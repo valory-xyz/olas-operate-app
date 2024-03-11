@@ -100,9 +100,6 @@ const createTray = () => {
   ]);
   tray.setToolTip('Olas Operate');
   tray.setContextMenu(contextMenu);
-  tray.on('click', () => {
-    mainWindow.show();
-  });
 };
 
 /**
@@ -345,7 +342,6 @@ ipcMain.on('check', async function (event, argument) {
 app.on('ready', async () => {
   if (platform === 'darwin') {
     app.dock?.setIcon(path.join(__dirname, 'assets/icons/robot-head.png'));
-    app.dock?.setBadge('Olas Operate');
   }
   createSplashWindow();
 });
