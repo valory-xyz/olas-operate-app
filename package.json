@@ -9,6 +9,7 @@
     "dockerode": "^4.0.2",
     "dotenv": "^16.4.5",
     "electron-sudo": "^4.0.12",
+    "eslint-plugin-lean-imports": "^0.3.3",
     "ethers": "5.7.2",
     "ethers-multicall": "^0.2.3",
     "lodash": "^4.17.21",

@@ -13,11 +13,12 @@ import { ReactElement, useCallback, useMemo, useState } from 'react';
 import { useSpawn, useAppInfo } from '@/hooks';
 import { CheckSquareTwoTone, WarningFilled } from '@ant-design/icons';
 import { InputStatus } from 'antd/es/_util/statusUtils';
-import { debounce } from 'lodash';
+import debounce from 'lodash/debounce';
 import { EthersService } from '@/service';
 import { SpawnScreen } from '@/enums';
 
 enum RPCState {
+  EMPTY,
   LOADING,
   VALID,
   INVALID,
@@ -98,10 +99,10 @@ export const SpawnRPC = ({ nextPage }: { nextPage: SpawnScreen }) => {
     [rpc, rpcState],
   );
 
-  const inputStatus: InputStatus = useMemo(
-    () => (rpcState === RPCState.INVALID ? 'error' : ''),
-    [rpcState],
-  );
+  const inputStatus: InputStatus = useMemo(() => {
+    if (!rpc) return '';
+    return rpcState === RPCState.INVALID ? 'error' : '';
+  }, [rpc, rpcState]);
 
   const inputSuffix: ReactElement = useMemo(() => {
     switch (rpcState) {
@@ -122,9 +123,9 @@ export const SpawnRPC = ({ nextPage }: { nextPage: SpawnScreen }) => {
       {
         children: (
           <Flex gap={8} vertical>
-            <Typography.Text>Get a Nodies account</Typography.Text>
+            <Typography.Text strong>Get a Nodies account</Typography.Text>
             <Button type="primary" href={NODIES_URL} target="_blank">
-              Open nodies site
+              Open Nodies site
             </Button>
           </Flex>
         ),
@@ -133,7 +134,7 @@ export const SpawnRPC = ({ nextPage }: { nextPage: SpawnScreen }) => {
       {
         children: (
           <Flex gap={8} vertical>
-            <Typography.Text>Add application</Typography.Text>
+            <Typography.Text strong>Add application</Typography.Text>
             <Typography.Text color="grey">
               Set Gnosis as network
             </Typography.Text>
@@ -144,7 +145,7 @@ export const SpawnRPC = ({ nextPage }: { nextPage: SpawnScreen }) => {
       {
         children: (
           <Flex gap={8} vertical>
-            <Typography.Text>Copy endpoint</Typography.Text>
+            <Typography.Text strong>Copy endpoint</Typography.Text>
             <Typography.Text color="grey">
               Copy the endpoint from the Nodies site
             </Typography.Text>
@@ -155,7 +156,7 @@ export const SpawnRPC = ({ nextPage }: { nextPage: SpawnScreen }) => {
       {
         children: (
           <Flex gap={8} vertical>
-            <Typography.Text>Paste endpoint</Typography.Text>
+            <Typography.Text strong>Paste endpoint</Typography.Text>
             <Input
               value={rpc}
               placeholder={'http...'}

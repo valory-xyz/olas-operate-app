@@ -2,7 +2,7 @@ import { SpawnScreen } from '@/enums';
 import { useSpawn } from '@/hooks';
 import { Address, FundingRecord, SpawnData } from '@/types';
 import { TimelineItemProps, Flex, Typography, Timeline, theme } from 'antd';
-import { isEmpty } from 'lodash';
+import isEmpty from 'lodash/isEmpty';
 import {
   useMemo,
   useEffect,

@@ -243,7 +243,7 @@ const ServiceCardStatusBadge = ({
       default:
         return <Badge status="processing" text="Loading" />;
     }
-  }, [serviceStatus]);
+  }, [serviceStatus, token.green]);
   return badge;
 };
 

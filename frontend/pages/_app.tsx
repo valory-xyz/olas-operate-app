@@ -6,7 +6,7 @@ import {
   AppInfoProvider,
 } from '@/context';
 import { mainTheme } from '@/theme';
-import { ConfigProvider } from 'antd';
+import ConfigProvider from 'antd/es/config-provider';
 import type { AppProps } from 'next/app';
 
 export default function App({ Component, pageProps }: AppProps) {

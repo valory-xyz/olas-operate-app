@@ -17,9 +17,11 @@
     "prettier",
     "react",
     "react-hooks",
-    "unused-imports"
+    "unused-imports",
+    "lean-imports"
   ],
   "rules": {
+    "lean-imports/import": [1, ["lodash", "antd"]],
     "unused-imports/no-unused-imports": "error",
     "no-console": "warn",
     "no-unused-vars": "warn",

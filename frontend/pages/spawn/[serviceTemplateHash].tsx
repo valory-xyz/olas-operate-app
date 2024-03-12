@@ -1,6 +1,8 @@
 import { SpawnRPC } from '@/components/Spawn';
 import { SpawnScreen } from '@/enums';
 import { useSpawn } from '@/hooks';
+import Flex from 'antd/es/flex';
+import theme from 'antd/es/theme';
 import { GetServerSidePropsContext } from 'next';
 import dynamic from 'next/dynamic';
 import { ReactElement, useEffect, useMemo, useState } from 'react';
@@ -59,6 +61,7 @@ type SpawnPageProps = {
 export const SpawnPage = (props: SpawnPageProps) => {
   const { loadSpawn, spawnData } = useSpawn();
   const [isLoaded, setIsLoaded] = useState(false);
+  const { token } = theme.useToken();
 
   useEffect(() => {
     if (isLoaded) return;
@@ -96,7 +99,9 @@ export const SpawnPage = (props: SpawnPageProps) => {
   return (
     <>
       <SpawnHeader />
-      {spawnScreen}
+      <Flex vertical style={{ padding: token.padding }}>
+        {spawnScreen}
+      </Flex>
     </>
   );
 };
