@@ -8,8 +8,9 @@ const { spawnSync } = require('child_process');
 
 
 const OperateDirectory = `${os.homedir()}/.operate`;
+const OperateInstallationLog = `${os.homedir()}/operate.log`;
 const OperateCmd = `${os.homedir()}/.operate/venv/bin/operate`;
-const Env = { ...process.env, PATH: `${process.env.PATH}:/opt/homebrew/bin/brew:/usr/local/bin` }
+const Env = { ...process.env, PATH: `${process.env.PATH}:/opt/homebrew/bin:/usr/local/bin` }
 const SudoOptions = {
   name: "Olas Operate",
   env: Env,
@@ -24,12 +25,32 @@ function isPackageInstalledUbuntu(package) {
   return result.status === 0;
 }
 
+function appendLog(log) {
+  fs.appendFileSync(
+    OperateInstallationLog,
+    `${log}\n`,
+    { "encoding": "utf-8" }
+  )
+  return log
+}
+
 function runCmdUnix(command, options) {
+  fs.appendFileSync(
+    OperateInstallationLog,
+    `Runninng ${command} with options ${JSON.stringify(options)}`,
+    { "encoding": "utf-8" }
+  )
   let bin = getBinPath(command)
   if (!bin) {
     throw new Error(`Command ${command} not found; Path : ${Env.PATH}`)
   }
   let output = spawnSync(bin, options);
+  if (output.stdout) {
+    appendLog(output.stdout.toString())
+  }
+  if (output.stderr) {
+    appendLog(output.stdout.toString())
+  }
   if (output.error) {
     throw new Error(
       `Error running ${command} with options ${options};
@@ -108,7 +129,7 @@ function isGitInstalledUbuntu() {
 }
 
 function installPythonUbuntu() {
-  return runSudoUnix('apt', 'install -y python3.10 python3.10-dev');
+  return runSudoUnix('apt', 'install -y python3.10 python3.10-dev python3-pip');
 }
 
 function installGitUbuntu() {
@@ -119,31 +140,33 @@ function createVirtualEnvUbuntu(path) {
   return runCmdUnix('python3.10', ['-m', 'venv', path]);
 }
 
-function cloneRepositoryUnix() {
-  runCmdUnix('git', ['clone', 'git@github.com:valory-xyz/olas-operate-app'])
-}
-
 function installOperatePackageUnix(path) {
-  runCmdUnix(`${path}/venv/bin/python3.10`, ['-m', 'pip', 'install', `${path}/temp/olas-operate-app`])
+  return runCmdUnix(
+    `${path}/venv/bin/python3.10`,
+    ['-m', 'pip', 'install', 'olas-operate-middleware==0.1.0rc0']
+  )
 }
 
-function installOperateCliDarwin(path) {
-  return new Promise((resolve, reject) => {
-    fs.copyFile(
-      `${path}/venv/bin/operate`,
-      '/opt/homebrew/bin/operate',
-      function (error, stdout, stderr) {
-        resolve(!error);
-      },
-    );
-  });
+function reInstallOperatePackageUnix(path) {
+  if (fs.existsSync(`${path}/venv/bin/operate`)) {
+    return
+  }
+  console.log(appendLog("Reinstalling operate CLI"))
+  return runCmdUnix(
+    `${path}/venv/bin/python3.10`,
+    ['-m', 'pip', 'install', 'olas-operate-middleware==0.1.0rc0', '--force-reinstall']
+  )
 }
 
-function installOperateCliUbuntu(path) {
+function installOperateCli(path) {
+  let installPath = `${path}/operate`
+  if (fs.existsSync(installPath)) {
+    fs.rmSync(installPath)
+  }
   return new Promise((resolve, reject) => {
     fs.copyFile(
-      `${path}/venv/bin/operate`,
-      '/usr/local/bin',
+      `${OperateDirectory}/venv/bin/operate`,
+      installPath,
       function (error, stdout, stderr) {
         resolve(!error);
       },
@@ -152,93 +175,101 @@ function installOperateCliUbuntu(path) {
 }
 
 function createDirectory(path) {
+  if (fs.existsSync(path)) {
+    return
+  }
   return new Promise((resolve, reject) => {
-    fs.mkdir(path, { recursive: true }, (error) => {
+    fs.mkdir(path, { recursive: true, }, (error) => {
       resolve(!error);
     });
   });
 }
 
-function isInstalled() {
-  return fs.existsSync(OperateDirectory);
-}
 
-async function setupDarwin() {
-  console.log("Checking brew installation")
+async function setupDarwin(ipcChannel) {
+  console.log(appendLog("Checking brew installation"))
   if (!isBrewInstalled()) {
-    console.log("Installing brew")
+    ipcChannel.send('response', 'Installing Operate Daemon')
+    console.log(appendLog("Installing brew"))
     installBrew()
   }
 
-  console.log("Checking docker installation")
+  console.log(appendLog("Checking docker installation"))
   if (!isDockerInstalledDarwin()) {
-    console.log("Installating docker")
+    ipcChannel.send('response', 'Installing Operate Daemon')
+    console.log(appendLog("Installating docker"))
     installDockerDarwin()
   }
 
-  console.log("Checking python installation")
+  console.log(appendLog("Checking python installation"))
   if (!isPythonInstalledDarwin()) {
-    console.log("Installing python")
+    ipcChannel.send('response', 'Installing Operate Daemon')
+    console.log(appendLog("Installing python"))
     installPythonDarwin()
   }
 
-  console.log("Creating required directories")
+  console.log(appendLog("Creating required directories"))
   await createDirectory(`${OperateDirectory}`);
   await createDirectory(`${OperateDirectory}/temp`);
 
-  console.log("Creating virtual environment")
-  createVirtualEnvUnix(`${OperateDirectory}/venv`);
+  if (!fs.existsSync(`${OperateDirectory}/venv`)) {
+    ipcChannel.send('response', 'Installing Operate Daemon')
+    console.log(appendLog("Creating virtual environment"))
+    createVirtualEnvUnix(`${OperateDirectory}/venv`);
+  }
 
-  console.log("Installing operate backend")
-  process.chdir(`${OperateDirectory}/temp`)
-  cloneRepositoryUnix()
+  console.log(appendLog("Installing operate backend"))
   installOperatePackageUnix(OperateDirectory)
+  reInstallOperatePackageUnix(OperateDirectory)
 
-  console.log("Installing operate CLI")
-  await installOperateCliDarwin(OperateDirectory)
+  console.log(appendLog("Installing operate CLI"))
+  await installOperateCli('/opt/homebrew/bin/operate')
 }
 
-async function setupUbuntu() {
+async function setupUbuntu(ipcChannel) {
 
-  console.log("Checking docker installation")
+  console.log(appendLog("Checking docker installation"))
   if (!isDockerInstalledUbuntu()) {
-    console.log("Installating docker")
+    ipcChannel.send('response', 'Installing Operate Daemon')
+    console.log(appendLog("Installating docker"))
     await installDockerUbuntu()
   }
 
-  console.log("Checking python installation")
+  console.log(appendLog("Checking python installation"))
   if (!isPythonInstalledUbuntu()) {
-    console.log("Installing Python")
+    ipcChannel.send('response', 'Installing Operate Daemon')
+    console.log(appendLog("Installing Python"))
     await installPythonUbuntu(OperateDirectory)
   }
 
-  console.log("Checking git installation")
+  console.log(appendLog("Checking git installation"))
   if (!isGitInstalledUbuntu()) {
-    console.log("Installing git")
+    ipcChannel.send('response', 'Installing Operate Daemon')
+    console.log(appendLog("Installing git"))
     await installGitUbuntu(OperateDirectory)
   }
 
-  console.log("Creating required directories")
+  console.log(appendLog("Creating required directories"))
   await createDirectory(`${OperateDirectory}`);
   await createDirectory(`${OperateDirectory}/temp`);
 
-  console.log("Creating virtual environment")
-  createVirtualEnvUbuntu(`${OperateDirectory}/venv`);
+  if (!fs.existsSync(`${OperateDirectory}/venv`)) {
+    ipcChannel.send('response', 'Installing Operate Daemon')
+    console.log(appendLog("Creating virtual environment"))
+    createVirtualEnvUnix(`${OperateDirectory}/venv`);
+  }
 
-
-  console.log("Installing operate backend")
-  process.chdir(`${OperateDirectory}/temp`)
-  cloneRepositoryUnix()
+  console.log(appendLog("Installing operate backend"))
   installOperatePackageUnix(OperateDirectory)
+  reInstallOperatePackageUnix(OperateDirectory)
 
-  console.log("Installing operate CLI")
-  await installOperateCliUbuntu(OperateDirectory)
+  console.log(appendLog("Installing operate CLI"))
+  await installOperateCli('/usr/local/bin')
 }
 
 module.exports = {
   setupDarwin,
   setupUbuntu,
-  isInstalled,
   OperateDirectory,
   OperateCmd,
 };

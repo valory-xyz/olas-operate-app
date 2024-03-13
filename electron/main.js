@@ -11,14 +11,13 @@ const {
 } = require('electron');
 const { spawn, exec } = require('child_process');
 const path = require('path');
-const url = require('url');
+const fs = require('fs');
 const os = require('os');
 const next = require('next');
 const http = require('http');
 
 const { isDockerRunning } = require('./docker');
 const {
-  isInstalled,
   setupDarwin,
   setupUbuntu,
   OperateCmd,
@@ -166,6 +165,10 @@ const createMainWindow = () => {
 };
 
 async function launchDaemon() {
+  function appendLog(data) {
+    fs.appendFileSync(`${OperateDirectory}/logs.txt`, data.trim() + "\n", { "encoding": "utf-8" })
+    return data
+  }
   const check = new Promise(function (resolve, reject) {
     operateDaemon = spawn(OperateCmd, [
       'daemon',
@@ -182,6 +185,10 @@ async function launchDaemon() {
       ) {
         resolve({ running: false, error: 'Port already in use' });
       }
+      console.log(appendLog(data.toString().trim()));
+    });
+    operateDaemon.stdout.on('data', (data) => {
+      console.log(appendLog(data.toString().trim()));
     });
   });
   return await check;
@@ -256,14 +263,13 @@ async function launchNextAppDev() {
 ipcMain.on('check', async function (event, argument) {
   try {
     event.sender.send('response', 'Checking installation');
-    if (!isDev && !isInstalled()) {
-      event.sender.send('response', 'Installing Operate Daemon');
+    if (!isDev) {
       if (platform === 'darwin') {
-        await setupDarwin();
+        await setupDarwin(event.sender);
       } else if (platform === 'win32') {
         // TODO
       } else {
-        await setupUbuntu();
+        await setupUbuntu(event.sender);
       }
     }
 
