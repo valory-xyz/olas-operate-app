@@ -43,15 +43,15 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "electron/assets/icons/robot-head.png"
+      "icon": "./electron/assets/icons/robot-head.png"
     },
     "mac": {
       "target": "dmg",
-      "icon": "electron/assets/icons/robot-head.png"
+      "icon": "./electron/assets/icons/robot-head.png"
     },
     "linux": {
       "target": "AppImage",
-      "icon": "electron/assets/icons/robot-head.png"
+      "icon": "./electron/assets/icons/robot-head.png"
     }
   },
   "scripts": {
