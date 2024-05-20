@@ -68,7 +68,7 @@ export const MainNeedsFunds = () => {
         <small>
           To run your agent, you must add these amounts to your account:
         </small>
-        <ul className="alert-list text-sm font-semibold">
+        <ul className="alert-list text-sm font-weight-600">
           {!hasEnoughOlas && (
             <li>
               {UNICODE_SYMBOLS.OLAS}
