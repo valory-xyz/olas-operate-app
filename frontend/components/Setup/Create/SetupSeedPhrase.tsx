@@ -39,7 +39,7 @@ export const SetupSeedPhrase = () => {
         <CopyOutlined /> Copy to clipboard
       </Button>
       <Button type="primary" size="large" onClick={handleNext}>
-        Confirm and create account
+        Continue
       </Button>
     </CardFlex>
   );
