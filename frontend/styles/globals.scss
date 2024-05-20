@@ -1,4 +1,5 @@
 @import '@fontsource/inter';
+@import '@fontsource/inter/600.css';
 @import '@fontsource/inter/700.css';
 @import '@fontsource/inter/900.css';
 
@@ -94,6 +95,10 @@ button, input, select, textarea, .ant-input-suffix {
 
 .text-sm {
   font-size: 14px;
+}
+
+.font-semibold {
+  font-weight: 600;
 }
 
 .break-word {

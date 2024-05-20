@@ -66,14 +66,13 @@ export const MainNeedsFunds = () => {
           Your agent needs funds
         </Text>
         <small>
-          To run your agent, you must have at least these amounts in your
-          account:
+          To run your agent, you must add these amounts to your account:
         </small>
-        <ul className="alert-list text-sm">
+        <ul className="alert-list text-sm font-semibold">
           {!hasEnoughOlas && (
             <li>
               {UNICODE_SYMBOLS.OLAS}
-              {serviceFundRequirements.olas} OLAS
+              {serviceFundRequirements.olas} OLAS (for staking)
             </li>
           )}
           {!hasEnoughEth && <li>${serviceFundRequirements.eth} XDAI</li>}
