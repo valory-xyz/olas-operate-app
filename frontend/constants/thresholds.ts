@@ -6,3 +6,5 @@ export const MIN_ETH_BALANCE_THRESHOLDS = {
     safeAddSigner: 0.1,
   },
 };
+
+export const LOW_BALANCE = 0.1;

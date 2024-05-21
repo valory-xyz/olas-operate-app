@@ -2,10 +2,11 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { Badge, Button, Flex, Popover, Typography } from 'antd';
 import { formatUnits } from 'ethers/lib/utils';
 import Image from 'next/image';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Chain, DeploymentStatus } from '@/client';
-import { COLOR, SERVICE_TEMPLATES } from '@/constants';
+import { setTrayIcon } from '@/common-util';
+import { COLOR, LOW_BALANCE, SERVICE_TEMPLATES } from '@/constants';
 import { useBalance, useServiceTemplates } from '@/hooks';
 import { useServices } from '@/hooks/useServices';
 import { useWallet } from '@/hooks/useWallet';
@@ -40,6 +41,16 @@ export const MainHeader = () => {
     () => getServiceTemplates()[0],
     [getServiceTemplates],
   );
+
+  useEffect(() => {
+    if (totalEthBalance && totalEthBalance < LOW_BALANCE) {
+      setTrayIcon('low-gas');
+    } else if (serviceStatus === DeploymentStatus.DEPLOYED) {
+      setTrayIcon('running');
+    } else if (serviceStatus === DeploymentStatus.STOPPED) {
+      setTrayIcon('paused');
+    }
+  }, [totalEthBalance, serviceStatus]);
 
   const agentHead = useMemo(() => {
     if (
