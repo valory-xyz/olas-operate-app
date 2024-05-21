@@ -3,7 +3,7 @@ Electron + NextJS + Python Backend application to one-click run Agents.
 
 ## Technologies Used
 - Electron
-- NextJS (20.11 LTS)
+- NodeJS (20.11 LTS)
 - AntD
 - TypeScript
 - Python (3.10)
