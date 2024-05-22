@@ -96,7 +96,7 @@ export const SetupWelcomeLogin = () => {
   const { goto } = useSetup();
   const { goto: gotoPage } = usePageState();
 
-  const { masterSafeAddress } = useWallet();
+  const { masterEoaAddress, masterSafeAddress } = useWallet();
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -107,9 +107,9 @@ export const SetupWelcomeLogin = () => {
       setIsLoggingIn(true);
       AccountService.loginAccount(password)
         .then(() => {
-          if (!masterSafeAddress) {
+          if (masterEoaAddress && !masterSafeAddress) {
             gotoPage(PageState.Setup);
-            goto(SetupScreen.SetupEoaFunding);
+            goto(SetupScreen.SetupEoaFundingIncomplete);
           } else {
             gotoPage(PageState.Main);
           }
@@ -120,7 +120,7 @@ export const SetupWelcomeLogin = () => {
         })
         .finally(() => setIsLoggingIn(false));
     },
-    [goto, gotoPage, masterSafeAddress],
+    [goto, gotoPage, masterEoaAddress, masterSafeAddress],
   );
 
   return (

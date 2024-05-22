@@ -45,7 +45,11 @@ const loadingStatuses = [
   SetupEaoFundingStatus.CreatingSafe,
 ];
 
-export const SetupEoaFunding = () => {
+export const SetupEoaFunding = ({
+  isIncomplete,
+}: {
+  isIncomplete?: boolean;
+}) => {
   const { masterEoaAddress: masterEaoAddress, masterSafeAddress } = useWallet();
   const { walletBalances } = useBalance();
   const { backupSigner } = useSetup();
@@ -103,7 +107,7 @@ export const SetupEoaFunding = () => {
     <CardFlex>
       <SetupCreateHeader
         prev={SetupScreen.SetupBackupSigner}
-        disabled={isCreatingSafe}
+        disabled={isCreatingSafe || isIncomplete}
       />
       <Typography.Title level={3}>
         Deposit {MIN_ETH_BALANCE_THRESHOLDS[Chain.GNOSIS].safeCreation} XDAI

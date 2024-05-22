@@ -17,7 +17,7 @@ export const SetupSeedPhrase = () => {
 
   return (
     <CardFlex gap={10}>
-      <SetupCreateHeader prev={SetupScreen.SetupPassword} />
+      <SetupCreateHeader prev={SetupScreen.SetupPassword} disabled={true} />
       <Typography.Title level={3}>Back up seed phrase</Typography.Title>
       <Typography.Text>
         Seed phrase is needed to regain access to your account if you forget the
