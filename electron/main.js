@@ -81,17 +81,23 @@ async function beforeQuit() {
   mainWindow && mainWindow.destroy();
 }
 
+const getUpdatedTrayIcon = (iconPath) => {
+  const icon = iconPath;
+  if (icon.resize) {
+    icon.resize({ width: 16 });
+    icon.setTemplateImage(true);
+  }
+
+  return icon;
+};
+
 /**
  * Creates the tray
  */
 const createTray = () => {
-  const trayPath =
-    isWindows || isMac ? TRAY_ICONS.LOGGED_OUT : TRAY_ICONS_PATHS.LOGGED_OUT;
-
-  if (trayPath.resize) {
-    trayPath.resize({ width: 16 });
-    trayPath.setTemplateImage(true);
-  }
+  const trayPath = getUpdatedTrayIcon(
+    isWindows || isMac ? TRAY_ICONS.LOGGED_OUT : TRAY_ICONS_PATHS.LOGGED_OUT,
+  );
   const tray = new Tray(trayPath);
 
   const contextMenu = Menu.buildFromTemplate([
@@ -120,21 +126,28 @@ const createTray = () => {
 
   ipcMain.on('tray', (_event, status) => {
     switch (status) {
-      case 'low-gas':
-        tray.setImage(
+      case 'low-gas': {
+        const icon = getUpdatedTrayIcon(
           isWindows || isMac ? TRAY_ICONS.LOW_GAS : TRAY_ICONS_PATHS.LOW_GAS,
         );
+        tray.setImage(icon);
         break;
-      case 'running':
-        tray.setImage(
+      }
+      case 'running': {
+        const icon = getUpdatedTrayIcon(
           isWindows || isMac ? TRAY_ICONS.RUNNING : TRAY_ICONS_PATHS.RUNNING,
         );
+        tray.setImage(icon);
+
         break;
-      case 'paused':
-        tray.setImage(
+      }
+      case 'paused': {
+        const icon = getUpdatedTrayIcon(
           isWindows || isMac ? TRAY_ICONS.PAUSED : TRAY_ICONS_PATHS.PAUSED,
         );
+        tray.setImage(icon);
         break;
+      }
     }
   });
 };
