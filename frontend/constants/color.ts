@@ -8,5 +8,4 @@ export const COLOR = {
   WHITE: '#ffffff',
   BORDER_GRAY: '#f0f0f0',
   BROWN: '#873800',
-  ACCOUNT_CREATION_CARD_GRAY: '#f2f4f9',
 };

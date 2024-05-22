@@ -55,12 +55,9 @@ export const SetupBackupSigner = () => {
           >
             Skip for now
           </Button>
-          <Typography.Text color="secondary">
-            <small>
-              Note that in the current version of the app, you will not be able
-              to set up a backup wallet afterward. This functionality is coming
-              soon.
-            </small>
+          <Typography.Text type="secondary" className="text-sm">
+            Note that in the current version of the app, you will not be able to
+            set up a backup wallet afterward. This functionality is coming soon.
           </Typography.Text>
         </FormFlex>
       </Flex>

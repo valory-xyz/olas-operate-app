@@ -18,9 +18,12 @@ export const SetupCreateHeader = memo(function SetupCreateHeader({
   return (
     <Row>
       <Col span={8}>
-        <Button onClick={handleBack} disabled={disabled}>
-          <ArrowLeftOutlined />
-        </Button>
+        <Button
+          onClick={handleBack}
+          disabled={disabled}
+          icon={<ArrowLeftOutlined />}
+          size="large"
+        />
       </Col>
       <Col span={8}>
         <Flex justify="center">

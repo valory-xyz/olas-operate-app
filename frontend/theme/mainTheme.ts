@@ -42,6 +42,8 @@ export const mainTheme: ThemeConfig = {
       colorTextLightSolid: 'black',
       colorBgSpotlight: 'white',
     },
-    Typography: {},
+    Typography: {
+      colorTextDescription: '#4D596A',
+    },
   },
 };

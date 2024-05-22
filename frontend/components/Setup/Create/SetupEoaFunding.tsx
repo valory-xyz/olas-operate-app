@@ -1,5 +1,6 @@
 import {
   CopyOutlined,
+  InfoCircleOutlined,
   // QrcodeOutlined
 } from '@ant-design/icons';
 import {
@@ -110,13 +111,11 @@ export const SetupEoaFunding = ({
         disabled={isCreatingSafe || isIncomplete}
       />
       <Typography.Title level={3}>
-        Deposit {MIN_ETH_BALANCE_THRESHOLDS[Chain.GNOSIS].safeCreation} XDAI
+        Deposit {MIN_ETH_BALANCE_THRESHOLDS[Chain.GNOSIS].safeCreation} XDAI on
+        Gnosis
       </Typography.Title>
       <Typography.Paragraph>
         The app needs these funds to create your account on-chain.
-      </Typography.Paragraph>
-      <Typography.Paragraph>
-        Note that this address will not be used after account creation.
       </Typography.Paragraph>
 
       <CardSection bordertop="true" borderbottom="true">
@@ -157,25 +156,25 @@ const SetupEoaFundingWaiting = ({
           }
         />
       </CardSection>
-      <CardSection bordertop="true" borderbottom="true" vertical gap={10}>
-        <AccountCreationCardFlex gap={10}>
-          <Flex justify="space-between">
-            <Typography.Text className="text-sm" strong>
-              Account creation address
-            </Typography.Text>
-            <Flex gap={10} align="center">
-              <Tooltip title="Copy to clipboard">
-                <CopyOutlined
-                  onClick={() =>
-                    masterEoa &&
-                    copyToClipboard(masterEoa).then(() =>
-                      message.success('Address copied!'),
-                    )
-                  }
-                />
-              </Tooltip>
+      <AccountCreationCard>
+        <Flex justify="space-between">
+          <Typography.Text className="text-sm" type="secondary">
+            Account creation address
+          </Typography.Text>
+          <Flex gap={10} align="center">
+            <Tooltip title="Copy to clipboard">
+              <CopyOutlined
+                style={ICON_STYLE}
+                onClick={() =>
+                  masterEoa &&
+                  copyToClipboard(masterEoa).then(() =>
+                    message.success('Address copied!'),
+                  )
+                }
+              />
+            </Tooltip>
 
-              {/* {masterEoa && (
+            {/* {masterEoa && (
                 <Popover
                   title="Scan QR code"
                   content={
@@ -185,30 +184,48 @@ const SetupEoaFundingWaiting = ({
                     />
                   }
                 >
-                  <QrcodeOutlined />
+                  <QrcodeOutlined style={ICON_STYLE}/>
                 </Popover>
               )} */}
-            </Flex>
           </Flex>
+        </Flex>
 
-          <span className="can-select-text break-word">
-            GNO:&nbsp;{masterEoa}
-          </span>
-        </AccountCreationCardFlex>
-        <Button
-          type="link"
-          target="_blank"
-          href={COW_SWAP_GNOSIS_XDAI_OLAS_URL}
-        >
-          Get XDAI on Gnosis Chain{UNICODE_SYMBOLS.EXTERNAL_LINK}
-        </Button>
-      </CardSection>
+        <span className="can-select-text break-word">
+          GNO:&nbsp;{masterEoa}
+        </span>
+        <Alert
+          className="account-creation-alert"
+          showIcon
+          icon={<InfoCircleOutlined />}
+          message={
+            'After this point, do not send more funds to this address. Once your account is created, you will be given a new address - send further funds there.'
+          }
+        />
+      </AccountCreationCard>
+      <Button type="link" target="_blank" href={COW_SWAP_GNOSIS_XDAI_OLAS_URL}>
+        Get XDAI on Gnosis Chain {UNICODE_SYMBOLS.EXTERNAL_LINK}
+      </Button>
     </>
   );
 };
 
-const AccountCreationCardFlex = styled(CardFlex)`
-  .ant-card-body {
-    background-color: ${COLOR.ACCOUNT_CREATION_CARD_GRAY};
+const AccountCreationCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='12' ry='12' stroke='%23A3AEBB' stroke-width='2' stroke-dasharray='6' stroke-dashoffset='15' stroke-linecap='square'/%3e%3c/svg%3e");
+  border-radius: 12px;
+
+  .account-creation-alert {
+    margin-top: 8px;
+    background: #e6f4ff;
+    border: 1px solid #91caff;
+    color: #002c8c;
+    align-items: flex-start;
   }
 `;
+
+const ICON_STYLE = { color: '#606F85' };
