@@ -191,7 +191,7 @@ const SetupEoaFundingWaiting = ({
         </Flex>
 
         <span className="can-select-text break-word">
-          GNO:&nbsp;{masterEoa}
+          {`GNO: ${masterEoa}`}
         </span>
         <Alert
           className="account-creation-alert"
