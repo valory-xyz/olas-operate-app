@@ -12,6 +12,8 @@ on:
 jobs:
     verify-main-branch: # ensures we only release from main
       runs-on: ubuntu-latest
+      steps:
+        - run: echo woo          
 
     release-middleware:
         needs: 
