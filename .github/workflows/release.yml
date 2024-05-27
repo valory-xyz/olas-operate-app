@@ -12,10 +12,6 @@ on:
 jobs:
     verify-main-branch: # ensures we only release from main
       runs-on: ubuntu-latest
-      steps:
-      - name: Exit if not on main branch
-        if: github.ref != 'refs/heads/main'
-        run: echo "Not on main branch, exiting" && exit -1
 
     release-middleware:
         needs: 
