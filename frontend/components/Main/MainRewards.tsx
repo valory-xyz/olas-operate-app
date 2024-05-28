@@ -1,4 +1,15 @@
-import { Button, Col, Flex, Modal, Row, Skeleton, Tag, Typography } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import {
+  Button,
+  Col,
+  Flex,
+  Modal,
+  Row,
+  Skeleton,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
@@ -12,7 +23,7 @@ import { useStore } from '@/hooks/useStore';
 
 import { ConfettiAnimation } from '../common/ConfettiAnimation';
 
-const { Text, Title } = Typography;
+const { Text, Title, Paragraph } = Typography;
 
 const RewardsRow = styled(Row)`
   margin: 0 -24px;
@@ -23,6 +34,11 @@ const RewardsRow = styled(Row)`
     }
   }
 `;
+
+const TOOLTIP_OVERLAY_STYLE = {
+  maxWidth: 'calc(100% - 48px)',
+  left: '24px',
+};
 
 const Loader = () => (
   <Flex vertical gap={8}>
@@ -52,8 +68,32 @@ const DisplayRewards = () => {
           <Text type="secondary">Staking rewards today</Text>
           {isBalanceLoaded ? (
             <>
-              <Text strong style={{ fontSize: 20 }}>
-                {balanceFormat(availableRewardsForEpochEth, 2)} OLAS
+              <Text className="text-xl font-weight-600">
+                {balanceFormat(availableRewardsForEpochEth, 2)} OLAS&nbsp;
+                <Text type="secondary">
+                  <Tooltip
+                    arrow={false}
+                    overlayStyle={TOOLTIP_OVERLAY_STYLE}
+                    title={
+                      <>
+                        <Text className="text-sm font-weight-600">
+                          Rewards are specified for the ongoing epoch
+                        </Text>
+
+                        <Paragraph className="text-sm mt-8">
+                          An epoch is a period when the agent can earn the
+                          staking rewards. It lasts approximately one day, from
+                          12 am to 12 am UTC. Start your agent earlier in the
+                          day to get all the rewards. Sometimes, epochs can last
+                          longer, and you can earn more than the number
+                          specified here.
+                        </Paragraph>
+                      </>
+                    }
+                  >
+                    <InfoCircleOutlined />
+                  </Tooltip>
+                </Text>
               </Text>
               {isEligibleForRewards ? (
                 <Tag color="success">Earned</Tag>
@@ -72,7 +112,7 @@ const DisplayRewards = () => {
           <Text type="secondary">Staked amount</Text>
           {isBalanceLoaded ? (
             <>
-              <Text strong style={{ fontSize: 20 }}>
+              <Text className="text-xl font-weight-600">
                 {balanceFormat(totalOlasStakedBalance, 2)} OLAS
               </Text>
               {minimumStakedAmountRequired && !isStaked ? (
