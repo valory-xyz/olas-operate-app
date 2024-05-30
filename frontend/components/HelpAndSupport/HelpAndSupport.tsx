@@ -2,14 +2,11 @@ import { CloseOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { Button, Card, Flex, message, Typography } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 
-import { DeploymentStatus } from '@/client';
 import { FAQ_URL, SUPPORT_URL } from '@/constants';
 import { UNICODE_SYMBOLS } from '@/constants/unicode';
 import { PageState } from '@/enums';
-import { useBalance, usePageState, useServices } from '@/hooks';
+import { useLogs, usePageState } from '@/hooks';
 import { useElectronApi } from '@/hooks/useElectronApi';
-import { useMasterSafe } from '@/hooks/useMasterSafe';
-import { useStore } from '@/hooks/useStore';
 
 import { CardTitle } from '../common/CardTitle';
 import { CardSection } from '../styled/CardSection';
@@ -27,118 +24,50 @@ const SettingsTitle = () => (
   />
 );
 
+const LogsSavedMessage = ({ onClick }: { onClick: () => void }) => {
+  return (
+    <span>
+      Logs saved
+      <Button type="link" size="small" onClick={onClick}>
+        Open folder
+      </Button>
+    </span>
+  );
+};
+
 export const HelpAndSupport = () => {
   const { goto } = usePageState();
-  const { saveLogs, openPath } = useElectronApi();
+  const { openPath, saveLogs } = useElectronApi();
 
-  const { storeState } = useStore();
-  const {
-    serviceStatus,
-    services,
-    hasInitialLoaded: isServiceLoaded,
-  } = useServices();
-  const {
-    isBalanceLoaded,
-    totalEthBalance,
-    totalOlasBalance,
-    wallets,
-    walletBalances,
-    totalOlasStakedBalance,
-  } = useBalance();
-
-  const {
-    backupSafeAddress,
-    masterSafeAddress,
-    masterEoaAddress,
-    masterSafeOwners,
-  } = useMasterSafe();
+  const logs = useLogs();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [canSaveLogs, setCanSafeLogs] = useState(false);
+  const [canSaveLogs, setCanSaveLogs] = useState(false);
 
-  const onSaveLogs = useCallback(() => {
-    setIsLoading(true);
-    setCanSafeLogs(true);
-  }, []);
-
-  const handleSaveLogs = useCallback(() => {
-    return saveLogs?.({
-      store: storeState,
-      debugData: {
-        services: {
-          services:
-            services?.map((item) => ({
-              ...item,
-              keys: item.keys.map((key) => key.address),
-            })) ?? 'undefined',
-          serviceStatus: serviceStatus
-            ? DeploymentStatus[serviceStatus]
-            : 'undefined',
-        },
-        addresses: [
-          { backupSafeAddress: backupSafeAddress ?? 'undefined' },
-          { masterSafeAddress: masterSafeAddress ?? 'undefined' },
-          { masterEoaAddress: masterEoaAddress ?? 'undefined' },
-          { masterSafeOwners: masterSafeOwners ?? 'undefined' },
-        ],
-        balances: [
-          { wallets: wallets ?? 'undefined' },
-          { walletBalances: walletBalances ?? 'undefined' },
-          { totalOlasStakedBalance: totalOlasStakedBalance ?? 'undefined' },
-          { totalEthBalance: totalEthBalance ?? 'undefined' },
-          { totalOlasBalance: totalOlasBalance ?? 'undefined' },
-        ],
-      },
-    }).then((result) => {
-      if (result.success) {
-        message.success({
-          content: (
-            <span>
-              Logs saved to:
-              <Button
-                type="link"
-                size="small"
-                onClick={() => {
-                  openPath?.(`${result.dirPath}`);
-                }}
-              >
-                {result.dirPath}
-              </Button>
-            </span>
-          ),
-          duration: 10,
-        });
-      } else {
-        message.error('Save logs failed or cancelled');
-      }
-    });
-  }, [
-    backupSafeAddress,
-    masterEoaAddress,
-    masterSafeAddress,
-    masterSafeOwners,
-    openPath,
-    saveLogs,
-    serviceStatus,
-    services,
-    storeState,
-    totalEthBalance,
-    totalOlasBalance,
-    totalOlasStakedBalance,
-    walletBalances,
-    wallets,
-  ]);
+  const onSaveLogs = useCallback(() => setCanSaveLogs(true), []);
 
   useEffect(() => {
-    // only save logs when all needed data is loaded
-    if (canSaveLogs && isBalanceLoaded && isServiceLoaded) {
-      handleSaveLogs()?.finally(() => {
-        setIsLoading(false);
-        setCanSafeLogs(false);
-      });
+    if (canSaveLogs && logs && !isLoading) {
+      setIsLoading(true);
+      saveLogs?.(logs)
+        .then((result) => {
+          if (result.success) {
+            message.success({
+              content: (
+                <LogsSavedMessage onClick={() => openPath?.(result.dirPath)} />
+              ),
+              duration: 10,
+            });
+          } else {
+            message.error('Save logs failed or cancelled');
+          }
+        })
+        .finally(() => {
+          setIsLoading(false);
+          setCanSaveLogs(false);
+        });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canSaveLogs, isBalanceLoaded, isServiceLoaded]);
+  }, [canSaveLogs, isLoading, logs, openPath, saveLogs]);
 
   return (
     <Card
@@ -181,7 +110,7 @@ export const HelpAndSupport = () => {
           type="primary"
           ghost
           size="large"
-          loading={isLoading}
+          loading={isLoading || canSaveLogs}
           onClick={onSaveLogs}
         >
           Export logs

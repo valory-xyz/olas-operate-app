@@ -554,6 +554,19 @@ ipcMain.on('open-path', (_, filePath) => {
   shell.openPath(filePath);
 });
 
+function getSanitizedLogs({ name, filePath, data }) {
+  const logs = filePath ? fs.readFileSync(filePath, 'utf-8') : data;
+  const tempDir = os.tmpdir();
+
+  const usernameRegex = /\/Users\/([^/]+)/g;
+  const sanitizedData = logs.replace(usernameRegex, '/Users/*****');
+
+  const sanitizedLogsFilePath = path.join(tempDir, name);
+  fs.writeFileSync(sanitizedLogsFilePath, sanitizedData);
+
+  return sanitizedLogsFilePath;
+}
+
 // EXPORT LOGS
 ipcMain.handle('save-logs', async (_, data) => {
   // version.txt
@@ -631,16 +644,3 @@ ipcMain.handle('save-logs', async (_, data) => {
 
   return result;
 });
-
-function getSanitizedLogs({ name, filePath, data }) {
-  const logs = filePath ? fs.readFileSync(filePath, 'utf-8') : data;
-  const tempDir = os.tmpdir();
-
-  const usernameRegex = /\/Users\/([^/]+)/g;
-  const sanitizedData = logs.replace(usernameRegex, '/Users/*****');
-
-  const sanitizedLogsFilePath = path.join(tempDir, name);
-  fs.writeFileSync(sanitizedLogsFilePath, sanitizedData);
-
-  return sanitizedLogsFilePath;
-}
