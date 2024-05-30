@@ -1,4 +1,4 @@
-import { SettingOutlined } from '@ant-design/icons';
+import { QuestionCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Card, Flex } from 'antd';
 import { useEffect } from 'react';
 
@@ -29,13 +29,20 @@ export const Main = () => {
     <Card
       title={<MainHeader />}
       extra={
-        <Button
-          type="default"
-          size="large"
-          onClick={() => goto(PageState.Settings)}
-        >
-          <SettingOutlined />
-        </Button>
+        <Flex gap={8}>
+          <Button
+            type="default"
+            size="large"
+            icon={<QuestionCircleOutlined />}
+            onClick={() => goto(PageState.HelpAndSupport)}
+          />
+          <Button
+            type="default"
+            size="large"
+            icon={<SettingOutlined />}
+            onClick={() => goto(PageState.Settings)}
+          />
+        </Flex>
       }
       style={{ borderTopColor: 'transparent' }}
     >

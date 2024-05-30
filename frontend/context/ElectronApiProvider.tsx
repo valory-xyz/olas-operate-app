@@ -25,6 +25,10 @@ type ElectronApiContextProps = {
   setAppHeight?: (height: unknown) => void;
   notifyAgentRunning?: () => void;
   showNotification?: (title: string, body?: string) => void;
+  saveLogs?: (data: {
+    store?: ElectronStore;
+    debugData?: Record<string, unknown>;
+  }) => Promise<{ success?: boolean; filePath?: string }>;
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -44,6 +48,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     clear: async () => {},
   },
   setAppHeight: () => {},
+  saveLogs: async () => ({}),
 });
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
@@ -80,6 +85,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         setAppHeight: getElectronApiFunction('setAppHeight'),
         showNotification: getElectronApiFunction('showNotification'),
+        saveLogs: getElectronApiFunction('saveLogs'),
       }}
     >
       {children}

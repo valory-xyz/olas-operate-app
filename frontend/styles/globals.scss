@@ -116,6 +116,14 @@ button, input, select, textarea, .ant-input-suffix {
   margin-bottom: 4px !important;
 }
 
+.mb-8 {
+  margin-bottom: 8px !important;
+}
+
+.mb-16 {
+  margin-bottom: 16px !important;
+}
+
 .mb-auto {
   margin-bottom: auto !important;
 }
@@ -134,15 +142,15 @@ button, input, select, textarea, .ant-input-suffix {
 } 
 
 .text-base {
-  font-size: 16px;
+  font-size: 16px !important;
 }
 
 .text-sm {
-  font-size: 14px;
+  font-size: 14px !important;
 }
 
 .font-weight-600 {
-  font-weight: 600;
+  font-weight: 600 !important;
 }
 
 .break-word {

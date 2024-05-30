@@ -20,4 +20,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setAppHeight: (height) => ipcRenderer.send('set-height', height),
   showNotification: (title, description) =>
     ipcRenderer.send('show-notification', title, description),
+  saveLogs: (data) => ipcRenderer.invoke('save-logs', data),
 });

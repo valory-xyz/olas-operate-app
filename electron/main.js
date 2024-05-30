@@ -7,6 +7,7 @@ const {
   Menu,
   Notification,
   ipcMain,
+  dialog,
 } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
@@ -14,6 +15,7 @@ const fs = require('fs');
 const os = require('os');
 const next = require('next');
 const http = require('http');
+const AdmZip = require('adm-zip');
 const { TRAY_ICONS, TRAY_ICONS_PATHS } = require('./icons');
 
 const {
@@ -23,6 +25,7 @@ const {
   OperateDirectory,
   startDocker,
   Env,
+  dirs,
 } = require('./install');
 const { killProcesses } = require('./processes');
 const { isPortAvailable, findAvailablePort } = require('./ports');
@@ -544,3 +547,94 @@ process.on('uncaughtException', (error) => {
     });
   });
 });
+
+// EXPORT LOGS
+ipcMain.handle('save-logs', async (_, data) => {
+  // version.txt
+  const versionFile = dirs.VersionFile;
+  // logs.txt
+  const logFile = getSanitizedLogs({ name: 'log.txt', filePath: dirs.LogFile });
+  // operate.log
+  const installationLog = getSanitizedLogs({
+    name: 'installation_log.txt',
+    filePath: dirs.OperateInstallationLog,
+  });
+
+  const tempDir = os.tmpdir();
+
+  // OS info
+  const osInfo = `
+    OS Type: ${os.type()}
+    OS Platform: ${os.platform()}
+    OS Arch: ${os.arch()}
+    OS Release: ${os.release()}
+    Total Memory: ${os.totalmem()}
+    Free Memory: ${os.freemem()}
+  `;
+  const osInfoFilePath = path.join(tempDir, 'os_info.txt');
+  fs.writeFileSync(osInfoFilePath, osInfo);
+
+  // Persistent store
+  let storeFilePath;
+  if (data.store) {
+    storeFilePath = path.join(tempDir, 'store.txt');
+    fs.writeFileSync(storeFilePath, JSON.stringify(data.store, null, 2));
+  }
+
+  // Other debug data: balances, addresses, etc.
+  let debugDataFilePath;
+  if (data.debugData) {
+    debugDataFilePath = getSanitizedLogs({
+      name: 'debug_data.txt',
+      data: JSON.stringify(data.debugData, null, 2),
+    });
+  }
+
+  // Create a zip archive
+  const zip = new AdmZip();
+  zip.addLocalFile(versionFile);
+  zip.addLocalFile(logFile);
+  zip.addLocalFile(installationLog);
+  zip.addLocalFile(osInfoFilePath);
+  zip.addLocalFile(storeFilePath);
+  zip.addLocalFile(debugDataFilePath);
+
+  // Show save dialog
+  const { filePath } = await dialog.showSaveDialog({
+    title: 'Save Logs',
+    defaultPath: path.join(os.homedir(), 'pearl_logs.zip'),
+    filters: [{ name: 'Zip Files', extensions: ['zip'] }],
+  });
+
+  let result;
+
+  if (filePath) {
+    // Write the zip file to the selected path
+    zip.writeZip(filePath);
+    result = { success: true, filePath };
+  } else {
+    result = { success: false };
+  }
+
+  // Remove temporary files
+  fs.unlinkSync(logFile);
+  fs.unlinkSync(installationLog);
+  fs.unlinkSync(osInfoFilePath);
+  if (storeFilePath) fs.unlinkSync(storeFilePath);
+  if (debugDataFilePath) fs.unlinkSync(debugDataFilePath);
+
+  return result;
+});
+
+function getSanitizedLogs({ name, filePath, data }) {
+  const logs = filePath ? fs.readFileSync(filePath, 'utf-8') : data;
+  const tempDir = os.tmpdir();
+
+  const usernameRegex = /\/Users\/([^/]+)/g;
+  const sanitizedData = logs.replace(usernameRegex, '/Users/*****');
+
+  const sanitizedLogsFilePath = path.join(tempDir, name);
+  fs.writeFileSync(sanitizedLogsFilePath, sanitizedData);
+
+  return sanitizedLogsFilePath;
+}

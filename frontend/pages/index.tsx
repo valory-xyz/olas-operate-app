@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
-import { Settings, Setup } from '@/components';
+import { HelpAndSupport, Settings, Setup } from '@/components';
 import { Main } from '@/components/Main/Main';
 import { DEFAULT_HEIGHT, PageState } from '@/enums';
 import { usePageState } from '@/hooks';
@@ -36,6 +36,8 @@ export default function Home() {
         return <Main />;
       case PageState.Settings:
         return <Settings />;
+      case PageState.HelpAndSupport:
+        return <HelpAndSupport />;
       default:
         return <Main />;
     }

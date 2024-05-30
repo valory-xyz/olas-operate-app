@@ -79,6 +79,7 @@ export const MasterSafeProvider = ({ children }: PropsWithChildren) => {
         backupSafeAddress,
         masterSafeOwners,
         masterSafeAddress,
+        masterEoaAddress,
         updateMasterSafeOwners,
       }}
     >

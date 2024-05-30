@@ -370,4 +370,9 @@ module.exports = {
   OperateDirectory,
   OperateCmd,
   Env,
+  dirs: {
+    VersionFile,
+    LogFile,
+    OperateInstallationLog,
+  },
 };
