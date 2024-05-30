@@ -29,7 +29,7 @@ const SettingsTitle = () => (
 
 export const HelpAndSupport = () => {
   const { goto } = usePageState();
-  const { saveLogs } = useElectronApi();
+  const { saveLogs, openPath } = useElectronApi();
 
   const { storeState } = useStore();
   const {
@@ -91,7 +91,23 @@ export const HelpAndSupport = () => {
       },
     }).then((result) => {
       if (result.success) {
-        message.success(`Logs saved to: ${result.filePath}`);
+        message.success({
+          content: (
+            <span>
+              Logs saved to:
+              <Button
+                type="link"
+                size="small"
+                onClick={() => {
+                  openPath?.(`${result.dirPath}`);
+                }}
+              >
+                {result.dirPath}
+              </Button>
+            </span>
+          ),
+          duration: 10,
+        });
       } else {
         message.error('Save logs failed or cancelled');
       }
@@ -101,6 +117,7 @@ export const HelpAndSupport = () => {
     masterEoaAddress,
     masterSafeAddress,
     masterSafeOwners,
+    openPath,
     saveLogs,
     serviceStatus,
     services,

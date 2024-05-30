@@ -8,6 +8,7 @@ const {
   Notification,
   ipcMain,
   dialog,
+  shell,
 } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
@@ -548,6 +549,11 @@ process.on('uncaughtException', (error) => {
   });
 });
 
+// OPEN PATH
+ipcMain.on('open-path', (_, filePath) => {
+  shell.openPath(filePath);
+});
+
 // EXPORT LOGS
 ipcMain.handle('save-logs', async (_, data) => {
   // version.txt
@@ -611,7 +617,7 @@ ipcMain.handle('save-logs', async (_, data) => {
   if (filePath) {
     // Write the zip file to the selected path
     zip.writeZip(filePath);
-    result = { success: true, filePath };
+    result = { success: true, dirPath: path.dirname(filePath) };
   } else {
     result = { success: false };
   }
