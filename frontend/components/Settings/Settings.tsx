@@ -13,6 +13,7 @@ import { useSettings } from '@/hooks/useSettings';
 import { Alert } from '../common/Alert';
 import { CardTitle } from '../common/CardTitle';
 import { CardSection } from '../styled/CardSection';
+import { DebugInfoCard } from './DebugInfoCard';
 import { SettingsAddBackupWallet } from './SettingsAddBackupWallet';
 
 const { Text, Paragraph } = Typography;
@@ -59,9 +60,11 @@ const SettingsMain = () => {
       title={<SettingsTitle />}
       bordered={false}
       extra={
-        <Button type="text" size="large" onClick={() => goto(PageState.Main)}>
-          <CloseOutlined />
-        </Button>
+        <Button
+          size="large"
+          icon={<CloseOutlined />}
+          onClick={() => goto(PageState.Main)}
+        />
       }
     >
       <CardSection borderbottom="true" justify="space-between" align="center">
@@ -71,7 +74,7 @@ const SettingsMain = () => {
         </Flex>
       </CardSection>
 
-      <CardSection vertical gap={8}>
+      <CardSection borderbottom="true" vertical gap={8}>
         <Text strong>Backup wallet</Text>
         {backupSafeAddress ? (
           <Link
@@ -85,6 +88,8 @@ const SettingsMain = () => {
           <NoBackupWallet />
         )}
       </CardSection>
+
+      <DebugInfoCard />
     </Card>
   );
 };
