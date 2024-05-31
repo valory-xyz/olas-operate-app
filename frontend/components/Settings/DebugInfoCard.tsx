@@ -1,7 +1,6 @@
 import { CopyOutlined } from '@ant-design/icons';
 import {
   Button,
-  Card,
   Col,
   Flex,
   message,
@@ -40,13 +39,9 @@ const DebugModal = styled(Modal)`
   }
 
   .ant-modal-header {
-    padding: 24px;
+    padding: 16px 24px;
     margin: 0;
     border-bottom: 1px solid ${COLOR.BORDER_GRAY};
-  }
-
-  .ant-modal-close {
-    top: 20px;
   }
 
   .ant-modal-body {
@@ -56,15 +51,11 @@ const DebugModal = styled(Modal)`
     overflow-y: auto;
     border-radius: 12px;
   }
+`;
 
-  .ant-card {
-    border-radius: 0;
-    border-top: 0;
-  }
-
-  .ant-card-body {
-    padding: 16px 24px;
-  }
+const Card = styled.div`
+  padding: 16px 24px;
+  border-bottom: 1px solid ${COLOR.BORDER_GRAY};
 `;
 
 const ICON_STYLE = { color: '#606F85' };
@@ -87,7 +78,7 @@ const DebugItem = ({
   item: {
     title: string;
     balance: Record<Token.ETH | Token.OLAS, string>;
-    address: string;
+    address: `0x${string}`;
     truncatedAddress: string;
     link?: { title: string; href: string };
   };
