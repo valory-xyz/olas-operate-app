@@ -1,44 +1,18 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import {
-  Button,
-  Col,
-  Flex,
-  Modal,
-  Row,
-  Skeleton,
-  Tag,
-  Tooltip,
-  Typography,
-} from 'antd';
+import { Button, Flex, Modal, Skeleton, Tag, Tooltip, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
-import styled from 'styled-components';
 
 import { balanceFormat } from '@/common-util';
-import { COLOR } from '@/constants';
 import { useBalance } from '@/hooks';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useReward } from '@/hooks/useReward';
 import { useStore } from '@/hooks/useStore';
 
 import { ConfettiAnimation } from '../common/ConfettiAnimation';
+import { CardSection } from '../styled/CardSection';
 
 const { Text, Title, Paragraph } = Typography;
-
-const RewardsRow = styled(Row)`
-  margin: 0 -24px;
-  > .ant-col {
-    padding: 24px;
-    &:not(:last-child) {
-      border-right: 1px solid ${COLOR.BORDER_GRAY};
-    }
-  }
-`;
-
-const TOOLTIP_OVERLAY_STYLE = {
-  maxWidth: 'calc(100% - 48px)',
-  left: '24px',
-};
 
 const Loader = () => (
   <Flex vertical gap={8}>
@@ -62,69 +36,36 @@ const DisplayRewards = () => {
     totalOlasStakedBalance >= minimumStakedAmountRequired;
 
   return (
-    <RewardsRow>
-      <Col span={12}>
-        <Flex vertical gap={4} align="flex-start">
-          <Text type="secondary">Staking rewards today</Text>
-          {isBalanceLoaded ? (
-            <>
-              <Text className="text-xl font-weight-600">
-                {balanceFormat(availableRewardsForEpochEth, 2)} OLAS&nbsp;
-                <Text type="secondary">
-                  <Tooltip
-                    arrow={false}
-                    overlayStyle={TOOLTIP_OVERLAY_STYLE}
-                    title={
-                      <>
-                        <Text className="text-sm font-weight-600">
-                          Rewards are specified for the ongoing epoch
-                        </Text>
-
-                        <Paragraph className="text-sm mt-8">
-                          An epoch is a period when the agent can earn the
-                          staking rewards. It lasts approximately one day, from
-                          12 am to 12 am UTC. Start your agent earlier in the
-                          day to get all the rewards. Sometimes, epochs can last
-                          longer, and you can earn more than the number
-                          specified here.
-                        </Paragraph>
-                      </>
-                    }
-                  >
-                    <InfoCircleOutlined />
-                  </Tooltip>
-                </Text>
-              </Text>
-              {isEligibleForRewards ? (
-                <Tag color="success">Earned</Tag>
-              ) : (
-                <Tag color="processing">Not yet earned</Tag>
-              )}
-            </>
+    <CardSection vertical gap={8} padding="16px 24px" align="start">
+      <Text type="secondary">
+        Staking rewards this work period&nbsp;
+        <Tooltip
+          arrow={false}
+          title={
+            <Paragraph className="text-sm m-0">
+              The agent&apos;s working period lasts at least 24 hours, but its
+              start and end point may not be at the same time every day.
+            </Paragraph>
+          }
+        >
+          <InfoCircleOutlined />
+        </Tooltip>
+      </Text>
+      {isBalanceLoaded ? (
+        <Flex align="center" gap={12}>
+          <Text className="text-xl font-weight-600">
+            {balanceFormat(availableRewardsForEpochEth, 2)} OLAS&nbsp;
+          </Text>
+          {isEligibleForRewards ? (
+            <Tag color="success">Earned</Tag>
           ) : (
-            <Loader />
+            <Tag color="processing">Not yet earned</Tag>
           )}
         </Flex>
-      </Col>
-
-      <Col span={12}>
-        <Flex vertical gap={4} align="flex-start">
-          <Text type="secondary">Staked amount</Text>
-          {isBalanceLoaded ? (
-            <>
-              <Text className="text-xl font-weight-600">
-                {balanceFormat(totalOlasStakedBalance, 2)} OLAS
-              </Text>
-              {minimumStakedAmountRequired && !isStaked ? (
-                <Tag color="processing">Not yet staked</Tag>
-              ) : null}
-            </>
-          ) : (
-            <Loader />
-          )}
-        </Flex>
-      </Col>
-    </RewardsRow>
+      ) : (
+        <Loader />
+      )}
+    </CardSection>
   );
 };
 

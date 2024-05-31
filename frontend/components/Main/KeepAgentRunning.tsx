@@ -9,6 +9,8 @@ import { CardSection } from '../styled/CardSection';
 
 const { Text } = Typography;
 
+const COVER_BLOCK_BORDERS_STYLE = { marginBottom: '-1px' };
+
 export const KeepAgentRunning = () => {
   const { storeState } = useStore();
   const { serviceStatus } = useServices();
@@ -17,7 +19,7 @@ export const KeepAgentRunning = () => {
   if (serviceStatus !== DeploymentStatus.DEPLOYED) return null;
 
   return (
-    <CardSection>
+    <CardSection style={COVER_BLOCK_BORDERS_STYLE}>
       <Alert
         type="info"
         fullWidth
