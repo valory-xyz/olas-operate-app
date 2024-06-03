@@ -169,6 +169,8 @@ export const MainHeader = () => {
       //   });
       // }
 
+      const isFirstTimeStaking = totalOlasStakedBalance === 0;
+
       // For now POST /api/services will take care of creating, starting and updating the service
       return ServicesService.createService({
         serviceTemplate,
@@ -176,7 +178,7 @@ export const MainHeader = () => {
       })
         .then(() => {
           setServiceStatus(DeploymentStatus.DEPLOYED);
-          if (totalOlasStakedBalance === 0) {
+          if (isFirstTimeStaking) {
             showNotification?.(
               `Your agent is running and you've staked ${minimumStakedAmountRequired} OLAS!`,
             );
