@@ -169,7 +169,7 @@ export const MainHeader = () => {
       //   });
       // }
 
-      const isFirstTimeStaking = totalOlasStakedBalance === 0;
+      const serviceExists = !!services?.[0];
 
       // For now POST /api/services will take care of creating, starting and updating the service
       return ServicesService.createService({
@@ -178,13 +178,13 @@ export const MainHeader = () => {
       })
         .then(() => {
           setServiceStatus(DeploymentStatus.DEPLOYED);
-          if (isFirstTimeStaking) {
+          if (serviceExists) {
+            showNotification?.('Your agent is now running!');
+          } else {
             showNotification?.(
               `Your agent is running and you've staked ${minimumStakedAmountRequired} OLAS!`,
             );
             setIsModalOpen(true);
-          } else {
-            showNotification?.('Your agent is now running!');
           }
         })
         .finally(() => {
@@ -199,10 +199,10 @@ export const MainHeader = () => {
     masterSafeAddress,
     minimumStakedAmountRequired,
     serviceTemplate,
+    services,
     setIsBalancePollingPaused,
     setServiceStatus,
     showNotification,
-    totalOlasStakedBalance,
     wallets,
   ]);
 
@@ -315,17 +315,19 @@ export const MainHeader = () => {
       );
     })();
 
+    const serviceExists = !!services?.[0];
+
     if (!isDeployable) {
       return (
         <Button type="default" size="large" disabled>
-          Start agent {totalOlasStakedBalance === 0 && '& stake'}
+          Start agent {!serviceExists && '& stake'}
         </Button>
       );
     }
 
     return (
       <Button type="primary" size="large" onClick={handleStart}>
-        Start agent {totalOlasStakedBalance === 0 && '& stake'}
+        Start agent {!serviceExists && '& stake'}
       </Button>
     );
   }, [
@@ -338,7 +340,6 @@ export const MainHeader = () => {
     services,
     storeState?.isInitialFunded,
     totalEthBalance,
-    totalOlasStakedBalance,
   ]);
 
   return (
