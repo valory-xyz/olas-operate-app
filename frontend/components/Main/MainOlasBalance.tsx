@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { balanceFormat } from '@/common-util/numberFormatters';
+import { COLOR } from '@/constants';
 import { UNICODE_SYMBOLS } from '@/constants/unicode';
 import { useBalance } from '@/hooks';
 import { useReward } from '@/hooks/useReward';
@@ -24,10 +25,10 @@ const BalanceBreakdownLine = styled.div`
   align-items: center;
   justify-content: space-between;
   font-size: 14px;
-  color: #1f2229;
+  color: ${COLOR.TEXT};
 
   > span {
-    background: #fff;
+    background: ${COLOR.WHITE};
     z-index: 1;
     &:first-child {
       padding-right: 6px;
@@ -42,7 +43,7 @@ const BalanceBreakdownLine = styled.div`
     position: absolute;
     bottom: 6px;
     width: 100%;
-    border-bottom: 2px dotted #c2cbd7;
+    border-bottom: 2px dotted ${COLOR.BORDER_GRAY};
   }
 
   &:not(:last-child) {

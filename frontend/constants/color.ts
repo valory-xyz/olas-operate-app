@@ -8,4 +8,5 @@ export const COLOR = {
   WHITE: '#ffffff',
   BORDER_GRAY: '#DFE5EE',
   BROWN: '#873800',
+  TEXT: '#1f2229',
 };

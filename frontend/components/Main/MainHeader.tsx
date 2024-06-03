@@ -62,8 +62,7 @@ const FirstRunModal = ({
         />
       </Flex>
       <Title level={5} className="mt-12 text-center">
-        Your agent is running and you&apos;ve staked{' '}
-        {minimumStakedAmountRequired} OLAS!
+        {`Your agent is running and you&apos;ve staked ${minimumStakedAmountRequired} OLAS!`}
       </Title>
       <Paragraph>Your agent is working towards earning rewards.</Paragraph>
       <Paragraph>
