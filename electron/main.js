@@ -236,7 +236,7 @@ const createMainWindow = () => {
     mainWindow.setSize(width, height);
   });
 
-  ipcMain.on('show-notification', (title, description) => {
+  ipcMain.on('show-notification', (_event, title, description) => {
     showNotification(title, description || undefined);
   });
 

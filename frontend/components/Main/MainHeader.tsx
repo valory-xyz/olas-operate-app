@@ -1,5 +1,5 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Badge, Button, Flex, Popover, Typography } from 'antd';
+import { Badge, Button, Flex, Modal, Popover, Typography } from 'antd';
 import { formatUnits } from 'ethers/lib/utils';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -8,22 +8,72 @@ import { Chain, DeploymentStatus } from '@/client';
 import { COLOR, LOW_BALANCE, SERVICE_TEMPLATES } from '@/constants';
 import { useBalance, useServiceTemplates } from '@/hooks';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useReward } from '@/hooks/useReward';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 import { useWallet } from '@/hooks/useWallet';
 import { ServicesService } from '@/service';
 import { WalletService } from '@/service/Wallet';
 
-const { Text } = Typography;
+const { Text, Title, Paragraph } = Typography;
 
 const LOADING_MESSAGE =
   "It may take a while to start your agent, so feel free to close the app. We'll notify you once your agent is running.";
-
 enum ServiceButtonLoadingState {
   Starting,
   Pausing,
   NotLoading,
 }
+
+const FirstRunModal = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => {
+  const { minimumStakedAmountRequired } = useReward();
+
+  if (!open) return null;
+  return (
+    <Modal
+      open={open}
+      width={412}
+      onCancel={onClose}
+      footer={[
+        <Button
+          key="ok"
+          type="primary"
+          block
+          size="large"
+          className="mt-8"
+          onClick={onClose}
+        >
+          Got it
+        </Button>,
+      ]}
+    >
+      <Flex align="center" justify="center">
+        <Image
+          src="/splash-robot-head.png"
+          width={100}
+          height={100}
+          alt="OLAS logo"
+        />
+      </Flex>
+      <Title level={5} className="mt-12 text-center">
+        Your agent is running and you&apos;ve staked{' '}
+        {minimumStakedAmountRequired} OLAS!
+      </Title>
+      <Paragraph>Your agent is working towards earning rewards.</Paragraph>
+      <Paragraph>
+        Pearl is designed to make it easy for you to earn staking rewards every
+        day. Simply leave the app and agent running in the background for ~1hr a
+        day.
+      </Paragraph>
+    </Modal>
+  );
+};
 
 export const MainHeader = () => {
   const { storeState } = useStore();
@@ -38,6 +88,11 @@ export const MainHeader = () => {
     isBalanceLoaded,
     setIsPaused: setIsBalancePollingPaused,
   } = useBalance();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const handleModalClose = useCallback(() => setIsModalOpen(false), []);
+
+  const { minimumStakedAmountRequired } = useReward();
 
   const safeOlasBalanceWithStaked = useMemo(() => {
     if (safeBalance?.OLAS === undefined) return;
@@ -122,7 +177,14 @@ export const MainHeader = () => {
       })
         .then(() => {
           setServiceStatus(DeploymentStatus.DEPLOYED);
-          showNotification?.('Your agent is now running!');
+          if (totalOlasStakedBalance === 0) {
+            showNotification?.(
+              `Your agent is running and you've staked ${minimumStakedAmountRequired} OLAS!`,
+            );
+            setIsModalOpen(true);
+          } else {
+            showNotification?.('Your agent is now running!');
+          }
         })
         .finally(() => {
           setIsBalancePollingPaused(false);
@@ -134,11 +196,13 @@ export const MainHeader = () => {
     }
   }, [
     masterSafeAddress,
+    minimumStakedAmountRequired,
     serviceTemplate,
     setIsBalancePollingPaused,
     setServiceStatus,
-    wallets,
     showNotification,
+    totalOlasStakedBalance,
+    wallets,
   ]);
 
   const handlePause = useCallback(() => {
@@ -253,14 +317,14 @@ export const MainHeader = () => {
     if (!isDeployable) {
       return (
         <Button type="default" size="large" disabled>
-          Start agent
+          Start agent {totalOlasStakedBalance === 0 && '& stake'}
         </Button>
       );
     }
 
     return (
       <Button type="primary" size="large" onClick={handleStart}>
-        Start agent
+        Start agent {totalOlasStakedBalance === 0 && '& stake'}
       </Button>
     );
   }, [
@@ -273,12 +337,14 @@ export const MainHeader = () => {
     services,
     storeState?.isInitialFunded,
     totalEthBalance,
+    totalOlasStakedBalance,
   ]);
 
   return (
     <Flex justify="start" align="center" gap={10}>
       {agentHead}
       {serviceToggleButton}
+      <FirstRunModal open={isModalOpen} onClose={handleModalClose} />
     </Flex>
   );
 };

@@ -22,18 +22,8 @@ const Loader = () => (
 );
 
 const DisplayRewards = () => {
-  const {
-    availableRewardsForEpochEth,
-    isEligibleForRewards,
-    minimumStakedAmountRequired,
-  } = useReward();
-  const { isBalanceLoaded, totalOlasStakedBalance } = useBalance();
-
-  // check if the staked amount is greater than the minimum required
-  const isStaked =
-    minimumStakedAmountRequired &&
-    totalOlasStakedBalance &&
-    totalOlasStakedBalance >= minimumStakedAmountRequired;
+  const { availableRewardsForEpochEth, isEligibleForRewards } = useReward();
+  const { isBalanceLoaded } = useBalance();
 
   return (
     <CardSection vertical gap={8} padding="16px 24px" align="start">
