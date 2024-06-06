@@ -18,7 +18,7 @@ include = [
 operate = "operate.cli:main"
 
 [tool.poetry.dependencies]
-python = "<4.0,>=3.8"
+python = "<3.13,>=3.8"
 open-autonomy = "==0.14.11.post1"
 open-aea-ledger-ethereum = "==1.51.0"
 open-aea-cli-ipfs = "==1.51.0"
@@ -36,7 +36,6 @@ eth-utils = "==2.3.1"
 eth-abi = "==5.1.0"
 frozenlist = "==1.4.1"
 hexbytes = "==0.3.1"
-ipfshttpclient = "==0.8.0a2"
 jsonschema = "==4.3.3"
 multidict = "==6.0.5"
 requests-toolbelt = "1.0.0"
@@ -44,6 +43,12 @@ starlette = "==0.36.3"
 uvicorn = "==0.27.0"
 web3 = "==6.1.0"
 psutil = "^5.9.8"
+
+[tool.poetry.group.dev.dependencies]
+pyinstaller = "^6.7.0"
+
+[tool.poetry-pyinstaller-plugin.scripts]
+middleware = { source = "operate/cli.py", type = "onedir", bundle = false }
 
 [build-system]
 requires = ["poetry-core"]
