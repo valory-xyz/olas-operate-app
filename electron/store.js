@@ -1,12 +1,18 @@
-// set schema to validate store data
 const defaultSchema = {
   environmentName: { type: 'string', default: '' },
   isInitialFunded: { type: 'boolean', default: false },
   firstStakingRewardAchieved: { type: 'boolean', default: false },
   firstRewardNotificationShown: { type: 'boolean', default: false },
+  canCheckForUpdates: { type: 'boolean', default: true },
 };
 
+/**
+ *
+ * @param {import('electron').IpcMain} ipcChannel
+ * @param {import('electron').BrowserWindow} mainWindow
+ */
 const setupStoreIpc = async (ipcChannel, mainWindow, storeInitialValues) => {
+  /** @type {import('electron-store').default} */
   const Store = (await import('electron-store')).default;
 
   // set default values for store

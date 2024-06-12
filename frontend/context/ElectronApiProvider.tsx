@@ -14,6 +14,7 @@ type ElectronApiContextProps = {
       func: (event: unknown, data: unknown) => void,
     ) => void; // listen to messages from main process
     invoke?: (channel: string, data: unknown) => Promise<unknown>; // send message to main process and get Promise response
+    removeAllListeners?: (channel: string) => void;
   };
   store?: {
     store?: () => Promise<ElectronStore>;
@@ -30,6 +31,10 @@ type ElectronApiContextProps = {
     debugData?: Record<string, unknown>;
   }) => Promise<{ success: true; dirPath: string } | { success?: false }>;
   openPath?: (filePath: string) => void;
+
+  // download new updates
+  startDownload?: () => Promise<void>;
+  quitAndInstall?: () => void;
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -51,6 +56,10 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   setAppHeight: () => {},
   saveLogs: async () => ({ success: false }),
   openPath: () => {},
+
+  // download updates
+  startDownload: async () => {},
+  quitAndInstall: async () => {},
 });
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
@@ -77,6 +86,9 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           send: getElectronApiFunction('ipcRenderer.send'),
           on: getElectronApiFunction('ipcRenderer.on'),
           invoke: getElectronApiFunction('ipcRenderer.invoke'),
+          removeAllListeners: getElectronApiFunction(
+            'ipcRenderer.removeAllListeners',
+          ),
         },
         store: {
           store: getElectronApiFunction('store.store'),
@@ -89,6 +101,10 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         showNotification: getElectronApiFunction('showNotification'),
         saveLogs: getElectronApiFunction('saveLogs'),
         openPath: getElectronApiFunction('openPath'),
+
+        // download updates
+        startDownload: getElectronApiFunction('startDownload'),
+        quitAndInstall: getElectronApiFunction('quitAndInstall'),
       }}
     >
       {children}

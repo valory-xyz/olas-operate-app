@@ -11,6 +11,9 @@ export default function Home() {
   const electronApi = useElectronApi();
 
   useEffect(() => {
+    // set the flag to check for updates on app start
+    electronApi?.store?.set?.('canCheckForUpdates', true);
+
     function updateAppHeight() {
       const bodyElement = document.querySelector('body');
       if (bodyElement) {

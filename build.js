@@ -1,6 +1,6 @@
 const dotenv = require('dotenv');
 const build = require('electron-builder').build;
-const { publishOptions } = require('./electron/constants/publishOptions');
+const { githubPublishOptions } = require('./electron/constants/config');
 
 dotenv.config();
 
@@ -27,7 +27,7 @@ const main = async () => {
             arch: ['x64', 'arm64'],
           },
         ],
-        publish: publishOptions,
+        publish: githubPublishOptions,
         category: 'public.app-category.utilities',
         icon: 'electron/assets/icons/splash-robot-head-dock.png',
         hardenedRuntime: true,

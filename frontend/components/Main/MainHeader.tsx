@@ -5,7 +5,12 @@ import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Chain, DeploymentStatus } from '@/client';
-import { COLOR, LOW_BALANCE, SERVICE_TEMPLATES } from '@/constants';
+import {
+  COLOR,
+  LOW_BALANCE,
+  MODAL_WIDTH,
+  SERVICE_TEMPLATES,
+} from '@/constants';
 import { useBalance, useServiceTemplates } from '@/hooks';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useReward } from '@/hooks/useReward';
@@ -38,7 +43,7 @@ const FirstRunModal = ({
   return (
     <Modal
       open={open}
-      width={412}
+      width={MODAL_WIDTH}
       onCancel={onClose}
       footer={[
         <Button
@@ -61,9 +66,11 @@ const FirstRunModal = ({
           alt="OLAS logo"
         />
       </Flex>
+
       <Title level={5} className="mt-12 text-center">
         {`Your agent is running and you&apos;ve staked ${minimumStakedAmountRequired} OLAS!`}
       </Title>
+
       <Paragraph>Your agent is working towards earning rewards.</Paragraph>
       <Paragraph>
         Pearl is designed to make it easy for you to earn staking rewards every

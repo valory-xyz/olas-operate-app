@@ -1,18 +1,10 @@
-const { publishOptions } = require('./constants/publishOptions');
-const electronUpdater = require('electron-updater');
+const { MacUpdater } = require('electron-updater');
 const electronLogger = require('electron-log');
+const { githubOptions } = require('./constants/config');
 
-const macUpdater = new electronUpdater.MacUpdater({
-  ...publishOptions,
-  channels: ['latest', 'beta', 'alpha'], // automatically update to all channels
-});
+const macUpdater = new MacUpdater(githubOptions);
 
-macUpdater.logger = electronLogger;
-
-macUpdater.setFeedURL({ ...publishOptions });
-
-macUpdater.autoDownload = true;
-macUpdater.autoInstallOnAppQuit = true;
+electronLogger.transports.file.level = 'info';
 macUpdater.logger = electronLogger;
 
 module.exports = { macUpdater };

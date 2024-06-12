@@ -7,8 +7,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ipcRenderer: {
     send: (channel, data) => ipcRenderer.send(channel, data),
     on: (channel, func) =>
-      ipcRenderer.on(channel, (event, ...args) => func(...args)),
+      ipcRenderer.on(channel, (_event, ...args) => func(...args)),
     invoke: (channel, data) => ipcRenderer.invoke(channel, data),
+    removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
   },
   store: {
     store: () => ipcRenderer.invoke('store'),
@@ -22,4 +23,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.send('show-notification', title, description),
   saveLogs: (data) => ipcRenderer.invoke('save-logs', data),
   openPath: (filePath) => ipcRenderer.send('open-path', filePath),
+
+  // update downloads
+  startDownload: () => ipcRenderer.send('start-download'),
+  quitAndInstall: () => ipcRenderer.send('install-update'),
 });

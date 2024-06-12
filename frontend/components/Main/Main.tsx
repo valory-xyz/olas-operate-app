@@ -12,6 +12,9 @@ import { MainHeader } from './MainHeader';
 import { MainNeedsFunds } from './MainNeedsFunds';
 import { MainOlasBalance } from './MainOlasBalance';
 import { MainRewards } from './MainRewards';
+import { NotifyRewards } from './NotifyRewards';
+import { NotifyUpdateInstallationModal } from './NotifyUpdateInstallationModal';
+import { UpdateProgressIndicator } from './UpdateProgressIndicator';
 
 export const Main = () => {
   const { goto } = usePageState();
@@ -47,12 +50,17 @@ export const Main = () => {
       style={{ borderTopColor: 'transparent' }}
     >
       <Flex vertical>
+        <UpdateProgressIndicator />
         <MainOlasBalance />
         <MainRewards />
         <KeepAgentRunning />
         <MainGasBalance />
         <MainNeedsFunds />
         <MainAddFunds />
+
+        {/* notifications */}
+        <NotifyRewards />
+        <NotifyUpdateInstallationModal />
       </Flex>
     </Card>
   );

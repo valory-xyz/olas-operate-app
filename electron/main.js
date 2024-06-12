@@ -189,7 +189,7 @@ const HEIGHT = 700;
 /**
  * Creates the main window
  */
-const createMainWindow = () => {
+const createMainWindow = async () => {
   const width = isDev ? 840 : APP_WIDTH;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
@@ -262,7 +262,7 @@ const createMainWindow = () => {
   const storeInitialValues = {
     environmentName: process.env.IS_STAGING ? 'staging' : '',
   };
-  setupStoreIpc(ipcMain, mainWindow, storeInitialValues);
+  await setupStoreIpc(ipcMain, mainWindow, storeInitialValues);
 
   if (isDev) {
     mainWindow.webContents.openDevTools();
@@ -408,29 +408,6 @@ async function launchNextAppDev() {
 }
 
 ipcMain.on('check', async function (event, _argument) {
-  // Update
-  try {
-    macUpdater.checkForUpdates().then((res) => {
-      if (!res) return;
-      if (!res.downloadPromise) return;
-
-      new Notification({
-        title: 'Update Available',
-        body: 'Downloading update...',
-      }).show();
-
-      res.downloadPromise.then(() => {
-        new Notification({
-          title: 'Update Downloaded',
-          body: 'Restarting application...',
-        }).show();
-        macUpdater.quitAndInstall();
-      });
-    });
-  } catch (e) {
-    console.error(e);
-  }
-
   // Setup
   try {
     event.sender.send('response', 'Checking installation');
@@ -494,9 +471,9 @@ ipcMain.on('check', async function (event, _argument) {
     }
 
     event.sender.send('response', 'Launching App');
-    createMainWindow();
-    createTray();
+    await createMainWindow();
     splashWindow.destroy();
+    createTray();
   } catch (e) {
     console.log(e);
     new Notification({
@@ -528,6 +505,22 @@ app.on('before-quit', async () => {
 
 // UPDATER EVENTS
 macUpdater.on('update-downloaded', () => {
+  mainWindow.webContents.send('update-downloaded');
+});
+
+macUpdater.on('update-available', (info) => {
+  mainWindow.webContents.send('update-available', info);
+});
+
+macUpdater.on('download-progress', (progress) => {
+  mainWindow.webContents.send('download-progress', progress);
+});
+
+ipcMain.on('start-download', () => {
+  macUpdater.downloadUpdate();
+});
+
+ipcMain.on('install-update', () => {
   macUpdater.quitAndInstall();
 });
 
