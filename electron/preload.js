@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openPath: (filePath) => ipcRenderer.send('open-path', filePath),
 
   // update downloads
+  checkUpdates: () => ipcRenderer.invoke('check-for-updates'),
   startDownload: () => ipcRenderer.send('start-download'),
   quitAndInstall: () => ipcRenderer.send('install-update'),
 });

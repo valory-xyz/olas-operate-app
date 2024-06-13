@@ -1,6 +1,6 @@
 const githubOptions = {
   releaseType: 'draft',
-  publishAutoUpdate: true,
+  publishAutoUpdate: false,
   token: process.env.GH_TOKEN,
   provider: 'github',
   owner: 'valory-xyz',

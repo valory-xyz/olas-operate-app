@@ -1,4 +1,5 @@
 const defaultSchema = {
+  version: { type: 'string', default: '' },
   environmentName: { type: 'string', default: '' },
   isInitialFunded: { type: 'boolean', default: false },
   firstStakingRewardAchieved: { type: 'boolean', default: false },

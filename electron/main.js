@@ -260,6 +260,7 @@ const createMainWindow = async () => {
   });
 
   const storeInitialValues = {
+    version: app.getVersion(),
     environmentName: process.env.IS_STAGING ? 'staging' : '',
   };
   await setupStoreIpc(ipcMain, mainWindow, storeInitialValues);
@@ -522,6 +523,52 @@ ipcMain.on('start-download', () => {
 
 ipcMain.on('install-update', () => {
   macUpdater.quitAndInstall();
+});
+
+ipcMain.on('update-available', async () => {
+  try {
+    const result = await checkForUpdates();
+    return result;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+});
+
+function checkForUpdates() {
+  return new Promise((resolve, reject) => {
+    console.log('Checking for updates...');
+    console.log(macUpdater);
+
+    macUpdater.checkForUpdates();
+
+    macUpdater.once('update-available', (info) => {
+      console.log('Update available.');
+      console.log(`Version: ${info.version}`);
+      resolve({ available: true, version: info.version, message: info.releaseNotes });
+    });
+
+    macUpdater.once('update-not-available', () => {
+      console.log('No updates available.');
+      resolve({ available: false, message: 'No updates available.' });
+    });
+
+    macUpdater.once('error', (error) => {
+      console.error('Error in auto-updater:', error);
+      reject(error);
+    });
+  });
+}
+
+ipcMain.handle('check-for-updates', async () => {
+  console.log('Checking for updates...');
+  // console.log(typeof macUpdater);
+  // return { checkForUpdates: macUpdater.checkForUpdates, available: false, message: 'No updates available.' }
+  try {
+    const result = await checkForUpdates();
+    return result;
+  } catch (error) {
+    throw new Error(error.message);
+  }
 });
 
 // PROCESS SPECIFIC EVENTS (HANDLES NON-GRACEFUL TERMINATION)

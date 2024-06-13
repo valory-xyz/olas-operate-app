@@ -7,6 +7,7 @@ import { truncateAddress } from '@/common-util';
 import { UNICODE_SYMBOLS } from '@/constants/unicode';
 import { PageState, SettingsScreen } from '@/enums';
 import { usePageState } from '@/hooks';
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { useMasterSafe } from '@/hooks/useMasterSafe';
 import { useSettings } from '@/hooks/useSettings';
 
@@ -96,6 +97,14 @@ const SettingsMain = () => {
 
 const NoBackupWallet = () => {
   const { goto: gotoSettings } = useSettings();
+  const { checkUpdates } = useElectronApi();
+
+  const checkForUpdates = async () => {
+    // const result = await ipcRenderer?.invoke?.('check-for-updates', {});
+    const result = await checkUpdates?.();
+    window.console.log(result);
+  };
+
   return (
     <>
       <Text type="secondary">No backup wallet added.</Text>
@@ -123,6 +132,10 @@ const NoBackupWallet = () => {
         onClick={() => gotoSettings(SettingsScreen.AddBackupWallet)}
       >
         Add backup wallet
+      </Button>
+
+      <Button type="primary" size="large" onClick={checkForUpdates}>
+        Check for updates
       </Button>
     </>
   );
