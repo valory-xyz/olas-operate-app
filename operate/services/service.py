@@ -390,6 +390,17 @@ def _setup_agent(working_dir: Path) -> None:
     venv = working_dir / "venv"
     pbin = str(venv / "bin" / "python")
 
+    # Install wheel to install agent dependencies
+    _run_cmd(
+        args=[
+            pbin,
+            "-m",
+            "pip",
+            "install",
+            "wheel",
+        ],
+    )
+
     # Install agent dependencies
     _run_cmd(
         args=[
