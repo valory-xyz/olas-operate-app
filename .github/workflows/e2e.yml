@@ -33,6 +33,7 @@ jobs:
         yarn
         # Uninstall brew
         sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+        if [ -d "/opt/homebrew" ]; then sudo rm -rf /opt/homebrew; fi
 
     - name: Install node dependencies
       run: yarn install
