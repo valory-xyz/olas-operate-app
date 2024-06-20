@@ -23,16 +23,18 @@ const TempDir = `${OperateDirectory}/temp`;
 const VersionFile = `${OperateDirectory}/version.txt`;
 const LogFile = `${OperateDirectory}/logs.txt`;
 const OperateInstallationLog = `${os.homedir()}/operate.log`;
-const OperateCmd = `${os.homedir()}/.operate/venv/bin/operate`;
+
 const Env = {
   ...process.env,
   PATH: `${process.env.PATH}:/opt/homebrew/bin:/usr/local/bin`,
   HOMEBREW_NO_AUTO_UPDATE: '1',
 };
+
 const SudoOptions = {
   name: 'Pearl',
   env: Env,
 };
+
 const TendermintUrls = {
   darwin: {
     x64: 'https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_darwin_amd64.tar.gz',
@@ -477,7 +479,6 @@ module.exports = {
   startDocker,
   setupUbuntu,
   OperateDirectory,
-  OperateCmd,
   Env,
   dirs: {
     VersionFile,
