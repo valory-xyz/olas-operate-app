@@ -679,7 +679,7 @@ class OnChainManager(_ChainUtil):
             key_file = Path(temp_dir, "key.txt")
             key_file.write_text(owner_key, encoding="utf-8")
             owner_crypto = EthereumCrypto(private_key_path=str(key_file))
-        owner_cryptos: list[EthereumCrypto] = [owner_crypto]
+        owner_cryptos: t.List[EthereumCrypto] = [owner_crypto]
         owners = [
             manager.ledger_api.api.to_checksum_address(owner_crypto.address)
             for owner_crypto in owner_cryptos

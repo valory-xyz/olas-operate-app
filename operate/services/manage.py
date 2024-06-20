@@ -26,6 +26,7 @@ import typing as t
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import aiohttp  # type: ignore
 from aea.helpers.base import IPFSHash
 from aea.helpers.logging import setup_logger
 from autonomy.chain.base import registry_contracts
@@ -56,6 +57,18 @@ KEY = "master-key.txt"
 KEYS_JSON = "keys.json"
 DOCKER_COMPOSE_YAML = "docker-compose.yaml"
 SERVICE_YAML = "service.yaml"
+HTTP_OK = 200
+
+
+async def check_service_health() -> bool:
+    """Check the service health"""
+    async with aiohttp.ClientSession() as session:
+        async with session.get("http://localhost:8716/healthcheck") as resp:
+            status = resp.status
+            response_json = await resp.json()
+            return status == HTTP_OK and response_json.get(
+                "is_transitioning_fast", False
+            )
 
 
 class ServiceManager:
@@ -900,6 +913,32 @@ class ServiceManager:
                         f"Error occured while funding the service\n{traceback.format_exc()}"
                     )
                 await asyncio.sleep(60)
+
+    async def healthcheck_job(
+        self,
+        hash: str,
+    ) -> None:
+        """Start a background funding job."""
+        failed_health_checks = 0
+
+        while True:
+            try:
+                # Check the service health
+                healthy = await check_service_health()
+                # Restart the service if the health failed 5 times in a row
+                if not healthy:
+                    failed_health_checks += 1
+                else:
+                    failed_health_checks = 0
+                if failed_health_checks >= 4:
+                    self.stop_service_locally(hash=hash)
+                    self.deploy_service_locally(hash=hash)
+
+            except Exception:  # pylint: disable=broad-except
+                logging.info(
+                    f"Error occured while checking the service health\n{traceback.format_exc()}"
+                )
+            await asyncio.sleep(30)
 
     def deploy_service_locally(self, hash: str, force: bool = True) -> Deployment:
         """
