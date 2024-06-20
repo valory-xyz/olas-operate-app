@@ -27,17 +27,12 @@ jobs:
       with:
           node-version: "20.11"
 
-    # - name: Install Yarn
-    #   run: npm install -g yarn
-
-    # - name: Verify Yarn
-    #   run: yarn --version
-
-    # - name: Setup
-    #   run:  |
-    #     yarn
-    #     # Uninstall brew
-    #     sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+    - name: Remove brew
+      if: runner.os == 'macOS'
+      run:  |
+        yarn
+        # Uninstall brew
+        sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
 
     - name: Install node dependencies
       run: yarn install
