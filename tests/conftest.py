@@ -1,11 +1,11 @@
-import pytest
-import httpx
 from operate import cli
 from uvicorn import Config, Server
 import asyncio
 import pytest_asyncio
 from pathlib import Path
 from dataclasses import dataclass
+
+
 
 @dataclass
 class ServerConfig:
@@ -14,6 +14,8 @@ class ServerConfig:
     TEST_HOST = "localhost"
     TEST_PORT = 8814
 
+
+SERVER_ENDPOINT = f"http://{ServerConfig.TEST_HOST}:{ServerConfig.TEST_PORT}"
 
 @pytest_asyncio.fixture
 async def server():
@@ -39,12 +41,3 @@ async def server():
 
     # Cancelar y esperar la tarea del servidor, manejando la cancelación correctamente
     await server_task
-
-
-@pytest.mark.asyncio
-async def test_items_endpoint(server):
-    url = f"http://{ServerConfig.TEST_HOST}:{ServerConfig.TEST_PORT}/api/services"
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url)
-        assert response.status_code == 200
-        assert response.json() == []
