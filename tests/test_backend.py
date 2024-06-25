@@ -1,8 +1,12 @@
+"""Backend tests"""
+
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Dict, List, Optional, Type, Union
 
-import httpx
-import pytest
+import httpx  # type: ignore
+import pytest  # type: ignore
+from uvicorn import Server
 
 from tests.conftest import SERVER_ENDPOINT, ServerConfig
 
@@ -18,7 +22,9 @@ class HTTP:
     PUT = "put"
 
 
-async def request_test(url, method, http_code, json):
+async def request_test(
+    url: str, method: str, http_code: int, json: Optional[Union[List, Dict]]
+) -> None:
     """Request test"""
     async with httpx.AsyncClient() as client:
         response = await getattr(client, method)(url)
@@ -44,7 +50,13 @@ async def request_test(url, method, http_code, json):
     ],
 )
 @pytest.mark.asyncio
-async def test_api(server, url, method, http_code, json):
+async def test_api(
+    server: Type[Server],
+    url: str,
+    method: str,
+    http_code: int,
+    json: Optional[Union[List, Dict]],
+) -> None:
     """Test api"""
     url = f"{SERVER_ENDPOINT}/api"
     await request_test(url, method, http_code, json)
@@ -52,7 +64,7 @@ async def test_api(server, url, method, http_code, json):
 
 # /shutdown_endpoint
 @pytest.mark.asyncio
-async def test_shutdown(server):
+async def test_shutdown(server: Type[Server]) -> None:
     """Test shutdown"""
     with open(
         Path(ServerConfig.TEST_HOME, "operate.kill"), "r", encoding="utf-8"
@@ -72,7 +84,13 @@ async def test_shutdown(server):
     ],
 )
 @pytest.mark.asyncio
-async def test_api_services(server, url, method, http_code, json):
+async def test_api_services(
+    server: Type[Server],
+    url: str,
+    method: str,
+    http_code: int,
+    json: Optional[Union[List, Dict]],
+) -> None:
     """Test services"""
     await request_test(url, method, http_code, json)
 

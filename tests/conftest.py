@@ -1,8 +1,11 @@
+"""Fixtures"""
+
 import asyncio
 from dataclasses import dataclass
 from pathlib import Path
+from typing import AsyncGenerator, Type
 
-import pytest_asyncio
+import pytest_asyncio  # type: ignore
 from uvicorn import Config, Server
 
 from operate import cli
@@ -21,7 +24,7 @@ SERVER_ENDPOINT = f"http://{ServerConfig.TEST_HOST}:{ServerConfig.TEST_PORT}"
 
 
 @pytest_asyncio.fixture
-async def server():
+async def server() -> AsyncGenerator[None, Type[Server]]:
     """Server start"""
     app = cli.create_app(home=ServerConfig.TEST_HOME)
     config = Config(
