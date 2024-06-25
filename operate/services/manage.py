@@ -85,8 +85,8 @@ class ServiceManager:
         Initialze service manager
 
         :param path: Path to service storage.
-        :param keys: Keys manager.
-        :param master_key_path: Path to master key.
+        :param keys_manager: Keys manager.
+        :param wallet_manager: Wallet manager instance.
         :param logger: logging.Logger object.
         """
         self.path = path
@@ -141,6 +141,9 @@ class ServiceManager:
 
         :param hash: Service hash
         :param rpc: RPC string
+        :param on_chain_user_params: On-chain user parameters
+        :param keys: Keys
+        :return: Service instance
         """
         path = self.path / hash
         if path.exists():
@@ -946,6 +949,7 @@ class ServiceManager:
 
         :param hash: Service hash
         :param force: Remove previous deployment and start a new one.
+        :return: Deployment instance
         """
         deployment = self.create_or_load(hash=hash).deployment
         deployment.build(force=force)
@@ -958,6 +962,7 @@ class ServiceManager:
 
         :param hash: Service hash
         :param delete: Delete local deployment.
+        :return: Deployment instance
         """
         deployment = self.create_or_load(hash=hash).deployment
         deployment.stop()

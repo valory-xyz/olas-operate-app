@@ -375,6 +375,7 @@ class MasterWalletManager:
         Create a master wallet
 
         :param ledger_type: Ledger type for the wallet.
+        :return: Tuple of master wallet and mnemonic
         """
         if ledger_type == LedgerType.ETHEREUM:
             return EthereumMasterWallet.new(password=self.password, path=self.path)
@@ -385,6 +386,7 @@ class MasterWalletManager:
         Check if a wallet exists or not
 
         :param ledger_type: Ledger type for the wallet.
+        :return: True if wallet exists, False otherwise.
         """
         return (self.path / ledger_type.config_file).exists() and (
             self.path / ledger_type.key_file
@@ -395,6 +397,7 @@ class MasterWalletManager:
         Load master wallet
 
         :param ledger_type: Ledger type for the wallet.
+        :return: Master wallet object
         """
         if ledger_type == LedgerType.ETHEREUM:
             wallet = EthereumMasterWallet.load(path=self.path)

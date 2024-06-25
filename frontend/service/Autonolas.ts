@@ -65,6 +65,7 @@ const getAgentStakingRewardsInfo = async ({
     serviceStakingTokenMechUsageContract.rewardsPerSecond(),
     serviceStakingTokenMechUsageContract.calculateStakingReward(serviceId),
     serviceStakingTokenMechUsageContract.minStakingDeposit(),
+    serviceStakingTokenMechUsageContract.tsCheckpoint(),
   ];
 
   await gnosisMulticallProvider.init();
@@ -77,8 +78,9 @@ const getAgentStakingRewardsInfo = async ({
     livenessPeriod,
     livenessRatio,
     rewardsPerSecond,
-    accruedServiceStakingRewards,
-    minimumStakingDeposit,
+    accuredStakingReward,
+    minStakingDeposit,
+    tsCheckpoint,
   ] = multicallResponse;
 
   /**
@@ -97,24 +99,28 @@ const getAgentStakingRewardsInfo = async ({
     uint256 inactivity;}
    */
 
-  const livenessRatioFormatted = livenessRatio / 1e18;
+  const nowInSeconds = Math.floor(Date.now() / 1000);
 
-  const multisigNonce = serviceInfo[2][1];
-
-  const eligibleRequests = mechRequestCount - multisigNonce;
-
-  const eligibilityMargin =
-    livenessPeriod * livenessRatioFormatted +
+  const requiredMechRequests =
+    (Math.ceil(Math.max(livenessPeriod, nowInSeconds - tsCheckpoint)) *
+      livenessRatio) /
+      1e18 +
     REQUIRED_MECH_REQUESTS_SAFETY_MARGIN;
 
-  const isEligibleForRewards = eligibleRequests >= eligibilityMargin;
+  const mechRequestCountOnLastCheckpoint = serviceInfo[2][1];
+  const eligibleRequests = mechRequestCount - mechRequestCountOnLastCheckpoint;
 
-  const availableRewardsForEpoch = rewardsPerSecond * livenessPeriod;
+  const isEligibleForRewards = eligibleRequests >= requiredMechRequests;
+
+  const availableRewardsForEpoch = Math.max(
+    rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
+    rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+  );
 
   // Minimum staked amount is double the minimum staking deposit
-  // (basically all the bonds must be the same as deposit)
+  // (all the bonds must be the same as deposit)
   const minimumStakedAmount =
-    parseFloat(ethers.utils.formatEther(`${minimumStakingDeposit}`)) * 2;
+    parseFloat(ethers.utils.formatEther(`${minStakingDeposit}`)) * 2;
 
   return {
     mechRequestCount,
@@ -125,7 +131,7 @@ const getAgentStakingRewardsInfo = async ({
     isEligibleForRewards,
     availableRewardsForEpoch,
     accruedServiceStakingRewards: parseFloat(
-      ethers.utils.formatEther(`${accruedServiceStakingRewards}`),
+      ethers.utils.formatEther(`${accuredStakingReward}`),
     ),
     minimumStakedAmount,
   } as StakingRewardsInfo;
@@ -134,16 +140,22 @@ const getAgentStakingRewardsInfo = async ({
 const getAvailableRewardsForEpoch = async (): Promise<number | undefined> => {
   const contractCalls = [
     serviceStakingTokenMechUsageContract.rewardsPerSecond(),
-    serviceStakingTokenMechUsageContract.livenessPeriod(),
+    serviceStakingTokenMechUsageContract.livenessPeriod(), // epoch length
+    serviceStakingTokenMechUsageContract.tsCheckpoint(), // last checkpoint timestamp
   ];
 
   await gnosisMulticallProvider.init();
 
   const multicallResponse = await gnosisMulticallProvider.all(contractCalls);
 
-  const [rewardsPerSecond, livenessPeriod] = multicallResponse;
+  const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
 
-  return rewardsPerSecond * livenessPeriod;
+  const nowInSeconds = Math.floor(Date.now() / 1000);
+
+  return Math.max(
+    rewardsPerSecond * livenessPeriod, // expected rewards
+    rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+  );
 };
 
 const getServiceRegistryInfo = async (

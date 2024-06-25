@@ -18,6 +18,13 @@ const main = async () => {
       directories: {
         output: 'dist',
       },
+      extraResources: [
+        {
+          from: 'electron/bins',
+          to: 'bins',
+          filter: ['**/*'],
+        },
+      ],
       cscKeyPassword: process.env.CSC_KEY_PASSWORD,
       cscLink: process.env.CSC_LINK,
       mac: {

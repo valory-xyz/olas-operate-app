@@ -50,6 +50,8 @@ jobs:
             - uses: actions/setup-node@v1
               with:
                 node-version: "20.11"
+            - name: Download binary
+              run: mkdir electron/bins && curl -L -o electron/bins/pearl_arm64 https://tempfileserver.staging.autonolas.tech/pearl_arm64 && chmod +x electron/bins/pearl_arm64 && curl -L -o electron/bins/pearl_x64 https://tempfileserver.staging.autonolas.tech/pearl_arm64 && chmod +x electron/bins/pearl_x64
             - uses: snok/install-poetry@v1
               with:
                 version: "1.7.1"

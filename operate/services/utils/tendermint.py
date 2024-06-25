@@ -502,7 +502,7 @@ def create_app(  # pylint: disable=too-many-statements
         use_grpc=os.environ["USE_GRPC"] == "true",
     )
 
-    app = Flask(__name__)
+    app = Flask(__name__)  # pylint: disable=redefined-outer-name
     period_dumper = PeriodDumper(
         logger=app.logger,
         dump_dir=Path(os.environ["TMSTATE"]),
@@ -637,3 +637,9 @@ def create_server() -> Any:
     """Function to retrieve just the app to be used by flask entry point."""
     flask_app, _ = create_app()
     return flask_app
+
+
+if __name__ == "__main__":
+    # Start the Flask server programmatically
+    app = create_server()
+    app.run(host="localhost", port=8080)

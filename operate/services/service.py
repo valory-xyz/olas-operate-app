@@ -25,15 +25,14 @@ import platform
 import shutil
 import signal
 import subprocess  # nosec
+import sys
 import time
 import typing as t
 from copy import copy, deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from venv import main as venv_cli
 
 import psutil
-from aea.__version__ import __version__ as aea_version
 from aea.configurations.constants import (
     DEFAULT_LEDGER,
     LEDGER,
@@ -44,7 +43,6 @@ from aea.configurations.constants import (
 from aea.configurations.data_types import PackageType
 from aea.helpers.yaml_utils import yaml_dump, yaml_load, yaml_load_all
 from aea_cli_ipfs.ipfs_utils import IPFSTool
-from autonomy.__version__ import __version__ as autonomy_version
 from autonomy.cli.helpers.deployment import run_deployment, stop_deployment
 from autonomy.configurations.loader import load_service_config
 from autonomy.deploy.base import BaseDeploymentGenerator
@@ -299,7 +297,7 @@ class HostDeploymentGenerator(BaseDeploymentGenerator):
             encoding="utf-8",
         )
         shutil.copy(
-            tendermint.__file__,
+            tendermint.__file__.replace(".pyc", ".py"),
             self.build_dir / "tendermint.py",
         )
         return self
@@ -317,7 +315,6 @@ class HostDeploymentGenerator(BaseDeploymentGenerator):
             json.dumps(agent, indent=2),
             encoding="utf-8",
         )
-        venv_cli(args=[str(self.build_dir / "venv")])
         return self
 
     def _populate_keys(self) -> None:
@@ -344,6 +341,8 @@ class HostDeploymentGenerator(BaseDeploymentGenerator):
 def _run_cmd(args: t.List[str], cwd: t.Optional[Path] = None) -> None:
     """Run command in a subprocess."""
     print(f"Running: {' '.join(args)}")
+    # print working dir
+    print(f"Working dir: {os.getcwd()}")
     result = subprocess.run(  # pylint: disable=subprocess-run-check # nosec
         args=args,
         cwd=cwd,
@@ -387,27 +386,8 @@ def _setup_agent(working_dir: Path) -> None:
         json.dumps(env, indent=4),
         encoding="utf-8",
     )
-    venv = working_dir / "venv"
-    pbin = str(venv / "bin" / "python")
 
-    # Install agent dependencies
-    _run_cmd(
-        args=[
-            pbin,
-            "-m",
-            "pip",
-            "install",
-            f"open-autonomy[all]=={autonomy_version}",
-            f"open-aea-ledger-ethereum=={aea_version}",
-            f"open-aea-ledger-ethereum-flashbots=={aea_version}",
-            f"open-aea-ledger-cosmos=={aea_version}",
-        ],
-    )
-
-    # Install tendermint dependencies
-    _run_cmd(args=[pbin, "-m", "pip", "install", "flask", "requests"])
-
-    abin = str(venv / "bin" / "aea")
+    abin = str(Path(sys._MEIPASS) / "aea_bin")  # type: ignore # pylint: disable=protected-access
     # Fetch agent
     _run_cmd(
         args=[
@@ -434,12 +414,6 @@ def _setup_agent(working_dir: Path) -> None:
         cwd=working_dir,
     )
 
-    # Install agent dependencies
-    _run_cmd(
-        args=[abin, "-v", "debug", "install", "--timeout", "600"],
-        cwd=working_dir / "agent",
-    )
-
     # Add keys
     shutil.copy(
         working_dir / "ethereum_private_key.txt",
@@ -458,8 +432,9 @@ def _setup_agent(working_dir: Path) -> None:
 def _start_agent(working_dir: Path) -> None:
     """Start agent process."""
     env = json.loads((working_dir / "agent.json").read_text(encoding="utf-8"))
+    aea_bin = str(Path(sys._MEIPASS) / "aea_bin")  # type: ignore  # pylint: disable=protected-access
     process = subprocess.Popen(  # pylint: disable=consider-using-with # nosec
-        args=[str(working_dir / "venv" / "bin" / "aea"), "run"],
+        args=[aea_bin, "run"],
         cwd=working_dir / "agent",
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -477,15 +452,9 @@ def _start_agent(working_dir: Path) -> None:
 def _start_tendermint(working_dir: Path) -> None:
     """Start tendermint process."""
     env = json.loads((working_dir / "tendermint.json").read_text(encoding="utf-8"))
+    tendermint_com = str(Path(sys._MEIPASS) / "tendermint")  # type: ignore  # pylint: disable=protected-access
     process = subprocess.Popen(  # pylint: disable=consider-using-with # nosec
-        args=[
-            str(working_dir / "venv" / "bin" / "flask"),
-            "run",
-            "--host",
-            "localhost",
-            "--port",
-            "8080",
-        ],
+        args=[tendermint_com],
         cwd=working_dir,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -580,6 +549,7 @@ class Deployment(LocalResource):
         Create a new deployment
 
         :param path: Path to service
+        :return: Deployment object
         """
         deployment = Deployment(
             status=DeploymentStatus.CREATED,
@@ -792,6 +762,7 @@ class Deployment(LocalResource):
         """
         Build a deployment
 
+        :param use_docker: Use docker deployment
         :param force: Remove existing deployment and build a new one
         :return: Deployment object
         """

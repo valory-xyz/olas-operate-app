@@ -33,8 +33,14 @@ tmp/
 temp/
 
 !operate/data
-dist/
 electron/.next
+
+dist/
+build/
 
 cache
 leak_report
+
+*.dist
+*.build
+/electron/bins/
