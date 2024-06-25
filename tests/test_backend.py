@@ -1,13 +1,16 @@
-import pytest
-import httpx
-from tests.conftest import SERVER_ENDPOINT, ServerConfig
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
+
+import httpx
+import pytest
+
+from tests.conftest import SERVER_ENDPOINT, ServerConfig
 
 
 @dataclass
 class HTTP:
     """HTTP codes"""
+
     OK = 200
     UNAUTHORIZED = 401
     GET = "get"
@@ -33,12 +36,12 @@ async def request_test(url, method, http_code, json):
             HTTP.GET,
             HTTP.OK,
             {
-                'name': 'Operate HTTP server',
-                'version': '0.1.0.rc0',
-                'home': str(ServerConfig.TEST_HOME)
-            }
+                "name": "Operate HTTP server",
+                "version": "0.1.0.rc0",
+                "home": str(ServerConfig.TEST_HOME),
+            },
         ),
-    ]
+    ],
 )
 @pytest.mark.asyncio
 async def test_api(server, url, method, http_code, json):
@@ -51,7 +54,9 @@ async def test_api(server, url, method, http_code, json):
 @pytest.mark.asyncio
 async def test_shutdown(server):
     """Test shutdown"""
-    with open(Path(ServerConfig.TEST_HOME, "operate.kill"), "r", encoding="utf-8") as file:
+    with open(
+        Path(ServerConfig.TEST_HOME, "operate.kill"), "r", encoding="utf-8"
+    ) as file:
         shutdown_endpoint = file.read().strip()
         url = f"{SERVER_ENDPOINT}/{shutdown_endpoint}"
         await request_test(url, HTTP.GET, HTTP.OK, None)
@@ -61,31 +66,15 @@ async def test_shutdown(server):
 @pytest.mark.parametrize(
     "url, method, http_code, json",
     [
-        (
-            f"{SERVER_ENDPOINT}/api/services",
-            HTTP.GET,
-            HTTP.OK,
-            []
-        ),
-        (
-            f"{SERVER_ENDPOINT}/api/services",
-            HTTP.POST,
-            HTTP.UNAUTHORIZED,
-            None
-        ),
-        (
-            f"{SERVER_ENDPOINT}/api/services",
-            HTTP.PUT,
-            HTTP.UNAUTHORIZED,
-            None
-        ),
-    ]
+        (f"{SERVER_ENDPOINT}/api/services", HTTP.GET, HTTP.OK, []),
+        (f"{SERVER_ENDPOINT}/api/services", HTTP.POST, HTTP.UNAUTHORIZED, None),
+        (f"{SERVER_ENDPOINT}/api/services", HTTP.PUT, HTTP.UNAUTHORIZED, None),
+    ],
 )
 @pytest.mark.asyncio
 async def test_api_services(server, url, method, http_code, json):
     """Test services"""
     await request_test(url, method, http_code, json)
-
 
 
 # # account
