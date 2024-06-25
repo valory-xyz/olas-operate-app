@@ -18,7 +18,7 @@ include = [
 operate = "operate.cli:main"
 
 [tool.poetry.dependencies]
-python = "<3.13,>=3.8"
+python = "<3.13,>=3.10"
 open-autonomy = "==0.14.11.post1"
 open-aea-ledger-ethereum = "==1.51.0"
 open-aea-cli-ipfs = "==1.51.0"
