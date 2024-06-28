@@ -233,7 +233,7 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
 
     def with_retries(f: t.Callable) -> t.Callable:
         """Retries decorator."""
-
+        return f
         async def _call(request: Request) -> JSONResponse:
             """Call the endpoint."""
             logger.info(f"Calling `{f.__name__}` with retries enabled")

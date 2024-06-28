@@ -68,6 +68,7 @@ from operate.constants import (
 from operate.http.exceptions import NotAllowed
 from operate.keys import Keys
 from operate.resource import LocalResource
+from operate.services.deployment_runner import run_host_deployment, stop_host_deployment
 from operate.services.utils import tendermint
 from operate.types import (
     ChainType,
@@ -338,201 +339,6 @@ class HostDeploymentGenerator(BaseDeploymentGenerator):
         return self
 
 
-def _run_cmd(args: t.List[str], cwd: t.Optional[Path] = None) -> None:
-    """Run command in a subprocess."""
-    print(f"Running: {' '.join(args)}")
-    # print working dir
-    print(f"Working dir: {os.getcwd()}")
-    result = subprocess.run(  # pylint: disable=subprocess-run-check # nosec
-        args=args,
-        cwd=cwd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"Error running: {args} @ {cwd}\n{result.stderr.decode()}")
-
-
-def _setup_agent(working_dir: Path) -> None:
-    """Setup agent."""
-    env = json.loads((working_dir / "agent.json").read_text(encoding="utf-8"))
-    # Patch for trader agent
-    if "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_STORE_PATH" in env:
-        data_dir = working_dir / "data"
-        data_dir.mkdir(exist_ok=True)
-        env["SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_STORE_PATH"] = str(data_dir)
-
-    # TODO: Dynamic port allocation, backport to service builder
-    env["CONNECTION_ABCI_CONFIG_HOST"] = "localhost"
-    env["CONNECTION_ABCI_CONFIG_PORT"] = "26658"
-
-    for var in env:
-        # Fix tendermint connection params
-        if var.endswith("MODELS_PARAMS_ARGS_TENDERMINT_COM_URL"):
-            env[var] = "http://localhost:8080"
-
-        if var.endswith("MODELS_PARAMS_ARGS_TENDERMINT_URL"):
-            env[var] = "http://localhost:26657"
-
-        if var.endswith("MODELS_PARAMS_ARGS_TENDERMINT_P2P_URL"):
-            env[var] = "localhost:26656"
-
-        if var.endswith("MODELS_BENCHMARK_TOOL_ARGS_LOG_DIR"):
-            benchmarks_dir = working_dir / "benchmarks"
-            benchmarks_dir.mkdir(exist_ok=True, parents=True)
-            env[var] = str(benchmarks_dir.resolve())
-
-    (working_dir / "agent.json").write_text(
-        json.dumps(env, indent=4),
-        encoding="utf-8",
-    )
-
-    abin = str(Path(sys._MEIPASS) / "aea_bin")  # type: ignore # pylint: disable=protected-access
-    # Fetch agent
-    _run_cmd(
-        args=[
-            abin,
-            "init",
-            "--reset",
-            "--author",
-            "valory",
-            "--remote",
-            "--ipfs",
-            "--ipfs-node",
-            "/dns/registry.autonolas.tech/tcp/443/https",
-        ],
-        cwd=working_dir,
-    )
-    _run_cmd(
-        args=[
-            abin,
-            "fetch",
-            env["AEA_AGENT"],
-            "--alias",
-            "agent",
-        ],
-        cwd=working_dir,
-    )
-
-    # Add keys
-    shutil.copy(
-        working_dir / "ethereum_private_key.txt",
-        working_dir / "agent" / "ethereum_private_key.txt",
-    )
-    _run_cmd(
-        args=[abin, "add-key", "ethereum"],
-        cwd=working_dir / "agent",
-    )
-    _run_cmd(
-        args=[abin, "issue-certificates"],
-        cwd=working_dir / "agent",
-    )
-
-
-def _start_agent(working_dir: Path) -> None:
-    """Start agent process."""
-    env = json.loads((working_dir / "agent.json").read_text(encoding="utf-8"))
-    aea_bin = str(Path(sys._MEIPASS) / "aea_bin")  # type: ignore  # pylint: disable=protected-access
-    process = subprocess.Popen(  # pylint: disable=consider-using-with # nosec
-        args=[aea_bin, "run"],
-        cwd=working_dir / "agent",
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        env={**os.environ, **env},
-        creationflags=(
-            0x00000008 if platform.system() == "Windows" else 0
-        ),  # Detach process from the main process
-    )
-    (working_dir / "agent.pid").write_text(
-        data=str(process.pid),
-        encoding="utf-8",
-    )
-
-
-def _start_tendermint(working_dir: Path) -> None:
-    """Start tendermint process."""
-    env = json.loads((working_dir / "tendermint.json").read_text(encoding="utf-8"))
-    tendermint_com = str(Path(sys._MEIPASS) / "tendermint")  # type: ignore  # pylint: disable=protected-access
-    process = subprocess.Popen(  # pylint: disable=consider-using-with # nosec
-        args=[tendermint_com],
-        cwd=working_dir,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        env={**os.environ, **env},
-        creationflags=(
-            0x00000008 if platform.system() == "Windows" else 0
-        ),  # Detach process from the main process
-    )
-    (working_dir / "tendermint.pid").write_text(
-        data=str(process.pid),
-        encoding="utf-8",
-    )
-
-
-def _kill_process(pid: int) -> None:
-    """Kill process."""
-    print(f"Trying to kill process: {pid}")
-    while True:
-        if not psutil.pid_exists(pid=pid):
-            return
-        if psutil.Process(pid=pid).status() in (
-            psutil.STATUS_DEAD,
-            psutil.STATUS_ZOMBIE,
-        ):
-            return
-        try:
-            os.kill(
-                pid,
-                (
-                    signal.CTRL_C_EVENT  # type: ignore
-                    if platform.platform() == "Windows"
-                    else signal.SIGKILL
-                ),
-            )
-        except OSError:
-            return
-        time.sleep(1)
-
-
-def _stop_agent(working_dir: Path) -> None:
-    """Start process."""
-    pid = working_dir / "agent.pid"
-    if not pid.exists():
-        return
-    _kill_process(int(pid.read_text(encoding="utf-8")))
-
-
-def _stop_tendermint(working_dir: Path) -> None:
-    """Start tendermint process."""
-    pid = working_dir / "tendermint.pid"
-    if not pid.exists():
-        return
-    _kill_process(int(pid.read_text(encoding="utf-8")))
-
-
-def run_host_deployment(build_dir: Path) -> None:
-    """Run host deployment."""
-    _setup_agent(
-        working_dir=build_dir,
-    )
-    _start_tendermint(
-        working_dir=build_dir,
-    )
-    _start_agent(
-        working_dir=build_dir,
-    )
-
-
-def stop_host_deployment(build_dir: Path) -> None:
-    """Stop host deployment."""
-    _stop_agent(
-        working_dir=build_dir,
-    )
-    _stop_tendermint(
-        working_dir=build_dir,
-    )
-
-
 @dataclass
 class Deployment(LocalResource):
     """Deployment resource for a service."""
@@ -743,9 +549,9 @@ class Deployment(LocalResource):
         # Mech price patch.
         agent_vars = json.loads(Path(build, "agent.json").read_text(encoding="utf-8"))
         if "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE" in agent_vars:
-            agent_vars[
-                "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE"
-            ] = "10000000000000000"
+            agent_vars["SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE"] = (
+                "10000000000000000"
+            )
             Path(build, "agent.json").write_text(
                 json.dumps(agent_vars, indent=4),
                 encoding="utf-8",
