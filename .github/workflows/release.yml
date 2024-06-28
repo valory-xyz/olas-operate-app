@@ -66,8 +66,7 @@ jobs:
                     NODE_ENV: production
                     DEV_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
                     IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
-                    FORK_URL: https://rpc-gate.autonolas.tech/gnosis-rpc/
-            - run: rm -rf /dist
+                    FORK_URL: https://rpc-gate.autonolas.tech/gnosis-rpc/            
             - name: "Build, notarize, publish"
               env:
                 APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
