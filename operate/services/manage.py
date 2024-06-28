@@ -941,7 +941,7 @@ class ServiceManager:
                 logging.info(
                     f"Error occured while checking the service health\n{traceback.format_exc()}"
                 )
-            await asyncio.sleep(30)
+            await asyncio.sleep(300)
 
     def deploy_service_locally(self, hash: str, force: bool = True) -> Deployment:
         """
