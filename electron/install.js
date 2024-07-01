@@ -12,7 +12,7 @@ const { spawnSync } = require('child_process');
  * - use "" (nothing as a suffix) for latest release candidate, for example "0.1.0rc26"
  * - use "alpha" for alpha release, for example "0.1.0rc26-alpha"
  */
-const OlasMiddlewareVersion = '0.1.0rc60';
+const OlasMiddlewareVersion = '0.1.0rc61';
 const OperateDirectory = path.join(os.homedir(), '.operate');
 
 // Create operate directory if it doesn't exist
