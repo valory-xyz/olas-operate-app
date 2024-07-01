@@ -9,3 +9,9 @@ export type StakingRewardsInfo = {
   accruedServiceStakingRewards: number;
   minimumStakedAmount: number;
 };
+
+export type StakingContractInfo = {
+  availableRewards: number;
+  maxNumServices: number;
+  serviceIds: number[];
+};

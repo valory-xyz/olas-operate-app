@@ -8,7 +8,7 @@ import { useBalance, usePageState, useServices } from '@/hooks';
 import { KeepAgentRunning } from './KeepAgentRunning';
 import { MainAddFunds } from './MainAddFunds';
 import { MainGasBalance } from './MainGasBalance';
-import { MainHeader } from './MainHeader';
+import { MainHeader } from './MainHeader/MainHeader';
 import { MainNeedsFunds } from './MainNeedsFunds';
 import { MainOlasBalance } from './MainOlasBalance';
 import { MainRewards } from './MainRewards';

@@ -1,24 +1,47 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Badge, Button, Flex, Modal, Popover, Typography } from 'antd';
-import { formatUnits } from 'ethers/lib/utils';
+import { Badge, Button, Flex, Popover, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Chain, DeploymentStatus } from '@/client';
-import { COLOR, LOW_BALANCE, SERVICE_TEMPLATES } from '@/constants';
+import { COLOR, LOW_BALANCE } from '@/constants';
 import { useBalance, useServiceTemplates } from '@/hooks';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useReward } from '@/hooks/useReward';
 import { useServices } from '@/hooks/useServices';
+import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
 import { useStore } from '@/hooks/useStore';
 import { useWallet } from '@/hooks/useWallet';
 import { ServicesService } from '@/service';
 import { WalletService } from '@/service/Wallet';
 
-const { Text, Title, Paragraph } = Typography;
+import { CannotStartAgent } from './CannotStartAgent';
+import { requiredGas, requiredOlas } from './constants';
+import { FirstRunModal } from './FirstRunModal';
+
+const { Text } = Typography;
 
 const LOADING_MESSAGE =
   'Starting the agent may take a while, so feel free to minimize the app. We’ll notify you once it’s running. Please, don’t quit the app.';
+const StartingButtonPopover = () => (
+  <Popover
+    trigger={['hover', 'click']}
+    placement="bottomLeft"
+    showArrow={false}
+    content={
+      <Flex vertical={false} gap={8} style={{ maxWidth: 260 }}>
+        <Text>
+          <InfoCircleOutlined style={{ color: COLOR.BLUE }} />
+        </Text>
+        <Text>{LOADING_MESSAGE}</Text>
+      </Flex>
+    }
+  >
+    <Button type="default" size="large" ghost disabled loading>
+      Starting...
+    </Button>
+  </Popover>
+);
 
 enum ServiceButtonLoadingState {
   Starting,
@@ -26,59 +49,28 @@ enum ServiceButtonLoadingState {
   NotLoading,
 }
 
-const FirstRunModal = ({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) => {
-  const { minimumStakedAmountRequired } = useReward();
+const useSetupTrayIcon = () => {
+  const { safeBalance } = useBalance();
+  const { serviceStatus } = useServices();
+  const { setTrayIcon } = useElectronApi();
 
-  if (!open) return null;
-  return (
-    <Modal
-      open={open}
-      width={412}
-      onCancel={onClose}
-      footer={[
-        <Button
-          key="ok"
-          type="primary"
-          block
-          size="large"
-          className="mt-8"
-          onClick={onClose}
-        >
-          Got it
-        </Button>,
-      ]}
-    >
-      <Flex align="center" justify="center">
-        <Image
-          src="/splash-robot-head.png"
-          width={100}
-          height={100}
-          alt="OLAS logo"
-        />
-      </Flex>
-      <Title level={5} className="mt-12 text-center">
-        {`Your agent is running and you&apos;ve staked ${minimumStakedAmountRequired} OLAS!`}
-      </Title>
-      <Paragraph>Your agent is working towards earning rewards.</Paragraph>
-      <Paragraph>
-        Pearl is designed to make it easy for you to earn staking rewards every
-        day. Simply leave the app and agent running in the background for ~1hr a
-        day.
-      </Paragraph>
-    </Modal>
-  );
+  useEffect(() => {
+    if (safeBalance && safeBalance.ETH < LOW_BALANCE) {
+      setTrayIcon?.('low-gas');
+    } else if (serviceStatus === DeploymentStatus.DEPLOYED) {
+      setTrayIcon?.('running');
+    } else if (serviceStatus === DeploymentStatus.STOPPED) {
+      setTrayIcon?.('paused');
+    }
+  }, [safeBalance, serviceStatus, setTrayIcon]);
+
+  return null;
 };
 
 export const MainHeader = () => {
   const { storeState } = useStore();
   const { services, serviceStatus, setServiceStatus } = useServices();
-  const { showNotification, setTrayIcon } = useElectronApi();
+  const { showNotification } = useElectronApi();
   const { getServiceTemplates } = useServiceTemplates();
   const { wallets, masterSafeAddress } = useWallet();
   const {
@@ -94,6 +86,12 @@ export const MainHeader = () => {
 
   const { minimumStakedAmountRequired } = useReward();
 
+  const { isStakingContractInfoLoading, canStartAgent } =
+    useStakingContractInfo();
+
+  // hook to setup tray icon
+  useSetupTrayIcon();
+
   const safeOlasBalanceWithStaked = useMemo(() => {
     if (safeBalance?.OLAS === undefined) return;
     if (totalOlasStakedBalance === undefined) return;
@@ -107,16 +105,6 @@ export const MainHeader = () => {
     () => getServiceTemplates()[0],
     [getServiceTemplates],
   );
-
-  useEffect(() => {
-    if (safeBalance && safeBalance.ETH < LOW_BALANCE) {
-      setTrayIcon?.('low-gas');
-    } else if (serviceStatus === DeploymentStatus.DEPLOYED) {
-      setTrayIcon?.('running');
-    } else if (serviceStatus === DeploymentStatus.STOPPED) {
-      setTrayIcon?.('paused');
-    }
-  }, [safeBalance, serviceStatus, setTrayIcon]);
 
   const agentHead = useMemo(() => {
     if (
@@ -227,25 +215,7 @@ export const MainHeader = () => {
     }
 
     if (serviceButtonState === ServiceButtonLoadingState.Starting) {
-      return (
-        <Popover
-          trigger={['hover', 'click']}
-          placement="bottomLeft"
-          showArrow={false}
-          content={
-            <Flex vertical={false} gap={8} style={{ maxWidth: 260 }}>
-              <Text>
-                <InfoCircleOutlined style={{ color: COLOR.BLUE }} />
-              </Text>
-              <Text>{LOADING_MESSAGE}</Text>
-            </Flex>
-          }
-        >
-          <Button type="default" size="large" ghost disabled loading>
-            Starting...
-          </Button>
-        </Popover>
-      );
+      return <StartingButtonPopover />;
     }
 
     if (serviceStatus === DeploymentStatus.DEPLOYED) {
@@ -271,29 +241,6 @@ export const MainHeader = () => {
         </Button>
       );
     }
-
-    const olasCostOfBond = Number(
-      formatUnits(
-        `${SERVICE_TEMPLATES[0].configuration.olas_cost_of_bond}`,
-        18,
-      ),
-    );
-
-    const olasRequiredToStake = Number(
-      formatUnits(
-        `${SERVICE_TEMPLATES[0].configuration.olas_required_to_stake}`,
-        18,
-      ),
-    );
-
-    const requiredOlas = olasCostOfBond + olasRequiredToStake;
-
-    const requiredGas = Number(
-      formatUnits(
-        `${SERVICE_TEMPLATES[0].configuration.monthly_gas_estimate}`,
-        18,
-      ),
-    );
 
     const isDeployable = (() => {
       // case where required values are undefined (not fetched from the server)
@@ -327,7 +274,12 @@ export const MainHeader = () => {
     }
 
     return (
-      <Button type="primary" size="large" onClick={handleStart}>
+      <Button
+        type="primary"
+        size="large"
+        disabled={!canStartAgent}
+        onClick={handleStart}
+      >
         Start agent {!serviceExists && '& stake'}
       </Button>
     );
@@ -341,12 +293,15 @@ export const MainHeader = () => {
     services,
     storeState?.isInitialFunded,
     totalEthBalance,
+    canStartAgent,
   ]);
 
   return (
     <Flex justify="start" align="center" gap={10}>
       {agentHead}
-      {serviceToggleButton}
+      {isStakingContractInfoLoading ? null : (
+        <>{canStartAgent ? serviceToggleButton : <CannotStartAgent />}</>
+      )}
       <FirstRunModal open={isModalOpen} onClose={handleModalClose} />
     </Flex>
   );
