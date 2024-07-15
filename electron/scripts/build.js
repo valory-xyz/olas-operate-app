@@ -18,13 +18,13 @@ const main = async () => {
       appId: 'xyz.valory.olas-operate-app',
       artifactName: '${productName}-${version}-${platform}-${arch}.${ext}',
       productName: 'Pearl',
-      files: ['electron/**/*', 'package.json'],
+      files: ['../src/**/*', '../package.json', '../.next', '../public'],
       directories: {
-        output: 'dist',
+        output: '../dist',
       },
       extraResources: [
         {
-          from: 'electron/bins',
+          from: '../bins',
           to: 'bins',
           filter: ['**/*'],
         },
@@ -49,7 +49,7 @@ const main = async () => {
 };
 
 main()
-  .then((response) => {
+  .then(() => {
     console.log('Build & Notarize complete');
   })
   .catch((e) => console.error(e));

@@ -1,6 +1,6 @@
 import net from 'net';
 
-import { ERROR_ADDRESS_IN_USE } from '../constants/errors.mjs';
+import { ERROR_ADDRESS_IN_USE } from '../constants/errors.js';
 
 /**
  * Finds an available port within the specified range, excluding specified ports.

@@ -12,18 +12,11 @@
   },
   "plugins": [
     "prettier",
-    "import",
     "unused-imports",
-    "simple-import-sort"
+    "simple-import-sort",
+    "paths"
   ],
   "rules": {
-    "import/extensions": [
-      "error",
-      "always",
-      {
-        "ignorePackages": true
-      }
-    ],
     "no-unused-vars": "off", // Turn off the default no-unused-vars rule
     "prettier/prettier": [
       "error",
@@ -45,19 +38,14 @@
         "vars": "all",
         "varsIgnorePattern": "^_"
       }
-    ]
-  },
-  "settings": {
-    "import/extensions": [
-      ".js",
-      ".mjs"
     ],
-    "import/resolver": {
-      "node": {
-        "extensions": [
-          ".mjs"
-        ]
+    "paths/alias": [
+      "error",
+      {
+        "config": {
+          "jsconfig": "./jsconfig.json"
+        }
       }
-    }
+    ]
   }
 }

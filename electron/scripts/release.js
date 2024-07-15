@@ -63,7 +63,7 @@ const main = async () => {
 };
 
 main()
-  .then((response) => {
+  .then(() => {
     console.log('Build & Notarize complete');
   })
   .catch((e) => console.error(e));

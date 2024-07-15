@@ -1,6 +1,5 @@
 {
   "author": "josh miller <josh@truemiller.com>",
-  "license": "MIT",
   "dependencies": {
     "@ant-design/cssinjs": "^1.18.4",
     "@ant-design/icons": "^5.3.0",
@@ -26,7 +25,6 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "eslint": "^8.56.0",
-    "eslint-config-next": "^14.1.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jest": "^27.6.3",
@@ -39,6 +37,7 @@
     "ts-node": "^10.9.2",
     "typescript": "~5.4"
   },
+  "license": "MIT",
   "name": "olas-operate-app",
   "private": true,
   "scripts": {
