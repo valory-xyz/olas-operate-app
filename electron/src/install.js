@@ -6,7 +6,7 @@ import os from 'os';
 import process from 'process';
 import sudo from 'sudo-prompt';
 
-import { paths } from './constants/paths.mjs';
+import { paths } from './constants/paths.js';
 
 /**
  * current version of the pearl release

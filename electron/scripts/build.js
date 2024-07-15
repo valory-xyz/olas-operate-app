@@ -1,11 +1,11 @@
 /**
- * This script is used to build the electron app **without** notarization. 
- * 
+ * Used to build the electron app **without** notarization.
+ *
  * This is useful for testing the build process.
  * It will not notarize the app, so it will not be able to be run on someone else's Mac without disabling Gatekeeper on their machine.
  */
-import { build } from 'electron-builder';
 import { config } from 'dotenv';
+import { build } from 'electron-builder';
 config();
 
 const main = async () => {
@@ -48,4 +48,8 @@ const main = async () => {
   });
 };
 
-main().then((response) => { console.log('Build & Notarize complete'); }).catch((e) => console.error(e));
+main()
+  .then((response) => {
+    console.log('Build & Notarize complete');
+  })
+  .catch((e) => console.error(e));

@@ -1,12 +1,14 @@
 import os from 'os';
 import path from 'path';
 
-import { isProd } from './env.mjs';
+import { isProd } from './env.js';
 
 // Paths
 const dotOperateDirectory = isProd
   ? path.join(os.homedir(), '.operate')
-  : '.operate';
+  : path.join(process.cwd(), '../.operate');
+
+console.log('dotOperateDirectory', dotOperateDirectory);
 
 export const paths = {
   dotOperateDirectory,

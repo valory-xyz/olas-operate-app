@@ -21,9 +21,9 @@ import { isDev } from './constants/env.mjs';
 import { isMac, isWindows } from './constants/os.mjs';
 import { paths } from './constants/paths.mjs';
 import { PORT_RANGE } from './constants/ports.mjs';
-import { Env } from './install.mjs';
-import { setupStoreIpc } from './store.mjs';
-import { macUpdater } from './update.mjs';
+import { Env } from './install.js';
+import { setupStoreIpc } from './store.js';
+import { macUpdater } from './update.js';
 import { TRAY_ICONS, TRAY_ICONS_PATHS } from './utils/icons.mjs';
 import { logger } from './utils/logger.mjs';
 import { findAvailablePort, isPortAvailable } from './utils/ports.mjs';
@@ -330,7 +330,7 @@ async function launchDaemonDev() {
       'operate',
       'daemon',
       `--port=${appConfig.ports.dev.operate}`,
-      '--home=.operate',
+      `--home=${paths.dotOperateDirectory}`,
     ]);
     operateDaemonPid = operateDaemon.pid;
     operateDaemon.stderr.on('data', (data) => {
@@ -383,12 +383,13 @@ async function launchNextAppDev() {
     process.env.NEXT_PUBLIC_BACKEND_PORT = appConfig.ports.dev.operate; // must set next env var to connect to backend
     nextAppProcess = spawn(
       'yarn',
-      ['dev:frontend', '--port', appConfig.ports.dev.next],
+      ['dev', '--port', appConfig.ports.dev.next],
       {
         env: {
           ...process.env,
           NEXT_PUBLIC_BACKEND_PORT: appConfig.ports.dev.operate,
         },
+        cwd: '../frontend',
       },
     );
     nextAppProcessPid = nextAppProcess.pid;
@@ -506,11 +507,14 @@ macUpdater.on('download-progress', (progress) => {
   mainWindow.webContents.send('download-progress', progress);
 });
 
-ipcMain.once('start-download', macUpdater.downloadUpdate);
+ipcMain.once('start-download', () => macUpdater.downloadUpdate());
 
-ipcMain.once('install-update', macUpdater.quitAndInstall);
+ipcMain.once('install-update', () => macUpdater.quitAndInstall());
 
-ipcMain.handle('check-for-updates', macUpdater.checkForUpdates);
+ipcMain.handle(
+  'check-for-updates',
+  async () => await macUpdater.checkForUpdates(),
+);
 
 // PROCESS SPECIFIC EVENTS (HANDLES NON-GRACEFUL TERMINATION)
 process.on('uncaughtException', (error) => {

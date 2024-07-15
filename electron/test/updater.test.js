@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import { app } from 'electron';
 
-import { macUpdater } from '../update.mjs';
+import { macUpdater } from '../update.js';
 
 config();
 

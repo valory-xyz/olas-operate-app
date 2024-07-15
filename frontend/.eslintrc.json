@@ -2,20 +2,12 @@
   "extends": [
     "next/core-web-vitals"
   ],
-  "globals": {
-    "JSX": true,
-    "React": true
-  },
   "plugins": [
     "prettier",
     "unused-imports",
-    "simple-import-sort",
-    "import"
+    "simple-import-sort"
   ],
   "rules": {
-    "import/first": "error",
-    "import/newline-after-import": "error",
-    "import/no-duplicates": "error",
     "simple-import-sort/imports": "error",
     "simple-import-sort/exports": "error",
     "unused-imports/no-unused-imports": "error",
@@ -26,5 +18,13 @@
       "semi": true,
       "singleQuote": true
     }]
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    },
+    "next": {
+      "rootDir": "./"
+    }
   }
 }
