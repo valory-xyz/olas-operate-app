@@ -36,8 +36,8 @@ jobs:
 
         - name: Check if release is from main
           run: |
-            echo github.ref
-            if [ github.ref != "feat/check-trader-versions" ]; then
+            echo "${{ github.ref }}" 
+            if [ "${{ github.ref }}" != "feat/check-trader-versions" ]; then
               echo "This release is not from the main branch."        
               exit 0
             fi
