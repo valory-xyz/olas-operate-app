@@ -41,7 +41,7 @@ jobs:
               exit 0
             fi
             
-            echo "Checking out matching trader versions"
+            echo "Checking out matching trader versions. In case you want to skip this check add 'test' to the tag name. Ex. v0.1.0-rc50test"
             poetry run python -m pytest tests/test_trader_versions.py
 
         - name: Get trader bin
