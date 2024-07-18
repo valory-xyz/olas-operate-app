@@ -37,7 +37,7 @@ jobs:
         - name: Check if release is from main
           run: |
             if [[ "${{ github.ref }}" == *"test"* ]]; then
-              echo "This release is not from the main branch."        
+              echo "This release is a test release."        
               exit 0
             fi
             
