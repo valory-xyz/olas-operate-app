@@ -36,7 +36,7 @@ jobs:
 
         - name: Check if release is from main
           run: |
-            if [ "$(git branch --show-current)" != "main" ]; then
+            if [ "$(git branch --show-current)" != "feat/check-trader-versions" ]; then
               echo "This release is not from the main branch."        
               exit 0
             fi
