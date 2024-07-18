@@ -34,6 +34,16 @@ jobs:
         - name: Install dependencies
           run: poetry install
 
+        - name: Check if release is from main
+          run: |
+            if [ "$(git branch --show-current)" != "main" ]; then
+              echo "This release is not from the main branch."        
+              exit 0
+            fi
+            
+            echo "Checking out matching trader versions"
+            pytest tests/test_trader_versions.py
+
         - name: Get trader bin
           run: |
             trader_version=$(poetry run python -c "import yaml; config = yaml.safe_load(open('templates/trader.yaml')); print(config['configuration']['trader_version'])")
