@@ -21,9 +21,12 @@
 from pathlib import Path
 
 import requests
-import yaml
+from aea.helpers.yaml_utils import yaml_load
 
-BASE_URL = "https://raw.githubusercontent.com/valory-xyz/trader/{}/packages/packages.json"
+
+BASE_URL = (
+    "https://raw.githubusercontent.com/valory-xyz/trader/{}/packages/packages.json"
+)
 TARGET_SERVICE = "service/valory/trader_pearl/0.1.0"
 TRADER_YAML = Path("templates/trader.yaml")
 
@@ -31,12 +34,7 @@ TRADER_YAML = Path("templates/trader.yaml")
 def test_trader_version_match() -> None:
     """Check that the trader versions match the package.json"""
     with TRADER_YAML.open("r", encoding="utf-8") as stream:
-        trader_template = yaml.safe_load(stream)
-
-    assert (
-        "configuration" in trader_template and "hash" in trader_template,
-        "Trader template does not contain configuration key!",
-    )
+        trader_template = yaml_load(stream)
 
     tag = trader_template["configuration"]["trader_version"]
     expected_hash = trader_template["hash"]
