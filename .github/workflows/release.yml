@@ -42,7 +42,7 @@ jobs:
             fi
             
             echo "Checking out matching trader versions"
-            pytest tests/test_trader_versions.py
+            python -m pytest tests/test_trader_versions.py
 
         - name: Get trader bin
           run: |
