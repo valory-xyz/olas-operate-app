@@ -1,6 +1,8 @@
-const winston = require('winston');
-const { format } = require('logform');
-const { paths } = require('./constants');
+// @ts-check
+import { format } from 'logform';
+import winston from 'winston';
+
+import { paths } from '../constants/paths.mjs';
 
 const { combine, timestamp, printf } = format;
 
@@ -29,7 +31,7 @@ const customLevels = {
 
 // Custom filter for specific levels, otherwise higher levels will include lower levels
 const levelFilter = (level) =>
-  format((info, _opts) => {
+  format((info) => {
     return info.level === level ? info : false;
   })();
 
@@ -70,4 +72,4 @@ const logger = winston.createLogger({
 
 winston.addColors(customLevels.colors);
 
-module.exports = { logger };
+export { logger };

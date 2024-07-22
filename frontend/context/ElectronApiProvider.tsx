@@ -14,6 +14,7 @@ type ElectronApiContextProps = {
       func: (event: unknown, data: unknown) => void,
     ) => void; // listen to messages from main process
     invoke?: (channel: string, data: unknown) => Promise<unknown>; // send message to main process and get Promise response
+    removeAllListeners?: (channel: string) => void;
   };
   store?: {
     store?: () => Promise<ElectronStore>;
@@ -30,6 +31,24 @@ type ElectronApiContextProps = {
     debugData?: Record<string, unknown>;
   }) => Promise<{ success: true; dirPath: string } | { success?: false }>;
   openPath?: (filePath: string) => void;
+
+  // download new updates
+  checkForUpdates?: () => Promise<void>;
+  startDownload?: () => Promise<void>;
+  quitAndInstall?: () => void;
+};
+
+const getElectronApiFunction = (functionNameInWindow: string) => {
+  if (typeof window === 'undefined') return;
+
+  const fn = get(window, `electronAPI.${functionNameInWindow}`);
+  if (!fn || typeof fn !== 'function') {
+    throw new Error(
+      `Function ${functionNameInWindow} not found in window.electronAPI`,
+    );
+  }
+
+  return fn;
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -51,22 +70,14 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   setAppHeight: () => {},
   saveLogs: async () => ({ success: false }),
   openPath: () => {},
+
+  // download updates
+  checkForUpdates: async () => {},
+  startDownload: async () => {},
+  quitAndInstall: async () => {},
 });
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
-  const getElectronApiFunction = (functionNameInWindow: string) => {
-    if (typeof window === 'undefined') return;
-
-    const fn = get(window, `electronAPI.${functionNameInWindow}`);
-    if (!fn || typeof fn !== 'function') {
-      throw new Error(
-        `Function ${functionNameInWindow} not found in window.electronAPI`,
-      );
-    }
-
-    return fn;
-  };
-
   return (
     <ElectronApiContext.Provider
       value={{
@@ -77,6 +88,9 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           send: getElectronApiFunction('ipcRenderer.send'),
           on: getElectronApiFunction('ipcRenderer.on'),
           invoke: getElectronApiFunction('ipcRenderer.invoke'),
+          removeAllListeners: getElectronApiFunction(
+            'ipcRenderer.removeAllListeners',
+          ),
         },
         store: {
           store: getElectronApiFunction('store.store'),
@@ -89,6 +103,10 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         showNotification: getElectronApiFunction('showNotification'),
         saveLogs: getElectronApiFunction('saveLogs'),
         openPath: getElectronApiFunction('openPath'),
+        // download updates
+        checkForUpdates: getElectronApiFunction('checkForUpdates'),
+        startDownload: getElectronApiFunction('startDownload'),
+        quitAndInstall: getElectronApiFunction('quitAndInstall'),
       }}
     >
       {children}

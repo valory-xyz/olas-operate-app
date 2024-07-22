@@ -43,7 +43,7 @@ const createService = async ({
         deploy,
         configuration: {
           ...serviceTemplate.configuration,
-          rpc: `${process.env.GNOSIS_RPC}`,
+          rpc: `${process.env.RPC}`,
         },
       }),
       headers: {

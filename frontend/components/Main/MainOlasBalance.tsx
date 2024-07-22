@@ -88,8 +88,8 @@ const CurrentBalance = () => {
         overlayStyle={OVERLAY_STYLE}
         title={
           <BalanceBreakdown>
-            {balances.map((item, index) => (
-              <BalanceBreakdownLine key={index}>
+            {balances.map((item) => (
+              <BalanceBreakdownLine key={item.title}>
                 <span>{item.title}</span>
                 <span className="font-weight-600">{item.value} OLAS</span>
               </BalanceBreakdownLine>

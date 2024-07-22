@@ -14,7 +14,7 @@ import {
   SERVICE_REGISTRY_TOKEN_UTILITY_CONTRACT_ADDRESS,
   SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESS,
 } from '@/constants/contractAddresses';
-import { gnosisMulticallProvider } from '@/constants/providers';
+import { multicallProvider } from '@/constants/providers';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
 import { Address } from '@/types/Address';
 import { StakingContractInfo, StakingRewardsInfo } from '@/types/Autonolas';
@@ -67,9 +67,9 @@ const getAgentStakingRewardsInfo = async ({
     serviceStakingTokenMechUsageContract.tsCheckpoint(),
   ];
 
-  await gnosisMulticallProvider.init();
+  await multicallProvider.init();
 
-  const multicallResponse = await gnosisMulticallProvider.all(contractCalls);
+  const multicallResponse = await multicallProvider.all(contractCalls);
 
   const [
     mechRequestCount,
@@ -143,9 +143,9 @@ const getAvailableRewardsForEpoch = async (): Promise<number | undefined> => {
     serviceStakingTokenMechUsageContract.tsCheckpoint(), // last checkpoint timestamp
   ];
 
-  await gnosisMulticallProvider.init();
+  await multicallProvider.init();
 
-  const multicallResponse = await gnosisMulticallProvider.all(contractCalls);
+  const multicallResponse = await multicallProvider.all(contractCalls);
 
   const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
 
@@ -174,9 +174,9 @@ const getStakingContractInfo = async (
     serviceStakingTokenMechUsageContract.getStakingState(serviceId),
   ];
 
-  await gnosisMulticallProvider.init();
+  await multicallProvider.init();
 
-  const multicallResponse = await gnosisMulticallProvider.all(contractCalls);
+  const multicallResponse = await multicallProvider.all(contractCalls);
   const [
     availableRewardsInBN,
     maxNumServicesInBN,
@@ -219,13 +219,13 @@ const getServiceRegistryInfo = async (
     serviceRegistryL2Contract.mapServices(serviceId),
   ];
 
-  await gnosisMulticallProvider.init();
+  await multicallProvider.init();
 
   const [
     operatorBalanceResponse,
     serviceIdTokenDepositResponse,
     mapServicesResponse,
-  ] = await gnosisMulticallProvider.all(contractCalls);
+  ] = await multicallProvider.all(contractCalls);
 
   const [bondValue, depositValue, serviceState] = [
     parseFloat(ethers.utils.formatUnits(operatorBalanceResponse, 18)),

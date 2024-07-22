@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+module.exports = {
   images: {
     remotePatterns: [
       {
@@ -32,11 +32,9 @@ const nextConfig = {
     return config;
   },
   env: {
-    GNOSIS_RPC:
+    RPC:
       process.env.NODE_ENV === 'production'
         ? process.env.FORK_URL
         : process.env.DEV_RPC,
   },
 };
-
-export default nextConfig;

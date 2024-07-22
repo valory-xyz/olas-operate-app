@@ -1,76 +1,25 @@
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Button, Flex, Modal, Skeleton, Tag, Tooltip, Typography } from 'antd';
-import Title from 'antd/es/typography/Title';
+import { Button, Flex, Modal, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 
+import { ConfettiAnimation } from '@/components/Confetti/ConfettiAnimation';
+import { MODAL_WIDTH } from '@/constants/sizes';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useReward } from '@/hooks/useReward';
 import { useStore } from '@/hooks/useStore';
 import { balanceFormat } from '@/utils/numberFormatters';
 
-import { ConfettiAnimation } from '../Confetti/ConfettiAnimation';
-import { CardSection } from '../styled/CardSection';
-
-const { Text, Paragraph } = Typography;
-
-const Loader = () => (
-  <Flex vertical gap={8}>
-    <Skeleton.Button active size="small" style={{ width: 92 }} />
-    <Skeleton.Button active size="small" style={{ width: 92 }} />
-  </Flex>
-);
-
-export const DisplayRewards = () => {
-  const { availableRewardsForEpochEth, isEligibleForRewards } = useReward();
-  const { isBalanceLoaded } = useBalance();
-
-  const reward =
-    availableRewardsForEpochEth === undefined
-      ? '--'
-      : `~${balanceFormat(availableRewardsForEpochEth, 2)}`;
-
-  return (
-    <CardSection vertical gap={8} padding="16px 24px" align="start">
-      <Text type="secondary">
-        Staking rewards this work period&nbsp;
-        <Tooltip
-          arrow={false}
-          title={
-            <Paragraph className="text-sm m-0">
-              The agent&apos;s working period lasts at least 24 hours, but its
-              start and end point may not be at the same time every day.
-            </Paragraph>
-          }
-        >
-          <InfoCircleOutlined />
-        </Tooltip>
-      </Text>
-      {isBalanceLoaded ? (
-        <Flex align="center" gap={12}>
-          <Text className="text-xl font-weight-600">{reward} OLAS&nbsp;</Text>
-          {isEligibleForRewards ? (
-            <Tag color="success">Earned</Tag>
-          ) : (
-            <Tag color="processing">Not yet earned</Tag>
-          )}
-        </Flex>
-      ) : (
-        <Loader />
-      )}
-    </CardSection>
-  );
-};
+const { Text, Title } = Typography;
 
 const SHARE_TEXT = `I just earned my first reward through the Operate app powered by #olas!\n\nDownload the Pearl app:`;
 const OPERATE_URL = 'https://olas.network/operate?pearl=first-reward';
 
-const NotifyRewards = () => {
+export const RewardsModal = () => {
   const { isEligibleForRewards, availableRewardsForEpochEth } = useReward();
   const { totalOlasBalance } = useBalance();
-  const { showNotification, store } = useElectronApi();
   const { storeState } = useStore();
+  const { showNotification, store } = useElectronApi();
 
   const [canShowNotification, setCanShowNotification] = useState(false);
 
@@ -121,7 +70,7 @@ const NotifyRewards = () => {
   return (
     <Modal
       open={canShowNotification}
-      width={400}
+      width={MODAL_WIDTH}
       onCancel={closeNotificationModal}
       footer={[
         <Button
@@ -178,10 +127,3 @@ const NotifyRewards = () => {
     </Modal>
   );
 };
-
-export const MainRewards = () => (
-  <>
-    <DisplayRewards />
-    <NotifyRewards />
-  </>
-);

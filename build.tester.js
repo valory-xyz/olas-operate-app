@@ -4,10 +4,9 @@
  * This is useful for testing the build process.
  * It will not notarize the app, so it will not be able to be run on someone else's Mac without disabling Gatekeeper on their machine.
  */
-require('dotenv').config();
-const build = require('electron-builder').build;
-
-const { publishOptions } = require('./electron/constants');
+import { build } from 'electron-builder';
+import { config } from 'dotenv';
+config();
 
 const main = async () => {
   console.log('Building...');
@@ -19,32 +18,33 @@ const main = async () => {
       appId: 'xyz.valory.olas-operate-app',
       artifactName: '${productName}-${version}-${platform}-${arch}.${ext}',
       productName: 'Pearl',
-      files: ['electron/**/*', 'package.json'],
+      files: ['./electron/**/*', './package.json', './dev-app-update.yml'],
       directories: {
-        output: 'dist',
+        output: './dist',
       },
       extraResources: [
         {
-          from: 'electron/bins',
+          from: './electron/bins',
           to: 'bins',
           filter: ['**/*'],
         },
       ],
-      mac: {
-        publish: null,
-        target: [
-          {
-            target: 'default',
-            arch: ['arm64'],
-          },
-        ],
-        category: 'public.app-category.utilities',
-        icon: 'electron/assets/icons/splash-robot-head-dock.png',
-        hardenedRuntime: true,
-        gatekeeperAssess: false,
-        entitlements: 'electron/entitlements.mac.plist',
-        entitlementsInherit: 'electron/entitlements.mac.plist',
-      },
+      //   NOTE - Edit this for your own platform, or leave it commented for default settings
+      //   mac: {
+      //   publish: null,
+      //   target: [
+      //     {
+      //       target: 'default',
+      //       arch: ['arm64'],
+      //     },
+      //   ],
+      //   category: 'public.app-category.utilities',
+      //   icon: 'electron/assets/icons/splash-robot-head-dock.png',
+      //   hardenedRuntime: true,
+      //   gatekeeperAssess: false,
+      //   entitlements: 'electron/entitlements.mac.plist',
+      //   entitlementsInherit: 'electron/entitlements.mac.plist',
+      // },
     },
   });
 };

@@ -7,6 +7,7 @@ import { useBalance } from '@/hooks/useBalance';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 
+import { UpdateProgressIndicator } from '../Update/UpdateProgressIndicator';
 import { KeepAgentRunning } from './KeepAgentRunning';
 import { MainAddFunds } from './MainAddFunds';
 import { MainGasBalance } from './MainGasBalance';
@@ -14,6 +15,7 @@ import { MainHeader } from './MainHeader';
 import { MainNeedsFunds } from './MainNeedsFunds';
 import { MainOlasBalance } from './MainOlasBalance';
 import { MainRewards } from './MainRewards';
+import { UpdateModal } from '../Update/UpdateModal';
 
 export const Main = () => {
   const { goto } = usePageState();
@@ -27,7 +29,7 @@ export const Main = () => {
     }
   }, [isLoaded, setIsLoaded, updateBalances, updateServicesState]);
 
-  return (
+  return (<>
     <Card
       title={<MainHeader />}
       extra={
@@ -49,6 +51,7 @@ export const Main = () => {
       style={{ borderTopColor: 'transparent' }}
     >
       <Flex vertical>
+        <UpdateProgressIndicator />
         <MainOlasBalance />
         <MainRewards />
         <KeepAgentRunning />
@@ -57,5 +60,7 @@ export const Main = () => {
         <MainAddFunds />
       </Flex>
     </Card>
+    <UpdateModal/>
+  </>
   );
 };

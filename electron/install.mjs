@@ -1,25 +1,26 @@
 // Installation helpers.
-const fs = require('fs');
-const os = require('os');
-const sudo = require('sudo-prompt');
-const process = require('process');
-const axios = require('axios');
-const { spawnSync } = require('child_process');
+import axios from 'axios';
+import { spawnSync } from 'child_process';
+import fs from 'fs';
+import os from 'os';
+import process from 'process';
+import sudo from 'sudo-prompt';
 
-const { paths } = require('./constants');
+import { paths } from './constants/paths.mjs';
 
 /**
  * current version of the pearl release
  * - use "" (nothing as a suffix) for latest release candidate, for example "0.1.0rc26"
  * - use "alpha" for alpha release, for example "0.1.0rc26-alpha"
  */
-const OlasMiddlewareVersion = '0.1.0rc71';
+const OlasMiddlewareVersion = '0.1.0rc79';
 
-const Env = {
+export const Env = {
   ...process.env,
   PATH: `${process.env.PATH}:/opt/homebrew/bin:/usr/local/bin`,
   HOMEBREW_NO_AUTO_UPDATE: '1',
 };
+
 const SudoOptions = {
   name: 'Pearl',
   env: Env,
@@ -82,7 +83,7 @@ function runSudoUnix(command, options) {
   if (!bin) {
     throw new Error(`Command ${command} not found`);
   }
-  return new Promise(function (resolve, _reject) {
+  return new Promise(function (resolve) {
     sudo.exec(
       `${bin} ${options}`,
       SudoOptions,
@@ -210,11 +211,11 @@ function installOperateCli(path) {
   if (fs.existsSync(installPath)) {
     fs.rmSync(installPath);
   }
-  return new Promise((resolve, _reject) => {
+  return new Promise((resolve) => {
     fs.copyFile(
       `${paths.dotOperateDirectory}/venv/bin/operate`,
       installPath,
-      function (error, _stdout, _stderr) {
+      function (error) {
         resolve(!error);
       },
     );
@@ -225,7 +226,7 @@ function createDirectory(path) {
   if (fs.existsSync(path)) {
     return;
   }
-  return new Promise((resolve, _reject) => {
+  return new Promise((resolve) => {
     fs.mkdir(path, { recursive: true }, (error) => {
       resolve(!error);
     });
@@ -262,7 +263,7 @@ function removeInstallationLogFile() {
 // NOTE: "Installing" is string matched in loading.html to detect installation
 /*******************************/
 
-async function setupDarwin(ipcChannel) {
+export async function setupDarwin(ipcChannel) {
   removeInstallationLogFile();
   console.log(appendInstallationLog('Creating required directories'));
   await createDirectory(`${paths.dotOperateDirectory}`);
@@ -289,7 +290,7 @@ async function setupDarwin(ipcChannel) {
 }
 
 // TODO: Add Tendermint installation
-async function setupUbuntu(ipcChannel) {
+export async function setupUbuntu(ipcChannel) {
   removeInstallationLogFile();
 
   console.log(appendInstallationLog('Checking python installation'));
@@ -345,9 +346,3 @@ async function setupUbuntu(ipcChannel) {
   console.log(appendInstallationLog('Installing pearl CLI'));
   await installOperateCli('/usr/local/bin');
 }
-
-module.exports = {
-  setupDarwin,
-  setupUbuntu,
-  Env,
-};

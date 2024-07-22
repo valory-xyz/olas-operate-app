@@ -1,4 +1,6 @@
-export const BACKEND_URL: string = `http://localhost:${process.env.NODE_ENV === 'production' ? 8765 : 8000}/api`;
+import { isDev } from './env';
+
+export const BACKEND_URL: string = `http://localhost:${isDev ? 8000 : 8765}/api`;
 export const COW_SWAP_GNOSIS_XDAI_OLAS_URL: string =
   'https://swap.cow.fi/#/100/swap/WXDAI/OLAS';
 

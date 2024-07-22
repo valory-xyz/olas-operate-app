@@ -230,7 +230,7 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
 export const getEthBalances = async (
   walletAddresses: Address[],
 ): Promise<AddressNumberRecord | undefined> => {
-  const rpcIsValid = await EthersService.checkRpc(`${process.env.GNOSIS_RPC}`);
+  const rpcIsValid = await EthersService.checkRpc(`${process.env.RPC}`);
   if (!rpcIsValid) return;
 
   const ethBalances = await MulticallService.getEthBalances(walletAddresses);
@@ -241,7 +241,7 @@ export const getEthBalances = async (
 export const getOlasBalances = async (
   walletAddresses: Address[],
 ): Promise<AddressNumberRecord | undefined> => {
-  const rpcIsValid = await EthersService.checkRpc(`${process.env.GNOSIS_RPC}`);
+  const rpcIsValid = await EthersService.checkRpc(`${process.env.RPC}`);
   if (!rpcIsValid) return;
 
   const olasBalances = await MulticallService.getErc20Balances(

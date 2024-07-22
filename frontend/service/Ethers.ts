@@ -1,6 +1,7 @@
-import { ContractInterface, ethers, providers, utils } from 'ethers';
+import { ContractInterface, ethers, utils } from 'ethers';
+import { Contract } from 'ethers-multicall';
 
-import { gnosisProvider } from '@/constants/providers';
+import { multicallProvider, provider } from '@/constants/providers';
 import { Address } from '@/types/Address';
 
 /**
@@ -9,15 +10,8 @@ import { Address } from '@/types/Address';
  * @param rpc
  * @returns Promise<number>
  */
-const getEthBalance = async (
-  address: Address,
-  rpc: string,
-): Promise<number> => {
+const getEthBalance = async (address: Address): Promise<number> => {
   try {
-    const provider = new providers.StaticJsonRpcProvider(rpc, {
-      name: 'Gnosis',
-      chainId: 100, // we currently only support Gnosis Trader agent
-    });
     return provider.getBalance(address).then((balance) => {
       const formattedBalance = utils.formatEther(balance);
       return Number(formattedBalance);
@@ -36,25 +30,16 @@ const getEthBalance = async (
  */
 const getErc20Balance = async (
   address: Address,
-  rpc: string,
   contractAddress?: Address,
 ): Promise<number> => {
   try {
     if (!contractAddress)
       throw new Error('Contract address is required for ERC20 balance');
-    const provider = new providers.StaticJsonRpcProvider(rpc, {
-      name: 'Gnosis',
-      chainId: 100, // we currently only support Gnosis Trader agent
-    });
-    const contract = new ethers.Contract(
-      contractAddress,
-      [
-        'function balanceOf(address) view returns (uint256)',
-        'function decimals() view returns (uint8)',
-      ],
-      provider,
-    );
-    const [balance, decimals] = await Promise.all([
+    const contract = new Contract(contractAddress, [
+      'function balanceOf(address) view returns (uint256)',
+      'function decimals() view returns (uint8)',
+    ]);
+    const [balance, decimals] = await multicallProvider.all([
       contract.balanceOf(address),
       contract.decimals(),
     ]);
@@ -75,9 +60,9 @@ const checkRpc = async (rpc: string): Promise<boolean> => {
   try {
     if (!rpc) throw new Error('RPC is required');
 
-    const provider = new providers.StaticJsonRpcProvider(rpc, {
+    const provider = new ethers.providers.StaticJsonRpcProvider(rpc, {
       name: 'Gnosis',
-      chainId: 100, // we currently only support Gnosis Trader agent
+      chainId: 100,
     });
 
     const networkId = (await provider.getNetwork()).chainId;
@@ -96,7 +81,7 @@ const readContract = ({
   address: string;
   abi: ContractInterface;
 }) => {
-  const contract = new ethers.Contract(address, abi, gnosisProvider);
+  const contract = new ethers.Contract(address, abi, provider);
   return contract;
 };
 
