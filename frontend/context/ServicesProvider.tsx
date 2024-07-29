@@ -85,8 +85,16 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   const updateServiceStatus = useCallback(async () => {
     if (!services?.[0]) return;
-    const serviceStatus = await ServicesService.getDeployment(services[0].hash);
-    setServiceStatus(serviceStatus.status);
+    try {
+      const serviceStatus = await ServicesService.getDeployment(
+        services[0].hash,
+      );
+      setServiceStatus(serviceStatus.status);
+    } catch (e) {
+      message.error(
+        'Service status could not be deployed, please contact support',
+      );
+    }
   }, [services]);
 
   // Update service state

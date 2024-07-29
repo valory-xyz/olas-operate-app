@@ -50,6 +50,13 @@ export const useStakingContractInfo = () => {
     hasEnoughRewardsAndSlots &&
     (isAgentEvicted ? isServiceStakedForMinimumDuration : true);
 
+  console.log({
+    serviceStakingStartTime,
+    minimumStakingDuration,
+    isEligibleForStaking,
+    isAgentEvicted,
+  });
+
   return {
     hasEnoughServiceSlots,
     isEligibleForStaking,

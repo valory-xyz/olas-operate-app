@@ -113,6 +113,8 @@ const AgentNotRunningButton = () => {
     // Must have a wallet to start the agent
     if (!wallets?.[0]) return;
 
+    console.log(wallets);
+
     // Paused to stop overlapping service poll while wallet is created or service is built
     setIsServicePollingPaused(true);
 
@@ -121,6 +123,8 @@ const AgentNotRunningButton = () => {
 
     // Mock "DEPLOYING" status (service polling will update this once resumed)
     setServiceStatus(DeploymentStatus.DEPLOYING);
+
+    console.log('before master safe: ', masterSafeAddress);
 
     // Create master safe if it doesn't exist
     try {
@@ -136,6 +140,7 @@ const AgentNotRunningButton = () => {
       return;
     }
 
+    console.log('before create / deploy: ');
     // Then create / deploy the service
     try {
       await ServicesService.createService({
@@ -151,6 +156,7 @@ const AgentNotRunningButton = () => {
       return;
     }
 
+    console.log('before minimum staked amount required: ');
     // Show success notification based on whether there was a service prior to starting
     try {
       if (!service) {
@@ -167,6 +173,8 @@ const AgentNotRunningButton = () => {
       console.error(error);
       showNotification?.('Error while showing "running" notification');
     }
+
+    console.log('before setting services ');
 
     // Can assume successful deployment
     // resume polling, optimistically update service status (poll will update, if needed)
@@ -195,6 +203,8 @@ const AgentNotRunningButton = () => {
       // at present agent will always require staked/bonded OLAS (or the ability to stake/bond)
       return safeOlasBalanceWithStaked >= requiredOlas;
     }
+
+    console.log({ isEligibleForStaking, isAgentEvicted });
 
     // case if agent is evicted and user has met the staking criteria
     if (isEligibleForStaking && isAgentEvicted) return true;
@@ -257,6 +267,15 @@ export const AgentButton = () => {
     ) {
       return <AgentNotRunningButton />;
     }
+
+    console.log('inside useMemo for start button');
+    console.log({
+      hasInitialLoaded,
+      serviceStatus,
+      isEligibleForStaking,
+      isAgentEvicted,
+      service,
+    });
 
     return (
       <Button type="primary" size="large" disabled>
