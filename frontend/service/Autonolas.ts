@@ -165,6 +165,8 @@ const getStakingContractInfo = async (
 ): Promise<StakingContractInfo | undefined> => {
   if (!serviceId) return;
 
+  console.log('serviceId: ', serviceId);
+
   const contractCalls = [
     serviceStakingTokenMechUsageContract.availableRewards(),
     serviceStakingTokenMechUsageContract.maxNumServices(),
