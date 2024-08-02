@@ -63,7 +63,7 @@ class LedgerType(enum.IntEnum):
         return f"{self.name.lower()}.txt"
 
 
-class ChainType(enum.IntEnum):
+class ChainIdentifier(enum.IntEnum):
     """Chain type enum."""
 
     ETHEREUM = 1
@@ -138,7 +138,7 @@ class LedgerConfig(LocalResource):
 
     rpc: str
     type: LedgerType
-    chain: ChainType
+    chain: ChainIdentifier
 
 
 LedgerConfigs = t.List[LedgerConfig]

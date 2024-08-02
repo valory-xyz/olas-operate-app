@@ -38,7 +38,7 @@ from operate.constants import (
 )
 from operate.ledger import get_default_rpc
 from operate.resource import LocalResource
-from operate.types import ChainType, LedgerType
+from operate.types import ChainIdentifier, LedgerType
 from operate.utils.gnosis import add_owner
 from operate.utils.gnosis import create_safe as create_gnosis_safe
 from operate.utils.gnosis import get_owners, swap_owner
@@ -83,7 +83,7 @@ class MasterWallet(LocalResource):
 
     def ledger_api(
         self,
-        chain_type: ChainType,
+        chain_type: ChainIdentifier,
         rpc: t.Optional[str] = None,
     ) -> LedgerApi:
         """Get ledger api object."""
@@ -97,7 +97,7 @@ class MasterWallet(LocalResource):
         self,
         to: str,
         amount: int,
-        chain_type: ChainType,
+        chain_type: ChainIdentifier,
         from_safe: bool = True,
     ) -> None:
         """Transfer funds to the given account."""
@@ -110,7 +110,7 @@ class MasterWallet(LocalResource):
 
     def create_safe(
         self,
-        chain_type: ChainType,
+        chain_type: ChainIdentifier,
         owner: t.Optional[str] = None,
         rpc: t.Optional[str] = None,
     ) -> None:
@@ -119,7 +119,7 @@ class MasterWallet(LocalResource):
 
     def add_backup_owner(
         self,
-        chain_type: ChainType,
+        chain_type: ChainIdentifier,
         owner: str,
         rpc: t.Optional[str] = None,
     ) -> None:
@@ -128,7 +128,7 @@ class MasterWallet(LocalResource):
 
     def swap_backup_owner(
         self,
-        chain_type: ChainType,
+        chain_type: ChainIdentifier,
         old_owner: str,
         new_owner: str,
         rpc: t.Optional[str] = None,
@@ -138,7 +138,7 @@ class MasterWallet(LocalResource):
 
     def add_or_swap_owner(
         self,
-        chain_type: ChainType,
+        chain_type: ChainIdentifier,
         owner: str,
         rpc: t.Optional[str] = None,
     ) -> None:
@@ -152,7 +152,7 @@ class EthereumMasterWallet(MasterWallet):
 
     path: Path
     address: str
-    safe_chains: t.List[ChainType]  # For cross-chain support
+    safe_chains: t.List[ChainIdentifier]  # For cross-chain support
 
     ledger_type: LedgerType = LedgerType.ETHEREUM
     safe: t.Optional[str] = None
@@ -162,7 +162,7 @@ class EthereumMasterWallet(MasterWallet):
     _key = ledger_type.key_file
     _crypto_cls = EthereumCrypto
 
-    def _transfer_from_eoa(self, to: str, amount: int, chain_type: ChainType) -> None:
+    def _transfer_from_eoa(self, to: str, amount: int, chain_type: ChainIdentifier) -> None:
         """Transfer funds from EOA wallet."""
         ledger_api = t.cast(EthereumApi, self.ledger_api(chain_type=chain_type))
         tx_helper = TxSettler(
@@ -195,7 +195,7 @@ class EthereumMasterWallet(MasterWallet):
         setattr(tx_helper, "build", _build_tx)  # noqa: B010
         tx_helper.transact(lambda x: x, "", kwargs={})
 
-    def _transfer_from_safe(self, to: str, amount: int, chain_type: ChainType) -> None:
+    def _transfer_from_safe(self, to: str, amount: int, chain_type: ChainIdentifier) -> None:
         """Transfer funds from safe wallet."""
         transfer_from_safe(
             ledger_api=self.ledger_api(chain_type=chain_type),
@@ -209,7 +209,7 @@ class EthereumMasterWallet(MasterWallet):
         self,
         to: str,
         amount: int,
-        chain_type: ChainType,
+        chain_type: ChainIdentifier,
         from_safe: bool = True,
     ) -> None:
         """Transfer funds to the given account."""
@@ -253,7 +253,7 @@ class EthereumMasterWallet(MasterWallet):
 
     def create_safe(
         self,
-        chain_type: ChainType,
+        chain_type: ChainIdentifier,
         owner: t.Optional[str] = None,
         rpc: t.Optional[str] = None,
     ) -> None:
@@ -271,7 +271,7 @@ class EthereumMasterWallet(MasterWallet):
 
     def add_backup_owner(
         self,
-        chain_type: ChainType,
+        chain_type: ChainIdentifier,
         owner: str,
         rpc: t.Optional[str] = None,
     ) -> None:
@@ -288,7 +288,7 @@ class EthereumMasterWallet(MasterWallet):
 
     def swap_backup_owner(
         self,
-        chain_type: ChainType,
+        chain_type: ChainIdentifier,
         old_owner: str,
         new_owner: str,
         rpc: t.Optional[str] = None,
@@ -307,7 +307,7 @@ class EthereumMasterWallet(MasterWallet):
 
     def add_or_swap_owner(
         self,
-        chain_type: ChainType,
+        chain_type: ChainIdentifier,
         owner: str,
         rpc: t.Optional[str] = None,
     ) -> None:

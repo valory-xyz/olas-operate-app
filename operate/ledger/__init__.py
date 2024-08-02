@@ -25,7 +25,7 @@ import typing as t
 from operate.ledger.base import LedgerHelper
 from operate.ledger.ethereum import Ethereum
 from operate.ledger.solana import Solana
-from operate.types import ChainType, LedgerType
+from operate.types import ChainIdentifier, LedgerType
 
 
 ETHEREUM_PUBLIC_RPC = os.environ.get("DEV_RPC", "https://ethereum.publicnode.com")
@@ -39,24 +39,24 @@ GOERLI_RPC = os.environ.get("DEV_RPC", "https://ethereum-goerli.publicnode.com")
 SOLANA_RPC = os.environ.get("DEV_RPC", "https://api.mainnet-beta.solana.com")
 
 PUBLIC_RPCS = {
-    ChainType.ETHEREUM: ETHEREUM_PUBLIC_RPC,
-    ChainType.GNOSIS: GNOSIS_PUBLIC_RPC,
-    ChainType.GOERLI: GOERLI_PUBLIC_RPC,
-    ChainType.SOLANA: SOLANA_PUBLIC_RPC,
+    ChainIdentifier.ETHEREUM: ETHEREUM_PUBLIC_RPC,
+    ChainIdentifier.GNOSIS: GNOSIS_PUBLIC_RPC,
+    ChainIdentifier.GOERLI: GOERLI_PUBLIC_RPC,
+    ChainIdentifier.SOLANA: SOLANA_PUBLIC_RPC,
 }
 
 DEFAULT_RPCS = {
-    ChainType.ETHEREUM: ETHEREUM_RPC,
-    ChainType.GNOSIS: GNOSIS_RPC,
-    ChainType.GOERLI: GOERLI_RPC,
-    ChainType.SOLANA: SOLANA_RPC,
+    ChainIdentifier.ETHEREUM: ETHEREUM_RPC,
+    ChainIdentifier.GNOSIS: GNOSIS_RPC,
+    ChainIdentifier.GOERLI: GOERLI_RPC,
+    ChainIdentifier.SOLANA: SOLANA_RPC,
 }
 
-CHAIN_HELPERS: t.Dict[ChainType, t.Type[LedgerHelper]] = {
-    ChainType.ETHEREUM: Ethereum,
-    ChainType.GNOSIS: Ethereum,
-    ChainType.GOERLI: Ethereum,
-    ChainType.SOLANA: Solana,
+CHAIN_HELPERS: t.Dict[ChainIdentifier, t.Type[LedgerHelper]] = {
+    ChainIdentifier.ETHEREUM: Ethereum,
+    ChainIdentifier.GNOSIS: Ethereum,
+    ChainIdentifier.GOERLI: Ethereum,
+    ChainIdentifier.SOLANA: Solana,
 }
 
 LEDGER_HELPERS: t.Dict[LedgerType, t.Type[LedgerHelper]] = {
@@ -65,26 +65,26 @@ LEDGER_HELPERS: t.Dict[LedgerType, t.Type[LedgerHelper]] = {
 }
 
 CURRENCY_DENOMS = {
-    ChainType.ETHEREUM: "Wei",
-    ChainType.GNOSIS: "xDai",
-    ChainType.GOERLI: "GWei",
-    ChainType.SOLANA: "Lamp",
+    ChainIdentifier.ETHEREUM: "Wei",
+    ChainIdentifier.GNOSIS: "xDai",
+    ChainIdentifier.GOERLI: "GWei",
+    ChainIdentifier.SOLANA: "Lamp",
 }
 
 
-def get_default_rpc(chain: ChainType) -> str:
+def get_default_rpc(chain: ChainIdentifier) -> str:
     """Get default RPC chain type."""
     return DEFAULT_RPCS.get(chain, ETHEREUM_RPC)
 
 
-def get_ledger_type_from_chain_type(chain: ChainType) -> LedgerType:
-    """Get LedgerType from ChainType."""
-    if chain in (ChainType.ETHEREUM, ChainType.GOERLI, ChainType.GNOSIS):
+def get_ledger_type_from_chain_type(chain: ChainIdentifier) -> LedgerType:
+    """Get LedgerType from ChainIdentifier."""
+    if chain in (ChainIdentifier.ETHEREUM, ChainIdentifier.GOERLI, ChainIdentifier.GNOSIS):
         return LedgerType.ETHEREUM
     return LedgerType.SOLANA
 
 
-def get_ledger_helper_by_chain(rpc: str, chain: ChainType) -> LedgerHelper:
+def get_ledger_helper_by_chain(rpc: str, chain: ChainIdentifier) -> LedgerHelper:
     """Get ledger helper by chain type."""
     return CHAIN_HELPERS.get(chain, Ethereum)(rpc=rpc)
 
@@ -94,6 +94,6 @@ def get_ledger_helper_by_ledger(rpc: str, ledger: LedgerHelper) -> LedgerHelper:
     return LEDGER_HELPERS.get(ledger, Ethereum)(rpc=rpc)  # type: ignore
 
 
-def get_currency_denom(chain: ChainType) -> str:
+def get_currency_denom(chain: ChainIdentifier) -> str:
     """Get currency denom by chain type."""
     return CURRENCY_DENOMS.get(chain, "Wei")

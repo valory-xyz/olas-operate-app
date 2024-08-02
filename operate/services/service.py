@@ -66,7 +66,7 @@ from operate.resource import LocalResource
 from operate.services.deployment_runner import run_host_deployment, stop_host_deployment
 from operate.services.utils import tendermint
 from operate.types import (
-    ChainType,
+    ChainIdentifier,
     DeployedNodes,
     DeploymentConfig,
     DeploymentStatus,
@@ -244,7 +244,7 @@ class ServiceHelper:
                 (_, config), *_ = override["config"]["ledger_apis"].items()
                 return LedgerConfig(
                     rpc=config["address"],
-                    chain=ChainType(config["chain_id"]),
+                    chain=ChainIdentifier(config["chain_id"]),
                     type=LedgerType.ETHEREUM,
                 )
         raise ValueError("No ledger config found.")

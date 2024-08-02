@@ -19,7 +19,7 @@
 
 """Chain profiles."""
 
-from operate.types import ChainType, ContractAddresses
+from operate.types import ChainIdentifier, ContractAddresses
 
 
 CONTRACTS = {
@@ -27,7 +27,7 @@ CONTRACTS = {
     #  Cannot be done with the given version.
     #  The addresses have been manually copied from:
     #  https://github.com/valory-xyz/open-autonomy/blob/v0.15.1/autonomy/chain/constants.py
-    ChainType.GNOSIS: ContractAddresses(
+    ChainIdentifier.GNOSIS: ContractAddresses(
         {
             "service_manager": "0x04b0007b2aFb398015B76e5f22993a1fddF83644",
             "service_registry": "0x9338b5153AE39BB89f50468E608eD9d764B755fD",
@@ -37,7 +37,7 @@ CONTRACTS = {
             "multisend": "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
         }
     ),
-    ChainType.ETHEREUM: ContractAddresses(
+    ChainIdentifier.ETHEREUM: ContractAddresses(
         {
             "service_registry": "0x48b6af7B12C71f09e2fC8aF4855De4Ff54e775cA",
             "service_registry_token_utility": "0x3Fb926116D454b95c669B6Bf2E7c3bad8d19affA",
@@ -47,7 +47,7 @@ CONTRACTS = {
             "multisend": "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
         }
     ),
-    ChainType.GOERLI: ContractAddresses(
+    ChainIdentifier.GOERLI: ContractAddresses(
         {
             "service_registry": "0x1cEe30D08943EB58EFF84DD1AB44a6ee6FEff63a",
             "service_registry_token_utility": "0x6d9b08701Af43D68D991c074A27E4d90Af7f2276",
@@ -57,7 +57,7 @@ CONTRACTS = {
             "multisend": "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
         }
     ),
-    ChainType.POLYGON: ContractAddresses(
+    ChainIdentifier.POLYGON: ContractAddresses(
         {
             "service_registry": "0xE3607b00E75f6405248323A9417ff6b39B244b50",
             "service_registry_token_utility": "0xa45E64d13A30a51b91ae0eb182e88a40e9b18eD8",
@@ -67,7 +67,7 @@ CONTRACTS = {
             "multisend": "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
         }
     ),
-    ChainType.POLYGON_MUMBAI: ContractAddresses(
+    ChainIdentifier.POLYGON_MUMBAI: ContractAddresses(
         {
             "service_registry": "0xf805DfF246CC208CD2F08ffaD242b7C32bc93623",
             "service_registry_token_utility": "0x131b5551c81e9B3E89E9ACE30A5B3D45144E3e42",
@@ -77,7 +77,7 @@ CONTRACTS = {
             "multisend": "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
         }
     ),
-    ChainType.CHIADO: ContractAddresses(
+    ChainIdentifier.CHIADO: ContractAddresses(
         {
             "service_registry": "0x31D3202d8744B16A120117A053459DDFAE93c855",
             "service_registry_token_utility": "0xc2c7E40674f1C7Bb99eFe5680Efd79842502bED4",
@@ -87,7 +87,7 @@ CONTRACTS = {
             "multisend": "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
         }
     ),
-    ChainType.ARBITRUM_ONE: ContractAddresses(
+    ChainIdentifier.ARBITRUM_ONE: ContractAddresses(
         {
             "service_registry": "0xE3607b00E75f6405248323A9417ff6b39B244b50",
             "service_registry_token_utility": "0x3d77596beb0f130a4415df3D2D8232B3d3D31e44",
@@ -97,7 +97,7 @@ CONTRACTS = {
             "multisend": "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
         }
     ),
-    ChainType.ARBITRUM_SEPOLIA: ContractAddresses(
+    ChainIdentifier.ARBITRUM_SEPOLIA: ContractAddresses(
         {
             "service_registry": "0x31D3202d8744B16A120117A053459DDFAE93c855",
             "service_registry_token_utility": "0xeB49bE5DF00F74bd240DE4535DDe6Bc89CEfb994",
@@ -107,7 +107,7 @@ CONTRACTS = {
             "multisend": "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
         }
     ),
-    ChainType.OPTIMISTIC: ContractAddresses(
+    ChainIdentifier.OPTIMISTIC: ContractAddresses(
         {
             "service_registry": "0x3d77596beb0f130a4415df3D2D8232B3d3D31e44",
             "service_registry_token_utility": "0xBb7e1D6Cb6F243D6bdE81CE92a9f2aFF7Fbe7eac",
@@ -117,7 +117,7 @@ CONTRACTS = {
             "multisend": "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
         }
     ),
-    ChainType.OPTIMISTIC_SEPOLIA: ContractAddresses(
+    ChainIdentifier.OPTIMISTIC_SEPOLIA: ContractAddresses(
         {
             "service_registry": "0x31D3202d8744B16A120117A053459DDFAE93c855",
             "service_registry_token_utility": "0xeB49bE5DF00F74bd240DE4535DDe6Bc89CEfb994",
@@ -127,7 +127,7 @@ CONTRACTS = {
             "multisend": "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
         }
     ),
-    ChainType.BASE: ContractAddresses(
+    ChainIdentifier.BASE: ContractAddresses(
         {
             "service_registry": "0x3C1fF68f5aa342D296d4DEe4Bb1cACCA912D95fE",
             "service_registry_token_utility": "0x34C895f302D0b5cf52ec0Edd3945321EB0f83dd5",
@@ -137,7 +137,7 @@ CONTRACTS = {
             "multisend": "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
         }
     ),
-    ChainType.BASE_SEPOLIA: ContractAddresses(
+    ChainIdentifier.BASE_SEPOLIA: ContractAddresses(
         {
             "service_registry": "0x31D3202d8744B16A120117A053459DDFAE93c855",
             "service_registry_token_utility": "0xeB49bE5DF00F74bd240DE4535DDe6Bc89CEfb994",
@@ -147,7 +147,7 @@ CONTRACTS = {
             "multisend": "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
         }
     ),
-    ChainType.CELO: ContractAddresses(
+    ChainIdentifier.CELO: ContractAddresses(
         {
             "service_registry": "0xE3607b00E75f6405248323A9417ff6b39B244b50",
             "service_registry_token_utility": "0x3d77596beb0f130a4415df3D2D8232B3d3D31e44",
@@ -157,7 +157,7 @@ CONTRACTS = {
             "multisend": "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D",
         }
     ),
-    ChainType.CELO_ALFAJORES: ContractAddresses(
+    ChainIdentifier.CELO_ALFAJORES: ContractAddresses(
         {
             "service_registry": "0x31D3202d8744B16A120117A053459DDFAE93c855",
             "service_registry_token_utility": "0xeB49bE5DF00F74bd240DE4535DDe6Bc89CEfb994",
@@ -170,9 +170,9 @@ CONTRACTS = {
 }
 
 STAKING = {
-    ChainType.GNOSIS: "0xEE9F19b5DF06c7E8Bfc7B28745dcf944C504198A",
+    ChainIdentifier.GNOSIS: "0xEE9F19b5DF06c7E8Bfc7B28745dcf944C504198A",
 }
 
 OLAS = {
-    ChainType.GNOSIS: "0xcE11e14225575945b8E6Dc0D4F2dD4C570f79d9f",
+    ChainIdentifier.GNOSIS: "0xcE11e14225575945b8E6Dc0D4F2dD4C570f79d9f",
 }
