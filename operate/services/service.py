@@ -66,15 +66,21 @@ from operate.resource import LocalResource
 from operate.services.deployment_runner import run_host_deployment, stop_host_deployment
 from operate.services.utils import tendermint
 from operate.types import (
+    ChainConfig,
+    ChainConfigs,
     ChainType,
+    ConfigurationTemplate,
+    ConfigurationTemplates,
     DeployedNodes,
     DeploymentConfig,
     DeploymentStatus,
     LedgerConfig,
+    LedgerConfigs,
     LedgerType,
     OnChainData,
     OnChainState,
     OnChainUserParams,
+    ServiceTemplate,
 )
 
 
@@ -86,6 +92,7 @@ DELETE_PREFIX = "delete_"
 # pylint: disable=no-member,redefined-builtin,too-many-instance-attributes
 
 DUMMY_MULTISIG = "0xm"
+NON_EXISTENT_TOKEN = -1
 
 
 def mkdirs(build_dir: Path) -> None:
@@ -233,21 +240,23 @@ class ServiceHelper:
         self.path = path
         self.config = load_service_config(service_path=path)
 
-    def ledger_config(self) -> "LedgerConfig":
-        """Get ledger config."""
-        # TODO: Multiledger/Multiagent support
+    def ledger_configs(self) -> "LedgerConfigs":
+        """Get ledger configs."""
+        ledger_configs = {}
         for override in self.config.overrides:
             if (
                 override["type"] == "connection"
                 and "valory/ledger" in override["public_id"]
             ):
                 (_, config), *_ = override["config"]["ledger_apis"].items()
-                return LedgerConfig(
+                # TODO chain name is inferred from the chain_id. The actual id provided on service.yaml is ignored.
+                chain = ChainType.from_id(cid=config["chain_id"])
+                ledger_configs[config["chain_id"]] = LedgerConfig(
                     rpc=config["address"],
-                    chain=ChainType.from_id(cid=config["chain_id"]),
+                    chain=chain,
                     type=LedgerType.ETHEREUM,
                 )
-        raise ValueError("No ledger config found.")
+        return ledger_configs
 
     def deployment_config(self) -> DeploymentConfig:
         """Returns deployment config."""
@@ -408,10 +417,12 @@ class Deployment(LocalResource):
             )
             builder.deplopyment_type = DockerComposeGenerator.deployment_type
             builder.try_update_abci_connection_params()
+
+            home_chain_data = service.chain_configs[service.home_chain_id]
             builder.try_update_runtime_params(
-                multisig_address=service.chain_data.multisig,
-                agent_instances=service.chain_data.instances,
-                service_id=service.chain_data.token,
+                multisig_address=home_chain_data.multisig,
+                agent_instances=home_chain_data.instances,
+                service_id=home_chain_data.token,
                 consensus_threshold=None,
             )
             # TODO: Support for multiledger
@@ -624,8 +635,8 @@ class Service(LocalResource):
 
     hash: str
     keys: Keys
-    ledger_config: LedgerConfig
-    chain_data: OnChainData
+    home_chain_id: int
+    chain_configs: ChainConfigs
 
     path: Path
     service_path: Path
@@ -662,8 +673,7 @@ class Service(LocalResource):
     def new(
         hash: str,
         keys: Keys,
-        rpc: str,
-        on_chain_user_params: OnChainUserParams,
+        service_template: ServiceTemplate,
         storage: Path,
     ) -> "Service":
         """Create a new service."""
@@ -676,26 +686,35 @@ class Service(LocalResource):
             )
         )
         with (service_path / "service.yaml").open("r", encoding="utf-8") as fp:
-            config, *_ = yaml_load_all(fp)
+            service_yaml, *_ = yaml_load_all(fp)
 
-        ledger_config = ServiceHelper(path=service_path).ledger_config()
-        service = Service(
-            name=config["author"] + "/" + config["name"],
-            hash=hash,
-            keys=keys,
-            ledger_config=LedgerConfig(
-                rpc=rpc,
-                type=ledger_config.type,
-                chain=ledger_config.chain,
-            ),
-            chain_data=OnChainData(
+        ledger_configs = ServiceHelper(path=service_path).ledger_configs()
+
+        chain_configs = {}
+        for chain, config in service_template["configurations"].items():
+            ledger_config = ledger_configs[chain]
+            ledger_config.rpc = config["rpc"]
+
+            chain_data = OnChainData(
                 instances=[],
-                token=-1,
+                token=NON_EXISTENT_TOKEN,
                 multisig=DUMMY_MULTISIG,
                 staked=False,
-                on_chain_state=OnChainState.NOTMINTED,
-                user_params=on_chain_user_params,
-            ),
+                on_chain_state=OnChainState.NON_EXISTENT,
+                user_params=OnChainUserParams.from_json(config),
+            )
+
+            chain_configs[chain] = ChainConfig(
+                ledger_config=ledger_config,
+                chain_data=chain_data,
+            )
+
+        service = Service(
+            name=service_yaml["author"] + "/" + service_yaml["name"],
+            hash=service_template["hash"],
+            keys=keys,
+            home_chain_id=service_template["home_chain_id"],
+            chain_configs=chain_configs,
             path=service_path.parent,
             service_path=service_path,
         )

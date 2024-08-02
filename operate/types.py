@@ -130,16 +130,17 @@ class DeploymentStatus(enum.IntEnum):
     DELETED = 6
 
 
+# TODO defined in aea.chain.base.OnChainState
 class OnChainState(enum.IntEnum):
     """On-chain state."""
 
-    NOTMINTED = 0
-    MINTED = 1
-    ACTIVATED = 2
-    REGISTERED = 3
+    NON_EXISTENT = 0
+    PRE_REGISTRATION = 1
+    ACTIVE_REGISTRATION = 2
+    FINISHED_REGISTRATION = 3
     DEPLOYED = 4
-    TERMINATED = 5
-    UNBONDED = 6
+    TERMINATED_BONDED = 5
+    UNBONDED = 6  # TODO this is not an on-chain state https://github.com/valory-xyz/autonolas-registries/blob/main/contracts/ServiceRegistryL2.sol
 
 
 class ContractAddresses(TypedDict):
@@ -162,18 +163,7 @@ class LedgerConfig(LocalResource):
     chain: ChainType
 
 
-LedgerConfigs = t.List[LedgerConfig]
-
-
-class ServiceState(enum.IntEnum):
-    """Service state"""
-
-    NON_EXISTENT = 0
-    PRE_REGISTRATION = 1
-    ACTIVE_REGISTRATION = 2
-    FINISHED_REGISTRATION = 3
-    DEPLOYED = 4
-    TERMINATED_BONDED = 5
+LedgerConfigs = t.Dict[str, LedgerConfig]
 
 
 class DeploymentConfig(TypedDict):
@@ -203,6 +193,9 @@ class ConfigurationTemplate(TypedDict):
     fund_requirements: FundRequirementsTemplate
 
 
+ConfigurationTemplates = t.Dict[int, ConfigurationTemplate]
+
+
 class ServiceTemplate(TypedDict):
     """Service template."""
 
@@ -210,7 +203,9 @@ class ServiceTemplate(TypedDict):
     hash: str
     image: str
     description: str
-    configuration: ConfigurationTemplate
+    service_version: str
+    home_chain_id: int
+    configurations: ConfigurationTemplates
 
 
 @dataclass
@@ -258,3 +253,19 @@ class OnChainData(LocalResource):
     staked: bool
     on_chain_state: OnChainState
     user_params: OnChainUserParams
+
+
+@dataclass
+class ChainConfig(LocalResource):
+    """Chain config."""
+
+    ledger_config: LedgerConfig
+    chain_data: OnChainData
+
+    @classmethod
+    def from_json(cls, obj: t.Dict) -> "ChainConfig":
+        """Load the chain config."""
+        return super().from_json(obj)  # type: ignore
+
+
+ChainConfigs = t.Dict[int, ChainConfig]

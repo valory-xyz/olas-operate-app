@@ -521,6 +521,102 @@ class _ChainUtil:
             instances=instances,
         )
 
+    def swap(  # pylint: disable=too-many-arguments,too-many-locals
+        self,
+        service_id: int,
+        multisig: str,
+        owner_key: str,
+    ) -> None:
+        """Swap safe owner."""
+        logging.info(f"Swapping safe for service {service_id} [{multisig}]...")
+        self._patch()
+        manager = ServiceManager(
+            service_id=service_id,
+            chain_type=self.chain_type,
+            key=self.wallet.key_path,
+            password=self.wallet.password,
+            timeout=ON_CHAIN_INTERACT_TIMEOUT,
+            retries=ON_CHAIN_INTERACT_RETRIES,
+            sleep=ON_CHAIN_INTERACT_SLEEP,
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            key_file = Path(temp_dir, "key.txt")
+            key_file.write_text(owner_key, encoding="utf-8")
+            owner_crypto = EthereumCrypto(private_key_path=str(key_file))
+        owner_cryptos: t.List[EthereumCrypto] = [owner_crypto]
+        owners = [
+            manager.ledger_api.api.to_checksum_address(owner_crypto.address)
+            for owner_crypto in owner_cryptos
+        ]
+        owner_to_swap = owners[0]
+        multisend_txs = []
+        txd = registry_contracts.gnosis_safe.get_swap_owner_data(
+            ledger_api=manager.ledger_api,
+            contract_address=multisig,
+            old_owner=manager.ledger_api.api.to_checksum_address(owner_to_swap),
+            new_owner=manager.ledger_api.api.to_checksum_address(
+                manager.crypto.address
+            ),
+        ).get("data")
+        multisend_txs.append(
+            {
+                "operation": MultiSendOperation.CALL,
+                "to": multisig,
+                "value": 0,
+                "data": HexBytes(txd[2:]),
+            }
+        )
+        multisend_txd = registry_contracts.multisend.get_tx_data(  # type: ignore
+            ledger_api=manager.ledger_api,
+            contract_address=ContractConfigs.multisend.contracts[self.chain_type],
+            multi_send_txs=multisend_txs,
+        ).get("data")
+        multisend_data = bytes.fromhex(multisend_txd[2:])
+        safe_tx_hash = registry_contracts.gnosis_safe.get_raw_safe_transaction_hash(
+            ledger_api=manager.ledger_api,
+            contract_address=multisig,
+            to_address=ContractConfigs.multisend.contracts[self.chain_type],
+            value=0,
+            data=multisend_data,
+            safe_tx_gas=0,
+            operation=SafeOperation.DELEGATE_CALL.value,
+        ).get("tx_hash")[2:]
+        payload_data = hash_payload_to_hex(
+            safe_tx_hash=safe_tx_hash,
+            ether_value=0,
+            safe_tx_gas=0,
+            to_address=ContractConfigs.multisend.contracts[self.chain_type],
+            data=multisend_data,
+        )
+        tx_params = skill_input_hex_to_payload(payload=payload_data)
+        safe_tx_bytes = binascii.unhexlify(tx_params["safe_tx_hash"])
+        owner_to_signature = {}
+        for owner_crypto in owner_cryptos:
+            signature = owner_crypto.sign_message(
+                message=safe_tx_bytes,
+                is_deprecated_mode=True,
+            )
+            owner_to_signature[
+                manager.ledger_api.api.to_checksum_address(owner_crypto.address)
+            ] = signature[2:]
+        tx = registry_contracts.gnosis_safe.get_raw_safe_transaction(
+            ledger_api=manager.ledger_api,
+            contract_address=multisig,
+            sender_address=owner_crypto.address,
+            owners=tuple(owners),  # type: ignore
+            to_address=tx_params["to_address"],
+            value=tx_params["ether_value"],
+            data=tx_params["data"],
+            safe_tx_gas=tx_params["safe_tx_gas"],
+            signatures_by_owner=owner_to_signature,
+            operation=SafeOperation.DELEGATE_CALL.value,
+        )
+        stx = owner_crypto.sign_transaction(tx)
+        tx_digest = manager.ledger_api.send_signed_transaction(stx)
+        receipt = manager.ledger_api.api.eth.wait_for_transaction_receipt(tx_digest)
+        if receipt["status"] != 1:
+            raise RuntimeError("Error swapping owners")
+
 
 class OnChainManager(_ChainUtil):
     """On chain service management."""
@@ -656,102 +752,6 @@ class OnChainManager(_ChainUtil):
             ).deploy_service(
                 reuse_multisig=reuse_multisig,
             )
-
-    def swap(  # pylint: disable=too-many-arguments,too-many-locals
-        self,
-        service_id: int,
-        multisig: str,
-        owner_key: str,
-    ) -> None:
-        """Swap safe owner."""
-        logging.info(f"Swapping safe for service {service_id} [{multisig}]...")
-        self._patch()
-        manager = ServiceManager(
-            service_id=service_id,
-            chain_type=self.chain_type,
-            key=self.wallet.key_path,
-            password=self.wallet.password,
-            timeout=ON_CHAIN_INTERACT_TIMEOUT,
-            retries=ON_CHAIN_INTERACT_RETRIES,
-            sleep=ON_CHAIN_INTERACT_SLEEP,
-        )
-        with tempfile.TemporaryDirectory() as temp_dir:
-            key_file = Path(temp_dir, "key.txt")
-            key_file.write_text(owner_key, encoding="utf-8")
-            owner_crypto = EthereumCrypto(private_key_path=str(key_file))
-        owner_cryptos: t.List[EthereumCrypto] = [owner_crypto]
-        owners = [
-            manager.ledger_api.api.to_checksum_address(owner_crypto.address)
-            for owner_crypto in owner_cryptos
-        ]
-        owner_to_swap = owners[0]
-        multisend_txs = []
-        txd = registry_contracts.gnosis_safe.get_swap_owner_data(
-            ledger_api=manager.ledger_api,
-            contract_address=multisig,
-            old_owner=manager.ledger_api.api.to_checksum_address(owner_to_swap),
-            new_owner=manager.ledger_api.api.to_checksum_address(
-                manager.crypto.address
-            ),
-        ).get("data")
-        multisend_txs.append(
-            {
-                "operation": MultiSendOperation.CALL,
-                "to": multisig,
-                "value": 0,
-                "data": HexBytes(txd[2:]),
-            }
-        )
-        multisend_txd = registry_contracts.multisend.get_tx_data(  # type: ignore
-            ledger_api=manager.ledger_api,
-            contract_address=ContractConfigs.multisend.contracts[self.chain_type],
-            multi_send_txs=multisend_txs,
-        ).get("data")
-        multisend_data = bytes.fromhex(multisend_txd[2:])
-        safe_tx_hash = registry_contracts.gnosis_safe.get_raw_safe_transaction_hash(
-            ledger_api=manager.ledger_api,
-            contract_address=multisig,
-            to_address=ContractConfigs.multisend.contracts[self.chain_type],
-            value=0,
-            data=multisend_data,
-            safe_tx_gas=0,
-            operation=SafeOperation.DELEGATE_CALL.value,
-        ).get("tx_hash")[2:]
-        payload_data = hash_payload_to_hex(
-            safe_tx_hash=safe_tx_hash,
-            ether_value=0,
-            safe_tx_gas=0,
-            to_address=ContractConfigs.multisend.contracts[self.chain_type],
-            data=multisend_data,
-        )
-        tx_params = skill_input_hex_to_payload(payload=payload_data)
-        safe_tx_bytes = binascii.unhexlify(tx_params["safe_tx_hash"])
-        owner_to_signature = {}
-        for owner_crypto in owner_cryptos:
-            signature = owner_crypto.sign_message(
-                message=safe_tx_bytes,
-                is_deprecated_mode=True,
-            )
-            owner_to_signature[
-                manager.ledger_api.api.to_checksum_address(owner_crypto.address)
-            ] = signature[2:]
-        tx = registry_contracts.gnosis_safe.get_raw_safe_transaction(
-            ledger_api=manager.ledger_api,
-            contract_address=multisig,
-            sender_address=owner_crypto.address,
-            owners=tuple(owners),  # type: ignore
-            to_address=tx_params["to_address"],
-            value=tx_params["ether_value"],
-            data=tx_params["data"],
-            safe_tx_gas=tx_params["safe_tx_gas"],
-            signatures_by_owner=owner_to_signature,
-            operation=SafeOperation.DELEGATE_CALL.value,
-        )
-        stx = owner_crypto.sign_transaction(tx)
-        tx_digest = manager.ledger_api.send_signed_transaction(stx)
-        receipt = manager.ledger_api.api.eth.wait_for_transaction_receipt(tx_digest)
-        if receipt["status"] != 1:
-            raise RuntimeError("Error swapping owners")
 
     def terminate(self, service_id: int, token: t.Optional[str] = None) -> None:
         """Terminate service."""

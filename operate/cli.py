@@ -510,12 +510,13 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
             old_hash = manager.json[0]["hash"]
             if old_hash == template["hash"]:
                 logger.info(f'Loading service {template["hash"]}')
+                chain_configs = [
+                    services.manage.ChainConfig.from_json(item)
+                    for item in template["chain_configs"]
+                ]
                 service = manager.load_or_create(
                     hash=template["hash"],
-                    rpc=template["configuration"]["rpc"],
-                    on_chain_user_params=services.manage.OnChainUserParams.from_json(
-                        template["configuration"]
-                    ),
+                    chain_configs=chain_configs,
                 )
             else:
                 logger.info(f"Updating service from {old_hash} to " + template["hash"])
@@ -531,12 +532,13 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
                 update = True
         else:
             logger.info(f'Creating service {template["hash"]}')
+            chain_configs = [
+                services.manage.ChainConfig.from_json(item)
+                for item in template["chain_configs"]
+            ]
             service = manager.load_or_create(
                 hash=template["hash"],
-                rpc=template["configuration"]["rpc"],
-                on_chain_user_params=services.manage.OnChainUserParams.from_json(
-                    template["configuration"]
-                ),
+                chain_configs=chain_configs,
             )
 
         if template.get("deploy", False):
