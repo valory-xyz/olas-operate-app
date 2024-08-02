@@ -35,23 +35,6 @@ _ACTIONS = {
     "stop": 3,
 }
 
-
-_CHAIN_NAME_TO_ENUM = {
-    "ethereum": 0,
-    "goerli": 1,
-    "gnosis": 2,
-    "solana": 3,
-}
-
-_CHAIN_ID_TO_CHAIN_NAME = {
-    1: "ethereum",
-    5: "goerli",
-    100: "gnosis",
-    1399811149: "solana",
-}
-
-_CHAIN_NAME_TO_ID = {val: key for key, val in _CHAIN_ID_TO_CHAIN_NAME.items()}
-
 _LEDGER_TYPE_TO_ENUM = {
     "ethereum": 0,
     "solana": 1,
@@ -83,25 +66,21 @@ class LedgerType(enum.IntEnum):
 class ChainType(enum.IntEnum):
     """Chain type enum."""
 
-    ETHEREUM = 0
-    GOERLI = 1
-    GNOSIS = 2
-    SOLANA = 3
-
-    @property
-    def id(self) -> int:
-        """Returns chain id."""
-        return _CHAIN_NAME_TO_ID[self.name.lower()]
-
-    @classmethod
-    def from_string(cls, chain: str) -> "ChainType":
-        """Load from string."""
-        return cls(_CHAIN_NAME_TO_ENUM[chain.lower()])
-
-    @classmethod
-    def from_id(cls, cid: int) -> "ChainType":
-        """Load from chain ID."""
-        return cls(_CHAIN_NAME_TO_ENUM[_CHAIN_ID_TO_CHAIN_NAME[cid]])
+    ETHEREUM = 1
+    GOERLI = 5
+    GNOSIS = 100
+    SOLANA = 1399811149
+    POLYGON = 137
+    POLYGON_MUMBAI = 80001
+    CHIADO = 10200
+    ARBITRUM_ONE = 42161
+    ARBITRUM_SEPOLIA = 421614
+    OPTIMISTIC = 10
+    OPTIMISTIC_SEPOLIA = 11155420
+    BASE = 8453
+    BASE_SEPOLIA = 84532
+    CELO = 42220
+    CELO_ALFAJORES = 42220
 
 
 class Action(enum.IntEnum):

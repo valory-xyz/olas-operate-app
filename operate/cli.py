@@ -349,7 +349,7 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
     async def _get_wallet_by_chain(request: Request) -> t.List[t.Dict]:
         """Create wallet safe"""
         ledger_type = get_ledger_type_from_chain_type(
-            chain=ChainType.from_string(request.path_params["chain"])
+            chain=ChainType[request.path_params["chain"].upper()]
         )
         manager = operate.wallet_manager
         if not manager.exists(ledger_type=ledger_type):
@@ -405,7 +405,7 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
     async def _get_safe(request: Request) -> t.List[t.Dict]:
         """Create wallet safe"""
         ledger_type = get_ledger_type_from_chain_type(
-            chain=ChainType.from_string(request.path_params["chain"])
+            chain=ChainType[request.path_params["chain"].upper()]
         )
         manager = operate.wallet_manager
         if not manager.exists(ledger_type=ledger_type):

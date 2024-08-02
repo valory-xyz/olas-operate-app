@@ -90,7 +90,7 @@ class MasterWallet(LocalResource):
         return make_ledger_api(
             self.ledger_type.name.lower(),
             address=(rpc or get_default_rpc(chain=chain_type)),
-            chain_id=chain_type.id,
+            chain_id=chain_type.value,
         )
 
     def transfer(
@@ -184,7 +184,7 @@ class EthereumMasterWallet(MasterWallet):
                 amount=amount,
                 tx_fee=50000,
                 tx_nonce="0x",
-                chain_id=chain_type.id,
+                chain_id=chain_type.value,
                 raise_on_try=True,
             )
             return ledger_api.update_with_gas_estimate(

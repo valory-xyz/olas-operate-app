@@ -244,7 +244,7 @@ class ServiceHelper:
                 (_, config), *_ = override["config"]["ledger_apis"].items()
                 return LedgerConfig(
                     rpc=config["address"],
-                    chain=ChainType.from_id(cid=config["chain_id"]),
+                    chain=ChainType(config["chain_id"]),
                     type=LedgerType.ETHEREUM,
                 )
         raise ValueError("No ledger config found.")
