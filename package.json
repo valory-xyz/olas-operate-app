@@ -55,7 +55,9 @@
     "dev": "dotenv -e .env -- yarn start",
     "start:frontend": "cd frontend && yarn start",
     "test:frontend": "cd frontend && yarn test",
-    "download-binaries": "sh download_binaries.sh"
+    "download-binaries": "sh download_binaries.sh",
+    "build:pearl": "sh build_pearl.sh"
+
   },
   "version": "0.1.0-rc97"
 }
