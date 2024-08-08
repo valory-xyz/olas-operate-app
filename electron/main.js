@@ -39,6 +39,9 @@ const binaryPaths = {
     arm64: 'bins/pearl_arm64',
     x64: 'bins/pearl_x64',
   },
+  win32: {
+    x64: 'bins/pearl_win.exe',
+  },
 };
 
 let appConfig = {
@@ -281,6 +284,7 @@ async function launchDaemon() {
   } catch (err) {
     logger.electron('Backend not running!');
   }
+  logger.info("11111111 " + JSON.stringify(Env, null, " "));
 
   const check = new Promise(function (resolve, _reject) {
     operateDaemon = spawn(
@@ -324,6 +328,7 @@ async function launchDaemon() {
 }
 
 async function launchDaemonDev() {
+
   const check = new Promise(function (resolve, _reject) {
     operateDaemon = spawn('poetry', [
       'run',
@@ -388,6 +393,7 @@ async function launchNextAppDev() {
       'yarn',
       ['dev:frontend', '--port', appConfig.ports.dev.next],
       {
+        shell: true,
         env: {
           ...process.env,
           NEXT_PUBLIC_BACKEND_PORT: appConfig.ports.dev.operate,

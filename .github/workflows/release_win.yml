@@ -1,0 +1,59 @@
+name: Release for Windows
+
+# This workflow is triggered on pushing a tag BE CAREFUL this application AUTO UPDATES !!! 
+# git tag vX.Y.Z
+# git push origin tag vX.Y.Z
+
+on: [pull_request]
+
+jobs:
+    build-windows:
+      runs-on: windows-latest
+      #strategy:
+      #  matrix:
+      #    arch: [ x64, arm64 ]
+      defaults:
+       run:
+         shell: bash
+      steps:
+        - uses: actions/checkout@v3
+        
+        - uses: actions/setup-python@v4
+          with:
+            python-version: '3.10'
+
+        - uses: actions/setup-node@v4
+          with:
+            node-version: lts/*
+
+        - name: Install and configure Poetry
+          uses: snok/install-poetry@v1
+          with:
+            # version: '1.4.0'
+            virtualenvs-create: true
+            virtualenvs-in-project: false
+            virtualenvs-path: ~/my-custom-path
+            installer-parallel: true
+        #- name: Setup tmate session
+        #  uses: mxschmitt/action-tmate@v3
+        - name: Install dependencies
+          run: poetry install
+
+        - name: install node deps
+          run: yarn install-deps
+        
+        - name: set env vars to prod.env
+          env: 
+            NODE_ENV: production
+            DEV_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
+            IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
+            FORK_URL: https://rpc-gate.autonolas.tech/gnosis-rpc/
+          run: |
+            echo NODE_ENV=$NODE_ENV >> prod.env
+            echo DEV_RPC=$DEV_RPC >> prod.env
+            echo IS_STAGING=$IS_STAGING >> prod.env
+            echo FORK_URL=$FORK_URL >> prod.env
+            cat prod.env
+        - run: rm -rf /dist
+        - name: "Build, notarize, publish"
+          run: make build

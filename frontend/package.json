@@ -45,7 +45,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "NODE_ENV=production next build",
+    "build": "bash -c 'NODE_ENV=production next build'",
     "lint": "next lint",
     "test": "jest",
     "start": "next start"

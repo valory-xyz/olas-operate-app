@@ -31,7 +31,6 @@ from abc import ABC, ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Any
 from venv import main as venv_cli
-
 import psutil
 from aea.__version__ import __version__ as aea_version
 from autonomy.__version__ import __version__ as autonomy_version
@@ -95,6 +94,7 @@ class BaseDeploymentRunner(AbstractDeploymentRunner, metaclass=ABCMeta):
 
     def _run_aea(self, *args: str, cwd: Path) -> Any:
         """Run aea command."""
+        print(222222222222222, self._aea_bin, args, flush=True)
         return self._run_cmd(args=[self._aea_bin, *args], cwd=cwd)
 
     @staticmethod
@@ -243,7 +243,7 @@ class PyInstallerHostDeploymentRunner(BaseDeploymentRunner):
             stderr=subprocess.DEVNULL,
             env={**os.environ, **env},
             creationflags=(
-                0x00000008 if platform.system() == "Windows" else 0
+                0x00000200  if platform.system() == "Windows" else 0
             ),  # Detach process from the main process
         )
         (working_dir / "agent.pid").write_text(
@@ -263,13 +263,30 @@ class PyInstallerHostDeploymentRunner(BaseDeploymentRunner):
             stderr=subprocess.DEVNULL,
             env={**os.environ, **env},
             creationflags=(
-                0x00000008 if platform.system() == "Windows" else 0
+                0x00000200  if platform.system() == "Windows" else 0
             ),  # Detach process from the main process
         )
         (working_dir / "tendermint.pid").write_text(
             data=str(process.pid),
             encoding="utf-8",
         )
+
+
+class PyInstallerHostDeploymentRunnerMac(PyInstallerHostDeploymentRunner):
+    pass
+
+
+class PyInstallerHostDeploymentRunnerWindows(PyInstallerHostDeploymentRunner):
+    @property
+    def _aea_bin(self) -> str:
+        """Return aea_bin path."""
+        abin = str(Path(sys._MEIPASS) / "aea_win.exe")  # type: ignore # pylint: disable=protected-access
+        return abin
+
+    @property
+    def _tendermint_bin(self) -> str:
+        """Return tendermint path."""
+        return str(Path(sys._MEIPASS) / "tendermint_win.exe")  # type: ignore # pylint: disable=protected-access
 
 
 class HostPythonHostDeploymentRunner(BaseDeploymentRunner):
@@ -368,8 +385,15 @@ class HostPythonHostDeploymentRunner(BaseDeploymentRunner):
 def _get_host_deployment_runner(build_dir: Path) -> BaseDeploymentRunner:
     """Return depoyment runner according to running env."""
     deployment_runner: BaseDeploymentRunner
+
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        deployment_runner = PyInstallerHostDeploymentRunner(build_dir)
+        # pyinstaller inside!
+        if platform.system() == "Darwin":
+            deployment_runner = PyInstallerHostDeploymentRunner(build_dir)
+        elif platform.system() == "Windows":
+            deployment_runner = PyInstallerHostDeploymentRunnerWindows(build_dir)
+        else:
+            raise ValueError(f"Platform not supported {platform.system()}")
     else:
         deployment_runner = HostPythonHostDeploymentRunner(build_dir)
     return deployment_runner
