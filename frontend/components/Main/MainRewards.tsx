@@ -65,7 +65,7 @@ const DisplayRewards = () => {
 const SHARE_TEXT = `I just earned my first reward through the Operate app powered by #olas!\n\nDownload the Pearl app:`;
 const OPERATE_URL = 'https://olas.network/operate?pearl=first-reward';
 
-const NotifyRewards = () => {
+const NotifyRewardsModal = () => {
   const { isEligibleForRewards, availableRewardsForEpochEth } = useReward();
   const { totalOlasBalance } = useBalance();
   const { showNotification, store } = useElectronApi();
@@ -179,6 +179,6 @@ const NotifyRewards = () => {
 export const MainRewards = () => (
   <>
     <DisplayRewards />
-    <NotifyRewards />
+    <NotifyRewardsModal />
   </>
 );

@@ -85,7 +85,7 @@ jobs:
             -   run: yarn install-deps
             -   name: "Build frontend with env vars"
                 run: yarn build:frontend
-                env: 
+                env:
                     NODE_ENV: production
                     DEV_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
                     IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
@@ -103,3 +103,25 @@ jobs:
                 DEV_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
                 FORK_URL: https://rpc-gate.autonolas.tech/gnosis-rpc/
               run: node build.js
+            - name: "Build frontend with dev env vars"
+              run: yarn build:frontend
+              env:
+                NODE_ENV: development
+                DEV_RPC: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
+                IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
+                FORK_URL: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
+            - name: "Build, notarize, publish dev build"
+              env:
+                APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
+                APPLE_ID: ${{ secrets.APPLEID }}
+                APPLETEAMID: ${{ secrets.APPLETEAMID }}
+                CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+                CSC_LINK: ${{ secrets.CSC_LINK }}
+                GH_TOKEN: ${{ secrets.github_token}}
+                NODE_ENV: development
+                DEV_RPC: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
+                FORK_URL: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
+              run: |
+                echo "DEV_RPC=https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b" >> .env
+                echo -e "FORK_URL=https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b" >> .env
+                node build.js

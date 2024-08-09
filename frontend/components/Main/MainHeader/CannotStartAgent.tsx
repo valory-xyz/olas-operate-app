@@ -15,6 +15,32 @@ const cannotStartAgentText = (
   </Text>
 );
 
+const otherPopoverProps: PopoverProps = {
+  arrow: false,
+  placement: 'bottomRight',
+};
+
+export const CannotStartAgentDueToUnexpectedError = () => (
+  <Popover
+    {...otherPopoverProps}
+    title="Unexpected error"
+    content={
+      <div style={{ maxWidth: 340 }}>
+        <Paragraph>
+          Try to restart the app. If the issue persists, join the Olas community
+          Discord server to report or stay up to date on the issue.
+        </Paragraph>
+
+        <a href={SUPPORT_URL} target="_blank" rel="noreferrer">
+          Olas community Discord server {UNICODE_SYMBOLS.EXTERNAL_LINK}
+        </a>
+      </div>
+    }
+  >
+    {cannotStartAgentText}
+  </Popover>
+);
+
 const evictedDescription =
   "You didn't run your agent enough and it missed its targets multiple times. Please wait a few days and try to run your agent again.";
 const AgentEvictedPopover = () => (
@@ -26,11 +52,6 @@ const AgentEvictedPopover = () => (
     {cannotStartAgentText}
   </Popover>
 );
-
-const otherPopoverProps: PopoverProps = {
-  arrow: false,
-  placement: 'bottomRight',
-};
 
 const JoinOlasCommunity = () => (
   <div style={{ maxWidth: 340 }}>

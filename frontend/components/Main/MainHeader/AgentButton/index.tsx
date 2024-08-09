@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 
 import { Chain, DeploymentStatus } from '@/client';
 import { COLOR } from '@/constants/colors';
+import { LOW_BALANCE } from '@/constants/thresholds';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
@@ -15,7 +16,10 @@ import { ServicesService } from '@/service/Services';
 import { WalletService } from '@/service/Wallet';
 import { getMinimumStakedAmountRequired } from '@/utils/service';
 
-import { CannotStartAgent } from '../CannotStartAgent';
+import {
+  CannotStartAgent,
+  CannotStartAgentDueToUnexpectedError,
+} from '../CannotStartAgent';
 import { requiredGas, requiredOlas } from '../constants';
 
 const { Text } = Typography;
@@ -185,6 +189,15 @@ const AgentNotRunningButton = () => {
   ]);
 
   const isDeployable = useMemo(() => {
+    // if the agent is NOT running and the balance is too low,
+    // user should not be able to start the agent
+    const isServiceInactive =
+      serviceStatus === DeploymentStatus.BUILT ||
+      serviceStatus === DeploymentStatus.STOPPED;
+    if (isServiceInactive && safeBalance && safeBalance.ETH < LOW_BALANCE) {
+      return false;
+    }
+
     if (serviceStatus === DeploymentStatus.DEPLOYED) return false;
     if (serviceStatus === DeploymentStatus.DEPLOYING) return false;
     if (serviceStatus === DeploymentStatus.STOPPING) return false;
@@ -211,6 +224,7 @@ const AgentNotRunningButton = () => {
     serviceStatus,
     storeState?.isInitialFunded,
     totalEthBalance,
+    safeBalance,
   ]);
 
   const buttonProps: ButtonProps = {
@@ -258,11 +272,7 @@ export const AgentButton = () => {
       return <AgentNotRunningButton />;
     }
 
-    return (
-      <Button type="primary" size="large" disabled>
-        Error, contact us!
-      </Button>
-    );
+    return <CannotStartAgentDueToUnexpectedError />;
   }, [
     hasInitialLoaded,
     serviceStatus,

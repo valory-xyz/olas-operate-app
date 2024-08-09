@@ -6,6 +6,16 @@ const build = require('electron-builder').build;
 
 const { publishOptions } = require('./electron/constants');
 
+/**
+ * Get the artifact name for the build based on the environment.
+ * @returns {string}
+ */
+function artifactName() {
+    const env = process.env.NODE_ENV;
+    const prefix = env === 'production' ? '' : 'dev-';
+    return prefix + '${productName}-${version}-${platform}-${arch}.${ext}';
+}
+
 const main = async () => {
   console.log('Building...');
 
@@ -14,7 +24,7 @@ const main = async () => {
     publish: 'onTag',
     config: {
       appId: 'xyz.valory.olas-operate-app',
-      artifactName: '${productName}-${version}-${platform}-${arch}.${ext}',
+      artifactName: artifactName(),
       productName: 'Pearl',
       files: ['electron/**/*', 'package.json'],
       directories: {
@@ -25,6 +35,10 @@ const main = async () => {
           from: 'electron/bins',
           to: 'bins',
           filter: ['**/*'],
+        },
+        {
+          from: '.env',
+          to: '.env'
         },
       ],
       cscKeyPassword: process.env.CSC_KEY_PASSWORD,

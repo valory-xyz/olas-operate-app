@@ -4,6 +4,7 @@ const defaultSchema = {
   isInitialFunded: { type: 'boolean', default: false },
   firstStakingRewardAchieved: { type: 'boolean', default: false },
   firstRewardNotificationShown: { type: 'boolean', default: false },
+  agentEvictionAlertShown: { type: 'boolean', default: false },
 };
 
 const setupStoreIpc = async (ipcChannel, mainWindow, storeInitialValues) => {

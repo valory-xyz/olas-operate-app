@@ -43,7 +43,6 @@
   "productName": "Pearl",
   "description": "An all-in-one application designed to streamline your entry into the world of autonomous agents and earning OLAS through staking.",
   "scripts": {
-    "build": "rm -rf dist/ && node build.tester.js",
     "build:frontend": "cd frontend && yarn build && rm -rf ../electron/.next && cp -r .next ../electron/.next && rm -rf ../electron/public && cp -r public ../electron/public",
     "dev:backend": "poetry run python operate/cli.py",
     "dev:frontend": "cd frontend && yarn dev",
@@ -52,9 +51,11 @@
     "install:backend": "poetry install --no-root",
     "install:frontend": "cd frontend && yarn",
     "lint:frontend": "cd frontend && yarn lint",
-    "start": "electron .",
+    "start": "yarn electron .",
+    "dev": "dotenv -e .env -- yarn start",
     "start:frontend": "cd frontend && yarn start",
-    "test:frontend": "cd frontend && yarn test"
+    "test:frontend": "cd frontend && yarn test",
+    "download-binaries": "sh download_binaries.sh"
   },
-  "version": "0.1.0-rc93"
+  "version": "0.1.0-rc105"
 }

@@ -14,7 +14,17 @@ const { paths } = require('./constants');
  * - use "" (nothing as a suffix) for latest release candidate, for example "0.1.0rc26"
  * - use "alpha" for alpha release, for example "0.1.0rc26-alpha"
  */
-const OlasMiddlewareVersion = '0.1.0rc93';
+const OlasMiddlewareVersion = '0.1.0rc105';
+
+const path = require('path');
+const { app } = require('electron');
+
+// load env vars
+require('dotenv').config({
+  path: app.isPackaged
+    ? path.join(process.resourcesPath, '.env')
+    : path.resolve(process.cwd(), '.env'),
+});
 
 const Env = {
   ...process.env,

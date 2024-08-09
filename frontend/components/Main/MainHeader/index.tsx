@@ -23,6 +23,8 @@ const useSetupTrayIcon = () => {
       setTrayIcon?.('running');
     } else if (serviceStatus === DeploymentStatus.STOPPED) {
       setTrayIcon?.('paused');
+    } else if (serviceStatus === DeploymentStatus.BUILT) {
+      setTrayIcon?.('logged-out');
     }
   }, [safeBalance, serviceStatus, setTrayIcon]);
 
