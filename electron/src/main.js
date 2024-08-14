@@ -133,17 +133,18 @@ const createTray = () => {
   tray.setContextMenu(contextMenu);
 
   ipcMain.on('tray', (_event, status) => {
+    const isSupportedOS = isWindows || isMac;
     switch (status) {
       case 'low-gas': {
         const icon = getUpdatedTrayIcon(
-          isWindows || isMac ? TRAY_ICONS.LOW_GAS : TRAY_ICONS_PATHS.LOW_GAS,
+          isSupportedOS ? TRAY_ICONS.LOW_GAS : TRAY_ICONS_PATHS.LOW_GAS,
         );
         tray.setImage(icon);
         break;
       }
       case 'running': {
         const icon = getUpdatedTrayIcon(
-          isWindows || isMac ? TRAY_ICONS.RUNNING : TRAY_ICONS_PATHS.RUNNING,
+          isSupportedOS ? TRAY_ICONS.RUNNING : TRAY_ICONS_PATHS.RUNNING,
         );
         tray.setImage(icon);
 
@@ -151,7 +152,14 @@ const createTray = () => {
       }
       case 'paused': {
         const icon = getUpdatedTrayIcon(
-          isWindows || isMac ? TRAY_ICONS.PAUSED : TRAY_ICONS_PATHS.PAUSED,
+          isSupportedOS ? TRAY_ICONS.PAUSED : TRAY_ICONS_PATHS.PAUSED,
+        );
+        tray.setImage(icon);
+        break;
+      }
+      case 'logged-out': {
+        const icon = getUpdatedTrayIcon(
+          isSupportedOS ? TRAY_ICONS.LOGGED_OUT : TRAY_ICONS_PATHS.LOGGED_OUT,
         );
         tray.setImage(icon);
         break;
@@ -407,7 +415,6 @@ ipcMain.on('check', async function (event, _argument) {
   // Setup
   try {
     event.sender.send('response', 'Checking installation');
-    if (!isDev) {
       if (isMac) {
         //await setupDarwin(event.sender);
       } else if (isWindows) {
@@ -415,7 +422,6 @@ ipcMain.on('check', async function (event, _argument) {
       } else {
         //await setupUbuntu(event.sender);
       }
-    }
 
     if (isDev) {
       event.sender.send(

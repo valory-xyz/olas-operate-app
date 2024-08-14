@@ -11,10 +11,10 @@ on:
 
 jobs:
     build-macos-pyinstaller:
-      runs-on: macos-latest
+      runs-on: ${{ matrix.os }}
       strategy:
         matrix:
-          arch: [ arm64, x64 ]
+          os: [ macos-14, macos-14-large ]
 
       steps:
         - uses: actions/checkout@v3
@@ -34,22 +34,30 @@ jobs:
         - name: Install dependencies
           run: poetry install
 
+        - name: Set arch environment variable for macos-latest-large
+          if: contains(matrix.os, 'large')
+          run: echo "OS_ARCH=x64" >> $GITHUB_ENV
+
+        - name: Set arch environment variable for other macOS versions
+          if: ${{ !contains(matrix.os, 'large') }}
+          run: echo "OS_ARCH=arm64" >> $GITHUB_ENV
+
         - name: Get trader bin
           run: |
-            trader_version=$(poetry run python -c "import yaml; config = yaml.safe_load(open('templates/trader.yaml')); print(config['configuration']['trader_version'])")
+            trader_version=$(poetry run python -c "import yaml; config = yaml.safe_load(open('templates/trader.yaml')); print(config['trader_version'])")
             echo $trader_version
-            mkdir dist && curl -L -o dist/aea_bin "https://github.com/valory-xyz/trader/releases/download/${trader_version}/trader_bin_${{ matrix.arch }}"
+            mkdir dist && curl -L -o dist/aea_bin "https://github.com/valory-xyz/trader/releases/download/${trader_version}/trader_bin_${{ env.OS_ARCH }}"
 
         - name: Build with PyInstaller
           run: |
              poetry run pyinstaller operate/services/utils/tendermint.py --onefile
-             poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py --add-binary dist/aea_bin:.  --add-binary dist/tendermint:. --onefile --name pearl_${{ matrix.arch }}
+             poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py --add-binary dist/aea_bin:.  --add-binary dist/tendermint:. --onefile --name pearl_${{ env.OS_ARCH }}
 
         - name: Upload Release Assets
           uses: actions/upload-artifact@v2
           with:
-            name: pearl_${{ matrix.arch }}
-            path: dist/pearl_${{ matrix.arch }}
+            name: pearl_${{ env.OS_ARCH }}
+            path: dist/pearl_${{ env.OS_ARCH }}
 
     release-operate:
         runs-on: macos-latest
@@ -85,7 +93,7 @@ jobs:
             -   run: yarn install-deps
             -   name: "Build frontend with env vars"
                 run: yarn build:frontend
-                env: 
+                env:
                     NODE_ENV: production
                     DEV_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
                     FORK_URL: https://rpc-gate.autonolas.tech/gnosis-rpc/
@@ -102,4 +110,26 @@ jobs:
                 NODE_ENV: production
                 DEV_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
                 FORK_URL: https://rpc-gate.autonolas.tech/gnosis-rpc/
-              run: node build.mjs
+              run: node build.js
+            - name: "Build frontend with dev env vars"
+              run: yarn build:frontend
+              env:
+                NODE_ENV: development
+                DEV_RPC: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
+                IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
+                FORK_URL: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
+            - name: "Build, notarize, publish dev build"
+              env:
+                APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
+                APPLE_ID: ${{ secrets.APPLEID }}
+                APPLETEAMID: ${{ secrets.APPLETEAMID }}
+                CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+                CSC_LINK: ${{ secrets.CSC_LINK }}
+                GH_TOKEN: ${{ secrets.github_token}}
+                NODE_ENV: development
+                DEV_RPC: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
+                FORK_URL: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
+              run: |
+                echo "DEV_RPC=https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b" >> .env
+                echo -e "FORK_URL=https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b" >> .env
+                node build.js

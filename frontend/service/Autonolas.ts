@@ -77,7 +77,7 @@ const getAgentStakingRewardsInfo = async ({
     livenessPeriod,
     livenessRatio,
     rewardsPerSecond,
-    accuredStakingReward,
+    accruedStakingReward,
     minStakingDeposit,
     tsCheckpoint,
   ] = multicallResponse;
@@ -130,7 +130,7 @@ const getAgentStakingRewardsInfo = async ({
     isEligibleForRewards,
     availableRewardsForEpoch,
     accruedServiceStakingRewards: parseFloat(
-      ethers.utils.formatEther(`${accuredStakingReward}`),
+      ethers.utils.formatEther(`${accruedStakingReward}`),
     ),
     minimumStakedAmount,
   } as StakingRewardsInfo;
@@ -160,20 +160,31 @@ const getAvailableRewardsForEpoch = async (): Promise<number | undefined> => {
 /**
  * function to get the staking contract info
  */
-const getStakingContractInfo = async (): Promise<
-  StakingContractInfo | undefined
-> => {
+const getStakingContractInfo = async (
+  serviceId: number,
+): Promise<StakingContractInfo | undefined> => {
+  if (!serviceId) return;
+
   const contractCalls = [
     serviceStakingTokenMechUsageContract.availableRewards(),
     serviceStakingTokenMechUsageContract.maxNumServices(),
     serviceStakingTokenMechUsageContract.getServiceIds(),
+    serviceStakingTokenMechUsageContract.minStakingDuration(),
+    serviceStakingTokenMechUsageContract.getServiceInfo(serviceId),
+    serviceStakingTokenMechUsageContract.getStakingState(serviceId),
   ];
 
   await gnosisMulticallProvider.init();
 
   const multicallResponse = await gnosisMulticallProvider.all(contractCalls);
-  const [availableRewardsInBN, maxNumServicesInBN, getServiceIdsInBN] =
-    multicallResponse;
+  const [
+    availableRewardsInBN,
+    maxNumServicesInBN,
+    getServiceIdsInBN,
+    minStakingDurationInBN,
+    serviceInfo,
+    serviceStakingState,
+  ] = multicallResponse;
 
   const availableRewards = parseFloat(
     ethers.utils.formatUnits(availableRewardsInBN, 18),
@@ -185,6 +196,9 @@ const getStakingContractInfo = async (): Promise<
     availableRewards,
     maxNumServices,
     serviceIds,
+    minimumStakingDuration: minStakingDurationInBN.toNumber(),
+    serviceStakingStartTime: serviceInfo.tsStart.toNumber(),
+    serviceStakingState,
   };
 };
 

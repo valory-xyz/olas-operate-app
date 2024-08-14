@@ -47,6 +47,7 @@ export const useServices = () => {
     serviceStatus,
     setServiceStatus,
     updateServiceStatus,
+    setIsPaused,
   } = useContext(ServicesContext);
 
   // STATE METHODS
@@ -80,6 +81,7 @@ export const useServices = () => {
     setServices((prev) => prev?.filter((s) => s.hash !== serviceHash));
 
   return {
+    service: services?.[0],
     services,
     serviceStatus,
     setServiceStatus,
@@ -91,5 +93,6 @@ export const useServices = () => {
     updateServiceStatus,
     deleteServiceState,
     hasInitialLoaded,
+    setIsServicePollingPaused: setIsPaused,
   };
 };

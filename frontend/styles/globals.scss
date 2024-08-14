@@ -66,7 +66,7 @@ button, input, select, textarea, .ant-input-suffix {
   &--primary {
     border-color: #ECD7FE;
     background-color: #F8F0FF;
-    color: #36075F;
+    color: #7E22CE;
 
     .ant-alert-icon {
       color: #7E22CE;
@@ -134,6 +134,10 @@ button, input, select, textarea, .ant-input-suffix {
 
 .mt-12 {
   margin-top: 12px !important;
+}
+
+.p-0 {
+  padding: 0 !important;
 }
 
 .mx-auto {

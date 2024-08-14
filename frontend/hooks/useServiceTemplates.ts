@@ -9,5 +9,6 @@ export const useServiceTemplates = () => {
   return {
     getServiceTemplate,
     getServiceTemplates,
+    serviceTemplate: SERVICE_TEMPLATES[0], // Default to the first template
   };
 };

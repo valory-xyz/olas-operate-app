@@ -48,8 +48,6 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   const [availableRewardsForEpoch, setAvailableRewardsForEpoch] =
     useState<number>();
   const [isEligibleForRewards, setIsEligibleForRewards] = useState<boolean>();
-  const [minimumStakedAmountRequired, setMinimumStakedAmountRequired] =
-    useState<number>();
 
   const availableRewardsForEpochEth = useMemo<number | undefined>(() => {
     if (!availableRewardsForEpoch) return;
@@ -87,7 +85,6 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     setAccruedServiceStakingRewards(
       stakingRewardsInfo?.accruedServiceStakingRewards,
     );
-    setMinimumStakedAmountRequired(stakingRewardsInfo?.minimumStakedAmount);
     setAvailableRewardsForEpoch(rewards);
   }, [service]);
 
@@ -114,7 +111,6 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
         availableRewardsForEpochEth,
         isEligibleForRewards,
         optimisticRewardsEarnedForEpoch,
-        minimumStakedAmountRequired,
         updateRewards,
       }}
     >

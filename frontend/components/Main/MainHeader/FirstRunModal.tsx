@@ -2,16 +2,22 @@ import { Button, Flex, Modal, Typography } from 'antd';
 import Image from 'next/image';
 import { FC } from 'react';
 
-import { useReward } from '@/hooks/useReward';
+import { useServiceTemplates } from '@/hooks/useServiceTemplates';
+import { getMinimumStakedAmountRequired } from '@/utils/service';
 
 const { Title, Paragraph } = Typography;
 
 type FirstRunModalProps = { open: boolean; onClose: () => void };
 
 export const FirstRunModal: FC<FirstRunModalProps> = ({ open, onClose }) => {
-  const { minimumStakedAmountRequired } = useReward();
+  const { getServiceTemplates } = useServiceTemplates();
 
   if (!open) return null;
+
+  const minimumStakedAmountRequired = getMinimumStakedAmountRequired(
+    getServiceTemplates()[0],
+  );
+
   return (
     <Modal
       open={open}

@@ -28,6 +28,7 @@ type ServicesContextProps = {
   updateServiceStatus: () => Promise<void>;
   hasInitialLoaded: boolean;
   setHasInitialLoaded: Dispatch<SetStateAction<boolean>>;
+  setIsPaused: Dispatch<SetStateAction<boolean>>;
 };
 
 export const ServicesContext = createContext<ServicesContextProps>({
@@ -40,6 +41,7 @@ export const ServicesContext = createContext<ServicesContextProps>({
   updateServiceStatus: async () => {},
   hasInitialLoaded: false,
   setHasInitialLoaded: () => {},
+  setIsPaused: () => {},
 });
 
 export const ServicesProvider = ({ children }: PropsWithChildren) => {
@@ -51,6 +53,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     DeploymentStatus | undefined
   >();
   const [hasInitialLoaded, setHasInitialLoaded] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   const serviceAddresses = useMemo(
     () =>
@@ -92,7 +95,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       updateServicesState()
         .then(() => updateServiceStatus())
         .catch((e) => message.error(e.message)),
-    isOnline ? FIVE_SECONDS_INTERVAL : null,
+    isOnline && !isPaused ? FIVE_SECONDS_INTERVAL : null,
   );
 
   return (
@@ -107,6 +110,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         serviceStatus,
         setServiceStatus,
         setHasInitialLoaded,
+        setIsPaused,
       }}
     >
       {children}

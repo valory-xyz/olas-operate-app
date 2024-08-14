@@ -1,59 +1,47 @@
-import { createContext, PropsWithChildren, useCallback, useState } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 import { useInterval } from 'usehooks-ts';
 
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { AutonolasService } from '@/service/Autonolas';
+import { StakingContractInfo } from '@/types/Autonolas';
+
+import { ServicesContext } from './ServicesProvider';
 
 type StakingContractInfoContextProps = {
   updateStakingContractInfo: () => Promise<void>;
-  isStakingContractInfoLoading: boolean;
-  isRewardsAvailable: boolean;
-  hasEnoughServiceSlots: boolean;
-  isAgentEvicted: boolean; // TODO: Implement this
-  canStartAgent: boolean;
+  stakingContractInfo?: StakingContractInfo;
 };
 
 export const StakingContractInfoContext =
   createContext<StakingContractInfoContextProps>({
     updateStakingContractInfo: async () => {},
-    isStakingContractInfoLoading: true,
-    isRewardsAvailable: false,
-    hasEnoughServiceSlots: false,
-    isAgentEvicted: false,
-    canStartAgent: false,
+    stakingContractInfo: undefined,
   });
 
 export const StakingContractInfoProvider = ({
   children,
 }: PropsWithChildren) => {
-  const [isStakingContractInfoLoading, setIsStakingContractInfoLoading] =
-    useState(true);
-  const [isRewardsAvailable, setIsRewardsAvailable] = useState(false);
-  const [hasEnoughServiceSlots, setHasEnoughServiceSlots] = useState(false);
-  const [isAgentEvicted, setIsAgentEvicted] = useState(false);
-  const [canStartAgent, setCanStartAgent] = useState(false);
+  const { services } = useContext(ServicesContext);
+  const serviceId = useMemo(() => services?.[0]?.chain_data?.token, [services]);
+
+  const [stakingContractInfo, setStakingContractInfo] =
+    useState<StakingContractInfo>();
 
   const updateStakingContractInfo = useCallback(async () => {
-    setIsStakingContractInfoLoading(true);
-    try {
-      const info = await AutonolasService.getStakingContractInfo();
-      if (!info) return;
+    if (!serviceId) return;
 
-      const { availableRewards, maxNumServices, serviceIds } = info;
-      const isRewardsAvailable = availableRewards > 0;
-      const hasEnoughServiceSlots = serviceIds.length < maxNumServices;
-      const canStartAgent = isRewardsAvailable && hasEnoughServiceSlots;
+    const info = await AutonolasService.getStakingContractInfo(serviceId);
+    if (!info) return;
 
-      setIsRewardsAvailable(isRewardsAvailable);
-      setHasEnoughServiceSlots(hasEnoughServiceSlots);
-      setCanStartAgent(canStartAgent);
-      setIsAgentEvicted(false); // TODO: Implement this
-    } catch (error) {
-      console.error('Failed to fetch staking contract info', error);
-    } finally {
-      setIsStakingContractInfoLoading(false);
-    }
-  }, []);
+    setStakingContractInfo(info);
+  }, [serviceId]);
 
   useInterval(updateStakingContractInfo, FIVE_SECONDS_INTERVAL);
 
@@ -61,11 +49,7 @@ export const StakingContractInfoProvider = ({
     <StakingContractInfoContext.Provider
       value={{
         updateStakingContractInfo,
-        isStakingContractInfoLoading,
-        isRewardsAvailable,
-        hasEnoughServiceSlots,
-        isAgentEvicted,
-        canStartAgent,
+        stakingContractInfo,
       }}
     >
       {children}

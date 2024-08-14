@@ -2,7 +2,7 @@ import '../styles/globals.scss';
 
 import { ConfigProvider } from 'antd';
 import type { AppProps } from 'next/app';
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Layout } from '@/components/Layout';
 import { BalanceProvider } from '@/context/BalanceProvider';
@@ -20,13 +20,9 @@ import { WalletProvider } from '@/context/WalletProvider';
 import { mainTheme } from '@/theme';
 
 export default function App({ Component, pageProps }: AppProps) {
-  const isMounted = useRef(false);
-
+  const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
+    setIsMounted(true);
   }, []);
 
   return (
@@ -42,13 +38,13 @@ export default function App({ Component, pageProps }: AppProps) {
                       <SetupProvider>
                         <SettingsProvider>
                           <StakingContractInfoProvider>
-                            {isMounted ? (
-                              <ConfigProvider theme={mainTheme}>
+                            <ConfigProvider theme={mainTheme}>
+                              {isMounted ? (
                                 <Layout>
                                   <Component {...pageProps} />
                                 </Layout>
-                              </ConfigProvider>
-                            ) : null}
+                              ) : null}
+                            </ConfigProvider>
                           </StakingContractInfoProvider>
                         </SettingsProvider>
                       </SetupProvider>
