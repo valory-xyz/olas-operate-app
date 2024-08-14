@@ -21,7 +21,7 @@
 
 import requests
 
-from operate.types import ChainType
+from operate.types import ChainIdentifier
 from scripts.fund import fund
 
 
@@ -48,7 +48,7 @@ print(
 wallet = requests.post(
     "http://localhost:8000/api/wallet",
     json={
-        "chain_type": ChainType.GNOSIS,
+        "chain_type": ChainIdentifier.GNOSIS,
     },
 ).json()
 print("Setting up wallet")
@@ -61,7 +61,7 @@ print(
     requests.post(
         "http://localhost:8000/api/wallet/safe",
         json={
-            "chain_type": ChainType.GNOSIS,
+            "chain_type": ChainIdentifier.GNOSIS,
             "owner": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",  # Backup owner
         },
     ).json()
