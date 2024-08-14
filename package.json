@@ -4,11 +4,12 @@
   "productName": "Pearl",
   "license": "MIT",
   "scripts": {
-    "build:frontend": "cd frontend && yarn build && rm -rf ../electron/.next && cp -r .next ../electron/.next && rm -rf ../electron/public && cp -r public ../electron/public",
+    "dev": "dotenv -e .env -- yarn start",
     "dev:backend": "poetry run python operate/cli.py",
     "dev:frontend": "cd frontend && yarn dev",
     "build": "rm -rf *.next/ && yarn build:frontend && cp -r frontend/.next electron/.next",
     "build:frontend": "cd frontend && yarn build",
+    "build:pearl": "sh build_pearl.sh",
     "install-deps": "yarn install:backend & yarn install:electron & yarn install:frontend & wait",
     "install:backend": "poetry install --no-root",
     "install:electron": "cd electron && yarn",
@@ -16,12 +17,9 @@
     "lint": "yarn lint:frontend & yarn lint:electron & wait",
     "lint:frontend": "cd frontend && yarn lint",
     "start": "yarn electron .",
-    "dev": "dotenv -e .env -- yarn start",
     "start:frontend": "cd frontend && yarn start",
     "test:frontend": "cd frontend && yarn test",
-    "download-binaries": "sh download_binaries.sh",
-    "build:pearl": "sh build_pearl.sh"
-
+    "download-binaries": "sh download_binaries.sh"
   },
   "version": "0.1.0-rc111"
 }
