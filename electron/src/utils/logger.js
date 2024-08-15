@@ -1,6 +1,7 @@
-const winston = require('winston');
-const { format } = require('logform');
-const { paths } = require('./constants');
+import { format } from 'logform';
+import winston from 'winston';
+
+import { paths } from '../constants/paths.js';
 
 const { combine, timestamp, printf } = format;
 
@@ -51,7 +52,7 @@ const logger = winston.createLogger({
     new winston.transports.File({
       filename: 'electron.log',
       dirname: paths.dotOperateDirectory,
-      level: 'electron',
+      levels: ['electron'],
       format: combine(levelFilter('electron'), timestamp(), logFormat),
       maxFiles: 1,
       maxsize: 1024 * 1024 * 10,
@@ -70,4 +71,4 @@ const logger = winston.createLogger({
 
 winston.addColors(customLevels.colors);
 
-module.exports = { logger };
+export { logger };

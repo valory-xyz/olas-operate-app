@@ -1,4 +1,3 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
     remotePatterns: [
@@ -14,7 +13,7 @@ const nextConfig = {
   },
   transpilePackages: [
     'rc-util',
-    '@babel/runtime',
+    // '@babel/runtime',
     '@ant-design',
     'rc-pagination',
     'rc-picker',

@@ -3,6 +3,7 @@ export type ElectronStore = {
   isInitialFunded?: boolean;
   firstStakingRewardAchieved?: boolean;
   firstRewardNotificationShown?: boolean;
+  canCheckForUpdates?: boolean;
   agentEvictionAlertShown?: boolean;
 };
 

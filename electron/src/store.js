@@ -1,13 +1,26 @@
-// set schema to validate store data
 const defaultSchema = {
+  version: { type: 'string', default: '' },
   environmentName: { type: 'string', default: '' },
   isInitialFunded: { type: 'boolean', default: false },
   firstStakingRewardAchieved: { type: 'boolean', default: false },
   firstRewardNotificationShown: { type: 'boolean', default: false },
   agentEvictionAlertShown: { type: 'boolean', default: false },
+  canCheckForUpdates: { type: 'boolean', default: true },
 };
 
-const setupStoreIpc = async (ipcChannel, mainWindow, storeInitialValues) => {
+/**
+ * Sets up the IPC communication and initializes the electron store with default values.
+ * @param {string} ipcChannel - The IPC channel for communication.
+ * @param {Electron.BrowserWindow} mainWindow - The main Electron browser window.
+ * @param {Object} storeInitialValues - The initial values for the store.
+ * @returns {Promise<void>} - A promise that resolves when the setup is complete.
+ */
+export const setupStoreIpc = async (
+  ipcChannel,
+  mainWindow,
+  storeInitialValues,
+) => {
+  /** @type {import('electron-store').default} */
   const Store = (await import('electron-store')).default;
 
   // set default values for store
@@ -33,5 +46,3 @@ const setupStoreIpc = async (ipcChannel, mainWindow, storeInitialValues) => {
   ipcChannel.handle('store-delete', (_, key) => store.delete(key));
   ipcChannel.handle('store-clear', (_) => store.clear());
 };
-
-module.exports = { setupStoreIpc };

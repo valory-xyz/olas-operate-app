@@ -1,0 +1,5 @@
+provider: github
+host: github.com
+owner: valory-xyz
+repo: olas-operate-app
+channel: latest

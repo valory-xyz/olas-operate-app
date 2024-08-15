@@ -1,13 +1,13 @@
 // Installation helpers.
-const fs = require('fs');
-const os = require('os');
-const sudo = require('sudo-prompt');
-const process = require('process');
-const axios = require('axios');
-const { spawnSync } = require('child_process');
-const { logger } = require('./logger');
+import axios from 'axios';
+import { spawnSync } from 'child_process';
+import fs from 'fs';
+import os from 'os';
+import process from 'process';
+import sudo from 'sudo-prompt';
 
-const { paths } = require('./constants');
+import { logger } from './utils/logger.js';
+import { paths } from './constants/paths.js';
 
 /**
  * current version of the pearl release
@@ -16,17 +16,7 @@ const { paths } = require('./constants');
  */
 const OlasMiddlewareVersion = '0.1.0rc111';
 
-const path = require('path');
-const { app } = require('electron');
-
-// load env vars
-require('dotenv').config({
-  path: app.isPackaged
-    ? path.join(process.resourcesPath, '.env')
-    : path.resolve(process.cwd(), '.env'),
-});
-
-const Env = {
+export const Env = {
   ...process.env,
   PATH: `${process.env.PATH}:/opt/homebrew/bin:/usr/local/bin`,
   HOMEBREW_NO_AUTO_UPDATE: '1',
@@ -200,10 +190,32 @@ async function setupUbuntu(ipcChannel) {
     logger.electron('Installing tendermint');
     await installTendermintUnix();
   }
-}
 
-module.exports = {
-  setupDarwin,
-  setupUbuntu,
-  Env,
-};
+  if (!fs.existsSync(paths.venvDir)) {
+    ipcChannel.send('response', 'Installing Pearl Daemon');
+    console.log(appendInstallationLog('Creating virtual environment'));
+    createVirtualEnvUnix(paths.venvDir);
+
+    console.log(appendInstallationLog('Installing pearl backend'));
+    installOperatePackageUnix(paths.dotOperateDirectory);
+  }
+
+  console.log(appendInstallationLog('Checking if upgrade is required'));
+  if (versionBumpRequired()) {
+    console.log(
+      appendInstallationLog(
+        `Upgrading pearl daemon to ${OlasMiddlewareVersion}`,
+      ),
+    );
+    reInstallOperatePackageUnix(paths.dotOperateDirectory);
+    writeVersion();
+    removeLogFile();
+  }
+
+  if (!fs.existsSync(`${paths.dotOperateDirectory}/venv/bin/operate`)) {
+    reInstallOperatePackageUnix(paths.dotOperateDirectory);
+  }
+
+  console.log(appendInstallationLog('Installing pearl CLI'));
+  await installOperateCli('/usr/local/bin');
+}

@@ -1,10 +1,21 @@
 /**
- * This script is used to build the electron app **with notarization**. It is used for the final build and release process.
+ * Used to build, release, code sign and notarize the app.
+ * It is used for the final build and release process.
  */
-require('dotenv').config();
-const build = require('electron-builder').build;
+import { config } from 'dotenv';
+import { build } from 'electron-builder';
 
-const { publishOptions } = require('./electron/constants');
+config();
+
+const publishOptions = {
+  provider: 'github',
+  owner: 'valory-xyz',
+  repo: 'olas-operate-app',
+  releaseType: 'draft',
+  token: process.env.GH_TOKEN,
+  private: false,
+  publishAutoUpdate: true,
+};
 
 /**
  * Get the artifact name for the build based on the environment.
@@ -47,7 +58,7 @@ const main = async () => {
         target: [
           {
             target: 'default',
-            arch: ['x64', 'arm64'],
+            arch: ['arm64', 'x64'],
           },
         ],
         publish: publishOptions,
@@ -65,4 +76,8 @@ const main = async () => {
   });
 };
 
-main().then((response) => { console.log('Build & Notarize complete'); }).catch((e) => console.error(e));
+main()
+  .then(() => {
+    console.log('Build & Notarize complete');
+  })
+  .catch((e) => console.error(e));

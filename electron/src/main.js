@@ -1,32 +1,34 @@
-const {
+import AdmZip from 'adm-zip';
+import { spawn } from 'child_process';
+import {
   app,
   BrowserWindow,
-  Tray,
+  dialog,
+  ipcMain,
   Menu,
   Notification,
-  ipcMain,
-  dialog,
   shell,
-} = require('electron');
-const { spawn } = require('child_process');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
-const next = require('next');
-const http = require('http');
-const AdmZip = require('adm-zip');
-const { TRAY_ICONS, TRAY_ICONS_PATHS } = require('./icons');
+  Tray,
+} from 'electron';
+import fs from 'fs';
+import http from 'http';
+import next from 'next';
+import os from 'os';
+import path from 'path';
 
-const { setupDarwin, setupUbuntu, Env } = require('./install');
+import { APP_HEIGHT, APP_WIDTH } from './constants/appSizes.js';
+import { isDev } from './constants/env.js';
+import { TRAY_ICONS, TRAY_ICONS_PATHS } from './constants/icons.js';
+import { isMac, isWindows } from './constants/os.js';
+import { paths } from './constants/paths.js';
+import { PORT_RANGE } from './constants/ports.js';
+import { Env } from './install.js';
+import { setupStoreIpc } from './store.js';
+import { macUpdater } from './update.js';
+import { logger } from './utils/logger.js';
+import { findAvailablePort, isPortAvailable } from './utils/portFinders.js';
+import { killProcesses } from './utils/processes.js';
 
-const { paths } = require('./constants');
-const { killProcesses } = require('./processes');
-const { isPortAvailable, findAvailablePort } = require('./ports');
-const { PORT_RANGE, isWindows, isMac } = require('./constants');
-const { macUpdater } = require('./update');
-const { setupStoreIpc } = require('./store');
-const { logger } = require('./logger');
-const { isDev } = require('./constants');
 
 // Attempt to acquire the single instance lock
 const singleInstanceLock = app.requestSingleInstanceLock();
@@ -104,6 +106,7 @@ const createTray = () => {
   const trayPath = getUpdatedTrayIcon(
     isWindows || isMac ? TRAY_ICONS.LOGGED_OUT : TRAY_ICONS_PATHS.LOGGED_OUT,
   );
+
   const tray = new Tray(trayPath);
 
   const contextMenu = Menu.buildFromTemplate([
@@ -166,8 +169,6 @@ const createTray = () => {
   });
 };
 
-const APP_WIDTH = 460;
-
 /**
  * Creates the splash window
  */
@@ -184,19 +185,17 @@ const createSplashWindow = () => {
       contextIsolation: false,
     },
   });
-  splashWindow.loadURL('file://' + __dirname + '/loading/index.html');
+  splashWindow.loadURL('file://' + import.meta.dirname + '/loading/index.html');
 
   if (isDev) {
     splashWindow.webContents.openDevTools();
   }
 };
 
-const HEIGHT = 700;
 /**
  * Creates the main window
  */
-const createMainWindow = () => {
-  const width = isDev ? 840 : APP_WIDTH;
+const createMainWindow = async () => {
   mainWindow = new BrowserWindow({
     title: 'Pearl',
     resizable: false,
@@ -205,12 +204,12 @@ const createMainWindow = () => {
     transparent: true,
     fullscreenable: false,
     maximizable: false,
-    width,
-    maxHeight: HEIGHT,
+    width: APP_WIDTH,
+    maxHeight: APP_HEIGHT,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(import.meta.dirname, 'preload.js'),
     },
   });
 
@@ -239,7 +238,7 @@ const createMainWindow = () => {
   });
 
   ipcMain.on('set-height', (_event, height) => {
-    mainWindow.setSize(width, height);
+    mainWindow.setSize(APP_WIDTH, height);
   });
 
   ipcMain.on('show-notification', (_event, title, description) => {
@@ -266,9 +265,11 @@ const createMainWindow = () => {
   });
 
   const storeInitialValues = {
+    version: app.getVersion(),
     environmentName: process.env.IS_STAGING ? 'staging' : '',
   };
-  setupStoreIpc(ipcMain, mainWindow, storeInitialValues);
+
+  await setupStoreIpc(ipcMain, mainWindow, storeInitialValues);
 
   if (isDev) {
     mainWindow.webContents.openDevTools();
@@ -338,7 +339,7 @@ async function launchDaemonDev() {
       'operate',
       'daemon',
       `--port=${appConfig.ports.dev.operate}`,
-      '--home=.operate',
+      `--home=${paths.dotOperateDirectory}`,
     ]);
     operateDaemonPid = operateDaemon.pid;
     operateDaemon.stderr.on('data', (data) => {
@@ -362,7 +363,7 @@ async function launchDaemonDev() {
 async function launchNextApp() {
   const nextApp = next({
     dev: false,
-    dir: path.join(__dirname),
+    dir: path.join(import.meta.dirname),
     port: appConfig.ports.prod.next,
     env: {
       GNOSIS_RPC:
@@ -377,10 +378,7 @@ async function launchNextApp() {
   });
   await nextApp.prepare();
 
-  const handle = nextApp.getRequestHandler();
-  const server = http.createServer((req, res) => {
-    handle(req, res); // Handle requests using the Next.js request handler
-  });
+  const server = http.createServer(nextApp.getRequestHandler);
   server.listen(appConfig.ports.prod.next, (err) => {
     if (err) throw err;
     logger.next(
@@ -394,55 +392,37 @@ async function launchNextAppDev() {
     process.env.NEXT_PUBLIC_BACKEND_PORT = appConfig.ports.dev.operate; // must set next env var to connect to backend
     nextAppProcess = spawn(
       'yarn',
-      ['dev:frontend', '--port', appConfig.ports.dev.next],
+      ['dev', '--port', appConfig.ports.dev.next],
       {
         env: {
           ...process.env,
           NEXT_PUBLIC_BACKEND_PORT: appConfig.ports.dev.operate,
         },
+        cwd: '../frontend',
       },
     );
     nextAppProcessPid = nextAppProcess.pid;
     nextAppProcess.stdout.on('data', (data) => {
       logger.next(data.toString().trim());
-      resolve();
+      if (data.toString().includes('Ready in', 'ms')) {
+        resolve();
+      }
     });
   });
 }
 
+// Fires after splash screen is loaded
 ipcMain.on('check', async function (event, _argument) {
-  // Update
-  try {
-    // macUpdater.checkForUpdates().then((res) => {
-    //   if (!res) return;
-    //   if (!res.downloadPromise) return;
-    //   new Notification({
-    //     title: 'Update Available',
-    //     body: 'Downloading update...',
-    //   }).show();
-    //   res.downloadPromise.then(() => {
-    //     new Notification({
-    //       title: 'Update Downloaded',
-    //       body: 'Restarting application...',
-    //     }).show();
-    //     macUpdater.quitAndInstall();
-    //   });
-    // });
-  } catch (e) {
-    logger.electron(e);
-  }
-
   // Setup
   try {
     event.sender.send('response', 'Checking installation');
-
-    if (platform === 'darwin') {
-      await setupDarwin(event.sender);
-    } else if (platform === 'win32') {
-      // TODO
-    } else {
-      await setupUbuntu(event.sender);
-    }
+      if (isMac) {
+        // await setupDarwin(event.sender);
+      } else if (isWindows) {
+        // TODO
+      } else {
+        // await setupUbuntu(event.sender);
+      }
 
     if (isDev) {
       event.sender.send(
@@ -494,9 +474,9 @@ ipcMain.on('check', async function (event, _argument) {
     }
 
     event.sender.send('response', 'Launching App');
-    createMainWindow();
-    createTray();
-    splashWindow.destroy();
+    createMainWindow().then(() => {
+      splashWindow.destroy();
+    });
   } catch (e) {
     logger.electron(e);
     new Notification({
@@ -510,9 +490,10 @@ ipcMain.on('check', async function (event, _argument) {
 
 // APP-SPECIFIC EVENTS
 app.on('ready', async () => {
-  if (platform === 'darwin') {
+  createTray();
+  if (isMac) {
     app.dock?.setIcon(
-      path.join(__dirname, 'assets/icons/splash-robot-head-dock.png'),
+      path.join(import.meta.dirname, 'assets/icons/splash-robot-head-dock.png'),
     );
   }
   createSplashWindow();
@@ -522,14 +503,25 @@ app.on('window-all-closed', () => {
   app.quit();
 });
 
-app.on('before-quit', async () => {
-  await beforeQuit();
-});
+app.on('before-quit', beforeQuit);
 
 // UPDATER EVENTS
-macUpdater.on('update-downloaded', () => {
-  macUpdater.quitAndInstall();
+macUpdater.once('update-downloaded', () => {
+  mainWindow.webContents.send('update-downloaded');
 });
+
+macUpdater.on('download-progress', (progress) => {
+  mainWindow.webContents.send('download-progress', progress);
+});
+
+ipcMain.once('start-download', () => macUpdater.downloadUpdate());
+
+ipcMain.once('install-update', () => macUpdater.quitAndInstall());
+
+ipcMain.handle(
+  'check-for-updates',
+  async () => await macUpdater.checkForUpdates(),
+);
 
 // PROCESS SPECIFIC EVENTS (HANDLES NON-GRACEFUL TERMINATION)
 process.on('uncaughtException', (error) => {

@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "baseUrl": ".",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext"
+    },
+    "exclude": [
+        "node_modules",
+        ".next",
+        "bins",
+        "dist"
+    ]
+}

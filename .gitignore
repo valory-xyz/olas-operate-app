@@ -1,19 +1,18 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
-/.pnp
+node_modules/
+.pnp
 .pnp.js
-.yarn/install-state.gz
-frontend/node_modules
+.yarn
 
 # next.js
-frontend/.next/
-frontend/out/
-frontend/.swc/
+.next
+out
+.swc
 
 # production
-frontend/build
+build
 
 # local env files
 .env
@@ -33,17 +32,16 @@ tmp/
 temp/
 
 !operate/data
-electron/.next
 
-dist/
-build/
+dist
+build
 
 cache
 leak_report
 
 *.dist
 *.build
-/electron/bins/
+bins
 
 # logs
 *.log

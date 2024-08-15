@@ -1,12 +1,18 @@
-const psTree = require('ps-tree');
-const { exec } = require('child_process');
+import { exec } from 'child_process';
+import psTree from 'ps-tree';
+
+import { isWindows } from '../constants/os.js';
 
 const unixKillCommand = 'kill -9';
 const windowsKillCommand = 'taskkill /F /PID';
 
-const isWindows = process.platform === 'win32';
-
-function killProcesses(pid) {
+/**
+ * Kills the specified process and its children.
+ *
+ * @param {number} pid - The process ID to kill.
+ * @returns {Promise<void>} A promise that resolves when the process and its children are killed, or rejects with an error.
+ */
+export function killProcesses(pid) {
   return new Promise((resolve, reject) => {
     psTree(pid, (err, children) => {
       if (err) {
@@ -36,5 +42,3 @@ function killProcesses(pid) {
     });
   });
 }
-
-module.exports = { killProcesses };

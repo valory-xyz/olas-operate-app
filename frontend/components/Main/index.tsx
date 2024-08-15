@@ -7,6 +7,7 @@ import { useBalance } from '@/hooks/useBalance';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 
+import { UpdateProgressIndicator } from '../Update/UpdateProgressIndicator';
 import { KeepAgentRunning } from './KeepAgentRunning';
 import { MainAddFunds } from './MainAddFunds';
 import { MainGasBalance } from './MainGasBalance';
@@ -49,6 +50,7 @@ export const Main = () => {
       style={{ borderTopColor: 'transparent' }}
     >
       <Flex vertical>
+        <UpdateProgressIndicator />
         <MainOlasBalance />
         <MainRewards />
         <KeepAgentRunning />

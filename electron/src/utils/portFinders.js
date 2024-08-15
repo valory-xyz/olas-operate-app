@@ -1,5 +1,6 @@
-const net = require('net');
-const { ERROR_ADDRESS_IN_USE } = require('./constants');
+import net from 'net';
+
+import { ERROR_ADDRESS_IN_USE } from '../constants/errors.js';
 
 /**
  * Finds an available port within the specified range, excluding specified ports.
@@ -8,7 +9,7 @@ const { ERROR_ADDRESS_IN_USE } = require('./constants');
  * @param {Array<number>} excludePorts - An array of ports to be skipped.
  * @returns {Promise<number>} The first available port found within the range that's not excluded.
  */
-function findAvailablePort({ startPort, endPort, excludePorts = [] }) {
+export function findAvailablePort({ startPort, endPort, excludePorts = [] }) {
   return new Promise((resolve, reject) => {
     let currentPort = startPort;
 
@@ -57,7 +58,7 @@ function findAvailablePort({ startPort, endPort, excludePorts = [] }) {
  * @param {number} port - The port to check.
  * @returns {Promise<boolean>} Whether the port is available.
  */
-function isPortAvailable(port) {
+export function isPortAvailable(port) {
   return new Promise((resolve) => {
     const server = net.createServer();
 
@@ -72,8 +73,3 @@ function isPortAvailable(port) {
     });
   });
 }
-
-module.exports = {
-  findAvailablePort,
-  isPortAvailable,
-};

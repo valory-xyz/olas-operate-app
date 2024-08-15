@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { PageState } from '@/enums/PageState';
 import { SettingsScreen } from '@/enums/SettingsScreen';
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { useMasterSafe } from '@/hooks/useMasterSafe';
 import { usePageState } from '@/hooks/usePageState';
 import { useSettings } from '@/hooks/useSettings';
@@ -49,6 +50,7 @@ export const Settings = () => {
 const SettingsMain = () => {
   const { backupSafeAddress } = useMasterSafe();
   const { goto } = usePageState();
+  const { checkForUpdates } = useElectronApi();
 
   const truncatedBackupSafeAddress: string | undefined = useMemo(() => {
     if (backupSafeAddress) {
@@ -89,6 +91,11 @@ const SettingsMain = () => {
           <NoBackupWallet />
         )}
       </CardSection>
+      <CardSection borderbottom="true" vertical gap={8}>
+        <Button onClick={checkForUpdates} color="primary" size="large">
+          Check for updates
+        </Button>
+      </CardSection>
 
       <DebugInfoCard />
     </Card>
@@ -120,7 +127,7 @@ const NoBackupWallet = () => {
       <Button
         type="primary"
         size="large"
-        disabled={true} // not in this iteration?
+        disabled={true} // TODO: enable when feature is ready
         onClick={() => gotoSettings(SettingsScreen.AddBackupWallet)}
       >
         Add backup wallet
