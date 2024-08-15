@@ -5,12 +5,9 @@ import fs from 'fs';
 import os from 'os';
 import process from 'process';
 import sudo from 'sudo-prompt';
-import { logger } from './logger';
 
+import { logger } from './utils/logger.js';
 import { paths } from './constants/paths.js';
-
-import path from from 'path';
-import { app } from 'electron';
 
 /**
  * current version of the pearl release

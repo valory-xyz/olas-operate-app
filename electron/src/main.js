@@ -29,6 +29,7 @@ import { logger } from './utils/logger.js';
 import { findAvailablePort, isPortAvailable } from './utils/portFinders.js';
 import { killProcesses } from './utils/processes.js';
 
+
 // Attempt to acquire the single instance lock
 const singleInstanceLock = app.requestSingleInstanceLock();
 if (!singleInstanceLock) app.quit();
@@ -416,11 +417,11 @@ ipcMain.on('check', async function (event, _argument) {
   try {
     event.sender.send('response', 'Checking installation');
       if (isMac) {
-        //await setupDarwin(event.sender);
+        // await setupDarwin(event.sender);
       } else if (isWindows) {
         // TODO
       } else {
-        //await setupUbuntu(event.sender);
+        // await setupUbuntu(event.sender);
       }
 
     if (isDev) {

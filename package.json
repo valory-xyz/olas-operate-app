@@ -16,7 +16,7 @@
     "install:frontend": "cd frontend && yarn",
     "lint": "yarn lint:frontend & yarn lint:electron & wait",
     "lint:frontend": "cd frontend && yarn lint",
-    "start": "yarn electron .",
+    "start": "electron electron",
     "start:frontend": "cd frontend && yarn start",
     "test:frontend": "cd frontend && yarn test",
     "download-binaries": "sh download_binaries.sh"
