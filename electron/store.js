@@ -1,3 +1,5 @@
+const Store = require('electron-store');
+
 // set schema to validate store data
 const schema = {
   isInitialFunded: { type: 'boolean', default: false }, // TODO: reconsider this default, can be problematic if user has already funded prior to implementation
@@ -16,8 +18,6 @@ const schema = {
  * @returns {Promise<void>} - A promise that resolves once the store is set up.
  */
 const setupStoreIpc = async (ipcMain, mainWindow) => {
-  const Store = (await import("electron-store")).default;
-
   const store = new Store({ schema });
 
   store.onDidAnyChange((data) => {
@@ -30,7 +30,9 @@ const setupStoreIpc = async (ipcMain, mainWindow) => {
   ipcMain.handle('store-get', (_, key) => store.get(key));
   ipcMain.handle('store-set', (_, key, value) => store.set(key, value));
   ipcMain.handle('store-delete', (_, key) => store.delete(key));
-  ipcMain.handle('store-clear', (_) => store.clear());  
+  ipcMain.handle('store-clear', (_) => store.clear());
 };
 
-module.exports = { setupStoreIpc };
+module.exports = {
+  setupStoreIpc,
+};

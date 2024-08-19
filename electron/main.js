@@ -24,7 +24,7 @@ const { killProcesses } = require('./processes');
 const { isPortAvailable, findAvailablePort } = require('./ports');
 const { PORT_RANGE, isWindows, isMac } = require('./constants');
 const { macUpdater } = require('./update');
-const { setupStoreIpc } = require('./store');
+const { setupStoreIpc } = require('./store.js');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 
@@ -258,7 +258,7 @@ const createMainWindow = async () => {
     event.preventDefault();
     mainWindow.hide();
   });
-  
+
   try {
     logger.electron('Setting up store IPC');
     await setupStoreIpc(ipcMain, mainWindow);
