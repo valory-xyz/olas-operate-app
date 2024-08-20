@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
-import { StakingProgramContext } from '@/context/StakingProgramContext';
+import { StakingProgramContext } from '@/context/main/StakingProgramContext';
 
 /**
  *  Mock hook for staking program abstraction
@@ -11,7 +11,7 @@ export const useStakingProgram = () => {
   const {
     activeStakingProgram,
     defaultStakingProgram,
-    updateActiveStakingProgram: updateStakingProgram,
+    updateActiveStakingProgram,
   } = useContext(StakingProgramContext);
 
   const isLoadedActiveStakingProgram = activeStakingProgram !== undefined;
@@ -27,7 +27,7 @@ export const useStakingProgram = () => {
     activeStakingProgram,
     activeStakingProgramMeta,
     defaultStakingProgram,
-    updateStakingProgram,
+    updateActiveStakingProgram,
     isLoadedActiveStakingProgram,
   };
 };

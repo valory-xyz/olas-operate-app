@@ -1,11 +1,11 @@
 import { useContext } from 'react';
 
-import { SetupContext } from '@/context/SetupProvider';
+import { SetupPageContext } from '@/context/SetupPageProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { Address } from '@/types/Address';
 
-export const useSetup = () => {
-  const { setupObject, setSetupObject } = useContext(SetupContext);
+export const useSetupPage = () => {
+  const { setupObject, setSetupObject } = useContext(SetupPageContext);
 
   const goto = (state: SetupScreen) => {
     setSetupObject((prev) => ({ ...prev, state }));

@@ -3,14 +3,14 @@ import { Button, Flex, Form, Input, Typography } from 'antd';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { FormFlex } from '@/components/styled/FormFlex';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup } from '@/hooks/useSetup';
+import { useSetupPage } from '@/hooks/useSetupPage';
 import { Address } from '@/types/Address';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
 
 export const SetupBackupSigner = () => {
-  const { goto } = useSetup();
-  const { setBackupSigner } = useSetup();
+  const { goto } = useSetupPage();
+  const { setBackupSigner } = useSetupPage();
   const [form] = Form.useForm();
 
   const handleFinish = (values: { 'backup-signer': Address }) => {

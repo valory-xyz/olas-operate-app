@@ -63,8 +63,11 @@ export const StakingContractSection = ({
     useServices();
   const { serviceTemplate } = useServiceTemplates();
   const { setMigrationModalOpen } = useModals();
-  const { activeStakingProgram, defaultStakingProgram, updateStakingProgram } =
-    useStakingProgram();
+  const {
+    activeStakingProgram,
+    defaultStakingProgram,
+    updateActiveStakingProgram: updateStakingProgram,
+  } = useStakingProgram();
   const { stakingContractInfoRecord } = useStakingContractInfo();
   const { token } = useToken();
   const { totalOlasBalance, isBalanceLoaded } = useBalance();

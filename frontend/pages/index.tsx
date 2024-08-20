@@ -5,6 +5,8 @@ import { Main } from '@/components/MainPage';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { Settings } from '@/components/SettingsPage';
 import { Setup } from '@/components/SetupPage';
+import { SettingsPageProvider } from '@/context/SettingsPageProvider';
+import { SetupPageProvider } from '@/context/SetupPageProvider';
 import { Pages } from '@/enums/PageState';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
@@ -36,17 +38,25 @@ export default function Home() {
   const page = useMemo(() => {
     switch (pageState) {
       case Pages.Setup:
-        return <Setup />;
+        return (
+          <SetupPageProvider>
+            <Setup />
+          </SetupPageProvider>
+        );
       case Pages.Main:
         return <Main />;
       case Pages.Settings:
-        return <Settings />;
+        return (
+          <SettingsPageProvider>
+            <Settings />
+          </SettingsPageProvider>
+        );
       case Pages.HelpAndSupport:
         return <HelpAndSupport />;
       case Pages.ManageStaking:
         return <ManageStakingPage />;
       default:
-        return <Main />;
+        return null;
     }
   }, [pageState]);
 

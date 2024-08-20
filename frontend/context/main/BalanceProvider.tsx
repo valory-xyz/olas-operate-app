@@ -29,7 +29,7 @@ import {
   WalletAddressNumberRecord,
 } from '@/types/Records';
 
-import { OnlineStatusContext } from './OnlineStatusProvider';
+import { OnlineStatusContext } from '../OnlineStatusProvider';
 import { RewardContext } from './RewardProvider';
 import { ServicesContext } from './ServicesProvider';
 import { WalletContext } from './WalletProvider';

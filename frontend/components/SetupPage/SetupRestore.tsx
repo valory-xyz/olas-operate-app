@@ -6,10 +6,10 @@ import { memo, useMemo, useState } from 'react';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup } from '@/hooks/useSetup';
+import { useSetupPage } from '@/hooks/useSetupPage';
 
 const ExitButton = memo(function ExitButton() {
-  const { goto } = useSetup();
+  const { goto } = useSetupPage();
   return (
     <Button size="large" onClick={() => goto(SetupScreen.Welcome)}>
       <CloseOutlined />
@@ -18,7 +18,7 @@ const ExitButton = memo(function ExitButton() {
 });
 
 export const SetupRestoreMain = () => {
-  const { goto } = useSetup();
+  const { goto } = useSetupPage();
   return (
     <CardFlex
       title={
@@ -67,7 +67,7 @@ export const SetupRestoreMain = () => {
 
 const SEED_PHRASE_WORDS = 12;
 export const SetupRestoreViaSeed = () => {
-  const { goto } = useSetup();
+  const { goto } = useSetupPage();
 
   const [form] = Form.useForm();
   const [formValues, setFormValues] = useState<{ [name: string]: string }>({});
@@ -132,7 +132,7 @@ export const SetupRestoreViaSeed = () => {
 };
 
 export const SetupRestoreSetPassword = () => {
-  const { goto } = useSetup();
+  const { goto } = useSetupPage();
   const [password, setPassword] = useState('');
   return (
     <CardFlex

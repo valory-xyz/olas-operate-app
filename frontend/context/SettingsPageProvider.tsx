@@ -2,7 +2,7 @@ import { createContext, PropsWithChildren, useState } from 'react';
 
 import { SettingsScreen } from '@/enums/SettingsScreen';
 
-export const SettingsContext = createContext<{
+export const SettingsPageContext = createContext<{
   screen: SettingsScreen;
   goto: (screen: SettingsScreen) => void;
 }>({
@@ -10,14 +10,14 @@ export const SettingsContext = createContext<{
   goto: () => {},
 });
 
-export const SettingsProvider = ({ children }: PropsWithChildren) => {
+export const SettingsPageProvider = ({ children }: PropsWithChildren) => {
   const [screen, setScreen] = useState<SettingsScreen>(SettingsScreen.Main);
 
   const goto = (screen: SettingsScreen) => setScreen(screen);
 
   return (
-    <SettingsContext.Provider value={{ screen, goto }}>
+    <SettingsPageContext.Provider value={{ screen, goto }}>
       {children}
-    </SettingsContext.Provider>
+    </SettingsPageContext.Provider>
   );
 };

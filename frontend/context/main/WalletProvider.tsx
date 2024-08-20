@@ -6,7 +6,7 @@ import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { WalletService } from '@/service/Wallet';
 import { Address } from '@/types/Address';
 
-import { OnlineStatusContext } from './OnlineStatusProvider';
+import { OnlineStatusContext } from '../OnlineStatusProvider';
 
 export const WalletContext = createContext<{
   masterEoaAddress?: Address;

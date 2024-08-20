@@ -28,19 +28,16 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     const serviceId =
       service?.chain_configs[CHAINS.GNOSIS.chainId].chain_data?.token;
 
-    if (!service?.chain_configs[CHAINS.GNOSIS.chainId].chain_data?.token) {
+    if (!serviceId) {
       setActiveStakingProgram(null);
       return;
     }
 
-    if (serviceId) {
-      // if service exists, we need to check if it is staked
-      AutonolasService.getCurrentStakingProgramByServiceId(serviceId).then(
-        (stakingProgram) => {
-          setActiveStakingProgram(stakingProgram);
-        },
-      );
-    }
+    AutonolasService.getCurrentStakingProgramByServiceId(serviceId).then(
+      (stakingProgram) => {
+        setActiveStakingProgram(stakingProgram);
+      },
+    );
   }, [service]);
 
   useInterval(updateActiveStakingProgram, 5000);
@@ -49,8 +46,8 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     <StakingProgramContext.Provider
       value={{
         activeStakingProgram,
-        updateActiveStakingProgram,
         defaultStakingProgram: StakingProgram.Beta,
+        updateActiveStakingProgram,
       }}
     >
       {children}

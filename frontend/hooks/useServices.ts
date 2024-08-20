@@ -2,7 +2,7 @@ import { useContext } from 'react';
 
 import { Service, ServiceHash, ServiceTemplate } from '@/client';
 import { CHAINS } from '@/constants/chains';
-import { ServicesContext } from '@/context/ServicesProvider';
+import { ServicesContext } from '@/context/main/ServicesProvider';
 import MulticallService from '@/service/Multicall';
 import { ServicesService } from '@/service/Services';
 import { Address } from '@/types/Address';

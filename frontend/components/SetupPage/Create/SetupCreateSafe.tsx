@@ -8,13 +8,13 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
 import { Pages } from '@/enums/PageState';
 import { usePageState } from '@/hooks/usePageState';
-import { useSetup } from '@/hooks/useSetup';
+import { useSetupPage } from '@/hooks/useSetupPage';
 import { useWallet } from '@/hooks/useWallet';
 import { WalletService } from '@/service/Wallet';
 
 export const SetupCreateSafe = () => {
   const { masterSafeAddress } = useWallet();
-  const { backupSigner } = useSetup();
+  const { backupSigner } = useSetupPage();
   const { goto } = usePageState();
 
   const [isCreatingSafe, setIsCreatingSafe] = useState(false);

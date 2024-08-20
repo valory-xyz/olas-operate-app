@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { memo } from 'react';
 
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup } from '@/hooks/useSetup';
+import { useSetupPage } from '@/hooks/useSetupPage';
 
 export const SetupCreateHeader = memo(function SetupCreateHeader({
   prev,
@@ -13,7 +13,7 @@ export const SetupCreateHeader = memo(function SetupCreateHeader({
   prev: SetupScreen;
   disabled?: boolean;
 }) {
-  const { goto } = useSetup();
+  const { goto } = useSetupPage();
   const handleBack = () => goto(prev);
   return (
     <Row>

@@ -6,14 +6,14 @@ import { Chain } from '@/client';
 import { MIN_ETH_BALANCE_THRESHOLDS } from '@/constants/thresholds';
 import { SettingsScreen } from '@/enums/SettingsScreen';
 import { useBalance } from '@/hooks/useBalance';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettingsPage } from '@/hooks/useSettingsPage';
 
 import { CardTitle } from '../Card/CardTitle';
 import { CardFlex } from '../styled/CardFlex';
 
 export const AddBackupWalletPage = () => {
   const { eoaBalance } = useBalance();
-  const { goto } = useSettings();
+  const { goto } = useSettingsPage();
 
   const [form] = Form.useForm();
 

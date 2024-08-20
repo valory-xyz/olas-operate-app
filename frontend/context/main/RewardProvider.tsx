@@ -13,12 +13,12 @@ import { useInterval } from 'usehooks-ts';
 import { CHAINS } from '@/constants/chains';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useServices } from '@/hooks/useServices';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { useStore } from '@/hooks/useStore';
 import { AutonolasService } from '@/service/Autonolas';
 
-import { OnlineStatusContext } from './OnlineStatusProvider';
-import { ServicesContext } from './ServicesProvider';
-import { StakingProgramContext } from './StakingProgramContext';
+import { OnlineStatusContext } from '../OnlineStatusProvider';
 
 export const RewardContext = createContext<{
   accruedServiceStakingRewards?: number;
@@ -40,13 +40,12 @@ export const RewardContext = createContext<{
 
 export const RewardProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
-  const { services } = useContext(ServicesContext);
-  const service = useMemo(() => services?.[0], [services]);
+
+  const { service } = useServices();
   const { storeState } = useStore();
+  const { activeStakingProgram, defaultStakingProgram } = useStakingProgram();
+
   const electronApi = useElectronApi();
-  const { activeStakingProgram, defaultStakingProgram } = useContext(
-    StakingProgramContext,
-  );
 
   const [accruedServiceStakingRewards, setAccruedServiceStakingRewards] =
     useState<number>();
@@ -56,7 +55,6 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
 
   const availableRewardsForEpochEth = useMemo<number | undefined>(() => {
     if (!availableRewardsForEpoch) return;
-
     const formatRewardsEth = parseFloat(
       ethers.utils.formatUnits(`${availableRewardsForEpoch}`, 18),
     );
@@ -89,7 +87,17 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
       });
     }
 
-    // can fallback to default staking program if no current staking program is active
+    /**
+     * if the active staking program has not loaded
+     * set default values
+     */
+    if (activeStakingProgram === undefined) {
+      setIsEligibleForRewards(false);
+      setAccruedServiceStakingRewards(0); // TODO: consider null for loading states
+      setAvailableRewardsForEpoch(0);
+      return;
+    }
+
     const epochRewardsPromise = AutonolasService.getAvailableRewardsForEpoch(
       activeStakingProgram ?? defaultStakingProgram,
     );

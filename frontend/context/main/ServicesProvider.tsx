@@ -17,7 +17,7 @@ import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { ServicesService } from '@/service/Services';
 import { Address } from '@/types/Address';
 
-import { OnlineStatusContext } from './OnlineStatusProvider';
+import { OnlineStatusContext } from '../OnlineStatusProvider';
 
 type ServicesContextProps = {
   services?: Service[];

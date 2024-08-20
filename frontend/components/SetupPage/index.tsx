@@ -1,6 +1,6 @@
 import { useContext, useMemo } from 'react';
 
-import { SetupContext } from '@/context/SetupProvider';
+import { SetupPageContext } from '@/context/SetupPageProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
@@ -17,7 +17,7 @@ import {
 import { SetupWelcome } from './SetupWelcome';
 
 export const Setup = () => {
-  const { setupObject } = useContext(SetupContext);
+  const { setupObject } = useContext(SetupPageContext);
   const setupScreen = useMemo(() => {
     switch (setupObject.state) {
       case SetupScreen.Welcome:

@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { Chain } from '@/client';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup } from '@/hooks/useSetup';
+import { useSetupPage } from '@/hooks/useSetupPage';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
 
@@ -13,7 +13,7 @@ import { SetupCreateHeader } from './SetupCreateHeader';
 const { Title, Text } = Typography;
 
 export const SetupPassword = () => {
-  const { goto, setMnemonic } = useSetup();
+  const { goto, setMnemonic } = useSetupPage();
   const [form] = Form.useForm<{ password: string; terms: boolean }>();
 
   const [isLoading, setIsLoading] = useState(false);

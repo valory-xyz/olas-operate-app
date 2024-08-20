@@ -9,18 +9,18 @@ import {
 import { SetupScreen } from '@/enums/SetupScreen';
 import { Address } from '@/types/Address';
 
-type SetupObjectType = {
+type SetupObject = {
   state: SetupScreen;
   mnemonic: string[];
   backupSigner?: Address;
 };
 
-type SetupContextType = {
-  setupObject: SetupObjectType;
-  setSetupObject: Dispatch<SetStateAction<SetupObjectType>>;
+type SetupPageContextType = {
+  setupObject: SetupObject;
+  setSetupObject: Dispatch<SetStateAction<SetupObject>>;
 };
 
-export const SetupContext = createContext<SetupContextType>({
+export const SetupPageContext = createContext<SetupPageContextType>({
   setupObject: {
     state: SetupScreen.Welcome,
     mnemonic: [],
@@ -29,16 +29,16 @@ export const SetupContext = createContext<SetupContextType>({
   setSetupObject: () => {},
 });
 
-export const SetupProvider = ({ children }: PropsWithChildren) => {
-  const [setupObject, setSetupObject] = useState<SetupObjectType>({
+export const SetupPageProvider = ({ children }: PropsWithChildren) => {
+  const [setupObject, setSetupObject] = useState<SetupObject>({
     state: SetupScreen.Welcome,
     mnemonic: [],
     backupSigner: undefined,
   });
 
   return (
-    <SetupContext.Provider value={{ setupObject, setSetupObject }}>
+    <SetupPageContext.Provider value={{ setupObject, setSetupObject }}>
       {children}
-    </SetupContext.Provider>
+    </SetupPageContext.Provider>
   );
 };

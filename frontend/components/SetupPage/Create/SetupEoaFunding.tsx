@@ -23,7 +23,7 @@ import { MIN_ETH_BALANCE_THRESHOLDS } from '@/constants/thresholds';
 import { COW_SWAP_GNOSIS_XDAI_OLAS_URL } from '@/constants/urls';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useBalance } from '@/hooks/useBalance';
-import { useSetup } from '@/hooks/useSetup';
+import { useSetupPage } from '@/hooks/useSetupPage';
 import { useWallet } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 
@@ -35,7 +35,7 @@ export const SetupEoaFunding = ({
   isIncomplete?: boolean;
 }) => {
   const { eoaBalance } = useBalance();
-  const { goto } = useSetup();
+  const { goto } = useSetupPage();
 
   const isFundedMasterEoa =
     eoaBalance?.ETH &&

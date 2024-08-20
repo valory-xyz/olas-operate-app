@@ -17,7 +17,7 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
-import { useSetup } from '@/hooks/useSetup';
+import { useSetupPage } from '@/hooks/useSetupPage';
 import { useWallet } from '@/hooks/useWallet';
 import { AccountService } from '@/service/Account';
 
@@ -96,7 +96,7 @@ export const SetupWelcome = () => {
 };
 
 export const SetupWelcomeCreate = () => {
-  const { goto } = useSetup();
+  const { goto } = useSetupPage();
 
   return (
     <Flex vertical gap={10}>
@@ -116,7 +116,7 @@ export const SetupWelcomeCreate = () => {
 };
 
 export const SetupWelcomeLogin = () => {
-  const { goto } = useSetup();
+  const { goto } = useSetupPage();
   const { goto: gotoPage } = usePageState();
 
   const { masterSafeAddress, wallets } = useWallet();

@@ -8,7 +8,7 @@ import { Pages } from '@/enums/PageState';
 import { SettingsScreen } from '@/enums/SettingsScreen';
 import { useMasterSafe } from '@/hooks/useMasterSafe';
 import { usePageState } from '@/hooks/usePageState';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettingsPage } from '@/hooks/useSettingsPage';
 import { truncateAddress } from '@/utils/truncate';
 
 import { CustomAlert } from '../Alert';
@@ -32,7 +32,7 @@ const SettingsTitle = () => (
 );
 
 export const Settings = () => {
-  const { screen } = useSettings();
+  const { screen } = useSettingsPage();
   const settingsScreen = useMemo(() => {
     switch (screen) {
       case SettingsScreen.Main:
@@ -100,7 +100,7 @@ const SettingsMain = () => {
 };
 
 const NoBackupWallet = () => {
-  const { goto: gotoSettings } = useSettings();
+  const { goto: gotoSettings } = useSettingsPage();
   return (
     <>
       <Text type="secondary">No backup wallet added.</Text>

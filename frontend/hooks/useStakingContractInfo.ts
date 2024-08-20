@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 
-import { StakingContractInfoContext } from '@/context/StakingContractInfoProvider';
+import { StakingContractInfoContext } from '@/context/main/StakingContractInfoProvider';
 
 import { useServices } from './useServices';
 

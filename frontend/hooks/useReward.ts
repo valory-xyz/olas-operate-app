@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 
-import { RewardContext } from '@/context/RewardProvider';
+import { RewardContext } from '@/context/main/RewardProvider';
 
 export const useReward = () => {
   const {

@@ -2,14 +2,14 @@ import { CopyOutlined } from '@ant-design/icons';
 import { Button, Flex, message, Tag, Typography } from 'antd';
 
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup } from '@/hooks/useSetup';
+import { useSetupPage } from '@/hooks/useSetupPage';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 
 import { CardFlex } from '../../styled/CardFlex';
 import { SetupCreateHeader } from './SetupCreateHeader';
 
 export const SetupSeedPhrase = () => {
-  const { mnemonic, goto } = useSetup();
+  const { mnemonic, goto } = useSetupPage();
 
   const handleNext = () => {
     goto(SetupScreen.SetupBackupSigner);
