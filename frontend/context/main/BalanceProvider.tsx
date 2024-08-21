@@ -17,6 +17,10 @@ import { useInterval } from 'usehooks-ts';
 import { Wallet } from '@/client';
 import { CHAINS } from '@/constants/chains';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
+import {
+  LOW_AGENT_SAFE_BALANCE,
+  LOW_MASTER_SAFE_BALANCE,
+} from '@/constants/thresholds';
 import { TOKENS } from '@/constants/tokens';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
 import { Token } from '@/enums/Token';
@@ -44,6 +48,7 @@ export const BalanceContext = createContext<{
   safeBalance?: ValueOf<WalletAddressNumberRecord>;
   totalEthBalance?: number;
   totalOlasBalance?: number;
+  isLowBalance: boolean;
   wallets?: Wallet[];
   walletBalances: WalletAddressNumberRecord;
   updateBalances: () => Promise<void>;
@@ -59,6 +64,7 @@ export const BalanceContext = createContext<{
   safeBalance: undefined,
   totalEthBalance: undefined,
   totalOlasBalance: undefined,
+  isLowBalance: false,
   wallets: undefined,
   walletBalances: {},
   updateBalances: async () => {},
@@ -197,6 +203,25 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     () => masterSafeAddress && walletBalances[masterSafeAddress],
     [masterSafeAddress, walletBalances],
   );
+  const agentSafeBalance = useMemo(
+    () =>
+      services?.[0]?.chain_configs[CHAINS.GNOSIS.chainId].chain_data
+        ?.multisig &&
+      walletBalances[
+        services[0].chain_configs[CHAINS.GNOSIS.chainId].chain_data.multisig!
+      ],
+    [services, walletBalances],
+  );
+  const isLowBalance = useMemo(() => {
+    if (!safeBalance || !agentSafeBalance) return false;
+    if (
+      safeBalance.ETH < LOW_MASTER_SAFE_BALANCE &&
+      // Need to check agentSafe balance as well, because it's auto-funded from safeBalance
+      agentSafeBalance.ETH < LOW_AGENT_SAFE_BALANCE
+    )
+      return true;
+    return false;
+  }, [safeBalance, agentSafeBalance]);
 
   useInterval(
     () => {
@@ -217,6 +242,7 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
         safeBalance,
         totalEthBalance,
         totalOlasBalance,
+        isLowBalance,
         wallets,
         walletBalances,
         updateBalances,

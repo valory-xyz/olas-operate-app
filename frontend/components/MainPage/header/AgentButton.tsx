@@ -4,7 +4,6 @@ import { useCallback, useMemo } from 'react';
 
 import { Chain, DeploymentStatus } from '@/client';
 import { COLOR } from '@/constants/colors';
-import { LOW_BALANCE } from '@/constants/thresholds';
 import { StakingProgram } from '@/enums/StakingProgram';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -103,6 +102,7 @@ const AgentNotRunningButton = () => {
   const {
     setIsPaused: setIsBalancePollingPaused,
     safeBalance,
+    isLowBalance,
     totalOlasStakedBalance,
     totalEthBalance,
   } = useBalance();
@@ -211,7 +211,7 @@ const AgentNotRunningButton = () => {
     const isServiceInactive =
       serviceStatus === DeploymentStatus.BUILT ||
       serviceStatus === DeploymentStatus.STOPPED;
-    if (isServiceInactive && safeBalance && safeBalance.ETH < LOW_BALANCE) {
+    if (isServiceInactive && isLowBalance) {
       return false;
     }
 
@@ -237,7 +237,6 @@ const AgentNotRunningButton = () => {
     return hasEnoughOlas && hasEnoughEth;
   }, [
     serviceStatus,
-    safeBalance,
     service,
     storeState?.isInitialFunded,
     isEligibleForStaking,
@@ -245,6 +244,7 @@ const AgentNotRunningButton = () => {
     safeOlasBalanceWithStaked,
     requiredOlas,
     totalEthBalance,
+    isLowBalance,
   ]);
 
   const buttonProps: ButtonProps = {

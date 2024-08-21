@@ -48,10 +48,7 @@ from operate.services.service import (
     OnChainUserParams,
     Service,
 )
-from operate.types import (
-    ServiceTemplate,
-    LedgerConfig
-)
+from operate.types import LedgerConfig, ServiceTemplate
 from operate.utils.gnosis import NULL_ADDRESS
 from operate.wallet.master import MasterWalletManager
 
@@ -159,7 +156,12 @@ class ServiceManager:
         """
         path = self.path / hash
         if path.exists():
-            return Service.load(path=path)
+            service = Service.load(path=path)
+
+            if service_template is not None:
+                service.update_user_params_from_template(service_template=service_template)
+
+            return service
 
         if service_template is None:
             raise ValueError(
@@ -878,8 +880,8 @@ class ServiceManager:
         ledger_config = chain_config.ledger_config
         chain_data = chain_config.chain_data
         user_params = chain_data.user_params
-        target_staking_program_id = user_params.staking_program_id
-        target_staking_contract = STAKING[ledger_config.chain][target_staking_program_id]
+        target_staking_program = user_params.staking_program_id
+        target_staking_contract = STAKING[ledger_config.chain][target_staking_program]
         sftxb = self.get_eth_safe_tx_builder(ledger_config=ledger_config)
 
         # TODO fixme
@@ -925,13 +927,27 @@ class ServiceManager:
             service_id=chain_config.chain_data.token,
             staking_contract=target_staking_contract,
         )
+        self.logger.info("Checking conditions to stake.")
+
+        staking_rewards_available = sftxb.staking_rewards_available(target_staking_contract)
+        staking_slots_available = sftxb.staking_slots_available(target_staking_contract)
+        on_chain_state = self._get_on_chain_state(chain_config=chain_config)
+        current_staking_program = self._get_current_staking_program(chain_data, ledger_config, sftxb)
+ 
+        self.logger.info(f"use_staking={chain_config.chain_data.user_params.use_staking}")
+        self.logger.info(f"{staking_state=}")
+        self.logger.info(f"{staking_rewards_available=}")
+        self.logger.info(f"{staking_slots_available=}")
+        self.logger.info(f"{on_chain_state=}")
+        self.logger.info(f"{current_staking_program=}")
+        self.logger.info(f"{target_staking_program=}")
 
         if (
                 chain_config.chain_data.user_params.use_staking
                 and staking_state == StakingState.UNSTAKED
-                and sftxb.staking_rewards_available(target_staking_contract)
-                and sftxb.staking_slots_available(target_staking_contract)
-                and self._get_on_chain_state(chain_config=chain_config) == OnChainState.DEPLOYED
+                and staking_rewards_available
+                and staking_slots_available
+                and on_chain_state == OnChainState.DEPLOYED
         ):
             self.logger.info(f"Approving staking: {chain_config.chain_data.token}")
             sftxb.new_tx().add(
@@ -955,6 +971,7 @@ class ServiceManager:
             service.store()
 
         current_staking_program = self._get_current_staking_program(chain_data, ledger_config, sftxb)
+        self.logger.info(f"{target_staking_program=}")
         self.logger.info(f"{current_staking_program=}")
 
     def unstake_service_on_chain(self, hash: str) -> None:

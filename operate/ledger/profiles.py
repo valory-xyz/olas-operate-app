@@ -38,7 +38,7 @@ CONTRACTS = {
 STAKING = {
     ChainType.GNOSIS: {
         "pearl_alpha": "0xEE9F19b5DF06c7E8Bfc7B28745dcf944C504198A",
-        "pearl_beta": "0xeF44Fb0842DDeF59D37f85D61A1eF492bbA6135d"
+        "pearl_beta": "0xeF44Fb0842DDeF59D37f85D61A1eF492bbA6135d",
     }
 }
 

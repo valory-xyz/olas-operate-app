@@ -777,6 +777,14 @@ class Service(LocalResource):
         service.store()
         return service
 
+    def update_user_params_from_template(self, service_template: ServiceTemplate):
+        """Update user params from template."""
+        for chain, config in service_template["configurations"].items():
+            for chain, config in service_template["configurations"].items():
+                self.chain_configs[chain].chain_data.user_params = OnChainUserParams.from_json(config)
+
+        self.store()
+
     def delete(self) -> None:
         """Delete a service."""
         parent_directory = self.path.parent

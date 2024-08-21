@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import { CustomAlert } from '@/components/Alert';
 import { COLOR } from '@/constants/colors';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { LOW_BALANCE } from '@/constants/thresholds';
+import { LOW_MASTER_SAFE_BALANCE } from '@/constants/thresholds';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useReward } from '@/hooks/useReward';
@@ -122,11 +122,12 @@ const MainOlasBalanceAlert = styled.div`
 `;
 
 const LowTradingBalanceAlert = () => {
-  const { isBalanceLoaded, safeBalance } = useBalance();
+  const { isBalanceLoaded, isLowBalance } = useBalance();
+  const { storeState } = useStore();
 
   if (!isBalanceLoaded) return null;
-  if (!safeBalance) return null;
-  if (safeBalance.ETH >= LOW_BALANCE) return null;
+  if (!storeState?.isInitialFunded) return;
+  if (!isLowBalance) return null;
 
   return (
     <MainOlasBalanceAlert>
@@ -140,7 +141,7 @@ const LowTradingBalanceAlert = () => {
               Trading balance is too low
             </Title>
             <Text>
-              {`To run your agent, add at least $${LOW_BALANCE} XDAI to your account.`}
+              {`To run your agent, add at least $${LOW_MASTER_SAFE_BALANCE} XDAI to your account.`}
             </Text>
             <Text>
               Do it quickly to avoid your agent missing its targets and getting

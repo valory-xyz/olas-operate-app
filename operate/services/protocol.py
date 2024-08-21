@@ -40,7 +40,8 @@ from autonomy.chain.base import registry_contracts
 from autonomy.chain.config import ChainConfigs, ChainType, ContractConfigs
 from autonomy.chain.constants import (
     GNOSIS_SAFE_PROXY_FACTORY_CONTRACT,
-    GNOSIS_SAFE_SAME_ADDRESS_MULTISIG_CONTRACT, MULTISEND_CONTRACT,
+    GNOSIS_SAFE_SAME_ADDRESS_MULTISIG_CONTRACT,
+    MULTISEND_CONTRACT,
 )
 from autonomy.chain.service import (
     get_agent_instances,
@@ -67,9 +68,10 @@ from operate.data.contracts.service_staking_token.contract import (
 from operate.types import ContractAddresses
 from operate.utils.gnosis import (
     MultiSendOperation,
+    NULL_ADDRESS,
     SafeOperation,
     hash_payload_to_hex,
-    skill_input_hex_to_payload, NULL_ADDRESS,
+    skill_input_hex_to_payload,
 )
 from operate.wallet.master import MasterWallet
 

@@ -528,6 +528,7 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
             )
 
         if template.get("deploy", False):
+
             def _fn() -> None:
                 manager.deploy_service_onchain_from_safe(hash=service.hash)
                 # manager.stake_service_on_chain_from_safe(hash=service.hash) # Done inside deploy_service_onchain

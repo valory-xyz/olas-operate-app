@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
-import { LOW_BALANCE } from '@/constants/thresholds';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useStore } from '@/hooks/useStore';
 import { useWallet } from '@/hooks/useWallet';
 
 import { CardSection } from '../../styled/CardSection';
@@ -33,7 +33,8 @@ const FineDot = styled(Dot)`
 `;
 
 const BalanceStatus = () => {
-  const { isBalanceLoaded, safeBalance } = useBalance();
+  const { isBalanceLoaded, isLowBalance } = useBalance();
+  const { storeState } = useStore();
   const { showNotification } = useElectronApi();
 
   const [isLowBalanceNotificationShown, setIsLowBalanceNotificationShown] =
@@ -42,33 +43,34 @@ const BalanceStatus = () => {
   // show notification if balance is too low
   useEffect(() => {
     if (!isBalanceLoaded) return;
-    if (!safeBalance) return;
     if (!showNotification) return;
+    if (!storeState?.isInitialFunded) return;
 
-    if (safeBalance.ETH < LOW_BALANCE && !isLowBalanceNotificationShown) {
+    if (isLowBalance && !isLowBalanceNotificationShown) {
       showNotification('Trading balance is too low.');
       setIsLowBalanceNotificationShown(true);
     }
 
     // If it has already been shown and the balance has increased,
     // should show the notification again if it goes below the threshold.
-    if (safeBalance.ETH >= LOW_BALANCE && isLowBalanceNotificationShown) {
+    if (!isLowBalance && isLowBalanceNotificationShown) {
       setIsLowBalanceNotificationShown(false);
     }
   }, [
     isBalanceLoaded,
     isLowBalanceNotificationShown,
-    safeBalance,
+    isLowBalance,
     showNotification,
+    storeState?.isInitialFunded,
   ]);
 
   const status = useMemo(() => {
-    if (!safeBalance || safeBalance.ETH < LOW_BALANCE) {
+    if (isLowBalance) {
       return { statusName: 'Too low', StatusComponent: EmptyDot };
     }
 
     return { statusName: 'Fine', StatusComponent: FineDot };
-  }, [safeBalance]);
+  }, [isLowBalance]);
 
   const { statusName, StatusComponent } = status;
   return (

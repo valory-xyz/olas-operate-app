@@ -1,5 +1,4 @@
 const Store = require('electron-store');
-
 // set schema to validate store data
 const schema = {
   isInitialFunded: { type: 'boolean', default: false }, // TODO: reconsider this default, can be problematic if user has already funded prior to implementation
