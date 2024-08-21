@@ -1,6 +1,6 @@
 name: "Trader Agent"
 description: "A single-agent service (sovereign agent) placing bets on Omen"
-hash: bafybeidgjgjj5ul6xkubicbemppufgsbx5sr5rwhtrwttk2oivp5bkdnce
+hash: bafybeiembjbkmym3ppclc2qnjuwzayibqp4vsv3lfq56fqelqfu6ytgv5i
 image: https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75
 service_version: v0.18.1
 home_chain_id: 100
