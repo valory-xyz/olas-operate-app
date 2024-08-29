@@ -1,16 +1,13 @@
 import { Flex, Typography } from 'antd';
-import { formatUnits } from 'ethers/lib/utils';
+import { isNil } from 'lodash-es';
 import { ReactNode, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
-import { CHAINS } from '@/constants/chains';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
-import { useServiceTemplates } from '@/hooks/useServiceTemplates';
-import { useStore } from '@/hooks/useStore';
-import { getMinimumStakedAmountRequired } from '@/utils/service';
+import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 
 import { CardSection } from '../../styled/CardSection';
 
@@ -24,62 +21,6 @@ const FundingValue = styled.div`
   letter-spacing: -0.72px;
 `;
 
-const useNeedsFunds = () => {
-  const { getServiceTemplates } = useServiceTemplates();
-
-  const serviceTemplate = useMemo(
-    () => getServiceTemplates()[0],
-    [getServiceTemplates],
-  );
-
-  const { storeState } = useStore();
-  const { safeBalance, totalOlasStakedBalance } = useBalance();
-
-  const isInitialFunded = storeState?.isInitialFunded;
-
-  const serviceFundRequirements = useMemo(() => {
-    const monthlyGasEstimate = Number(
-      formatUnits(
-        `${serviceTemplate.configurations[CHAINS.GNOSIS.chainId].monthly_gas_estimate}`,
-        18,
-      ),
-    );
-
-    const minimumStakedAmountRequired =
-      getMinimumStakedAmountRequired(serviceTemplate);
-
-    return {
-      eth: monthlyGasEstimate,
-      olas: minimumStakedAmountRequired,
-    };
-  }, [serviceTemplate]);
-
-  const hasEnoughEthForInitialFunding = useMemo(
-    () => (safeBalance?.ETH || 0) >= (serviceFundRequirements?.eth || 0),
-    [serviceFundRequirements?.eth, safeBalance],
-  );
-
-  const hasEnoughOlasForInitialFunding = useMemo(() => {
-    const olasInSafe = safeBalance?.OLAS || 0;
-    const olasStakedBySafe = totalOlasStakedBalance || 0;
-
-    const olasInSafeAndStaked = olasInSafe + olasStakedBySafe;
-
-    return olasInSafeAndStaked >= serviceFundRequirements.olas;
-  }, [
-    safeBalance?.OLAS,
-    totalOlasStakedBalance,
-    serviceFundRequirements?.olas,
-  ]);
-
-  return {
-    hasEnoughEthForInitialFunding,
-    hasEnoughOlasForInitialFunding,
-    serviceFundRequirements,
-    isInitialFunded,
-  };
-};
-
 export const MainNeedsFunds = () => {
   const { isBalanceLoaded } = useBalance();
   const {
@@ -92,11 +33,14 @@ export const MainNeedsFunds = () => {
   const electronApi = useElectronApi();
 
   const isVisible: boolean = useMemo(() => {
-    if (isInitialFunded) return false;
+    if (isNil(isInitialFunded)) return false;
     if (!isBalanceLoaded) return false;
-    if (hasEnoughEthForInitialFunding && hasEnoughOlasForInitialFunding)
+    if (
+      isNil(hasEnoughOlasForInitialFunding) ||
+      isNil(hasEnoughEthForInitialFunding)
+    )
       return false;
-    return true;
+    return !hasEnoughEthForInitialFunding || !hasEnoughOlasForInitialFunding;
   }, [
     hasEnoughEthForInitialFunding,
     hasEnoughOlasForInitialFunding,
@@ -109,20 +53,22 @@ export const MainNeedsFunds = () => {
       <Flex vertical gap={16}>
         <Text className="font-weight-600">Your agent needs funds</Text>
         <Flex gap={24}>
-          {!hasEnoughOlasForInitialFunding && (
-            <div>
-              <FundingValue>{`${UNICODE_SYMBOLS.OLAS}${serviceFundRequirements.olas} OLAS `}</FundingValue>
-              <span className="text-sm">for staking</span>
-            </div>
-          )}
-          {!hasEnoughEthForInitialFunding && (
-            <div>
-              <FundingValue>
-                {`$${serviceFundRequirements.eth} XDAI `}
-              </FundingValue>
-              <span className="text-sm">for trading</span>
-            </div>
-          )}
+          {!isNil(hasEnoughEthForInitialFunding) &&
+            !hasEnoughOlasForInitialFunding && (
+              <div>
+                <FundingValue>{`${UNICODE_SYMBOLS.OLAS}${serviceFundRequirements.olas} OLAS `}</FundingValue>
+                <span className="text-sm">for staking</span>
+              </div>
+            )}
+          {!isNil(hasEnoughOlasForInitialFunding) &&
+            !hasEnoughEthForInitialFunding && (
+              <div>
+                <FundingValue>
+                  {`$${serviceFundRequirements.eth} XDAI `}
+                </FundingValue>
+                <span className="text-sm">for trading</span>
+              </div>
+            )}
         </Flex>
         <ul className="p-0 m-0 text-sm">
           <li>Do not add more than these amounts.</li>
