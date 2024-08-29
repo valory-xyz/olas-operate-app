@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import { COLOR } from '@/constants/colors';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { useStore } from '@/hooks/useStore';
 import { useWallet } from '@/hooks/useWallet';
 
@@ -34,6 +35,7 @@ const FineDot = styled(Dot)`
 
 const BalanceStatus = () => {
   const { isBalanceLoaded, isLowBalance } = useBalance();
+  const { hasEnoughEthForInitialFunding } = useNeedsFunds();
   const { storeState } = useStore();
   const { showNotification } = useElectronApi();
 
@@ -65,12 +67,20 @@ const BalanceStatus = () => {
   ]);
 
   const status = useMemo(() => {
-    if (isLowBalance) {
-      return { statusName: 'Too low', StatusComponent: EmptyDot };
+    if (!storeState?.isInitialFunded && hasEnoughEthForInitialFunding) {
+      return { statusName: 'Fine', StatusComponent: FineDot };
     }
 
-    return { statusName: 'Fine', StatusComponent: FineDot };
-  }, [isLowBalance]);
+    if (!isLowBalance) {
+      return { statusName: 'Fine', StatusComponent: FineDot };
+    }
+
+    return { statusName: 'Too low', StatusComponent: EmptyDot };
+  }, [
+    hasEnoughEthForInitialFunding,
+    isLowBalance,
+    storeState?.isInitialFunded,
+  ]);
 
   const { statusName, StatusComponent } = status;
   return (
