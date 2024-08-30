@@ -6,6 +6,13 @@ const build = require('electron-builder').build;
 
 const { publishOptions } = require('./electron/constants');
 
+
+function artifactName() {
+  const env = process.env.NODE_ENV;
+  const prefix = env === 'production' ? '' : 'dev-';
+  return prefix + '${productName}-${version}-${platform}-${arch}.${ext}';
+}
+
 const main = async () => {
   console.log('Building...');
 
@@ -14,7 +21,7 @@ const main = async () => {
     publish: 'onTag',
     config: {
       appId: 'xyz.valory.olas-operate-app',
-      artifactName: '${productName}-${version}-${platform}-${arch}.${ext}',
+      artifactName: artifactName(),
       productName: 'Pearl',
       files: ['electron/**/*', 'package.json'],
       directories: {
@@ -23,6 +30,9 @@ const main = async () => {
       nsis: {
         oneClick: false,
       },
+      publish: publishOptions,
+      category: 'public.app-category.utilities',
+      icon: 'electron/assets/icons/splash-robot-head-dock.png',
       extraResources: [
         {
           from: 'electron/bins',
