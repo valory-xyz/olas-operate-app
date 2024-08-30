@@ -1,6 +1,6 @@
 import { message } from 'antd';
 import { isAddress } from 'ethers/lib/utils';
-import { isNumber } from 'lodash';
+import { isNumber } from 'lodash-es';
 import { ValueOf } from 'next/dist/shared/lib/constants';
 import {
   createContext,

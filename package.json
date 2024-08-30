@@ -15,7 +15,7 @@
     "electron-updater": "^6.1.8",
     "ethers": "5.7.2",
     "ethers-multicall": "^0.2.3",
-    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "next": "^14.2.3",
     "ps-tree": "^1.2.0",
     "react": "^18.3.1",

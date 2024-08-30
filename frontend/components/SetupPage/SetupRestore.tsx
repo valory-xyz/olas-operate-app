@@ -1,6 +1,6 @@
 import { CloseOutlined } from '@ant-design/icons';
 import { Button, Col, Flex, Form, Input, Row, Tooltip, Typography } from 'antd';
-import isEmpty from 'lodash/isEmpty';
+import isEmpty from 'lodash-es/isEmpty';
 import { memo, useMemo, useState } from 'react';
 
 import { CardFlex } from '@/components/styled/CardFlex';

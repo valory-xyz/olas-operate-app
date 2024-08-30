@@ -1,4 +1,4 @@
-import { get } from 'lodash';
+import { get } from 'lodash-es';
 import { createContext, PropsWithChildren } from 'react';
 
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
