@@ -53,22 +53,20 @@ export const MainNeedsFunds = () => {
       <Flex vertical gap={16}>
         <Text className="font-weight-600">Your agent needs funds</Text>
         <Flex gap={24}>
-          {!isNil(hasEnoughEthForInitialFunding) &&
-            !hasEnoughOlasForInitialFunding && (
-              <div>
-                <FundingValue>{`${UNICODE_SYMBOLS.OLAS}${serviceFundRequirements.olas} OLAS `}</FundingValue>
-                <span className="text-sm">for staking</span>
-              </div>
-            )}
-          {!isNil(hasEnoughOlasForInitialFunding) &&
-            !hasEnoughEthForInitialFunding && (
-              <div>
-                <FundingValue>
-                  {`$${serviceFundRequirements.eth} XDAI `}
-                </FundingValue>
-                <span className="text-sm">for trading</span>
-              </div>
-            )}
+          {hasEnoughOlasForInitialFunding === false && (
+            <div>
+              <FundingValue>{`${UNICODE_SYMBOLS.OLAS}${serviceFundRequirements.olas} OLAS `}</FundingValue>
+              <span className="text-sm">for staking</span>
+            </div>
+          )}
+          {hasEnoughEthForInitialFunding === false && (
+            <div>
+              <FundingValue>
+                {`$${serviceFundRequirements.eth} XDAI `}
+              </FundingValue>
+              <span className="text-sm">for trading</span>
+            </div>
+          )}
         </Flex>
         <ul className="p-0 m-0 text-sm">
           <li>Do not add more than these amounts.</li>
