@@ -56,7 +56,7 @@ export const StakingContractUpdate = () => {
             placement="topLeft"
             trigger={['hover']}
             arrow={false}
-            content={<Text>Ability to withdraw is coming soon</Text>}
+            content={<Text>Fund your agent to manage staking contracts</Text>}
           >
             {stakingButton}
           </Popover>
