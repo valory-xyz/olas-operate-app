@@ -559,8 +559,9 @@ class ServiceManager:
             (not is_first_mint)
             and (on_chain_hash is not None)
             and (
-                on_chain_hash != service.hash
-                or current_agent_id != staking_params["agent_ids"][0]
+                # TODO Discuss how to manage on-chain hash updates with staking programs.
+                # on_chain_hash != service.hash or  # noqa
+                current_agent_id != staking_params["agent_ids"][0]
                 or current_agent_bond != staking_params["min_staking_deposit"]
             )
         )
