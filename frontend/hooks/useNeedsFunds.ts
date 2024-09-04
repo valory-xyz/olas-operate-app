@@ -19,23 +19,15 @@ export const useNeedsFunds = () => {
   const { storeState } = useStore();
   const { isBalanceLoaded, safeBalance, totalOlasStakedBalance } = useBalance();
 
-  const isInitialFunded = storeState?.isInitialFunded;
-
   const serviceFundRequirements = useMemo(() => {
-    const monthlyGasEstimate = Number(
-      formatUnits(
-        `${serviceTemplate.configurations[CHAINS.GNOSIS.chainId].monthly_gas_estimate}`,
-        18,
-      ),
-    );
-
+    const gasEstimate =
+      serviceTemplate.configurations[CHAINS.GNOSIS.chainId]
+        .monthly_gas_estimate;
+    const monthlyGasEstimate = Number(formatUnits(`${gasEstimate}`, 18));
     const minimumStakedAmountRequired =
       getMinimumStakedAmountRequired(serviceTemplate);
 
-    return {
-      eth: monthlyGasEstimate,
-      olas: minimumStakedAmountRequired,
-    };
+    return { eth: monthlyGasEstimate, olas: minimumStakedAmountRequired };
   }, [serviceTemplate]);
 
   const hasEnoughEthForInitialFunding = useMemo(
@@ -47,9 +39,7 @@ export const useNeedsFunds = () => {
     const olasInSafe = safeBalance?.OLAS || 0;
     const olasStakedBySafe = totalOlasStakedBalance || 0;
     const olasRequiredToFundService = serviceFundRequirements.olas || 0;
-
     const olasInSafeAndStaked = olasInSafe + olasStakedBySafe;
-
     return olasInSafeAndStaked >= olasRequiredToFundService;
   }, [
     safeBalance?.OLAS,
@@ -57,6 +47,7 @@ export const useNeedsFunds = () => {
     serviceFundRequirements?.olas,
   ]);
 
+  const isInitialFunded = storeState?.isInitialFunded;
   const needsInitialFunding: boolean = useMemo(() => {
     if (isInitialFunded) return false;
     if (!isBalanceLoaded) return false;

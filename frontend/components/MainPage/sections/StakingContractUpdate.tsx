@@ -16,7 +16,7 @@ const { Text } = Typography;
 export const StakingContractUpdate = () => {
   const { goto } = usePageState();
   const { isBalanceLoaded, isLowBalance } = useBalance();
-  const { hasEnoughEthForInitialFunding } = useNeedsFunds();
+  const { needsInitialFunding } = useNeedsFunds();
   const {
     activeStakingProgramMeta,
     isLoadedActiveStakingProgram,
@@ -31,9 +31,9 @@ export const StakingContractUpdate = () => {
   const canUpdateStakingContract = useMemo(() => {
     if (!isBalanceLoaded) return false;
     if (isLowBalance) return false;
-    if (!hasEnoughEthForInitialFunding) return false;
+    if (needsInitialFunding) return false;
     return true;
-  }, [isBalanceLoaded, isLowBalance, hasEnoughEthForInitialFunding]);
+  }, [isBalanceLoaded, isLowBalance, needsInitialFunding]);
 
   const stakingButton = useMemo(() => {
     if (!isLoadedActiveStakingProgram) return <Skeleton.Input />;
