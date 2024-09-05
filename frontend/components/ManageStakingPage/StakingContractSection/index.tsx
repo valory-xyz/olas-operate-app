@@ -25,35 +25,12 @@ import { StakingContractInfo } from './StakingContractInfo';
 import { StakingContractTag } from './StakingContractTag';
 
 const { Title } = Typography;
-
 const { useToken } = theme;
 
-// const CustomDivider = styled(Divider)`
-//   flex: auto;
-//   width: max-content;
-//   min-width: 0;
-//   margin: 0;
-// `;
-
-// const ContractParameter = ({
-//   label,
-//   value,
-// }: {
-//   label: string;
-//   value: string;
-// }) => (
-//   <Flex gap={16} align="center">
-//     <Text type="secondary">{label}</Text>
-//     <CustomDivider />
-//     <Text className="font-weight-600">{value}</Text>
-//   </Flex>
-// );
-
+type StakingProgramProps = { stakingProgram: StakingProgram };
 export const StakingContractSection = ({
   stakingProgram,
-}: {
-  stakingProgram: StakingProgram;
-}) => {
+}: StakingProgramProps) => {
   const { goto } = usePageState();
   const {
     setServiceStatus,
@@ -251,20 +228,9 @@ export const StakingContractSection = ({
     return {};
   }, [isSelected, activeStakingProgram, token.colorPrimaryBg]);
 
-  // If the staking program is deprecated, don't render the section
-  if (STAKING_PROGRAM_META[stakingProgram].deprecated) {
-    return null;
-  }
-
   return (
     <>
-      <CardSection
-        style={cardStyle}
-        bordertop="true"
-        borderbottom="true"
-        vertical
-        gap={16}
-      >
+      <CardSection style={cardStyle} borderbottom="true" vertical gap={16}>
         <Flex gap={12}>
           <Title level={5} className="m-0">
             {`${stakingProgramMeta?.name} contract`}

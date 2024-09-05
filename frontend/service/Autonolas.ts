@@ -20,8 +20,8 @@ import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceS
 import { StakingProgram } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 import {
-  StakingContractDetails,
   StakingContractInfo,
+  StakingContractRecord,
   StakingRewardsInfo,
 } from '@/types/Autonolas';
 
@@ -249,7 +249,7 @@ const getStakingContractInfoByServiceIdStakingProgram = async (
  */
 const getStakingContractInfoByStakingProgram = async (
   stakingProgram: StakingProgram,
-): Promise<StakingContractDetails> => {
+): Promise<StakingContractRecord> => {
   const contractCalls = [
     serviceStakingTokenMechUsageContracts[stakingProgram].availableRewards(),
     serviceStakingTokenMechUsageContracts[stakingProgram].maxNumServices(),

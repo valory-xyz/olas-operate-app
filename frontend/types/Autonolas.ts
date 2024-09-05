@@ -33,5 +33,5 @@ export type OtherStakingContractInfo = {
   rewardsPerWorkPeriod?: number;
 };
 
-export type StakingContractDetails = Partial<StakingContractInfo> &
+export type StakingContractRecord = Partial<StakingContractInfo> &
   OtherStakingContractInfo;
