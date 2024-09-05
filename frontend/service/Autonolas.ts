@@ -19,7 +19,11 @@ import { gnosisMulticallProvider } from '@/constants/providers';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
 import { StakingProgram } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
-import { StakingContractInfo, StakingRewardsInfo } from '@/types/Autonolas';
+import {
+  StakingContractDetails,
+  StakingContractInfo,
+  StakingRewardsInfo,
+} from '@/types/Autonolas';
 
 const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 const REQUIRED_MECH_REQUESTS_SAFETY_MARGIN = 1;
@@ -245,7 +249,7 @@ const getStakingContractInfoByServiceIdStakingProgram = async (
  */
 const getStakingContractInfoByStakingProgram = async (
   stakingProgram: StakingProgram,
-) => {
+): Promise<StakingContractDetails> => {
   const contractCalls = [
     serviceStakingTokenMechUsageContracts[stakingProgram].availableRewards(),
     serviceStakingTokenMechUsageContracts[stakingProgram].maxNumServices(),
@@ -284,14 +288,15 @@ const getStakingContractInfoByStakingProgram = async (
     (1 + numAgentInstances.toNumber());
 
   // Amount of OLAS required for Stake
-  const stakeRequired = minStakingDeposit.add(
+  const stakeRequiredInWei = minStakingDeposit.add(
     minStakingDeposit.mul(numAgentInstances),
   );
+  const stakeRequired = Number(formatEther(stakeRequiredInWei));
 
   // Rewards per work period
-  const rewardsPerWorkPeriod = formatEther(
-    rewardsPerSecond.mul(livenessPeriod),
-  );
+  const rewardsPerWorkPeriod =
+    Number(formatEther(rewardsPerSecond as BigNumber)) *
+    livenessPeriod.toNumber();
 
   return {
     availableRewards,
@@ -299,7 +304,6 @@ const getStakingContractInfoByStakingProgram = async (
     serviceIds,
     minimumStakingDuration: minStakingDurationInBN.toNumber(),
     minStakingDeposit: parseFloat(ethers.utils.formatEther(minStakingDeposit)),
-    rewardsPerSecond: rewardsPerSecond.toNumber(),
     apy,
     stakeRequired,
     rewardsPerWorkPeriod,
