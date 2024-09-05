@@ -265,10 +265,9 @@ export const StakingContractSection = ({
         gap={16}
       >
         <Flex gap={12}>
-          <Title
-            level={5}
-            className="m-0"
-          >{`${stakingProgramMeta?.name} contract`}</Title>
+          <Title level={5} className="m-0">
+            {`${stakingProgramMeta?.name} contract`}
+          </Title>
           <StakingContractTag status={contractTagStatus} />
         </Flex>
 
