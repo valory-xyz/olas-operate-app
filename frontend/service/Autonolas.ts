@@ -1,4 +1,5 @@
 import { BigNumber, ethers } from 'ethers';
+import { formatEther } from 'ethers/lib/utils';
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { AGENT_MECH_ABI } from '@/abis/agentMech';
@@ -27,33 +28,31 @@ const agentMechContract = new MulticallContract(
   AGENT_MECH_ABI.filter((abi) => abi.type === 'function'), // weird bug in the package where their filter doesn't work..
 );
 
+const ServiceStakingTokenAbi = SERVICE_STAKING_TOKEN_MECH_USAGE_ABI.filter(
+  (abi) => abi.type === 'function',
+);
+
 const serviceStakingTokenMechUsageContracts: Record<
   StakingProgram,
   MulticallContract
 > = {
   [StakingProgram.Alpha]: new MulticallContract(
     SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS][
-    StakingProgram.Alpha
+      StakingProgram.Alpha
     ],
-    SERVICE_STAKING_TOKEN_MECH_USAGE_ABI.filter(
-      (abi) => abi.type === 'function',
-    ),
+    ServiceStakingTokenAbi,
   ),
   [StakingProgram.Beta]: new MulticallContract(
     SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS][
-    StakingProgram.Beta
+      StakingProgram.Beta
     ],
-    SERVICE_STAKING_TOKEN_MECH_USAGE_ABI.filter(
-      (abi) => abi.type === 'function',
-    ),
+    ServiceStakingTokenAbi,
   ),
   [StakingProgram.Beta2]: new MulticallContract(
     SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS][
-    StakingProgram.Beta2
+      StakingProgram.Beta2
     ],
-    SERVICE_STAKING_TOKEN_MECH_USAGE_ABI.filter(
-      (abi) => abi.type === 'function',
-    ),
+    ServiceStakingTokenAbi,
   ),
 };
 
@@ -135,7 +134,7 @@ const getAgentStakingRewardsInfo = async ({
   const requiredMechRequests =
     (Math.ceil(Math.max(livenessPeriod, nowInSeconds - tsCheckpoint)) *
       livenessRatio) /
-    1e18 +
+      1e18 +
     REQUIRED_MECH_REQUESTS_SAFETY_MARGIN;
 
   const mechRequestCountOnLastCheckpoint = serviceInfo[2][1];
@@ -180,9 +179,7 @@ const getAvailableRewardsForEpoch = async (
   await gnosisMulticallProvider.init();
 
   const multicallResponse = await gnosisMulticallProvider.all(contractCalls);
-
   const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
-
   const nowInSeconds = Math.floor(Date.now() / 1000);
 
   return Math.max(
@@ -241,6 +238,36 @@ const getStakingContractInfoByServiceIdStakingProgram = async (
   };
 };
 
+const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
+const getApy = (
+  rewardsPerSecond: BigNumber,
+  minStakingDeposit: BigNumber,
+  maxNumAgentInstances: BigNumber,
+) => {
+  const rewardsPerYear = rewardsPerSecond.mul(ONE_YEAR);
+  const apy = rewardsPerYear.mul(100).div(minStakingDeposit);
+  return Number(apy) / (1 + maxNumAgentInstances.toNumber());
+};
+
+const getStakeRequired = (
+  minStakingDeposit: BigNumber,
+  numAgentInstances: BigNumber,
+) => {
+  const stake = minStakingDeposit.add(minStakingDeposit.mul(numAgentInstances));
+  return formatEther(stake);
+};
+
+const getRewardsPerWorkPeriod = (
+  rewardsPerSecond: BigNumber,
+  livenessPeriod: BigNumber,
+) => {
+  return formatEther(rewardsPerSecond.mul(livenessPeriod));
+};
+
+/**
+ * Get staking contract info by staking program name
+ * eg. Alpha, Beta, Beta2
+ */
 const getStakingContractInfoByStakingProgram = async (
   stakingProgram: StakingProgram,
 ) => {
@@ -250,6 +277,9 @@ const getStakingContractInfoByStakingProgram = async (
     serviceStakingTokenMechUsageContracts[stakingProgram].getServiceIds(),
     serviceStakingTokenMechUsageContracts[stakingProgram].minStakingDuration(),
     serviceStakingTokenMechUsageContracts[stakingProgram].minStakingDeposit(),
+    serviceStakingTokenMechUsageContracts[stakingProgram].rewardsPerSecond(),
+    serviceStakingTokenMechUsageContracts[stakingProgram].numAgentInstances(),
+    serviceStakingTokenMechUsageContracts[stakingProgram].livenessPeriod(),
   ];
 
   await gnosisMulticallProvider.init();
@@ -261,6 +291,9 @@ const getStakingContractInfoByStakingProgram = async (
     getServiceIdsInBN,
     minStakingDurationInBN,
     minStakingDeposit,
+    rewardsPerSecond,
+    numAgentInstances,
+    livenessPeriod,
   ] = multicallResponse;
 
   const availableRewards = parseFloat(
@@ -275,6 +308,13 @@ const getStakingContractInfoByStakingProgram = async (
     serviceIds,
     minimumStakingDuration: minStakingDurationInBN.toNumber(),
     minStakingDeposit: parseFloat(ethers.utils.formatEther(minStakingDeposit)),
+    rewardsPerSecond: rewardsPerSecond.toNumber(),
+    apy: getApy(rewardsPerSecond, minStakingDeposit, numAgentInstances),
+    stakeRequired: getStakeRequired(minStakingDeposit, numAgentInstances),
+    rewardsPerWorkPeriod: getRewardsPerWorkPeriod(
+      rewardsPerSecond,
+      livenessPeriod,
+    ),
   };
 };
 
