@@ -17,13 +17,17 @@ export const ManageStakingPage = () => {
   const orderedStakingPrograms: StakingProgram[] = Object.values(
     StakingProgram,
   ).reduce((acc: StakingProgram[], stakingProgram: StakingProgram) => {
+    // put the active staking program at the top
     if (stakingProgram === activeStakingProgram) {
-      // put the active staking program at the top
       return [stakingProgram, ...acc];
     }
+
     // otherwise, append to the end
     return [...acc, stakingProgram];
   }, []);
+
+  const activeStakingContract = orderedStakingPrograms[0];
+  const otherStakingContracts = orderedStakingPrograms.slice(1);
 
   return (
     <Card
@@ -38,7 +42,8 @@ export const ManageStakingPage = () => {
       }
     >
       <WhatAreStakingContractsSection />
-      {orderedStakingPrograms.map((stakingProgram) => (
+      <StakingContractSection stakingProgram={activeStakingContract} />
+      {otherStakingContracts.map((stakingProgram) => (
         <StakingContractSection
           key={stakingProgram}
           stakingProgram={stakingProgram}

@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
-import { InfoBreakdown } from '@/components/InfoBreakdown';
+import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { LOW_MASTER_SAFE_BALANCE } from '@/constants/thresholds';
 import { useBalance } from '@/hooks/useBalance';
@@ -20,9 +20,7 @@ const Balance = styled.span`
   letter-spacing: -2px;
   margin-right: 4px;
 `;
-const BalanceBreakdown = styled.div`
-  padding: 4px;
-`;
+
 const OVERLAY_STYLE = { maxWidth: '300px', width: '300px' };
 
 const CurrentBalance = () => {
@@ -60,17 +58,14 @@ const CurrentBalance = () => {
         placement="bottom"
         overlayStyle={OVERLAY_STYLE}
         title={
-          <BalanceBreakdown>
-            {balances.map((item, index) => (
-              <InfoBreakdown
-                key={index}
-                left={<span>{item.title}</span>}
-                right={
-                  <span className="font-weight-600">{item.value} OLAS</span>
-                }
-              />
-            ))}
-          </BalanceBreakdown>
+          <InfoBreakdownList
+            list={balances.map((item) => ({
+              left: item.title,
+              right: `${item.value} OLAS`,
+            }))}
+            size="small"
+            parentStyle={{ padding: 4, gap: 8 }}
+          />
         }
       >
         <InfoCircleOutlined />
