@@ -21,6 +21,7 @@ import { StakingProgram } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 import { StakingContractInfo, StakingRewardsInfo } from '@/types/Autonolas';
 
+const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 const REQUIRED_MECH_REQUESTS_SAFETY_MARGIN = 1;
 
 const agentMechContract = new MulticallContract(
@@ -238,32 +239,6 @@ const getStakingContractInfoByServiceIdStakingProgram = async (
   };
 };
 
-const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
-const getApy = (
-  rewardsPerSecond: BigNumber,
-  minStakingDeposit: BigNumber,
-  maxNumAgentInstances: BigNumber,
-) => {
-  const rewardsPerYear = rewardsPerSecond.mul(ONE_YEAR);
-  const apy = rewardsPerYear.mul(100).div(minStakingDeposit);
-  return Number(apy) / (1 + maxNumAgentInstances.toNumber());
-};
-
-const getStakeRequired = (
-  minStakingDeposit: BigNumber,
-  numAgentInstances: BigNumber,
-) => {
-  const stake = minStakingDeposit.add(minStakingDeposit.mul(numAgentInstances));
-  return formatEther(stake);
-};
-
-const getRewardsPerWorkPeriod = (
-  rewardsPerSecond: BigNumber,
-  livenessPeriod: BigNumber,
-) => {
-  return formatEther(rewardsPerSecond.mul(livenessPeriod));
-};
-
 /**
  * Get staking contract info by staking program name
  * eg. Alpha, Beta, Beta2
@@ -302,6 +277,22 @@ const getStakingContractInfoByStakingProgram = async (
   const serviceIds = getServiceIdsInBN.map((id: BigNumber) => id.toNumber());
   const maxNumServices = maxNumServicesInBN.toNumber();
 
+  // APY
+  const rewardsPerYear = rewardsPerSecond.mul(ONE_YEAR);
+  const apy =
+    Number(rewardsPerYear.mul(100).div(minStakingDeposit)) /
+    (1 + numAgentInstances.toNumber());
+
+  // Amount of OLAS required for Stake
+  const stakeRequired = minStakingDeposit.add(
+    minStakingDeposit.mul(numAgentInstances),
+  );
+
+  // Rewards per work period
+  const rewardsPerWorkPeriod = formatEther(
+    rewardsPerSecond.mul(livenessPeriod),
+  );
+
   return {
     availableRewards,
     maxNumServices,
@@ -309,12 +300,9 @@ const getStakingContractInfoByStakingProgram = async (
     minimumStakingDuration: minStakingDurationInBN.toNumber(),
     minStakingDeposit: parseFloat(ethers.utils.formatEther(minStakingDeposit)),
     rewardsPerSecond: rewardsPerSecond.toNumber(),
-    apy: getApy(rewardsPerSecond, minStakingDeposit, numAgentInstances),
-    stakeRequired: getStakeRequired(minStakingDeposit, numAgentInstances),
-    rewardsPerWorkPeriod: getRewardsPerWorkPeriod(
-      rewardsPerSecond,
-      livenessPeriod,
-    ),
+    apy,
+    stakeRequired,
+    rewardsPerWorkPeriod,
   };
 };
 
