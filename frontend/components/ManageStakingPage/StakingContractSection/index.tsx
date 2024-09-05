@@ -221,6 +221,12 @@ export const StakingContractSection = ({
     return;
   }, [activeStakingProgram, defaultStakingProgram, stakingProgram]);
 
+  // Show funding address
+  const canShowFundingAddress =
+    !isSelected &&
+    activeStakingContractSupportsMigration &&
+    !hasEnoughOlasToMigrate;
+
   const cardStyle = useMemo(() => {
     if (isSelected || !activeStakingProgram) {
       return { background: token.colorPrimaryBg };
@@ -285,20 +291,18 @@ export const StakingContractSection = ({
         )}
 
         {/* show funding address */}
-        {!isSelected &&
-          activeStakingContractSupportsMigration &&
-          !hasEnoughOlasToMigrate && (
-            <>
-              <Button
-                type="default"
-                size="large"
-                onClick={() => setIsFundingSectionOpen((prev) => !prev)}
-              >
-                {isFundingSectionOpen ? 'Hide' : 'Show'} address to fund
-              </Button>
-              {isFundingSectionOpen && <OpenAddFundsSection />}
-            </>
-          )}
+        {canShowFundingAddress && (
+          <>
+            <Button
+              type="default"
+              size="large"
+              onClick={() => setIsFundingSectionOpen((prev) => !prev)}
+            >
+              {isFundingSectionOpen ? 'Hide' : 'Show'} address to fund
+            </Button>
+            {isFundingSectionOpen && <OpenAddFundsSection />}
+          </>
+        )}
       </CardSection>
     </>
   );

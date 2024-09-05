@@ -22,15 +22,15 @@ export type StakingContractInfo = {
   serviceStakingState: number;
   /** OLAS cost of staking */
   minStakingDeposit: number;
-  /** annual percentage yield */
 };
 
 export type OtherStakingContractInfo = {
-  apy?: number;
+  /** annual percentage yield */
+  apy: number;
   /** amount of OLAS required to stake */
-  stakeRequired?: number;
+  stakeRequired: number;
   /** rewards per work period */
-  rewardsPerWorkPeriod?: number;
+  rewardsPerWorkPeriod: number;
 };
 
 export type StakingContractRecord = Partial<StakingContractInfo> &
