@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
-import { COLOR } from '@/constants/colors';
+import { InfoBreakdown } from '@/components/InfoBreakdown';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { LOW_MASTER_SAFE_BALANCE } from '@/constants/thresholds';
 import { useBalance } from '@/hooks/useBalance';
@@ -22,37 +22,6 @@ const Balance = styled.span`
 `;
 const BalanceBreakdown = styled.div`
   padding: 4px;
-`;
-const BalanceBreakdownLine = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 14px;
-  color: ${COLOR.TEXT};
-
-  > span {
-    background: ${COLOR.WHITE};
-    z-index: 1;
-    &:first-child {
-      padding-right: 6px;
-    }
-    &:last-child {
-      padding-left: 6px;
-    }
-  }
-
-  &:before {
-    content: '';
-    position: absolute;
-    bottom: 6px;
-    width: 100%;
-    border-bottom: 2px dotted ${COLOR.BORDER_GRAY};
-  }
-
-  &:not(:last-child) {
-    margin-bottom: 8px;
-  }
 `;
 const OVERLAY_STYLE = { maxWidth: '300px', width: '300px' };
 
@@ -93,10 +62,13 @@ const CurrentBalance = () => {
         title={
           <BalanceBreakdown>
             {balances.map((item, index) => (
-              <BalanceBreakdownLine key={index}>
-                <span>{item.title}</span>
-                <span className="font-weight-600">{item.value} OLAS</span>
-              </BalanceBreakdownLine>
+              <InfoBreakdown
+                key={index}
+                left={<span>{item.title}</span>}
+                right={
+                  <span className="font-weight-600">{item.value} OLAS</span>
+                }
+              />
             ))}
           </BalanceBreakdown>
         }
