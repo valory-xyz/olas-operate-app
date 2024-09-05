@@ -2,7 +2,6 @@ import { Button, Flex, Popover, theme, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 
 import { Chain, DeploymentStatus } from '@/client';
-import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { OpenAddFundsSection } from '@/components/MainPage/sections/AddFundsSection';
 import { CardSection } from '@/components/styled/CardSection';
 import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/constants/contractAddresses';
@@ -22,6 +21,7 @@ import { ServicesService } from '@/service/Services';
 import { getMinimumStakedAmountRequired } from '@/utils/service';
 
 import { AlertInsufficientMigrationFunds, AlertNoSlots } from './alerts';
+import { StakingContractInfo } from './StakingContractInfo';
 import { StakingContractTag } from './StakingContractTag';
 
 const { Title } = Typography;
@@ -251,23 +251,6 @@ export const StakingContractSection = ({
     return {};
   }, [isSelected, activeStakingProgram, token.colorPrimaryBg]);
 
-  const balances = useMemo(() => {
-    return [
-      {
-        left: 'Rewards per work period',
-        right: '~ 0.38 OLAS',
-      },
-      {
-        left: 'Annual percentage Yield (APY)',
-        right: '138.5%',
-      },
-      {
-        left: 'Required OLAS for staking',
-        right: '100 OLAS',
-      },
-    ];
-  }, []);
-
   // If the staking program is deprecated, don't render the section
   if (STAKING_PROGRAM_META[stakingProgram].deprecated) {
     return null;
@@ -289,28 +272,7 @@ export const StakingContractSection = ({
           <StakingContractTag status={contractTagStatus} />
         </Flex>
 
-        {/* TODO: redisplay once bugs resolved */}
-        {/* 
-          {stakingContractInfo?.availableRewards && (
-            <ContractParameter
-              label="Rewards per work period"
-              value={`${stakingContractInfo?.availableRewards} OLAS`}
-            />
-          )}
-
-          {stakingContractInfo?.minStakingDeposit && (
-            <ContractParameter
-              label="Required OLAS for staking"
-              value={`${stakingContractInfo?.minStakingDeposit} OLAS`}
-            />
-          )} 
-       */}
-
-        <InfoBreakdownList
-          list={balances}
-          parentStyle={{ gap: 12 }}
-          color="primary"
-        />
+        <StakingContractInfo name={stakingProgram} />
         <a
           href={`https://gnosisscan.io/address/${stakingContractAddress}`}
           target="_blank"
