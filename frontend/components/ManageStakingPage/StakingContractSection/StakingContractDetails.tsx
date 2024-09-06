@@ -5,7 +5,7 @@ import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { StakingProgram } from '@/enums/StakingProgram';
 import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
 
-export const StakingContractInfo = ({ name }: { name: StakingProgram }) => {
+export const StakingContractDetails = ({ name }: { name: StakingProgram }) => {
   const { stakingContractInfoRecord } = useStakingContractInfo();
 
   const balances = useMemo(() => {
@@ -25,7 +25,7 @@ export const StakingContractInfo = ({ name }: { name: StakingProgram }) => {
       },
       {
         left: 'Required OLAS for staking',
-        right: `${details.stakeRequired} OLAS`,
+        right: `${details.olasStakeRequired} OLAS`,
       },
     ];
   }, [stakingContractInfoRecord, name]);

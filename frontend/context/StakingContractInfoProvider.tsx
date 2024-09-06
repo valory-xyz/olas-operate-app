@@ -13,15 +13,18 @@ import { CHAINS } from '@/constants/chains';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { StakingProgram } from '@/enums/StakingProgram';
 import { AutonolasService } from '@/service/Autonolas';
-import { StakingContractInfo, StakingContractRecord } from '@/types/Autonolas';
+import { StakingContractInfo } from '@/types/Autonolas';
 
 import { ServicesContext } from './ServicesProvider';
 import { StakingProgramContext } from './StakingProgramContext';
 
 type StakingContractInfoContextProps = {
   updateActiveStakingContractInfo: () => Promise<void>;
-  activeStakingContractInfo?: StakingContractInfo;
-  stakingContractInfoRecord?: Record<StakingProgram, StakingContractRecord>;
+  activeStakingContractInfo?: Partial<StakingContractInfo>;
+  stakingContractInfoRecord?: Record<
+    StakingProgram,
+    Partial<StakingContractInfo>
+  >;
 };
 
 export const StakingContractInfoContext =
@@ -38,10 +41,10 @@ export const StakingContractInfoProvider = ({
   const { activeStakingProgram } = useContext(StakingProgramContext);
 
   const [activeStakingContractInfo, setActiveStakingContractInfo] =
-    useState<StakingContractInfo>();
+    useState<Partial<StakingContractInfo>>();
 
   const [stakingContractInfoRecord, setStakingContractInfoRecord] =
-    useState<Record<StakingProgram, StakingContractRecord>>();
+    useState<Record<StakingProgram, Partial<StakingContractInfo>>>();
 
   const serviceId = useMemo(
     () => services?.[0]?.chain_configs[CHAINS.GNOSIS.chainId].chain_data?.token,

@@ -21,7 +21,7 @@ import { ServicesService } from '@/service/Services';
 import { getMinimumStakedAmountRequired } from '@/utils/service';
 
 import { AlertInsufficientMigrationFunds, AlertNoSlots } from './alerts';
-import { StakingContractInfo } from './StakingContractInfo';
+import { StakingContractDetails } from './StakingContractDetails';
 import { StakingContractTag } from './StakingContractTag';
 
 const { Title } = Typography;
@@ -244,7 +244,7 @@ export const StakingContractSection = ({
           <StakingContractTag status={contractTagStatus} />
         </Flex>
 
-        <StakingContractInfo name={stakingProgram} />
+        <StakingContractDetails name={stakingProgram} />
         <a
           href={`https://gnosisscan.io/address/${stakingContractAddress}`}
           target="_blank"

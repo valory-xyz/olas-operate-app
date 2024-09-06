@@ -19,11 +19,7 @@ import { gnosisMulticallProvider } from '@/constants/providers';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
 import { StakingProgram } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
-import {
-  StakingContractInfo,
-  StakingContractRecord,
-  StakingRewardsInfo,
-} from '@/types/Autonolas';
+import { StakingContractInfo, StakingRewardsInfo } from '@/types/Autonolas';
 
 const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 const REQUIRED_MECH_REQUESTS_SAFETY_MARGIN = 1;
@@ -196,7 +192,7 @@ const getAvailableRewardsForEpoch = async (
 const getStakingContractInfoByServiceIdStakingProgram = async (
   serviceId: number,
   stakingProgram: StakingProgram,
-): Promise<StakingContractInfo | undefined> => {
+): Promise<Partial<StakingContractInfo> | undefined> => {
   if (!serviceId) return;
 
   const contractCalls = [
@@ -249,7 +245,7 @@ const getStakingContractInfoByServiceIdStakingProgram = async (
  */
 const getStakingContractInfoByStakingProgram = async (
   stakingProgram: StakingProgram,
-): Promise<StakingContractRecord> => {
+): Promise<Partial<StakingContractInfo>> => {
   const contractCalls = [
     serviceStakingTokenMechUsageContracts[stakingProgram].availableRewards(),
     serviceStakingTokenMechUsageContracts[stakingProgram].maxNumServices(),
@@ -291,7 +287,7 @@ const getStakingContractInfoByStakingProgram = async (
   const stakeRequiredInWei = minStakingDeposit.add(
     minStakingDeposit.mul(numAgentInstances),
   );
-  const stakeRequired = Number(formatEther(stakeRequiredInWei));
+  const olasStakeRequired = Number(formatEther(stakeRequiredInWei));
 
   // Rewards per work period
   const rewardsPerWorkPeriod =
@@ -305,7 +301,7 @@ const getStakingContractInfoByStakingProgram = async (
     minimumStakingDuration: minStakingDurationInBN.toNumber(),
     minStakingDeposit: parseFloat(ethers.utils.formatEther(minStakingDeposit)),
     apy,
-    stakeRequired,
+    olasStakeRequired,
     rewardsPerWorkPeriod,
   };
 };

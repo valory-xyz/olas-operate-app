@@ -28,12 +28,11 @@ export const ManageStakingPage = () => {
     return [...acc, stakingProgram];
   }, []);
 
-  const activeStakingContract = orderedStakingPrograms[0];
-  const otherStakingContracts = orderedStakingPrograms.filter(
+  const otherStakingPrograms = orderedStakingPrograms.filter(
     (stakingProgram) => {
       const info = STAKING_PROGRAM_META[stakingProgram];
       if (!info) return false;
-      if (activeStakingContract === stakingProgram) return false;
+      if (activeStakingProgram === stakingProgram) return false;
       if (info.deprecated) return false;
       return true;
     },
@@ -52,13 +51,13 @@ export const ManageStakingPage = () => {
       }
     >
       <WhatAreStakingContractsSection />
-      <StakingContractSection stakingProgram={activeStakingContract} />
+      <StakingContractSection stakingProgram={orderedStakingPrograms[0]} />
 
       <CardSection borderbottom="true" vertical gap={16}>
-        {`Browse ${otherStakingContracts.length} staking contract${otherStakingContracts.length > 1 ? 's' : ''}.`}
+        {`Browse ${otherStakingPrograms.length} staking contract${otherStakingPrograms.length > 1 ? 's' : ''}.`}
       </CardSection>
 
-      {otherStakingContracts.map((stakingProgram) => (
+      {otherStakingPrograms.map((stakingProgram) => (
         <StakingContractSection
           key={stakingProgram}
           stakingProgram={stakingProgram}
