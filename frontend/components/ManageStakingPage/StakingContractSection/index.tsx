@@ -43,7 +43,12 @@ export const StakingContractSection = ({
   const { activeStakingProgram, defaultStakingProgram, updateStakingProgram } =
     useStakingProgram();
   const { token } = useToken();
-  const { safeBalance, totalOlasStakedBalance, isBalanceLoaded } = useBalance();
+  const {
+    safeBalance,
+    totalOlasStakedBalance,
+    isBalanceLoaded,
+    setIsPaused: setIsBalancePollingPaused,
+  } = useBalance();
   const { isServiceStakedForMinimumDuration, stakingContractInfoRecord } =
     useStakingContractInfo();
   const [isFundingSectionOpen, setIsFundingSectionOpen] = useState(false);
@@ -264,6 +269,8 @@ export const StakingContractSection = ({
               disabled={!canMigrate}
               onClick={async () => {
                 setIsServicePollingPaused(true);
+                setIsBalancePollingPaused(true);
+
                 try {
                   setServiceStatus(DeploymentStatus.DEPLOYING);
                   goto(Pages.Main);
@@ -281,6 +288,7 @@ export const StakingContractSection = ({
                   console.error(error);
                 } finally {
                   setIsServicePollingPaused(false);
+                  setIsBalancePollingPaused(false);
                   updateServiceStatus();
                 }
               }}
