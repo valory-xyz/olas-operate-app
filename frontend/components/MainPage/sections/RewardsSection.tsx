@@ -22,13 +22,13 @@ const Loader = () => (
 );
 
 const DisplayRewards = () => {
-  const { availableRewardsForEpochEth, isEligibleForRewards } = useReward();
+  const { availableRewardsForEpochEth, isEligibleForRewards, isRewardsLoaded } =
+    useReward();
   const { isBalanceLoaded } = useBalance();
 
-  const reward =
-    availableRewardsForEpochEth === undefined
-      ? '--'
-      : `~${balanceFormat(availableRewardsForEpochEth, 2)}`;
+  const reward = !isRewardsLoaded
+    ? '--'
+    : `~${balanceFormat(availableRewardsForEpochEth, 2)}`;
 
   return (
     <CardSection vertical gap={8} padding="16px 24px" align="start">
@@ -46,7 +46,7 @@ const DisplayRewards = () => {
           <InfoCircleOutlined />
         </Tooltip>
       </Text>
-      {isBalanceLoaded ? (
+      {isBalanceLoaded && isRewardsLoaded ? (
         <Flex align="center" gap={12}>
           <Text className="text-xl font-weight-600">{reward} OLAS&nbsp;</Text>
           {isEligibleForRewards ? (

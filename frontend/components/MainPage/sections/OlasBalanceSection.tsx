@@ -159,6 +159,7 @@ const AvoidSuspensionAlert = () => {
 export const MainOlasBalance = () => {
   const { storeState } = useStore();
   const { isBalanceLoaded, totalOlasBalance } = useBalance();
+  const { isRewardsLoaded } = useReward();
 
   // If first reward notification is shown BUT
   // agent eviction alert is NOT yet shown, show this alert.
@@ -180,18 +181,19 @@ export const MainOlasBalance = () => {
     <CardSection vertical gap={8} bordertop="true" borderbottom="true">
       {canShowAvoidSuspensionAlert ? <AvoidSuspensionAlert /> : null}
       <LowTradingBalanceAlert />
-      {isBalanceLoaded ? (
-        <>
-          <CurrentBalance />
+
+      <>
+        <CurrentBalance />
+        {isBalanceLoaded && isRewardsLoaded ? (
           <Flex align="end">
             <span className="balance-symbol">{UNICODE_SYMBOLS.OLAS}</span>
             <Balance className="balance">{balance}</Balance>
             <span className="balance-currency">OLAS</span>
           </Flex>
-        </>
-      ) : (
-        <Skeleton.Input active size="large" style={{ margin: '4px 0' }} />
-      )}
+        ) : (
+          <Skeleton.Input active size="large" className="balance-skeleton" />
+        )}
+      </>
     </CardSection>
   );
 };

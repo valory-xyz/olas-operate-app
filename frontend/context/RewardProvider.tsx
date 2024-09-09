@@ -25,6 +25,7 @@ export const RewardContext = createContext<{
   availableRewardsForEpoch?: number;
   availableRewardsForEpochEth?: number;
   isEligibleForRewards?: boolean;
+  isRewardsLoaded: boolean;
   optimisticRewardsEarnedForEpoch?: number;
   minimumStakedAmountRequired?: number;
   updateRewards: () => Promise<void>;
@@ -33,6 +34,7 @@ export const RewardContext = createContext<{
   availableRewardsForEpoch: undefined,
   availableRewardsForEpochEth: undefined,
   isEligibleForRewards: undefined,
+  isRewardsLoaded: false,
   optimisticRewardsEarnedForEpoch: undefined,
   minimumStakedAmountRequired: undefined,
   updateRewards: async () => {},
@@ -54,6 +56,8 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     useState<number>();
   const [isEligibleForRewards, setIsEligibleForRewards] = useState<boolean>();
 
+  const [isRewardsLoaded, setIsRewardsLoaded] = useState<boolean>(false);
+
   const availableRewardsForEpochEth = useMemo<number | undefined>(() => {
     if (!availableRewardsForEpoch) return;
 
@@ -65,11 +69,13 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   }, [availableRewardsForEpoch]);
 
   const optimisticRewardsEarnedForEpoch = useMemo<number | undefined>(() => {
+    if (!isRewardsLoaded) return;
+
     if (isEligibleForRewards && availableRewardsForEpochEth) {
       return availableRewardsForEpochEth;
     }
-    return;
-  }, [availableRewardsForEpochEth, isEligibleForRewards]);
+    return 0;
+  }, [availableRewardsForEpochEth, isEligibleForRewards, isRewardsLoaded]);
 
   const updateRewards = useCallback(async (): Promise<void> => {
     let stakingRewardsInfoPromise;
@@ -104,6 +110,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
       stakingRewardsInfo?.accruedServiceStakingRewards,
     );
     setAvailableRewardsForEpoch(rewards);
+    setIsRewardsLoaded(true);
   }, [activeStakingProgram, defaultStakingProgram, service]);
 
   useEffect(() => {
@@ -128,6 +135,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
         availableRewardsForEpoch,
         availableRewardsForEpochEth,
         isEligibleForRewards,
+        isRewardsLoaded,
         optimisticRewardsEarnedForEpoch,
         updateRewards,
       }}
