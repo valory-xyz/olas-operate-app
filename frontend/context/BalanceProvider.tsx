@@ -80,11 +80,12 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
   const { optimisticRewardsEarnedForEpoch, accruedServiceStakingRewards } =
     useContext(RewardContext);
 
-  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false); // TODO: Consolidate duplicate "isLoaded" and "isBalanceLoaded" states
+  const [isBalanceLoaded, setIsBalanceLoaded] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
+
   const [olasDepositBalance, setOlasDepositBalance] = useState<number>();
   const [olasBondBalance, setOlasBondBalance] = useState<number>();
-  const [isBalanceLoaded, setIsBalanceLoaded] = useState<boolean>(false);
   const [walletBalances, setWalletBalances] =
     useState<WalletAddressNumberRecord>({});
 
@@ -131,6 +132,7 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     if (!serviceAddresses) return;
 
     try {
+      // TODO: refactor, this is too much logic in one try/catch
       const walletAddresses: Address[] = [];
       if (isAddress(masterEoaAddress)) walletAddresses.push(masterEoaAddress);
       if (isAddress(`${masterSafeAddress}`))
