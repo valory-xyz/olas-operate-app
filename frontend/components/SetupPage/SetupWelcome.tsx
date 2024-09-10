@@ -39,12 +39,13 @@ export const SetupWelcome = () => {
           case true:
             setIsSetup(AccountIsSetup.True);
             break;
-          case false:
+          case false: {
             // Reset persistent state
             // if creating new account
             electronApi.store?.clear?.();
             setIsSetup(AccountIsSetup.False);
             break;
+          }
           default:
             setIsSetup(AccountIsSetup.Error);
             break;
@@ -64,18 +65,27 @@ export const SetupWelcome = () => {
         return <SetupWelcomeCreate />;
       case AccountIsSetup.Loading:
         return (
-          <Flex justify="center">
+          <Flex
+            justify="center"
+            align="center"
+            style={{ height: 140, marginBottom: 32 }}
+          >
             <Spin />
           </Flex>
         );
-      default:
+      case AccountIsSetup.Error:
         return (
-          <Flex justify="center">
+          <Flex
+            justify="center"
+            style={{ margin: '32px 0', textAlign: 'center' }}
+          >
             <Typography.Text>
-              Error determining account setup state.
+              Unable to determine the account setup status, please try again.
             </Typography.Text>
           </Flex>
         );
+      default:
+        return null;
     }
   }, [isSetup]);
 
