@@ -16,6 +16,10 @@ export default function Home() {
   const electronApi = useElectronApi();
 
   useEffect(() => {
+    // Notify the main process that the app is loaded
+    electronApi?.setIsAppLoaded?.(true);
+
+    // Set the app height to the body scroll height
     function updateAppHeight() {
       const bodyElement = document.querySelector('body');
       if (bodyElement) {

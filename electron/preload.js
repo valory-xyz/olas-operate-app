@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron/renderer');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  setIsAppLoaded: (isAppLoaded) =>
+    ipcRenderer.send('is-app-loaded', isAppLoaded),
   closeApp: () => ipcRenderer.send('close-app'),
   minimizeApp: () => ipcRenderer.send('minimize-app'),
   setTrayIcon: (status) => ipcRenderer.send('tray', status),

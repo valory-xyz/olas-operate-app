@@ -4,6 +4,7 @@ import { createContext, PropsWithChildren } from 'react';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
 
 type ElectronApiContextProps = {
+  setIsAppLoaded?: (isLoaded: boolean) => void;
   closeApp?: () => void;
   minimizeApp?: () => void;
   setTrayIcon?: (status: ElectronTrayIconStatus) => void;
@@ -33,6 +34,7 @@ type ElectronApiContextProps = {
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
+  setIsAppLoaded: () => false,
   closeApp: () => {},
   minimizeApp: () => {},
   setTrayIcon: () => {},
@@ -70,6 +72,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
   return (
     <ElectronApiContext.Provider
       value={{
+        setIsAppLoaded: getElectronApiFunction('setIsAppLoaded'),
         closeApp: getElectronApiFunction('closeApp'),
         minimizeApp: getElectronApiFunction('minimizeApp'),
         setTrayIcon: getElectronApiFunction('setTrayIcon'),

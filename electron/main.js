@@ -57,8 +57,12 @@ let appConfig = {
   },
 };
 
+/**
+ * @type {BrowserWindow}
+ */
+let mainWindow;
+
 let tray,
-  mainWindow,
   splashWindow,
   operateDaemon,
   operateDaemonPid,
@@ -189,9 +193,9 @@ const createSplashWindow = () => {
   });
   splashWindow.loadURL('file://' + __dirname + '/loading/index.html');
 
-  if (isDev) {
-    splashWindow.webContents.openDevTools();
-  }
+  // if (isDev) {
+  //   splashWindow.webContents.openDevTools();
+  // }
 };
 
 const HEIGHT = 700;
@@ -199,7 +203,10 @@ const HEIGHT = 700;
  * Creates the main window
  */
 const createMainWindow = async () => {
-  const width = isDev ? 840 : APP_WIDTH;
+  console.log('Creating main window');
+
+  const width = APP_WIDTH;
+  // const width = isDev ? 840 : APP_WIDTH;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
     resizable: false,
@@ -228,6 +235,7 @@ const createMainWindow = async () => {
   });
 
   app.on('activate', () => {
+    console.log('ACTIVATE EVENT');
     if (mainWindow.isMinimized()) {
       mainWindow.restore();
     } else {
@@ -243,13 +251,59 @@ const createMainWindow = async () => {
     showNotification(title, description || undefined);
   });
 
+  ipcMain.on('is-app-loaded', (_event, isLoaded) => {
+    console.log('IS APP LOADED ------------>>>>>>> ', isLoaded);
+    if (isLoaded) {
+      if (splashWindow) {
+        splashWindow.destroy();
+        splashWindow = null;
+      }
+      // mainWindow.show();
+    }
+  });
+
   mainWindow.webContents.on('did-fail-load', () => {
+    console.log('DID FAIL LOAD');
     mainWindow.webContents.reloadIgnoringCache();
   });
 
+  // mainWindow.webContents.on('ready-to-show', () => {
+  //   mainWindow.show();
+  // });
   mainWindow.webContents.on('ready-to-show', () => {
+    console.log('DOM READY');
+    if (splashWindow) {
+      // splashWindow.destroy();
+      // splashWindow = null;
+    }
+    // mainWindow.show();
     mainWindow.show();
   });
+
+  // mainWindow.webContents.on('did-create-window', () => {
+  //   console.log('DID CREATE WINDOW');
+  // });
+
+  // mainWindow.webContents.on('ready-to-show', () => {
+  //   console.log('READY TO SHOW');
+  //   // splashWindow.destroy();
+  //   // mainWindow.show();
+  // });
+
+  // mainWindow.webContents.on('did-finish-load', () => {
+  //   console.log('DID FINISH LOAD');
+  //   if (splashWindow) {
+  //     splashWindow.destroy();
+  //     splashWindow = null;
+  //   }
+  //   mainWindow.show();
+  // });
+
+  // // destroy splash window once main window is in the view
+  // mainWindow.webContents.on('did-frame-finish-load', () => {
+  //   console.log('SHOW EVENT');
+  //   // splashWindow.destroy();
+  // });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     // open url in a browser and prevent default
@@ -261,7 +315,7 @@ const createMainWindow = async () => {
     event.preventDefault();
     mainWindow.hide();
   });
-  
+
   try {
     logger.electron('Setting up store IPC');
     await setupStoreIpc(ipcMain, mainWindow);
@@ -269,9 +323,9 @@ const createMainWindow = async () => {
     logger.electron('Store IPC failed:', JSON.stringify(e));
   }
 
-  if (isDev) {
-    mainWindow.webContents.openDevTools();
-  }
+  // if (isDev) {
+  //   mainWindow.webContents.openDevTools();
+  // }
 
   if (isDev) {
     mainWindow.loadURL(`http://localhost:${appConfig.ports.dev.next}`);
@@ -337,7 +391,6 @@ async function launchDaemon() {
 }
 
 async function launchDaemonDev() {
-
   const check = new Promise(function (resolve, _reject) {
     operateDaemon = spawn('poetry', [
       'run',
@@ -503,7 +556,7 @@ ipcMain.on('check', async function (event, _argument) {
     event.sender.send('response', 'Launching App');
     await createMainWindow();
     createTray();
-    splashWindow.destroy();
+    console.log('splashWindow destroyed!!!');
   } catch (e) {
     logger.electron(e);
     new Notification({
@@ -522,6 +575,8 @@ app.on('ready', async () => {
       path.join(__dirname, 'assets/icons/splash-robot-head-dock.png'),
     );
   }
+
+  console.log('App is ready');
   createSplashWindow();
 });
 
