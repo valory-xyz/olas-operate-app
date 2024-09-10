@@ -114,9 +114,8 @@ const NoBackupWallet = () => {
               <Flex vertical gap={5}>
                 <Text className="font-weight-600">Your funds are at risk!</Text>
                 <Text>
-                  You will lose any assets you send on other chains. Add a
-                  backup wallet to allow you to retrieve funds if you lose your
-                  password and seed phrase.
+                  Add a backup wallet to allow you to retrieve funds if you lose
+                  your password and seed phrase.
                 </Text>
               </Flex>
             </>
