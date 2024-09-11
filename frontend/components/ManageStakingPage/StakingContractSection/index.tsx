@@ -222,16 +222,10 @@ export const StakingContractSection = ({
   ]);
 
   const contractTagStatus = useMemo(() => {
-    if (activeStakingProgram === stakingProgram)
-      return StakingProgramStatus.Selected;
-
-    // not staked, set the default as the Selected contract
-    if (stakingProgram === defaultStakingProgram)
-      return StakingProgramStatus.Selected;
-
-    // otherwise, no tag
-    return;
-  }, [activeStakingProgram, defaultStakingProgram, stakingProgram]);
+    return activeStakingProgram === stakingProgram
+      ? StakingProgramStatus.Selected
+      : null;
+  }, [activeStakingProgram, stakingProgram]);
 
   // Show funding address
   const canShowFundingAddress =
