@@ -64,6 +64,6 @@ const countdownDisplayFormat = (totalSeconds: number) => {
   const formattedHours = String(hours).padStart(2, '0');
   const formattedMinutes = String(minutes).padStart(2, '0');
   const formattedSeconds = String(seconds).padStart(2, '0');
-
+  // TODO: update this support plural and singular text
   return `${days} days ${formattedHours} hours ${formattedMinutes} minutes ${formattedSeconds} seconds`;
 };
