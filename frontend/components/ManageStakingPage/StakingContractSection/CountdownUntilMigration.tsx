@@ -37,7 +37,7 @@ export const CountdownUntilMigration = ({
   }, 1000);
 
   const countdownDisplay = isNil(secondsUntilReady)
-    ? 'Loading ...'
+    ? 'Loading...'
     : countdownDisplayFormat(secondsUntilReady);
 
   return (
