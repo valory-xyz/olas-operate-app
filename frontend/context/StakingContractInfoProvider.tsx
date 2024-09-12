@@ -11,7 +11,7 @@ import { useInterval } from 'usehooks-ts';
 
 import { CHAINS } from '@/constants/chains';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
-import { StakingProgram } from '@/enums/StakingProgram';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { AutonolasService } from '@/service/Autonolas';
 import { StakingContractInfo } from '@/types/Autonolas';
 
@@ -19,32 +19,37 @@ import { ServicesContext } from './ServicesProvider';
 import { StakingProgramContext } from './StakingProgramContext';
 
 type StakingContractInfoContextProps = {
-  updateActiveStakingContractInfo: () => Promise<void>;
   activeStakingContractInfo?: Partial<StakingContractInfo>;
+  isStakingContractInfoLoaded: boolean;
   stakingContractInfoRecord?: Record<
-    StakingProgram,
+    StakingProgramId,
     Partial<StakingContractInfo>
   >;
+  updateActiveStakingContractInfo: () => Promise<void>;
 };
 
 export const StakingContractInfoContext =
   createContext<StakingContractInfoContextProps>({
-    updateActiveStakingContractInfo: async () => {},
     activeStakingContractInfo: undefined,
+    isStakingContractInfoLoaded: false,
     stakingContractInfoRecord: undefined,
+    updateActiveStakingContractInfo: async () => {},
   });
 
 export const StakingContractInfoProvider = ({
   children,
 }: PropsWithChildren) => {
   const { services } = useContext(ServicesContext);
-  const { activeStakingProgram } = useContext(StakingProgramContext);
+  const { activeStakingProgramId } = useContext(StakingProgramContext);
+
+  const [isStakingContractInfoLoaded, setIsStakingContractInfoLoaded] =
+    useState(false);
 
   const [activeStakingContractInfo, setActiveStakingContractInfo] =
     useState<Partial<StakingContractInfo>>();
 
   const [stakingContractInfoRecord, setStakingContractInfoRecord] =
-    useState<Record<StakingProgram, Partial<StakingContractInfo>>>();
+    useState<Record<StakingProgramId, Partial<StakingContractInfo>>>();
 
   const serviceId = useMemo(
     () => services?.[0]?.chain_configs[CHAINS.GNOSIS.chainId].chain_data?.token,
@@ -55,38 +60,45 @@ export const StakingContractInfoProvider = ({
   // it requires serviceId and activeStakingProgram
   const updateActiveStakingContractInfo = useCallback(async () => {
     if (!serviceId) return;
-    if (!activeStakingProgram) return;
+    if (!activeStakingProgramId) return;
 
     AutonolasService.getStakingContractInfoByServiceIdStakingProgram(
       serviceId,
-      activeStakingProgram,
+      activeStakingProgramId,
     ).then(setActiveStakingContractInfo);
-  }, [activeStakingProgram, serviceId]);
+  }, [activeStakingProgramId, serviceId]);
 
   useInterval(updateActiveStakingContractInfo, FIVE_SECONDS_INTERVAL);
 
   // Record of staking contract info for each staking program
   // not user/service specific
-  const updateStakingContractInfoRecord = () => {
+  const updateStakingContractInfoRecord = async () => {
     const alpha = AutonolasService.getStakingContractInfoByStakingProgram(
-      StakingProgram.Alpha,
+      StakingProgramId.Alpha,
     );
     const beta = AutonolasService.getStakingContractInfoByStakingProgram(
-      StakingProgram.Beta,
+      StakingProgramId.Beta,
     );
 
     const beta_2 = AutonolasService.getStakingContractInfoByStakingProgram(
-      StakingProgram.Beta2,
+      StakingProgramId.Beta2,
     );
 
-    Promise.all([alpha, beta, beta_2]).then((values) => {
-      const [alphaInfo, betaInfo, beta2Info] = values;
+    try {
+      const [alphaInfo, betaInfo, beta2Info] = await Promise.all([
+        alpha,
+        beta,
+        beta_2,
+      ]);
       setStakingContractInfoRecord({
-        [StakingProgram.Alpha]: alphaInfo,
-        [StakingProgram.Beta]: betaInfo,
-        [StakingProgram.Beta2]: beta2Info,
+        [StakingProgramId.Alpha]: alphaInfo,
+        [StakingProgramId.Beta]: betaInfo,
+        [StakingProgramId.Beta2]: beta2Info,
       });
-    });
+      setIsStakingContractInfoLoaded(true);
+    } catch (e) {
+      setIsStakingContractInfoLoaded(false);
+    }
   };
 
   useEffect(() => {
@@ -97,9 +109,10 @@ export const StakingContractInfoProvider = ({
   return (
     <StakingContractInfoContext.Provider
       value={{
-        updateActiveStakingContractInfo,
         activeStakingContractInfo,
+        isStakingContractInfoLoaded,
         stakingContractInfoRecord,
+        updateActiveStakingContractInfo,
       }}
     >
       {children}

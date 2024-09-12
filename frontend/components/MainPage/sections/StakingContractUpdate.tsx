@@ -19,14 +19,14 @@ export const StakingContractUpdate = () => {
   const { needsInitialFunding } = useNeedsFunds();
   const {
     activeStakingProgramMeta,
-    isLoadedActiveStakingProgram,
-    defaultStakingProgram,
+    isActiveStakingProgramLoaded,
+    defaultStakingProgramId,
   } = useStakingProgram();
 
   const stakingContractName = useMemo(() => {
     if (activeStakingProgramMeta) return activeStakingProgramMeta.name;
-    return STAKING_PROGRAM_META[defaultStakingProgram].name;
-  }, [activeStakingProgramMeta, defaultStakingProgram]);
+    return STAKING_PROGRAM_META[defaultStakingProgramId].name;
+  }, [activeStakingProgramMeta, defaultStakingProgramId]);
 
   const canUpdateStakingContract = useMemo(() => {
     if (!isBalanceLoaded) return false;
@@ -36,7 +36,7 @@ export const StakingContractUpdate = () => {
   }, [isBalanceLoaded, isLowBalance, needsInitialFunding]);
 
   const stakingButton = useMemo(() => {
-    if (!isLoadedActiveStakingProgram) return <Skeleton.Input />;
+    if (!isActiveStakingProgramLoaded) return <Skeleton.Input />;
     return (
       <Button
         type="link"
@@ -50,7 +50,7 @@ export const StakingContractUpdate = () => {
     );
   }, [
     goto,
-    isLoadedActiveStakingProgram,
+    isActiveStakingProgramLoaded,
     stakingContractName,
     canUpdateStakingContract,
   ]);

@@ -1,4 +1,4 @@
-import { StakingProgram } from '@/enums/StakingProgram';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
 import { Chain, DeploymentStatus, Ledger } from './enums';
@@ -30,7 +30,7 @@ export type ChainData = {
       safe: number;
     };
     nft: string;
-    staking_program_id: StakingProgram;
+    staking_program_id: StakingProgramId;
     threshold: number;
     use_staking: true;
   };
@@ -62,7 +62,7 @@ export type ServiceTemplate = {
 
 export type ConfigurationTemplate = {
   rpc?: string; // added on deployment
-  staking_program_id?: StakingProgram; // added on deployment
+  staking_program_id?: StakingProgramId; // added on deployment
   nft: string;
   agent_id: number;
   threshold: number;

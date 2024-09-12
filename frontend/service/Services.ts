@@ -1,6 +1,6 @@
 import { Deployment, Service, ServiceHash, ServiceTemplate } from '@/client';
 import { BACKEND_URL } from '@/constants/urls';
-import { StakingProgram } from '@/enums/StakingProgram';
+import { StakingProgramId } from '@/enums/StakingProgram';
 
 /**
  * Get a single service from the backend
@@ -32,11 +32,11 @@ const getServices = async (): Promise<Service[]> =>
 const createService = async ({
   deploy,
   serviceTemplate,
-  stakingProgram,
+  stakingProgramId,
 }: {
   deploy: boolean;
   serviceTemplate: ServiceTemplate;
-  stakingProgram: StakingProgram;
+  stakingProgramId: StakingProgramId;
 }): Promise<Service> =>
   new Promise((resolve, reject) =>
     fetch(`${BACKEND_URL}/services`, {
@@ -47,7 +47,7 @@ const createService = async ({
         configurations: {
           100: {
             ...serviceTemplate.configurations[100],
-            staking_program_id: stakingProgram,
+            staking_program_id: stakingProgramId,
             rpc: `${process.env.GNOSIS_RPC}`,
           },
         },

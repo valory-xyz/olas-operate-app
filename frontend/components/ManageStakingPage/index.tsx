@@ -3,7 +3,7 @@ import { Button, Card } from 'antd';
 
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { Pages } from '@/enums/PageState';
-import { StakingProgram } from '@/enums/StakingProgram';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { usePageState } from '@/hooks/usePageState';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
@@ -14,25 +14,38 @@ import { WhatAreStakingContractsSection } from './WhatAreStakingContracts';
 
 export const ManageStakingPage = () => {
   const { goto } = usePageState();
-  const { activeStakingProgram } = useStakingProgram();
+  const { activeStakingProgramId, defaultStakingProgramId } =
+    useStakingProgram();
 
-  const orderedStakingPrograms: StakingProgram[] = Object.values(
-    StakingProgram,
-  ).reduce((acc: StakingProgram[], stakingProgram: StakingProgram) => {
+  const orderedStakingProgramIds: StakingProgramId[] = Object.values(
+    StakingProgramId,
+  ).reduce((acc: StakingProgramId[], stakingProgramId: StakingProgramId) => {
     // put the active staking program at the top
-    if (stakingProgram === activeStakingProgram) {
-      return [stakingProgram, ...acc];
+    if (stakingProgramId === activeStakingProgramId) {
+      return [stakingProgramId, ...acc];
+    }
+
+    // put default at the top if no activeStakingProgram
+    if (
+      activeStakingProgramId === null &&
+      stakingProgramId === defaultStakingProgramId
+    )
+      return [stakingProgramId, ...acc];
+
+    // if the program is deprecated, ignore it
+    if (STAKING_PROGRAM_META[stakingProgramId]?.deprecated) {
+      return acc;
     }
 
     // otherwise, append to the end
-    return [...acc, stakingProgram];
+    return [...acc, stakingProgramId];
   }, []);
 
-  const otherStakingPrograms = orderedStakingPrograms.filter(
-    (stakingProgram) => {
-      const info = STAKING_PROGRAM_META[stakingProgram];
+  const otherStakingProgramIds = orderedStakingProgramIds.filter(
+    (stakingProgramId) => {
+      const info = STAKING_PROGRAM_META[stakingProgramId];
       if (!info) return false;
-      if (activeStakingProgram === stakingProgram) return false;
+      if (activeStakingProgramId === stakingProgramId) return false;
       if (info.deprecated) return false;
       return true;
     },
@@ -52,18 +65,20 @@ export const ManageStakingPage = () => {
     >
       <WhatAreStakingContractsSection />
 
-      {activeStakingProgram && (
-        <StakingContractSection stakingProgram={orderedStakingPrograms[0]} />
+      {activeStakingProgramId && (
+        <StakingContractSection
+          stakingProgramId={orderedStakingProgramIds[0]}
+        />
       )}
 
       <CardSection borderbottom="true" vertical gap={16}>
-        {`Browse ${otherStakingPrograms.length} staking contract${otherStakingPrograms.length > 1 ? 's' : ''}.`}
+        {`Browse ${otherStakingProgramIds.length} staking contract${otherStakingProgramIds.length > 1 ? 's' : ''}.`}
       </CardSection>
 
-      {otherStakingPrograms.map((stakingProgram) => (
+      {otherStakingProgramIds.map((stakingProgramId) => (
         <StakingContractSection
-          key={stakingProgram}
-          stakingProgram={stakingProgram}
+          key={stakingProgramId}
+          stakingProgramId={stakingProgramId}
         />
       ))}
     </Card>

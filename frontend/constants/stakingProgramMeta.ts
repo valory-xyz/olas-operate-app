@@ -1,26 +1,27 @@
-import { StakingProgram } from '@/enums/StakingProgram';
+import { StakingProgramId } from '@/enums/StakingProgram';
 
+export type StakingProgramMeta = {
+  name: string;
+  canMigrateTo: StakingProgramId[];
+  deprecated: boolean;
+};
 export const STAKING_PROGRAM_META: Record<
-  StakingProgram,
-  {
-    name: string;
-    canMigrateTo: StakingProgram[];
-    deprecated: boolean;
-  }
+  StakingProgramId,
+  StakingProgramMeta
 > = {
-  [StakingProgram.Alpha]: {
+  [StakingProgramId.Alpha]: {
     name: 'Pearl Alpha',
-    canMigrateTo: [StakingProgram.Beta, StakingProgram.Beta2],
+    canMigrateTo: [StakingProgramId.Beta, StakingProgramId.Beta2],
     deprecated: true,
   },
-  [StakingProgram.Beta]: {
+  [StakingProgramId.Beta]: {
     name: 'Pearl Beta',
-    canMigrateTo: [StakingProgram.Beta2],
+    canMigrateTo: [StakingProgramId.Beta2],
     deprecated: false,
   },
-  [StakingProgram.Beta2]: {
+  [StakingProgramId.Beta2]: {
     name: 'Pearl Beta 2',
-    canMigrateTo: [StakingProgram.Beta],
+    canMigrateTo: [StakingProgramId.Beta],
     deprecated: false,
   },
 };

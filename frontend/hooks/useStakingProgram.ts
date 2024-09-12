@@ -1,33 +1,42 @@
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { StakingProgramContext } from '@/context/StakingProgramContext';
 
 /**
- *  Mock hook for staking program abstraction
- * @returns {currentStakingProgram: IncentiveProgram}
+ * Hook to get the active staking program and its metadata, and the default staking program.
+ * @returns {Object} The active staking program and its metadata.
  */
 export const useStakingProgram = () => {
   const {
-    activeStakingProgram,
-    defaultStakingProgram,
-    updateActiveStakingProgram: updateStakingProgram,
+    activeStakingProgramId,
+    defaultStakingProgramId,
+    updateActiveStakingProgramId,
   } = useContext(StakingProgramContext);
 
-  const isLoadedActiveStakingProgram = activeStakingProgram !== undefined;
+  const isActiveStakingProgramLoaded = activeStakingProgramId !== undefined;
 
-  const activeStakingProgramMeta =
-    activeStakingProgram === undefined
-      ? null
-      : activeStakingProgram === null
-        ? null
-        : STAKING_PROGRAM_META[activeStakingProgram];
+  /**
+   * TODO: implement enums
+   * returns `StakingProgramMeta` if defined
+   * returns `undefined` if not loaded
+   * returns `null` if not actively staked
+   */
+  const activeStakingProgramMeta = useMemo(() => {
+    if (activeStakingProgramId === undefined) return undefined;
+    if (activeStakingProgramId === null) return null;
+    return STAKING_PROGRAM_META[activeStakingProgramId];
+  }, [activeStakingProgramId]);
+
+  const defaultStakingProgramMeta =
+    STAKING_PROGRAM_META[defaultStakingProgramId];
 
   return {
-    activeStakingProgram,
+    activeStakingProgramId,
     activeStakingProgramMeta,
-    defaultStakingProgram,
-    updateStakingProgram,
-    isLoadedActiveStakingProgram,
+    defaultStakingProgramId,
+    defaultStakingProgramMeta,
+    isActiveStakingProgramLoaded,
+    updateActiveStakingProgramId,
   };
 };

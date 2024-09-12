@@ -44,7 +44,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   const service = useMemo(() => services?.[0], [services]);
   const { storeState } = useStore();
   const electronApi = useElectronApi();
-  const { activeStakingProgram, defaultStakingProgram } = useContext(
+  const { activeStakingProgramId, defaultStakingProgramId } = useContext(
     StakingProgramContext,
   );
 
@@ -76,7 +76,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
 
     // only check for rewards if there's a currentStakingProgram active
     if (
-      activeStakingProgram &&
+      activeStakingProgramId &&
       service?.chain_configs[CHAINS.GNOSIS.chainId].chain_data?.multisig &&
       service?.chain_configs[CHAINS.GNOSIS.chainId].chain_data?.token
     ) {
@@ -85,13 +85,13 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
           service.chain_configs[CHAINS.GNOSIS.chainId].chain_data.multisig!,
         serviceId:
           service.chain_configs[CHAINS.GNOSIS.chainId].chain_data.token!,
-        stakingProgram: activeStakingProgram,
+        stakingProgram: activeStakingProgramId,
       });
     }
 
     // can fallback to default staking program if no current staking program is active
     const epochRewardsPromise = AutonolasService.getAvailableRewardsForEpoch(
-      activeStakingProgram ?? defaultStakingProgram,
+      activeStakingProgramId ?? defaultStakingProgramId,
     );
 
     const [stakingRewardsInfo, rewards] = await Promise.all([
@@ -104,7 +104,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
       stakingRewardsInfo?.accruedServiceStakingRewards,
     );
     setAvailableRewardsForEpoch(rewards);
-  }, [activeStakingProgram, defaultStakingProgram, service]);
+  }, [activeStakingProgramId, defaultStakingProgramId, service]);
 
   useEffect(() => {
     if (isEligibleForRewards && !storeState?.firstStakingRewardAchieved) {

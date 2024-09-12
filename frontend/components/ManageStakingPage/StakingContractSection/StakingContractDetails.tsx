@@ -2,18 +2,22 @@ import { Alert, Skeleton } from 'antd';
 import { useMemo } from 'react';
 
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
-import { StakingProgram } from '@/enums/StakingProgram';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
 
-export const StakingContractDetails = ({ name }: { name: StakingProgram }) => {
+export const StakingContractDetails = ({
+  stakingProgramId,
+}: {
+  stakingProgramId: StakingProgramId;
+}) => {
   const { stakingContractInfoRecord } = useStakingContractInfo();
 
   const balances = useMemo(() => {
     if (!stakingContractInfoRecord) return null;
-    if (!name) return null;
-    if (!stakingContractInfoRecord?.[name]) return null;
+    if (!stakingProgramId) return null;
+    if (!stakingContractInfoRecord?.[stakingProgramId]) return null;
 
-    const details = stakingContractInfoRecord[name];
+    const details = stakingContractInfoRecord[stakingProgramId];
     return [
       {
         left: 'Rewards per work period',
@@ -28,7 +32,7 @@ export const StakingContractDetails = ({ name }: { name: StakingProgram }) => {
         right: `${details.olasStakeRequired} OLAS`,
       },
     ];
-  }, [stakingContractInfoRecord, name]);
+  }, [stakingContractInfoRecord, stakingProgramId]);
 
   if (!stakingContractInfoRecord) {
     return <Skeleton active />;
