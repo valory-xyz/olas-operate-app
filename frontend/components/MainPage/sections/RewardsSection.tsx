@@ -22,7 +22,7 @@ const Loader = () => (
 );
 
 const getFormattedReward = (reward: number | undefined) =>
-  reward === undefined ? '--' : `${balanceFormat(reward, 2)}`;
+  reward === undefined ? '--' : `~${balanceFormat(reward, 2)}`;
 
 const DisplayRewards = () => {
   const { availableRewardsForEpochEth, isEligibleForRewards } = useReward();
