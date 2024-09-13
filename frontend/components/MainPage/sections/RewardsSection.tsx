@@ -21,14 +21,14 @@ const Loader = () => (
   </Flex>
 );
 
+const getFormattedReward = (reward: number | undefined) =>
+  reward === undefined ? '--' : `${balanceFormat(reward, 2)}`;
+
 const DisplayRewards = () => {
   const { availableRewardsForEpochEth, isEligibleForRewards } = useReward();
   const { isBalanceLoaded } = useBalance();
 
-  const reward =
-    availableRewardsForEpochEth === undefined
-      ? '--'
-      : `~${balanceFormat(availableRewardsForEpochEth, 2)}`;
+  const reward = getFormattedReward(availableRewardsForEpochEth);
 
   return (
     <CardSection vertical gap={8} padding="16px 24px" align="start">
@@ -90,7 +90,7 @@ const NotifyRewardsModal = () => {
   useEffect(() => {
     if (!canShowNotification) return;
 
-    const reward = firstRewardRef.current?.toFixed(2);
+    const reward = getFormattedReward(firstRewardRef.current);
     showNotification?.(
       'First rewards earned!',
       `Congratulations! Your agent just got the first reward for you! Your current balance: ${reward} OLAS`,
