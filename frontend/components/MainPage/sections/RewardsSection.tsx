@@ -90,9 +90,10 @@ const NotifyRewardsModal = () => {
   useEffect(() => {
     if (!canShowNotification) return;
 
+    const reward = firstRewardRef.current?.toFixed(2);
     showNotification?.(
       'First rewards earned!',
-      `Congratulations! Your agent just got the first reward for you! Your current balance: ${firstRewardRef.current} OLAS`,
+      `Congratulations! Your agent just got the first reward for you! Your current balance: ${reward} OLAS`,
     );
   }, [canShowNotification, showNotification]);
 
