@@ -91,7 +91,7 @@ const NotifyRewardsModal = () => {
     if (!canShowNotification) return;
 
     showNotification?.(
-      'Your agent earned its first staking rewards!',
+      'First rewards earned!',
       `Congratulations! Your agent just got the first reward for you! Your current balance: ${firstRewardRef.current} OLAS`,
     );
   }, [canShowNotification, showNotification]);
