@@ -49,7 +49,7 @@ const main = async () => {
       cscKeyPassword: process.env.CSC_KEY_PASSWORD,
       cscLink: process.env.CSC_LINK,
       mac: {
-        binaries: () => {
+        binaries: (() => {
           // Read all files from the 'electron/bins' directory          
           const binaries = fs.readdirSync(electronBinsDir);
           // Map each file name to the path inside the .app bundle
@@ -57,7 +57,7 @@ const main = async () => {
             console.log(`Included binary ${bin} for signing.`);
             return `Contents/Resources/bins/${bin}`;
           });
-        },
+        })(),
         category: 'public.app-category.utilities',
         entitlements: 'electron/entitlements.mac.plist',
         entitlementsInherit: 'electron/entitlements.mac.plist',
