@@ -2,6 +2,9 @@ const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 module.exports = async function (context) {
   const appOutDir = context.appOutDir;
