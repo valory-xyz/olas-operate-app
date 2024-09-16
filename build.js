@@ -23,6 +23,7 @@ const main = async () => {
   await build({
     publish: 'onTag',
     config: {
+      afterSign: 'electron/afterSign.js',
       appId: 'xyz.valory.olas-operate-app',
       artifactName: artifactName(),
       productName: 'Pearl',
@@ -44,7 +45,6 @@ const main = async () => {
       cscKeyPassword: process.env.CSC_KEY_PASSWORD,
       cscLink: process.env.CSC_LINK,
       mac: {
-        afterSign: 'electron/hooks/afterSign.js',
         target: [
           {
             target: 'dmg',
