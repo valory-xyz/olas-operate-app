@@ -25,13 +25,13 @@ module.exports = async function (context) {
       // Sign the binary
       console.log(`Signing binary: ${binaryPath}`);
       execSync(
-        `codesign --deep --force --verbose --sign "Developer ID Application: ${process.env.APPLE_DEVELOPER_ID}" "${binaryPath}"`,
+        `codesign --deep --force --verbose --sign "Developer ID Application: ${process.env.APPLETEAMID}" "${binaryPath}"`,
       );
     });
 
     // Optionally, deep-sign the entire app (if needed, after signing the binaries)
     // execSync(
-    //   `codesign --deep --force --verify --verbose --sign "Developer ID Application: ${process.env.APPLE_DEVELOPER_ID}" "${appPath}"`,
+    //   `codesign --deep --force --verify --verbose --sign "Developer ID Application: ${process.env.APPLETEAMID}" "${appPath}"`,
     // );
   }
 
