@@ -29,7 +29,7 @@ const main = async () => {
       files: ['electron/**/*', 'package.json'],
       directories: {
         output: 'dist',
-      },
+      },      
       extraResources: [
         {
           from: 'electron/bins',
@@ -44,10 +44,11 @@ const main = async () => {
       cscKeyPassword: process.env.CSC_KEY_PASSWORD,
       cscLink: process.env.CSC_LINK,
       mac: {
+        afterSign: 'electron/hooks/afterSign.js',
         target: [
           {
-            target: 'default',
-            arch: ['x64', 'arm64'],
+            target: 'dmg',
+            arch: ['arm64', "x64"],
           },
         ],
         publish: publishOptions,
