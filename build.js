@@ -23,7 +23,7 @@ const main = async () => {
   await build({
     publish: 'onTag',
     config: {
-      afterSign: 'electron/afterSign.js',
+      afterSign: 'electron/hooks/afterSign.js',
       appId: 'xyz.valory.olas-operate-app',
       artifactName: artifactName(),
       productName: 'Pearl',
