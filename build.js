@@ -3,6 +3,7 @@
  */
 require('dotenv').config();
 const build = require('electron-builder').build;
+const fs = require('fs');
 
 const { publishOptions } = require('./electron/constants');
 
@@ -16,6 +17,8 @@ function artifactName() {
     return prefix + '${productName}-${version}-${platform}-${arch}.${ext}';
 }
 
+const electronBinsDir = 'electron/bins';
+
 const main = async () => {
   console.log('Building...');
 
@@ -23,7 +26,7 @@ const main = async () => {
   await build({
     publish: 'onTag',
     config: {
-      afterSign: 'electron/hooks/afterSign.js',
+      // afterSign: 'electron/hooks/afterSign.js',
       appId: 'xyz.valory.olas-operate-app',
       artifactName: artifactName(),
       productName: 'Pearl',
@@ -33,7 +36,7 @@ const main = async () => {
       },      
       extraResources: [
         {
-          from: 'electron/bins',
+          from: electronBinsDir,
           to: 'bins',
           filter: ['**/*'],
         },
@@ -42,9 +45,22 @@ const main = async () => {
           to: '.env'
         },
       ],
+      asar: true,
       cscKeyPassword: process.env.CSC_KEY_PASSWORD,
       cscLink: process.env.CSC_LINK,
       mac: {
+        binaries: () => {
+          // Read all files from the 'electron/bins' directory          
+          const binaries = fs.readdirSync(electronBinsDir);
+          // Map each file name to the path inside the .app bundle
+          return binaries.map(bin => {
+            console.log(`Included binary ${bin} for signing.`);
+            return `Contents/Resources/bins/${bin}`;
+          });
+        },
+        category: 'public.app-category.utilities',
+        entitlements: 'electron/entitlements.mac.plist',
+        entitlementsInherit: 'electron/entitlements.mac.plist',
         target: [
           {
             target: 'dmg',
@@ -52,12 +68,9 @@ const main = async () => {
           },
         ],
         publish: publishOptions,
-        category: 'public.app-category.utilities',
         icon: 'electron/assets/icons/splash-robot-head-dock.png',
         hardenedRuntime: true,
         gatekeeperAssess: false,
-        entitlements: 'electron/entitlements.mac.plist',
-        entitlementsInherit: 'electron/entitlements.mac.plist',
         notarize: {
           teamId: process.env.APPLETEAMID,
         },
