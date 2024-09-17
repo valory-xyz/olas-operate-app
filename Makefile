@@ -25,6 +25,13 @@ endef
 
 ./dist/pearl_win.exe: ./operate/ ./dist/aea_win.exe ./dist/tendermint_win.exe
 	pwd
+	poetry install && poetry run pyinstaller --collect-all aea --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum --collect-all aea_ledger_ethereum_flashbots --collect-all asn1crypto --collect-all autonomy --collect-all coincurve --collect-all google.protobuf --collect-all openapi_core --collect-all openapi_spec_validator --collect-all operate --collect-data eth_account --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_ethereum_flashbots --hidden-import grpc --hidden-import openapi_core --hidden-import py_ecc --hidden-import pytz --name pearl_win --onefile operate/pearl.py 
+
+
+
+
+./dist/pearl_win.exe_old: ./operate/ ./dist/aea_win.exe ./dist/tendermint_win.exe
+	pwd
 	poetry install && poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all coincurve --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py --add-binary dist/aea_win.exe:.  --add-binary dist/tendermint_win.exe:. --onefile --name pearl_win
 
 

@@ -20,8 +20,10 @@
 """Operate app CLI module."""
 
 import asyncio
+from importlib.metadata import version
 import logging
 import os
+from platform import system
 import signal
 import traceback
 import typing as t
@@ -46,7 +48,6 @@ from operate.ledger import get_ledger_type_from_chain_type
 from operate.services.health_checker import HealthChecker
 from operate.types import ChainType, DeploymentStatus
 from operate.wallet.master import MasterWalletManager
-
 
 DEFAULT_HARDHAT_KEY = (
     "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
@@ -147,6 +148,7 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
     number_of_fails = int(os.environ.get("HEALTH_CHECKER_TRIES", "5"))
 
     logger = setup_logger(name="operate")
+    logger.info(f"Starting olas-operate-middleware: {version('olas-operate-middleware')} on {system()}")
     if HEALTH_CHECKER_OFF:
         logger.warning("healthchecker is off!!!")
     operate = OperateApp(home=home, logger=logger)
