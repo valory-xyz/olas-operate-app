@@ -33,7 +33,9 @@ export const PageStateProvider = ({ children }: PropsWithChildren) => {
     () => {
       setIsPageLoadedAndOneMinutePassed(true);
     },
-    pageState === Pages.Setup ? null : LAST_TRANSACTION_SHOW_DELAY,
+    pageState === Pages.Setup || isPageLoadedAndOneMinutePassed
+      ? null
+      : LAST_TRANSACTION_SHOW_DELAY,
   );
 
   return (
