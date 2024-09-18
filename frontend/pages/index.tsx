@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { useTimeout } from 'usehooks-ts';
 
 import { HelpAndSupport } from '@/components/HelpAndSupportPage';
 import { Main } from '@/components/MainPage';
@@ -10,6 +11,8 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 
 const DEFAULT_APP_HEIGHT = 700;
+
+const LAST_TRANSACTION_SHOW_DELAY = 60 * 1000;
 
 export default function Home() {
   const { pageState } = usePageState();
@@ -36,6 +39,11 @@ export default function Home() {
       resizeObserver.unobserve(document.body);
     };
   }, [electronApi]);
+
+  // Show the last transaction notification after a delay
+  useTimeout(() => {
+    electronApi?.store?.set?.('canShowLastTransaction', true);
+  }, LAST_TRANSACTION_SHOW_DELAY);
 
   const page = useMemo(() => {
     switch (pageState) {

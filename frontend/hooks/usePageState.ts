@@ -4,11 +4,12 @@ import { PageStateContext } from '@/context/PageStateProvider';
 import { Pages } from '@/enums/PageState';
 
 export const usePageState = () => {
-  const { pageState, setPageState } = useContext(PageStateContext);
+  const { pageState, setPageState, isPageLoadedAndOneMinutePassed } =
+    useContext(PageStateContext);
 
   const goto = (state: Pages) => {
     setPageState(state);
   };
 
-  return { pageState, setPageState, goto };
+  return { pageState, setPageState, goto, isPageLoadedAndOneMinutePassed };
 };

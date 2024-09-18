@@ -8,6 +8,9 @@ const schema = {
 
   environmentName: { type: 'string', default: '' },
   currentStakingProgram: { type: 'string', default: '' },
+
+  /** show the last transaction in the agent head */
+  canShowLastTransaction: { type: 'boolean', default: false },
 };
 
 /**
