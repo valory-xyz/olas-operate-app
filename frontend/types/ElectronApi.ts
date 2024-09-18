@@ -4,7 +4,6 @@ export type ElectronStore = {
   firstStakingRewardAchieved?: boolean;
   firstRewardNotificationShown?: boolean;
   agentEvictionAlertShown?: boolean;
-  canShowLastTransaction?: boolean;
 };
 
 export type ElectronTrayIconStatus =
