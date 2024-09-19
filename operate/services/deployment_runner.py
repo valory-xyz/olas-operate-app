@@ -18,6 +18,7 @@
 #
 # ------------------------------------------------------------------------------
 """Source code to run and stop deployments created."""
+import multiprocessing
 import json
 import os
 import platform
@@ -25,6 +26,7 @@ import shutil  # nosec
 import subprocess  # nosec
 import sys  # nosec
 import time
+from traceback import print_exc
 import typing as t
 from abc import ABC, ABCMeta, abstractmethod
 from pathlib import Path
@@ -280,6 +282,28 @@ class PyInstallerHostDeploymentRunnerMac(PyInstallerHostDeploymentRunner):
 class PyInstallerHostDeploymentRunnerWindows(PyInstallerHostDeploymentRunner):
     """Windows deployment runner."""
 
+    def _run_aea(self, *args: str, cwd: Path) -> Any:
+        """Run aea command."""
+        p = multiprocessing.Process(
+            target=PyInstallerHostDeploymentRunnerWindows._call_aea_command,
+            args=(cwd, args),
+        )
+        p.start()
+        p.join()
+
+    @staticmethod
+    def _call_aea_command(cwd, args):
+        try:
+            import os
+
+            os.chdir(cwd)
+            from aea.cli.core import cli as call_aea
+
+            call_aea(args, standalone_mode=False)
+        except:
+            print_exc()
+            raise
+
     @property
     def _aea_bin(self) -> str:
         """Return aea_bin path."""
@@ -289,7 +313,83 @@ class PyInstallerHostDeploymentRunnerWindows(PyInstallerHostDeploymentRunner):
     @property
     def _tendermint_bin(self) -> str:
         """Return tendermint path."""
+        raise NotImplementedError
         return str(Path(sys._MEIPASS) / "tendermint_win.exe")  # type: ignore # pylint: disable=protected-access
+
+    def _start_tendermint(self) -> None:
+        working_dir = self._work_directory
+        p = multiprocessing.Process(
+            target=PyInstallerHostDeploymentRunnerWindows._tm_start, args=(working_dir,)
+        )
+        p.start()
+
+    def _start_agent(self) -> None:
+        """Start agent process."""
+        working_dir = self._work_directory
+        p = multiprocessing.Process(
+            target=PyInstallerHostDeploymentRunnerWindows._aea_agent_run,
+            args=(working_dir,),
+        )
+        p.start()
+
+    @staticmethod
+    def _aea_agent_run(working_dir):
+        try:
+            import os
+            import sys
+
+            f = open(os.devnull, "w")
+            sys.stdout = f
+            os.chdir(working_dir / "agent")
+            from aea.cli.core import cli as call_aea
+
+            env = json.loads((working_dir / "agent.json").read_text(encoding="utf-8"))
+            for k, v in env.items():
+                os.environ[k] = v
+            (working_dir / "agent.pid").write_text(
+                data=str(os.getpid()),
+                encoding="utf-8",
+            )
+            call_aea(["run"], standalone_mode=False)
+        except:
+            print_exc()
+            raise
+
+    @staticmethod
+    def _tm_start(working_dir):
+        try:
+            import os
+            import json
+            import sys
+
+            f = open(os.devnull, "w")
+            sys.stdout = f
+
+            os.chdir(working_dir)
+            env = json.loads(
+                (working_dir / "tendermint.json").read_text(encoding="utf-8")
+            )
+            for k, v in env.items():
+                os.environ[k] = v
+
+            if platform.system() == "Windows":
+                # to look up for bundled in tendermint.exe
+                os.environ["PATH"] = (
+                    os.environ["PATH"] + ";" + os.path.dirname(sys.executable)
+                )
+
+            from operate.services.utils.tendermint import create_server
+
+            pid = os.getpid()
+            (working_dir / "tendermint.pid").write_text(
+                data=str(pid),
+                encoding="utf-8",
+            )
+            flask_app = create_server()
+            flask_app.run(host="localhost", port=8080)
+        except:
+            print_exc()
+            raise
 
 
 class HostPythonHostDeploymentRunner(BaseDeploymentRunner):
@@ -412,3 +512,8 @@ def stop_host_deployment(build_dir: Path) -> None:
     """Stop host deployment."""
     deployment_runner = _get_host_deployment_runner(build_dir=build_dir)
     deployment_runner.stop()
+
+
+if sys.platform.startswith("win"):
+    # On Windows calling this function is necessary.
+    multiprocessing.freeze_support()
