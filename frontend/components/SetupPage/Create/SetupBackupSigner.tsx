@@ -38,9 +38,9 @@ export const SetupBackupSigner = () => {
       <Typography.Title level={3}>Set backup wallet</Typography.Title>
       <Flex vertical gap={10}>
         <Typography.Text>
-          To keep your funds safe, we encourage you to add one of your existing
-          crypto wallets as a backup. This enables you to recover your funds if
-          you lose both your password and seed phrase.
+          To help keep your funds safe, we encourage you to add one of your
+          existing crypto wallets as a backup. This enables you to recover your
+          funds if you lose both your password and seed phrase.
         </Typography.Text>
 
         <FormFlex layout="vertical" form={form} onFinish={handleFinish}>
