@@ -22,7 +22,7 @@ export type StakingContractInfo = {
   serviceStakingState: number;
   /** OLAS cost of staking */
   minStakingDeposit: number;
-  /** annual percentage yield */
+  /** estimated annual percentage yield */
   apy: number;
   /** amount of OLAS required to stake */
   olasStakeRequired: number;

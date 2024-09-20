@@ -24,7 +24,7 @@ export const StakingContractDetails = ({
         right: `~ ${details.rewardsPerWorkPeriod?.toFixed(2)} OLAS`,
       },
       {
-        left: 'Annual percentage Yield (APY)',
+        left: 'Estimated Annual Percentage Yield (APY)',
         right: `${details.apy}%`,
       },
       {
