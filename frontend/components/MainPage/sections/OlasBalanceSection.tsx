@@ -1,6 +1,6 @@
 import { RightOutlined } from '@ant-design/icons';
 import { Button, Flex, Skeleton, Typography } from 'antd';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
@@ -126,6 +126,10 @@ export const MainOlasBalance = () => {
     return balanceFormat(totalOlasBalance, 2);
   }, [totalOlasBalance]);
 
+  const hideAccountBalanceDetailsModal = useCallback(() => {
+    setIsAccountBalanceDetailsModalVisible(false);
+  }, []);
+
   return (
     <CardSection
       vertical
@@ -161,9 +165,7 @@ export const MainOlasBalance = () => {
 
       {isAccountBalanceDetailsModalVisible && (
         <AccountBalances
-          hideAccountBalanceDetailsModal={() =>
-            setIsAccountBalanceDetailsModalVisible(false)
-          }
+          hideAccountBalanceDetailsModal={hideAccountBalanceDetailsModal}
         />
       )}
     </CardSection>

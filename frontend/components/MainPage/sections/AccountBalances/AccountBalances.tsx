@@ -71,24 +71,22 @@ const OlasBalance = () => {
 };
 
 const XdaiBalance = () => {
-  const { safeBalance } = useBalance();
-  const xdaiBalances = useMemo(() => {
-    return [
-      {
-        title: <Text strong>XDAI</Text>,
-        value: balanceFormat(safeBalance?.ETH ?? 0, 2),
-      },
-    ];
-  }, [safeBalance?.ETH]);
+  const { safeBalance, eoaBalance } = useBalance();
+  const totalXdaiBalance = useMemo(
+    () => (safeBalance?.ETH ?? 0) + (eoaBalance?.ETH ?? 0),
+    [safeBalance?.ETH, eoaBalance?.ETH],
+  );
 
   return (
     <Flex vertical gap={8}>
       <InfoBreakdownList
-        list={xdaiBalances.map((item) => ({
-          left: item.title,
-          leftClassName: 'text-light',
-          right: `${item.value} XDAI`,
-        }))}
+        list={[
+          {
+            left: <Text strong>XDAI</Text>,
+            leftClassName: 'text-light',
+            right: `${balanceFormat(totalXdaiBalance, 2)} XDAI`,
+          },
+        ]}
         parentStyle={infoBreakdownParentStyle}
       />
     </Flex>
@@ -97,24 +95,18 @@ const XdaiBalance = () => {
 
 const Signer = () => {
   const { masterEoaAddress } = useWallet();
-  const signerInfo = useMemo(() => {
-    return [
-      {
-        title: <SignerTitle />,
-        value: <AddressLink address={masterEoaAddress} />,
-      },
-    ];
-  }, [masterEoaAddress]);
 
   return (
     <Flex vertical gap={8}>
       <InfoBreakdownList
-        list={signerInfo.map((item) => ({
-          left: item.title,
-          leftClassName: 'text-light',
-          right: item.value,
-          rightClassName: 'font-normal',
-        }))}
+        list={[
+          {
+            left: <SignerTitle />,
+            leftClassName: 'text-light',
+            right: <AddressLink address={masterEoaAddress} />,
+            rightClassName: 'font-normal',
+          },
+        ]}
         parentStyle={infoBreakdownParentStyle}
       />
     </Flex>

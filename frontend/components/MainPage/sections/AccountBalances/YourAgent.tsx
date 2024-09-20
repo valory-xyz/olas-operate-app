@@ -78,10 +78,10 @@ const ServiceAndNftDetails = () => {
 };
 
 export const YourAgentWallet = () => {
-  const { agentSafeBalance } = useBalance();
+  const { agentSafeBalance, agentEoaBalance } = useBalance();
   const { accruedServiceStakingRewards } = useReward();
   const {
-    instanceAddress: agentInstanceAddress,
+    instanceAddress: agentEoaAddress,
     multisigAddress: agentSafeAddress,
   } = useAddress();
 
@@ -98,23 +98,10 @@ export const YourAgentWallet = () => {
     ];
   }, [agentSafeBalance?.OLAS, accruedServiceStakingRewards]);
 
-  const xdaiBalances = useMemo(() => {
-    return [
-      {
-        title: <XdaiTitle />,
-        value: balanceFormat(agentSafeBalance?.ETH ?? 0, 2),
-      },
-    ];
-  }, [agentSafeBalance?.ETH]);
-
-  const signerInfo = useMemo(() => {
-    return [
-      {
-        title: <SignerTitle />,
-        value: <AddressLink address={agentInstanceAddress} />,
-      },
-    ];
-  }, [agentInstanceAddress]);
+  const agentXdaiBalance = useMemo(
+    () => (agentSafeBalance?.ETH ?? 0) + (agentEoaBalance?.ETH ?? 0),
+    [agentSafeBalance?.ETH, agentEoaBalance?.ETH],
+  );
 
   return (
     <Card>
@@ -149,23 +136,27 @@ export const YourAgentWallet = () => {
 
         <Flex vertical gap={8}>
           <InfoBreakdownList
-            list={xdaiBalances.map((item) => ({
-              left: item.title,
-              leftClassName: 'text-light text-sm',
-              right: `${item.value} XDAI`,
-            }))}
+            list={[
+              {
+                left: <XdaiTitle />,
+                leftClassName: 'text-light text-sm',
+                right: `${balanceFormat(agentXdaiBalance, 2)} XDAI`,
+              },
+            ]}
             parentStyle={infoBreakdownParentStyle}
           />
         </Flex>
 
         <Flex vertical gap={8}>
           <InfoBreakdownList
-            list={signerInfo.map((item) => ({
-              left: item.title,
-              leftClassName: 'text-light text-sm',
-              right: item.value,
-              rightClassName: 'font-normal',
-            }))}
+            list={[
+              {
+                left: <SignerTitle />,
+                leftClassName: 'text-light text-sm',
+                right: <AddressLink address={agentEoaAddress} />,
+                rightClassName: 'font-normal',
+              },
+            ]}
             parentStyle={infoBreakdownParentStyle}
           />
         </Flex>
