@@ -188,8 +188,8 @@ export const SetupRestoreViaBackup = () => {
           the instructions below.
         </Typography.Text>
         <Typography.Text>
-          Note that the backup wallet won’t give you access to your Pearl
-          account but only to the funds stored on it.
+          Note that the backup wallet feature is not designed to restore access
+          to your Pearl account but rather the funds stored on it.
         </Typography.Text>
       </Flex>
     </CardFlex>
