@@ -1,4 +1,4 @@
-import { WalletOutlined } from '@ant-design/icons';
+import { RightOutlined } from '@ant-design/icons';
 import { Button, Flex, Skeleton, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import styled from 'styled-components';
@@ -138,31 +138,33 @@ export const MainOlasBalance = () => {
       <LowTradingBalanceAlert />
 
       {isBalanceLoaded ? (
-        <Flex className="w-full" align="center" justify="space-between">
-          <Flex vertical gap={8}>
-            <Text type="secondary">Current balance</Text>
-            <Flex align="end">
-              <span className="balance-symbol">{UNICODE_SYMBOLS.OLAS}</span>
-              <Balance className="balance">{balance}</Balance>
-              <span className="balance-currency">OLAS</span>
-            </Flex>
+        <Flex vertical gap={8}>
+          <Text type="secondary">Current balance</Text>
+          <Flex align="end">
+            <span className="balance-symbol">{UNICODE_SYMBOLS.OLAS}</span>
+            <Balance className="balance">{balance}</Balance>
+            <span className="balance-currency">OLAS</span>
           </Flex>
 
-          <Button
-            icon={<WalletOutlined />}
+          <Text
+            type="secondary"
+            className="text-sm pointer hover-underline"
             onClick={() => setIsAccountBalanceDetailsModalVisible(true)}
-          />
-
-          {isAccountBalanceDetailsModalVisible && (
-            <AccountBalances
-              hideAccountBalanceDetailsModal={() =>
-                setIsAccountBalanceDetailsModalVisible(false)
-              }
-            />
-          )}
+          >
+            See breakdown
+            <RightOutlined style={{ fontSize: 12, paddingLeft: 6 }} />
+          </Text>
         </Flex>
       ) : (
         <Skeleton.Input active size="large" style={{ margin: '4px 0' }} />
+      )}
+
+      {isAccountBalanceDetailsModalVisible && (
+        <AccountBalances
+          hideAccountBalanceDetailsModal={() =>
+            setIsAccountBalanceDetailsModalVisible(false)
+          }
+        />
       )}
     </CardSection>
   );
