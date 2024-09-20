@@ -15,14 +15,14 @@ const collapseItems = [
         </Text>
         <Text>
           Staking contracts define what the agent needs to do, how much OLAS
-          needs to be staked etc.
+          needs to be staked, etc., to be eligible for rewards.
         </Text>
         <Text>
           Your agent can only participate in one staking contract at a time.
         </Text>
         <Text>
-          You need to run your agent for max 1 hour a day, regardless of the
-          staking contract.
+          To be eligible for rewards your agent must run max 1 hour a day,
+          regardless of the staking contract.
         </Text>
       </Flex>
     ),
