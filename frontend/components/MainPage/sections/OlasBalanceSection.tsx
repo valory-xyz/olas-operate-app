@@ -111,8 +111,8 @@ const LowTradingBalanceAlert = () => {
               {`To run your agent, add at least $${LOW_MASTER_SAFE_BALANCE} XDAI to your account.`}
             </Text>
             <Text>
-              Do it quickly to avoid your agent missing its targets and getting
-              suspended!
+              Your agent is at risk of missing its targets, which would result
+              in several days&apos; suspension.
             </Text>
           </Flex>
         }
