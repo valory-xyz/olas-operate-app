@@ -51,7 +51,6 @@ export const MainNeedsFunds = () => {
           )}
         </Flex>
         <ul className="p-0 m-0 text-sm">
-          <li>Do not add more than these amounts.</li>
           <li>Use the address in the “Add Funds” section below.</li>
         </ul>
       </Flex>
