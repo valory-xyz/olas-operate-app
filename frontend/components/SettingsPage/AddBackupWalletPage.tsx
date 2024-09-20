@@ -35,8 +35,8 @@ export const AddBackupWalletPage = () => {
     >
       <Typography.Paragraph>
         To help keep your funds safe, we encourage you to add one of your
-        existing crypto wallets as a backup. This enables you to recover your
-        funds if you lose both your password and seed phrase.
+        existing crypto wallets as a backup. You may recover your funds to your
+        backup wallet if you lose both your password and seed phrase.
       </Typography.Paragraph>
       <Form layout="vertical" form={form}>
         <Form.Item
