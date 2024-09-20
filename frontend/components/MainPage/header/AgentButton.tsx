@@ -35,8 +35,8 @@ const IdleTooltip = () => (
     arrow={false}
     title={
       <Paragraph className="text-sm m-0">
-        Your agent earned rewards for this epoch and stopped working. It’ll
-        return to work once the next epoch starts.
+        Your agent earned rewards for this epoch, so decided to stop working
+        until the next epoch.
       </Paragraph>
     }
   >
