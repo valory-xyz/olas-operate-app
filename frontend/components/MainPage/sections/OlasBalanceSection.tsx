@@ -136,10 +136,10 @@ const AvoidSuspensionAlert = () => {
               Avoid suspension!
             </Title>
             <Text>
-              Run your agent for at least half an hour a day to make sure it
-              hits its targets. If it misses its targets 2 days in a row, it’ll
-              be suspended. You won’t be able to run it or earn rewards for
-              several days.
+              Run your agent for at least half an hour a day to avoid missing
+              targets. If it misses its targets 2 days in a row, it’ll be
+              suspended. You won’t be able to run it or earn rewards for several
+              days.
             </Text>
             <Button
               type="primary"
