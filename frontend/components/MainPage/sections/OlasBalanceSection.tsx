@@ -12,7 +12,7 @@ import { useStore } from '@/hooks/useStore';
 import { balanceFormat } from '@/utils/numberFormatters';
 
 import { CardSection } from '../../styled/CardSection';
-import { AccountBalances } from './AccountBalances/AccountBalances';
+import { YourWallet } from './YourWallet/YourWallet';
 
 const { Text, Title } = Typography;
 const Balance = styled.span`
@@ -164,7 +164,7 @@ export const MainOlasBalance = () => {
       )}
 
       {isAccountBalanceDetailsModalVisible && (
-        <AccountBalances
+        <YourWallet
           hideAccountBalanceDetailsModal={hideAccountBalanceDetailsModal}
         />
       )}

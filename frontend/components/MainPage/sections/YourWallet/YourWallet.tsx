@@ -119,7 +119,7 @@ type AccountBalanceDetailsProps = {
   hideAccountBalanceDetailsModal: () => void;
 };
 
-export const AccountBalances = ({
+export const YourWallet = ({
   hideAccountBalanceDetailsModal,
 }: AccountBalanceDetailsProps) => {
   return (
