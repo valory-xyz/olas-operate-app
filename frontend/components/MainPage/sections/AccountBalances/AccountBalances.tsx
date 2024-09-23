@@ -22,6 +22,26 @@ const MainCard = styled(Card)`
   > .ant-card-body {
     padding: 16px;
   }
+
+  &#account-balances {
+    overflow-y: auto;
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+      &:hover {
+        background: #555;
+      }
+    }
+  }
 `;
 
 const YourWalletDetails = () => {
@@ -129,7 +149,7 @@ export const AccountBalances = ({
       onCancel={hideAccountBalanceDetailsModal}
       footer={null}
     >
-      <MainCard className="main-card">
+      <MainCard className="main-card" id="account-balances">
         <Container>
           <YourWalletDetails />
           <OlasBalance />
