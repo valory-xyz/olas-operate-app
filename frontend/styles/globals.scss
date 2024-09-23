@@ -216,6 +216,28 @@ ul.alert-list {
   }
 }
 
+// custom scrollbar
+::-webkit-scrollbar {
+  width: 6px; /* Scrollbar width */
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Scrollbar track background */
+  border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888; /* Scrollbar color */
+  border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Scrollbar color when hovered */
+}
+
 @keyframes ellipsis {
   to {
     width: 40px;
