@@ -1,4 +1,3 @@
-import { WalletOutlined } from '@ant-design/icons';
 import { Card, Flex, Typography } from 'antd';
 import { useMemo } from 'react';
 import styled from 'styled-components';
@@ -6,7 +5,6 @@ import styled from 'styled-components';
 import { AddressLink } from '@/components/AddressLink';
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { CustomModal } from '@/components/styled/CustomModal';
-import { COLOR } from '@/constants/colors';
 import { MODAL_WIDTH } from '@/constants/width';
 import { useBalance } from '@/hooks/useBalance';
 import { useWallet } from '@/hooks/useWallet';
@@ -16,7 +14,7 @@ import { Container, infoBreakdownParentStyle } from './styles';
 import { SignerTitle } from './Titles';
 import { YourAgentWallet } from './YourAgent';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const MainCard = styled(Card)`
   > .ant-card-body {
@@ -24,18 +22,22 @@ const MainCard = styled(Card)`
   }
 `;
 
-const YourWalletDetails = () => {
+const Address = () => {
   const { masterSafeAddress } = useWallet();
 
   return (
-    <Flex vertical gap={12}>
-      <WalletOutlined style={{ fontSize: 24, color: COLOR.TEXT_LIGHT }} />
-      <Flex justify="space-between" align="center" className="w-full">
-        <Title level={5} className="m-0">
-          Your wallet
-        </Title>
-        <AddressLink address={masterSafeAddress} />
-      </Flex>
+    <Flex vertical gap={8}>
+      <InfoBreakdownList
+        list={[
+          {
+            left: 'Address',
+            leftClassName: 'text-light',
+            right: <AddressLink address={masterSafeAddress} />,
+            rightClassName: 'font-normal',
+          },
+        ]}
+        parentStyle={infoBreakdownParentStyle}
+      />
     </Flex>
   );
 };
@@ -122,7 +124,7 @@ export const AccountBalances = ({
 }: AccountBalanceDetailsProps) => {
   return (
     <CustomModal
-      title="Account balances"
+      title="Your wallet"
       open
       width={MODAL_WIDTH}
       bodyPadding
@@ -131,7 +133,7 @@ export const AccountBalances = ({
     >
       <MainCard className="main-card">
         <Container>
-          <YourWalletDetails />
+          <Address />
           <OlasBalance />
           <XdaiBalance />
           <Signer />
