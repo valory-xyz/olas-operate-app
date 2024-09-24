@@ -46,15 +46,13 @@ export const AddFundsSection = () => {
   return (
     <>
       <CustomizedCardSection gap={12}>
-        {isAddFundsVisible ? (
-          <Button type="default" size="large" onClick={closeAddFunds}>
-            Close instructions
-          </Button>
-        ) : (
-          <Button type="default" size="large" onClick={addFunds}>
-            Add funds
-          </Button>
-        )}
+        <Button
+          type="default"
+          size="large"
+          onClick={isAddFundsVisible ? closeAddFunds : addFunds}
+        >
+          {isAddFundsVisible ? 'Close instructions' : 'Add funds'}
+        </Button>
 
         <Popover
           placement="topRight"

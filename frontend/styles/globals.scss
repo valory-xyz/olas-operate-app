@@ -20,6 +20,24 @@ button, input, select, textarea, .ant-input-suffix {
   -webkit-app-region: no-drag;
 }
 
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFFFFF; /* Scrollbar track background */
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C2CBD7; /* Scrollbar color */
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9AA1AA; /* Scrollbar color when hovered */
+}
+
 // antd overrides
 .ant-card {
   -webkit-app-region: no-drag;
@@ -32,7 +50,7 @@ button, input, select, textarea, .ant-input-suffix {
 }
 
 .antd-card {
-  background-color: white;
+  background-color: #FFFFFF;
   overflow-y: scroll;
 }
 
@@ -215,28 +233,6 @@ ul.alert-list {
   &:hover {
     text-decoration: underline;
   }
-}
-
-// custom scrollbar
-::-webkit-scrollbar {
-  width: 6px; /* Scrollbar width */
-}
-
-/* Track */
-::-webkit-scrollbar-track {
-  background: #f1f1f1; /* Scrollbar track background */
-  border-radius: 10px;
-}
-
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background: #888; /* Scrollbar color */
-  border-radius: 10px;
-}
-
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: #555; /* Scrollbar color when hovered */
 }
 
 @keyframes ellipsis {
