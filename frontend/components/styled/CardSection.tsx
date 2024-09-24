@@ -7,6 +7,7 @@ type CardSectionProps = FlexProps & {
   bordertop?: 'true' | 'false';
   borderbottom?: 'true' | 'false';
   padding?: string;
+  vertical?: boolean;
 };
 
 /**
@@ -25,10 +26,13 @@ export const CardSection = styled(Flex)<CardSectionProps>`
         ? `border-bottom: 1px solid ${COLOR.BORDER_GRAY};`
         : '';
 
+    const verticalStyle = props.vertical ? 'flex-direction: column;' : '';
+
     return `
       ${paddingStyle}
       ${borderTopStyle}
       ${borderBottomStyle}
+      ${verticalStyle}
     `;
   }}
   border-collapse: collapse;

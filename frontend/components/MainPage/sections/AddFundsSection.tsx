@@ -12,7 +12,7 @@ import {
   Typography,
 } from 'antd';
 import Link from 'next/link';
-import { useCallback, useMemo, useState } from 'react';
+import { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
@@ -34,13 +34,14 @@ const CustomizedCardSection = styled(CardSection)<{ border?: boolean }>`
 `;
 
 export const AddFundsSection = () => {
+  const fundSectionRef = useRef<HTMLDivElement>(null);
   const [isAddFundsVisible, setIsAddFundsVisible] = useState(false);
 
   const addFunds = useCallback(async () => {
     setIsAddFundsVisible(true);
 
     await delayInSeconds(0.1);
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    fundSectionRef?.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
   const closeAddFunds = useCallback(() => setIsAddFundsVisible(false), []);
 
@@ -66,12 +67,12 @@ export const AddFundsSection = () => {
         </Popover>
       </CustomizedCardSection>
 
-      {isAddFundsVisible && <OpenAddFundsSection />}
+      {isAddFundsVisible && <OpenAddFundsSection ref={fundSectionRef} />}
     </>
   );
 };
 
-export const OpenAddFundsSection = () => {
+export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
   const { masterSafeAddress } = useWallet();
 
   const truncatedFundingAddress: string | undefined = useMemo(
@@ -88,7 +89,7 @@ export const OpenAddFundsSection = () => {
     [masterSafeAddress],
   );
   return (
-    <>
+    <CardSection vertical ref={ref}>
       <AddFundsWarningAlertSection />
       <AddFundsAddressSection
         truncatedFundingAddress={truncatedFundingAddress}
@@ -96,9 +97,10 @@ export const OpenAddFundsSection = () => {
         handleCopy={handleCopyAddress}
       />
       <AddFundsGetTokensSection />
-    </>
+    </CardSection>
   );
-};
+});
+OpenAddFundsSection.displayName = 'OpenAddFundsSection';
 
 const AddFundsWarningAlertSection = () => (
   <CardSection>

@@ -32,6 +32,13 @@ const Container = styled.div<{ blur: 'true' | 'false' }>`
     `}
 `;
 
+const Body = styled.div`
+  // check main.js for the height of the app ie, 700px
+  max-height: calc(700px - 45px);
+  padding-top: 45px;
+  overflow-y: auto;
+`;
+
 export const Layout = ({
   children,
 }: PropsWithChildren & { vertical?: boolean }) => {
@@ -53,7 +60,7 @@ export const Layout = ({
   return (
     <Container blur={isOnline ? 'false' : 'true'}>
       <TopBar />
-      {children}
+      <Body>{children}</Body>
     </Container>
   );
 };
