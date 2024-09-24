@@ -14,6 +14,7 @@ body {
   border-radius: 8px;
   user-select: none;
   scroll-behavior: smooth;
+  overflow: hidden;
 }
 
 button, input, select, textarea, .ant-input-suffix {

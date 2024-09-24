@@ -1,5 +1,5 @@
 import { QuestionCircleOutlined, SettingOutlined } from '@ant-design/icons';
-import { Button, Card, Flex } from 'antd';
+import { Button, Flex } from 'antd';
 import { useEffect } from 'react';
 
 import { Pages } from '@/enums/PageState';
@@ -9,6 +9,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
+import { MainCard } from '../Card/MainCard';
 import { MainHeader } from './header';
 import { AddFundsSection } from './sections/AddFundsSection';
 import { GasBalanceSection } from './sections/GasBalanceSection';
@@ -33,7 +34,7 @@ export const Main = () => {
   }, [isLoaded, setIsLoaded, updateBalances, updateServicesState]);
 
   return (
-    <Card
+    <MainCard
       title={<MainHeader />}
       extra={
         <Flex gap={8}>
@@ -65,6 +66,6 @@ export const Main = () => {
         <MainNeedsFunds />
         <AddFundsSection />
       </Flex>
-    </Card>
+    </MainCard>
   );
 };
