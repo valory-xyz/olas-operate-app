@@ -1,12 +1,21 @@
-import { Card, Flex, Typography } from 'antd';
+import { CloseOutlined } from '@ant-design/icons';
+import {
+  Button,
+  Card,
+  ConfigProvider,
+  Flex,
+  ThemeConfig,
+  Typography,
+} from 'antd';
 import { useMemo } from 'react';
-import styled from 'styled-components';
 
 import { AddressLink } from '@/components/AddressLink';
+import { CardTitle } from '@/components/Card/CardTitle';
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
-import { CustomModal } from '@/components/styled/CustomModal';
-import { MODAL_WIDTH } from '@/constants/width';
+import { CardFlex } from '@/components/styled/CardFlex';
+import { Pages } from '@/enums/PageState';
 import { useBalance } from '@/hooks/useBalance';
+import { usePageState } from '@/hooks/usePageState';
 import { useWallet } from '@/hooks/useWallet';
 import { balanceFormat } from '@/utils/numberFormatters';
 
@@ -16,11 +25,13 @@ import { YourAgentWallet } from './YourAgent';
 
 const { Text } = Typography;
 
-const MainCard = styled(Card)`
-  > .ant-card-body {
-    padding: 16px;
-  }
-`;
+const yourWalletTheme: ThemeConfig = {
+  components: {
+    Card: { paddingLG: 16 },
+  },
+};
+
+const YourWalletTitle = () => <CardTitle title="Your wallet" />;
 
 const Address = () => {
   const { masterSafeAddress } = useWallet();
@@ -115,31 +126,32 @@ const Signer = () => {
   );
 };
 
-type AccountBalanceDetailsProps = {
-  hideAccountBalanceDetailsModal: () => void;
-};
+export const YourWallet = () => {
+  const { goto } = usePageState();
 
-export const YourWallet = ({
-  hideAccountBalanceDetailsModal,
-}: AccountBalanceDetailsProps) => {
   return (
-    <CustomModal
-      title="Your wallet"
-      open
-      width={MODAL_WIDTH}
-      bodyPadding
-      onCancel={hideAccountBalanceDetailsModal}
-      footer={null}
-    >
-      <MainCard className="main-card">
-        <Container>
-          <Address />
-          <OlasBalance />
-          <XdaiBalance />
-          <Signer />
-          <YourAgentWallet />
-        </Container>
-      </MainCard>
-    </CustomModal>
+    <ConfigProvider theme={yourWalletTheme}>
+      <CardFlex
+        bordered={false}
+        title={<YourWalletTitle />}
+        extra={
+          <Button
+            size="large"
+            icon={<CloseOutlined />}
+            onClick={() => goto(Pages.Main)}
+          />
+        }
+      >
+        <Card>
+          <Container>
+            <Address />
+            <OlasBalance />
+            <XdaiBalance />
+            <Signer />
+            <YourAgentWallet />
+          </Container>
+        </Card>
+      </CardFlex>
+    </ConfigProvider>
   );
 };

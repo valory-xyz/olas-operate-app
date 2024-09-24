@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 
 import { HelpAndSupport } from '@/components/HelpAndSupportPage';
 import { Main } from '@/components/MainPage';
+import { YourWallet } from '@/components/MainPage/sections/YourWallet/YourWallet';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { Settings } from '@/components/SettingsPage';
 import { Setup } from '@/components/SetupPage';
@@ -49,6 +50,8 @@ export default function Home() {
         return <HelpAndSupport />;
       case Pages.ManageStaking:
         return <ManageStakingPage />;
+      case Pages.YourWalletBreakdown:
+        return <YourWallet />;
       default:
         return <Main />;
     }
