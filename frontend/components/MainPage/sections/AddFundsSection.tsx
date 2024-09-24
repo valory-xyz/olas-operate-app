@@ -19,6 +19,7 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { COW_SWAP_GNOSIS_XDAI_OLAS_URL } from '@/constants/urls';
 import { useWallet } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
+import { delayInSeconds } from '@/utils/delay';
 import { truncateAddress } from '@/utils/truncate';
 
 import { CustomAlert } from '../../Alert';
@@ -38,7 +39,7 @@ export const AddFundsSection = () => {
   const addFunds = useCallback(async () => {
     setIsAddFundsVisible(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await delayInSeconds(0.1);
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }, []);
   const closeAddFunds = useCallback(() => setIsAddFundsVisible(false), []);
