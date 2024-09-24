@@ -35,16 +35,26 @@ const CustomizedCardSection = styled(CardSection)<{ border?: boolean }>`
 export const AddFundsSection = () => {
   const [isAddFundsVisible, setIsAddFundsVisible] = useState(false);
 
+  const addFunds = useCallback(async () => {
+    setIsAddFundsVisible(true);
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }, []);
+  const closeAddFunds = useCallback(() => setIsAddFundsVisible(false), []);
+
   return (
     <>
       <CustomizedCardSection gap={12}>
-        <Button
-          type="default"
-          size="large"
-          onClick={() => setIsAddFundsVisible((prev) => !prev)}
-        >
-          {isAddFundsVisible ? 'Close instructions' : 'Add funds'}
-        </Button>
+        {isAddFundsVisible ? (
+          <Button type="default" size="large" onClick={closeAddFunds}>
+            Close instructions
+          </Button>
+        ) : (
+          <Button type="default" size="large" onClick={addFunds}>
+            Add funds
+          </Button>
+        )}
 
         <Popover
           placement="topRight"

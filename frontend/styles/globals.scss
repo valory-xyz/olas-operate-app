@@ -13,6 +13,7 @@ body {
   max-width: 460px;
   border-radius: 8px;
   user-select: none;
+  scroll-behavior: smooth;
 }
 
 button, input, select, textarea, .ant-input-suffix {
