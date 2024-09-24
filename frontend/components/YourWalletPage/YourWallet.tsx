@@ -1,14 +1,21 @@
-import { WalletOutlined } from '@ant-design/icons';
-import { Card, Flex, Typography } from 'antd';
+import { CloseOutlined } from '@ant-design/icons';
+import {
+  Button,
+  Card,
+  ConfigProvider,
+  Flex,
+  ThemeConfig,
+  Typography,
+} from 'antd';
 import { useMemo } from 'react';
-import styled from 'styled-components';
 
 import { AddressLink } from '@/components/AddressLink';
+import { CardTitle } from '@/components/Card/CardTitle';
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
-import { CustomModal } from '@/components/styled/CustomModal';
-import { COLOR } from '@/constants/colors';
-import { MODAL_WIDTH } from '@/constants/width';
+import { CardFlex } from '@/components/styled/CardFlex';
+import { Pages } from '@/enums/PageState';
 import { useBalance } from '@/hooks/useBalance';
+import { usePageState } from '@/hooks/usePageState';
 import { useWallet } from '@/hooks/useWallet';
 import { balanceFormat } from '@/utils/numberFormatters';
 
@@ -16,26 +23,32 @@ import { Container, infoBreakdownParentStyle } from './styles';
 import { SignerTitle } from './Titles';
 import { YourAgentWallet } from './YourAgent';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
-const MainCard = styled(Card)`
-  > .ant-card-body {
-    padding: 16px;
-  }
-`;
+const yourWalletTheme: ThemeConfig = {
+  components: {
+    Card: { paddingLG: 16 },
+  },
+};
 
-const YourWalletDetails = () => {
+const YourWalletTitle = () => <CardTitle title="Your wallet" />;
+
+const Address = () => {
   const { masterSafeAddress } = useWallet();
 
   return (
-    <Flex vertical gap={12}>
-      <WalletOutlined style={{ fontSize: 24, color: COLOR.TEXT_LIGHT }} />
-      <Flex justify="space-between" align="center" className="w-full">
-        <Title level={5} className="m-0">
-          Your wallet
-        </Title>
-        <AddressLink address={masterSafeAddress} />
-      </Flex>
+    <Flex vertical gap={8}>
+      <InfoBreakdownList
+        list={[
+          {
+            left: 'Address',
+            leftClassName: 'text-light',
+            right: <AddressLink address={masterSafeAddress} />,
+            rightClassName: 'font-normal',
+          },
+        ]}
+        parentStyle={infoBreakdownParentStyle}
+      />
     </Flex>
   );
 };
@@ -113,31 +126,32 @@ const Signer = () => {
   );
 };
 
-type AccountBalanceDetailsProps = {
-  hideAccountBalanceDetailsModal: () => void;
-};
+export const YourWallet = () => {
+  const { goto } = usePageState();
 
-export const AccountBalances = ({
-  hideAccountBalanceDetailsModal,
-}: AccountBalanceDetailsProps) => {
   return (
-    <CustomModal
-      title="Account balances"
-      open
-      width={MODAL_WIDTH}
-      bodyPadding
-      onCancel={hideAccountBalanceDetailsModal}
-      footer={null}
-    >
-      <MainCard className="main-card">
-        <Container>
-          <YourWalletDetails />
-          <OlasBalance />
-          <XdaiBalance />
-          <Signer />
-          <YourAgentWallet />
-        </Container>
-      </MainCard>
-    </CustomModal>
+    <ConfigProvider theme={yourWalletTheme}>
+      <CardFlex
+        bordered={false}
+        title={<YourWalletTitle />}
+        extra={
+          <Button
+            size="large"
+            icon={<CloseOutlined />}
+            onClick={() => goto(Pages.Main)}
+          />
+        }
+      >
+        <Card>
+          <Container>
+            <Address />
+            <OlasBalance />
+            <XdaiBalance />
+            <Signer />
+            <YourAgentWallet />
+          </Container>
+        </Card>
+      </CardFlex>
+    </ConfigProvider>
   );
 };

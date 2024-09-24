@@ -1,18 +1,19 @@
 import { RightOutlined } from '@ant-design/icons';
 import { Button, Flex, Skeleton, Typography } from 'antd';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { LOW_MASTER_SAFE_BALANCE } from '@/constants/thresholds';
+import { Pages } from '@/enums/PageState';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { usePageState } from '@/hooks/usePageState';
 import { useStore } from '@/hooks/useStore';
 import { balanceFormat } from '@/utils/numberFormatters';
 
 import { CardSection } from '../../styled/CardSection';
-import { AccountBalances } from './AccountBalances/AccountBalances';
 
 const { Text, Title } = Typography;
 const Balance = styled.span`
@@ -105,10 +106,7 @@ const AvoidSuspensionAlert = () => {
 export const MainOlasBalance = () => {
   const { storeState } = useStore();
   const { isBalanceLoaded, totalOlasBalance } = useBalance();
-  const [
-    isAccountBalanceDetailsModalVisible,
-    setIsAccountBalanceDetailsModalVisible,
-  ] = useState(false);
+  const { goto } = usePageState();
 
   // If first reward notification is shown BUT
   // agent eviction alert is NOT yet shown, show this alert.
@@ -125,10 +123,6 @@ export const MainOlasBalance = () => {
     if (totalOlasBalance === undefined) return '--';
     return balanceFormat(totalOlasBalance, 2);
   }, [totalOlasBalance]);
-
-  const hideAccountBalanceDetailsModal = useCallback(() => {
-    setIsAccountBalanceDetailsModalVisible(false);
-  }, []);
 
   return (
     <CardSection
@@ -153,7 +147,7 @@ export const MainOlasBalance = () => {
           <Text
             type="secondary"
             className="text-sm pointer hover-underline"
-            onClick={() => setIsAccountBalanceDetailsModalVisible(true)}
+            onClick={() => goto(Pages.YourWalletBreakdown)}
           >
             See breakdown
             <RightOutlined style={{ fontSize: 12, paddingLeft: 6 }} />
@@ -161,12 +155,6 @@ export const MainOlasBalance = () => {
         </Flex>
       ) : (
         <Skeleton.Input active size="large" style={{ margin: '4px 0' }} />
-      )}
-
-      {isAccountBalanceDetailsModalVisible && (
-        <AccountBalances
-          hideAccountBalanceDetailsModal={hideAccountBalanceDetailsModal}
-        />
       )}
     </CardSection>
   );

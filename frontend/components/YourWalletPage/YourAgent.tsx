@@ -14,7 +14,7 @@ import { useServices } from '@/hooks/useServices';
 import { balanceFormat } from '@/utils/numberFormatters';
 import { truncateAddress } from '@/utils/truncate';
 
-import { InfoBreakdownList } from '../../../InfoBreakdown';
+import { InfoBreakdownList } from '../InfoBreakdown';
 import { Container, infoBreakdownParentStyle } from './styles';
 import {
   OlasTitle,

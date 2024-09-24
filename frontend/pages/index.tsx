@@ -5,6 +5,7 @@ import { Main } from '@/components/MainPage';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { Settings } from '@/components/SettingsPage';
 import { Setup } from '@/components/SetupPage';
+import { YourWallet } from '@/components/YourWalletPage/YourWallet';
 import { Pages } from '@/enums/PageState';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
@@ -49,6 +50,8 @@ export default function Home() {
         return <HelpAndSupport />;
       case Pages.ManageStaking:
         return <ManageStakingPage />;
+      case Pages.YourWalletBreakdown:
+        return <YourWallet />;
       default:
         return <Main />;
     }
