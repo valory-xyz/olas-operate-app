@@ -2,10 +2,10 @@ import { useEffect, useMemo } from 'react';
 
 import { HelpAndSupport } from '@/components/HelpAndSupportPage';
 import { Main } from '@/components/MainPage';
-import { YourWallet } from '@/components/MainPage/sections/YourWallet/YourWallet';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { Settings } from '@/components/SettingsPage';
 import { Setup } from '@/components/SetupPage';
+import { YourWallet } from '@/components/YourWalletPage/YourWallet';
 import { Pages } from '@/enums/PageState';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
