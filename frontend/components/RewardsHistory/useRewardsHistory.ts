@@ -104,18 +104,32 @@ export const useRewardsHistory = () => {
       const betaRewards = allRewards[betaAddress.toLowerCase()];
       const beta2Rewards = allRewards[beta2Address.toLowerCase()];
 
-      const rewards = [
-        {
-          id: beta2Address,
-          name: STAKING_PROGRAM_META[StakingProgramId.Beta2].name,
-          history: transformRewards(beta2Rewards, serviceId),
-        },
-        {
-          id: betaAddress,
-          name: STAKING_PROGRAM_META[StakingProgramId.Beta].name,
-          history: transformRewards(betaRewards, serviceId),
-        },
-      ];
+      const beta2ContractDetails = {
+        id: beta2Address,
+        name: STAKING_PROGRAM_META[StakingProgramId.Beta2].name,
+        history: transformRewards(beta2Rewards, serviceId),
+        /**
+         * - how do we know the service has been changed?
+         * - service created for the current user? which event is it?
+         *   - find the block timestamp of the service creation event
+         *   - find the epoch that the service was created
+         * - remove the rewards before the service was created
+         */
+      };
+
+      const betaContractRewards = {
+        id: betaAddress,
+        name: STAKING_PROGRAM_META[StakingProgramId.Beta].name,
+        history: transformRewards(betaRewards, serviceId),
+      };
+
+      const rewards = [];
+      if (beta2ContractDetails.history.some((epoch) => epoch.earned)) {
+        rewards.push(beta2ContractDetails);
+      }
+      if (betaContractRewards.history.some((epoch) => epoch.earned)) {
+        rewards.push(betaContractRewards);
+      }
 
       const parsedRewards = StakingRewardSchema.array().safeParse(rewards);
       if (!parsedRewards.success) {
