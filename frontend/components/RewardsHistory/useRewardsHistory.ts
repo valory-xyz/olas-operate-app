@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { ethers } from 'ethers';
-import { gql, request } from 'graphql-request';
+import { gql, GraphQLClient, request } from 'graphql-request';
 import { groupBy } from 'lodash';
 import { z } from 'zod';
 
@@ -22,8 +22,14 @@ const RewardHistoryResponseSchema = z.object({
   transactionHash: z.string(),
   epochLength: z.string(),
 });
-
 type RewardHistoryResponse = z.infer<typeof RewardHistoryResponseSchema>;
+
+const ServiceStakedInfoSchema = z.object({
+  blockTimestamp: z.string(),
+  epoch: z.string(),
+  owner: z.string(),
+});
+type ServiceStakedInfo = z.infer<typeof ServiceStakedInfoSchema>;
 
 const betaAddress =
   SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS].pearl_beta;
@@ -34,6 +40,14 @@ const beta2Address =
 const SUBGRAPH_URL =
   'https://api.studio.thegraph.com/query/81855/pearl-staking-rewards-history/version/latest';
 
+const GRAPH_CLIENT = new GraphQLClient(SUBGRAPH_URL, {
+  jsonSerializer: {
+    parse: JSON.parse,
+    stringify: JSON.stringify,
+  },
+});
+
+const id = 499;
 const fetchRewardsQuery = gql`
   {
     allRewards: checkpoints(orderBy: epoch, orderDirection: desc) {
@@ -47,8 +61,70 @@ const fetchRewardsQuery = gql`
       transactionHash
       contractAddress
     }
+    serviceStakedInfo: {
+      serviceStakeds(orderBy: epoch, where: { serviceId: "${id}" }, first: 1) {
+        blockTimestamp
+        epoch
+        owner
+      }
+    }
   }
 `;
+
+const serviceStakedQuery = (id: number) => gql`{
+  serviceStakedInfo: {
+    serviceStakeds(orderBy: epoch, where: { serviceId: "${id}" }, first: 1) {
+      blockTimestamp
+      epoch
+      owner
+    }
+  }
+}`;
+
+export const useFirstStakedBlockTimestamp = () => {
+  console.log('useFirstStakedBlockTimestamp');
+
+  const { serviceId } = useServices();
+  const { data } = useQuery({
+    queryKey: ['serviceStakedInfo', serviceId], // Unique key for the first query
+    async queryFn() {
+      return await request(
+        SUBGRAPH_URL,
+        serviceStakedQuery(serviceId as number),
+      );
+    },
+    // select: (data) => {
+    //   console.log({ data });
+
+    //   const rawServiceStakedInfo = data as {
+    //     serviceStakedInfo: ServiceStakedInfo[];
+    //   };
+    //   const serviceStakedInfo = rawServiceStakedInfo.serviceStakedInfo[0];
+    //   return serviceStakedInfo?.blockTimestamp || -1;
+    // },
+    enabled: !!serviceId,
+    refetchOnWindowFocus: false,
+    // refetchInterval: ONE_DAY,
+  });
+
+  console.log({ data });
+
+  return data;
+};
+
+// const qetFirstStakedBlockTimestamp = async () => {
+//   const query = gql`
+//     query GetCreateProducts {
+//       serviceStakeds(orderBy: epoch, where: { serviceId: "499" }, first: 1) {
+//         blockTimestamp
+//         epoch
+//         owner
+//       }
+//     }
+//   `;
+//   const res = await GRAPH_CLIENT.request(query);
+//   console.log({ res });
+// };
 
 const transformRewards = (
   rewards: RewardHistoryResponse[],
@@ -91,16 +167,23 @@ const transformRewards = (
 
 export const useRewardsHistory = () => {
   const { serviceId } = useServices();
+  // const firstStakedBlockTimestamp = useFirstStakedBlockTimestamp();
+  // console.log(firstStakedBlockTimestamp);
+
   const { data, isError, isLoading, isFetching, refetch } = useQuery({
-    queryKey: [],
+    queryKey: ['rewardsHistory', serviceId], // Unique key for the second query
     async queryFn() {
-      return await request(SUBGRAPH_URL, fetchRewardsQuery);
+      // const serviceStakedInfo = await GRAPH_CLIENT.request(
+      //   serviceStakedQuery(serviceId as number),
+      // );
+      const allRewardsResponse = await request(SUBGRAPH_URL, fetchRewardsQuery);
+      console.log({ allRewardsResponse });
+      // return { allRewards: allRewardsResponse };
+      return allRewardsResponse as { allRewards: RewardHistoryResponse[] };
     },
     select: (data) => {
-      const allRewards = groupBy(
-        (data as { allRewards: RewardHistoryResponse[] }).allRewards,
-        'contractAddress',
-      );
+      console.log({ data });
+      const allRewards = groupBy(data.allRewards, 'contractAddress');
       const betaRewards = allRewards[betaAddress.toLowerCase()];
       const beta2Rewards = allRewards[beta2Address.toLowerCase()];
 
@@ -140,6 +223,7 @@ export const useRewardsHistory = () => {
     },
     refetchOnWindowFocus: false,
     refetchInterval: ONE_DAY,
+    enabled: !!serviceId,
   });
 
   return {
