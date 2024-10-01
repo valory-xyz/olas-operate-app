@@ -90,7 +90,6 @@ export const StakingContractInfoProvider = ({
     const beta = AutonolasService.getStakingContractInfoByStakingProgram(
       StakingProgramId.Beta,
     );
-
     const beta_2 = AutonolasService.getStakingContractInfoByStakingProgram(
       StakingProgramId.Beta2,
     );
