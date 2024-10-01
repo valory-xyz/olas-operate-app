@@ -1,10 +1,10 @@
+//@ts-check
 /**
  * This script is used to build the electron app **with notarization**. It is used for the final build and release process.
  */
 require('dotenv').config();
 const build = require('electron-builder').build;
-
-const { publishOptions } = require('./electron/constants');
+const { githubPublishOptions } = require('./electron/constants/config');
 
 /**
  * Get the artifact name for the build based on the environment.
@@ -19,14 +19,15 @@ function artifactName() {
 const main = async () => {
   console.log('Building...');
 
-  /** @type import {CliOptions} from "electron-builder" */
-  await build({
+  /** @type {import('electron-builder').CliOptions}  */
+  const cliOptions = {
     publish: 'onTag',
     config: {
       appId: 'xyz.valory.olas-operate-app',
       artifactName: artifactName(),
       productName: 'Pearl',
       files: ['electron/**/*', 'package.json'],
+      detectUpdateChannel: false,
       directories: {
         output: 'dist',
       },
@@ -44,13 +45,14 @@ const main = async () => {
       cscKeyPassword: process.env.CSC_KEY_PASSWORD,
       cscLink: process.env.CSC_LINK,
       mac: {
+        
         target: [
           {
-            target: 'dmg',
-            arch: [process.env.ARCH], // ARCH env is set during release CI
+            target: 'default', // builds both dmg and zip, required for auto-updates
+            arch: ['arm64', 'x64'],            
           },
         ],
-        publish: publishOptions,
+        publish: githubPublishOptions,
         category: 'public.app-category.utilities',
         icon: 'electron/assets/icons/splash-robot-head-dock.png',
         hardenedRuntime: true,
@@ -58,11 +60,13 @@ const main = async () => {
         entitlements: 'electron/entitlements.mac.plist',
         entitlementsInherit: 'electron/entitlements.mac.plist',
         notarize: {
-          teamId: process.env.APPLETEAMID,
+          teamId: `${process.env.APPLETEAMID}`,
         },
       },
     },
-  });
+  };
+
+  await build(cliOptions);
 };
 
 main().then((response) => { console.log('Build & Notarize complete'); }).catch((e) => console.error(e));

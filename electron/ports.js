@@ -1,13 +1,6 @@
 const net = require('net');
 const { ERROR_ADDRESS_IN_USE } = require('./constants');
 
-/**
- * Finds an available port within the specified range, excluding specified ports.
- * @param {number} startPort - The start of the port range.
- * @param {number} endPort - The end of the port range.
- * @param {Array<number>} excludePorts - An array of ports to be skipped.
- * @returns {Promise<number>} The first available port found within the range that's not excluded.
- */
 function findAvailablePort({ startPort, endPort, excludePorts = [] }) {
   return new Promise((resolve, reject) => {
     let currentPort = startPort;

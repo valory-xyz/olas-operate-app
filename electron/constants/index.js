@@ -31,17 +31,6 @@ const paths = {
   osPearlTempDir: path.join(os.tmpdir(), 'pearl'),
 };
 
-// Publish options
-const publishOptions = {
-  provider: 'github',
-  owner: 'valory-xyz',
-  repo: 'olas-operate-app',
-  releaseType: 'draft',
-  token: process.env.GH_TOKEN,
-  private: false,
-  publishAutoUpdate: false,
-};
-
 module.exports = {
   PORT_RANGE,
   ERROR_ADDRESS_IN_USE,
@@ -50,6 +39,5 @@ module.exports = {
   isLinux,
   isProd,
   isDev,
-  publishOptions,
   paths,
 };

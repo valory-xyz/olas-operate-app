@@ -20,10 +20,11 @@ const { paths } = require('./constants');
 const { killProcesses } = require('./processes');
 const { isPortAvailable, findAvailablePort } = require('./ports');
 const { PORT_RANGE } = require('./constants');
-const { setupStoreIpc } = require('./store');
+const { setupStore } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
+const { PearlOTA } = require('./components/PearlOTA');
 
 // Attempt to acquire the single instance lock
 const singleInstanceLock = app.requestSingleInstanceLock();
@@ -71,6 +72,12 @@ let splashWindow = null;
 let tray = null;
 
 let operateDaemon, operateDaemonPid, nextAppProcess, nextAppProcessPid;
+
+// @ts-ignore - Workaround for the missing type definitions
+const nextApp = next({
+  dev: false,
+  dir: path.join(__dirname),
+});
 
 const getActiveWindow = () => splashWindow ?? mainWindow;
 
@@ -135,7 +142,6 @@ const createMainWindow = async () => {
   mainWindow = new BrowserWindow({
     title: 'Pearl',
     resizable: false,
-    draggable: true,
     frame: false,
     transparent: true,
     fullscreenable: false,
@@ -187,7 +193,7 @@ const createMainWindow = async () => {
     mainWindow.webContents.reloadIgnoringCache();
   });
 
-  mainWindow.webContents.on('ready-to-show', () => {
+  mainWindow.webContents.on('dom-ready', () => {
     mainWindow.show();
   });
 
@@ -203,8 +209,8 @@ const createMainWindow = async () => {
   });
 
   try {
-    logger.electron('Setting up store IPC');
-    await setupStoreIpc(ipcMain, mainWindow);
+    logger.electron('Setting up store');
+    await setupStore(ipcMain, mainWindow);
   } catch (e) {
     logger.electron('Store IPC failed:', JSON.stringify(e));
   }
@@ -258,6 +264,7 @@ async function launchDaemon() {
     // );
 
     operateDaemon.stderr.on('data', (data) => {
+      logger.cli(data.toString().trim() + ' stderr');
       if (data.toString().includes('Uvicorn running on')) {
         resolve({ running: true, error: null });
       }
@@ -266,10 +273,17 @@ async function launchDaemon() {
       ) {
         resolve({ running: false, error: 'Port already in use' });
       }
-      logger.cli(data.toString().trim());
     });
     operateDaemon.stdout.on('data', (data) => {
-      logger.cli(data.toString().trim());
+      logger.cli(data.toString().trim() + ' stdout');
+      if (data.toString().includes('Uvicorn running on')) {
+        resolve({ running: true, error: null });
+      }
+      if (
+        data.toString().includes('error while attempting to bind on address')
+      ) {
+        resolve({ running: false, error: 'Port already in use' });
+      }
     });
   });
 
@@ -305,29 +319,22 @@ async function launchDaemonDev() {
 }
 
 async function launchNextApp() {
-  const nextApp = next({
-    dev: false,
-    dir: path.join(__dirname),
-    port: appConfig.ports.prod.next,
-    env: {
-      GNOSIS_RPC:
-        process.env.NODE_ENV === 'production'
-          ? process.env.FORK_URL
-          : process.env.DEV_RPC,
-      NEXT_PUBLIC_BACKEND_PORT:
-        process.env.NODE_ENV === 'production'
-          ? appConfig.ports.prod.operate
-          : appConfig.ports.dev.operate,
-    },
-  });
+  logger.electron('Launching Next App');
+
+  logger.electron('Preparing Next App');
   await nextApp.prepare();
 
+  logger.electron('Getting Next App Handler');
   const handle = nextApp.getRequestHandler();
+
+  logger.electron('Creating Next App Server');
   const server = http.createServer((req, res) => {
     handle(req, res); // Handle requests using the Next.js request handler
   });
-  server.listen(appConfig.ports.prod.next, (err) => {
-    if (err) throw err;
+
+  logger.electron('Listening on Next App Server');
+  server.listen(appConfig.ports.prod.next, (test) => {
+    logger.electron(test);
     logger.next(
       `> Next server running on http://localhost:${appConfig.ports.prod.next}`,
     );
@@ -336,15 +343,15 @@ async function launchNextApp() {
 
 async function launchNextAppDev() {
   await new Promise(function (resolve, _reject) {
-    process.env.NEXT_PUBLIC_BACKEND_PORT = appConfig.ports.dev.operate; // must set next env var to connect to backend
+    process.env.NEXT_PUBLIC_BACKEND_PORT = `${appConfig.ports.dev.operate}`; // must set next env var to connect to backend
     nextAppProcess = spawn(
       'yarn',
-      ['dev:frontend', '--port', appConfig.ports.dev.next],
+      ['dev:frontend', '--port', `${appConfig.ports.dev.next}`],
       {
         shell: true,
         env: {
           ...process.env,
-          NEXT_PUBLIC_BACKEND_PORT: appConfig.ports.dev.operate,
+          NEXT_PUBLIC_BACKEND_PORT: `${appConfig.ports.dev.operate}`,
         },
       },
     );
@@ -425,18 +432,19 @@ ipcMain.on('check', async function (event, _argument) {
     } else {
       event.sender.send('response', 'Starting Pearl Daemon');
       await launchDaemon();
-
       event.sender.send('response', 'Starting Frontend Server');
       const frontendPortAvailable = await isPortAvailable(
         appConfig.ports.prod.next,
       );
       if (!frontendPortAvailable) {
         appConfig.ports.prod.next = await findAvailablePort({
-          ...PORT_RANGE,
+          startPort: PORT_RANGE.startPort,
+          endPort: PORT_RANGE.endPort,
           excludePorts: [appConfig.ports.prod.operate],
         });
       }
-      await launchNextApp();
+      await launchNextApp().catch((e) => logger.electron(JSON.stringify(e)));
+      logger.electron('Frontend server started');
     }
 
     event.sender.send('response', 'Launching App');
@@ -486,6 +494,8 @@ app.once('ready', async () => {
       path.join(__dirname, 'assets/icons/splash-robot-head-dock.png'),
     );
   }
+
+  new PearlOTA();
   createSplashWindow();
 });
 
@@ -518,11 +528,12 @@ ipcMain.on('open-path', (_, filePath) => {
  * If the file path does not exist, it returns null.
  * If no file path is provided, it sanitizes the provided data directly.
  * The sanitized log data is then written to the destination path.
- * @param {Object} options - The options for sanitizing logs.
- * @param {string} options.name - The name of the log file.
- * @param {string} options.filePath - The file path to read the log data from.
- * @param {string} options.data - The log data to sanitize if no file path is provided.
- * @param {string} options.destPath - The destination path where the logs should be stored after sanitization.
+ * @param {{
+ *  name: string,
+ *  filePath?: string,
+ *  data?: string,
+ *  destPath?: string,
+ * }} options - The options for sanitizing logs.
  * @returns {string|null} - The file path of the sanitized log data, or null if the file path does not exist.
  */
 function sanitizeLogs({

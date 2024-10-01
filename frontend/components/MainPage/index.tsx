@@ -54,6 +54,7 @@ export const Main = () => {
       style={{ borderTopColor: 'transparent' }}
     >
       <Flex vertical>
+        {/* <UpdateProgressIndicator /> */}
         {currentStakingProgram === StakingProgramId.Alpha && (
           <NewStakingProgramAlertSection />
         )}

@@ -1,52 +1,55 @@
+//@ts-check
 /**
- * This script is used to build the electron app **without** notarization. 
- * 
+ * This script is used to build the electron app **without** notarization.
+ *
  * This is useful for testing the build process.
  * It will not notarize the app, so it will not be able to be run on someone else's Mac without disabling Gatekeeper on their machine.
  */
-require('dotenv').config();
-const build = require('electron-builder').build;
-
-const { publishOptions } = require('./electron/constants');
+require("dotenv").config();
+const build = require("electron-builder").build;
 
 const main = async () => {
-  console.log('Building...');
+  console.log("Building...");
 
-  /** @type import {CliOptions} from "electron-builder" */
+  /** @type {import('electron-builder').CliOptions}  */
   await build({
-    publish: 'onTag',
+    publish: "never",
     config: {
-      appId: 'xyz.valory.olas-operate-app',
-      artifactName: '${productName}-${version}-${platform}-${arch}.${ext}',
-      productName: 'Pearl',
-      files: ['electron/**/*', 'package.json'],
+      appId: "xyz.valory.olas-operate-app",
+      artifactName: "${productName}-${version}-${platform}-${arch}.${ext}",
+      productName: "Pearl",
+      files: ["electron/**/*", "package.json"],
       directories: {
-        output: 'dist',
+        output: "dist",
       },
       extraResources: [
         {
-          from: 'electron/bins',
-          to: 'bins',
-          filter: ['**/*'],
+          from: "electron/bins",
+          to: "bins",
+          filter: ["**/*"],
         },
       ],
       mac: {
-        publish: null,
         target: [
           {
-            target: 'default',
-            arch: ['arm64'],
+            target: "dmg",
+            arch: ["arm64"],
           },
         ],
-        category: 'public.app-category.utilities',
-        icon: 'electron/assets/icons/splash-robot-head-dock.png',
+        compression: "store",
+        category: "public.app-category.utilities",
+        icon: "electron/assets/icons/splash-robot-head-dock.png",
         hardenedRuntime: true,
         gatekeeperAssess: false,
-        entitlements: 'electron/entitlements.mac.plist',
-        entitlementsInherit: 'electron/entitlements.mac.plist',
+        entitlements: "electron/entitlements.mac.plist",
+        entitlementsInherit: "electron/entitlements.mac.plist",
       },
     },
   });
 };
 
-main().then((response) => { console.log('Build & Notarize complete'); }).catch((e) => console.error(e));
+main()
+  .then((response) => {
+    console.log("Build & Notarize complete");
+  })
+  .catch((e) => console.error(e));

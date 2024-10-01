@@ -1,18 +1,10 @@
 import { Flex, Typography } from 'antd';
 
 import { InfoTooltip } from '@/components/InfoTooltip';
-import { Address } from '@/types/Address';
-
-import { AddressLink } from '../AddressLink';
 
 const { Paragraph, Text, Title } = Typography;
 
-type SignerTitleProps = { signerText: string; signerAddress?: Address };
-
-export const SignerTitle = ({
-  signerText,
-  signerAddress,
-}: SignerTitleProps) => (
+export const SignerTitle = () => (
   <>
     Signer&nbsp;
     <InfoTooltip>
@@ -25,10 +17,7 @@ export const SignerTitle = ({
         This setup enables features like the backup wallet.
       </Paragraph>
       <Paragraph className="text-sm m-0">
-        <Flex gap={4} vertical>
-          <Text className="text-sm">{signerText}</Text>
-          <AddressLink address={signerAddress} />
-        </Flex>
+        Note: Signer’s XDAI balance is included in wallet XDAI balances.
       </Paragraph>
     </InfoTooltip>
   </>

@@ -1,11 +1,13 @@
 import { CloseOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Card, Flex, Typography } from 'antd';
+import { noop } from 'lodash';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { Pages } from '@/enums/PageState';
 import { SettingsScreen } from '@/enums/SettingsScreen';
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { useMasterSafe } from '@/hooks/useMasterSafe';
 import { usePageState } from '@/hooks/usePageState';
 import { useSettings } from '@/hooks/useSettings';
@@ -49,6 +51,7 @@ export const Settings = () => {
 const SettingsMain = () => {
   const { backupSafeAddress } = useMasterSafe();
   const { goto } = usePageState();
+  const { ota } = useElectronApi();
 
   const truncatedBackupSafeAddress: string | undefined = useMemo(() => {
     if (backupSafeAddress) {
@@ -90,6 +93,17 @@ const SettingsMain = () => {
         ) : (
           <NoBackupWallet />
         )}
+      </CardSection>
+
+      {/* Updater */}
+      <CardSection borderbottom="true" vertical gap={8}>
+        <Button
+          onClick={ota?.checkForUpdates ?? noop}
+          color="primary"
+          size="large"
+        >
+          Check for updates
+        </Button>
       </CardSection>
 
       {/* Debug info */}

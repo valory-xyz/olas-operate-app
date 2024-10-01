@@ -76,7 +76,11 @@ jobs:
     strategy:
       matrix:
         env: [production, development]
-        arch: [arm64, x64]
+        include:
+          - env: production
+            rpc: https://rpc-gate.autonolas.tech/gnosis-rpc/
+          - env: development
+            rpc: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
 
     needs: build-macos-pyinstaller
 
@@ -84,29 +88,42 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
-
-      # Download the appropriate architecture artifact
-      - name: Download Pearl binary for architecture
+          node-version-file: .nvmrc
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: pearl_${{ matrix.arch }}
+          name: pearl_x64
           path: electron/bins/
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: pearl_arm64
+          path: electron/bins/
+      
+      - name: Read directory
+        run: ls -R electron/bins/
 
-      # Add execution permissions to the binaries
       - name: Add exec permissions
-        run: chmod +x electron/bins/pearl_${{ matrix.arch }}
+        run: chmod +x electron/bins/pearl_x64 && chmod +x electron/bins/pearl_arm64
 
       # Cache node_modules with unique key for each environment and architecture
-      - name: Cache Node.js modules
+      - name: Cache Electron Node.js modules
         uses: actions/cache@v3
         with:
-          path: |
-            node_modules
-            frontend/node_modules
-          key: node-modules-${{ matrix.env }}-${{ matrix.arch }}-${{ hashFiles('yarn.lock') }}
+          path: node_modules
+          key: ${{runner.os}}-node-modules-${{ hashFiles('yarn.lock') }}
           restore-keys: |
-            node-modules-${{ matrix.env }}-${{ matrix.arch }}-
+            ${{ runner.os }}-node_modules-
+
+      # Cache frontend node_modules with unique key
+      - name: Cache Frontend node_modules
+        uses: actions/cache@v3
+        with:
+          path: frontend/node_modules
+          key: ${{runner.os}}-frontend-node-modules-${{ hashFiles('frontend/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-node-modules-
+        
 
       # Install dependencies
       - name: Install dependencies
@@ -115,28 +132,16 @@ jobs:
           yarn install:frontend
 
       # Build frontend for production
-      - name: Build frontend for production
-        if: matrix.env == 'production'
+      - name: Build frontend
         run: yarn build:frontend
         env:
           NODE_ENV: ${{ matrix.env }}
-          DEV_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
+          DEV_RPC: ${{ matrix.rpc }}
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
-          FORK_URL: https://rpc-gate.autonolas.tech/gnosis-rpc/
-
-      # Build frontend for development
-      - name: Build frontend for development
-        if: matrix.env == 'development'
-        run: yarn build:frontend
-        env:
-          NODE_ENV: ${{ matrix.env }}
-          DEV_RPC: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
-          IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
-          FORK_URL: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
+          FORK_URL: ${{ matrix.rpc }}
 
       # Run the build and notarization process for production
-      - name: Build, notarize, and publish (Production)
-        if: matrix.env == 'production'
+      - name: Build, notarize, and publish
         env:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
           APPLE_ID: ${{ secrets.APPLEID }}
@@ -145,26 +150,6 @@ jobs:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}
           NODE_ENV: ${{ matrix.env }}
-          ARCH: ${{ matrix.arch }}
-          DEV_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
-          FORK_URL: https://rpc-gate.autonolas.tech/gnosis-rpc/
+          DEV_RPC: ${{ matrix.rpc }}
+          FORK_URL: ${{ matrix.rpc }}
         run: node build.js
-
-      # Run the build and notarization process for development
-      - name: Build, notarize, and publish (Development)
-        if: matrix.env == 'development'
-        env:
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
-          APPLE_ID: ${{ secrets.APPLEID }}
-          APPLETEAMID: ${{ secrets.APPLETEAMID }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          GH_TOKEN: ${{ secrets.github_token }}
-          NODE_ENV: ${{ matrix.env }}
-          ARCH: ${{ matrix.arch }}
-          DEV_RPC: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
-          FORK_URL: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
-        run: |
-          echo "DEV_RPC=https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b" >> .env
-          echo "FORK_URL=https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b" >> .env
-          node build.js

@@ -84,7 +84,11 @@ const OlasBalance = () => {
 };
 
 const XdaiBalance = () => {
-  const { safeBalance } = useBalance();
+  const { safeBalance, eoaBalance } = useBalance();
+  const totalXdaiBalance = useMemo(
+    () => (safeBalance?.ETH ?? 0) + (eoaBalance?.ETH ?? 0),
+    [safeBalance?.ETH, eoaBalance?.ETH],
+  );
 
   return (
     <Flex vertical gap={8}>
@@ -93,7 +97,7 @@ const XdaiBalance = () => {
           {
             left: <Text strong>XDAI</Text>,
             leftClassName: 'text-light',
-            right: `${balanceFormat(safeBalance?.ETH, 2)} XDAI`,
+            right: `${balanceFormat(totalXdaiBalance, 2)} XDAI`,
           },
         ]}
         parentStyle={infoBreakdownParentStyle}
@@ -104,21 +108,16 @@ const XdaiBalance = () => {
 
 const Signer = () => {
   const { masterEoaAddress } = useWallet();
-  const { eoaBalance } = useBalance();
 
   return (
     <Flex vertical gap={8}>
       <InfoBreakdownList
         list={[
           {
-            left: (
-              <SignerTitle
-                signerText="Your wallet signer address:"
-                signerAddress={masterEoaAddress}
-              />
-            ),
+            left: <SignerTitle />,
             leftClassName: 'text-light',
-            right: `${balanceFormat(eoaBalance?.ETH, 2)} XDAI`,
+            right: <AddressLink address={masterEoaAddress} />,
+            rightClassName: 'font-normal',
           },
         ]}
         parentStyle={infoBreakdownParentStyle}

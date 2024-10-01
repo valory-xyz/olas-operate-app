@@ -3,7 +3,6 @@ import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
 import { useElectronApi } from '@/hooks/useElectronApi';
-import { useStore } from '@/hooks/useStore';
 
 const { Text } = Typography;
 
@@ -51,8 +50,8 @@ const TopBarContainer = styled.div`
 
 export const TopBar = () => {
   const electronApi = useElectronApi();
-  const store = useStore();
-  const envName = store?.storeState?.environmentName;
+  // const store = useStore();
+  const envName = null; //store?.storeState?.environmentName;
 
   return (
     <TopBarContainer>

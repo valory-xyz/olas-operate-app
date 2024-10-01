@@ -1,13 +1,22 @@
 import { get } from 'lodash';
 import { createContext, PropsWithChildren } from 'react';
 
-import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
+import {
+  ElectronStore,
+  ElectronTrayIconStatus,
+  RecursiveFunction,
+} from '@/types/ElectronApi';
 
 type ElectronApiContextProps = {
   setIsAppLoaded?: (isLoaded: boolean) => void;
   closeApp?: () => void;
   minimizeApp?: () => void;
   setTrayIcon?: (status: ElectronTrayIconStatus) => void;
+  ota?: {
+    checkForUpdates?: () => Promise<unknown>;
+    downloadUpdate?: () => Promise<unknown>;
+    quitAndInstall?: () => Promise<unknown>;
+  };
   ipcRenderer?: {
     send?: (channel: string, data: unknown) => void; // send messages to main process
     on?: (
@@ -15,6 +24,7 @@ type ElectronApiContextProps = {
       func: (event: unknown, data: unknown) => void,
     ) => void; // listen to messages from main process
     invoke?: (channel: string, data: unknown) => Promise<unknown>; // send message to main process and get Promise response
+    removeAllListeners?: (channel: string) => void;
   };
   store?: {
     store?: () => Promise<ElectronStore>;
@@ -34,32 +44,46 @@ type ElectronApiContextProps = {
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
-  setIsAppLoaded: () => false,
-  closeApp: () => {},
-  minimizeApp: () => {},
-  setTrayIcon: () => {},
-  ipcRenderer: {
-    send: () => {},
-    on: () => {},
-    invoke: async () => {},
-  },
-  store: {
-    store: async () => ({}),
-    get: async () => {},
-    set: async () => {},
-    delete: async () => {},
-    clear: async () => {},
-  },
-  setAppHeight: () => {},
-  saveLogs: async () => ({ success: false }),
-  openPath: () => {},
+  /* @note may not be necessary to provide default values */
+  // setIsAppLoaded: () => false,
+  // closeApp: () => {},
+  // minimizeApp: () => {},
+  // setTrayIcon: () => {},
+  // ota: {
+  //   checkForUpdates: async () => {},
+  //   downloadUpdate: async () => {},
+  //   quitAndInstall: async () => {},
+  // },
+  // ipcRenderer: {
+  //   send: () => {},
+  //   on: () => {},
+  //   invoke: async () => {},
+  //   removeAllListeners: () => {},
+  // },
+  // store: {
+  //   store: async () => ({}),
+  //   get: async () => {},
+  //   set: async () => {},
+  //   delete: async () => {},
+  //   clear: async () => {},
+  // },
+  // setAppHeight: () => {},
+  // saveLogs: async () => ({ success: false }),
+  // openPath: () => {},
 });
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
-  const getElectronApiFunction = (functionNameInWindow: string) => {
+  const getElectronApiFunction = <
+    T extends RecursiveFunction<ElectronApiContextProps>,
+  >(
+    functionNameInWindow: string,
+  ) => {
     if (typeof window === 'undefined') return;
 
-    const fn = get(window, `electronAPI.${functionNameInWindow}`);
+    const fn = get(
+      window,
+      `electronAPI.${functionNameInWindow}`,
+    ) as unknown as T;
     if (!fn || typeof fn !== 'function') {
       throw new Error(
         `Function ${functionNameInWindow} not found in window.electronAPI`,
@@ -72,6 +96,11 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
   return (
     <ElectronApiContext.Provider
       value={{
+        ota: {
+          checkForUpdates: getElectronApiFunction('ota.checkForUpdates'),
+          downloadUpdate: getElectronApiFunction('ota.downloadUpdate'),
+          quitAndInstall: getElectronApiFunction('ota.quitAndInstall'),
+        },
         setIsAppLoaded: getElectronApiFunction('setIsAppLoaded'),
         closeApp: getElectronApiFunction('closeApp'),
         minimizeApp: getElectronApiFunction('minimizeApp'),

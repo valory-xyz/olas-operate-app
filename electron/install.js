@@ -1,3 +1,6 @@
+// @ts-nocheck
+/* eslint-disable */
+
 // Installation helpers.
 const fs = require('fs');
 const os = require('os');
@@ -6,15 +9,9 @@ const process = require('process');
 const axios = require('axios');
 const { spawnSync } = require('child_process');
 const { logger } = require('./logger');
-const { execSync} = require('child_process');
+const { execSync } = require('child_process');
 const { paths } = require('./constants');
 const homedir = os.homedir();
-/**
- * current version of the pearl release
- * - use "" (nothing as a suffix) for latest release candidate, for example "0.1.0rc26"
- * - use "alpha" for alpha release, for example "0.1.0rc26-alpha"
- */
-const OlasMiddlewareVersion = '0.1.0rc145';
 
 const path = require('path');
 const { app } = require('electron');
@@ -55,18 +52,16 @@ const TendermintUrls = {
   },
 };
 
-
 function execSyncExitCode(cmd) {
   try {
     execSync(cmd);
     return 0;
-  } 
-  catch (error) {
-    logger.electron(error.status);  // Might be 127 in your example.
+  } catch (error) {
+    logger.electron(error.status); // Might be 127 in your example.
     logger.electron(error.message); // Holds the message you typically want.
-      logger.electron(error.stderr.toString());  // Holds the stderr output. Use `.toString()`.
-        logger.electron(error.stdout.toString());  // Holds the stdout output. Use `.toString()`.
-   return error.status;
+    logger.electron(error.stderr.toString()); // Holds the stderr output. Use `.toString()`.
+    logger.electron(error.stdout.toString()); // Holds the stdout output. Use `.toString()`.
+    return error.status;
   }
 }
 
@@ -93,7 +88,6 @@ function runCmdUnix(command, options) {
   logger.electron(`===== stdout =====  \n${output.stdout}`);
   logger.electron(`===== stderr =====  \n${output.stderr}`);
 }
-
 
 function runSudoUnix(command, options) {
   let bin = getBinPath(command);
@@ -132,7 +126,7 @@ function isTendermintInstalledUnix() {
 function isTendermintInstalledWindows() {
   return true;
   //always installed cause bundled in
-    return execSyncExitCode('tendermint --help') === 0;
+  return execSyncExitCode('tendermint --help') === 0;
 }
 
 async function downloadFile(url, dest) {
@@ -171,23 +165,22 @@ async function installTendermintWindows() {
   logger.electron(`Installing tendermint binary`);
   try {
     execSync('tar -xvf tendermint.tar.gz');
-  } catch (error){
-    logger.electron(error.status);  // Might be 127 in your example.
+  } catch (error) {
+    logger.electron(error.status); // Might be 127 in your example.
     logger.electron(error.message); // Holds the message you typically want.
-      logger.electron(error.stderr.toString());  // Holds the stderr output. Use `.toString()`.
-        logger.electron(error.stdout.toString());  // Holds the stdout output. Use `.toString()`.
+    logger.electron(error.stderr.toString()); // Holds the stderr output. Use `.toString()`.
+    logger.electron(error.stdout.toString()); // Holds the stdout output. Use `.toString()`.
   }
 
-  const bin_dir = homedir + "//AppData//Local//Microsoft//WindowsApps//"
+  const bin_dir = homedir + '//AppData//Local//Microsoft//WindowsApps//';
   if (!Env.CI) {
     if (!fs.existsSync(bin_dir)) {
-     fs.mkdirSync(bin_dir, {recursive: true});
+      fs.mkdirSync(bin_dir, { recursive: true });
     }
-    fs.copyFileSync("tendermint.exe", bin_dir + "tendermint.exe");
+    fs.copyFileSync('tendermint.exe', bin_dir + 'tendermint.exe');
   }
   process.chdir(cwd);
 }
-
 
 async function installTendermintUnix() {
   logger.electron(`Installing tendermint for ${os.platform()}-${process.arch}`);
@@ -259,14 +252,14 @@ async function setupUbuntu(ipcChannel) {
   }
 }
 
-
-
 async function setupWindows(ipcChannel) {
   logger.electron('Creating required directories');
   await createDirectory(`${paths.dotOperateDirectory}`);
   await createDirectory(`${paths.tempDir}`);
 
-  logger.electron('Checking tendermint installation: ' + isTendermintInstalledWindows());
+  logger.electron(
+    'Checking tendermint installation: ' + isTendermintInstalledWindows(),
+  );
   if (!isTendermintInstalledWindows()) {
     ipcChannel.send('response', 'Installing tendermint');
     logger.electron('Installing tendermint');

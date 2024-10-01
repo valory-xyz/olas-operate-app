@@ -7,7 +7,7 @@ const macTrayIconSize = { width: 16, height: 16 };
 
 /** Status supported by tray icons.
  * @readonly
- * @enum {'logged-out' | 'low-gas' | 'paused' | 'running'}
+ * @enum {string}
  */
 const TrayIconStatus = {
   LoggedOut: 'logged-out',
@@ -66,7 +66,7 @@ class PearlTray extends Electron.Tray {
     // Store the callback to retrieve the active window
     this.activeWindowCallback = activeWindowCallback;
 
-    this.setContextMenu(new PearlTrayContextMenu(activeWindowCallback));
+    this.setContextMenu(PearlTrayContextMenu.create(activeWindowCallback));
     this.setToolTip('Pearl');
 
     this.#bindClickEvents();
@@ -118,14 +118,15 @@ class PearlTray extends Electron.Tray {
   };
 }
 
-/**
- * Builds the context menu for the tray.
- * @param {() => Electron.BrowserWindow | null} activeWindowCallback - A callback to retrieve the active window.
- * @returns {Electron.Menu} The context menu for the tray.
- */
+/** Context menu for the tray. */
 class PearlTrayContextMenu {
-  constructor(activeWindowCallback) {
-    return Electron.Menu.buildFromTemplate([
+  /**
+   * Creates preset context menu for the tray.
+   * @param {() => (Electron.BrowserWindow | null)} activeWindowCallback
+   * @returns {Electron.Menu} The context menu for the tray.
+   */
+  static create = (activeWindowCallback) =>
+    Electron.Menu.buildFromTemplate([
       {
         label: 'Show app',
         click: () => activeWindowCallback()?.show(),
@@ -141,7 +142,6 @@ class PearlTrayContextMenu {
         },
       },
     ]);
-  }
 }
 
 module.exports = { PearlTray };

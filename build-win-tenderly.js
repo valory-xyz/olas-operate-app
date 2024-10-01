@@ -1,15 +1,15 @@
+//@ts-check
+
 /**
  * This script is used to build the electron app **with notarization**. It is used for the final build and release process.
  */
 require('dotenv').config();
 const build = require('electron-builder').build;
 
-const { publishOptions } = require('./electron/constants');
-
 const main = async () => {
   console.log('Building...');
 
-  /** @type import {CliOptions} from "electron-builder" */
+  /** @type {import('electron-builder').CliOptions}  */
   await build({
     publish: 'onTag',
     config: {

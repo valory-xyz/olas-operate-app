@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+      "target": "ESNext",
+      "module": "CommonJS",              // Set to CommonJS for Node-style modules
+      "lib": ["ESNext"],
+      "allowJs": true,                    // Allow JavaScript files
+      "checkJs": true,                    // Enable type-checking for JavaScript files
+      "moduleResolution": "Node",         // Use Node module resolution for CommonJS
+      "baseUrl": "./",                    // Set base directory for module resolution
+      "paths": {
+        "*": ["node_modules/*"]           // Simplify path resolution for modules
+      }
+    },
+    "include": ["./**/*"],                // Include all files in the project
+    "exclude": [
+      "node_modules", 
+      "**/node_modules/*",
+      // "main.js"                           // You mentioned fixing this in the future
+    ]
+  }
+  
