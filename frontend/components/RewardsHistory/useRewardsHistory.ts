@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ethers } from 'ethers';
 import { gql, request } from 'graphql-request';
 import { groupBy } from 'lodash';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { z } from 'zod';
 
 import { Chain } from '@/client';
@@ -10,7 +10,6 @@ import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/constants
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useServices } from '@/hooks/useServices';
-import { AutonolasService } from '@/service/Autonolas';
 
 import { EpochDetails, StakingRewardSchema } from './types';
 
@@ -34,49 +33,6 @@ const beta2Address =
 
 const SUBGRAPH_URL =
   'https://api.studio.thegraph.com/query/81855/pearl-staking-rewards-history/version/latest';
-
-type StakingContractInfo = {
-  [StakingProgramId.Beta2]: { blockTimestamp: number | null };
-  [StakingProgramId.Beta]: { blockTimestamp: number | null };
-};
-
-const useGetServiceStakedInfo = () => {
-  const { serviceId } = useServices();
-  const [isLoading, setIsLoading] = useState(false);
-  const [stakingContractsInfo, setStakingContractsInfo] =
-    useState<StakingContractInfo | null>(null);
-
-  useEffect(() => {
-    if (!serviceId) return;
-    const beta2Info =
-      AutonolasService.getStakingContractInfoByServiceIdStakingProgram(
-        serviceId,
-        StakingProgramId.Beta2,
-      );
-    const betaInfo =
-      AutonolasService.getStakingContractInfoByServiceIdStakingProgram(
-        serviceId,
-        StakingProgramId.Beta,
-      );
-
-    setIsLoading(true);
-    Promise.all([beta2Info, betaInfo])
-      .then(([beta2, beta]) => {
-        setStakingContractsInfo({
-          [StakingProgramId.Beta2]: {
-            blockTimestamp: beta2?.serviceStakingStartTime || null,
-          },
-          [StakingProgramId.Beta]: {
-            blockTimestamp: beta?.serviceStakingStartTime || null,
-          },
-        });
-      })
-      .catch(console.error)
-      .finally(() => setIsLoading(false));
-  }, [serviceId]);
-
-  return { isLoading, stakingContractsInfo };
-};
 
 const fetchRewardsQuery = gql`
   {
@@ -145,9 +101,20 @@ const transformRewards = (
     });
 };
 
+const getTimestampOfFirstReward = (
+  epochs: RewardHistoryResponse[],
+  serviceId: number,
+) => {
+  const timestamp = epochs
+    .toReversed()
+    .find((epochDetails) =>
+      epochDetails.serviceIds.includes(`${serviceId}`),
+    )?.blockTimestamp;
+
+  return timestamp ? Number(timestamp) : null;
+};
+
 export const useRewardsHistory = () => {
-  const { stakingContractsInfo, isLoading: isServiceInfoLoading } =
-    useGetServiceStakedInfo();
   const { serviceId } = useServices();
   const {
     data,
@@ -163,29 +130,30 @@ export const useRewardsHistory = () => {
     },
     select: (data) => {
       const allRewards = groupBy(data.allRewards, 'contractAddress');
-      const beta2switchTimestamp =
-        stakingContractsInfo?.[StakingProgramId.Beta2]?.blockTimestamp;
       const beta2Rewards = allRewards[beta2Address.toLowerCase()];
-      const betaSwitchTimestamp =
-        stakingContractsInfo?.[StakingProgramId.Beta]?.blockTimestamp;
-      const betaRewards = allRewards[betaAddress.toLowerCase()];
+      /** Pearl beta 2 details */
 
+      // timestamp when the contract was switched to beta2
+      // ie, got the fist rewards from beta2 contract
+      const beta2switchTimestamp = getTimestampOfFirstReward(
+        beta2Rewards,
+        serviceId as number,
+      );
       const beta2ContractDetails = {
         id: beta2Address,
         name: STAKING_PROGRAM_META[StakingProgramId.Beta2].name,
-        history: transformRewards(
-          beta2Rewards,
-          serviceId,
-          beta2switchTimestamp,
-        ),
+        history: transformRewards(beta2Rewards, serviceId, null),
       };
 
+      /** Pearl beta details */
+      const betaRewards = allRewards[betaAddress.toLowerCase()];
       const betaContractRewards = {
         id: betaAddress,
         name: STAKING_PROGRAM_META[StakingProgramId.Beta].name,
-        history: transformRewards(betaRewards, serviceId, betaSwitchTimestamp),
+        history: transformRewards(betaRewards, serviceId, beta2switchTimestamp),
       };
 
+      // If there are no rewards in both contracts, return empty array
       const rewards = [];
       if (beta2ContractDetails.history.some((epoch) => epoch.earned)) {
         rewards.push(beta2ContractDetails);
@@ -217,7 +185,7 @@ export const useRewardsHistory = () => {
   return {
     isError,
     isFetching,
-    isLoading: isServiceInfoLoading || isRewardsLoading,
+    isLoading: isRewardsLoading,
     refetch,
     rewards: data,
   };
