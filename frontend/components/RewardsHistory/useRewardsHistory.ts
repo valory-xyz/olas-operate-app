@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { ethers } from 'ethers';
 import { gql, request } from 'graphql-request';
 import { groupBy } from 'lodash';
-import { useCallback } from 'react';
 import { z } from 'zod';
 
 import { Chain } from '@/client';
@@ -93,14 +92,16 @@ const transformRewards = (
       // If the contract has been switched to new contract, ignore the rewards from the old contract of the same epoch,
       // as the rewards are already accounted in the new contract.
       // example: If contract was switched on September 1st, 2024, ignore the rewards before that date
-      // till the user staked in the contract.
-      if (timestampToIgnore) {
-        return epoch.epochEndTimeStamp < timestampToIgnore;
-      }
-      return true;
+      // in the old contract.
+      if (!timestampToIgnore) return true;
+      return epoch.epochEndTimeStamp < timestampToIgnore;
     });
 };
 
+/**
+ * Get the timestamp of the first reward received by the service in the contract.
+ * NOTE: Assumes that the switch of the contract was completed AND the rewards are received in the same epoch.
+ */
 const getTimestampOfFirstReward = (
   epochs: RewardHistoryResponse[],
   serviceId: number,
@@ -116,13 +117,7 @@ const getTimestampOfFirstReward = (
 
 export const useRewardsHistory = () => {
   const { serviceId } = useServices();
-  const {
-    data,
-    isError,
-    isLoading: isRewardsLoading,
-    isFetching,
-    refetch: refetchRewards,
-  } = useQuery({
+  const { data, isError, isLoading, isFetching, refetch } = useQuery({
     queryKey: [],
     async queryFn() {
       const allRewardsResponse = await request(SUBGRAPH_URL, fetchRewardsQuery);
@@ -174,18 +169,10 @@ export const useRewardsHistory = () => {
     enabled: !!serviceId,
   });
 
-  const refetch = useCallback(() => {
-    refetchRewards();
-    // refetchServiceInfo();
-  }, [
-    refetchRewards,
-    // refetchServiceInfo
-  ]);
-
   return {
     isError,
     isFetching,
-    isLoading: isRewardsLoading,
+    isLoading,
     refetch,
     rewards: data,
   };
