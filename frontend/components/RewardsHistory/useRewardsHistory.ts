@@ -130,13 +130,6 @@ export const useRewardsHistory = () => {
           serviceId,
           beta2switchTimestamp,
         ),
-        /**
-         * - how do we know the service has been changed?
-         * - service created for the current user? which event is it?
-         *   - find the block timestamp of the service creation event
-         *   - find the epoch that the service was created
-         * - remove the rewards before the service was created
-         */
       };
 
       const betaContractRewards = {
