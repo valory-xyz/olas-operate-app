@@ -47,12 +47,8 @@ const useGetServiceStakedInfo = () => {
     return gql`
       {
         serviceStakeds(orderBy: epoch, where: { serviceId: "${serviceId}" }, first: 1) {
-          id
-          serviceId
-          blockNumber
           blockTimestamp
           epoch
-          nonces
           owner
         }
       }
@@ -67,14 +63,25 @@ const useGetServiceStakedInfo = () => {
     },
     select: (data) => {
       const firstServiceStakedInfo = data.serviceStakeds[0];
-      return firstServiceStakedInfo;
+      return ServiceStakedInfoSchema.parse(firstServiceStakedInfo);
     },
     refetchOnWindowFocus: false,
     refetchInterval: ONE_DAY,
     enabled: !!serviceId,
   });
 
-  return { isError, isLoading, refetch, serviceStakedInfo: data };
+  const serviceStakedInfo = useMemo(() => {
+    return {
+      [StakingProgramId.Beta2]: {
+        timestamp: null, // not yet switched from this contract
+      },
+      [StakingProgramId.Beta]: {
+        timestamp: data?.blockTimestamp ? Number(data.blockTimestamp) : null,
+      },
+    };
+  }, [data]);
+
+  return { isError, isLoading, refetch, serviceStakedInfo };
 };
 
 const fetchRewardsQuery = gql`
@@ -146,7 +153,7 @@ const transformRewards = (
 
 export const useRewardsHistory = () => {
   const {
-    serviceStakedInfo: beta2ServiceStakedInfo,
+    serviceStakedInfo,
     isLoading: isServiceInfoLoading,
     refetch: refetchServiceInfo,
   } = useGetServiceStakedInfo();
@@ -165,11 +172,11 @@ export const useRewardsHistory = () => {
     },
     select: (data) => {
       const allRewards = groupBy(data.allRewards, 'contractAddress');
-      const beta2switchTimestamp = null;
+      const beta2switchTimestamp =
+        serviceStakedInfo[StakingProgramId.Beta2].timestamp;
       const beta2Rewards = allRewards[beta2Address.toLowerCase()];
-      const betaSwitchTimestamp = beta2ServiceStakedInfo?.blockTimestamp
-        ? Number(beta2ServiceStakedInfo.blockTimestamp)
-        : null;
+      const betaSwitchTimestamp =
+        serviceStakedInfo[StakingProgramId.Beta].timestamp;
       const betaRewards = allRewards[betaAddress.toLowerCase()];
 
       const beta2ContractDetails = {
