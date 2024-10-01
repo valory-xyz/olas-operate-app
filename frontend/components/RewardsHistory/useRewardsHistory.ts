@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ethers } from 'ethers';
 import { gql, request } from 'graphql-request';
 import { groupBy } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod';
 
 import { Chain } from '@/client';
@@ -10,6 +10,7 @@ import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/constants
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useServices } from '@/hooks/useServices';
+import { AutonolasService } from '@/service/Autonolas';
 
 import { EpochDetails, StakingRewardSchema } from './types';
 
@@ -25,13 +26,6 @@ const RewardHistoryResponseSchema = z.object({
 });
 type RewardHistoryResponse = z.infer<typeof RewardHistoryResponseSchema>;
 
-const ServiceStakedInfoSchema = z.object({
-  blockTimestamp: z.string(),
-  epoch: z.string(),
-  owner: z.string(),
-});
-type ServiceStakedInfo = z.infer<typeof ServiceStakedInfoSchema>;
-
 const betaAddress =
   SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS].pearl_beta;
 const beta2Address =
@@ -41,47 +35,47 @@ const beta2Address =
 const SUBGRAPH_URL =
   'https://api.studio.thegraph.com/query/81855/pearl-staking-rewards-history/version/latest';
 
+type StakingContractInfo = {
+  [StakingProgramId.Beta2]: { blockTimestamp: number | null };
+  [StakingProgramId.Beta]: { blockTimestamp: number | null };
+};
+
 const useGetServiceStakedInfo = () => {
   const { serviceId } = useServices();
-  const query = useMemo(() => {
-    return gql`
-      {
-        serviceStakeds(orderBy: epoch, where: { serviceId: "${serviceId}" }, first: 1) {
-          blockTimestamp
-          epoch
-          owner
-        }
-      }
-    `;
+  const [isLoading, setIsLoading] = useState(false);
+  const [stakingContractsInfo, setStakingContractsInfo] =
+    useState<StakingContractInfo | null>(null);
+
+  useEffect(() => {
+    if (!serviceId) return;
+    const beta2Info =
+      AutonolasService.getStakingContractInfoByServiceIdStakingProgram(
+        serviceId,
+        StakingProgramId.Beta2,
+      );
+    const betaInfo =
+      AutonolasService.getStakingContractInfoByServiceIdStakingProgram(
+        serviceId,
+        StakingProgramId.Beta,
+      );
+
+    setIsLoading(true);
+    Promise.all([beta2Info, betaInfo])
+      .then(([beta2, beta]) => {
+        setStakingContractsInfo({
+          [StakingProgramId.Beta2]: {
+            blockTimestamp: beta2?.serviceStakingStartTime || null,
+          },
+          [StakingProgramId.Beta]: {
+            blockTimestamp: beta?.serviceStakingStartTime || null,
+          },
+        });
+      })
+      .catch(console.error)
+      .finally(() => setIsLoading(false));
   }, [serviceId]);
 
-  const { data, isError, isLoading, refetch } = useQuery({
-    queryKey: ['serviceStakedInfo', serviceId],
-    async queryFn() {
-      const serviceStakedInfo = await request(SUBGRAPH_URL, query);
-      return serviceStakedInfo as { serviceStakeds: ServiceStakedInfo[] };
-    },
-    select: (data) => {
-      const firstServiceStakedInfo = data.serviceStakeds[0];
-      return ServiceStakedInfoSchema.parse(firstServiceStakedInfo);
-    },
-    refetchOnWindowFocus: false,
-    refetchInterval: ONE_DAY,
-    enabled: !!serviceId,
-  });
-
-  const serviceStakedInfo = useMemo(() => {
-    return {
-      [StakingProgramId.Beta2]: {
-        timestamp: null, // not yet switched from this contract
-      },
-      [StakingProgramId.Beta]: {
-        timestamp: data?.blockTimestamp ? Number(data.blockTimestamp) : null,
-      },
-    };
-  }, [data]);
-
-  return { isError, isLoading, refetch, serviceStakedInfo };
+  return { isLoading, stakingContractsInfo };
 };
 
 const fetchRewardsQuery = gql`
@@ -152,11 +146,8 @@ const transformRewards = (
 };
 
 export const useRewardsHistory = () => {
-  const {
-    serviceStakedInfo,
-    isLoading: isServiceInfoLoading,
-    refetch: refetchServiceInfo,
-  } = useGetServiceStakedInfo();
+  const { stakingContractsInfo, isLoading: isServiceInfoLoading } =
+    useGetServiceStakedInfo();
   const { serviceId } = useServices();
   const {
     data,
@@ -173,10 +164,10 @@ export const useRewardsHistory = () => {
     select: (data) => {
       const allRewards = groupBy(data.allRewards, 'contractAddress');
       const beta2switchTimestamp =
-        serviceStakedInfo[StakingProgramId.Beta2].timestamp;
+        stakingContractsInfo?.[StakingProgramId.Beta2]?.blockTimestamp;
       const beta2Rewards = allRewards[beta2Address.toLowerCase()];
       const betaSwitchTimestamp =
-        serviceStakedInfo[StakingProgramId.Beta].timestamp;
+        stakingContractsInfo?.[StakingProgramId.Beta]?.blockTimestamp;
       const betaRewards = allRewards[betaAddress.toLowerCase()];
 
       const beta2ContractDetails = {
@@ -217,8 +208,11 @@ export const useRewardsHistory = () => {
 
   const refetch = useCallback(() => {
     refetchRewards();
-    refetchServiceInfo();
-  }, [refetchRewards, refetchServiceInfo]);
+    // refetchServiceInfo();
+  }, [
+    refetchRewards,
+    // refetchServiceInfo
+  ]);
 
   return {
     isError,
