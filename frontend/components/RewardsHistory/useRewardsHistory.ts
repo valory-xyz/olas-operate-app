@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ethers } from 'ethers';
 import { gql, request } from 'graphql-request';
 import { groupBy } from 'lodash';
+import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
 import { Chain } from '@/client';
@@ -24,12 +25,12 @@ const RewardHistoryResponseSchema = z.object({
 });
 type RewardHistoryResponse = z.infer<typeof RewardHistoryResponseSchema>;
 
-// const ServiceStakedInfoSchema = z.object({
-//   blockTimestamp: z.string(),
-//   epoch: z.string(),
-//   owner: z.string(),
-// });
-// type ServiceStakedInfo = z.infer<typeof ServiceStakedInfoSchema>;
+const ServiceStakedInfoSchema = z.object({
+  blockTimestamp: z.string(),
+  epoch: z.string(),
+  owner: z.string(),
+});
+type ServiceStakedInfo = z.infer<typeof ServiceStakedInfoSchema>;
 
 const betaAddress =
   SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS].pearl_beta;
@@ -40,7 +41,42 @@ const beta2Address =
 const SUBGRAPH_URL =
   'https://api.studio.thegraph.com/query/81855/pearl-staking-rewards-history/version/latest';
 
-const contractSwitchTimestamp = 1725380220;
+const useGetServiceStakedInfo = () => {
+  const { serviceId } = useServices();
+  const query = useMemo(() => {
+    return gql`
+      {
+        serviceStakeds(orderBy: epoch, where: { serviceId: "${serviceId}" }, first: 1) {
+          id
+          serviceId
+          blockNumber
+          blockTimestamp
+          epoch
+          nonces
+          owner
+        }
+      }
+    `;
+  }, [serviceId]);
+
+  const { data, isError, isLoading, refetch } = useQuery({
+    queryKey: ['serviceStakedInfo', serviceId],
+    async queryFn() {
+      const serviceStakedInfo = await request(SUBGRAPH_URL, query);
+      return serviceStakedInfo as { serviceStakeds: ServiceStakedInfo[] };
+    },
+    select: (data) => {
+      const firstServiceStakedInfo = data.serviceStakeds[0];
+      return firstServiceStakedInfo;
+    },
+    refetchOnWindowFocus: false,
+    refetchInterval: ONE_DAY,
+    enabled: !!serviceId,
+  });
+
+  return { isError, isLoading, refetch, serviceStakedInfo: data };
+};
+
 const fetchRewardsQuery = gql`
   {
     allRewards: checkpoints(orderBy: epoch, orderDirection: desc) {
@@ -97,9 +133,10 @@ const transformRewards = (
       } as EpochDetails;
     })
     .filter((epoch) => {
-      // If the contract has been switched to new contract, ignore the rewards from the old contract
+      // If the contract has been switched to new contract, ignore the rewards from the old contract of the same epoch,
+      // as the rewards are already accounted in the new contract.
       // example: If contract was switched on September 1st, 2024, ignore the rewards before that date
-      // till the user staked in the contract
+      // till the user staked in the contract.
       if (timestampToIgnore) {
         return epoch.epochEndTimeStamp < timestampToIgnore;
       }
@@ -108,8 +145,19 @@ const transformRewards = (
 };
 
 export const useRewardsHistory = () => {
+  const {
+    serviceStakedInfo: beta2ServiceStakedInfo,
+    isLoading: isServiceInfoLoading,
+    refetch: refetchServiceInfo,
+  } = useGetServiceStakedInfo();
   const { serviceId } = useServices();
-  const { data, isError, isLoading, isFetching, refetch } = useQuery({
+  const {
+    data,
+    isError,
+    isLoading: isRewardsLoading,
+    isFetching,
+    refetch: refetchRewards,
+  } = useQuery({
     queryKey: [],
     async queryFn() {
       const allRewardsResponse = await request(SUBGRAPH_URL, fetchRewardsQuery);
@@ -119,7 +167,9 @@ export const useRewardsHistory = () => {
       const allRewards = groupBy(data.allRewards, 'contractAddress');
       const beta2switchTimestamp = null;
       const beta2Rewards = allRewards[beta2Address.toLowerCase()];
-      const betaSwitchTimestamp = contractSwitchTimestamp;
+      const betaSwitchTimestamp = beta2ServiceStakedInfo?.blockTimestamp
+        ? Number(beta2ServiceStakedInfo.blockTimestamp)
+        : null;
       const betaRewards = allRewards[betaAddress.toLowerCase()];
 
       const beta2ContractDetails = {
@@ -158,10 +208,15 @@ export const useRewardsHistory = () => {
     enabled: !!serviceId,
   });
 
+  const refetch = useCallback(() => {
+    refetchRewards();
+    refetchServiceInfo();
+  }, [refetchRewards, refetchServiceInfo]);
+
   return {
     isError,
     isFetching,
-    isLoading,
+    isLoading: isServiceInfoLoading || isRewardsLoading,
     refetch,
     rewards: data,
   };
