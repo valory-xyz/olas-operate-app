@@ -146,8 +146,8 @@ const ContractRewards = ({ contract }: ContractRewardsHistoryProps) => (
 
     {contract.history.map((epoch) => {
       const currentEpochReward = epoch.reward
-        ? `~${balanceFormat(epoch.reward, 2)} OLAS`
-        : 'NA';
+        ? `~${balanceFormat(epoch.reward ?? 0, 2)} OLAS`
+        : '0 OLAS';
 
       return (
         <EpochRow key={epoch.epochEndTimeStamp}>
