@@ -72,6 +72,12 @@ let tray = null;
 
 let operateDaemon, operateDaemonPid, nextAppProcess, nextAppProcessPid;
 
+// @ts-ignore - Workaround for the missing type definitions
+const nextApp = next({
+  dev: false,
+  dir: path.join(__dirname),
+});
+
 const getActiveWindow = () => splashWindow ?? mainWindow;
 
 function showNotification(title, body) {
@@ -305,29 +311,22 @@ async function launchDaemonDev() {
 }
 
 async function launchNextApp() {
-  const nextApp = next({
-    dev: false,
-    dir: path.join(__dirname),
-    port: appConfig.ports.prod.next,
-    env: {
-      GNOSIS_RPC:
-        process.env.NODE_ENV === 'production'
-          ? process.env.FORK_URL
-          : process.env.DEV_RPC,
-      NEXT_PUBLIC_BACKEND_PORT:
-        process.env.NODE_ENV === 'production'
-          ? appConfig.ports.prod.operate
-          : appConfig.ports.dev.operate,
-    },
-  });
+  logger.electron('Launching Next App');
+
+  logger.electron('Preparing Next App');
   await nextApp.prepare();
 
+  logger.electron('Getting Next App Handler');
   const handle = nextApp.getRequestHandler();
+
+  logger.electron('Creating Next App Server');
   const server = http.createServer((req, res) => {
     handle(req, res); // Handle requests using the Next.js request handler
   });
-  server.listen(appConfig.ports.prod.next, (err) => {
-    if (err) throw err;
+
+  logger.electron('Listening on Next App Server');
+  server.listen(appConfig.ports.prod.next, (test) => {
+    logger.electron(test);
     logger.next(
       `> Next server running on http://localhost:${appConfig.ports.prod.next}`,
     );
