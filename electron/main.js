@@ -325,8 +325,7 @@ async function launchNextApp() {
   });
 
   logger.electron('Listening on Next App Server');
-  server.listen(appConfig.ports.prod.next, (test) => {
-    logger.electron(test);
+  server.listen(appConfig.ports.prod.next, () => {
     logger.next(
       `> Next server running on http://localhost:${appConfig.ports.prod.next}`,
     );
