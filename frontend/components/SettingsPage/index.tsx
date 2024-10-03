@@ -44,7 +44,7 @@ const NoBackupWallet = () => {
           showIcon
           message={
             <Flex vertical gap={5}>
-              <span className="font-weight-600">Backup wallet not added</span>
+              <span className="font-weight-600">Your funds are at risk!</span>
               <span>
                 Add a backup wallet to allow you to retrieve funds if you lose
                 your password and seed phrase.
