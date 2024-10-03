@@ -103,7 +103,10 @@ const AvoidSuspensionAlert = () => {
   );
 };
 
-export const MainOlasBalance = () => {
+type MainOlasBalanceProps = { isBorderTopVisible?: boolean };
+export const MainOlasBalance = ({
+  isBorderTopVisible = true,
+}: MainOlasBalanceProps) => {
   const { storeState } = useStore();
   const { isBalanceLoaded, totalOlasBalance } = useBalance();
   const { goto } = usePageState();
@@ -128,7 +131,7 @@ export const MainOlasBalance = () => {
     <CardSection
       vertical
       gap={8}
-      bordertop="true"
+      bordertop={isBorderTopVisible ? 'true' : 'false'}
       borderbottom="true"
       padding="16px 24px"
     >

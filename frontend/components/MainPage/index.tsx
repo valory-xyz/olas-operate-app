@@ -10,6 +10,7 @@ import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { MainHeader } from './header';
+import { AddBackupWalletAlert } from './sections/AddBackupWalletAlert';
 import { AddFundsSection } from './sections/AddFundsSection';
 import { GasBalanceSection } from './sections/GasBalanceSection';
 import { KeepAgentRunningSection } from './sections/KeepAgentRunningSection';
@@ -31,6 +32,13 @@ export const Main = () => {
       updateServicesState().then(() => updateBalances());
     }
   }, [isLoaded, setIsLoaded, updateBalances, updateServicesState]);
+
+  /* TODO: if no backup wallet show the alert message, condition pending */
+  const isBackupWalletUnavailable = true; // TODO: condition pending
+
+  const hideMainOlasBalanceTopBorder = [isBackupWalletUnavailable].some(
+    (condition) => !!condition,
+  );
 
   return (
     <Card
@@ -54,10 +62,12 @@ export const Main = () => {
       style={{ borderTopColor: 'transparent' }}
     >
       <Flex vertical>
+        {isBackupWalletUnavailable && <AddBackupWalletAlert />}
         {currentStakingProgram === StakingProgramId.Alpha && (
           <NewStakingProgramAlertSection />
         )}
-        <MainOlasBalance />
+
+        <MainOlasBalance isBorderTopVisible={!hideMainOlasBalanceTopBorder} />
         <MainRewards />
         <KeepAgentRunningSection />
         <StakingContractUpdate />
