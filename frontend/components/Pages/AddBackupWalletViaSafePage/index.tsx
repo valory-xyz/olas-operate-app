@@ -2,14 +2,12 @@ import { Card, Flex, Typography } from 'antd';
 
 import { CardTitle } from '@/components/Card/CardTitle';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { DISCORD_TICKET_URL } from '@/constants/urls';
 import { useWallet } from '@/hooks/useWallet';
 
 import { GoToMainPageButton } from '../GoToMainPageButton';
 
 const { Text } = Typography;
-
-const DISCORD_TICKET_URL =
-  'https://discord.com/channels/899649805582737479/1245674435160178712/1263815577240076308';
 
 export const AddBackupWalletViaSafePage = () => {
   const { masterSafeAddress } = useWallet();
