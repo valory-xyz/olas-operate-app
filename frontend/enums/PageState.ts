@@ -8,4 +8,5 @@ export enum Pages {
   ManageStaking,
   YourWalletBreakdown,
   RewardsHistory,
+  AddBackupWalletViaSafe,
 }
