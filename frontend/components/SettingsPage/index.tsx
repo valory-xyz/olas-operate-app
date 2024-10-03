@@ -30,6 +30,39 @@ const SettingsTitle = () => (
   />
 );
 
+const NoBackupWallet = () => {
+  const { goto } = usePageState();
+
+  return (
+    <>
+      <Text type="secondary">No backup wallet added.</Text>
+
+      <CardSection style={{ marginTop: 12 }}>
+        <CustomAlert
+          type="warning"
+          fullWidth
+          showIcon
+          message={
+            <Flex vertical gap={5}>
+              <span className="font-weight-600">Backup wallet not added</span>
+              <span>
+                Add a backup wallet to allow you to retrieve funds if you lose
+                your password and seed phrase.
+              </span>
+              <Text
+                className="pointer hover-underline text-primary"
+                onClick={() => goto(Pages.AddBackupWalletViaSafe)}
+              >
+                See instructions
+              </Text>
+            </Flex>
+          }
+        />
+      </CardSection>
+    </>
+  );
+};
+
 export const Settings = () => {
   const { screen } = useSettings();
   const settingsScreen = useMemo(() => {
@@ -77,7 +110,11 @@ const SettingsMain = () => {
       </CardSection>
 
       {/* Wallet backup */}
-      <CardSection borderbottom="true" vertical gap={8}>
+      <CardSection
+        borderbottom={backupSafeAddress ? 'true' : 'false'}
+        vertical
+        gap={8}
+      >
         <Text strong>Backup wallet</Text>
         {backupSafeAddress ? (
           <Link
@@ -95,42 +132,5 @@ const SettingsMain = () => {
       {/* Debug info */}
       <DebugInfoSection />
     </Card>
-  );
-};
-
-const NoBackupWallet = () => {
-  const { goto: gotoSettings } = useSettings();
-  return (
-    <>
-      <Text type="secondary">No backup wallet added.</Text>
-
-      <CardSection style={{ marginTop: 12, marginBottom: 18 }}>
-        <CustomAlert
-          type="warning"
-          fullWidth
-          showIcon
-          message={
-            <>
-              <Flex vertical gap={5}>
-                <Text className="font-weight-600">Your funds are at risk!</Text>
-                <Text>
-                  Add a backup wallet to allow you to retrieve funds if you lose
-                  your password and seed phrase.
-                </Text>
-              </Flex>
-            </>
-          }
-        />
-      </CardSection>
-
-      <Button
-        type="primary"
-        size="large"
-        disabled={true} // not in this iteration?
-        onClick={() => gotoSettings(SettingsScreen.AddBackupWallet)}
-      >
-        Add backup wallet
-      </Button>
-    </>
   );
 };

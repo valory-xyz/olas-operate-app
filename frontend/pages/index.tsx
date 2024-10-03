@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { HelpAndSupport } from '@/components/HelpAndSupportPage';
 import { Main } from '@/components/MainPage';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
+import { AddBackupWalletViaSafePage } from '@/components/Pages/AddBackupWalletViaSafePage';
 import { RewardsHistory } from '@/components/RewardsHistory/RewardsHistory';
 import { Settings } from '@/components/SettingsPage';
 import { Setup } from '@/components/SetupPage';
@@ -55,6 +56,8 @@ export default function Home() {
         return <YourWallet />;
       case Pages.RewardsHistory:
         return <RewardsHistory />;
+      case Pages.AddBackupWalletViaSafe:
+        return <AddBackupWalletViaSafePage />;
       default:
         return <Main />;
     }

@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { Pages } from '@/enums/PageState';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalance } from '@/hooks/useBalance';
+import { useMasterSafe } from '@/hooks/useMasterSafe';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -22,6 +23,7 @@ import { StakingContractUpdate } from './sections/StakingContractUpdate';
 
 export const Main = () => {
   const { goto } = usePageState();
+  const { backupSafeAddress } = useMasterSafe();
   const { updateServicesState } = useServices();
   const { updateBalances, isLoaded, setIsLoaded } = useBalance();
   const { activeStakingProgramId: currentStakingProgram } = useStakingProgram();
@@ -33,12 +35,10 @@ export const Main = () => {
     }
   }, [isLoaded, setIsLoaded, updateBalances, updateServicesState]);
 
-  /* TODO: if no backup wallet show the alert message, condition pending */
-  const isBackupWalletUnavailable = true; // TODO: condition pending
-
-  const hideMainOlasBalanceTopBorder = [isBackupWalletUnavailable].some(
-    (condition) => !!condition,
-  );
+  const hideMainOlasBalanceTopBorder = [
+    !backupSafeAddress,
+    currentStakingProgram === StakingProgramId.Alpha,
+  ].some((condition) => !!condition);
 
   return (
     <Card
@@ -62,7 +62,7 @@ export const Main = () => {
       style={{ borderTopColor: 'transparent' }}
     >
       <Flex vertical>
-        {isBackupWalletUnavailable && <AddBackupWalletAlert />}
+        {!backupSafeAddress && <AddBackupWalletAlert />}
         {currentStakingProgram === StakingProgramId.Alpha && (
           <NewStakingProgramAlertSection />
         )}

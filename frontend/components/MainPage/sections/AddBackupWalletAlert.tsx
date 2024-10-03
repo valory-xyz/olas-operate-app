@@ -19,7 +19,7 @@ export const AddBackupWalletAlert = () => {
         showIcon
         message={
           <Flex align="center" justify="space-between" gap={2}>
-            <Text>Add backup wallet</Text>
+            <span>Add backup wallet</span>
             <Text
               className="pointer hover-underline text-primary"
               onClick={() => goto(Pages.AddBackupWalletViaSafe)}
