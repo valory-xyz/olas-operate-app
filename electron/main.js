@@ -87,6 +87,7 @@ function showNotification(title, body) {
 async function beforeQuit() {
   if (operateDaemonPid) {
     try {
+      await fetch(`http://localhost:${appConfig.ports.prod.operate}/stop_all_services`);
       await killProcesses(operateDaemonPid);
     } catch (e) {
       logger.electron(e);

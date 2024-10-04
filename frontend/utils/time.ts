@@ -27,11 +27,25 @@ export const getTimeAgo = (timestampInSeconds: number) => {
  * @returns formatted date in the format of 'MMM DD'
  * @example 1626825600 => 'Jul 21'
  */
-export const formatToMonthDay = (timeInSeconds: number) => {
-  if (!isNumber(timeInSeconds)) return '--';
-  return new Date(timeInSeconds).toLocaleDateString('en-US', {
+export const formatToMonthDay = (timeInMs: number) => {
+  if (!isNumber(timeInMs)) return '--';
+  return new Date(timeInMs).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
+  });
+};
+
+/**
+ * @returns formatted time in the format of 'HH:MM AM/PM'
+ * @example 1626825600 => '12:00 PM'
+ */
+export const formatToTime = (timeInMs: number) => {
+  if (!isNumber(timeInMs)) return '--';
+  return new Date(timeInMs).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true,
+    timeZone: 'UTC',
   });
 };
 
@@ -40,9 +54,9 @@ export const formatToMonthDay = (timeInSeconds: number) => {
  * @returns formatted date and time in the format of 'MMM DD, HH:MM AM/PM'
  * @example 1626825600 => 'Jul 21, 12:00 PM'
  */
-export const formatToShortDateTime = (timeInSeconds?: number) => {
-  if (!isNumber(timeInSeconds)) return '--';
-  return new Date(timeInSeconds).toLocaleDateString('en-US', {
+export const formatToShortDateTime = (timeInMs?: number) => {
+  if (!isNumber(timeInMs)) return '--';
+  return new Date(timeInMs).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',

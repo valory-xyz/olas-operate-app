@@ -1,5 +1,5 @@
-import { InfoCircleOutlined, RightOutlined } from '@ant-design/icons';
-import { Button, Flex, Modal, Skeleton, Tag, Tooltip, Typography } from 'antd';
+import { RightOutlined } from '@ant-design/icons';
+import { Button, Flex, Modal, Skeleton, Tag, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -11,10 +11,11 @@ import { useReward } from '@/hooks/useReward';
 import { useStore } from '@/hooks/useStore';
 import { balanceFormat } from '@/utils/numberFormatters';
 
-import { ConfettiAnimation } from '../../Confetti/ConfettiAnimation';
-import { CardSection } from '../../styled/CardSection';
+import { ConfettiAnimation } from '../../../Confetti/ConfettiAnimation';
+import { CardSection } from '../../../styled/CardSection';
+import { StakingRewardsThisEpoch } from './StakingRewardsThisEpoch';
 
-const { Text, Title, Paragraph } = Typography;
+const { Text, Title } = Typography;
 
 const Loader = () => (
   <Flex vertical gap={8}>
@@ -35,20 +36,7 @@ const DisplayRewards = () => {
 
   return (
     <CardSection vertical gap={8} padding="16px 24px" align="start">
-      <Text type="secondary">
-        Staking rewards this epoch&nbsp;
-        <Tooltip
-          arrow={false}
-          title={
-            <Paragraph className="text-sm m-0">
-              The agent&apos;s working period lasts at least 24 hours, but its
-              start and end point may not be at the same time every day.
-            </Paragraph>
-          }
-        >
-          <InfoCircleOutlined />
-        </Tooltip>
-      </Text>
+      <StakingRewardsThisEpoch />
 
       {isBalanceLoaded ? (
         <Flex align="center" gap={12}>

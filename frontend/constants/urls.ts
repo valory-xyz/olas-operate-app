@@ -4,6 +4,9 @@ export const COW_SWAP_GNOSIS_XDAI_OLAS_URL: string =
 
 export const FAQ_URL = 'https://olas.network/operate#faq';
 
+export const SUBGRAPH_URL =
+  'https://api.studio.thegraph.com/query/81855/pearl-staking-rewards-history/version/latest';
+
 // discord
 export const SUPPORT_URL =
   'https://discord.com/channels/899649805582737479/1244588374736502847';

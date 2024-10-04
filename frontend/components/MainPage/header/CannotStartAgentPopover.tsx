@@ -1,10 +1,11 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Popover, PopoverProps, Typography } from 'antd';
+import { Flex, Popover, PopoverProps, Typography } from 'antd';
 
 import { COLOR } from '@/constants/colors';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
 import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
+import { formatToShortDateTime } from '@/utils/time';
 
 const { Paragraph, Text } = Typography;
 
@@ -42,16 +43,37 @@ export const CannotStartAgentDueToUnexpectedError = () => (
 );
 
 const evictedDescription =
-  "You didn't run your agent enough and it missed its targets multiple times. Please wait a few days and try to run your agent again.";
-const AgentEvictedPopover = () => (
-  <Popover
-    {...otherPopoverProps}
-    title="Your agent is suspended from work"
-    content={<div style={{ maxWidth: 340 }}>{evictedDescription}</div>}
-  >
-    {cannotStartAgentText}
-  </Popover>
-);
+  "You didn't run your agent enough and it missed its targets multiple times. You can run the agent again when the eviction period ends.";
+const AgentEvictedPopover = () => {
+  const { evictionExpiresAt } = useStakingContractInfo();
+
+  return (
+    <Popover
+      {...otherPopoverProps}
+      title="Your agent is evicted"
+      content={
+        <Flex
+          vertical
+          gap={8}
+          className="text-sm-all"
+          style={{ maxWidth: 340 }}
+        >
+          <Paragraph className="text-sm m-0">{evictedDescription}</Paragraph>
+          {evictionExpiresAt && (
+            <Paragraph className="m-0">
+              <Text className="text-sm">Eviction ends at</Text>{' '}
+              <Text strong className="text-sm">
+                {formatToShortDateTime(evictionExpiresAt * 1000)}
+              </Text>
+            </Paragraph>
+          )}
+        </Flex>
+      }
+    >
+      {cannotStartAgentText}
+    </Popover>
+  );
+};
 
 const JoinOlasCommunity = () => (
   <div style={{ maxWidth: 340 }}>

@@ -40,6 +40,9 @@ export const mainTheme: ThemeConfig = {
     Typography: {
       colorTextDescription: '#4D596A',
     },
+    Popover: {
+      fontSize: 14,
+    },
     Tag: {
       colorSuccess: '#135200',
     },

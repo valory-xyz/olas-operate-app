@@ -29,6 +29,8 @@ import typing as t
 from copy import copy, deepcopy
 from dataclasses import dataclass
 from pathlib import Path
+from time import sleep
+from traceback import print_exc
 
 from aea.configurations.constants import (
     DEFAULT_LEDGER,
@@ -504,7 +506,15 @@ class Deployment(LocalResource):
 
         if build.exists() and force:
             stop_host_deployment(build_dir=build)
-            shutil.rmtree(build)
+            try:
+                # sleep needed to ensure all processes closed/killed otherwise it will block directory removal on windows
+                sleep(3)
+                shutil.rmtree(build)
+            except:  # noqa  # pylint: disable=bare-except
+                # sleep and try again. exception if fails
+                print_exc()
+                sleep(3)
+                shutil.rmtree(build)
 
         service = Service.load(path=self.path)
         if service.helper.config.number_of_agents > 1:

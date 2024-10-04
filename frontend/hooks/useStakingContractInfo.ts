@@ -43,9 +43,7 @@ export const useStakingContractInfo = () => {
     serviceIds.length < maxNumServices;
 
   const hasEnoughRewardsAndSlots = isRewardsAvailable && hasEnoughServiceSlots;
-
   const isAgentEvicted = serviceStakingState === 2;
-
   const isServiceStaked =
     !!serviceStakingStartTime && serviceStakingState === 1;
 
@@ -78,10 +76,15 @@ export const useStakingContractInfo = () => {
     !isNil(hasEnoughRewardsAndSlots) &&
     (isAgentEvicted ? isServiceStakedForMinimumDuration : true);
 
+  // Eviction expire time in seconds
+  const evictionExpiresAt =
+    (serviceStakingStartTime ?? 0) + (minimumStakingDuration ?? 0);
+
   return {
     activeStakingContractInfo,
     hasEnoughServiceSlots,
     isAgentEvicted,
+    evictionExpiresAt,
     isEligibleForStaking,
     isPaused,
     isRewardsAvailable,

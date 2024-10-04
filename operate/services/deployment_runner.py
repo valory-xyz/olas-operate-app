@@ -78,6 +78,8 @@ def kill_process(pid: int) -> None:
     children = list(reversed(current_process.children(recursive=True)))
     for child in children:
         _kill_process(child.pid)
+        _kill_process(child.pid)
+    _kill_process(pid)
     _kill_process(pid)
 
 
