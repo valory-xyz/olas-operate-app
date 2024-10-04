@@ -310,7 +310,8 @@ const AgentNotRunningButton = () => {
 };
 
 export const AgentButton = () => {
-  const { service, serviceStatus, hasInitialLoaded } = useServices();
+  const { serviceStatus, hasInitialLoaded, isServiceNotRunning } =
+    useServices();
   const { isEligibleForStaking, isAgentEvicted } = useStakingContractInfo();
 
   return useMemo(() => {
@@ -330,16 +331,11 @@ export const AgentButton = () => {
       return <AgentRunningButton />;
     }
 
-    if (!isEligibleForStaking && isAgentEvicted)
+    if (!isEligibleForStaking && isAgentEvicted) {
       return <CannotStartAgentPopover />;
+    }
 
-    if (
-      !service ||
-      serviceStatus === DeploymentStatus.STOPPED ||
-      serviceStatus === DeploymentStatus.CREATED ||
-      serviceStatus === DeploymentStatus.BUILT ||
-      serviceStatus === DeploymentStatus.DELETED
-    ) {
+    if (isServiceNotRunning) {
       return <AgentNotRunningButton />;
     }
 
@@ -349,6 +345,6 @@ export const AgentButton = () => {
     serviceStatus,
     isEligibleForStaking,
     isAgentEvicted,
-    service,
+    isServiceNotRunning,
   ]);
 };
