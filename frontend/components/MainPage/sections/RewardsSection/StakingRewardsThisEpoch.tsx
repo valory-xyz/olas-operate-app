@@ -2,6 +2,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { Popover, Typography } from 'antd';
 
+import { POPOVER_WIDTH_MEDIUM } from '@/constants/width';
 import { getLatestEpochDetails } from '@/graphql/queries';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { formatToTime } from '@/utils/time';
@@ -28,6 +29,7 @@ const useEpochEndTime = () => {
 
 export const StakingRewardsThisEpoch = () => {
   const { data: epochEndTimeInMs } = useEpochEndTime();
+  const { activeStakingProgramMeta } = useStakingProgram();
 
   return (
     <Text type="secondary">
@@ -35,14 +37,14 @@ export const StakingRewardsThisEpoch = () => {
       <Popover
         arrow={false}
         content={
-          <>
-            The epoch ends each day at ~{' '}
+          <div style={{ maxWidth: POPOVER_WIDTH_MEDIUM }}>
+            The epoch for {activeStakingProgramMeta?.name} ends each day at ~{' '}
             <Text className="text-sm" strong>
               {epochEndTimeInMs
                 ? `${formatToTime(epochEndTimeInMs * 1000)} (UTC)`
                 : '--'}
             </Text>
-          </>
+          </div>
         }
       >
         <InfoCircleOutlined />
