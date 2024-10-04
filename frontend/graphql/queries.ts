@@ -13,6 +13,7 @@ export const getLatestEpochTimeQuery = (contractAddress: string) => gql`
         contractAddress: "${contractAddress}"
       }
     ) {
+      epoch
       epochLength
       blockTimestamp
     }
