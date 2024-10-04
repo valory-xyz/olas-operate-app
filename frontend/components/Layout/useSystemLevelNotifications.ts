@@ -12,7 +12,7 @@ type EpochStatusNotification = {
 };
 
 /**
- * This hook is used to notify the user when a new epoch is created
+ * Hook to notify the user when a new epoch is started
  * and agent is not running.
  */
 const useNotifyOnNewEpoch = () => {
