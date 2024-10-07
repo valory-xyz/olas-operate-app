@@ -74,8 +74,13 @@ let operateDaemon, operateDaemonPid, nextAppProcess, nextAppProcessPid;
 
 // @ts-ignore - Workaround for the missing type definitions
 const nextApp = next({
-  dev: false,
+  dev: false, // this instance is only used for production
   dir: path.join(__dirname),
+  conf: {
+    env: {
+      NEXT_PUBLIC_PEARL_VERSION: app.getVersion(),
+    },
+  },
 });
 
 const getActiveWindow = () => splashWindow ?? mainWindow;
@@ -344,6 +349,7 @@ async function launchNextAppDev() {
         env: {
           ...process.env,
           NEXT_PUBLIC_BACKEND_PORT: appConfig.ports.dev.operate,
+          NEXT_PUBLIC_PEARL_VERSION: app.getVersion(),
         },
       },
     );

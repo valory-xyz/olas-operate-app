@@ -16,6 +16,7 @@
     "react-canvas-confetti": "1.2.1",
     "react-dom": "^18.3.1",
     "sass": "^1.72.0",
+    "semver": "^7.6.3",
     "styled-components": "^6.1.8",
     "usehooks-ts": "^2.14.0",
     "zod": "^3.23.8"

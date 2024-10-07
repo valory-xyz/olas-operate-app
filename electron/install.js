@@ -14,7 +14,7 @@ const homedir = os.homedir();
  * - use "" (nothing as a suffix) for latest release candidate, for example "0.1.0rc26"
  * - use "alpha" for alpha release, for example "0.1.0rc26-alpha"
  */
-const OlasMiddlewareVersion = '0.1.0rc162';
+const OlasMiddlewareVersion = '0.1.0rc163';
 
 const path = require('path');
 const { app } = require('electron');

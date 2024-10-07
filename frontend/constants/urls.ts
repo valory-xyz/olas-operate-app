@@ -2,7 +2,9 @@ export const BACKEND_URL: string = `http://localhost:${process.env.NODE_ENV === 
 export const COW_SWAP_GNOSIS_XDAI_OLAS_URL: string =
   'https://swap.cow.fi/#/100/swap/WXDAI/OLAS';
 
+// olas.network
 export const FAQ_URL = 'https://olas.network/operate#faq';
+export const DOWNLOAD_URL = 'https://olas.network/operate#download';
 
 export const SUBGRAPH_URL =
   'https://api.studio.thegraph.com/query/81855/pearl-staking-rewards-history/version/latest';

@@ -20,11 +20,13 @@ export const CardSection = styled(Flex)<CardSectionProps>`
 
     const paddingStyle = `padding: ${padding ?? '24px'};`;
     const borderTopStyle =
-      bordertop === 'true' ? `border-top: 1px solid ${COLOR.BORDER_GRAY};` : '';
+      bordertop === 'true'
+        ? `border-top: 1px solid ${COLOR.BORDER_GRAY};`
+        : 'border-top: none;';
     const borderBottomStyle =
       borderbottom === 'true'
         ? `border-bottom: 1px solid ${COLOR.BORDER_GRAY};`
-        : '';
+        : 'border-top: none;';
 
     const verticalStyle = props.vertical ? 'flex-direction: column;' : '';
 
@@ -35,6 +37,7 @@ export const CardSection = styled(Flex)<CardSectionProps>`
       ${verticalStyle}
     `;
   }}
+
   border-collapse: collapse;
   margin-left: -24px;
   margin-right: -24px;
