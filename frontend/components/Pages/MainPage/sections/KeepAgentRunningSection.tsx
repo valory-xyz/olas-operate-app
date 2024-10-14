@@ -4,8 +4,8 @@ import { DeploymentStatus } from '@/client';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 
-import { CustomAlert } from '../../Alert';
-import { CardSection } from '../../styled/CardSection';
+import { CustomAlert } from '../../../Alert';
+import { CardSection } from '../../../styled/CardSection';
 
 const { Text } = Typography;
 

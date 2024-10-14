@@ -13,7 +13,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { useStore } from '@/hooks/useStore';
 import { balanceFormat } from '@/utils/numberFormatters';
 
-import { CardSection } from '../../styled/CardSection';
+import { CardSection } from '../../../styled/CardSection';
 
 const { Text, Title } = Typography;
 const Balance = styled.span`

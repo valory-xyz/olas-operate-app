@@ -1,6 +1,6 @@
 import { Collapse, Flex, Typography } from 'antd';
 
-import { CardSection } from '../styled/CardSection';
+import { CardSection } from '../../styled/CardSection';
 
 const { Text } = Typography;
 

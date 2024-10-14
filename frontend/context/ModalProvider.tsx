@@ -6,7 +6,7 @@ import {
   useState,
 } from 'react';
 
-import { MigrationSuccessModal } from '@/components/MainPage/modals/MigrationModal';
+import { MigrationSuccessModal } from '@/components/Pages/MainPage/modals/MigrationModal';
 
 export const ModalContext = createContext<{
   migrationModalOpen: boolean;

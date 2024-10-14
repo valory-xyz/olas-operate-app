@@ -10,7 +10,7 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { useStore } from '@/hooks/useStore';
 import { useWallet } from '@/hooks/useWallet';
 
-import { CardSection } from '../../styled/CardSection';
+import { CardSection } from '../../../styled/CardSection';
 
 const { Text } = Typography;
 

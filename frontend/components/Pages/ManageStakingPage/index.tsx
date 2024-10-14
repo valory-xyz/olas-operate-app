@@ -7,8 +7,8 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { usePageState } from '@/hooks/usePageState';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
-import { CardTitle } from '../Card/CardTitle';
-import { CardSection } from '../styled/CardSection';
+import { CardTitle } from '../../Card/CardTitle';
+import { CardSection } from '../../styled/CardSection';
 import { StakingContractSection } from './StakingContractSection';
 import { WhatAreStakingContractsSection } from './WhatAreStakingContracts';
 

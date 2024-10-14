@@ -21,7 +21,7 @@ import { useSetup } from '@/hooks/useSetup';
 import { useWallet } from '@/hooks/useWallet';
 import { AccountService } from '@/service/Account';
 
-import { FormFlex } from '../styled/FormFlex';
+import { FormFlex } from '../../styled/FormFlex';
 
 const { Title } = Typography;
 

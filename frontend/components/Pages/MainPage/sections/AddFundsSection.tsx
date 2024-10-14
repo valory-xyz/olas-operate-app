@@ -22,8 +22,8 @@ import { copyToClipboard } from '@/utils/copyToClipboard';
 import { delayInSeconds } from '@/utils/delay';
 import { truncateAddress } from '@/utils/truncate';
 
-import { CustomAlert } from '../../Alert';
-import { CardSection } from '../../styled/CardSection';
+import { CustomAlert } from '../../../Alert';
+import { CardSection } from '../../../styled/CardSection';
 
 const { Text } = Typography;
 

@@ -7,7 +7,7 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 
-import { CardSection } from '../../styled/CardSection';
+import { CardSection } from '../../../styled/CardSection';
 
 const { Text } = Typography;
 const COVER_PREV_BLOCK_BORDER_STYLE = { marginTop: '-1px' };

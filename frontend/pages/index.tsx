@@ -1,13 +1,13 @@
 import { useEffect, useMemo } from 'react';
 
-import { Main } from '@/components/MainPage';
-import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { AddBackupWalletViaSafePage } from '@/components/Pages/AddBackupWalletViaSafePage';
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
+import { Main } from '@/components/Pages/MainPage';
+import { ManageStakingPage } from '@/components/Pages/ManageStakingPage';
+import { Settings } from '@/components/Pages/SettingsPage';
+import { Setup } from '@/components/Pages/SetupPage';
+import { YourWallet } from '@/components/Pages/YourWalletPage/YourWallet';
 import { RewardsHistory } from '@/components/RewardsHistory/RewardsHistory';
-import { Settings } from '@/components/SettingsPage';
-import { Setup } from '@/components/SetupPage';
-import { YourWallet } from '@/components/YourWalletPage/YourWallet';
 import { Pages } from '@/enums/PageState';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';

@@ -3,8 +3,8 @@ import { Button, Flex, Typography } from 'antd';
 import { Pages } from '@/enums/PageState';
 import { usePageState } from '@/hooks/usePageState';
 
-import { CustomAlert } from '../../Alert';
-import { CardSection } from '../../styled/CardSection';
+import { CustomAlert } from '../../../Alert';
+import { CardSection } from '../../../styled/CardSection';
 
 const { Text } = Typography;
 

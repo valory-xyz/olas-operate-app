@@ -11,8 +11,8 @@ import { useReward } from '@/hooks/useReward';
 import { useStore } from '@/hooks/useStore';
 import { balanceFormat } from '@/utils/numberFormatters';
 
-import { ConfettiAnimation } from '../../../Confetti/ConfettiAnimation';
-import { CardSection } from '../../../styled/CardSection';
+import { ConfettiAnimation } from '../../../../Confetti/ConfettiAnimation';
+import { CardSection } from '../../../../styled/CardSection';
 import { StakingRewardsThisEpoch } from './StakingRewardsThisEpoch';
 
 const { Text, Title } = Typography;

@@ -1,7 +1,7 @@
 import { Button } from 'antd';
 import { useState } from 'react';
 
-import { OpenAddFundsSection } from '@/components/MainPage/sections/AddFundsSection';
+import { OpenAddFundsSection } from '@/components/Pages/MainPage/sections/AddFundsSection';
 
 export const StakingContractFundingButton = () => {
   const [isFundingSectionOpen, setIsFundingSectionOpen] = useState(false);

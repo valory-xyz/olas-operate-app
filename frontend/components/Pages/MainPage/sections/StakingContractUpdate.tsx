@@ -9,7 +9,7 @@ import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { usePageState } from '@/hooks/usePageState';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
-import { CardSection } from '../../styled/CardSection';
+import { CardSection } from '../../../styled/CardSection';
 
 const { Text } = Typography;
 

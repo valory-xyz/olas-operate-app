@@ -3,7 +3,7 @@ import { Flex, Typography } from 'antd';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { Address } from '@/types/Address';
 
-import { AddressLink } from '../AddressLink';
+import { AddressLink } from '../../AddressLink';
 
 const { Paragraph, Text, Title } = Typography;
 

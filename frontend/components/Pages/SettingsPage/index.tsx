@@ -11,9 +11,9 @@ import { usePageState } from '@/hooks/usePageState';
 import { useSettings } from '@/hooks/useSettings';
 import { truncateAddress } from '@/utils/truncate';
 
-import { CustomAlert } from '../Alert';
-import { CardTitle } from '../Card/CardTitle';
-import { CardSection } from '../styled/CardSection';
+import { CustomAlert } from '../../Alert';
+import { CardTitle } from '../../Card/CardTitle';
+import { CardSection } from '../../styled/CardSection';
 import { AddBackupWalletPage } from './AddBackupWalletPage';
 import { DebugInfoSection } from './DebugInfoSection';
 

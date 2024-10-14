@@ -5,7 +5,7 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 
-import { CardFlex } from '../../styled/CardFlex';
+import { CardFlex } from '../../../styled/CardFlex';
 import { SetupCreateHeader } from './SetupCreateHeader';
 
 export const SetupSeedPhrase = () => {

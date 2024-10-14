@@ -7,7 +7,7 @@ import { useSetup } from '@/hooks/useSetup';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
 
-import { CardFlex } from '../../styled/CardFlex';
+import { CardFlex } from '../../../styled/CardFlex';
 import { SetupCreateHeader } from './SetupCreateHeader';
 
 const { Title, Text } = Typography;

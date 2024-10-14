@@ -24,8 +24,8 @@ import { copyToClipboard } from '@/utils/copyToClipboard';
 import { balanceFormat } from '@/utils/numberFormatters';
 import { truncateAddress } from '@/utils/truncate';
 
-import { CardSection } from '../styled/CardSection';
-import { CustomModal } from '../styled/CustomModal';
+import { CardSection } from '../../styled/CardSection';
+import { CustomModal } from '../../styled/CustomModal';
 
 const { Text, Title } = Typography;
 
