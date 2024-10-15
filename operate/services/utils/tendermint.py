@@ -32,6 +32,7 @@ import traceback
 from logging import Logger
 from pathlib import Path
 from threading import Event, Thread
+from turtle import home
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 import requests
@@ -89,12 +90,15 @@ class TendermintParams:  # pylint: disable=too-few-public-methods
     def __init__(  # pylint: disable=too-many-arguments
         self,
         proxy_app: str,
+        tmstate: str,
+        log_file: str,
         rpc_laddr: str = DEFAULT_RPC_LISTEN_ADDRESS,
         p2p_laddr: str = DEFAULT_P2P_LISTEN_ADDRESS,
         p2p_seeds: Optional[List[str]] = None,
         consensus_create_empty_blocks: bool = True,
         home: Optional[str] = None,
         use_grpc: bool = False,
+        write_to_log=False, 
     ):
         """
         Initialize the parameters to the Tendermint node.
@@ -107,7 +111,9 @@ class TendermintParams:  # pylint: disable=too-few-public-methods
         :param home: Tendermint's home directory.
         :param use_grpc: Whether to use a gRPC server, or TCP
         """
-
+        self.write_to_log = write_to_log
+        self.log_file = log_file
+        self.tmstate = tmstate
         self.proxy_app = proxy_app
         self.rpc_laddr = rpc_laddr
         self.p2p_laddr = p2p_laddr
@@ -185,7 +191,7 @@ class TendermintNode:
         self._monitoring: Optional[StoppableThread] = None
         self._stopping = False
         self.logger = logger or logging.getLogger()
-        self.log_file = os.environ.get("LOG_FILE", DEFAULT_TENDERMINT_LOG_FILE)
+        self.log_file = params.log_file
         self.write_to_log = write_to_log
 
     def _build_init_command(self) -> List[str]:
@@ -357,25 +363,25 @@ class TendermintNode:
         genesis_file.write_text(json.dumps(genesis_config, indent=2), encoding=ENCODING)
 
 
-def load_genesis() -> Any:
+def load_genesis(tmhome) -> Any:
     """Load genesis file."""
     return json.loads(
-        Path(os.environ["TMHOME"], "config", "genesis.json").read_text(
+        Path(tmhome, "config", "genesis.json").read_text(
             encoding=ENCODING
         )
     )
 
 
-def get_defaults() -> Dict[str, str]:
+def get_defaults(tmhome) -> Dict[str, str]:
     """Get defaults from genesis file."""
-    genesis = load_genesis()
+    genesis = load_genesis(tmhome)
     return dict(genesis_time=genesis.get("genesis_time"))
 
 
-def override_config_toml() -> None:
+def override_config_toml(tmhome) -> None:
     """Update sync method."""
 
-    config_path = str(Path(os.environ["TMHOME"]) / "config" / "config.toml")
+    config_path = str(Path(tmhome) / "config" / "config.toml")
     logging.info(config_path)
     with open(config_path, "r", encoding=ENCODING) as fp:
         config = fp.read()
@@ -421,10 +427,10 @@ def update_external_address(external_address: str, config_path: Path) -> None:
     config_path.write_text(updated_config, encoding="utf-8")
 
 
-def update_genesis_config(data: Dict) -> None:
+def update_genesis_config(tmhome, data: Dict) -> None:
     """Update genesis.json file for the tendermint node."""
 
-    genesis_file = Path(os.environ["TMHOME"]) / "config" / "genesis.json"
+    genesis_file = Path(tmhome) / "config" / "genesis.json"
     genesis_data = {}
     genesis_data["genesis_time"] = data["genesis_config"]["genesis_time"]
     genesis_data["chain_id"] = data["genesis_config"]["chain_id"]
@@ -449,14 +455,15 @@ class PeriodDumper:
     resets: int
     dump_dir: Path
     logger: logging.Logger
+    tmhome: str
 
-    def __init__(self, logger: logging.Logger, dump_dir: Optional[Path] = None) -> None:
+    def __init__(self, tmhome, logger: logging.Logger, dump_dir: Optional[Path] = None) -> None:
         """Initialize object."""
 
         self.resets = 0
         self.logger = logger
         self.dump_dir = Path(dump_dir or "/tm_state")
-
+        self.tmhome = tmhome
         if self.dump_dir.is_dir():
             shutil.rmtree(str(self.dump_dir), onerror=self.readonly_handler)
         self.dump_dir.mkdir(exist_ok=True)
@@ -478,7 +485,7 @@ class PeriodDumper:
         store_dir.mkdir(exist_ok=True)
         try:
             shutil.copytree(
-                os.environ["TMHOME"], str(store_dir / ("node" + os.environ["ID"]))
+               self.tmhome, str(store_dir / ("node" + os.environ["ID"]))
             )
             self.logger.info(f"Dumped data for period {self.resets}")
         except OSError as e:
@@ -489,23 +496,19 @@ class PeriodDumper:
 
 
 def create_app(  # pylint: disable=too-many-statements
+    params: TendermintParams,
     debug: bool = False,
 ) -> Tuple[Flask, TendermintNode]:
     """Create the Tendermint server app"""
-    write_to_log = os.environ.get("WRITE_TO_LOG", "false").lower() == "true"
-    tendermint_params = TendermintParams(
-        proxy_app=os.environ["PROXY_APP"],
-        p2p_laddr=os.environ["P2P_LADDR"],
-        rpc_laddr=os.environ["RPC_LADDR"],
-        consensus_create_empty_blocks=os.environ["CREATE_EMPTY_BLOCKS"] == "true",
-        home=os.environ["TMHOME"],
-        use_grpc=os.environ["USE_GRPC"] == "true",
-    )
+    
+    tendermint_params = params
+    write_to_log = params.write_to_log
 
     app = Flask(__name__)  # pylint: disable=redefined-outer-name
     period_dumper = PeriodDumper(
         logger=app.logger,
-        dump_dir=Path(os.environ["TMSTATE"]),
+        dump_dir=params.tmstate,
+        tmhome=params.home
     )
     tendermint_node = TendermintNode(
         tendermint_params,
@@ -513,16 +516,14 @@ def create_app(  # pylint: disable=too-many-statements
         write_to_log=write_to_log,
     )
     tendermint_node.init()
-    override_config_toml()
+    override_config_toml(params.home)
     tendermint_node.start(debug=debug)
 
     @app.get("/params")
     def get_params() -> Dict:
         """Get tendermint params."""
         try:
-            priv_key_file = (
-                Path(os.environ["TMHOME"]) / "config" / "priv_validator_key.json"
-            )
+            priv_key_file = Path(params.home) / "config" / "priv_validator_key.json"
             priv_key_data = json.loads(priv_key_file.read_text(encoding=ENCODING))
             del priv_key_data["priv_key"]
             status = requests.get(TM_STATUS_ENDPOINT).json()
@@ -548,12 +549,12 @@ def create_app(  # pylint: disable=too-many-statements
             cast(logging.Logger, app.logger).info(  # pylint: disable=no-member
                 "Updating genesis config."
             )
-            update_genesis_config(data=data)
+            update_genesis_config(tendermint_params.home, data=data)
 
             cast(logging.Logger, app.logger).info(  # pylint: disable=no-member
                 "Updating peristent peers."
             )
-            config_path = Path(os.environ["TMHOME"]) / "config" / "config.toml"
+            config_path = Path(params.home) / "config" / "config.toml"
             update_peers(
                 validators=data["validators"],
                 config_path=config_path,
@@ -606,7 +607,7 @@ def create_app(  # pylint: disable=too-many-statements
             if return_code:
                 tendermint_node.start()
                 raise RuntimeError("Could not perform `unsafe-reset-all` successfully!")
-            defaults = get_defaults()
+            defaults = get_defaults(tendermint_params.home)
             tendermint_node.reset_genesis_file(
                 request.args.get("genesis_time", defaults["genesis_time"]),
                 # default should be 1: https://github.com/tendermint/tendermint/pull/5191/files
@@ -635,7 +636,18 @@ def create_app(  # pylint: disable=too-many-statements
 
 def create_server() -> Any:
     """Function to retrieve just the app to be used by flask entry point."""
-    flask_app, _ = create_app()
+    params = TendermintParams(
+        proxy_app=os.environ["PROXY_APP"],
+        p2p_laddr=os.environ["P2P_LADDR"],
+        rpc_laddr=os.environ["RPC_LADDR"],
+        consensus_create_empty_blocks=os.environ["CREATE_EMPTY_BLOCKS"] == "true",
+        home=os.environ["TMHOME"],
+        use_grpc=os.environ["USE_GRPC"] == "true",
+        log_file=os.environ.get("LOG_FILE", DEFAULT_TENDERMINT_LOG_FILE),
+        write_to_log=os.environ.get("WRITE_TO_LOG", "false").lower() == "true",
+        tmstate=os.environ["TMSTATE"]
+    )
+    flask_app, _ = create_app(params=params)
     return flask_app
 
 
