@@ -7,6 +7,7 @@ import { COLOR } from '@/constants/colors';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 
 import { TopBar } from './TopBar';
+import { useSystemLevelNotifications } from './useSystemLevelNotifications';
 
 const Container = styled.div<{ blur: 'true' | 'false' }>`
   background-color: ${COLOR.WHITE};
@@ -43,6 +44,9 @@ export const Layout = ({
   children,
 }: PropsWithChildren & { vertical?: boolean }) => {
   const { isOnline } = useContext(OnlineStatusContext);
+
+  // all the app level notifications
+  useSystemLevelNotifications();
 
   useEffect(() => {
     let messageKey;
