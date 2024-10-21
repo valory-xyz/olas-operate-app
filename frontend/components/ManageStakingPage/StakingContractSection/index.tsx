@@ -71,7 +71,10 @@ export const StakingContractSection = ({
   return (
     <>
       <CardSection
-        style={contractTagStatus ? { background: token.colorPrimaryBg } : {}}
+        style={{
+          padding: '16px 24px',
+          backgroundColor: contractTagStatus ? token.colorPrimaryBg : undefined,
+        }}
         borderbottom="true"
         vertical
         gap={16}

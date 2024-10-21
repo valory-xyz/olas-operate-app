@@ -40,7 +40,11 @@ export const PageStateProvider = ({ children }: PropsWithChildren) => {
 
   return (
     <PageStateContext.Provider
-      value={{ pageState, setPageState, isPageLoadedAndOneMinutePassed }}
+      value={{
+        pageState,
+        setPageState,
+        isPageLoadedAndOneMinutePassed,
+      }}
     >
       {children}
     </PageStateContext.Provider>

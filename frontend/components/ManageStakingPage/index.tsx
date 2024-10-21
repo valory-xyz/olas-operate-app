@@ -55,6 +55,12 @@ export const ManageStakingPage = () => {
     <Card
       title={<CardTitle title="Manage staking contract" />}
       bordered={false}
+      styles={{
+        body: {
+          paddingTop: 0,
+          paddingBottom: 0,
+        },
+      }}
       extra={
         <Button
           size="large"
@@ -71,7 +77,14 @@ export const ManageStakingPage = () => {
         />
       )}
 
-      <CardSection borderbottom="true" vertical gap={16}>
+      <CardSection
+        style={{
+          padding: 24,
+        }}
+        borderbottom="true"
+        vertical
+        gap={16}
+      >
         {`Browse ${otherStakingProgramIds.length} staking contract${otherStakingProgramIds.length > 1 ? 's' : ''}.`}
       </CardSection>
 

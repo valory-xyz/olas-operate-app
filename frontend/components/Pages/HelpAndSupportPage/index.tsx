@@ -74,6 +74,12 @@ export const HelpAndSupport = () => {
     <Card
       title={<SettingsTitle />}
       bordered={false}
+      styles={{
+        body: {
+          paddingTop: 0,
+          paddingBottom: 0,
+        },
+      }}
       extra={
         <Button
           size="large"

@@ -66,11 +66,12 @@ export const SetupEoaFunding = ({
         Deposit {MIN_ETH_BALANCE_THRESHOLDS[Chain.GNOSIS].safeCreation} XDAI on
         Gnosis
       </Typography.Title>
-      <Typography.Paragraph>
+      <Typography.Paragraph style={{ marginBottom: 0 }}>
         The app needs these funds to create your account on-chain.
       </Typography.Paragraph>
 
       <CardSection
+        padding="12px 24px"
         bordertop="true"
         borderbottom={isFundedMasterEoa ? 'true' : 'false'}
       >

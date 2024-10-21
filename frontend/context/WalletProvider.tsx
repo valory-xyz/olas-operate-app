@@ -29,9 +29,12 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
   const masterSafeAddress: Address | undefined = wallets?.[0]?.safe;
 
   const updateWallets = async () => {
-    const wallets = await WalletService.getWallets();
-    if (!wallets) return;
-    setWallets(wallets);
+    try {
+      const wallets = await WalletService.getWallets();
+      setWallets(wallets);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   useInterval(updateWallets, isOnline ? FIVE_SECONDS_INTERVAL : null);

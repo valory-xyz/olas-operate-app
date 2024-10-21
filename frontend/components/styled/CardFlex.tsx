@@ -13,7 +13,7 @@ export const CardFlex = styled(Card).withConfig({
       const { gap, noBodyPadding } = props;
 
       const gapStyle = gap ? `gap: ${gap}px;` : '';
-      const paddingStyle = noBodyPadding === 'true' ? 'padding: 0;' : undefined;
+      const paddingStyle = noBodyPadding === 'true' ? 'padding: 0;' : '';
 
       return `${gapStyle} ${paddingStyle}`;
     }}

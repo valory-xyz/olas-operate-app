@@ -1,18 +1,16 @@
-import { RightOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Skeleton, Tag, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Pages } from '@/enums/PageState';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
-import { usePageState } from '@/hooks/usePageState';
 import { useReward } from '@/hooks/useReward';
 import { useStore } from '@/hooks/useStore';
 import { balanceFormat } from '@/utils/numberFormatters';
 
 import { ConfettiAnimation } from '../../../Confetti/ConfettiAnimation';
 import { CardSection } from '../../../styled/CardSection';
+import { RewardsStreak } from './RewardsStreak';
 import { StakingRewardsThisEpoch } from './StakingRewardsThisEpoch';
 
 const { Text, Title } = Typography;
@@ -30,14 +28,12 @@ const getFormattedReward = (reward: number | undefined) =>
 const DisplayRewards = () => {
   const { availableRewardsForEpochEth, isEligibleForRewards } = useReward();
   const { isBalanceLoaded } = useBalance();
-  const { goto } = usePageState();
 
   const reward = getFormattedReward(availableRewardsForEpochEth);
 
   return (
     <CardSection vertical gap={8} padding="16px 24px" align="start">
       <StakingRewardsThisEpoch />
-
       {isBalanceLoaded ? (
         <Flex align="center" gap={12}>
           <Text className="text-xl font-weight-600">{reward} OLAS&nbsp;</Text>
@@ -50,15 +46,6 @@ const DisplayRewards = () => {
       ) : (
         <Loader />
       )}
-
-      <Text
-        type="secondary"
-        className="text-sm pointer hover-underline"
-        onClick={() => goto(Pages.RewardsHistory)}
-      >
-        See rewards history
-        <RightOutlined style={{ fontSize: 12, paddingLeft: 6 }} />
-      </Text>
     </CardSection>
   );
 };
@@ -178,9 +165,10 @@ const NotifyRewardsModal = () => {
   );
 };
 
-export const MainRewards = () => (
+export const RewardsSection = () => (
   <>
     <DisplayRewards />
+    <RewardsStreak />
     <NotifyRewardsModal />
   </>
 );

@@ -1105,7 +1105,7 @@ class ServiceManager:
 
             if (
                 staking_state == StakingState.STAKED
-                and current_staking_program != target_staking_contract
+                and current_staking_program != target_staking_program
                 and can_unstake
             ):
                 self.logger.info(

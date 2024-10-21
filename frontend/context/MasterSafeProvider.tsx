@@ -19,7 +19,7 @@ export const MasterSafeContext = createContext<{
   masterSafeAddress?: Address;
   masterEoaAddress?: Address;
   masterSafeOwners?: Address[];
-  updateMasterSafeOwners?: () => Promise<void>;
+  updateMasterSafeOwners: () => Promise<void>;
 }>({
   backupSafeAddress: undefined,
   masterSafeAddress: undefined,
@@ -38,7 +38,11 @@ export const MasterSafeProvider = ({ children }: PropsWithChildren) => {
     if (!masterEoaAddress) return;
     if (!masterSafeOwners) return;
     if (!masterSafeOwners.length) return;
-    if (!masterSafeOwners.includes(masterEoaAddress)) {
+    if (
+      !masterSafeOwners.find(
+        (address) => address.toLowerCase() === masterEoaAddress.toLowerCase(),
+      )
+    ) {
       console.error('Safe not owned by master EOA');
       return;
     }

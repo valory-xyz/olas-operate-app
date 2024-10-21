@@ -3,9 +3,10 @@
 @import '@fontsource/inter/700.css';
 @import '@fontsource/inter/900.css';
 
-html, body {
+html,
+body {
   margin: 0;
-  padding: 0;   
+  padding: 0;
   height: auto;
 }
 
@@ -17,7 +18,11 @@ body {
   overflow: hidden;
 }
 
-button, input, select, textarea, .ant-input-suffix {
+button,
+input,
+select,
+textarea,
+.ant-input-suffix {
   -webkit-app-region: no-drag;
 }
 
@@ -26,17 +31,20 @@ button, input, select, textarea, .ant-input-suffix {
 }
 
 ::-webkit-scrollbar-track {
-  background: #FFFFFF; /* Scrollbar track background */
+  background: #FFFFFF;
+  /* Scrollbar track background */
   border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #C2CBD7; /* Scrollbar color */
+  background: #C2CBD7;
+  /* Scrollbar color */
   border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9AA1AA; /* Scrollbar color when hovered */
+  background: #9AA1AA;
+  /* Scrollbar color when hovered */
 }
 
 // antd overrides
@@ -106,12 +114,11 @@ button, input, select, textarea, .ant-input-suffix {
 
   &--full-width {
     flex: auto;
-    margin: 0;
     border-radius: 0;
     border-left: 0;
     border-right: 0;
     padding: 12px 24px;
-    margin: -24px;
+    margin: 0;
   }
 }
 
@@ -167,21 +174,33 @@ button, input, select, textarea, .ant-input-suffix {
 }
 
 
+.pl-16 {
+  padding-left: 16px !important;
+}
+
+.pr-16 {
+  padding-right: 16px !important;
+}
+
+
 .mx-auto {
   margin-left: auto !important;
   margin-right: auto !important;
-} 
+}
 
 // font size
 .text-xl {
   font-size: 20px;
 }
+
 .text-base {
   font-size: 16px !important;
 }
+
 .text-sm {
   font-size: 14px !important;
 }
+
 .text-xs {
   font-size: 12px !important;
 }
@@ -198,9 +217,20 @@ button, input, select, textarea, .ant-input-suffix {
 .text-light {
   color: #4D596A !important;
 }
+
+.text-right {
+  text-align: right !important;
+}
+
+// font color
 .text-light {
   color: #4D596A !important;
 }
+
+.text-light {
+  color: #4D596A !important;
+}
+
 .text-primary {
   color: #7E22CE !important;
 }
@@ -213,6 +243,7 @@ button, input, select, textarea, .ant-input-suffix {
 .font-weight-600 {
   font-weight: 600 !important;
 }
+
 .font-normal {
   font-weight: normal !important;
 }
@@ -231,6 +262,7 @@ ul.alert-list {
 .w-3\/4 {
   width: 75% !important;
 }
+
 .w-full {
   width: 100% !important;
 }

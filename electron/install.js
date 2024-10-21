@@ -9,12 +9,6 @@ const { logger } = require('./logger');
 const { execSync } = require('child_process');
 const { paths } = require('./constants');
 const homedir = os.homedir();
-/**
- * current version of the pearl release
- * - use "" (nothing as a suffix) for latest release candidate, for example "0.1.0rc26"
- * - use "alpha" for alpha release, for example "0.1.0rc26-alpha"
- */
-const OlasMiddlewareVersion = '0.1.0rc158';
 
 const path = require('path');
 const { app } = require('electron');

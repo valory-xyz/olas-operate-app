@@ -40,10 +40,16 @@ export const useStakingProgram = () => {
     ];
   }, [activeStakingProgramId]);
 
+  const defaultStakingProgramAddress =
+    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS][
+      defaultStakingProgramId
+    ];
+
   return {
-    activeStakingProgramId,
     activeStakingProgramAddress,
+    activeStakingProgramId,
     activeStakingProgramMeta,
+    defaultStakingProgramAddress,
     defaultStakingProgramId,
     defaultStakingProgramMeta,
     isActiveStakingProgramLoaded,

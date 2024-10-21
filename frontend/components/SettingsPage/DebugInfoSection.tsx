@@ -166,7 +166,7 @@ export const DebugInfoSection = () => {
   ]);
 
   return (
-    <CardSection vertical gap={8} align="start">
+    <CardSection vertical gap={8} align="start" padding="24px">
       <Text strong>Debug data (for devs)</Text>
       <Button type="primary" ghost size="large" onClick={showModal}>
         Show debug data

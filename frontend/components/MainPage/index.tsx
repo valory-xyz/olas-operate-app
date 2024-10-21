@@ -11,14 +11,13 @@ import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { MainHeader } from './header';
-import { AddBackupWalletAlert } from './sections/AddBackupWalletAlert';
 import { AddFundsSection } from './sections/AddFundsSection';
+import { AlertSections } from './sections/AlertSections';
 import { GasBalanceSection } from './sections/GasBalanceSection';
 import { KeepAgentRunningSection } from './sections/KeepAgentRunningSection';
 import { MainNeedsFunds } from './sections/NeedsFundsSection';
-import { NewStakingProgramAlertSection } from './sections/NewStakingProgramAlertSection';
 import { MainOlasBalance } from './sections/OlasBalanceSection';
-import { MainRewards } from './sections/RewardsSection/RewardsSection';
+import { RewardsSection } from './sections/RewardsSection';
 import { StakingContractUpdate } from './sections/StakingContractUpdate';
 
 export const Main = () => {
@@ -43,6 +42,12 @@ export const Main = () => {
   return (
     <Card
       title={<MainHeader />}
+      styles={{
+        body: {
+          paddingTop: 0,
+          paddingBottom: 0,
+        },
+      }}
       extra={
         <Flex gap={8}>
           <Button
@@ -62,13 +67,9 @@ export const Main = () => {
       style={{ borderTopColor: 'transparent' }}
     >
       <Flex vertical>
-        {!backupSafeAddress && <AddBackupWalletAlert />}
-        {currentStakingProgram === StakingProgramId.Alpha && (
-          <NewStakingProgramAlertSection />
-        )}
-
+        <AlertSections />
         <MainOlasBalance isBorderTopVisible={!hideMainOlasBalanceTopBorder} />
-        <MainRewards />
+        <RewardsSection />
         <KeepAgentRunningSection />
         <StakingContractUpdate />
         <GasBalanceSection />

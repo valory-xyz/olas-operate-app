@@ -84,7 +84,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
           setHasInitialLoaded(true);
         })
         .catch((e) => {
-          message.error(e.message);
+          console.error(e);
+          // message.error(e.message); Commented out to avoid showing error message; need to handle "isAuthenticated" in a better way
         }),
     [],
   );

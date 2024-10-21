@@ -47,7 +47,7 @@ export const AddFundsSection = () => {
 
   return (
     <>
-      <CustomizedCardSection gap={12}>
+      <CustomizedCardSection gap={12} padding="24px">
         <Button
           type="default"
           size="large"
@@ -89,7 +89,7 @@ export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
     [masterSafeAddress],
   );
   return (
-    <CardSection vertical ref={ref}>
+    <Flex vertical ref={ref}>
       <AddFundsWarningAlertSection />
       <AddFundsAddressSection
         truncatedFundingAddress={truncatedFundingAddress}
@@ -97,7 +97,7 @@ export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
         handleCopy={handleCopyAddress}
       />
       <AddFundsGetTokensSection />
-    </CardSection>
+    </Flex>
   );
 });
 OpenAddFundsSection.displayName = 'OpenAddFundsSection';

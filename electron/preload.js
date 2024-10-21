@@ -24,4 +24,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.send('show-notification', title, description),
   saveLogs: (data) => ipcRenderer.invoke('save-logs', data),
   openPath: (filePath) => ipcRenderer.send('open-path', filePath),
+  getAppVersion: () => ipcRenderer.invoke('app-version'),
 });

@@ -28,8 +28,8 @@ import { usePageState } from '@/hooks/usePageState';
 import { balanceFormat } from '@/utils/numberFormatters';
 import { formatToMonthDay, formatToShortDateTime } from '@/utils/time';
 
+import { useRewardsHistory } from '../../hooks/useRewardsHistory';
 import { EpochDetails, StakingReward } from './types';
-import { useRewardsHistory } from './useRewardsHistory';
 
 const { Text, Title } = Typography;
 const MIN_HEIGHT = 400;

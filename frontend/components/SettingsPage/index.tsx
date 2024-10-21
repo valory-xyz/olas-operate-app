@@ -93,6 +93,12 @@ const SettingsMain = () => {
     <Card
       title={<SettingsTitle />}
       bordered={false}
+      styles={{
+        body: {
+          paddingTop: 0,
+          paddingBottom: 0,
+        },
+      }}
       extra={
         <Button
           size="large"
@@ -102,7 +108,12 @@ const SettingsMain = () => {
       }
     >
       {/* Password */}
-      <CardSection borderbottom="true" justify="space-between" align="center">
+      <CardSection
+        padding="24px"
+        borderbottom="true"
+        justify="space-between"
+        align="center"
+      >
         <Flex vertical>
           <Paragraph strong>Password</Paragraph>
           <Text style={{ lineHeight: 1 }}>********</Text>
@@ -111,6 +122,7 @@ const SettingsMain = () => {
 
       {/* Wallet backup */}
       <CardSection
+        padding="24px"
         borderbottom={backupSafeAddress ? 'true' : 'false'}
         vertical
         gap={8}
