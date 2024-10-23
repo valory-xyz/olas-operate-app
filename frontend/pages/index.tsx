@@ -7,7 +7,7 @@ import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { RewardsHistory } from '@/components/RewardsHistory/RewardsHistory';
 import { Settings } from '@/components/SettingsPage';
 import { Setup } from '@/components/SetupPage';
-import { YourWalletPage } from '@/components/YourWalletPage';
+import { YourWallet } from '@/components/YourWalletPage/YourWallet';
 import { Pages } from '@/enums/PageState';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
@@ -53,7 +53,7 @@ export default function Home() {
       case Pages.ManageStaking:
         return <ManageStakingPage />;
       case Pages.YourWalletBreakdown:
-        return <YourWalletPage />;
+        return <YourWallet />;
       case Pages.RewardsHistory:
         return <RewardsHistory />;
       case Pages.AddBackupWalletViaSafe:

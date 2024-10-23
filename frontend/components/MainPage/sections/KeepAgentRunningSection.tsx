@@ -9,7 +9,7 @@ import { CardSection } from '../../styled/CardSection';
 
 const { Text } = Typography;
 
-const cardSectionStyle = { marginBottom: '-1px', marginTop: '24px' };
+const COVER_BLOCK_BORDERS_STYLE = { marginBottom: '-1px' };
 
 export const KeepAgentRunningSection = () => {
   const { storeState } = useStore();
@@ -19,7 +19,7 @@ export const KeepAgentRunningSection = () => {
   if (serviceStatus !== DeploymentStatus.DEPLOYED) return null;
 
   return (
-    <CardSection style={cardSectionStyle}>
+    <CardSection style={COVER_BLOCK_BORDERS_STYLE}>
       <CustomAlert
         type="info"
         fullWidth
@@ -27,7 +27,7 @@ export const KeepAgentRunningSection = () => {
         message={
           <Flex vertical>
             <Text>Your agent has not hit its target yet.</Text>
-            <Text>Keep the agent running to earn today&apos;s rewards.</Text>
+            <Text>Keep the agent running to earn today’s rewards.</Text>
           </Flex>
         }
       />
