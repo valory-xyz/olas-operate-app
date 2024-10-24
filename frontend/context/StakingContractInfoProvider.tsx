@@ -90,20 +90,22 @@ export const StakingContractInfoProvider = ({
     const beta = AutonolasService.getStakingContractInfoByStakingProgram(
       StakingProgramId.Beta,
     );
-    const beta_2 = AutonolasService.getStakingContractInfoByStakingProgram(
+    const beta2 = AutonolasService.getStakingContractInfoByStakingProgram(
       StakingProgramId.Beta2,
     );
+    const betaMechMarketplace =
+      AutonolasService.getStakingContractInfoByStakingProgram(
+        StakingProgramId.BetaMechMarketplace,
+      );
 
     try {
-      const [alphaInfo, betaInfo, beta2Info] = await Promise.all([
-        alpha,
-        beta,
-        beta_2,
-      ]);
+      const [alphaInfo, betaInfo, beta2Info, betaMechMarketplaceInfo] =
+        await Promise.all([alpha, beta, beta2, betaMechMarketplace]);
       setStakingContractInfoRecord({
         [StakingProgramId.Alpha]: alphaInfo,
         [StakingProgramId.Beta]: betaInfo,
         [StakingProgramId.Beta2]: beta2Info,
+        [StakingProgramId.BetaMechMarketplace]: betaMechMarketplaceInfo,
       });
       setIsStakingContractInfoLoaded(true);
     } catch (e) {

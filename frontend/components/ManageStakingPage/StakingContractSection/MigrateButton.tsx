@@ -69,6 +69,8 @@ export const MigrateButton = ({ stakingProgramId }: MigrateButtonProps) => {
               stakingProgramId,
               serviceTemplate,
               deploy: true,
+              useMechMarketplace:
+                stakingProgramId === StakingProgramId.BetaMechMarketplace,
             });
 
             await updateStakingProgram();

@@ -187,6 +187,7 @@ class ConfigurationTemplate(TypedDict):
     rpc: str
     threshold: int
     use_staking: bool
+    use_mech_marketplace: bool
     cost_of_bond: int
     fund_requirements: FundRequirementsTemplate
 
@@ -230,6 +231,7 @@ class OnChainUserParams(LocalResource):
     nft: str
     threshold: int
     use_staking: bool
+    use_mech_marketplace: bool
     cost_of_bond: int
     fund_requirements: OnChainFundRequirements
 

@@ -47,10 +47,12 @@ const createService = async ({
   deploy,
   serviceTemplate,
   stakingProgramId,
+  useMechMarketplace = false,
 }: {
   deploy: boolean;
   serviceTemplate: ServiceTemplate;
   stakingProgramId: StakingProgramId;
+  useMechMarketplace?: boolean;
 }): Promise<Service> =>
   new Promise((resolve, reject) =>
     fetch(`${BACKEND_URL}/services`, {
@@ -63,6 +65,7 @@ const createService = async ({
             ...serviceTemplate.configurations[100],
             staking_program_id: stakingProgramId,
             rpc: `${process.env.GNOSIS_RPC}`,
+            use_mech_marketplace: useMechMarketplace,
           },
         },
       }),
@@ -77,57 +80,44 @@ const createService = async ({
     }),
   );
 
-const deployOnChain = async (serviceHash: ServiceHash): Promise<Deployment> =>
-  fetch(`${BACKEND_URL}/services/${serviceHash}/onchain/deploy`, {
-    method: 'POST',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
-  }).then((response) => {
-    if (response.ok) {
-      return response.json();
-    }
-    throw new Error('Failed to deploy service on chain');
-  });
+// const deployOnChain = async (serviceHash: ServiceHash): Promise<Deployment> =>
+//   fetch(`${BACKEND_URL}/services/${serviceHash}/onchain/deploy`, {
+//     method: 'POST',
+//     headers: {
+//       ...CONTENT_TYPE_JSON_UTF8,
+//     },
+//   }).then((response) => {
+//     if (response.ok) {
+//       return response.json();
+//     }
+//     throw new Error('Failed to deploy service on chain');
+//   });
 
-const stopOnChain = async (serviceHash: ServiceHash): Promise<Deployment> =>
-  fetch(`${BACKEND_URL}/services/${serviceHash}/onchain/stop`, {
-    method: 'POST',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
-  }).then((response) => {
-    if (response.ok) {
-      return response.json();
-    }
-    throw new Error('Failed to stop service on chain');
-  });
+// const buildDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
+//   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/build`, {
+//     method: 'POST',
+//     headers: {
+//       ...CONTENT_TYPE_JSON_UTF8,
+//     },
+//   }).then((response) => {
+//     if (response.ok) {
+//       return response.json();
+//     }
+//     throw new Error('Failed to build deployment');
+//   });
 
-const buildDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
-  fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/build`, {
-    method: 'POST',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
-  }).then((response) => {
-    if (response.ok) {
-      return response.json();
-    }
-    throw new Error('Failed to build deployment');
-  });
-
-const startDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
-  fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/start`, {
-    method: 'POST',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
-  }).then((response) => {
-    if (response.ok) {
-      return response.json();
-    }
-    throw new Error('Failed to start deployment');
-  });
+// const startDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
+//   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/start`, {
+//     method: 'POST',
+//     headers: {
+//       ...CONTENT_TYPE_JSON_UTF8,
+//     },
+//   }).then((response) => {
+//     if (response.ok) {
+//       return response.json();
+//     }
+//     throw new Error('Failed to start deployment');
+//   });
 
 const stopDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/stop`, {
@@ -142,20 +132,20 @@ const stopDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
     throw new Error('Failed to stop deployment');
   });
 
-const deleteDeployment = async (
-  serviceHash: ServiceHash,
-): Promise<Deployment> =>
-  fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/delete`, {
-    method: 'POST',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
-  }).then((response) => {
-    if (response.ok) {
-      return response.json();
-    }
-    throw new Error('Failed to delete deployment');
-  });
+// const deleteDeployment = async (
+//   serviceHash: ServiceHash,
+// ): Promise<Deployment> =>
+//   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/delete`, {
+//     method: 'POST',
+//     headers: {
+//       ...CONTENT_TYPE_JSON_UTF8,
+//     },
+//   }).then((response) => {
+//     if (response.ok) {
+//       return response.json();
+//     }
+//     throw new Error('Failed to delete deployment');
+//   });
 
 const getDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment`, {
@@ -175,10 +165,10 @@ export const ServicesService = {
   getServices,
   getDeployment,
   createService,
-  deployOnChain,
-  stopOnChain,
-  buildDeployment,
-  startDeployment,
+  // deployOnChain,
+  // stopOnChain,
+  // buildDeployment,
+  // startDeployment,
   stopDeployment,
-  deleteDeployment,
+  // deleteDeployment,
 };

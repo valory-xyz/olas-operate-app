@@ -4,6 +4,7 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { AGENT_MECH_ABI } from '@/abis/agentMech';
 import { MECH_ACTIVITY_CHECKER_ABI } from '@/abis/mechActivityChecker';
+import { REQUESTER_ACTIVITY_CHECKER_ABI } from '@/abis/requesterActivityChecker';
 import { SERVICE_REGISTRY_L2_ABI } from '@/abis/serviceRegistryL2';
 import { SERVICE_REGISTRY_TOKEN_UTILITY_ABI } from '@/abis/serviceRegistryTokenUtility';
 import { SERVICE_STAKING_TOKEN_MECH_USAGE_ABI } from '@/abis/serviceStakingTokenMechUsage';
@@ -11,6 +12,7 @@ import { Chain } from '@/client';
 import {
   AGENT_MECH_CONTRACT_ADDRESS,
   MECH_ACTIVITY_CHECKER_CONTRACT_ADDRESS,
+  REQUESTER_ACTIVITY_CHECKER_CONTRACT_ADDRESS,
   SERVICE_REGISTRY_L2_CONTRACT_ADDRESS,
   SERVICE_REGISTRY_TOKEN_UTILITY_CONTRACT_ADDRESS,
   SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES,
@@ -23,11 +25,6 @@ import { StakingContractInfo, StakingRewardsInfo } from '@/types/Autonolas';
 
 const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 const REQUIRED_MECH_REQUESTS_SAFETY_MARGIN = 1;
-
-const agentMechContract = new MulticallContract(
-  AGENT_MECH_CONTRACT_ADDRESS[Chain.GNOSIS],
-  AGENT_MECH_ABI.filter((abi) => abi.type === 'function'), // weird bug in the package where their filter doesn't work..
-);
 
 const ServiceStakingTokenAbi = SERVICE_STAKING_TOKEN_MECH_USAGE_ABI.filter(
   (abi) => abi.type === 'function',
@@ -55,21 +52,42 @@ const serviceStakingTokenMechUsageContracts: Record<
     ],
     ServiceStakingTokenAbi,
   ),
+  [StakingProgramId.BetaMechMarketplace]: new MulticallContract(
+    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS][
+      StakingProgramId.BetaMechMarketplace
+    ],
+    ServiceStakingTokenAbi,
+  ),
 };
 
 const serviceRegistryTokenUtilityContract = new MulticallContract(
   SERVICE_REGISTRY_TOKEN_UTILITY_CONTRACT_ADDRESS[Chain.GNOSIS],
-  SERVICE_REGISTRY_TOKEN_UTILITY_ABI.filter((abi) => abi.type === 'function'), // same as above
+  SERVICE_REGISTRY_TOKEN_UTILITY_ABI.filter((abi) => abi.type === 'function'),
 );
 
 const serviceRegistryL2Contract = new MulticallContract(
   SERVICE_REGISTRY_L2_CONTRACT_ADDRESS[Chain.GNOSIS],
-  SERVICE_REGISTRY_L2_ABI.filter((abi) => abi.type === 'function'), // same as above
+  SERVICE_REGISTRY_L2_ABI.filter((abi) => abi.type === 'function'),
 );
 
-const mechActivityCheckerContract = new MulticallContract(
+const agentMechContract = new MulticallContract(
+  AGENT_MECH_CONTRACT_ADDRESS[Chain.GNOSIS],
+  AGENT_MECH_ABI.filter((abi) => abi.type === 'function'),
+);
+
+const agentMechActivityCheckerContract = new MulticallContract(
   MECH_ACTIVITY_CHECKER_CONTRACT_ADDRESS[Chain.GNOSIS],
-  MECH_ACTIVITY_CHECKER_ABI.filter((abi) => abi.type === 'function'), // same as above
+  MECH_ACTIVITY_CHECKER_ABI.filter((abi) => abi.type === 'function'),
+);
+
+const mechMarketplaceContract = new MulticallContract(
+  MECH_ACTIVITY_CHECKER_CONTRACT_ADDRESS[Chain.GNOSIS],
+  MECH_ACTIVITY_CHECKER_ABI.filter((abi) => abi.type === 'function'),
+);
+
+const mechMarketplaceActivityCheckerContract = new MulticallContract(
+  REQUESTER_ACTIVITY_CHECKER_CONTRACT_ADDRESS[Chain.GNOSIS],
+  REQUESTER_ACTIVITY_CHECKER_ABI.filter((abi) => abi.type === 'function'),
 );
 
 const getAgentStakingRewardsInfo = async ({
@@ -84,13 +102,23 @@ const getAgentStakingRewardsInfo = async ({
   if (!agentMultisigAddress) return;
   if (!serviceId) return;
 
+  const mechContract =
+    stakingProgram === StakingProgramId.BetaMechMarketplace
+      ? mechMarketplaceContract
+      : agentMechContract;
+
+  const mechActivityContract =
+    stakingProgram === StakingProgramId.BetaMechMarketplace
+      ? mechMarketplaceActivityCheckerContract
+      : agentMechActivityCheckerContract;
+
   const contractCalls = [
-    agentMechContract.getRequestsCount(agentMultisigAddress),
+    mechContract.getRequestsCount(agentMultisigAddress),
     serviceStakingTokenMechUsageContracts[stakingProgram].getServiceInfo(
       serviceId,
     ),
     serviceStakingTokenMechUsageContracts[stakingProgram].livenessPeriod(),
-    mechActivityCheckerContract.livenessRatio(),
+    mechActivityContract.livenessRatio(),
     serviceStakingTokenMechUsageContracts[stakingProgram].rewardsPerSecond(),
     serviceStakingTokenMechUsageContracts[
       stakingProgram

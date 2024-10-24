@@ -67,6 +67,7 @@ from operate.constants import (
 )
 from operate.http.exceptions import NotAllowed
 from operate.keys import Keys
+from operate.ledger.profiles import STAKING
 from operate.resource import LocalResource
 from operate.services.deployment_runner import run_host_deployment, stop_host_deployment
 from operate.services.utils import tendermint
@@ -87,7 +88,7 @@ from operate.types import (
 )
 
 
-# pylint: disable=no-member,redefined-builtin,too-many-instance-attributes
+# pylint: disable=no-member,redefined-builtin,too-many-instance-attributes,too-many-locals
 
 SAFE_CONTRACT_ADDRESS = "safe_contract_address"
 ALL_PARTICIPANTS = "all_participants"
@@ -482,16 +483,33 @@ class Deployment(LocalResource):
         for node in deployment["services"]:
             if "abci" in node:
                 deployment["services"][node]["volumes"].extend(_volumes)
-                if (
-                    "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE=0"
-                    in deployment["services"][node]["environment"]
-                ):
-                    deployment["services"][node]["environment"].remove(
-                        "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE=0"
-                    )
-                    deployment["services"][node]["environment"].append(
-                        "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE=10000000000000000"
-                    )
+
+                # Patch - update variables
+
+                # TODO Possibly a best way to do this is within the method
+                # 'ServiceManager.deploy_service_locally' and set the variables
+                # as environment variables. Note that part of the variables of the agent
+                # are already set using 'os.environ' on the ServiceManager, and are
+                # thus set up 'by coincidence' here.
+                # See also method '_build_host' below.
+
+                user_params = home_chain_data.user_params
+                staking_contract = STAKING[home_chain_ledger_config.chain][
+                    user_params.staking_program_id
+                ]
+
+                env_var_updates = {
+                    "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE=0": "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE=10000000000000000",
+                    "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_USE_MECH_MARKETPLACE=False": f"SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_USE_MECH_MARKETPLACE={str(home_chain_data.user_params.use_mech_marketplace).capitalize()}",
+                    "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_MARKETPLACE_CONFIG_REQUESTER_STAKING_INSTANCE_ADDRESS=0x0000000000000000000000000000000000000000": f"SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_MARKETPLACE_CONFIG_REQUESTER_STAKING_INSTANCE_ADDRESS={staking_contract}",
+                }
+
+                for old_value, new_value in env_var_updates.items():
+                    if old_value in deployment["services"][node]["environment"]:
+                        deployment["services"][node]["environment"].remove(old_value)
+                        deployment["services"][node]["environment"].append(new_value)
+
+                # End patch
 
         with (build / DOCKER_COMPOSE_YAML).open("w", encoding="utf-8") as stream:
             yaml_dump(data=deployment, stream=stream)
@@ -578,16 +596,37 @@ class Deployment(LocalResource):
                 shutil.rmtree(build)
             raise e
 
-        # Mech price patch.
+        # Patch - update variables
+
+        # TODO Possibly a best way to do this is within the method
+        # 'ServiceManager.deploy_service_locally' and set the variables
+        # as environment variables. Note that part of the variables of the agent
+        # are already set using 'os.environ' on the ServiceManager, and are
+        # thus set up 'by coincidence' here.
+        # See also method '_build_docker' above.
         agent_vars = json.loads(Path(build, "agent.json").read_text(encoding="utf-8"))
-        if "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE" in agent_vars:
-            agent_vars[
-                "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE"
-            ] = "10000000000000000"
-            Path(build, "agent.json").write_text(
-                json.dumps(agent_vars, indent=4),
-                encoding="utf-8",
-            )
+
+        user_params = chain_data.user_params
+        staking_contract = STAKING[ledger_config.chain][user_params.staking_program_id]
+
+        # Mech price patch, mech marketplace patch
+        agent_var_updates = {
+            "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE": "10000000000000000",
+            "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_USE_MECH_MARKETPLACE": str(
+                chain_data.user_params.use_mech_marketplace
+            ).capitalize(),
+            "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_MARKETPLACE_CONFIG_REQUESTER_STAKING_INSTANCE_ADDRESS": staking_contract,
+        }
+
+        for key, value in agent_var_updates.items():
+            if key in agent_vars:
+                agent_vars[key] = value
+
+        Path(build, "agent.json").write_text(
+            json.dumps(agent_vars, indent=4),
+            encoding="utf-8",
+        )
+        # End patch
 
         self.status = DeploymentStatus.BUILT
         self.store()
