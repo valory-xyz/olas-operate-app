@@ -25,4 +25,9 @@ export const STAKING_PROGRAM_META: Record<
     canMigrateTo: [StakingProgramId.Beta],
     deprecated: false,
   },
+  [StakingProgramId.OptimusAlpha]: {
+    name: 'Optimus Alpha',
+    canMigrateTo: [],
+    deprecated: false,
+  },
 };

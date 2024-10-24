@@ -41,6 +41,8 @@ _CHAIN_NAME_TO_ENUM = {
     "goerli": 1,
     "gnosis": 2,
     "solana": 3,
+    "optimism": 4,
+    "base": 5,
 }
 
 _CHAIN_ID_TO_CHAIN_NAME = {
@@ -48,6 +50,8 @@ _CHAIN_ID_TO_CHAIN_NAME = {
     5: "goerli",
     100: "gnosis",
     1399811149: "solana",
+    10: "optimism",
+    8453: "base",
 }
 
 _CHAIN_NAME_TO_ID = {val: key for key, val in _CHAIN_ID_TO_CHAIN_NAME.items()}
@@ -87,6 +91,8 @@ class ChainType(enum.IntEnum):
     GOERLI = 1
     GNOSIS = 2
     SOLANA = 3
+    OPTIMISM = 4
+    BASE = 5
 
     @property
     def id(self) -> int:
@@ -189,6 +195,7 @@ class ConfigurationTemplate(TypedDict):
     use_staking: bool
     cost_of_bond: int
     fund_requirements: FundRequirementsTemplate
+    fallback_chain_params: t.Optional[t.Dict]
 
 
 ConfigurationTemplates = t.Dict[str, ConfigurationTemplate]

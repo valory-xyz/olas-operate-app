@@ -748,7 +748,7 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
 
 @group(name="operate")
 def _operate() -> None:
-    """Operate - deploy autonomous services."""
+    """Operate -- deploy autonomous services."""
 
 
 @_operate.command(name="daemon")
