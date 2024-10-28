@@ -1,4 +1,4 @@
-import { Card, Flex, Skeleton, Typography } from 'antd';
+import { Card, Flex, Skeleton, Tooltip, Typography } from 'antd';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import styled from 'styled-components';
@@ -25,7 +25,7 @@ import {
   XdaiTitle,
 } from './Titles';
 
-const { Text } = Typography;
+const { Text, Paragraph } = Typography;
 
 const NftCard = styled(Card)`
   .ant-card-body {
@@ -79,7 +79,18 @@ const AgentTitle = () => {
             Your agent
           </Text>
           <Flex justify="space-between">
-            <Text strong>{agentName}</Text>
+            <Tooltip
+              arrow={false}
+              title={
+                <Paragraph className="text-sm m-0">
+                  This is your agent’s unique name
+                </Paragraph>
+              }
+              placement="top"
+            >
+              <Text strong>{agentName}</Text>
+            </Tooltip>
+
             <a
               href={`https://predict.olas.network/agents/${agentSafeAddress}`}
               target="_blank"
