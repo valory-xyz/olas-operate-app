@@ -14,6 +14,7 @@ import { generateName } from '@/utils/agentName';
 import { balanceFormat } from '@/utils/numberFormatters';
 import { truncateAddress } from '@/utils/truncate';
 
+import { AddressLink } from '../AddressLink';
 import { InfoBreakdownList } from '../InfoBreakdown';
 import { Container, infoBreakdownParentStyle } from './styles';
 import {
@@ -34,6 +35,26 @@ const NftCard = styled(Card)`
     }
   }
 `;
+
+const SafeAddress = () => {
+  const { multisigAddress } = useAddress();
+
+  return (
+    <Flex vertical gap={8}>
+      <InfoBreakdownList
+        list={[
+          {
+            left: 'Wallet Address',
+            leftClassName: 'text-light text-sm',
+            right: <AddressLink address={multisigAddress} />,
+            rightClassName: 'font-normal text-sm',
+          },
+        ]}
+        parentStyle={infoBreakdownParentStyle}
+      />
+    </Flex>
+  );
+};
 
 const ServiceAndNftDetails = () => {
   const { serviceId } = useServices();
@@ -146,6 +167,8 @@ export const YourAgentWallet = () => {
             </Flex>
           </Flex>
         </Flex>
+
+        <SafeAddress />
 
         <Flex vertical gap={8}>
           <OlasTitle />
