@@ -56,6 +56,44 @@ const SafeAddress = () => {
   );
 };
 
+const AgentTitle = () => {
+  const { multisigAddress: agentSafeAddress } = useAddress();
+
+  const agentName = useMemo(
+    () => (agentSafeAddress ? generateName(agentSafeAddress) : '--'),
+    [agentSafeAddress],
+  );
+
+  return (
+    <Flex vertical gap={12}>
+      <Flex gap={12}>
+        <Image
+          width={36}
+          height={36}
+          alt="Agent wallet"
+          src="/agent-wallet.png"
+        />
+
+        <Flex vertical className="w-full">
+          <Text className="m-0 text-sm" type="secondary">
+            Your agent
+          </Text>
+          <Flex justify="space-between">
+            <Text strong>{agentName}</Text>
+            <a
+              href={`https://predict.olas.network/agents/${agentSafeAddress}`}
+              target="_blank"
+              className="text-sm"
+            >
+              Agent profile {UNICODE_SYMBOLS.EXTERNAL_LINK}
+            </a>
+          </Flex>
+        </Flex>
+      </Flex>
+    </Flex>
+  );
+};
+
 const ServiceAndNftDetails = () => {
   const { serviceId } = useServices();
   const serviceAddress =
@@ -105,15 +143,7 @@ export const YourAgentWallet = () => {
     isEligibleForRewards,
     accruedServiceStakingRewards,
   } = useReward();
-  const {
-    instanceAddress: agentEoaAddress,
-    multisigAddress: agentSafeAddress,
-  } = useAddress();
-
-  const agentName = useMemo(
-    () => (agentSafeAddress ? generateName(agentSafeAddress) : '--'),
-    [agentSafeAddress],
-  );
+  const { instanceAddress: agentEoaAddress } = useAddress();
 
   const reward = useMemo(() => {
     if (!isBalanceLoaded) return <Skeleton.Input size="small" active />;
@@ -139,35 +169,8 @@ export const YourAgentWallet = () => {
   }, [agentSafeBalance?.OLAS, accruedServiceStakingRewards, reward]);
 
   return (
-    <Card>
+    <Card title={<AgentTitle />}>
       <Container>
-        <Flex vertical gap={12}>
-          <Flex gap={12}>
-            <Image
-              width={36}
-              height={36}
-              alt="Agent wallet"
-              src="/agent-wallet.png"
-            />
-
-            <Flex vertical className="w-full">
-              <Text className="m-0 text-sm" type="secondary">
-                Your agent
-              </Text>
-              <Flex justify="space-between">
-                <Text strong>{agentName}</Text>
-                <a
-                  href={`https://predict.olas.network/agents/${agentSafeAddress}`}
-                  target="_blank"
-                  className="text-sm"
-                >
-                  Agent profile {UNICODE_SYMBOLS.EXTERNAL_LINK}
-                </a>
-              </Flex>
-            </Flex>
-          </Flex>
-        </Flex>
-
         <SafeAddress />
 
         <Flex vertical gap={8}>
