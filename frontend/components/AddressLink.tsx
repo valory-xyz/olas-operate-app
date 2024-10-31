@@ -1,4 +1,6 @@
+import { MiddlewareChain } from '@/client';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { EXPLORER_URL } from '@/constants/urls';
 import { Address } from '@/types/Address';
 import { truncateAddress } from '@/utils/truncate';
 
@@ -11,7 +13,10 @@ export const AddressLink = ({
   if (!address) return null;
 
   return (
-    <a target="_blank" href={`https://gnosisscan.io/address/${address}`}>
+    <a
+      target="_blank"
+      href={`${EXPLORER_URL[MiddlewareChain.OPTIMISM]}/address/${address}`}
+    >
       {truncateAddress(address)}
 
       {hideLinkArrow ? null : (

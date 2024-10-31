@@ -1,6 +1,6 @@
 import { useContext, useMemo } from 'react';
 
-import { Chain } from '@/client';
+import { MiddlewareChain } from '@/client';
 import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/constants/contractAddresses';
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import {
@@ -36,13 +36,13 @@ export const useStakingProgram = () => {
 
   const activeStakingProgramAddress = useMemo(() => {
     if (!activeStakingProgramId) return;
-    return SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.OPTIMISM][
+    return SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[MiddlewareChain.OPTIMISM][
       activeStakingProgramId
     ];
   }, [activeStakingProgramId]);
 
   const defaultStakingProgramAddress =
-    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.OPTIMISM][
+    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[MiddlewareChain.OPTIMISM][
       DEFAULT_STAKING_PROGRAM_ID
     ];
 

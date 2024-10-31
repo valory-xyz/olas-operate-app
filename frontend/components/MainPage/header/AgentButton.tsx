@@ -2,8 +2,9 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { Button, ButtonProps, Flex, Popover, Tooltip, Typography } from 'antd';
 import { useCallback, useMemo } from 'react';
 
-import { Chain, DeploymentStatus } from '@/client';
+import { DeploymentStatus, MiddlewareChain } from '@/client';
 import { COLOR } from '@/constants/colors';
+import { DEFAULT_STAKING_PROGRAM_ID } from '@/context/StakingProgramProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -146,8 +147,7 @@ const AgentNotRunningButton = () => {
     setIsPaused: setIsStakingContractInfoPollingPaused,
     updateActiveStakingContractInfo,
   } = useStakingContractInfo();
-  const { activeStakingProgramId, defaultStakingProgramId } =
-    useStakingProgram();
+  const { activeStakingProgramId } = useStakingProgram();
 
   // const minStakingDeposit =
   //   stakingContractInfoRecord?.[activeStakingProgram ?? defaultStakingProgram]
@@ -155,7 +155,7 @@ const AgentNotRunningButton = () => {
 
   const requiredOlas = getMinimumStakedAmountRequired(
     serviceTemplate,
-    activeStakingProgramId ?? defaultStakingProgramId,
+    activeStakingProgramId ?? DEFAULT_STAKING_PROGRAM_ID,
   );
 
   const safeOlasBalance = safeBalance?.OLAS;
@@ -182,12 +182,12 @@ const AgentNotRunningButton = () => {
 
     // Get the active staking program id; default id if there's no agent yet
     const stakingProgramId: StakingProgramId =
-      activeStakingProgramId ?? defaultStakingProgramId;
+      activeStakingProgramId ?? DEFAULT_STAKING_PROGRAM_ID;
 
     // Create master safe if it doesn't exist
     try {
       if (!masterSafeAddress) {
-        await WalletService.createSafe(Chain.OPTIMISM);
+        await WalletService.createSafe(MiddlewareChain.OPTIMISM);
       }
     } catch (error) {
       console.error(error);
@@ -205,8 +205,8 @@ const AgentNotRunningButton = () => {
         stakingProgramId,
         serviceTemplate,
         deploy: true,
-        useMechMarketplace:
-          stakingProgramId === StakingProgramId.BetaMechMarketplace,
+        useMechMarketplace: false,
+        // stakingProgramId === StakingProgramId.BetaMechMarketplace,
       });
     } catch (error) {
       console.error(error);
@@ -255,7 +255,6 @@ const AgentNotRunningButton = () => {
     masterSafeAddress,
     showNotification,
     activeStakingProgramId,
-    defaultStakingProgramId,
     serviceTemplate,
     updateServicesState,
     updateActiveStakingContractInfo,

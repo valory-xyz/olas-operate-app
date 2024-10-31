@@ -3,7 +3,9 @@ import { Button, Card, Flex, Typography } from 'antd';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
+import { MiddlewareChain } from '@/client';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { EXPLORER_URL } from '@/constants/urls';
 import { Pages } from '@/enums/PageState';
 import { SettingsScreen } from '@/enums/SettingsScreen';
 import { useMasterSafe } from '@/hooks/useMasterSafe';
@@ -132,7 +134,7 @@ const SettingsMain = () => {
           <Link
             type="link"
             target="_blank"
-            href={`https://gnosisscan.io/address/${backupSafeAddress}`}
+            href={`${EXPLORER_URL[MiddlewareChain.OPTIMISM]}/address/${backupSafeAddress}`}
           >
             {truncatedBackupSafeAddress} {UNICODE_SYMBOLS.EXTERNAL_LINK}
           </Link>

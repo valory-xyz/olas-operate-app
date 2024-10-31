@@ -5,7 +5,7 @@ export enum Action {
   STOP = 3,
 }
 
-export enum Chain {
+export enum MiddlewareChain {
   ETHEREUM = 0,
   GOERLI = 1,
   GNOSIS = 2,

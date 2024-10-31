@@ -1,5 +1,5 @@
 export type StakingRewardsInfo = {
-  mechRequestCount: number;
+  // mechRequestCount: number;
   serviceInfo: unknown[];
   livenessPeriod: number;
   livenessRatio: number;

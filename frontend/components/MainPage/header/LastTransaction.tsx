@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useInterval } from 'usehooks-ts';
 
+import { MiddlewareChain } from '@/client';
+import { EXPLORER_URL } from '@/constants/urls';
 import { useAddress } from '@/hooks/useAddress';
 import { usePageState } from '@/hooks/usePageState';
 import { getLatestTransaction } from '@/service/Ethers';
@@ -23,7 +25,7 @@ const Loader = styled(Skeleton.Input)`
 const POLLING_INTERVAL = 60 * 1000; // 1 minute
 
 /**
- * Displays the last transaction time and link to the transaction on GnosisScan
+ * Displays the last transaction time and link to the transaction on explorer
  * by agent safe.
  */
 export const LastTransaction = () => {
@@ -74,7 +76,9 @@ export const LastTransaction = () => {
         type="secondary"
         className="text-xs pointer hover-underline"
         onClick={() =>
-          window.open(`https://gnosisscan.io/tx/${transaction.hash}`)
+          window.open(
+            `${EXPLORER_URL[MiddlewareChain.OPTIMISM]}/tx/${transaction.hash}`,
+          )
         }
       >
         {getTimeAgo(transaction.timestamp)} ↗

@@ -2,7 +2,7 @@ import { Card, message, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Chain } from '@/client';
+import { MiddlewareChain } from '@/client';
 import { CardSection } from '@/components/styled/CardSection';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
@@ -38,7 +38,7 @@ export const SetupCreateSafe = () => {
       }
 
       // Try to create the safe
-      WalletService.createSafe(Chain.OPTIMISM, backupSigner)
+      WalletService.createSafe(MiddlewareChain.OPTIMISM, backupSigner)
         .then(async () => {
           // Backend returned success
           message.success('Account created');

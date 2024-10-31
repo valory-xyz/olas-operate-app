@@ -12,8 +12,10 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
+import { MiddlewareChain } from '@/client';
 import { COLOR } from '@/constants/colors';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { EXPLORER_URL } from '@/constants/urls';
 import { MODAL_WIDTH } from '@/constants/width';
 import { Token } from '@/enums/Token';
 import { useAddress } from '@/hooks/useAddress';
@@ -91,7 +93,7 @@ const DebugItem = ({
             <Flex gap={12}>
               <a
                 target="_blank"
-                href={`https://gnosisscan.io/address/${item.address}`}
+                href={`${EXPLORER_URL[MiddlewareChain.OPTIMISM]}/address/${item.address}`}
               >
                 {item.truncatedAddress}
               </a>

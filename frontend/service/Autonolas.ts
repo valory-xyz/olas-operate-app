@@ -2,20 +2,18 @@ import { BigNumber, ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 import { Contract as MulticallContract } from 'ethers-multicall';
 
-import { AGENT_MECH_ABI } from '@/abis/agentMech';
-import { MECH_ACTIVITY_CHECKER_ABI } from '@/abis/mechActivityChecker';
 import { SERVICE_REGISTRY_L2_ABI } from '@/abis/serviceRegistryL2';
 import { SERVICE_REGISTRY_TOKEN_UTILITY_ABI } from '@/abis/serviceRegistryTokenUtility';
 import { SERVICE_STAKING_TOKEN_MECH_USAGE_ABI } from '@/abis/serviceStakingTokenMechUsage';
-import { Chain } from '@/client';
+import { STAKING_ACTIVITY_CHECKER_ABI } from '@/abis/stakingActivityChecker';
+import { MiddlewareChain } from '@/client';
 import {
-  AGENT_MECH_CONTRACT_ADDRESS,
-  MECH_ACTIVITY_CHECKER_CONTRACT_ADDRESS,
   SERVICE_REGISTRY_L2_CONTRACT_ADDRESS,
   SERVICE_REGISTRY_TOKEN_UTILITY_CONTRACT_ADDRESS,
   SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES,
+  STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS,
 } from '@/constants/contractAddresses';
-import { gnosisMulticallProvider } from '@/constants/providers';
+import { optimismMulticallProvider } from '@/constants/providers';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
@@ -57,32 +55,32 @@ const serviceStakingTokenMechUsageContracts: Record<
   //   ServiceStakingTokenAbi,
   // ),
   [StakingProgramId.OptimusAlpha]: new MulticallContract(
-    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.OPTIMISM][
-      StakingProgramId.OptimusAlpha
-    ],
+    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[
+      MiddlewareChain.OPTIMISM
+    ][StakingProgramId.OptimusAlpha],
     ServiceStakingTokenAbi,
   ),
 };
 
 const serviceRegistryTokenUtilityContract = new MulticallContract(
-  SERVICE_REGISTRY_TOKEN_UTILITY_CONTRACT_ADDRESS[Chain.GNOSIS],
+  SERVICE_REGISTRY_TOKEN_UTILITY_CONTRACT_ADDRESS[MiddlewareChain.OPTIMISM],
   SERVICE_REGISTRY_TOKEN_UTILITY_ABI.filter((abi) => abi.type === 'function'),
 );
 
 const serviceRegistryL2Contract = new MulticallContract(
-  SERVICE_REGISTRY_L2_CONTRACT_ADDRESS[Chain.GNOSIS],
+  SERVICE_REGISTRY_L2_CONTRACT_ADDRESS[MiddlewareChain.OPTIMISM],
   SERVICE_REGISTRY_L2_ABI.filter((abi) => abi.type === 'function'),
 );
 
-const agentMechContract = new MulticallContract(
-  AGENT_MECH_CONTRACT_ADDRESS[Chain.GNOSIS],
-  AGENT_MECH_ABI.filter((abi) => abi.type === 'function'),
-);
+// const agentMechContract = new MulticallContract(
+//   AGENT_MECH_CONTRACT_ADDRESS[Chain.GNOSIS],
+//   AGENT_MECH_ABI.filter((abi) => abi.type === 'function'),
+// );
 
-const agentMechActivityCheckerContract = new MulticallContract(
-  MECH_ACTIVITY_CHECKER_CONTRACT_ADDRESS[Chain.GNOSIS],
-  MECH_ACTIVITY_CHECKER_ABI.filter((abi) => abi.type === 'function'),
-);
+// const agentMechActivityCheckerContract = new MulticallContract(
+//   AGENT_MECH_ACTIVITY_CHECKER_CONTRACT_ADDRESS[Chain.GNOSIS],
+//   MECH_ACTIVITY_CHECKER_ABI.filter((abi) => abi.type === 'function'),
+// );
 
 // const mechMarketplaceContract = new MulticallContract(
 //   MECH_MARKETPLACE_CONTRACT_ADDRESS[Chain.GNOSIS],
@@ -93,6 +91,11 @@ const agentMechActivityCheckerContract = new MulticallContract(
 //   REQUESTER_ACTIVITY_CHECKER_CONTRACT_ADDRESS[Chain.GNOSIS],
 //   REQUESTER_ACTIVITY_CHECKER_ABI.filter((abi) => abi.type === 'function'),
 // );
+
+const stakingActivityCheckerContract = new MulticallContract(
+  STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS[MiddlewareChain.OPTIMISM],
+  STAKING_ACTIVITY_CHECKER_ABI.filter((abi) => abi.type === 'function'),
+);
 
 const getAgentStakingRewardsInfo = async ({
   agentMultisigAddress,
@@ -106,23 +109,24 @@ const getAgentStakingRewardsInfo = async ({
   if (!agentMultisigAddress) return;
   if (!serviceId) return;
 
-  const mechContract = agentMechContract;
+  // const mechContract = agentMechContract;
+
   // stakingProgram === StakingProgramId.BetaMechMarketplace
   //   ? mechMarketplaceContract
   //   : agentMechContract;
 
-  const mechActivityContract = agentMechActivityCheckerContract;
+  const activityCheckerContract = stakingActivityCheckerContract;
   // stakingProgram === StakingProgramId.BetaMechMarketplace
   //   ? mechMarketplaceActivityCheckerContract
   //   : agentMechActivityCheckerContract;
 
   const contractCalls = [
-    mechContract.getRequestsCount(agentMultisigAddress),
+    // mechContract.getRequestsCount(agentMultisigAddress),
     serviceStakingTokenMechUsageContracts[stakingProgram].getServiceInfo(
       serviceId,
     ),
     serviceStakingTokenMechUsageContracts[stakingProgram].livenessPeriod(),
-    mechActivityContract.livenessRatio(),
+    activityCheckerContract.livenessRatio(),
     serviceStakingTokenMechUsageContracts[stakingProgram].rewardsPerSecond(),
     serviceStakingTokenMechUsageContracts[
       stakingProgram
@@ -131,9 +135,9 @@ const getAgentStakingRewardsInfo = async ({
     serviceStakingTokenMechUsageContracts[stakingProgram].tsCheckpoint(),
   ];
 
-  await gnosisMulticallProvider.init();
+  await optimismMulticallProvider.init();
 
-  const multicallResponse = await gnosisMulticallProvider.all(contractCalls);
+  const multicallResponse = await optimismMulticallProvider.all(contractCalls);
 
   const [
     mechRequestCount,
@@ -186,7 +190,7 @@ const getAgentStakingRewardsInfo = async ({
     parseFloat(ethers.utils.formatEther(`${minStakingDeposit}`)) * 2;
 
   return {
-    mechRequestCount,
+    // mechRequestCount,
     serviceInfo,
     livenessPeriod,
     livenessRatio,
@@ -209,9 +213,9 @@ const getAvailableRewardsForEpoch = async (
     serviceStakingTokenMechUsageContracts[stakingProgramId].tsCheckpoint(), // last checkpoint timestamp
   ];
 
-  await gnosisMulticallProvider.init();
+  await optimismMulticallProvider.init();
 
-  const multicallResponse = await gnosisMulticallProvider.all(contractCalls);
+  const multicallResponse = await optimismMulticallProvider.all(contractCalls);
   const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
   const nowInSeconds = Math.floor(Date.now() / 1000);
 
@@ -243,9 +247,9 @@ const getStakingContractInfoByServiceIdStakingProgram = async (
     serviceStakingTokenMechUsageContracts[stakingProgramId].minStakingDeposit(),
   ];
 
-  await gnosisMulticallProvider.init();
+  await optimismMulticallProvider.init();
 
-  const multicallResponse = await gnosisMulticallProvider.all(contractCalls);
+  const multicallResponse = await optimismMulticallProvider.all(contractCalls);
   const [
     availableRewardsInBN,
     maxNumServicesInBN,
@@ -291,9 +295,9 @@ const getStakingContractInfoByStakingProgram = async (
     serviceStakingTokenMechUsageContracts[stakingProgram].livenessPeriod(),
   ];
 
-  await gnosisMulticallProvider.init();
+  await optimismMulticallProvider.init();
 
-  const multicallResponse = await gnosisMulticallProvider.all(contractCalls);
+  const multicallResponse = await optimismMulticallProvider.all(contractCalls);
   const [
     availableRewardsInBN,
     maxNumServicesInBN,
@@ -357,13 +361,13 @@ const getServiceRegistryInfo = async (
     serviceRegistryL2Contract.mapServices(serviceId),
   ];
 
-  await gnosisMulticallProvider.init();
+  await optimismMulticallProvider.init();
 
   const [
     operatorBalanceResponse,
     serviceIdTokenDepositResponse,
     mapServicesResponse,
-  ] = await gnosisMulticallProvider.all(contractCalls);
+  ] = await optimismMulticallProvider.all(contractCalls);
 
   const [bondValue, depositValue, serviceState] = [
     parseFloat(ethers.utils.formatUnits(operatorBalanceResponse, 18)),
@@ -387,25 +391,30 @@ const getCurrentStakingProgramByServiceId = async (
 ): Promise<StakingProgramId | null> => {
   if (serviceId <= -1) return null;
 
-  // const contractCalls = Object.values(StakingProgramId).reduce(
-  //   (acc, stakingProgramId: StakingProgramId) => ({
-  //     ...acc,
-  //     [stakingProgramId]:
-  //       serviceStakingTokenMechUsageContracts[stakingProgramId].getStakingState(
-  //         serviceId,
-  //       ),
-  //   }),
-  //   {},
-  // );
+  const contractCalls = Object.values(StakingProgramId).reduce(
+    (acc, stakingProgramId: StakingProgramId) => ({
+      ...acc,
+      [stakingProgramId]:
+        serviceStakingTokenMechUsageContracts[stakingProgramId].getStakingState(
+          serviceId,
+        ),
+    }),
+    {},
+  );
 
   try {
-    await gnosisMulticallProvider.init();
-    // const [
-    //   isAlphaStaked,
-    //   isBetaStaked,
-    //   isBeta2Staked,
-    //   isBetaMechMarketplaceStaked,
-    // ] = await gnosisMulticallProvider.all(Object.values(contractCalls));
+    await optimismMulticallProvider.init();
+    const [
+      isOptimusAlphaStaked,
+      // isAlphaStaked,
+      // isBetaStaked,
+      // isBeta2Staked,
+      // isBetaMechMarketplaceStaked,
+    ] = await optimismMulticallProvider.all(Object.values(contractCalls));
+
+    if (isOptimusAlphaStaked) {
+      return StakingProgramId.OptimusAlpha;
+    }
 
     // if (isAlphaStaked) {
     //   return StakingProgramId.Alpha;

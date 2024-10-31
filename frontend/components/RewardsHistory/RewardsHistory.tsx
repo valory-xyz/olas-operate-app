@@ -19,13 +19,14 @@ import {
 import { CSSProperties, ReactNode, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { Chain } from '@/client';
+import { MiddlewareChain } from '@/client';
 import { CardTitle } from '@/components/Card/CardTitle';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { COLOR } from '@/constants/colors';
 import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/constants/contractAddresses';
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { EXPLORER_URL } from '@/constants/urls';
 import { Pages } from '@/enums/PageState';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { usePageState } from '@/hooks/usePageState';
@@ -130,7 +131,7 @@ const EpochTime = ({ epoch }: { epoch: EpochDetails }) => {
               {timePeriod}
             </Text>
             <a
-              href={`https://gnosisscan.io/tx/${epoch.transactionHash}`}
+              href={`${EXPLORER_URL[MiddlewareChain.OPTIMISM]}/tx/${epoch.transactionHash}`}
               target="_blank"
             >
               End of epoch transaction {UNICODE_SYMBOLS.EXTERNAL_LINK}
@@ -194,7 +195,9 @@ export const RewardsHistory = () => {
         {Object.keys(contractCheckpoints).map((contractAddress: string) => {
           const checkpoints = contractCheckpoints[contractAddress];
           const [stakingProgramId] = Object.entries(
-            SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS],
+            SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[
+              MiddlewareChain.OPTIMISM
+            ],
           ).find((entry) => {
             const [, stakingProxyAddress] = entry;
             return (

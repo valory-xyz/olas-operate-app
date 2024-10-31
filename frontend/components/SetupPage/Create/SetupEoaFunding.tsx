@@ -3,7 +3,6 @@ import {
   // QrcodeOutlined
 } from '@ant-design/icons';
 import {
-  Button,
   Flex,
   message,
   // Popover,
@@ -14,13 +13,12 @@ import {
 import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { Chain } from '@/client';
+import { MiddlewareChain } from '@/client';
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
-import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { CHAINS } from '@/constants/chains';
 import { MIN_ETH_BALANCE_THRESHOLDS } from '@/constants/thresholds';
-import { COW_SWAP_GNOSIS_XDAI_OLAS_URL } from '@/constants/urls';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useBalance } from '@/hooks/useBalance';
 import { useSetup } from '@/hooks/useSetup';
@@ -39,7 +37,8 @@ export const SetupEoaFunding = ({
 
   const isFundedMasterEoa =
     eoaBalance?.ETH &&
-    eoaBalance.ETH >= MIN_ETH_BALANCE_THRESHOLDS[Chain.GNOSIS].safeCreation;
+    eoaBalance.ETH >=
+      MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.OPTIMISM].safeCreation;
 
   const statusMessage = useMemo(() => {
     if (isFundedMasterEoa) {
@@ -63,8 +62,10 @@ export const SetupEoaFunding = ({
         disabled={isIncomplete}
       />
       <Typography.Title level={3}>
-        Deposit {MIN_ETH_BALANCE_THRESHOLDS[Chain.GNOSIS].safeCreation} XDAI on
-        Gnosis
+        Deposit{' '}
+        {MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.OPTIMISM].safeCreation}{' '}
+        {CHAINS[MiddlewareChain.OPTIMISM].currency}
+        on {CHAINS[MiddlewareChain.OPTIMISM].name}
       </Typography.Title>
       <Typography.Paragraph style={{ marginBottom: 0 }}>
         The app needs these funds to create your account on-chain.
@@ -99,7 +100,7 @@ const SetupEoaFundingWaiting = () => {
           message={
             <Flex vertical gap={5}>
               <Typography.Text strong>
-                Only send funds on Gnosis Chain!
+                Only send funds on {CHAINS[MiddlewareChain.OPTIMISM].name}!
               </Typography.Text>
               <Typography.Text>
                 You will lose any assets you send on other chains.
@@ -153,9 +154,9 @@ const SetupEoaFundingWaiting = () => {
           }
         />
       </AccountCreationCard>
-      <Button type="link" target="_blank" href={COW_SWAP_GNOSIS_XDAI_OLAS_URL}>
+      {/* <Button type="link" target="_blank" href={COW_SWAP_GNOSIS_XDAI_OLAS_URL}>
         Get XDAI on Gnosis Chain {UNICODE_SYMBOLS.EXTERNAL_LINK}
-      </Button>
+      </Button> */}
     </>
   );
 };

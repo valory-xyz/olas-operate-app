@@ -2,7 +2,7 @@ import { CloseOutlined } from '@ant-design/icons';
 import { Button, Form, Input, Typography } from 'antd';
 import { useMemo } from 'react';
 
-import { Chain } from '@/client';
+import { MiddlewareChain } from '@/client';
 import { MIN_ETH_BALANCE_THRESHOLDS } from '@/constants/thresholds';
 import { SettingsScreen } from '@/enums/SettingsScreen';
 import { useBalance } from '@/hooks/useBalance';
@@ -20,7 +20,8 @@ export const AddBackupWalletPage = () => {
   const isFunded = useMemo<boolean>(() => {
     if (!eoaBalance) return false;
     return (
-      eoaBalance.ETH >= MIN_ETH_BALANCE_THRESHOLDS[Chain.GNOSIS].safeAddSigner
+      eoaBalance.ETH >=
+      MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.OPTIMISM].safeAddSigner
     );
   }, [eoaBalance]);
 

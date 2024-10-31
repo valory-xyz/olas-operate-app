@@ -4,7 +4,7 @@ import { Contract as MulticallContract, ContractCall } from 'ethers-multicall';
 import { ERC20_BALANCEOF_FRAGMENT } from '@/abis/erc20';
 import { MULTICALL3_ABI } from '@/abis/multicall3';
 import { MULTICALL_CONTRACT_ADDRESS } from '@/constants/contractAddresses';
-import { gnosisMulticallProvider } from '@/constants/providers';
+import { optimismMulticallProvider } from '@/constants/providers';
 import { Address } from '@/types/Address';
 import { AddressNumberRecord } from '@/types/Records';
 
@@ -30,8 +30,8 @@ const getEthBalances = async (
 
   if (!callData.length) return {};
 
-  await gnosisMulticallProvider.init();
-  const multicallResponse = await gnosisMulticallProvider.all(callData);
+  await optimismMulticallProvider.init();
+  const multicallResponse = await optimismMulticallProvider.all(callData);
 
   return multicallResponse.reduce(
     (acc: AddressNumberRecord, balance: BigNumber, index: number) => ({
@@ -62,9 +62,9 @@ const getErc20Balances = async (
     ),
   );
 
-  await gnosisMulticallProvider.init();
+  await optimismMulticallProvider.init();
 
-  const multicallResponse = await gnosisMulticallProvider.all(callData);
+  const multicallResponse = await optimismMulticallProvider.all(callData);
 
   return multicallResponse.reduce(
     (acc: AddressNumberRecord, balance: BigNumber, index: number) => ({

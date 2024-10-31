@@ -1,6 +1,6 @@
 import { ContractInterface, ethers, providers, utils } from 'ethers';
 
-import { gnosisProvider } from '@/constants/providers';
+import { optimismProvider } from '@/constants/providers';
 import { Address } from '@/types/Address';
 import { TransactionInfo } from '@/types/TransactionInfo';
 
@@ -108,7 +108,7 @@ const getLogsList = async (
     fromBlock,
     toBlock,
   };
-  const list = await gnosisProvider.getLogs(filter);
+  const list = await optimismProvider.getLogs(filter);
 
   if (list.length > 0) return list;
 
@@ -126,7 +126,7 @@ const getLogsList = async (
 export const getLatestTransaction = async (
   contractAddress: Address,
 ): Promise<TransactionInfo | null> => {
-  const latestBlock = await gnosisProvider.getBlockNumber();
+  const latestBlock = await optimismProvider.getBlockNumber();
 
   const logs = await getLogsList(
     contractAddress,
@@ -141,8 +141,8 @@ export const getLatestTransaction = async (
   // Get the last log entry and fetch the transaction details
   const lastLog = logs[logs.length - 1];
   const txHash = lastLog.transactionHash;
-  const receipt = await gnosisProvider.getTransactionReceipt(txHash);
-  const block = await gnosisProvider.getBlock(receipt.blockNumber);
+  const receipt = await optimismProvider.getTransactionReceipt(txHash);
+  const block = await optimismProvider.getBlock(receipt.blockNumber);
   const timestamp = block.timestamp;
 
   return { hash: txHash, timestamp };
@@ -155,7 +155,7 @@ const readContract = ({
   address: string;
   abi: ContractInterface;
 }) => {
-  const contract = new ethers.Contract(address, abi, gnosisProvider);
+  const contract = new ethers.Contract(address, abi, optimismProvider);
   return contract;
 };
 

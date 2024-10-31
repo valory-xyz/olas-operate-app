@@ -1,11 +1,13 @@
 import { Flex, theme, Typography } from 'antd';
 import { useMemo } from 'react';
 
-import { Chain } from '@/client';
+import { MiddlewareChain } from '@/client';
 import { CardSection } from '@/components/styled/CardSection';
 import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/constants/contractAddresses';
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { EXPLORER_URL } from '@/constants/urls';
+import { DEFAULT_STAKING_PROGRAM_ID } from '@/context/StakingProgramProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { StakingProgramStatus } from '@/enums/StakingProgramStatus';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -24,17 +26,16 @@ type StakingContractSectionProps = { stakingProgramId: StakingProgramId };
 export const StakingContractSection = ({
   stakingProgramId,
 }: StakingContractSectionProps) => {
-  const { activeStakingProgramId, defaultStakingProgramId } =
-    useStakingProgram();
+  const { activeStakingProgramId } = useStakingProgram();
 
   const { token } = useToken();
 
   const { migrateValidation } = useMigrate(stakingProgramId);
 
   const stakingContractAddress =
-    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS][
-      stakingProgramId
-    ];
+    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[
+      MiddlewareChain.OPTIMISM
+    ][stakingProgramId];
 
   const stakingProgramMeta = STAKING_PROGRAM_META[stakingProgramId];
 
@@ -44,21 +45,24 @@ export const StakingContractSection = ({
    */
   const isActiveStakingProgram = useMemo(() => {
     if (activeStakingProgramId === null)
-      return defaultStakingProgramId === stakingProgramId;
+      return DEFAULT_STAKING_PROGRAM_ID === stakingProgramId;
     return activeStakingProgramId === stakingProgramId;
-  }, [activeStakingProgramId, defaultStakingProgramId, stakingProgramId]);
+  }, [activeStakingProgramId, stakingProgramId]);
 
   const contractTagStatus = useMemo(() => {
     if (activeStakingProgramId === stakingProgramId)
       return StakingProgramStatus.Selected;
 
     // Pearl is not staked, set as Selected if default
-    if (!activeStakingProgramId && stakingProgramId === defaultStakingProgramId)
+    if (
+      !activeStakingProgramId &&
+      stakingProgramId === DEFAULT_STAKING_PROGRAM_ID
+    )
       return StakingProgramStatus.Selected;
 
     // Otherwise, no tag
     return null;
-  }, [activeStakingProgramId, defaultStakingProgramId, stakingProgramId]);
+  }, [activeStakingProgramId, stakingProgramId]);
 
   const showMigrateButton = !isActiveStakingProgram;
   const showFundingButton = useMemo(() => {
@@ -88,7 +92,7 @@ export const StakingContractSection = ({
 
         <StakingContractDetails stakingProgramId={stakingProgramId} />
         <a
-          href={`https://gnosisscan.io/address/${stakingContractAddress}`}
+          href={`${EXPLORER_URL[MiddlewareChain.OPTIMISM]}/address/${stakingContractAddress}`}
           target="_blank"
         >
           View contract details {UNICODE_SYMBOLS.EXTERNAL_LINK}

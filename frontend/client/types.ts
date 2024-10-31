@@ -1,20 +1,20 @@
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
-import { Chain, DeploymentStatus, Ledger } from './enums';
+import { DeploymentStatus, Ledger, MiddlewareChain } from './enums';
 
 export type ServiceHash = string;
 
 export type LedgerConfig = {
   rpc: string;
   type: Ledger;
-  chain: Chain;
+  chain: MiddlewareChain;
 };
 
 export type ServiceKeys = {
   address: Address;
   private_key: string;
-  ledger: Chain;
+  ledger: MiddlewareChain;
 };
 
 export type ChainData = {
@@ -127,10 +127,10 @@ export type AppInfo = {
 
 export type WalletResponse = {
   address: Address;
-  safe_chains: Chain[];
+  safe_chains: MiddlewareChain[];
   ledger_type: Ledger;
   safes: {
-    [middlewareChainId in (typeof Chain)[keyof typeof Chain]]: Address;
+    [middlewareChainId in (typeof MiddlewareChain)[keyof typeof MiddlewareChain]]: Address;
   };
   safe_nonce: number;
 };
