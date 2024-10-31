@@ -26,7 +26,7 @@ export const SetupPassword = () => {
     setIsLoading(true);
     AccountService.createAccount(password)
       .then(() => AccountService.loginAccount(password))
-      .then(() => WalletService.createEoa(Chain.GNOSIS))
+      .then(() => WalletService.createEoa(Chain.OPTIMISM))
       .then(({ mnemonic }: { mnemonic: string[] }) => {
         setMnemonic(mnemonic);
         goto(SetupScreen.SetupSeedPhrase);

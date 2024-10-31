@@ -38,7 +38,7 @@ export const SetupCreateSafe = () => {
       }
 
       // Try to create the safe
-      WalletService.createSafe(Chain.GNOSIS, backupSigner)
+      WalletService.createSafe(Chain.OPTIMISM, backupSigner)
         .then(async () => {
           // Backend returned success
           message.success('Account created');

@@ -187,7 +187,7 @@ const AgentNotRunningButton = () => {
     // Create master safe if it doesn't exist
     try {
       if (!masterSafeAddress) {
-        await WalletService.createSafe(Chain.GNOSIS);
+        await WalletService.createSafe(Chain.OPTIMISM);
       }
     } catch (error) {
       console.error(error);
