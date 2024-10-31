@@ -84,33 +84,32 @@ export const StakingContractInfoProvider = ({
 
   /** Updates general staking contract information, not user or service specific */
   const updateStakingContractInfoRecord = async () => {
-    const alpha = AutonolasService.getStakingContractInfoByStakingProgram(
-      StakingProgramId.Alpha,
-    );
-    const beta = AutonolasService.getStakingContractInfoByStakingProgram(
-      StakingProgramId.Beta,
-    );
-    const beta2 = AutonolasService.getStakingContractInfoByStakingProgram(
-      StakingProgramId.Beta2,
-    );
-    const betaMechMarketplace =
-      AutonolasService.getStakingContractInfoByStakingProgram(
-        StakingProgramId.BetaMechMarketplace,
-      );
-
-    try {
-      const [alphaInfo, betaInfo, beta2Info, betaMechMarketplaceInfo] =
-        await Promise.all([alpha, beta, beta2, betaMechMarketplace]);
-      setStakingContractInfoRecord({
-        [StakingProgramId.Alpha]: alphaInfo,
-        [StakingProgramId.Beta]: betaInfo,
-        [StakingProgramId.Beta2]: beta2Info,
-        [StakingProgramId.BetaMechMarketplace]: betaMechMarketplaceInfo,
-      });
-      setIsStakingContractInfoLoaded(true);
-    } catch (e) {
-      console.error(e);
-    }
+    // const alpha = AutonolasService.getStakingContractInfoByStakingProgram(
+    //   StakingProgramId.Alpha,
+    // );
+    // const beta = AutonolasService.getStakingContractInfoByStakingProgram(
+    //   StakingProgramId.Beta,
+    // );
+    // const beta2 = AutonolasService.getStakingContractInfoByStakingProgram(
+    //   StakingProgramId.Beta2,
+    // );
+    // const betaMechMarketplace =
+    //   AutonolasService.getStakingContractInfoByStakingProgram(
+    //     StakingProgramId.BetaMechMarketplace,
+    //   );
+    // try {
+    //   const [alphaInfo, betaInfo, beta2Info, betaMechMarketplaceInfo] =
+    //     await Promise.all([alpha, beta, beta2, betaMechMarketplace]);
+    //   setStakingContractInfoRecord({
+    //     [StakingProgramId.Alpha]: alphaInfo,
+    //     [StakingProgramId.Beta]: betaInfo,
+    //     [StakingProgramId.Beta2]: beta2Info,
+    //     [StakingProgramId.BetaMechMarketplace]: betaMechMarketplaceInfo,
+    //   });
+    //   setIsStakingContractInfoLoaded(true);
+    // } catch (e) {
+    //   console.error(e);
+    // }
   };
 
   useEffect(() => {

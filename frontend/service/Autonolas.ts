@@ -387,41 +387,41 @@ const getCurrentStakingProgramByServiceId = async (
 ): Promise<StakingProgramId | null> => {
   if (serviceId <= -1) return null;
 
-  const contractCalls = Object.values(StakingProgramId).reduce(
-    (acc, stakingProgramId: StakingProgramId) => ({
-      ...acc,
-      [stakingProgramId]:
-        serviceStakingTokenMechUsageContracts[stakingProgramId].getStakingState(
-          serviceId,
-        ),
-    }),
-    {},
-  );
+  // const contractCalls = Object.values(StakingProgramId).reduce(
+  //   (acc, stakingProgramId: StakingProgramId) => ({
+  //     ...acc,
+  //     [stakingProgramId]:
+  //       serviceStakingTokenMechUsageContracts[stakingProgramId].getStakingState(
+  //         serviceId,
+  //       ),
+  //   }),
+  //   {},
+  // );
 
   try {
     await gnosisMulticallProvider.init();
-    const [
-      isAlphaStaked,
-      isBetaStaked,
-      isBeta2Staked,
-      isBetaMechMarketplaceStaked,
-    ] = await gnosisMulticallProvider.all(Object.values(contractCalls));
+    // const [
+    //   isAlphaStaked,
+    //   isBetaStaked,
+    //   isBeta2Staked,
+    //   isBetaMechMarketplaceStaked,
+    // ] = await gnosisMulticallProvider.all(Object.values(contractCalls));
 
-    if (isAlphaStaked) {
-      return StakingProgramId.Alpha;
-    }
+    // if (isAlphaStaked) {
+    //   return StakingProgramId.Alpha;
+    // }
 
-    if (isBetaStaked) {
-      return StakingProgramId.Beta;
-    }
+    // if (isBetaStaked) {
+    //   return StakingProgramId.Beta;
+    // }
 
-    if (isBeta2Staked) {
-      return StakingProgramId.Beta2;
-    }
+    // if (isBeta2Staked) {
+    //   return StakingProgramId.Beta2;
+    // }
 
-    if (isBetaMechMarketplaceStaked) {
-      return StakingProgramId.BetaMechMarketplace;
-    }
+    // if (isBetaMechMarketplaceStaked) {
+    //   return StakingProgramId.BetaMechMarketplace;
+    // }
 
     return null;
   } catch (error) {
