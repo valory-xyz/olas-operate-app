@@ -33,7 +33,8 @@ const AccountCreationCard = styled.div`
 
 const ICON_STYLE = { color: '#606F85' };
 
-const SetupEoaFundingWaiting = () => {
+type SetupEoaFundingWaitingProps = { chainName: string };
+const SetupEoaFundingWaiting = ({ chainName }: SetupEoaFundingWaitingProps) => {
   const { masterEoaAddress } = useWallet();
 
   return (
@@ -45,7 +46,7 @@ const SetupEoaFundingWaiting = () => {
           showIcon
           message={
             <Flex vertical gap={5}>
-              <Text strong>Only send funds on {CHAINS.OPTIMISM.name}!</Text>
+              <Text strong>Only send funds on {chainName}!</Text>
               <Text>You will lose any assets you send on other chains.</Text>
             </Flex>
           }
@@ -74,13 +75,13 @@ const SetupEoaFundingWaiting = () => {
         <span className="can-select-text break-word">
           {`GNO: ${masterEoaAddress}`}
         </span>
-        <CustomAlert
+        {/* <CustomAlert
           type="info"
           showIcon
           message={
             'After this point, do not send more funds to this address. Once your account is created, you will be given a new address - send further funds there.'
           }
-        />
+        /> */}
       </AccountCreationCard>
     </>
   );
@@ -138,7 +139,7 @@ export const SetupEoaFundingForChain = ({
           Status: {statusMessage}
         </Text>
       </CardSection>
-      {!isFunded && <SetupEoaFundingWaiting />}
+      {!isFunded && <SetupEoaFundingWaiting chainName={chainName} />}
     </CardFlex>
   );
 };
