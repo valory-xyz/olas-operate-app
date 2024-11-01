@@ -31,8 +31,8 @@ export const Setup = () => {
         return <SetupBackupSigner />;
       case SetupScreen.SetupEoaFunding:
         return <SetupEoaFunding />;
-      case SetupScreen.SetupEoaFundingIncomplete:
-        return <SetupEoaFunding isIncomplete />;
+      // case SetupScreen.SetupEoaFundingIncomplete:
+      //   return <SetupEoaFunding isIncomplete />;
       case SetupScreen.SetupCreateSafe:
         return <SetupCreateSafe />;
       // Restore account

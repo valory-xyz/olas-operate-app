@@ -18,7 +18,8 @@ export const SetupBackupSigner = () => {
 
   const handleFinish = (values: { 'backup-signer': string }) => {
     const checksummedAddress = getAddress(
-      values['backup-signer'].toLowerCase(), // important to lowercase the address before checksumming, invalid checksums will cause ethers to throw
+      // important to lowercase the address before checksumming, invalid checksums will cause ethers to throw
+      values['backup-signer'].toLowerCase(),
     ) as Address | null; // returns null if invalid, ethers type is incorrect...
 
     // If the address is invalid, show an error message

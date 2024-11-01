@@ -56,6 +56,8 @@ export const BalanceContext = createContext<{
   updateBalances: () => Promise<void>;
   setIsPaused: Dispatch<SetStateAction<boolean>>;
   totalOlasStakedBalance?: number;
+  baseBalance?: number;
+  ethereumBalance?: number;
 }>({
   isLoaded: false,
   setIsLoaded: () => {},
@@ -74,6 +76,8 @@ export const BalanceContext = createContext<{
   updateBalances: async () => {},
   setIsPaused: () => {},
   totalOlasStakedBalance: undefined,
+  baseBalance: undefined,
+  ethereumBalance: undefined,
 });
 
 export const BalanceProvider = ({ children }: PropsWithChildren) => {
@@ -91,6 +95,8 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
   const [isBalanceLoaded, setIsBalanceLoaded] = useState<boolean>(false);
   const [walletBalances, setWalletBalances] =
     useState<WalletAddressNumberRecord>({});
+  const [baseBalance, setBaseBalance] = useState<number>();
+  const [ethereumBalance, setEthereumBalance] = useState<number>();
 
   const totalEthBalance: number | undefined = useMemo(() => {
     if (!isLoaded) return;
@@ -134,15 +140,29 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     if (!masterEoaAddress) return;
 
     const walletAddresses: Address[] = [];
-
     if (isAddress(masterEoaAddress)) walletAddresses.push(masterEoaAddress);
-
     if (isAddress(`${masterSafeAddress}`)) {
       walletAddresses.push(masterSafeAddress as Address);
     }
-
     if (serviceAddresses) {
       walletAddresses.push(...serviceAddresses.filter(isAddress));
+    }
+
+    // fetch balances for other chains
+    try {
+      const optimismBalanceTemp =
+        await EthersService.getOptimismBalance(masterEoaAddress);
+      console.log('optimismBalanceTemp', optimismBalanceTemp);
+
+      const baseBalanceTemp =
+        await EthersService.getBaseBalance(masterEoaAddress);
+      setBaseBalance(baseBalanceTemp);
+
+      const ethereumBalanceTemp =
+        await EthersService.getEthereumBalance(masterEoaAddress);
+      setEthereumBalance(ethereumBalanceTemp);
+    } catch (error) {
+      console.error(error);
     }
 
     try {
@@ -211,7 +231,6 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
         ?.instances?.[0],
     [services],
   );
-
   const masterEoaBalance = useMemo(
     () => masterEoaAddress && walletBalances[masterEoaAddress],
     [masterEoaAddress, walletBalances],
@@ -272,6 +291,8 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
         updateBalances,
         setIsPaused,
         totalOlasStakedBalance,
+        baseBalance,
+        ethereumBalance,
       }}
     >
       {children}

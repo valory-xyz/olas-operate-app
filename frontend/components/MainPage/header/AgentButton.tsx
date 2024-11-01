@@ -157,7 +157,6 @@ const AgentNotRunningButton = () => {
     serviceTemplate,
     activeStakingProgramId ?? DEFAULT_STAKING_PROGRAM_ID,
   );
-
   const safeOlasBalance = safeBalance?.OLAS;
   const safeOlasBalanceWithStaked =
     safeOlasBalance === undefined || totalOlasStakedBalance === undefined

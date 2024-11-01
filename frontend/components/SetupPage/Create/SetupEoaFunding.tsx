@@ -1,6 +1,6 @@
 import { CopyOutlined } from '@ant-design/icons';
 import { Flex, message, Tooltip, Typography } from 'antd';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { MiddlewareChain } from '@/client';
@@ -14,6 +14,7 @@ import { useBalance } from '@/hooks/useBalance';
 import { useSetup } from '@/hooks/useSetup';
 import { useWallet } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
+import { delayInSeconds } from '@/utils/delay';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
 
@@ -85,44 +86,44 @@ const SetupEoaFundingWaiting = () => {
   );
 };
 
-export const SetupEoaFunding = ({
-  isIncomplete,
-}: {
-  isIncomplete?: boolean;
-}) => {
-  const { masterEoaBalance: eoaBalance } = useBalance();
+type SetupEoaFundingProps = {
+  isFunded: boolean;
+  minRequiredBalance: number;
+  currency: string;
+  chainName: string;
+  onFunded: () => void;
+};
+export const SetupEoaFundingForChain = ({
+  isFunded,
+  minRequiredBalance,
+  currency,
+  chainName,
+  onFunded,
+}: SetupEoaFundingProps) => {
   const { goto } = useSetup();
 
-  const isFundedMasterEoa =
-    eoaBalance?.ETH &&
-    eoaBalance.ETH >=
-      MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.OPTIMISM].safeCreation;
-
   const statusMessage = useMemo(() => {
-    if (isFundedMasterEoa) {
+    if (isFunded) {
       return 'Funds have been received!';
     } else {
       return 'Waiting for transaction';
     }
-  }, [isFundedMasterEoa]);
+  }, [isFunded]);
 
   useEffect(() => {
-    // Move to create the safe stage once the master EOA is funded
-    if (!isFundedMasterEoa) return;
+    if (!isFunded) return;
+
     message.success('Funds have been received!');
-    goto(SetupScreen.SetupCreateSafe);
-  }, [goto, isFundedMasterEoa]);
+
+    // Wait for a second before moving to the next step
+    delayInSeconds(1).then(onFunded);
+  }, [goto, isFunded, onFunded]);
 
   return (
     <CardFlex>
-      <SetupCreateHeader
-        prev={SetupScreen.SetupBackupSigner}
-        disabled={isIncomplete}
-      />
+      <SetupCreateHeader prev={SetupScreen.SetupBackupSigner} disabled />
       <Title level={3}>
-        Deposit{' '}
-        {MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.OPTIMISM].safeCreation}{' '}
-        {CHAINS.OPTIMISM.currency} on {CHAINS.OPTIMISM.name}
+        {`Deposit ${minRequiredBalance} ${currency} on ${chainName}`}
       </Title>
       <Paragraph style={{ marginBottom: 0 }}>
         The app needs these funds to create your account on-chain.
@@ -131,13 +132,105 @@ export const SetupEoaFunding = ({
       <CardSection
         padding="12px 24px"
         bordertop="true"
-        borderbottom={isFundedMasterEoa ? 'true' : 'false'}
+        borderbottom={isFunded ? 'true' : 'false'}
       >
-        <Text className={isFundedMasterEoa ? '' : 'loading-ellipses'}>
+        <Text className={isFunded ? '' : 'loading-ellipses'}>
           Status: {statusMessage}
         </Text>
       </CardSection>
-      {!isFundedMasterEoa && <SetupEoaFundingWaiting />}
+      {!isFunded && <SetupEoaFundingWaiting />}
     </CardFlex>
   );
+};
+
+export const SetupEoaFunding = () => {
+  const { goto } = useSetup();
+  const {
+    masterEoaBalance: eoaBalance,
+    baseBalance,
+    ethereumBalance,
+  } = useBalance();
+  const [currentChain, setCurrentChain] = useState<MiddlewareChain | null>(
+    null,
+  );
+
+  const isOptimusFunded = useMemo(() => {
+    if (!eoaBalance) return false;
+    return (
+      eoaBalance.ETH >=
+      MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.OPTIMISM].safeCreation
+    );
+  }, [eoaBalance]);
+
+  const isEthereumFunded = useMemo(() => {
+    if (!ethereumBalance) return false;
+
+    return (
+      ethereumBalance >=
+      MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.ETHEREUM].safeCreation
+    );
+  }, [ethereumBalance]);
+
+  const isBaseFunded = useMemo(() => {
+    if (!baseBalance) return false;
+
+    return (
+      baseBalance >=
+      MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.BASE].safeCreation
+    );
+  }, [baseBalance]);
+
+  // Set the current chain to the first chain that the user has not funded
+  useEffect(() => {
+    if (currentChain) return;
+    if (!isOptimusFunded) setCurrentChain(MiddlewareChain.OPTIMISM);
+    if (!isEthereumFunded) setCurrentChain(MiddlewareChain.ETHEREUM);
+    if (!isBaseFunded) setCurrentChain(MiddlewareChain.BASE);
+  }, [isOptimusFunded, isEthereumFunded, isBaseFunded, currentChain]);
+
+  // If the user has not funded their account on any chain, show the funding instructions
+  const screen = useMemo(() => {
+    switch (currentChain) {
+      case MiddlewareChain.OPTIMISM:
+        return (
+          <SetupEoaFundingForChain
+            isFunded={isOptimusFunded}
+            minRequiredBalance={
+              MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.OPTIMISM].safeCreation
+            }
+            currency={CHAINS.OPTIMISM.currency}
+            chainName={CHAINS.OPTIMISM.name}
+            onFunded={() => setCurrentChain(MiddlewareChain.ETHEREUM)}
+          />
+        );
+      case MiddlewareChain.ETHEREUM:
+        return (
+          <SetupEoaFundingForChain
+            isFunded={isEthereumFunded}
+            minRequiredBalance={
+              MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.ETHEREUM].safeCreation
+            }
+            currency={CHAINS.ETHEREUM.currency}
+            chainName={CHAINS.ETHEREUM.name}
+            onFunded={() => setCurrentChain(MiddlewareChain.BASE)}
+          />
+        );
+      case MiddlewareChain.BASE:
+        return (
+          <SetupEoaFundingForChain
+            isFunded={isBaseFunded}
+            minRequiredBalance={
+              MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.BASE].safeCreation
+            }
+            currency={CHAINS.BASE.currency}
+            chainName={CHAINS.BASE.name}
+            onFunded={() => goto(SetupScreen.SetupCreateSafe)}
+          />
+        );
+      default:
+        return null;
+    }
+  }, [currentChain, isOptimusFunded, isEthereumFunded, isBaseFunded, goto]);
+
+  return screen;
 };

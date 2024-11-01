@@ -1,6 +1,10 @@
 import { ContractInterface, ethers, providers, utils } from 'ethers';
 
-import { optimismProvider } from '@/constants/providers';
+import {
+  baseProvider,
+  ethereumProvider,
+  optimismProvider,
+} from '@/constants/providers';
 import { Address } from '@/types/Address';
 import { TransactionInfo } from '@/types/TransactionInfo';
 
@@ -41,8 +45,10 @@ const getErc20Balance = async (
   contractAddress?: Address,
 ): Promise<number> => {
   try {
-    if (!contractAddress)
+    if (!contractAddress) {
       throw new Error('Contract address is required for ERC20 balance');
+    }
+
     const provider = new providers.StaticJsonRpcProvider(rpc, {
       name: 'Gnosis',
       chainId: 100, // we currently only support Gnosis Trader agent
@@ -59,11 +65,47 @@ const getErc20Balance = async (
       contract.balanceOf(address),
       contract.decimals(),
     ]);
-    if (!balance || !decimals)
+
+    if (!balance || !decimals) {
       throw new Error('Failed to resolve balance or decimals');
+    }
+
     return Number(utils.formatUnits(balance, decimals));
   } catch (e) {
     return Promise.reject(e);
+  }
+};
+
+const getOptimismBalance = async (address: Address): Promise<number> => {
+  try {
+    return optimismProvider.getBalance(address).then((balance) => {
+      const formattedBalance = utils.formatEther(balance);
+      return Number(formattedBalance);
+    });
+  } catch (e) {
+    return Promise.reject('Failed to get Optimism balance');
+  }
+};
+
+const getEthereumBalance = async (address: Address): Promise<number> => {
+  try {
+    return ethereumProvider.getBalance(address).then((balance) => {
+      const formattedBalance = utils.formatEther(balance);
+      return Number(formattedBalance);
+    });
+  } catch (e) {
+    return Promise.reject('Failed to get Ethereum balance');
+  }
+};
+
+const getBaseBalance = async (address: Address): Promise<number> => {
+  try {
+    return baseProvider.getBalance(address).then((balance) => {
+      const formattedBalance = utils.formatEther(balance);
+      return Number(formattedBalance);
+    });
+  } catch (e) {
+    return Promise.reject('Failed to get base balance');
   }
 };
 
@@ -155,9 +197,12 @@ const readContract = ({
 };
 
 export const EthersService = {
-  getEthBalance,
+  getEthBalance, // gnosis
   getErc20Balance,
   checkRpc,
   readContract,
   getLatestTransaction,
+  getOptimismBalance,
+  getEthereumBalance,
+  getBaseBalance,
 };
