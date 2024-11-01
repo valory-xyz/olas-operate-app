@@ -1,12 +1,12 @@
-import { RightOutlined } from '@ant-design/icons';
+// import { RightOutlined } from '@ant-design/icons';
 import { Flex, Skeleton, Typography } from 'antd';
 import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { Pages } from '@/enums/PageState';
+// import { Pages } from '@/enums/PageState';
 import { useBalance } from '@/hooks/useBalance';
-import { usePageState } from '@/hooks/usePageState';
+// import { usePageState } from '@/hooks/usePageState';
 import { balanceFormat } from '@/utils/numberFormatters';
 
 import { CardSection } from '../../styled/CardSection';
@@ -23,7 +23,7 @@ export const MainOlasBalance = ({
   isBorderTopVisible = true,
 }: MainOlasBalanceProps) => {
   const { isBalanceLoaded, totalOlasBalance } = useBalance();
-  const { goto } = usePageState();
+  // const { goto } = usePageState();
 
   const balance = useMemo(() => {
     if (totalOlasBalance === undefined) return '--';
@@ -47,14 +47,14 @@ export const MainOlasBalance = ({
             <span className="balance-currency">OLAS</span>
           </Flex>
 
-          <Text
+          {/* <Text
             type="secondary"
             className="text-sm pointer hover-underline"
             onClick={() => goto(Pages.YourWalletBreakdown)}
           >
             See breakdown
             <RightOutlined style={{ fontSize: 12, paddingLeft: 6 }} />
-          </Text>
+          </Text> */}
         </Flex>
       ) : (
         <Skeleton.Input active size="large" style={{ margin: '4px 0' }} />

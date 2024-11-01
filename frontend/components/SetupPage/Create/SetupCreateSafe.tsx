@@ -14,6 +14,8 @@ import { useWallet } from '@/hooks/useWallet';
 import { WalletService } from '@/service/Wallet';
 import { delayInSeconds } from '@/utils/delay';
 
+const { Text } = Typography;
+
 export const SetupCreateSafe = () => {
   const { goto } = usePageState();
   const { updateWallets } = useWallet();
@@ -107,16 +109,16 @@ export const SetupCreateSafe = () => {
         {failed ? (
           <>
             <Image src="/broken-robot.svg" alt="logo" width={80} height={80} />
-            <Typography.Text type="secondary" className="mt-12">
+            <Text type="secondary" className="mt-12">
               Error, please restart the app and try again.
-            </Typography.Text>
-            <Typography.Text style={{ fontSize: 'small' }}>
+            </Text>
+            <Text style={{ fontSize: 'small' }}>
               If the issue persists,{' '}
               <a href={SUPPORT_URL} target="_blank" rel="noreferrer">
                 contact Olas community support {UNICODE_SYMBOLS.EXTERNAL_LINK}
               </a>
               .
-            </Typography.Text>
+            </Text>
           </>
         ) : (
           <>
@@ -133,9 +135,9 @@ export const SetupCreateSafe = () => {
             >
               {creationStatusText}
             </Typography.Title>
-            <Typography.Text type="secondary">
-              You will be redirected once the account is created
-            </Typography.Text>
+            <Text type="secondary">
+              You will be redirected once the account is created.
+            </Text>
           </>
         )}
       </CardSection>
