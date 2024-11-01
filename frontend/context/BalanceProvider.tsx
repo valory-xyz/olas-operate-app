@@ -150,10 +150,6 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
 
     // fetch balances for other chains
     try {
-      const optimismBalanceTemp =
-        await EthersService.getOptimismBalance(masterEoaAddress);
-      console.log('optimismBalanceTemp', optimismBalanceTemp);
-
       const baseBalanceTemp =
         await EthersService.getBaseBalance(masterEoaAddress);
       setBaseBalance(baseBalanceTemp);
