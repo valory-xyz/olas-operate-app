@@ -76,6 +76,9 @@ const getErc20Balance = async (
   }
 };
 
+/**
+ * Returns the Optimism balance of the given address
+ */
 const getOptimismBalance = async (address: Address): Promise<number> => {
   try {
     return optimismProvider.getBalance(address).then((balance) => {
@@ -87,6 +90,9 @@ const getOptimismBalance = async (address: Address): Promise<number> => {
   }
 };
 
+/**
+ * Returns the Ethereum balance of the given address
+ */
 const getEthereumBalance = async (address: Address): Promise<number> => {
   try {
     return ethereumProvider.getBalance(address).then((balance) => {
@@ -98,6 +104,9 @@ const getEthereumBalance = async (address: Address): Promise<number> => {
   }
 };
 
+/**
+ * Returns the base balance of the given address
+ */
 const getBaseBalance = async (address: Address): Promise<number> => {
   try {
     return baseProvider.getBalance(address).then((balance) => {
