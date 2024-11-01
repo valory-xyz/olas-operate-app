@@ -159,6 +159,7 @@ const AgentNotRunningButton = () => {
   );
 
   const safeOlasBalance = safeBalance?.OLAS;
+
   const safeOlasBalanceWithStaked =
     safeOlasBalance === undefined || totalOlasStakedBalance === undefined
       ? undefined
