@@ -18,7 +18,7 @@ import { AutonolasService } from '@/service/Autonolas';
 import { StakingContractInfo } from '@/types/Autonolas';
 
 import { ServicesContext } from './ServicesProvider';
-import { StakingProgramContext } from './StakingProgramContext';
+import { StakingProgramContext } from './StakingProgramProvider';
 
 type StakingContractInfoContextProps = {
   activeStakingContractInfo?: Partial<StakingContractInfo>;
@@ -84,27 +84,28 @@ export const StakingContractInfoProvider = ({
 
   /** Updates general staking contract information, not user or service specific */
   const updateStakingContractInfoRecord = async () => {
-    const alpha = AutonolasService.getStakingContractInfoByStakingProgram(
-      StakingProgramId.Alpha,
-    );
-    const beta = AutonolasService.getStakingContractInfoByStakingProgram(
-      StakingProgramId.Beta,
-    );
-    const beta_2 = AutonolasService.getStakingContractInfoByStakingProgram(
-      StakingProgramId.Beta2,
-    );
+    const stakingPrograms = Object.values(StakingProgramId);
 
     try {
-      const [alphaInfo, betaInfo, beta2Info] = await Promise.all([
-        alpha,
-        beta,
-        beta_2,
-      ]);
-      setStakingContractInfoRecord({
-        [StakingProgramId.Alpha]: alphaInfo,
-        [StakingProgramId.Beta]: betaInfo,
-        [StakingProgramId.Beta2]: beta2Info,
-      });
+      const stakingInfoPromises = stakingPrograms.map((programId) =>
+        AutonolasService.getStakingContractInfoByStakingProgram(programId),
+      );
+
+      const stakingInfos = await Promise.allSettled(stakingInfoPromises);
+
+      const stakingContractInfoRecord = stakingPrograms.reduce(
+        (record, programId, index) => {
+          if (stakingInfos[index].status === 'rejected') {
+            console.error(stakingInfos[index].reason);
+            return record;
+          }
+          record[programId] = stakingInfos[index].value;
+          return record;
+        },
+        {} as Record<string, Partial<StakingContractInfo>>,
+      );
+
+      setStakingContractInfoRecord(stakingContractInfoRecord);
       setIsStakingContractInfoLoaded(true);
     } catch (e) {
       console.error(e);

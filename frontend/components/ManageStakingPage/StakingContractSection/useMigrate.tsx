@@ -17,9 +17,11 @@ export enum CantMigrateReason {
   InsufficientOlasToMigrate = 'Insufficient OLAS to switch',
   MigrationNotSupported = 'Switching to this program is not currently supported',
   NoAvailableRewards = 'This program has no rewards available',
-  NoAvailableStakingSlots = 'The program has no more avaiable slots',
+  NoAvailableStakingSlots = 'The program has no more available slots',
   NotStakedForMinimumDuration = 'Pearl has not been staked for the required minimum duration',
   PearlCurrentlyRunning = 'Unable to switch while Pearl is running',
+  LoadingServices = 'Loading services...',
+  CannotFindStakingContractInfo = 'Cannot obtain staking contract information',
 }
 
 type MigrateValidation =
@@ -34,17 +36,25 @@ type MigrateValidation =
 export const useMigrate = (stakingProgramId: StakingProgramId) => {
   const { serviceStatus } = useServices();
   const { serviceTemplate } = useServiceTemplates();
-  const { isBalanceLoaded, safeBalance, totalOlasStakedBalance } = useBalance();
+  const {
+    isBalanceLoaded,
+    masterSafeBalance: safeBalance,
+    totalOlasStakedBalance,
+  } = useBalance();
   const { activeStakingProgramId, activeStakingProgramMeta } =
     useStakingProgram();
+
   const {
     activeStakingContractInfo,
     isServiceStaked,
     isServiceStakedForMinimumDuration,
     isStakingContractInfoLoaded,
-    isRewardsAvailable,
-    hasEnoughServiceSlots,
+    stakingContractInfoRecord,
   } = useStakingContractInfo();
+
+  const stakingContractInfo = stakingContractInfoRecord?.[stakingProgramId];
+
+  const { hasInitialLoaded: isServicesLoaded } = useServices();
 
   const minimumOlasRequiredToMigrate = useMemo(
     () => getMinimumStakedAmountRequired(serviceTemplate, stakingProgramId),
@@ -67,16 +77,34 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
     totalOlasStakedBalance,
   ]);
 
+  const hasEnoughOlasForFirstRun = useMemo(() => {
+    if (!isBalanceLoaded) return false;
+    if (isNil(safeBalance?.OLAS)) return false;
+    if (isNil(minimumOlasRequiredToMigrate)) return false;
+
+    return safeBalance.OLAS >= minimumOlasRequiredToMigrate;
+  }, [isBalanceLoaded, minimumOlasRequiredToMigrate, safeBalance]);
+
   const migrateValidation = useMemo<MigrateValidation>(() => {
-    // loading requirements
+    if (!isServicesLoaded) {
+      return { canMigrate: false, reason: CantMigrateReason.LoadingServices };
+    }
+
     if (!isBalanceLoaded) {
       return { canMigrate: false, reason: CantMigrateReason.LoadingBalance };
     }
 
-    if (!isStakingContractInfoLoaded) {
+    if (isServicesLoaded && !isStakingContractInfoLoaded) {
       return {
         canMigrate: false,
         reason: CantMigrateReason.LoadingStakingContractInfo,
+      };
+    }
+
+    if (!stakingContractInfo) {
+      return {
+        canMigrate: false,
+        reason: CantMigrateReason.CannotFindStakingContractInfo,
       };
     }
 
@@ -88,14 +116,17 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
       };
     }
 
-    if (!isRewardsAvailable) {
+    if ((stakingContractInfo.availableRewards ?? 0) <= 0) {
       return {
         canMigrate: false,
         reason: CantMigrateReason.NoAvailableRewards,
       };
     }
 
-    if (!hasEnoughServiceSlots) {
+    if (
+      (stakingContractInfo.serviceIds ?? []).length >=
+      (stakingContractInfo.maxNumServices ?? 0)
+    ) {
       return {
         canMigrate: false,
         reason: CantMigrateReason.NoAvailableStakingSlots,
@@ -145,12 +176,12 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
 
     return { canMigrate: true };
   }, [
+    isServicesLoaded,
     isBalanceLoaded,
     isStakingContractInfoLoaded,
+    stakingContractInfo,
     activeStakingProgramId,
     stakingProgramId,
-    isRewardsAvailable,
-    hasEnoughServiceSlots,
     hasEnoughOlasToMigrate,
     isServiceStaked,
     activeStakingProgramMeta?.canMigrateTo,
@@ -159,7 +190,49 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
     serviceStatus,
   ]);
 
+  const firstDeployValidation = useMemo<MigrateValidation>(() => {
+    if (!isServicesLoaded) {
+      return { canMigrate: false, reason: CantMigrateReason.LoadingServices };
+    }
+
+    if (!isBalanceLoaded) {
+      return { canMigrate: false, reason: CantMigrateReason.LoadingBalance };
+    }
+
+    if (!hasEnoughOlasForFirstRun) {
+      return {
+        canMigrate: false,
+        reason: CantMigrateReason.InsufficientOlasToMigrate,
+      };
+    }
+
+    const stakingContractInfo = stakingContractInfoRecord?.[stakingProgramId];
+
+    if ((stakingContractInfo?.availableRewards ?? 0) <= 0) {
+      return {
+        canMigrate: false,
+        reason: CantMigrateReason.NoAvailableRewards,
+      };
+    }
+
+    if (!stakingContractInfo?.maxNumServices) {
+      return {
+        canMigrate: false,
+        reason: CantMigrateReason.NoAvailableStakingSlots,
+      };
+    }
+
+    return { canMigrate: true };
+  }, [
+    isServicesLoaded,
+    isBalanceLoaded,
+    hasEnoughOlasForFirstRun,
+    stakingContractInfoRecord,
+    stakingProgramId,
+  ]);
+
   return {
     migrateValidation,
+    firstDeployValidation,
   };
 };

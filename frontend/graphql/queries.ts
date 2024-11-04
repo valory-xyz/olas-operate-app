@@ -1,6 +1,6 @@
 import { gql, request } from 'graphql-request';
 
-import { SUBGRAPH_URL } from '@/constants/urls';
+import { GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL } from '@/constants/urls';
 import {
   EpochDetailsResponse,
   EpochDetailsResponseSchema,
@@ -26,7 +26,10 @@ export const getLatestEpochTimeQuery = (contractAddress: string) => gql`
 export const getLatestEpochDetails = async (contractAddress: string) => {
   const response = await request<{
     checkpoints: EpochDetailsResponse[];
-  }>(SUBGRAPH_URL, getLatestEpochTimeQuery(contractAddress));
+  }>(
+    GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL,
+    getLatestEpochTimeQuery(contractAddress),
+  );
 
   return EpochDetailsResponseSchema.parse(response.checkpoints[0]);
 };

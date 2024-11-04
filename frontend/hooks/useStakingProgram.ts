@@ -3,7 +3,7 @@ import { useContext, useMemo } from 'react';
 import { Chain } from '@/client';
 import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/constants/contractAddresses';
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
-import { StakingProgramContext } from '@/context/StakingProgramContext';
+import { StakingProgramContext } from '@/context/StakingProgramProvider';
 
 /**
  * Hook to get the active staking program and its metadata, and the default staking program.

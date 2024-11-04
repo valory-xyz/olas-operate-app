@@ -24,6 +24,8 @@ const Env = {
   ...process.env,
   PATH: `${process.env.PATH}:/opt/homebrew/bin:/usr/local/bin`,
   HOMEBREW_NO_AUTO_UPDATE: '1',
+  PYTHONUTF8: '1',
+  PYTHONIOENCODING: 'utf8'
 };
 
 const SudoOptions = {

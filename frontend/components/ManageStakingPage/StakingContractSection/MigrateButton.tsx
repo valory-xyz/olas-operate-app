@@ -23,22 +23,37 @@ type MigrateButtonProps = {
 export const MigrateButton = ({ stakingProgramId }: MigrateButtonProps) => {
   const { goto } = usePageState();
   const { serviceTemplate } = useServiceTemplates();
-  const { setIsServicePollingPaused, setServiceStatus, updateServiceStatus } =
-    useServices();
+  const {
+    setIsServicePollingPaused,
+    setServiceStatus,
+    updateServiceStatus,
+    hasInitialLoaded: isServicesLoaded,
+    service,
+  } = useServices();
   const { setIsPaused: setIsBalancePollingPaused } = useBalance();
   const { updateActiveStakingProgramId: updateStakingProgram } =
     useStakingProgram();
   const { activeStakingContractInfo } = useStakingContractInfo();
   const { setMigrationModalOpen } = useModals();
 
-  const { migrateValidation } = useMigrate(stakingProgramId);
+  const { migrateValidation, firstDeployValidation } =
+    useMigrate(stakingProgramId);
+
+  // if false, user is migrating, not running for first time
+  const isFirstDeploy = useMemo(() => {
+    if (!isServicesLoaded) return false;
+    if (service) return false;
+
+    return true;
+  }, [isServicesLoaded, service]);
+
+  const validation = isFirstDeploy ? firstDeployValidation : migrateValidation;
 
   const popoverContent = useMemo(() => {
-    if (migrateValidation.canMigrate) return null;
+    if (validation.canMigrate) return null;
 
     if (
-      migrateValidation.reason ===
-        CantMigrateReason.NotStakedForMinimumDuration &&
+      validation.reason === CantMigrateReason.NotStakedForMinimumDuration &&
       !isNil(activeStakingContractInfo)
     ) {
       return (
@@ -48,15 +63,15 @@ export const MigrateButton = ({ stakingProgramId }: MigrateButtonProps) => {
       );
     }
 
-    return migrateValidation.reason;
-  }, [activeStakingContractInfo, migrateValidation]);
+    return validation.reason;
+  }, [activeStakingContractInfo, validation]);
 
   return (
     <Popover content={popoverContent}>
       <Button
         type="primary"
         size="large"
-        disabled={!migrateValidation.canMigrate}
+        disabled={!validation.canMigrate}
         onClick={async () => {
           setIsServicePollingPaused(true);
           setIsBalancePollingPaused(true);
@@ -69,6 +84,8 @@ export const MigrateButton = ({ stakingProgramId }: MigrateButtonProps) => {
               stakingProgramId,
               serviceTemplate,
               deploy: true,
+              useMechMarketplace:
+                stakingProgramId === StakingProgramId.BetaMechMarketplace,
             });
 
             await updateStakingProgram();

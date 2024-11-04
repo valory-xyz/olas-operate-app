@@ -18,7 +18,7 @@ import { AutonolasService } from '@/service/Autonolas';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 import { ServicesContext } from './ServicesProvider';
-import { StakingProgramContext } from './StakingProgramContext';
+import { StakingProgramContext } from './StakingProgramProvider';
 
 export const RewardContext = createContext<{
   accruedServiceStakingRewards?: number;

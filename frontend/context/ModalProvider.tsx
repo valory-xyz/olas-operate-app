@@ -19,13 +19,17 @@ export const ModalContext = createContext<{
 export const ModalProvider = ({ children }: PropsWithChildren) => {
   const [migrationModalOpen, setMigrationModalOpen] = useState(false);
 
+  const closeMigrationModal = () => {
+    setMigrationModalOpen(false);
+  };
+
   return (
     <ModalContext.Provider
       value={{ migrationModalOpen, setMigrationModalOpen }}
     >
       <MigrationSuccessModal
         open={migrationModalOpen}
-        onClose={() => setMigrationModalOpen(false)}
+        onClose={() => closeMigrationModal()}
       />
       {children}
     </ModalContext.Provider>

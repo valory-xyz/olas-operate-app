@@ -1,12 +1,5 @@
 import { CloseOutlined } from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  ConfigProvider,
-  Flex,
-  ThemeConfig,
-  Typography,
-} from 'antd';
+import { Button, ConfigProvider, Flex, ThemeConfig, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { AddressLink } from '@/components/AddressLink';
@@ -16,6 +9,7 @@ import { CardFlex } from '@/components/styled/CardFlex';
 import { Pages } from '@/enums/PageState';
 import { useBalance } from '@/hooks/useBalance';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
 import { useWallet } from '@/hooks/useWallet';
 import { balanceFormat } from '@/utils/numberFormatters';
 
@@ -54,7 +48,8 @@ const Address = () => {
 };
 
 const OlasBalance = () => {
-  const { safeBalance, totalOlasStakedBalance } = useBalance();
+  const { masterSafeBalance: safeBalance, totalOlasStakedBalance } =
+    useBalance();
   const olasBalances = useMemo(() => {
     return [
       {
@@ -84,7 +79,7 @@ const OlasBalance = () => {
 };
 
 const XdaiBalance = () => {
-  const { safeBalance } = useBalance();
+  const { masterSafeBalance: safeBalance } = useBalance();
 
   return (
     <Flex vertical gap={8}>
@@ -104,7 +99,7 @@ const XdaiBalance = () => {
 
 const Signer = () => {
   const { masterEoaAddress } = useWallet();
-  const { eoaBalance } = useBalance();
+  const { masterEoaBalance: eoaBalance } = useBalance();
 
   return (
     <Flex vertical gap={8}>
@@ -127,8 +122,9 @@ const Signer = () => {
   );
 };
 
-export const YourWallet = () => {
+export const YourWalletPage = () => {
   const { goto } = usePageState();
+  const { service } = useServices();
 
   return (
     <ConfigProvider theme={yourWalletTheme}>
@@ -143,15 +139,13 @@ export const YourWallet = () => {
           />
         }
       >
-        <Card>
-          <Container>
-            <Address />
-            <OlasBalance />
-            <XdaiBalance />
-            <Signer />
-            <YourAgentWallet />
-          </Container>
-        </Card>
+        <Container style={{ margin: 8 }}>
+          <Address />
+          <OlasBalance />
+          <XdaiBalance />
+          <Signer />
+          {service && <YourAgentWallet />}
+        </Container>
       </CardFlex>
     </ConfigProvider>
   );

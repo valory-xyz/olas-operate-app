@@ -34,7 +34,7 @@ export const SetupEoaFunding = ({
 }: {
   isIncomplete?: boolean;
 }) => {
-  const { eoaBalance } = useBalance();
+  const { masterEoaBalance: eoaBalance } = useBalance();
   const { goto } = useSetup();
 
   const isFundedMasterEoa =

@@ -12,7 +12,7 @@ import { CardTitle } from '../Card/CardTitle';
 import { CardFlex } from '../styled/CardFlex';
 
 export const AddBackupWalletPage = () => {
-  const { eoaBalance } = useBalance();
+  const { masterEoaBalance: eoaBalance } = useBalance();
   const { goto } = useSettings();
 
   const [form] = Form.useForm();

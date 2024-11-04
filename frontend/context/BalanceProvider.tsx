@@ -44,8 +44,8 @@ export const BalanceContext = createContext<{
   isBalanceLoaded: boolean;
   olasBondBalance?: number;
   olasDepositBalance?: number;
-  eoaBalance?: ValueOf<WalletAddressNumberRecord>;
-  safeBalance?: ValueOf<WalletAddressNumberRecord>;
+  masterEoaBalance?: ValueOf<WalletAddressNumberRecord>;
+  masterSafeBalance?: ValueOf<WalletAddressNumberRecord>;
   totalEthBalance?: number;
   totalOlasBalance?: number;
   isLowBalance: boolean;
@@ -62,8 +62,8 @@ export const BalanceContext = createContext<{
   isBalanceLoaded: false,
   olasBondBalance: undefined,
   olasDepositBalance: undefined,
-  eoaBalance: undefined,
-  safeBalance: undefined,
+  masterEoaBalance: undefined,
+  masterSafeBalance: undefined,
   totalEthBalance: undefined,
   totalOlasBalance: undefined,
   isLowBalance: false,
@@ -132,7 +132,6 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
 
   const updateBalances = useCallback(async (): Promise<void> => {
     if (!masterEoaAddress) return;
-    if (!serviceAddresses) return;
 
     try {
       const walletAddresses: Address[] = [];
@@ -256,8 +255,8 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
         isBalanceLoaded,
         olasBondBalance,
         olasDepositBalance,
-        eoaBalance,
-        safeBalance,
+        masterEoaBalance: eoaBalance,
+        masterSafeBalance: safeBalance,
         totalEthBalance,
         totalOlasBalance,
         isLowBalance,

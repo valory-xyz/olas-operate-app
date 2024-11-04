@@ -75,7 +75,6 @@ export const SetupCreateSafe = () => {
 
   const creationStatusText = useMemo(() => {
     if (isCreatingSafe) return 'Creating account';
-    if (masterSafeAddress && !backupSafeAddress) return 'Checking backup';
     if (masterSafeAddress && backupSafeAddress) return 'Account created';
     return 'Account creation in progress';
   }, [backupSafeAddress, isCreatingSafe, masterSafeAddress]);
@@ -93,7 +92,7 @@ export const SetupCreateSafe = () => {
 
   useEffect(() => {
     // Only progress is the safe is created and accessible via context (updates on interval)
-    if (masterSafeAddress && backupSafeAddress) goto(Pages.Main);
+    if (masterSafeAddress) goto(Pages.Main);
   }, [backupSafeAddress, goto, masterSafeAddress]);
 
   return (

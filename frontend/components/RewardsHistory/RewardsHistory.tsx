@@ -19,17 +19,24 @@ import {
 import { CSSProperties, ReactNode, useMemo } from 'react';
 import styled from 'styled-components';
 
+import { Chain } from '@/client';
 import { CardTitle } from '@/components/Card/CardTitle';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { COLOR } from '@/constants/colors';
+import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/constants/contractAddresses';
+import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { Pages } from '@/enums/PageState';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { usePageState } from '@/hooks/usePageState';
 import { balanceFormat } from '@/utils/numberFormatters';
 import { formatToMonthDay, formatToShortDateTime } from '@/utils/time';
 
-import { useRewardsHistory } from '../../hooks/useRewardsHistory';
-import { EpochDetails, StakingReward } from './types';
+import {
+  TransformedCheckpoint,
+  useRewardsHistory,
+} from '../../hooks/useRewardsHistory';
+import { EpochDetails } from './types';
 
 const { Text, Title } = Typography;
 const MIN_HEIGHT = 400;
@@ -137,28 +144,33 @@ const EpochTime = ({ epoch }: { epoch: EpochDetails }) => {
   );
 };
 
-type ContractRewardsHistoryProps = { contract: StakingReward };
-const ContractRewards = ({ contract }: ContractRewardsHistoryProps) => (
+const ContractRewards = ({
+  stakingProgramId,
+  checkpoints,
+}: {
+  stakingProgramId: StakingProgramId;
+  checkpoints: TransformedCheckpoint[];
+}) => (
   <Flex vertical>
     <ContractName>
-      <Text strong>{contract.name}</Text>
+      <Text strong>{STAKING_PROGRAM_META[stakingProgramId].name}</Text>
     </ContractName>
 
-    {contract.history.map((epoch) => {
-      const currentEpochReward = epoch.reward
-        ? `~${balanceFormat(epoch.reward ?? 0, 2)} OLAS`
+    {checkpoints.map((checkpoint) => {
+      const currentEpochReward = checkpoint.reward
+        ? `~${balanceFormat(checkpoint.reward ?? 0, 2)} OLAS`
         : '0 OLAS';
 
       return (
-        <EpochRow key={epoch.epochEndTimeStamp}>
+        <EpochRow key={checkpoint.epochEndTimeStamp}>
           <Col span={6}>
-            <EpochTime epoch={epoch} />
+            <EpochTime epoch={checkpoint} />
           </Col>
           <Col span={11} className="text-right pr-16">
             <Text type="secondary">{currentEpochReward}</Text>
           </Col>
           <Col span={7} className="text-center pl-16">
-            {epoch.earned ? <EarnedTag /> : <NotEarnedTag />}
+            {checkpoint.earned ? <EarnedTag /> : <NotEarnedTag />}
           </Col>
         </EpochRow>
       );
@@ -167,23 +179,43 @@ const ContractRewards = ({ contract }: ContractRewardsHistoryProps) => (
 );
 
 export const RewardsHistory = () => {
-  const { rewards, isError, isLoading, isFetching, refetch } =
+  const { contractCheckpoints, isError, isLoading, isFetching, refetch } =
     useRewardsHistory();
   const { goto } = usePageState();
 
   const history = useMemo(() => {
     if (isLoading || isFetching) return <Loading />;
     if (isError) return <ErrorLoadingHistory refetch={refetch} />;
-    if (!rewards) return <NoRewardsHistory />;
-    if (rewards.length === 0) return <NoRewardsHistory />;
+    if (!contractCheckpoints) return <NoRewardsHistory />;
+    if (Object.keys(contractCheckpoints).length === 0)
+      return <NoRewardsHistory />;
     return (
       <Flex vertical gap={16}>
-        {rewards.map((reward) => (
-          <ContractRewards key={reward.id} contract={reward} />
-        ))}
+        {Object.keys(contractCheckpoints).map((contractAddress: string) => {
+          const checkpoints = contractCheckpoints[contractAddress];
+          const [stakingProgramId] = Object.entries(
+            SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS],
+          ).find((entry) => {
+            const [, stakingProxyAddress] = entry;
+            return (
+              stakingProxyAddress.toLowerCase() ===
+              contractAddress.toLowerCase()
+            );
+          }) ?? [null, null];
+
+          if (!stakingProgramId) return null;
+
+          return (
+            <ContractRewards
+              key={contractAddress}
+              stakingProgramId={stakingProgramId as StakingProgramId}
+              checkpoints={checkpoints}
+            />
+          );
+        })}
       </Flex>
     );
-  }, [isLoading, isFetching, isError, rewards, refetch]);
+  }, [isLoading, isFetching, isError, refetch, contractCheckpoints]);
 
   return (
     <ConfigProvider theme={yourWalletTheme}>

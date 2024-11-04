@@ -82,9 +82,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      
       - uses: actions/setup-node@v4
         with:
           node-version: "20.x"
+          registry-url: "https://registry.npmjs.org"   
 
       # Download the appropriate architecture artifact
       - name: Download Pearl binary for architecture
@@ -97,22 +99,31 @@ jobs:
       - name: Add exec permissions
         run: chmod +x electron/bins/pearl_${{ matrix.arch }}
 
-      # Cache node_modules with unique key for each environment and architecture
-      - name: Cache Node.js modules
+      # Cache electron node_modules with unique key for each environment and architecture
+      - name: Restore electron node_modules cache
+        id: cache-electron-node-modules
         uses: actions/cache@v3
         with:
-          path: |
-            node_modules
-            frontend/node_modules
-          key: node-modules-${{ matrix.env }}-${{ matrix.arch }}-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            node-modules-${{ matrix.env }}-${{ matrix.arch }}-
+          path: node_modules
+          key: electron-node-modules-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.env }}-${{ hashFiles('yarn.lock') }}
 
-      # Install dependencies
-      - name: Install dependencies
-        run: |
-          yarn install
-          yarn install:frontend
+      # Install electron dependencies if cache miss
+      - name: Install electron dependencies
+        if: steps.cache-electron-node-modules.outputs.cache-hit != 'true'
+        run: yarn install
+
+      # Cache frontend node_modules with unique key for each environment and architecture
+      - name: Restore frontend node_modules cache
+        id: cache-frontend-node-modules
+        uses: actions/cache@v3
+        with:
+          path: frontend/node_modules
+          key: frontend-node-modules-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.env }}-${{ hashFiles('frontend/yarn.lock') }}
+
+      # Install frontend dependencies if cache miss
+      - name: Install frontend dependencies
+        if: steps.cache-frontend-node-modules.outputs.cache-hit != 'true'
+        run: yarn install:frontend
 
       # Build frontend for production
       - name: Build frontend for production
@@ -130,9 +141,9 @@ jobs:
         run: yarn build:frontend
         env:
           NODE_ENV: ${{ matrix.env }}
-          DEV_RPC: https://virtual.gnosis.rpc.tenderly.co/7e67e659-9a8a-4830-b430-76203f1abde8
+          DEV_RPC: https://virtual.gnosis.rpc.tenderly.co/80ff70d1-71fd-4c9e-9402-913f0c4c58b0
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
-          FORK_URL: https://virtual.gnosis.rpc.tenderly.co/7e67e659-9a8a-4830-b430-76203f1abde8
+          FORK_URL: https://virtual.gnosis.rpc.tenderly.co/80ff70d1-71fd-4c9e-9402-913f0c4c58b0
 
       # Run the build and notarization process for production
       - name: Build, notarize, and publish (Production)
@@ -162,9 +173,9 @@ jobs:
           GH_TOKEN: ${{ secrets.github_token }}
           NODE_ENV: ${{ matrix.env }}
           ARCH: ${{ matrix.arch }}
-          DEV_RPC: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
-          FORK_URL: https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b
+          DEV_RPC: https://virtual.gnosis.rpc.tenderly.co/80ff70d1-71fd-4c9e-9402-913f0c4c58b0
+          FORK_URL: https://virtual.gnosis.rpc.tenderly.co/80ff70d1-71fd-4c9e-9402-913f0c4c58b0
         run: |
-          echo "DEV_RPC=https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b" >> .env
-          echo "FORK_URL=https://virtual.gnosis.rpc.tenderly.co/78ca845d-2b24-44a6-9ce2-869a979e8b5b" >> .env
+          echo "DEV_RPC=https://virtual.gnosis.rpc.tenderly.co/80ff70d1-71fd-4c9e-9402-913f0c4c58b0" >> .env
+          echo "FORK_URL=https://virtual.gnosis.rpc.tenderly.co/80ff70d1-71fd-4c9e-9402-913f0c4c58b0" >> .env
           node build.js

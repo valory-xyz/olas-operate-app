@@ -28,6 +28,7 @@ import sys
 import typing as t
 from copy import copy, deepcopy
 from dataclasses import dataclass
+from json import JSONDecodeError
 from pathlib import Path
 from time import sleep
 from traceback import print_exc
@@ -86,13 +87,13 @@ from operate.types import (
 )
 
 
-# pylint: disable=no-member,redefined-builtin,too-many-instance-attributes
+# pylint: disable=no-member,redefined-builtin,too-many-instance-attributes,too-many-locals
 
 SAFE_CONTRACT_ADDRESS = "safe_contract_address"
 ALL_PARTICIPANTS = "all_participants"
 CONSENSUS_THRESHOLD = "consensus_threshold"
 DELETE_PREFIX = "delete_"
-SERVICE_CONFIG_VERSION = 2
+SERVICE_CONFIG_VERSION = 3
 
 DUMMY_MULTISIG = "0xm"
 NON_EXISTENT_TOKEN = -1
@@ -481,16 +482,6 @@ class Deployment(LocalResource):
         for node in deployment["services"]:
             if "abci" in node:
                 deployment["services"][node]["volumes"].extend(_volumes)
-                if (
-                    "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE=0"
-                    in deployment["services"][node]["environment"]
-                ):
-                    deployment["services"][node]["environment"].remove(
-                        "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE=0"
-                    )
-                    deployment["services"][node]["environment"].append(
-                        "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE=10000000000000000"
-                    )
 
         with (build / DOCKER_COMPOSE_YAML).open("w", encoding="utf-8") as stream:
             yaml_dump(data=deployment, stream=stream)
@@ -576,17 +567,6 @@ class Deployment(LocalResource):
             if build.exists():
                 shutil.rmtree(build)
             raise e
-
-        # Mech price patch.
-        agent_vars = json.loads(Path(build, "agent.json").read_text(encoding="utf-8"))
-        if "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE" in agent_vars:
-            agent_vars[
-                "SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_MECH_REQUEST_PRICE"
-            ] = "10000000000000000"
-            Path(build, "agent.json").write_text(
-                json.dumps(agent_vars, indent=4),
-                encoding="utf-8",
-            )
 
         self.status = DeploymentStatus.BUILT
         self.store()
@@ -687,55 +667,67 @@ class Service(LocalResource):
         with open(file_path, "r", encoding="utf-8") as file:
             data = json.load(file)
 
-        if "version" in data:
-            # Data is already in the new format
+        version = data.get("version", 0)
+        if version >= 3:
             return
 
-        # Migrate from old format to new format
-        new_data = {
-            "version": 2,
-            "hash": data.get("hash"),
-            "keys": data.get("keys"),
-            "home_chain_id": "100",  # Assuming a default value for home_chain_id
-            "chain_configs": {
-                "100": {
-                    "ledger_config": {
-                        "rpc": data.get("ledger_config", {}).get("rpc"),
-                        "type": data.get("ledger_config", {}).get("type"),
-                        "chain": data.get("ledger_config", {}).get("chain"),
-                    },
-                    "chain_data": {
-                        "instances": data.get("chain_data", {}).get("instances", []),
-                        "token": data.get("chain_data", {}).get("token"),
-                        "multisig": data.get("chain_data", {}).get("multisig"),
-                        "staked": data.get("chain_data", {}).get("staked", False),
-                        "on_chain_state": data.get("chain_data", {}).get(
-                            "on_chain_state", 3
-                        ),
-                        "user_params": {
-                            "staking_program_id": "pearl_alpha",
-                            "nft": data.get("chain_data", {})
-                            .get("user_params", {})
-                            .get("nft"),
-                            "threshold": data.get("chain_data", {})
-                            .get("user_params", {})
-                            .get("threshold"),
-                            "use_staking": data.get("chain_data", {})
-                            .get("user_params", {})
-                            .get("use_staking"),
-                            "cost_of_bond": data.get("chain_data", {})
-                            .get("user_params", {})
-                            .get("cost_of_bond"),
-                            "fund_requirements": data.get("chain_data", {})
-                            .get("user_params", {})
-                            .get("fund_requirements", {}),
+        # Migrate from old formats to new format
+        if version == 2:
+            data["chain_configs"]["100"]["chain_data"]["user_params"][
+                "use_mech_marketplace"
+            ] = data["chain_configs"]["100"]["chain_data"]["user_params"].get(
+                "use_mech_marketplace", False
+            )
+            data["version"] = 3
+            new_data = data
+        elif version == 0:
+            new_data = {
+                "version": 3,
+                "hash": data.get("hash"),
+                "keys": data.get("keys"),
+                "home_chain_id": "100",  # Assuming a default value for home_chain_id
+                "chain_configs": {
+                    "100": {
+                        "ledger_config": {
+                            "rpc": data.get("ledger_config", {}).get("rpc"),
+                            "type": data.get("ledger_config", {}).get("type"),
+                            "chain": data.get("ledger_config", {}).get("chain"),
                         },
-                    },
-                }
-            },
-            "service_path": data.get("service_path", ""),
-            "name": data.get("name", ""),
-        }
+                        "chain_data": {
+                            "instances": data.get("chain_data", {}).get(
+                                "instances", []
+                            ),
+                            "token": data.get("chain_data", {}).get("token"),
+                            "multisig": data.get("chain_data", {}).get("multisig"),
+                            "staked": data.get("chain_data", {}).get("staked", False),
+                            "on_chain_state": data.get("chain_data", {}).get(
+                                "on_chain_state", 3
+                            ),
+                            "user_params": {
+                                "staking_program_id": "pearl_alpha",
+                                "nft": data.get("chain_data", {})
+                                .get("user_params", {})
+                                .get("nft"),
+                                "threshold": data.get("chain_data", {})
+                                .get("user_params", {})
+                                .get("threshold"),
+                                "use_staking": data.get("chain_data", {})
+                                .get("user_params", {})
+                                .get("use_staking"),
+                                "use_mech_marketplace": False,
+                                "cost_of_bond": data.get("chain_data", {})
+                                .get("user_params", {})
+                                .get("cost_of_bond"),
+                                "fund_requirements": data.get("chain_data", {})
+                                .get("user_params", {})
+                                .get("fund_requirements", {}),
+                            },
+                        },
+                    }
+                },
+                "service_path": data.get("service_path", ""),
+                "name": data.get("name", ""),
+            }
 
         with open(file_path, "w", encoding="utf-8") as file:
             json.dump(new_data, file, indent=2)
@@ -758,8 +750,10 @@ class Service(LocalResource):
         """Load deployment object for the service."""
         if not (self.path / DEPLOYMENT_JSON).exists():
             self._deployment = Deployment.new(path=self.path)
-        if self._deployment is None:
+        try:
             self._deployment = Deployment.load(path=self.path)
+        except JSONDecodeError:
+            self._deployment = Deployment.new(path=self.path)
         return t.cast(Deployment, self._deployment)
 
     @staticmethod

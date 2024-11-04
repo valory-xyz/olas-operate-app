@@ -6,13 +6,15 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { useServices } from '@/hooks/useServices';
 import { AutonolasService } from '@/service/Autonolas';
 
+export const DEFAULT_STAKING_PROGRAM_ID = StakingProgramId.Beta;
+
 export const StakingProgramContext = createContext<{
   activeStakingProgramId?: StakingProgramId | null;
   defaultStakingProgramId: StakingProgramId;
   updateActiveStakingProgramId: () => Promise<void>;
 }>({
   activeStakingProgramId: undefined,
-  defaultStakingProgramId: StakingProgramId.Beta,
+  defaultStakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
   updateActiveStakingProgramId: async () => {},
 });
 
@@ -50,7 +52,7 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
       value={{
         activeStakingProgramId,
         updateActiveStakingProgramId,
-        defaultStakingProgramId: StakingProgramId.Beta,
+        defaultStakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
       }}
     >
       {children}

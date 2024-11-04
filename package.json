@@ -57,11 +57,11 @@
     "install:frontend": "cd frontend && yarn",
     "lint:frontend": "cd frontend && yarn lint",
     "start": "yarn electron .",
-    "dev": "dotenv -e .env -- yarn start",
+    "dev": "dotenv -e .env -- electron .",
     "start:frontend": "cd frontend && yarn start",
     "test:frontend": "cd frontend && yarn test",
     "download-binaries": "sh download_binaries.sh",
     "build:pearl": "sh build_pearl.sh"
   },
-  "version": "0.1.0-rc167"
+  "version": "0.1.0-rc184"
 }

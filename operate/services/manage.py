@@ -512,6 +512,14 @@ class ServiceManager:
             "activity_checker"
         ]
         os.environ["MECH_CONTRACT_ADDRESS"] = staking_params["agent_mech"]
+        os.environ["MECH_REQUEST_PRICE"] = "10000000000000000"
+        os.environ["USE_MECH_MARKETPLACE"] = str(
+            chain_data.user_params.use_mech_marketplace
+        )
+        os.environ["REQUESTER_STAKING_INSTANCE_ADDRESS"] = staking_params[
+            "staking_contract"
+        ]
+        os.environ["PRIORITY_MECH_ADDRESS"] = staking_params["agent_mech"]
 
         if user_params.use_staking:
             self.logger.info("Checking staking compatibility")
@@ -1354,6 +1362,9 @@ class ServiceManager:
                     )
                 await asyncio.sleep(60)
 
+    def _set_env_variables(self, hash: str) -> None:
+        self.logger.info(f"_set_env_variables {hash} - not implemented")
+
     def deploy_service_locally(self, hash: str, force: bool = True) -> Deployment:
         """
         Deploy service locally
@@ -1362,6 +1373,7 @@ class ServiceManager:
         :param force: Remove previous deployment and start a new one.
         :return: Deployment instance
         """
+        self._set_env_variables(hash=hash)
         deployment = self.load_or_create(hash=hash).deployment
         deployment.build(force=force)
         deployment.start()

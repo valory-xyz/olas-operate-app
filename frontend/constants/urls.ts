@@ -6,8 +6,8 @@ export const COW_SWAP_GNOSIS_XDAI_OLAS_URL: string =
 export const FAQ_URL = 'https://olas.network/operate#faq';
 export const DOWNLOAD_URL = 'https://olas.network/operate#download';
 
-export const SUBGRAPH_URL =
-  'https://api.studio.thegraph.com/query/81855/pearl-staking-rewards-history/version/latest';
+export const GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL =
+  'https://api.studio.thegraph.com/query/81371/gnosis-pearl-rewards-history/version/latest';
 
 // discord
 export const SUPPORT_URL =

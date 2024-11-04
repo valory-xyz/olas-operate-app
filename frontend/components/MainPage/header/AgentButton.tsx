@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 
 import { Chain, DeploymentStatus } from '@/client';
 import { COLOR } from '@/constants/colors';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useReward } from '@/hooks/useReward';
@@ -132,7 +133,7 @@ const AgentNotRunningButton = () => {
   const { showNotification } = useElectronApi();
   const {
     setIsPaused: setIsBalancePollingPaused,
-    safeBalance,
+    masterSafeBalance: safeBalance,
     isLowBalance,
     totalOlasStakedBalance,
     totalEthBalance,
@@ -179,6 +180,10 @@ const AgentNotRunningButton = () => {
     // Mock "DEPLOYING" status (service polling will update this once resumed)
     setServiceStatus(DeploymentStatus.DEPLOYING);
 
+    // Get the active staking program id; default id if there's no agent yet
+    const stakingProgramId: StakingProgramId =
+      activeStakingProgramId ?? defaultStakingProgramId;
+
     // Create master safe if it doesn't exist
     try {
       if (!masterSafeAddress) {
@@ -197,9 +202,11 @@ const AgentNotRunningButton = () => {
     // Then create / deploy the service
     try {
       await ServicesService.createService({
-        stakingProgramId: activeStakingProgramId ?? defaultStakingProgramId, // overwrite with StakingProgram.Alpha to test migration
+        stakingProgramId,
         serviceTemplate,
         deploy: true,
+        useMechMarketplace:
+          stakingProgramId === StakingProgramId.BetaMechMarketplace,
       });
     } catch (error) {
       console.error(error);

@@ -5,11 +5,7 @@ import { groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 import { z } from 'zod';
 
-import { Chain } from '@/client';
-import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/constants/contractAddresses';
-import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
-import { SUBGRAPH_URL } from '@/constants/urls';
-import { StakingProgramId } from '@/enums/StakingProgram';
+import { GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL } from '@/constants/urls';
 
 import { useServices } from './useServices';
 
@@ -41,12 +37,6 @@ const CheckpointGraphResponseSchema = z.object({
 });
 type CheckpointGraphResponse = z.infer<typeof CheckpointGraphResponseSchema>;
 
-const betaAddress =
-  SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS].pearl_beta;
-const beta2Address =
-  SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS]
-    .pearl_beta_2;
-
 const fetchRewardsQuery = gql`
   {
     checkpoints(orderBy: epoch, orderDirection: desc) {
@@ -63,7 +53,7 @@ const fetchRewardsQuery = gql`
   }
 `;
 
-type TransformedCheckpoint = {
+export type TransformedCheckpoint = {
   epoch: string;
   rewards: string[];
   serviceIds: string[];
@@ -132,115 +122,100 @@ const transformCheckpoints = (
   return transformed;
 };
 
-/**
- * Get the timestamp of the first reward received by the service in the contract.
- * NOTE: Assumes that the switch of the contract was completed AND the rewards are received in the same epoch.
- */
-const getTimestampOfFirstReward = (
-  epochs: CheckpointGraphResponse[],
-  serviceId: number,
-) => {
-  const timestamp = epochs
-    .toReversed()
-    .find((epochDetails) =>
-      epochDetails.serviceIds.includes(`${serviceId}`),
-    )?.blockTimestamp;
-
-  return timestamp ? Number(timestamp) : null;
-};
-
 export const useRewardsHistory = () => {
   const { serviceId } = useServices();
 
-  const { data, isError, isLoading, isFetching, refetch } = useQuery({
+  const {
+    data: contractCheckpoints,
+    isError,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: [],
     async queryFn() {
+      if (!serviceId) return { checkpoints: [] };
+
       const checkpointsResponse: {
         checkpoints: CheckpointGraphResponse[];
-      } = await request(SUBGRAPH_URL, fetchRewardsQuery);
+      } = await request(GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL, fetchRewardsQuery);
       return checkpointsResponse;
     },
-    select: ({ checkpoints }) => {
+    select: ({
+      checkpoints,
+    }): { [contractAddress: string]: TransformedCheckpoint[] } => {
+      if (!serviceId) return {};
+      if (!checkpoints) return {};
+
+      // group checkpoints by contract address / staking program
       const checkpointsByContractAddress = groupBy(
         checkpoints,
         'contractAddress',
       );
 
-      const beta2Checkpoints =
-        checkpointsByContractAddress[beta2Address.toLowerCase()];
+      // only need relevant contract history that service has participated in
+      // ignore contract addresses with no activity from the service
+      const relevantTransformedCheckpoints = Object.keys(
+        checkpointsByContractAddress,
+      ).reduce(
+        (
+          acc: { [stakingContractAddress: string]: TransformedCheckpoint[] },
+          stakingContractAddress: string,
+        ) => {
+          const checkpoints =
+            checkpointsByContractAddress[stakingContractAddress];
 
-      /** Pearl beta 2 details */
+          // skip if there are no checkpoints for the contract address
+          if (!checkpoints) return acc;
+          if (checkpoints.length <= 0) return acc;
+          if (
+            !checkpoints.some((checkpoint) =>
+              checkpoint.serviceIds.includes(`${serviceId}`),
+            )
+          )
+            return acc;
 
-      // timestamp when the contract was switched to beta2
-      // ie, got the fist rewards from beta2 contract
-      const beta2switchTimestamp = getTimestampOfFirstReward(
-        beta2Checkpoints,
-        serviceId as number,
+          // transform the checkpoints ..
+          // includes epoch start and end time, rewards, etc
+          const transformedCheckpoints = transformCheckpoints(
+            checkpoints,
+            serviceId as number,
+            null,
+          );
+
+          return {
+            ...acc,
+            [stakingContractAddress]: transformedCheckpoints,
+          };
+        },
+        {},
       );
 
-      const beta2ContractDetails = {
-        id: beta2Address,
-        name: STAKING_PROGRAM_META[StakingProgramId.Beta2].name,
-        history: transformCheckpoints(beta2Checkpoints, serviceId, null),
-      };
-
-      /** Pearl beta details */
-      const betaCheckpoints =
-        checkpointsByContractAddress[betaAddress.toLowerCase()];
-
-      const betaContractRewards = {
-        id: betaAddress,
-        name: STAKING_PROGRAM_META[StakingProgramId.Beta].name,
-        history: transformCheckpoints(
-          betaCheckpoints,
-          serviceId,
-          beta2switchTimestamp,
-        ),
-      };
-
-      // If there are no rewards in both contracts, return empty array
-      const rewards = [];
-      if (beta2ContractDetails.history.some((epoch) => epoch?.earned)) {
-        rewards.push(beta2ContractDetails);
-      }
-      if (betaContractRewards.history.some((epoch) => epoch?.earned)) {
-        rewards.push(betaContractRewards);
-      }
-
-      /**
-       * Temporarily disabling schema validation as it is failing for some reason.
-       */
-
-      // const parsedRewards = StakingRewardSchema.array().safeParse(rewards);
-
-      // if (!parsedRewards.success) {
-      //   console.error(parsedRewards.error.errors);
-      //   throw new Error(parsedRewards.error.errors.join(', '));
-      // }
-
-      // return parsedRewards.data;
-
-      return rewards;
+      return relevantTransformedCheckpoints;
     },
     refetchOnWindowFocus: false,
     refetchInterval: ONE_DAY_IN_MS,
     enabled: !!serviceId,
   });
 
-  const latestRewardStreak = useMemo<number>(() => {
-    if (!data) return 0;
+  const allCheckpoints = useMemo<TransformedCheckpoint[]>(
+    () =>
+      Object.values(contractCheckpoints ?? {})
+        .flat()
+        .sort((a, b) => b.epochEndTimeStamp - a.epochEndTimeStamp),
+    [contractCheckpoints],
+  );
 
-    // merge histories into single array
-    const allCheckpoints = data.reduce(
-      (acc: TransformedCheckpoint[], { history }) => [...acc, ...history],
-      [],
-    );
+  const latestRewardStreak = useMemo<number>(() => {
+    if (!contractCheckpoints) return 0;
 
     // remove all histories that are not earned
-    const earnedHistories = allCheckpoints.filter((history) => history.earned);
+    const earnedCheckpoints = allCheckpoints.filter(
+      (checkpoint) => checkpoint.earned,
+    );
 
     // sort descending by epoch end time
-    const sorted = earnedHistories.sort(
+    const sorted = earnedCheckpoints.sort(
       (a, b) => b.epochEndTimeStamp - a.epochEndTimeStamp,
     );
 
@@ -279,7 +254,7 @@ export const useRewardsHistory = () => {
     }
 
     return streak;
-  }, [data]);
+  }, [allCheckpoints, contractCheckpoints]);
 
   useEffect(() => {
     serviceId && refetch();
@@ -291,6 +266,7 @@ export const useRewardsHistory = () => {
     isLoading,
     latestRewardStreak,
     refetch,
-    rewards: data,
+    allCheckpoints,
+    contractCheckpoints,
   };
 };

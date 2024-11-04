@@ -17,8 +17,9 @@ import { ServicesProvider } from '@/context/ServicesProvider';
 import { SettingsProvider } from '@/context/SettingsProvider';
 import { SetupProvider } from '@/context/SetupProvider';
 import { StakingContractInfoProvider } from '@/context/StakingContractInfoProvider';
-import { StakingProgramProvider } from '@/context/StakingProgramContext';
+import { StakingProgramProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
+import { SystemNotificationTriggers } from '@/context/SystemNotificationTriggers';
 import { WalletProvider } from '@/context/WalletProvider';
 import { mainTheme } from '@/theme';
 
@@ -48,9 +49,11 @@ export default function App({ Component, pageProps }: AppProps) {
                                 <ModalProvider>
                                   {isMounted ? (
                                     <QueryClientProvider client={queryClient}>
-                                      <Layout>
-                                        <Component {...pageProps} />
-                                      </Layout>
+                                      <SystemNotificationTriggers>
+                                        <Layout>
+                                          <Component {...pageProps} />
+                                        </Layout>
+                                      </SystemNotificationTriggers>
                                     </QueryClientProvider>
                                   ) : null}
                                 </ModalProvider>

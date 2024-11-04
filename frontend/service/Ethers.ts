@@ -90,7 +90,8 @@ const checkRpc = async (rpc: string): Promise<boolean> => {
   }
 };
 
-const BACK_TRACK_BLOCKS = 9000;
+// tenderly limits to 1000
+const BACK_TRACK_BLOCKS = process.env.NODE_ENV === 'development' ? 1000 : 9000;
 const MAX_ROUNDS = 5;
 
 const getLogsList = async (

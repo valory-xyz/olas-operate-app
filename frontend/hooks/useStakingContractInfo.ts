@@ -29,13 +29,13 @@ export const useStakingContractInfo = () => {
   const {
     serviceStakingState,
     serviceStakingStartTime,
-    //availableRewards, // TODO: uncomment when availableRewards is available
     serviceIds,
     maxNumServices,
     minimumStakingDuration,
+    availableRewards,
   } = activeStakingContractInfo;
 
-  const isRewardsAvailable = true; // availableRewards > 0;
+  const isRewardsAvailable = availableRewards ?? 0 > 0;
 
   const hasEnoughServiceSlots =
     !isNil(serviceIds) &&

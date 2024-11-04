@@ -4,6 +4,8 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { AGENT_MECH_ABI } from '@/abis/agentMech';
 import { MECH_ACTIVITY_CHECKER_ABI } from '@/abis/mechActivityChecker';
+import { MECH_MARKETPLACE_ABI } from '@/abis/mechMarketplace';
+import { REQUESTER_ACTIVITY_CHECKER_ABI } from '@/abis/requesterActivityChecker';
 import { SERVICE_REGISTRY_L2_ABI } from '@/abis/serviceRegistryL2';
 import { SERVICE_REGISTRY_TOKEN_UTILITY_ABI } from '@/abis/serviceRegistryTokenUtility';
 import { SERVICE_STAKING_TOKEN_MECH_USAGE_ABI } from '@/abis/serviceStakingTokenMechUsage';
@@ -11,6 +13,8 @@ import { Chain } from '@/client';
 import {
   AGENT_MECH_CONTRACT_ADDRESS,
   MECH_ACTIVITY_CHECKER_CONTRACT_ADDRESS,
+  MECH_MARKETPLACE_CONTRACT_ADDRESS,
+  REQUESTER_ACTIVITY_CHECKER_CONTRACT_ADDRESS,
   SERVICE_REGISTRY_L2_CONTRACT_ADDRESS,
   SERVICE_REGISTRY_TOKEN_UTILITY_CONTRACT_ADDRESS,
   SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES,
@@ -24,11 +28,6 @@ import { StakingContractInfo, StakingRewardsInfo } from '@/types/Autonolas';
 const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 const REQUIRED_MECH_REQUESTS_SAFETY_MARGIN = 1;
 
-const agentMechContract = new MulticallContract(
-  AGENT_MECH_CONTRACT_ADDRESS[Chain.GNOSIS],
-  AGENT_MECH_ABI.filter((abi) => abi.type === 'function'), // weird bug in the package where their filter doesn't work..
-);
-
 const ServiceStakingTokenAbi = SERVICE_STAKING_TOKEN_MECH_USAGE_ABI.filter(
   (abi) => abi.type === 'function',
 );
@@ -36,40 +35,47 @@ const ServiceStakingTokenAbi = SERVICE_STAKING_TOKEN_MECH_USAGE_ABI.filter(
 const serviceStakingTokenMechUsageContracts: Record<
   StakingProgramId,
   MulticallContract
-> = {
-  [StakingProgramId.Alpha]: new MulticallContract(
-    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS][
-      StakingProgramId.Alpha
-    ],
-    ServiceStakingTokenAbi,
-  ),
-  [StakingProgramId.Beta]: new MulticallContract(
-    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS][
-      StakingProgramId.Beta
-    ],
-    ServiceStakingTokenAbi,
-  ),
-  [StakingProgramId.Beta2]: new MulticallContract(
-    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS][
-      StakingProgramId.Beta2
-    ],
-    ServiceStakingTokenAbi,
-  ),
-};
+> = Object.values(StakingProgramId).reduce(
+  (contracts, programId) => {
+    contracts[programId] = new MulticallContract(
+      SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS][
+        programId
+      ],
+      ServiceStakingTokenAbi,
+    );
+    return contracts;
+  },
+  {} as Record<StakingProgramId, MulticallContract>,
+);
 
 const serviceRegistryTokenUtilityContract = new MulticallContract(
   SERVICE_REGISTRY_TOKEN_UTILITY_CONTRACT_ADDRESS[Chain.GNOSIS],
-  SERVICE_REGISTRY_TOKEN_UTILITY_ABI.filter((abi) => abi.type === 'function'), // same as above
+  SERVICE_REGISTRY_TOKEN_UTILITY_ABI.filter((abi) => abi.type === 'function'),
 );
 
 const serviceRegistryL2Contract = new MulticallContract(
   SERVICE_REGISTRY_L2_CONTRACT_ADDRESS[Chain.GNOSIS],
-  SERVICE_REGISTRY_L2_ABI.filter((abi) => abi.type === 'function'), // same as above
+  SERVICE_REGISTRY_L2_ABI.filter((abi) => abi.type === 'function'),
 );
 
-const mechActivityCheckerContract = new MulticallContract(
+const agentMechContract = new MulticallContract(
+  AGENT_MECH_CONTRACT_ADDRESS[Chain.GNOSIS],
+  AGENT_MECH_ABI.filter((abi) => abi.type === 'function'),
+);
+
+const agentMechActivityCheckerContract = new MulticallContract(
   MECH_ACTIVITY_CHECKER_CONTRACT_ADDRESS[Chain.GNOSIS],
-  MECH_ACTIVITY_CHECKER_ABI.filter((abi) => abi.type === 'function'), // same as above
+  MECH_ACTIVITY_CHECKER_ABI.filter((abi) => abi.type === 'function'),
+);
+
+const mechMarketplaceContract = new MulticallContract(
+  MECH_MARKETPLACE_CONTRACT_ADDRESS[Chain.GNOSIS],
+  MECH_MARKETPLACE_ABI.filter((abi) => abi.type === 'function'),
+);
+
+const mechMarketplaceActivityCheckerContract = new MulticallContract(
+  REQUESTER_ACTIVITY_CHECKER_CONTRACT_ADDRESS[Chain.GNOSIS],
+  REQUESTER_ACTIVITY_CHECKER_ABI.filter((abi) => abi.type === 'function'),
 );
 
 const getAgentStakingRewardsInfo = async ({
@@ -84,13 +90,23 @@ const getAgentStakingRewardsInfo = async ({
   if (!agentMultisigAddress) return;
   if (!serviceId) return;
 
+  const mechContract =
+    stakingProgram === StakingProgramId.BetaMechMarketplace
+      ? mechMarketplaceContract
+      : agentMechContract;
+
+  const mechActivityContract =
+    stakingProgram === StakingProgramId.BetaMechMarketplace
+      ? mechMarketplaceActivityCheckerContract
+      : agentMechActivityCheckerContract;
+
   const contractCalls = [
-    agentMechContract.getRequestsCount(agentMultisigAddress),
+    mechContract.getRequestsCount(agentMultisigAddress),
     serviceStakingTokenMechUsageContracts[stakingProgram].getServiceInfo(
       serviceId,
     ),
     serviceStakingTokenMechUsageContracts[stakingProgram].livenessPeriod(),
-    mechActivityCheckerContract.livenessRatio(),
+    mechActivityContract.livenessRatio(),
     serviceStakingTokenMechUsageContracts[stakingProgram].rewardsPerSecond(),
     serviceStakingTokenMechUsageContracts[
       stakingProgram
@@ -276,19 +292,26 @@ const getStakingContractInfoByStakingProgram = async (
   const availableRewards = parseFloat(
     ethers.utils.formatUnits(availableRewardsInBN, 18),
   );
+
   const serviceIds = getServiceIdsInBN.map((id: BigNumber) => id.toNumber());
   const maxNumServices = maxNumServicesInBN.toNumber();
 
   // APY
   const rewardsPerYear = rewardsPerSecond.mul(ONE_YEAR);
-  const apy =
-    Number(rewardsPerYear.mul(100).div(minStakingDeposit)) /
-    (1 + numAgentInstances.toNumber());
+
+  let apy = 0;
+
+  if (rewardsPerSecond.gt(0) && minStakingDeposit.gt(0)) {
+    apy =
+      Number(rewardsPerYear.mul(100).div(minStakingDeposit)) /
+      (1 + numAgentInstances.toNumber());
+  }
 
   // Amount of OLAS required for Stake
   const stakeRequiredInWei = minStakingDeposit.add(
     minStakingDeposit.mul(numAgentInstances),
   );
+
   const olasStakeRequired = Number(formatEther(stakeRequiredInWei));
 
   // Rewards per work period
@@ -368,8 +391,15 @@ const getCurrentStakingProgramByServiceId = async (
 
   try {
     await gnosisMulticallProvider.init();
-    const [isAlphaStaked, isBetaStaked, isBeta2Staked] =
-      await gnosisMulticallProvider.all(Object.values(contractCalls));
+    const [
+      isAlphaStaked,
+      isBetaStaked,
+      isBeta2Staked,
+      isBeta3Staked,
+      isBeta4Staked,
+      isBeta5Staked,
+      isBetaMechMarketplaceStaked,
+    ] = await gnosisMulticallProvider.all(Object.values(contractCalls));
 
     if (isAlphaStaked) {
       return StakingProgramId.Alpha;
@@ -381,6 +411,22 @@ const getCurrentStakingProgramByServiceId = async (
 
     if (isBeta2Staked) {
       return StakingProgramId.Beta2;
+    }
+
+    if (isBeta3Staked) {
+      return StakingProgramId.Beta3;
+    }
+
+    if (isBeta4Staked) {
+      return StakingProgramId.Beta4;
+    }
+
+    if (isBeta5Staked) {
+      return StakingProgramId.Beta5;
+    }
+
+    if (isBetaMechMarketplaceStaked) {
+      return StakingProgramId.BetaMechMarketplace;
     }
 
     return null;

@@ -19,7 +19,8 @@ const AlertInsufficientMigrationFunds = ({
 }: CantMigrateAlertProps) => {
   const { serviceTemplate } = useServiceTemplates();
   const { isServiceStaked } = useStakingContractInfo();
-  const { safeBalance, totalOlasStakedBalance } = useBalance();
+  const { masterSafeBalance: safeBalance, totalOlasStakedBalance } =
+    useBalance();
 
   const totalOlasRequiredForStaking = getMinimumStakedAmountRequired(
     serviceTemplate,

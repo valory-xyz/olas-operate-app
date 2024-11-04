@@ -17,7 +17,11 @@ export const useNeedsFunds = () => {
   );
 
   const { storeState } = useStore();
-  const { isBalanceLoaded, safeBalance, totalOlasStakedBalance } = useBalance();
+  const {
+    isBalanceLoaded,
+    masterSafeBalance: safeBalance,
+    totalOlasStakedBalance,
+  } = useBalance();
 
   const serviceFundRequirements = useMemo(() => {
     const gasEstimate =
