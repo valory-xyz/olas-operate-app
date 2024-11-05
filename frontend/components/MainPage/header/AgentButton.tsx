@@ -145,6 +145,7 @@ const AgentNotRunningButton = () => {
     isAgentEvicted,
     setIsPaused: setIsStakingContractInfoPollingPaused,
     updateActiveStakingContractInfo,
+    hasEnoughServiceSlots,
   } = useStakingContractInfo();
   const { activeStakingProgramId, defaultStakingProgramId } =
     useStakingProgram();
@@ -280,6 +281,9 @@ const AgentNotRunningButton = () => {
 
     if (!requiredOlas) return false;
 
+    // If no slots available, agent cannot be started
+    if (!hasEnoughServiceSlots) return false;
+
     // case where service exists & user has initial funded
     if (service && storeState?.isInitialFunded) {
       if (!safeOlasBalanceWithStaked) return false;
@@ -304,6 +308,7 @@ const AgentNotRunningButton = () => {
     requiredOlas,
     totalEthBalance,
     isLowBalance,
+    hasEnoughServiceSlots,
   ]);
 
   const buttonProps: ButtonProps = {

@@ -8,6 +8,7 @@ import { useBalance } from '@/hooks/useBalance';
 import { useMasterSafe } from '@/hooks/useMasterSafe';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
+import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { MainHeader } from './header';
@@ -26,6 +27,7 @@ export const Main = () => {
   const { updateServicesState } = useServices();
   const { updateBalances, isLoaded, setIsLoaded } = useBalance();
   const { activeStakingProgramId: currentStakingProgram } = useStakingProgram();
+  const { hasEnoughServiceSlots } = useStakingContractInfo();
 
   useEffect(() => {
     if (!isLoaded) {
@@ -37,6 +39,7 @@ export const Main = () => {
   const hideMainOlasBalanceTopBorder = [
     !backupSafeAddress,
     currentStakingProgram === StakingProgramId.Alpha,
+    !hasEnoughServiceSlots,
   ].some((condition) => !!condition);
 
   return (

@@ -7,6 +7,7 @@ import { Pages } from '@/enums/PageState';
 import { useBalance } from '@/hooks/useBalance';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { usePageState } from '@/hooks/usePageState';
+import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { CardSection } from '../../styled/CardSection';
@@ -17,6 +18,7 @@ export const StakingContractUpdate = () => {
   const { goto } = usePageState();
   const { isBalanceLoaded, isLowBalance } = useBalance();
   const { needsInitialFunding } = useNeedsFunds();
+  const { hasEnoughServiceSlots } = useStakingContractInfo();
   const {
     activeStakingProgramMeta,
     isActiveStakingProgramLoaded,
@@ -32,8 +34,14 @@ export const StakingContractUpdate = () => {
     if (!isBalanceLoaded) return false;
     if (isLowBalance) return false;
     if (needsInitialFunding) return false;
+    if (!hasEnoughServiceSlots) return false;
     return true;
-  }, [isBalanceLoaded, isLowBalance, needsInitialFunding]);
+  }, [
+    isBalanceLoaded,
+    isLowBalance,
+    needsInitialFunding,
+    hasEnoughServiceSlots,
+  ]);
 
   const stakingButton = useMemo(() => {
     if (!isActiveStakingProgramLoaded) return <Skeleton.Input />;
