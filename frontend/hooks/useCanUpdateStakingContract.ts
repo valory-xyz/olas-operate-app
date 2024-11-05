@@ -4,7 +4,7 @@ import { useBalance } from './useBalance';
 import { useNeedsFunds } from './useNeedsFunds';
 import { useStakingContractInfo } from './useStakingContractInfo';
 
-export const useCanStartUpdateStakingContract = () => {
+export const useCanUpdateStakingContract = () => {
   const { isBalanceLoaded, isLowBalance } = useBalance();
   const { needsInitialFunding } = useNeedsFunds();
   const { hasEnoughServiceSlots } = useStakingContractInfo();

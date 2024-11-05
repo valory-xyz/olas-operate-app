@@ -1,7 +1,7 @@
 import { Flex, Typography } from 'antd';
 
 import { Pages } from '@/enums/PageState';
-import { useCanStartUpdateStakingContract } from '@/hooks/useCanStartUpdateStakingContract';
+import { useCanUpdateStakingContract } from '@/hooks/useCanUpdateStakingContract';
 import { usePageState } from '@/hooks/usePageState';
 import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
 
@@ -12,7 +12,7 @@ const { Text } = Typography;
 export const NoAvailableSlotsOnTheContract = () => {
   const { goto } = usePageState();
   const { hasEnoughServiceSlots } = useStakingContractInfo();
-  const { canUpdateStakingContract } = useCanStartUpdateStakingContract();
+  const { canUpdateStakingContract } = useCanUpdateStakingContract();
 
   if (hasEnoughServiceSlots) return null;
 

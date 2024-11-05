@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { Pages } from '@/enums/PageState';
-import { useCanStartUpdateStakingContract } from '@/hooks/useCanStartUpdateStakingContract';
+import { useCanUpdateStakingContract } from '@/hooks/useCanUpdateStakingContract';
 import { usePageState } from '@/hooks/usePageState';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
@@ -14,7 +14,7 @@ const { Text } = Typography;
 
 export const StakingContractUpdate = () => {
   const { goto } = usePageState();
-  const { canUpdateStakingContract } = useCanStartUpdateStakingContract();
+  const { canUpdateStakingContract } = useCanUpdateStakingContract();
   const {
     activeStakingProgramMeta,
     isActiveStakingProgramLoaded,
