@@ -1,7 +1,8 @@
 import { Flex, Typography } from 'antd';
 
+import { useMigrate } from '@/components/ManageStakingPage/StakingContractSection/useMigrate';
 import { Pages } from '@/enums/PageState';
-import { useCanUpdateStakingContract } from '@/hooks/useCanUpdateStakingContract';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { usePageState } from '@/hooks/usePageState';
 import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
 
@@ -9,10 +10,15 @@ import { CustomAlert } from '../../../Alert';
 
 const { Text } = Typography;
 
-export const NoAvailableSlotsOnTheContract = () => {
+type NoAvailableSlotsOnTheContractProps = {
+  stakingProgramId: StakingProgramId;
+};
+export const NoAvailableSlotsOnTheContract = ({
+  stakingProgramId,
+}: NoAvailableSlotsOnTheContractProps) => {
   const { goto } = usePageState();
   const { hasEnoughServiceSlots } = useStakingContractInfo();
-  const { canUpdateStakingContract } = useCanUpdateStakingContract();
+  const { canUpdateStakingContract } = useMigrate(stakingProgramId);
 
   if (hasEnoughServiceSlots) return null;
 

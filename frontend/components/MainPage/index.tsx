@@ -74,7 +74,9 @@ export const Main = () => {
         <MainOlasBalance isBorderTopVisible={!hideMainOlasBalanceTopBorder} />
         <RewardsSection />
         <KeepAgentRunningSection />
-        <StakingContractUpdate />
+        {currentStakingProgram && (
+          <StakingContractUpdate stakingProgramId={currentStakingProgram} />
+        )}
         <GasBalanceSection />
         <MainNeedsFunds />
         <AddFundsSection />

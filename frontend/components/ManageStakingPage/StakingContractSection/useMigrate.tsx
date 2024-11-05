@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { DeploymentStatus } from '@/client';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalance } from '@/hooks/useBalance';
+import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { useServices } from '@/hooks/useServices';
 import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
@@ -40,9 +41,11 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
     isBalanceLoaded,
     masterSafeBalance: safeBalance,
     totalOlasStakedBalance,
+    isLowBalance,
   } = useBalance();
   const { activeStakingProgramId, activeStakingProgramMeta } =
     useStakingProgram();
+  const { needsInitialFunding } = useNeedsFunds();
 
   const {
     activeStakingContractInfo,
@@ -50,6 +53,7 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
     isServiceStakedForMinimumDuration,
     isStakingContractInfoLoaded,
     stakingContractInfoRecord,
+    hasEnoughServiceSlots,
   } = useStakingContractInfo();
 
   const stakingContractInfo = stakingContractInfoRecord?.[stakingProgramId];
@@ -231,8 +235,22 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
     stakingProgramId,
   ]);
 
+  const canUpdateStakingContract = useMemo(() => {
+    if (!isBalanceLoaded) return false;
+    if (isLowBalance) return false;
+    if (needsInitialFunding) return false;
+    if (!hasEnoughServiceSlots) return false;
+    return true;
+  }, [
+    isBalanceLoaded,
+    isLowBalance,
+    needsInitialFunding,
+    hasEnoughServiceSlots,
+  ]);
+
   return {
     migrateValidation,
     firstDeployValidation,
+    canUpdateStakingContract,
   };
 };

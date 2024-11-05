@@ -4,22 +4,26 @@ import { useMemo } from 'react';
 
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { Pages } from '@/enums/PageState';
-import { useCanUpdateStakingContract } from '@/hooks/useCanUpdateStakingContract';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { usePageState } from '@/hooks/usePageState';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
+import { useMigrate } from '../../ManageStakingPage/StakingContractSection/useMigrate';
 import { CardSection } from '../../styled/CardSection';
 
 const { Text } = Typography;
 
-export const StakingContractUpdate = () => {
+type StakingContractUpdateProps = { stakingProgramId: StakingProgramId };
+export const StakingContractUpdate = ({
+  stakingProgramId,
+}: StakingContractUpdateProps) => {
   const { goto } = usePageState();
-  const { canUpdateStakingContract } = useCanUpdateStakingContract();
   const {
     activeStakingProgramMeta,
     isActiveStakingProgramLoaded,
     defaultStakingProgramId,
   } = useStakingProgram();
+  const { canUpdateStakingContract } = useMigrate(stakingProgramId);
 
   const stakingContractName = useMemo(() => {
     if (activeStakingProgramMeta) return activeStakingProgramMeta.name;

@@ -1,4 +1,5 @@
 import { CardSection } from '@/components/styled/CardSection';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { AddBackupWalletAlert } from './AddBackupWalletAlert';
 import { AvoidSuspensionAlert } from './AvoidSuspensionAlert';
@@ -8,6 +9,8 @@ import { NoAvailableSlotsOnTheContract } from './NoAvailableSlotsOnTheContract';
 import { UpdateAvailableAlert } from './UpdateAvailableAlert';
 
 export const AlertSections = () => {
+  const { activeStakingProgramId } = useStakingProgram();
+
   return (
     <CardSection vertical>
       <UpdateAvailableAlert />
@@ -15,7 +18,11 @@ export const AlertSections = () => {
       <NewStakingProgramAlert />
       <AvoidSuspensionAlert />
       <LowTradingBalanceAlert />
-      <NoAvailableSlotsOnTheContract />
+      {activeStakingProgramId && (
+        <NoAvailableSlotsOnTheContract
+          stakingProgramId={activeStakingProgramId}
+        />
+      )}
     </CardSection>
   );
 };
