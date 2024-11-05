@@ -89,7 +89,7 @@ const AgentRunningButton = () => {
       await ServicesService.stopDeployment(service.hash);
     } catch (error) {
       console.error(error);
-      showNotification?.('Error while stopping agent');
+      showNotification?.('Some error ocurred while stopping agent');
     } finally {
       // Resume polling, will update to correct status regardless of success
       setIsServicePollingPaused(false);
@@ -192,7 +192,7 @@ const AgentNotRunningButton = () => {
     } catch (error) {
       console.error(error);
       setServiceStatus(undefined);
-      showNotification?.('Error while creating safe');
+      showNotification?.('Some error ocurred while creating safe');
       setIsStakingContractInfoPollingPaused(false);
       setIsServicePollingPaused(false);
       setIsBalancePollingPaused(false);
@@ -211,7 +211,7 @@ const AgentNotRunningButton = () => {
     } catch (error) {
       console.error(error);
       setServiceStatus(undefined);
-      showNotification?.('Error while deploying service');
+      showNotification?.('Some error ocurred while deploying service');
       setIsServicePollingPaused(false);
       setIsBalancePollingPaused(false);
       setIsStakingContractInfoPollingPaused(false);
@@ -223,7 +223,9 @@ const AgentNotRunningButton = () => {
       showNotification?.(`Your agent is running!`);
     } catch (error) {
       console.error(error);
-      showNotification?.('Error while showing "running" notification');
+      showNotification?.(
+        'Some error ocurred while showing "running" notification',
+      );
     }
 
     // Can assume successful deployment
