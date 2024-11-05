@@ -3,6 +3,7 @@ import { isNil } from 'lodash';
 import { useState } from 'react';
 import { useInterval } from 'usehooks-ts';
 
+import { POPOVER_WIDTH_LARGE } from '@/constants/width';
 import { StakingContractInfo } from '@/types/Autonolas';
 
 const { Text } = Typography;
@@ -41,7 +42,7 @@ export const CountdownUntilMigration = ({
     : countdownDisplayFormat(secondsUntilReady);
 
   return (
-    <Flex vertical gap={1}>
+    <Flex vertical gap={1} style={{ maxWidth: POPOVER_WIDTH_LARGE }}>
       <Text strong>Can&apos;t switch because you unstaked too recently.</Text>
       <Text>This may be because your agent was suspended.</Text>
       <Text>Keep running your agent and you&apos;ll be able to switch in</Text>
