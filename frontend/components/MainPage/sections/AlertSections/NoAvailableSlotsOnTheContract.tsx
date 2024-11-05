@@ -1,6 +1,7 @@
 import { Flex, Typography } from 'antd';
 
 import { Pages } from '@/enums/PageState';
+import { useCanStartUpdateStakingContract } from '@/hooks/useCanStartUpdateStakingContract';
 import { usePageState } from '@/hooks/usePageState';
 import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
 
@@ -11,6 +12,7 @@ const { Text } = Typography;
 export const NoAvailableSlotsOnTheContract = () => {
   const { goto } = usePageState();
   const { hasEnoughServiceSlots } = useStakingContractInfo();
+  const { canUpdateStakingContract } = useCanStartUpdateStakingContract();
 
   if (hasEnoughServiceSlots) return null;
 
@@ -28,12 +30,14 @@ export const NoAvailableSlotsOnTheContract = () => {
             Select a contract with available slots to be able to start your
             agent.
           </span>
-          <Text
-            className="pointer hover-underline text-primary text-sm"
-            onClick={() => goto(Pages.ManageStaking)}
-          >
-            Change staking contract
-          </Text>
+          {canUpdateStakingContract && (
+            <Text
+              className="pointer hover-underline text-primary text-sm"
+              onClick={() => goto(Pages.ManageStaking)}
+            >
+              Change staking contract
+            </Text>
+          )}
         </Flex>
       }
     />

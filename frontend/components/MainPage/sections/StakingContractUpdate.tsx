@@ -4,10 +4,8 @@ import { useMemo } from 'react';
 
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { Pages } from '@/enums/PageState';
-import { useBalance } from '@/hooks/useBalance';
-import { useNeedsFunds } from '@/hooks/useNeedsFunds';
+import { useCanStartUpdateStakingContract } from '@/hooks/useCanStartUpdateStakingContract';
 import { usePageState } from '@/hooks/usePageState';
-import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { CardSection } from '../../styled/CardSection';
@@ -16,9 +14,7 @@ const { Text } = Typography;
 
 export const StakingContractUpdate = () => {
   const { goto } = usePageState();
-  const { isBalanceLoaded, isLowBalance } = useBalance();
-  const { needsInitialFunding } = useNeedsFunds();
-  const { hasEnoughServiceSlots } = useStakingContractInfo();
+  const { canUpdateStakingContract } = useCanStartUpdateStakingContract();
   const {
     activeStakingProgramMeta,
     isActiveStakingProgramLoaded,
@@ -29,19 +25,6 @@ export const StakingContractUpdate = () => {
     if (activeStakingProgramMeta) return activeStakingProgramMeta.name;
     return STAKING_PROGRAM_META[defaultStakingProgramId].name;
   }, [activeStakingProgramMeta, defaultStakingProgramId]);
-
-  const canUpdateStakingContract = useMemo(() => {
-    if (!isBalanceLoaded) return false;
-    if (isLowBalance) return false;
-    if (needsInitialFunding) return false;
-    if (!hasEnoughServiceSlots) return false;
-    return true;
-  }, [
-    isBalanceLoaded,
-    isLowBalance,
-    needsInitialFunding,
-    hasEnoughServiceSlots,
-  ]);
 
   const stakingButton = useMemo(() => {
     if (!isActiveStakingProgramLoaded) return <Skeleton.Input />;
