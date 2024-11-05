@@ -2,6 +2,7 @@ import { Alert, Skeleton } from 'antd';
 import { useMemo } from 'react';
 
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
+import { NA } from '@/constants/symbols';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
 
@@ -20,12 +21,17 @@ export const StakingContractDetails = ({
     const details = stakingContractInfoRecord[stakingProgramId];
     return [
       {
+        left: 'Available slots',
+        right: details.maxNumServices || NA,
+      },
+      {
         left: 'Rewards per epoch',
         right: `~ ${details.rewardsPerWorkPeriod?.toFixed(2)} OLAS`,
       },
       {
         left: 'Estimated Annual Percentage Yield (APY)',
         right: `${details.apy}%`,
+        leftClassName: 'max-width-200',
       },
       {
         left: 'Required OLAS for staking',

@@ -262,9 +262,11 @@ ul.alert-list {
 .w-3\/4 {
   width: 75% !important;
 }
-
 .w-full {
   width: 100% !important;
+}
+.max-width-200 {
+  max-width: 200px;
 }
 
 .loading-ellipses:after {
