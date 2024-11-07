@@ -11,17 +11,8 @@ type EpochStatusNotification = {
   isNotified: boolean;
 };
 
-/**
- * Hook to notify the user when a new epoch is started
- * and agent is not running.
- */
-const useNotifyOnNewEpoch = () => {
-  const { showNotification } = useElectronApi();
-  const { isServiceNotRunning } = useServices();
+const useNewEpochEvent = () => {
   const { activeStakingProgramAddress } = useStakingProgram();
-
-  const [epochStatusNotification, setEpochStatusNotification] =
-    useState<EpochStatusNotification | null>(null);
 
   const { data: epoch } = useQuery({
     queryKey: ['latestEpochTime'],
@@ -31,6 +22,21 @@ const useNotifyOnNewEpoch = () => {
     select: (data) => Number(data.epoch),
     enabled: !!activeStakingProgramAddress,
   });
+
+  return epoch;
+};
+
+/**
+ * Hook to notify the user when a new epoch is started
+ * and agent is not running.
+ */
+export const useNotifyOnNewEpoch = () => {
+  const { showNotification } = useElectronApi();
+  const { isServiceNotRunning } = useServices();
+  const epoch = useNewEpochEvent();
+
+  const [epochStatusNotification, setEpochStatusNotification] =
+    useState<EpochStatusNotification | null>(null);
 
   useEffect(() => {
     // if agent is running, no need to show notification
@@ -57,8 +63,4 @@ const useNotifyOnNewEpoch = () => {
       setEpochStatusNotification({ lastEpoch: epoch, isNotified: true });
     }
   }, [isServiceNotRunning, epochStatusNotification, epoch, showNotification]);
-};
-
-export const useSystemLevelNotifications = () => {
-  useNotifyOnNewEpoch();
 };

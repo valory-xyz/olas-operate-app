@@ -5,9 +5,9 @@ import styled, { css } from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
+import { useNotifyOnNewEpoch } from '@/hooks/useNotifyOnNewEpoch';
 
 import { TopBar } from './TopBar';
-import { useSystemLevelNotifications } from './useSystemLevelNotifications';
 
 const Container = styled.div<{ blur: 'true' | 'false' }>`
   background-color: ${COLOR.WHITE};
@@ -39,6 +39,10 @@ const Body = styled.div`
   padding-top: 45px;
   overflow-y: auto;
 `;
+
+const useSystemLevelNotifications = () => {
+  useNotifyOnNewEpoch();
+};
 
 export const Layout = ({
   children,
