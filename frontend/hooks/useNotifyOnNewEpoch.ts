@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
+import { ethers } from 'ethers';
 import { useEffect, useState } from 'react';
 
+import { SERVICE_STAKING_TOKEN_MECH_USAGE_ABI } from '@/abis/serviceStakingTokenMechUsage';
+import { gnosisProvider } from '@/constants/providers';
 import { getLatestEpochDetails } from '@/graphql/queries';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
@@ -9,6 +12,46 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
 type EpochStatusNotification = {
   lastEpoch: number;
   isNotified: boolean;
+};
+
+type EventData = {
+  value: string; // Adjust based on your event's structure
+};
+
+type UseContractEventReturn = EventData | null;
+
+const useContractEvent = (eventName: string): UseContractEventReturn => {
+  const { activeStakingProgramAddress } = useStakingProgram();
+  const [eventData, setEventData] = useState<UseContractEventReturn>(null);
+
+  useEffect(() => {
+    if (!activeStakingProgramAddress) return;
+
+    const signer = gnosisProvider.getSigner();
+
+    // Set up the contract instance
+    const contract = new ethers.Contract(
+      activeStakingProgramAddress,
+      SERVICE_STAKING_TOKEN_MECH_USAGE_ABI,
+      signer,
+    );
+
+    // Event handler
+    const handleEvent = (value: string) => {
+      console.log('Event data:', value);
+      setEventData({ value });
+    };
+
+    // Listen for the event
+    contract.on(eventName, handleEvent);
+
+    // Cleanup the event listener when the component unmounts
+    return () => {
+      contract.off(eventName, handleEvent);
+    };
+  }, [activeStakingProgramAddress, eventName]);
+
+  return eventData;
 };
 
 const useNewEpochEvent = () => {
@@ -34,6 +77,9 @@ export const useNotifyOnNewEpoch = () => {
   const { showNotification } = useElectronApi();
   const { isServiceNotRunning } = useServices();
   const epoch = useNewEpochEvent();
+  const eventInfo = useContractEvent('Checkpoint');
+
+  console.log('eventInfo', eventInfo);
 
   const [epochStatusNotification, setEpochStatusNotification] =
     useState<EpochStatusNotification | null>(null);
