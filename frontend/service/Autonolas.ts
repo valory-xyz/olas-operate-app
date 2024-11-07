@@ -225,6 +225,7 @@ const getStakingContractInfoByServiceIdStakingProgram = async (
       serviceId,
     ),
     serviceStakingTokenMechUsageContracts[stakingProgramId].minStakingDeposit(),
+    serviceStakingTokenMechUsageContracts[stakingProgramId].epochCounter(),
   ];
 
   await gnosisMulticallProvider.init();
@@ -238,6 +239,7 @@ const getStakingContractInfoByServiceIdStakingProgram = async (
     serviceInfo,
     serviceStakingState,
     minStakingDeposit,
+    epochCounter,
   ] = multicallResponse;
 
   const availableRewards = parseFloat(
@@ -254,6 +256,7 @@ const getStakingContractInfoByServiceIdStakingProgram = async (
     serviceStakingStartTime: serviceInfo.tsStart.toNumber(),
     serviceStakingState,
     minStakingDeposit: parseFloat(ethers.utils.formatEther(minStakingDeposit)),
+    epochCounter: epochCounter.toNumber(),
   };
 };
 
