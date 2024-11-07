@@ -10,7 +10,10 @@ import { useModals } from '@/hooks/useModals';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useServiceTemplates } from '@/hooks/useServiceTemplates';
-import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
+import {
+  useActiveStakingContractInfo,
+  useStakingContractInfo,
+} from '@/hooks/useStakingContractInfo';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { ServicesService } from '@/service/Services';
 
@@ -30,10 +33,28 @@ export const MigrateButton = ({ stakingProgramId }: MigrateButtonProps) => {
     hasInitialLoaded: isServicesLoaded,
     service,
   } = useServices();
-  const { setIsPaused: setIsBalancePollingPaused } = useBalance();
-  const { updateActiveStakingProgramId: updateStakingProgram } =
+
+  const { defaultStakingProgramId, setDefaultStakingProgramId } =
     useStakingProgram();
-  const { activeStakingContractInfo } = useStakingContractInfo();
+
+  const { setIsPaused: setIsBalancePollingPaused } = useBalance();
+  const { updateActiveStakingProgramId } = useStakingProgram();
+
+  const { activeStakingContractInfo, isActiveStakingContractInfoLoaded } =
+    useActiveStakingContractInfo();
+  const { stakingContractInfo: defaultStakingContractInfo } =
+    useStakingContractInfo(defaultStakingProgramId);
+
+  const currentStakingContractInfo = useMemo(() => {
+    if (!isActiveStakingContractInfoLoaded) return;
+    if (activeStakingContractInfo) return activeStakingContractInfo;
+    return defaultStakingContractInfo;
+  }, [
+    activeStakingContractInfo,
+    defaultStakingContractInfo,
+    isActiveStakingContractInfoLoaded,
+  ]);
+
   const { setMigrationModalOpen } = useModals();
 
   const { migrateValidation, firstDeployValidation } =
@@ -43,7 +64,6 @@ export const MigrateButton = ({ stakingProgramId }: MigrateButtonProps) => {
   const isFirstDeploy = useMemo(() => {
     if (!isServicesLoaded) return false;
     if (service) return false;
-
     return true;
   }, [isServicesLoaded, service]);
 
@@ -54,17 +74,17 @@ export const MigrateButton = ({ stakingProgramId }: MigrateButtonProps) => {
 
     if (
       validation.reason === CantMigrateReason.NotStakedForMinimumDuration &&
-      !isNil(activeStakingContractInfo)
+      !isNil(currentStakingContractInfo)
     ) {
       return (
         <CountdownUntilMigration
-          activeStakingContractInfo={activeStakingContractInfo}
+          currentStakingContractInfo={currentStakingContractInfo}
         />
       );
     }
 
     return validation.reason;
-  }, [activeStakingContractInfo, validation]);
+  }, [currentStakingContractInfo, validation]);
 
   return (
     <Popover content={popoverContent}>
@@ -75,6 +95,7 @@ export const MigrateButton = ({ stakingProgramId }: MigrateButtonProps) => {
         onClick={async () => {
           setIsServicePollingPaused(true);
           setIsBalancePollingPaused(true);
+          setDefaultStakingProgramId(stakingProgramId);
 
           try {
             setServiceStatus(DeploymentStatus.DEPLOYING);
@@ -88,7 +109,7 @@ export const MigrateButton = ({ stakingProgramId }: MigrateButtonProps) => {
                 stakingProgramId === StakingProgramId.BetaMechMarketplace,
             });
 
-            await updateStakingProgram();
+            await updateActiveStakingProgramId();
 
             setMigrationModalOpen(true);
           } catch (error) {

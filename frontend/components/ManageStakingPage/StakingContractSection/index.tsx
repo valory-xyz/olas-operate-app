@@ -38,33 +38,37 @@ export const StakingContractSection = ({
 
   const stakingProgramMeta = STAKING_PROGRAM_META[stakingProgramId];
 
-  /**
-   * Returns `true` if this stakingProgram is active,
-   * or user is unstaked and this is the default
-   */
-  const isActiveStakingProgram = useMemo(() => {
-    if (activeStakingProgramId === null)
-      return defaultStakingProgramId === stakingProgramId;
-    return activeStakingProgramId === stakingProgramId;
-  }, [activeStakingProgramId, defaultStakingProgramId, stakingProgramId]);
+  // /**
+  //  * Returns `true` if this stakingProgram is active,
+  //  * or user is unstaked and this is the default
+  //  */
+  // const isActiveStakingProgram = useMemo(() => {
+  //   if (activeStakingProgramId === null)
+  //     return defaultStakingProgramId === stakingProgramId;
+  //   return activeStakingProgramId === stakingProgramId;
+  // }, [activeStakingProgramId, defaultStakingProgramId, stakingProgramId]);
 
   const contractTagStatus = useMemo(() => {
     if (activeStakingProgramId === stakingProgramId)
-      return StakingProgramStatus.Selected;
+      return StakingProgramStatus.Active;
 
     // Pearl is not staked, set as Selected if default
     if (!activeStakingProgramId && stakingProgramId === defaultStakingProgramId)
-      return StakingProgramStatus.Selected;
+      return StakingProgramStatus.Default;
 
     // Otherwise, no tag
     return null;
   }, [activeStakingProgramId, defaultStakingProgramId, stakingProgramId]);
 
-  const showMigrateButton = !isActiveStakingProgram;
+  const showMigrateButton =
+    stakingProgramId !== (activeStakingProgramId ?? defaultStakingProgramId);
+
   const showFundingButton = useMemo(() => {
     if (migrateValidation.canMigrate) return false;
     return (
-      migrateValidation.reason === CantMigrateReason.InsufficientOlasToMigrate
+      migrateValidation.reason ===
+        CantMigrateReason.InsufficientOlasToMigrate ||
+      migrateValidation.reason === CantMigrateReason.InsufficientGasToMigrate
     );
   }, [migrateValidation]);
 

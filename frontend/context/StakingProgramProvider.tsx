@@ -6,16 +6,18 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { useServices } from '@/hooks/useServices';
 import { AutonolasService } from '@/service/Autonolas';
 
-export const DEFAULT_STAKING_PROGRAM_ID = StakingProgramId.Beta;
+export const INITIAL_DEFAULT_STAKING_PROGRAM_ID = StakingProgramId.Beta;
 
 export const StakingProgramContext = createContext<{
   activeStakingProgramId?: StakingProgramId | null;
   defaultStakingProgramId: StakingProgramId;
   updateActiveStakingProgramId: () => Promise<void>;
+  setDefaultStakingProgramId: (stakingProgramId: StakingProgramId) => void;
 }>({
   activeStakingProgramId: undefined,
-  defaultStakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
+  defaultStakingProgramId: INITIAL_DEFAULT_STAKING_PROGRAM_ID,
   updateActiveStakingProgramId: async () => {},
+  setDefaultStakingProgramId: () => {},
 });
 
 /** Determines the current active staking program, if any */
@@ -24,6 +26,10 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
 
   const [activeStakingProgramId, setActiveStakingProgramId] =
     useState<StakingProgramId | null>();
+
+  const [defaultStakingProgramId, setDefaultStakingProgramId] = useState(
+    INITIAL_DEFAULT_STAKING_PROGRAM_ID,
+  );
 
   const updateActiveStakingProgramId = useCallback(async () => {
     // if no service nft, not staked
@@ -52,7 +58,8 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
       value={{
         activeStakingProgramId,
         updateActiveStakingProgramId,
-        defaultStakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
+        defaultStakingProgramId,
+        setDefaultStakingProgramId,
       }}
     >
       {children}

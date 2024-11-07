@@ -4,7 +4,12 @@ import { Flex, Popover, PopoverProps, Typography } from 'antd';
 import { COLOR } from '@/constants/colors';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
-import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
+import {
+  useActiveStakingContractInfo,
+  useStakingContractContext,
+  useStakingContractInfo,
+} from '@/hooks/useStakingContractInfo';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { formatToShortDateTime } from '@/utils/time';
 
 const { Paragraph, Text } = Typography;
@@ -45,7 +50,11 @@ export const CannotStartAgentDueToUnexpectedError = () => (
 const evictedDescription =
   "You didn't run your agent enough and it missed its targets multiple times. You can run the agent again when the eviction period ends.";
 const AgentEvictedPopover = () => {
-  const { evictionExpiresAt } = useStakingContractInfo();
+  const { isStakingContractInfoRecordLoaded } = useStakingContractContext();
+
+  const { evictionExpiresAt } = useActiveStakingContractInfo();
+
+  if (!isStakingContractInfoRecordLoaded) return null;
 
   return (
     <Popover
@@ -109,13 +118,19 @@ const NoJobsAvailablePopover = () => (
 );
 
 export const CannotStartAgentPopover = () => {
-  const {
-    isEligibleForStaking,
-    hasEnoughServiceSlots,
-    isRewardsAvailable,
-    isAgentEvicted,
-  } = useStakingContractInfo();
+  const { isStakingContractInfoRecordLoaded } = useStakingContractContext();
 
+  const { activeStakingProgramId, defaultStakingProgramId } =
+    useStakingProgram();
+
+  const { isAgentEvicted, isEligibleForStaking } =
+    useActiveStakingContractInfo();
+
+  const { hasEnoughServiceSlots, isRewardsAvailable } = useStakingContractInfo(
+    activeStakingProgramId ?? defaultStakingProgramId,
+  );
+
+  if (!isStakingContractInfoRecordLoaded) return null;
   if (isEligibleForStaking) return null;
   if (!hasEnoughServiceSlots) return <NoJobsAvailablePopover />;
   if (!isRewardsAvailable) return <NoRewardsAvailablePopover />;

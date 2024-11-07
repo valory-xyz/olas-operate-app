@@ -1,3 +1,4 @@
 export enum StakingProgramStatus {
-  Selected = 'current',
+  Active = 'current',
+  Default = 'default',
 }

@@ -78,18 +78,20 @@ export const useServices = () => {
     hasInitialLoaded ? services : [];
 
   const updateServiceState = (serviceHash: ServiceHash) => {
-    ServicesService.getService(serviceHash).then((service: Service) => {
-      setServices((prev) => {
-        if (!prev) return [service];
+    ServicesService.getService(serviceHash)
+      .then((service: Service) => {
+        setServices((prev) => {
+          if (!prev) return [service];
 
-        const index = prev.findIndex((s) => s.hash === serviceHash); // findIndex returns -1 if not found
-        if (index === -1) return [...prev, service];
+          const index = prev.findIndex((s) => s.hash === serviceHash); // findIndex returns -1 if not found
+          if (index === -1) return [...prev, service];
 
-        const newServices = [...prev];
-        newServices[index] = service;
-        return newServices;
-      });
-    });
+          const newServices = [...prev];
+          newServices[index] = service;
+          return newServices;
+        });
+      })
+      .catch(console.error);
   };
 
   const deleteServiceState = (serviceHash: ServiceHash) =>

@@ -2,10 +2,15 @@ import { Flex, Typography } from 'antd';
 import { isNil } from 'lodash';
 
 import { CustomAlert } from '@/components/Alert';
+import { LOW_MASTER_SAFE_BALANCE } from '@/constants/thresholds';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalance } from '@/hooks/useBalance';
+import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { useServiceTemplates } from '@/hooks/useServiceTemplates';
-import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
+import {
+  useActiveStakingContractInfo,
+  useStakingContractContext,
+} from '@/hooks/useStakingContractInfo';
 import { getMinimumStakedAmountRequired } from '@/utils/service';
 
 import { CantMigrateReason } from './useMigrate';
@@ -18,15 +23,18 @@ const AlertInsufficientMigrationFunds = ({
   stakingProgramId,
 }: CantMigrateAlertProps) => {
   const { serviceTemplate } = useServiceTemplates();
-  const { isServiceStaked } = useStakingContractInfo();
+  const { isStakingContractInfoRecordLoaded } = useStakingContractContext();
+  const { isServiceStaked } = useActiveStakingContractInfo();
   const { masterSafeBalance: safeBalance, totalOlasStakedBalance } =
     useBalance();
+  const { serviceFundRequirements, isInitialFunded } = useNeedsFunds();
 
   const totalOlasRequiredForStaking = getMinimumStakedAmountRequired(
     serviceTemplate,
     stakingProgramId,
   );
 
+  if (!isStakingContractInfoRecordLoaded) return null;
   if (isNil(totalOlasRequiredForStaking)) return null;
   if (isNil(safeBalance?.OLAS)) return null;
   if (isNil(totalOlasStakedBalance)) return null;
@@ -35,18 +43,24 @@ const AlertInsufficientMigrationFunds = ({
     ? totalOlasRequiredForStaking - (totalOlasStakedBalance + safeBalance.OLAS) // when staked
     : totalOlasRequiredForStaking - safeBalance.OLAS; // when not staked
 
+  const requiredXdaiDeposit = isInitialFunded
+    ? LOW_MASTER_SAFE_BALANCE - safeBalance.ETH // is already funded allow minimal maintenance
+    : serviceFundRequirements.eth - safeBalance.ETH; // otherwise require full initial funding requirements
+
   return (
     <CustomAlert
       type="warning"
       showIcon
       message={
         <Flex vertical gap={4}>
-          <Text className="font-weight-600">
-            An additional {requiredOlasDeposit} OLAS is required to switch
-          </Text>
+          <Text className="font-weight-600">Additional funds required</Text>
           <Text>
-            Add <strong>{requiredOlasDeposit} OLAS</strong> to your account to
-            meet the contract requirements and switch.
+            <ul style={{ marginTop: 0, marginBottom: 4 }}>
+              {requiredOlasDeposit > 0 && <li>{requiredOlasDeposit} OLAS</li>}
+              {requiredXdaiDeposit > 0 && <li>{requiredXdaiDeposit} XDAI</li>}
+            </ul>
+            Add the required funds to your account to meet the staking
+            requirements.
           </Text>
         </Flex>
       }
@@ -102,7 +116,10 @@ export const CantMigrateAlert = ({
     return <AlertNoSlots />;
   }
 
-  if (cantMigrateReason === CantMigrateReason.InsufficientOlasToMigrate) {
+  if (
+    cantMigrateReason === CantMigrateReason.InsufficientOlasToMigrate ||
+    cantMigrateReason === CantMigrateReason.InsufficientGasToMigrate
+  ) {
     return (
       <AlertInsufficientMigrationFunds stakingProgramId={stakingProgramId} />
     );

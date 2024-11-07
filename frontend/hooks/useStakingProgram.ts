@@ -14,6 +14,7 @@ export const useStakingProgram = () => {
     activeStakingProgramId,
     defaultStakingProgramId,
     updateActiveStakingProgramId,
+    setDefaultStakingProgramId,
   } = useContext(StakingProgramContext);
 
   const isActiveStakingProgramLoaded = activeStakingProgramId !== undefined;
@@ -54,5 +55,6 @@ export const useStakingProgram = () => {
     defaultStakingProgramMeta,
     isActiveStakingProgramLoaded,
     updateActiveStakingProgramId,
+    setDefaultStakingProgramId,
   };
 };

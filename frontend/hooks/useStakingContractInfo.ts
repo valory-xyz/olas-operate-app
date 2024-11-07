@@ -2,38 +2,48 @@ import { isNil } from 'lodash';
 import { useContext } from 'react';
 
 import { StakingContractInfoContext } from '@/context/StakingContractInfoProvider';
+import { StakingProgramId } from '@/enums/StakingProgram';
 
-import { useServices } from './useServices';
-
-export const useStakingContractInfo = () => {
+export const useStakingContractContext = () => {
   const {
     activeStakingContractInfo,
     isPaused,
-    isStakingContractInfoLoaded,
+    isStakingContractInfoRecordLoaded,
     stakingContractInfoRecord,
     updateActiveStakingContractInfo,
     setIsPaused,
+    isActiveStakingContractInfoLoaded,
   } = useContext(StakingContractInfoContext);
+  return {
+    isActiveStakingContractInfoLoaded,
+    activeStakingContractInfo,
+    isPaused,
+    isStakingContractInfoRecordLoaded,
+    stakingContractInfoRecord,
+    updateActiveStakingContractInfo,
+    setIsPaused,
+  };
+};
 
-  const { service } = useServices();
-
-  // TODO: find a better way to handle this, currently stops react lifecycle hooks being implemented below it
-  if (!service || !activeStakingContractInfo)
-    return {
-      stakingContractInfoRecord,
-      updateActiveStakingContractInfo,
-      setIsPaused,
-      isPaused,
-    };
+export const useActiveStakingContractInfo = () => {
+  const {
+    activeStakingContractInfo,
+    isActiveStakingContractInfoLoaded: isActiveStakingContractInfoLoaded,
+  } = useStakingContractContext();
 
   const {
     serviceStakingState,
     serviceStakingStartTime,
-    serviceIds,
-    maxNumServices,
     minimumStakingDuration,
     availableRewards,
-  } = activeStakingContractInfo;
+    serviceIds,
+    maxNumServices,
+  } = activeStakingContractInfo ?? {};
+
+  const isAgentEvicted = serviceStakingState === 2;
+
+  const isServiceStaked =
+    !!serviceStakingStartTime && serviceStakingState === 1;
 
   const isRewardsAvailable = availableRewards ?? 0 > 0;
 
@@ -43,9 +53,6 @@ export const useStakingContractInfo = () => {
     serviceIds.length < maxNumServices;
 
   const hasEnoughRewardsAndSlots = isRewardsAvailable && hasEnoughServiceSlots;
-  const isAgentEvicted = serviceStakingState === 2;
-  const isServiceStaked =
-    !!serviceStakingStartTime && serviceStakingState === 1;
 
   /**
    * Important: Assumes service is staked. Returns false for unstaked.
@@ -65,34 +72,46 @@ export const useStakingContractInfo = () => {
     Math.round(Date.now() / 1000) - serviceStakingStartTime >=
       minimumStakingDuration;
 
-  /**
-   * User can only stake if:
-   * - rewards are available
-   * - service has enough slots
-   * - agent is not evicted
-   *    - if agent is evicted, then service should be staked for minimum duration
-   */
-  const isEligibleForStaking =
-    !isNil(hasEnoughRewardsAndSlots) &&
-    (isAgentEvicted ? isServiceStakedForMinimumDuration : true);
-
   // Eviction expire time in seconds
   const evictionExpiresAt =
     (serviceStakingStartTime ?? 0) + (minimumStakingDuration ?? 0);
 
+  const isEligibleForStaking =
+    !isNil(hasEnoughRewardsAndSlots) &&
+    (isAgentEvicted ? isServiceStakedForMinimumDuration : true);
+
   return {
-    activeStakingContractInfo,
-    hasEnoughServiceSlots,
     isAgentEvicted,
-    evictionExpiresAt,
     isEligibleForStaking,
-    isPaused,
-    isRewardsAvailable,
     isServiceStakedForMinimumDuration,
     isServiceStaked,
-    isStakingContractInfoLoaded,
-    stakingContractInfoRecord,
-    updateActiveStakingContractInfo,
-    setIsPaused,
+    evictionExpiresAt,
+    isActiveStakingContractInfoLoaded,
+    activeStakingContractInfo,
+  };
+};
+
+export const useStakingContractInfo = (stakingProgramId: StakingProgramId) => {
+  const { stakingContractInfoRecord } = useStakingContractContext();
+
+  const stakingContractInfo = stakingContractInfoRecord?.[stakingProgramId];
+
+  const { serviceIds, maxNumServices, availableRewards } =
+    stakingContractInfo ?? {};
+
+  const isRewardsAvailable = availableRewards ?? 0 > 0;
+
+  const hasEnoughServiceSlots =
+    !isNil(serviceIds) &&
+    !isNil(maxNumServices) &&
+    serviceIds.length < maxNumServices;
+
+  const hasEnoughRewardsAndSlots = isRewardsAvailable && hasEnoughServiceSlots;
+
+  return {
+    hasEnoughServiceSlots,
+    isRewardsAvailable,
+    stakingContractInfo,
+    hasEnoughRewardsAndSlots,
   };
 };

@@ -1,12 +1,13 @@
 import { RightOutlined } from '@ant-design/icons';
-import { Button, Flex, Popover, Skeleton, Typography } from 'antd';
+import { Button, Flex, Skeleton, Typography } from 'antd';
 import { useMemo } from 'react';
 
+import { DeploymentStatus } from '@/client';
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { Pages } from '@/enums/PageState';
-import { useBalance } from '@/hooks/useBalance';
-import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
+import { useStakingContractContext } from '@/hooks/useStakingContractInfo';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { CardSection } from '../../styled/CardSection';
@@ -15,34 +16,35 @@ const { Text } = Typography;
 
 export const StakingContractUpdate = () => {
   const { goto } = usePageState();
-  const { isBalanceLoaded, isLowBalance } = useBalance();
-  const { needsInitialFunding } = useNeedsFunds();
   const {
-    activeStakingProgramMeta,
     isActiveStakingProgramLoaded,
+    activeStakingProgramMeta,
     defaultStakingProgramId,
   } = useStakingProgram();
+
+  const { isStakingContractInfoRecordLoaded } = useStakingContractContext();
+  const { serviceStatus } = useServices();
+
+  const serviceIsTransitioning = useMemo(
+    () =>
+      serviceStatus === DeploymentStatus.DEPLOYING ||
+      serviceStatus === DeploymentStatus.STOPPING,
+    [serviceStatus],
+  );
 
   const stakingContractName = useMemo(() => {
     if (activeStakingProgramMeta) return activeStakingProgramMeta.name;
     return STAKING_PROGRAM_META[defaultStakingProgramId].name;
   }, [activeStakingProgramMeta, defaultStakingProgramId]);
 
-  const canUpdateStakingContract = useMemo(() => {
-    if (!isBalanceLoaded) return false;
-    if (isLowBalance) return false;
-    if (needsInitialFunding) return false;
-    return true;
-  }, [isBalanceLoaded, isLowBalance, needsInitialFunding]);
-
-  const stakingButton = useMemo(() => {
+  const gotoManageStakingButton = useMemo(() => {
     if (!isActiveStakingProgramLoaded) return <Skeleton.Input />;
     return (
       <Button
         type="link"
         className="p-0"
-        disabled={!canUpdateStakingContract}
         onClick={() => goto(Pages.ManageStaking)}
+        disabled={!isStakingContractInfoRecordLoaded || serviceIsTransitioning}
       >
         {stakingContractName}
         <RightOutlined />
@@ -51,8 +53,9 @@ export const StakingContractUpdate = () => {
   }, [
     goto,
     isActiveStakingProgramLoaded,
+    isStakingContractInfoRecordLoaded,
+    serviceIsTransitioning,
     stakingContractName,
-    canUpdateStakingContract,
   ]);
 
   return (
@@ -64,19 +67,7 @@ export const StakingContractUpdate = () => {
         style={{ width: '100%' }}
       >
         <Text type="secondary">Staking contract</Text>
-
-        {canUpdateStakingContract ? (
-          stakingButton
-        ) : (
-          <Popover
-            placement="topLeft"
-            trigger={['hover']}
-            arrow={false}
-            content={<Text>Fund your agent to manage staking contracts</Text>}
-          >
-            {stakingButton}
-          </Popover>
-        )}
+        {gotoManageStakingButton}
       </Flex>
     </CardSection>
   );
