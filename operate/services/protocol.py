@@ -508,16 +508,15 @@ class _ChainUtil:
         self.rpc = rpc
         self.wallet = wallet
         self.contracts = contracts
-        self.chain_type = chain_type or ChainType.CUSTOM
 
-    def _patch(self) -> None:
-        """Patch contract and chain config."""
+        if chain_type is None:
+            self.chain_type = ChainType.CUSTOM
+            for name, address in self.contracts.items():
+                ContractConfigs.get(name=name).contracts[self.chain_type] = address
+        else:
+            self.chain_type = chain_type
+
         ChainConfigs.get(self.chain_type).rpc = self.rpc
-        if self.chain_type != ChainType.CUSTOM:
-            return
-
-        for name, address in self.contracts.items():
-            ContractConfigs.get(name=name).contracts[self.chain_type] = address
 
     @property
     def safe(self) -> str:
@@ -533,7 +532,6 @@ class _ChainUtil:
     @property
     def crypto(self) -> Crypto:
         """Load crypto object."""
-        self._patch()
         _, crypto = OnChainHelper.get_ledger_and_crypto_objects(
             chain_type=self.chain_type,
             key=self.wallet.key_path,
@@ -544,7 +542,6 @@ class _ChainUtil:
     @property
     def ledger_api(self) -> LedgerApi:
         """Load ledger api object."""
-        self._patch()
         ledger_api, _ = OnChainHelper.get_ledger_and_crypto_objects(
             chain_type=self.chain_type,
             key=self.wallet.key_path,
@@ -566,7 +563,6 @@ class _ChainUtil:
 
     def owner_of(self, token_id: int) -> str:
         """Get owner of a service."""
-        self._patch()
         ledger_api, _ = OnChainHelper.get_ledger_and_crypto_objects(
             chain_type=self.chain_type
         )
@@ -577,7 +573,6 @@ class _ChainUtil:
 
     def info(self, token_id: int) -> t.Dict:
         """Get service info."""
-        self._patch()
         ledger_api, _ = OnChainHelper.get_ledger_and_crypto_objects(
             chain_type=self.chain_type
         )
@@ -614,7 +609,6 @@ class _ChainUtil:
 
     def get_agent_bond(self, service_id: int, agent_id: int) -> int:
         """Get the agent bond for a given service"""
-        self._patch()
 
         if service_id <= 0 or agent_id <= 0:
             return 0
@@ -659,7 +653,6 @@ class _ChainUtil:
     ) -> None:
         """Swap safe owner."""
         logging.info(f"Swapping safe for service {service_id} [{multisig}]...")
-        self._patch()
         manager = ServiceManager(
             service_id=service_id,
             chain_type=self.chain_type,
@@ -747,7 +740,6 @@ class _ChainUtil:
 
     def staking_slots_available(self, staking_contract: str) -> bool:
         """Check if there are available slots on the staking contract"""
-        self._patch()
         return StakingManager(
             key=self.wallet.key_path,
             password=self.wallet.password,
@@ -758,7 +750,6 @@ class _ChainUtil:
 
     def staking_rewards_available(self, staking_contract: str) -> bool:
         """Check if there are available staking rewards on the staking contract"""
-        self._patch()
         available_rewards = StakingManager(
             key=self.wallet.key_path,
             password=self.wallet.password,
@@ -770,7 +761,6 @@ class _ChainUtil:
 
     def staking_status(self, service_id: int, staking_contract: str) -> StakingState:
         """Stake the service"""
-        self._patch()
         return StakingManager(
             key=self.wallet.key_path,
             password=self.wallet.password,
@@ -782,7 +772,6 @@ class _ChainUtil:
 
     def get_staking_params(self, staking_contract: str) -> t.Dict:
         """Get agent IDs for the staking contract"""
-        self._patch()
         staking_manager = StakingManager(
             key=self.wallet.key_path,
             password=self.wallet.password,
@@ -846,7 +835,6 @@ class OnChainManager(_ChainUtil):
     ) -> t.Dict:
         """Mint service."""
         # TODO: Support for update
-        self._patch()
         manager = MintManager(
             chain_type=self.chain_type,
             key=self.wallet.key_path,
@@ -902,7 +890,6 @@ class OnChainManager(_ChainUtil):
     ) -> None:
         """Activate service."""
         logging.info(f"Activating service {service_id}...")
-        self._patch()
         with contextlib.redirect_stdout(io.StringIO()):
             ServiceManager(
                 service_id=service_id,
@@ -949,7 +936,6 @@ class OnChainManager(_ChainUtil):
     ) -> None:
         """Deploy service."""
         logging.info(f"Deploying service {service_id}...")
-        self._patch()
         with contextlib.redirect_stdout(io.StringIO()):
             ServiceManager(
                 service_id=service_id,
@@ -968,7 +954,6 @@ class OnChainManager(_ChainUtil):
     def terminate(self, service_id: int, token: t.Optional[str] = None) -> None:
         """Terminate service."""
         logging.info(f"Terminating service {service_id}...")
-        self._patch()
         with contextlib.redirect_stdout(io.StringIO()):
             ServiceManager(
                 service_id=service_id,
@@ -985,7 +970,6 @@ class OnChainManager(_ChainUtil):
     def unbond(self, service_id: int, token: t.Optional[str] = None) -> None:
         """Unbond service."""
         logging.info(f"Unbonding service {service_id}...")
-        self._patch()
         with contextlib.redirect_stdout(io.StringIO()):
             ServiceManager(
                 service_id=service_id,
@@ -1006,7 +990,6 @@ class OnChainManager(_ChainUtil):
         staking_contract: str,
     ) -> None:
         """Stake service."""
-        self._patch()
         StakingManager(
             key=self.wallet.key_path,
             password=self.wallet.password,
@@ -1019,7 +1002,6 @@ class OnChainManager(_ChainUtil):
 
     def unstake(self, service_id: int, staking_contract: str) -> None:
         """Unstake service."""
-        self._patch()
         StakingManager(
             key=self.wallet.key_path,
             password=self.wallet.password,
@@ -1031,7 +1013,6 @@ class OnChainManager(_ChainUtil):
 
     def staking_status(self, service_id: int, staking_contract: str) -> StakingState:
         """Stake the service"""
-        self._patch()
         return StakingManager(
             key=self.wallet.key_path,
             password=self.wallet.password,
@@ -1067,7 +1048,6 @@ class EthSafeTxBuilder(_ChainUtil):
     ) -> t.Dict:
         """Build mint transaction."""
         # TODO: Support for update
-        self._patch()
         manager = MintManager(
             chain_type=self.chain_type,
             key=self.wallet.key_path,
@@ -1328,7 +1308,6 @@ class EthSafeTxBuilder(_ChainUtil):
         staking_contract: str,
     ) -> t.Dict:
         """Get staking approval data"""
-        self._patch()
         txd = StakingManager(
             key=self.wallet.key_path,
             password=self.wallet.password,
@@ -1352,7 +1331,6 @@ class EthSafeTxBuilder(_ChainUtil):
         staking_contract: str,
     ) -> t.Dict:
         """Get staking tx data"""
-        self._patch()
         txd = StakingManager(
             key=self.wallet.key_path,
             password=self.wallet.password,
@@ -1374,7 +1352,6 @@ class EthSafeTxBuilder(_ChainUtil):
         staking_contract: str,
     ) -> t.Dict:
         """Get unstaking tx data"""
-        self._patch()
         txd = StakingManager(
             key=self.wallet.key_path,
             password=self.wallet.password,
@@ -1392,7 +1369,6 @@ class EthSafeTxBuilder(_ChainUtil):
 
     def staking_slots_available(self, staking_contract: str) -> bool:
         """Stake service."""
-        self._patch()
         return StakingManager(
             key=self.wallet.key_path,
             password=self.wallet.password,
