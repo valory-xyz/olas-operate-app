@@ -24,6 +24,7 @@ import {
   SignerTitle,
   XdaiTitle,
 } from './Titles';
+import { WithdrawFunds } from './WithdrawFunds';
 
 const { Text, Paragraph } = Typography;
 
@@ -147,7 +148,7 @@ const ServiceAndNftDetails = () => {
   );
 };
 
-export const YourAgentWallet = () => {
+const YourAgentWalletBreakdown = () => {
   const { isBalanceLoaded, agentSafeBalance, agentEoaBalance } = useBalance();
   const {
     availableRewardsForEpochEth,
@@ -232,3 +233,10 @@ export const YourAgentWallet = () => {
     </Card>
   );
 };
+
+export const YourAgentWallet = () => (
+  <>
+    <YourAgentWalletBreakdown />
+    <WithdrawFunds />
+  </>
+);
