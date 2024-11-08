@@ -1,5 +1,8 @@
-import { Button, Flex, Input, Modal, Typography } from 'antd';
-import React, { useState } from 'react';
+import { Button, Flex, Input, message, Modal, Typography } from 'antd';
+import { isAddress } from 'ethers/lib/utils';
+import React, { useCallback, useState } from 'react';
+
+import { delayInSeconds } from '@/utils/delay';
 
 import { CustomAlert } from '../Alert';
 
@@ -8,14 +11,29 @@ const { Text } = Typography;
 export const WithdrawFunds = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [amount, setAmount] = useState('');
+  const [isWithdrawalLoading, setIsWithdrawalLoading] = useState(false);
 
-  const showModal = () => {
+  const showModal = useCallback(() => {
     setIsModalVisible(true);
-  };
+  }, []);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setIsModalVisible(false);
-  };
+  }, []);
+
+  const handleProceed = useCallback(async () => {
+    if (!amount) return;
+
+    const isValidAddress = isAddress(amount);
+    if (!isValidAddress) {
+      message.error('Please enter a valid address');
+      return;
+    }
+
+    setIsWithdrawalLoading(true);
+    await delayInSeconds(2); // TODO: integrate with the backend
+    setIsWithdrawalLoading(false);
+  }, [amount]);
 
   return (
     <>
@@ -52,7 +70,9 @@ export const WithdrawFunds = () => {
           />
 
           <Button
-            onClick={showModal}
+            disabled={!amount}
+            loading={isWithdrawalLoading}
+            onClick={handleProceed}
             block
             type="primary"
             style={{ fontSize: 14 }}
