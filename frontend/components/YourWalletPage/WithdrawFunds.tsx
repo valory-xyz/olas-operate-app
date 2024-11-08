@@ -19,6 +19,7 @@ export const WithdrawFunds = () => {
 
   const handleCancel = useCallback(() => {
     setIsModalVisible(false);
+    setAmount('');
   }, []);
 
   const handleProceed = useCallback(async () => {
@@ -30,9 +31,13 @@ export const WithdrawFunds = () => {
       return;
     }
 
+    message.loading('Withdrawal pending. It may take a few minutes.');
+
     setIsWithdrawalLoading(true);
     await delayInSeconds(2); // TODO: integrate with the backend
     setIsWithdrawalLoading(false);
+
+    message.success('Transaction complete.');
   }, [amount]);
 
   return (
@@ -46,8 +51,10 @@ export const WithdrawFunds = () => {
         open={isModalVisible}
         footer={null}
         onCancel={handleCancel}
+        width={400}
+        destroyOnClose
       >
-        <Flex vertical gap={16}>
+        <Flex vertical gap={16} style={{ marginTop: 12 }}>
           <Text>
             To proceed, enter the EVM-compatible wallet address where you’d like
             to receive your funds. Funds will be sent on Gnosis Chain.
@@ -67,6 +74,9 @@ export const WithdrawFunds = () => {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0x..."
+            size="small"
+            className="text-base"
+            style={{ padding: '6px 12px' }}
           />
 
           <Button
@@ -75,7 +85,7 @@ export const WithdrawFunds = () => {
             onClick={handleProceed}
             block
             type="primary"
-            style={{ fontSize: 14 }}
+            className="text-base"
           >
             Proceed
           </Button>
