@@ -6,14 +6,12 @@ import {
   Button,
   Flex,
   message,
-  Popover,
   // QRCode,
   Tooltip,
   Typography,
 } from 'antd';
 import Link from 'next/link';
 import { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { COW_SWAP_GNOSIS_XDAI_OLAS_URL } from '@/constants/urls';
@@ -26,12 +24,6 @@ import { CustomAlert } from '../../Alert';
 import { CardSection } from '../../styled/CardSection';
 
 const { Text } = Typography;
-
-const CustomizedCardSection = styled(CardSection)<{ border?: boolean }>`
-  > .ant-btn {
-    width: 50%;
-  }
-`;
 
 export const AddFundsSection = () => {
   const fundSectionRef = useRef<HTMLDivElement>(null);
@@ -47,25 +39,16 @@ export const AddFundsSection = () => {
 
   return (
     <>
-      <CustomizedCardSection gap={12} padding="24px">
+      <CardSection gap={12} padding="24px">
         <Button
           type="default"
           size="large"
+          block
           onClick={isAddFundsVisible ? closeAddFunds : addFunds}
         >
           {isAddFundsVisible ? 'Close instructions' : 'Add funds'}
         </Button>
-
-        <Popover
-          placement="topRight"
-          trigger={['hover', 'click']}
-          content={<Text>Ability to withdraw is coming soon</Text>}
-        >
-          <Button type="default" size="large" disabled>
-            Withdraw
-          </Button>
-        </Popover>
-      </CustomizedCardSection>
+      </CardSection>
 
       {isAddFundsVisible && <OpenAddFundsSection ref={fundSectionRef} />}
     </>
