@@ -508,15 +508,13 @@ class _ChainUtil:
         self.rpc = rpc
         self.wallet = wallet
         self.contracts = contracts
-
-        if chain_type is None:
-            self.chain_type = ChainType.CUSTOM
-            for name, address in self.contracts.items():
-                ContractConfigs.get(name=name).contracts[self.chain_type] = address
-        else:
-            self.chain_type = chain_type
-
+        self.chain_type = chain_type or ChainType.CUSTOM
         ChainConfigs.get(self.chain_type).rpc = self.rpc
+        if self.chain_type != ChainType.CUSTOM:
+            return
+
+        for name, address in self.contracts.items():
+            ContractConfigs.get(name=name).contracts[self.chain_type] = address
 
     @property
     def safe(self) -> str:
