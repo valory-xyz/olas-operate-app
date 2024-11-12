@@ -3,29 +3,30 @@ import { Button, Card, Flex } from 'antd';
 import { useEffect } from 'react';
 
 import { Pages } from '@/enums/Pages';
-// import { StakingProgramId } from '@/enums/StakingProgram';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalance } from '@/hooks/useBalance';
+import { useMasterSafe } from '@/hooks/useMasterSafe';
 // import { useMasterSafe } from '@/hooks/useMasterSafe';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 
-// import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { MainHeader } from './header';
 import { AddFundsSection } from './sections/AddFundsSection';
-// import { MainNeedsFunds } from './sections/NeedsFundsSection';
+import { AlertSections } from './sections/AlertSections';
+import { GasBalanceSection } from './sections/GasBalanceSection';
+import { KeepAgentRunningSection } from './sections/KeepAgentRunningSection';
+import { MainNeedsFunds } from './sections/NeedsFundsSection';
 import { MainOlasBalance } from './sections/OlasBalanceSection';
-// import { AlertSections } from './sections/AlertSections';
-// import { GasBalanceSection } from './sections/GasBalanceSection';
-// import { KeepAgentRunningSection } from './sections/KeepAgentRunningSection';
 import { RewardsSection } from './sections/RewardsSection';
-// import { StakingContractUpdate } from './sections/StakingContractUpdate';
+import { StakingContractUpdate } from './sections/StakingContractUpdate';
 
 export const Main = () => {
   const { goto } = usePageState();
-  // const { backupSafeAddress } = useMasterSafe();
+  const { backupSafeAddress } = useMasterSafe();
   const { updateServicesState } = useServices();
   const { updateBalances, isLoaded, setIsLoaded } = useBalance();
-  // const { activeStakingProgramId: currentStakingProgram } = useStakingProgram();
+  const { activeStakingProgramId: currentStakingProgram } = useStakingProgram();
 
   useEffect(() => {
     if (!isLoaded) {
@@ -34,10 +35,10 @@ export const Main = () => {
     }
   }, [isLoaded, setIsLoaded, updateBalances, updateServicesState]);
 
-  // const hideMainOlasBalanceTopBorder = [
-  //   !backupSafeAddress,
-  //   currentStakingProgram === StakingProgramId.Alpha,
-  // ].some((condition) => !!condition);
+  const hideMainOlasBalanceTopBorder = [
+    !backupSafeAddress,
+    currentStakingProgram === StakingProgramId.PearlAlpha,
+  ].some((condition) => !!condition);
 
   return (
     <Card
@@ -67,14 +68,14 @@ export const Main = () => {
       style={{ borderTopColor: 'transparent' }}
     >
       <Flex vertical>
-        {/* <AlertSections /> */}
+        <AlertSections />
         <MainOlasBalance isBorderTopVisible={false} />
-        {/* <MainOlasBalance isBorderTopVisible={!hideMainOlasBalanceTopBorder} /> */}
+        <MainOlasBalance isBorderTopVisible={!hideMainOlasBalanceTopBorder} />
         <RewardsSection />
-        {/* <KeepAgentRunningSection /> */}
-        {/* <StakingContractUpdate /> */}
-        {/* <GasBalanceSection /> */}
-        {/* <MainNeedsFunds /> */}
+        <KeepAgentRunningSection />
+        <StakingContractUpdate />
+        <GasBalanceSection />
+        <MainNeedsFunds />
         <AddFundsSection />
       </Flex>
     </Card>
