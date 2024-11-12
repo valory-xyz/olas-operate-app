@@ -7,7 +7,6 @@
  * @note `noop` functions should be replaced with actual implementations in the extending classes.
  * @warning DO NOT STORE STATE IN THESE CLASSES. THEY ARE SINGLETONS AND WILL BE SHARED ACROSS THE APPLICATION.
  */
-import { Address } from 'cluster';
 import { ethers } from 'ethers';
 import { Contract as MulticallContract } from 'ethers-multicall';
 
@@ -18,6 +17,7 @@ import { ChainId } from '@/enums/Chain';
 import { ContractType } from '@/enums/Contract';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
 import { StakingProgramId } from '@/enums/StakingProgram';
+import { Address } from '@/types/Address';
 
 export const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 

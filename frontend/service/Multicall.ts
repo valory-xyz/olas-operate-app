@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { Contract as MulticallContract, ContractCall } from 'ethers-multicall';
 
-import { ERC20_BALANCEOF_STRING_FRAGMENT } from '@/abis/erc20';
+import { ERC20_BALANCE_OF_STRING_FRAGMENT } from '@/abis/erc20';
 import { Erc20TokenConfig } from '@/config/tokens';
 import { PROVIDERS } from '@/constants/providers';
 import { ChainId } from '@/enums/Chain';
@@ -59,7 +59,7 @@ const getErc20Balances = async (
   const callData: ContractCall[] = addresses.map((address: Address) =>
     new MulticallContract(
       erc20TokenConfig.address,
-      ERC20_BALANCEOF_STRING_FRAGMENT,
+      ERC20_BALANCE_OF_STRING_FRAGMENT,
     )
       .balanceOf(address)
       .then((balance: bigint) =>

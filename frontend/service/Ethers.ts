@@ -87,7 +87,7 @@ const checkRpc = async (chainId: ChainId): Promise<boolean> => {
 };
 
 // tenderly limits to 1000
-const BLOCK_LOOKBACK_WINDOW =
+const BLOCK_LOOK_BACK_WINDOW =
   process.env.NODE_ENV === 'development' ? 1000 : 9000;
 const MAX_ROUNDS = 5;
 
@@ -115,7 +115,7 @@ const getLogsList = async (
 
   return getLogsList(
     contractAddress,
-    fromBlock - BLOCK_LOOKBACK_WINDOW,
+    fromBlock - BLOCK_LOOK_BACK_WINDOW,
     fromBlock,
     roundsLeft - 1,
     chainId,
@@ -135,7 +135,7 @@ export const getLatestTransaction = async (
 
   const logs = await getLogsList(
     address,
-    latestBlock - BLOCK_LOOKBACK_WINDOW,
+    latestBlock - BLOCK_LOOK_BACK_WINDOW,
     latestBlock,
     MAX_ROUNDS,
     chainId,

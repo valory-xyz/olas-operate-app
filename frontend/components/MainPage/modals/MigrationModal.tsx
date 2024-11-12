@@ -6,6 +6,8 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { MODAL_WIDTH } from '@/constants/width';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
+const { Text, Title, Link } = Typography;
+
 export const MigrationSuccessModal = ({
   open,
   onClose,
@@ -42,7 +44,6 @@ export const MigrationSuccessModal = ({
       ]}
     >
       <Flex gap={8} vertical>
-        {/* Robot head */}
         <Flex align="center" justify="center">
           <Image
             src="/splash-robot-head.png"
@@ -51,16 +52,14 @@ export const MigrationSuccessModal = ({
             alt="Pearl agent head"
           />
         </Flex>
-        <Typography.Title level={4}>
-          You switched staking contract succesfully!
-        </Typography.Title>
-        <Typography.Text>
+        <Title level={4}>You switched staking contract successfully!</Title>
+        <Text>
           Your agent is now staked on {activeStakingProgramMeta.name}.
-        </Typography.Text>
+        </Text>
         {/* TODO: Add relevant block explorer domain */}
-        <Typography.Link href="#">
+        <Link href="#">
           View full contract details {UNICODE_SYMBOLS.EXTERNAL_LINK}
-        </Typography.Link>
+        </Link>
       </Flex>
     </Modal>
   );
