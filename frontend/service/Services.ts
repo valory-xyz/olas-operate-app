@@ -145,45 +145,6 @@ const startService = async (
     throw new Error('Failed to start the service');
   });
 
-// const deployOnChain = async (serviceHash: ServiceHash): Promise<Deployment> =>
-//   fetch(`${BACKEND_URL}/services/${serviceHash}/onchain/deploy`, {
-//     method: 'POST',
-//     headers: {
-//       ...CONTENT_TYPE_JSON_UTF8,
-//     },
-//   }).then((response) => {
-//     if (response.ok) {
-//       return response.json();
-//     }
-//     throw new Error('Failed to deploy service on chain');
-//   });
-
-// const buildDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
-//   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/build`, {
-//     method: 'POST',
-//     headers: {
-//       ...CONTENT_TYPE_JSON_UTF8,
-//     },
-//   }).then((response) => {
-//     if (response.ok) {
-//       return response.json();
-//     }
-//     throw new Error('Failed to build deployment');
-//   });
-
-// const startDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
-//   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/start`, {
-//     method: 'POST',
-//     headers: {
-//       ...CONTENT_TYPE_JSON_UTF8,
-//     },
-//   }).then((response) => {
-//     if (response.ok) {
-//       return response.json();
-//     }
-//     throw new Error('Failed to start deployment');
-//   });
-
 const stopDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
   fetch(`${BACKEND_URL_V2}/service/${serviceHash}/deployment/stop`, {
     method: 'POST',
@@ -194,21 +155,6 @@ const stopDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
     }
     throw new Error('Failed to stop deployment');
   });
-
-// const deleteDeployment = async (
-//   serviceHash: ServiceHash,
-// ): Promise<Deployment> =>
-//   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/delete`, {
-//     method: 'POST',
-//     headers: {
-//       ...CONTENT_TYPE_JSON_UTF8,
-//     },
-//   }).then((response) => {
-//     if (response.ok) {
-//       return response.json();
-//     }
-//     throw new Error('Failed to delete deployment');
-//   });
 
 const getDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
   fetch(`${BACKEND_URL_V2}/services/${serviceHash}/deployment`, {
@@ -228,10 +174,5 @@ export const ServicesService = {
   startService,
   createService,
   updateService,
-  // deployOnChain,
-  // stopOnChain,
-  // buildDeployment,
-  // startDeployment,
   stopDeployment,
-  // deleteDeployment,
 };
