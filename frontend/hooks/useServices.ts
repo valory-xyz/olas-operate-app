@@ -30,7 +30,6 @@ const checkServiceIsFunded = async (
   const addresses = [...instances, multisig];
 
   const balances = await MulticallService.getEthBalances(addresses);
-
   if (!balances) return false;
 
   const fundRequirements: AddressBooleanRecord = addresses.reduce(
@@ -53,7 +52,12 @@ const checkServiceIsFunded = async (
 };
 
 export const useServices = () => {
-  const { services, isFetched: hasInitialLoaded } = useContext(ServicesContext);
+  const {
+    services,
+    isFetched: hasInitialLoaded,
+    refetch,
+    setPaused,
+  } = useContext(ServicesContext);
 
   const serviceId =
     services?.[0]?.chain_configs[ChainId.Optimism].chain_data?.token;
@@ -71,14 +75,10 @@ export const useServices = () => {
     // service: services?.[0],
     services,
     serviceId,
-    setServiceStatus,
     getServiceFromState,
-    getServicesFromState,
     checkServiceIsFunded,
-    refetchServicesState,
-    updateServiceState,
-    updateServiceStatus,
+    refetchServicesState: refetch,
     hasInitialLoaded,
-    setIsServicePollingPaused: setIsPaused,
+    setIsServicePollingPaused: setPaused,
   };
 };
