@@ -33,18 +33,21 @@ const checkServiceIsFunded = async (
   if (!balances) return false;
 
   const fundRequirements: AddressBooleanRecord = addresses.reduce(
-    (acc: AddressBooleanRecord, address: Address) =>
-      // TODO: remove this hardcoding
+    (acc: AddressBooleanRecord, address: Address) => {
+      const agentFund =
+        serviceTemplate.configurations[GNOSIS_CHAIN_CONFIG.chainId]
+          .fund_requirements.agent;
+      const safeFund =
+        serviceTemplate.configurations[GNOSIS_CHAIN_CONFIG.chainId]
+          .fund_requirements.safe;
 
-      Object.assign(acc, {
+      // TODO: remove this hardcoding
+      return Object.assign(acc, {
         [address]: instances.includes(address)
-          ? balances[address] >
-            serviceTemplate.configurations[GNOSIS_CHAIN_CONFIG.chainId]
-              .fund_requirements.agent
-          : balances[address] >
-            serviceTemplate.configurations[GNOSIS_CHAIN_CONFIG.chainId]
-              .fund_requirements.safe,
-      }),
+          ? balances[address] > agentFund
+          : balances[address] > safeFund,
+      });
+    },
     {},
   );
 
