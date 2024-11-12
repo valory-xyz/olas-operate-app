@@ -6,7 +6,7 @@ import {
 } from '@/client';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
-import { BACKEND_URL, BACKEND_URL_V2 } from '@/constants/urls';
+import { BACKEND_URL_V2 } from '@/constants/urls';
 import { ChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
 
@@ -18,7 +18,7 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 const getService = async (
   serviceHash: ServiceHash,
 ): Promise<MiddlewareServiceResponse> =>
-  fetch(`${BACKEND_URL}/services/${serviceHash}`, {
+  fetch(`${BACKEND_URL_V2}/service/${serviceHash}`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
@@ -75,9 +75,7 @@ const createService = async ({
         },
       },
     }),
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
     if (response.ok) {
       return response.json();
@@ -157,7 +155,7 @@ const stopDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
   });
 
 const getDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
-  fetch(`${BACKEND_URL_V2}/services/${serviceHash}/deployment`, {
+  fetch(`${BACKEND_URL_V2}/service/${serviceHash}/deployment`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
