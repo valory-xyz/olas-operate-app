@@ -52,15 +52,18 @@ export const useServices = () => {
   const { services, isFetched: hasInitialLoaded } = useContext(ServicesContext);
 
   const serviceId =
-    services?.[0]?.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data?.token;
+    services?.[0]?.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data
+      ?.token;
 
   // STATE METHODS
   const getServiceFromState = (
-    serviceHash: ServiceHash,
+    serviceUuid: ServiceHash,
   ): MiddlewareServiceResponse | undefined => {
     if (!hasInitialLoaded) return;
     if (!services) return;
-    return services.find((service) => service.hash === serviceHash);
+    return services.find(
+      (service) => service.service_config_id === serviceUuid,
+    );
   };
 
   return {

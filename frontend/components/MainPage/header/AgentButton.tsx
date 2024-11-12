@@ -87,7 +87,7 @@ const AgentRunningButton = () => {
     // Optimistically update service status
     setServiceStatus(MiddlewareDeploymentStatus.STOPPING);
     try {
-      await ServicesService.stopDeployment(service.hash);
+      await ServicesService.stopDeployment(service.service_config_id);
     } catch (error) {
       console.error(error);
       showNotification?.('Error while stopping agent');
@@ -209,7 +209,7 @@ const AgentNotRunningButton = () => {
         chainId: ChainId.Gnosis, // TODO: Add support for other chains
       });
 
-      await ServicesService.startService(serviceTemplate.hash);
+      await ServicesService.startService(serviceTemplate.service_config_id);
     } catch (error) {
       console.error(error);
       setServiceStatus(undefined);

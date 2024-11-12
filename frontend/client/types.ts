@@ -42,9 +42,9 @@ export type ChainData = {
 
 export type MiddlewareServiceResponse = {
   name: string;
-  hash: string;
   keys: ServiceKeys[];
   readme?: string;
+  service_config_id: string;
   chain_configs: {
     [chainId: number]: {
       ledger_config: LedgerConfig;
@@ -55,7 +55,7 @@ export type MiddlewareServiceResponse = {
 
 export type ServiceTemplate = {
   name: string;
-  hash: string;
+  service_config_id: string;
   image: string;
   description: string;
   service_version: string;

@@ -85,14 +85,16 @@ export const MigrateButton = ({ stakingProgramId }: MigrateButtonProps) => {
             await ServicesService.updateService({
               stakingProgramId,
               serviceTemplate,
-              serviceHash: serviceTemplate.hash,
+              serviceUuid: serviceTemplate.service_config_id,
               deploy: true,
               useMechMarketplace: false,
               chainId: ChainId.Gnosis, // TODO: Add support for other chains
             });
 
             // start service after updating
-            await ServicesService.startService(serviceTemplate.hash);
+            await ServicesService.startService(
+              serviceTemplate.service_config_id,
+            );
 
             await updateStakingProgram();
 

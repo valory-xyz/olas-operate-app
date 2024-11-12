@@ -59,7 +59,9 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   const selectedService = useMemo<Service | undefined>(() => {
     if (!services) return;
-    return services.find((service) => service.hash === selectedServiceUuid); // TODO: use uuid instead of hash once middleware refactored
+    return services.find(
+      (service) => service.service_config_id === selectedServiceUuid,
+    ); // TODO: use uuid instead of hash once middleware refactored
   }, [selectedServiceUuid, services]);
 
   const selectService = useCallback((serviceUuid: string) => {
@@ -68,7 +70,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     if (!services) return;
-    setSelectedServiceUuid(services[0]?.hash); // TODO: use uuid instead of hash once middleware refactored
+    setSelectedServiceUuid(services[0]?.service_config_id); // TODO: use uuid instead of hash once middleware refactored
   }, [services]);
 
   // const serviceAddresses = useMemo(
@@ -107,7 +109,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   // const updateServiceStatus = useCallback(async () => {
   //   if (!services?.[0]) return;
-  //   const serviceStatus = await ServicesService.getDeployment(services[0].hash);
+  //   const serviceStatus = await ServicesService.getDeployment(services[0].service_config_id);
   //   setServiceStatuses(serviceStatus.status);
   // }, [services]);
 
