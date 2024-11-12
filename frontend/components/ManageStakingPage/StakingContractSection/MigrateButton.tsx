@@ -3,6 +3,7 @@ import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
+import { ChainId } from '@/enums/Chain';
 import { Pages } from '@/enums/Pages';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalance } from '@/hooks/useBalance';
@@ -80,12 +81,18 @@ export const MigrateButton = ({ stakingProgramId }: MigrateButtonProps) => {
             setServiceStatus(MiddlewareDeploymentStatus.DEPLOYING);
             goto(Pages.Main);
 
-            await ServicesService.createService({
+            // update service
+            await ServicesService.updateService({
               stakingProgramId,
               serviceTemplate,
+              serviceHash: serviceTemplate.hash,
               deploy: true,
               useMechMarketplace: false,
+              chainId: ChainId.Gnosis, // TODO: Add support for other chains
             });
+
+            // start service after updating
+            await ServicesService.startService(serviceTemplate.hash);
 
             await updateStakingProgram();
 
