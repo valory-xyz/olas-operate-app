@@ -9,6 +9,7 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useReward } from '@/hooks/useReward';
+import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
@@ -75,15 +76,14 @@ const AgentStoppingButton = () => (
 const AgentRunningButton = () => {
   const { showNotification } = useElectronApi();
   const { isEligibleForRewards } = useReward();
-  const { service, setIsServicePollingPaused, setServiceStatus } =
-    useServices();
+  const { setIsServicePollingPaused } = useServices();
+  const { service, setServiceStatus } = useService();
 
   const handlePause = useCallback(async () => {
     if (!service) return;
     // Paused to stop overlapping service poll while waiting for response
     setIsServicePollingPaused(true);
 
-    // Optimistically update service status
     setServiceStatus(MiddlewareDeploymentStatus.STOPPING);
     try {
       await ServicesService.stopDeployment(service.hash);
@@ -122,13 +122,8 @@ const AgentRunningButton = () => {
 /** Button used to start / deploy the agent */
 const AgentNotRunningButton = () => {
   const { wallets, masterSafeAddress } = useWallet();
-  const {
-    service,
-    serviceStatus,
-    setServiceStatus,
-    setIsServicePollingPaused,
-    updateServicesState,
-  } = useServices();
+  const { setIsServicePollingPaused, refetchServicesState } = useServices();
+  const { service, serviceStatus, setServiceStatus } = useService();
   const { serviceTemplate } = useServiceTemplates();
   const { showNotification } = useElectronApi();
   const {
@@ -233,7 +228,7 @@ const AgentNotRunningButton = () => {
     // update provider states sequentially
     // service id is required before activeStakingContractInfo & balances can be updated
     try {
-      await updateServicesState(); // reload the available services
+      await refetchServicesState(); // reload the available services
       await updateActiveStakingContractInfo(); // reload active staking contract with new service
       await updateBalances(); // reload the balances
     } catch (error) {
@@ -254,7 +249,7 @@ const AgentNotRunningButton = () => {
     showNotification,
     activeStakingProgramId,
     serviceTemplate,
-    updateServicesState,
+    refetchServicesState,
     updateActiveStakingContractInfo,
     updateBalances,
   ]);
@@ -314,7 +309,8 @@ const AgentNotRunningButton = () => {
 };
 
 export const AgentButton = () => {
-  const { service, serviceStatus, hasInitialLoaded } = useServices();
+  const { hasInitialLoaded } = useServices();
+  const { service, serviceStatus } = useService();
   const { isEligibleForStaking, isAgentEvicted } = useStakingContractInfo();
 
   return useMemo(() => {

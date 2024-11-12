@@ -15,16 +15,17 @@ import {
 import { useInterval } from 'usehooks-ts';
 
 import { Wallet } from '@/client';
+import { AGENT_CONFIG } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { TOKEN_CONFIG } from '@/config/tokens';
+import { Erc20TokenConfig, GNOSIS_TOKEN_CONFIG } from '@/config/tokens';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import {
   LOW_AGENT_SAFE_BALANCE,
   LOW_MASTER_SAFE_BALANCE,
 } from '@/constants/thresholds';
+import { ChainId } from '@/enums/Chain';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
 import { TokenSymbol } from '@/enums/Token';
-import { AutonolasService } from '@/service/Autonolas';
 import { EthersService } from '@/service/Ethers';
 import MulticallService from '@/service/Multicall';
 import { Address } from '@/types/Address';
@@ -81,6 +82,8 @@ export const BalanceContext = createContext<{
   ethereumBalance: undefined,
   optimismBalance: undefined,
 });
+
+const CHAIN_ID = ChainId.Gnosis; // TODO: get from context
 
 export const BalanceProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
@@ -192,10 +195,18 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
       }
 
       if (isAddress(`${masterSafeAddress}`) && serviceId > 0) {
+        // const { depositValue, bondValue, serviceState } =
+        //   await AutonolasService.getServiceRegistryInfo(
+        //     masterSafeAddress as Address,
+        //     serviceId,
+        //   );
+
         const { depositValue, bondValue, serviceState } =
-          await AutonolasService.getServiceRegistryInfo(
+          // TODO: agent agnostic
+          await AGENT_CONFIG.trader.serviceApi.getServiceRegistryInfo(
             masterSafeAddress as Address,
             serviceId,
+            CHAIN_ID,
           );
 
         switch (serviceState) {
@@ -316,13 +327,12 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
 export const getEthBalances = async (
   walletAddresses: Address[],
 ): Promise<AddressNumberRecord | undefined> => {
-  const rpcIsValid = await EthersService.checkRpc(
-    `${process.env.OPTIMISM_RPC}`,
-  );
+  const rpcIsValid = await EthersService.checkRpc(CHAIN_ID);
   if (!rpcIsValid) return;
 
   const ethBalances = await MulticallService.getEthBalances(
     walletAddresses,
+    CHAIN_ID,
   ).catch((e) => {
     console.error(e);
     return walletAddresses.reduce((acc, address) => {
@@ -337,14 +347,13 @@ export const getEthBalances = async (
 export const getOlasBalances = async (
   walletAddresses: Address[],
 ): Promise<AddressNumberRecord | undefined> => {
-  const rpcIsValid = await EthersService.checkRpc(
-    `${process.env.OPTIMISM_RPC}`,
-  );
+  const rpcIsValid = await EthersService.checkRpc(CHAIN_ID);
   if (!rpcIsValid) return;
 
   const olasBalances = await MulticallService.getErc20Balances(
     walletAddresses,
-    TOKEN_CONFIG[CHAIN_CONFIG.OPTIMISM.chainId].OLAS.address,
+    GNOSIS_TOKEN_CONFIG[TokenSymbol.OLAS] as Erc20TokenConfig, // TODO: agent agnostic
+    CHAIN_ID,
   );
 
   return olasBalances;

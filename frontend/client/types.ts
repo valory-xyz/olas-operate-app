@@ -40,6 +40,24 @@ export type ChainData = {
   };
 };
 
+/**
+ * @example
+ * {
+ *  "name": "service-name",
+ *  "hash": "service-hash",
+ *  "keys": [{ "address": "0x123", "private_key": "0x123", "ledger": "ethereum" }],
+ *  "readme": "service-readme",
+ *  "chain_configs": {
+ *  "1": {
+ *    "ledger_config": {
+ *       "rpc": "http://localhost:8545", "type": "ethereum", "chain": "mainnet"
+ *     },
+ *    "chain_data": {
+ *       "instances": ["0x123"], "token": 1,  "multisig": "0x123"
+ *     }
+ *   }
+ * }
+ */
 export type MiddlewareServiceResponse = {
   name: string;
   hash: string;

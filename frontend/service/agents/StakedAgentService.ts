@@ -111,14 +111,14 @@ export abstract class StakedAgentService {
     ];
 
     const [
-      getOperatorBalanceReponse,
+      getOperatorBalanceResponse,
       mapServiceIdTokenDepositResponse,
       mapServicesResponse,
     ] =
       await OLAS_CONTRACTS[chainId][ContractType.Multicall3].all(contractCalls);
 
     const [bondValue, depositValue, serviceState] = [
-      parseFloat(ethers.utils.formatUnits(getOperatorBalanceReponse, 18)),
+      parseFloat(ethers.utils.formatUnits(getOperatorBalanceResponse, 18)),
       parseFloat(
         ethers.utils.formatUnits(mapServiceIdTokenDepositResponse[1], 18),
       ),

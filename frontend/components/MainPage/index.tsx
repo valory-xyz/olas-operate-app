@@ -1,14 +1,12 @@
 import { QuestionCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Card, Flex } from 'antd';
-import { useEffect } from 'react';
 
 import { Pages } from '@/enums/Pages';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useBalance } from '@/hooks/useBalance';
 import { useMasterSafe } from '@/hooks/useMasterSafe';
 // import { useMasterSafe } from '@/hooks/useMasterSafe';
 import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
+import { useService } from '@/hooks/useService';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { MainHeader } from './header';
@@ -24,16 +22,17 @@ import { StakingContractUpdate } from './sections/StakingContractUpdate';
 export const Main = () => {
   const { goto } = usePageState();
   const { backupSafeAddress } = useMasterSafe();
-  const { updateServicesState } = useServices();
-  const { updateBalances, isLoaded, setIsLoaded } = useBalance();
+  const { refetchServicesState } = useService();
+  // const { updateBalances, isLoaded, setIsLoaded } = useBalance();
   const { activeStakingProgramId: currentStakingProgram } = useStakingProgram();
 
-  useEffect(() => {
-    if (!isLoaded) {
-      setIsLoaded(true);
-      updateServicesState().then(() => updateBalances());
-    }
-  }, [isLoaded, setIsLoaded, updateBalances, updateServicesState]);
+  // TODO: move to services provider as it depends on services
+  // useEffect(() => {
+  //   if (!isLoaded) {
+  //     setIsLoaded(true);
+  //     refetchServicesState().then(() => updateBalances());
+  //   }
+  // }, [isLoaded, setIsLoaded, updateBalances, refetchServicesState]);
 
   const hideMainOlasBalanceTopBorder = [
     !backupSafeAddress,

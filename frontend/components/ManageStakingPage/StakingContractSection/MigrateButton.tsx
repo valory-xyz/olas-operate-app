@@ -8,6 +8,7 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalance } from '@/hooks/useBalance';
 import { useModals } from '@/hooks/useModals';
 import { usePageState } from '@/hooks/usePageState';
+import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
@@ -23,13 +24,9 @@ type MigrateButtonProps = {
 export const MigrateButton = ({ stakingProgramId }: MigrateButtonProps) => {
   const { goto } = usePageState();
   const { serviceTemplate } = useServiceTemplates();
-  const {
-    setIsServicePollingPaused,
-    setServiceStatus,
-    updateServiceStatus,
-    hasInitialLoaded: isServicesLoaded,
-    service,
-  } = useServices();
+  const { setIsServicePollingPaused, hasInitialLoaded: isServicesLoaded } =
+    useServices();
+  const { service, setServiceStatus, updateServiceStatus } = useService();
   const { setIsPaused: setIsBalancePollingPaused } = useBalance();
   const { updateActiveStakingProgramId: updateStakingProgram } =
     useStakingProgram();

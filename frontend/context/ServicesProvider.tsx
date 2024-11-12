@@ -59,7 +59,9 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   const selectedService = useMemo<Service | undefined>(() => {
     if (!services) return;
-    return services.find((service) => service.hash === selectedServiceUuid); // TODO: use uuid instead of hash once middleware refactored
+
+    // TODO: use uuid instead of hash once middleware refactored
+    return services.find((service) => service.hash === selectedServiceUuid);
   }, [selectedServiceUuid, services]);
 
   const selectService = useCallback((serviceUuid: string) => {
@@ -68,7 +70,9 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     if (!services) return;
-    setSelectedServiceUuid(services[0]?.hash); // TODO: use uuid instead of hash once middleware refactored
+
+    // TODO: use uuid instead of hash once middleware refactored
+    setSelectedServiceUuid(services[0]?.hash);
   }, [services]);
 
   // const serviceAddresses = useMemo(
@@ -90,7 +94,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   //   [services],
   // );
 
-  // const updateServicesState = useCallback(
+  // const refetchServicesState = useCallback(
   //   async (): Promise<void> =>
   //     ServicesService.getServices()
   //       .then((data: MiddlewareServiceResponse[]) => {
@@ -114,7 +118,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   // Update service state
   // useInterval(
   //   () =>
-  //     updateServicesState()
+  //     refetchServicesState()
   //       .then(() => updateServiceStatus())
   //       .catch((e) => message.error(e.message)),
   //   isOnline && !isPaused ? FIVE_SECONDS_INTERVAL : null,
