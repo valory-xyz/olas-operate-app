@@ -61,7 +61,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     if (!services) return;
     return services.find(
       (service) => service.service_config_id === selectedServiceUuid,
-    ); // TODO: use uuid instead of hash once middleware refactored
+    );
   }, [selectedServiceUuid, services]);
 
   const selectService = useCallback((serviceUuid: string) => {
@@ -70,7 +70,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     if (!services) return;
-    setSelectedServiceUuid(services[0]?.service_config_id); // TODO: use uuid instead of hash once middleware refactored
+    setSelectedServiceUuid(services[0]?.service_config_id);
   }, [services]);
 
   // const serviceAddresses = useMemo(

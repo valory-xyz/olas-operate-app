@@ -67,7 +67,6 @@ export type ServiceTemplate = {
   hash: string;
   description: string;
   image: string;
-  service_config_id: string;
   service_version: string;
   home_chain_id: string;
   configurations: { [key: string]: ConfigurationTemplate };
@@ -109,37 +108,6 @@ export type DeployedNodes = {
 export type Deployment = {
   status: MiddlewareDeploymentStatus;
   nodes: DeployedNodes;
-};
-
-export type EmptyPayload = Record<string, never>;
-
-export type EmptyResponse = Record<string, never>;
-
-export type HttpResponse = {
-  error?: string;
-  data?: string;
-};
-
-export type ClientResponse<ResponseType> = {
-  error?: string;
-  data?: ResponseType;
-};
-
-export type StopDeployment = {
-  delete: boolean /* Delete deployment*/;
-};
-
-export type UpdateServicePayload = {
-  old: ServiceHash;
-  new: ServiceTemplate;
-};
-
-export type DeleteServicesPayload = {
-  hashes: ServiceHash[];
-};
-
-export type DeleteServicesResponse = {
-  hashes: ServiceHash[];
 };
 
 export type AppInfo = {
