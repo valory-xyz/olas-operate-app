@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { useInterval } from 'usehooks-ts';
 
+import { AGENT_CONFIG } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -77,16 +78,20 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     // only check for rewards if there's a currentStakingProgram active
     if (
       activeStakingProgramId &&
-      service?.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data?.multisig &&
+      service?.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data
+        ?.multisig &&
       service?.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data?.token
     ) {
-      stakingRewardsInfoPromise = AutonolasService.getAgentStakingRewardsInfo({
-        agentMultisigAddress:
-          service.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data.multisig!,
-        serviceId:
-          service.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data.token!,
-        stakingProgram: activeStakingProgramId,
-      });
+      stakingRewardsInfoPromise =
+        AGENT_CONFIG.trader.serviceApi.getAgentStakingRewardsInfo({
+          agentMultisigAddress:
+            service.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data
+              .multisig!,
+          serviceId:
+            service.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data
+              .token!,
+          stakingProgram: activeStakingProgramId,
+        });
     }
 
     // can fallback to default staking program if no current staking program is active
