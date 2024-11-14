@@ -26,7 +26,9 @@ export const StakingProgramContext = createContext<{
   setDefaultStakingProgramId: () => {},
 });
 
-/** Determines the current active staking program, if any */
+/**
+ * Determines the current active staking program, if any
+ * */
 export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
   const { service } = useServices();
 
