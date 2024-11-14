@@ -17,7 +17,7 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
-import { StakingRewardsInfo } from '@/types/Autonolas';
+import { StakingRewardsInfoSchema } from '@/types/Autonolas';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 import { StakingProgramContext } from './StakingProgramProvider';
@@ -68,16 +68,20 @@ const useStakingRewardsDetails = () => {
       multisig!,
       token!,
     ),
-    queryFn: async (): Promise<StakingRewardsInfo | undefined> => {
-      return await currentAgent.serviceApi.getAgentStakingRewardsInfo({
-        agentMultisigAddress: multisig!,
-        serviceId: token!,
-        stakingProgramId: activeStakingProgramId!,
-        chainId: currentChainId,
-      });
+    queryFn: async () => {
+      const response = await currentAgent.serviceApi.getAgentStakingRewardsInfo(
+        {
+          agentMultisigAddress: multisig!,
+          serviceId: token!,
+          stakingProgramId: activeStakingProgramId!,
+          chainId: currentChainId,
+        },
+      );
+      return StakingRewardsInfoSchema.parse(response);
     },
     enabled: !!isOnline && !!activeStakingProgramId && !!multisig && !!token,
-    refetchInterval: FIVE_SECONDS_INTERVAL,
+    refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -108,7 +112,8 @@ const useAvailableRewardsForEpoch = () => {
     },
     enabled:
       !!isOnline && !!activeStakingProgramId && !!defaultStakingProgramId,
-    refetchInterval: FIVE_SECONDS_INTERVAL,
+    refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
+    refetchOnWindowFocus: false,
   });
 };
 

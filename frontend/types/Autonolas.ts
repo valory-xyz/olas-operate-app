@@ -1,14 +1,18 @@
-export type StakingRewardsInfo = {
-  // mechRequestCount: number;
-  serviceInfo: unknown[];
-  livenessPeriod: number;
-  livenessRatio: number;
-  rewardsPerSecond: number;
-  isEligibleForRewards: boolean;
-  availableRewardsForEpoch: number;
-  accruedServiceStakingRewards: number;
-  minimumStakedAmount: number;
-};
+import { z } from 'zod';
+
+export const StakingRewardsInfoSchema = z.object({
+  // mechRequestCount: z.number(),
+  serviceInfo: z.array(z.unknown()),
+  livenessPeriod: z.number(),
+  livenessRatio: z.number(),
+  rewardsPerSecond: z.number(),
+  isEligibleForRewards: z.boolean(),
+  availableRewardsForEpoch: z.number(),
+  accruedServiceStakingRewards: z.number(),
+  minimumStakedAmount: z.number(),
+});
+
+export type StakingRewardsInfo = z.infer<typeof StakingRewardsInfoSchema>;
 
 export type StakingContractInfo = {
   availableRewards: number;
