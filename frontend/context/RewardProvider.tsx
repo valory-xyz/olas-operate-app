@@ -1,4 +1,5 @@
-import { ethers } from 'ethers';
+import { useQuery } from '@tanstack/react-query';
+import { formatUnits } from 'ethers/lib/utils';
 import {
   createContext,
   PropsWithChildren,
@@ -6,19 +7,19 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
 } from 'react';
-import { useInterval } from 'usehooks-ts';
 
 import { AGENT_CONFIG } from '@/config/agents';
-import { CHAIN_CONFIG } from '@/config/chains';
+import { GNOSIS_CHAIN_CONFIG } from '@/config/chains';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
+import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useService } from '@/hooks/useService';
+import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
-import { AutonolasService } from '@/service/Autonolas';
+import { StakingRewardsInfo } from '@/types/Autonolas';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
-import { ServicesContext } from './ServicesProvider';
 import { StakingProgramContext } from './StakingProgramProvider';
 
 export const RewardContext = createContext<{
@@ -39,78 +40,91 @@ export const RewardContext = createContext<{
   updateRewards: async () => {},
 });
 
+// type StakingRewardsDetails = {
+//   accruedServiceStakingRewards: number;
+// };
+
 export const RewardProvider = ({ children }: PropsWithChildren) => {
-  const { isOnline } = useContext(OnlineStatusContext);
-  const { services } = useContext(ServicesContext);
-  const service = useMemo(() => services?.[0], [services]);
   const { storeState } = useStore();
   const electronApi = useElectronApi();
+  const { isOnline } = useContext(OnlineStatusContext);
   const { activeStakingProgramId, defaultStakingProgramId } = useContext(
     StakingProgramContext,
   );
 
-  const [accruedServiceStakingRewards, setAccruedServiceStakingRewards] =
-    useState<number>();
-  const [availableRewardsForEpoch, setAvailableRewardsForEpoch] =
-    useState<number>();
-  const [isEligibleForRewards, setIsEligibleForRewards] = useState<boolean>();
+  const { selectedService, isLoaded } = useServices();
 
+  const configId =
+    isLoaded && selectedService ? selectedService?.service_config_id : '';
+  const { service } = useService({ serviceConfigId: configId });
+
+  const rewardsDetailsApi =
+    AGENT_CONFIG.trader.serviceApi.getAgentStakingRewardsInfo;
+  const availableRewardsForEpochApi =
+    AGENT_CONFIG.trader.serviceApi.getAvailableRewardsForEpoch;
+
+  const chainData =
+    service?.chain_configs[GNOSIS_CHAIN_CONFIG.chainId].chain_data;
+  const multisig = chainData?.multisig;
+  const token = chainData?.token;
+
+  // fetch staking rewards details
+  const { data: stakingRewardsDetails, refetch: refetchStakingRewardsDetails } =
+    useQuery({
+      queryKey: REACT_QUERY_KEYS.REWARDS_KEY(
+        activeStakingProgramId!,
+        multisig!,
+        token!,
+      ),
+      queryFn: async (): Promise<StakingRewardsInfo | undefined> => {
+        return await rewardsDetailsApi({
+          agentMultisigAddress: multisig!,
+          serviceId: token!,
+          stakingProgramId: activeStakingProgramId!,
+          chainId: GNOSIS_CHAIN_CONFIG.chainId,
+        });
+      },
+      enabled: isOnline && activeStakingProgramId && multisig && token,
+      refetchInterval: FIVE_SECONDS_INTERVAL,
+    });
+
+  // fetch available rewards for the current epoch
+  const {
+    data: availableRewardsForEpoch,
+    refetch: refetchAvailableRewardsForEpoch,
+  } = useQuery({
+    queryKey: REACT_QUERY_KEYS.AVAILABLE_REWARDS_FOR_EPOCH_KEY(
+      activeStakingProgramId!,
+      GNOSIS_CHAIN_CONFIG.chainId,
+    ),
+    queryFn: async () => {
+      return await availableRewardsForEpochApi(
+        activeStakingProgramId ?? defaultStakingProgramId,
+        GNOSIS_CHAIN_CONFIG.chainId,
+      );
+    },
+    enabled: isOnline && activeStakingProgramId && defaultStakingProgramId,
+    refetchInterval: FIVE_SECONDS_INTERVAL,
+  });
+
+  const isEligibleForRewards = stakingRewardsDetails?.isEligibleForRewards;
+  const accruedServiceStakingRewards =
+    stakingRewardsDetails?.accruedServiceStakingRewards;
+
+  // available rewards for the current epoch in ETH
   const availableRewardsForEpochEth = useMemo<number | undefined>(() => {
     if (!availableRewardsForEpoch) return;
-
-    const formatRewardsEth = parseFloat(
-      ethers.utils.formatUnits(`${availableRewardsForEpoch}`, 18),
-    );
-
-    return formatRewardsEth;
+    return parseFloat(formatUnits(`${availableRewardsForEpoch}`));
   }, [availableRewardsForEpoch]);
 
+  // optimistic rewards earned for the current epoch in ETH
   const optimisticRewardsEarnedForEpoch = useMemo<number | undefined>(() => {
-    if (isEligibleForRewards && availableRewardsForEpochEth) {
-      return availableRewardsForEpochEth;
-    }
-    return;
+    if (!isEligibleForRewards) return;
+    if (!availableRewardsForEpochEth) return;
+    return availableRewardsForEpochEth;
   }, [availableRewardsForEpochEth, isEligibleForRewards]);
 
-  const updateRewards = useCallback(async (): Promise<void> => {
-    let stakingRewardsInfoPromise;
-
-    // only check for rewards if there's a currentStakingProgram active
-    if (
-      activeStakingProgramId &&
-      service?.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data
-        ?.multisig &&
-      service?.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data?.token
-    ) {
-      stakingRewardsInfoPromise =
-        AGENT_CONFIG.trader.serviceApi.getAgentStakingRewardsInfo({
-          agentMultisigAddress:
-            service.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data
-              .multisig!,
-          serviceId:
-            service.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data
-              .token!,
-          stakingProgram: activeStakingProgramId,
-        });
-    }
-
-    // can fallback to default staking program if no current staking program is active
-    const epochRewardsPromise = AutonolasService.getAvailableRewardsForEpoch(
-      activeStakingProgramId ?? defaultStakingProgramId,
-    );
-
-    const [stakingRewardsInfo, rewards] = await Promise.all([
-      stakingRewardsInfoPromise,
-      epochRewardsPromise,
-    ]);
-
-    setIsEligibleForRewards(stakingRewardsInfo?.isEligibleForRewards);
-    setAccruedServiceStakingRewards(
-      stakingRewardsInfo?.accruedServiceStakingRewards,
-    );
-    setAvailableRewardsForEpoch(rewards);
-  }, [activeStakingProgramId, defaultStakingProgramId, service]);
-
+  // store the first staking reward achieved in the store
   useEffect(() => {
     if (isEligibleForRewards && !storeState?.firstStakingRewardAchieved) {
       electronApi.store?.set?.('firstStakingRewardAchieved', true);
@@ -121,10 +135,10 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     storeState?.firstStakingRewardAchieved,
   ]);
 
-  useInterval(
-    async () => updateRewards(),
-    isOnline ? FIVE_SECONDS_INTERVAL : null,
-  );
+  const updateRewards = useCallback(async () => {
+    await refetchStakingRewardsDetails();
+    await refetchAvailableRewardsForEpoch();
+  }, [refetchStakingRewardsDetails, refetchAvailableRewardsForEpoch]);
 
   return (
     <RewardContext.Provider
