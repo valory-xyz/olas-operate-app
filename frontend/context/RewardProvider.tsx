@@ -40,9 +40,8 @@ export const RewardContext = createContext<{
   updateRewards: async () => {},
 });
 
-// type StakingRewardsDetails = {
-//   accruedServiceStakingRewards: number;
-// };
+const currentAgent = AGENT_CONFIG.trader; // TODO: replace with dynamic agent selection
+const currentChainId = GNOSIS_CHAIN_CONFIG.chainId; // TODO: replace with dynamic chain selection
 
 export const RewardProvider = ({ children }: PropsWithChildren) => {
   const { storeState } = useStore();
@@ -53,18 +52,12 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   );
 
   const { selectedService, isLoaded } = useServices();
-
   const configId =
     isLoaded && selectedService ? selectedService?.service_config_id : '';
   const { service } = useService({ serviceConfigId: configId });
 
-  const rewardsDetailsApi =
-    AGENT_CONFIG.trader.serviceApi.getAgentStakingRewardsInfo;
-  const availableRewardsForEpochApi =
-    AGENT_CONFIG.trader.serviceApi.getAvailableRewardsForEpoch;
-
-  const chainData =
-    service?.chain_configs[GNOSIS_CHAIN_CONFIG.chainId].chain_data;
+  // fetch chain data from the selected service
+  const chainData = service?.chain_configs[currentChainId].chain_data;
   const multisig = chainData?.multisig;
   const token = chainData?.token;
 
@@ -77,14 +70,14 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
         token!,
       ),
       queryFn: async (): Promise<StakingRewardsInfo | undefined> => {
-        return await rewardsDetailsApi({
+        return await currentAgent.serviceApi.getAgentStakingRewardsInfo({
           agentMultisigAddress: multisig!,
           serviceId: token!,
           stakingProgramId: activeStakingProgramId!,
-          chainId: GNOSIS_CHAIN_CONFIG.chainId,
+          chainId: currentChainId,
         });
       },
-      enabled: isOnline && activeStakingProgramId && multisig && token,
+      enabled: !!isOnline && !!activeStakingProgramId && !!multisig && !!token,
       refetchInterval: FIVE_SECONDS_INTERVAL,
     });
 
@@ -95,15 +88,16 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.AVAILABLE_REWARDS_FOR_EPOCH_KEY(
       activeStakingProgramId!,
-      GNOSIS_CHAIN_CONFIG.chainId,
+      currentChainId,
     ),
     queryFn: async () => {
-      return await availableRewardsForEpochApi(
+      return await currentAgent.serviceApi.getAvailableRewardsForEpoch(
         activeStakingProgramId ?? defaultStakingProgramId,
-        GNOSIS_CHAIN_CONFIG.chainId,
+        currentChainId,
       );
     },
-    enabled: isOnline && activeStakingProgramId && defaultStakingProgramId,
+    enabled:
+      !!isOnline && !!activeStakingProgramId && !!defaultStakingProgramId,
     refetchInterval: FIVE_SECONDS_INTERVAL,
   });
 
