@@ -119,11 +119,8 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   const { storeState } = useStore();
   const electronApi = useElectronApi();
 
-  // fetch staking rewards details
   const { data: stakingRewardsDetails, refetch: refetchStakingRewardsDetails } =
     useStakingRewardsDetails();
-
-  // fetch available rewards for the current epoch
   const {
     data: availableRewardsForEpoch,
     refetch: refetchAvailableRewardsForEpoch,
@@ -146,17 +143,18 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     return availableRewardsForEpochEth;
   }, [availableRewardsForEpochEth, isEligibleForRewards]);
 
-  // store the first staking reward achieved in the store
+  // store the first staking reward achieved in the store for notification
   useEffect(() => {
-    if (isEligibleForRewards && !storeState?.firstStakingRewardAchieved) {
-      electronApi.store?.set?.('firstStakingRewardAchieved', true);
-    }
+    if (!isEligibleForRewards) return;
+    if (storeState?.firstStakingRewardAchieved) return;
+    electronApi.store?.set?.('firstStakingRewardAchieved', true);
   }, [
     electronApi.store,
     isEligibleForRewards,
     storeState?.firstStakingRewardAchieved,
   ]);
 
+  // refresh rewards data
   const updateRewards = useCallback(async () => {
     await refetchStakingRewardsDetails();
     await refetchAvailableRewardsForEpoch();
