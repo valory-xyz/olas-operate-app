@@ -15,7 +15,6 @@ import {
   useActiveStakingContractInfo,
   useStakingContractInfo,
 } from '@/hooks/useStakingContractInfo';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { ServicesService } from '@/service/Services';
 
 import { CountdownUntilMigration } from './CountdownUntilMigration';
@@ -43,7 +42,6 @@ export const MigrateButton = ({
   });
 
   const { setIsPaused: setIsBalancePollingPaused } = useBalance();
-  const { updateActiveStakingProgramId } = useStakingProgram();
 
   const { activeStakingContractInfo, isActiveStakingContractInfoLoaded } =
     useActiveStakingContractInfo();
@@ -102,7 +100,10 @@ export const MigrateButton = ({
         onClick={async () => {
           setIsServicePollingPaused(true);
           setIsBalancePollingPaused(true);
-          setDefaultStakingProgramId(stakingProgramId);
+
+          // TODO: we should not get the default staking program id
+          // from the context, we should get it from the service
+          // setDefaultStakingProgramId(stakingProgramId);
 
           try {
             setDeploymentStatus(MiddlewareDeploymentStatus.DEPLOYING);
