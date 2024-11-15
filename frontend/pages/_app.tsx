@@ -16,7 +16,7 @@ import { RewardProvider } from '@/context/RewardProvider';
 import { ServicesProvider } from '@/context/ServicesProvider';
 import { SettingsProvider } from '@/context/SettingsProvider';
 import { SetupProvider } from '@/context/SetupProvider';
-import { StakingContractInfoProvider } from '@/context/StakingContractInfoProvider';
+import { StakingContractDetailsProvider } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
 import { SystemNotificationTriggers } from '@/context/SystemNotificationTriggers';
@@ -44,7 +44,7 @@ export default function App({ Component, pageProps }: AppProps) {
               <WalletProvider>
                 <MasterSafeProvider>
                   <StakingProgramProvider>
-                    <StakingContractInfoProvider>
+                    <StakingContractDetailsProvider>
                       <RewardProvider>
                         <BalanceProvider>
                           <SetupProvider>
@@ -66,7 +66,7 @@ export default function App({ Component, pageProps }: AppProps) {
                           </SetupProvider>
                         </BalanceProvider>
                       </RewardProvider>
-                    </StakingContractInfoProvider>
+                    </StakingContractDetailsProvider>
                   </StakingProgramProvider>
                 </MasterSafeProvider>
               </WalletProvider>

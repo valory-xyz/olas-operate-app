@@ -1,7 +1,7 @@
 import { isNil } from 'lodash';
 import { useContext } from 'react';
 
-import { StakingContractInfoContext } from '@/context/StakingContractInfoProvider';
+import { StakingContractInfoContext } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
 
 export const useStakingContractContext = () => {

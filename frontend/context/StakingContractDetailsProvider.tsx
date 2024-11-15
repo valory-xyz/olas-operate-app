@@ -47,7 +47,7 @@ export const StakingContractInfoContext =
     setIsPaused: () => {},
   });
 
-export const StakingContractInfoProvider = ({
+export const StakingContractDetailsProvider = ({
   children,
 }: PropsWithChildren) => {
   const { services } = useContext(ServicesContext);
@@ -71,7 +71,8 @@ export const StakingContractInfoProvider = ({
 
   const serviceId = useMemo(
     () =>
-      services?.[0]?.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data?.token,
+      services?.[0]?.chain_configs[CHAIN_CONFIG.OPTIMISM.chainId].chain_data
+        ?.token,
     [services],
   );
 
