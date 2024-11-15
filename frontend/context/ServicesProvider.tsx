@@ -14,12 +14,7 @@ import { MiddlewareServiceResponse } from '@/client';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { ChainId } from '@/enums/Chain';
-import {
-  AgentEoa,
-  AgentWallets,
-  WalletOwner,
-  WalletType,
-} from '@/enums/Wallet';
+import { AgentWallets, WalletOwner, WalletType } from '@/enums/Wallet';
 import { UsePause, usePause } from '@/hooks/usePause';
 import { ServicesService } from '@/service/Services';
 import { Service } from '@/types/Service';
@@ -116,14 +111,11 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
               if (instances) {
                 acc.push(
-                  ...instances.map(
-                    (instance: string) =>
-                      ({
-                        address: instance,
-                        type: WalletType.EOA,
-                        owner: WalletOwner.Agent,
-                      }),
-                  ),
+                  ...instances.map((instance: string) => ({
+                    address: instance,
+                    type: WalletType.EOA,
+                    owner: WalletOwner.Agent,
+                  })),
                 );
               }
 

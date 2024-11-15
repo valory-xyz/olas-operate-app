@@ -15,7 +15,7 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 
-export const INITIAL_DEFAULT_STAKING_PROGRAM_ID = StakingProgramId.Beta;
+export const INITIAL_DEFAULT_STAKING_PROGRAM_ID = StakingProgramId.PearlBeta;
 
 export const StakingProgramContext = createContext<{
   activeStakingProgramId?: StakingProgramId | null;
@@ -75,6 +75,7 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
       value={{
         activeStakingProgramId,
         // TODO: we should not expose the default staking program id, discuss with Josh
+        // active staking program id should be the only thing exposed
         defaultStakingProgramId: INITIAL_DEFAULT_STAKING_PROGRAM_ID,
       }}
     >

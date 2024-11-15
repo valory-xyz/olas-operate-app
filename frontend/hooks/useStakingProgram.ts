@@ -13,12 +13,7 @@ import {
  * @returns {Object} The active staking program and its metadata.
  */
 export const useStakingProgram = () => {
-  const {
-    activeStakingProgramId,
-    defaultStakingProgramId,
-    updateActiveStakingProgramId,
-    setDefaultStakingProgramId,
-  } = useContext(StakingProgramContext);
+  const { activeStakingProgramId } = useContext(StakingProgramContext);
 
   const isActiveStakingProgramLoaded = activeStakingProgramId !== undefined;
 
@@ -56,7 +51,5 @@ export const useStakingProgram = () => {
     defaultStakingProgramAddress,
     defaultStakingProgramMeta,
     isActiveStakingProgramLoaded,
-    updateActiveStakingProgramId,
-    setDefaultStakingProgramId,
   };
 };
