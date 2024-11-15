@@ -42,7 +42,7 @@ const useGetActiveStakingProgramId = () => {
   const response = useQuery({
     queryKey: [REACT_QUERY_KEYS.STAKING_PROGRAM_KEY, serviceId, currentChainId],
     queryFn: async () => {
-      return currentAgent.serviceApi.getCurrentStakingProgramByServiceId(
+      return await currentAgent.serviceApi.getCurrentStakingProgramByServiceId(
         serviceId!,
         currentChainId,
       );
@@ -76,6 +76,7 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
         activeStakingProgramId,
         // TODO: we should not expose the default staking program id, discuss with Josh
         // active staking program id should be the only thing exposed
+        // maybe (defaultStakingProgramId: defaultStakingProgramId ?? activeStakingProgramId)
         defaultStakingProgramId: INITIAL_DEFAULT_STAKING_PROGRAM_ID,
       }}
     >
