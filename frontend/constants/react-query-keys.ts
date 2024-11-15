@@ -3,8 +3,14 @@ export const REACT_QUERY_KEYS = {
   SERVICES_KEY: ['services'] as const,
   SERVICE_DEPLOYMENT_STATUS_KEY: (serviceConfigId: string) =>
     ['serviceStatus', serviceConfigId] as const,
+
+  // staking programs
+  STAKING_PROGRAM_KEY: (serviceConfigId: string, chainId: number) =>
+    ['stakingProgram', serviceConfigId, chainId] as const,
+
   // wallets
   WALLETS_KEY: ['wallets'] as const,
+
   // rewards
   REWARDS_KEY: (
     chainId: number,
