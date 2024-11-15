@@ -48,9 +48,12 @@ const currentChainId = GNOSIS_CHAIN_CONFIG.chainId; // TODO: replace with dynami
  */
 const useStakingRewardsDetails = () => {
   const { isOnline } = useContext(OnlineStatusContext);
-  const { activeStakingProgramId } = useContext(StakingProgramContext);
+  const { activeStakingProgramId, defaultStakingProgramId } = useContext(
+    StakingProgramContext,
+  );
+  const stakingProgramId = activeStakingProgramId ?? defaultStakingProgramId;
 
-  const { selectedService, isLoaded } = useServices();
+  const { selectedService, isFetched: isLoaded } = useServices();
   const serviceConfigId =
     isLoaded && selectedService ? selectedService?.service_config_id : '';
   const { service } = useService({ serviceConfigId });
@@ -64,7 +67,7 @@ const useStakingRewardsDetails = () => {
     queryKey: REACT_QUERY_KEYS.REWARDS_KEY(
       currentChainId,
       serviceConfigId,
-      activeStakingProgramId!,
+      stakingProgramId!,
       multisig!,
       token!,
     ),
@@ -73,13 +76,13 @@ const useStakingRewardsDetails = () => {
         {
           agentMultisigAddress: multisig!,
           serviceId: token!,
-          stakingProgramId: activeStakingProgramId!,
+          stakingProgramId: stakingProgramId!,
           chainId: currentChainId,
         },
       );
       return StakingRewardsInfoSchema.parse(response);
     },
-    enabled: !!isOnline && !!activeStakingProgramId && !!multisig && !!token,
+    enabled: !!isOnline && !!stakingProgramId && !!multisig && !!token,
     refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });
@@ -93,7 +96,9 @@ const useAvailableRewardsForEpoch = () => {
   const { activeStakingProgramId, defaultStakingProgramId } = useContext(
     StakingProgramContext,
   );
-  const { selectedService, isLoaded } = useServices();
+  const stakingProgramId = activeStakingProgramId ?? defaultStakingProgramId;
+
+  const { selectedService, isFetched: isLoaded } = useServices();
   const serviceConfigId =
     isLoaded && selectedService ? selectedService?.service_config_id : '';
 
@@ -101,17 +106,16 @@ const useAvailableRewardsForEpoch = () => {
     queryKey: REACT_QUERY_KEYS.AVAILABLE_REWARDS_FOR_EPOCH_KEY(
       currentChainId,
       serviceConfigId,
-      activeStakingProgramId!,
+      stakingProgramId!,
       currentChainId,
     ),
     queryFn: async () => {
       return await currentAgent.serviceApi.getAvailableRewardsForEpoch(
-        activeStakingProgramId ?? defaultStakingProgramId,
+        stakingProgramId,
         currentChainId,
       );
     },
-    enabled:
-      !!isOnline && !!activeStakingProgramId && !!defaultStakingProgramId,
+    enabled: !!isOnline && !!stakingProgramId,
     refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });
