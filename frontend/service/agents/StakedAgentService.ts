@@ -11,13 +11,17 @@ import { ethers } from 'ethers';
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { OLAS_CONTRACTS } from '@/config/olasContracts';
-import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import {
+  STAKING_PROGRAM_ADDRESS,
+  STAKING_PROGRAMS,
+} from '@/config/stakingPrograms';
 import { PROVIDERS } from '@/constants/providers';
 import { ChainId } from '@/enums/Chain';
 import { ContractType } from '@/enums/Contract';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
+import { Nullable } from '@/types/Util';
 
 export const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 
@@ -130,5 +134,22 @@ export abstract class StakedAgentService {
       depositValue,
       serviceState,
     };
+  };
+
+  /**
+   *
+   * Get the staking program id by address
+   * @example getStakingProgramIdByAddress('0x3052451e1eAee78e62E169AfdF6288F8791F2918') // StakingProgramId.Beta4
+   */
+  static getStakingProgramIdByAddress = (
+    chainId: number | ChainId,
+    contractAddress: Address,
+  ): Nullable<StakingProgramId> => {
+    const addresses = STAKING_PROGRAM_ADDRESS[chainId];
+    const entries = Object.entries(addresses) as [StakingProgramId, Address][];
+    const foundEntry = entries.find(
+      ([, address]) => address.toLowerCase() === contractAddress.toLowerCase(),
+    );
+    return foundEntry ? foundEntry[0] : null;
   };
 }

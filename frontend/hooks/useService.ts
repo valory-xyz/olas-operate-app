@@ -82,6 +82,7 @@ export const useService = ({
   };
 };
 
+// TODO: support multiple services
 /**
  *  Hook to get service id
  */
