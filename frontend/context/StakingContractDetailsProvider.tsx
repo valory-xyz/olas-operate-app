@@ -4,6 +4,7 @@ import {
   Dispatch,
   PropsWithChildren,
   SetStateAction,
+  useCallback,
   useContext,
   useState,
 } from 'react';
@@ -15,7 +16,7 @@ import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
-import { StakingContractInfo } from '@/types/Autonolas';
+import { StakingContractDetails } from '@/types/Autonolas';
 
 import {
   INITIAL_DEFAULT_STAKING_PROGRAM_ID,
@@ -50,7 +51,7 @@ const useStakingContractDetailsByStakingProgram = (isPaused: boolean) => {
       currentChainId,
     ],
     queryFn: async () => {
-      return await currentAgent.serviceApi.getStakingContractInfoByServiceIdStakingProgram(
+      return await currentAgent.serviceApi.getStakingContractDetailsByServiceIdStakingProgram(
         serviceId!,
         activeStakingProgramId!,
         currentChainId,
@@ -75,18 +76,21 @@ const useAllStakingContractDetails = () => {
         currentChainId,
       ),
       queryFn: async () =>
-        await currentAgent.serviceApi.getStakingContractInfoByStakingProgram(
+        await currentAgent.serviceApi.getStakingContractDetailsByStakingProgram(
           programId,
           currentChainId,
         ),
       onError: (error: Error) => {
-        console.error(`Error fetching staking info for ${programId}:`, error);
+        console.error(
+          `Error fetching staking details for ${programId}:`,
+          error,
+        );
       },
     })),
   });
 
   // Aggregate results into a record
-  const allStakingContractDetails = stakingPrograms.reduce(
+  const allStakingContractDetailsList = stakingPrograms.reduce(
     (record, programId, index) => {
       const query = queryResults[index];
       if (query.status === 'success') {
@@ -96,40 +100,40 @@ const useAllStakingContractDetails = () => {
       }
       return record;
     },
-    {} as Record<string, Partial<StakingContractInfo>>,
+    {} as Record<string, Partial<StakingContractDetails>>,
   );
 
   const isAllStakingContractDetailsLoaded = queryResults.every(
     (query) => query.isSuccess,
   );
 
-  return { allStakingContractDetails, isAllStakingContractDetailsLoaded };
+  return { allStakingContractDetailsList, isAllStakingContractDetailsLoaded };
 };
 
-type StakingContractInfoContextProps = {
-  activeStakingContractInfo?: Partial<StakingContractInfo>;
-  isActiveStakingContractInfoLoaded: boolean;
+type StakingContractDetailsContextProps = {
+  activeStakingContractDetails?: Partial<StakingContractDetails>;
+  isActiveStakingContractDetailsLoaded: boolean;
   isPaused: boolean;
-  stakingContractInfoRecord?: Record<
+  allStakingContractDetailsList?: Record<
     StakingProgramId,
-    Partial<StakingContractInfo>
+    Partial<StakingContractDetails>
   >;
-  isStakingContractInfoRecordLoaded: boolean;
-  updateActiveStakingContractInfo: () => Promise<void>;
+  isAllStakingContractDetailsListLoaded: boolean;
+  refetchActiveStakingContractDetails: () => Promise<void>;
   setIsPaused: Dispatch<SetStateAction<boolean>>;
 };
 
 /**
  * Context for staking contract details
  */
-export const StakingContractInfoContext =
-  createContext<StakingContractInfoContextProps>({
-    activeStakingContractInfo: undefined,
+export const StakingContractDetailsContext =
+  createContext<StakingContractDetailsContextProps>({
+    activeStakingContractDetails: undefined,
     isPaused: false,
-    isStakingContractInfoRecordLoaded: false,
-    isActiveStakingContractInfoLoaded: false,
-    stakingContractInfoRecord: undefined,
-    updateActiveStakingContractInfo: async () => {},
+    isAllStakingContractDetailsListLoaded: false,
+    isActiveStakingContractDetailsLoaded: false,
+    allStakingContractDetailsList: undefined,
+    refetchActiveStakingContractDetails: async () => {},
     setIsPaused: () => {},
   });
 
@@ -142,30 +146,36 @@ export const StakingContractDetailsProvider = ({
   const [isPaused, setIsPaused] = useState(false);
 
   const {
-    data: activeStakingContractInfo,
-    isLoading: isActiveStakingContractInfoLoading,
+    data: activeStakingContractDetails,
+    isLoading: isActiveStakingContractDetailsLoading,
     // Updates staking contract info specific to the actively staked
     // service owned by the user
-    refetch: updateActiveStakingContractInfo,
+    refetch: refetchActiveStakingContract,
   } = useStakingContractDetailsByStakingProgram(isPaused);
 
-  const { allStakingContractDetails, isAllStakingContractDetailsLoaded } =
+  const { allStakingContractDetailsList, isAllStakingContractDetailsLoaded } =
     useAllStakingContractDetails();
 
+  const refetchActiveStakingContractDetails = useCallback(async () => {
+    await refetchActiveStakingContract();
+  }, [refetchActiveStakingContract]);
+
   return (
-    <StakingContractInfoContext.Provider
+    <StakingContractDetailsContext.Provider
       value={{
-        activeStakingContractInfo,
-        isStakingContractInfoRecordLoaded: isAllStakingContractDetailsLoaded,
-        isActiveStakingContractInfoLoaded:
-          !isActiveStakingContractInfoLoading && !!activeStakingContractInfo,
-        stakingContractInfoRecord: allStakingContractDetails,
+        activeStakingContractDetails,
+        isAllStakingContractDetailsListLoaded:
+          isAllStakingContractDetailsLoaded,
+        isActiveStakingContractDetailsLoaded:
+          !isActiveStakingContractDetailsLoading &&
+          !!activeStakingContractDetails,
+        allStakingContractDetailsList,
         isPaused,
         setIsPaused,
-        updateActiveStakingContractInfo,
+        refetchActiveStakingContractDetails,
       }}
     >
       {children}
-    </StakingContractInfoContext.Provider>
+    </StakingContractDetailsContext.Provider>
   );
 };

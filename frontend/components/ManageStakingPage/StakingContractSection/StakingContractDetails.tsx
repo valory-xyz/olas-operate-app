@@ -10,16 +10,18 @@ export const StakingContractDetails = ({
 }: {
   stakingProgramId: StakingProgramId;
 }) => {
-  const { stakingContractInfoRecord, isStakingContractInfoRecordLoaded } =
-    useStakingContractContext();
+  const {
+    allStakingContractDetailsList,
+    isAllStakingContractDetailsListLoaded,
+  } = useStakingContractContext();
 
   const list = useMemo(() => {
-    if (!isStakingContractInfoRecordLoaded) return;
-    if (!stakingContractInfoRecord) return;
+    if (!isAllStakingContractDetailsListLoaded) return;
+    if (!allStakingContractDetailsList) return;
     if (!stakingProgramId) return;
-    if (!stakingContractInfoRecord?.[stakingProgramId]) return;
+    if (!allStakingContractDetailsList?.[stakingProgramId]) return;
 
-    const details = stakingContractInfoRecord[stakingProgramId];
+    const details = allStakingContractDetailsList[stakingProgramId];
 
     return [
       {
@@ -41,16 +43,16 @@ export const StakingContractDetails = ({
       },
     ];
   }, [
-    isStakingContractInfoRecordLoaded,
-    stakingContractInfoRecord,
+    isAllStakingContractDetailsListLoaded,
+    allStakingContractDetailsList,
     stakingProgramId,
   ]);
 
-  if (!isStakingContractInfoRecordLoaded) {
+  if (!isAllStakingContractDetailsListLoaded) {
     return <Skeleton active />;
   }
 
-  if (!stakingContractInfoRecord) {
+  if (!allStakingContractDetailsList) {
     return (
       <Alert
         message="No staking information available."

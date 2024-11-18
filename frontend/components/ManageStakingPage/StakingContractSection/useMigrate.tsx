@@ -51,8 +51,10 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
     useStakingProgram();
   const { needsInitialFunding } = useNeedsFunds();
 
-  const { stakingContractInfoRecord, isStakingContractInfoRecordLoaded } =
-    useStakingContractContext();
+  const {
+    allStakingContractDetailsList,
+    isAllStakingContractDetailsListLoaded,
+  } = useStakingContractContext();
 
   const { isServiceStaked, isServiceStakedForMinimumDuration } =
     useActiveStakingContractInfo();
@@ -116,7 +118,7 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
       return { canMigrate: false, reason: CantMigrateReason.LoadingBalance };
     }
 
-    if (!isStakingContractInfoRecordLoaded) {
+    if (!isAllStakingContractDetailsListLoaded) {
       return {
         canMigrate: false,
         reason: CantMigrateReason.LoadingStakingContractInfo,
@@ -196,7 +198,7 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
   }, [
     isServicesLoaded,
     isBalanceLoaded,
-    isStakingContractInfoRecordLoaded,
+    isAllStakingContractDetailsListLoaded,
     stakingContractInfo,
     activeStakingProgramId,
     stakingProgramId,
@@ -236,14 +238,15 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
 
     // staking contract requirements
 
-    if (!isStakingContractInfoRecordLoaded) {
+    if (!isAllStakingContractDetailsListLoaded) {
       return {
         canMigrate: false,
         reason: CantMigrateReason.LoadingStakingContractInfo,
       };
     }
 
-    const stakingContractInfo = stakingContractInfoRecord?.[stakingProgramId];
+    const stakingContractInfo =
+      allStakingContractDetailsList?.[stakingProgramId];
 
     if (!stakingContractInfo) {
       return {
@@ -295,8 +298,8 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
     isServicesLoaded,
     isBalanceLoaded,
     hasEnoughEthForInitialFunding,
-    isStakingContractInfoRecordLoaded,
-    stakingContractInfoRecord,
+    isAllStakingContractDetailsListLoaded,
+    allStakingContractDetailsList,
     stakingProgramId,
     hasEnoughOlasForFirstRun,
     serviceStatus,

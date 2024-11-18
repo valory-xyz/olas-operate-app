@@ -18,16 +18,16 @@ export const useNotifyOnNewEpoch = () => {
   const { showNotification } = useElectronApi();
   const { isServiceNotRunning } = useServices();
 
-  const { activeStakingContractInfo, isActiveStakingContractInfoLoaded } =
+  const { activeStakingContractDetails, isActiveStakingContractDetailsLoaded } =
     useActiveStakingContractInfo();
-  const epoch = activeStakingContractInfo?.epochCounter;
+  const epoch = activeStakingContractDetails?.epochCounter;
 
   const [epochStatusNotification, setEpochStatusNotification] =
     useState<EpochStatusNotification | null>(null);
 
   useEffect(() => {
     //  if active staking contract info is not loaded yet, return
-    if (!isActiveStakingContractInfoLoaded) return;
+    if (!isActiveStakingContractDetailsLoaded) return;
 
     // if agent is running, no need to show notification
     if (!isServiceNotRunning) return;
@@ -56,7 +56,7 @@ export const useNotifyOnNewEpoch = () => {
     isServiceNotRunning,
     epochStatusNotification,
     epoch,
-    isActiveStakingContractInfoLoaded,
+    isActiveStakingContractDetailsLoaded,
     showNotification,
   ]);
 };

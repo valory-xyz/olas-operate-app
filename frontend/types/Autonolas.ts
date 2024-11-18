@@ -14,7 +14,7 @@ export const StakingRewardsInfoSchema = z.object({
 
 export type StakingRewardsInfo = z.infer<typeof StakingRewardsInfoSchema>;
 
-export type StakingContractInfo = {
+export type StakingContractDetails = {
   availableRewards: number;
   /* number of slots available for staking */
   maxNumServices: number;

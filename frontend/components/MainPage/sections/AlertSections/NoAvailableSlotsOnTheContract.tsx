@@ -24,14 +24,14 @@ export const NoAvailableSlotsOnTheContract = () => {
     defaultStakingProgramMeta,
   } = useStakingProgram();
 
-  const { isStakingContractInfoRecordLoaded } = useStakingContractContext();
+  const { isAllStakingContractDetailsListLoaded } = useStakingContractContext();
   const { isServiceStaked } = useActiveStakingContractInfo();
   const { hasEnoughServiceSlots } = useStakingContractInfo(
     activeStakingProgramId ?? defaultStakingProgramId,
   );
 
   const stakingProgramName = useMemo(() => {
-    if (!isStakingContractInfoRecordLoaded) return null;
+    if (!isAllStakingContractDetailsListLoaded) return null;
     if (activeStakingProgramId) {
       return activeStakingProgramMeta?.name;
     }
@@ -40,10 +40,10 @@ export const NoAvailableSlotsOnTheContract = () => {
     activeStakingProgramId,
     activeStakingProgramMeta?.name,
     defaultStakingProgramMeta?.name,
-    isStakingContractInfoRecordLoaded,
+    isAllStakingContractDetailsListLoaded,
   ]);
 
-  if (!isStakingContractInfoRecordLoaded) return null;
+  if (!isAllStakingContractDetailsListLoaded) return null;
   if (hasEnoughServiceSlots) return null;
   if (isServiceStaked) return null;
 

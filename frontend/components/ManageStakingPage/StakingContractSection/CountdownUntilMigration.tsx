@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { useInterval } from 'usehooks-ts';
 
 import { POPOVER_WIDTH_LARGE } from '@/constants/width';
-import { StakingContractInfo } from '@/types/Autonolas';
+import { StakingContractDetails } from '@/types/Autonolas';
 
 const { Text } = Typography;
 
 export const CountdownUntilMigration = ({
   currentStakingContractInfo,
 }: {
-  currentStakingContractInfo: Partial<StakingContractInfo>;
+  currentStakingContractInfo: Partial<StakingContractDetails>;
 }) => {
   const [secondsUntilReady, setSecondsUntilMigration] = useState<number>();
 

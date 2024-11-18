@@ -23,7 +23,7 @@ const AlertInsufficientMigrationFunds = ({
   stakingProgramId,
 }: CantMigrateAlertProps) => {
   const { serviceTemplate } = useServiceTemplates();
-  const { isStakingContractInfoRecordLoaded } = useStakingContractContext();
+  const { isAllStakingContractDetailsListLoaded } = useStakingContractContext();
   const { isServiceStaked } = useActiveStakingContractInfo();
   const { masterSafeBalance: safeBalance, totalOlasStakedBalance } =
     useBalance();
@@ -34,7 +34,7 @@ const AlertInsufficientMigrationFunds = ({
     stakingProgramId,
   );
 
-  if (!isStakingContractInfoRecordLoaded) return null;
+  if (!isAllStakingContractDetailsListLoaded) return null;
   if (isNil(totalOlasRequiredForStaking)) return null;
   if (isNil(safeBalance?.OLAS)) return null;
   if (isNil(totalOlasStakedBalance)) return null;
