@@ -6,6 +6,7 @@ import { useEffect, useMemo } from 'react';
 import { z } from 'zod';
 
 import { STAKING_PROGRAM_ADDRESS } from '@/config/stakingPrograms';
+import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL } from '@/constants/urls';
 import { Address } from '@/types/Address';
 import { getStakingProgramIdByAddress } from '@/utils/service';
@@ -154,7 +155,7 @@ const useContractCheckpoints = () => {
   const chainId = useChainId();
 
   return useQuery({
-    queryKey: [],
+    queryKey: REACT_QUERY_KEYS.REWARDS_HISTORY_KEY(chainId, serviceId!),
     async queryFn() {
       if (!serviceId) return [];
 
@@ -213,9 +214,9 @@ const useContractCheckpoints = () => {
         return { ...acc, [stakingContractAddress]: transformedCheckpoints };
       }, {});
     },
-    refetchOnWindowFocus: false,
+    enabled: !!chainId && !!serviceId,
     refetchInterval: ONE_DAY_IN_MS,
-    enabled: !!serviceId,
+    refetchOnWindowFocus: false,
   });
 };
 

@@ -31,7 +31,7 @@ export const REACT_QUERY_KEYS = {
   // rewards
   REWARDS_KEY: (
     chainId: number,
-    serviceUuid: string,
+    serviceConfigId: string,
     stakingProgramId: string,
     multisig: string,
     token: number,
@@ -39,7 +39,7 @@ export const REACT_QUERY_KEYS = {
     [
       'rewards',
       chainId,
-      serviceUuid,
+      serviceConfigId,
       stakingProgramId,
       multisig,
       token,
@@ -57,4 +57,6 @@ export const REACT_QUERY_KEYS = {
       stakingProgramId,
       chainId,
     ] as const,
+  REWARDS_HISTORY_KEY: (chainId: number, serviceId: number) =>
+    ['rewardsHistory', chainId, serviceId] as const,
 } as const;
