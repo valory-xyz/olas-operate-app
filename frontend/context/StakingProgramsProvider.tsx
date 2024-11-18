@@ -11,18 +11,18 @@ import { Nullable } from '@/types/Util';
 
 export const INITIAL_DEFAULT_STAKING_PROGRAM_ID = StakingProgramId.PearlBeta;
 
-export const StakingProgramContext = createContext<{
-  isActiveStakingProgramLoaded: boolean;
-  activeStakingProgramId?: Nullable<StakingProgramId>;
+export const StakingProgramsContext = createContext<{
+  isActiveStakingProgramsLoaded: boolean;
+  activeStakingProgramIds?: StakingProgramId[];
 }>({
-  isActiveStakingProgramLoaded: false,
-  activeStakingProgramId: null,
+  isActiveStakingProgramsLoaded: false,
+  activeStakingProgramIds: [],
 });
 
 /**
  * hook to get the active staking program id
  */
-const useGetActiveStakingProgramId = () => {
+const useGetActiveStakingProgramIds = () => {
   const queryClient = useQueryClient();
   const agent = useAgent();
   const chainId = useChainId();
@@ -32,12 +32,12 @@ const useGetActiveStakingProgramId = () => {
     queryKey: REACT_QUERY_KEYS.STAKING_PROGRAM_KEY(chainId, serviceId!),
     queryFn: async () => {
       const response =
-        await agent.serviceApi.getCurrentStakingProgramByServiceId(
+        await agent.serviceApi.getCurrentStakingProgramsByServiceId(
           serviceId!,
           chainId,
         );
       return response?.length === 0
-        ? INITIAL_DEFAULT_STAKING_PROGRAM_ID
+        ? [INITIAL_DEFAULT_STAKING_PROGRAM_ID]
         : response;
     },
     enabled: !!chainId && !!serviceId,
@@ -47,10 +47,14 @@ const useGetActiveStakingProgramId = () => {
   const setActiveStakingProgramId = useCallback(
     (stakingProgramId: Nullable<StakingProgramId>) => {
       if (!serviceId) return;
+      if (!stakingProgramId) return;
 
+      // update the active staking program id in the cache
       queryClient.setQueryData(
         REACT_QUERY_KEYS.STAKING_PROGRAM_KEY(chainId, serviceId),
-        stakingProgramId,
+        (oldData: Nullable<StakingProgramId[]>) => {
+          return oldData ? [...oldData, stakingProgramId] : [stakingProgramId];
+        },
       );
     },
     [queryClient, chainId, serviceId],
@@ -60,23 +64,23 @@ const useGetActiveStakingProgramId = () => {
 };
 
 /**
- * context provider responsible for determining the current active staking program, if any.
+ * context provider responsible for determining the all active staking programs.
  * It does so by checking if the current service is staked, and if so, which staking program it is staked in.
  * It also provides a method to update the active staking program id in state.
  */
-export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
-  const { isLoading: isStakingProgramLoading, data: activeStakingProgramId } =
-    useGetActiveStakingProgramId();
+export const StakingProgramsProvider = ({ children }: PropsWithChildren) => {
+  const { isLoading: isStakingProgramsLoading, data: activeStakingProgramIds } =
+    useGetActiveStakingProgramIds();
 
   return (
-    <StakingProgramContext.Provider
+    <StakingProgramsContext.Provider
       value={{
-        isActiveStakingProgramLoaded:
-          !isStakingProgramLoading && !!activeStakingProgramId,
-        activeStakingProgramId,
+        isActiveStakingProgramsLoaded:
+          !isStakingProgramsLoading && !!activeStakingProgramIds,
+        activeStakingProgramIds,
       }}
     >
       {children}
-    </StakingProgramContext.Provider>
+    </StakingProgramsContext.Provider>
   );
 };

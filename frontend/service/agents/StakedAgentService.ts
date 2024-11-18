@@ -39,10 +39,10 @@ export abstract class StakedAgentService {
   abstract getStakingContractInfoByServiceIdStakingProgramId: Promise<unknown>;
   abstract getStakingContractInfoByStakingProgramId: Promise<unknown>;
 
-  static getCurrentStakingProgramByServiceId = async (
+  static getCurrentStakingProgramsByServiceId = async (
     serviceId: number,
     chainId: ChainId,
-  ): Promise<StakingProgramId | null> => {
+  ): Promise<StakingProgramId[]> => {
     try {
       const { multicallProvider } = PROVIDERS[chainId];
 
@@ -66,20 +66,18 @@ export abstract class StakedAgentService {
       );
 
       // find the first staking program that is active
-      const activeStakingProgramIndex = multicallResponse.findIndex(Boolean);
+      const activeStakingPrograms: StakingProgramId[] =
+        multicallResponse.filter((entry) => entry !== null);
 
-      // if no staking program is active, return null
-      if (activeStakingProgramIndex === -1) {
-        return null;
+      if (activeStakingPrograms.length === 0) {
+        return [];
       }
 
-      // return the staking program id
-      return stakingProgramEntries[
-        activeStakingProgramIndex
-      ][0] as StakingProgramId;
+      // return the staking program ids
+      return activeStakingPrograms;
     } catch (error) {
       console.error('Error while getting current staking program', error);
-      return null;
+      return [];
     }
   };
 
