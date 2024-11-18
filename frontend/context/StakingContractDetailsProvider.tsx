@@ -26,6 +26,7 @@ import {
 const currentAgent = AGENT_CONFIG.trader; // TODO: replace with dynamic agent selection
 const currentChainId = GNOSIS_CHAIN_CONFIG.chainId; // TODO: replace with dynamic chain selection
 
+// TODO: create a separate hook to get service id
 const useServiceId = () => {
   const { selectedService, isFetched: isLoaded } = useServices();
   const serviceConfigId =
@@ -46,9 +47,9 @@ const useStakingContractDetailsByStakingProgram = (isPaused: boolean) => {
   return useQuery({
     queryKey: [
       REACT_QUERY_KEYS.STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY,
+      currentChainId,
       serviceId,
       activeStakingProgramId,
-      currentChainId,
     ],
     queryFn: async () => {
       return await currentAgent.serviceApi.getStakingContractDetailsByServiceIdStakingProgram(
@@ -57,7 +58,8 @@ const useStakingContractDetailsByStakingProgram = (isPaused: boolean) => {
         currentChainId,
       );
     },
-    enabled: !!serviceId && !!activeStakingProgramId && !isPaused,
+    enabled:
+      !!serviceId && !!activeStakingProgramId && !currentChainId && !isPaused,
     refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });
@@ -72,8 +74,8 @@ const useAllStakingContractDetails = () => {
   const queryResults = useQueries({
     queries: stakingPrograms.map((programId) => ({
       queryKey: REACT_QUERY_KEYS.ALL_STAKING_CONTRACT_DETAILS(
-        programId,
         currentChainId,
+        programId,
       ),
       queryFn: async () =>
         await currentAgent.serviceApi.getStakingContractDetailsByStakingProgram(
@@ -148,8 +150,6 @@ export const StakingContractDetailsProvider = ({
   const {
     data: activeStakingContractDetails,
     isLoading: isActiveStakingContractDetailsLoading,
-    // Updates staking contract info specific to the actively staked
-    // service owned by the user
     refetch: refetchActiveStakingContract,
   } = useStakingContractDetailsByStakingProgram(isPaused);
 

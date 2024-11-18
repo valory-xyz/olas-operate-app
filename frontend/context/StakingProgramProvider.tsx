@@ -28,6 +28,9 @@ export const StakingProgramContext = createContext<{
 const currentAgent = AGENT_CONFIG.trader; // TODO: replace with dynamic agent selection
 const currentChainId = GNOSIS_CHAIN_CONFIG.chainId; // TODO: replace with dynamic chain selection
 
+/**
+ * hook to get the active staking program id
+ */
 const useGetActiveStakingProgramId = () => {
   const queryClient = useQueryClient();
 
@@ -40,21 +43,22 @@ const useGetActiveStakingProgramId = () => {
   const serviceId = service?.chain_configs[currentChainId].chain_data?.token;
 
   const response = useQuery({
-    queryKey: [REACT_QUERY_KEYS.STAKING_PROGRAM_KEY, serviceId, currentChainId],
+    queryKey: [REACT_QUERY_KEYS.STAKING_PROGRAM_KEY, currentChainId, serviceId],
     queryFn: async () => {
       return await currentAgent.serviceApi.getCurrentStakingProgramByServiceId(
         serviceId!,
         currentChainId,
       );
+      // if the response is null, return default staking program id. Thoughts?
     },
-    enabled: !!service,
+    enabled: !!serviceId,
     refetchInterval: isLoaded ? FIVE_SECONDS_INTERVAL : false,
   });
 
   const setActiveStakingProgramId = useCallback(
     (stakingProgramId: StakingProgramId | null) => {
       queryClient.setQueryData(
-        [REACT_QUERY_KEYS.STAKING_PROGRAM_KEY, serviceId, currentChainId],
+        [REACT_QUERY_KEYS.STAKING_PROGRAM_KEY, currentChainId, serviceId],
         stakingProgramId,
       );
     },
@@ -74,9 +78,10 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     <StakingProgramContext.Provider
       value={{
         activeStakingProgramId,
-        // TODO: we should not expose the default staking program id, discuss with Josh
-        // active staking program id should be the only thing exposed
-        // maybe (defaultStakingProgramId: defaultStakingProgramId ?? activeStakingProgramId)
+        // TODO: we should not expose the default staking program id, discuss with Josh.
+        // active staking program id should be the only thing exposed.
+        // My idea is wait for the BE call to finish and then set the default staking program id
+        // if the active staking program id is null.
         defaultStakingProgramId: INITIAL_DEFAULT_STAKING_PROGRAM_ID,
       }}
     >
