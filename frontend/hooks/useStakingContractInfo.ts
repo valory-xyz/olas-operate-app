@@ -8,8 +8,8 @@ export const useStakingContractContext = () => {
   const {
     activeStakingContractDetails,
     isPaused,
-    isAllStakingContractDetailsListLoaded,
-    allStakingContractDetailsList,
+    isAllStakingContractDetailsRecordLoaded,
+    allStakingContractDetailsRecord,
     refetchActiveStakingContractDetails,
     setIsPaused,
     isActiveStakingContractDetailsLoaded,
@@ -18,8 +18,8 @@ export const useStakingContractContext = () => {
     isActiveStakingContractDetailsLoaded,
     activeStakingContractDetails,
     isPaused,
-    isAllStakingContractDetailsListLoaded,
-    allStakingContractDetailsList,
+    isAllStakingContractDetailsRecordLoaded,
+    allStakingContractDetailsRecord,
     refetchActiveStakingContractDetails,
     setIsPaused,
   };
@@ -36,7 +36,7 @@ export const useActiveStakingContractInfo = () => {
   // TODO: find a better way to handle this, currently stops react lifecycle hooks being implemented below it
   if (!selectedService || !activeStakingContractDetails)
     return {
-      allStakingContractDetailsList,
+      allStakingContractDetailsRecord,
       refetchActiveStakingContractDetails,
       setIsPaused,
       isPaused,
@@ -103,9 +103,10 @@ export const useActiveStakingContractInfo = () => {
 };
 
 export const useStakingContractInfo = (stakingProgramId: StakingProgramId) => {
-  const { allStakingContractDetailsList } = useStakingContractContext();
+  const { allStakingContractDetailsRecord } = useStakingContractContext();
 
-  const stakingContractInfo = allStakingContractDetailsList?.[stakingProgramId];
+  const stakingContractInfo =
+    allStakingContractDetailsRecord?.[stakingProgramId];
 
   const { serviceIds, maxNumServices, availableRewards } =
     stakingContractInfo ?? {};

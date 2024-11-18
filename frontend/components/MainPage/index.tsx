@@ -37,7 +37,8 @@ export const Main = () => {
   const { activeStakingProgramId, defaultStakingProgramId } =
     useStakingProgram();
 
-  const { isAllStakingContractDetailsListLoaded } = useStakingContractContext();
+  const { isAllStakingContractDetailsRecordLoaded } =
+    useStakingContractContext();
 
   const { hasEnoughServiceSlots } = useStakingContractInfo(
     activeStakingProgramId ?? defaultStakingProgramId,
@@ -61,7 +62,7 @@ export const Main = () => {
   const hideMainOlasBalanceTopBorder = [
     !backupSafeAddress,
     activeStakingProgramId === StakingProgramId.Alpha,
-    isAllStakingContractDetailsListLoaded && !hasEnoughServiceSlots,
+    isAllStakingContractDetailsRecordLoaded && !hasEnoughServiceSlots,
   ].some((condition) => !!condition);
 
   return (

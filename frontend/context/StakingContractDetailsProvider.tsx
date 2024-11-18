@@ -92,7 +92,7 @@ const useAllStakingContractDetails = () => {
   });
 
   // Aggregate results into a record
-  const allStakingContractDetailsList = stakingPrograms.reduce(
+  const allStakingContractDetailsRecord = stakingPrograms.reduce(
     (record, programId, index) => {
       const query = queryResults[index];
       if (query.status === 'success') {
@@ -109,18 +109,18 @@ const useAllStakingContractDetails = () => {
     (query) => query.isSuccess,
   );
 
-  return { allStakingContractDetailsList, isAllStakingContractDetailsLoaded };
+  return { allStakingContractDetailsRecord, isAllStakingContractDetailsLoaded };
 };
 
 type StakingContractDetailsContextProps = {
   activeStakingContractDetails?: Partial<StakingContractDetails>;
   isActiveStakingContractDetailsLoaded: boolean;
   isPaused: boolean;
-  allStakingContractDetailsList?: Record<
+  allStakingContractDetailsRecord?: Record<
     StakingProgramId,
     Partial<StakingContractDetails>
   >;
-  isAllStakingContractDetailsListLoaded: boolean;
+  isAllStakingContractDetailsRecordLoaded: boolean;
   refetchActiveStakingContractDetails: () => Promise<void>;
   setIsPaused: Dispatch<SetStateAction<boolean>>;
 };
@@ -132,9 +132,9 @@ export const StakingContractDetailsContext =
   createContext<StakingContractDetailsContextProps>({
     activeStakingContractDetails: undefined,
     isPaused: false,
-    isAllStakingContractDetailsListLoaded: false,
+    isAllStakingContractDetailsRecordLoaded: false,
     isActiveStakingContractDetailsLoaded: false,
-    allStakingContractDetailsList: undefined,
+    allStakingContractDetailsRecord: undefined,
     refetchActiveStakingContractDetails: async () => {},
     setIsPaused: () => {},
   });
@@ -153,7 +153,7 @@ export const StakingContractDetailsProvider = ({
     refetch: refetchActiveStakingContract,
   } = useStakingContractDetailsByStakingProgram(isPaused);
 
-  const { allStakingContractDetailsList, isAllStakingContractDetailsLoaded } =
+  const { allStakingContractDetailsRecord, isAllStakingContractDetailsLoaded } =
     useAllStakingContractDetails();
 
   const refetchActiveStakingContractDetails = useCallback(async () => {
@@ -164,12 +164,12 @@ export const StakingContractDetailsProvider = ({
     <StakingContractDetailsContext.Provider
       value={{
         activeStakingContractDetails,
-        isAllStakingContractDetailsListLoaded:
-          isAllStakingContractDetailsLoaded,
         isActiveStakingContractDetailsLoaded:
           !isActiveStakingContractDetailsLoading &&
           !!activeStakingContractDetails,
-        allStakingContractDetailsList,
+        isAllStakingContractDetailsRecordLoaded:
+          isAllStakingContractDetailsLoaded,
+        allStakingContractDetailsRecord,
         isPaused,
         setIsPaused,
         refetchActiveStakingContractDetails,

@@ -52,7 +52,7 @@ export const AgentNotRunningButton = () => {
   const { storeState } = useStore();
 
   const {
-    isAllStakingContractDetailsListLoaded,
+    isAllStakingContractDetailsRecordLoaded,
     setIsPaused: setIsStakingContractInfoPollingPaused,
     refetchActiveStakingContractDetails,
   } = useStakingContractContext();
@@ -68,7 +68,7 @@ export const AgentNotRunningButton = () => {
   );
 
   // const minStakingDeposit =
-  //   allStakingContractDetailsList?.[activeStakingProgram ?? defaultStakingProgram]
+  //   allStakingContractDetailsRecord?.[activeStakingProgram ?? defaultStakingProgram]
   //     ?.minStakingDeposit;
 
   const requiredOlas =
@@ -182,7 +182,7 @@ export const AgentNotRunningButton = () => {
   ]);
 
   const isDeployable = useMemo(() => {
-    if (!isAllStakingContractDetailsListLoaded) return false;
+    if (!isAllStakingContractDetailsRecordLoaded) return false;
 
     // if the agent is NOT running and the balance is too low,
     // user should not be able to start the agent
@@ -217,7 +217,7 @@ export const AgentNotRunningButton = () => {
 
     return hasEnoughOlas && hasEnoughEth;
   }, [
-    isAllStakingContractDetailsListLoaded,
+    isAllStakingContractDetailsRecordLoaded,
     deploymentStatus,
     isLowBalance,
     requiredOlas,
