@@ -7,7 +7,7 @@ export const REACT_QUERY_KEYS = {
   // staking programs
   STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY: (
     chainId: number,
-    serviceConfigId: string,
+    serviceConfigId: number,
     activeStakingProgramId: string,
   ) =>
     [
@@ -18,11 +18,8 @@ export const REACT_QUERY_KEYS = {
     ] as const,
   ALL_STAKING_CONTRACT_DETAILS: (chainId: number, stakingProgramId: string) =>
     ['allStakingContractDetails', chainId, stakingProgramId] as const,
-  STAKING_PROGRAM_KEY: (
-    chainId: number,
-    serviceConfigId: string,
-    stakingProgramId: string,
-  ) => ['stakingProgram', chainId, serviceConfigId, stakingProgramId] as const,
+  STAKING_PROGRAM_KEY: (chainId: number, serviceConfigId: number) =>
+    ['stakingProgram', chainId, serviceConfigId] as const,
 
   // wallets
   WALLETS_KEY: ['wallets'] as const,

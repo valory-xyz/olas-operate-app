@@ -122,12 +122,11 @@ export const useStakingContractDetailsByStakingProgram = (
   const agent = useAgent();
 
   return useQuery({
-    queryKey: [
-      REACT_QUERY_KEYS.STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY,
+    queryKey: REACT_QUERY_KEYS.STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY(
       chainId,
-      serviceId,
-      stakingProgramId,
-    ],
+      serviceId!,
+      stakingProgramId!,
+    ),
     queryFn: async () => {
       return await agent.serviceApi.getStakingContractDetailsByServiceIdStakingProgram(
         serviceId!,

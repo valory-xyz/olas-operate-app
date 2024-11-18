@@ -44,7 +44,7 @@ const useGetActiveStakingProgramId = () => {
   const serviceId = service?.chain_configs[currentChainId].chain_data?.token;
 
   const response = useQuery({
-    queryKey: [REACT_QUERY_KEYS.STAKING_PROGRAM_KEY, currentChainId, serviceId],
+    queryKey: REACT_QUERY_KEYS.STAKING_PROGRAM_KEY(currentChainId, serviceId!),
     queryFn: async () => {
       return await currentAgent.serviceApi.getCurrentStakingProgramByServiceId(
         serviceId!,
@@ -58,13 +58,10 @@ const useGetActiveStakingProgramId = () => {
 
   const setActiveStakingProgramId = useCallback(
     (stakingProgramId: Nullable<StakingProgramId>) => {
+      if (!serviceId) return;
+
       queryClient.setQueryData(
-        [
-          REACT_QUERY_KEYS.STAKING_PROGRAM_KEY,
-          currentChainId,
-          serviceId,
-          stakingProgramId,
-        ],
+        REACT_QUERY_KEYS.STAKING_PROGRAM_KEY(currentChainId, serviceId),
         stakingProgramId,
       );
     },
