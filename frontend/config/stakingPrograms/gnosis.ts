@@ -12,7 +12,7 @@ import { MECHS, MechType } from '../mechs';
 import { StakingProgramMap } from '.';
 
 export const GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
-  StakingProgramId,
+  string,
   Address
 > = {
   [StakingProgramId.PearlAlpha]: '0xEE9F19b5DF06c7E8Bfc7B28745dcf944C504198A',
@@ -23,7 +23,6 @@ export const GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
   [StakingProgramId.PearlBeta5]: '0x4Abe376Fda28c2F43b84884E5f822eA775DeA9F4',
   [StakingProgramId.PearlBetaMechMarketplace]:
     '0xDaF34eC46298b53a3d24CBCb431E84eBd23927dA',
-  [StakingProgramId.OptimusAlpha]: '0xTODO', // TODO: add Optimus Alpha address
 };
 
 export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
