@@ -7,7 +7,7 @@ import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { useChainId } from './useChainId';
 
 /**
- * Hook to get the active staking program and its metadata, and the default staking program.
+ * Hook to get the active staking program and its metadata.
  */
 export const useStakingProgram = () => {
   const chainId = useChainId();
@@ -20,25 +20,15 @@ export const useStakingProgram = () => {
     return GNOSIS_STAKING_PROGRAMS[activeStakingProgramId];
   }, [activeStakingProgramId]);
 
-  // const defaultStakingProgramMeta =
-  //   STAKING_PROGRAM_META[DEFAULT_STAKING_PROGRAM_ID];
-
   const activeStakingProgramAddress = useMemo(() => {
     if (!activeStakingProgramId) return null;
     return STAKING_PROGRAM_ADDRESS[chainId][activeStakingProgramId];
   }, [chainId, activeStakingProgramId]);
 
-  // const defaultStakingProgramAddress =
-  //   SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[
-  //     MiddlewareChain.OPTIMISM
-  //   ][DEFAULT_STAKING_PROGRAM_ID];
-
   return {
+    isActiveStakingProgramLoaded,
     activeStakingProgramId,
     activeStakingProgramAddress,
     activeStakingProgramMeta,
-    // defaultStakingProgramAddress,
-    // defaultStakingProgramMeta,
-    isActiveStakingProgramLoaded,
   };
 };
