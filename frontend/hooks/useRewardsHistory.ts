@@ -5,7 +5,7 @@ import { groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 import { z } from 'zod';
 
-import { GNOSIS_SERVICE_STAKING_CONTRACT_ADDRESSES } from '@/constants/contractAddresses';
+import { GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES } from '@/constants/contractAddresses';
 import { GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL } from '@/constants/urls';
 import { Address } from '@/types/Address';
 import { getStakingProgramIdByAddress } from '@/utils/service';
@@ -42,7 +42,7 @@ const CheckpointsGraphResponseSchema = z.array(CheckpointGraphResponseSchema);
 type CheckpointResponse = z.infer<typeof CheckpointGraphResponseSchema>;
 
 const supportedStakingContracts = Object.values(
-  GNOSIS_SERVICE_STAKING_CONTRACT_ADDRESSES,
+  GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
 ).map((address) => `"${address}"`);
 
 const fetchRewardsQuery = gql`
