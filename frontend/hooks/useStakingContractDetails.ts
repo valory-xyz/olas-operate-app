@@ -134,7 +134,7 @@ export const useStakingContractDetailsByStakingProgram = (
         chainId,
       );
     },
-    enabled: !!serviceId && !!stakingProgramId && !chainId && !isPaused,
+    enabled: !!serviceId && !!stakingProgramId && !!chainId && !isPaused,
     refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });
