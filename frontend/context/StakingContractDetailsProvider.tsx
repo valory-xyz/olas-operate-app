@@ -1,14 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   createContext,
   Dispatch,
   PropsWithChildren,
   SetStateAction,
   useContext,
-  useEffect,
   useState,
 } from 'react';
-import { useInterval } from 'usehooks-ts';
 
 import { AGENT_CONFIG } from '@/config/agents';
 import { GNOSIS_CHAIN_CONFIG } from '@/config/chains';
@@ -17,7 +15,6 @@ import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
-import { AutonolasService } from '@/service/Autonolas';
 import { StakingContractInfo } from '@/types/Autonolas';
 
 import {
@@ -28,17 +25,22 @@ import {
 const currentAgent = AGENT_CONFIG.trader; // TODO: replace with dynamic agent selection
 const currentChainId = GNOSIS_CHAIN_CONFIG.chainId; // TODO: replace with dynamic chain selection
 
-/**
- * hook to get staking contract details by staking program
- */
-const useStakingContractDetailsByStakingProgram = (isPaused: boolean) => {
-  const { activeStakingProgramId } = useContext(StakingProgramContext);
-
+const useServiceId = () => {
   const { selectedService, isFetched: isLoaded } = useServices();
   const serviceConfigId =
     isLoaded && selectedService ? selectedService?.service_config_id : '';
   const { service } = useService({ serviceConfigId });
   const serviceId = service?.chain_configs[currentChainId].chain_data?.token;
+
+  return serviceId;
+};
+
+/**
+ * hook to get staking contract details by staking program
+ */
+const useStakingContractDetailsByStakingProgram = (isPaused: boolean) => {
+  const { activeStakingProgramId } = useContext(StakingProgramContext);
+  const serviceId = useServiceId();
 
   return useQuery({
     queryKey: [
@@ -54,10 +56,54 @@ const useStakingContractDetailsByStakingProgram = (isPaused: boolean) => {
         currentChainId,
       );
     },
-    enabled: !!service && !!activeStakingProgramId && !isPaused,
-    refetchInterval: isLoaded && !isPaused ? FIVE_SECONDS_INTERVAL : false,
+    enabled: !!serviceId && !!activeStakingProgramId && !isPaused,
+    refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });
+};
+
+/**
+ * hook to get all staking contract details
+ */
+const useAllStakingContractDetails = () => {
+  const stakingPrograms = Object.values([INITIAL_DEFAULT_STAKING_PROGRAM_ID]);
+
+  const queryResults = useQueries({
+    queries: stakingPrograms.map((programId) => ({
+      queryKey: REACT_QUERY_KEYS.ALL_STAKING_CONTRACT_DETAILS(
+        programId,
+        currentChainId,
+      ),
+      queryFn: async () =>
+        await currentAgent.serviceApi.getStakingContractInfoByStakingProgram(
+          programId,
+          currentChainId,
+        ),
+      onError: (error: Error) => {
+        console.error(`Error fetching staking info for ${programId}:`, error);
+      },
+    })),
+  });
+
+  // Aggregate results into a record
+  const allStakingContractDetails = stakingPrograms.reduce(
+    (record, programId, index) => {
+      const query = queryResults[index];
+      if (query.status === 'success') {
+        record[programId] = query.data;
+      } else if (query.status === 'error') {
+        console.error(query.error);
+      }
+      return record;
+    },
+    {} as Record<string, Partial<StakingContractInfo>>,
+  );
+
+  const isAllStakingContractDetailsLoaded = queryResults.every(
+    (query) => query.isSuccess,
+  );
+
+  return { allStakingContractDetails, isAllStakingContractDetailsLoaded };
 };
 
 type StakingContractInfoContextProps = {
@@ -94,10 +140,6 @@ export const StakingContractDetailsProvider = ({
   children,
 }: PropsWithChildren) => {
   const [isPaused, setIsPaused] = useState(false);
-  const [
-    isStakingContractInfoRecordLoaded,
-    setIsStakingContractInfoRecordLoaded,
-  ] = useState(false);
 
   const {
     data: activeStakingContractInfo,
@@ -107,58 +149,17 @@ export const StakingContractDetailsProvider = ({
     refetch: updateActiveStakingContractInfo,
   } = useStakingContractDetailsByStakingProgram(isPaused);
 
-  const [stakingContractInfoRecord, setStakingContractInfoRecord] =
-    useState<Record<StakingProgramId, Partial<StakingContractInfo>>>();
-
-  /** Updates general staking contract information, not user or service specific */
-  const updateStakingContractInfoRecord = async () => {
-    const stakingPrograms = Object.values([INITIAL_DEFAULT_STAKING_PROGRAM_ID]);
-
-    try {
-      const stakingInfoPromises = stakingPrograms.map((programId) =>
-        AutonolasService.getStakingContractInfoByStakingProgram(programId),
-      );
-
-      const stakingInfos = await Promise.allSettled(stakingInfoPromises);
-
-      const stakingContractInfoRecord = stakingPrograms.reduce(
-        (record, programId, index) => {
-          if (stakingInfos[index].status === 'rejected') {
-            console.error(stakingInfos[index].reason);
-            return record;
-          }
-          record[programId] = stakingInfos[index].value;
-          return record;
-        },
-        {} as Record<string, Partial<StakingContractInfo>>,
-      );
-
-      setStakingContractInfoRecord(stakingContractInfoRecord);
-      setIsStakingContractInfoRecordLoaded(true);
-    } catch (e) {
-      console.error({ e });
-    }
-  };
-
-  useEffect(() => {
-    updateStakingContractInfoRecord().catch(console.error);
-  }, []);
-
-  useInterval(
-    async () => {
-      await updateStakingContractInfoRecord().catch(console.error);
-    },
-    isPaused ? null : FIVE_SECONDS_INTERVAL,
-  );
+  const { allStakingContractDetails, isAllStakingContractDetailsLoaded } =
+    useAllStakingContractDetails();
 
   return (
     <StakingContractInfoContext.Provider
       value={{
         activeStakingContractInfo,
-        isStakingContractInfoRecordLoaded,
+        isStakingContractInfoRecordLoaded: isAllStakingContractDetailsLoaded,
         isActiveStakingContractInfoLoaded:
           !isActiveStakingContractInfoLoading && !!activeStakingContractInfo,
-        stakingContractInfoRecord,
+        stakingContractInfoRecord: allStakingContractDetails,
         isPaused,
         setIsPaused,
         updateActiveStakingContractInfo,
