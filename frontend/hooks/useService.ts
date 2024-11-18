@@ -5,6 +5,7 @@ import { MiddlewareDeploymentStatus } from '@/client';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { Address } from '@/types/Address';
 
+import { useChainId } from './useChainId';
 import { useServices } from './useServices';
 
 type ServiceChainIdAddressRecord = {
@@ -79,4 +80,18 @@ export const useService = ({
     deploymentStatus,
     setDeploymentStatus,
   };
+};
+
+/**
+ *  Hook to get service id
+ */
+export const useServiceId = () => {
+  const chainId = useChainId();
+  const { selectedService, isFetched: isLoaded } = useServices();
+  const serviceConfigId =
+    isLoaded && selectedService ? selectedService?.service_config_id : '';
+  const { service } = useService({ serviceConfigId });
+  const serviceId = service?.chain_configs[chainId].chain_data?.token;
+
+  return serviceId;
 };

@@ -1,8 +1,16 @@
+import { useQuery } from '@tanstack/react-query';
 import { isNil } from 'lodash';
 import { useContext } from 'react';
 
+import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
+import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { StakingContractDetailsContext } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
+import { Maybe } from '@/types/Util';
+
+import { useAgent } from './useAgent';
+import { useChainId } from './useChainId';
+import { useServiceId } from './useService';
 
 export const useStakingContractContext = () => {
   const {
@@ -100,6 +108,37 @@ export const useActiveStakingContractInfo = () => {
     isActiveStakingContractDetailsLoaded,
     activeStakingContractDetails,
   };
+};
+
+/**
+ * hook to get staking contract details by staking program
+ */
+export const useStakingContractDetailsByStakingProgram = (
+  stakingProgramId: Maybe<StakingProgramId>,
+  isPaused?: boolean,
+) => {
+  const serviceId = useServiceId();
+  const chainId = useChainId();
+  const agent = useAgent();
+
+  return useQuery({
+    queryKey: [
+      REACT_QUERY_KEYS.STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY,
+      chainId,
+      serviceId,
+      stakingProgramId,
+    ],
+    queryFn: async () => {
+      return await agent.serviceApi.getStakingContractDetailsByServiceIdStakingProgram(
+        serviceId!,
+        stakingProgramId!,
+        chainId,
+      );
+    },
+    enabled: !!serviceId && !!stakingProgramId && !chainId && !isPaused,
+    refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : false,
+    refetchOnWindowFocus: false,
+  });
 };
 
 export const useStakingContractDetails = (

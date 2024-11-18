@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import {
   createContext,
   Dispatch,
@@ -9,13 +9,11 @@ import {
   useState,
 } from 'react';
 
-import { AGENT_CONFIG } from '@/config/agents';
-import { GNOSIS_CHAIN_CONFIG } from '@/config/chains';
-import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useService } from '@/hooks/useService';
-import { useServices } from '@/hooks/useServices';
+import { useAgent } from '@/hooks/useAgent';
+import { useChainId } from '@/hooks/useChainId';
+import { useStakingContractDetailsByStakingProgram } from '@/hooks/useStakingContractDetails';
 import { StakingContractDetails } from '@/types/Autonolas';
 
 import {
@@ -23,64 +21,24 @@ import {
   StakingProgramContext,
 } from './StakingProgramProvider';
 
-const currentAgent = AGENT_CONFIG.trader; // TODO: replace with dynamic agent selection
-const currentChainId = GNOSIS_CHAIN_CONFIG.chainId; // TODO: replace with dynamic chain selection
-
-// TODO: create a separate hook to get service id
-const useServiceId = () => {
-  const { selectedService, isFetched: isLoaded } = useServices();
-  const serviceConfigId =
-    isLoaded && selectedService ? selectedService?.service_config_id : '';
-  const { service } = useService({ serviceConfigId });
-  const serviceId = service?.chain_configs[currentChainId].chain_data?.token;
-
-  return serviceId;
-};
-
-/**
- * hook to get staking contract details by staking program
- */
-const useStakingContractDetailsByStakingProgram = (isPaused: boolean) => {
-  const { activeStakingProgramId } = useContext(StakingProgramContext);
-  const serviceId = useServiceId();
-
-  return useQuery({
-    queryKey: [
-      REACT_QUERY_KEYS.STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY,
-      currentChainId,
-      serviceId,
-      activeStakingProgramId,
-    ],
-    queryFn: async () => {
-      return await currentAgent.serviceApi.getStakingContractDetailsByServiceIdStakingProgram(
-        serviceId!,
-        activeStakingProgramId!,
-        currentChainId,
-      );
-    },
-    enabled:
-      !!serviceId && !!activeStakingProgramId && !currentChainId && !isPaused,
-    refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : false,
-    refetchOnWindowFocus: false,
-  });
-};
-
 /**
  * hook to get all staking contract details
  */
 const useAllStakingContractDetails = () => {
   const stakingPrograms = Object.values([INITIAL_DEFAULT_STAKING_PROGRAM_ID]);
+  const chainId = useChainId();
+  const currentAgent = useAgent();
 
   const queryResults = useQueries({
     queries: stakingPrograms.map((programId) => ({
       queryKey: REACT_QUERY_KEYS.ALL_STAKING_CONTRACT_DETAILS(
-        currentChainId,
+        chainId,
         programId,
       ),
       queryFn: async () =>
         await currentAgent.serviceApi.getStakingContractDetailsByStakingProgram(
           programId,
-          currentChainId,
+          chainId,
         ),
       onError: (error: Error) => {
         console.error(
@@ -147,11 +105,15 @@ export const StakingContractDetailsProvider = ({
 }: PropsWithChildren) => {
   const [isPaused, setIsPaused] = useState(false);
 
+  const { activeStakingProgramId } = useContext(StakingProgramContext);
   const {
     data: activeStakingContractDetails,
     isLoading: isActiveStakingContractDetailsLoading,
     refetch: refetchActiveStakingContract,
-  } = useStakingContractDetailsByStakingProgram(isPaused);
+  } = useStakingContractDetailsByStakingProgram(
+    activeStakingProgramId,
+    isPaused,
+  );
 
   const { allStakingContractDetailsRecord, isAllStakingContractDetailsLoaded } =
     useAllStakingContractDetails();
