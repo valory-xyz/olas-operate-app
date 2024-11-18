@@ -197,7 +197,7 @@ export abstract class PredictTraderService extends StakedAgentService {
    * Get staking contract info by staking program name
    * eg. Alpha, Beta, Beta2
    */
-  static getStakingContractDetailsByStakingProgram = async (
+  static getStakingContractDetailsByName = async (
     stakingProgramId: StakingProgramId,
     chainId: ChainId,
   ): Promise<Partial<StakingContractDetails>> => {

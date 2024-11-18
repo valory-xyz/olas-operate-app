@@ -25,7 +25,7 @@ import {
  * hook to get all staking contract details
  */
 const useAllStakingContractDetails = () => {
-  const stakingPrograms = Object.values([INITIAL_DEFAULT_STAKING_PROGRAM_ID]);
+  const stakingPrograms = [INITIAL_DEFAULT_STAKING_PROGRAM_ID];
   const chainId = useChainId();
   const currentAgent = useAgent();
 
@@ -36,7 +36,7 @@ const useAllStakingContractDetails = () => {
         programId,
       ),
       queryFn: async () =>
-        await currentAgent.serviceApi.getStakingContractDetailsByStakingProgram(
+        await currentAgent.serviceApi.getStakingContractDetailsByName(
           programId,
           chainId,
         ),
