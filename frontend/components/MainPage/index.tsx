@@ -10,8 +10,8 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import {
   useStakingContractContext,
-  useStakingContractInfo,
-} from '@/hooks/useStakingContractInfo';
+  useStakingContractDetails,
+} from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 // import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -40,7 +40,7 @@ export const Main = () => {
   const { isAllStakingContractDetailsRecordLoaded } =
     useStakingContractContext();
 
-  const { hasEnoughServiceSlots } = useStakingContractInfo(
+  const { hasEnoughServiceSlots } = useStakingContractDetails(
     activeStakingProgramId ?? defaultStakingProgramId,
   );
 

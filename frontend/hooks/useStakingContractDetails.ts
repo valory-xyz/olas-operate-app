@@ -102,7 +102,9 @@ export const useActiveStakingContractInfo = () => {
   };
 };
 
-export const useStakingContractInfo = (stakingProgramId: StakingProgramId) => {
+export const useStakingContractDetails = (
+  stakingProgramId: StakingProgramId,
+) => {
   const { allStakingContractDetailsRecord } = useStakingContractContext();
 
   const stakingContractInfo =

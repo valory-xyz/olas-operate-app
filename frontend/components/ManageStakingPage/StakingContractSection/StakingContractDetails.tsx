@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useStakingContractContext } from '@/hooks/useStakingContractInfo';
+import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 
 export const StakingContractDetails = ({
   stakingProgramId,

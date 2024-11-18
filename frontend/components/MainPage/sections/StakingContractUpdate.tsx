@@ -7,7 +7,7 @@ import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { Pages } from '@/enums/PageState';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
-import { useStakingContractContext } from '@/hooks/useStakingContractInfo';
+import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { CardSection } from '../../styled/CardSection';

@@ -6,8 +6,8 @@ import { usePageState } from '@/hooks/usePageState';
 import {
   useActiveStakingContractInfo,
   useStakingContractContext,
-  useStakingContractInfo,
-} from '@/hooks/useStakingContractInfo';
+  useStakingContractDetails,
+} from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { CustomAlert } from '../../../Alert';
@@ -27,7 +27,7 @@ export const NoAvailableSlotsOnTheContract = () => {
   const { isAllStakingContractDetailsRecordLoaded } =
     useStakingContractContext();
   const { isServiceStaked } = useActiveStakingContractInfo();
-  const { hasEnoughServiceSlots } = useStakingContractInfo(
+  const { hasEnoughServiceSlots } = useStakingContractDetails(
     activeStakingProgramId ?? defaultStakingProgramId,
   );
 

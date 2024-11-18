@@ -7,8 +7,8 @@ import { SUPPORT_URL } from '@/constants/urls';
 import {
   useActiveStakingContractInfo,
   useStakingContractContext,
-  useStakingContractInfo,
-} from '@/hooks/useStakingContractInfo';
+  useStakingContractDetails,
+} from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { formatToShortDateTime } from '@/utils/time';
 
@@ -128,7 +128,7 @@ export const CannotStartAgentPopover = () => {
   const { isAgentEvicted, isEligibleForStaking } =
     useActiveStakingContractInfo();
 
-  const { hasEnoughServiceSlots, isRewardsAvailable } = useStakingContractInfo(
+  const { hasEnoughServiceSlots, isRewardsAvailable } = useStakingContractDetails(
     activeStakingProgramId ?? defaultStakingProgramId,
   );
 

@@ -10,7 +10,7 @@ import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import {
   useActiveStakingContractInfo,
   useStakingContractContext,
-} from '@/hooks/useStakingContractInfo';
+} from '@/hooks/useStakingContractDetails';
 import { getMinimumStakedAmountRequired } from '@/utils/service';
 
 import { CantMigrateReason } from './useMigrate';

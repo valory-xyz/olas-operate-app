@@ -14,8 +14,8 @@ import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import {
   useActiveStakingContractInfo,
   useStakingContractContext,
-  useStakingContractInfo,
-} from '@/hooks/useStakingContractInfo';
+  useStakingContractDetails,
+} from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { useStore } from '@/hooks/useStore';
 import { useWallet } from '@/hooks/useWallet';
@@ -63,7 +63,7 @@ export const AgentNotRunningButton = () => {
   const { isEligibleForStaking, isAgentEvicted, isServiceStaked } =
     useActiveStakingContractInfo();
 
-  const { hasEnoughServiceSlots } = useStakingContractInfo(
+  const { hasEnoughServiceSlots } = useStakingContractDetails(
     activeStakingProgramId ?? defaultStakingProgramId,
   );
 

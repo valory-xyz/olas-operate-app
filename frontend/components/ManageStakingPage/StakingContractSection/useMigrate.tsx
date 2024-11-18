@@ -10,8 +10,8 @@ import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import {
   useActiveStakingContractInfo,
   useStakingContractContext,
-  useStakingContractInfo,
-} from '@/hooks/useStakingContractInfo';
+  useStakingContractDetails,
+} from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 export enum CantMigrateReason {
@@ -60,7 +60,7 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
     useActiveStakingContractInfo();
 
   const { stakingContractInfo, hasEnoughServiceSlots } =
-    useStakingContractInfo(stakingProgramId);
+    useStakingContractDetails(stakingProgramId);
 
   const { isFetched: isServicesLoaded } = useServices();
 

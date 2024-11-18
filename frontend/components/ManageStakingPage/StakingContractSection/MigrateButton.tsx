@@ -13,8 +13,8 @@ import { useServices } from '@/hooks/useServices';
 import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import {
   useActiveStakingContractInfo,
-  useStakingContractInfo,
-} from '@/hooks/useStakingContractInfo';
+  useStakingContractDetails,
+} from '@/hooks/useStakingContractDetails';
 import { ServicesService } from '@/service/Services';
 
 import { CountdownUntilMigration } from './CountdownUntilMigration';
@@ -46,7 +46,7 @@ export const MigrateButton = ({
   const { activeStakingContractDetails, isActiveStakingContractDetailsLoaded } =
     useActiveStakingContractInfo();
   const { stakingContractInfo: defaultStakingContractInfo } =
-    useStakingContractInfo(defaultStakingProgramId);
+    useStakingContractDetails(defaultStakingProgramId);
 
   const currentStakingContractInfo = useMemo(() => {
     if (!isActiveStakingContractDetailsLoaded) return;
