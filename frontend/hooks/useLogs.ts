@@ -1,6 +1,7 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { DeploymentStatus } from '@/client';
+import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 
 import { useBalance } from './useBalance';
 import { useMasterSafe } from './useMasterSafe';
@@ -47,18 +48,22 @@ const useBalancesLogs = () => {
 };
 
 const useServicesLogs = () => {
-  const { serviceStatus, services, hasInitialLoaded } = useServices();
+  const { services, isLoaded } = useServices();
+  const { getQueryData } = useQueryClient();
 
   return {
-    isLoaded: hasInitialLoaded,
+    isLoaded: isLoaded,
     data: {
-      serviceStatus: serviceStatus
-        ? DeploymentStatus[serviceStatus]
-        : 'undefined',
       services:
         services?.map((item) => ({
           ...item,
           keys: item.keys.map((key) => key.address),
+          deploymentStatus: getQueryData<string>([
+            REACT_QUERY_KEYS.SERVICE_DEPLOYMENT_STATUS_KEY(
+              item.service_config_id,
+            ),
+            item.service_config_id,
+          ]),
         })) ?? 'undefined',
     },
   };

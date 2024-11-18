@@ -1,6 +1,6 @@
 import { PropsWithChildren, useCallback, useEffect, useRef } from 'react';
 
-import { DeploymentStatus } from '@/client';
+import { MiddlewareDeploymentStatus } from '@/client';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useReward } from '@/hooks/useReward';
 import { useServices } from '@/hooks/useServices';
@@ -22,7 +22,7 @@ export const SystemNotificationTriggers = ({ children }: PropsWithChildren) => {
     if (!electronApi.showNotification) return;
 
     // ignore if agent is not running
-    if (serviceStatus !== DeploymentStatus.DEPLOYED) return;
+    if (serviceStatus !== MiddlewareDeploymentStatus.DEPLOYED) return;
     // ignore if eligibility is not yet defined
     if (isEligibleForRewards === undefined) return;
     // ignore if agent was previously eligible and is still eligible

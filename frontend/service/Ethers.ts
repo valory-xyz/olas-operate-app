@@ -1,6 +1,8 @@
-import { ContractInterface, ethers, providers, utils } from 'ethers';
+import { providers, utils } from 'ethers';
+import { Contract as MulticallContract } from 'ethers-multicall';
 
-import { gnosisProvider } from '@/constants/providers';
+import { PROVIDERS } from '@/constants/providers';
+import { ChainId } from '@/enums/Chain';
 import { Address } from '@/types/Address';
 import { TransactionInfo } from '@/types/TransactionInfo';
 
@@ -12,14 +14,12 @@ import { TransactionInfo } from '@/types/TransactionInfo';
  */
 const getEthBalance = async (
   address: Address,
-  rpc: string,
+  chainId: ChainId,
 ): Promise<number> => {
   try {
-    const provider = new providers.StaticJsonRpcProvider(rpc, {
-      name: 'Gnosis',
-      chainId: 100, // we currently only support Gnosis Trader agent
-    });
-    return provider.getBalance(address).then((balance) => {
+    const provider = PROVIDERS[chainId].multicallProvider;
+
+    return provider.getEthBalance(address).then((balance: bigint) => {
       const formattedBalance = utils.formatEther(balance);
       return Number(formattedBalance);
     });
@@ -37,30 +37,30 @@ const getEthBalance = async (
  */
 const getErc20Balance = async (
   address: Address,
-  rpc: string,
-  contractAddress?: Address,
+  contractAddress: Address,
+  chainId: ChainId,
 ): Promise<number> => {
   try {
-    if (!contractAddress)
+    if (!contractAddress) {
       throw new Error('Contract address is required for ERC20 balance');
-    const provider = new providers.StaticJsonRpcProvider(rpc, {
-      name: 'Gnosis',
-      chainId: 100, // we currently only support Gnosis Trader agent
-    });
-    const contract = new ethers.Contract(
-      contractAddress,
-      [
-        'function balanceOf(address) view returns (uint256)',
-        'function decimals() view returns (uint8)',
-      ],
-      provider,
-    );
-    const [balance, decimals] = await Promise.all([
+    }
+
+    const provider = PROVIDERS[chainId].multicallProvider;
+
+    const contract = new MulticallContract(contractAddress, [
+      'function balanceOf(address) view returns (uint256)',
+      'function decimals() view returns (uint8)',
+    ]);
+
+    const [balance, decimals] = await provider.all([
       contract.balanceOf(address),
       contract.decimals(),
     ]);
-    if (!balance || !decimals)
-      throw new Error('Failed to resolve balance or decimals');
+
+    if (!balance || !decimals) {
+      throw new Error('Failed to resolve erc20 balance');
+    }
+
     return Number(utils.formatUnits(balance, decimals));
   } catch (e) {
     return Promise.reject(e);
@@ -72,26 +72,23 @@ const getErc20Balance = async (
  * @param rpc string
  * @returns Promise<boolean>
  */
-const checkRpc = async (rpc: string): Promise<boolean> => {
+const checkRpc = async (chainId: ChainId): Promise<boolean> => {
+  const provider = PROVIDERS[chainId].provider;
   try {
-    if (!rpc) throw new Error('RPC is required');
-
-    const provider = new providers.StaticJsonRpcProvider(rpc, {
-      name: 'Gnosis',
-      chainId: 100, // we currently only support Gnosis Trader agent
-    });
+    if (!provider) throw new Error('Provider is required');
 
     const networkId = (await provider.getNetwork()).chainId;
     if (!networkId) throw new Error('Failed to get network ID');
 
-    return Promise.resolve(true);
+    return chainId === networkId;
   } catch (e) {
-    return Promise.resolve(false);
+    return false;
   }
 };
 
 // tenderly limits to 1000
-const BACK_TRACK_BLOCKS = process.env.NODE_ENV === 'development' ? 1000 : 9000;
+const BLOCK_LOOKBACK_WINDOW =
+  process.env.NODE_ENV === 'development' ? 1000 : 9000;
 const MAX_ROUNDS = 5;
 
 const getLogsList = async (
@@ -99,7 +96,10 @@ const getLogsList = async (
   fromBlock: number,
   toBlock: number,
   roundsLeft: number,
+  chainId: ChainId,
 ): Promise<providers.Log[]> => {
+  const provider = PROVIDERS[chainId].provider;
+
   // Limit the number of recursive calls to prevent too many requests
   if (roundsLeft === 0) return [];
 
@@ -108,31 +108,37 @@ const getLogsList = async (
     fromBlock,
     toBlock,
   };
-  const list = await gnosisProvider.getLogs(filter);
+
+  const list = await provider.getLogs(filter);
 
   if (list.length > 0) return list;
 
   return getLogsList(
     contractAddress,
-    fromBlock - BACK_TRACK_BLOCKS,
+    fromBlock - BLOCK_LOOKBACK_WINDOW,
     fromBlock,
     roundsLeft - 1,
+    chainId,
   );
 };
 
 /**
- * Get the latest transaction details for the given contract address
+ * Get the latest transaction details for the given address
  */
 export const getLatestTransaction = async (
-  contractAddress: Address,
+  address: Address,
+  chainId: ChainId,
 ): Promise<TransactionInfo | null> => {
-  const latestBlock = await gnosisProvider.getBlockNumber();
+  const provider = PROVIDERS[chainId].provider;
+
+  const latestBlock = await provider.getBlockNumber();
 
   const logs = await getLogsList(
-    contractAddress,
-    latestBlock - BACK_TRACK_BLOCKS,
+    address,
+    latestBlock - BLOCK_LOOKBACK_WINDOW,
     latestBlock,
     MAX_ROUNDS,
+    chainId,
   );
 
   // No transactions found
@@ -141,28 +147,16 @@ export const getLatestTransaction = async (
   // Get the last log entry and fetch the transaction details
   const lastLog = logs[logs.length - 1];
   const txHash = lastLog.transactionHash;
-  const receipt = await gnosisProvider.getTransactionReceipt(txHash);
-  const block = await gnosisProvider.getBlock(receipt.blockNumber);
+  const receipt = await provider.getTransactionReceipt(txHash);
+  const block = await provider.getBlock(receipt.blockNumber);
   const timestamp = block.timestamp;
 
   return { hash: txHash, timestamp };
-};
-
-const readContract = ({
-  address,
-  abi,
-}: {
-  address: string;
-  abi: ContractInterface;
-}) => {
-  const contract = new ethers.Contract(address, abi, gnosisProvider);
-  return contract;
 };
 
 export const EthersService = {
   getEthBalance,
   getErc20Balance,
   checkRpc,
-  readContract,
   getLatestTransaction,
 };

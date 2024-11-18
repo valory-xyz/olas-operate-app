@@ -1,4 +1,4 @@
-import { Chain } from '@/client';
+import { MiddlewareChain, Wallet } from '@/client';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL } from '@/constants/urls';
 
@@ -9,39 +9,39 @@ const getWallets = async () =>
   fetch(`${BACKEND_URL}/wallet`).then((res) => {
     if (res.ok) return res.json();
     throw new Error('Failed to get wallets');
-  });
+  }) as Promise<Wallet[]>;
 
-const createEoa = async (chain: Chain) =>
+const createEoa = async (chain: MiddlewareChain) =>
   fetch(`${BACKEND_URL}/wallet`, {
     method: 'POST',
     headers: {
       ...CONTENT_TYPE_JSON_UTF8,
     },
-    body: JSON.stringify({ chain_type: chain }),
+    body: JSON.stringify({ chain: chain }),
   }).then((res) => {
     if (res.ok) return res.json();
     throw new Error('Failed to create EOA');
   });
 
-const createSafe = async (chain: Chain, owner?: string) =>
+const createSafe = async (chain: MiddlewareChain, owner?: string) =>
   fetch(`${BACKEND_URL}/wallet/safe`, {
     method: 'POST',
     headers: {
       ...CONTENT_TYPE_JSON_UTF8,
     },
-    body: JSON.stringify({ chain_type: chain, owner: owner }),
+    body: JSON.stringify({ chain: chain, owner: owner }),
   }).then((res) => {
     if (res.ok) return res.json();
     throw new Error('Failed to create safe');
   });
 
-const addBackupOwner = async (chain: Chain, owner: string) =>
+const addBackupOwner = async (chain: MiddlewareChain, owner: string) =>
   fetch(`${BACKEND_URL}/wallet/safe`, {
     method: 'PUT',
     headers: {
       ...CONTENT_TYPE_JSON_UTF8,
     },
-    body: JSON.stringify({ chain_type: chain, owner: owner }),
+    body: JSON.stringify({ chain: chain, owner: owner }),
   }).then((res) => {
     if (res.ok) return res.json();
     throw new Error('Failed to add backup owner');

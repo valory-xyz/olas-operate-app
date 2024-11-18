@@ -32,7 +32,7 @@ export const Setup = () => {
       case SetupScreen.SetupEoaFunding:
         return <SetupEoaFunding />;
       case SetupScreen.SetupEoaFundingIncomplete:
-        return <SetupEoaFunding isIncomplete />;
+        return <SetupEoaFunding />;
       case SetupScreen.SetupCreateSafe:
         return <SetupCreateSafe />;
       // Restore account

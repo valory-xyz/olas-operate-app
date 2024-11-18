@@ -62,7 +62,9 @@ export const TopBar = () => {
         <DisabledLight />
       </TrafficLights>
 
-      <Text>{`Pearl (alpha) ${envName ? `(${envName})` : ''}`.trim()}</Text>
+      <Text>
+        {`Pearl (Optimus) (alpha) ${envName ? `(${envName})` : ''}`.trim()}
+      </Text>
     </TopBarContainer>
   );
 };

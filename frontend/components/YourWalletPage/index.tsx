@@ -6,7 +6,7 @@ import { AddressLink } from '@/components/AddressLink';
 import { CardTitle } from '@/components/Card/CardTitle';
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { CardFlex } from '@/components/styled/CardFlex';
-import { Pages } from '@/enums/PageState';
+import { Pages } from '@/enums/Pages';
 import { useBalance } from '@/hooks/useBalance';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';

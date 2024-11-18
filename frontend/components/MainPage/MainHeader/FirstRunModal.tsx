@@ -4,7 +4,6 @@ import { FC } from 'react';
 
 import { MODAL_WIDTH } from '@/constants/width';
 import { useServiceTemplates } from '@/hooks/useServiceTemplates';
-import { getMinimumStakedAmountRequired } from '@/utils/service';
 
 type FirstRunModalProps = { open: boolean; onClose: () => void };
 

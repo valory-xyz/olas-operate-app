@@ -8,7 +8,7 @@ import { RewardsHistory } from '@/components/RewardsHistory/RewardsHistory';
 import { Settings } from '@/components/SettingsPage';
 import { Setup } from '@/components/SetupPage';
 import { YourWalletPage } from '@/components/YourWalletPage';
-import { Pages } from '@/enums/PageState';
+import { Pages } from '@/enums/Pages';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 

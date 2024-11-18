@@ -1,6 +1,6 @@
 import { Button, Flex, Typography } from 'antd';
 
-import { Pages } from '@/enums/PageState';
+import { Pages } from '@/enums/Pages';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { usePageState } from '@/hooks/usePageState';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -14,9 +14,10 @@ export const NewStakingProgramAlert = () => {
   const { activeStakingProgramId, isActiveStakingProgramLoaded } =
     useStakingProgram();
 
+  // TODO: remove single staking program check
   if (
     !isActiveStakingProgramLoaded ||
-    activeStakingProgramId !== StakingProgramId.Alpha
+    activeStakingProgramId !== StakingProgramId.OptimusAlpha
   )
     return null;
 

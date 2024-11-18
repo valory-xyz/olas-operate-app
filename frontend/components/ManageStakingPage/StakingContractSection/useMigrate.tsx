@@ -1,7 +1,7 @@
 import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
-import { DeploymentStatus } from '@/client';
+import { MiddlewareDeploymentStatus } from '@/client';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalance } from '@/hooks/useBalance';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
@@ -13,7 +13,6 @@ import {
   useStakingContractInfo,
 } from '@/hooks/useStakingContractInfo';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
-import { getMinimumStakedAmountRequired } from '@/utils/service';
 
 export enum CantMigrateReason {
   ContractAlreadySelected = 'This staking program is already selected',
@@ -61,12 +60,12 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
   const { stakingContractInfo, hasEnoughServiceSlots } =
     useStakingContractInfo(stakingProgramId);
 
-  const { hasInitialLoaded: isServicesLoaded } = useServices();
+  const { isLoaded: isServicesLoaded } = useServices();
 
   const { hasEnoughEthForInitialFunding } = useNeedsFunds();
 
   const minimumOlasRequiredToMigrate = useMemo(
-    () => getMinimumStakedAmountRequired(serviceTemplate, stakingProgramId),
+    () => getMinimumStakedAmountRequired(serviceTemplate, stakingProgramId), // TODO: refactor, can no longer use service template, must use config for funding requirements
     [serviceTemplate, stakingProgramId],
   );
 
@@ -220,9 +219,9 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
     // Services must be not be running or in a transitional state
     if (
       [
-        DeploymentStatus.DEPLOYED,
-        DeploymentStatus.DEPLOYING,
-        DeploymentStatus.STOPPING,
+        MiddlewareDeploymentStatus.DEPLOYED,
+        MiddlewareDeploymentStatus.DEPLOYING,
+        MiddlewareDeploymentStatus.STOPPING,
       ].some((status) => status === serviceStatus)
     ) {
       return {

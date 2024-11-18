@@ -7,7 +7,7 @@
     "@tanstack/react-query": "^5.29.0",
     "adm-zip": "^0.5.12",
     "antd": "^5.14.0",
-    "axios": "^1.7.2",
+    "axios": "^1.7.7",
     "child_process": "^1.0.2",
     "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",
@@ -45,7 +45,7 @@
   },
   "main": "electron/main.js",
   "name": "olas-operate-app",
-  "productName": "Pearl",
+  "productName": "Pearl (Optimus)",
   "description": "An all-in-one application designed to streamline your entry into the world of autonomous agents and earning OLAS through staking.",
   "scripts": {
     "build:frontend": "cd frontend && yarn build && rm -rf ../electron/.next && cp -r .next ../electron/.next && rm -rf ../electron/public && cp -r public ../electron/public",

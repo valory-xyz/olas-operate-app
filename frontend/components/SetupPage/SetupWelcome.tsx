@@ -11,8 +11,8 @@ import {
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { AccountIsSetup } from '@/client';
-import { Pages } from '@/enums/PageState';
+import { MiddlewareAccountIsSetup } from '@/client';
+import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -27,43 +27,43 @@ const { Title } = Typography;
 
 export const SetupWelcome = () => {
   const electronApi = useElectronApi();
-  const [isSetup, setIsSetup] = useState<AccountIsSetup | null>(null);
+  const [isSetup, setIsSetup] = useState<MiddlewareAccountIsSetup | null>(null);
 
   useEffect(() => {
     if (isSetup !== null) return;
-    setIsSetup(AccountIsSetup.Loading);
+    setIsSetup(MiddlewareAccountIsSetup.Loading);
 
     AccountService.getAccount()
       .then((res) => {
         switch (res.is_setup) {
           case true:
-            setIsSetup(AccountIsSetup.True);
+            setIsSetup(MiddlewareAccountIsSetup.True);
             break;
           case false: {
             // Reset persistent state
             // if creating new account
             electronApi.store?.clear?.();
-            setIsSetup(AccountIsSetup.False);
+            setIsSetup(MiddlewareAccountIsSetup.False);
             break;
           }
           default:
-            setIsSetup(AccountIsSetup.Error);
+            setIsSetup(MiddlewareAccountIsSetup.Error);
             break;
         }
       })
       .catch((e) => {
         console.error(e);
-        setIsSetup(AccountIsSetup.Error);
+        setIsSetup(MiddlewareAccountIsSetup.Error);
       });
   }, [electronApi.store, isSetup]);
 
   const welcomeScreen = useMemo(() => {
     switch (isSetup) {
-      case AccountIsSetup.True:
+      case MiddlewareAccountIsSetup.True:
         return <SetupWelcomeLogin />;
-      case AccountIsSetup.False:
+      case MiddlewareAccountIsSetup.False:
         return <SetupWelcomeCreate />;
-      case AccountIsSetup.Loading:
+      case MiddlewareAccountIsSetup.Loading:
         return (
           <Flex
             justify="center"
@@ -73,7 +73,7 @@ export const SetupWelcome = () => {
             <Spin />
           </Flex>
         );
-      case AccountIsSetup.Error:
+      case MiddlewareAccountIsSetup.Error:
         return (
           <Flex
             justify="center"

@@ -67,7 +67,7 @@ class PearlTray extends Electron.Tray {
     this.activeWindowCallback = activeWindowCallback;
 
     this.setContextMenu(new PearlTrayContextMenu(activeWindowCallback));
-    this.setToolTip('Pearl');
+    this.setToolTip('Pearl (Optimus)');
 
     this.#bindClickEvents();
     this.#bindIpcListener();

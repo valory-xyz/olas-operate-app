@@ -12,10 +12,12 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
+import { MiddlewareChain } from '@/client';
 import { COLOR } from '@/constants/colors';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { EXPLORER_URL } from '@/constants/urls';
 import { MODAL_WIDTH } from '@/constants/width';
-import { Token } from '@/enums/Token';
+import { TokenSymbol } from '@/enums/Token';
 import { useAddress } from '@/hooks/useAddress';
 import { useBalance } from '@/hooks/useBalance';
 import { useWallet } from '@/hooks/useWallet';
@@ -53,7 +55,7 @@ const DebugItem = ({
 }: {
   item: {
     title: string;
-    balance: Record<Token.ETH | Token.OLAS, string>;
+    balance: Record<TokenSymbol.ETH | TokenSymbol.OLAS, string>;
     address: `0x${string}`;
     truncatedAddress: string;
     link?: { title: string; href: string };
@@ -79,7 +81,8 @@ const DebugItem = ({
               Balance
             </Text>
             <Text>{item.balance.OLAS} OLAS</Text>
-            <Text>{item.balance.ETH} XDAI</Text>
+            <Text>{item.balance.ETH} ETH</Text>
+            {/* <Text>{item.balance.USDC} USDC</Text> */}
           </Flex>
         </Col>
 
@@ -91,7 +94,7 @@ const DebugItem = ({
             <Flex gap={12}>
               <a
                 target="_blank"
-                href={`https://gnosisscan.io/address/${item.address}`}
+                href={`${EXPLORER_URL[MiddlewareChain.OPTIMISM]}/address/${item.address}`}
               >
                 {item.truncatedAddress}
               </a>

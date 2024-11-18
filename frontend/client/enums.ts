@@ -1,23 +1,26 @@
-export enum Action {
+export enum MiddlewareAction {
   STATUS = 0,
   BUILD = 1,
   DEPLOY = 2,
   STOP = 3,
 }
 
-export enum Chain {
-  ETHEREUM = 0,
-  GOERLI = 1,
-  GNOSIS = 2,
-  SOLANA = 3,
+export enum MiddlewareChain {
+  ETHEREUM = "ethereum",
+  GOERLI = "goerli",
+  GNOSIS = "gnosis",
+  SOLANA = "solana",
+  OPTIMISM = "optimism",
+  BASE = "base",
+  MODE = "mode",
 }
 
-export enum Ledger {
+export enum MiddlewareLedger {
   ETHEREUM = 0,
   SOLANA = 1,
 }
 
-export enum DeploymentStatus {
+export enum MiddlewareDeploymentStatus {
   CREATED = 0,
   BUILT = 1,
   DEPLOYING = 2,
@@ -27,9 +30,15 @@ export enum DeploymentStatus {
   DELETED = 6,
 }
 
-export enum AccountIsSetup {
+export enum MiddlewareAccountIsSetup {
   True,
   False,
   Loading,
   Error,
+}
+
+export enum EnvProvisionType {
+  FIXED = "fixed",
+  USER = "user",
+  COMPUTED = "computed"
 }

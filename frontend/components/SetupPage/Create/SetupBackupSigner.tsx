@@ -18,7 +18,8 @@ export const SetupBackupSigner = () => {
 
   const handleFinish = (values: { 'backup-signer': string }) => {
     const checksummedAddress = getAddress(
-      values['backup-signer'].toLowerCase(), // important to lowercase the address before checksumming, invalid checksums will cause ethers to throw
+      // important to lowercase the address before checksumming, invalid checksums will cause ethers to throw
+      values['backup-signer'].toLowerCase(),
     ) as Address | null; // returns null if invalid, ethers type is incorrect...
 
     // If the address is invalid, show an error message
@@ -62,20 +63,22 @@ export const SetupBackupSigner = () => {
           <Button type="primary" size="large" htmlType="submit">
             Add backup wallet and continue
           </Button>
-          {/* Commented to protect users from skipping backup wallet setup during Alpha testing          
-          <Button
-            type="link"
-            size="large"
-            onClick={() => goto(SetupScreen.SetupEoaFunding)}
-          >
-            Skip for now
-          </Button>
-          <Typography.Text type="secondary" className="text-sm">
-            Note that in the current version of the app, you will not be able to
-            set up a backup wallet afterward. This functionality is coming soon.
-          </Typography.Text> 
+          {/* 
+            Commented to protect users from skipping backup wallet setup during Alpha testing          
+            <Button
+              type="link"
+              size="large"
+              onClick={() => goto(SetupScreen.SetupEoaFunding)}
+            >
+              Skip for now
+            </Button> 
           */}
         </FormFlex>
+
+        <Typography.Text type="secondary" className="text-sm">
+          Note that in the current version of the app, you will not be able to
+          set up a backup wallet afterward. This functionality is coming soon.
+        </Typography.Text>
       </Flex>
     </CardFlex>
   );

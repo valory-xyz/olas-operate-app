@@ -1,6 +1,13 @@
-import { Deployment, Service, ServiceHash, ServiceTemplate } from '@/client';
+import {
+  Deployment,
+  MiddlewareServiceResponse,
+  ServiceHash,
+  ServiceTemplate,
+} from '@/client';
+import { CHAIN_CONFIG } from '@/config/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
-import { BACKEND_URL } from '@/constants/urls';
+import { BACKEND_URL_V2 } from '@/constants/urls';
+import { ChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
 
 /**
@@ -8,29 +15,27 @@ import { StakingProgramId } from '@/enums/StakingProgram';
  * @param serviceHash
  * @returns
  */
-const getService = async (serviceHash: ServiceHash): Promise<Service> =>
-  fetch(`${BACKEND_URL}/services/${serviceHash}`, {
+const getService = async (
+  serviceUuid: ServiceHash,
+): Promise<MiddlewareServiceResponse> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceUuid}`, {
     method: 'GET',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
     if (response.ok) {
       return response.json();
     }
-    throw new Error(`Failed to fetch service ${serviceHash}`);
+    throw new Error(`Failed to fetch service ${serviceUuid}`);
   });
 
 /**
  * Gets an array of services from the backend
  * @returns An array of services
  */
-const getServices = async (): Promise<Service[]> =>
-  fetch(`${BACKEND_URL}/services`, {
+const getServices = async (): Promise<MiddlewareServiceResponse[]> =>
+  fetch(`${BACKEND_URL_V2}/services`, {
     method: 'GET',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
     if (response.ok) {
       return response.json();
@@ -48,83 +53,100 @@ const createService = async ({
   serviceTemplate,
   stakingProgramId,
   useMechMarketplace = false,
+  chainId,
 }: {
   deploy: boolean;
   serviceTemplate: ServiceTemplate;
   stakingProgramId: StakingProgramId;
   useMechMarketplace?: boolean;
-}): Promise<Service> =>
-  new Promise((resolve, reject) =>
-    fetch(`${BACKEND_URL}/services`, {
-      method: 'POST',
-      body: JSON.stringify({
-        ...serviceTemplate,
-        deploy,
-        configurations: {
-          100: {
-            ...serviceTemplate.configurations[100],
-            staking_program_id: stakingProgramId,
-            rpc: `${process.env.GNOSIS_RPC}`,
-            use_mech_marketplace: useMechMarketplace,
-          },
-        },
-      }),
-      headers: {
-        ...CONTENT_TYPE_JSON_UTF8,
-      },
-    }).then((response) => {
-      if (response.ok) {
-        resolve(response.json());
-      }
-      reject('Failed to create service');
-    }),
-  );
-
-// const deployOnChain = async (serviceHash: ServiceHash): Promise<Deployment> =>
-//   fetch(`${BACKEND_URL}/services/${serviceHash}/onchain/deploy`, {
-//     method: 'POST',
-//     headers: {
-//       ...CONTENT_TYPE_JSON_UTF8,
-//     },
-//   }).then((response) => {
-//     if (response.ok) {
-//       return response.json();
-//     }
-//     throw new Error('Failed to deploy service on chain');
-//   });
-
-// const buildDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
-//   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/build`, {
-//     method: 'POST',
-//     headers: {
-//       ...CONTENT_TYPE_JSON_UTF8,
-//     },
-//   }).then((response) => {
-//     if (response.ok) {
-//       return response.json();
-//     }
-//     throw new Error('Failed to build deployment');
-//   });
-
-// const startDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
-//   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/start`, {
-//     method: 'POST',
-//     headers: {
-//       ...CONTENT_TYPE_JSON_UTF8,
-//     },
-//   }).then((response) => {
-//     if (response.ok) {
-//       return response.json();
-//     }
-//     throw new Error('Failed to start deployment');
-//   });
-
-const stopDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
-  fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/stop`, {
+  chainId: ChainId;
+}): Promise<MiddlewareServiceResponse> =>
+  fetch(`${BACKEND_URL_V2}/service`, {
     method: 'POST',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
+    body: JSON.stringify({
+      ...serviceTemplate,
+      deploy,
+      configurations: {
+        [CHAIN_CONFIG[chainId].middlewareChain]: {
+          ...serviceTemplate.configurations[CHAIN_CONFIG[chainId].middlewareChain],
+          staking_program_id: stakingProgramId,
+          rpc: CHAIN_CONFIG[chainId].rpc,
+          use_mech_marketplace: useMechMarketplace,
+        },
+      },
+    }),
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+    throw new Error('Failed to create service');
+  });
+
+/**
+ * Updates a service
+ * @param serviceTemplate
+ * @returns Promise<Service>
+ */
+const updateService = async ({
+  deploy,
+  serviceTemplate,
+  serviceUuid,
+  stakingProgramId,
+  useMechMarketplace = false,
+  chainId,
+}: {
+  deploy: boolean;
+  serviceTemplate: ServiceTemplate;
+  serviceUuid: ServiceHash;
+  stakingProgramId: StakingProgramId;
+  useMechMarketplace?: boolean;
+  chainId: ChainId;
+}): Promise<MiddlewareServiceResponse> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceUuid}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      ...serviceTemplate,
+      deploy,
+      configurations: {
+        [CHAIN_CONFIG[chainId].middlewareChain]: {
+          ...serviceTemplate.configurations[CHAIN_CONFIG[chainId].middlewareChain],
+          staking_program_id: stakingProgramId,
+          rpc: CHAIN_CONFIG[chainId].rpc,
+          use_mech_marketplace: useMechMarketplace,
+        },
+      },
+    }),
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+    throw new Error('Failed to update service');
+  });
+
+/**
+ * Starts a service
+ * @param serviceTemplate
+ * @returns Promise<Service>
+ */
+const startService = async (
+  serviceUuid: ServiceHash,
+): Promise<MiddlewareServiceResponse> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceUuid}`, {
+    method: 'POST',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+    throw new Error('Failed to start the service');
+  });
+
+const stopDeployment = async (serviceUuid: ServiceHash): Promise<Deployment> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceUuid}/deployment/stop`, {
+    method: 'POST',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
     if (response.ok) {
       return response.json();
@@ -132,27 +154,10 @@ const stopDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
     throw new Error('Failed to stop deployment');
   });
 
-// const deleteDeployment = async (
-//   serviceHash: ServiceHash,
-// ): Promise<Deployment> =>
-//   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/delete`, {
-//     method: 'POST',
-//     headers: {
-//       ...CONTENT_TYPE_JSON_UTF8,
-//     },
-//   }).then((response) => {
-//     if (response.ok) {
-//       return response.json();
-//     }
-//     throw new Error('Failed to delete deployment');
-//   });
-
-const getDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
-  fetch(`${BACKEND_URL}/services/${serviceHash}/deployment`, {
+const getDeployment = async (serviceUuid: ServiceHash): Promise<Deployment> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceUuid}/deployment`, {
     method: 'GET',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
     if (response.ok) {
       return response.json();
@@ -164,11 +169,8 @@ export const ServicesService = {
   getService,
   getServices,
   getDeployment,
+  startService,
   createService,
-  // deployOnChain,
-  // stopOnChain,
-  // buildDeployment,
-  // startDeployment,
+  updateService,
   stopDeployment,
-  // deleteDeployment,
 };

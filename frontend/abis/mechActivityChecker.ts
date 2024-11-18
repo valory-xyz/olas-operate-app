@@ -1,4 +1,6 @@
-export const MECH_ACTIVITY_CHECKER_ABI = [
+import { Abi } from '@/types/Abi';
+
+export const MECH_ACTIVITY_CHECKER_ABI: Abi = [
   {
     inputs: [
       { internalType: 'address', name: '_agentMech', type: 'address' },

@@ -1,9 +1,12 @@
 import { useContext, useMemo } from 'react';
 
-import { Chain } from '@/client';
-import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/constants/contractAddresses';
+import { MiddlewareChain } from '@/client';
+import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/config/olasContracts';
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
-import { StakingProgramContext } from '@/context/StakingProgramProvider';
+import {
+  DEFAULT_STAKING_PROGRAM_ID,
+  StakingProgramContext,
+} from '@/context/StakingProgramProvider';
 
 /**
  * Hook to get the active staking program and its metadata, and the default staking program.
@@ -32,26 +35,25 @@ export const useStakingProgram = () => {
   }, [activeStakingProgramId]);
 
   const defaultStakingProgramMeta =
-    STAKING_PROGRAM_META[defaultStakingProgramId];
+    STAKING_PROGRAM_META[DEFAULT_STAKING_PROGRAM_ID];
 
   const activeStakingProgramAddress = useMemo(() => {
     if (!activeStakingProgramId) return;
-    return SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS][
-      activeStakingProgramId
-    ];
+    return SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[
+      MiddlewareChain.OPTIMISM
+    ][activeStakingProgramId];
   }, [activeStakingProgramId]);
 
   const defaultStakingProgramAddress =
-    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[Chain.GNOSIS][
-      defaultStakingProgramId
-    ];
+    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[
+      MiddlewareChain.OPTIMISM
+    ][DEFAULT_STAKING_PROGRAM_ID];
 
   return {
     activeStakingProgramAddress,
     activeStakingProgramId,
     activeStakingProgramMeta,
     defaultStakingProgramAddress,
-    defaultStakingProgramId,
     defaultStakingProgramMeta,
     isActiveStakingProgramLoaded,
     updateActiveStakingProgramId,

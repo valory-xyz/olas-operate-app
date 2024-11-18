@@ -1,8 +1,30 @@
 import { ethers } from 'ethers';
-import { Provider } from 'ethers-multicall';
+import { Provider as MulticallProvider } from 'ethers-multicall';
 
-export const gnosisProvider = new ethers.providers.StaticJsonRpcProvider(
-  process.env.GNOSIS_RPC,
+import { CHAIN_CONFIG } from '../config/chains';
+
+type Providers = {
+  [chainConfigsKey in keyof typeof CHAIN_CONFIG]: {
+    provider: ethers.providers.JsonRpcProvider;
+    multicallProvider: MulticallProvider;
+  };
+};
+
+export const PROVIDERS = Object.entries(CHAIN_CONFIG).reduce(
+  (acc, [chainConfigKey, { rpc, name, chainId }]) => {
+    const provider = new ethers.providers.JsonRpcProvider(rpc, {
+      name,
+      chainId,
+    });
+    const multicallProvider = new MulticallProvider(provider, chainId);
+
+    return {
+      ...acc,
+      [chainConfigKey]: {
+        provider,
+        multicallProvider,
+      },
+    };
+  },
+  {} as Providers,
 );
-
-export const gnosisMulticallProvider = new Provider(gnosisProvider, 100);

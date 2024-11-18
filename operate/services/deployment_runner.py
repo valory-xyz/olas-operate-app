@@ -123,6 +123,11 @@ class BaseDeploymentRunner(AbstractDeploymentRunner, metaclass=ABCMeta):
             data_dir.mkdir(exist_ok=True)
             env["SKILL_TRADER_ABCI_MODELS_PARAMS_ARGS_STORE_PATH"] = str(data_dir)
 
+        if "SKILL_OPTIMUS_ABCI_MODELS_PARAMS_ARGS_STORE_PATH" in env:
+            data_dir = working_dir / "data"
+            data_dir.mkdir(exist_ok=True)
+            env["SKILL_OPTIMUS_ABCI_MODELS_PARAMS_ARGS_STORE_PATH"] = str(data_dir)
+
         # TODO: Dynamic port allocation, backport to service builder
         env["CONNECTION_ABCI_CONFIG_HOST"] = "localhost"
         env["CONNECTION_ABCI_CONFIG_PORT"] = "26658"

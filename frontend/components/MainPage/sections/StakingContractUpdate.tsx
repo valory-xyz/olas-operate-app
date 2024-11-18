@@ -34,8 +34,8 @@ export const StakingContractUpdate = () => {
 
   const stakingContractName = useMemo(() => {
     if (activeStakingProgramMeta) return activeStakingProgramMeta.name;
-    return STAKING_PROGRAM_META[defaultStakingProgramId].name;
-  }, [activeStakingProgramMeta, defaultStakingProgramId]);
+    return STAKING_PROGRAM_META[DEFAULT_STAKING_PROGRAM_ID].name;
+  }, [activeStakingProgramMeta]);
 
   const gotoManageStakingButton = useMemo(() => {
     if (!isActiveStakingProgramLoaded) return <Skeleton.Input />;

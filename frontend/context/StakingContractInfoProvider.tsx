@@ -11,14 +11,18 @@ import {
 } from 'react';
 import { useInterval } from 'usehooks-ts';
 
-import { CHAINS } from '@/constants/chains';
+import { CHAIN_CONFIG } from '@/config/chains';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { AutonolasService } from '@/service/Autonolas';
 import { StakingContractInfo } from '@/types/Autonolas';
 
 import { ServicesContext } from './ServicesProvider';
-import { StakingProgramContext } from './StakingProgramProvider';
+import {
+  DEFAULT_STAKING_PROGRAM_ID,
+  StakingProgramContext,
+} from './StakingProgramProvider';
+import { ChainId } from '@/enums/Chain';
 
 type StakingContractInfoContextProps = {
   activeStakingContractInfo?: Partial<StakingContractInfo>;
@@ -40,8 +44,8 @@ export const StakingContractInfoContext =
     isStakingContractInfoRecordLoaded: false,
     isActiveStakingContractInfoLoaded: false,
     stakingContractInfoRecord: undefined,
-    updateActiveStakingContractInfo: async () => {},
-    setIsPaused: () => {},
+    updateActiveStakingContractInfo: async () => { },
+    setIsPaused: () => { },
   });
 
 export const StakingContractInfoProvider = ({
@@ -67,7 +71,8 @@ export const StakingContractInfoProvider = ({
     useState<Record<StakingProgramId, Partial<StakingContractInfo>>>();
 
   const serviceId = useMemo(
-    () => services?.[0]?.chain_configs[CHAINS.GNOSIS.chainId].chain_data?.token,
+    () =>
+      services?.[0]?.chain_configs[CHAIN_CONFIG[ChainId.Optimism].middlewareChain].chain_data?.token,
     [services],
   );
 
@@ -86,7 +91,7 @@ export const StakingContractInfoProvider = ({
 
   /** Updates general staking contract information, not user or service specific */
   const updateStakingContractInfoRecord = async () => {
-    const stakingPrograms = Object.values(StakingProgramId);
+    const stakingPrograms = Object.values([DEFAULT_STAKING_PROGRAM_ID]);
 
     try {
       const stakingInfoPromises = stakingPrograms.map((programId) =>

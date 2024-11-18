@@ -13,6 +13,7 @@ const os = require('os');
 const next = require('next/dist/server/next');
 const http = require('http');
 const AdmZip = require('adm-zip');
+const { validateEnv } = require('./utils/env-validation');
 
 const { setupDarwin, setupUbuntu, setupWindows, Env } = require('./install');
 
@@ -24,6 +25,11 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
+
+// Validates environment variables required for Pearl
+// kills the app/process if required environment variables are unavailable
+// mostly RPC URLs and NODE_ENV
+validateEnv();
 
 // Attempt to acquire the single instance lock
 const singleInstanceLock = app.requestSingleInstanceLock();
@@ -175,7 +181,7 @@ const createSplashWindow = () => {
     height: APP_WIDTH,
     resizable: false,
     show: true,
-    title: 'Pearl',
+    title: 'Pearl (Optimus)',
     frame: false,
     webPreferences: {
       nodeIntegration: true,
@@ -196,7 +202,7 @@ const HEIGHT = 700;
 const createMainWindow = async () => {
   const width = isDev ? 840 : APP_WIDTH;
   mainWindow = new BrowserWindow({
-    title: 'Pearl',
+    title: 'Pearl (Optimus)',
     resizable: false,
     draggable: true,
     frame: false,
@@ -451,7 +457,7 @@ ipcMain.on('check', async function (event, _argument) {
     if (isDev) {
       event.sender.send(
         'response',
-        'Starting Pearl Daemon In Development Mode',
+        'Starting Pearl (Optimus) Daemon In Development Mode',
       );
 
       const daemonDevPortAvailable = await isPortAvailable(

@@ -7,7 +7,7 @@ import {
 } from 'react';
 import { useTimeout } from 'usehooks-ts';
 
-import { Pages } from '@/enums/PageState';
+import { Pages } from '@/enums/Pages';
 
 const LAST_TRANSACTION_SHOW_DELAY = 60 * 1000;
 

@@ -22,6 +22,10 @@ import { StoreProvider } from '@/context/StoreProvider';
 import { SystemNotificationTriggers } from '@/context/SystemNotificationTriggers';
 import { WalletProvider } from '@/context/WalletProvider';
 import { mainTheme } from '@/theme';
+import { setupMulticallAddresses } from '@/utils/setupMulticall';
+
+// Setup multicall addresses
+setupMulticallAddresses();
 
 const queryClient = new QueryClient();
 

@@ -1,128 +1,122 @@
 import { useContext, useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 
-import {
-  DeploymentStatus,
-  Service,
-  ServiceHash,
-  ServiceTemplate,
-} from '@/client';
-import { CHAINS } from '@/constants/chains';
+import { MiddlewareServiceResponse } from '@/client';
 import { ServicesContext } from '@/context/ServicesProvider';
-import MulticallService from '@/service/Multicall';
-import { ServicesService } from '@/service/Services';
-import { Address } from '@/types/Address';
-import { AddressBooleanRecord } from '@/types/Records';
+import { ChainId } from '@/enums/Chain';
 
-const checkServiceIsFunded = async (
-  service: Service,
-  serviceTemplate: ServiceTemplate,
-): Promise<boolean> => {
-  const {
-    chain_configs: {
-      [CHAINS.GNOSIS.chainId]: {
-        chain_data: { instances, multisig },
-      },
-    },
-  } = service;
+// const checkServiceIsFundedOnChain = async ({
+//   service,
+//   chainId,
+// }: {
+//   service: MiddlewareServiceResponse;
+//   chainId: ChainId;
+// }) => {
+//   if (!service.chain_configs[chainId].chain_data.instances) return false;
+//   if (!service.chain_configs[chainId].chain_data.multisig) return false;
 
-  if (!instances || !multisig) return false;
+//   const instances: Address[] =
+//     service.chain_configs[chainId].chain_data.instances;
 
-  const addresses = [...instances, multisig];
+//   const multisig: Address = service.chain_configs[chainId].chain_data.multisig;
 
-  const balances = await MulticallService.getEthBalances(addresses);
+//   const addresses = [...instances, multisig];
 
-  if (!balances) return false;
+//   const balances = await MulticallService.getEthBalances(addresses, chainId);
 
-  const fundRequirements: AddressBooleanRecord = addresses.reduce(
-    (acc: AddressBooleanRecord, address: Address) =>
-      Object.assign(acc, {
-        [address]: instances.includes(address)
-          ? balances[address] >
-            serviceTemplate.configurations[CHAINS.GNOSIS.chainId]
-              .fund_requirements.agent
-          : balances[address] >
-            serviceTemplate.configurations[CHAINS.GNOSIS.chainId]
-              .fund_requirements.safe,
-      }),
-    {},
-  );
+//   if (!balances) return false;
 
-  return Object.values(fundRequirements).every((f) => f);
-};
+//   const fundRequirements: AddressBooleanRecord = addresses.reduce(
+//     (acc: AddressBooleanRecord, address: Address) =>
+//       Object.assign(acc, {
+//         [address]: instances.includes(address)
+//           ? balances[address] > stakingProgram
+//           : balances[address] >
+//             serviceTemplate.configurations[chainId].fund_requirements.safe,
+//       }),
+//     {},
+//   );
+
+//   return Object.values(fundRequirements).every((f) => f);
+// };
+
+// const checkServiceIsFunded = async (
+//   service: MiddlewareServiceResponse,
+//   stakingProgramFundingRequirements:
+// ): Promise<boolean> => {
+//   // get all the chainIds from the service
+//   const chainIds: ChainId[] = Object.keys(service.chain_configs).map(
+//     (chainId) => +chainId,
+//   );
+
+//   // loop over the chainIds and check if the service is funded
+//   const instanceAddresses = chainIds.map(
+//     (chainId) => service.chain_configs[chainId].chain_data.instances,
+//   );
+
+//   if (!instances || !multisig) return false;
+
+//   const addresses = [...instances, multisig];
+
+//   const balances = await MulticallService.getEthBalances(addresses);
+
+//   if (!balances) return false;
+
+//   const fundRequirements: AddressBooleanRecord = addresses.reduce(
+//     (acc: AddressBooleanRecord, address: Address) =>
+//       Object.assign(acc, {
+//         [address]: instances.includes(address)
+//           ? balances[address] >
+//             serviceTemplate.configurations[CHAIN_CONFIG.OPTIMISM.chainId]
+//               .fund_requirements.agent
+//           : balances[address] >
+//             serviceTemplate.configurations[CHAIN_CONFIG.OPTIMISM.chainId]
+//               .fund_requirements.safe,
+//       }),
+//     {},
+//   );
+
+//   return Object.values(fundRequirements).every((f) => f);
+// };
 
 export const useServices = () => {
   const {
     services,
-    updateServicesState,
-    hasInitialLoaded,
-    setServices,
-    serviceStatus,
-    setServiceStatus,
-    updateServiceStatus,
-    setIsPaused,
+    isFetched: isLoaded,
+    paused,
+    setPaused: setPaused,
+    selectedService,
+    selectService,
+    refetch,
   } = useContext(ServicesContext);
 
-  const serviceId =
-    services?.[0]?.chain_configs[CHAINS.GNOSIS.chainId].chain_data?.token;
-
-  // STATE METHODS
-  const getServiceFromState = (
-    serviceHash: ServiceHash,
-  ): Service | undefined => {
-    if (!hasInitialLoaded) return;
+  const servicesByChain = useMemo(() => {
+    if (!isLoaded) return;
     if (!services) return;
-    return services.find((service) => service.hash === serviceHash);
-  };
-
-  const getServicesFromState = (): Service[] | undefined =>
-    hasInitialLoaded ? services : [];
-
-  const updateServiceState = (serviceHash: ServiceHash) => {
-    ServicesService.getService(serviceHash)
-      .then((service: Service) => {
-        setServices((prev) => {
-          if (!prev) return [service];
-
-          const index = prev.findIndex((s) => s.hash === serviceHash); // findIndex returns -1 if not found
-          if (index === -1) return [...prev, service];
-
-          const newServices = [...prev];
-          newServices[index] = service;
-          return newServices;
-        });
-      })
-      .catch(console.error);
-  };
-
-  const deleteServiceState = (serviceHash: ServiceHash) =>
-    setServices((prev) => prev?.filter((s) => s.hash !== serviceHash));
-  const service = services?.[0];
-
-  const isServiceNotRunning = useMemo(
-    () =>
-      !service ||
-      serviceStatus === DeploymentStatus.STOPPED ||
-      serviceStatus === DeploymentStatus.CREATED ||
-      serviceStatus === DeploymentStatus.BUILT ||
-      serviceStatus === DeploymentStatus.DELETED,
-    [service, serviceStatus],
-  );
+    return Object.keys(ChainId).reduce(
+      (
+        acc: Record<number, MiddlewareServiceResponse[]>,
+        chainIdKey: string,
+      ) => {
+        const chainIdNumber = +chainIdKey;
+        acc[chainIdNumber] = services.filter(
+          (service: MiddlewareServiceResponse) =>
+            service.chain_configs[chainIdNumber],
+        );
+        return acc;
+      },
+      {},
+    );
+  }, [isLoaded, services]);
 
   return {
-    service,
     services,
-    serviceId,
-    serviceStatus,
-    isServiceNotRunning,
-    setServiceStatus,
-    getServiceFromState,
-    getServicesFromState,
-    checkServiceIsFunded,
-    updateServicesState,
-    updateServiceState,
-    updateServiceStatus,
-    deleteServiceState,
-    hasInitialLoaded,
-    setIsServicePollingPaused: setIsPaused,
+    servicesByChain,
+    isLoaded,
+    setPaused,
+    paused,
+    selectedService,
+    selectService,
+    refetch,
   };
 };

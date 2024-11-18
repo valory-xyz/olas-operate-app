@@ -61,7 +61,11 @@ jobs:
           echo $trader_version
           make ./dist/aea_bin
         #instead of this one mwe use make; mkdir dist && curl -L -o dist/aea_bin "https://github.com/valory-xyz/trader/releases/download/${trader_version}/trader_bin_${{ env.OS_ARCH }}"
-
+        
+      # -- old optimus getter
+      # optimus_version=$(poetry run python -c "import yaml; config = yaml.safe_load(open('templates/optimus.yaml')); print(config['service_version'])")
+      #     echo $optimus_version
+      #     mkdir dist && curl -L -o dist/aea_bin "https://github.com/valory-xyz/optimus/releases/download/${$optimus_version}/optimus_bin_${{ env.OS_ARCH }}"
       - name: Build with PyInstaller
         run: |
           poetry run pyinstaller operate/services/utils/tendermint.py --onefile
@@ -106,7 +110,7 @@ jobs:
     
 
       # Download the appropriate architecture artifact
-      - name: Download Pearl binary for architecture
+      - name: Download Pearl (Optimus) binary for architecture
         uses: actions/download-artifact@v4
         with:
           name: pearl_${{ matrix.arch }}

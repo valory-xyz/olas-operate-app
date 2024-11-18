@@ -56,30 +56,32 @@ class HealthChecker:
         self.sleep_period = sleep_period or self.SLEEP_PERIOD_DEFAULT
         self.number_of_fails = number_of_fails or self.NUMBER_OF_FAILS_DEFAULT
 
-    def start_for_service(self, service: str) -> None:
+    def start_for_service(self, service_config_id: str) -> None:
         """Start for a specific service."""
-        self.logger.info(f"[HEALTH_CHECKER]: Starting healthcheck job for {service}")
-        if service in self._jobs:
-            self.stop_for_service(service=service)
+        self.logger.info(
+            f"[HEALTH_CHECKER]: Starting healthcheck job for {service_config_id}"
+        )
+        if service_config_id in self._jobs:
+            self.stop_for_service(service_config_id=service_config_id)
 
         loop = asyncio.get_running_loop()
-        self._jobs[service] = loop.create_task(
+        self._jobs[service_config_id] = loop.create_task(
             self.healthcheck_job(
-                service=service,
+                service_config_id=service_config_id,
             )
         )
 
-    def stop_for_service(self, service: str) -> None:
+    def stop_for_service(self, service_config_id: str) -> None:
         """Stop for a specific service."""
-        if service not in self._jobs:
+        if service_config_id not in self._jobs:
             return
         self.logger.info(
-            f"[HEALTH_CHECKER]: Cancelling existing healthcheck_jobs job for {service}"
+            f"[HEALTH_CHECKER]: Cancelling existing healthcheck_jobs job for {service_config_id}"
         )
-        status = self._jobs[service].cancel()
+        status = self._jobs[service_config_id].cancel()
         if not status:
             self.logger.info(
-                f"[HEALTH_CHECKER]: Healthcheck job cancellation for {service} failed"
+                f"[HEALTH_CHECKER]: Healthcheck job cancellation for {service_config_id} failed"
             )
 
     @classmethod
@@ -96,20 +98,20 @@ class HealthChecker:
 
     async def healthcheck_job(
         self,
-        service: str,
+        service_config_id: str,
     ) -> None:
         """Start a background health check job."""
 
         try:
             self.logger.info(
-                f"[HEALTH_CHECKER] Start healthcheck job for service: {service}"
+                f"[HEALTH_CHECKER] Start healthcheck job for service: {service_config_id}"
             )
 
             async def _wait_for_port(sleep_period: int = 15) -> None:
                 self.logger.info("[HEALTH_CHECKER]: wait port is up")
                 while True:
                     try:
-                        await self.check_service_health(service)
+                        await self.check_service_health(service_config_id)
                         self.logger.info("[HEALTH_CHECKER]: port is UP")
                         return
                     except aiohttp.ClientConnectionError:
@@ -136,37 +138,45 @@ class HealthChecker:
                 while True:
                     try:
                         # Check the service health
-                        healthy = await self.check_service_health(service)
+                        healthy = await self.check_service_health(service_config_id)
                     except aiohttp.ClientConnectionError as e:
                         print_exc()
                         self.logger.warning(
-                            f"[HEALTH_CHECKER] {service} port read failed. assume not healthy {e}"
+                            f"[HEALTH_CHECKER] {service_config_id} port read failed. assume not healthy {e}"
                         )
                         healthy = False
 
                     if not healthy:
                         fails += 1
                         self.logger.warning(
-                            f"[HEALTH_CHECKER] {service} not healthy for {fails} time in a row"
+                            f"[HEALTH_CHECKER] {service_config_id} not healthy for {fails} time in a row"
                         )
                     else:
-                        self.logger.info(f"[HEALTH_CHECKER] {service} is HEALTHY")
+                        self.logger.info(
+                            f"[HEALTH_CHECKER] {service_config_id} is HEALTHY"
+                        )
                         # reset fails if comes healty
                         fails = 0
 
                     if fails >= number_of_fails:
                         # too much fails, exit
                         self.logger.error(
-                            f"[HEALTH_CHECKER]  {service} failed {fails} times in a row. restart"
+                            f"[HEALTH_CHECKER]  {service_config_id} failed {fails} times in a row. restart"
                         )
                         return
 
                     await asyncio.sleep(sleep_period)
 
-            async def _restart(service_manager: ServiceManager, service: str) -> None:
+            async def _restart(
+                service_manager: ServiceManager, service_config_id: str
+            ) -> None:
                 def _do_restart() -> None:
-                    service_manager.stop_service_locally(hash=service)
-                    service_manager.deploy_service_locally(hash=service)
+                    service_manager.stop_service_locally(
+                        service_config_id=service_config_id
+                    )
+                    service_manager.deploy_service_locally(
+                        service_config_id=service_config_id
+                    )
 
                 loop = asyncio.get_event_loop()
                 with ThreadPoolExecutor() as executor:
@@ -178,11 +188,13 @@ class HealthChecker:
 
             # upper cycle
             while True:
-                self.logger.info(f"[HEALTH_CHECKER]  {service} wait for port ready")
+                self.logger.info(
+                    f"[HEALTH_CHECKER] {service_config_id} wait for port ready"
+                )
                 if await _check_port_ready(timeout=self.port_up_timeout):
                     # blocking till restart needed
                     self.logger.info(
-                        f"[HEALTH_CHECKER]  {service} port is ready, checking health every {self.sleep_period}"
+                        f"[HEALTH_CHECKER]  {service_config_id} port is ready, checking health every {self.sleep_period}"
                     )
                     await _check_health(
                         number_of_fails=self.number_of_fails,
@@ -196,7 +208,9 @@ class HealthChecker:
 
                 # perform restart
                 # TODO: blocking!!!!!!!
-                await _restart(self._service_manager, service)
+                await _restart(self._service_manager, service_config_id)
         except Exception:
-            self.logger.exception(f"problems running healthcheckr for {service}")
+            self.logger.exception(
+                f"Problems running healthcheck job for {service_config_id}"
+            )
             raise

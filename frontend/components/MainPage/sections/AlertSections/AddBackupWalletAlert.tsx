@@ -1,7 +1,7 @@
 import { Flex, Typography } from 'antd';
 import { isNil } from 'lodash';
 
-import { Pages } from '@/enums/PageState';
+import { Pages } from '@/enums/Pages';
 import { useMasterSafe } from '@/hooks/useMasterSafe';
 import { usePageState } from '@/hooks/usePageState';
 

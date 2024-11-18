@@ -1,7 +1,7 @@
 import { Button, Checkbox, Form, Input, message, Typography } from 'antd';
 import { useState } from 'react';
 
-import { Chain } from '@/client';
+import { MiddlewareChain } from '@/client';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { AccountService } from '@/service/Account';
@@ -26,7 +26,7 @@ export const SetupPassword = () => {
     setIsLoading(true);
     AccountService.createAccount(password)
       .then(() => AccountService.loginAccount(password))
-      .then(() => WalletService.createEoa(Chain.GNOSIS))
+      .then(() => WalletService.createEoa(MiddlewareChain.OPTIMISM))
       .then(({ mnemonic }: { mnemonic: string[] }) => {
         setMnemonic(mnemonic);
         goto(SetupScreen.SetupSeedPhrase);

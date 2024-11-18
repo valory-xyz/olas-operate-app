@@ -4,7 +4,9 @@ import { isNil } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
+import { MiddlewareChain } from '@/client';
 import { COLOR } from '@/constants/colors';
+import { EXPLORER_URL } from '@/constants/urls';
 import { useBalance } from '@/hooks/useBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useStore } from '@/hooks/useStore';
@@ -114,7 +116,10 @@ export const GasBalanceSection = () => {
                 Your agent uses this balance to fund trading activity on-chain.
                 <br />
                 <a
-                  href={'https://gnosisscan.io/address/' + masterSafeAddress}
+                  href={
+                    `${EXPLORER_URL[MiddlewareChain.OPTIMISM]}/address/` +
+                    masterSafeAddress
+                  }
                   target="_blank"
                 >
                   Track activity on blockchain explorer{' '}

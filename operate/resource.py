@@ -32,11 +32,11 @@ from pathlib import Path
 def serialize(obj: t.Any) -> t.Any:
     """Serialize object."""
     if is_dataclass(obj):
-        return asdict(obj)
+        return serialize(asdict(obj))
     if isinstance(obj, Path):
         return str(obj)
     if isinstance(obj, dict):
-        return {key: serialize(obj=value) for key, value in obj.items()}
+        return {serialize(key): serialize(obj=value) for key, value in obj.items()}
     if isinstance(obj, list):
         return [serialize(obj=value) for value in obj]
     if isinstance(obj, enum.Enum):
