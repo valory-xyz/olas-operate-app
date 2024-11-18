@@ -14,6 +14,7 @@ import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
+import { Nullable } from '@/types/Util';
 
 export const INITIAL_DEFAULT_STAKING_PROGRAM_ID = StakingProgramId.PearlBeta;
 
@@ -56,9 +57,14 @@ const useGetActiveStakingProgramId = () => {
   });
 
   const setActiveStakingProgramId = useCallback(
-    (stakingProgramId: StakingProgramId | null) => {
+    (stakingProgramId: Nullable<StakingProgramId>) => {
       queryClient.setQueryData(
-        [REACT_QUERY_KEYS.STAKING_PROGRAM_KEY, currentChainId, serviceId],
+        [
+          REACT_QUERY_KEYS.STAKING_PROGRAM_KEY,
+          currentChainId,
+          serviceId,
+          stakingProgramId,
+        ],
         stakingProgramId,
       );
     },
