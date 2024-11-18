@@ -33,16 +33,16 @@ export type StakingProgramMap = {
   [stakingProgramId: string]: StakingProgramConfig;
 };
 
-export type StakingProgramMapByChains = {
+export const STAKING_PROGRAMS: {
   [chainId: number | ChainId]: StakingProgramMap;
-};
-
-export const STAKING_PROGRAMS: StakingProgramMapByChains = {
+} = {
   [ChainId.Gnosis]: GNOSIS_STAKING_PROGRAMS,
   [ChainId.Optimism]: OPTIMISM_STAKING_PROGRAMS,
 };
 
-export const STAKING_PROGRAM_ADDRESS: Record<string, Address> = {
-  ...GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
-  ...OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
+export const STAKING_PROGRAM_ADDRESS: {
+  [chainId: number | ChainId]: Record<string, Address>;
+} = {
+  [ChainId.Gnosis]: GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
+  [ChainId.Optimism]: OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
 };

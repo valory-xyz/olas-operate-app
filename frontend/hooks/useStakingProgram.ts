@@ -1,55 +1,44 @@
 import { useContext, useMemo } from 'react';
 
-import { MiddlewareChain } from '@/client';
-import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/config/olasContracts';
-import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
-import {
-  DEFAULT_STAKING_PROGRAM_ID,
-  StakingProgramContext,
-} from '@/context/StakingProgramProvider';
+import { STAKING_PROGRAM_ADDRESS } from '@/config/stakingPrograms';
+import { GNOSIS_STAKING_PROGRAMS } from '@/config/stakingPrograms/gnosis';
+import { StakingProgramContext } from '@/context/StakingProgramProvider';
+
+import { useChainId } from './useChainId';
 
 /**
  * Hook to get the active staking program and its metadata, and the default staking program.
- * @returns {Object} The active staking program and its metadata.
  */
 export const useStakingProgram = () => {
-  const { activeStakingProgramId } = useContext(StakingProgramContext);
+  const chainId = useChainId();
+  const { activeStakingProgramId, isActiveStakingProgramLoaded } = useContext(
+    StakingProgramContext,
+  );
 
-  const isActiveStakingProgramLoaded = activeStakingProgramId !== undefined;
-
-  /**
-   * TODO: implement enums
-   * returns `StakingProgramMeta` if defined
-   * returns `undefined` if not loaded
-   * returns `null` if not actively staked
-   */
   const activeStakingProgramMeta = useMemo(() => {
-    if (activeStakingProgramId === undefined) return;
-    if (activeStakingProgramId === null) return null;
-    return STAKING_PROGRAM_META[activeStakingProgramId];
+    if (!activeStakingProgramId) return null;
+    return GNOSIS_STAKING_PROGRAMS[activeStakingProgramId];
   }, [activeStakingProgramId]);
 
-  const defaultStakingProgramMeta =
-    STAKING_PROGRAM_META[DEFAULT_STAKING_PROGRAM_ID];
+  // const defaultStakingProgramMeta =
+  //   STAKING_PROGRAM_META[DEFAULT_STAKING_PROGRAM_ID];
 
   const activeStakingProgramAddress = useMemo(() => {
-    if (!activeStakingProgramId) return;
-    return SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[
-      MiddlewareChain.OPTIMISM
-    ][activeStakingProgramId];
-  }, [activeStakingProgramId]);
+    if (!activeStakingProgramId) return null;
+    return STAKING_PROGRAM_ADDRESS[chainId][activeStakingProgramId];
+  }, [chainId, activeStakingProgramId]);
 
-  const defaultStakingProgramAddress =
-    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[
-      MiddlewareChain.OPTIMISM
-    ][DEFAULT_STAKING_PROGRAM_ID];
+  // const defaultStakingProgramAddress =
+  //   SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[
+  //     MiddlewareChain.OPTIMISM
+  //   ][DEFAULT_STAKING_PROGRAM_ID];
 
   return {
-    activeStakingProgramAddress,
     activeStakingProgramId,
+    activeStakingProgramAddress,
     activeStakingProgramMeta,
-    defaultStakingProgramAddress,
-    defaultStakingProgramMeta,
+    // defaultStakingProgramAddress,
+    // defaultStakingProgramMeta,
     isActiveStakingProgramLoaded,
   };
 };

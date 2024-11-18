@@ -5,12 +5,13 @@ import { groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 import { z } from 'zod';
 
-import { GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES } from '@/constants/contractAddresses';
+import { STAKING_PROGRAM_ADDRESS } from '@/config/stakingPrograms';
 import { GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL } from '@/constants/urls';
 import { Address } from '@/types/Address';
 import { getStakingProgramIdByAddress } from '@/utils/service';
 
-import { useServices } from './useServices';
+import { useChainId } from './useChainId';
+import { useServiceId } from './useService';
 
 const ONE_DAY_IN_S = 24 * 60 * 60;
 const ONE_DAY_IN_MS = ONE_DAY_IN_S * 1000;
@@ -41,11 +42,12 @@ const CheckpointGraphResponseSchema = z.object({
 const CheckpointsGraphResponseSchema = z.array(CheckpointGraphResponseSchema);
 type CheckpointResponse = z.infer<typeof CheckpointGraphResponseSchema>;
 
-const supportedStakingContracts = Object.values(
-  GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
-).map((address) => `"${address}"`);
+const fetchRewardsQuery = (chainId: number) => {
+  const supportedStakingContracts = Object.values(
+    STAKING_PROGRAM_ADDRESS[chainId],
+  ).map((address) => `"${address}"`);
 
-const fetchRewardsQuery = gql`
+  return gql`
   {
     checkpoints(
       orderBy: epoch
@@ -68,6 +70,7 @@ const fetchRewardsQuery = gql`
     }
   }
 `;
+};
 
 export type Checkpoint = {
   epoch: string;
@@ -147,7 +150,8 @@ type CheckpointsResponse = { checkpoints: CheckpointResponse[] };
  * hook to fetch rewards history for all contracts
  */
 const useContractCheckpoints = () => {
-  const { serviceId } = useServices();
+  const serviceId = useServiceId();
+  const chainId = useChainId();
 
   return useQuery({
     queryKey: [],
@@ -156,7 +160,7 @@ const useContractCheckpoints = () => {
 
       const checkpointsResponse = await request<CheckpointsResponse>(
         GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL,
-        fetchRewardsQuery,
+        fetchRewardsQuery(chainId),
       );
 
       const parsedCheckpoints = CheckpointsGraphResponseSchema.safeParse(
@@ -216,7 +220,7 @@ const useContractCheckpoints = () => {
 };
 
 export const useRewardsHistory = () => {
-  const { serviceId } = useServices();
+  const serviceId = useServiceId();
   const {
     isError,
     isLoading,
