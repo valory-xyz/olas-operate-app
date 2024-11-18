@@ -20,7 +20,7 @@ import { useStore } from '@/hooks/useStore';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
-import { StakingProgramContext } from './StakingProgramProvider';
+import { StakingProgramsContext } from './StakingProgramsProvider';
 
 export const RewardContext = createContext<{
   accruedServiceStakingRewards?: number;
@@ -48,7 +48,7 @@ const currentChainId = GNOSIS_CHAIN_CONFIG.chainId; // TODO: replace with dynami
  */
 const useStakingRewardsDetails = () => {
   const { isOnline } = useContext(OnlineStatusContext);
-  const { activeStakingProgramId } = useContext(StakingProgramContext);
+  const { activeStakingProgramId } = useContext(StakingProgramsContext);
 
   const { selectedService, isFetched: isLoaded } = useServices();
   const serviceConfigId =
@@ -90,7 +90,7 @@ const useStakingRewardsDetails = () => {
  */
 const useAvailableRewardsForEpoch = () => {
   const { isOnline } = useContext(OnlineStatusContext);
-  const { activeStakingProgramId } = useContext(StakingProgramContext);
+  const { activeStakingProgramId } = useContext(StakingProgramsContext);
 
   const { selectedService, isFetched: isLoaded } = useServices();
   const serviceConfigId =

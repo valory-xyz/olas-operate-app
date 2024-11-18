@@ -16,16 +16,13 @@ import { useChainId } from '@/hooks/useChainId';
 import { useStakingContractDetailsByStakingProgram } from '@/hooks/useStakingContractDetails';
 import { StakingContractDetails } from '@/types/Autonolas';
 
-import {
-  INITIAL_DEFAULT_STAKING_PROGRAM_ID,
-  StakingProgramContext,
-} from './StakingProgramProvider';
+import { StakingProgramsContext } from './StakingProgramsProvider';
 
 /**
  * hook to get all staking contract details
  */
 const useAllStakingContractDetails = () => {
-  const stakingPrograms = [INITIAL_DEFAULT_STAKING_PROGRAM_ID];
+  const stakingPrograms = activeStaking;
   const chainId = useChainId();
   const currentAgent = useAgent();
 
@@ -105,7 +102,7 @@ export const StakingContractDetailsProvider = ({
 }: PropsWithChildren) => {
   const [isPaused, setIsPaused] = useState(false);
 
-  const { activeStakingProgramId } = useContext(StakingProgramContext);
+  const { activeStakingProgramId } = useContext(StakingProgramsContext);
   const {
     data: activeStakingContractDetails,
     isLoading: isActiveStakingContractDetailsLoading,

@@ -2,7 +2,7 @@ import { CloseOutlined } from '@ant-design/icons';
 import { Button, Card } from 'antd';
 
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
-import { DEFAULT_STAKING_PROGRAM_ID } from '@/context/StakingProgramProvider';
+import { DEFAULT_STAKING_PROGRAM_ID } from '@/context/StakingProgramsProvider';
 import { Pages } from '@/enums/Pages';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { usePageState } from '@/hooks/usePageState';

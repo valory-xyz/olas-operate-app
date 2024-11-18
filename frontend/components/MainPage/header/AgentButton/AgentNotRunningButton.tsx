@@ -3,7 +3,6 @@ import { useCallback, useMemo } from 'react';
 
 import { MiddlewareChain, MiddlewareDeploymentStatus } from '@/client';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { DEFAULT_STAKING_PROGRAM_ID } from '@/context/StakingProgramProvider';
 import { ChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalance } from '@/hooks/useBalance';
@@ -57,14 +56,13 @@ export const AgentNotRunningButton = () => {
     refetchActiveStakingContractDetails,
   } = useStakingContractContext();
 
-  const { activeStakingProgramId, defaultStakingProgramId } =
-    useStakingProgram();
+  const { activeStakingProgramId } = useStakingProgram();
 
   const { isEligibleForStaking, isAgentEvicted, isServiceStaked } =
     useActiveStakingContractInfo();
 
   const { hasEnoughServiceSlots } = useStakingContractDetails(
-    activeStakingProgramId ?? defaultStakingProgramId,
+    activeStakingProgramId,
   );
 
   // const minStakingDeposit =
@@ -97,8 +95,7 @@ export const AgentNotRunningButton = () => {
     setDeploymentStatus(MiddlewareDeploymentStatus.DEPLOYING);
 
     // Get the active staking program id; default id if there's no agent yet
-    const stakingProgramId: StakingProgramId =
-      activeStakingProgramId ?? DEFAULT_STAKING_PROGRAM_ID;
+    const stakingProgramId: StakingProgramId = activeStakingProgramId;
 
     // Create master safe if it doesn't exist
     try {
@@ -118,7 +115,7 @@ export const AgentNotRunningButton = () => {
     // Then create / deploy the service
     try {
       await ServicesService.createService({
-        stakingProgramId,
+        activeStakingProgramId,
         serviceTemplate,
         deploy: true,
         useMechMarketplace: false,

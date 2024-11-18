@@ -9,14 +9,14 @@ import { useChainId } from '@/hooks/useChainId';
 import { useServiceId } from '@/hooks/useService';
 import { Nullable } from '@/types/Util';
 
-export const INITIAL_DEFAULT_STAKING_PROGRAM_ID = StakingProgramId.PearlBeta;
+const INITIAL_DEFAULT_STAKING_PROGRAM_ID = StakingProgramId.PearlBeta;
 
 export const StakingProgramsContext = createContext<{
   isActiveStakingProgramsLoaded: boolean;
-  activeStakingProgramIds?: StakingProgramId[];
+  activeStakingProgramsId?: StakingProgramId[];
 }>({
   isActiveStakingProgramsLoaded: false,
-  activeStakingProgramIds: [],
+  activeStakingProgramsId: [],
 });
 
 /**
@@ -69,15 +69,15 @@ const useGetActiveStakingProgramIds = () => {
  * It also provides a method to update the active staking program id in state.
  */
 export const StakingProgramsProvider = ({ children }: PropsWithChildren) => {
-  const { isLoading: isStakingProgramsLoading, data: activeStakingProgramIds } =
+  const { isLoading: isStakingProgramsLoading, data: activeStakingProgramsId } =
     useGetActiveStakingProgramIds();
 
   return (
     <StakingProgramsContext.Provider
       value={{
         isActiveStakingProgramsLoaded:
-          !isStakingProgramsLoading && !!activeStakingProgramIds,
-        activeStakingProgramIds,
+          !isStakingProgramsLoading && !!activeStakingProgramsId,
+        activeStakingProgramsId,
       }}
     >
       {children}

@@ -2,7 +2,7 @@ import { useContext, useMemo } from 'react';
 
 import { STAKING_PROGRAM_ADDRESS } from '@/config/stakingPrograms';
 import { GNOSIS_STAKING_PROGRAMS } from '@/config/stakingPrograms/gnosis';
-import { StakingProgramContext } from '@/context/StakingProgramProvider';
+import { StakingProgramsContext } from '@/context/StakingProgramsProvider';
 
 import { useChainId } from './useChainId';
 
@@ -12,7 +12,7 @@ import { useChainId } from './useChainId';
 export const useStakingProgram = () => {
   const chainId = useChainId();
   const { activeStakingProgramId, isActiveStakingProgramLoaded } = useContext(
-    StakingProgramContext,
+    StakingProgramsContext,
   );
 
   const activeStakingProgramMeta = useMemo(() => {
