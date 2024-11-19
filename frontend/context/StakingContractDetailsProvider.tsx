@@ -1,4 +1,5 @@
 import { useQueries } from '@tanstack/react-query';
+import { Maybe } from 'graphql/jsutils/Maybe';
 import {
   createContext,
   Dispatch,
@@ -9,12 +10,12 @@ import {
   useState,
 } from 'react';
 
+import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useAgent } from '@/hooks/useAgent';
-import { useChainId } from '@/hooks/useChainId';
 import { useServiceId } from '@/hooks/useService';
-import { useStakingContractDetailsByStakingProgram } from '@/hooks/useStakingContractDetails';
+import { useServices } from '@/hooks/useServices';
+import { useStakingPrograms } from '@/hooks/useStakingPrograms';
 import { StakingContractDetails } from '@/types/Autonolas';
 
 import { StakingProgramsContext } from './StakingProgramsProvider';
@@ -23,20 +24,20 @@ import { StakingProgramsContext } from './StakingProgramsProvider';
  * hook to get all staking contract details
  */
 const useAllStakingContractDetails = () => {
-  const stakingPrograms = activeStaking;
-  const chainId = useChainId();
-  const currentAgent = useAgent();
+  const { allStakingProgramIds } = useStakingPrograms();
+  const { selectedAgentConfig } = useServices();
+  const { serviceApi, homeChainId } = selectedAgentConfig;
 
   const queryResults = useQueries({
-    queries: stakingPrograms.map((programId) => ({
+    queries: allStakingProgramIds.map((programId) => ({
       queryKey: REACT_QUERY_KEYS.ALL_STAKING_CONTRACT_DETAILS(
-        chainId,
+        homeChainId,
         programId,
       ),
       queryFn: async () =>
-        await currentAgent.serviceApi.getStakingContractDetailsByName(
-          programId,
-          chainId,
+        await serviceApi.getStakingContractDetailsByName(
+          programId as StakingProgramId,
+          homeChainId,
         ),
       onError: (error: Error) => {
         console.error(
@@ -48,7 +49,7 @@ const useAllStakingContractDetails = () => {
   });
 
   // Aggregate results into a record
-  const allStakingContractDetailsRecord = stakingPrograms.reduce(
+  const allStakingContractDetailsRecord = allStakingProgramIds.reduce(
     (record, programId, index) => {
       const query = queryResults[index];
       if (query.status === 'success') {
@@ -68,8 +69,48 @@ const useAllStakingContractDetails = () => {
   return { allStakingContractDetailsRecord, isAllStakingContractDetailsLoaded };
 };
 
+/**
+ * hook to get staking contract details by staking program
+ */
+const useStakingContractDetailsByStakingProgram = (
+  serviceId: Maybe<number>,
+  stakingProgramsId: StakingProgramId[],
+  isPaused?: boolean,
+) => {
+  const { selectedAgentConfig } = useServices();
+  const { serviceApi, homeChainId: chainId } = selectedAgentConfig;
+  const response = useQueries({
+    queries: stakingProgramsId.map((programId) => ({
+      queryKey:
+        REACT_QUERY_KEYS.STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY(
+          chainId,
+          serviceId!,
+          programId,
+        ),
+      queryFn: async () => {
+        return await serviceApi.getStakingContractDetailsByServiceIdStakingProgram(
+          serviceId!,
+          programId,
+          chainId,
+        );
+      },
+      enabled: !!serviceId && !!programId && !!chainId && !isPaused,
+      refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : () => false,
+      refetchOnWindowFocus: false,
+    })),
+  });
+
+  const isLoading = response.some((query) => query.isLoading);
+  const data = response.map((query) => query.data);
+  const refetch = useCallback(() => {
+    response.forEach((query) => query.refetch());
+  }, [response]);
+
+  return { isLoading, data, refetch };
+};
+
 type StakingContractDetailsContextProps = {
-  activeStakingContractDetails?: Partial<StakingContractDetails>;
+  activeStakingContractDetails: Partial<StakingContractDetails | undefined>[];
   isActiveStakingContractDetailsLoaded: boolean;
   isPaused: boolean;
   allStakingContractDetailsRecord?: Record<
@@ -86,7 +127,7 @@ type StakingContractDetailsContextProps = {
  */
 export const StakingContractDetailsContext =
   createContext<StakingContractDetailsContextProps>({
-    activeStakingContractDetails: undefined,
+    activeStakingContractDetails: [],
     isPaused: false,
     isAllStakingContractDetailsRecordLoaded: false,
     isActiveStakingContractDetailsLoaded: false,

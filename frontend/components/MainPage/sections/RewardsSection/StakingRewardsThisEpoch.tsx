@@ -5,15 +5,17 @@ import { Popover, Typography } from 'antd';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { POPOVER_WIDTH_MEDIUM } from '@/constants/width';
 import { getLatestEpochDetails } from '@/graphql/queries';
-import { useChainId } from '@/hooks/useChainId';
+import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { formatToTime } from '@/utils/time';
 
 const { Text } = Typography;
 
 const useEpochEndTime = () => {
+  const { selectedAgentConfig } = useServices();
+  const chainId = selectedAgentConfig.homeChainId;
+
   const { activeStakingProgramAddress } = useStakingProgram();
-  const chainId = useChainId();
 
   const { data, isLoading } = useQuery({
     queryKey: REACT_QUERY_KEYS.LATEST_EPOCH_TIME_KEY(

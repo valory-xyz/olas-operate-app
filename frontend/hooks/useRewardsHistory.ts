@@ -11,9 +11,8 @@ import { GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL } from '@/constants/urls';
 import { Address } from '@/types/Address';
 import { Nullable } from '@/types/Util';
 
-import { useAgent } from './useAgent';
-import { useChainId } from './useChainId';
 import { useServiceId } from './useService';
+import { useServices } from './useServices';
 
 const ONE_DAY_IN_S = 24 * 60 * 60;
 const ONE_DAY_IN_MS = ONE_DAY_IN_S * 1000;
@@ -90,8 +89,8 @@ export type Checkpoint = {
 };
 
 const useTransformCheckpoints = () => {
-  const agent = useAgent();
-  const chainId = useChainId();
+  const { selectedAgentConfig } = useServices();
+  const { serviceApi: agent, homeChainId: chainId } = selectedAgentConfig;
 
   return useCallback(
     (
@@ -125,11 +124,10 @@ const useTransformCheckpoints = () => {
                 Number(checkpoint.epochLength)
               : checkpoints[index + 1]?.blockTimestamp ?? 0;
 
-          const stakingContractId =
-            agent.serviceApi.getStakingProgramIdByAddress(
-              chainId,
-              checkpoint.contractAddress as Address,
-            );
+          const stakingContractId = agent.getStakingProgramIdByAddress(
+            chainId,
+            checkpoint.contractAddress as Address,
+          );
 
           return {
             ...checkpoint,
@@ -165,7 +163,9 @@ type CheckpointsResponse = { checkpoints: CheckpointResponse[] };
  */
 const useContractCheckpoints = () => {
   const serviceId = useServiceId();
-  const chainId = useChainId();
+  const { selectedAgentConfig } = useServices();
+  const { homeChainId: chainId } = selectedAgentConfig;
+
   const transformCheckpoints = useTransformCheckpoints();
 
   return useQuery({

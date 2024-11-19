@@ -8,55 +8,67 @@ import {
 import { StakingProgramsContext } from '@/context/StakingProgramsProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
 
-import { useChainId } from './useChainId';
+import { useServices } from './useServices';
 
 /**
  * Hook to get the active staking program and its metadata.
  */
 export const useStakingPrograms = () => {
-  const chainId = useChainId();
   const { isActiveStakingProgramsLoaded, activeStakingProgramsId } = useContext(
     StakingProgramsContext,
   );
+  const { selectedAgentConfig } = useServices();
+  const { homeChainId } = selectedAgentConfig;
+
+  const allStakingProgramsKeys = Object.keys(STAKING_PROGRAMS[homeChainId]);
+  const allStakingProgramNameAddressPair = STAKING_PROGRAM_ADDRESS[homeChainId];
 
   const activeStakingProgramsMeta = useMemo(() => {
+    if (!isActiveStakingProgramsLoaded) return null;
     if (!activeStakingProgramsId) return null;
     if (activeStakingProgramsId.length === 0) return null;
 
-    if (!isActiveStakingProgramsLoaded) return null;
-
-    const allStakingProgramsKeys = Object.keys(STAKING_PROGRAMS[chainId]);
     return (allStakingProgramsKeys as StakingProgramId[]).reduce(
       (acc, programId) => {
         if (activeStakingProgramsId.includes(programId)) {
-          acc[programId] = STAKING_PROGRAMS[chainId][programId];
+          acc[programId] = STAKING_PROGRAMS[homeChainId][programId];
         }
         return acc;
       },
       {} as Record<StakingProgramId, StakingProgramConfig>,
     );
-  }, [chainId, isActiveStakingProgramsLoaded, activeStakingProgramsId]);
+  }, [
+    homeChainId,
+    isActiveStakingProgramsLoaded,
+    allStakingProgramsKeys,
+    activeStakingProgramsId,
+  ]);
 
   const activeStakingProgramsAddress = useMemo(() => {
     if (!activeStakingProgramsId) return null;
     if (activeStakingProgramsId.length === 0) return null;
 
-    const stakingProgramAddress = STAKING_PROGRAM_ADDRESS[chainId];
-    return (Object.keys(stakingProgramAddress) as StakingProgramId[]).reduce(
+    return (
+      Object.keys(allStakingProgramNameAddressPair) as StakingProgramId[]
+    ).reduce(
       (acc, programId) => {
         if (activeStakingProgramsId.includes(programId)) {
-          acc[programId] = stakingProgramAddress[programId];
+          acc[programId] = allStakingProgramNameAddressPair[programId];
         }
         return acc;
       },
       {} as Record<StakingProgramId, string>,
     );
-  }, [chainId, activeStakingProgramsId]);
+  }, [allStakingProgramNameAddressPair, activeStakingProgramsId]);
 
   return {
     isActiveStakingProgramsLoaded,
     activeStakingProgramsId,
     activeStakingProgramsAddress,
     activeStakingProgramsMeta,
+
+    // all staking programs
+    allStakingProgramIds: Object.keys(allStakingProgramNameAddressPair),
+    allStakingProgramAddress: Object.values(allStakingProgramNameAddressPair),
   };
 };
