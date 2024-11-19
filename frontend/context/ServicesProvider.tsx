@@ -11,13 +11,17 @@ import {
 } from 'react';
 
 import { MiddlewareServiceResponse } from '@/client';
+import { AGENT_CONFIG } from '@/config/agents';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { AgentType } from '@/enums/Agent';
 import { ChainId } from '@/enums/Chain';
 import { AgentWallets, WalletOwner, WalletType } from '@/enums/Wallet';
 import { UsePause, usePause } from '@/hooks/usePause';
 import { ServicesService } from '@/service/Services';
+import { AgentConfig } from '@/types/Agent';
 import { Service } from '@/types/Service';
+import { Maybe } from '@/types/Util';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 
@@ -27,6 +31,8 @@ type ServicesContextType = {
   servicesByChain?: Record<number, MiddlewareServiceResponse[]>;
   selectService: (serviceUuid: string) => void;
   selectedService?: Service;
+  selectedAgentConfig: AgentConfig;
+  updateAgentType: (agentType: AgentType) => void;
 } & Partial<QueryObserverBaseResult<MiddlewareServiceResponse[]>> &
   UsePause;
 
@@ -35,6 +41,8 @@ export const ServicesContext = createContext<ServicesContextType>({
   setPaused: noop,
   togglePaused: noop,
   selectService: noop,
+  selectedAgentConfig: AGENT_CONFIG[AgentType.PredictTrader],
+  updateAgentType: noop,
 });
 
 /**
@@ -43,6 +51,11 @@ export const ServicesContext = createContext<ServicesContextType>({
 export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
   const { paused, setPaused, togglePaused } = usePause();
+
+  // selected agent type
+  const [selectedAgentType, setAgentType] = useState<AgentType>(
+    AgentType.PredictTrader,
+  );
 
   // user selected service identifier
   const [selectedServiceConfigId, setSelectedServiceConfigId] =
@@ -72,6 +85,19 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const selectService = useCallback((serviceUuid: string) => {
     setSelectedServiceConfigId(serviceUuid);
   }, []);
+
+  const updateAgentType = useCallback((agentType: AgentType) => {
+    setAgentType(agentType);
+  }, []);
+
+  const selectedAgentConfig = useMemo(() => {
+    const config: Maybe<AgentConfig> = AGENT_CONFIG[selectedAgentType];
+
+    if (!config) {
+      throw new Error(`Agent config not found for ${selectedAgentType}`);
+    }
+    return config;
+  }, [selectedAgentType]);
 
   const servicesByChain = useMemo(() => {
     if (!isFetched) return;
@@ -171,6 +197,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         togglePaused,
         selectService,
         selectedService,
+        selectedAgentConfig,
+        updateAgentType,
       }}
     >
       {children}
