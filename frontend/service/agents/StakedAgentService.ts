@@ -26,7 +26,7 @@ import { Nullable } from '@/types/Util';
 export const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 
 /**
- *
+ * Staked agent service class.
  */
 export abstract class StakedAgentService {
   abstract activityCheckerContract: MulticallContract;
@@ -34,10 +34,26 @@ export abstract class StakedAgentService {
   abstract serviceRegistryTokenUtilityContract: MulticallContract;
 
   abstract getStakingRewardsInfo: Promise<unknown>;
-  abstract getAvailableRewardsForEpoch: Promise<unknown>;
-  abstract getStakingContractInfo: Promise<unknown>;
-  abstract getStakingContractInfoByServiceIdStakingProgramId: Promise<unknown>;
-  abstract getStakingContractInfoByStakingProgramId: Promise<unknown>;
+  abstract getAgentStakingRewardsInfo(
+    agentMultisigAddress: Address,
+    serviceId: number,
+    stakingProgramId: StakingProgramId,
+    chainId: ChainId,
+  ): Promise<unknown>;
+  abstract getAvailableRewardsForEpoch(
+    stakingProgramId: StakingProgramId,
+    chainId: ChainId,
+  ): Promise<unknown>;
+  abstract getStakingContractDetailsByServiceIdStakingProgram(
+    serviceId: number,
+    stakingProgramId: StakingProgramId,
+    chainId: ChainId,
+  ): Promise<unknown>;
+  abstract getStakingContractDetailsByName(
+    stakingProgramId: StakingProgramId,
+    chainId: ChainId,
+  ): Promise<unknown>;
+  abstract getInstance(): StakedAgentService;
 
   static getCurrentStakingProgramsByServiceId = async (
     serviceId: number,
