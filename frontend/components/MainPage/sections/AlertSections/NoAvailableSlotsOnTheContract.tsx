@@ -1,7 +1,7 @@
 import { Flex, Typography } from 'antd';
-import { useMemo } from 'react';
 
-import { Pages } from '@/enums/PageState';
+import { NA } from '@/constants/symbols';
+import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import {
   useActiveStakingContractInfo,
@@ -27,17 +27,6 @@ export const NoAvailableSlotsOnTheContract = () => {
     activeStakingProgramId,
   );
 
-  const stakingProgramName = useMemo(() => {
-    if (!isAllStakingContractDetailsRecordLoaded) return null;
-    if (activeStakingProgramId) {
-      return activeStakingProgramMeta?.name;
-    }
-  }, [
-    activeStakingProgramId,
-    activeStakingProgramMeta?.name,
-    isAllStakingContractDetailsRecordLoaded,
-  ]);
-
   if (!isAllStakingContractDetailsRecordLoaded) return null;
   if (hasEnoughServiceSlots) return null;
   if (isServiceStaked) return null;
@@ -50,7 +39,7 @@ export const NoAvailableSlotsOnTheContract = () => {
       message={
         <Flex justify="space-between" gap={4} vertical>
           <Text className="font-weight-600">
-            No available staking slots on {stakingProgramName}
+            No available staking slots on {activeStakingProgramMeta?.name || NA}
           </Text>
           <span className="text-sm">
             Select a contract with available slots to start your agent.
