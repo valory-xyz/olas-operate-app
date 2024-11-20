@@ -3,7 +3,6 @@ import { Button, Card, Flex } from 'antd';
 import { useEffect } from 'react';
 
 import { Pages } from '@/enums/Pages';
-import { StakingProgramId } from '@/enums/StakingProgram';
 // import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalance } from '@/hooks/useBalance';
 // import { useMasterSafe } from '@/hooks/useMasterSafe';
@@ -60,7 +59,7 @@ export const Main = () => {
 
   const hideMainOlasBalanceTopBorder = [
     !backupSafeAddress,
-    activeStakingProgramId === StakingProgramId.PearlAlpha,
+    !!activeStakingProgramId,
     isAllStakingContractDetailsRecordLoaded && !hasEnoughServiceSlots,
   ].some((condition) => !!condition);
 

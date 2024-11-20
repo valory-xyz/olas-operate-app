@@ -23,7 +23,7 @@ export const useStakingProgram = () => {
   const allStakingProgramsKeys = Object.keys(STAKING_PROGRAMS[homeChainId]);
   const allStakingProgramNameAddressPair = STAKING_PROGRAM_ADDRESS[homeChainId];
 
-  const activeStakingProgramMeta = useMemo(() => {
+  const allStakingProgramsMeta = useMemo(() => {
     if (!isActiveStakingProgramLoaded) return null;
     if (!activeStakingProgramId) return null;
     if (activeStakingProgramId.length === 0) return null;
@@ -41,6 +41,18 @@ export const useStakingProgram = () => {
     homeChainId,
     isActiveStakingProgramLoaded,
     allStakingProgramsKeys,
+    activeStakingProgramId,
+  ]);
+
+  const activeStakingProgramMeta = useMemo(() => {
+    if (!isActiveStakingProgramLoaded) return null;
+    if (!activeStakingProgramId) return null;
+    if (!allStakingProgramsMeta) return null;
+
+    return allStakingProgramsMeta[activeStakingProgramId];
+  }, [
+    isActiveStakingProgramLoaded,
+    allStakingProgramsMeta,
     activeStakingProgramId,
   ]);
 
@@ -70,5 +82,6 @@ export const useStakingProgram = () => {
     // all staking programs
     allStakingProgramIds: Object.keys(allStakingProgramNameAddressPair),
     allStakingProgramAddress: Object.values(allStakingProgramNameAddressPair),
+    allStakingProgramsMeta,
   };
 };

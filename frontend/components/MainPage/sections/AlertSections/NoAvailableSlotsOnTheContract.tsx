@@ -17,18 +17,14 @@ const { Text } = Typography;
 export const NoAvailableSlotsOnTheContract = () => {
   const { goto } = usePageState();
 
-  const {
-    activeStakingProgramId,
-    defaultStakingProgramId,
-    activeStakingProgramMeta,
-    defaultStakingProgramMeta,
-  } = useStakingProgram();
+  const { activeStakingProgramId, activeStakingProgramMeta } =
+    useStakingProgram();
 
   const { isAllStakingContractDetailsRecordLoaded } =
     useStakingContractContext();
   const { isServiceStaked } = useActiveStakingContractInfo();
   const { hasEnoughServiceSlots } = useStakingContractDetails(
-    activeStakingProgramId ?? defaultStakingProgramId,
+    activeStakingProgramId,
   );
 
   const stakingProgramName = useMemo(() => {
@@ -36,11 +32,9 @@ export const NoAvailableSlotsOnTheContract = () => {
     if (activeStakingProgramId) {
       return activeStakingProgramMeta?.name;
     }
-    return defaultStakingProgramMeta?.name;
   }, [
     activeStakingProgramId,
     activeStakingProgramMeta?.name,
-    defaultStakingProgramMeta?.name,
     isAllStakingContractDetailsRecordLoaded,
   ]);
 
