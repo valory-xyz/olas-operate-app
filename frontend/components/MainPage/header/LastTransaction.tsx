@@ -28,6 +28,7 @@ const Loader = styled(Skeleton.Input)`
  * Displays the last transaction time and link to the transaction on explorer
  * by agent safe.
  */
+// TODO: loop over all supported chains 
 export const LastTransaction = () => {
   const { isPageLoadedAndOneMinutePassed } = usePageState();
   const { multisigAddress } = useAddress();
