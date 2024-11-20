@@ -25,6 +25,7 @@ export const useStakingProgram = () => {
   const allStakingProgramsKeys = Object.keys(STAKING_PROGRAMS[homeChainId]);
   const allStakingProgramNameAddressPair = STAKING_PROGRAM_ADDRESS[homeChainId];
 
+  // TODO: refactor to support allStakingPrograms, previously this was intented solely for the active staking program
   const allStakingProgramsMeta = useMemo(() => {
     if (!isActiveStakingProgramLoaded) return null;
     if (!activeStakingProgramId) return null;
