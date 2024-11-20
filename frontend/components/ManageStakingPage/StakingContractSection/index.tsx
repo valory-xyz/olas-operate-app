@@ -1,4 +1,4 @@
-import { Flex, theme, Typography } from 'antd';
+import { Flex, Tag, theme, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { MiddlewareChain } from '@/client';
@@ -13,11 +13,21 @@ import { CantMigrateAlert } from './CantMigrateAlert';
 import { MigrateButton } from './MigrateButton';
 import { StakingContractDetails } from './StakingContractDetails';
 import { StakingContractFundingButton } from './StakingContractFundingButton';
-import { StakingContractTag } from './StakingContractTag';
 import { CantMigrateReason, useMigrate } from './useMigrate';
 
 const { Title } = Typography;
 const { useToken } = theme;
+
+type StakingContractTagProps = { status: StakingProgramStatus | null };
+export const StakingContractTag = ({ status }: StakingContractTagProps) => {
+  if (status === StakingProgramStatus.Active) {
+    return <Tag color="purple">Active</Tag>;
+  }
+  if (status === StakingProgramStatus.Default) {
+    return <Tag color="purple">Default</Tag>;
+  }
+  return null;
+};
 
 type StakingContractSectionProps = { stakingProgramId: StakingProgramId };
 export const StakingContractSection = ({

@@ -11,7 +11,7 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { useServices } from './useServices';
 
 /**
- * Hook to get the active staking program and its metadata.
+ * Hook to get the staking program and its metadata.
  */
 export const useStakingProgram = () => {
   const {

@@ -2,6 +2,7 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { AgentType } from '@/enums/Agent';
 import { ChainId } from '@/enums/Chain';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
 import {
@@ -45,4 +46,11 @@ export const STAKING_PROGRAM_ADDRESS: {
 } = {
   [ChainId.Gnosis]: GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
   [ChainId.Optimism]: OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
+};
+
+export const INITIAL_DEFAULT_STAKING_PROGRAM_IDS: {
+  [chainId: number | ChainId]: StakingProgramId;
+} = {
+  [ChainId.Gnosis]: StakingProgramId.PearlBeta,
+  [ChainId.Optimism]: StakingProgramId.OptimusAlpha,
 };
