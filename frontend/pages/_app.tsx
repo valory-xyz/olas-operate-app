@@ -17,7 +17,7 @@ import { ServicesProvider } from '@/context/ServicesProvider';
 import { SettingsProvider } from '@/context/SettingsProvider';
 import { SetupProvider } from '@/context/SetupProvider';
 import { StakingContractDetailsProvider } from '@/context/StakingContractDetailsProvider';
-import { StakingProgramsProvider } from '@/context/StakingProgramsProvider';
+import { StakingProgramsProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
 import { SystemNotificationTriggers } from '@/context/SystemNotificationTriggers';
 import { WalletProvider } from '@/context/WalletProvider';

@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Maybe } from 'graphql/jsutils/Maybe';
 import { createContext, PropsWithChildren, useCallback } from 'react';
 
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
@@ -12,16 +13,16 @@ const INITIAL_DEFAULT_STAKING_PROGRAM_ID = StakingProgramId.PearlBeta;
 
 export const StakingProgramsContext = createContext<{
   isActiveStakingProgramsLoaded: boolean;
-  activeStakingProgramsId: StakingProgramId[];
+  activeStakingProgramId: Maybe<StakingProgramId>;
 }>({
   isActiveStakingProgramsLoaded: false,
-  activeStakingProgramsId: [],
+  activeStakingProgramId: null,
 });
 
 /**
  * hook to get the active staking program id
  */
-const useGetActiveStakingProgramIds = () => {
+const useGetActiveStakingProgramId = () => {
   const queryClient = useQueryClient();
   const { selectedAgentConfig } = useServices();
   const serviceId = useServiceId();
@@ -35,9 +36,7 @@ const useGetActiveStakingProgramIds = () => {
         serviceId!,
         homeChainId,
       );
-      return response?.length === 0
-        ? [INITIAL_DEFAULT_STAKING_PROGRAM_ID]
-        : response;
+      return response || INITIAL_DEFAULT_STAKING_PROGRAM_ID;
     },
     enabled: !!homeChainId && !!serviceId,
     refetchInterval: serviceId ? FIVE_SECONDS_INTERVAL : false,
@@ -51,9 +50,7 @@ const useGetActiveStakingProgramIds = () => {
       // update the active staking program id in the cache
       queryClient.setQueryData(
         REACT_QUERY_KEYS.STAKING_PROGRAM_KEY(homeChainId, serviceId),
-        (oldData: Nullable<StakingProgramId[]>) => {
-          return oldData ? [...oldData, stakingProgramId] : [stakingProgramId];
-        },
+        stakingProgramId,
       );
     },
     [queryClient, homeChainId, serviceId],
@@ -68,17 +65,15 @@ const useGetActiveStakingProgramIds = () => {
  * It also provides a method to update the active staking program id in state.
  */
 export const StakingProgramsProvider = ({ children }: PropsWithChildren) => {
-  const {
-    isLoading: isStakingProgramsLoading,
-    data: activeStakingProgramsId = [],
-  } = useGetActiveStakingProgramIds();
+  const { isLoading: isStakingProgramsLoading, data: activeStakingProgramId } =
+    useGetActiveStakingProgramId();
 
   return (
     <StakingProgramsContext.Provider
       value={{
         isActiveStakingProgramsLoaded:
-          !isStakingProgramsLoading && !!activeStakingProgramsId,
-        activeStakingProgramsId,
+          !isStakingProgramsLoading && !!activeStakingProgramId,
+        activeStakingProgramId,
       }}
     >
       {children}

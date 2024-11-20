@@ -7,7 +7,7 @@ import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/config/ol
 import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { EXPLORER_URL } from '@/constants/urls';
-import { DEFAULT_STAKING_PROGRAM_ID } from '@/context/StakingProgramsProvider';
+import { DEFAULT_STAKING_PROGRAM_ID } from '@/context/StakingProgramProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { StakingProgramStatus } from '@/enums/StakingProgramStatus';
 import { useStakingProgram } from '@/hooks/useStakingProgram';

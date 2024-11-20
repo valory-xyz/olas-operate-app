@@ -21,7 +21,7 @@ import { ContractType } from '@/enums/Contract';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
-import { Nullable } from '@/types/Util';
+import { Maybe, Nullable } from '@/types/Util';
 
 export const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 
@@ -58,7 +58,7 @@ export abstract class StakedAgentService {
   static getCurrentStakingProgramsByServiceId = async (
     serviceId: number,
     chainId: ChainId,
-  ): Promise<StakingProgramId[]> => {
+  ): Promise<Maybe<StakingProgramId>> => {
     try {
       const { multicallProvider } = PROVIDERS[chainId];
 
@@ -82,18 +82,19 @@ export abstract class StakedAgentService {
       );
 
       // find the first staking program that is active
-      const activeStakingPrograms: StakingProgramId[] =
-        multicallResponse.filter((entry) => entry !== null);
+      const activeStakingProgramIndex = multicallResponse.findIndex(Boolean);
 
-      if (activeStakingPrograms.length === 0) {
-        return [];
+      if (activeStakingProgramIndex === -1) {
+        return null;
       }
 
-      // return the staking program ids
-      return activeStakingPrograms;
+      // return the staking program id
+      return stakingProgramEntries[
+        activeStakingProgramIndex
+      ][0] as StakingProgramId;
     } catch (error) {
       console.error('Error while getting current staking program', error);
-      return [];
+      return null;
     }
   };
 

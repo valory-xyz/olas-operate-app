@@ -5,7 +5,7 @@ import {
   STAKING_PROGRAMS,
   StakingProgramConfig,
 } from '@/config/stakingPrograms';
-import { StakingProgramsContext } from '@/context/StakingProgramsProvider';
+import { StakingProgramsContext } from '@/context/StakingProgramProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
 
 import { useServices } from './useServices';
@@ -14,7 +14,7 @@ import { useServices } from './useServices';
  * Hook to get the active staking program and its metadata.
  */
 export const useStakingPrograms = () => {
-  const { isActiveStakingProgramsLoaded, activeStakingProgramsId } = useContext(
+  const { isActiveStakingProgramsLoaded, activeStakingProgramId } = useContext(
     StakingProgramsContext,
   );
   const { selectedAgentConfig } = useServices();
@@ -25,12 +25,12 @@ export const useStakingPrograms = () => {
 
   const activeStakingProgramsMeta = useMemo(() => {
     if (!isActiveStakingProgramsLoaded) return null;
-    if (!activeStakingProgramsId) return null;
-    if (activeStakingProgramsId.length === 0) return null;
+    if (!activeStakingProgramId) return null;
+    if (activeStakingProgramId.length === 0) return null;
 
     return (allStakingProgramsKeys as StakingProgramId[]).reduce(
       (acc, programId) => {
-        if (activeStakingProgramsId.includes(programId)) {
+        if (activeStakingProgramId.includes(programId)) {
           acc[programId] = STAKING_PROGRAMS[homeChainId][programId];
         }
         return acc;
@@ -41,29 +41,29 @@ export const useStakingPrograms = () => {
     homeChainId,
     isActiveStakingProgramsLoaded,
     allStakingProgramsKeys,
-    activeStakingProgramsId,
+    activeStakingProgramId,
   ]);
 
   const activeStakingProgramsAddress = useMemo(() => {
-    if (!activeStakingProgramsId) return null;
-    if (activeStakingProgramsId.length === 0) return null;
+    if (!activeStakingProgramId) return null;
+    if (activeStakingProgramId.length === 0) return null;
 
     return (
       Object.keys(allStakingProgramNameAddressPair) as StakingProgramId[]
     ).reduce(
       (acc, programId) => {
-        if (activeStakingProgramsId.includes(programId)) {
+        if (activeStakingProgramId.includes(programId)) {
           acc[programId] = allStakingProgramNameAddressPair[programId];
         }
         return acc;
       },
       {} as Record<StakingProgramId, string>,
     );
-  }, [allStakingProgramNameAddressPair, activeStakingProgramsId]);
+  }, [allStakingProgramNameAddressPair, activeStakingProgramId]);
 
   return {
     isActiveStakingProgramsLoaded,
-    activeStakingProgramsId,
+    activeStakingProgramId,
     activeStakingProgramsAddress,
     activeStakingProgramsMeta,
 

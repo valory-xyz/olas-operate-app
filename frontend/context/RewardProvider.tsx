@@ -20,7 +20,7 @@ import { useStore } from '@/hooks/useStore';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
-import { StakingProgramsContext } from './StakingProgramsProvider';
+import { StakingProgramsContext } from './StakingProgramProvider';
 
 export const RewardContext = createContext<{
   accruedServiceStakingRewards?: number;

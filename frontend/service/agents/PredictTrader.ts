@@ -7,6 +7,7 @@ import { ChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 import { StakingContractDetails, StakingRewardsInfo } from '@/types/Autonolas';
+import { Maybe } from '@/types/Util';
 
 import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
 
@@ -144,8 +145,8 @@ export abstract class PredictTraderService extends StakedAgentService {
     serviceId: number,
     stakingProgramId: StakingProgramId,
     chainId: ChainId = ChainId.Gnosis,
-  ): Promise<Partial<StakingContractDetails> | undefined> => {
-    if (!serviceId) return;
+  ): Promise<Partial<Maybe<StakingContractDetails>>> => {
+    if (!serviceId) return null;
 
     const { multicallProvider } = PROVIDERS[chainId];
 

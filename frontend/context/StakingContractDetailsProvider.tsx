@@ -1,4 +1,4 @@
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { Maybe } from 'graphql/jsutils/Maybe';
 import {
   createContext,
@@ -18,7 +18,7 @@ import { useServices } from '@/hooks/useServices';
 import { useStakingPrograms } from '@/hooks/useStakingPrograms';
 import { StakingContractDetails } from '@/types/Autonolas';
 
-import { StakingProgramsContext } from './StakingProgramsProvider';
+import { StakingProgramsContext } from './StakingProgramProvider';
 
 /**
  * hook to get all staking contract details
@@ -74,43 +74,32 @@ const useAllStakingContractDetails = () => {
  */
 const useStakingContractDetailsByStakingProgram = (
   serviceId: Maybe<number>,
-  stakingProgramsId: StakingProgramId[],
+  stakingProgramId: Maybe<StakingProgramId>,
   isPaused?: boolean,
 ) => {
   const { selectedAgentConfig } = useServices();
   const { serviceApi, homeChainId: chainId } = selectedAgentConfig;
-  const response = useQueries({
-    queries: stakingProgramsId.map((programId) => ({
-      queryKey:
-        REACT_QUERY_KEYS.STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY(
-          chainId,
-          serviceId!,
-          programId,
-        ),
-      queryFn: async () => {
-        return await serviceApi.getStakingContractDetailsByServiceIdStakingProgram(
-          serviceId!,
-          programId,
-          chainId,
-        );
-      },
-      enabled: !!serviceId && !!programId && !!chainId && !isPaused,
-      refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : () => false,
-      refetchOnWindowFocus: false,
-    })),
+  return useQuery({
+    queryKey: REACT_QUERY_KEYS.STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY(
+      chainId,
+      serviceId!,
+      stakingProgramId!,
+    ),
+    queryFn: async () => {
+      return await serviceApi.getStakingContractDetailsByServiceIdStakingProgram(
+        serviceId!,
+        stakingProgramId!,
+        chainId,
+      );
+    },
+    enabled: !!serviceId && !!stakingProgramId && !!chainId && !isPaused,
+    refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : () => false,
+    refetchOnWindowFocus: false,
   });
-
-  const isLoading = response.some((query) => query.isLoading);
-  const data = response.map((query) => query.data);
-  const refetch = useCallback(() => {
-    response.forEach((query) => query.refetch());
-  }, [response]);
-
-  return { isLoading, data, refetch };
 };
 
 type StakingContractDetailsContextProps = {
-  activeStakingContractDetails: Partial<StakingContractDetails | undefined>[];
+  activeStakingContractDetails: Partial<Maybe<StakingContractDetails>>;
   isActiveStakingContractDetailsLoaded: boolean;
   isPaused: boolean;
   allStakingContractDetailsRecord?: Record<
@@ -127,7 +116,7 @@ type StakingContractDetailsContextProps = {
  */
 export const StakingContractDetailsContext =
   createContext<StakingContractDetailsContextProps>({
-    activeStakingContractDetails: [],
+    activeStakingContractDetails: null,
     isPaused: false,
     isAllStakingContractDetailsRecordLoaded: false,
     isActiveStakingContractDetailsLoaded: false,
@@ -145,14 +134,14 @@ export const StakingContractDetailsProvider = ({
   const [isPaused, setIsPaused] = useState(false);
   const serviceId = useServiceId();
 
-  const { activeStakingProgramsId } = useContext(StakingProgramsContext);
+  const { activeStakingProgramId } = useContext(StakingProgramsContext);
   const {
     data: activeStakingContractDetails,
     isLoading: isActiveStakingContractDetailsLoading,
     refetch: refetchActiveStakingContract,
   } = useStakingContractDetailsByStakingProgram(
     serviceId,
-    activeStakingProgramsId,
+    activeStakingProgramId,
     isPaused,
   );
 

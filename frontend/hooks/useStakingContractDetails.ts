@@ -36,11 +36,7 @@ export const useActiveStakingContractInfo = () => {
   const { selectedService } = useServices();
 
   // TODO: find a better way to handle this, currently stops react lifecycle hooks being implemented below it
-  if (
-    !selectedService ||
-    !activeStakingContractDetails ||
-    activeStakingContractDetails.length === 0
-  ) {
+  if (!selectedService || !activeStakingContractDetails) {
     return {
       allStakingContractDetailsRecord,
       refetchActiveStakingContractDetails,
@@ -57,7 +53,7 @@ export const useActiveStakingContractInfo = () => {
     availableRewards,
     serviceIds,
     maxNumServices,
-  } = activeStakingContractDetails?.[0] ?? {};
+  } = activeStakingContractDetails ?? {};
 
   const isAgentEvicted = serviceStakingState === 2;
 
