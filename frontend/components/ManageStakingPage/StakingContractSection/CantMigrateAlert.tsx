@@ -4,7 +4,7 @@ import { isNil } from 'lodash';
 import { CustomAlert } from '@/components/Alert';
 import { LOW_MASTER_SAFE_BALANCE } from '@/constants/thresholds';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useBalance } from '@/hooks/useBalance';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import {
@@ -27,7 +27,7 @@ const AlertInsufficientMigrationFunds = ({
     useStakingContractContext();
   const { isServiceStaked } = useActiveStakingContractInfo();
   const { masterSafeBalance: safeBalance, totalOlasStakedBalance } =
-    useBalance();
+    useBalanceContext();
   const { serviceFundRequirements, isInitialFunded } = useNeedsFunds();
 
   const totalOlasRequiredForStaking = getMinimumStakedAmountRequired(

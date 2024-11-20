@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 
-import { useBalance } from './useBalance';
+import { useBalanceContext } from './useBalanceContext';
 import { useMasterSafe } from './useMasterSafe';
 import { useServices } from './useServices';
 import { useStore } from './useStore';
@@ -33,7 +33,7 @@ const useBalancesLogs = () => {
     wallets,
     walletBalances,
     totalOlasStakedBalance,
-  } = useBalance();
+  } = useBalanceContext();
 
   return {
     isLoaded: isBalanceLoaded,

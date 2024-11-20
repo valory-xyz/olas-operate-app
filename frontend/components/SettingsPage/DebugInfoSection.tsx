@@ -19,7 +19,7 @@ import { EXPLORER_URL } from '@/constants/urls';
 import { MODAL_WIDTH } from '@/constants/width';
 import { TokenSymbol } from '@/enums/Token';
 import { useAddress } from '@/hooks/useAddress';
-import { useBalance } from '@/hooks/useBalance';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useWallet } from '@/hooks/useWallet';
 import { WalletAddressNumberRecord } from '@/types/Records';
 import { copyToClipboard } from '@/utils/copyToClipboard';
@@ -119,7 +119,7 @@ const DebugItem = ({
 export const DebugInfoSection = () => {
   const { wallets, masterEoaAddress, masterSafeAddress } = useWallet();
   const { instanceAddress, multisigAddress } = useAddress();
-  const { walletBalances } = useBalance();
+  const { walletBalances } = useBalanceContext();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const showModal = useCallback(() => setIsModalOpen(true), []);

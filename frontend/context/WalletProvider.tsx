@@ -8,7 +8,7 @@ import {
   MasterEoa,
   MasterSafe,
   MasterWallets,
-  WalletOwner,
+  WalletOwnerType,
   WalletType,
 } from '@/enums/Wallet';
 import { UsePause } from '@/hooks/usePause';
@@ -34,7 +34,7 @@ const transformMiddlewareWalletResponse = (
 ): MasterWallets => {
   const masterEoa: MasterEoa = {
     address: data.address,
-    owner: WalletOwner.Master,
+    owner: WalletOwnerType.Master,
     type: WalletType.EOA,
   };
 
@@ -42,7 +42,7 @@ const transformMiddlewareWalletResponse = (
     ([middlewareChain, address]) => ({
       address,
       chainId: convertMiddlewareChainToChainId(+middlewareChain),
-      owner: WalletOwner.Master,
+      owner: WalletOwnerType.Master,
       type: WalletType.Safe,
     }),
   );

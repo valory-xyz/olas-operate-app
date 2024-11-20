@@ -4,7 +4,7 @@ import { Provider as MulticallProvider } from 'ethers-multicall';
 import { CHAIN_CONFIG } from '../config/chains';
 
 type Providers = {
-  [chainConfigsKey in keyof typeof CHAIN_CONFIG]: {
+  [chainIdKey in keyof typeof CHAIN_CONFIG]: {
     provider: ethers.providers.JsonRpcProvider;
     multicallProvider: MulticallProvider;
   };

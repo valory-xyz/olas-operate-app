@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { MiddlewareDeploymentStatus } from '@/client';
 import { Pages } from '@/enums/Pages';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useBalance } from '@/hooks/useBalance';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useModals } from '@/hooks/useModals';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
@@ -41,7 +41,7 @@ export const MigrateButton = ({
         : '',
   });
 
-  const { setIsPaused: setIsBalancePollingPaused } = useBalance();
+  const { setIsPaused: setIsBalancePollingPaused } = useBalanceContext();
 
   const { activeStakingContractDetails, isActiveStakingContractDetailsLoaded } =
     useActiveStakingContractInfo();

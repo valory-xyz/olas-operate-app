@@ -7,7 +7,7 @@ import { MiddlewareChain } from '@/client';
 import { SERVICE_REGISTRY_L2_CONTRACT_ADDRESS } from '@/config/olasContracts';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { useAddress } from '@/hooks/useAddress';
-import { useBalance } from '@/hooks/useBalance';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useReward } from '@/hooks/useReward';
 import { useServices } from '@/hooks/useServices';
 import { generateName } from '@/utils/agentName';
@@ -149,7 +149,7 @@ const ServiceAndNftDetails = () => {
 };
 
 export const YourAgentWallet = () => {
-  const { isBalanceLoaded, agentSafeBalance, agentEoaBalance } = useBalance();
+  const { isBalanceLoaded, agentSafeBalance, agentEoaBalance } = useBalanceContext();
   const {
     availableRewardsForEpochEth,
     isEligibleForRewards,

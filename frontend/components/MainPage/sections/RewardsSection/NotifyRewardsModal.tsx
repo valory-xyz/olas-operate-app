@@ -2,7 +2,7 @@ import { Button, Flex, Modal, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useBalance } from '@/hooks/useBalance';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useReward } from '@/hooks/useReward';
 import { useStore } from '@/hooks/useStore';
@@ -20,7 +20,7 @@ const OPERATE_URL = 'https://olas.network/operate?pearl=first-reward';
 
 export const NotifyRewardsModal = () => {
   const { isEligibleForRewards, availableRewardsForEpochEth } = useReward();
-  const { totalOlasBalance } = useBalance();
+  const { totalOlasBalance } = useBalanceContext();
   const { showNotification, store } = useElectronApi();
   const { storeState } = useStore();
 

@@ -1,6 +1,6 @@
 import { Flex, Skeleton, Tag, Typography } from 'antd';
 
-import { useBalance } from '@/hooks/useBalance';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useReward } from '@/hooks/useReward';
 import { balanceFormat } from '@/utils/numberFormatters';
 
@@ -23,7 +23,7 @@ const getFormattedReward = (reward: number | undefined) =>
 
 const DisplayRewards = () => {
   const { availableRewardsForEpochEth, isEligibleForRewards } = useReward();
-  const { isBalanceLoaded } = useBalance();
+  const { isBalanceLoaded } = useBalanceContext();
 
   const reward = getFormattedReward(availableRewardsForEpochEth);
 

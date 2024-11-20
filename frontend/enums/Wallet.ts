@@ -6,7 +6,7 @@ export enum WalletType {
   Safe = 'multisig',
   EOA = 'eoa',
 }
-export enum WalletOwner {
+export enum WalletOwnerType {
   Master = 'master', // user
   Agent = 'agent',
 }
@@ -14,7 +14,7 @@ export enum WalletOwner {
 export type MasterEoa = {
   address: Address;
   type: WalletType.EOA;
-  owner: WalletOwner;
+  owner: WalletOwnerType.Master;
 };
 
 export type MasterSafe = Omit<MasterEoa, 'type'> & {
@@ -22,10 +22,12 @@ export type MasterSafe = Omit<MasterEoa, 'type'> & {
   chainId: ChainId;
 };
 
+export type MasterWallet = MasterEoa | MasterSafe;
+
 export type AgentEoa = {
   address: Address;
   type: WalletType.EOA;
-  owner: WalletOwner.Agent;
+  owner: WalletOwnerType.Agent;
 };
 
 export type AgentSafe = Omit<AgentEoa, 'type'> & {
@@ -33,6 +35,11 @@ export type AgentSafe = Omit<AgentEoa, 'type'> & {
   chainId: ChainId;
 };
 
-export type MasterWallets = (MasterEoa | MasterSafe)[];
-export type AgentWallets = (AgentEoa | AgentSafe)[];
-export type Wallets = (MasterEoa | MasterSafe | AgentEoa | AgentSafe)[];
+export type AgentWallet = AgentEoa | AgentSafe;
+
+export type Wallet = MasterWallet | AgentWallet;
+
+export type MasterWallets = MasterWallet[];
+export type AgentWallets = AgentWallet[];
+
+export type Wallets = Wallet[];

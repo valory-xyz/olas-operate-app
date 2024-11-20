@@ -14,7 +14,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MiddlewareAccountIsSetup } from '@/client';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useBalance } from '@/hooks/useBalance';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 import { useSetup } from '@/hooks/useSetup';
@@ -130,7 +130,7 @@ export const SetupWelcomeLogin = () => {
   const { goto: gotoPage } = usePageState();
 
   const { masterSafeAddress, wallets } = useWallet();
-  const { isBalanceLoaded, masterEoaBalance: eoaBalance } = useBalance();
+  const { isBalanceLoaded, masterEoaBalance: eoaBalance } = useBalanceContext();
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [canNavigate, setCanNavigate] = useState(false);

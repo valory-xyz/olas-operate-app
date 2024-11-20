@@ -2,7 +2,7 @@ import { Flex } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
-import { useBalance } from '@/hooks/useBalance';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
@@ -13,7 +13,7 @@ import { AgentButton } from './AgentButton/AgentButton';
 import { AgentHead } from './AgentHead';
 
 const useSetupTrayIcon = () => {
-  const { isLowBalance } = useBalance();
+  const { lowBalances } = useBalanceContext();
   const { selectedService } = useServices();
   const { deploymentStatus } = useService({
     serviceConfigId: selectedService?.service_config_id,

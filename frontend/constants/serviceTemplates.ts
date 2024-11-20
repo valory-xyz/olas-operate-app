@@ -1,4 +1,4 @@
-import { ServiceTemplate, EnvProvisionType } from '@/client';
+import { EnvProvisionType, ServiceTemplate } from '@/client';
 import { ChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
 
@@ -12,8 +12,8 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
     service_version: 'v0.18.4',
     home_chain_id: ChainId.Gnosis.toString(),
     configurations: {
-      [ChainId.Optimism]: {
-        staking_program_id: StakingProgramId.OptimusAlpha, // default, may be overwritten
+      [ChainId.Gnosis]: {
+        staking_program_id: StakingProgramId.PearlBeta, // default, may be overwritten
         nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
         rpc: 'http://localhost:8545',
         agent_id: 14,
@@ -31,10 +31,10 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
     },
     env_variables: {
       GNOSIS_LEDGER_RPC: {
-        name: "Gnosis ledger RPC",
-        description: "",
-        value: "",
-        provision_type: EnvProvisionType.COMPUTED
+        name: 'Gnosis ledger RPC',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
       },
       // ETHEREUM_LEDGER_RPC: {
       //   name: "Ethereum ledger RPC",
@@ -53,49 +53,49 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
       //   description: "",
       //   value: "",
       //   provision_type: EnvProvisionType.COMPUTED
-      // },      
+      // },
       STAKING_CONTRACT_ADDRESS: {
-        name: "Staking contract address",
-        description: "",
-        value: "",
-        provision_type: EnvProvisionType.COMPUTED
+        name: 'Staking contract address',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
       },
       MECH_ACTIVITY_CHECKER_CONTRACT: {
-        name: "Mech activity checker contract",
-        description: "",
-        value: "",
-        provision_type: EnvProvisionType.COMPUTED
+        name: 'Mech activity checker contract',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
       },
       MECH_CONTRACT_ADDRESS: {
-        name: "Mech contract address",
-        description: "",
-        value: "",
-        provision_type: EnvProvisionType.COMPUTED
+        name: 'Mech contract address',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
       },
       MECH_REQUEST_PRICE: {
-        name: "Mech request price",
-        description: "",
-        value: "",
-        provision_type: EnvProvisionType.COMPUTED
+        name: 'Mech request price',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
       },
       USE_MECH_MARKETPLACE: {
-        name: "Use Mech marketplace",
-        description: "",
-        value: "",
-        provision_type: EnvProvisionType.COMPUTED
+        name: 'Use Mech marketplace',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
       },
       REQUESTER_STAKING_INSTANCE_ADDRESS: {
-        name: "Requester staking instance address",
-        description: "",
-        value: "",
-        provision_type: EnvProvisionType.COMPUTED
+        name: 'Requester staking instance address',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
       },
       PRIORITY_MECH_ADDRESS: {
-        name: "Priority Mech address",
-        description: "",
-        value: "",
-        provision_type: EnvProvisionType.COMPUTED
-      }
+        name: 'Priority Mech address',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
     },
   },
   //   {

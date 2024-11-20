@@ -25,6 +25,12 @@ import { Maybe, Nullable } from '@/types/Util';
 
 export const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 
+export type GetServiceRegistryInfoResponse = {
+  bondValue: number;
+  depositValue: number;
+  serviceState: ServiceRegistryL2ServiceState;
+};
+
 /**
  * Staked agent service class.
  */
@@ -109,11 +115,7 @@ export abstract class StakedAgentService {
     address: Address, // generally masterSafeAddress
     serviceId: number,
     chainId: ChainId,
-  ): Promise<{
-    bondValue: number;
-    depositValue: number;
-    serviceState: ServiceRegistryL2ServiceState;
-  }> => {
+  ): Promise<GetServiceRegistryInfoResponse> => {
     if (!OLAS_CONTRACTS[chainId]) {
       throw new Error('Chain not supported');
     }

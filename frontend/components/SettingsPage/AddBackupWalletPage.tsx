@@ -5,14 +5,14 @@ import { useMemo } from 'react';
 import { MiddlewareChain } from '@/client';
 import { MIN_ETH_BALANCE_THRESHOLDS } from '@/constants/thresholds';
 import { SettingsScreen } from '@/enums/SettingsScreen';
-import { useBalance } from '@/hooks/useBalance';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useSettings } from '@/hooks/useSettings';
 
 import { CardTitle } from '../Card/CardTitle';
 import { CardFlex } from '../styled/CardFlex';
 
 export const AddBackupWalletPage = () => {
-  const { masterEoaBalance: eoaBalance } = useBalance();
+  const { masterEoaBalance: eoaBalance } = useBalanceContext();
   const { goto } = useSettings();
 
   const [form] = Form.useForm();

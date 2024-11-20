@@ -7,7 +7,7 @@ import { CardTitle } from '@/components/Card/CardTitle';
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { Pages } from '@/enums/Pages';
-import { useBalance } from '@/hooks/useBalance';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useWallet } from '@/hooks/useWallet';
@@ -49,7 +49,7 @@ const Address = () => {
 
 const OlasBalance = () => {
   const { masterSafeBalance: safeBalance, totalOlasStakedBalance } =
-    useBalance();
+    useBalanceContext();
   const olasBalances = useMemo(() => {
     return [
       {
@@ -79,7 +79,7 @@ const OlasBalance = () => {
 };
 
 const XdaiBalance = () => {
-  const { masterSafeBalance: safeBalance } = useBalance();
+  const { masterSafeBalance: safeBalance } = useBalanceContext();
 
   return (
     <Flex vertical gap={8}>
@@ -99,7 +99,7 @@ const XdaiBalance = () => {
 
 const Signer = () => {
   const { masterEoaAddress } = useWallet();
-  const { masterEoaBalance: eoaBalance } = useBalance();
+  const { masterEoaBalance: eoaBalance } = useBalanceContext();
 
   return (
     <Flex vertical gap={8}>

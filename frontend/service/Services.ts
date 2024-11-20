@@ -53,13 +53,11 @@ const createService = async ({
   serviceTemplate,
   stakingProgramId,
   useMechMarketplace = false,
-  chainId,
 }: {
   deploy: boolean;
   serviceTemplate: ServiceTemplate;
   stakingProgramId: StakingProgramId;
   useMechMarketplace?: boolean;
-  chainId: ChainId;
 }): Promise<MiddlewareServiceResponse> =>
   fetch(`${BACKEND_URL_V2}/service`, {
     method: 'POST',
@@ -67,12 +65,19 @@ const createService = async ({
       ...serviceTemplate,
       deploy,
       configurations: {
-        [chainId]: {
-          ...serviceTemplate.configurations[ChainId.Optimism],
-          staking_program_id: stakingProgramId,
-          rpc: CHAIN_CONFIG[chainId].rpc,
-          use_mech_marketplace: useMechMarketplace,
-        },
+        ...serviceTemplate.configurations,
+        // overwrite defaults with chain-specific configurations
+        ...Object.entries(serviceTemplate.configurations).reduce(
+          (acc, [chainId, config]) => {
+            acc[+chainId] = {
+              ...config,
+              rpc: CHAIN_CONFIG[+chainId].rpc,
+              staking_program_id: stakingProgramId,
+              use_mech_marketplace: useMechMarketplace,
+            };
+            return acc;
+          },
+        ),
       },
     }),
     headers: { ...CONTENT_TYPE_JSON_UTF8 },

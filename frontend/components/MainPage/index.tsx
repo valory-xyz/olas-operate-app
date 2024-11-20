@@ -1,18 +1,10 @@
 import { QuestionCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Card, Flex } from 'antd';
-import { useEffect } from 'react';
 
 import { Pages } from '@/enums/Pages';
 // import { StakingProgramId } from '@/enums/StakingProgram';
-import { useBalance } from '@/hooks/useBalance';
 // import { useMasterSafe } from '@/hooks/useMasterSafe';
 import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
-import {
-  useStakingContractContext,
-  useStakingContractDetails,
-} from '@/hooks/useStakingContractDetails';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { MainHeader } from './header';
 import { AddFundsSection } from './sections/AddFundsSection';
@@ -26,42 +18,44 @@ import { StakingContractUpdate } from './sections/StakingContractUpdate';
 
 export const Main = () => {
   const { goto } = usePageState();
-  const { backupSafeAddress } = useMasterSafe();
-  const { updateServicesState } = useServices();
-  const {
-    updateBalances,
-    isLoaded: isBalanceLoaded,
-    setIsLoaded: setIsBalanceLoaded,
-  } = useBalance();
-  const { activeStakingProgramId } = useStakingProgram();
+  // const { backupSafeAddress } = useMasterSafe();
+  // const { refetch: updateServicesState } = useServices();
+  // const {
+  //   updateBalances,
+  //   isLoaded: isBalanceLoaded,
+  //   setIsLoaded: setIsBalanceLoaded,
+  // } = useBalanceContext();
+  // const { activeStakingProgramId } = useStakingProgram();
 
-  const { isAllStakingContractDetailsRecordLoaded } =
-    useStakingContractContext();
+  // TODO: reintroduce later,  non critical
+  // const { isAllStakingContractDetailsRecordLoaded } =
+  //   useStakingContractContext();
 
-  const { hasEnoughServiceSlots } = useStakingContractDetails(
-    activeStakingProgramId,
-  );
+  // const { hasEnoughServiceSlots } = useStakingContractDetails(
+  //   activeStakingProgramId,
+  // );
 
-  /**
-   * @todo fix this isLoaded logic
-   */
-  useEffect(() => {
-    if (!isBalanceLoaded) {
-      updateServicesState().then(() => updateBalances());
-      setIsBalanceLoaded(true);
-    }
-  }, [
-    isBalanceLoaded,
-    setIsBalanceLoaded,
-    updateBalances,
-    updateServicesState,
-  ]);
+  // TODO: reintroduce later,  non critical
 
-  const hideMainOlasBalanceTopBorder = [
-    !backupSafeAddress,
-    !!activeStakingProgramId,
-    isAllStakingContractDetailsRecordLoaded && !hasEnoughServiceSlots,
-  ].some((condition) => !!condition);
+  // useEffect(() => {
+  //   if (!isBalanceLoaded) {
+  //     updateServicesState?.().then(() => updateBalances());
+  //     setIsBalanceLoaded(true);
+  //   }
+  // }, [
+  //   isBalanceLoaded,
+  //   setIsBalanceLoaded,
+  //   updateBalances,
+  //   updateServicesState,
+  // ]);
+
+  // TODO: reintroduce later,  non critical
+
+  // const hideMainOlasBalanceTopBorder = [
+  //   !backupSafeAddress, // TODO: update this condition to check backup safe relative to selectedService
+  //   activeStakingProgramId === StakingProgramId.Alpha,
+  //   isAllStakingContractDetailsRecordLoaded && !hasEnoughServiceSlots,
+  // ].some((condition) => !!condition);
 
   return (
     <Card

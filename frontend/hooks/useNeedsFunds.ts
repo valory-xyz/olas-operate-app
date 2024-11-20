@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
 
-import { useBalance } from './useBalance';
+import { useBalanceContext } from './useBalanceContext';
 import { useServiceTemplates } from './useServiceTemplates';
 import { useStore } from './useStore';
 
@@ -22,7 +22,7 @@ export const useNeedsFunds = () => {
     isBalanceLoaded,
     masterSafeBalance: safeBalance,
     totalOlasStakedBalance,
-  } = useBalance();
+  } = useBalanceContext();
 
   const serviceFundRequirements = useMemo(() => {
     const gasEstimate =

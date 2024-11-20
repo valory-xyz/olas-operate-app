@@ -3,9 +3,11 @@ import { useMemo } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { WalletOwnerType, WalletType } from '@/enums/Wallet';
 import { Address } from '@/types/Address';
 
 import { useServices } from './useServices';
+import { useWallet } from './useWallet';
 
 type ServiceChainIdAddressRecord = {
   [chainId: number]: {
@@ -24,6 +26,7 @@ export const useService = ({
 }) => {
   const { services, isFetched: isLoaded } = useServices();
   const queryClient = useQueryClient();
+  const { wallets } = useWallet();
 
   const service = useMemo(() => {
     return services?.find(
@@ -58,6 +61,25 @@ export const useService = ({
     return addressesByChainId;
   }, [service]);
 
+  const flatAddresses = useMemo(() => {
+    return Object.values(addresses).reduce((acc, { agentSafe, agentEoas }) => {
+      if (agentSafe) acc.push(agentSafe);
+      if (agentEoas) acc.push(...agentEoas);
+      return acc;
+    }, [] as Address[]);
+  }, [addresses]);
+
+  const masterSafes = useMemo(() => {
+    return (
+      wallets?.filter(
+        (wallet) =>
+          flatAddresses.includes(wallet.address) &&
+          wallet.owner === WalletOwnerType.Master &&
+          wallet.type === WalletType.Safe,
+      ) ?? []
+    );
+  }, [flatAddresses, wallets]);
+
   /**
    * Overrides the deployment status of the service in the cache.
    * @note Overwrite is only temporary if ServicesContext is polling
@@ -75,9 +97,11 @@ export const useService = ({
   return {
     service,
     addresses,
+    flatAddresses,
     isLoaded,
     deploymentStatus,
     setDeploymentStatus,
+    masterSafes,
   };
 };
 

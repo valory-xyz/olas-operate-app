@@ -23,8 +23,10 @@ export type NativeTokenConfig = {
   decimals: number;
 };
 
+export type TokenConfig = Erc20TokenConfig | NativeTokenConfig;
+
 export type ChainTokenConfig = {
-  [tokenSymbol: string]: Erc20TokenConfig | NativeTokenConfig;
+  [tokenSymbol: string]: TokenConfig;
 };
 
 export const GNOSIS_TOKEN_CONFIG: ChainTokenConfig = {

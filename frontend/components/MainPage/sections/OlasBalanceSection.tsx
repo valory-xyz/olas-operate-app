@@ -5,7 +5,7 @@ import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 // import { Pages } from '@/enums/PageState';
-import { useBalance } from '@/hooks/useBalance';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 // import { usePageState } from '@/hooks/usePageState';
 import { balanceFormat } from '@/utils/numberFormatters';
 
@@ -22,7 +22,7 @@ type MainOlasBalanceProps = { isBorderTopVisible?: boolean };
 export const MainOlasBalance = ({
   isBorderTopVisible = true,
 }: MainOlasBalanceProps) => {
-  const { isBalanceLoaded, totalOlasBalance } = useBalance();
+  const { isLoaded: isBalanceLoaded, totalOlasBalance } = useBalanceContext();
   // const { goto } = usePageState();
 
   const balance = useMemo(() => {

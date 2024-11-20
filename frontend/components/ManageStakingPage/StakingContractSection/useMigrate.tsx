@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useBalance } from '@/hooks/useBalance';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { useServices } from '@/hooks/useServices';
 import { useServiceTemplates } from '@/hooks/useServiceTemplates';
@@ -46,7 +46,7 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
     masterSafeBalance: safeBalance,
     totalOlasStakedBalance,
     isLowBalance,
-  } = useBalance();
+  } = useBalanceContext();
   const { activeStakingProgramId, activeStakingProgramMeta } =
     useStakingProgram();
   const { needsInitialFunding } = useNeedsFunds();

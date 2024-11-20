@@ -1,5 +1,4 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Maybe } from 'graphql/jsutils/Maybe';
 import { createContext, PropsWithChildren, useCallback } from 'react';
 
 import { INITIAL_DEFAULT_STAKING_PROGRAM_IDS } from '@/config/stakingPrograms';
@@ -8,7 +7,7 @@ import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useServiceId } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
-import { Nullable } from '@/types/Util';
+import { Maybe, Nullable } from '@/types/Util';
 
 export const StakingProgramContext = createContext<{
   isActiveStakingProgramLoaded: boolean;
