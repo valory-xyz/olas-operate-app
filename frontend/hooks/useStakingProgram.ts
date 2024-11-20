@@ -13,7 +13,7 @@ import { useServices } from './useServices';
 /**
  * Hook to get the active staking program and its metadata.
  */
-export const useStakingPrograms = () => {
+export const useStakingProgram = () => {
   const { isActiveStakingProgramsLoaded, activeStakingProgramId } = useContext(
     StakingProgramsContext,
   );

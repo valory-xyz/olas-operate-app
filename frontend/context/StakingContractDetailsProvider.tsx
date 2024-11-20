@@ -15,7 +15,7 @@ import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useServiceId } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
-import { useStakingPrograms } from '@/hooks/useStakingPrograms';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { StakingContractDetails } from '@/types/Autonolas';
 
 import { StakingProgramsContext } from './StakingProgramProvider';
@@ -24,7 +24,7 @@ import { StakingProgramsContext } from './StakingProgramProvider';
  * hook to get all staking contract details
  */
 const useAllStakingContractDetails = () => {
-  const { allStakingProgramIds } = useStakingPrograms();
+  const { allStakingProgramIds } = useStakingProgram();
   const { selectedAgentConfig } = useServices();
   const { serviceApi, homeChainId } = selectedAgentConfig;
 

@@ -45,7 +45,6 @@ export const useActiveStakingContractInfo = () => {
     };
   }
 
-  // first active staking contract
   const {
     serviceStakingState,
     serviceStakingStartTime,

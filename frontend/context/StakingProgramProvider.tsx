@@ -32,7 +32,7 @@ const useGetActiveStakingProgramId = () => {
   const response = useQuery({
     queryKey: REACT_QUERY_KEYS.STAKING_PROGRAM_KEY(homeChainId, serviceId!),
     queryFn: async () => {
-      const response = await serviceApi.getCurrentStakingProgramsByServiceId(
+      const response = await serviceApi.getCurrentStakingProgramByServiceId(
         serviceId!,
         homeChainId,
       );
@@ -64,7 +64,7 @@ const useGetActiveStakingProgramId = () => {
  * It does so by checking if the current service is staked, and if so, which staking program it is staked in.
  * It also provides a method to update the active staking program id in state.
  */
-export const StakingProgramsProvider = ({ children }: PropsWithChildren) => {
+export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
   const { isLoading: isStakingProgramsLoading, data: activeStakingProgramId } =
     useGetActiveStakingProgramId();
 
