@@ -104,7 +104,7 @@ export const StakingContractSection = ({
 
         <StakingContractDetails stakingProgramId={stakingProgramId} />
         <a
-          href={`${EXPLORER_URL[MiddlewareChain.OPTIMISM]}/address/${activeStakingProgramAddress}`}
+          href={`${EXPLORER_URL[]}/address/${activeStakingProgramAddress}`}
           target="_blank"
         >
           View contract details {UNICODE_SYMBOLS.EXTERNAL_LINK}
