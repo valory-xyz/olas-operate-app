@@ -5,6 +5,8 @@ import { MiddlewareDeploymentStatus } from '@/client';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useStakingContractDetails } from '@/hooks/useStakingContractDetails';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { assertRequired } from '@/types/Util';
 
 import {
   CannotStartAgentDueToUnexpectedError,
@@ -17,12 +19,22 @@ import { AgentStoppingButton } from './AgentStoppingButton';
 
 export const AgentButton = () => {
   const { selectedService } = useServices();
+  const { activeStakingProgramId } = useStakingProgram();
+
   const {
     service,
     deploymentStatus: serviceStatus,
     isLoaded,
   } = useService({ serviceConfigId: selectedService?.service_config_id });
-  const { isEligibleForStaking, isAgentEvicted } = useStakingContractDetails();
+
+  assertRequired(
+    activeStakingProgramId,
+    'Active staking program ID is required',
+  );
+
+  const { isEligibleForStaking, isAgentEvicted } = useStakingContractDetails(
+    activeStakingProgramId,
+  );
 
   return useMemo(() => {
     if (!isLoaded) {
