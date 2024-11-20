@@ -13,10 +13,12 @@ const INITIAL_DEFAULT_STAKING_PROGRAM_ID = StakingProgramId.PearlBeta;
 
 export const StakingProgramContext = createContext<{
   isActiveStakingProgramLoaded: boolean;
+  initialDefaultStakingProgramId: StakingProgramId;
   activeStakingProgramId: Maybe<StakingProgramId>;
 }>({
   isActiveStakingProgramLoaded: false,
   activeStakingProgramId: null,
+  initialDefaultStakingProgramId: INITIAL_DEFAULT_STAKING_PROGRAM_ID,
 });
 
 /**
@@ -74,6 +76,7 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
         isActiveStakingProgramLoaded:
           !isStakingProgramsLoading && !!activeStakingProgramId,
         activeStakingProgramId,
+        initialDefaultStakingProgramId: INITIAL_DEFAULT_STAKING_PROGRAM_ID,
       }}
     >
       {children}

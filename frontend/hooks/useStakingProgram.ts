@@ -14,9 +14,11 @@ import { useServices } from './useServices';
  * Hook to get the active staking program and its metadata.
  */
 export const useStakingProgram = () => {
-  const { isActiveStakingProgramLoaded, activeStakingProgramId } = useContext(
-    StakingProgramContext,
-  );
+  const {
+    isActiveStakingProgramLoaded,
+    activeStakingProgramId,
+    initialDefaultStakingProgramId,
+  } = useContext(StakingProgramContext);
   const { selectedAgentConfig } = useServices();
   const { homeChainId } = selectedAgentConfig;
 
@@ -74,6 +76,9 @@ export const useStakingProgram = () => {
   }, [allStakingProgramNameAddressPair, activeStakingProgramId]);
 
   return {
+    initialDefaultStakingProgramId,
+
+    // active staking program
     isActiveStakingProgramLoaded,
     activeStakingProgramId,
     activeStakingProgramAddress,
