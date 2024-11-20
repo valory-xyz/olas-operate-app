@@ -14,7 +14,7 @@ import { useServices } from './useServices';
  * Hook to get the active staking program and its metadata.
  */
 export const useStakingProgram = () => {
-  const { isActiveStakingProgramsLoaded, activeStakingProgramId } = useContext(
+  const { isActiveStakingProgramLoaded, activeStakingProgramId } = useContext(
     StakingProgramContext,
   );
   const { selectedAgentConfig } = useServices();
@@ -23,8 +23,8 @@ export const useStakingProgram = () => {
   const allStakingProgramsKeys = Object.keys(STAKING_PROGRAMS[homeChainId]);
   const allStakingProgramNameAddressPair = STAKING_PROGRAM_ADDRESS[homeChainId];
 
-  const activeStakingProgramsMeta = useMemo(() => {
-    if (!isActiveStakingProgramsLoaded) return null;
+  const activeStakingProgramMeta = useMemo(() => {
+    if (!isActiveStakingProgramLoaded) return null;
     if (!activeStakingProgramId) return null;
     if (activeStakingProgramId.length === 0) return null;
 
@@ -39,12 +39,12 @@ export const useStakingProgram = () => {
     );
   }, [
     homeChainId,
-    isActiveStakingProgramsLoaded,
+    isActiveStakingProgramLoaded,
     allStakingProgramsKeys,
     activeStakingProgramId,
   ]);
 
-  const activeStakingProgramsAddress = useMemo(() => {
+  const activeStakingProgramAddress = useMemo(() => {
     if (!activeStakingProgramId) return null;
     if (activeStakingProgramId.length === 0) return null;
 
@@ -62,10 +62,10 @@ export const useStakingProgram = () => {
   }, [allStakingProgramNameAddressPair, activeStakingProgramId]);
 
   return {
-    isActiveStakingProgramsLoaded,
+    isActiveStakingProgramLoaded,
     activeStakingProgramId,
-    activeStakingProgramsAddress,
-    activeStakingProgramsMeta,
+    activeStakingProgramAddress,
+    activeStakingProgramMeta,
 
     // all staking programs
     allStakingProgramIds: Object.keys(allStakingProgramNameAddressPair),

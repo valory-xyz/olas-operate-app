@@ -12,10 +12,10 @@ import { Nullable } from '@/types/Util';
 const INITIAL_DEFAULT_STAKING_PROGRAM_ID = StakingProgramId.PearlBeta;
 
 export const StakingProgramContext = createContext<{
-  isActiveStakingProgramsLoaded: boolean;
+  isActiveStakingProgramLoaded: boolean;
   activeStakingProgramId: Maybe<StakingProgramId>;
 }>({
-  isActiveStakingProgramsLoaded: false,
+  isActiveStakingProgramLoaded: false,
   activeStakingProgramId: null,
 });
 
@@ -60,7 +60,7 @@ const useGetActiveStakingProgramId = () => {
 };
 
 /**
- * context provider responsible for determining the all active staking programs.
+ * context provider responsible for determining the current active staking programs.
  * It does so by checking if the current service is staked, and if so, which staking program it is staked in.
  * It also provides a method to update the active staking program id in state.
  */
@@ -71,7 +71,7 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
   return (
     <StakingProgramContext.Provider
       value={{
-        isActiveStakingProgramsLoaded:
+        isActiveStakingProgramLoaded:
           !isStakingProgramsLoading && !!activeStakingProgramId,
         activeStakingProgramId,
       }}
