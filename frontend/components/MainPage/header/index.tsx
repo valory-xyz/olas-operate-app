@@ -47,6 +47,7 @@ export const MainHeader = () => {
   const { isActiveStakingProgramLoaded } = useStakingProgram();
 
   useSetupTrayIcon();
+  // TODO: support loading state
 
   return (
     <Flex justify="start" align="center" gap={10}>
