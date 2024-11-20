@@ -3,11 +3,8 @@ import { useMemo } from 'react';
 
 import { MiddlewareChain } from '@/client';
 import { CardSection } from '@/components/styled/CardSection';
-import { SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES } from '@/config/olasContracts';
-import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { EXPLORER_URL } from '@/constants/urls';
-import { DEFAULT_STAKING_PROGRAM_ID } from '@/context/StakingProgramProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { StakingProgramStatus } from '@/enums/StakingProgramStatus';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -26,18 +23,14 @@ type StakingContractSectionProps = { stakingProgramId: StakingProgramId };
 export const StakingContractSection = ({
   stakingProgramId,
 }: StakingContractSectionProps) => {
-  const { activeStakingProgramId } = useStakingProgram();
-
   const { token } = useToken();
-
   const { migrateValidation } = useMigrate(stakingProgramId);
-
-  const stakingContractAddress =
-    SERVICE_STAKING_TOKEN_MECH_USAGE_CONTRACT_ADDRESSES[
-      MiddlewareChain.OPTIMISM
-    ][stakingProgramId];
-
-  const stakingProgramMeta = STAKING_PROGRAM_META[stakingProgramId];
+  const {
+    initialDefaultStakingProgramId,
+    activeStakingProgramId,
+    activeStakingProgramMeta,
+    activeStakingProgramAddress,
+  } = useStakingProgram();
 
   // /**
   //  * Returns `true` if this stakingProgram is active,
@@ -50,19 +43,27 @@ export const StakingContractSection = ({
   // }, [activeStakingProgramId, defaultStakingProgramId, stakingProgramId]);
 
   const contractTagStatus = useMemo(() => {
-    if (activeStakingProgramId === stakingProgramId)
+    if (activeStakingProgramId === stakingProgramId) {
       return StakingProgramStatus.Active;
+    }
 
     // Pearl is not staked, set as Selected if default
-    if (!activeStakingProgramId && stakingProgramId === defaultStakingProgramId)
+    if (
+      !activeStakingProgramId &&
+      stakingProgramId === initialDefaultStakingProgramId
+    ) {
       return StakingProgramStatus.Default;
+    }
 
     // Otherwise, no tag
     return null;
-  }, [activeStakingProgramId, defaultStakingProgramId, stakingProgramId]);
+  }, [
+    activeStakingProgramId,
+    initialDefaultStakingProgramId,
+    stakingProgramId,
+  ]);
 
-  const showMigrateButton =
-    stakingProgramId !== (activeStakingProgramId ?? defaultStakingProgramId);
+  const showMigrateButton = stakingProgramId !== activeStakingProgramId;
 
   const showFundingButton = useMemo(() => {
     if (migrateValidation.canMigrate) return false;
@@ -86,14 +87,14 @@ export const StakingContractSection = ({
       >
         <Flex gap={12}>
           <Title level={5} className="m-0">
-            {`${stakingProgramMeta?.name} contract`}
+            {`${activeStakingProgramMeta?.name} contract`}
           </Title>
           <StakingContractTag status={contractTagStatus} />
         </Flex>
 
         <StakingContractDetails stakingProgramId={stakingProgramId} />
         <a
-          href={`${EXPLORER_URL[MiddlewareChain.OPTIMISM]}/address/${stakingContractAddress}`}
+          href={`${EXPLORER_URL[MiddlewareChain.OPTIMISM]}/address/${activeStakingProgramAddress}`}
           target="_blank"
         >
           View contract details {UNICODE_SYMBOLS.EXTERNAL_LINK}
