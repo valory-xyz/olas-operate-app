@@ -32,17 +32,18 @@ const IdleAgentHead = () => (
 );
 
 export const AgentHead = () => {
-  const { serviceStatus } = useServices();
+  const { selectedService } = useServices();
   const { isEligibleForRewards } = useReward();
+  const status = selectedService?.deploymentStatus;
 
   if (
-    serviceStatus === MiddlewareDeploymentStatus.DEPLOYING ||
-    serviceStatus === MiddlewareDeploymentStatus.STOPPING
+    status === MiddlewareDeploymentStatus.DEPLOYING ||
+    status === MiddlewareDeploymentStatus.STOPPING
   ) {
     return <TransitionalAgentHead />;
   }
 
-  if (serviceStatus === MiddlewareDeploymentStatus.DEPLOYED) {
+  if (status === MiddlewareDeploymentStatus.DEPLOYED) {
     // If the agent is eligible for rewards, agent is idle
     return isEligibleForRewards ? <IdleAgentHead /> : <DeployedAgentHead />;
   }

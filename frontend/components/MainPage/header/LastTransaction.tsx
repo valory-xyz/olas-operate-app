@@ -4,9 +4,11 @@ import styled from 'styled-components';
 import { useInterval } from 'usehooks-ts';
 
 import { MiddlewareChain } from '@/client';
+import { ONE_MINUTE_INTERVAL } from '@/constants/intervals';
 import { EXPLORER_URL } from '@/constants/urls';
 import { useAddress } from '@/hooks/useAddress';
 import { usePageState } from '@/hooks/usePageState';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { getLatestTransaction } from '@/service/Ethers';
 import { TransactionInfo } from '@/types/TransactionInfo';
 import { getTimeAgo } from '@/utils/time';
@@ -22,8 +24,6 @@ const Loader = styled(Skeleton.Input)`
   }
 `;
 
-const POLLING_INTERVAL = 60 * 1000; // 1 minute
-
 /**
  * Displays the last transaction time and link to the transaction on explorer
  * by agent safe.
@@ -31,23 +31,27 @@ const POLLING_INTERVAL = 60 * 1000; // 1 minute
 export const LastTransaction = () => {
   const { isPageLoadedAndOneMinutePassed } = usePageState();
   const { multisigAddress } = useAddress();
+  const { activeStakingProgramMeta } = useStakingProgram();
 
   const [isFetching, setIsFetching] = useState(true);
   const [transaction, setTransaction] = useState<TransactionInfo | null>(null);
 
+  const chainId = activeStakingProgramMeta?.chainId;
+
   const fetchTransaction = useCallback(async () => {
     if (!multisigAddress) return;
+    if (!chainId) return;
 
-    getLatestTransaction(multisigAddress)
+    getLatestTransaction(multisigAddress, chainId)
       .then((tx) => setTransaction(tx))
       .catch((error) =>
         console.error('Failed to get latest transaction', error),
       )
       .finally(() => setIsFetching(false));
-  }, [multisigAddress]);
+  }, [multisigAddress, chainId]);
 
   // Poll for the latest transaction
-  useInterval(() => fetchTransaction(), POLLING_INTERVAL);
+  useInterval(() => fetchTransaction(), ONE_MINUTE_INTERVAL);
 
   // Fetch the latest transaction on mount
   useEffect(() => {
