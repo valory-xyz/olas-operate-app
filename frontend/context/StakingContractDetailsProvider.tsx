@@ -18,7 +18,7 @@ import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { StakingContractDetails } from '@/types/Autonolas';
 
-import { StakingProgramsContext } from './StakingProgramProvider';
+import { StakingProgramContext } from './StakingProgramProvider';
 
 /**
  * hook to get all staking contract details
@@ -134,7 +134,7 @@ export const StakingContractDetailsProvider = ({
   const [isPaused, setIsPaused] = useState(false);
   const serviceId = useServiceId();
 
-  const { activeStakingProgramId } = useContext(StakingProgramsContext);
+  const { activeStakingProgramId } = useContext(StakingProgramContext);
   const {
     data: activeStakingContractDetails,
     isLoading: isActiveStakingContractDetailsLoading,

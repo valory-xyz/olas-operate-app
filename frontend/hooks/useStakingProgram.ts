@@ -5,7 +5,7 @@ import {
   STAKING_PROGRAMS,
   StakingProgramConfig,
 } from '@/config/stakingPrograms';
-import { StakingProgramsContext } from '@/context/StakingProgramProvider';
+import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
 
 import { useServices } from './useServices';
@@ -15,7 +15,7 @@ import { useServices } from './useServices';
  */
 export const useStakingProgram = () => {
   const { isActiveStakingProgramsLoaded, activeStakingProgramId } = useContext(
-    StakingProgramsContext,
+    StakingProgramContext,
   );
   const { selectedAgentConfig } = useServices();
   const { homeChainId } = selectedAgentConfig;
