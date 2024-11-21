@@ -234,7 +234,7 @@ export const SetupEoaFunding = () => {
     goto(SetupScreen.SetupCreateSafe);
   }, 5000);
 
-  const eoaBalance = walletBalances.find((e) => e.isNative);
+  const eoaBalance = walletBalances.find((e) => e.isNative); // TODO: ensure we pull correct native with chainId when implementing multi-chain
   const isFunded =
     eoaBalance?.chainId === ChainId.Gnosis &&
     eoaBalance.balance >=
