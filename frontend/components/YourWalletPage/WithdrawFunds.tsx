@@ -51,11 +51,10 @@ export const WithdrawFunds = () => {
       return;
     }
 
+    setIsWithdrawalLoading(true);
     message.loading('Withdrawal pending. It may take a few minutes.');
 
     try {
-      setIsWithdrawalLoading(true);
-
       const response = await ServicesService.withdrawBalance({
         withdrawAddress: withdrawAddress as Address,
         serviceHash: serviceHash,
@@ -68,13 +67,15 @@ export const WithdrawFunds = () => {
 
         // refetch and keep up to date
         await refetchDetails();
+
+        // Close modal after withdrawal is successful
+        handleCancel();
       }
     } catch (error) {
       message.error('Failed to withdraw funds. Please try again.');
       console.error(error);
     } finally {
       setIsWithdrawalLoading(false);
-      handleCancel(); // Close modal after withdrawal
     }
   }, [withdrawAddress, serviceHash, handleCancel, refetchDetails]);
 
