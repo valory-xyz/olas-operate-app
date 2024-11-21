@@ -19,6 +19,43 @@ const { Text } = Typography;
 const minDurationMessage =
   "You have not reached the minimum duration of staking. Keep running your agent and you'll be able to withdraw in";
 
+const ServiceNotRunning = () => (
+  <div className="mt-8">
+    <InfoCircleOutlined style={{ color: COLOR.TEXT_LIGHT }} />
+    &nbsp;
+    <Text className="text-sm text-light">
+      Proceeding with withdrawal will stop your running agent.
+    </Text>
+  </div>
+);
+
+const ToProceedMessage = () => (
+  <>
+    <Text>
+      To proceed, enter the EVM-compatible wallet address where you’d like to
+      receive your funds. Funds will be sent on Gnosis Chain.
+    </Text>
+
+    <CustomAlert
+      type="warning"
+      showIcon
+      message={
+        <Text className="text-sm">
+          Ensure you have access to this wallet to avoid losing assets.
+        </Text>
+      }
+    />
+  </>
+);
+
+const AfterWithdrawalMessage = () => (
+  <Text className="text-sm text-light">
+    After withdrawal, you won’t be able to run your agent until you fund it with
+    the required amounts again. Some funds may be locked in prediction markets
+    and cannot be withdrawn at this time.
+  </Text>
+);
+
 export const WithdrawFunds = () => {
   const { updateWallets } = useWallet();
   const { updateBalances } = useBalance();
@@ -89,8 +126,8 @@ export const WithdrawFunds = () => {
     }
   }, [withdrawAddress, serviceHash, handleCancel, refetchDetails]);
 
-  const withdrawButton = useMemo(() => {
-    return (
+  const withdrawButton = useMemo(
+    () => (
       <Button
         onClick={showModal}
         block
@@ -99,8 +136,9 @@ export const WithdrawFunds = () => {
       >
         Withdraw all funds
       </Button>
-    );
-  }, [service, isServiceStakedForMinimumDuration, showModal]);
+    ),
+    [service, isServiceStakedForMinimumDuration, showModal],
+  );
 
   return (
     <>
@@ -119,15 +157,7 @@ export const WithdrawFunds = () => {
         </Tooltip>
       )}
 
-      {!isServiceNotRunning && (
-        <div className="mt-8">
-          <InfoCircleOutlined style={{ color: COLOR.TEXT_LIGHT }} />
-          &nbsp;
-          <Text className="text-sm text-light">
-            Proceeding with withdrawal will stop your running agent.
-          </Text>
-        </div>
-      )}
+      {!isServiceNotRunning && <ServiceNotRunning />}
 
       <Modal
         title="Withdraw Funds"
@@ -138,20 +168,7 @@ export const WithdrawFunds = () => {
         destroyOnClose
       >
         <Flex vertical gap={16} style={{ marginTop: 12 }}>
-          <Text>
-            To proceed, enter the EVM-compatible wallet address where you’d like
-            to receive your funds. Funds will be sent on Gnosis Chain.
-          </Text>
-
-          <CustomAlert
-            type="warning"
-            showIcon
-            message={
-              <Text className="text-sm">
-                Ensure you have access to this wallet to avoid losing assets.
-              </Text>
-            }
-          />
+          <ToProceedMessage />
 
           <Input
             value={withdrawAddress}
@@ -173,11 +190,7 @@ export const WithdrawFunds = () => {
             Proceed
           </Button>
 
-          <Text className="text-sm text-light">
-            After withdrawal, you won’t be able to run your agent until you fund
-            it with the required amounts again. Some funds may be locked in
-            prediction markets and cannot be withdrawn at this time.
-          </Text>
+          <AfterWithdrawalMessage />
         </Flex>
       </Modal>
     </>

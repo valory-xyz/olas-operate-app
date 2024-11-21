@@ -1,5 +1,7 @@
 import { isNumber } from 'lodash';
 
+import { NA } from '@/constants/symbols';
+
 const MILLISECONDS_IN_A_DAY = 24 * 3600 * 1000;
 const MILLISECONDS_IN_AN_HOUR = 3600 * 1000;
 const MILLISECONDS_IN_A_MINUTE = 60 * 1000;
@@ -77,7 +79,7 @@ export const formatToShortDateTime = (timeInMs?: number) => {
 export const formatTimeRemainingFromNow = (
   futureTimestampInSeconds: number,
 ) => {
-  if (!isNumber(futureTimestampInSeconds)) return '--';
+  if (!isNumber(futureTimestampInSeconds)) return NA;
 
   const now = new Date().getTime();
   const targetTime = futureTimestampInSeconds * 1000 + Date.now();
