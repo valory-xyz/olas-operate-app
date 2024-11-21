@@ -236,7 +236,7 @@ export const SetupEoaFunding = () => {
 
   const eoaBalance = walletBalances.find((e) => e.isNative);
   const isFunded =
-    eoaBalance?.chainId === ChainId.Ethereum &&
+    eoaBalance?.chainId === ChainId.Gnosis &&
     eoaBalance.balance >=
       MIN_ETH_BALANCE_THRESHOLDS[ChainId.Gnosis].safeCreation;
 
