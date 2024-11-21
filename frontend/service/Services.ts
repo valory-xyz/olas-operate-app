@@ -2,6 +2,7 @@ import { Deployment, Service, ServiceHash, ServiceTemplate } from '@/client';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL } from '@/constants/urls';
 import { StakingProgramId } from '@/enums/StakingProgram';
+import { Address } from '@/types/Address';
 
 /**
  * Get a single service from the backend
@@ -160,6 +161,34 @@ const getDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
     throw new Error('Failed to get deployment');
   });
 
+/**
+ * Withdraws the balance of a service
+ *
+ * @param withdrawAddress Address
+ * @param serviceTemplate ServiceTemplate
+ * @returns Promise<Service>
+ */
+export const withdrawBalance = async ({
+  withdrawAddress,
+  serviceHash,
+}: {
+  withdrawAddress: Address;
+  serviceHash: ServiceHash;
+}): Promise<{ error: string | null }> =>
+  new Promise((resolve, reject) =>
+    fetch(`${BACKEND_URL}/services/${serviceHash}/onchain/withdraw`, {
+      method: 'POST',
+      body: JSON.stringify({ withdrawal_address: withdrawAddress }),
+      headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    }).then((response) => {
+      if (response.ok) {
+        resolve(response.json());
+      } else {
+        reject('Failed to withdraw balance');
+      }
+    }),
+  );
+
 export const ServicesService = {
   getService,
   getServices,
@@ -171,4 +200,5 @@ export const ServicesService = {
   // startDeployment,
   stopDeployment,
   // deleteDeployment,
+  withdrawBalance,
 };
