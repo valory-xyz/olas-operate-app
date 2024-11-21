@@ -34,12 +34,11 @@ export const AgentRunningButton = () => {
 
   const { selectedService, isFetched: isLoaded, setPaused } = useServices();
 
-  const { service, setDeploymentStatus } = useService({
-    serviceConfigId:
-      isLoaded && selectedService?.service_config_id
-        ? selectedService.service_config_id
-        : '',
-  });
+  const serviceConfigId =
+    isLoaded && selectedService?.service_config_id
+      ? selectedService.service_config_id
+      : '';
+  const { service, setDeploymentStatus } = useService({ serviceConfigId });
 
   const handlePause = useCallback(async () => {
     if (!service) return;
@@ -76,7 +75,8 @@ export const AgentRunningButton = () => {
             Agent is working
           </Paragraph>
         )}
-        <LastTransaction />
+
+        <LastTransaction serviceConfigId={serviceConfigId} />
       </Flex>
     </Flex>
   );

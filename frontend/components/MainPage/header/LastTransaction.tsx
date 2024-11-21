@@ -6,11 +6,12 @@ import { useInterval } from 'usehooks-ts';
 import { MiddlewareChain } from '@/client';
 import { ONE_MINUTE_INTERVAL } from '@/constants/intervals';
 import { EXPLORER_URL } from '@/constants/urls';
-import { useAddress } from '@/hooks/useAddress';
 import { usePageState } from '@/hooks/usePageState';
+import { useService } from '@/hooks/useService';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { getLatestTransaction } from '@/service/Ethers';
 import { TransactionInfo } from '@/types/TransactionInfo';
+import { Optional } from '@/types/Util';
 import { getTimeAgo } from '@/utils/time';
 
 const { Text } = Typography;
@@ -24,20 +25,22 @@ const Loader = styled(Skeleton.Input)`
   }
 `;
 
+type LastTransactionProps = { serviceConfigId: Optional<string> };
+
 /**
  * Displays the last transaction time and link to the transaction on explorer
  * by agent safe.
  */
-// TODO: loop over all supported chains 
-export const LastTransaction = () => {
+export const LastTransaction = ({ serviceConfigId }: LastTransactionProps) => {
   const { isPageLoadedAndOneMinutePassed } = usePageState();
-  const { multisigAddress } = useAddress();
   const { activeStakingProgramMeta } = useStakingProgram();
+  const { service } = useService({ serviceConfigId });
+  const multisigAddress =
+    service?.chain_configs[service?.home_chain_id].chain_data.multisig;
+  const chainId = activeStakingProgramMeta?.chainId;
 
   const [isFetching, setIsFetching] = useState(true);
   const [transaction, setTransaction] = useState<TransactionInfo | null>(null);
-
-  const chainId = activeStakingProgramMeta?.chainId;
 
   const fetchTransaction = useCallback(async () => {
     if (!multisigAddress) return;
