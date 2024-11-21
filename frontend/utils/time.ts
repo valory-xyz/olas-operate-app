@@ -1,5 +1,9 @@
 import { isNumber } from 'lodash';
 
+const MILLISECONDS_IN_A_DAY = 24 * 3600 * 1000;
+const MILLISECONDS_IN_AN_HOUR = 3600 * 1000;
+const MILLISECONDS_IN_A_MINUTE = 60 * 1000;
+
 export const getTimeAgo = (timestampInSeconds: number) => {
   if (!isNumber(timestampInSeconds)) return null;
 
@@ -64,4 +68,31 @@ export const formatToShortDateTime = (timeInMs?: number) => {
     hour12: true,
     timeZone: 'UTC',
   });
+};
+
+/**
+ * @returns formatted time remaining in the format of 'X days Y hours Z minutes'
+ * @example 1626825600 => '1 day 2 hours 30 minutes'
+ */
+export const formatTimeRemaining = (futureTimestampInSeconds: number) => {
+  if (!isNumber(futureTimestampInSeconds)) return '--';
+
+  const now = new Date().getTime();
+  const targetTime = new Date(futureTimestampInSeconds * 1000).getTime();
+  const timeDifference = targetTime - now;
+
+  if (timeDifference <= 0) return 'Time has passed';
+
+  const days = Math.floor(timeDifference / MILLISECONDS_IN_A_DAY);
+  const hours = Math.floor(
+    (timeDifference % MILLISECONDS_IN_A_DAY) / MILLISECONDS_IN_AN_HOUR,
+  );
+  const minutes = Math.floor(
+    (timeDifference % MILLISECONDS_IN_AN_HOUR) / MILLISECONDS_IN_A_MINUTE,
+  );
+
+  const daysInWords = `${days} day${days !== 1 ? 's' : ''}`;
+  const hoursInWords = `${hours} hour${hours !== 1 ? 's' : ''}`;
+  const minutesInWords = `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  return `${daysInWords} ${hoursInWords} ${minutesInWords}`;
 };
