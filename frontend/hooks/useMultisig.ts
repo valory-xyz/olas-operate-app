@@ -15,14 +15,17 @@ import { Address } from '@/types/Address';
  * @returns multisig owners
  * @note extend with further multisig functions as needed
  */
-export const useMultisig = (safe: Safe) => {
+export const useMultisig = (safe?: Safe) => {
   const {
     data: owners,
     isFetched: ownersIsFetched,
     isPending: ownersIsPending,
-  } = useQuery<Address[]>({
-    queryKey: REACT_QUERY_KEYS.MULTISIG_GET_OWNERS_KEY(safe),
+  } = useQuery<Address[] | null>({
+    queryKey: safe ? REACT_QUERY_KEYS.MULTISIG_GET_OWNERS_KEY(safe) : [],
     queryFn: async () => {
+      if (!safe) {
+        return null;
+      }
       const contract = new Contract(
         safe.address,
         GNOSIS_SAFE_ABI,

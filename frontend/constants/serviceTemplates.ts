@@ -1,9 +1,11 @@
 import { EnvProvisionType, ServiceTemplate } from '@/client';
+import { AgentType } from '@/enums/Agent';
 import { ChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
 
 export const SERVICE_TEMPLATES: ServiceTemplate[] = [
   {
+    agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
     name: 'Trader Agent',
     hash: 'bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u',
     description: 'Trader agent for omen prediction markets',
@@ -15,7 +17,7 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
       [ChainId.Gnosis]: {
         staking_program_id: StakingProgramId.PearlBeta, // default, may be overwritten
         nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
-        rpc: 'http://localhost:8545',
+        rpc: 'http://localhost:8545', // overwritten
         agent_id: 14,
         threshold: 1,
         use_staking: true,

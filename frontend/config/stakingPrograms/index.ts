@@ -5,6 +5,7 @@ import { ChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
+import { MechType } from '../mechs';
 import {
   GNOSIS_STAKING_PROGRAMS,
   GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
@@ -26,6 +27,7 @@ export type StakingProgramConfig = {
     [tokenSymbol: string]: number;
   };
   contract: MulticallContract;
+  mechType?: MechType;
   mech?: MulticallContract;
   activityChecker: MulticallContract;
 };

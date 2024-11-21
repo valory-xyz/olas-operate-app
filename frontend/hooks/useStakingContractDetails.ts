@@ -3,6 +3,7 @@ import { useContext } from 'react';
 
 import { StakingContractDetailsContext } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
+import { StakingState } from '@/types/Autonolas';
 
 import { useServices } from './useServices';
 
@@ -27,10 +28,20 @@ export const useStakingContractContext = () => {
   };
 };
 
+/**
+ * Returns ACTIVE staking contract details
+ * Has staked service speficic information that `useStakingContractDetails` does not have
+
+ * @note requires serviceConfigId once multiple instances are supported
+ */
 export const useActiveStakingContractInfo = () => {
   const {
     activeStakingContractDetails,
     isActiveStakingContractDetailsLoaded: isActiveStakingContractDetailsLoaded,
+    allStakingContractDetailsRecord,
+    refetchActiveStakingContractDetails,
+    isPaused,
+    setIsPaused,
   } = useStakingContractContext();
 
   const { selectedService } = useServices();
@@ -40,8 +51,8 @@ export const useActiveStakingContractInfo = () => {
     return {
       allStakingContractDetailsRecord,
       refetchActiveStakingContractDetails,
-      setIsPaused,
       isPaused,
+      setIsPaused,
     };
   }
 
@@ -54,10 +65,10 @@ export const useActiveStakingContractInfo = () => {
     maxNumServices,
   } = activeStakingContractDetails ?? {};
 
-  const isAgentEvicted = serviceStakingState === 2;
+  const isAgentEvicted = serviceStakingState === StakingState.Evicted;
 
   const isServiceStaked =
-    !!serviceStakingStartTime && serviceStakingState === 1;
+    !!serviceStakingStartTime && serviceStakingState === StakingState.Staked;
 
   const isRewardsAvailable = availableRewards ?? 0 > 0;
 
@@ -102,6 +113,9 @@ export const useActiveStakingContractInfo = () => {
     evictionExpiresAt,
     isActiveStakingContractDetailsLoaded,
     activeStakingContractDetails,
+    hasEnoughRewardsAndSlots,
+    hasEnoughServiceSlots,
+    isRewardsAvailable,
   };
 };
 

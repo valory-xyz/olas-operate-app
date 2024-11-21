@@ -1,5 +1,6 @@
 import { CloseOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Card, Flex, Typography } from 'antd';
+import { isNil } from 'lodash';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
@@ -11,7 +12,9 @@ import { SettingsScreen } from '@/enums/SettingsScreen';
 import { useMultisig } from '@/hooks/useMultisig';
 import { usePageState } from '@/hooks/usePageState';
 import { useSettings } from '@/hooks/useSettings';
-import { useWalletContext } from '@/hooks/useWallet';
+import { useMasterWalletContext } from '@/hooks/useWallet';
+import { Address } from '@/types/Address';
+import { Optional } from '@/types/Util';
 import { truncateAddress } from '@/utils/truncate';
 
 import { CustomAlert } from '../Alert';
@@ -83,15 +86,34 @@ export const Settings = () => {
 };
 
 const SettingsMain = () => {
-  const { wallets } = useWalletContext();
-  const { backupSafeAddress } = useMultisig();
+  const { masterEoa, masterSafes } = useMasterWalletContext();
+
+  const { owners } = useMultisig(
+    masterSafes?.[0], // TODO: all master safes should have the same address, but dirty implementation
+  );
+
   const { goto } = usePageState();
 
-  const truncatedBackupSafeAddress: string | undefined = useMemo(() => {
-    if (backupSafeAddress) {
-      return truncateAddress(backupSafeAddress);
+  const masterSafeBackupAddresses = useMemo<Optional<Address[]>>(() => {
+    if (!owners) return;
+    if (!masterEoa) return;
+
+    // TODO: handle edge cases where there are multiple owners due to middleware failure, or user interaction via safe.global
+    return owners.filter((owner) => owner !== masterEoa.address);
+  }, [owners, masterEoa]);
+
+  const masterSafeBackupAddress = useMemo<Optional<Address>>(() => {
+    if (isNil(masterSafeBackupAddresses)) return;
+    if (!masterSafeBackupAddresses?.[0]) return;
+
+    return masterSafeBackupAddresses[0];
+  }, [masterSafeBackupAddresses]);
+
+  const truncatedBackupSafeAddress: Optional<string> = useMemo(() => {
+    if (masterSafeBackupAddress && masterSafeBackupAddress?.length) {
+      return truncateAddress(masterSafeBackupAddress);
     }
-  }, [backupSafeAddress]);
+  }, [masterSafeBackupAddress]);
 
   return (
     <Card
@@ -127,16 +149,16 @@ const SettingsMain = () => {
       {/* Wallet backup */}
       <CardSection
         padding="24px"
-        borderbottom={backupSafeAddress ? 'true' : 'false'}
+        borderbottom={masterSafeBackupAddress ? 'true' : 'false'}
         vertical
         gap={8}
       >
         <Text strong>Backup wallet</Text>
-        {backupSafeAddress ? (
+        {masterSafeBackupAddress ? (
           <Link
             type="link"
             target="_blank"
-            href={`${EXPLORER_URL[MiddlewareChain.OPTIMISM]}/address/${backupSafeAddress}`}
+            href={`${EXPLORER_URL[MiddlewareChain.GNOSIS]}/address/${masterSafeBackupAddress}`} // TODO: dynamic by selected agent type's home_chain_id
           >
             {truncatedBackupSafeAddress} {UNICODE_SYMBOLS.EXTERNAL_LINK}
           </Link>

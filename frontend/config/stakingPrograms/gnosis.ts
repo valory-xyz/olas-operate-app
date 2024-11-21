@@ -34,6 +34,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       [TokenSymbol.OLAS]: 20,
     },
+    mechType: MechType.Agent,
     mech: MECHS[ChainId.Gnosis][MechType.Agent].contract,
     activityChecker: ACTIVITY_CHECKERS[ChainId.Gnosis][MechType.Agent],
     contract: new MulticallContract(
@@ -48,6 +49,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       [TokenSymbol.OLAS]: 40,
     },
+    mechType: MechType.Agent,
     mech: MECHS[ChainId.Gnosis][MechType.Agent].contract,
     activityChecker: ACTIVITY_CHECKERS[ChainId.Gnosis][MechType.Agent],
     contract: new MulticallContract(
@@ -62,6 +64,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       [TokenSymbol.OLAS]: 100,
     },
+    mechType: MechType.Agent,
     mech: MECHS[ChainId.Gnosis][MechType.Agent].contract,
     activityChecker: ACTIVITY_CHECKERS[ChainId.Gnosis][MechType.Agent],
     contract: new MulticallContract(
@@ -76,6 +79,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       [TokenSymbol.OLAS]: 100,
     },
+    mechType: MechType.Agent,
     mech: MECHS[ChainId.Gnosis][MechType.Agent].contract,
     activityChecker: ACTIVITY_CHECKERS[ChainId.Gnosis][MechType.Agent],
     contract: new MulticallContract(
@@ -90,6 +94,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       [TokenSymbol.OLAS]: 100,
     },
+    mechType: MechType.Agent,
     mech: MECHS[ChainId.Gnosis][MechType.Agent].contract,
     activityChecker: ACTIVITY_CHECKERS[ChainId.Gnosis][MechType.Agent],
     contract: new MulticallContract(
@@ -104,6 +109,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       [TokenSymbol.OLAS]: 10,
     },
+    mechType: MechType.Agent,
     mech: MECHS[ChainId.Gnosis][MechType.Agent].contract,
     activityChecker: ACTIVITY_CHECKERS[ChainId.Gnosis][MechType.Agent],
     contract: new MulticallContract(
@@ -118,6 +124,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       [TokenSymbol.OLAS]: 40,
     },
+    mechType: MechType.Marketplace,
     mech: MECHS[ChainId.Gnosis][MechType.Marketplace].contract,
     activityChecker: ACTIVITY_CHECKERS[ChainId.Gnosis][MechType.Marketplace],
     contract: new MulticallContract(

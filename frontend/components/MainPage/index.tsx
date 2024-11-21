@@ -9,7 +9,6 @@ import { usePageState } from '@/hooks/usePageState';
 import { MainHeader } from './header';
 import { AddFundsSection } from './sections/AddFundsSection';
 import { AlertSections } from './sections/AlertSections';
-import { GasBalanceSection } from './sections/GasBalanceSection';
 import { KeepAgentRunningSection } from './sections/KeepAgentRunningSection';
 import { MainNeedsFunds } from './sections/NeedsFundsSection';
 import { MainOlasBalance } from './sections/OlasBalanceSection';
@@ -87,11 +86,11 @@ export const Main = () => {
       <Flex vertical>
         <AlertSections />
         <MainOlasBalance isBorderTopVisible={false} />
-        <MainOlasBalance isBorderTopVisible={!hideMainOlasBalanceTopBorder} />
+        {/* <MainOlasBalance isBorderTopVisible={!hideMainOlasBalanceTopBorder} /> */}
         <RewardsSection />
         <KeepAgentRunningSection />
         <StakingContractUpdate />
-        <GasBalanceSection />
+        {/* <GasBalanceSection /> */}
         <MainNeedsFunds />
         <AddFundsSection />
       </Flex>

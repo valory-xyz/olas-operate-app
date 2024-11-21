@@ -2,7 +2,9 @@ import { Button, ButtonProps } from 'antd';
 import { useCallback, useMemo } from 'react';
 
 import { MiddlewareChain, MiddlewareDeploymentStatus } from '@/client';
+import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { LOW_MASTER_SAFE_BALANCE } from '@/constants/thresholds';
 import { TokenSymbol } from '@/enums/Token';
 import {
@@ -12,11 +14,9 @@ import {
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
-import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import {
   useActiveStakingContractInfo,
   useStakingContractContext,
-  useStakingContractDetails,
 } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { useStore } from '@/hooks/useStore';
@@ -26,7 +26,7 @@ import { WalletService } from '@/service/Wallet';
 import { delayInSeconds } from '@/utils/delay';
 
 /** Button used to start / deploy the agent */
-export const AgentNotRunningButton = (serviceConfigId: string) => {
+export const AgentNotRunningButton = () => {
   const { masterWallets: wallets } = useMasterWalletContext();
   const {
     selectedService,
@@ -38,7 +38,6 @@ export const AgentNotRunningButton = (serviceConfigId: string) => {
     serviceConfigId:
       isLoaded && selectedService ? selectedService?.service_config_id : '',
   });
-  const { serviceTemplate } = useServiceTemplates();
   const { showNotification } = useElectronApi();
   const {
     setIsPaused: setIsBalancePollingPaused,
@@ -46,8 +45,9 @@ export const AgentNotRunningButton = (serviceConfigId: string) => {
     totalEthBalance,
     updateBalances,
   } = useBalanceContext();
-  const { serviceSafeBalances, isLowBalance } =
-    useServiceBalances(serviceConfigId);
+  const { serviceSafeBalances, isLowBalance } = useServiceBalances(
+    selectedService?.service_config_id,
+  );
   const { storeState } = useStore();
   const {
     isAllStakingContractDetailsRecordLoaded,
@@ -57,12 +57,11 @@ export const AgentNotRunningButton = (serviceConfigId: string) => {
   const { activeStakingProgramId } = useStakingProgram();
   const { isEligibleForStaking, isAgentEvicted, isServiceStaked } =
     useActiveStakingContractInfo();
-  const { hasEnoughServiceSlots } = useStakingContractDetails(
-    activeStakingProgramId,
-  );
+  const { hasEnoughServiceSlots } = useActiveStakingContractInfo();
 
   const requiredStakedOlas =
     service &&
+    activeStakingProgramId &&
     STAKING_PROGRAMS[service.home_chain_id][activeStakingProgramId]
       ?.stakingRequirements[TokenSymbol.OLAS];
 
@@ -102,15 +101,22 @@ export const AgentNotRunningButton = (serviceConfigId: string) => {
   }, [service]);
 
   const deployAndStartService = useCallback(async () => {
-    await ServicesService.createService({
+    if (!activeStakingProgramId) return;
+
+    const middlewareServiceResponse = await ServicesService.createService({
       stakingProgramId: activeStakingProgramId,
-      serviceTemplate,
+      serviceTemplate: SERVICE_TEMPLATES[0], // TODO: support multi-agent, during optimus week
       deploy: true,
-      useMechMarketplace: false,
+      useMechMarketplace:
+        STAKING_PROGRAMS[+SERVICE_TEMPLATES[0].home_chain_id][ // TODO: support multi-agent, during optimus week
+          activeStakingProgramId
+        ].mechType === MechType.Marketplace,
     });
 
-    await ServicesService.startService(serviceConfigId);
-  }, [activeStakingProgramId, serviceTemplate, serviceConfigId]);
+    await ServicesService.startService(
+      middlewareServiceResponse.service_config_id,
+    );
+  }, [activeStakingProgramId]);
 
   const updateStatesSequentially = useCallback(async () => {
     await updateServicesState?.();

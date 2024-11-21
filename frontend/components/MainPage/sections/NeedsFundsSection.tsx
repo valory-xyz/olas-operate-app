@@ -6,6 +6,7 @@ import { CustomAlert } from '@/components/Alert';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
+import { useServices } from '@/hooks/useServices';
 
 import { CardSection } from '../../styled/CardSection';
 
@@ -28,6 +29,9 @@ export const MainNeedsFunds = () => {
     needsInitialFunding,
   } = useNeedsFunds();
 
+  const { selectedAgentConfig } = useServices();
+  const { homeChainId } = selectedAgentConfig;
+
   const electronApi = useElectronApi();
 
   const message: ReactNode = useMemo(
@@ -37,14 +41,14 @@ export const MainNeedsFunds = () => {
         <Flex gap={24}>
           {!hasEnoughOlasForInitialFunding && (
             <div>
-              <FundingValue>{`${UNICODE_SYMBOLS.OLAS}${serviceFundRequirements.olas} OLAS `}</FundingValue>
+              <FundingValue>{`${UNICODE_SYMBOLS.OLAS}${serviceFundRequirements[homeChainId].olas} OLAS `}</FundingValue>
               <span className="text-sm">for staking</span>
             </div>
           )}
           {!hasEnoughEthForInitialFunding && (
             <div>
               <FundingValue>
-                {`$${serviceFundRequirements.eth} XDAI `}
+                {`$${serviceFundRequirements[homeChainId].eth} XDAI `}
               </FundingValue>
               <span className="text-sm">for trading</span>
             </div>
@@ -56,9 +60,10 @@ export const MainNeedsFunds = () => {
       </Flex>
     ),
     [
-      serviceFundRequirements,
-      hasEnoughEthForInitialFunding,
       hasEnoughOlasForInitialFunding,
+      serviceFundRequirements,
+      homeChainId,
+      hasEnoughEthForInitialFunding,
     ],
   );
 

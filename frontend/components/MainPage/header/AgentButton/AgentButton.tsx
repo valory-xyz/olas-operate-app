@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { MiddlewareDeploymentStatus } from '@/client';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
-import { useStakingContractDetails } from '@/hooks/useStakingContractDetails';
+import { useActiveStakingContractInfo } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { assertRequired } from '@/types/Util';
 
@@ -21,20 +21,22 @@ export const AgentButton = () => {
   const { selectedService } = useServices();
   const { activeStakingProgramId } = useStakingProgram();
 
+  const serviceConfigId = selectedService?.service_config_id;
+
   const {
     service,
     deploymentStatus: serviceStatus,
     isLoaded,
-  } = useService({ serviceConfigId: selectedService?.service_config_id });
+  } = useService({ serviceConfigId });
 
   assertRequired(
+    // TODO: review whether this causes agent button to not render
     activeStakingProgramId,
     'Active staking program ID is required',
   );
 
-  const { isEligibleForStaking, isAgentEvicted } = useStakingContractDetails(
-    activeStakingProgramId,
-  );
+  const { isEligibleForStaking, isAgentEvicted } =
+    useActiveStakingContractInfo();
 
   return useMemo(() => {
     if (!isLoaded) {

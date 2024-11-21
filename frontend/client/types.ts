@@ -1,3 +1,4 @@
+import { AgentType } from '@/enums/Agent';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
@@ -70,6 +71,7 @@ export type EnvVariableAttributes = {
 };
 
 export type ServiceTemplate = {
+  agentType: AgentType;
   name: string;
   hash: string;
   description: string;

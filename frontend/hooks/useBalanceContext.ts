@@ -12,20 +12,15 @@ export const useBalanceContext = () => useContext(BalanceContext);
  * @param serviceConfigId
  * @returns
  */
-export const useServiceBalances = (serviceConfigId: string) => {
-  const { flatAddresses, serviceSafes } = useService({
+export const useServiceBalances = (serviceConfigId: string | undefined) => {
+  const { flatAddresses, serviceSafes, serviceEoa } = useService({
     serviceConfigId,
   });
   const { walletBalances, lowBalances, stakedBalances } = useBalanceContext();
 
-  const serviceWalletBalances = useMemo(
-    () =>
-      walletBalances?.filter((balance) =>
-        flatAddresses.includes(balance.walletAddress),
-      ),
-    [flatAddresses, walletBalances],
-  );
-
+  /**
+   * Staked balances, only relevant to safes
+   */
   const serviceStakedBalances = useMemo(
     () =>
       stakedBalances?.filter((balance) =>
@@ -34,16 +29,23 @@ export const useServiceBalances = (serviceConfigId: string) => {
     [flatAddresses, stakedBalances],
   );
 
+  /** Array of cross-chain wallet balances relevant to the service with is considered low */
   const serviceLowBalances = useMemo(
     () => lowBalances?.filter((balance) => balance.walletAddress),
     [lowBalances],
   );
 
+  /**
+   * Boolean indicating if the service has low balances
+   */
   const isLowBalance = useMemo(
     () => serviceLowBalances?.length > 0,
     [serviceLowBalances],
   );
 
+  /**
+   * Cross-chain unstaked balances in service safes
+   */
   const serviceSafeBalances = useMemo<WalletBalanceResult[]>(
     () =>
       walletBalances?.filter((balance) =>
@@ -52,10 +54,32 @@ export const useServiceBalances = (serviceConfigId: string) => {
     [serviceSafes, walletBalances],
   );
 
+  /**
+   * Cross-chain unstaked balances in service eoa (signer)
+   */
+  const serviceEoaBalances = useMemo<WalletBalanceResult[]>(
+    () =>
+      walletBalances?.filter(
+        (balance) => balance.walletAddress === serviceEoa?.address,
+      ),
+    [serviceEoa?.address, walletBalances],
+  );
+
+  /**
+   * Balances i.e. native, erc20, etc
+   * Across all service wallets, including eoa
+   * @note NOT STAKED BALANCES
+   */
+  const serviceWalletBalances = useMemo(
+    () => [...serviceSafeBalances, ...serviceEoaBalances],
+    [serviceEoaBalances, serviceSafeBalances],
+  );
+
   return {
     serviceWalletBalances,
     serviceStakedBalances,
     serviceSafeBalances,
+    serviceEoaBalances,
     serviceLowBalances,
     isLowBalance,
   };
@@ -68,36 +92,18 @@ export const useServiceBalances = (serviceConfigId: string) => {
  */
 export const useMasterBalances = () => {
   const { masterSafes, masterEoa } = useMasterWalletContext();
-  const { walletBalances, lowBalances, stakedBalances } = useBalanceContext();
+  const { walletBalances, lowBalances } = useBalanceContext();
 
-  const masterWalletBalances = useMemo(
-    () =>
-      walletBalances?.filter(
-        (balance) =>
-          masterSafes?.find((safe) => safe.address === balance.walletAddress) ||
-          masterEoa?.address === balance.walletAddress,
-      ),
-    [masterEoa?.address, masterSafes, walletBalances],
-  );
+  // TODO: unused, check only services stake?
+  // const masterStakedBalances = useMemo(
+  //   () =>
+  //     stakedBalances?.filter((balance) =>
+  //       masterSafes?.find((safe) => safe.address === balance.walletAddress),
+  //     ),
+  //   [masterSafes, stakedBalances],
+  // );
 
-  const masterStakedBalances = useMemo(
-    () =>
-      stakedBalances?.filter((balance) =>
-        masterSafes?.find((safe) => safe.address === balance.walletAddress),
-      ),
-    [masterSafes, stakedBalances],
-  );
-
-  const masterLowBalances = useMemo(
-    () => lowBalances?.filter((balance) => balance.walletAddress),
-    [lowBalances],
-  );
-
-  const isLowBalance = useMemo(
-    () => masterLowBalances?.length > 0,
-    [masterLowBalances],
-  );
-  // use flatAddresses for consistency
+  // TODO: use flatAddresses for consistency
   const masterSafeBalances = useMemo<WalletBalanceResult[]>(
     () =>
       walletBalances?.filter((balance) =>
@@ -106,10 +112,42 @@ export const useMasterBalances = () => {
     [masterSafes, walletBalances],
   );
 
+  const masterEoaBalances = useMemo<WalletBalanceResult[]>(
+    () =>
+      walletBalances?.filter(
+        (balance) => balance.walletAddress === masterEoa?.address,
+      ),
+    [masterEoa?.address, walletBalances],
+  );
+
+  /**
+   * Unstaked balances across master safes and eoas
+   */
+  const masterWalletBalances = useMemo(
+    () => [...masterSafeBalances, ...masterEoaBalances],
+    [masterEoaBalances, masterSafeBalances],
+  );
+
+  /**
+   * Array of low balances relevant to the master wallets (safes and eoa)
+   */
+  const masterLowBalances = useMemo(
+    () => lowBalances?.filter((balance) => balance.walletAddress),
+    [lowBalances],
+  );
+
+  /**
+   * Boolean indicating if any master wallets have low balances
+   */
+  const isLowBalance = useMemo(
+    () => masterLowBalances?.length > 0,
+    [masterLowBalances],
+  );
+
   return {
     masterWalletBalances,
-    masterStakedBalances,
     masterSafeBalances,
+    masterEoaBalances,
     masterLowBalances,
     isLowBalance,
   };
