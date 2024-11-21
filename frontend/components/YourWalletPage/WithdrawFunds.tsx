@@ -10,7 +10,7 @@ import { useActiveStakingContractInfo } from '@/hooks/useStakingContractInfo';
 import { useWallet } from '@/hooks/useWallet';
 import { ServicesService } from '@/service/Services';
 import { Address } from '@/types/Address';
-import { formatTimeRemaining } from '@/utils/time';
+import { formatTimeRemainingFromNow } from '@/utils/time';
 
 import { CustomAlert } from '../Alert';
 
@@ -111,10 +111,7 @@ export const WithdrawFunds = () => {
           title={
             <Text className="text-sm">
               {minDurationMessage}{' '}
-              {formatTimeRemaining(
-                Date.now() / 1000 + (remainingStakingDuration ?? 0),
-              )}
-              .
+              {formatTimeRemainingFromNow(remainingStakingDuration ?? 0)}.
             </Text>
           }
         >

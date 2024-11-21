@@ -74,11 +74,13 @@ export const formatToShortDateTime = (timeInMs?: number) => {
  * @returns formatted time remaining in the format of 'X days Y hours Z minutes'
  * @example 1626825600 => '1 day 2 hours 30 minutes'
  */
-export const formatTimeRemaining = (futureTimestampInSeconds: number) => {
+export const formatTimeRemainingFromNow = (
+  futureTimestampInSeconds: number,
+) => {
   if (!isNumber(futureTimestampInSeconds)) return '--';
 
   const now = new Date().getTime();
-  const targetTime = new Date(futureTimestampInSeconds * 1000).getTime();
+  const targetTime = futureTimestampInSeconds * 1000 + Date.now();
   const timeDifference = targetTime - now;
 
   if (timeDifference <= 0) return 'Time has passed';
@@ -94,5 +96,5 @@ export const formatTimeRemaining = (futureTimestampInSeconds: number) => {
   const daysInWords = `${days} day${days !== 1 ? 's' : ''}`;
   const hoursInWords = `${hours} hour${hours !== 1 ? 's' : ''}`;
   const minutesInWords = `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-  return `${daysInWords} ${hoursInWords} ${minutesInWords}`;
+  return `${daysInWords} ${hoursInWords} ${minutesInWords}`.trim();
 };
