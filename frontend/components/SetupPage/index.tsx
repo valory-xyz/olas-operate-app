@@ -16,6 +16,10 @@ import {
 } from './SetupRestore';
 import { SetupWelcome } from './SetupWelcome';
 
+const UnexpectedError = () => (
+  <div style={{ height: 400 }}>Something went wrong!</div>
+);
+
 export const Setup = () => {
   const { setupObject } = useContext(SetupContext);
   const setupScreen = useMemo(() => {
@@ -45,7 +49,7 @@ export const Setup = () => {
       case SetupScreen.RestoreViaBackup:
         return <SetupRestoreViaBackup />;
       default:
-        return <>Error</>;
+        return <UnexpectedError />;
     }
   }, [setupObject.state]);
 

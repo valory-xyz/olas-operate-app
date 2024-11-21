@@ -11,6 +11,7 @@ import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { PROVIDERS } from '@/constants/providers';
+import { NA } from '@/constants/symbols';
 import { MIN_ETH_BALANCE_THRESHOLDS } from '@/constants/thresholds';
 import { ChainId } from '@/enums/Chain';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -87,7 +88,7 @@ const SetupEoaFundingWaiting = ({ chainName }: SetupEoaFundingWaitingProps) => {
         </Flex>
 
         <span className="can-select-text break-word">
-          {`ETH: ${masterEoaAddress}`}
+          {`ETH: ${masterEoaAddress || NA}`}
         </span>
         {/* <CustomAlert
           type="info"
