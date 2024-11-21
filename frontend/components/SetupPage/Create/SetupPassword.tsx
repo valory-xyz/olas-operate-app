@@ -17,7 +17,6 @@ export const SetupPassword = () => {
   const [form] = Form.useForm<{ password: string; terms: boolean }>();
 
   const [isLoading, setIsLoading] = useState(false);
-
   const isTermsAccepted = Form.useWatch('terms', form);
 
   const handleCreateEoa = async ({ password }: { password: string }) => {
@@ -26,7 +25,7 @@ export const SetupPassword = () => {
     setIsLoading(true);
     AccountService.createAccount(password)
       .then(() => AccountService.loginAccount(password))
-      .then(() => WalletService.createEoa(MiddlewareChain.OPTIMISM))
+      .then(() => WalletService.createEoa(MiddlewareChain.GNOSIS)) // TODO: chain independent
       .then(({ mnemonic }: { mnemonic: string[] }) => {
         setMnemonic(mnemonic);
         goto(SetupScreen.SetupSeedPhrase);

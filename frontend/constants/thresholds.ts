@@ -1,13 +1,15 @@
 import { ChainId } from '@/enums/Chain';
 
+// TODO
+
 /**
  * @warning must be updated to be dynamic
  */
 export const MIN_ETH_BALANCE_THRESHOLDS = {
-  // [Chain.GNOSIS]: {
-  //   safeCreation: 1.5,
-  //   safeAddSigner: 0.1,
-  // },
+  [ChainId.Gnosis]: {
+    safeCreation: 1.5,
+    safeAddSigner: 0.1,
+  },
   [ChainId.Optimism]: {
     safeCreation: 0.005,
     safeAddSigner: 0.005,

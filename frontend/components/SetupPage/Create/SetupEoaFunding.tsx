@@ -1,7 +1,7 @@
 import { CopyOutlined } from '@ant-design/icons';
 import { Flex, message, Tooltip, Typography } from 'antd';
 import { BigNumber, ethers } from 'ethers';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useInterval } from 'usehooks-ts';
 
@@ -10,15 +10,13 @@ import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
 import { CHAIN_CONFIG } from '@/config/chains';
-import {
-  BASE_PROVIDER,
-  ETHEREUM_PROVIDER,
-  OPTIMISM_PROVIDER,
-} from '@/constants/providers';
+import { PROVIDERS } from '@/constants/providers';
 import { MIN_ETH_BALANCE_THRESHOLDS } from '@/constants/thresholds';
+import { ChainId } from '@/enums/Chain';
 import { SetupScreen } from '@/enums/SetupScreen';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useSetup } from '@/hooks/useSetup';
-import { useWallet } from '@/hooks/useWallet';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 import { delayInSeconds } from '@/utils/delay';
@@ -40,9 +38,18 @@ const AccountCreationCard = styled.div`
 
 const ICON_STYLE = { color: '#606F85' };
 
+const statusMessage = (isFunded?: boolean) => {
+  if (isFunded) {
+    return 'Funds have been received!';
+  } else {
+    return 'Waiting for transaction';
+  }
+};
+
 type SetupEoaFundingWaitingProps = { chainName: string };
 const SetupEoaFundingWaiting = ({ chainName }: SetupEoaFundingWaitingProps) => {
-  const { masterEoaAddress } = useWallet();
+  const { masterEoa } = useMasterWalletContext();
+  const masterEoaAddress = masterEoa?.address;
 
   return (
     <>
@@ -110,14 +117,6 @@ export const SetupEoaFundingForChain = ({
 }: SetupEoaFundingProps) => {
   const { goto } = useSetup();
 
-  const statusMessage = useMemo(() => {
-    if (isFunded) {
-      return 'Funds have been received!';
-    } else {
-      return 'Waiting for transaction';
-    }
-  }, [isFunded]);
-
   useEffect(() => {
     message.success(`${chainName} funds have been received!`);
 
@@ -141,7 +140,7 @@ export const SetupEoaFundingForChain = ({
         borderbottom={isFunded ? 'true' : 'false'}
       >
         <Text className={isFunded ? '' : 'loading-ellipses'}>
-          Status: {statusMessage}
+          Status: {statusMessage(isFunded)}
         </Text>
       </CardSection>
       {!isFunded && <SetupEoaFundingWaiting chainName={chainName} />}
@@ -149,29 +148,38 @@ export const SetupEoaFundingForChain = ({
   );
 };
 
+// TODO: chain independent
 const eoaFundingMap = {
-  [MiddlewareChain.OPTIMISM]: {
-    provider: OPTIMISM_PROVIDER,
-    chainConfig: CHAIN_CONFIG.OPTIMISM,
-    requiredEth:
-      MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.OPTIMISM].safeCreation,
-  },
-  [MiddlewareChain.ETHEREUM]: {
-    provider: ETHEREUM_PROVIDER,
-    chainConfig: CHAIN_CONFIG.ETHEREUM,
-    requiredEth:
-      MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.ETHEREUM].safeCreation,
-  },
-  [MiddlewareChain.BASE]: {
-    provider: BASE_PROVIDER,
-    chainConfig: CHAIN_CONFIG.BASE,
-    requiredEth: MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.BASE].safeCreation,
+  //   [MiddlewareChain.OPTIMISM]: {
+  //     provider: OPTIMISM_PROVIDER,
+  //     chainConfig: CHAIN_CONFIG.OPTIMISM,
+  //     requiredEth:
+  //       MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.OPTIMISM].safeCreation,
+  //   },
+  //   [MiddlewareChain.ETHEREUM]: {
+  //     provider: ETHEREUM_PROVIDER,
+  //     chainConfig: CHAIN_CONFIG.ETHEREUM,
+  //     requiredEth:
+  //       MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.ETHEREUM].safeCreation,
+  //   },
+  //   [MiddlewareChain.BASE]: {
+  //     provider: BASE_PROVIDER,
+  //     chainConfig: CHAIN_CONFIG.BASE,
+  //     requiredEth: MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.BASE].safeCreation,
+  //   },
+  [MiddlewareChain.GNOSIS]: {
+    provider: PROVIDERS[ChainId.Gnosis].provider,
+    chainConfig: CHAIN_CONFIG[ChainId.Gnosis],
+    requiredEth: MIN_ETH_BALANCE_THRESHOLDS[ChainId.Gnosis].safeCreation,
   },
 };
 
 export const SetupEoaFunding = () => {
   const { goto } = useSetup();
-  const { masterEoaAddress } = useWallet();
+  const { masterEoa } = useMasterWalletContext();
+  const { walletBalances } = useBalanceContext();
+  const masterEoaAddress = masterEoa?.address;
+
   const [currentChain, setCurrentChain] = useState<MiddlewareChain>(
     +Object.keys(eoaFundingMap)[0] as MiddlewareChain,
   );
@@ -225,6 +233,12 @@ export const SetupEoaFunding = () => {
     goto(SetupScreen.SetupCreateSafe);
   }, 5000);
 
+  const eoaBalance = walletBalances.find((e) => e.isNative);
+  const isFunded =
+    eoaBalance?.chainId === ChainId.Ethereum &&
+    eoaBalance.balance >=
+      MIN_ETH_BALANCE_THRESHOLDS[ChainId.Gnosis].safeCreation;
+
   return (
     <CardFlex>
       <SetupCreateHeader prev={SetupScreen.SetupBackupSigner} disabled />
@@ -235,15 +249,15 @@ export const SetupEoaFunding = () => {
         The app needs these funds to create your account on-chain.
       </Paragraph>
 
-      {/* <CardSection
+      <CardSection
         padding="12px 24px"
         bordertop="true"
         borderbottom={isFunded ? 'true' : 'false'}
       >
         <Text className={isFunded ? '' : 'loading-ellipses'}>
-          Status: {statusMessage}
+          Status: {statusMessage(isFunded)}
         </Text>
-      </CardSection> */}
+      </CardSection>
 
       <SetupEoaFundingWaiting
         chainName={currentFundingMapObject.chainConfig.name}
