@@ -38,37 +38,39 @@ export default function App({ Component, pageProps }: AppProps) {
     <OnlineStatusProvider>
       <ElectronApiProvider>
         <StoreProvider>
-          <PageStateProvider>
-            <ServicesProvider>
-              <MasterWalletProvider>
-                <StakingProgramProvider>
-                  <StakingContractDetailsProvider>
-                    <RewardProvider>
-                      <BalanceProvider>
-                        <SetupProvider>
-                          <SettingsProvider>
-                            <ConfigProvider theme={mainTheme}>
-                              <ModalProvider>
-                                {isMounted ? (
-                                  <QueryClientProvider client={queryClient}>
-                                    <SystemNotificationTriggers>
-                                      <Layout>
-                                        <Component {...pageProps} />
-                                      </Layout>
-                                    </SystemNotificationTriggers>
-                                  </QueryClientProvider>
-                                ) : null}
-                              </ModalProvider>
-                            </ConfigProvider>
-                          </SettingsProvider>
-                        </SetupProvider>
-                      </BalanceProvider>
-                    </RewardProvider>
-                  </StakingContractDetailsProvider>
-                </StakingProgramProvider>
-              </MasterWalletProvider>
-            </ServicesProvider>
-          </PageStateProvider>
+          <QueryClientProvider client={queryClient}>
+            <PageStateProvider>
+              <ServicesProvider>
+                <MasterWalletProvider>
+                  <StakingProgramProvider>
+                    <StakingContractDetailsProvider>
+                      <RewardProvider>
+                        <BalanceProvider>
+                          <SetupProvider>
+                            <SettingsProvider>
+                              <ConfigProvider theme={mainTheme}>
+                                <ModalProvider>
+                                  {isMounted ? (
+                                    <QueryClientProvider client={queryClient}>
+                                      <SystemNotificationTriggers>
+                                        <Layout>
+                                          <Component {...pageProps} />
+                                        </Layout>
+                                      </SystemNotificationTriggers>
+                                    </QueryClientProvider>
+                                  ) : null}
+                                </ModalProvider>
+                              </ConfigProvider>
+                            </SettingsProvider>
+                          </SetupProvider>
+                        </BalanceProvider>
+                      </RewardProvider>
+                    </StakingContractDetailsProvider>
+                  </StakingProgramProvider>
+                </MasterWalletProvider>
+              </ServicesProvider>
+            </PageStateProvider>
+          </QueryClientProvider>
         </StoreProvider>
       </ElectronApiProvider>
     </OnlineStatusProvider>

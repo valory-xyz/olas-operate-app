@@ -1,3 +1,4 @@
+import { JsonFragment } from '@ethersproject/abi';
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { AGENT_MECH_ABI } from '@/abis/agentMech';
@@ -24,14 +25,18 @@ export const MECHS: Mechs = {
       name: 'Agent Mech',
       contract: new MulticallContract(
         '0x77af31De935740567Cf4fF1986D04B2c964A786a',
-        AGENT_MECH_ABI,
+        AGENT_MECH_ABI.filter(
+          (abi) => (abi as JsonFragment).type === 'function',
+        ) as JsonFragment[],
       ),
     },
     [MechType.Marketplace]: {
       name: 'Mech Marketplace',
       contract: new MulticallContract(
         '0x4554fE75c1f5576c1d7F765B2A036c199Adae329',
-        MECH_MARKETPLACE_ABI,
+        MECH_MARKETPLACE_ABI.filter(
+          (abi) => (abi as JsonFragment).type === 'function',
+        ) as JsonFragment[],
       ),
     },
   },

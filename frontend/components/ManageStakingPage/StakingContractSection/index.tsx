@@ -1,13 +1,14 @@
 import { Flex, Tag, theme, Typography } from 'antd';
 import { useMemo } from 'react';
 
-import { MiddlewareChain } from '@/client';
 import { CardSection } from '@/components/styled/CardSection';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { EXPLORER_URL } from '@/constants/urls';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { StakingProgramStatus } from '@/enums/StakingProgramStatus';
+import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { Maybe } from '@/types/Util';
 
 import { CantMigrateAlert } from './CantMigrateAlert';
 import { MigrateButton } from './MigrateButton';
@@ -41,6 +42,7 @@ export const StakingContractSection = ({
     activeStakingProgramMeta,
     activeStakingProgramAddress,
   } = useStakingProgram();
+  const { selectedService } = useServices();
 
   // /**
   //  * Returns `true` if this stakingProgram is active,
@@ -84,6 +86,9 @@ export const StakingContractSection = ({
     );
   }, [migrateValidation]);
 
+  const chainId: Maybe<keyof typeof EXPLORER_URL> =
+    selectedService?.home_chain_id;
+
   return (
     <>
       <CardSection
@@ -103,12 +108,15 @@ export const StakingContractSection = ({
         </Flex>
 
         <StakingContractDetails stakingProgramId={stakingProgramId} />
-        <a
-          href={`${EXPLORER_URL[]}/address/${activeStakingProgramAddress}`}
-          target="_blank"
-        >
-          View contract details {UNICODE_SYMBOLS.EXTERNAL_LINK}
-        </a>
+
+        {chainId && (
+          <a
+            href={`${EXPLORER_URL[chainId]}/address/${activeStakingProgramAddress}`}
+            target="_blank"
+          >
+            View contract details {UNICODE_SYMBOLS.EXTERNAL_LINK}
+          </a>
+        )}
 
         {!migrateValidation.canMigrate && (
           <CantMigrateAlert
