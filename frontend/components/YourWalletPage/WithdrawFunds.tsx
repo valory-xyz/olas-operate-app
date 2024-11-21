@@ -1,22 +1,32 @@
-import { Button, Flex, Input, message, Modal, Typography } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Button, Flex, Input, message, Modal, Tooltip, Typography } from 'antd';
 import { isAddress } from 'ethers/lib/utils';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
+import { COLOR } from '@/constants/colors';
 import { useBalance } from '@/hooks/useBalance';
 import { useServices } from '@/hooks/useServices';
+import { useActiveStakingContractInfo } from '@/hooks/useStakingContractInfo';
 import { useWallet } from '@/hooks/useWallet';
 import { ServicesService } from '@/service/Services';
 import { Address } from '@/types/Address';
+import { formatTimeRemaining } from '@/utils/time';
 
 import { CustomAlert } from '../Alert';
 
 const { Text } = Typography;
 
+const minDurationMessage =
+  "You have not reached the minimum duration of staking. Keep running your agent and you'll be able to withdraw in";
+
 export const WithdrawFunds = () => {
   const { updateWallets } = useWallet();
   const { updateBalances } = useBalance();
-  const { service, updateServicesState } = useServices();
+  const { service, updateServicesState, isServiceNotRunning } = useServices();
   const serviceHash = service?.hash;
+
+  const { isServiceStakedForMinimumDuration, remainingStakingDuration } =
+    useActiveStakingContractInfo();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [withdrawAddress, setWithdrawAddress] = useState('');
@@ -79,11 +89,48 @@ export const WithdrawFunds = () => {
     }
   }, [withdrawAddress, serviceHash, handleCancel, refetchDetails]);
 
-  return (
-    <>
-      <Button onClick={showModal} block style={{ fontSize: 14 }}>
+  const withdrawButton = useMemo(() => {
+    return (
+      <Button
+        onClick={showModal}
+        block
+        size="large"
+        disabled={!service || !isServiceStakedForMinimumDuration}
+      >
         Withdraw all funds
       </Button>
+    );
+  }, [service, isServiceStakedForMinimumDuration, showModal]);
+
+  return (
+    <>
+      {isServiceStakedForMinimumDuration ? (
+        withdrawButton
+      ) : (
+        <Tooltip
+          title={
+            <Text className="text-sm">
+              {minDurationMessage}{' '}
+              {formatTimeRemaining(
+                Date.now() / 1000 + (remainingStakingDuration ?? 0),
+              )}
+              .
+            </Text>
+          }
+        >
+          {withdrawButton}
+        </Tooltip>
+      )}
+
+      {!isServiceNotRunning && (
+        <div className="mt-8">
+          <InfoCircleOutlined style={{ color: COLOR.TEXT_LIGHT }} />
+          &nbsp;
+          <Text className="text-sm text-light">
+            Proceeding with withdrawal will stop your running agent.
+          </Text>
+        </div>
+      )}
 
       <Modal
         title="Withdraw Funds"
