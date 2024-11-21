@@ -2,15 +2,24 @@ import { Button, Flex, Input, message, Modal, Typography } from 'antd';
 import { isAddress } from 'ethers/lib/utils';
 import React, { useCallback, useState } from 'react';
 
-import { delayInSeconds } from '@/utils/delay';
+import { useBalance } from '@/hooks/useBalance';
+import { useServices } from '@/hooks/useServices';
+import { useWallet } from '@/hooks/useWallet';
+import { ServicesService } from '@/service/Services';
+import { Address } from '@/types/Address';
 
 import { CustomAlert } from '../Alert';
 
 const { Text } = Typography;
 
 export const WithdrawFunds = () => {
+  const { updateWallets } = useWallet();
+  const { updateBalances } = useBalance();
+  const { service, updateServicesState } = useServices();
+  const serviceHash = service?.hash;
+
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [amount, setAmount] = useState('');
+  const [withdrawAddress, setWithdrawAddress] = useState('');
   const [isWithdrawalLoading, setIsWithdrawalLoading] = useState(false);
 
   const showModal = useCallback(() => {
@@ -19,13 +28,24 @@ export const WithdrawFunds = () => {
 
   const handleCancel = useCallback(() => {
     setIsModalVisible(false);
-    setAmount('');
+    setWithdrawAddress('');
   }, []);
 
-  const handleProceed = useCallback(async () => {
-    if (!amount) return;
+  const refetchDetails = useCallback(async () => {
+    try {
+      await updateServicesState();
+      await updateWallets();
+      await updateBalances();
+    } catch (error) {
+      console.error('Failed to refetch details after withdrawal', error);
+    }
+  }, [updateServicesState, updateWallets, updateBalances]);
 
-    const isValidAddress = isAddress(amount);
+  const handleProceed = useCallback(async () => {
+    if (!withdrawAddress) return;
+    if (!serviceHash) return;
+
+    const isValidAddress = isAddress(withdrawAddress);
     if (!isValidAddress) {
       message.error('Please enter a valid address');
       return;
@@ -33,12 +53,30 @@ export const WithdrawFunds = () => {
 
     message.loading('Withdrawal pending. It may take a few minutes.');
 
-    setIsWithdrawalLoading(true);
-    await delayInSeconds(2); // TODO: integrate with the backend
-    setIsWithdrawalLoading(false);
+    try {
+      setIsWithdrawalLoading(true);
 
-    message.success('Transaction complete.');
-  }, [amount]);
+      const response = await ServicesService.withdrawBalance({
+        withdrawAddress: withdrawAddress as Address,
+        serviceHash: serviceHash,
+      });
+
+      if (response.error) {
+        message.error(response.error);
+      } else {
+        message.success('Transaction complete.');
+
+        // refetch and keep up to date
+        await refetchDetails();
+      }
+    } catch (error) {
+      message.error('Failed to withdraw funds. Please try again.');
+      console.error(error);
+    } finally {
+      setIsWithdrawalLoading(false);
+      handleCancel(); // Close modal after withdrawal
+    }
+  }, [withdrawAddress, serviceHash, handleCancel, refetchDetails]);
 
   return (
     <>
@@ -71,8 +109,8 @@ export const WithdrawFunds = () => {
           />
 
           <Input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            value={withdrawAddress}
+            onChange={(e) => setWithdrawAddress(e.target.value)}
             placeholder="0x..."
             size="small"
             className="text-base"
@@ -80,7 +118,7 @@ export const WithdrawFunds = () => {
           />
 
           <Button
-            disabled={!amount}
+            disabled={!withdrawAddress}
             loading={isWithdrawalLoading}
             onClick={handleProceed}
             block

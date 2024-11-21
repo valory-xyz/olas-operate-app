@@ -1,4 +1,10 @@
-import { createContext, PropsWithChildren, useContext, useState } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useCallback,
+  useContext,
+  useState,
+} from 'react';
 import { useInterval } from 'usehooks-ts';
 
 import { Wallet } from '@/client';
@@ -28,14 +34,14 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
   const masterEoaAddress: Address | undefined = wallets?.[0]?.address;
   const masterSafeAddress: Address | undefined = wallets?.[0]?.safe;
 
-  const updateWallets = async () => {
+  const updateWallets = useCallback(async () => {
     try {
       const wallets = await WalletService.getWallets();
       setWallets(wallets);
     } catch (e) {
       console.error(e);
     }
-  };
+  }, []);
 
   useInterval(updateWallets, isOnline ? FIVE_SECONDS_INTERVAL : null);
 
