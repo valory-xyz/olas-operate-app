@@ -49,7 +49,6 @@ export const STAKING_PROGRAM_META: Record<
     canMigrateTo: activeStakingProgramsWithout(StakingProgramId.Beta5),
     deprecated: false,
   },
-
   [StakingProgramId.BetaMechMarketplace]: {
     name: 'Pearl Beta Mech Marketplace',
     canMigrateTo: activeStakingProgramsWithout(

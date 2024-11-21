@@ -1,6 +1,11 @@
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 
-import { Service, ServiceHash, ServiceTemplate } from '@/client';
+import {
+  DeploymentStatus,
+  Service,
+  ServiceHash,
+  ServiceTemplate,
+} from '@/client';
 import { CHAINS } from '@/constants/chains';
 import { ServicesContext } from '@/context/ServicesProvider';
 import MulticallService from '@/service/Multicall';
@@ -91,12 +96,24 @@ export const useServices = () => {
 
   const deleteServiceState = (serviceHash: ServiceHash) =>
     setServices((prev) => prev?.filter((s) => s.hash !== serviceHash));
+  const service = services?.[0];
+
+  const isServiceNotRunning = useMemo(
+    () =>
+      !service ||
+      serviceStatus === DeploymentStatus.STOPPED ||
+      serviceStatus === DeploymentStatus.CREATED ||
+      serviceStatus === DeploymentStatus.BUILT ||
+      serviceStatus === DeploymentStatus.DELETED,
+    [service, serviceStatus],
+  );
 
   return {
-    service: services?.[0],
+    service,
     services,
     serviceId,
     serviceStatus,
+    isServiceNotRunning,
     setServiceStatus,
     getServiceFromState,
     getServicesFromState,

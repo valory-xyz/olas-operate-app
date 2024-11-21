@@ -29,8 +29,8 @@ from pathlib import Path
 from aea.helpers.logging import setup_logger
 from aea_ledger_ethereum.ethereum import EthereumCrypto
 
+from operate.operate_types import LedgerType
 from operate.resource import LocalResource
-from operate.types import LedgerType
 
 
 @dataclass

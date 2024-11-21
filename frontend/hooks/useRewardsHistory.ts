@@ -5,7 +5,10 @@ import { groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 import { z } from 'zod';
 
+import { GNOSIS_SERVICE_STAKING_CONTRACT_ADDRESSES } from '@/constants/contractAddresses';
 import { GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL } from '@/constants/urls';
+import { Address } from '@/types/Address';
+import { getStakingProgramIdByAddress } from '@/utils/service';
 
 import { useServices } from './useServices';
 
@@ -32,14 +35,27 @@ const CheckpointGraphResponseSchema = z.object({
     message: 'Expected epochLength to be a string',
   }),
   contractAddress: z.string({
-    message: 'Expected contractAddress to be a string',
+    message: 'Expected contractAddress to be a valid Ethereum address',
   }),
 });
-type CheckpointGraphResponse = z.infer<typeof CheckpointGraphResponseSchema>;
+const CheckpointsGraphResponseSchema = z.array(CheckpointGraphResponseSchema);
+type CheckpointResponse = z.infer<typeof CheckpointGraphResponseSchema>;
+
+const supportedStakingContracts = Object.values(
+  GNOSIS_SERVICE_STAKING_CONTRACT_ADDRESSES,
+).map((address) => `"${address}"`);
 
 const fetchRewardsQuery = gql`
   {
-    checkpoints(orderBy: epoch, orderDirection: desc) {
+    checkpoints(
+      orderBy: epoch
+      orderDirection: desc
+      first: 1000
+      where: {
+        serviceIds_not: []
+        contractAddress_in: [${supportedStakingContracts}]
+      }
+    ) {
       id
       availableRewards
       blockTimestamp
@@ -53,7 +69,7 @@ const fetchRewardsQuery = gql`
   }
 `;
 
-export type TransformedCheckpoint = {
+export type Checkpoint = {
   epoch: string;
   rewards: string[];
   serviceIds: string[];
@@ -61,6 +77,7 @@ export type TransformedCheckpoint = {
   transactionHash: string;
   epochLength: string;
   contractAddress: string;
+  contractName?: string;
   epochEndTimeStamp: number;
   epochStartTimeStamp: number;
   reward: number;
@@ -68,15 +85,15 @@ export type TransformedCheckpoint = {
 };
 
 const transformCheckpoints = (
-  checkpoints: CheckpointGraphResponse[],
-  serviceId?: number,
+  checkpoints: CheckpointResponse[],
+  serviceId: number,
   timestampToIgnore?: null | number,
-): TransformedCheckpoint[] => {
+): Checkpoint[] => {
   if (!checkpoints || checkpoints.length === 0) return [];
   if (!serviceId) return [];
 
-  const transformed = checkpoints
-    .map((checkpoint: CheckpointGraphResponse, index: number) => {
+  return checkpoints
+    .map((checkpoint: CheckpointResponse, index: number) => {
       const serviceIdIndex =
         checkpoint.serviceIds?.findIndex((id) => Number(id) === serviceId) ??
         -1;
@@ -84,12 +101,9 @@ const transformCheckpoints = (
       let reward = '0';
 
       if (serviceIdIndex !== -1) {
-        const isRewardFinite = isFinite(
-          Number(checkpoint.rewards?.[serviceIdIndex]),
-        );
-        reward = isRewardFinite
-          ? checkpoint.rewards?.[serviceIdIndex] ?? '0'
-          : '0';
+        const currentReward = checkpoint.rewards?.[serviceIdIndex];
+        const isRewardFinite = isFinite(Number(currentReward));
+        reward = isRewardFinite ? currentReward ?? '0' : '0';
       }
 
       // If the epoch is 0, it means it's the first epoch else,
@@ -99,106 +113,119 @@ const transformCheckpoints = (
           ? Number(checkpoint.blockTimestamp) - Number(checkpoint.epochLength)
           : checkpoints[index + 1]?.blockTimestamp ?? 0;
 
+      const stakingContractId = getStakingProgramIdByAddress(
+        checkpoint.contractAddress as Address,
+      );
+
       return {
         ...checkpoint,
         epochEndTimeStamp: Number(checkpoint.blockTimestamp ?? Date.now()),
         epochStartTimeStamp: Number(epochStartTimeStamp),
         reward: Number(ethers.utils.formatUnits(reward, 18)),
         earned: serviceIdIndex !== -1,
+        contractName: stakingContractId,
       };
     })
-    .filter((epoch) => {
-      // If the contract has been switched to new contract, ignore the rewards from the old contract of the same epoch,
+    .filter((checkpoint) => {
+      // If the contract has been switched to new contract,
+      // ignore the rewards from the old contract of the same epoch,
       // as the rewards are already accounted in the new contract.
-      // example: If contract was switched on September 1st, 2024, ignore the rewards before that date
-      // in the old contract.
+      // Example: If contract was switched on September 1st, 2024,
+      // ignore the rewards before that date in the old contract.
       if (!timestampToIgnore) return true;
 
-      if (!epoch) return false;
-      if (!epoch.epochEndTimeStamp) return false;
-      return epoch.epochEndTimeStamp < timestampToIgnore;
-    });
+      if (!checkpoint) return false;
+      if (!checkpoint.epochEndTimeStamp) return false;
 
-  return transformed;
+      return checkpoint.epochEndTimeStamp < timestampToIgnore;
+    });
 };
 
-export const useRewardsHistory = () => {
+type CheckpointsResponse = { checkpoints: CheckpointResponse[] };
+
+/**
+ * hook to fetch rewards history for all contracts
+ */
+const useContractCheckpoints = () => {
   const { serviceId } = useServices();
 
-  const {
-    data: contractCheckpoints,
-    isError,
-    isLoading,
-    isFetching,
-    refetch,
-  } = useQuery({
+  return useQuery({
     queryKey: [],
     async queryFn() {
-      if (!serviceId) return { checkpoints: [] };
+      if (!serviceId) return [];
 
-      const checkpointsResponse: {
-        checkpoints: CheckpointGraphResponse[];
-      } = await request(GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL, fetchRewardsQuery);
-      return checkpointsResponse;
+      const checkpointsResponse = await request<CheckpointsResponse>(
+        GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL,
+        fetchRewardsQuery,
+      );
+
+      const parsedCheckpoints = CheckpointsGraphResponseSchema.safeParse(
+        checkpointsResponse.checkpoints,
+      );
+
+      if (parsedCheckpoints.error) {
+        console.error(parsedCheckpoints.error);
+        return [];
+      }
+
+      return parsedCheckpoints.data;
     },
-    select: ({
-      checkpoints,
-    }): { [contractAddress: string]: TransformedCheckpoint[] } => {
+    select: (checkpoints): { [contractAddress: string]: Checkpoint[] } => {
       if (!serviceId) return {};
       if (!checkpoints) return {};
 
-      // group checkpoints by contract address / staking program
+      // group checkpoints by contract address (staking program)
       const checkpointsByContractAddress = groupBy(
         checkpoints,
         'contractAddress',
       );
 
-      // only need relevant contract history that service has participated in
+      // only need relevant contract history that service has participated in,
       // ignore contract addresses with no activity from the service
-      const relevantTransformedCheckpoints = Object.keys(
-        checkpointsByContractAddress,
-      ).reduce(
-        (
-          acc: { [stakingContractAddress: string]: TransformedCheckpoint[] },
-          stakingContractAddress: string,
-        ) => {
-          const checkpoints =
-            checkpointsByContractAddress[stakingContractAddress];
+      return Object.keys(checkpointsByContractAddress).reduce<{
+        [stakingContractAddress: string]: Checkpoint[];
+      }>((acc, stakingContractAddress: string) => {
+        const checkpoints =
+          checkpointsByContractAddress[stakingContractAddress];
 
-          // skip if there are no checkpoints for the contract address
-          if (!checkpoints) return acc;
-          if (checkpoints.length <= 0) return acc;
-          if (
-            !checkpoints.some((checkpoint) =>
-              checkpoint.serviceIds.includes(`${serviceId}`),
-            )
-          )
-            return acc;
+        // skip if there are no checkpoints for the contract address
+        if (!checkpoints) return acc;
+        if (checkpoints.length <= 0) return acc;
 
-          // transform the checkpoints ..
-          // includes epoch start and end time, rewards, etc
-          const transformedCheckpoints = transformCheckpoints(
-            checkpoints,
-            serviceId as number,
-            null,
-          );
+        // check if the service has participated in the staking contract
+        // if not, skip the contract
+        const isServiceParticipatedInContract = checkpoints.some((checkpoint) =>
+          checkpoint.serviceIds.includes(`${serviceId}`),
+        );
+        if (!isServiceParticipatedInContract) return acc;
 
-          return {
-            ...acc,
-            [stakingContractAddress]: transformedCheckpoints,
-          };
-        },
-        {},
-      );
+        // transform the checkpoints, includes epoch start and end time, rewards, etc
+        const transformedCheckpoints = transformCheckpoints(
+          checkpoints,
+          serviceId,
+          null,
+        );
 
-      return relevantTransformedCheckpoints;
+        return { ...acc, [stakingContractAddress]: transformedCheckpoints };
+      }, {});
     },
     refetchOnWindowFocus: false,
     refetchInterval: ONE_DAY_IN_MS,
     enabled: !!serviceId,
   });
+};
 
-  const allCheckpoints = useMemo<TransformedCheckpoint[]>(
+export const useRewardsHistory = () => {
+  const { serviceId } = useServices();
+  const {
+    isError,
+    isLoading,
+    isFetching,
+    refetch,
+    data: contractCheckpoints,
+  } = useContractCheckpoints();
+
+  const epochSortedCheckpoints = useMemo<Checkpoint[]>(
     () =>
       Object.values(contractCheckpoints ?? {})
         .flat()
@@ -207,54 +234,50 @@ export const useRewardsHistory = () => {
   );
 
   const latestRewardStreak = useMemo<number>(() => {
+    if (isLoading || isFetching) return 0;
     if (!contractCheckpoints) return 0;
 
     // remove all histories that are not earned
-    const earnedCheckpoints = allCheckpoints.filter(
+    const earnedCheckpoints = epochSortedCheckpoints.filter(
       (checkpoint) => checkpoint.earned,
     );
 
-    // sort descending by epoch end time
-    const sorted = earnedCheckpoints.sort(
-      (a, b) => b.epochEndTimeStamp - a.epochEndTimeStamp,
-    );
+    const timeNow = Math.trunc(Date.now() / 1000);
 
-    let streak = 0;
-    for (let i = 0; i < sorted.length; i++) {
-      const current = sorted[i];
+    let isStreakBroken = false; // flag to break the streak
+    return earnedCheckpoints.reduce((streakCount, current, i) => {
+      if (isStreakBroken) return streakCount;
 
       // first iteration
       if (i === 0) {
-        const timeNow = Date.now() / 1000;
+        const initialEpochGap = Math.trunc(timeNow - current.epochEndTimeStamp);
 
-        // multiplied by 2 to give a buffer of 2 days
-        const initialEpochGap = timeNow - current.epochEndTimeStamp;
-
-        // if the last epoch was more than 1 day ago, break
-        if (initialEpochGap > ONE_DAY_IN_S) break;
-
-        // if the last epoch was less than 1 day ago, increment streak
-        if (current.earned) {
-          streak++;
-          continue;
+        // If the epoch gap is greater than the epoch length
+        if (initialEpochGap > Number(current.epochLength)) {
+          isStreakBroken = true;
+          return streakCount;
         }
 
-        break;
+        if (current.earned) {
+          return streakCount + 1;
+        }
+
+        isStreakBroken = true;
+        return streakCount;
       }
 
-      // nth interations
-      const previous = sorted[i - 1];
+      // other iterations
+      const previous = earnedCheckpoints[i - 1];
       const epochGap = previous.epochStartTimeStamp - current.epochEndTimeStamp;
 
-      if (current.earned && epochGap <= ONE_DAY_IN_S) {
-        streak++;
-        continue;
+      if (current.earned && Number(current.epochLength) > epochGap) {
+        return streakCount + 1;
       }
-      break;
-    }
 
-    return streak;
-  }, [allCheckpoints, contractCheckpoints]);
+      isStreakBroken = true;
+      return streakCount;
+    }, 0);
+  }, [isLoading, isFetching, epochSortedCheckpoints, contractCheckpoints]);
 
   useEffect(() => {
     serviceId && refetch();
@@ -266,7 +289,7 @@ export const useRewardsHistory = () => {
     isLoading,
     latestRewardStreak,
     refetch,
-    allCheckpoints,
+    allCheckpoints: epochSortedCheckpoints,
     contractCheckpoints,
   };
 };

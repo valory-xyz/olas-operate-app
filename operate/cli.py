@@ -43,8 +43,8 @@ from operate import services
 from operate.account.user import UserAccount
 from operate.constants import KEY, KEYS, OPERATE, SERVICES
 from operate.ledger import get_ledger_type_from_chain_type
+from operate.operate_types import ChainType, DeploymentStatus
 from operate.services.health_checker import HealthChecker
-from operate.types import ChainType, DeploymentStatus
 from operate.wallet.master import MasterWalletManager
 
 
@@ -479,7 +479,9 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
 
         wallet.create_safe(  # pylint: disable=no-member
             chain_type=chain_type,
-            owner=data.get("owner"),
+            backup_owner=data.get(
+                "backup_owner", data.get("owner")
+            ),  # TODO: 'owner' kept for backwards compatibility
         )
         wallet.transfer(
             to=t.cast(str, wallet.safe),
@@ -514,9 +516,11 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
             return JSONResponse(content={"error": "Wallet does not exist"})
 
         wallet = manager.load(ledger_type=ledger_type)
-        wallet.add_or_swap_owner(
+        wallet.update_backup_owner(
             chain_type=chain_type,
-            owner=data.get("owner"),
+            backup_owner=data.get(
+                "backup_owner", data.get("owner")
+            ),  # TODO: 'owner' kept for backwards compatibility
         )
         return JSONResponse(content=wallet.json)
 

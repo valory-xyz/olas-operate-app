@@ -57,7 +57,7 @@ from autonomy.cli.helpers.chain import ServiceHelper as ServiceManager
 from eth_utils import to_bytes
 from hexbytes import HexBytes
 
-import operate.types
+import operate.operate_types
 from operate.constants import (
     ON_CHAIN_INTERACT_RETRIES,
     ON_CHAIN_INTERACT_SLEEP,
@@ -68,7 +68,7 @@ from operate.data.contracts.service_staking_token.contract import (
     ServiceStakingTokenContract,
 )
 from operate.ledger.profiles import STAKING
-from operate.types import ContractAddresses
+from operate.operate_types import ContractAddresses
 from operate.utils.gnosis import (
     MultiSendOperation,
     NULL_ADDRESS,
@@ -773,7 +773,9 @@ class _ChainUtil:
         # TODO Read from activity checker contract. Read remaining variables for marketplace.
         if (
             staking_contract
-            == STAKING[operate.types.ChainType.GNOSIS]["pearl_beta_mech_marketplace"]
+            == STAKING[operate.operate_types.ChainType.GNOSIS][
+                "pearl_beta_mech_marketplace"
+            ]
         ):
             agent_mech = "0x552cEA7Bc33CbBEb9f1D90c1D11D2C6daefFd053"  # nosec
         else:

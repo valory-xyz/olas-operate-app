@@ -11,4 +11,5 @@ export const COLOR = {
   BROWN: '#873800',
   TEXT: '#1f2229',
   TEXT_LIGHT: '#606F85',
+  GRAY_1: '#f2f4f9',
 };

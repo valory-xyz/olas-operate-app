@@ -37,3 +37,5 @@ ON_CHAIN_INTERACT_RETRIES = 40
 ON_CHAIN_INTERACT_SLEEP = 3.0
 
 HEALTH_CHECK_URL = "http://127.0.0.1:8716/healthcheck"  # possible DNS issues on windows so use IP address
+
+TM_CONTROL_URL = "http://localhost:8080"

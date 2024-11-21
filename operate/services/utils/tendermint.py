@@ -18,8 +18,10 @@
 # ------------------------------------------------------------------------------
 
 """Tendermint manager."""
+import contextlib
 import json
 import logging
+import multiprocessing
 import os
 import platform
 import re
@@ -32,6 +34,7 @@ import traceback
 from logging import Logger
 from pathlib import Path
 from threading import Event, Thread
+from time import sleep
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 import requests
@@ -306,12 +309,12 @@ class TendermintNode:
         """Stop a monitoring process."""
         if self._monitoring is not None:
             self._monitoring.stop()  # set stop event
-            self._monitoring.join()
+            self._monitoring.join(timeout=20)
 
     def stop(self) -> None:
         """Stop a Tendermint node process."""
-        self._stop_tm_process()
         self._stop_monitoring_thread()
+        self._stop_tm_process()
 
     @staticmethod
     def _write_to_console(line: str) -> None:
@@ -503,6 +506,9 @@ def create_app(  # pylint: disable=too-many-statements
     )
 
     app = Flask(__name__)  # pylint: disable=redefined-outer-name
+    app._is_on_exit = (  # pylint: disable=protected-access
+        False  # ugly but better than global ver
+    )
     period_dumper = PeriodDumper(
         logger=app.logger,
         dump_dir=Path(os.environ["TMSTATE"]),
@@ -570,6 +576,8 @@ def create_app(  # pylint: disable=too-many-statements
     @app.route("/gentle_reset")
     def gentle_reset() -> Tuple[Any, int]:
         """Reset the tendermint node gently."""
+        if app._is_on_exit:  # pylint: disable=protected-access
+            raise RuntimeError("server exit now")
         try:
             tendermint_node.stop()
             tendermint_node.start()
@@ -597,6 +605,8 @@ def create_app(  # pylint: disable=too-many-statements
     @app.route("/hard_reset")
     def hard_reset() -> Tuple[Any, int]:
         """Reset the node forcefully, and prune the blocks"""
+        if app._is_on_exit:  # pylint: disable=protected-access
+            raise RuntimeError("server exit now")
         try:
             tendermint_node.stop()
             if IS_DEV_MODE:
@@ -639,7 +649,52 @@ def create_server() -> Any:
     return flask_app
 
 
-if __name__ == "__main__":
-    # Start the Flask server programmatically
+def run_app_in_subprocess(q: multiprocessing.Queue) -> None:
+    """Run flask app in a subprocess to kill it when needed."""
+    print("app in subprocess")
+    app, tendermint_node = create_app()
+
+    @app.route("/exit")
+    def handle_server_exit() -> Response:
+        """Handle server exit."""
+        app._is_on_exit = True  # pylint: disable=protected-access
+        try:
+            tendermint_node.stop()
+        finally:
+            q.put(True)
+        return {"node": "stopped"}
+
+    app.run(host="localhost", port=8080)
+
+
+def run_stoppable_main() -> None:
+    """Main to spawn flask in a subprocess."""
+    print("run stoppable main!")
+    q: multiprocessing.Queue = multiprocessing.Queue()
+    p = multiprocessing.Process(target=run_app_in_subprocess, args=(q,))
+    p.start()
+    # wait for stop marker
+    try:
+        q.get(block=True)
+        sleep(1)
+    finally:
+        p.terminate()
+        with contextlib.suppress(Exception):
+            p.join(timeout=10)
+            p.terminate()
+
+
+def main() -> None:
+    """Main entrance."""
     app = create_server()
     app.run(host="localhost", port=8080)
+
+
+if __name__ == "__main__":
+    # Start the Flask server programmatically
+
+    with contextlib.suppress(Exception):
+        # support for pyinstaller multiprocessing
+        multiprocessing.freeze_support()
+
+    run_stoppable_main()

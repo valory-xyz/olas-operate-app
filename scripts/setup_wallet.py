@@ -21,7 +21,7 @@
 
 import requests
 
-from operate.types import ChainType
+from operate.operate_types import ChainType
 from scripts.fund import fund
 
 

@@ -65,12 +65,9 @@ from operate.constants import (
     DOCKER_COMPOSE_YAML,
     KEYS_JSON,
 )
-from operate.http.exceptions import NotAllowed
 from operate.keys import Keys
-from operate.resource import LocalResource
-from operate.services.deployment_runner import run_host_deployment, stop_host_deployment
-from operate.services.utils import tendermint
-from operate.types import (
+from operate.operate_http.exceptions import NotAllowed
+from operate.operate_types import (
     ChainConfig,
     ChainConfigs,
     ChainType,
@@ -85,6 +82,9 @@ from operate.types import (
     OnChainUserParams,
     ServiceTemplate,
 )
+from operate.resource import LocalResource
+from operate.services.deployment_runner import run_host_deployment, stop_host_deployment
+from operate.services.utils import tendermint
 
 
 # pylint: disable=no-member,redefined-builtin,too-many-instance-attributes,too-many-locals
@@ -668,7 +668,13 @@ class Service(LocalResource):
             data = json.load(file)
 
         version = data.get("version", 0)
-        if version >= 3:
+
+        if version > SERVICE_CONFIG_VERSION:
+            raise ValueError(
+                f"Service configuration in {path} has version {version}, which means it was created with a newer version of olas-operate-middleware. Only configuration versions <= {SERVICE_CONFIG_VERSION} are supported by this version of olas-operate-middleware."
+            )
+
+        if version == SERVICE_CONFIG_VERSION:
             return
 
         # Migrate from old formats to new format

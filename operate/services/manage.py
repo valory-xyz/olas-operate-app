@@ -38,6 +38,7 @@ from autonomy.chain.base import registry_contracts
 from operate.keys import Key, KeysManager
 from operate.ledger import PUBLIC_RPCS
 from operate.ledger.profiles import CONTRACTS, OLAS, STAKING
+from operate.operate_types import LedgerConfig, ServiceTemplate
 from operate.services.protocol import EthSafeTxBuilder, OnChainManager, StakingState
 from operate.services.service import (
     ChainConfig,
@@ -49,7 +50,6 @@ from operate.services.service import (
     OnChainUserParams,
     Service,
 )
-from operate.types import LedgerConfig, ServiceTemplate
 from operate.utils.gnosis import NULL_ADDRESS
 from operate.wallet.master import MasterWalletManager
 
@@ -112,6 +112,8 @@ class ServiceManager:
             try:
                 service = Service.load(path=path)
                 data.append(service.json)
+            except ValueError as e:
+                raise e
             except Exception as e:  # pylint: disable=broad-except
                 self.logger.warning(
                     f"Failed to load service: {path.name}. Exception: {e}"
@@ -256,7 +258,7 @@ class ServiceManager:
         """
         # TODO This method has not been thoroughly reviewed. Deprecated usage in favour of Safe version.
 
-        self.logger.info(f"_deploy_service_onchain_from_safe {chain_id=}")
+        self.logger.info(f"_deploy_service_onchain {chain_id=}")
         service = self.load_or_create(hash=hash)
         chain_config = service.chain_configs[chain_id]
         ledger_config = chain_config.ledger_config

@@ -205,7 +205,7 @@ Creates a master key for given chain type.
 </details>
 
 ---
-#### `PUT /api/wallet`
+#### `POST /api/wallet/safe`
 
 Creates a gnosis safe for given chain type.
 
@@ -215,8 +215,46 @@ Creates a gnosis safe for given chain type.
 ```js
 {
   "chain_type": ChainType,
+  "backup_owner": "0xd7DB7603B5A5c1cBBD88b7C11F3Fd6e46779094e"
 }
 ```
+
+Note: For backwards compatibility, the field `owner` is also accepted as an alias for `backup_owner`.
+
+</details>
+
+<details>
+  <summary>Response</summary>
+
+```json
+{
+  "address": "0xaaFd5cb31A611C5e5aa65ea8c6226EB4328175E3",
+  "safe_chains": [
+    2
+  ],
+  "ledger_type": 0,
+  "safe": "0xe56fb574ce2C66008d5c4C09980c4f36Ab81ff22",
+  "safe_nonce": 110558881674480320952254000342160989674913430251157716140571305138121962898821
+}
+```
+</details>
+
+---
+#### `PUT /api/wallet/safe`
+
+Updates a gnosis safe for given chain type.
+
+<details>
+  <summary>Request</summary>
+
+```js
+{
+  "chain_type": ChainType,
+  "backup_owner": "0xd7DB7603B5A5c1cBBD88b7C11F3Fd6e46779094e"
+}
+```
+
+Note: For backwards compatibility, the field `owner` is also accepted as an alias for `backup_owner`.
 
 </details>
 

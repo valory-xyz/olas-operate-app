@@ -28,12 +28,16 @@ import time
 import typing as t
 from abc import ABC, ABCMeta, abstractmethod
 from pathlib import Path
+from traceback import print_exc
 from typing import Any
 from venv import main as venv_cli
 
 import psutil
+import requests
 from aea.__version__ import __version__ as aea_version
 from autonomy.__version__ import __version__ as autonomy_version
+
+from operate import constants
 
 
 class AbstractDeploymentRunner(ABC):
@@ -86,6 +90,9 @@ def kill_process(pid: int) -> None:
 class BaseDeploymentRunner(AbstractDeploymentRunner, metaclass=ABCMeta):
     """Base deployment with aea support."""
 
+    TM_CONTROL_URL = constants.TM_CONTROL_URL
+    SLEEP_BEFORE_TM_KILL = 2  # seconds
+
     def _run_aea(self, *args: str, cwd: Path) -> Any:
         """Run aea command."""
         return self._run_cmd(args=[self._aea_bin, *args], cwd=cwd)
@@ -123,7 +130,7 @@ class BaseDeploymentRunner(AbstractDeploymentRunner, metaclass=ABCMeta):
         for var in env:
             # Fix tendermint connection params
             if var.endswith("MODELS_PARAMS_ARGS_TENDERMINT_COM_URL"):
-                env[var] = "http://localhost:8080"
+                env[var] = self.TM_CONTROL_URL
 
             if var.endswith("MODELS_PARAMS_ARGS_TENDERMINT_URL"):
                 env[var] = "http://localhost:26657"
@@ -189,8 +196,19 @@ class BaseDeploymentRunner(AbstractDeploymentRunner, metaclass=ABCMeta):
             return
         kill_process(int(pid.read_text(encoding="utf-8")))
 
+    def _get_tm_exit_url(self) -> str:
+        return f"{self.TM_CONTROL_URL}/exit"
+
     def _stop_tendermint(self) -> None:
         """Start tendermint process."""
+        try:
+            requests.get(self._get_tm_exit_url(), timeout=(1, 10))
+            time.sleep(self.SLEEP_BEFORE_TM_KILL)
+        except requests.ConnectionError:
+            print(f"No Tendermint process listening on {self._get_tm_exit_url()}.")
+        except Exception:  # pylint: disable=broad-except
+            print_exc()
+
         pid = self._work_directory / "tendermint.pid"
         if not pid.exists():
             return

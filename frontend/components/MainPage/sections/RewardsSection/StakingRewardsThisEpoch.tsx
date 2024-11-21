@@ -1,51 +1,21 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { Popover, Typography } from 'antd';
-import { gql, request } from 'graphql-request';
-import { z } from 'zod';
 
-import { GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL } from '@/constants/urls';
 import { POPOVER_WIDTH_MEDIUM } from '@/constants/width';
+import { getLatestEpochDetails } from '@/graphql/queries';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { formatToTime } from '@/utils/time';
 
 const { Text } = Typography;
 
-const EpochTimeResponseSchema = z.object({
-  epochLength: z.string(),
-  blockTimestamp: z.string(),
-});
-type EpochTimeResponse = z.infer<typeof EpochTimeResponseSchema>;
-
 const useEpochEndTime = () => {
   const { activeStakingProgramAddress } = useStakingProgram();
-
-  const latestEpochTimeQuery = gql`
-    query {
-      checkpoints(
-        orderBy: epoch
-        orderDirection: desc
-        first: 1
-        where: {
-          contractAddress: "${activeStakingProgramAddress}"
-        }
-      ) {
-        epochLength
-        blockTimestamp
-      }
-    }
-  `;
 
   const { data, isLoading } = useQuery({
     queryKey: ['latestEpochTime'],
     queryFn: async () => {
-      const response = (await request(
-        GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL,
-        latestEpochTimeQuery,
-      )) as {
-        checkpoints: EpochTimeResponse[];
-      };
-      return EpochTimeResponseSchema.parse(response.checkpoints[0]);
+      return await getLatestEpochDetails(activeStakingProgramAddress as string);
     },
     select: (data) => {
       // last epoch end time + epoch length

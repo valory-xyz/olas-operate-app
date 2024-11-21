@@ -57,12 +57,13 @@ const main = async () => {
         gatekeeperAssess: false,
         entitlements: 'electron/entitlements.mac.plist',
         entitlementsInherit: 'electron/entitlements.mac.plist',
-        notarize: {
-          teamId: process.env.APPLETEAMID,
-        },
       },
     },
   });
 };
 
-main().then((response) => { console.log('Build & Notarize complete'); }).catch((e) => console.error(e));
+main().then(() => {
+  console.log('Build & Notarize complete');
+}).catch(() => {
+  throw new Error('Failed to build and notarize.');
+});

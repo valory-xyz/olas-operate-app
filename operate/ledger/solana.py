@@ -22,7 +22,7 @@
 import typing as t
 
 from operate.ledger.base import LedgerHelper
-from operate.types import LedgerType
+from operate.operate_types import LedgerType
 
 
 class Solana(LedgerHelper):

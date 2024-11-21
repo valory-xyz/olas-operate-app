@@ -12,13 +12,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-14, macos-14-large]
+        os: [macos-14]
+        arch: [arm64, x64]
 
     steps:
       - uses: actions/checkout@v3
 
-      # Setup Python
-      - uses: actions/setup-python@v4
+      # Set up Python with setup-python action and add it to PATH
+      - uses: actions/setup-python@v5
+        id: setup-python
         with:
           python-version: "3.10"
 
@@ -32,10 +34,10 @@ jobs:
           virtualenvs-path: ~/my-custom-path
           installer-parallel: true
 
-      # Set architecture for macos-latest-large as x64 and arm64 for other versions
+      # Set OS_ARCH env
       - name: Set architecture environment variable
-        run: |
-          if [ "${{ matrix.os }}" == "macos-14-large" ]; then echo "OS_ARCH=x64" >> $GITHUB_ENV; else echo "OS_ARCH=arm64" >> $GITHUB_ENV; fi
+        run: 
+            echo "OS_ARCH=${{ matrix.arch }}" >> $GITHUB_ENV; 
 
       # Cache Poetry dependencies with unique key for each environment and architecture
       - name: Cache Poetry dependencies
@@ -45,9 +47,9 @@ jobs:
             ~/.cache/pypoetry
             ~/.cache/pip
             ~/.venv
-          key: poetry-${{ env.OS_ARCH }}-${{ hashFiles('**/poetry.lock') }}
+          key: poetry-${{ matrix.arch }}-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
-            poetry-${{ env.OS_ARCH }}-
+            poetry-${{ matrix.arch }}-
 
       - name: Install dependencies
         run: poetry install
@@ -57,22 +59,29 @@ jobs:
         run: |
           trader_version=$(poetry run python -c "import yaml; config = yaml.safe_load(open('templates/trader.yaml')); print(config['service_version'])")
           echo $trader_version
-          mkdir dist && curl -L -o dist/aea_bin "https://github.com/valory-xyz/trader/releases/download/${trader_version}/trader_bin_${{ env.OS_ARCH }}"
+          make ./dist/aea_bin
+        #instead of this one mwe use make; mkdir dist && curl -L -o dist/aea_bin "https://github.com/valory-xyz/trader/releases/download/${trader_version}/trader_bin_${{ env.OS_ARCH }}"
 
       - name: Build with PyInstaller
         run: |
           poetry run pyinstaller operate/services/utils/tendermint.py --onefile
+
+          # patch open aea in place
+          rm -fr ./open-aea
+          git clone https://github.com/valory-xyz/open-aea.git -b fix/1.5.2_encoding
+          poetry run pip install ./open-aea/
+
           poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py --add-binary dist/aea_bin:. --add-binary dist/tendermint:. --onefile --name pearl_${{ env.OS_ARCH }}
 
       - name: Upload Release Assets
         uses: actions/upload-artifact@v4
         with:
-          name: pearl_${{ env.OS_ARCH }}
-          path: dist/pearl_${{ env.OS_ARCH }}
+          name: pearl_${{ matrix.arch }}
+          path: dist/pearl_${{ matrix.arch }}
 
   # Jobs for production and development, running separately for x64 and arm64
   build-release:
-    runs-on: macos-latest
+    runs-on: macos-14
     strategy:
       matrix:
         env: [production, development]
@@ -86,7 +95,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          registry-url: "https://registry.npmjs.org"   
+          registry-url: "https://registry.npmjs.org"
+
+      # Configure Yarn network settings for timeout, retries, and reduced concurrency
+      - name: Configure Yarn network settings
+        run: |
+              yarn config set network-timeout 60000         # Set network timeout to 1 minute
+              yarn config set network-retries 10             # Retry up to 10 times
+              yarn config set network-concurrency 2          # Reduce concurrency to 2 connections
+    
 
       # Download the appropriate architecture artifact
       - name: Download Pearl binary for architecture
@@ -151,7 +168,7 @@ jobs:
         env:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
           APPLE_ID: ${{ secrets.APPLEID }}
-          APPLETEAMID: ${{ secrets.APPLETEAMID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}
@@ -167,7 +184,7 @@ jobs:
         env:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
           APPLE_ID: ${{ secrets.APPLEID }}
-          APPLETEAMID: ${{ secrets.APPLETEAMID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}

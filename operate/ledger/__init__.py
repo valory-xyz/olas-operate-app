@@ -25,7 +25,7 @@ import typing as t
 from operate.ledger.base import LedgerHelper
 from operate.ledger.ethereum import Ethereum
 from operate.ledger.solana import Solana
-from operate.types import ChainType, LedgerType
+from operate.operate_types import ChainType, LedgerType
 
 
 ETHEREUM_PUBLIC_RPC = os.environ.get("DEV_RPC", "https://ethereum.publicnode.com")

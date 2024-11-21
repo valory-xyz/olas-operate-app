@@ -19,7 +19,7 @@
 
 """Chain profiles."""
 
-from operate.types import ChainType, ContractAddresses
+from operate.operate_types import ChainType, ContractAddresses
 
 
 CONTRACTS = {
