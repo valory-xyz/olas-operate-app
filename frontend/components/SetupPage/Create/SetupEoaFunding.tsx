@@ -88,7 +88,7 @@ const SetupEoaFundingWaiting = ({ chainName }: SetupEoaFundingWaitingProps) => {
         </Flex>
 
         <span className="can-select-text break-word">
-          {`ETH: ${masterEoaAddress || NA}`}
+          {`XDAI: ${masterEoaAddress || NA}`}
         </span>
         {/* <CustomAlert
           type="info"
