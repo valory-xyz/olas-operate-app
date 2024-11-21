@@ -38,6 +38,7 @@ type ServicesContextType = {
   selectService: (serviceUuid: string) => void;
   selectedService?: Service;
   selectedAgentConfig: AgentConfig;
+  selectedAgentType: AgentType;
   updateAgentType: (agentType: AgentType) => void;
 } & Partial<QueryObserverBaseResult<MiddlewareServiceResponse[]>> &
   UsePause;
@@ -48,6 +49,7 @@ export const ServicesContext = createContext<ServicesContextType>({
   togglePaused: noop,
   selectService: noop,
   selectedAgentConfig: AGENT_CONFIG[AgentType.PredictTrader],
+  selectedAgentType: AgentType.PredictTrader,
   updateAgentType: noop,
 });
 
@@ -207,6 +209,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         selectService,
         selectedService,
         selectedAgentConfig,
+        selectedAgentType,
         updateAgentType,
       }}
     >
