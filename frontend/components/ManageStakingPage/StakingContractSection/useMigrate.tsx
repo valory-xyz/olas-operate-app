@@ -3,8 +3,14 @@ import { useMemo } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useBalanceContext } from '@/hooks/useBalanceContext';
+import { TokenSymbol } from '@/enums/Token';
+import {
+  useBalanceContext,
+  useMasterBalances,
+  useServiceBalances,
+} from '@/hooks/useBalanceContext';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
+import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import {
@@ -39,14 +45,17 @@ type MigrateValidation =
     };
 
 export const useMigrate = (stakingProgramId: StakingProgramId) => {
-  const { serviceStatus } = useServices();
+  const { selectedAgentConfig, selectedService } = useServices();
+  const { homeChainId } = selectedAgentConfig;
+  const serviceConfigId = selectedService?.service_config_id;
+  const { deploymentStatus: serviceStatus } = useService({
+    serviceConfigId,
+  });
   const { serviceTemplate } = useServiceTemplates();
-  const {
-    isBalanceLoaded,
-    masterSafeBalance: safeBalance,
-    totalOlasStakedBalance,
-    isLowBalance,
-  } = useBalanceContext();
+  const { isLoaded: isBalanceLoaded } = useBalanceContext();
+  const { serviceStakedBalances, isLowBalance } =
+    useServiceBalances(serviceConfigId);
+  const { masterSafeBalances } = useMasterBalances();
   const { activeStakingProgramId, activeStakingProgramMeta } =
     useStakingProgram();
   const { needsInitialFunding } = useNeedsFunds();
@@ -73,18 +82,34 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
 
   const hasEnoughOlasToMigrate = useMemo(() => {
     if (!isBalanceLoaded) return false;
-    if (isNil(safeBalance?.OLAS)) return false;
+    // TODO: Josh please check if it's a correct replacement for safeBalance?.OLAS
+    const safeOlasBalance = masterSafeBalances?.find(
+      (item) =>
+        item.chainId === homeChainId && item.symbol === TokenSymbol.OLAS,
+    )?.balance;
+    if (isNil(safeOlasBalance)) return false;
+
+    const serviceStakedBalance = serviceStakedBalances?.find(
+      (item) => item.chainId === homeChainId,
+    );
+
+    // TODO: Josh please check if it's a correct replacement for totalOlasStakedBalance
+    // also it seems it makes sense to have it somewhere already calculated
+    const totalOlasStakedBalance =
+      (serviceStakedBalance?.olasBondBalance || 0) +
+      (serviceStakedBalance?.olasDepositBalance || 0);
     if (isNil(totalOlasStakedBalance)) return false;
     if (isNil(minimumOlasRequiredToMigrate)) return false;
 
-    const balanceForMigration = safeBalance.OLAS + totalOlasStakedBalance;
+    const balanceForMigration = safeOlasBalance + totalOlasStakedBalance;
 
     return balanceForMigration >= minimumOlasRequiredToMigrate;
   }, [
+    homeChainId,
     isBalanceLoaded,
+    masterSafeBalances,
     minimumOlasRequiredToMigrate,
-    safeBalance,
-    totalOlasStakedBalance,
+    serviceStakedBalances,
   ]);
 
   const hasEnoughOlasForFirstRun = useMemo(() => {
