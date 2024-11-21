@@ -51,13 +51,11 @@ export default function App({ Component, pageProps }: AppProps) {
                               <ConfigProvider theme={mainTheme}>
                                 <ModalProvider>
                                   {isMounted ? (
-                                    <QueryClientProvider client={queryClient}>
-                                      <SystemNotificationTriggers>
-                                        <Layout>
-                                          <Component {...pageProps} />
-                                        </Layout>
-                                      </SystemNotificationTriggers>
-                                    </QueryClientProvider>
+                                    <SystemNotificationTriggers>
+                                      <Layout>
+                                        <Component {...pageProps} />
+                                      </Layout>
+                                    </SystemNotificationTriggers>
                                   ) : null}
                                 </ModalProvider>
                               </ConfigProvider>

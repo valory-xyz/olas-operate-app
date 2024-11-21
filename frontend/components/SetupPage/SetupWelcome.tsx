@@ -14,7 +14,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MiddlewareAccountIsSetup } from '@/client';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useBalanceContext } from '@/hooks/useBalanceContext';
+import {
+  useBalanceContext,
+  useMasterBalances,
+} from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
@@ -131,14 +134,21 @@ export const SetupWelcomeLogin = () => {
   const { goto: gotoPage } = usePageState();
 
   const { selectedService } = useServices();
-  const { masterSafes, masterWallets: wallets } = useMasterWalletContext();
-  const { isLoaded, walletBalances } = useBalanceContext();
+  const {
+    masterSafes,
+    masterWallets: wallets,
+    masterEoa,
+  } = useMasterWalletContext();
+  const { isLoaded } = useBalanceContext();
+  const { masterWalletBalances } = useMasterBalances();
 
   const masterSafe =
     masterSafes?.find(
       (safe) => safe.chainId === selectedService?.home_chain_id,
     ) ?? null;
-  const eoaBalanceEth = walletBalances?.find((balance) => balance.isNative);
+  const eoaBalanceEth = masterWalletBalances?.find(
+    (balance) => balance.walletAddress === masterEoa?.address,
+  );
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [canNavigate, setCanNavigate] = useState(false);

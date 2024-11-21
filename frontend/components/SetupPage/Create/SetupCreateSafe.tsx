@@ -7,7 +7,6 @@ import { CardSection } from '@/components/styled/CardSection';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
 import { Pages } from '@/enums/Pages';
-import { WalletOwnerType } from '@/enums/Wallet';
 import { usePageState } from '@/hooks/usePageState';
 import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
@@ -62,10 +61,7 @@ export const SetupCreateSafe = () => {
 
   const masterSafeAddress = useMemo(() => {
     if (!masterSafes) return;
-    const master = masterSafes.find(
-      (safe) => safe.owner === WalletOwnerType.Master,
-    );
-    return master?.address;
+    return masterSafes[0]?.address;
   }, [masterSafes]);
 
   const [isCreatingSafe, setIsCreatingSafe] = useState(false);

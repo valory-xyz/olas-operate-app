@@ -15,7 +15,7 @@ import { NA } from '@/constants/symbols';
 import { MIN_ETH_BALANCE_THRESHOLDS } from '@/constants/thresholds';
 import { ChainId } from '@/enums/Chain';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useBalanceContext } from '@/hooks/useBalanceContext';
+import { useMasterBalances } from '@/hooks/useBalanceContext';
 import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
@@ -178,7 +178,7 @@ const eoaFundingMap = {
 export const SetupEoaFunding = () => {
   const { goto } = useSetup();
   const { masterEoa } = useMasterWalletContext();
-  const { walletBalances } = useBalanceContext();
+  const { masterWalletBalances } = useMasterBalances();
   const masterEoaAddress = masterEoa?.address;
 
   const [currentChain, setCurrentChain] = useState<MiddlewareChain>(
@@ -234,9 +234,11 @@ export const SetupEoaFunding = () => {
     goto(SetupScreen.SetupCreateSafe);
   }, 5000);
 
-  const eoaBalance = walletBalances.find((e) => e.isNative);
+  const eoaBalance = masterWalletBalances?.find(
+    (balance) => balance.walletAddress === masterEoaAddress,
+  );
   const isFunded =
-    eoaBalance?.chainId === ChainId.Ethereum &&
+    eoaBalance?.chainId === ChainId.Gnosis &&
     eoaBalance.balance >=
       MIN_ETH_BALANCE_THRESHOLDS[ChainId.Gnosis].safeCreation;
 
