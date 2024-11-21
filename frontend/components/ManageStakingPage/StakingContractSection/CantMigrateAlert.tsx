@@ -1,17 +1,24 @@
 import { Flex, Typography } from 'antd';
-import { isNil } from 'lodash';
+import { isEmpty, isNil } from 'lodash';
+import { useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
+import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { LOW_MASTER_SAFE_BALANCE } from '@/constants/thresholds';
+import { ChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useBalanceContext } from '@/hooks/useBalanceContext';
+import { TokenSymbol } from '@/enums/Token';
+import {
+  useBalanceContext,
+  useMasterBalances,
+} from '@/hooks/useBalanceContext';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
-import { useServiceTemplates } from '@/hooks/useServiceTemplates';
+import { useService } from '@/hooks/useService';
+import { useServices } from '@/hooks/useServices';
 import {
   useActiveStakingContractInfo,
   useStakingContractContext,
 } from '@/hooks/useStakingContractDetails';
-import { getMinimumStakedAmountRequired } from '@/utils/service';
 
 import { CantMigrateReason } from './useMigrate';
 
@@ -20,33 +27,65 @@ const { Text } = Typography;
 type CantMigrateAlertProps = { stakingProgramId: StakingProgramId };
 
 const AlertInsufficientMigrationFunds = ({
-  stakingProgramId,
+  stakingProgramId: stakingProgramIdToMigrateTo,
 }: CantMigrateAlertProps) => {
-  const { serviceTemplate } = useServiceTemplates();
+  const {
+    isFetched: isServicesLoaded,
+    selectedService,
+    selectedAgentConfig,
+  } = useServices();
+  const { homeChainId } = selectedAgentConfig;
+  const serviceConfigId =
+    isServicesLoaded && selectedService
+      ? selectedService.service_config_id
+      : '';
+  const { service } = useService({
+    serviceConfigId,
+  });
   const { isAllStakingContractDetailsRecordLoaded } =
     useStakingContractContext();
   const { isServiceStaked } = useActiveStakingContractInfo();
-  const { masterSafeBalance: safeBalance, totalOlasStakedBalance } =
+  const { isLoaded: isBalanceLoaded, totalStakedOlasBalance } =
     useBalanceContext();
+  const { masterSafeBalances } = useMasterBalances();
   const { serviceFundRequirements, isInitialFunded } = useNeedsFunds();
 
-  const totalOlasRequiredForStaking = getMinimumStakedAmountRequired(
-    serviceTemplate,
-    stakingProgramId,
-  );
+  // should find in STAKING_PROGRAMS based on stakingProgramIdToMigrateTo?
+  const chainIdToMigrateTo = ChainId.Gnosis;
+
+  const requiredStakedOlas =
+    service &&
+    STAKING_PROGRAMS[chainIdToMigrateTo][stakingProgramIdToMigrateTo]
+      ?.stakingRequirements[TokenSymbol.OLAS];
+
+  const safeBalance = useMemo(() => {
+    if (!isBalanceLoaded) return;
+    if (isNil(masterSafeBalances) || isEmpty(masterSafeBalances)) return;
+    masterSafeBalances.reduce(
+      (acc, { chainId, symbol, balance }) => {
+        if (chainId === homeChainId) {
+          acc[symbol] = balance;
+        }
+        return acc;
+      },
+      {} as Record<TokenSymbol, number>,
+    );
+  }, [homeChainId, isBalanceLoaded, masterSafeBalances]);
 
   if (!isAllStakingContractDetailsRecordLoaded) return null;
-  if (isNil(totalOlasRequiredForStaking)) return null;
-  if (isNil(safeBalance?.OLAS)) return null;
-  if (isNil(totalOlasStakedBalance)) return null;
+  if (isNil(requiredStakedOlas)) return null;
+  if (isNil(safeBalance?.[TokenSymbol.OLAS])) return null;
+  if (isNil(totalStakedOlasBalance)) return null;
 
   const requiredOlasDeposit = isServiceStaked
-    ? totalOlasRequiredForStaking - (totalOlasStakedBalance + safeBalance.OLAS) // when staked
-    : totalOlasRequiredForStaking - safeBalance.OLAS; // when not staked
+    ? requiredStakedOlas -
+      (totalStakedOlasBalance + safeBalance[TokenSymbol.OLAS]) // when staked
+    : requiredStakedOlas - safeBalance[TokenSymbol.OLAS]; // when not staked
 
   const requiredXdaiDeposit = isInitialFunded
-    ? LOW_MASTER_SAFE_BALANCE - safeBalance.ETH // is already funded allow minimal maintenance
-    : serviceFundRequirements.eth - safeBalance.ETH; // otherwise require full initial funding requirements
+    ? LOW_MASTER_SAFE_BALANCE - (safeBalance[TokenSymbol.ETH] || 0) // is already funded allow minimal maintenance
+    : (serviceFundRequirements[homeChainId]?.[TokenSymbol.ETH] || 0) -
+      (safeBalance[TokenSymbol.ETH] || 0); // otherwise require full initial funding requirements
 
   return (
     <CustomAlert

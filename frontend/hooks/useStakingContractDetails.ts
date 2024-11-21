@@ -3,6 +3,7 @@ import { useContext } from 'react';
 
 import { StakingContractDetailsContext } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
+import { Maybe } from '@/types/Util';
 
 import { useServices } from './useServices';
 
@@ -106,11 +107,12 @@ export const useActiveStakingContractInfo = () => {
 };
 
 export const useStakingContractDetails = (
-  stakingProgramId: StakingProgramId,
+  stakingProgramId: Maybe<StakingProgramId>,
 ) => {
   const { allStakingContractDetailsRecord } = useStakingContractContext();
-  const stakingContractInfo =
-    allStakingContractDetailsRecord?.[stakingProgramId];
+  const stakingContractInfo = stakingProgramId
+    ? allStakingContractDetailsRecord?.[stakingProgramId]
+    : null;
 
   const { serviceIds, maxNumServices, availableRewards } =
     stakingContractInfo ?? {};

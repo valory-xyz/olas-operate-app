@@ -8,7 +8,6 @@ import { TokenSymbol } from '@/enums/Token';
 import {
   useBalanceContext,
   useMasterBalances,
-  useServiceBalances,
 } from '@/hooks/useBalanceContext';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { useService } from '@/hooks/useService';
@@ -45,65 +44,36 @@ type MigrateValidation =
     };
 
 export const useMigrate = (stakingProgramId: StakingProgramId) => {
-  const { selectedAgentConfig, selectedService, selectedAgentType } =
-    useServices();
+  const {
+    isFetched: isServicesLoaded,
+    selectedAgentConfig,
+    selectedService,
+    selectedAgentType,
+  } = useServices();
   const { homeChainId } = selectedAgentConfig;
   const serviceConfigId = selectedService?.service_config_id;
   const { deploymentStatus: serviceStatus } = useService({
     serviceConfigId,
   });
+
   const {
     isLoaded: isBalanceLoaded,
-    totalStakedOlasBalance: totalOlasStakedBalance,
+    totalStakedOlasBalance,
+    isLowBalance,
   } = useBalanceContext();
-  const { isLowBalance } = useServiceBalances(serviceConfigId);
   const { masterSafeBalances } = useMasterBalances();
-  const { activeStakingProgramId } = useStakingProgram();
-  const { needsInitialFunding } = useNeedsFunds();
+  const { needsInitialFunding, hasEnoughEthForInitialFunding } =
+    useNeedsFunds(serviceConfigId);
 
+  const { activeStakingProgramId } = useStakingProgram();
   const {
     allStakingContractDetailsRecord,
     isAllStakingContractDetailsRecordLoaded,
   } = useStakingContractContext();
-
   const { isServiceStaked, isServiceStakedForMinimumDuration } =
     useActiveStakingContractInfo();
-
   const { stakingContractInfo, hasEnoughServiceSlots } =
     useStakingContractDetails(stakingProgramId);
-
-  const { isFetched: isServicesLoaded } = useServices();
-
-  const { hasEnoughEthForInitialFunding } = useNeedsFunds();
-
-  const minimumOlasRequiredToMigrate = useMemo(
-    () =>
-      STAKING_PROGRAMS[selectedAgentConfig.homeChainId][stakingProgramId]
-        .stakingRequirements[TokenSymbol.OLAS],
-    [selectedAgentConfig.homeChainId, stakingProgramId],
-  );
-
-  const hasEnoughOlasToMigrate = useMemo(() => {
-    if (!isBalanceLoaded) return false;
-    const safeOlasBalance = masterSafeBalances?.find(
-      (item) =>
-        item.chainId === homeChainId && item.symbol === TokenSymbol.OLAS,
-    )?.balance;
-    if (isNil(safeOlasBalance)) return false;
-
-    if (isNil(totalOlasStakedBalance)) return false;
-    if (isNil(minimumOlasRequiredToMigrate)) return false;
-
-    const balanceForMigration = safeOlasBalance + totalOlasStakedBalance;
-
-    return balanceForMigration >= minimumOlasRequiredToMigrate;
-  }, [
-    homeChainId,
-    isBalanceLoaded,
-    masterSafeBalances,
-    minimumOlasRequiredToMigrate,
-    totalOlasStakedBalance,
-  ]);
 
   const safeOlasBalance = useMemo(() => {
     if (!isBalanceLoaded) return 0;
@@ -114,6 +84,27 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
       return acc;
     }, 0);
   }, [homeChainId, isBalanceLoaded, masterSafeBalances]);
+
+  const minimumOlasRequiredToMigrate = useMemo(
+    () =>
+      STAKING_PROGRAMS[selectedAgentConfig.homeChainId][stakingProgramId]
+        .stakingRequirements[TokenSymbol.OLAS],
+    [selectedAgentConfig.homeChainId, stakingProgramId],
+  );
+  const hasEnoughOlasToMigrate = useMemo(() => {
+    if (!isBalanceLoaded) return false;
+    if (isNil(safeOlasBalance)) return false;
+    if (isNil(totalStakedOlasBalance)) return false;
+    if (isNil(minimumOlasRequiredToMigrate)) return false;
+
+    const balanceForMigration = safeOlasBalance + totalStakedOlasBalance;
+    return balanceForMigration >= minimumOlasRequiredToMigrate;
+  }, [
+    isBalanceLoaded,
+    minimumOlasRequiredToMigrate,
+    safeOlasBalance,
+    totalStakedOlasBalance,
+  ]);
 
   const hasEnoughOlasForFirstRun = useMemo(() => {
     if (!isBalanceLoaded) return false;

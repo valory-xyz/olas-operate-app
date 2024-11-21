@@ -2,7 +2,8 @@ import { Button, Popover } from 'antd';
 import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
-import { MiddlewareDeploymentStatus } from '@/client';
+import { MiddlewareDeploymentStatus, ServiceTemplate } from '@/client';
+import { getServiceTemplate } from '@/constants/serviceTemplates';
 import { Pages } from '@/enums/Pages';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
@@ -10,11 +11,11 @@ import { useModals } from '@/hooks/useModals';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
-import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import {
   useActiveStakingContractInfo,
   useStakingContractDetails,
 } from '@/hooks/useStakingContractDetails';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { ServicesService } from '@/service/Services';
 
 import { CountdownUntilMigration } from './CountdownUntilMigration';
@@ -27,26 +28,32 @@ export const MigrateButton = ({
   stakingProgramId: stakingProgramIdToMigrateTo,
 }: MigrateButtonProps) => {
   const { goto } = usePageState();
-  const { serviceTemplate } = useServiceTemplates();
   const {
     setPaused: setIsServicePollingPaused,
     isFetched: isServicesLoaded,
     selectedService,
+    selectedAgentConfig,
   } = useServices();
-
-  const { setDeploymentStatus } = useService({
-    serviceConfigId:
-      isServicesLoaded && selectedService
-        ? selectedService.service_config_id
-        : '',
+  const { homeChainId } = selectedAgentConfig;
+  const serviceConfigId =
+    isServicesLoaded && selectedService
+      ? selectedService.service_config_id
+      : '';
+  const { service, setDeploymentStatus } = useService({
+    serviceConfigId,
   });
+  const serviceTemplate = useMemo<ServiceTemplate | undefined>(
+    () => (service ? getServiceTemplate(service.hash) : undefined),
+    [service],
+  );
 
   const { setIsPaused: setIsBalancePollingPaused } = useBalanceContext();
 
+  const { initialDefaultStakingProgramId } = useStakingProgram();
   const { activeStakingContractDetails, isActiveStakingContractDetailsLoaded } =
     useActiveStakingContractInfo();
   const { stakingContractInfo: defaultStakingContractInfo } =
-    useStakingContractDetails(defaultStakingProgramId);
+    useStakingContractDetails(initialDefaultStakingProgramId);
 
   const currentStakingContractInfo = useMemo(() => {
     if (!isActiveStakingContractDetailsLoaded) return;
@@ -98,6 +105,8 @@ export const MigrateButton = ({
         size="large"
         disabled={!validation.canMigrate}
         onClick={async () => {
+          if (!serviceTemplate) return;
+
           setIsServicePollingPaused(true);
           setIsBalancePollingPaused(true);
 
@@ -111,20 +120,20 @@ export const MigrateButton = ({
 
             // update service
             await ServicesService.updateService({
-              stakingProgramId,
+              stakingProgramId: stakingProgramIdToMigrateTo,
               serviceTemplate,
-              serviceUuid: serviceTemplate.service_config_id,
+              serviceUuid: serviceConfigId,
               deploy: true,
               useMechMarketplace:
-                stakingProgramId === StakingProgramId.BetaMechMarketplace,
+                stakingProgramIdToMigrateTo ===
+                StakingProgramId.PearlBetaMechMarketplace,
+              chainId: homeChainId,
             });
 
             // start service after updating
-            await ServicesService.startService(
-              serviceTemplate.service_config_id,
-            );
+            await ServicesService.startService(serviceConfigId);
 
-            await updateStakingProgram(); // TODO: refactor to support single staking program & multi staking programs, this on longer works
+            // await updateStakingProgram(); // TODO: refactor to support single staking program & multi staking programs, this on longer works
 
             setMigrationModalOpen(true);
           } catch (error) {
