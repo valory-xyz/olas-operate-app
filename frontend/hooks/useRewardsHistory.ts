@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { ethers } from 'ethers';
+import { Maybe } from 'graphql/jsutils/Maybe';
 import { gql, request } from 'graphql-request';
 import { groupBy } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
@@ -8,10 +9,11 @@ import { z } from 'zod';
 import { STAKING_PROGRAM_ADDRESS } from '@/config/stakingPrograms';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL } from '@/constants/urls';
+import { ChainId } from '@/enums/Chain';
 import { Address } from '@/types/Address';
 import { Nullable } from '@/types/Util';
 
-import { useServiceId } from './useService';
+import { useService } from './useService';
 import { useServices } from './useServices';
 
 const ONE_DAY_IN_S = 24 * 60 * 60;
@@ -161,11 +163,7 @@ type CheckpointsResponse = { checkpoints: CheckpointResponse[] };
 /**
  * hook to fetch rewards history for all contracts
  */
-const useContractCheckpoints = () => {
-  const serviceId = useServiceId();
-  const { selectedAgentConfig } = useServices();
-  const { homeChainId: chainId } = selectedAgentConfig;
-
+const useContractCheckpoints = (chainId: ChainId, serviceId: Maybe<number>) => {
   const transformCheckpoints = useTransformCheckpoints();
 
   return useQuery({
@@ -235,14 +233,24 @@ const useContractCheckpoints = () => {
 };
 
 export const useRewardsHistory = () => {
-  const serviceId = useServiceId();
+  const {
+    selectedService,
+    selectedAgentConfig,
+    isFetched: isLoaded,
+  } = useServices();
+  const { homeChainId } = selectedAgentConfig;
+  const serviceConfigId =
+    isLoaded && selectedService ? selectedService?.service_config_id : '';
+  const { service } = useService({ serviceConfigId });
+  const serviceId = service?.chain_configs[homeChainId].chain_data?.token;
+
   const {
     isError,
     isLoading,
     isFetching,
     refetch,
     data: contractCheckpoints,
-  } = useContractCheckpoints();
+  } = useContractCheckpoints(homeChainId, serviceId);
 
   const epochSortedCheckpoints = useMemo<Checkpoint[]>(
     () =>
