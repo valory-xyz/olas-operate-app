@@ -8,9 +8,9 @@ import { COLOR } from '@/constants/colors';
 import { EXPLORER_URL } from '@/constants/urls';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
-import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 
 import { CardSection } from '../../styled/CardSection';
 
@@ -97,20 +97,16 @@ const TooltipContent = styled.div`
 `;
 
 export const GasBalanceSection = () => {
-  const { selectedService, isFetched: isLoaded } = useServices();
-  const serviceConfigId =
-    isLoaded && selectedService ? selectedService?.service_config_id : '';
-  const { serviceSafes } = useService({
-    serviceConfigId,
-  });
+  const { selectedAgentConfig } = useServices();
+  const { homeChainId } = selectedAgentConfig;
+  const { masterSafes } = useMasterWalletContext();
   const { isLoaded: isBalancesLoaded } = useBalanceContext();
 
-  const chainId = selectedService?.home_chain_id;
-  const serviceSafe = useMemo(() => {
-    if (!chainId) return;
+  const masterSafe = useMemo(() => {
+    if (isNil(masterSafes)) return;
 
-    return serviceSafes.find((wallet) => wallet.chainId === chainId);
-  }, [chainId, serviceSafes]);
+    return masterSafes.find((wallet) => wallet.chainId === homeChainId);
+  }, [homeChainId, masterSafes]);
 
   return (
     <CardSection
@@ -121,24 +117,26 @@ export const GasBalanceSection = () => {
     >
       <Text type="secondary">
         Trading balance&nbsp;
-        {serviceSafe && (
+        {masterSafe && (
           <Tooltip
             title={
               <TooltipContent>
                 Your agent uses this balance to fund trading activity on-chain.
                 <br />
-                {chainId && (
-                  <a
-                    href={
-                      `${EXPLORER_URL[chainId as keyof typeof EXPLORER_URL]}/address/` +
-                      serviceSafe.address
-                    }
-                    target="_blank"
-                  >
-                    Track activity on blockchain explorer{' '}
-                    <ArrowUpOutlined style={{ rotate: '45deg' }} />
-                  </a>
-                )}
+                <a
+                  href={
+                    `${
+                      EXPLORER_URL[
+                        // TODO: fix unknown
+                        homeChainId as unknown as keyof typeof EXPLORER_URL
+                      ]
+                    }/address/` + masterSafe.address
+                  }
+                  target="_blank"
+                >
+                  Track activity on blockchain explorer{' '}
+                  <ArrowUpOutlined style={{ rotate: '45deg' }} />
+                </a>
               </TooltipContent>
             }
           >
