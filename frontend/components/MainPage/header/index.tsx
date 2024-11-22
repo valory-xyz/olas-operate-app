@@ -13,7 +13,7 @@ import { AgentButton } from './AgentButton/AgentButton';
 import { AgentHead } from './AgentHead';
 
 const useSetupTrayIcon = () => {
-  const { lowBalances } = useBalanceContext();
+  const { isLowBalance } = useBalanceContext();
   const { selectedService } = useServices();
   const { deploymentStatus } = useService({
     serviceConfigId: selectedService?.service_config_id,

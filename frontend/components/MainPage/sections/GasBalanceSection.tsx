@@ -1,13 +1,15 @@
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { ArrowUpOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Skeleton, Tooltip, Typography } from 'antd';
 import { isNil } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
+import { EXPLORER_URL } from '@/constants/urls';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useService } from '@/hooks/useService';
+import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 
 import { CardSection } from '../../styled/CardSection';
@@ -33,19 +35,13 @@ const FineDot = styled(Dot)`
   background-color: ${COLOR.GREEN_2};
 `;
 
-const BalanceStatus = ({ serviceConfigId }: { serviceConfigId: string }) => {
-  const { isLoaded, lowBalances } = useBalanceContext();
+const BalanceStatus = () => {
+  const { isLoaded, isLowBalance } = useBalanceContext();
   const { storeState } = useStore();
   const { showNotification } = useElectronApi();
 
   const [isLowBalanceNotificationShown, setIsLowBalanceNotificationShown] =
     useState(false);
-
-  const isLowBalance =
-    lowBalances.filter(
-      (lowBalanceResult) =>
-        lowBalanceResult.serviceConfigId === serviceConfigId,
-    ).length > 0;
 
   // show notification if balance is too low
   useEffect(() => {
@@ -100,12 +96,21 @@ const TooltipContent = styled.div`
   }
 `;
 
-type GasBalanceSectionProps = { serviceConfigId: string };
-export const GasBalanceSection = ({
-  serviceConfigId,
-}: GasBalanceSectionProps) => {
-  const { isLoaded } = useBalanceContext();
-  const { serviceSafes } = useService({ serviceConfigId });
+export const GasBalanceSection = () => {
+  const { selectedService, isFetched: isLoaded } = useServices();
+  const serviceConfigId =
+    isLoaded && selectedService ? selectedService?.service_config_id : '';
+  const { serviceSafes } = useService({
+    serviceConfigId,
+  });
+  const { isLoaded: isBalancesLoaded } = useBalanceContext();
+
+  const chainId = selectedService?.home_chain_id;
+  const serviceSafe = useMemo(() => {
+    if (!chainId) return;
+
+    return serviceSafes.find((wallet) => wallet.chainId === chainId);
+  }, [chainId, serviceSafes]);
 
   return (
     <CardSection
@@ -116,23 +121,24 @@ export const GasBalanceSection = ({
     >
       <Text type="secondary">
         Trading balance&nbsp;
-        {serviceSafes.length > 0 && (
+        {serviceSafe && (
           <Tooltip
             title={
               <TooltipContent>
                 Your agent uses this balance to fund trading activity on-chain.
-                {/* TODO: reintroduce, low priority */}
-                {/* <br />
-                <a
-                  href={
-                    `${EXPLORER_URL[MiddlewareChain.GNOSIS]}/address/` +
-                    masterSafeAddress
-                  }
-                  target="_blank"
-                >
-                  Track activity on blockchain explorer{' '}
-                  <ArrowUpOutlined style={{ rotate: '45deg' }} />
-                </a> */}
+                <br />
+                {chainId && (
+                  <a
+                    href={
+                      `${EXPLORER_URL[chainId as keyof typeof EXPLORER_URL]}/address/` +
+                      serviceSafe.address
+                    }
+                    target="_blank"
+                  >
+                    Track activity on blockchain explorer{' '}
+                    <ArrowUpOutlined style={{ rotate: '45deg' }} />
+                  </a>
+                )}
               </TooltipContent>
             }
           >
@@ -141,9 +147,9 @@ export const GasBalanceSection = ({
         )}
       </Text>
 
-      {isLoaded ? (
+      {isBalancesLoaded ? (
         <Text strong>
-          <BalanceStatus serviceConfigId={serviceConfigId} />
+          <BalanceStatus />
         </Text>
       ) : (
         <Skeleton.Button active size="small" style={{ width: 96 }} />
