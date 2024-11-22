@@ -5,7 +5,7 @@ import { INITIAL_DEFAULT_STAKING_PROGRAM_IDS } from '@/config/stakingPrograms';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useServiceId } from '@/hooks/useService';
+import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { Maybe, Nullable } from '@/types/Util';
 
@@ -22,10 +22,9 @@ export const StakingProgramContext = createContext<{
 /**
  * hook to get the active staking program id
  */
-const useGetActiveStakingProgramId = () => {
+const useGetActiveStakingProgramId = (serviceId: Maybe<number>) => {
   const queryClient = useQueryClient();
   const { selectedAgentConfig } = useServices();
-  const serviceId = useServiceId();
 
   const { serviceApi, homeChainId } = selectedAgentConfig;
 
@@ -68,9 +67,20 @@ const useGetActiveStakingProgramId = () => {
  * It also provides a method to update the active staking program id in state.
  */
 export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
-  const { selectedAgentConfig } = useServices();
+  const {
+    selectedService,
+    selectedAgentConfig,
+    isFetched: isLoaded,
+  } = useServices();
+  const serviceConfigId =
+    isLoaded && selectedService ? selectedService?.service_config_id : '';
+  const { service } = useService({ serviceConfigId });
+
+  // fetch chain data from the selected service
+  const chainId = selectedService?.home_chain_id;
+  const chainData = chainId ? service?.chain_configs[chainId].chain_data : null;
   const { isLoading: isStakingProgramsLoading, data: activeStakingProgramId } =
-    useGetActiveStakingProgramId();
+    useGetActiveStakingProgramId(chainData?.token);
 
   return (
     <StakingProgramContext.Provider
