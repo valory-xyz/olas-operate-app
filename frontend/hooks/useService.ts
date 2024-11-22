@@ -150,22 +150,3 @@ export const useService = ({
     serviceEoa,
   };
 };
-
-// TODO: support multiple services
-/**
- *  Hook to get service id
- */
-export const useServiceId = () => {
-  const {
-    selectedService,
-    selectedAgentConfig,
-    isFetched: isLoaded,
-  } = useServices();
-  const { homeChainId } = selectedAgentConfig;
-  const serviceConfigId =
-    isLoaded && selectedService ? selectedService?.service_config_id : '';
-  const { service } = useService({ serviceConfigId });
-  const serviceId = service?.chain_configs[homeChainId].chain_data?.token;
-
-  return serviceId;
-};

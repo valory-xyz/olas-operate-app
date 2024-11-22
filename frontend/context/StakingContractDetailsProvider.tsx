@@ -13,7 +13,7 @@ import {
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useServiceId } from '@/hooks/useService';
+import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { StakingContractDetails } from '@/types/Autonolas';
@@ -132,7 +132,17 @@ export const StakingContractDetailsProvider = ({
   children,
 }: PropsWithChildren) => {
   const [isPaused, setIsPaused] = useState(false);
-  const serviceId = useServiceId();
+  const {
+    selectedService,
+    selectedAgentConfig,
+    isFetched: isLoaded,
+  } = useServices();
+  const serviceConfigId =
+    isLoaded && selectedService ? selectedService?.service_config_id : '';
+  const { service } = useService({ serviceConfigId });
+  const serviceId =
+    service?.chain_configs?.[selectedAgentConfig?.homeChainId]?.chain_data
+      ?.token;
 
   const { activeStakingProgramId } = useContext(StakingProgramContext);
   const {
