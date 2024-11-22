@@ -5,8 +5,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { FAQ_URL, SUPPORT_URL } from '@/constants/urls';
 import { Pages } from '@/enums/Pages';
-import { useLogs } from '@/hooks/backup/useLogs';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useLogs } from '@/hooks/useLogs';
 import { usePageState } from '@/hooks/usePageState';
 
 import { CardTitle } from '../../Card/CardTitle';

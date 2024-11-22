@@ -58,6 +58,7 @@ export const BalanceContext = createContext<{
     balance: number;
     expectedBalance: number;
   }[];
+  isLowBalance: boolean;
   isPaused: boolean;
 }>({
   isLoaded: false,
@@ -71,6 +72,7 @@ export const BalanceContext = createContext<{
   totalEthBalance: 0,
   totalStakedOlasBalance: 0,
   lowBalances: [],
+  isLowBalance: false,
 });
 
 export const BalanceProvider = ({ children }: PropsWithChildren) => {
@@ -196,6 +198,8 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     return result;
   }, [services, stakedBalances, wallets, walletBalances]);
 
+  const isLowBalance = useMemo(() => lowBalances?.length > 0, [lowBalances]);
+
   const updateBalances = useCallback(async () => {
     if (wallets && services) {
       setIsUpdatingBalances(true);
@@ -244,6 +248,7 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
         totalEthBalance,
         totalStakedOlasBalance,
         lowBalances,
+        isLowBalance,
       }}
     >
       {children}

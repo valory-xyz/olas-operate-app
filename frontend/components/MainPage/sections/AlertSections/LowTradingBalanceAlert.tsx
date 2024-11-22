@@ -8,7 +8,7 @@ import { useStore } from '@/hooks/useStore';
 const { Text, Title } = Typography;
 
 export const LowTradingBalanceAlert = () => {
-  const { isBalanceLoaded, isLowBalance } = useBalanceContext();
+  const { isLoaded: isBalanceLoaded, isLowBalance } = useBalanceContext();
   const { storeState } = useStore();
 
   if (!isBalanceLoaded) return null;

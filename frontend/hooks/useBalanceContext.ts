@@ -16,7 +16,7 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
   const { flatAddresses, serviceSafes, serviceEoa } = useService({
     serviceConfigId,
   });
-  const { walletBalances, lowBalances, stakedBalances } = useBalanceContext();
+  const { walletBalances, stakedBalances } = useBalanceContext();
 
   /**
    * Staked balances, only relevant to safes
@@ -27,20 +27,6 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
         flatAddresses.includes(balance.walletAddress),
       ),
     [flatAddresses, stakedBalances],
-  );
-
-  /** Array of cross-chain wallet balances relevant to the service with is considered low */
-  const serviceLowBalances = useMemo(
-    () => lowBalances?.filter((balance) => balance.walletAddress),
-    [lowBalances],
-  );
-
-  /**
-   * Boolean indicating if the service has low balances
-   */
-  const isLowBalance = useMemo(
-    () => serviceLowBalances?.length > 0,
-    [serviceLowBalances],
   );
 
   /**
@@ -80,8 +66,6 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
     serviceStakedBalances,
     serviceSafeBalances,
     serviceEoaBalances,
-    serviceLowBalances,
-    isLowBalance,
   };
 };
 
@@ -92,7 +76,7 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
  */
 export const useMasterBalances = () => {
   const { masterSafes, masterEoa } = useMasterWalletContext();
-  const { walletBalances, lowBalances } = useBalanceContext();
+  const { walletBalances } = useBalanceContext();
 
   // TODO: unused, check only services stake?
   // const masterStakedBalances = useMemo(
@@ -128,27 +112,9 @@ export const useMasterBalances = () => {
     [masterEoaBalances, masterSafeBalances],
   );
 
-  /**
-   * Array of low balances relevant to the master wallets (safes and eoa)
-   */
-  const masterLowBalances = useMemo(
-    () => lowBalances?.filter((balance) => balance.walletAddress),
-    [lowBalances],
-  );
-
-  /**
-   * Boolean indicating if any master wallets have low balances
-   */
-  const isLowBalance = useMemo(
-    () => masterLowBalances?.length > 0,
-    [masterLowBalances],
-  );
-
   return {
     masterWalletBalances,
     masterSafeBalances,
     masterEoaBalances,
-    masterLowBalances,
-    isLowBalance,
   };
 };
