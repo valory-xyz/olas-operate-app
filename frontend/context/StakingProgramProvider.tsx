@@ -78,9 +78,11 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
 
   // fetch chain data from the selected service
   const chainId = selectedService?.home_chain_id;
-  const chainData = chainId ? service?.chain_configs[chainId].chain_data : null;
+  const serviceId = chainId
+    ? service?.chain_configs[chainId].chain_data?.token
+    : null;
   const { isLoading: isStakingProgramsLoading, data: activeStakingProgramId } =
-    useGetActiveStakingProgramId(chainData?.token);
+    useGetActiveStakingProgramId(serviceId);
 
   return (
     <StakingProgramContext.Provider
