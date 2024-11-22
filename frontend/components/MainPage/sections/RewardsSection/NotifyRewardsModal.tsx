@@ -2,6 +2,7 @@ import { Button, Flex, Modal, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { NA } from '@/constants/symbols';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useReward } from '@/hooks/useReward';
@@ -13,7 +14,7 @@ import { ConfettiAnimation } from '../../../Confetti/ConfettiAnimation';
 const { Text, Title } = Typography;
 
 const getFormattedReward = (reward: number | undefined) =>
-  reward === undefined ? '--' : `~${balanceFormat(reward, 2)}`;
+  reward === undefined ? NA : `~${balanceFormat(reward, 2)}`;
 
 const SHARE_TEXT = `I just earned my first reward through the Operate app powered by #olas!\n\nDownload the Pearl app:`;
 const OPERATE_URL = 'https://olas.network/operate?pearl=first-reward';

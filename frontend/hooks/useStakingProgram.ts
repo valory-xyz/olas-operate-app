@@ -7,6 +7,8 @@ import {
 } from '@/config/stakingPrograms';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
+import { Address } from '@/types/Address';
+import { Nullable } from '@/types/Util';
 
 import { useServices } from './useServices';
 
@@ -25,7 +27,7 @@ export const useStakingProgram = () => {
   const allStakingProgramsKeys = Object.keys(STAKING_PROGRAMS[homeChainId]);
   const allStakingProgramNameAddressPair = STAKING_PROGRAM_ADDRESS[homeChainId];
 
-  // TODO: refactor to support allStakingPrograms, previously this was intented solely for the active staking program
+  // TODO: refactor to support allStakingPrograms, previously this was intended solely for the active staking program
   const allStakingProgramsMeta = useMemo(() => {
     if (!isActiveStakingProgramLoaded) return null;
     if (!activeStakingProgramId) return null;
@@ -59,21 +61,9 @@ export const useStakingProgram = () => {
     activeStakingProgramId,
   ]);
 
-  const activeStakingProgramAddress = useMemo(() => {
+  const activeStakingProgramAddress: Nullable<Address> = useMemo(() => {
     if (!activeStakingProgramId) return null;
-    if (activeStakingProgramId.length === 0) return null;
-
-    return (
-      Object.keys(allStakingProgramNameAddressPair) as StakingProgramId[]
-    ).reduce(
-      (acc, programId) => {
-        if (activeStakingProgramId.includes(programId)) {
-          acc[programId] = allStakingProgramNameAddressPair[programId];
-        }
-        return acc;
-      },
-      {} as Record<StakingProgramId, string>,
-    );
+    return allStakingProgramNameAddressPair[activeStakingProgramId];
   }, [allStakingProgramNameAddressPair, activeStakingProgramId]);
 
   return {

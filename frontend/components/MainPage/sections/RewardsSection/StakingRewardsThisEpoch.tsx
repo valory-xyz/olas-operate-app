@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Popover, Typography } from 'antd';
 
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { NA } from '@/constants/symbols';
 import { POPOVER_WIDTH_MEDIUM } from '@/constants/width';
 import { getLatestEpochDetails } from '@/graphql/queries';
 import { useServices } from '@/hooks/useServices';
@@ -29,7 +30,7 @@ const useEpochEndTime = () => {
       // last epoch end time + epoch length
       return Number(data.blockTimestamp) + Number(data.epochLength);
     },
-    enabled: !!activeStakingProgramAddress,
+    enabled: !!activeStakingProgramAddress && !!chainId,
     refetchOnWindowFocus: false,
   });
 
@@ -58,7 +59,7 @@ export const StakingRewardsThisEpoch = () => {
               <Text className="text-sm" strong>
                 {epochEndTimeInMs
                   ? `${formatToTime(epochEndTimeInMs * 1000)} (UTC)`
-                  : '--'}
+                  : NA}
               </Text>
             </div>
           ) : (

@@ -6,7 +6,7 @@ import { FireNoStreak } from '@/components/custom-icons/FireNoStreak';
 import { FireStreak } from '@/components/custom-icons/FireStreak';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
-import { Pages } from '@/enums/PageState';
+import { Pages } from '@/enums/Pages';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { usePageState } from '@/hooks/usePageState';
 import { useReward } from '@/hooks/useReward';
@@ -22,7 +22,7 @@ const RewardsStreakFlex = styled(Flex)`
 `;
 
 const Streak = () => {
-  const { isBalanceLoaded } = useBalanceContext();
+  const { isLoaded: isBalanceLoaded } = useBalanceContext();
   const { isEligibleForRewards } = useReward();
   const {
     latestRewardStreak: streak,
