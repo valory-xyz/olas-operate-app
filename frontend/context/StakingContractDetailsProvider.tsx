@@ -138,7 +138,7 @@ export const StakingContractDetailsProvider = ({
     isFetched: isLoaded,
   } = useServices();
   const serviceConfigId =
-    isLoaded && selectedService ? selectedService?.service_config_id : '';
+    selectedService?.service_config_id;
   const { service } = useService({ serviceConfigId });
   const serviceId =
     service?.chain_configs?.[selectedAgentConfig?.homeChainId]?.chain_data
