@@ -2,9 +2,9 @@ import { RightOutlined } from '@ant-design/icons';
 import { Button, Flex, Skeleton, Typography } from 'antd';
 import { useMemo } from 'react';
 
-import { DeploymentStatus } from '@/client';
-import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
-import { Pages } from '@/enums/PageState';
+import { MiddlewareDeploymentStatus } from '@/client';
+import { NA } from '@/constants/symbols';
+import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
@@ -16,27 +16,20 @@ const { Text } = Typography;
 
 export const StakingContractUpdate = () => {
   const { goto } = usePageState();
-  const {
-    isActiveStakingProgramLoaded,
-    activeStakingProgramMeta,
-    defaultStakingProgramId,
-  } = useStakingProgram();
+  const { isActiveStakingProgramLoaded, activeStakingProgramMeta } =
+    useStakingProgram();
 
   const { isAllStakingContractDetailsRecordLoaded } =
     useStakingContractContext();
-  const { serviceStatus } = useServices();
+  const { selectedService } = useServices();
+  const serviceStatus = selectedService?.deploymentStatus;
 
   const serviceIsTransitioning = useMemo(
     () =>
-      serviceStatus === DeploymentStatus.DEPLOYING ||
-      serviceStatus === DeploymentStatus.STOPPING,
+      serviceStatus === MiddlewareDeploymentStatus.DEPLOYING ||
+      serviceStatus === MiddlewareDeploymentStatus.STOPPING,
     [serviceStatus],
   );
-
-  const stakingContractName = useMemo(() => {
-    if (activeStakingProgramMeta) return activeStakingProgramMeta.name;
-    return STAKING_PROGRAM_META[DEFAULT_STAKING_PROGRAM_ID].name;
-  }, [activeStakingProgramMeta]);
 
   const gotoManageStakingButton = useMemo(() => {
     if (!isActiveStakingProgramLoaded) return <Skeleton.Input />;
@@ -49,7 +42,7 @@ export const StakingContractUpdate = () => {
           !isAllStakingContractDetailsRecordLoaded || serviceIsTransitioning
         }
       >
-        {stakingContractName}
+        {activeStakingProgramMeta?.name || NA}
         <RightOutlined />
       </Button>
     );
@@ -58,7 +51,7 @@ export const StakingContractUpdate = () => {
     isActiveStakingProgramLoaded,
     isAllStakingContractDetailsRecordLoaded,
     serviceIsTransitioning,
-    stakingContractName,
+    activeStakingProgramMeta?.name,
   ]);
 
   return (

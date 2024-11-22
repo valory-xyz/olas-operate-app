@@ -31,7 +31,7 @@ export const useStakingContractContext = () => {
 
 /**
  * Returns ACTIVE staking contract details
- * Has staked service speficic information that `useStakingContractDetails` does not have
+ * Has staked service specific information that `useStakingContractDetails` does not have
 
  * @note requires serviceConfigId once multiple instances are supported
  */

@@ -233,14 +233,9 @@ const useContractCheckpoints = (chainId: ChainId, serviceId: Maybe<number>) => {
 };
 
 export const useRewardsHistory = () => {
-  const {
-    selectedService,
-    selectedAgentConfig,
-    isFetched: isLoaded,
-  } = useServices();
+  const { selectedService, selectedAgentConfig } = useServices();
   const { homeChainId } = selectedAgentConfig;
-  const serviceConfigId =
-    selectedService?.service_config_id;
+  const serviceConfigId = selectedService?.service_config_id;
   const { service } = useService({ serviceConfigId });
   const serviceId = service?.chain_configs[homeChainId].chain_data?.token;
 

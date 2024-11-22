@@ -1,12 +1,13 @@
 import { Flex, Skeleton, Tag, Typography } from 'antd';
 
+import { NA } from '@/constants/symbols';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useReward } from '@/hooks/useReward';
 import { balanceFormat } from '@/utils/numberFormatters';
 
 import { CardSection } from '../../../styled/CardSection';
-// import { RewardsStreak } from './RewardsStreak';
-// import { NotifyRewardsModal } from './NotifyRewardsModal';
+import { NotifyRewardsModal } from './NotifyRewardsModal';
+import { RewardsStreak } from './RewardsStreak';
 import { StakingRewardsThisEpoch } from './StakingRewardsThisEpoch';
 
 const { Text } = Typography;
@@ -19,12 +20,11 @@ const Loader = () => (
 );
 
 const getFormattedReward = (reward: number | undefined) =>
-  reward === undefined ? '--' : `~${balanceFormat(reward, 2)}`;
+  reward === undefined ? NA : `~${balanceFormat(reward, 2)}`;
 
 const DisplayRewards = () => {
   const { availableRewardsForEpochEth, isEligibleForRewards } = useReward();
   const { isLoaded } = useBalanceContext();
-
   const reward = getFormattedReward(availableRewardsForEpochEth);
 
   return (
@@ -55,7 +55,7 @@ const DisplayRewards = () => {
 export const RewardsSection = () => (
   <>
     <DisplayRewards />
-    {/* <RewardsStreak /> */}
-    {/* <NotifyRewardsModal /> */}
+    <RewardsStreak />
+    <NotifyRewardsModal />
   </>
 );

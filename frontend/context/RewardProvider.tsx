@@ -50,9 +50,8 @@ const useStakingRewardsDetails = () => {
   const { isOnline } = useContext(OnlineStatusContext);
   const { activeStakingProgramId } = useContext(StakingProgramContext);
 
-  const { selectedService, isFetched: isLoaded } = useServices();
-  const serviceConfigId =
-    isLoaded && selectedService ? selectedService?.service_config_id : '';
+  const { selectedService } = useServices();
+  const serviceConfigId = selectedService?.service_config_id;
   const { service } = useService({ serviceConfigId });
 
   // fetch chain data from the selected service
@@ -63,7 +62,7 @@ const useStakingRewardsDetails = () => {
   return useQuery({
     queryKey: REACT_QUERY_KEYS.REWARDS_KEY(
       currentChainId,
-      serviceConfigId,
+      serviceConfigId!,
       activeStakingProgramId!,
       multisig!,
       token!,
@@ -79,7 +78,12 @@ const useStakingRewardsDetails = () => {
       );
       return StakingRewardsInfoSchema.parse(response);
     },
-    enabled: !!isOnline && !!activeStakingProgramId && !!multisig && !!token,
+    enabled:
+      !!isOnline &&
+      !!serviceConfigId &&
+      !!activeStakingProgramId &&
+      !!multisig &&
+      !!token,
     refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });
