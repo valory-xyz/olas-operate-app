@@ -30,29 +30,23 @@ const ServiceNotRunning = () => (
 );
 
 const ToProceedMessage = () => (
-  <>
-    <Text>
-      To proceed, enter the EVM-compatible wallet address where you’d like to
-      receive your funds. Funds will be sent on Gnosis Chain.
-    </Text>
-
-    <CustomAlert
-      type="warning"
-      showIcon
-      message={
-        <Text className="text-sm">
-          Ensure you have access to this wallet to avoid losing assets.
-        </Text>
-      }
-    />
-  </>
+  <CustomAlert
+    type="warning"
+    showIcon
+    message={
+      <Text className="text-sm">
+        This will remove all OLAS and all XDAl - excluding the DAl currently in
+        prediction markets - from your account. You will not be able to run your
+        agent after withdrawing.
+      </Text>
+    }
+  />
 );
 
 const AfterWithdrawalMessage = () => (
   <Text className="text-sm text-light">
-    After withdrawal, you won’t be able to run your agent until you fund it with
-    the required amounts again. Some funds may be locked in prediction markets
-    and cannot be withdrawn at this time.
+    Ensure this is an EVM-compatible address you can access on all relevant
+    chains.
   </Text>
 );
 
@@ -170,14 +164,19 @@ export const WithdrawFunds = () => {
         <Flex vertical gap={16} style={{ marginTop: 12 }}>
           <ToProceedMessage />
 
-          <Input
-            value={withdrawAddress}
-            onChange={(e) => setWithdrawAddress(e.target.value)}
-            placeholder="0x..."
-            size="small"
-            className="text-base"
-            style={{ padding: '6px 12px' }}
-          />
+          <Flex vertical gap={8}>
+            <Text className="text-sm text-light">Withdrawal address</Text>
+            <Input
+              value={withdrawAddress}
+              onChange={(e) => setWithdrawAddress(e.target.value)}
+              placeholder="0x..."
+              size="small"
+              className="text-base"
+              style={{ padding: '6px 12px' }}
+            />
+          </Flex>
+
+          <AfterWithdrawalMessage />
 
           <Button
             disabled={!withdrawAddress}
@@ -189,8 +188,6 @@ export const WithdrawFunds = () => {
           >
             Proceed
           </Button>
-
-          <AfterWithdrawalMessage />
         </Flex>
       </Modal>
     </>
