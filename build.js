@@ -11,9 +11,9 @@ const { publishOptions } = require('./electron/constants');
  * @returns {string}
  */
 function artifactName() {
-    const env = process.env.NODE_ENV;
-    const prefix = env === 'production' ? '' : 'dev-';
-    return prefix + '${productName}-${version}-${platform}-${arch}.${ext}';
+  const env = process.env.NODE_ENV;
+  const prefix = env === 'production' ? '' : 'dev-';
+  return prefix + '${productName}-${version}-${platform}-${arch}.${ext}';
 }
 
 const main = async () => {
@@ -64,6 +64,4 @@ const main = async () => {
 
 main().then(() => {
   console.log('Build & Notarize complete');
-}).catch(() => {
-  throw new Error('Failed to build and notarize.');
 });
