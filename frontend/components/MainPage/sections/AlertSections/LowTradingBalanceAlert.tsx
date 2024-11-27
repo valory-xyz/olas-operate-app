@@ -26,7 +26,7 @@ export const LowTradingBalanceAlert = () => {
             Trading balance is too low
           </Title>
           <Text>
-            {`To run your agent, add at least $${LOW_MASTER_SAFE_BALANCE} XDAI to your account.`}
+            {`To run your agent, add at least ${LOW_MASTER_SAFE_BALANCE} XDAI to your account.`}
           </Text>
           <Text>
             Your agent is at risk of missing its targets, which would result in
