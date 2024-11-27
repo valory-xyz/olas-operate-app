@@ -43,7 +43,7 @@ const ToProceedMessage = () => (
   />
 );
 
-const AfterWithdrawalMessage = () => (
+const CompatibleMessage = () => (
   <Text className="text-sm text-light">
     Ensure this is an EVM-compatible address you can access on all relevant
     chains.
@@ -176,7 +176,7 @@ export const WithdrawFunds = () => {
             />
           </Flex>
 
-          <AfterWithdrawalMessage />
+          <CompatibleMessage />
 
           <Button
             disabled={!withdrawAddress}
