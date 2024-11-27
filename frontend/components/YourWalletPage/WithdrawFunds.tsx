@@ -35,7 +35,7 @@ const ToProceedMessage = () => (
     showIcon
     message={
       <Text className="text-sm">
-        This will remove all OLAS and all XDAl - excluding the DAl currently in
+        This will remove all OLAS and all XDAI - excluding the DAI currently in
         prediction markets - from your account. You will not be able to run your
         agent after withdrawing.
       </Text>
