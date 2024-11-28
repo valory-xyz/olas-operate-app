@@ -148,10 +148,14 @@ export abstract class PredictTraderService extends StakedAgentService {
   ): Promise<Partial<Maybe<StakingContractDetails>>> => {
     if (!serviceNftTokenId) return null;
 
+    if (!stakingProgramId) return null;
+
     const { multicallProvider } = PROVIDERS[chainId];
 
     const { contract: stakingTokenProxy } =
       STAKING_PROGRAMS[chainId][stakingProgramId].contract;
+
+    if (!stakingTokenProxy) return null;
 
     const contractCalls = [
       stakingTokenProxy.availableRewards(),
