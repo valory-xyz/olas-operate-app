@@ -102,7 +102,7 @@ const useStakingContractDetailsByStakingProgram = ({
         evmHomeChainId,
       );
     },
-    enabled: !isPaused,
+    enabled: !isPaused && !!serviceNftTokenId && !!stakingProgramId,
     refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });
