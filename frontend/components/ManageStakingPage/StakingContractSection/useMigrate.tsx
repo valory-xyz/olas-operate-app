@@ -61,6 +61,7 @@ export const useMigrate = (migrateToStakingProgramId: StakingProgramId) => {
     isLowBalance,
   } = useBalanceContext();
   const { masterSafeBalances } = useMasterBalances();
+
   const { needsInitialFunding, hasEnoughEthForInitialFunding } = useNeedsFunds(
     migrateToStakingProgramId,
   );
