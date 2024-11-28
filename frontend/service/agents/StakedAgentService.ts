@@ -120,8 +120,11 @@ export abstract class StakedAgentService {
       throw new Error('Chain not supported');
     }
 
-    const { serviceRegistryTokenUtilityContract, serviceRegistryL2Contract } =
-      OLAS_CONTRACTS[chainId];
+    const {
+      [ContractType.ServiceRegistryTokenUtility]:
+        serviceRegistryTokenUtilityContract,
+      [ContractType.ServiceRegistryL2]: serviceRegistryL2Contract,
+    } = OLAS_CONTRACTS[chainId];
 
     const contractCalls = [
       serviceRegistryTokenUtilityContract.getOperatorBalance(
@@ -132,15 +135,16 @@ export abstract class StakedAgentService {
       serviceRegistryL2Contract.mapServices(serviceId),
     ];
 
+    const { multicallProvider } = PROVIDERS[chainId];
+
     const [
-      getOperatorBalanceReponse,
+      getOperatorBalanceResponse,
       mapServiceIdTokenDepositResponse,
       mapServicesResponse,
-    ] =
-      await OLAS_CONTRACTS[chainId][ContractType.Multicall3].all(contractCalls);
+    ] = await multicallProvider.all(contractCalls);
 
     const [bondValue, depositValue, serviceState] = [
-      parseFloat(ethers.utils.formatUnits(getOperatorBalanceReponse, 18)),
+      parseFloat(ethers.utils.formatUnits(getOperatorBalanceResponse, 18)),
       parseFloat(
         ethers.utils.formatUnits(mapServiceIdTokenDepositResponse[1], 18),
       ),

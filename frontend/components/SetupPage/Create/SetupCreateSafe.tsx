@@ -31,7 +31,7 @@ const YouWillBeRedirected = ({ text }: { text: string }) => (
     <Typography.Title
       level={4}
       className="m-0 mt-12 loading-ellipses"
-      style={{ width: '220px' }}
+      style={{ width: '230px' }}
     >
       {text}
     </Typography.Title>
