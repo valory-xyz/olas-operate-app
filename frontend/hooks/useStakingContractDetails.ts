@@ -114,15 +114,15 @@ export const useStakingContractDetails = (
 
   const isRewardsAvailable = availableRewards ?? 0 > 0;
 
-  const hasEnoughServiceSlots =
+  const hasEnoughStakingSlots =
     !isNil(serviceIds) &&
     !isNil(maxNumServices) &&
     serviceIds.length < maxNumServices;
 
-  const hasEnoughRewardsAndSlots = isRewardsAvailable && hasEnoughServiceSlots;
+  const hasEnoughRewardsAndSlots = isRewardsAvailable && hasEnoughStakingSlots;
 
   return {
-    hasEnoughServiceSlots,
+    hasEnoughStakingSlots,
     isRewardsAvailable,
     stakingContractInfo,
     hasEnoughRewardsAndSlots,

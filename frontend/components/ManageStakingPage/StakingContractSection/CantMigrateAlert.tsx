@@ -10,6 +10,7 @@ import { TokenSymbol } from '@/enums/Token';
 import {
   useBalanceContext,
   useMasterBalances,
+  useServiceBalances,
 } from '@/hooks/useBalanceContext';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { useServices } from '@/hooks/useServices';
@@ -28,15 +29,35 @@ type CantMigrateAlertProps = { stakingProgramId: StakingProgramId };
 const AlertInsufficientMigrationFunds = ({
   stakingProgramId: stakingProgramIdToMigrateTo,
 }: CantMigrateAlertProps) => {
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedService } = useServices();
   const { isAllStakingContractDetailsRecordLoaded } =
     useStakingContractContext();
-  const { isServiceStaked } = useActiveStakingContractInfo();
-  const { isLoaded: isBalanceLoaded, totalStakedOlasBalance } =
-    useBalanceContext();
+  const { isServiceStaked, isSelectedStakingContractDetailsLoaded } =
+    useActiveStakingContractInfo();
+  const { isLoaded: isBalanceLoaded } = useBalanceContext();
+  const { serviceSafeBalances } = useServiceBalances(
+    selectedService?.service_config_id,
+  );
   const { masterSafeBalances } = useMasterBalances();
   const { serviceFundRequirements, isInitialFunded } = useNeedsFunds(
     stakingProgramIdToMigrateTo,
+  );
+
+  const serviceStakedOlasBalance = useMemo(
+    () =>
+      serviceSafeBalances?.find(
+        ({ symbol, evmChainId }) =>
+          isSelectedStakingContractDetailsLoaded &&
+          isServiceStaked &&
+          symbol === TokenSymbol.OLAS &&
+          selectedAgentConfig.evmHomeChainId === evmChainId,
+      )?.balance,
+    [
+      isSelectedStakingContractDetailsLoaded,
+      isServiceStaked,
+      selectedAgentConfig.evmHomeChainId,
+      serviceSafeBalances,
+    ],
   );
 
   const requiredStakedOlas =
@@ -44,7 +65,7 @@ const AlertInsufficientMigrationFunds = ({
       TokenSymbol.OLAS
     ];
 
-  const safeBalance = useMemo(() => {
+  const masterSafeBalanceRecord = useMemo(() => {
     if (!isBalanceLoaded) return;
     if (isNil(masterSafeBalances) || isEmpty(masterSafeBalances)) return;
     return masterSafeBalances.reduce(
@@ -60,21 +81,23 @@ const AlertInsufficientMigrationFunds = ({
 
   if (!isAllStakingContractDetailsRecordLoaded) return null;
   if (isNil(requiredStakedOlas)) return null;
-  if (isNil(safeBalance?.[TokenSymbol.OLAS])) return null;
+  if (isNil(masterSafeBalanceRecord?.[TokenSymbol.OLAS])) return null;
 
-  if (isNil(totalStakedOlasBalance)) return null;
+  if (isNil(serviceStakedOlasBalance)) return null;
 
-  const requiredOlasDeposit = isServiceStaked
-    ? requiredStakedOlas -
-      (totalStakedOlasBalance + safeBalance[TokenSymbol.OLAS]) // when staked
-    : requiredStakedOlas - safeBalance[TokenSymbol.OLAS]; // when not staked
+  const requiredOlasDeposit =
+    isSelectedStakingContractDetailsLoaded && isServiceStaked
+      ? requiredStakedOlas -
+        (serviceStakedOlasBalance + masterSafeBalanceRecord[TokenSymbol.OLAS]) // when staked
+      : requiredStakedOlas - masterSafeBalanceRecord[TokenSymbol.OLAS]; // when not staked
 
-  const homeChainId = selectedAgentConfig.evmHomeChainId;
-  const nativeTokenSymbol = getNativeTokenSymbol(homeChainId);
+  const { evmHomeChainId } = selectedAgentConfig;
+  const nativeTokenSymbol = getNativeTokenSymbol(evmHomeChainId);
   const requiredNativeTokenDeposit = isInitialFunded
-    ? LOW_MASTER_SAFE_BALANCE - (safeBalance[nativeTokenSymbol] || 0) // is already funded allow minimal maintenance
-    : (serviceFundRequirements[homeChainId]?.[nativeTokenSymbol] || 0) -
-      (safeBalance[nativeTokenSymbol] || 0); // otherwise require full initial funding requirements
+    ? LOW_MASTER_SAFE_BALANCE -
+      (masterSafeBalanceRecord[nativeTokenSymbol] || 0) // is already funded allow minimal maintenance
+    : (serviceFundRequirements[evmHomeChainId]?.[nativeTokenSymbol] || 0) -
+      (masterSafeBalanceRecord[nativeTokenSymbol] || 0); // otherwise require full initial funding requirements
 
   return (
     <CustomAlert

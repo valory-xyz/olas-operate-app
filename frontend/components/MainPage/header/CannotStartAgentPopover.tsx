@@ -127,12 +127,12 @@ export const CannotStartAgentPopover = () => {
   const { isAgentEvicted, isEligibleForStaking } =
     useActiveStakingContractInfo();
 
-  const { hasEnoughServiceSlots, isRewardsAvailable } =
+  const { hasEnoughStakingSlots, isRewardsAvailable } =
     useStakingContractDetails(activeStakingProgramId);
 
   if (!isAllStakingContractDetailsRecordLoaded) return null;
   if (isEligibleForStaking) return null;
-  if (!hasEnoughServiceSlots) return <NoJobsAvailablePopover />;
+  if (!hasEnoughStakingSlots) return <NoJobsAvailablePopover />;
   if (!isRewardsAvailable) return <NoRewardsAvailablePopover />;
   if (isAgentEvicted) return <AgentEvictedPopover />;
   throw new Error('Cannot start agent, please contact support');

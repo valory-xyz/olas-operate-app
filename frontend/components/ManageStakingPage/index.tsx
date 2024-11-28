@@ -17,15 +17,8 @@ import { WhatAreStakingContractsSection } from './WhatAreStakingContracts';
 export const ManageStakingPage = () => {
   const { goto } = usePageState();
   const { selectedAgentConfig } = useServices();
-  const {
-    activeStakingProgramId,
-    isActiveStakingProgramLoaded,
-    defaultStakingProgramId,
-  } = useStakingProgram();
-
-  const currentStakingProgramId = isActiveStakingProgramLoaded
-    ? activeStakingProgramId || defaultStakingProgramId
-    : null;
+  const { isActiveStakingProgramLoaded, selectedStakingProgramId } =
+    useStakingProgram();
 
   const stakingProgramIdsAvailable = Object.keys(
     STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId],
@@ -38,7 +31,7 @@ export const ManageStakingPage = () => {
           if (!isActiveStakingProgramLoaded) return acc;
 
           // put the active staking program at the top
-          if (stakingProgramId === currentStakingProgramId) {
+          if (stakingProgramId === selectedStakingProgramId) {
             return [stakingProgramId, ...acc];
           }
 
@@ -59,7 +52,7 @@ export const ManageStakingPage = () => {
     [
       isActiveStakingProgramLoaded,
       selectedAgentConfig.evmHomeChainId,
-      currentStakingProgramId,
+      selectedStakingProgramId,
       stakingProgramIdsAvailable,
     ],
   );
@@ -72,7 +65,7 @@ export const ManageStakingPage = () => {
         STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][stakingProgramId];
 
       if (!info) return false;
-      if (currentStakingProgramId === stakingProgramId) return false;
+      if (selectedStakingProgramId === stakingProgramId) return false;
       if (info.deprecated) return false;
       return true;
     },
@@ -98,12 +91,11 @@ export const ManageStakingPage = () => {
     >
       <WhatAreStakingContractsSection />
 
-      {isActiveStakingProgramLoaded &&
-        (activeStakingProgramId || defaultStakingProgramId) && (
-          <StakingContractSection
-            stakingProgramId={orderedStakingProgramIds[0]}
-          />
-        )}
+      {isActiveStakingProgramLoaded && selectedStakingProgramId && (
+        <StakingContractSection
+          stakingProgramId={orderedStakingProgramIds[0]}
+        />
+      )}
 
       <CardSection
         style={{

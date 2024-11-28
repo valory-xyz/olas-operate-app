@@ -53,7 +53,7 @@ export const BalanceContext = createContext<{
   totalStakedOlasBalance?: number;
   lowBalances?: {
     serviceConfigId: string;
-    chainId: EvmChainId;
+    evmChaindId: EvmChainId;
     walletAddress: Address;
     balance: number;
     expectedBalance: number;
@@ -298,15 +298,16 @@ const getCrossChainStakedBalances = async (
       return null;
     }
 
+    const evmChainId = asEvmChainId(middlewareChain);
     const registryInfo = await StakedAgentService.getServiceRegistryInfo(
       multisig,
       token,
-      asEvmChainId(middlewareChain),
+      evmChainId,
     );
 
     return {
-      serviceId: serviceConfigId,
-      chainId: middlewareChain,
+      serviceConfigId,
+      middlewareChain,
       ...registryInfo,
     };
   });
@@ -315,19 +316,27 @@ const getCrossChainStakedBalances = async (
 
   registryInfos.forEach((res, idx) => {
     if (res.status === 'fulfilled' && res.value) {
-      const { serviceId, chainId, depositValue, bondValue, serviceState } =
-        res.value;
+      const {
+        serviceConfigId,
+        middlewareChain,
+        depositValue,
+        bondValue,
+        serviceState,
+      } = res.value;
+
+      if (!services[idx].chain_configs[middlewareChain].chain_data.multisig)
+        return;
 
       result.push({
-        serviceId,
-        evmChainId: asEvmChainId(chainId),
+        serviceConfigId,
+        evmChainId: asEvmChainId(middlewareChain),
         ...correctBondDepositByServiceState({
           olasBondBalance: bondValue,
           olasDepositBalance: depositValue,
           serviceState,
         }),
         walletAddress:
-          services[idx].chain_configs[chainId].chain_data.multisig!, // multisig must exist if registry info is fetched
+          services[idx].chain_configs[middlewareChain].chain_data.multisig, // multisig must exist if registry info is fetched
       });
     } else {
       console.error(
