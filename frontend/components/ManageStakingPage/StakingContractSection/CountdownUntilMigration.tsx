@@ -16,8 +16,6 @@ export const CountdownUntilMigration = ({
   const [secondsUntilReady, setSecondsUntilMigration] = useState<number>();
 
   useInterval(() => {
-    if (!currentStakingContractInfo) return;
-
     const { serviceStakingStartTime, minimumStakingDuration } =
       currentStakingContractInfo;
 

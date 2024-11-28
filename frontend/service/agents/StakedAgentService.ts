@@ -114,9 +114,9 @@ export abstract class StakedAgentService {
   static getServiceRegistryInfo = async (
     address: Address, // generally masterSafeAddress
     serviceId: number,
-    chainId: EvmChainId,
+    evmChainId: EvmChainId,
   ): Promise<GetServiceRegistryInfoResponse> => {
-    if (!OLAS_CONTRACTS[chainId]) {
+    if (!OLAS_CONTRACTS[evmChainId]) {
       throw new Error('Chain not supported');
     }
 
@@ -124,7 +124,7 @@ export abstract class StakedAgentService {
       [ContractType.ServiceRegistryTokenUtility]:
         serviceRegistryTokenUtilityContract,
       [ContractType.ServiceRegistryL2]: serviceRegistryL2Contract,
-    } = OLAS_CONTRACTS[chainId];
+    } = OLAS_CONTRACTS[evmChainId];
 
     const contractCalls = [
       serviceRegistryTokenUtilityContract.getOperatorBalance(
@@ -135,7 +135,7 @@ export abstract class StakedAgentService {
       serviceRegistryL2Contract.mapServices(serviceId),
     ];
 
-    const { multicallProvider } = PROVIDERS[chainId];
+    const { multicallProvider } = PROVIDERS[evmChainId];
 
     const [
       getOperatorBalanceResponse,

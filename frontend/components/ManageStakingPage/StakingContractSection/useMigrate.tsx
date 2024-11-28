@@ -204,7 +204,7 @@ export const useMigrate = (migrateToStakingProgramId: StakingProgramId) => {
     // user must be staked from hereon
 
     if (
-      !STAKING_PROGRAMS[homeChainId][migrateToStakingProgramId].deprecated ||
+      STAKING_PROGRAMS[homeChainId][migrateToStakingProgramId].deprecated ||
       !STAKING_PROGRAMS[homeChainId][
         migrateToStakingProgramId
       ].agentsSupported.includes(selectedAgentType)

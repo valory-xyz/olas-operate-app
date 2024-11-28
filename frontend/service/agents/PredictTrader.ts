@@ -144,14 +144,14 @@ export abstract class PredictTraderService extends StakedAgentService {
   static getStakingContractDetailsByServiceIdStakingProgram = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Gnosis,
+    evmChainId: EvmChainId = EvmChainId.Gnosis,
   ): Promise<Partial<Maybe<StakingContractDetails>>> => {
     if (!serviceNftTokenId) return null;
 
-    const { multicallProvider } = PROVIDERS[chainId];
+    const { multicallProvider } = PROVIDERS[evmChainId];
 
     const { contract: stakingTokenProxy } =
-      STAKING_PROGRAMS[chainId][stakingProgramId].contract;
+      STAKING_PROGRAMS[evmChainId][stakingProgramId];
 
     if (!stakingTokenProxy) return null;
 

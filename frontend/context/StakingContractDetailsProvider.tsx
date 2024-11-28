@@ -19,6 +19,7 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { StakingContractDetails } from '@/types/Autonolas';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
+import { ServicesContext } from './ServicesProvider';
 import { StakingProgramContext } from './StakingProgramProvider';
 
 /**
@@ -84,27 +85,31 @@ const useStakingContractDetailsByStakingProgram = ({
 }) => {
   const { selectedAgentConfig } = useServices();
   const { serviceApi, evmHomeChainId } = selectedAgentConfig;
+
   return useQuery({
     queryKey: REACT_QUERY_KEYS.STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY(
       evmHomeChainId,
-      serviceNftTokenId!,
-      stakingProgramId!,
+      serviceNftTokenId ?? -1,
+      stakingProgramId ?? '',
     ),
     queryFn: async () => {
-      if (isNil(serviceNftTokenId))
+      if (!stakingProgramId) return;
+
+      if (!serviceNftTokenId) {
         return serviceApi.getStakingContractDetailsByStakingProgramId(
-          stakingProgramId!,
+          stakingProgramId,
           evmHomeChainId,
         );
+      }
       return serviceApi.getStakingContractDetailsByServiceIdStakingProgram(
-        serviceNftTokenId!,
-        stakingProgramId!,
+        serviceNftTokenId,
+        stakingProgramId,
         evmHomeChainId,
       );
     },
-    enabled: !isPaused && !!serviceNftTokenId && !!stakingProgramId,
+    enabled: !isPaused && !!stakingProgramId,
     refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : false,
-    refetchOnWindowFocus: false,
+    // refetchOnWindowFocus: false,
   });
 };
 
@@ -140,10 +145,10 @@ export const StakingContractDetailsContext =
 export const StakingContractDetailsProvider = ({
   children,
 }: PropsWithChildren) => {
-  const [isPaused, setIsPaused] = useState(false);
-  const { selectedService, selectedAgentConfig } = useServices();
-
+  const { selectedService, selectedAgentConfig } = useContext(ServicesContext);
   const { selectedStakingProgramId } = useContext(StakingProgramContext);
+
+  const [isPaused, setIsPaused] = useState(false);
 
   const {
     data: selectedStakingContractDetails,

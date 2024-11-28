@@ -125,9 +125,11 @@ export const AgentNotRunningButton = () => {
 
     if (isServiceStaked) {
       const hasEnoughOlas =
-        (serviceSafeOlasWithStaked ?? 0) >= requiredStakedOlas;
+        sum([serviceSafeOlasWithStaked, masterSafeOlasBalance]) >=
+        requiredStakedOlas;
       const hasEnoughNativeGas =
         (masterSafeNativeGasBalance ?? 0) > LOW_MASTER_SAFE_BALANCE;
+
       return hasEnoughOlas && hasEnoughNativeGas;
     }
 
