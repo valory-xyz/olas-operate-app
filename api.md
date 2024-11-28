@@ -198,6 +198,76 @@ Returns a list of available wallets
 
 ---
 
+### `GET /api/extended/wallet`
+
+Returns a list of available wallets with enriched information. It executes on-chain requests to populate the list of owners of each safe, and provides the attributes
+
+- `consistent_backup_owner`: This flag is `true` when all safes across the chains have exactly the same set of backup owner addresses. It ensures that ownership is identical across all safes, regardless of the number of owners.
+- `consistent_backup_owner_count`: This flag is `true` when all safes have the same number of owners, and that number is either 0 (no backup owners) or 1 (exactly one backup owner). It checks for uniformity in the count of owners and restricts the count to these two cases.
+- `consistent_safe_address`: This flag is `true` when all chains have the same safe address. It ensures there is a single safe address consistently used across all chains.
+
+<details>
+  <summary>Response</summary>
+
+```json
+[
+  {
+    "address":"0xFafd5cb31a611C5e5aa65ea8c6226EB4328175E7",
+    "consistent_backup_owner": false,
+    "consistent_backup_owner_count": false,
+    "consistent_safe_address": true,
+    "ledger_type":"ethereum",
+    "safe_chains":[
+      "gnosis",
+      "ethereum",
+      "base",
+      "optimistic"
+    ],
+    "safe_nonce":110558881674480320952254000342160989674913430251257716940579305238321962891821,
+    "safes":{
+      "base":{
+        "0xd56fb274ce2C66008D5c4C09980c4f36Ab81ff23":{
+          "backup_owners": [],  // Empty = no backup owners
+          "balances": {...}
+        }
+      },
+      "ethereum":{
+        "0xd56fb274ce2C66008D5c4C09980c4f36Ab81ff23":{
+          "backup_owners":[
+            "0x46eC2E77Fe3E367252f1A8a77470CE8eEd2A985b"
+          ],
+          "balances": {...}
+        }
+      },
+      "gnosis":{
+        "0xd56fb274ce2C66008D5c4C09980c4f36Ab81ff23":{
+          "backup_owners":[
+            "0x46eC2E77Fe3E367252f1A8a77470CE8eEd2A985b"
+          ],
+          "balances": {
+            "0x0000000000000000000000000000000000000000": 995899999999999999998, // xDAI
+            "0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83": 0,                     // USDC
+            "0xcE11e14225575945b8E6Dc0D4F2dD4C570f79d9f": 960000000000000000000  // OLAS
+        }
+      },
+      "optimistic":{
+        "0xd56fb274ce2C66008D5c4C09980c4f36Ab81ff23":{
+          "backup_owners":[
+            "0x46eC2E77Fe3E367252f1A8a77470CE8eEd2A985b"
+          ],
+          "balances": {...}
+        }
+      }
+    },
+    "single_backup_owner_per_safe":false
+  }
+]
+```
+
+</details>
+
+---
+
 ### `POST /api/wallet`
 
 Creates a master wallet for given chain type. If a wallet already exists for a given chain type, it returns the already existing wallet without creating an additional one.

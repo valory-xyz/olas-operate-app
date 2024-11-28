@@ -30,6 +30,7 @@ from aea.crypto.base import Crypto, LedgerApi
 from aea.crypto.registries import make_ledger_api
 from aea.helpers.logging import setup_logger
 from aea_ledger_ethereum.ethereum import EthereumApi, EthereumCrypto
+from autonomy.chain.base import registry_contracts
 from autonomy.chain.config import ChainType as ChainProfile
 from autonomy.chain.tx import TxSettler
 from web3 import Account
@@ -40,9 +41,10 @@ from operate.constants import (
     ON_CHAIN_INTERACT_TIMEOUT,
 )
 from operate.ledger import get_default_rpc
+from operate.ledger.profiles import OLAS, USDC
 from operate.operate_types import Chain, LedgerType
 from operate.resource import LocalResource
-from operate.utils.gnosis import add_owner
+from operate.utils.gnosis import NULL_ADDRESS, add_owner
 from operate.utils.gnosis import create_safe as create_gnosis_safe
 from operate.utils.gnosis import get_owners, remove_owner, swap_owner
 from operate.utils.gnosis import transfer as transfer_from_safe
@@ -144,6 +146,12 @@ class MasterWallet(LocalResource):
     ) -> bool:
         """Update backup owner."""
         raise NotImplementedError()
+
+    # TODO move to resource.py if used in more resources similarly
+    @property
+    def extended_json(self) -> t.Dict:
+        """Get JSON representation with extended information (e.g., safe owners)."""
+        raise NotImplementedError
 
     @classmethod
     def migrate_format(cls, path: Path) -> bool:
@@ -392,6 +400,51 @@ class EthereumMasterWallet(MasterWallet):
             return True
 
         return False
+
+    @property
+    def extended_json(self) -> t.Dict:
+        """Get JSON representation with extended information (e.g., safe owners)."""
+        rpc = None
+        tokens = (OLAS, USDC)
+        wallet_json = self.json
+
+        if not self.safes:
+            return wallet_json
+
+        owner_sets = set()
+        for chain, safe in self.safes.items():
+            ledger_api = self.ledger_api(chain=chain, rpc=rpc)
+            owners = get_owners(ledger_api=ledger_api, safe=safe)
+            owners.remove(self.address)
+
+            balances: t.Dict[str, int] = {}
+            balances[NULL_ADDRESS] = ledger_api.get_balance(safe) or 0
+            for token in tokens:
+                balance = (
+                    registry_contracts.erc20.get_instance(
+                        ledger_api=ledger_api,
+                        contract_address=token[chain],
+                    )
+                    .functions.balanceOf(safe)
+                    .call()
+                )
+                balances[token[chain]] = balance
+
+            wallet_json["safes"][chain.value] = {
+                wallet_json["safes"][chain.value]: {
+                    "backup_owners": owners,
+                    "balances": balances,
+                }
+            }
+            owner_sets.add(frozenset(owners))
+
+        wallet_json["extended_json"] = True
+        wallet_json["consistent_safe_address"] = len(set(self.safes.values())) == 1
+        wallet_json["consistent_backup_owner"] = len(owner_sets) == 1
+        wallet_json["consistent_backup_owner_count"] = all(
+            len(owner) == 1 for owner in owner_sets
+        ) or all(len(owner) == 0 for owner in owner_sets)
+        return wallet_json
 
     @classmethod
     def load(cls, path: Path) -> "EthereumMasterWallet":
