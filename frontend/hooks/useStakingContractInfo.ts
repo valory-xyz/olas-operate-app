@@ -72,13 +72,6 @@ export const useActiveStakingContractInfo = () => {
     Math.round(Date.now() / 1000) - serviceStakingStartTime >=
       minimumStakingDuration;
 
-  const remainingStakingDuration = Math.max(
-    0,
-    (serviceStakingStartTime ?? 0) +
-      (minimumStakingDuration ?? 0) -
-      Math.round(Date.now() / 1000),
-  );
-
   // Eviction expire time in seconds
   const evictionExpiresAt =
     (serviceStakingStartTime ?? 0) + (minimumStakingDuration ?? 0);
@@ -95,7 +88,6 @@ export const useActiveStakingContractInfo = () => {
     evictionExpiresAt,
     isActiveStakingContractInfoLoaded,
     activeStakingContractInfo,
-    remainingStakingDuration,
   };
 };
 

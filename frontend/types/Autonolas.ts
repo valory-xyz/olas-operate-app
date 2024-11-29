@@ -19,8 +19,6 @@ export type StakingContractInfo = {
   minimumStakingDuration: number;
   /** time when service was staked (in seconds) - 0 = never staked */
   serviceStakingStartTime: number;
-  /** time when service can be unstaked (in seconds) - has to meet minimum staking duration */
-  remainingStakingDuration: number;
   /** 0: not staked, 1: staked, 2: unstaked - current state of the service */
   serviceStakingState: number;
   /** OLAS cost of staking */

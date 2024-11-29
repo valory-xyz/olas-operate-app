@@ -6,11 +6,11 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { COLOR } from '@/constants/colors';
 import { useBalance } from '@/hooks/useBalance';
 import { useServices } from '@/hooks/useServices';
+import { useStakingContractCountdown } from '@/hooks/useStakingContractCountdown';
 import { useActiveStakingContractInfo } from '@/hooks/useStakingContractInfo';
 import { useWallet } from '@/hooks/useWallet';
 import { ServicesService } from '@/service/Services';
 import { Address } from '@/types/Address';
-import { formatTimeRemainingFromNow } from '@/utils/time';
 
 import { CustomAlert } from '../Alert';
 
@@ -56,12 +56,16 @@ export const WithdrawFunds = () => {
   const { service, updateServicesState, isServiceNotRunning } = useServices();
   const serviceHash = service?.hash;
 
-  const { isServiceStakedForMinimumDuration, remainingStakingDuration } =
+  const { isServiceStakedForMinimumDuration, activeStakingContractInfo } =
     useActiveStakingContractInfo();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [withdrawAddress, setWithdrawAddress] = useState('');
   const [isWithdrawalLoading, setIsWithdrawalLoading] = useState(false);
+
+  const countdownDisplay = useStakingContractCountdown(
+    activeStakingContractInfo,
+  );
 
   const showModal = useCallback(() => {
     setIsModalVisible(true);
@@ -142,8 +146,7 @@ export const WithdrawFunds = () => {
         <Tooltip
           title={
             <Text className="text-sm">
-              {minDurationMessage}{' '}
-              {formatTimeRemainingFromNow(remainingStakingDuration ?? 0)}.
+              {minDurationMessage} {countdownDisplay}.
             </Text>
           }
         >
