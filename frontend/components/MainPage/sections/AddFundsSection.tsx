@@ -17,8 +17,8 @@ import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { COW_SWAP_GNOSIS_XDAI_OLAS_URL } from '@/constants/urls';
+import { NA, UNICODE_SYMBOLS } from '@/constants/symbols';
+import { SWAP_URL_BY_EVM_CHAIN } from '@/constants/urls';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
@@ -34,6 +34,20 @@ const CustomizedCardSection = styled(CardSection)<{ border?: boolean }>`
     width: 50%;
   }
 `;
+
+const AddFundsGetTokensSection = () => {
+  const { selectedAgentConfig } = useServices();
+  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
+
+  return (
+    <CardSection justify="center" bordertop="true" padding="16px 24px">
+      <Link target="_blank" href={SWAP_URL_BY_EVM_CHAIN[homeChainId]}>
+        Get OLAS + {CHAIN_CONFIG[homeChainId].nativeToken.symbol} on{' '}
+        {CHAIN_CONFIG[homeChainId].name} {UNICODE_SYMBOLS.EXTERNAL_LINK}
+      </Link>
+    </CardSection>
+  );
+};
 
 export const AddFundsSection = () => {
   const fundSectionRef = useRef<HTMLDivElement>(null);
@@ -106,7 +120,7 @@ export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
         fundingAddress={masterSafeAddress}
         handleCopy={handleCopyAddress}
       />
-      {/* <AddFundsGetTokensSection /> */}
+      <AddFundsGetTokensSection />
     </Flex>
   );
 });
@@ -153,7 +167,7 @@ const AddFundsAddressSection = ({
         </span>
       }
     >
-      <Text title={fundingAddress}>{truncatedFundingAddress ?? '--'}</Text>
+      <Text title={fundingAddress}>{truncatedFundingAddress ?? NA}</Text>
     </Tooltip>
 
     <Button onClick={handleCopy} icon={<CopyOutlined />} size="large" />
@@ -171,25 +185,3 @@ const AddFundsAddressSection = ({
     </Popover> */}
   </CardSection>
 );
-
-// TODO: readd when important to
-// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-const AddFundsGetTokensSection = () => {
-  const { selectedAgentConfig } = useServices();
-  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
-
-  return (
-    <CardSection justify="center" bordertop="true" padding="16px 24px">
-      <Link
-        target="_blank"
-        href={
-          // TODO: update this url based on homeChainId for optimism
-          COW_SWAP_GNOSIS_XDAI_OLAS_URL
-        }
-      >
-        Get OLAS + {CHAIN_CONFIG[homeChainId].nativeToken.symbol} on{' '}
-        {CHAIN_CONFIG[homeChainId].name} {UNICODE_SYMBOLS.EXTERNAL_LINK}
-      </Link>
-    </CardSection>
-  );
-};

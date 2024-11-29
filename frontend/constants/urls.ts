@@ -42,6 +42,11 @@ export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChain.GNOSIS]: GNOSIS_EXPLORER_URL,
 };
 
+export const SWAP_URL_BY_EVM_CHAIN: Record<number | EvmChainId, Url> = {
+  // [EvmChainId.OPTIMISM]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
+  [EvmChainId.Gnosis]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
+};
+
 export const EXPLORER_URL_BY_EVM_CHAIN_ID: Record<number | EvmChainId, Url> =
   Object.fromEntries(
     Object.entries(EXPLORER_URL_BY_MIDDLEWARE_CHAIN).map(
