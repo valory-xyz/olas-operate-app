@@ -79,9 +79,11 @@ export const StakingContractInfoProvider = ({
     AutonolasService.getStakingContractInfoByServiceIdStakingProgram(
       serviceId,
       activeStakingProgramId,
-    ).then(setActiveStakingContractInfo);
-
-    setIsActiveStakingContractInfoLoaded(true);
+    )
+      .then(setActiveStakingContractInfo)
+      .finally(() => {
+        setIsActiveStakingContractInfoLoaded(true);
+      });
   }, [activeStakingProgramId, serviceId]);
 
   /** Updates general staking contract information, not user or service specific */
