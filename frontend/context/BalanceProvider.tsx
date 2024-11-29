@@ -72,7 +72,8 @@ export const BalanceContext = createContext<{
 export const BalanceProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
   const { masterWallets } = useContext(MasterWalletContext);
-  const { services, selectedAgentConfig } = useContext(ServicesContext);
+  const { services, serviceWallets, selectedAgentConfig } =
+    useContext(ServicesContext);
 
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -128,7 +129,10 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
 
         const [walletBalancesResult, stakedBalancesResult] =
           await Promise.allSettled([
-            getCrossChainWalletBalances(masterWallets),
+            getCrossChainWalletBalances([
+              ...masterWallets,
+              ...(serviceWallets || []),
+            ]),
             getCrossChainStakedBalances(services, masterSafe?.address),
           ]);
 
@@ -152,7 +156,12 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
         setIsUpdatingBalances(false);
       }
     }
-  }, [masterWallets, services, selectedAgentConfig.evmHomeChainId]);
+  }, [
+    masterWallets,
+    services,
+    serviceWallets,
+    selectedAgentConfig.evmHomeChainId,
+  ]);
 
   useEffect(() => {
     // Update balances once on load, then use interval
