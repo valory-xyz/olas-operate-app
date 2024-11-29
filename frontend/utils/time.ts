@@ -85,7 +85,7 @@ export const formatTimeRemainingFromNow = (
   const targetTime = futureTimestampInSeconds * 1000 + Date.now();
   const timeDifference = targetTime - now;
 
-  if (timeDifference <= 0) return 'Time has passed';
+  if (timeDifference <= 0) return NA;
 
   const days = Math.floor(timeDifference / MILLISECONDS_IN_A_DAY);
   const hours = Math.floor(
