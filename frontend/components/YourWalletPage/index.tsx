@@ -1,6 +1,5 @@
 import { CloseOutlined } from '@ant-design/icons';
 import {
-  Alert,
   Button,
   ConfigProvider,
   Flex,
@@ -31,6 +30,7 @@ import { type Address } from '@/types/Address';
 import { Optional } from '@/types/Util';
 import { balanceFormat } from '@/utils/numberFormatters';
 
+import { FeatureNotEnabled } from '../FeatureNotEnabled';
 import { Container, infoBreakdownParentStyle } from './styles';
 import { SignerTitle } from './Titles';
 import { YourAgentWallet } from './YourAgent';
@@ -222,13 +222,7 @@ export const YourWalletPage = () => {
             ))}
           </Container>
         ) : (
-          <Alert
-            message="Oops!"
-            description="This feature is not enabled for your current agent type."
-            type="error"
-            showIcon
-            style={{ border: 'none' }}
-          />
+          <FeatureNotEnabled />
         )}
       </CardFlex>
     </ConfigProvider>
