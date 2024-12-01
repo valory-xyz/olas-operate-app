@@ -225,7 +225,7 @@ export const YourWalletPage = () => {
           <Alert
             message="Oops!"
             description="This feature is not enabled for your current agent type."
-            type="warning"
+            type="error"
             showIcon
             style={{ border: 'none' }}
           />
