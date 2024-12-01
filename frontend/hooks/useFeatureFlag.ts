@@ -1,17 +1,29 @@
+import { z } from 'zod';
+
 import { AgentType } from '@/enums/Agent';
 import { assertRequired } from '@/types/Util';
 
 import { useServices } from './useServices';
 
-type FeatureFlags = 'last-transactions' | 'balance-breakdown';
+const FeatureFlagsSchema = z.enum(['last-transactions', 'balance-breakdown']);
+type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
 
-const FEATURES: Record<AgentType, Record<FeatureFlags, boolean>> = {
+const FeaturesSchema = z.record(
+  z.nativeEnum(AgentType),
+  z.record(FeatureFlagsSchema, z.boolean()),
+);
+
+const FEATURES = FeaturesSchema.parse({
   [AgentType.PredictTrader]: {
     'balance-breakdown': true,
     'last-transactions': false,
   },
-};
+});
 
+/**
+ * hook to check if a feature flag is enabled for the selected agent
+ * @example const isFeatureEnabled = useFeatureFlag('feature-name');
+ */
 export const useFeatureFlag = (featureFlag: FeatureFlags | FeatureFlags[]) => {
   const { selectedAgentType } = useServices();
 
@@ -21,11 +33,17 @@ export const useFeatureFlag = (featureFlag: FeatureFlags | FeatureFlags[]) => {
     'Feature Flag must be used within a ServicesProvider',
   );
 
+  // make sure the selected agent type is supported
+  const currentAgentFeatures = FEATURES[selectedAgentType];
+  assertRequired(
+    currentAgentFeatures,
+    `Agent type ${selectedAgentType} not is not supported.`,
+  );
+
+  // if the feature flag is an array, return an array of booleans
   if (Array.isArray(featureFlag)) {
-    return featureFlag.map(
-      (flag) => FEATURES[selectedAgentType][flag] ?? false,
-    );
+    return featureFlag.map((flag) => currentAgentFeatures[flag] ?? false);
   }
 
-  return FEATURES[selectedAgentType][featureFlag] ?? false;
+  return currentAgentFeatures[featureFlag] ?? false;
 };
