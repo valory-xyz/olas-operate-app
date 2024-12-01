@@ -23,7 +23,7 @@ import {
   useBalanceContext,
   useMasterBalances,
 } from '@/hooks/useBalanceContext';
-import { FeatureFlags, useFeatureFlag } from '@/hooks/useFeatureFlag';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
@@ -190,23 +190,9 @@ const MasterEoaSignerNativeBalance = () => {
 };
 
 export const YourWalletPage = () => {
-  const isBalanceBreakdownEnabled = useFeatureFlag(
-    FeatureFlags.BalanceBreakdown,
-  );
-  const { goto } = usePageState();
-
+  const isBalanceBreakdownEnabled = useFeatureFlag('balance-breakdown');
   const { services } = useServices();
-
-  // if (isBalanceBreakdownEnabled) {
-  //   return (
-  //     <Alert
-  //       message="Feature is not enabled"
-  //       description="This feature is not enabled for your current agent type."
-  //       type="warning"
-  //       showIcon
-  //     />
-  //   );
-  // }
+  const { goto } = usePageState();
 
   return (
     <ConfigProvider theme={yourWalletTheme}>
@@ -221,31 +207,29 @@ export const YourWalletPage = () => {
           />
         }
       >
-        <>
-          {!isBalanceBreakdownEnabled ? (
-            <Container style={{ margin: 8 }}>
-              <Address />
-              <OlasBalance />
-              <MasterSafeNativeBalance />
-              <MasterEoaSignerNativeBalance />
-              {services?.map(({ service_config_id }) => (
-                // TODO: bit dirty, but should be fine for now
-                <YourAgentWallet
-                  key={service_config_id}
-                  serviceConfigId={service_config_id}
-                />
-              ))}
-            </Container>
-          ) : (
-            <Alert
-              message="Oops!"
-              description="This feature is not enabled for your current agent type."
-              type="warning"
-              showIcon
-              style={{ border: 'none' }}
-            />
-          )}
-        </>
+        {isBalanceBreakdownEnabled ? (
+          <Container style={{ margin: 8 }}>
+            <Address />
+            <OlasBalance />
+            <MasterSafeNativeBalance />
+            <MasterEoaSignerNativeBalance />
+            {services?.map(({ service_config_id }) => (
+              // TODO: bit dirty, but should be fine for now
+              <YourAgentWallet
+                key={service_config_id}
+                serviceConfigId={service_config_id}
+              />
+            ))}
+          </Container>
+        ) : (
+          <Alert
+            message="Oops!"
+            description="This feature is not enabled for your current agent type."
+            type="warning"
+            showIcon
+            style={{ border: 'none' }}
+          />
+        )}
       </CardFlex>
     </ConfigProvider>
   );

@@ -12,7 +12,7 @@ import {
   useMasterBalances,
   useServiceBalances,
 } from '@/hooks/useBalanceContext';
-import { FeatureFlags, useFeatureFlag } from '@/hooks/useFeatureFlag';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { balanceFormat } from '@/utils/numberFormatters';
@@ -37,9 +37,7 @@ export const MainOlasBalance = ({
     selectedService?.service_config_id,
   );
   const { goto } = usePageState();
-  const isBalanceBreakdownEnabled = useFeatureFlag(
-    FeatureFlags.BalanceBreakdown,
-  );
+  const isBalanceBreakdownEnabled = useFeatureFlag('balance-breakdown');
 
   const displayedBalance = useMemo(() => {
     // olas across master wallets, safes and eoa

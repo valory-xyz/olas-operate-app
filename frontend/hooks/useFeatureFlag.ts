@@ -3,15 +3,12 @@ import { assertRequired } from '@/types/Util';
 
 import { useServices } from './useServices';
 
-export enum FeatureFlags {
-  BalanceBreakdown = 'balance-breakdown',
-}
+type FeatureFlags = 'last-transactions' | 'balance-breakdown';
 
-type EachAgent = Record<FeatureFlags, boolean>;
-
-const FEATURES: Record<AgentType, EachAgent> = {
+const FEATURES: Record<AgentType, Record<FeatureFlags, boolean>> = {
   [AgentType.PredictTrader]: {
-    [FeatureFlags.BalanceBreakdown]: true,
+    'balance-breakdown': true,
+    'last-transactions': false,
   },
 };
 
