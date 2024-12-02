@@ -21,6 +21,8 @@ export const AGENT_CONFIG: {
     },
     requiresMasterSafesOn: [EvmChainId.Gnosis],
     serviceApi: PredictTraderService,
+    displayName: 'Prediction agent',
+    description: 'Participates in prediction markets.',
   },
   // TODO: check optimus config
   // [AgentType.Optimus]: {
@@ -34,5 +36,12 @@ export const AGENT_CONFIG: {
   //     [ChainId.Base]: 100000000000000000,
   //   },
   //   serviceApi: OptimusService,
+  // },
+  // [AgentType.Memeooorr]: {
+  //   name: 'Memeooorr agent',
+  //   // homeChainId: ChainId.Base,
+  //   displayName: 'Memeooorr agent',
+  //   description:
+  //     'Autonomously post to Twitter, create and trade memecoins, and interact with other agents.',
   // },
 };

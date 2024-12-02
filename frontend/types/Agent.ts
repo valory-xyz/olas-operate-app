@@ -11,4 +11,6 @@ export type AgentConfig = {
   agentSafeFundingRequirements: Record<string, number>;
   requiresMasterSafesOn: EvmChainId[];
   serviceApi: typeof PredictTraderService;
+  displayName: string;
+  description: string;
 };
