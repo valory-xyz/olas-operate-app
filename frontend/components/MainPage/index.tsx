@@ -12,6 +12,7 @@ import {
 } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
+import { CardSection } from '../styled/CardSection';
 // import { useMasterWalletContext } from '@/hooks/useWallet';
 import { MainHeader } from './header';
 import { AddFundsSection } from './sections/AddFundsSection';
@@ -66,32 +67,37 @@ export const Main = () => {
 
   return (
     <Card
-      title={<MainHeader />}
       styles={{
         body: {
           paddingTop: 0,
           paddingBottom: 0,
         },
       }}
-      extra={
-        <Flex gap={8}>
-          <Button
-            type="default"
-            size="large"
-            icon={<QuestionCircleOutlined />}
-            onClick={() => goto(Pages.HelpAndSupport)}
-          />
-          <Button
-            type="default"
-            size="large"
-            icon={<SettingOutlined />}
-            onClick={() => goto(Pages.Settings)}
-          />
-        </Flex>
-      }
       style={{ borderTopColor: 'transparent' }}
     >
       <Flex vertical>
+        <CardSection
+          gap={8}
+          // borderbottom="true"
+          padding="8px 24px"
+          justify="space-between"
+        >
+          <MainHeader />
+          <Flex gap={8} align="center">
+            <Button
+              type="default"
+              size="large"
+              icon={<QuestionCircleOutlined />}
+              onClick={() => goto(Pages.HelpAndSupport)}
+            />
+            <Button
+              type="default"
+              size="large"
+              icon={<SettingOutlined />}
+              onClick={() => goto(Pages.Settings)}
+            />
+          </Flex>
+        </CardSection>
         <AlertSections />
         <MainOlasBalance isBorderTopVisible={!hideMainOlasBalanceTopBorder} />
         <RewardsSection />
