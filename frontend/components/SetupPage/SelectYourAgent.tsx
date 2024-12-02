@@ -18,6 +18,7 @@ import { SetupCreateHeader } from './Create/SetupCreateHeader';
 const { Title, Text } = Typography;
 
 type EachAgentProps = { agentType: AgentType; agentConfig: AgentConfig };
+
 const EachAgent = ({ agentType, agentConfig }: EachAgentProps) => {
   const { selectedAgentType, updateAgentType } = useServices();
   const { goto } = usePageState();
@@ -70,6 +71,10 @@ const EachAgent = ({ agentType, agentConfig }: EachAgentProps) => {
   );
 };
 
+/**
+ *
+ * Component to select the agent type
+ */
 export const SelectYourAgent = () => (
   <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }}>
     <SetupCreateHeader prev={SetupScreen.SetupBackupSigner} />
