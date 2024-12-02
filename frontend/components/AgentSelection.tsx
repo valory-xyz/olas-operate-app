@@ -17,7 +17,7 @@ const { Title, Text } = Typography;
 type EachAgentProps = {
   agentType: AgentType;
   agentConfig: AgentConfig;
-  onSelect?: () => void;
+  onSelect: () => void;
 };
 
 const EachAgent = ({ agentType, agentConfig, onSelect }: EachAgentProps) => {
@@ -27,7 +27,7 @@ const EachAgent = ({ agentType, agentConfig, onSelect }: EachAgentProps) => {
 
   const handleSelectAgent = useCallback(() => {
     updateAgentType(agentType);
-    onSelect?.();
+    onSelect();
   }, [agentType, updateAgentType, onSelect]);
 
   return (
@@ -73,7 +73,7 @@ const EachAgent = ({ agentType, agentConfig, onSelect }: EachAgentProps) => {
 
 type AgentSelectionProps = {
   onPrev: () => void;
-  onNext?: () => void;
+  onNext: () => void;
 };
 
 /**
