@@ -4,7 +4,7 @@ export enum SetupScreen {
   SetupPassword,
   SetupSeedPhrase,
   SetupBackupSigner,
-  SelectYourAgent,
+  AgentSelection,
   SetupEoaFunding,
   SetupEoaFundingIncomplete,
   SetupCreateSafe,

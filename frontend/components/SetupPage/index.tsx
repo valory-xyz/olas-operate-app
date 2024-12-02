@@ -2,13 +2,14 @@ import { useContext, useMemo } from 'react';
 
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
+import { useSetup } from '@/hooks/useSetup';
 
+import { AgentSelection } from '../AgentSelection';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
 import { SetupCreateSafe } from './Create/SetupCreateSafe';
 import { SetupEoaFunding } from './Create/SetupEoaFunding';
 import { SetupPassword } from './Create/SetupPassword';
 import { SetupSeedPhrase } from './Create/SetupSeedPhrase';
-import { SelectYourAgent } from './SelectYourAgent';
 import {
   SetupRestoreMain,
   SetupRestoreSetPassword,
@@ -23,11 +24,13 @@ const UnexpectedError = () => (
 
 export const Setup = () => {
   const { setupObject } = useContext(SetupContext);
+  const { goto } = useSetup();
 
   const setupScreen = useMemo(() => {
     switch (setupObject.state) {
       case SetupScreen.Welcome:
         return <SetupWelcome />;
+
       // Create account
       case SetupScreen.SetupPassword:
         return <SetupPassword />;
@@ -41,8 +44,14 @@ export const Setup = () => {
         return <SetupEoaFunding />;
       case SetupScreen.SetupCreateSafe:
         return <SetupCreateSafe />;
-      case SetupScreen.SelectYourAgent:
-        return <SelectYourAgent />;
+      case SetupScreen.AgentSelection:
+        return (
+          <AgentSelection
+            onPrev={() => goto(SetupScreen.SetupBackupSigner)}
+            onNext={() => goto(SetupScreen.SetupEoaFunding)}
+          />
+        );
+
       // Restore account
       case SetupScreen.Restore:
         return <SetupRestoreMain />;
@@ -55,7 +64,7 @@ export const Setup = () => {
       default:
         return <UnexpectedError />;
     }
-  }, [setupObject.state]);
+  }, [setupObject.state, goto]);
 
   return setupScreen;
 };

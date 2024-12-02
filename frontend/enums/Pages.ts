@@ -9,5 +9,5 @@ export enum Pages {
   YourWalletBreakdown,
   RewardsHistory,
   AddBackupWalletViaSafe,
-  SetupYourAgent,
+  SwitchAgent,
 }

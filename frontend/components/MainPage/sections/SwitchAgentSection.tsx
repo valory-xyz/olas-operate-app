@@ -2,12 +2,15 @@ import { Button, Flex, Typography } from 'antd';
 import Image from 'next/image';
 
 import { CardSection } from '@/components/styled/CardSection';
+import { Pages } from '@/enums/Pages';
+import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 
 const { Text } = Typography;
 
 export const SwitchAgentSection = () => {
   const { selectedAgentConfig, selectedAgentType } = useServices();
+  const { goto } = usePageState();
 
   return (
     <CardSection
@@ -27,7 +30,7 @@ export const SwitchAgentSection = () => {
         <Text>{selectedAgentConfig.displayName}</Text>
       </Flex>
 
-      <Button type="primary" ghost>
+      <Button type="primary" ghost onClick={() => goto(Pages.SwitchAgent)}>
         Switch agent
       </Button>
     </CardSection>

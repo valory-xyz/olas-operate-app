@@ -6,29 +6,29 @@ import { useCallback } from 'react';
 import { AGENT_CONFIG } from '@/config/agents';
 import { COLOR } from '@/constants/colors';
 import { AgentType } from '@/enums/Agent';
-import { Pages } from '@/enums/Pages';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { AgentConfig } from '@/types/Agent';
 
-import { CardFlex } from '../styled/CardFlex';
-import { SetupCreateHeader } from './Create/SetupCreateHeader';
+import { SetupCreateHeader } from './SetupPage/Create/SetupCreateHeader';
+import { CardFlex } from './styled/CardFlex';
 
 const { Title, Text } = Typography;
 
-type EachAgentProps = { agentType: AgentType; agentConfig: AgentConfig };
+type EachAgentProps = {
+  agentType: AgentType;
+  agentConfig: AgentConfig;
+  onSelect?: () => void;
+};
 
-const EachAgent = ({ agentType, agentConfig }: EachAgentProps) => {
+const EachAgent = ({ agentType, agentConfig, onSelect }: EachAgentProps) => {
   const { selectedAgentType, updateAgentType } = useServices();
-  const { goto } = usePageState();
 
   const isCurrentAgent = selectedAgentType === agentType;
 
   const handleSelectAgent = useCallback(() => {
     updateAgentType(agentType);
-    goto(Pages.SetupYourAgent); // TODO: page to be added
-  }, [agentType, updateAgentType, goto]);
+    onSelect?.();
+  }, [agentType, updateAgentType, onSelect]);
 
   return (
     <Card
@@ -71,13 +71,17 @@ const EachAgent = ({ agentType, agentConfig }: EachAgentProps) => {
   );
 };
 
+type SelectYourAgentProps = {
+  onPrev: () => void;
+  onNext?: () => void;
+};
+
 /**
- *
- * Component to select the agent type
+ * Component to select the agent type.
  */
-export const SelectYourAgent = () => (
+export const AgentSelection = ({ onPrev, onNext }: SelectYourAgentProps) => (
   <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }}>
-    <SetupCreateHeader prev={SetupScreen.SetupBackupSigner} />
+    <SetupCreateHeader prev={onPrev} />
     <Title level={3}>Select your agent</Title>
 
     {entries(AGENT_CONFIG).map(([agentType, agentConfig]) => {
@@ -86,6 +90,7 @@ export const SelectYourAgent = () => (
           key={agentType}
           agentType={agentType as AgentType}
           agentConfig={agentConfig}
+          onSelect={onNext}
         />
       );
     })}
