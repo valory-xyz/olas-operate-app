@@ -1,9 +1,13 @@
-import { Flex } from 'antd';
+import { QuestionCircleOutlined, SettingOutlined } from '@ant-design/icons';
+import { Button, Flex } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
+import { CardSection } from '@/components/styled/CardSection';
+import { Pages } from '@/enums/Pages';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 
@@ -33,6 +37,8 @@ const useSetupTrayIcon = () => {
 };
 
 export const MainHeader = () => {
+  const { goto } = usePageState();
+
   const [isFirstRunModalOpen, setIsFirstRunModalOpen] = useState(false);
   const handleModalClose = useCallback(() => setIsFirstRunModalOpen(false), []);
 
@@ -40,10 +46,27 @@ export const MainHeader = () => {
   // TODO: support loading state
 
   return (
-    <Flex justify="start" align="center" gap={10}>
-      <AgentHead />
-      <AgentButton />
-      <FirstRunModal open={isFirstRunModalOpen} onClose={handleModalClose} />
-    </Flex>
+    <CardSection gap={8} padding="8px 24px" justify="space-between">
+      <Flex justify="start" align="center" gap={10}>
+        <AgentHead />
+        <AgentButton />
+        <FirstRunModal open={isFirstRunModalOpen} onClose={handleModalClose} />
+      </Flex>
+
+      <Flex gap={8} align="center">
+        <Button
+          type="default"
+          size="large"
+          icon={<QuestionCircleOutlined />}
+          onClick={() => goto(Pages.HelpAndSupport)}
+        />
+        <Button
+          type="default"
+          size="large"
+          icon={<SettingOutlined />}
+          onClick={() => goto(Pages.Settings)}
+        />
+      </Flex>
+    </CardSection>
   );
 };
