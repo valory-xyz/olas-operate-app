@@ -24,7 +24,7 @@ export const SwitchAgentSection = () => {
     useStakingContractContext();
 
   // enable only if all conditions are met
-  const isSwitchEnabled = useMemo(() => {
+  const isSwitchAgentEnabled = useMemo(() => {
     if (isServicesLoading) return false;
     if (isServiceRunning) return false;
     if (!isAllStakingContractDetailsRecordLoaded) return false;
@@ -54,10 +54,10 @@ export const SwitchAgentSection = () => {
       </Flex>
 
       <Button
+        disabled={!isSwitchAgentEnabled}
+        onClick={() => goto(Pages.SwitchAgent)}
         type="primary"
         ghost
-        onClick={() => goto(Pages.SwitchAgent)}
-        disabled={!isSwitchEnabled}
       >
         Switch agent
       </Button>

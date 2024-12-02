@@ -71,7 +71,7 @@ const EachAgent = ({ agentType, agentConfig, onSelect }: EachAgentProps) => {
   );
 };
 
-type SelectYourAgentProps = {
+type AgentSelectionProps = {
   onPrev: () => void;
   onNext?: () => void;
 };
@@ -79,7 +79,7 @@ type SelectYourAgentProps = {
 /**
  * Component to select the agent type.
  */
-export const AgentSelection = ({ onPrev, onNext }: SelectYourAgentProps) => (
+export const AgentSelection = ({ onPrev, onNext }: AgentSelectionProps) => (
   <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }}>
     <SetupCreateHeader prev={onPrev} />
     <Title level={3}>Select your agent</Title>

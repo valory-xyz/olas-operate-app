@@ -1,5 +1,6 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button, Col, Flex, Row } from 'antd';
+import { isFunction } from 'lodash';
 import Image from 'next/image';
 import { useCallback } from 'react';
 
@@ -17,11 +18,7 @@ export const SetupCreateHeader = ({
 }: SetupCreateHeaderProps) => {
   const { goto } = useSetup();
   const handleBack = useCallback(() => {
-    if (typeof prev === 'function') {
-      prev();
-    } else {
-      goto(prev);
-    }
+    isFunction(prev) ? prev() : goto(prev);
   }, [goto, prev]);
 
   return (
