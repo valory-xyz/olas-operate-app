@@ -8,6 +8,7 @@ import { SetupCreateSafe } from './Create/SetupCreateSafe';
 import { SetupEoaFunding } from './Create/SetupEoaFunding';
 import { SetupPassword } from './Create/SetupPassword';
 import { SetupSeedPhrase } from './Create/SetupSeedPhrase';
+import { SelectYourAgent } from './SelectYourAgent';
 import {
   SetupRestoreMain,
   SetupRestoreSetPassword,
@@ -22,6 +23,7 @@ const UnexpectedError = () => (
 
 export const Setup = () => {
   const { setupObject } = useContext(SetupContext);
+
   const setupScreen = useMemo(() => {
     switch (setupObject.state) {
       case SetupScreen.Welcome:
@@ -39,6 +41,8 @@ export const Setup = () => {
         return <SetupEoaFunding />;
       case SetupScreen.SetupCreateSafe:
         return <SetupCreateSafe />;
+      case SetupScreen.SelectYourAgent:
+        return <SelectYourAgent />;
       // Restore account
       case SetupScreen.Restore:
         return <SetupRestoreMain />;
