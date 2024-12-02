@@ -35,7 +35,7 @@ const EachAgent = ({ agentType, agentConfig }: EachAgentProps) => {
       style={{ padding: 0, marginBottom: 6 }}
       styles={{
         body: {
-          padding: 16,
+          padding: '12px 16px',
           gap: 6,
           borderRadius: 'inherit',
           background: isCurrentAgent ? COLOR.GRAY_1 : 'transparent',
@@ -44,11 +44,11 @@ const EachAgent = ({ agentType, agentConfig }: EachAgentProps) => {
       }}
     >
       <Flex vertical>
-        <Flex align="center" justify="space-between">
+        <Flex align="center" justify="space-between" className="mb-8">
           <Image
             src={`/agent-${agentType}-icon.png`}
-            width={50}
-            height={50}
+            width={36}
+            height={36}
             alt={agentConfig.displayName}
           />
           {isCurrentAgent ? (
