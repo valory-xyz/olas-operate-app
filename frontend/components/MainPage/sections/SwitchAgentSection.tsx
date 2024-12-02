@@ -1,16 +1,39 @@
 import { Button, Flex, Typography } from 'antd';
 import Image from 'next/image';
+import { useMemo } from 'react';
 
 import { CardSection } from '@/components/styled/CardSection';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
+import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
+import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 
 const { Text } = Typography;
 
 export const SwitchAgentSection = () => {
-  const { selectedAgentConfig, selectedAgentType } = useServices();
   const { goto } = usePageState();
+  const {
+    isLoading: isServicesLoading,
+    selectedAgentConfig,
+    selectedAgentType,
+    selectedService,
+  } = useServices();
+  const { isServiceRunning } = useService(selectedService?.service_config_id);
+  const { isAllStakingContractDetailsRecordLoaded } =
+    useStakingContractContext();
+
+  // enable only if all conditions are met
+  const isSwitchEnabled = useMemo(() => {
+    if (isServicesLoading) return false;
+    if (isServiceRunning) return false;
+    if (!isAllStakingContractDetailsRecordLoaded) return false;
+    return true;
+  }, [
+    isServicesLoading,
+    isServiceRunning,
+    isAllStakingContractDetailsRecordLoaded,
+  ]);
 
   return (
     <CardSection
@@ -30,7 +53,12 @@ export const SwitchAgentSection = () => {
         <Text>{selectedAgentConfig.displayName}</Text>
       </Flex>
 
-      <Button type="primary" ghost onClick={() => goto(Pages.SwitchAgent)}>
+      <Button
+        type="primary"
+        ghost
+        onClick={() => goto(Pages.SwitchAgent)}
+        disabled={!isSwitchEnabled}
+      >
         Switch agent
       </Button>
     </CardSection>
