@@ -1,16 +1,26 @@
-import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
-import { Button, ConfigProvider, Divider, Flex, Form, Input, Typography } from "antd";
-import type { FormInstance } from "antd/lib/form";
-import React, { useState } from "react";
+import { EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons';
+import {
+  Button,
+  ConfigProvider,
+  Divider,
+  Flex,
+  Form,
+  Input,
+  message,
+  Typography,
+} from 'antd';
+import React, { useState } from 'react';
+import { useUnmount } from 'usehooks-ts';
 
-import { CardFlex } from "@/components/styled/CardFlex";
-import { SetupScreen } from "@/enums/SetupScreen";
+import { CustomAlert } from '@/components/Alert';
+import { CardFlex } from '@/components/styled/CardFlex';
+import { SetupScreen } from '@/enums/SetupScreen';
+import { useSetup } from '@/hooks/useSetup';
 
-import { SetupCreateHeader } from "../Create/SetupCreateHeader";
-import { CustomAlert } from "@/components/Alert";
+import { SetupCreateHeader } from '../Create/SetupCreateHeader';
+import { validateGeminiApiKey, validateTwitterCredentials } from './validation';
 
 const { Title, Text } = Typography;
-
 
 // TODO: consolidate theme into mainTheme
 const LOCAL_THEME = { components: { Input: { fontSize: 16 } } };
@@ -18,36 +28,37 @@ const LOCAL_THEME = { components: { Input: { fontSize: 16 } } };
 type FieldValues = {
   personaDescription: string;
   geminiApiKey: string;
-  email: string;
-  username: string;
-  password: string;
+  xEmail: string;
+  xUsername: string;
+  xPassword: string;
 };
 
-const requiredRules = [{ required: true, message: "Field is required" }];
+type ValidationStatus = 'valid' | 'invalid' | 'unknown';
+
+const requiredRules = [{ required: true, message: 'Field is required' }];
 const validateMessages = {
-  required: "Field is required",
+  required: 'Field is required',
   types: {
-    email: "Please enter a valid email",
+    email: 'Please enter a valid email',
   },
 };
 
 const XAccountCredentials = () => (
   <Flex vertical>
-    <Divider style={{ margin: "16px 0" }} />
+    <Divider style={{ margin: '16px 0' }} />
     <Title level={5} className="mt-0">
       X account credentials
     </Title>
     <Text type="secondary" className="mb-16">
-      Create a new account for your agent at{" "}
+      Create a new account for your agent at{' '}
       <a href="https://x.com" target="_blank" rel="noreferrer">
         x.com
-      </a>{" "}
+      </a>{' '}
       and enter the login details. This enables your agent to view X and
       interact with other agents.
     </Text>
   </Flex>
 );
-
 
 const InvalidGeminiApiCredentials = () => (
   <CustomAlert
@@ -68,16 +79,58 @@ const InvalidXCredentials = () => (
 );
 
 const SetupYourAgentForm = () => {
-  const [form] = Form.useForm<FieldValues>();
-  const [apiKeyVisible, setApiKeyVisible] = useState(false);
+  const { goto } = useSetup();
 
-  const onFinish = (values: Record<string, string>) => {
-    console.log("Form values:", values);
+  const [form] = Form.useForm<FieldValues>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [geminiApiKeyValidationStatus, setGeminiApiKeyValidationStatus] =
+    useState<ValidationStatus>('unknown');
+  const [
+    twitterCredentialsValidationStatus,
+    setTwitterCredentialsValidationStatus,
+  ] = useState<ValidationStatus>('unknown');
+
+  const onFinish = async (values: Record<string, string>) => {
+    try {
+      setIsSubmitting(true);
+
+      const isGeminiValid = await validateGeminiApiKey(values.geminiApiKey);
+      setGeminiApiKeyValidationStatus(isGeminiValid ? 'valid' : 'invalid');
+      if (!isGeminiValid) return;
+
+      const isTwitterValid = await validateTwitterCredentials(
+        values.xEmail,
+        values.xUsername,
+        values.xPassword,
+      );
+      setTwitterCredentialsValidationStatus(
+        isTwitterValid ? 'valid' : 'invalid',
+      );
+      if (!isTwitterValid) return;
+
+      // TODO: send to backend maybe?
+      message.success('Agent setup complete');
+
+      goto(SetupScreen.SetupEoaFunding);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+
+    // TODO: validate the gemini API
+
+    // TODO: validate the twitter credentials
+
+    // TODO: move to next page
   };
 
-  // const onFinishFailed = (errorInfo: any) => {
-  //   console.log("Form failed:", errorInfo);
-  // };
+  // Clean up
+  useUnmount(async () => {
+    setIsSubmitting(false);
+    setGeminiApiKeyValidationStatus('unknown');
+    setTwitterCredentialsValidationStatus('unknown');
+  });
 
   return (
     <Form<FieldValues>
@@ -85,8 +138,8 @@ const SetupYourAgentForm = () => {
       name="setup-your-agent"
       layout="vertical"
       onFinish={onFinish}
-      // onFinishFailed={onFinishFailed}
       validateMessages={validateMessages}
+      disabled={isSubmitting}
     >
       <Form.Item
         name="personaDescription"
@@ -109,23 +162,27 @@ const SetupYourAgentForm = () => {
           }
         />
       </Form.Item>
-      <InvalidGeminiApiCredentials />
+      {geminiApiKeyValidationStatus === 'invalid' && (
+        <InvalidGeminiApiCredentials />
+      )}
 
       {/* X */}
       <XAccountCredentials />
-      <InvalidXCredentials />
+      {twitterCredentialsValidationStatus === 'invalid' && (
+        <InvalidXCredentials />
+      )}
 
       <Form.Item
-        name="email"
+        name="xEmail"
         label="X email"
-        rules={[{ required: true, type: "email" }]}
+        rules={[{ required: true, type: 'email' }]}
         hasFeedback
       >
         <Input />
       </Form.Item>
 
       <Form.Item
-        name="username"
+        name="xUsername"
         label="X username"
         rules={requiredRules}
         hasFeedback
@@ -134,7 +191,7 @@ const SetupYourAgentForm = () => {
       </Form.Item>
 
       <Form.Item
-        name="password"
+        name="xPassword"
         label="X password"
         rules={requiredRules}
         hasFeedback
@@ -147,7 +204,13 @@ const SetupYourAgentForm = () => {
       </Form.Item>
 
       <Form.Item>
-        <Button type="primary" htmlType="submit" size="large" block>
+        <Button
+          type="primary"
+          htmlType="submit"
+          size="large"
+          block
+          loading={isSubmitting}
+        >
           Continue
         </Button>
       </Form.Item>
@@ -158,17 +221,17 @@ const SetupYourAgentForm = () => {
 export const SetupYourAgent = () => {
   return (
     <ConfigProvider theme={LOCAL_THEME}>
-      <CardFlex gap={10} styles={{ body: { padding: "12px 24px" } }}>
+      <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }}>
         <SetupCreateHeader prev={SetupScreen.AgentSelection} />
         <Title level={3}>Set up your agent</Title>
         <Text>
           Provide your agent with a persona, access to an LLM and X account.
         </Text>
-        <Divider style={{ margin: "12px 0" }} />
+        <Divider style={{ margin: '8px 0' }} />
 
         <SetupYourAgentForm />
 
-        <Text type="secondary" style={{ display: "block", marginTop: "-16px" }}>
+        <Text type="secondary" style={{ display: 'block', marginTop: '-16px' }}>
           You won’t be able to update your agent’s configuration after this
           step.
         </Text>
