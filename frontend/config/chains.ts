@@ -10,7 +10,7 @@ import { TOKEN_CONFIG, TokenConfig } from './tokens';
 
 type HttpUrl = `http${'s' | ''}://${string}`;
 
-type ChainConfig = {
+export type ChainConfig = {
   name: string;
   nativeToken: TokenConfig;
   evmChainId: number;
@@ -53,7 +53,7 @@ export const ETHEREUM_CHAIN_CONFIG: ChainConfig = {
 export const CHAIN_CONFIG: {
   [evmChainId: number]: ChainConfig;
 } = {
-  // [EvmChainId.Base]: BASE_CHAIN_CONFIG,
+  [EvmChainId.Base]: BASE_CHAIN_CONFIG,
   // [EvmChainId.Ethereum]: ETHEREUM_CHAIN_CONFIG,
   [EvmChainId.Gnosis]: GNOSIS_CHAIN_CONFIG,
   // [EvmChainId.Optimism]: OPTIMISM_CHAIN_CONFIG,

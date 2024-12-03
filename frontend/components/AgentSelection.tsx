@@ -15,15 +15,21 @@ import { CardFlex } from './styled/CardFlex';
 const { Title, Text } = Typography;
 
 type EachAgentProps = {
+  showSelected: boolean;
   agentType: AgentType;
   agentConfig: AgentConfig;
   onSelect: () => void;
 };
 
-const EachAgent = ({ agentType, agentConfig, onSelect }: EachAgentProps) => {
+const EachAgent = ({
+  showSelected,
+  agentType,
+  agentConfig,
+  onSelect,
+}: EachAgentProps) => {
   const { selectedAgentType, updateAgentType } = useServices();
 
-  const isCurrentAgent = selectedAgentType === agentType;
+  const isCurrentAgent = showSelected ? selectedAgentType === agentType : false;
 
   const handleSelectAgent = useCallback(() => {
     updateAgentType(agentType);
@@ -72,6 +78,7 @@ const EachAgent = ({ agentType, agentConfig, onSelect }: EachAgentProps) => {
 };
 
 type AgentSelectionProps = {
+  showSelected?: boolean;
   onPrev: () => void;
   onNext: () => void;
 };
@@ -79,7 +86,11 @@ type AgentSelectionProps = {
 /**
  * Component to select the agent type.
  */
-export const AgentSelection = ({ onPrev, onNext }: AgentSelectionProps) => (
+export const AgentSelection = ({
+  showSelected = true,
+  onPrev,
+  onNext,
+}: AgentSelectionProps) => (
   <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }}>
     <SetupCreateHeader prev={onPrev} />
     <Title level={3}>Select your agent</Title>
@@ -88,6 +99,7 @@ export const AgentSelection = ({ onPrev, onNext }: AgentSelectionProps) => (
       return (
         <EachAgent
           key={agentType}
+          showSelected={showSelected}
           agentType={agentType as AgentType}
           agentConfig={agentConfig}
           onSelect={onNext}

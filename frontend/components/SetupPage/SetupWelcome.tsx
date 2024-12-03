@@ -12,6 +12,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { MiddlewareAccountIsSetup } from '@/client';
+import { MIN_ETH_BALANCE_THRESHOLDS } from '@/constants/thresholds';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
@@ -134,7 +135,7 @@ export const SetupWelcomeLogin = () => {
   const { goto } = useSetup();
   const { goto: gotoPage } = usePageState();
 
-  const { selectedService } = useServices();
+  const { selectedService, selectedAgentConfig } = useServices();
   const {
     masterSafes,
     masterWallets: wallets,
@@ -143,16 +144,22 @@ export const SetupWelcomeLogin = () => {
   const { isLoaded: isBalanceLoaded, updateBalances } = useBalanceContext();
   const { masterWalletBalances } = useMasterBalances();
 
+  const selectedServiceOrAgentChainId = selectedService?.home_chain
+    ? asEvmChainId(selectedService?.home_chain)
+    : selectedAgentConfig.evmHomeChainId;
+
   const masterSafe =
     masterSafes?.find(
       (safe) =>
-        selectedService?.home_chain &&
-        safe.evmChainId === asEvmChainId(selectedService?.home_chain),
+        selectedServiceOrAgentChainId &&
+        safe.evmChainId === selectedServiceOrAgentChainId,
     ) ?? null;
 
   const eoaBalanceEth = masterWalletBalances?.find(
-    (balance) => balance.walletAddress === masterEoa?.address,
-  );
+    (balance) =>
+      balance.walletAddress === masterEoa?.address &&
+      balance.evmChainId === selectedServiceOrAgentChainId,
+  )?.balance;
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [canNavigate, setCanNavigate] = useState(false);
@@ -184,7 +191,11 @@ export const SetupWelcomeLogin = () => {
     // TODO: fix wallet and balance loads
     if (canNavigate) {
       setIsLoggingIn(false);
-      if (!eoaBalanceEth) {
+      if (
+        !eoaBalanceEth ||
+        eoaBalanceEth <
+          MIN_ETH_BALANCE_THRESHOLDS[selectedServiceOrAgentChainId].safeCreation
+      ) {
         goto(SetupScreen.SetupEoaFundingIncomplete);
       } else if (!masterSafe?.address) {
         goto(SetupScreen.SetupCreateSafe);
@@ -199,6 +210,7 @@ export const SetupWelcomeLogin = () => {
     gotoPage,
     isBalanceLoaded,
     masterSafe?.address,
+    selectedServiceOrAgentChainId,
     wallets?.length,
   ]);
 

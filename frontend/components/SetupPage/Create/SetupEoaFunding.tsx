@@ -1,24 +1,23 @@
 import { CopyOutlined } from '@ant-design/icons';
 import { Flex, message, Tooltip, Typography } from 'antd';
-import { BigNumber, ethers } from 'ethers';
+import { ethers } from 'ethers';
 import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { useInterval } from 'usehooks-ts';
 
-import { MiddlewareChain } from '@/client';
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
-import { CHAIN_CONFIG } from '@/config/chains';
+import { CHAIN_CONFIG, ChainConfig } from '@/config/chains';
 import { PROVIDERS } from '@/constants/providers';
 import { NA } from '@/constants/symbols';
 import { MIN_ETH_BALANCE_THRESHOLDS } from '@/constants/thresholds';
+import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useMasterBalances } from '@/hooks/useBalanceContext';
+import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
-import { Address } from '@/types/Address';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 import { delayInSeconds } from '@/utils/delay';
 
@@ -47,8 +46,11 @@ const statusMessage = (isFunded?: boolean) => {
   }
 };
 
-type SetupEoaFundingWaitingProps = { chainName: string };
-const SetupEoaFundingWaiting = ({ chainName }: SetupEoaFundingWaitingProps) => {
+type SetupEoaFundingWaitingProps = { chainName: string; currency: string };
+const SetupEoaFundingWaiting = ({
+  chainName,
+  currency,
+}: SetupEoaFundingWaitingProps) => {
   const { masterEoa } = useMasterWalletContext();
   const masterEoaAddress = masterEoa?.address;
 
@@ -88,7 +90,7 @@ const SetupEoaFundingWaiting = ({ chainName }: SetupEoaFundingWaitingProps) => {
         </Flex>
 
         <span className="can-select-text break-word">
-          {`XDAI: ${masterEoaAddress || NA}`}
+          {`${currency}: ${masterEoaAddress || NA}`}
         </span>
         {/* <CustomAlert
           type="info"
@@ -107,24 +109,13 @@ type SetupEoaFundingProps = {
   minRequiredBalance: number;
   currency: string;
   chainName: string;
-  onFunded: () => void;
 };
 export const SetupEoaFundingForChain = ({
   isFunded,
   minRequiredBalance,
   currency,
   chainName,
-  onFunded,
 }: SetupEoaFundingProps) => {
-  const { goto } = useSetup();
-
-  useEffect(() => {
-    message.success(`${chainName} funds have been received!`);
-
-    // Wait for a second before moving to the next step
-    delayInSeconds(1).then(onFunded);
-  }, [chainName, goto, isFunded, onFunded]);
-
   return (
     <CardFlex>
       <SetupCreateHeader prev={SetupScreen.SetupBackupSigner} disabled />
@@ -135,135 +126,128 @@ export const SetupEoaFundingForChain = ({
         The app needs these funds to create your account on-chain.
       </Paragraph>
 
-      <CardSection
-        padding="12px 24px"
-        bordertop="true"
-        borderbottom={isFunded ? 'true' : 'false'}
-      >
+      <CardSection padding="12px 24px" bordertop="true" className="mt-12">
         <Text className={isFunded ? '' : 'loading-ellipses'}>
           Status: {statusMessage(isFunded)}
         </Text>
       </CardSection>
-      {!isFunded && <SetupEoaFundingWaiting chainName={chainName} />}
+      {!isFunded && (
+        <SetupEoaFundingWaiting chainName={chainName} currency={currency} />
+      )}
     </CardFlex>
   );
 };
 
+type EoaFundingMapParams = {
+  provider: ethers.providers.JsonRpcProvider;
+  chainConfig: ChainConfig;
+  requiredEth: number;
+};
+
 // TODO: chain independent
-const eoaFundingMap = {
-  //   [MiddlewareChain.OPTIMISM]: {
-  //     provider: OPTIMISM_PROVIDER,
-  //     chainConfig: CHAIN_CONFIG.OPTIMISM,
-  //     requiredEth:
-  //       MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.OPTIMISM].safeCreation,
-  //   },
-  //   [MiddlewareChain.ETHEREUM]: {
-  //     provider: ETHEREUM_PROVIDER,
-  //     chainConfig: CHAIN_CONFIG.ETHEREUM,
-  //     requiredEth:
-  //       MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.ETHEREUM].safeCreation,
-  //   },
-  //   [MiddlewareChain.BASE]: {
-  //     provider: BASE_PROVIDER,
-  //     chainConfig: CHAIN_CONFIG.BASE,
-  //     requiredEth: MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.BASE].safeCreation,
-  //   },
-  [MiddlewareChain.GNOSIS]: {
-    provider: PROVIDERS[EvmChainId.Gnosis].provider,
-    chainConfig: CHAIN_CONFIG[EvmChainId.Gnosis],
-    requiredEth: MIN_ETH_BALANCE_THRESHOLDS[EvmChainId.Gnosis].safeCreation,
+// use SERVICE_TEMPLATES[].configurations instead?
+const EOA_FUNDING_MAP: Record<
+  AgentType,
+  Partial<Record<EvmChainId, EoaFundingMapParams>>
+> = {
+  [AgentType.PredictTrader]: {
+    [EvmChainId.Gnosis]: {
+      provider: PROVIDERS[EvmChainId.Gnosis].provider,
+      chainConfig: CHAIN_CONFIG[EvmChainId.Gnosis],
+      requiredEth: MIN_ETH_BALANCE_THRESHOLDS[EvmChainId.Gnosis].safeCreation,
+    },
   },
+  [AgentType.Memeooorr]: {
+    [EvmChainId.Base]: {
+      provider: PROVIDERS[EvmChainId.Base].provider,
+      chainConfig: CHAIN_CONFIG[EvmChainId.Base],
+      requiredEth: MIN_ETH_BALANCE_THRESHOLDS[EvmChainId.Base].safeCreation,
+    },
+  },
+  // [AgentType.Optimus]: {
+  //   [EvmChainId.Optimism]: {
+  //     provider: PROVIDERS[EvmChainId.Optimism].provider,
+  //     chainConfig: CHAIN_CONFIG[EvmChainId.Optimism],
+  //     requiredEth: MIN_ETH_BALANCE_THRESHOLDS[EvmChainId.Optimism].safeCreation,
+  //   },
+  //   [EvmChainId.Ethereum]: {
+  //     provider: PROVIDERS[EvmChainId.Ethereum].provider,
+  //     chainConfig: CHAIN_CONFIG[EvmChainId.Ethereum],
+  //     requiredEth: MIN_ETH_BALANCE_THRESHOLDS[EvmChainId.Ethereum].safeCreation,
+  //   },
+  //   [EvmChainId.Base]: {
+  //     provider: PROVIDERS[EvmChainId.Base].provider,
+  //     chainConfig: CHAIN_CONFIG[EvmChainId.Base],
+  //     requiredEth: MIN_ETH_BALANCE_THRESHOLDS[EvmChainId.Base].safeCreation,
+  //   },
+  // }
 };
 
 export const SetupEoaFunding = () => {
   const { goto } = useSetup();
+  const { selectedAgentType, selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
   const { masterWalletBalances } = useMasterBalances();
   const masterEoaAddress = masterEoa?.address;
 
-  const [currentChain, setCurrentChain] = useState<MiddlewareChain>(
-    MiddlewareChain.GNOSIS,
+  const [currentChain, setCurrentChain] = useState<EvmChainId>(
+    selectedAgentConfig.evmHomeChainId,
   );
 
-  const currentFundingMapObject = eoaFundingMap[MiddlewareChain.GNOSIS];
-
-  const getIsCurrentChainFunded = useCallback(
-    async (
-      currentFundingMapObject: (typeof eoaFundingMap)[keyof typeof eoaFundingMap],
-      masterEoaAddress: Address,
-    ) => {
-      const { provider, requiredEth } = currentFundingMapObject;
-
-      return provider
-        .getBalance(masterEoaAddress)
-        .then(
-          (balance: BigNumber) =>
-            parseFloat(ethers.utils.formatEther(balance)) >= requiredEth,
-        );
-    },
-    [],
-  );
-
-  useInterval(async () => {
-    if (!masterEoaAddress) return;
-
-    const currentChainIsFunded = await getIsCurrentChainFunded(
-      currentFundingMapObject,
-      masterEoaAddress,
-    );
-
-    if (!currentChainIsFunded) return;
-
-    message.success(
-      `${currentFundingMapObject.chainConfig.name} funds have been received!`,
-    );
-
-    const indexOfCurrentChain = Object.keys(eoaFundingMap).indexOf(
-      currentChain.toString(),
-    );
-    const nextChainExists =
-      Object.keys(eoaFundingMap).length > indexOfCurrentChain + 1;
-    if (nextChainExists) {
-      // goto next chain
-      setCurrentChain(
-        Object.keys(eoaFundingMap)[indexOfCurrentChain + 1] as MiddlewareChain,
-      );
-      return;
-    }
-    goto(SetupScreen.SetupCreateSafe);
-  }, 5000);
+  const currentFundingMapObject =
+    EOA_FUNDING_MAP[selectedAgentType][currentChain];
 
   const eoaBalance = masterWalletBalances?.find(
-    (balance) => balance.walletAddress === masterEoaAddress,
+    (balance) =>
+      balance.walletAddress === masterEoaAddress &&
+      balance.evmChainId === currentChain,
   );
+
   const isFunded =
-    eoaBalance?.evmChainId === EvmChainId.Gnosis &&
-    eoaBalance.balance >=
-      MIN_ETH_BALANCE_THRESHOLDS[EvmChainId.Gnosis].safeCreation;
+    eoaBalance?.evmChainId === currentChain &&
+    eoaBalance.balance >= MIN_ETH_BALANCE_THRESHOLDS[currentChain].safeCreation;
+
+  const handleFunded = useCallback(async () => {
+    message.success(
+      `${currentFundingMapObject?.chainConfig.name} funds have been received!`,
+    );
+
+    await delayInSeconds(1);
+
+    const chains = Object.keys(EOA_FUNDING_MAP[selectedAgentType]);
+    const indexOfCurrentChain = chains.indexOf(currentChain.toString());
+    const nextChainExists = chains.length > indexOfCurrentChain + 1;
+
+    if (nextChainExists) {
+      // goto next chain
+      setCurrentChain(chains[indexOfCurrentChain + 1] as unknown as EvmChainId);
+      return;
+    }
+
+    goto(SetupScreen.SetupCreateSafe);
+  }, [
+    currentChain,
+    currentFundingMapObject?.chainConfig.name,
+    goto,
+    selectedAgentType,
+  ]);
+
+  useEffect(() => {
+    if (!currentFundingMapObject) return;
+    if (!masterEoaAddress) return;
+    if (!isFunded) return;
+
+    handleFunded();
+  }, [currentFundingMapObject, handleFunded, isFunded, masterEoaAddress]);
+
+  if (!currentFundingMapObject) return null;
 
   return (
-    <CardFlex>
-      <SetupCreateHeader prev={SetupScreen.SetupBackupSigner} disabled />
-      <Title level={3}>
-        {`Deposit ${currentFundingMapObject.requiredEth} ${currentFundingMapObject.chainConfig.nativeToken.symbol} on ${currentFundingMapObject.chainConfig.name}`}
-      </Title>
-      <Paragraph style={{ marginBottom: 0 }}>
-        The app needs these funds to create your account on-chain.
-      </Paragraph>
-
-      <CardSection
-        padding="12px 24px"
-        bordertop="true"
-        borderbottom={isFunded ? 'true' : 'false'}
-      >
-        <Text className={isFunded ? '' : 'loading-ellipses'}>
-          Status: {statusMessage(isFunded)}
-        </Text>
-      </CardSection>
-
-      <SetupEoaFundingWaiting
-        chainName={currentFundingMapObject.chainConfig.name}
-      />
-    </CardFlex>
+    <SetupEoaFundingForChain
+      isFunded={isFunded}
+      minRequiredBalance={currentFundingMapObject.requiredEth}
+      currency={currentFundingMapObject.chainConfig.nativeToken.symbol}
+      chainName={currentFundingMapObject.chainConfig.name}
+    />
   );
 };

@@ -16,6 +16,10 @@ const FeaturesConfigSchema = z.record(
 const FEATURES_CONFIG = FeaturesConfigSchema.parse({
   [AgentType.PredictTrader]: {
     'balance-breakdown': true,
+    'last-transactions': true,
+  },
+  [AgentType.Memeooorr]: {
+    'balance-breakdown': false,
     'last-transactions': false,
   },
 });

@@ -155,6 +155,34 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
   //       },
   //     },
   //   },
+  {
+    agentType: AgentType.Memeooorr,
+    name: '', // TODO: fix value
+    hash: '', // TODO: fix value
+    description: '', // TODO: fix value
+    image: '', // TODO: fix value
+    service_version: '', // TODO: fix value
+    home_chain: MiddlewareChain.BASE,
+    configurations: {
+      [MiddlewareChain.BASE]: {
+        staking_program_id: StakingProgramId.MemeBaseAlpha, // default, may be overwritten
+        nft: '', // TODO: fix value
+        rpc: '', // overwritten  // TODO: fix value
+        agent_id: 43,
+        threshold: 1,
+        use_staking: true,
+        use_mech_marketplace: false,
+        // TODO: pull fund requirements from staking program config
+        cost_of_bond: 50000000000000000000,
+        monthly_gas_estimate: 50000000000000000, // 0.05 - ensure it's correct
+        fund_requirements: {
+          agent: 100000000000000000, // TODO: fix value
+          safe: 5000000000000000000, // TODO: fix value
+        },
+      },
+    },
+    env_variables: {}, // TODO: fix values
+  },
 ];
 
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;

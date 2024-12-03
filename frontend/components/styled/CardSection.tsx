@@ -27,7 +27,7 @@ export const CardSection = styled(Flex)<CardSectionProps>`
     const borderBottomStyle =
       borderbottom === 'true'
         ? `border-bottom: 1px solid ${COLOR.BORDER_GRAY};`
-        : 'border-top: none;';
+        : 'border-bottom: none;';
 
     const verticalStyle = props.vertical ? 'flex-direction: column;' : '';
 
