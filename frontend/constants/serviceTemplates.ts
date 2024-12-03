@@ -157,31 +157,61 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
   //   },
   {
     agentType: AgentType.Memeooorr,
-    name: '', // TODO: fix value
+    name: 'Memeooorr',
     hash: '', // TODO: fix value
-    description: '', // TODO: fix value
-    image: '', // TODO: fix value
-    service_version: '', // TODO: fix value
+    description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
+    image:
+      'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
+    service_version: 'v0.0.1',
     home_chain: MiddlewareChain.BASE,
     configurations: {
       [MiddlewareChain.BASE]: {
         staking_program_id: StakingProgramId.MemeBaseAlpha, // default, may be overwritten
-        nft: '', // TODO: fix value
-        rpc: '', // overwritten  // TODO: fix value
+        nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+        rpc: 'http://localhost:8545', // overwritten
         agent_id: 43,
         threshold: 1,
         use_staking: true,
-        use_mech_marketplace: false,
-        // TODO: pull fund requirements from staking program config
         cost_of_bond: 50000000000000000000,
-        monthly_gas_estimate: 50000000000000000, // 0.05 - ensure it's correct
+        monthly_gas_estimate: 50000000000000000, // 0.05
         fund_requirements: {
-          agent: 100000000000000000, // TODO: fix value
-          safe: 5000000000000000000, // TODO: fix value
+          agent: 1000000000000000, // 0.001
+          safe: 2000000000000000, // 0.002
         },
       },
     },
-    env_variables: {}, // TODO: fix values
+    env_variables: {
+      TWIKIT_USERNAME: {
+        name: 'Twitter username',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+      TWIKIT_EMAIL: {
+        name: 'Twitter email',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+      TWIKIT_PASSWORD: {
+        name: 'Twitter password',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+      GENAI_API_KEY: {
+        name: 'Gemini api key',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+      PERSONA: {
+        name: 'Persona description',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+    },
   },
 ];
 
