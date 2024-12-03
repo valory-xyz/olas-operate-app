@@ -13,6 +13,11 @@ const FeaturesConfigSchema = z.record(
   z.record(FeatureFlagsSchema, z.boolean()),
 );
 
+/**
+ * Feature flags configuration for each agent type
+ * If true  - the feature is enabled
+ * if false - the feature is disabled
+ */
 const FEATURES_CONFIG = FeaturesConfigSchema.parse({
   [AgentType.PredictTrader]: {
     'balance-breakdown': true,
