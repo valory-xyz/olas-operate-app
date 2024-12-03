@@ -4,27 +4,16 @@ export const validateGeminiApiKey = async (apiKey: string) => {
   if (!apiKey) return false;
 
   try {
+    // sample request to fetch the models
     const apiUrl =
       'https://generativelanguage.googleapis.com/v1/models?key=' + apiKey;
-
     const response = await fetch(apiUrl);
-    window.console.log(response);
 
-    if (!response.ok) {
-      throw new Error('API request failed');
-    }
-
-    window.console.log('API key is valid');
-    window.console.log(response.json());
-    return true;
+    return response.ok;
   } catch (error) {
-    window.console.error('Error validating Gemini API key:', error);
+    console.error('Error validating Gemini API key:', error);
     return false;
   }
-
-  // TODO: validate the gemini API and remove the delay
-  // await delayInSeconds(2);
-  // return true;
 };
 
 export const validateTwitterCredentials = async (
