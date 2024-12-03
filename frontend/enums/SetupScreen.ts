@@ -5,6 +5,7 @@ export enum SetupScreen {
   SetupSeedPhrase,
   SetupBackupSigner,
   AgentSelection,
+  SetupYourAgent,
   SetupEoaFunding,
   SetupEoaFundingIncomplete,
   SetupCreateSafe,

@@ -17,6 +17,7 @@ import {
   SetupRestoreViaSeed,
 } from './SetupRestore';
 import { SetupWelcome } from './SetupWelcome';
+import { SetupYourAgent } from './SetupYourAgent';
 
 const UnexpectedError = () => (
   <div style={{ height: 400 }}>Something went wrong!</div>
@@ -51,6 +52,8 @@ export const Setup = () => {
             onNext={() => goto(SetupScreen.SetupEoaFunding)}
           />
         );
+      case SetupScreen.SetupYourAgent:
+        return <SetupYourAgent />;
 
       // Restore account
       case SetupScreen.Restore:
