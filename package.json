@@ -6,6 +6,7 @@
     "@fontsource/inter": "^5.0.17",
     "@tanstack/react-query": "^5.29.0",
     "adm-zip": "^0.5.12",
+    "agent-twitter-client": "^0.0.16",
     "antd": "^5.14.0",
     "axios": "^1.7.7",
     "child_process": "^1.0.2",
