@@ -1,6 +1,7 @@
 import { Card, Flex } from 'antd';
 
 import { StakingProgramId } from '@/enums/StakingProgram';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 // import { StakingProgramId } from '@/enums/StakingProgram';
 // import { useMasterSafe } from '@/hooks/useMasterSafe';
 import {
@@ -22,6 +23,9 @@ import { StakingContractSection } from './sections/StakingContractUpdate';
 import { SwitchAgentSection } from './sections/SwitchAgentSection';
 
 export const Main = () => {
+  const isStakingContractSectionEnabled = useFeatureFlag(
+    'staking-contract-section',
+  );
   // const { backupSafeAddress } = useMasterWalletContext();
   // const { refetch: updateServicesState } = useServices();
   // const {
@@ -73,7 +77,7 @@ export const Main = () => {
         <MainOlasBalance isBorderTopVisible={!hideMainOlasBalanceTopBorder} />
         <RewardsSection />
         <KeepAgentRunningSection />
-        <StakingContractSection />
+        {isStakingContractSectionEnabled && <StakingContractSection />}
         <GasBalanceSection />
         <MainNeedsFunds />
         <AddFundsSection />

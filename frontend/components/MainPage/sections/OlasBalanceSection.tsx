@@ -27,6 +27,7 @@ const Balance = styled.span`
 `;
 
 type MainOlasBalanceProps = { isBorderTopVisible?: boolean };
+
 export const MainOlasBalance = ({
   isBorderTopVisible = true,
 }: MainOlasBalanceProps) => {

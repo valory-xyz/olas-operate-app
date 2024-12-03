@@ -2,6 +2,7 @@ import { Flex, Skeleton, Tag, Typography } from 'antd';
 
 import { NA } from '@/constants/symbols';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useReward } from '@/hooks/useReward';
 import { balanceFormat } from '@/utils/numberFormatters';
 
@@ -46,10 +47,14 @@ const DisplayRewards = () => {
   );
 };
 
-export const RewardsSection = () => (
-  <>
-    <DisplayRewards />
-    <RewardsStreak />
-    <NotifyRewardsModal />
-  </>
-);
+export const RewardsSection = () => {
+  const isRewardsStreakEnabled = useFeatureFlag('rewards-streak');
+
+  return (
+    <>
+      <DisplayRewards />
+      {isRewardsStreakEnabled && <RewardsStreak />}
+      <NotifyRewardsModal />
+    </>
+  );
+};

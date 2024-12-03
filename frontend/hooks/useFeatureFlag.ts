@@ -5,7 +5,12 @@ import { assertRequired } from '@/types/Util';
 
 import { useServices } from './useServices';
 
-const FeatureFlagsSchema = z.enum(['last-transactions', 'balance-breakdown']);
+const FeatureFlagsSchema = z.enum([
+  'last-transactions',
+  'balance-breakdown',
+  'rewards-streak',
+  'staking-contract-section',
+]);
 type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
 
 const FeaturesConfigSchema = z.record(
@@ -22,20 +27,28 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
   [AgentType.PredictTrader]: {
     'balance-breakdown': true,
     'last-transactions': true,
+    'rewards-streak': true,
+    'staking-contract-section': true,
   },
   [AgentType.Memeooorr]: {
     'balance-breakdown': false,
     'last-transactions': false,
+    'rewards-streak': false,
+    'staking-contract-section': false,
   },
 });
+
+type FeatureFlagReturn<T extends FeatureFlags | FeatureFlags[]> =
+  T extends FeatureFlags[] ? boolean[] : boolean;
 
 /**
  * Hook to check if a feature flag is enabled for the selected agent
  * @example const isFeatureEnabled = useFeatureFlag('feature-name');
  */
-export const useFeatureFlag = (featureFlag: FeatureFlags | FeatureFlags[]) => {
+export function useFeatureFlag<T extends FeatureFlags | FeatureFlags[]>(
+  featureFlag: T,
+): FeatureFlagReturn<T> {
   const { selectedAgentType } = useServices();
-
   // Ensure an agent is selected before using the feature flag
   assertRequired(
     selectedAgentType,
@@ -51,9 +64,12 @@ export const useFeatureFlag = (featureFlag: FeatureFlags | FeatureFlags[]) => {
 
   // If the feature flag is an array, return an array of booleans
   if (Array.isArray(featureFlag)) {
-    return featureFlag.map((flag) => selectedAgentFeatures[flag] ?? false);
+    return featureFlag.map(
+      (flag) => selectedAgentFeatures[flag] ?? false,
+    ) as FeatureFlagReturn<T>;
   }
 
   // Return the boolean value for the single feature flag
-  return selectedAgentFeatures[featureFlag] ?? false;
-};
+  return (selectedAgentFeatures[featureFlag as FeatureFlags] ??
+    false) as FeatureFlagReturn<T>;
+}
