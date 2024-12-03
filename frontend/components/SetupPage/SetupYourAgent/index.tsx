@@ -1,62 +1,102 @@
-import { EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons';
-import { Button, ConfigProvider, Form, Input, Typography } from 'antd';
-import type { FormInstance } from 'antd/lib/form';
-import React, { useState } from 'react';
+import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
+import { Button, ConfigProvider, Divider, Flex, Form, Input, Typography } from "antd";
+import type { FormInstance } from "antd/lib/form";
+import React, { useState } from "react";
 
-import { CardFlex } from '@/components/styled/CardFlex';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { CardFlex } from "@/components/styled/CardFlex";
+import { SetupScreen } from "@/enums/SetupScreen";
 
-import { SetupCreateHeader } from '../Create/SetupCreateHeader';
+import { SetupCreateHeader } from "../Create/SetupCreateHeader";
+import { CustomAlert } from "@/components/Alert";
 
 const { Title, Text } = Typography;
 
-const requiredRules = [
-  { required: true, message: 'Please enter your API key' },
-];
 
-export const SetupYourAgentForm = () => {
-  const [form] = Form.useForm<FormInstance>();
+// TODO: consolidate theme into mainTheme
+const LOCAL_THEME = { components: { Input: { fontSize: 16 } } };
+
+type FieldValues = {
+  personaDescription: string;
+  geminiApiKey: string;
+  email: string;
+  username: string;
+  password: string;
+};
+
+const requiredRules = [{ required: true, message: "Field is required" }];
+const validateMessages = {
+  required: "Field is required",
+  types: {
+    email: "Please enter a valid email",
+  },
+};
+
+const XAccountCredentials = () => (
+  <Flex vertical>
+    <Divider style={{ margin: "16px 0" }} />
+    <Title level={5} className="mt-0">
+      X account credentials
+    </Title>
+    <Text type="secondary" className="mb-16">
+      Create a new account for your agent at{" "}
+      <a href="https://x.com" target="_blank" rel="noreferrer">
+        x.com
+      </a>{" "}
+      and enter the login details. This enables your agent to view X and
+      interact with other agents.
+    </Text>
+  </Flex>
+);
+
+
+const InvalidGeminiApiCredentials = () => (
+  <CustomAlert
+    type="error"
+    showIcon
+    message={<Text>API key is invalid</Text>}
+    className="mb-8"
+  />
+);
+
+const InvalidXCredentials = () => (
+  <CustomAlert
+    type="error"
+    showIcon
+    message={<Text>X account credentials are invalid or 2FA is enabled.</Text>}
+    className="mb-16"
+  />
+);
+
+const SetupYourAgentForm = () => {
+  const [form] = Form.useForm<FieldValues>();
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
 
   const onFinish = (values: Record<string, string>) => {
-    console.log('Form values:', values);
+    console.log("Form values:", values);
   };
 
-  const onFinishFailed = (errorInfo: any) => {
-    console.log('Form failed:', errorInfo);
-  };
-
-  const validateMessages = {
-    required: 'This field is required!',
-    types: {
-      email: 'Not a valid email!',
-    },
-  };
+  // const onFinishFailed = (errorInfo: any) => {
+  //   console.log("Form failed:", errorInfo);
+  // };
 
   return (
-    <Form
+    <Form<FieldValues>
       form={form}
       name="setup-your-agent"
       layout="vertical"
       onFinish={onFinish}
-      onFinishFailed={onFinishFailed}
+      // onFinishFailed={onFinishFailed}
       validateMessages={validateMessages}
     >
-      {/* Persona Description */}
       <Form.Item
         name="personaDescription"
         label="Persona Description"
-        rules={[{ required: true, message: 'Please enter a description' }]}
+        rules={requiredRules}
         hasFeedback
       >
-        <Input.TextArea
-          size="small"
-          rows={4}
-          placeholder="Enter persona description"
-        />
+        <Input.TextArea size="small" rows={4} placeholder="e.g. ..." />
       </Form.Item>
 
-      {/* Gemini API Key */}
       <Form.Item
         name="geminiApiKey"
         label="Gemini API Key"
@@ -64,51 +104,50 @@ export const SetupYourAgentForm = () => {
         hasFeedback
       >
         <Input.Password
-          placeholder="Enter API key"
           iconRender={(visible) =>
             visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
           }
         />
       </Form.Item>
+      <InvalidGeminiApiCredentials />
 
-      {/* Email */}
+      {/* X */}
+      <XAccountCredentials />
+      <InvalidXCredentials />
+
       <Form.Item
         name="email"
-        label="Email"
-        rules={[{ required: true, type: 'email' }]}
+        label="X email"
+        rules={[{ required: true, type: "email" }]}
         hasFeedback
       >
-        <Input placeholder="Enter your email" />
+        <Input />
       </Form.Item>
 
-      {/* Username */}
       <Form.Item
         name="username"
-        label="Username"
+        label="X username"
         rules={requiredRules}
         hasFeedback
       >
-        <Input placeholder="Enter your username" />
+        <Input />
       </Form.Item>
 
-      {/* Password */}
       <Form.Item
         name="password"
-        label="Password"
+        label="X password"
         rules={requiredRules}
         hasFeedback
       >
         <Input.Password
-          placeholder="Enter your password"
           iconRender={(visible) =>
             visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
           }
         />
       </Form.Item>
 
-      {/* Submit Button */}
       <Form.Item>
-        <Button type="primary" htmlType="submit">
+        <Button type="primary" htmlType="submit" size="large" block>
           Continue
         </Button>
       </Form.Item>
@@ -116,19 +155,23 @@ export const SetupYourAgentForm = () => {
   );
 };
 
-// TODO: consolidate theme into mainTheme
-const theme = { components: { Input: { fontSize: 16 } } };
-
 export const SetupYourAgent = () => {
   return (
-    <ConfigProvider theme={theme}>
-      <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }}>
+    <ConfigProvider theme={LOCAL_THEME}>
+      <CardFlex gap={10} styles={{ body: { padding: "12px 24px" } }}>
         <SetupCreateHeader prev={SetupScreen.AgentSelection} />
         <Title level={3}>Set up your agent</Title>
-        <Text type="secondary">
+        <Text>
           Provide your agent with a persona, access to an LLM and X account.
         </Text>
+        <Divider style={{ margin: "12px 0" }} />
+
         <SetupYourAgentForm />
+
+        <Text type="secondary" style={{ display: "block", marginTop: "-16px" }}>
+          You won’t be able to update your agent’s configuration after this
+          step.
+        </Text>
       </CardFlex>
     </ConfigProvider>
   );
