@@ -215,7 +215,7 @@ export const SetupYourAgent = () => {
         <SetupCreateHeader prev={SetupScreen.AgentSelection} />
         <Title level={3}>Set up your agent</Title>
         <Text>
-          Provide your agent with a persona, access to an LLM and X account.
+          Provide your agent with a persona, access to an LLM and an X account.
         </Text>
         <Divider style={{ margin: '8px 0' }} />
 
