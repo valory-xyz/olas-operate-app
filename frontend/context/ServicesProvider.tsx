@@ -74,7 +74,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   // selected agent type
   const [selectedAgentType, setAgentType] = useState<AgentType>(
-    AgentType.Memeooorr,
+    AgentType.PredictTrader,
   );
 
   // user selected service identifier
