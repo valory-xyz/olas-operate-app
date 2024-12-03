@@ -6,10 +6,9 @@ import {
   Flex,
   Form,
   Input,
-  message,
   Typography,
 } from 'antd';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { CustomAlert } from '@/components/Alert';
@@ -18,7 +17,11 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 
 import { SetupCreateHeader } from '../Create/SetupCreateHeader';
-import { validateGeminiApiKey, validateTwitterCredentials } from './validation';
+import {
+  onAgentSetupComplete,
+  validateGeminiApiKey,
+  validateTwitterCredentials,
+} from './validation';
 
 const { Title, Text } = Typography;
 
@@ -32,15 +35,12 @@ type FieldValues = {
   xUsername: string;
   xPassword: string;
 };
-
 type ValidationStatus = 'valid' | 'invalid' | 'unknown';
 
 const requiredRules = [{ required: true, message: 'Field is required' }];
 const validateMessages = {
   required: 'Field is required',
-  types: {
-    email: 'Please enter a valid email',
-  },
+  types: { email: 'Enter a valid email' },
 };
 
 const XAccountCredentials = () => (
@@ -78,6 +78,7 @@ const InvalidXCredentials = () => (
   />
 );
 
+// Agent setup form
 const SetupYourAgentForm = () => {
   const { goto } = useSetup();
 
@@ -94,35 +95,31 @@ const SetupYourAgentForm = () => {
     try {
       setIsSubmitting(true);
 
-      const isGeminiValid = await validateGeminiApiKey(values.geminiApiKey);
-      setGeminiApiKeyValidationStatus(isGeminiValid ? 'valid' : 'invalid');
-      if (!isGeminiValid) return;
+      // validate the gemini API
+      const isGeminiApiValid = await validateGeminiApiKey(values.geminiApiKey);
+      setGeminiApiKeyValidationStatus(isGeminiApiValid ? 'valid' : 'invalid');
+      if (!isGeminiApiValid) return;
 
-      const isTwitterValid = await validateTwitterCredentials(
+      // validate the twitter credentials
+      const isTwitterCredentialsValid = await validateTwitterCredentials(
         values.xEmail,
         values.xUsername,
         values.xPassword,
       );
       setTwitterCredentialsValidationStatus(
-        isTwitterValid ? 'valid' : 'invalid',
+        isTwitterCredentialsValid ? 'valid' : 'invalid',
       );
-      if (!isTwitterValid) return;
+      if (!isTwitterCredentialsValid) return;
 
-      // TODO: send to backend maybe?
-      message.success('Agent setup complete');
+      await onAgentSetupComplete();
 
+      // move to next page
       goto(SetupScreen.SetupEoaFunding);
     } catch (error) {
       console.error(error);
     } finally {
       setIsSubmitting(false);
     }
-
-    // TODO: validate the gemini API
-
-    // TODO: validate the twitter credentials
-
-    // TODO: move to next page
   };
 
   // Clean up
@@ -131,6 +128,11 @@ const SetupYourAgentForm = () => {
     setGeminiApiKeyValidationStatus('unknown');
     setTwitterCredentialsValidationStatus('unknown');
   });
+
+  const commonFieldProps = useMemo(
+    () => ({ rules: requiredRules, hasFeedback: true }),
+    [],
+  );
 
   return (
     <Form<FieldValues>
@@ -144,8 +146,7 @@ const SetupYourAgentForm = () => {
       <Form.Item
         name="personaDescription"
         label="Persona Description"
-        rules={requiredRules}
-        hasFeedback
+        {...commonFieldProps}
       >
         <Input.TextArea size="small" rows={4} placeholder="e.g. ..." />
       </Form.Item>
@@ -153,8 +154,7 @@ const SetupYourAgentForm = () => {
       <Form.Item
         name="geminiApiKey"
         label="Gemini API Key"
-        rules={requiredRules}
-        hasFeedback
+        {...commonFieldProps}
       >
         <Input.Password
           iconRender={(visible) =>
@@ -181,21 +181,11 @@ const SetupYourAgentForm = () => {
         <Input />
       </Form.Item>
 
-      <Form.Item
-        name="xUsername"
-        label="X username"
-        rules={requiredRules}
-        hasFeedback
-      >
+      <Form.Item name="xUsername" label="X username" {...commonFieldProps}>
         <Input />
       </Form.Item>
 
-      <Form.Item
-        name="xPassword"
-        label="X password"
-        rules={requiredRules}
-        hasFeedback
-      >
+      <Form.Item name="xPassword" label="X password" {...commonFieldProps}>
         <Input.Password
           iconRender={(visible) =>
             visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
