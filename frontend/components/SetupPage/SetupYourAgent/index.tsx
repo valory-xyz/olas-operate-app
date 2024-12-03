@@ -6,6 +6,7 @@ import {
   Flex,
   Form,
   Input,
+  message,
   Typography,
 } from 'antd';
 import React, { useMemo, useState } from 'react';
@@ -84,6 +85,7 @@ const SetupYourAgentForm = () => {
 
   const [form] = Form.useForm<FieldValues>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitButtonText, setSubmitButtonText] = useState('Continue');
   const [geminiApiKeyValidationStatus, setGeminiApiKeyValidationStatus] =
     useState<ValidationStatus>('unknown');
   const [
@@ -96,11 +98,13 @@ const SetupYourAgentForm = () => {
       setIsSubmitting(true);
 
       // validate the gemini API
+      setSubmitButtonText('Validating API key...');
       const isGeminiApiValid = await validateGeminiApiKey(values.geminiApiKey);
       setGeminiApiKeyValidationStatus(isGeminiApiValid ? 'valid' : 'invalid');
       if (!isGeminiApiValid) return;
 
       // validate the twitter credentials
+      setSubmitButtonText('Validating Twitter credentials...');
       const isTwitterCredentialsValid = await validateTwitterCredentials(
         values.xEmail,
         values.xUsername,
@@ -111,14 +115,18 @@ const SetupYourAgentForm = () => {
       );
       if (!isTwitterCredentialsValid) return;
 
+      // wait for agent setup to complete
+      setSubmitButtonText('Setting up agent...');
       await onAgentSetupComplete();
 
       // move to next page
       goto(SetupScreen.SetupEoaFunding);
     } catch (error) {
+      message.error('Something went wrong. Please try again.');
       console.error(error);
     } finally {
       setIsSubmitting(false);
+      setSubmitButtonText('Continue');
     }
   };
 
@@ -127,6 +135,7 @@ const SetupYourAgentForm = () => {
     setIsSubmitting(false);
     setGeminiApiKeyValidationStatus('unknown');
     setTwitterCredentialsValidationStatus('unknown');
+    setSubmitButtonText('Continue');
   });
 
   const commonFieldProps = useMemo(
@@ -201,7 +210,7 @@ const SetupYourAgentForm = () => {
           block
           loading={isSubmitting}
         >
-          Continue
+          {submitButtonText}
         </Button>
       </Form.Item>
     </Form>

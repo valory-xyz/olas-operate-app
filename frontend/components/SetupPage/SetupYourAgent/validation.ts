@@ -1,12 +1,19 @@
 import { delayInSeconds } from '@/utils/delay';
 
-export const validateGeminiApiKey = async (value: string) => {
-  if (!value) return false;
+export const validateGeminiApiKey = async (apiKey: string) => {
+  if (!apiKey) return false;
 
-  // TODO: validate the gemini API and remove the delay
-  await delayInSeconds(2);
+  try {
+    // sample request to fetch the models
+    const apiUrl =
+      'https://generativelanguage.googleapis.com/v1/models?key=' + apiKey;
+    const response = await fetch(apiUrl);
 
-  return true;
+    return response.ok;
+  } catch (error) {
+    console.error('Error validating Gemini API key:', error);
+    return false;
+  }
 };
 
 export const validateTwitterCredentials = async (
