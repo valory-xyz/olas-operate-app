@@ -1,5 +1,6 @@
 import { ServiceTemplate } from '@/client';
-import { delayInSeconds } from '@/utils/delay';
+import { StakingProgramId } from '@/enums/StakingProgram';
+import { ServicesService } from '@/service/Services';
 
 /**
  * Validate the Google Gemini API key
@@ -57,9 +58,14 @@ export const validateTwitterCredentials = async (
   }
 };
 
-export const onAgentSetupComplete = async (serviceConfig: ServiceTemplate) => {
-  window.console.log('Agent setup complete:', serviceConfig);
-
-  // TODO: send to backend and remove the delay
-  await delayInSeconds(2);
+export const onDummyServiceCreation = async (
+  stakingProgramId: StakingProgramId,
+  serviceTemplateConfig: ServiceTemplate,
+) => {
+  await ServicesService.createService({
+    serviceTemplate: serviceTemplateConfig,
+    deploy: true,
+    useMechMarketplace: true,
+    stakingProgramId,
+  });
 };

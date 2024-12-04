@@ -20,10 +20,11 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { SetupCreateHeader } from '../Create/SetupCreateHeader';
 import {
-  onAgentSetupComplete,
+  onDummyServiceCreation,
   validateGeminiApiKey,
   validateTwitterCredentials,
 } from './validation';
@@ -86,7 +87,9 @@ const InvalidXCredentials = () => (
 type SetupYourAgentFormProps = { serviceTemplate: ServiceTemplate };
 // Agent setup form
 const SetupYourAgentForm = ({ serviceTemplate }: SetupYourAgentFormProps) => {
+  const electronApi = useElectronApi();
   const { goto } = useSetup();
+  const { defaultStakingProgramId } = useStakingProgram();
 
   const [form] = Form.useForm<FieldValues>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,10 +101,10 @@ const SetupYourAgentForm = ({ serviceTemplate }: SetupYourAgentFormProps) => {
     setTwitterCredentialsValidationStatus,
   ] = useState<ValidationStatus>('unknown');
 
-  const electronApi = useElectronApi();
-
   const onFinish = useCallback(
     async (values: Record<keyof FieldValues, string>) => {
+      if (!defaultStakingProgramId) return;
+
       try {
         setIsSubmitting(true);
 
@@ -159,7 +162,12 @@ const SetupYourAgentForm = ({ serviceTemplate }: SetupYourAgentFormProps) => {
           },
         };
 
-        await onAgentSetupComplete(overriddenServiceConfig);
+        await onDummyServiceCreation(
+          defaultStakingProgramId,
+          overriddenServiceConfig,
+        );
+
+        message.success('Agent setup complete');
 
         // move to next page
         goto(SetupScreen.SetupEoaFunding);
@@ -171,7 +179,7 @@ const SetupYourAgentForm = ({ serviceTemplate }: SetupYourAgentFormProps) => {
         setSubmitButtonText('Continue');
       }
     },
-    [electronApi, goto, serviceTemplate],
+    [electronApi, defaultStakingProgramId, serviceTemplate, goto],
   );
 
   // Clean up
@@ -187,6 +195,8 @@ const SetupYourAgentForm = ({ serviceTemplate }: SetupYourAgentFormProps) => {
     [],
   );
 
+  const canSubmitForm = isSubmitting || !defaultStakingProgramId;
+
   return (
     <Form<FieldValues>
       form={form}
@@ -194,7 +204,7 @@ const SetupYourAgentForm = ({ serviceTemplate }: SetupYourAgentFormProps) => {
       layout="vertical"
       onFinish={onFinish}
       validateMessages={validateMessages}
-      disabled={isSubmitting}
+      disabled={canSubmitForm}
     >
       <Form.Item
         name="personaDescription"
@@ -253,6 +263,7 @@ const SetupYourAgentForm = ({ serviceTemplate }: SetupYourAgentFormProps) => {
           size="large"
           block
           loading={isSubmitting}
+          disabled={canSubmitForm}
         >
           {submitButtonText}
         </Button>
