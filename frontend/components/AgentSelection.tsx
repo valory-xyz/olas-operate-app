@@ -34,7 +34,7 @@ const EachAgent = ({
   const handleSelectAgent = useCallback(() => {
     updateAgentType(agentType);
     onSelect();
-  }, [agentType, updateAgentType, onSelect]);
+  }, [agentType, onSelect, updateAgentType]);
 
   return (
     <Card

@@ -177,16 +177,16 @@ export const useService = (serviceConfigId?: string) => {
     : false;
 
   return {
-    service,
-    serviceNftTokenId,
-    addresses,
-    flatAddresses,
     isLoaded,
-    deploymentStatus,
-    serviceSafes,
-    serviceEoa,
     isServiceTransitioning,
     isServiceRunning,
     isServiceBuilding,
+    serviceNftTokenId,
+    addresses,
+    flatAddresses,
+    deploymentStatus,
+    serviceSafes,
+    serviceEoa,
+    service,
   };
 };

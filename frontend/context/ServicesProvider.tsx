@@ -26,6 +26,7 @@ import {
   WalletOwnerType,
   WalletType,
 } from '@/enums/Wallet';
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { UsePause, usePause } from '@/hooks/usePause';
 import { ServicesService } from '@/service/Services';
 import { AgentConfig } from '@/types/Agent';
@@ -70,6 +71,7 @@ export const ServicesContext = createContext<ServicesContextType>({
  */
 export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
+  const { store } = useElectronApi();
   const { paused, setPaused, togglePaused } = usePause();
 
   // selected agent type
@@ -137,9 +139,13 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     setSelectedServiceConfigId(serviceConfigId);
   }, []);
 
-  const updateAgentType = useCallback((agentType: AgentType) => {
-    setAgentType(agentType);
-  }, []);
+  const updateAgentType = useCallback(
+    (agentType: AgentType) => {
+      store?.set?.('lastSelectedAgentType', agentType);
+      setAgentType(agentType);
+    },
+    [store],
+  );
 
   const selectedAgentConfig = useMemo(() => {
     const config: Maybe<AgentConfig> = AGENT_CONFIG[selectedAgentType];
