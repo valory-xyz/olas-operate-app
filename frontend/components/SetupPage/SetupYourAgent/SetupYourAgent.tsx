@@ -131,8 +131,9 @@ const SetupYourAgentForm = ({ serviceTemplate }: SetupYourAgentFormProps) => {
         // wait for agent setup to complete
         setSubmitButtonText('Setting up agent...');
 
-        const overriddenServiceConfig = {
+        const overriddenServiceConfig: ServiceTemplate = {
           ...serviceTemplate,
+          description: `Memeooorr @${values.xUsername}`,
           env_variables: {
             ...serviceTemplate.env_variables,
             TWIKIT_USERNAME: {
