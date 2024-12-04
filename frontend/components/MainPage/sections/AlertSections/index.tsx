@@ -4,6 +4,7 @@ import { AddBackupWalletAlert } from './AddBackupWalletAlert';
 import { AvoidSuspensionAlert } from './AvoidSuspensionAlert';
 import { LowTradingBalanceAlert } from './LowTradingBalanceAlert';
 import { NewStakingProgramAlert } from './NewStakingProgramAlert';
+import { NoAvailableSlotsOnTheContract } from './NoAvailableSlotsOnTheContract';
 import { UpdateAvailableAlert } from './UpdateAvailableAlert';
 
 export const AlertSections = () => {
@@ -14,6 +15,7 @@ export const AlertSections = () => {
       <NewStakingProgramAlert />
       <AvoidSuspensionAlert />
       <LowTradingBalanceAlert />
+      <NoAvailableSlotsOnTheContract />
     </CardSection>
   );
 };

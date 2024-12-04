@@ -1,56 +1,33 @@
 import { ethers } from 'ethers';
 import { Provider as MulticallProvider } from 'ethers-multicall';
 
-import { CHAINS } from './chains';
+import { EvmChainId } from '@/enums/Chain';
 
-export const gnosisProvider = new ethers.providers.JsonRpcProvider(
-  process.env.RPC,
-  {
-    chainId: CHAINS.GNOSIS.chainId,
-    name: CHAINS.GNOSIS.name,
+import { CHAIN_CONFIG } from '../config/chains';
+
+type Providers = {
+  [evmChainId in EvmChainId]: {
+    provider: ethers.providers.JsonRpcProvider;
+    multicallProvider: MulticallProvider;
+  };
+};
+
+export const PROVIDERS: Providers = Object.entries(CHAIN_CONFIG).reduce(
+  (acc, [, { rpc, name, evmChainId }]) => {
+    const provider = new ethers.providers.StaticJsonRpcProvider(rpc, {
+      name,
+      chainId: evmChainId,
+    });
+
+    const multicallProvider = new MulticallProvider(provider, evmChainId);
+
+    return {
+      ...acc,
+      [evmChainId]: {
+        provider,
+        multicallProvider,
+      },
+    };
   },
-);
-
-export const gnosisMulticallProvider = new MulticallProvider(
-  gnosisProvider,
-  CHAINS.GNOSIS.chainId,
-);
-
-export const optimismProvider = new ethers.providers.JsonRpcProvider(
-  process.env.OPTIMISM_RPC,
-  {
-    chainId: CHAINS.OPTIMISM.chainId,
-    name: CHAINS.OPTIMISM.name,
-  },
-);
-
-export const optimismMulticallProvider = new MulticallProvider(
-  optimismProvider,
-  CHAINS.OPTIMISM.chainId,
-);
-
-export const ethereumProvider = new ethers.providers.JsonRpcProvider(
-  process.env.ETHEREUM_RPC,
-  {
-    chainId: CHAINS.ETHEREUM.chainId,
-    name: CHAINS.ETHEREUM.name,
-  },
-);
-
-export const ethereumMulticallProvider = new MulticallProvider(
-  ethereumProvider,
-  CHAINS.ETHEREUM.chainId,
-);
-
-export const baseProvider = new ethers.providers.JsonRpcProvider(
-  process.env.BASE_RPC,
-  {
-    chainId: CHAINS.BASE.chainId,
-    name: CHAINS.BASE.name,
-  },
-);
-
-export const baseMulticallProvider = new MulticallProvider(
-  baseProvider,
-  CHAINS.BASE.chainId,
+  {} as Providers,
 );

@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { BalanceProvider } from '@/context/BalanceProvider';
 import { ElectronApiProvider } from '@/context/ElectronApiProvider';
-import { MasterSafeProvider } from '@/context/MasterSafeProvider';
+import { MasterWalletProvider } from '@/context/MasterWalletProvider';
 import { ModalProvider } from '@/context/ModalProvider';
 import { OnlineStatusProvider } from '@/context/OnlineStatusProvider';
 import { PageStateProvider } from '@/context/PageStateProvider';
@@ -16,12 +16,15 @@ import { RewardProvider } from '@/context/RewardProvider';
 import { ServicesProvider } from '@/context/ServicesProvider';
 import { SettingsProvider } from '@/context/SettingsProvider';
 import { SetupProvider } from '@/context/SetupProvider';
-import { StakingContractInfoProvider } from '@/context/StakingContractInfoProvider';
+import { StakingContractDetailsProvider } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
 import { SystemNotificationTriggers } from '@/context/SystemNotificationTriggers';
-import { WalletProvider } from '@/context/WalletProvider';
 import { mainTheme } from '@/theme';
+import { setupMulticallAddresses } from '@/utils/setupMulticall';
+
+// Setup multicall addresses
+setupMulticallAddresses();
 
 const queryClient = new QueryClient();
 
@@ -35,12 +38,12 @@ export default function App({ Component, pageProps }: AppProps) {
     <OnlineStatusProvider>
       <ElectronApiProvider>
         <StoreProvider>
-          <PageStateProvider>
-            <ServicesProvider>
-              <WalletProvider>
-                <MasterSafeProvider>
+          <QueryClientProvider client={queryClient}>
+            <PageStateProvider>
+              <ServicesProvider>
+                <MasterWalletProvider>
                   <StakingProgramProvider>
-                    <StakingContractInfoProvider>
+                    <StakingContractDetailsProvider>
                       <RewardProvider>
                         <BalanceProvider>
                           <SetupProvider>
@@ -48,13 +51,11 @@ export default function App({ Component, pageProps }: AppProps) {
                               <ConfigProvider theme={mainTheme}>
                                 <ModalProvider>
                                   {isMounted ? (
-                                    <QueryClientProvider client={queryClient}>
-                                      <SystemNotificationTriggers>
-                                        <Layout>
-                                          <Component {...pageProps} />
-                                        </Layout>
-                                      </SystemNotificationTriggers>
-                                    </QueryClientProvider>
+                                    <SystemNotificationTriggers>
+                                      <Layout>
+                                        <Component {...pageProps} />
+                                      </Layout>
+                                    </SystemNotificationTriggers>
                                   ) : null}
                                 </ModalProvider>
                               </ConfigProvider>
@@ -62,12 +63,12 @@ export default function App({ Component, pageProps }: AppProps) {
                           </SetupProvider>
                         </BalanceProvider>
                       </RewardProvider>
-                    </StakingContractInfoProvider>
+                    </StakingContractDetailsProvider>
                   </StakingProgramProvider>
-                </MasterSafeProvider>
-              </WalletProvider>
-            </ServicesProvider>
-          </PageStateProvider>
+                </MasterWalletProvider>
+              </ServicesProvider>
+            </PageStateProvider>
+          </QueryClientProvider>
         </StoreProvider>
       </ElectronApiProvider>
     </OnlineStatusProvider>

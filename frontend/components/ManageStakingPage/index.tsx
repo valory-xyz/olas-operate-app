@@ -1,11 +1,12 @@
 import { CloseOutlined } from '@ant-design/icons';
 import { Button, Card } from 'antd';
+import { useMemo } from 'react';
 
-import { STAKING_PROGRAM_META } from '@/constants/stakingProgramMeta';
-import { DEFAULT_STAKING_PROGRAM_ID } from '@/context/StakingProgramProvider';
-import { Pages } from '@/enums/PageState';
+import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { Pages } from '@/enums/Pages';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { CardTitle } from '../Card/CardTitle';
@@ -15,37 +16,63 @@ import { WhatAreStakingContractsSection } from './WhatAreStakingContracts';
 
 export const ManageStakingPage = () => {
   const { goto } = usePageState();
-  const { activeStakingProgramId } = useStakingProgram();
+  const { selectedAgentConfig } = useServices();
+  const {
+    activeStakingProgramId,
+    isActiveStakingProgramLoaded,
+    defaultStakingProgramId,
+  } = useStakingProgram();
 
-  const orderedStakingProgramIds: StakingProgramId[] = Object.values(
-    StakingProgramId,
-  ).reduce((acc: StakingProgramId[], stakingProgramId: StakingProgramId) => {
-    // put the active staking program at the top
-    if (stakingProgramId === activeStakingProgramId) {
-      return [stakingProgramId, ...acc];
-    }
+  const currentStakingProgramId = isActiveStakingProgramLoaded
+    ? activeStakingProgramId || defaultStakingProgramId
+    : null;
 
-    // put default at the top if no activeStakingProgram
-    if (
-      activeStakingProgramId === null &&
-      stakingProgramId === DEFAULT_STAKING_PROGRAM_ID
-    )
-      return [stakingProgramId, ...acc];
+  const stakingProgramIdsAvailable = Object.keys(
+    STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId],
+  ).map((stakingProgramIdKey) => stakingProgramIdKey as StakingProgramId);
 
-    // if the program is deprecated, ignore it
-    if (STAKING_PROGRAM_META[stakingProgramId]?.deprecated) {
-      return acc;
-    }
+  const orderedStakingProgramIds = useMemo(
+    () =>
+      stakingProgramIdsAvailable.reduce(
+        (acc: StakingProgramId[], stakingProgramId: StakingProgramId) => {
+          if (!isActiveStakingProgramLoaded) return acc;
 
-    // otherwise, append to the end
-    return [...acc, stakingProgramId];
-  }, []);
+          // put the active staking program at the top
+          if (stakingProgramId === currentStakingProgramId) {
+            return [stakingProgramId, ...acc];
+          }
+
+          // if the program is deprecated, ignore it
+          if (
+            STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
+              stakingProgramId
+            ].deprecated
+          ) {
+            return acc;
+          }
+
+          // otherwise, append to the end
+          return [...acc, stakingProgramId];
+        },
+        [],
+      ),
+    [
+      isActiveStakingProgramLoaded,
+      selectedAgentConfig.evmHomeChainId,
+      currentStakingProgramId,
+      stakingProgramIdsAvailable,
+    ],
+  );
 
   const otherStakingProgramIds = orderedStakingProgramIds.filter(
     (stakingProgramId) => {
-      const info = STAKING_PROGRAM_META[stakingProgramId];
+      if (!isActiveStakingProgramLoaded) return false;
+
+      const info =
+        STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][stakingProgramId];
+
       if (!info) return false;
-      if (activeStakingProgramId === stakingProgramId) return false;
+      if (currentStakingProgramId === stakingProgramId) return false;
       if (info.deprecated) return false;
       return true;
     },
@@ -71,11 +98,12 @@ export const ManageStakingPage = () => {
     >
       <WhatAreStakingContractsSection />
 
-      {activeStakingProgramId && (
-        <StakingContractSection
-          stakingProgramId={orderedStakingProgramIds[0]}
-        />
-      )}
+      {isActiveStakingProgramLoaded &&
+        (activeStakingProgramId || defaultStakingProgramId) && (
+          <StakingContractSection
+            stakingProgramId={orderedStakingProgramIds[0]}
+          />
+        )}
 
       <CardSection
         style={{
@@ -88,11 +116,8 @@ export const ManageStakingPage = () => {
         {`Browse ${otherStakingProgramIds.length} staking contract${otherStakingProgramIds.length > 1 ? 's' : ''}.`}
       </CardSection>
 
-      {otherStakingProgramIds.map((stakingProgramId) => (
-        <StakingContractSection
-          key={stakingProgramId}
-          stakingProgramId={stakingProgramId}
-        />
+      {otherStakingProgramIds.map((otherId) => (
+        <StakingContractSection key={otherId} stakingProgramId={otherId} />
       ))}
     </Card>
   );

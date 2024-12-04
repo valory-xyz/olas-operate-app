@@ -1,3 +1,4 @@
+require('dotenv').config();
 const {
   app,
   BrowserWindow,
@@ -13,6 +14,7 @@ const os = require('os');
 const next = require('next/dist/server/next');
 const http = require('http');
 const AdmZip = require('adm-zip');
+const { validateEnv } = require('./utils/env-validation');
 
 const { setupDarwin, setupUbuntu, setupWindows, Env } = require('./install');
 
@@ -24,6 +26,12 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
+
+// Validates environment variables required for Pearl
+// kills the app/process if required environment variables are unavailable
+// mostly RPC URLs and NODE_ENV
+// TODO: only reintroduce once refactor completed
+// validateEnv();
 
 // Attempt to acquire the single instance lock
 const singleInstanceLock = app.requestSingleInstanceLock();
@@ -70,11 +78,20 @@ let splashWindow = null;
 /** @type {Electron.Tray | null} */
 let tray = null;
 
-let operateDaemon, operateDaemonPid, nextAppProcess, nextAppProcessPid;
+// Used in production and development
+let operateDaemon;
+let operateDaemonPid;
 
+// Child processes for running next app are only used in development
+// required for hot reloads and other dev features
+let devNextApp;
+let devNextAppPid;
+
+// Next.js app instance for production
+// requires http server wrap to work; assign port, receive requests, deliver responses
 // @ts-ignore - Workaround for the missing type definitions
 const nextApp = next({
-  dev: false, // this instance is only used for production
+  dev: false, // DO NOT SET TO TRUE
   dir: path.join(__dirname),
 });
 
@@ -85,28 +102,73 @@ function showNotification(title, body) {
 }
 
 async function beforeQuit() {
-  if (operateDaemonPid) {
+  // destroy all ui components for immediate feedback
+  tray?.destroy();
+  splashWindow?.destroy();
+  mainWindow?.destroy();
+
+  if (operateDaemon || operateDaemonPid) {
+    // gracefully stop running services
     try {
       await fetch(
         `http://localhost:${appConfig.ports.prod.operate}/stop_all_services`,
       );
-      await killProcesses(operateDaemonPid);
     } catch (e) {
-      logger.electron(e);
+      logger.electron("Couldn't stop_all_services gracefully:");
+      logger.electron(JSON.stringify(e, null, 2));
     }
-  }
 
-  if (nextAppProcessPid) {
+    // clean-up via pid first*
+    // may have dangling subprocesses
     try {
-      await killProcesses(nextAppProcessPid);
+      operateDaemonPid && (await killProcesses(operateDaemonPid));
     } catch (e) {
-      logger.electron(e);
+      logger.electron("Couldn't kill daemon processes via pid:");
+      logger.electron(JSON.stringify(e, null, 2));
+    }
+
+    // attempt to kill the daemon process via kill
+    // if the pid-based cleanup fails
+    try {
+      const dead = operateDaemon?.kill();
+      if (!dead) {
+        logger.electron('Daemon process still alive after kill');
+      }
+    } catch (e) {
+      logger.electron("Couldn't kill operate daemon process via kill:");
+      logger.electron(JSON.stringify(e, null, 2));
     }
   }
 
-  tray?.destroy();
-  splashWindow?.destroy();
-  mainWindow?.destroy();
+  if (devNextApp || devNextAppPid) {
+    // attempt graceful kill first with next app
+    try {
+      const dead = devNextApp?.kill();
+      if (!dead) {
+        logger.electron('Dev NextApp process still alive after kill');
+      }
+    } catch (e) {
+      logger.electron("Couldn't kill devNextApp process via kill:");
+      logger.electron(JSON.stringify(e, null, 2));
+    }
+
+    // attempt to kill the dev next app process via pid
+    try {
+      devNextAppPid && (await killProcesses(devNextAppPid));
+    } catch (e) {
+      logger.electron("Couldn't kill devNextApp processes via pid:");
+      logger.electron(JSON.stringify(e, null, 2));
+    }
+  }
+
+  if (nextApp) {
+    // attempt graceful close of prod next app
+    await nextApp.close().catch((e) => {
+      logger.electron("Couldn't close NextApp gracefully:");
+      logger.electron(JSON.stringify(e, null, 2));
+    });
+    // electron will kill next service on exit
+  }
 }
 
 const APP_WIDTH = 460;
@@ -121,7 +183,7 @@ const createSplashWindow = () => {
     height: APP_WIDTH,
     resizable: false,
     show: true,
-    title: 'Pearl (Optimus)',
+    title: 'Pearl',
     frame: false,
     webPreferences: {
       nodeIntegration: true,
@@ -142,7 +204,7 @@ const HEIGHT = 700;
 const createMainWindow = async () => {
   const width = isDev ? 840 : APP_WIDTH;
   mainWindow = new BrowserWindow({
-    title: 'Pearl (Optimus)',
+    title: 'Pearl',
     resizable: false,
     draggable: true,
     frame: false,
@@ -340,7 +402,7 @@ async function launchNextApp() {
 async function launchNextAppDev() {
   await new Promise(function (resolve, _reject) {
     process.env.NEXT_PUBLIC_BACKEND_PORT = appConfig.ports.dev.operate; // must set next env var to connect to backend
-    nextAppProcess = spawn(
+    devNextApp = spawn(
       'yarn',
       ['dev:frontend', '--port', appConfig.ports.dev.next],
       {
@@ -352,8 +414,8 @@ async function launchNextAppDev() {
         },
       },
     );
-    nextAppProcessPid = nextAppProcess.pid;
-    nextAppProcess.stdout.on('data', (data) => {
+    devNextAppPid = devNextApp.pid;
+    devNextApp.stdout.on('data', (data) => {
       logger.next(data.toString().trim());
       resolve();
     });
@@ -397,7 +459,7 @@ ipcMain.on('check', async function (event, _argument) {
     if (isDev) {
       event.sender.send(
         'response',
-        'Starting Pearl (Optimus) Daemon In Development Mode',
+        'Starting Pearl Daemon In Development Mode',
       );
 
       const daemonDevPortAvailable = await isPortAvailable(

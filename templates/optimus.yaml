@@ -3,9 +3,9 @@ hash: bafybeibiiuhqronhgkxjo7x5xve24lkbqom5rqcjxg7vrl6jwavfyypmhu
 description: Optimus
 image: https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75
 service_version: v0.2.9
-home_chain_id: 10
+home_chain: "optimistic"
 configurations:
-  1:
+  ethereum:
     staking_program_id: optimus_alpha
     nft: bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq
     agent_id: 14
@@ -17,7 +17,7 @@ configurations:
     fund_requirements:
       agent: 1000 
       safe: 1000
-  10:
+  optimistic:
     staking_program_id: optimus_alpha
     nft: bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq
     agent_id: 14
@@ -29,7 +29,7 @@ configurations:
     fund_requirements:
       agent: 1000
       safe: 1000
-  8453:
+  base:
     staking_program_id: optimus_alpha
     nft: bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq
     agent_id: 14

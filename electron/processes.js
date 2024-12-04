@@ -16,15 +16,16 @@ function killProcesses(pid) {
 
       // Array of PIDs to kill, starting with the children
       const pidsToKill = children.map((p) => p.PID);
-      logger.info("Pids to kill " + JSON.stringify(pidsToKill));
+      logger.electron('Pids to kill ' + JSON.stringify(pidsToKill));
 
       const killCommand = isWindows ? windowsKillCommand : unixKillCommand;
 
       let errors = [];
-      for (const ppid of pidsToKill) {
-        logger.info("kill: " + ppid);
-        exec(`${killCommand} ${ppid}`, (err) => {
-          logger.error("Pids to kill error:" + err);
+      for (const pid of pidsToKill) {
+        logger.electron('killing: ' + pid);
+        exec(`${killCommand} ${pid}`, (err) => {
+          err && logger.electron(`error killing pid ${pid}`);
+          err && logger.electron(JSON.stringify(err, null, 2));
           if (
             err?.message?.includes(isWindows ? 'not found' : 'No such process')
           ) {
@@ -36,9 +37,7 @@ function killProcesses(pid) {
 
       if (errors.length === 0) {
         reject(errors);
-        
-
-      } else  resolve();
+      } else resolve();
     });
   });
 }

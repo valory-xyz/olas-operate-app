@@ -3,22 +3,31 @@ import { useMemo } from 'react';
 
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
+import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 
 export const StakingContractDetails = ({
   stakingProgramId,
 }: {
   stakingProgramId: StakingProgramId;
 }) => {
-  const { stakingContractInfoRecord } = useStakingContractInfo();
+  const {
+    allStakingContractDetailsRecord,
+    isAllStakingContractDetailsRecordLoaded,
+  } = useStakingContractContext();
 
-  const balances = useMemo(() => {
-    if (!stakingContractInfoRecord) return null;
-    if (!stakingProgramId) return null;
-    if (!stakingContractInfoRecord?.[stakingProgramId]) return null;
+  const list = useMemo(() => {
+    if (!isAllStakingContractDetailsRecordLoaded) return;
+    if (!allStakingContractDetailsRecord) return;
+    if (!stakingProgramId) return;
+    if (!allStakingContractDetailsRecord?.[stakingProgramId]) return;
 
-    const details = stakingContractInfoRecord[stakingProgramId];
+    const details = allStakingContractDetailsRecord[stakingProgramId];
+
     return [
+      {
+        left: 'Available slots',
+        right: `${details.maxNumServices! - details.serviceIds!.length} / ${details.maxNumServices}`,
+      },
       {
         left: 'Rewards per epoch',
         right: `~ ${details.rewardsPerWorkPeriod?.toFixed(2)} OLAS`,
@@ -26,19 +35,24 @@ export const StakingContractDetails = ({
       {
         left: 'Estimated Annual Percentage Yield (APY)',
         right: `${details.apy}%`,
+        leftClassName: 'max-width-200',
       },
       {
         left: 'Required OLAS for staking',
         right: `${details.olasStakeRequired} OLAS`,
       },
     ];
-  }, [stakingContractInfoRecord, stakingProgramId]);
+  }, [
+    isAllStakingContractDetailsRecordLoaded,
+    allStakingContractDetailsRecord,
+    stakingProgramId,
+  ]);
 
-  if (!stakingContractInfoRecord) {
+  if (!isAllStakingContractDetailsRecordLoaded) {
     return <Skeleton active />;
   }
 
-  if (!balances) {
+  if (!allStakingContractDetailsRecord) {
     return (
       <Alert
         message="No staking information available."
@@ -49,10 +63,6 @@ export const StakingContractDetails = ({
   }
 
   return (
-    <InfoBreakdownList
-      list={balances}
-      parentStyle={{ gap: 12 }}
-      color="primary"
-    />
+    <InfoBreakdownList list={list!} parentStyle={{ gap: 12 }} color="primary" />
   );
 };

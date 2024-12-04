@@ -1,7 +1,6 @@
 import { Button, Checkbox, Form, Input, message, Typography } from 'antd';
 import { useState } from 'react';
 
-import { MiddlewareChain } from '@/client';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { AccountService } from '@/service/Account';
@@ -17,7 +16,6 @@ export const SetupPassword = () => {
   const [form] = Form.useForm<{ password: string; terms: boolean }>();
 
   const [isLoading, setIsLoading] = useState(false);
-
   const isTermsAccepted = Form.useWatch('terms', form);
 
   const handleCreateEoa = async ({ password }: { password: string }) => {
@@ -26,7 +24,7 @@ export const SetupPassword = () => {
     setIsLoading(true);
     AccountService.createAccount(password)
       .then(() => AccountService.loginAccount(password))
-      .then(() => WalletService.createEoa(MiddlewareChain.OPTIMISM))
+      .then(() => WalletService.createEoa())
       .then(({ mnemonic }: { mnemonic: string[] }) => {
         setMnemonic(mnemonic);
         goto(SetupScreen.SetupSeedPhrase);

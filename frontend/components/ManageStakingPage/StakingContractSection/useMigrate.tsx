@@ -1,20 +1,30 @@
-import { isNil } from 'lodash';
+import { isEmpty, isNil } from 'lodash';
 import { useMemo } from 'react';
 
-import { DeploymentStatus } from '@/client';
+import { MiddlewareDeploymentStatus } from '@/client';
+import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useBalance } from '@/hooks/useBalance';
+import { TokenSymbol } from '@/enums/Token';
+import {
+  useBalanceContext,
+  useMasterBalances,
+} from '@/hooks/useBalanceContext';
+import { useNeedsFunds } from '@/hooks/useNeedsFunds';
+import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
-import { useServiceTemplates } from '@/hooks/useServiceTemplates';
-import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
+import {
+  useActiveStakingContractInfo,
+  useStakingContractContext,
+  useStakingContractDetails,
+} from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
-import { getMinimumStakedAmountRequired } from '@/utils/service';
 
 export enum CantMigrateReason {
   ContractAlreadySelected = 'This staking program is already selected',
   LoadingBalance = 'Loading balance...',
   LoadingStakingContractInfo = 'Loading staking contract information...',
   InsufficientOlasToMigrate = 'Insufficient OLAS to switch',
+  InsufficientGasToMigrate = 'Insufficient XDAI to switch', // TODO: make chain agnostic
   MigrationNotSupported = 'Switching to this program is not currently supported',
   NoAvailableRewards = 'This program has no rewards available',
   NoAvailableStakingSlots = 'The program has no more available slots',
@@ -33,68 +43,105 @@ type MigrateValidation =
       reason: CantMigrateReason;
     };
 
-export const useMigrate = (stakingProgramId: StakingProgramId) => {
-  const { serviceStatus } = useServices();
-  const { serviceTemplate } = useServiceTemplates();
+export const useMigrate = (migrateToStakingProgramId: StakingProgramId) => {
   const {
-    isBalanceLoaded,
-    masterSafeBalance: safeBalance,
-    totalOlasStakedBalance,
-  } = useBalance();
-  const { activeStakingProgramId, activeStakingProgramMeta } =
-    useStakingProgram();
+    isFetched: isServicesLoaded,
+    selectedAgentConfig,
+    selectedService,
+    selectedAgentType,
+  } = useServices();
+  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
+  const serviceConfigId = selectedService?.service_config_id;
+  const { deploymentStatus: serviceStatus } = useService(serviceConfigId);
 
   const {
-    activeStakingContractInfo,
-    isServiceStaked,
-    isServiceStakedForMinimumDuration,
-    isStakingContractInfoLoaded,
-    stakingContractInfoRecord,
-  } = useStakingContractInfo();
+    isLoaded: isBalanceLoaded,
+    totalStakedOlasBalance,
+    isLowBalance,
+  } = useBalanceContext();
+  const { masterSafeBalances } = useMasterBalances();
+  const { needsInitialFunding, hasEnoughEthForInitialFunding } = useNeedsFunds(
+    migrateToStakingProgramId,
+  );
 
-  const stakingContractInfo = stakingContractInfoRecord?.[stakingProgramId];
+  const { activeStakingProgramId } = useStakingProgram();
+  const {
+    allStakingContractDetailsRecord,
+    isAllStakingContractDetailsRecordLoaded,
+  } = useStakingContractContext();
+  const { isServiceStaked, isServiceStakedForMinimumDuration } =
+    useActiveStakingContractInfo();
+  const { stakingContractInfo, hasEnoughServiceSlots } =
+    useStakingContractDetails(migrateToStakingProgramId);
 
-  const { hasInitialLoaded: isServicesLoaded } = useServices();
+  const safeOlasBalance = useMemo(() => {
+    if (!isBalanceLoaded) return 0;
+    if (isNil(masterSafeBalances) || isEmpty(masterSafeBalances)) return 0;
+    return masterSafeBalances.reduce(
+      (acc, { evmChainId: chainId, symbol, balance }) => {
+        if (chainId === homeChainId && symbol === TokenSymbol.OLAS)
+          return acc + balance;
+        return acc;
+      },
+      0,
+    );
+  }, [homeChainId, isBalanceLoaded, masterSafeBalances]);
 
   const minimumOlasRequiredToMigrate = useMemo(
-    () => getMinimumStakedAmountRequired(serviceTemplate, stakingProgramId),
-    [serviceTemplate, stakingProgramId],
+    () =>
+      STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
+        migrateToStakingProgramId
+      ]?.stakingRequirements[TokenSymbol.OLAS],
+    [selectedAgentConfig.evmHomeChainId, migrateToStakingProgramId],
   );
 
   const hasEnoughOlasToMigrate = useMemo(() => {
     if (!isBalanceLoaded) return false;
-    if (isNil(safeBalance?.OLAS)) return false;
-    if (isNil(totalOlasStakedBalance)) return false;
+    if (isNil(safeOlasBalance)) return false;
+    if (isNil(totalStakedOlasBalance)) return false;
     if (isNil(minimumOlasRequiredToMigrate)) return false;
 
-    const balanceForMigration = safeBalance.OLAS + totalOlasStakedBalance;
-
+    const balanceForMigration = safeOlasBalance + totalStakedOlasBalance;
     return balanceForMigration >= minimumOlasRequiredToMigrate;
   }, [
     isBalanceLoaded,
     minimumOlasRequiredToMigrate,
-    safeBalance,
-    totalOlasStakedBalance,
+    safeOlasBalance,
+    totalStakedOlasBalance,
   ]);
 
   const hasEnoughOlasForFirstRun = useMemo(() => {
     if (!isBalanceLoaded) return false;
-    if (isNil(safeBalance?.OLAS)) return false;
+    if (isNil(safeOlasBalance)) return false;
     if (isNil(minimumOlasRequiredToMigrate)) return false;
 
-    return safeBalance.OLAS >= minimumOlasRequiredToMigrate;
-  }, [isBalanceLoaded, minimumOlasRequiredToMigrate, safeBalance]);
+    return safeOlasBalance >= minimumOlasRequiredToMigrate;
+  }, [isBalanceLoaded, minimumOlasRequiredToMigrate, safeOlasBalance]);
 
   const migrateValidation = useMemo<MigrateValidation>(() => {
     if (!isServicesLoaded) {
       return { canMigrate: false, reason: CantMigrateReason.LoadingServices };
     }
 
+    // Services must be not be running or in a transitional state
+    if (
+      [
+        MiddlewareDeploymentStatus.DEPLOYED,
+        MiddlewareDeploymentStatus.DEPLOYING,
+        MiddlewareDeploymentStatus.STOPPING,
+      ].some((status) => status === serviceStatus)
+    ) {
+      return {
+        canMigrate: false,
+        reason: CantMigrateReason.PearlCurrentlyRunning,
+      };
+    }
+
     if (!isBalanceLoaded) {
       return { canMigrate: false, reason: CantMigrateReason.LoadingBalance };
     }
 
-    if (isServicesLoaded && !isStakingContractInfoLoaded) {
+    if (!isAllStakingContractDetailsRecordLoaded) {
       return {
         canMigrate: false,
         reason: CantMigrateReason.LoadingStakingContractInfo,
@@ -109,10 +156,20 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
     }
 
     // general requirements
-    if (activeStakingProgramId === stakingProgramId) {
+    if (activeStakingProgramId === migrateToStakingProgramId) {
       return {
         canMigrate: false,
         reason: CantMigrateReason.ContractAlreadySelected,
+      };
+    }
+
+    if (
+      (stakingContractInfo.serviceIds ?? [])?.length >=
+      (stakingContractInfo.maxNumServices ?? 0)
+    ) {
+      return {
+        canMigrate: false,
+        reason: CantMigrateReason.NoAvailableStakingSlots,
       };
     }
 
@@ -140,34 +197,23 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
       };
     }
 
-    // Services must be not be running or in a transitional state
-    if (
-      [
-        DeploymentStatus.DEPLOYED,
-        DeploymentStatus.DEPLOYING,
-        DeploymentStatus.STOPPING,
-      ].some((status) => status === serviceStatus)
-    ) {
-      return {
-        canMigrate: false,
-        reason: CantMigrateReason.PearlCurrentlyRunning,
-      };
-    }
-
     if (activeStakingProgramId === null && !isServiceStaked) {
       return { canMigrate: true };
     }
 
-    // user must be staked from hereon
+    // user is staked from hereon
 
-    if (!activeStakingProgramMeta?.canMigrateTo.includes(stakingProgramId)) {
+    const { deprecated: isDeprecated, agentsSupported } =
+      STAKING_PROGRAMS[homeChainId][migrateToStakingProgramId];
+
+    if (isDeprecated || !agentsSupported.includes(selectedAgentType)) {
       return {
         canMigrate: false,
         reason: CantMigrateReason.MigrationNotSupported,
       };
     }
 
-    if (activeStakingContractInfo && !isServiceStakedForMinimumDuration) {
+    if (!isServiceStakedForMinimumDuration) {
       return {
         canMigrate: false,
         reason: CantMigrateReason.NotStakedForMinimumDuration,
@@ -178,35 +224,73 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
   }, [
     isServicesLoaded,
     isBalanceLoaded,
-    isStakingContractInfoLoaded,
+    isAllStakingContractDetailsRecordLoaded,
     stakingContractInfo,
     activeStakingProgramId,
-    stakingProgramId,
+    migrateToStakingProgramId,
     hasEnoughOlasToMigrate,
     isServiceStaked,
-    activeStakingProgramMeta?.canMigrateTo,
-    activeStakingContractInfo,
+    homeChainId,
+    selectedAgentType,
     isServiceStakedForMinimumDuration,
     serviceStatus,
   ]);
 
   const firstDeployValidation = useMemo<MigrateValidation>(() => {
+    /**
+     * @todo fix temporary check for xDai balance on first deploy (same as initial funding requirement)
+     */
+
     if (!isServicesLoaded) {
       return { canMigrate: false, reason: CantMigrateReason.LoadingServices };
+    }
+
+    // Services must be not be running or in a transitional state
+    if (
+      [
+        MiddlewareDeploymentStatus.DEPLOYED,
+        MiddlewareDeploymentStatus.DEPLOYING,
+        MiddlewareDeploymentStatus.STOPPING,
+      ].some((status) => status === serviceStatus)
+    ) {
+      return {
+        canMigrate: false,
+        reason: CantMigrateReason.PearlCurrentlyRunning,
+      };
     }
 
     if (!isBalanceLoaded) {
       return { canMigrate: false, reason: CantMigrateReason.LoadingBalance };
     }
 
-    if (!hasEnoughOlasForFirstRun) {
+    // staking contract requirements
+
+    if (!isAllStakingContractDetailsRecordLoaded) {
       return {
         canMigrate: false,
-        reason: CantMigrateReason.InsufficientOlasToMigrate,
+        reason: CantMigrateReason.LoadingStakingContractInfo,
       };
     }
 
-    const stakingContractInfo = stakingContractInfoRecord?.[stakingProgramId];
+    const stakingContractInfo =
+      allStakingContractDetailsRecord?.[migrateToStakingProgramId];
+
+    if (!stakingContractInfo) {
+      return {
+        canMigrate: false,
+        reason: CantMigrateReason.CannotFindStakingContractInfo,
+      };
+    }
+
+    if (
+      (stakingContractInfo.serviceIds ?? [])?.length >=
+      (stakingContractInfo.maxNumServices ?? 0)
+    ) {
+      return {
+        canMigrate: false,
+        reason: CantMigrateReason.NoAvailableStakingSlots,
+      };
+    }
 
     if ((stakingContractInfo?.availableRewards ?? 0) <= 0) {
       return {
@@ -222,17 +306,48 @@ export const useMigrate = (stakingProgramId: StakingProgramId) => {
       };
     }
 
+    if (!hasEnoughOlasForFirstRun) {
+      return {
+        canMigrate: false,
+        reason: CantMigrateReason.InsufficientOlasToMigrate,
+      };
+    }
+
+    if (!hasEnoughEthForInitialFunding) {
+      return {
+        canMigrate: false,
+        reason: CantMigrateReason.InsufficientGasToMigrate,
+      };
+    }
+
     return { canMigrate: true };
   }, [
     isServicesLoaded,
     isBalanceLoaded,
+    hasEnoughEthForInitialFunding,
+    isAllStakingContractDetailsRecordLoaded,
+    allStakingContractDetailsRecord,
+    migrateToStakingProgramId,
     hasEnoughOlasForFirstRun,
-    stakingContractInfoRecord,
-    stakingProgramId,
+    serviceStatus,
+  ]);
+
+  const canUpdateStakingContract = useMemo(() => {
+    if (!isBalanceLoaded) return false;
+    if (isLowBalance) return false;
+    if (needsInitialFunding) return false;
+    if (!hasEnoughServiceSlots) return false;
+    return true;
+  }, [
+    isBalanceLoaded,
+    isLowBalance,
+    needsInitialFunding,
+    hasEnoughServiceSlots,
   ]);
 
   return {
     migrateValidation,
     firstDeployValidation,
+    canUpdateStakingContract,
   };
 };

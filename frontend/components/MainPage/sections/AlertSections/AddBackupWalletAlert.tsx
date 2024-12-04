@@ -1,8 +1,11 @@
 import { Flex, Typography } from 'antd';
+import { isEmpty, isNil } from 'lodash';
 
-import { Pages } from '@/enums/PageState';
-import { useMasterSafe } from '@/hooks/useMasterSafe';
+import { Pages } from '@/enums/Pages';
+import { useMultisig } from '@/hooks/useMultisig';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 
 import { CustomAlert } from '../../../Alert';
 
@@ -10,9 +13,26 @@ const { Text } = Typography;
 
 export const AddBackupWalletAlert = () => {
   const { goto } = usePageState();
-  const { backupSafeAddress } = useMasterSafe();
+  const { selectedAgentConfig } = useServices();
+  const { masterSafes, masterEoa } = useMasterWalletContext();
+  const { ownersIsFetched: masterSafeOwnersIsFetched, backupOwners } =
+    useMultisig(
+      masterSafes?.find((masterSafe) => {
+        return masterSafe.evmChainId === selectedAgentConfig.evmHomeChainId;
+      }),
+    );
 
-  if (backupSafeAddress) return null;
+  if (!masterSafeOwnersIsFetched) return null;
+
+  if (isNil(backupOwners)) return null;
+  if (
+    isEmpty(
+      backupOwners.filter(
+        (owner) => !isNil(masterEoa) && owner === masterEoa.address,
+      ),
+    )
+  )
+    return null;
 
   return (
     <CustomAlert

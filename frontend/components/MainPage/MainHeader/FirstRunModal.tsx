@@ -3,19 +3,16 @@ import Image from 'next/image';
 import { FC } from 'react';
 
 import { MODAL_WIDTH } from '@/constants/width';
-import { useServiceTemplates } from '@/hooks/useServiceTemplates';
-import { getMinimumStakedAmountRequired } from '@/utils/service';
+import { TokenSymbol } from '@/enums/Token';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 type FirstRunModalProps = { open: boolean; onClose: () => void };
 
 export const FirstRunModal: FC<FirstRunModalProps> = ({ open, onClose }) => {
-  const { getServiceTemplates } = useServiceTemplates();
+  const { activeStakingProgramMeta } = useStakingProgram();
 
-  if (!open) return null;
-
-  const minimumStakedAmountRequired = getMinimumStakedAmountRequired(
-    getServiceTemplates()[0],
-  );
+  const minimumStakedAmountRequired =
+    activeStakingProgramMeta?.stakingRequirements?.[TokenSymbol.OLAS];
 
   return (
     <Modal

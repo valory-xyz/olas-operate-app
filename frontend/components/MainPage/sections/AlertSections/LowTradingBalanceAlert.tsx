@@ -2,13 +2,13 @@ import { Flex, Typography } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
 import { LOW_MASTER_SAFE_BALANCE } from '@/constants/thresholds';
-import { useBalance } from '@/hooks/useBalance';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useStore } from '@/hooks/useStore';
 
 const { Text, Title } = Typography;
 
 export const LowTradingBalanceAlert = () => {
-  const { isBalanceLoaded, isLowBalance } = useBalance();
+  const { isLoaded: isBalanceLoaded, isLowBalance } = useBalanceContext();
   const { storeState } = useStore();
 
   if (!isBalanceLoaded) return null;

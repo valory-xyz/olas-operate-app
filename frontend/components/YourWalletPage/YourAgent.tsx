@@ -1,15 +1,22 @@
 import { Card, Flex, Skeleton, Tooltip, Typography } from 'antd';
+import { isArray, isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import styled from 'styled-components';
 
-import { MiddlewareChain } from '@/client';
-import { SERVICE_REGISTRY_L2_CONTRACT_ADDRESS } from '@/constants/contractAddresses';
+import { OLAS_CONTRACTS } from '@/config/olasContracts';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { useAddress } from '@/hooks/useAddress';
-import { useBalance } from '@/hooks/useBalance';
+import { EvmChainId } from '@/enums/Chain';
+import { ContractType } from '@/enums/Contract';
+import { TokenSymbol } from '@/enums/Token';
+import { AgentSafe, Safe } from '@/enums/Wallet';
+import {
+  useBalanceContext,
+  useServiceBalances,
+} from '@/hooks/useBalanceContext';
 import { useReward } from '@/hooks/useReward';
-import { useServices } from '@/hooks/useServices';
+import { useService } from '@/hooks/useService';
+import { Address } from '@/types/Address';
 import { generateName } from '@/utils/agentName';
 import { balanceFormat } from '@/utils/numberFormatters';
 import { truncateAddress } from '@/utils/truncate';
@@ -17,13 +24,7 @@ import { truncateAddress } from '@/utils/truncate';
 import { AddressLink } from '../AddressLink';
 import { InfoBreakdownList } from '../InfoBreakdown';
 import { Container, infoBreakdownParentStyle } from './styles';
-import {
-  OlasTitle,
-  OwnershipNftTitle,
-  ServiceIdTitle,
-  SignerTitle,
-  XdaiTitle,
-} from './Titles';
+import { OlasTitle, OwnershipNftTitle, ServiceNftIdTitle } from './Titles';
 
 const { Text, Paragraph } = Typography;
 
@@ -36,8 +37,8 @@ const NftCard = styled(Card)`
   }
 `;
 
-const SafeAddress = () => {
-  const { multisigAddress } = useAddress();
+const SafeAddress = ({ serviceSafe }: { serviceSafe: Safe }) => {
+  const multisigAddress = serviceSafe.address;
 
   return (
     <Flex vertical gap={8}>
@@ -56,12 +57,10 @@ const SafeAddress = () => {
   );
 };
 
-const AgentTitle = () => {
-  const { multisigAddress: agentSafeAddress } = useAddress();
-
+const AgentTitle = ({ serviceSafe }: { serviceSafe: AgentSafe }) => {
   const agentName = useMemo(
-    () => (agentSafeAddress ? generateName(agentSafeAddress) : '--'),
-    [agentSafeAddress],
+    () => (serviceSafe ? generateName(serviceSafe.address) : '--'),
+    [serviceSafe],
   );
 
   return (
@@ -83,22 +82,21 @@ const AgentTitle = () => {
               arrow={false}
               title={
                 <Paragraph className="text-sm m-0">
-                  This is your agent’s unique name
+                  This is your agent&apos;s unique name
                 </Paragraph>
               }
               placement="top"
             >
               <Text strong>{agentName}</Text>
             </Tooltip>
-            {/* 
-            ONLY APPLIES TO PREDICT AGENT
+            {/* TODO: address multi-agent at later point */}
             <a
-              href={`https://predict.olas.network/agents/${agentSafeAddress}`}
+              href={`https://predict.olas.network/agents/${serviceSafe.address}`}
               target="_blank"
               className="text-sm"
             >
               Agent profile {UNICODE_SYMBOLS.EXTERNAL_LINK}
-            </a> */}
+            </a>
           </Flex>
         </Flex>
       </Flex>
@@ -106,10 +104,13 @@ const AgentTitle = () => {
   );
 };
 
-const ServiceAndNftDetails = () => {
-  const { serviceId } = useServices();
-  const serviceAddress =
-    SERVICE_REGISTRY_L2_CONTRACT_ADDRESS[`${MiddlewareChain.OPTIMISM}`];
+const ServiceAndNftDetails = ({
+  serviceNftTokenId,
+}: {
+  serviceNftTokenId: number;
+}) => {
+  const serviceRegistryL2ContractAddress =
+    OLAS_CONTRACTS[EvmChainId.Gnosis][ContractType.ServiceRegistryL2].address;
 
   return (
     <NftCard>
@@ -126,20 +127,21 @@ const ServiceAndNftDetails = () => {
           <Flex vertical>
             <OwnershipNftTitle />
             <a
-              href={`https://gnosis.blockscout.com/token/${serviceAddress}/instance/${serviceId}`}
+              href={`https://gnosis.blockscout.com/token/${serviceRegistryL2ContractAddress}/instance/${serviceNftTokenId}`}
               target="_blank"
             >
-              {truncateAddress(serviceAddress)} {UNICODE_SYMBOLS.EXTERNAL_LINK}
+              {truncateAddress(serviceRegistryL2ContractAddress as Address)}{' '}
+              {UNICODE_SYMBOLS.EXTERNAL_LINK}
             </a>
           </Flex>
 
           <Flex vertical>
-            <ServiceIdTitle />
+            <ServiceNftIdTitle />
             <a
-              href={`https://registry.olas.network/gnosis/services/${serviceId}`}
+              href={`https://registry.olas.network/gnosis/services/${serviceNftTokenId}`}
               target="_blank"
             >
-              {serviceId} {UNICODE_SYMBOLS.EXTERNAL_LINK}
+              {serviceNftTokenId} {UNICODE_SYMBOLS.EXTERNAL_LINK}
             </a>
           </Flex>
         </Flex>
@@ -148,26 +150,42 @@ const ServiceAndNftDetails = () => {
   );
 };
 
-export const YourAgentWallet = () => {
-  const { isBalanceLoaded, agentSafeBalance, agentEoaBalance } = useBalance();
+export const YourAgentWallet = ({
+  serviceConfigId,
+}: {
+  serviceConfigId: string;
+}) => {
+  const { isLoaded } = useBalanceContext();
+  const { serviceSafes, serviceNftTokenId, serviceEoa } =
+    useService(serviceConfigId);
+  const { serviceSafeBalances, serviceEoaBalances } =
+    useServiceBalances(serviceConfigId);
+
   const {
     availableRewardsForEpochEth,
     isEligibleForRewards,
     accruedServiceStakingRewards,
   } = useReward();
-  const { instanceAddress: agentEoaAddress } = useAddress();
 
   const reward = useMemo(() => {
-    if (!isBalanceLoaded) return <Skeleton.Input size="small" active />;
+    if (!isLoaded) return <Skeleton.Input size="small" active />;
     if (!isEligibleForRewards) return 'Not yet earned';
     return `~${balanceFormat(availableRewardsForEpochEth, 2)} OLAS`;
-  }, [isBalanceLoaded, isEligibleForRewards, availableRewardsForEpochEth]);
+  }, [isLoaded, isEligibleForRewards, availableRewardsForEpochEth]);
 
-  const olasBalances = useMemo(() => {
-    return [
+  const serviceSafeOlasBalances = useMemo(
+    () =>
+      serviceSafeBalances?.filter(
+        (walletBalance) => walletBalance.symbol === TokenSymbol.OLAS,
+      ),
+    [serviceSafeBalances],
+  );
+
+  const serviceSafeRewards = useMemo(
+    () => [
       {
         title: 'Claimed rewards',
-        value: `${balanceFormat(agentSafeBalance?.OLAS, 2)} OLAS`,
+        value: `${balanceFormat(serviceSafeOlasBalances?.[0]?.balance ?? 0, 2)} OLAS`,
       },
       {
         title: 'Unclaimed rewards',
@@ -177,58 +195,78 @@ export const YourAgentWallet = () => {
         title: 'Current epoch rewards',
         value: reward,
       },
-    ];
-  }, [agentSafeBalance?.OLAS, accruedServiceStakingRewards, reward]);
+    ],
+    [accruedServiceStakingRewards, reward, serviceSafeOlasBalances],
+  );
+
+  const serviceSafeNativeBalances = useMemo(
+    () => serviceSafeBalances?.filter((balance) => balance.isNative),
+    [serviceSafeBalances],
+  );
+
+  const serviceEoaNativeBalances = useMemo(
+    () => serviceEoaBalances?.filter((balance) => balance.isNative),
+    [serviceEoaBalances],
+  );
+
+  const serviceSafe = useMemo(() => {
+    if (isNil(serviceSafes) || isEmpty(serviceSafes)) return null;
+    return serviceSafes[0];
+  }, [serviceSafes]);
+
+  if (isNil(serviceSafe)) return null;
 
   return (
-    <Card title={<AgentTitle />}>
+    <Card title={<AgentTitle serviceSafe={serviceSafe} />}>
       <Container>
-        <SafeAddress />
+        <SafeAddress serviceSafe={serviceSafe} />
 
-        <Flex vertical gap={8}>
-          <OlasTitle />
-          <InfoBreakdownList
-            list={olasBalances.map((item) => ({
-              left: item.title,
-              leftClassName: 'text-light text-sm',
-              right: item.value,
-            }))}
-            parentStyle={infoBreakdownParentStyle}
-          />
-        </Flex>
-
-        <Flex vertical gap={8}>
-          <InfoBreakdownList
-            list={[
-              {
-                left: <XdaiTitle />,
+        {!isEmpty(serviceSafeRewards) && (
+          <Flex vertical gap={8}>
+            <OlasTitle />
+            <InfoBreakdownList
+              list={serviceSafeRewards.map((item) => ({
+                left: item.title,
                 leftClassName: 'text-light text-sm',
-                right: `${balanceFormat(agentSafeBalance?.ETH, 2)} XDAI`,
-              },
-            ]}
-            parentStyle={infoBreakdownParentStyle}
-          />
-        </Flex>
+                right: item.value,
+              }))}
+              parentStyle={infoBreakdownParentStyle}
+            />
+          </Flex>
+        )}
 
-        <Flex vertical gap={8}>
-          <InfoBreakdownList
-            list={[
-              {
-                left: (
-                  <SignerTitle
-                    signerText="Agent's wallet signer address:"
-                    signerAddress={agentEoaAddress}
-                  />
-                ),
-                leftClassName: 'text-light text-sm',
-                right: `${balanceFormat(agentEoaBalance?.ETH, 2)} XDAI`,
-              },
-            ]}
-            parentStyle={infoBreakdownParentStyle}
-          />
-        </Flex>
+        {(!isNil(serviceSafeNativeBalances) ||
+          !isNil(serviceEoaNativeBalances)) && (
+          <Flex vertical gap={8}>
+            {isArray(serviceSafeNativeBalances) && (
+              <InfoBreakdownList
+                list={serviceSafeNativeBalances.map((balance) => ({
+                  left: <strong>{balance.symbol}</strong>,
+                  leftClassName: 'text-sm',
+                  right: `${balanceFormat(balance.balance, 2)} ${balance.symbol}`,
+                }))}
+                parentStyle={infoBreakdownParentStyle}
+              />
+            )}
+            {!isNil(serviceEoa) && (
+              <InfoBreakdownList
+                list={[
+                  {
+                    left: 'Signer',
+                    leftClassName: 'text-sm',
+                    right: <AddressLink address={serviceEoa.address} />,
+                    rightClassName: 'font-normal text-sm',
+                  },
+                ]}
+                parentStyle={infoBreakdownParentStyle}
+              />
+            )}
+          </Flex>
+        )}
 
-        <ServiceAndNftDetails />
+        {!isNil(serviceNftTokenId) && (
+          <ServiceAndNftDetails serviceNftTokenId={serviceNftTokenId} />
+        )}
       </Container>
     </Card>
   );

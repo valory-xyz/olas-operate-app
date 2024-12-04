@@ -1,26 +1,31 @@
-import { MiddlewareChain } from '@/client';
+import { EvmChainId } from '@/enums/Chain';
 
-/**
- * @warning must be updated to be dynamic
- */
-export const MIN_ETH_BALANCE_THRESHOLDS = {
-  // [Chain.GNOSIS]: {
-  //   safeCreation: 1.5,
-  //   safeAddSigner: 0.1,
-  // },
-  [MiddlewareChain.OPTIMISM]: {
+// TODO: confirm eth requirements, very flaky, eth requirements will fluctuate
+export const MIN_ETH_BALANCE_THRESHOLDS: Record<
+  EvmChainId,
+  {
+    safeCreation: number;
+    safeAddSigner: number;
+  }
+> = {
+  [EvmChainId.Gnosis]: {
+    safeCreation: 1.5,
+    safeAddSigner: 0.1,
+  },
+  [EvmChainId.Optimism]: {
     safeCreation: 0.005,
     safeAddSigner: 0.005,
   },
-  [MiddlewareChain.ETHEREUM]: {
+  [EvmChainId.Ethereum]: {
     safeCreation: 0.02,
     safeAddSigner: 0.02,
   },
-  [MiddlewareChain.BASE]: {
+  [EvmChainId.Base]: {
     safeCreation: 0.005,
     safeAddSigner: 0.005,
   },
 };
 
+// TODO: update to support multi-chain, very poor implementation
 export const LOW_AGENT_SAFE_BALANCE = 0.5;
 export const LOW_MASTER_SAFE_BALANCE = 2;

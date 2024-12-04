@@ -3,25 +3,37 @@ import { isNil } from 'lodash';
 import { useState } from 'react';
 import { useInterval } from 'usehooks-ts';
 
-import { StakingContractInfo } from '@/types/Autonolas';
+import { POPOVER_WIDTH_LARGE } from '@/constants/width';
+import {
+  ServiceStakingDetails,
+  StakingContractDetails,
+} from '@/types/Autonolas';
 
 const { Text } = Typography;
 
 export const CountdownUntilMigration = ({
-  activeStakingContractInfo,
+  currentStakingContractInfo,
 }: {
-  activeStakingContractInfo: Partial<StakingContractInfo>;
+  currentStakingContractInfo:
+    | Partial<StakingContractDetails>
+    | Partial<StakingContractDetails & ServiceStakingDetails>;
 }) => {
   const [secondsUntilReady, setSecondsUntilMigration] = useState<number>();
 
   useInterval(() => {
-    if (!activeStakingContractInfo) return;
+    if (!currentStakingContractInfo) return;
+
+    if (
+      !('serviceStakingStartTime' in currentStakingContractInfo) ||
+      !('minimumStakingDuration' in currentStakingContractInfo)
+    ) {
+      return;
+    }
 
     const { serviceStakingStartTime, minimumStakingDuration } =
-      activeStakingContractInfo;
+      currentStakingContractInfo;
 
-    if (isNil(minimumStakingDuration)) return;
-    if (isNil(serviceStakingStartTime)) return;
+    if (isNil(minimumStakingDuration) || isNil(serviceStakingStartTime)) return;
 
     const now = Math.round(Date.now() / 1000);
     const timeSinceLastStaked = now - serviceStakingStartTime;
@@ -41,7 +53,7 @@ export const CountdownUntilMigration = ({
     : countdownDisplayFormat(secondsUntilReady);
 
   return (
-    <Flex vertical gap={1}>
+    <Flex vertical gap={1} style={{ maxWidth: POPOVER_WIDTH_LARGE }}>
       <Text strong>Can&apos;t switch because you unstaked too recently.</Text>
       <Text>This may be because your agent was suspended.</Text>
       <Text>Keep running your agent and you&apos;ll be able to switch in</Text>

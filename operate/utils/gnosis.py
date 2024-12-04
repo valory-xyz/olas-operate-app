@@ -40,6 +40,7 @@ from operate.constants import (
 NULL_ADDRESS: str = "0x" + "0" * 40
 MAX_UINT256 = 2**256 - 1
 ZERO_ETH = 0
+SENTINEL_OWNERS = "0x0000000000000000000000000000000000000001"
 
 
 class SafeOperation(Enum):
@@ -157,7 +158,7 @@ def _get_nonce() -> int:
 def create_safe(
     ledger_api: LedgerApi,
     crypto: Crypto,
-    owner: t.Optional[str] = None,
+    backup_owner: t.Optional[str] = None,
     salt_nonce: t.Optional[int] = None,
 ) -> t.Tuple[str, int]:
     """Create gnosis safe."""
@@ -169,7 +170,9 @@ def create_safe(
         tx = registry_contracts.gnosis_safe.get_deploy_transaction(
             ledger_api=ledger_api,
             deployer_address=crypto.address,
-            owners=[crypto.address] if owner is None else [crypto.address, owner],
+            owners=[crypto.address]
+            if backup_owner is None
+            else [crypto.address, backup_owner],
             threshold=1,
             salt_nonce=salt_nonce,
         )
@@ -294,14 +297,81 @@ def add_owner(
     )
 
 
-def swap_owner(  # pylint: disable=unused-argument
+def get_prev_owner(ledger_api: LedgerApi, safe: str, owner: str) -> str:
+    """Retrieve the previous owner in the owners list of the Safe."""
+
+    owners = get_owners(ledger_api=ledger_api, safe=safe)
+
+    try:
+        index = owners.index(owner) - 1
+    except ValueError as e:
+        raise ValueError(
+            f"Owner {owner} not found in the owners' list of the Safe."
+        ) from e
+
+    if index < 0:
+        return SENTINEL_OWNERS
+    return owners[index]
+
+
+def swap_owner(
     ledger_api: LedgerApi,
     crypto: Crypto,
     safe: str,
     old_owner: str,
     new_owner: str,
 ) -> None:
-    """Swap owner on a safe."""
+    """Swap owner of a safe."""
+
+    prev_owner = get_prev_owner(ledger_api=ledger_api, safe=safe, owner=old_owner)
+    instance = registry_contracts.gnosis_safe.get_instance(
+        ledger_api=ledger_api,
+        contract_address=safe,
+    )
+    txd = instance.encodeABI(
+        fn_name="swapOwner",
+        args=[
+            prev_owner,
+            old_owner,
+            new_owner,
+        ],
+    )
+    send_safe_txs(
+        txd=bytes.fromhex(txd[2:]),
+        safe=safe,
+        ledger_api=ledger_api,
+        crypto=crypto,
+    )
+
+
+def remove_owner(
+    ledger_api: LedgerApi,
+    crypto: Crypto,
+    safe: str,
+    owner: str,
+    threshold: int,
+) -> None:
+    """Remove owner from a safe."""
+
+    prev_owner = get_prev_owner(ledger_api=ledger_api, safe=safe, owner=owner)
+    instance = registry_contracts.gnosis_safe.get_instance(
+        ledger_api=ledger_api,
+        contract_address=safe,
+    )
+    txd = instance.encodeABI(
+        fn_name="removeOwner",
+        args=[
+            prev_owner,
+            owner,
+            threshold,
+        ],
+    )
+    send_safe_txs(
+        txd=bytes.fromhex(txd[2:]),
+        safe=safe,
+        ledger_api=ledger_api,
+        crypto=crypto,
+    )
 
 
 def transfer(

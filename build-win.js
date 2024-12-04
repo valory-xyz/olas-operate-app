@@ -20,9 +20,9 @@ const main = async () => {
   await build({
     publish: 'onTag',
     config: {
-      appId: 'xyz.valory.olas-pearl-optimus',
+      appId: 'xyz.valory.olas-operate-app',
       artifactName: artifactName(),
-      productName: 'Pearl (Optimus)',
+      productName: 'Pearl',
       files: ['electron/**/*', 'package.json'],
       directories: {
         output: 'dist',
@@ -46,4 +46,8 @@ const main = async () => {
   });
 };
 
-main().then((response) => { console.log('Build & Notarize complete'); }).catch((e) => console.error(e));
+main().then(() => {
+  console.log('Build & Notarize complete');
+}).catch(() => {
+  throw new Error('Failed to build and notarize.');
+});

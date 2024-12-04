@@ -3,9 +3,13 @@ import { ReactNode, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
+import { getNativeTokenSymbol } from '@/config/tokens';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { TokenSymbol } from '@/enums/Token';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
+import { useServices } from '@/hooks/useServices';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { CardSection } from '../../styled/CardSection';
 
@@ -20,13 +24,19 @@ const FundingValue = styled.div`
 `;
 
 export const MainNeedsFunds = () => {
+  const { selectedStakingProgramId } = useStakingProgram();
+
   const {
     hasEnoughEthForInitialFunding,
     hasEnoughOlasForInitialFunding,
     serviceFundRequirements,
     isInitialFunded,
     needsInitialFunding,
-  } = useNeedsFunds();
+  } = useNeedsFunds(selectedStakingProgramId);
+
+  const { selectedAgentConfig } = useServices();
+  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
+  const nativeTokenSymbol = getNativeTokenSymbol(homeChainId);
 
   const electronApi = useElectronApi();
 
@@ -37,14 +47,14 @@ export const MainNeedsFunds = () => {
         <Flex gap={24}>
           {!hasEnoughOlasForInitialFunding && (
             <div>
-              <FundingValue>{`${UNICODE_SYMBOLS.OLAS}${serviceFundRequirements.olas} OLAS `}</FundingValue>
+              <FundingValue>{`${UNICODE_SYMBOLS.OLAS}${serviceFundRequirements[homeChainId][TokenSymbol.OLAS]} OLAS `}</FundingValue>
               <span className="text-sm">for staking</span>
             </div>
           )}
           {!hasEnoughEthForInitialFunding && (
             <div>
               <FundingValue>
-                {`$${serviceFundRequirements.eth} XDAI `}
+                {`$${serviceFundRequirements[homeChainId][nativeTokenSymbol]} ${nativeTokenSymbol} `}
               </FundingValue>
               <span className="text-sm">for trading</span>
             </div>
@@ -56,9 +66,11 @@ export const MainNeedsFunds = () => {
       </Flex>
     ),
     [
-      serviceFundRequirements,
       hasEnoughEthForInitialFunding,
       hasEnoughOlasForInitialFunding,
+      homeChainId,
+      nativeTokenSymbol,
+      serviceFundRequirements,
     ],
   );
 

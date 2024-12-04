@@ -17,10 +17,11 @@ export const SetupBackupSigner = () => {
   const [form] = Form.useForm();
 
   const handleFinish = (values: { 'backup-signer': string }) => {
+    // important to lowercase the address before check summing, invalid checksums will cause ethers to throw
+    // returns null if invalid, ethers type is incorrect...
     const checksummedAddress = getAddress(
-      // important to lowercase the address before checksumming, invalid checksums will cause ethers to throw
       values['backup-signer'].toLowerCase(),
-    ) as Address | null; // returns null if invalid, ethers type is incorrect...
+    ) as Address | null;
 
     // If the address is invalid, show an error message
     if (!checksummedAddress) {

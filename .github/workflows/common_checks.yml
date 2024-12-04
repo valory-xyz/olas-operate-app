@@ -48,3 +48,27 @@ jobs:
     # - name: License compatibility check
     #   run: tox -e liccheck
     # tox -p -e vulture -e darglint
+
+  test:
+    continue-on-error: True
+    needs:
+      - linter_checks
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        python-version: [ "3.10.9" ]
+  
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run unit tests
+        run: |
+          pip install tomte[tox]==0.2.15
+          tox -e unit-tests

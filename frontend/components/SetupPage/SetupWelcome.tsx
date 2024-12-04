@@ -11,15 +11,20 @@ import {
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { AccountIsSetup } from '@/client';
-import { Pages } from '@/enums/PageState';
+import { MiddlewareAccountIsSetup } from '@/client';
+import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useBalance } from '@/hooks/useBalance';
+import {
+  useBalanceContext,
+  useMasterBalances,
+} from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
-import { useWallet } from '@/hooks/useWallet';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 import { AccountService } from '@/service/Account';
+import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { FormFlex } from '../styled/FormFlex';
 
@@ -27,43 +32,43 @@ const { Title } = Typography;
 
 export const SetupWelcome = () => {
   const electronApi = useElectronApi();
-  const [isSetup, setIsSetup] = useState<AccountIsSetup | null>(null);
+  const [isSetup, setIsSetup] = useState<MiddlewareAccountIsSetup | null>(null);
 
   useEffect(() => {
     if (isSetup !== null) return;
-    setIsSetup(AccountIsSetup.Loading);
+    setIsSetup(MiddlewareAccountIsSetup.Loading);
 
     AccountService.getAccount()
       .then((res) => {
         switch (res.is_setup) {
           case true:
-            setIsSetup(AccountIsSetup.True);
+            setIsSetup(MiddlewareAccountIsSetup.True);
             break;
           case false: {
             // Reset persistent state
             // if creating new account
             electronApi.store?.clear?.();
-            setIsSetup(AccountIsSetup.False);
+            setIsSetup(MiddlewareAccountIsSetup.False);
             break;
           }
           default:
-            setIsSetup(AccountIsSetup.Error);
+            setIsSetup(MiddlewareAccountIsSetup.Error);
             break;
         }
       })
       .catch((e) => {
         console.error(e);
-        setIsSetup(AccountIsSetup.Error);
+        setIsSetup(MiddlewareAccountIsSetup.Error);
       });
   }, [electronApi.store, isSetup]);
 
   const welcomeScreen = useMemo(() => {
     switch (isSetup) {
-      case AccountIsSetup.True:
+      case MiddlewareAccountIsSetup.True:
         return <SetupWelcomeLogin />;
-      case AccountIsSetup.False:
+      case MiddlewareAccountIsSetup.False:
         return <SetupWelcomeCreate />;
-      case AccountIsSetup.Loading:
+      case MiddlewareAccountIsSetup.Loading:
         return (
           <Flex
             justify="center"
@@ -73,7 +78,7 @@ export const SetupWelcome = () => {
             <Spin />
           </Flex>
         );
-      case AccountIsSetup.Error:
+      case MiddlewareAccountIsSetup.Error:
         return (
           <Flex
             justify="center"
@@ -129,8 +134,25 @@ export const SetupWelcomeLogin = () => {
   const { goto } = useSetup();
   const { goto: gotoPage } = usePageState();
 
-  const { masterSafeAddress, wallets } = useWallet();
-  const { isBalanceLoaded, masterEoaBalance: eoaBalance } = useBalance();
+  const { selectedService } = useServices();
+  const {
+    masterSafes,
+    masterWallets: wallets,
+    masterEoa,
+  } = useMasterWalletContext();
+  const { isLoaded: isBalanceLoaded, updateBalances } = useBalanceContext();
+  const { masterWalletBalances } = useMasterBalances();
+
+  const masterSafe =
+    masterSafes?.find(
+      (safe) =>
+        selectedService?.home_chain &&
+        safe.evmChainId === asEvmChainId(selectedService?.home_chain),
+    ) ?? null;
+
+  const eoaBalanceEth = masterWalletBalances?.find(
+    (balance) => balance.walletAddress === masterEoa?.address,
+  );
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [canNavigate, setCanNavigate] = useState(false);
@@ -141,7 +163,8 @@ export const SetupWelcomeLogin = () => {
     async ({ password }: { password: string }) => {
       setIsLoggingIn(true);
       AccountService.loginAccount(password)
-        .then(() => {
+        .then(async () => {
+          await updateBalances();
           setCanNavigate(true);
         })
         .catch((e) => {
@@ -150,17 +173,20 @@ export const SetupWelcomeLogin = () => {
           message.error('Invalid password');
         });
     },
-    [],
+    [updateBalances],
   );
 
   useEffect(() => {
     // Navigate only when wallets and balances are loaded
     // To check if some setup steps were missed
-    if (canNavigate && wallets?.length && isBalanceLoaded) {
+    // if (canNavigate && wallets?.length && isBalanceLoaded) {
+
+    // TODO: fix wallet and balance loads
+    if (canNavigate) {
       setIsLoggingIn(false);
-      if (!eoaBalance?.ETH) {
+      if (!eoaBalanceEth) {
         goto(SetupScreen.SetupEoaFundingIncomplete);
-      } else if (!masterSafeAddress) {
+      } else if (!masterSafe?.address) {
         goto(SetupScreen.SetupCreateSafe);
       } else {
         gotoPage(Pages.Main);
@@ -168,11 +194,11 @@ export const SetupWelcomeLogin = () => {
     }
   }, [
     canNavigate,
-    eoaBalance?.ETH,
+    eoaBalanceEth,
     goto,
     gotoPage,
     isBalanceLoaded,
-    masterSafeAddress,
+    masterSafe?.address,
     wallets?.length,
   ]);
 

@@ -1,29 +1,40 @@
 import { CloseOutlined } from '@ant-design/icons';
 import { Button, Form, Input, Typography } from 'antd';
+import { isEmpty, isNil } from 'lodash';
 import { useMemo } from 'react';
 
-import { MiddlewareChain } from '@/client';
 import { MIN_ETH_BALANCE_THRESHOLDS } from '@/constants/thresholds';
 import { SettingsScreen } from '@/enums/SettingsScreen';
-import { useBalance } from '@/hooks/useBalance';
+import { useMasterBalances } from '@/hooks/useBalanceContext';
+import { useServices } from '@/hooks/useServices';
 import { useSettings } from '@/hooks/useSettings';
 
 import { CardTitle } from '../Card/CardTitle';
 import { CardFlex } from '../styled/CardFlex';
 
 export const AddBackupWalletPage = () => {
-  const { masterEoaBalance: eoaBalance } = useBalance();
+  const {
+    selectedAgentConfig: { evmHomeChainId: homeChainId },
+  } = useServices();
+  const { masterEoaBalances } = useMasterBalances();
   const { goto } = useSettings();
-
   const [form] = Form.useForm();
 
-  const isFunded = useMemo<boolean>(() => {
-    if (!eoaBalance) return false;
-    return (
-      eoaBalance.ETH >=
-      MIN_ETH_BALANCE_THRESHOLDS[MiddlewareChain.OPTIMISM].safeAddSigner
-    );
-  }, [eoaBalance]);
+  const isMasterEoaFunded = useMemo<boolean>(() => {
+    if (isNil(masterEoaBalances) || isEmpty(masterEoaBalances)) return false;
+
+    const masterEoaNativeBalance = masterEoaBalances.find(
+      ({ isNative, evmChainId: chainId }) =>
+        isNative && chainId === homeChainId,
+    )?.balance;
+
+    if (isNil(masterEoaNativeBalance)) return false;
+
+    const nativeBalanceRequiredToAddSigner =
+      MIN_ETH_BALANCE_THRESHOLDS[homeChainId].safeAddSigner;
+
+    return masterEoaNativeBalance >= nativeBalanceRequiredToAddSigner;
+  }, [homeChainId, masterEoaBalances]);
 
   return (
     <CardFlex
@@ -55,7 +66,7 @@ export const AddBackupWalletPage = () => {
         >
           <Input placeholder="e.g. 0x123124...124124" size="large" />
         </Form.Item>
-        <Button type="primary" disabled={!isFunded} htmlType="submit">
+        <Button type="primary" disabled={!isMasterEoaFunded} htmlType="submit">
           Add backup wallet
         </Button>
       </Form>

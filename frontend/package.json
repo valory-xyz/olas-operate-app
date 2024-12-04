@@ -6,6 +6,7 @@
     "@fontsource/inter": "^5.0.17",
     "@tanstack/react-query": "^5.29.0",
     "antd": "^5.14.0",
+    "axios": "^1.7.7",
     "ethers": "5.7.2",
     "ethers-multicall": "^0.2.3",
     "graphql": "^16.8.1",
@@ -29,8 +30,8 @@
     "@types/node": "20.14.10",
     "@types/react": "18.3.3",
     "@types/react-dom": "^18",
-    "@typescript-eslint/eslint-plugin": "^7.0.1",
-    "@typescript-eslint/parser": "^7.0.1",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.1.0",
     "eslint-config-prettier": "^9.1.0",
@@ -44,13 +45,13 @@
     "jest-environment-jsdom": "^29.7.0",
     "prettier": "^3.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "5.5.3"
+    "typescript": "5.3.x"
   },
   "name": "olas-operate-app",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "bash -c \"DEV_RPC=$DEV_RPC FORK_URL=$FORK_URL NODE_ENV=production next build\"",
+    "build": "bash -c \"GNOSIS_RPC=$GNOSIS_RPC BASE_RPC=$BASE_RPC OPTIMISM_RPC=$OPTIMISM_RPC ETHEREUM_RPC=$ETHEREUM_RPC NODE_ENV=production next build\"",
     "lint": "next lint",
     "test": "jest",
     "start": "next start"

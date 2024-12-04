@@ -1,43 +1,76 @@
 import { useMemo } from 'react';
 
-import { DeploymentStatus } from '@/client';
+import { EvmChainId } from '@/enums/Chain';
+import { Eoa, WalletType } from '@/enums/Wallet';
+import { Address } from '@/types/Address';
+import { Service } from '@/types/Service';
+import { Optional } from '@/types/Util';
 
-import { useBalance } from './useBalance';
-import { useMasterSafe } from './useMasterSafe';
+import { useBalanceContext } from './useBalanceContext';
+import { useMultisigs } from './useMultisig';
 import { useServices } from './useServices';
 import { useStore } from './useStore';
-import { useWallet } from './useWallet';
+import { useMasterWalletContext } from './useWallet';
 
 const useAddressesLogs = () => {
-  const { wallets, masterEoaAddress, masterSafeAddress } = useWallet();
+  const {
+    masterSafes,
+    masterEoa,
+    isFetched: masterWalletsIsFetched,
+  } = useMasterWalletContext();
 
-  const { backupSafeAddress, masterSafeOwners } = useMasterSafe();
+  const { masterSafesOwners, masterSafesOwnersIsFetched } =
+    useMultisigs(masterSafes);
+
+  const backupEoas = useMemo<Optional<Eoa[]>>(() => {
+    if (!masterEoa) return;
+    if (!masterSafesOwners) return;
+
+    const result = masterSafesOwners
+      .map((masterSafeOwners) => {
+        const { owners, safeAddress, evmChainId } = masterSafeOwners;
+        return owners
+          .filter((owner): owner is Address => owner !== masterEoa.address)
+          .map<Eoa>((address) => ({
+            address,
+            type: WalletType.EOA,
+            safeAddress,
+            evmChainId,
+          }));
+      })
+      .flat();
+
+    return result;
+  }, [masterSafesOwners, masterEoa]);
 
   return {
-    isLoaded: wallets?.length !== 0 && !!masterSafeOwners,
+    isLoaded: masterWalletsIsFetched && masterSafesOwnersIsFetched,
     data: [
-      { backupSafeAddress: backupSafeAddress ?? 'undefined' },
-      { masterSafeAddress: masterSafeAddress ?? 'undefined' },
-      { masterEoaAddress: masterEoaAddress ?? 'undefined' },
-      { masterSafeOwners: masterSafeOwners ?? 'undefined' },
+      { masterEoa: masterEoa ?? 'undefined' },
+      {
+        masterSafes:
+          masterSafes?.find((safe) => safe.evmChainId === EvmChainId.Gnosis) ??
+          'undefined',
+      },
+      { masterSafeBackups: backupEoas ?? 'undefined' },
     ],
   };
 };
 
 const useBalancesLogs = () => {
+  const { masterWallets } = useMasterWalletContext();
   const {
-    isBalanceLoaded,
+    isLoaded: isBalanceLoaded,
     totalEthBalance,
     totalOlasBalance,
-    wallets,
     walletBalances,
-    totalOlasStakedBalance,
-  } = useBalance();
+    totalStakedOlasBalance: totalOlasStakedBalance,
+  } = useBalanceContext();
 
   return {
     isLoaded: isBalanceLoaded,
     data: [
-      { wallets: wallets ?? 'undefined' },
+      { masterWallets: masterWallets ?? 'undefined' },
       { walletBalances: walletBalances ?? 'undefined' },
       { totalOlasStakedBalance: totalOlasStakedBalance ?? 'undefined' },
       { totalEthBalance: totalEthBalance ?? 'undefined' },
@@ -47,18 +80,20 @@ const useBalancesLogs = () => {
 };
 
 const useServicesLogs = () => {
-  const { serviceStatus, services, hasInitialLoaded } = useServices();
+  const { services, isFetched: isLoaded, selectedService } = useServices();
+  // const { getQueryData } = useQueryClient();
 
   return {
-    isLoaded: hasInitialLoaded,
+    isLoaded,
     data: {
-      serviceStatus: serviceStatus
-        ? DeploymentStatus[serviceStatus]
-        : 'undefined',
       services:
-        services?.map((item) => ({
+        services?.map((item: Service) => ({
           ...item,
           keys: item.keys.map((key) => key.address),
+          deploymentStatus:
+            selectedService?.service_config_id === item.service_config_id
+              ? selectedService.deploymentStatus
+              : item.deploymentStatus,
         })) ?? 'undefined',
     },
   };

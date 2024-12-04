@@ -198,6 +198,7 @@ class UniswapV2ERC20Contract(Contract):
         transfer_logs: List = []
 
         if transfer_logs_data:
+
             transfer_logs = cast(
                 List,
                 transfer_logs_data["logs"],

@@ -20,9 +20,12 @@
 """Types module."""
 
 import enum
+import os
 import typing as t
 from dataclasses import dataclass
 
+from autonomy.chain.config import ChainType
+from autonomy.chain.constants import CHAIN_NAME_TO_CHAIN_ID
 from typing_extensions import TypedDict
 
 from operate.resource import LocalResource
@@ -35,45 +38,19 @@ _ACTIONS = {
     "stop": 3,
 }
 
-
-_CHAIN_NAME_TO_ENUM = {
-    "ethereum": 0,
-    "goerli": 1,
-    "gnosis": 2,
-    "solana": 3,
-    "optimism": 4,
-    "base": 5,
-    "mode": 6,
-}
+CHAIN_NAME_TO_CHAIN_ID["mode"] = 34443  # TODO: update open-autonomy and remove this
+CHAIN_NAME_TO_CHAIN_ID["solana"] = 900
 
 _CHAIN_ID_TO_CHAIN_NAME = {
-    1: "ethereum",
-    5: "goerli",
-    100: "gnosis",
-    1399811149: "solana",
-    10: "optimism",
-    8453: "base",
-    34443: "mode",
-}
-
-_CHAIN_NAME_TO_ID = {val: key for key, val in _CHAIN_ID_TO_CHAIN_NAME.items()}
-
-_LEDGER_TYPE_TO_ENUM = {
-    "ethereum": 0,
-    "solana": 1,
+    chain_id: chain_name for chain_name, chain_id in CHAIN_NAME_TO_CHAIN_ID.items()
 }
 
 
-class LedgerType(enum.IntEnum):
+class LedgerType(str, enum.Enum):
     """Ledger type enum."""
 
-    ETHEREUM = 0
-    SOLANA = 1
-
-    @classmethod
-    def from_string(cls, chain: str) -> "LedgerType":
-        """Load from string."""
-        return cls(_LEDGER_TYPE_TO_ENUM[chain.lower()])
+    ETHEREUM = "ethereum"
+    SOLANA = "solana"
 
     @property
     def config_file(self) -> str:
@@ -85,32 +62,78 @@ class LedgerType(enum.IntEnum):
         """Key filename."""
         return f"{self.name.lower()}.txt"
 
+    @classmethod
+    def from_id(cls, chain_id: int) -> "LedgerType":
+        """Load from chain ID."""
+        return Chain(_CHAIN_ID_TO_CHAIN_NAME[chain_id]).ledger_type
 
-class ChainType(enum.IntEnum):
-    """Chain type enum."""
 
-    ETHEREUM = 0
-    GOERLI = 1
-    GNOSIS = 2
-    SOLANA = 3
-    OPTIMISM = 4
-    BASE = 5
-    MODE = 6
+# Dynamically create the Chain enum from the ChainType
+# TODO: Migrate this to open-autonomy and remove this modified version of Chain here and use the one from open-autonomy
+# This version of open-autonomy must support the LedgerType to support SOLANA in the future
+# If solana support is not fuly implemented, decide to keep this half-baked feature.
+#
+# TODO: Once the above issue is properly implemented in Open Autonomy, remove the following
+# lines from tox.ini:
+#
+#    exclude = ^(operate/operate_types\.py|scripts/setup_wallet\.py|operate/ledger/profiles\.py|operate/ledger/__init__\.py|operate/wallet/master\.py|operate/services/protocol\.py|operate/services/manage\.py|operate/cli\.py)$
+#
+#    [mypy-operate.*]
+#    follow_imports = skip  # noqa
+#
+# These lines were itroduced to resolve mypy issues with the temporary Chain/ChainType solution.
+Chain = enum.Enum(
+    "Chain",
+    [(member.name, member.value) for member in ChainType]
+    + [
+        ("MODE", "mode"),  # TODO: update open-autonomy version and remove this
+        ("SOLANA", "solana"),
+    ],
+)
+
+
+class ChainMixin:
+    """Mixin for some new functions in the ChainType class."""
 
     @property
-    def id(self) -> int:
-        """Returns chain id."""
-        return _CHAIN_NAME_TO_ID[self.name.lower()]
+    def id(self) -> t.Optional[int]:
+        """Chain ID"""
+        if self == Chain.CUSTOM:
+            chain_id = os.environ.get("CUSTOM_CHAIN_ID")
+            if chain_id is None:
+                return None
+            return int(chain_id)
+        return CHAIN_NAME_TO_CHAIN_ID[self.value]
+
+    @property
+    def ledger_type(self) -> LedgerType:
+        """Ledger type."""
+        if self in (
+            Chain.ETHEREUM,
+            Chain.GOERLI,
+            Chain.GNOSIS,
+            Chain.BASE,
+            Chain.OPTIMISTIC,
+            Chain.MODE,
+        ):
+            return LedgerType.ETHEREUM
+        return LedgerType.SOLANA
 
     @classmethod
-    def from_string(cls, chain: str) -> "ChainType":
+    def from_string(cls, chain: str) -> "Chain":
         """Load from string."""
-        return cls(_CHAIN_NAME_TO_ENUM[chain.lower()])
+        return Chain(chain.lower())
 
     @classmethod
-    def from_id(cls, cid: int) -> "ChainType":
+    def from_id(cls, chain_id: int) -> "Chain":
         """Load from chain ID."""
-        return cls(_CHAIN_NAME_TO_ENUM[_CHAIN_ID_TO_CHAIN_NAME[cid]])
+        return Chain(_CHAIN_ID_TO_CHAIN_NAME[chain_id])
+
+
+# Add the ChainMixin methods to the Chain enum
+for name in dir(ChainMixin):
+    if not name.startswith("__"):
+        setattr(Chain, name, getattr(ChainMixin, name))
 
 
 class Action(enum.IntEnum):
@@ -168,8 +191,7 @@ class LedgerConfig(LocalResource):
     """Ledger config."""
 
     rpc: str
-    type: LedgerType
-    chain: ChainType
+    chain: Chain
 
 
 LedgerConfigs = t.Dict[str, LedgerConfig]
@@ -203,7 +225,25 @@ class ConfigurationTemplate(TypedDict):
     fallback_chain_params: t.Optional[t.Dict]
 
 
+class ServiceEnvProvisionType(str, enum.Enum):
+    """Service environment variable provision type."""
+
+    FIXED = "fixed"
+    USER = "user"
+    COMPUTED = "computed"
+
+
+class EnvVariableAttributes(TypedDict):
+    """Service environment variable template."""
+
+    name: str
+    description: str
+    value: str
+    provision_type: ServiceEnvProvisionType
+
+
 ConfigurationTemplates = t.Dict[str, ConfigurationTemplate]
+EnvVariables = t.Dict[str, EnvVariableAttributes]
 
 
 class ServiceTemplate(TypedDict):
@@ -214,8 +254,9 @@ class ServiceTemplate(TypedDict):
     image: str
     description: str
     service_version: str
-    home_chain_id: str
+    home_chain: str
     configurations: ConfigurationTemplates
+    env_variables: EnvVariables
 
 
 @dataclass
