@@ -8,6 +8,9 @@ const schema = {
 
   environmentName: { type: 'string', default: '' },
   currentStakingProgram: { type: 'string', default: '' },
+
+  // agent settings
+  lastSelectedAgentType: { type: 'string', default: '' },
 };
 
 /**
