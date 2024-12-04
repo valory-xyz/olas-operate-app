@@ -213,7 +213,7 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
       },
     },
   },
-];
+] as const;
 
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;
 

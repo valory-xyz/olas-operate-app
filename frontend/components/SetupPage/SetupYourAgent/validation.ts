@@ -1,3 +1,4 @@
+import { ServiceTemplate } from '@/client';
 import { delayInSeconds } from '@/utils/delay';
 
 /**
@@ -56,7 +57,9 @@ export const validateTwitterCredentials = async (
   }
 };
 
-export const onAgentSetupComplete = async () => {
+export const onAgentSetupComplete = async (serviceConfig: ServiceTemplate) => {
+  window.console.log('Agent setup complete:', serviceConfig);
+
   // TODO: send to backend and remove the delay
   await delayInSeconds(2);
 };

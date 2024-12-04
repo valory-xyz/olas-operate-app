@@ -179,7 +179,7 @@ export const StakingContractDetailsProvider = ({
     serviceNftTokenId: !isNil(selectedService?.service_config_id)
       ? selectedService?.chain_configs?.[
           asMiddlewareChain(selectedAgentConfig.evmHomeChainId)
-        ].chain_data.token
+        ]?.chain_data?.token
       : null,
     stakingProgramId: selectedStakingProgramId,
   });

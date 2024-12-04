@@ -59,8 +59,8 @@ export const ServicesContext = createContext<ServicesContextType>({
   selectService: noop,
   isSelectedServiceStatusFetched: false,
   refetchSelectedServiceStatus: noop,
-  selectedAgentConfig: AGENT_CONFIG[AgentType.PredictTrader],
-  selectedAgentType: AgentType.PredictTrader,
+  selectedAgentConfig: AGENT_CONFIG[AgentType.Memeooorr], // TODO: from storage
+  selectedAgentType: AgentType.Memeooorr, // TODO: from storage
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
 });
@@ -74,7 +74,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   // selected agent type
   const [selectedAgentType, setAgentType] = useState<AgentType>(
-    AgentType.PredictTrader,
+    AgentType.Memeooorr, // TODO: from storage
   );
 
   // user selected service identifier

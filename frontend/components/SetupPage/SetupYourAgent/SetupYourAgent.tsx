@@ -12,10 +12,13 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
+import { ServiceTemplate } from '@/client';
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
+import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 
 import { SetupCreateHeader } from '../Create/SetupCreateHeader';
@@ -80,8 +83,9 @@ const InvalidXCredentials = () => (
   />
 );
 
+type SetupYourAgentFormProps = { serviceTemplate: ServiceTemplate };
 // Agent setup form
-const SetupYourAgentForm = () => {
+const SetupYourAgentForm = ({ serviceTemplate }: SetupYourAgentFormProps) => {
   const { goto } = useSetup();
 
   const [form] = Form.useForm<FieldValues>();
@@ -97,7 +101,7 @@ const SetupYourAgentForm = () => {
   const electronApi = useElectronApi();
 
   const onFinish = useCallback(
-    async (values: Record<string, string>) => {
+    async (values: Record<keyof FieldValues, string>) => {
       try {
         setIsSubmitting(true);
 
@@ -126,7 +130,35 @@ const SetupYourAgentForm = () => {
 
         // wait for agent setup to complete
         setSubmitButtonText('Setting up agent...');
-        await onAgentSetupComplete();
+
+        const overriddenServiceConfig = {
+          ...serviceTemplate,
+          env_variables: {
+            ...serviceTemplate.env_variables,
+            TWIKIT_USERNAME: {
+              ...serviceTemplate.env_variables.TWIKIT_USERNAME,
+              value: values.xUsername,
+            },
+            TWIKIT_EMAIL: {
+              ...serviceTemplate.env_variables.TWIKIT_EMAIL,
+              value: values.xEmail,
+            },
+            TWIKIT_PASSWORD: {
+              ...serviceTemplate.env_variables.TWIKIT_PASSWORD,
+              value: values.xPassword,
+            },
+            GENAI_API_KEY: {
+              ...serviceTemplate.env_variables.GENAI_API_KEY,
+              value: values.geminiApiKey,
+            },
+            PERSONA: {
+              ...serviceTemplate.env_variables.PERSONA,
+              value: values.personaDescription,
+            },
+          },
+        };
+
+        await onAgentSetupComplete(overriddenServiceConfig);
 
         // move to next page
         goto(SetupScreen.SetupEoaFunding);
@@ -138,7 +170,7 @@ const SetupYourAgentForm = () => {
         setSubmitButtonText('Continue');
       }
     },
-    [electronApi, goto],
+    [electronApi, goto, serviceTemplate],
   );
 
   // Clean up
@@ -229,6 +261,22 @@ const SetupYourAgentForm = () => {
 };
 
 export const SetupYourAgent = () => {
+  const { selectedAgentType } = useServices();
+  const serviceTemplate = SERVICE_TEMPLATES.find(
+    (template) => template.agentType === selectedAgentType,
+  );
+
+  if (!serviceTemplate) {
+    return (
+      <CustomAlert
+        type="error"
+        showIcon
+        message={<Text>Please select an agent type first!</Text>}
+        className="mb-8"
+      />
+    );
+  }
+
   return (
     <ConfigProvider theme={LOCAL_THEME}>
       <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }}>
@@ -239,7 +287,7 @@ export const SetupYourAgent = () => {
         </Text>
         <Divider style={{ margin: '8px 0' }} />
 
-        <SetupYourAgentForm />
+        <SetupYourAgentForm serviceTemplate={serviceTemplate} />
 
         <Text type="secondary" style={{ display: 'block', marginTop: '-16px' }}>
           You won’t be able to update your agent’s configuration after this
