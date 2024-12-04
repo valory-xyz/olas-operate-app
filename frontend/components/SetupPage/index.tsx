@@ -17,7 +17,7 @@ import {
   SetupRestoreViaSeed,
 } from './SetupRestore';
 import { SetupWelcome } from './SetupWelcome';
-import { SetupYourAgent } from './SetupYourAgent';
+import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
 
 const UnexpectedError = () => (
   <div style={{ height: 400 }}>Something went wrong!</div>

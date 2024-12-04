@@ -257,12 +257,12 @@ const createMainWindow = async () => {
   ipcMain.handle('app-version', () => app.getVersion());
 
   // Handle twitter login
-  ipcMain.handle('check-twitter-login', async (_event, credentials) => {
+  ipcMain.handle('validate-twitter-login', async (_event, credentials) => {
     const scraper = new Scraper();
 
     const { username, password, email } = credentials;
     if (!username || !password || !email) {
-      return { success: false, error: 'Invalid credentials' };
+      return { success: false, error: 'Missing credentials' };
     }
 
     try {

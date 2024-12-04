@@ -25,6 +25,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveLogs: (data) => ipcRenderer.invoke('save-logs', data),
   openPath: (filePath) => ipcRenderer.send('open-path', filePath),
   getAppVersion: () => ipcRenderer.invoke('app-version'),
-  checkTwitterLogin: (credentials) =>
-    ipcRenderer.invoke('check-twitter-login', credentials),
+  validateTwitterLogin: (credentials) =>
+    ipcRenderer.invoke('validate-twitter-login', credentials),
 });

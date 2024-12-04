@@ -8,14 +8,11 @@ export const validateGeminiApiKey = async (apiKey: string) => {
 
   try {
     // sample request to fetch the models
-    // const apiUrl =
-    //   'https://generativelanguage.googleapis.com/v1/models?key=' + apiKey;
-    // const response = await fetch(apiUrl);
+    const apiUrl =
+      'https://generativelanguage.googleapis.com/v1/models?key=' + apiKey;
+    const response = await fetch(apiUrl);
 
-    // return response.ok;
-
-    await delayInSeconds(1);
-    return true;
+    return response.ok;
   } catch (error) {
     console.error('Error validating Gemini API key:', error);
     return false;
@@ -29,7 +26,7 @@ export const validateTwitterCredentials = async (
   email: string,
   username: string,
   password: string,
-  checkTwitterLogin: ({
+  validateTwitterLogin: ({
     username,
     password,
     email,
@@ -42,7 +39,11 @@ export const validateTwitterCredentials = async (
   if (!email || !username || !password) return false;
 
   try {
-    const isValidated = await checkTwitterLogin({ username, password, email });
+    const isValidated = await validateTwitterLogin({
+      username,
+      password,
+      email,
+    });
     if (isValidated.success) {
       return true;
     }

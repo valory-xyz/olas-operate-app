@@ -102,7 +102,7 @@ const SetupYourAgentForm = () => {
         setIsSubmitting(true);
 
         // validate the gemini API
-        setSubmitButtonText('Validating API key...');
+        setSubmitButtonText('Validating Gemini API key...');
         const isGeminiApiValid = await validateGeminiApiKey(
           values.geminiApiKey,
         );
@@ -111,12 +111,12 @@ const SetupYourAgentForm = () => {
 
         // validate the twitter credentials
         setSubmitButtonText('Validating Twitter credentials...');
-        const isTwitterCredentialsValid = electronApi?.checkTwitterLogin
+        const isTwitterCredentialsValid = electronApi?.validateTwitterLogin
           ? await validateTwitterCredentials(
               values.xEmail,
               values.xUsername,
               values.xPassword,
-              electronApi.checkTwitterLogin,
+              electronApi.validateTwitterLogin,
             )
           : false;
         setTwitterCredentialsValidationStatus(
