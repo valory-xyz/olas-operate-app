@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
 import { CardSection } from '@/components/styled/CardSection';
-import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -39,7 +38,6 @@ const useSetupTrayIcon = () => {
 
 export const MainHeader = () => {
   const { goto } = usePageState();
-  const { selectedAgentType } = useServices();
 
   const [isFirstRunModalOpen, setIsFirstRunModalOpen] = useState(false);
   const handleModalClose = useCallback(() => setIsFirstRunModalOpen(false), []);
@@ -48,14 +46,7 @@ export const MainHeader = () => {
   // TODO: support loading state
 
   return (
-    <CardSection
-      gap={8}
-      padding="8px 24px"
-      justify="space-between"
-      borderbottom={
-        selectedAgentType === AgentType.Memeooorr ? 'true' : 'false'
-      }
-    >
+    <CardSection gap={8} padding="8px 24px" justify="space-between">
       <Flex justify="start" align="center" gap={10}>
         <AgentHead />
         <AgentButton />
