@@ -15,6 +15,7 @@ import { useUnmount } from 'usehooks-ts';
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { SetupScreen } from '@/enums/SetupScreen';
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { useSetup } from '@/hooks/useSetup';
 
 import { SetupCreateHeader } from '../Create/SetupCreateHeader';
@@ -93,6 +94,8 @@ const SetupYourAgentForm = () => {
     setTwitterCredentialsValidationStatus,
   ] = useState<ValidationStatus>('unknown');
 
+  const electronApi = useElectronApi();
+
   const onFinish = async (values: Record<string, string>) => {
     try {
       setIsSubmitting(true);
@@ -109,6 +112,7 @@ const SetupYourAgentForm = () => {
         values.xEmail,
         values.xUsername,
         values.xPassword,
+        electronApi?.checkTwitterLogin,
       );
       setTwitterCredentialsValidationStatus(
         isTwitterCredentialsValid ? 'valid' : 'invalid',

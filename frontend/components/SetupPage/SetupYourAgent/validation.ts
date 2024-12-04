@@ -1,5 +1,3 @@
-import { Scraper } from 'agent-twitter-client';
-
 import { delayInSeconds } from '@/utils/delay';
 
 /**
@@ -31,6 +29,7 @@ export const validateTwitterCredentials = async (
   email: string,
   username: string,
   password: string,
+  checkTwitterLogin: any,
 ) => {
   if (!email || !username || !password) return false;
 
@@ -52,15 +51,15 @@ export const validateTwitterCredentials = async (
     //   },
     // });
 
-    const scraper = new Scraper();
+    // const scraper = new Scraper();
 
-    console.log('Logging in with:', email, username, password, scraper);
+    // console.log('Logging in with:', email, username, password, scraper);
 
-    await scraper.login(username, password, email);
+    await checkTwitterLogin({ username, password, email });
 
     // Check if logged in
-    const isLoggedIn = await scraper.isLoggedIn();
-    return isLoggedIn;
+    // const isLoggedIn = await scraper.isLoggedIn();
+    // return isLoggedIn;
   } catch (error) {
     console.error('Error validating Twitter credentials:', error);
     return false;

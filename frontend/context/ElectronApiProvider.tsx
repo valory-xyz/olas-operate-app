@@ -32,6 +32,7 @@ type ElectronApiContextProps = {
     debugData?: Record<string, unknown>;
   }) => Promise<{ success: true; dirPath: string } | { success?: false }>;
   openPath?: (filePath: string) => void;
+  checkTwitterLogin?: (credentials: any) => void;
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -55,6 +56,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   setAppHeight: () => {},
   saveLogs: async () => ({ success: false }),
   openPath: () => {},
+  checkTwitterLogin: () => {},
 });
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
@@ -95,6 +97,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         showNotification: getElectronApiFunction('showNotification'),
         saveLogs: getElectronApiFunction('saveLogs'),
         openPath: getElectronApiFunction('openPath'),
+        checkTwitterLogin: getElectronApiFunction('checkTwitterLogin'),
       }}
     >
       {children}

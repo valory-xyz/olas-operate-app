@@ -26,6 +26,7 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
+const { Scraper } = require('agent-twitter-client');
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -255,6 +256,21 @@ const createMainWindow = async () => {
   });
 
   ipcMain.handle('app-version', () => app.getVersion());
+
+  // Handle twitter login
+  ipcMain.handle('check-twitter-login', async (_event, credentials) => {
+    const { username, password, email } = credentials;
+    const scraper = new Scraper();
+
+    try {
+      const loginResponse = await scraper.login(username, password, email);
+      console.log('loginResponse', loginResponse);
+      return { success: true, data: loginResponse };
+    } catch (error) {
+      console.error('Login failed:', error);
+      return { success: false, error: error.message };
+    }
+  });
 
   mainWindow.webContents.on('did-fail-load', () => {
     mainWindow.webContents.reloadIgnoringCache();
