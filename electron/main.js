@@ -14,7 +14,6 @@ const os = require('os');
 const next = require('next/dist/server/next');
 const http = require('http');
 const AdmZip = require('adm-zip');
-const { validateEnv } = require('./utils/env-validation');
 
 const { setupDarwin, setupUbuntu, setupWindows, Env } = require('./install');
 
@@ -259,15 +258,18 @@ const createMainWindow = async () => {
 
   // Handle twitter login
   ipcMain.handle('check-twitter-login', async (_event, credentials) => {
-    const { username, password, email } = credentials;
     const scraper = new Scraper();
 
+    const { username, password, email } = credentials;
+    if (!username || !password || !email) {
+      return { success: false, error: 'Invalid credentials' };
+    }
+
     try {
-      const loginResponse = await scraper.login(username, password, email);
-      console.log('loginResponse', loginResponse);
-      return { success: true, data: loginResponse };
+      await scraper.login(username, password, email);
+      return { success: true };
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('Twitter login error:', error);
       return { success: false, error: error.message };
     }
   });
