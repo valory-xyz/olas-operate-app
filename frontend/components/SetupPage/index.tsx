@@ -2,7 +2,6 @@ import { useContext, useMemo } from 'react';
 
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup } from '@/hooks/useSetup';
 
 import { AgentSelection } from '../AgentSelection';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
@@ -25,7 +24,6 @@ const UnexpectedError = () => (
 
 export const Setup = () => {
   const { setupObject } = useContext(SetupContext);
-  const { goto } = useSetup();
 
   const setupScreen = useMemo(() => {
     switch (setupObject.state) {
@@ -46,13 +44,7 @@ export const Setup = () => {
       case SetupScreen.SetupCreateSafe:
         return <SetupCreateSafe />;
       case SetupScreen.AgentSelection:
-        return (
-          <AgentSelection
-            showSelected={false}
-            onPrev={() => goto(SetupScreen.SetupBackupSigner)}
-            onNext={() => goto(SetupScreen.SetupEoaFunding)}
-          />
-        );
+        return <AgentSelection showSelected={false} />;
       case SetupScreen.SetupYourAgent:
         return <SetupYourAgent />;
 
@@ -68,7 +60,7 @@ export const Setup = () => {
       default:
         return <UnexpectedError />;
     }
-  }, [setupObject.state, goto]);
+  }, [setupObject.state]);
 
   return setupScreen;
 };

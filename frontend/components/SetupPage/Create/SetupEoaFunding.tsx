@@ -118,7 +118,7 @@ export const SetupEoaFundingForChain = ({
 }: SetupEoaFundingProps) => {
   return (
     <CardFlex>
-      <SetupCreateHeader prev={SetupScreen.SetupBackupSigner} disabled />
+      <SetupCreateHeader />
       <Title level={3}>
         {`Deposit ${minRequiredBalance} ${currency} on ${chainName}`}
       </Title>

@@ -16,7 +16,7 @@ export const SetupSeedPhrase = () => {
 
   return (
     <Card>
-      <SetupCreateHeader prev={SetupScreen.SetupPassword} disabled={true} />
+      <SetupCreateHeader />
       <Typography.Title level={3}>Back up seed phrase</Typography.Title>
 
       <Flex gap={16} vertical>

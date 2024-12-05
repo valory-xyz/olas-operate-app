@@ -8,16 +8,15 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 
 type SetupCreateHeaderProps = {
-  prev: SetupScreen | (() => void);
+  prev?: SetupScreen | (() => void);
   disabled?: boolean;
 };
 
-export const SetupCreateHeader = ({
-  prev,
-  disabled = false,
-}: SetupCreateHeaderProps) => {
+export const SetupCreateHeader = ({ prev }: SetupCreateHeaderProps) => {
   const { goto } = useSetup();
   const handleBack = useCallback(() => {
+    if (!prev) return;
+
     isFunction(prev) ? prev() : goto(prev);
   }, [goto, prev]);
 
@@ -26,7 +25,7 @@ export const SetupCreateHeader = ({
       <Col span={8}>
         <Button
           onClick={handleBack}
-          disabled={disabled}
+          disabled={!prev}
           icon={<ArrowLeftOutlined />}
           size="large"
         />

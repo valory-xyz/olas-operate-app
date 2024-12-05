@@ -6,7 +6,12 @@ import { useCallback } from 'react';
 import { AGENT_CONFIG } from '@/config/agents';
 import { COLOR } from '@/constants/colors';
 import { AgentType } from '@/enums/Agent';
+import { Pages } from '@/enums/Pages';
+import { SetupScreen } from '@/enums/SetupScreen';
+import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
+import { useSetup } from '@/hooks/useSetup';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 import { AgentConfig } from '@/types/Agent';
 
 import { SetupCreateHeader } from './SetupPage/Create/SetupCreateHeader';
@@ -18,23 +23,40 @@ type EachAgentProps = {
   showSelected: boolean;
   agentType: AgentType;
   agentConfig: AgentConfig;
-  onSelect: () => void;
 };
 
 const EachAgent = ({
   showSelected,
   agentType,
   agentConfig,
-  onSelect,
 }: EachAgentProps) => {
+  const { goto: gotoSetup } = useSetup();
+  const { goto: gotoPage } = usePageState();
   const { selectedAgentType, updateAgentType } = useServices();
+  const { masterSafes, isLoading } = useMasterWalletContext();
 
   const isCurrentAgent = showSelected ? selectedAgentType === agentType : false;
 
   const handleSelectAgent = useCallback(() => {
     updateAgentType(agentType);
-    onSelect();
-  }, [agentType, onSelect, updateAgentType]);
+
+    const isSafeCreated = masterSafes?.find(
+      (masterSafe) =>
+        masterSafe.evmChainId === AGENT_CONFIG[agentType].evmHomeChainId,
+    );
+
+    if (isSafeCreated) {
+      gotoPage(Pages.Main);
+    } else {
+      if (agentType === AgentType.Memeooorr) {
+        // if the selected type is Memeooorr - should set up the agent first
+        gotoPage(Pages.Setup);
+        gotoSetup(SetupScreen.SetupYourAgent);
+      } else {
+        gotoSetup(SetupScreen.SetupEoaFunding);
+      }
+    }
+  }, [agentType, gotoPage, gotoSetup, masterSafes, updateAgentType]);
 
   return (
     <Card
@@ -61,7 +83,11 @@ const EachAgent = ({
           {isCurrentAgent ? (
             <Text>Selected Agent</Text>
           ) : (
-            <Button type="primary" onClick={handleSelectAgent}>
+            <Button
+              type="primary"
+              onClick={handleSelectAgent}
+              disabled={isLoading}
+            >
               Select
             </Button>
           )}
@@ -79,8 +105,8 @@ const EachAgent = ({
 
 type AgentSelectionProps = {
   showSelected?: boolean;
-  onPrev: () => void;
-  onNext: () => void;
+  canGoBack?: boolean;
+  onPrev?: () => void;
 };
 
 /**
@@ -89,7 +115,6 @@ type AgentSelectionProps = {
 export const AgentSelection = ({
   showSelected = true,
   onPrev,
-  onNext,
 }: AgentSelectionProps) => (
   <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }}>
     <SetupCreateHeader prev={onPrev} />
@@ -102,7 +127,6 @@ export const AgentSelection = ({
           showSelected={showSelected}
           agentType={agentType as AgentType}
           agentConfig={agentConfig}
-          onSelect={onNext}
         />
       );
     })}

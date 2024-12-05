@@ -48,12 +48,7 @@ export default function Home() {
       case Pages.Main:
         return <Main />;
       case Pages.SwitchAgent:
-        return (
-          <AgentSelection
-            onPrev={() => goto(Pages.Main)}
-            onNext={() => goto(Pages.Main)}
-          />
-        );
+        return <AgentSelection onPrev={() => goto(Pages.Main)} />;
       case Pages.Settings:
         return <Settings />;
       case Pages.HelpAndSupport:
