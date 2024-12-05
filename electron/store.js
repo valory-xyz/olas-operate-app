@@ -10,7 +10,7 @@ const schema = {
   currentStakingProgram: { type: 'string', default: '' },
 
   // agent settings
-  lastSelectedAgentType: { type: 'string', default: '' },
+  lastSelectedAgentType: { type: 'string', default: 'trader' },
 };
 
 /**

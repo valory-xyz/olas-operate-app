@@ -30,18 +30,18 @@ import { StakingProgramContext } from './StakingProgramProvider';
 const useAllStakingContractDetails = () => {
   const { allStakingProgramIds } = useStakingProgram();
   const { selectedAgentConfig } = useServices();
-  const { serviceApi, evmHomeChainId: homeChainId } = selectedAgentConfig;
+  const { serviceApi, evmHomeChainId } = selectedAgentConfig;
 
   const queryResults = useQueries({
     queries: allStakingProgramIds.map((programId) => ({
       queryKey: REACT_QUERY_KEYS.ALL_STAKING_CONTRACT_DETAILS(
-        homeChainId,
+        evmHomeChainId,
         programId,
       ),
       queryFn: async () =>
         await serviceApi.getStakingContractDetails(
           programId as StakingProgramId,
-          homeChainId,
+          evmHomeChainId,
         ),
       onError: (error: Error) => {
         console.error(
