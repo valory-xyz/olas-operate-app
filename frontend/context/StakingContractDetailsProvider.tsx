@@ -87,6 +87,7 @@ const useStakingContractDetailsByStakingProgram = ({
 }) => {
   const { selectedAgentConfig } = useServices();
   const { serviceApi, evmHomeChainId } = selectedAgentConfig;
+
   return useQuery({
     queryKey: REACT_QUERY_KEYS.STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY(
       evmHomeChainId,
@@ -168,19 +169,20 @@ export const StakingContractDetailsProvider = ({
 }: PropsWithChildren) => {
   const [isPaused, setIsPaused] = useState(false);
   const { selectedService, selectedAgentConfig } = useServices();
-
   const { selectedStakingProgramId } = useContext(StakingProgramContext);
+
+  const serviceNftTokenId = !isNil(selectedService?.service_config_id)
+    ? selectedService?.chain_configs?.[
+        asMiddlewareChain(selectedAgentConfig.evmHomeChainId)
+      ]?.chain_data?.token
+    : null;
 
   const {
     data: selectedStakingContractDetails,
     isFetched,
     refetch,
   } = useStakingContractDetailsByStakingProgram({
-    serviceNftTokenId: !isNil(selectedService?.service_config_id)
-      ? selectedService?.chain_configs?.[
-          asMiddlewareChain(selectedAgentConfig.evmHomeChainId)
-        ]?.chain_data?.token
-      : null,
+    serviceNftTokenId,
     stakingProgramId: selectedStakingProgramId,
   });
 
