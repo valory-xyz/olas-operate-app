@@ -32,7 +32,7 @@ import { useStore } from '@/hooks/useStore';
 import { ServicesService } from '@/service/Services';
 import { AgentConfig } from '@/types/Agent';
 import { Service } from '@/types/Service';
-import { Maybe, Optional } from '@/types/Util';
+import { Maybe, Nullable, Optional } from '@/types/Util';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
@@ -93,7 +93,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   // user selected service identifier
   const [selectedServiceConfigId, setSelectedServiceConfigId] =
-    useState<Maybe<string>>();
+    useState<Nullable<string>>(null);
 
   const {
     data: services,
@@ -165,13 +165,14 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       throw new Error(`Agent config not found for ${selectedAgentType}`);
     }
     return config;
-  }, [selectedAgentType]);
+  }, [selectedAgentType, agentTypeFromStore]);
 
-  console.log({
-    selectedConfigChainId: selectedAgentConfig.evmHomeChainId,
-    agentTypeFromStore,
-    selectedAgentType,
-  });
+  // console.log({
+  //   selectedConfigChainId: selectedAgentConfig.evmHomeChainId,
+  //   agentTypeFromStore,
+  //   selectedAgentType,
+  // });
+  console.log({ selectedAgentConfig });
 
   const serviceWallets: Optional<AgentWallets> = useMemo(() => {
     if (!isServicesFetched) return;
@@ -227,14 +228,24 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
    * Select the first service by default
    */
   useEffect(() => {
+    if (!selectedAgentConfig) return;
     if (!isServicesFetched) return;
+    if (!services) return;
+    if (isEmpty(services)) return;
 
-    if (isEmpty(services)) setSelectedServiceConfigId(null);
+    const currentService = services.find(
+      ({ home_chain }) =>
+        home_chain === selectedAgentConfig.middlewareHomeChainId,
+    );
+    if (!currentService) return;
 
-    if (!selectedServiceConfigId && services && services.length > 0) {
-      setSelectedServiceConfigId(services[0].service_config_id);
-    }
-  }, [isServicesFetched, selectedServiceConfigId, services]);
+    setSelectedServiceConfigId(currentService.service_config_id);
+  }, [
+    isServicesFetched,
+    selectedServiceConfigId,
+    services,
+    selectedAgentConfig,
+  ]);
 
   return (
     <ServicesContext.Provider

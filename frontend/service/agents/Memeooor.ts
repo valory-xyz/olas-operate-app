@@ -14,6 +14,8 @@ import {
 
 import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
 
+const MEMEOOORR_STAKING_PROGRAMS_IDS = [StakingProgramId.MemeBaseAlpha];
+
 export abstract class MemeooorBaseService extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({
     agentMultisigAddress,
@@ -184,7 +186,7 @@ export abstract class MemeooorBaseService extends StakedAgentService {
   ): Promise<StakingContractDetails | undefined> => {
     const { multicallProvider } = PROVIDERS[chainId];
 
-    if (!stakingProgramId.includes(StakingProgramId.MemeBaseAlpha)) {
+    if (!MEMEOOORR_STAKING_PROGRAMS_IDS.includes(stakingProgramId)) {
       return;
     }
 

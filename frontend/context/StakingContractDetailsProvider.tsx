@@ -57,7 +57,9 @@ const useAllStakingContractDetails = () => {
     (record, programId, index) => {
       const query = queryResults[index];
       if (query.status === 'success') {
-        record[programId] = query.data;
+        if (query.data) {
+          record[programId] = query.data;
+        }
       } else if (query.status === 'error') {
         console.error(query.error);
       }
@@ -99,8 +101,9 @@ const useStakingContractDetailsByStakingProgram = ({
        * Request staking contract details
        * if service is present, request it's info and states on the staking contract
        */
+
       const promises: Promise<
-        StakingContractDetails | ServiceStakingDetails
+        StakingContractDetails | ServiceStakingDetails | undefined
       >[] = [
         serviceApi.getStakingContractDetails(stakingProgramId!, evmHomeChainId),
       ];

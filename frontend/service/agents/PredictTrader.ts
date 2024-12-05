@@ -15,6 +15,15 @@ import {
 import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
 
 const MECH_REQUESTS_SAFETY_MARGIN = 1;
+const PREDICT_TRADER_STAKING_PROGRAM_IDS = [
+  StakingProgramId.PearlAlpha,
+  StakingProgramId.PearlBeta,
+  StakingProgramId.PearlBeta2,
+  StakingProgramId.PearlBeta3,
+  StakingProgramId.PearlBeta4,
+  StakingProgramId.PearlBeta5,
+  StakingProgramId.PearlBetaMechMarketplace,
+];
 
 export abstract class PredictTraderService extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({
@@ -129,6 +138,8 @@ export abstract class PredictTraderService extends StakedAgentService {
   ): Promise<number | undefined> => {
     const stakingTokenProxy =
       STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
+    if (!stakingTokenProxy) return;
+
     const { multicallProvider } = PROVIDERS[chainId];
 
     const contractCalls = [
@@ -182,11 +193,14 @@ export abstract class PredictTraderService extends StakedAgentService {
   static getStakingContractDetails = async (
     stakingProgramId: StakingProgramId,
     chainId: EvmChainId,
-  ): Promise<StakingContractDetails> => {
+  ): Promise<StakingContractDetails | undefined> => {
     const { multicallProvider } = PROVIDERS[chainId];
+    const stakingTokenProxy =
+      STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
 
-    const { contract: stakingTokenProxy } =
-      STAKING_PROGRAMS[chainId][stakingProgramId];
+    if (!PREDICT_TRADER_STAKING_PROGRAM_IDS.includes(stakingProgramId)) {
+      return Promise.resolve(undefined);
+    }
 
     const contractCalls = [
       stakingTokenProxy.availableRewards(),
