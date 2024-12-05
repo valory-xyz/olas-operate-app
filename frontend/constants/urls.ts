@@ -17,8 +17,14 @@ export const FAQ_URL: Url = 'https://olas.network/operate#faq';
 export const DOWNLOAD_URL: Url = 'https://olas.network/operate#download';
 
 // thegraph
-export const GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL: Url =
-  'https://api.studio.thegraph.com/query/81371/gnosis-pearl-rewards-history/version/latest';
+export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN = {
+  [EvmChainId.Ethereum]: '',
+  [EvmChainId.Optimism]: '',
+  [EvmChainId.Gnosis]:
+    'https://api.studio.thegraph.com/query/81371/gnosis-pearl-rewards-history/version/latest',
+  [EvmChainId.Base]:
+    'https://api.studio.thegraph.com/query/67875/olas-base-staking-rewards-history/version/latest',
+};
 
 // discord
 export const SUPPORT_URL: Url =

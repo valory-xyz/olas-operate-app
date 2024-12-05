@@ -87,7 +87,6 @@ export const MainOlasBalance = ({
       bordertop={isBorderTopVisible ? 'true' : 'false'}
       borderbottom="true"
       padding="16px 24px"
-      align="center"
     >
       {isBalanceLoaded ? (
         <Flex vertical gap={8}>
