@@ -126,7 +126,7 @@ const useStakingContractDetailsByStakingProgram = ({
         };
       });
     },
-    enabled: !isPaused && !!stakingProgramId,
+    enabled: !isPaused && !!stakingProgramId && serviceNftTokenId !== -1,
     refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });

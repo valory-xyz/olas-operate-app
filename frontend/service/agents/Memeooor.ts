@@ -183,8 +183,8 @@ export abstract class MemeooorBaseService extends StakedAgentService {
   ): Promise<StakingContractDetails> => {
     const { multicallProvider } = PROVIDERS[chainId];
 
-    const { contract: stakingTokenProxy } =
-      STAKING_PROGRAMS[chainId][stakingProgramId];
+    const stakingTokenProxy =
+      STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
 
     const contractCalls = [
       stakingTokenProxy.availableRewards(),

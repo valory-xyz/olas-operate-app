@@ -52,7 +52,8 @@ const EachAgent = ({
         // if the selected type is Memeooorr - should set up the agent first
         gotoPage(Pages.Setup);
         gotoSetup(SetupScreen.SetupYourAgent);
-      } else {
+      } else if (agentType === AgentType.PredictTrader) {
+        gotoPage(Pages.Setup);
         gotoSetup(SetupScreen.SetupEoaFunding);
       }
     }

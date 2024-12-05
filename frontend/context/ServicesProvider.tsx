@@ -86,8 +86,10 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   // set the agent type from the store on load
   useEffect(() => {
     if (!agentType) return;
+    if (agentType === selectedAgentType) return;
+
     setAgentType(agentType);
-  }, [agentType]);
+  }, [agentType, selectedAgentType]);
 
   // user selected service identifier
   const [selectedServiceConfigId, setSelectedServiceConfigId] =
@@ -152,7 +154,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const updateAgentType = useCallback(
     (agentType: AgentType) => {
       store?.set?.('lastSelectedAgentType', agentType);
-      setAgentType(agentType);
     },
     [store],
   );
