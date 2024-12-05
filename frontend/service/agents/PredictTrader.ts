@@ -127,8 +127,8 @@ export abstract class PredictTraderService extends StakedAgentService {
     stakingProgramId: StakingProgramId,
     chainId: EvmChainId = EvmChainId.Gnosis,
   ): Promise<number | undefined> => {
-    const { contract: stakingTokenProxy } =
-      STAKING_PROGRAMS[chainId][stakingProgramId];
+    const stakingTokenProxy =
+      STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
     const { multicallProvider } = PROVIDERS[chainId];
 
     const contractCalls = [

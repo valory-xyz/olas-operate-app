@@ -28,6 +28,7 @@ export abstract class MemeooorBaseService extends StakedAgentService {
   }): Promise<StakingRewardsInfo | undefined> => {
     if (!agentMultisigAddress) return;
     if (!serviceId) return;
+    if (serviceId === -1) return;
 
     const stakingProgramConfig = STAKING_PROGRAMS[chainId][stakingProgramId];
 
@@ -180,8 +181,12 @@ export abstract class MemeooorBaseService extends StakedAgentService {
   static getStakingContractDetails = async (
     stakingProgramId: StakingProgramId,
     chainId: EvmChainId,
-  ): Promise<StakingContractDetails> => {
+  ): Promise<StakingContractDetails | undefined> => {
     const { multicallProvider } = PROVIDERS[chainId];
+
+    if (!stakingProgramId.includes(StakingProgramId.MemeBaseAlpha)) {
+      return;
+    }
 
     const stakingTokenProxy =
       STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
