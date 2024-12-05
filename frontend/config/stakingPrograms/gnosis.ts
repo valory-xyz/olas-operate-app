@@ -23,7 +23,7 @@ export const GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
   [StakingProgramId.PearlBeta5]: '0x4Abe376Fda28c2F43b84884E5f822eA775DeA9F4',
   [StakingProgramId.PearlBetaMechMarketplace]:
     '0xDaF34eC46298b53a3d24CBCb431E84eBd23927dA',
-};
+} as const;
 
 export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
   [StakingProgramId.PearlAlpha]: {
@@ -134,4 +134,4 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       STAKING_TOKEN_PROXY_ABI,
     ),
   },
-};
+} as const;

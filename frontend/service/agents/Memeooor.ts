@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { BASE_STAKING_PROGRAMS } from '@/config/stakingPrograms/base';
 import { PROVIDERS } from '@/constants/providers';
 import { EvmChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
@@ -13,9 +14,6 @@ import {
 } from '@/types/Autonolas';
 
 import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
-
-// TODO: move to common place, enums/StakingProgram.ts?
-const MEMEOOORR_STAKING_PROGRAMS_IDS = [StakingProgramId.MemeBaseAlpha];
 
 export abstract class MemeooorBaseService extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({
@@ -187,12 +185,8 @@ export abstract class MemeooorBaseService extends StakedAgentService {
   ): Promise<StakingContractDetails | undefined> => {
     const { multicallProvider } = PROVIDERS[chainId];
 
-    if (!MEMEOOORR_STAKING_PROGRAMS_IDS.includes(stakingProgramId)) {
-      return;
-    }
-
-    const stakingTokenProxy =
-      STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
+    const stakingTokenProxy = BASE_STAKING_PROGRAMS[stakingProgramId]?.contract;
+    if (!stakingTokenProxy) return;
 
     const contractCalls = [
       stakingTokenProxy.availableRewards(),

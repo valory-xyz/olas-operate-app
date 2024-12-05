@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { GNOSIS_STAKING_PROGRAMS } from '@/config/stakingPrograms/gnosis';
 import { PROVIDERS } from '@/constants/providers';
 import { EvmChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
@@ -15,17 +16,6 @@ import {
 import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
 
 const MECH_REQUESTS_SAFETY_MARGIN = 1;
-
-// TODO: move to common place, enums/StakingProgram.ts?
-const PREDICT_TRADER_STAKING_PROGRAM_IDS = [
-  StakingProgramId.PearlAlpha,
-  StakingProgramId.PearlBeta,
-  StakingProgramId.PearlBeta2,
-  StakingProgramId.PearlBeta3,
-  StakingProgramId.PearlBeta4,
-  StakingProgramId.PearlBeta5,
-  StakingProgramId.PearlBetaMechMarketplace,
-];
 
 export abstract class PredictTraderService extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({
@@ -198,11 +188,9 @@ export abstract class PredictTraderService extends StakedAgentService {
   ): Promise<StakingContractDetails | undefined> => {
     const { multicallProvider } = PROVIDERS[chainId];
     const stakingTokenProxy =
-      STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
+      GNOSIS_STAKING_PROGRAMS[stakingProgramId]?.contract;
 
-    if (!PREDICT_TRADER_STAKING_PROGRAM_IDS.includes(stakingProgramId)) {
-      return Promise.resolve(undefined);
-    }
+    if (!stakingTokenProxy) return;
 
     const contractCalls = [
       stakingTokenProxy.availableRewards(),
