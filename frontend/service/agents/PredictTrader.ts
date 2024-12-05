@@ -15,6 +15,8 @@ import {
 import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
 
 const MECH_REQUESTS_SAFETY_MARGIN = 1;
+
+// TODO: move to common place, enums/StakingProgram.ts?
 const PREDICT_TRADER_STAKING_PROGRAM_IDS = [
   StakingProgramId.PearlAlpha,
   StakingProgramId.PearlBeta,

@@ -14,6 +14,7 @@ import {
 
 import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
 
+// TODO: move to common place, enums/StakingProgram.ts?
 const MEMEOOORR_STAKING_PROGRAMS_IDS = [StakingProgramId.MemeBaseAlpha];
 
 export abstract class MemeooorBaseService extends StakedAgentService {

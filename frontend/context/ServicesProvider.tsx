@@ -78,18 +78,11 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   const agentTypeFromStore = storeState?.lastSelectedAgentType;
 
-  // selected agent type
-  const [selectedAgentType, setAgentType] = useState<AgentType>(
-    agentTypeFromStore ?? AgentType.PredictTrader,
-  );
-
   // set the agent type from the store on load
-  useEffect(() => {
-    if (!agentTypeFromStore) return;
-    if (agentTypeFromStore === selectedAgentType) return;
-
-    setAgentType(agentTypeFromStore);
-  }, [agentTypeFromStore, selectedAgentType]);
+  const selectedAgentType = useMemo(() => {
+    if (!agentTypeFromStore) return AgentType.PredictTrader;
+    return agentTypeFromStore;
+  }, [agentTypeFromStore]);
 
   // user selected service identifier
   const [selectedServiceConfigId, setSelectedServiceConfigId] =
@@ -165,14 +158,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       throw new Error(`Agent config not found for ${selectedAgentType}`);
     }
     return config;
-  }, [selectedAgentType, agentTypeFromStore]);
-
-  // console.log({
-  //   selectedConfigChainId: selectedAgentConfig.evmHomeChainId,
-  //   agentTypeFromStore,
-  //   selectedAgentType,
-  // });
-  console.log({ selectedAgentConfig });
+  }, [selectedAgentType]);
 
   const serviceWallets: Optional<AgentWallets> = useMemo(() => {
     if (!isServicesFetched) return;

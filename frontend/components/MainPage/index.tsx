@@ -1,6 +1,5 @@
 import { Card, Flex } from 'antd';
-import { useCallback } from 'react';
-import { useTimeout } from 'usehooks-ts';
+import { useEffect } from 'react';
 
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -35,7 +34,7 @@ const useSelectAgentTypeIfNotSet = () => {
   const { selectedAgentType } = useServices();
   const { store } = useElectronApi();
 
-  const updateAgentType = useCallback(() => {
+  useEffect(() => {
     if (!store?.set) return;
     if (!storeState) return;
     if (!selectedAgentType) return;
@@ -43,10 +42,6 @@ const useSelectAgentTypeIfNotSet = () => {
 
     store.set('lastSelectedAgentType', selectedAgentType);
   }, [store, storeState, selectedAgentType]);
-
-  useTimeout(() => {
-    updateAgentType();
-  }, 1000);
 };
 
 export const Main = () => {
