@@ -1,4 +1,5 @@
 import { Flex, Skeleton, Tag, Typography } from 'antd';
+import { useMemo } from 'react';
 
 import { NA } from '@/constants/symbols';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
@@ -24,9 +25,21 @@ const getFormattedReward = (reward: number | undefined) =>
   reward === undefined ? NA : `~${balanceFormat(reward, 2)}`;
 
 const DisplayRewards = () => {
-  const { availableRewardsForEpochEth, isEligibleForRewards } = useReward();
+  const {
+    availableRewardsForEpochEth,
+    isEligibleForRewards,
+    isStakingRewardsDetailsFetched,
+  } = useReward();
   const { isLoaded: isBalancesLoaded } = useBalanceContext();
   const reward = getFormattedReward(availableRewardsForEpochEth);
+
+  const earnedTag = useMemo(() => {
+    if (!isStakingRewardsDetailsFetched) return <Skeleton.Input size="small" />;
+    if (!isEligibleForRewards) {
+      return <Tag color="processing">Not yet earned</Tag>;
+    }
+    return <Tag color="success">Earned</Tag>;
+  }, [isEligibleForRewards, isStakingRewardsDetailsFetched]);
 
   return (
     <CardSection vertical gap={8} padding="16px 24px" align="start">
@@ -34,11 +47,7 @@ const DisplayRewards = () => {
       {isBalancesLoaded ? (
         <Flex align="center" gap={12}>
           <Text className="text-xl font-weight-600">{reward} OLAS&nbsp;</Text>
-          {isEligibleForRewards ? (
-            <Tag color="success">Earned</Tag>
-          ) : (
-            <Tag color="processing">Not yet earned</Tag>
-          )}
+          {earnedTag}
         </Flex>
       ) : (
         <Loader />

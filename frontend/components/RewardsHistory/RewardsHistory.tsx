@@ -22,7 +22,10 @@ import styled from 'styled-components';
 import { MiddlewareChain } from '@/client';
 import { CardTitle } from '@/components/Card/CardTitle';
 import { CardFlex } from '@/components/styled/CardFlex';
-import { STAKING_PROGRAM_ADDRESS } from '@/config/stakingPrograms';
+import {
+  STAKING_PROGRAM_ADDRESS,
+  STAKING_PROGRAMS,
+} from '@/config/stakingPrograms';
 import { COLOR } from '@/constants/colors';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
@@ -31,7 +34,7 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { AgentConfig } from '@/types/Agent';
 import { balanceFormat } from '@/utils/numberFormatters';
 import { formatToMonthDay, formatToShortDateTime } from '@/utils/time';
 
@@ -147,15 +150,21 @@ const EpochTime = ({ epoch }: { epoch: EpochDetails }) => {
 type ContractRewardsProps = {
   stakingProgramId: StakingProgramId;
   checkpoints: Checkpoint[];
+  selectedAgentConfig: AgentConfig;
 };
 
-const ContractRewards = ({ checkpoints }: ContractRewardsProps) => {
-  const { activeStakingProgramMeta } = useStakingProgram();
+const ContractRewards = ({
+  checkpoints,
+  stakingProgramId,
+  selectedAgentConfig,
+}: ContractRewardsProps) => {
+  const stakingProgramMeta =
+    STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][stakingProgramId];
 
   return (
     <Flex vertical>
       <ContractName>
-        <Text strong>{activeStakingProgramMeta?.name}</Text>
+        <Text strong>{stakingProgramMeta.name}</Text>
       </ContractName>
 
       {checkpoints.map((checkpoint) => {
@@ -239,6 +248,7 @@ export const RewardsHistory = () => {
               key={contractAddress}
               stakingProgramId={stakingProgramId as StakingProgramId}
               checkpoints={checkpoints}
+              selectedAgentConfig={selectedAgentConfig}
             />
           );
         })}
@@ -250,7 +260,7 @@ export const RewardsHistory = () => {
     isError,
     refetch,
     contractCheckpoints,
-    selectedAgentConfig.evmHomeChainId,
+    selectedAgentConfig,
     serviceNftTokenId,
   ]);
 

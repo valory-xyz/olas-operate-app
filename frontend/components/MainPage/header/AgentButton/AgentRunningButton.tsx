@@ -12,7 +12,7 @@ import { ServicesService } from '@/service/Services';
 
 import { LastTransaction } from '../LastTransaction';
 
-const { Paragraph } = Typography;
+const { Paragraph, Text } = Typography;
 
 const IdleTooltip = () => (
   <Tooltip
@@ -74,14 +74,14 @@ export const AgentRunningButton = () => {
 
       <Flex vertical>
         {isEligibleForRewards ? (
-          <Paragraph type="secondary" className="text-sm">
+          <Text type="secondary" className="text-sm">
             Agent is idle&nbsp;
             <IdleTooltip />
-          </Paragraph>
+          </Text>
         ) : (
-          <Paragraph type="secondary" className="text-sm loading-ellipses">
+          <Text type="secondary" className="text-sm loading-ellipses">
             Agent is working
-          </Paragraph>
+          </Text>
         )}
 
         {isLastTransactionEnabled && (

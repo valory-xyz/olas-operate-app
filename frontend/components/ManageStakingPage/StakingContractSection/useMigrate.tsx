@@ -206,7 +206,7 @@ export const useMigrate = (migrateToStakingProgramId: StakingProgramId) => {
     const { deprecated: isDeprecated, agentsSupported } =
       STAKING_PROGRAMS[homeChainId][migrateToStakingProgramId];
 
-    if (isDeprecated || agentsSupported.includes(selectedAgentType)) {
+    if (isDeprecated || !agentsSupported.includes(selectedAgentType)) {
       return {
         canMigrate: false,
         reason: CantMigrateReason.MigrationNotSupported,

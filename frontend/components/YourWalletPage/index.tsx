@@ -107,26 +107,38 @@ const OlasBalance = () => {
 };
 
 const MasterSafeNativeBalance = () => {
-  const { masterSafes, masterEoa } = useMasterWalletContext();
-  const { masterWalletBalances } = useMasterBalances();
+  const { selectedAgentConfig } = useServices();
+  const { masterSafes } = useMasterWalletContext();
+  const { masterSafeBalances } = useMasterBalances();
 
-  const masterSafeNativeBalance: Optional<number> = useMemo(() => {
-    if (isNil(masterSafes)) return;
-    if (isNil(masterWalletBalances)) return;
+  const selectedMasterSafe = useMemo(() => {
+    if (!masterSafes) return;
+    if (!selectedAgentConfig) return;
 
-    if (isEmpty(masterSafes)) return 0;
-    if (isEmpty(masterWalletBalances)) return 0;
+    return masterSafes.find(
+      (masterSafe) =>
+        masterSafe.evmChainId === selectedAgentConfig.evmHomeChainId,
+    );
+  }, [masterSafes, selectedAgentConfig]);
 
-    const masterSafe = masterSafes[0]; // TODO: handle multiple safes in future
+  const selectedMasterSafeNativeBalance: Optional<number> = useMemo(() => {
+    if (isNil(selectedMasterSafe)) return;
+    if (isNil(masterSafeBalances)) return;
 
-    return masterWalletBalances
-      .filter(
-        ({ walletAddress }) =>
-          walletAddress === masterSafe.address || // TODO: handle multiple safes in future
-          walletAddress === masterEoa?.address,
-      )
-      .reduce((acc, balance) => acc + balance.balance, 0);
-  }, [masterEoa?.address, masterSafes, masterWalletBalances]);
+    return masterSafeBalances
+      .filter(({ walletAddress, evmChainId, isNative }) => {
+        return (
+          evmChainId === selectedAgentConfig?.evmHomeChainId && // TODO: address multi chain, need to refactor as per product requirement
+          isNative &&
+          walletAddress === selectedMasterSafe.address
+        );
+      })
+      .reduce((acc, { balance }) => acc + balance, 0);
+  }, [
+    masterSafeBalances,
+    selectedAgentConfig?.evmHomeChainId,
+    selectedMasterSafe,
+  ]);
 
   const nativeTokenSymbol = getNativeTokenSymbol(EvmChainId.Gnosis);
 
@@ -137,7 +149,7 @@ const MasterSafeNativeBalance = () => {
           {
             left: <Text strong>{getNativeTokenSymbol(EvmChainId.Gnosis)}</Text>,
             leftClassName: 'text-light',
-            right: `${balanceFormat(masterSafeNativeBalance, 2)} ${nativeTokenSymbol}`,
+            right: `${balanceFormat(selectedMasterSafeNativeBalance, 2)} ${nativeTokenSymbol}`,
           },
         ]}
         parentStyle={infoBreakdownParentStyle}
@@ -149,6 +161,7 @@ const MasterSafeNativeBalance = () => {
 const MasterEoaSignerNativeBalance = () => {
   const { masterEoa } = useMasterWalletContext();
   const { masterWalletBalances } = useMasterBalances();
+  const { selectedAgentConfig } = useServices();
 
   const masterEoaBalance: Optional<number> = useMemo(() => {
     if (isNil(masterEoa)) return;
@@ -156,12 +169,13 @@ const MasterEoaSignerNativeBalance = () => {
 
     return masterWalletBalances
       .filter(
-        (
-          { walletAddress, isNative }, // TODO: support chainId grouping, for multi-agent
-        ) => walletAddress === masterEoa.address && isNative,
+        ({ walletAddress, isNative, evmChainId }) =>
+          walletAddress === masterEoa.address &&
+          isNative &&
+          selectedAgentConfig?.evmHomeChainId === evmChainId, // TODO: address multi chain, need to refactor as per product requirement
       )
-      .reduce((acc, balance) => acc + balance.balance, 0);
-  }, [masterEoa, masterWalletBalances]);
+      .reduce((acc, { balance }) => acc + balance, 0);
+  }, [masterEoa, masterWalletBalances, selectedAgentConfig?.evmHomeChainId]);
 
   const nativeTokenSymbol = useMemo(
     () => getNativeTokenSymbol(EvmChainId.Gnosis), // TODO: support multi chain

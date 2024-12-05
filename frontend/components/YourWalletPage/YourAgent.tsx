@@ -1,5 +1,5 @@
 import { Card, Flex, Skeleton, Tooltip, Typography } from 'antd';
-import { isEmpty, isNil } from 'lodash';
+import { isArray, isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import styled from 'styled-components';
@@ -156,7 +156,8 @@ export const YourAgentWallet = ({
   serviceConfigId: string;
 }) => {
   const { isLoaded } = useBalanceContext();
-  const { serviceSafes, serviceNftTokenId } = useService(serviceConfigId);
+  const { serviceSafes, serviceNftTokenId, serviceEoa } =
+    useService(serviceConfigId);
   const { serviceSafeBalances, serviceEoaBalances } =
     useServiceBalances(serviceConfigId);
 
@@ -234,31 +235,32 @@ export const YourAgentWallet = ({
           </Flex>
         )}
 
-        {!isNil(serviceSafeNativeBalances) && (
+        {(!isNil(serviceSafeNativeBalances) ||
+          !isNil(serviceEoaNativeBalances)) && (
           <Flex vertical gap={8}>
-            <InfoBreakdownList
-              list={serviceSafeNativeBalances.map((balance) => ({
-                left: balance.symbol,
-                leftClassName: 'text-light text-sm',
-                right: `${balanceFormat(balance.balance, 2)} ${balance.symbol}`,
-              }))}
-              parentStyle={infoBreakdownParentStyle}
-            />
-          </Flex>
-        )}
-
-        {!isNil(serviceEoaNativeBalances) && (
-          <Flex vertical gap={8}>
-            <InfoBreakdownList
-              list={
-                serviceEoaNativeBalances.map((balance) => ({
-                  left: balance.symbol,
-                  leftClassName: 'text-light text-sm',
+            {isArray(serviceSafeNativeBalances) && (
+              <InfoBreakdownList
+                list={serviceSafeNativeBalances.map((balance) => ({
+                  left: <strong>{balance.symbol}</strong>,
+                  leftClassName: 'text-sm',
                   right: `${balanceFormat(balance.balance, 2)} ${balance.symbol}`,
-                })) ?? []
-              }
-              parentStyle={infoBreakdownParentStyle}
-            />
+                }))}
+                parentStyle={infoBreakdownParentStyle}
+              />
+            )}
+            {!isNil(serviceEoa) && (
+              <InfoBreakdownList
+                list={[
+                  {
+                    left: 'Signer',
+                    leftClassName: 'text-sm',
+                    right: <AddressLink address={serviceEoa.address} />,
+                    rightClassName: 'font-normal text-sm',
+                  },
+                ]}
+                parentStyle={infoBreakdownParentStyle}
+              />
+            )}
           </Flex>
         )}
 

@@ -29,6 +29,7 @@ export const RewardContext = createContext<{
   optimisticRewardsEarnedForEpoch?: number;
   minimumStakedAmountRequired?: number;
   updateRewards: () => Promise<void>;
+  isStakingRewardsDetailsFetched?: boolean;
 }>({
   updateRewards: async () => {},
 });
@@ -123,8 +124,11 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   const { storeState } = useStore();
   const electronApi = useElectronApi();
 
-  const { data: stakingRewardsDetails, refetch: refetchStakingRewardsDetails } =
-    useStakingRewardsDetails();
+  const {
+    data: stakingRewardsDetails,
+    refetch: refetchStakingRewardsDetails,
+    isFetched: isStakingRewardsDetailsFetched,
+  } = useStakingRewardsDetails();
   const {
     data: availableRewardsForEpoch,
     refetch: refetchAvailableRewardsForEpoch,
@@ -173,6 +177,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
         isEligibleForRewards,
         optimisticRewardsEarnedForEpoch,
         updateRewards,
+        isStakingRewardsDetailsFetched,
       }}
     >
       {children}
