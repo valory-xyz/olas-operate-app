@@ -28,6 +28,7 @@ import {
 } from '@/enums/Wallet';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { UsePause, usePause } from '@/hooks/usePause';
+import { useStore } from '@/hooks/useStore';
 import { ServicesService } from '@/service/Services';
 import { AgentConfig } from '@/types/Agent';
 import { Service } from '@/types/Service';
@@ -60,8 +61,8 @@ export const ServicesContext = createContext<ServicesContextType>({
   selectService: noop,
   isSelectedServiceStatusFetched: false,
   refetchSelectedServiceStatus: noop,
-  selectedAgentConfig: AGENT_CONFIG[AgentType.Memeooorr], // TODO: from storage
-  selectedAgentType: AgentType.Memeooorr, // TODO: from storage
+  selectedAgentConfig: AGENT_CONFIG[AgentType.PredictTrader],
+  selectedAgentType: AgentType.PredictTrader,
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
 });
@@ -73,11 +74,20 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
   const { store } = useElectronApi();
   const { paused, setPaused, togglePaused } = usePause();
+  const { storeState } = useStore();
+
+  const agentType = storeState?.lastSelectedAgentType;
 
   // selected agent type
   const [selectedAgentType, setAgentType] = useState<AgentType>(
-    AgentType.Memeooorr, // TODO: from storage
+    agentType ?? AgentType.PredictTrader,
   );
+
+  // set the agent type from the store on load
+  useEffect(() => {
+    if (!agentType) return;
+    setAgentType(agentType);
+  }, [agentType]);
 
   // user selected service identifier
   const [selectedServiceConfigId, setSelectedServiceConfigId] =

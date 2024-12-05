@@ -1,15 +1,35 @@
 import { Button, Flex, Typography } from 'antd';
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { CardSection } from '@/components/styled/CardSection';
 import { Pages } from '@/enums/Pages';
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
+import { useStore } from '@/hooks/useStore';
 
 const { Text } = Typography;
+
+// If the lastSelectedAgentType is not set, set it to the current selected agent type.
+// This is to ensure that the last selected agent type is always set
+// Eg. If the single agent app was used before,
+// the last selected agent should be set to the single agent type
+const useSelectAgentTypeIfNotSet = () => {
+  const { storeState } = useStore();
+  const { selectedAgentType } = useServices();
+  const { store } = useElectronApi();
+
+  useEffect(() => {
+    if (!store?.set) return;
+    if (!storeState) return;
+    if (storeState.lastSelectedAgentType === selectedAgentType) return;
+
+    store.set('lastSelectedAgentType', selectedAgentType);
+  }, [store, storeState, selectedAgentType]);
+};
 
 export const SwitchAgentSection = () => {
   const { goto } = usePageState();
@@ -22,6 +42,8 @@ export const SwitchAgentSection = () => {
   const { isServiceRunning } = useService(selectedService?.service_config_id);
   const { isAllStakingContractDetailsRecordLoaded } =
     useStakingContractContext();
+
+  useSelectAgentTypeIfNotSet();
 
   // enable only if all conditions are met
   const isSwitchAgentEnabled = useMemo(() => {

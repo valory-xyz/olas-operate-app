@@ -19,7 +19,7 @@ const schema = {
  * @param {Electron.BrowserWindow} mainWindow - The main Electron browser window.
  * @returns {Promise<void>} - A promise that resolves once the store is set up.
  */
-const setupStoreIpc = async (ipcMain, mainWindow) => {
+const setupStoreIpc = (ipcMain, mainWindow) => {
   const store = new Store({ schema });
 
   store.onDidAnyChange((data) => {

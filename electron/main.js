@@ -295,7 +295,7 @@ const createMainWindow = async () => {
 
   try {
     logger.electron('Setting up store IPC');
-    await setupStoreIpc(ipcMain, mainWindow);
+    setupStoreIpc(ipcMain, mainWindow);
   } catch (e) {
     logger.electron('Store IPC failed:', JSON.stringify(e));
   }

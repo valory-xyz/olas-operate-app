@@ -123,8 +123,10 @@ export abstract class MemeooorBaseService extends StakedAgentService {
     stakingProgramId: StakingProgramId,
     chainId: EvmChainId = EvmChainId.Base,
   ): Promise<number | undefined> => {
-    const { contract: stakingTokenProxy } =
-      STAKING_PROGRAMS[chainId][stakingProgramId];
+    const stakingTokenProxy =
+      STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
+    if (!stakingTokenProxy) return;
+
     const { multicallProvider } = PROVIDERS[chainId];
 
     const contractCalls = [
