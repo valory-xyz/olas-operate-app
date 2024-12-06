@@ -183,6 +183,9 @@ const EOA_FUNDING_MAP: Record<
   // }
 };
 
+/**
+ * EOA funding setup screen
+ */
 export const SetupEoaFunding = () => {
   const { goto } = useSetup();
   const { selectedAgentType, selectedAgentConfig } = useServices();

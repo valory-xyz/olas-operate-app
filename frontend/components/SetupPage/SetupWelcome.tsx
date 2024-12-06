@@ -12,7 +12,6 @@ import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { MiddlewareAccountIsSetup } from '@/client';
-import { MIN_ETH_BALANCE_THRESHOLDS } from '@/constants/thresholds';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
@@ -132,6 +131,7 @@ export const SetupWelcomeCreate = () => {
 };
 
 export const SetupWelcomeLogin = () => {
+  const [form] = Form.useForm();
   const { goto } = useSetup();
   const { goto: gotoPage } = usePageState();
 
@@ -164,8 +164,6 @@ export const SetupWelcomeLogin = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [canNavigate, setCanNavigate] = useState(false);
 
-  const [form] = Form.useForm();
-
   const handleLogin = useCallback(
     async ({ password }: { password: string }) => {
       setIsLoggingIn(true);
@@ -184,24 +182,19 @@ export const SetupWelcomeLogin = () => {
   );
 
   useEffect(() => {
-    // Navigate only when wallets and balances are loaded
-    // To check if some setup steps were missed
-    // if (canNavigate && wallets?.length && isBalanceLoaded) {
+    if (!canNavigate) return;
 
-    // TODO: fix wallet and balance loads
-    if (canNavigate) {
-      setIsLoggingIn(false);
-      if (
-        !eoaBalanceEth ||
-        eoaBalanceEth <
-          MIN_ETH_BALANCE_THRESHOLDS[selectedServiceOrAgentChainId].safeCreation
-      ) {
-        goto(SetupScreen.SetupEoaFundingIncomplete);
-      } else if (!masterSafe?.address) {
-        goto(SetupScreen.SetupCreateSafe);
-      } else {
-        gotoPage(Pages.Main);
-      }
+    // Navigate only when wallets and balances are loaded
+    if (!isBalanceLoaded) return;
+
+    setIsLoggingIn(false);
+
+    if (!eoaBalanceEth) {
+      goto(SetupScreen.SetupEoaFundingIncomplete);
+    } else if (!masterSafe?.address) {
+      goto(SetupScreen.SetupCreateSafe);
+    } else {
+      gotoPage(Pages.Main);
     }
   }, [
     canNavigate,
