@@ -38,19 +38,21 @@ export const GITHUB_API_LATEST_RELEASE: Url =
 
 // explorers @note DO NOT END WITH `/`
 // export const OPTIMISM_EXPLORER_URL: Url = 'https://optimistic.etherscan.io';
-export const GNOSIS_EXPLORER_URL: Url = 'https://gnosisscan.io';
+const GNOSIS_EXPLORER_URL: Url = 'https://gnosisscan.io';
+const BASE_EXPLORER_URL: Url = 'https://basescan.org';
 
 export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   string | MiddlewareChain,
   Url
 > = {
-  // [MiddlewareChain.OPTIMISM]: OPTIMISM_EXPLORER_URL,
   [MiddlewareChain.GNOSIS]: GNOSIS_EXPLORER_URL,
+  // [MiddlewareChain.OPTIMISM]: OPTIMISM_EXPLORER_URL,
+  [MiddlewareChain.BASE]: BASE_EXPLORER_URL,
 };
 
 export const SWAP_URL_BY_EVM_CHAIN: Record<number | EvmChainId, Url> = {
-  // [EvmChainId.OPTIMISM]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
   [EvmChainId.Gnosis]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
+  // [EvmChainId.OPTIMISM]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
 };
 
 export const EXPLORER_URL_BY_EVM_CHAIN_ID: Record<number | EvmChainId, Url> =

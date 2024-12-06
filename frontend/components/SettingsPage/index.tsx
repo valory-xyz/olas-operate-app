@@ -4,13 +4,13 @@ import { isEmpty, isNil } from 'lodash';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
-import { MiddlewareChain } from '@/client';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { Pages } from '@/enums/Pages';
 import { SettingsScreen } from '@/enums/SettingsScreen';
 import { useMultisig } from '@/hooks/useMultisig';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
 import { useSettings } from '@/hooks/useSettings';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
@@ -86,6 +86,7 @@ export const Settings = () => {
 };
 
 const SettingsMain = () => {
+  const { selectedService } = useServices();
   const { masterEoa, masterSafes } = useMasterWalletContext();
 
   const { owners, ownersIsFetched } = useMultisig(
@@ -117,16 +118,17 @@ const SettingsMain = () => {
     }
   }, [masterSafeBackupAddress]);
 
+  const masterSafeBackupAddressLink = useMemo(() => {
+    if (!selectedService) return '';
+    if (!selectedService.home_chain) return '';
+    return `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[selectedService.home_chain]}/address/${masterSafeBackupAddress}`;
+  }, [masterSafeBackupAddress, selectedService]);
+
   return (
     <Card
       title={<SettingsTitle />}
       bordered={false}
-      styles={{
-        body: {
-          paddingTop: 0,
-          paddingBottom: 0,
-        },
-      }}
+      styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}
       extra={
         <Button
           size="large"
@@ -160,11 +162,7 @@ const SettingsMain = () => {
         {!ownersIsFetched ? (
           <Skeleton />
         ) : masterSafeBackupAddress ? (
-          <Link
-            type="link"
-            target="_blank"
-            href={`${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[MiddlewareChain.GNOSIS]}/address/${masterSafeBackupAddress}`} // TODO: dynamic by selected agent type's home_chain_id
-          >
+          <Link type="link" target="_blank" href={masterSafeBackupAddressLink}>
             {truncatedBackupSafeAddress} {UNICODE_SYMBOLS.EXTERNAL_LINK}
           </Link>
         ) : (
