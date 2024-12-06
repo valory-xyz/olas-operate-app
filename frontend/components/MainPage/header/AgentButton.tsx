@@ -29,6 +29,7 @@ import {
 } from './CannotStartAgentPopover';
 import { requiredGas } from './constants';
 import { LastTransaction } from './LastTransaction';
+import { WhatIsAgentDoing } from './WhatIsAgentDoing';
 
 const { Text, Paragraph } = Typography;
 
@@ -101,12 +102,12 @@ const AgentRunningButton = () => {
   }, [service, setIsServicePollingPaused, setServiceStatus, showNotification]);
 
   return (
-    <Flex gap={10} align="center">
+    <Flex gap={10} align="center" className="mt-8">
       <Button type="default" size="large" onClick={handlePause}>
         Pause
       </Button>
 
-      <Flex vertical>
+      <Flex vertical align="start">
         {isEligibleForRewards ? (
           <Text type="secondary" className="text-sm">
             Agent is idle&nbsp;
@@ -118,6 +119,7 @@ const AgentRunningButton = () => {
           </Text>
         )}
         <LastTransaction />
+        <WhatIsAgentDoing />
       </Flex>
     </Flex>
   );
