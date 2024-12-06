@@ -88,6 +88,9 @@ export const AddFundsSection = () => {
   );
 };
 
+/**
+ * Add funds section
+ */
 export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
   const { selectedAgentConfig } = useServices();
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
