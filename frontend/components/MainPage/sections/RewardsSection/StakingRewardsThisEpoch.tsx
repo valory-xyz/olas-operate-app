@@ -53,12 +53,15 @@ export const StakingRewardsThisEpoch = () => {
 
   const popoverContent = useMemo(() => {
     if (!isActiveStakingProgramLoaded) return <Skeleton.Input />;
-    if (!activeStakingProgramMeta)
+
+    if (!activeStakingProgramMeta) {
       return (
         <div style={{ maxWidth: POPOVER_WIDTH_MEDIUM }}>
           You&apos;re not yet in a staking program!
         </div>
       );
+    }
+
     return (
       <div style={{ maxWidth: POPOVER_WIDTH_MEDIUM }}>
         The epoch for {stakingProgramMeta?.name} ends each day at ~{' '}

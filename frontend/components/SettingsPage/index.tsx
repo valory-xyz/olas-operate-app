@@ -110,7 +110,7 @@ const SettingsMain = () => {
   }, [masterSafeBackupAddresses]);
 
   const walletBackup = useMemo(() => {
-    if (!ownersIsFetched) return <Skeleton />;
+    if (!ownersIsFetched) return <Skeleton.Input />;
     if (!masterSafeBackupAddress) return <NoBackupWallet />;
     if (!selectedService?.home_chain) return null;
 

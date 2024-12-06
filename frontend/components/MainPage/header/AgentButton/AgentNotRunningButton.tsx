@@ -108,8 +108,9 @@ export const AgentNotRunningButton = () => {
       !isNil(hasEnoughServiceSlots) &&
       !hasEnoughServiceSlots &&
       !isServiceStaked
-    )
+    ) {
       return false;
+    }
 
     const masterSafeOlasBalance = masterSafeBalances?.find(
       (walletBalanceResult) =>
