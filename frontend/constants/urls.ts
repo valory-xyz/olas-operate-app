@@ -12,6 +12,8 @@ export const BACKEND_URL_V2: Url = `http://localhost:${process.env.NODE_ENV === 
 export const COW_SWAP_GNOSIS_XDAI_OLAS_URL: Url =
   'https://swap.cow.fi/#/100/swap/WXDAI/OLAS';
 
+export const SWAP_BASE_URL: Url = 'https://swap.cow.fi/#/100/swap/WXDAI/OLAS'; // TODO: update
+
 // olas.network
 export const FAQ_URL: Url = 'https://olas.network/operate#faq';
 export const DOWNLOAD_URL: Url = 'https://olas.network/operate#download';
@@ -53,6 +55,7 @@ export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
 export const SWAP_URL_BY_EVM_CHAIN: Record<number | EvmChainId, Url> = {
   [EvmChainId.Gnosis]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
   // [EvmChainId.OPTIMISM]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
+  [EvmChainId.Base]: SWAP_BASE_URL,
 };
 
 export const EXPLORER_URL_BY_EVM_CHAIN_ID: Record<number | EvmChainId, Url> =
