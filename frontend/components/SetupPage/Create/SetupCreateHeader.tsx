@@ -1,26 +1,31 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button, Col, Flex, Row } from 'antd';
+import { isFunction } from 'lodash';
 import Image from 'next/image';
-import { memo } from 'react';
+import { useCallback } from 'react';
 
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 
-export const SetupCreateHeader = memo(function SetupCreateHeader({
-  prev,
-  disabled = false,
-}: {
-  prev: SetupScreen;
+type SetupCreateHeaderProps = {
+  prev?: SetupScreen | (() => void);
   disabled?: boolean;
-}) {
+};
+
+export const SetupCreateHeader = ({ prev }: SetupCreateHeaderProps) => {
   const { goto } = useSetup();
-  const handleBack = () => goto(prev);
+  const handleBack = useCallback(() => {
+    if (!prev) return;
+
+    isFunction(prev) ? prev() : goto(prev);
+  }, [goto, prev]);
+
   return (
     <Row>
       <Col span={8}>
         <Button
           onClick={handleBack}
-          disabled={disabled}
+          disabled={!prev}
           icon={<ArrowLeftOutlined />}
           size="large"
         />
@@ -39,4 +44,4 @@ export const SetupCreateHeader = memo(function SetupCreateHeader({
       <Col span={8} />
     </Row>
   );
-});
+};

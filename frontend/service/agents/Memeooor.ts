@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { GNOSIS_STAKING_PROGRAMS } from '@/config/stakingPrograms/gnosis';
+import { BASE_STAKING_PROGRAMS } from '@/config/stakingPrograms/base';
 import { PROVIDERS } from '@/constants/providers';
 import { EvmChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
@@ -15,14 +15,12 @@ import {
 
 import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
 
-const MECH_REQUESTS_SAFETY_MARGIN = 1;
-
-export abstract class PredictTraderService extends StakedAgentService {
+export abstract class MemeooorBaseService extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({
     agentMultisigAddress,
     serviceId,
     stakingProgramId,
-    chainId = EvmChainId.Gnosis,
+    chainId = EvmChainId.Base,
   }: {
     agentMultisigAddress: Address;
     serviceId: number;
@@ -31,42 +29,38 @@ export abstract class PredictTraderService extends StakedAgentService {
   }): Promise<StakingRewardsInfo | undefined> => {
     if (!agentMultisigAddress) return;
     if (!serviceId) return;
+    if (serviceId === -1) return;
 
     const stakingProgramConfig = STAKING_PROGRAMS[chainId][stakingProgramId];
 
     if (!stakingProgramConfig) throw new Error('Staking program not found');
 
-    const {
-      activityChecker,
-      contract: stakingTokenProxyContract,
-      mech: mechContract,
-    } = stakingProgramConfig;
-
-    if (!mechContract) throw new Error('Mech contract is not defined');
+    const { activityChecker, contract: stakingTokenProxyContract } =
+      stakingProgramConfig;
 
     const provider = PROVIDERS[chainId].multicallProvider;
 
     const contractCalls = [
-      mechContract.getRequestsCount(agentMultisigAddress),
       stakingTokenProxyContract.getServiceInfo(serviceId),
       stakingTokenProxyContract.livenessPeriod(),
-      activityChecker.livenessRatio(),
       stakingTokenProxyContract.rewardsPerSecond(),
       stakingTokenProxyContract.calculateStakingReward(serviceId),
       stakingTokenProxyContract.minStakingDeposit(),
       stakingTokenProxyContract.tsCheckpoint(),
+      activityChecker.livenessRatio(),
+      activityChecker.getMultisigNonces(),
     ];
     const multicallResponse = await provider.all(contractCalls);
 
     const [
-      mechRequestCount,
       serviceInfo,
       livenessPeriod,
-      livenessRatio,
       rewardsPerSecond,
       accruedStakingReward,
       minStakingDeposit,
       tsCheckpoint,
+      livenessRatio,
+      currentMultisigNonces,
     ] = multicallResponse;
 
     /**
@@ -85,19 +79,16 @@ export abstract class PredictTraderService extends StakedAgentService {
       uint256 inactivity;}
      */
 
+    const lastMultisigNonces = serviceInfo[2];
     const nowInSeconds = Math.floor(Date.now() / 1000);
 
-    const requiredMechRequests =
-      (Math.ceil(Math.max(livenessPeriod, nowInSeconds - tsCheckpoint)) *
-        livenessRatio) /
-        1e18 +
-      MECH_REQUESTS_SAFETY_MARGIN;
-
-    const mechRequestCountOnLastCheckpoint = serviceInfo[2][1];
-    const eligibleRequests =
-      mechRequestCount - mechRequestCountOnLastCheckpoint;
-
-    const isEligibleForRewards = eligibleRequests >= requiredMechRequests;
+    const [isEligibleForRewards] = await provider.all([
+      activityChecker.isRatioPass(
+        currentMultisigNonces,
+        lastMultisigNonces,
+        Math.ceil(nowInSeconds - tsCheckpoint),
+      ),
+    ]);
 
     const availableRewardsForEpoch = Math.max(
       rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
@@ -110,7 +101,6 @@ export abstract class PredictTraderService extends StakedAgentService {
       parseFloat(ethers.utils.formatEther(`${minStakingDeposit}`)) * 2;
 
     return {
-      // mechRequestCount,
       serviceInfo,
       livenessPeriod,
       livenessRatio,
@@ -126,7 +116,7 @@ export abstract class PredictTraderService extends StakedAgentService {
 
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Gnosis,
+    chainId: EvmChainId = EvmChainId.Base,
   ): Promise<number | undefined> => {
     const stakingTokenProxy =
       STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
@@ -157,7 +147,7 @@ export abstract class PredictTraderService extends StakedAgentService {
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Gnosis,
+    chainId: EvmChainId = EvmChainId.Base,
   ): Promise<ServiceStakingDetails> => {
     const { multicallProvider } = PROVIDERS[chainId];
 
@@ -187,9 +177,8 @@ export abstract class PredictTraderService extends StakedAgentService {
     chainId: EvmChainId,
   ): Promise<StakingContractDetails | undefined> => {
     const { multicallProvider } = PROVIDERS[chainId];
-    const stakingTokenProxy =
-      GNOSIS_STAKING_PROGRAMS[stakingProgramId]?.contract;
 
+    const stakingTokenProxy = BASE_STAKING_PROGRAMS[stakingProgramId]?.contract;
     if (!stakingTokenProxy) return;
 
     const contractCalls = [

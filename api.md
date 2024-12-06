@@ -313,6 +313,7 @@ Creates a Gnosis safe for given chain type.
 ```js
 {
   "chain": Chain,
+  "fund_amount": 10000000000000000
 }
 ```
 

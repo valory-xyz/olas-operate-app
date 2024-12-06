@@ -91,7 +91,7 @@ export const BASE_TOKEN_CONFIG: ChainTokenConfig = {
     symbol: TokenSymbol.ETH,
   },
   [TokenSymbol.OLAS]: {
-    address: '0x4B1a99467a284CC690e3237bc69105956816F762',
+    address: '0x54330d28ca3357F294334BDC454a032e7f353416',
     decimals: 18,
     tokenType: TokenType.Erc20,
     symbol: TokenSymbol.OLAS,

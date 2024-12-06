@@ -9,6 +9,7 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
+import { isAddress } from 'ethers/lib/utils';
 import { isEmpty, isNil } from 'lodash';
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
@@ -195,6 +196,8 @@ export const DebugInfoSection = () => {
 
     if (!isNil(serviceAddresses)) {
       serviceAddresses?.forEach((serviceWallet) => {
+        if (!isAddress(serviceWallet.address)) return;
+
         if (serviceWallet.type === WalletType.EOA) {
           result.push({
             title: 'Agent Instance EOA',

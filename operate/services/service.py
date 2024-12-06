@@ -193,9 +193,12 @@ class ServiceBuilder(BaseServiceBuilder):
                     has_multiple_overrides=has_multiple_overrides,
                 )
                 if service_id is not None:
-                    override["models"]["params"]["args"][
-                        "on_chain_service_id"
-                    ] = service_id
+                    if has_multiple_overrides:
+                        os.environ["ON_CHAIN_SERVICE_ID"] = str(service_id)
+                    else:
+                        override["models"]["params"]["args"][
+                            "on_chain_service_id"
+                        ] = service_id
 
             override["type"] = component_id.package_type.value
             override["public_id"] = str(component_id.public_id)

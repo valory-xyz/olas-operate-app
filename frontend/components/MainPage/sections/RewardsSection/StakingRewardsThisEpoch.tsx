@@ -25,7 +25,7 @@ const useEpochEndTime = () => {
       activeStakingProgramAddress!,
     ),
     queryFn: async () => {
-      return await getLatestEpochDetails(activeStakingProgramAddress!);
+      return await getLatestEpochDetails(chainId, activeStakingProgramAddress!);
     },
     select: (data) => {
       // last epoch end time + epoch length

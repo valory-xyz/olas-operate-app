@@ -12,6 +12,7 @@ import {
   useMasterBalances,
   useServiceBalances,
 } from '@/hooks/useBalanceContext';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { balanceFormat } from '@/utils/numberFormatters';
@@ -26,6 +27,7 @@ const Balance = styled.span`
 `;
 
 type MainOlasBalanceProps = { isBorderTopVisible?: boolean };
+
 export const MainOlasBalance = ({
   isBorderTopVisible = true,
 }: MainOlasBalanceProps) => {
@@ -36,6 +38,7 @@ export const MainOlasBalance = ({
     selectedService?.service_config_id,
   );
   const { goto } = usePageState();
+  const isBalanceBreakdownEnabled = useFeatureFlag('balance-breakdown');
 
   const displayedBalance = useMemo(() => {
     // olas across master wallets, safes and eoa
@@ -94,14 +97,16 @@ export const MainOlasBalance = ({
             <span className="balance-currency">OLAS</span>
           </Flex>
 
-          <Text
-            type="secondary"
-            className="text-sm pointer hover-underline"
-            onClick={() => goto(Pages.YourWalletBreakdown)}
-          >
-            See breakdown
-            <RightOutlined style={{ fontSize: 12, paddingLeft: 6 }} />
-          </Text>
+          {isBalanceBreakdownEnabled && (
+            <Text
+              type="secondary"
+              className="text-sm pointer hover-underline"
+              onClick={() => goto(Pages.YourWalletBreakdown)}
+            >
+              See breakdown
+              <RightOutlined style={{ fontSize: 12, paddingLeft: 6 }} />
+            </Text>
+          )}
         </Flex>
       ) : (
         <Skeleton.Input active size="large" style={{ margin: '4px 0' }} />

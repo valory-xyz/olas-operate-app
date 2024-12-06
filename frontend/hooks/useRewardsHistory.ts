@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 import { STAKING_PROGRAM_ADDRESS } from '@/config/stakingPrograms';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
-import { GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL } from '@/constants/urls';
+import { REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
 import { EvmChainId } from '@/enums/Chain';
 import { Address } from '@/types/Address';
 import { Nullable } from '@/types/Util';
@@ -174,7 +174,7 @@ const useContractCheckpoints = (
     queryKey: REACT_QUERY_KEYS.REWARDS_HISTORY_KEY(chainId, serviceId!),
     queryFn: async () => {
       const checkpointsResponse = await request<CheckpointsResponse>(
-        GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL,
+        REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId],
         fetchRewardsQuery(chainId),
       );
 
@@ -241,7 +241,7 @@ export const useRewardsHistory = () => {
   const { service } = useService(serviceConfigId);
 
   const serviceNftTokenId =
-    service?.chain_configs?.[asMiddlewareChain(homeChainId)].chain_data?.token;
+    service?.chain_configs?.[asMiddlewareChain(homeChainId)]?.chain_data?.token;
 
   const {
     isError,

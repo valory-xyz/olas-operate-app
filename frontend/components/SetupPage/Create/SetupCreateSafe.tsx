@@ -4,26 +4,20 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { MiddlewareChain } from '@/client';
 import { CardSection } from '@/components/styled/CardSection';
+import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
+import { EvmChainName } from '@/enums/Chain';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { WalletService } from '@/service/Wallet';
 import { delayInSeconds } from '@/utils/delay';
+import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 const { Text } = Typography;
-
-const capitalizedMiddlewareChainNames: { [key in MiddlewareChain]: string } = {
-  [MiddlewareChain.ETHEREUM]: 'Ethereum',
-  [MiddlewareChain.BASE]: 'Base',
-  [MiddlewareChain.OPTIMISM]: 'Optimism',
-  [MiddlewareChain.GOERLI]: 'Goerli',
-  [MiddlewareChain.GNOSIS]: 'Gnosis',
-  [MiddlewareChain.SOLANA]: 'Solana',
-  [MiddlewareChain.MODE]: 'Mode',
-};
 
 const YouWillBeRedirected = ({ text }: { text: string }) => (
   <>
@@ -59,31 +53,33 @@ const CreationError = () => (
 
 export const SetupCreateSafe = () => {
   const { goto } = usePageState();
-  const { masterSafes, refetch: updateWallets } = useMasterWalletContext();
-  // const { updateMasterSafeOwners } = useMultisig();
+
+  const { selectedAgentType } = useServices();
+  const serviceTemplate = SERVICE_TEMPLATES.find(
+    (template) => template.agentType === selectedAgentType,
+  );
+
+  const {
+    masterSafes,
+    refetch: updateWallets,
+    isFetched: isWalletsFetched,
+  } = useMasterWalletContext();
   const { backupSigner } = useSetup();
 
   const masterSafeAddress = useMemo(() => {
     if (!masterSafes) return;
-    return masterSafes[0]?.address;
-  }, [masterSafes]);
+    return masterSafes.find(
+      (safe) => safe.evmChainId === asEvmChainId(serviceTemplate?.home_chain),
+    );
+  }, [masterSafes, serviceTemplate?.home_chain]);
 
   const [isCreatingSafe, setIsCreatingSafe] = useState(false);
 
-  const [gnosisFailed, setGnosisFailed] = useState(false);
-  // const [optimismFailed, setOptimismFailed] = useState(false);
-  // const [ethereumFailed, setEthereumFailed] = useState(false);
-  // const [baseFailed, setBaseFailed] = useState(false);
-
-  const [isGnosisSuccess, setIsGnosisSuccess] = useState(false);
-  // const [isOptimismSuccess, setIsOptimismSuccess] = useState(false);
-  // const [isEthereumSuccess, setIsEthereumSuccess] = useState(false);
-  // const [isBaseSuccess, setIsBaseSuccess] = useState(false);
+  const [isFailed, setIsFailed] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const createSafeWithRetries = useCallback(
     async (middlewareChain: MiddlewareChain, retries: number) => {
-      setIsCreatingSafe(true);
-
       for (let attempt = retries; attempt > 0; attempt--) {
         try {
           // Attempt to create the safe
@@ -91,37 +87,15 @@ export const SetupCreateSafe = () => {
 
           // Update wallets and handle successful creation
           await updateWallets?.();
-          setIsCreatingSafe(false);
-          setGnosisFailed(false);
+          setIsFailed(false);
+          setIsSuccess(true);
           break; // Exit the loop once successful
         } catch (e) {
           console.error(e);
           if (attempt === 1) {
-            // Final failure case after all retries
-            // If we have retried too many times, set failed
-            // if (middlewareChain === MiddlewareChain.OPTIMISM) {
-            //   setOptimismFailed(true);
-            //   setIsOptimismSuccess(false);
-            //   throw new Error('Failed to create safe on Optimism');
-            // }
-            // if (middlewareChain === MiddlewareChain.ETHEREUM) {
-            //   setEthereumFailed(true);
-            //   setIsEthereumSuccess(false);
-            //   throw new Error('Failed to create safe on Ethereum');
-            // }
-            // if (middlewareChain === MiddlewareChain.BASE) {
-            //   setBaseFailed(true);
-            //   setIsBaseSuccess(false);
-            //   throw new Error('Failed to create safe on Base');
-            // }
-
-            if (middlewareChain === MiddlewareChain.GNOSIS) {
-              setGnosisFailed(true);
-              setIsGnosisSuccess(false);
-              throw new Error('Failed to create safe on Gnosis');
-            }
-
-            throw new Error('Failed to create safe as chain is not supported');
+            setIsFailed(true);
+            setIsSuccess(false);
+            throw new Error(`Failed to create safe on ${middlewareChain}`);
           } else {
             // Retry delay
             message.error(
@@ -137,75 +111,49 @@ export const SetupCreateSafe = () => {
 
   const creationStatusText = useMemo(() => {
     if (isCreatingSafe) return 'Creating accounts';
-    if (masterSafeAddress) return 'Account created';
+    if (isSuccess) return 'Account created';
     return 'Account creation in progress';
-  }, [isCreatingSafe, masterSafeAddress]);
+  }, [isCreatingSafe, isSuccess]);
 
   useEffect(() => {
     if (
       /**
        * Avoid creating safes if any of the following conditions are met:
        */
-      [
-        // optimismFailed, baseFailed, ethereumFailed
-        gnosisFailed,
-      ].some((x) => x) || // any of the chains failed
-      isCreatingSafe //|| // already creating a safe
-      // [isBaseSuccess, isEthereumSuccess, isOptimismSuccess].some((x) => !x) // any of the chains are not successful
+      isFailed || // creation failed - it's retried in background
+      isCreatingSafe || // already creating a safe
+      !isWalletsFetched // wallets are not loaded yet
     )
       return;
 
-    const chainsToCreateSafesFor = {
-      // [MiddlewareChain.OPTIMISM]: masterSafeAddressKeyExistsForChain(
-      //   MiddlewareChain.OPTIMISM,
-      // ),
-      // [MiddlewareChain.ETHEREUM]: masterSafeAddressKeyExistsForChain(
-      //   MiddlewareChain.ETHEREUM,
-      // ),
-      // [MiddlewareChain.BASE]: masterSafeAddressKeyExistsForChain(
-      //   MiddlewareChain.BASE,
-      // ),
-      [MiddlewareChain.GNOSIS]: !!masterSafeAddress,
-    };
+    const chainsToCreateSafesFor = serviceTemplate
+      ? Object.keys(serviceTemplate.configurations)
+      : null;
 
-    const safeCreationsRequired = Object.entries(chainsToCreateSafesFor).reduce(
-      (acc, [chain, safeAddressAlreadyExists]) => {
-        const middlewareChain = chain as MiddlewareChain;
-        if (safeAddressAlreadyExists) {
-          // switch (middlewareChain) {
-          //   case MiddlewareChain.OPTIMISM:
-          //     setIsOptimismSuccess(true);
-          //     break;
-          //   case MiddlewareChain.ETHEREUM:
-          //     setIsEthereumSuccess(true);
-          //     break;
-          //   case MiddlewareChain.BASE:
-          //     setIsBaseSuccess(true);
-          //     break;
-          // }
-
-          switch (middlewareChain) {
-            case MiddlewareChain.GNOSIS:
-              setIsGnosisSuccess(true);
-              break;
+    const safeCreationsRequired = chainsToCreateSafesFor
+      ? chainsToCreateSafesFor.reduce((acc, chain) => {
+          const safeAddressAlreadyExists = masterSafes?.find(
+            (safe) => safe.evmChainId === asEvmChainId(chain),
+          );
+          if (!safeAddressAlreadyExists) {
+            const middlewareChain = chain as MiddlewareChain;
+            acc.push(middlewareChain);
           }
           return acc;
-        }
-        return [...acc, middlewareChain];
-      },
-      [] as MiddlewareChain[],
-    );
+        }, [] as MiddlewareChain[])
+      : [];
 
     (async () => {
       for (const middlewareChain of safeCreationsRequired) {
+        setIsCreatingSafe(true);
         try {
           await createSafeWithRetries(middlewareChain, 3);
           message.success(
-            `${capitalizedMiddlewareChainNames[middlewareChain]} account created`,
+            `${EvmChainName[asEvmChainId(middlewareChain)]} account created`,
           );
         } catch (e) {
           message.warning(
-            `Failed to create ${capitalizedMiddlewareChainNames[middlewareChain]} account`,
+            `Failed to create ${EvmChainName[asEvmChainId(middlewareChain)]} account`,
           );
           console.error(e);
         }
@@ -214,23 +162,21 @@ export const SetupCreateSafe = () => {
       setIsCreatingSafe(false);
     });
   }, [
-    backupSigner,
     createSafeWithRetries,
-    masterSafeAddress,
     isCreatingSafe,
-    // optimismFailed,
-    // isBaseSuccess,
-    // isEthereumSuccess,
-    // isOptimismSuccess,
-    // baseFailed,
-    // ethereumFailed,
-    isGnosisSuccess,
-    gnosisFailed,
+    isFailed,
+    isWalletsFetched,
+    masterSafes,
+    serviceTemplate,
   ]);
 
   useEffect(() => {
     // Only progress is the safe is created and accessible via context (updates on interval)
-    if (masterSafeAddress) goto(Pages.Main);
+    if (masterSafeAddress) {
+      delayInSeconds(2).then(() => {
+        goto(Pages.Main);
+      });
+    }
   }, [goto, masterSafeAddress]);
 
   return (
@@ -242,7 +188,7 @@ export const SetupCreateSafe = () => {
         padding="80px 24px"
         gap={12}
       >
-        {gnosisFailed ? (
+        {isFailed ? (
           <CreationError />
         ) : (
           <YouWillBeRedirected text={creationStatusText} />

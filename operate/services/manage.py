@@ -620,8 +620,7 @@ class ServiceManager:
             and (
                 # TODO Discuss how to manage on-chain hash updates with staking programs.
                 # on_chain_hash != service.hash or  # noqa
-                current_agent_id
-                != staking_params["agent_ids"][0]
+                current_agent_id != staking_params["agent_ids"][0]
                 # TODO This has to be removed for Optimus (needs to be properly implemented). Needs to be put back for Trader!
                 or current_agent_bond != staking_params["min_staking_deposit"]
                 or has_metadata_changed

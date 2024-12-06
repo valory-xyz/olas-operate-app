@@ -22,6 +22,7 @@ import {
   useBalanceContext,
   useMasterBalances,
 } from '@/hooks/useBalanceContext';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
@@ -29,6 +30,7 @@ import { type Address } from '@/types/Address';
 import { Optional } from '@/types/Util';
 import { balanceFormat } from '@/utils/numberFormatters';
 
+import { FeatureNotEnabled } from '../FeatureNotEnabled';
 import { Container, infoBreakdownParentStyle } from './styles';
 import { SignerTitle } from './Titles';
 import { YourAgentWallet } from './YourAgent';
@@ -40,8 +42,6 @@ const yourWalletTheme: ThemeConfig = {
     Card: { paddingLG: 16 },
   },
 };
-
-const YourWalletTitle = () => <CardTitle title="Your wallets" />;
 
 const Address = () => {
   const { masterSafes } = useMasterWalletContext();
@@ -204,15 +204,15 @@ const MasterEoaSignerNativeBalance = () => {
 };
 
 export const YourWalletPage = () => {
-  const { goto } = usePageState();
-
+  const isBalanceBreakdownEnabled = useFeatureFlag('balance-breakdown');
   const { services } = useServices();
+  const { goto } = usePageState();
 
   return (
     <ConfigProvider theme={yourWalletTheme}>
       <CardFlex
         bordered={false}
-        title={<YourWalletTitle />}
+        title={<CardTitle title="Your wallets" />}
         extra={
           <Button
             size="large"
@@ -221,19 +221,23 @@ export const YourWalletPage = () => {
           />
         }
       >
-        <Container style={{ margin: 8 }}>
-          <Address />
-          <OlasBalance />
-          <MasterSafeNativeBalance />
-          <MasterEoaSignerNativeBalance />
-          {services?.map(({ service_config_id }) => (
-            // TODO: bit dirty, but should be fine for now
-            <YourAgentWallet
-              key={service_config_id}
-              serviceConfigId={service_config_id}
-            />
-          ))}
-        </Container>
+        {isBalanceBreakdownEnabled ? (
+          <Container style={{ margin: 8 }}>
+            <Address />
+            <OlasBalance />
+            <MasterSafeNativeBalance />
+            <MasterEoaSignerNativeBalance />
+            {services?.map(({ service_config_id }) => (
+              // TODO: bit dirty, but should be fine for now
+              <YourAgentWallet
+                key={service_config_id}
+                serviceConfigId={service_config_id}
+              />
+            ))}
+          </Container>
+        ) : (
+          <FeatureNotEnabled />
+        )}
       </CardFlex>
     </ConfigProvider>
   );
