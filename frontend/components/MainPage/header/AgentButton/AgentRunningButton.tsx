@@ -11,6 +11,7 @@ import { useServices } from '@/hooks/useServices';
 import { ServicesService } from '@/service/Services';
 
 import { LastTransaction } from '../LastTransaction';
+import { WhatIsAgentDoing } from '../WhatIsAgentDoing';
 
 const { Paragraph, Text } = Typography;
 
@@ -30,7 +31,10 @@ const IdleTooltip = () => (
 );
 
 export const AgentRunningButton = () => {
-  const isLastTransactionEnabled = useFeatureFlag('last-transactions');
+  const [isLastTransactionEnabled, isAgentActivityEnabled] = useFeatureFlag([
+    'last-transactions',
+    'agent-activity',
+  ]);
   const { showNotification } = useElectronApi();
   const { isEligibleForRewards } = useReward();
 
@@ -72,7 +76,7 @@ export const AgentRunningButton = () => {
         Pause
       </Button>
 
-      <Flex vertical>
+      <Flex vertical align="start">
         {isEligibleForRewards ? (
           <Text type="secondary" className="text-sm">
             Agent is idle&nbsp;
@@ -87,6 +91,8 @@ export const AgentRunningButton = () => {
         {isLastTransactionEnabled && (
           <LastTransaction serviceConfigId={serviceConfigId} />
         )}
+
+        {isAgentActivityEnabled && <WhatIsAgentDoing />}
       </Flex>
     </Flex>
   );
