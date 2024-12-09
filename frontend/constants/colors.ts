@@ -12,4 +12,5 @@ export const COLOR = {
   TEXT: '#1f2229',
   TEXT_LIGHT: '#606F85',
   GRAY_1: '#f2f4f9',
+  GRAY_2: '#4D596A',
 };

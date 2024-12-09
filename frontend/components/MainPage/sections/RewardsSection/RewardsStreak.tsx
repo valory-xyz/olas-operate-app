@@ -1,7 +1,6 @@
 import { RightOutlined, ShareAltOutlined } from '@ant-design/icons';
 import { Button, Flex, Skeleton, Tooltip, Typography } from 'antd';
 import { useCallback } from 'react';
-// import Image from 'next/image';
 import styled from 'styled-components';
 
 import { FireNoStreak } from '@/components/custom-icons/FireNoStreak';
@@ -22,6 +21,7 @@ const RewardsStreakFlex = styled(Flex)`
   height: 40px;
   background: ${COLOR.GRAY_1};
   border-radius: 6px;
+  margin-bottom: 16px;
 `;
 
 const Streak = () => {
@@ -39,7 +39,7 @@ const Streak = () => {
 
   const onStreakShare = useCallback(() => {
     const encodedText = encodeURIComponent(
-      `I've just completed a ${optimisticStreak}-day streak with my agent on Pearl and earned OLAS every single day! How long can you keep your streak going?`,
+      `🎉 I've just completed a ${optimisticStreak}-day streak with my agent on Pearl and earned OLAS every single day! 🏆 How long can you keep your streak going? \n\nDownload the Pearl app:`,
     );
     const encodedURL = encodeURIComponent(`${OPERATE_URL}?pearl=share-streak`);
 
@@ -64,31 +64,15 @@ const Streak = () => {
       {optimisticStreak > 0 ? (
         <>
           <FireStreak /> {optimisticStreak} day streak
-          <Tooltip
-            arrow={false}
-            open
-            title={
-              <>
-                Share streak on X
-                {/* <Image
-                  src="/twitter.svg"
-                  width={24}
-                  height={24}
-                  alt="Share streak on twitter"
-                /> */}
-              </>
-            }
-            placement="top"
-          >
+          <Tooltip arrow={false} title={'Share streak on X'} placement="top">
             <Button
               type="link"
               onClick={onStreakShare}
               icon={
                 <ShareAltOutlined
-                  style={{ fontSize: '20px', color: COLOR.TEXT }}
+                  style={{ fontSize: '20px', color: COLOR.GRAY_2 }}
                 />
               }
-              // iconPosition={position}
             />
           </Tooltip>
         </>
