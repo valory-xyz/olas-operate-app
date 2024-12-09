@@ -64,7 +64,7 @@
     "download-binaries": "sh download_binaries.sh",
     "build:pearl": "sh build_pearl.sh"
   },
-  "version": "0.2.0-rc9",
+  "version": "0.2.0-rc11",
   "engines": {
     "node": ">=20",
     "yarn": ">=1.22.0",
