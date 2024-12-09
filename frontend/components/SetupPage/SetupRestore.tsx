@@ -19,6 +19,7 @@ const ExitButton = memo(function ExitButton() {
 
 export const SetupRestoreMain = () => {
   const { goto } = useSetup();
+
   return (
     <CardFlex
       title={
@@ -47,6 +48,7 @@ export const SetupRestoreMain = () => {
           </Button>
         </Tooltip>
       </CardSection>
+
       <CardSection gap={10} vertical bordertop="true" borderbottom="true">
         <Typography.Text>
           If you don’t have the seed phrase but added a backup wallet to your
@@ -134,6 +136,7 @@ export const SetupRestoreViaSeed = () => {
 export const SetupRestoreSetPassword = () => {
   const { goto } = useSetup();
   const [password, setPassword] = useState('');
+
   return (
     <CardFlex
       title={

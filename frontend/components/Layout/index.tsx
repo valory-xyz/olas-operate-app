@@ -5,6 +5,7 @@ import styled, { css } from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
+import { useNotifyOnNewEpoch } from '@/hooks/useNotifyOnNewEpoch';
 
 import { TopBar } from './TopBar';
 
@@ -39,10 +40,17 @@ const Body = styled.div`
   overflow-y: auto;
 `;
 
+const useSystemLevelNotifications = () => {
+  useNotifyOnNewEpoch();
+};
+
 export const Layout = ({
   children,
 }: PropsWithChildren & { vertical?: boolean }) => {
   const { isOnline } = useContext(OnlineStatusContext);
+
+  // all the app level notifications
+  useSystemLevelNotifications();
 
   useEffect(() => {
     let messageKey;

@@ -20,12 +20,12 @@ const main = async () => {
   console.log('Building...');
 
   /** @type import {CliOptions} from "electron-builder" */
-  await build({
+  return build({
     publish: 'onTag',
     config: {
-      appId: 'xyz.valory.olas-pearl-optimus',
+      appId: 'xyz.valory.olas-operate-app',
       artifactName: artifactName(),
-      productName: 'Pearl (Optimus)',
+      productName: 'Pearl',
       files: ['electron/**/*', 'package.json'],
       directories: {
         output: 'dist',
@@ -57,12 +57,16 @@ const main = async () => {
         gatekeeperAssess: false,
         entitlements: 'electron/entitlements.mac.plist',
         entitlementsInherit: 'electron/entitlements.mac.plist',
-        notarize: {
-          teamId: process.env.APPLETEAMID,
-        },
       },
     },
   });
 };
 
-main().then((response) => { console.log('Build & Notarize complete'); }).catch((e) => console.error(e));
+main().then((res) => {
+  console.log(JSON.stringify(res))
+  console.log('Build & Notarize complete');
+
+}).catch((e) => {
+  console.error(JSON.stringify(e))
+  throw new Error('Failed to build and notarize.');
+});

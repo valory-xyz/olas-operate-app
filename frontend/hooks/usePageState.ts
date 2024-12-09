@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 
 import { PageStateContext } from '@/context/PageStateProvider';
-import { Pages } from '@/enums/PageState';
+import { Pages } from '@/enums/Pages';
 
 export const usePageState = () => {
   const { pageState, setPageState, isPageLoadedAndOneMinutePassed } =

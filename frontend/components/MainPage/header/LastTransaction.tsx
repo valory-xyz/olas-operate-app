@@ -4,11 +4,14 @@ import styled from 'styled-components';
 import { useInterval } from 'usehooks-ts';
 
 import { MiddlewareChain } from '@/client';
-import { EXPLORER_URL } from '@/constants/urls';
-import { useAddress } from '@/hooks/useAddress';
+import { ONE_MINUTE_INTERVAL } from '@/constants/intervals';
+import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { usePageState } from '@/hooks/usePageState';
+import { useService } from '@/hooks/useService';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { getLatestTransaction } from '@/service/Ethers';
 import { TransactionInfo } from '@/types/TransactionInfo';
+import { Optional } from '@/types/Util';
 import { getTimeAgo } from '@/utils/time';
 
 const { Text } = Typography;
@@ -22,32 +25,38 @@ const Loader = styled(Skeleton.Input)`
   }
 `;
 
-const POLLING_INTERVAL = 60 * 1000; // 1 minute
+type LastTransactionProps = { serviceConfigId: Optional<string> };
 
 /**
  * Displays the last transaction time and link to the transaction on explorer
  * by agent safe.
  */
-export const LastTransaction = () => {
+export const LastTransaction = ({ serviceConfigId }: LastTransactionProps) => {
   const { isPageLoadedAndOneMinutePassed } = usePageState();
-  const { multisigAddress } = useAddress();
+  const { activeStakingProgramMeta } = useStakingProgram();
+  const { serviceSafes } = useService(serviceConfigId);
+
+  const serviceSafe = serviceSafes?.[0];
+
+  const chainId = activeStakingProgramMeta?.chainId;
 
   const [isFetching, setIsFetching] = useState(true);
   const [transaction, setTransaction] = useState<TransactionInfo | null>(null);
 
   const fetchTransaction = useCallback(async () => {
-    if (!multisigAddress) return;
+    if (!serviceSafe?.address) return;
+    if (!chainId) return;
 
-    getLatestTransaction(multisigAddress)
+    getLatestTransaction(serviceSafe.address, chainId)
       .then((tx) => setTransaction(tx))
       .catch((error) =>
         console.error('Failed to get latest transaction', error),
       )
       .finally(() => setIsFetching(false));
-  }, [multisigAddress]);
+  }, [serviceSafe, chainId]);
 
   // Poll for the latest transaction
-  useInterval(() => fetchTransaction(), POLLING_INTERVAL);
+  useInterval(() => fetchTransaction(), ONE_MINUTE_INTERVAL);
 
   // Fetch the latest transaction on mount
   useEffect(() => {
@@ -77,7 +86,7 @@ export const LastTransaction = () => {
         className="text-xs pointer hover-underline"
         onClick={() =>
           window.open(
-            `${EXPLORER_URL[MiddlewareChain.OPTIMISM]}/tx/${transaction.hash}`,
+            `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[MiddlewareChain.GNOSIS]}/tx/${transaction.hash}`,
           )
         }
       >

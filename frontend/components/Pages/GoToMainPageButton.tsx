@@ -1,7 +1,7 @@
 import { CloseOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 
-import { Pages } from '@/enums/PageState';
+import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 
 export const GoToMainPageButton = () => {

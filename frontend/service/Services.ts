@@ -1,37 +1,42 @@
-import { Deployment, Service, ServiceHash, ServiceTemplate } from '@/client';
-import { CHAINS } from '@/constants/chains';
+import {
+  Deployment,
+  MiddlewareChain,
+  MiddlewareServiceResponse,
+  ServiceTemplate,
+} from '@/client';
+import { CHAIN_CONFIG } from '@/config/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
-import { BACKEND_URL } from '@/constants/urls';
+import { BACKEND_URL_V2 } from '@/constants/urls';
+import { EvmChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
+import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 /**
  * Get a single service from the backend
  * @param serviceHash
  * @returns
  */
-const getService = async (serviceHash: ServiceHash): Promise<Service> =>
-  fetch(`${BACKEND_URL}/services/${serviceHash}`, {
+const getService = async (
+  serviceConfigId: string,
+): Promise<MiddlewareServiceResponse> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}`, {
     method: 'GET',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
     if (response.ok) {
       return response.json();
     }
-    throw new Error(`Failed to fetch service ${serviceHash}`);
+    throw new Error(`Failed to fetch service ${serviceConfigId}`);
   });
 
 /**
  * Gets an array of services from the backend
  * @returns An array of services
  */
-const getServices = async (): Promise<Service[]> =>
-  fetch(`${BACKEND_URL}/services`, {
+const getServices = async (): Promise<MiddlewareServiceResponse[]> =>
+  fetch(`${BACKEND_URL_V2}/services`, {
     method: 'GET',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
     if (response.ok) {
       return response.json();
@@ -54,78 +59,103 @@ const createService = async ({
   serviceTemplate: ServiceTemplate;
   stakingProgramId: StakingProgramId;
   useMechMarketplace?: boolean;
-}): Promise<Service> =>
-  new Promise((resolve, reject) =>
-    fetch(`${BACKEND_URL}/services`, {
-      method: 'POST',
-      body: JSON.stringify({
-        ...serviceTemplate,
-        deploy,
-        configurations: {
-          [CHAINS.OPTIMISM.chainId]: {
-            ...serviceTemplate.configurations[CHAINS.OPTIMISM.chainId],
-            staking_program_id: stakingProgramId,
-            rpc: `${process.env.OPTIMISM_RPC}`,
-            use_mech_marketplace: useMechMarketplace,
-          },
-        },
-      }),
-      headers: {
-        ...CONTENT_TYPE_JSON_UTF8,
-      },
-    }).then((response) => {
-      if (response.ok) {
-        resolve(response.json());
-      }
-      reject(response);
-    }),
-  );
-
-// const deployOnChain = async (serviceHash: ServiceHash): Promise<Deployment> =>
-//   fetch(`${BACKEND_URL}/services/${serviceHash}/onchain/deploy`, {
-//     method: 'POST',
-//     headers: {
-//       ...CONTENT_TYPE_JSON_UTF8,
-//     },
-//   }).then((response) => {
-//     if (response.ok) {
-//       return response.json();
-//     }
-//     throw new Error('Failed to deploy service on chain');
-//   });
-
-// const buildDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
-//   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/build`, {
-//     method: 'POST',
-//     headers: {
-//       ...CONTENT_TYPE_JSON_UTF8,
-//     },
-//   }).then((response) => {
-//     if (response.ok) {
-//       return response.json();
-//     }
-//     throw new Error('Failed to build deployment');
-//   });
-
-// const startDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
-//   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/start`, {
-//     method: 'POST',
-//     headers: {
-//       ...CONTENT_TYPE_JSON_UTF8,
-//     },
-//   }).then((response) => {
-//     if (response.ok) {
-//       return response.json();
-//     }
-//     throw new Error('Failed to start deployment');
-//   });
-
-const stopDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
-  fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/stop`, {
+}): Promise<MiddlewareServiceResponse> =>
+  fetch(`${BACKEND_URL_V2}/service`, {
     method: 'POST',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
+    body: JSON.stringify({
+      ...serviceTemplate,
+      deploy,
+      configurations: {
+        ...serviceTemplate.configurations,
+        // overwrite defaults with chain-specific configurations
+        ...Object.entries(serviceTemplate.configurations).reduce(
+          (acc, [middlewareChain, config]) => {
+            acc[middlewareChain] = {
+              ...config,
+              rpc: CHAIN_CONFIG[asEvmChainId(MiddlewareChain.GNOSIS)].rpc,
+              staking_program_id: stakingProgramId,
+              use_mech_marketplace: useMechMarketplace,
+            };
+            return acc;
+          },
+          {} as typeof serviceTemplate.configurations,
+        ),
+      },
+    }),
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+    throw new Error('Failed to create service');
+  });
+
+/**
+ * Updates a service
+ * @param serviceTemplate
+ * @returns Promise<Service>
+ */
+const updateService = async ({
+  deploy,
+  serviceTemplate,
+  serviceConfigId,
+  stakingProgramId,
+  useMechMarketplace = false,
+  chainId,
+}: {
+  deploy: boolean;
+  serviceTemplate: ServiceTemplate;
+  serviceConfigId: string;
+  stakingProgramId: StakingProgramId;
+  useMechMarketplace?: boolean;
+  chainId: EvmChainId;
+}): Promise<MiddlewareServiceResponse> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      ...serviceTemplate,
+      deploy,
+      configurations: {
+        [CHAIN_CONFIG[chainId].middlewareChain]: {
+          ...serviceTemplate.configurations[
+            CHAIN_CONFIG[chainId].middlewareChain
+          ],
+          staking_program_id: stakingProgramId,
+          rpc: CHAIN_CONFIG[chainId].rpc,
+          use_mech_marketplace: useMechMarketplace,
+        },
+      },
+    }),
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+    throw new Error('Failed to update service');
+  });
+
+/**
+ * Starts a service
+ * @param serviceTemplate
+ * @returns Promise<Service>
+ */
+const startService = async (
+  serviceConfigId: string,
+): Promise<MiddlewareServiceResponse> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}`, {
+    method: 'POST',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+    throw new Error('Failed to start the service');
+  });
+
+const stopDeployment = async (serviceConfigId: string): Promise<Deployment> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/deployment/stop`, {
+    method: 'POST',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
     if (response.ok) {
       return response.json();
@@ -133,27 +163,10 @@ const stopDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
     throw new Error('Failed to stop deployment');
   });
 
-// const deleteDeployment = async (
-//   serviceHash: ServiceHash,
-// ): Promise<Deployment> =>
-//   fetch(`${BACKEND_URL}/services/${serviceHash}/deployment/delete`, {
-//     method: 'POST',
-//     headers: {
-//       ...CONTENT_TYPE_JSON_UTF8,
-//     },
-//   }).then((response) => {
-//     if (response.ok) {
-//       return response.json();
-//     }
-//     throw new Error('Failed to delete deployment');
-//   });
-
-const getDeployment = async (serviceHash: ServiceHash): Promise<Deployment> =>
-  fetch(`${BACKEND_URL}/services/${serviceHash}/deployment`, {
+const getDeployment = async (serviceConfigId: string): Promise<Deployment> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/deployment`, {
     method: 'GET',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
     if (response.ok) {
       return response.json();
@@ -165,11 +178,8 @@ export const ServicesService = {
   getService,
   getServices,
   getDeployment,
+  startService,
   createService,
-  // deployOnChain,
-  // stopOnChain,
-  // buildDeployment,
-  // startDeployment,
+  updateService,
   stopDeployment,
-  // deleteDeployment,
 };

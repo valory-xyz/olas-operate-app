@@ -12,10 +12,16 @@ jobs:
       matrix:
         include:
           - env: "production"
-            rpc: "https://rpc-gate.autonolas.tech/gnosis-rpc/"
+            OPTIMISM_RPC: "https://rpc-gate.autonolas.tech/optimism-rpc/"
+            BASE_RPC: "https://rpc-gate.autonolas.tech/base-rpc/"
+            GNOSIS_RPC: "https://rpc-gate.autonolas.tech/gnosis-rpc/"
+            ETHEREUM_RPC: "https://rpc-gate.autonolas.tech/ethereum-rpc/"
             arch: "x64"
           - env: "development"
-            rpc: "https://virtual.gnosis.rpc.tenderly.co/80ff70d1-71fd-4c9e-9402-913f0c4c58b0"
+            OPTIMISM_RPC: "https://rpc-gate.autonolas.tech/optimism-rpc/"
+            BASE_RPC: "https://rpc-gate.autonolas.tech/base-rpc/"
+            GNOSIS_RPC: "https://virtual.gnosis.rpc.tenderly.co/80ff70d1-71fd-4c9e-9402-913f0c4c58b0"
+            ETHEREUM_RPC: "https://rpc-gate.autonolas.tech/ethereum-rpc/"            
             arch: "x64"
     defaults:
       run:
@@ -23,15 +29,27 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v4
+      # Set up Python with setup-python action and add it to PATH
+      - uses: actions/setup-python@v5
         id: setup-python
         with:
           python-version: "3.10"
 
+      - name: Add Python to PATH
+        run: |
+          echo "${{ steps.setup-python.outputs.python-path }}" >> $GITHUB_PATH
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          registry-url: "https://registry.npmjs.org"     
+          registry-url: "https://registry.npmjs.org"
+
+      # Configure Yarn network settings for timeout, retries, and reduced concurrency
+      - name: Configure Yarn network settings
+        run: |
+          yarn config set network-timeout 60000         # Set network timeout to 1 minute
+          yarn config set network-retries 10             # Retry up to 10 times
+          yarn config set network-concurrency 2          # Reduce concurrency to 2 connections     
           
       - name: Install and configure Poetry
         uses: snok/install-poetry@v1
@@ -84,16 +102,20 @@ jobs:
 
       - name: set env vars to prod.env
         env:
-          NODE_ENV: ${{ matrix.env }}
-          DEV_RPC: ${{ matrix.rpc }}
+          NODE_ENV: ${{ matrix.env }}          
+          GNOSIS_RPC: ${{ matrix.GNOSIS_RPC }}
+          BASE_RPC: ${{ matrix.BASE_RPC }}
+          ETHEREUM_RPC: ${{ matrix.ETHEREUM_RPC }}
+          OPTIMISM_RPC: ${{ matrix.OPTIMISM_RPC }}
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
-          FORK_URL: ${{ matrix.rpc }}
           GH_TOKEN: ${{ secrets.github_token}}
         run: |
           echo NODE_ENV=$NODE_ENV >> prod.env
-          echo DEV_RPC=$DEV_RPC >> prod.env
           echo IS_STAGING=$IS_STAGING >> prod.env
-          echo FORK_URL=$FORK_URL >> prod.env
+          echo OPTIMISM_RPC=$OPTIMISM_RPC >> prod.env
+          echo BASE_RPC=$BASE_RPC >> prod.env
+          echo ETHEREUM_RPC=$ETHEREUM_RPC >> prod.env
+          echo GNOSIS_RPC=$GNOSIS_RPC >> prod.env
           cat prod.env
           echo GH_TOKEN=$GH_TOKEN >> prod.env
       - run: rm -rf /dist

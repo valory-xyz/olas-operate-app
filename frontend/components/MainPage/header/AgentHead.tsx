@@ -1,7 +1,7 @@
 import { Badge } from 'antd';
 import Image from 'next/image';
 
-import { DeploymentStatus } from '@/client';
+import { MiddlewareDeploymentStatus } from '@/client';
 import { useReward } from '@/hooks/useReward';
 import { useServices } from '@/hooks/useServices';
 
@@ -32,17 +32,18 @@ const IdleAgentHead = () => (
 );
 
 export const AgentHead = () => {
-  const { serviceStatus } = useServices();
+  const { selectedService } = useServices();
   const { isEligibleForRewards } = useReward();
+  const status = selectedService?.deploymentStatus;
 
   if (
-    serviceStatus === DeploymentStatus.DEPLOYING ||
-    serviceStatus === DeploymentStatus.STOPPING
+    status === MiddlewareDeploymentStatus.DEPLOYING ||
+    status === MiddlewareDeploymentStatus.STOPPING
   ) {
     return <TransitionalAgentHead />;
   }
 
-  if (serviceStatus === DeploymentStatus.DEPLOYED) {
+  if (status === MiddlewareDeploymentStatus.DEPLOYED) {
     // If the agent is eligible for rewards, agent is idle
     return isEligibleForRewards ? <IdleAgentHead /> : <DeployedAgentHead />;
   }

@@ -1,6 +1,7 @@
 import { Flex, Typography } from 'antd';
 
 import { InfoTooltip } from '@/components/InfoTooltip';
+import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 
 import { AddressLink } from '../AddressLink';
@@ -17,8 +18,8 @@ export const SignerTitle = ({
     Signer&nbsp;
     <InfoTooltip>
       <Paragraph className="text-sm">
-        Your wallet and agent’s wallet use Safe, a multi-signature wallet. The
-        app is designed to trigger transactions on these Safe wallets via
+        Your wallet and agent&apos;s wallet use Safe, a multi-signature wallet.
+        The app is designed to trigger transactions on these Safe wallets via
         Signers.
       </Paragraph>
       <Paragraph className="text-sm">
@@ -43,23 +44,24 @@ export const OlasTitle = () => (
     <InfoTooltip>
       <Paragraph className="text-sm m-0">
         Agent rewards accumulate in the staking contract. The agent is designed
-        to claim rewards periodically. Withdrawal of claimed rewards isn’t
+        to claim rewards periodically. Withdrawal of claimed rewards isn&apos;t
         available yet.
       </Paragraph>
     </InfoTooltip>
   </Flex>
 );
 
-export const XdaiTitle = () => (
+export const NativeTokenTitle = ({ symbol }: { symbol: TokenSymbol }) => (
   <Flex align="center">
     <Title level={5} className="m-0 text-sm">
-      XDAI
+      {symbol}
     </Title>
     &nbsp;
     <InfoTooltip>
+      {/* TODO: address multi-agent tooltip, specfic to agent config */}
       <Paragraph className="text-sm m-0">
-        XDAI is used by the agent to engage in prediction markets. This amount
-        will fluctuate based on your agent’s performance.
+        {symbol} is used by the agent to engage in prediction markets. This
+        amount will fluctuate based on your agent&apos;s performance.
       </Paragraph>
     </InfoTooltip>
   </Flex>
@@ -75,20 +77,20 @@ export const OwnershipNftTitle = () => (
         </Text>
         <Paragraph className="text-sm m-0">
           Agents are minted through the Olas Registry. Each agent has an NFT
-          that gives its owner control over the agent’s settings.
+          that gives its owner control over the agent&apos;s settings.
         </Paragraph>
       </Flex>
     </InfoTooltip>
   </Text>
 );
 
-export const ServiceIdTitle = () => (
+export const ServiceNftIdTitle = () => (
   <Text className="text-sm text-light">
     ID&nbsp;
     <InfoTooltip placement="topRight">
       <Paragraph className="text-sm m-0">
         Each minted agent gets a unique ID. Technically, agents are referred to
-        as ‘services’.
+        as &apos;services&apos;.
       </Paragraph>
     </InfoTooltip>
   </Text>

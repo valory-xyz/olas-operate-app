@@ -11,23 +11,16 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { BigNumber, Contract, ethers } from 'ethers';
 import Link from 'next/link';
 import { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { useInterval } from 'usehooks-ts';
 
-import { ERC20_BALANCEOF_FRAGMENT } from '@/abis/erc20';
-import { CHAINS } from '@/constants/chains';
-import {
-  baseProvider,
-  ethereumProvider,
-  optimismProvider,
-} from '@/constants/providers';
-import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { TOKENS } from '@/constants/tokens';
-import { COW_SWAP_GNOSIS_XDAI_OLAS_URL } from '@/constants/urls';
-import { useWallet } from '@/hooks/useWallet';
+import { CustomAlert } from '@/components/Alert';
+import { CHAIN_CONFIG } from '@/config/chains';
+import { NA, UNICODE_SYMBOLS } from '@/constants/symbols';
+import { SWAP_URL_BY_EVM_CHAIN } from '@/constants/urls';
+import { useServices } from '@/hooks/useServices';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 import { delayInSeconds } from '@/utils/delay';
 import { truncateAddress } from '@/utils/truncate';
@@ -42,16 +35,30 @@ const CustomizedCardSection = styled(CardSection)<{ border?: boolean }>`
   }
 `;
 
+const AddFundsGetTokensSection = () => {
+  const { selectedAgentConfig } = useServices();
+  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
+
+  return (
+    <CardSection justify="center" bordertop="true" padding="16px 24px">
+      <Link target="_blank" href={SWAP_URL_BY_EVM_CHAIN[homeChainId]}>
+        Get OLAS + {CHAIN_CONFIG[homeChainId].nativeToken.symbol} on{' '}
+        {CHAIN_CONFIG[homeChainId].name} {UNICODE_SYMBOLS.EXTERNAL_LINK}
+      </Link>
+    </CardSection>
+  );
+};
+
 export const AddFundsSection = () => {
   const fundSectionRef = useRef<HTMLDivElement>(null);
   const [isAddFundsVisible, setIsAddFundsVisible] = useState(false);
 
   const addFunds = useCallback(async () => {
     setIsAddFundsVisible(true);
-
     await delayInSeconds(0.1);
     fundSectionRef?.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
+
   const closeAddFunds = useCallback(() => setIsAddFundsVisible(false), []);
 
   return (
@@ -82,20 +89,19 @@ export const AddFundsSection = () => {
 };
 
 export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
-  const { masterSafeAddress } = useWallet();
+  const { selectedAgentConfig } = useServices();
+  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
+  const { masterSafes } = useMasterWalletContext();
+  const masterSafeAddress = useMemo(
+    () =>
+      masterSafes?.find((wallet) => wallet.evmChainId === homeChainId)?.address,
+    [homeChainId, masterSafes],
+  );
 
   const truncatedFundingAddress: string | undefined = useMemo(
     () => masterSafeAddress && truncateAddress(masterSafeAddress, 4),
     [masterSafeAddress],
   );
-
-  const [ethEth, setethEth] = useState(0);
-  const [ethUsdc, setethUsdc] = useState(0);
-
-  const [opEth, setopEth] = useState(0);
-  const [opOlas, setopOlas] = useState(0);
-
-  const [baseEth, setbaseEth] = useState(0);
 
   const handleCopyAddress = useCallback(
     () =>
@@ -106,95 +112,43 @@ export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
     [masterSafeAddress],
   );
 
-  useInterval(async () => {
-    if (!masterSafeAddress) return;
-    await Promise.allSettled([
-      ethereumProvider
-        .getBalance(masterSafeAddress)
-        .then(ethers.utils.formatEther)
-        .then(Number)
-        .then(setethEth),
-      //USDC balance
-      new Contract(
-        TOKENS[CHAINS.ETHEREUM.chainId]['USDC'].address,
-        ERC20_BALANCEOF_FRAGMENT,
-        ethereumProvider,
-      )
-        .balanceOf(masterSafeAddress)
-        .then((wei: BigNumber) => ethers.utils.formatUnits(wei, 6))
-        .then(Number)
-        .then(setethUsdc),
-      optimismProvider
-        .getBalance(masterSafeAddress)
-        .then(ethers.utils.formatEther)
-        .then(Number)
-        .then(setopEth),
-      new Contract(
-        TOKENS[CHAINS.OPTIMISM.chainId]['OLAS'].address,
-        ERC20_BALANCEOF_FRAGMENT,
-        optimismProvider,
-      )
-        .balanceOf(masterSafeAddress)
-        .then(ethers.utils.formatEther)
-        .then(Number)
-        .then(setopOlas),
-      baseProvider
-        .getBalance(masterSafeAddress)
-        .then(ethers.utils.formatEther)
-        .then(Number)
-        .then(setbaseEth),
-    ]);
-  }, 2000);
-
   return (
     <Flex vertical ref={ref}>
-      {/* <AddFundsWarningAlertSection /> */}
-
+      <AddFundsWarningAlertSection />
       <AddFundsAddressSection
         truncatedFundingAddress={truncatedFundingAddress}
         fundingAddress={masterSafeAddress}
         handleCopy={handleCopyAddress}
       />
-      <pre style={{ fontSize: 12 }}>
-        {`
--- Master Safe Balances --
-Ethereum
-ETH ${ethEth}
-USDC ${ethUsdc}
-
-Optimism 
-ETH ${opEth} 
-OLAS ${opOlas}
-
-Base
-ETH ${baseEth}
-`}
-      </pre>
       <AddFundsGetTokensSection />
     </Flex>
   );
 });
 OpenAddFundsSection.displayName = 'OpenAddFundsSection';
 
-// const AddFundsWarningAlertSection = () => (
-//   <CardSection>
-//     <CustomAlert
-//       type="warning"
-//       fullWidth
-//       showIcon
-//       message={
-//         <Flex vertical gap={2.5}>
-//           <Text className="text-base" strong>
-//             Only send funds on {CHAINS.OPTIMISM.name}!
-//           </Text>
-//           <Text className="text-base">
-//             You will lose any assets you send on other chains.
-//           </Text>
-//         </Flex>
-//       }
-//     />
-//   </CardSection>
-// );
+const AddFundsWarningAlertSection = () => {
+  const { selectedAgentConfig } = useServices();
+  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
+  return (
+    <CardSection>
+      <CustomAlert
+        type="warning"
+        fullWidth
+        showIcon
+        message={
+          <Flex vertical gap={2.5}>
+            <Text className="text-base" strong>
+              Only send funds on {CHAIN_CONFIG[homeChainId].name} Chain!
+            </Text>
+            <Text className="text-base">
+              You will lose any assets you send on other chains.
+            </Text>
+          </Flex>
+        }
+      />
+    </CardSection>
+  );
+};
 
 const AddFundsAddressSection = ({
   fundingAddress,
@@ -213,7 +167,7 @@ const AddFundsAddressSection = ({
         </span>
       }
     >
-      <Text title={fundingAddress}>{truncatedFundingAddress ?? '--'}</Text>
+      <Text title={fundingAddress}>{truncatedFundingAddress ?? NA}</Text>
     </Tooltip>
 
     <Button onClick={handleCopy} icon={<CopyOutlined />} size="large" />
@@ -229,14 +183,5 @@ const AddFundsAddressSection = ({
     >
       <Button icon={<QrcodeOutlined />} size="large" />
     </Popover> */}
-  </CardSection>
-);
-
-const AddFundsGetTokensSection = () => (
-  <CardSection justify="center" bordertop="true" padding="16px 24px">
-    <Link target="_blank" href={COW_SWAP_GNOSIS_XDAI_OLAS_URL}>
-      Get OLAS + {CHAINS.OPTIMISM.currency} on {CHAINS.OPTIMISM.name}{' '}
-      {UNICODE_SYMBOLS.EXTERNAL_LINK}
-    </Link>
   </CardSection>
 );

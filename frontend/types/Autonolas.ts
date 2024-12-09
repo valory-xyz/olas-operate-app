@@ -1,25 +1,37 @@
-export type StakingRewardsInfo = {
-  // mechRequestCount: number;
-  serviceInfo: unknown[];
-  livenessPeriod: number;
-  livenessRatio: number;
-  rewardsPerSecond: number;
-  isEligibleForRewards: boolean;
-  availableRewardsForEpoch: number;
-  accruedServiceStakingRewards: number;
-  minimumStakedAmount: number;
-};
+import { z } from 'zod';
 
-export type StakingContractInfo = {
+const zodBigNumber = z.object({
+  _isBigNumber: z.boolean(),
+  _hex: z.string().startsWith('0x'),
+});
+
+export const StakingRewardsInfoSchema = z.object({
+  // mechRequestCount: z.number(),
+  serviceInfo: z.array(z.unknown()),
+  livenessPeriod: zodBigNumber,
+  livenessRatio: zodBigNumber,
+  rewardsPerSecond: zodBigNumber,
+  isEligibleForRewards: z.boolean(),
+  availableRewardsForEpoch: z.number(),
+  accruedServiceStakingRewards: z.number(),
+  minimumStakedAmount: z.number(),
+});
+
+export type StakingRewardsInfo = z.infer<typeof StakingRewardsInfoSchema>;
+
+export enum StakingState {
+  NotStaked = 0,
+  Staked = 1,
+  Evicted = 2,
+}
+
+export type StakingContractDetails = {
   availableRewards: number;
+  /* number of slots available for staking */
   maxNumServices: number;
   serviceIds: number[];
   /** minimum staking duration (in seconds) */
   minimumStakingDuration: number;
-  /** time when service was staked (in seconds) - 0 = never staked */
-  serviceStakingStartTime: number;
-  /** 0: not staked, 1: staked, 2: unstaked - current state of the service */
-  serviceStakingState: number;
   /** OLAS cost of staking */
   minStakingDeposit: number;
   /** estimated annual percentage yield */
@@ -28,4 +40,13 @@ export type StakingContractInfo = {
   olasStakeRequired: number;
   /** rewards per work period */
   rewardsPerWorkPeriod: number;
+  /** current epoch */
+  epochCounter: number;
+};
+
+export type ServiceStakingDetails = {
+  /** time when service was staked (in seconds) - 0 = never staked */
+  serviceStakingStartTime: number;
+  /** 0: not staked, 1: staked, 2: evicted */
+  serviceStakingState: StakingState;
 };

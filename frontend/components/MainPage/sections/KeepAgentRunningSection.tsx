@@ -1,6 +1,7 @@
 import { Flex, Typography } from 'antd';
 
-import { DeploymentStatus } from '@/client';
+import { MiddlewareDeploymentStatus } from '@/client';
+import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 
@@ -13,10 +14,14 @@ const cardSectionStyle = { marginBottom: '-1px', marginTop: '24px' };
 
 export const KeepAgentRunningSection = () => {
   const { storeState } = useStore();
-  const { serviceStatus } = useServices();
+
+  const { selectedService } = useServices();
+  const { deploymentStatus: serviceStatus } = useService(
+    selectedService?.service_config_id,
+  );
 
   if (storeState?.firstStakingRewardAchieved) return null;
-  if (serviceStatus !== DeploymentStatus.DEPLOYED) return null;
+  if (serviceStatus !== MiddlewareDeploymentStatus.DEPLOYED) return null;
 
   return (
     <CardSection style={cardSectionStyle}>

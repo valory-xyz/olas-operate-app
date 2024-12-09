@@ -25,17 +25,17 @@ const setBalance = async (masterEoa, rpc) => fetch(rpc, {
     }),
 }).then(() => console.log(`Successfully set balance for ${masterEoa} on ${rpc}`))
 
-const main = async () => { 
+const main = async () => {
     const rpcs = {
-        gnosis: process.env.GNOSIS_DEV_RPC,
-        optimus: process.env.OPTIMISM_DEV_RPC,
-        base: process.env.BASE_DEV_RPC,
-        ethereum: process.env.ETHEREUM_DEV_RPC
+        gnosis: process.env.GNOSIS_RPC,
+        optimus: process.env.OPTIMISM_RPC,
+        base: process.env.BASE_RPC,
+        ethereum: process.env.ETHEREUM_RPC
     };
 
     console.log(rpcs)
 
-    await Promise.all(Object.values(rpcs).map(rpc => setBalance(masterEoa, rpc)));    
+    await Promise.all(Object.values(rpcs).map(rpc => setBalance(masterEoa, rpc)));
 }
 
 main()

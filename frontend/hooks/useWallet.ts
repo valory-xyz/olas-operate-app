@@ -1,5 +1,5 @@
 import { useContext } from 'react';
 
-import { WalletContext } from '@/context/WalletProvider';
+import { MasterWalletContext } from '@/context/MasterWalletProvider';
 
-export const useWallet = () => useContext(WalletContext);
+export const useMasterWalletContext = () => useContext(MasterWalletContext);

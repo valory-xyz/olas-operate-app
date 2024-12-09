@@ -18,23 +18,43 @@
     "import"
   ],
   "rules": {
+    "@next/next/no-html-link-for-pages": "off", // stop Next.js from complaining about pages not being in root
+    "object-shorthand": [
+      "error",
+      "always"
+    ], // don't do things like {service: service}, instead just {service}
     "import/first": "error",
     "import/newline-after-import": "error",
     "import/no-duplicates": "error",
     "simple-import-sort/imports": "error",
     "simple-import-sort/exports": "error",
     "unused-imports/no-unused-imports": "error",
-    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
-    "no-console": ["error", { "allow": ["error"] }],
-    "prettier/prettier": ["error", {
-      "endOfLine": "auto",
-      "semi": true,
-      "singleQuote": true
-    }],
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_"
+      }
+    ],
+    "no-console": [
+      "error",
+      {
+        "allow": [
+          "error"
+        ]
+      }
+    ],
+    "prettier/prettier": [
+      "error",
+      {
+        "endOfLine": "auto",
+        "semi": true,
+        "singleQuote": true
+      }
+    ],
     "react/jsx-props-no-spreading": "off",
     "react/no-array-index-key": "off",
-    "react/react-in-jsx-scope": "off",    
-    "react-hooks/rules-of-hooks": "error", 
+    "react/react-in-jsx-scope": "off",
+    "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn"
   }
 }

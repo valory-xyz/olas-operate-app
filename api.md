@@ -1,6 +1,10 @@
-#### `GET /api`
+# Olas-Operate API reference
 
-Returns information of the operate daemon
+## General
+
+### `GET /api`
+
+Returns information of the operate daemon.
 
 <details>
   <summary>Response</summary>
@@ -19,35 +23,39 @@ Returns information of the operate daemon
 </details>
 
 ---
-#### `GET /api/account`
 
-Returns account status
+## Account
 
-<details>
-  <summary>Before setup</summary>
+### `GET /api/account`
 
-```json
-{
-  "is_setup": false
-}
-```
-
-</details>
+Returns account status.
 
 <details>
-  <summary>After setup</summary>
+  <summary>Response</summary>
 
-```json
-{
-  "is_setup": true
-}
-```
+- Before setup:
+
+    ```json
+    {
+      "is_setup": false
+    }
+    ```
+
+- After setup:
+
+  ```json
+  {
+    "is_setup": true
+  }
+  ```
+
 </details>
 
 ---
-#### `POST /api/account`
 
-Create a local user account
+### `POST /api/account`
+
+Create a local user account.
 
 <details>
   <summary>Request</summary>
@@ -63,29 +71,29 @@ Create a local user account
 <details>
   <summary>Response</summary>
 
-```json
-{
-  "error": null
-}
-```
-</details>
+- If account did not exist:
 
-If account already exists
+  ```json
+  {
+    "error": null
+  }
+  ```
 
-<details>
-  <summary>Response</summary>
+- If account already exists:
 
-```json
-{
-  "error": "Account already exists"
-}
-```
+  ```json
+  {
+    "error": "Account already exists"
+  }
+  ```
+
 </details>
 
 ---
-#### `PUT /api/account`
 
-Update password
+### `PUT /api/account`
+
+Update account password.
 
 <details>
   <summary>Request</summary>
@@ -102,30 +110,30 @@ Update password
 <details>
   <summary>Response</summary>
 
-```json
-{
-  "error": null
-}
-```
-</details>
+- If old password is valid:
 
-Old password is not valid
+  ```json
+  {
+    "error": null
+  }
+  ```
 
-<details>
-  <summary>Response</summary>
+- If old password is not valid:
 
-```json
-{
-  "error": "Old password is not valid",
-  "traceback": "..."
-}
-```
+  ```json
+  {
+    "error": "Old password is not valid",
+    "traceback": "..."
+  }
+  ```
+
 </details>
 
 ---
-#### `POST /api/account/login`
 
-Login and create a session
+### `POST /api/account/login`
+
+Login and create a session.
 
 <details>
   <summary>Request</summary>
@@ -141,15 +149,29 @@ Login and create a session
 <details>
   <summary>Response</summary>
 
-```json
-{
-  "message": "Login successful"
-}
-```
+- If password is valid:
+
+  ```json
+  {
+    "message": "Login successful"
+  }
+  ```
+
+- If password is not valid:
+
+  ```json
+  {
+    "error": "Password is not valid"
+  }
+  ```
+
 </details>
 
 ---
-#### `GET /api/wallet`
+
+## Wallet
+
+### `GET /api/wallet`
 
 Returns a list of available wallets
 
@@ -161,27 +183,101 @@ Returns a list of available wallets
   {
     "address": "0xFafd5cb31a611C5e5aa65ea8c6226EB4328175E7",
     "safe_chains": [
-      2
+      "gnosis"
     ],
     "ledger_type": 0,
-    "safe": "0xd56fb274ce2C66008D5c4C09980c4f36Ab81ff23",
+    "safes": {
+      "gnosis": "0xd56fb274ce2C66008D5c4C09980c4f36Ab81ff23"
+    },
     "safe_nonce": 110558881674480320952254000342160989674913430251257716940579305238321962891821
   }
 ]
 ```
+
 </details>
 
 ---
-#### `POST /api/wallet`
 
-Creates a master key for given chain type.
+### `GET /api/extended/wallet`
+
+Returns a list of available wallets with enriched information. It executes on-chain requests to populate the list of owners of each safe, and provides the attributes
+
+- `consistent_backup_owner`: This flag is `true` when all safes across the chains have exactly the same set of backup owner addresses. It ensures that ownership is identical across all safes, regardless of the number of owners.
+- `consistent_backup_owner_count`: This flag is `true` when all safes have the same number of owners, and that number is either 0 (no backup owners) or 1 (exactly one backup owner). It checks for uniformity in the count of owners and restricts the count to these two cases.
+- `consistent_safe_address`: This flag is `true` when all chains have the same safe address. It ensures there is a single safe address consistently used across all chains.
+
+<details>
+  <summary>Response</summary>
+
+```json
+[
+  {
+    "address":"0xFafd5cb31a611C5e5aa65ea8c6226EB4328175E7",
+    "consistent_backup_owner": false,
+    "consistent_backup_owner_count": false,
+    "consistent_safe_address": true,
+    "ledger_type":"ethereum",
+    "safe_chains":[
+      "gnosis",
+      "ethereum",
+      "base",
+      "optimistic"
+    ],
+    "safe_nonce":110558881674480320952254000342160989674913430251257716940579305238321962891821,
+    "safes":{
+      "base":{
+        "0xd56fb274ce2C66008D5c4C09980c4f36Ab81ff23":{
+          "backup_owners": [],  // Empty = no backup owners
+          "balances": {...}
+        }
+      },
+      "ethereum":{
+        "0xd56fb274ce2C66008D5c4C09980c4f36Ab81ff23":{
+          "backup_owners":[
+            "0x46eC2E77Fe3E367252f1A8a77470CE8eEd2A985b"
+          ],
+          "balances": {...}
+        }
+      },
+      "gnosis":{
+        "0xd56fb274ce2C66008D5c4C09980c4f36Ab81ff23":{
+          "backup_owners":[
+            "0x46eC2E77Fe3E367252f1A8a77470CE8eEd2A985b"
+          ],
+          "balances": {
+            "0x0000000000000000000000000000000000000000": 995899999999999999998, // xDAI
+            "0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83": 0,                     // USDC
+            "0xcE11e14225575945b8E6Dc0D4F2dD4C570f79d9f": 960000000000000000000  // OLAS
+        }
+      },
+      "optimistic":{
+        "0xd56fb274ce2C66008D5c4C09980c4f36Ab81ff23":{
+          "backup_owners":[
+            "0x46eC2E77Fe3E367252f1A8a77470CE8eEd2A985b"
+          ],
+          "balances": {...}
+        }
+      }
+    },
+    "single_backup_owner_per_safe":false
+  }
+]
+```
+
+</details>
+
+---
+
+### `POST /api/wallet`
+
+Creates a master wallet for a given ledger type. If a wallet already exists for a given ledger type, it returns the already existing wallet without creating an additional one.
 
 <details>
   <summary>Request</summary>
 
-```js
+```json
 {
-  "chain_type": ChainType,
+  "ledger_type": LedgerType,
 }
 ```
 
@@ -196,25 +292,27 @@ Creates a master key for given chain type.
     "address": "0xAafd5cb31a611C5e5aa65ea8c6226EB4328175E1",
     "safe_chains": [],
     "ledger_type": 0,
-    "safe": null,
+    "safes": {},
     "safe_nonce": null
   },
-  "mnemonic": [...]
+  "mnemonic": ["polar", "mail", "tattoo", "write", "track", ... ]
 }
 ```
+
 </details>
 
 ---
-#### `PUT /api/wallet`
 
-Creates a gnosis safe for given chain type.
+### `POST /api/wallet/safe`
+
+Creates a Gnosis safe for given chain.
 
 <details>
   <summary>Request</summary>
 
 ```js
 {
-  "chain_type": ChainType,
+  "chain": Chain,
 }
 ```
 
@@ -223,23 +321,114 @@ Creates a gnosis safe for given chain type.
 <details>
   <summary>Response</summary>
 
-```json
-{
-  "address": "0xaaFd5cb31A611C5e5aa65ea8c6226EB4328175E3",
-  "safe_chains": [
-    2
-  ],
-  "ledger_type": 0,
-  "safe": "0xe56fb574ce2C66008d5c4C09980c4f36Ab81ff22",
-  "safe_nonce": 110558881674480320952254000342160989674913430251157716140571305138121962898821
-}
-```
+- If Gnosis safe creation is successful:
+
+  ```json
+  {
+    "address": "0xFafd5cb31a611C5e5aa65ea8c6226EB4328175E7",
+    "safe_chains": [
+      "gnosis"
+    ],
+    "ledger_type": 0,
+    "safes": {
+      "gnosis": "0xd56fb274ce2C66008D5c4C09980c4f36Ab81ff23"
+    },
+    "safe_nonce": 110558881674480320952254000342160989674913430251257716940579305238321962891821
+  }
+  ```
+
+- If Gnosis safe creation is not successful:
+
+  ```json
+  {
+    "error": "Error message",
+    "traceback": "Traceback message"
+  }
+  ```
+
 </details>
 
 ---
-#### `GET /api/services`
 
-Returns the list of services
+### `PUT /api/wallet/safe`
+
+Upadtes a Gnosis safe for given chain. If no `backup_owner` is provided, it will assume a null value, that is, it will remove the backup owner from the safe.
+
+<details>
+  <summary>Request</summary>
+
+```js
+{
+  "chain": Chain,
+  "backup_owner": "0x650e83Bc808B8f405A9aF7CF68644cc817e084A6"  // Optional.
+}
+```
+
+</details>
+
+<details>
+  <summary>Response</summary>
+
+- If Gnosis safe update is successful:
+
+  ```json
+  {
+    "backup_owner_updated": true,
+    "chain": "gnosis",
+    "message": "Backup owner updated.",
+    "wallet": {
+      "address": "0xFafd5cb31a611C5e5aa65ea8c6226EB4328175E7",
+      "safe_chains": [
+        "gnosis"
+      ],
+      "ledger_type": 0,
+      "safes": {
+        "gnosis": "0xd56fb274ce2C66008D5c4C09980c4f36Ab81ff23"
+      },
+      "safe_nonce": 110558881674480320952254000342160989674913430251257716940579305238321962891821
+    }
+  }
+  ```
+
+- If Gnosis safe update is successful, but no changes required in the safe:
+
+  ```json
+  {
+    "backup_owner_updated": false,
+    "chain": "gnosis",
+    "message": "No changes on backup owner. The backup owner provided matches the current one.",
+    "wallet": {
+      "address": "0xFafd5cb31a611C5e5aa65ea8c6226EB4328175E7",
+      "safe_chains": [
+        "gnosis"
+      ],
+      "ledger_type": 0,
+      "safes": {
+        "gnosis": "0xd56fb274ce2C66008D5c4C09980c4f36Ab81ff23"
+      },
+      "safe_nonce": 110558881674480320952254000342160989674913430251257716940579305238321962891821
+    }
+  }
+  ```
+
+- If Gnosis safe creation is not successful:
+
+  ```json
+  {
+    "error": "Error message",
+    "traceback": "Traceback message"
+  }
+  ```
+
+</details>
+
+---
+
+## Services
+
+### `GET /api/v2/services`
+
+Returns the list of existing service configurations.
 
 <details>
   <summary>Response</summary>
@@ -247,253 +436,309 @@ Returns the list of services
 ```json
 [
   {
-    "hash": "bafybeiha6dxygx2ntgjxhs6zzymgqk3s5biy3ozeqw6zuhr6yxgjlebfmq",
-    "keys": [
-      {
-        "ledger": 0,
-        "address": "0x6Db941e0e82feA3c02Ba83B20e3fB5Ea6ee539cf",
-        "private_key": "0x34f58dcc11acec007644e49921fd81b9c8a959f651d6d66a42242a1b2dbaf4be"
-      }
-    ],
-    "ledger_config": {
-      "rpc": "http://localhost:8545",
-      "type": 0,
-      "chain": 2
-    },
-    "chain_data": {
-      "instances": [
-        "0x6Db941e0e82feA3c02Ba83B20e3fB5Ea6ee539cf"
-      ],
-      "token": 380,
-      "multisig": "0x7F3e460Cf596E783ca490791643C0055Fa2034AC",
-      "staked": false,
-      "on_chain_state": 6,
-      "user_params": {
-        "nft": "bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq",
-        "agent_id": 14,
-        "threshold": 1,
-        "use_staking": false,
-        "cost_of_bond": 10000000000000000,
-        "olas_cost_of_bond": 10000000000000000000,
-        "olas_required_to_stake": 10000000000000000000,
-        "fund_requirements": {
-          "agent": 0.1,
-          "safe": 0.5
-        }
-      }
-    },
-    "path": "/Users/virajpatel/valory/olas-operate-app/.operate/services/bafybeiha6dxygx2ntgjxhs6zzymgqk3s5biy3ozeqw6zuhr6yxgjlebfmq",
-    "service_path": "/Users/virajpatel/valory/olas-operate-app/.operate/services/bafybeiha6dxygx2ntgjxhs6zzymgqk3s5biy3ozeqw6zuhr6yxgjlebfmq/trader_omen_gnosis",
-    "name": "valory/trader_omen_gnosis"
-  }
+    "chain_configs": {...},
+    "description": "Trader agent for omen prediction markets",
+    "env_variables": {...},
+    "hash": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u",
+    "hash_history": {"1731487112": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u"},
+    "home_chain": "gnosis",
+    "keys": [...],
+    "name": "valory/trader_omen_gnosis",
+    "service_config_id": "sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39",
+    "service_path": "/home/user/.operate/services/sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39/trader_omen_gnosis",
+    "version": 4
+  },
+  ...
 ]
 ```
 
 </details>
 
 ---
-#### `POST /api/services`
 
-Create a service using the service template
+#### `POST /api/v2/services`
+
+Create a service configuration using a template.
 
 <details>
   <summary>Request</summary>
 
 ```json
-{
-  "name": "Trader Agent",
-  "description": "Trader agent for omen prediction markets",
-  "hash": "bafybeiha6dxygx2ntgjxhs6zzymgqk3s5biy3ozeqw6zuhr6yxgjlebfmq",
-  "image": "https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75",
-  "configuration": {
-    "nft": "bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq",
-    "rpc": "http://localhost:8545",
-    "agent_id": 14,
-    "threshold": 1,
-    "use_staking": false,
-    "cost_of_bond": 10000000000000000,
-    "olas_cost_of_bond": 10000000000000000000,
-    "olas_required_to_stake": 10000000000000000000,
-    "fund_requirements": {
-      "agent": 0.1,
-      "safe": 0.5
-    }
+  {
+    "configurations": {...},
+    "description": "Trader agent for omen prediction markets",
+    "env_variables": {...},
+    "hash": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u",
+    "image": "https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75",
+    "home_chain": "gnosis",
+    "name": "valory/trader_omen_gnosis",
+    "service_version": "v0.18.4"
   }
-}
 ```
 
 </details>
-
-Optionally you can add `deploy` parameter and set it to `true` for a full deployment in a single request.
 
 <details>
   <summary>Response</summary>
 
 ```json
 {
-  "hash": "bafybeiha6dxygx2ntgjxhs6zzymgqk3s5biy3ozeqw6zuhr6yxgjlebfmq",
-  "keys": [
-    {
-      "ledger": 0,
-      "address": "0x10EB940024913dfCAE95D21E04Ba662cdfB79fF0",
-      "private_key": "0x00000000000000000000000000000000000000000000000000000000000000000"
-    }
-  ],
-  "ledger_config": {
-    "rpc": "http: //localhost:8545",
-    "type": 0,
-    "chain": 2
-  },
-  "chain_data": {
-    "instances": [
-      "0x10EB940024913dfCAE95D21E04Ba662cdfB79fF0"
-    ],
-    "token": 382,
-    "multisig": "0xf21d8A424e83BBa2588306D1C574FE695AD410b5",
-    "staked": false,
-    "on_chain_state": 4,
-    "user_params": {
-      "nft": "bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq",
-      "agent_id": 14,
-      "threshold": 1,
-      "use_staking": false,
-      "cost_of_bond": 10000000000000000,
-      "olas_cost_of_bond": 10000000000000000000,
-      "olas_required_to_stake": 10000000000000000000,
-      "fund_requirements": {
-        "agent": 0.1,
-        "safe": 0.5
-      }
-    }
-  },
-  "path": "~/.operate/services/bafybeiha6dxygx2ntgjxhs6zzymgqk3s5biy3ozeqw6zuhr6yxgjlebfmq",
-  "service_path": "~/.operate/services/bafybeiha6dxygx2ntgjxhs6zzymgqk3s5biy3ozeqw6zuhr6yxgjlebfmq/trader_omen_gnosis",
-  "name": "valory/trader_omen_gnosis"
+  "chain_configs": {...},
+  "description": "Trader agent for omen prediction markets",
+  "env_variables": {...},
+  "hash": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u",
+  "hash_history": {"1731487112": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u"},
+  "home_chain": "gnosis",
+  "keys": [...],
+  "name": "valory/trader_omen_gnosis",
+  "service_config_id": "sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39",
+  "service_path": "/home/user/.operate/services/sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39/trader_omen_gnosis",
+  "version": 4
 }
 ```
 
 </details>
 
 ---
-#### `PUT /api/services`
 
-Update a service
+### `PUT /api/v2/services`
+
+Update all the service configurations whose Service Public ID match the Service Public ID in the provided hash.
 
 <details>
   <summary>Request</summary>
 
 ```json
-{
-    "old_service_hash": "bafybeiha6dxygx2ntgjxhs6zzymgqk3s5biy3ozeqw6zuhr6yxgjlebfmq",
-    "new_service_hash": "bafybeicxdpkuk5z5zfbkso7v5pywf4v7chxvluyht7dtgalg6dnhl7ejoe",
-}
+  {
+    "configurations": {...},
+    "description": "Trader agent for omen prediction markets",
+    "env_variables": {...},
+    "hash": "bafybeibpseosblmaw6sk6zsnic2kfxfsijrnfluuhkwboyqhx7ma7zw2me",
+    "image": "https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75",
+    "home_chain": "gnosis",
+    "name": "valory/trader_omen_gnosis",
+    "service_version": "v0.19.0"
+  }
 ```
 
 </details>
 
-Optionally you can add `deploy` parameter and set it to `true` for a full deployment in a single request.
-
 <details>
   <summary>Response</summary>
 
+The response contains an array of the services which have been updated (an empty array if no service matches the Service Public ID in the provided hash).
+
 ```json
-{
-  "hash": "bafybeicxdpkuk5z5zfbkso7v5pywf4v7chxvluyht7dtgalg6dnhl7ejoe",
-  "keys": [
-    {
-      "ledger": 0,
-      "address": "0x10EB940024913dfCAE95D21E04Ba662cdfB79fF0",
-      "private_key": "0x00000000000000000000000000000000000000000000000000000000000000000"
-    }
-  ],
-  "ledger_config": {
-    "rpc": "http: //localhost:8545",
-    "type": 0,
-    "chain": 2
+[
+  {
+    "chain_configs": {...},
+    "description": "Trader agent for omen prediction markets",
+    "env_variables": {...},
+    "hash": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u",
+    "hash_history": {"1731487112": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u", "1731490000": "bafybeibpseosblmaw6sk6zsnic2kfxfsijrnfluuhkwboyqhx7ma7zw2me"},
+    "home_chain": "gnosis",
+    "keys": [...],
+    "name": "valory/trader_omen_gnosis",
+    "service_config_id": "sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39",
+    "service_path": "/home/user/.operate/services/sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39/trader_omen_gnosis",
+    "version": 4
   },
-  "chain_data": {
-    "instances": [
-      "0x10EB940024913dfCAE95D21E04Ba662cdfB79fF0"
-    ],
-    "token": 382,
-    "multisig": "0xf21d8A424e83BBa2588306D1C574FE695AD410b5",
-    "staked": false,
-    "on_chain_state": 4,
-    "user_params": {
-      "nft": "bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq",
-      "agent_id": 14,
-      "threshold": 1,
-      "use_staking": false,
-      "cost_of_bond": 10000000000000000,
-      "olas_cost_of_bond": 10000000000000000000,
-      "olas_required_to_stake": 10000000000000000000,
-      "fund_requirements": {
-        "agent": 0.1,
-        "safe": 0.5
-      }
-    }
-  },
-  "path": "~/.operate/services/bafybeicxdpkuk5z5zfbkso7v5pywf4v7chxvluyht7dtgalg6dnhl7ejoe",
-  "service_path": "~/.operate/services/bafybeicxdpkuk5z5zfbkso7v5pywf4v7chxvluyht7dtgalg6dnhl7ejoe/trader_omen_gnosis",
-  "name": "valory/trader_omen_gnosis"
-}
+  ...
+]
 ```
 
 </details>
 
 ---
-#### `GET /api/services/{service}`
+
+#### `POST /api/v2/services/stop` (alias `GET /stop_all_services`)
+
+Stop all running deployments.
 
 <details>
   <summary>Response</summary>
 
+- If the operation was successful:
+  
+  ```json
+  {
+    "message": "Services stopped."
+  }
+  ```
+
+- If the operation was not successful:
+
+  ```json
+  {
+    "error": "Error message",
+    "traceback": "Traceback message"
+  }
+  ```
+
+</details>
+
+---
+
+## Service
+
+### `GET /api/v2/service/{service_config_id}`
+
+Returns the service configuration `service_config_id`.
+
+<details>
+  <summary>Response</summary>
+
+- If service configuration `service_config_id` exists:
+
+  ```json
+  {
+    "chain_configs": {...},
+    "description": "Trader agent for omen prediction markets",
+    "env_variables": {...},
+    "hash": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u",
+    "hash_history": {"1731487112": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u"},
+    "home_chain": "gnosis",
+    "keys": [...],
+    "name": "valory/trader_omen_gnosis",
+    "service_config_id": "sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39",
+    "service_path": "/home/user/.operate/services/sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39/trader_omen_gnosis",
+    "version": 4
+  }
+
+  ```
+
+- If service configuration `service_config_id` does not exist:
+  
+  ```json
+  {
+    "error": "Service foo not found"
+  }
+  ```
+
+</details>
+
+---
+
+### `POST /api/v2/service/{service_config_id}`
+
+Deploy service with service configuration `service_config_id` on-chain and run local deployment. This endpoint executes the following tasks:
+
+1. Stops any running service.
+2. Ensures that the service is deployed on-chain on all the configured chains.
+3. Ensures that the the service is staked on all the configured chains.
+4. Runs the service locally.
+5. Starts funding job.
+6. Starts healthcheck job.
+
+</details>
+
+<details>
+  <summary>Response</summary>
+
+The response contains the updated service configuration following the on-chain operations, including service Gnosis safe, on-chain token, etc.
+
 ```json
 {
-  "hash": "{service}",
-  "keys": [
-    {
-      "ledger": 0,
-      "address": "0x10EB940024913dfCAE95D21E04Ba662cdfB79fF0",
-      "private_key": "0x00000000000000000000000000000000000000000000000000000000000000000"
-    }
-  ],
-  "ledger_config": {
-    "rpc": "http: //localhost:8545",
-    "type": 0,
-    "chain": 2
-  },
-  "chain_data": {
-    "instances": [
-      "0x10EB940024913dfCAE95D21E04Ba662cdfB79fF0"
-    ],
-    "token": 382,
-    "multisig": "0xf21d8A424e83BBa2588306D1C574FE695AD410b5",
-    "staked": false,
-    "on_chain_state": 4,
-    "user_params": {
-      "nft": "bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq",
-      "agent_id": 14,
-      "threshold": 1,
-      "use_staking": false,
-      "cost_of_bond": 10000000000000000,
-      "olas_cost_of_bond": 10000000000000000000,
-      "olas_required_to_stake": 10000000000000000000,
-      "fund_requirements": {
-        "agent": 0.1,
-        "safe": 0.5
-      }
-    }
-  },
-  "path": "~/.operate/services/{service}",
-  "service_path": "~/.operate/services/{service}/trader_omen_gnosis",
-  "name": "valory/trader_omen_gnosis"
+  "chain_configs": {...},
+  "description": "Trader agent for omen prediction markets",
+  "env_variables": {...},
+  "hash": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u",
+  "hash_history": {"1731487112": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u"},
+  "home_chain": "gnosis",
+  "keys": [...],
+  "name": "valory/trader_omen_gnosis",
+  "service_config_id": "sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39",
+  "service_path": "/home/user/.operate/services/sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39/trader_omen_gnosis"
 }
+
 ```
 
 </details>
 
 ---
-#### `POST /api/services/{service}/onchain/deploy`
+
+### `PUT /api/v2/service/{service_config_id}`
+
+Update service configuration `service_config_id` with the provided template.
+
+<details>
+  <summary>Request</summary>
+
+```json
+  {
+    "configurations": {...},
+    "description": "Trader agent for omen prediction markets",
+    "env_variables": {...},
+    "hash": "bafybeibpseosblmaw6sk6zsnic2kfxfsijrnfluuhkwboyqhx7ma7zw2me",
+    "image": "https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75",
+    "home_chain": "gnosis",
+    "name": "valory/trader_omen_gnosis",
+    "service_version": "v0.19.0"
+  }
+```
+
+</details>
+
+<details>
+  <summary>Response</summary>
+
+- If the update is successful, the response contains the updated service configuration:
+
+  ```json
+  {
+    "chain_configs": {...},
+    "description": "Trader agent for omen prediction markets",
+    "env_variables": {...},
+    "hash": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u",
+    "hash_history": {"1731487112": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u", "1731490000": "bafybeibpseosblmaw6sk6zsnic2kfxfsijrnfluuhkwboyqhx7ma7zw2me"},
+    "home_chain": "gnosis",
+    "keys": [...],
+    "name": "valory/trader_omen_gnosis",
+    "service_config_id": "sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39",
+    "service_path": "/home/user/.operate/services/sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39/trader_omen_gnosis"
+  }
+
+  ```
+
+- If the update is not successful:
+
+  ```json
+  {
+    "error": "Error message",
+    "traceback": "Traceback message"
+  }
+  ```
+
+</details>
+
+---
+
+### `POST /api/service/{service_config_id}/stop`
+
+Stop service with service configuration `service_configuration_id`.
+
+<details>
+  <summary>Response</summary>
+
+```json
+  {
+    "nodes": {
+      "agent": [],
+      "tendermint": []
+    },
+    "status": 1
+  }
+```
+
+</details>
+
+---
+
+## Unused endpoints
+
+### `POST /api/services/{service}/onchain/deploy`
+
+**:warning: Deprecated**
 
 Deploy service on-chain
 
@@ -514,7 +759,10 @@ Deploy service on-chain
 </details>
 
 ---
-#### `POST /api/services/{service}/onchain/stop`
+
+### `POST /api/services/{service}/onchain/stop`
+
+**:warning: Deprecated**
 
 Stop service on-chain
 
@@ -535,7 +783,10 @@ Stop service on-chain
 </details>
 
 ---
-#### `GET /api/services/{service}/deployment`
+
+### `GET /api/services/{service}/deployment`
+
+**:warning: Deprecated**
 
 <details>
   <summary>Response</summary>
@@ -557,7 +808,10 @@ Stop service on-chain
 </details>
 
 ---
-#### `POST /api/services/{service}/deployment/build`
+
+### `POST /api/services/{service}/deployment/build`
+
+**:warning: Deprecated**
 
 Build service locally
 
@@ -578,7 +832,10 @@ Build service locally
 </details>
 
 ---
-#### `POST /api/services/{service}/deployment/start`
+
+### `POST /api/services/{service}/deployment/start`
+
+**:warning: Deprecated**
 
 Start agent
 
@@ -599,7 +856,10 @@ Start agent
 </details>
 
 ---
-#### `POST /api/services/{service}/deployment/stop`
+
+### `POST /api/services/{service}/deployment/stop`
+
+**:warning: Deprecated**
 
 Stop agent
 
@@ -607,7 +867,10 @@ Stop agent
 ```
 
 ---
-#### `POST /api/services/{service}/deployment/delete`
+
+### `POST /api/services/{service}/deployment/delete`
+
+**:warning: Deprecated**
 
 Delete local deployment
 
@@ -645,5 +908,3 @@ Delete local deployment
 </details>
 
 -->
-
-

@@ -1,4 +1,6 @@
-export const SERVICE_REGISTRY_L2_ABI = [
+import { Abi } from '@/types/Abi';
+
+export const SERVICE_REGISTRY_L2_ABI: Abi = [
   {
     inputs: [
       { internalType: 'string', name: '_name', type: 'string' },

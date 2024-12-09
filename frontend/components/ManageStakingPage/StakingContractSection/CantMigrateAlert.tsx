@@ -1,12 +1,23 @@
 import { Flex, Typography } from 'antd';
-import { isNil } from 'lodash';
+import { isEmpty, isNil } from 'lodash';
+import { useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
+import { getNativeTokenSymbol } from '@/config/tokens';
+import { LOW_MASTER_SAFE_BALANCE } from '@/constants/thresholds';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useBalance } from '@/hooks/useBalance';
-import { useServiceTemplates } from '@/hooks/useServiceTemplates';
-import { useStakingContractInfo } from '@/hooks/useStakingContractInfo';
-import { getMinimumStakedAmountRequired } from '@/utils/service';
+import { TokenSymbol } from '@/enums/Token';
+import {
+  useBalanceContext,
+  useMasterBalances,
+} from '@/hooks/useBalanceContext';
+import { useNeedsFunds } from '@/hooks/useNeedsFunds';
+import { useServices } from '@/hooks/useServices';
+import {
+  useActiveStakingContractInfo,
+  useStakingContractContext,
+} from '@/hooks/useStakingContractDetails';
+import { balanceFormat } from '@/utils/numberFormatters';
 
 import { CantMigrateReason } from './useMigrate';
 
@@ -15,25 +26,55 @@ const { Text } = Typography;
 type CantMigrateAlertProps = { stakingProgramId: StakingProgramId };
 
 const AlertInsufficientMigrationFunds = ({
-  stakingProgramId,
+  stakingProgramId: stakingProgramIdToMigrateTo,
 }: CantMigrateAlertProps) => {
-  const { serviceTemplate } = useServiceTemplates();
-  const { isServiceStaked } = useStakingContractInfo();
-  const { masterSafeBalance: safeBalance, totalOlasStakedBalance } =
-    useBalance();
-
-  const totalOlasRequiredForStaking = getMinimumStakedAmountRequired(
-    serviceTemplate,
-    stakingProgramId,
+  const { selectedAgentConfig } = useServices();
+  const { isAllStakingContractDetailsRecordLoaded } =
+    useStakingContractContext();
+  const { isServiceStaked } = useActiveStakingContractInfo();
+  const { isLoaded: isBalanceLoaded, totalStakedOlasBalance } =
+    useBalanceContext();
+  const { masterSafeBalances } = useMasterBalances();
+  const { serviceFundRequirements, isInitialFunded } = useNeedsFunds(
+    stakingProgramIdToMigrateTo,
   );
 
-  if (isNil(totalOlasRequiredForStaking)) return null;
-  if (isNil(safeBalance?.OLAS)) return null;
-  if (isNil(totalOlasStakedBalance)) return null;
+  const requiredStakedOlas =
+    serviceFundRequirements[selectedAgentConfig.evmHomeChainId][
+      TokenSymbol.OLAS
+    ];
+
+  const safeBalance = useMemo(() => {
+    if (!isBalanceLoaded) return;
+    if (isNil(masterSafeBalances) || isEmpty(masterSafeBalances)) return;
+    return masterSafeBalances.reduce(
+      (acc, { evmChainId: chainId, symbol, balance }) => {
+        if (chainId === selectedAgentConfig.evmHomeChainId) {
+          acc[symbol] = balance;
+        }
+        return acc;
+      },
+      {} as Record<TokenSymbol, number>,
+    );
+  }, [isBalanceLoaded, masterSafeBalances, selectedAgentConfig.evmHomeChainId]);
+
+  if (!isAllStakingContractDetailsRecordLoaded) return null;
+  if (isNil(requiredStakedOlas)) return null;
+  if (isNil(safeBalance?.[TokenSymbol.OLAS])) return null;
+
+  if (isNil(totalStakedOlasBalance)) return null;
 
   const requiredOlasDeposit = isServiceStaked
-    ? totalOlasRequiredForStaking - (totalOlasStakedBalance + safeBalance.OLAS) // when staked
-    : totalOlasRequiredForStaking - safeBalance.OLAS; // when not staked
+    ? requiredStakedOlas -
+      (totalStakedOlasBalance + safeBalance[TokenSymbol.OLAS]) // when staked
+    : requiredStakedOlas - safeBalance[TokenSymbol.OLAS]; // when not staked
+
+  const homeChainId = selectedAgentConfig.evmHomeChainId;
+  const nativeTokenSymbol = getNativeTokenSymbol(homeChainId);
+  const requiredNativeTokenDeposit = isInitialFunded
+    ? LOW_MASTER_SAFE_BALANCE - (safeBalance[nativeTokenSymbol] || 0) // is already funded allow minimal maintenance
+    : (serviceFundRequirements[homeChainId]?.[nativeTokenSymbol] || 0) -
+      (safeBalance[nativeTokenSymbol] || 0); // otherwise require full initial funding requirements
 
   return (
     <CustomAlert
@@ -41,12 +82,22 @@ const AlertInsufficientMigrationFunds = ({
       showIcon
       message={
         <Flex vertical gap={4}>
-          <Text className="font-weight-600">
-            An additional {requiredOlasDeposit} OLAS is required to switch
-          </Text>
+          <Text className="font-weight-600">Additional funds required</Text>
           <Text>
-            Add <strong>{requiredOlasDeposit} OLAS</strong> to your account to
-            meet the contract requirements and switch.
+            <ul style={{ marginTop: 0, marginBottom: 4 }}>
+              {requiredOlasDeposit > 0 && (
+                <li>
+                  {`${balanceFormat(requiredOlasDeposit, 2)} ${TokenSymbol.OLAS}`}
+                </li>
+              )}
+              {requiredNativeTokenDeposit > 0 && (
+                <li>
+                  {`${balanceFormat(requiredNativeTokenDeposit, 2)} ${nativeTokenSymbol}`}
+                </li>
+              )}
+            </ul>
+            Add the required funds to your account to meet the staking
+            requirements.
           </Text>
         </Flex>
       }
@@ -102,7 +153,10 @@ export const CantMigrateAlert = ({
     return <AlertNoSlots />;
   }
 
-  if (cantMigrateReason === CantMigrateReason.InsufficientOlasToMigrate) {
+  if (
+    cantMigrateReason === CantMigrateReason.InsufficientOlasToMigrate ||
+    cantMigrateReason === CantMigrateReason.InsufficientGasToMigrate
+  ) {
     return (
       <AlertInsufficientMigrationFunds stakingProgramId={stakingProgramId} />
     );

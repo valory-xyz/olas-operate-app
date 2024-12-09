@@ -18,6 +18,7 @@ export const SetupSeedPhrase = () => {
     <Card>
       <SetupCreateHeader prev={SetupScreen.SetupPassword} disabled={true} />
       <Typography.Title level={3}>Back up seed phrase</Typography.Title>
+
       <Flex gap={16} vertical>
         <Typography.Text>
           Seed phrase is needed to regain access to your account if you forget
@@ -33,6 +34,7 @@ export const SetupSeedPhrase = () => {
             </Tag>
           ))}
         </Flex>
+
         <Flex gap={10}>
           <Button
             size="large"

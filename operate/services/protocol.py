@@ -24,14 +24,13 @@ import contextlib
 import io
 import json
 import logging
-import os
 import tempfile
 import time
 import typing as t
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 from aea.configurations.data_types import PackageType
 from aea.crypto.base import Crypto, LedgerApi
@@ -44,6 +43,7 @@ from autonomy.chain.constants import (
     GNOSIS_SAFE_SAME_ADDRESS_MULTISIG_CONTRACT,
     MULTISEND_CONTRACT,
 )
+from autonomy.chain.metadata import publish_metadata
 from autonomy.chain.service import (
     get_agent_instances,
     get_delployment_payload,
@@ -52,8 +52,7 @@ from autonomy.chain.service import (
     get_token_deposit_amount,
 )
 from autonomy.chain.tx import TxSettler
-from autonomy.cli.helpers.chain import MintHelper as MintManager
-from autonomy.cli.helpers.chain import OnChainHelper
+from autonomy.cli.helpers.chain import MintHelper, OnChainHelper
 from autonomy.cli.helpers.chain import ServiceHelper as ServiceManager
 from eth_utils import to_bytes
 from hexbytes import HexBytes
@@ -66,11 +65,9 @@ from operate.constants import (
     ON_CHAIN_INTERACT_TIMEOUT,
 )
 from operate.data import DATA_DIR
-from operate.data.contracts.service_staking_token.contract import (
-    ServiceStakingTokenContract,
-)
+from operate.data.contracts.staking_token.contract import StakingTokenContract
 from operate.ledger.profiles import STAKING
-from operate.operate_types import ChainType as OperateChainType
+from operate.operate_types import Chain as OperateChain
 from operate.operate_types import ContractAddresses
 from operate.utils.gnosis import (
     MultiSendOperation,
@@ -204,9 +201,9 @@ class StakingManager(OnChainHelper):
         """Initialize object."""
         super().__init__(key=key, chain_type=chain_type, password=password)
         self.staking_ctr = t.cast(
-            ServiceStakingTokenContract,
-            ServiceStakingTokenContract.from_dir(
-                directory=str(DATA_DIR / "contracts" / "service_staking_token")
+            StakingTokenContract,
+            StakingTokenContract.from_dir(
+                directory=str(DATA_DIR / "contracts" / "staking_token")
             ),
         )
 
@@ -494,6 +491,51 @@ class StakingManager(OnChainHelper):
         )
 
 
+# TODO Backport this to Open Autonomy MintHelper class
+# MintHelper should support passing custom 'description', 'name' and 'attributes'.
+# If some of these fields are not defined, then it can take the current default values.
+# (Version is included as an attribute.)
+# The current code here is a workaround and just addresses the description,
+# because modifying the name and attributes requires touching lower-level code.
+# A proper refactor of this should be done in Open Autonomy.
+class MintManager(MintHelper):
+    """MintManager"""
+
+    metadata_description: t.Optional[str] = None
+    metadata_name: t.Optional[str] = None
+    metadata_attributes: t.Optional[t.Dict[str, str]] = None
+
+    def set_metadata_fields(
+        self,
+        name: t.Optional[str] = None,
+        description: t.Optional[str] = None,
+        attributes: t.Optional[t.Dict[str, str]] = None,
+    ) -> "MintManager":
+        """Set metadata fields."""
+        self.metadata_name = (
+            name  # Not used currently, just an indication for the OA refactor
+        )
+        self.metadata_description = description
+        self.metadata_attributes = (
+            attributes  # Not used currently, just an indication for the OA refactor
+        )
+        return self
+
+    def publish_metadata(self) -> "MintManager":
+        """Publish metadata."""
+        self.metadata_hash, self.metadata_string = publish_metadata(
+            package_id=self.package_configuration.package_id,
+            package_path=self.package_path,
+            nft=cast(str, self.nft),
+            description=self.metadata_description
+            or self.package_configuration.description,
+        )
+        return self
+
+
+# End Backport
+
+
 class _ChainUtil:
     """On chain service management."""
 
@@ -523,12 +565,12 @@ class _ChainUtil:
     def safe(self) -> str:
         """Get safe address."""
         chain_id = self.ledger_api.api.eth.chain_id
-        chain_type = OperateChainType.from_id(chain_id)
+        chain = OperateChain.from_id(chain_id)
         if self.wallet.safes is None:
             raise ValueError("Safes not initialized")
-        if chain_type not in self.wallet.safes:
-            raise ValueError(f"Safe for chain type {chain_type} not found")
-        return self.wallet.safes[chain_type]
+        if chain not in self.wallet.safes:
+            raise ValueError(f"Safe for chain type {chain} not found")
+        return self.wallet.safes[chain]
 
     @property
     def crypto(self) -> Crypto:
@@ -810,7 +852,7 @@ class _ChainUtil:
         # TODO Read from activity checker contract. Read remaining variables for marketplace.
         if (
             staking_contract
-            == STAKING[operate.operate_types.ChainType.GNOSIS][
+            == STAKING[operate.operate_types.Chain.GNOSIS][
                 "pearl_beta_mech_marketplace"
             ]
         ):
@@ -843,6 +885,7 @@ class OnChainManager(_ChainUtil):
         nft: Optional[Union[Path, IPFSHash]],
         update_token: t.Optional[int] = None,
         token: t.Optional[str] = None,
+        metadata_description: t.Optional[str] = None,
     ) -> t.Dict:
         """Mint service."""
         # TODO: Support for update
@@ -863,6 +906,7 @@ class OnChainManager(_ChainUtil):
                 package_path=package_path, package_type=PackageType.SERVICE
             )
             .load_metadata()
+            .set_metadata_fields(description=metadata_description)
             .verify_nft(nft=nft)
             .verify_service_dependencies(agent_id=agent_id)
             .publish_metadata()
@@ -1064,6 +1108,7 @@ class EthSafeTxBuilder(_ChainUtil):
         nft: Optional[Union[Path, IPFSHash]],
         update_token: t.Optional[int] = None,
         token: t.Optional[str] = None,
+        metadata_description: t.Optional[str] = None,
     ) -> t.Dict:
         """Build mint transaction."""
         # TODO: Support for update
@@ -1083,6 +1128,7 @@ class EthSafeTxBuilder(_ChainUtil):
                 package_path=package_path, package_type=PackageType.SERVICE
             )
             .load_metadata()
+            .set_metadata_fields(description=metadata_description)
             .verify_nft(nft=nft)
             .verify_service_dependencies(agent_id=agent_id)
             .publish_metadata()
