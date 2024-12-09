@@ -105,7 +105,7 @@ const TooltipContent = styled.div`
 `;
 
 export const GasBalanceSection = () => {
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedService } = useServices();
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
   const { masterSafes } = useMasterWalletContext();
   const { isLoaded: isBalancesLoaded } = useBalanceContext();
@@ -115,6 +115,23 @@ export const GasBalanceSection = () => {
 
     return masterSafes.find((wallet) => wallet.evmChainId === homeChainId);
   }, [homeChainId, masterSafes]);
+
+  const activityLink = useMemo(() => {
+    if (!masterSafe) return;
+    if (!selectedService?.home_chain) return;
+
+    const link =
+      EXPLORER_URL_BY_MIDDLEWARE_CHAIN[selectedService.home_chain] +
+      '/address/' +
+      masterSafe.address;
+
+    return (
+      <a href={link} target="_blank">
+        Track activity on blockchain explorer{' '}
+        <ArrowUpOutlined style={{ rotate: '45deg' }} />
+      </a>
+    );
+  }, [masterSafe, selectedService?.home_chain]);
 
   return (
     <CardSection
@@ -131,20 +148,7 @@ export const GasBalanceSection = () => {
               <TooltipContent>
                 Your agent uses this balance to fund trading activity on-chain.
                 <br />
-                <a
-                  href={
-                    `${
-                      EXPLORER_URL_BY_MIDDLEWARE_CHAIN[
-                        // TODO: fix unknown
-                        homeChainId as unknown as keyof typeof EXPLORER_URL_BY_MIDDLEWARE_CHAIN
-                      ]
-                    }/address/` + masterSafe.address
-                  }
-                  target="_blank"
-                >
-                  Track activity on blockchain explorer{' '}
-                  <ArrowUpOutlined style={{ rotate: '45deg' }} />
-                </a>
+                {activityLink}
               </TooltipContent>
             }
           >
