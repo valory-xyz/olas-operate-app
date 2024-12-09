@@ -14,13 +14,13 @@ import {
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { StakingProgramId } from '@/enums/StakingProgram';
+import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import {
   ServiceStakingDetails,
   StakingContractDetails,
 } from '@/types/Autonolas';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { StakingProgramContext } from './StakingProgramProvider';
 
@@ -171,18 +171,13 @@ export const StakingContractDetailsProvider = ({
   children,
 }: PropsWithChildren) => {
   const [isPaused, setIsPaused] = useState(false);
-  const { selectedService, selectedAgentConfig } = useServices();
+  const { selectedService } = useServices();
+  const { serviceNftTokenId } = useService(selectedService?.service_config_id);
   const { selectedStakingProgramId } = useContext(StakingProgramContext);
-
-  const serviceNftTokenId = !isNil(selectedService?.service_config_id)
-    ? selectedService?.chain_configs?.[
-        asMiddlewareChain(selectedAgentConfig.evmHomeChainId)
-      ]?.chain_data?.token
-    : null;
 
   const {
     data: selectedStakingContractDetails,
-    isFetched,
+    isLoading,
     refetch,
   } = useStakingContractDetailsByStakingProgram({
     serviceNftTokenId,
@@ -200,7 +195,7 @@ export const StakingContractDetailsProvider = ({
     <StakingContractDetailsContext.Provider
       value={{
         selectedStakingContractDetails,
-        isSelectedStakingContractDetailsLoaded: isFetched,
+        isSelectedStakingContractDetailsLoaded: !isLoading,
         isAllStakingContractDetailsRecordLoaded:
           isAllStakingContractDetailsLoaded,
         allStakingContractDetailsRecord,
