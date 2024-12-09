@@ -14,6 +14,7 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { CardSection } from '../../styled/CardSection';
 
@@ -105,7 +106,7 @@ const TooltipContent = styled.div`
 `;
 
 export const GasBalanceSection = () => {
-  const { selectedAgentConfig, selectedService } = useServices();
+  const { selectedAgentConfig } = useServices();
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
   const { masterSafes } = useMasterWalletContext();
   const { isLoaded: isBalancesLoaded } = useBalanceContext();
@@ -118,10 +119,9 @@ export const GasBalanceSection = () => {
 
   const activityLink = useMemo(() => {
     if (!masterSafe) return;
-    if (!selectedService?.home_chain) return;
 
     const link =
-      EXPLORER_URL_BY_MIDDLEWARE_CHAIN[selectedService.home_chain] +
+      EXPLORER_URL_BY_MIDDLEWARE_CHAIN[asMiddlewareChain(homeChainId)] +
       '/address/' +
       masterSafe.address;
 
@@ -131,7 +131,7 @@ export const GasBalanceSection = () => {
         <ArrowUpOutlined style={{ rotate: '45deg' }} />
       </a>
     );
-  }, [masterSafe, selectedService?.home_chain]);
+  }, [masterSafe, homeChainId]);
 
   return (
     <CardSection
