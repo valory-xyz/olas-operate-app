@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
+import { AgentActivityPage } from '@/components/AgentActivity';
 import { AgentSelection } from '@/components/AgentSelection';
 import { Main } from '@/components/MainPage';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
@@ -61,6 +62,8 @@ export default function Home() {
         return <RewardsHistory />;
       case Pages.AddBackupWalletViaSafe:
         return <AddBackupWalletViaSafePage />;
+      case Pages.AgentActivity:
+        return <AgentActivityPage />;
       default:
         return <Main />;
     }

@@ -10,4 +10,5 @@ export enum Pages {
   RewardsHistory,
   AddBackupWalletViaSafe,
   SwitchAgent,
+  AgentActivity,
 }
