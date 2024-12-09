@@ -14,6 +14,7 @@ const COW_SWAP_GNOSIS_XDAI_OLAS_URL: Url =
 const SWAP_BASE_URL: Url = 'https://balancer.fi/swap/base/ETH/OLAS';
 
 // olas.network
+export const OPERATE_URL: Url = 'https://olas.network/operate';
 export const FAQ_URL: Url = 'https://olas.network/operate#faq';
 export const DOWNLOAD_URL: Url = 'https://olas.network/operate#download';
 
