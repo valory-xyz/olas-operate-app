@@ -155,7 +155,96 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
   //       },
   //     },
   //   },
-];
+  {
+    agentType: AgentType.Memeooorr,
+    name: 'Memeooorr',
+    hash: 'bafybeidvfwl7mrrxh7rjq2ytjihr6xc4ac4hniszawsrc4oc7p6ubklloy',
+    description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
+    image:
+      'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
+    service_version: 'v0.0.1',
+    home_chain: MiddlewareChain.BASE,
+    configurations: {
+      [MiddlewareChain.BASE]: {
+        staking_program_id: StakingProgramId.MemeBaseAlpha, // default, may be overwritten
+        nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+        rpc: 'http://localhost:8545', // overwritten
+        agent_id: 43,
+        threshold: 1,
+        use_staking: true,
+        cost_of_bond: 50000000000000000000,
+        monthly_gas_estimate: 50000000000000000, // 0.05
+        fund_requirements: {
+          agent: 1000000000000000, // 0.001
+          safe: 2000000000000000, // 0.002
+        },
+      },
+    },
+    env_variables: {
+      TWIKIT_USERNAME: {
+        name: 'Twitter username',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+      TWIKIT_EMAIL: {
+        name: 'Twitter email',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+      TWIKIT_PASSWORD: {
+        name: 'Twitter password',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+      GENAI_API_KEY: {
+        name: 'Gemini api key',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+      PERSONA: {
+        name: 'Persona description',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+      // These are fixed, but may become user provided in the future
+      FEEDBACK_PERIOD_HOURS: {
+        name: 'Feedback period',
+        description: '',
+        value: '1',
+        provision_type: EnvProvisionType.FIXED,
+      },
+      MIN_FEEDBACK_REPLIES: {
+        name: 'Minimum feedback replies',
+        description: '',
+        value: '10',
+        provision_type: EnvProvisionType.FIXED,
+      },
+      RESET_PAUSE_DURATION: {
+        name: 'Reset pause duration',
+        description: '',
+        value: '1800',
+        provision_type: EnvProvisionType.FIXED,
+      },
+      DB_PATH: {
+        name: 'DB path',
+        description: '',
+        value: 'logs/memeooorr.db',
+        provision_type: EnvProvisionType.FIXED,
+      },
+      TWIKIT_COOKIES_PATH: {
+        name: 'Twitter cookies path',
+        description: '',
+        value: 'logs/twikit_cookies.json',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+    },
+  },
+] as const;
 
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;
 

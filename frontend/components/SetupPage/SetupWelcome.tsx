@@ -131,10 +131,11 @@ export const SetupWelcomeCreate = () => {
 };
 
 export const SetupWelcomeLogin = () => {
+  const [form] = Form.useForm();
   const { goto } = useSetup();
   const { goto: gotoPage } = usePageState();
 
-  const { selectedService } = useServices();
+  const { selectedService, selectedAgentConfig } = useServices();
   const {
     masterSafes,
     masterWallets: wallets,
@@ -143,21 +144,25 @@ export const SetupWelcomeLogin = () => {
   const { isLoaded: isBalanceLoaded, updateBalances } = useBalanceContext();
   const { masterWalletBalances } = useMasterBalances();
 
+  const selectedServiceOrAgentChainId = selectedService?.home_chain
+    ? asEvmChainId(selectedService?.home_chain)
+    : selectedAgentConfig.evmHomeChainId;
+
   const masterSafe =
     masterSafes?.find(
       (safe) =>
-        selectedService?.home_chain &&
-        safe.evmChainId === asEvmChainId(selectedService?.home_chain),
+        selectedServiceOrAgentChainId &&
+        safe.evmChainId === selectedServiceOrAgentChainId,
     ) ?? null;
 
   const eoaBalanceEth = masterWalletBalances?.find(
-    (balance) => balance.walletAddress === masterEoa?.address,
-  );
+    (balance) =>
+      balance.walletAddress === masterEoa?.address &&
+      balance.evmChainId === selectedServiceOrAgentChainId,
+  )?.balance;
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [canNavigate, setCanNavigate] = useState(false);
-
-  const [form] = Form.useForm();
 
   const handleLogin = useCallback(
     async ({ password }: { password: string }) => {
@@ -177,20 +182,19 @@ export const SetupWelcomeLogin = () => {
   );
 
   useEffect(() => {
-    // Navigate only when wallets and balances are loaded
-    // To check if some setup steps were missed
-    // if (canNavigate && wallets?.length && isBalanceLoaded) {
+    if (!canNavigate) return;
 
-    // TODO: fix wallet and balance loads
-    if (canNavigate) {
-      setIsLoggingIn(false);
-      if (!eoaBalanceEth) {
-        goto(SetupScreen.SetupEoaFundingIncomplete);
-      } else if (!masterSafe?.address) {
-        goto(SetupScreen.SetupCreateSafe);
-      } else {
-        gotoPage(Pages.Main);
-      }
+    // Navigate only when wallets and balances are loaded
+    if (!isBalanceLoaded) return;
+
+    setIsLoggingIn(false);
+
+    if (!eoaBalanceEth) {
+      goto(SetupScreen.SetupEoaFundingIncomplete);
+    } else if (!masterSafe?.address) {
+      goto(SetupScreen.SetupCreateSafe);
+    } else {
+      gotoPage(Pages.Main);
     }
   }, [
     canNavigate,
@@ -199,6 +203,7 @@ export const SetupWelcomeLogin = () => {
     gotoPage,
     isBalanceLoaded,
     masterSafe?.address,
+    selectedServiceOrAgentChainId,
     wallets?.length,
   ]);
 

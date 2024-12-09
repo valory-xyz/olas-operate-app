@@ -97,11 +97,12 @@ export const useMasterBalances = () => {
     () =>
       walletBalances?.filter(({ walletAddress }) =>
         masterSafes?.find(
-          ({ address: masterSafeAddress }) =>
-            walletAddress === masterSafeAddress,
+          ({ address: masterSafeAddress, evmChainId }) =>
+            walletAddress === masterSafeAddress &&
+            selectedAgentConfig.requiresAgentSafesOn.includes(evmChainId),
         ),
       ),
-    [masterSafes, walletBalances],
+    [masterSafes, walletBalances, selectedAgentConfig.requiresAgentSafesOn],
   );
 
   const masterEoaBalances = useMemo<Optional<WalletBalanceResult[]>>(
@@ -116,11 +117,7 @@ export const useMasterBalances = () => {
    * Unstaked balances across master safes and eoas
    */
   const masterWalletBalances = useMemo<Optional<WalletBalanceResult[]>>(() => {
-    let result;
-    if (masterSafeBalances || masterEoaBalances) {
-      result = [...(masterSafeBalances || []), ...(masterEoaBalances || [])];
-    }
-    return result;
+    return [...(masterSafeBalances || []), ...(masterEoaBalances || [])];
   }, [masterEoaBalances, masterSafeBalances]);
 
   const isMasterSafeLowOnNativeGas = useMemo(() => {

@@ -21,10 +21,6 @@ import { StakingProgramProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
 import { SystemNotificationTriggers } from '@/context/SystemNotificationTriggers';
 import { mainTheme } from '@/theme';
-import { setupMulticallAddresses } from '@/utils/setupMulticall';
-
-// Setup multicall addresses
-setupMulticallAddresses();
 
 const queryClient = new QueryClient();
 

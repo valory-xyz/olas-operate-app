@@ -91,7 +91,10 @@ STAKING: t.Dict[Chain, t.Dict[str, str]] = {
         "optimus_alpha": "0x88996bbdE7f982D93214881756840cE2c77C4992",
     },
     Chain.ETHEREUM: {},
-    Chain.BASE: {},
+    Chain.BASE: {"meme_alpha": "0x06702A05312091013FdB50C8b60B98ca30762931"},
+    Chain.CELO: {
+        "meme_alpha": "0xf39cd0eE4C502Df7D26F28cFAdd579724A3CFCe8",
+    },
     Chain.MODE: {
         "optimus_alpha": "0x5fc25f50E96857373C64dC0eDb1AbCBEd4587e91",
     },
@@ -111,4 +114,12 @@ USDC: t.Dict[Chain, str] = {
     Chain.BASE: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     Chain.ETHEREUM: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
     Chain.MODE: "0xd988097fb8612cc24eeC14542bC03424c656005f",
+}
+
+DEFAULT_NEW_SAFE_FUNDS_AMOUNT: t.Dict[Chain, int] = {
+    Chain.GNOSIS: 1e18,
+    Chain.OPTIMISTIC: 1e15 / 4,
+    Chain.BASE: 1e15 / 4,
+    Chain.ETHEREUM: 1e15 / 4,
+    Chain.MODE: 1e15 / 4,
 }

@@ -1,6 +1,7 @@
 import { gql, request } from 'graphql-request';
 
-import { GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL } from '@/constants/urls';
+import { REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
+import { EvmChainId } from '@/enums/Chain';
 import {
   EpochDetailsResponse,
   EpochDetailsResponseSchema,
@@ -23,11 +24,14 @@ export const getLatestEpochTimeQuery = (contractAddress: string) => gql`
   }
 `;
 
-export const getLatestEpochDetails = async (contractAddress: string) => {
+export const getLatestEpochDetails = async (
+  chainId: EvmChainId,
+  contractAddress: string,
+) => {
   const response = await request<{
     checkpoints: EpochDetailsResponse[];
   }>(
-    GNOSIS_REWARDS_HISTORY_SUBGRAPH_URL,
+    REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId],
     getLatestEpochTimeQuery(contractAddress),
   );
 

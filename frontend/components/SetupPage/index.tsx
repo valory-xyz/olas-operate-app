@@ -3,6 +3,7 @@ import { useContext, useMemo } from 'react';
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
+import { AgentSelection } from '../AgentSelection';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
 import { SetupCreateSafe } from './Create/SetupCreateSafe';
 import { SetupEoaFunding } from './Create/SetupEoaFunding';
@@ -15,6 +16,7 @@ import {
   SetupRestoreViaSeed,
 } from './SetupRestore';
 import { SetupWelcome } from './SetupWelcome';
+import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
 
 const UnexpectedError = () => (
   <div style={{ height: 400 }}>Something went wrong!</div>
@@ -22,10 +24,12 @@ const UnexpectedError = () => (
 
 export const Setup = () => {
   const { setupObject } = useContext(SetupContext);
+
   const setupScreen = useMemo(() => {
     switch (setupObject.state) {
       case SetupScreen.Welcome:
         return <SetupWelcome />;
+
       // Create account
       case SetupScreen.SetupPassword:
         return <SetupPassword />;
@@ -39,6 +43,11 @@ export const Setup = () => {
         return <SetupEoaFunding />;
       case SetupScreen.SetupCreateSafe:
         return <SetupCreateSafe />;
+      case SetupScreen.AgentSelection:
+        return <AgentSelection showSelected={false} />;
+      case SetupScreen.SetupYourAgent:
+        return <SetupYourAgent />;
+
       // Restore account
       case SetupScreen.Restore:
         return <SetupRestoreMain />;

@@ -42,6 +42,7 @@ from uvicorn.main import run as uvicorn
 from operate import services
 from operate.account.user import UserAccount
 from operate.constants import KEY, KEYS, OPERATE, SERVICES
+from operate.ledger.profiles import DEFAULT_NEW_SAFE_FUNDS_AMOUNT
 from operate.operate_types import Chain, DeploymentStatus, LedgerType
 from operate.services.health_checker import HealthChecker
 from operate.wallet.master import MasterWalletManager
@@ -529,7 +530,7 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
         )
         wallet.transfer(
             to=t.cast(str, safes.get(chain)),
-            amount=int(1e18),
+            amount=int(data.get("fund_amount", DEFAULT_NEW_SAFE_FUNDS_AMOUNT[chain])),
             chain=chain,
             from_safe=False,
         )
@@ -583,7 +584,9 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
             )
             wallet.transfer(
                 to=t.cast(str, safes.get(chain)),
-                amount=int(1e18),
+                amount=int(
+                    data.get("fund_amount", DEFAULT_NEW_SAFE_FUNDS_AMOUNT[chain])
+                ),
                 chain=chain,
                 from_safe=False,
             )

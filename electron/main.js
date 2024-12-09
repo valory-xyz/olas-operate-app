@@ -14,7 +14,6 @@ const os = require('os');
 const next = require('next/dist/server/next');
 const http = require('http');
 const AdmZip = require('adm-zip');
-const { validateEnv } = require('./utils/env-validation');
 
 const { setupDarwin, setupUbuntu, setupWindows, Env } = require('./install');
 
@@ -26,6 +25,7 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
+const { Scraper } = require('agent-twitter-client');
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -256,6 +256,24 @@ const createMainWindow = async () => {
 
   ipcMain.handle('app-version', () => app.getVersion());
 
+  // Handle twitter login
+  ipcMain.handle('validate-twitter-login', async (_event, credentials) => {
+    const scraper = new Scraper();
+
+    const { username, password, email } = credentials;
+    if (!username || !password || !email) {
+      return { success: false, error: 'Missing credentials' };
+    }
+
+    try {
+      await scraper.login(username, password, email);
+      return { success: true };
+    } catch (error) {
+      console.error('Twitter login error:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
   mainWindow.webContents.on('did-fail-load', () => {
     mainWindow.webContents.reloadIgnoringCache();
   });
@@ -277,7 +295,7 @@ const createMainWindow = async () => {
 
   try {
     logger.electron('Setting up store IPC');
-    await setupStoreIpc(ipcMain, mainWindow);
+    setupStoreIpc(ipcMain, mainWindow);
   } catch (e) {
     logger.electron('Store IPC failed:', JSON.stringify(e));
   }
