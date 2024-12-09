@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { NA } from '@/constants/symbols';
+import { OPERATE_URL } from '@/constants/urls';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useReward } from '@/hooks/useReward';
@@ -17,7 +18,6 @@ const getFormattedReward = (reward: number | undefined) =>
   reward === undefined ? NA : `~${balanceFormat(reward, 2)}`;
 
 const SHARE_TEXT = `I just earned my first reward through the Operate app powered by #olas!\n\nDownload the Pearl app:`;
-const OPERATE_URL = 'https://olas.network/operate?pearl=first-reward';
 
 export const NotifyRewardsModal = () => {
   const { isEligibleForRewards, availableRewardsForEpochEth } = useReward();
@@ -60,7 +60,7 @@ export const NotifyRewardsModal = () => {
 
   const onTwitterShare = useCallback(() => {
     const encodedText = encodeURIComponent(SHARE_TEXT);
-    const encodedURL = encodeURIComponent(OPERATE_URL);
+    const encodedURL = encodeURIComponent(`${OPERATE_URL}?pearl=first-reward`);
 
     window.open(
       `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedURL}`,
