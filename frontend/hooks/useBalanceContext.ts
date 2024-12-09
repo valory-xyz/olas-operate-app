@@ -99,10 +99,10 @@ export const useMasterBalances = () => {
         masterSafes?.find(
           ({ address: masterSafeAddress, evmChainId }) =>
             walletAddress === masterSafeAddress &&
-            selectedAgentConfig.evmHomeChainId === evmChainId,
+            selectedAgentConfig.requiresAgentSafesOn.includes(evmChainId),
         ),
       ),
-    [masterSafes, walletBalances, selectedAgentConfig.evmHomeChainId],
+    [masterSafes, walletBalances, selectedAgentConfig.requiresAgentSafesOn],
   );
 
   const masterEoaBalances = useMemo<Optional<WalletBalanceResult[]>>(

@@ -87,21 +87,15 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
 
   const totalEthBalance = useMemo(() => {
     if (!isLoaded) return 0;
-    return walletBalances.reduce((acc, walletBalance) => {
-      if (walletBalance.isNative) {
-        return acc + walletBalance.balance;
-      }
-      return acc;
+    return walletBalances.reduce((acc, { isNative, balance }) => {
+      return isNative ? acc + balance : acc;
     }, 0);
   }, [isLoaded, walletBalances]);
 
   const totalOlasBalance = useMemo(() => {
     if (!isLoaded) return 0;
-    return walletBalances.reduce((acc, walletBalance) => {
-      if (walletBalance.symbol === TokenSymbol.OLAS) {
-        return acc + walletBalance.balance;
-      }
-      return acc;
+    return walletBalances.reduce((acc, { symbol, balance }) => {
+      return symbol === TokenSymbol.OLAS ? acc + balance : acc;
     }, 0);
   }, [isLoaded, walletBalances]);
 
