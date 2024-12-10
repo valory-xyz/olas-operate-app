@@ -11,7 +11,7 @@ const badgeOffset: [number, number] = [-5, 32.5];
 
 const AnimationContainer = styled.div`
   position: relative;
-  top: -2px;
+  top: -4px;
   width: 42px;
   height: 42px;
   padding: 2px 0;
@@ -53,9 +53,6 @@ export const AgentHead = () => {
   const { selectedService } = useServices();
   const { isEligibleForRewards } = useReward();
   const status = selectedService?.deploymentStatus;
-
-  // return <TransitionalAgentHead />;
-  return <DeployedAgentHead />;
 
   if (
     status === MiddlewareDeploymentStatus.DEPLOYING ||
