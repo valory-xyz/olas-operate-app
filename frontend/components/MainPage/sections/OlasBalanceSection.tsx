@@ -1,4 +1,3 @@
-import { RightOutlined } from '@ant-design/icons';
 import { Button, Flex, Skeleton, Typography } from 'antd';
 import { sum } from 'lodash';
 import { useMemo } from 'react';
@@ -93,25 +92,14 @@ export const MainOlasBalance = ({
           <Flex align="center" justify="space-between">
             <Text type="secondary">Current balance</Text>
             {isBalanceBreakdownEnabled && (
-              <>
-                <Text
-                  type="secondary"
-                  className="text-sm pointer hover-underline"
-                  style={{ display: 'none' }}
-                  onClick={() => goto(Pages.ManageWallet)}
-                >
-                  See breakdown
-                  <RightOutlined style={{ fontSize: 12, paddingLeft: 6 }} />
-                </Text>
-
-                <Button
-                  // size="small"
-                  onClick={() => goto(Pages.ManageWallet)}
-                  className="pl-8 pr-8"
-                >
-                  Manage wallet
-                </Button>
-              </>
+              <Button
+                size="small"
+                onClick={() => goto(Pages.ManageWallet)}
+                className="text-sm"
+                // className="pl-8 pr-8 text-sm"
+              >
+                Manage wallet
+              </Button>
             )}
           </Flex>
 
