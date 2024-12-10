@@ -7,7 +7,7 @@ import { useServices } from './useServices';
 
 const FeatureFlagsSchema = z.enum([
   'last-transactions',
-  'balance-breakdown',
+  'manage-wallet',
   'rewards-streak',
   'staking-contract-section',
 ]);
@@ -25,13 +25,13 @@ const FeaturesConfigSchema = z.record(
  */
 const FEATURES_CONFIG = FeaturesConfigSchema.parse({
   [AgentType.PredictTrader]: {
-    'balance-breakdown': true,
+    'manage-wallet': true,
     'last-transactions': true,
     'rewards-streak': true,
     'staking-contract-section': true,
   },
   [AgentType.Memeooorr]: {
-    'balance-breakdown': false,
+    'manage-wallet': false,
     'last-transactions': false,
     'rewards-streak': false,
     'staking-contract-section': false,

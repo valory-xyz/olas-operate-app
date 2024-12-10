@@ -55,7 +55,7 @@ export default function Home() {
         return <HelpAndSupport />;
       case Pages.ManageStaking:
         return <ManageStakingPage />;
-      case Pages.YourWalletBreakdown:
+      case Pages.ManageWallet:
         return <YourWalletPage />;
       case Pages.RewardsHistory:
         return <RewardsHistory />;

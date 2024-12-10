@@ -204,7 +204,7 @@ const MasterEoaSignerNativeBalance = () => {
 };
 
 export const YourWalletPage = () => {
-  const isBalanceBreakdownEnabled = useFeatureFlag('balance-breakdown');
+  const isBalanceBreakdownEnabled = useFeatureFlag('manage-wallet');
   const { services } = useServices();
   const { goto } = usePageState();
 
