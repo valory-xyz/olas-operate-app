@@ -96,7 +96,6 @@ export const MainOlasBalance = ({
                 size="small"
                 onClick={() => goto(Pages.ManageWallet)}
                 className="text-sm"
-                // className="pl-8 pr-8 text-sm"
               >
                 Manage wallet
               </Button>
