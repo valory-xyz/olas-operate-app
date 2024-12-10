@@ -10,8 +10,11 @@ import { useServices } from '@/hooks/useServices';
 const badgeOffset: [number, number] = [-5, 32.5];
 
 const AnimationContainer = styled.div`
-  width: 40px;
-  height: 40px;
+  position: relative;
+  top: -2px;
+  width: 42px;
+  height: 42px;
+  padding: 2px 0;
   > div {
     width: 100%;
     height: 100%;
@@ -30,7 +33,6 @@ const DeployedAgentHead = () => {
     loop: true,
     autoplay: true,
   });
-  // return <div style={{ width: 40, height: 40 }}>{View}</div>;
 
   return <AnimationContainer>{View}</AnimationContainer>;
 };
