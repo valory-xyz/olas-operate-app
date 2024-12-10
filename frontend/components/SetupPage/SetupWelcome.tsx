@@ -8,7 +8,6 @@ import {
   Spin,
   Typography,
 } from 'antd';
-import { useLottie } from 'lottie-react';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -30,17 +29,6 @@ import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { FormFlex } from '../styled/FormFlex';
 
 const { Title } = Typography;
-
-const options = {
-  animationData: require('./robot-head.json'),
-  loop: true,
-  autoplay: true,
-};
-
-const AnimationComponent = () => {
-  const { View } = useLottie(options);
-  return <div style={{ width: 180, height: 180 }}>{View}</div>;
-};
 
 export const SetupWelcome = () => {
   const electronApi = useElectronApi();
@@ -114,9 +102,7 @@ export const SetupWelcome = () => {
           alt="Onboarding Robot"
           width={80}
           height={80}
-          style={{ display: 'none' }}
         />
-        <AnimationComponent />
         <Title>Pearl</Title>
       </Flex>
       {welcomeScreen}
