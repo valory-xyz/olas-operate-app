@@ -39,6 +39,12 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'staking-contract-section': false,
     'low-funds': false,
   },
+  [AgentType.Modius]: {
+    'manage-wallet': false,
+    'last-transactions': false,
+    'rewards-streak': false,
+    'staking-contract-section': false,
+  },
 });
 
 type FeatureFlagReturn<T extends FeatureFlags | FeatureFlags[]> =
