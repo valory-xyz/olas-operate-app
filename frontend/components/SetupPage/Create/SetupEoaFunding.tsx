@@ -1,18 +1,17 @@
 import { CopyOutlined } from '@ant-design/icons';
 import { Flex, message, Tooltip, Typography } from 'antd';
-import { ethers } from 'ethers';
+import { formatEther } from 'ethers/lib/utils';
 import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
-import { CHAIN_CONFIG, ChainConfig } from '@/config/chains';
-import { PROVIDERS } from '@/constants/providers';
+import { AGENT_CONFIG } from '@/config/agents';
+import { CHAIN_CONFIG } from '@/config/chains';
 import { NA } from '@/constants/symbols';
 import { MIN_ETH_BALANCE_THRESHOLDS } from '@/constants/thresholds';
-import { AgentType } from '@/enums/Agent';
-import { EvmChainId } from '@/enums/Chain';
+import { EvmChainId, EvmChainName } from '@/enums/Chain';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useMasterBalances } from '@/hooks/useBalanceContext';
 import { useServices } from '@/hooks/useServices';
@@ -133,51 +132,6 @@ export const SetupEoaFundingForChain = ({
   );
 };
 
-type EoaFundingMapParams = {
-  provider: ethers.providers.JsonRpcProvider;
-  chainConfig: ChainConfig;
-  requiredEth: number;
-};
-
-// TODO: chain independent
-// use SERVICE_TEMPLATES[].configurations instead?
-const EOA_FUNDING_MAP: Record<
-  AgentType,
-  Partial<Record<EvmChainId, EoaFundingMapParams>>
-> = {
-  [AgentType.PredictTrader]: {
-    [EvmChainId.Gnosis]: {
-      provider: PROVIDERS[EvmChainId.Gnosis].provider,
-      chainConfig: CHAIN_CONFIG[EvmChainId.Gnosis],
-      requiredEth: MIN_ETH_BALANCE_THRESHOLDS[EvmChainId.Gnosis].safeCreation,
-    },
-  },
-  [AgentType.Memeooorr]: {
-    [EvmChainId.Base]: {
-      provider: PROVIDERS[EvmChainId.Base].provider,
-      chainConfig: CHAIN_CONFIG[EvmChainId.Base],
-      requiredEth: MIN_ETH_BALANCE_THRESHOLDS[EvmChainId.Base].safeCreation,
-    },
-  },
-  // [AgentType.Optimus]: {
-  //   [EvmChainId.Optimism]: {
-  //     provider: PROVIDERS[EvmChainId.Optimism].provider,
-  //     chainConfig: CHAIN_CONFIG[EvmChainId.Optimism],
-  //     requiredEth: MIN_ETH_BALANCE_THRESHOLDS[EvmChainId.Optimism].safeCreation,
-  //   },
-  //   [EvmChainId.Ethereum]: {
-  //     provider: PROVIDERS[EvmChainId.Ethereum].provider,
-  //     chainConfig: CHAIN_CONFIG[EvmChainId.Ethereum],
-  //     requiredEth: MIN_ETH_BALANCE_THRESHOLDS[EvmChainId.Ethereum].safeCreation,
-  //   },
-  //   [EvmChainId.Base]: {
-  //     provider: PROVIDERS[EvmChainId.Base].provider,
-  //     chainConfig: CHAIN_CONFIG[EvmChainId.Base],
-  //     requiredEth: MIN_ETH_BALANCE_THRESHOLDS[EvmChainId.Base].safeCreation,
-  //   },
-  // }
-} as const;
-
 /**
  * EOA funding setup screen
  */
@@ -192,8 +146,10 @@ export const SetupEoaFunding = () => {
     selectedAgentConfig.evmHomeChainId,
   );
 
-  const currentFundingMapObject =
-    EOA_FUNDING_MAP[selectedAgentType][currentChain];
+  const agentSafeFundingRequirements =
+    AGENT_CONFIG[selectedAgentType]?.agentSafeFundingRequirements;
+  const currentFundingRequirements =
+    agentSafeFundingRequirements?.[currentChain];
 
   const eoaBalance = masterWalletBalances?.find(
     (balance) =>
@@ -206,13 +162,11 @@ export const SetupEoaFunding = () => {
     eoaBalance.balance >= MIN_ETH_BALANCE_THRESHOLDS[currentChain].safeCreation;
 
   const handleFunded = useCallback(async () => {
-    message.success(
-      `${currentFundingMapObject?.chainConfig.name} funds have been received!`,
-    );
+    message.success(`${EvmChainName[currentChain]} funds have been received!`);
 
     await delayInSeconds(1);
 
-    const chains = Object.keys(EOA_FUNDING_MAP[selectedAgentType]);
+    const chains = Object.keys(agentSafeFundingRequirements);
     const indexOfCurrentChain = chains.indexOf(currentChain.toString());
     const nextChainExists = chains.length > indexOfCurrentChain + 1;
 
@@ -223,29 +177,24 @@ export const SetupEoaFunding = () => {
     }
 
     goto(SetupScreen.SetupCreateSafe);
-  }, [
-    currentChain,
-    currentFundingMapObject?.chainConfig.name,
-    goto,
-    selectedAgentType,
-  ]);
+  }, [agentSafeFundingRequirements, currentChain, goto]);
 
   useEffect(() => {
-    if (!currentFundingMapObject) return;
+    if (!currentFundingRequirements) return;
     if (!masterEoaAddress) return;
     if (!isFunded) return;
 
     handleFunded();
-  }, [currentFundingMapObject, handleFunded, isFunded, masterEoaAddress]);
+  }, [currentFundingRequirements, handleFunded, isFunded, masterEoaAddress]);
 
-  if (!currentFundingMapObject) return null;
+  if (!currentFundingRequirements) return null;
 
   return (
     <SetupEoaFundingForChain
       isFunded={isFunded}
-      minRequiredBalance={currentFundingMapObject.requiredEth}
-      currency={currentFundingMapObject.chainConfig.nativeToken.symbol}
-      chainName={currentFundingMapObject.chainConfig.name}
+      minRequiredBalance={Number(formatEther(`${currentFundingRequirements}`))}
+      currency={CHAIN_CONFIG[currentChain].nativeToken.symbol}
+      chainName={CHAIN_CONFIG[currentChain].name}
     />
   );
 };
