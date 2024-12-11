@@ -10,6 +10,7 @@ const FeatureFlagsSchema = z.enum([
   'manage-wallet',
   'rewards-streak',
   'staking-contract-section',
+  'backup-via-safe',
 ]);
 type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
 
@@ -29,18 +30,22 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'last-transactions': true,
     'rewards-streak': true,
     'staking-contract-section': true,
+    'backup-via-safe': true,
   },
   [AgentType.Memeooorr]: {
     'manage-wallet': false,
     'last-transactions': false,
     'rewards-streak': false,
     'staking-contract-section': false,
+    'backup-via-safe': true,
   },
   [AgentType.Modius]: {
     'manage-wallet': false,
     'last-transactions': false,
     'rewards-streak': false,
     'staking-contract-section': false,
+    // temporarily hidden until mode is available on safe https://app.safe.global/new-safe/create
+    'backup-via-safe': false,
   },
 });
 
