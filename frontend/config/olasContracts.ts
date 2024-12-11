@@ -51,10 +51,22 @@ export const BASE_OLAS_CONTRACTS: ContractsByType = {
   ),
 };
 
+export const MODE_OLAS_CONTRACTS: ContractsByType = {
+  [ContractType.ServiceRegistryL2]: new MulticallContract(
+    '0x3C1fF68f5aa342D296d4DEe4Bb1cACCA912D95fE',
+    SERVICE_REGISTRY_L2_ABI,
+  ),
+  [ContractType.ServiceRegistryTokenUtility]: new MulticallContract(
+    '0x34C895f302D0b5cf52ec0Edd3945321EB0f83dd5',
+    SERVICE_REGISTRY_TOKEN_UTILITY_ABI,
+  ),
+};
+
 export const OLAS_CONTRACTS: {
   [chainId: number]: ContractsByType;
 } = {
   [EvmChainId.Gnosis]: GNOSIS_OLAS_CONTRACTS,
   [EvmChainId.Optimism]: OPTIMISM_OLAS_CONTRACTS,
   [EvmChainId.Base]: BASE_OLAS_CONTRACTS,
+  [EvmChainId.Mode]: MODE_OLAS_CONTRACTS,
 };

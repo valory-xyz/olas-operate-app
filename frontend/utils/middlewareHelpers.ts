@@ -17,6 +17,8 @@ export const asEvmChainId = (chain?: MiddlewareChain | string): EvmChainId => {
       return EvmChainId.Gnosis;
     case MiddlewareChain.BASE:
       return EvmChainId.Base;
+    case MiddlewareChain.MODE:
+      return EvmChainId.Mode;
   }
   throw new Error(`Invalid middleware chain enum: ${chain}`);
 };
@@ -31,6 +33,8 @@ export const asMiddlewareChain = (chainId?: EvmChainId | number) => {
       return MiddlewareChain.GNOSIS;
     case EvmChainId.Base:
       return MiddlewareChain.BASE;
+    case EvmChainId.Mode:
+      return MiddlewareChain.MODE;
   }
   throw new Error(`Invalid chain id: ${chainId}`);
 };
