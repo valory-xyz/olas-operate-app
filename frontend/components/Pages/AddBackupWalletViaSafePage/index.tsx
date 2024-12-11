@@ -19,6 +19,7 @@ const safeChainPrefix = {
   [EvmChainId.Base]: 'base',
   [EvmChainId.Optimism]: 'oeth',
   [EvmChainId.Gnosis]: 'gno',
+  [EvmChainId.Mode]: 'mode', // TODO: Modius - the above link doesn't have Mode, so the prefix is a guess
 };
 
 export const AddBackupWalletViaSafePage = () => {
