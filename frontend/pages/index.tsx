@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
+import { AgentSelection } from '@/components/AgentSelection';
 import { Main } from '@/components/MainPage';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { AddBackupWalletViaSafePage } from '@/components/Pages/AddBackupWalletViaSafePage';
@@ -15,7 +16,7 @@ import { usePageState } from '@/hooks/usePageState';
 const DEFAULT_APP_HEIGHT = 700;
 
 export default function Home() {
-  const { pageState } = usePageState();
+  const { pageState, goto } = usePageState();
   const electronApi = useElectronApi();
 
   useEffect(() => {
@@ -46,13 +47,15 @@ export default function Home() {
         return <Setup />;
       case Pages.Main:
         return <Main />;
+      case Pages.SwitchAgent:
+        return <AgentSelection onPrev={() => goto(Pages.Main)} />;
       case Pages.Settings:
         return <Settings />;
       case Pages.HelpAndSupport:
         return <HelpAndSupport />;
       case Pages.ManageStaking:
         return <ManageStakingPage />;
-      case Pages.YourWalletBreakdown:
+      case Pages.ManageWallet:
         return <YourWalletPage />;
       case Pages.RewardsHistory:
         return <RewardsHistory />;
@@ -61,7 +64,7 @@ export default function Home() {
       default:
         return <Main />;
     }
-  }, [pageState]);
+  }, [pageState, goto]);
 
   return page;
 }

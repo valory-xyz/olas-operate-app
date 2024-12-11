@@ -52,7 +52,7 @@ export const StakingContractSection = () => {
   ]);
 
   return (
-    <CardSection bordertop="true" padding="16px 24px">
+    <CardSection padding="16px 24px">
       <Flex
         gap={16}
         justify="space-between"

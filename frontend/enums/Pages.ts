@@ -6,7 +6,8 @@ export enum Pages {
   Receive,
   Send,
   ManageStaking,
-  YourWalletBreakdown,
+  ManageWallet,
   RewardsHistory,
   AddBackupWalletViaSafe,
+  SwitchAgent,
 }

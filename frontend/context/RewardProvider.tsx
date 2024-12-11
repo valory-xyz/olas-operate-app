@@ -10,8 +10,6 @@ import {
   useMemo,
 } from 'react';
 
-import { AGENT_CONFIG } from '@/config/agents';
-import { GNOSIS_CHAIN_CONFIG } from '@/config/chains';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -36,9 +34,6 @@ export const RewardContext = createContext<{
   updateRewards: async () => {},
 });
 
-const currentAgent = AGENT_CONFIG.trader; // TODO: replace with dynamic agent selection
-const currentChainId = GNOSIS_CHAIN_CONFIG.evmChainId; // TODO: replace with selectedAgentConfig.chainId
-
 /**
  * hook to fetch staking rewards details
  */
@@ -46,15 +41,14 @@ const useStakingRewardsDetails = () => {
   const { isOnline } = useContext(OnlineStatusContext);
   const { selectedStakingProgramId } = useContext(StakingProgramContext);
 
-  const { selectedService } = useServices();
-  // const { service } = useService(selectedService?.service_config_id);
-
+  const { selectedService, selectedAgentConfig } = useServices();
   const serviceConfigId = selectedService?.service_config_id;
+  const currentChainId = selectedAgentConfig.evmHomeChainId;
 
   // fetch chain data from the selected service
   const chainData = !isNil(selectedService?.chain_configs)
     ? selectedService?.chain_configs?.[asMiddlewareChain(currentChainId)]
-        .chain_data
+        ?.chain_data
     : null;
   const multisig = chainData?.multisig;
   const token = chainData?.token;
@@ -69,14 +63,13 @@ const useStakingRewardsDetails = () => {
     ),
     queryFn: async () => {
       if (!multisig || !token || !selectedStakingProgramId) return;
-      const response = await currentAgent.serviceApi.getAgentStakingRewardsInfo(
-        {
+      const response =
+        await selectedAgentConfig.serviceApi.getAgentStakingRewardsInfo({
           agentMultisigAddress: multisig,
           serviceId: token,
           stakingProgramId: selectedStakingProgramId,
           chainId: currentChainId,
-        },
-      );
+        });
 
       if (!response) return;
 
@@ -105,11 +98,14 @@ const useAvailableRewardsForEpoch = () => {
   const { isOnline } = useContext(OnlineStatusContext);
   const { selectedStakingProgramId } = useContext(StakingProgramContext);
 
-  const { selectedService, isFetched: isServicesFetched } = useServices();
+  const {
+    selectedService,
+    isFetched: isLoaded,
+    selectedAgentConfig,
+  } = useServices();
   const serviceConfigId =
-    isServicesFetched && selectedService
-      ? selectedService?.service_config_id
-      : '';
+    isLoaded && selectedService ? selectedService?.service_config_id : '';
+  const currentChainId = selectedAgentConfig.evmHomeChainId;
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.AVAILABLE_REWARDS_FOR_EPOCH_KEY(
@@ -119,7 +115,7 @@ const useAvailableRewardsForEpoch = () => {
       currentChainId,
     ),
     queryFn: async () => {
-      return await currentAgent.serviceApi.getAvailableRewardsForEpoch(
+      return await selectedAgentConfig.serviceApi.getAvailableRewardsForEpoch(
         selectedStakingProgramId!,
         currentChainId,
       );
@@ -140,7 +136,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   const {
     data: stakingRewardsDetails,
     refetch: refetchStakingRewardsDetails,
-    isFetched: isStakingRewardsDetailsFetched,
+    isLoading: isStakingRewardsDetailsLoading,
   } = useStakingRewardsDetails();
 
   const {
@@ -191,7 +187,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
         isEligibleForRewards,
         optimisticRewardsEarnedForEpoch,
         updateRewards,
-        isStakingRewardsDetailsFetched,
+        isStakingRewardsDetailsFetched: !isStakingRewardsDetailsLoading,
       }}
     >
       {children}

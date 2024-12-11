@@ -67,13 +67,8 @@ export const AgentNotRunningButton = () => {
     serviceStakedOlasBalanceOnHomeChain?.olasDepositBalance,
   ]);
 
-  const { masterSafeBalances } = useMasterBalances();
-
-  const masterSafeNativeGasBalance = masterSafeBalances?.find(
-    (walletBalanceResult) =>
-      walletBalanceResult.isNative &&
-      walletBalanceResult.evmChainId === selectedAgentConfig.evmHomeChainId,
-  )?.balance;
+  const { masterSafeBalances, masterSafeNativeGasBalance } =
+    useMasterBalances();
 
   const {
     isAllStakingContractDetailsRecordLoaded,
@@ -108,8 +103,9 @@ export const AgentNotRunningButton = () => {
       !isNil(hasEnoughServiceSlots) &&
       !hasEnoughServiceSlots &&
       !isServiceStaked
-    )
+    ) {
       return false;
+    }
 
     const masterSafeOlasBalance = masterSafeBalances?.find(
       (walletBalanceResult) =>

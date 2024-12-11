@@ -134,6 +134,10 @@ textarea,
   margin: 0 !important;
 }
 
+.mt-0 {
+  margin-top: 0 !important;
+}
+
 .mb-4 {
   margin-bottom: 4px !important;
 }
@@ -146,12 +150,20 @@ textarea,
   margin-bottom: 16px !important;
 }
 
+.mb-auto {
+  margin-bottom: auto !important;
+}
+
 .ml-auto {
   margin-left: auto !important;
 }
 
-.mb-auto {
-  margin-bottom: auto !important;
+.ml-8 {
+  margin-left: 8px !important;
+}
+
+.ml-12 {
+  margin-left: 12px !important;
 }
 
 .mt-8 {
@@ -166,13 +178,6 @@ textarea,
 .p-0 {
   padding: 0 !important;
 }
-.pl-16 {
-  padding-left: 16px !important;
-}
-.pr-16 {
-  padding-right: 16px !important;
-}
-
 
 .pl-16 {
   padding-left: 16px !important;
@@ -181,7 +186,6 @@ textarea,
 .pr-16 {
   padding-right: 16px !important;
 }
-
 
 .mx-auto {
   margin-left: auto !important;
@@ -223,14 +227,6 @@ textarea,
 }
 
 // font color
-.text-light {
-  color: #4D596A !important;
-}
-
-.text-light {
-  color: #4D596A !important;
-}
-
 .text-primary {
   color: #7E22CE !important;
 }

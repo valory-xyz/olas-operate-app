@@ -1,16 +1,5 @@
-import {
-  CopyOutlined,
-  // QrcodeOutlined,
-} from '@ant-design/icons';
-import {
-  Button,
-  Flex,
-  message,
-  Popover,
-  // QRCode,
-  Tooltip,
-  Typography,
-} from 'antd';
+import { CopyOutlined } from '@ant-design/icons';
+import { Button, Flex, message, Popover, Tooltip, Typography } from 'antd';
 import Link from 'next/link';
 import { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
@@ -34,20 +23,6 @@ const CustomizedCardSection = styled(CardSection)<{ border?: boolean }>`
     width: 50%;
   }
 `;
-
-const AddFundsGetTokensSection = () => {
-  const { selectedAgentConfig } = useServices();
-  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
-
-  return (
-    <CardSection justify="center" bordertop="true" padding="16px 24px">
-      <Link target="_blank" href={SWAP_URL_BY_EVM_CHAIN[homeChainId]}>
-        Get OLAS + {CHAIN_CONFIG[homeChainId].nativeToken.symbol} on{' '}
-        {CHAIN_CONFIG[homeChainId].name} {UNICODE_SYMBOLS.EXTERNAL_LINK}
-      </Link>
-    </CardSection>
-  );
-};
 
 export const AddFundsSection = () => {
   const fundSectionRef = useRef<HTMLDivElement>(null);
@@ -88,44 +63,6 @@ export const AddFundsSection = () => {
   );
 };
 
-export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
-  const { selectedAgentConfig } = useServices();
-  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
-  const { masterSafes } = useMasterWalletContext();
-  const masterSafeAddress = useMemo(
-    () =>
-      masterSafes?.find((wallet) => wallet.evmChainId === homeChainId)?.address,
-    [homeChainId, masterSafes],
-  );
-
-  const truncatedFundingAddress: string | undefined = useMemo(
-    () => masterSafeAddress && truncateAddress(masterSafeAddress, 4),
-    [masterSafeAddress],
-  );
-
-  const handleCopyAddress = useCallback(
-    () =>
-      masterSafeAddress &&
-      copyToClipboard(masterSafeAddress).then(() =>
-        message.success('Copied successfully!'),
-      ),
-    [masterSafeAddress],
-  );
-
-  return (
-    <Flex vertical ref={ref}>
-      <AddFundsWarningAlertSection />
-      <AddFundsAddressSection
-        truncatedFundingAddress={truncatedFundingAddress}
-        fundingAddress={masterSafeAddress}
-        handleCopy={handleCopyAddress}
-      />
-      <AddFundsGetTokensSection />
-    </Flex>
-  );
-});
-OpenAddFundsSection.displayName = 'OpenAddFundsSection';
-
 const AddFundsWarningAlertSection = () => {
   const { selectedAgentConfig } = useServices();
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
@@ -163,7 +100,7 @@ const AddFundsAddressSection = ({
     <Tooltip
       title={
         <span className="can-select-text flex">
-          {fundingAddress ?? 'Error loading address'}
+          {fundingAddress ?? 'Unable to load address'}
         </span>
       }
     >
@@ -171,17 +108,60 @@ const AddFundsAddressSection = ({
     </Tooltip>
 
     <Button onClick={handleCopy} icon={<CopyOutlined />} size="large" />
-
-    {/* <Popover
-      title="Scan QR code"
-      content={
-        <QRCode
-          size={250}
-          value={`https://metamask.app.link/send/${fundingAddress}@${100}`}
-        />
-      }
-    >
-      <Button icon={<QrcodeOutlined />} size="large" />
-    </Popover> */}
   </CardSection>
 );
+
+const AddFundsGetTokensSection = () => {
+  const { selectedAgentConfig } = useServices();
+  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
+
+  return (
+    <CardSection justify="center" bordertop="true" padding="16px 24px">
+      <Link target="_blank" href={SWAP_URL_BY_EVM_CHAIN[homeChainId]}>
+        Get OLAS + {CHAIN_CONFIG[homeChainId].nativeToken.symbol} on{' '}
+        {CHAIN_CONFIG[homeChainId].name} {UNICODE_SYMBOLS.EXTERNAL_LINK}
+      </Link>
+    </CardSection>
+  );
+};
+
+/**
+ * Add funds section
+ */
+export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
+  const { selectedAgentConfig } = useServices();
+  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
+  const { masterSafes } = useMasterWalletContext();
+  const masterSafeAddress = useMemo(
+    () =>
+      masterSafes?.find((wallet) => wallet.evmChainId === homeChainId)?.address,
+    [homeChainId, masterSafes],
+  );
+
+  const truncatedFundingAddress: string | undefined = useMemo(
+    () => masterSafeAddress && truncateAddress(masterSafeAddress, 4),
+    [masterSafeAddress],
+  );
+
+  const handleCopyAddress = useCallback(
+    () =>
+      masterSafeAddress &&
+      copyToClipboard(masterSafeAddress).then(() =>
+        message.success('Copied successfully!'),
+      ),
+    [masterSafeAddress],
+  );
+
+  return (
+    <Flex vertical ref={ref}>
+      <AddFundsWarningAlertSection />
+      <AddFundsAddressSection
+        truncatedFundingAddress={truncatedFundingAddress}
+        fundingAddress={masterSafeAddress}
+        handleCopy={handleCopyAddress}
+      />
+      <AddFundsGetTokensSection />
+    </Flex>
+  );
+});
+OpenAddFundsSection.displayName = 'OpenAddFundsSection';

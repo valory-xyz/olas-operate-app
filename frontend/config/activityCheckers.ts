@@ -1,15 +1,17 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { MECH_ACTIVITY_CHECKER_ABI } from '@/abis/mechActivityChecker';
+import { MEME_ACTIVITY_CHECKER_ABI } from '@/abis/memeActivityChecker';
 import { REQUESTER_ACTIVITY_CHECKER_ABI } from '@/abis/requesterActivityChecker';
 import { EvmChainId } from '@/enums/Chain';
 
 import { MechType } from './mechs';
 
-enum ActivityCheckerType {
+export enum ActivityCheckerType {
   MechActivityChecker = MechType.Agent,
   RequesterActivityChecker = MechType.Marketplace,
   Staking = 'StakingActivityChecker',
+  MemeActivityChecker = 'MemeActivityChecker',
 }
 
 type ActivityCheckers = {
@@ -29,6 +31,12 @@ export const GNOSIS_ACTIVITY_CHECKERS: ActivityCheckers = {
 
 export const OPTIMISM_ACTIVITY_CHECKERS: ActivityCheckers = {};
 
+export const BASE_ACTIVITY_CHECKERS: ActivityCheckers = {
+  [ActivityCheckerType.MemeActivityChecker]: new MulticallContract(
+    '0xAe2f766506F6BDF740Cc348a90139EF317Fa7Faf',
+    MEME_ACTIVITY_CHECKER_ABI,
+  ),
+};
 export const ACTIVITY_CHECKERS: {
   [chainId: number]: {
     [activityCheckerType: string]: MulticallContract;
@@ -36,4 +44,5 @@ export const ACTIVITY_CHECKERS: {
 } = {
   [EvmChainId.Gnosis]: GNOSIS_ACTIVITY_CHECKERS,
   [EvmChainId.Optimism]: OPTIMISM_ACTIVITY_CHECKERS,
+  [EvmChainId.Base]: BASE_ACTIVITY_CHECKERS,
 } as const;

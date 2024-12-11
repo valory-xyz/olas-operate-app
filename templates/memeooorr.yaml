@@ -1,0 +1,79 @@
+name: "Memeooorr"
+description: "Memeooorr @twitter_handle"
+hash: bafybeidbgqxeh2yhzrxl3tib5s23hp4ihqjjw6melv7ks47afxc5gil5em
+image: https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu
+service_version: v0.0.1
+home_chain: "base"
+configurations:
+  base:
+    staking_program_id: meme_base_alpha
+    nft: bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve
+    rpc: http://localhost:8545 # User provided
+    threshold: 1 # TODO: Move to service component
+    use_staking: true # User provided
+    cost_of_bond: 50000000000000000000
+    monthly_gas_estimate: 50000000000000000  # 0.05
+    fund_requirements:
+      agent: 1000000000000000  # 0.001
+      safe: 2000000000000000  # 0.002
+env_variables:
+  BASE_LEDGER_RPC:
+    name: "Base ledger RPC"
+    description: ""
+    value: ""
+    provision_type: "computed"
+  CELO_LEDGER_RPC:
+    name: "Base ledger RPC"
+    description: ""
+    value: ""
+    provision_type: "computed"
+  TWIKIT_USERNAME:
+    name: "Twitter username"
+    description: ""
+    value: ""
+    provision_type: "user"
+  TWIKIT_EMAIL:
+    name: "Twitter email"
+    description: ""
+    value: ""
+    provision_type: "user"
+  TWIKIT_PASSWORD:
+    name: "Twitter password"
+    description: ""
+    value: ""
+    provision_type: "user"
+  GENAI_API_KEY:
+    name: "Gemini api key"
+    description: ""
+    value: ""
+    provision_type: "user"
+  PERSONA:
+    name: "Persona description"
+    description: ""
+    value: ""
+    provision_type: "user"
+  FEEDBACK_PERIOD_HOURS:
+    name: "Feedback period"
+    description: ""
+    value: "1"
+    provision_type: "fixed"
+  MIN_FEEDBACK_REPLIES:
+    name: "Minimum feedback replies"
+    description: ""
+    value: "10"
+    provision_type: "fixed"
+  RESET_PAUSE_DURATION:
+    name: "Reset pause duration"
+    description: ""
+    value: "1800"
+    provision_type: "fixed"
+  DB_PATH:
+    name: "DB path"
+    description: ""
+    value: "persistent_data/memeooorr.db"
+    provision_type: "computed"
+  TWIKIT_COOKIES_PATH:
+    name: "Twitter cookies path"
+    description: ""
+    value: "persistent_data/twikit_cookies.json"
+    provision_type: "computed"

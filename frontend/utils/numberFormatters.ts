@@ -26,6 +26,7 @@ export const formatUnits = (value: BigNumberish, decimals = 18): string => {
 
 /**
  * Assumes the input is in wei and converts it to ether
+ * @example `formatEther('1000000000000000000')` => '1.0'
  */
 export const formatEther = (wei: BigNumberish): string => {
   return ethers.utils.formatEther(wei);

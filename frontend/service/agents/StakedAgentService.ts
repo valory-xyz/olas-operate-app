@@ -66,6 +66,7 @@ export abstract class StakedAgentService {
     evmChainId: EvmChainId,
   ): Promise<Maybe<StakingProgramId>> => {
     if (!serviceNftTokenId || !evmChainId) return;
+    if (serviceNftTokenId <= 0) return;
     try {
       const { multicallProvider } = PROVIDERS[evmChainId];
 

@@ -25,14 +25,13 @@ export const AddBackupWalletAlert = () => {
   if (!masterSafeOwnersIsFetched) return null;
 
   if (isNil(backupOwners)) return null;
-  if (
-    isEmpty(
-      backupOwners.filter(
-        (owner) => !isNil(masterEoa) && owner === masterEoa.address,
-      ),
-    )
-  )
-    return null;
+
+  const hasNoBackupOwners = isEmpty(
+    backupOwners.filter(
+      (owner) => !isNil(masterEoa) && owner === masterEoa.address,
+    ),
+  );
+  if (hasNoBackupOwners) return null;
 
   return (
     <CustomAlert

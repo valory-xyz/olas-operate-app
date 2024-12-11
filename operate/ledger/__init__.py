@@ -35,6 +35,7 @@ GOERLI_PUBLIC_RPC = os.environ.get(
 )
 SOLANA_PUBLIC_RPC = os.environ.get("SOLANA_RPC", "https://api.mainnet-beta.solana.com")
 BASE_PUBLIC_RPC = os.environ.get("BASE_RPC", "https://mainnet.base.org")
+CELO_PUBLIC_RPC = os.environ.get("CELO_RPC", "https://forno.celo.org")
 OPTIMISM_PUBLIC_RPC = os.environ.get("OPTIMISM_RPC", "https://mainnet.optimism.io")
 MODE_PUBLIC_RPC = os.environ.get("MODE_RPC", "https://rpc.mode.network")
 
@@ -43,6 +44,7 @@ GNOSIS_RPC = os.environ.get("GNOSIS_RPC", "https://rpc-gate.autonolas.tech/gnosi
 GOERLI_RPC = os.environ.get("GOERLI_RPC", "https://ethereum-goerli.publicnode.com")
 SOLANA_RPC = os.environ.get("SOLANA_RPC", "https://api.mainnet-beta.solana.com")
 BASE_RPC = os.environ.get("BASE_RPC", "https://mainnet.base.org")
+CELO_RPC = os.environ.get("CELO_RPC", "https://forno.celo.org")
 OPTIMISM_RPC = os.environ.get("OPTIMISM_RPC", "https://mainnet.optimism.io")
 MODE_RPC = os.environ.get("MODE_RPC", "https://rpc.mode.network")
 
@@ -52,6 +54,7 @@ PUBLIC_RPCS = {
     Chain.GOERLI: GOERLI_PUBLIC_RPC,
     Chain.SOLANA: SOLANA_PUBLIC_RPC,
     Chain.BASE: BASE_PUBLIC_RPC,
+    Chain.CELO: CELO_PUBLIC_RPC,
     Chain.OPTIMISTIC: OPTIMISM_PUBLIC_RPC,
     Chain.MODE: MODE_PUBLIC_RPC,
 }
@@ -62,6 +65,7 @@ DEFAULT_RPCS = {
     Chain.GOERLI: GOERLI_RPC,
     Chain.SOLANA: SOLANA_RPC,
     Chain.BASE: BASE_RPC,
+    Chain.CELO: CELO_RPC,
     Chain.OPTIMISTIC: OPTIMISM_RPC,
     Chain.MODE: MODE_RPC,
 }
@@ -72,6 +76,7 @@ CHAIN_HELPERS: t.Dict[Chain, t.Type[LedgerHelper]] = {
     Chain.GOERLI: Ethereum,
     Chain.SOLANA: Solana,
     Chain.BASE: Ethereum,
+    Chain.CELO: Ethereum,
     Chain.OPTIMISTIC: Ethereum,
     Chain.MODE: Ethereum,
 }
@@ -87,6 +92,7 @@ CURRENCY_DENOMS = {
     Chain.GOERLI: "GWei",
     Chain.SOLANA: "Lamp",
     Chain.BASE: "Wei",
+    Chain.CELO: "Wei",
     Chain.OPTIMISTIC: "Wei",
     Chain.MODE: "Wei",
 }
