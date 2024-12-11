@@ -137,7 +137,6 @@ export const MigrateButton = ({
               useMechMarketplace:
                 stakingProgramIdToMigrateTo ===
                 StakingProgramId.PearlBetaMechMarketplace,
-              chainId: homeChainId,
             };
 
             if (selectedService) {
