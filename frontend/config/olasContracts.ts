@@ -68,4 +68,5 @@ export const OLAS_CONTRACTS: {
   [EvmChainId.Gnosis]: GNOSIS_OLAS_CONTRACTS,
   [EvmChainId.Optimism]: OPTIMISM_OLAS_CONTRACTS,
   [EvmChainId.Base]: BASE_OLAS_CONTRACTS,
+  [EvmChainId.Mode]: MODE_OLAS_CONTRACTS,
 };
