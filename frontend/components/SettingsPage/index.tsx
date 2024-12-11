@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 
 import { Pages } from '@/enums/Pages';
 import { SettingsScreen } from '@/enums/SettingsScreen';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useMultisig } from '@/hooks/useMultisig';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
@@ -83,6 +84,7 @@ export const Settings = () => {
 };
 
 const SettingsMain = () => {
+  const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
   const { selectedAgentConfig } = useServices();
   const { masterEoa, masterSafes } = useMasterWalletContext();
 
@@ -151,16 +153,21 @@ const SettingsMain = () => {
         </Flex>
       </CardSection>
 
-      {/* Wallet backup */}
-      <CardSection
-        padding="24px"
-        borderbottom={masterSafeBackupAddress ? 'true' : 'false'}
-        vertical
-        gap={8}
-      >
-        <Text strong>Backup wallet</Text>
-        {walletBackup}
-      </CardSection>
+      {/* Wallet backup 
+        If there's no backup address and adding it
+        via safe is disabled - hide the section
+      */}
+      {!isBackupViaSafeEnabled && !masterSafeBackupAddress ? null : (
+        <CardSection
+          padding="24px"
+          borderbottom={masterSafeBackupAddress ? 'true' : 'false'}
+          vertical
+          gap={8}
+        >
+          <Text strong>Backup wallet</Text>
+          {walletBackup}
+        </CardSection>
+      )}
 
       {/* Debug info */}
       <DebugInfoSection />
