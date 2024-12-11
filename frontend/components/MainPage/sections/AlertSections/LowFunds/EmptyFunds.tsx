@@ -1,44 +1,46 @@
-import { Flex, Typography } from 'antd';
+import { Divider, Flex, Typography } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
+import { COLOR } from '@/constants/colors';
 import { LOW_AGENT_SAFE_BALANCE } from '@/constants/thresholds';
 
+import { FundsToActivate } from './FundsToActivate';
 import { InlineBanner } from './InlineBanner';
 import { useLowFundsDetails } from './useLowFunds';
 
 const { Text, Title } = Typography;
 
-export const LowSafeSignerBalanceAlert = () => {
+const PurpleDivider = () => (
+  <Divider style={{ margin: '12px 0 8px 0', background: COLOR.PURPLE_LIGHT }} />
+);
+
+export const EmptyFunds = () => {
   const { chainName, tokenSymbol, masterEoaAddress } = useLowFundsDetails();
 
   return (
     <CustomAlert
       fullWidth
-      type="error"
       showIcon
       message={
         <Flex vertical gap={8} align="flex-start">
           <Title level={5} style={{ margin: 0 }}>
-            Safe signer balance is too low
+            Fund your agent
           </Title>
+
           <Text>
             To keep your agent operational, add
             <Text strong>{` ${LOW_AGENT_SAFE_BALANCE} ${tokenSymbol} `}</Text>
             on {chainName} chain to the safe signer.
           </Text>
-          <Text>
-            Your agent is at risk of missing its targets, which would result in
-            several days&apos; suspension.
-          </Text>
 
           {masterEoaAddress && (
-            <InlineBanner
-              text="Safe signer address"
-              address={masterEoaAddress}
-            />
+            <InlineBanner text="Your safe address" address={masterEoaAddress} />
           )}
+          <PurpleDivider />
+          <FundsToActivate stakingFundsRequired tradingFundsRequired />
         </Flex>
       }
+      type="primary"
     />
   );
 };
