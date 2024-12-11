@@ -41,7 +41,7 @@ export const BASE_ACTIVITY_CHECKERS: ActivityCheckers = {
 
 export const MODE_ACTIVITY_CHECKERS: ActivityCheckers = {
   [ActivityCheckerType.Staking]: new MulticallContract(
-    '0x534c0a05b6d4d28d5f3630d6d74857b253cf8332',
+    '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
     STAKING_ACTIVITY_CHECKER_ABI,
   ),
 };
