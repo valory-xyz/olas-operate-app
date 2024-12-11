@@ -2,6 +2,7 @@ import { MiddlewareChain } from '@/client';
 import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
 import { MemeooorBaseService } from '@/service/agents/Memeooor';
+import { ModiusService } from '@/service/agents/Modius';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
 // import { OptimusService } from '@/service/agents/Optimus';
 import { AgentConfig } from '@/types/Agent';
@@ -51,5 +52,19 @@ export const AGENT_CONFIG: {
     displayName: 'Memeooorr agent',
     description:
       'Autonomously post to Twitter, create and trade memecoins, and interact with other agents.',
+  },
+  [AgentType.Modius]: {
+    name: 'Modius agent',
+    evmHomeChainId: EvmChainId.Mode,
+    middlewareHomeChainId: MiddlewareChain.MODE,
+    requiresAgentSafesOn: [EvmChainId.Mode],
+    agentSafeFundingRequirements: {
+      [EvmChainId.Mode]: 5260000000000000, // 0.00526 eth
+    },
+    requiresMasterSafesOn: [EvmChainId.Mode],
+    serviceApi: ModiusService,
+    displayName: 'Modius agent',
+    description:
+      'Invests crypto assets in DEXs on your behalf and grow your portfolio.',
   },
 };

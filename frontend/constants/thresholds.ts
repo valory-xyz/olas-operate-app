@@ -24,6 +24,10 @@ export const MIN_ETH_BALANCE_THRESHOLDS: Record<
     safeCreation: 0.005,
     safeAddSigner: 0.005,
   },
+  [EvmChainId.Mode]: {
+    safeCreation: 0.00526,
+    safeAddSigner: 0.005, // TODO: Modius - confirm this value
+  },
 };
 
 // TODO: update to support multi-chain, very poor implementation
