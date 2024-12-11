@@ -2,13 +2,15 @@ import {
   Deployment,
   MiddlewareChain,
   MiddlewareServiceResponse,
+  ServiceHash,
   ServiceTemplate,
 } from '@/client';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
-import { BACKEND_URL_V2 } from '@/constants/urls';
+import { BACKEND_URL, BACKEND_URL_V2 } from '@/constants/urls';
 import { EvmChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
+import { Address } from '@/types/Address';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 /**
@@ -174,6 +176,34 @@ const getDeployment = async (serviceConfigId: string): Promise<Deployment> =>
     throw new Error('Failed to get deployment');
   });
 
+/**
+ * Withdraws the balance of a service
+ *
+ * @param withdrawAddress Address
+ * @param serviceTemplate ServiceTemplate
+ * @returns Promise<Service>
+ */
+export const withdrawBalance = async ({
+  withdrawAddress,
+  serviceHash,
+}: {
+  withdrawAddress: Address;
+  serviceHash: ServiceHash;
+}): Promise<{ error: string | null }> =>
+  new Promise((resolve, reject) =>
+    fetch(`${BACKEND_URL}/services/${serviceHash}/onchain/withdraw`, {
+      method: 'POST',
+      body: JSON.stringify({ withdrawal_address: withdrawAddress }),
+      headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    }).then((response) => {
+      if (response.ok) {
+        resolve(response.json());
+      } else {
+        reject('Failed to withdraw balance');
+      }
+    }),
+  );
+
 export const ServicesService = {
   getService,
   getServices,
@@ -182,4 +212,6 @@ export const ServicesService = {
   createService,
   updateService,
   stopDeployment,
+  // deleteDeployment,
+  withdrawBalance,
 };

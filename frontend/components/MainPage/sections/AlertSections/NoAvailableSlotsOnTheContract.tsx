@@ -4,7 +4,7 @@ import { NA } from '@/constants/symbols';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import {
-  useActiveStakingContractInfo,
+  useActiveStakingContractDetails,
   useStakingContractDetails,
 } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -26,7 +26,7 @@ export const NoAvailableSlotsOnTheContract = () => {
     isServiceStaked,
     isSelectedStakingContractDetailsLoaded:
       isActiveStakingContractDetailsLoaded,
-  } = useActiveStakingContractInfo();
+  } = useActiveStakingContractDetails();
 
   const { hasEnoughServiceSlots } = useStakingContractDetails(
     selectedStakingProgramId,

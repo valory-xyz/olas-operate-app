@@ -17,7 +17,7 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import {
-  useActiveStakingContractInfo,
+  useActiveStakingContractDetails,
   useStakingContractContext,
 } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -84,9 +84,9 @@ export const AgentNotRunningButton = () => {
   const { selectedStakingProgramId } = useStakingProgram();
 
   const { isEligibleForStaking, isAgentEvicted, isServiceStaked } =
-    useActiveStakingContractInfo();
+    useActiveStakingContractDetails();
 
-  const { hasEnoughServiceSlots } = useActiveStakingContractInfo();
+  const { hasEnoughServiceSlots } = useActiveStakingContractDetails();
 
   const requiredStakedOlas =
     selectedStakingProgramId &&

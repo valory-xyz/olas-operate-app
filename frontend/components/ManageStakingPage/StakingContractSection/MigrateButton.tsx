@@ -15,7 +15,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import {
-  useActiveStakingContractInfo,
+  useActiveStakingContractDetails,
   useStakingContractDetails,
 } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -62,7 +62,7 @@ export const MigrateButton = ({
   const {
     selectedStakingContractDetails,
     isSelectedStakingContractDetailsLoaded,
-  } = useActiveStakingContractInfo();
+  } = useActiveStakingContractDetails();
   const { stakingContractInfo: defaultStakingContractInfo } =
     useStakingContractDetails(defaultStakingProgramId);
 

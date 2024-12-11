@@ -13,7 +13,7 @@ import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import {
-  useActiveStakingContractInfo,
+  useActiveStakingContractDetails,
   useStakingContractContext,
   useStakingContractDetails,
 } from '@/hooks/useStakingContractDetails';
@@ -70,7 +70,7 @@ export const useMigrate = (migrateToStakingProgramId: StakingProgramId) => {
     isAllStakingContractDetailsRecordLoaded,
   } = useStakingContractContext();
   const { isServiceStaked, isServiceStakedForMinimumDuration } =
-    useActiveStakingContractInfo();
+    useActiveStakingContractDetails();
   const { stakingContractInfo, hasEnoughServiceSlots } =
     useStakingContractDetails(migrateToStakingProgramId);
 

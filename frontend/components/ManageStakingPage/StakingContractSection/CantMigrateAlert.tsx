@@ -14,7 +14,7 @@ import {
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { useServices } from '@/hooks/useServices';
 import {
-  useActiveStakingContractInfo,
+  useActiveStakingContractDetails,
   useStakingContractContext,
 } from '@/hooks/useStakingContractDetails';
 import { balanceFormat } from '@/utils/numberFormatters';
@@ -31,7 +31,7 @@ const AlertInsufficientMigrationFunds = ({
   const { selectedAgentConfig } = useServices();
   const { isAllStakingContractDetailsRecordLoaded } =
     useStakingContractContext();
-  const { isServiceStaked } = useActiveStakingContractInfo();
+  const { isServiceStaked } = useActiveStakingContractDetails();
   const { isLoaded: isBalanceLoaded, totalStakedOlasBalance } =
     useBalanceContext();
   const { masterSafeBalances } = useMasterBalances();

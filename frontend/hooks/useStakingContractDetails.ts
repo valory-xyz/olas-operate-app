@@ -15,7 +15,7 @@ export const useStakingContractContext = () =>
 
  * @note requires serviceConfigId once multiple instances are supported
  */
-export const useActiveStakingContractInfo = () => {
+export const useActiveStakingContractDetails = () => {
   const {
     selectedStakingContractDetails,
     isSelectedStakingContractDetailsLoaded,

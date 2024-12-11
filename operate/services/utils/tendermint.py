@@ -309,7 +309,7 @@ class TendermintNode:
         """Stop a monitoring process."""
         if self._monitoring is not None:
             self._monitoring.stop()  # set stop event
-            self._monitoring.join()
+            self._monitoring.join(timeout=20)
 
     def stop(self) -> None:
         """Stop a Tendermint node process."""
@@ -658,9 +658,10 @@ def run_app_in_subprocess(q: multiprocessing.Queue) -> None:
     def handle_server_exit() -> Response:
         """Handle server exit."""
         app._is_on_exit = True  # pylint: disable=protected-access
-        tendermint_node.stop()
-
-        q.put(True)
+        try:
+            tendermint_node.stop()
+        finally:
+            q.put(True)
         return {"node": "stopped"}
 
     app.run(host="localhost", port=8080)
@@ -673,9 +674,14 @@ def run_stoppable_main() -> None:
     p = multiprocessing.Process(target=run_app_in_subprocess, args=(q,))
     p.start()
     # wait for stop marker
-    q.get(block=True)
-    sleep(1)
-    p.terminate()
+    try:
+        q.get(block=True)
+        sleep(1)
+    finally:
+        p.terminate()
+        with contextlib.suppress(Exception):
+            p.join(timeout=10)
+            p.terminate()
 
 
 def main() -> None:

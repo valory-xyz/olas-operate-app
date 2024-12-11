@@ -33,6 +33,7 @@ from typing import Any
 from venv import main as venv_cli
 
 import psutil
+import requests
 from aea.__version__ import __version__ as aea_version
 from autonomy.__version__ import __version__ as autonomy_version
 from requests import get
@@ -71,6 +72,8 @@ def _kill_process(pid: int) -> None:
             process.kill()
         except OSError:
             return
+        except psutil.AccessDenied:
+            return            
         time.sleep(1)
 
 
@@ -205,10 +208,12 @@ class BaseDeploymentRunner(AbstractDeploymentRunner, metaclass=ABCMeta):
         return f"{self.TM_CONTROL_URL}/exit"
 
     def _stop_tendermint(self) -> None:
-        """Start tendermint process."""
+        """Stop tendermint process."""
         try:
-            get(self._get_tm_exit_url())
+            requests.get(self._get_tm_exit_url(), timeout=(1, 10))
             time.sleep(self.SLEEP_BEFORE_TM_KILL)
+        except requests.ConnectionError:
+            print(f"No Tendermint process listening on {self._get_tm_exit_url()}.")
         except Exception:  # pylint: disable=broad-except
             print_exc()
 
@@ -238,13 +243,13 @@ class PyInstallerHostDeploymentRunner(BaseDeploymentRunner):
     @property
     def _aea_bin(self) -> str:
         """Return aea_bin path."""
-        abin = str(Path(sys._MEIPASS) / "aea_bin")  # type: ignore # pylint: disable=protected-access
+        abin = str(Path(os.path.dirname(sys.executable)) / "aea_bin")  # type: ignore # pylint: disable=protected-access
         return abin
 
     @property
     def _tendermint_bin(self) -> str:
         """Return tendermint path."""
-        return str(Path(sys._MEIPASS) / "tendermint")  # type: ignore # pylint: disable=protected-access
+        return str(Path(os.path.dirname(sys.executable)) / "tendermint_bin")  # type: ignore # pylint: disable=protected-access
 
     def _start_agent(self) -> None:
         """Start agent process."""
@@ -282,7 +287,9 @@ class PyInstallerHostDeploymentRunner(BaseDeploymentRunner):
 
         if platform.system() == "Windows":
             # to look up for bundled in tendermint.exe
-            env["PATH"] = os.environ["PATH"] + ";" + os.path.dirname(sys.executable)
+            env["PATH"] = os.path.dirname(sys.executable) + ";" + os.environ["PATH"]
+        else:
+            env["PATH"] = os.path.dirname(sys.executable) + ":" + os.environ["PATH"]
 
         tendermint_com = self._tendermint_bin  # type: ignore  # pylint: disable=protected-access
         process = subprocess.Popen(  # pylint: disable=consider-using-with # nosec
@@ -311,13 +318,13 @@ class PyInstallerHostDeploymentRunnerWindows(PyInstallerHostDeploymentRunner):
     @property
     def _aea_bin(self) -> str:
         """Return aea_bin path."""
-        abin = str(Path(sys._MEIPASS) / "aea_win.exe")  # type: ignore # pylint: disable=protected-access
+        abin = str(Path(os.path.dirname(sys.executable)) / "aea_win.exe")  # type: ignore # pylint: disable=protected-access
         return abin
 
     @property
     def _tendermint_bin(self) -> str:
         """Return tendermint path."""
-        return str(Path(sys._MEIPASS) / "tendermint_win.exe")  # type: ignore # pylint: disable=protected-access
+        return str(Path(os.path.dirname(sys.executable)) / "tendermint_win.exe")  # type: ignore # pylint: disable=protected-access
 
 
 class HostPythonHostDeploymentRunner(BaseDeploymentRunner):
@@ -426,7 +433,7 @@ def _get_host_deployment_runner(build_dir: Path) -> BaseDeploymentRunner:
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         # pyinstaller inside!
         if platform.system() == "Darwin":
-            deployment_runner = PyInstallerHostDeploymentRunner(build_dir)
+            deployment_runner = PyInstallerHostDeploymentRunnerMac(build_dir)
         elif platform.system() == "Windows":
             deployment_runner = PyInstallerHostDeploymentRunnerWindows(build_dir)
         else:

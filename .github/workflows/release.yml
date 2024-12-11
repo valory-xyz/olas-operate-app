@@ -12,8 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-14]
-        arch: [arm64, x64]
+        os: [macos-14, macos-14-large]
 
     steps:
       - uses: actions/checkout@v3
@@ -36,8 +35,12 @@ jobs:
 
       # Set OS_ARCH env
       - name: Set architecture environment variable
-        run: 
-            echo "OS_ARCH=${{ matrix.arch }}" >> $GITHUB_ENV; 
+        run: |
+          if [ "${{ matrix.os }}" == "macos-14-large" ]; then 
+            echo "OS_ARCH=x64" >> $GITHUB_ENV; 
+          else 
+            echo "OS_ARCH=arm64" >> $GITHUB_ENV; 
+          fi
 
       # Cache Poetry dependencies with unique key for each environment and architecture
       - name: Cache Poetry dependencies
@@ -47,9 +50,9 @@ jobs:
             ~/.cache/pypoetry
             ~/.cache/pip
             ~/.venv
-          key: poetry-${{ matrix.arch }}-${{ hashFiles('**/poetry.lock') }}
+          key: poetry-${{ env.OS_ARCH }}-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
-            poetry-${{ matrix.arch }}-
+            poetry-${{ env.OS_ARCH }}-
 
       - name: Install dependencies
         run: poetry install
@@ -69,27 +72,40 @@ jobs:
       - name: Build with PyInstaller
         run: |
           poetry run pyinstaller operate/services/utils/tendermint.py --onefile
+          cp dist/tendermint dist/tendermint_bin
 
           # patch open aea in place
           rm -fr ./open-aea
           git clone https://github.com/valory-xyz/open-aea.git -b fix/1.5.2_encoding
           poetry run pip install ./open-aea/
 
-          poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py --add-binary dist/aea_bin:. --add-binary dist/tendermint:. --onefile --name pearl_${{ env.OS_ARCH }}
+          poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py  --onefile --name pearl_${{ env.OS_ARCH }}
 
       - name: Upload Release Assets
         uses: actions/upload-artifact@v4
         with:
-          name: pearl_${{ matrix.arch }}
-          path: dist/pearl_${{ matrix.arch }}
+          name: pearl_${{ env.OS_ARCH }}
+          path: dist/pearl_${{ env.OS_ARCH }}
+
+      - name: Upload Tendermint
+        uses: actions/upload-artifact@v4
+        with:
+          name: tendermint_${{ env.OS_ARCH }}
+          path: dist/tendermint_bin
+
+      - name: Upload aea
+        uses: actions/upload-artifact@v4
+        with:
+          name: aea_bin_${{ env.OS_ARCH }}
+          path: ./dist/aea_bin
 
   # Jobs for production and development, running separately for x64 and arm64
   build-release:
-    runs-on: macos-14
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         env: [production, development]
-        arch: [arm64, x64]
+        os: [macos-14, macos-14-large]
 
     needs: build-macos-pyinstaller
 
@@ -108,17 +124,55 @@ jobs:
               yarn config set network-retries 10             # Retry up to 10 times
               yarn config set network-concurrency 2          # Reduce concurrency to 2 connections
     
-
+      # Set OS_ARCH env
+      - name: Set architecture environment variable
+        run: |
+          if [ "${{ matrix.os }}" == "macos-14-large" ]; then 
+            echo "OS_ARCH=x64" >> $GITHUB_ENV; 
+          else 
+            echo "OS_ARCH=arm64" >> $GITHUB_ENV; 
+          fi
       # Download the appropriate architecture artifact
       - name: Download Pearl binary for architecture
         uses: actions/download-artifact@v4
         with:
-          name: pearl_${{ matrix.arch }}
+          name: pearl_${{ env.OS_ARCH }}
           path: electron/bins/
+      
+      - name: Download aea binary for architecture
+        uses: actions/download-artifact@v4
+        with:
+          name: aea_bin_${{ env.OS_ARCH }}
+          path: electron/bins/
+
+      - name: Download tendermint binary for architecture
+        uses: actions/download-artifact@v4
+        with:
+          name: tendermint_${{ env.OS_ARCH }}
+          path: electron/bins/
+      
+      # Configure Yarn network settings for timeout, retries, and reduced concurrency
+      - name: Configure Yarn network settings
+        run: |
+            ls electron/bins/
+
+      # download TM
+      - name: Set architecture environment variable
+        run: |
+          
+          if [ "${{ matrix.os }}" == "macos-14-large" ]; then 
+            export TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_darwin_amd64.tar.gz
+          else 
+            export TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_darwin_arm64.tar.gz
+          fi
+          curl $TM_DOWNLOAD_URL -L -o tendermint.tar.gz
+          tar -xvf tendermint.tar.gz
+          cp ./tendermint electron/bins/tendermint
+          chmod +x electron/bins/tendermint
 
       # Add execution permissions to the binaries
       - name: Add exec permissions
-        run: chmod +x electron/bins/pearl_${{ matrix.arch }}
+        run: chmod +x electron/bins/*
 
       # Cache electron node_modules with unique key for each environment and architecture
       - name: Restore electron node_modules cache
@@ -126,7 +180,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: node_modules
-          key: electron-node-modules-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.env }}-${{ hashFiles('yarn.lock') }}
+          key: electron-node-modules-${{ runner.os }}-${{ env.OS_ARCH }}-${{ matrix.env }}-${{ hashFiles('yarn.lock') }}
 
       # Install electron dependencies if cache miss
       - name: Install electron dependencies
@@ -139,7 +193,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: frontend/node_modules
-          key: frontend-node-modules-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.env }}-${{ hashFiles('frontend/yarn.lock') }}
+          key: frontend-node-modules-${{ runner.os }}-${{ env.OS_ARCH }}-${{ matrix.env }}-${{ hashFiles('frontend/yarn.lock') }}
 
       # Install frontend dependencies if cache miss
       - name: Install frontend dependencies
@@ -182,12 +236,17 @@ jobs:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}
           NODE_ENV: ${{ matrix.env }}
-          ARCH: ${{ matrix.arch }}
+          ARCH: ${{ env.OS_ARCH }}
           OPTIMISM_RPC: https://rpc-gate.autonolas.tech/optimism-rpc/
           BASE_RPC: https://rpc-gate.autonolas.tech/base-rpc/
           GNOSIS_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
-        run: node build.js
+        run: |
+          echo "OPTIMISM_RPC=https://rpc-gate.autonolas.tech/optimism-rpc/" >> .env
+          echo "BASE_RPC=https://rpc-gate.autonolas.tech/base-rpc/" >> .env
+          echo "GNOSIS_RPC=https://rpc-gate.autonolas.tech/gnosis-rpc/" >> .env
+          echo "ETHEREUM_RPC=https://rpc-gate.autonolas.tech/ethereum-rpc/" >> .env
+          node build.js
 
       # Run the build and notarization process for development
       - name: Build, notarize, and publish (Development)
@@ -200,9 +259,14 @@ jobs:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}
           NODE_ENV: ${{ matrix.env }}
-          ARCH: ${{ matrix.arch }}
+          ARCH: ${{ env.OS_ARCH }}
           OPTIMISM_RPC: https://rpc-gate.autonolas.tech/optimism-rpc/
           BASE_RPC: https://rpc-gate.autonolas.tech/base-rpc/
           GNOSIS_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
-        run: node build.js
+        run: |
+          echo "OPTIMISM_RPC=https://rpc-gate.autonolas.tech/optimism-rpc/" >> .env
+          echo "BASE_RPC=https://rpc-gate.autonolas.tech/base-rpc/" >> .env
+          echo "GNOSIS_RPC=https://rpc-gate.autonolas.tech/gnosis-rpc/" >> .env
+          echo "ETHEREUM_RPC=https://rpc-gate.autonolas.tech/ethereum-rpc/" >> .env
+          node build.js

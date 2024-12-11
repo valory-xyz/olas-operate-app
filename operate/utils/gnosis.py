@@ -20,14 +20,17 @@
 """Safe helpers."""
 
 import binascii
-import os
 import secrets
+import time
 import typing as t
+from datetime import datetime
 from enum import Enum
 
 from aea.crypto.base import Crypto, LedgerApi
+from aea.helpers.logging import setup_logger
 from autonomy.chain.base import registry_contracts
 from autonomy.chain.config import ChainType as ChainProfile
+from autonomy.chain.exceptions import ChainInteractionError
 from autonomy.chain.tx import TxSettler
 
 from operate.constants import (
@@ -37,6 +40,7 @@ from operate.constants import (
 )
 
 
+logger = setup_logger(name="operate.manager")
 NULL_ADDRESS: str = "0x" + "0" * 40
 MAX_UINT256 = 2**256 - 1
 ZERO_ETH = 0
@@ -56,6 +60,39 @@ class MultiSendOperation(Enum):
 
     CALL = 0
     DELEGATE_CALL = 1
+
+
+def settle_raw_transaction(
+    ledger_api: LedgerApi, build_and_send_tx: t.Callable[[], t.Optional[str]]
+) -> t.Dict:
+    """Settle the transaction.
+
+    Args:
+        ledger_api: The ledger api.
+        send_tx: The function to send the transaction and return tx digest or receipt.
+
+    Returns:
+        The transaction receipt
+    """
+    retries = 0
+    deadline = datetime.now().timestamp() + ON_CHAIN_INTERACT_TIMEOUT
+    while retries < ON_CHAIN_INTERACT_RETRIES and datetime.now().timestamp() < deadline:
+        try:
+            digest_or_receipt = build_and_send_tx()
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"Error sending the safe tx: {e}")
+            digest_or_receipt = None
+
+        if isinstance(digest_or_receipt, str):  # it's a digest
+            logger.info(f"Transaction hash: {digest_or_receipt}")
+            receipt = ledger_api.api.eth.wait_for_transaction_receipt(digest_or_receipt)
+        else:
+            receipt = digest_or_receipt
+
+        if receipt is not None and receipt["status"] != 0:
+            return receipt
+        time.sleep(ON_CHAIN_INTERACT_SLEEP)
+    raise RuntimeError("Timeout while waiting for safe transaction to go through")
 
 
 def hash_payload_to_hex(  # pylint: disable=too-many-arguments,too-many-locals
@@ -225,49 +262,46 @@ def send_safe_txs(
         crypto.address,
     )
     to_address = to or safe
-    safe_tx_hash = registry_contracts.gnosis_safe.get_raw_safe_transaction_hash(
-        ledger_api=ledger_api,
-        contract_address=safe,
-        value=0,
-        safe_tx_gas=0,
-        to_address=to_address,
-        data=txd,
-        operation=SafeOperation.CALL.value,
-    ).get("tx_hash")
-    safe_tx_bytes = binascii.unhexlify(
-        safe_tx_hash[2:],
-    )
-    signatures = {
-        owner: crypto.sign_message(
-            message=safe_tx_bytes,
-            is_deprecated_mode=True,
-        )[2:]
-    }
-    max_priority_fee_per_gas = os.getenv("MAX_PRIORITY_FEE_PER_GAS", None)
-    max_fee_per_gas = os.getenv("MAX_FEE_PER_GAS", None)
-    transaction = registry_contracts.gnosis_safe.get_raw_safe_transaction(
-        ledger_api=ledger_api,
-        contract_address=safe,
-        sender_address=owner,
-        owners=(owner,),  # type: ignore
-        to_address=to_address,
-        value=0,
-        data=txd,
-        safe_tx_gas=0,
-        signatures_by_owner=signatures,
-        operation=SafeOperation.CALL.value,
-        nonce=ledger_api.api.eth.get_transaction_count(owner),
-        max_fee_per_gas=int(max_fee_per_gas) if max_fee_per_gas else None,
-        max_priority_fee_per_gas=int(max_priority_fee_per_gas)
-        if max_priority_fee_per_gas
-        else None,
-    )
-    ledger_api.get_transaction_receipt(
-        ledger_api.send_signed_transaction(
-            crypto.sign_transaction(
-                transaction,
-            ),
+
+    def _build_and_send_tx() -> t.Optional[str]:
+        safe_tx_hash = registry_contracts.gnosis_safe.get_raw_safe_transaction_hash(
+            ledger_api=ledger_api,
+            contract_address=safe,
+            value=0,
+            safe_tx_gas=0,
+            to_address=to_address,
+            data=txd,
+            operation=SafeOperation.CALL.value,
+        ).get("tx_hash")
+        safe_tx_bytes = binascii.unhexlify(
+            safe_tx_hash[2:],
         )
+        signatures = {
+            owner: crypto.sign_message(
+                message=safe_tx_bytes,
+                is_deprecated_mode=True,
+            )[2:]
+        }
+        transaction = registry_contracts.gnosis_safe.get_raw_safe_transaction(
+            ledger_api=ledger_api,
+            contract_address=safe,
+            sender_address=owner,
+            owners=(owner,),  # type: ignore
+            to_address=to_address,
+            value=0,
+            data=txd,
+            safe_tx_gas=0,
+            signatures_by_owner=signatures,
+            operation=SafeOperation.CALL.value,
+            nonce=ledger_api.api.eth.get_transaction_count(owner),
+        )
+        return ledger_api.send_signed_transaction(
+            crypto.sign_transaction(transaction),
+        )
+
+    settle_raw_transaction(
+        ledger_api=ledger_api,
+        build_and_send_tx=_build_and_send_tx,
     )
 
 
@@ -386,49 +420,46 @@ def transfer(
     owner = ledger_api.api.to_checksum_address(
         crypto.address,
     )
-    safe_tx_hash = registry_contracts.gnosis_safe.get_raw_safe_transaction_hash(
-        ledger_api=ledger_api,
-        contract_address=safe,
-        value=amount,
-        safe_tx_gas=0,
-        to_address=to,
-        data=b"",
-        operation=SafeOperation.CALL.value,
-    ).get("tx_hash")
-    safe_tx_bytes = binascii.unhexlify(
-        safe_tx_hash[2:],
-    )
-    signatures = {
-        owner: crypto.sign_message(
-            message=safe_tx_bytes,
-            is_deprecated_mode=True,
-        )[2:]
-    }
-    max_priority_fee_per_gas = os.getenv("MAX_PRIORITY_FEE_PER_GAS", None)
-    max_fee_per_gas = os.getenv("MAX_FEE_PER_GAS", None)
-    transaction = registry_contracts.gnosis_safe.get_raw_safe_transaction(
-        ledger_api=ledger_api,
-        contract_address=safe,
-        sender_address=owner,
-        owners=(owner,),  # type: ignore
-        to_address=to,
-        value=amount,
-        data=b"",
-        safe_tx_gas=0,
-        signatures_by_owner=signatures,
-        operation=SafeOperation.CALL.value,
-        nonce=ledger_api.api.eth.get_transaction_count(owner),
-        max_fee_per_gas=int(max_fee_per_gas) if max_fee_per_gas else None,
-        max_priority_fee_per_gas=int(max_priority_fee_per_gas)
-        if max_priority_fee_per_gas
-        else None,
-    )
-    ledger_api.get_transaction_receipt(
-        ledger_api.send_signed_transaction(
-            crypto.sign_transaction(
-                transaction,
-            ),
+
+    def _build_and_send_tx() -> t.Optional[str]:
+        safe_tx_hash = registry_contracts.gnosis_safe.get_raw_safe_transaction_hash(
+            ledger_api=ledger_api,
+            contract_address=safe,
+            value=amount,
+            safe_tx_gas=0,
+            to_address=to,
+            data=b"",
+            operation=SafeOperation.CALL.value,
+        ).get("tx_hash")
+        safe_tx_bytes = binascii.unhexlify(
+            safe_tx_hash[2:],
         )
+        signatures = {
+            owner: crypto.sign_message(
+                message=safe_tx_bytes,
+                is_deprecated_mode=True,
+            )[2:]
+        }
+        transaction = registry_contracts.gnosis_safe.get_raw_safe_transaction(
+            ledger_api=ledger_api,
+            contract_address=safe,
+            sender_address=owner,
+            owners=(owner,),  # type: ignore
+            to_address=to,
+            value=amount,
+            data=b"",
+            safe_tx_gas=0,
+            signatures_by_owner=signatures,
+            operation=SafeOperation.CALL.value,
+            nonce=ledger_api.api.eth.get_transaction_count(owner),
+        )
+        return ledger_api.send_signed_transaction(
+            crypto.sign_transaction(transaction),
+        )
+
+    settle_raw_transaction(
+        ledger_api=ledger_api,
+        build_and_send_tx=_build_and_send_tx,
     )
 
 
@@ -459,4 +490,55 @@ def transfer_erc20_from_safe(
         ledger_api=ledger_api,
         crypto=crypto,
         to=token,
+    )
+
+
+def drain_signer(
+    ledger_api: LedgerApi,
+    crypto: Crypto,
+    withdrawal_address: str,
+    chain_id: int,
+) -> None:
+    """Drain all the native tokens from the crypto wallet."""
+    tx_helper = TxSettler(
+        ledger_api=ledger_api,
+        crypto=crypto,
+        chain_type=ChainProfile.CUSTOM,
+        timeout=ON_CHAIN_INTERACT_TIMEOUT,
+        retries=ON_CHAIN_INTERACT_RETRIES,
+        sleep=ON_CHAIN_INTERACT_SLEEP,
+    )
+
+    def _build_tx(  # pylint: disable=unused-argument
+        *args: t.Any, **kwargs: t.Any
+    ) -> t.Dict:
+        """Build transaction"""
+        tx = ledger_api.get_transfer_transaction(
+            sender_address=crypto.address,
+            destination_address=withdrawal_address,
+            amount=0,
+            tx_fee=0,
+            tx_nonce="0x",
+            chain_id=chain_id,
+            raise_on_try=True,
+        )
+        tx = ledger_api.update_with_gas_estimate(
+            transaction=tx,
+            raise_on_try=True,
+        )
+        tx["value"] = (
+            ledger_api.get_balance(crypto.address) - tx["gas"] * tx["maxFeePerGas"]
+        )
+        if tx["value"] <= 0:
+            logger.warning(f"No balance to drain from signer key: {crypto.address}")
+            raise ChainInteractionError("Insufficient balance")
+
+        logger.info(f"Draining {tx['value']} xDAI out of signer key: {crypto.address}")
+
+        return tx
+
+    setattr(tx_helper, "build", _build_tx)  # noqa: B010
+    settle_raw_transaction(
+        ledger_api=ledger_api,
+        build_and_send_tx=lambda: tx_helper.transact(lambda x: x, "", kwargs={}),
     )

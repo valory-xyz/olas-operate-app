@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { MiddlewareDeploymentStatus } from '@/client';
 import { ErrorComponent } from '@/components/errors/ErrorComponent';
 import { useServices } from '@/hooks/useServices';
-import { useActiveStakingContractInfo } from '@/hooks/useStakingContractDetails';
+import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 
 import {
   CannotStartAgentDueToUnexpectedError,
@@ -27,7 +27,7 @@ export const AgentButton = () => {
     isEligibleForStaking,
     isAgentEvicted,
     isSelectedStakingContractDetailsLoaded,
-  } = useActiveStakingContractInfo();
+  } = useActiveStakingContractDetails();
 
   const button = useMemo(() => {
     if (!isServicesLoaded || !isSelectedStakingContractDetailsLoaded) {

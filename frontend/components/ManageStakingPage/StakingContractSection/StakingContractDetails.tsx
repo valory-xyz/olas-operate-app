@@ -52,7 +52,7 @@ export const StakingContractDetails = ({
     return <Skeleton active />;
   }
 
-  if (!allStakingContractDetailsRecord) {
+  if (!allStakingContractDetailsRecord || !list || list.length === 0) {
     return (
       <Alert
         message="No staking information available."

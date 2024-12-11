@@ -5,7 +5,7 @@ import { COLOR } from '@/constants/colors';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
 import {
-  useActiveStakingContractInfo,
+  useActiveStakingContractDetails,
   useStakingContractContext,
   useStakingContractDetails,
 } from '@/hooks/useStakingContractDetails';
@@ -53,7 +53,7 @@ const AgentEvictedPopover = () => {
   const { isAllStakingContractDetailsRecordLoaded } =
     useStakingContractContext();
 
-  const { evictionExpiresAt } = useActiveStakingContractInfo();
+  const { evictionExpiresAt } = useActiveStakingContractDetails();
 
   if (!isAllStakingContractDetailsRecordLoaded) return null;
 
@@ -125,7 +125,7 @@ export const CannotStartAgentPopover = () => {
   const { activeStakingProgramId } = useStakingProgram();
 
   const { isAgentEvicted, isEligibleForStaking } =
-    useActiveStakingContractInfo();
+    useActiveStakingContractDetails();
 
   const { hasEnoughServiceSlots, isRewardsAvailable } =
     useStakingContractDetails(activeStakingProgramId);

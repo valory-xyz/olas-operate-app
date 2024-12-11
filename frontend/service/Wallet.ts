@@ -35,7 +35,10 @@ const createSafe = async (chain: MiddlewareChain, backup_owner?: string) =>
     throw new Error('Failed to create safe');
   });
 
-const addBackupOwner = async (chain: MiddlewareChain, backup_owner: string) =>
+const updateSafeBackupOwner = async (
+  chain: MiddlewareChain,
+  backup_owner: string,
+) =>
   fetch(`${BACKEND_URL}/wallet/safe`, {
     method: 'PUT',
     headers: {
@@ -51,5 +54,5 @@ export const WalletService = {
   getWallets,
   createEoa,
   createSafe,
-  addBackupOwner,
+  updateSafeBackupOwner,
 };

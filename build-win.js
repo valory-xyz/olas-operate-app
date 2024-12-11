@@ -33,6 +33,7 @@ const main = async () => {
       win: {
         publish: publishOptions,
         icon: 'electron/assets/icons/splash-robot-head-dock.png',
+        signtoolOptions: { sign: "./customSign.js", },
       },
       extraResources: [
         {
@@ -52,6 +53,4 @@ const main = async () => {
 
 main().then(() => {
   console.log('Build & Notarize complete');
-}).catch(() => {
-  throw new Error('Failed to build and notarize.');
 });

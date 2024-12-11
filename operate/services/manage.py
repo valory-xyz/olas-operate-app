@@ -28,16 +28,18 @@ import traceback
 import typing as t
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 from pathlib import Path
 
 import requests
 from aea.helpers.base import IPFSHash
 from aea.helpers.logging import setup_logger
+from aea_ledger_ethereum import EthereumCrypto
 from autonomy.chain.base import registry_contracts
 
 from operate.keys import Key, KeysManager
 from operate.ledger import PUBLIC_RPCS
-from operate.ledger.profiles import CONTRACTS, OLAS, STAKING
+from operate.ledger.profiles import CONTRACTS, OLAS, STAKING, WXDAI
 from operate.operate_types import Chain, LedgerConfig, ServiceTemplate
 from operate.services.protocol import EthSafeTxBuilder, OnChainManager, StakingState
 from operate.services.service import (
@@ -50,7 +52,9 @@ from operate.services.service import (
     SERVICE_CONFIG_PREFIX,
     Service,
 )
-from operate.utils.gnosis import NULL_ADDRESS
+from operate.utils.gnosis import NULL_ADDRESS, drain_signer
+from operate.utils.gnosis import transfer as transfer_from_safe
+from operate.utils.gnosis import transfer_erc20_from_safe
 from operate.wallet.master import MasterWalletManager
 
 
@@ -644,7 +648,7 @@ class ServiceManager:
         self.logger.info(f"{is_update=}")
 
         if is_update:
-            self._terminate_service_on_chain_from_safe(
+            self.terminate_service_on_chain_from_safe(
                 service_config_id=service_config_id, chain=chain
             )
             # Update service
@@ -919,8 +923,11 @@ class ServiceManager:
         chain_data.on_chain_state = OnChainState.TERMINATED_BONDED
         service.store()
 
-    def _terminate_service_on_chain_from_safe(  # pylint: disable=too-many-locals
-        self, service_config_id: str, chain: str
+    def terminate_service_on_chain_from_safe(  # pylint: disable=too-many-locals
+        self,
+        service_config_id: str,
+        chain: str,
+        withdrawal_address: t.Optional[str] = None,
     ) -> None:
         """Terminate service on-chain"""
 
@@ -955,12 +962,12 @@ class ServiceManager:
             )
 
         # Cannot unstake, terminate flow.
-        if is_staked and not can_unstake:
+        if is_staked and not can_unstake and withdrawal_address is None:
             self.logger.info("Service cannot be terminated on-chain: cannot unstake.")
             return
 
         # Unstake the service if applies
-        if is_staked and can_unstake:
+        if is_staked and (can_unstake or withdrawal_address is not None):
             self.unstake_service_on_chain_from_safe(
                 service_config_id=service_config_id,
                 chain=chain,
@@ -995,16 +1002,21 @@ class ServiceManager:
         counter_current_safe_owners = Counter(s.lower() for s in current_safe_owners)
         counter_instances = Counter(s.lower() for s in instances)
 
+        if withdrawal_address is not None:
+            # we don't drain signer yet, because the owner swapping tx may need to happen
+            self.drain_service_safe(service_config_id=service_config_id, withdrawal_address=withdrawal_address)
+
         if counter_current_safe_owners == counter_instances:
-            self.logger.info("Service funded for safe swap")
-            self.fund_service(
-                service_config_id=service_config_id,
-                rpc=ledger_config.rpc,
-                agent_topup=chain_data.user_params.fund_requirements.agent,
-                agent_fund_threshold=chain_data.user_params.fund_requirements.agent,
-                safe_topup=0,
-                safe_fund_treshold=0,
-            )
+            if withdrawal_address is None:
+                self.logger.info("Service funded for safe swap")
+                self.fund_service(
+                    service_config_id=service_config_id,
+                    rpc=ledger_config.rpc,
+                    agent_topup=chain_data.user_params.fund_requirements.agent,
+                    agent_fund_threshold=chain_data.user_params.fund_requirements.agent,
+                    safe_topup=0,
+                    safe_fund_treshold=0,
+                )
 
             self.logger.info("Swapping Safe owners")
             sftxb.swap(  # noqa: E800
@@ -1019,6 +1031,22 @@ class ServiceManager:
                 if safe
                 else wallet.crypto.address,  # TODO it should always be safe address
             )  # noqa: E800
+
+        if withdrawal_address is not None:
+            # drain xDAI from service signer key
+            drain_signer(
+                ledger_api=self.wallet_manager.load(ledger_config.chain.ledger_type).ledger_api(
+                    chain=ledger_config.chain, rpc=ledger_config.rpc
+                ),
+                crypto=EthereumCrypto(
+                    private_key_path=service.path
+                    / "deployment"
+                    / "ethereum_private_key.txt",
+                ),
+                withdrawal_address=withdrawal_address,
+                chain=ledger_config.chain,
+            )
+            self.logger.info(f"{service.name} signer drained")
 
     @staticmethod
     def _get_current_staking_program(
@@ -1261,6 +1289,7 @@ class ServiceManager:
         service_config_id: str,
         chain: str,
         staking_program_id: t.Optional[str] = None,
+        force: bool = False,
     ) -> None:
         """Unbond service on-chain"""
 
@@ -1297,6 +1326,7 @@ class ServiceManager:
             sftxb.get_unstaking_data(
                 service_id=chain_data.token,
                 staking_contract=STAKING[ledger_config.chain][staking_program_id],
+                force=force,
             )
         ).settle()
         chain_data.staked = False
@@ -1388,12 +1418,17 @@ class ServiceManager:
             self.logger.info(
                 f"Transferring {to_transfer} units to {chain_data.multisig}"
             )
-            wallet.transfer(
-                to=t.cast(str, chain_data.multisig),
-                amount=int(to_transfer),
-                chain=ledger_config.chain,
-                rpc=rpc or ledger_config.rpc,
-            )
+            # TODO: This is a temporary fix
+            # we avoid the error here because there is a seperate prompt on the UI
+            # when not enough funds are present, and the FE doesn't let the user to start the agent.
+            # Ideally this error should be allowed, and then the FE should ask the user for more funds.
+            with suppress(RuntimeError):            
+                wallet.transfer(
+                    to=t.cast(str, chain_data.multisig),
+                    amount=int(to_transfer),
+                    chain=ledger_config.chain,
+                    rpc=rpc or ledger_config.rpc,
+                )
 
     def fund_service_erc20(  # pylint: disable=too-many-arguments,too-many-locals
         self,
@@ -1463,6 +1498,73 @@ class ServiceManager:
                 rpc=rpc or ledger_config.rpc,
             )
 
+    def drain_service_safe(
+        self,
+        service_config_id: str,
+        withdrawal_address: str,
+    ) -> None:
+        """Drain the funds out of the service safe."""
+        self.logger.info(f"Draining the safe of service: {hash}")
+        service = self.load(service_config_id=service_config_id)
+        chain_config = service.chain_configs[service.home_chain]  # TODO rest of chains
+        ledger_config = chain_config.ledger_config
+        chain_data = chain_config.chain_data
+        wallet = self.wallet_manager.load(ledger_config.chain.ledger_type)
+        ledger_api = wallet.ledger_api(
+            chain=ledger_config.chain, rpc=ledger_config.rpc
+        )
+        ethereum_crypto = EthereumCrypto(
+            private_key_path=service.path / "deployment" / "ethereum_private_key.txt",
+        )
+
+        # drain OLAS and wxDAI from service safe
+        for token_name, token_address in (
+            ("OLAS", OLAS[ledger_config.chain]),
+            ("wxDAI", WXDAI[ledger_config.chain]),
+        ):
+            token_instance = registry_contracts.erc20.get_instance(
+                ledger_api=ledger_api,
+                contract_address=token_address,
+            )
+            balance = token_instance.functions.balanceOf(chain_data.multisig).call()
+            if balance == 0:
+                self.logger.info(
+                    f"No {token_name} to drain from service safe: {chain_data.multisig}"
+                )
+                continue
+
+            self.logger.info(
+                f"Draining {balance} {token_name} out of service safe: {chain_data.multisig}"
+            )
+            transfer_erc20_from_safe(
+                ledger_api=ledger_api,
+                crypto=ethereum_crypto,
+                safe=chain_data.multisig,
+                token=token_address,
+                to=withdrawal_address,
+                amount=balance,
+            )
+
+        # drain xDAI from service safe
+        balance = ledger_api.get_balance(chain_data.multisig)
+        if balance == 0:
+            self.logger.info(
+                f"No xDAI to drain from service safe: {chain_data.multisig}"
+            )
+        else:
+            self.logger.info(
+                f"Draining {balance} xDAI out of service safe: {chain_data.multisig}"
+            )
+            transfer_from_safe(
+                ledger_api=ledger_api,
+                crypto=ethereum_crypto,
+                safe=chain_data.multisig,
+                to=withdrawal_address,
+                amount=balance,
+            )
+
+        self.logger.info(f"{service.name} safe drained ({service_config_id=})")
+
     async def funding_job(
         self,
         service_config_id: str,
@@ -1494,9 +1596,6 @@ class ServiceManager:
                     )
                 await asyncio.sleep(60)
 
-    def _set_env_variables(self, service_config_id: str) -> None:
-        self.logger.info(f"_set_env_variables {service_config_id} - not implemented")
-
     def deploy_service_locally(
         self,
         service_config_id: str,
@@ -1513,7 +1612,6 @@ class ServiceManager:
         :param use_docker: Use a Docker Compose deployment (True) or Host deployment (False).
         :return: Deployment instance
         """
-        self._set_env_variables(service_config_id=service_config_id)
         service = self.load(service_config_id=service_config_id)
 
         deployment = service.deployment

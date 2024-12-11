@@ -888,6 +888,43 @@ Delete local deployment
 ```json
 ```
 
+---
+#### `POST /api/services/{service}/onchain/withdraw`
+
+Withdraw all the funds from the service safe, service signer(s), master safe, and master signer.
+
+<details>
+  <summary>Request</summary>
+
+```json
+{
+  "withdrawal_address": "0x0000000000000000000000000000000000000000"
+}
+```
+
+</details>
+
+<details>
+  <summary>Response 200</summary>
+
+```json
+{
+  "error": null
+}
+```
+
+</details>
+
+<details>
+  <summary>Response 500</summary>
+
+```json
+{
+  "error": "Insufficient funds",
+  "traceback": "<a long stringified traceback here>"
+}
+```
+
 </details>
 
 <!-- 

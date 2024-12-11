@@ -21,7 +21,11 @@
 
 import requests
 
+<<<<<<< HEAD
+from operate.operate_types import ChainType
+=======
 from operate.operate_types import Chain
+>>>>>>> origin/refactor/multi-chain-support-frontend
 from scripts.fund import fund
 
 

@@ -183,6 +183,8 @@ async function installTendermintWindows() {
 }
 
 async function installTendermintUnix() {
+  return;
+  // bundled in
   logger.electron(`Installing tendermint for ${os.platform()}-${process.arch}`);
   const cwd = process.cwd();
   process.chdir(paths.tempDir);

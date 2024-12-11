@@ -4,7 +4,7 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
 
 import { useService } from './useService';
-import { useActiveStakingContractInfo } from './useStakingContractDetails';
+import { useActiveStakingContractDetails } from './useStakingContractDetails';
 
 type EpochStatusNotification = {
   lastEpoch: number;
@@ -24,7 +24,7 @@ export const useNotifyOnNewEpoch = () => {
     selectedStakingContractDetails: activeStakingContractDetails,
     isSelectedStakingContractDetailsLoaded:
       isActiveStakingContractDetailsLoaded,
-  } = useActiveStakingContractInfo();
+  } = useActiveStakingContractDetails();
   const epoch = activeStakingContractDetails?.epochCounter;
 
   const [epochStatusNotification, setEpochStatusNotification] =
