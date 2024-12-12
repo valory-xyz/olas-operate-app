@@ -68,5 +68,5 @@ export const DEFAULT_STAKING_PROGRAM_IDS: {
   [EvmChainId.Gnosis]: StakingProgramId.PearlBeta,
   // [EvmChainId.Optimism]: StakingProgramId.OptimusAlpha,
   [EvmChainId.Base]: StakingProgramId.MemeBaseAlpha2,
-  [EvmChainId.Mode]: StakingProgramId.ModiusAlpha,
+  [EvmChainId.Mode]: StakingProgramId.OptimusAlpha,
 };
