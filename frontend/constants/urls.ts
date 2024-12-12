@@ -29,7 +29,8 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN = {
     'https://api.studio.thegraph.com/query/81371/gnosis-pearl-rewards-history/version/latest',
   [EvmChainId.Base]:
     'https://api.studio.thegraph.com/query/67875/olas-base-staking-rewards-history/version/latest',
-  [EvmChainId.Mode]: 'TBD',
+  [EvmChainId.Mode]:
+    'https://api.studio.thegraph.com/query/67875/olas-mode-staking-rewards-history/version/latest',
 };
 
 // discord

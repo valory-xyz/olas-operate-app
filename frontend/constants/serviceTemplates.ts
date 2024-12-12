@@ -263,6 +263,112 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
       },
     },
   },
+  {
+    agentType: AgentType.Modius,
+    name: 'Optimus',
+    hash: 'bafybeihqho73he6mirkodg4ubom6ngf2nkgebhmxr435yxpsxgsthu5nvy',
+    description: 'Optimus',
+    image:
+      'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+    service_version: 'v0.18.1',
+    home_chain: MiddlewareChain.MODE,
+    configurations: {
+      [MiddlewareChain.MODE]: {
+        staking_program_id: StakingProgramId.OptimusAlpha, // default, may be overwritten
+        nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+        rpc: 'http://localhost:8545', // overwritten
+        agent_id: 40,
+        threshold: 1,
+        use_staking: true,
+        cost_of_bond: 20000000000000000000,
+        monthly_gas_estimate: 5260000000000000,
+        fund_requirements: {
+          agent: 5000000000000000,
+          safe: 0,
+        },
+      },
+    },
+    env_variables: {
+      SAFE_CONTRACT_ADDRESSES: {
+        name: 'Safe contract address',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      TENDERLY_ACCESS_KEY: {
+        name: 'Tenderly access key',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      TENDERLY_ACCOUNT_SLUG: {
+        name: 'Tenderly account slug',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      TENDERLY_PROJECT_SLUG: {
+        name: 'Tenderly project slug',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      STAKING_TOKEN_CONTRACT_ADDRESS: {
+        name: 'Staking token contract address',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      COINGECKO_API_KEY: {
+        name: 'Coingecko API key',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      STAKING_CHAIN: {
+        name: 'Staking chain',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+        name: 'Staking activity checker contract address',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      MIN_SWAP_AMOUNT_THRESHOLD: {
+        name: 'Minimum swap amount threshold',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      ALLOWED_CHAINS: {
+        name: 'Allowed chains',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      TARGET_INVESTMENT_CHAINS: {
+        name: 'Target investment chains',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      INITIAL_ASSETS: {
+        name: 'Initial assets',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      SELECTED_STRATEGIES: {
+        name: 'Selected strategies',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+    },
+  },
 ] as const;
 
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;
