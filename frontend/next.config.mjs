@@ -36,6 +36,7 @@ const nextConfig = {
     OPTIMISM_RPC: process.env.OPTIMISM_RPC,
     BASE_RPC: process.env.BASE_RPC,
     ETHEREUM_RPC: process.env.ETHEREUM_RPC,
+    MODE_RPC: process.env.MODE_RPC,
   },
 };
 
