@@ -539,34 +539,26 @@ class ServiceManager:
         # TODO A customized, arbitrary computation mechanism should be devised.
         env_var_to_value = {}
         if chain == service.home_chain:
-            env_var_to_value.update(
-                {
-                    "ETHEREUM_LEDGER_RPC": PUBLIC_RPCS[Chain.ETHEREUM],
-                    "GNOSIS_LEDGER_RPC": PUBLIC_RPCS[Chain.GNOSIS],
-                    "BASE_LEDGER_RPC": PUBLIC_RPCS[Chain.BASE],
-                    "CELO_LEDGER_RPC": PUBLIC_RPCS[Chain.CELO],
-                    "OPTIMISM_LEDGER_RPC": PUBLIC_RPCS[Chain.OPTIMISTIC],
-                    "STAKING_CONTRACT_ADDRESS": staking_params.get("staking_contract"),
-                    "STAKING_TOKEN_CONTRACT_ADDRESS": staking_params.get(
-                        "staking_contract"
-                    ),
-                    "MECH_ACTIVITY_CHECKER_CONTRACT": staking_params.get(
-                        "activity_checker"
-                    ),
-                    "MECH_CONTRACT_ADDRESS": staking_params.get("agent_mech"),
-                    "MECH_REQUEST_PRICE": "10000000000000000",
-                    "USE_MECH_MARKETPLACE": str(
-                        "mech_marketplace"
-                        in service.chain_configs[
-                            service.home_chain
-                        ].chain_data.user_params.staking_program_id
-                    ),
-                    "REQUESTER_STAKING_INSTANCE_ADDRESS": staking_params.get(
-                        "staking_contract"
-                    ),
-                    "PRIORITY_MECH_ADDRESS": staking_params.get("agent_mech"),
-                }
-            )
+            env_var_to_value.update({
+                f"{chain.upper()}_LEDGER_RPC": ledger_config.rpc,
+                "STAKING_CONTRACT_ADDRESS": staking_params.get("staking_contract"),
+                "STAKING_TOKEN_CONTRACT_ADDRESS": staking_params.get("staking_contract"),
+                "MECH_ACTIVITY_CHECKER_CONTRACT": staking_params.get(
+                    "activity_checker"
+                ),
+                "MECH_CONTRACT_ADDRESS": staking_params.get("agent_mech"),
+                "MECH_REQUEST_PRICE": "10000000000000000",
+                "USE_MECH_MARKETPLACE": str(
+                    "mech_marketplace"
+                    in service.chain_configs[
+                        service.home_chain
+                    ].chain_data.user_params.staking_program_id
+                ),
+                "REQUESTER_STAKING_INSTANCE_ADDRESS": staking_params.get(
+                    "staking_contract"
+                ),
+                "PRIORITY_MECH_ADDRESS": staking_params.get("agent_mech"),
+            })
 
         # TODO: yet another agent specific logic for memeooorr, which should be abstracted
         if all(
