@@ -289,6 +289,12 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
       },
     },
     env_variables: {
+      MODE_LEDGER_RPC: {
+        name: 'Mode ledger RPC',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
       SAFE_CONTRACT_ADDRESSES: {
         name: 'Safe contract address',
         description: '',
@@ -299,19 +305,19 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
         name: 'Tenderly access key',
         description: '',
         value: '',
-        provision_type: EnvProvisionType.COMPUTED,
+        provision_type: EnvProvisionType.USER,
       },
       TENDERLY_ACCOUNT_SLUG: {
         name: 'Tenderly account slug',
         description: '',
         value: '',
-        provision_type: EnvProvisionType.COMPUTED,
+        provision_type: EnvProvisionType.USER,
       },
       TENDERLY_PROJECT_SLUG: {
         name: 'Tenderly project slug',
         description: '',
         value: '',
-        provision_type: EnvProvisionType.COMPUTED,
+        provision_type: EnvProvisionType.USER,
       },
       STAKING_TOKEN_CONTRACT_ADDRESS: {
         name: 'Staking token contract address',
@@ -323,7 +329,7 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
         name: 'Coingecko API key',
         description: '',
         value: '',
-        provision_type: EnvProvisionType.COMPUTED,
+        provision_type: EnvProvisionType.USER,
       },
       STAKING_CHAIN: {
         name: 'Staking chain',
@@ -364,8 +370,9 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
       SELECTED_STRATEGIES: {
         name: 'Selected strategies',
         description: '',
-        value: '',
-        provision_type: EnvProvisionType.COMPUTED,
+        value:
+          '["merkl_pools_search", "balancer_pools_search", "asset_lending"]',
+        provision_type: EnvProvisionType.FIXED,
       },
     },
   },
