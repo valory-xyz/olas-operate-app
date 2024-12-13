@@ -1,6 +1,5 @@
 import { Button, Flex, Skeleton, Typography } from 'antd';
 import { sum } from 'lodash';
-import { motion } from 'motion/react';
 import { useMemo } from 'react';
 import styled from 'styled-components';
 
@@ -88,8 +87,6 @@ export const MainOlasBalance = ({
       borderbottom="true"
       padding="16px 24px"
     >
-      <motion.ul animate={{ x: 100 }} />
-
       {isBalanceLoaded ? (
         <Flex vertical gap={8}>
           <Flex align="center" justify="space-between">

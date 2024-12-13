@@ -17,6 +17,7 @@
     "electron-updater": "^6.1.8",
     "ethers": "5.7.2",
     "ethers-multicall": "^0.2.3",
+    "framer-motion": "^11.14.1",
     "graphql": "^16.8.1",
     "graphql-request": "^6.1.0",
     "lodash": "^4.17.21",

@@ -1,4 +1,5 @@
 import { Card, message, Typography } from 'antd';
+import { motion } from 'motion/react';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -38,6 +39,21 @@ const YouWillBeRedirected = ({ text }: { text: string }) => (
 const CreationError = () => (
   <>
     <Image src="/broken-robot.svg" alt="logo" width={80} height={80} />
+    <motion.ul
+      // animate={{ x: 50 }}
+      // initial={{ scale: 1 }}
+      // animate={{ scale: 2 }}
+
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      style={{
+        width: 100,
+        height: 100,
+        borderRadius: 20,
+        backgroundColor: 'green',
+      }}
+    />
+
     <Text type="secondary" className="mt-12">
       Error, please restart the app and try again.
     </Text>
