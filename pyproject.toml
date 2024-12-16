@@ -50,6 +50,7 @@ pyinstaller = "^6.8.0"
 aiohttp = "3.9.5"
 deepdiff = "^8.0.1"
 twikit = "==2.2.0"
+halo = "==0.0.31"
 
 [tool.poetry.group.development.dependencies]
 tomte = {version = "0.2.17", extras = ["cli"]}

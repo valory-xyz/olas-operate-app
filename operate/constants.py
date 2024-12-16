@@ -19,7 +19,11 @@
 
 """Constants."""
 
+from pathlib import Path
+
+
 OPERATE = ".operate"
+OPERATE_HOME = Path.cwd() / OPERATE
 CONFIG = "config.json"
 SERVICES = "services"
 KEYS = "keys"
