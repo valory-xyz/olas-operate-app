@@ -48,6 +48,7 @@ from operate.ledger.profiles import DEFAULT_NEW_SAFE_FUNDS_AMOUNT, OLAS
 from operate.operate_types import Chain, DeploymentStatus, LedgerType
 from operate.quickstart.run_service import run_service
 from operate.quickstart.stop_service import stop_service
+from operate.quickstart.terminate_on_chain_service import terminate_service
 from operate.services.health_checker import HealthChecker
 from operate.utils.gnosis import drain_signer, transfer_erc20_from_safe
 from operate.wallet.master import MasterWalletManager
@@ -956,6 +957,16 @@ def quickstop(
     operate = OperateApp()
     operate.setup()
     stop_service(operate=operate, config_path=config)
+
+
+@_operate.command(name="terminate")
+def quickstop(
+    config: Annotated[str, params.String(help="Quickstart config file path")],
+) -> None:
+    """Quickstart."""
+    operate = OperateApp()
+    operate.setup()
+    terminate_service(operate=operate, config_path=config)
 
 
 def main() -> None:

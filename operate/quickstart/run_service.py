@@ -197,6 +197,28 @@ def handle_password_migration(operate: "OperateApp", config: TraderConfig) -> t.
         return new_password
     return None
 
+def ask_password_if_needed(operate: "OperateApp", config: TraderConfig):
+    if operate.user_account is None:
+        print_section("Set up local user account")
+        print("Creating a new local user account...")
+        password = ask_confirm_password()
+        UserAccount.new(
+            password=password,
+            path=operate._path / "user.json",
+        )
+        config.password_migrated = True
+        config.store()
+    else:
+        password = handle_password_migration(operate, config)
+        while password is None:
+            password = getpass.getpass("\nEnter local user account password [hidden input]: ")
+            if operate.user_account.is_valid(password=password):
+                break
+            password = None
+            print("Invalid password!")
+
+    operate.password = password
+
 def get_service(manager: ServiceManager, template: ServiceTemplate) -> t.Tuple[Service, bool]:
     is_update = False
     if len(manager.json) > 0:
@@ -222,44 +244,13 @@ def get_service(manager: ServiceManager, template: ServiceTemplate) -> t.Tuple[S
 
     return service, is_update
 
-
-def run_service(operate: "OperateApp", config_path: str) -> None:
-    """Run service."""
-
-    with open(config_path, "r") as config_file:
-        template = json.load(config_file)
-
-    config = configure_local_config(template)
-    manager = operate.service_manager()
-    service, is_service_update = get_service(manager, template)
-    password = None
-
-    if operate.user_account is None:
-        print_section("Set up local user account")
-        print("Creating a new local user account...")
-        password = ask_confirm_password()
-        UserAccount.new(
-            password=password,
-            path=operate._path / "user.json",
-        )
-        config.password_migrated = True
-        config.store()
-    else:
-        password = handle_password_migration(operate, config)
-        while password is None:
-            password = getpass.getpass("\nEnter local user account password [hidden input]: ")
-            if operate.user_account.is_valid(password=password):
-                break
-            password = None
-            print("Invalid password!")
-
-    operate.password = password
+def ensure_enough_funds(operate: "OperateApp", service: Service) -> None:
     if not operate.wallet_manager.exists(ledger_type=LedgerType.ETHEREUM):
-        print("Creating the main wallet...")
+        print("Creating the master EOA...")
         wallet, mnemonic = operate.wallet_manager.create(ledger_type=LedgerType.ETHEREUM)
-        wallet.password = password
+        wallet.password = operate.password
         print()
-        print_box(f"Please save the mnemonic phrase for the main wallet:\n{', '.join(mnemonic)}", 0, '-')
+        print_box(f"Please save the mnemonic phrase for the master EOA:\n{', '.join(mnemonic)}", 0, '-')
         input("Press enter to continue...")
     else:
         wallet = operate.wallet_manager.load(ledger_type=LedgerType.ETHEREUM)
@@ -285,25 +276,34 @@ def run_service(operate: "OperateApp", config_path: str) -> None:
         
         balance_str = wei_to_token(ledger_api.get_balance(wallet.crypto.address), token)
 
-        print(f"[{chain_name}] Main wallet balance: {balance_str}",)
+        print(f"[{chain_name}] Master EOA balance: {balance_str}",)
         safe_exists = wallet.safes.get(chain) is not None
+        if safe_exists:
+            print(f"[{chain_name}] Master safe balance: {wei_to_token(ledger_api.get_balance(wallet.safes[chain]), token)}")
 
         operational_fund_req = chain_metadata.get("operationalFundReq")
         agent_fund_requirement = chain_config.chain_data.user_params.fund_requirements.agent
         safe_fund_requirement = chain_config.chain_data.user_params.fund_requirements.safe
 
         safety_margin = SAFETY_MARGIN if service_state == OnChainState.NON_EXISTENT else 0
-        if chain_config.chain_data.multisig != DUMMY_MULTISIG and ledger_api.get_balance(chain_config.chain_data.multisig) >= safe_fund_requirement:
-            safe_fund_requirement = 0
-        if len(service.keys) > 0 and ledger_api.get_balance(service.keys[0].address) >= agent_fund_requirement:
-            agent_fund_requirement = 0
+        if chain_config.chain_data.multisig != DUMMY_MULTISIG:
+            service_save_balance = ledger_api.get_balance(chain_config.chain_data.multisig)
+            print(f"[{chain_name}] Service safe balance: {wei_to_token(service_save_balance, token)}")
+            if service_save_balance >= safe_fund_requirement:
+                safe_fund_requirement = 0
+
+        if len(service.keys) > 0:
+            agent_eoa_balance = ledger_api.get_balance(service.keys[0].address)
+            print(f"[{chain_name}] Agent EOA balance: {wei_to_token(agent_eoa_balance, token)}")
+            if agent_eoa_balance >= agent_fund_requirement:
+                agent_fund_requirement = 0
 
         required_balance = operational_fund_req + agent_fund_requirement + safe_fund_requirement
         if required_balance > ledger_api.get_balance(wallet.crypto.address):
             required_balance += safety_margin
 
             print(
-                f"[{chain_name}] Please make sure main wallet {wallet.crypto.address} has at least {wei_to_token(required_balance, token)}",
+                f"[{chain_name}] Please make sure master EOA {wallet.crypto.address} has at least {wei_to_token(required_balance, token)}",
             )
             spinner = Halo(
                 text=f"[{chain_name}] Waiting for {wei_to_token(required_balance - ledger_api.get_balance(wallet.crypto.address), token)}...",
@@ -315,10 +315,10 @@ def run_service(operate: "OperateApp", config_path: str) -> None:
             while ledger_api.get_balance(wallet.crypto.address) < required_balance:
                 time.sleep(1)
 
-            spinner.succeed(f"[{chain_name}] Main wallet updated balance: {wei_to_token(ledger_api.get_balance(wallet.crypto.address), token)}.")
+            spinner.succeed(f"[{chain_name}] master EOA updated balance: {wei_to_token(ledger_api.get_balance(wallet.crypto.address), token)}.")
 
         if not safe_exists:
-            print(f"[{chain_name}] Creating Safe")
+            print(f"[{chain_name}] Creating Master Safe")
             ledger_type = LedgerType.ETHEREUM
             wallet_manager = operate.wallet_manager
             wallet = wallet_manager.load(ledger_type=ledger_type)
@@ -335,23 +335,23 @@ def run_service(operate: "OperateApp", config_path: str) -> None:
         safe_address = wallet.safes[chain]
         top_up = agent_fund_requirement + safe_fund_requirement
 
-        if top_up > 0:
+        if top_up > ledger_api.get_balance(safe_address):
             top_up += safety_margin
             spinner = Halo(
-                text=f"[{chain_name}] Transfering {wei_to_token(top_up, token)} to safe...",
+                text=f"[{chain_name}] Transfering {wei_to_token(top_up, token)} to master safe...",
                 spinner="dots",
             )
             spinner.start()
 
             wallet.transfer(
-                to=t.cast(str, wallet.safes[chain]),
+                to=t.cast(str, safe_address),
                 amount=top_up,
                 chain=chain,
                 from_safe=False,
                 rpc=chain_config.ledger_config.rpc,
             )
 
-            spinner.succeed(f"[{chain_name}] Safe updated balance: {wei_to_token(ledger_api.get_balance(safe_address), token)}.")
+            spinner.succeed(f"[{chain_name}] Master Safe updated balance: {wei_to_token(ledger_api.get_balance(safe_address), token)}.")
 
         if chain_config.chain_data.user_params.use_staking:
             olas_address = config.staking_vars["CUSTOM_OLAS_ADDRESS"]
@@ -380,12 +380,29 @@ def run_service(operate: "OperateApp", config_path: str) -> None:
                     time.sleep(1)
 
                 balance = get_erc20_balance(ledger_api, olas_address, safe_address) / 10 ** 18
-                spinner.succeed(f"[{chain_name}] Safe updated balance: {balance} {STAKED_BONDING_TOKEN}")
+                spinner.succeed(f"[{chain_name}] Master Safe updated balance: {balance} {STAKED_BONDING_TOKEN}")
+
+
+def run_service(operate: "OperateApp", config_path: str) -> None:
+    """Run service."""
+
+    with open(config_path, "r") as config_file:
+        template = json.load(config_file)
+
+    config = configure_local_config(template)
+    manager = operate.service_manager()
+    service, is_service_update = get_service(manager, template)
+    ask_password_if_needed(operate, config)
+
+    # reload manger and config after setting operate.password
+    manager = operate.service_manager()
+    config = load_local_config()
+    ensure_enough_funds(operate, service)
 
     # return  # TODO: Remove this line
-    print_section(f"Deploying on-chain service on {chain_name}")
+    print_section(f"Deploying on-chain service on {config.principal_chain}...")
     print_box("PLEASE, DO NOT INTERRUPT THIS PROCESS.")
-    print("Cancelling the on-chain service update prematurely could lead to an inconsistent state of the Safe or the on-chain service state, which may require manual intervention to resolve.")
+    print("Cancelling the on-chain service update prematurely could lead to an inconsistent state of the Safe or the on-chain service state, which may require manual intervention to resolve.\n")
     manager.deploy_service_onchain_from_safe(service_config_id=service.service_config_id)
 
     print_section("Funding the service")
