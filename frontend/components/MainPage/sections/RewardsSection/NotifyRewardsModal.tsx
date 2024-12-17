@@ -7,6 +7,7 @@ import { OPERATE_URL } from '@/constants/urls';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useReward } from '@/hooks/useReward';
+import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 import { balanceFormat } from '@/utils/numberFormatters';
 
@@ -24,6 +25,7 @@ export const NotifyRewardsModal = () => {
   const { totalOlasBalance } = useBalanceContext();
   const { showNotification, store } = useElectronApi();
   const { storeState } = useStore();
+  const { selectedAgentType } = useServices();
 
   const [canShowNotification, setCanShowNotification] = useState(false);
 
@@ -33,12 +35,17 @@ export const NotifyRewardsModal = () => {
   useEffect(() => {
     if (!isEligibleForRewards) return;
     if (!storeState) return;
-    if (storeState?.firstRewardNotificationShown) return;
+    if (storeState?.[selectedAgentType]?.firstRewardNotificationShown) return;
     if (!availableRewardsForEpochEth) return;
 
     firstRewardRef.current = availableRewardsForEpochEth;
     setCanShowNotification(true);
-  }, [isEligibleForRewards, availableRewardsForEpochEth, storeState]);
+  }, [
+    isEligibleForRewards,
+    availableRewardsForEpochEth,
+    storeState,
+    selectedAgentType,
+  ]);
 
   // hook to show desktop app notification
   useEffect(() => {
@@ -55,8 +62,8 @@ export const NotifyRewardsModal = () => {
     setCanShowNotification(false);
 
     // once the notification is closed, set the flag to true
-    store?.set?.('firstRewardNotificationShown', true);
-  }, [store]);
+    store?.set?.(`${selectedAgentType}.firstRewardNotificationShown`, true);
+  }, [store, selectedAgentType]);
 
   const onTwitterShare = useCallback(() => {
     const encodedText = encodeURIComponent(SHARE_TEXT);

@@ -132,6 +132,7 @@ const useAvailableRewardsForEpoch = () => {
 export const RewardProvider = ({ children }: PropsWithChildren) => {
   const { storeState } = useStore();
   const electronApi = useElectronApi();
+  const { selectedAgentType } = useServices();
 
   const {
     data: stakingRewardsDetails,
@@ -161,15 +162,22 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     return availableRewardsForEpochEth;
   }, [availableRewardsForEpochEth, isEligibleForRewards]);
 
+  const isFirstStakingRewardAchieved =
+    storeState?.[selectedAgentType].firstStakingRewardAchieved;
+
   // store the first staking reward achieved in the store for notification
   useEffect(() => {
     if (!isEligibleForRewards) return;
-    if (storeState?.firstStakingRewardAchieved) return;
-    electronApi.store?.set?.('firstStakingRewardAchieved', true);
+    if (isFirstStakingRewardAchieved) return;
+    electronApi.store?.set?.(
+      `${selectedAgentType}.firstStakingRewardAchieved`,
+      true,
+    );
   }, [
     electronApi.store,
     isEligibleForRewards,
-    storeState?.firstStakingRewardAchieved,
+    isFirstStakingRewardAchieved,
+    selectedAgentType,
   ]);
 
   // refresh rewards data
