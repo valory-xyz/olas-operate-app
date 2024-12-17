@@ -336,6 +336,7 @@ def run_service(operate: "OperateApp", config_path: str) -> None:
         top_up = agent_fund_requirement + safe_fund_requirement
 
         if top_up > 0:
+            top_up += safety_margin
             spinner = Halo(
                 text=f"[{chain_name}] Transfering {wei_to_token(top_up, token)} to safe...",
                 spinner="dots",
