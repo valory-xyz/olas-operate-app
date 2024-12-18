@@ -30,15 +30,19 @@ export const LowOperatingBalanceAlert = () => {
   const { chainName, tokenSymbol, masterSafeAddress, masterThresholds } =
     useLowFundsDetails();
 
+  const agentSafeNativeBalance = useMemo(() => {
+    if (!serviceSafeBalances) return;
+
+    return serviceSafeBalances.find(({ symbol }) => symbol === tokenSymbol)
+      ?.balance;
+  }, [serviceSafeBalances, tokenSymbol]);
+
   const hasEnoughBalance = useMemo(() => {
     if (!masterSafeNativeGasBalance) return true;
-    if (!serviceSafeBalances) return true;
+    if (!agentSafeNativeBalance) return true;
     if (!masterThresholds) return true;
 
     const safeThreshold = masterThresholds[WalletType.Safe][tokenSymbol];
-    const agentSafeNativeBalance =
-      serviceSafeBalances.find(({ symbol }) => symbol === tokenSymbol)
-        ?.balance || 0;
 
     // @note: Funds are transferred to the agent safe from the master safe.
     // Hence, if the agent safe has enough funds, it is considered as enough.
@@ -50,7 +54,7 @@ export const LowOperatingBalanceAlert = () => {
     masterSafeNativeGasBalance,
     masterThresholds,
     tokenSymbol,
-    serviceSafeBalances,
+    agentSafeNativeBalance,
   ]);
 
   if (!isBalanceLoaded) return null;
