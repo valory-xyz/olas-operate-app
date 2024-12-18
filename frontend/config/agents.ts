@@ -121,6 +121,6 @@ export const AGENT_CONFIG: {
     serviceApi: ModiusService,
     displayName: 'Modius agent',
     description:
-      'Invests crypto assets in DEXs on your behalf and grow your portfolio.',
+      'Invests crypto assets on your behalf and grows your portfolio.',
   },
 };
