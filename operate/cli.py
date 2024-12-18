@@ -46,6 +46,7 @@ from operate.account.user import UserAccount
 from operate.constants import KEY, KEYS, OPERATE_HOME, SERVICES
 from operate.ledger.profiles import DEFAULT_NEW_SAFE_FUNDS_AMOUNT, OLAS
 from operate.operate_types import Chain, DeploymentStatus, LedgerType
+from operate.quickstart.reset_staking import reset_staking
 from operate.quickstart.claim_olas import claim_olas
 from operate.quickstart.run_service import run_service
 from operate.quickstart.stop_service import stop_service
@@ -978,6 +979,16 @@ def quickclaim(
     operate = OperateApp()
     operate.setup()
     claim_olas(operate=operate, config_path=config)
+
+
+@_operate.command(name="reset-staking")
+def quick_reset_staking(
+    config: Annotated[str, params.String(help="Quickstart config file path")],
+) -> None:
+    """Reset staking."""
+    operate = OperateApp()
+    operate.setup()
+    reset_staking(operate=operate, config_path=config)
 
 
 def main() -> None:

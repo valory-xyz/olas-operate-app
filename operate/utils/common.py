@@ -39,6 +39,7 @@ def print_box(text: str, margin: int = 1, character: str = '=') -> None:
     border = character * length
     margin_str = ' ' * margin
 
+    print()
     print(border)
     print(f"{margin_str}{text}{margin_str}")
     print(border)
@@ -47,7 +48,6 @@ def print_box(text: str, margin: int = 1, character: str = '=') -> None:
 
 def print_title(text: str) -> None:
     """Print title."""
-    print()
     print_box(text, 4, '=')
 
 
@@ -64,6 +64,16 @@ def wei_to_unit(wei: int) -> float:
 def wei_to_token(wei: int, token: str = "xDAI") -> str:
     """Convert Wei to token."""
     return f"{wei_to_unit(wei):.6f} {token}"
+
+
+def ask_yes_or_no(question: str) -> bool:
+    """Ask a yes/no question."""
+    response = (
+        input(f"{question} (yes/no): ")
+        .strip()
+        .lower()
+    )
+    return response in ["yes", "y"]
 
 
 def check_rpc(rpc_url: Optional[str] = None) -> True:

@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING
 from operate.constants import OPERATE_HOME
 from operate.operate_types import OnChainState
 from operate.quickstart.run_service import ask_password_if_needed, configure_local_config, ensure_enough_funds, get_service
-from operate.utils.common import print_section, print_title
+from operate.utils.common import ask_yes_or_no, print_section, print_title
 
 if TYPE_CHECKING:
     from operate.cli import OperateApp
@@ -44,11 +44,10 @@ def terminate_service(operate: "OperateApp", config_path: str) -> None:
         print("No previous agent setup found. Exiting.")
         return
 
-    response = input(
+    if not ask_yes_or_no(
         "Please, ensure that your service is stopped (./stop_service.sh) before proceeding. "
-        "Do you want to continue? (yes/no): "
-    )
-    if not response.lower().startswith("y"):
+        "Do you want to continue?"
+    ):
         print("Cancelled.")
         return
 
