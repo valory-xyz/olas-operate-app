@@ -7,6 +7,7 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
+import { commonFieldProps, validateMessages } from '../formUtils';
 import { onDummyServiceCreation } from '../utils';
 
 const { Text } = Typography;
@@ -17,10 +18,6 @@ type FieldValues = {
   tenderlyProjectSlug: string;
   CoinGeckoApiKey: string;
 };
-
-const requiredRules = [{ required: true, message: 'Field is required' }];
-const validateMessages = { required: 'Field is required' };
-const commonFieldProps = { rules: requiredRules, hasFeedback: true };
 
 type ModiusAgentFormProps = { serviceTemplate: ServiceTemplate };
 
