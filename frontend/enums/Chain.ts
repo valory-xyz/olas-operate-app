@@ -3,6 +3,7 @@ export enum EvmChainId {
   Optimism = 10,
   Gnosis = 100,
   Base = 8453,
+  Mode = 34443,
 }
 
 export const EvmChainName = {
@@ -10,4 +11,5 @@ export const EvmChainName = {
   [EvmChainId.Optimism]: 'Optimism',
   [EvmChainId.Gnosis]: 'Gnosis',
   [EvmChainId.Base]: 'Base',
+  [EvmChainId.Mode]: 'Mode',
 };

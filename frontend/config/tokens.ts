@@ -98,11 +98,26 @@ export const BASE_TOKEN_CONFIG: ChainTokenConfig = {
   },
 };
 
+export const MODE_TOKEN_CONFIG: ChainTokenConfig = {
+  [TokenSymbol.ETH]: {
+    tokenType: TokenType.NativeGas,
+    decimals: 18,
+    symbol: TokenSymbol.ETH,
+  },
+  [TokenSymbol.OLAS]: {
+    address: '0xcfD1D50ce23C46D3Cf6407487B2F8934e96DC8f9',
+    decimals: 18,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbol.OLAS,
+  },
+};
+
 export const TOKEN_CONFIG = {
   [EvmChainId.Gnosis]: GNOSIS_TOKEN_CONFIG,
   [EvmChainId.Optimism]: OPTIMISM_TOKEN_CONFIG,
   [EvmChainId.Ethereum]: ETHEREUM_TOKEN_CONFIG,
   [EvmChainId.Base]: BASE_TOKEN_CONFIG,
+  [EvmChainId.Mode]: MODE_TOKEN_CONFIG,
 } as const;
 
 /**
