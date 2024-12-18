@@ -22,7 +22,7 @@ import json
 import textwrap
 import warnings
 
-from operate.utils.common import check_rpc, get_erc20_balance, print_box, print_section, wei_to_token
+from operate.utils.common import check_rpc, get_erc20_balance, print_box, print_section, print_title, wei_to_token
 warnings.filterwarnings("ignore", category=UserWarning)
 
 import sys
@@ -306,7 +306,7 @@ def ensure_enough_funds(operate: "OperateApp", service: Service) -> None:
                 f"[{chain_name}] Please make sure master EOA {wallet.crypto.address} has at least {wei_to_token(required_balance, token)}",
             )
             spinner = Halo(
-                text=f"[{chain_name}] Waiting for {wei_to_token(required_balance - ledger_api.get_balance(wallet.crypto.address), token)}...",
+                text=f"[{chain_name}] Waiting for at least {wei_to_token(required_balance - ledger_api.get_balance(wallet.crypto.address), token)}...",
                 spinner="dots"
             )
             spinner.start()
@@ -389,6 +389,7 @@ def run_service(operate: "OperateApp", config_path: str) -> None:
     with open(config_path, "r") as config_file:
         template = json.load(config_file)
 
+    print_title(f"{template['name']} quickstart")
     config = configure_local_config(template)
     manager = operate.service_manager()
     service, is_service_update = get_service(manager, template)

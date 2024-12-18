@@ -44,8 +44,8 @@ def stop_service(operate: "OperateApp", config_path: str) -> None:
     # check if agent was started before
     path = OPERATE_HOME / "local_config.json"
     if not path.exists():
-        print("Nothing to clean. Exiting.")
-        sys.exit(0)
+        print("No previous agent setup found. Exiting.")
+        return
 
     configure_local_config(template)
     manager = operate.service_manager()

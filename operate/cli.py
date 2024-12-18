@@ -46,6 +46,7 @@ from operate.account.user import UserAccount
 from operate.constants import KEY, KEYS, OPERATE_HOME, SERVICES
 from operate.ledger.profiles import DEFAULT_NEW_SAFE_FUNDS_AMOUNT, OLAS
 from operate.operate_types import Chain, DeploymentStatus, LedgerType
+from operate.quickstart.claim_olas import claim_olas
 from operate.quickstart.run_service import run_service
 from operate.quickstart.stop_service import stop_service
 from operate.quickstart.terminate_on_chain_service import terminate_service
@@ -960,13 +961,23 @@ def quickstop(
 
 
 @_operate.command(name="terminate")
-def quickstop(
+def terminate(
     config: Annotated[str, params.String(help="Quickstart config file path")],
 ) -> None:
     """Quickstart."""
     operate = OperateApp()
     operate.setup()
     terminate_service(operate=operate, config_path=config)
+
+
+@_operate.command(name="claim")
+def quickclaim(
+    config: Annotated[str, params.String(help="Quickstart config file path")],
+) -> None:
+    """Quickclaim OLAS rewards."""
+    operate = OperateApp()
+    operate.setup()
+    claim_olas(operate=operate, config_path=config)
 
 
 def main() -> None:
