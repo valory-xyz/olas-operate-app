@@ -99,6 +99,24 @@ export const AGENT_CONFIG: {
     agentSafeFundingRequirements: {
       [EvmChainId.Mode]: 5260000000000000, // 0.00526 eth
     },
+    operatingThresholds: {
+      [WalletOwnerType.Master]: {
+        [WalletType.EOA]: {
+          [TokenSymbol.ETH]: 0.0001, // TODO: ensure this is correct
+        },
+        [WalletType.Safe]: {
+          [TokenSymbol.ETH]: 0.0001, // TODO: ensure this is correct
+        },
+      },
+      [WalletOwnerType.Agent]: {
+        [WalletType.EOA]: {
+          [TokenSymbol.ETH]: 0.0001, // TODO: ensure this is correct
+        },
+        [WalletType.Safe]: {
+          [TokenSymbol.ETH]: 0.0001, // TODO: ensure this is correct
+        },
+      },
+    },
     requiresMasterSafesOn: [EvmChainId.Mode],
     serviceApi: ModiusService,
     displayName: 'Modius agent',
