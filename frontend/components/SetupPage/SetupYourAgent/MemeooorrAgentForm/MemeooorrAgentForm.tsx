@@ -10,7 +10,11 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
-import { commonFieldProps, emailValidateMessages } from '../formUtils';
+import {
+  commonFieldProps,
+  emailValidateMessages,
+  requiredRules,
+} from '../formUtils';
 import { onDummyServiceCreation } from '../utils';
 import {
   validateGeminiApiKey,
@@ -240,7 +244,6 @@ export const MemeooorrAgentForm = ({
         <Form.Item
           name="xEmail"
           label="X email"
-          {...emailRequiredFieldProps}
           rules={[{ required: true, type: 'email' }]}
           hasFeedback
         >
