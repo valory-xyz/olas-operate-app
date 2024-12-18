@@ -9,8 +9,8 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useServices } from '@/hooks/useServices';
 
 import { SetupCreateHeader } from '../Create/SetupCreateHeader';
-import { MemeooorrAgentForm } from './MemeooorrAgentForm';
-import { ModiusAgentForm } from './ModiusAgentForm';
+import { MemeooorrAgentForm } from './MemeooorrAgentForm/MemeooorrAgentForm';
+import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
 
 const { Title, Text } = Typography;
 
