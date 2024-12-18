@@ -334,8 +334,8 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
       STAKING_CHAIN: {
         name: 'Staking chain',
         description: '',
-        value: '',
-        provision_type: EnvProvisionType.COMPUTED,
+        value: 'mode',
+        provision_type: EnvProvisionType.FIXED,
       },
       STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
         name: 'Staking activity checker contract address',
@@ -346,8 +346,8 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
       MIN_SWAP_AMOUNT_THRESHOLD: {
         name: 'Minimum swap amount threshold',
         description: '',
-        value: '',
-        provision_type: EnvProvisionType.COMPUTED,
+        value: '15',
+        provision_type: EnvProvisionType.FIXED,
       },
       ALLOWED_CHAINS: {
         name: 'Allowed chains',
@@ -358,8 +358,8 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
       TARGET_INVESTMENT_CHAINS: {
         name: 'Target investment chains',
         description: '',
-        value: '',
-        provision_type: EnvProvisionType.COMPUTED,
+        value: '["mode"]',
+        provision_type: EnvProvisionType.FIXED,
       },
       INITIAL_ASSETS: {
         name: 'Initial assets',
