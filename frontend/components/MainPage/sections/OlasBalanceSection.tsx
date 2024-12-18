@@ -26,7 +26,7 @@ const Balance = styled.span`
 `;
 
 export const MainOlasBalance = () => {
-  const { selectedService } = useServices();
+  const { selectedService, selectedAgentConfig } = useServices();
   const { isLoaded: isBalanceLoaded } = useBalanceContext();
   const { masterWalletBalances } = useMasterBalances();
   const { serviceStakedBalances, serviceWalletBalances } = useServiceBalances(
@@ -36,10 +36,13 @@ export const MainOlasBalance = () => {
   const isBalanceBreakdownEnabled = useFeatureFlag('manage-wallet');
 
   const displayedBalance = useMemo(() => {
-    // olas across master wallets, safes and eoa
+    // olas across master wallet -- safes and eoa -- on relevant chains for agent
     const masterWalletOlasBalance = masterWalletBalances?.reduce(
-      (acc, { symbol, balance }) => {
-        if (symbol === TokenSymbol.OLAS) {
+      (acc, { symbol, balance, evmChainId }) => {
+        if (
+          symbol === TokenSymbol.OLAS &&
+          selectedAgentConfig.requiresAgentSafesOn.includes(evmChainId)
+        ) {
           return acc + Number(balance);
         }
         return acc;
@@ -47,10 +50,13 @@ export const MainOlasBalance = () => {
       0,
     );
 
-    // olas across all service wallets
+    // olas across all wallets owned by selected service
     const serviceWalletOlasBalance = serviceWalletBalances?.reduce(
-      (acc, { symbol, balance }) => {
-        if (symbol === TokenSymbol.OLAS) {
+      (acc, { symbol, balance, evmChainId }) => {
+        if (
+          symbol === TokenSymbol.OLAS &&
+          selectedAgentConfig.requiresAgentSafesOn.includes(evmChainId)
+        ) {
           return acc + Number(balance);
         }
         return acc;
@@ -58,9 +64,12 @@ export const MainOlasBalance = () => {
       0,
     );
 
-    // olas staked across all services
+    // olas staked across services on relevant chains for agent
     const serviceStakedOlasBalance = serviceStakedBalances?.reduce(
-      (acc, { olasBondBalance, olasDepositBalance }) => {
+      (acc, { olasBondBalance, olasDepositBalance, evmChainId }) => {
+        if (!selectedAgentConfig.requiresAgentSafesOn.includes(evmChainId)) {
+          return acc;
+        }
         return acc + Number(olasBondBalance) + Number(olasDepositBalance);
       },
       0,
@@ -73,7 +82,12 @@ export const MainOlasBalance = () => {
     ]);
 
     return balanceFormat(totalOlasBalance, 2);
-  }, [masterWalletBalances, serviceStakedBalances, serviceWalletBalances]);
+  }, [
+    masterWalletBalances,
+    selectedAgentConfig.requiresAgentSafesOn,
+    serviceStakedBalances,
+    serviceWalletBalances,
+  ]);
 
   return (
     <CardSection

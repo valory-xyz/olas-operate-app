@@ -1,5 +1,5 @@
 import { Flex, Typography } from 'antd';
-import { isEmpty, isNil } from 'lodash';
+import { isEmpty, isNil, sum } from 'lodash';
 import { useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
@@ -14,10 +14,7 @@ import {
 } from '@/hooks/useBalanceContext';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { useServices } from '@/hooks/useServices';
-import {
-  useActiveStakingContractDetails,
-  useStakingContractContext,
-} from '@/hooks/useStakingContractDetails';
+import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 import { balanceFormat } from '@/utils/numberFormatters';
 
 import { CantMigrateReason } from './useMigrate';
@@ -32,9 +29,10 @@ const AlertInsufficientMigrationFunds = ({
   const { selectedAgentConfig } = useServices();
   const { isAllStakingContractDetailsRecordLoaded } =
     useStakingContractContext();
-  const { isServiceStaked } = useActiveStakingContractDetails();
-  const { isLoaded: isBalanceLoaded, totalStakedOlasBalance } =
-    useBalanceContext();
+  const {
+    isLoaded: isBalanceLoaded,
+    totalStakedOlasBalance: totalStakedOlasBalanceOnHomeChain,
+  } = useBalanceContext();
   const { masterSafeBalances } = useMasterBalances();
   const { serviceFundRequirements, isInitialFunded } = useNeedsFunds(
     stakingProgramIdToMigrateTo,
@@ -45,7 +43,7 @@ const AlertInsufficientMigrationFunds = ({
       TokenSymbol.OLAS
     ];
 
-  const safeBalance = useMemo(() => {
+  const masterSafeBalanceOnHomeChain = useMemo(() => {
     if (!isBalanceLoaded) return;
     if (isNil(masterSafeBalances) || isEmpty(masterSafeBalances)) return;
     return masterSafeBalances.reduce(
@@ -61,14 +59,16 @@ const AlertInsufficientMigrationFunds = ({
 
   if (!isAllStakingContractDetailsRecordLoaded) return null;
   if (isNil(requiredStakedOlas)) return null;
-  if (isNil(safeBalance?.[TokenSymbol.OLAS])) return null;
+  if (isNil(masterSafeBalanceOnHomeChain?.[TokenSymbol.OLAS])) return null;
 
-  if (isNil(totalStakedOlasBalance)) return null;
+  if (isNil(totalStakedOlasBalanceOnHomeChain)) return null;
 
-  const requiredOlasDeposit = isServiceStaked
-    ? requiredStakedOlas -
-      (totalStakedOlasBalance + safeBalance[TokenSymbol.OLAS]) // when staked
-    : requiredStakedOlas - safeBalance[TokenSymbol.OLAS]; // when not staked
+  const requiredOlasDeposit =
+    requiredStakedOlas -
+    sum([
+      masterSafeBalanceOnHomeChain[TokenSymbol.OLAS],
+      totalStakedOlasBalanceOnHomeChain,
+    ]);
 
   const homeChainId = selectedAgentConfig.evmHomeChainId;
   const nativeTokenSymbol = getNativeTokenSymbol(homeChainId);
@@ -76,9 +76,9 @@ const AlertInsufficientMigrationFunds = ({
     ? selectedAgentConfig.operatingThresholds[WalletOwnerType.Master][
         WalletType.Safe
       ][CHAIN_CONFIG[selectedAgentConfig.evmHomeChainId].nativeToken.symbol] -
-      (safeBalance[nativeTokenSymbol] || 0) // is already funded allow minimal maintenance
+      (masterSafeBalanceOnHomeChain[nativeTokenSymbol] || 0) // is already funded allow minimal maintenance
     : (serviceFundRequirements[homeChainId]?.[nativeTokenSymbol] || 0) -
-      (safeBalance[nativeTokenSymbol] || 0); // otherwise require full initial funding requirements
+      (masterSafeBalanceOnHomeChain[nativeTokenSymbol] || 0); // otherwise require full initial funding requirements
 
   return (
     <CustomAlert

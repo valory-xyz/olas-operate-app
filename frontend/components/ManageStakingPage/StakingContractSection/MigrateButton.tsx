@@ -3,16 +3,14 @@ import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
 import { MiddlewareDeploymentStatus, ServiceTemplate } from '@/client';
-import {
-  getServiceTemplate,
-  SERVICE_TEMPLATES,
-} from '@/constants/serviceTemplates';
+import { MechType } from '@/config/mechs';
+import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { Pages } from '@/enums/Pages';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useModals } from '@/hooks/useModals';
 import { usePageState } from '@/hooks/usePageState';
-import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import {
   useActiveStakingContractDetails,
@@ -36,21 +34,19 @@ export const MigrateButton = ({
     isFetched: isServicesLoaded,
     selectedService,
     selectedAgentType,
+    selectedAgentConfig,
     overrideSelectedServiceStatus,
   } = useServices();
   const serviceConfigId =
     isServicesLoaded && selectedService
       ? selectedService.service_config_id
       : '';
-  const { service } = useService(serviceConfigId);
   const serviceTemplate = useMemo<ServiceTemplate | undefined>(
     () =>
-      service
-        ? getServiceTemplate(service.hash)
-        : SERVICE_TEMPLATES.find(
-            (template) => template.agentType === selectedAgentType,
-          ),
-    [selectedAgentType, service],
+      SERVICE_TEMPLATES.find(
+        (template) => template.agentType === selectedAgentType,
+      ),
+    [selectedAgentType],
   );
 
   const { setIsPaused: setIsBalancePollingPaused } = useBalanceContext();
@@ -131,10 +127,11 @@ export const MigrateButton = ({
             const serviceConfigParams = {
               stakingProgramId: stakingProgramIdToMigrateTo,
               serviceTemplate,
-              deploy: true,
+              deploy: false,
               useMechMarketplace:
-                stakingProgramIdToMigrateTo ===
-                StakingProgramId.PearlBetaMechMarketplace,
+                STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
+                  stakingProgramIdToMigrateTo
+                ].mechType === MechType.Marketplace,
             };
 
             if (selectedService) {

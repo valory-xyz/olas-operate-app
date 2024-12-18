@@ -19,25 +19,6 @@ export const Main = () => {
   const isStakingContractSectionEnabled = useFeatureFlag(
     'staking-contract-section',
   );
-  // const { refetch: updateServicesState } = useServices();
-  // const {
-  //   updateBalances,
-  //   isLoaded: isBalanceLoaded,
-  //   setIsLoaded: setIsBalanceLoaded,
-  // } = useBalanceContext();
-
-  // TODO: reintroduce later,  non critical
-  // useEffect(() => {
-  //   if (!isBalanceLoaded) {
-  //     updateServicesState?.().then(() => updateBalances());
-  //     setIsBalanceLoaded(true);
-  //   }
-  // }, [
-  //   isBalanceLoaded,
-  //   setIsBalanceLoaded,
-  //   updateBalances,
-  //   updateServicesState,
-  // ]);
 
   return (
     <Card
