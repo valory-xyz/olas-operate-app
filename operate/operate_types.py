@@ -86,11 +86,9 @@ Chain = enum.Enum(
     "Chain",
     [(member.name, member.value) for member in ChainType]
     + [
-        ("MODE", "mode"),  # TODO: update open-autonomy version and remove this
         ("SOLANA", "solana"),
     ],
 )
-
 
 class ChainMixin:
     """Mixin for some new functions in the ChainType class."""
@@ -110,11 +108,12 @@ class ChainMixin:
         """Ledger type."""
         if self in (
             Chain.ETHEREUM,
-            Chain.GOERLI,
+            #Chain.GOERLI,
             Chain.GNOSIS,
             Chain.BASE,
             Chain.OPTIMISTIC,
             Chain.MODE,
+            Chain.LOCAL
         ):
             return LedgerType.ETHEREUM
         return LedgerType.SOLANA

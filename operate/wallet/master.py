@@ -69,6 +69,7 @@ class MasterWallet(LocalResource):
         """Password string."""
         if self._password is None:
             raise ValueError("Password not set.")
+
         return self._password
 
     @password.setter
@@ -94,9 +95,10 @@ class MasterWallet(LocalResource):
         rpc: t.Optional[str] = None,
     ) -> LedgerApi:
         """Get ledger api object."""
+        rpc_address = rpc or get_default_rpc(chain=chain)
         return make_ledger_api(
             self.ledger_type.name.lower(),
-            address=(rpc or get_default_rpc(chain=chain)),
+            address=rpc_address,
             chain_id=chain.id,
         )
 
@@ -204,9 +206,9 @@ class EthereumMasterWallet(MasterWallet):
                 chain_id=chain.id,
                 raise_on_try=True,
                 max_fee_per_gas=int(max_fee_per_gas) if max_fee_per_gas else None,
-                max_priority_fee_per_gas=int(max_priority_fee_per_gas)
-                if max_priority_fee_per_gas
-                else None,
+                max_priority_fee_per_gas=(
+                    int(max_priority_fee_per_gas) if max_priority_fee_per_gas else None
+                ),
             )
             return ledger_api.update_with_gas_estimate(
                 transaction=tx,

@@ -19,15 +19,15 @@ operate = "operate.cli:main"
 
 [tool.poetry.dependencies]
 python = "<3.12,>=3.9"
-open-autonomy = "==0.16.1"
-open-aea-ledger-cosmos = "==1.57.0"
-open-aea-ledger-ethereum = "==1.57.0"
-open-aea-ledger-ethereum-flashbots = "==1.57.0"
-open-aea-cli-ipfs = "==1.57.0"
+open-autonomy = "==0.18.3"
+open-aea-ledger-cosmos = "==1.60.0"
+open-aea-ledger-ethereum = "==1.60.0"
+open-aea-ledger-ethereum-flashbots = "==1.60.0"
+open-aea-cli-ipfs = "==1.60.0"
 clea = "==0.1.0rc4"
 cytoolz = "==0.12.3"
 docker = "6.1.2"
-fastapi = "==0.110.0"
+fastapi = "==0.115.6"
 eth-hash = "==0.7.0"
 eth-account = "==0.8.0"
 eth-keyfile = "==0.6.1"
@@ -42,7 +42,6 @@ ipfshttpclient = "==0.8.0a2"
 jsonschema = "==4.3.3"
 multidict = "==6.0.5"
 requests-toolbelt = "1.0.0"
-starlette = "==0.36.3"
 uvicorn = "==0.27.0"
 web3 = "==6.1.0"
 psutil = "^5.9.8"
@@ -53,6 +52,21 @@ deepdiff = "^8.0.1"
 [tool.poetry.group.development.dependencies]
 tomte = {version = "0.2.17", extras = ["cli"]}
 
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+httpx = "^0.28.1"
+pytest-cov = "^6.0.0"
+pytest-asyncio = "0.23"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.pytest.ini_options]
+addopts = "--cov=operate --ignore=scripts/test_e2e.py --ignore=scripts/test_staking_e2e.py --ignore=operate/data/contracts/uniswap_v2_erc20/tests/test_contract.py"
+testpaths = [
+    "./tests/",
+]
+norecursedirs = ["./operate/*", "scripts/*"]

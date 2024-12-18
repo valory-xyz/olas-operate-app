@@ -79,12 +79,12 @@ CONTRACTS: t.Dict[Chain, ContractAddresses] = {
 
 STAKING: t.Dict[Chain, t.Dict[str, str]] = {
     Chain.GNOSIS: {
-        "pearl_alpha": "0xEE9F19b5DF06c7E8Bfc7B28745dcf944C504198A",
+        #"pearl_alpha": "0xEE9F19b5DF06c7E8Bfc7B28745dcf944C504198A",
         "pearl_beta": "0xeF44Fb0842DDeF59D37f85D61A1eF492bbA6135d",
-        "pearl_beta_2": "0x1c2F82413666d2a3fD8bC337b0268e62dDF67434",
-        "pearl_beta_3": "0xBd59Ff0522aA773cB6074ce83cD1e4a05A457bc1",
-        "pearl_beta_4": "0x3052451e1eAee78e62E169AfdF6288F8791F2918",
-        "pearl_beta_5": "0x4Abe376Fda28c2F43b84884E5f822eA775DeA9F4",
+        #"pearl_beta_2": "0x1c2F82413666d2a3fD8bC337b0268e62dDF67434",
+        #"pearl_beta_3": "0xBd59Ff0522aA773cB6074ce83cD1e4a05A457bc1",
+        #"pearl_beta_4": "0x3052451e1eAee78e62E169AfdF6288F8791F2918",
+        #"pearl_beta_5": "0x4Abe376Fda28c2F43b84884E5f822eA775DeA9F4",
         "pearl_beta_mech_marketplace": "0xDaF34eC46298b53a3d24CBCb431E84eBd23927dA",
     },
     Chain.OPTIMISTIC: {
@@ -103,6 +103,7 @@ OLAS: t.Dict[Chain, str] = {
     Chain.BASE: "0x54330d28ca3357F294334BDC454a032e7f353416",
     Chain.ETHEREUM: "0x0001A500A6B18995B03f44bb040A5fFc28E45CB0",
     Chain.MODE: "0xcfD1D50ce23C46D3Cf6407487B2F8934e96DC8f9",
+    
 }
 
 USDC: t.Dict[Chain, str] = {

@@ -19,6 +19,7 @@
 
 """Operate app CLI module."""
 import asyncio
+import json
 import logging
 import os
 import signal
@@ -36,14 +37,17 @@ from docker.errors import APIError
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import Json
 from typing_extensions import Annotated
 from uvicorn.main import run as uvicorn
 
 from operate import services
 from operate.account.user import UserAccount
 from operate.constants import KEY, KEYS, OPERATE, SERVICES
+from operate.ledger.profiles import OLAS
 from operate.operate_types import Chain, DeploymentStatus, LedgerType
 from operate.services.health_checker import HealthChecker
+from operate.utils.misc import get_backend_version
 from operate.wallet.master import MasterWalletManager
 
 
@@ -54,6 +58,8 @@ DEFAULT_MAX_RETRIES = 3
 USER_NOT_LOGGED_IN_ERROR = JSONResponse(
     content={"error": "User not logged in!"}, status_code=401
 )
+
+BACKEND_VERSION = get_backend_version()
 
 
 def service_not_found_error(service_config_id: str) -> JSONResponse:
@@ -133,7 +139,7 @@ class OperateApp:
         """Json representation of the app."""
         return {
             "name": "Operate HTTP server",
-            "version": "0.1.0.rc0",
+            "version": BACKEND_VERSION,
             "home": str(self._path),
         }
 
@@ -153,6 +159,7 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
     if HEALTH_CHECKER_OFF:
         logger.warning("Healthchecker is off!!!")
     operate = OperateApp(home=home, logger=logger)
+    logger.info(f"Starting backend version: {BACKEND_VERSION}")
 
     operate.service_manager().log_directories()
     logger.info("Migrating service configs...")
@@ -272,7 +279,7 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
 
         async def _call(request: Request) -> JSONResponse:
             """Call the endpoint."""
-            logger.info(f"Calling `{f.__name__}` with retries enabled")
+            logger.debug(f"Calling `{f.__name__}` with retries enabled")
             retries = 0
             errors = []
             while retries < DEFAULT_MAX_RETRIES:
@@ -418,6 +425,66 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
             content=manager.load(ledger_type=ledger_type).json,
         )
 
+    @app.get("/api/wallet/balance/{chain}/{address}")
+    @with_retries
+    async def _get_balance(request: Request) -> t.List[t.Dict]:
+        """Create wallet safe"""
+        # by default!
+        chain_name = request.path_params["chain"]
+        address = request.path_params["address"]
+        chain = Chain(chain_name)
+        ledger_type = chain.ledger_type
+        manager = operate.wallet_manager
+        if not manager.exists(ledger_type=ledger_type):
+            return JSONResponse(
+                content={"error": "Wallet does not exist"},
+                status_code=404,
+            )
+        ledger_api = manager.load(ledger_type=ledger_type).ledger_api(chain=chain)
+        return JSONResponse(
+            content={
+                "address": address,
+                "balance": ledger_api.get_balance(address=address),
+            }
+        )
+
+    @app.get("/api/wallet/balance/{chain}/{address}/olas")
+    @with_retries
+    async def _get_balance(request: Request) -> t.List[t.Dict]:
+        """Create wallet safe"""
+        # by default!
+        chain_name = request.path_params["chain"]
+        address = request.path_params["address"]
+        chain = Chain(chain_name)
+        ledger_type = chain.ledger_type
+        manager = operate.wallet_manager
+        if not manager.exists(ledger_type=ledger_type):
+            return JSONResponse(
+                content={"error": "Wallet does not exist"},
+                status_code=404,
+            )
+        ledger_api = manager.load(ledger_type=ledger_type).ledger_api(chain=chain)
+
+        olas_contract = ledger_api.api.eth.contract(
+            address=ledger_api.api.to_checksum_address(OLAS[chain]),
+            abi=json.loads(
+                Path(
+                    Path(__file__).parent,
+                    "data",
+                    "contracts",
+                    "uniswap_v2_erc20",
+                    "build",
+                    "IUniswapV2ERC20.json",
+                ).read_text(encoding="utf-8")
+            ).get("abi"),
+        )
+        return JSONResponse(
+            content={
+                "address": address,
+                "balance": olas_contract.functions.balanceOf(address).call() / 1e18,
+            }
+        )
+
     @app.post("/api/wallet")
     @with_retries
     async def _create_wallet(request: Request) -> t.List[t.Dict]:
@@ -511,7 +578,9 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
         ledger_type = chain.ledger_type
         manager = operate.wallet_manager
         if not manager.exists(ledger_type=ledger_type):
-            return JSONResponse(content={"error": "Wallet does not exist"})
+            return JSONResponse(
+                content={"error": "Wallet does not exist"}, status_code=400
+            )
 
         wallet = manager.load(ledger_type=ledger_type)
         if wallet.safes is not None and wallet.safes.get(chain) is not None:
@@ -704,7 +773,7 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
         if operate.password is None:
             return USER_NOT_LOGGED_IN_ERROR
 
-        pause_all_services()
+        #pause_all_services()
         service_config_id = request.path_params["service_config_id"]
         manager = operate.service_manager()
 

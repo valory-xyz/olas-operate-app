@@ -728,6 +728,7 @@ class ServiceManager:
                 )
                 .settle()
             )
+            raise Exception(111111111111)
             event_data, *_ = t.cast(
                 t.Tuple,
                 registry_contracts.service_registry.process_receipt(

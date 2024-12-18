@@ -148,6 +148,7 @@ class GnosisSafeTransaction:
                 is_deprecated_mode=True,
             )[2:]
         }
+        
         tx = registry_contracts.gnosis_safe.get_raw_safe_transaction(
             ledger_api=self.ledger_api,
             contract_address=self.safe,
@@ -161,6 +162,7 @@ class GnosisSafeTransaction:
             operation=SafeOperation.DELEGATE_CALL.value,
             nonce=self.ledger_api.api.eth.get_transaction_count(owner),
         )
+        tx["gas"] = 200000
         self.tx = self.crypto.sign_transaction(tx)
         return t.cast(t.Dict, self.tx)
 

@@ -42,7 +42,6 @@ MAX_UINT256 = 2**256 - 1
 ZERO_ETH = 0
 SENTINEL_OWNERS = "0x0000000000000000000000000000000000000001"
 
-
 class SafeOperation(Enum):
     """Operation types."""
 
@@ -170,9 +169,11 @@ def create_safe(
         tx = registry_contracts.gnosis_safe.get_deploy_transaction(
             ledger_api=ledger_api,
             deployer_address=crypto.address,
-            owners=[crypto.address]
-            if backup_owner is None
-            else [crypto.address, backup_owner],
+            owners=(
+                [crypto.address]
+                if backup_owner is None
+                else [crypto.address, backup_owner]
+            ),
             threshold=1,
             salt_nonce=salt_nonce,
         )
@@ -192,6 +193,7 @@ def create_safe(
         "build",
         _build,
     )
+
     receipt = tx_settler.transact(
         method=lambda: {},
         contract="",
@@ -199,7 +201,8 @@ def create_safe(
     )
     instance = registry_contracts.gnosis_safe_proxy_factory.get_instance(
         ledger_api=ledger_api,
-        contract_address="0xa6b71e26c5e0845f74c812102ca7114b6a896ab2",
+        contract_address="0x4826533B4897376654Bb4d4AD88B7faFD0C98528",
+        # "0xa6b71e26c5e0845f74c812102ca7114b6a896ab2",
     )
     (event,) = instance.events.ProxyCreation().process_receipt(receipt)
     return event["args"]["proxy"], salt_nonce
@@ -258,9 +261,9 @@ def send_safe_txs(
         operation=SafeOperation.CALL.value,
         nonce=ledger_api.api.eth.get_transaction_count(owner),
         max_fee_per_gas=int(max_fee_per_gas) if max_fee_per_gas else None,
-        max_priority_fee_per_gas=int(max_priority_fee_per_gas)
-        if max_priority_fee_per_gas
-        else None,
+        max_priority_fee_per_gas=(
+            int(max_priority_fee_per_gas) if max_priority_fee_per_gas else None
+        ),
     )
     ledger_api.get_transaction_receipt(
         ledger_api.send_signed_transaction(
@@ -419,9 +422,9 @@ def transfer(
         operation=SafeOperation.CALL.value,
         nonce=ledger_api.api.eth.get_transaction_count(owner),
         max_fee_per_gas=int(max_fee_per_gas) if max_fee_per_gas else None,
-        max_priority_fee_per_gas=int(max_priority_fee_per_gas)
-        if max_priority_fee_per_gas
-        else None,
+        max_priority_fee_per_gas=(
+            int(max_priority_fee_per_gas) if max_priority_fee_per_gas else None
+        ),
     )
     ledger_api.get_transaction_receipt(
         ledger_api.send_signed_transaction(
