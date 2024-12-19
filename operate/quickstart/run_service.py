@@ -219,8 +219,7 @@ def ask_password_if_needed(operate: "OperateApp", config: TraderConfig):
 
     operate.password = password
 
-def get_service(manager: ServiceManager, template: ServiceTemplate) -> t.Tuple[Service, bool]:
-    is_update = False
+def get_service(manager: ServiceManager, template: ServiceTemplate) -> Service:
     if len(manager.json) > 0:
         old_hash = manager.json[0]["hash"]
         if old_hash == template["hash"]:
@@ -234,7 +233,6 @@ def get_service(manager: ServiceManager, template: ServiceTemplate) -> t.Tuple[S
                 service_config_id=manager.json[0]["service_config_id"],
                 service_template=template,
             )
-            is_update = True
     else:
         print(f'Creating service {template["hash"]}')
         service = manager.load_or_create(
@@ -242,7 +240,7 @@ def get_service(manager: ServiceManager, template: ServiceTemplate) -> t.Tuple[S
             service_template=template,
         )
 
-    return service, is_update
+    return service
 
 def ensure_enough_funds(operate: "OperateApp", service: Service) -> None:
     if not operate.wallet_manager.exists(ledger_type=LedgerType.ETHEREUM):
@@ -392,7 +390,7 @@ def run_service(operate: "OperateApp", config_path: str) -> None:
     print_title(f"{template['name']} quickstart")
     config = configure_local_config(template)
     manager = operate.service_manager()
-    service, is_service_update = get_service(manager, template)
+    service = get_service(manager, template)
     ask_password_if_needed(operate, config)
 
     # reload manger and config after setting operate.password

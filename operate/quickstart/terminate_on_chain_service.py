@@ -52,7 +52,7 @@ def terminate_service(operate: "OperateApp", config_path: str) -> None:
     config = configure_local_config(template)
     ask_password_if_needed(operate, config)
     manager = operate.service_manager()
-    service, _ = get_service(manager, template)
+    service = get_service(manager, template)
     ensure_enough_funds(operate, service)
     manager.terminate_service_on_chain_from_safe(
         service_config_id=service.service_config_id,

@@ -50,7 +50,7 @@ def claim_olas(operate: "OperateApp", config_path: str) -> None:
 
     config = configure_local_config(template)
     manager = operate.service_manager()
-    service, _ = get_service(manager, template)
+    service = get_service(manager, template)
     ask_password_if_needed(operate, config)
 
     # reload manger and config after setting operate.password

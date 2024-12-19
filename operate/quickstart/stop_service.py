@@ -49,7 +49,7 @@ def stop_service(operate: "OperateApp", config_path: str) -> None:
 
     configure_local_config(template)
     manager = operate.service_manager()
-    service, _ = get_service(manager, template)
+    service = get_service(manager, template)
     manager.stop_service_locally(service_config_id=service.service_config_id, delete=True, use_docker=True)
 
     print()

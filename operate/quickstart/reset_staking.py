@@ -44,7 +44,6 @@ def reset_staking(operate: "OperateApp", config_path: str) -> None:
 
     config = configure_local_config(template)
     manager = operate.service_manager()
-    service, _ = get_service(manager, template)
 
     print(f"Your current staking program preference is set to '{config.staking_vars['STAKING_PROGRAM']}'.")
     print(
