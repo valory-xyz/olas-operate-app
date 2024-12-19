@@ -28,7 +28,7 @@ import { StakedAgentService } from '@/service/agents/StakedAgentService';
 import { Address } from '@/types/Address';
 import { Maybe } from '@/types/Util';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
-import { formatEther } from '@/utils/numberFormatters';
+import { formatUnits } from '@/utils/numberFormatters';
 
 import { MasterWalletContext } from './MasterWalletProvider';
 import { OnlineStatusContext } from './OnlineStatusProvider';
@@ -228,6 +228,7 @@ const getCrossChainWalletBalances = async (
         tokenType,
         symbol: tokenSymbol,
         address: tokenAddress,
+        decimals,
       } of Object.values(tokensOnChain)) {
         const isNative = tokenType === TokenType.NativeGas;
         const isErc20 = tokenType === TokenType.Erc20;
@@ -258,7 +259,7 @@ const getCrossChainWalletBalances = async (
                 evmChainId: providerEvmChainId,
                 symbol: tokenSymbol,
                 isNative: true,
-                balance: Number(formatEther(balance)),
+                balance: Number(formatUnits(balance)),
               }),
           );
         }
@@ -287,7 +288,7 @@ const getCrossChainWalletBalances = async (
               evmChainId: providerEvmChainId,
               symbol: tokenSymbol,
               isNative: false,
-              balance: Number(formatEther(erc20Balances[index])),
+              balance: Number(formatUnits(erc20Balances[index], decimals)),
             }),
           ) as WalletBalanceResult[];
 

@@ -13,6 +13,7 @@ const schema = {
   lastSelectedAgentType: { type: 'string', default: 'trader' },
   isInitialFunded_trader: { type: 'boolean', default: false },
   isInitialFunded_memeooorr: { type: 'boolean', default: false },
+  isInitialFunded_modius: { type: 'boolean', default: false },
 };
 
 /**

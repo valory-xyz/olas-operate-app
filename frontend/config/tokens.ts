@@ -110,6 +110,17 @@ export const MODE_TOKEN_CONFIG: ChainTokenConfig = {
     tokenType: TokenType.Erc20,
     symbol: TokenSymbol.OLAS,
   },
+  /**
+   * @warning USDC is a special case, it has 6 decimals, not 18.
+   * https://explorer.mode.network/address/0xd988097fb8612cc24eeC14542bC03424c656005f?tab=read_contract#313ce567
+   * @note When parsing or formatting units, use `decimals` (6) instead of the standard `ether` sizing (10^18).
+   */
+  [TokenSymbol.USDC]: {
+    address: '0xd988097fb8612cc24eeC14542bC03424c656005f',
+    decimals: 6,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbol.USDC,
+  },
 };
 
 export const TOKEN_CONFIG = {

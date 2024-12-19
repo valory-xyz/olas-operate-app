@@ -16,17 +16,20 @@ const { Text } = Typography;
 
 type FundsToActivateProps = {
   stakingFundsRequired: boolean;
-  otherFundsRequired: boolean;
+  nativeFundsRequired: boolean;
+  additionalFundsRequired?: boolean;
 };
 
 const FUNDS_REQUIRED_FOR_BY_AGENT_TYPE = {
   [AgentType.PredictTrader]: 'for trading',
   [AgentType.Memeooorr]: 'for agent operations',
+  [AgentType.Modius]: 'minimum for investment',
 };
 
 export const FundsToActivate = ({
   stakingFundsRequired = true,
-  otherFundsRequired = true,
+  nativeFundsRequired = true,
+  additionalFundsRequired = true,
 }: FundsToActivateProps) => {
   const { selectedStakingProgramId } = useStakingProgram();
 
@@ -49,6 +52,22 @@ export const FundsToActivate = ({
     return `${native} ${nativeTokenSymbol}`;
   }, [homeChainId, serviceFundRequirements, nativeTokenSymbol]);
 
+  // Calculate additional tokens requirements (Eg. USDC)
+  const additionalTokensRequired = useMemo(() => {
+    const additionalTokens = Object.keys(
+      serviceFundRequirements[homeChainId],
+    ).filter(
+      (token) => token !== TokenSymbol.OLAS && token !== nativeTokenSymbol,
+    );
+
+    if (additionalTokens.length === 0) [];
+
+    return additionalTokens.map((tokenSymbol) => {
+      const token = serviceFundRequirements[homeChainId][tokenSymbol];
+      return `${token} ${tokenSymbol}`;
+    });
+  }, [homeChainId, serviceFundRequirements, nativeTokenSymbol]);
+
   return (
     <>
       <Text>
@@ -63,12 +82,20 @@ export const FundsToActivate = ({
             staking.
           </div>
         )}
-        {otherFundsRequired && (
+        {nativeFundsRequired && (
           <div>
             {UNICODE_SYMBOLS.BULLET} <Text strong>{nativeTokenRequired}</Text> -
             {` ${FUNDS_REQUIRED_FOR_BY_AGENT_TYPE[selectedAgentType]}.`}
           </div>
         )}
+
+        {additionalFundsRequired &&
+          additionalTokensRequired.map((additionalToken) => (
+            <div key={additionalToken}>
+              {UNICODE_SYMBOLS.BULLET} <Text strong>{additionalToken}</Text> -
+              {` ${FUNDS_REQUIRED_FOR_BY_AGENT_TYPE[selectedAgentType]}.`}
+            </div>
+          ))}
       </Flex>
 
       {masterSafeAddress && (

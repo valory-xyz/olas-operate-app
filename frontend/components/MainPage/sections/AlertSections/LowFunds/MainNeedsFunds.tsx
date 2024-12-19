@@ -18,6 +18,7 @@ export const MainNeedsFunds = () => {
   const {
     hasEnoughEthForInitialFunding,
     hasEnoughOlasForInitialFunding,
+    hasEnoughAdditionalTokensForInitialFunding,
     isInitialFunded,
     needsInitialFunding,
   } = useNeedsFunds(selectedStakingProgramId);
@@ -54,7 +55,10 @@ export const MainNeedsFunds = () => {
 
           <FundsToActivate
             stakingFundsRequired={!hasEnoughOlasForInitialFunding}
-            otherFundsRequired={!hasEnoughEthForInitialFunding}
+            nativeFundsRequired={!hasEnoughEthForInitialFunding}
+            additionalFundsRequired={
+              !hasEnoughAdditionalTokensForInitialFunding
+            }
           />
         </Flex>
       }
