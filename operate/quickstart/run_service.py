@@ -106,14 +106,14 @@ class TraderConfig(LocalResource):
         return cls(**kwargs)
 
 def ask_confirm_password() -> str:
-    password = getpass.getpass("Please input your password (or press enter): ")
-    confirm_password = getpass.getpass("Please confirm your password: ")
+    while True:
+        password = getpass.getpass("Please input your password (or press enter): ")
+        confirm_password = getpass.getpass("Please confirm your password: ")
 
-    if password == confirm_password:
-        return password
-    else:
-        print("Passwords do not match. Terminating.")
-        sys.exit(1)
+        if password == confirm_password:
+            return password
+        else:
+            print("Passwords do not match!")
 
 def load_local_config() -> TraderConfig:
     """Load the local optimus configuration."""

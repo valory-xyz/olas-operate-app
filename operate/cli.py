@@ -46,6 +46,7 @@ from operate.account.user import UserAccount
 from operate.constants import KEY, KEYS, OPERATE_HOME, SERVICES
 from operate.ledger.profiles import DEFAULT_NEW_SAFE_FUNDS_AMOUNT, OLAS
 from operate.operate_types import Chain, DeploymentStatus, LedgerType
+from operate.quickstart.reset_password import reset_password
 from operate.quickstart.reset_staking import reset_staking
 from operate.quickstart.claim_olas import claim_olas
 from operate.quickstart.run_service import run_service
@@ -989,6 +990,14 @@ def quick_reset_staking(
     operate = OperateApp()
     operate.setup()
     reset_staking(operate=operate, config_path=config)
+
+
+@_operate.command(name="reset-password")
+def quick_reset_password() -> None:
+    """Reset password."""
+    operate = OperateApp()
+    operate.setup()
+    reset_password(operate=operate)
 
 
 def main() -> None:

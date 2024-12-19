@@ -383,6 +383,20 @@ class EthereumMasterWallet(MasterWallet):
         wallet.password = password
         return wallet, mnemonic.split()
 
+    def update_password(self, password: str) -> None:
+        """Update password."""
+        self._crypto = None
+        (self.path / self._key).write_text(
+            data=json.dumps(
+                Account.encrypt(
+                    private_key=self.crypto.private_key,  # pylint: disable=protected-access
+                    password=password,
+                ),
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+
     def create_safe(
         self,
         chain: Chain,
