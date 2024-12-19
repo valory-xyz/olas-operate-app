@@ -18,7 +18,6 @@ import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 import { delayInSeconds } from '@/utils/delay';
-import { formatEther } from '@/utils/numberFormatters';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
 
@@ -192,9 +191,7 @@ export const SetupEoaFunding = () => {
   return (
     <SetupEoaFundingForChain
       isFunded={isFunded}
-      minRequiredBalance={parseFloat(
-        formatEther(`${currentFundingRequirements}`),
-      )}
+      minRequiredBalance={currentFundingRequirements}
       currency={CHAIN_CONFIG[currentChain].nativeToken.symbol}
       chainName={CHAIN_CONFIG[currentChain].name}
     />

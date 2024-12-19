@@ -97,23 +97,28 @@ export const AGENT_CONFIG: {
     middlewareHomeChainId: MiddlewareChain.MODE,
     requiresAgentSafesOn: [EvmChainId.Mode],
     agentSafeFundingRequirements: {
-      [EvmChainId.Mode]: 5260000000000000, // 0.00526 eth
+      [EvmChainId.Mode]: 0.0005,
+    },
+    additionalRequirements: {
+      [EvmChainId.Mode]: {
+        [TokenSymbol.USDC]: 16,
+      },
     },
     operatingThresholds: {
       [WalletOwnerType.Master]: {
         [WalletType.EOA]: {
-          [TokenSymbol.ETH]: 0.0001, // TODO: ensure this is correct
+          [TokenSymbol.ETH]: 0.0002,
         },
         [WalletType.Safe]: {
-          [TokenSymbol.ETH]: 0.0001, // TODO: ensure this is correct
+          [TokenSymbol.ETH]: 0.001,
         },
       },
       [WalletOwnerType.Agent]: {
         [WalletType.EOA]: {
-          [TokenSymbol.ETH]: 0.0001, // TODO: ensure this is correct
+          [TokenSymbol.ETH]: 0.00005,
         },
         [WalletType.Safe]: {
-          [TokenSymbol.ETH]: 0.0001, // TODO: ensure this is correct
+          [TokenSymbol.ETH]: 0.0005,
         },
       },
     },

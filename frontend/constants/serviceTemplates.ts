@@ -280,10 +280,10 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
         agent_id: 40,
         threshold: 1,
         use_staking: true,
-        cost_of_bond: 20000000000000000000,
-        monthly_gas_estimate: 5260000000000000,
+        cost_of_bond: +parseEther(20),
+        monthly_gas_estimate: +parseEther(0.00516),
         fund_requirements: {
-          agent: 5000000000000000,
+          agent: +parseEther(0.001),
           safe: 0,
         },
       },
