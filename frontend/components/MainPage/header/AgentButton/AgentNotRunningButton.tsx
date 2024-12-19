@@ -133,11 +133,8 @@ const useServiceDeployment = () => {
         walletBalanceResult.evmChainId === selectedAgentConfig.evmHomeChainId,
     )?.balance;
 
-    if (
-      service &&
-      storeState?.[`isInitialFunded_${selectedAgentType}`] &&
-      isServiceStaked
-    ) {
+    const isInitialFunded = storeState?.[selectedAgentType]?.isInitialFunded;
+    if (service && isInitialFunded && isServiceStaked) {
       return (serviceTotalStakedOlas ?? 0) >= requiredStakedOlas;
     }
 

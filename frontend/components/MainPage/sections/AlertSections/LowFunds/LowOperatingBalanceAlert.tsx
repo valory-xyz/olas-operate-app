@@ -36,7 +36,7 @@ export const LowOperatingBalanceAlert = () => {
 
   if (!isBalanceLoaded) return null;
   if (!masterThresholds) return null;
-  if (!storeState?.[`isInitialFunded_${selectedAgentType}`]) return;
+  if (!storeState?.[selectedAgentType].isInitialFunded) return;
   if (!isLowBalance) return null;
 
   return (

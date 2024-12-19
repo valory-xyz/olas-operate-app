@@ -30,7 +30,7 @@ export const MainNeedsFunds = () => {
       hasEnoughOlasForInitialFunding &&
       !isInitialFunded
     ) {
-      electronApi.store?.set?.(`isInitialFunded_${selectedAgentType}`, true);
+      electronApi.store?.set?.(`${selectedAgentType}.isInitialFunded`, true);
     }
   }, [
     electronApi.store,
