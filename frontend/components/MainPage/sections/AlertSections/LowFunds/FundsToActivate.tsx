@@ -60,7 +60,7 @@ export const FundsToActivate = ({
       (token) => token !== TokenSymbol.OLAS && token !== nativeTokenSymbol,
     );
 
-    if (additionalTokens.length === 0) [];
+    if (additionalTokens.length === 0) return [];
 
     return additionalTokens.map((tokenSymbol) => {
       const token = serviceFundRequirements[homeChainId][tokenSymbol];
