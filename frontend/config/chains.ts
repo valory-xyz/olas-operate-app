@@ -50,6 +50,14 @@ export const ETHEREUM_CHAIN_CONFIG: ChainConfig = {
   rpc: process.env.GNOSIS_RPC as HttpUrl,
 };
 
+export const MODE_CHAIN_CONFIG: ChainConfig = {
+  evmChainId: EvmChainId.Mode,
+  name: 'Mode',
+  nativeToken: TOKEN_CONFIG[EvmChainId.Mode][TokenSymbol.ETH],
+  middlewareChain: MiddlewareChainId.MODE,
+  rpc: process.env.MODE_RPC as HttpUrl,
+};
+
 export const CHAIN_CONFIG: {
   [evmChainId: number]: ChainConfig;
 } = {
@@ -57,4 +65,5 @@ export const CHAIN_CONFIG: {
   // [EvmChainId.Ethereum]: ETHEREUM_CHAIN_CONFIG,
   [EvmChainId.Gnosis]: GNOSIS_CHAIN_CONFIG,
   // [EvmChainId.Optimism]: OPTIMISM_CHAIN_CONFIG,
+  [EvmChainId.Mode]: MODE_CHAIN_CONFIG,
 } as const;
