@@ -18,6 +18,7 @@ import { CustomAlert } from '../Alert';
 import { CardTitle } from '../Card/CardTitle';
 import { CardSection } from '../styled/CardSection';
 import { AddBackupWalletPage } from './AddBackupWalletPage';
+import { DebugInfoSection } from './DebugInfoSection';
 
 const { Text, Paragraph } = Typography;
 
@@ -160,6 +161,9 @@ const SettingsMain = () => {
         <Text strong>Backup wallet</Text>
         {walletBackup}
       </CardSection>
+
+      {/* Debug info */}
+      <DebugInfoSection />
     </Card>
   );
 };
