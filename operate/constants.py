@@ -44,3 +44,8 @@ HEALTH_CHECK_URL = "http://127.0.0.1:8716/healthcheck"  # possible DNS issues on
 
 TM_CONTROL_URL = "http://localhost:8080"
 SAFE_WEBAPP_URL = "https://app.safe.global/home?safe=gno:"
+
+STAKING_TOKEN_JSON_URL = "https://raw.githubusercontent.com/valory-xyz/trader/refs/heads/main/packages/valory/contracts/service_staking_token/build/ServiceStakingToken.json"
+ACTIVITY_CHECKER_JSON_URL = "https://raw.githubusercontent.com/valory-xyz/trader/refs/heads/main/packages/valory/contracts/mech_activity/build/MechActivity.json"
+SERVICE_REGISTRY_TOKEN_UTILITY_JSON_URL = "https://raw.githubusercontent.com/valory-xyz/open-autonomy/refs/heads/main/packages/valory/contracts/service_registry_token_utility/build/ServiceRegistryTokenUtility.json"
+MECH_CONTRACT_JSON_URL = "https://raw.githubusercontent.com/valory-xyz/mech/refs/heads/main/packages/valory/contracts/agent_mech/build/AgentMech.json"
