@@ -1689,12 +1689,17 @@ class ServiceManager:
         service_config_id: str,
         service_template: ServiceTemplate,
         allow_different_service_public_id: bool = False,
+        partial_update: bool = True,
     ) -> Service:
         """Update a service."""
 
         self.logger.info(f"Updating {service_config_id=}")
         service = self.load(service_config_id=service_config_id)
-        service.update(service_template, allow_different_service_public_id)
+        service.update(
+            service_template=service_template,
+            allow_different_service_public_id=allow_different_service_public_id,
+            partial_update=partial_update,
+        )
         return service
 
     def update_all_matching(
