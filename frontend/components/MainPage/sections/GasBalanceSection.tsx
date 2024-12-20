@@ -55,7 +55,7 @@ const BalanceStatus = () => {
   useEffect(() => {
     if (!isBalanceLoaded || !isServicesLoaded) return;
     if (!showNotification) return;
-    if (!storeState?.[`isInitialFunded_${selectedAgentType}`]) return;
+    if (!storeState?.[selectedAgentType]?.isInitialFunded) return;
 
     if (isMasterSafeLowOnNativeGas && !isLowBalanceNotificationShown) {
       showNotification('Operating balance is too low.');

@@ -364,7 +364,6 @@ const createMainWindow = async () => {
   } catch (e) {
     logger.electron('Store IPC failed:', JSON.stringify(e));
   }
-
   if (isDev) {
     mainWindow.webContents.openDevTools();
   }

@@ -17,8 +17,8 @@ export const AvoidSuspensionAlert = () => {
     if (!storeState) return false;
 
     return (
-      storeState.firstRewardNotificationShown &&
-      !storeState.agentEvictionAlertShown
+      storeState?.firstRewardNotificationShown &&
+      !storeState?.agentEvictionAlertShown
     );
   }, [storeState]);
 

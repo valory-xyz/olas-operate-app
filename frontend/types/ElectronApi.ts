@@ -1,13 +1,22 @@
 import { AgentType } from '@/enums/Agent';
 
+type AgentSettings = {
+  isInitialFunded: boolean;
+};
+
 export type ElectronStore = {
+  // Global settings
   environmentName?: string;
-  isInitialFunded_trader?: boolean;
-  isInitialFunded_memeooorr?: boolean;
+  lastSelectedAgentType?: AgentType;
+
+  // First time user settings
   firstStakingRewardAchieved?: boolean;
   firstRewardNotificationShown?: boolean;
   agentEvictionAlertShown?: boolean;
-  lastSelectedAgentType?: AgentType;
+
+  // Each agent has its own settings
+  trader: AgentSettings;
+  memeooorr: AgentSettings;
 };
 
 export type ElectronTrayIconStatus =
