@@ -714,6 +714,64 @@ Update service configuration `service_config_id` with the provided template.
 
 ---
 
+### `PATCH /api/v2/service/{service_config_id}`
+
+Partial update service configuration `service_config_id` with the provided (partial) template.
+
+![Partial updates](docs/images/partial_update_examples.png)
+
+<details>
+  <summary>Request</summary>
+
+```json
+  {
+    "configurations": {...},
+    "description": "Trader agent for omen prediction markets",
+    "env_variables": {...},
+    "hash": "bafybeibpseosblmaw6sk6zsnic2kfxfsijrnfluuhkwboyqhx7ma7zw2me",
+    "image": "https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75",
+    "home_chain": "gnosis",
+    "name": "valory/trader_omen_gnosis",
+    "service_version": "v0.19.0"
+  }
+```
+
+</details>
+
+<details>
+  <summary>Response</summary>
+
+- If the update is successful, the response contains the updated service configuration:
+
+  ```json
+  {
+    "chain_configs": {...},
+    "description": "Trader agent for omen prediction markets",
+    "env_variables": {...},
+    "hash": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u",
+    "hash_history": {"1731487112": "bafybeidicxsruh3r4a2xarawzan6ocwyvpn3ofv42po5kxf7x6ck7kn22u", "1731490000": "bafybeibpseosblmaw6sk6zsnic2kfxfsijrnfluuhkwboyqhx7ma7zw2me"},
+    "home_chain": "gnosis",
+    "keys": [...],
+    "name": "valory/trader_omen_gnosis",
+    "service_config_id": "sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39",
+    "service_path": "/home/user/.operate/services/sc-85a7a12a-8c6b-46b8-919a-b8a3b8e3ad39/trader_omen_gnosis"
+  }
+
+  ```
+
+- If the update is not successful:
+
+  ```json
+  {
+    "error": "Error message",
+    "traceback": "Traceback message"
+  }
+  ```
+
+</details>
+
+---
+
 ### `POST /api/service/{service_config_id}/stop`
 
 Stop service with service configuration `service_configuration_id`.

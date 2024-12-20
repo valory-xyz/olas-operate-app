@@ -98,7 +98,7 @@ DELETE_PREFIX = "delete_"
 SERVICE_CONFIG_VERSION = 4
 SERVICE_CONFIG_PREFIX = "sc-"
 
-DUMMY_MULTISIG = "0xm"
+NON_EXISTENT_MULTISIG = "0xm"
 NON_EXISTENT_TOKEN = -1
 
 DEFAULT_TRADER_ENV_VARS = {
@@ -683,7 +683,7 @@ class Service(LocalResource):
     _file = "config.json"
 
     @classmethod
-    def migrate_format(cls, path: Path) -> bool:
+    def migrate_format(cls, path: Path) -> bool:  # pylint: disable=too-many-statements
         """Migrate the JSON file format if needed."""
 
         if not path.is_dir():
@@ -897,7 +897,7 @@ class Service(LocalResource):
             chain_data = OnChainData(
                 instances=[],
                 token=NON_EXISTENT_TOKEN,
-                multisig=DUMMY_MULTISIG,
+                multisig=NON_EXISTENT_MULTISIG,
                 staked=False,
                 on_chain_state=OnChainState.NON_EXISTENT,
                 user_params=OnChainUserParams.from_json(config),  # type: ignore
@@ -981,47 +981,65 @@ class Service(LocalResource):
         self,
         service_template: ServiceTemplate,
         allow_different_service_public_id: bool = False,
+        partial_update: bool = False,
     ) -> None:
         """Update service."""
 
-        target_hash = service_template["hash"]
-        target_service_public_id = Service.get_service_public_id(target_hash, self.path)
-
-        if not allow_different_service_public_id and (
-            self.service_public_id() != target_service_public_id
-        ):
-            raise ValueError(
-                f"Trying to update a service with a different public id: {self.service_public_id()=} {self.hash=} {target_service_public_id=} {target_hash=}."
+        target_hash = service_template.get("hash")
+        if target_hash:
+            target_service_public_id = Service.get_service_public_id(
+                target_hash, self.path
             )
+
+            if not allow_different_service_public_id and (
+                self.service_public_id() != target_service_public_id
+            ):
+                raise ValueError(
+                    f"Trying to update a service with a different public id: {self.service_public_id()=} {self.hash=} {target_service_public_id=} {target_hash=}."
+                )
+
+        self.hash = service_template.get("hash", self.hash)
+
+        # hash_history - Only update if latest inserted hash is different
+        if self.hash_history[max(self.hash_history.keys())] != self.hash:
+            current_timestamp = int(time.time())
+            self.hash_history[current_timestamp] = self.hash
+
+        self.home_chain = service_template.get("home_chain", self.home_chain)
+        self.description = service_template.get("description", self.description)
+        self.name = service_template.get("name", self.name)
 
         shutil.rmtree(self.service_path)
         service_path = Path(
             IPFSTool().download(
-                hash_id=service_template["hash"],
+                hash_id=self.hash,
                 target_dir=self.path,
             )
         )
         self.service_path = service_path
-        self.name = service_template["name"]
-        self.hash = service_template["hash"]
-        self.description = service_template["description"]
 
-        # TODO temporarily disable update env variables - hotfix for Memeooorr
-        # self.env_variables = service_template["env_variables"]
+        # env_variables
+        if partial_update:
+            for var, attrs in service_template.get("env_variables", {}).items():
+                self.env_variables.setdefault(var, {}).update(attrs)
+        else:
+            self.env_variables = service_template["env_variables"]
 
-        # Only update hash_history if latest inserted hash is different
-        if self.hash_history[max(self.hash_history.keys())] != service_template["hash"]:
-            current_timestamp = int(time.time())
-            self.hash_history[current_timestamp] = service_template["hash"]
-
-        self.home_chain = service_template["home_chain"]
-
+        # chain_configs
+        # TODO support remove chains for non-partial updates
+        # TODO ensure all and only existing chains are passed for non-partial updates
         ledger_configs = ServiceHelper(path=self.service_path).ledger_configs()
-        for chain, config in service_template["configurations"].items():
+        for chain, new_config in service_template.get("configurations", {}).items():
             if chain in self.chain_configs:
                 # The template is providing a chain configuration that already
                 # exists in this service - update only the user parameters.
                 # This is to avoid losing on-chain data like safe, token, etc.
+                if partial_update:
+                    config = self.chain_configs[chain].chain_data.user_params.json
+                    config.update(new_config)
+                else:
+                    config = new_config
+
                 self.chain_configs[
                     chain
                 ].chain_data.user_params = OnChainUserParams.from_json(
@@ -1032,15 +1050,15 @@ class Service(LocalResource):
                 # not currently exist in this service - copy all config as
                 # when creating a new service.
                 ledger_config = ledger_configs[chain]
-                ledger_config.rpc = config["rpc"]
+                ledger_config.rpc = new_config["rpc"]
 
                 chain_data = OnChainData(
                     instances=[],
                     token=NON_EXISTENT_TOKEN,
-                    multisig=DUMMY_MULTISIG,
+                    multisig=NON_EXISTENT_MULTISIG,
                     staked=False,
                     on_chain_state=OnChainState.NON_EXISTENT,
-                    user_params=OnChainUserParams.from_json(config),  # type: ignore
+                    user_params=OnChainUserParams.from_json(new_config),  # type: ignore
                 )
 
                 self.chain_configs[chain] = ChainConfig(

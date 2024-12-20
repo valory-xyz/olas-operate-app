@@ -585,8 +585,37 @@ class ServiceManager:
         ):
             # TODO: This is possibly not a good idea: we are setting up a computed variable based on
             # the value passed in the template.
-            db_path = service.path / "persistent_data/memeooorr.db"
-            cookies_path = service.path / "persistent_data/twikit_cookies.json"
+            db_path = (
+                service.path
+                / "persistent_data"
+                / service.env_variables["TWIKIT_USERNAME"]["value"]
+                / "memeooorr.db"
+            )
+            cookies_path = (
+                service.path
+                / "persistent_data"
+                / service.env_variables["TWIKIT_USERNAME"]["value"]
+                / "twikit_cookies.json"
+            )
+
+            # Patch: Move existing configurations to the new location
+            old_db_path = service.path / "persistent_data" / "memeooorr.db"
+            old_cookies_path = service.path / "persistent_data" / "twikit_cookies.json"
+
+            for old_path, new_path in [
+                (old_db_path, db_path),
+                (old_cookies_path, cookies_path),
+            ]:
+                if old_path.exists():
+                    self.logger.info(f"Moving {old_path} -> {new_path}")
+                    new_path.parent.mkdir(parents=True, exist_ok=True)
+                    try:
+                        os.rename(old_path, new_path)
+                    except OSError:
+                        self.logger.info("Fallback to shutil.move")
+                        shutil.move(str(old_path), str(new_path))
+                        time.sleep(3)
+            # End patch
 
             env_var_to_value.update(
                 {
@@ -1689,12 +1718,17 @@ class ServiceManager:
         service_config_id: str,
         service_template: ServiceTemplate,
         allow_different_service_public_id: bool = False,
+        partial_update: bool = True,
     ) -> Service:
         """Update a service."""
 
         self.logger.info(f"Updating {service_config_id=}")
         service = self.load(service_config_id=service_config_id)
-        service.update(service_template, allow_different_service_public_id)
+        service.update(
+            service_template=service_template,
+            allow_different_service_public_id=allow_different_service_public_id,
+            partial_update=partial_update,
+        )
         return service
 
     def update_all_matching(

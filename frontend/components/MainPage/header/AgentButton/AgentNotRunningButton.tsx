@@ -248,6 +248,10 @@ const useServiceDeployment = () => {
     }
 
     // Update the service if the hash is different
+    // TODO: "updateService" now uses PATCH instead of PUT,
+    // which means it updates only the provided values.
+    // Ideally we should consider rewriting this code
+    // so that only hash value is passed
     if (!middlewareServiceResponse && service) {
       if (service.hash !== serviceTemplate.hash) {
         await ServicesService.updateService({

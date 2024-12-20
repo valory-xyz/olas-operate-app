@@ -246,7 +246,7 @@ ConfigurationTemplates = t.Dict[str, ConfigurationTemplate]
 EnvVariables = t.Dict[str, EnvVariableAttributes]
 
 
-class ServiceTemplate(TypedDict):
+class ServiceTemplate(TypedDict, total=False):
     """Service template."""
 
     name: str

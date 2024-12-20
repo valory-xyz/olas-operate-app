@@ -268,7 +268,7 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
-        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     )
 
     def with_retries(f: t.Callable) -> t.Callable:
@@ -756,6 +756,7 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
         )
 
     @app.put("/api/v2/service/{service_config_id}")
+    @app.patch("/api/v2/service/{service_config_id}")
     @with_retries
     async def _update_service(request: Request) -> JSONResponse:
         """Update a service."""
@@ -765,7 +766,6 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
         service_config_id = request.path_params["service_config_id"]
         manager = operate.service_manager()
 
-        print(service_config_id)
         if not manager.exists(service_config_id=service_config_id):
             return service_not_found_error(service_config_id=service_config_id)
 
@@ -773,10 +773,21 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
         allow_different_service_public_id = template.get(
             "allow_different_service_public_id", False
         )
+
+        if request.method == "PUT":
+            partial_update = False
+        else:
+            partial_update = True
+
+        logger.info(
+            f"_update_service {partial_update=} {allow_different_service_public_id=}"
+        )
+
         output = manager.update(
             service_config_id=service_config_id,
             service_template=template,
             allow_different_service_public_id=allow_different_service_public_id,
+            partial_update=partial_update,
         )
 
         return JSONResponse(content=output.json)
