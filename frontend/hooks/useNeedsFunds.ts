@@ -113,7 +113,7 @@ export const useNeedsFunds = (stakingProgramId: Maybe<StakingProgramId>) => {
     return chainIds.every((chainId) => {
       const nativeTokenSymbol = getNativeTokenSymbol(chainId);
       const nativeTokenBalance =
-        balancesByChain[chainId][nativeTokenSymbol] || 0;
+        balancesByChain[chainId]?.[nativeTokenSymbol] || 0;
       const nativeTokenRequired =
         serviceFundRequirements[chainId]?.[nativeTokenSymbol] || 0;
 
@@ -132,7 +132,7 @@ export const useNeedsFunds = (stakingProgramId: Maybe<StakingProgramId>) => {
     const chainIds = Object.keys(serviceFundRequirements).map(Number);
 
     return chainIds.every((chainId) => {
-      const olasBalance = balancesByChain[chainId][TokenSymbol.OLAS] || 0;
+      const olasBalance = balancesByChain[chainId]?.[TokenSymbol.OLAS] || 0;
       const olasRequired =
         serviceFundRequirements[chainId]?.[TokenSymbol.OLAS] || 0;
 

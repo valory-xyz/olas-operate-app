@@ -49,7 +49,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'backup-via-safe': true,
   },
   [AgentType.Modius]: {
-    'manage-wallet': false,
+    'manage-wallet': true,
     'withdraw-funds': false,
     'last-transactions': false,
     'rewards-streak': false,

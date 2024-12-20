@@ -29,6 +29,7 @@ export const MainNeedsFunds = () => {
     if (
       hasEnoughEthForInitialFunding &&
       hasEnoughOlasForInitialFunding &&
+      hasEnoughAdditionalTokensForInitialFunding &&
       !isInitialFunded
     ) {
       electronApi.store?.set?.(`isInitialFunded_${selectedAgentType}`, true);
@@ -38,6 +39,7 @@ export const MainNeedsFunds = () => {
     selectedAgentType,
     hasEnoughEthForInitialFunding,
     hasEnoughOlasForInitialFunding,
+    hasEnoughAdditionalTokensForInitialFunding,
     isInitialFunded,
   ]);
 

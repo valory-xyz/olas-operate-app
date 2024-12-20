@@ -224,6 +224,17 @@ const YourAgentWalletBreakdown = () => {
     [serviceSafeBalances, evmHomeChainId],
   );
 
+  const serviceSafeErc20Balances = useMemo(
+    () =>
+      serviceSafeBalances?.filter(
+        ({ isNative, symbol, evmChainId }) =>
+          !isNative &&
+          symbol !== TokenSymbol.OLAS &&
+          evmChainId === evmHomeChainId,
+      ),
+    [serviceSafeBalances, evmHomeChainId],
+  );
+
   const serviceEoaNativeBalances = useMemo(
     () =>
       serviceEoaBalances?.filter(
@@ -259,6 +270,16 @@ const YourAgentWalletBreakdown = () => {
             {isArray(serviceSafeNativeBalances) && (
               <InfoBreakdownList
                 list={serviceSafeNativeBalances.map((balance) => ({
+                  left: <strong>{balance.symbol}</strong>,
+                  leftClassName: 'text-sm',
+                  right: `${balanceFormat(balance.balance, 2)} ${balance.symbol}`,
+                }))}
+                parentStyle={infoBreakdownParentStyle}
+              />
+            )}
+            {isArray(serviceSafeErc20Balances) && (
+              <InfoBreakdownList
+                list={serviceSafeErc20Balances.map((balance) => ({
                   left: <strong>{balance.symbol}</strong>,
                   leftClassName: 'text-sm',
                   right: `${balanceFormat(balance.balance, 2)} ${balance.symbol}`,

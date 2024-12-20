@@ -157,6 +157,57 @@ const MasterSafeNativeBalance = () => {
   );
 };
 
+const MasterSafeErc20Balances = () => {
+  const { evmHomeChainId, masterSafeAddress, middlewareChain } =
+    useYourWallet();
+  const { masterSafeBalances } = useMasterBalances();
+
+  const masterSafeErc20Balances = useMemo(() => {
+    if (isNil(masterSafeAddress)) return;
+    if (isNil(masterSafeBalances)) return;
+
+    return masterSafeBalances
+      .filter(({ walletAddress, evmChainId, symbol, isNative }) => {
+        return (
+          evmChainId === evmHomeChainId && // TODO: address multi chain, need to refactor as per product requirement
+          !isNative &&
+          symbol !== TokenSymbol.OLAS &&
+          walletAddress === masterSafeAddress
+        );
+      })
+      .reduce<{ [tokenSymbol: string]: number }>((acc, { balance, symbol }) => {
+        if (!acc[symbol]) acc[symbol] = 0;
+        acc[symbol] += balance;
+
+        return acc;
+      }, {});
+  }, [masterSafeBalances, masterSafeAddress, evmHomeChainId]);
+
+  if (!masterSafeErc20Balances) return null;
+
+  return (
+    <Flex vertical gap={8}>
+      {Object.entries(masterSafeErc20Balances).map(([symbol, balance]) => (
+        <InfoBreakdownList
+          key={symbol}
+          list={[
+            {
+              left: (
+                <Text strong>
+                  {symbol} ({capitalize(middlewareChain)})
+                </Text>
+              ),
+              leftClassName: 'text-light',
+              right: `${balanceFormat(balance, 2)} ${symbol}`,
+            },
+          ]}
+          parentStyle={infoBreakdownParentStyle}
+        />
+      ))}
+    </Flex>
+  );
+};
+
 const MasterEoaSignerNativeBalance = () => {
   const { masterEoa } = useMasterWalletContext();
   const { masterWalletBalances } = useMasterBalances();
@@ -223,6 +274,7 @@ export const YourWalletPage = () => {
             <Address />
             <OlasBalance />
             <MasterSafeNativeBalance />
+            <MasterSafeErc20Balances />
             <MasterEoaSignerNativeBalance />
             {selectedService && <YourAgentWallet />}
           </Container>
