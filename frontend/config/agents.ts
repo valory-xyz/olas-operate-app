@@ -4,6 +4,7 @@ import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
 import { WalletOwnerType, WalletType } from '@/enums/Wallet';
 import { MemeooorBaseService } from '@/service/agents/Memeooor';
+import { ModiusService } from '@/service/agents/Modius';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
 // import { OptimusService } from '@/service/agents/Optimus';
 import { AgentConfig } from '@/types/Agent';
@@ -89,4 +90,41 @@ export const AGENT_CONFIG: {
     description:
       'Autonomously post to Twitter, create and trade memecoins, and interact with other agents.',
   },
-} as const;
+  [AgentType.Modius]: {
+    name: 'Modius agent',
+    evmHomeChainId: EvmChainId.Mode,
+    middlewareHomeChainId: MiddlewareChain.MODE,
+    requiresAgentSafesOn: [EvmChainId.Mode],
+    agentSafeFundingRequirements: {
+      [EvmChainId.Mode]: 0.0005,
+    },
+    additionalRequirements: {
+      [EvmChainId.Mode]: {
+        [TokenSymbol.USDC]: 16,
+      },
+    },
+    operatingThresholds: {
+      [WalletOwnerType.Master]: {
+        [WalletType.EOA]: {
+          [TokenSymbol.ETH]: 0.0002,
+        },
+        [WalletType.Safe]: {
+          [TokenSymbol.ETH]: 0.001,
+        },
+      },
+      [WalletOwnerType.Agent]: {
+        [WalletType.EOA]: {
+          [TokenSymbol.ETH]: 0.00005,
+        },
+        [WalletType.Safe]: {
+          [TokenSymbol.ETH]: 0.0005,
+        },
+      },
+    },
+    requiresMasterSafesOn: [EvmChainId.Mode],
+    serviceApi: ModiusService,
+    displayName: 'Modius agent',
+    description:
+      'Invests crypto assets on your behalf and grows your portfolio.',
+  },
+};

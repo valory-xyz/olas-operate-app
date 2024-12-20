@@ -1,6 +1,3 @@
-import { ServiceTemplate } from '@/client';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { ServicesService } from '@/service/Services';
 import { XCookie } from '@/types/Cookies';
 
 /**
@@ -66,16 +63,4 @@ export const validateTwitterCredentials = async (
     console.error('Unexpected error validating Twitter credentials:', error);
     return { isValid: false };
   }
-};
-
-export const onDummyServiceCreation = async (
-  stakingProgramId: StakingProgramId,
-  serviceTemplateConfig: ServiceTemplate,
-) => {
-  await ServicesService.createService({
-    serviceTemplate: serviceTemplateConfig,
-    deploy: true,
-    useMechMarketplace: true,
-    stakingProgramId,
-  });
 };

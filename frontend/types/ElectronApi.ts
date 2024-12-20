@@ -4,6 +4,7 @@ export type ElectronStore = {
   environmentName?: string;
   isInitialFunded_trader?: boolean;
   isInitialFunded_memeooorr?: boolean;
+  isInitialFunded_modius?: boolean;
   firstStakingRewardAchieved?: boolean;
   firstRewardNotificationShown?: boolean;
   agentEvictionAlertShown?: boolean;

@@ -1,6 +1,8 @@
 import { round } from 'lodash';
 import { useMemo } from 'react';
 
+import { getNativeTokenSymbol } from '@/config/tokens';
+import { TokenSymbol } from '@/enums/Token';
 import { WalletType } from '@/enums/Wallet';
 import { useMasterBalances } from '@/hooks/useBalanceContext';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
@@ -22,8 +24,9 @@ export const LowFunds = () => {
     masterSafeNativeGasBalance,
   } = useMasterBalances();
 
-  const { nativeBalancesByChain, olasBalancesByChain, isInitialFunded } =
-    useNeedsFunds(selectedStakingProgramId);
+  const { balancesByChain, isInitialFunded } = useNeedsFunds(
+    selectedStakingProgramId,
+  );
   const { tokenSymbol, masterThresholds } = useLowFundsDetails();
 
   const chainId = selectedAgentConfig.evmHomeChainId;
@@ -50,15 +53,14 @@ export const LowFunds = () => {
   // Show the empty funds alert if the agent is not funded
   const isEmptyFundsVisible = useMemo(() => {
     if (!isBalanceLoaded) return false;
-    if (!olasBalancesByChain) return false;
-    if (!nativeBalancesByChain) return false;
+    if (!balancesByChain) return false;
 
     // If the agent is not funded, <MainNeedsFunds /> will be displayed
     if (!isInitialFunded) return false;
 
     if (
-      round(nativeBalancesByChain[chainId], 2) === 0 &&
-      round(olasBalancesByChain[chainId], 2) === 0 &&
+      round(balancesByChain[chainId][getNativeTokenSymbol(chainId)], 2) === 0 &&
+      round(balancesByChain[chainId][TokenSymbol.OLAS], 2) === 0 &&
       isSafeSignerBalanceLow
     ) {
       return true;
@@ -69,8 +71,7 @@ export const LowFunds = () => {
     isBalanceLoaded,
     isInitialFunded,
     chainId,
-    nativeBalancesByChain,
-    olasBalancesByChain,
+    balancesByChain,
     isSafeSignerBalanceLow,
   ]);
 

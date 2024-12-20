@@ -263,6 +263,119 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
       },
     },
   },
+  {
+    agentType: AgentType.Modius,
+    name: 'Optimus',
+    hash: 'bafybeihqho73he6mirkodg4ubom6ngf2nkgebhmxr435yxpsxgsthu5nvy',
+    description: 'Optimus',
+    image:
+      'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+    service_version: 'v0.18.1',
+    home_chain: MiddlewareChain.MODE,
+    configurations: {
+      [MiddlewareChain.MODE]: {
+        staking_program_id: StakingProgramId.OptimusAlpha, // default, may be overwritten
+        nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+        rpc: 'http://localhost:8545', // overwritten
+        agent_id: 40,
+        threshold: 1,
+        use_staking: true,
+        cost_of_bond: +parseEther(20),
+        monthly_gas_estimate: +parseEther(0.00516),
+        fund_requirements: {
+          agent: +parseEther(0.001),
+          safe: 0,
+        },
+      },
+    },
+    env_variables: {
+      MODE_LEDGER_RPC: {
+        name: 'Mode ledger RPC',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      SAFE_CONTRACT_ADDRESSES: {
+        name: 'Safe contract address',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      TENDERLY_ACCESS_KEY: {
+        name: 'Tenderly access key',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+      TENDERLY_ACCOUNT_SLUG: {
+        name: 'Tenderly account slug',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+      TENDERLY_PROJECT_SLUG: {
+        name: 'Tenderly project slug',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+      STAKING_TOKEN_CONTRACT_ADDRESS: {
+        name: 'Staking token contract address',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      COINGECKO_API_KEY: {
+        name: 'Coingecko API key',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.USER,
+      },
+      STAKING_CHAIN: {
+        name: 'Staking chain',
+        description: '',
+        value: 'mode',
+        provision_type: EnvProvisionType.FIXED,
+      },
+      STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+        name: 'Staking activity checker contract address',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      MIN_SWAP_AMOUNT_THRESHOLD: {
+        name: 'Minimum swap amount threshold',
+        description: '',
+        value: '15',
+        provision_type: EnvProvisionType.FIXED,
+      },
+      ALLOWED_CHAINS: {
+        name: 'Allowed chains',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      TARGET_INVESTMENT_CHAINS: {
+        name: 'Target investment chains',
+        description: '',
+        value: '["mode"]',
+        provision_type: EnvProvisionType.FIXED,
+      },
+      INITIAL_ASSETS: {
+        name: 'Initial assets',
+        description: '',
+        value: '',
+        provision_type: EnvProvisionType.COMPUTED,
+      },
+      SELECTED_STRATEGIES: {
+        name: 'Selected strategies',
+        description: '',
+        value:
+          '["merkl_pools_search", "balancer_pools_search", "asset_lending"]',
+        provision_type: EnvProvisionType.FIXED,
+      },
+    },
+  },
 ] as const;
 
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;

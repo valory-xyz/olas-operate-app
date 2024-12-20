@@ -98,11 +98,37 @@ export const BASE_TOKEN_CONFIG: ChainTokenConfig = {
   },
 };
 
+export const MODE_TOKEN_CONFIG: ChainTokenConfig = {
+  [TokenSymbol.ETH]: {
+    tokenType: TokenType.NativeGas,
+    decimals: 18,
+    symbol: TokenSymbol.ETH,
+  },
+  [TokenSymbol.OLAS]: {
+    address: '0xcfD1D50ce23C46D3Cf6407487B2F8934e96DC8f9',
+    decimals: 18,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbol.OLAS,
+  },
+  /**
+   * @warning USDC is a special case, it has 6 decimals, not 18.
+   * https://explorer.mode.network/address/0xd988097fb8612cc24eeC14542bC03424c656005f?tab=read_contract#313ce567
+   * @note When parsing or formatting units, use `decimals` (6) instead of the standard `ether` sizing (10^18).
+   */
+  [TokenSymbol.USDC]: {
+    address: '0xd988097fb8612cc24eeC14542bC03424c656005f',
+    decimals: 6,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbol.USDC,
+  },
+};
+
 export const TOKEN_CONFIG = {
   [EvmChainId.Gnosis]: GNOSIS_TOKEN_CONFIG,
   [EvmChainId.Optimism]: OPTIMISM_TOKEN_CONFIG,
   [EvmChainId.Ethereum]: ETHEREUM_TOKEN_CONFIG,
   [EvmChainId.Base]: BASE_TOKEN_CONFIG,
+  [EvmChainId.Mode]: MODE_TOKEN_CONFIG,
 } as const;
 
 /**
