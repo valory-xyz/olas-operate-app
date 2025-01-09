@@ -1,10 +1,11 @@
 import { Button, Flex, Skeleton, Typography } from 'antd';
 import { sum } from 'lodash';
-import { useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { AnimateNumber } from '@/components/ui/animations/AnimateNumber';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { RewardContext } from '@/context/RewardProvider';
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
 import {
@@ -32,6 +33,9 @@ export const MainOlasBalance = () => {
   const { serviceStakedBalances, serviceWalletBalances } = useServiceBalances(
     selectedService?.service_config_id,
   );
+  const { optimisticRewardsEarnedForEpoch, accruedServiceStakingRewards } =
+    useContext(RewardContext);
+
   const { goto } = usePageState();
   const isBalanceBreakdownEnabled = useFeatureFlag('manage-wallet');
 
@@ -79,11 +83,15 @@ export const MainOlasBalance = () => {
       masterWalletOlasBalance,
       serviceWalletOlasBalance,
       serviceStakedOlasBalance,
+      optimisticRewardsEarnedForEpoch,
+      accruedServiceStakingRewards,
     ]);
 
     return totalOlasBalance;
   }, [
+    accruedServiceStakingRewards,
     masterWalletBalances,
+    optimisticRewardsEarnedForEpoch,
     selectedAgentConfig.requiresAgentSafesOn,
     serviceStakedBalances,
     serviceWalletBalances,

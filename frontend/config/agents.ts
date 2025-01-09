@@ -75,7 +75,7 @@ export const AGENT_CONFIG: {
           ),
         },
         [WalletType.EOA]: {
-          [TokenSymbol.ETH]: 0.0125, // TODO: should come from the template
+          [TokenSymbol.ETH]: 0.0025,
         },
       },
       [WalletOwnerType.Agent]: {

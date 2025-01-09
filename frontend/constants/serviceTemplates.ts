@@ -10,11 +10,11 @@ import { parseEther, parseUnits } from '@/utils/numberFormatters';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent',
-  hash: 'bafybeicts6zhavxzz2rxahz3wzs2pzamoq64n64wp4q4cdanfuz7id6c2q',
+  hash: 'bafybeictmh4vwvgeeqcbju5gfilm2oiyz7yuoajnxaffn4pfvr5qgmgrc4',
   description: 'Trader agent for omen prediction markets',
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.18.4',
+  service_version: 'v0.22.0',
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
@@ -49,6 +49,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
+    MECH_MARKETPLACE_CONFIG: {
+      name: 'Mech marketplace configuration',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },    
     MECH_ACTIVITY_CHECKER_CONTRACT: {
       name: 'Mech activity checker contract',
       description: '',
@@ -91,11 +97,11 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 export const MEMEOOORR_BASE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Memeooorr,
   name: 'Memeooorr',
-  hash: 'bafybeihgaoi7u4ryeopz3ujzeplmheqnsop7mh25nvkvzfp747uaurru6a',
+  hash: 'bafybeicecxdycxh6tthzsj6v2c7q5b6ufaqhtn2bn6mpn4ur23tuk7brsm',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
-  service_version: 'v0.2.0-alpha16',
+  service_version: 'v0.2.0-alpha17',
   home_chain: MiddlewareChain.BASE,
   configurations: {
     [MiddlewareChain.BASE]: {

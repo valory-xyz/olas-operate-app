@@ -30,9 +30,6 @@ from operate.operate_types import Chain, LedgerType
 
 ETHEREUM_PUBLIC_RPC = os.environ.get("ETHEREUM_RPC", "https://ethereum.publicnode.com")
 GNOSIS_PUBLIC_RPC = os.environ.get("GNOSIS_RPC", "https://gnosis-rpc.publicnode.com")
-GOERLI_PUBLIC_RPC = os.environ.get(
-    "GOERLI_RPC", "https://ethereum-goerli.publicnode.com"
-)
 SOLANA_PUBLIC_RPC = os.environ.get("SOLANA_RPC", "https://api.mainnet-beta.solana.com")
 BASE_PUBLIC_RPC = os.environ.get("BASE_RPC", "https://mainnet.base.org")
 CELO_PUBLIC_RPC = os.environ.get("CELO_RPC", "https://forno.celo.org")
@@ -41,7 +38,6 @@ MODE_PUBLIC_RPC = os.environ.get("MODE_RPC", "https://rpc.mode.network")
 
 ETHEREUM_RPC = os.environ.get("ETHEREUM_RPC", "https://ethereum.publicnode.com")
 GNOSIS_RPC = os.environ.get("GNOSIS_RPC", "https://rpc-gate.autonolas.tech/gnosis-rpc/")
-GOERLI_RPC = os.environ.get("GOERLI_RPC", "https://ethereum-goerli.publicnode.com")
 SOLANA_RPC = os.environ.get("SOLANA_RPC", "https://api.mainnet-beta.solana.com")
 BASE_RPC = os.environ.get("BASE_RPC", "https://mainnet.base.org")
 CELO_RPC = os.environ.get("CELO_RPC", "https://forno.celo.org")
@@ -51,7 +47,6 @@ MODE_RPC = os.environ.get("MODE_RPC", "https://rpc.mode.network")
 PUBLIC_RPCS = {
     Chain.ETHEREUM: ETHEREUM_PUBLIC_RPC,
     Chain.GNOSIS: GNOSIS_PUBLIC_RPC,
-    Chain.GOERLI: GOERLI_PUBLIC_RPC,
     Chain.SOLANA: SOLANA_PUBLIC_RPC,
     Chain.BASE: BASE_PUBLIC_RPC,
     Chain.CELO: CELO_PUBLIC_RPC,
@@ -62,7 +57,6 @@ PUBLIC_RPCS = {
 DEFAULT_RPCS = {
     Chain.ETHEREUM: ETHEREUM_RPC,
     Chain.GNOSIS: GNOSIS_RPC,
-    Chain.GOERLI: GOERLI_RPC,
     Chain.SOLANA: SOLANA_RPC,
     Chain.BASE: BASE_RPC,
     Chain.CELO: CELO_RPC,
@@ -73,7 +67,6 @@ DEFAULT_RPCS = {
 CHAIN_HELPERS: t.Dict[Chain, t.Type[LedgerHelper]] = {
     Chain.ETHEREUM: Ethereum,
     Chain.GNOSIS: Ethereum,
-    Chain.GOERLI: Ethereum,
     Chain.SOLANA: Solana,
     Chain.BASE: Ethereum,
     Chain.CELO: Ethereum,
@@ -89,7 +82,6 @@ LEDGER_HELPERS: t.Dict[LedgerType, t.Type[LedgerHelper]] = {
 CURRENCY_DENOMS = {
     Chain.ETHEREUM: "Wei",
     Chain.GNOSIS: "xDai",
-    Chain.GOERLI: "GWei",
     Chain.SOLANA: "Lamp",
     Chain.BASE: "Wei",
     Chain.CELO: "Wei",

@@ -115,6 +115,12 @@ DEFAULT_TRADER_ENV_VARS = {
         "value": "",
         "provision_type": "computed",
     },
+    "MECH_MARKETPLACE_CONFIG": {
+        "name": "Mech marketplace configuration",
+        "description": "",
+        "value": "",
+        "provision_type": "computed",
+    },
     "MECH_ACTIVITY_CHECKER_CONTRACT": {
         "name": "Mech activity checker contract",
         "description": "",
@@ -712,12 +718,16 @@ class Service(LocalResource):
                 f"Service configuration in {path} has version {version}, which means it was created with a newer version of olas-operate-middleware. Only configuration versions <= {SERVICE_CONFIG_VERSION} are supported by this version of olas-operate-middleware."
             )
 
-        # Corner-case during testing: force include env_vars for empty env_vars during testing.
-        if data["name"] == "valory/trader_pearl":
-            if "env_variables" not in data or not data["env_variables"]:
-                data["env_variables"] = DEFAULT_TRADER_ENV_VARS
-                with open(path / Service._file, "w", encoding="utf-8") as file:
-                    json.dump(data, file, indent=2)
+        # Complete missing env vars for trader
+        if "trader" in data["name"].lower():
+            data.setdefault("env_variables", {})
+
+            for key, value in DEFAULT_TRADER_ENV_VARS.items():
+                if key not in data["env_variables"]:
+                    data["env_variables"][key] = value
+
+            with open(path / Service._file, "w", encoding="utf-8") as file:
+                json.dump(data, file, indent=2)
 
         if version == SERVICE_CONFIG_VERSION:
             return False
@@ -827,7 +837,7 @@ class Service(LocalResource):
                 else:
                     data["env_variables"] = {}
 
-        if version == 4:
+        if version < 5:
             new_chain_configs = {}
             for chain, chain_data in data["chain_configs"].items():
                 fund_requirements = chain_data["chain_data"]["user_params"][

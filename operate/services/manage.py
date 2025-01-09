@@ -557,6 +557,14 @@ class ServiceManager:
                     "STAKING_TOKEN_CONTRACT_ADDRESS": staking_params.get(
                         "staking_contract"
                     ),
+                    "MECH_MARKETPLACE_CONFIG": (
+                        f'{{"mech_marketplace_address":"0x4554fE75c1f5576c1d7F765B2A036c199Adae329",'
+                        f'"priority_mech_address":"{staking_params.get("agent_mech")}",'
+                        f'"priority_mech_staking_instance_address":"0x998dEFafD094817EF329f6dc79c703f1CF18bC90",'
+                        f'"priority_mech_service_id":975,'
+                        f'"requester_staking_instance_address":"{staking_params.get("staking_contract")}",'
+                        f'"response_timeout":300}}'
+                    ),
                     "MECH_ACTIVITY_CHECKER_CONTRACT": staking_params.get(
                         "activity_checker"
                     ),
@@ -959,18 +967,23 @@ class ServiceManager:
 
         # TODO: this is a patch for modius, to be standardized
         staking_chain = None
-        for chain, config in service.chain_configs.items():
+        for chain_, config in service.chain_configs.items():
             if config.chain_data.user_params.use_staking:
-                staking_chain = chain
+                staking_chain = chain_
                 break
 
-        service.update_env_variables_values({
-            "SAFE_CONTRACT_ADDRESSES": json.dumps({
-                chain: config.chain_data.multisig
-                for chain, config in service.chain_configs.items()
-            }, separators=(',', ':')),
-            "STAKING_CHAIN": staking_chain,
-        })
+        service.update_env_variables_values(
+            {
+                "SAFE_CONTRACT_ADDRESSES": json.dumps(
+                    {
+                        chain: config.chain_data.multisig
+                        for chain, config in service.chain_configs.items()
+                    },
+                    separators=(",", ":"),
+                ),
+                "STAKING_CHAIN": staking_chain,
+            }
+        )
         service.store()
 
         if user_params.use_staking:
@@ -1495,7 +1508,9 @@ class ServiceManager:
                     f"[FUNDING_JOB] Agent {key.address} Asset: {asset_address} balance: {agent_balance}"
                 )
                 if agent_fund_threshold > 0:
-                    self.logger.info(f"[FUNDING_JOB] Required balance: {agent_fund_threshold}")
+                    self.logger.info(
+                        f"[FUNDING_JOB] Required balance: {agent_fund_threshold}"
+                    )
                     if agent_balance < agent_fund_threshold:
                         self.logger.info("[FUNDING_JOB] Funding agents")
                         target_balance = (
@@ -1508,7 +1523,9 @@ class ServiceManager:
                             contract_address=asset_address,
                             address=wallet.safes[ledger_config.chain],
                         )
-                        to_transfer = max(min(transferable_balance, target_balance - agent_balance), 0)
+                        to_transfer = max(
+                            min(transferable_balance, target_balance - agent_balance), 0
+                        )
                         self.logger.info(
                             f"[FUNDING_JOB] Transferring {to_transfer} asset ({asset_address}) to {key.address}"
                         )
@@ -1555,23 +1572,34 @@ class ServiceManager:
                     contract_address=asset_address,
                     address=wallet.safes[ledger_config.chain],
                 )
-                to_transfer = max(min(transferable_balance, target_balance - safe_balance), 0)
-                self.logger.info(
-                    f"[FUNDING_JOB] Transferring {to_transfer} asset ({asset_address}) to {chain_data.multisig}"
+                to_transfer = max(
+                    min(transferable_balance, target_balance - safe_balance), 0
                 )
-                # TODO: This is a temporary fix
-                # we avoid the error here because there is a seperate prompt on the UI
-                # when not enough funds are present, and the FE doesn't let the user to start the agent.
-                # Ideally this error should be allowed, and then the FE should ask the user for more funds.
-                with suppress(RuntimeError):
-                    wallet.transfer_asset(
-                        asset=asset_address,
-                        to=t.cast(str, chain_data.multisig),
-                        amount=int(to_transfer),
-                        chain=ledger_config.chain,
-                        rpc=rpc or ledger_config.rpc,
-                    )
 
+                # TODO Possibly remove this logging
+                self.logger.info(f"{transferable_balance=}")
+                self.logger.info(f"{target_balance=}")
+                self.logger.info(f"{safe_balance=}")
+                self.logger.info(f"{to_transfer=}")
+
+                if to_transfer > 0:
+                    self.logger.info(
+                        f"[FUNDING_JOB] Transferring {to_transfer} asset ({asset_address}) to {chain_data.multisig}"
+                    )
+                    # TODO: This is a temporary fix
+                    # we avoid the error here because there is a seperate prompt on the UI
+                    # when not enough funds are present, and the FE doesn't let the user to start the agent.
+                    # Ideally this error should be allowed, and then the FE should ask the user for more funds.
+                    with suppress(RuntimeError):
+                        wallet.transfer_asset(
+                            asset=asset_address,
+                            to=t.cast(str, chain_data.multisig),
+                            amount=int(to_transfer),
+                            chain=ledger_config.chain,
+                            rpc=rpc or ledger_config.rpc,
+                        )
+
+    # TODO This method is possibly not used anymore
     def fund_service_erc20(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         service_config_id: str,

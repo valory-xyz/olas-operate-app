@@ -50,7 +50,7 @@ DEFAULT_CONFIG_KWARGS = {
     "fund_requirements_agent": 100000000000000000,
     "fund_requirements_safe": 5000000000000000000,
     "nft": "bafybeinft",
-    "name": "Trader Service",
+    "name": "Test Service",
     "description": "Service description",
     "keys_address_0": "0x0000000000000000000000000000000000000001",
     "keys_private_key_0": "0x0000000000000000000000000000000000000000000000000000000000000001",

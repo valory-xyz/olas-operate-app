@@ -66,8 +66,10 @@ def get_template(**kwargs: t.Any) -> ServiceTemplate:
                 "use_mech_marketplace": kwargs.get("use_mech_marketplace"),
                 "cost_of_bond": kwargs.get("cost_of_bond"),
                 "fund_requirements": {
-                    "agent": kwargs.get("fund_requirements_agent"),
-                    "safe": kwargs.get("fund_requirements_safe"),
+                    "0x0000000000000000000000000000000000000000": {
+                        "agent": kwargs.get("fund_requirements_agent"),
+                        "safe": kwargs.get("fund_requirements_safe"),
+                    }
                 },
                 "fallback_chain_params": {},
             }
