@@ -728,6 +728,50 @@ ipcMain.handle('save-logs', async (_, data) => {
     logger.electron(e);
   }
 
+  try {
+    fs.readdirSync(paths.servicesDir).map((serviceDirName) => {
+      const servicePath = path.join(paths.servicesDir, serviceDirName);
+      if (!fs.existsSync(servicePath)) return;
+      if (!fs.statSync(servicePath).isDirectory()) return;
+
+      const agentLogFilePath = path.join(
+        servicePath,
+        'aea.extra.log',
+      );
+      if (!fs.existsSync(agentLogFilePath)) return;
+
+      return sanitizeLogs({
+        name: `${serviceDirName}-aea.extra.log`,
+        filePath: agentLogFilePath,
+      });
+    });
+  } catch (e) {
+    logger.electron(e);
+  }
+
+
+  try {
+    fs.readdirSync(paths.servicesDir).map((serviceDirName) => {
+      const servicePath = path.join(paths.servicesDir, serviceDirName);
+      if (!fs.existsSync(servicePath)) return;
+      if (!fs.statSync(servicePath).isDirectory()) return;
+
+      const agentLogFilePath = path.join(
+        servicePath,
+        'tm.extra.log',
+      );
+      if (!fs.existsSync(agentLogFilePath)) return;
+
+      return sanitizeLogs({
+        name: `${serviceDirName}-tm.extra.log`,
+        filePath: agentLogFilePath,
+      });
+    });
+  } catch (e) {
+    logger.electron(e);
+  }
+
+
   // Create a zip archive
   const zip = new AdmZip();
   fs.readdirSync(paths.osPearlTempDir).forEach((file) => {

@@ -157,9 +157,6 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
         shutdown_endpoint
     )
     thread_pool_executor = ThreadPoolExecutor()
-    
-    
-    
 
     async def run_in_executor(fn: t.Callable, *args: t.Any) -> t.Any:
         loop = asyncio.get_event_loop()
@@ -231,7 +228,7 @@ def create_app(  # pylint: disable=too-many-locals, unused-argument, too-many-st
     async def lifespan(app: FastAPI):
         # hack to set event loop for components running in threads
         # need to restruct all the classes dependencies tree
-        HealtChecker.EVENT_LOOP  = asyncio.get_event_loop()
+        HealtChecker.EVENT_LOOP = asyncio.get_event_loop()
         yield
 
     app = FastAPI(lifespan=lifespan)

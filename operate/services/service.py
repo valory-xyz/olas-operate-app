@@ -146,7 +146,11 @@ class ServiceBuilder(BaseServiceBuilder):
         """Try to update the ledger params."""
 
         for override in deepcopy(self.service.overrides):
-            (override, component_id, _,) = self.service.process_metadata(
+            (
+                override,
+                component_id,
+                _,
+            ) = self.service.process_metadata(
                 configuration=override,
             )
 

@@ -18,7 +18,6 @@
 #
 # ------------------------------------------------------------------------------
 """Source code to run and stop deployments created."""
-import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
 import json
@@ -110,14 +109,16 @@ class BaseDeploymentRunner(AbstractDeploymentRunner, metaclass=ABCMeta):
         self._health_checker = HealtChecker(
             work_directory, self._restart_by_healthchecker
         )
+        self._tm_file = None
+        self._agent_file = None
 
     def _start_process(self, *args, **kwargs) -> subprocess.Popen:
-        return subprocess.Popen(
+        proc = subprocess.Popen(
             *args,
             **{
                 **dict(
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
+                    stderr=subprocess.STDOUT,
                     creationflags=(
                         0x00000200 if platform.system() == "Windows" else 0
                     ),  # Detach process from the main process
@@ -125,6 +126,7 @@ class BaseDeploymentRunner(AbstractDeploymentRunner, metaclass=ABCMeta):
                 **kwargs,
             },
         )
+        return proc
 
     def _run_aea(self, *args: str, cwd: Path) -> Any:
         """Run aea command."""
@@ -216,7 +218,6 @@ class BaseDeploymentRunner(AbstractDeploymentRunner, metaclass=ABCMeta):
     def start(self) -> None:
         """Start the deployment."""
         try:
-
             self._setup_agent()
             self._start_tendermint()
             self._start_agent()
@@ -230,7 +231,7 @@ class BaseDeploymentRunner(AbstractDeploymentRunner, metaclass=ABCMeta):
     def _restart_by_healthchecker(self):
         self._stop_agent()
         self._stop_tendermint()
-        # no need to setup it was setup already
+
         self._start_tendermint()
         self._start_agent()
 
@@ -256,6 +257,9 @@ class BaseDeploymentRunner(AbstractDeploymentRunner, metaclass=ABCMeta):
         """Start process."""
         if self._stop_process(self._agent_process):
             return
+        if self._agent_file:
+            with suppress(Exception):
+                self._agent_file.close()
 
         pid = self._work_directory / "agent.pid"
         if not pid.exists():
@@ -275,6 +279,9 @@ class BaseDeploymentRunner(AbstractDeploymentRunner, metaclass=ABCMeta):
         except Exception:  # pylint: disable=broad-except
             print_exc()
 
+        if self._tm_file:
+            with suppress(Exception):
+                self._tm_file.close()
         if self._stop_process(self._tm_process):
             return
 
@@ -312,6 +319,10 @@ class PyInstallerHostDeploymentRunner(BaseDeploymentRunner):
         """Return tendermint path."""
         return str(Path(os.path.dirname(sys.executable)) / "tendermint_bin")  # type: ignore # pylint: disable=protected-access
 
+    def _make_log_file(self, name):
+        file_path = Path(self._work_directory) / f"../{name}.extra.log"
+        return open(file_path, "a+")
+
     def _start_agent(self) -> None:
         """Start agent process."""
         self.logger.info("[DEPLOYMENT] Starting up agent")
@@ -321,10 +332,12 @@ class PyInstallerHostDeploymentRunner(BaseDeploymentRunner):
         env["PYTHONUTF8"] = "1"
         env["PYTHONIOENCODING"] = "utf8"
         env = {**os.environ, **env}
+        self._agent_file = self._make_log_file("aea")
         process = self._start_process(  # pylint: disable=consider-using-with # nosec
             args=[self._aea_bin, "run"],
             cwd=agent_working_dir,
             env=env,
+            stdout=self._agent_file,
         )
         (working_dir / "agent.pid").write_text(
             data=str(process.pid),
@@ -354,10 +367,9 @@ class PyInstallerHostDeploymentRunner(BaseDeploymentRunner):
             env["PATH"] = os.path.dirname(sys.executable) + ":" + os.environ["PATH"]
 
         tendermint_com = self._tendermint_bin  # type: ignore  # pylint: disable=protected-access
+        self._tm_file = self._make_log_file("tm")
         process = self._start_process(
-            args=[tendermint_com],
-            cwd=working_dir,
-            env=env,
+            args=[tendermint_com], cwd=working_dir, env=env, stdout=self._tm_file
         )
         self._tm_process = process
 
@@ -365,7 +377,6 @@ class PyInstallerHostDeploymentRunner(BaseDeploymentRunner):
             data=str(process.pid),
             encoding="utf-8",
         )
-        time.sleep(5)
         if process.poll() is not None:
             raise RuntimeError("Tendermint crashed!")
 

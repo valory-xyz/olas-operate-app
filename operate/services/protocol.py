@@ -595,7 +595,16 @@ class _ChainUtil:
         ledger_api, _ = OnChainHelper.get_ledger_and_crypto_objects(
             chain_type=self.chain_type
         )
-        (_, multisig_address, _, _, _, _, _, _,) = get_service_info(
+        (
+            _,
+            multisig_address,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+        ) = get_service_info(
             ledger_api=ledger_api,
             chain_type=self.chain_type,
             token_id=service_id,
@@ -885,7 +894,9 @@ class OnChainManager(_ChainUtil):
                 timeout=ON_CHAIN_INTERACT_TIMEOUT,
                 retries=ON_CHAIN_INTERACT_RETRIES,
                 sleep=ON_CHAIN_INTERACT_SLEEP,
-            ).check_is_service_token_secured(token=token,).register_instance(
+            ).check_is_service_token_secured(
+                token=token,
+            ).register_instance(
                 instances=instances,
                 agent_ids=agents,
             )
@@ -908,7 +919,9 @@ class OnChainManager(_ChainUtil):
                 timeout=ON_CHAIN_INTERACT_TIMEOUT,
                 retries=ON_CHAIN_INTERACT_RETRIES,
                 sleep=ON_CHAIN_INTERACT_SLEEP,
-            ).check_is_service_token_secured(token=token,).deploy_service(
+            ).check_is_service_token_secured(
+                token=token,
+            ).deploy_service(
                 reuse_multisig=reuse_multisig,
             )
 
