@@ -257,6 +257,10 @@ jobs:
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
           MODE_RPC: https://mainnet.mode.network
           CELO_RPC: https://forno.celo.org
+          DEBUG: electron-builder,electron-builder:*,electron-notarize*
+          DEBUG_LOGGING: true
+          ELECTRON_BUILDER_SIGN_DEBUG: 1
+          ELECTRON_BUILDER_VERBOSE: 1
         run: |
           echo "OPTIMISM_RPC=https://rpc-gate.autonolas.tech/optimism-rpc/" >> .env
           echo "BASE_RPC=https://rpc-gate.autonolas.tech/base-rpc/" >> .env
@@ -287,6 +291,10 @@ jobs:
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
           MODE_RPC: https://virtual.mode.rpc.tenderly.co/9f5ab06c-f005-4f8d-8bb2-786cb7b8f865
           CELO_RPC: https://forno.celo.org
+          DEBUG: electron-builder,electron-builder:*,electron-notarize*
+          DEBUG_LOGGING: true
+          ELECTRON_BUILDER_SIGN_DEBUG: 1
+          ELECTRON_BUILDER_VERBOSE: 1
         run: |
           echo "OPTIMISM_RPC=https://rpc-gate.autonolas.tech/optimism-rpc/" >> .env
           echo "BASE_RPC=https://virtual.base.rpc.tenderly.co/2a91611a-3251-48a6-8095-b86815de84bf" >> .env
