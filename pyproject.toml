@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "olas-operate-middleware"
-version = "0.2.0-rc100"
+version = "0.2.0-rc101"
 description = ""
 authors = ["David Vilela <dvilelaf@gmail.com>", "Viraj Patel <vptl185@gmail.com>"]
 readme = "README.md"
