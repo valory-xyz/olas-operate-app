@@ -26,10 +26,6 @@ const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
 const { Scraper } = require('agent-twitter-client');
-const {
-  default: installExtension,
-  REACT_DEVELOPER_TOOLS,
-} = require('electron-devtools-installer');
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -37,20 +33,26 @@ const {
 // TODO: only reintroduce once refactor completed
 // validateEnv();
 
+// Add devtools extension in Dev mode
+if (isDev) {
+  const {
+    default: installExtension,
+    REACT_DEVELOPER_TOOLS,
+  } = require('electron-devtools-installer');
+  app.whenReady().then(() => {
+    installExtension([REACT_DEVELOPER_TOOLS], {
+      loadExtensionOptions: { allowFileAccess: true },
+      forceDownload: false,
+    })
+      .then(([react]) => console.log(`Added Extensions: ${react.name}`))
+      .catch((e) =>
+        console.log('An error occurred on loading extensions: ', e),
+      );
+  });
+}
+
 // Attempt to acquire the single instance lock
 const singleInstanceLock = app.requestSingleInstanceLock();
-
-app.whenReady().then(() => {
-  installExtension([REACT_DEVELOPER_TOOLS], {
-    loadExtensionOptions: { allowFileAccess: true },
-    forceDownload: false,
-  })
-    .then(([redux, react]) =>
-      console.log(`Added Extensions:  ${redux.name}, ${react.name}`),
-    )
-    .catch((e) => console.log('An error occurred on loading extensions: ', e));
-});
-
 if (!singleInstanceLock) {
   try {
     logger.electron('Could not obtain single instance lock. Quitting...');

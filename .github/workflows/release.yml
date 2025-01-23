@@ -225,10 +225,10 @@ jobs:
           NODE_ENV: ${{ matrix.env }}
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
           OPTIMISM_RPC: https://rpc-gate.autonolas.tech/optimism-rpc/
-          BASE_RPC: https://virtual.base.rpc.tenderly.co/2a91611a-3251-48a6-8095-b86815de84bf
-          GNOSIS_RPC: https://virtual.gnosis.rpc.tenderly.co/7de511da-9ad7-4e9f-98c1-e99052e92b15
+          BASE_RPC: https://virtual.base.rpc.tenderly.co/f4a92b26-8193-4686-b464-7c1990144659
+          GNOSIS_RPC: https://virtual.gnosis.rpc.tenderly.co/b8bd81f7-0126-49ca-8a2d-11aa03dc7ccf
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
-          MODE_RPC: https://virtual.mode.rpc.tenderly.co/9f5ab06c-f005-4f8d-8bb2-786cb7b8f865
+          MODE_RPC: https://virtual.mode.rpc.tenderly.co/df18cdf5-748b-436d-a676-4649ca19fb2e
           CELO_RPC: https://forno.celo.org
 
       # Run the build and notarization process for production
@@ -277,16 +277,16 @@ jobs:
           ELECTRON_BUILDER_DOWNLOAD_RETRY: 10
           ELECTRON_BUILDER_DOWNLOAD_TIMEOUT: 120000
           OPTIMISM_RPC: https://rpc-gate.autonolas.tech/optimism-rpc/          
-          BASE_RPC: https://virtual.base.rpc.tenderly.co/2a91611a-3251-48a6-8095-b86815de84bf
-          GNOSIS_RPC: https://virtual.gnosis.rpc.tenderly.co/7de511da-9ad7-4e9f-98c1-e99052e92b15
+          BASE_RPC: https://virtual.base.rpc.tenderly.co/f4a92b26-8193-4686-b464-7c1990144659
+          GNOSIS_RPC: https://virtual.gnosis.rpc.tenderly.co/b8bd81f7-0126-49ca-8a2d-11aa03dc7ccf
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
-          MODE_RPC: https://virtual.mode.rpc.tenderly.co/9f5ab06c-f005-4f8d-8bb2-786cb7b8f865
+          MODE_RPC: https://virtual.mode.rpc.tenderly.co/df18cdf5-748b-436d-a676-4649ca19fb2e
           CELO_RPC: https://forno.celo.org
         run: |
           echo "OPTIMISM_RPC=https://rpc-gate.autonolas.tech/optimism-rpc/" >> .env
-          echo "BASE_RPC=https://virtual.base.rpc.tenderly.co/2a91611a-3251-48a6-8095-b86815de84bf" >> .env
-          echo "GNOSIS_RPC=https://virtual.gnosis.rpc.tenderly.co/7de511da-9ad7-4e9f-98c1-e99052e92b15" >> .env
+          echo "BASE_RPC=https://virtual.base.rpc.tenderly.co/f4a92b26-8193-4686-b464-7c1990144659" >> .env
+          echo "GNOSIS_RPC=https://virtual.gnosis.rpc.tenderly.co/b8bd81f7-0126-49ca-8a2d-11aa03dc7ccf" >> .env
           echo "ETHEREUM_RPC=https://rpc-gate.autonolas.tech/ethereum-rpc/" >> .env
-          echo "MODE_RPC=https://virtual.mode.rpc.tenderly.co/9f5ab06c-f005-4f8d-8bb2-786cb7b8f865" >> .env
+          echo "MODE_RPC=https://virtual.mode.rpc.tenderly.co/df18cdf5-748b-436d-a676-4649ca19fb2e" >> .env
           echo "CELO_RPC=https://forno.celo.org" >> .env
           node build.js

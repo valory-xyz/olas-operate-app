@@ -416,6 +416,13 @@ class Deployment(LocalResource):
         """Load a service"""
         return super().load(path)  # type: ignore
 
+    def copy_previous_agent_run_logs(self) -> None:
+        """Copy previous agent logs."""
+        source_path = self.path / DEPLOYMENT / "agent" / "log.txt"
+        destination_path = self.path / "prev_log.txt"
+        if source_path.exists():
+            shutil.copy(source_path, destination_path)
+
     def _build_docker(
         self,
         force: bool = True,
@@ -434,6 +441,7 @@ class Deployment(LocalResource):
         if build.exists() and not force:
             return
         if build.exists() and force:
+            self.copy_previous_agent_run_logs()
             shutil.rmtree(build)
         mkdirs(build_dir=build)
 
@@ -531,6 +539,7 @@ class Deployment(LocalResource):
             try:
                 # sleep needed to ensure all processes closed/killed otherwise it will block directory removal on windows
                 time.sleep(3)
+                self.copy_previous_agent_run_logs()
                 shutil.rmtree(build)
             except:  # noqa  # pylint: disable=bare-except
                 # sleep and try again. exception if fails
@@ -660,7 +669,8 @@ class Deployment(LocalResource):
 
     def delete(self) -> None:
         """Delete the deployment."""
-        shutil.rmtree(self.path / "deployment")
+        build = self.path / DEPLOYMENT
+        shutil.rmtree(build)
         self.status = DeploymentStatus.DELETED
         self.store()
 

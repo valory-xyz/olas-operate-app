@@ -7,6 +7,7 @@ import {
   ONE_MINUTE_INTERVAL,
 } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { BalanceService } from '@/service/balances';
@@ -28,6 +29,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
 export const BalancesAndRefillRequirementsProvider = ({
   children,
 }: PropsWithChildren) => {
+  const { isUserLoggedIn } = usePageState();
   const { selectedService, selectedAgentConfig } = useServices();
   const configId = selectedService?.service_config_id;
   const chainId = selectedAgentConfig.evmHomeChainId;
@@ -52,7 +54,7 @@ export const BalancesAndRefillRequirementsProvider = ({
     ),
     queryFn: () =>
       BalanceService.getBalancesAndRefillRequirements(configId as string),
-    enabled: !!configId,
+    enabled: !!configId && isUserLoggedIn,
     refetchInterval,
   });
 

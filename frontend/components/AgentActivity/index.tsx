@@ -1,4 +1,4 @@
-import { ApiOutlined, CloseOutlined, InboxOutlined } from '@ant-design/icons';
+import { ApiOutlined, InboxOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, Collapse, Flex, Spin, Typography } from 'antd';
 import { isEmpty, isNull } from 'lodash';
@@ -9,13 +9,12 @@ import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { NA } from '@/constants/symbols';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
-import { Pages } from '@/enums/Pages';
 import { useElectronApi } from '@/hooks/useElectronApi';
-import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 
 import { CardTitle } from '../Card/CardTitle';
+import { GoToMainPageButton } from '../Pages/GoToMainPageButton';
 
 const { Text } = Typography;
 
@@ -63,7 +62,6 @@ const NoData = () => (
 export const AgentActivityPage = () => {
   const electronApi = useElectronApi();
   const { isOnline } = useContext(OnlineStatusContext);
-  const { goto } = usePageState();
 
   const { selectedService } = useServices();
   const { isServiceRunning } = useService(selectedService?.service_config_id);
@@ -139,13 +137,7 @@ export const AgentActivityPage = () => {
       title={<CardTitle title="Agent activity" />}
       bordered={false}
       styles={{ body: { padding: '1px 0 24px' } }}
-      extra={
-        <Button
-          size="large"
-          icon={<CloseOutlined />}
-          onClick={() => goto(Pages.Main)}
-        />
-      }
+      extra={<GoToMainPageButton />}
     >
       {activity}
     </Card>

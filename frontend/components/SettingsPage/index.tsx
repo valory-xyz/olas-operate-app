@@ -1,5 +1,5 @@
-import { CloseOutlined, SettingOutlined } from '@ant-design/icons';
-import { Button, Card, Flex, Skeleton, Typography } from 'antd';
+import { SettingOutlined } from '@ant-design/icons';
+import { Card, Flex, Skeleton, Typography } from 'antd';
 import { isEmpty, isNil } from 'lodash';
 import { useMemo } from 'react';
 
@@ -17,6 +17,7 @@ import { Optional } from '@/types/Util';
 import { AddressLink } from '../AddressLink';
 import { CustomAlert } from '../Alert';
 import { CardTitle } from '../Card/CardTitle';
+import { GoToMainPageButton } from '../Pages/GoToMainPageButton';
 import { CardSection } from '../styled/CardSection';
 import { DebugInfoSection } from './DebugInfoSection';
 
@@ -91,8 +92,6 @@ const SettingsMain = () => {
 
   const { owners, ownersIsFetched } = useMultisig(masterSafe);
 
-  const { goto } = usePageState();
-
   const masterSafeBackupAddresses = useMemo<Optional<Address[]>>(() => {
     if (!ownersIsFetched) return;
     if (!masterEoa) return;
@@ -131,13 +130,7 @@ const SettingsMain = () => {
       title={<SettingsTitle />}
       bordered={false}
       styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}
-      extra={
-        <Button
-          size="large"
-          icon={<CloseOutlined />}
-          onClick={() => goto(Pages.Main)}
-        />
-      }
+      extra={<GoToMainPageButton />}
     >
       {/* Password */}
       <CardSection

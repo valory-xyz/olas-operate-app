@@ -1,6 +1,5 @@
 import {
   ApiOutlined,
-  CloseOutlined,
   HistoryOutlined,
   InfoCircleOutlined,
 } from '@ant-design/icons';
@@ -28,9 +27,7 @@ import {
 import { COLOR } from '@/constants/colors';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
-import { Pages } from '@/enums/Pages';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { usePageState } from '@/hooks/usePageState';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
@@ -43,6 +40,7 @@ import {
 } from '@/utils/time';
 
 import { Checkpoint, useRewardsHistory } from '../../hooks/useRewardsHistory';
+import { GoToMainPageButton } from '../Pages/GoToMainPageButton';
 import { EpochDetails } from './types';
 
 const { Text, Title } = Typography;
@@ -248,7 +246,6 @@ const ContractRewards = ({
 export const RewardsHistory = () => {
   const { contractCheckpoints, isError, isFetched, refetch } =
     useRewardsHistory();
-  const { goto } = usePageState();
   const { selectedService, selectedAgentConfig } = useServices();
   const { serviceNftTokenId } = useService(selectedService?.service_config_id);
 
@@ -322,13 +319,7 @@ export const RewardsHistory = () => {
         bordered={false}
         title={<CardTitle title="Staking rewards history" />}
         noBodyPadding="true"
-        extra={
-          <Button
-            size="large"
-            icon={<CloseOutlined />}
-            onClick={() => goto(Pages.Main)}
-          />
-        }
+        extra={<GoToMainPageButton />}
       >
         {history}
       </CardFlex>

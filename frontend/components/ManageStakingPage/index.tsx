@@ -1,21 +1,18 @@
-import { CloseOutlined } from '@ant-design/icons';
-import { Button, Card } from 'antd';
+import { Card } from 'antd';
 import { useMemo } from 'react';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { Pages } from '@/enums/Pages';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { CardTitle } from '../Card/CardTitle';
+import { GoToMainPageButton } from '../Pages/GoToMainPageButton';
 import { CardSection } from '../styled/CardSection';
 import { StakingContractSection } from './StakingContractSection';
 import { WhatAreStakingContractsSection } from './WhatAreStakingContracts';
 
 export const ManageStakingPage = () => {
-  const { goto } = usePageState();
   const { selectedAgentConfig } = useServices();
   const {
     activeStakingProgramId,
@@ -88,19 +85,8 @@ export const ManageStakingPage = () => {
     <Card
       title={<CardTitle title="Manage staking contract" />}
       bordered={false}
-      styles={{
-        body: {
-          paddingTop: 0,
-          paddingBottom: 0,
-        },
-      }}
-      extra={
-        <Button
-          size="large"
-          icon={<CloseOutlined />}
-          onClick={() => goto(Pages.Main)}
-        />
-      }
+      styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}
+      extra={<GoToMainPageButton />}
     >
       <WhatAreStakingContractsSection />
 

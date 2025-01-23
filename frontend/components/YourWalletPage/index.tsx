@@ -1,12 +1,4 @@
-import { CloseOutlined } from '@ant-design/icons';
-import {
-  Button,
-  ConfigProvider,
-  Flex,
-  Skeleton,
-  ThemeConfig,
-  Typography,
-} from 'antd';
+import { ConfigProvider, Flex, Skeleton, ThemeConfig, Typography } from 'antd';
 import { capitalize, isNil } from 'lodash';
 import { useMemo } from 'react';
 
@@ -15,14 +7,12 @@ import { CardTitle } from '@/components/Card/CardTitle';
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { getNativeTokenSymbol } from '@/config/tokens';
-import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
 import {
   useBalanceContext,
   useMasterBalances,
 } from '@/hooks/useBalanceContext';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
-import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { type Address } from '@/types/Address';
@@ -30,6 +20,7 @@ import { Optional } from '@/types/Util';
 import { balanceFormat } from '@/utils/numberFormatters';
 
 import { FeatureNotEnabled } from '../FeatureNotEnabled';
+import { GoToMainPageButton } from '../Pages/GoToMainPageButton';
 import { Container, infoBreakdownParentStyle } from './styles';
 import { SignerTitle } from './Titles';
 import { useYourWallet } from './useYourWallet';
@@ -261,20 +252,13 @@ const MasterEoaSignerNativeBalance = () => {
 export const YourWalletPage = () => {
   const isBalanceBreakdownEnabled = useFeatureFlag('manage-wallet');
   const { selectedService } = useServices();
-  const { goto } = usePageState();
 
   return (
     <ConfigProvider theme={yourWalletTheme}>
       <CardFlex
         bordered={false}
         title={<CardTitle title="Your wallets" />}
-        extra={
-          <Button
-            size="large"
-            icon={<CloseOutlined />}
-            onClick={() => goto(Pages.Main)}
-          />
-        }
+        extra={<GoToMainPageButton />}
       >
         {isBalanceBreakdownEnabled ? (
           <Container style={{ margin: 8 }}>

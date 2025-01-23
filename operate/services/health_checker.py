@@ -37,7 +37,7 @@ class HealthChecker:
     """Health checker manager."""
 
     SLEEP_PERIOD_DEFAULT = 30
-    PORT_UP_TIMEOUT_DEFAULT = 120  # seconds
+    PORT_UP_TIMEOUT_DEFAULT = 300  # seconds
     REQUEST_TIMEOUT_DEFAULT = 90
     NUMBER_OF_FAILS_DEFAULT = 10
     HEALTH_CHECK_URL = HEALTH_CHECK_URL
@@ -109,7 +109,7 @@ class HealthChecker:
                 f"[HEALTH_CHECKER] Start healthcheck job for service: {service_config_id}"
             )
 
-            async def _wait_for_port(sleep_period: int = 15) -> None:
+            async def _wait_for_port(sleep_period: int = 30) -> None:
                 self.logger.info("[HEALTH_CHECKER]: wait port is up")
                 while True:
                     try:
@@ -123,7 +123,7 @@ class HealthChecker:
                     await asyncio.sleep(sleep_period)
 
             async def _check_port_ready(
-                timeout: int = self.port_up_timeout, sleep_period: int = 15
+                timeout: int = self.port_up_timeout, sleep_period: int = 30
             ) -> bool:
                 try:
                     await asyncio.wait_for(

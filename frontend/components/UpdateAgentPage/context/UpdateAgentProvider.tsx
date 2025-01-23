@@ -74,7 +74,7 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
     } finally {
       setIsEditing(false);
     }
-  }, [form, selectedService]);
+  }, [form, selectedService, selectedAgentType]);
 
   const confirmUnsavedCallback = useCallback(async () => {
     goto(Pages.Main);
