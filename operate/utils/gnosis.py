@@ -40,6 +40,7 @@ from operate.constants import (
     ON_CHAIN_INTERACT_TIMEOUT,
     ZERO_ADDRESS,
 )
+from operate.operate_types import Chain
 
 
 logger = setup_logger(name="operate.manager")
@@ -47,6 +48,7 @@ NULL_ADDRESS: str = "0x" + "0" * 40
 MAX_UINT256 = 2**256 - 1
 ZERO_ETH = 0
 SENTINEL_OWNERS = "0x0000000000000000000000000000000000000001"
+L2_GAS_BUFFER = 0.05
 
 
 class SafeOperation(Enum):
@@ -82,7 +84,7 @@ def settle_raw_transaction(
         try:
             digest_or_receipt = build_and_send_tx()
         except Exception as e:  # pylint: disable=broad-except
-            logger.error(f"Error sending the safe tx: {e}")
+            logger.error(f"Error sending the tx: {e}")
             digest_or_receipt = None
 
         if isinstance(digest_or_receipt, str):  # it's a digest
@@ -94,7 +96,7 @@ def settle_raw_transaction(
         if receipt is not None and receipt["status"] != 0:
             return receipt
         time.sleep(ON_CHAIN_INTERACT_SLEEP)
-    raise RuntimeError("Timeout while waiting for safe transaction to go through")
+    raise RuntimeError("Timeout while waiting for transaction to go through")
 
 
 def hash_payload_to_hex(  # pylint: disable=too-many-arguments,too-many-locals
@@ -528,12 +530,22 @@ def drain_eoa(
             transaction=tx,
             raise_on_try=True,
         )
+
+        buffer = 0
+        if Chain.from_id(chain_id) in (Chain.ARBITRUM_ONE, Chain.BASE, Chain.OPTIMISTIC):
+            buffer = int((tx["gas"] * tx["maxFeePerGas"])*(1 + L2_GAS_BUFFER))
+
         tx["value"] = (
-            ledger_api.get_balance(crypto.address) - tx["gas"] * tx["maxFeePerGas"]
+            ledger_api.get_balance(crypto.address) - tx["gas"] * tx["maxFeePerGas"] - buffer
         )
+
+        print(f"{tx['value']=}")
+        print(f"{tx['gas']=}")
+        print(f"{tx['maxFeePerGas']=}")
+
         if tx["value"] <= 0:
-            logger.warning(f"No balance to drain from wallet: {crypto.address}")
-            raise ChainInteractionError("Insufficient balance")
+            logger.warning(f"Gas fees exceed address balance: {crypto.address}")
+            raise ChainInteractionError(f"Gas fees exceed address balance: {crypto.address}")
 
         logger.info(
             f"Draining {tx['value']} native units from wallet: {crypto.address}"
