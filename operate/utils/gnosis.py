@@ -29,6 +29,7 @@ from enum import Enum
 
 from aea.crypto.base import Crypto, LedgerApi
 from aea.helpers.logging import setup_logger
+from aea_ledger_ethereum import EIP1559
 from autonomy.chain.base import registry_contracts
 from autonomy.chain.config import ChainType as ChainProfile
 from autonomy.chain.exceptions import ChainInteractionError
@@ -48,7 +49,6 @@ NULL_ADDRESS: str = "0x" + "0" * 40
 MAX_UINT256 = 2**256 - 1
 ZERO_ETH = 0
 SENTINEL_OWNERS = "0x0000000000000000000000000000000000000001"
-L2_GAS_BUFFER = 0.05
 
 
 class SafeOperation(Enum):
@@ -83,6 +83,9 @@ def settle_raw_transaction(
     while retries < ON_CHAIN_INTERACT_RETRIES and datetime.now().timestamp() < deadline:
         try:
             digest_or_receipt = build_and_send_tx()
+        except ChainInteractionError as e:
+            logger.error(f"Error sending the tx: {e}")
+            return
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"Error sending the tx: {e}")
             digest_or_receipt = None
@@ -531,12 +534,13 @@ def drain_eoa(
             raise_on_try=True,
         )
 
-        buffer = 0
+        max_fee_per_gas = tx["maxFeePerGas"]
         if Chain.from_id(chain_id) in (Chain.ARBITRUM_ONE, Chain.BASE, Chain.OPTIMISTIC):
-            buffer = int((tx["gas"] * tx["maxFeePerGas"])*(1 + L2_GAS_BUFFER))
+            # TODO: using default max fee because core does not count the L1 fees
+            max_fee_per_gas = ledger_api._gas_price_strategies[EIP1559]["fallback_estimate"]['maxFeePerGas']
 
         tx["value"] = (
-            ledger_api.get_balance(crypto.address) - tx["gas"] * tx["maxFeePerGas"] - buffer
+            ledger_api.get_balance(crypto.address) - tx["gas"] * max_fee_per_gas
         )
 
         print(f"{tx['value']=}")
