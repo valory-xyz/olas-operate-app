@@ -430,7 +430,6 @@ def ensure_enough_funds(operate: "OperateApp", service: Service) -> None:
 
 def run_service(operate: "OperateApp", config_path: str) -> None:
     """Run service."""
-
     with open(config_path, "r") as config_file:
         template = json.load(config_file)
 
@@ -438,16 +437,23 @@ def run_service(operate: "OperateApp", config_path: str) -> None:
     config = configure_local_config(template)
     manager = operate.service_manager()
     service = get_service(manager, template)
+
+    # Set config in manager
+    manager.config_file = template  # Add this line
+
     ask_password_if_needed(operate, config)
 
-    # reload manger and config after setting operate.password
+    # Reload with config to ensure it persists
     manager = operate.service_manager()
+    manager.config_file = template  # Add this line again to ensure it persists
+
     config = load_local_config()
     ensure_enough_funds(operate, service)
 
     print_box("PLEASE, DO NOT INTERRUPT THIS PROCESS.")
     print_section(f"Deploying on-chain service on {config.principal_chain}...")
     print("Cancelling the on-chain service update prematurely could lead to an inconsistent state of the Safe or the on-chain service state, which may require manual intervention to resolve.\n")
+
     manager.deploy_service_onchain_from_safe(service_config_id=service.service_config_id)
 
     print_section("Funding the service")
