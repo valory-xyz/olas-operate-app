@@ -203,7 +203,7 @@ class StakingManager(OnChainHelper):
             .call()
         )
 
-    def slots_available(self, staking_contract: str) -> bool:
+    def is_slots_available(self, staking_contract: str) -> bool:
         """Check if there are available slots on the staking contract"""
         instance = self.staking_ctr.get_instance(
             ledger_api=self.ledger_api,
@@ -213,6 +213,17 @@ class StakingManager(OnChainHelper):
             instance.functions.getServiceIds().call()
         )
         return available > 0
+    
+    def available_slots_num(self, staking_contract: str) -> bool:
+        """Check if there are available slots on the staking contract"""
+        instance = self.staking_ctr.get_instance(
+            ledger_api=self.ledger_api,
+            contract_address=staking_contract,
+        )
+        available = instance.functions.maxNumServices().call() - len(
+            instance.functions.getServiceIds().call()
+        )
+        return available
 
     def available_rewards(self, staking_contract: str) -> int:
         """Get the available staking rewards on the staking contract"""
@@ -292,7 +303,7 @@ class StakingManager(OnChainHelper):
         if status == StakingState.EVICTED:
             raise ValueError("Service is evicted")
 
-        if not self.slots_available(staking_contract):
+        if not self.is_slots_available(staking_contract):
             raise ValueError("No sataking slots available.")
 
     def stake(
@@ -794,14 +805,25 @@ class _ChainUtil:
         if receipt["status"] != 1:
             raise RuntimeError("Error swapping owners")
 
-    def staking_slots_available(self, staking_contract: str) -> bool:
+    def is_staking_slots_available(self, staking_contract: str) -> bool:
         """Check if there are available slots on the staking contract"""
         self._patch()
         return StakingManager(
             key=self.wallet.key_path,
             password=self.wallet.password,
             chain_type=self.chain_type,
-        ).slots_available(
+        ).is_slots_available(
+            staking_contract=staking_contract,
+        )
+    
+    def available_staking_slots_num(self, staking_contract: str) -> int:
+        """Stake service."""
+        self._patch()
+        return StakingManager(
+            key=self.wallet.key_path,
+            password=self.wallet.password,
+            chain_type=self.chain_type,
+        ).available_slots_num(
             staking_contract=staking_contract,
         )
 
@@ -1475,14 +1497,25 @@ class EthSafeTxBuilder(_ChainUtil):
             "value": 0,
         }
 
-    def staking_slots_available(self, staking_contract: str) -> bool:
+    def is_staking_slots_available(self, staking_contract: str) -> bool:
         """Stake service."""
         self._patch()
         return StakingManager(
             key=self.wallet.key_path,
             password=self.wallet.password,
             chain_type=self.chain_type,
-        ).slots_available(
+        ).is_slots_available(
+            staking_contract=staking_contract,
+        )
+    
+    def available_staking_slots_num(self, staking_contract: str) -> int:
+        """Stake service."""
+        self._patch()
+        return StakingManager(
+            key=self.wallet.key_path,
+            password=self.wallet.password,
+            chain_type=self.chain_type,
+        ).available_slots_num(
             staking_contract=staking_contract,
         )
 

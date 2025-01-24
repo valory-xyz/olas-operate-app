@@ -105,12 +105,13 @@ class OperateApp:
 
     def service_manager(self) -> services.manage.ServiceManager:
         """Load service manager."""
-        return services.manage.ServiceManager(
+        manager = services.manage.ServiceManager(
             path=self._services,
             keys_manager=self.keys_manager,
             wallet_manager=self.wallet_manager,
             logger=self.logger,
         )
+        return manager
 
     @property
     def user_account(self) -> t.Optional[UserAccount]:
