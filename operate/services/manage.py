@@ -97,6 +97,13 @@ class ServiceManager:
         config_file: t.Optional[dict] = None,
         logger: t.Optional[logging.Logger] = None,
     ) -> None:
+        """
+        Initialze service manager
+        :param path: Path to service storage.
+        :param keys_manager: Keys manager.
+        :param wallet_manager: Wallet manager instance.
+        :param logger: logging.Logger object.
+        """
         self.path = path
         self.keys_manager = keys_manager
         self.wallet_manager = wallet_manager
@@ -1227,22 +1234,18 @@ class ServiceManager:
             raise ValueError("Config file missing staking programs")
 
         staking_programs = {k: v for k, v in config_file["staking_programs"].items() if k != "no_staking"}
-        logger.info(f"Searching staking programs: {staking_programs.keys()}")
         current_staking_program = None
         
         for staking_program in staking_programs:
-            logger.info(f"Checking staking status for program {staking_program}")
             state = sftxb.staking_status(
                 service_id=chain_data.token,
                 staking_contract=config_file["staking_programs"][staking_program]
             )
-            logger.info(f"Program {staking_program} state: {state}")
             if state in (StakingState.STAKED, StakingState.EVICTED):
                 current_staking_program = staking_program
                 logger.info(f"Found active staking program: {staking_program}")
                 break
                 
-        logger.info(f"Returning staking program: {current_staking_program}")
         return current_staking_program
 
     def unbond_service_on_chain(

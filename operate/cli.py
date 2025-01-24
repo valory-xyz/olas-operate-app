@@ -111,7 +111,6 @@ class OperateApp:
             wallet_manager=self.wallet_manager,
             logger=self.logger,
         )
-        self.logger.info(f"Created service manager. Config file present: {manager.config_file is not None}")
         return manager
 
     @property
