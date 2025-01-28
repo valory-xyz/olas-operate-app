@@ -145,16 +145,8 @@ def configure_local_config(template: ServiceTemplate) -> QuickstartConfig:
             wrapped_description = textwrap.fill(
                 description, width=80, initial_indent="   ", subsequent_indent="   "
             )
-            if program_id == NO_STAKING_PROGRAM_ID:
-                print(f"{index + 1}) {name}\n{wrapped_description}\n")
-                available_choices[index + 1] = {
-                    "program_id": program_id,
-                    "slots": "∞",
-                    "name": name
-                }
-                continue
-            print(f"{index + 1}) {name} ( available slots : {available_slots} )\n{wrapped_description}\n")
-            if available_slots > 0:
+            print(f"{index + 1}) {name}\t(available slots : {available_slots})\n{wrapped_description}\n")
+            if available_slots != 0:
                 available_choices[index + 1] = {
                     "program_id": program_id,
                     "slots": available_slots,
@@ -164,7 +156,7 @@ def configure_local_config(template: ServiceTemplate) -> QuickstartConfig:
             try:
                 choice = int(input(f"Enter your choice (1 - {len(ids)}): "))
                 if choice not in available_choices:
-                    print("\nPlease select from available programs:")
+                    print("\nPlease select a program with available slots:") 
                     for idx, prog in available_choices.items():
                         print(f"{idx}) {prog['name']} : available slots {prog['slots']}")
                     continue

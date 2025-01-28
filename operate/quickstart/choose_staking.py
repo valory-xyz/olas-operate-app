@@ -38,7 +38,7 @@ NO_STAKING_PROGRAM_METADATA = {
     "name": "No staking",
     "description": "Your Olas Predict agent will still actively participate in prediction\
         markets, but it will not be staked within any staking program.",
-    "available_staking_slots":0  
+    "available_staking_slots":"∞"
 }
 
 
@@ -120,7 +120,6 @@ class StakingHandler:
             ipfs_address = IPFS_ADDRESS.format(hash=metadata_hash.hex())
             response = requests.get(ipfs_address)
 
-            metadata = {}
             if response.status_code == 200:
                 metadata = response.json()
                 # Add staking slots count to successful response
@@ -130,7 +129,7 @@ class StakingHandler:
                     metadata["available_staking_slots"] = max_services - len(current_services)
                 except ContractLogicError as e:
                     self.logger.error(f"Contract call failed for {program_id}: {str(e)}")
-                    metadata["available_staking_slots"] = 0
+                    metadata["available_staking_slots"] = "?"
                 return metadata
 
             raise Exception(  # pylint: disable=broad-except
@@ -140,7 +139,7 @@ class StakingHandler:
             return {
                 "name": program_id,
                 "description": program_id,
-                "available_staking_slots": 0
+                "available_staking_slots": "?"
             }
 
     def get_staking_env_variables(self: "StakingHandler", program_id: str) -> StakingVariables:
