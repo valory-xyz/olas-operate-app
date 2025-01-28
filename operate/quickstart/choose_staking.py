@@ -38,6 +38,7 @@ NO_STAKING_PROGRAM_METADATA = {
     "name": "No staking",
     "description": "Your Olas Predict agent will still actively participate in prediction\
         markets, but it will not be staked within any staking program.",
+    "available_staking_slots":0  
 }
 
 
@@ -109,7 +110,7 @@ class StakingHandler:
 
         return contract
 
-    def get_staking_contract_metadata(self: "StakingHandler", program_id: str) -> Dict[str, str]:
+    def get_staking_contract_metadata(self: "StakingHandler", program_id: str) -> Dict[str, Any]:
         try:
             if program_id == NO_STAKING_PROGRAM_ID:
                 return NO_STAKING_PROGRAM_METADATA
@@ -119,8 +120,18 @@ class StakingHandler:
             ipfs_address = IPFS_ADDRESS.format(hash=metadata_hash.hex())
             response = requests.get(ipfs_address)
 
+            metadata = {}
             if response.status_code == 200:
-                return response.json()
+                metadata = response.json()
+                # Add staking slots count to successful response
+                try:
+                    max_services = staking_token_contract.functions.maxNumServices().call()
+                    current_services = staking_token_contract.functions.getServiceIds().call()
+                    metadata["available_staking_slots"] = max_services - len(current_services)
+                except ContractLogicError as e:
+                    self.logger.error(f"Contract call failed for {program_id}: {str(e)}")
+                    metadata["available_staking_slots"] = 0
+                return metadata
 
             raise Exception(  # pylint: disable=broad-except
                 f"Failed to fetch data from {ipfs_address}: {response.status_code}"
@@ -129,31 +140,8 @@ class StakingHandler:
             return {
                 "name": program_id,
                 "description": program_id,
+                "available_staking_slots": 0
             }
-
-    def get_staking_slots_count(self: "StakingHandler", program_id: str) -> int:
-        """Get available staking slots count for a program."""
-        try:
-            if program_id == NO_STAKING_PROGRAM_ID:
-                return NO_STAKING_PROGRAM_METADATA
-
-            staking_token_contract = self._get_staking_token_contract(program_id) 
-            if not staking_token_contract:
-                self.logger.error(f"No contract found for {program_id}")
-                return 0
-
-            try:
-                max_services = staking_token_contract.functions.maxNumServices().call()
-                current_services = staking_token_contract.functions.getServiceIds().call()
-                return max_services - len(current_services)
-                
-            except (ContractLogicError) as e:
-                self.logger.error(f"Contract call failed for {program_id}: {str(e)}")
-                return 0
-                
-        except Exception as e:
-            self.logger.error(f"Unexpected error getting slots for {program_id}: {str(e)}")
-            return 0    
 
     def get_staking_env_variables(self: "StakingHandler", program_id: str) -> StakingVariables:
         if program_id == NO_STAKING_PROGRAM_ID:

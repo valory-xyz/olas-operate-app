@@ -137,15 +137,15 @@ def configure_local_config(template: ServiceTemplate) -> QuickstartConfig:
         print_section("Please, select your staking program preference")
         ids = list(template["staking_programs"].keys())
         available_choices = {}
-        for index, key in enumerate(ids):
-            metadata = staking_handler.get_staking_contract_metadata(program_id=key)
+        for index, program_id in enumerate(ids):
+            metadata = staking_handler.get_staking_contract_metadata(program_id=program_id)
             name = metadata["name"]
             description = metadata["description"]
+            available_slots = metadata["available_staking_slots"] 
             wrapped_description = textwrap.fill(
                 description, width=80, initial_indent="   ", subsequent_indent="   "
             )
-            program_id = key
-            if name.lower().startswith('no staking'):
+            if program_id == NO_STAKING_PROGRAM_ID:
                 print(f"{index + 1}) {name}\n{wrapped_description}\n")
                 available_choices[index + 1] = {
                     "program_id": program_id,
@@ -153,12 +153,11 @@ def configure_local_config(template: ServiceTemplate) -> QuickstartConfig:
                     "name": name
                 }
                 continue
-            available = staking_handler.get_staking_slots_count(program_id=program_id)
-            print(f"{index + 1}) {name} ( available slots : {available} )\n{wrapped_description}\n")
-            if available > 0:
+            print(f"{index + 1}) {name} ( available slots : {available_slots} )\n{wrapped_description}\n")
+            if available_slots > 0:
                 available_choices[index + 1] = {
                     "program_id": program_id,
-                    "slots": available,
+                    "slots": available_slots,
                     "name": name
                 }
         while True:
