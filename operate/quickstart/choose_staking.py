@@ -128,7 +128,6 @@ class StakingHandler:
                     current_services = staking_token_contract.functions.getServiceIds().call()
                     metadata["available_staking_slots"] = max_services - len(current_services)
                 except ContractLogicError as e:
-                    self.logger.error(f"Contract call failed for {program_id}: {str(e)}")
                     metadata["available_staking_slots"] = "?"
                 return metadata
 
