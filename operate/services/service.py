@@ -392,21 +392,24 @@ class Deployment(LocalResource):
     status: DeploymentStatus
     nodes: DeployedNodes
     path: Path
+    custom_docker_image_name:str = ""
 
     _file = "deployment.json"
 
     @staticmethod
-    def new(path: Path) -> "Deployment":
+    def new(path: Path, custom_docker_image_name: t.Optional[str] = None) -> "Deployment":
         """
         Create a new deployment
 
         :param path: Path to service
+        :param custom_docker_image_name: A custom docker image that will be used in the deployment.
         :return: Deployment object
         """
         deployment = Deployment(
             status=DeploymentStatus.CREATED,
             nodes=DeployedNodes(agent=[], tendermint=[]),
-            path=path,
+            path=path,  
+            custom_docker_image_name = custom_docker_image_name
         )
         deployment.store()
         return deployment
@@ -453,7 +456,7 @@ class Deployment(LocalResource):
             encoding="utf-8",
         )
         try:
-            service.consume_env_variables()
+            service.consume_env_variables(deployment_dir=build.resolve())
             builder = ServiceBuilder.from_dir(
                 path=service.service_path,
                 keys_file=keys_file,
@@ -482,7 +485,9 @@ class Deployment(LocalResource):
                     build_dir=build.resolve(),
                     use_tm_testnet_setup=True,
                 )
-                .generate()
+                .generate(
+                    custom_docker_image_name=self.custom_docker_image_name
+                )
                 .generate_config_tendermint()
                 .write_config()
                 .populate_private_keys()
@@ -623,7 +628,7 @@ class Deployment(LocalResource):
         :return: Deployment object
         """
         # TODO: Maybe remove usage of chain and use home_chain always?
-        if use_docker:
+        if use_docker or self.custom_docker_image is not None:
             return self._build_docker(force=force, chain=chain)
         return self._build_host(force=force, chain=chain)
 
@@ -683,6 +688,7 @@ class Service(LocalResource):
     hash_history: t.Dict[int, str]
     keys: Keys
     home_chain: str
+    docker_image_name: str
     chain_configs: ChainConfigs
     description: str
     env_variables: EnvVariables
@@ -896,11 +902,11 @@ class Service(LocalResource):
     def deployment(self) -> Deployment:
         """Load deployment object for the service."""
         if not (self.path / DEPLOYMENT_JSON).exists():
-            self._deployment = Deployment.new(path=self.path)
+            self._deployment = Deployment.new(path=self.path, custom_docker_image_name=self.docker_image_name)
         try:
             self._deployment = Deployment.load(path=self.path)
         except JSONDecodeError:
-            self._deployment = Deployment.new(path=self.path)
+            self._deployment = Deployment.new(path=self.path, custom_docker_image_name=self.docker_image_name)
         return t.cast(Deployment, self._deployment)
 
     @staticmethod
@@ -943,6 +949,11 @@ class Service(LocalResource):
             )
 
         current_timestamp = int(time.time())
+
+        docker_image_name = None
+        if "docker_image_name" in service_template:
+            docker_image_name = service_template["docker_image_name"]
+
         service = Service(
             version=SERVICE_CONFIG_VERSION,
             service_config_id=service_config_id,
@@ -956,6 +967,7 @@ class Service(LocalResource):
             path=service_path.parent,
             service_path=service_path,
             env_variables=service_template["env_variables"],
+            docker_image_name=docker_image_name
         )
         service.store()
         return service
@@ -1115,10 +1127,20 @@ class Service(LocalResource):
 
         self.store()
 
-    def consume_env_variables(self) -> None:
+    def consume_env_variables(self, deployment_dir:str = None ) -> None:
         """Consume (apply) environment variables."""
-        for env_var, attributes in self.env_variables.items():
-            os.environ[env_var] = str(attributes["value"])
+        print(f'Applying environment variables: {self.env_variables}')
+        if self.docker_image_name is not None and deployment_dir is not None:
+            print('Creating .env file to be used in the docker container')
+            env_file_path = f'{deployment_dir}/.env'
+            with open(env_file_path, "w") as file:
+                for env_var, attributes in self.env_variables.items():
+                    env_var_value = str(attributes["value"])
+                    file.write(f"{env_var}={env_var_value}\n")
+
+        else:            
+            for env_var, attributes in self.env_variables.items():
+                os.environ[env_var] = str(attributes["value"])
 
     def update_env_variables_values(
         self, env_var_to_value: t.Dict[str, t.Any], except_if_undefined: bool = False

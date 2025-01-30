@@ -94,7 +94,9 @@ class LocalResource:
         for pname, ptype in cls.__annotations__.items():
             if pname.startswith("_"):
                 continue
-            kwargs[pname] = deserialize(obj=obj[pname], otype=ptype)
+
+            if pname in obj:
+                kwargs[pname] = deserialize(obj=obj[pname], otype=ptype)
         return cls(**kwargs)
 
     @classmethod
