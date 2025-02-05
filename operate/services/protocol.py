@@ -863,16 +863,28 @@ class _ChainUtil:
         if "mech_marketplace" in program_id:
             agent_mech = PRIORITY_MECH_ADDRESS[chain]
         else:
-            agent_mech = w3.eth.contract(
-                address=activity_checker,
-                abi=[{
-                    "inputs": [],
-                    "name": "agentMech",
-                    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-                    "stateMutability": "view",
-                    "type": "function"
-                }]
-            ).functions.agentMech().call()
+            agent_mech = (
+                w3.eth.contract(
+                    address=activity_checker,
+                    abi=[
+                        {
+                            "inputs": [],
+                            "name": "agentMech",
+                            "outputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "",
+                                    "type": "address",
+                                }
+                            ],
+                            "stateMutability": "view",
+                            "type": "function",
+                        }
+                    ],
+                )
+                .functions.agentMech()
+                .call()
+            )
 
         return dict(
             staking_contract=staking_contract,

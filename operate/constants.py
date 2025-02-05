@@ -52,7 +52,7 @@ ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 # TODO: These links may break in the future, use a more robust approach
 MECH_CONTRACT_JSON_URL = "https://raw.githubusercontent.com/valory-xyz/mech/refs/tags/v0.8.0/packages/valory/contracts/agent_mech/build/AgentMech.json"
-STAKING_TOKEN_INSTANCE_ABI_PATH = 'https://raw.githubusercontent.com/valory-xyz/trader/refs/tags/v0.23.0/packages/valory/contracts/staking_token/build/StakingToken.json'
-MECH_ACTIVITY_CHECKER_JSON_URL = 'https://raw.githubusercontent.com/valory-xyz/autonolas-staking-programmes/refs/heads/main/abis/0.8.25/SingleMechActivityChecker.json'
+STAKING_TOKEN_INSTANCE_ABI_PATH = "https://raw.githubusercontent.com/valory-xyz/trader/refs/tags/v0.23.0/packages/valory/contracts/staking_token/build/StakingToken.json"
+MECH_ACTIVITY_CHECKER_JSON_URL = "https://raw.githubusercontent.com/valory-xyz/autonolas-staking-programmes/refs/heads/main/abis/0.8.25/SingleMechActivityChecker.json"
 SERVICE_REGISTRY_TOKEN_UTILITY_JSON_URL = "https://raw.githubusercontent.com/valory-xyz/open-autonomy/refs/tags/v0.18.4/packages/valory/contracts/service_registry_token_utility/build/ServiceRegistryTokenUtility.json"
 MECH_AGENT_FACTORY_JSON_URL = "https://raw.githubusercontent.com/valory-xyz/ai-registry-mech/main/abis/0.8.25/AgentFactory.json"

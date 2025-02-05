@@ -19,25 +19,26 @@
 # ------------------------------------------------------------------------------
 
 
-import requests
-from decimal import ROUND_UP, Decimal
-from halo import Halo
+from decimal import Decimal, ROUND_UP
 from typing import Optional
+
+import requests
+from halo import Halo
 
 from operate.constants import ZERO_ADDRESS
 from operate.ledger.profiles import OLAS, USDC
 from operate.operate_types import Chain
 
 
-def print_box(text: str, margin: int = 1, character: str = '=') -> None:
+def print_box(text: str, margin: int = 1, character: str = "=") -> None:
     """Print text centered within a box."""
 
-    lines = text.split('\n')
+    lines = text.split("\n")
     text_length = max(len(line) for line in lines)
     length = text_length + 2 * margin
 
     border = character * length
-    margin_str = ' ' * margin
+    margin_str = " " * margin
 
     print()
     print(border)
@@ -48,12 +49,12 @@ def print_box(text: str, margin: int = 1, character: str = '=') -> None:
 
 def print_title(text: str) -> None:
     """Print title."""
-    print_box(text, 4, '=')
+    print_box(text, 4, "=")
 
 
 def print_section(text: str) -> None:
     """Print section."""
-    print_box(text, 1, '-')
+    print_box(text, 1, "-")
 
 
 def unit_to_wei(unit: float) -> int:
@@ -78,13 +79,13 @@ CHAIN_TO_METADATA = {
             OLAS[Chain.GNOSIS]: {
                 "symbol": "OLAS",
                 "decimals": 18,
-            }
+            },
         },
         "gasParams": {
             # this means default values will be used
             "MAX_PRIORITY_FEE_PER_GAS": "",
             "MAX_FEE_PER_GAS": "",
-        }
+        },
     },
     "mode": {
         "name": "Mode",
@@ -102,13 +103,13 @@ CHAIN_TO_METADATA = {
             OLAS[Chain.MODE]: {
                 "symbol": "OLAS",
                 "decimals": 18,
-            }
+            },
         },
         "gasParams": {
             # this means default values will be used
             "MAX_PRIORITY_FEE_PER_GAS": "",
             "MAX_FEE_PER_GAS": "",
-        }
+        },
     },
     "optimistic": {
         "name": "Optimism",
@@ -126,13 +127,13 @@ CHAIN_TO_METADATA = {
             OLAS[Chain.OPTIMISTIC]: {
                 "symbol": "OLAS",
                 "decimals": 18,
-            }
+            },
         },
         "gasParams": {
             # this means default values will be used
             "MAX_PRIORITY_FEE_PER_GAS": "",
             "MAX_FEE_PER_GAS": "",
-        }
+        },
     },
     "base": {
         "name": "Base",
@@ -150,35 +151,34 @@ CHAIN_TO_METADATA = {
             OLAS[Chain.BASE]: {
                 "symbol": "OLAS",
                 "decimals": 18,
-            }
+            },
         },
         "gasParams": {
             # this means default values will be used
             "MAX_PRIORITY_FEE_PER_GAS": "",
             "MAX_FEE_PER_GAS": "",
-        }
+        },
     },
 }
 
 
 def wei_to_unit(wei: int, chain: str, token_address: str = ZERO_ADDRESS) -> float:
     """Convert Wei to unit."""
-    unit: Decimal = Decimal(str(wei)) / 10 ** CHAIN_TO_METADATA[chain]["token_data"][token_address]["decimals"]
-    return unit.quantize(Decimal('0.000001'), rounding=ROUND_UP)
+    unit: Decimal = (
+        Decimal(str(wei))
+        / 10 ** CHAIN_TO_METADATA[chain]["token_data"][token_address]["decimals"]
+    )
+    return unit.quantize(Decimal("0.000001"), rounding=ROUND_UP)
 
 
-def wei_to_token(wei: int, chain:str, token_address: str = ZERO_ADDRESS) -> str:
+def wei_to_token(wei: int, chain: str, token_address: str = ZERO_ADDRESS) -> str:
     """Convert Wei to token."""
     return f"{wei_to_unit(wei, chain, token_address)} {CHAIN_TO_METADATA[chain]['token_data'][token_address]['symbol']}"
 
 
 def ask_yes_or_no(question: str) -> bool:
     """Ask a yes/no question."""
-    response = (
-        input(f"{question} (yes/no): ")
-        .strip()
-        .lower()
-    )
+    response = input(f"{question} (yes/no): ").strip().lower()
     return response in ["yes", "y"]
 
 
@@ -193,14 +193,12 @@ def check_rpc(rpc_url: Optional[str] = None) -> True:
         "jsonrpc": "2.0",
         "method": "eth_newFilter",
         "params": ["invalid"],
-        "id": 1
+        "id": 1,
     }
 
     try:
         response = requests.post(
-            rpc_url,
-            json=rpc_data,
-            headers={"Content-Type": "application/json"}
+            rpc_url, json=rpc_data, headers={"Content-Type": "application/json"}
         )
         response.raise_for_status()
         rpc_response = response.json()
@@ -208,10 +206,16 @@ def check_rpc(rpc_url: Optional[str] = None) -> True:
         spinner.fail(f"Error: Failed to send RPC request: {e}")
         return False
 
-    rpc_error_message = rpc_response.get("error", {}).get("message", "exception processing rpc response").lower()
+    rpc_error_message = (
+        rpc_response.get("error", {})
+        .get("message", "exception processing rpc response")
+        .lower()
+    )
 
     if rpc_error_message == "exception processing rpc response":
-        print("Error: The received rpc response is malformed. Please verify the RPC address and/or rpc behavior.")
+        print(
+            "Error: The received rpc response is malformed. Please verify the RPC address and/or rpc behavior."
+        )
         print("  Received response:")
         print("  ", rpc_response)
         print("")
@@ -221,7 +225,9 @@ def check_rpc(rpc_url: Optional[str] = None) -> True:
         print("Error: The provided rpc is out of requests.")
         spinner.fail("Terminating script.")
         return False
-    elif rpc_error_message == "the method eth_newfilter does not exist/is not available":
+    elif (
+        rpc_error_message == "the method eth_newfilter does not exist/is not available"
+    ):
         print("Error: The provided RPC does not support 'eth_newFilter'.")
         spinner.fail("Terminating script.")
         return False

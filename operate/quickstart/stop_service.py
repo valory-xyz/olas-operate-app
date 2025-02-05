@@ -19,13 +19,14 @@
 """Quickstop script."""
 
 import json
-from typing import TYPE_CHECKING
-import warnings
 import sys
+import warnings
+from typing import TYPE_CHECKING
 
 from operate.constants import OPERATE_HOME
 from operate.quickstart.run_service import configure_local_config, get_service
 from operate.utils.common import print_section, print_title
+
 
 if TYPE_CHECKING:
     from operate.cli import OperateApp
@@ -50,7 +51,9 @@ def stop_service(operate: "OperateApp", config_path: str) -> None:
     configure_local_config(template)
     manager = operate.service_manager()
     service = get_service(manager, template)
-    manager.stop_service_locally(service_config_id=service.service_config_id, delete=True, use_docker=True)
+    manager.stop_service_locally(
+        service_config_id=service.service_config_id, delete=True, use_docker=True
+    )
 
     print()
     print_section(f"{template['name']} service stopped")

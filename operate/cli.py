@@ -45,10 +45,10 @@ from operate.account.user import UserAccount
 from operate.constants import KEY, KEYS, OPERATE_HOME, SERVICES
 from operate.ledger.profiles import DEFAULT_NEW_SAFE_FUNDS_AMOUNT
 from operate.operate_types import Chain, DeploymentStatus, LedgerType
-from operate.quickstart.reset_password import reset_password
-from operate.quickstart.reset_staking import reset_staking
 from operate.quickstart.analyse_logs import analyse_logs
 from operate.quickstart.claim_staking_rewards import claim_staking_rewards
+from operate.quickstart.reset_password import reset_password
+from operate.quickstart.reset_staking import reset_staking
 from operate.quickstart.run_service import run_service
 from operate.quickstart.stop_service import stop_service
 from operate.quickstart.terminate_on_chain_service import terminate_service
@@ -1004,18 +1004,51 @@ def qs_reset_password() -> None:
 @_operate.command(name="analyse-logs")
 def qs_analyse_logs(
     config: Annotated[str, params.String(help="Quickstart config file path")],
-    from_dir: Annotated[str, params.String(help="Path to the logs directory. If not provided, it is auto-detected.", default="")],
-    agent: Annotated[str, params.String(help="The agent name to analyze (default: 'aea_0').", default="aea_0")],
-    reset_db: Annotated[bool, params.Boolean(help="Use this flag to disable resetting the log database.", default=False)],
-    start_time: Annotated[str, params.String(help="Start time in `YYYY-MM-DD H:M:S,MS` format.", default="")],
-    end_time: Annotated[str, params.String(help="End time in `YYYY-MM-DD H:M:S,MS` format.", default="")],
-    log_level: Annotated[str, params.String(help="Logging level. (INFO, DEBUG, WARNING, ERROR, CRITICAL)", default="INFO")],
+    from_dir: Annotated[
+        str,
+        params.String(
+            help="Path to the logs directory. If not provided, it is auto-detected.",
+            default="",
+        ),
+    ],
+    agent: Annotated[
+        str,
+        params.String(
+            help="The agent name to analyze (default: 'aea_0').", default="aea_0"
+        ),
+    ],
+    reset_db: Annotated[
+        bool,
+        params.Boolean(
+            help="Use this flag to disable resetting the log database.", default=False
+        ),
+    ],
+    start_time: Annotated[
+        str,
+        params.String(help="Start time in `YYYY-MM-DD H:M:S,MS` format.", default=""),
+    ],
+    end_time: Annotated[
+        str, params.String(help="End time in `YYYY-MM-DD H:M:S,MS` format.", default="")
+    ],
+    log_level: Annotated[
+        str,
+        params.String(
+            help="Logging level. (INFO, DEBUG, WARNING, ERROR, CRITICAL)",
+            default="INFO",
+        ),
+    ],
     period: Annotated[int, params.Integer(help="Period ID.", default="")],
     round: Annotated[str, params.String(help="Round name.", default="")],
     behaviour: Annotated[str, params.String(help="Behaviour name filter.", default="")],
-    fsm: Annotated[bool, params.Boolean(help="Print only the FSM execution path.", default=False)],
-    include_regex: Annotated[str, params.String(help="Regex pattern to include in the result.", default="")],
-    exclude_regex: Annotated[str, params.String(help="Regex pattern to exclude from the result.", default="")],
+    fsm: Annotated[
+        bool, params.Boolean(help="Print only the FSM execution path.", default=False)
+    ],
+    include_regex: Annotated[
+        str, params.String(help="Regex pattern to include in the result.", default="")
+    ],
+    exclude_regex: Annotated[
+        str, params.String(help="Regex pattern to exclude from the result.", default="")
+    ],
 ) -> None:
     """Analyse the logs of an agent."""
     operate = OperateApp()
@@ -1034,7 +1067,7 @@ def qs_analyse_logs(
         behaviour=behaviour,
         fsm=fsm,
         include_regex=include_regex,
-        exclude_regex=exclude_regex
+        exclude_regex=exclude_regex,
     )
 
 

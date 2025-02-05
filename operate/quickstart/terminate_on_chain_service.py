@@ -19,10 +19,17 @@
 
 import json
 from typing import TYPE_CHECKING
+
 from operate.constants import OPERATE_HOME
 from operate.operate_types import OnChainState
-from operate.quickstart.run_service import ask_password_if_needed, configure_local_config, ensure_enough_funds, get_service
+from operate.quickstart.run_service import (
+    ask_password_if_needed,
+    configure_local_config,
+    ensure_enough_funds,
+    get_service,
+)
 from operate.utils.common import ask_yes_or_no, print_section, print_title
+
 
 if TYPE_CHECKING:
     from operate.cli import OperateApp
@@ -59,7 +66,10 @@ def terminate_service(operate: "OperateApp", config_path: str) -> None:
         chain=config.principal_chain,
     )
 
-    if manager._get_on_chain_state(service, config.principal_chain) == OnChainState.PRE_REGISTRATION:
+    if (
+        manager._get_on_chain_state(service, config.principal_chain)
+        == OnChainState.PRE_REGISTRATION
+    ):
         service_id = service.chain_configs[config.principal_chain].chain_data.token
         print(
             f"\nService {service_id} is now terminated and unbonded (i.e., it is on PRE-REGISTRATION state)."
