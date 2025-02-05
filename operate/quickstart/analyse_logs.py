@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from operate.constants import DEPLOYMENT
 
+
 if TYPE_CHECKING:
     from operate.cli import OperateApp
 
@@ -25,7 +26,7 @@ def find_build_directory(config_file: Path, operate: "OperateApp") -> Path:
                 print(f"{config.get('name')} not deployed.")
                 sys.exit(1)
             return build_dir
-    
+
     print(f"{config.get('name')} not found.")
     sys.exit(1)
 
@@ -33,8 +34,13 @@ def find_build_directory(config_file: Path, operate: "OperateApp") -> Path:
 def run_analysis(logs_dir, **kwargs):
     """Run the log analysis command."""
     command = [
-        "poetry", "run", "autonomy", "analyse", "logs",
-        "--from-dir", logs_dir,
+        "poetry",
+        "run",
+        "autonomy",
+        "analyse",
+        "logs",
+        "--from-dir",
+        logs_dir,
     ]
     if kwargs.get("agent"):
         command.extend(["--agent", kwargs.get("agent")])
@@ -70,12 +76,7 @@ def run_analysis(logs_dir, **kwargs):
         sys.exit(1)
 
 
-def analyse_logs(
-        operate: "OperateApp",
-        config_path: str,
-        **kwargs
-):
-
+def analyse_logs(operate: "OperateApp", config_path: str, **kwargs):
     config_file = Path(config_path)
     if not config_file.exists():
         print(f"Config file '{config_file}' not found.")

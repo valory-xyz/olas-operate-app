@@ -25,6 +25,7 @@ from operate.constants import OPERATE_HOME
 from operate.quickstart.run_service import configure_local_config, get_service
 from operate.utils.common import ask_yes_or_no, print_title
 
+
 if TYPE_CHECKING:
     from operate.cli import OperateApp
 
@@ -45,7 +46,9 @@ def reset_staking(operate: "OperateApp", config_path: str) -> None:
     config = configure_local_config(template)
     manager = operate.service_manager()
 
-    print(f"Your current staking program preference is set to '{config.staking_vars['STAKING_PROGRAM']}'.")
+    print(
+        f"Your current staking program preference is set to '{config.staking_vars['STAKING_PROGRAM']}'."
+    )
     print(
         "You can reset your preference. "
         "However, your agent might not be able to switch between staking contracts "

@@ -989,24 +989,31 @@ class ServiceManager:
             ]
         ):
             if (
-                not service.env_variables["AGENT_ID"]["value"] or
-                not service.env_variables["MECH_TO_CONFIG"]["value"]
+                not service.env_variables["AGENT_ID"]["value"]
+                or not service.env_variables["MECH_TO_CONFIG"]["value"]
             ):
                 mech_address, agent_id = deploy_mech(sftxb=sftxb, service=service)
-                service.update_env_variables_values({
-                    "AGENT_ID": agent_id,
-                    "MECH_TO_CONFIG": json.dumps({
-                        mech_address: {
-                            "use_dynamic_pricing": False,
-                            "is_marketplace_mech": True,
-                        }
-                    }, separators=(',', ':')),
-                })
-            
-            service.update_env_variables_values({
-                "ON_CHAIN_SERVICE_ID": chain_data.token,
-                "GNOSIS_RPC_0": service.env_variables["GNOSIS_LEDGER_RPC"]["value"],
-            })
+                service.update_env_variables_values(
+                    {
+                        "AGENT_ID": agent_id,
+                        "MECH_TO_CONFIG": json.dumps(
+                            {
+                                mech_address: {
+                                    "use_dynamic_pricing": False,
+                                    "is_marketplace_mech": True,
+                                }
+                            },
+                            separators=(",", ":"),
+                        ),
+                    }
+                )
+
+            service.update_env_variables_values(
+                {
+                    "ON_CHAIN_SERVICE_ID": chain_data.token,
+                    "GNOSIS_RPC_0": service.env_variables["GNOSIS_LEDGER_RPC"]["value"],
+                }
+            )
 
         # TODO: this is a patch for modius, to be standardized
         staking_chain = None
@@ -1501,9 +1508,7 @@ class ServiceManager:
         chain_data = chain_config.chain_data
         staking_program_id = chain_data.user_params.staking_program_id
         wallet = self.wallet_manager.load(ledger_config.chain.ledger_type)
-        ledger_api = wallet.ledger_api(
-            chain=ledger_config.chain, rpc=ledger_config.rpc
-        )
+        ledger_api = wallet.ledger_api(chain=ledger_config.chain, rpc=ledger_config.rpc)
         print(
             f"OLAS Balance on service Safe {chain_data.multisig}: "
             f"{get_asset_balance(ledger_api, OLAS[Chain(chain)], chain_data.multisig)}"
@@ -1515,13 +1520,17 @@ class ServiceManager:
             )
 
         sftxb = self.get_eth_safe_tx_builder(ledger_config=ledger_config)
-        receipt = sftxb.new_tx().add(
-            sftxb.get_claiming_data(
-                service_id=chain_data.token,
-                staking_contract=STAKING[ledger_config.chain][staking_program_id],
+        receipt = (
+            sftxb.new_tx()
+            .add(
+                sftxb.get_claiming_data(
+                    service_id=chain_data.token,
+                    staking_contract=STAKING[ledger_config.chain][staking_program_id],
+                )
             )
-        ).settle()
-        return receipt['transactionHash']
+            .settle()
+        )
+        return receipt["transactionHash"]
 
     def fund_service(  # pylint: disable=too-many-arguments,too-many-locals
         self,

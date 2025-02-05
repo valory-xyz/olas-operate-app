@@ -192,7 +192,9 @@ class NodeConfig(TypedDict):
     """Deployment node config."""
 
     ports: t.Optional[t.Dict[t.Union[str, int], t.Dict[int, int]]]
-    volumes: t.Optional[t.Union[t.Dict[str, str], t.Dict[t.Union[str, int], t.Dict[str, str]]]]
+    volumes: t.Optional[
+        t.Union[t.Dict[str, str], t.Dict[t.Union[str, int], t.Dict[str, str]]]
+    ]
 
 
 class DeploymentConfig(TypedDict):
@@ -200,6 +202,7 @@ class DeploymentConfig(TypedDict):
 
     agent: t.Optional[NodeConfig]
     tendermint: t.Optional[NodeConfig]
+
 
 class FundRequirementsTemplate(TypedDict):
     """Fund requirement template."""

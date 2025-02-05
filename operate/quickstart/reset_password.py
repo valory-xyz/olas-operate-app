@@ -27,6 +27,7 @@ from operate.quickstart.run_service import ask_confirm_password
 from operate.utils.common import print_section, print_title
 from operate.wallet.master import EthereumMasterWallet
 
+
 if TYPE_CHECKING:
     from operate.cli import OperateApp
 
@@ -62,7 +63,9 @@ def reset_password(operate: "OperateApp") -> None:
     print('Resetting password of "ethereum" wallet...')
     operate.password = old_password
     operate.wallet_manager.password = old_password
-    wallet: EthereumMasterWallet = operate.wallet_manager.load(ledger_type=LedgerType.ETHEREUM)
+    wallet: EthereumMasterWallet = operate.wallet_manager.load(
+        ledger_type=LedgerType.ETHEREUM
+    )
     wallet.update_password(password=new_password)
 
     print_section("Password reset done!")
