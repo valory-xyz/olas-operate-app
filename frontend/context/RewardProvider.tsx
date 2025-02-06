@@ -13,6 +13,7 @@ import {
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
@@ -102,7 +103,7 @@ const useStakingRewardsDetails = () => {
  * hook to fetch available rewards for the current epoch
  */
 const useAvailableRewardsForEpoch = () => {
-  const { isOnline } = useContext(OnlineStatusContext);
+  const { isOnline } = useOnlineStatusContext();
   const { selectedStakingProgramId } = useContext(StakingProgramContext);
 
   const {
