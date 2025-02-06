@@ -1,0 +1,34 @@
+name: "Basic Langchain Agent"
+description: "A Basic Langchain Agent"
+hash: bafybeif6t6kxdkklesvsxohqrdfbypzjtoy5wlmzovfxp3wklr4k3nusiu
+image: https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75
+service_version: v0.18.4
+home_chain: "gnosis"
+docker_image_name: "nrosavalory/langchain-hello-world:30012025"
+configurations:
+  gnosis:
+    staking_program_id: no_staking    
+    threshold: 1 # TODO: Move to service component    
+    # Values below copied from trader.yaml
+    cost_of_bond: 10000000000000000
+    monthly_gas_estimate: 10000000000000000000  # TODO: Where is this used
+    fund_requirements:
+      agent: 100000000000000000
+      safe: 5000000000000000000      
+    # Values above copied from trader.yaml
+env_variables:
+  GNOSIS_LEDGER_RPC:
+    name: "Gnosis ledger RPC"
+    description: ""
+    value: ""
+    provision_type: "computed"
+  TAVILY_API_KEY:
+    name: "Tavily API Key"
+    description: ""
+    value: ""
+    provision_type: "user"
+  OPENAI_API_KEY:
+    name: "OpenAI API Key"
+    description: ""
+    value: ""
+    provision_type: "user"

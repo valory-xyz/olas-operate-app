@@ -12,6 +12,7 @@ import { LOCAL_FORM_THEME } from '@/theme';
 import { SetupCreateHeader } from '../Create/SetupCreateHeader';
 import { MemeooorrAgentForm } from './MemeooorrAgentForm/MemeooorrAgentForm';
 import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
+import { LangchainAgentForm } from './LangchainAgentForm/LangchainAgentForm';
 
 const { Title, Text } = Typography;
 
@@ -44,6 +45,10 @@ export const SetupYourAgent = () => {
 
         {selectedAgentType === AgentType.Modius && (
           <ModiusAgentForm serviceTemplate={serviceTemplate} />
+        )}
+
+        {selectedAgentType === AgentType.Langchain && (
+          <LangchainAgentForm serviceTemplate={serviceTemplate} />
         )}
 
         <Text

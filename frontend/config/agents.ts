@@ -8,6 +8,7 @@ import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
+import { LangchainService } from '@/service/agents/Langchain';
 import { AgentConfig } from '@/types/Agent';
 
 import { MODE_TOKEN_CONFIG } from './tokens';
@@ -44,6 +45,17 @@ export const AGENT_CONFIG: {
     displayName: 'Agents.fun agent - Base',
     description:
       'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
+    isAgentEnabled: true,
+  },
+  [AgentType.Langchain]: {
+    name: 'Basic Langchain agent',
+    evmHomeChainId: EvmChainId.Gnosis,
+    middlewareHomeChainId: MiddlewareChain.GNOSIS,
+    requiresAgentSafesOn: [EvmChainId.Gnosis],
+    requiresMasterSafesOn: [EvmChainId.Gnosis],
+    serviceApi: LangchainService,
+    displayName: 'Basic Langchain agent',
+    description: 'Basic Langchain agent',
     isAgentEnabled: true,
   },
   [AgentType.Modius]: {

@@ -107,7 +107,8 @@ const EachAgent = memo(
       if (
         agentType === AgentType.Memeooorr ||
         agentType === AgentType.Modius ||
-        agentType === AgentType.AgentsFunCelo
+        agentType === AgentType.AgentsFunCelo ||
+        agentType == AgentType.Langchain
       ) {
         // if the selected type requires setting up an agent - should redirect to SetupYourAgent first
         // TODO: can have this as a boolean flag in agentConfig?

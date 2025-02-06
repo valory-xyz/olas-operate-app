@@ -25,6 +25,7 @@ const FUNDS_REQUIRED_FOR_BY_AGENT_TYPE = {
   [AgentType.Memeooorr]: 'for agent operations',
   [AgentType.Modius]: 'minimum for investment',
   [AgentType.AgentsFunCelo]: 'for agent operations',
+  [AgentType.Langchain]: 'for testing'
 };
 
 export const FundsToActivate = ({

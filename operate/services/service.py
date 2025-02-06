@@ -627,8 +627,13 @@ class Deployment(LocalResource):
         :param chain: Chain to set runtime parameters on the deployment (home_chain if not provided).
         :return: Deployment object
         """
+        custom_docker_image = None
+        if hasattr(self, "custom_docker_image"):
+            custom_docker_image = self.custom_docker_image
+
+
         # TODO: Maybe remove usage of chain and use home_chain always?
-        if use_docker or self.custom_docker_image is not None:
+        if use_docker or custom_docker_image is not None:
             return self._build_docker(force=force, chain=chain)
         return self._build_host(force=force, chain=chain)
 
@@ -952,7 +957,10 @@ class Service(LocalResource):
 
         docker_image_name = None
         if "docker_image_name" in service_template:
+            print(f'Docker image name found in service template: {service_template["docker_image_name"]}')
             docker_image_name = service_template["docker_image_name"]
+        else:
+            print('No docker image name found in service template.')
 
         service = Service(
             version=SERVICE_CONFIG_VERSION,

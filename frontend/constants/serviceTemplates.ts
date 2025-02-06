@@ -243,6 +243,57 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
   ...AGENTS_FUN_COMMON_TEMPLATE,
 } as const;
 
+export const LANGCHAIN_TEMPLATE: ServiceTemplate = {
+  agentType: AgentType.Langchain,
+  hash: 'bafybeif6t6kxdkklesvsxohqrdfbypzjtoy5wlmzovfxp3wklr4k3nusiu',
+  name: 'Langchain',// Should be unique across all services and not be updated
+  description: 'Basic Langchain Agent', 
+  image:
+    'https://gateway.autonolas.tech/ipfs/QmWGuWJ5oVgvdJrjxjfssDyoFxGXwKfB8pFL7Et54qT9H7',
+  service_version: 'v0.18.1',
+  home_chain: MiddlewareChain.GNOSIS,
+  configurations: {
+    [MiddlewareChain.GNOSIS]: {
+      //staking_program_id: StakingProgramId., // default, may be overwritten
+      nft: 'bafybeif6t6kxdkklesvsxohqrdfbypzjtoy5wlmzovfxp3wklr4k3nusiu',
+      rpc: 'http://localhost:8545', // overwritten
+      agent_id: 1, //TODO REPLACE
+      threshold: 1,
+      use_staking: false,
+      //values below copied from Trader template
+      cost_of_bond: +parseEther(0.001),
+      monthly_gas_estimate: +parseEther(10),
+      fund_requirements: {
+        [ethers.constants.AddressZero]: {
+          agent: +parseEther(2),
+          safe: +parseEther(5),
+        }, 
+      //values above copied from Trader template
+      },
+    },
+  },  
+  env_variables: {
+    GNOSIS_LEDGER_RPC: {
+      name: 'Gnosis ledger RPC',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    TAVILY_API_KEY: {
+      name: 'Tavily API Key',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    OPENAI_API_KEY: {
+      name: 'OpenAI API Key',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+  },
+} as const;
+
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
@@ -374,6 +425,7 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
   AGENTS_FUN_BASE_TEMPLATE,
   MODIUS_SERVICE_TEMPLATE,
   AGENTS_FUN_CELO_TEMPLATE,
+  LANGCHAIN_TEMPLATE,
 ] as const;
 
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;

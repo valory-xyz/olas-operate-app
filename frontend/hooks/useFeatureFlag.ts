@@ -40,6 +40,17 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'backup-via-safe': true,
     'agent-settings': false,
   },
+  [AgentType.Langchain]: {
+    'manage-wallet': true,
+    'withdraw-funds': true,
+    'last-transactions': true,
+    'rewards-streak': true,
+    'staking-contract-section': false,
+    'low-funds': true,
+    'agent-activity': false,
+    'backup-via-safe': true,
+    'agent-settings': true,
+  },
   [AgentType.Memeooorr]: {
     'manage-wallet': true,
     'withdraw-funds': false,
