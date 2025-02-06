@@ -32,8 +32,6 @@ backend/tmp/
 tmp/
 temp/
 
-!operate/data
-
 # electron cache/temp
 electron/.next
 electron/public/*.png

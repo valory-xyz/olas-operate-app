@@ -25,7 +25,7 @@ mkdir -p $BIN_DIR
 
 poetry install
 
-poetry run pyinstaller operate/services/utils/tendermint.py --onefile --distpath $BIN_DIR
+poetry run pyinstaller operate/tendermint.py --onefile --distpath $BIN_DIR
 
 poetry run pyinstaller \
     --collect-data eth_account \

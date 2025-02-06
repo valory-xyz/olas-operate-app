@@ -30,7 +30,7 @@ endef
 
 ./dist/tendermint_win.exe: ./electron/bins/ ./operate/
 	pwd
-	poetry install && poetry run pyinstaller operate/services/utils/tendermint.py --onefile --name tendermint_win
+	poetry install && poetry run pyinstaller operate/tendermint.py --onefile --name tendermint_win
 	ls -l dist
 	cp dist/tendermint_win.exe ./electron/bins/tendermint_win.exe
 

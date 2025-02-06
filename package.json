@@ -63,7 +63,7 @@
     "build:frontend": "cd frontend && yarn build && rm -rf ../electron/.next && cp -r .next ../electron/.next && rm -rf ../electron/public && cp -r public ../electron/public",
     "build:pearl": "sh build_pearl.sh",
     "dev": "dotenv -e .env -- electron .",
-    "dev:backend": "poetry run python operate/cli.py",
+    "dev:backend": "poetry run python -m operate.cli daemon",
     "dev:frontend": "cd frontend && yarn dev",
     "dev:hardhat": "hardhat node",
     "download-binaries": "sh download_binaries.sh",

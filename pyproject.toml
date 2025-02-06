@@ -1,58 +1,14 @@
-[tool.poetry]
 name = "olas-operate-middleware"
 version = "0.2.0-rc156"
 description = ""
 authors = ["David Vilela <dvilelaf@gmail.com>", "Viraj Patel <vptl185@gmail.com>"]
 readme = "README.md"
-packages = [
-    { include = "operate" }
-]
-include = [
-    "operate/data/acn/*",
-    "operate/data/contracts/*",
-    "operate/data/contracts/staking_token/*",
-    "operate/data/contracts/staking_token/build/*",
-]
-
-[tool.poetry.scripts]
-operate = "operate.cli:main"
+packages = []
+include = []
 
 [tool.poetry.dependencies]
-python = "<3.12,>=3.9"
-open-autonomy = "==0.19.1"
-open-aea-ledger-cosmos = "==1.63.0"
-open-aea-ledger-ethereum = "==1.63.0"
-open-aea-ledger-ethereum-flashbots = "==1.63.0"
-open-aea-cli-ipfs = "==1.63.0"
-clea = "==0.1.0rc4"
-cytoolz = "==0.12.3"
-docker = "6.1.2"
-fastapi = "==0.110.0"
-eth-hash = "==0.7.0"
-eth-account = "==0.8.0"
-eth-keyfile = "==0.6.1"
-eth-keys = "==0.4.0"
-eth-rlp = "==0.3.0"
-eth-typing = "==3.5.2"
-eth-utils = "==2.3.1"
-eth-abi = "==5.1.0"
-frozenlist = "==1.4.1"
-hexbytes = "==0.3.1"
-ipfshttpclient = "==0.8.0a2"
-jsonschema = "==4.3.3"
-multidict = "==6.0.5"
-requests-toolbelt = "1.0.0"
-starlette = "==0.36.3"
-uvicorn = "==0.27.0"
-web3 = "==6.1.0"
-psutil = "^5.9.8"
-pyinstaller = "^6.8.0"
-aiohttp = "3.9.5"
-deepdiff = "^8.0.1"
-twikit = "==2.2.0"
-
-[tool.poetry.group.development.dependencies]
-tomte = {version = "0.2.17", extras = ["cli"]}
+python = ">=3.9,<3.12"
+olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "52f22ca6c48bf6410c72315a7cddd5742e4d9c6c"}
 
 [build-system]
 requires = ["poetry-core"]

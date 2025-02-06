@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 from aea_ledger_ethereum.ethereum import EthereumApi, EthereumCrypto
+from operate.data.contracts import uniswap_v2_erc20
 
 
 RPC = os.environ.get("DEV_RPC", "http://localhost:8545")
@@ -29,10 +30,7 @@ def fund(wallet: str, address: str, amount: float = 20.0) -> None:
         address=ledger_api.api.to_checksum_address(OLAS_CONTRACT_ADDRESS_GNOSIS),
         abi=json.loads(
             Path(
-                "operate",
-                "data",
-                "contracts",
-                "uniswap_v2_erc20",
+                f"{uniswap_v2_erc20.__path__[0]}",
                 "build",
                 "IUniswapV2ERC20.json",
             ).read_text(encoding="utf-8")

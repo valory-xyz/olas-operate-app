@@ -260,13 +260,13 @@ typecheck = ["mypy"]
 
 [[package]]
 name = "beautifulsoup4"
-version = "4.13.2"
+version = "4.13.3"
 description = "Screen-scraping library"
 optional = false
 python-versions = ">=3.7.0"
 files = [
-    {file = "beautifulsoup4-4.13.2-py3-none-any.whl", hash = "sha256:b0ebbcecbfbed2f28e07fb8d004494dfb3030711874a034551ac52008b87a1d1"},
-    {file = "beautifulsoup4-4.13.2.tar.gz", hash = "sha256:da9184389e6848818cf31c970ba3cbe6f33c2b8fbabd70d5bd4a2bfa0c1c4272"},
+    {file = "beautifulsoup4-4.13.3-py3-none-any.whl", hash = "sha256:99045d7d3f08f91f0d656bc9b7efbae189426cd913d830294a15eefa0ea4df16"},
+    {file = "beautifulsoup4-4.13.3.tar.gz", hash = "sha256:1bd32405dacc920b42b83ba01644747ed77456a65760e285fbc47633ceddaf8b"},
 ]
 
 [package.dependencies]
@@ -1005,17 +1005,6 @@ cli = ["click (==8.1.8)", "pyyaml (==6.0.2)"]
 optimize = ["orjson"]
 
 [[package]]
-name = "distlib"
-version = "0.3.9"
-description = "Distribution utilities"
-optional = false
-python-versions = "*"
-files = [
-    {file = "distlib-0.3.9-py2.py3-none-any.whl", hash = "sha256:47f8c22fd27c27e25a65601af709b38e4f0a45ea4fc2e710f65755fa8caaaf87"},
-    {file = "distlib-0.3.9.tar.gz", hash = "sha256:a60f20dea646b8a33f3e7772f74dc0b2d0772d2837ee1342a00645c81edf9403"},
-]
-
-[[package]]
 name = "distro"
 version = "1.9.0"
 description = "Distro - an OS platform information API"
@@ -1300,22 +1289,6 @@ typing-extensions = ">=4.8.0"
 
 [package.extras]
 all = ["email-validator (>=2.0.0)", "httpx (>=0.23.0)", "itsdangerous (>=1.1.0)", "jinja2 (>=2.11.2)", "orjson (>=3.2.1)", "pydantic-extra-types (>=2.0.0)", "pydantic-settings (>=2.0.0)", "python-multipart (>=0.0.7)", "pyyaml (>=5.3.1)", "ujson (>=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0)", "uvicorn[standard] (>=0.12.0)"]
-
-[[package]]
-name = "filelock"
-version = "3.17.0"
-description = "A platform independent file lock."
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "filelock-3.17.0-py3-none-any.whl", hash = "sha256:533dc2f7ba78dc2f0f531fc6c4940addf7b70a481e269a5a3b93be94ffbe8338"},
-    {file = "filelock-3.17.0.tar.gz", hash = "sha256:ee4e77401ef576ebb38cd7f13b9b28893194acc20a8e68e18730ba9c0e54660e"},
-]
-
-[package.extras]
-docs = ["furo (>=2024.8.6)", "sphinx (>=8.1.3)", "sphinx-autodoc-typehints (>=3)"]
-testing = ["covdefaults (>=2.3)", "coverage (>=7.6.10)", "diff-cover (>=9.2.1)", "pytest (>=8.3.4)", "pytest-asyncio (>=0.25.2)", "pytest-cov (>=6)", "pytest-mock (>=3.14)", "pytest-timeout (>=2.3.1)", "virtualenv (>=20.28.1)"]
-typing = ["typing-extensions (>=4.12.2)"]
 
 [[package]]
 name = "filetype"
@@ -2218,6 +2191,54 @@ files = [
 nicer-shell = ["ipython"]
 
 [[package]]
+name = "olas-operate-middleware"
+version = "0.2.0-rc147"
+description = ""
+optional = false
+python-versions = "<3.12,>=3.9"
+files = []
+develop = false
+
+[package.dependencies]
+aiohttp = "3.9.5"
+clea = "==0.1.0rc4"
+cytoolz = "==0.12.3"
+deepdiff = "^8.0.1"
+docker = "6.1.2"
+eth-abi = "==5.1.0"
+eth-account = "==0.8.0"
+eth-hash = "==0.7.0"
+eth-keyfile = "==0.6.1"
+eth-keys = "==0.4.0"
+eth-rlp = "==0.3.0"
+eth-typing = "==3.5.2"
+eth-utils = "==2.3.1"
+fastapi = "==0.110.0"
+frozenlist = "==1.4.1"
+hexbytes = "==0.3.1"
+ipfshttpclient = "==0.8.0a2"
+jsonschema = "==4.3.3"
+multidict = "==6.0.5"
+open-aea-cli-ipfs = "==1.63.0"
+open-aea-ledger-cosmos = "==1.63.0"
+open-aea-ledger-ethereum = "==1.63.0"
+open-aea-ledger-ethereum-flashbots = "==1.63.0"
+open-autonomy = "==0.19.2"
+psutil = "^5.9.8"
+pyinstaller = "^6.8.0"
+requests-toolbelt = "1.0.0"
+starlette = "==0.36.3"
+twikit = "==2.2.0"
+uvicorn = "==0.27.0"
+web3 = "==6.1.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/valory-xyz/olas-operate-middleware.git"
+reference = "52f22ca6c48bf6410c72315a7cddd5742e4d9c6c"
+resolved_reference = "52f22ca6c48bf6410c72315a7cddd5742e4d9c6c"
+
+[[package]]
 name = "open-aea"
 version = "1.63.0"
 description = "Open Autonomous Economic Agent framework (without vendor lock-in)"
@@ -2339,13 +2360,13 @@ open-aea-ledger-ethereum = ">=1.63.0,<1.64.0"
 
 [[package]]
 name = "open-autonomy"
-version = "0.19.1"
+version = "0.19.2"
 description = "A framework for the creation of autonomous agent services."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "open_autonomy-0.19.1-py3-none-any.whl", hash = "sha256:d69f432269be722755b5d6a2513b848fcfde28e74563bef6e189329a90bcf7c0"},
-    {file = "open_autonomy-0.19.1.tar.gz", hash = "sha256:34f88a8b23982fd560dc41219afbeb872a871f487d9010eb16191ff9011328a3"},
+    {file = "open_autonomy-0.19.2-py3-none-any.whl", hash = "sha256:2ce08e72ebe141dc60b6e81497618c47f6db945fe574c450c6c6f617fb2d1687"},
+    {file = "open_autonomy-0.19.2.tar.gz", hash = "sha256:be282f2b9fd22a8d9e26ef56656c22d21126f0dc2c3b822df02dec571ab595dd"},
 ]
 
 [package.dependencies]
@@ -2441,22 +2462,6 @@ files = [
     {file = "pefile-2023.2.7-py3-none-any.whl", hash = "sha256:da185cd2af68c08a6cd4481f7325ed600a88f6a813bad9dea07ab3ef73d8d8d6"},
     {file = "pefile-2023.2.7.tar.gz", hash = "sha256:82e6114004b3d6911c77c3953e3838654b04511b8b66e8583db70c65998017dc"},
 ]
-
-[[package]]
-name = "platformdirs"
-version = "4.3.6"
-description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "platformdirs-4.3.6-py3-none-any.whl", hash = "sha256:73e575e1408ab8103900836b97580d5307456908a03e92031bab39e4554cc3fb"},
-    {file = "platformdirs-4.3.6.tar.gz", hash = "sha256:357fb2acbc885b0419afd3ce3ed34564c13c9b95c89360cd9563f73aa5e2b907"},
-]
-
-[package.extras]
-docs = ["furo (>=2024.8.6)", "proselint (>=0.14)", "sphinx (>=8.0.2)", "sphinx-autodoc-typehints (>=2.4)"]
-test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=8.3.2)", "pytest-cov (>=5)", "pytest-mock (>=3.14)"]
-type = ["mypy (>=1.11.2)"]
 
 [[package]]
 name = "pluggy"
@@ -2613,17 +2618,6 @@ files = [
 
 [package.extras]
 test = ["enum34", "ipaddress", "mock", "pywin32", "wmi"]
-
-[[package]]
-name = "py"
-version = "1.11.0"
-description = "library with cross-python path, ini-parsing, io, code, log facilities"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-files = [
-    {file = "py-1.11.0-py2.py3-none-any.whl", hash = "sha256:607c53218732647dff4acdfcd50cb62615cedf612e72d1724fb1a0cc6405b378"},
-    {file = "py-1.11.0.tar.gz", hash = "sha256:51c75c4126074b472f746a24399ad32f6053d1b34b68d2fa41e558e6f4a98719"},
-]
 
 [[package]]
 name = "py-multibase"
@@ -3452,38 +3446,6 @@ files = [
 ]
 
 [[package]]
-name = "tomte"
-version = "0.2.17"
-description = "A library that wraps many useful tools (linters, analysers, etc) to keep Python code clean, secure, well-documented and optimised."
-optional = false
-python-versions = "<4,>=3.8"
-files = [
-    {file = "tomte-0.2.17-py3-none-any.whl", hash = "sha256:477e1e903610b5e2a8cf74a78cf229eacc21aa666e25e7bb872385ef2c013cfe"},
-    {file = "tomte-0.2.17.tar.gz", hash = "sha256:ad583dd39f2c398272f7f196471b2ecc8430eb89e07295ec1e682f64dd782831"},
-]
-
-[package.dependencies]
-click = {version = ">=8.1.0,<9", optional = true, markers = "extra == \"black\" or extra == \"cli\" or extra == \"docs\""}
-requests = {version = ">=2.28.1,<3", optional = true, markers = "extra == \"cli\""}
-tox = {version = "3.28.0", optional = true, markers = "extra == \"cli\" or extra == \"tox\""}
-
-[package.extras]
-bandit = ["bandit (==1.7.4)"]
-black = ["black (==23.1.0)", "click (>=8.1.0,<9)"]
-cli = ["click (>=8.1.0,<9)", "requests (>=2.28.1,<3)", "tox (==3.28.0)"]
-darglint = ["darglint (==1.8.1)"]
-docs = ["Markdown (==3.3.7)", "Pygments (>=2.16,<3.0)", "bs4 (==0.0.1)", "click (>=8.1.0,<9)", "markdown-include (==0.8.0)", "mkdocs (>=1.5.3,<2.0)", "mkdocs-macros-plugin (==0.7.0)", "mkdocs-material (==9.4.10)", "mkdocs-material-extensions (==1.3)", "mkdocs-redirects (==1.2.0)", "pydoc-markdown (==4.8.2)", "pydocstyle (==6.2.3)", "pymdown-extensions (>=10.2,<11.0)"]
-flake8 = ["flake8 (==3.9.2)", "flake8-bugbear (==23.1.14)", "flake8-docstrings (==1.6.0)", "flake8-eradicate (==1.4.0)", "flake8-isort (==6.0.0)", "pydocstyle (==6.2.3)"]
-isort = ["isort (==5.11.4)"]
-liccheck = ["liccheck (==0.8.3)"]
-mypy = ["mypy (==0.991)"]
-pylint = ["pylint (==2.13.9)"]
-safety = ["safety (==2.4.0b1)"]
-tests = ["pytest (==7.2.1)", "pytest-asyncio (>=0.21.0,<0.22.0)", "pytest-cov (==4.0.0)", "pytest-randomly (==3.12.0)", "pytest-rerunfailures (==11.0)"]
-tox = ["tox (==3.28.0)"]
-vulture = ["vulture (==2.7)"]
-
-[[package]]
 name = "toolz"
 version = "1.0.0"
 description = "List processing tools and functional utilities"
@@ -3493,31 +3455,6 @@ files = [
     {file = "toolz-1.0.0-py3-none-any.whl", hash = "sha256:292c8f1c4e7516bf9086f8850935c799a874039c8bcf959d47b600e4c44a6236"},
     {file = "toolz-1.0.0.tar.gz", hash = "sha256:2c86e3d9a04798ac556793bced838816296a2f085017664e4995cb40a1047a02"},
 ]
-
-[[package]]
-name = "tox"
-version = "3.28.0"
-description = "tox is a generic virtualenv management and test command line tool"
-optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
-files = [
-    {file = "tox-3.28.0-py2.py3-none-any.whl", hash = "sha256:57b5ab7e8bb3074edc3c0c0b4b192a4f3799d3723b2c5b76f1fa9f2d40316eea"},
-    {file = "tox-3.28.0.tar.gz", hash = "sha256:d0d28f3fe6d6d7195c27f8b054c3e99d5451952b54abdae673b71609a581f640"},
-]
-
-[package.dependencies]
-colorama = {version = ">=0.4.1", markers = "platform_system == \"Windows\""}
-filelock = ">=3.0.0"
-packaging = ">=14"
-pluggy = ">=0.12.0"
-py = ">=1.4.17"
-six = ">=1.14.0"
-tomli = {version = ">=2.0.1", markers = "python_version >= \"3.7\" and python_version < \"3.11\""}
-virtualenv = ">=16.0.0,<20.0.0 || >20.0.0,<20.0.1 || >20.0.1,<20.0.2 || >20.0.2,<20.0.3 || >20.0.3,<20.0.4 || >20.0.4,<20.0.5 || >20.0.5,<20.0.6 || >20.0.6,<20.0.7 || >20.0.7"
-
-[package.extras]
-docs = ["pygments-github-lexers (>=0.0.5)", "sphinx (>=2.0.0)", "sphinxcontrib-autoprogram (>=0.1.5)", "towncrier (>=18.5.0)"]
-testing = ["flaky (>=3.4.0)", "freezegun (>=0.3.11)", "pathlib2 (>=2.3.3)", "psutil (>=5.6.1)", "pytest (>=4.0.0)", "pytest-cov (>=2.5.1)", "pytest-mock (>=1.10.0)", "pytest-randomly (>=1.0.0)"]
 
 [[package]]
 name = "twikit"
@@ -3621,26 +3558,6 @@ python-versions = "*"
 files = [
     {file = "varint-1.0.2.tar.gz", hash = "sha256:a6ecc02377ac5ee9d65a6a8ad45c9ff1dac8ccee19400a5950fb51d594214ca5"},
 ]
-
-[[package]]
-name = "virtualenv"
-version = "20.29.1"
-description = "Virtual Python Environment builder"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "virtualenv-20.29.1-py3-none-any.whl", hash = "sha256:4e4cb403c0b0da39e13b46b1b2476e505cb0046b25f242bee80f62bf990b2779"},
-    {file = "virtualenv-20.29.1.tar.gz", hash = "sha256:b8b8970138d32fb606192cb97f6cd4bb644fa486be9308fb9b63f81091b5dc35"},
-]
-
-[package.dependencies]
-distlib = ">=0.3.7,<1"
-filelock = ">=3.12.2,<4"
-platformdirs = ">=3.9.1,<5"
-
-[package.extras]
-docs = ["furo (>=2023.7.26)", "proselint (>=0.13)", "sphinx (>=7.1.2,!=7.3)", "sphinx-argparse (>=0.4)", "sphinxcontrib-towncrier (>=0.2.1a0)", "towncrier (>=23.6)"]
-test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=23.1)", "pytest (>=7.4)", "pytest-env (>=0.8.2)", "pytest-freezer (>=0.4.8)", "pytest-mock (>=3.11.1)", "pytest-randomly (>=3.12)", "pytest-timeout (>=2.1)", "setuptools (>=68)", "time-machine (>=2.10)"]
 
 [[package]]
 name = "watchdog"
@@ -3940,5 +3857,5 @@ type = ["pytest-mypy"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "<3.12,>=3.9"
-content-hash = "ac6878b68f285dc3bc2c09456e54466d6c2d511cc222114a5f65f5b1994b93a9"
+python-versions = ">=3.9,<3.12"
+content-hash = "e16ed936a5c34f2d20b70151f4ffb3a374603cf263aa4c15a67e87bc6cba08ec"

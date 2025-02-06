@@ -71,7 +71,7 @@ jobs:
       #     mkdir dist && curl -L -o dist/aea_bin "https://github.com/valory-xyz/optimus/releases/download/${$optimus_version}/optimus_bin_${{ env.OS_ARCH }}"
       - name: Build with PyInstaller
         run: |
-          poetry run pyinstaller operate/services/utils/tendermint.py --onefile
+          poetry run pyinstaller operate/tendermint.py --onefile
           cp dist/tendermint dist/tendermint_bin
 
           poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py  --onefile --name pearl_${{ env.OS_ARCH }}
