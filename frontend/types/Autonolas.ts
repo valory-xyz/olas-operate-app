@@ -8,14 +8,15 @@ const zodBigNumber = z.object({
 export const StakingRewardsInfoSchema = z.object({
   // mechRequestCount: z.number(),
   serviceInfo: z.array(z.unknown()),
-  livenessPeriod: zodBigNumber,
+  livenessPeriod: z.number(),
   livenessRatio: zodBigNumber,
-  rewardsPerSecond: zodBigNumber,
+  rewardsPerSecond: z.number(),
   rewardsPerSecondInNumber: z.number(),
   isEligibleForRewards: z.boolean(),
   availableRewardsForEpoch: z.number(),
   accruedServiceStakingRewards: z.number(),
   minimumStakedAmount: z.number(),
+  lastCheckpointTimestamp: z.number(),
 });
 
 export type StakingRewardsInfo = z.infer<typeof StakingRewardsInfoSchema>;

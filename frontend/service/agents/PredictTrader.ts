@@ -111,23 +111,21 @@ export abstract class PredictTraderService extends StakedAgentService {
     const minimumStakedAmount =
       parseFloat(ethers.utils.formatEther(`${minStakingDeposit}`)) * 2;
 
-    console.log(rewardsPerSecond.toString());
     return {
       // mechRequestCount,
       serviceInfo,
-      livenessPeriod,
+      livenessPeriod: livenessPeriod.toNumber(),
       livenessRatio,
       rewardsPerSecond,
-      rewardsPerSecondInNumber: rewardsPerSecond
-        ? Number(rewardsPerSecond.toString())
-        : 0,
-      isEligibleForRewards,
+      rewardsPerSecondInNumber: Number(rewardsPerSecond.toNumber()),
+      isEligibleForRewards: isEligibleForRewards || true, // TODO: remove
       availableRewardsForEpoch,
       // accruedServiceStakingRewards: accruedStakingReward
       //   ? parseFloat(ethers.utils.formatEther(`${accruedStakingReward}`))
       //   : 0,
       accruedServiceStakingRewards: 0,
       minimumStakedAmount,
+      lastCheckpointTimestamp: tsCheckpoint.toNumber(),
     } as StakingRewardsInfo;
   };
 
