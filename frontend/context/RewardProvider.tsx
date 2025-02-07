@@ -189,7 +189,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
       stakingRewardsDetails.lastCheckpointTimestamp +
       stakingRewardsDetails.livenessPeriod;
 
-    // default to the late checkpoint timestamp
+    // default to the last checkpoint timestamp
     // ie, if agent has not staked yet, use the last checkpoint timestamp
     const agentStakingStartTime = Math.max(
       stakingRewardsDetails.lastCheckpointTimestamp,
@@ -216,6 +216,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     availableRewardsForEpoch,
   ]);
 
+  // optimistic rewards earned for the current epoch in ETH
   const optimisticRewardsEarnedForEpoch = useMemo<number | undefined>(() => {
     if (!isEligibleForRewards) return;
     if (!availableRewardsForEpochEth) return;

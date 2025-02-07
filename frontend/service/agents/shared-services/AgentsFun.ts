@@ -110,7 +110,8 @@ export abstract class AgentsFunService extends StakedAgentService {
         ethers.utils.formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
-    } as StakingRewardsInfo;
+      lastCheckpointTimestamp: tsCheckpoint,
+    } satisfies StakingRewardsInfo;
   };
 
   static getAvailableRewardsForEpoch = async (

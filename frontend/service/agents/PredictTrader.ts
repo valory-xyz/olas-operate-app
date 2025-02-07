@@ -113,7 +113,7 @@ export abstract class PredictTraderService extends StakedAgentService {
         : 0,
       minimumStakedAmount,
       lastCheckpointTimestamp: tsCheckpoint,
-    } as StakingRewardsInfo;
+    } satisfies StakingRewardsInfo;
   };
 
   static getAvailableRewardsForEpoch = async (
