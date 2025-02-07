@@ -3,13 +3,16 @@ import { z } from 'zod';
 export const StakingRewardsInfoSchema = z.object({
   // mechRequestCount: z.number(),
   serviceInfo: z.array(z.unknown()),
+  /* checkpoint period (in seconds). eg. 86400 */
   livenessPeriod: z.number(),
   livenessRatio: z.number(),
+  /* rewards per second */
   rewardsPerSecond: z.number(),
   isEligibleForRewards: z.boolean(),
   availableRewardsForEpoch: z.number(),
   accruedServiceStakingRewards: z.number(),
   minimumStakedAmount: z.number(),
+  /* last timestamp of the checkpoint */
   lastCheckpointTimestamp: z.number(),
 });
 

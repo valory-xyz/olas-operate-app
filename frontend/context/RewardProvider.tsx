@@ -18,7 +18,7 @@ import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 import { useStore } from '@/hooks/useStore';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
-import { formatEther, formatUnits } from '@/utils/numberFormatters';
+import { formatEther } from '@/utils/numberFormatters';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 import { StakingProgramContext } from './StakingProgramProvider';
@@ -164,8 +164,10 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     stakingRewardsDetails?.accruedServiceStakingRewards;
 
   const rewardsPerSecond = stakingRewardsDetails?.rewardsPerSecond;
+  // const serviceStakingStartTime =
+  //   selectedStakingContractDetails?.serviceStakingStartTime;
   const serviceStakingStartTime =
-    selectedStakingContractDetails?.serviceStakingStartTime;
+    (stakingRewardsDetails?.lastCheckpointTimestamp || 0) + 86400 / 2;
 
   // available rewards for the epoch
   const availableRewardsForEpochEth = useMemo<number | undefined>(() => {
@@ -177,16 +179,19 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     if (isSelectedStakingContractDetailsLoading) return;
     if (isAvailableRewardsForEpochLoading) return;
 
-    // // if agent is not staked, return the available rewards for the epoch
-    if (isNil(serviceStakingStartTime) || serviceStakingStartTime === 0) {
-      return parseFloat(formatUnits(`${availableRewardsForEpoch}`));
-    }
+    // if agent is not staked, return the available rewards for the epoch
+    // i.e, agent has not yet started staking
+    // if (isNil(serviceStakingStartTime) || serviceStakingStartTime === 0) {
+    //   return parseFloat(formatUnits(`${availableRewardsForEpoch}`));
+    // }
 
+    // calculate the next checkpoint timestamp
+    // i.e, next = last + checkpoint period
     const nextCheckpointTimestamp =
       stakingRewardsDetails.lastCheckpointTimestamp +
       stakingRewardsDetails.livenessPeriod;
 
-    // default to the latest checkpoint timestamp
+    // default to the late checkpoint timestamp
     // ie, if agent has not staked yet, use the last checkpoint timestamp
     const agentStakingStartTime = Math.max(
       stakingRewardsDetails.lastCheckpointTimestamp,
@@ -218,8 +223,6 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     if (!availableRewardsForEpochEth) return;
     return availableRewardsForEpochEth;
   }, [availableRewardsForEpochEth, isEligibleForRewards]);
-
-  // console.log({ stakingRewardsDetails });
 
   // store the first staking reward achieved in the store for notification
   useEffect(() => {
