@@ -58,14 +58,19 @@ export abstract class AgentsFunService extends StakedAgentService {
 
     const [
       serviceInfo,
-      livenessPeriod,
-      rewardsPerSecond,
+      livenessPeriodInBn,
+      rewardsPerSecondInBn,
       accruedStakingReward,
       minStakingDeposit,
-      tsCheckpoint,
-      livenessRatio,
+      tsCheckpointInBn,
+      livenessRatioInBn,
       currentMultisigNonces,
     ] = multicallResponse;
+
+    const rewardsPerSecond = rewardsPerSecondInBn.toNumber();
+    const livenessPeriod = livenessPeriodInBn.toNumber();
+    const tsCheckpoint = tsCheckpointInBn.toNumber();
+    const livenessRatio = livenessRatioInBn.toNumber();
 
     const lastMultisigNonces = serviceInfo[2];
     const nowInSeconds = Math.floor(Date.now() / 1000);

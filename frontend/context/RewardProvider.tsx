@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { formatEther } from 'ethers/lib/utils';
 import { isNil } from 'lodash';
 import {
   createContext,
@@ -14,12 +13,12 @@ import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
-import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 import { useStore } from '@/hooks/useStore';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { formatEther, formatUnits } from '@/utils/numberFormatters';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 import { StakingProgramContext } from './StakingProgramProvider';
@@ -144,20 +143,15 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   const electronApi = useElectronApi();
 
   const {
+    isSelectedStakingContractDetailsLoading,
+    selectedStakingContractDetails,
+  } = useStakingContractContext();
+
+  const {
     data: stakingRewardsDetails,
     refetch: refetchStakingRewardsDetails,
     isLoading: isStakingRewardsDetailsLoading,
   } = useStakingRewardsDetails();
-
-  const { selectedService } = useServices();
-  const { isLoaded: isServiceLoaded, isServiceRunning } = useService(
-    selectedService?.service_config_id,
-  );
-
-  const {
-    isSelectedStakingContractDetailsLoading,
-    selectedStakingContractDetails,
-  } = useStakingContractContext();
 
   const {
     data: availableRewardsForEpoch,
@@ -169,71 +163,55 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   const accruedServiceStakingRewards =
     stakingRewardsDetails?.accruedServiceStakingRewards;
 
-  const rewardsPerSecond = stakingRewardsDetails?.rewardsPerSecondInNumber;
-  // const rewardsPerSecondInBg = (
-  //   BigNumber.isBigNumber(rewardsPerSecond) ? rewardsPerSecond.toNumber() : 0
-  // ) as number;
+  const rewardsPerSecond = stakingRewardsDetails?.rewardsPerSecond;
+  const serviceStakingStartTime =
+    selectedStakingContractDetails?.serviceStakingStartTime;
 
-  // console.log('stakingRewardsDetails', stakingRewardsDetails);
-  // console.log('selectedStakingContractDetails', selectedStakingContractDetails);
-  // available rewards for the current epoch in ETH
-
+  // available rewards for the epoch
   const availableRewardsForEpochEth = useMemo<number | undefined>(() => {
     if (!rewardsPerSecond) return;
     if (!isEligibleForRewards) return;
+
+    // wait for the staking details to load
+    if (isStakingRewardsDetailsLoading) return;
     if (isSelectedStakingContractDetailsLoading) return;
+    if (isAvailableRewardsForEpochLoading) return;
 
-    // // wait for service to load
-    // if (!isServiceLoaded) return;
-    if (!stakingRewardsDetails) return;
-
-    // // if agent is not running, return available rewards for the current epoch
-    // if (!isServiceRunning) {
-    //   return parseFloat(formatUnits(`${availableRewardsForEpoch}`));
-    // }
-
-    // calculate the time agent staked in the current epoch
-
-    // const rewardsPerSecondInBg = BigNumber.isBigNumber(rewardsPerSecond)
-    //   ? rewardsPerSecond
-    //   : ethers.BigNumber.from(0);
-    // console.log(rewardsPerSecondInBg);
-    // // rewardsPerSecondInBg.mul(timeWhenAgentStakedInCurrentEpoch).toS;
-    // // multiply rewards per second with the time agent staked in the current epoch
-    // const currentEpochRewards = 0;
+    // // if agent is not staked, return the available rewards for the epoch
+    if (isNil(serviceStakingStartTime) || serviceStakingStartTime === 0) {
+      return parseFloat(formatUnits(`${availableRewardsForEpoch}`));
+    }
 
     const nextCheckpointTimestamp =
       stakingRewardsDetails.lastCheckpointTimestamp +
       stakingRewardsDetails.livenessPeriod;
 
-    // if agent is running, calculate rewards earned for the current epoch
-    // (tsCheckpoint + livenessPeriod) - tsStartTime)
+    // default to the latest checkpoint timestamp
+    // ie, if agent has not staked yet, use the last checkpoint timestamp
+    const agentStakingStartTime = Math.max(
+      stakingRewardsDetails.lastCheckpointTimestamp,
+      serviceStakingStartTime || 0,
+    );
+
+    // calculate the time agent staked in the current epoch
     const stakingDurationInCurrentEpoch =
-      nextCheckpointTimestamp -
-      (selectedStakingContractDetails?.serviceStakingStartTime || 0);
+      nextCheckpointTimestamp - agentStakingStartTime;
 
-    console.log({
-      rewardsPerSecond,
-      serviceStakingStartTime:
-        selectedStakingContractDetails?.serviceStakingStartTime,
-      stakingDurationInCurrentEpoch,
-      nextCheckpointTimestamp,
-    });
+    const rewardsInCurrentEpoch =
+      parseFloat(formatEther(`${rewardsPerSecond}`)) *
+      stakingDurationInCurrentEpoch;
 
-    const rewardsInCurrentEpochAfterStaking =
-      formatEther(rewardsPerSecond) * stakingDurationInCurrentEpoch;
-
-    return parseFloat(rewardsInCurrentEpochAfterStaking);
+    return parseFloat(`${rewardsInCurrentEpoch}`);
   }, [
     isEligibleForRewards,
     isSelectedStakingContractDetailsLoading,
-    isServiceLoaded,
-    isServiceRunning,
+    isStakingRewardsDetailsLoading,
+    isAvailableRewardsForEpochLoading,
     stakingRewardsDetails,
     rewardsPerSecond,
+    serviceStakingStartTime,
+    availableRewardsForEpoch,
   ]);
-
-  console.log({ availableRewardsForEpochEth });
 
   const optimisticRewardsEarnedForEpoch = useMemo<number | undefined>(() => {
     if (!isEligibleForRewards) return;

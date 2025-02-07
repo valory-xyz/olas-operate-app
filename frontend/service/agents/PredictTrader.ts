@@ -63,13 +63,18 @@ export abstract class PredictTraderService extends StakedAgentService {
     const [
       mechRequestCount,
       serviceInfo,
-      livenessPeriod,
-      livenessRatio,
-      rewardsPerSecond,
+      livenessPeriodInBn,
+      livenessRatioInBn,
+      rewardsPerSecondInBn,
       // accruedStakingReward,
       minStakingDeposit,
-      tsCheckpoint,
+      tsCheckpointInBn,
     ] = multicallResponse;
+
+    const rewardsPerSecond = rewardsPerSecondInBn.toNumber();
+    const livenessPeriod = livenessPeriodInBn.toNumber();
+    const tsCheckpoint = tsCheckpointInBn.toNumber();
+    const livenessRatio = livenessRatioInBn.toNumber();
 
     /**
      * struct ServiceInfo {
@@ -114,10 +119,9 @@ export abstract class PredictTraderService extends StakedAgentService {
     return {
       // mechRequestCount,
       serviceInfo,
-      livenessPeriod: livenessPeriod.toNumber(),
+      livenessPeriod,
       livenessRatio,
       rewardsPerSecond,
-      rewardsPerSecondInNumber: Number(rewardsPerSecond.toNumber()),
       isEligibleForRewards: isEligibleForRewards || true, // TODO: remove
       availableRewardsForEpoch,
       // accruedServiceStakingRewards: accruedStakingReward
@@ -125,7 +129,7 @@ export abstract class PredictTraderService extends StakedAgentService {
       //   : 0,
       accruedServiceStakingRewards: 0,
       minimumStakedAmount,
-      lastCheckpointTimestamp: tsCheckpoint.toNumber(),
+      lastCheckpointTimestamp: tsCheckpoint,
     } as StakingRewardsInfo;
   };
 
