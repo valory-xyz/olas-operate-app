@@ -18,7 +18,7 @@ import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 import { useStore } from '@/hooks/useStore';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
-import { formatEther } from '@/utils/numberFormatters';
+import { formatEther, formatUnits } from '@/utils/numberFormatters';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 import { StakingProgramContext } from './StakingProgramProvider';
@@ -164,10 +164,8 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     stakingRewardsDetails?.accruedServiceStakingRewards;
 
   const rewardsPerSecond = stakingRewardsDetails?.rewardsPerSecond;
-  // const serviceStakingStartTime =
-  //   selectedStakingContractDetails?.serviceStakingStartTime;
   const serviceStakingStartTime =
-    (stakingRewardsDetails?.lastCheckpointTimestamp || 0) + 86400 / 2;
+    selectedStakingContractDetails?.serviceStakingStartTime;
 
   // available rewards for the epoch
   const availableRewardsForEpochEth = useMemo<number | undefined>(() => {
@@ -181,9 +179,9 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
 
     // if agent is not staked, return the available rewards for the epoch
     // i.e, agent has not yet started staking
-    // if (isNil(serviceStakingStartTime) || serviceStakingStartTime === 0) {
-    //   return parseFloat(formatUnits(`${availableRewardsForEpoch}`));
-    // }
+    if (isNil(serviceStakingStartTime) || serviceStakingStartTime === 0) {
+      return parseFloat(formatUnits(`${availableRewardsForEpoch}`));
+    }
 
     // calculate the next checkpoint timestamp
     // i.e, next = last + checkpoint period

@@ -54,44 +54,28 @@ export abstract class PredictTraderService extends StakedAgentService {
       stakingTokenProxyContract.livenessPeriod(),
       activityChecker.livenessRatio(),
       stakingTokenProxyContract.rewardsPerSecond(),
-      // stakingTokenProxyContract.calculateStakingReward(serviceId),
+      stakingTokenProxyContract.calculateStakingReward(serviceId),
       stakingTokenProxyContract.minStakingDeposit(),
       stakingTokenProxyContract.tsCheckpoint(),
     ];
     const multicallResponse = await provider.all(contractCalls);
 
     const [
-      mechRequestCount,
+      mechRequestCountInBn,
       serviceInfo,
       livenessPeriodInBn,
       livenessRatioInBn,
       rewardsPerSecondInBn,
-      // accruedStakingReward,
+      accruedStakingReward,
       minStakingDeposit,
       tsCheckpointInBn,
     ] = multicallResponse;
 
+    const mechRequestCount = mechRequestCountInBn.toNumber();
     const rewardsPerSecond = rewardsPerSecondInBn.toNumber();
     const livenessPeriod = livenessPeriodInBn.toNumber();
     const tsCheckpoint = tsCheckpointInBn.toNumber();
     const livenessRatio = livenessRatioInBn.toNumber();
-
-    /**
-     * struct ServiceInfo {
-      // Service multisig address
-      address multisig;
-      // Service owner
-      address owner;
-      // Service multisig nonces
-      uint256[] nonces; <-- (we use this in the rewards eligibility check)
-      // Staking start time
-      uint256 tsStart;
-      // Accumulated service staking reward
-      uint256 reward;
-      // Accumulated inactivity that might lead to the service eviction
-      uint256 inactivity;}
-     */
-
     const nowInSeconds = Math.floor(Date.now() / 1000);
 
     const requiredMechRequests =
@@ -122,12 +106,11 @@ export abstract class PredictTraderService extends StakedAgentService {
       livenessPeriod,
       livenessRatio,
       rewardsPerSecond,
-      isEligibleForRewards: isEligibleForRewards || true, // TODO: remove
+      isEligibleForRewards,
       availableRewardsForEpoch,
-      // accruedServiceStakingRewards: accruedStakingReward
-      //   ? parseFloat(ethers.utils.formatEther(`${accruedStakingReward}`))
-      //   : 0,
-      accruedServiceStakingRewards: 0,
+      accruedServiceStakingRewards: accruedStakingReward
+        ? parseFloat(ethers.utils.formatEther(`${accruedStakingReward}`))
+        : 0,
       minimumStakedAmount,
       lastCheckpointTimestamp: tsCheckpoint,
     } as StakingRewardsInfo;
