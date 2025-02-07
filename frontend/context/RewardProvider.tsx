@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { ethers } from 'ethers';
 import { formatUnits } from 'ethers/lib/utils';
 import { isNil } from 'lodash';
 import {
@@ -14,7 +15,9 @@ import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
+import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
+import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 import { useStore } from '@/hooks/useStore';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
@@ -147,6 +150,16 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     isLoading: isStakingRewardsDetailsLoading,
   } = useStakingRewardsDetails();
 
+  const { selectedService } = useServices();
+  const { isLoaded: isServiceLoaded, isServiceRunning } = useService(
+    selectedService?.service_config_id,
+  );
+
+  const {
+    isSelectedStakingContractDetailsLoading,
+    selectedStakingContractDetails,
+  } = useStakingContractContext();
+
   const {
     data: availableRewardsForEpoch,
     isLoading: isAvailableRewardsForEpochLoading,
@@ -157,18 +170,60 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   const accruedServiceStakingRewards =
     stakingRewardsDetails?.accruedServiceStakingRewards;
 
-  // available rewards for the current epoch in ETH
-  const availableRewardsForEpochEth = useMemo<number | undefined>(() => {
-    if (!availableRewardsForEpoch) return;
-    return parseFloat(formatUnits(`${availableRewardsForEpoch}`));
-  }, [availableRewardsForEpoch]);
+  const rewardsPerSecond = stakingRewardsDetails?.rewardsPerSecondInNumber;
+  // const rewardsPerSecondInBg = (
+  //   BigNumber.isBigNumber(rewardsPerSecond) ? rewardsPerSecond.toNumber() : 0
+  // ) as number;
+  console.log(rewardsPerSecond);
 
-  // optimistic rewards earned for the current epoch in ETH
+  // console.log('stakingRewardsDetails', stakingRewardsDetails);
+  // console.log('selectedStakingContractDetails', selectedStakingContractDetails);
+  // available rewards for the current epoch in ETH
+
+  const availableRewardsForEpochEth = useMemo<number | undefined>(() => {
+    if (!isEligibleForRewards) return;
+    if (!availableRewardsForEpochEth) return;
+    if (!isSelectedStakingContractDetailsLoading) return;
+
+    // wait for service to load
+    if (!isServiceLoaded) return;
+
+    // if agent is not running, return available rewards for the current epoch
+    if (!isServiceRunning)
+      return parseFloat(formatUnits(`${availableRewardsForEpoch}`));
+
+    // calculate the time agent staked in the current epoch
+    const timeWhenAgentStakedInCurrentEpoch = 1;
+
+    // const rewardsPerSecondInBg = BigNumber.isBigNumber(rewardsPerSecond)
+    //   ? rewardsPerSecond
+    //   : ethers.BigNumber.from(0);
+    // console.log(rewardsPerSecondInBg);
+    // // rewardsPerSecondInBg.mul(timeWhenAgentStakedInCurrentEpoch).toS;
+    // // multiply rewards per second with the time agent staked in the current epoch
+    // const currentEpochRewards = 0;
+
+    // if agent is running, calculate rewards earned for the current epoch
+    const currentEpochRewards = ethers.BigNumber.from(
+      stakingRewardsDetails.rewardsPerSecondInNumber,
+    ).mul(timeWhenAgentStakedInCurrentEpoch);
+
+    return ethers.utils.formatEther(currentEpochRewards);
+  }, [
+    isEligibleForRewards,
+    isSelectedStakingContractDetailsLoading,
+    isServiceLoaded,
+    isServiceRunning,
+    stakingRewardsDetails,
+  ]);
+
   const optimisticRewardsEarnedForEpoch = useMemo<number | undefined>(() => {
     if (!isEligibleForRewards) return;
     if (!availableRewardsForEpochEth) return;
     return availableRewardsForEpochEth;
   }, [availableRewardsForEpochEth, isEligibleForRewards]);
+
+  // console.log({ stakingRewardsDetails });
 
   // store the first staking reward achieved in the store for notification
   useEffect(() => {

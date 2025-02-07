@@ -54,7 +54,7 @@ export abstract class PredictTraderService extends StakedAgentService {
       stakingTokenProxyContract.livenessPeriod(),
       activityChecker.livenessRatio(),
       stakingTokenProxyContract.rewardsPerSecond(),
-      stakingTokenProxyContract.calculateStakingReward(serviceId),
+      // stakingTokenProxyContract.calculateStakingReward(serviceId),
       stakingTokenProxyContract.minStakingDeposit(),
       stakingTokenProxyContract.tsCheckpoint(),
     ];
@@ -66,7 +66,7 @@ export abstract class PredictTraderService extends StakedAgentService {
       livenessPeriod,
       livenessRatio,
       rewardsPerSecond,
-      accruedStakingReward,
+      // accruedStakingReward,
       minStakingDeposit,
       tsCheckpoint,
     ] = multicallResponse;
@@ -111,17 +111,22 @@ export abstract class PredictTraderService extends StakedAgentService {
     const minimumStakedAmount =
       parseFloat(ethers.utils.formatEther(`${minStakingDeposit}`)) * 2;
 
+    console.log(rewardsPerSecond.toString());
     return {
       // mechRequestCount,
       serviceInfo,
       livenessPeriod,
       livenessRatio,
       rewardsPerSecond,
+      rewardsPerSecondInNumber: rewardsPerSecond
+        ? Number(rewardsPerSecond.toString())
+        : 0,
       isEligibleForRewards,
       availableRewardsForEpoch,
-      accruedServiceStakingRewards: parseFloat(
-        ethers.utils.formatEther(`${accruedStakingReward}`),
-      ),
+      // accruedServiceStakingRewards: accruedStakingReward
+      //   ? parseFloat(ethers.utils.formatEther(`${accruedStakingReward}`))
+      //   : 0,
+      accruedServiceStakingRewards: 0,
       minimumStakedAmount,
     } as StakingRewardsInfo;
   };

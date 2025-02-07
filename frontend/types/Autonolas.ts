@@ -11,6 +11,7 @@ export const StakingRewardsInfoSchema = z.object({
   livenessPeriod: zodBigNumber,
   livenessRatio: zodBigNumber,
   rewardsPerSecond: zodBigNumber,
+  rewardsPerSecondInNumber: z.number(),
   isEligibleForRewards: z.boolean(),
   availableRewardsForEpoch: z.number(),
   accruedServiceStakingRewards: z.number(),
