@@ -18,6 +18,7 @@
 """Terminate on-chain service."""
 
 import json
+import os
 from typing import TYPE_CHECKING
 from operate.constants import OPERATE_HOME
 from operate.operate_types import OnChainState
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
 
 def terminate_service(operate: "OperateApp", config_path: str) -> None:
     """Terminate service."""
+    attended = os.environ.get("ATTENDED", "true").lower() == "true"
 
     with open(config_path, "r") as config_file:
         template = json.load(config_file)
@@ -42,7 +44,7 @@ def terminate_service(operate: "OperateApp", config_path: str) -> None:
         print("No previous agent setup found. Exiting.")
         return
 
-    if not ask_yes_or_no(
+    if attended and not ask_yes_or_no(
         "Please, ensure that your service is stopped (./stop_service.sh) before proceeding. "
         "Do you want to continue?"
     ):

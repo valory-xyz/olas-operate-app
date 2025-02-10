@@ -19,6 +19,7 @@
 """Reset staking."""
 
 import json
+import os
 from typing import TYPE_CHECKING
 
 from operate.constants import OPERATE_HOME
@@ -33,6 +34,8 @@ if TYPE_CHECKING:
 
 def reset_staking(operate: "OperateApp", config_path: str) -> None:
     """Reset staking."""
+    attended = os.environ.get("ATTENDED", "true").lower() == "true"
+
     with open(config_path, "r") as config_file:
         template = json.load(config_file)
 
@@ -58,7 +61,7 @@ def reset_staking(operate: "OperateApp", config_path: str) -> None:
         "until it has been staked for a minimum staking period in the current program.\n"
     )
 
-    if not ask_yes_or_no(
+    if attended and not ask_yes_or_no(
         "Please, ensure that your service is stopped (./stop_service.sh) before proceeding. "
         "Do you want to continue?"
     ):
@@ -87,7 +90,7 @@ def reset_staking(operate: "OperateApp", config_path: str) -> None:
         )
         return
 
-    if not ask_yes_or_no("Service can be unstaked. Would you like to proceed with unstaking and reset?"):
+    if attended and not ask_yes_or_no("Service can be unstaked. Would you like to proceed with unstaking and reset?"):
         print("Cancelled.")
         return
 
