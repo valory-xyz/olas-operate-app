@@ -30,6 +30,7 @@ export const StakingContractTag = ({ status }: StakingContractTagProps) => {
 };
 
 type StakingContractSectionProps = { stakingProgramId: StakingProgramId };
+
 export const StakingContractSection = ({
   stakingProgramId,
 }: StakingContractSectionProps) => {
@@ -106,7 +107,8 @@ export const StakingContractSection = ({
     >
       <Flex gap={12}>
         <Title level={5} className="m-0">
-          {allStakingProgramsMeta[stakingProgramId]?.name || 'Unknown'}
+          {allStakingProgramsMeta[stakingProgramId]?.name || 'Unknown'} -{' '}
+          {stakingProgramId}
         </Title>
         <StakingContractTag status={contractTagStatus} />
       </Flex>
