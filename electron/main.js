@@ -92,6 +92,8 @@ let appConfig = {
 let mainWindow = null;
 /** @type {Electron.BrowserWindow | null} */
 let splashWindow = null;
+/** @type {Electron.BrowserWindow | null} */
+let agentWindow = null;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
@@ -395,6 +397,46 @@ const createMainWindow = async () => {
   }
 };
 
+/**Create the agent specific window */
+const createAgentActivityWindow = async () => {
+  agentWindow = new BrowserWindow({
+    title: 'Agent activity window',
+    resizable: false,
+    draggable: true,
+    frame: false,
+    transparent: true,
+    fullscreenable: false,
+    maximizable: false,
+    maxHeight: 900,
+    maxWidth: 1200,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
+    },
+  });
+
+  ipcMain.on('agent-activity-window-goto', (_event, url) => {
+    agentWindow?.loadURL(url);
+  });
+
+  ipcMain.on('agent-activity-window-hide', () => {
+    agentWindow?.hide();
+  });
+
+  ipcMain.on('agent-activity-window-show', () => {
+    agentWindow?.show();
+  });
+
+  ipcMain.on('agent-activity-window-close', () => {
+    agentWindow?.close();
+  });
+
+  ipcMain.on('agent-activity-window-minimize', () => {
+    agentWindow?.minimize();
+  });
+};
+
 async function launchDaemon() {
   // Free up backend port if already occupied
   try {
@@ -625,6 +667,7 @@ ipcMain.on('check', async function (event, _argument) {
     event.sender.send('response', 'Launching App');
     await createMainWindow();
     tray = new PearlTray(getActiveWindow);
+    await createAgentActivityWindow(); // TODO: only create when needed
   } catch (e) {
     logger.electron(e);
     new Notification({
