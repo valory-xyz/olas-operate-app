@@ -20,7 +20,7 @@ const getFormattedReward = (reward: number | undefined) =>
 const SHARE_TEXT = `I just earned my first reward through the Operate app powered by #olas!\n\nDownload the Pearl app:`;
 
 export const NotifyRewardsModal = () => {
-  const { isEligibleForRewards, availableRewardsForEpochEth } =
+  const { isEligibleForRewards, eligibleRewardsThisEpochInEth } =
     useRewardContext();
   const { mainOlasBalance } = useMainOlasBalance();
   const { showNotification, store } = useElectronApi();
@@ -35,8 +35,8 @@ export const NotifyRewardsModal = () => {
     [mainOlasBalance],
   );
   const formattedEarnedRewards = useMemo(
-    () => balanceFormat(availableRewardsForEpochEth, 2),
-    [availableRewardsForEpochEth],
+    () => balanceFormat(eligibleRewardsThisEpochInEth, 2),
+    [eligibleRewardsThisEpochInEth],
   );
 
   // hook to set the flag to show the notification
@@ -44,11 +44,11 @@ export const NotifyRewardsModal = () => {
     if (!isEligibleForRewards) return;
     if (!storeState) return;
     if (storeState?.firstRewardNotificationShown) return;
-    if (!availableRewardsForEpochEth) return;
+    if (!eligibleRewardsThisEpochInEth) return;
 
-    firstRewardRef.current = availableRewardsForEpochEth;
+    firstRewardRef.current = eligibleRewardsThisEpochInEth;
     setCanShowNotification(true);
-  }, [isEligibleForRewards, availableRewardsForEpochEth, storeState]);
+  }, [isEligibleForRewards, eligibleRewardsThisEpochInEth, storeState]);
 
   // hook to show desktop app notification
   useEffect(() => {

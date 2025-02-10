@@ -9,7 +9,7 @@ export const StakingRewardsInfoSchema = z.object({
   /* rewards per second */
   rewardsPerSecond: z.number(),
   isEligibleForRewards: z.boolean(),
-  availableRewardsForEpoch: z.number(),
+  eligibleRewardsThisEpoch: z.number(),
   accruedServiceStakingRewards: z.number(),
   minimumStakedAmount: z.number(),
   /* last timestamp of the checkpoint */

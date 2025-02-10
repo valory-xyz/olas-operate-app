@@ -89,7 +89,7 @@ export abstract class AgentsFunService extends StakedAgentService {
 
     const isEligibleForRewards = eligibleRequests >= requiredRequests;
 
-    const availableRewardsForEpoch = Math.max(
+    const eligibleRewardsThisEpoch = Math.max(
       rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
       rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
     );
@@ -105,7 +105,7 @@ export abstract class AgentsFunService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
-      availableRewardsForEpoch,
+      eligibleRewardsThisEpoch,
       accruedServiceStakingRewards: parseFloat(
         ethers.utils.formatEther(`${accruedStakingReward}`),
       ),

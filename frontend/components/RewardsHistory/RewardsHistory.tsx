@@ -197,7 +197,7 @@ const ContractRewards = ({
 }: ContractRewardsProps) => {
   const stakingProgramMeta =
     STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][stakingProgramId];
-  const { availableRewardsForEpochEth: reward, isEligibleForRewards } =
+  const { eligibleRewardsThisEpochInEth: reward, isEligibleForRewards } =
     useRewardContext();
 
   return (

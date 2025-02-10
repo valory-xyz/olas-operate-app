@@ -90,7 +90,7 @@ export abstract class ModiusService extends StakedAgentService {
 
     const isEligibleForRewards = eligibleRequests >= requiredRequests;
 
-    const availableRewardsForEpoch = Math.max(
+    const eligibleRewardsThisEpoch = Math.max(
       rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
       rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
     );
@@ -106,7 +106,7 @@ export abstract class ModiusService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
-      availableRewardsForEpoch,
+      eligibleRewardsThisEpoch,
       accruedServiceStakingRewards: parseFloat(
         ethers.utils.formatEther(`${accruedStakingReward}`),
       ),

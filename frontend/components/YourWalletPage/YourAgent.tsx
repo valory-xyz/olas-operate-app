@@ -195,7 +195,7 @@ const YourAgentWalletBreakdown = () => {
   const { serviceSafe, middlewareChain, evmHomeChainId } = useYourWallet();
 
   const {
-    availableRewardsForEpochEth,
+    eligibleRewardsThisEpochInEth,
     isEligibleForRewards,
     accruedServiceStakingRewards,
   } = useRewardContext();
@@ -203,11 +203,11 @@ const YourAgentWalletBreakdown = () => {
   const reward = useMemo(() => {
     if (!isLoaded) return <Skeleton.Input size="small" active />;
     if (isEligibleForRewards) {
-      return `~${balanceFormat(availableRewardsForEpochEth, 2)} OLAS`;
+      return `~${balanceFormat(eligibleRewardsThisEpochInEth, 2)} OLAS`;
     }
 
     return 'Not yet earned';
-  }, [isLoaded, isEligibleForRewards, availableRewardsForEpochEth]);
+  }, [isLoaded, isEligibleForRewards, eligibleRewardsThisEpochInEth]);
 
   const serviceSafeOlas = useMemo(
     () =>

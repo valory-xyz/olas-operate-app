@@ -90,7 +90,7 @@ export abstract class PredictTraderService extends StakedAgentService {
 
     const isEligibleForRewards = eligibleRequests >= requiredMechRequests;
 
-    const availableRewardsForEpoch = Math.max(
+    const eligibleRewardsThisEpoch = Math.max(
       rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
       rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
     );
@@ -107,7 +107,7 @@ export abstract class PredictTraderService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
-      availableRewardsForEpoch,
+      eligibleRewardsThisEpoch,
       accruedServiceStakingRewards: accruedStakingReward
         ? parseFloat(ethers.utils.formatEther(`${accruedStakingReward}`))
         : 0,
