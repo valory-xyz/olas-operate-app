@@ -28,4 +28,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   validateTwitterLogin: (credentials) =>
     ipcRenderer.invoke('validate-twitter-login', credentials),
   healthCheck: () => ipcRenderer.invoke('health-check'),
+  agentActivityWindow,
 });
+
+/** IPC methods for controlling agent activity window */
+const agentActivityWindow = {
+  goto: (url) => ipcRenderer.send('agent-activity-window-goto', url),
+  hide: () => ipcRenderer.send('agent-activity-window-hide'),
+  show: () => ipcRenderer.send('agent-activity-window-show'),
+  close: () => ipcRenderer.send('agent-activity-window-close'),
+  minimize: () => ipcRenderer.send('agent-activity-window-minimize'),
+};
