@@ -170,7 +170,6 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   // available rewards for the epoch
   const eligibleRewardsThisEpochInEth = useMemo<number | undefined>(() => {
     if (!rewardsPerSecond) return;
-    if (!isEligibleForRewards) return;
 
     // wait for the staking details to load
     if (isStakingRewardsDetailsLoading) return;
@@ -206,7 +205,6 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
 
     return parseFloat(`${rewardsInCurrentEpoch}`);
   }, [
-    isEligibleForRewards,
     isSelectedStakingContractDetailsLoading,
     isStakingRewardsDetailsLoading,
     isEligibleRewardsThisEpochLoading,
