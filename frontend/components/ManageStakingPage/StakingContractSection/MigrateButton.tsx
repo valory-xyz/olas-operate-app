@@ -16,7 +16,7 @@ import {
 } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { ServicesService } from '@/service/Services';
-import { DeepPartial } from '@/types/Util';
+import { assertRequired, DeepPartial } from '@/types/Util';
 
 import { CountdownUntilMigration } from './CountdownUntilMigration';
 import { CantMigrateReason, useMigrate } from './useMigrate';
@@ -124,7 +124,6 @@ export const MigrateButton = ({
     currentStakingContractId,
   } = useMigrateButtonDetails(stakingProgramIdToMigrateTo);
 
-  const serviceConfigId = selectedService?.service_config_id;
   const serviceTemplate = useMemo(
     () =>
       SERVICE_TEMPLATES.find(
@@ -135,7 +134,8 @@ export const MigrateButton = ({
 
   const handleSwitchAndRunAgent = useCallback(async () => {
     if (!serviceTemplate) return;
-    if (!serviceConfigId) return;
+
+    let serviceConfigId = null;
 
     setIsServicePollingPaused(true);
     setIsBalancePollingPaused(true);
@@ -152,6 +152,8 @@ export const MigrateButton = ({
 
       // update service, if it exists
       if (selectedService) {
+        serviceConfigId = selectedService.service_config_id;
+
         const partialServiceTemplate = {
           configurations: {
             ...Object.entries(serviceTemplate.configurations).reduce(
@@ -167,6 +169,10 @@ export const MigrateButton = ({
           },
         };
 
+        assertRequired(
+          serviceConfigId,
+          'Service config Id has to be present before updating service',
+        );
         await ServicesService.updateService({
           serviceConfigId,
           partialServiceTemplate,
@@ -181,14 +187,22 @@ export const MigrateButton = ({
           deploy: true,
           canUseMechMarketplace,
         };
-        await ServicesService.createService(serviceConfigParams);
+        serviceConfigId = (
+          await ServicesService.createService(serviceConfigParams)
+        ).service_config_id;
       }
 
-      setIsMigrating(false);
+      // update active staking program ID
       setActiveStakingProgramId(stakingProgramIdToMigrateTo);
+
+      setIsMigrating(false);
       overrideSelectedServiceStatus(MiddlewareDeploymentStatus.DEPLOYING);
 
       // start service after updating or creating
+      assertRequired(
+        serviceConfigId,
+        'Service config Id has to be available before starting service',
+      );
       await ServicesService.startService(serviceConfigId);
 
       setMigrationModalOpen(true);
@@ -207,7 +221,6 @@ export const MigrateButton = ({
   }, [
     serviceTemplate,
     stakingProgramIdToMigrateTo,
-    serviceConfigId,
     selectedService,
     setActiveStakingProgramId,
     setIsServicePollingPaused,
