@@ -2,8 +2,9 @@ import { Button, Popover } from 'antd';
 import { isNil } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import { ServiceTemplate } from '@/client';
+import { MiddlewareDeploymentStatus } from '@/client';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
+import { Pages } from '@/enums/Pages';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useModals } from '@/hooks/useModals';
@@ -20,44 +21,38 @@ import { DeepPartial } from '@/types/Util';
 import { CountdownUntilMigration } from './CountdownUntilMigration';
 import { CantMigrateReason, useMigrate } from './useMigrate';
 
-type MigrateButtonProps = {
-  stakingProgramId: StakingProgramId;
-};
-export const MigrateButton = ({
-  stakingProgramId: stakingProgramIdToMigrateTo,
-}: MigrateButtonProps) => {
-  const { goto } = usePageState();
-  const {
-    setPaused: setIsServicePollingPaused,
-    isFetched: isServicesLoaded,
+// validation state
+const useValidation = (stakingProgramId: StakingProgramId) => {
+  const { isFetched: isServicesLoaded, selectedService } = useServices();
+  const { migrateValidation, firstDeployValidation } =
+    useMigrate(stakingProgramId);
+
+  const validation = useMemo(() => {
+    if (!isServicesLoaded) return migrateValidation;
+    if (selectedService) return migrateValidation;
+    return firstDeployValidation;
+  }, [
+    isServicesLoaded,
     selectedService,
-    selectedAgentType,
-    overrideSelectedServiceStatus,
-  } = useServices();
-  const serviceConfigId =
-    isServicesLoaded && selectedService
-      ? selectedService.service_config_id
-      : '';
-  console.log('serviceConfigId', serviceConfigId);
-  const serviceTemplate = useMemo<ServiceTemplate | undefined>(
-    () =>
-      SERVICE_TEMPLATES.find(
-        (template) => template.agentType === selectedAgentType,
-      ),
-    [selectedAgentType],
-  );
+    migrateValidation,
+    firstDeployValidation,
+  ]);
 
-  const { setIsPaused: setIsBalancePollingPaused } = useBalanceContext();
+  return validation;
+};
 
-  const { defaultStakingProgramId, setDefaultStakingProgramId } =
-    useStakingProgram();
+// migrate button details
+const useMigrateButtonDetails = (stakingProgramId: StakingProgramId) => {
+  const { defaultStakingProgramId } = useStakingProgram();
   const {
-    selectedStakingContractDetails,
     isSelectedStakingContractDetailsLoading,
+    selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
   const { stakingContractInfo: defaultStakingContractInfo } =
     useStakingContractDetails(defaultStakingProgramId);
+  const validation = useValidation(stakingProgramId);
 
+  // current staking contract details
   const currentStakingContractInfo = useMemo(() => {
     if (isSelectedStakingContractDetailsLoading) return;
     if (selectedStakingContractDetails) return selectedStakingContractDetails;
@@ -67,22 +62,6 @@ export const MigrateButton = ({
     defaultStakingContractInfo,
     isSelectedStakingContractDetailsLoading,
   ]);
-
-  const { setMigrationModalOpen } = useModals();
-
-  const { migrateValidation, firstDeployValidation } = useMigrate(
-    stakingProgramIdToMigrateTo,
-  );
-
-  // if false, user is migrating, not running for first time
-  const isFirstDeploy = useMemo(() => {
-    if (!isServicesLoaded) return false;
-    if (selectedService) return false;
-
-    return true;
-  }, [isServicesLoaded, selectedService]);
-
-  const validation = isFirstDeploy ? firstDeployValidation : migrateValidation;
 
   const popoverContent = useMemo(() => {
     if (validation.canMigrate) return null;
@@ -101,26 +80,68 @@ export const MigrateButton = ({
     return validation.reason;
   }, [currentStakingContractInfo, validation]);
 
+  return {
+    popoverContent,
+    validation,
+    // currentStakingContractId: currentStakingContractInfo?.id,
+  };
+};
+
+type MigrateButtonProps = {
+  stakingProgramId: StakingProgramId;
+};
+
+/**
+ * Contract migration button
+ */
+export const MigrateButton = ({
+  stakingProgramId: stakingProgramIdToMigrateTo,
+}: MigrateButtonProps) => {
+  const { goto } = usePageState();
+  const {
+    setPaused: setIsServicePollingPaused,
+    selectedService,
+    selectedAgentType,
+    overrideSelectedServiceStatus,
+  } = useServices();
+
+  // balance
+  const { setIsPaused: setIsBalancePollingPaused } = useBalanceContext();
+
+  // modals
+  const { setMigrationModalOpen } = useModals();
+
+  // staking contract details, validation, popover content
+  const { setDefaultStakingProgramId } = useStakingProgram();
+  const { popoverContent, validation } = useMigrateButtonDetails(
+    stakingProgramIdToMigrateTo,
+  );
+
+  const serviceConfigId = selectedService?.service_config_id;
+  const serviceTemplate = useMemo(
+    () =>
+      SERVICE_TEMPLATES.find(
+        (template) => template.agentType === selectedAgentType,
+      ),
+    [selectedAgentType],
+  );
+
   const handleSwitchAndRunAgent = useCallback(async () => {
     if (!serviceTemplate) return;
+    if (!serviceConfigId) return;
 
-    // setIsServicePollingPaused(true);
-    // setIsBalancePollingPaused(true);
-    // setDefaultStakingProgramId(stakingProgramIdToMigrateTo);
+    setIsServicePollingPaused(true);
+    setIsBalancePollingPaused(true);
 
     const useMechMarketplace =
       stakingProgramIdToMigrateTo === StakingProgramId.PearlBetaMechMarketplace;
 
-    // TODO: we should not get the default staking program id
-    // from the context, we should get it from the service
-    // setDefaultStakingProgramId(stakingProgramId);
-
     try {
-      // overrideSelectedServiceStatus(MiddlewareDeploymentStatus.DEPLOYING);
-      // goto(Pages.Main);
+      overrideSelectedServiceStatus(MiddlewareDeploymentStatus.DEPLOYING);
+      goto(Pages.Main);
 
+      // update service, if it exists
       if (selectedService) {
-        // update service, if it exists
         const partialServiceTemplate = {
           configurations: {
             ...Object.entries(serviceTemplate.configurations).reduce(
@@ -135,14 +156,16 @@ export const MigrateButton = ({
             ),
           },
         };
-        console.log('partialServiceTemplate', partialServiceTemplate);
 
-        // await ServicesService.updateService({
-        //   serviceConfigId,
-        //   partialServiceTemplate,
-        // });
-      } else {
-        // create service, if it doesn't exist
+        // console.log(`Switching from ${old} to ${stakingProgramIdToMigrateTo}`);
+        await ServicesService.updateService({
+          serviceConfigId,
+          partialServiceTemplate,
+        });
+      }
+
+      // create service, if it doesn't exist
+      else {
         const serviceConfigParams = {
           stakingProgramId: stakingProgramIdToMigrateTo,
           serviceTemplate,
@@ -159,9 +182,9 @@ export const MigrateButton = ({
     } catch (error) {
       console.error(error);
     } finally {
-      // overrideSelectedServiceStatus(null);
-      // setIsServicePollingPaused(false);
-      // setIsBalancePollingPaused(false);
+      overrideSelectedServiceStatus(null);
+      setIsServicePollingPaused(false);
+      setIsBalancePollingPaused(false);
     }
   }, [
     serviceTemplate,
@@ -181,6 +204,7 @@ export const MigrateButton = ({
       <Button
         type="primary"
         size="large"
+        loading
         disabled={!validation.canMigrate}
         onClick={handleSwitchAndRunAgent}
       >

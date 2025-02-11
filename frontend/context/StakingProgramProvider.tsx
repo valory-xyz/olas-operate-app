@@ -103,7 +103,7 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     setDefaultStakingProgramId(
       DEFAULT_STAKING_PROGRAM_IDS[selectedAgentConfig.evmHomeChainId],
     );
-  }, [selectedAgentConfig]);
+  }, [selectedAgentConfig.evmHomeChainId]);
 
   const serviceNftTokenId = isNil(selectedService?.chain_configs)
     ? null
@@ -113,6 +113,10 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
   const { isLoading, data: activeStakingProgramId } =
     useGetActiveStakingProgramId(serviceNftTokenId);
 
+  /**
+   * The selected staking program id is the active staking program id if it is loaded,
+   * otherwise, it is the default staking program id
+   */
   const selectedStakingProgramId = isLoading
     ? null
     : activeStakingProgramId || defaultStakingProgramId;

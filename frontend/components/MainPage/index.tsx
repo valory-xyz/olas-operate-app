@@ -9,7 +9,7 @@ import { GasBalanceSection } from './sections/GasBalanceSection';
 import { KeepAgentRunningSection } from './sections/KeepAgentRunningSection';
 import { MainOlasBalance } from './sections/OlasBalanceSection';
 import { RewardsSection } from './sections/RewardsSection';
-import { StakingContractSection } from './sections/StakingContractUpdate';
+import { StakingContractUpdate } from './sections/StakingContractUpdate';
 import { SwitchAgentSection } from './sections/SwitchAgentSection';
 
 export const Main = () => {
@@ -29,7 +29,7 @@ export const Main = () => {
         <MainOlasBalance />
         <RewardsSection />
         <KeepAgentRunningSection />
-        {isStakingContractSectionEnabled && <StakingContractSection />}
+        {isStakingContractSectionEnabled && <StakingContractUpdate />}
         <GasBalanceSection />
         <AddFundsSection />
       </Flex>

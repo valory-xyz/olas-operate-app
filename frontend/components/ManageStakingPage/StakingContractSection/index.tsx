@@ -45,15 +45,7 @@ export const StakingContractSection = ({
   } = useStakingProgram();
   const { selectedAgentConfig } = useServices();
 
-  // /**
-  //  * Returns `true` if this stakingProgram is active,
-  //  * or user is unstaked and this is the default
-  //  */
-  // const isActiveStakingProgram = useMemo(() => {
-  //   if (activeStakingProgramId === null)
-  //     return defaultStakingProgramId === stakingProgramId;
-  //   return activeStakingProgramId === stakingProgramId;
-  // }, [activeStakingProgramId, defaultStakingProgramId, stakingProgramId]);
+  const evmChainId = selectedAgentConfig.evmHomeChainId;
 
   const contractTagStatus = useMemo(() => {
     if (!isActiveStakingProgramLoaded) return null;
@@ -92,8 +84,6 @@ export const StakingContractSection = ({
       migrateValidation.reason === CantMigrateReason.InsufficientGasToMigrate
     );
   }, [isActiveStakingProgramLoaded, migrateValidation]);
-
-  const evmChainId = selectedAgentConfig.evmHomeChainId;
 
   return (
     <CardSection
