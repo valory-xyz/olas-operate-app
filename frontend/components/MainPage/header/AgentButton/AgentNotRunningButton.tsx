@@ -192,7 +192,7 @@ const useServiceDeployment = () => {
           stakingProgramId: selectedStakingProgramId,
           serviceTemplate,
           deploy: false, // TODO: deprecated will remove
-          useMechMarketplace:
+          canUseMechMarketplace:
             STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
               selectedStakingProgramId
             ].mechType === MechType.Marketplace,

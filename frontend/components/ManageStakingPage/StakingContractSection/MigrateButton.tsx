@@ -117,7 +117,6 @@ export const MigrateButton = ({
   const { setMigrationModalOpen } = useModals();
 
   // staking contract details, validation, popover content
-  // const { setDefaultStakingProgramId } = useStakingProgram();
   const {
     popoverContent,
     validation,
@@ -141,7 +140,7 @@ export const MigrateButton = ({
     setIsServicePollingPaused(true);
     setIsBalancePollingPaused(true);
 
-    const useMechMarketplace =
+    const canUseMechMarketplace =
       stakingProgramIdToMigrateTo === StakingProgramId.PearlBetaMechMarketplace;
 
     try {
@@ -159,7 +158,7 @@ export const MigrateButton = ({
               (acc, [middlewareChain]) => {
                 acc[middlewareChain] = {
                   staking_program_id: stakingProgramIdToMigrateTo,
-                  use_mech_marketplace: useMechMarketplace,
+                  use_mech_marketplace: canUseMechMarketplace,
                 };
                 return acc;
               },
@@ -180,7 +179,7 @@ export const MigrateButton = ({
           stakingProgramId: stakingProgramIdToMigrateTo,
           serviceTemplate,
           deploy: true,
-          useMechMarketplace,
+          canUseMechMarketplace,
         };
         await ServicesService.createService(serviceConfigParams);
       }
@@ -188,12 +187,14 @@ export const MigrateButton = ({
       setIsMigrating(false);
       setActiveStakingProgramId(stakingProgramIdToMigrateTo);
       overrideSelectedServiceStatus(MiddlewareDeploymentStatus.DEPLOYING);
-      goto(Pages.Main);
 
       // start service after updating or creating
       await ServicesService.startService(serviceConfigId);
 
       setMigrationModalOpen(true);
+
+      // go to main page after migration
+      goto(Pages.Main);
     } catch (error) {
       setIsMigrating(false);
       console.error(error);
