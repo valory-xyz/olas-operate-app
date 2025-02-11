@@ -47,6 +47,7 @@ const useMigrateButtonDetails = (stakingProgramId: StakingProgramId) => {
   const {
     isSelectedStakingContractDetailsLoading,
     selectedStakingContractDetails,
+    setActiveStakingProgramId,
   } = useActiveStakingContractDetails();
   const { stakingContractInfo: stakingContractInfo } =
     useStakingContractDetails(selectedStakingProgramId);
@@ -85,6 +86,7 @@ const useMigrateButtonDetails = (stakingProgramId: StakingProgramId) => {
     popoverContent,
     validation,
     currentStakingContractId: selectedStakingProgramId,
+    setActiveStakingProgramId,
   };
 };
 
@@ -116,8 +118,12 @@ export const MigrateButton = ({
 
   // staking contract details, validation, popover content
   // const { setDefaultStakingProgramId } = useStakingProgram();
-  const { popoverContent, validation, currentStakingContractId } =
-    useMigrateButtonDetails(stakingProgramIdToMigrateTo);
+  const {
+    popoverContent,
+    validation,
+    setActiveStakingProgramId,
+    currentStakingContractId,
+  } = useMigrateButtonDetails(stakingProgramIdToMigrateTo);
 
   const serviceConfigId = selectedService?.service_config_id;
   const serviceTemplate = useMemo(
@@ -180,6 +186,7 @@ export const MigrateButton = ({
       }
 
       setIsMigrating(false);
+      setActiveStakingProgramId(stakingProgramIdToMigrateTo);
       overrideSelectedServiceStatus(MiddlewareDeploymentStatus.DEPLOYING);
       goto(Pages.Main);
 
@@ -199,7 +206,7 @@ export const MigrateButton = ({
     stakingProgramIdToMigrateTo,
     serviceConfigId,
     selectedService,
-    // setDefaultStakingProgramId,
+    setActiveStakingProgramId,
     setIsServicePollingPaused,
     setIsBalancePollingPaused,
     setMigrationModalOpen,

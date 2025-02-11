@@ -18,6 +18,7 @@ export const useActiveStakingContractDetails = () => {
   const {
     selectedStakingContractDetails,
     isSelectedStakingContractDetailsLoading,
+    setActiveStakingProgramId,
   } = useStakingContractContext();
 
   const {
@@ -80,6 +81,7 @@ export const useActiveStakingContractDetails = () => {
     hasEnoughRewardsAndSlots,
     hasEnoughServiceSlots,
     isRewardsAvailable,
+    setActiveStakingProgramId,
   };
 };
 
