@@ -11,7 +11,7 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { CantMigrateAlert } from './CantMigrateAlert';
 import { MigrateButton } from './MigrateButton';
-import { StakingContractDetails } from './StakingContractDetails';
+import { StakingContractDetailsBreakdown } from './StakingContractDetailsBreakdown';
 import { StakingContractFundingButton } from './StakingContractFundingButton';
 import { CantMigrateReason, useMigrate } from './useMigrate';
 
@@ -102,7 +102,7 @@ export const StakingContractSection = ({
         <StakingContractTag status={contractTagStatus} />
       </Flex>
 
-      <StakingContractDetails stakingProgramId={stakingProgramId} />
+      <StakingContractDetailsBreakdown stakingProgramId={stakingProgramId} />
 
       {evmChainId && (
         <AddressLink

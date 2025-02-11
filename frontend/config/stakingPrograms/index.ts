@@ -51,7 +51,7 @@ export const STAKING_PROGRAMS: {
   [EvmChainId.Base]: BASE_STAKING_PROGRAMS,
   [EvmChainId.Mode]: MODE_STAKING_PROGRAMS,
   [EvmChainId.Celo]: CELO_STAKING_PROGRAMS,
-};
+} as const;
 
 export const STAKING_PROGRAM_ADDRESS: {
   [chainId in EvmChainId]: Record<string, Address>;
@@ -60,7 +60,7 @@ export const STAKING_PROGRAM_ADDRESS: {
   [EvmChainId.Base]: BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
   [EvmChainId.Mode]: MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
   [EvmChainId.Celo]: CELO_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
-};
+} as const;
 
 export const DEFAULT_STAKING_PROGRAM_IDS: {
   [chainId in EvmChainId]: StakingProgramId;
@@ -69,4 +69,4 @@ export const DEFAULT_STAKING_PROGRAM_IDS: {
   [EvmChainId.Base]: StakingProgramId.MemeBaseAlpha2,
   [EvmChainId.Mode]: StakingProgramId.ModiusAlpha,
   [EvmChainId.Celo]: StakingProgramId.MemeCeloAlpha2,
-};
+} as const;

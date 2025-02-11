@@ -1,4 +1,4 @@
-import { Button, Popover } from 'antd';
+import { Button, message, Popover } from 'antd';
 import { isNil } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -147,7 +147,7 @@ export const MigrateButton = ({
     try {
       setIsMigrating(true);
 
-      window.console.log(
+      window.console.warn(
         `Switching from ${currentStakingContractId} to ${stakingProgramIdToMigrateTo}`,
       );
 
@@ -195,7 +195,9 @@ export const MigrateButton = ({
 
       setMigrationModalOpen(true);
     } catch (error) {
+      setIsMigrating(false);
       console.error(error);
+      message.error('Failed to switch contract, please try again.');
     } finally {
       overrideSelectedServiceStatus(null);
       setIsServicePollingPaused(false);

@@ -40,10 +40,7 @@ const useAllStakingContractDetails = () => {
         programId,
       ),
       queryFn: async () =>
-        serviceApi.getStakingContractDetails(
-          programId as StakingProgramId,
-          evmHomeChainId,
-        ),
+        serviceApi.getStakingContractDetails(programId, evmHomeChainId),
       onError: (error: Error) => {
         console.error(
           `Error fetching staking details for ${programId}:`,
@@ -66,7 +63,7 @@ const useAllStakingContractDetails = () => {
       }
       return record;
     },
-    {} as Record<string, Partial<StakingContractDetails>>,
+    {} as Record<StakingProgramId, Partial<StakingContractDetails>>,
   );
 
   // TODO: some are failing, not sure why.
