@@ -11,7 +11,7 @@ import { GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { MECHS, MechType } from '../mechs';
 import { StakingProgramConfig } from './index';
 
-type GnosisStakingProgramId =
+export type GnosisStakingProgramId =
   | StakingProgramId.PearlAlpha
   | StakingProgramId.PearlBeta
   | StakingProgramId.PearlBeta2
@@ -144,7 +144,7 @@ export const GNOSIS_STAKING_PROGRAMS: Record<
     stakingRequirements: {
       [TokenSymbol.OLAS]: 5000,
     },
-    mechType: MechType.Agent,
+    mechType: MechType.Marketplace,
     mech: MECHS[EvmChainId.Gnosis][MechType.Marketplace].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.PearlBeta6],

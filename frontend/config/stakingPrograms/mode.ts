@@ -10,7 +10,7 @@ import { Address } from '@/types/Address';
 import { MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { StakingProgramConfig } from '.';
 
-type ModeStakingProgramId =
+export type ModeStakingProgramId =
   | StakingProgramId.ModiusAlpha
   | StakingProgramId.ModiusAlpha2
   | StakingProgramId.ModiusAlpha3

@@ -10,7 +10,7 @@ import { Address } from '@/types/Address';
 import { CELO_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { StakingProgramConfig } from '.';
 
-type CeloStakingProgramId = StakingProgramId.MemeCeloAlpha2;
+export type CeloStakingProgramId = StakingProgramId.MemeCeloAlpha2;
 
 export const CELO_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
   CeloStakingProgramId,

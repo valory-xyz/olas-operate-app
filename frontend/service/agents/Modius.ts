@@ -188,7 +188,11 @@ export abstract class ModiusService extends StakedAgentService {
   ): Promise<StakingContractDetails | undefined> => {
     const { multicallProvider } = PROVIDERS[chainId];
 
-    const stakingTokenProxy = MODE_STAKING_PROGRAMS[stakingProgramId]?.contract;
+    const modeStakingProgram =
+      MODE_STAKING_PROGRAMS[
+        stakingProgramId as keyof typeof MODE_STAKING_PROGRAMS
+      ];
+    const stakingTokenProxy = modeStakingProgram.contract;
     if (!stakingTokenProxy) return;
 
     const contractCalls = [

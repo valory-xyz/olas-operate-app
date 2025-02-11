@@ -52,12 +52,10 @@ const createService = async ({
   deploy,
   serviceTemplate,
   stakingProgramId,
-  canUseMechMarketplace = false,
 }: {
   deploy: boolean;
   serviceTemplate: ServiceTemplate;
   stakingProgramId: StakingProgramId;
-  canUseMechMarketplace?: boolean;
 }): Promise<MiddlewareServiceResponse> =>
   fetch(`${BACKEND_URL_V2}/service`, {
     method: 'POST',
@@ -73,7 +71,8 @@ const createService = async ({
               ...config,
               rpc: CHAIN_CONFIG[asEvmChainId(middlewareChain)].rpc,
               staking_program_id: stakingProgramId,
-              use_mech_marketplace: canUseMechMarketplace,
+              use_mech_marketplace:
+                false /** @note Not used by BE, false by default */,
             };
             return acc;
           },
@@ -188,6 +187,5 @@ export const ServicesService = {
   createService,
   updateService,
   stopDeployment,
-  // deleteDeployment,
   withdrawBalance,
 };

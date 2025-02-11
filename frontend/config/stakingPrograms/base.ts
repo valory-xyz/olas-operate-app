@@ -10,7 +10,7 @@ import { Address } from '@/types/Address';
 import { BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { StakingProgramConfig } from '.';
 
-type BaseStakingProgramId =
+export type BaseStakingProgramId =
   | StakingProgramId.MemeBaseAlpha2
   | StakingProgramId.MemeBaseBeta
   | StakingProgramId.MemeBaseBeta2

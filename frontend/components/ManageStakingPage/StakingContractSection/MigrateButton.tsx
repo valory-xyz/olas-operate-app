@@ -140,9 +140,6 @@ export const MigrateButton = ({
     setIsServicePollingPaused(true);
     setIsBalancePollingPaused(true);
 
-    const canUseMechMarketplace =
-      stakingProgramIdToMigrateTo === StakingProgramId.PearlBetaMechMarketplace;
-
     try {
       setIsMigrating(true);
 
@@ -160,7 +157,6 @@ export const MigrateButton = ({
               (acc, [middlewareChain]) => {
                 acc[middlewareChain] = {
                   staking_program_id: stakingProgramIdToMigrateTo,
-                  use_mech_marketplace: canUseMechMarketplace,
                 };
                 return acc;
               },
@@ -168,7 +164,6 @@ export const MigrateButton = ({
             ),
           },
         };
-
         assertRequired(
           serviceConfigId,
           'Service config Id has to be present before updating service',
@@ -185,7 +180,6 @@ export const MigrateButton = ({
           stakingProgramId: stakingProgramIdToMigrateTo,
           serviceTemplate,
           deploy: true,
-          canUseMechMarketplace,
         };
         serviceConfigId = (
           await ServicesService.createService(serviceConfigParams)

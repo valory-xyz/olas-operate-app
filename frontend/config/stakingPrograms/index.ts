@@ -40,12 +40,8 @@ export type StakingProgramConfig = {
   activityChecker: MulticallContract;
 };
 
-export type StakingProgramMap = {
-  [stakingProgramId: string]: StakingProgramConfig;
-};
-
 export const STAKING_PROGRAMS: {
-  [chainId in EvmChainId]: StakingProgramMap;
+  [chainId in EvmChainId]: Record<string, StakingProgramConfig>; // TODO: fix type "string"
 } = {
   [EvmChainId.Gnosis]: GNOSIS_STAKING_PROGRAMS,
   [EvmChainId.Base]: BASE_STAKING_PROGRAMS,

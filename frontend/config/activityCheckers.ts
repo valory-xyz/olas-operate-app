@@ -7,6 +7,11 @@ import { STAKING_ACTIVITY_CHECKER_ABI } from '@/abis/stakingActivityChecker';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
+import { BaseStakingProgramId } from './stakingPrograms/base';
+import { CeloStakingProgramId } from './stakingPrograms/celo';
+import { GnosisStakingProgramId } from './stakingPrograms/gnosis';
+import { ModeStakingProgramId } from './stakingPrograms/mode';
+
 export const getMechActivityCheckerContract = (
   address: Address,
 ): MulticallContract => {
@@ -32,7 +37,7 @@ export const getMemeActivityCheckerContract = (
 };
 
 export const GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
-  string,
+  GnosisStakingProgramId,
   MulticallContract
 > = {
   [StakingProgramId.PearlAlpha]: getMechActivityCheckerContract(
@@ -63,7 +68,7 @@ export const GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
 } as const;
 
 export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
-  string,
+  BaseStakingProgramId,
   MulticallContract
 > = {
   [StakingProgramId.MemeBaseAlpha2]: getMemeActivityCheckerContract(
@@ -78,10 +83,10 @@ export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [StakingProgramId.MemeBaseBeta3]: getMemeActivityCheckerContract(
     '0x026AB1c5ea14E61f67d245685D9561c0c2Cb39Ba',
   ),
-};
+} as const;
 
 export const MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
-  string,
+  ModeStakingProgramId,
   MulticallContract
 > = {
   [StakingProgramId.ModiusAlpha]: getStakingActivityCheckerContract(
@@ -99,13 +104,13 @@ export const MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [StakingProgramId.ModiusAlpha4]: getStakingActivityCheckerContract(
     '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
   ),
-};
+} as const;
 
 export const CELO_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
-  string,
+  CeloStakingProgramId,
   MulticallContract
 > = {
   [StakingProgramId.MemeCeloAlpha2]: getMemeActivityCheckerContract(
     '0x3FD8C757dE190bcc82cF69Df3Cd9Ab15bCec1426',
   ),
-};
+} as const;
