@@ -79,18 +79,6 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    REQUESTER_STAKING_INSTANCE_ADDRESS: {
-      name: 'Requester staking instance address',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.COMPUTED,
-    },
-    PRIORITY_MECH_ADDRESS: {
-      name: 'Priority Mech address',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.COMPUTED,
-    },
   },
 } as const;
 
