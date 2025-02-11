@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING
 from operate.constants import OPERATE_HOME, SAFE_WEBAPP_URL
 from operate.operate_types import LedgerType
 from operate.quickstart.run_service import ask_password_if_needed, configure_local_config, get_service, load_local_config
-from operate.utils.common import print_section, print_title
+from operate.utils.common import ask_yes_or_no, print_section, print_title
 
 if TYPE_CHECKING:
     from operate.cli import OperateApp
@@ -38,6 +38,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 def claim_staking_rewards(operate: "OperateApp", config_path: str) -> None:
     """Claim staking rewards."""
+    attended = os.environ.get("ATTENDED", "true").lower() == "true"
 
     with open(config_path, "r") as config_file:
         template = json.load(config_file)
@@ -54,10 +55,10 @@ def claim_staking_rewards(operate: "OperateApp", config_path: str) -> None:
         "This script will claim the OLAS staking rewards "
         "accrued in the current staking contract and transfer them to your service safe."
     )
-    _continue = input("Do you want to continue (yes/no)? ").strip().lower()
-
-    if _continue not in ("y", "yes"):
-        sys.exit(0)
+    
+    if attended and not ask_yes_or_no("Do you want to continue?"):
+       print("Cancelled.")
+       return
 
     print("")
 

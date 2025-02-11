@@ -946,8 +946,16 @@ def _daemon(
 @_operate.command(name="quickstart")
 def qs_start(
     config: Annotated[str, params.String(help="Quickstart config file path")],
+    attended: Annotated[str, params.String(help="Run in attended/unattended mode (default: true")] = "true",
 ) -> None:
     """Quickstart."""
+    
+    # Validate boolean value
+    if attended.lower() not in ["true", "false"]:
+        print("Error: --attended only accepts true/false values")
+        return
+        
+    os.environ["ATTENDED"] = attended.lower()
     operate = OperateApp()
     operate.setup()
     run_service(operate=operate, config_path=config)
@@ -966,8 +974,15 @@ def qs_stop(
 @_operate.command(name="terminate")
 def qs_terminate(
     config: Annotated[str, params.String(help="Quickstart config file path")],
+    attended: Annotated[str, params.String(help="Run in attended/unattended mode (default: true")] = "true",
 ) -> None:
-    """Quickstart."""
+    """Terminate service."""
+    
+    if attended.lower() not in ["true", "false"]:
+        print("Error: --attended only accepts true/false values")
+        return
+        
+    os.environ["ATTENDED"] = attended.lower()
     operate = OperateApp()
     operate.setup()
     terminate_service(operate=operate, config_path=config)
@@ -976,8 +991,15 @@ def qs_terminate(
 @_operate.command(name="claim")
 def qs_claim(
     config: Annotated[str, params.String(help="Quickstart config file path")],
+    attended: Annotated[str, params.String(help="Run in attended/unattended mode (default: true")] = "true",
 ) -> None:
     """Quickclaim staking rewards."""
+    
+    if attended.lower() not in ["true", "false"]:
+        print("Error: --attended only accepts true/false values")
+        return
+        
+    os.environ["ATTENDED"] = attended.lower()
     operate = OperateApp()
     operate.setup()
     claim_staking_rewards(operate=operate, config_path=config)
@@ -986,16 +1008,31 @@ def qs_claim(
 @_operate.command(name="reset-staking")
 def qs_reset_staking(
     config: Annotated[str, params.String(help="Quickstart config file path")],
+    attended: Annotated[str, params.String(help="Run in attended/unattended mode (default: true")] = "true",
 ) -> None:
     """Reset staking."""
+    
+    if attended.lower() not in ["true", "false"]:
+        print("Error: --attended only accepts true/false values")
+        return
+        
+    os.environ["ATTENDED"] = attended.lower()
     operate = OperateApp()
     operate.setup()
     reset_staking(operate=operate, config_path=config)
 
 
 @_operate.command(name="reset-password")
-def qs_reset_password() -> None:
+def qs_reset_password(
+    attended: Annotated[str, params.String(help="Run in attended/unattended mode (default: true")] = "true",
+) -> None:
     """Reset password."""
+    
+    if attended.lower() not in ["true", "false"]:
+        print("Error: --attended only accepts true/false values")
+        return
+        
+    os.environ["ATTENDED"] = attended.lower()
     operate = OperateApp()
     operate.setup()
     reset_password(operate=operate)

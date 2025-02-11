@@ -19,6 +19,7 @@
 """Reset password."""
 
 from getpass import getpass
+import os
 from typing import TYPE_CHECKING
 
 from operate.account.user import UserAccount
@@ -33,6 +34,8 @@ if TYPE_CHECKING:
 
 def reset_password(operate: "OperateApp") -> None:
     """Reset password."""
+    attended = os.environ.get("ATTENDED", "true").lower() == "true"
+
     print_title("Reset your password")
 
     # check if agent was started before
@@ -42,11 +45,18 @@ def reset_password(operate: "OperateApp") -> None:
 
     old_password = None
     while old_password is None:
-        old_password = getpass("\nEnter local user account password [hidden input]: ")
-        if operate.user_account.is_valid(password=old_password):
-            break
-        old_password = None
-        print("Invalid password!")
+            if attended:
+                old_password = getpass("\nEnter local user account password [hidden input]: ")
+            else:
+                old_password = os.getenv("OLD_OPERATE_PASSWORD")
+                if not old_password:
+                    raise ValueError("OLD_OPERATE_PASSWORD environment variable must be set in unattended mode")
+            
+            if operate.user_account.is_valid(password=old_password):
+                break
+            old_password = None
+            if attended:
+                print("Invalid password!")    
 
     print_section("Update local user account")
     new_password = ask_confirm_password()

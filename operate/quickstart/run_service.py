@@ -91,14 +91,22 @@ class QuickstartConfig(LocalResource):
         return cls(**kwargs)
 
 def ask_confirm_password() -> str:
-    while True:
-        password = getpass.getpass("Please input your password (or press enter): ")
-        confirm_password = getpass.getpass("Please confirm your password: ")
+    """Get password from user input or environment."""
+    if os.getenv("ATTENDED", "true").lower() == "true":
+        while True:
+            password = getpass.getpass("Please input your password (or press enter): ")
+            confirm_password = getpass.getpass("Please confirm your password: ")
 
-        if password == confirm_password:
-            return password
-        else:
-            print("Passwords do not match!")
+            if password == confirm_password:
+                return password
+            else:
+                print("Passwords do not match!")
+    else:
+        # In unattended mode, get password from environment
+        password = os.getenv("OPERATE_PASSWORD")
+        if not password:
+            raise ValueError("OPERATE_PASSWORD environment variable must be set in unattended mode")
+        return password
 
 def load_local_config() -> QuickstartConfig:
     """Load the local quickstart configuration."""
@@ -113,15 +121,21 @@ def load_local_config() -> QuickstartConfig:
 def configure_local_config(template: ServiceTemplate) -> QuickstartConfig:
     """Configure local quickstart configuration."""
     config = load_local_config()
-
+    attended = os.getenv("ATTENDED", "true").lower() == "true"
     if config.rpc is None:
         config.rpc = {}
 
     for chain in template["configurations"]:
         while not check_rpc(config.rpc.get(chain)):
-            config.rpc[chain] = getpass.getpass(
-                f"Enter a {CHAIN_TO_METADATA[chain]['name']} RPC that supports eth_newFilter [hidden input]: "
-            )
+            if attended:
+                config.rpc[chain] = getpass.getpass(
+                    f"Enter a {CHAIN_TO_METADATA[chain]['name']} RPC that supports eth_newFilter [hidden input]: "
+                )
+            else:
+                rpc_env = f"{chain.upper()}_LEDGER_RPC"
+                if not os.getenv(rpc_env):
+                    raise ValueError(f"{rpc_env} environment variable must be set in unattended mode")
+                config.rpc[chain] = os.getenv(rpc_env)
         
         os.environ[f"{chain.upper()}_LEDGER_RPC"] = config.rpc[chain]
 
@@ -134,39 +148,45 @@ def configure_local_config(template: ServiceTemplate) -> QuickstartConfig:
         default_agent_id=template["agent_id"],
     )
     if config.staking_vars is None:
-        print_section("Please, select your staking program preference")
-        ids = list(template["staking_programs"].keys())
-        available_choices = {}
-        for index, program_id in enumerate(ids):
-            metadata = staking_handler.get_staking_contract_metadata(program_id=program_id)
-            name = metadata["name"]
-            description = metadata["description"]
-            available_slots = metadata["available_staking_slots"] 
-            wrapped_description = textwrap.fill(
-                description, width=80, initial_indent="   ", subsequent_indent="   "
-            )
-            print(f"{index + 1}) {name}\t(available slots : {available_slots})\n{wrapped_description}\n")
-            if available_slots != 0:
-                available_choices[index + 1] = {
-                    "program_id": program_id,
-                    "slots": available_slots,
-                    "name": name
-                }
-        while True:
-            try:
-                choice = int(input(f"Enter your choice (1 - {len(ids)}): "))
-                if choice not in available_choices:
-                    print("\nPlease select a program with available slots:") 
-                    for idx, prog in available_choices.items():
-                        print(f"{idx}) {prog['name']} : available slots {prog['slots']}")
-                    continue
-                selected_program = available_choices[choice]
-                program_id = selected_program["program_id"]
-                print(f"Selected staking program: {selected_program['name']}")
-                config.staking_vars = staking_handler.get_staking_env_variables(program_id=program_id)
-                break
-            except ValueError:
-                print(f"Please enter a valid option (1 - {len(ids)}).")
+        if attended:
+            print_section("Please, select your staking program preference")
+            ids = list(template["staking_programs"].keys())
+            available_choices = {}
+            for index, program_id in enumerate(ids):
+                metadata = staking_handler.get_staking_contract_metadata(program_id=program_id)
+                name = metadata["name"]
+                description = metadata["description"]
+                available_slots = metadata["available_staking_slots"] 
+                wrapped_description = textwrap.fill(
+                    description, width=80, initial_indent="   ", subsequent_indent="   "
+                )
+                print(f"{index + 1}) {name}\t(available slots : {available_slots})\n{wrapped_description}\n")
+                if available_slots != 0:
+                    available_choices[index + 1] = {
+                        "program_id": program_id,
+                        "slots": available_slots,
+                        "name": name
+                    }
+            while True:
+                try:
+                    choice = int(input(f"Enter your choice (1 - {len(ids)}): "))
+                    if choice not in available_choices:
+                        print("\nPlease select a program with available slots:") 
+                        for idx, prog in available_choices.items():
+                            print(f"{idx}) {prog['name']} : available slots {prog['slots']}")
+                        continue
+                    selected_program = available_choices[choice]
+                    program_id = selected_program["program_id"]
+                    print(f"Selected staking program: {selected_program['name']}")
+                    config.staking_vars = staking_handler.get_staking_env_variables(program_id=program_id)
+                    break
+                except ValueError:
+                    print(f"Please enter a valid option (1 - {len(ids)}).")
+        else:
+            program_id = os.getenv("STAKING_PROGRAM")
+            if not program_id:
+                raise ValueError("STAKING_PROGRAM environment variable must be set in unattended mode")
+            config.staking_vars = staking_handler.get_staking_env_variables(program_id=program_id)
 
     if config.principal_chain is None:
         config.principal_chain = template["home_chain"]
@@ -194,7 +214,7 @@ def configure_local_config(template: ServiceTemplate) -> QuickstartConfig:
     if config.user_provided_args is None:
         config.user_provided_args = {}
 
-    if any(
+    if attended and any(
         (
             env_var_data["provision_type"] == ServiceEnvProvisionType.USER
             and env_var_name not in config.user_provided_args
@@ -205,11 +225,17 @@ def configure_local_config(template: ServiceTemplate) -> QuickstartConfig:
     for env_var_name, env_var_data in template["env_variables"].items():
         if env_var_data["provision_type"] == ServiceEnvProvisionType.USER:
             if env_var_name not in config.user_provided_args:
-                print(f"Description: {env_var_data['description']}")
-                if env_var_data["value"]:
-                    print(f"Example: {env_var_data['value']}")
-                config.user_provided_args[env_var_name] = input(f"Please enter {env_var_data['name']}: ")
-                print()
+                if attended:
+                    print(f"Description: {env_var_data['description']}")
+                    if env_var_data["value"]:
+                        print(f"Example: {env_var_data['value']}")
+                    config.user_provided_args[env_var_name] = input(f"Please enter {env_var_data['name']}: ")
+                    print()
+                else:
+                    env_value = os.getenv(env_var_name)
+                    if not env_value:
+                        raise ValueError(f"{env_var_name} environment variable must be set in unattended mode")
+                    config.user_provided_args[env_var_name] = env_value
 
             template["env_variables"][env_var_name]["value"] = config.user_provided_args[env_var_name]
 
@@ -245,9 +271,12 @@ def handle_password_migration(operate: "OperateApp", config: QuickstartConfig) -
     return None
 
 def ask_password_if_needed(operate: "OperateApp", config: QuickstartConfig):
+    attended = os.getenv("ATTENDED", "true").lower() == "true"
+    
     if operate.user_account is None:
-        print_section("Set up local user account")
-        print("Creating a new local user account...")
+        if attended:
+            print_section("Set up local user account")
+            print("Creating a new local user account...")
         password = ask_confirm_password()
         UserAccount.new(
             password=password,
@@ -258,11 +287,18 @@ def ask_password_if_needed(operate: "OperateApp", config: QuickstartConfig):
     else:
         password = handle_password_migration(operate, config)
         while password is None:
-            password = getpass.getpass("\nEnter local user account password [hidden input]: ")
+            if attended:
+                password = getpass.getpass("\nEnter local user account password [hidden input]: ")
+            else:
+                password = os.getenv("OPERATE_PASSWORD")
+                if not password:
+                    raise ValueError("OPERATE_PASSWORD environment variable must be set in unattended mode")
+            
             if operate.user_account.is_valid(password=password):
                 break
             password = None
-            print("Invalid password!")
+            if attended:
+                print("Invalid password!")
 
     operate.password = password
 
@@ -322,12 +358,17 @@ def ask_funds_in_address(
         spinner.succeed(f"[{chain}] {recipient_name} updated balance: {wei_to_token(updated_balance, chain, asset_address)}.")
 
 def ensure_enough_funds(operate: "OperateApp", service: Service) -> None:
+    attended = os.getenv("ATTENDED", "true").lower() == "true"
+
     if not operate.wallet_manager.exists(ledger_type=LedgerType.ETHEREUM):
         print("Creating the Master EOA...")
         wallet, mnemonic = operate.wallet_manager.create(ledger_type=LedgerType.ETHEREUM)
         wallet.password = operate.password
-        print_box(f"Please save the mnemonic phrase for the Master EOA:\n{', '.join(mnemonic)}", 0, '-')
-        input("Press enter to continue...")
+        if attended:
+            print_box(f"Please save the mnemonic phrase for the Master EOA:\n{', '.join(mnemonic)}", 0, '-')
+            input("Press enter to continue...")
+        else:
+            print(f"Mnemonic phrase for Master EOA:\n{', '.join(mnemonic)}")
     else:
         wallet = operate.wallet_manager.load(ledger_type=LedgerType.ETHEREUM)
 
@@ -396,7 +437,12 @@ def ensure_enough_funds(operate: "OperateApp", service: Service) -> None:
                 print(f"[{chain_name}] Creating Master Safe")
                 wallet_manager = operate.wallet_manager
                 wallet = wallet_manager.load(ledger_type=LedgerType.ETHEREUM)
-                backup_owner=input("Please input your backup owner (leave empty to skip): ")
+                if attended:
+                    backup_owner = input("Please input your backup owner (leave empty to skip): ")
+                else:
+                    backup_owner = os.getenv("BACKUP_OWNER", "")
+                    if backup_owner != "":
+                        print(f"[{chain_name}] Linking Backup Owner:{backup_owner}")
 
                 wallet.create_safe(
                     chain=chain,
