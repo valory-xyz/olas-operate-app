@@ -2,8 +2,8 @@ import { OnboardingStep } from './IntroductionStep';
 
 export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    title: 'Monitor prediction markets',
-    desc: 'Your prediction agent actively scans prediction markets to identify new opportunities for investment.',
+    title: 'Market opportunity finder',
+    desc: 'Prediction agent actively scans prediction markets to identify new opportunities for investment.',
     imgSrc: 'setup-agent-prediction-1',
   },
   {
@@ -20,8 +20,8 @@ export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
 
 export const AGENTS_FUND_ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    title: 'Create your agent’s persona',
-    desc: 'Your agent will post autonomously on X, crafting content based on the persona you provide.',
+    title: 'Your personal AI influencer',
+    desc: 'Create a custom persona, and your agent will post autonomously on X, crafting engaging content to match the character you design',
     imgSrc: 'setup-agent-agents.fun-1',
   },
   {
@@ -40,8 +40,8 @@ export const AGENTS_FUND_ONBOARDING_STEPS: OnboardingStep[] = [
 
 export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    title: 'Gather market data',
-    desc: 'Your Modius autonomous investment trading agent collects up-to-date market data from CoinGecko, focusing on select DeFi protocols on the Mode chain.',
+    title: 'Your AI portfolio manager',
+    desc: 'Modius collects real-time market data from CoinGecko and autonomously manages your investments using Balancer and Sturdy — delivering hands-free portfolio growth. Requires ETH and USDC on Mode as initial investments.',
     imgSrc: 'setup-agent-modius-1',
   },
   {
