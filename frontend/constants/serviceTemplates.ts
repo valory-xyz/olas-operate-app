@@ -79,18 +79,6 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    REQUESTER_STAKING_INSTANCE_ADDRESS: {
-      name: 'Requester staking instance address',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.COMPUTED,
-    },
-    PRIORITY_MECH_ADDRESS: {
-      name: 'Priority Mech address',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.COMPUTED,
-    },
   },
 } as const;
 
@@ -98,11 +86,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeieyagegimsimdvqwtqbo7qacfezh4kjqugdp7ugg6dis72pxythoi',
+  hash: 'bafybeig3ejsfizeaaujj7syncvuhqkjdkgfsxl7qlhvlmq7whdqdmdkroa',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.3.0-alpha10',
+  service_version: 'v0.3.0-alpha11',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -171,16 +159,10 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '1800',
       provision_type: EnvProvisionType.FIXED,
     },
-    DB_PATH: {
-      name: 'DB path',
+    STORE_PATH: {
+      name: 'Store path',
       description: '',
-      value: 'persistent_data/memeooorr.db',
-      provision_type: EnvProvisionType.COMPUTED,
-    },
-    TWIKIT_COOKIES_PATH: {
-      name: 'Twitter cookies path',
-      description: '',
-      value: 'persistent_data/twikit_cookies.json',
+      value: 'persistent_data/',
       provision_type: EnvProvisionType.COMPUTED,
     },
   },
