@@ -1,6 +1,6 @@
 import { Button, Popover } from 'antd';
 import { isNil } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
@@ -43,23 +43,24 @@ const useValidation = (stakingProgramId: StakingProgramId) => {
 
 // migrate button details
 const useMigrateButtonDetails = (stakingProgramId: StakingProgramId) => {
-  const { defaultStakingProgramId } = useStakingProgram();
+  const { selectedStakingProgramId } = useStakingProgram();
   const {
     isSelectedStakingContractDetailsLoading,
     selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
-  const { stakingContractInfo: defaultStakingContractInfo } =
-    useStakingContractDetails(defaultStakingProgramId);
+  const { stakingContractInfo: stakingContractInfo } =
+    useStakingContractDetails(selectedStakingProgramId);
+
   const validation = useValidation(stakingProgramId);
 
   // current staking contract details
   const currentStakingContractInfo = useMemo(() => {
     if (isSelectedStakingContractDetailsLoading) return;
     if (selectedStakingContractDetails) return selectedStakingContractDetails;
-    return defaultStakingContractInfo;
+    return stakingContractInfo;
   }, [
     selectedStakingContractDetails,
-    defaultStakingContractInfo,
+    stakingContractInfo,
     isSelectedStakingContractDetailsLoading,
   ]);
 
@@ -83,7 +84,7 @@ const useMigrateButtonDetails = (stakingProgramId: StakingProgramId) => {
   return {
     popoverContent,
     validation,
-    // currentStakingContractId: currentStakingContractInfo?.id,
+    currentStakingContractId: selectedStakingProgramId,
   };
 };
 
@@ -97,6 +98,8 @@ type MigrateButtonProps = {
 export const MigrateButton = ({
   stakingProgramId: stakingProgramIdToMigrateTo,
 }: MigrateButtonProps) => {
+  const [isMigrating, setIsMigrating] = useState(false);
+
   const { goto } = usePageState();
   const {
     setPaused: setIsServicePollingPaused,
@@ -112,10 +115,9 @@ export const MigrateButton = ({
   const { setMigrationModalOpen } = useModals();
 
   // staking contract details, validation, popover content
-  const { setDefaultStakingProgramId } = useStakingProgram();
-  const { popoverContent, validation } = useMigrateButtonDetails(
-    stakingProgramIdToMigrateTo,
-  );
+  // const { setDefaultStakingProgramId } = useStakingProgram();
+  const { popoverContent, validation, currentStakingContractId } =
+    useMigrateButtonDetails(stakingProgramIdToMigrateTo);
 
   const serviceConfigId = selectedService?.service_config_id;
   const serviceTemplate = useMemo(
@@ -137,8 +139,11 @@ export const MigrateButton = ({
       stakingProgramIdToMigrateTo === StakingProgramId.PearlBetaMechMarketplace;
 
     try {
-      overrideSelectedServiceStatus(MiddlewareDeploymentStatus.DEPLOYING);
-      goto(Pages.Main);
+      setIsMigrating(true);
+
+      window.console.log(
+        `Switching from ${currentStakingContractId} to ${stakingProgramIdToMigrateTo}`,
+      );
 
       // update service, if it exists
       if (selectedService) {
@@ -157,7 +162,6 @@ export const MigrateButton = ({
           },
         };
 
-        // console.log(`Switching from ${old} to ${stakingProgramIdToMigrateTo}`);
         await ServicesService.updateService({
           serviceConfigId,
           partialServiceTemplate,
@@ -175,8 +179,12 @@ export const MigrateButton = ({
         await ServicesService.createService(serviceConfigParams);
       }
 
+      setIsMigrating(false);
+      overrideSelectedServiceStatus(MiddlewareDeploymentStatus.DEPLOYING);
+      goto(Pages.Main);
+
       // start service after updating or creating
-      // await ServicesService.startService(serviceConfigId);
+      await ServicesService.startService(serviceConfigId);
 
       setMigrationModalOpen(true);
     } catch (error) {
@@ -191,12 +199,13 @@ export const MigrateButton = ({
     stakingProgramIdToMigrateTo,
     serviceConfigId,
     selectedService,
-    setDefaultStakingProgramId,
+    // setDefaultStakingProgramId,
     setIsServicePollingPaused,
     setIsBalancePollingPaused,
     setMigrationModalOpen,
     overrideSelectedServiceStatus,
     goto,
+    currentStakingContractId,
   ]);
 
   return (
@@ -204,11 +213,11 @@ export const MigrateButton = ({
       <Button
         type="primary"
         size="large"
-        loading
+        loading={isMigrating}
         disabled={!validation.canMigrate}
         onClick={handleSwitchAndRunAgent}
       >
-        Switch and run agent - {stakingProgramIdToMigrateTo}
+        Switch and run agent
       </Button>
     </Popover>
   );
