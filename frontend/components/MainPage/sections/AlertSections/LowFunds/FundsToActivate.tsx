@@ -7,6 +7,7 @@ import { getNativeTokenSymbol } from '@/config/tokens';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SWAP_URL_BY_EVM_CHAIN } from '@/constants/urls';
 import { AgentType } from '@/enums/Agent';
+import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { useServices } from '@/hooks/useServices';
@@ -23,12 +24,12 @@ type FundsToActivateProps = {
   additionalFundsRequired?: boolean;
 };
 
-const FUNDS_REQUIRED_FOR_BY_AGENT_TYPE = {
+const FUNDS_REQUIRED_FOR_BY_AGENT_TYPE: { [key in AgentType]: string } = {
   [AgentType.PredictTrader]: 'for trading',
   [AgentType.Memeooorr]: 'for agent operations',
   [AgentType.Modius]: 'minimum for investment',
   [AgentType.AgentsFunCelo]: 'for agent operations',
-};
+} as const;
 
 export const FundsToActivate = ({
   stakingFundsRequired = true,
@@ -78,6 +79,14 @@ export const FundsToActivate = ({
     });
   }, [homeChainId, serviceFundRequirements, nativeTokenSymbol]);
 
+  const getOlasText = useMemo(() => {
+    const chainName = CHAIN_CONFIG[homeChainId].name;
+    if (homeChainId === EvmChainId.Mode) {
+      return `Get OLAS + USDC on ${chainName}`;
+    }
+    return `Get OLAS on ${chainName}`;
+  }, [homeChainId]);
+
   return (
     <>
       <Text>
@@ -115,8 +124,7 @@ export const FundsToActivate = ({
           address={masterSafeAddress}
           extra={
             <Link target="_blank" href={SWAP_URL_BY_EVM_CHAIN[homeChainId]}>
-              Get OLAS + {CHAIN_CONFIG[homeChainId].nativeToken.symbol} on{' '}
-              {CHAIN_CONFIG[homeChainId].name} {UNICODE_SYMBOLS.EXTERNAL_LINK}
+              {getOlasText} {UNICODE_SYMBOLS.EXTERNAL_LINK}
             </Link>
           }
         />
