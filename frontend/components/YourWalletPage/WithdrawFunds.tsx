@@ -43,8 +43,8 @@ const getWithdrawMessage = (agentType: AgentType) => {
 };
 
 const agentsWithWithdrawalsComingSoon: AgentType[] = [
-  AgentType.Modius,
-  AgentType.Memeooorr,
+  // AgentType.Modius,
+  // AgentType.Memeooorr,
 ];
 
 const ServiceNotRunning = () => (
