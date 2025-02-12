@@ -3,7 +3,7 @@ import { OnboardingStep } from './IntroductionStep';
 export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: 'Market opportunity finder',
-    desc: 'Prediction agent actively scans prediction markets to identify new opportunities for investment.',
+    desc: 'Prediction agents actively scan prediction markets to identify new opportunities for investment.',
     imgSrc: 'setup-agent-prediction-1',
   },
   {
