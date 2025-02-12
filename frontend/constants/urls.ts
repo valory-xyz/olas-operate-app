@@ -12,7 +12,7 @@ const COW_SWAP_GNOSIS_XDAI_OLAS_URL: Url =
   'https://swap.cow.fi/#/100/swap/WXDAI/OLAS';
 const SWAP_BASE_URL: Url = 'https://balancer.fi/swap/base/ETH/OLAS';
 const SWAP_MODE_URL: Url =
-  'https://balancer.fi/swap/mode/ETH/0xcfd1d50ce23c46d3cf6407487b2f8934e96dc8f9';
+  'https://balancer.fi/pools/mode/v2/0xd1dbea51c7f23f61d020e2602d0d157d132faafc00020000000000000000000e';
 const SWAP_CELO_URL: Url =
   'https://app.ubeswap.org/#/swap?inputCurrency=0x471ece3750da237f93b8e339c536989b8978a438&outputCurrency=0xacffae8e57ec6e394eb1b41939a8cf7892dbdc51';
 
