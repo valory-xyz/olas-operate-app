@@ -71,7 +71,7 @@ export const AGENT_CONFIG: {
     serviceApi: ModiusService,
     displayName: 'Modius agent',
     description:
-      'Invests crypto assets on your behalf and grows your portfolio.',
+      'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
   },
   // TODO: celo (check each key)
   [AgentType.AgentsFunCelo]: {
