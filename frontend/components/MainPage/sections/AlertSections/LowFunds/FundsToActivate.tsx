@@ -1,8 +1,11 @@
 import { Flex, Typography } from 'antd';
+import Link from 'next/link';
 import { useMemo } from 'react';
 
+import { CHAIN_CONFIG } from '@/config/chains';
 import { getNativeTokenSymbol } from '@/config/tokens';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { SWAP_URL_BY_EVM_CHAIN } from '@/constants/urls';
 import { AgentType } from '@/enums/Agent';
 import { TokenSymbol } from '@/enums/Token';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
@@ -107,7 +110,16 @@ export const FundsToActivate = ({
       </Flex>
 
       {masterSafeAddress && (
-        <InlineBanner text="Your safe address" address={masterSafeAddress} />
+        <InlineBanner
+          text="Your safe address"
+          address={masterSafeAddress}
+          extra={
+            <Link target="_blank" href={SWAP_URL_BY_EVM_CHAIN[homeChainId]}>
+              Get OLAS + {CHAIN_CONFIG[homeChainId].nativeToken.symbol} on{' '}
+              {CHAIN_CONFIG[homeChainId].name} {UNICODE_SYMBOLS.EXTERNAL_LINK}
+            </Link>
+          }
+        />
       )}
     </>
   );
