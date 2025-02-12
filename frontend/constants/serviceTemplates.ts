@@ -10,11 +10,11 @@ import { parseEther, parseUnits } from '@/utils/numberFormatters';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // Should be unique across all services and not be updated
-  hash: 'bafybeido32nzhwejtooopsk4j3242nb7ofyvpdfuvatdfzmdnbcugcv2ae',
+  hash: 'bafybeieywtlhaufr273ur2igxv6upvfkgau2c2om6jmvhghlxggzemft2e',
   description: 'Trader agent for omen prediction markets',
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.23.2',
+  service_version: 'v0.24.0',
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
