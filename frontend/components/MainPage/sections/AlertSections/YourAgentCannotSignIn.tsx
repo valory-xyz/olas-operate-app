@@ -28,31 +28,24 @@ export const useHealthCheck = () => {
       return true;
     }
 
-    try {
-      const { healthcheck } = deploymentDetails;
-      if (isEmpty(healthcheck) || !healthcheck.env_var_status?.needs_update) {
-        return true;
-      }
-
-      const envVarsKeys = Object.keys(
-        healthcheck.env_var_status?.env_vars || {},
-      );
-      const hasIssues = envVarsKeys.some((key) =>
-        ENV_VARS_WITH_X_ISSUES.includes(key),
-      );
-      if (!hasIssues) return true;
-
-      if (!isHealthCheckAlertShown) {
-        setHealthCheckAlertShown(true);
-        showNotification?.(
-          'Your agent cannot sign in to X. Please check that your credentials are correct or verify if your X account has been suspended.',
-        );
-      }
-      return false;
-    } catch (error) {
-      console.error('Health check failed:', error);
-      throw error;
+    const { healthcheck } = deploymentDetails;
+    if (isEmpty(healthcheck) || !healthcheck.env_var_status?.needs_update) {
+      return true;
     }
+
+    const envVarsKeys = Object.keys(healthcheck.env_var_status?.env_vars || {});
+    const hasIssues = envVarsKeys.some((key) =>
+      ENV_VARS_WITH_X_ISSUES.includes(key),
+    );
+    if (!hasIssues) return true;
+
+    if (!isHealthCheckAlertShown) {
+      setHealthCheckAlertShown(true);
+      showNotification?.(
+        'Your agent cannot sign in to X. Please check that your credentials are correct or verify if your X account has been suspended.',
+      );
+    }
+    return false;
   }, [
     deploymentDetails,
     showNotification,

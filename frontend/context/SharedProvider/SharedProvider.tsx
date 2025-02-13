@@ -22,7 +22,7 @@ export const SharedContext = createContext<{
   onboardingStep: number;
   updateOnboardingStep: (step: number) => void;
 
-  // healthcheck errors shown to user
+  // healthcheck alert shown to user
   isHealthCheckAlertShown: boolean;
   setHealthCheckAlertShown: (e: boolean) => void;
 
@@ -37,7 +37,7 @@ export const SharedContext = createContext<{
   onboardingStep: 0,
   updateOnboardingStep: () => {},
 
-  // healthcheck errors shown to user
+  // healthcheck alert shown to user
   isHealthCheckAlertShown: false,
   setHealthCheckAlertShown: () => {},
   // others
@@ -48,7 +48,7 @@ export const SharedContext = createContext<{
  * @example
  * - Track the main OLAS balance animation state & mount state.
  * - Track the onboarding step of the user (independent of the agent).
- * - Track the healthcheck errors shown to the user (so that they are not shown again).
+ * - Track the healthcheck alert shown to the user (so that they are not shown again).
  */
 export const SharedProvider = ({ children }: PropsWithChildren) => {
   // state to track the onboarding step of the user (independent of the agent)
@@ -64,7 +64,7 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
     hasAnimatedRef.current = value;
   }, []);
 
-  // state to track the healthcheck errors shown to the user
+  // state to show healthcheck alert to the user
   const [isHealthCheckAlertShown, setHealthCheckErrorsShownToUser] =
     useState(false);
   const setHealthCheckAlertShown = useCallback((isShown:boolean) => {
