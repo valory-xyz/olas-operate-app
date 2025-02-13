@@ -1,3 +1,4 @@
+import { uniq } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -21,6 +22,10 @@ export const SharedContext = createContext<{
   onboardingStep: number;
   updateOnboardingStep: (step: number) => void;
 
+  // healthcheck errors shown to user
+  healthCheckErrorsShownToUser: string[];
+  updateHealthCheckErrors: (e: string) => void;
+
   // others
 }>({
   isMainOlasBalanceLoading: true,
@@ -32,6 +37,9 @@ export const SharedContext = createContext<{
   onboardingStep: 0,
   updateOnboardingStep: () => {},
 
+  // healthcheck errors shown to user
+  healthCheckErrorsShownToUser: [],
+  updateHealthCheckErrors: () => {},
   // others
 });
 
@@ -39,20 +47,30 @@ export const SharedContext = createContext<{
  * Shared provider to provide shared context to all components in the app.
  * @example
  * - Track the main OLAS balance animation state & mount state.
+ * - Track the onboarding step of the user (independent of the agent).
+ * - Track the healthcheck errors shown to the user (so that they are not shown again).
  */
 export const SharedProvider = ({ children }: PropsWithChildren) => {
   // state to track the onboarding step of the user (independent of the agent)
   const [onboardingStep, setOnboardingStep] = useState(0);
+  const updateOnboardingStep = useCallback((step: number) => {
+    setOnboardingStep(step);
+  }, []);
 
+  // state to track the main OLAS balance animation state & mount state
   const hasAnimatedRef = useRef(false);
-
   const mainOlasBalanceDetails = useMainOlasBalance();
   const setMainOlasBalanceAnimated = useCallback((value: boolean) => {
     hasAnimatedRef.current = value;
   }, []);
 
-  const updateOnboardingStep = useCallback((step: number) => {
-    setOnboardingStep(step);
+  // state to track the healthcheck errors shown to the user
+  const [healthCheckErrorsShownToUser, setHealthCheckErrorsShownToUser] =
+    useState<string[]>([]);
+  const updateHealthCheckErrors = useCallback((currentError: string) => {
+    setHealthCheckErrorsShownToUser((prevErrors) =>
+      uniq([...prevErrors, currentError]),
+    );
   }, []);
 
   return (
@@ -65,6 +83,10 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
         // onboarding
         onboardingStep,
         updateOnboardingStep,
+
+        // healthcheck errors
+        healthCheckErrorsShownToUser,
+        updateHealthCheckErrors,
       }}
     >
       {children}

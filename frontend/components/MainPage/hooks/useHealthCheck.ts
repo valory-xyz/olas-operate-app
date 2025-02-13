@@ -1,11 +1,12 @@
 import { message } from 'antd';
-import { isEmpty } from 'lodash';
+import { isEmpty, uniq } from 'lodash';
 import { useEffect } from 'react';
 
 import { Pages } from '@/enums/Pages';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
+import { useSharedContext } from '@/hooks/useSharedContext';
 import { delayInSeconds } from '@/utils/delay';
 
 /**
@@ -15,6 +16,8 @@ export const useHealthCheck = () => {
   const { deploymentDetails, selectedService } = useServices();
   const { goto: gotoPage } = usePageState();
   const { showNotification } = useElectronApi();
+  const { healthCheckErrorsShownToUser, updateHealthCheckErrors } =
+    useSharedContext();
 
   const serviceId = selectedService?.service_config_id;
 
@@ -29,15 +32,21 @@ export const useHealthCheck = () => {
           return true;
         }
 
-        // Check if there are any errors in the env vars
-        const envVarsErrors = Object.values(
-          healthcheck.env_var_status?.env_vars || {},
+        // Unique errors
+        const envVarsErrors = uniq(
+          Object.values(healthcheck.env_var_status?.env_vars || {}),
         );
-        if (envVarsErrors.length === 0) return true;
+        const notShownErrors = envVarsErrors.filter(
+          (error) => !healthCheckErrorsShownToUser.includes(error),
+        );
 
-        const firstError = envVarsErrors[0];
+        if (notShownErrors.length === 0) return true;
+
+        const firstError = notShownErrors[0];
+        updateHealthCheckErrors(firstError);
         showNotification?.(firstError);
         message.error(firstError);
+
         await delayInSeconds(2); // wait for the notification to show
         message.loading('Redirecting to the settings page...', 2);
         await delayInSeconds(4); // wait before redirecting
@@ -50,5 +59,12 @@ export const useHealthCheck = () => {
     };
 
     checkHealth();
-  }, [gotoPage, showNotification, deploymentDetails, serviceId]);
+  }, [
+    gotoPage,
+    showNotification,
+    deploymentDetails,
+    serviceId,
+    healthCheckErrorsShownToUser,
+    updateHealthCheckErrors,
+  ]);
 };
