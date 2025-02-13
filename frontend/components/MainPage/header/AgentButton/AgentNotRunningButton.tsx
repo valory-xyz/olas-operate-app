@@ -33,6 +33,9 @@ import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 import { updateServiceIfNeeded } from '@/utils/service';
 
+/**
+ * Health check hook
+ */
 const useHealthCheck = () => {
   const { selectedAgentType } = useServices();
   const { goto: gotoPage } = usePageState();
@@ -44,31 +47,26 @@ const useHealthCheck = () => {
       try {
         const response = await ServicesService.getDeployment(serviceId);
         const healthcheck = response.healthcheck;
-
-        if (isEmpty(healthcheck)) {
+        if (isEmpty(healthcheck) || !healthcheck.env_var_status?.needs_update) {
           return true;
         }
 
-        if (!healthcheck.env_var_status?.needs_update) {
+        if (selectedAgentType !== AgentType.Memeooorr) {
           return true;
         }
 
-        if (selectedAgentType === AgentType.Memeooorr) {
-          const reason =
-            healthcheck.env_var_status?.env_vars?.['TWIKIT_COOKIES']?.reason;
-          const isXSuspended = reason?.includes('suspended');
+        const reason =
+          healthcheck.env_var_status?.env_vars?.['TWIKIT_COOKIES']?.reason;
+        const isXSuspended = reason?.includes('suspended');
 
-          if (isXSuspended) {
-            message.error(
-              'Oops! Your account is suspended. Please update the credentials in the settings page. Redirecting you to the settings page...',
-            );
-            await delayInSeconds(5);
-            gotoPage(Pages.UpdateAgentTemplate);
-            return false;
-          }
+        if (isXSuspended) {
+          message.error('Oops! Your account is suspended. Please update the credentials in the settings page.');
+          await delayInSeconds(2);
+          message.loading('Redirecting to the settings page...', 2);
+          await delayInSeconds(4);
+          gotoPage(Pages.UpdateAgentTemplate);
+          return false;
         }
-
-        return true;
       } catch (error) {
         console.error('Health check failed:', error);
         throw error;
@@ -110,7 +108,7 @@ const useServiceDeployment = () => {
 
   const serviceStakedOlasBalancesOnHomeChain = serviceStakedBalances?.find(
     (stakedBalance) =>
-      stakedBalance.evmChainId === selectedAgentConfig.evmHomeChainId,
+      stakedBalance.evmChainId === selectedAgentConfig.evmHomeChainId
   );
 
   const serviceTotalStakedOlas = sum([
@@ -119,7 +117,7 @@ const useServiceDeployment = () => {
   ]);
 
   const serviceOlasBalanceOnHomeChain = serviceSafeBalances?.find(
-    (balance) => balance.evmChainId === selectedAgentConfig.evmHomeChainId,
+    (balance) => balance.evmChainId === selectedAgentConfig.evmHomeChainId
   )?.balance;
 
   // Staking contract details
@@ -302,7 +300,15 @@ const useServiceDeployment = () => {
 
     try {
       const isHealthy = await performHealthCheck(serviceId);
-      if (!isHealthy) return;
+
+      // If not healthy, reset the status and do not proceed
+      if (!isHealthy) {
+        overrideSelectedServiceStatus(selectedService?.deploymentStatus);
+        return;
+      }
+
+      console.log('Starting service... (SHOULD NOT HAPPEN)');
+      return;
 
       await createSafeIfNeeded({
         masterSafes,
