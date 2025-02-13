@@ -1,4 +1,4 @@
-import { Button, message } from 'antd';
+import { Button, Flex, message } from 'antd';
 import { isEmpty, isNil, sum } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
@@ -33,16 +33,20 @@ import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 import { updateServiceIfNeeded } from '@/utils/service';
 
+const UNABLE_TO_SIGN_IN_TO_X =
+  'Your agent cannot sign in to X. Please check that your credentials are correct or verify if your X account has been suspended.';
+
 /**
  * Health check hook
  */
 const useHealthCheck = () => {
   const { selectedAgentType } = useServices();
   const { goto: gotoPage } = usePageState();
+  const { showNotification } = useElectronApi();
 
-  return useCallback(
+  const performHealthCheck = useCallback(
     async (serviceId?: string) => {
-      if (!serviceId) return true; // TODO: check
+      if (!serviceId) return true;
 
       try {
         const response = await ServicesService.getDeployment(serviceId);
@@ -60,10 +64,14 @@ const useHealthCheck = () => {
         const isXSuspended = reason?.includes('suspended');
 
         if (isXSuspended) {
-          message.error('Oops! Your account is suspended. Please update the credentials in the settings page.');
-          await delayInSeconds(2);
+          showNotification?.(UNABLE_TO_SIGN_IN_TO_X);
+          message.error(
+            <Flex style={{ width: 300 }}>{UNABLE_TO_SIGN_IN_TO_X}</Flex>,
+            0,
+          );
+          await delayInSeconds(2); // wait for the notification to show
           message.loading('Redirecting to the settings page...', 2);
-          await delayInSeconds(4);
+          await delayInSeconds(4); // wait before redirecting
           gotoPage(Pages.UpdateAgentTemplate);
           return false;
         }
@@ -72,8 +80,10 @@ const useHealthCheck = () => {
         throw error;
       }
     },
-    [gotoPage, selectedAgentType],
+    [gotoPage, selectedAgentType, showNotification],
   );
+
+  return { performHealthCheck };
 };
 
 /**
@@ -83,7 +93,7 @@ const useServiceDeployment = () => {
   const { showNotification } = useElectronApi();
 
   const { goto: gotoPage } = usePageState();
-  const performHealthCheck = useHealthCheck();
+  const { performHealthCheck } = useHealthCheck();
 
   const { masterWallets, masterSafes, masterEoa } = useMasterWalletContext();
   const {
@@ -108,7 +118,7 @@ const useServiceDeployment = () => {
 
   const serviceStakedOlasBalancesOnHomeChain = serviceStakedBalances?.find(
     (stakedBalance) =>
-      stakedBalance.evmChainId === selectedAgentConfig.evmHomeChainId
+      stakedBalance.evmChainId === selectedAgentConfig.evmHomeChainId,
   );
 
   const serviceTotalStakedOlas = sum([
@@ -117,7 +127,7 @@ const useServiceDeployment = () => {
   ]);
 
   const serviceOlasBalanceOnHomeChain = serviceSafeBalances?.find(
-    (balance) => balance.evmChainId === selectedAgentConfig.evmHomeChainId
+    (balance) => balance.evmChainId === selectedAgentConfig.evmHomeChainId,
   )?.balance;
 
   // Staking contract details
@@ -299,9 +309,8 @@ const useServiceDeployment = () => {
     overrideSelectedServiceStatus(MiddlewareDeploymentStatus.DEPLOYING);
 
     try {
-      const isHealthy = await performHealthCheck(serviceId);
-
       // If not healthy, reset the status and do not proceed
+      const isHealthy = await performHealthCheck(serviceId);
       if (!isHealthy) {
         overrideSelectedServiceStatus(selectedService?.deploymentStatus);
         return;
@@ -354,6 +363,7 @@ const useServiceDeployment = () => {
     selectedAgentType,
     performHealthCheck,
     serviceId,
+    selectedService?.deploymentStatus,
   ]);
 
   const buttonText = `Start agent ${isServiceStaked ? '' : '& stake'}`;
