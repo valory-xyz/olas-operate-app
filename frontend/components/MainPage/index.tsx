@@ -3,7 +3,6 @@ import { Card, Flex } from 'antd';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
 import { MainHeader } from './header';
-import { useHealthCheck } from './hooks/useHealthCheck';
 import { AddFundsSection } from './sections/AddFundsSection';
 import { AlertSections } from './sections/AlertSections';
 import { GasBalanceSection } from './sections/GasBalanceSection';
@@ -17,8 +16,6 @@ export const Main = () => {
   const isStakingContractSectionEnabled = useFeatureFlag(
     'staking-contract-section',
   );
-
-  useHealthCheck();
 
   return (
     <Card
