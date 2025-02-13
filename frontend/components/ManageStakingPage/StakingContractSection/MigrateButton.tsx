@@ -21,8 +21,6 @@ import { assertRequired, DeepPartial } from '@/types/Util';
 import { CountdownUntilMigration } from './CountdownUntilMigration';
 import { CantMigrateReason, useMigrate } from './useMigrate';
 
-const log = (...params: unknown[]) => window.console.log(...params);
-
 // validation state
 const useValidation = (stakingProgramId: StakingProgramId) => {
   const { isFetched: isServicesLoaded, selectedService } = useServices();
@@ -153,8 +151,6 @@ export const MigrateButton = ({
       if (selectedService) {
         serviceConfigId = selectedService.service_config_id;
 
-        log('>> Service exists, updating service');
-
         const partialServiceTemplate = {
           configurations: {
             ...Object.entries(serviceTemplate.configurations).reduce(
@@ -172,17 +168,14 @@ export const MigrateButton = ({
           serviceConfigId,
           'Service config Id has to be present before updating service',
         );
-        const response = await ServicesService.updateService({
+        await ServicesService.updateService({
           serviceConfigId,
           partialServiceTemplate,
         });
-        log(`>> Service updated: `, response);
       }
 
       // create service, if it doesn't exist
       else {
-        log('>> Service does not exist, creating service');
-
         const serviceConfigParams = {
           stakingProgramId: stakingProgramIdToMigrateTo,
           serviceTemplate,
@@ -191,8 +184,6 @@ export const MigrateButton = ({
         const response =
           await ServicesService.createService(serviceConfigParams);
         serviceConfigId = response.service_config_id;
-
-        log(`>> Service created: `, response);
       }
 
       // update active staking program ID
@@ -203,7 +194,6 @@ export const MigrateButton = ({
 
       // go to main page after migration
       goto(Pages.Main);
-      log('>> Starting service');
 
       // start service after updating or creating
       assertRequired(
@@ -212,7 +202,6 @@ export const MigrateButton = ({
       );
       await ServicesService.startService(serviceConfigId);
 
-      log('>> Service started');
       setMigrationModalOpen(true);
     } catch (error) {
       setIsMigrating(false);
