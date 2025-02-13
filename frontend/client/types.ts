@@ -120,9 +120,7 @@ export type Deployment = {
     env_var_status?: {
       needs_update: boolean;
       env_vars: {
-        [key: string]: {
-          reason: string;
-        };
+        [key: string]: string;
       };
     };
   };

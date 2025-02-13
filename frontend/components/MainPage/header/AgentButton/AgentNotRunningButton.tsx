@@ -1,12 +1,11 @@
 import { Button, message } from 'antd';
-import { isEmpty, isNil, sum } from 'lodash';
+import { isNil, sum } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
 import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
 import { MasterEoa, MasterSafe } from '@/enums/Wallet';
@@ -33,54 +32,6 @@ import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 import { updateServiceIfNeeded } from '@/utils/service';
 
-const UNABLE_TO_SIGN_IN_TO_X =
-  'Your agent cannot sign in to X. Please check that your credentials are correct or verify if your X account has been suspended.';
-
-/**
- * Health check hook
- */
-const useHealthCheck = () => {
-  const { selectedAgentType } = useServices();
-  const { goto: gotoPage } = usePageState();
-  const { showNotification } = useElectronApi();
-
-  return useCallback(
-    async (serviceId?: string) => {
-      if (!serviceId) return true;
-
-      try {
-        const response = await ServicesService.getDeployment(serviceId);
-        const healthcheck = response.healthcheck;
-        if (isEmpty(healthcheck) || !healthcheck.env_var_status?.needs_update) {
-          return true;
-        }
-
-        if (selectedAgentType !== AgentType.Memeooorr) {
-          return true;
-        }
-
-        const reason =
-          healthcheck.env_var_status?.env_vars?.['TWIKIT_COOKIES']?.reason;
-        const isXSuspended = reason?.includes('suspended');
-
-        if (isXSuspended) {
-          showNotification?.(UNABLE_TO_SIGN_IN_TO_X);
-          message.error(UNABLE_TO_SIGN_IN_TO_X);
-          await delayInSeconds(2); // wait for the notification to show
-          message.loading('Redirecting to the settings page...', 2);
-          await delayInSeconds(4); // wait before redirecting
-          gotoPage(Pages.UpdateAgentTemplate);
-          return false;
-        }
-      } catch (error) {
-        console.error('Health check failed:', error);
-        throw error;
-      }
-    },
-    [gotoPage, selectedAgentType, showNotification],
-  );
-};
-
 /**
  * hook to handle service deployment and starting the service
  */
@@ -88,8 +39,6 @@ const useServiceDeployment = () => {
   const { showNotification } = useElectronApi();
 
   const { goto: gotoPage } = usePageState();
-  const performHealthCheck = useHealthCheck();
-
   const { masterWallets, masterSafes, masterEoa } = useMasterWalletContext();
   const {
     selectedService,
@@ -304,13 +253,6 @@ const useServiceDeployment = () => {
     overrideSelectedServiceStatus(MiddlewareDeploymentStatus.DEPLOYING);
 
     try {
-      // If not healthy, reset the status and do not proceed
-      const isHealthy = await performHealthCheck(serviceId);
-      if (!isHealthy) {
-        overrideSelectedServiceStatus(selectedService?.deploymentStatus);
-        return;
-      }
-
       await createSafeIfNeeded({
         masterSafes,
         masterSafesOwners,
@@ -353,9 +295,6 @@ const useServiceDeployment = () => {
     showNotification,
     updateStatesSequentially,
     selectedAgentType,
-    performHealthCheck,
-    serviceId,
-    selectedService?.deploymentStatus,
   ]);
 
   const buttonText = `Start agent ${isServiceStaked ? '' : '& stake'}`;

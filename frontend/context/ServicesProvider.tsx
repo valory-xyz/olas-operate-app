@@ -1,6 +1,5 @@
 import { QueryObserverBaseResult, useQuery } from '@tanstack/react-query';
-import { message } from 'antd';
-import { isEmpty, noop } from 'lodash';
+import { noop } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -12,6 +11,7 @@ import {
 } from 'react';
 
 import {
+  Deployment,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
   MiddlewareServiceResponse,
@@ -20,7 +20,6 @@ import { AGENT_CONFIG } from '@/config/agents';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { AgentType } from '@/enums/Agent';
-import { Pages } from '@/enums/Pages';
 import {
   AgentEoa,
   AgentSafe,
@@ -29,14 +28,12 @@ import {
   WalletType,
 } from '@/enums/Wallet';
 import { useElectronApi } from '@/hooks/useElectronApi';
-import { usePageState } from '@/hooks/usePageState';
 import { UsePause, usePause } from '@/hooks/usePause';
 import { useStore } from '@/hooks/useStore';
 import { ServicesService } from '@/service/Services';
 import { AgentConfig } from '@/types/Agent';
 import { Service } from '@/types/Service';
 import { Maybe, Nullable, Optional } from '@/types/Util';
-import { delayInSeconds } from '@/utils/delay';
 import { isNilOrEmpty } from '@/utils/lodashExtensions';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
@@ -55,6 +52,7 @@ type ServicesContextType = {
   isSelectedServiceDeploymentStatusLoading: boolean;
   selectedAgentConfig: AgentConfig;
   selectedAgentType: AgentType;
+  deploymentDetails: Deployment | undefined;
   updateAgentType: (agentType: AgentType) => void;
   overrideSelectedServiceStatus: (
     status?: Maybe<MiddlewareDeploymentStatus>,
@@ -70,22 +68,19 @@ export const ServicesContext = createContext<ServicesContextType>({
   isSelectedServiceDeploymentStatusLoading: true,
   selectedAgentConfig: AGENT_CONFIG[AgentType.PredictTrader],
   selectedAgentType: AgentType.PredictTrader,
+  deploymentDetails: undefined,
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
 });
-
-const UNABLE_TO_SIGN_IN_TO_X =
-  'Your agent cannot sign in to X. Please check that your credentials are correct or verify if your X account has been suspended.';
 
 /**
  * Polls for available services via the middleware API globally
  */
 export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
-  const { store, showNotification } = useElectronApi();
+  const { store } = useElectronApi();
   const { paused, setPaused, togglePaused } = usePause();
   const { storeState } = useStore();
-  const { goto: gotoPage } = usePageState();
 
   const agentTypeFromStore = storeState?.lastSelectedAgentType;
 
@@ -111,7 +106,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   });
 
   const {
-    data: selectedServiceStatus,
+    data: deploymentDetails,
     isLoading: isSelectedServiceDeploymentStatusLoading,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.SERVICE_DEPLOYMENT_STATUS_KEY(
@@ -119,28 +114,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     ),
     queryFn: () =>
       ServicesService.getDeployment(selectedServiceConfigId as string),
-    select: async (response) => {
-      const healthcheck = response.healthcheck;
-      if (isEmpty(healthcheck) || !healthcheck.env_var_status?.needs_update) {
-        return true;
-      }
-
-      const reason =
-        healthcheck.env_var_status?.env_vars?.['TWIKIT_COOKIES']?.reason;
-      const isXSuspended = reason?.includes('suspended');
-
-      if (isXSuspended) {
-        showNotification?.(UNABLE_TO_SIGN_IN_TO_X);
-        message.error(UNABLE_TO_SIGN_IN_TO_X);
-        await delayInSeconds(2); // wait for the notification to show
-        message.loading('Redirecting to the settings page...', 2);
-        await delayInSeconds(4); // wait before redirecting
-        gotoPage(Pages.UpdateAgentTemplate);
-        return false;
-      }
-
-      return response;
-    },
     enabled: isOnline && !!selectedServiceConfigId,
     refetchInterval: FIVE_SECONDS_INTERVAL,
   });
@@ -161,11 +134,11 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     return {
       ...selectedService,
       deploymentStatus:
-        selectedServiceStatusOverride ?? selectedServiceStatus?.status,
+        selectedServiceStatusOverride ?? deploymentDetails?.status,
     };
   }, [
     selectedService,
-    selectedServiceStatus?.status,
+    deploymentDetails?.status,
     selectedServiceStatusOverride,
   ]);
 
@@ -282,6 +255,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         selectedAgentType,
 
         // others
+        deploymentDetails,
         updateAgentType,
         overrideSelectedServiceStatus: (
           status: Maybe<MiddlewareDeploymentStatus>,
