@@ -7,30 +7,29 @@ import { Pages } from '@/enums/Pages';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
+import { useSharedContext } from '@/hooks/useSharedContext';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
-const envVarsWithXIssues = [
+const ENV_VARS_WITH_X_ISSUES = [
   'TWIKIT_USERNAME',
   'TWIKIT_EMAIL',
   'TWIKIT_COOKIES',
 ];
 
-/**
- * Health check hook
- */
 export const useHealthCheck = () => {
-  const { deploymentDetails, selectedService } = useServices();
+  const { deploymentDetails } = useServices();
   const { showNotification } = useElectronApi();
-
-  const serviceId = selectedService?.service_config_id;
+  const { isHealthCheckAlertShown, setHealthCheckAlertShown } =
+    useSharedContext();
 
   return useMemo(() => {
-    if (!serviceId) return true;
-    if (!deploymentDetails) return true;
+    if (!deploymentDetails || isEmpty(deploymentDetails)) {
+      return true;
+    }
 
     try {
-      const healthcheck = deploymentDetails.healthcheck;
+      const { healthcheck } = deploymentDetails;
       if (isEmpty(healthcheck) || !healthcheck.env_var_status?.needs_update) {
         return true;
       }
@@ -38,26 +37,35 @@ export const useHealthCheck = () => {
       const envVarsKeys = Object.keys(
         healthcheck.env_var_status?.env_vars || {},
       );
-
-      const isEnvVarWithXIssues = envVarsKeys.some((key) =>
-        envVarsWithXIssues.includes(key),
+      const hasIssues = envVarsKeys.some((key) =>
+        ENV_VARS_WITH_X_ISSUES.includes(key),
       );
-      if (!isEnvVarWithXIssues) return true;
+      if (!hasIssues) return true;
 
-      showNotification?.(
-        'Your agent cannot sign in to X. Please check that your credentials are correct or verify if your X account has been suspended.',
-      );
-
+      if (!isHealthCheckAlertShown) {
+        setHealthCheckAlertShown(true);
+        showNotification?.(
+          'Your agent cannot sign in to X. Please check that your credentials are correct or verify if your X account has been suspended.',
+        );
+      }
       return false;
     } catch (error) {
       console.error('Health check failed:', error);
       throw error;
     }
-  }, [deploymentDetails, serviceId, showNotification]);
+  }, [
+    deploymentDetails,
+    showNotification,
+    isHealthCheckAlertShown,
+    setHealthCheckAlertShown,
+  ]);
 };
 
 export const YourAgentCannotSignIn = () => {
   const { goto } = usePageState();
+  const hasHealthCheckPassed = useHealthCheck();
+
+  if (hasHealthCheckPassed) return null;
 
   return (
     <CustomAlert
@@ -69,10 +77,6 @@ export const YourAgentCannotSignIn = () => {
           <Text className="font-weight-600">
             Your agent cannot sign in to X
           </Text>
-
-          <Title level={5} style={{ margin: 0, display: 'none' }}>
-            Your agent cannot sign in to X
-          </Title>
 
           <Text className="text-sm">
             Check your X credentials in Pearl and verify if your X account has
