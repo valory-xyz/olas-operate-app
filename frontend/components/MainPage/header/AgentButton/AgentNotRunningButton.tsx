@@ -1,4 +1,4 @@
-import { Button, Flex, message } from 'antd';
+import { Button, message } from 'antd';
 import { isEmpty, isNil, sum } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
@@ -44,7 +44,7 @@ const useHealthCheck = () => {
   const { goto: gotoPage } = usePageState();
   const { showNotification } = useElectronApi();
 
-  const performHealthCheck = useCallback(
+  return useCallback(
     async (serviceId?: string) => {
       if (!serviceId) return true;
 
@@ -65,10 +65,7 @@ const useHealthCheck = () => {
 
         if (isXSuspended) {
           showNotification?.(UNABLE_TO_SIGN_IN_TO_X);
-          message.error(
-            <Flex style={{ width: 300 }}>{UNABLE_TO_SIGN_IN_TO_X}</Flex>,
-            0,
-          );
+          message.error(UNABLE_TO_SIGN_IN_TO_X);
           await delayInSeconds(2); // wait for the notification to show
           message.loading('Redirecting to the settings page...', 2);
           await delayInSeconds(4); // wait before redirecting
@@ -82,8 +79,6 @@ const useHealthCheck = () => {
     },
     [gotoPage, selectedAgentType, showNotification],
   );
-
-  return { performHealthCheck };
 };
 
 /**
@@ -93,7 +88,7 @@ const useServiceDeployment = () => {
   const { showNotification } = useElectronApi();
 
   const { goto: gotoPage } = usePageState();
-  const { performHealthCheck } = useHealthCheck();
+  const performHealthCheck = useHealthCheck();
 
   const { masterWallets, masterSafes, masterEoa } = useMasterWalletContext();
   const {
@@ -315,9 +310,6 @@ const useServiceDeployment = () => {
         overrideSelectedServiceStatus(selectedService?.deploymentStatus);
         return;
       }
-
-      console.log('Starting service... (SHOULD NOT HAPPEN)');
-      return;
 
       await createSafeIfNeeded({
         masterSafes,
