@@ -28,9 +28,9 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN = {
   [EvmChainId.Gnosis]:
     'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/F3iqL2iw5UTrP1qbb4S694pGEkBwzoxXp1TRikB2K4e',
   [EvmChainId.Base]:
-    'https://api.studio.thegraph.com/query/67875/olas-base-staking/version/latest',
+    'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/9etc5Ht8eQGghXrkbWJk2yMzNypCFTL46m1iLXqE2rnq',
   [EvmChainId.Mode]:
-    'https://api.studio.thegraph.com/query/67875/olas-mode-staking/version/latest',
+    'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/Fe6oYUKbSGP7a16NowseTU82MVG9D2xWbBUCz4MPB4d4',
   [EvmChainId.Celo]:
     'https://api.studio.thegraph.com/query/67875/olas-celo-staking/version/latest',
 };
