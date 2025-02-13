@@ -1,5 +1,6 @@
 import { QueryObserverBaseResult, useQuery } from '@tanstack/react-query';
-import { noop } from 'lodash';
+import { message } from 'antd';
+import { isEmpty, noop } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -19,6 +20,7 @@ import { AGENT_CONFIG } from '@/config/agents';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { AgentType } from '@/enums/Agent';
+import { Pages } from '@/enums/Pages';
 import {
   AgentEoa,
   AgentSafe,
@@ -27,12 +29,14 @@ import {
   WalletType,
 } from '@/enums/Wallet';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { usePageState } from '@/hooks/usePageState';
 import { UsePause, usePause } from '@/hooks/usePause';
 import { useStore } from '@/hooks/useStore';
 import { ServicesService } from '@/service/Services';
 import { AgentConfig } from '@/types/Agent';
 import { Service } from '@/types/Service';
 import { Maybe, Nullable, Optional } from '@/types/Util';
+import { delayInSeconds } from '@/utils/delay';
 import { isNilOrEmpty } from '@/utils/lodashExtensions';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
@@ -70,14 +74,18 @@ export const ServicesContext = createContext<ServicesContextType>({
   overrideSelectedServiceStatus: noop,
 });
 
+const UNABLE_TO_SIGN_IN_TO_X =
+  'Your agent cannot sign in to X. Please check that your credentials are correct or verify if your X account has been suspended.';
+
 /**
  * Polls for available services via the middleware API globally
  */
 export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
-  const { store } = useElectronApi();
+  const { store, showNotification } = useElectronApi();
   const { paused, setPaused, togglePaused } = usePause();
   const { storeState } = useStore();
+  const { goto: gotoPage } = usePageState();
 
   const agentTypeFromStore = storeState?.lastSelectedAgentType;
 
@@ -111,6 +119,28 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     ),
     queryFn: () =>
       ServicesService.getDeployment(selectedServiceConfigId as string),
+    select: async (response) => {
+      const healthcheck = response.healthcheck;
+      if (isEmpty(healthcheck) || !healthcheck.env_var_status?.needs_update) {
+        return true;
+      }
+
+      const reason =
+        healthcheck.env_var_status?.env_vars?.['TWIKIT_COOKIES']?.reason;
+      const isXSuspended = reason?.includes('suspended');
+
+      if (isXSuspended) {
+        showNotification?.(UNABLE_TO_SIGN_IN_TO_X);
+        message.error(UNABLE_TO_SIGN_IN_TO_X);
+        await delayInSeconds(2); // wait for the notification to show
+        message.loading('Redirecting to the settings page...', 2);
+        await delayInSeconds(4); // wait before redirecting
+        gotoPage(Pages.UpdateAgentTemplate);
+        return false;
+      }
+
+      return response;
+    },
     enabled: isOnline && !!selectedServiceConfigId,
     refetchInterval: FIVE_SECONDS_INTERVAL,
   });
