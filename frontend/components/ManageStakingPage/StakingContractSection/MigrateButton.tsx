@@ -181,9 +181,9 @@ export const MigrateButton = ({
           serviceTemplate,
           deploy: true,
         };
-        serviceConfigId = (
-          await ServicesService.createService(serviceConfigParams)
-        ).service_config_id;
+        const response =
+          await ServicesService.createService(serviceConfigParams);
+        serviceConfigId = response.service_config_id;
       }
 
       // update active staking program ID
@@ -191,6 +191,9 @@ export const MigrateButton = ({
 
       setIsMigrating(false);
       overrideSelectedServiceStatus(MiddlewareDeploymentStatus.DEPLOYING);
+
+      // go to main page after migration
+      goto(Pages.Main);
 
       // start service after updating or creating
       assertRequired(
@@ -200,13 +203,10 @@ export const MigrateButton = ({
       await ServicesService.startService(serviceConfigId);
 
       setMigrationModalOpen(true);
-
-      // go to main page after migration
-      goto(Pages.Main);
     } catch (error) {
       setIsMigrating(false);
-      console.error(error);
       message.error('Failed to switch contract, please try again.');
+      console.error(error);
     } finally {
       overrideSelectedServiceStatus(null);
       setIsServicePollingPaused(false);
