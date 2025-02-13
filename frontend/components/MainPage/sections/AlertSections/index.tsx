@@ -14,7 +14,6 @@ export const AlertSections = () => {
     <CardSection vertical>
       <UpdateAvailableAlert />
       {isBackupViaSafeEnabled && <AddBackupWalletAlert />}
-      {/* <NewStakingProgramAlert /> */}
       <AvoidSuspensionAlert />
       <YourAgentCannotSignIn />
       <LowFunds />

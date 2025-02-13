@@ -22,10 +22,6 @@ export const SharedContext = createContext<{
   onboardingStep: number;
   updateOnboardingStep: (step: number) => void;
 
-  // healthcheck errors shown to user
-  healthCheckErrorsShownToUser: string[];
-  updateHealthCheckErrors: (e: string) => void;
-
   // others
 }>({
   isMainOlasBalanceLoading: true,
@@ -37,9 +33,6 @@ export const SharedContext = createContext<{
   onboardingStep: 0,
   updateOnboardingStep: () => {},
 
-  // healthcheck errors shown to user
-  healthCheckErrorsShownToUser: [],
-  updateHealthCheckErrors: () => {},
   // others
 });
 
@@ -64,15 +57,6 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
     hasAnimatedRef.current = value;
   }, []);
 
-  // state to track the healthcheck errors shown to the user
-  const [healthCheckErrorsShownToUser, setHealthCheckErrorsShownToUser] =
-    useState<string[]>([]);
-  const updateHealthCheckErrors = useCallback((currentError: string) => {
-    setHealthCheckErrorsShownToUser((prevErrors) =>
-      uniq([...prevErrors, currentError]),
-    );
-  }, []);
-
   return (
     <SharedContext.Provider
       value={{
@@ -83,10 +67,6 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
         // onboarding
         onboardingStep,
         updateOnboardingStep,
-
-        // healthcheck errors
-        healthCheckErrorsShownToUser,
-        updateHealthCheckErrors,
       }}
     >
       {children}
