@@ -111,7 +111,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     ),
     queryFn: () =>
       ServicesService.getDeployment(selectedServiceConfigId as string),
-    enabled: !!selectedServiceConfigId,
+    enabled: isOnline && !!selectedServiceConfigId,
     refetchInterval: FIVE_SECONDS_INTERVAL,
   });
 

@@ -1,11 +1,12 @@
 import { Button, message } from 'antd';
-import { isNil, sum } from 'lodash';
+import { isEmpty, isNil, sum } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
 import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
+import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
 import { MasterEoa, MasterSafe } from '@/enums/Wallet';
@@ -32,10 +33,59 @@ import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 import { updateServiceIfNeeded } from '@/utils/service';
 
+const useHealthCheck = () => {
+  const { selectedAgentType } = useServices();
+  const { goto: gotoPage } = usePageState();
+
+  return useCallback(
+    async (serviceId?: string) => {
+      if (!serviceId) return true; // TODO: check
+
+      try {
+        const response = await ServicesService.getDeployment(serviceId);
+        const healthcheck = response.healthcheck;
+
+        if (isEmpty(healthcheck)) {
+          return true;
+        }
+
+        if (!healthcheck.env_var_status?.needs_update) {
+          return true;
+        }
+
+        if (selectedAgentType === AgentType.Memeooorr) {
+          const reason =
+            healthcheck.env_var_status?.env_vars?.['TWIKIT_COOKIES']?.reason;
+          const isXSuspended = reason?.includes('suspended');
+
+          if (isXSuspended) {
+            message.error(
+              'Oops! Your account is suspended. Please update the credentials in the settings page. Redirecting you to the settings page...',
+            );
+            await delayInSeconds(5);
+            gotoPage(Pages.UpdateAgentTemplate);
+            return false;
+          }
+        }
+
+        return true;
+      } catch (error) {
+        console.error('Health check failed:', error);
+        throw error;
+      }
+    },
+    [gotoPage, selectedAgentType],
+  );
+};
+
+/**
+ * hook to handle service deployment and starting the service
+ */
 const useServiceDeployment = () => {
   const { showNotification } = useElectronApi();
 
   const { goto: gotoPage } = usePageState();
+  const performHealthCheck = useHealthCheck();
 
   const { masterWallets, masterSafes, masterEoa } = useMasterWalletContext();
   const {
@@ -47,18 +97,16 @@ const useServiceDeployment = () => {
     selectedAgentType,
     overrideSelectedServiceStatus,
   } = useServices();
+  const serviceId = selectedService?.service_config_id;
 
   const { canStartAgent } = useBalanceAndRefillRequirementsContext();
-  const { service, isServiceRunning } = useService(
-    selectedService?.service_config_id,
-  );
+  const { service, isServiceRunning } = useService(serviceId);
 
   const { setIsPaused: setIsBalancePollingPaused, updateBalances } =
     useBalanceContext();
 
-  const { serviceStakedBalances, serviceSafeBalances } = useServiceBalances(
-    selectedService?.service_config_id,
-  );
+  const { serviceStakedBalances, serviceSafeBalances } =
+    useServiceBalances(serviceId);
 
   const serviceStakedOlasBalancesOnHomeChain = serviceStakedBalances?.find(
     (stakedBalance) =>
@@ -74,18 +122,19 @@ const useServiceDeployment = () => {
     (balance) => balance.evmChainId === selectedAgentConfig.evmHomeChainId,
   )?.balance;
 
+  // Staking contract details
   const {
     isAllStakingContractDetailsRecordLoaded,
     setIsPaused: setIsStakingContractInfoPollingPaused,
     refetchSelectedStakingContractDetails: refetchActiveStakingContractDetails,
   } = useStakingContractContext();
-
   const { selectedStakingProgramId } = useStakingProgram();
-
-  const { isEligibleForStaking, isAgentEvicted, isServiceStaked } =
-    useActiveStakingContractDetails();
-
-  const { hasEnoughServiceSlots } = useActiveStakingContractDetails();
+  const {
+    isEligibleForStaking,
+    isAgentEvicted,
+    isServiceStaked,
+    hasEnoughServiceSlots,
+  } = useActiveStakingContractDetails();
 
   const { masterSafesOwners } = useMultisigs(masterSafes);
 
@@ -170,6 +219,7 @@ const useServiceDeployment = () => {
     setIsBalancePollingPaused,
     setIsStakingContractInfoPollingPaused,
   ]);
+
   /**
    * @note only create a service if `service` does not exist
    */
@@ -251,6 +301,9 @@ const useServiceDeployment = () => {
     overrideSelectedServiceStatus(MiddlewareDeploymentStatus.DEPLOYING);
 
     try {
+      const isHealthy = await performHealthCheck(serviceId);
+      if (!isHealthy) return;
+
       await createSafeIfNeeded({
         masterSafes,
         masterSafesOwners,
@@ -293,6 +346,8 @@ const useServiceDeployment = () => {
     showNotification,
     updateStatesSequentially,
     selectedAgentType,
+    performHealthCheck,
+    serviceId,
   ]);
 
   const buttonText = `Start agent ${isServiceStaked ? '' : '& stake'}`;
@@ -314,8 +369,7 @@ const createSafeIfNeeded = async ({
   masterSafesOwners?: MultisigOwners[];
 }) => {
   const selectedChainHasMasterSafe = masterSafes?.some(
-    (masterSafe) =>
-      masterSafe.evmChainId === selectedAgentConfig.evmHomeChainId,
+    ({ evmChainId }) => evmChainId === selectedAgentConfig.evmHomeChainId,
   );
 
   if (selectedChainHasMasterSafe) return;
@@ -324,8 +378,7 @@ const createSafeIfNeeded = async ({
   const otherChainOwners = new Set(
     masterSafesOwners
       ?.filter(
-        (masterSafe) =>
-          masterSafe.evmChainId !== selectedAgentConfig.evmHomeChainId,
+        ({ evmChainId }) => evmChainId !== selectedAgentConfig.evmHomeChainId,
       )
       .map((masterSafe) => masterSafe.owners)
       .flat(),
