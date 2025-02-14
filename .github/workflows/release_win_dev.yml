@@ -3,7 +3,7 @@ name: Release for Windows
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "dev-v*.*.*"
 
 jobs:
   build-windows:
@@ -11,13 +11,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - env: "production"
+          - env: "development"
             OPTIMISM_RPC: "https://rpc-gate.autonolas.tech/optimism-rpc/"
-            BASE_RPC: "https://rpc-gate.autonolas.tech/base-rpc/"
-            GNOSIS_RPC: "https://rpc-gate.autonolas.tech/gnosis-rpc/"
-            ETHEREUM_RPC: "https://rpc-gate.autonolas.tech/ethereum-rpc/"
-            MODE_RPC: "https://mainnet.mode.network"
-            CELO_RPC: "https://forno.celo.org"
+            BASE_RPC: "https://virtual.base.rpc.tenderly.co/a02bc0de-2665-4444-872f-8f55cd15e519"
+            GNOSIS_RPC: "https://virtual.gnosis.rpc.tenderly.co/c3515971-35be-4739-99d5-6a29ca1a8b2e"
+            ETHEREUM_RPC: "https://rpc-gate.autonolas.tech/ethereum-rpc/"  
+            MODE_RPC: "https://virtual.mode.rpc.tenderly.co/223302cf-9443-40c9-8a1c-d8fbc1aedef3"
+            CELO_RPC: "https://forno.celo.org"          
             arch: "x64"
     defaults:
       run:

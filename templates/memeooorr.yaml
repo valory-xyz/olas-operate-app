@@ -1,8 +1,8 @@
 name: "Memeooorr"
 description: "Memeooorr @twitter_handle"
-hash: bafybeig3ejsfizeaaujj7syncvuhqkjdkgfsxl7qlhvlmq7whdqdmdkroa
+hash: bafybeiboafhfh3ufjgqb6jj5ik3b6znde6ghyksgla2ygfns5vtx2n2yge
 image: https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu
-service_version: v0.3.0-alpha11
+service_version: v0.4.0-alpha1
 home_chain: "base"
 configurations:
   base:
