@@ -88,6 +88,8 @@ let appConfig = {
   },
 };
 
+const nextUrl = `http://localhost:${isDev ? appConfig.ports.dev.next : appConfig.ports.prod.next}`;
+
 /** @type {Electron.BrowserWindow | null} */
 let mainWindow = null;
 /** @type {Electron.BrowserWindow | null} */
@@ -263,6 +265,7 @@ const HEIGHT = 700;
  * Creates the main window
  */
 const createMainWindow = async () => {
+  if (mainWindow) return;
   const width = isDev ? 840 : APP_WIDTH;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
@@ -361,6 +364,13 @@ const createMainWindow = async () => {
     }
   });
 
+  // Initialize the agent activity checker
+  ipcMain.handle('agent-activity-window-init', async () => {
+    if (agentWindow)
+      return logger.electron('Agent activity window already exists');
+    await createAgentActivityWindow();
+  });
+
   mainWindow.webContents.on('did-fail-load', () => {
     mainWindow.webContents.reloadIgnoringCache();
   });
@@ -390,23 +400,16 @@ const createMainWindow = async () => {
     mainWindow.webContents.openDevTools();
   }
 
-  if (isDev) {
-    mainWindow.loadURL(`http://localhost:${appConfig.ports.dev.next}`);
-  } else {
-    mainWindow.loadURL(`http://localhost:${appConfig.ports.prod.next}`);
-  }
+  await mainWindow.loadURL(nextUrl);
 };
 
 /**Create the agent specific window */
 const createAgentActivityWindow = async () => {
+  if (agentWindow) return;
+
   agentWindow = new BrowserWindow({
     title: 'Agent activity window',
-    resizable: false,
-    draggable: true,
-    frame: false,
-    transparent: true,
-    fullscreenable: false,
-    maximizable: false,
+    frame: true,
     maxHeight: 900,
     maxWidth: 1200,
     webPreferences: {
@@ -414,6 +417,10 @@ const createAgentActivityWindow = async () => {
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
     },
+    show: false,
+    paintWhenInitiallyHidden: true,
+    parent: mainWindow,
+    modal: true,
   });
 
   ipcMain.on('agent-activity-window-goto', (_event, url) => {
@@ -551,9 +558,7 @@ async function launchNextApp() {
 
   logger.electron('Listening on Next App Server');
   server.listen(appConfig.ports.prod.next, () => {
-    logger.next(
-      `> Next server running on http://localhost:${appConfig.ports.prod.next}`,
-    );
+    logger.next(`> Next server running on ${nextUrl}`);
   });
 }
 
@@ -665,9 +670,8 @@ ipcMain.on('check', async function (event, _argument) {
     }
 
     event.sender.send('response', 'Launching App');
-    await createMainWindow();
+    createMainWindow();
     tray = new PearlTray(getActiveWindow);
-    await createAgentActivityWindow(); // TODO: only create when needed
   } catch (e) {
     logger.electron(e);
     new Notification({
