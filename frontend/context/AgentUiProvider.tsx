@@ -1,5 +1,5 @@
 import { noop } from 'lodash';
-import { PropsWithChildren, useContext, useEffect } from 'react';
+import { PropsWithChildren, useContext, useEffect, useRef } from 'react';
 
 import { usePrevious } from '@/hooks/usePrevious';
 import { useServices } from '@/hooks/useServices';
@@ -9,7 +9,9 @@ import { ElectronApiContext } from './ElectronApiProvider';
 export const AgentUiProvider = ({ children }: PropsWithChildren) => {
   const { selectedAgentType } = useServices();
   const prevSelectedAgentType = usePrevious(selectedAgentType);
-  const { hide } = useAgentUi();
+  const { hide, init } = useAgentUi();
+
+  useRef(() => init?.());
 
   //   Hide agent activity window when agent type changes
   useEffect(() => {
@@ -25,6 +27,7 @@ export const useAgentUi = () => {
   const electronApiContext = useContext(ElectronApiContext);
   if (!electronApiContext.agentActivityWindow) {
     return {
+      init: noop,
       show: noop,
       hide: noop,
       close: noop,

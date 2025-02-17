@@ -48,6 +48,8 @@ if (isDev) {
       .catch((e) =>
         console.log('An error occurred on loading extensions: ', e),
       );
+
+    createAgentActivityWindow();
   });
 }
 
@@ -88,7 +90,8 @@ let appConfig = {
   },
 };
 
-const nextUrl = `http://localhost:${isDev ? appConfig.ports.dev.next : appConfig.ports.prod.next}`;
+const nextUrl = () =>
+  `http://localhost:${isDev ? appConfig.ports.dev.next : appConfig.ports.prod.next}`;
 
 /** @type {Electron.BrowserWindow | null} */
 let mainWindow = null;
@@ -366,9 +369,32 @@ const createMainWindow = async () => {
 
   // Initialize the agent activity checker
   ipcMain.handle('agent-activity-window-init', async () => {
-    if (agentWindow)
-      return logger.electron('Agent activity window already exists');
     await createAgentActivityWindow();
+  });
+
+  ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
+    logger.electron('Navigating to:', url);
+    agentWindow?.loadURL(url);
+  });
+
+  ipcMain.handle('agent-activity-window-hide', async () => {
+    logger.electron('Hiding agent activity window');
+    agentWindow?.hide();
+  });
+
+  ipcMain.handle('agent-activity-window-show', async () => {
+    logger.electron('Showing agent activity window');
+    agentWindow?.show();
+  });
+
+  ipcMain.handle('agent-activity-window-close', async () => {
+    logger.electron('Closing agent activity window');
+    agentWindow?.close();
+  });
+
+  ipcMain.handle('agent-activity-window-minimize', async () => {
+    logger.electron('Minimizing agent activity window');
+    agentWindow?.minimize();
   });
 
   mainWindow.webContents.on('did-fail-load', () => {
@@ -400,12 +426,13 @@ const createMainWindow = async () => {
     mainWindow.webContents.openDevTools();
   }
 
-  await mainWindow.loadURL(nextUrl);
+  await mainWindow.loadURL(nextUrl());
 };
 
 /**Create the agent specific window */
 const createAgentActivityWindow = async () => {
-  if (agentWindow) return;
+  if (agentWindow)
+    return logger.electron('Agent activity window already exists');
 
   agentWindow = new BrowserWindow({
     title: 'Agent activity window',
@@ -415,16 +442,22 @@ const createAgentActivityWindow = async () => {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
+      // preload: path.join(__dirname, 'preload.js'),
     },
     show: false,
     paintWhenInitiallyHidden: true,
     parent: mainWindow,
-    modal: true,
+    autoHideMenuBar: true,
   });
 
-  ipcMain.on('agent-activity-window-goto', (_event, url) => {
-    agentWindow?.loadURL(url);
+  ipcMain.on('agent-activity-window-goto', async (_event, url) => {
+    if (!agentWindow || agentWindow.isDestroyed()) {
+      agentWindow = null;
+      return createAgentActivityWindow().then(async () =>
+        agentWindow?.loadURL(url),
+      );
+    }
+    return agentWindow.loadURL(url);
   });
 
   ipcMain.on('agent-activity-window-hide', () => {
@@ -558,7 +591,7 @@ async function launchNextApp() {
 
   logger.electron('Listening on Next App Server');
   server.listen(appConfig.ports.prod.next, () => {
-    logger.next(`> Next server running on ${nextUrl}`);
+    logger.next(`> Next server running on ${nextUrl()}`);
   });
 }
 

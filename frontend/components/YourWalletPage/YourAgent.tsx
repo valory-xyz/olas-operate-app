@@ -99,19 +99,19 @@ const AgentTitle = ({ address }: { address: Address }) => {
 
   const { goto, show } = useAgentUi();
 
-  const handleAgentUiBrowserLinkClick = useCallback(() => {
-    if ([!goto || !show].some((fn) => !fn)) {
+  const handleAgentUiBrowserLinkClick = useCallback(async () => {
+    if ([goto || show].some((fn) => !fn)) {
       message.error('Agent UI browser IPC methods are not available');
       return;
     }
 
     if (deploymentStatus !== MiddlewareDeploymentStatus.DEPLOYED) {
-      message.error('Please run the agent to view the agent UI');
+      message.error(
+        'Please run the agent first, before attempting to view the agent UI',
+      );
       return;
     }
-
-    goto?.('http://localhost:8716');
-    show?.();
+    goto?.('http://localhost:8716')?.then(show);
   }, [deploymentStatus, goto, show]);
 
   const agentProfileLink = useMemo(() => {
@@ -135,7 +135,7 @@ const AgentTitle = ({ address }: { address: Address }) => {
       selectedAgentType === AgentType.Memeooorr &&
       service?.env_variables?.TWIKIT_USERNAME?.value
     )
-      return `https://www.agents.fun/services/${service.env_variables.TWIKIT_USERNAME.value}`;
+      return `https://www.agents.fun/services/${service.env_variables.TWIKIT_USERNAME.value ?? '#'}`;
 
     // modius
     if (
@@ -150,7 +150,7 @@ const AgentTitle = ({ address }: { address: Address }) => {
     handleAgentUiBrowserLinkClick,
     middlewareChain,
     selectedAgentType,
-    service?.env_variables.TWIKIT_USERNAME.value,
+    service?.env_variables?.TWIKIT_USERNAME?.value,
   ]);
 
   return (

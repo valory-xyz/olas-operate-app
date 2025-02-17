@@ -7,7 +7,7 @@ import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
 
 type ElectronApiAgentActivityWindow = {
   init: () => Promise<void>;
-  goto: (url: string) => void;
+  goto: (url: string) => Promise<void>;
   hide: () => void;
   show: () => void;
   close: () => void;
@@ -83,7 +83,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   healthCheck: async () => ({ response: null }),
   agentActivityWindow: {
     init: async () => {},
-    goto: () => {},
+    goto: async () => {},
     hide: () => {},
     show: () => {},
     close: () => {},
