@@ -8,15 +8,22 @@ import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 
 import { CELO_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
-import { StakingProgramMap } from '.';
+import { StakingProgramConfig } from '.';
 
-export const CELO_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
-  {
-    [StakingProgramId.MemeCeloAlpha2]:
-      '0x95D12D193d466237Bc1E92a1a7756e4264f574AB',
-  };
+export type CeloStakingProgramId = StakingProgramId.MemeCeloAlpha2;
 
-export const CELO_STAKING_PROGRAMS: StakingProgramMap = {
+export const CELO_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
+  CeloStakingProgramId,
+  Address
+> = {
+  [StakingProgramId.MemeCeloAlpha2]:
+    '0x95D12D193d466237Bc1E92a1a7756e4264f574AB',
+};
+
+export const CELO_STAKING_PROGRAMS: Record<
+  CeloStakingProgramId,
+  StakingProgramConfig
+> = {
   [StakingProgramId.MemeCeloAlpha2]: {
     chainId: EvmChainId.Celo,
     name: 'MemeCelo Alpha II',
