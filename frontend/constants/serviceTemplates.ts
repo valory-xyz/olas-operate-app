@@ -10,11 +10,11 @@ import { parseEther, parseUnits } from '@/utils/numberFormatters';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // Should be unique across all services and not be updated
-  hash: 'bafybeiaw36jpiyh6pmgkpfvklhshigyvakkefl27k47duz22moxnxnwlcu',
+  hash: 'bafybeiftdsc6xi77hwvbxwwfrc2tnssenqk6ixxkl5n4nil4n34dgbdgda',
   description: 'Trader agent for omen prediction markets',
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.23.1',
+  service_version: 'v0.24.1',
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
@@ -79,18 +79,6 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    REQUESTER_STAKING_INSTANCE_ADDRESS: {
-      name: 'Requester staking instance address',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.COMPUTED,
-    },
-    PRIORITY_MECH_ADDRESS: {
-      name: 'Priority Mech address',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.COMPUTED,
-    },
   },
 } as const;
 
@@ -98,11 +86,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeieyagegimsimdvqwtqbo7qacfezh4kjqugdp7ugg6dis72pxythoi',
+  hash: 'bafybeic6yi22szouojeueui5ewcibckcmxcbmkhzspwqxygen6twjtg7lm',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.3.0-alpha10',
+  service_version: 'v0.4.0-alpha4',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -171,16 +159,22 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '1800',
       provision_type: EnvProvisionType.FIXED,
     },
-    DB_PATH: {
-      name: 'DB path',
+    STORE_PATH: {
+      name: 'Store path',
       description: '',
-      value: 'persistent_data/memeooorr.db',
+      value: 'persistent_data/',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    TWIKIT_COOKIES_PATH: {
-      name: 'Twitter cookies path',
+    STAKING_TOKEN_CONTRACT_ADDRESS: {
+      name: 'Staking token contract address',
       description: '',
-      value: 'persistent_data/twikit_cookies.json',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      name: 'Staking activity checker contract address',
+      description: '',
+      value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
   },
@@ -371,6 +365,12 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
+    },
+    RESET_PAUSE_DURATION: {
+      name: 'Reset pause duration',
+      description: '',
+      value: '300',
+      provision_type: EnvProvisionType.FIXED,
     },
   },
 } as const;

@@ -1,6 +1,7 @@
 import { CopyOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
-import styled from 'styled-components';
+import { ReactNode } from 'react';
+import styled, { CSSProperties } from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
 import { Address } from '@/types/Address';
@@ -12,7 +13,6 @@ const { Text } = Typography;
 const InlineBannerContainer = styled(Flex)`
   width: 100%;
   margin-top: 8px;
-  padding: 8px 8px 8px 12px;
   background-color: ${COLOR.WHITE};
   color: ${COLOR.TEXT};
   border-radius: 8px;
@@ -23,18 +23,36 @@ const InlineBannerContainer = styled(Flex)`
     0px 2px 4px 0px rgba(0, 0, 0, 0.02);
 `;
 
-type InlineBannerProps = { text: string; address: Address };
+const rowCommonStyle: CSSProperties = {
+  padding: '8px 12px',
+};
 
-export const InlineBanner = ({ text, address }: InlineBannerProps) => {
+type InlineBannerProps = { text: string; address: Address; extra?: ReactNode };
+
+export const InlineBanner = ({ text, address, extra }: InlineBannerProps) => {
   return (
-    <InlineBannerContainer justify="space-between" align="center">
-      <Text>{text}</Text>
-      <Flex gap={12}>
-        <Text>{truncateAddress(address)}</Text>
-        <Button size="small" onClick={() => copyToClipboard(address)}>
-          <CopyOutlined />
-        </Button>
+    <InlineBannerContainer vertical>
+      <Flex justify="space-between" align="center" style={rowCommonStyle}>
+        <Text strong>{text}</Text>
+        <Flex gap={12}>
+          <Text>{truncateAddress(address)}</Text>
+          <Button size="small" onClick={() => copyToClipboard(address)}>
+            <CopyOutlined />
+          </Button>
+        </Flex>
       </Flex>
+
+      {extra && (
+        <Flex
+          className="w-full"
+          style={{
+            borderTop: `1px solid ${COLOR.BORDER_GRAY}`,
+            ...rowCommonStyle,
+          }}
+        >
+          {extra}
+        </Flex>
+      )}
     </InlineBannerContainer>
   );
 };

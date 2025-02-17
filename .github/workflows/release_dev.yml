@@ -4,7 +4,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "dev-v*.*.*"
 
 jobs:
   # PyInstaller job for both x64 and arm64 binaries
@@ -94,12 +94,12 @@ jobs:
           name: aea_bin_${{ env.OS_ARCH }}
           path: ./dist/aea_bin
 
-  # Jobs for production, running separately for x64 and arm64
+  # Jobs for development, running separately for x64 and arm64
   build-release:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        env: [production]
+        env: [development]
         os: [macos-14, macos-14-large]
 
     needs: build-macos-pyinstaller
@@ -203,21 +203,21 @@ jobs:
         if: steps.cache-frontend-node-modules.outputs.cache-hit != 'true'
         run: yarn install:frontend
 
-      # Build frontend for production
-      - name: Build frontend for production
+      # Build frontend for development
+      - name: Build frontend for development
         run: yarn build:frontend
         env:
-          NODE_ENV: ${{ matrix.env }}          
+          NODE_ENV: ${{ matrix.env }}
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
           OPTIMISM_RPC: https://rpc-gate.autonolas.tech/optimism-rpc/
-          BASE_RPC: https://rpc-gate.autonolas.tech/base-rpc/
-          GNOSIS_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
+          BASE_RPC: https://virtual.base.rpc.tenderly.co/a02bc0de-2665-4444-872f-8f55cd15e519
+          GNOSIS_RPC: https://virtual.gnosis.rpc.tenderly.co/c3515971-35be-4739-99d5-6a29ca1a8b2e
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
-          MODE_RPC: https://mainnet.mode.network
+          MODE_RPC: https://virtual.mode.rpc.tenderly.co/223302cf-9443-40c9-8a1c-d8fbc1aedef3
           CELO_RPC: https://forno.celo.org
 
-      # Run the build and notarization process for production
-      - name: Build, notarize, and publish (Production)
+      # Run the build and notarization process for development
+      - name: Build, notarize, and publish (Development)
         env:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
           APPLE_ID: ${{ secrets.APPLEID }}
@@ -230,17 +230,17 @@ jobs:
           ELECTRON_BUILDER_CACHE: ~/.cache/electron-builder
           ELECTRON_BUILDER_DOWNLOAD_RETRY: 10
           ELECTRON_BUILDER_DOWNLOAD_TIMEOUT: 120000
-          OPTIMISM_RPC: https://rpc-gate.autonolas.tech/optimism-rpc/
-          BASE_RPC: https://rpc-gate.autonolas.tech/base-rpc/
-          GNOSIS_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
+          OPTIMISM_RPC: https://rpc-gate.autonolas.tech/optimism-rpc/          
+          BASE_RPC: https://virtual.base.rpc.tenderly.co/a02bc0de-2665-4444-872f-8f55cd15e519
+          GNOSIS_RPC: https://virtual.gnosis.rpc.tenderly.co/c3515971-35be-4739-99d5-6a29ca1a8b2e
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
-          MODE_RPC: https://mainnet.mode.network
+          MODE_RPC: https://virtual.mode.rpc.tenderly.co/223302cf-9443-40c9-8a1c-d8fbc1aedef3
           CELO_RPC: https://forno.celo.org
         run: |
           echo "OPTIMISM_RPC=https://rpc-gate.autonolas.tech/optimism-rpc/" >> .env
-          echo "BASE_RPC=https://rpc-gate.autonolas.tech/base-rpc/" >> .env
-          echo "GNOSIS_RPC=https://rpc-gate.autonolas.tech/gnosis-rpc/" >> .env
+          echo "BASE_RPC=https://virtual.base.rpc.tenderly.co/a02bc0de-2665-4444-872f-8f55cd15e519" >> .env
+          echo "GNOSIS_RPC=https://virtual.gnosis.rpc.tenderly.co/c3515971-35be-4739-99d5-6a29ca1a8b2e" >> .env
           echo "ETHEREUM_RPC=https://rpc-gate.autonolas.tech/ethereum-rpc/" >> .env
-          echo "MODE_RPC=https://mainnet.mode.network" >> .env
+          echo "MODE_RPC=https://virtual.mode.rpc.tenderly.co/223302cf-9443-40c9-8a1c-d8fbc1aedef3" >> .env
           echo "CELO_RPC=https://forno.celo.org" >> .env
           node build.js
