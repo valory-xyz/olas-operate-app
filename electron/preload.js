@@ -1,5 +1,15 @@
 const { contextBridge, ipcRenderer } = require('electron/renderer');
 
+/** IPC methods for controlling agent activity window */
+const agentActivityWindow = {
+  init: () => ipcRenderer.send('agent-activity-window-init'),
+  goto: (url) => ipcRenderer.send('agent-activity-window-goto', url),
+  hide: () => ipcRenderer.send('agent-activity-window-hide'),
+  show: () => ipcRenderer.send('agent-activity-window-show'),
+  close: () => ipcRenderer.send('agent-activity-window-close'),
+  minimize: () => ipcRenderer.send('agent-activity-window-minimize'),
+};
+
 contextBridge.exposeInMainWorld('electronAPI', {
   setIsAppLoaded: (isAppLoaded) =>
     ipcRenderer.send('is-app-loaded', isAppLoaded),
@@ -30,12 +40,3 @@ contextBridge.exposeInMainWorld('electronAPI', {
   healthCheck: () => ipcRenderer.invoke('health-check'),
   agentActivityWindow,
 });
-
-/** IPC methods for controlling agent activity window */
-const agentActivityWindow = {
-  goto: (url) => ipcRenderer.send('agent-activity-window-goto', url),
-  hide: () => ipcRenderer.send('agent-activity-window-hide'),
-  show: () => ipcRenderer.send('agent-activity-window-show'),
-  close: () => ipcRenderer.send('agent-activity-window-close'),
-  minimize: () => ipcRenderer.send('agent-activity-window-minimize'),
-};
