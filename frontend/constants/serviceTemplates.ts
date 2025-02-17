@@ -165,6 +165,18 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: 'persistent_data/',
       provision_type: EnvProvisionType.COMPUTED,
     },
+    STAKING_TOKEN_CONTRACT_ADDRESS: {
+      name: 'Staking token contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      name: 'Staking activity checker contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
   },
 };
 
