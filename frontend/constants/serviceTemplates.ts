@@ -86,11 +86,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeiboafhfh3ufjgqb6jj5ik3b6znde6ghyksgla2ygfns5vtx2n2yge',
+  hash: 'bafybeic6yi22szouojeueui5ewcibckcmxcbmkhzspwqxygen6twjtg7lm',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.4.0-alpha1',
+  service_version: 'v0.4.0-alpha4',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -163,6 +163,18 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       name: 'Store path',
       description: '',
       value: 'persistent_data/',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    STAKING_TOKEN_CONTRACT_ADDRESS: {
+      name: 'Staking token contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      name: 'Staking activity checker contract address',
+      description: '',
+      value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
   },
