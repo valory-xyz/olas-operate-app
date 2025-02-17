@@ -171,7 +171,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+    ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
       name: 'Staking activity checker contract address',
       description: '',
       value: '',
