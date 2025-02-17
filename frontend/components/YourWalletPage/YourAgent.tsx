@@ -1,13 +1,14 @@
-import { Card, Flex, Skeleton, Tooltip, Typography } from 'antd';
+import { Card, Flex, message, Skeleton, Tooltip, Typography } from 'antd';
 import { find, groupBy, isArray, isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { MiddlewareChain } from '@/client';
+import { MiddlewareChain, MiddlewareDeploymentStatus } from '@/client';
 import { OLAS_CONTRACTS } from '@/config/olasContracts';
 import { NA, UNICODE_SYMBOLS } from '@/constants/symbols';
 import { BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
+import { useAgentUi } from '@/context/AgentUiProvider';
 import { AgentType } from '@/enums/Agent';
 import { ContractType } from '@/enums/Contract';
 import { TokenSymbol } from '@/enums/Token';
@@ -73,19 +74,59 @@ const SafeAddress = ({ address }: { address: Address }) => {
   );
 };
 
+const ExternalAgentProfileLink = ({ href }: { href: string }) => {
+  return (
+    <a href={href} target="_blank" className="text-sm">
+      Agent profile {UNICODE_SYMBOLS.EXTERNAL_LINK}
+    </a>
+  );
+};
+
+const AgentUiBrowserLink = ({ onClick }: { onClick: () => void }) => {
+  return (
+    <a onClick={onClick} className="text-sm" href="#">
+      Agent profile {UNICODE_SYMBOLS.EXTERNAL_LINK}
+    </a>
+  );
+};
+
 const AgentTitle = ({ address }: { address: Address }) => {
   const { middlewareChain } = useYourWallet();
   const { selectedAgentType, selectedService } = useServices();
-  const { service } = useService(selectedService?.service_config_id);
+  const { service, deploymentStatus } = useService(
+    selectedService?.service_config_id,
+  );
+
+  const { goto, show } = useAgentUi();
+
+  const handleAgentUiBrowserLinkClick = useCallback(() => {
+    if ([!goto || !show].some((fn) => !fn)) {
+      message.error('Agent UI browser IPC methods are not available');
+      return;
+    }
+
+    if (deploymentStatus !== MiddlewareDeploymentStatus.DEPLOYED) {
+      message.error('Please run the agent to view the agent UI');
+      return;
+    }
+
+    goto?.('http://localhost:8716');
+    show?.();
+  }, [deploymentStatus, goto, show]);
 
   const agentProfileLink = useMemo(() => {
     if (!address) return null;
+
     // gnosis predict trader
     if (
       middlewareChain === MiddlewareChain.GNOSIS &&
       selectedAgentType === AgentType.PredictTrader
     ) {
-      return `https://predict.olas.network/agents/${address}`;
+      return (
+        <ExternalAgentProfileLink
+          href={`https://predict.olas.network/agents/${address}`}
+        />
+      );
     }
 
     // base memeooorr
@@ -95,7 +136,22 @@ const AgentTitle = ({ address }: { address: Address }) => {
       service?.env_variables?.TWIKIT_USERNAME?.value
     )
       return `https://www.agents.fun/services/${service.env_variables.TWIKIT_USERNAME.value}`;
-  }, [address, middlewareChain, selectedAgentType, service]);
+
+    // modius
+    if (
+      middlewareChain === MiddlewareChain.MODE &&
+      selectedAgentType === AgentType.Modius
+    )
+      return <AgentUiBrowserLink onClick={handleAgentUiBrowserLinkClick} />;
+
+    return null;
+  }, [
+    address,
+    handleAgentUiBrowserLinkClick,
+    middlewareChain,
+    selectedAgentType,
+    service?.env_variables.TWIKIT_USERNAME.value,
+  ]);
 
   return (
     <Flex vertical gap={12}>
@@ -124,11 +180,7 @@ const AgentTitle = ({ address }: { address: Address }) => {
               <Text strong>{address ? generateName(address) : NA}</Text>
             </Tooltip>
 
-            {agentProfileLink && (
-              <a href={agentProfileLink} target="_blank" className="text-sm">
-                Agent profile {UNICODE_SYMBOLS.EXTERNAL_LINK}
-              </a>
-            )}
+            {agentProfileLink}
           </Flex>
         </Flex>
       </Flex>

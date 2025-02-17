@@ -46,6 +46,13 @@ type ElectronApiContextProps = {
   healthCheck?: () => Promise<
     { response: AgentHealthCheck | null } | { error: string }
   >;
+  agentActivityWindow?: {
+    goto?: (url: string) => void;
+    hide?: () => void;
+    show?: () => void;
+    close?: () => void;
+    minimize?: () => void;
+  };
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -71,6 +78,13 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   openPath: () => {},
   validateTwitterLogin: async () => ({ success: false }),
   healthCheck: async () => ({ response: null }),
+  agentActivityWindow: {
+    goto: () => {},
+    hide: () => {},
+    show: () => {},
+    close: () => {},
+    minimize: () => {},
+  },
 });
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
@@ -113,6 +127,13 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         openPath: getElectronApiFunction('openPath'),
         validateTwitterLogin: getElectronApiFunction('validateTwitterLogin'),
         healthCheck: getElectronApiFunction('healthCheck'),
+        agentActivityWindow: {
+          goto: getElectronApiFunction('agentActivityWindow.goto'),
+          hide: getElectronApiFunction('agentActivityWindow.hide'),
+          show: getElectronApiFunction('agentActivityWindow.show'),
+          close: getElectronApiFunction('agentActivityWindow.close'),
+          minimize: getElectronApiFunction('agentActivityWindow.minimize'),
+        },
       }}
     >
       {children}
