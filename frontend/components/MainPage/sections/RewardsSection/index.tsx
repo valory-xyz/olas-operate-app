@@ -52,7 +52,7 @@ const EarnedTagContainer = styled.div`
 
 const DisplayRewards = () => {
   const {
-    availableRewardsForEpochEth: reward,
+    eligibleRewardsThisEpochInEth: reward,
     isEligibleForRewards,
     isStakingRewardsDetailsLoading,
   } = useRewardContext();
