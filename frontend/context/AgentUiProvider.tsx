@@ -15,6 +15,7 @@ export const AgentUiProvider = ({ children }: PropsWithChildren) => {
 
   //   Hide agent activity window when agent type changes
   useEffect(() => {
+    if (prevSelectedAgentType === undefined) return;
     if (selectedAgentType != prevSelectedAgentType) {
       hide?.();
     }

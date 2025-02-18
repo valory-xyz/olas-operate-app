@@ -111,7 +111,13 @@ const AgentTitle = ({ address }: { address: Address }) => {
       );
       return;
     }
-    goto?.('http://localhost:8716')?.then(show);
+    try {
+      await goto?.('http://localhost:8716');
+      show?.();
+    } catch (error) {
+      message.error('Failed to open agent UI browser');
+      console.error(error);
+    }
   }, [deploymentStatus, goto, show]);
 
   const agentProfileLink = useMemo(() => {

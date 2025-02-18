@@ -2,8 +2,8 @@ const { contextBridge, ipcRenderer } = require('electron/renderer');
 
 /** IPC methods for controlling agent activity window */
 const agentActivityWindow = {
-  init: async () => ipcRenderer.invoke('agent-activity-window-init'),
-  goto: async (url) => ipcRenderer.invoke('agent-activity-window-goto', url),
+  init: () => ipcRenderer.invoke('agent-activity-window-init'),
+  goto: (url) => ipcRenderer.invoke('agent-activity-window-goto', url),
   hide: () => ipcRenderer.invoke('agent-activity-window-hide'),
   show: () => ipcRenderer.invoke('agent-activity-window-show'),
   close: () => ipcRenderer.invoke('agent-activity-window-close'),
