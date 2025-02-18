@@ -41,6 +41,7 @@ export type ChainData = {
     nft: string;
     staking_program_id: StakingProgramId;
     threshold: number;
+    /** @deprecated */
     use_mech_marketplace: boolean;
     use_staking: boolean;
   };
@@ -94,6 +95,7 @@ export type ConfigurationTemplate = {
   agent_id: number;
   threshold: number;
   use_staking: boolean;
+  /** @deprecated */
   use_mech_marketplace?: boolean;
   cost_of_bond: number;
   monthly_gas_estimate: number;

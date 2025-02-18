@@ -10,33 +10,16 @@ export const useStakingContractContext = () =>
   useContext(StakingContractDetailsContext);
 
 /**
- * Returns ACTIVE staking contract details
- * Has staked service specific information that `useStakingContractDetails` does not have
-
- * @note requires serviceConfigId once multiple instances are supported
+ * Returns ACTIVE staking contract details.
+ * It has staked service specific information that `useStakingContractDetails` does not have.
+ * @note requires `serviceConfigId` once multiple instances are supported
  */
 export const useActiveStakingContractDetails = () => {
   const {
     selectedStakingContractDetails,
     isSelectedStakingContractDetailsLoading,
-    // allStakingContractDetailsRecord,
-    // refetchActiveStakingContractDetails,
-    // isPaused,
-    // setIsPaused,
+    setActiveStakingProgramId,
   } = useStakingContractContext();
-
-  // const { selectedService } = useServices();
-
-  // // TODO: find a better way to handle this, currently stops react lifecycle hooks being implemented below it
-  // if (!selectedService || !activeStakingContractDetails) {
-  //   return {
-  //     allStakingContractDetailsRecord,
-  //     refetchActiveStakingContractDetails,
-  //     isPaused,
-  //     setIsPaused,
-  //     isActiveStakingContractDetailsLoaded,
-  //   };
-  // }
 
   const {
     serviceStakingState,
@@ -98,6 +81,7 @@ export const useActiveStakingContractDetails = () => {
     hasEnoughRewardsAndSlots,
     hasEnoughServiceSlots,
     isRewardsAvailable,
+    setActiveStakingProgramId,
   };
 };
 

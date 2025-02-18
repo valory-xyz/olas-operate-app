@@ -8,21 +8,31 @@ import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 
 import { BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
-import { StakingProgramMap } from '.';
+import { StakingProgramConfig } from '.';
 
-export const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
-  {
-    [StakingProgramId.MemeBaseAlpha2]:
-      '0xc653622FD75026a020995a1d8c8651316cBBc4dA',
-    [StakingProgramId.MemeBaseBeta]:
-      '0x6011E09e7c095e76980b22498d69dF18EB62BeD8',
-    [StakingProgramId.MemeBaseBeta2]:
-      '0xfb7669c3AdF673b3A545Fa5acd987dbfdA805e22',
-    [StakingProgramId.MemeBaseBeta3]:
-      '0xCA61633b03c54F64b6A7F1f9A9C0A6Feb231Cc4D',
-  };
+export type BaseStakingProgramId =
+  | StakingProgramId.MemeBaseAlpha2
+  | StakingProgramId.MemeBaseBeta
+  | StakingProgramId.MemeBaseBeta2
+  | StakingProgramId.MemeBaseBeta3;
 
-export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
+export const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
+  BaseStakingProgramId,
+  Address
+> = {
+  [StakingProgramId.MemeBaseAlpha2]:
+    '0xc653622FD75026a020995a1d8c8651316cBBc4dA',
+  [StakingProgramId.MemeBaseBeta]: '0x6011E09e7c095e76980b22498d69dF18EB62BeD8',
+  [StakingProgramId.MemeBaseBeta2]:
+    '0xfb7669c3AdF673b3A545Fa5acd987dbfdA805e22',
+  [StakingProgramId.MemeBaseBeta3]:
+    '0xCA61633b03c54F64b6A7F1f9A9C0A6Feb231Cc4D',
+};
+
+export const BASE_STAKING_PROGRAMS: Record<
+  BaseStakingProgramId,
+  StakingProgramConfig
+> = {
   [StakingProgramId.MemeBaseAlpha2]: {
     chainId: EvmChainId.Base,
     name: 'MemeBase Alpha II',
