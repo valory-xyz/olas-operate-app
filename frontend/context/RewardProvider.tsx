@@ -17,6 +17,7 @@ import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { isValidServiceId } from '@/utils/service';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 import { StakingProgramContext } from './StakingProgramProvider';
@@ -92,7 +93,7 @@ const useStakingRewardsDetails = () => {
       !!serviceConfigId &&
       !!selectedStakingProgramId &&
       !!multisig &&
-      !!token,
+      isValidServiceId(token),
     refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });

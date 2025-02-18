@@ -37,7 +37,7 @@ export const SetupPassword = () => {
   };
 
   return (
-    <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }}>
+    <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }} noBorder>
       <SetupCreateHeader prev={SetupScreen.Welcome} />
       <Title level={3}>Create password</Title>
       <Text>Come up with a strong password.</Text>

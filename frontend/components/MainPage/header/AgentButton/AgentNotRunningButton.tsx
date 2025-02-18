@@ -32,11 +32,13 @@ import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 import { updateServiceIfNeeded } from '@/utils/service';
 
+/**
+ * hook to handle service deployment and starting the service
+ */
 const useServiceDeployment = () => {
   const { showNotification } = useElectronApi();
 
   const { goto: gotoPage } = usePageState();
-
   const { masterWallets, masterSafes, masterEoa } = useMasterWalletContext();
   const {
     selectedService,
@@ -47,18 +49,16 @@ const useServiceDeployment = () => {
     selectedAgentType,
     overrideSelectedServiceStatus,
   } = useServices();
+  const serviceId = selectedService?.service_config_id;
 
   const { canStartAgent } = useBalanceAndRefillRequirementsContext();
-  const { service, isServiceRunning } = useService(
-    selectedService?.service_config_id,
-  );
+  const { service, isServiceRunning } = useService(serviceId);
 
   const { setIsPaused: setIsBalancePollingPaused, updateBalances } =
     useBalanceContext();
 
-  const { serviceStakedBalances, serviceSafeBalances } = useServiceBalances(
-    selectedService?.service_config_id,
-  );
+  const { serviceStakedBalances, serviceSafeBalances } =
+    useServiceBalances(serviceId);
 
   const serviceStakedOlasBalancesOnHomeChain = serviceStakedBalances?.find(
     (stakedBalance) =>
@@ -74,18 +74,19 @@ const useServiceDeployment = () => {
     (balance) => balance.evmChainId === selectedAgentConfig.evmHomeChainId,
   )?.balance;
 
+  // Staking contract details
   const {
     isAllStakingContractDetailsRecordLoaded,
     setIsPaused: setIsStakingContractInfoPollingPaused,
     refetchSelectedStakingContractDetails: refetchActiveStakingContractDetails,
   } = useStakingContractContext();
-
   const { selectedStakingProgramId } = useStakingProgram();
-
-  const { isEligibleForStaking, isAgentEvicted, isServiceStaked } =
-    useActiveStakingContractDetails();
-
-  const { hasEnoughServiceSlots } = useActiveStakingContractDetails();
+  const {
+    isEligibleForStaking,
+    isAgentEvicted,
+    isServiceStaked,
+    hasEnoughServiceSlots,
+  } = useActiveStakingContractDetails();
 
   const { masterSafesOwners } = useMultisigs(masterSafes);
 
@@ -170,6 +171,7 @@ const useServiceDeployment = () => {
     setIsBalancePollingPaused,
     setIsStakingContractInfoPollingPaused,
   ]);
+
   /**
    * @note only create a service if `service` does not exist
    */
@@ -314,8 +316,7 @@ const createSafeIfNeeded = async ({
   masterSafesOwners?: MultisigOwners[];
 }) => {
   const selectedChainHasMasterSafe = masterSafes?.some(
-    (masterSafe) =>
-      masterSafe.evmChainId === selectedAgentConfig.evmHomeChainId,
+    ({ evmChainId }) => evmChainId === selectedAgentConfig.evmHomeChainId,
   );
 
   if (selectedChainHasMasterSafe) return;
@@ -324,8 +325,7 @@ const createSafeIfNeeded = async ({
   const otherChainOwners = new Set(
     masterSafesOwners
       ?.filter(
-        (masterSafe) =>
-          masterSafe.evmChainId !== selectedAgentConfig.evmHomeChainId,
+        ({ evmChainId }) => evmChainId !== selectedAgentConfig.evmHomeChainId,
       )
       .map((masterSafe) => masterSafe.owners)
       .flat(),
