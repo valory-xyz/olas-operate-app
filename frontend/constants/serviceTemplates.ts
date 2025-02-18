@@ -86,7 +86,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeic6yi22szouojeueui5ewcibckcmxcbmkhzspwqxygen6twjtg7lm',
+  hash: 'bafybeichqcx6rjb6shgnd5h626doe6th2ll5j52n2oewyt4hocb4pjpyvi',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
