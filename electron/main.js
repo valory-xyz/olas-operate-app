@@ -99,6 +99,7 @@ let mainWindow = null;
 let splashWindow = null;
 /** @type {Electron.BrowserWindow | null} */
 let agentWindow = null;
+const getAgentWindow = () => agentWindow;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
@@ -367,36 +368,6 @@ const createMainWindow = async () => {
     }
   });
 
-  // Initialize the agent activity checker
-  ipcMain.handle('agent-activity-window-init', async () => {
-    await createAgentActivityWindow();
-  });
-
-  ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
-    logger.electron('Navigating to:', url);
-    agentWindow?.loadURL(url);
-  });
-
-  ipcMain.handle('agent-activity-window-hide', async () => {
-    logger.electron('Hiding agent activity window');
-    agentWindow?.hide();
-  });
-
-  ipcMain.handle('agent-activity-window-show', async () => {
-    logger.electron('Showing agent activity window');
-    agentWindow?.show();
-  });
-
-  ipcMain.handle('agent-activity-window-close', async () => {
-    logger.electron('Closing agent activity window');
-    agentWindow?.close();
-  });
-
-  ipcMain.handle('agent-activity-window-minimize', async () => {
-    logger.electron('Minimizing agent activity window');
-    agentWindow?.minimize();
-  });
-
   mainWindow.webContents.on('did-fail-load', () => {
     mainWindow.webContents.reloadIgnoringCache();
   });
@@ -431,7 +402,7 @@ const createMainWindow = async () => {
 
 /**Create the agent specific window */
 const createAgentActivityWindow = async () => {
-  if (agentWindow)
+  if (getAgentWindow())
     return logger.electron('Agent activity window already exists');
 
   agentWindow = new BrowserWindow({
@@ -451,29 +422,38 @@ const createAgentActivityWindow = async () => {
   });
 
   ipcMain.on('agent-activity-window-goto', async (_event, url) => {
-    if (!agentWindow || agentWindow.isDestroyed()) {
+    if (!getAgentWindow() || getAgentWindow().isDestroyed()) {
       agentWindow = null;
       return createAgentActivityWindow().then(async () =>
-        agentWindow?.loadURL(url),
+        getAgentWindow()?.loadURL(url),
       );
     }
-    return agentWindow.loadURL(url);
+    return getAgentWindow().loadURL(url);
   });
 
   ipcMain.on('agent-activity-window-hide', () => {
-    agentWindow?.hide();
+    if (!getAgentWindow() || getAgentWindow().isDestroyed()) return;
+    getAgentWindow()?.hide();
   });
 
-  ipcMain.on('agent-activity-window-show', () => {
-    agentWindow?.show();
+  ipcMain.on('agent-activity-window-show', async () => {
+    if (!getAgentWindow() || getAgentWindow().isDestroyed()) return;
+    getAgentWindow()?.show();
   });
 
   ipcMain.on('agent-activity-window-close', () => {
-    agentWindow?.close();
+    if (!getAgentWindow() || getAgentWindow().isDestroyed()) return;
+    getAgentWindow()?.close();
   });
 
   ipcMain.on('agent-activity-window-minimize', () => {
-    agentWindow?.minimize();
+    if (
+      !getAgentWindow() ||
+      getAgentWindow().isDestroyed() ||
+      getAgentWindow().isMinimized()
+    )
+      return;
+    getAgentWindow()?.minimize();
   });
 };
 
