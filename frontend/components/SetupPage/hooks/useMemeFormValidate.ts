@@ -29,12 +29,15 @@ export const useMemeFormValidate = () => {
     twitterCredentialsValidationStatus,
     setTwitterCredentialsValidationStatus,
   ] = useState<ValidationStatus>('unknown');
+  const [fireworksApiKeyValidationStatus, setFireworksApiKeyValidationStatus] =
+    useState<ValidationStatus>('unknown');
 
   const handleValidate = useCallback(
     async (values: Record<keyof FieldValues, string>) => {
       setIsValidating(true);
 
       setGeminiApiKeyValidationStatus('unknown');
+      setFireworksApiKeyValidationStatus('unknown');
       setTwitterCredentialsValidationStatus('unknown');
       setSubmitButtonText('Validating Gemini API key...');
 
@@ -44,6 +47,14 @@ export const useMemeFormValidate = () => {
         );
         setGeminiApiKeyValidationStatus(isGeminiApiValid ? 'valid' : 'invalid');
         if (!isGeminiApiValid) return;
+
+        const isFireworksApiValid = await validateGeminiApiKey(
+          values.fireworksApiKey,
+        );
+        setGeminiApiKeyValidationStatus(
+          isFireworksApiValid ? 'valid' : 'invalid',
+        );
+        if (!isFireworksApiValid) return;
 
         // validate the twitter credentials
         setSubmitButtonText('Validating Twitter credentials...');
@@ -81,6 +92,8 @@ export const useMemeFormValidate = () => {
     setSubmitButtonText,
     geminiApiKeyValidationStatus,
     setGeminiApiKeyValidationStatus,
+    fireworksApiKeyValidationStatus,
+    setFireworksApiKeyValidationStatus,
     twitterCredentialsValidationStatus,
     setTwitterCredentialsValidationStatus,
     handleValidate,
