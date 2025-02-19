@@ -43,7 +43,7 @@ const UnhingedModeLabel = () => (
 const FireworksApiLabel = () => (
   <div>
     Fireworks API (Unhinged Dobby LLM)&nbsp;
-    <InfoTooltip overlayInnerStyle={{ width: 360 }} open={false}>
+    <InfoTooltip overlayInnerStyle={{ width: 360 }}>
       <Flex vertical gap={8}>
         <Text>
           Dobby LLM requires a Fireworks AI API key (paid) to activate Unhinged

@@ -27,6 +27,7 @@ type MemeooorrFormValues = {
   description: string;
   env_variables: {
     GENAI_API_KEY: string;
+    FIREWORKS_API_KEY: string;
     PERSONA: string;
     TWIKIT_USERNAME: string;
     TWIKIT_EMAIL: string;
@@ -57,6 +58,7 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
     const cookies = await handleValidate({
       personaDescription: values.env_variables.PERSONA,
       geminiApiKey: values.env_variables.GENAI_API_KEY,
+      fireworksApiKey: values.env_variables.FIREWORKS_API_KEY,
       xEmail: values.env_variables.TWIKIT_EMAIL,
       xUsername: values.env_variables.TWIKIT_USERNAME,
       xPassword: values.env_variables.TWIKIT_PASSWORD,
@@ -193,6 +195,8 @@ export const MemeUpdatePage = () => {
           acc.env_variables.PERSONA = value;
         } else if (key === 'GENAI_API_KEY') {
           acc.env_variables.GENAI_API_KEY = value;
+        } else if (key === 'FIREWORKS_API_KEY') {
+          acc.env_variables.FIREWORKS_API_KEY = value;
         } else if (key === 'TWIKIT_EMAIL') {
           acc.env_variables.TWIKIT_EMAIL = value;
         } else if (key === 'TWIKIT_USERNAME') {

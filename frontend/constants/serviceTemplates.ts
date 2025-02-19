@@ -134,6 +134,12 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.USER,
     },
+    FIREWORKS_API_KEY: {
+      name: 'Fireworks AI api key',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
     PERSONA: {
       name: 'Persona description',
       description: '',
@@ -178,7 +184,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       provision_type: EnvProvisionType.COMPUTED,
     },
   },
-};
+} as const;
 
 /**
  * Agents.fun Base template
