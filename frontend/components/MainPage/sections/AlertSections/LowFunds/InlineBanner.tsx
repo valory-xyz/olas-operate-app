@@ -32,12 +32,7 @@ type InlineBannerProps = { text: string; address: Address; extra?: ReactNode };
 export const InlineBanner = ({ text, address, extra }: InlineBannerProps) => {
   return (
     <InlineBannerContainer vertical>
-      <Flex
-        justify="space-between"
-        align="center"
-        className="w-full"
-        style={rowCommonStyle}
-      >
+      <Flex justify="space-between" align="center" style={rowCommonStyle}>
         <Text strong>{text}</Text>
         <Flex gap={12}>
           <Text>{truncateAddress(address)}</Text>
