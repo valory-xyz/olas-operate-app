@@ -26,7 +26,7 @@ import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
 type MemeooorrFormValues = {
   description: string;
-  isFireworksApiEnabled: boolean;
+  fireworksApiEnabled: boolean;
   env_variables: {
     GENAI_API_KEY: string;
     FIREWORKS_API_KEY: string;
@@ -60,7 +60,7 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
     const cookies = await handleValidate({
       personaDescription: values.env_variables.PERSONA,
       geminiApiKey: values.env_variables.GENAI_API_KEY,
-      fireworksApiKey: values.isFireworksApiEnabled
+      fireworksApiKey: values.fireworksApiEnabled
         ? values.env_variables.FIREWORKS_API_KEY
         : '',
       xEmail: values.env_variables.TWIKIT_EMAIL,
@@ -207,7 +207,7 @@ export const MemeUpdatePage = () => {
           acc.env_variables.GENAI_API_KEY = value;
         } else if (key === 'FIREWORKS_API_KEY') {
           acc.env_variables.FIREWORKS_API_KEY = value;
-          acc.isFireworksApiEnabled = !!value;
+          acc.fireworksApiEnabled = !!value;
         } else if (key === 'TWIKIT_EMAIL') {
           acc.env_variables.TWIKIT_EMAIL = value;
         } else if (key === 'TWIKIT_USERNAME') {
@@ -215,9 +215,6 @@ export const MemeUpdatePage = () => {
         } else if (key === 'TWIKIT_PASSWORD') {
           acc.env_variables.TWIKIT_PASSWORD = value;
         }
-
-        acc.env_variables.FIREWORKS_API_KEY = 'Some random value'; // TODO: remove this line
-        acc.isFireworksApiEnabled = false; // TODO: remove this line
         return acc;
       },
       { env_variables: {} } as MemeooorrFormValues,
