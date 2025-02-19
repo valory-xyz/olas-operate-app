@@ -86,11 +86,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeichqcx6rjb6shgnd5h626doe6th2ll5j52n2oewyt4hocb4pjpyvi',
+  hash: 'bafybeihrfc7vxnkikd5eqiry4fu7dybmeianetnbgohuw3fupfr5wx6uc4',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.4.0-alpha4',
+  service_version: 'v0.4.0-alpha5',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -323,7 +323,8 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {  // Unused, refactored - remove
+    STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      // Unused, refactored - remove
       name: 'Staking activity checker contract address',
       description: '',
       value: 'Unused',
