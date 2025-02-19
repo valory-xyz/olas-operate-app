@@ -326,7 +326,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
     STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {  // Unused, refactored - remove
       name: 'Staking activity checker contract address',
       description: '',
-      value: '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
+      value: 'Unused',
       provision_type: EnvProvisionType.FIXED,
     },
     MIN_SWAP_AMOUNT_THRESHOLD: {
