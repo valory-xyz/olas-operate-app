@@ -112,7 +112,7 @@ const AgentTitle = ({ address }: { address: Address }) => {
       return;
     }
     try {
-      await goto?.('http://localhost:8716');
+      await goto?.('http://127.0.0.1:8716');
       show?.();
     } catch (error) {
       message.error('Failed to open agent UI browser');
