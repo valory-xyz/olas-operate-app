@@ -1,22 +1,9 @@
-import { InfoCircleOutlined } from '@ant-design/icons';
-import {
-  Button,
-  Checkbox,
-  Divider,
-  Flex,
-  Form,
-  Input,
-  message,
-  Popover,
-  Typography,
-} from 'antd';
+import { Button, Divider, Flex, Form, Input, message, Typography } from 'antd';
 import React, { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
 import { CustomAlert } from '@/components/Alert';
-import { InfoTooltip } from '@/components/InfoTooltip';
-import { COLOR } from '@/constants/colors';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -28,6 +15,7 @@ import {
   requiredRules,
 } from '../formUtils';
 import { onDummyServiceCreation } from '../utils';
+import { FireworksApiFields } from './FireworksApiField';
 
 const { Title, Text } = Typography;
 
@@ -37,11 +25,13 @@ type FieldValues = {
   xEmail: string;
   xUsername: string;
   xPassword: string;
+  fireworksApiEnabled: boolean;
+  fireworksApiKey: string;
 };
 
 export const XAccountCredentials = () => (
   <Flex vertical>
-    <Divider style={{ margin: '16px 0' }} />
+    <Divider style={{ margin: '8px 0 16px 0' }} />
     <Title level={5} className="mt-0">
       X account credentials
     </Title>
@@ -88,42 +78,6 @@ export const InvalidXCredentials = () => (
   />
 );
 
-const FireworksApiLabel = () => {
-  return (
-    <div>
-      Fireworks API (Unhinged Dobby LLM)
-      <InfoTooltip style={{ width: 400 }} open>
-        <Text>
-          Dobby LLM requires a Fireworks AI API key (paid) to activate Unhinged
-          Mode. To generate the API key: Log in to Fireworks AI account ↗.
-          Navigate to Get API Key section and click Generate Key. On the Home
-          page, click Set payment to cover usage costs based on tokens consumed.
-        </Text>
-      </InfoTooltip>
-      <Popover
-        trigger={['hover', 'click']}
-        placement="bottomLeft"
-        showArrow={false}
-        style={{ width: 400 }}
-        content={
-          <Flex vertical={false} gap={8} style={{ maxWidth: 400 }}>
-            <Typography.Text>
-              <InfoCircleOutlined style={{ color: COLOR.BLUE }} />
-            </Typography.Text>
-            Dobby LLM requires a Fireworks AI API key (paid) to activate
-            Unhinged Mode. To generate the API key: Log in to Fireworks AI
-            account ↗. Navigate to Get API Key section and click Generate Key.
-            On the Home page, click Set payment to cover usage costs based on
-            tokens consumed.
-          </Flex>
-        }
-      >
-        ABCD
-      </Popover>
-    </div>
-  );
-};
-
 type MemeooorrAgentFormProps = { serviceTemplate: ServiceTemplate };
 
 export const MemeooorrAgentForm = ({
@@ -146,7 +100,7 @@ export const MemeooorrAgentForm = ({
   } = useMemeFormValidate();
 
   const onFinish = useCallback(
-    async (values: Record<keyof FieldValues, string>) => {
+    async (values: FieldValues) => {
       if (!defaultStakingProgramId) return;
 
       try {
@@ -257,19 +211,7 @@ export const MemeooorrAgentForm = ({
           <InvalidGeminiApiCredentials />
         )}
 
-        <Form.Item name="useFireworksApi" valuePropName="checked">
-          <Checkbox>Use Fireworks API (Unhinged Dobby LLM)</Checkbox>
-        </Form.Item>
-
-        {form.getFieldValue('useFireworksApi') && (
-          <Form.Item
-            name="fireworksApiKey"
-            label={<FireworksApiLabel />}
-            {...commonFieldProps}
-          >
-            <Input.Password />
-          </Form.Item>
-        )}
+        <FireworksApiFields />
 
         {/* X */}
         <XAccountCredentials />
