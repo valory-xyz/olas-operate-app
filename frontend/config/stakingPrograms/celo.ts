@@ -7,7 +7,7 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 
-import { ACTIVITY_CHECKERS, ActivityCheckerType } from '../activityCheckers';
+import { CELO_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { StakingProgramMap } from '.';
 
 export const CELO_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
@@ -25,9 +25,7 @@ export const CELO_STAKING_PROGRAMS: StakingProgramMap = {
       [TokenSymbol.OLAS]: 100,
     },
     activityChecker:
-      ACTIVITY_CHECKERS[EvmChainId.Celo][
-        ActivityCheckerType.MemeActivityChecker
-      ],
+      CELO_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.MemeCeloAlpha2],
     contract: new MulticallContract(
       CELO_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.MemeCeloAlpha2],
       STAKING_TOKEN_PROXY_ABI,

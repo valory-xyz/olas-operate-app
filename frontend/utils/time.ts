@@ -35,6 +35,7 @@ export const formatToMonthDay = (timeInMs: number) => {
   return new Date(timeInMs).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
+    timeZone: 'UTC',
   });
 };
 

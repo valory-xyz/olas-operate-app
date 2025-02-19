@@ -7,7 +7,7 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 
-import { ACTIVITY_CHECKERS, ActivityCheckerType } from '../activityCheckers';
+import { MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { StakingProgramMap } from '.';
 
 export const MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
@@ -34,7 +34,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
       [TokenSymbol.OLAS]: 40,
     },
     activityChecker:
-      ACTIVITY_CHECKERS[EvmChainId.Mode][ActivityCheckerType.Staking],
+      MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.ModiusAlpha],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.ModiusAlpha],
       STAKING_TOKEN_PROXY_ABI,
@@ -48,7 +48,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
       [TokenSymbol.OLAS]: 100,
     },
     activityChecker:
-      ACTIVITY_CHECKERS[EvmChainId.Mode][ActivityCheckerType.Staking],
+      MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.ModiusAlpha2],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.ModiusAlpha2],
       STAKING_TOKEN_PROXY_ABI,
@@ -62,7 +62,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
       [TokenSymbol.OLAS]: 1000,
     },
     activityChecker:
-      ACTIVITY_CHECKERS[EvmChainId.Mode][ActivityCheckerType.Staking],
+      MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.ModiusAlpha3],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.ModiusAlpha3],
       STAKING_TOKEN_PROXY_ABI,
@@ -76,7 +76,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
       [TokenSymbol.OLAS]: 5000,
     },
     activityChecker:
-      ACTIVITY_CHECKERS[EvmChainId.Mode][ActivityCheckerType.Staking],
+      MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.ModiusAlpha4],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.ModiusAlpha4],
       STAKING_TOKEN_PROXY_ABI,
@@ -91,7 +91,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
       [TokenSymbol.OLAS]: 40,
     },
     activityChecker:
-      ACTIVITY_CHECKERS[EvmChainId.Mode][ActivityCheckerType.Staking],
+      MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.OptimusAlpha],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.OptimusAlpha],
       STAKING_TOKEN_PROXY_ABI,
