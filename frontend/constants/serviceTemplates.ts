@@ -240,7 +240,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeihzkrcw5nncj773gblcv6gjcjjwrsrwt4kn7sycthrjnexsnxi3me',
+  hash: 'bafybeifl56xp3o26zb6uaoyeg2pwoduhnm22ukjcv5wcj32tswibsikosa',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
@@ -317,7 +317,13 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: 'mode',
       provision_type: EnvProvisionType.FIXED,
     },
-    STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+    ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      name: 'Staking activity checker contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {  // Unused, refactored - remove
       name: 'Staking activity checker contract address',
       description: '',
       value: '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
