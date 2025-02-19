@@ -15,6 +15,7 @@ import {
   requiredRules,
   validateMessages,
 } from '../SetupPage/SetupYourAgent/formUtils';
+import { FireworksApiFields } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/FireworksApiField';
 import {
   InvalidGeminiApiCredentials,
   InvalidXCredentials,
@@ -25,6 +26,7 @@ import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
 type MemeooorrFormValues = {
   description: string;
+  isFireworksApiEnabled: boolean;
   env_variables: {
     GENAI_API_KEY: string;
     FIREWORKS_API_KEY: string;
@@ -58,7 +60,9 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
     const cookies = await handleValidate({
       personaDescription: values.env_variables.PERSONA,
       geminiApiKey: values.env_variables.GENAI_API_KEY,
-      fireworksApiKey: values.env_variables.FIREWORKS_API_KEY,
+      fireworksApiKey: values.isFireworksApiEnabled
+        ? values.env_variables.FIREWORKS_API_KEY
+        : '',
       xEmail: values.env_variables.TWIKIT_EMAIL,
       xUsername: values.env_variables.TWIKIT_USERNAME,
       xPassword: values.env_variables.TWIKIT_PASSWORD,
@@ -107,6 +111,12 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
       {geminiApiKeyValidationStatus === 'invalid' && (
         <InvalidGeminiApiCredentials />
       )}
+
+      {/* Fireworks API */}
+      <FireworksApiFields
+        fireworksApiEnabledName="fireworksApiEnabled"
+        fireworksApiKeyName={['env_variables', 'FIREWORKS_API_KEY']}
+      />
 
       {/* X */}
       <XAccountCredentials />
@@ -197,6 +207,7 @@ export const MemeUpdatePage = () => {
           acc.env_variables.GENAI_API_KEY = value;
         } else if (key === 'FIREWORKS_API_KEY') {
           acc.env_variables.FIREWORKS_API_KEY = value;
+          acc.isFireworksApiEnabled = !!value;
         } else if (key === 'TWIKIT_EMAIL') {
           acc.env_variables.TWIKIT_EMAIL = value;
         } else if (key === 'TWIKIT_USERNAME') {
@@ -205,6 +216,8 @@ export const MemeUpdatePage = () => {
           acc.env_variables.TWIKIT_PASSWORD = value;
         }
 
+        acc.env_variables.FIREWORKS_API_KEY = 'Some random value'; // TODO: remove this line
+        acc.isFireworksApiEnabled = false; // TODO: remove this line
         return acc;
       },
       { env_variables: {} } as MemeooorrFormValues,

@@ -136,7 +136,7 @@ export const MemeooorrAgentForm = ({
             },
             FIREWORKS_API_KEY: {
               ...serviceTemplate.env_variables.FIREWORKS_API_KEY,
-              value: values.fireworksApiKey,
+              value: values.fireworksApiEnabled ? values.fireworksApiKey : '',
             },
             PERSONA: {
               ...serviceTemplate.env_variables.PERSONA,

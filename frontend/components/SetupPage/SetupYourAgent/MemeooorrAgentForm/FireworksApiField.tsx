@@ -76,13 +76,25 @@ const FireworksApiLabel = () => (
   </div>
 );
 
-export const FireworksApiFields = () => {
+type FireworksApiFieldsProps = {
+  fireworksApiEnabledName?: string;
+  fireworksApiKeyName?: string | string[];
+};
+
+export const FireworksApiFields = ({
+  fireworksApiEnabledName = 'fireworksApiEnabled',
+  fireworksApiKeyName = 'fireworksApiKey',
+}: FireworksApiFieldsProps) => {
   const isFireworksApiEnabled = Form.useWatch('fireworksApiEnabled');
 
   return (
     <>
       <Form.Item>
-        <Form.Item name="fireworksApiEnabled" valuePropName="checked" noStyle>
+        <Form.Item
+          name={fireworksApiEnabledName}
+          valuePropName="checked"
+          noStyle
+        >
           <Switch />
         </Form.Item>
         <UnhingedModeLabel />
@@ -90,7 +102,7 @@ export const FireworksApiFields = () => {
 
       {isFireworksApiEnabled && (
         <Form.Item
-          name="fireworksApiKey"
+          name={fireworksApiKeyName}
           label={<FireworksApiLabel />}
           {...commonFieldProps}
         >
