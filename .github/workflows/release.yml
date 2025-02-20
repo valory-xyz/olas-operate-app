@@ -58,12 +58,12 @@ jobs:
         run: poetry install
 
       # Download and build with PyInstaller
-      - name: Get trader bin
-        run: |
-          trader_version=$(poetry run python -c "import yaml; config = yaml.safe_load(open('templates/trader.yaml')); print(config['service_version'])")
-          echo $trader_version
-          make ./dist/aea_bin
-        #instead of this one mwe use make; mkdir dist && curl -L -o dist/aea_bin "https://github.com/valory-xyz/trader/releases/download/${trader_version}/trader_bin_${{ env.OS_ARCH }}"
+      #- name: Get trader bin
+      #  run: |
+      #    trader_version=$(poetry run python -c "import yaml; config = yaml.safe_load(open('templates/trader.yaml')); print(config['service_version'])")
+      #    echo $trader_version
+      # make ./dist/aea_bin
+      #instead of this one mwe use make; mkdir dist && curl -L -o dist/aea_bin "https://github.com/valory-xyz/trader/releases/download/${trader_version}/trader_bin_${{ env.OS_ARCH }}"
         
       # -- old optimus getter
       # optimus_version=$(poetry run python -c "import yaml; config = yaml.safe_load(open('templates/optimus.yaml')); print(config['service_version'])")
@@ -88,11 +88,11 @@ jobs:
           name: tendermint_${{ env.OS_ARCH }}
           path: dist/tendermint_bin
 
-      - name: Upload aea
-        uses: actions/upload-artifact@v4
-        with:
-          name: aea_bin_${{ env.OS_ARCH }}
-          path: ./dist/aea_bin
+      #- name: Upload aea
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: aea_bin_${{ env.OS_ARCH }}
+      #    path: ./dist/aea_bin
 
   # Jobs for production, running separately for x64 and arm64
   build-release:
@@ -134,11 +134,11 @@ jobs:
           name: pearl_${{ env.OS_ARCH }}
           path: electron/bins/
       
-      - name: Download aea binary for architecture
-        uses: actions/download-artifact@v4
-        with:
-          name: aea_bin_${{ env.OS_ARCH }}
-          path: electron/bins/
+      #- name: Download aea binary for architecture
+      #  uses: actions/download-artifact@v4
+      #  with:
+      #    name: aea_bin_${{ env.OS_ARCH }}
+      #    path: electron/bins/
 
       - name: Download tendermint binary for architecture
         uses: actions/download-artifact@v4
