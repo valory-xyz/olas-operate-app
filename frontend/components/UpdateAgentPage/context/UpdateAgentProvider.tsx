@@ -10,6 +10,7 @@ import {
 
 import { ServiceTemplate } from '@/client';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
+import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
@@ -33,7 +34,7 @@ export const UpdateAgentContext = createContext<
 >({});
 
 export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
-  const [form] = Form.useForm<DeepPartial<ServiceTemplate>>();
+  const [form] = Form.useForm<DeepPartial<ServiceTemplate>>(); // TODO: wrong type, fix it
   const { selectedService, selectedAgentType } = useServices();
   const { goto } = usePageState();
   const [isEditing, setIsEditing] = useState(false);
@@ -43,32 +44,53 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
 
     if (!selectedService || !selectedService.service_config_id) return;
 
-    try {
-      await ServicesService.updateService({
-        serviceConfigId: selectedService.service_config_id,
-        partialServiceTemplate: {
-          ...formValues,
-          env_variables: {
-            ...Object.entries(formValues.env_variables ?? {}).reduce(
-              (acc, [key, value]) => ({
-                ...acc,
-                [key]: {
-                  // Pass the environment variable details
-                  // in case the variable doesn't exist yet in the service
-                  ...(SERVICE_TEMPLATES.find(
-                    (template) =>
-                      template.name === selectedService.name ||
-                      template.agentType === selectedAgentType,
-                  )?.env_variables?.[key] || {}),
-                  // Update with the value from the form
-                  value,
-                },
-              }),
-              {},
-            ),
-          },
+    const currentTemplate = SERVICE_TEMPLATES.find(
+      ({ name, agentType }) =>
+        name === selectedService.name || agentType === selectedAgentType,
+    );
+
+    console.log('currentTemplate', formValues);
+
+    // TODO: This logic should be moved to agent specific components
+    // WE SHOULD NOT DO THIS HERE
+    if (selectedAgentType === AgentType.Memeooorr) {
+      const isUnhingedMode =
+        'fireworksApiEnabled' in formValues && formValues.fireworksApiEnabled;
+
+      formValues.env_variables = {
+        ...formValues.env_variables,
+        FIREWORKS_API_KEY: isUnhingedMode
+          ? String(formValues.env_variables?.FIREWORKS_API_KEY || '')
+          : '',
+      };
+    }
+
+    const partialServiceTemplate = {
+      serviceConfigId: selectedService.service_config_id,
+      partialServiceTemplate: {
+        ...formValues,
+        env_variables: {
+          ...Object.entries(formValues.env_variables ?? {}).reduce(
+            (acc, [key, value]) => ({
+              ...acc,
+              [key]: {
+                // Pass the environment variable details
+                // in case the variable doesn't exist yet in the service
+                ...(currentTemplate?.env_variables?.[key] || {}),
+                value, // Update with the value from the form
+              },
+            }),
+            {},
+          ),
         },
-      });
+      },
+    };
+
+    console.log('partialServiceTemplate', partialServiceTemplate);
+    return;
+
+    try {
+      await ServicesService.updateService(partialServiceTemplate);
     } catch (error) {
       console.error(error);
     } finally {
