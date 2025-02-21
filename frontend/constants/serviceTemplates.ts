@@ -249,7 +249,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   configurations: {
     [MiddlewareChain.MODE]: {
       staking_program_id: StakingProgramId.ModiusAlpha, // default, may be overwritten
-      nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+      nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
       threshold: 1,
