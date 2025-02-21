@@ -69,6 +69,13 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
     });
     if (!cookies) return;
 
+    // fields for firework api key
+    form?.setFieldValue(
+      ['env_variables', 'FIREWORKS_API_KEY'],
+      values.fireworksApiEnabled ? values.env_variables.FIREWORKS_API_KEY : '',
+    );
+
+    // other fields
     form?.setFieldValue(['env_variables', 'TWIKIT_COOKIES'], cookies);
     form?.setFieldValue(
       'description',
@@ -99,7 +106,6 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
           rows={4}
         />
       </Form.Item>
-
       {/* Gemini credentials */}
       <Form.Item
         label="Gemini API key"
@@ -111,19 +117,16 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
       {geminiApiKeyValidationStatus === 'invalid' && (
         <InvalidGeminiApiCredentials />
       )}
-
       {/* Fireworks API */}
       <FireworksApiFields
         fireworksApiEnabledName="fireworksApiEnabled"
         fireworksApiKeyName={['env_variables', 'FIREWORKS_API_KEY']}
       />
-
       {/* X */}
       <XAccountCredentials />
       {twitterCredentialsValidationStatus === 'invalid' && (
         <InvalidXCredentials />
       )}
-
       <Form.Item
         label="X Email"
         name={['env_variables', 'TWIKIT_EMAIL']}
@@ -169,11 +172,10 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
       >
         <Input.Password placeholder="X Password" />
       </Form.Item>
-
       {/* Hidden fields that need to be accessible in Confirm Update Modal */}
       <Form.Item name={['env_variables', 'TWIKIT_COOKIES']} hidden />
+      <Form.Item name={['env_variables', 'FIREWORKS_API_KEY']} hidden />
       <Form.Item name="description" hidden />
-
       <Form.Item hidden={!isEditing}>
         <Button
           size="large"

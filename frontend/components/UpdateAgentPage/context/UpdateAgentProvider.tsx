@@ -49,20 +49,12 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
         name === selectedService.name || agentType === selectedAgentType,
     );
 
-    console.log('currentTemplate', formValues);
-
-    // TODO: This logic should be moved to agent specific components
-    // WE SHOULD NOT DO THIS HERE
+    // TODO: This should be in MemesUpdatePage and not here
+    // Better approach would be to pass formValues as a argument to the function
     if (selectedAgentType === AgentType.Memeooorr) {
-      const isUnhingedMode =
-        'fireworksApiEnabled' in formValues && formValues.fireworksApiEnabled;
-
-      formValues.env_variables = {
-        ...formValues.env_variables,
-        FIREWORKS_API_KEY: isUnhingedMode
-          ? String(formValues.env_variables?.FIREWORKS_API_KEY || '')
-          : '',
-      };
+      if ('fireworksApiEnabled' in formValues) {
+        delete formValues.fireworksApiEnabled;
+      }
     }
 
     const partialServiceTemplate = {
@@ -85,9 +77,6 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
         },
       },
     };
-
-    console.log('partialServiceTemplate', partialServiceTemplate);
-    return;
 
     try {
       await ServicesService.updateService(partialServiceTemplate);
