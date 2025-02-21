@@ -15,6 +15,7 @@ import {
   requiredRules,
   validateMessages,
 } from '../SetupPage/SetupYourAgent/formUtils';
+import { FireworksApiFields } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/FireworksApiField';
 import {
   InvalidGeminiApiCredentials,
   InvalidXCredentials,
@@ -25,8 +26,10 @@ import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
 type MemeooorrFormValues = {
   description: string;
+  fireworksApiEnabled: boolean;
   env_variables: {
     GENAI_API_KEY: string;
+    FIREWORKS_API_KEY: string;
     PERSONA: string;
     TWIKIT_USERNAME: string;
     TWIKIT_EMAIL: string;
@@ -57,6 +60,9 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
     const cookies = await handleValidate({
       personaDescription: values.env_variables.PERSONA,
       geminiApiKey: values.env_variables.GENAI_API_KEY,
+      fireworksApiKey: values.fireworksApiEnabled
+        ? values.env_variables.FIREWORKS_API_KEY
+        : '',
       xEmail: values.env_variables.TWIKIT_EMAIL,
       xUsername: values.env_variables.TWIKIT_USERNAME,
       xPassword: values.env_variables.TWIKIT_PASSWORD,
@@ -105,6 +111,12 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
       {geminiApiKeyValidationStatus === 'invalid' && (
         <InvalidGeminiApiCredentials />
       )}
+
+      {/* Fireworks API */}
+      <FireworksApiFields
+        fireworksApiEnabledName="fireworksApiEnabled"
+        fireworksApiKeyName={['env_variables', 'FIREWORKS_API_KEY']}
+      />
 
       {/* X */}
       <XAccountCredentials />
@@ -193,6 +205,9 @@ export const MemeUpdatePage = () => {
           acc.env_variables.PERSONA = value;
         } else if (key === 'GENAI_API_KEY') {
           acc.env_variables.GENAI_API_KEY = value;
+        } else if (key === 'FIREWORKS_API_KEY') {
+          acc.env_variables.FIREWORKS_API_KEY = value;
+          acc.fireworksApiEnabled = !!value;
         } else if (key === 'TWIKIT_EMAIL') {
           acc.env_variables.TWIKIT_EMAIL = value;
         } else if (key === 'TWIKIT_USERNAME') {
@@ -200,7 +215,6 @@ export const MemeUpdatePage = () => {
         } else if (key === 'TWIKIT_PASSWORD') {
           acc.env_variables.TWIKIT_PASSWORD = value;
         }
-
         return acc;
       },
       { env_variables: {} } as MemeooorrFormValues,
