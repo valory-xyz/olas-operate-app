@@ -10,11 +10,11 @@ import { parseEther, parseUnits } from '@/utils/numberFormatters';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // Should be unique across all services and not be updated
-  hash: 'bafybeiftdsc6xi77hwvbxwwfrc2tnssenqk6ixxkl5n4nil4n34dgbdgda',
+  hash: 'bafybeia3eztsz325jy2sbtilulfnl6pngz3bltkvogowx6xym3kr5re4ei',
   description: 'Trader agent for omen prediction markets',
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.24.1',
+  service_version: 'v0.24.2',
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
@@ -86,11 +86,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeichqcx6rjb6shgnd5h626doe6th2ll5j52n2oewyt4hocb4pjpyvi',
+  hash: 'bafybeibfcxcqjwkikqmigi7xtuq2aeubb6j6sgotrz7aypd6mlneq4syjy',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.4.0-alpha4',
+  service_version: 'v0.4.0-alpha6',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -246,7 +246,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeihzkrcw5nncj773gblcv6gjcjjwrsrwt4kn7sycthrjnexsnxi3me',
+  hash: 'bafybeiaaghw3uelbevit4a6ntd3znglmmid4yy3szhgsv32r4hvshsckyq',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
@@ -323,10 +323,17 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: 'mode',
       provision_type: EnvProvisionType.FIXED,
     },
-    STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+    ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
       name: 'Staking activity checker contract address',
       description: '',
-      value: '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      // Unused, refactored - remove
+      name: 'Staking activity checker contract address',
+      description: '',
+      value: 'Unused',
       provision_type: EnvProvisionType.FIXED,
     },
     MIN_SWAP_AMOUNT_THRESHOLD: {
