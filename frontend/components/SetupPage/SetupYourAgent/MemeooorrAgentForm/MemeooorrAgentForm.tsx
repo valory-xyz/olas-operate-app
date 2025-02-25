@@ -15,6 +15,7 @@ import {
   requiredRules,
 } from '../formUtils';
 import { onDummyServiceCreation } from '../utils';
+import { FireworksApiFields } from './FireworksApiField';
 
 const { Title, Text } = Typography;
 
@@ -24,11 +25,13 @@ type FieldValues = {
   xEmail: string;
   xUsername: string;
   xPassword: string;
+  fireworksApiEnabled: boolean;
+  fireworksApiKey: string;
 };
 
 export const XAccountCredentials = () => (
   <Flex vertical>
-    <Divider style={{ margin: '16px 0' }} />
+    <Divider style={{ margin: '8px 0 16px 0' }} />
     <Title level={5} className="mt-0">
       X account credentials
     </Title>
@@ -97,7 +100,7 @@ export const MemeooorrAgentForm = ({
   } = useMemeFormValidate();
 
   const onFinish = useCallback(
-    async (values: Record<keyof FieldValues, string>) => {
+    async (values: FieldValues) => {
       if (!defaultStakingProgramId) return;
 
       try {
@@ -130,6 +133,10 @@ export const MemeooorrAgentForm = ({
             GENAI_API_KEY: {
               ...serviceTemplate.env_variables.GENAI_API_KEY,
               value: values.geminiApiKey,
+            },
+            FIREWORKS_API_KEY: {
+              ...serviceTemplate.env_variables.FIREWORKS_API_KEY,
+              value: values.fireworksApiEnabled ? values.fireworksApiKey : '',
             },
             PERSONA: {
               ...serviceTemplate.env_variables.PERSONA,
@@ -207,6 +214,8 @@ export const MemeooorrAgentForm = ({
         {geminiApiKeyValidationStatus === 'invalid' && (
           <InvalidGeminiApiCredentials />
         )}
+
+        <FireworksApiFields />
 
         {/* X */}
         <XAccountCredentials />
