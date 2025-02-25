@@ -419,7 +419,9 @@ const createAgentActivityWindow = async () => {
       // parent: mainWindow,
       autoHideMenuBar: true,
     });
-  } else logger.electron('Agent activity window already exists');
+  } else {
+    logger.electron('Agent activity window already exists');
+  }
 
   agentWindow.on('close', function (event) {
     event.preventDefault();
@@ -907,10 +909,12 @@ ipcMain.handle('save-logs', async (_, data) => {
 });
 
 ipcMain.handle('agent-activity-window-goto', (_event, url) => {
-  logger.electron(`handle agent-activity-window-goto: ${url}`);
+  logger.electron(`agent-activity-window-goto: ${url}`);
   if (!getAgentWindow() || getAgentWindow().isDestroyed()) {
     createAgentActivityWindow()?.then((aaw) => aaw.loadURL(url));
-  } else getAgentWindow()?.loadURL(url);
+  } else {
+    getAgentWindow()?.loadURL(url);
+  }
 });
 
 ipcMain.handle('agent-activity-window-hide', () => {
@@ -921,9 +925,11 @@ ipcMain.handle('agent-activity-window-hide', () => {
 
 ipcMain.handle('agent-activity-window-show', () => {
   logger.electron('agent-activity-window-show');
-  if (!getAgentWindow() || getAgentWindow().isDestroyed())
+  if (!getAgentWindow() || getAgentWindow().isDestroyed()) {
     createAgentActivityWindow()?.then((aaw) => aaw.show());
-  else getAgentWindow()?.show();
+  } else {
+    getAgentWindow()?.show();
+  }
 });
 
 ipcMain.handle('agent-activity-window-minimize', () => {
