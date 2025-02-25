@@ -10,11 +10,11 @@ import { parseEther, parseUnits } from '@/utils/numberFormatters';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // Should be unique across all services and not be updated
-  hash: 'bafybeia3eztsz325jy2sbtilulfnl6pngz3bltkvogowx6xym3kr5re4ei',
+  hash: 'bafybeihgmbbjtkrlu62bkm3e4j2ehqipv5huqpifjiyttvjrk4sikwsfzu',
   description: 'Trader agent for omen prediction markets',
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.24.2',
+  service_version: 'v0.25.0',
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
@@ -240,7 +240,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeiaaghw3uelbevit4a6ntd3znglmmid4yy3szhgsv32r4hvshsckyq',
+  hash: 'bafybeihzkrcw5nncj773gblcv6gjcjjwrsrwt4kn7sycthrjnexsnxi3me',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
