@@ -6,10 +6,11 @@ authors = ["David Vilela <dvilelaf@gmail.com>", "Viraj Patel <vptl185@gmail.com>
 readme = "README.md"
 packages = []
 include = []
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
-olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "956a4c90f700cc205fae64182a7a97ddf7937f63"}
+olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "7d791e5c3bfe2aae243fb7c780e3ce1441aa6867"}
 
 [build-system]
 requires = ["poetry-core"]
