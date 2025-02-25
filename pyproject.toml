@@ -6,7 +6,6 @@ authors = ["David Vilela <dvilelaf@gmail.com>", "Viraj Patel <vptl185@gmail.com>
 readme = "README.md"
 packages = []
 include = []
-package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
