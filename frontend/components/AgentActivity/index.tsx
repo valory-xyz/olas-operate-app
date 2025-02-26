@@ -97,7 +97,8 @@ export const AgentActivityPage = () => {
 
     const items = data.rounds.map((item, index) => {
       const isCurrent = index === 0;
-      const roundName = data.roundsInfo?.[item]?.name || item;
+      const currentActivityRoundName = data.roundsInfo?.[item]?.name || item;
+      const otherActivityDesc = data.roundsInfo?.[item]?.description || NA;
       return {
         key: `${item}-${index}`,
         label: isCurrent ? (
@@ -105,10 +106,12 @@ export const AgentActivityPage = () => {
             <Text type="secondary" className="text-xs">
               Current activity
             </Text>
-            <Text className="text-sm loading-ellipses">{roundName}</Text>
+            <Text className="text-sm loading-ellipses">
+              {currentActivityRoundName}
+            </Text>
           </Flex>
         ) : (
-          <Text className="text-sm">{roundName}</Text>
+          <Text className="text-sm">{currentActivityRoundName}</Text>
         ),
         children: (
           <Text
@@ -116,7 +119,7 @@ export const AgentActivityPage = () => {
             className="text-sm"
             style={{ marginLeft: '26px' }}
           >
-            {data.roundsInfo?.[item]?.description || NA}
+            {otherActivityDesc}
           </Text>
         ),
         style: isCurrent ? CURRENT_ACTIVITY_STYLE : undefined,
