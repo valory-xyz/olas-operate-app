@@ -79,6 +79,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
+    TOOLS_ACCURACY_HASH: {
+      name: 'Tools accuracy hash',
+      description: '',
+      // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
+      value: 'QmZFEoQ1oFCWmwgyo63sn2cFwQm2M5HxgU9jhCE2ayQhKG',
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
 
