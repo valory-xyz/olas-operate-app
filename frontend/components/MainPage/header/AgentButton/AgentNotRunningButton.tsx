@@ -1,5 +1,5 @@
 import { Button, message } from 'antd';
-import { isNil, sum } from 'lodash';
+import { isNil } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
@@ -7,16 +7,11 @@ import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { Pages } from '@/enums/Pages';
-import { TokenSymbol } from '@/enums/Token';
 import { MasterEoa, MasterSafe } from '@/enums/Wallet';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
-import {
-  useBalanceContext,
-  useServiceBalances,
-} from '@/hooks/useBalanceContext';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { MultisigOwners, useMultisigs } from '@/hooks/useMultisig';
-import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
@@ -51,28 +46,12 @@ const useServiceDeployment = () => {
   } = useServices();
   const serviceId = selectedService?.service_config_id;
 
-  const { canStartAgent } = useBalanceAndRefillRequirementsContext();
+  const { canStartAgent, isBalancesAndFundingRequirementsLoading } =
+    useBalanceAndRefillRequirementsContext();
   const { service, isServiceRunning } = useService(serviceId);
 
   const { setIsPaused: setIsBalancePollingPaused, updateBalances } =
     useBalanceContext();
-
-  const { serviceStakedBalances, serviceSafeBalances } =
-    useServiceBalances(serviceId);
-
-  const serviceStakedOlasBalancesOnHomeChain = serviceStakedBalances?.find(
-    (stakedBalance) =>
-      stakedBalance.evmChainId === selectedAgentConfig.evmHomeChainId,
-  );
-
-  const serviceTotalStakedOlas = sum([
-    serviceStakedOlasBalancesOnHomeChain?.olasBondBalance,
-    serviceStakedOlasBalancesOnHomeChain?.olasDepositBalance,
-  ]);
-
-  const serviceOlasBalanceOnHomeChain = serviceSafeBalances?.find(
-    (balance) => balance.evmChainId === selectedAgentConfig.evmHomeChainId,
-  )?.balance;
 
   // Staking contract details
   const {
@@ -90,66 +69,31 @@ const useServiceDeployment = () => {
 
   const { masterSafesOwners } = useMultisigs(masterSafes);
 
-  const { isInitialFunded, needsInitialFunding } = useNeedsFunds(
-    selectedStakingProgramId,
-  );
-
-  const requiredStakedOlas =
-    selectedStakingProgramId &&
-    STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
-      selectedStakingProgramId
-    ]?.stakingRequirements[TokenSymbol.OLAS];
-
-  const serviceSafeOlasWithStaked = sum([
-    serviceOlasBalanceOnHomeChain,
-    serviceTotalStakedOlas,
-  ]);
-
   const isDeployable = useMemo(() => {
+    if (isBalancesAndFundingRequirementsLoading) return false;
     if (isServicesLoading || isServiceRunning) return false;
 
     if (!isAllStakingContractDetailsRecordLoaded) return false;
-
-    if (isNil(requiredStakedOlas)) return false;
 
     // If not enough service slots, and service is not staked, return false
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
     if (hasSlot && !isServiceStaked) return false;
 
-    // If already staked and initial funded, check if it has enough staked OLAS
-    if (service && isInitialFunded && isServiceStaked) {
-      if (!canStartAgent) return false;
+    // If was evicted and can't re-stake - return false
+    if (isAgentEvicted && !isEligibleForStaking) return false;
 
-      return (serviceTotalStakedOlas ?? 0) >= requiredStakedOlas;
-    }
-
-    // If was evicted, but can re-stake - unlock the button
-    if (isAgentEvicted && isEligibleForStaking) return true;
-
-    // SERVICE IS STAKED, AND STARTING AGAIN
-    if (isServiceStaked) {
-      const hasEnoughOlas = serviceSafeOlasWithStaked >= requiredStakedOlas;
-      return hasEnoughOlas;
-    }
-
-    // SERVICE IS NOT STAKED AND/OR IS STARTING FOR THE FIRST TIME
-    // Check if it has enough initial funding
-    return !needsInitialFunding;
+    // allow starting based on refill requirements
+    return canStartAgent;
   }, [
-    isServicesLoading,
-    isServiceRunning,
-    isAllStakingContractDetailsRecordLoaded,
-    requiredStakedOlas,
-    hasEnoughServiceSlots,
-    isServiceStaked,
-    service,
-    isInitialFunded,
-    isAgentEvicted,
-    isEligibleForStaking,
-    needsInitialFunding,
-    serviceTotalStakedOlas,
-    serviceSafeOlasWithStaked,
+    isBalancesAndFundingRequirementsLoading,
     canStartAgent,
+    hasEnoughServiceSlots,
+    isAgentEvicted,
+    isAllStakingContractDetailsRecordLoaded,
+    isEligibleForStaking,
+    isServiceRunning,
+    isServiceStaked,
+    isServicesLoading,
   ]);
 
   const pauseAllPolling = useCallback(() => {
