@@ -21,7 +21,7 @@ To withdraw funds from the Agent EOA and Agent Safe you have to access contents 
 
 - **Mac**: `/Users/YOUR_USERNAME/.operate`
 - **Windows**: `C:\Users\YOUR_USERNAME\.operate`
-- **Linux**: `/users/YOUR_USERNAME/`
+- **Linux**: `/users/YOUR_USERNAME/.operate`
 
 1. **Stop Pearl.**
 
