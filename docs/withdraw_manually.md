@@ -25,7 +25,7 @@ To withdraw funds from the Agent EOA and Agent Safe you have to access contents 
 
 1. **Stop Pearl.**
 
-2. **Locate Agent Data.** Open the file `.operate/sc-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/config.json` in a text editor. If running multiple services, ensure to select the correct `sc-xxxxxx...` folder. Search for:
+2. **Locate Agent Data.** Open the file `.operate/sc-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/config.json` in a text editor. If running multiple agents, ensure to select the correct `sc-xxxxxx...` folder. Search for:
    1. `name`: Identifies the agent type (e.g., Trader, Optimus, ...).
    2. `keys`: Contains the **Agent EOA address** and its **private key**.
    3. `multisig`: Contains the **Agent Safe address**.
@@ -47,7 +47,7 @@ To withdraw funds from the Agent EOA and Agent Safe you have to access contents 
 
 5. **Withdraw from Agent EOA.** Use Metamask to send funds/tokens to the recipient address.
 
-You must repeat this process for as many chains the service is in.
+You must repeat this process for as many chains the agent is in.
 
 > [!IMPORTANT]
 > Withdraw from Agent Safe first because transactions require gas fees from the Agent EOA. If the Agent EOA is drained first, it will be unable to interact with the Agent Safe.
@@ -59,10 +59,7 @@ You must repeat this process for as many chains the service is in.
 2. **Locate data in the Olas Registry page of the agent.**
    1. Navigate to: https://registry.olas.network/gnosis/services/OWNERSHIP_NFT_ID (replace `OWNERSHIP_NFT_ID` from Step 1.2).
    2. Locate **Master Safe address** under *Operators*.
-   3. Locate **Staking contract address** under *Owner address*.
-
-   > [!NOTE]
-   > If these two addresses are equal, your service is not staked.
+   3. Locate **Staking contract address** under *Owner address*. If this address matches the **Master Safe address**, your service is not staked.
 
 3. **Import Master EOA or Backup Owner into Metamask.**
    - To interact with the **Master Safe**, use either the **Master EOA** or the **backup owner**:
@@ -72,9 +69,7 @@ You must repeat this process for as many chains the service is in.
    1. Open the Safe webapp https://app.safe.global/home?safe=gno:MASTER_SAFE_ADDRESS (replace `MASTER_SAFE_ADDRESS`).
    2. Connect using the **Master EOA** or **backup owner**.
 
-5. **Unstake Service.** If your service is not staked, you can skip this step.
-   > [!IMPORTANT]
-   > You can unstake the service **only after** the minimum staking period (typically 3 days).
+5. **Unstake Service.** If your service is not staked, you can skip this step.  You can unstake the service **only after** the minimum staking period (typically 3 days).
    1. Open the staking contract Blockscout interface: https://gnosis.blockscout.com/address/STAKING_CONTRACT_ADDRESS?tab=write_proxy (replace `STAKING_CONTRACT_ADDRESS` from Step 2.1).
    2. Press *Login* (top right) &#8594; *Continue with Web3 wallet* &#8594; *Wallet Connect* &#8594; Copy the link.
    3. On the Safe webapp, press the *Wallet Connect* button ![Wallet Connect](./images/wallet_connect.png) and paste the link and approve the connection.
@@ -85,12 +80,12 @@ You must repeat this process for as many chains the service is in.
    1. Open the Olas Registry page: https://registry.olas.network/gnosis/services/OWNERSHIP_NFT_ID (replace `OWNERSHIP_NFT_ID` from Step 1.2).
    2. Press *Connect* (top right) &#8594; *Wallet Connect* &#8594; Copy the link.
    3. On the Safe webapp, press the *Wallet Connect* button ![Wallet Connect](./images/wallet_connect.png) and paste the link and approve the connection.
-   4. On the Olas Registry, press *Terminate* service. This transaction will be transferred to the Safe webapp.
+   4. On the Olas Registry, press *Terminate*. This transaction will be transferred to the Safe webapp.
    5. On the Safe webapp, **approve** and **execute** the transaction.
    6. If required, return to the Olas Registry, press *Unbond* and execute similarly.
    7. The service should now be in *Pre-Registration*, with funds transferred to the Master Safe, including bonds and security deposits.
 
-You must repeat this process for as many chains the service is in.
+You must repeat this process for as many chains the agent is in.
 
 ## Step 3: Withdraw from Master EOA and Master Safe
 
@@ -107,7 +102,7 @@ You must repeat this process for as many chains the service is in.
 
 4. **Withdraw from Master EOA.** Use Metamask to send funds/tokens to your recipient address.
 
-You must repeat this process for as many chains the service is in.
+You must repeat this process for as many chains the agent is in.
 
 > [!IMPORTANT]
 > Withdraw from Master Safe first because transactions require gas fees from the Master EOA. If the Master EOA is drained first, it will be unable to interact with the Master Safe.
