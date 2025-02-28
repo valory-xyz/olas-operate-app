@@ -16,7 +16,6 @@ import { ServicesService } from '@/service/Services';
 import { Address } from '@/types/Address';
 
 import { CustomAlert } from '../Alert';
-import { FeatureNotEnabled } from '../FeatureNotEnabled';
 
 const { Text } = Typography;
 
@@ -76,6 +75,7 @@ export const WithdrawFunds = () => {
   const { selectedService, refetch: refetchServices } = useServices();
   const { refetch: refetchMasterWallets } = useMasterWalletContext();
   const { updateBalances } = useBalanceContext();
+  const isWithdrawFundsEnabled = useFeatureFlag('withdraw-funds');
 
   const { service, isServiceRunning } = useService(
     selectedService?.service_config_id,
@@ -155,46 +155,50 @@ export const WithdrawFunds = () => {
     handleCancel,
   ]);
 
-  const withdrawAllButton = useMemo(
-    () => (
-      <Button
-        onClick={showModal}
-        block
-        size="large"
-        disabled={!service || !isServiceStakedForMinimumDuration}
-      >
-        Withdraw all funds
-      </Button>
-    ),
-    [showModal, service, isServiceStakedForMinimumDuration],
-  );
+  const withdrawAllTooltipText = useMemo(() => {
+    if (!isWithdrawFundsEnabled) {
+      return 'Available soon!';
+    }
 
-  const withdrawAllTooltip = useMemo(() => {
     // countdown to withdrawal
     if (!isServiceStakedForMinimumDuration) {
       return `${minDurationMessage} ${countdownDisplay}`;
     }
 
     return null;
-  }, [countdownDisplay, isServiceStakedForMinimumDuration]);
+  }, [
+    countdownDisplay,
+    isServiceStakedForMinimumDuration,
+    isWithdrawFundsEnabled,
+  ]);
 
   const modalButtonText = useMemo(() => {
-    if (isWithdrawalLoading) return 'Loading';
+    if (isWithdrawalLoading) return 'Loading...';
     return 'Proceed';
   }, [isWithdrawalLoading]);
 
-  const isWithdrawFundsEnabled = useFeatureFlag('withdraw-funds');
-  if (!isWithdrawFundsEnabled) return <FeatureNotEnabled />;
-
   return (
     <>
-      {withdrawAllTooltip ? (
-        <Tooltip title={<Text className="text-sm">{withdrawAllTooltip}</Text>}>
-          {withdrawAllButton}
-        </Tooltip>
-      ) : (
-        withdrawAllButton
-      )}
+      <Tooltip
+        title={
+          withdrawAllTooltipText ? (
+            <Text className="text-sm">{withdrawAllTooltipText}</Text>
+          ) : null
+        }
+      >
+        <Button
+          onClick={showModal}
+          disabled={
+            !service ||
+            !isServiceStakedForMinimumDuration ||
+            !isWithdrawFundsEnabled
+          }
+          block
+          size="large"
+        >
+          Withdraw all funds
+        </Button>
+      </Tooltip>
 
       {!isServiceRunning && <ServiceNotRunning />}
 
