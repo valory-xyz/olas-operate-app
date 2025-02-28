@@ -7,10 +7,10 @@ This guide explains how to withdraw funds stored in:
 - **Master Safe** (includes agent bonds and security deposits)
 - **Master EOA**
 
- ## Prerequisites
+## Prerequisites
 
 - You have [Metamask](https://metamask.io/) installed in your browser and know how to execute transactions.
-- You understand Safe{Wallet}s and hasve some familiarity with the [Safe webapp](https://app.safe.global/).
+- You understand Safe{Wallet}s and have some familiarity with the [Safe webapp](https://app.safe.global/).
 
 > [!IMPORTANT]
 > This guide does **not** cover removing external investments (e.g., liquidity pools) made by the agent. Ensure that the agent has withdrawn any such funds to the **Agent Safe** before proceeding.
@@ -47,6 +47,8 @@ To withdraw funds, from the Agent EOA and Agent Safe you have to access contents
 
 5. **Withdraw from Agent EOA.** Use Metamask to send funds/tokens to the recipient address.
 
+You must repeat this process for as many chains the service is in.
+
 > [!IMPORTANT]
 > Withdraw from Agent Safe first because transactions require gas fees from the Agent EOA. If the Agent EOA is drained first, it will be unable to interact with the Agent Safe.
 
@@ -71,10 +73,10 @@ To withdraw funds, from the Agent EOA and Agent Safe you have to access contents
    4. Keep this tab open.
 
 > [!NOTE]
-> If the service is in *Pre-Registration* on the Olas Registry, skip to Step 3.
+> If the service is in *Pre-Registration* on the Olas Registry, skip to Step 3 below.
 
 4. **Connect the Master Safe to Olas Registry.**
-   - Otherwise, press *Connect* (top right) → *Wallet Connect* → Copy the link.
+   - Press *Connect* (top right) → *Wallet Connect* → Copy the link.
    - In the Safe webapp, press the *Wallet Connect* button ![Wallet Connect](./images/wallet_connect.png) and paste the link.
    - Approve the connection.
 
@@ -86,16 +88,21 @@ To withdraw funds, from the Agent EOA and Agent Safe you have to access contents
 
 ## Step 3: Withdraw from Master EOA and Master Safe
 
-1. **Import Master EOA or backup owner into Metamask.** Follow Step 2.2.
+1. **Stop Pearl.**
 
-2. **Withdraw from Master Safe.**
+2. **Import Master EOA or backup owner into Metamask.**
+   - Follow Step 2.2.
+
+3. **Withdraw from Master Safe.**
    1. Open the Safe webapp: https://app.safe.global/home?safe=gno:MASTER_SAFE_ADDRESS (replace `MASTER_SAFE_ADDRESS`)..
    2. Press *Connect* → *Metamask*.
    3. Go to *Home* → *Send*.
-   4. Select the recipient, token, and amount. Follow instructions to **create** and **execute** the transaction.
+   4. Select the recipient, token, and amount. Follow instructions on the Safe webapp to **create** and **execute** the transaction.
    5. Repeat as needed for all tokens.
 
-3. **Withdraw from Master EOA.** Use Metamask to send funds/tokens to your recipient address.
+4. **Withdraw from Master EOA.** Use Metamask to send funds/tokens to your recipient address.
+
+You must repeat this process for as many chains the service is in.
 
 > [!IMPORTANT]
 > Withdraw from Master Safe first because transactions require gas fees from the Master EOA. If the Master EOA is drained first, it will be unable to interact with the Master Safe.
