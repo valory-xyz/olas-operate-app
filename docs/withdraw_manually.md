@@ -66,11 +66,11 @@ You must repeat this process for as many chains the agent is in.
    - To import the **Master EOA** via BIP-39 seed phrase, create a new browser profile, install Metamask, and select *Import an existing wallet*.
 
 4. **Connect to the Master Safe.** Open a new tab and keep this tab open.
-   1. Open the Safe webapp https://app.safe.global/home?safe=gno:MASTER_SAFE_ADDRESS (replace `MASTER_SAFE_ADDRESS`).
+   1. Open the Safe webapp https://app.safe.global/home?safe=gno:MASTER_SAFE_ADDRESS (replace `MASTER_SAFE_ADDRESS` from Step 2.2).
    2. Connect using the **Master EOA** or **backup owner**.
 
 5. **Unstake Service.** If your service is not staked, you can skip this step.  You can unstake the service **only after** the minimum staking period (typically 3 days).
-   1. Open the staking contract Blockscout interface: https://gnosis.blockscout.com/address/STAKING_CONTRACT_ADDRESS?tab=write_proxy (replace `STAKING_CONTRACT_ADDRESS` from Step 2.1).
+   1. Open the staking contract Blockscout interface: https://gnosis.blockscout.com/address/STAKING_CONTRACT_ADDRESS?tab=write_proxy (replace `STAKING_CONTRACT_ADDRESS` from Step 2.2).
    2. Press *Login* (top right) &#8594; *Continue with Web3 wallet* &#8594; *Wallet Connect* &#8594; Copy the link.
    3. On the Safe webapp, press the *Wallet Connect* button ![Wallet Connect](./images/wallet_connect.png) and paste the link and approve the connection.
    4. On the staking contract Blockscout interface scroll down to method *41. Unstake*. Enter your Ownership NFT ID and press *Write*. This transaction will be transferred to the Safe webapp.
@@ -94,7 +94,7 @@ You must repeat this process for as many chains the agent is in.
 2. **Import Master EOA or backup owner into Metamask.** Follow Step 2.2.
 
 3. **Withdraw from Master Safe.**
-   1. Open the Safe webapp: https://app.safe.global/home?safe=gno:MASTER_SAFE_ADDRESS (replace `MASTER_SAFE_ADDRESS`)..
+   1. Open the Safe webapp: https://app.safe.global/home?safe=gno:MASTER_SAFE_ADDRESS (replace `MASTER_SAFE_ADDRESS` from Step 2.2)..
    2. Press *Connect* &#8594; *Metamask*.
    3. Go to *Home* &#8594; *Send*.
    4. Select the recipient, token, and amount. Follow instructions on the Safe webapp to **create** and **execute** the transaction.
