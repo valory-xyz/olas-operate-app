@@ -25,7 +25,7 @@ To withdraw funds from the Agent EOA and Agent Safe you have to access contents 
 
 1. **Stop Pearl.**
 
-2. **Locate Agent Data.** Open the file `.operate/sc-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/config.json` in a text editor. If running multiple agents, ensure to select the correct `sc-xxxxxx...` folder. Search for:
+2. **Locate Agent Data.** Open the file `.operate/sc-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/config.json` in a text editor. If running multiple agents, ensure to select the correct `sc-xxxxxx...` folder. Search and note down the following values from the `config.json` file, which will be required in the next steps:
    1. `name`: Identifies the agent type (e.g., Trader, Optimus, ...).
    2. `keys`: Contains the **Agent EOA address** and its **private key**.
    3. `multisig`: Contains the **Agent Safe address**.
@@ -39,7 +39,7 @@ To withdraw funds from the Agent EOA and Agent Safe you have to access contents 
    5. Ensure the **Agent EOA address** is selected and connected to the correct chain.
 
 4. **Withdraw from Agent Safe**
-   1. Open the Safe webapp: https://app.safe.global/home?safe=gno:AGENT_SAFE_ADDRESS (replace `AGENT_SAFE_ADDRESS`).
+   1. Open the Safe webapp: https://app.safe.global/home?safe=gno:AGENT_SAFE_ADDRESS (replace `gno` by the correct chain identifier, e.g., `gno`, `eth`, ...replace `AGENT_SAFE_ADDRESS` with `multisig` from Step 1.2).
    2. Press *Connect* &#8594; *Metamask*.
    3. Go to *Home* &#8594; *Send*.
    4. Select the recipient, token, and amount. Follow instructions to **create** and **execute** the transaction.
