@@ -12,6 +12,7 @@ import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRef
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { MultisigOwners, useMultisigs } from '@/hooks/useMultisig';
+import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
@@ -69,6 +70,10 @@ const useServiceDeployment = () => {
 
   const { masterSafesOwners } = useMultisigs(masterSafes);
 
+  const { isInitialFunded, needsInitialFunding } = useNeedsFunds(
+    selectedStakingProgramId,
+  );
+
   const isDeployable = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return false;
     if (isServicesLoading || isServiceRunning) return false;
@@ -82,18 +87,26 @@ const useServiceDeployment = () => {
     // If was evicted and can't re-stake - return false
     if (isAgentEvicted && !isEligibleForStaking) return false;
 
+    // if there's no service created, check if initially funded
+    // TODO: should create dummy service instead (for trader)
+    // and rely on canStartAgent
+    if (!selectedService && isInitialFunded) return !needsInitialFunding;
+
     // allow starting based on refill requirements
     return canStartAgent;
   }, [
     isBalancesAndFundingRequirementsLoading,
-    canStartAgent,
-    hasEnoughServiceSlots,
-    isAgentEvicted,
-    isAllStakingContractDetailsRecordLoaded,
-    isEligibleForStaking,
-    isServiceRunning,
-    isServiceStaked,
     isServicesLoading,
+    isServiceRunning,
+    isAllStakingContractDetailsRecordLoaded,
+    hasEnoughServiceSlots,
+    isServiceStaked,
+    isAgentEvicted,
+    isEligibleForStaking,
+    selectedService,
+    isInitialFunded,
+    needsInitialFunding,
+    canStartAgent,
   ]);
 
   const pauseAllPolling = useCallback(() => {
