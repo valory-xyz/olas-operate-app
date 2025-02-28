@@ -60,7 +60,8 @@ You must repeat this process for as many chains the service is in.
 1. **Open the Olas Registry page of the agent.**
    1. Open a tab.
    2. Navigate to: https://registry.olas.network/gnosis/services/OWNERSHIP_NFT_ID (replace `OWNERSHIP_NFT_ID` from Step 1.2).
-   3. Locate Master Safe address under *Operators*.
+   3. Locate **Master Safe address** under *Operators*.
+   4. Locate **Staking contract address** under *Owner address*.
 
 2. **Import Master EOA or Backup Owner into Metamask.**
    - To interact with the **Master Safe**, use either the **Master EOA** or the **backup owner**:
@@ -75,12 +76,16 @@ You must repeat this process for as many chains the service is in.
 > [!NOTE]
 > If the service is in *Pre-Registration* on the Olas Registry, skip to Step 3 below.
 
-4. **Connect the Master Safe to Olas Registry.**
+4. **Unstake**
+   
+   
+
+6. **Connect the Master Safe to Olas Registry.**
    - Press *Connect* (top right) → *Wallet Connect* → Copy the link.
    - In the Safe webapp, press the *Wallet Connect* button ![Wallet Connect](./images/wallet_connect.png) and paste the link.
    - Approve the connection.
 
-5. **Terminate & Unbond Service.**
+7. **Terminate & Unbond Service.**
    1. In the Olas Registry, press *Terminate* service. This transaction will be transferred to the Safe webapp.
    2. In the Safe webapp, **approve** and **execute** the transaction.
    3. If required, return to the Olas Registry, press *Unbond* and execute similarly.
