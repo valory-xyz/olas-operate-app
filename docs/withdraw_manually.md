@@ -26,7 +26,7 @@ To withdraw funds, from the Agent EOA and Agent Safe you have to access contents
 1. **Stop Pearl.**
 
 2. **Locate Agent Data.** Open the file `.operate/sc-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/config.json` in a text editor. If running multiple services, ensure to select the correct `sc-xxxxxx...` folder. Search for:
-   1. `name`: Identifies the agent type.
+   1. `name`: Identifies the agent type (e.g., Trader, Optimus, ...).
    2. `keys`: Contains the **Agent EOA address** and its **private key**.
    3. `multisig`: Contains the **Agent Safe address**.
    4. `token`: Contains the **Ownership NFT ID**.
