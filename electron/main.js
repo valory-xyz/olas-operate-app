@@ -257,7 +257,7 @@ const createSplashWindow = () => {
       contextIsolation: false,
     },
   });
-  splashWindow.loadURL('file://' + __dirname + '/loading/index.html');
+  splashWindow.loadURL('file://' + __dirname + '/resources/app-loading.html');
 
   if (isDev) {
     splashWindow.webContents.openDevTools();
@@ -908,13 +908,53 @@ ipcMain.handle('save-logs', async (_, data) => {
   return result;
 });
 
-ipcMain.handle('agent-activity-window-goto', (_event, url) => {
+// ipcMain.handle('agent-activity-window-goto', (_event, url) => {
+//   console.log('agent-activity-window-goto: ', url);
+//   logger.electron(`agent-activity-window-goto: ${url}`);
+//   if (!getAgentWindow() || getAgentWindow().isDestroyed()) {
+//     createAgentActivityWindow()?.then((aaw) => {
+//       aaw
+//         .loadURL(url)
+//         .then(() => aaw.show())
+//         .catch((e) => console.error(e));
+//     });
+//   } else {
+//     getAgentWindow()?.loadURL(url);
+//   }
+// });
+
+ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
+  console.log('agent-activity-window-goto: ', url);
   logger.electron(`agent-activity-window-goto: ${url}`);
-  if (!getAgentWindow() || getAgentWindow().isDestroyed()) {
-    createAgentActivityWindow()?.then((aaw) => aaw.loadURL(url));
-  } else {
-    getAgentWindow()?.loadURL(url);
+
+  let agentWindow = getAgentWindow();
+  if (!agentWindow || agentWindow.isDestroyed()) {
+    agentWindow = await createAgentActivityWindow();
   }
+
+  // Load the local loading screen first
+  await agentWindow.loadURL(
+    'file://' + __dirname + '/resources/agent-loading.html',
+  );
+
+  let retryInterval = null;
+
+  // Function to attempt loading the actual URL
+  const tryLoadURL = async () => {
+    try {
+      await agentWindow.loadURL(url);
+      console.log('Successfully loaded:', url);
+      clearInterval(retryInterval); // Stop retrying
+    } catch (error) {
+      console.error('Error loading URL:', error);
+    }
+  };
+
+  // Start retrying every 5 seconds
+  retryInterval = setInterval(tryLoadURL, 5000);
+
+  // Try loading the URL immediately as well
+  tryLoadURL();
 });
 
 ipcMain.handle('agent-activity-window-hide', () => {
