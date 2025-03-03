@@ -22,6 +22,7 @@ export const SetupRestoreMain = () => {
 
   return (
     <CardFlex
+      noBorder
       title={
         <Flex justify="space-between" align="center">
           <Typography.Title className="m-0" level={4}>
@@ -31,7 +32,7 @@ export const SetupRestoreMain = () => {
         </Flex>
       }
     >
-      <CardSection gap={10} vertical bordertop="true" borderbottom="true">
+      <CardSection gap={8} vertical padding="0px 24px 24px 24px">
         <Typography.Text>
           You can recover the Pearl account access by providing the seed phrase
           you received when setting up your account.
@@ -49,7 +50,12 @@ export const SetupRestoreMain = () => {
         </Tooltip>
       </CardSection>
 
-      <CardSection gap={10} vertical bordertop="true" borderbottom="true">
+      <CardSection
+        gap={8}
+        vertical
+        bordertop="true"
+        padding="16px 24px 8px 24px"
+      >
         <Typography.Text>
           If you don’t have the seed phrase but added a backup wallet to your
           account, you may still restore your funds, but you won’t be able to

@@ -50,7 +50,7 @@ export const AddBackupWalletViaSafePage = () => {
           {masterSafe?.address && (
             <a
               target="_blank"
-              href={`https://app.safe.global/safes/${safePrefix}/${masterSafe.address}/settings`}
+              href={`https://app.safe.global/settings/setup?safe=${safePrefix}:${masterSafe.address}`}
             >
               Open Safe interface {UNICODE_SYMBOLS.EXTERNAL_LINK}
             </a>

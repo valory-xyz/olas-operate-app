@@ -1,6 +1,5 @@
 [MASTER]
 ignore-patterns=contract.py
-ignore=operate/data/contracts/
 
 [MESSAGES CONTROL]
 disable=C0103,R0801,C0301,C0201,C0204,C0209,W1203,C0302,R1735,R1729,W0511,E0611,R0903,E1101

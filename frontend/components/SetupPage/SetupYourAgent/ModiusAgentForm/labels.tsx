@@ -2,10 +2,15 @@ import { Flex, Typography } from 'antd';
 
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import {
+  COINGECKO_DEMO_API_KEY,
+  COINGECKO_URL,
+  TENDERLY_URL,
+} from '@/constants/urls';
 
 const { Paragraph, Text } = Typography;
 
-const TOOLTIP_STYLE = { width: '400px' };
+const TOOLTIP_STYLE = { width: '340px' };
 
 export const TenderlyAccessTokenLabel = () => (
   <Flex align="center" gap={8}>
@@ -22,8 +27,8 @@ export const TenderlyAccessTokenLabel = () => (
       <ol className="pl-16 text-sm">
         <li>
           <Text className="text-sm">
-            Log in to{' '}
-            <a target="_blank" href="https://tenderly.co">
+            Connect to{' '}
+            <a target="_blank" href={TENDERLY_URL}>
               Tenderly&nbsp;
               {UNICODE_SYMBOLS.EXTERNAL_LINK}
             </a>{' '}
@@ -82,7 +87,7 @@ export const CoinGeckoApiKeyLabel = () => (
         <li>
           <Text className="text-sm">
             Log in to your{' '}
-            <a target="_blank" href="https://www.coingecko.com">
+            <a target="_blank" href={COINGECKO_URL}>
               CoinGecko account&nbsp;
               {UNICODE_SYMBOLS.EXTERNAL_LINK}
             </a>
@@ -101,6 +106,13 @@ export const CoinGeckoApiKeyLabel = () => (
           </Text>
         </li>
       </ol>
+
+      <Text className="text-sm">
+        <a target="_blank" href={COINGECKO_DEMO_API_KEY}>
+          Learn how to create a demo API key&nbsp;
+          {UNICODE_SYMBOLS.EXTERNAL_LINK}
+        </a>
+      </Text>
     </InfoTooltip>
   </Flex>
 );

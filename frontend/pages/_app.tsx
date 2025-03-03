@@ -5,7 +5,7 @@ import { ConfigProvider } from 'antd';
 import type { AppProps } from 'next/app';
 import { useEffect, useState } from 'react';
 
-import { Layout } from '@/components/Layout';
+import { Layout } from '@/components/Layout/Layout';
 import { BalanceProvider } from '@/context/BalanceProvider/BalanceProvider';
 import { BalancesAndRefillRequirementsProvider } from '@/context/BalancesAndRefillRequirementsProvider';
 import { ElectronApiProvider } from '@/context/ElectronApiProvider';

@@ -7,7 +7,7 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 
-import { ACTIVITY_CHECKERS } from '../activityCheckers';
+import { GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { MECHS, MechType } from '../mechs';
 import { StakingProgramMap } from '.';
 
@@ -37,7 +37,8 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     },
     mechType: MechType.Agent,
     mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
-    activityChecker: ACTIVITY_CHECKERS[EvmChainId.Gnosis][MechType.Agent],
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.PearlAlpha],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.PearlAlpha],
       STAKING_TOKEN_PROXY_ABI,
@@ -52,7 +53,8 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     },
     mechType: MechType.Agent,
     mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
-    activityChecker: ACTIVITY_CHECKERS[EvmChainId.Gnosis][MechType.Agent],
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.PearlBeta],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.PearlBeta],
       STAKING_TOKEN_PROXY_ABI,
@@ -67,7 +69,8 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     },
     mechType: MechType.Agent,
     mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
-    activityChecker: ACTIVITY_CHECKERS[EvmChainId.Gnosis][MechType.Agent],
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.PearlBeta2],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.PearlBeta2],
       STAKING_TOKEN_PROXY_ABI,
@@ -82,7 +85,8 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     },
     mechType: MechType.Agent,
     mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
-    activityChecker: ACTIVITY_CHECKERS[EvmChainId.Gnosis][MechType.Agent],
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.PearlBeta3],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.PearlBeta3],
       STAKING_TOKEN_PROXY_ABI,
@@ -97,7 +101,8 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     },
     mechType: MechType.Agent,
     mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
-    activityChecker: ACTIVITY_CHECKERS[EvmChainId.Gnosis][MechType.Agent],
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.PearlBeta4],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.PearlBeta4],
       STAKING_TOKEN_PROXY_ABI,
@@ -112,7 +117,8 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     },
     mechType: MechType.Agent,
     mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
-    activityChecker: ACTIVITY_CHECKERS[EvmChainId.Gnosis][MechType.Agent],
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.PearlBeta5],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.PearlBeta5],
       STAKING_TOKEN_PROXY_ABI,
@@ -126,8 +132,9 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       [TokenSymbol.OLAS]: 5000,
     },
     mechType: MechType.Agent,
-    mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
-    activityChecker: ACTIVITY_CHECKERS[EvmChainId.Gnosis][MechType.Agent],
+    mech: MECHS[EvmChainId.Gnosis][MechType.Marketplace].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.PearlBeta6],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.PearlBeta6],
       STAKING_TOKEN_PROXY_ABI,
@@ -142,7 +149,10 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     },
     mechType: MechType.Marketplace,
     mech: MECHS[EvmChainId.Gnosis][MechType.Marketplace].contract,
-    activityChecker: ACTIVITY_CHECKERS[EvmChainId.Gnosis][MechType.Marketplace],
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        StakingProgramId.PearlBetaMechMarketplace
+      ],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         StakingProgramId.PearlBetaMechMarketplace

@@ -19,6 +19,7 @@ import {
   useMasterBalances,
 } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
@@ -30,87 +31,25 @@ import { FormFlex } from '../styled/FormFlex';
 
 const { Title } = Typography;
 
-export const SetupWelcome = () => {
-  const electronApi = useElectronApi();
-  const [isSetup, setIsSetup] = useState<MiddlewareAccountIsSetup | null>(null);
+const SetupLoader = () => (
+  <Flex
+    justify="center"
+    align="center"
+    style={{ height: 140, marginBottom: 32 }}
+  >
+    <Spin />
+  </Flex>
+);
 
-  useEffect(() => {
-    if (isSetup !== null) return;
-    setIsSetup(MiddlewareAccountIsSetup.Loading);
+const SetupError = () => (
+  <Flex justify="center" style={{ margin: '32px 0', textAlign: 'center' }}>
+    <Typography.Text>
+      Unable to determine the account setup status, please try again.
+    </Typography.Text>
+  </Flex>
+);
 
-    AccountService.getAccount()
-      .then((res) => {
-        switch (res.is_setup) {
-          case true:
-            setIsSetup(MiddlewareAccountIsSetup.True);
-            break;
-          case false: {
-            // Reset persistent state
-            // if creating new account
-            electronApi.store?.clear?.();
-            setIsSetup(MiddlewareAccountIsSetup.False);
-            break;
-          }
-          default:
-            setIsSetup(MiddlewareAccountIsSetup.Error);
-            break;
-        }
-      })
-      .catch((e) => {
-        console.error(e);
-        setIsSetup(MiddlewareAccountIsSetup.Error);
-      });
-  }, [electronApi.store, isSetup]);
-
-  const welcomeScreen = useMemo(() => {
-    switch (isSetup) {
-      case MiddlewareAccountIsSetup.True:
-        return <SetupWelcomeLogin />;
-      case MiddlewareAccountIsSetup.False:
-        return <SetupWelcomeCreate />;
-      case MiddlewareAccountIsSetup.Loading:
-        return (
-          <Flex
-            justify="center"
-            align="center"
-            style={{ height: 140, marginBottom: 32 }}
-          >
-            <Spin />
-          </Flex>
-        );
-      case MiddlewareAccountIsSetup.Error:
-        return (
-          <Flex
-            justify="center"
-            style={{ margin: '32px 0', textAlign: 'center' }}
-          >
-            <Typography.Text>
-              Unable to determine the account setup status, please try again.
-            </Typography.Text>
-          </Flex>
-        );
-      default:
-        return null;
-    }
-  }, [isSetup]);
-
-  return (
-    <Card bordered={false}>
-      <Flex vertical align="center">
-        <Image
-          src={'/onboarding-robot.svg'}
-          alt="Onboarding Robot"
-          width={80}
-          height={80}
-        />
-        <Title>Pearl</Title>
-      </Flex>
-      {welcomeScreen}
-    </Card>
-  );
-};
-
-export const SetupWelcomeCreate = () => {
+const SetupWelcomeCreate = () => {
   const { goto } = useSetup();
 
   return (
@@ -130,9 +69,10 @@ export const SetupWelcomeCreate = () => {
   );
 };
 
-export const SetupWelcomeLogin = () => {
+const SetupWelcomeLogin = () => {
   const [form] = Form.useForm();
   const { goto } = useSetup();
+  const { isOnline } = useOnlineStatusContext();
   const { goto: gotoPage, setUserLoggedIn } = usePageState();
 
   const {
@@ -172,19 +112,17 @@ export const SetupWelcomeLogin = () => {
   const handleLogin = useCallback(
     async ({ password }: { password: string }) => {
       setIsLoggingIn(true);
-      AccountService.loginAccount(password)
-        .then(async () => {
-          await updateBalances();
-          setCanNavigate(true);
-          setUserLoggedIn();
-        })
-        .catch((e) => {
-          console.error(e);
-          message.error('Invalid password');
-        })
-        .finally(() => {
-          setIsLoggingIn(false);
-        });
+      try {
+        await AccountService.loginAccount(password);
+        await updateBalances();
+        setCanNavigate(true);
+        setUserLoggedIn();
+      } catch (e) {
+        message.error('Invalid password');
+        console.error(e);
+      } finally {
+        setIsLoggingIn(false);
+      }
     },
     [updateBalances, setUserLoggedIn],
   );
@@ -196,13 +134,15 @@ export const SetupWelcomeLogin = () => {
     if (!selectedAgentConfig) return false;
 
     return services.some(
-      (service) =>
-        service.home_chain ===
-        asMiddlewareChain(selectedAgentConfig.evmHomeChainId),
+      ({ home_chain }) =>
+        home_chain === asMiddlewareChain(selectedAgentConfig.evmHomeChainId),
     );
   }, [isServicesFetched, services, selectedService, selectedAgentConfig]);
 
   useEffect(() => {
+    // If not online, do not proceed
+    if (!isOnline) return;
+
     if (!canNavigate) return;
     if (!isServicesFetched) return;
     if (!isWalletsFetched) return;
@@ -254,6 +194,7 @@ export const SetupWelcomeLogin = () => {
     gotoPage,
     selectedAgentConfig,
     selectedAgentType,
+    isOnline,
   ]);
 
   return (
@@ -283,5 +224,71 @@ export const SetupWelcomeLogin = () => {
         </Button>
       </Flex>
     </FormFlex>
+  );
+};
+
+/**
+ * Setup screen for creating or logging into an account
+ */
+export const SetupWelcome = () => {
+  const electronApi = useElectronApi();
+  const [isSetup, setIsSetup] = useState<MiddlewareAccountIsSetup | null>(null);
+
+  useEffect(() => {
+    if (isSetup !== null) return;
+    setIsSetup(MiddlewareAccountIsSetup.Loading);
+
+    AccountService.getAccount()
+      .then((res) => {
+        switch (res.is_setup) {
+          case true:
+            setIsSetup(MiddlewareAccountIsSetup.True);
+            break;
+          case false: {
+            // Reset persistent state
+            // if creating new account
+            electronApi.store?.clear?.();
+            setIsSetup(MiddlewareAccountIsSetup.False);
+            break;
+          }
+          default:
+            setIsSetup(MiddlewareAccountIsSetup.Error);
+            break;
+        }
+      })
+      .catch((e) => {
+        console.error(e);
+        setIsSetup(MiddlewareAccountIsSetup.Error);
+      });
+  }, [electronApi.store, isSetup]);
+
+  const welcomeScreen = useMemo(() => {
+    switch (isSetup) {
+      case MiddlewareAccountIsSetup.True:
+        return <SetupWelcomeLogin />;
+      case MiddlewareAccountIsSetup.False:
+        return <SetupWelcomeCreate />;
+      case MiddlewareAccountIsSetup.Loading:
+        return <SetupLoader />;
+      case MiddlewareAccountIsSetup.Error:
+        return <SetupError />;
+      default:
+        return null;
+    }
+  }, [isSetup]);
+
+  return (
+    <Card bordered={false}>
+      <Flex vertical align="center">
+        <Image
+          src={'/onboarding-robot.svg'}
+          alt="Onboarding Robot"
+          width={80}
+          height={80}
+        />
+        <Title>Pearl</Title>
+      </Flex>
+      {welcomeScreen}
+    </Card>
   );
 };

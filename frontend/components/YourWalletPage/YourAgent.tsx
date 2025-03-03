@@ -15,7 +15,6 @@ import {
   useBalanceContext,
   useServiceBalances,
 } from '@/hooks/useBalanceContext';
-import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
@@ -358,12 +357,10 @@ const YourAgentWalletBreakdown = () => {
 };
 
 export const YourAgentWallet = () => {
-  const isWithdrawFundsEnabled = useFeatureFlag('withdraw-funds');
-
   return (
     <>
       <YourAgentWalletBreakdown />
-      {isWithdrawFundsEnabled && <WithdrawFunds />}
+      <WithdrawFunds />
     </>
   );
 };

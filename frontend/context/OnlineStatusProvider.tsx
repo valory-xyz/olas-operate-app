@@ -1,25 +1,17 @@
-import React, {
-  createContext,
-  PropsWithChildren,
-  useEffect,
-  useState,
-} from 'react';
+import { createContext, PropsWithChildren, useEffect, useState } from 'react';
 
-type OnlineStatusContextProps = {
-  isOnline: boolean;
-};
+const initialState = { isOnline: false };
 
-const initialState = {
-  isOnline: true,
-};
+export const OnlineStatusContext = createContext<{ isOnline: boolean }>(
+  initialState,
+);
 
-const OnlineStatusContext =
-  createContext<OnlineStatusContextProps>(initialState);
-
-const OnlineStatusProvider = ({ children }: PropsWithChildren) => {
+export const OnlineStatusProvider = ({ children }: PropsWithChildren) => {
   const [isOnline, setIsOnline] = useState(initialState.isOnline);
 
   useEffect(() => {
+    setIsOnline(navigator.onLine); // initial status after mounting
+
     const updateOnlineStatus = () => {
       setIsOnline(navigator.onLine);
     };
@@ -39,5 +31,3 @@ const OnlineStatusProvider = ({ children }: PropsWithChildren) => {
     </OnlineStatusContext.Provider>
   );
 };
-
-export { OnlineStatusContext, OnlineStatusProvider };

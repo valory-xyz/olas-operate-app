@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
+import { COINGECKO_URL, TENDERLY_URL } from '@/constants/urls';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -17,6 +18,20 @@ import {
 } from './labels';
 
 const { Text } = Typography;
+
+const SetupHeader = () => (
+  <Text>
+    Set up your agent with access to a{' '}
+    <a target="_blank" href={TENDERLY_URL}>
+      Tenderly
+    </a>{' '}
+    project for simulating bridge and swap routes, and swap routes and provide a{' '}
+    <a target="_blank" href={COINGECKO_URL}>
+      CoinGecko API key
+    </a>{' '}
+    as a price source.
+  </Text>
+);
 
 type FieldValues = {
   tenderlyAccessToken: string;
@@ -98,13 +113,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
 
   return (
     <>
-      <Text>
-        Set up your agent with access to a Tenderly project for simulating
-        bridge and swap routes to select the best available option at the time
-        of investment. Additionally, provide a CoinGecko API key as a price
-        source to calculate the initial investment assets required for the
-        agent.
-      </Text>
+      <SetupHeader />
       <Divider style={{ margin: '8px 0' }} />
 
       <Form<FieldValues>

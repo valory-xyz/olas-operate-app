@@ -7,6 +7,7 @@ from pathlib import Path
 
 from aea_ledger_ethereum.ethereum import EthereumApi, EthereumCrypto
 from dotenv import load_dotenv
+from operate.data.contracts import uniswap_v2_erc20
 
 
 load_dotenv()
@@ -38,10 +39,7 @@ def fund(address: str, amount: float = 10.0) -> None:
         staking_crypto = EthereumCrypto(staking_keys_path)
         with open(
             Path(
-                "operate",
-                "data",
-                "contracts",
-                "uniswap_v2_erc20",
+                f"{uniswap_v2_erc20.__path__[0]}",
                 "build",
                 "IUniswapV2ERC20.json",
             ),

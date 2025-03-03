@@ -96,6 +96,7 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
   }, [selectedAgentConfig.evmHomeChainId, stakedBalances]);
 
   const updateBalances = useCallback(async () => {
+    if (!isOnline) return;
     if (isNil(masterWallets) || isEmpty(masterWallets)) return;
     if (isNil(services)) return;
 
@@ -134,7 +135,7 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     } finally {
       setIsUpdatingBalances(false);
     }
-  }, [masterWallets, services, serviceWallets]);
+  }, [isOnline, masterWallets, services, serviceWallets]);
 
   // Update balances once on load, then use interval
   useEffect(() => {
