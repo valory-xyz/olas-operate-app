@@ -257,7 +257,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  service_version: 'v0.18.1',
+  service_version: 'v0.3.1',
   home_chain: MiddlewareChain.MODE,
   configurations: {
     [MiddlewareChain.MODE]: {
