@@ -10,11 +10,11 @@ import { parseEther, parseUnits } from '@/utils/numberFormatters';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // Should be unique across all services and not be updated
-  hash: 'bafybeia3eztsz325jy2sbtilulfnl6pngz3bltkvogowx6xym3kr5re4ei',
+  hash: 'bafybeihgmbbjtkrlu62bkm3e4j2ehqipv5huqpifjiyttvjrk4sikwsfzu',
   description: 'Trader agent for omen prediction markets',
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.24.2',
+  service_version: 'v0.25.0',
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
@@ -79,6 +79,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
+    TOOLS_ACCURACY_HASH: {
+      name: 'Tools accuracy hash',
+      description: '',
+      // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
+      value: 'QmZFEoQ1oFCWmwgyo63sn2cFwQm2M5HxgU9jhCE2ayQhKG',
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
 
@@ -86,11 +93,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeihrfc7vxnkikd5eqiry4fu7dybmeianetnbgohuw3fupfr5wx6uc4',
+  hash: 'bafybeichcqlatpqn4ifklszf2odsllna76nm4du6irva3favj5f2wzsaju',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.4.0-alpha5',
+  service_version: 'v0.4.0-alpha7',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -130,6 +137,12 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
     },
     GENAI_API_KEY: {
       name: 'Gemini api key',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    FIREWORKS_API_KEY: {
+      name: 'Fireworks AI api key',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
@@ -178,7 +191,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       provision_type: EnvProvisionType.COMPUTED,
     },
   },
-};
+} as const;
 
 /**
  * Agents.fun Base template
@@ -240,7 +253,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeidsmy2rmftexz5ofbsu64vatakgraaxvxys7m5a5wkt7k3ipo46la',
+  hash: 'bafybeigbxddoe5hcvm3mlve77wjvaem5k6jd5vbtq575aj273uqqjj7zgq',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',

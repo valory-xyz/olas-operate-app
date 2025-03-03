@@ -12,6 +12,7 @@ type ValidationStatus = 'valid' | 'invalid' | 'unknown';
 type FieldValues = {
   personaDescription: string;
   geminiApiKey: string;
+  fireworksApiKey: string;
   xEmail: string;
   xUsername: string;
   xPassword: string;
