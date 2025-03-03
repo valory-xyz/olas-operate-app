@@ -6,6 +6,7 @@ const {
   ipcMain,
   dialog,
   shell,
+  session,
 } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
@@ -932,21 +933,38 @@ ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
     agentWindow = await createAgentActivityWindow();
   }
 
-  // Load the local loading screen first
-  await agentWindow.loadURL(
-    'file://' + __dirname + '/resources/agent-loading.html',
-  );
+  // // Load the local loading screen first
+  // await agentWindow.loadURL(
+  //   'file://' + __dirname + '/resources/agent-loading.html',
+  // );
 
   let retryInterval = null;
 
   // Function to attempt loading the actual URL
   const tryLoadURL = async () => {
     try {
-      await agentWindow.loadURL(url);
-      console.log('Successfully loaded:', url);
-      clearInterval(retryInterval); // Stop retrying
+      const response = await session.defaultSession.fetch(url, {
+        method: 'HEAD',
+      });
+      console.log(response);
+
+      if (response.ok) {
+        console.log(`URL is reachable: ${url}`);
+        clearInterval(retryInterval); // Stop retrying
+        await agentWindow.loadURL(url); // Now load the actual page
+      } else {
+        console.error(`Failed: Response not OK`);
+        // Load the local loading screen first
+        await agentWindow.loadURL(
+          'file://' + __dirname + '/resources/agent-loading.html',
+        );
+      }
     } catch (error) {
-      console.error('Error loading URL:', error);
+      console.error(`Failed: ${error}`);
+      // Load the local loading screen first
+      await agentWindow.loadURL(
+        'file://' + __dirname + '/resources/agent-loading.html',
+      );
     }
   };
 

@@ -1,8 +1,9 @@
 import { Flex, message, Tooltip, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useMemo } from 'react';
+import { useTimeout } from 'usehooks-ts';
 
-import { MiddlewareChain, MiddlewareDeploymentStatus } from '@/client';
+import { MiddlewareChain } from '@/client';
 import { NA, UNICODE_SYMBOLS } from '@/constants/symbols';
 import { useAgentUi } from '@/context/AgentUiProvider';
 import { AgentType } from '@/enums/Agent';
@@ -39,8 +40,13 @@ export const AgentTitle = ({ address }: { address: Address }) => {
   const { service, deploymentStatus } = useService(
     selectedService?.service_config_id,
   );
-
   const { goto, show } = useAgentUi();
+
+  useTimeout(() => {
+    if (!goto) return;
+
+    goto('http://127.0.0.1:3003');
+  }, 15000);
 
   const handleAgentUiBrowserLinkClick = useCallback(async () => {
     if (!goto || !show) {
@@ -48,20 +54,24 @@ export const AgentTitle = ({ address }: { address: Address }) => {
       return;
     }
 
-    if (deploymentStatus !== MiddlewareDeploymentStatus.DEPLOYED) {
-      message.error(
-        'Please run the agent first, before attempting to view the agent UI',
-      );
-      return;
-    }
+    // if (deploymentStatus !== MiddlewareDeploymentStatus.DEPLOYED) {
+    //   message.error(
+    //     'Please run the agent first, before attempting to view the agent UI',
+    //   );
+    //   return;
+    // }
 
     try {
+      console.log('Opening agent UI browser');
       await goto('http://127.0.0.1:8716');
-      show();
+      console.log('Agent UI browser opened', goto);
+      await show();
     } catch (error) {
+      console.log('Failed to open agent UI browser');
       message.error('Failed to open agent UI browser');
       console.error(error);
     }
+    console.log('handleAgentUiBrowserLinkClick');
   }, [deploymentStatus, goto, show]);
 
   const agentProfileLink = useMemo(() => {
