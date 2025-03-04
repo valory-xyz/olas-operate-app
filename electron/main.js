@@ -910,20 +910,18 @@ ipcMain.handle('save-logs', async (_, data) => {
 });
 
 ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
-  console.log('agent-activity-window-goto: ', url);
   logger.electron(`agent-activity-window-goto: ${url}`);
 
   let agentWindow = getAgentWindow();
-
   if (!agentWindow || agentWindow.isDestroyed()) {
     agentWindow = await createAgentActivityWindow();
   }
 
-  // Show the loading screen only once
+  // Show the loading screen initially
   const loadingScreenPath = `file://${__dirname}/resources/agent-loading.html`;
   await agentWindow.loadURL(loadingScreenPath);
 
-  const tryLoadURL = async () => {
+  const loadUrl = async () => {
     try {
       const response = await session.defaultSession.fetch(url, {
         method: 'HEAD',
@@ -940,11 +938,11 @@ ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
     }
   };
 
-  // Start checking the URL every 5 seconds (FOREVER)
-  const retryInterval = setInterval(tryLoadURL, 5000);
+  // Start checking the URL every 5 seconds until it's available
+  const retryInterval = setInterval(loadUrl, 5000);
 
-  // Try checking the URL immediately
-  tryLoadURL();
+  // Also, try checking the URL immediately
+  loadUrl();
 });
 
 ipcMain.handle('agent-activity-window-hide', () => {
