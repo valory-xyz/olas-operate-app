@@ -909,69 +909,41 @@ ipcMain.handle('save-logs', async (_, data) => {
   return result;
 });
 
-// ipcMain.handle('agent-activity-window-goto', (_event, url) => {
-//   console.log('agent-activity-window-goto: ', url);
-//   logger.electron(`agent-activity-window-goto: ${url}`);
-//   if (!getAgentWindow() || getAgentWindow().isDestroyed()) {
-//     createAgentActivityWindow()?.then((aaw) => {
-//       aaw
-//         .loadURL(url)
-//         .then(() => aaw.show())
-//         .catch((e) => console.error(e));
-//     });
-//   } else {
-//     getAgentWindow()?.loadURL(url);
-//   }
-// });
-
 ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
   console.log('agent-activity-window-goto: ', url);
   logger.electron(`agent-activity-window-goto: ${url}`);
 
   let agentWindow = getAgentWindow();
+
   if (!agentWindow || agentWindow.isDestroyed()) {
     agentWindow = await createAgentActivityWindow();
   }
 
-  // // Load the local loading screen first
-  // await agentWindow.loadURL(
-  //   'file://' + __dirname + '/resources/agent-loading.html',
-  // );
+  // Show the loading screen only once
+  const loadingScreenPath = `file://${__dirname}/resources/agent-loading.html`;
+  await agentWindow.loadURL(loadingScreenPath);
 
-  let retryInterval = null;
-
-  // Function to attempt loading the actual URL
   const tryLoadURL = async () => {
     try {
       const response = await session.defaultSession.fetch(url, {
         method: 'HEAD',
       });
-      console.log(response);
 
       if (response.ok) {
-        console.log(`URL is reachable: ${url}`);
-        clearInterval(retryInterval); // Stop retrying
-        await agentWindow.loadURL(url); // Now load the actual page
+        clearInterval(retryInterval);
+        await agentWindow.loadURL(url);
       } else {
         console.error(`Failed: Response not OK`);
-        // Load the local loading screen first
-        await agentWindow.loadURL(
-          'file://' + __dirname + '/resources/agent-loading.html',
-        );
       }
     } catch (error) {
       console.error(`Failed: ${error}`);
-      // Load the local loading screen first
-      await agentWindow.loadURL(
-        'file://' + __dirname + '/resources/agent-loading.html',
-      );
     }
   };
 
-  // Start retrying every 5 seconds
-  retryInterval = setInterval(tryLoadURL, 5000);
+  // Start checking the URL every 5 seconds (FOREVER)
+  const retryInterval = setInterval(tryLoadURL, 5000);
 
-  // Try loading the URL immediately as well
+  // Try checking the URL immediately
   tryLoadURL();
 });
 
