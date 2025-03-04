@@ -271,7 +271,8 @@ const HEIGHT = 700;
  */
 const createMainWindow = async () => {
   if (mainWindow) return;
-  const width = isDev ? 840 : APP_WIDTH;
+  const width = APP_WIDTH;
+  // const width = isDev ? 840 : APP_WIDTH;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
     resizable: false,
@@ -920,20 +921,26 @@ ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
   // Show the loading screen initially
   const loadingScreenPath = `file://${__dirname}/resources/agent-loading.html`;
   await agentWindow.loadURL(loadingScreenPath);
+  logger.electron(`Loading screen: ${loadingScreenPath}`);
 
   const loadUrl = async () => {
+    logger.electron(`Checking URL: ${url}`);
+
     try {
       const response = await session.defaultSession.fetch(url, {
         method: 'HEAD',
       });
+      logger.electron(`Response: ${response.status}`);
 
       if (response.ok) {
         clearInterval(retryInterval);
         await agentWindow.loadURL(url);
       } else {
+        logger.electron(`Failed: Response not OK`);
         console.error(`Failed: Response not OK`);
       }
     } catch (error) {
+      logger.electron(`Failed: ${error}`);
       console.error(`Failed: ${error}`);
     }
   };
