@@ -271,8 +271,7 @@ const HEIGHT = 700;
  */
 const createMainWindow = async () => {
   if (mainWindow) return;
-  const width = APP_WIDTH;
-  // const width = isDev ? 840 : APP_WIDTH;
+  const width = isDev ? 840 : APP_WIDTH;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
     resizable: false,
