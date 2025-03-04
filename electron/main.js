@@ -6,7 +6,6 @@ const {
   ipcMain,
   dialog,
   shell,
-  session,
 } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
@@ -27,6 +26,7 @@ const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
 const { Scraper } = require('agent-twitter-client');
+const { checkUrl } = require('./utils');
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -918,38 +918,37 @@ ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
     agentWindow = await createAgentActivityWindow();
   }
 
+  if (!agentWindow) {
+    logger.electron('Failed to create agent window');
+    return;
+  }
+
   // Show the loading screen initially
   const loadingScreenPath = `file://${__dirname}/resources/agent-loading.html`;
   await agentWindow.loadURL(loadingScreenPath);
-  logger.electron(`Loading screen: ${loadingScreenPath}`);
+  logger.electron(`Showing loading screen: ${loadingScreenPath}`);
 
-  const loadUrl = async () => {
-    logger.electron(`Checking URL: ${url}`);
+  const waitForUrl = async () => {
+    logger.electron(`Starting URL check: ${url}`);
 
-    try {
-      const response = await session.defaultSession.fetch(url, {
-        method: 'HEAD',
-      });
-      logger.electron(`Response: ${response.status}`);
-
-      if (response.ok) {
-        clearInterval(retryInterval);
-        await agentWindow.loadURL(url);
-      } else {
-        logger.electron(`Failed: Response not OK`);
-        console.error(`Failed: Response not OK`);
+    const interval = setInterval(async () => {
+      try {
+        const isValidUrl = await checkUrl(url);
+        if (isValidUrl) {
+          clearInterval(interval);
+          await agentWindow.loadURL(url);
+          logger.electron(`Successfully loaded: ${url}`);
+        } else {
+          logger.electron(`Valid URL not available yet, retrying in 5s...`);
+        }
+      } catch (error) {
+        logger.electron(`Error checking URL: ${error.message}`);
       }
-    } catch (error) {
-      logger.electron(`Failed: ${error}`);
-      console.error(`Failed: ${error}`);
-    }
+    }, 5000);
   };
 
-  // Start checking the URL every 5 seconds until it's available
-  const retryInterval = setInterval(loadUrl, 5000);
-
-  // Also, try checking the URL immediately
-  loadUrl();
+  // Start polling until URL is available
+  waitForUrl();
 });
 
 ipcMain.handle('agent-activity-window-hide', () => {
