@@ -35,6 +35,11 @@ const useRefillRequirement = (wallet?: WalletBalance) => {
   ]);
 
   if (isNil(requirement)) return;
+  return requirement;
+};
+
+const formatRequirement = (requirement: number | undefined) => {
+  if (isNil(requirement)) return;
   return formatUnitsToNumber(`${requirement}`);
 };
 
@@ -112,7 +117,7 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
   /**
    * service safe native balance requirement
    */
-  const serviceSafeNativeGasRequirement =
+  const serviceSafeNativeGasRequirementInWei =
     useRefillRequirement(serviceSafeNative);
 
   return {
@@ -121,7 +126,9 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
     serviceSafeBalances,
     serviceEoaBalances,
     serviceSafeNative,
-    isServiceSafeLowOnNativeGas: requiresFund(serviceSafeNativeGasRequirement),
+    isServiceSafeLowOnNativeGas: requiresFund(
+      serviceSafeNativeGasRequirementInWei,
+    ),
   };
 };
 
@@ -187,7 +194,11 @@ export const useMasterBalances = () => {
   /**
    * master safe native balance requirement
    */
-  const masterSafeNativeGasRequirement = useRefillRequirement(masterSafeNative);
+  const masterSafeNativeGasRequirementInWei =
+    useRefillRequirement(masterSafeNative);
+  const masterSafeNativeGasRequirement = formatRequirement(
+    masterSafeNativeGasRequirementInWei,
+  );
 
   /**
    * master EOA balance
@@ -212,7 +223,10 @@ export const useMasterBalances = () => {
   /**
    * master EOA balance requirement
    */
-  const masterEoaGasRequirement = useRefillRequirement(masterEoaNative);
+  const masterEoaGasRequirementInWei = useRefillRequirement(masterEoaNative);
+  const masterEoaGasRequirement = formatRequirement(
+    masterEoaGasRequirementInWei,
+  );
 
   return {
     isLoaded,
@@ -220,13 +234,15 @@ export const useMasterBalances = () => {
 
     // master safe
     masterSafeBalances,
-    isMasterSafeLowOnNativeGas: requiresFund(masterSafeNativeGasRequirement),
+    isMasterSafeLowOnNativeGas: requiresFund(
+      masterSafeNativeGasRequirementInWei,
+    ),
     masterSafeNativeGasRequirement,
     masterSafeNativeGasBalance: masterSafeNative?.balance,
 
     // master eoa
     masterEoaNativeGasBalance: masterEoaNative?.balance,
-    isMasterEoaLowOnGas: requiresFund(masterEoaGasRequirement),
+    isMasterEoaLowOnGas: requiresFund(masterEoaGasRequirementInWei),
     masterEoaGasRequirement,
     masterEoaBalances,
   };
