@@ -916,38 +916,35 @@ ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
   if (!agentWindow || agentWindow.isDestroyed()) {
     agentWindow = await createAgentActivityWindow();
   }
-
   if (!agentWindow) {
     logger.electron('Failed to create agent window');
     return;
   }
 
-  // Show the loading screen initially
-  const loadingScreenPath = `file://${__dirname}/resources/agent-loading.html`;
-  await agentWindow.loadURL(loadingScreenPath);
-  logger.electron(`Showing loading screen: ${loadingScreenPath}`);
+  await agentWindow.loadURL(`file://${__dirname}/resources/agent-loading.html`);
+  logger.electron('Showing loading screen');
 
-  const waitForUrl = async () => {
+  const checkAndLoadUrl = async () => {
     logger.electron(`Starting URL check: ${url}`);
 
-    const interval = setInterval(async () => {
-      try {
-        const isValidUrl = await checkUrl(url);
-        if (isValidUrl) {
-          clearInterval(interval);
-          await agentWindow.loadURL(url);
-          logger.electron(`Successfully loaded: ${url}`);
-        } else {
-          logger.electron(`Valid URL not available yet, retrying in 5s...`);
-        }
-      } catch (error) {
-        logger.electron(`Error checking URL: ${error.message}`);
+    try {
+      if (await checkUrl(url)) {
+        await agentWindow.loadURL(url);
+        logger.electron(`Successfully loaded: ${url}`);
+        return true;
       }
-    }, 5000);
+    } catch (error) {
+      logger.electron(`Error checking URL: ${error.message}`);
+    }
+    return false;
   };
 
-  // Start polling until URL is available
-  waitForUrl();
+  if (await checkAndLoadUrl()) return;
+
+  const interval = setInterval(async () => {
+    if (await checkAndLoadUrl()) clearInterval(interval);
+    else logger.electron(`Valid URL not available yet, retrying in 5s...`);
+  }, 5000);
 });
 
 ipcMain.handle('agent-activity-window-hide', () => {
