@@ -51,7 +51,6 @@ export const AGENT_CONFIG: {
   },
   [AgentType.Modius]: {
     isAgentEnabled: true,
-    isComingSoon: true,
     requiresSetup: true,
     name: 'Modius agent',
     evmHomeChainId: EvmChainId.Mode,
