@@ -942,8 +942,11 @@ ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
   if (await checkAndLoadUrl()) return;
 
   const interval = setInterval(async () => {
-    if (await checkAndLoadUrl()) clearInterval(interval);
-    else logger.electron(`Valid URL not available yet, retrying in 5s...`);
+    if (await checkAndLoadUrl()) {
+      clearInterval(interval);
+    } else {
+      logger.electron(`Valid URL not available yet, retrying in 5s...`);
+    }
   }, 5000);
 });
 
