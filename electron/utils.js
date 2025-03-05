@@ -2,6 +2,9 @@ const http = require('http');
 const https = require('https');
 const { logger } = require('./logger');
 
+/**
+ * Checks if a URL is reachable.
+ */
 const checkUrl = (url) => {
   return new Promise((resolve) => {
     logger.electron(`Checking URL in agent window: ${url}`);
@@ -13,7 +16,7 @@ const checkUrl = (url) => {
       resolve(response.statusCode >= 200 && response.statusCode < 300);
     });
 
-    request.on('error', () => resolve(false)); // Resolve as false if request fails
+    request.on('error', () => resolve(false));
     request.end();
   });
 };
