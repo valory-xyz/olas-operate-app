@@ -39,7 +39,6 @@ export const AgentTitle = ({ address }: { address: Address }) => {
   const { service, deploymentStatus } = useService(
     selectedService?.service_config_id,
   );
-
   const { goto, show } = useAgentUi();
 
   const handleAgentUiBrowserLinkClick = useCallback(async () => {
