@@ -190,6 +190,5 @@ export const ServicesService = {
   createService,
   updateService,
   stopDeployment,
-  // deleteDeployment,
   withdrawBalance,
 };

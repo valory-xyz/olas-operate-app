@@ -120,10 +120,13 @@ export const ModiusUpdatePage = () => {
     );
   }, [selectedService?.env_variables]);
 
-  const handleClickBack = useCallback(() => {
+  const handleBackClick = useCallback(() => {
     const unsavedFields = get(form?.getFieldsValue(), 'env_variables');
     const previousValues = initialValues?.env_variables;
 
+    // TODO: something wrong with this check as the condition is always failing
+    // MAYBE - the updated value is not reflected in the initialValues?
+    // Is the service is actually updated in the store?
     const hasUnsavedChanges = !isEqual(unsavedFields, previousValues);
     if (hasUnsavedChanges) {
       unsavedModal?.openModal?.();
@@ -133,7 +136,7 @@ export const ModiusUpdatePage = () => {
   }, [unsavedModal, goto, form, initialValues]);
 
   return (
-    <CardLayout onClickBack={handleClickBack}>
+    <CardLayout onClickBack={handleBackClick}>
       <ModiusUpdateForm initialFormValues={initialValues} />
     </CardLayout>
   );

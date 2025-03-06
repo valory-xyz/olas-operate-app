@@ -66,9 +66,9 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   // state to show healthcheck alert to the user
   const [isHealthCheckAlertShown, setHealthCheckErrorsShownToUser] =
     useState(false);
-  const setHealthCheckAlertShown = useCallback((isShown:boolean) => {
+  const setHealthCheckAlertShown = useCallback((isShown: boolean) => {
     setHealthCheckErrorsShownToUser(isShown);
-  }, []); 
+  }, []);
 
   return (
     <SharedContext.Provider

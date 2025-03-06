@@ -1,4 +1,5 @@
 import { Form, FormInstance } from 'antd';
+import { noop } from 'lodash';
 import {
   createContext,
   Dispatch,
@@ -23,19 +24,24 @@ import { useUnsavedModal } from '../hooks/useUnsavedModal';
 import { ConfirmUpdateModal } from '../modals/ConfirmUpdateModal';
 import { UnsavedModal } from '../modals/UnsavedModal';
 
-export const UpdateAgentContext = createContext<
-  Partial<{
-    confirmUpdateModal: ModalProps;
-    unsavedModal: ModalProps;
-    form: FormInstance;
-    isEditing: boolean;
-    setIsEditing: Dispatch<SetStateAction<boolean>>;
-  }>
->({});
+export const UpdateAgentContext = createContext<{
+  confirmUpdateModal?: ModalProps;
+  unsavedModal?: ModalProps;
+  form?: FormInstance;
+  isEditing: boolean;
+  setIsEditing: Dispatch<SetStateAction<boolean>>;
+}>({
+  isEditing: false,
+  setIsEditing: noop,
+});
 
 export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
   const [form] = Form.useForm<DeepPartial<ServiceTemplate>>(); // TODO: wrong type, fix it
-  const { selectedService, selectedAgentType } = useServices();
+  const {
+    refetch: refetchServices,
+    selectedService,
+    selectedAgentType,
+  } = useServices();
   const { goto } = usePageState();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -80,12 +86,13 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
 
     try {
       await ServicesService.updateService(partialServiceTemplate);
+      await refetchServices?.();
     } catch (error) {
       console.error(error);
     } finally {
       setIsEditing(false);
     }
-  }, [form, selectedAgentType, selectedService]);
+  }, [form, selectedAgentType, selectedService, refetchServices]);
 
   const confirmUnsavedCallback = useCallback(async () => {
     goto(Pages.Main);
@@ -109,7 +116,7 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
         setIsEditing,
       }}
     >
-      <ConfirmUpdateModal />
+      <ConfirmUpdateModal isLoading={isEditing} />
       <UnsavedModal />
       {children}
     </UpdateAgentContext.Provider>
