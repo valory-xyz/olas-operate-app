@@ -26,6 +26,7 @@ const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
 const { Scraper } = require('agent-twitter-client');
+const { checkUrl } = require('./utils');
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -257,7 +258,7 @@ const createSplashWindow = () => {
       contextIsolation: false,
     },
   });
-  splashWindow.loadURL('file://' + __dirname + '/loading/index.html');
+  splashWindow.loadURL('file://' + __dirname + '/resources/app-loading.html');
 
   if (isDev) {
     splashWindow.webContents.openDevTools();
@@ -908,13 +909,45 @@ ipcMain.handle('save-logs', async (_, data) => {
   return result;
 });
 
-ipcMain.handle('agent-activity-window-goto', (_event, url) => {
+ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
   logger.electron(`agent-activity-window-goto: ${url}`);
-  if (!getAgentWindow() || getAgentWindow().isDestroyed()) {
-    createAgentActivityWindow()?.then((aaw) => aaw.loadURL(url));
-  } else {
-    getAgentWindow()?.loadURL(url);
+
+  let agentWindow = getAgentWindow();
+  if (!agentWindow || agentWindow.isDestroyed()) {
+    agentWindow = await createAgentActivityWindow();
   }
+  if (!agentWindow) {
+    logger.electron('Failed to create agent window');
+    return;
+  }
+
+  await agentWindow.loadURL(`file://${__dirname}/resources/agent-loading.html`);
+  logger.electron('Showing loading screen');
+
+  const checkAndLoadUrl = async () => {
+    logger.electron(`Starting URL check: ${url}`);
+
+    try {
+      if (await checkUrl(url)) {
+        await agentWindow.loadURL(url);
+        logger.electron(`Successfully loaded: ${url}`);
+        return true;
+      }
+    } catch (error) {
+      logger.electron(`Error checking URL: ${error.message}`);
+    }
+    return false;
+  };
+
+  if (await checkAndLoadUrl()) return;
+
+  const interval = setInterval(async () => {
+    if (await checkAndLoadUrl()) {
+      clearInterval(interval);
+    } else {
+      logger.electron(`Valid URL not available yet, retrying in 5s...`);
+    }
+  }, 5000);
 });
 
 ipcMain.handle('agent-activity-window-hide', () => {
