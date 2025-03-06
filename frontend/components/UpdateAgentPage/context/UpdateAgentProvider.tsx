@@ -19,20 +19,22 @@ import { ServicesService } from '@/service/Services';
 import { DeepPartial } from '@/types/Util';
 
 import { useConfirmUpdateModal } from '../hooks/useConfirmModal';
-import { ModalProps } from '../hooks/useModal';
+import { defaultModalProps, ModalProps } from '../hooks/useModal';
 import { useUnsavedModal } from '../hooks/useUnsavedModal';
 import { ConfirmUpdateModal } from '../modals/ConfirmUpdateModal';
 import { UnsavedModal } from '../modals/UnsavedModal';
 
 export const UpdateAgentContext = createContext<{
-  confirmUpdateModal?: ModalProps;
-  unsavedModal?: ModalProps;
-  form?: FormInstance;
   isEditing: boolean;
   setIsEditing: Dispatch<SetStateAction<boolean>>;
+  form?: FormInstance;
+  confirmUpdateModal: ModalProps;
+  unsavedModal: ModalProps;
 }>({
   isEditing: false,
   setIsEditing: noop,
+  unsavedModal: defaultModalProps,
+  confirmUpdateModal: defaultModalProps,
 });
 
 export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
@@ -44,11 +46,14 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
   } = useServices();
   const { goto } = usePageState();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // Save button loading state
 
   const confirmUpdateCallback = useCallback(async () => {
     const formValues = form.getFieldsValue();
 
     if (!selectedService || !selectedService.service_config_id) return;
+
+    setIsSaving(true);
 
     const currentTemplate = SERVICE_TEMPLATES.find(
       ({ name, agentType }) =>
@@ -91,6 +96,7 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
       console.error(error);
     } finally {
       setIsEditing(false);
+      setIsSaving(false);
     }
   }, [form, selectedAgentType, selectedService, refetchServices]);
 
@@ -116,7 +122,7 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
         setIsEditing,
       }}
     >
-      <ConfirmUpdateModal isLoading={isEditing} />
+      <ConfirmUpdateModal isLoading={isSaving} />
       <UnsavedModal />
       {children}
     </UpdateAgentContext.Provider>

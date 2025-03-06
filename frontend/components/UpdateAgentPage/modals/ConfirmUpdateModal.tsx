@@ -21,8 +21,6 @@ export const ConfirmUpdateModal = ({ isLoading }: ConfirmUpdateModalProps) => {
     return isLoading ? 'Saving...' : 'Save';
   }, [isServiceRunning, isLoading]);
 
-  if (!confirmUpdateModal) return null;
-
   return (
     <Modal
       title="Confirm changes"
