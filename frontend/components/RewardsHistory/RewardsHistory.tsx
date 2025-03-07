@@ -171,15 +171,15 @@ const EpochTime = ({
   );
 };
 
-type RewardRowProps = { date: ReactNode; reward: string; earned: ReactNode };
-const RewardRow = ({ date, reward, earned }: RewardRowProps) => (
+type RewardRowProps = { date: ReactNode; earned: ReactNode; reward: string };
+const RewardRow = ({ date, earned, reward }: RewardRowProps) => (
   <EpochRow>
     <Col span={6}>{date}</Col>
-    <Col span={11} className="text-right pr-16">
-      <Text type="secondary">{reward}</Text>
-    </Col>
-    <Col span={7} className="text-center pl-16">
+    <Col span={11} className="text-center">
       {earned}
+    </Col>
+    <Col span={7} className="text-right">
+      <Text type="secondary">{reward}</Text>
     </Col>
   </EpochRow>
 );
@@ -240,9 +240,7 @@ const ContractRewards = ({
   );
 };
 
-/**
- * TODO: Refactor, only supports a single service for now
- * */
+// TODO: Refactor, only supports a single service for now
 export const RewardsHistory = () => {
   const { contractCheckpoints, isError, isFetched, refetch } =
     useRewardsHistory();
