@@ -47,7 +47,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       form={form}
       layout="vertical"
       disabled={!isEditing}
-      onFinish={confirmModal?.openModal}
+      onFinish={confirmModal.openModal}
       validateMessages={validateMessages}
       initialValues={{ ...initialFormValues }}
     >
@@ -120,20 +120,20 @@ export const ModiusUpdatePage = () => {
     );
   }, [selectedService?.env_variables]);
 
-  const handleClickBack = useCallback(() => {
+  const handleBackClick = useCallback(() => {
     const unsavedFields = get(form?.getFieldsValue(), 'env_variables');
     const previousValues = initialValues?.env_variables;
 
     const hasUnsavedChanges = !isEqual(unsavedFields, previousValues);
     if (hasUnsavedChanges) {
-      unsavedModal?.openModal?.();
+      unsavedModal.openModal();
     } else {
       goto(Pages.Main);
     }
-  }, [unsavedModal, goto, form, initialValues]);
+  }, [initialValues, form, unsavedModal, goto]);
 
   return (
-    <CardLayout onClickBack={handleClickBack}>
+    <CardLayout onClickBack={handleBackClick}>
       <ModiusUpdateForm initialFormValues={initialValues} />
     </CardLayout>
   );

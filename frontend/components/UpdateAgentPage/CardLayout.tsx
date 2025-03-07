@@ -1,6 +1,6 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
-import { useCallback, useContext } from 'react';
+import { ReactNode, useCallback, useContext } from 'react';
 
 import { CardTitle } from '../Card/CardTitle';
 import { CardFlex } from '../styled/CardFlex';
@@ -20,17 +20,13 @@ const EditButton = () => {
   );
 };
 
-export const CardLayout = ({
-  onClickBack,
-  children,
-}: {
-  onClickBack: () => void;
-  children: React.ReactNode;
-}) => {
+type CardLayoutProps = { onClickBack: () => void; children: ReactNode };
+
+export const CardLayout = ({ onClickBack, children }: CardLayoutProps) => {
   const { isEditing } = useContext(UpdateAgentContext);
+
   return (
     <CardFlex
-      bordered={false}
       title={
         <CardTitle
           backButtonCallback={onClickBack}
@@ -38,6 +34,7 @@ export const CardLayout = ({
         />
       }
       extra={isEditing ? null : <EditButton />}
+      bordered={false}
     >
       {children}
     </CardFlex>

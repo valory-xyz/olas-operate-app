@@ -30,10 +30,7 @@ export const useConfirmUpdateModal = ({
 
   const confirm = useCallback(async () => {
     setPending(true);
-    message.loading({
-      content: 'Updating agent settings...',
-      key: 'updating',
-    });
+    message.loading({ content: 'Updating agent settings...', key: 'updating' });
     let failed = false;
 
     try {
