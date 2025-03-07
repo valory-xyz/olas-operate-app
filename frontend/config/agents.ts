@@ -37,7 +37,6 @@ export const AGENT_CONFIG: {
   },
   [AgentType.Memeooorr]: {
     isAgentEnabled: true,
-    isComingSoon: true,
     requiresSetup: true,
     name: 'Agents.fun agent',
     evmHomeChainId: EvmChainId.Base,
@@ -51,7 +50,6 @@ export const AGENT_CONFIG: {
   },
   [AgentType.Modius]: {
     isAgentEnabled: true,
-    isComingSoon: true,
     requiresSetup: true,
     name: 'Modius agent',
     evmHomeChainId: EvmChainId.Mode,
