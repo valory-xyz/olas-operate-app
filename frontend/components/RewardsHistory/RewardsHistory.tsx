@@ -119,13 +119,16 @@ const ErrorLoadingHistory = ({ refetch }: { refetch: () => void }) => (
 
 type EpochTimeProps = Pick<
   EpochDetails,
-  'epochStartTimeStamp' | 'epochEndTimeStamp'
->;
+  'epoch' | 'epochStartTimeStamp' | 'epochEndTimeStamp'
+> &
+  Partial<Pick<EpochDetails, 'transactionHash'>>;
+
 const EpochTime = ({
+  epoch,
   epochEndTimeStamp,
   epochStartTimeStamp,
   transactionHash,
-}: EpochTimeProps & Partial<Pick<EpochDetails, 'transactionHash'>>) => {
+}: EpochTimeProps) => {
   const { selectedAgentConfig } = useServices();
   const { middlewareHomeChainId } = selectedAgentConfig;
 
@@ -141,7 +144,7 @@ const EpochTime = ({
 
   return (
     <Text type="secondary">
-      {formatToMonthDay(epochEndTimeStamp * 1000)}
+      {`Epoch ${epoch}`}
       &nbsp;
       <Popover
         arrow={false}
@@ -171,10 +174,14 @@ const EpochTime = ({
   );
 };
 
-type RewardRowProps = { date: ReactNode; earned: ReactNode; reward: string };
-const RewardRow = ({ date, earned, reward }: RewardRowProps) => (
+type RewardRowProps = {
+  epochSummary: ReactNode;
+  earned: ReactNode;
+  reward: string;
+};
+const RewardRow = ({ epochSummary, earned, reward }: RewardRowProps) => (
   <EpochRow>
-    <Col span={6}>{date}</Col>
+    <Col span={6}>{epochSummary}</Col>
     <Col span={11} className="text-center">
       {earned}
     </Col>
@@ -208,8 +215,9 @@ const ContractRewards = ({
 
       {/* Today's rewards */}
       <RewardRow
-        date={
+        epochSummary={
           <EpochTime
+            epoch={Number(checkpoints[0].epoch) + 1}
             epochStartTimeStamp={
               checkpoints[0].epochStartTimeStamp + ONE_DAY_IN_S
             }
@@ -224,8 +232,9 @@ const ContractRewards = ({
         return (
           <RewardRow
             key={checkpoint.epochEndTimeStamp}
-            date={
+            epochSummary={
               <EpochTime
+                epoch={Number(checkpoint.epoch)}
                 epochStartTimeStamp={checkpoint.epochStartTimeStamp}
                 epochEndTimeStamp={checkpoint.epochEndTimeStamp}
                 transactionHash={checkpoint.transactionHash}

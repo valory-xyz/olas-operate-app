@@ -88,6 +88,11 @@ export type Checkpoint = {
   earned: boolean;
 };
 
+/**
+ * function to transform the checkpoints data from the subgraph
+ * to include additional information like epoch start and end time,
+ * rewards, etc.
+ */
 const useTransformCheckpoints = () => {
   const { selectedAgentConfig } = useServices();
   const { serviceApi: agent, evmHomeChainId: chainId } = selectedAgentConfig;
