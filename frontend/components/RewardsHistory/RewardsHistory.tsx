@@ -117,6 +117,12 @@ const ErrorLoadingHistory = ({ refetch }: { refetch: () => void }) => (
   </Container>
 );
 
+const EmptyRewardsHistoryForCurrentContract = () => (
+  <Flex vertical style={{ height: 60 }} align="center" justify="center">
+    <Text type="secondary">There’s no history of rewards yet.</Text>
+  </Flex>
+);
+
 type EpochTimeProps = Pick<
   EpochDetails,
   'epoch' | 'epochStartTimeStamp' | 'epochEndTimeStamp'
@@ -207,20 +213,33 @@ const ContractRewards = ({
   const { availableRewardsForEpochEth: reward, isEligibleForRewards } =
     useRewardContext();
 
-  return (
-    <Flex vertical>
+  const contractName = useMemo(() => {
+    return (
       <ContractName>
         <Text strong>{stakingProgramMeta.name}</Text>
       </ContractName>
+    );
+  }, [stakingProgramMeta]);
+
+  if (checkpoints.length === 0) {
+    return (
+      <Flex vertical>
+        {contractName}
+        <EmptyRewardsHistoryForCurrentContract />
+      </Flex>
+    );
+  }
+
+  return (
+    <Flex vertical>
+      {contractName}
 
       {/* Today's rewards */}
       <RewardRow
         epochSummary={
           <EpochTime
             epoch={Number(checkpoints[0].epoch) + 1}
-            epochStartTimeStamp={
-              checkpoints[0].epochStartTimeStamp + ONE_DAY_IN_S
-            }
+            epochStartTimeStamp={checkpoints[0].epochEndTimeStamp}
             epochEndTimeStamp={checkpoints[0].epochEndTimeStamp + ONE_DAY_IN_S}
           />
         }
