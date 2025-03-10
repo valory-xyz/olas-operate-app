@@ -100,7 +100,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     refetch,
   } = useQuery<MiddlewareServiceResponse[]>({
     queryKey: REACT_QUERY_KEYS.SERVICES_KEY,
-    queryFn: ServicesService.getServices,
+    queryFn: ({ signal }) => ServicesService.getServices(signal),
     enabled: isOnline && !paused,
     refetchInterval: FIVE_SECONDS_INTERVAL,
   });
