@@ -59,9 +59,8 @@ export const BalancesAndRefillRequirementsProvider = ({
         serviceConfigId: configId!,
         signal,
       }),
-    enabled: !!configId && isUserLoggedIn && isOnline, // Ensure the query runs only when necessary
+    enabled: !!configId && isUserLoggedIn && isOnline,
     refetchInterval,
-    staleTime: 0, // Forces fresh data every time
   });
 
   const balances = useMemo(() => {
