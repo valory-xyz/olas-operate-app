@@ -143,15 +143,25 @@ const stopDeployment = async (
     throw new Error('Failed to stop deployment');
   });
 
-const getDeployment = async (serviceConfigId: string): Promise<Deployment> =>
+/**
+ * To get the deployment of a service
+ */
+const getDeployment = async ({
+  serviceConfigId,
+  signal,
+}: {
+  serviceConfigId: ServiceConfigId;
+  signal: AbortSignal;
+}): Promise<Deployment> =>
   fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/deployment`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    signal,
   }).then((response) => {
     if (response.ok) {
       return response.json();
     }
-    throw new Error('Failed to get deployment');
+    throw new Error('Failed to fetch deployment');
   });
 
 /**

@@ -112,8 +112,11 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     queryKey: REACT_QUERY_KEYS.SERVICE_DEPLOYMENT_STATUS_KEY(
       selectedServiceConfigId,
     ),
-    queryFn: () =>
-      ServicesService.getDeployment(selectedServiceConfigId as string),
+    queryFn: ({ signal }) =>
+      ServicesService.getDeployment({
+        serviceConfigId: selectedServiceConfigId!,
+        signal,
+      }),
     enabled: isOnline && !!selectedServiceConfigId,
     refetchInterval: FIVE_SECONDS_INTERVAL,
   });
