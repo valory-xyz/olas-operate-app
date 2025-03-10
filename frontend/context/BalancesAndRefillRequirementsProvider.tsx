@@ -47,6 +47,11 @@ export const BalancesAndRefillRequirementsProvider = ({
     return FIVE_SECONDS_INTERVAL;
   }, [isServiceRunning, configId]);
 
+  console.log('BalancesAndRefillRequirementsProvider', {
+    configId,
+    chainId,
+  });
+
   const {
     data: balancesAndRefillRequirements,
     isLoading: isBalancesAndFundingRequirementsLoading,
@@ -54,10 +59,16 @@ export const BalancesAndRefillRequirementsProvider = ({
     queryKey: REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(
       configId as string,
     ),
-    queryFn: () =>
-      BalanceService.getBalancesAndRefillRequirements(configId as string),
-    enabled: !!configId && isUserLoggedIn && isOnline,
+    queryFn: ({ signal }) => {
+      console.log('Fetching data for serviceConfigId:', configId);
+      return BalanceService.getBalancesAndRefillRequirements({
+        serviceConfigId: configId!,
+        signal,
+      });
+    },
+    enabled: !!configId && isUserLoggedIn && isOnline, // Ensure the query runs only when necessary
     refetchInterval,
+    staleTime: 0, // Forces fresh data every time
   });
 
   const balances = useMemo(() => {
