@@ -16,7 +16,11 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
  */
 export const useMainOlasBalance = () => {
   const { isLoaded: isBalanceLoaded } = useBalanceContext();
-  const { selectedService, selectedAgentConfig } = useServices();
+  const {
+    isLoading: isServicesLoading,
+    selectedService,
+    selectedAgentConfig,
+  } = useServices();
   const { masterWalletBalances } = useMasterBalances();
   const { serviceStakedBalances, serviceWalletBalances } = useServiceBalances(
     selectedService?.service_config_id,
@@ -77,6 +81,17 @@ export const useMainOlasBalance = () => {
       accruedServiceStakingRewards,
     ]);
 
+    console.log('mainOlasBalance memo', {
+      requiresAgentSafesOn: selectedAgentConfig.requiresAgentSafesOn,
+      serviceStakedBalances,
+      masterWalletOlasBalance,
+      serviceWalletOlasBalance,
+      serviceStakedOlasBalance,
+      optimisticRewardsEarnedForEpoch,
+      accruedServiceStakingRewards,
+      totalBalance,
+    });
+
     return totalBalance;
   }, [
     masterWalletBalances,
@@ -88,11 +103,21 @@ export const useMainOlasBalance = () => {
   ]);
 
   const isMainOlasBalanceLoading = [
+    isServicesLoading, // addresses to filter the staked balances are available only after services are loaded
     !isBalanceLoaded,
     isStakingRewardsDetailsLoading,
     isAvailableRewardsForEpochLoading,
     !selectedStakingProgramId, // staking program is required to calculate staking rewards
   ].some(Boolean);
+
+  // console.log('useMainOlasBalance', {
+  //   mainOlasBalance,
+  //   isBalanceLoaded,
+  //   isStakingRewardsDetailsLoading,
+  //   isAvailableRewardsForEpochLoading,
+  //   selectedStakingProgramId,
+  //   isMainOlasBalanceLoading,
+  // });
 
   return { isMainOlasBalanceLoading, mainOlasBalance };
 };

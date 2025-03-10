@@ -29,7 +29,6 @@ import {
 
 export const BalanceContext = createContext<{
   isLoaded: boolean;
-  setIsLoaded: Dispatch<SetStateAction<boolean>>;
   updateBalances: () => Promise<void>;
   setIsPaused: Dispatch<SetStateAction<boolean>>;
   walletBalances?: WalletBalance[];
@@ -48,7 +47,6 @@ export const BalanceContext = createContext<{
   isPaused: boolean;
 }>({
   isLoaded: false,
-  setIsLoaded: () => {},
   updateBalances: async () => {},
   isPaused: false,
   setIsPaused: () => {},
@@ -155,7 +153,6 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     <BalanceContext.Provider
       value={{
         isLoaded,
-        setIsLoaded,
         walletBalances,
         stakedBalances,
         updateBalances,
