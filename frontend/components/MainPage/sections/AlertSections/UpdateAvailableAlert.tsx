@@ -5,6 +5,7 @@ import semver from 'semver';
 
 import { CustomAlert } from '@/components/Alert';
 import { ArrowUpRightSvg } from '@/components/custom-icons/ArrowUpRight';
+import { ONE_MINUTE_INTERVAL } from '@/constants/intervals';
 import { DOWNLOAD_URL, GITHUB_API_LATEST_RELEASE } from '@/constants/urls';
 import { useElectronApi } from '@/hooks/useElectronApi';
 
@@ -28,6 +29,7 @@ export const UpdateAvailableAlert = () => {
 
       const appVersion = await getAppVersion();
       if (!appVersion) return false;
+
       const response = await fetch(GITHUB_API_LATEST_RELEASE);
       if (!response.ok) return false;
 
@@ -47,7 +49,7 @@ export const UpdateAvailableAlert = () => {
 
       return comparison === SemverComparisonResult.OUTDATED;
     },
-    refetchInterval: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: ONE_MINUTE_INTERVAL * 5, // 5 minutes
   });
 
   if (!isFetched || !isPearlOutdated) {

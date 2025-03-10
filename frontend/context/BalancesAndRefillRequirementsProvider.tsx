@@ -54,8 +54,11 @@ export const BalancesAndRefillRequirementsProvider = ({
     queryKey: REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(
       configId as string,
     ),
-    queryFn: () =>
-      BalanceService.getBalancesAndRefillRequirements(configId as string),
+    queryFn: ({ signal }) =>
+      BalanceService.getBalancesAndRefillRequirements({
+        serviceConfigId: configId!,
+        signal,
+      }),
     enabled: !!configId && isUserLoggedIn && isOnline,
     refetchInterval,
   });

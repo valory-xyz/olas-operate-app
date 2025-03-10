@@ -35,8 +35,10 @@ export const useService = (serviceConfigId?: string) => {
   const { services, isFetched: isLoaded, selectedService } = useServices();
 
   const service = useMemo<Optional<Service>>(() => {
-    if (serviceConfigId === selectedService?.service_config_id)
+    if (serviceConfigId === selectedService?.service_config_id) {
       return selectedService;
+    }
+
     return services?.find(
       (service) => service.service_config_id === serviceConfigId,
     );
@@ -104,6 +106,10 @@ export const useService = (serviceConfigId?: string) => {
     return addressesByChainId;
   }, [service]);
 
+  /**
+   * Flat list of all addresses associated with the service.
+   * ie, all agentSafe and agentEoas
+   */
   const flatAddresses = useMemo(() => {
     if (!service) return [];
     if (!addresses) return [];
@@ -116,24 +122,22 @@ export const useService = (serviceConfigId?: string) => {
   }, [addresses, service]);
 
   const serviceSafes = useMemo(() => {
-    return (
-      serviceWallets?.filter(
-        (wallet): wallet is AgentSafe =>
-          flatAddresses.includes(wallet.address) &&
-          wallet.owner === WalletOwnerType.Agent &&
-          wallet.type === WalletType.Safe,
-      ) ?? []
+    if (!serviceWallets) return [];
+    return serviceWallets.filter(
+      (wallet): wallet is AgentSafe =>
+        flatAddresses.includes(wallet.address) &&
+        wallet.owner === WalletOwnerType.Agent &&
+        wallet.type === WalletType.Safe,
     );
   }, [flatAddresses, serviceWallets]);
 
   const serviceEoa = useMemo(() => {
-    return (
-      serviceWallets?.find(
-        (wallet): wallet is AgentEoa =>
-          flatAddresses.includes(wallet.address) &&
-          wallet.owner === WalletOwnerType.Agent &&
-          wallet.type === WalletType.EOA,
-      ) ?? null
+    if (!serviceWallets) return null;
+    return serviceWallets.find(
+      (wallet): wallet is AgentEoa =>
+        flatAddresses.includes(wallet.address) &&
+        wallet.owner === WalletOwnerType.Agent &&
+        wallet.type === WalletType.EOA,
     );
   }, [flatAddresses, serviceWallets]);
 

@@ -71,7 +71,7 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
     isFetched,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.WALLETS_KEY,
-    queryFn: WalletService.getWallets,
+    queryFn: ({ signal }) => WalletService.getWallets(signal),
     refetchInterval: isOnline && !paused ? FIVE_SECONDS_INTERVAL : false,
     select: (data) =>
       transformMiddlewareWalletResponse(data).filter(
