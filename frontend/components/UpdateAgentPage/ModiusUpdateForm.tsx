@@ -57,6 +57,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
         label={<TenderlyAccessTokenLabel />}
         name={['env_variables', 'TENDERLY_ACCESS_KEY']}
         {...commonFieldProps}
+        normalize={(value) => value?.trim()}
       >
         <Input.Password />
       </Form.Item>
@@ -65,6 +66,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
         label={<TenderlyAccountSlugLabel />}
         name={['env_variables', 'TENDERLY_ACCOUNT_SLUG']}
         {...commonFieldProps}
+        normalize={(value) => value?.trim()}
       >
         <Input />
       </Form.Item>
@@ -73,6 +75,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
         label={<TenderlyProjectSlugLabel />}
         name={['env_variables', 'TENDERLY_PROJECT_SLUG']}
         {...commonFieldProps}
+        normalize={(value) => value?.trim()}
       >
         <Input />
       </Form.Item>
@@ -83,6 +86,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
         hasFeedback
         rules={[...requiredRules, { validator: validateApiKey }]}
         validateFirst
+        normalize={(value) => value?.trim()}
       >
         <Input.Password />
       </Form.Item>
