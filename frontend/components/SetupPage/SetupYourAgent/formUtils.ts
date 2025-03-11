@@ -13,12 +13,10 @@ export const emailValidateMessages = {
 };
 
 /**
- * antd validator for API key.
+ * form validator for API key.
  */
 export const validateApiKey = (_: unknown, value?: string): Promise<void> => {
-  if (!value) {
-    return Promise.reject('API Key is required');
-  }
+  if (!value) return Promise.resolve(); // If empty, let 'required' rule handle it
 
   const trimmedValue = value.trim();
 
@@ -31,6 +29,29 @@ export const validateApiKey = (_: unknown, value?: string): Promise<void> => {
   if (!/^[a-zA-Z0-9-_]+$/.test(trimmedValue)) {
     return Promise.reject(
       'Invalid API Key format. Only letters, numbers, hyphens, and underscores are allowed.',
+    );
+  }
+
+  return Promise.resolve();
+};
+
+/**
+ * form validator for slug.
+ */
+export const validateSlug = (_: unknown, value?: string): Promise<void> => {
+  if (!value) return Promise.resolve(); // If empty, let 'required' rule handle it
+
+  if (/\s/.test(value)) {
+    return Promise.reject('Slugs cannot contain spaces.');
+  }
+
+  if (/^https?:\/\//.test(value)) {
+    return Promise.reject('Please enter only the slug, not the full URL.');
+  }
+
+  if (!/^[a-z0-9-_]+$/.test(value)) {
+    return Promise.reject(
+      'Invalid slug: Use only lowercase letters, numbers, hyphens, and underscores.',
     );
   }
 
