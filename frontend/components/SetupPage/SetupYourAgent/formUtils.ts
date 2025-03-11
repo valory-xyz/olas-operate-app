@@ -16,7 +16,7 @@ export const modiusAgentFieldProps: FormItemProps = {
 export const emailValidateMessages = {
   required: 'Field is required',
   types: { email: 'Enter a valid email' },
-};
+} as const;
 
 /**
  * form validator for API key.
@@ -49,7 +49,7 @@ export const validateSlug = (_: unknown, value?: string): Promise<void> => {
     return Promise.reject('Slugs cannot contain spaces.');
   }
 
-  // If the value is a URL
+  // URL should not be allowed
   if (/^https?:\/\//.test(value)) {
     return Promise.reject('Please enter only the slug, not the full URL.');
   }
@@ -57,7 +57,7 @@ export const validateSlug = (_: unknown, value?: string): Promise<void> => {
   // Slug should only contain lowercase letters, numbers, hyphens, and underscores
   if (!/^[a-z0-9-_]+$/.test(value)) {
     return Promise.reject(
-      'Invalid slug: Use only lowercase letters, numbers, hyphens, and underscores.',
+      'Invalid slug format. Only lowercase letters, numbers, hyphens, and underscores are allowed.',
     );
   }
 
