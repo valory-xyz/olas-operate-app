@@ -5,7 +5,13 @@ export const validateMessages = { required: 'Field is required' };
 export const commonFieldProps: FormItemProps = {
   rules: requiredRules,
   hasFeedback: true,
-};
+} as const;
+
+export const modiusAgentFieldProps: FormItemProps = {
+  ...commonFieldProps,
+  validateFirst: true,
+  normalize: (value: string) => value.trim(),
+} as const;
 
 export const emailValidateMessages = {
   required: 'Field is required',
@@ -18,15 +24,13 @@ export const emailValidateMessages = {
 export const validateApiKey = (_: unknown, value?: string): Promise<void> => {
   if (!value) return Promise.resolve(); // If empty, let 'required' rule handle it
 
-  const trimmedValue = value.trim();
-
   // API key should not contain spaces
-  if (/\s/.test(trimmedValue)) {
+  if (/\s/.test(value)) {
     return Promise.reject('API Key should not contain spaces.');
   }
 
   // API key should only contain letters, numbers, hyphens, and underscores
-  if (!/^[a-zA-Z0-9-_]+$/.test(trimmedValue)) {
+  if (!/^[a-zA-Z0-9-_]+$/.test(value)) {
     return Promise.reject(
       'Invalid API Key format. Only letters, numbers, hyphens, and underscores are allowed.',
     );
@@ -45,10 +49,12 @@ export const validateSlug = (_: unknown, value?: string): Promise<void> => {
     return Promise.reject('Slugs cannot contain spaces.');
   }
 
+  // If the value is a URL
   if (/^https?:\/\//.test(value)) {
     return Promise.reject('Please enter only the slug, not the full URL.');
   }
 
+  // Slug should only contain lowercase letters, numbers, hyphens, and underscores
   if (!/^[a-z0-9-_]+$/.test(value)) {
     return Promise.reject(
       'Invalid slug: Use only lowercase letters, numbers, hyphens, and underscores.',

@@ -10,6 +10,7 @@ import { Nullable } from '@/types/Util';
 // TODO: move the following hook/components to a shared place
 // once Modius work is merged
 import {
+  modiusAgentFieldProps,
   requiredRules,
   validateApiKey,
   validateMessages,
@@ -56,10 +57,8 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<TenderlyAccessTokenLabel />}
         name={['env_variables', 'TENDERLY_ACCESS_KEY']}
-        hasFeedback
+        {...modiusAgentFieldProps}
         rules={[...requiredRules, { validator: validateApiKey }]}
-        validateFirst
-        normalize={(value) => value?.trim()}
       >
         <Input.Password />
       </Form.Item>
@@ -67,10 +66,8 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<TenderlyAccountSlugLabel />}
         name={['env_variables', 'TENDERLY_ACCOUNT_SLUG']}
-        hasFeedback
+        {...modiusAgentFieldProps}
         rules={[...requiredRules, { validator: validateSlug }]}
-        validateFirst
-        normalize={(value) => value?.trim()}
       >
         <Input />
       </Form.Item>
@@ -78,10 +75,8 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<TenderlyProjectSlugLabel />}
         name={['env_variables', 'TENDERLY_PROJECT_SLUG']}
-        hasFeedback
+        {...modiusAgentFieldProps}
         rules={[...requiredRules, { validator: validateSlug }]}
-        validateFirst
-        normalize={(value) => value?.trim()}
       >
         <Input />
       </Form.Item>
@@ -89,10 +84,8 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<CoinGeckoApiKeyLabel />}
         name={['env_variables', 'COINGECKO_API_KEY']}
-        hasFeedback
+        {...modiusAgentFieldProps}
         rules={[...requiredRules, { validator: validateApiKey }]}
-        validateFirst
-        normalize={(value) => value?.trim()}
       >
         <Input.Password />
       </Form.Item>

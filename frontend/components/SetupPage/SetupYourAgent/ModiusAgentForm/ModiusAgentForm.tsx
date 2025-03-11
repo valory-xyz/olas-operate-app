@@ -9,10 +9,11 @@ import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import {
-  commonFieldProps,
+  modiusAgentFieldProps,
   requiredRules,
   validateApiKey,
   validateMessages,
+  validateSlug,
 } from '../formUtils';
 import { onDummyServiceCreation } from '../utils';
 import {
@@ -132,7 +133,8 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="tenderlyAccessToken"
           label={<TenderlyAccessTokenLabel />}
-          {...commonFieldProps}
+          {...modiusAgentFieldProps}
+          rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input />
         </Form.Item>
@@ -140,7 +142,8 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="tenderlyAccountSlug"
           label={<TenderlyAccountSlugLabel />}
-          {...commonFieldProps}
+          {...modiusAgentFieldProps}
+          rules={[...requiredRules, { validator: validateSlug }]}
         >
           <Input />
         </Form.Item>
@@ -148,7 +151,8 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="tenderlyProjectSlug"
           label={<TenderlyProjectSlugLabel />}
-          {...commonFieldProps}
+          {...modiusAgentFieldProps}
+          rules={[...requiredRules, { validator: validateSlug }]}
         >
           <Input />
         </Form.Item>
@@ -156,7 +160,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="CoinGeckoApiKey"
           label={<CoinGeckoApiKeyLabel />}
-          hasFeedback
+          {...modiusAgentFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input />
