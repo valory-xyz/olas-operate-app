@@ -8,7 +8,12 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
-import { commonFieldProps, validateMessages } from '../formUtils';
+import {
+  commonFieldProps,
+  requiredRules,
+  validateApiKey,
+  validateMessages,
+} from '../formUtils';
 import { onDummyServiceCreation } from '../utils';
 import {
   CoinGeckoApiKeyLabel,
@@ -151,7 +156,8 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="CoinGeckoApiKey"
           label={<CoinGeckoApiKeyLabel />}
-          {...commonFieldProps}
+          hasFeedback
+          rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input />
         </Form.Item>

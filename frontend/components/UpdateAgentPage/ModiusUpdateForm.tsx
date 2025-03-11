@@ -11,6 +11,8 @@ import { Nullable } from '@/types/Util';
 // once Modius work is merged
 import {
   commonFieldProps,
+  requiredRules,
+  validateApiKey,
   validateMessages,
 } from '../SetupPage/SetupYourAgent/formUtils';
 import {
@@ -78,7 +80,9 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<CoinGeckoApiKeyLabel />}
         name={['env_variables', 'COINGECKO_API_KEY']}
-        {...commonFieldProps}
+        hasFeedback
+        rules={[...requiredRules, { validator: validateApiKey }]}
+        validateFirst
       >
         <Input.Password />
       </Form.Item>
