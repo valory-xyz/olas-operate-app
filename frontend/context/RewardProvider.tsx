@@ -112,13 +112,13 @@ const useAvailableRewardsForEpoch = () => {
     selectedAgentConfig,
   } = useServices();
   const serviceConfigId =
-    isLoaded && selectedService ? selectedService?.service_config_id : '';
+    isLoaded && selectedService ? selectedService?.service_config_id : null;
   const currentChainId = selectedAgentConfig.evmHomeChainId;
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.AVAILABLE_REWARDS_FOR_EPOCH_KEY(
       currentChainId,
-      serviceConfigId,
+      serviceConfigId!,
       selectedStakingProgramId!,
       currentChainId,
     ),
@@ -128,7 +128,7 @@ const useAvailableRewardsForEpoch = () => {
         currentChainId,
       );
     },
-    enabled: !!isOnline && !!selectedStakingProgramId,
+    enabled: !!isOnline && !!selectedStakingProgramId && !!serviceConfigId,
     refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });
