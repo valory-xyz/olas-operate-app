@@ -10,8 +10,11 @@ import { Nullable } from '@/types/Util';
 // TODO: move the following hook/components to a shared place
 // once Modius work is merged
 import {
-  commonFieldProps,
+  modiusAgentFieldProps,
+  requiredRules,
+  validateApiKey,
   validateMessages,
+  validateSlug,
 } from '../SetupPage/SetupYourAgent/formUtils';
 import {
   CoinGeckoApiKeyLabel,
@@ -54,7 +57,8 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<TenderlyAccessTokenLabel />}
         name={['env_variables', 'TENDERLY_ACCESS_KEY']}
-        {...commonFieldProps}
+        {...modiusAgentFieldProps}
+        rules={[...requiredRules, { validator: validateApiKey }]}
       >
         <Input.Password />
       </Form.Item>
@@ -62,7 +66,8 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<TenderlyAccountSlugLabel />}
         name={['env_variables', 'TENDERLY_ACCOUNT_SLUG']}
-        {...commonFieldProps}
+        {...modiusAgentFieldProps}
+        rules={[...requiredRules, { validator: validateSlug }]}
       >
         <Input />
       </Form.Item>
@@ -70,7 +75,8 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<TenderlyProjectSlugLabel />}
         name={['env_variables', 'TENDERLY_PROJECT_SLUG']}
-        {...commonFieldProps}
+        {...modiusAgentFieldProps}
+        rules={[...requiredRules, { validator: validateSlug }]}
       >
         <Input />
       </Form.Item>
@@ -78,7 +84,8 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<CoinGeckoApiKeyLabel />}
         name={['env_variables', 'COINGECKO_API_KEY']}
-        {...commonFieldProps}
+        {...modiusAgentFieldProps}
+        rules={[...requiredRules, { validator: validateApiKey }]}
       >
         <Input.Password />
       </Form.Item>
