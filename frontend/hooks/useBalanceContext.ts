@@ -51,20 +51,27 @@ const formatRequirement = (requirement: number | undefined) => {
 export const useServiceBalances = (serviceConfigId: string | undefined) => {
   const { selectedAgentConfig } = useServices();
 
-  const { flatAddresses, serviceSafes, serviceEoa } =
+  const { allAgentAddresses, serviceSafes, serviceEoa } =
     useService(serviceConfigId);
   const { walletBalances, stakedBalances } = useBalanceContext();
 
   /**
    * Staked balances, only relevant to safes
    */
-  const serviceStakedBalances = useMemo(
-    () =>
-      stakedBalances?.filter((balance) =>
-        flatAddresses.includes(balance.walletAddress),
-      ),
-    [flatAddresses, stakedBalances],
-  );
+  const serviceStakedBalances = useMemo(() => {
+    if (!stakedBalances) return;
+    return stakedBalances.filter(
+      ({ walletAddress, evmChainId }) =>
+        allAgentAddresses.includes(walletAddress) &&
+        evmChainId === selectedAgentConfig.evmHomeChainId,
+    );
+  }, [allAgentAddresses, stakedBalances, selectedAgentConfig.evmHomeChainId]);
+
+  console.log({
+    stakedBalances,
+    allAgentAddresses,
+    id: selectedAgentConfig.evmHomeChainId,
+  });
 
   /**
    * Cross-chain unstaked balances in service safes
