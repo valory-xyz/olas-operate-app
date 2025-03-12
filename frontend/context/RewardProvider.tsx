@@ -120,7 +120,6 @@ const useAvailableRewardsForEpoch = () => {
       currentChainId,
       serviceConfigId!,
       selectedStakingProgramId!,
-      currentChainId,
     ),
     queryFn: async () => {
       return await selectedAgentConfig.serviceApi.getAvailableRewardsForEpoch(
