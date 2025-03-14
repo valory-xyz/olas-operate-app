@@ -64,7 +64,6 @@ export const getCrossChainWalletBalances = async (
 
         return isOnActiveChain;
       });
-      // console.log('tokensOnChain', tokensOnChain);
 
       for (const {
         tokenType,
