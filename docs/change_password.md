@@ -18,19 +18,19 @@ Steps to change the password:
    - **macOS**: Press `Cmd` + `Space`, type `Terminal`, and press **Enter**.  
    - **Linux**: Press `Ctrl` + `Alt` + `T`.  
 4. In the terminal window, type the command to change the password and then press **Enter**:
-   1. (Preferred) If you know the old password, use:
+   - (Preferred) If you know the old password, use:
 
-        ```bash
-        curl -X PUT "http://localhost:8765/api/account" -H "Content-Type: application/json" -d "{\"old_password\": \"YOUR_OLD_PASSWORD\", \"new_password\": \"YOUR_NEW_PASSWORD\"}"
-        ```
+       ```bash
+       curl -X PUT "http://localhost:8765/api/account" -H "Content-Type: application/json" -d "{\"old_password\": \"YOUR_OLD_PASSWORD\", \"new_password\": \"YOUR_NEW_PASSWORD\"}"
+       ```
 
-        Replace `YOUR_OLD_PASSWORD` with your current password and `YOUR_NEW_PASSWORD` with your desired password.
+       Replace `YOUR_OLD_PASSWORD` with your current password and `YOUR_NEW_PASSWORD` with your desired password.
 
-   2. If you know the BIP-39 backup seed phrase:
+   - If you know the BIP-39 backup seed phrase:
 
-        ```bash
-        curl -X PUT "http://localhost:8765/api/account" -H "Content-Type: application/json" -d "{\"mnemonic\": \"YOUR_SEED_PHRASE\", \"new_password\": \"YOUR_NEW_PASSWORD\"}"
-        ```
+       ```bash
+       curl -X PUT "http://localhost:8765/api/account" -H "Content-Type: application/json" -d "{\"mnemonic\": \"YOUR_SEED_PHRASE\", \"new_password\": \"YOUR_NEW_PASSWORD\"}"
+       ```
 
-        Replace `YOUR_SEED_PHRASE` with your **lowercase, space-separated** BIP-39 seed phrase, and `YOUR_NEW_PASSWORD` with your desired password.
+       Replace `YOUR_SEED_PHRASE` with your **lowercase, space-separated** BIP-39 seed phrase, and `YOUR_NEW_PASSWORD` with your desired password.
 5. Close and restart Pearl.
