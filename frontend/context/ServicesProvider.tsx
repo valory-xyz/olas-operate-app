@@ -132,8 +132,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     );
   }, [selectedServiceConfigId, services]);
 
-  console.log({ selectedServiceConfigId, selectedService });
-
   const selectedServiceWithStatus = useMemo<Service | undefined>(() => {
     if (!selectedService) return;
     return {

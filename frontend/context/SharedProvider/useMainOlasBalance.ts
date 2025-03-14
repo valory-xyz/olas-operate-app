@@ -73,12 +73,6 @@ export const useMainOlasBalance = () => {
       0,
     );
 
-    // console.log({
-    //   masterWalletBalances,
-    //   serviceWalletBalances,
-    //   serviceStakedBalances,
-    // });
-
     const totalBalance = sum([
       masterWalletOlasBalance,
       serviceWalletOlasBalance,
@@ -104,15 +98,6 @@ export const useMainOlasBalance = () => {
     isAvailableRewardsForEpochLoading,
     !selectedStakingProgramId, // staking program is required to calculate staking rewards
   ].some(Boolean);
-
-  // console.log({
-  //   isMainOlasBalanceLoading,
-  //   isServicesLoading,
-  //   isBalanceLoading: !isBalanceLoaded,
-  //   isStakingRewardsDetailsLoading,
-  //   isAvailableRewardsForEpochLoading,
-  //   isStakingProgramLoading: !selectedStakingProgramId,
-  // });
 
   return { isMainOlasBalanceLoading, mainOlasBalance };
 };

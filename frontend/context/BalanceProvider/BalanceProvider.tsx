@@ -103,13 +103,11 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
   const { masterWallets } = useContext(MasterWalletContext);
   const { services, serviceWallets, selectedAgentConfig } =
     useContext(ServicesContext);
-
   const [isPaused, setIsPaused] = useState(false);
 
   const refetchInterval = useMemo(() => (isPaused ? false : 15000), [isPaused]);
 
-  // Use React Query to fetch balances
-  const { isLoading, data, refetch, ...rest } = useQuery({
+  const { isLoading, data, refetch } = useQuery({
     queryKey: [
       'balances',
       isOnline,
@@ -127,20 +125,8 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     refetchInterval,
   });
 
-  // const isEnabled = isOnline && !!masterWallets?.length && !!services;
-
   const walletBalances = useMemo(() => data?.walletBalances ?? [], [data]);
   const stakedBalances = useMemo(() => data?.stakedBalances ?? [], [data]);
-
-  // console.log({
-  //   isLoading,
-  //   data,
-  //   rest,
-  //   masterWallets,
-  //   services,
-  //   isEnabled,
-  //   stakedBalances,
-  // });
 
   const totalEthBalance = useMemo(
     () =>

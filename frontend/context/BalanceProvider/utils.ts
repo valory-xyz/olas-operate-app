@@ -195,7 +195,7 @@ export const getCrossChainStakedBalances = async (
   registryInfos.forEach((res, idx) => {
     if (res.status !== 'fulfilled') {
       const id = services[idx].service_config_id;
-      console.error('Error fetching registry info for', id);
+      console.error('Error fetching registry details for', id);
       return;
     }
 
