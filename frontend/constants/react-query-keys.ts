@@ -51,14 +51,12 @@ export const REACT_QUERY_KEYS = {
     currentChainId: number,
     serviceConfigId: string,
     stakingProgramId: string,
-    chainId: number,
   ) =>
     [
       'availableRewardsForEpoch',
       currentChainId,
       serviceConfigId,
       stakingProgramId,
-      chainId,
     ] as const,
   REWARDS_HISTORY_KEY: (chainId: number, serviceId: number) =>
     ['rewardsHistory', chainId, serviceId] as const,

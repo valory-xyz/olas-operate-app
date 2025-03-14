@@ -93,11 +93,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeichcqlatpqn4ifklszf2odsllna76nm4du6irva3favj5f2wzsaju',
+  hash: 'bafybeickejdjgbq3ofib4k26qsff6vhc7sfktq73yyg7dyj2var4qk5bsa',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.4.0-alpha7',
+  service_version: 'v0.4.1-alpha1',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -253,7 +253,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeiaogccz4nwjzabrqsx5hvskdkmviwoq5z2pwmopzczyls6m73cume',
+  hash: 'bafybeibhev6otq7lm7lwsq6p62edjzgbyk7r67u3fzr4syqoq4nah2p6t4',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
