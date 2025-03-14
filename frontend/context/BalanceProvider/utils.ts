@@ -9,7 +9,13 @@ import { providers } from '@/config/providers';
 import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { EvmChainId } from '@/enums/Chain';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
-import { MasterSafe, Wallet, WalletType } from '@/enums/Wallet';
+import {
+  AgentWallet,
+  MasterSafe,
+  MasterWallet,
+  Wallet,
+  WalletType,
+} from '@/enums/Wallet';
 import { StakedAgentService } from '@/service/agents/shared-services/StakedAgentService';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
@@ -150,8 +156,6 @@ export const getCrossChainWalletBalances = async (
 /**
  * Get the staked balances for all services.
  * ie, the bond and deposit balances for all services on all chains.
- *
- * @example { serviceId: '1', evmChainId: 100, olasBondBalance: 20, olasDepositBalance: 20, walletAddress: '0x123' }
  */
 export const getCrossChainStakedBalances = async (
   services: MiddlewareServiceResponse[],
@@ -215,4 +219,43 @@ export const getCrossChainStakedBalances = async (
   });
 
   return result;
+};
+
+/**
+ * Fetches wallet balances and staked balances.
+ */
+export const getCrossChainBalances = async ({
+  services,
+  masterWallets,
+  serviceWallets,
+}: {
+  services: MiddlewareServiceResponse[];
+  masterWallets: MasterWallet[];
+  serviceWallets?: AgentWallet[];
+}) => {
+  const masterSafes = masterWallets.filter(
+    (masterWallet): masterWallet is MasterSafe =>
+      masterWallet.type === WalletType.Safe,
+  );
+
+  const [walletBalancesResult, stakedBalancesResult] = await Promise.allSettled(
+    [
+      getCrossChainWalletBalances([
+        ...masterWallets,
+        ...(serviceWallets || []),
+      ]),
+      getCrossChainStakedBalances(services, masterSafes),
+    ],
+  );
+
+  return {
+    walletBalances:
+      walletBalancesResult.status === 'fulfilled'
+        ? walletBalancesResult.value
+        : [],
+    stakedBalances:
+      stakedBalancesResult.status === 'fulfilled'
+        ? stakedBalancesResult.value
+        : [],
+  };
 };

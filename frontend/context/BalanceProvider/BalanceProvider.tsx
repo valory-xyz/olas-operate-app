@@ -11,64 +11,16 @@ import {
   useState,
 } from 'react';
 
-import { MiddlewareServiceResponse } from '@/client';
+import { FIFTEEN_SECONDS_INTERVAL } from '@/constants/intervals';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
-import {
-  AgentWallet,
-  MasterSafe,
-  MasterWallet,
-  WalletType,
-} from '@/enums/Wallet';
 import { Address } from '@/types/Address';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
 
 import { MasterWalletContext } from '../MasterWalletProvider';
 import { OnlineStatusContext } from '../OnlineStatusProvider';
 import { ServicesContext } from '../ServicesProvider';
-import {
-  getCrossChainStakedBalances,
-  getCrossChainWalletBalances,
-} from './utils';
-
-/**
- * Fetches wallet balances and staked balances.
- */
-const fetchBalances = async ({
-  services,
-  masterWallets,
-  serviceWallets,
-}: {
-  services: MiddlewareServiceResponse[];
-  masterWallets: MasterWallet[];
-  serviceWallets?: AgentWallet[];
-}) => {
-  const masterSafes = masterWallets.filter(
-    (masterWallet): masterWallet is MasterSafe =>
-      masterWallet.type === WalletType.Safe,
-  );
-
-  const [walletBalancesResult, stakedBalancesResult] = await Promise.allSettled(
-    [
-      getCrossChainWalletBalances([
-        ...masterWallets,
-        ...(serviceWallets || []),
-      ]),
-      getCrossChainStakedBalances(services, masterSafes),
-    ],
-  );
-
-  return {
-    walletBalances:
-      walletBalancesResult.status === 'fulfilled'
-        ? walletBalancesResult.value
-        : [],
-    stakedBalances:
-      stakedBalancesResult.status === 'fulfilled'
-        ? stakedBalancesResult.value
-        : [],
-  };
-};
+import { getCrossChainBalances } from './utils';
 
 export const BalanceContext = createContext<{
   isLoading: boolean;
@@ -105,7 +57,10 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     useContext(ServicesContext);
   const [isPaused, setIsPaused] = useState(false);
 
-  const refetchInterval = useMemo(() => (isPaused ? false : 15000), [isPaused]);
+  const refetchInterval = useMemo(
+    () => (isPaused ? false : FIFTEEN_SECONDS_INTERVAL),
+    [isPaused],
+  );
 
   const { isLoading, data, refetch } = useQuery({
     queryKey: [
@@ -119,7 +74,12 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
       if (!isOnline || !masterWallets?.length || !services) {
         throw new Error('Invalid state, should not be enabled');
       }
-      return fetchBalances({ services, masterWallets, serviceWallets });
+
+      return getCrossChainBalances({
+        services,
+        masterWallets,
+        serviceWallets,
+      });
     },
     enabled: isOnline && !!masterWallets?.length && !!services,
     refetchInterval,
