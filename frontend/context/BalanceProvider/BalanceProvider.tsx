@@ -72,7 +72,7 @@ const fetchBalances = async ({
 
 export const BalanceContext = createContext<{
   isLoading: boolean;
-  /** @deprecated use isLoaded instead */
+  /** @deprecated use isLoading instead */
   isLoaded: boolean;
   updateBalances: () => Promise<void>;
   setIsPaused: Dispatch<SetStateAction<boolean>>;
