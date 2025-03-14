@@ -1,4 +1,4 @@
-# Change password
+# Change Pearl password
 
 You can change the Pearl login password using either the old password or the BIP-39 backup seed phrase.
 
