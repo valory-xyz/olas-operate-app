@@ -1,4 +1,5 @@
-import { isEmpty, isNil, sum } from 'lodash';
+import { useQuery } from '@tanstack/react-query';
+import { sum } from 'lodash';
 import {
   createContext,
   Dispatch,
@@ -6,28 +7,24 @@ import {
   SetStateAction,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from 'react';
-import { useInterval } from 'usehooks-ts';
 
-import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
+import { FIFTEEN_SECONDS_INTERVAL } from '@/constants/intervals';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
-import { MasterSafe, WalletType } from '@/enums/Wallet';
 import { Address } from '@/types/Address';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
 
 import { MasterWalletContext } from '../MasterWalletProvider';
 import { OnlineStatusContext } from '../OnlineStatusProvider';
 import { ServicesContext } from '../ServicesProvider';
-import {
-  getCrossChainStakedBalances,
-  getCrossChainWalletBalances,
-} from './utils';
+import { getCrossChainBalances } from './utils';
 
 export const BalanceContext = createContext<{
+  isLoading: boolean;
+  /** @deprecated use isLoading instead */
   isLoaded: boolean;
   updateBalances: () => Promise<void>;
   setIsPaused: Dispatch<SetStateAction<boolean>>;
@@ -46,6 +43,7 @@ export const BalanceContext = createContext<{
   isLowBalance?: boolean;
   isPaused: boolean;
 }>({
+  isLoading: false,
   isLoaded: false,
   updateBalances: async () => {},
   isPaused: false,
@@ -57,110 +55,89 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
   const { masterWallets } = useContext(MasterWalletContext);
   const { services, serviceWallets, selectedAgentConfig } =
     useContext(ServicesContext);
+  const [isPaused, setIsPaused] = useState(false);
 
-  const [isLoaded, setIsLoaded] = useState<boolean>(false);
-  const [isPaused, setIsPaused] = useState<boolean>(false);
-  const [isUpdatingBalances, setIsUpdatingBalances] = useState<boolean>(false);
+  const refetchInterval = useMemo(
+    () => (isPaused ? false : FIFTEEN_SECONDS_INTERVAL),
+    [isPaused],
+  );
 
-  const [walletBalances, setWalletBalances] = useState<WalletBalance[]>([]);
-  const [stakedBalances, setStakedBalances] =
-    useState<CrossChainStakedBalances>([]);
+  const { isLoading, data, refetch } = useQuery({
+    queryKey: [
+      'balances',
+      isOnline,
+      masterWallets?.map((w) => w.address),
+      services?.map((s) => s.service_config_id),
+      serviceWallets?.map((sw) => sw.address),
+    ],
+    queryFn: async () => {
+      if (!isOnline || !masterWallets?.length || !services) {
+        throw new Error('Invalid state, should not be enabled');
+      }
 
-  const totalEthBalance = useMemo(() => {
-    if (!isLoaded) return 0;
-    return walletBalances.reduce(
-      (acc, { isNative, balance }) => (isNative ? acc + balance : acc),
-      0,
-    );
-  }, [isLoaded, walletBalances]);
+      return getCrossChainBalances({
+        services,
+        masterWallets,
+        serviceWallets,
+      });
+    },
+    enabled: isOnline && !!masterWallets?.length && !!services,
+    refetchInterval,
+  });
 
-  const totalOlasBalance = useMemo(() => {
-    if (!isLoaded) return 0;
-    return walletBalances.reduce(
-      (acc, { symbol, balance }) =>
-        symbol === TokenSymbol.OLAS ? acc + balance : acc,
-      0,
-    );
-  }, [isLoaded, walletBalances]);
+  const walletBalances = useMemo(() => data?.walletBalances ?? [], [data]);
+  const stakedBalances = useMemo(() => data?.stakedBalances ?? [], [data]);
 
-  const totalStakedOlasBalance = useMemo(() => {
-    return stakedBalances
-      .filter(
-        ({ evmChainId }) => evmChainId === selectedAgentConfig.evmHomeChainId,
-      )
-      .reduce((acc, balance) => {
-        return sum([acc, balance.olasBondBalance, balance.olasDepositBalance]);
-      }, 0);
-  }, [selectedAgentConfig.evmHomeChainId, stakedBalances]);
+  const totalEthBalance = useMemo(
+    () =>
+      walletBalances.reduce(
+        (acc, { isNative, balance }) => (isNative ? acc + balance : acc),
+        0,
+      ),
+    [walletBalances],
+  );
+
+  const totalOlasBalance = useMemo(
+    () =>
+      walletBalances.reduce(
+        (acc, { symbol, balance }) =>
+          symbol === TokenSymbol.OLAS ? acc + balance : acc,
+        0,
+      ),
+    [walletBalances],
+  );
+
+  const totalStakedOlasBalance = useMemo(
+    () =>
+      stakedBalances
+        .filter(
+          ({ evmChainId }) => evmChainId === selectedAgentConfig.evmHomeChainId,
+        )
+        .reduce(
+          (acc, balance) =>
+            sum([acc, balance.olasBondBalance, balance.olasDepositBalance]),
+          0,
+        ),
+    [selectedAgentConfig.evmHomeChainId, stakedBalances],
+  );
 
   const updateBalances = useCallback(async () => {
-    if (!isOnline) return;
-    if (isNil(masterWallets) || isEmpty(masterWallets)) return;
-    if (isNil(services)) return;
-
-    setIsUpdatingBalances(true);
-
-    try {
-      const masterSafes = masterWallets.filter(
-        (masterWallet) => masterWallet.type === WalletType.Safe,
-      ) as MasterSafe[];
-
-      const [walletBalancesResult, stakedBalancesResult] =
-        await Promise.allSettled([
-          getCrossChainWalletBalances([
-            ...masterWallets,
-            ...(serviceWallets || []),
-          ]),
-          getCrossChainStakedBalances(services, masterSafes),
-        ]);
-
-      // parse the results
-      const walletBalances =
-        walletBalancesResult.status === 'fulfilled'
-          ? walletBalancesResult.value
-          : [];
-
-      const stakedBalances =
-        stakedBalancesResult.status === 'fulfilled'
-          ? stakedBalancesResult.value
-          : [];
-
-      setWalletBalances(walletBalances);
-      setStakedBalances(stakedBalances);
-      setIsLoaded(true);
-    } catch (error) {
-      console.error('Error updating balances:', error);
-    } finally {
-      setIsUpdatingBalances(false);
-    }
-  }, [isOnline, masterWallets, services, serviceWallets]);
-
-  // Update balances once on load, then use interval
-  useEffect(() => {
-    if (!isOnline || isUpdatingBalances || isLoaded) return;
-
-    updateBalances();
-  }, [isOnline, isUpdatingBalances, isLoaded, updateBalances]);
-
-  // Update balances every 5 seconds
-  useInterval(() => {
-    if (!isPaused && isOnline && !isUpdatingBalances) {
-      updateBalances();
-    }
-  }, FIVE_SECONDS_INTERVAL);
+    await refetch();
+  }, [refetch]);
 
   return (
     <BalanceContext.Provider
       value={{
-        isLoaded,
+        isLoading,
+        isLoaded: !!data,
         walletBalances,
         stakedBalances,
-        updateBalances,
-        isPaused,
-        setIsPaused,
         totalOlasBalance,
         totalEthBalance,
         totalStakedOlasBalance,
+        isPaused,
+        setIsPaused,
+        updateBalances,
       }}
     >
       {children}

@@ -110,7 +110,7 @@ export const useService = (serviceConfigId?: string) => {
    * Flat list of all addresses associated with the service.
    * ie, all agentSafe and agentEoas
    */
-  const flatAddresses = useMemo(() => {
+  const allAgentAddresses = useMemo(() => {
     if (!service) return [];
     if (!addresses) return [];
 
@@ -125,21 +125,21 @@ export const useService = (serviceConfigId?: string) => {
     if (!serviceWallets) return [];
     return serviceWallets.filter(
       (wallet): wallet is AgentSafe =>
-        flatAddresses.includes(wallet.address) &&
+        allAgentAddresses.includes(wallet.address) &&
         wallet.owner === WalletOwnerType.Agent &&
         wallet.type === WalletType.Safe,
     );
-  }, [flatAddresses, serviceWallets]);
+  }, [allAgentAddresses, serviceWallets]);
 
   const serviceEoa = useMemo(() => {
     if (!serviceWallets) return null;
     return serviceWallets.find(
       (wallet): wallet is AgentEoa =>
-        flatAddresses.includes(wallet.address) &&
+        allAgentAddresses.includes(wallet.address) &&
         wallet.owner === WalletOwnerType.Agent &&
         wallet.type === WalletType.EOA,
     );
-  }, [flatAddresses, serviceWallets]);
+  }, [allAgentAddresses, serviceWallets]);
 
   /** @note deployment is transitioning from stopped to deployed (and vice versa) */
   const isServiceTransitioning = deploymentStatus
@@ -163,7 +163,7 @@ export const useService = (serviceConfigId?: string) => {
     isServiceBuilding,
     serviceNftTokenId,
     addresses,
-    flatAddresses,
+    allAgentAddresses,
     deploymentStatus,
     serviceSafes,
     serviceEoa,
