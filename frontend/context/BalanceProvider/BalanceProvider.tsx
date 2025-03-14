@@ -12,10 +12,16 @@ import {
 } from 'react';
 import { useInterval } from 'usehooks-ts';
 
+import { MiddlewareServiceResponse } from '@/client';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
-import { MasterSafe, WalletType } from '@/enums/Wallet';
+import {
+  AgentWallet,
+  MasterSafe,
+  MasterWallet,
+  WalletType,
+} from '@/enums/Wallet';
 import { Address } from '@/types/Address';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
 
@@ -26,6 +32,45 @@ import {
   getCrossChainStakedBalances,
   getCrossChainWalletBalances,
 } from './utils';
+
+/**
+ * Fetches wallet balances and staked balances.
+ */
+const fetchBalances = async ({
+  services,
+  masterWallets,
+  serviceWallets,
+}: {
+  services: MiddlewareServiceResponse[];
+  masterWallets: MasterWallet[];
+  serviceWallets?: AgentWallet[];
+}) => {
+  const masterSafes = masterWallets.filter(
+    (masterWallet): masterWallet is MasterSafe =>
+      masterWallet.type === WalletType.Safe,
+  );
+
+  const [walletBalancesResult, stakedBalancesResult] = await Promise.allSettled(
+    [
+      getCrossChainWalletBalances([
+        ...masterWallets,
+        ...(serviceWallets || []),
+      ]),
+      getCrossChainStakedBalances(services, masterSafes),
+    ],
+  );
+
+  return {
+    walletBalances:
+      walletBalancesResult.status === 'fulfilled'
+        ? walletBalancesResult.value
+        : [],
+    stakedBalances:
+      stakedBalancesResult.status === 'fulfilled'
+        ? stakedBalancesResult.value
+        : [],
+  };
+};
 
 export const BalanceContext = createContext<{
   isLoaded: boolean;
@@ -101,29 +146,11 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     setIsUpdatingBalances(true);
 
     try {
-      const masterSafes = masterWallets.filter(
-        (masterWallet) => masterWallet.type === WalletType.Safe,
-      ) as MasterSafe[];
-
-      const [walletBalancesResult, stakedBalancesResult] =
-        await Promise.allSettled([
-          getCrossChainWalletBalances([
-            ...masterWallets,
-            ...(serviceWallets || []),
-          ]),
-          getCrossChainStakedBalances(services, masterSafes),
-        ]);
-
-      // parse the results
-      const walletBalances =
-        walletBalancesResult.status === 'fulfilled'
-          ? walletBalancesResult.value
-          : [];
-
-      const stakedBalances =
-        stakedBalancesResult.status === 'fulfilled'
-          ? stakedBalancesResult.value
-          : [];
+      const { walletBalances, stakedBalances } = await fetchBalances({
+        services,
+        masterWallets,
+        serviceWallets,
+      });
 
       setWalletBalances(walletBalances);
       setStakedBalances(stakedBalances);

@@ -9,11 +9,12 @@ import { providers } from '@/config/providers';
 import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { EvmChainId } from '@/enums/Chain';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
-import { MasterSafe, Wallets, WalletType } from '@/enums/Wallet';
+import { MasterSafe, Wallet, WalletType } from '@/enums/Wallet';
 import { StakedAgentService } from '@/service/agents/shared-services/StakedAgentService';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { formatUnits } from '@/utils/numberFormatters';
+import { isValidServiceId } from '@/utils/service';
 
 /**
  * Corrects the bond and deposit balances based on the service state
@@ -27,10 +28,7 @@ const correctBondDepositByServiceState = ({
   olasBondBalance: number;
   olasDepositBalance: number;
   serviceState: ServiceRegistryL2ServiceState;
-}): {
-  olasBondBalance: number;
-  olasDepositBalance: number;
-} => {
+}) => {
   switch (serviceState) {
     case ServiceRegistryL2ServiceState.NonExistent:
     case ServiceRegistryL2ServiceState.PreRegistration:
@@ -49,7 +47,7 @@ const correctBondDepositByServiceState = ({
 };
 
 export const getCrossChainWalletBalances = async (
-  wallets: Wallets,
+  wallets: Wallet[],
 ): Promise<WalletBalance[]> => {
   const balanceResults: WalletBalance[] = [];
 
@@ -58,14 +56,15 @@ export const getCrossChainWalletBalances = async (
       const providerEvmChainId = +evmChainIdKey as EvmChainId;
       const tokensOnChain = TOKEN_CONFIG[providerEvmChainId];
 
-      const relevantWallets = wallets.filter((wallet) => {
+      const connectedWallets = wallets.filter((wallet) => {
         const isEoa = wallet.type === WalletType.EOA;
         const isSafe = wallet.type === WalletType.Safe;
-        const isOnProviderChain =
+        const isOnActiveChain =
           isEoa || (isSafe && wallet.evmChainId === providerEvmChainId);
 
-        return isOnProviderChain;
+        return isOnActiveChain;
       });
+      // console.log('tokensOnChain', tokensOnChain);
 
       for (const {
         tokenType,
@@ -80,7 +79,7 @@ export const getCrossChainWalletBalances = async (
         if (isNative) {
           // get native balances for all relevant wallets
           const nativeBalancePromises =
-            relevantWallets.map<Promise<BigNumberish> | null>(
+            connectedWallets.map<Promise<BigNumberish> | null>(
               ({ address: walletAddress }) => {
                 if (!isAddress(walletAddress)) return null;
                 return provider.getBalance(getAddress(walletAddress));
@@ -97,7 +96,7 @@ export const getCrossChainWalletBalances = async (
           // add the results to the balance results
           nativeBalances.forEach((balance, index) => {
             if (!isNil(balance)) {
-              const address = relevantWallets[index].address;
+              const address = connectedWallets[index].address;
 
               balanceResults.push({
                 walletAddress: address,
@@ -110,6 +109,7 @@ export const getCrossChainWalletBalances = async (
           });
         }
 
+        // get erc20 balances for all relevant wallets
         if (isErc20 || isWrappedToken) {
           if (!tokenAddress) continue;
 
@@ -118,7 +118,7 @@ export const getCrossChainWalletBalances = async (
             ERC20_BALANCE_OF_STRING_FRAGMENT,
           );
 
-          const relevantWalletsFiltered = relevantWallets.filter((wallet) =>
+          const relevantWalletsFiltered = connectedWallets.filter((wallet) =>
             isAddress(wallet.address),
           );
 
@@ -148,6 +148,12 @@ export const getCrossChainWalletBalances = async (
   return balanceResults;
 };
 
+/**
+ * Get the staked balances for all services.
+ * ie, the bond and deposit balances for all services on all chains.
+ *
+ * @example { serviceId: '1', evmChainId: 100, olasBondBalance: 20, olasDepositBalance: 20, walletAddress: '0x123' }
+ */
 export const getCrossChainStakedBalances = async (
   services: MiddlewareServiceResponse[],
   masterSafeAddresses: MasterSafe[],
@@ -165,7 +171,7 @@ export const getCrossChainStakedBalances = async (
 
     if (
       isNil(serviceNftTokenId) ||
-      serviceNftTokenId <= 0 ||
+      !isValidServiceId(serviceNftTokenId) ||
       isNil(masterSafeAddress) ||
       !isAddress(masterSafeAddress)
     ) {
@@ -186,13 +192,10 @@ export const getCrossChainStakedBalances = async (
   });
 
   const registryInfos = await Promise.allSettled(registryInfoPromises);
-
   registryInfos.forEach((res, idx) => {
     if (res.status !== 'fulfilled') {
-      console.error(
-        'Error fetching registry info for',
-        services[idx].service_config_id,
-      );
+      const id = services[idx].service_config_id;
+      console.error('Error fetching registry info for', id);
       return;
     }
 
