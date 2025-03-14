@@ -60,12 +60,10 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
    */
   const serviceStakedBalances = useMemo(() => {
     if (!stakedBalances) return;
-    return stakedBalances.filter(
-      ({ walletAddress, evmChainId }) =>
-        allAgentAddresses.includes(walletAddress) &&
-        evmChainId === selectedAgentConfig.evmHomeChainId,
+    return stakedBalances.filter(({ walletAddress }) =>
+      allAgentAddresses.includes(walletAddress),
     );
-  }, [allAgentAddresses, stakedBalances, selectedAgentConfig.evmHomeChainId]);
+  }, [allAgentAddresses, stakedBalances]);
 
   /**
    * Cross-chain unstaked balances in service safes
