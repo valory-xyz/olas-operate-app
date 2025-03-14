@@ -15,12 +15,17 @@ import { asEvmChainId } from '@/utils/middlewareHelpers';
 /**
  * Get a single service from the backend
  */
-const getService = async (
-  serviceConfigId: string,
-): Promise<MiddlewareServiceResponse> =>
+const getService = async ({
+  serviceConfigId,
+  signal,
+}: {
+  serviceConfigId: ServiceConfigId;
+  signal: AbortSignal;
+}): Promise<MiddlewareServiceResponse> =>
   fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    signal,
   }).then((response) => {
     if (response.ok) {
       return response.json();
@@ -32,14 +37,15 @@ const getService = async (
  * Gets an array of services from the backend
  * @returns An array of services
  */
-const getServices = async (): Promise<MiddlewareServiceResponse[]> =>
+const getServices = async (
+  signal: AbortSignal,
+): Promise<MiddlewareServiceResponse[]> =>
   fetch(`${BACKEND_URL_V2}/services`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    signal,
   }).then((response) => {
-    if (response.ok) {
-      return response.json();
-    }
+    if (response.ok) return response.json();
     throw new Error('Failed to fetch services');
   });
 
@@ -143,15 +149,23 @@ const stopDeployment = async (
     throw new Error('Failed to stop deployment');
   });
 
-const getDeployment = async (serviceConfigId: string): Promise<Deployment> =>
+/**
+ * To get the deployment of a service
+ */
+const getDeployment = async ({
+  serviceConfigId,
+  signal,
+}: {
+  serviceConfigId: ServiceConfigId;
+  signal: AbortSignal;
+}): Promise<Deployment> =>
   fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/deployment`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    signal,
   }).then((response) => {
-    if (response.ok) {
-      return response.json();
-    }
-    throw new Error('Failed to get deployment');
+    if (response.ok) return response.json();
+    throw new Error('Failed to fetch deployment');
   });
 
 /**

@@ -6,9 +6,7 @@ import { BACKEND_URL } from '@/constants/urls';
  */
 const getAccount = () =>
   fetch(`${BACKEND_URL}/account`, {
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((res) => {
     if (res.ok) return res.json();
     throw new Error('Failed to get account');
@@ -20,9 +18,7 @@ const getAccount = () =>
 const createAccount = (password: string) =>
   fetch(`${BACKEND_URL}/account`, {
     method: 'POST',
-    headers: {
-      ...CONTENT_TYPE_JSON_UTF8,
-    },
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify({ password }),
   }).then((res) => {
     if (res.ok) return res.json();
@@ -52,9 +48,7 @@ const loginAccount = (password: string) =>
   fetch(`${BACKEND_URL}/account/login`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    body: JSON.stringify({
-      password,
-    }),
+    body: JSON.stringify({ password }),
   }).then((res) => {
     if (res.ok) return res.json();
     throw new Error('Failed to login');

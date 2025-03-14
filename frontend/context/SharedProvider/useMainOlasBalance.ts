@@ -15,8 +15,12 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
  * hook to get the main OLAS balance owned by the selected service
  */
 export const useMainOlasBalance = () => {
-  const { isLoaded: isBalanceLoaded } = useBalanceContext();
-  const { selectedService, selectedAgentConfig } = useServices();
+  const { isLoading: isBalanceLoading } = useBalanceContext();
+  const {
+    isLoading: isServicesLoading,
+    selectedService,
+    selectedAgentConfig,
+  } = useServices();
   const { masterWalletBalances } = useMasterBalances();
   const { serviceStakedBalances, serviceWalletBalances } = useServiceBalances(
     selectedService?.service_config_id,
@@ -88,7 +92,8 @@ export const useMainOlasBalance = () => {
   ]);
 
   const isMainOlasBalanceLoading = [
-    !isBalanceLoaded,
+    isServicesLoading, // addresses to filter the staked balances are available only after services are loaded
+    isBalanceLoading,
     isStakingRewardsDetailsLoading,
     isAvailableRewardsForEpochLoading,
     !selectedStakingProgramId, // staking program is required to calculate staking rewards

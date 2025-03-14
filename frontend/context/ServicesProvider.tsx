@@ -100,7 +100,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     refetch,
   } = useQuery<MiddlewareServiceResponse[]>({
     queryKey: REACT_QUERY_KEYS.SERVICES_KEY,
-    queryFn: ServicesService.getServices,
+    queryFn: ({ signal }) => ServicesService.getServices(signal),
     enabled: isOnline && !paused,
     refetchInterval: FIVE_SECONDS_INTERVAL,
   });
@@ -112,8 +112,11 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     queryKey: REACT_QUERY_KEYS.SERVICE_DEPLOYMENT_STATUS_KEY(
       selectedServiceConfigId,
     ),
-    queryFn: () =>
-      ServicesService.getDeployment(selectedServiceConfigId as string),
+    queryFn: ({ signal }) =>
+      ServicesService.getDeployment({
+        serviceConfigId: selectedServiceConfigId!,
+        signal,
+      }),
     enabled: isOnline && !!selectedServiceConfigId,
     refetchInterval: FIVE_SECONDS_INTERVAL,
   });
@@ -213,7 +216,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
    */
   useEffect(() => {
     if (!selectedAgentConfig) return;
-    if (isSelectedServiceDeploymentStatusLoading) return;
     if (isNilOrEmpty(services)) return;
 
     const currentService = services.find(
@@ -226,12 +228,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     }
 
     setSelectedServiceConfigId(currentService.service_config_id);
-  }, [
-    isSelectedServiceDeploymentStatusLoading,
-    selectedServiceConfigId,
-    services,
-    selectedAgentConfig,
-  ]);
+  }, [selectedServiceConfigId, services, selectedAgentConfig]);
 
   return (
     <ServicesContext.Provider

@@ -24,29 +24,19 @@ export type Safe = {
 };
 
 // owned eoas
-export type MasterEoa = Eoa & {
-  owner: WalletOwnerType.Master;
-};
+export type MasterEoa = Eoa & { owner: WalletOwnerType.Master };
 
-export type AgentEoa = Eoa & {
-  owner: WalletOwnerType.Agent;
-};
+export type AgentEoa = Eoa & { owner: WalletOwnerType.Agent };
 
 // owned safes
-export type MasterSafe = Safe & {
-  owner: WalletOwnerType.Master;
-};
+export type MasterSafe = Safe & { owner: WalletOwnerType.Master };
 
-export type AgentSafe = Safe & {
-  owner: WalletOwnerType.Agent;
-};
+export type AgentSafe = Safe & { owner: WalletOwnerType.Agent };
 
 // generic wallets
 export type MasterWallet = MasterEoa | MasterSafe;
 export type AgentWallet = AgentEoa | AgentSafe;
 export type Wallet = MasterWallet | AgentWallet;
 
-// collections of wallets // TODO: probably not needed
-export type MasterWallets = MasterWallet[];
+/** @deprecated use AgentWallet[] instead */
 export type AgentWallets = AgentWallet[];
-export type Wallets = Wallet[];

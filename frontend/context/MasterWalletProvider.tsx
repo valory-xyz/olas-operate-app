@@ -8,7 +8,7 @@ import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import {
   MasterEoa,
   MasterSafe,
-  MasterWallets,
+  MasterWallet,
   WalletOwnerType,
   WalletType,
 } from '@/enums/Wallet';
@@ -21,8 +21,8 @@ import { OnlineStatusContext } from './OnlineStatusProvider';
 type MasterWalletContext = {
   masterEoa?: MasterEoa;
   masterSafes?: MasterSafe[];
-  masterWallets?: (MasterEoa | MasterSafe)[];
-} & Partial<QueryObserverBaseResult<(MasterEoa | MasterSafe)[]>> &
+  masterWallets?: MasterWallet[];
+} & Partial<QueryObserverBaseResult<MasterWallet[]>> &
   UsePause;
 
 export const MasterWalletContext = createContext<MasterWalletContext>({
@@ -33,8 +33,8 @@ export const MasterWalletContext = createContext<MasterWalletContext>({
 
 const transformMiddlewareWalletResponse = (
   data: MiddlewareWalletResponse[],
-): MasterWallets => {
-  const result: MasterWallets = [];
+) => {
+  const result: MasterWallet[] = [];
 
   data.forEach((response) => {
     if (getAddress(response.address)) {
@@ -71,7 +71,7 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
     isFetched,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.WALLETS_KEY,
-    queryFn: WalletService.getWallets,
+    queryFn: ({ signal }) => WalletService.getWallets(signal),
     refetchInterval: isOnline && !paused ? FIVE_SECONDS_INTERVAL : false,
     select: (data) =>
       transformMiddlewareWalletResponse(data).filter(
