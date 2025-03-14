@@ -17,7 +17,7 @@ Steps to change the password:
    - **Windows**: Press `Win` + `R`, type `cmd`, and press **Enter**.  
    - **macOS**: Press `Cmd` + `Space`, type `Terminal`, and press **Enter**.  
    - **Linux**: Press `Ctrl` + `Alt` + `T`.  
-4. In the terminal window, type the command to change the password and then press Enter:
+4. In the terminal window, type the command to change the password and then press **Enter**:
    1. (Preferred) If you know the old password, use:
 
         ```bash
