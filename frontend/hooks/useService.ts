@@ -83,8 +83,6 @@ export const useService = (serviceConfigId?: string) => {
     ];
   }, [service, selectedService]);
 
-  console.log(service);
-
   const addresses: Nullable<ServiceChainIdAddressRecord> = useMemo(() => {
     const chainData = service?.chain_configs;
 

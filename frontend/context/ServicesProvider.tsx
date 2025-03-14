@@ -132,7 +132,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     );
   }, [selectedServiceConfigId, services]);
 
-  console.log(selectedService);
+  console.log({ selectedServiceConfigId, selectedService });
 
   const selectedServiceWithStatus = useMemo<Service | undefined>(() => {
     if (!selectedService) return;
@@ -218,7 +218,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
    */
   useEffect(() => {
     if (!selectedAgentConfig) return;
-    if (isSelectedServiceDeploymentStatusLoading) return;
     if (isNilOrEmpty(services)) return;
 
     const currentService = services.find(
@@ -231,12 +230,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     }
 
     setSelectedServiceConfigId(currentService.service_config_id);
-  }, [
-    isSelectedServiceDeploymentStatusLoading,
-    selectedServiceConfigId,
-    services,
-    selectedAgentConfig,
-  ]);
+  }, [selectedServiceConfigId, services, selectedAgentConfig]);
 
   return (
     <ServicesContext.Provider
