@@ -21,6 +21,10 @@ export const SharedContext = createContext<{
   onboardingStep: number;
   updateOnboardingStep: (step: number) => void;
 
+  // healthcheck alert shown to user
+  isHealthCheckAlertShown: boolean;
+  setHealthCheckAlertShown: (e: boolean) => void;
+
   // others
 }>({
   isMainOlasBalanceLoading: true,
@@ -32,6 +36,9 @@ export const SharedContext = createContext<{
   onboardingStep: 0,
   updateOnboardingStep: () => {},
 
+  // healthcheck alert shown to user
+  isHealthCheckAlertShown: false,
+  setHealthCheckAlertShown: () => {},
   // others
 });
 
@@ -39,20 +46,28 @@ export const SharedContext = createContext<{
  * Shared provider to provide shared context to all components in the app.
  * @example
  * - Track the main OLAS balance animation state & mount state.
+ * - Track the onboarding step of the user (independent of the agent).
+ * - Track the healthcheck alert shown to the user (so that they are not shown again).
  */
 export const SharedProvider = ({ children }: PropsWithChildren) => {
   // state to track the onboarding step of the user (independent of the agent)
   const [onboardingStep, setOnboardingStep] = useState(0);
+  const updateOnboardingStep = useCallback((step: number) => {
+    setOnboardingStep(step);
+  }, []);
 
+  // state to track the main OLAS balance animation state & mount state
   const hasAnimatedRef = useRef(false);
-
   const mainOlasBalanceDetails = useMainOlasBalance();
   const setMainOlasBalanceAnimated = useCallback((value: boolean) => {
     hasAnimatedRef.current = value;
   }, []);
 
-  const updateOnboardingStep = useCallback((step: number) => {
-    setOnboardingStep(step);
+  // state to show healthcheck alert to the user
+  const [isHealthCheckAlertShown, setHealthCheckErrorsShownToUser] =
+    useState(false);
+  const setHealthCheckAlertShown = useCallback((isShown: boolean) => {
+    setHealthCheckErrorsShownToUser(isShown);
   }, []);
 
   return (
@@ -65,6 +80,10 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
         // onboarding
         onboardingStep,
         updateOnboardingStep,
+
+        // healthcheck errors
+        isHealthCheckAlertShown,
+        setHealthCheckAlertShown,
       }}
     >
       {children}

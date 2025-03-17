@@ -117,15 +117,24 @@ const ErrorLoadingHistory = ({ refetch }: { refetch: () => void }) => (
   </Container>
 );
 
+const EmptyRewardsHistoryForCurrentContract = () => (
+  <Flex vertical style={{ height: 60 }} align="center" justify="center">
+    <Text type="secondary">There’s no history of rewards yet.</Text>
+  </Flex>
+);
+
 type EpochTimeProps = Pick<
   EpochDetails,
-  'epochStartTimeStamp' | 'epochEndTimeStamp'
->;
+  'epoch' | 'epochStartTimeStamp' | 'epochEndTimeStamp'
+> &
+  Partial<Pick<EpochDetails, 'transactionHash'>>;
+
 const EpochTime = ({
+  epoch,
   epochEndTimeStamp,
   epochStartTimeStamp,
   transactionHash,
-}: EpochTimeProps & Partial<Pick<EpochDetails, 'transactionHash'>>) => {
+}: EpochTimeProps) => {
   const { selectedAgentConfig } = useServices();
   const { middlewareHomeChainId } = selectedAgentConfig;
 
@@ -141,7 +150,7 @@ const EpochTime = ({
 
   return (
     <Text type="secondary">
-      {formatToMonthDay(epochEndTimeStamp * 1000)}
+      {`Epoch ${epoch}`}
       &nbsp;
       <Popover
         arrow={false}
@@ -171,15 +180,19 @@ const EpochTime = ({
   );
 };
 
-type RewardRowProps = { date: ReactNode; reward: string; earned: ReactNode };
-const RewardRow = ({ date, reward, earned }: RewardRowProps) => (
+type RewardRowProps = {
+  epochSummary: ReactNode;
+  earned: ReactNode;
+  reward: string;
+};
+const RewardRow = ({ epochSummary, earned, reward }: RewardRowProps) => (
   <EpochRow>
-    <Col span={6}>{date}</Col>
-    <Col span={11} className="text-right pr-16">
-      <Text type="secondary">{reward}</Text>
-    </Col>
-    <Col span={7} className="text-center pl-16">
+    <Col span={6}>{epochSummary}</Col>
+    <Col span={11} className="text-center">
       {earned}
+    </Col>
+    <Col span={7} className="text-right">
+      <Text type="secondary">{reward}</Text>
     </Col>
   </EpochRow>
 );
@@ -200,19 +213,33 @@ const ContractRewards = ({
   const { eligibleRewardsThisEpochInEth: reward, isEligibleForRewards } =
     useRewardContext();
 
-  return (
-    <Flex vertical>
+  const contractName = useMemo(() => {
+    return (
       <ContractName>
         <Text strong>{stakingProgramMeta.name}</Text>
       </ContractName>
+    );
+  }, [stakingProgramMeta]);
+
+  if (checkpoints.length === 0) {
+    return (
+      <Flex vertical>
+        {contractName}
+        <EmptyRewardsHistoryForCurrentContract />
+      </Flex>
+    );
+  }
+
+  return (
+    <Flex vertical>
+      {contractName}
 
       {/* Today's rewards */}
       <RewardRow
-        date={
+        epochSummary={
           <EpochTime
-            epochStartTimeStamp={
-              checkpoints[0].epochStartTimeStamp + ONE_DAY_IN_S
-            }
+            epoch={Number(checkpoints[0].epoch) + 1}
+            epochStartTimeStamp={checkpoints[0].epochEndTimeStamp}
             epochEndTimeStamp={checkpoints[0].epochEndTimeStamp + ONE_DAY_IN_S}
           />
         }
@@ -224,8 +251,9 @@ const ContractRewards = ({
         return (
           <RewardRow
             key={checkpoint.epochEndTimeStamp}
-            date={
+            epochSummary={
               <EpochTime
+                epoch={Number(checkpoint.epoch)}
                 epochStartTimeStamp={checkpoint.epochStartTimeStamp}
                 epochEndTimeStamp={checkpoint.epochEndTimeStamp}
                 transactionHash={checkpoint.transactionHash}
@@ -240,9 +268,7 @@ const ContractRewards = ({
   );
 };
 
-/**
- * TODO: Refactor, only supports a single service for now
- * */
+// TODO: Refactor, only supports a single service for now
 export const RewardsHistory = () => {
   const { contractCheckpoints, isError, isFetched, refetch } =
     useRewardsHistory();

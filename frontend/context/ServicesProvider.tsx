@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import {
+  Deployment,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
   MiddlewareServiceResponse,
@@ -51,6 +52,7 @@ type ServicesContextType = {
   isSelectedServiceDeploymentStatusLoading: boolean;
   selectedAgentConfig: AgentConfig;
   selectedAgentType: AgentType;
+  deploymentDetails: Deployment | undefined;
   updateAgentType: (agentType: AgentType) => void;
   overrideSelectedServiceStatus: (
     status?: Maybe<MiddlewareDeploymentStatus>,
@@ -66,6 +68,7 @@ export const ServicesContext = createContext<ServicesContextType>({
   isSelectedServiceDeploymentStatusLoading: true,
   selectedAgentConfig: AGENT_CONFIG[AgentType.PredictTrader],
   selectedAgentType: AgentType.PredictTrader,
+  deploymentDetails: undefined,
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
 });
@@ -103,7 +106,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   });
 
   const {
-    data: selectedServiceStatus,
+    data: deploymentDetails,
     isLoading: isSelectedServiceDeploymentStatusLoading,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.SERVICE_DEPLOYMENT_STATUS_KEY(
@@ -111,7 +114,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     ),
     queryFn: () =>
       ServicesService.getDeployment(selectedServiceConfigId as string),
-    enabled: !!selectedServiceConfigId,
+    enabled: isOnline && !!selectedServiceConfigId,
     refetchInterval: FIVE_SECONDS_INTERVAL,
   });
 
@@ -131,11 +134,11 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     return {
       ...selectedService,
       deploymentStatus:
-        selectedServiceStatusOverride ?? selectedServiceStatus?.status,
+        selectedServiceStatusOverride ?? deploymentDetails?.status,
     };
   }, [
     selectedService,
-    selectedServiceStatus?.status,
+    deploymentDetails?.status,
     selectedServiceStatusOverride,
   ]);
 
@@ -252,6 +255,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         selectedAgentType,
 
         // others
+        deploymentDetails,
         updateAgentType,
         overrideSelectedServiceStatus: (
           status: Maybe<MiddlewareDeploymentStatus>,

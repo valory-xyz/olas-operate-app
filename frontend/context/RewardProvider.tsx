@@ -19,6 +19,7 @@ import { useStore } from '@/hooks/useStore';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { formatEther, formatUnits } from '@/utils/numberFormatters';
+import { isValidServiceId } from '@/utils/service';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 import { StakingProgramContext } from './StakingProgramProvider';
@@ -94,7 +95,7 @@ const useStakingRewardsDetails = () => {
       !!serviceConfigId &&
       !!selectedStakingProgramId &&
       !!multisig &&
-      !!token,
+      isValidServiceId(token),
     refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });
@@ -113,15 +114,14 @@ const useEligibleRewardsThisEpoch = () => {
     selectedAgentConfig,
   } = useServices();
   const serviceConfigId =
-    isLoaded && selectedService ? selectedService?.service_config_id : '';
+    isLoaded && selectedService ? selectedService?.service_config_id : null;
   const currentChainId = selectedAgentConfig.evmHomeChainId;
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.AVAILABLE_REWARDS_FOR_EPOCH_KEY(
       currentChainId,
-      serviceConfigId,
+      serviceConfigId!,
       selectedStakingProgramId!,
-      currentChainId,
     ),
     queryFn: async () => {
       return await selectedAgentConfig.serviceApi.getAvailableRewardsForEpoch(
@@ -129,7 +129,7 @@ const useEligibleRewardsThisEpoch = () => {
         currentChainId,
       );
     },
-    enabled: !!isOnline && !!selectedStakingProgramId,
+    enabled: !!isOnline && !!selectedStakingProgramId && !!serviceConfigId,
     refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });

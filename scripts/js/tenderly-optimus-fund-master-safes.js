@@ -54,8 +54,7 @@ const main = async () => {
         olas: {
             gnosis: "0xce11e14225575945b8e6dc0d4f2dd4c570f79d9f",
             optimism: "0xFC2E6e6BCbd49ccf3A5f029c79984372DcBFE527",
-            ethereum:
-                "0x0001a500a6b18995b03f44bb040a5ffc28e45cb0",
+            ethereum: "0x48c301F2aBFf21b5C9Ea3A57C36FBD290Ab291E05ffc28e45cb0",
             base:
                 "0x54330d28ca3357f294334bdc454a032e7f353416",
             mode: "0xcfD1D50ce23C46D3Cf6407487B2F8934e96DC8f9"

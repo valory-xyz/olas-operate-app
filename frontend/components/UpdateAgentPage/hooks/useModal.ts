@@ -1,4 +1,13 @@
+import { noop } from 'lodash';
 import { useCallback, useState } from 'react';
+
+export const defaultModalProps = {
+  open: false,
+  openModal: noop,
+  closeModal: noop,
+  cancel: noop,
+  confirm: noop,
+};
 
 export type ModalProps = {
   open: boolean;

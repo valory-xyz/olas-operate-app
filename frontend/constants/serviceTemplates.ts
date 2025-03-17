@@ -10,11 +10,11 @@ import { parseEther, parseUnits } from '@/utils/numberFormatters';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // Should be unique across all services and not be updated
-  hash: 'bafybeiaw36jpiyh6pmgkpfvklhshigyvakkefl27k47duz22moxnxnwlcu',
+  hash: 'bafybeihgmbbjtkrlu62bkm3e4j2ehqipv5huqpifjiyttvjrk4sikwsfzu',
   description: 'Trader agent for omen prediction markets',
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.23.1',
+  service_version: 'v0.25.0',
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
@@ -79,17 +79,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    REQUESTER_STAKING_INSTANCE_ADDRESS: {
-      name: 'Requester staking instance address',
+    TOOLS_ACCURACY_HASH: {
+      name: 'Tools accuracy hash',
       description: '',
-      value: '',
-      provision_type: EnvProvisionType.COMPUTED,
-    },
-    PRIORITY_MECH_ADDRESS: {
-      name: 'Priority Mech address',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.COMPUTED,
+      // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
+      value: 'QmZFEoQ1oFCWmwgyo63sn2cFwQm2M5HxgU9jhCE2ayQhKG',
+      provision_type: EnvProvisionType.FIXED,
     },
   },
 } as const;
@@ -98,11 +93,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeihokbwvtkapycqle3fi4ew76t2yuyaaf7jozf3sjmjdowile3xy2e',
+  hash: 'bafybeickejdjgbq3ofib4k26qsff6vhc7sfktq73yyg7dyj2var4qk5bsa',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.3.0-alpha8',
+  service_version: 'v0.4.1-alpha1',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -146,6 +141,12 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.USER,
     },
+    FIREWORKS_API_KEY: {
+      name: 'Fireworks AI api key',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
     PERSONA: {
       name: 'Persona description',
       description: '',
@@ -171,20 +172,26 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '1800',
       provision_type: EnvProvisionType.FIXED,
     },
-    DB_PATH: {
-      name: 'DB path',
+    STORE_PATH: {
+      name: 'Store path',
       description: '',
-      value: 'persistent_data/memeooorr.db',
+      value: 'persistent_data/',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    TWIKIT_COOKIES_PATH: {
-      name: 'Twitter cookies path',
+    STAKING_TOKEN_CONTRACT_ADDRESS: {
+      name: 'Staking token contract address',
       description: '',
-      value: 'persistent_data/twikit_cookies.json',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      name: 'Staking activity checker contract address',
+      description: '',
+      value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
   },
-};
+} as const;
 
 /**
  * Agents.fun Base template
@@ -246,16 +253,16 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeigze75dsdbqb3uf5mutdaquvh2lxaga25ybvf7npmkome3gvxqqcu',
+  hash: 'bafybeibhev6otq7lm7lwsq6p62edjzgbyk7r67u3fzr4syqoq4nah2p6t4',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  service_version: 'v0.18.1',
+  service_version: 'v0.3.1',
   home_chain: MiddlewareChain.MODE,
   configurations: {
     [MiddlewareChain.MODE]: {
       staking_program_id: StakingProgramId.ModiusAlpha, // default, may be overwritten
-      nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+      nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
       threshold: 1,
@@ -323,10 +330,17 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: 'mode',
       provision_type: EnvProvisionType.FIXED,
     },
-    STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+    ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
       name: 'Staking activity checker contract address',
       description: '',
-      value: '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      // Unused, refactored - remove
+      name: 'Staking activity checker contract address',
+      description: '',
+      value: 'Unused',
       provision_type: EnvProvisionType.FIXED,
     },
     MIN_SWAP_AMOUNT_THRESHOLD: {
@@ -371,6 +385,12 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
+    },
+    RESET_PAUSE_DURATION: {
+      name: 'Reset pause duration',
+      description: '',
+      value: '300',
+      provision_type: EnvProvisionType.FIXED,
     },
   },
 } as const;

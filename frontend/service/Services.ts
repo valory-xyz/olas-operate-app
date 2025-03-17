@@ -130,7 +130,9 @@ const startService = async (
     throw new Error('Failed to start the service');
   });
 
-const stopDeployment = async (serviceConfigId: string): Promise<Deployment> =>
+const stopDeployment = async (
+  serviceConfigId: string,
+): Promise<Pick<Deployment, 'status' | 'nodes'>> =>
   fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/deployment/stop`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
@@ -188,6 +190,5 @@ export const ServicesService = {
   createService,
   updateService,
   stopDeployment,
-  // deleteDeployment,
   withdrawBalance,
 };

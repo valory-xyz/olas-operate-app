@@ -7,7 +7,7 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 
-import { ACTIVITY_CHECKERS, ActivityCheckerType } from '../activityCheckers';
+import { BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { StakingProgramMap } from '.';
 
 export const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
@@ -31,9 +31,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       [TokenSymbol.OLAS]: 100,
     },
     activityChecker:
-      ACTIVITY_CHECKERS[EvmChainId.Base][
-        ActivityCheckerType.MemeActivityChecker
-      ],
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.MemeBaseAlpha2],
     contract: new MulticallContract(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.MemeBaseAlpha2],
       STAKING_TOKEN_PROXY_ABI,
@@ -47,9 +45,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       [TokenSymbol.OLAS]: 100,
     },
     activityChecker:
-      ACTIVITY_CHECKERS[EvmChainId.Base][
-        ActivityCheckerType.MemeActivityChecker
-      ],
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.MemeBaseBeta],
     contract: new MulticallContract(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.MemeBaseBeta],
       STAKING_TOKEN_PROXY_ABI,
@@ -63,9 +59,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       [TokenSymbol.OLAS]: 1000,
     },
     activityChecker:
-      ACTIVITY_CHECKERS[EvmChainId.Base][
-        ActivityCheckerType.MemeActivityChecker
-      ],
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.MemeBaseBeta2],
     contract: new MulticallContract(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.MemeBaseBeta2],
       STAKING_TOKEN_PROXY_ABI,
@@ -79,9 +73,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       [TokenSymbol.OLAS]: 5000,
     },
     activityChecker:
-      ACTIVITY_CHECKERS[EvmChainId.Base][
-        ActivityCheckerType.MemeActivityChecker
-      ],
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.MemeBaseBeta3],
     contract: new MulticallContract(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[StakingProgramId.MemeBaseBeta3],
       STAKING_TOKEN_PROXY_ABI,

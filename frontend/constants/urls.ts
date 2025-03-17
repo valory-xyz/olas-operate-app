@@ -11,9 +11,8 @@ export const BACKEND_URL_V2: Url = `http://localhost:${process.env.NODE_ENV === 
 const COW_SWAP_GNOSIS_XDAI_OLAS_URL: Url =
   'https://swap.cow.fi/#/100/swap/WXDAI/OLAS';
 const SWAP_BASE_URL: Url = 'https://balancer.fi/swap/base/ETH/OLAS';
-// TODO: Modius - confirm this URL is correct
 const SWAP_MODE_URL: Url =
-  'https://jumper.exchange/?fromChain=34443&fromToken=0x0000000000000000000000000000000000000000&toChain=34443&toToken=0xcfD1D50ce23C46D3Cf6407487B2F8934e96DC8f9';
+  'https://balancer.fi/swap/mode/0xd988097fb8612cc24eec14542bc03424c656005f/0xcfd1d50ce23c46d3cf6407487b2f8934e96dc8f9';
 const SWAP_CELO_URL: Url =
   'https://app.ubeswap.org/#/swap?inputCurrency=0x471ece3750da237f93b8e339c536989b8978a438&outputCurrency=0xacffae8e57ec6e394eb1b41939a8cf7892dbdc51';
 
@@ -26,12 +25,13 @@ export const DOWNLOAD_URL: Url = 'https://olas.network/operate#download';
 // thegraph
 export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN = {
   [EvmChainId.Gnosis]:
-    'https://api.studio.thegraph.com/query/81371/gnosis-pearl-rewards-history/version/latest',
+    'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/F3iqL2iw5UTrP1qbb4S694pGEkBwzoxXp1TRikB2K4e',
   [EvmChainId.Base]:
-    'https://api.studio.thegraph.com/query/67875/olas-base-staking-rewards-history/version/latest',
+    'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/9etc5Ht8eQGghXrkbWJk2yMzNypCFTL46m1iLXqE2rnq',
   [EvmChainId.Mode]:
-    'https://api.studio.thegraph.com/query/67875/olas-mode-staking-rewards-history/version/latest',
-  [EvmChainId.Celo]: '', // TODO: celo
+    'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/Fe6oYUKbSGP7a16NowseTU82MVG9D2xWbBUCz4MPB4d4',
+  [EvmChainId.Celo]:
+    'https://api.studio.thegraph.com/query/67875/olas-celo-staking/version/latest',
 };
 
 // discord

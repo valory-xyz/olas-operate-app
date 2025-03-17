@@ -1,5 +1,15 @@
 const { contextBridge, ipcRenderer } = require('electron/renderer');
 
+/** IPC methods for controlling agent activity window */
+const agentActivityWindow = {
+  init: () => ipcRenderer.invoke('agent-activity-window-init'),
+  goto: (url) => ipcRenderer.invoke('agent-activity-window-goto', url),
+  hide: () => ipcRenderer.invoke('agent-activity-window-hide'),
+  show: () => ipcRenderer.invoke('agent-activity-window-show'),
+  close: () => ipcRenderer.invoke('agent-activity-window-close'),
+  minimize: () => ipcRenderer.invoke('agent-activity-window-minimize'),
+};
+
 contextBridge.exposeInMainWorld('electronAPI', {
   setIsAppLoaded: (isAppLoaded) =>
     ipcRenderer.send('is-app-loaded', isAppLoaded),
@@ -28,4 +38,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   validateTwitterLogin: (credentials) =>
     ipcRenderer.invoke('validate-twitter-login', credentials),
   healthCheck: () => ipcRenderer.invoke('health-check'),
+  agentActivityWindow,
 });
