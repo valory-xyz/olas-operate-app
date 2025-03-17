@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { formatUnits } from 'ethers/lib/utils';
 import { isNil } from 'lodash';
 import {
   createContext,
@@ -13,27 +12,30 @@ import {
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { useServices } from '@/hooks/useServices';
+import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 import { useStore } from '@/hooks/useStore';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { formatEther, formatUnits } from '@/utils/numberFormatters';
 import { isValidServiceId } from '@/utils/service';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 import { StakingProgramContext } from './StakingProgramProvider';
 
 export const RewardContext = createContext<{
-  isAvailableRewardsForEpochLoading?: boolean;
+  isEligibleRewardsThisEpochLoading?: boolean;
   accruedServiceStakingRewards?: number;
-  availableRewardsForEpoch?: number;
-  availableRewardsForEpochEth?: number;
+  eligibleRewardsThisEpoch?: number;
+  eligibleRewardsThisEpochInEth?: number;
   isEligibleForRewards?: boolean;
   optimisticRewardsEarnedForEpoch?: number;
   minimumStakedAmountRequired?: number;
   updateRewards: () => Promise<void>;
   isStakingRewardsDetailsLoading?: boolean;
 }>({
-  isAvailableRewardsForEpochLoading: false,
+  isEligibleRewardsThisEpochLoading: false,
   updateRewards: async () => {},
 });
 
@@ -102,8 +104,8 @@ const useStakingRewardsDetails = () => {
 /**
  * hook to fetch available rewards for the current epoch
  */
-const useAvailableRewardsForEpoch = () => {
-  const { isOnline } = useContext(OnlineStatusContext);
+const useEligibleRewardsThisEpoch = () => {
+  const { isOnline } = useOnlineStatusContext();
   const { selectedStakingProgramId } = useContext(StakingProgramContext);
 
   const {
@@ -141,33 +143,83 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   const electronApi = useElectronApi();
 
   const {
+    isSelectedStakingContractDetailsLoading,
+    selectedStakingContractDetails,
+  } = useStakingContractContext();
+
+  const {
     data: stakingRewardsDetails,
     refetch: refetchStakingRewardsDetails,
     isLoading: isStakingRewardsDetailsLoading,
   } = useStakingRewardsDetails();
 
   const {
-    data: availableRewardsForEpoch,
-    isLoading: isAvailableRewardsForEpochLoading,
-    refetch: refetchAvailableRewardsForEpoch,
-  } = useAvailableRewardsForEpoch();
+    data: eligibleRewardsThisEpoch,
+    isLoading: isEligibleRewardsThisEpochLoading,
+    refetch: refetchEligibleRewardsThisEpoch,
+  } = useEligibleRewardsThisEpoch();
 
   const isEligibleForRewards = stakingRewardsDetails?.isEligibleForRewards;
   const accruedServiceStakingRewards =
     stakingRewardsDetails?.accruedServiceStakingRewards;
 
-  // available rewards for the current epoch in ETH
-  const availableRewardsForEpochEth = useMemo<number | undefined>(() => {
-    if (!availableRewardsForEpoch) return;
-    return parseFloat(formatUnits(`${availableRewardsForEpoch}`));
-  }, [availableRewardsForEpoch]);
+  const rewardsPerSecond = stakingRewardsDetails?.rewardsPerSecond;
+  const serviceStakingStartTime =
+    selectedStakingContractDetails?.serviceStakingStartTime;
+
+  // available rewards for the epoch
+  const eligibleRewardsThisEpochInEth = useMemo<number | undefined>(() => {
+    if (!rewardsPerSecond) return;
+
+    // wait for the staking details to load
+    if (isStakingRewardsDetailsLoading) return;
+    if (isSelectedStakingContractDetailsLoading) return;
+    if (isEligibleRewardsThisEpochLoading) return;
+
+    // if agent is not staked, return the available rewards for the epoch
+    // i.e, agent has not yet started staking
+    if (isNil(serviceStakingStartTime) || serviceStakingStartTime === 0) {
+      return parseFloat(formatUnits(`${eligibleRewardsThisEpoch}`));
+    }
+
+    // calculate the next checkpoint timestamp
+    // i.e, next = last + checkpoint period
+    const nextCheckpointTimestamp =
+      stakingRewardsDetails.lastCheckpointTimestamp +
+      stakingRewardsDetails.livenessPeriod;
+
+    // default to the last checkpoint timestamp
+    // ie, if agent has not staked yet, use the last checkpoint timestamp
+    const rewardCountingStartTime = Math.max(
+      stakingRewardsDetails.lastCheckpointTimestamp,
+      serviceStakingStartTime || 0,
+    );
+
+    // calculate the time service staked in the current epoch
+    const stakingDurationInCurrentEpoch =
+      nextCheckpointTimestamp - rewardCountingStartTime;
+
+    const rewardsInCurrentEpoch =
+      parseFloat(formatEther(`${rewardsPerSecond}`)) *
+      stakingDurationInCurrentEpoch;
+
+    return parseFloat(`${rewardsInCurrentEpoch}`);
+  }, [
+    isSelectedStakingContractDetailsLoading,
+    isStakingRewardsDetailsLoading,
+    isEligibleRewardsThisEpochLoading,
+    stakingRewardsDetails,
+    rewardsPerSecond,
+    serviceStakingStartTime,
+    eligibleRewardsThisEpoch,
+  ]);
 
   // optimistic rewards earned for the current epoch in ETH
   const optimisticRewardsEarnedForEpoch = useMemo<number | undefined>(() => {
     if (!isEligibleForRewards) return;
-    if (!availableRewardsForEpochEth) return;
-    return availableRewardsForEpochEth;
-  }, [availableRewardsForEpochEth, isEligibleForRewards]);
+    if (!eligibleRewardsThisEpochInEth) return;
+    return eligibleRewardsThisEpochInEth;
+  }, [eligibleRewardsThisEpochInEth, isEligibleForRewards]);
 
   // store the first staking reward achieved in the store for notification
   useEffect(() => {
@@ -183,8 +235,8 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   // refresh rewards data
   const updateRewards = useCallback(async () => {
     await refetchStakingRewardsDetails();
-    await refetchAvailableRewardsForEpoch();
-  }, [refetchStakingRewardsDetails, refetchAvailableRewardsForEpoch]);
+    await refetchEligibleRewardsThisEpoch();
+  }, [refetchStakingRewardsDetails, refetchEligibleRewardsThisEpoch]);
 
   return (
     <RewardContext.Provider
@@ -194,9 +246,9 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
         accruedServiceStakingRewards,
 
         // available rewards for the current epoch
-        isAvailableRewardsForEpochLoading,
-        availableRewardsForEpoch,
-        availableRewardsForEpochEth,
+        isEligibleRewardsThisEpochLoading,
+        eligibleRewardsThisEpoch,
+        eligibleRewardsThisEpochInEth,
         isEligibleForRewards,
         optimisticRewardsEarnedForEpoch,
 

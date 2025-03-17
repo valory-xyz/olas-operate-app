@@ -59,30 +59,19 @@ export abstract class ModiusService extends StakedAgentService {
 
     const [
       serviceInfo,
-      livenessPeriod,
-      rewardsPerSecond,
+      livenessPeriodInBn,
+      rewardsPerSecondInBn,
       accruedStakingReward,
       minStakingDeposit,
-      tsCheckpoint,
-      livenessRatio,
+      tsCheckpointInBn,
+      livenessRatioInBn,
       currentMultisigNonces,
     ] = multicallResponse;
 
-    /**
-     * struct ServiceInfo {
-      // Service multisig address
-      address multisig;
-      // Service owner
-      address owner;
-      // Service multisig nonces
-      uint256[] nonces; <-- (we use this in the rewards eligibility check)
-      // Staking start time
-      uint256 tsStart;
-      // Accumulated service staking reward
-      uint256 reward;
-      // Accumulated inactivity that might lead to the service eviction
-      uint256 inactivity;}
-     */
+    const rewardsPerSecond = rewardsPerSecondInBn.toNumber();
+    const livenessPeriod = livenessPeriodInBn.toNumber();
+    const tsCheckpoint = tsCheckpointInBn.toNumber();
+    const livenessRatio = livenessRatioInBn.toNumber();
 
     const lastMultisigNonces = serviceInfo[2];
     const nowInSeconds = Math.floor(Date.now() / 1000);
@@ -101,7 +90,7 @@ export abstract class ModiusService extends StakedAgentService {
 
     const isEligibleForRewards = eligibleRequests >= requiredRequests;
 
-    const availableRewardsForEpoch = Math.max(
+    const eligibleRewardsThisEpoch = Math.max(
       rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
       rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
     );
@@ -117,12 +106,13 @@ export abstract class ModiusService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
-      availableRewardsForEpoch,
+      eligibleRewardsThisEpoch,
       accruedServiceStakingRewards: parseFloat(
         ethers.utils.formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
-    } as StakingRewardsInfo;
+      lastCheckpointTimestamp: tsCheckpoint,
+    } satisfies StakingRewardsInfo;
   };
 
   static getAvailableRewardsForEpoch = async (
