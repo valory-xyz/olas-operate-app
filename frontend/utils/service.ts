@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { isEmpty, isNil } from 'lodash';
 
 import { EnvProvisionType, ServiceTemplate } from '@/client';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
@@ -105,4 +105,15 @@ export const updateServiceIfNeeded = async (
     serviceConfigId: service.service_config_id,
     partialServiceTemplate,
   });
+};
+
+/**
+ * Check if the token is a valid service id
+ */
+export const isValidServiceId = (
+  token: number | null | undefined | -1,
+): boolean => {
+  if (isNil(token)) return false;
+  if (token === -1) return false;
+  return !!token;
 };

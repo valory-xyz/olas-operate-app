@@ -1,32 +1,29 @@
-import { Card, Flex, Skeleton, Tooltip, Typography } from 'antd';
+import { Card, Flex, Skeleton } from 'antd';
 import { find, groupBy, isArray, isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import styled from 'styled-components';
 
-import { MiddlewareChain } from '@/client';
 import { OLAS_CONTRACTS } from '@/config/olasContracts';
-import { NA, UNICODE_SYMBOLS } from '@/constants/symbols';
+import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
-import { AgentType } from '@/enums/Agent';
 import { ContractType } from '@/enums/Contract';
 import { TokenSymbol } from '@/enums/Token';
 import {
   useBalanceContext,
   useServiceBalances,
 } from '@/hooks/useBalanceContext';
-import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { Address } from '@/types/Address';
 import { WalletBalance } from '@/types/Balance';
-import { generateName } from '@/utils/agentName';
 import { balanceFormat } from '@/utils/numberFormatters';
 import { truncateAddress } from '@/utils/truncate';
 
 import { AddressLink } from '../AddressLink';
 import { InfoBreakdownList } from '../InfoBreakdown';
+import { AgentTitle } from './AgentTitle';
 import { Container, infoBreakdownParentStyle } from './styles';
 import {
   OlasTitle,
@@ -36,8 +33,6 @@ import {
 } from './Titles';
 import { useYourWallet } from './useYourWallet';
 import { WithdrawFunds } from './WithdrawFunds';
-
-const { Text, Paragraph } = Typography;
 
 const NftCard = styled(Card)`
   .ant-card-body {
@@ -69,69 +64,6 @@ const SafeAddress = ({ address }: { address: Address }) => {
         ]}
         parentStyle={infoBreakdownParentStyle}
       />
-    </Flex>
-  );
-};
-
-const AgentTitle = ({ address }: { address: Address }) => {
-  const { middlewareChain } = useYourWallet();
-  const { selectedAgentType, selectedService } = useServices();
-  const { service } = useService(selectedService?.service_config_id);
-
-  const agentProfileLink = useMemo(() => {
-    if (!address) return null;
-    // gnosis predict trader
-    if (
-      middlewareChain === MiddlewareChain.GNOSIS &&
-      selectedAgentType === AgentType.PredictTrader
-    ) {
-      return `https://predict.olas.network/agents/${address}`;
-    }
-
-    // base memeooorr
-    if (
-      middlewareChain === MiddlewareChain.BASE &&
-      selectedAgentType === AgentType.Memeooorr &&
-      service?.env_variables?.TWIKIT_USERNAME?.value
-    )
-      return `https://www.agents.fun/services/${service.env_variables.TWIKIT_USERNAME.value}`;
-  }, [address, middlewareChain, selectedAgentType, service]);
-
-  return (
-    <Flex vertical gap={12}>
-      <Flex gap={12}>
-        <Image
-          width={36}
-          height={36}
-          alt="Agent wallet"
-          src="/agent-wallet.png"
-        />
-
-        <Flex vertical className="w-full">
-          <Text className="m-0 text-sm" type="secondary">
-            Your agent
-          </Text>
-          <Flex justify="space-between">
-            <Tooltip
-              arrow={false}
-              title={
-                <Paragraph className="text-sm m-0">
-                  This is your agent&apos;s unique name
-                </Paragraph>
-              }
-              placement="top"
-            >
-              <Text strong>{address ? generateName(address) : NA}</Text>
-            </Tooltip>
-
-            {agentProfileLink && (
-              <a href={agentProfileLink} target="_blank" className="text-sm">
-                Agent profile {UNICODE_SYMBOLS.EXTERNAL_LINK}
-              </a>
-            )}
-          </Flex>
-        </Flex>
-      </Flex>
     </Flex>
   );
 };
@@ -358,12 +290,10 @@ const YourAgentWalletBreakdown = () => {
 };
 
 export const YourAgentWallet = () => {
-  const isWithdrawFundsEnabled = useFeatureFlag('withdraw-funds');
-
   return (
     <>
       <YourAgentWalletBreakdown />
-      {isWithdrawFundsEnabled && <WithdrawFunds />}
+      <WithdrawFunds />
     </>
   );
 };

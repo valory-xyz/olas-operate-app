@@ -10,11 +10,11 @@ import { parseEther, parseUnits } from '@/utils/numberFormatters';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // Should be unique across all services and not be updated
-  hash: 'bafybeiftdsc6xi77hwvbxwwfrc2tnssenqk6ixxkl5n4nil4n34dgbdgda',
+  hash: 'bafybeihgmbbjtkrlu62bkm3e4j2ehqipv5huqpifjiyttvjrk4sikwsfzu',
   description: 'Trader agent for omen prediction markets',
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.24.1',
+  service_version: 'v0.25.0',
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
@@ -79,6 +79,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
+    TOOLS_ACCURACY_HASH: {
+      name: 'Tools accuracy hash',
+      description: '',
+      // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
+      value: 'QmZFEoQ1oFCWmwgyo63sn2cFwQm2M5HxgU9jhCE2ayQhKG',
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
 
@@ -86,11 +93,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeic6yi22szouojeueui5ewcibckcmxcbmkhzspwqxygen6twjtg7lm',
+  hash: 'bafybeickejdjgbq3ofib4k26qsff6vhc7sfktq73yyg7dyj2var4qk5bsa',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.4.0-alpha4',
+  service_version: 'v0.4.1-alpha1',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -130,6 +137,12 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
     },
     GENAI_API_KEY: {
       name: 'Gemini api key',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    FIREWORKS_API_KEY: {
+      name: 'Fireworks AI api key',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
@@ -178,7 +191,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       provision_type: EnvProvisionType.COMPUTED,
     },
   },
-};
+} as const;
 
 /**
  * Agents.fun Base template
@@ -240,16 +253,16 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeihzkrcw5nncj773gblcv6gjcjjwrsrwt4kn7sycthrjnexsnxi3me',
+  hash: 'bafybeibhev6otq7lm7lwsq6p62edjzgbyk7r67u3fzr4syqoq4nah2p6t4',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  service_version: 'v0.18.1',
+  service_version: 'v0.3.1',
   home_chain: MiddlewareChain.MODE,
   configurations: {
     [MiddlewareChain.MODE]: {
       staking_program_id: StakingProgramId.ModiusAlpha, // default, may be overwritten
-      nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+      nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
       threshold: 1,
@@ -317,10 +330,17 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: 'mode',
       provision_type: EnvProvisionType.FIXED,
     },
-    STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+    ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
       name: 'Staking activity checker contract address',
       description: '',
-      value: '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      // Unused, refactored - remove
+      name: 'Staking activity checker contract address',
+      description: '',
+      value: 'Unused',
       provision_type: EnvProvisionType.FIXED,
     },
     MIN_SWAP_AMOUNT_THRESHOLD: {

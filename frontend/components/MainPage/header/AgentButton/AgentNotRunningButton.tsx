@@ -1,18 +1,14 @@
 import { Button, message } from 'antd';
-import { isNil, sum } from 'lodash';
+import { isNil } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { Pages } from '@/enums/Pages';
-import { TokenSymbol } from '@/enums/Token';
 import { MasterEoa, MasterSafe } from '@/enums/Wallet';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
-import {
-  useBalanceContext,
-  useServiceBalances,
-} from '@/hooks/useBalanceContext';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { MultisigOwners, useMultisigs } from '@/hooks/useMultisig';
 import { useNeedsFunds } from '@/hooks/useNeedsFunds';
@@ -31,11 +27,13 @@ import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 import { updateServiceIfNeeded } from '@/utils/service';
 
+/**
+ * hook to handle service deployment and starting the service
+ */
 const useServiceDeployment = () => {
   const { showNotification } = useElectronApi();
 
   const { goto: gotoPage } = usePageState();
-
   const { masterWallets, masterSafes, masterEoa } = useMasterWalletContext();
   const {
     selectedService,
@@ -46,45 +44,28 @@ const useServiceDeployment = () => {
     selectedAgentType,
     overrideSelectedServiceStatus,
   } = useServices();
+  const serviceId = selectedService?.service_config_id;
 
-  const { canStartAgent } = useBalanceAndRefillRequirementsContext();
-  const { service, isServiceRunning } = useService(
-    selectedService?.service_config_id,
-  );
+  const { canStartAgent, isBalancesAndFundingRequirementsLoading } =
+    useBalanceAndRefillRequirementsContext();
+  const { service, isServiceRunning } = useService(serviceId);
 
   const { setIsPaused: setIsBalancePollingPaused, updateBalances } =
     useBalanceContext();
 
-  const { serviceStakedBalances, serviceSafeBalances } = useServiceBalances(
-    selectedService?.service_config_id,
-  );
-
-  const serviceStakedOlasBalancesOnHomeChain = serviceStakedBalances?.find(
-    (stakedBalance) =>
-      stakedBalance.evmChainId === selectedAgentConfig.evmHomeChainId,
-  );
-
-  const serviceTotalStakedOlas = sum([
-    serviceStakedOlasBalancesOnHomeChain?.olasBondBalance,
-    serviceStakedOlasBalancesOnHomeChain?.olasDepositBalance,
-  ]);
-
-  const serviceOlasBalanceOnHomeChain = serviceSafeBalances?.find(
-    (balance) => balance.evmChainId === selectedAgentConfig.evmHomeChainId,
-  )?.balance;
-
+  // Staking contract details
   const {
     isAllStakingContractDetailsRecordLoaded,
     setIsPaused: setIsStakingContractInfoPollingPaused,
     refetchSelectedStakingContractDetails: refetchActiveStakingContractDetails,
   } = useStakingContractContext();
-
   const { selectedStakingProgramId } = useStakingProgram();
-
-  const { isEligibleForStaking, isAgentEvicted, isServiceStaked } =
-    useActiveStakingContractDetails();
-
-  const { hasEnoughServiceSlots } = useActiveStakingContractDetails();
+  const {
+    isEligibleForStaking,
+    isAgentEvicted,
+    isServiceStaked,
+    hasEnoughServiceSlots,
+  } = useActiveStakingContractDetails();
 
   const { masterSafesOwners } = useMultisigs(masterSafes);
 
@@ -92,61 +73,38 @@ const useServiceDeployment = () => {
     selectedStakingProgramId,
   );
 
-  const requiredStakedOlas =
-    selectedStakingProgramId &&
-    STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
-      selectedStakingProgramId
-    ]?.stakingRequirements[TokenSymbol.OLAS];
-
-  const serviceSafeOlasWithStaked = sum([
-    serviceOlasBalanceOnHomeChain,
-    serviceTotalStakedOlas,
-  ]);
-
   const isDeployable = useMemo(() => {
+    if (isBalancesAndFundingRequirementsLoading) return false;
     if (isServicesLoading || isServiceRunning) return false;
 
     if (!isAllStakingContractDetailsRecordLoaded) return false;
-
-    if (isNil(requiredStakedOlas)) return false;
 
     // If not enough service slots, and service is not staked, return false
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
     if (hasSlot && !isServiceStaked) return false;
 
-    // If already staked and initial funded, check if it has enough staked OLAS
-    if (service && isInitialFunded && isServiceStaked) {
-      if (!canStartAgent) return false;
+    // If was evicted and can't re-stake - return false
+    if (isAgentEvicted && !isEligibleForStaking) return false;
 
-      return (serviceTotalStakedOlas ?? 0) >= requiredStakedOlas;
-    }
+    // if there's no service created, check if initially funded
+    // TODO: should create dummy service instead (for trader)
+    // and rely on canStartAgent
+    if (!selectedService && isInitialFunded) return !needsInitialFunding;
 
-    // If was evicted, but can re-stake - unlock the button
-    if (isAgentEvicted && isEligibleForStaking) return true;
-
-    // SERVICE IS STAKED, AND STARTING AGAIN
-    if (isServiceStaked) {
-      const hasEnoughOlas = serviceSafeOlasWithStaked >= requiredStakedOlas;
-      return hasEnoughOlas;
-    }
-
-    // SERVICE IS NOT STAKED AND/OR IS STARTING FOR THE FIRST TIME
-    // Check if it has enough initial funding
-    return !needsInitialFunding;
+    // allow starting based on refill requirements
+    return canStartAgent;
   }, [
+    isBalancesAndFundingRequirementsLoading,
     isServicesLoading,
     isServiceRunning,
     isAllStakingContractDetailsRecordLoaded,
-    requiredStakedOlas,
     hasEnoughServiceSlots,
     isServiceStaked,
-    service,
-    isInitialFunded,
     isAgentEvicted,
     isEligibleForStaking,
+    selectedService,
+    isInitialFunded,
     needsInitialFunding,
-    serviceTotalStakedOlas,
-    serviceSafeOlasWithStaked,
     canStartAgent,
   ]);
 
@@ -169,6 +127,7 @@ const useServiceDeployment = () => {
     setIsBalancePollingPaused,
     setIsStakingContractInfoPollingPaused,
   ]);
+
   /**
    * @note only create a service if `service` does not exist
    */
@@ -303,8 +262,7 @@ const createSafeIfNeeded = async ({
   masterSafesOwners?: MultisigOwners[];
 }) => {
   const selectedChainHasMasterSafe = masterSafes?.some(
-    (masterSafe) =>
-      masterSafe.evmChainId === selectedAgentConfig.evmHomeChainId,
+    ({ evmChainId }) => evmChainId === selectedAgentConfig.evmHomeChainId,
   );
 
   if (selectedChainHasMasterSafe) return;
@@ -313,8 +271,7 @@ const createSafeIfNeeded = async ({
   const otherChainOwners = new Set(
     masterSafesOwners
       ?.filter(
-        (masterSafe) =>
-          masterSafe.evmChainId !== selectedAgentConfig.evmHomeChainId,
+        ({ evmChainId }) => evmChainId !== selectedAgentConfig.evmHomeChainId,
       )
       .map((masterSafe) => masterSafe.owners)
       .flat(),

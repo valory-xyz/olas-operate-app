@@ -118,6 +118,14 @@ export type DeployedNodes = {
 export type Deployment = {
   status: MiddlewareDeploymentStatus;
   nodes: DeployedNodes;
+  healthcheck: {
+    env_var_status?: {
+      needs_update: boolean;
+      env_vars: {
+        [key: string]: string;
+      };
+    };
+  };
 };
 
 export type AppInfo = {
@@ -154,5 +162,8 @@ export type BalancesAndFundingRequirements = {
   refill_requirements: Partial<{
     [chain in MiddlewareChain]: AddressBalanceRecord;
   }>;
+  bonded_olas: {
+    [chain in MiddlewareChain]: number;
+  };
   allow_start_agent: boolean;
 };

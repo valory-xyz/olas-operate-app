@@ -15,6 +15,7 @@ import {
   requiredRules,
   validateMessages,
 } from '../SetupPage/SetupYourAgent/formUtils';
+import { FireworksApiFields } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/FireworksApiField';
 import {
   InvalidGeminiApiCredentials,
   InvalidXCredentials,
@@ -25,8 +26,10 @@ import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
 type MemeooorrFormValues = {
   description: string;
+  fireworksApiEnabled: boolean;
   env_variables: {
     GENAI_API_KEY: string;
+    FIREWORKS_API_KEY: string;
     PERSONA: string;
     TWIKIT_USERNAME: string;
     TWIKIT_EMAIL: string;
@@ -57,19 +60,29 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
     const cookies = await handleValidate({
       personaDescription: values.env_variables.PERSONA,
       geminiApiKey: values.env_variables.GENAI_API_KEY,
+      fireworksApiKey: values.fireworksApiEnabled
+        ? values.env_variables.FIREWORKS_API_KEY
+        : '',
       xEmail: values.env_variables.TWIKIT_EMAIL,
       xUsername: values.env_variables.TWIKIT_USERNAME,
       xPassword: values.env_variables.TWIKIT_PASSWORD,
     });
     if (!cookies) return;
 
+    // fields for firework api key
+    form?.setFieldValue(
+      ['env_variables', 'FIREWORKS_API_KEY'],
+      values.fireworksApiEnabled ? values.env_variables.FIREWORKS_API_KEY : '',
+    );
+
+    // other fields
     form?.setFieldValue(['env_variables', 'TWIKIT_COOKIES'], cookies);
     form?.setFieldValue(
       'description',
       `Memeooorr @${values.env_variables.TWIKIT_USERNAME}`,
     );
 
-    confirmModal?.openModal();
+    confirmModal.openModal();
   };
 
   return (
@@ -93,7 +106,6 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
           rows={4}
         />
       </Form.Item>
-
       {/* Gemini credentials */}
       <Form.Item
         label="Gemini API key"
@@ -105,13 +117,16 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
       {geminiApiKeyValidationStatus === 'invalid' && (
         <InvalidGeminiApiCredentials />
       )}
-
+      {/* Fireworks API */}
+      <FireworksApiFields
+        fireworksApiEnabledName="fireworksApiEnabled"
+        fireworksApiKeyName={['env_variables', 'FIREWORKS_API_KEY']}
+      />
       {/* X */}
       <XAccountCredentials />
       {twitterCredentialsValidationStatus === 'invalid' && (
         <InvalidXCredentials />
       )}
-
       <Form.Item
         label="X Email"
         name={['env_variables', 'TWIKIT_EMAIL']}
@@ -157,11 +172,10 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
       >
         <Input.Password placeholder="X Password" />
       </Form.Item>
-
       {/* Hidden fields that need to be accessible in Confirm Update Modal */}
       <Form.Item name={['env_variables', 'TWIKIT_COOKIES']} hidden />
+      <Form.Item name={['env_variables', 'FIREWORKS_API_KEY']} hidden />
       <Form.Item name="description" hidden />
-
       <Form.Item hidden={!isEditing}>
         <Button
           size="large"
@@ -193,6 +207,9 @@ export const MemeUpdatePage = () => {
           acc.env_variables.PERSONA = value;
         } else if (key === 'GENAI_API_KEY') {
           acc.env_variables.GENAI_API_KEY = value;
+        } else if (key === 'FIREWORKS_API_KEY') {
+          acc.env_variables.FIREWORKS_API_KEY = value;
+          acc.fireworksApiEnabled = !!value;
         } else if (key === 'TWIKIT_EMAIL') {
           acc.env_variables.TWIKIT_EMAIL = value;
         } else if (key === 'TWIKIT_USERNAME') {
@@ -200,7 +217,6 @@ export const MemeUpdatePage = () => {
         } else if (key === 'TWIKIT_PASSWORD') {
           acc.env_variables.TWIKIT_PASSWORD = value;
         }
-
         return acc;
       },
       { env_variables: {} } as MemeooorrFormValues,
@@ -216,11 +232,11 @@ export const MemeUpdatePage = () => {
 
     const hasUnsavedChanges = !isEqual(unsavedFields, previousValues);
     if (hasUnsavedChanges) {
-      unsavedModal?.openModal?.();
+      unsavedModal.openModal();
     } else {
       goto(Pages.Main);
     }
-  }, [unsavedModal, goto, form, initialValues]);
+  }, [initialValues, form, unsavedModal, goto]);
 
   return (
     <CardLayout onClickBack={handleClickBack}>

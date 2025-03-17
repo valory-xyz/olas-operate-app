@@ -26,6 +26,7 @@ const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
 const { Scraper } = require('agent-twitter-client');
+const { checkUrl } = require('./utils');
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -48,6 +49,8 @@ if (isDev) {
       .catch((e) =>
         console.log('An error occurred on loading extensions: ', e),
       );
+
+    createAgentActivityWindow();
   });
 }
 
@@ -88,10 +91,16 @@ let appConfig = {
   },
 };
 
+const nextUrl = () =>
+  `http://localhost:${isDev ? appConfig.ports.dev.next : appConfig.ports.prod.next}`;
+
 /** @type {Electron.BrowserWindow | null} */
 let mainWindow = null;
 /** @type {Electron.BrowserWindow | null} */
 let splashWindow = null;
+/** @type {Electron.BrowserWindow | null} */
+let agentWindow = null;
+const getAgentWindow = () => agentWindow;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
@@ -249,7 +258,7 @@ const createSplashWindow = () => {
       contextIsolation: false,
     },
   });
-  splashWindow.loadURL('file://' + __dirname + '/loading/index.html');
+  splashWindow.loadURL('file://' + __dirname + '/resources/app-loading.html');
 
   if (isDev) {
     splashWindow.webContents.openDevTools();
@@ -261,6 +270,7 @@ const HEIGHT = 700;
  * Creates the main window
  */
 const createMainWindow = async () => {
+  if (mainWindow) return;
   const width = isDev ? 840 : APP_WIDTH;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
@@ -388,11 +398,38 @@ const createMainWindow = async () => {
     mainWindow.webContents.openDevTools();
   }
 
-  if (isDev) {
-    mainWindow.loadURL(`http://localhost:${appConfig.ports.dev.next}`);
+  await mainWindow.loadURL(nextUrl());
+};
+
+/**Create the agent specific window */
+/** @type {()=>Promise<BrowserWindow|undefined>} */
+const createAgentActivityWindow = async () => {
+  if (!getAgentWindow() || getActiveWindow()?.isDestroyed) {
+    agentWindow = new BrowserWindow({
+      title: 'Agent activity window',
+      frame: true,
+      maxHeight: 900,
+      maxWidth: 1200,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, 'preload.js'),
+      },
+      show: false,
+      paintWhenInitiallyHidden: true,
+      // parent: mainWindow,
+      autoHideMenuBar: true,
+    });
   } else {
-    mainWindow.loadURL(`http://localhost:${appConfig.ports.prod.next}`);
+    logger.electron('Agent activity window already exists');
   }
+
+  agentWindow.on('close', function (event) {
+    event.preventDefault();
+    agentWindow?.hide();
+  });
+
+  return agentWindow;
 };
 
 async function launchDaemon() {
@@ -509,9 +546,7 @@ async function launchNextApp() {
 
   logger.electron('Listening on Next App Server');
   server.listen(appConfig.ports.prod.next, () => {
-    logger.next(
-      `> Next server running on http://localhost:${appConfig.ports.prod.next}`,
-    );
+    logger.next(`> Next server running on ${nextUrl()}`);
   });
 }
 
@@ -623,7 +658,7 @@ ipcMain.on('check', async function (event, _argument) {
     }
 
     event.sender.send('response', 'Launching App');
-    await createMainWindow();
+    createMainWindow();
     tray = new PearlTray(getActiveWindow);
   } catch (e) {
     logger.electron(e);
@@ -872,4 +907,66 @@ ipcMain.handle('save-logs', async (_, data) => {
     });
 
   return result;
+});
+
+ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
+  logger.electron(`agent-activity-window-goto: ${url}`);
+
+  let agentWindow = getAgentWindow();
+  if (!agentWindow || agentWindow.isDestroyed()) {
+    agentWindow = await createAgentActivityWindow();
+  }
+  if (!agentWindow) {
+    logger.electron('Failed to create agent window');
+    return;
+  }
+
+  await agentWindow.loadURL(`file://${__dirname}/resources/agent-loading.html`);
+  logger.electron('Showing loading screen');
+
+  const checkAndLoadUrl = async () => {
+    logger.electron(`Starting URL check: ${url}`);
+
+    try {
+      if (await checkUrl(url)) {
+        await agentWindow.loadURL(url);
+        logger.electron(`Successfully loaded: ${url}`);
+        return true;
+      }
+    } catch (error) {
+      logger.electron(`Error checking URL: ${error.message}`);
+    }
+    return false;
+  };
+
+  if (await checkAndLoadUrl()) return;
+
+  const interval = setInterval(async () => {
+    if (await checkAndLoadUrl()) {
+      clearInterval(interval);
+    } else {
+      logger.electron(`Valid URL not available yet, retrying in 5s...`);
+    }
+  }, 5000);
+});
+
+ipcMain.handle('agent-activity-window-hide', () => {
+  logger.electron('agent-activity-window-hide');
+  if (!getAgentWindow() || getAgentWindow().isDestroyed()) return; // already destroyed
+  getAgentWindow()?.hide();
+});
+
+ipcMain.handle('agent-activity-window-show', () => {
+  logger.electron('agent-activity-window-show');
+  if (!getAgentWindow() || getAgentWindow().isDestroyed()) {
+    createAgentActivityWindow()?.then((aaw) => aaw.show());
+  } else {
+    getAgentWindow()?.show();
+  }
+});
+
+ipcMain.handle('agent-activity-window-minimize', () => {
+  logger.electron('agent-activity-window-minimize');
+  if (!getAgentWindow() || getAgentWindow().isDestroyed()) return; // nothing to minimize
+  getAgentWindow()?.then((aaw) => aaw.minimize());
 });

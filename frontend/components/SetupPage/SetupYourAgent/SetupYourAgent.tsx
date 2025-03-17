@@ -45,15 +45,6 @@ export const SetupYourAgent = () => {
         {selectedAgentType === AgentType.Modius && (
           <ModiusAgentForm serviceTemplate={serviceTemplate} />
         )}
-
-        <Text
-          type="secondary"
-          className="text-sm"
-          style={{ display: 'block', marginTop: '-16px' }}
-        >
-          You won’t be able to update your agent’s configuration after this
-          step.
-        </Text>
       </CardFlex>
     </ConfigProvider>
   );

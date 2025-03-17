@@ -9,6 +9,8 @@ import { Address } from '@/types/Address';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
 
+const { Title, Text } = Typography;
+
 const invalidAddressMessage = 'Please input a valid backup wallet address!';
 
 export const SetupBackupSigner = () => {
@@ -35,15 +37,15 @@ export const SetupBackupSigner = () => {
   };
 
   return (
-    <CardFlex>
+    <CardFlex noBorder>
       <SetupCreateHeader prev={SetupScreen.SetupSeedPhrase} />
-      <Typography.Title level={3}>Set backup wallet</Typography.Title>
+      <Title level={3}>Set backup wallet</Title>
       <Flex vertical gap={10}>
-        <Typography.Text>
+        <Text>
           To help keep your funds safe, we encourage you to add one of your
           existing crypto wallets as a backup. You may recover your funds to
           your backup wallet if you lose both your password and seed phrase.
-        </Typography.Text>
+        </Text>
 
         <FormFlex layout="vertical" form={form} onFinish={handleFinish}>
           <Form.Item
@@ -59,27 +61,17 @@ export const SetupBackupSigner = () => {
               },
             ]}
           >
-            <Input size="large" placeholder={'e.g. 0x12345...54321'} />
+            <Input size="large" placeholder="e.g. 0x12345...54321" />
           </Form.Item>
           <Button type="primary" size="large" htmlType="submit">
             Add backup wallet and continue
           </Button>
-          {/* 
-            Commented to protect users from skipping backup wallet setup during Alpha testing          
-            <Button
-              type="link"
-              size="large"
-              onClick={() => goto(SetupScreen.SetupEoaFunding)}
-            >
-              Skip for now
-            </Button> 
-          */}
         </FormFlex>
 
-        <Typography.Text type="secondary" className="text-sm">
+        <Text type="secondary" className="text-sm">
           Note that in the current version of the app, you will not be able to
           set up a backup wallet afterward. This functionality is coming soon.
-        </Typography.Text>
+        </Text>
       </Flex>
     </CardFlex>
   );

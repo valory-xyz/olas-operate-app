@@ -16,7 +16,6 @@ import { ServicesService } from '@/service/Services';
 import { Address } from '@/types/Address';
 
 import { CustomAlert } from '../Alert';
-import { FeatureNotEnabled } from '../FeatureNotEnabled';
 
 const { Text } = Typography;
 
@@ -41,11 +40,6 @@ const getWithdrawMessage = (agentType: AgentType) => {
       return `This will withdraw all funds from your account. ${afterWithdrawing}`;
   }
 };
-
-const agentsWithWithdrawalsComingSoon: AgentType[] = [
-  AgentType.Modius,
-  AgentType.Memeooorr,
-];
 
 const ServiceNotRunning = () => (
   <div className="mt-8">
@@ -78,13 +72,10 @@ const CompatibleMessage = () => (
 );
 
 export const WithdrawFunds = () => {
-  const {
-    selectedService,
-    refetch: refetchServices,
-    selectedAgentType,
-  } = useServices();
+  const { selectedService, refetch: refetchServices } = useServices();
   const { refetch: refetchMasterWallets } = useMasterWalletContext();
   const { updateBalances } = useBalanceContext();
+  const isWithdrawFundsEnabled = useFeatureFlag('withdraw-funds');
 
   const { service, isServiceRunning } = useService(
     selectedService?.service_config_id,
@@ -101,11 +92,6 @@ export const WithdrawFunds = () => {
   const countdownDisplay = useStakingContractCountdown({
     currentStakingContractInfo: selectedStakingContractDetails,
   });
-
-  const isComingSoon = useMemo(
-    () => agentsWithWithdrawalsComingSoon.includes(selectedAgentType),
-    [selectedAgentType],
-  );
 
   const showModal = useCallback(() => {
     setIsModalVisible(true);
@@ -169,24 +155,8 @@ export const WithdrawFunds = () => {
     handleCancel,
   ]);
 
-  const withdrawAllButton = useMemo(
-    () => (
-      <Button
-        onClick={showModal}
-        block
-        size="large"
-        disabled={
-          !service || !isServiceStakedForMinimumDuration || isComingSoon
-        }
-      >
-        Withdraw all funds
-      </Button>
-    ),
-    [showModal, service, isServiceStakedForMinimumDuration, isComingSoon],
-  );
-
-  const withdrawAllTooltip = useMemo(() => {
-    if (isComingSoon) {
+  const withdrawAllTooltipText = useMemo(() => {
+    if (!isWithdrawFundsEnabled) {
       return 'Available soon!';
     }
 
@@ -196,20 +166,38 @@ export const WithdrawFunds = () => {
     }
 
     return null;
-  }, [countdownDisplay, isComingSoon, isServiceStakedForMinimumDuration]);
+  }, [
+    countdownDisplay,
+    isServiceStakedForMinimumDuration,
+    isWithdrawFundsEnabled,
+  ]);
 
   const modalButtonText = useMemo(() => {
-    if (isWithdrawalLoading) return 'Loading';
+    if (isWithdrawalLoading) return 'Loading...';
     return 'Proceed';
   }, [isWithdrawalLoading]);
 
-  const isWithdrawFundsEnabled = useFeatureFlag('withdraw-funds');
-  if (!isWithdrawFundsEnabled) return <FeatureNotEnabled />;
-
   return (
     <>
-      <Tooltip title={<Text className="text-sm">{withdrawAllTooltip}</Text>}>
-        {withdrawAllButton}
+      <Tooltip
+        title={
+          withdrawAllTooltipText ? (
+            <Text className="text-sm">{withdrawAllTooltipText}</Text>
+          ) : null
+        }
+      >
+        <Button
+          onClick={showModal}
+          disabled={
+            !service ||
+            !isServiceStakedForMinimumDuration ||
+            !isWithdrawFundsEnabled
+          }
+          block
+          size="large"
+        >
+          Withdraw all funds
+        </Button>
       </Tooltip>
 
       {!isServiceRunning && <ServiceNotRunning />}
