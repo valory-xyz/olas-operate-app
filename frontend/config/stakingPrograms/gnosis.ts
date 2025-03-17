@@ -9,10 +9,20 @@ import { Address } from '@/types/Address';
 
 import { GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { MECHS, MechType } from '../mechs';
-import { StakingProgramMap } from '.';
+import { StakingProgramConfig } from './index';
+
+export type GnosisStakingProgramId =
+  | StakingProgramId.PearlAlpha
+  | StakingProgramId.PearlBeta
+  | StakingProgramId.PearlBeta2
+  | StakingProgramId.PearlBeta3
+  | StakingProgramId.PearlBeta4
+  | StakingProgramId.PearlBeta5
+  | StakingProgramId.PearlBeta6
+  | StakingProgramId.PearlBetaMechMarketplace;
 
 export const GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
-  string,
+  GnosisStakingProgramId,
   Address
 > = {
   [StakingProgramId.PearlAlpha]: '0xEE9F19b5DF06c7E8Bfc7B28745dcf944C504198A',
@@ -26,7 +36,10 @@ export const GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
     '0xDaF34eC46298b53a3d24CBCb431E84eBd23927dA',
 } as const;
 
-export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
+export const GNOSIS_STAKING_PROGRAMS: Record<
+  GnosisStakingProgramId,
+  StakingProgramConfig
+> = {
   [StakingProgramId.PearlAlpha]: {
     deprecated: true,
     name: 'Pearl Alpha',
@@ -131,7 +144,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       [TokenSymbol.OLAS]: 5000,
     },
-    mechType: MechType.Agent,
+    mechType: MechType.Marketplace,
     mech: MECHS[EvmChainId.Gnosis][MechType.Marketplace].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.PearlBeta6],

@@ -185,9 +185,13 @@ export abstract class AgentsFunService extends StakedAgentService {
 
     const getStakingTokenConfig = () => {
       if (chainId === EvmChainId.Celo)
-        return CELO_STAKING_PROGRAMS[stakingProgramId];
+        return CELO_STAKING_PROGRAMS[
+          stakingProgramId as keyof typeof CELO_STAKING_PROGRAMS
+        ];
       if (chainId === EvmChainId.Base)
-        return BASE_STAKING_PROGRAMS[stakingProgramId];
+        return BASE_STAKING_PROGRAMS[
+          stakingProgramId as keyof typeof BASE_STAKING_PROGRAMS
+        ];
       return null;
     };
 

@@ -5,11 +5,13 @@ import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 
-export const StakingContractDetails = ({
-  stakingProgramId,
-}: {
+type StakingContractDetailsBreakdownProps = {
   stakingProgramId: StakingProgramId;
-}) => {
+};
+
+export const StakingContractDetailsBreakdown = ({
+  stakingProgramId,
+}: StakingContractDetailsBreakdownProps) => {
   const {
     allStakingContractDetailsRecord,
     isAllStakingContractDetailsRecordLoaded,
@@ -53,16 +55,6 @@ export const StakingContractDetails = ({
   }
 
   if (!allStakingContractDetailsRecord || !list || list.length === 0) {
-    return (
-      <Alert
-        message="No staking information available."
-        type="error"
-        showIcon
-      />
-    );
-  }
-
-  if (!list || list.length === 0) {
     return (
       <Alert
         message="No staking information available."

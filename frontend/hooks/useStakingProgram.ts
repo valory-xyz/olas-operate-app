@@ -5,6 +5,7 @@ import {
   STAKING_PROGRAMS,
 } from '@/config/stakingPrograms';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 import { Nullable } from '@/types/Util';
 
@@ -27,8 +28,9 @@ export const useStakingProgram = () => {
     return STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId];
   }, [selectedAgentConfig.evmHomeChainId]);
 
-  const allStakingProgramNameAddressPair =
-    STAKING_PROGRAM_ADDRESS[selectedAgentConfig.evmHomeChainId];
+  const allStakingProgramNameAddressPair = STAKING_PROGRAM_ADDRESS[
+    selectedAgentConfig.evmHomeChainId
+  ] as Record<StakingProgramId, Address>;
 
   const activeStakingProgramMeta = useMemo(() => {
     if (!isActiveStakingProgramLoaded) return null;
@@ -78,8 +80,12 @@ export const useStakingProgram = () => {
     selectedStakingProgramMeta,
 
     // all staking programs
-    allStakingProgramIds: Object.keys(allStakingProgramNameAddressPair),
-    allStakingProgramAddress: Object.values(allStakingProgramNameAddressPair),
+    allStakingProgramIds: Object.keys(
+      allStakingProgramNameAddressPair,
+    ) as StakingProgramId[],
+    allStakingProgramAddress: Object.values(
+      allStakingProgramNameAddressPair,
+    ) as Address[],
     allStakingProgramsMeta,
   };
 };

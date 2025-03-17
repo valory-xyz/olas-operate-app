@@ -11,7 +11,7 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { CantMigrateAlert } from './CantMigrateAlert';
 import { MigrateButton } from './MigrateButton';
-import { StakingContractDetails } from './StakingContractDetails';
+import { StakingContractDetailsBreakdown } from './StakingContractDetailsBreakdown';
 import { StakingContractFundingButton } from './StakingContractFundingButton';
 import { CantMigrateReason, useMigrate } from './useMigrate';
 
@@ -30,6 +30,7 @@ export const StakingContractTag = ({ status }: StakingContractTagProps) => {
 };
 
 type StakingContractSectionProps = { stakingProgramId: StakingProgramId };
+
 export const StakingContractSection = ({
   stakingProgramId,
 }: StakingContractSectionProps) => {
@@ -44,15 +45,7 @@ export const StakingContractSection = ({
   } = useStakingProgram();
   const { selectedAgentConfig } = useServices();
 
-  // /**
-  //  * Returns `true` if this stakingProgram is active,
-  //  * or user is unstaked and this is the default
-  //  */
-  // const isActiveStakingProgram = useMemo(() => {
-  //   if (activeStakingProgramId === null)
-  //     return defaultStakingProgramId === stakingProgramId;
-  //   return activeStakingProgramId === stakingProgramId;
-  // }, [activeStakingProgramId, defaultStakingProgramId, stakingProgramId]);
+  const evmChainId = selectedAgentConfig.evmHomeChainId;
 
   const contractTagStatus = useMemo(() => {
     if (!isActiveStakingProgramLoaded) return null;
@@ -92,8 +85,6 @@ export const StakingContractSection = ({
     );
   }, [isActiveStakingProgramLoaded, migrateValidation]);
 
-  const evmChainId = selectedAgentConfig.evmHomeChainId;
-
   return (
     <CardSection
       style={{
@@ -111,7 +102,7 @@ export const StakingContractSection = ({
         <StakingContractTag status={contractTagStatus} />
       </Flex>
 
-      <StakingContractDetails stakingProgramId={stakingProgramId} />
+      <StakingContractDetailsBreakdown stakingProgramId={stakingProgramId} />
 
       {evmChainId && (
         <AddressLink

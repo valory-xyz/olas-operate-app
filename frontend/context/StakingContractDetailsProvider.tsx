@@ -21,6 +21,7 @@ import {
   ServiceStakingDetails,
   StakingContractDetails,
 } from '@/types/Autonolas';
+import { Nullable } from '@/types/Util';
 
 import { StakingProgramContext } from './StakingProgramProvider';
 
@@ -39,10 +40,7 @@ const useAllStakingContractDetails = () => {
         programId,
       ),
       queryFn: async () =>
-        serviceApi.getStakingContractDetails(
-          programId as StakingProgramId,
-          evmHomeChainId,
-        ),
+        serviceApi.getStakingContractDetails(programId, evmHomeChainId),
       onError: (error: Error) => {
         console.error(
           `Error fetching staking details for ${programId}:`,
@@ -65,7 +63,7 @@ const useAllStakingContractDetails = () => {
       }
       return record;
     },
-    {} as Record<string, Partial<StakingContractDetails>>,
+    {} as Record<StakingProgramId, Partial<StakingContractDetails>>,
   );
 
   // TODO: some are failing, not sure why.
@@ -150,6 +148,9 @@ type StakingContractDetailsContextProps = {
   isAllStakingContractDetailsRecordLoaded: boolean;
   refetchSelectedStakingContractDetails: () => Promise<void>;
   setIsPaused: Dispatch<SetStateAction<boolean>>;
+  setActiveStakingProgramId: (
+    stakingProgramId: Nullable<StakingProgramId>,
+  ) => void;
 };
 
 /**
@@ -163,6 +164,7 @@ export const StakingContractDetailsContext =
     refetchSelectedStakingContractDetails: async () => {},
     isPaused: false,
     setIsPaused: () => {},
+    setActiveStakingProgramId: () => {},
   });
 
 /**
@@ -174,7 +176,9 @@ export const StakingContractDetailsProvider = ({
   const [isPaused, setIsPaused] = useState(false);
   const { selectedService } = useServices();
   const { serviceNftTokenId } = useService(selectedService?.service_config_id);
-  const { selectedStakingProgramId } = useContext(StakingProgramContext);
+  const { selectedStakingProgramId, setActiveStakingProgramId } = useContext(
+    StakingProgramContext,
+  );
 
   const {
     data: selectedStakingContractDetails,
@@ -200,6 +204,7 @@ export const StakingContractDetailsProvider = ({
         selectedStakingContractDetails,
         isSelectedStakingContractDetailsLoading: isLoading,
         refetchSelectedStakingContractDetails,
+        setActiveStakingProgramId,
 
         // all staking contract details
         isAllStakingContractDetailsRecordLoaded:
