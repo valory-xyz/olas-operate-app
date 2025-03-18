@@ -21,7 +21,7 @@ export const OPERATE_URL: Url = 'https://olas.network/operate';
 export const FAQ_URL: Url = 'https://olas.network/operate#faq';
 export const TERMS_AND_CONDITIONS_URL: Url = 'https://olas.network/pearl-terms';
 export const DOWNLOAD_URL_PUBLIC: Url = 'https://olas.network/operate#download';
-export const DOWNLOAD_URL_EA: Url = 'https://olas.network/operate#download';
+export const DOWNLOAD_URL_EA: Url = 'https://olas.network/ea-all';
 
 // thegraph
 export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN = {

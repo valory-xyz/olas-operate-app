@@ -5,7 +5,7 @@ import { AddBackupWalletAlert } from './AddBackupWalletAlert';
 import { AvoidSuspensionAlert } from './AvoidSuspensionAlert';
 import { LowFunds } from './LowFunds/LowFunds';
 import { NoAvailableSlotsOnTheContract } from './NoAvailableSlotsOnTheContract';
-import { UpdateAvailableAlert } from './UpdateAvailableAlert';
+import { UpdateAvailableAlert } from './UpdateAvailableAlert/UpdateAvailableAlert';
 import { YourAgentCannotSignIn } from './YourAgentCannotSignIn';
 
 export const AlertSections = () => {

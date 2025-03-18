@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Flex } from 'antd';
+import { Flex, Typography } from 'antd';
 import useToken from 'antd/es/theme/useToken';
 import semver from 'semver';
 
@@ -13,6 +13,10 @@ import {
 } from '@/constants/urls';
 import { useElectronApi } from '@/hooks/useElectronApi';
 
+import { getLatestEaRelease } from './getLatestEaRelease';
+
+const { Text } = Typography;
+
 enum SemverComparisonResult {
   OUTDATED = -1,
   EQUAL = 0,
@@ -21,20 +25,9 @@ enum SemverComparisonResult {
 
 type GithubRelease = { tag_name: string };
 
-const isEaRelease = false; // TODO
+const isEaRelease = true; // TODO
 
-const isNewEaReleaseAvailable = (oldVersion: string, newVersion: string) => {
-  const oldClean = oldVersion.replace(/-all$/, '');
-  const newClean = newVersion.replace(/-all$/, '');
-
-  if (!oldClean || !newClean) return false;
-  return semver.gt(newClean, oldClean);
-};
-
-const isNewPublicReleaseAvailable = (
-  oldVersion: string,
-  newVersion: string,
-) => {
+const isNewReleaseAvailable = (oldVersion: string, newVersion: string) => {
   const latestVersion = semver.parse(newVersion);
   const currentVersion = semver.parse(oldVersion);
 
@@ -55,25 +48,19 @@ const isNewPublicReleaseAvailable = (
   return comparison === SemverComparisonResult.OUTDATED;
 };
 
-const getLatestPublicRelease = async (): Promise<string | null> => {
-  return '0.2.0-rc245-all';
+const isNewEaReleaseAvailable = (oldVersion: string, newVersion: string) => {
+  const oldClean = oldVersion.replace(/-all$/, '');
+  const newClean = newVersion.replace(/-all$/, '');
 
-  const response = await fetch(GITHUB_API_LATEST_RELEASE);
-  if (!response.ok) return null;
-
-  const data: GithubRelease = await response.json();
-  console.log('data', data);
-  return data.tag_name;
+  if (!oldClean || !newClean) return false;
+  return isNewReleaseAvailable(oldClean, newClean);
 };
 
-const getLatestEaRelease = async (): Promise<string | null> => {
-  return '0.2.0-rc245-all';
-
+const getLatestPublicRelease = async (): Promise<string | null> => {
   const response = await fetch(GITHUB_API_LATEST_RELEASE);
   if (!response.ok) return null;
 
   const data: GithubRelease = await response.json();
-  console.log('data', data);
   return data.tag_name;
 };
 
@@ -92,19 +79,15 @@ export const UpdateAvailableAlert = () => {
       const appVersion = await getAppVersion();
       if (!appVersion) return false;
 
-      if (isEaRelease) {
-        const latestVersionString = await getLatestEaRelease();
-        if (!latestVersionString) return false;
+      const latestVersion = isEaRelease
+        ? await getLatestEaRelease()
+        : await getLatestPublicRelease();
+      if (!latestVersion) return false;
 
-        return isNewEaReleaseAvailable(appVersion, latestVersionString);
-      }
-
-      const latestVersionString = await getLatestPublicRelease();
-      if (!latestVersionString) return false;
-
+      // console.log('isEaRelease', isEaRelease, { appVersion, latestVersion });
       return isEaRelease
-        ? isNewEaReleaseAvailable(appVersion, latestVersionString)
-        : isNewPublicReleaseAvailable(appVersion, latestVersionString);
+        ? isNewEaReleaseAvailable(appVersion, latestVersion)
+        : isNewReleaseAvailable(appVersion, latestVersion);
     },
     refetchInterval: FIVE_MINUTES_INTERVAL,
   });
@@ -120,7 +103,7 @@ export const UpdateAvailableAlert = () => {
       showIcon
       message={
         <Flex align="center" justify="space-between" gap={2}>
-          <span>A new version of Pearl is available</span>
+          <Text>A new version of Pearl is available</Text>
           <a
             href={isEaRelease ? DOWNLOAD_URL_EA : DOWNLOAD_URL_PUBLIC}
             target="_blank"
