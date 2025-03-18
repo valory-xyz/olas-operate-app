@@ -116,6 +116,9 @@ const useGetPearlOutdated = () => {
   });
 };
 
+/**
+ * Display an alert if a new version of Pearl is available
+ */
 export const UpdateAvailableAlert = () => {
   const [, token] = useToken();
   const { data: isPearlOutdated, isFetched } = useGetPearlOutdated();
