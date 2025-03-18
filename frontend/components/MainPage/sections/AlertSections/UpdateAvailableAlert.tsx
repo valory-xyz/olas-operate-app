@@ -19,15 +19,45 @@ enum SemverComparisonResult {
   UPDATED = 1,
 }
 
-const isEaRelease = false;
+type GithubRelease = { tag_name: string };
+
+const isEaRelease = false; // TODO
+
+const isNewEaReleaseAvailable = (oldVersion: string, newVersion: string) => {
+  const oldClean = oldVersion.replace(/-all$/, '');
+  const newClean = newVersion.replace(/-all$/, '');
+
+  if (!oldClean || !newClean) return false;
+  return semver.gt(newClean, oldClean);
+};
+
+const isNewPublicReleaseAvailable = (
+  oldVersion: string,
+  newVersion: string,
+) => {
+  if (!oldVersion || !newVersion) return false;
+  return semver.gt(newVersion, oldVersion);
+};
+
+const getLatestPublicRelease = async (): Promise<string | null> => {
+  return '0.2.0-rc245-all';
+
+  const response = await fetch(GITHUB_API_LATEST_RELEASE);
+  if (!response.ok) return null;
+
+  const data: GithubRelease = await response.json();
+  console.log('data', data);
+  return data.tag_name;
+};
 
 export const UpdateAvailableAlert = () => {
   const { getAppVersion } = useElectronApi();
   const [, token] = useToken();
 
-  const { data: isPearlOutdated, isFetched } = useQuery<boolean>({
+  const { data: isPearlOutdated, isFetched } = useQuery({
     queryKey: ['isPearlOutdated'],
     queryFn: async (): Promise<boolean> => {
+      console.log('getAppVersion', getAppVersion);
       if (!getAppVersion) {
         console.error('electronAPI.getAppVersion is not available in Window');
         return false;
@@ -35,14 +65,16 @@ export const UpdateAvailableAlert = () => {
 
       const appVersion = await getAppVersion();
       if (!appVersion) return false;
+      console.log('appVersion', appVersion);
 
-      const response = await fetch(GITHUB_API_LATEST_RELEASE);
-      if (!response.ok) return false;
+      const latestTag = await getLatestPublicRelease();
+      if (!latestTag) return false;
+      console.log('latestTag', latestTag);
 
-      const data = await response.json();
-      const latestTag = data.tag_name;
       const latestVersion = semver.parse(latestTag);
       const currentVersion = semver.parse(appVersion);
+
+      console.log('latestVersion', { latestVersion, currentVersion });
 
       if (!latestVersion || !currentVersion) {
         return false;
@@ -52,6 +84,7 @@ export const UpdateAvailableAlert = () => {
         appVersion,
         latestVersion,
       );
+      console.log('comparison', comparison);
 
       return comparison === SemverComparisonResult.OUTDATED;
     },
@@ -85,3 +118,9 @@ export const UpdateAvailableAlert = () => {
     />
   );
 };
+
+/**
+ * - How to add IS_EA_RELEASE in the build so it is available in the process.env
+ * - Ask Admin to add Github token to actually get the draft releases version (ea is a draft release)
+ * - Test: Once really released, test if the alert is shown and navigate to the "EA" download link
+ */
