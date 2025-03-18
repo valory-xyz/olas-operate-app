@@ -35,11 +35,38 @@ const isNewPublicReleaseAvailable = (
   oldVersion: string,
   newVersion: string,
 ) => {
-  if (!oldVersion || !newVersion) return false;
-  return semver.gt(newVersion, oldVersion);
+  const latestVersion = semver.parse(newVersion);
+  const currentVersion = semver.parse(oldVersion);
+
+  if (!latestVersion || !currentVersion) return false;
+
+  // console.log('latestVersion', {
+  //   newVersion,
+  //   oldVersion,
+  //   latestVersion,
+  //   currentVersion,
+  // });
+
+  const comparison: SemverComparisonResult = semver.compare(
+    currentVersion,
+    latestVersion,
+  );
+
+  return comparison === SemverComparisonResult.OUTDATED;
 };
 
 const getLatestPublicRelease = async (): Promise<string | null> => {
+  return '0.2.0-rc245-all';
+
+  const response = await fetch(GITHUB_API_LATEST_RELEASE);
+  if (!response.ok) return null;
+
+  const data: GithubRelease = await response.json();
+  console.log('data', data);
+  return data.tag_name;
+};
+
+const getLatestEaRelease = async (): Promise<string | null> => {
   return '0.2.0-rc245-all';
 
   const response = await fetch(GITHUB_API_LATEST_RELEASE);
@@ -57,7 +84,6 @@ export const UpdateAvailableAlert = () => {
   const { data: isPearlOutdated, isFetched } = useQuery({
     queryKey: ['isPearlOutdated'],
     queryFn: async (): Promise<boolean> => {
-      console.log('getAppVersion', getAppVersion);
       if (!getAppVersion) {
         console.error('electronAPI.getAppVersion is not available in Window');
         return false;
@@ -65,28 +91,20 @@ export const UpdateAvailableAlert = () => {
 
       const appVersion = await getAppVersion();
       if (!appVersion) return false;
-      console.log('appVersion', appVersion);
 
-      const latestTag = await getLatestPublicRelease();
-      if (!latestTag) return false;
-      console.log('latestTag', latestTag);
+      if (isEaRelease) {
+        const latestVersionString = await getLatestEaRelease();
+        if (!latestVersionString) return false;
 
-      const latestVersion = semver.parse(latestTag);
-      const currentVersion = semver.parse(appVersion);
-
-      console.log('latestVersion', { latestVersion, currentVersion });
-
-      if (!latestVersion || !currentVersion) {
-        return false;
+        return isNewEaReleaseAvailable(appVersion, latestVersionString);
       }
 
-      const comparison: SemverComparisonResult = semver.compare(
-        appVersion,
-        latestVersion,
-      );
-      console.log('comparison', comparison);
+      const latestVersionString = await getLatestPublicRelease();
+      if (!latestVersionString) return false;
 
-      return comparison === SemverComparisonResult.OUTDATED;
+      return isEaRelease
+        ? isNewEaReleaseAvailable(appVersion, latestVersionString)
+        : isNewPublicReleaseAvailable(appVersion, latestVersionString);
     },
     refetchInterval: FIVE_MINUTES_INTERVAL,
   });
