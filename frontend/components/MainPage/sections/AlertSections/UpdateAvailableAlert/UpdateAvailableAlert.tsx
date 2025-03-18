@@ -1,3 +1,4 @@
+import { Octokit } from '@octokit/core';
 import { useQuery } from '@tanstack/react-query';
 import { Flex, Typography } from 'antd';
 import useToken from 'antd/es/theme/useToken';
@@ -13,9 +14,11 @@ import {
 } from '@/constants/urls';
 import { useElectronApi } from '@/hooks/useElectronApi';
 
-import { getLatestEaRelease } from './getLatestEaRelease';
-
 const { Text } = Typography;
+
+const OCTOKIT = new Octokit({
+  auth: process.env.NEXT_PUBLIC_GITHUB_AUTH_TOKEN,
+});
 
 enum SemverComparisonResult {
   OUTDATED = -1,
@@ -27,18 +30,12 @@ type GithubRelease = { tag_name: string };
 
 const isEaRelease = true; // TODO
 
+/** Compare two versions of a PUBLIC release and return if the new version is available */
 const isNewReleaseAvailable = (oldVersion: string, newVersion: string) => {
   const latestVersion = semver.parse(newVersion);
   const currentVersion = semver.parse(oldVersion);
 
   if (!latestVersion || !currentVersion) return false;
-
-  // console.log('latestVersion', {
-  //   newVersion,
-  //   oldVersion,
-  //   latestVersion,
-  //   currentVersion,
-  // });
 
   const comparison: SemverComparisonResult = semver.compare(
     currentVersion,
@@ -48,6 +45,7 @@ const isNewReleaseAvailable = (oldVersion: string, newVersion: string) => {
   return comparison === SemverComparisonResult.OUTDATED;
 };
 
+/** Compare two versions of EA release and return if the new version is available */
 const isNewEaReleaseAvailable = (oldVersion: string, newVersion: string) => {
   const oldClean = oldVersion.replace(/-all$/, '');
   const newClean = newVersion.replace(/-all$/, '');
@@ -56,6 +54,7 @@ const isNewEaReleaseAvailable = (oldVersion: string, newVersion: string) => {
   return isNewReleaseAvailable(oldClean, newClean);
 };
 
+/** Get the latest public release from the Github API */
 const getLatestPublicRelease = async (): Promise<string | null> => {
   const response = await fetch(GITHUB_API_LATEST_RELEASE);
   if (!response.ok) return null;
@@ -64,11 +63,36 @@ const getLatestPublicRelease = async (): Promise<string | null> => {
   return data.tag_name;
 };
 
-export const UpdateAvailableAlert = () => {
-  const { getAppVersion } = useElectronApi();
-  const [, token] = useToken();
+type Tag = { name: string };
 
-  const { data: isPearlOutdated, isFetched } = useQuery({
+/** Get the latest EA release from the Github API */
+const getLatestEaRelease = async () => {
+  try {
+    const tags = await OCTOKIT.request(
+      'GET /repos/valory-xyz/olas-operate-app/tags',
+      {
+        headers: { 'X-GitHub-Api-Version': '2022-11-28' },
+      },
+    );
+
+    const allTags: Tag[] = tags.data;
+
+    // Find the latest tag that ends with `-all`
+    const latestTag = allTags.find((item: Tag) => item.name.endsWith(`-all`));
+    if (!latestTag) return null;
+
+    return latestTag.name;
+  } catch (error) {
+    console.error(error);
+  }
+
+  return null;
+};
+
+const useGetPearlOutdated = () => {
+  const { getAppVersion } = useElectronApi();
+
+  return useQuery({
     queryKey: ['isPearlOutdated'],
     queryFn: async (): Promise<boolean> => {
       if (!getAppVersion) {
@@ -84,17 +108,19 @@ export const UpdateAvailableAlert = () => {
         : await getLatestPublicRelease();
       if (!latestVersion) return false;
 
-      // console.log('isEaRelease', isEaRelease, { appVersion, latestVersion });
       return isEaRelease
         ? isNewEaReleaseAvailable(appVersion, latestVersion)
         : isNewReleaseAvailable(appVersion, latestVersion);
     },
     refetchInterval: FIVE_MINUTES_INTERVAL,
   });
+};
 
-  if (!isFetched || !isPearlOutdated) {
-    return null;
-  }
+export const UpdateAvailableAlert = () => {
+  const [, token] = useToken();
+  const { data: isPearlOutdated, isFetched } = useGetPearlOutdated();
+
+  if (!isFetched || !isPearlOutdated) return null;
 
   return (
     <CustomAlert
