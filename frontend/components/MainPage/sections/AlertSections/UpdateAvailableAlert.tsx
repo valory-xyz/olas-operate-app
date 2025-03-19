@@ -16,6 +16,8 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 
 const { Text } = Typography;
 
+const IS_EA_RELEASE = process.env.IS_EA;
+
 const OCTOKIT = new Octokit({
   auth: process.env.NEXT_PUBLIC_GITHUB_AUTH_TOKEN,
 });
@@ -25,10 +27,6 @@ enum SemverComparisonResult {
   EQUAL = 0,
   UPDATED = 1,
 }
-
-type GithubRelease = { tag_name: string };
-
-const isEaRelease = true; // TODO
 
 /** Compare two versions of a release and return if the new version is available */
 const isNewReleaseAvailable = (oldVersion: string, newVersion: string) => {
@@ -53,6 +51,8 @@ const isNewEaReleaseAvailable = (oldVersion: string, newVersion: string) => {
   if (!oldClean || !newClean) return false;
   return isNewReleaseAvailable(oldClean, newClean);
 };
+
+type GithubRelease = { tag_name: string };
 
 /** Get the latest public release from the Github API */
 const getLatestPublicRelease = async (): Promise<string | null> => {
@@ -103,12 +103,12 @@ const useGetPearlOutdated = () => {
       const appVersion = await getAppVersion();
       if (!appVersion) return false;
 
-      const latestVersion = isEaRelease
+      const latestVersion = IS_EA_RELEASE
         ? await getLatestEaRelease()
         : await getLatestPublicRelease();
       if (!latestVersion) return false;
 
-      return isEaRelease
+      return IS_EA_RELEASE
         ? isNewEaReleaseAvailable(appVersion, latestVersion)
         : isNewReleaseAvailable(appVersion, latestVersion);
     },
@@ -117,7 +117,7 @@ const useGetPearlOutdated = () => {
 };
 
 /**
- * Display an alert if a new version of Pearl is available
+ * Display an alert if a new version of Pearl is available.
  */
 export const UpdateAvailableAlert = () => {
   const [, token] = useToken();
@@ -134,7 +134,7 @@ export const UpdateAvailableAlert = () => {
         <Flex align="center" justify="space-between" gap={2}>
           <Text>A new version of Pearl is available</Text>
           <a
-            href={isEaRelease ? DOWNLOAD_URL_EA : DOWNLOAD_URL_PUBLIC}
+            href={IS_EA_RELEASE ? DOWNLOAD_URL_EA : DOWNLOAD_URL_PUBLIC}
             target="_blank"
           >
             Download{' '}
@@ -148,9 +148,3 @@ export const UpdateAvailableAlert = () => {
     />
   );
 };
-
-/**
- * - How to add IS_EA_RELEASE in the build so it is available in the process.env
- * - Ask Admin to add Github token to actually get the draft releases version (ea is a draft release)
- * - Test: Once really released, test if the alert is shown and navigate to the "EA" download link
- */
