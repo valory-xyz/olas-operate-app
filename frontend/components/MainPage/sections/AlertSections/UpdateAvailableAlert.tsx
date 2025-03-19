@@ -6,7 +6,7 @@ import semver from 'semver';
 
 import { CustomAlert } from '@/components/Alert';
 import { ArrowUpRightSvg } from '@/components/custom-icons/ArrowUpRight';
-import { FIVE_MINUTES_INTERVAL } from '@/constants/intervals';
+import { FIVE_MINUTE_INTERVAL } from '@/constants/intervals';
 import {
   DOWNLOAD_URL_EA,
   DOWNLOAD_URL_PUBLIC,
@@ -123,7 +123,7 @@ const useGetPearlOutdated = () => {
         ? isNewEaReleaseAvailable(appVersion, latestVersion)
         : isNewReleaseAvailable(appVersion, latestVersion);
     },
-    refetchInterval: FIVE_MINUTES_INTERVAL,
+    refetchInterval: FIVE_MINUTE_INTERVAL,
   });
 };
 
