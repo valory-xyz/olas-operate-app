@@ -135,7 +135,7 @@ jobs:
           MODE_RPC: ${{ matrix.MODE_RPC }}
           CELO_RPC: ${{ matrix.CELO_RPC }}
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
-          NEXT_PUBLIC_IS_EA: ${{ contains(github.ref_name, '-all') && 'true' || 'false' }}
+          NEXT_PUBLIC_IS_EA: ${{ contains(github.ref_name, '-all') && 'true' || 'true' }}
           GH_TOKEN: ${{ secrets.github_token }}
           GITHUB_PAT: ${{ secrets.github_token }}
         run: |
