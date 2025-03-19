@@ -14,6 +14,11 @@ type ElectronApiAgentActivityWindow = {
   minimize: () => void;
 };
 
+type GithubReleaseDetails = {
+  tags: { name: string }[];
+  latestEaVersion: string;
+};
+
 type ElectronApiContextProps = {
   getAppVersion?: () => Promise<string>;
   setIsAppLoaded?: (isLoaded: boolean) => void;
@@ -56,6 +61,7 @@ type ElectronApiContextProps = {
     { response: AgentHealthCheck | null } | { error: string }
   >;
   agentActivityWindow?: Partial<ElectronApiAgentActivityWindow>;
+  githubReleaseTags?: () => Promise<GithubReleaseDetails[]>;
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -131,6 +137,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         openPath: getElectronApiFunction('openPath'),
         validateTwitterLogin: getElectronApiFunction('validateTwitterLogin'),
         healthCheck: getElectronApiFunction('healthCheck'),
+        githubReleaseTags: getElectronApiFunction('githubReleaseTags'),
         agentActivityWindow: {
           init: getElectronApiFunction('agentActivityWindow.init'),
           goto: getElectronApiFunction('agentActivityWindow.goto'),

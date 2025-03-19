@@ -90,7 +90,7 @@ const getLatestEaRelease = async () => {
 };
 
 const useGetPearlOutdated = () => {
-  const { getAppVersion } = useElectronApi();
+  const { getAppVersion, githubReleaseTags } = useElectronApi();
 
   return useQuery({
     queryKey: ['isPearlOutdated'],
@@ -106,14 +106,21 @@ const useGetPearlOutdated = () => {
       const latestVersion = IS_EA_RELEASE
         ? await getLatestEaRelease()
         : await getLatestPublicRelease();
+
+      if (githubReleaseTags) {
+        window.console.log('githubReleaseTags >> ', await githubReleaseTags());
+      }
+
       if (!latestVersion) return false;
 
       // TODO: Remove this console.log
       window.console.log({
         appVersion,
         latestVersion,
-        IS_EA_RELEASE,
+        NEXT_PUBLIC_IS_EA: process.env.NEXT_PUBLIC_IS_EA,
         IS_EA: process.env.IS_EA,
+        NODE_ENV: process.env.NODE_ENV,
+        modeChainRpcFromEnv: process.env.MODE_CHAIN_RPC,
         firstFewCharsOfToken: process.env.GH_TOKEN?.slice(0, 20),
         latestEaRelease: getLatestEaRelease(),
       });

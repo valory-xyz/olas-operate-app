@@ -27,6 +27,7 @@ const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
 const { Scraper } = require('agent-twitter-client');
 const { checkUrl } = require('./utils');
+const { registerGithubIpcHandlers } = require('./handlers/github');
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -369,6 +370,9 @@ const createMainWindow = async () => {
     }
   });
 
+  // other ipc handlers
+  registerGithubIpcHandlers();
+
   mainWindow.webContents.on('did-fail-load', () => {
     mainWindow.webContents.reloadIgnoringCache();
   });
@@ -562,6 +566,7 @@ async function launchNextAppDev() {
           ...process.env,
           NEXT_PUBLIC_BACKEND_PORT: appConfig.ports.dev.operate,
           NEXT_PUBLIC_PEARL_VERSION: app.getVersion(),
+          NEXT_PUBLIC_IS_EA: process.env.IS_EA,
         },
       },
     );
