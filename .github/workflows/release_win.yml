@@ -158,14 +158,13 @@ jobs:
     steps:
       - name: Determine if the tag is Early Access (-all)
         id: set_env
-        shell: pwsh
+        shell: bash
         run: |
-          $tag = "${env:GITHUB_REF}" -replace 'refs/tags/', ''
+          tag="${GITHUB_REF#refs/tags/}"
           echo "Tag detected: $tag"
 
-          if ($tag -like "*-all") {
-            $isEA = "true"
-            echo "IS_EA=$isEA" >> $env:GITHUB_ENV
-          } else {
-            echo "IS_EA=$isEA" >> $env:GITHUB_ENV
-          }
+          if [[ "$tag" == *-all ]]; then
+            echo "IS_EA=true" >> "$GITHUB_ENV"
+          else
+            echo "IS_EA=false" >> "$GITHUB_ENV"
+          fi
