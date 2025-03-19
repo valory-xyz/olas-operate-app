@@ -145,8 +145,8 @@ jobs:
           echo GNOSIS_RPC=$GNOSIS_RPC >> prod.env
           echo MODE_RPC=$MODE_RPC >> prod.env
           echo CELO_RPC=$CELO_RPC >> prod.env
-          cat prod.env
           echo GH_TOKEN=$GH_TOKEN >> prod.env
+          cat prod.env
       - run: rm -rf /dist
       - name: "Build, notarize, publish"
         run: make build

@@ -2,16 +2,23 @@ require('dotenv').config();
 
 const { ipcMain } = require('electron');
 const { logger } = require('../logger');
+const { publishOptions } = require('../constants');
 
 const EA_RELEASE_TAG_SUFFIX = '-all';
 
 function registerGithubIpcHandlers() {
   ipcMain.handle('get-github-release-tags', async () => {
     try {
-      logger.electron('Fetching GitHub data...', {
-        ghToken: process.env.GH_TOKEN?.slice(0, 20),
-        isEaRelease: process.env.IS_EA,
-      });
+      logger.electron(
+        `Fetching GitHub data... ${JSON.stringify({
+          ghToken: process.env.GH_TOKEN?.slice(0, 20),
+          isEaRelease: process.env.IS_EA,
+          modeRpc: process.env.MODE_RPC,
+          nodeEnv: process.env.NODE_ENV,
+          tokenFromPublishOptions: publishOptions.token?.slice(0, 20),
+        })}
+        `,
+      );
 
       const { Octokit } = await import('@octokit/core');
       const octokit = new Octokit({ auth: process.env.GH_TOKEN });
@@ -27,10 +34,12 @@ function registerGithubIpcHandlers() {
         tag.name.endsWith(EA_RELEASE_TAG_SUFFIX),
       );
 
-      logger.electron('GitHub data fetched successfully', {
-        tags: allTags,
-        latestEaVersion: latestTag.name,
-      });
+      logger.electron(
+        `GitHub data fetched successfully ${JSON.stringify({
+          tags: allTags,
+          latestEaVersion: latestTag.name,
+        })}`,
+      );
 
       return {
         tags,
@@ -40,7 +49,7 @@ function registerGithubIpcHandlers() {
         nodeEnv: process.env.NODE_ENV,
       };
     } catch (error) {
-      logger.electron('Error fetching GitHub data:', error);
+      logger.electron(`Error fetching GitHub data: ${JSON.stringify(error)}`);
       console.error('Error fetching GitHub data:', error);
       return { error: error?.message };
     }
