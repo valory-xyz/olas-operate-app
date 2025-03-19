@@ -77,6 +77,9 @@ const getLatestEaRelease = async () => {
 
     const allTags: Tag[] = tags.data;
 
+    // TODO: Remove this console.log
+    window.console.log('All tags (including all draft releases):', { allTags });
+
     // Find the latest tag that ends with `-all`
     const latestTag = allTags.find((item: Tag) => item.name.endsWith(`-all`));
     if (!latestTag) return null;
@@ -107,6 +110,14 @@ const useGetPearlOutdated = () => {
         ? await getLatestEaRelease()
         : await getLatestPublicRelease();
       if (!latestVersion) return false;
+
+      // TODO: Remove this console.log
+      window.console.log({
+        appVersion,
+        latestVersion,
+        IS_EA_RELEASE,
+        latestEaRelease: getLatestEaRelease(),
+      });
 
       return IS_EA_RELEASE
         ? isNewEaReleaseAvailable(appVersion, latestVersion)
