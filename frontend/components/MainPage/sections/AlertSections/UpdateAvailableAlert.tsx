@@ -17,10 +17,7 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 const { Text } = Typography;
 
 const IS_EA_RELEASE = process.env.IS_EA;
-
-const OCTOKIT = new Octokit({
-  auth: process.env.GH_TOKEN,
-});
+const OCTOKIT = new Octokit({ auth: process.env.GH_TOKEN });
 
 enum SemverComparisonResult {
   OUTDATED = -1,
