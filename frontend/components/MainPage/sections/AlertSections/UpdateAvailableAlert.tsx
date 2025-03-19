@@ -19,7 +19,7 @@ const { Text } = Typography;
 const IS_EA_RELEASE = process.env.IS_EA;
 
 const OCTOKIT = new Octokit({
-  auth: process.env.NEXT_PUBLIC_GITHUB_AUTH_TOKEN,
+  auth: process.env.GH_TOKEN,
 });
 
 enum SemverComparisonResult {
