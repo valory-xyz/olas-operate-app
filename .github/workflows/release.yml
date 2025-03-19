@@ -225,6 +225,7 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}
+          GITHUB_PAT: ${{ secrets.github_token }}
           NODE_ENV: ${{ matrix.env }}
           ARCH: ${{ env.OS_ARCH }}
           ELECTRON_BUILDER_CACHE: ~/.cache/electron-builder
@@ -243,7 +244,7 @@ jobs:
           echo "ETHEREUM_RPC=https://rpc-gate.autonolas.tech/ethereum-rpc/" >> .env
           echo "MODE_RPC=https://mainnet.mode.network" >> .env
           echo "CELO_RPC=https://forno.celo.org" >> .env
-          echo "GH_TOKEN=${{ secrets.github_token }}" >> .env
+          echo "GITHUB_PAT=${{ secrets.github_token }}" >> .env
           node build.js
 
        # Job to set env variable based on tag

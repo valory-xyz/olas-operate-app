@@ -11,7 +11,7 @@ function registerGithubIpcHandlers() {
     try {
       logger.electron(
         `Fetching GitHub data... ${JSON.stringify({
-          ghToken: process.env.GH_TOKEN?.slice(0, 20),
+          ghToken: process.env.GITHUB_PAT?.slice(0, 20),
           isEaRelease: process.env.IS_EA,
           modeRpc: process.env.MODE_RPC,
           nodeEnv: process.env.NODE_ENV,
@@ -21,7 +21,7 @@ function registerGithubIpcHandlers() {
       );
 
       const { Octokit } = await import('@octokit/core');
-      const octokit = new Octokit({ auth: process.env.GH_TOKEN });
+      const octokit = new Octokit({ auth: process.env.GITHUB_PAT });
       const tags = await octokit.request(
         'GET /repos/valory-xyz/olas-operate-app/tags',
         {
@@ -45,7 +45,6 @@ function registerGithubIpcHandlers() {
         tags,
         latestEaVersion: latestTag?.name || null,
         isEaRelease: process.env.IS_EA,
-        firstFewCharsOfToken: process.env.GH_TOKEN?.slice(0, 20),
         nodeEnv: process.env.NODE_ENV,
       };
     } catch (error) {

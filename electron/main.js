@@ -373,7 +373,7 @@ const createMainWindow = async () => {
   // other ipc handlers
   logger.electron(
     `Registering Github IPC handler and env: ${JSON.stringify({
-      ghToken: process.env.GH_TOKEN?.slice(0, 20),
+      ghToken: process.env.GITHUB_PAT?.slice(0, 20),
       isEaRelease: process.env.IS_EA,
       modeRpc: process.env.MODE_RPC,
       nodeEnv: process.env.NODE_ENV,
