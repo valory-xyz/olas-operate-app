@@ -243,4 +243,22 @@ jobs:
           echo "ETHEREUM_RPC=https://rpc-gate.autonolas.tech/ethereum-rpc/" >> .env
           echo "MODE_RPC=https://mainnet.mode.network" >> .env
           echo "CELO_RPC=https://forno.celo.org" >> .env
+          echo "GH_TOKEN=${{ secrets.github_token }}" >> .env
           node build.js
+
+  # Job to set env variable based on tag
+  set-env:
+    name: Set Environment Variable Based on Tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine if the tag is Early Access (-all)
+        id: set_env
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          echo "Tag name is: $TAG_NAME"
+          
+          if [[ "$TAG_NAME" == *-all ]]; then
+            echo "IS_EA=true" >> $GITHUB_ENV
+          else
+            echo "IS_EA=false" >> $GITHUB_ENV
+          fi

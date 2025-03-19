@@ -30,7 +30,7 @@ type GithubRelease = { tag_name: string };
 
 const isEaRelease = true; // TODO
 
-/** Compare two versions of a PUBLIC release and return if the new version is available */
+/** Compare two versions of a release and return if the new version is available */
 const isNewReleaseAvailable = (oldVersion: string, newVersion: string) => {
   const latestVersion = semver.parse(newVersion);
   const currentVersion = semver.parse(oldVersion);
