@@ -215,6 +215,8 @@ jobs:
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
           MODE_RPC: https://mainnet.mode.network
           CELO_RPC: https://forno.celo.org
+          IS_EA: ${{ contains(github.ref_name, '-all') && 'true' || 'false' }}
+          NEXT_PUBLIC_IS_EA: ${{ contains(github.ref_name, '-all') && 'true' || 'false' }}
 
       # Run the build and notarization process for production
       - name: Build, notarize, and publish (Production)

@@ -108,8 +108,8 @@ const useGetPearlOutdated = () => {
         appVersion,
         IS_EA_RELEASE,
         latestVersion,
-        NEXT_PUBLIC_IS_EA: process.env.NEXT_PUBLIC_IS_EA,
         IS_EA: process.env.IS_EA,
+        NEXT_PUBLIC_IS_EA: process.env.NEXT_PUBLIC_IS_EA,
         NODE_ENV: process.env.NODE_ENV,
       });
 
