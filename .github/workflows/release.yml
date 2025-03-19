@@ -207,7 +207,7 @@ jobs:
       - name: Build frontend for production
         run: yarn build:frontend
         env:
-          NODE_ENV: ${{ matrix.env }}          
+          NODE_ENV: ${{ matrix.env }}
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
           OPTIMISM_RPC: https://rpc-gate.autonolas.tech/optimism-rpc/
           BASE_RPC: https://rpc-gate.autonolas.tech/base-rpc/
@@ -246,13 +246,8 @@ jobs:
           echo "GH_TOKEN=${{ secrets.github_token }}" >> .env
           node build.js
 
-  # Job to set env variable based on tag
-  set-env:
-    name: Set Environment Variable Based on Tag
-    runs-on: ubuntu-latest
-    steps:
-      - name: Determine if the tag is Early Access (-all)
-        id: set_env
+       # Job to set env variable based on tag
+      - name: Set Environment Variable Based on Tag
         run: |
           TAG_NAME="${GITHUB_REF#refs/tags/}"
           echo "Tag name is: $TAG_NAME"
