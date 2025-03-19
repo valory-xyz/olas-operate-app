@@ -7,6 +7,8 @@ const { publishOptions } = require('../constants');
 const EA_RELEASE_TAG_SUFFIX = '-all';
 
 function registerGithubIpcHandlers() {
+  logger.electron('Registering GitHub IPC handlers...');
+
   ipcMain.handle('get-github-release-tags', async () => {
     try {
       logger.electron(
