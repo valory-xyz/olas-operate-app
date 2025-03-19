@@ -566,7 +566,7 @@ async function launchNextAppDev() {
           ...process.env,
           NEXT_PUBLIC_BACKEND_PORT: appConfig.ports.dev.operate,
           NEXT_PUBLIC_PEARL_VERSION: app.getVersion(),
-          NEXT_PUBLIC_IS_EA: process.env.IS_EA,
+          NEXT_PUBLIC_IS_EA: process.env.NEXT_PUBLIC_IS_EA,
         },
       },
     );

@@ -1,4 +1,3 @@
-import { Octokit } from '@octokit/core';
 import { useQuery } from '@tanstack/react-query';
 import { Flex, Typography } from 'antd';
 import useToken from 'antd/es/theme/useToken';
@@ -16,8 +15,7 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 
 const { Text } = Typography;
 
-const IS_EA_RELEASE = process.env.IS_EA;
-const OCTOKIT = new Octokit({ auth: process.env.GH_TOKEN });
+const IS_EA_RELEASE = process.env.NEXT_PUBLIC_IS_EA === 'true';
 
 enum SemverComparisonResult {
   OUTDATED = -1,
@@ -60,62 +58,33 @@ const getLatestPublicRelease = async (): Promise<string | null> => {
   return data.tag_name;
 };
 
-type Tag = { name: string };
-
-/** Get the latest EA release from the Github API */
-const getLatestEaRelease = async () => {
-  try {
-    const tags = await OCTOKIT.request(
-      'GET /repos/valory-xyz/olas-operate-app/tags',
-      {
-        headers: { 'X-GitHub-Api-Version': '2022-11-28' },
-      },
-    );
-
-    const allTags: Tag[] = tags.data;
-
-    // TODO: Remove this console.log
-    window.console.log('All tags (including all draft releases):', { allTags });
-
-    // Find the latest tag that ends with `-all`
-    const latestTag = allTags.find((item: Tag) => item.name.endsWith(`-all`));
-    if (!latestTag) return null;
-
-    return latestTag.name;
-  } catch (error) {
-    console.error(error);
-  }
-
-  return null;
-};
-
 const useGetPearlOutdated = () => {
-  const { getAppVersion, githubReleaseTags } = useElectronApi();
+  const { getAppVersion, getLatestEaRelease } = useElectronApi();
 
   return useQuery({
     queryKey: ['isPearlOutdated'],
     queryFn: async (): Promise<boolean> => {
-      window.console.log('Checking for updates...');
-
       const appVersion = await getAppVersion!();
       if (!appVersion) return false;
 
       const latestVersion = IS_EA_RELEASE
-        ? await getLatestEaRelease()
+        ? await getLatestEaRelease!()
         : await getLatestPublicRelease();
 
+      // TODO: Remove this console.log
       window.console.log({
         appVersion,
-        IS_EA_RELEASE,
         latestVersion,
+        IS_EA_RELEASE,
         IS_EA: process.env.IS_EA,
         NEXT_PUBLIC_IS_EA: process.env.NEXT_PUBLIC_IS_EA,
         NODE_ENV: process.env.NODE_ENV,
       });
 
-      if (githubReleaseTags) {
+      // TODO: Remove this IF
+      if (getLatestEaRelease) {
         try {
-          const response = await githubReleaseTags();
+          const response = await getLatestEaRelease();
           window.console.log(
             'All tags (including all draft releases):',
             response,
@@ -127,12 +96,6 @@ const useGetPearlOutdated = () => {
 
       if (!latestVersion) return false;
 
-      // TODO: Remove this console.log
-      window.console.log({
-        modeChainRpcFromEnv: process.env.MODE_CHAIN_RPC,
-        firstFewCharsOfToken: process.env.GH_TOKEN?.slice(0, 20),
-      });
-
       window.console.log('>>>>> Is Pearl outdated? >>>>>', {
         appVersion,
         latestVersion,
@@ -143,7 +106,7 @@ const useGetPearlOutdated = () => {
         : isNewReleaseAvailable(appVersion, latestVersion);
     },
     refetchInterval: FIVE_MINUTE_INTERVAL,
-    enabled: !!getAppVersion,
+    enabled: !!getAppVersion && !!getLatestEaRelease,
   });
 };
 
@@ -152,9 +115,21 @@ const useGetPearlOutdated = () => {
  */
 export const UpdateAvailableAlert = () => {
   const [, token] = useToken();
-  const { data: isPearlOutdated, isFetched } = useGetPearlOutdated();
+  const { data: isPearlOutdated, isFetched, isError } = useGetPearlOutdated();
 
   if (!isFetched || !isPearlOutdated) return null;
+
+  // TODO: remove it after testing
+  if (isError) {
+    return (
+      <CustomAlert
+        type="error"
+        fullWidth
+        showIcon
+        message="Something went wrong while checking for updates"
+      />
+    );
+  }
 
   return (
     <CustomAlert

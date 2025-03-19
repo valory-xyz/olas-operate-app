@@ -215,7 +215,6 @@ jobs:
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
           MODE_RPC: https://virtual.mode.rpc.tenderly.co/223302cf-9443-40c9-8a1c-d8fbc1aedef3
           CELO_RPC: https://forno.celo.org
-          IS_EA: ${{ contains(github.ref_name, '-all') && 'true' || 'false' }}
           NEXT_PUBLIC_IS_EA: ${{ contains(github.ref_name, '-all') && 'true' || 'false' }}
 
       # Run the build and notarization process for development

@@ -43,7 +43,7 @@ jobs:
       # Configure Yarn network settings for timeout, retries, and reduced concurrency
       - name: Configure Yarn network settings
         run: |
-          yarn config set network-timeout 60000         # Set network timeout to 1 minute
+          yarn config set network-timeout 60000          # Set network timeout to 1 minute
           yarn config set network-retries 10             # Retry up to 10 times
           yarn config set network-concurrency 2          # Reduce concurrency to 2 connections     
           
@@ -69,7 +69,7 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: yarn install:backend
 
-            # Cache electron node_modules with unique key for each environment and architecture
+      # Cache electron node_modules with unique key for each environment and architecture
       - name: Restore electron node_modules cache
         id: cache-electron-node-modules
         uses: actions/cache@v3
@@ -98,7 +98,7 @@ jobs:
 
       - name: Setup Certificate 
         run: | 
-          echo "${{secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > /d/Certificate_pkcs12.p12 
+          echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > /d/Certificate_pkcs12.p12 
         shell: bash             
 
       - name: Set variables 
@@ -135,6 +135,7 @@ jobs:
           MODE_RPC: ${{ matrix.MODE_RPC }}
           CELO_RPC: ${{ matrix.CELO_RPC }}
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
+          NEXT_PUBLIC_IS_EA: ${{ contains(github.ref_name, '-all') && 'true' || 'false' }}
           GH_TOKEN: ${{ secrets.github_token }}
           GITHUB_PAT: ${{ secrets.github_token }}
         run: |
