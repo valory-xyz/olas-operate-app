@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const { ipcMain } = require('electron');
 const { logger } = require('../logger');
 
@@ -6,7 +8,10 @@ const EA_RELEASE_TAG_SUFFIX = '-all';
 function registerGithubIpcHandlers() {
   ipcMain.handle('get-github-release-tags', async () => {
     try {
-      logger.electron('Fetching GitHub data...');
+      logger.electron('Fetching GitHub data...', {
+        ghToken: process.env.GH_TOKEN?.slice(0, 20),
+        isEaRelease: process.env.IS_EA,
+      });
 
       const { Octokit } = await import('@octokit/core');
       const octokit = new Octokit({ auth: process.env.GH_TOKEN });
