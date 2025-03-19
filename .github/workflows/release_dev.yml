@@ -258,8 +258,7 @@ jobs:
           echo "Tag name is: $TAG_NAME"
           
           if [[ "$TAG_NAME" == *-all ]]; then
-            echo "IS_EA=true" >> $GITHUB_ENV
+            echo "IS_EA=true" >> .env
           else
-            echo "IS_EA=false" >> $GITHUB_ENV
+            echo "IS_EA=false" >> .env
           fi
-  

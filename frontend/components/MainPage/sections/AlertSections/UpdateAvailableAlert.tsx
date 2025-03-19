@@ -113,6 +113,8 @@ const useGetPearlOutdated = () => {
         appVersion,
         latestVersion,
         IS_EA_RELEASE,
+        IS_EA: process.env.IS_EA,
+        firstFewCharsOfToken: process.env.GH_TOKEN?.slice(0, 20),
         latestEaRelease: getLatestEaRelease(),
       });
 

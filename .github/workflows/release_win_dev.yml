@@ -164,7 +164,7 @@ jobs:
           echo "Tag detected: $tag"
 
           if [[ "$tag" == *-all ]]; then
-            echo "IS_EA=true" >> "$GITHUB_ENV"
+            echo "IS_EA=true" >> prod.env
           else
-            echo "IS_EA=false" >> "$GITHUB_ENV"
+            echo "IS_EA=false" >> prod.env
           fi
