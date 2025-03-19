@@ -95,34 +95,47 @@ const useGetPearlOutdated = () => {
   return useQuery({
     queryKey: ['isPearlOutdated'],
     queryFn: async (): Promise<boolean> => {
-      if (!getAppVersion) {
-        console.error('electronAPI.getAppVersion is not available in Window');
-        return false;
-      }
+      window.console.log('Checking for updates...');
 
-      const appVersion = await getAppVersion();
+      const appVersion = await getAppVersion!();
       if (!appVersion) return false;
 
       const latestVersion = IS_EA_RELEASE
         ? await getLatestEaRelease()
         : await getLatestPublicRelease();
 
+      window.console.log({
+        appVersion,
+        IS_EA_RELEASE,
+        latestVersion,
+        NEXT_PUBLIC_IS_EA: process.env.NEXT_PUBLIC_IS_EA,
+        IS_EA: process.env.IS_EA,
+        NODE_ENV: process.env.NODE_ENV,
+      });
+
       if (githubReleaseTags) {
-        window.console.log('githubReleaseTags >> ', await githubReleaseTags());
+        try {
+          const response = await githubReleaseTags();
+          window.console.log(
+            'All tags (including all draft releases):',
+            response,
+          );
+        } catch (error) {
+          console.error(error);
+        }
       }
 
       if (!latestVersion) return false;
 
       // TODO: Remove this console.log
       window.console.log({
-        appVersion,
-        latestVersion,
-        NEXT_PUBLIC_IS_EA: process.env.NEXT_PUBLIC_IS_EA,
-        IS_EA: process.env.IS_EA,
-        NODE_ENV: process.env.NODE_ENV,
         modeChainRpcFromEnv: process.env.MODE_CHAIN_RPC,
         firstFewCharsOfToken: process.env.GH_TOKEN?.slice(0, 20),
-        latestEaRelease: getLatestEaRelease(),
+      });
+
+      window.console.log('>>>>> Is Pearl outdated? >>>>>', {
+        appVersion,
+        latestVersion,
       });
 
       return IS_EA_RELEASE
@@ -130,6 +143,7 @@ const useGetPearlOutdated = () => {
         : isNewReleaseAvailable(appVersion, latestVersion);
     },
     refetchInterval: FIVE_MINUTE_INTERVAL,
+    enabled: !!getAppVersion,
   });
 };
 
