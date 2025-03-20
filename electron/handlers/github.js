@@ -6,10 +6,17 @@ const { logger } = require('../logger');
 function registerGithubIpcHandlers() {
   logger.electron('Registering GitHub IPC handlers...');
 
-  ipcMain.handle('get-github-release-tags', async () => {
+  ipcMain.handle('get-latest-ea-release-tag', async () => {
     try {
       const { Octokit } = await import('@octokit/core');
-      const octokit = new Octokit({ auth: process.env.GITHUB_PAT });
+
+      const auth = process.env.GITHUB_PAT;
+      if (!auth) {
+        logger.electron('GitHub PAT not found in environment variables');
+        return null;
+      }
+
+      const octokit = new Octokit({ auth });
       const tags = await octokit.request(
         'GET /repos/valory-xyz/olas-operate-app/tags',
         {
