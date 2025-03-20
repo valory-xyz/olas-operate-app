@@ -247,15 +247,3 @@ jobs:
           echo "CELO_RPC=https://forno.celo.org" >> .env
           echo "GITHUB_PAT=${{ secrets.github_token }}" >> .env
           node build.js
-
-       # Job to set env variable based on tag
-      - name: Set Environment Variable Based on Tag
-        run: |
-          TAG_NAME="${GITHUB_REF#refs/tags/}"
-          echo "Tag name is: $TAG_NAME"
-          
-          if [[ "$TAG_NAME" == *-all ]]; then
-            echo "IS_EA=true" >> .env
-          else
-            echo "IS_EA=false" >> .env
-          fi

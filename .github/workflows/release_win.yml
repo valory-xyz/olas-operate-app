@@ -153,16 +153,3 @@ jobs:
       - run: rm -rf /dist
       - name: "Build, notarize, publish"
         run: make build
-        
-      # Job to set env variable based on tag
-      - name: Set Environment Variable Based on Tag (Windows)
-        shell: bash
-        run: |
-          tag="${GITHUB_REF#refs/tags/}"
-          echo "Tag detected: $tag"
-  
-          if [[ "$tag" == *-all ]]; then
-            echo "IS_EA=true" >> prod.env
-          else
-            echo "IS_EA=false" >> prod.env
-          fi
