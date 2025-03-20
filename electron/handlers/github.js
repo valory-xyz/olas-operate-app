@@ -25,11 +25,8 @@ function registerGithubIpcHandlers() {
         return null;
       }
 
-      logger.electron(
-        `GitHub releases fetched successfully and the latest EA tag is ${latestEaTag.name}`,
-      );
-
-      return latestEaTag?.name;
+      logger.electron(`The latest EA tag is ${latestEaTag.name}`);
+      return latestEaTag.name;
     } catch (error) {
       logger.electron(
         `Error fetching GitHub latest EA tag: ${JSON.stringify(error)}`,

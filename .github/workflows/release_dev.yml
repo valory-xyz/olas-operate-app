@@ -226,7 +226,7 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}
-          GITHUB_PAT: ${{ secrets.github_token }}
+          GITHUB_PAT: ${{ secrets.github_pat }}
           NODE_ENV: ${{ matrix.env }}
           ARCH: ${{ env.OS_ARCH }}
           ELECTRON_BUILDER_CACHE: ~/.cache/electron-builder
@@ -245,5 +245,5 @@ jobs:
           echo "ETHEREUM_RPC=https://rpc-gate.autonolas.tech/ethereum-rpc/" >> .env
           echo "MODE_RPC=https://virtual.mode.rpc.tenderly.co/223302cf-9443-40c9-8a1c-d8fbc1aedef3" >> .env
           echo "CELO_RPC=https://forno.celo.org" >> .env
-          echo "GITHUB_PAT=${{ secrets.github_token }}" >> .env
+          echo "GITHUB_PAT=${{ secrets.github_pat }}" >> .env
           node build.js

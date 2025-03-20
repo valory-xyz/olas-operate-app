@@ -137,7 +137,7 @@ jobs:
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
           NEXT_PUBLIC_IS_EA: ${{ contains(github.ref_name, '-all') && 'true' || 'false' }}
           GH_TOKEN: ${{ secrets.github_token }}
-          GITHUB_PAT: ${{ secrets.github_token }}
+          GITHUB_PAT: ${{ secrets.github_pat }}
         run: |
           echo NODE_ENV=$NODE_ENV >> prod.env
           echo IS_STAGING=$IS_STAGING >> prod.env
