@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Flex, Typography } from 'antd';
-import useToken from 'antd/es/theme/useToken';
+import { Flex, theme, Typography } from 'antd';
 import semver from 'semver';
 
 import { CustomAlert } from '@/components/Alert';
@@ -14,6 +13,7 @@ import {
 import { useElectronApi } from '@/hooks/useElectronApi';
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 const IS_EA_RELEASE = process.env.NEXT_PUBLIC_IS_EA === 'true';
 
@@ -90,8 +90,8 @@ const useGetPearlOutdated = () => {
  * Display an alert if a new version of Pearl is available.
  */
 export const UpdateAvailableAlert = () => {
-  const [, token] = useToken();
   const { data: isPearlOutdated, isFetched } = useGetPearlOutdated();
+  const { token } = useToken();
 
   if (!isFetched || !isPearlOutdated) return null;
 
