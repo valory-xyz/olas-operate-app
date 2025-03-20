@@ -56,7 +56,7 @@ type ElectronApiContextProps = {
     { response: AgentHealthCheck | null } | { error: string }
   >;
   agentActivityWindow?: Partial<ElectronApiAgentActivityWindow>;
-  getLatestEaRelease?: () => Promise<string>;
+  getLatestEaRelease?: () => Promise<string | null>;
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({

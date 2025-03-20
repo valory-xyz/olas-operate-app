@@ -68,43 +68,10 @@ const useGetPearlOutdated = () => {
         const appVersion = await getAppVersion!();
         if (!appVersion) return false;
 
-        // TODO: Remove this console.log
-        window.console.log({
-          appVersion,
-          IS_EA_RELEASE,
-          IS_EA: process.env.IS_EA,
-          NEXT_PUBLIC_IS_EA: process.env.NEXT_PUBLIC_IS_EA,
-          NODE_ENV: process.env.NODE_ENV,
-        });
-
         const latestVersion = IS_EA_RELEASE
           ? await getLatestEaRelease!()
           : await getLatestPublicRelease();
-
-        // TODO: Remove this console.log
-        window.console.log({
-          latestVersion,
-        });
-
-        // TODO: Remove this IF
-        if (getLatestEaRelease) {
-          try {
-            const response = await getLatestEaRelease();
-            window.console.log(
-              'All tags (including all draft releases):',
-              response,
-            );
-          } catch (error) {
-            console.error(error);
-          }
-        }
-
         if (!latestVersion) return false;
-
-        window.console.log('>>>>> Is Pearl outdated? >>>>>', {
-          appVersion,
-          latestVersion,
-        });
 
         return IS_EA_RELEASE
           ? isNewEaReleaseAvailable(appVersion, latestVersion)
@@ -124,25 +91,7 @@ const useGetPearlOutdated = () => {
  */
 export const UpdateAvailableAlert = () => {
   const [, token] = useToken();
-  const {
-    data: isPearlOutdated,
-    isFetched,
-    isError,
-    error,
-  } = useGetPearlOutdated();
-
-  // TODO: remove it after testing
-  if (isError) {
-    console.error('Error checking for updates:', error);
-    return (
-      <CustomAlert
-        type="error"
-        fullWidth
-        showIcon
-        message="Something went wrong while checking for updates"
-      />
-    );
-  }
+  const { data: isPearlOutdated, isFetched } = useGetPearlOutdated();
 
   if (!isFetched || !isPearlOutdated) return null;
 

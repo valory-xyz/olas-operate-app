@@ -29,7 +29,7 @@ function registerGithubIpcHandlers() {
       logger.electron(
         `Error fetching GitHub latest EA tag: ${JSON.stringify(error)}`,
       );
-      throw error;
+      return null;
     }
   });
 }
