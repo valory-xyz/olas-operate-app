@@ -27,7 +27,7 @@ function registerGithubIpcHandlers() {
       return latestEaTag;
     } catch (error) {
       logger.electron(
-        `Error fetching GitHub latest EA tag: ${(JSON.stringify(error), 2)}`,
+        `Error fetching GitHub latest EA tag: ${JSON.stringify(error)}`,
       );
       throw error;
     }
