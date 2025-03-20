@@ -9,14 +9,7 @@ function registerGithubIpcHandlers() {
   ipcMain.handle('get-latest-ea-release-tag', async () => {
     try {
       const { Octokit } = await import('@octokit/core');
-
-      const auth = process.env.GITHUB_PAT;
-      if (!auth) {
-        logger.electron('GitHub PAT not found in environment variables');
-        return null;
-      }
-
-      const octokit = new Octokit({ auth });
+      const octokit = new Octokit({ auth: process.env.GITHUB_PAT });
       const tags = await octokit.request(
         'GET /repos/valory-xyz/olas-operate-app/tags',
         {
@@ -27,11 +20,16 @@ function registerGithubIpcHandlers() {
       const allTags = tags.data || [];
       const latestEaTag = allTags.find((tag) => tag.name.endsWith('-all'));
 
+      if (!latestEaTag) {
+        logger.electron('No EA tag found in GitHub releases');
+        return null;
+      }
+
       logger.electron(
         `GitHub releases fetched successfully and the latest EA tag is ${latestEaTag.name}`,
       );
 
-      return latestEaTag;
+      return latestEaTag?.name;
     } catch (error) {
       logger.electron(
         `Error fetching GitHub latest EA tag: ${JSON.stringify(error)}`,
