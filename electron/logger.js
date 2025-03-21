@@ -29,15 +29,17 @@ const customLevels = {
 
 // Custom filter for specific levels, otherwise higher levels will include lower levels
 const levelFilter = (level) =>
-  format((info, _opts) => {
-    return info.level === level ? info : false;
-  })();
+  format((info) => (info.level === level ? info : false))();
+
+winston.addColors(customLevels.colors);
+
+const TEN_MEGABYTES = 10 * 1024 * 1024;
 
 const logger = winston.createLogger({
   levels: customLevels.levels,
   transports: [
     new winston.transports.Console({
-      level: 'electron', // Set to the highest level so it captures everything.
+      level: 'electron',
       format: combine(winston.format.colorize(), timestamp(), logFormat),
     }),
     new winston.transports.File({
@@ -45,8 +47,8 @@ const logger = winston.createLogger({
       dirname: paths.dotOperateDirectory,
       level: 'cli',
       format: combine(levelFilter('cli'), timestamp(), logFormat),
-      maxFiles: 1,
-      maxsize: 1024 * 1024 * 10,
+      maxsize: TEN_MEGABYTES,
+      maxFiles: 1000,
     }),
     new winston.transports.File({
       filename: 'electron.log',
@@ -54,7 +56,7 @@ const logger = winston.createLogger({
       level: 'electron',
       format: combine(levelFilter('electron'), timestamp(), logFormat),
       maxFiles: 1,
-      maxsize: 1024 * 1024 * 10,
+      maxsize: TEN_MEGABYTES,
     }),
     new winston.transports.File({
       filename: 'next.log',
@@ -62,12 +64,10 @@ const logger = winston.createLogger({
       level: 'next',
       format: combine(levelFilter('next'), timestamp(), logFormat),
       maxFiles: 1,
-      maxsize: 1024 * 1024 * 10,
+      maxsize: TEN_MEGABYTES,
     }),
   ],
   format: combine(timestamp(), logFormat),
 });
-
-winston.addColors(customLevels.colors);
 
 module.exports = { logger };
