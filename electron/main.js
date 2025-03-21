@@ -260,9 +260,10 @@ const createSplashWindow = () => {
   });
   splashWindow.loadURL('file://' + __dirname + '/resources/app-loading.html');
 
-  if (isDev) {
-    splashWindow.webContents.openDevTools();
-  }
+  // @note: uncomment to show dev tools for splash screen
+  // if (isDev) {
+  //   splashWindow.webContents.openDevTools();
+  // }
 };
 
 const HEIGHT = 700;
@@ -272,7 +273,6 @@ const HEIGHT = 700;
 const createMainWindow = async () => {
   if (mainWindow) return;
   const width = APP_WIDTH;
-  // const width = isDev ? 840 : APP_WIDTH;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
     resizable: false,
@@ -396,7 +396,7 @@ const createMainWindow = async () => {
     logger.electron('Store IPC failed:', JSON.stringify(e));
   }
   if (isDev) {
-    mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
 
   await mainWindow.loadURL(nextUrl());
