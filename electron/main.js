@@ -758,7 +758,9 @@ function sanitizeLogs({
   const sanitizedData = logs.replace(usernameRegex, '/$1/*****');
   const sanitizedLogsFilePath = path.join(destPath, name);
 
-  if (!fs.existsSync(destPath)) fs.mkdirSync(destPath);
+  if (!fs.existsSync(destPath)) {
+    fs.mkdirSync(destPath, { recursive: true });
+  }
 
   fs.writeFileSync(sanitizedLogsFilePath, sanitizedData);
 
@@ -772,34 +774,15 @@ ipcMain.handle('save-logs', async (_, data) => {
     .filter((file) => file.startsWith('cli') && file.endsWith('.log'));
 
   if (cliLogFiles.length > 1) {
-    const cliLogsDir = path.join(paths.osPearlTempDir, 'cli');
-    if (!fs.existsSync(cliLogsDir)) {
-      fs.mkdirSync(cliLogsDir);
-    }
-
     cliLogFiles.forEach((file) => {
-      sanitizeLogs({
-        name: file,
-        filePath: path.join(paths.dotOperateDirectory, file),
-        destPath: cliLogsDir,
-      });
-    });
-  } else if (cliLogFiles.length === 1) {
-    sanitizeLogs({
-      name: 'cli.log',
-      filePath: path.join(paths.dotOperateDirectory, cliLogFiles[0]),
+      const filePath = path.join(paths.dotOperateDirectory, file);
+      sanitizeLogs({ name: file, filePath });
     });
   }
 
-  sanitizeLogs({
-    name: 'next.log',
-    filePath: paths.nextLogFile,
-  });
+  sanitizeLogs({ name: 'next.log', filePath: paths.nextLogFile });
 
-  sanitizeLogs({
-    name: 'electron.log',
-    filePath: paths.electronLogFile,
-  });
+  sanitizeLogs({ name: 'electron.log', filePath: paths.electronLogFile });
 
   // OS info
   const osInfo = `
