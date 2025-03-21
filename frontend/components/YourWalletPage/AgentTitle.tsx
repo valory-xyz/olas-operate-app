@@ -63,7 +63,7 @@ export const AgentTitle = ({ address }: { address: Address }) => {
     }
   }, [deploymentStatus, goto, show]);
 
-  const agentProfileLink = useMemo(() => {
+  const agentProfileLink: JSX.Element | null = useMemo(() => {
     if (!address) return null;
 
     // gnosis - trader
@@ -84,7 +84,11 @@ export const AgentTitle = ({ address }: { address: Address }) => {
       selectedAgentType === AgentType.Memeooorr &&
       service?.env_variables?.TWIKIT_USERNAME?.value
     ) {
-      return `https://www.agents.fun/services/${service.env_variables.TWIKIT_USERNAME.value ?? '#'}`;
+      return (
+        <ExternalAgentProfileLink
+          href={`https://www.agents.fun/services/${service.env_variables.TWIKIT_USERNAME.value ?? '#'}`}
+        />
+      );
     }
 
     // mode - modius
