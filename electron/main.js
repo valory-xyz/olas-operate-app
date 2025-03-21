@@ -271,7 +271,8 @@ const HEIGHT = 700;
  */
 const createMainWindow = async () => {
   if (mainWindow) return;
-  const width = isDev ? 840 : APP_WIDTH;
+  const width = APP_WIDTH;
+  // const width = isDev ? 840 : APP_WIDTH;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
     resizable: false,
@@ -766,10 +767,29 @@ function sanitizeLogs({
 
 // EXPORT LOGS
 ipcMain.handle('save-logs', async (_, data) => {
-  sanitizeLogs({
-    name: 'cli.log',
-    filePath: paths.cliLogFile,
-  });
+  const cliLogFiles = fs
+    .readdirSync(paths.dotOperateDirectory)
+    .filter((file) => file.startsWith('cli') && file.endsWith('.log'));
+
+  if (cliLogFiles.length > 1) {
+    const cliLogsDir = path.join(paths.osPearlTempDir, 'cli');
+    if (!fs.existsSync(cliLogsDir)) {
+      fs.mkdirSync(cliLogsDir);
+    }
+
+    cliLogFiles.forEach((file) => {
+      sanitizeLogs({
+        name: file,
+        filePath: path.join(paths.dotOperateDirectory, file),
+        destPath: cliLogsDir,
+      });
+    });
+  } else if (cliLogFiles.length === 1) {
+    sanitizeLogs({
+      name: 'cli.log',
+      filePath: path.join(paths.dotOperateDirectory, cliLogFiles[0]),
+    });
+  }
 
   sanitizeLogs({
     name: 'next.log',
@@ -821,7 +841,7 @@ ipcMain.handle('save-logs', async (_, data) => {
     clonedDebugData.services = servicesData;
 
     sanitizeLogs({
-      name: 'debug_data.txt',
+      name: 'debug_data.json',
       data: JSON.stringify(clonedDebugData, null, 2),
     });
   }
