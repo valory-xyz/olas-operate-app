@@ -773,7 +773,7 @@ ipcMain.handle('save-logs', async (_, data) => {
     .readdirSync(paths.dotOperateDirectory)
     .filter((file) => file.startsWith('cli') && file.endsWith('.log'));
 
-  if (cliLogFiles.length > 1) {
+  if (cliLogFiles.length >= 1) {
     cliLogFiles.forEach((file) => {
       const filePath = path.join(paths.dotOperateDirectory, file);
       sanitizeLogs({ name: file, filePath });
