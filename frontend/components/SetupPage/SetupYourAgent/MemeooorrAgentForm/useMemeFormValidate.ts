@@ -5,9 +5,8 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import {
   validateGeminiApiKey,
   validateTwitterCredentials,
-} from '../SetupYourAgent/validations';
-
-type ValidationStatus = 'valid' | 'invalid' | 'unknown';
+  ValidationStatus,
+} from '../shared/validations';
 
 type FieldValues = {
   personaDescription: string;

@@ -8,14 +8,14 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
-import { useMemeFormValidate } from '../../hooks/useMemeFormValidate';
 import {
   commonFieldProps,
   emailValidateMessages,
   requiredRules,
-} from '../formUtils';
-import { onDummyServiceCreation } from '../utils';
+} from '../shared/formUtils';
+import { onDummyServiceCreation } from '../shared/utils';
 import { FireworksApiFields } from './FireworksApiField';
+import { useMemeFormValidate } from './useMemeFormValidate';
 
 const { Title, Text } = Typography;
 

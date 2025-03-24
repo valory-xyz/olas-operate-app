@@ -7,6 +7,12 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 
+import {
+  CoinGeckoApiKeyLabel,
+  TenderlyAccessTokenLabel,
+  TenderlyAccountSlugLabel,
+  TenderlyProjectSlugLabel,
+} from '../SetupPage/SetupYourAgent/ModiusAgentForm/labels';
 // TODO: move the following hook/components to a shared place
 // once Modius work is merged
 import {
@@ -15,13 +21,7 @@ import {
   validateApiKey,
   validateMessages,
   validateSlug,
-} from '../SetupPage/SetupYourAgent/formUtils';
-import {
-  CoinGeckoApiKeyLabel,
-  TenderlyAccessTokenLabel,
-  TenderlyAccountSlugLabel,
-  TenderlyProjectSlugLabel,
-} from '../SetupPage/SetupYourAgent/ModiusAgentForm/labels';
+} from '../SetupPage/SetupYourAgent/shared/formUtils';
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
@@ -31,6 +31,7 @@ type ModiusFormValues = {
     TENDERLY_ACCOUNT_SLUG: string;
     TENDERLY_PROJECT_SLUG: string;
     COINGECKO_API_KEY: string;
+    GENAI_API_KEY: string;
   };
 };
 
@@ -90,6 +91,15 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
         <Input.Password />
       </Form.Item>
 
+      <Form.Item
+        label="Gemini API Key"
+        name={['env_variables', 'GENAI_API_KEY']}
+        {...modiusAgentFieldProps}
+        rules={[...requiredRules, { validator: validateApiKey }]}
+      >
+        <Input.Password />
+      </Form.Item>
+
       <Form.Item hidden={!isEditing}>
         <Button size="large" type="primary" htmlType="submit" block>
           Save changes
@@ -119,6 +129,8 @@ export const ModiusUpdatePage = () => {
           acc.env_variables.TENDERLY_PROJECT_SLUG = value;
         } else if (key === 'COINGECKO_API_KEY') {
           acc.env_variables.COINGECKO_API_KEY = value;
+        } else if (key === 'GENAI_API_KEY') {
+          acc.env_variables.GENAI_API_KEY = value;
         }
 
         return acc;
