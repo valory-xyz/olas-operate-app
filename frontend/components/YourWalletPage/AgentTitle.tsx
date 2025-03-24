@@ -1,16 +1,26 @@
-import { Flex, message, Modal, Tooltip, Typography } from 'antd';
+import {
+  Button,
+  Checkbox,
+  Flex,
+  message,
+  Modal,
+  Tooltip,
+  Typography,
+} from 'antd';
 import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
 
-import { MiddlewareChain } from '@/client';
+import { MiddlewareChain, MiddlewareDeploymentStatus } from '@/client';
 import { NA, UNICODE_SYMBOLS } from '@/constants/symbols';
 import { GEMINI_API_URL } from '@/constants/urls';
+import { MODAL_WIDTH } from '@/constants/width';
 import { useAgentUi } from '@/context/AgentUiProvider';
 import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
+import { useSharedContext } from '@/hooks/useSharedContext';
 import { Address } from '@/types/Address';
 import { generateName } from '@/utils/agentName';
 
@@ -31,24 +41,26 @@ const ExternalAgentProfileLink = ({ href }: { href: string }) => {
 const ModiusAgentProfile = ({ onClick }: { onClick: () => void }) => {
   const { selectedService } = useServices();
   const { goto } = usePageState();
+  const { allowModiusAgentProfileAccess, updateAllowModiusAgentProfileAccess } =
+    useSharedContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const geminiApiKey = selectedService?.env_variables?.GENAI_API_KEY?.value;
 
   const handleAgentProfileClick = useCallback(() => {
-    if (!geminiApiKey) {
-      setIsModalOpen(true);
+    if (geminiApiKey || allowModiusAgentProfileAccess) {
+      onClick();
       return;
     }
 
-    onClick();
-  }, [geminiApiKey, onClick]);
+    setIsModalOpen(true);
+  }, [geminiApiKey, allowModiusAgentProfileAccess, onClick]);
 
   const handleOk = useCallback(() => {
     setIsModalOpen(false);
     goto(Pages.UpdateAgentTemplate);
   }, [goto]);
 
-  const handleCancel = useCallback(() => {
+  const handleProceed = useCallback(() => {
     setIsModalOpen(false);
     onClick();
   }, [onClick]);
@@ -61,17 +73,37 @@ const ModiusAgentProfile = ({ onClick }: { onClick: () => void }) => {
       <Modal
         title="Provide Gemini API Key"
         open={isModalOpen}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        okText="Provide Gemini API key"
-        cancelText="Proceed anyway"
+        onCancel={() => setIsModalOpen(false)}
+        width={MODAL_WIDTH}
+        footer={null}
       >
-        To unlock the full functionality of Modius profile, a Gemini API key is
-        required. You can get a free Gemini API key through the{' '}
-        <a target="_blank" href={GEMINI_API_URL}>
-          Google AI Studio
-        </a>
-        .
+        <Flex vertical gap={20}>
+          <div>
+            To unlock the full functionality of Modius profile, a Gemini API key
+            is required. You can get a free Gemini API key through the{' '}
+            <a target="_blank" href={GEMINI_API_URL}>
+              Google AI Studio
+            </a>
+            .
+          </div>
+
+          <Flex align="center" gap={8}>
+            <Checkbox
+              onChange={(e) =>
+                updateAllowModiusAgentProfileAccess(e.target.checked)
+              }
+            >
+              {"Don't show again"}
+            </Checkbox>
+          </Flex>
+
+          <Flex gap={8}>
+            <Button onClick={handleProceed}>Proceed anyway</Button>
+            <Button type="primary" onClick={handleOk}>
+              Provide Gemini API key
+            </Button>
+          </Flex>
+        </Flex>
       </Modal>
     </>
   );
@@ -91,12 +123,15 @@ export const AgentTitle = ({ address }: { address: Address }) => {
       return;
     }
 
-    // if (deploymentStatus !== MiddlewareDeploymentStatus.DEPLOYED) {
-    //   message.error(
-    //     'Please run the agent first, before attempting to view the agent UI',
-    //   );
-    //   return;
-    // }
+    if (
+      deploymentStatus !== MiddlewareDeploymentStatus.DEPLOYED &&
+      1 + 1 === 3 // TODO: remove
+    ) {
+      message.error(
+        'Please run the agent first, before attempting to view the agent UI',
+      );
+      return;
+    }
 
     try {
       await goto('http://127.0.0.1:8716');

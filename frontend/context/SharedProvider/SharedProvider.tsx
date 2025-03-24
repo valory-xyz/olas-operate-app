@@ -1,3 +1,4 @@
+import { noop } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -25,6 +26,10 @@ export const SharedContext = createContext<{
   isHealthCheckAlertShown: boolean;
   setHealthCheckAlertShown: (e: boolean) => void;
 
+  // modius agent specific
+  allowModiusAgentProfileAccess: boolean;
+  updateAllowModiusAgentProfileAccess: (value: boolean) => void;
+
   // others
 }>({
   isMainOlasBalanceLoading: true,
@@ -39,6 +44,11 @@ export const SharedContext = createContext<{
   // healthcheck alert shown to user
   isHealthCheckAlertShown: false,
   setHealthCheckAlertShown: () => {},
+
+  // modius agent specific
+  allowModiusAgentProfileAccess: false,
+  updateAllowModiusAgentProfileAccess: noop,
+
   // others
 });
 
@@ -70,6 +80,13 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
     setHealthCheckErrorsShownToUser(isShown);
   }, []);
 
+  // state to allow modius agent profile access
+  const [allowModiusAgentProfileAccess, setAllowModiusAgentProfileAccess] =
+    useState(false);
+  const updateAllowModiusAgentProfileAccess = useCallback((value: boolean) => {
+    setAllowModiusAgentProfileAccess(value);
+  }, []);
+
   return (
     <SharedContext.Provider
       value={{
@@ -84,6 +101,10 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
         // healthcheck errors
         isHealthCheckAlertShown,
         setHealthCheckAlertShown,
+
+        // modius agent specific
+        allowModiusAgentProfileAccess,
+        updateAllowModiusAgentProfileAccess,
       }}
     >
       {children}
