@@ -10,9 +10,9 @@ export type FieldValues = {
   geminiApiKey: string;
 };
 
-export const useModiusFormValidate = () => {
+export const useModiusFormValidate = (btnText = 'Continue') => {
   const [isValidating, setIsValidating] = useState(false);
-  const [submitButtonText, setSubmitButtonText] = useState('Continue');
+  const [submitButtonText, setSubmitButtonText] = useState(btnText);
   const [geminiApiKeyValidationStatus, setGeminiApiKeyValidationStatus] =
     useState<ValidationStatus>('unknown');
 
@@ -21,7 +21,7 @@ export const useModiusFormValidate = () => {
       setIsValidating(true);
 
       setGeminiApiKeyValidationStatus('unknown');
-      setSubmitButtonText('Validating Gemini API key...');
+      setSubmitButtonText('Validating...');
 
       try {
         const isGeminiApiValid = await validateGeminiApiKey(

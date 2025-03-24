@@ -7,12 +7,14 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 
+import { InvalidGeminiApiCredentials } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/MemeooorrAgentForm';
 import {
   CoinGeckoApiKeyLabel,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
 } from '../SetupPage/SetupYourAgent/ModiusAgentForm/labels';
+import { useModiusFormValidate } from '../SetupPage/SetupYourAgent/ModiusAgentForm/useModiusFormValidate';
 // TODO: move the following hook/components to a shared place
 // once Modius work is merged
 import {
@@ -46,12 +48,43 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
     confirmUpdateModal: confirmModal,
   } = useContext(UpdateAgentContext);
 
+  const {
+    geminiApiKeyValidationStatus,
+    submitButtonText,
+    updateSubmitButtonText,
+    validateForm,
+  } = useModiusFormValidate('Save Changes');
+
+  const handleFinish = useCallback(
+    async (values: ModiusFormValues) => {
+      try {
+        const envVariables = values.env_variables;
+        const isFormValid = await validateForm({
+          CoinGeckoApiKey: envVariables.COINGECKO_API_KEY,
+          geminiApiKey: envVariables.GENAI_API_KEY,
+          tenderlyAccessToken: envVariables.TENDERLY_ACCESS_KEY,
+          tenderlyAccountSlug: envVariables.TENDERLY_ACCOUNT_SLUG,
+          tenderlyProjectSlug: envVariables.TENDERLY_PROJECT_SLUG,
+        });
+        if (!isFormValid) return;
+
+        updateSubmitButtonText('Updating agent...');
+        // confirmModal.openModal();
+      } catch (error) {
+        console.error('Error validating form:', error);
+      } finally {
+        updateSubmitButtonText('Save Changes');
+      }
+    },
+    [validateForm, confirmModal, updateSubmitButtonText],
+  );
+
   return (
     <Form<ModiusFormValues>
       form={form}
       layout="vertical"
       disabled={!isEditing}
-      onFinish={confirmModal.openModal}
+      onFinish={handleFinish}
       validateMessages={validateMessages}
       initialValues={{ ...initialFormValues }}
     >
@@ -99,16 +132,22 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       >
         <Input.Password />
       </Form.Item>
+      {geminiApiKeyValidationStatus === 'invalid' && (
+        <InvalidGeminiApiCredentials />
+      )}
 
       <Form.Item hidden={!isEditing}>
         <Button size="large" type="primary" htmlType="submit" block>
-          Save changes
+          {submitButtonText}
         </Button>
       </Form.Item>
     </Form>
   );
 };
 
+/**
+ * Form for updating Modius agent.
+ */
 export const ModiusUpdatePage = () => {
   const { goto } = usePageState();
   const { selectedService } = useServices();
