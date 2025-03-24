@@ -259,11 +259,6 @@ const createSplashWindow = () => {
     },
   });
   splashWindow.loadURL('file://' + __dirname + '/resources/app-loading.html');
-
-  // @note: uncomment to show dev tools for splash screen
-  // if (isDev) {
-  //   splashWindow.webContents.openDevTools();
-  // }
 };
 
 const HEIGHT = 700;
