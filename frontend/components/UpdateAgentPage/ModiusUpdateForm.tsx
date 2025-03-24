@@ -10,6 +10,7 @@ import { Nullable } from '@/types/Util';
 import { InvalidGeminiApiCredentials } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/MemeooorrAgentForm';
 import {
   CoinGeckoApiKeyLabel,
+  ModiusGeminiApiKeyLabel,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
@@ -125,7 +126,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       </Form.Item>
 
       <Form.Item
-        label="Gemini API Key"
+        label={<ModiusGeminiApiKeyLabel />}
         name={['env_variables', 'GENAI_API_KEY']}
         {...modiusAgentFieldProps}
         rules={[...requiredRules, { validator: validateApiKey }]}

@@ -19,6 +19,7 @@ import {
 import { onDummyServiceCreation } from '../shared/utils';
 import {
   CoinGeckoApiKeyLabel,
+  ModiusGeminiApiKeyLabel,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
@@ -181,7 +182,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
 
         <Form.Item
           name="geminiApiKey"
-          label="Gemini API Key"
+          label={<ModiusGeminiApiKeyLabel />}
           {...modiusAgentFieldProps}
         >
           <Input.Password />

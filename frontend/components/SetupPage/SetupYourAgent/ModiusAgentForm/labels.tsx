@@ -13,7 +13,7 @@ const { Paragraph, Text } = Typography;
 const TOOLTIP_STYLE = { width: '340px' };
 
 export const TenderlyAccessTokenLabel = () => (
-  <Flex align="center" gap={8}>
+  <Flex align="center" gap={6}>
     <Text>Tenderly access token</Text>
     <InfoTooltip placement="bottom" overlayInnerStyle={TOOLTIP_STYLE}>
       <Paragraph className="text-sm mt-0">
@@ -49,7 +49,7 @@ export const TenderlyAccessTokenLabel = () => (
 );
 
 export const TenderlyAccountSlugLabel = () => (
-  <Flex align="center" gap={8}>
+  <Flex align="center" gap={6}>
     <Text>Tenderly account slug</Text>
     <InfoTooltip placement="bottom" overlayInnerStyle={TOOLTIP_STYLE}>
       <Paragraph className="text-sm m-0">
@@ -62,7 +62,7 @@ export const TenderlyAccountSlugLabel = () => (
 );
 
 export const TenderlyProjectSlugLabel = () => (
-  <Flex align="center" gap={8}>
+  <Flex align="center" gap={6}>
     <Text>Tenderly project slug</Text>
     <InfoTooltip placement="bottom" overlayInnerStyle={TOOLTIP_STYLE}>
       <Paragraph className="text-sm m-0">
@@ -75,7 +75,7 @@ export const TenderlyProjectSlugLabel = () => (
 );
 
 export const CoinGeckoApiKeyLabel = () => (
-  <Flex align="center" gap={8}>
+  <Flex align="center" gap={6}>
     <Text>CoinGecko API key</Text>
     <InfoTooltip placement="bottom" overlayInnerStyle={TOOLTIP_STYLE}>
       <Paragraph className="text-sm mt-0">
@@ -114,5 +114,25 @@ export const CoinGeckoApiKeyLabel = () => (
         </a>
       </Text>
     </InfoTooltip>
+  </Flex>
+);
+
+export const ModiusGeminiApiKeyLabel = () => (
+  <Flex align="center" gap={6}>
+    <Text>Gemini API key</Text>
+    <InfoTooltip placement="bottom" overlayInnerStyle={TOOLTIP_STYLE}>
+      <Paragraph className="text-sm m-0">
+        The Gemini API key allows you to chat with your agent and update its
+        goals through Modius’ profile. You can generate one for free on{' '}
+        <a target="_blank" href="https://aistudio.google.com/app/apikey">
+          AI Studio
+          {UNICODE_SYMBOLS.EXTERNAL_LINK}
+        </a>
+        .
+      </Paragraph>
+    </InfoTooltip>
+    <Text type="secondary" className="text-sm">
+      (Optional)
+    </Text>
   </Flex>
 );
