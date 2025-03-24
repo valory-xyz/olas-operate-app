@@ -1,5 +1,5 @@
 import { Button, Form, Input } from 'antd';
-import { get, isEqual } from 'lodash';
+import { get, isEqual, isUndefined, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import { Pages } from '@/enums/Pages';
@@ -70,7 +70,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
         if (!isFormValid) return;
 
         updateSubmitButtonText('Updating agent...');
-        // confirmModal.openModal();
+        confirmModal.openModal();
       } catch (error) {
         console.error('Error validating form:', error);
       } finally {
@@ -129,7 +129,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
         label={<ModiusGeminiApiKeyLabel />}
         name={['env_variables', 'GENAI_API_KEY']}
         {...modiusAgentFieldProps}
-        rules={[...requiredRules, { validator: validateApiKey }]}
+        rules={[{ validator: validateApiKey }]}
       >
         <Input.Password />
       </Form.Item>
@@ -180,7 +180,11 @@ export const ModiusUpdatePage = () => {
   }, [selectedService?.env_variables]);
 
   const handleBackClick = useCallback(() => {
-    const unsavedFields = get(form?.getFieldsValue(), 'env_variables');
+    // Check if there are unsaved changes and omit empty fields
+    const unsavedFields = omitBy(
+      get(form?.getFieldsValue(), 'env_variables'),
+      (value) => isUndefined(value),
+    );
     const previousValues = initialValues?.env_variables;
 
     const hasUnsavedChanges = !isEqual(unsavedFields, previousValues);

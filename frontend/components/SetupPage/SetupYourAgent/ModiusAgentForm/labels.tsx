@@ -5,6 +5,7 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import {
   COINGECKO_DEMO_API_KEY,
   COINGECKO_URL,
+  GEMINI_API_URL,
   TENDERLY_URL,
 } from '@/constants/urls';
 
@@ -124,7 +125,7 @@ export const ModiusGeminiApiKeyLabel = () => (
       <Paragraph className="text-sm m-0">
         The Gemini API key allows you to chat with your agent and update its
         goals through Modius’ profile. You can generate one for free on{' '}
-        <a target="_blank" href="https://aistudio.google.com/app/apikey">
+        <a target="_blank" href={GEMINI_API_URL}>
           AI Studio
           {UNICODE_SYMBOLS.EXTERNAL_LINK}
         </a>
