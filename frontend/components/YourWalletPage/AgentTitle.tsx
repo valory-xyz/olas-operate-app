@@ -17,10 +17,11 @@ import { MODAL_WIDTH } from '@/constants/width';
 import { useAgentUi } from '@/context/AgentUiProvider';
 import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
-import { useSharedContext } from '@/hooks/useSharedContext';
+import { useStore } from '@/hooks/useStore';
 import { Address } from '@/types/Address';
 import { generateName } from '@/utils/agentName';
 
@@ -39,15 +40,23 @@ const ExternalAgentProfileLink = ({ href }: { href: string }) => {
 };
 
 const ModiusAgentProfile = ({ onClick }: { onClick: () => void }) => {
-  const { selectedService } = useServices();
+  const electronApi = useElectronApi();
+  const { storeState } = useStore();
+  const { selectedService, selectedAgentType } = useServices();
   const { goto } = usePageState();
-  const { allowModiusAgentProfileAccess, updateAllowModiusAgentProfileAccess } =
-    useSharedContext();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
   const geminiApiKey = selectedService?.env_variables?.GENAI_API_KEY?.value;
 
+  const allowModiusAgentProfileAccess = useMemo(() => {
+    if (!storeState) return false;
+    return storeState.modius?.allowProfileAccess ?? false;
+  }, [storeState]);
+
   const handleAgentProfileClick = useCallback(() => {
-    if (geminiApiKey || allowModiusAgentProfileAccess) {
+    if (!!geminiApiKey || allowModiusAgentProfileAccess) {
       onClick();
       return;
     }
@@ -55,15 +64,24 @@ const ModiusAgentProfile = ({ onClick }: { onClick: () => void }) => {
     setIsModalOpen(true);
   }, [geminiApiKey, allowModiusAgentProfileAccess, onClick]);
 
-  const handleOk = useCallback(() => {
-    setIsModalOpen(false);
+  const handleDoNotShowAgain = useCallback(
+    (value: boolean) => {
+      const key = `${selectedAgentType}.allowProfileAccess`;
+      electronApi.store?.set?.(key, value);
+      setIsModalOpen(false);
+    },
+    [electronApi.store, selectedAgentType],
+  );
+
+  const handleProvideKey = useCallback(() => {
+    handleDoNotShowAgain(dontShowAgain);
     goto(Pages.UpdateAgentTemplate);
-  }, [goto]);
+  }, [dontShowAgain, handleDoNotShowAgain, goto]);
 
   const handleProceed = useCallback(() => {
-    setIsModalOpen(false);
+    handleDoNotShowAgain(dontShowAgain);
     onClick();
-  }, [onClick]);
+  }, [dontShowAgain, handleDoNotShowAgain, onClick]);
 
   return (
     <>
@@ -88,18 +106,14 @@ const ModiusAgentProfile = ({ onClick }: { onClick: () => void }) => {
           </div>
 
           <Flex align="center" gap={8}>
-            <Checkbox
-              onChange={(e) =>
-                updateAllowModiusAgentProfileAccess(e.target.checked)
-              }
-            >
+            <Checkbox onChange={(e) => setDontShowAgain(e.target.checked)}>
               {"Don't show again"}
             </Checkbox>
           </Flex>
 
           <Flex gap={8}>
             <Button onClick={handleProceed}>Proceed anyway</Button>
-            <Button type="primary" onClick={handleOk}>
+            <Button type="primary" onClick={handleProvideKey}>
               Provide Gemini API key
             </Button>
           </Flex>

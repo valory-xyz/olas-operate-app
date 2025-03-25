@@ -60,13 +60,14 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
     async (values: ModiusFormValues) => {
       try {
         const envVariables = values.env_variables;
-        const isFormValid = await validateForm({
+        const userInputs = {
           CoinGeckoApiKey: envVariables.COINGECKO_API_KEY,
           geminiApiKey: envVariables.GENAI_API_KEY,
           tenderlyAccessToken: envVariables.TENDERLY_ACCESS_KEY,
           tenderlyAccountSlug: envVariables.TENDERLY_ACCOUNT_SLUG,
           tenderlyProjectSlug: envVariables.TENDERLY_PROJECT_SLUG,
-        });
+        };
+        const isFormValid = await validateForm(userInputs);
         if (!isFormValid) return;
 
         updateSubmitButtonText('Updating agent...');

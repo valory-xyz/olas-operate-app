@@ -24,11 +24,18 @@ export const useModiusFormValidate = (btnText = 'Continue') => {
       setSubmitButtonText('Validating...');
 
       try {
-        const isGeminiApiValid = await validateGeminiApiKey(
-          values.geminiApiKey,
-        );
-        setGeminiApiKeyValidationStatus(isGeminiApiValid ? 'valid' : 'invalid');
-        if (!isGeminiApiValid) return;
+        const isGeminiApiKeyProvided = !!values.geminiApiKey;
+
+        // gemini api key is optional, so we only validate if it's provided
+        if (isGeminiApiKeyProvided) {
+          const isGeminiApiValid = await validateGeminiApiKey(
+            values.geminiApiKey,
+          );
+          setGeminiApiKeyValidationStatus(
+            isGeminiApiValid ? 'valid' : 'invalid',
+          );
+          if (!isGeminiApiValid) return;
+        }
 
         return true;
       } catch (error) {

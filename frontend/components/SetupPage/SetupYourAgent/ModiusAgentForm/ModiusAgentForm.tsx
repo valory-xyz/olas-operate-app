@@ -150,7 +150,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
           {...modiusAgentFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
-          <Input />
+          <Input.Password />
         </Form.Item>
 
         <Form.Item
@@ -177,7 +177,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
           {...modiusAgentFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
-          <Input />
+          <Input.Password />
         </Form.Item>
 
         <Form.Item
