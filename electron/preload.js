@@ -38,5 +38,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   validateTwitterLogin: (credentials) =>
     ipcRenderer.invoke('validate-twitter-login', credentials),
   healthCheck: () => ipcRenderer.invoke('health-check'),
+  getLatestEaRelease: () => ipcRenderer.invoke('get-latest-ea-release-tag'),
   agentActivityWindow,
 });

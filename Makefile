@@ -53,7 +53,7 @@ build: ./dist/pearl_win.exe ./electron/bins/tendermint.exe
 	$(call setup_env, prod)
 	cp -f dist/pearl_win.exe ./electron/bins/pearl_win.exe
 	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} yarn build:frontend
-	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} GH_TOKEN=${GH_TOKEN} node build-win.js
+	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} GH_TOKEN=${GH_TOKEN} GITHUB_PAT=${GITHUB_PAT} node build-win.js
 
 
 .PHONY: build-tenderly
@@ -61,4 +61,4 @@ build-tenderly:  ./dist/pearl_win.exe
 	$(call setup_env, dev-tenderly)
 	cp -f dist/pearl_win.exe ./electron/bins/pearl_win.exe
 	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} yarn build:frontend
-	GH_TOKEN=${GH_TOKEN} node build-win-tenderly.js
+	GH_TOKEN=${GH_TOKEN} GITHUB_PAT=${GITHUB_PAT} node build-win-tenderly.js

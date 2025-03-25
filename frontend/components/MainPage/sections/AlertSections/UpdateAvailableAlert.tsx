@@ -1,13 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
-import { Flex } from 'antd';
-import useToken from 'antd/es/theme/useToken';
+import { Flex, theme, Typography } from 'antd';
 import semver from 'semver';
 
 import { CustomAlert } from '@/components/Alert';
 import { ArrowUpRightSvg } from '@/components/custom-icons/ArrowUpRight';
 import { FIVE_MINUTE_INTERVAL } from '@/constants/intervals';
-import { DOWNLOAD_URL, GITHUB_API_LATEST_RELEASE } from '@/constants/urls';
+import {
+  DOWNLOAD_URL_EA,
+  DOWNLOAD_URL_PUBLIC,
+  GITHUB_API_LATEST_RELEASE,
+} from '@/constants/urls';
 import { useElectronApi } from '@/hooks/useElectronApi';
+
+const { Text } = Typography;
+const { useToken } = theme;
+
+const IS_EA_RELEASE = process.env.NEXT_PUBLIC_IS_EA === 'true';
 
 enum SemverComparisonResult {
   OUTDATED = -1,
@@ -15,46 +23,77 @@ enum SemverComparisonResult {
   UPDATED = 1,
 }
 
-export const UpdateAvailableAlert = () => {
-  const { getAppVersion } = useElectronApi();
-  const [, token] = useToken();
+/** Compare two versions of a release and return if the new version is available */
+const isNewReleaseAvailable = (oldVersion: string, newVersion: string) => {
+  const latestVersion = semver.parse(newVersion);
+  const currentVersion = semver.parse(oldVersion);
 
-  const { data: isPearlOutdated, isFetched } = useQuery<boolean>({
+  if (!latestVersion || !currentVersion) return false;
+
+  const comparison: SemverComparisonResult = semver.compare(
+    currentVersion,
+    latestVersion,
+  );
+
+  return comparison === SemverComparisonResult.OUTDATED;
+};
+
+/** Compare two versions of EA release and return if the new version is available */
+const isNewEaReleaseAvailable = (oldVersion: string, newVersion: string) => {
+  const oldClean = oldVersion.replace(/-all$/, '');
+  const newClean = newVersion.replace(/-all$/, '');
+
+  if (!oldClean || !newClean) return false;
+  return isNewReleaseAvailable(oldClean, newClean);
+};
+
+type GithubRelease = { tag_name: string };
+
+/** Get the latest public release from the Github API */
+const getLatestPublicRelease = async (): Promise<string | null> => {
+  const response = await fetch(GITHUB_API_LATEST_RELEASE);
+  if (!response.ok) return null;
+
+  const data: GithubRelease = await response.json();
+  return data.tag_name;
+};
+
+const useGetPearlOutdated = () => {
+  const { getAppVersion, getLatestEaRelease } = useElectronApi();
+
+  return useQuery({
     queryKey: ['isPearlOutdated'],
     queryFn: async (): Promise<boolean> => {
-      if (!getAppVersion) {
-        console.error('electronAPI.getAppVersion is not available in Window');
+      try {
+        const appVersion = await getAppVersion!();
+        if (!appVersion) return false;
+
+        const latestVersion = IS_EA_RELEASE
+          ? await getLatestEaRelease!()
+          : await getLatestPublicRelease();
+        if (!latestVersion) return false;
+
+        return IS_EA_RELEASE
+          ? isNewEaReleaseAvailable(appVersion, latestVersion)
+          : isNewReleaseAvailable(appVersion, latestVersion);
+      } catch (error) {
+        console.error('Unable to check for updates:', error);
         return false;
       }
-
-      const appVersion = await getAppVersion();
-      if (!appVersion) return false;
-
-      const response = await fetch(GITHUB_API_LATEST_RELEASE);
-      if (!response.ok) return false;
-
-      const data = await response.json();
-      const latestTag = data.tag_name;
-      const latestVersion = semver.parse(latestTag);
-      const currentVersion = semver.parse(appVersion ?? '0.0.0');
-
-      if (!latestVersion || !currentVersion) {
-        return false;
-      }
-
-      const comparison: SemverComparisonResult = semver.compare(
-        appVersion,
-        latestVersion,
-      );
-
-      return comparison === SemverComparisonResult.OUTDATED;
     },
     refetchInterval: FIVE_MINUTE_INTERVAL,
+    enabled: !!getAppVersion && !!getLatestEaRelease,
   });
+};
 
-  if (!isFetched || !isPearlOutdated) {
-    return null;
-  }
+/**
+ * Display an alert if a new version of Pearl is available.
+ */
+export const UpdateAvailableAlert = () => {
+  const { data: isPearlOutdated, isFetched } = useGetPearlOutdated();
+  const { token } = useToken();
+
+  if (!isFetched || !isPearlOutdated) return null;
 
   return (
     <CustomAlert
@@ -63,8 +102,11 @@ export const UpdateAvailableAlert = () => {
       showIcon
       message={
         <Flex align="center" justify="space-between" gap={2}>
-          <span>A new version of Pearl is available</span>
-          <a href={DOWNLOAD_URL} target="_blank">
+          <Text>A new version of Pearl is available</Text>
+          <a
+            href={IS_EA_RELEASE ? DOWNLOAD_URL_EA : DOWNLOAD_URL_PUBLIC}
+            target="_blank"
+          >
             Download{' '}
             <ArrowUpRightSvg
               fill={token.colorPrimary}

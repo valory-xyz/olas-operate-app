@@ -207,7 +207,7 @@ jobs:
       - name: Build frontend for production
         run: yarn build:frontend
         env:
-          NODE_ENV: ${{ matrix.env }}          
+          NODE_ENV: ${{ matrix.env }}
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
           OPTIMISM_RPC: https://rpc-gate.autonolas.tech/optimism-rpc/
           BASE_RPC: https://rpc-gate.autonolas.tech/base-rpc/
@@ -215,6 +215,7 @@ jobs:
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
           MODE_RPC: https://mainnet.mode.network
           CELO_RPC: https://forno.celo.org
+          NEXT_PUBLIC_IS_EA: ${{ contains(github.ref_name, '-all') && 'true' || 'false' }}
 
       # Run the build and notarization process for production
       - name: Build, notarize, and publish (Production)
@@ -225,6 +226,7 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}
+          GITHUB_PAT: ${{ secrets.github_pat }}
           NODE_ENV: ${{ matrix.env }}
           ARCH: ${{ env.OS_ARCH }}
           ELECTRON_BUILDER_CACHE: ~/.cache/electron-builder
@@ -243,4 +245,5 @@ jobs:
           echo "ETHEREUM_RPC=https://rpc-gate.autonolas.tech/ethereum-rpc/" >> .env
           echo "MODE_RPC=https://mainnet.mode.network" >> .env
           echo "CELO_RPC=https://forno.celo.org" >> .env
+          echo "GITHUB_PAT=${{ secrets.github_pat }}" >> .env
           node build.js

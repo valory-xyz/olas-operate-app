@@ -56,6 +56,7 @@ type ElectronApiContextProps = {
     { response: AgentHealthCheck | null } | { error: string }
   >;
   agentActivityWindow?: Partial<ElectronApiAgentActivityWindow>;
+  getLatestEaRelease?: () => Promise<string | null>;
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -131,6 +132,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         openPath: getElectronApiFunction('openPath'),
         validateTwitterLogin: getElectronApiFunction('validateTwitterLogin'),
         healthCheck: getElectronApiFunction('healthCheck'),
+        getLatestEaRelease: getElectronApiFunction('getLatestEaRelease'),
         agentActivityWindow: {
           init: getElectronApiFunction('agentActivityWindow.init'),
           goto: getElectronApiFunction('agentActivityWindow.goto'),
