@@ -137,10 +137,7 @@ export const AgentTitle = ({ address }: { address: Address }) => {
       return;
     }
 
-    if (
-      deploymentStatus !== MiddlewareDeploymentStatus.DEPLOYED &&
-      1 + 1 === 3 // TODO: remove
-    ) {
+    if (deploymentStatus !== MiddlewareDeploymentStatus.DEPLOYED) {
       message.error(
         'Please run the agent first, before attempting to view the agent UI',
       );

@@ -88,7 +88,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
             },
             COINGECKO_API_KEY: {
               ...serviceTemplate.env_variables.COINGECKO_API_KEY,
-              value: values.CoinGeckoApiKey,
+              value: values.coinGeckoApiKey,
             },
             GENAI_API_KEY: {
               ...serviceTemplate.env_variables.GENAI_API_KEY,
@@ -172,7 +172,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         </Form.Item>
 
         <Form.Item
-          name="CoinGeckoApiKey"
+          name="coinGeckoApiKey"
           label={<CoinGeckoApiKeyLabel />}
           {...modiusAgentFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}

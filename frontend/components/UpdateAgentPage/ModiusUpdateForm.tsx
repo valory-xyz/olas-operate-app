@@ -61,11 +61,11 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       try {
         const envVariables = values.env_variables;
         const userInputs = {
-          CoinGeckoApiKey: envVariables.COINGECKO_API_KEY,
-          geminiApiKey: envVariables.GENAI_API_KEY,
           tenderlyAccessToken: envVariables.TENDERLY_ACCESS_KEY,
           tenderlyAccountSlug: envVariables.TENDERLY_ACCOUNT_SLUG,
           tenderlyProjectSlug: envVariables.TENDERLY_PROJECT_SLUG,
+          coinGeckoApiKey: envVariables.COINGECKO_API_KEY,
+          geminiApiKey: envVariables.GENAI_API_KEY,
         };
         const isFormValid = await validateForm(userInputs);
         if (!isFormValid) return;

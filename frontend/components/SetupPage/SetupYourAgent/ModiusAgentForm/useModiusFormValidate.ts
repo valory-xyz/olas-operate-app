@@ -6,13 +6,15 @@ export type FieldValues = {
   tenderlyAccessToken: string;
   tenderlyAccountSlug: string;
   tenderlyProjectSlug: string;
-  CoinGeckoApiKey: string;
+  coinGeckoApiKey: string;
   geminiApiKey: string;
 };
 
-export const useModiusFormValidate = (btnText = 'Continue') => {
+export const useModiusFormValidate = (defaultSubmitButtonText = 'Continue') => {
   const [isValidating, setIsValidating] = useState(false);
-  const [submitButtonText, setSubmitButtonText] = useState(btnText);
+  const [submitButtonText, setSubmitButtonText] = useState(
+    defaultSubmitButtonText,
+  );
   const [geminiApiKeyValidationStatus, setGeminiApiKeyValidationStatus] =
     useState<ValidationStatus>('unknown');
 
@@ -39,7 +41,7 @@ export const useModiusFormValidate = (btnText = 'Continue') => {
 
         return true;
       } catch (error) {
-        console.error('Error validating meme form:', error);
+        console.error('Error validating modius form:', error);
       } finally {
         setIsValidating(false);
       }

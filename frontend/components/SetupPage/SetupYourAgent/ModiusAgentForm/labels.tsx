@@ -126,8 +126,7 @@ export const ModiusGeminiApiKeyLabel = () => (
         The Gemini API key allows you to chat with your agent and update its
         goals through Modius’ profile. You can generate one for free on{' '}
         <a target="_blank" href={GEMINI_API_URL}>
-          AI Studio
-          {UNICODE_SYMBOLS.EXTERNAL_LINK}
+          Google AI Studio
         </a>
         .
       </Paragraph>
