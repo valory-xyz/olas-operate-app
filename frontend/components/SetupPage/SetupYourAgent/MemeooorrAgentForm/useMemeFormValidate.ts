@@ -8,7 +8,7 @@ import {
   ValidationStatus,
 } from '../shared/validations';
 
-type FieldValues = {
+export type MemeooorrFieldValues = {
   personaDescription: string;
   geminiApiKey: string;
   fireworksApiKey: string;
@@ -30,7 +30,7 @@ export const useMemeFormValidate = () => {
   ] = useState<ValidationStatus>('unknown');
 
   const handleValidate = useCallback(
-    async (values: Record<keyof FieldValues, string>) => {
+    async (values: MemeooorrFieldValues) => {
       setIsValidating(true);
 
       setGeminiApiKeyValidationStatus('unknown');

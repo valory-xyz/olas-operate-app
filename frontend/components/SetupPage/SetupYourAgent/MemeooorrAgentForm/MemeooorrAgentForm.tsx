@@ -15,18 +15,15 @@ import {
 } from '../shared/formUtils';
 import { onDummyServiceCreation } from '../shared/utils';
 import { FireworksApiFields } from './FireworksApiField';
-import { useMemeFormValidate } from './useMemeFormValidate';
+import {
+  MemeooorrFieldValues,
+  useMemeFormValidate,
+} from './useMemeFormValidate';
 
 const { Title, Text } = Typography;
 
-type FieldValues = {
-  personaDescription: string;
-  geminiApiKey: string;
-  xEmail: string;
-  xUsername: string;
-  xPassword: string;
+type MemeooorrFormValues = MemeooorrFieldValues & {
   fireworksApiEnabled: boolean;
-  fireworksApiKey: string;
 };
 
 export const XAccountCredentials = () => (
@@ -86,7 +83,7 @@ export const MemeooorrAgentForm = ({
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
-  const [form] = Form.useForm<FieldValues>();
+  const [form] = Form.useForm<MemeooorrFormValues>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -100,7 +97,7 @@ export const MemeooorrAgentForm = ({
   } = useMemeFormValidate();
 
   const onFinish = useCallback(
-    async (values: FieldValues) => {
+    async (values: MemeooorrFormValues) => {
       if (!defaultStakingProgramId) return;
 
       try {
@@ -188,7 +185,7 @@ export const MemeooorrAgentForm = ({
       </Text>
       <Divider style={{ margin: '8px 0' }} />
 
-      <Form<FieldValues>
+      <Form<MemeooorrFormValues>
         form={form}
         name="setup-your-agent"
         layout="vertical"

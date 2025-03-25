@@ -24,7 +24,10 @@ import {
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
 } from './labels';
-import { FieldValues, useModiusFormValidate } from './useModiusFormValidate';
+import {
+  ModiusFieldValues,
+  useModiusFormValidate,
+} from './useModiusFormValidate';
 
 const { Text } = Typography;
 
@@ -48,7 +51,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
-  const [form] = Form.useForm<FieldValues>();
+  const [form] = Form.useForm<ModiusFieldValues>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     geminiApiKeyValidationStatus,
@@ -58,7 +61,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
   } = useModiusFormValidate();
 
   const onFinish = useCallback(
-    async (values: Record<keyof FieldValues, string>) => {
+    async (values: ModiusFieldValues) => {
       if (!defaultStakingProgramId) return;
 
       try {
@@ -92,7 +95,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
             },
             GENAI_API_KEY: {
               ...serviceTemplate.env_variables.GENAI_API_KEY,
-              value: values.geminiApiKey,
+              value: values.geminiApiKey || '',
             },
           },
         };
@@ -136,7 +139,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
       <SetupHeader />
       <Divider style={{ margin: '8px 0' }} />
 
-      <Form<FieldValues>
+      <Form<ModiusFieldValues>
         form={form}
         name="setup-your-agent"
         layout="vertical"

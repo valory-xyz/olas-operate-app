@@ -2,12 +2,12 @@ import { useCallback, useState } from 'react';
 
 import { validateGeminiApiKey, ValidationStatus } from '../shared/validations';
 
-export type FieldValues = {
+export type ModiusFieldValues = {
   tenderlyAccessToken: string;
   tenderlyAccountSlug: string;
   tenderlyProjectSlug: string;
   coinGeckoApiKey: string;
-  geminiApiKey: string;
+  geminiApiKey?: string;
 };
 
 export const useModiusFormValidate = (defaultSubmitButtonText = 'Continue') => {
@@ -18,36 +18,29 @@ export const useModiusFormValidate = (defaultSubmitButtonText = 'Continue') => {
   const [geminiApiKeyValidationStatus, setGeminiApiKeyValidationStatus] =
     useState<ValidationStatus>('unknown');
 
-  const handleValidate = useCallback(
-    async (values: Record<keyof FieldValues, string>) => {
-      setIsValidating(true);
+  const handleValidate = useCallback(async (values: ModiusFieldValues) => {
+    setIsValidating(true);
 
-      setGeminiApiKeyValidationStatus('unknown');
-      setSubmitButtonText('Validating...');
+    setGeminiApiKeyValidationStatus('unknown');
+    setSubmitButtonText('Validating...');
 
-      try {
-        const isGeminiApiKeyProvided = !!values.geminiApiKey;
-
-        // gemini api key is optional, so we only validate if it's provided
-        if (isGeminiApiKeyProvided) {
-          const isGeminiApiValid = await validateGeminiApiKey(
-            values.geminiApiKey,
-          );
-          setGeminiApiKeyValidationStatus(
-            isGeminiApiValid ? 'valid' : 'invalid',
-          );
-          if (!isGeminiApiValid) return;
-        }
-
-        return true;
-      } catch (error) {
-        console.error('Error validating modius form:', error);
-      } finally {
-        setIsValidating(false);
+    try {
+      // gemini api key is optional, so we only validate if it's provided
+      if (values.geminiApiKey) {
+        const isGeminiApiValid = await validateGeminiApiKey(
+          values.geminiApiKey,
+        );
+        setGeminiApiKeyValidationStatus(isGeminiApiValid ? 'valid' : 'invalid');
+        if (!isGeminiApiValid) return;
       }
-    },
-    [],
-  );
+
+      return true;
+    } catch (error) {
+      console.error('Error validating modius form:', error);
+    } finally {
+      setIsValidating(false);
+    }
+  }, []);
 
   const updateSubmitButtonText = useCallback((value: string) => {
     setSubmitButtonText(value);
