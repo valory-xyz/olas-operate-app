@@ -9,13 +9,13 @@ import { Nullable } from '@/types/Util';
 
 import { FireworksApiFields } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/FireworksApiField';
 import {
-  InvalidGeminiApiCredentials,
   InvalidXCredentials,
   XAccountCredentials,
 } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/MemeooorrAgentForm';
 // TODO: move the following hook/components to a shared place
 // once Modius work is merged
 import { useMemeFormValidate } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/useMemeFormValidate';
+import { InvalidGeminiApiCredentials } from '../SetupPage/SetupYourAgent/shared/components';
 import {
   commonFieldProps,
   requiredRules,
@@ -195,7 +195,7 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
   );
 };
 
-export const MemeUpdatePage = () => {
+export const MemeooorrUpdatePage = () => {
   const { goto } = usePageState();
   const { selectedService } = useServices();
   const { unsavedModal, form } = useContext(UpdateAgentContext);

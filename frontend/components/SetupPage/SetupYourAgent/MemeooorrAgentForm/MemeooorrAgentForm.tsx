@@ -8,6 +8,7 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
+import { InvalidGeminiApiCredentials } from '../shared/components';
 import {
   commonFieldProps,
   emailValidateMessages,
@@ -55,15 +56,6 @@ export const XAccountCredentials = () => (
       className="mb-16"
     />
   </Flex>
-);
-
-export const InvalidGeminiApiCredentials = () => (
-  <CustomAlert
-    type="error"
-    showIcon
-    message={<Text>API key is invalid</Text>}
-    className="mb-8"
-  />
 );
 
 export const InvalidXCredentials = () => (

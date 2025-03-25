@@ -7,7 +7,6 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 
-import { InvalidGeminiApiCredentials } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/MemeooorrAgentForm';
 import {
   CoinGeckoApiKeyLabel,
   ModiusGeminiApiKeyLabel,
@@ -16,6 +15,7 @@ import {
   TenderlyProjectSlugLabel,
 } from '../SetupPage/SetupYourAgent/ModiusAgentForm/labels';
 import { useModiusFormValidate } from '../SetupPage/SetupYourAgent/ModiusAgentForm/useModiusFormValidate';
+import { InvalidGeminiApiCredentials } from '../SetupPage/SetupYourAgent/shared/components';
 // TODO: move the following hook/components to a shared place
 // once Modius work is merged
 import {
