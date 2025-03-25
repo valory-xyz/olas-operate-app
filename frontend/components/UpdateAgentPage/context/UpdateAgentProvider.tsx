@@ -1,4 +1,5 @@
 import { Form, FormInstance } from 'antd';
+import { noop } from 'lodash';
 import {
   createContext,
   Dispatch,
@@ -18,31 +19,41 @@ import { ServicesService } from '@/service/Services';
 import { DeepPartial } from '@/types/Util';
 
 import { useConfirmUpdateModal } from '../hooks/useConfirmModal';
-import { ModalProps } from '../hooks/useModal';
+import { defaultModalProps, ModalProps } from '../hooks/useModal';
 import { useUnsavedModal } from '../hooks/useUnsavedModal';
 import { ConfirmUpdateModal } from '../modals/ConfirmUpdateModal';
 import { UnsavedModal } from '../modals/UnsavedModal';
 
-export const UpdateAgentContext = createContext<
-  Partial<{
-    confirmUpdateModal: ModalProps;
-    unsavedModal: ModalProps;
-    form: FormInstance;
-    isEditing: boolean;
-    setIsEditing: Dispatch<SetStateAction<boolean>>;
-  }>
->({});
+export const UpdateAgentContext = createContext<{
+  isEditing: boolean;
+  setIsEditing: Dispatch<SetStateAction<boolean>>;
+  form?: FormInstance;
+  confirmUpdateModal: ModalProps;
+  unsavedModal: ModalProps;
+}>({
+  isEditing: false,
+  setIsEditing: noop,
+  unsavedModal: defaultModalProps,
+  confirmUpdateModal: defaultModalProps,
+});
 
 export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
   const [form] = Form.useForm<DeepPartial<ServiceTemplate>>(); // TODO: wrong type, fix it
-  const { selectedService, selectedAgentType } = useServices();
+  const {
+    refetch: refetchServices,
+    selectedService,
+    selectedAgentType,
+  } = useServices();
   const { goto } = usePageState();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // Save button loading state
 
   const confirmUpdateCallback = useCallback(async () => {
     const formValues = form.getFieldsValue();
 
     if (!selectedService || !selectedService.service_config_id) return;
+
+    setIsSaving(true);
 
     const currentTemplate = SERVICE_TEMPLATES.find(
       ({ name, agentType }) =>
@@ -80,12 +91,14 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
 
     try {
       await ServicesService.updateService(partialServiceTemplate);
+      await refetchServices?.();
     } catch (error) {
       console.error(error);
     } finally {
       setIsEditing(false);
+      setIsSaving(false);
     }
-  }, [form, selectedAgentType, selectedService]);
+  }, [form, selectedAgentType, selectedService, refetchServices]);
 
   const confirmUnsavedCallback = useCallback(async () => {
     goto(Pages.Main);
@@ -109,7 +122,7 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
         setIsEditing,
       }}
     >
-      <ConfirmUpdateModal />
+      <ConfirmUpdateModal isLoading={isSaving} />
       <UnsavedModal />
       {children}
     </UpdateAgentContext.Provider>

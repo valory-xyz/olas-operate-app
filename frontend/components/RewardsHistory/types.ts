@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AddressSchema } from '@/types/Address';
 
 export const EpochDetailsSchema = z.object({
+  epoch: z.number(),
   epochStartTimeStamp: z.number(),
   epochEndTimeStamp: z.number(),
   reward: z.number(),

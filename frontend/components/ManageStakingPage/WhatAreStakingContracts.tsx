@@ -20,10 +20,6 @@ const collapseItems = [
         <Text>
           Your agent can only participate in one staking contract at a time.
         </Text>
-        <Text>
-          To be eligible for rewards your agent must run max 1 hour a day,
-          regardless of the staking contract.
-        </Text>
       </Flex>
     ),
   },

@@ -6,8 +6,6 @@ import { UpdateAgentContext } from '../context/UpdateAgentProvider';
 export const UnsavedModal = () => {
   const { unsavedModal } = useContext(UpdateAgentContext);
 
-  if (!unsavedModal) return null;
-
   return (
     <Modal
       title="Unsaved changes"

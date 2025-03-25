@@ -82,7 +82,7 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
       `Memeooorr @${values.env_variables.TWIKIT_USERNAME}`,
     );
 
-    confirmModal?.openModal();
+    confirmModal.openModal();
   };
 
   return (
@@ -232,11 +232,11 @@ export const MemeUpdatePage = () => {
 
     const hasUnsavedChanges = !isEqual(unsavedFields, previousValues);
     if (hasUnsavedChanges) {
-      unsavedModal?.openModal?.();
+      unsavedModal.openModal();
     } else {
       goto(Pages.Main);
     }
-  }, [unsavedModal, goto, form, initialValues]);
+  }, [initialValues, form, unsavedModal, goto]);
 
   return (
     <CardLayout onClickBack={handleClickBack}>
