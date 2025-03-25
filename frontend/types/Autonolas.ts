@@ -1,20 +1,19 @@
 import { z } from 'zod';
 
-const zodBigNumber = z.object({
-  _isBigNumber: z.boolean(),
-  _hex: z.string().startsWith('0x'),
-});
-
 export const StakingRewardsInfoSchema = z.object({
   // mechRequestCount: z.number(),
   serviceInfo: z.array(z.unknown()),
-  livenessPeriod: zodBigNumber,
-  livenessRatio: zodBigNumber,
-  rewardsPerSecond: zodBigNumber,
+  /* checkpoint period (in seconds). eg. 86400 */
+  livenessPeriod: z.number(),
+  livenessRatio: z.number(),
+  /* rewards per second */
+  rewardsPerSecond: z.number(),
   isEligibleForRewards: z.boolean(),
-  availableRewardsForEpoch: z.number(),
+  eligibleRewardsThisEpoch: z.number(),
   accruedServiceStakingRewards: z.number(),
   minimumStakedAmount: z.number(),
+  /* last timestamp of the checkpoint */
+  lastCheckpointTimestamp: z.number(),
 });
 
 export type StakingRewardsInfo = z.infer<typeof StakingRewardsInfoSchema>;

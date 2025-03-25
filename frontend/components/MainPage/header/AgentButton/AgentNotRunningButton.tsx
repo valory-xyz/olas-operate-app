@@ -3,8 +3,6 @@ import { isNil } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
-import { MechType } from '@/config/mechs';
-import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { Pages } from '@/enums/Pages';
 import { MasterEoa, MasterSafe } from '@/enums/Wallet';
@@ -151,10 +149,6 @@ const useServiceDeployment = () => {
           stakingProgramId: selectedStakingProgramId,
           serviceTemplate,
           deploy: false, // TODO: deprecated will remove
-          useMechMarketplace:
-            STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
-              selectedStakingProgramId
-            ].mechType === MechType.Marketplace,
         });
       } catch (error) {
         console.error('Failed to create service:', error);
@@ -177,13 +171,7 @@ const useServiceDeployment = () => {
       showNotification?.('Failed to start service.');
       throw error;
     }
-  }, [
-    selectedAgentConfig.evmHomeChainId,
-    selectedAgentType,
-    selectedStakingProgramId,
-    service,
-    showNotification,
-  ]);
+  }, [selectedAgentType, selectedStakingProgramId, service, showNotification]);
 
   const updateStatesSequentially = useCallback(async () => {
     await updateServicesState?.();
