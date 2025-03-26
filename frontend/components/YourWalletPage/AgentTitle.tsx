@@ -50,23 +50,23 @@ const ModiusAgentProfile = ({ onClick }: { onClick: () => void }) => {
 
   const geminiApiKey = selectedService?.env_variables?.GENAI_API_KEY?.value;
 
-  const allowModiusAgentProfileAccess = useMemo(() => {
+  const canAccessProfile = useMemo(() => {
     if (!storeState) return false;
-    return storeState.modius?.allowProfileAccess ?? false;
+    return storeState.modius?.isProfileWarningDisplayed ?? false;
   }, [storeState]);
 
   const handleAgentProfileClick = useCallback(() => {
-    if (!!geminiApiKey || allowModiusAgentProfileAccess) {
+    if (!!geminiApiKey || canAccessProfile) {
       onClick();
       return;
     }
 
     setIsModalOpen(true);
-  }, [geminiApiKey, allowModiusAgentProfileAccess, onClick]);
+  }, [geminiApiKey, canAccessProfile, onClick]);
 
   const handleDoNotShowAgain = useCallback(
     (value: boolean) => {
-      const key = `${selectedAgentType}.allowProfileAccess`;
+      const key = `${selectedAgentType}.isProfileWarningDisplayed`;
       electronApi.store?.set?.(key, value);
       setIsModalOpen(false);
     },

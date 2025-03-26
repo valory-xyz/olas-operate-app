@@ -20,7 +20,10 @@ const schema = {
   memeooorr: { type: 'object', default: defaultInitialAgentSettings },
   modius: {
     type: 'object',
-    default: { ...defaultInitialAgentSettings, allowProfileAccess: false },
+    default: {
+      ...defaultInitialAgentSettings,
+      isProfileWarningDisplayed: false,
+    },
   },
   agentsFunCelo: { type: 'object', default: defaultInitialAgentSettings },
 };

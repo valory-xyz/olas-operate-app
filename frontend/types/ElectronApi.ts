@@ -18,7 +18,7 @@ export type ElectronStore = {
   [AgentType.PredictTrader]?: AgentSettings;
   [AgentType.Memeooorr]?: AgentSettings;
   [AgentType.Modius]?: AgentSettings & {
-    allowProfileAccess: boolean;
+    isProfileWarningDisplayed: boolean;
   };
   [AgentType.AgentsFunCelo]?: AgentSettings;
 };
