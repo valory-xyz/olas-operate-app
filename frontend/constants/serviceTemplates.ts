@@ -83,7 +83,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
-      value: 'QmZFEoQ1oFCWmwgyo63sn2cFwQm2M5HxgU9jhCE2ayQhKG',
+      value: 'QmXbpSiocGi4qy4gjMKAw1iHSqmf6jhuWrxBCVwtHBPw9f',
       provision_type: EnvProvisionType.FIXED,
     },
   },
