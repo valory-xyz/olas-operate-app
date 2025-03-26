@@ -8,12 +8,12 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
-import { InvalidGeminiApiCredentials } from '../shared/components';
 import {
   commonFieldProps,
   emailValidateMessages,
   requiredRules,
 } from '../shared/formUtils';
+import { InvalidGeminiApiCredentials } from '../shared/InvalidGeminiApiCredentials';
 import { onDummyServiceCreation } from '../shared/utils';
 import { FireworksApiFields } from './FireworksApiField';
 import {
@@ -85,7 +85,7 @@ export const MemeooorrAgentForm = ({
     setGeminiApiKeyValidationStatus,
     twitterCredentialsValidationStatus,
     setTwitterCredentialsValidationStatus,
-    handleValidate,
+    validateForm,
   } = useMemeFormValidate();
 
   const onFinish = useCallback(
@@ -95,7 +95,7 @@ export const MemeooorrAgentForm = ({
       try {
         setIsSubmitting(true);
 
-        const cookies = await handleValidate(values);
+        const cookies = await validateForm(values);
         if (!cookies) return;
 
         const overriddenServiceConfig: ServiceTemplate = {
@@ -153,7 +153,7 @@ export const MemeooorrAgentForm = ({
     },
     [
       defaultStakingProgramId,
-      handleValidate,
+      validateForm,
       serviceTemplate,
       goto,
       setSubmitButtonText,

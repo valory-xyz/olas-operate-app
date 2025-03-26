@@ -8,7 +8,6 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
-import { InvalidGeminiApiCredentials } from '../shared/components';
 import {
   modiusAgentFieldProps,
   requiredRules,
@@ -16,6 +15,7 @@ import {
   validateMessages,
   validateSlug,
 } from '../shared/formUtils';
+import { InvalidGeminiApiCredentials } from '../shared/InvalidGeminiApiCredentials';
 import { onDummyServiceCreation } from '../shared/utils';
 import {
   CoinGeckoApiKeyLabel,

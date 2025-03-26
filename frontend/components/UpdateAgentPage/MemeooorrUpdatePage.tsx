@@ -15,12 +15,12 @@ import {
 // TODO: move the following hook/components to a shared place
 // once Modius work is merged
 import { useMemeFormValidate } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/useMemeFormValidate';
-import { InvalidGeminiApiCredentials } from '../SetupPage/SetupYourAgent/shared/components';
 import {
   commonFieldProps,
   requiredRules,
   validateMessages,
 } from '../SetupPage/SetupYourAgent/shared/formUtils';
+import { InvalidGeminiApiCredentials } from '../SetupPage/SetupYourAgent/shared/InvalidGeminiApiCredentials';
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
@@ -53,11 +53,11 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
     isValidating,
     geminiApiKeyValidationStatus,
     twitterCredentialsValidationStatus,
-    handleValidate,
+    validateForm,
   } = useMemeFormValidate();
 
   const handleFinish = async (values: MemeooorrFormValues) => {
-    const cookies = await handleValidate({
+    const cookies = await validateForm({
       personaDescription: values.env_variables.PERSONA,
       geminiApiKey: values.env_variables.GENAI_API_KEY,
       fireworksApiKey: values.fireworksApiEnabled

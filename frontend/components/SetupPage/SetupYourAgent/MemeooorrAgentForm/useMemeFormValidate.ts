@@ -82,6 +82,6 @@ export const useMemeFormValidate = () => {
     setGeminiApiKeyValidationStatus,
     twitterCredentialsValidationStatus,
     setTwitterCredentialsValidationStatus,
-    handleValidate,
+    validateForm: handleValidate,
   };
 };
