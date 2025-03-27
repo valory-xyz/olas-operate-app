@@ -39,8 +39,11 @@ export abstract class AgentsFunService extends StakedAgentService {
     const stakingProgramConfig = STAKING_PROGRAMS[chainId][stakingProgramId];
     if (!stakingProgramConfig) throw new Error('Staking program not found');
 
-    const { activityChecker, contract: stakingTokenProxyContract } =
-      stakingProgramConfig;
+    const {
+      activityChecker,
+      contract: stakingTokenProxyContract,
+      mech: mechContract,
+    } = stakingProgramConfig;
 
     const provider = PROVIDERS[chainId].multicallProvider;
 
@@ -52,7 +55,6 @@ export abstract class AgentsFunService extends StakedAgentService {
       stakingTokenProxyContract.minStakingDeposit(),
       stakingTokenProxyContract.tsCheckpoint(),
       activityChecker.livenessRatio(),
-      activityChecker.getMultisigNonces(agentMultisigAddress),
     ];
     const multicallResponse = await provider.all(contractCalls);
 
@@ -64,10 +66,8 @@ export abstract class AgentsFunService extends StakedAgentService {
       minStakingDeposit,
       tsCheckpoint,
       livenessRatio,
-      currentMultisigNonces,
     ] = multicallResponse;
 
-    const lastMultisigNonces = serviceInfo[2];
     const nowInSeconds = Math.floor(Date.now() / 1000);
 
     const isServiceStaked = serviceInfo[2].length > 0;
@@ -78,11 +78,30 @@ export abstract class AgentsFunService extends StakedAgentService {
         1e18 +
       REQUESTS_SAFETY_MARGIN;
 
-    const eligibleRequests = isServiceStaked
-      ? currentMultisigNonces[0] - lastMultisigNonces[0]
-      : 0;
+    let isEligibleForRewards = false;
 
-    const isEligibleForRewards = eligibleRequests >= requiredRequests;
+    if (mechContract) {
+      // Define eligibility for rewards in staking contracts based on
+      // mechs by checking the number of requests on the mech contract
+      const mechRequestCount =
+        await mechContract.getRequestsCount(agentMultisigAddress);
+      const mechRequestCountOnLastCheckpoint = serviceInfo[2][1];
+      const eligibleRequests =
+        mechRequestCount - mechRequestCountOnLastCheckpoint;
+
+      isEligibleForRewards = eligibleRequests >= requiredRequests;
+    } else {
+      // Define eligibility for rewards in legacy staking contracts
+      // by checking the multisig nonces on the activity checker
+      const currentMultisigNonces =
+        await activityChecker.getMultisigNonces(agentMultisigAddress);
+      const lastMultisigNonces = serviceInfo[2];
+      const eligibleRequests = isServiceStaked
+        ? currentMultisigNonces[0] - lastMultisigNonces[0]
+        : 0;
+
+      isEligibleForRewards = eligibleRequests >= requiredRequests;
+    }
 
     const availableRewardsForEpoch = Math.max(
       rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
