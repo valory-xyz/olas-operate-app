@@ -83,7 +83,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
-      value: 'QmZFEoQ1oFCWmwgyo63sn2cFwQm2M5HxgU9jhCE2ayQhKG',
+      value: 'QmXbpSiocGi4qy4gjMKAw1iHSqmf6jhuWrxBCVwtHBPw9f',
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -93,11 +93,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeickejdjgbq3ofib4k26qsff6vhc7sfktq73yyg7dyj2var4qk5bsa',
+  hash: 'bafybeiexs3bkq6om7z5djknrfddm3wka5is4mdqkd33rr6qspwlannmnqy',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.4.1-alpha1',
+  service_version: 'v0.4.1-alpha2',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
