@@ -253,7 +253,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeiarzdiqj3bqddmop4jhphcvw4ufemq24xb6qa4jnz4bhtbd23a4r4',
+  hash: 'bafybeiaobyifxb5ns6jvpvpt7g35wya4vtdl4jvcwo2a6hzpo5nizxe6ha',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
@@ -411,6 +411,6 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;
 
 export const getServiceTemplate = (
-  templateHash: string
+  templateHash: string,
 ): ServiceTemplate | undefined =>
   SERVICE_TEMPLATES.find((template) => template.hash === templateHash);
