@@ -1,5 +1,5 @@
 import { Button, Form, Input } from 'antd';
-import { get, isEqual } from 'lodash';
+import { get, isEqual, isUndefined, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import { Pages } from '@/enums/Pages';
@@ -7,6 +7,14 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 
+import {
+  CoinGeckoApiKeyLabel,
+  ModiusGeminiApiKeyLabel,
+  TenderlyAccessTokenLabel,
+  TenderlyAccountSlugLabel,
+  TenderlyProjectSlugLabel,
+} from '../SetupPage/SetupYourAgent/ModiusAgentForm/labels';
+import { useModiusFormValidate } from '../SetupPage/SetupYourAgent/ModiusAgentForm/useModiusFormValidate';
 // TODO: move the following hook/components to a shared place
 // once Modius work is merged
 import {
@@ -15,13 +23,8 @@ import {
   validateApiKey,
   validateMessages,
   validateSlug,
-} from '../SetupPage/SetupYourAgent/formUtils';
-import {
-  CoinGeckoApiKeyLabel,
-  TenderlyAccessTokenLabel,
-  TenderlyAccountSlugLabel,
-  TenderlyProjectSlugLabel,
-} from '../SetupPage/SetupYourAgent/ModiusAgentForm/labels';
+} from '../SetupPage/SetupYourAgent/shared/formUtils';
+import { InvalidGeminiApiCredentials } from '../SetupPage/SetupYourAgent/shared/InvalidGeminiApiCredentials';
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
@@ -31,6 +34,7 @@ type ModiusFormValues = {
     TENDERLY_ACCOUNT_SLUG: string;
     TENDERLY_PROJECT_SLUG: string;
     COINGECKO_API_KEY: string;
+    GENAI_API_KEY: string;
   };
 };
 
@@ -45,12 +49,44 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
     confirmUpdateModal: confirmModal,
   } = useContext(UpdateAgentContext);
 
+  const {
+    geminiApiKeyValidationStatus,
+    submitButtonText,
+    updateSubmitButtonText,
+    validateForm,
+  } = useModiusFormValidate('Save Changes');
+
+  const handleFinish = useCallback(
+    async (values: ModiusFormValues) => {
+      try {
+        const envVariables = values.env_variables;
+        const userInputs = {
+          tenderlyAccessToken: envVariables.TENDERLY_ACCESS_KEY,
+          tenderlyAccountSlug: envVariables.TENDERLY_ACCOUNT_SLUG,
+          tenderlyProjectSlug: envVariables.TENDERLY_PROJECT_SLUG,
+          coinGeckoApiKey: envVariables.COINGECKO_API_KEY,
+          geminiApiKey: envVariables.GENAI_API_KEY,
+        };
+        const isFormValid = await validateForm(userInputs);
+        if (!isFormValid) return;
+
+        updateSubmitButtonText('Updating agent...');
+        confirmModal.openModal();
+      } catch (error) {
+        console.error('Error validating form:', error);
+      } finally {
+        updateSubmitButtonText('Save Changes');
+      }
+    },
+    [validateForm, confirmModal, updateSubmitButtonText],
+  );
+
   return (
     <Form<ModiusFormValues>
       form={form}
       layout="vertical"
       disabled={!isEditing}
-      onFinish={confirmModal.openModal}
+      onFinish={handleFinish}
       validateMessages={validateMessages}
       initialValues={{ ...initialFormValues }}
     >
@@ -90,15 +126,30 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
         <Input.Password />
       </Form.Item>
 
+      <Form.Item
+        label={<ModiusGeminiApiKeyLabel />}
+        name={['env_variables', 'GENAI_API_KEY']}
+        {...modiusAgentFieldProps}
+        rules={[{ validator: validateApiKey }]}
+      >
+        <Input.Password />
+      </Form.Item>
+      {geminiApiKeyValidationStatus === 'invalid' && (
+        <InvalidGeminiApiCredentials />
+      )}
+
       <Form.Item hidden={!isEditing}>
         <Button size="large" type="primary" htmlType="submit" block>
-          Save changes
+          {submitButtonText}
         </Button>
       </Form.Item>
     </Form>
   );
 };
 
+/**
+ * Form for updating Modius agent.
+ */
 export const ModiusUpdatePage = () => {
   const { goto } = usePageState();
   const { selectedService } = useServices();
@@ -119,6 +170,8 @@ export const ModiusUpdatePage = () => {
           acc.env_variables.TENDERLY_PROJECT_SLUG = value;
         } else if (key === 'COINGECKO_API_KEY') {
           acc.env_variables.COINGECKO_API_KEY = value;
+        } else if (key === 'GENAI_API_KEY') {
+          acc.env_variables.GENAI_API_KEY = value;
         }
 
         return acc;
@@ -128,7 +181,11 @@ export const ModiusUpdatePage = () => {
   }, [selectedService?.env_variables]);
 
   const handleBackClick = useCallback(() => {
-    const unsavedFields = get(form?.getFieldsValue(), 'env_variables');
+    // Check if there are unsaved changes and omit empty fields
+    const unsavedFields = omitBy(
+      get(form?.getFieldsValue(), 'env_variables'),
+      (value) => isUndefined(value),
+    );
     const previousValues = initialValues?.env_variables;
 
     const hasUnsavedChanges = !isEqual(unsavedFields, previousValues);

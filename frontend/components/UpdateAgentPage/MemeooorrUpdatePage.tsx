@@ -7,20 +7,20 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 
+import { FireworksApiFields } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/FireworksApiField';
+import {
+  InvalidXCredentials,
+  XAccountCredentials,
+} from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/MemeooorrAgentForm';
 // TODO: move the following hook/components to a shared place
 // once Modius work is merged
-import { useMemeFormValidate } from '../SetupPage/hooks/useMemeFormValidate';
+import { useMemeFormValidate } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/useMemeFormValidate';
 import {
   commonFieldProps,
   requiredRules,
   validateMessages,
-} from '../SetupPage/SetupYourAgent/formUtils';
-import { FireworksApiFields } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/FireworksApiField';
-import {
-  InvalidGeminiApiCredentials,
-  InvalidXCredentials,
-  XAccountCredentials,
-} from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/MemeooorrAgentForm';
+} from '../SetupPage/SetupYourAgent/shared/formUtils';
+import { InvalidGeminiApiCredentials } from '../SetupPage/SetupYourAgent/shared/InvalidGeminiApiCredentials';
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
@@ -53,11 +53,11 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
     isValidating,
     geminiApiKeyValidationStatus,
     twitterCredentialsValidationStatus,
-    handleValidate,
+    validateForm,
   } = useMemeFormValidate();
 
   const handleFinish = async (values: MemeooorrFormValues) => {
-    const cookies = await handleValidate({
+    const cookies = await validateForm({
       personaDescription: values.env_variables.PERSONA,
       geminiApiKey: values.env_variables.GENAI_API_KEY,
       fireworksApiKey: values.fireworksApiEnabled
@@ -106,6 +106,7 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
           rows={4}
         />
       </Form.Item>
+
       {/* Gemini credentials */}
       <Form.Item
         label="Gemini API key"
@@ -117,11 +118,13 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
       {geminiApiKeyValidationStatus === 'invalid' && (
         <InvalidGeminiApiCredentials />
       )}
+
       {/* Fireworks API */}
       <FireworksApiFields
         fireworksApiEnabledName="fireworksApiEnabled"
         fireworksApiKeyName={['env_variables', 'FIREWORKS_API_KEY']}
       />
+
       {/* X */}
       <XAccountCredentials />
       {twitterCredentialsValidationStatus === 'invalid' && (
@@ -172,6 +175,7 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
       >
         <Input.Password placeholder="X Password" />
       </Form.Item>
+
       {/* Hidden fields that need to be accessible in Confirm Update Modal */}
       <Form.Item name={['env_variables', 'TWIKIT_COOKIES']} hidden />
       <Form.Item name={['env_variables', 'FIREWORKS_API_KEY']} hidden />
@@ -191,7 +195,7 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
   );
 };
 
-export const MemeUpdatePage = () => {
+export const MemeooorrUpdatePage = () => {
   const { goto } = usePageState();
   const { selectedService } = useServices();
   const { unsavedModal, form } = useContext(UpdateAgentContext);

@@ -253,7 +253,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeibhev6otq7lm7lwsq6p62edjzgbyk7r67u3fzr4syqoq4nah2p6t4',
+  hash: 'bafybeiaobyifxb5ns6jvpvpt7g35wya4vtdl4jvcwo2a6hzpo5nizxe6ha',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
@@ -320,6 +320,12 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
     },
     COINGECKO_API_KEY: {
       name: 'Coingecko API key',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    GENAI_API_KEY: {
+      name: 'Gemini api key',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,

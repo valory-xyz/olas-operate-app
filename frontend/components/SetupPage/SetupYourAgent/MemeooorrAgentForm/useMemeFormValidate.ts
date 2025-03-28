@@ -5,11 +5,10 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import {
   validateGeminiApiKey,
   validateTwitterCredentials,
-} from '../SetupYourAgent/validations';
+  ValidationStatus,
+} from '../shared/validations';
 
-type ValidationStatus = 'valid' | 'invalid' | 'unknown';
-
-type FieldValues = {
+export type MemeooorrFieldValues = {
   personaDescription: string;
   geminiApiKey: string;
   fireworksApiKey: string;
@@ -31,7 +30,7 @@ export const useMemeFormValidate = () => {
   ] = useState<ValidationStatus>('unknown');
 
   const handleValidate = useCallback(
-    async (values: Record<keyof FieldValues, string>) => {
+    async (values: MemeooorrFieldValues) => {
       setIsValidating(true);
 
       setGeminiApiKeyValidationStatus('unknown');
@@ -83,6 +82,6 @@ export const useMemeFormValidate = () => {
     setGeminiApiKeyValidationStatus,
     twitterCredentialsValidationStatus,
     setTwitterCredentialsValidationStatus,
-    handleValidate,
+    validateForm: handleValidate,
   };
 };

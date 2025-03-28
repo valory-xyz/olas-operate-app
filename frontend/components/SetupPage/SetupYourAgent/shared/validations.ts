@@ -1,5 +1,7 @@
 import { XCookie } from '@/types/Cookies';
 
+export type ValidationStatus = 'valid' | 'invalid' | 'unknown';
+
 /**
  * Validate the Google Gemini API key
  */
