@@ -1,5 +1,5 @@
 import { CopyOutlined } from '@ant-design/icons';
-import { Button, Flex, message, Tooltip, Typography } from 'antd';
+import { Button, Flex, message, Segmented, Tooltip, Typography } from 'antd';
 import Link from 'next/link';
 import { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 
@@ -17,9 +17,12 @@ import { CardSection } from '../../styled/CardSection';
 
 const { Text } = Typography;
 
+type AddFunds = 'Send on Base' | 'Bridge from Ethereum';
+
 export const AddFundsSection = () => {
   const fundSectionRef = useRef<HTMLDivElement>(null);
   const [isAddFundsVisible, setIsAddFundsVisible] = useState(false);
+  const [sendType, setSendType] = useState<AddFunds>('Send on Base');
 
   const addFunds = useCallback(async () => {
     setIsAddFundsVisible(true);
@@ -31,10 +34,10 @@ export const AddFundsSection = () => {
 
   return (
     <>
-      <CardSection gap={12} padding="24px">
+      <CardSection gap={12} padding='24px'>
         <Button
-          type="default"
-          size="large"
+          type='default'
+          size='large'
           block
           onClick={isAddFundsVisible ? closeAddFunds : addFunds}
         >
@@ -42,7 +45,23 @@ export const AddFundsSection = () => {
         </Button>
       </CardSection>
 
-      {isAddFundsVisible && <OpenAddFundsSection ref={fundSectionRef} />}
+      {isAddFundsVisible && (
+        <>
+          <Segmented<AddFunds>
+            options={['Send on Base', 'Bridge from Ethereum']} // TODO
+            onChange={(value) => setSendType(value)}
+            value={sendType}
+            block
+          />
+          {sendType === 'Send on Base' ? (
+            <OpenAddFundsSection ref={fundSectionRef} />
+          ) : (
+            <Text className='text-base'>
+              Bridge funds from Ethereum to Base chain (Coming soon)
+            </Text>
+          )}
+        </>
+      )}
     </>
   );
 };
@@ -53,15 +72,15 @@ const AddFundsWarningAlertSection = () => {
   return (
     <CardSection>
       <CustomAlert
-        type="warning"
+        type='warning'
         fullWidth
         showIcon
         message={
           <Flex vertical gap={2.5}>
-            <Text className="text-base" strong>
+            <Text className='text-base' strong>
               Only send funds on {CHAIN_CONFIG[homeChainId].name} Chain!
             </Text>
-            <Text className="text-base">
+            <Text className='text-base'>
               You will lose any assets you send on other chains.
             </Text>
           </Flex>
@@ -80,10 +99,10 @@ const AddFundsAddressSection = ({
   truncatedFundingAddress?: string;
   handleCopy: () => void;
 }) => (
-  <CardSection gap={10} justify="center" align="center" padding="16px 24px">
+  <CardSection gap={10} justify='center' align='center' padding='16px 24px'>
     <Tooltip
       title={
-        <span className="can-select-text flex">
+        <span className='can-select-text flex'>
           {fundingAddress ?? 'Unable to load address'}
         </span>
       }
@@ -91,7 +110,7 @@ const AddFundsAddressSection = ({
       <Text title={fundingAddress}>{truncatedFundingAddress ?? NA}</Text>
     </Tooltip>
 
-    <Button onClick={handleCopy} icon={<CopyOutlined />} size="large" />
+    <Button onClick={handleCopy} icon={<CopyOutlined />} size='large' />
   </CardSection>
 );
 
@@ -100,8 +119,8 @@ const AddFundsGetTokensSection = () => {
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
 
   return (
-    <CardSection justify="center" bordertop="true" padding="16px 24px">
-      <Link target="_blank" href={SWAP_URL_BY_EVM_CHAIN[homeChainId]}>
+    <CardSection justify='center' bordertop='true' padding='16px 24px'>
+      <Link target='_blank' href={SWAP_URL_BY_EVM_CHAIN[homeChainId]}>
         Get OLAS + {CHAIN_CONFIG[homeChainId].nativeToken.symbol} on{' '}
         {CHAIN_CONFIG[homeChainId].name} {UNICODE_SYMBOLS.EXTERNAL_LINK}
       </Link>
@@ -119,21 +138,21 @@ export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
   const masterSafeAddress = useMemo(
     () =>
       masterSafes?.find((wallet) => wallet.evmChainId === homeChainId)?.address,
-    [homeChainId, masterSafes],
+    [homeChainId, masterSafes]
   );
 
   const truncatedFundingAddress: string | undefined = useMemo(
     () => masterSafeAddress && truncateAddress(masterSafeAddress, 4),
-    [masterSafeAddress],
+    [masterSafeAddress]
   );
 
   const handleCopyAddress = useCallback(
     () =>
       masterSafeAddress &&
       copyToClipboard(masterSafeAddress).then(() =>
-        message.success('Copied successfully!'),
+        message.success('Copied successfully!')
       ),
-    [masterSafeAddress],
+    [masterSafeAddress]
   );
 
   return (
