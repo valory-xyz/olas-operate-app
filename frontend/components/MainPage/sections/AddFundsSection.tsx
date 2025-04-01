@@ -1,5 +1,5 @@
 import { CopyOutlined } from '@ant-design/icons';
-import { Button, Flex, message, Segmented, Tooltip, Typography } from 'antd';
+import { Button, Flex, message, Tooltip, Typography } from 'antd';
 import Link from 'next/link';
 import { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 
@@ -17,12 +17,9 @@ import { CardSection } from '../../styled/CardSection';
 
 const { Text } = Typography;
 
-type AddFunds = 'Send on Base' | 'Bridge from Ethereum';
-
 export const AddFundsSection = () => {
   const fundSectionRef = useRef<HTMLDivElement>(null);
   const [isAddFundsVisible, setIsAddFundsVisible] = useState(false);
-  const [sendType, setSendType] = useState<AddFunds>('Send on Base');
 
   const addFunds = useCallback(async () => {
     setIsAddFundsVisible(true);
@@ -45,23 +42,7 @@ export const AddFundsSection = () => {
         </Button>
       </CardSection>
 
-      {isAddFundsVisible && (
-        <>
-          <Segmented<AddFunds>
-            options={['Send on Base', 'Bridge from Ethereum']} // TODO
-            onChange={(value) => setSendType(value)}
-            value={sendType}
-            block
-          />
-          {sendType === 'Send on Base' ? (
-            <OpenAddFundsSection ref={fundSectionRef} />
-          ) : (
-            <Text className="text-base">
-              Bridge funds from Ethereum to Base chain (Coming soon)
-            </Text>
-          )}
-        </>
-      )}
+      {isAddFundsVisible && <OpenAddFundsSection ref={fundSectionRef} />}
     </>
   );
 };
