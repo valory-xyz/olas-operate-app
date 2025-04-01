@@ -179,7 +179,7 @@ const SetupEoaFundingForChainV2 = ({
     <WaitingForTransactionCard className="mt-16">
       <Flex gap={8} align="center">
         <Image
-          src={`/chains/${kebabCase(chainName)}.png`}
+          src={`/chains/${kebabCase(chainName)}-chain.png`}
           width={20}
           height={20}
           alt="chain logo"
