@@ -8,25 +8,23 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
-import { useMemeFormValidate } from '../../hooks/useMemeFormValidate';
 import {
   commonFieldProps,
   emailValidateMessages,
   requiredRules,
-} from '../formUtils';
-import { onDummyServiceCreation } from '../utils';
+} from '../shared/formUtils';
+import { InvalidGeminiApiCredentials } from '../shared/InvalidGeminiApiCredentials';
+import { onDummyServiceCreation } from '../shared/utils';
 import { FireworksApiFields } from './FireworksApiField';
+import {
+  MemeooorrFieldValues,
+  useMemeFormValidate,
+} from './useMemeFormValidate';
 
 const { Title, Text } = Typography;
 
-type FieldValues = {
-  personaDescription: string;
-  geminiApiKey: string;
-  xEmail: string;
-  xUsername: string;
-  xPassword: string;
+type MemeooorrFormValues = MemeooorrFieldValues & {
   fireworksApiEnabled: boolean;
-  fireworksApiKey: string;
 };
 
 export const XAccountCredentials = () => (
@@ -60,15 +58,6 @@ export const XAccountCredentials = () => (
   </Flex>
 );
 
-export const InvalidGeminiApiCredentials = () => (
-  <CustomAlert
-    type="error"
-    showIcon
-    message={<Text>API key is invalid</Text>}
-    className="mb-8"
-  />
-);
-
 export const InvalidXCredentials = () => (
   <CustomAlert
     type="error"
@@ -86,7 +75,7 @@ export const MemeooorrAgentForm = ({
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
-  const [form] = Form.useForm<FieldValues>();
+  const [form] = Form.useForm<MemeooorrFormValues>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -96,17 +85,17 @@ export const MemeooorrAgentForm = ({
     setGeminiApiKeyValidationStatus,
     twitterCredentialsValidationStatus,
     setTwitterCredentialsValidationStatus,
-    handleValidate,
+    validateForm,
   } = useMemeFormValidate();
 
   const onFinish = useCallback(
-    async (values: FieldValues) => {
+    async (values: MemeooorrFormValues) => {
       if (!defaultStakingProgramId) return;
 
       try {
         setIsSubmitting(true);
 
-        const cookies = await handleValidate(values);
+        const cookies = await validateForm(values);
         if (!cookies) return;
 
         const overriddenServiceConfig: ServiceTemplate = {
@@ -164,7 +153,7 @@ export const MemeooorrAgentForm = ({
     },
     [
       defaultStakingProgramId,
-      handleValidate,
+      validateForm,
       serviceTemplate,
       goto,
       setSubmitButtonText,
@@ -188,7 +177,7 @@ export const MemeooorrAgentForm = ({
       </Text>
       <Divider style={{ margin: '8px 0' }} />
 
-      <Form<FieldValues>
+      <Form<MemeooorrFormValues>
         form={form}
         name="setup-your-agent"
         layout="vertical"
