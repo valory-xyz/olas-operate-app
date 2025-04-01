@@ -40,7 +40,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'agent-activity': true,
     'backup-via-safe': true,
     'agent-settings': false,
-    'bridge-funds': false,
+    'bridge-funds': true,
   },
   [AgentType.Memeooorr]: {
     'manage-wallet': true,

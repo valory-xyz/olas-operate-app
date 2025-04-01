@@ -1,5 +1,5 @@
 import { CopyOutlined } from '@ant-design/icons';
-import { Flex, message, Tooltip, Typography } from 'antd';
+import { Flex, message, Segmented, Tooltip, Typography } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
@@ -11,12 +11,14 @@ import { NA } from '@/constants/symbols';
 import { EvmChainId } from '@/enums/Chain';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useMasterBalances } from '@/hooks/useBalanceContext';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 import { delayInSeconds } from '@/utils/delay';
 
+import { BridgeOnEvm } from './BridgeOnEvm';
 import { SetupCreateHeader } from './SetupCreateHeader';
 
 const { Text, Title, Paragraph } = Typography;
@@ -26,7 +28,6 @@ const AccountCreationCard = styled.div`
   flex-direction: column;
   gap: 8px;
   margin-top: 24px;
-  margin-bottom: 24px;
   padding: 16px;
   background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='12' ry='12' stroke='%23A3AEBB' stroke-width='2' stroke-dasharray='6' stroke-dashoffset='15' stroke-linecap='square'/%3e%3c/svg%3e");
   border-radius: 12px;
@@ -37,7 +38,39 @@ const ICON_STYLE = { color: '#606F85' };
 const statusMessage = (isFunded?: boolean) =>
   isFunded ? 'Funds have been received!' : 'Waiting for transaction';
 
+const AccountCreationAddress = () => {
+  const { masterEoa } = useMasterWalletContext();
+  const address = masterEoa?.address;
+
+  const handleCopyAddress = useCallback(() => {
+    if (address) {
+      copyToClipboard(address).then(() => message.success('Address copied!'));
+    }
+  }, [address]);
+
+  return (
+    <AccountCreationCard>
+      <Flex justify="space-between">
+        <Text className="text-sm" type="secondary">
+          Account creation address
+        </Text>
+        <Flex gap={10} align="center">
+          <Tooltip title="Copy to clipboard" placement="left">
+            <CopyOutlined style={ICON_STYLE} onClick={handleCopyAddress} />
+          </Tooltip>
+        </Flex>
+      </Flex>
+
+      <span className="can-select-text break-word">{`${address || NA}`}</span>
+    </AccountCreationCard>
+  );
+};
+
 type SetupEoaFundingWaitingProps = { chainName: string };
+
+/**
+ * @deprecated View is deprecated, use SetupEoaFundingWaitingV2Props instead
+ */
 const SetupEoaFundingWaiting = ({ chainName }: SetupEoaFundingWaitingProps) => {
   const { masterEoa } = useMasterWalletContext();
   const masterEoaAddress = masterEoa?.address;
@@ -91,7 +124,11 @@ type SetupEoaFundingProps = {
   currency: string;
   chainName: string;
 };
-export const SetupEoaFundingForChain = ({
+
+/**
+ * @deprecated View is deprecated, use SetupEoaFundingForChainV2 instead
+ */
+const SetupEoaFundingForChain = ({
   isFunded,
   minRequiredBalance,
   currency,
@@ -117,10 +154,62 @@ export const SetupEoaFundingForChain = ({
   );
 };
 
+type SetupEoaFundingWaitingV2Props = { chainName: string };
+const SetupEoaFundingWaitingV2 = ({
+  chainName,
+}: SetupEoaFundingWaitingV2Props) => {
+  return (
+    <>
+      <CardSection>
+        <CustomAlert
+          fullWidth
+          type="warning"
+          showIcon
+          message={
+            <Flex vertical gap={5}>
+              <Text strong>Only send funds on {chainName} chain!</Text>
+              <Text>You will lose any assets you send on other chains.</Text>
+            </Flex>
+          }
+        />
+      </CardSection>
+      <AccountCreationAddress />
+    </>
+  );
+};
+
+type SetupEoaFundingPropsV2 = {
+  isFunded: boolean;
+  minRequiredBalance: number;
+  currency: string;
+  chainName: string;
+};
+
+const SetupEoaFundingForChainV2 = ({
+  isFunded,
+  minRequiredBalance,
+  currency,
+  chainName,
+}: SetupEoaFundingPropsV2) => {
+  return (
+    <>
+      <Paragraph style={{ marginBottom: 12 }}>
+        Send funds on Base to create your account. Additional funds for staking
+        and operating your agent will be requested separately.
+      </Paragraph>
+
+      {!isFunded && <SetupEoaFundingWaitingV2 chainName={chainName} />}
+    </>
+  );
+};
+
+type SendFundAction = 'native' | 'nonNative';
+
 /**
  * EOA funding setup screen
  */
 export const SetupEoaFunding = () => {
+  const isBridgeEnabled = useFeatureFlag('bridge-funds');
   const { goto } = useSetup();
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
@@ -130,6 +219,7 @@ export const SetupEoaFunding = () => {
   const [currentChain, setCurrentChain] = useState<EvmChainId>(
     selectedAgentConfig.evmHomeChainId,
   );
+  const [fundType, setFundType] = useState<SendFundAction>('native');
 
   const currentFundingRequirements = CHAIN_CONFIG[currentChain];
 
@@ -156,7 +246,7 @@ export const SetupEoaFunding = () => {
 
     // goto next chain
     if (nextChainExists) {
-      setCurrentChain(chains[indexOfCurrentChain + 1] as unknown as EvmChainId);
+      setCurrentChain(chains[indexOfCurrentChain + 1]);
       return;
     }
 
@@ -177,6 +267,48 @@ export const SetupEoaFunding = () => {
   }, [currentFundingRequirements, handleFunded, isFunded, masterEoaAddress]);
 
   if (!currentFundingRequirements) return null;
+
+  if (isBridgeEnabled) {
+    return (
+      <CardFlex noBorder>
+        <SetupCreateHeader prev={SetupScreen.AgentSelection} />
+        <Title level={3}>Fund your agent</Title>
+        <Text type="secondary">Choose how.</Text>
+        <CardSection
+          padding="16px 24px"
+          bordertop="true"
+          borderbottom="true"
+          className="mt-12 mb-12"
+        >
+          <Segmented<SendFundAction>
+            options={[
+              {
+                label: `Send on ${currentFundingRequirements.name}`,
+                value: 'native',
+              },
+              { label: 'Bridge from Ethereum', value: 'nonNative' },
+            ]}
+            onChange={(value) => setFundType(value)}
+            value={fundType}
+            block
+            style={{ width: '100%' }}
+          />
+        </CardSection>
+        {fundType === 'native' ? (
+          <SetupEoaFundingForChainV2
+            isFunded={isFunded}
+            minRequiredBalance={
+              currentFundingRequirements.safeCreationThreshold
+            }
+            currency={currentFundingRequirements.nativeToken.symbol}
+            chainName={currentFundingRequirements.name}
+          />
+        ) : (
+          <BridgeOnEvm />
+        )}
+      </CardFlex>
+    );
+  }
 
   return (
     <SetupEoaFundingForChain
