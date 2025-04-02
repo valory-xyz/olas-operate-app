@@ -58,7 +58,7 @@ const Line = styled(Divider)`
   margin: 0;
 `;
 
-const ICON_STYLE = { color: '#606F85' };
+const ICON_STYLE = { color: COLOR.TEXT_LIGHT };
 
 const statusMessage = (isFunded?: boolean) =>
   isFunded ? 'Funds have been received!' : 'Waiting for transaction';
