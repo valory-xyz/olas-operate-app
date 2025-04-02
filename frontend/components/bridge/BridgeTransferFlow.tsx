@@ -9,7 +9,20 @@ import { formatEther } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
 
-type FlowProps = {
+type TransferChainProps = { chainName: string };
+const TransferChain = ({ chainName }: TransferChainProps) => (
+  <Flex gap={8} align="center">
+    <Image
+      src={`/chains/${kebabCase(chainName)}-chain.png`}
+      width={20}
+      height={20}
+      alt="chain logo"
+    />
+    <Text className="text-sm">{chainName}</Text>
+  </Flex>
+);
+
+type BridgeTransferFlowProps = {
   fromChain: string;
   toChain: string;
   transfers: {
@@ -20,33 +33,26 @@ type FlowProps = {
   }[];
 };
 
-const Flow = ({ fromChain, toChain, transfers }: FlowProps) => {
-  window.console.log({ transfers, fromChain, toChain });
+// TODO: Mohan to update
+
+/**
+ * Presentational component for the bridge transfer flow
+ * showing the transfer details between two chains.
+ */
+export const BridgeTransferFlow = ({
+  fromChain,
+  toChain,
+  transfers,
+}: BridgeTransferFlowProps) => {
   return (
     <div>
       <List
         dataSource={transfers}
         header={
           <Flex gap={16} align="center" className="w-full">
-            <Flex gap={8} align="center">
-              <Image
-                src={`/chains/${kebabCase(fromChain)}-chain.png`}
-                width={20}
-                height={20}
-                alt="chain logo"
-              />
-              <Text className="text-sm"> {fromChain}</Text>
-            </Flex>
+            <TransferChain chainName={fromChain} />
             <ArrowRightOutlined style={{ fontSize: 14 }} />
-            <Flex gap={8} align="center">
-              <Image
-                src={`/chains/${kebabCase(toChain)}-chain.png`}
-                width={20}
-                height={20}
-                alt="chain logo"
-              />
-              <Text className="text-sm"> {toChain}</Text>
-            </Flex>
+            <TransferChain chainName={toChain} />
           </Flex>
         }
         renderItem={(item) => (
@@ -61,15 +67,5 @@ const Flow = ({ fromChain, toChain, transfers }: FlowProps) => {
         size="small"
       />
     </div>
-  );
-};
-
-type BridgeTransferFlowProps = FlowProps;
-
-export const BridgeTransferFlow = (props: BridgeTransferFlowProps) => {
-  return (
-    <>
-      <Flow {...props} />
-    </>
   );
 };
