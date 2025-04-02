@@ -83,7 +83,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
-      value: 'QmXbpSiocGi4qy4gjMKAw1iHSqmf6jhuWrxBCVwtHBPw9f',
+      value: 'QmQkJ4P6r9qevSJN1nwppMqfgJ6NKR4suSgZax2wEuTmS2',
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -411,6 +411,6 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;
 
 export const getServiceTemplate = (
-  templateHash: string
+  templateHash: string,
 ): ServiceTemplate | undefined =>
   SERVICE_TEMPLATES.find((template) => template.hash === templateHash);
