@@ -5,7 +5,7 @@ import { useServices } from '@/hooks/useServices';
 import { LOCAL_FORM_THEME } from '@/theme';
 
 import { UpdateAgentProvider } from './context/UpdateAgentProvider';
-import { MemeUpdatePage } from './MemeUpdatePage';
+import { MemeooorrUpdatePage } from './MemeooorrUpdatePage';
 import { ModiusUpdatePage } from './ModiusUpdateForm';
 
 export const UpdateAgentPage = () => {
@@ -13,7 +13,7 @@ export const UpdateAgentPage = () => {
   return (
     <UpdateAgentProvider>
       <ConfigProvider theme={LOCAL_FORM_THEME}>
-        {selectedAgentType === AgentType.Memeooorr && <MemeUpdatePage />}
+        {selectedAgentType === AgentType.Memeooorr && <MemeooorrUpdatePage />}
         {selectedAgentType === AgentType.Modius && <ModiusUpdatePage />}
       </ConfigProvider>
     </UpdateAgentProvider>

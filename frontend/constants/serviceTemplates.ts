@@ -83,7 +83,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
-      value: 'QmXbpSiocGi4qy4gjMKAw1iHSqmf6jhuWrxBCVwtHBPw9f',
+      value: 'QmQkJ4P6r9qevSJN1nwppMqfgJ6NKR4suSgZax2wEuTmS2',
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -253,7 +253,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeifgkbbm2gv6zccuzoajwttvlpmppxy6jx2ziy7qyvqo5ibmc7rtyi',
+  hash: 'bafybeigadjx5ewnllaps5nwyc6ktdof24q5lf4s5p5qtu7xbwlga425shy',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
@@ -320,6 +320,12 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
     },
     COINGECKO_API_KEY: {
       name: 'Coingecko API key',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    GENAI_API_KEY: {
+      name: 'Gemini api key',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
