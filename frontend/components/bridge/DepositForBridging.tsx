@@ -19,18 +19,16 @@ import Image from 'next/image';
 import { useCallback, useState } from 'react';
 import styled from 'styled-components';
 
-import { AddressZero } from '@/constants/address';
 import { COLOR } from '@/constants/colors';
 import { TokenSymbol } from '@/enums/Token';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 
 const { Text } = Typography;
 
-const RootCard = styled.div`
-  display: flex;
-  flex-direction: column;
+const RootCard = styled(Flex)`
+  align-items: start;
   border-radius: 12px;
-  align-items: flex-start;
   border: 1px solid ${COLOR.BORDER_GRAY};
 `;
 
@@ -58,7 +56,7 @@ const TokenInfo = ({
         <ClockCircleOutlined style={WARNING_ICON_STYLE} />
         <Text className="loading-ellipses">
           Waiting for{' '}
-          <Text className="font-weight-600">
+          <Text strong>
             {formatEther(totalRequiredInWei - currentBalanceInWei)}&nbsp;
             {symbol}
           </Text>
@@ -72,12 +70,47 @@ const TokenInfo = ({
     return (
       <Flex gap={8}>
         <CheckSquareOutlined style={SUCCESS_ICON_STYLE} />
-        <Text className="font-weight-600">{symbol}</Text> funds received!
+        <Text strong>{symbol}</Text> funds received!
         {/** TODO: add tooltip */}
       </Flex>
     );
   }
+
   return null;
+};
+
+// TODO: make a shared component similar to AccountCreationAddress
+// in frontend/components/SetupPage/Create/SetupEoaFunding.tsx
+const DepositAddress = () => {
+  const { masterEoa } = useMasterWalletContext();
+  const address = masterEoa?.address;
+
+  const handleCopyAddress = useCallback(() => {
+    if (address) {
+      copyToClipboard(address).then(() => message.success('Address copied!'));
+    }
+  }, [address]);
+
+  return (
+    <Flex gap={8} vertical className="p-16">
+      <Flex justify="space-between" align="center">
+        <Text className="text-sm" type="secondary">
+          Deposit address
+        </Text>
+        <Flex gap={10}>
+          <Tooltip title="Copy to clipboard" placement="left">
+            <Button
+              onClick={handleCopyAddress}
+              size="small"
+              icon={<CopyOutlined style={LIGHT_ICON_STYLE} />}
+            />
+          </Tooltip>
+        </Flex>
+      </Flex>
+
+      <span className="can-select-text break-word">{`${address}`}</span>
+    </Flex>
+  );
 };
 
 type DepositForBridgingProps = {
@@ -85,9 +118,8 @@ type DepositForBridgingProps = {
 };
 export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
   // TODO: use API for getting quote
-  const [isRequestingQuote, setIsRequestingQuote] = useState(true);
-  const [depositAddress, setDepositAddress] = useState(AddressZero);
-  const [tokens, setTokens] = useState<TokenInfoProps[]>([
+  const [isRequestingQuote] = useState(false);
+  const [tokens] = useState<TokenInfoProps[]>([
     {
       status: 'waiting',
       symbol: TokenSymbol.OLAS,
@@ -102,16 +134,8 @@ export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
     },
   ]);
 
-  const handleCopyAddress = useCallback(() => {
-    if (depositAddress) {
-      copyToClipboard(depositAddress).then(() =>
-        message.success('Address copied!'),
-      );
-    }
-  }, [depositAddress]);
-
   return (
-    <RootCard>
+    <RootCard vertical>
       <Flex gap={8} align="center" className="p-16">
         <Image
           src={`/chains/${kebabCase(chainName)}-chain.png`}
@@ -127,7 +151,7 @@ export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
       {isRequestingQuote ? (
         <Flex gap={8} className="p-16">
           <Spin indicator={<LoadingOutlined spin style={LIGHT_ICON_STYLE} />} />
-          <Text className="loading-ellipses">Requesting quote</Text>
+          <Text>Requesting quote...</Text>
         </Flex>
       ) : (
         <>
@@ -145,24 +169,7 @@ export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
 
           <Divider className="m-0" />
 
-          <Flex gap={8} vertical className="p-16">
-            <Flex justify="space-between">
-              <Text className="text-sm" type="secondary">
-                Deposit address
-              </Text>
-              <Flex gap={10} align="center">
-                <Tooltip title="Copy to clipboard" placement="left">
-                  <Button
-                    onClick={handleCopyAddress}
-                    size="small"
-                    icon={<CopyOutlined style={LIGHT_ICON_STYLE} />}
-                  />
-                </Tooltip>
-              </Flex>
-            </Flex>
-
-            <span className="can-select-text break-word">{`${depositAddress}`}</span>
-          </Flex>
+          <DepositAddress />
         </>
       )}
     </RootCard>
