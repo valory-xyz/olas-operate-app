@@ -10,11 +10,11 @@ import { SetupCreateHeader } from './SetupCreateHeader';
 
 const { Text, Title } = Typography;
 
-// TODO: update
+// TODO: Tanya to update the component
 export const BridgeOnEvm = () => {
   const { goto } = useSetup();
 
-  // TODO: remove
+  // TODO: dummy function to move to the next screen (for Mohan to work on "in progress" screen)
   const handleMove = useCallback(() => {
     goto(SetupScreen.BridgeInProgress);
   }, [goto]);

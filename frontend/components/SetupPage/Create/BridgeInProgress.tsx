@@ -48,9 +48,10 @@ export const BridgeInProgress = () => {
           fromChain="Ethereum"
           toChain="Base"
           transfers={[
+            // dummy values
             {
               fromAddress: ETHEREUM_OLAS_ADDRESS,
-              fromAmount: ' 1000000000000000000',
+              fromAmount: '1000000000000000000',
               toAddress: TOKEN_CONFIG[42220][TokenSymbol.OLAS].address!,
               toAmount: '1200000000000000000',
             },
