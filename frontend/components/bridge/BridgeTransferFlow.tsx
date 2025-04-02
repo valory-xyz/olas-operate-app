@@ -18,8 +18,17 @@ const TransferChain = ({ chainName }: TransferChainProps) => (
       height={20}
       alt="chain logo"
     />
-    <Text className="text-sm">{chainName}</Text>
+    <Text>{chainName}</Text>
   </Flex>
+);
+
+const TransferringAndReceivingRow = () => (
+  <List.Item>
+    <Flex justify="space-between" className="w-full">
+      <Text type="secondary">Transferring</Text>
+      <Text type="secondary">Receiving</Text>
+    </Flex>
+  </List.Item>
 );
 
 type BridgeTransferFlowProps = {
@@ -45,27 +54,38 @@ export const BridgeTransferFlow = ({
   transfers,
 }: BridgeTransferFlowProps) => {
   return (
-    <div>
-      <List
-        dataSource={transfers}
-        header={
-          <Flex gap={16} align="center" className="w-full">
-            <TransferChain chainName={fromChain} />
-            <ArrowRightOutlined style={{ fontSize: 14 }} />
-            <TransferChain chainName={toChain} />
-          </Flex>
-        }
-        renderItem={(item) => (
+    <List
+      dataSource={transfers}
+      header={
+        <Flex gap={16} align="center" className="w-full">
+          <TransferChain chainName={fromChain} />
+          <ArrowRightOutlined style={{ fontSize: 14 }} />
+          <TransferChain chainName={toChain} />
+        </Flex>
+      }
+      renderItem={(item, index) => {
+        const fromToTransfer = (
           <List.Item>
             <Flex justify="space-between" className="w-full">
-              <Text className="text-sm">{formatEther(item.fromAmount)}</Text>
-              <Text className="text-sm">{formatEther(item.toAmount)}</Text>
+              <Text>{formatEther(item.fromAmount)}</Text>
+              <Text>{formatEther(item.toAmount)}</Text>
             </Flex>
           </List.Item>
-        )}
-        bordered
-        size="small"
-      />
-    </div>
+        );
+
+        if (index === 0) {
+          return (
+            <>
+              <TransferringAndReceivingRow />
+              {fromToTransfer}
+            </>
+          );
+        }
+
+        return fromToTransfer;
+      }}
+      bordered
+      size="small"
+    />
   );
 };
