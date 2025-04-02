@@ -186,12 +186,7 @@ const SetupEoaFundingForChainV2 = ({
         />
         <Text>{chainName}</Text>
       </Flex>
-      <Flex
-        justify="space-between"
-        align="center"
-        gap={16}
-        style={{ width: '100%' }}
-      >
+      <Flex justify="space-between" align="center" gap={16} className="w-full">
         <Text strong>
           {minRequiredBalance} {currency}
         </Text>
@@ -209,7 +204,7 @@ const SetupEoaFundingForChainV2 = ({
   </>
 );
 
-type SendFundAction = 'native' | 'nonNative';
+type SendFundAction = 'transfer' | 'bridge';
 
 /**
  * EOA funding setup screen
@@ -225,7 +220,7 @@ export const SetupEoaFunding = () => {
   const [currentChain, setCurrentChain] = useState<EvmChainId>(
     selectedAgentConfig.evmHomeChainId,
   );
-  const [fundType, setFundType] = useState<SendFundAction>('native');
+  const [fundType, setFundType] = useState<SendFundAction>('transfer');
 
   const currentFundingRequirements = CHAIN_CONFIG[currentChain];
 
@@ -302,17 +297,17 @@ export const SetupEoaFunding = () => {
           options={[
             {
               label: `Send on ${currentFundingRequirements.name}`,
-              value: 'native',
+              value: 'transfer',
             },
-            { label: 'Bridge from Ethereum', value: 'nonNative' },
+            { label: 'Bridge from Ethereum', value: 'bridge' },
           ]}
           onChange={(value) => setFundType(value)}
           value={fundType}
           block
-          style={{ width: '100%' }}
+          className="w-full"
         />
       </CardSection>
-      {fundType === 'native' ? (
+      {fundType === 'transfer' ? (
         <SetupEoaFundingForChainV2
           isFunded={isFunded}
           minRequiredBalance={currentFundingRequirements.safeCreationThreshold}
