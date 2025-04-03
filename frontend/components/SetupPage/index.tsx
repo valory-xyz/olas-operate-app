@@ -5,6 +5,8 @@ import { SetupScreen } from '@/enums/SetupScreen';
 
 import { AgentSelection } from '../AgentSelection';
 import { AgentIntroduction } from './AgentIntroduction/AgentIntroduction';
+import { BridgeInProgress } from './Create/BridgeInProgress';
+import { BridgeOnEvm } from './Create/BridgeOnEvm';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
 import { SetupCreateSafe } from './Create/SetupCreateSafe';
 import { SetupEoaFunding } from './Create/SetupEoaFunding';
@@ -53,6 +55,12 @@ export const Setup = () => {
         return <EarlyAccessOnly />;
       case SetupScreen.SetupYourAgent:
         return <SetupYourAgent />;
+
+      // Bridge account
+      case SetupScreen.BridgeFromEvm:
+        return <BridgeOnEvm />;
+      case SetupScreen.BridgeInProgress:
+        return <BridgeInProgress />;
 
       // Restore account
       case SetupScreen.Restore:
