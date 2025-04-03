@@ -1,9 +1,11 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { Steps, Typography } from 'antd';
+import { Button, Flex, Steps, Typography } from 'antd';
+import { noop } from 'lodash';
 import React from 'react';
 import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { SUPPORT_URL } from '@/constants/urls';
 
 const { Text } = Typography;
 
@@ -14,6 +16,7 @@ const SubStep = styled.div`
 type SubStep = {
   description: string | null;
   txnLink: string | null;
+  isFailed?: boolean;
 };
 
 type Step = {
@@ -21,6 +24,31 @@ type Step = {
   status: 'finished' | 'loading' | 'waiting' | 'error';
   subSteps: SubStep[];
 };
+
+type FundsAreSafeMessageProps = { onRetry?: () => void };
+
+const FundsAreSafeMessage = ({ onRetry }: FundsAreSafeMessageProps) => (
+  <Flex vertical gap={8} align="flex-start" className="mt-12 text-sm">
+    {onRetry && (
+      <Button onClick={onRetry} type="primary" size="small">
+        Retry
+      </Button>
+    )}
+
+    <Text className="text-sm text-lighter">
+      Don&apos;t worry, your funds remain safe. You can access them by importing
+      your Pearl seed phrase into a compatible wallet, like MetaMask or
+      Coinbase.
+    </Text>
+
+    <Text className="text-sm text-lighter">
+      Ask for help in{' '}
+      <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">
+        the Olas community Discord server {UNICODE_SYMBOLS.EXTERNAL_LINK}
+      </a>
+    </Text>
+  </Flex>
+);
 
 const txnLink =
   'https://etherscan.io/tx/0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
@@ -36,13 +64,19 @@ const data: Step[] = [
   },
   {
     title: 'Create Master Safe',
-    status: 'loading',
+    status: 'finished',
     subSteps: [{ description: 'Transaction complete.', txnLink: null }],
   },
   {
     title: 'Transfer funds to the Master Safe',
-    status: 'waiting',
-    subSteps: [],
+    status: 'error',
+    subSteps: [
+      {
+        description: 'Transfer ETH transaction failed.',
+        txnLink,
+        isFailed: true,
+      },
+    ],
   },
 ];
 
@@ -86,6 +120,8 @@ export const BridgingSteps = () => (
                 </Text>
               </a>
             )}
+
+            {subStep.isFailed && <FundsAreSafeMessage onRetry={noop} />}
           </SubStep>
         )),
         icon: currentStatus === 'loading' ? <LoadingOutlined /> : undefined,

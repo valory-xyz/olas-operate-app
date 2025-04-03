@@ -18,6 +18,8 @@ export const mainTheme: ThemeConfig = {
       fontSize: 16,
     },
     Button: {
+      contentFontSizeSM: 14,
+      paddingInlineSM: 12,
       fontSize: 16,
       fontSizeLG: 16,
     },
