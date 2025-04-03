@@ -1,17 +1,20 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Flex, Steps, Typography } from 'antd';
 import { noop } from 'lodash';
-import React from 'react';
+import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
+import { BridgeExecutionStatus } from '@/types/Bridge';
 
 const { Text } = Typography;
 
 const SubStepRow = styled.div`
   line-height: normal;
 `;
+
+const TXN_COMPLETED = 'Transaction complete.';
 
 const Desc = ({ text }: { text: string }) => (
   <Text className="text-sm text-lighter" style={{ lineHeight: 'normal' }}>
@@ -59,67 +62,142 @@ type SubStep = {
 
 type Step = {
   title: string;
-  status: 'finished' | 'loading' | 'waiting' | 'error';
+  status: 'completed' | 'loading' | 'waiting' | 'error';
   subSteps: SubStep[];
 };
 
-const txnLink =
-  'https://etherscan.io/tx/0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+// const txnLink =
+//   'https://etherscan.io/tx/0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
 
-const data: Step[] = [
-  {
-    title: 'Bridge funds to Base',
-    status: 'finished',
-    subSteps: [
-      { description: 'Bridge OLAS transaction complete.', txnLink },
-      { description: 'Bridge ETH transaction complete.', txnLink },
-    ],
-  },
-  {
-    title: 'Create Master Safe',
-    status: 'finished',
-    subSteps: [{ description: 'Transaction complete.', txnLink: null }],
-  },
-  {
-    title: 'Transfer funds to the Master Safe',
-    status: 'error',
-    subSteps: [
-      {
-        description: 'Transfer ETH transaction failed.',
-        txnLink,
-        isFailed: true,
-      },
-    ],
-  },
-];
+type Status = 'loading' | 'completed' | 'error';
+
+type BridgingStepsProps = {
+  chainName: string;
+  bridgeExecutions: {
+    symbol: string;
+    status: BridgeExecutionStatus;
+    txnLink: string | null;
+  }[];
+  masterSafe?: {
+    creation: { status: Status; txnLink: string | null };
+    transfer: { status: Status; txnLink: string | null };
+  };
+  onRetry?: () => void;
+};
 
 /**
  * Presentational component for the bridging steps.
  */
-export const BridgingSteps = () => (
-  <Steps
-    size="small"
-    direction="vertical"
-    items={data.map(({ status: currentStatus, title, subSteps }) => {
-      const status = (() => {
-        if (currentStatus === 'finished') return 'finish';
-        if (currentStatus === 'loading') return 'process';
-        if (currentStatus === 'error') return 'error';
-        return 'wait';
-      })();
+export const BridgingSteps = ({
+  chainName,
+  bridgeExecutions,
+  masterSafe,
+  onRetry = noop,
+}: BridgingStepsProps) => {
+  const bridgeSteps: Step = useMemo(() => {
+    const isCompleted = bridgeExecutions.every(
+      ({ status }) => status === 'DONE',
+    );
+    const isLoading = bridgeExecutions.some(
+      ({ status }) => status === 'PENDING',
+    );
 
-      return {
-        status,
-        title,
-        description: subSteps.map((subStep, index) => (
-          <SubStepRow key={index} style={{ marginTop: index === 0 ? 4 : 6 }}>
-            {subStep.description && <Desc text={subStep.description} />}
-            {subStep.txnLink && <TxnDetails link={subStep.txnLink} />}
-            {subStep.isFailed && <FundsAreSafeMessage onRetry={noop} />}
-          </SubStepRow>
-        )),
-        icon: currentStatus === 'loading' ? <LoadingOutlined /> : undefined,
-      };
-    })}
-  />
-);
+    const status = (() => {
+      if (isCompleted) return 'completed';
+      if (isLoading) return 'loading';
+      return 'error';
+    })();
+
+    return {
+      title: `Bridge funds to ${chainName}`,
+      status,
+      subSteps: bridgeExecutions.map(({ symbol, status, txnLink }) => ({
+        description: `Bridge ${symbol} transaction ${
+          status === 'DONE' ? 'complete' : 'failed'
+        }.`,
+        txnLink,
+        isFailed: status !== 'DONE' && status !== 'PENDING',
+      })),
+    };
+  }, [chainName, bridgeExecutions]);
+
+  const masterSafeStatus: Step[] = useMemo(() => {
+    if (!masterSafe) return [];
+
+    const { creation, transfer } = masterSafe;
+    return [
+      {
+        title: 'Create Master Safe',
+        status: creation.status,
+        subSteps: [
+          {
+            description: TXN_COMPLETED,
+            txnLink: creation.txnLink,
+            isFailed: creation.status === 'error',
+          },
+        ],
+      },
+      {
+        title: 'Transfer funds to the Master Safe',
+        status: transfer.status,
+        subSteps: [
+          {
+            description: TXN_COMPLETED,
+            txnLink: transfer.txnLink,
+            isFailed: transfer.status === 'error',
+          },
+        ],
+      },
+    ];
+  }, [masterSafe]);
+
+  const steps = useMemo(
+    () => [...[bridgeSteps], ...masterSafeStatus],
+    [bridgeSteps, masterSafeStatus],
+  );
+
+  return (
+    <Steps
+      size="small"
+      direction="vertical"
+      items={steps.map(({ status: currentStatus, title, subSteps }) => {
+        const status = (() => {
+          if (currentStatus === 'completed') return 'finish';
+          if (currentStatus === 'loading') return 'process';
+          if (currentStatus === 'error') return 'error';
+          return 'wait';
+        })();
+
+        return {
+          status,
+          title,
+          description: subSteps.map((subStep, index) => (
+            <SubStepRow key={index} style={{ marginTop: index === 0 ? 4 : 6 }}>
+              {subStep.description && <Desc text={subStep.description} />}
+              {subStep.txnLink && <TxnDetails link={subStep.txnLink} />}
+              {subStep.isFailed && <FundsAreSafeMessage onRetry={onRetry} />}
+            </SubStepRow>
+          )),
+          icon: currentStatus === 'loading' ? <LoadingOutlined /> : undefined,
+        };
+      })}
+    />
+  );
+};
+
+/**
+ * masterSafe = {
+ *   creation: {
+ *     status: 'loading' | 'completed' | 'error';
+ *     txnLink: string | null;
+ *   },
+ *   transfer: {
+ *    status: 'loading' | 'completed' | 'error';
+ *    txnLink: string | null;
+ *   },
+ * }
+ *
+ * bridgeExecutions = [
+ *  { symbol: 'ETH', status: 'loading' | 'completed' | 'error', txnLink: string | null },
+ * ]
+ */
