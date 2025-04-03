@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
-import { BridgingSteps } from '@/components/bridge/BridgingSteps';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -14,45 +13,45 @@ import { SetupCreateHeader } from './SetupCreateHeader';
 
 const { Text, Title } = Typography;
 
-const isBridgingSuccess = false; // TODO: from the API
+const KeepAppOpenAlert = () => (
+  <CustomAlert
+    type="warning"
+    fullWidth
+    showIcon
+    message={
+      <Text className="text-sm">
+        Keep the app open until bridging is complete.
+      </Text>
+    }
+  />
+);
 
-const Header = () => (
+const BridgeInProgressHeader = () => (
   <>
     <SetupCreateHeader />
-    <Title level={3} className="mb-16">
+    <Title level={3} className="m-0">
       Bridging in progress
     </Title>
-    <CustomAlert
-      type="warning"
-      fullWidth
-      showIcon
-      style={{ margin: '0 -24px 16px -24px' }}
-      message={
-        <Text className="text-sm">
-          Keep the app open until bridging is complete.
-        </Text>
-      }
-    />
   </>
 );
 
 // TODO: integrate with the API
-const useBridgeTransferFlow = () => {
+const useBridgeTransfers = () => {
   return {
     fromChain: 'Ethereum',
     toChain: 'Base',
     transfers: [
       {
-        fromSymbol: TokenSymbol.ETH,
-        fromAmount: '1000000000000000000',
-        toSymbol: TokenSymbol.ETH,
-        toAmount: '1200000000000000000',
+        fromSymbol: TokenSymbol.OLAS,
+        fromAmount: '100000000000000000000',
+        toSymbol: TokenSymbol.OLAS,
+        toAmount: '100000000000000000000',
       },
       {
-        fromSymbol: TokenSymbol.OLAS,
-        fromAmount: '1000000000000000000',
-        toSymbol: TokenSymbol.OLAS,
-        toAmount: '1200000000000000000',
+        fromSymbol: TokenSymbol.ETH,
+        fromAmount: '5500000000000000',
+        toSymbol: TokenSymbol.ETH,
+        toAmount: '5000000000000000',
       },
     ],
   };
@@ -63,26 +62,30 @@ const useBridgeTransferFlow = () => {
  */
 export const BridgeInProgress = () => {
   const { goto } = useSetup();
+  const { fromChain, toChain, transfers } = useBridgeTransfers();
 
-  const { fromChain, toChain, transfers } = useBridgeTransferFlow();
-
+  const isBridgingSuccess = false; // TODO: from the API
   useEffect(() => {
     if (isBridgingSuccess) {
       goto(SetupScreen.SetupCreateSafe);
     }
-  }, [goto]);
+  }, [isBridgingSuccess, goto]);
 
   return (
-    <CardFlex noBorder>
-      <Header />
+    <>
+      <CardFlex $noBorder $gap={20} $padding="0 24px">
+        <BridgeInProgressHeader />
+      </CardFlex>
+
+      <KeepAppOpenAlert />
+
       <CardSection vertical gap={16} className="m-0">
         <BridgeTransferFlow
           fromChain={fromChain}
           toChain={toChain}
           transfers={transfers}
         />
-        <BridgingSteps />
       </CardSection>
-    </CardFlex>
+    </>
   );
 };
