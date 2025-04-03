@@ -46,6 +46,9 @@ export const mainTheme: ThemeConfig = {
     Tag: {
       colorSuccess: '#135200',
     },
+    List: {
+      colorBorder: '#DFE5EE',
+    },
   },
 };
 

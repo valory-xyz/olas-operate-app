@@ -4,13 +4,13 @@ import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import React from 'react';
 
-import { Address } from '@/types/Address';
+import { COLOR } from '@/constants/colors';
+import { TokenSymbol } from '@/enums/Token';
 import { formatEther } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
 
-type TransferChainProps = { chainName: string };
-const TransferChain = ({ chainName }: TransferChainProps) => (
+const TransferChain = ({ chainName }: { chainName: string }) => (
   <Flex gap={8} align="center">
     <Image
       src={`/chains/${kebabCase(chainName)}-chain.png`}
@@ -18,22 +18,47 @@ const TransferChain = ({ chainName }: TransferChainProps) => (
       height={20}
       alt="chain logo"
     />
-    <Text className="text-sm">{chainName}</Text>
+    <Text>{chainName}</Text>
   </Flex>
 );
+
+const TransferringAndReceivingRow = () => (
+  <List.Item>
+    <Flex justify="space-between" className="w-full">
+      <Text type="secondary">Transferring</Text>
+      <Text type="secondary">Receiving</Text>
+    </Flex>
+  </List.Item>
+);
+
+type Transfer = {
+  fromSymbol: TokenSymbol;
+  fromAmount: string;
+  toSymbol: TokenSymbol;
+  toAmount: string;
+};
+
+const TransferRow = ({ transfer }: { transfer: Transfer }) => {
+  const { fromAmount, fromSymbol, toSymbol, toAmount } = transfer;
+  return (
+    <List.Item>
+      <Flex justify="space-between" className="w-full">
+        <Text>
+          {formatEther(fromAmount)} {fromSymbol}
+        </Text>
+        <Text>
+          {formatEther(toAmount)} {toSymbol}
+        </Text>
+      </Flex>
+    </List.Item>
+  );
+};
 
 type BridgeTransferFlowProps = {
   fromChain: string;
   toChain: string;
-  transfers: {
-    fromAddress: Address;
-    fromAmount: string;
-    toAddress: Address;
-    toAmount: string;
-  }[];
+  transfers: Transfer[];
 };
-
-// TODO: Mohan to update
 
 /**
  * Presentational component for the bridge transfer flow
@@ -45,27 +70,25 @@ export const BridgeTransferFlow = ({
   transfers,
 }: BridgeTransferFlowProps) => {
   return (
-    <div>
-      <List
-        dataSource={transfers}
-        header={
-          <Flex gap={16} align="center" className="w-full">
-            <TransferChain chainName={fromChain} />
-            <ArrowRightOutlined style={{ fontSize: 14 }} />
-            <TransferChain chainName={toChain} />
-          </Flex>
-        }
-        renderItem={(item) => (
-          <List.Item>
-            <Flex justify="space-between" className="w-full">
-              <Text className="text-sm">{formatEther(item.fromAmount)}</Text>
-              <Text className="text-sm">{formatEther(item.toAmount)}</Text>
-            </Flex>
-          </List.Item>
-        )}
-        bordered
-        size="small"
-      />
-    </div>
+    <List
+      dataSource={transfers}
+      header={
+        <Flex gap={16} align="center" className="w-full">
+          <TransferChain chainName={fromChain} />
+          <ArrowRightOutlined
+            style={{ fontSize: 14, color: COLOR.TEXT_LIGHT }}
+          />
+          <TransferChain chainName={toChain} />
+        </Flex>
+      }
+      renderItem={(transfer, index) => (
+        <>
+          {index === 0 && <TransferringAndReceivingRow />}
+          <TransferRow transfer={transfer} />
+        </>
+      )}
+      bordered
+      size="small"
+    />
   );
 };
