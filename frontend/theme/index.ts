@@ -49,6 +49,9 @@ export const mainTheme: ThemeConfig = {
     List: {
       colorBorder: '#DFE5EE',
     },
+    Steps: {
+      fontSize: 16,
+    },
   },
 };
 
