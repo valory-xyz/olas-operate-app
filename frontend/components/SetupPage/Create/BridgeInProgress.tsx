@@ -1,10 +1,9 @@
-import { Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import { useEffect } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { CardFlex } from '@/components/styled/CardFlex';
-import { CardSection } from '@/components/styled/CardSection';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { TokenSymbol } from '@/enums/Token';
 import { useSetup } from '@/hooks/useSetup';
@@ -33,6 +32,15 @@ const BridgeInProgressHeader = () => (
       Bridging in progress
     </Title>
   </>
+);
+
+// TODO: to update
+const EstimatedTime = () => (
+  <Flex gap={8}>
+    <Text type="secondary">Estimated completion time:</Text>
+    <Text strong>~ 5 minutes</Text>
+    <Text type="secondary">(0:05)</Text>
+  </Flex>
 );
 
 // TODO: integrate with the API
@@ -76,16 +84,15 @@ export const BridgeInProgress = () => {
       <CardFlex $noBorder $gap={20} $padding="0 24px">
         <BridgeInProgressHeader />
       </CardFlex>
-
       <KeepAppOpenAlert />
-
-      <CardSection vertical gap={16} className="m-0">
+      <CardFlex $noBorder $gap={20} $padding="0 24px">
         <BridgeTransferFlow
           fromChain={fromChain}
           toChain={toChain}
           transfers={transfers}
         />
-      </CardSection>
+        <EstimatedTime />
+      </CardFlex>
     </>
   );
 };
