@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
+import { BridgingSteps } from '@/components/bridge/BridgingSteps';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { TokenSymbol } from '@/enums/Token';
@@ -87,6 +88,7 @@ export const BridgeInProgress = () => {
           transfers={transfers}
         />
         <EstimatedCompletionTime />
+        <BridgingSteps />
       </CardFlex>
     </>
   );
