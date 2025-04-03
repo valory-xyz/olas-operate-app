@@ -14,14 +14,20 @@ import {
   validateApiKey,
   validateMessages,
   validateSlug,
-} from '../formUtils';
-import { onDummyServiceCreation } from '../utils';
+} from '../shared/formUtils';
+import { InvalidGeminiApiCredentials } from '../shared/InvalidGeminiApiCredentials';
+import { onDummyServiceCreation } from '../shared/utils';
 import {
   CoinGeckoApiKeyLabel,
+  ModiusGeminiApiKeyLabel,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
 } from './labels';
+import {
+  ModiusFieldValues,
+  useModiusFormValidate,
+} from './useModiusFormValidate';
 
 const { Text } = Typography;
 
@@ -39,32 +45,33 @@ const SetupHeader = () => (
   </Text>
 );
 
-type FieldValues = {
-  tenderlyAccessToken: string;
-  tenderlyAccountSlug: string;
-  tenderlyProjectSlug: string;
-  CoinGeckoApiKey: string;
-};
-
 type ModiusAgentFormProps = { serviceTemplate: ServiceTemplate };
 
 export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
-  const [form] = Form.useForm<FieldValues>();
+  const [form] = Form.useForm<ModiusFieldValues>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitButtonText, setSubmitButtonText] = useState('Continue');
+  const {
+    geminiApiKeyValidationStatus,
+    submitButtonText,
+    updateSubmitButtonText,
+    validateForm,
+  } = useModiusFormValidate();
 
   const onFinish = useCallback(
-    async (values: Record<keyof FieldValues, string>) => {
+    async (values: ModiusFieldValues) => {
       if (!defaultStakingProgramId) return;
 
       try {
         setIsSubmitting(true);
 
         // wait for agent setup to complete
-        setSubmitButtonText('Setting up agent...');
+        updateSubmitButtonText('Setting up agent...');
+
+        const isFormValid = await validateForm(values);
+        if (!isFormValid) return;
 
         const overriddenServiceConfig: ServiceTemplate = {
           ...serviceTemplate,
@@ -84,7 +91,11 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
             },
             COINGECKO_API_KEY: {
               ...serviceTemplate.env_variables.COINGECKO_API_KEY,
-              value: values.CoinGeckoApiKey,
+              value: values.coinGeckoApiKey,
+            },
+            GENAI_API_KEY: {
+              ...serviceTemplate.env_variables.GENAI_API_KEY,
+              value: values.geminiApiKey || '',
             },
           },
         };
@@ -103,16 +114,22 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         console.error(error);
       } finally {
         setIsSubmitting(false);
-        setSubmitButtonText('Continue');
+        updateSubmitButtonText('Continue');
       }
     },
-    [defaultStakingProgramId, serviceTemplate, goto],
+    [
+      defaultStakingProgramId,
+      serviceTemplate,
+      validateForm,
+      updateSubmitButtonText,
+      goto,
+    ],
   );
 
   // Clean up
   useUnmount(async () => {
     setIsSubmitting(false);
-    setSubmitButtonText('Continue');
+    updateSubmitButtonText('Continue');
   });
 
   const canSubmitForm = isSubmitting || !defaultStakingProgramId;
@@ -122,7 +139,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
       <SetupHeader />
       <Divider style={{ margin: '8px 0' }} />
 
-      <Form<FieldValues>
+      <Form<ModiusFieldValues>
         form={form}
         name="setup-your-agent"
         layout="vertical"
@@ -136,7 +153,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
           {...modiusAgentFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
-          <Input />
+          <Input.Password />
         </Form.Item>
 
         <Form.Item
@@ -158,13 +175,24 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         </Form.Item>
 
         <Form.Item
-          name="CoinGeckoApiKey"
+          name="coinGeckoApiKey"
           label={<CoinGeckoApiKeyLabel />}
           {...modiusAgentFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
-          <Input />
+          <Input.Password />
         </Form.Item>
+
+        <Form.Item
+          name="geminiApiKey"
+          label={<ModiusGeminiApiKeyLabel />}
+          {...modiusAgentFieldProps}
+        >
+          <Input.Password />
+        </Form.Item>
+        {geminiApiKeyValidationStatus === 'invalid' && (
+          <InvalidGeminiApiCredentials />
+        )}
 
         <Form.Item>
           <Button

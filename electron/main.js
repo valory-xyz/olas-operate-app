@@ -259,10 +259,6 @@ const createSplashWindow = () => {
     },
   });
   splashWindow.loadURL('file://' + __dirname + '/resources/app-loading.html');
-
-  if (isDev) {
-    splashWindow.webContents.openDevTools();
-  }
 };
 
 const HEIGHT = 700;
@@ -271,7 +267,7 @@ const HEIGHT = 700;
  */
 const createMainWindow = async () => {
   if (mainWindow) return;
-  const width = isDev ? 840 : APP_WIDTH;
+  const width = APP_WIDTH;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
     resizable: false,
@@ -395,7 +391,7 @@ const createMainWindow = async () => {
     logger.electron('Store IPC failed:', JSON.stringify(e));
   }
   if (isDev) {
-    mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
 
   await mainWindow.loadURL(nextUrl());
@@ -757,7 +753,9 @@ function sanitizeLogs({
   const sanitizedData = logs.replace(usernameRegex, '/$1/*****');
   const sanitizedLogsFilePath = path.join(destPath, name);
 
-  if (!fs.existsSync(destPath)) fs.mkdirSync(destPath);
+  if (!fs.existsSync(destPath)) {
+    fs.mkdirSync(destPath, { recursive: true });
+  }
 
   fs.writeFileSync(sanitizedLogsFilePath, sanitizedData);
 
@@ -766,20 +764,20 @@ function sanitizeLogs({
 
 // EXPORT LOGS
 ipcMain.handle('save-logs', async (_, data) => {
-  sanitizeLogs({
-    name: 'cli.log',
-    filePath: paths.cliLogFile,
-  });
+  const cliLogFiles = fs
+    .readdirSync(paths.dotOperateDirectory)
+    .filter((file) => file.startsWith('cli') && file.endsWith('.log'));
 
-  sanitizeLogs({
-    name: 'next.log',
-    filePath: paths.nextLogFile,
-  });
+  if (cliLogFiles.length >= 1) {
+    cliLogFiles.forEach((file) => {
+      const filePath = path.join(paths.dotOperateDirectory, file);
+      sanitizeLogs({ name: file, filePath });
+    });
+  }
 
-  sanitizeLogs({
-    name: 'electron.log',
-    filePath: paths.electronLogFile,
-  });
+  sanitizeLogs({ name: 'next.log', filePath: paths.nextLogFile });
+
+  sanitizeLogs({ name: 'electron.log', filePath: paths.electronLogFile });
 
   // OS info
   const osInfo = `
@@ -821,7 +819,7 @@ ipcMain.handle('save-logs', async (_, data) => {
     clonedDebugData.services = servicesData;
 
     sanitizeLogs({
-      name: 'debug_data.txt',
+      name: 'debug_data.json',
       data: JSON.stringify(clonedDebugData, null, 2),
     });
   }
