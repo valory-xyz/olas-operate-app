@@ -25,17 +25,8 @@ const KeepAppOpenAlert = () => (
   />
 );
 
-const BridgeInProgressHeader = () => (
-  <>
-    <SetupCreateHeader />
-    <Title level={3} className="m-0">
-      Bridging in progress
-    </Title>
-  </>
-);
-
 // TODO: to update
-const EstimatedTime = () => (
+const EstimatedCompletionTime = () => (
   <Flex gap={8}>
     <Text type="secondary">Estimated completion time:</Text>
     <Text strong>~ 5 minutes</Text>
@@ -82,16 +73,20 @@ export const BridgeInProgress = () => {
   return (
     <>
       <CardFlex $noBorder $gap={20} $padding="0 24px">
-        <BridgeInProgressHeader />
+        <SetupCreateHeader />
+        <Title level={3} className="m-0">
+          Bridging in progress
+        </Title>
       </CardFlex>
       <KeepAppOpenAlert />
+
       <CardFlex $noBorder $gap={20} $padding="0 24px">
         <BridgeTransferFlow
           fromChain={fromChain}
           toChain={toChain}
           transfers={transfers}
         />
-        <EstimatedTime />
+        <EstimatedCompletionTime />
       </CardFlex>
     </>
   );
