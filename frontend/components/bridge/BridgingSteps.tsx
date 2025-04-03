@@ -9,24 +9,25 @@ import { SUPPORT_URL } from '@/constants/urls';
 
 const { Text } = Typography;
 
-const SubStep = styled.div`
+const SubStepRow = styled.div`
   line-height: normal;
 `;
 
-type SubStep = {
-  description: string | null;
-  txnLink: string | null;
-  isFailed?: boolean;
-};
+const Desc = ({ text }: { text: string }) => (
+  <Text className="text-sm text-lighter" style={{ lineHeight: 'normal' }}>
+    {text}
+  </Text>
+);
 
-type Step = {
-  title: string;
-  status: 'finished' | 'loading' | 'waiting' | 'error';
-  subSteps: SubStep[];
-};
+const TxnDetails = ({ link }: { link: string }) => (
+  <a href={link} target="_blank" rel="noopener noreferrer" className="pl-4">
+    <Text className="text-sm text-primary">
+      Txn details {UNICODE_SYMBOLS.EXTERNAL_LINK}
+    </Text>
+  </a>
+);
 
 type FundsAreSafeMessageProps = { onRetry?: () => void };
-
 const FundsAreSafeMessage = ({ onRetry }: FundsAreSafeMessageProps) => (
   <Flex vertical gap={8} align="flex-start" className="mt-12 text-sm">
     {onRetry && (
@@ -49,6 +50,18 @@ const FundsAreSafeMessage = ({ onRetry }: FundsAreSafeMessageProps) => (
     </Text>
   </Flex>
 );
+
+type SubStep = {
+  description: string | null;
+  txnLink: string | null;
+  isFailed?: boolean;
+};
+
+type Step = {
+  title: string;
+  status: 'finished' | 'loading' | 'waiting' | 'error';
+  subSteps: SubStep[];
+};
 
 const txnLink =
   'https://etherscan.io/tx/0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
@@ -87,8 +100,6 @@ export const BridgingSteps = () => (
   <Steps
     size="small"
     direction="vertical"
-    current={1}
-    status="error"
     items={data.map(({ status: currentStatus, title, subSteps }) => {
       const status = (() => {
         if (currentStatus === 'finished') return 'finish';
@@ -98,34 +109,16 @@ export const BridgingSteps = () => (
       })();
 
       return {
+        status,
         title,
         description: subSteps.map((subStep, index) => (
-          <SubStep key={index} style={{ marginTop: index === 0 ? 4 : 6 }}>
-            <Text
-              className="text-sm text-lighter"
-              style={{ lineHeight: 'normal' }}
-            >
-              {subStep.description}
-            </Text>
-
-            {subStep.txnLink && (
-              <a
-                href={subStep.txnLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="pl-4"
-              >
-                <Text className="text-sm text-primary">
-                  Txn details {UNICODE_SYMBOLS.EXTERNAL_LINK}
-                </Text>
-              </a>
-            )}
-
+          <SubStepRow key={index} style={{ marginTop: index === 0 ? 4 : 6 }}>
+            {subStep.description && <Desc text={subStep.description} />}
+            {subStep.txnLink && <TxnDetails link={subStep.txnLink} />}
             {subStep.isFailed && <FundsAreSafeMessage onRetry={noop} />}
-          </SubStep>
+          </SubStepRow>
         )),
         icon: currentStatus === 'loading' ? <LoadingOutlined /> : undefined,
-        status,
       };
     })}
   />

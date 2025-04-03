@@ -53,6 +53,7 @@ export const mainTheme: ThemeConfig = {
     },
     Steps: {
       fontSize: 16,
+      colorError: '#CF1322',
     },
   },
 };
