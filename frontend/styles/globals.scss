@@ -211,6 +211,10 @@ textarea,
   padding-top: 24px !important;
 }
 
+.p-8 {
+  padding: 8px;
+}
+
 .p-16 {
   padding: 16px;
 }
@@ -297,15 +301,23 @@ ul.alert-list {
   max-width: 200px;
 }
 
-.loading-ellipses:after {
-  overflow: hidden;
+.loading-ellipses {
   display: inline-block;
-  vertical-align: bottom;
-  -webkit-animation: ellipsis steps(4, end) 900ms infinite;
-  animation: ellipsis steps(4, end) 900ms infinite;
-  content: "\2026";
-  /* ascii code for the ellipsis character */
-  width: 0px;
+  position: relative; /* Ensures absolute positioned :after is placed relative to this */
+  white-space: nowrap; /* Prevents line breaks */
+  margin-right: 16px;
+  
+  &:after {
+    overflow: hidden;
+    display: inline-block;
+    -webkit-animation: ellipsis steps(4, end) 1.5s infinite;
+    animation: ellipsis steps(4, end) 1.5s infinite;
+    content: "\2026"; /* ascii code for the ellipsis character */
+    width: 0px;
+    position: absolute;
+    left: 100%;
+    white-space: nowrap;
+  }
 }
 
 .hover-underline {
