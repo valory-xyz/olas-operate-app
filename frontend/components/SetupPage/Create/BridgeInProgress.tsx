@@ -6,8 +6,6 @@ import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { BridgingSteps } from '@/components/bridge/BridgingSteps';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
-import { TOKEN_CONFIG } from '@/config/tokens';
-import { ETHEREUM_OLAS_ADDRESS } from '@/constants/address';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { TokenSymbol } from '@/enums/Token';
 import { useSetup } from '@/hooks/useSetup';
@@ -45,9 +43,15 @@ const useBridgeTransferFlow = () => {
     toChain: 'Base',
     transfers: [
       {
-        fromAddress: ETHEREUM_OLAS_ADDRESS,
+        fromSymbol: TokenSymbol.ETH,
         fromAmount: '1000000000000000000',
-        toAddress: TOKEN_CONFIG[42220][TokenSymbol.OLAS].address!,
+        toSymbol: TokenSymbol.ETH,
+        toAmount: '1200000000000000000',
+      },
+      {
+        fromSymbol: TokenSymbol.OLAS,
+        fromAmount: '1000000000000000000',
+        toSymbol: TokenSymbol.OLAS,
         toAmount: '1200000000000000000',
       },
     ],

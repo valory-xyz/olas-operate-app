@@ -4,13 +4,13 @@ import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import React from 'react';
 
-import { Address } from '@/types/Address';
+import { COLOR } from '@/constants/colors';
+import { TokenSymbol } from '@/enums/Token';
 import { formatEther } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
 
-type TransferChainProps = { chainName: string };
-const TransferChain = ({ chainName }: TransferChainProps) => (
+const TransferChain = ({ chainName }: { chainName: string }) => (
   <Flex gap={8} align="center">
     <Image
       src={`/chains/${kebabCase(chainName)}-chain.png`}
@@ -31,18 +31,34 @@ const TransferringAndReceivingRow = () => (
   </List.Item>
 );
 
+type Transfer = {
+  fromSymbol: TokenSymbol;
+  fromAmount: string;
+  toSymbol: TokenSymbol;
+  toAmount: string;
+};
+
+const TransferRow = ({ transfer }: { transfer: Transfer }) => {
+  const { fromAmount, fromSymbol, toSymbol, toAmount } = transfer;
+  return (
+    <List.Item>
+      <Flex justify="space-between" className="w-full">
+        <Text>
+          {formatEther(fromAmount)} {fromSymbol}
+        </Text>
+        <Text>
+          {formatEther(toAmount)} {toSymbol}
+        </Text>
+      </Flex>
+    </List.Item>
+  );
+};
+
 type BridgeTransferFlowProps = {
   fromChain: string;
   toChain: string;
-  transfers: {
-    fromAddress: Address;
-    fromAmount: string;
-    toAddress: Address;
-    toAmount: string;
-  }[];
+  transfers: Transfer[];
 };
-
-// TODO: Mohan to update
 
 /**
  * Presentational component for the bridge transfer flow
@@ -59,31 +75,18 @@ export const BridgeTransferFlow = ({
       header={
         <Flex gap={16} align="center" className="w-full">
           <TransferChain chainName={fromChain} />
-          <ArrowRightOutlined style={{ fontSize: 14 }} />
+          <ArrowRightOutlined
+            style={{ fontSize: 14, color: COLOR.TEXT_LIGHT }}
+          />
           <TransferChain chainName={toChain} />
         </Flex>
       }
-      renderItem={(item, index) => {
-        const fromToTransfer = (
-          <List.Item>
-            <Flex justify="space-between" className="w-full">
-              <Text>{formatEther(item.fromAmount)}</Text>
-              <Text>{formatEther(item.toAmount)}</Text>
-            </Flex>
-          </List.Item>
-        );
-
-        if (index === 0) {
-          return (
-            <>
-              <TransferringAndReceivingRow />
-              {fromToTransfer}
-            </>
-          );
-        }
-
-        return fromToTransfer;
-      }}
+      renderItem={(transfer, index) => (
+        <>
+          {index === 0 && <TransferringAndReceivingRow />}
+          <TransferRow transfer={transfer} />
+        </>
+      )}
       bordered
       size="small"
     />
