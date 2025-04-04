@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { Flex, Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 
@@ -6,12 +5,9 @@ import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { BridgingSteps } from '@/components/bridge/BridgingSteps';
 import { CardFlex } from '@/components/styled/CardFlex';
-import { TEN_SECONDS_INTERVAL } from '@/constants/intervals';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { TokenSymbol } from '@/enums/Token';
 import { useSetup } from '@/hooks/useSetup';
-import { getBridgeStatus } from '@/service/Bridge';
 import { BridgingStepStatus } from '@/types/Bridge';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
@@ -63,34 +59,27 @@ const useBridgeTransfers = () => {
 };
 
 // TODO: to update
-const useBridgingSteps = () =>
-  useQuery({
-    queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY('some-quote-id'),
-    queryFn: async () => {
-      return await getBridgeStatus('some-quote-id');
-    },
-    select: (data) => ({
-      isBridgingFailed: data.status === 'FINISHED' && data.error,
-      status: data.status,
-      executions: data.executions.map(
-        ({ status: actualStatus, explorer_link }) => {
-          const status = (() => {
-            if (actualStatus === 'DONE') return 'finish';
-            if (actualStatus === 'PENDING') return 'wait';
-            return 'error';
-          })();
-
-          return {
-            symbol: TokenSymbol.OLAS, // TODO: from the API
-            status: status as BridgingStepStatus,
-            txnLink: explorer_link,
-          };
-        },
-      ),
-    }),
-    refetchInterval: TEN_SECONDS_INTERVAL,
-    refetchOnWindowFocus: false,
-  });
+const useBridgingSteps = () => ({
+  isLoading: false,
+  isError: false,
+  data: {
+    status: 'FINISHED',
+    isBridgingFailed: false,
+    executions: [
+      {
+        symbol: 'OLAS' as TokenSymbol,
+        status: 'finish' as BridgingStepStatus,
+        txnLink:
+          'https://scan.li.fi/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
+      },
+      {
+        symbol: 'OLAS' as TokenSymbol,
+        status: 'finish' as BridgingStepStatus,
+        txnLink: '',
+      },
+    ],
+  },
+});
 
 /**
  * Bridge in progress screen.
@@ -114,7 +103,7 @@ export const BridgeInProgress = () => {
     const currentBridgeStatus: BridgingStepStatus = (() => {
       if (bridge.isBridgingFailed) return 'error';
       return bridge.status === 'FINISHED' ? 'finish' : 'process';
-    })();
+    })() as BridgingStepStatus; // "as" to be removed when the API is updated
 
     return {
       status: currentBridgeStatus,
@@ -146,9 +135,9 @@ export const BridgeInProgress = () => {
         {!!bridgeDetails && (
           <BridgingSteps
             chainName="Base" // TODO: from the API
-            bridge={bridgeDetails}
-            // TODO: from the API
+            bridge={bridgeDetails} // TODO: from the API
             masterSafe={{
+              // TODO: from the API
               creation: { status: 'process', txnLink: null },
               transfer: { status: 'wait', txnLink: null },
             }}

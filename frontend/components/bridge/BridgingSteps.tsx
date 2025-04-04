@@ -95,6 +95,7 @@ export const BridgingSteps = ({
       title: `Bridge funds to ${chainName}`,
       status: bridge.status,
       subSteps: bridge.executions.map(({ symbol, status, txnLink }) => {
+        // TODO: simplify this logic
         const description = (() => {
           if (status === 'finish') {
             return `Bridging ${symbol} transaction complete.`;
@@ -156,14 +157,7 @@ export const BridgingSteps = ({
     <Steps
       size="small"
       direction="vertical"
-      items={steps.map(({ status: currentStatus, title, subSteps }) => {
-        const status = (() => {
-          if (currentStatus === 'finish') return 'finish';
-          if (currentStatus === 'wait') return 'wait';
-          if (currentStatus === 'error') return 'error';
-          return 'process';
-        })();
-
+      items={steps.map(({ status, title, subSteps }) => {
         return {
           status,
           title,
