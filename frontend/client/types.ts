@@ -165,3 +165,50 @@ export type BalancesAndFundingRequirements = {
   };
   allow_start_agent: boolean;
 };
+
+export type MiddlewareBridgeRefillRequirementsRequest = {
+  from: {
+    chain: MiddlewareChain;
+    address: Address;
+    token: Address;
+  };
+  to: {
+    chain: MiddlewareChain;
+    address: Address;
+    token: Address;
+    amount: bigint;
+  };
+};
+
+export type MiddlewareBridgeRefillRequirementsResponse = {
+  id: string;
+  balances: Partial<{
+    [chain in MiddlewareChain]: AddressBalanceRecord;
+  }>;
+  bridge_total_requirements: Partial<{
+    [chain in MiddlewareChain]: AddressBalanceRecord;
+  }>;
+  bridge_refill_requirements: Partial<{
+    [chain in MiddlewareChain]: AddressBalanceRecord;
+  }>;
+  expiration_timestamp: number;
+  is_refill_required: boolean;
+  error: boolean;
+  quote_response_status: { error: boolean; message: string }[];
+};
+
+export type BridgeStatus = 'CREATED' | 'QUOTED' | 'SUBMITTED' | 'FINISHED';
+export type ExecuteQuoteStatus = 'PENDING' | 'DONE';
+export type QuoteExecution = {
+  explorer_link: string;
+  message: string;
+  status: ExecuteQuoteStatus;
+  tx_hash: string;
+};
+
+export type MiddlewareBridgeStatusResponse = {
+  id: string;
+  status: BridgeStatus;
+  executions: QuoteExecution[];
+  error: boolean;
+};
