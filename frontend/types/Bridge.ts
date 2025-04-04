@@ -14,7 +14,7 @@ export type QuoteBundleStatus = 'CREATED' | 'QUOTED' | 'SUBMITTED' | 'FINISHED';
  */
 export type BridgeExecutionStatus =
   | 'NOT_FOUND'
-  | 'INVALID '
+  | 'INVALID'
   | 'PENDING'
   | 'DONE'
   | 'FAILED'
