@@ -8,7 +8,7 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
 import { TokenSymbol } from '@/enums/Token';
 import { BridgingStepStatus as Status } from '@/types/Bridge';
-import { Nullable } from '@/types/Util';
+import { Maybe, Nullable } from '@/types/Util';
 
 const { Text } = Typography;
 
@@ -59,7 +59,7 @@ type Step = {
   status: Status;
   subSteps: {
     description: Nullable<string>;
-    txnLink: Nullable<string>;
+    txnLink: Maybe<string>;
     isFailed?: boolean;
     onRetry?: () => void;
   }[];
@@ -90,10 +90,11 @@ const generateBridgeStep = (
 
 const generateMasterSafeCreationStep = (
   status: Status,
-  txnLink: Nullable<string>,
-): Omit<Step, 'title'> => {
+  txnLink: Maybe<string>,
+): Step => {
   const isFailed = status === 'error';
   return {
+    title: 'Create Master Safe',
     status,
     subSteps: [{ description: getDescription(status), txnLink, isFailed }],
   };
@@ -102,8 +103,9 @@ const generateMasterSafeCreationStep = (
 const generateMasterSafeTransferStep = (
   status: Status,
   subSteps: StepEvent[],
-): Omit<Step, 'title'> => {
+): Step => {
   return {
+    title: 'Transfer funds to the Master Safe',
     status,
     subSteps: subSteps.map(({ symbol, status, txnLink }) => {
       const isFailed = status === 'error';
@@ -135,7 +137,7 @@ const getDescription = (status: Status) => {
 type StepEvent = {
   symbol: TokenSymbol;
   status: Status;
-  txnLink: Nullable<string>;
+  txnLink?: Maybe<string>;
   onRetry?: () => void;
 };
 
@@ -148,7 +150,7 @@ type BridgingStepsProps = {
   };
   masterSafeCreation?: {
     status: Status;
-    txnLink: Nullable<string>;
+    txnLink?: Maybe<string>;
     onRetry?: () => void;
   };
   masterSafeTransfer?: {
@@ -175,26 +177,18 @@ export const BridgingSteps = ({
 
   const masterSafeCreationStep: Nullable<Step> = useMemo(() => {
     if (!masterSafeCreation) return null;
-
-    return {
-      title: 'Create Master Safe',
-      ...generateMasterSafeCreationStep(
-        masterSafeCreation.status,
-        masterSafeCreation.txnLink,
-      ),
-    };
+    return generateMasterSafeCreationStep(
+      masterSafeCreation.status,
+      masterSafeCreation.txnLink,
+    );
   }, [masterSafeCreation]);
 
   const masterSafeTransferStep: Nullable<Step> = useMemo(() => {
     if (!masterSafeTransfer) return null;
-
-    return {
-      title: 'Transfer funds to the Master Safe',
-      ...generateMasterSafeTransferStep(
-        masterSafeTransfer.status,
-        masterSafeTransfer.transfers,
-      ),
-    };
+    return generateMasterSafeTransferStep(
+      masterSafeTransfer.status,
+      masterSafeTransfer.transfers,
+    );
   }, [masterSafeTransfer]);
 
   const steps = useMemo(

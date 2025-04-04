@@ -9,7 +9,7 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { TokenSymbol } from '@/enums/Token';
 import { useSetup } from '@/hooks/useSetup';
 import { BridgingStepStatus } from '@/types/Bridge';
-import { Nullable } from '@/types/Util';
+import { Maybe } from '@/types/Util';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
 
@@ -59,6 +59,10 @@ const useBridgeTransfers = () => {
   };
 };
 
+const liFiTxnLink =
+  'https://scan.li.fi/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3';
+
+// TODO: to remove
 const txnLink =
   'https://etherscan.io/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3';
 
@@ -73,28 +77,38 @@ const useBridgingSteps = () => ({
       {
         symbol: 'OLAS' as TokenSymbol,
         status: 'finish' as BridgingStepStatus,
-        txnLink:
-          'https://scan.li.fi/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
+        txnLink: liFiTxnLink,
       },
       {
         symbol: 'OLAS' as TokenSymbol,
         status: 'finish' as BridgingStepStatus,
-        txnLink: '',
+        txnLink: liFiTxnLink,
       },
     ],
   },
 });
 
+// TODO: to update
+const useMasterSafeCreation = () => ({
+  isLoading: false,
+  isError: false,
+  data: {
+    isSafeCreated: true,
+    txnLink:
+      'https://etherscan.io/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
+  },
+});
+
+// TODO: to update
 const useMasterSafeTransfers = () => ({
   isLoading: false,
   isError: false,
   data: {
     status: 'CREATED',
-    isTransferFailed: false,
     transfers: [
       {
         symbol: 'OLAS' as TokenSymbol,
-        status: 'wait' as BridgingStepStatus,
+        status: 'process' as BridgingStepStatus,
         txnLink: null,
       },
       {
@@ -112,69 +126,84 @@ const useMasterSafeTransfers = () => ({
 export const BridgeInProgress = () => {
   const { goto } = useSetup();
   const { fromChain, toChain, transfers } = useBridgeTransfers();
-  const { isLoading, isError, data: bridge } = useBridgingSteps();
+  const {
+    isLoading: isLoadingBridge,
+    isError: isErrorBridge,
+    data: bridge,
+  } = useBridgingSteps();
+  const {
+    isLoading: isLoadingMasterSafeCreation,
+    isError: isErrorMasterSafeCreation,
+    data: masterSafeCreation,
+  } = useMasterSafeCreation();
   const {
     isLoading: isLoadingMasterSafe,
     isError: isErrorMasterSafe,
     data: masterSafeTransfer,
   } = useMasterSafeTransfers();
 
-  const isBridgingSuccess = false; // TODO: from the API
-  const isSafeCreated = false; // TODO: from the API
+  const isBridgingCompleted = bridge.status === 'FINISHED'; // TODO: from the API
+  const isSafeCreated = masterSafeCreation?.isSafeCreated; // TODO: from the API
+  const isTransferCompleted = masterSafeTransfer.status === 'FINISHED'; // TODO: from the API
 
   useEffect(() => {
-    if (!isBridgingSuccess) return;
+    if (!isBridgingCompleted) return;
     if (!isSafeCreated) return;
+    if (!isTransferCompleted) return;
 
     goto(SetupScreen.SetupCreateSafe);
-  }, [isBridgingSuccess, isSafeCreated, goto]);
+  }, [isBridgingCompleted, isSafeCreated, isTransferCompleted, goto]);
 
   // TODO: to update and consolidate after the API integration
   const bridgeDetails = useMemo(() => {
-    if (isLoading || isError) return null;
-    if (!bridge) return null;
-
     const currentBridgeStatus: BridgingStepStatus = (() => {
-      if (bridge.isBridgingFailed) return 'error';
-      return bridge.status === 'FINISHED' ? 'finish' : 'process';
-    })() as BridgingStepStatus; // "as" to be removed when the API is updated
+      if (!bridge) return 'wait';
+      if (isLoadingBridge) return 'process';
+      if (bridge.isBridgingFailed || isErrorBridge) return 'error';
+      return isBridgingCompleted ? 'finish' : 'process';
+    })();
 
     return {
       status: currentBridgeStatus,
       executions: bridge.executions,
     };
-  }, [isLoading, isError, bridge]);
+  }, [isLoadingBridge, isErrorBridge, isBridgingCompleted, bridge]);
 
   // TODO: to update and consolidate after the API integration
   const masterSafeCreationDetails: {
     status: BridgingStepStatus;
-    txnLink: Nullable<string>;
+    txnLink?: Maybe<string>;
   } = useMemo(() => {
-    if (!isBridgingSuccess) return { status: 'wait', txnLink: null };
+    if (isErrorMasterSafeCreation) return { status: 'error' };
+    if (!isBridgingCompleted) return { status: 'wait' };
+    if (isLoadingMasterSafeCreation) return { status: 'process' };
     if (isSafeCreated) return { status: 'finish', txnLink };
-    return { status: 'process', txnLink };
-  }, [isSafeCreated, isBridgingSuccess]);
+    return { status: 'process' };
+  }, [
+    isBridgingCompleted,
+    isSafeCreated,
+    isLoadingMasterSafeCreation,
+    isErrorMasterSafeCreation,
+  ]);
 
   // TODO: to update and consolidate after the API integration
   const masterSafeTransferDetails = useMemo(() => {
-    if (isLoadingMasterSafe || isErrorMasterSafe) return;
-    if (!masterSafeTransfer) return;
-
     const currentMasterSafeStatus: BridgingStepStatus = (() => {
-      if (masterSafeTransfer.isTransferFailed) return 'error';
-      if (isSafeCreated) return 'process';
-      return masterSafeTransfer.status === 'FINISHED' ? 'finish' : 'wait';
-    })() as BridgingStepStatus; // "as" to be removed when the API is updated
+      if (isErrorMasterSafe) return 'error';
+      if (isLoadingMasterSafe || isSafeCreated) return 'process';
+      return isTransferCompleted ? 'finish' : 'wait';
+    })();
 
     return {
       status: currentMasterSafeStatus,
-      transfers: masterSafeTransfer.transfers,
+      transfers: masterSafeTransfer.transfers || [],
     };
   }, [
     isLoadingMasterSafe,
     isErrorMasterSafe,
     isSafeCreated,
     masterSafeTransfer,
+    isTransferCompleted,
   ]);
 
   return (
