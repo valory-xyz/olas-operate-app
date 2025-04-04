@@ -1,8 +1,8 @@
 name: Optimus
-hash: bafybeifesvdgjtae2n46y52x4lt6hs254fmtduinmucelha4lhz6gm6xmi
+hash: bafybeidxtebtydohzxse3woapxu2wwbmva3ijhwhr4abvicdctsdswrb4e
 description: Optimus
 image: https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75
-service_version: v0.3.7
+service_version: v0.3.8
 home_chain: "optimistic"
 configurations:
   ethereum:
