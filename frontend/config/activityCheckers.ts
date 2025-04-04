@@ -78,6 +78,15 @@ export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [StakingProgramId.MemeBaseBeta3]: getMemeActivityCheckerContract(
     '0x026AB1c5ea14E61f67d245685D9561c0c2Cb39Ba',
   ),
+  [StakingProgramId.AgentsFun1]: getRequesterActivityCheckerContract(
+    '0x87C9922A099467E5A80367553e7003349FE50106',
+  ),
+  [StakingProgramId.AgentsFun2]: getRequesterActivityCheckerContract(
+    '0x4bEb05F76f4563DE7BCB6276915C3E1F71184D8f',
+  ),
+  [StakingProgramId.AgentsFun3]: getRequesterActivityCheckerContract(
+    '0xF0814A105c1b684922Fce8C3b80d7B6Ff1e399F9',
+  ),
 };
 
 export const MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
