@@ -77,4 +77,8 @@ export const REACT_QUERY_KEYS = {
   // balances and funding requirements
   BALANCES_AND_REFILL_REQUIREMENTS_KEY: (serviceConfigId: string) =>
     ['balancesAndRefillRequirements', serviceConfigId] as const,
+
+  // bridge
+  BRIDGE_STATUS_BY_QUOTE_ID_KEY: (quoteId: string) =>
+    ['bridgeStatusByQuoteId', quoteId] as const,
 } as const;
