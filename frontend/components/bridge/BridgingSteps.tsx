@@ -93,10 +93,17 @@ const generateMasterSafeCreationStep = (
   txnLink: Maybe<string>,
 ): Step => {
   const isFailed = status === 'error';
+  const description = (() => {
+    if (status === 'finish') return 'Transaction complete.';
+    if (status === 'error') return 'Transaction failed.';
+    if (status === 'process') return 'Sending transaction...';
+    return null;
+  })();
+
   return {
     title: 'Create Master Safe',
     status,
-    subSteps: [{ description: getDescription(status), txnLink, isFailed }],
+    subSteps: [{ description, txnLink, isFailed }],
   };
 };
 
@@ -125,13 +132,6 @@ const generateMasterSafeTransferStep = (
       return { description, txnLink, isFailed };
     }),
   };
-};
-
-const getDescription = (status: Status) => {
-  if (status === 'finish') return `Transaction complete.`;
-  if (status === 'error') return `Transaction failed.`;
-  if (status === 'process') return `Sending transaction...`;
-  return null;
 };
 
 type StepEvent = {
