@@ -96,13 +96,16 @@ export const BridgingSteps = ({
       status: bridge.status,
       subSteps: bridge.executions.map(({ symbol, status, txnLink }) => {
         const description = (() => {
-          if (status === 'completed') {
+          if (status === 'finish') {
             return `Bridging ${symbol} transaction complete.`;
           }
-          if (status === 'loading') {
+          if (status === 'wait') {
             return `Sending transaction...`;
           }
-          return `Bridging ${symbol} failed.`;
+          if (status === 'error') {
+            return `Bridging ${symbol} failed.`;
+          }
+          return `Bridging ${symbol} in progress...`;
         })();
 
         return {
@@ -155,10 +158,10 @@ export const BridgingSteps = ({
       direction="vertical"
       items={steps.map(({ status: currentStatus, title, subSteps }) => {
         const status = (() => {
-          if (currentStatus === 'completed') return 'finish';
-          if (currentStatus === 'loading') return 'process';
+          if (currentStatus === 'finish') return 'finish';
+          if (currentStatus === 'wait') return 'wait';
           if (currentStatus === 'error') return 'error';
-          return 'wait';
+          return 'process';
         })();
 
         return {
@@ -171,26 +174,9 @@ export const BridgingSteps = ({
               {subStep.isFailed && <FundsAreSafeMessage onRetry={onRetry} />}
             </SubStepRow>
           )),
-          icon: currentStatus === 'loading' ? <LoadingOutlined /> : undefined,
+          icon: status === 'process' ? <LoadingOutlined /> : undefined,
         };
       })}
     />
   );
 };
-
-/**
- * masterSafe = {
- *   creation: {
- *     status: 'loading' | 'completed' | 'error';
- *     txnLink: string | null;
- *   },
- *   transfer: {
- *    status: 'loading' | 'completed' | 'error';
- *    txnLink: string | null;
- *   },
- * }
- *
- * bridgeExecutions = [
- *  { symbol: 'ETH', status: 'loading' | 'completed' | 'error', txnLink: string | null },
- * ]
- */

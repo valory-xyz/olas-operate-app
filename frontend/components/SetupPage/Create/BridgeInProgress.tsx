@@ -62,6 +62,7 @@ const useBridgeTransfers = () => {
   };
 };
 
+// TODO: to update
 const useBridgingSteps = () =>
   useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY('some-quote-id'),
@@ -74,8 +75,8 @@ const useBridgingSteps = () =>
       executions: data.executions.map(
         ({ status: actualStatus, explorer_link }) => {
           const status = (() => {
-            if (actualStatus === 'DONE') return 'completed';
-            if (actualStatus === 'PENDING') return 'loading';
+            if (actualStatus === 'DONE') return 'finish';
+            if (actualStatus === 'PENDING') return 'wait';
             return 'error';
           })();
 
@@ -112,7 +113,7 @@ export const BridgeInProgress = () => {
 
     const currentBridgeStatus: BridgingStepStatus = (() => {
       if (bridge.isBridgingFailed) return 'error';
-      return bridge.status === 'FINISHED' ? 'completed' : 'loading';
+      return bridge.status === 'FINISHED' ? 'finish' : 'process';
     })();
 
     return {
@@ -147,10 +148,10 @@ export const BridgeInProgress = () => {
             chainName="Base" // TODO: from the API
             bridge={bridgeDetails}
             // TODO: from the API
-            // masterSafe={{
-            //   creation: { status: 'PENDING', txnLink: null },
-            //   transfer: { status: 'PENDING', txnLink: null },
-            // }}
+            masterSafe={{
+              creation: { status: 'wait', txnLink: null },
+              transfer: { status: 'wait', txnLink: null },
+            }}
           />
         )}
       </CardFlex>
