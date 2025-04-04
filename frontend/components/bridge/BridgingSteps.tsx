@@ -6,15 +6,15 @@ import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
-import { BridgeExecutionStatus } from '@/types/Bridge';
+import { TokenSymbol } from '@/enums/Token';
+import { BridgingStepStatus } from '@/types/Bridge';
+import { Nullable } from '@/types/Util';
 
 const { Text } = Typography;
 
 const SubStepRow = styled.div`
   line-height: normal;
 `;
-
-const TXN_COMPLETED = 'Transaction complete.';
 
 const Desc = ({ text }: { text: string }) => (
   <Text className="text-sm text-lighter" style={{ lineHeight: 'normal' }}>
@@ -54,33 +54,29 @@ const FundsAreSafeMessage = ({ onRetry }: FundsAreSafeMessageProps) => (
   </Flex>
 );
 
+type Status = BridgingStepStatus;
+
 type SubStep = {
-  description: string | null;
-  txnLink: string | null;
+  description: Nullable<string>;
+  txnLink: Nullable<string>;
   isFailed?: boolean;
 };
 
-type Step = {
-  title: string;
-  status: 'completed' | 'loading' | 'waiting' | 'error';
-  subSteps: SubStep[];
-};
-
-// const txnLink =
-//   'https://etherscan.io/tx/0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
-
-type Status = 'loading' | 'completed' | 'error';
+type Step = { title: string; status: Status; subSteps: SubStep[] };
 
 type BridgingStepsProps = {
   chainName: string;
-  bridgeExecutions: {
-    symbol: string;
-    status: BridgeExecutionStatus;
-    txnLink: string | null;
-  }[];
+  bridge: {
+    status: Status;
+    executions: {
+      symbol: TokenSymbol;
+      status: Status;
+      txnLink: Nullable<string>;
+    }[];
+  };
   masterSafe?: {
-    creation: { status: Status; txnLink: string | null };
-    transfer: { status: Status; txnLink: string | null };
+    creation: { status: Status; txnLink: Nullable<string> };
+    transfer: { status: Status; txnLink: Nullable<string> };
   };
   onRetry?: () => void;
 };
@@ -90,36 +86,33 @@ type BridgingStepsProps = {
  */
 export const BridgingSteps = ({
   chainName,
-  bridgeExecutions,
+  bridge,
   masterSafe,
   onRetry = noop,
 }: BridgingStepsProps) => {
   const bridgeSteps: Step = useMemo(() => {
-    const isCompleted = bridgeExecutions.every(
-      ({ status }) => status === 'DONE',
-    );
-    const isLoading = bridgeExecutions.some(
-      ({ status }) => status === 'PENDING',
-    );
-
-    const status = (() => {
-      if (isCompleted) return 'completed';
-      if (isLoading) return 'loading';
-      return 'error';
-    })();
-
     return {
       title: `Bridge funds to ${chainName}`,
-      status,
-      subSteps: bridgeExecutions.map(({ symbol, status, txnLink }) => ({
-        description: `Bridge ${symbol} transaction ${
-          status === 'DONE' ? 'complete' : 'failed'
-        }.`,
-        txnLink,
-        isFailed: status !== 'DONE' && status !== 'PENDING',
-      })),
+      status: bridge.status,
+      subSteps: bridge.executions.map(({ symbol, status, txnLink }) => {
+        const description = (() => {
+          if (status === 'completed') {
+            return `Bridging ${symbol} transaction complete.`;
+          }
+          if (status === 'loading') {
+            return `Sending transaction...`;
+          }
+          return `Bridging ${symbol} failed.`;
+        })();
+
+        return {
+          description,
+          txnLink,
+          isFailed: status === 'error',
+        };
+      }),
     };
-  }, [chainName, bridgeExecutions]);
+  }, [chainName, bridge]);
 
   const masterSafeStatus: Step[] = useMemo(() => {
     if (!masterSafe) return [];
@@ -131,7 +124,7 @@ export const BridgingSteps = ({
         status: creation.status,
         subSteps: [
           {
-            description: TXN_COMPLETED,
+            description: 'Transaction complete.',
             txnLink: creation.txnLink,
             isFailed: creation.status === 'error',
           },
@@ -142,7 +135,7 @@ export const BridgingSteps = ({
         status: transfer.status,
         subSteps: [
           {
-            description: TXN_COMPLETED,
+            description: 'Transaction complete.',
             txnLink: transfer.txnLink,
             isFailed: transfer.status === 'error',
           },

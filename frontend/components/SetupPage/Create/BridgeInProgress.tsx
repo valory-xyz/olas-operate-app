@@ -1,13 +1,18 @@
+import { useQuery } from '@tanstack/react-query';
 import { Flex, Typography } from 'antd';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { BridgingSteps } from '@/components/bridge/BridgingSteps';
 import { CardFlex } from '@/components/styled/CardFlex';
+import { TEN_SECONDS_INTERVAL } from '@/constants/intervals';
+import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { TokenSymbol } from '@/enums/Token';
 import { useSetup } from '@/hooks/useSetup';
+import { getBridgeStatus } from '@/service/Bridge';
+import { BridgingStepStatus } from '@/types/Bridge';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
 
@@ -57,12 +62,42 @@ const useBridgeTransfers = () => {
   };
 };
 
+const useBridgingSteps = () =>
+  useQuery({
+    queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY('some-quote-id'),
+    queryFn: async () => {
+      return await getBridgeStatus('some-quote-id');
+    },
+    select: (data) => ({
+      isBridgingFailed: data.status === 'FINISHED' && data.error,
+      status: data.status,
+      executions: data.executions.map(
+        ({ status: actualStatus, explorer_link }) => {
+          const status = (() => {
+            if (actualStatus === 'DONE') return 'completed';
+            if (actualStatus === 'PENDING') return 'loading';
+            return 'error';
+          })();
+
+          return {
+            symbol: TokenSymbol.OLAS, // TODO: from the API
+            status: status as BridgingStepStatus,
+            txnLink: explorer_link,
+          };
+        },
+      ),
+    }),
+    refetchInterval: TEN_SECONDS_INTERVAL,
+    refetchOnWindowFocus: false,
+  });
+
 /**
  * Bridge in progress screen.
  */
 export const BridgeInProgress = () => {
   const { goto } = useSetup();
   const { fromChain, toChain, transfers } = useBridgeTransfers();
+  const { isLoading, isError, data: bridge } = useBridgingSteps();
 
   const isBridgingSuccess = false; // TODO: from the API
   useEffect(() => {
@@ -70,6 +105,25 @@ export const BridgeInProgress = () => {
       goto(SetupScreen.SetupCreateSafe);
     }
   }, [isBridgingSuccess, goto]);
+
+  const bridgeDetails = useMemo(() => {
+    if (isLoading || isError) return null;
+    if (!bridge) return null;
+
+    const currentBridgeStatus: BridgingStepStatus = (() => {
+      if (bridge.isBridgingFailed) return 'error';
+      return bridge.status === 'FINISHED' ? 'completed' : 'loading';
+    })();
+
+    return {
+      status: currentBridgeStatus,
+      executions: bridge.executions.map(({ symbol, status, txnLink }) => ({
+        symbol,
+        status,
+        txnLink,
+      })),
+    };
+  }, [isLoading, isError, bridge]);
 
   return (
     <>
@@ -88,7 +142,17 @@ export const BridgeInProgress = () => {
           transfers={transfers}
         />
         <EstimatedCompletionTime />
-        <BridgingSteps />
+        {!!bridgeDetails && (
+          <BridgingSteps
+            chainName="Base" // TODO: from the API
+            bridge={bridgeDetails}
+            // TODO: from the API
+            // masterSafe={{
+            //   creation: { status: 'PENDING', txnLink: null },
+            //   transfer: { status: 'PENDING', txnLink: null },
+            // }}
+          />
+        )}
       </CardFlex>
     </>
   );
