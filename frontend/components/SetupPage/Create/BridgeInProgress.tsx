@@ -9,6 +9,7 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { TokenSymbol } from '@/enums/Token';
 import { useSetup } from '@/hooks/useSetup';
 import { BridgingStepStatus } from '@/types/Bridge';
+import { Nullable } from '@/types/Util';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
 
@@ -58,6 +59,9 @@ const useBridgeTransfers = () => {
   };
 };
 
+const txnLink =
+  'https://etherscan.io/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3';
+
 // TODO: to update
 const useBridgingSteps = () => ({
   isLoading: false,
@@ -81,6 +85,27 @@ const useBridgingSteps = () => ({
   },
 });
 
+const useMasterSafeTransfers = () => ({
+  isLoading: false,
+  isError: false,
+  data: {
+    status: 'CREATED',
+    isTransferFailed: false,
+    transfers: [
+      {
+        symbol: 'OLAS' as TokenSymbol,
+        status: 'wait' as BridgingStepStatus,
+        txnLink: null,
+      },
+      {
+        symbol: 'OLAS' as TokenSymbol,
+        status: 'wait' as BridgingStepStatus,
+        txnLink: null,
+      },
+    ],
+  },
+});
+
 /**
  * Bridge in progress screen.
  */
@@ -88,14 +113,23 @@ export const BridgeInProgress = () => {
   const { goto } = useSetup();
   const { fromChain, toChain, transfers } = useBridgeTransfers();
   const { isLoading, isError, data: bridge } = useBridgingSteps();
+  const {
+    isLoading: isLoadingMasterSafe,
+    isError: isErrorMasterSafe,
+    data: masterSafeTransfer,
+  } = useMasterSafeTransfers();
 
   const isBridgingSuccess = false; // TODO: from the API
-  useEffect(() => {
-    if (isBridgingSuccess) {
-      goto(SetupScreen.SetupCreateSafe);
-    }
-  }, [isBridgingSuccess, goto]);
+  const isSafeCreated = false; // TODO: from the API
 
+  useEffect(() => {
+    if (!isBridgingSuccess) return;
+    if (!isSafeCreated) return;
+
+    goto(SetupScreen.SetupCreateSafe);
+  }, [isBridgingSuccess, isSafeCreated, goto]);
+
+  // TODO: to update and consolidate after the API integration
   const bridgeDetails = useMemo(() => {
     if (isLoading || isError) return null;
     if (!bridge) return null;
@@ -107,13 +141,41 @@ export const BridgeInProgress = () => {
 
     return {
       status: currentBridgeStatus,
-      executions: bridge.executions.map(({ symbol, status, txnLink }) => ({
-        symbol,
-        status,
-        txnLink,
-      })),
+      executions: bridge.executions,
     };
   }, [isLoading, isError, bridge]);
+
+  // TODO: to update and consolidate after the API integration
+  const masterSafeCreationDetails: {
+    status: BridgingStepStatus;
+    txnLink: Nullable<string>;
+  } = useMemo(() => {
+    if (!isBridgingSuccess) return { status: 'wait', txnLink: null };
+    if (isSafeCreated) return { status: 'finish', txnLink };
+    return { status: 'process', txnLink };
+  }, [isSafeCreated, isBridgingSuccess]);
+
+  // TODO: to update and consolidate after the API integration
+  const masterSafeTransferDetails = useMemo(() => {
+    if (isLoadingMasterSafe || isErrorMasterSafe) return;
+    if (!masterSafeTransfer) return;
+
+    const currentMasterSafeStatus: BridgingStepStatus = (() => {
+      if (masterSafeTransfer.isTransferFailed) return 'error';
+      if (isSafeCreated) return 'process';
+      return masterSafeTransfer.status === 'FINISHED' ? 'finish' : 'wait';
+    })() as BridgingStepStatus; // "as" to be removed when the API is updated
+
+    return {
+      status: currentMasterSafeStatus,
+      transfers: masterSafeTransfer.transfers,
+    };
+  }, [
+    isLoadingMasterSafe,
+    isErrorMasterSafe,
+    isSafeCreated,
+    masterSafeTransfer,
+  ]);
 
   return (
     <>
@@ -134,13 +196,10 @@ export const BridgeInProgress = () => {
         <EstimatedCompletionTime />
         {!!bridgeDetails && (
           <BridgingSteps
-            chainName="Base" // TODO: from the API
-            bridge={bridgeDetails} // TODO: from the API
-            masterSafe={{
-              // TODO: from the API
-              creation: { status: 'process', txnLink: null },
-              transfer: { status: 'wait', txnLink: null },
-            }}
+            chainName="Base"
+            bridge={bridgeDetails}
+            masterSafeCreation={masterSafeCreationDetails}
+            masterSafeTransfer={masterSafeTransferDetails}
           />
         )}
       </CardFlex>
