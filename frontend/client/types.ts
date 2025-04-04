@@ -166,18 +166,16 @@ export type BalancesAndFundingRequirements = {
   allow_start_agent: boolean;
 };
 
+export type BridgeFrom = {
+  chain: MiddlewareChain;
+  address: Address;
+  token: Address;
+};
+export type BridgeTo = BridgeFrom & { amount: bigint };
+
 export type MiddlewareBridgeRefillRequirementsRequest = {
-  from: {
-    chain: MiddlewareChain;
-    address: Address;
-    token: Address;
-  };
-  to: {
-    chain: MiddlewareChain;
-    address: Address;
-    token: Address;
-    amount: bigint;
-  };
+  from: BridgeFrom;
+  to: BridgeTo;
 };
 
 export type MiddlewareBridgeRefillRequirementsResponse = {
