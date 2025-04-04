@@ -24,6 +24,8 @@ import { TokenSymbol } from '@/enums/Token';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 
+import { InfoTooltip } from '../InfoTooltip';
+
 const { Text } = Typography;
 
 const RootCard = styled(Flex)`
@@ -38,45 +40,80 @@ const WARNING_ICON_STYLE = { color: COLOR.WARNING };
 const SUCCESS_ICON_STYLE = { color: COLOR.SUCCESS };
 
 type TokenInfoProps = {
-  status: 'waiting' | 'received';
   symbol: TokenSymbol;
   totalRequiredInWei: bigint;
   currentBalanceInWei: bigint;
+  isNative?: boolean;
 };
 
 const TokenInfo = ({
-  status,
   symbol,
   totalRequiredInWei,
   currentBalanceInWei,
+  isNative,
 }: TokenInfoProps) => {
-  if (status === 'waiting') {
-    return (
-      <Flex gap={8}>
-        <ClockCircleOutlined style={WARNING_ICON_STYLE} />
-        <Text className="loading-ellipses">
-          Waiting for{' '}
-          <Text strong>
-            {formatEther(totalRequiredInWei - currentBalanceInWei)}&nbsp;
-            {symbol}
+  const depositRequiredInWei = totalRequiredInWei - currentBalanceInWei;
+  const areFundsReceived = depositRequiredInWei <= 0;
+
+  return (
+    <Flex gap={8} align="center">
+      {areFundsReceived ? (
+        <>
+          <CheckSquareOutlined style={SUCCESS_ICON_STYLE} />
+          <Text strong>{symbol}</Text> funds received!
+        </>
+      ) : (
+        <>
+          <ClockCircleOutlined style={WARNING_ICON_STYLE} />
+          <Text className="loading-ellipses">
+            Waiting for{' '}
+            <Text strong>
+              {formatEther(depositRequiredInWei)}&nbsp;
+              {symbol}
+            </Text>
           </Text>
-        </Text>
-        {/** TODO: add tooltip */}
-      </Flex>
-    );
-  }
+        </>
+      )}
 
-  if (status === 'received') {
-    return (
-      <Flex gap={8}>
-        <CheckSquareOutlined style={SUCCESS_ICON_STYLE} />
-        <Text strong>{symbol}</Text> funds received!
-        {/** TODO: add tooltip */}
-      </Flex>
-    );
-  }
-
-  return null;
+      <InfoTooltip overlayInnerStyle={{ width: 320 }} placement="top">
+        <Flex vertical gap={12} className="p-8">
+          <Flex justify="space-between">
+            <Text type="secondary" className="text-sm">
+              Total amount required
+            </Text>
+            <Text
+              className="text-sm"
+              strong
+            >{`${formatEther(totalRequiredInWei)} ${symbol}`}</Text>
+          </Flex>
+          <Flex justify="space-between">
+            <Text type="secondary" className="text-sm">
+              Balance at deposit address
+            </Text>
+            <Text
+              className="text-sm"
+              strong
+            >{`${formatEther(currentBalanceInWei)} ${symbol}`}</Text>
+          </Flex>
+          <Divider className="m-0" />
+          <Flex justify="space-between">
+            <Text className="text-sm" strong>
+              Deposit required
+            </Text>
+            <Text
+              className="text-sm"
+              strong
+            >{`${formatEther(depositRequiredInWei)} ${symbol}`}</Text>
+          </Flex>
+          {isNative && (
+            <Text type="secondary" className="text-sm">
+              The total amount may fluctuate due to periodic quote updates.
+            </Text>
+          )}
+        </Flex>
+      </InfoTooltip>
+    </Flex>
+  );
 };
 
 // TODO: make a shared component similar to AccountCreationAddress
@@ -116,19 +153,19 @@ const DepositAddress = () => {
 type DepositForBridgingProps = {
   chainName: string;
 };
+
 export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
   // TODO: use API for getting quote
   const [isRequestingQuote] = useState(false);
   const [tokens] = useState<TokenInfoProps[]>([
     {
-      status: 'waiting',
       symbol: TokenSymbol.OLAS,
       totalRequiredInWei: BigInt('40000000000000000000'), // 40 Ether
       currentBalanceInWei: BigInt(0),
     },
     {
-      status: 'received',
       symbol: TokenSymbol.ETH,
+      isNative: true, // TODO: define by chainName using getNativeTokenSymbol
       totalRequiredInWei: BigInt('55000000000000000'), // 0.055 Ether
       currentBalanceInWei: BigInt('55000000000000000'), // 0.055 Ether
     },
@@ -159,7 +196,7 @@ export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
             {tokens.map((token) => (
               <TokenInfo
                 key={token.symbol}
-                status={token.status}
+                isNative={token.isNative}
                 symbol={token.symbol}
                 totalRequiredInWei={token.totalRequiredInWei}
                 currentBalanceInWei={token.currentBalanceInWei}
