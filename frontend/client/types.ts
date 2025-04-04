@@ -174,8 +174,11 @@ export type BridgeFrom = {
 export type BridgeTo = BridgeFrom & { amount: bigint };
 
 export type MiddlewareBridgeRefillRequirementsRequest = {
-  from: BridgeFrom;
-  to: BridgeTo;
+  bridge_requests: {
+    from: BridgeFrom;
+    to: BridgeTo;
+  }[];
+  force_update: boolean;
 };
 
 export type MiddlewareBridgeRefillRequirementsResponse = {
