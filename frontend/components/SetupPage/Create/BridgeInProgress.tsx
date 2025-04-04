@@ -149,7 +149,7 @@ export const BridgeInProgress = () => {
             bridge={bridgeDetails}
             // TODO: from the API
             masterSafe={{
-              creation: { status: 'wait', txnLink: null },
+              creation: { status: 'process', txnLink: null },
               transfer: { status: 'wait', txnLink: null },
             }}
           />
