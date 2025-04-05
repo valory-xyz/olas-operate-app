@@ -14,7 +14,7 @@ import { CardSection } from '../../styled/CardSection';
 
 const { Text } = Typography;
 
-export const StakingContractSection = () => {
+export const StakingContractUpdate = () => {
   const { goto } = usePageState();
   const { isActiveStakingProgramLoaded, selectedStakingProgramMeta } =
     useStakingProgram();

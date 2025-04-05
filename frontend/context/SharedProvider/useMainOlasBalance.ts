@@ -27,7 +27,7 @@ export const useMainOlasBalance = () => {
   );
   const {
     isStakingRewardsDetailsLoading,
-    isAvailableRewardsForEpochLoading,
+    isEligibleRewardsThisEpochLoading,
     optimisticRewardsEarnedForEpoch,
     accruedServiceStakingRewards,
   } = useRewardContext();
@@ -95,7 +95,7 @@ export const useMainOlasBalance = () => {
     isServicesLoading, // addresses to filter the staked balances are available only after services are loaded
     isBalanceLoading,
     isStakingRewardsDetailsLoading,
-    isAvailableRewardsForEpochLoading,
+    isEligibleRewardsThisEpochLoading,
     !selectedStakingProgramId, // staking program is required to calculate staking rewards
   ].some(Boolean);
 
