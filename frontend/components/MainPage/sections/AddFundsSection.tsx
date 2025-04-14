@@ -8,6 +8,7 @@ import { SendFundAction } from '@/components/bridge/types';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { NA, UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SWAP_URL_BY_EVM_CHAIN } from '@/constants/urls';
+import { EvmChainName } from '@/enums/Chain';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
@@ -19,93 +20,42 @@ import { CardSection } from '../../styled/CardSection';
 
 const { Text } = Typography;
 
-export const AddFundsSection = () => {
-  const fundSectionRef = useRef<HTMLDivElement>(null);
-  const [isAddFundsVisible, setIsAddFundsVisible] = useState(false);
-
-  const addFunds = useCallback(async () => {
-    setIsAddFundsVisible(true);
-
-    await delayInSeconds(0.1);
-    fundSectionRef?.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-  const closeAddFunds = useCallback(() => setIsAddFundsVisible(false), []);
+const AddFundsWarningAlertSection = () => {
+  const { selectedAgentConfig } = useServices();
+  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
 
   return (
-    <>
-      <CardSection gap={12} padding="24px">
-        <Button
-          type="default"
-          size="large"
-          block
-          onClick={isAddFundsVisible ? closeAddFunds : addFunds}
-        >
-          {isAddFundsVisible ? 'Close instructions' : 'Add funds'}
-        </Button>
-      </CardSection>
-
-      {isAddFundsVisible && <OpenAddFundsSection ref={fundSectionRef} />}
-    </>
+    <CardSection>
+      <CustomAlert
+        type="warning"
+        fullWidth
+        showIcon
+        message={
+          <Flex vertical gap={2.5}>
+            <Text className="text-base" strong>
+              Only send funds on {CHAIN_CONFIG[homeChainId].name} Chain!
+            </Text>
+            <Text className="text-base">
+              You will lose any assets you send on other chains.
+            </Text>
+          </Flex>
+        }
+      />
+    </CardSection>
   );
 };
 
-const AddFundsWarningAlertSection = () => {
-  const isBridgeEnabled = useFeatureFlag('bridge-funds');
-  const { selectedAgentConfig } = useServices();
-  const [fundType, setFundType] = useState<SendFundAction>('transfer');
-
-  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
-  const currentFundingRequirements = CHAIN_CONFIG[homeChainId];
-
-  return (
-    <>
-      {isBridgeEnabled && (
-        <CardSection gap={12} $padding="24px" $borderTop>
-          <Segmented<SendFundAction>
-            options={[
-              {
-                label: `Send on ${currentFundingRequirements.name}`,
-                value: 'transfer',
-              },
-              { label: 'Bridge from Ethereum', value: 'bridge' },
-            ]}
-            onChange={(value) => setFundType(value)}
-            value={fundType}
-            block
-            className="w-full"
-          />
-        </CardSection>
-      )}
-      <CardSection>
-        <CustomAlert
-          type="warning"
-          fullWidth
-          showIcon
-          message={
-            <Flex vertical gap={2.5}>
-              <Text className="text-base" strong>
-                Only send funds on {CHAIN_CONFIG[homeChainId].name} Chain!
-              </Text>
-              <Text className="text-base">
-                You will lose any assets you send on other chains.
-              </Text>
-            </Flex>
-          }
-        />
-      </CardSection>
-    </>
-  );
+type AddFundsAddressSectionProps = {
+  fundingAddress?: string;
+  truncatedFundingAddress?: string;
+  handleCopy: () => void;
 };
 
 const AddFundsAddressSection = ({
   fundingAddress,
   truncatedFundingAddress,
   handleCopy,
-}: {
-  fundingAddress?: string;
-  truncatedFundingAddress?: string;
-  handleCopy: () => void;
-}) => (
+}: AddFundsAddressSectionProps) => (
   <CardSection gap={10} justify="center" align="center" padding="16px 24px">
     <Tooltip
       title={
@@ -175,3 +125,81 @@ export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
   );
 });
 OpenAddFundsSection.displayName = 'OpenAddFundsSection';
+
+export const AddFundsSection = () => {
+  const isBridgeEnabled = useFeatureFlag('bridge-funds');
+  const { selectedAgentConfig } = useServices();
+  const [fundType, setFundType] = useState<SendFundAction>('transfer');
+  const fundSectionRef = useRef<HTMLDivElement>(null);
+  const [isAddFundsVisible, setIsAddFundsVisible] = useState(false);
+
+  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
+  const currentFundingRequirements = CHAIN_CONFIG[homeChainId];
+
+  const addFunds = useCallback(async () => {
+    setIsAddFundsVisible(true);
+
+    await delayInSeconds(0.1);
+    fundSectionRef?.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+  const closeAddFunds = useCallback(() => setIsAddFundsVisible(false), []);
+
+  return (
+    <>
+      <CardSection gap={12} padding="24px">
+        <Button
+          type="primary"
+          size="large"
+          ghost
+          block
+          onClick={isAddFundsVisible ? closeAddFunds : addFunds}
+        >
+          {isAddFundsVisible ? 'Close instructions' : 'Add funds'}
+        </Button>
+      </CardSection>
+
+      {isAddFundsVisible && (
+        <>
+          {isBridgeEnabled && (
+            <CardSection gap={12} $padding="24px" $borderTop>
+              <Segmented<SendFundAction>
+                options={[
+                  {
+                    label: `Send on ${currentFundingRequirements.name}`,
+                    value: 'transfer',
+                  },
+                  { label: 'Bridge from Ethereum', value: 'bridge' },
+                ]}
+                onChange={(value) => setFundType(value)}
+                value={fundType}
+                block
+                className="w-full"
+              />
+            </CardSection>
+          )}
+
+          {fundType === 'bridge' ? (
+            <CardSection
+              gap={12}
+              justify="center"
+              align="center"
+              $padding="16px 24px"
+              $borderTop
+              vertical
+            >
+              <Text className="text-base">
+                Bridge funds from Ethereum directly to your Pearl Safe on{' '}
+                {EvmChainName[homeChainId]} chain.
+              </Text>
+              <Button type="primary" size="large" block>
+                Bridge funds
+              </Button>
+            </CardSection>
+          ) : (
+            <OpenAddFundsSection ref={fundSectionRef} />
+          )}
+        </>
+      )}
+    </>
+  );
+};
