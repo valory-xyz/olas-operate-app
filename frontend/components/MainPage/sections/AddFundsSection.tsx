@@ -1,12 +1,14 @@
 import { CopyOutlined } from '@ant-design/icons';
-import { Button, Flex, message, Tooltip, Typography } from 'antd';
+import { Button, Flex, message, Segmented, Tooltip, Typography } from 'antd';
 import Link from 'next/link';
 import { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
+import { SendFundAction } from '@/components/bridge/types';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { NA, UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SWAP_URL_BY_EVM_CHAIN } from '@/constants/urls';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
@@ -48,26 +50,50 @@ export const AddFundsSection = () => {
 };
 
 const AddFundsWarningAlertSection = () => {
+  const isBridgeEnabled = useFeatureFlag('bridge-funds');
   const { selectedAgentConfig } = useServices();
+  const [fundType, setFundType] = useState<SendFundAction>('transfer');
+
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
+  const currentFundingRequirements = CHAIN_CONFIG[homeChainId];
+
   return (
-    <CardSection>
-      <CustomAlert
-        type="warning"
-        fullWidth
-        showIcon
-        message={
-          <Flex vertical gap={2.5}>
-            <Text className="text-base" strong>
-              Only send funds on {CHAIN_CONFIG[homeChainId].name} Chain!
-            </Text>
-            <Text className="text-base">
-              You will lose any assets you send on other chains.
-            </Text>
-          </Flex>
-        }
-      />
-    </CardSection>
+    <>
+      {isBridgeEnabled && (
+        <CardSection gap={12} $padding="24px" $borderTop>
+          <Segmented<SendFundAction>
+            options={[
+              {
+                label: `Send on ${currentFundingRequirements.name}`,
+                value: 'transfer',
+              },
+              { label: 'Bridge from Ethereum', value: 'bridge' },
+            ]}
+            onChange={(value) => setFundType(value)}
+            value={fundType}
+            block
+            className="w-full"
+          />
+        </CardSection>
+      )}
+      <CardSection>
+        <CustomAlert
+          type="warning"
+          fullWidth
+          showIcon
+          message={
+            <Flex vertical gap={2.5}>
+              <Text className="text-base" strong>
+                Only send funds on {CHAIN_CONFIG[homeChainId].name} Chain!
+              </Text>
+              <Text className="text-base">
+                You will lose any assets you send on other chains.
+              </Text>
+            </Flex>
+          }
+        />
+      </CardSection>
+    </>
   );
 };
 
