@@ -1,5 +1,9 @@
 /**
  * Status of the each step in the bridging process.
+ * - process: the step is in progress (loading spinner)
+ * - wait: the step is waiting for the previous step to finish (grayed out)
+ * - finish: the step is finished (checked)
+ * - error: the step has failed (red cross)
  */
 export type BridgingStepStatus = 'process' | 'wait' | 'finish' | 'error';
 
