@@ -28,6 +28,7 @@ export const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
 
 export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
   [StakingProgramId.MemeBaseAlpha2]: {
+    deprecated: true,
     chainId: EvmChainId.Base,
     name: 'MemeBase Alpha II',
     agentsSupported: [AgentType.Memeooorr],
@@ -42,6 +43,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [StakingProgramId.MemeBaseBeta]: {
+    deprecated: true,
     chainId: EvmChainId.Base,
     name: 'MemeBase Beta I',
     agentsSupported: [AgentType.Memeooorr],
@@ -56,6 +58,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [StakingProgramId.MemeBaseBeta2]: {
+    deprecated: true,
     chainId: EvmChainId.Base,
     name: 'MemeBase Beta II',
     agentsSupported: [AgentType.Memeooorr],
@@ -70,6 +73,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [StakingProgramId.MemeBaseBeta3]: {
+    deprecated: true,
     chainId: EvmChainId.Base,
     name: 'MemeBase Beta III',
     agentsSupported: [AgentType.Memeooorr],
