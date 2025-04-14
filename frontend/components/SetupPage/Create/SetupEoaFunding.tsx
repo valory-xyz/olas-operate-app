@@ -199,7 +199,7 @@ const SetupEoaFundingForChainV2 = ({
         </Text>
         <Line />
         <Text
-          style={{ display: 'block', width: 202 }}
+          style={{ display: 'block', width: 174 }}
           type="secondary"
           className={isFunded ? '' : 'loading-ellipses'}
         >
