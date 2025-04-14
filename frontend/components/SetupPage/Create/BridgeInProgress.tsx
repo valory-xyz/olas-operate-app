@@ -9,7 +9,6 @@ import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
 import { usePageState } from '@/hooks/usePageState';
 import { BridgingStepStatus } from '@/types/Bridge';
-import { Maybe } from '@/types/Util';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
 
@@ -166,20 +165,29 @@ export const BridgeInProgress = () => {
 
     return {
       status: currentBridgeStatus,
-      executions: bridge.executions,
+      subSteps: bridge.executions,
     };
   }, [isLoadingBridge, isErrorBridge, isBridgingCompleted, bridge]);
 
   // TODO: to update and consolidate after the API integration (move to useQuery)
-  const masterSafeCreationDetails: {
-    status: BridgingStepStatus;
-    txnLink?: Maybe<string>;
-  } = useMemo(() => {
-    if (isErrorMasterSafeCreation) return { status: 'error' };
-    if (!isBridgingCompleted) return { status: 'wait' };
-    if (isLoadingMasterSafeCreation) return { status: 'process' };
-    if (isSafeCreated) return { status: 'finish', txnLink };
-    return { status: 'process' };
+  const masterSafeCreationDetails = useMemo(() => {
+    const currentMasterSafeCreationStatus: BridgingStepStatus = (() => {
+      if (isErrorMasterSafeCreation) return 'error';
+      if (!isBridgingCompleted) return 'wait';
+      if (isLoadingMasterSafeCreation) return 'process';
+      if (isSafeCreated) return 'finish';
+      return 'process';
+    })();
+
+    const creationTxnLink = (() => {
+      if (isSafeCreated) return txnLink;
+      return null;
+    })();
+
+    return {
+      status: currentMasterSafeCreationStatus,
+      subSteps: [{ txnLink: creationTxnLink }],
+    };
   }, [
     isBridgingCompleted,
     isSafeCreated,
@@ -197,7 +205,7 @@ export const BridgeInProgress = () => {
 
     return {
       status: currentMasterSafeStatus,
-      transfers: masterSafeTransfer.transfers || [],
+      subSteps: masterSafeTransfer.transfers || [],
     };
   }, [
     isLoadingMasterSafe,

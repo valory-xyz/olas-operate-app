@@ -57,12 +57,19 @@ const FundsAreSafeMessage = ({ onRetry }: FundsAreSafeMessageProps) => (
 type Step = {
   title: string;
   status: Status;
-  subSteps: {
+  computedSubSteps: {
     description: Nullable<string>;
     txnLink: Maybe<string>;
     isFailed?: boolean;
     onRetry?: () => void;
   }[];
+};
+
+type StepEvent = {
+  symbol?: TokenSymbol;
+  status?: Status;
+  txnLink?: Maybe<string>;
+  onRetry?: () => void;
 };
 
 const generateBridgeStep = (
@@ -71,7 +78,7 @@ const generateBridgeStep = (
 ): Omit<Step, 'title'> => {
   return {
     status,
-    subSteps: subSteps.map(({ symbol, status, txnLink }) => {
+    computedSubSteps: subSteps.map(({ symbol, status, txnLink }) => {
       const isFailed = status === 'error';
       const description = (() => {
         if (status === 'finish') {
@@ -90,7 +97,7 @@ const generateBridgeStep = (
 
 const generateMasterSafeCreationStep = (
   status: Status,
-  txnLink: Maybe<string>,
+  subSteps: StepEvent[],
 ): Step => {
   const isFailed = status === 'error';
   const description = (() => {
@@ -103,7 +110,9 @@ const generateMasterSafeCreationStep = (
   return {
     title: 'Create Master Safe',
     status,
-    subSteps: [{ description, txnLink, isFailed }],
+    computedSubSteps: subSteps.map(({ txnLink }) => {
+      return { description, txnLink, isFailed };
+    }),
   };
 };
 
@@ -114,7 +123,7 @@ const generateMasterSafeTransferStep = (
   return {
     title: 'Transfer funds to the Master Safe',
     status,
-    subSteps: subSteps.map(({ symbol, status, txnLink }) => {
+    computedSubSteps: subSteps.map(({ symbol, status, txnLink }) => {
       const isFailed = status === 'error';
       const description = (() => {
         if (status === 'finish') {
@@ -134,29 +143,14 @@ const generateMasterSafeTransferStep = (
   };
 };
 
-type StepEvent = {
-  symbol: TokenSymbol;
-  status: Status;
-  txnLink?: Maybe<string>;
-  onRetry?: () => void;
-};
+type BridgingStep = { status: Status; subSteps: StepEvent[] };
 
 // TODO: simplify status
 type BridgingStepsProps = {
   chainName: string;
-  bridge: {
-    status: Status;
-    executions: StepEvent[];
-  };
-  masterSafeCreation?: {
-    status: Status;
-    txnLink?: Maybe<string>;
-    onRetry?: () => void;
-  };
-  masterSafeTransfer?: {
-    status: Status;
-    transfers: StepEvent[];
-  };
+  bridge: BridgingStep;
+  masterSafeCreation?: BridgingStep;
+  masterSafeTransfer?: BridgingStep;
 };
 
 /**
@@ -171,7 +165,7 @@ export const BridgingSteps = ({
   const bridgeStep: Step = useMemo(() => {
     return {
       title: `Bridge funds to ${chainName}`,
-      ...generateBridgeStep(bridge.status, bridge.executions),
+      ...generateBridgeStep(bridge.status, bridge.subSteps),
     };
   }, [chainName, bridge]);
 
@@ -179,7 +173,7 @@ export const BridgingSteps = ({
     if (!masterSafeCreation) return null;
     return generateMasterSafeCreationStep(
       masterSafeCreation.status,
-      masterSafeCreation.txnLink,
+      masterSafeCreation.subSteps,
     );
   }, [masterSafeCreation]);
 
@@ -187,7 +181,7 @@ export const BridgingSteps = ({
     if (!masterSafeTransfer) return null;
     return generateMasterSafeTransferStep(
       masterSafeTransfer.status,
-      masterSafeTransfer.transfers,
+      masterSafeTransfer.subSteps,
     );
   }, [masterSafeTransfer]);
 
@@ -203,11 +197,11 @@ export const BridgingSteps = ({
     <Steps
       size="small"
       direction="vertical"
-      items={steps.map(({ status, title, subSteps }) => {
+      items={steps.map(({ status, title, computedSubSteps }) => {
         return {
           status,
           title,
-          description: subSteps.map((subStep, index) => (
+          description: computedSubSteps.map((subStep, index) => (
             <SubStepRow key={index} style={{ marginTop: index === 0 ? 4 : 6 }}>
               {subStep.description && <Desc text={subStep.description} />}
               {subStep.txnLink && <TxnDetails link={subStep.txnLink} />}
