@@ -117,7 +117,7 @@ const useTimeRemaining = () => {
   const TIME_FOR_MASTER_SAFE_TRANSFER = ONE_SECOND_INTERVAL * 4; // TODO: to update
   const timeToExecuteQuote = 1744690251; // TODO: to update
   return {
-    isLoading: true,
+    isLoading: false,
     isError: false,
     timeRemaining:
       timeToExecuteQuote +
