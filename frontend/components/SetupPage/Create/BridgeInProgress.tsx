@@ -1,9 +1,10 @@
-import { Flex, Typography } from 'antd';
+import { Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { BridgingSteps } from '@/components/bridge/BridgingSteps';
+import { EstimatedCompletionTime } from '@/components/bridge/EstimatedCompletionTime';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
@@ -25,15 +26,6 @@ const KeepAppOpenAlert = () => (
       </Text>
     }
   />
-);
-
-// TODO: to update
-const EstimatedCompletionTime = () => (
-  <Flex gap={8}>
-    <Text type="secondary">Estimated completion time:</Text>
-    <Text strong>~ 5 minutes</Text>
-    <Text type="secondary">(0:05)</Text>
-  </Flex>
 );
 
 // TODO: integrate with the API
@@ -70,7 +62,7 @@ const useBridgingSteps = () => ({
   isLoading: false,
   isError: false,
   data: {
-    status: 'CREATED',
+    status: 'FINISHED',
     isBridgingFailed: false,
     executions: [
       {
@@ -79,8 +71,8 @@ const useBridgingSteps = () => ({
         txnLink: liFiTxnLink,
       },
       {
-        symbol: 'OLAS' as TokenSymbol,
-        status: 'process' as BridgingStepStatus,
+        symbol: 'ETH' as TokenSymbol,
+        status: 'finish' as BridgingStepStatus,
         txnLink: liFiTxnLink,
       },
     ],
@@ -92,7 +84,7 @@ const useMasterSafeCreation = () => ({
   isLoading: false,
   isError: false,
   data: {
-    isSafeCreated: false,
+    isSafeCreated: true,
     txnLink:
       'https://etherscan.io/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
   },
@@ -145,6 +137,7 @@ export const BridgeInProgress = () => {
   const isBridgingCompleted = bridge.status === 'FINISHED'; // TODO: from the API
   const isSafeCreated = masterSafeCreation?.isSafeCreated; // TODO: from the API
   const isTransferCompleted = masterSafeTransfer.status === 'FINISHED'; // TODO: from the API
+  const estimatedCompletionTime = 1744690251; // TODO: from the API
 
   useEffect(() => {
     if (!isBridgingCompleted) return;
@@ -231,7 +224,7 @@ export const BridgeInProgress = () => {
           toChain={toChain}
           transfers={transfers}
         />
-        <EstimatedCompletionTime />
+        <EstimatedCompletionTime time={estimatedCompletionTime} />
         {!!bridgeDetails && (
           <BridgingSteps
             chainName="Base"
