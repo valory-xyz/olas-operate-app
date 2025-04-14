@@ -87,7 +87,7 @@ export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [StakingProgramId.AgentsFun3]: getRequesterActivityCheckerContract(
     '0xF0814A105c1b684922Fce8C3b80d7B6Ff1e399F9',
   ),
-};
+} as const;
 
 export const MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   string,
@@ -108,7 +108,7 @@ export const MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [StakingProgramId.ModiusAlpha4]: getStakingActivityCheckerContract(
     '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
   ),
-};
+} as const;
 
 export const CELO_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   string,
@@ -117,4 +117,4 @@ export const CELO_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [StakingProgramId.MemeCeloAlpha2]: getMemeActivityCheckerContract(
     '0x3FD8C757dE190bcc82cF69Df3Cd9Ab15bCec1426',
   ),
-};
+} as const;
