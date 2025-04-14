@@ -6,6 +6,7 @@ import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { BridgingSteps } from '@/components/bridge/BridgingSteps';
 import { EstimatedCompletionTime } from '@/components/bridge/EstimatedCompletionTime';
 import { CardFlex } from '@/components/styled/CardFlex';
+import { ONE_SECOND_INTERVAL } from '@/constants/intervals';
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
 import { usePageState } from '@/hooks/usePageState';
@@ -111,6 +112,20 @@ const useMasterSafeTransfers = () => ({
   },
 });
 
+const useTimeRemaining = () => {
+  const TIME_FOR_SAFE_CREATION = ONE_SECOND_INTERVAL * 4; // TODO: to update
+  const TIME_FOR_MASTER_SAFE_TRANSFER = ONE_SECOND_INTERVAL * 4; // TODO: to update
+  const timeToExecuteQuote = 1744690251; // TODO: to update
+  return {
+    isLoading: true,
+    isError: false,
+    timeRemaining:
+      timeToExecuteQuote +
+      TIME_FOR_SAFE_CREATION +
+      TIME_FOR_MASTER_SAFE_TRANSFER,
+  };
+};
+
 /**
  * Bridge in progress screen.
  */
@@ -118,6 +133,8 @@ export const BridgeInProgress = () => {
   const { goto } = usePageState();
 
   const { fromChain, toChain, transfers } = useBridgeTransfers();
+  const { isLoading: isTimeRemainingLoading, timeRemaining } =
+    useTimeRemaining();
   const {
     isLoading: isLoadingBridge,
     isError: isErrorBridge,
@@ -137,7 +154,6 @@ export const BridgeInProgress = () => {
   const isBridgingCompleted = bridge.status === 'FINISHED'; // TODO: from the API
   const isSafeCreated = masterSafeCreation?.isSafeCreated; // TODO: from the API
   const isTransferCompleted = masterSafeTransfer.status === 'FINISHED'; // TODO: from the API
-  const estimatedCompletionTime = 1744690251; // TODO: from the API
 
   useEffect(() => {
     if (!isBridgingCompleted) return;
@@ -224,7 +240,10 @@ export const BridgeInProgress = () => {
           toChain={toChain}
           transfers={transfers}
         />
-        <EstimatedCompletionTime time={estimatedCompletionTime} />
+        <EstimatedCompletionTime
+          isLoading={isTimeRemainingLoading}
+          time={timeRemaining}
+        />
         {!!bridgeDetails && (
           <BridgingSteps
             chainName="Base"

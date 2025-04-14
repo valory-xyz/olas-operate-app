@@ -1,4 +1,4 @@
-import { Flex, Statistic, Typography } from 'antd';
+import { Flex, Skeleton, Statistic, Typography } from 'antd';
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
@@ -15,9 +15,10 @@ const EstimatedTimeRow = styled(Flex)`
 `;
 
 /** time: in minutes */
-type EstimatedCompletionTimeProps = { time: number };
+type EstimatedCompletionTimeProps = { isLoading?: boolean; time: number };
 
 export const EstimatedCompletionTime = ({
+  isLoading,
   time,
 }: EstimatedCompletionTimeProps) => {
   const deadline = useMemo(() => {
@@ -34,19 +35,25 @@ export const EstimatedCompletionTime = ({
   return (
     <EstimatedTimeRow gap={8}>
       <Text type="secondary">Estimated completion time:</Text>
-      <Text strong>
-        ~ {minutesRemaining} minute{minutesRemaining === 1 ? '' : 's'}
-      </Text>
-      <Text type="secondary">
-        <Countdown
-          value={deadline}
-          format="HH:mm:ss"
-          valueStyle={{ fontSize: '16px' }}
-          style={{ display: 'inline-block' }}
-          prefix={'('}
-          suffix={')'}
-        />
-      </Text>
+      {isLoading ? (
+        <Skeleton.Input active size="small" style={{ width: 100 }} />
+      ) : (
+        <>
+          <Text strong>
+            ~ {minutesRemaining} minute{minutesRemaining === 1 ? '' : 's'}
+          </Text>
+          <Text type="secondary">
+            <Countdown
+              value={deadline}
+              format="HH:mm:ss"
+              valueStyle={{ fontSize: '16px' }}
+              style={{ display: 'inline-block' }}
+              prefix={'('}
+              suffix={')'}
+            />
+          </Text>
+        </>
+      )}
     </EstimatedTimeRow>
   );
 };
