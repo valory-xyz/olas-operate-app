@@ -84,7 +84,7 @@ export abstract class AgentsFunService extends StakedAgentService {
       // Define eligibility for rewards in staking contracts based on
       // mechs by checking the number of requests on the mech contract
       const mechRequestCount =
-        await mechContract.getRequestsCount(agentMultisigAddress);
+        await mechContract.mapRequestCounts(agentMultisigAddress);
       const mechRequestCountOnLastCheckpoint = serviceInfo[2][1];
       const eligibleRequests =
         mechRequestCount - mechRequestCountOnLastCheckpoint;

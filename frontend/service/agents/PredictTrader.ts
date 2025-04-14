@@ -49,7 +49,7 @@ export abstract class PredictTraderService extends StakedAgentService {
     const provider = PROVIDERS[chainId].multicallProvider;
 
     const contractCalls = [
-      mechContract.getRequestsCount(agentMultisigAddress),
+      mechContract.mapRequestCounts(agentMultisigAddress),
       stakingTokenProxyContract.getServiceInfo(serviceId),
       stakingTokenProxyContract.livenessPeriod(),
       activityChecker.livenessRatio(),
