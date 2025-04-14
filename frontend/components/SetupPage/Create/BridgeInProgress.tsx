@@ -1,10 +1,12 @@
-import { Flex, Typography } from 'antd';
+import { Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { BridgingSteps } from '@/components/bridge/BridgingSteps';
+import { EstimatedCompletionTime } from '@/components/bridge/EstimatedCompletionTime';
 import { CardFlex } from '@/components/styled/CardFlex';
+import { ONE_SECOND_INTERVAL } from '@/constants/intervals';
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
 import { usePageState } from '@/hooks/usePageState';
@@ -25,15 +27,6 @@ const KeepAppOpenAlert = () => (
       </Text>
     }
   />
-);
-
-// TODO: to update
-const EstimatedCompletionTime = () => (
-  <Flex gap={8}>
-    <Text type="secondary">Estimated completion time:</Text>
-    <Text strong>~ 5 minutes</Text>
-    <Text type="secondary">(0:05)</Text>
-  </Flex>
 );
 
 // TODO: integrate with the API
@@ -70,7 +63,7 @@ const useBridgingSteps = () => ({
   isLoading: false,
   isError: false,
   data: {
-    status: 'CREATED',
+    status: 'FINISHED',
     isBridgingFailed: false,
     executions: [
       {
@@ -79,8 +72,8 @@ const useBridgingSteps = () => ({
         txnLink: liFiTxnLink,
       },
       {
-        symbol: 'OLAS' as TokenSymbol,
-        status: 'process' as BridgingStepStatus,
+        symbol: 'ETH' as TokenSymbol,
+        status: 'finish' as BridgingStepStatus,
         txnLink: liFiTxnLink,
       },
     ],
@@ -92,7 +85,7 @@ const useMasterSafeCreation = () => ({
   isLoading: false,
   isError: false,
   data: {
-    isSafeCreated: false,
+    isSafeCreated: true,
     txnLink:
       'https://etherscan.io/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
   },
@@ -119,6 +112,20 @@ const useMasterSafeTransfers = () => ({
   },
 });
 
+const useTimeRemaining = () => {
+  const TIME_FOR_SAFE_CREATION = ONE_SECOND_INTERVAL * 4; // TODO: to update
+  const TIME_FOR_MASTER_SAFE_TRANSFER = ONE_SECOND_INTERVAL * 4; // TODO: to update
+  const timeToExecuteQuote = 1744690251; // TODO: to update
+  return {
+    isLoading: false,
+    isError: false,
+    timeRemaining:
+      timeToExecuteQuote +
+      TIME_FOR_SAFE_CREATION +
+      TIME_FOR_MASTER_SAFE_TRANSFER,
+  };
+};
+
 /**
  * Bridge in progress screen.
  */
@@ -126,6 +133,8 @@ export const BridgeInProgress = () => {
   const { goto } = usePageState();
 
   const { fromChain, toChain, transfers } = useBridgeTransfers();
+  const { isLoading: isTimeRemainingLoading, timeRemaining } =
+    useTimeRemaining();
   const {
     isLoading: isLoadingBridge,
     isError: isErrorBridge,
@@ -231,7 +240,10 @@ export const BridgeInProgress = () => {
           toChain={toChain}
           transfers={transfers}
         />
-        <EstimatedCompletionTime />
+        <EstimatedCompletionTime
+          isLoading={isTimeRemainingLoading}
+          time={timeRemaining}
+        />
         {!!bridgeDetails && (
           <BridgingSteps
             chainName="Base"
