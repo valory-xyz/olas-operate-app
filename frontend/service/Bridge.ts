@@ -6,6 +6,30 @@ import {
   BridgeStatusResponse,
 } from '@/types/Bridge';
 
+const IS_MOCK_ENABLED = true; // TODO: remove
+
+const getBridgeStatusMock = {
+  id: 'qb-bdaafd7f-0698-4e10-83dd-d742cc0e656d',
+  status: 'SUBMITTED',
+  bridge_request_status: [
+    {
+      explorer_link:
+        'https://scan.li.fi/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
+      message: null,
+      status: 'EXECUTION_DONE',
+      tx_hash:
+        '0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
+    },
+    {
+      explorer_link: null,
+      message: null,
+      status: 'EXECUTION_PENDING',
+      tx_hash: null,
+    },
+  ],
+  error: false,
+} as const satisfies BridgeStatusResponse;
+
 /**
  * Get bridge refill requirements for the provided source and destination parameters
  */
@@ -46,18 +70,20 @@ const executeBridge = async (id: string): Promise<BridgeStatusResponse> =>
  * Get status of the bridge for the provided quote bundle id
  */
 const getBridgeStatus = async (id: string): Promise<BridgeStatusResponse> =>
-  fetch(`${BACKEND_URL_V2}/bridge/status/${id}`, {
-    method: 'GET',
-    headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    body: JSON.stringify({ id }),
-  }).then((response) => {
-    if (response.ok) {
-      return response.json();
-    }
-    throw new Error(
-      `Failed to get bridge status for the following quote id: ${id}`,
-    );
-  });
+  IS_MOCK_ENABLED
+    ? Promise.resolve(getBridgeStatusMock)
+    : fetch(`${BACKEND_URL_V2}/bridge/status/${id}`, {
+        method: 'GET',
+        headers: { ...CONTENT_TYPE_JSON_UTF8 },
+        body: JSON.stringify({ id }),
+      }).then((response) => {
+        if (response.ok) {
+          return response.json();
+        }
+        throw new Error(
+          `Failed to get bridge status for the following quote id: ${id}`,
+        );
+      });
 
 export const BridgeService = {
   getBridgeRefillRequirements,

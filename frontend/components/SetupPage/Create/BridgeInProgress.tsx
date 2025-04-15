@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 
@@ -7,9 +8,11 @@ import { BridgingSteps } from '@/components/bridge/BridgingSteps';
 import { EstimatedCompletionTime } from '@/components/bridge/EstimatedCompletionTime';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { ONE_SECOND_INTERVAL } from '@/constants/intervals';
+import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
 import { usePageState } from '@/hooks/usePageState';
+import { BridgeService } from '@/service/Bridge';
 import { BridgingStepStatus } from '@/types/Bridge';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
@@ -51,41 +54,57 @@ const useBridgeTransfers = () => {
   };
 };
 
-const liFiTxnLink =
-  'https://scan.li.fi/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3';
-
 // TODO: to remove
 const txnLink =
   'https://etherscan.io/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3';
 
+// TODO: quote_bundle_id to be passed from previous screen
+const useQuoteBundleId = () => {
+  return 'qb-bdaafd7f-0698-4e10-83dd-d742cc0e656d';
+};
+
 // TODO: to update
-const useBridgingSteps = () => ({
-  isLoading: false,
-  isError: false,
-  data: {
-    status: 'FINISHED',
-    isBridgingFailed: false,
-    executions: [
-      {
-        symbol: 'OLAS' as TokenSymbol,
-        status: 'finish' as BridgingStepStatus,
-        txnLink: liFiTxnLink,
-      },
-      {
-        symbol: 'ETH' as TokenSymbol,
-        status: 'finish' as BridgingStepStatus,
-        txnLink: liFiTxnLink,
-      },
-    ],
-  },
-});
+const useBridgingSteps = (quoteId: string) => {
+  // TODO: fetch from bridge refill API
+  const symbols = [TokenSymbol.OLAS, TokenSymbol.ETH];
+
+  return useQuery({
+    queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY(quoteId),
+    queryFn: async () => {
+      return await BridgeService.getBridgeStatus(quoteId);
+    },
+    select: ({ status, error, bridge_request_status }) => {
+      const isBridgingFailed = status === 'FINISHED' && error;
+      return {
+        status,
+        isBridgingFailed,
+        bridgeRequestStatus: bridge_request_status.map((step, index) => {
+          const status: BridgingStepStatus = (() => {
+            if (step.status === 'EXECUTION_DONE') return 'finish';
+            if (step.status === 'EXECUTION_FAILED') return 'error';
+            if (step.status === 'QUOTE_FAILED') return 'error';
+            if (step.status === 'QUOTE_DONE') return 'finish';
+            if (step.status === 'EXECUTION_PENDING') return 'process';
+            return 'wait';
+          })();
+
+          return {
+            symbol: symbols[index],
+            status,
+            txnLink: step.explorer_link || null,
+          };
+        }),
+      };
+    },
+  });
+};
 
 // TODO: to update
 const useMasterSafeCreation = () => ({
   isLoading: false,
   isError: false,
   data: {
-    isSafeCreated: true,
+    isSafeCreated: false,
     txnLink:
       'https://etherscan.io/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
   },
@@ -131,6 +150,7 @@ const useTimeRemaining = () => {
  */
 export const BridgeInProgress = () => {
   const { goto } = usePageState();
+  const quoteId = useQuoteBundleId();
 
   const { fromChain, toChain, transfers } = useBridgeTransfers();
   const { isLoading: isTimeRemainingLoading, timeRemaining } =
@@ -139,19 +159,19 @@ export const BridgeInProgress = () => {
     isLoading: isLoadingBridge,
     isError: isErrorBridge,
     data: bridge,
-  } = useBridgingSteps();
+  } = useBridgingSteps(quoteId);
   const {
     isLoading: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
     data: masterSafeCreation,
   } = useMasterSafeCreation();
   const {
-    isLoading: isLoadingMasterSafe,
+    isLoading: isLoadingMasterSafeTransfer,
     isError: isErrorMasterSafe,
     data: masterSafeTransfer,
   } = useMasterSafeTransfers();
 
-  const isBridgingCompleted = bridge.status === 'FINISHED'; // TODO: from the API
+  const isBridgingCompleted = bridge?.status === 'FINISHED';
   const isSafeCreated = masterSafeCreation?.isSafeCreated; // TODO: from the API
   const isTransferCompleted = masterSafeTransfer.status === 'FINISHED'; // TODO: from the API
 
@@ -163,18 +183,18 @@ export const BridgeInProgress = () => {
     goto(Pages.Main);
   }, [isBridgingCompleted, isSafeCreated, isTransferCompleted, goto]);
 
-  // TODO: to update and consolidate after the API integration (move to useQuery)
   const bridgeDetails = useMemo(() => {
     const currentBridgeStatus: BridgingStepStatus = (() => {
-      if (!bridge) return 'wait';
+      if (isErrorBridge) return 'error';
       if (isLoadingBridge) return 'process';
-      if (bridge.isBridgingFailed || isErrorBridge) return 'error';
+      if (!bridge) return 'wait';
+      if (bridge.isBridgingFailed) return 'error';
       return isBridgingCompleted ? 'finish' : 'process';
     })();
 
     return {
       status: currentBridgeStatus,
-      subSteps: bridge.executions,
+      subSteps: bridge?.bridgeRequestStatus || [],
     };
   }, [isLoadingBridge, isErrorBridge, isBridgingCompleted, bridge]);
 
@@ -208,7 +228,8 @@ export const BridgeInProgress = () => {
   const masterSafeTransferDetails = useMemo(() => {
     const currentMasterSafeStatus: BridgingStepStatus = (() => {
       if (isErrorMasterSafe) return 'error';
-      if (isLoadingMasterSafe || isSafeCreated) return 'process';
+      if (!isBridgingCompleted || !isSafeCreated) return 'wait';
+      if (isLoadingMasterSafeTransfer) return 'process';
       return isTransferCompleted ? 'finish' : 'wait';
     })();
 
@@ -217,9 +238,10 @@ export const BridgeInProgress = () => {
       subSteps: masterSafeTransfer.transfers || [],
     };
   }, [
-    isLoadingMasterSafe,
+    isLoadingMasterSafeTransfer,
     isErrorMasterSafe,
     isSafeCreated,
+    isBridgingCompleted,
     masterSafeTransfer,
     isTransferCompleted,
   ]);
