@@ -203,9 +203,7 @@ export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
               />
             ))}
           </Flex>
-
           <Divider className="m-0" />
-
           <DepositAddress />
         </>
       )}

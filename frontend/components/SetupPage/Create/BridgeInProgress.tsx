@@ -11,6 +11,7 @@ import { ONE_SECOND_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
+import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { BridgeService } from '@/service/Bridge';
 import { BridgingStepStatus } from '@/types/Bridge';
@@ -54,20 +55,25 @@ const useBridgeTransfers = () => {
   };
 };
 
-// TODO: to remove
-const txnLink =
-  'https://etherscan.io/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3';
-
 // TODO: quote_bundle_id to be passed from previous screen
-const useQuoteBundleId = () => {
-  return 'qb-bdaafd7f-0698-4e10-83dd-d742cc0e656d';
-};
+const useQuoteBundleId = () => 'qb-bdaafd7f-0698-4e10-83dd-d742cc0e656d';
 
-// TODO: to update
 const useBridgingSteps = (quoteId: string) => {
-  // TODO: fetch from bridge refill API
+  const { isOnline } = useOnlineStatusContext();
+
+  // TODO: array of symbols to be fetched from bridge refill API and passed
   const symbols = [TokenSymbol.OLAS, TokenSymbol.ETH];
 
+  // Execute bridge API to be called before fetching the status
+  const { data: bridgeExecute } = useQuery({
+    queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
+    queryFn: async () => {
+      return await BridgeService.executeBridge(quoteId);
+    },
+    enabled: !!quoteId && isOnline,
+  });
+
+  // Fetch the bridge status
   return useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY(quoteId),
     queryFn: async () => {
@@ -94,6 +100,7 @@ const useBridgingSteps = (quoteId: string) => {
         }),
       };
     },
+    enabled: !!quoteId && isOnline && !!bridgeExecute,
   });
 };
 
@@ -207,7 +214,9 @@ export const BridgeInProgress = () => {
     })();
 
     const creationTxnLink = (() => {
-      if (isSafeCreated) return txnLink;
+      if (isSafeCreated) {
+        return 'https://etherscan.io/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3';
+      }
       return null;
     })();
 
