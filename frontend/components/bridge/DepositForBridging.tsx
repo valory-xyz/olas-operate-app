@@ -25,6 +25,11 @@ import { useMasterWalletContext } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 
 import { InfoTooltip } from '../InfoTooltip';
+import {
+  LIGHT_ICON_STYLE,
+  SUCCESS_ICON_STYLE,
+  WARNING_ICON_STYLE,
+} from '../ui/iconStyles';
 
 const { Text } = Typography;
 
@@ -33,11 +38,6 @@ const RootCard = styled(Flex)`
   border-radius: 12px;
   border: 1px solid ${COLOR.BORDER_GRAY};
 `;
-
-// TODO: move to some shared place? e.g. constants?
-const LIGHT_ICON_STYLE = { color: COLOR.TEXT_LIGHT };
-const WARNING_ICON_STYLE = { color: COLOR.WARNING };
-const SUCCESS_ICON_STYLE = { color: COLOR.SUCCESS };
 
 type TokenInfoProps = {
   symbol: TokenSymbol;
