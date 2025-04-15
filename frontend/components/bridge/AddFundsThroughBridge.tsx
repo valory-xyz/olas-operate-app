@@ -1,6 +1,7 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Button, Flex, Form, Image, Typography } from 'antd';
-import { useMemo } from 'react';
+import { Button, Flex, Image, Typography } from 'antd';
+import { isNil } from 'lodash';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
@@ -66,11 +67,28 @@ const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
 
 export const AddFundsThroughBridge = () => {
   const { goto } = usePageState();
+  const [inputs, setInputs] = useState(
+    fundsToReceive.reduce(
+      (acc, { symbol, amount }) => ({ ...acc, [symbol]: amount }),
+      {} as Record<TokenSymbol, number | null>,
+    ),
+  );
+
+  const handleInputChange = useCallback(
+    (symbol: TokenSymbol, value: number | null) => {
+      setInputs((prev) => ({ ...prev, [symbol]: value }));
+    },
+    [],
+  );
+
+  const isButtonDisabled = useMemo(() => {
+    return Object.values(inputs).some((value) => isNil(value) || value <= 0);
+  }, [inputs]);
 
   return (
     <CardFlex
-      gap={20}
-      noBorder
+      $gap={20}
+      $noBorder
       title={<BridgeHeader />}
       styles={{ header: { minHeight: 56 }, body: { padding: '0 24px' } }}
     >
@@ -84,49 +102,30 @@ export const AddFundsThroughBridge = () => {
           Amount to receive
         </Text>
         <Flex gap={12} vertical>
-          <Form
-            layout="vertical"
-            onFinish={(values) => {
-              console.log('Form Values:', values);
-            }}
-          >
-            {fundsToReceive.map(({ symbol, amount }) => {
-              return (
-                <Form.Item
-                  key={symbol}
-                  name={symbol}
-                  label={null}
-                  initialValue={amount}
-                  rules={[
-                    {
-                      required: true,
-                      message: '',
-                    },
-                    {
-                      type: 'number',
-                      min: 0,
-                      message: '',
-                    },
-                  ]}
-                  validateTrigger="onSubmit"
-                >
-                  <NumberInput
-                    addonBefore={<InputAddOn symbol={symbol} />}
-                    placeholder="0.00"
-                    size="large"
-                    min={0}
-                    className="w-full"
-                  />
-                </Form.Item>
-              );
-            })}
+          {fundsToReceive.map(({ symbol }) => {
+            return (
+              <NumberInput
+                key={symbol}
+                value={inputs[symbol]}
+                addonBefore={<InputAddOn symbol={symbol} />}
+                placeholder="0.00"
+                size="large"
+                min={0}
+                onChange={(value: number | null) => {
+                  handleInputChange(symbol, value);
+                }}
+              />
+            );
+          })}
 
-            <Form.Item>
-              <Button type="primary" size="large" htmlType="submit" block>
-                Bridge funds
-              </Button>
-            </Form.Item>
-          </Form>
+          <Button
+            disabled={isButtonDisabled}
+            onClick={() => goto(Pages.Main)} // TODO: Mohan to update
+            type="primary"
+            size="large"
+          >
+            Bridge funds
+          </Button>
         </Flex>
       </Flex>
     </CardFlex>
