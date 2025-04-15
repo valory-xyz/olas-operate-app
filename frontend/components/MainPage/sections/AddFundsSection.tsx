@@ -9,7 +9,9 @@ import { CHAIN_CONFIG } from '@/config/chains';
 import { NA, UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SWAP_URL_BY_EVM_CHAIN } from '@/constants/urls';
 import { EvmChainName } from '@/enums/Chain';
+import { Pages } from '@/enums/Pages';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
+import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
@@ -129,6 +131,8 @@ OpenAddFundsSection.displayName = 'OpenAddFundsSection';
 export const AddFundsSection = () => {
   const isBridgeEnabled = useFeatureFlag('bridge-funds');
   const { selectedAgentConfig } = useServices();
+  const { goto } = usePageState();
+
   const [fundType, setFundType] = useState<SendFundAction>('transfer');
   const fundSectionRef = useRef<HTMLDivElement>(null);
   const [isAddFundsVisible, setIsAddFundsVisible] = useState(false);
@@ -191,7 +195,12 @@ export const AddFundsSection = () => {
                 Bridge funds from Ethereum directly to your Pearl Safe on{' '}
                 {EvmChainName[homeChainId]} chain.
               </Text>
-              <Button type="primary" size="large" block>
+              <Button
+                type="primary"
+                size="large"
+                block
+                onClick={() => goto(Pages.AddFundsThroughBridge)}
+              >
                 Bridge funds
               </Button>
             </CardSection>

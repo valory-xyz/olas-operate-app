@@ -145,7 +145,6 @@ const generateMasterSafeTransferStep = (
 
 type BridgingStep = { status: Status; subSteps: StepEvent[] };
 
-// TODO: simplify status
 type BridgingStepsProps = {
   chainName: string;
   bridge: BridgingStep;

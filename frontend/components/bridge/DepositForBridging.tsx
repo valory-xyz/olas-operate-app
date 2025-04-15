@@ -155,7 +155,7 @@ type DepositForBridgingProps = {
 };
 
 export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
-  // TODO: use API for getting quote
+  // TODO: use API for getting quote and pass it as a prop
   const [isRequestingQuote] = useState(false);
   const [tokens] = useState<TokenInfoProps[]>([
     {
