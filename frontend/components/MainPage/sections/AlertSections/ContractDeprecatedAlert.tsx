@@ -32,7 +32,7 @@ export const ContractDeprecatedAlert = () => {
       message={
         <Flex justify="space-between" gap={4} vertical>
           <Text className="font-weight-600">
-            {selectedStakingProgramMeta?.name || NA} contract is deprecated
+            {selectedStakingProgramMeta.name || NA} contract is deprecated
           </Text>
           <span className="text-sm">
             Switch to one of the available contracts to start your agent.
