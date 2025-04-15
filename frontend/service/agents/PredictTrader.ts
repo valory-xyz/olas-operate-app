@@ -49,6 +49,7 @@ export abstract class PredictTraderService extends StakedAgentService {
     const provider = PROVIDERS[chainId].multicallProvider;
 
     const contractCalls = [
+      // TODO: for new mech MM there's no such function, need to use mapRequestCounts instead
       mechContract.getRequestsCount(agentMultisigAddress),
       stakingTokenProxyContract.getServiceInfo(serviceId),
       stakingTokenProxyContract.livenessPeriod(),
