@@ -311,7 +311,7 @@ export const SetupEoaFunding = () => {
             },
             { label: 'Bridge from Ethereum', value: 'bridge' },
           ]}
-          onChange={(value) => setFundType(value)}
+          onChange={setFundType}
           value={fundType}
           block
           className="w-full"

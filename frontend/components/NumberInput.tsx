@@ -1,6 +1,6 @@
 import { InputNumber, InputNumberProps } from 'antd';
 
-export const allowOnlyNumbers = (e: React.KeyboardEvent<HTMLInputElement>) => {
+const allowOnlyNumbers = (e: React.KeyboardEvent<HTMLInputElement>) => {
   const isCopy = (e.ctrlKey || e.metaKey) && e.key === 'c';
   const isPaste = (e.ctrlKey || e.metaKey) && e.key === 'v';
   const isCut = (e.ctrlKey || e.metaKey) && e.key === 'x';
