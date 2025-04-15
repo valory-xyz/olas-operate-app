@@ -23,7 +23,7 @@ export const BridgeOnEvm = () => {
   }, [goto]);
 
   return (
-    <CardFlex noBorder>
+    <CardFlex $noBorder>
       <SetupCreateHeader prev={SetupScreen.SetupEoaFunding} />
 
       <CardSection vertical gap={16} className="m-0 pt-24">

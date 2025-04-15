@@ -81,6 +81,12 @@ export const AddFundsThroughBridge = () => {
     [],
   );
 
+  // TODO: API call to bridge funds
+  const handleBridgeFunds = useCallback(() => {
+    window.console.log('Bridging funds:', inputs);
+    goto(Pages.Main); // REMOVE and move to the next screen
+  }, [inputs, goto]);
+
   const isButtonDisabled = useMemo(() => {
     return Object.values(inputs).some((value) => isNil(value) || value <= 0);
   }, [inputs]);
@@ -120,7 +126,7 @@ export const AddFundsThroughBridge = () => {
 
           <Button
             disabled={isButtonDisabled}
-            onClick={() => goto(Pages.Main)} // TODO: Mohan to update
+            onClick={handleBridgeFunds}
             type="primary"
             size="large"
           >
