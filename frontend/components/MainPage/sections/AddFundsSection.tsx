@@ -128,17 +128,69 @@ export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
 });
 OpenAddFundsSection.displayName = 'OpenAddFundsSection';
 
-export const AddFundsSection = () => {
+const AddFundsBy = forwardRef<HTMLDivElement>((_, ref) => {
   const isBridgeEnabled = useFeatureFlag('bridge-funds');
   const { selectedAgentConfig } = useServices();
   const { goto } = usePageState();
 
   const [fundType, setFundType] = useState<SendFundAction>('transfer');
-  const fundSectionRef = useRef<HTMLDivElement>(null);
-  const [isAddFundsVisible, setIsAddFundsVisible] = useState(false);
 
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
   const currentFundingRequirements = CHAIN_CONFIG[homeChainId];
+
+  return (
+    <>
+      {isBridgeEnabled && (
+        <CardSection gap={12} $padding="24px" $borderTop>
+          <Segmented<SendFundAction>
+            options={[
+              {
+                label: `Send on ${currentFundingRequirements.name}`,
+                value: 'transfer',
+              },
+              { label: 'Bridge from Ethereum', value: 'bridge' },
+            ]}
+            onChange={(value) => setFundType(value)}
+            value={fundType}
+            block
+            className="w-full"
+          />
+        </CardSection>
+      )}
+
+      {fundType === 'bridge' ? (
+        <CardSection
+          gap={12}
+          justify="center"
+          align="center"
+          $padding="16px 24px"
+          $borderTop
+          vertical
+        >
+          <Text className="text-base">
+            Bridge funds from Ethereum directly to your Pearl Safe on{' '}
+            {EvmChainName[homeChainId]} chain.
+          </Text>
+          <Button
+            type="primary"
+            size="large"
+            block
+            onClick={() => goto(Pages.AddFundsThroughBridge)}
+          >
+            Bridge funds
+          </Button>
+        </CardSection>
+      ) : (
+        <OpenAddFundsSection ref={ref} />
+      )}
+    </>
+  );
+});
+AddFundsBy.displayName = 'AddFundsBy';
+
+export const AddFundsSection = () => {
+  const fundSectionRef = useRef<HTMLDivElement>(null);
+  const [isAddFundsVisible, setIsAddFundsVisible] = useState(false);
 
   const addFunds = useCallback(async () => {
     setIsAddFundsVisible(true);
@@ -162,53 +214,7 @@ export const AddFundsSection = () => {
         </Button>
       </CardSection>
 
-      {isAddFundsVisible && (
-        <>
-          {isBridgeEnabled && (
-            <CardSection gap={12} $padding="24px" $borderTop>
-              <Segmented<SendFundAction>
-                options={[
-                  {
-                    label: `Send on ${currentFundingRequirements.name}`,
-                    value: 'transfer',
-                  },
-                  { label: 'Bridge from Ethereum', value: 'bridge' },
-                ]}
-                onChange={(value) => setFundType(value)}
-                value={fundType}
-                block
-                className="w-full"
-              />
-            </CardSection>
-          )}
-
-          {fundType === 'bridge' ? (
-            <CardSection
-              gap={12}
-              justify="center"
-              align="center"
-              $padding="16px 24px"
-              $borderTop
-              vertical
-            >
-              <Text className="text-base">
-                Bridge funds from Ethereum directly to your Pearl Safe on{' '}
-                {EvmChainName[homeChainId]} chain.
-              </Text>
-              <Button
-                type="primary"
-                size="large"
-                block
-                onClick={() => goto(Pages.AddFundsThroughBridge)}
-              >
-                Bridge funds
-              </Button>
-            </CardSection>
-          ) : (
-            <OpenAddFundsSection ref={fundSectionRef} />
-          )}
-        </>
-      )}
+      {isAddFundsVisible && <AddFundsBy ref={fundSectionRef} />}
     </>
   );
 };

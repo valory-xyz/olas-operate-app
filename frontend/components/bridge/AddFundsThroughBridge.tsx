@@ -125,12 +125,12 @@ export const AddFundsThroughBridge = () => {
           })}
 
           <Button
-            disabled={isButtonDisabled}
+            disabled={isButtonDisabled || true} // TODO: remove hardcoded true after API call
             onClick={handleBridgeFunds}
             type="primary"
             size="large"
           >
-            Bridge funds
+            Bridge funds (coming soon)
           </Button>
         </Flex>
       </Flex>
