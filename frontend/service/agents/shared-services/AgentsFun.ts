@@ -83,9 +83,12 @@ export abstract class AgentsFunService extends StakedAgentService {
     if (mechContract) {
       // Define eligibility for rewards in staking contracts based on
       // mechs by checking the number of requests on the mech contract
-      const mechRequestCount =
-        await mechContract.mapRequestCounts(agentMultisigAddress);
-      const mechRequestCountOnLastCheckpoint = serviceInfo[2][1];
+      const [mechRequestCount] = await provider.all([
+        mechContract.mapRequestCounts(agentMultisigAddress),
+      ]);
+      const mechRequestCountOnLastCheckpoint = isServiceStaked
+        ? serviceInfo[2][1]
+        : 0;
       const eligibleRequests =
         mechRequestCount - mechRequestCountOnLastCheckpoint;
 
