@@ -17,6 +17,8 @@ import {
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { ServicesService } from '@/service/Services';
 import { DeepPartial } from '@/types/Util';
+import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { isValidServiceId } from '@/utils/service';
 
 import { CountdownUntilMigration } from './CountdownUntilMigration';
 import { CantMigrateReason, useMigrate } from './useMigrate';
@@ -33,6 +35,7 @@ export const MigrateButton = ({
     isFetched: isServicesLoaded,
     selectedService,
     selectedAgentType,
+    selectedAgentConfig,
     overrideSelectedServiceStatus,
   } = useServices();
   const serviceConfigId =
@@ -77,10 +80,19 @@ export const MigrateButton = ({
   // if false, user is migrating, not running for first time
   const isFirstDeploy = useMemo(() => {
     if (!isServicesLoaded) return false;
-    if (selectedService) return false;
+
+    // check if the service is deployed (has service id assigned)
+    const currentChainId = selectedAgentConfig.evmHomeChainId;
+    const chainData = !isNil(selectedService?.chain_configs)
+      ? selectedService?.chain_configs?.[asMiddlewareChain(currentChainId)]
+          ?.chain_data
+      : null;
+    const token = chainData?.token;
+
+    if (selectedService && isValidServiceId(token)) return false;
 
     return true;
-  }, [isServicesLoaded, selectedService]);
+  }, [isServicesLoaded, selectedAgentConfig.evmHomeChainId, selectedService]);
 
   const validation = isFirstDeploy ? firstDeployValidation : migrateValidation;
 

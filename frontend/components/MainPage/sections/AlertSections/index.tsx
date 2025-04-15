@@ -3,6 +3,7 @@ import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
 import { AddBackupWalletAlert } from './AddBackupWalletAlert';
 import { AvoidSuspensionAlert } from './AvoidSuspensionAlert';
+import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { LowFunds } from './LowFunds/LowFunds';
 import { NoAvailableSlotsOnTheContract } from './NoAvailableSlotsOnTheContract';
 import { UpdateAvailableAlert } from './UpdateAvailableAlert';
@@ -14,6 +15,7 @@ export const AlertSections = () => {
     <CardSection vertical>
       <UpdateAvailableAlert />
       {isBackupViaSafeEnabled && <AddBackupWalletAlert />}
+      <ContractDeprecatedAlert />
       <AvoidSuspensionAlert />
       <YourAgentCannotSignIn />
       <LowFunds />
