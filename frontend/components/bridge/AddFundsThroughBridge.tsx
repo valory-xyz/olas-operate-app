@@ -1,12 +1,26 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Button, Flex, Typography } from 'antd';
+import { Button, Flex, Image, Typography } from 'antd';
 
 import { Pages } from '@/enums/Pages';
+import { TokenSymbol } from '@/enums/Token';
 import { usePageState } from '@/hooks/usePageState';
+import { toMiddlewareChainFromTokenSymbol } from '@/utils/middlewareHelpers';
 
+import { NumberInput } from '../NumberInput';
 import { CardFlex } from '../styled/CardFlex';
 
 const { Title, Text } = Typography;
+
+const fundsToReceive = [
+  {
+    symbol: TokenSymbol.OLAS,
+    amount: 0,
+  },
+  {
+    symbol: TokenSymbol.ETH,
+    amount: 0.005,
+  },
+];
 
 export const AddFundsThroughBridge = () => {
   const { goto } = usePageState();
@@ -36,8 +50,51 @@ export const AddFundsThroughBridge = () => {
         Safe.
       </Text>
 
-      <Flex gap={8} vertical>
-        <Text className="font-sm">Amount to receive</Text>
+      <Flex gap={12} vertical>
+        <Text className="font-xs" type="secondary">
+          Amount to receive
+        </Text>
+        {fundsToReceive.map(({ symbol, amount }) => {
+          const imgSrc = (() => {
+            if (!symbol) return;
+            if (symbol === TokenSymbol.OLAS) {
+              return '/olas-icon.png';
+            }
+            return `/chains/${toMiddlewareChainFromTokenSymbol(symbol)}-chain.png`;
+          })();
+
+          return (
+            <NumberInput
+              key={symbol}
+              value={amount}
+              addonBefore={
+                <Flex
+                  align="center"
+                  justify="flex-start"
+                  gap={6}
+                  style={{ width: 78 }}
+                >
+                  {imgSrc && (
+                    <>
+                      <Image
+                        src={imgSrc}
+                        alt={symbol}
+                        style={{ width: 20, height: 20 }}
+                        preview={false}
+                      />{' '}
+                    </>
+                  )}
+
+                  {symbol}
+                </Flex>
+              }
+              placeholder="0.00"
+              size="large"
+              min={0}
+            />
+          );
+        })}
+
         <Button
           type="primary"
           size="large"
