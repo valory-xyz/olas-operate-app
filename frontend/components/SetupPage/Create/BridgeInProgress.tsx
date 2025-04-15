@@ -82,16 +82,14 @@ const useBridgingSteps = (quoteId: string) => {
           const status: BridgingStepStatus = (() => {
             if (step.status === 'EXECUTION_DONE') return 'finish';
             if (step.status === 'EXECUTION_FAILED') return 'error';
-            if (step.status === 'QUOTE_FAILED') return 'error';
-            if (step.status === 'QUOTE_DONE') return 'finish';
-            if (step.status === 'EXECUTION_PENDING') return 'process';
-            return 'wait';
+            if (step.status === 'QUOTE_FAILED') return 'process';
+            return 'process';
           })();
 
           return {
             symbol: symbols[index],
             status,
-            txnLink: step.explorer_link || null,
+            txnLink: step.explorer_link,
           };
         }),
       };
