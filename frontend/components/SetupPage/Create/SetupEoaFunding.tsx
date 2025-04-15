@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
+import { SendFundAction } from '@/components/bridge/types';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
 import { CHAIN_CONFIG } from '@/config/chains';
@@ -211,8 +212,6 @@ const SetupEoaFundingForChainV2 = ({
   </>
 );
 
-type SendFundAction = 'transfer' | 'bridge';
-
 /**
  * EOA funding setup screen
  */
@@ -312,7 +311,7 @@ export const SetupEoaFunding = () => {
             },
             { label: 'Bridge from Ethereum', value: 'bridge' },
           ]}
-          onChange={(value) => setFundType(value)}
+          onChange={setFundType}
           value={fundType}
           block
           className="w-full"
