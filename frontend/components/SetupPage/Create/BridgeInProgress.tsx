@@ -285,3 +285,17 @@ export const BridgeInProgress = () => {
     </>
   );
 };
+
+/**
+ * - Everything will be master EOA
+ * - Now, we want to transfer OLAS & token (ETH) to master safe
+ *
+ * For example: EOA has "100 OLAS" & "10 ETH".
+ *
+ * refill_requirements API says masterEoaAddress should have 2ETH, then
+ *
+ * initialFunds: {
+ *   100OLAS
+ *   8ETH: // (what EOA has minus refill_requirements EOA) ie. 10 - 2
+ * }
+ */
