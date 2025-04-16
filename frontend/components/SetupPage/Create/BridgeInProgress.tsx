@@ -271,7 +271,7 @@ export const BridgeInProgress = () => {
         />
         <EstimatedCompletionTime
           isLoading={isTimeRemainingLoading}
-          time={timeRemaining}
+          timeInSeconds={timeRemaining}
         />
         {!!bridgeDetails && (
           <BridgingSteps

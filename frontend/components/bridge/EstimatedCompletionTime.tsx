@@ -14,17 +14,19 @@ const EstimatedTimeRow = styled(Flex)`
   }
 `;
 
-/** time: in minutes */
-type EstimatedCompletionTimeProps = { isLoading?: boolean; time: number };
+type EstimatedCompletionTimeProps = {
+  isLoading?: boolean;
+  timeInSeconds: number;
+};
 
 export const EstimatedCompletionTime = ({
   isLoading,
-  time,
+  timeInSeconds,
 }: EstimatedCompletionTimeProps) => {
   const deadline = useMemo(() => {
-    if (!time) return 0;
-    return new Date(time * 1000).getTime();
-  }, [time]);
+    if (!timeInSeconds) return 0;
+    return new Date(timeInSeconds * 1000).getTime();
+  }, [timeInSeconds]);
 
   const minutesRemaining = useMemo(() => {
     if (!deadline) return 0;
