@@ -5,9 +5,7 @@ import { useEffect, useMemo } from 'react';
 import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { BridgingSteps } from '@/components/bridge/BridgingSteps';
-import { EstimatedCompletionTime } from '@/components/bridge/EstimatedCompletionTime';
 import { CardFlex } from '@/components/styled/CardFlex';
-import { ONE_SECOND_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
@@ -136,20 +134,6 @@ const useMasterSafeTransfers = () => ({
   },
 });
 
-const useTimeRemaining = () => {
-  const TIME_FOR_SAFE_CREATION = ONE_SECOND_INTERVAL * 4; // TODO: to update
-  const TIME_FOR_MASTER_SAFE_TRANSFER = ONE_SECOND_INTERVAL * 4; // TODO: to update
-  const timeToExecuteQuote = 1744690251; // TODO: to update
-  return {
-    isLoading: false,
-    isError: false,
-    timeRemaining:
-      timeToExecuteQuote +
-      TIME_FOR_SAFE_CREATION +
-      TIME_FOR_MASTER_SAFE_TRANSFER,
-  };
-};
-
 /**
  * Bridge in progress screen.
  */
@@ -158,8 +142,6 @@ export const BridgeInProgress = () => {
   const quoteId = useQuoteBundleId();
 
   const { fromChain, toChain, transfers } = useBridgeTransfers();
-  const { isLoading: isTimeRemainingLoading, timeRemaining } =
-    useTimeRemaining();
   const {
     isLoading: isLoadingBridge,
     isError: isErrorBridge,
@@ -268,10 +250,6 @@ export const BridgeInProgress = () => {
           fromChain={fromChain}
           toChain={toChain}
           transfers={transfers}
-        />
-        <EstimatedCompletionTime
-          isLoading={isTimeRemainingLoading}
-          timeInSeconds={timeRemaining}
         />
         {!!bridgeDetails && (
           <BridgingSteps
