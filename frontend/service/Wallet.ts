@@ -26,8 +26,7 @@ const createEoa = async () =>
   });
 
 /**
- *
- * @param initial_funds Funds to be sent to master safe from master EOA
+ * @param initial_funds - Funds to be sent to master safe from master EOA
  */
 const createSafe = async (
   chain: MiddlewareChain,

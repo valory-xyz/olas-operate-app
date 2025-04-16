@@ -143,14 +143,14 @@ const useMasterSafeCreation = () => {
     if (!balances) return;
     if (!masterEoa) return;
 
-    const eoaDetails = balances[masterEoa.address];
+    const eoaFunds = { ...balances[masterEoa.address] };
     const fundRequiredByEoa = 50; // Doubt: where is this in refill_requirements? 🥲
 
-    return {
-      ...eoaDetails,
-      // Keep some funds in the EOA for gas and transfer the rest to the master safe.
-      [AddressZero]: eoaDetails[AddressZero] - fundRequiredByEoa,
-    };
+    // Keep some funds in the EOA for gas and transfer the rest to the master safe.
+    const nativeFundsForMasterSafe = eoaFunds[AddressZero] - fundRequiredByEoa;
+    eoaFunds[AddressZero] = Math.max(nativeFundsForMasterSafe, 0);
+
+    return eoaFunds;
   }, [isBalancesAndFundingRequirementsLoading, balances, masterEoa]);
 
   return useMutation({
@@ -207,6 +207,7 @@ export const BridgeInProgress = () => {
     if (!isBridgingCompleted) return;
     if (isLoadingMasterSafeCreation) return;
     if (masterSafeDetails?.isSafeCreated) return;
+
     createMasterSafe();
   }, [
     isBridgingCompleted,
