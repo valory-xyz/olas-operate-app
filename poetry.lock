@@ -2294,8 +2294,8 @@ web3 = "==6.1.0"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "30dbddfdb8f0aa2852a3be614cc7889dc2ef7aaa"
-resolved_reference = "30dbddfdb8f0aa2852a3be614cc7889dc2ef7aaa"
+reference = "2f01ddefb7f36c6a22251cb63db09b2585319fa8"
+resolved_reference = "2f01ddefb7f36c6a22251cb63db09b2585319fa8"
 
 [[package]]
 name = "open-aea"
@@ -3972,4 +3972,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "da8b9d7ff4f56fcac79f9bcd1b1b4db58a3bf30ad9b07fac1c8ce14039342a8a"
+content-hash = "82aff82c6f4ad0365d5d4312dd404ee09bf73b1e57a33c1f1e81c659a4a4ed0b"
