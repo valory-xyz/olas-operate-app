@@ -200,7 +200,7 @@ const SetupEoaFundingForChainV2 = ({
         </Text>
         <Line />
         <Text
-          style={{ display: 'block', width: 202 }}
+          style={{ display: 'block', width: 172 }}
           type="secondary"
           className={isFunded ? '' : 'loading-ellipses'}
         >
@@ -325,7 +325,7 @@ export const SetupEoaFunding = () => {
           chainName={currentFundingRequirements.name}
         />
       ) : (
-        <CardSection padding="0px 24px" vertical gap={16}>
+        <CardSection $padding="0px 24px" vertical gap={16}>
           <Text className="text-base">
             Bridge from Ethereum directly to your agent. No further funds will
             be needed after bridging.
