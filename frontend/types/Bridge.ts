@@ -1,3 +1,8 @@
+import { AddressBalanceRecord, MiddlewareChain } from '@/client';
+
+import { Address } from './Address';
+import { Maybe, Nullable } from './Util';
+
 /**
  * Status of the each step in the bridging process.
  * - process: the step is in progress (loading spinner)
@@ -5,10 +10,6 @@
  * - finish: the step is finished (checked)
  * - error: the step has failed (red cross)
  */
-import { AddressBalanceRecord, MiddlewareChain } from '@/client';
-
-import { Address } from './Address';
-
 export type BridgingStepStatus = 'process' | 'wait' | 'finish' | 'error';
 
 /**
@@ -19,30 +20,35 @@ export type QuoteBundleStatus = 'CREATED' | 'QUOTED' | 'SUBMITTED' | 'FINISHED';
 /**
  * Execution status of each bridge step.
  * For example, status of bridging ethereum to base.
- * TODO: ask BE what are the other statuses
+ *
+ * QUOTE_DONE: A quote is available.
+ * QUOTE_FAILED: Failed to request a quote.
+ * EXECUTION_PENDING: Execution submitted and pending to be finalized.
+ * EXECUTION_DONE: Execution finalized successfully.
+ * EXECUTION_FAILED: Execution failed.
  */
-export type QuoteStatus = 'EXECUTION_PENDING' | 'EXECUTION_DONE' | 'QUOTE_DONE';
+export type QuoteStatus =
+  | 'QUOTE_DONE'
+  | 'QUOTE_FAILED'
+  | 'EXECUTION_PENDING'
+  | 'EXECUTION_DONE'
+  | 'EXECUTION_FAILED';
 
-export type BridgeFrom = {
+type BridgeFrom = {
   chain: MiddlewareChain;
   address: Address;
   token: Address;
 };
-export type BridgeTo = BridgeFrom & { amount: bigint };
+type BridgeTo = BridgeFrom & { amount: bigint };
 
 export type BridgeRefillRequirementsRequest = {
-  bridge_requests: {
-    from: BridgeFrom;
-    to: BridgeTo;
-  }[];
+  bridge_requests: { from: BridgeFrom; to: BridgeTo }[];
   force_update: boolean;
 };
 
 export type BridgeRefillRequirementsResponse = {
   id: string;
-  balances: {
-    [chain in MiddlewareChain]: AddressBalanceRecord;
-  };
+  balances: { [chain in MiddlewareChain]: AddressBalanceRecord };
   bridge_total_requirements: {
     [chain in MiddlewareChain]: AddressBalanceRecord;
   };
@@ -55,18 +61,16 @@ export type BridgeRefillRequirementsResponse = {
   bridge_request_status: { message: string; status: QuoteStatus }[];
 };
 
-export type QuoteExecution = {
-  message: string | null;
+type QuoteRequestStatus = {
+  explorer_link: Maybe<string>;
+  message: Nullable<string>;
   status: QuoteStatus;
-  explorer_link?: string;
-  tx_hash?: string;
+  tx_hash?: Maybe<string>;
 };
 
-// TODO: confirm response format with BE (currently bridge_request_status are called "executions"
-// in the status endpoint, ideally to change it)
 export type BridgeStatusResponse = {
   id: string;
   status: QuoteBundleStatus;
-  bridge_request_status: QuoteExecution[];
+  bridge_request_status: QuoteRequestStatus[];
   error: boolean;
 };
