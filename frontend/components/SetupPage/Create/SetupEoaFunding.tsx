@@ -291,16 +291,16 @@ export const SetupEoaFunding = () => {
   }
 
   return (
-    <CardFlex noBorder>
+    <CardFlex $noBorder>
       <SetupCreateHeader prev={SetupScreen.AgentSelection} />
       <Title level={3} className="mb-8">
         Fund your agent
       </Title>
       <Text type="secondary">Choose how.</Text>
       <CardSection
-        padding="20px 24px"
-        bordertop="true"
-        borderbottom="true"
+        $padding="20px 24px"
+        $borderTop
+        $borderBottom
         className="mt-12 mb-12"
       >
         <Segmented<SendFundAction>

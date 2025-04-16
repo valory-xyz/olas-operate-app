@@ -6,17 +6,19 @@ import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { BridgingSteps } from '@/components/bridge/BridgingSteps';
 import { CardFlex } from '@/components/styled/CardFlex';
+import { AddressZero } from '@/constants/address';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
 import { useBackupSigner } from '@/hooks/useBackupSigner';
+import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 import { BridgeService } from '@/service/Bridge';
 import { WalletService } from '@/service/Wallet';
-import { Address } from '@/types/Address';
 import { BridgingStepStatus } from '@/types/Bridge';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
@@ -34,6 +36,18 @@ const KeepAppOpenAlert = () => (
       </Text>
     }
   />
+);
+
+const Header = () => (
+  <>
+    <CardFlex $noBorder $gap={20} $padding="0 24px">
+      <SetupCreateHeader />
+      <Title level={3} className="m-0">
+        Bridging in progress
+      </Title>
+    </CardFlex>
+    <KeepAppOpenAlert />
+  </>
 );
 
 // TODO: integrate with the API
@@ -114,36 +128,47 @@ const useBridgingSteps = (quoteId: string) => {
   });
 };
 
-// TODO: to update
 const useMasterSafeCreation = () => {
   const backupSignerAddress = useBackupSigner();
   const symbols = useSymbols();
+  const { masterEoa } = useMasterWalletContext();
+  const { balances, isBalancesAndFundingRequirementsLoading } =
+    useBalanceAndRefillRequirementsContext();
   const { selectedAgentConfig } = useServices();
 
   const chain = selectedAgentConfig.middlewareHomeChainId;
 
-  // TODO: to be generated
-  const initialFunds: { [address: Address]: bigint } = {
-    '0x0000000000000000000000000000000000000000': BigInt('1000000000000000000'),
-    '0xcE11e14225575945b8E6Dc0D4F2dD4C570f79d9f': BigInt(0),
-  };
+  const initialFunds = useMemo(() => {
+    if (isBalancesAndFundingRequirementsLoading) return;
+    if (!balances) return;
+    if (!masterEoa) return;
+
+    const eoaDetails = balances[masterEoa.address];
+    const fundRequiredByEoa = 50; // Doubt: where is this in refill_requirements? 🥲
+
+    return {
+      ...eoaDetails,
+      // Keep some funds in the EOA for gas and transfer the rest to the master safe.
+      [AddressZero]: eoaDetails[AddressZero] - fundRequiredByEoa,
+    };
+  }, [isBalancesAndFundingRequirementsLoading, balances, masterEoa]);
 
   return useMutation({
     mutationFn: async () => {
+      if (!initialFunds) return;
+
       await WalletService.createSafe(chain, backupSignerAddress, initialFunds);
 
       return {
         isSafeCreated: true,
-        txnLink: null, // to be returned from the API
+        txnLink: null, // BE does not return the txn link yet
 
-        // Transfer to master safe step:
-        // - To extract this into a separate hook once the backend API is updated.
-        // - Currently, both creation and transfer are handled in the same API call.
+        // NOTE: Currently, both creation and transfer are handled in the same API call.
         masterSafeTransferStatus: 'FINISHED',
         transfers: symbols.map((symbol) => ({
           symbol,
-          status: 'finish' as BridgingStepStatus, // Transferred as part of the creation
-          txnLink: null,
+          status: 'finish' as BridgingStepStatus, // Transferred as part of the creation, hence finish
+          txnLink: null, // BE does not return the txn link yet
         })),
       };
     },
@@ -156,7 +181,6 @@ const useMasterSafeCreation = () => {
 export const BridgeInProgress = () => {
   const { goto } = usePageState();
   const quoteId = useQuoteBundleId();
-
   const { fromChain, toChain, transfers } = useBridgeTransfers();
   const {
     isLoading: isBridging,
@@ -171,23 +195,27 @@ export const BridgeInProgress = () => {
   } = useMasterSafeCreation();
 
   const isBridgingCompleted = !!(
-    bridge &&
-    bridge.status === 'FINISHED' &&
-    !bridge.isBridgingFailed
+    bridge?.status === 'FINISHED' && !bridge?.isBridgingFailed
   );
+  const isSafeCreated = masterSafeDetails?.isSafeCreated;
+  const isTransferCompleted =
+    masterSafeDetails?.masterSafeTransferStatus === 'FINISHED';
 
   // Create master safe after the bridging is completed
   // and if the master safe is not created yet
   useEffect(() => {
     if (!isBridgingCompleted) return;
+    if (isLoadingMasterSafeCreation) return;
     if (masterSafeDetails?.isSafeCreated) return;
     createMasterSafe();
-  }, [isBridgingCompleted, masterSafeDetails, createMasterSafe]);
+  }, [
+    isBridgingCompleted,
+    isLoadingMasterSafeCreation,
+    masterSafeDetails,
+    createMasterSafe,
+  ]);
 
-  const isSafeCreated = masterSafeDetails?.isSafeCreated;
-  const isTransferCompleted =
-    masterSafeDetails?.masterSafeTransferStatus === 'FINISHED';
-
+  // Redirect to main page if all steps are completed
   useEffect(() => {
     if (!isBridgingCompleted) return;
     if (!isSafeCreated) return;
@@ -231,7 +259,6 @@ export const BridgeInProgress = () => {
     isErrorMasterSafeCreation,
   ]);
 
-  // TODO: to update and consolidate after the API integration (move to useQuery)
   const masterSafeTransferDetails = useMemo(() => {
     const currentMasterSafeStatus: BridgingStepStatus = (() => {
       if (isErrorMasterSafeCreation) return 'error';
@@ -253,14 +280,7 @@ export const BridgeInProgress = () => {
 
   return (
     <>
-      <CardFlex $noBorder $gap={20} $padding="0 24px">
-        <SetupCreateHeader />
-        <Title level={3} className="m-0">
-          Bridging in progress
-        </Title>
-      </CardFlex>
-      <KeepAppOpenAlert />
-
+      <Header />
       <CardFlex $noBorder $gap={20} $padding="0 24px">
         <BridgeTransferFlow
           fromChain={fromChain}
@@ -279,17 +299,3 @@ export const BridgeInProgress = () => {
     </>
   );
 };
-
-/**
- * - Everything will be in master EOA
- * - Now, we want to transfer OLAS & token (ETH) to master safe
- *
- * For example: EOA has "100 OLAS" & "10 ETH".
- *
- * refill_requirements API says masterEoaAddress should have 2ETH, then
- *
- * initialFunds: {
- *   100OLAS
- *   8ETH: // (what EOA has minus refill_requirements EOA) ie. 10 - 2
- * }
- */

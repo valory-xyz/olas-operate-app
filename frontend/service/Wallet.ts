@@ -9,13 +9,6 @@ const IS_MOCK_ENABLED = true;
 const createSafeMock = {
   safe: '0x29e23F7705d849F368855947691cB133CD770752',
   message: 'Safe created!',
-  // explorer_link:
-  //   'https://basescan.org/tx/0xcdc29496ea4a0e7028cb3a199559ea31c53b37125b7aa67a7b14fd9487471935',
-  // transfers: {
-  //   ethereum:
-  //     'https://basescan.org/tx/0x9462057de52853ad1ef8f6027fbe2f0889eb616a212b5a66785b022f5f25d433',
-  //   olas: 'https://basescan.org/tx/0x877085abf4246e5b3e4dedbb2ae810abfa670521ed53db993643255a7a9c8e4d',
-  // },
 } as const satisfies SafeCreationResponse;
 
 /**
@@ -46,7 +39,7 @@ const createEoa = async () =>
 const createSafe = async (
   chain: MiddlewareChain,
   backup_owner?: string,
-  initial_funds?: { [address: Address]: bigint },
+  initial_funds?: { [address: Address]: bigint | number },
 ): Promise<SafeCreationResponse> =>
   IS_MOCK_ENABLED
     ? Promise.resolve(createSafeMock)
