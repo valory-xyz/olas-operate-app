@@ -9,10 +9,10 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
 import { EvmChainName } from '@/enums/Chain';
 import { Pages } from '@/enums/Pages';
+import { useBackupSigner } from '@/hooks/useBackupSigner';
 import { useMultisigs } from '@/hooks/useMultisig';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
-import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { WalletService } from '@/service/Wallet';
 import { delayInSeconds } from '@/utils/delay';
@@ -54,22 +54,24 @@ const CreationError = () => (
 
 export const SetupCreateSafe = () => {
   const { goto, setUserLoggedIn } = usePageState();
-
-  const { selectedAgentType } = useServices();
-  const serviceTemplate = SERVICE_TEMPLATES.find(
-    (template) => template.agentType === selectedAgentType,
-  );
-
   const {
     masterSafes,
     refetch: updateWallets,
     isFetched: isWalletsFetched,
   } = useMasterWalletContext();
+  const { masterSafesOwnersIsLoading } = useMultisigs(masterSafes);
+  const backupSignerAddress = useBackupSigner();
 
-  const { allBackupAddresses, masterSafesOwnersIsLoading } =
-    useMultisigs(masterSafes);
+  // current service template
+  const { selectedAgentType } = useServices();
+  const serviceTemplate = SERVICE_TEMPLATES.find(
+    (template) => template.agentType === selectedAgentType,
+  );
 
-  const { backupSigner } = useSetup();
+  // state for creating safes
+  const [isCreatingSafe, setIsCreatingSafe] = useState(false);
+  const [isFailed, setIsFailed] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const masterSafeAddress = useMemo(() => {
     if (!masterSafes) return;
@@ -77,13 +79,6 @@ export const SetupCreateSafe = () => {
       (safe) => safe.evmChainId === asEvmChainId(serviceTemplate?.home_chain),
     );
   }, [masterSafes, serviceTemplate?.home_chain]);
-
-  const [isCreatingSafe, setIsCreatingSafe] = useState(false);
-
-  const [isFailed, setIsFailed] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-
-  const backupSignerAddress = backupSigner ?? allBackupAddresses[0];
 
   const createSafeWithRetries = useCallback(
     async (middlewareChain: MiddlewareChain, retries: number) => {
