@@ -31,7 +31,7 @@ const createEoa = async () =>
 const createSafe = async (
   chain: MiddlewareChain,
   backup_owner?: string,
-  initial_funds?: { [address: Address]: bigint | number },
+  initial_funds?: { [address: Address]: number | string },
 ): Promise<SafeCreationResponse> =>
   fetch(`${BACKEND_URL}/wallet/safe`, {
     method: 'POST',

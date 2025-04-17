@@ -6,7 +6,6 @@ import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { BridgingSteps } from '@/components/bridge/BridgingSteps';
 import { CardFlex } from '@/components/styled/CardFlex';
-import { AddressZero } from '@/constants/address';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { Pages } from '@/enums/Pages';
@@ -19,7 +18,9 @@ import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { BridgeService } from '@/service/Bridge';
 import { WalletService } from '@/service/Wallet';
+import { Address } from '@/types/Address';
 import { BridgingStepStatus, CrossChainTransferDetails } from '@/types/Bridge';
+import { bigintMax } from '@/utils/calculations';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
 
@@ -58,7 +59,7 @@ const useBridgingSteps = (quoteId: string) => {
   const { isOnline } = useOnlineStatusContext();
   const symbols = useSymbols();
 
-  // Execute bridge API to be called before fetching the status
+  // `/execute` bridge API should be called first before fetching the status.
   const { data: bridgeExecute } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
     queryFn: async () => {
@@ -93,7 +94,7 @@ const useBridgingSteps = (quoteId: string) => {
         }),
       };
     },
-    // refetch every 5 seconds until the status is finished
+    // refetch every 5 seconds until the status is FINISHED
     refetchInterval: ({ state }) => {
       const status = state?.data?.status;
       if (status === 'FINISHED') return false;
@@ -103,12 +104,16 @@ const useBridgingSteps = (quoteId: string) => {
   });
 };
 
-const useMasterSafeCreation = () => {
+// hook to create master safe and transfer funds (step 2 and 3)
+const useMasterSafeCreationAndTransfer = () => {
   const backupSignerAddress = useBackupSigner();
   const symbols = useSymbols();
   const { masterEoa } = useMasterWalletContext();
-  const { balances, isBalancesAndFundingRequirementsLoading } =
-    useBalanceAndRefillRequirementsContext();
+  const {
+    isBalancesAndFundingRequirementsLoading,
+    balances,
+    refillRequirements,
+  } = useBalanceAndRefillRequirementsContext();
   const { selectedAgentConfig } = useServices();
 
   const chain = selectedAgentConfig.middlewareHomeChainId;
@@ -118,15 +123,33 @@ const useMasterSafeCreation = () => {
     if (!balances) return;
     if (!masterEoa) return;
 
-    const eoaFunds = { ...balances[masterEoa.address] };
-    const fundRequiredByEoa = 50; // Doubt: where is this in refill_requirements? 🥲
+    return Object.entries(balances[masterEoa.address]).reduce(
+      (acc, [tokenAddress, tokenBalance]) => {
+        /** @example { [0xMasterEoaAddress]: { 0x00000000...: amount } } */
+        const requiredAmountsByMasterEoa =
+          refillRequirements?.[masterEoa.address];
 
-    // Keep some funds in the EOA for gas and transfer the rest to the master safe.
-    const nativeFundsForMasterSafe = eoaFunds[AddressZero] - fundRequiredByEoa;
-    eoaFunds[AddressZero] = Math.max(nativeFundsForMasterSafe, 0);
+        if (!requiredAmountsByMasterEoa) return acc;
 
-    return eoaFunds;
-  }, [isBalancesAndFundingRequirementsLoading, balances, masterEoa]);
+        const amountRequiredByMasterEoaCurrentToken =
+          requiredAmountsByMasterEoa[tokenAddress as Address] || 0;
+
+        // NOTE: Need to keep some funds in the EOA for gas, and transfer the rest to the master safe.
+        const remainingBalanceForMasterSafe = bigintMax(
+          BigInt(tokenBalance) - BigInt(amountRequiredByMasterEoaCurrentToken),
+        );
+        acc[tokenAddress as Address] = remainingBalanceForMasterSafe.toString();
+
+        return acc;
+      },
+      {} as Record<Address, string>,
+    );
+  }, [
+    isBalancesAndFundingRequirementsLoading,
+    masterEoa,
+    balances,
+    refillRequirements,
+  ]);
 
   return useMutation({
     mutationFn: async () => {
@@ -172,7 +195,7 @@ export const BridgeInProgress = ({
     isError: isErrorMasterSafeCreation,
     data: masterSafeDetails,
     mutateAsync: createMasterSafe,
-  } = useMasterSafeCreation();
+  } = useMasterSafeCreationAndTransfer();
 
   const isBridgingCompleted = !!(
     bridge?.status === 'FINISHED' && !bridge?.isBridgingFailed
