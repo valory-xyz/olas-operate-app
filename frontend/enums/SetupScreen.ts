@@ -16,8 +16,6 @@ export enum SetupScreen {
   AgentIntroduction,
   EarlyAccessOnly,
 
-  /** Transfer balance to the EOA for bridging quote */
-  BridgeFromEvm,
-  /** Bridge in progress (quote being executed) */
-  BridgeInProgress,
+  /** Onboarding using the bridge */
+  BridgeOnboarding,
 }

@@ -19,7 +19,7 @@ import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { BridgeService } from '@/service/Bridge';
 import { WalletService } from '@/service/Wallet';
-import { BridgingStepStatus } from '@/types/Bridge';
+import { BridgingStepStatus, CrossChainTransferDetails } from '@/types/Bridge';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
 
@@ -49,31 +49,6 @@ const Header = () => (
     <KeepAppOpenAlert />
   </>
 );
-
-// TODO: integrate with the API
-const useBridgeTransfers = () => {
-  return {
-    fromChain: 'Ethereum',
-    toChain: 'Base',
-    transfers: [
-      {
-        fromSymbol: TokenSymbol.OLAS,
-        fromAmount: '100000000000000000000',
-        toSymbol: TokenSymbol.OLAS,
-        toAmount: '100000000000000000000',
-      },
-      {
-        fromSymbol: TokenSymbol.ETH,
-        fromAmount: '5500000000000000',
-        toSymbol: TokenSymbol.ETH,
-        toAmount: '5000000000000000',
-      },
-    ],
-  };
-};
-
-// TODO: quote_bundle_id to be passed from previous screen
-const useQuoteBundleId = () => 'qb-bdaafd7f-0698-4e10-83dd-d742cc0e656d';
 
 // TODO: to be returned from the previous screen
 const useSymbols = () => [TokenSymbol.OLAS, TokenSymbol.ETH];
@@ -175,13 +150,18 @@ const useMasterSafeCreation = () => {
   });
 };
 
+type BridgeInProgressProps = { quoteId: string } & CrossChainTransferDetails;
+
 /**
  * Bridge in progress screen.
  */
-export const BridgeInProgress = () => {
+export const BridgeInProgress = ({
+  quoteId,
+  fromChain,
+  toChain,
+  transfers,
+}: BridgeInProgressProps) => {
   const { goto } = usePageState();
-  const quoteId = useQuoteBundleId();
-  const { fromChain, toChain, transfers } = useBridgeTransfers();
   const {
     isLoading: isBridging,
     isError: isBridgeError,
