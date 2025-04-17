@@ -90,7 +90,7 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
         }),
       };
     },
-    // refetch every 5 seconds until the status is FINISHED
+    // fetch every 5 seconds until the status is FINISHED
     refetchInterval: ({ state }) => {
       const status = state?.data?.status;
       if (status === 'FINISHED') return false;
@@ -150,18 +150,24 @@ const useMasterSafeCreationAndTransfer = (tokenSymbols: TokenSymbol[]) => {
     mutationFn: async () => {
       if (!initialFunds) return;
 
-      await WalletService.createSafe(chain, backupSignerAddress, initialFunds);
+      const response = await WalletService.createSafe(
+        chain,
+        backupSignerAddress,
+        initialFunds,
+      );
 
       return {
         isSafeCreated: true,
-        txnLink: null, // BE does not return the txn link yet
+        txnLink: response.safe_creation_explorer_link || null,
 
         // NOTE: Currently, both creation and transfer are handled in the same API call.
+        // Hence, the response contains the transfer status as well.
         masterSafeTransferStatus: 'FINISHED',
         transfers: tokenSymbols.map((symbol) => ({
           symbol,
-          status: 'finish' as BridgingStepStatus, // Transferred as part of the creation, hence finish
-          txnLink: null, // BE does not return the txn link yet
+          status: 'finish' as BridgingStepStatus,
+          // BE does not return the txn link yet 👇🏽
+          txnLink: null,
         })),
       };
     },

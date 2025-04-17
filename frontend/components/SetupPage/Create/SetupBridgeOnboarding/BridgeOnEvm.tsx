@@ -63,8 +63,12 @@ export const BridgeOnEvm = ({
           and run your agent, including fees. No further funds will be needed.
         </Text>
 
-        {/* TODO: pass onNext, updateQuoteId & updateCrossChainTransferDetails */}
-        <DepositForBridging chainName={FROM_CHAIN_NAME} />
+        <DepositForBridging
+          chainName={FROM_CHAIN_NAME}
+          updateQuoteId={updateQuoteId}
+          updateCrossChainTransferDetails={updateCrossChainTransferDetails}
+          onNext={onNext}
+        />
         {/* TODO: remove after automatic redirection to the next page */}
         <Button onClick={handleNext} block type="primary" size="large">
           {'Next => In progress page'}
