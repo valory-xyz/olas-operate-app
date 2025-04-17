@@ -152,9 +152,16 @@ const DepositAddress = () => {
 
 type DepositForBridgingProps = {
   chainName: string;
+  // TODO: uncomment and implement
+  // updateQuoteId: (quoteId: string) => void;
+  // updateTransfers: (amount: number) => void;
 };
 
-export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
+export const DepositForBridging = ({
+  chainName,
+  // updateQuoteId,
+  // updateTransfers,
+}: DepositForBridgingProps) => {
   // TODO: use API for getting quote
   const [isRequestingQuote] = useState(false);
   const [tokens] = useState<TokenInfoProps[]>([

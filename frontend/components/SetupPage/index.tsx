@@ -1,13 +1,14 @@
+import { Typography } from 'antd';
 import { useContext, useMemo } from 'react';
 
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
 import { AgentSelection } from '../AgentSelection';
+import { CardFlex } from '../styled/CardFlex';
 import { AgentIntroduction } from './AgentIntroduction/AgentIntroduction';
-import { BridgeInProgress } from './Create/BridgeInProgress';
-import { BridgeOnEvm } from './Create/BridgeOnEvm';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
+import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding';
 import { SetupCreateSafe } from './Create/SetupCreateSafe';
 import { SetupEoaFunding } from './Create/SetupEoaFunding';
 import { SetupPassword } from './Create/SetupPassword';
@@ -22,8 +23,14 @@ import {
 import { SetupWelcome } from './SetupWelcome';
 import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
 
+const { Title } = Typography;
+
 const UnexpectedError = () => (
-  <div style={{ height: 400 }}>Something went wrong!</div>
+  <CardFlex style={{ height: 400, textAlign: 'center' }} $noBorder>
+    <Title level={4} className="m-0">
+      Something went wrong!
+    </Title>
+  </CardFlex>
 );
 
 export const Setup = () => {
@@ -57,10 +64,8 @@ export const Setup = () => {
         return <SetupYourAgent />;
 
       // Bridge account
-      case SetupScreen.BridgeFromEvm:
-        return <BridgeOnEvm />;
-      case SetupScreen.BridgeInProgress:
-        return <BridgeInProgress />;
+      case SetupScreen.SetupBridgeOnboardingScreen:
+        return <SetupBridgeOnboarding />;
 
       // Restore account
       case SetupScreen.Restore:

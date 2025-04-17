@@ -1,4 +1,5 @@
 import { AddressBalanceRecord, MiddlewareChain } from '@/client';
+import { TokenSymbol } from '@/enums/Token';
 
 import { Address } from './Address';
 import { Maybe, Nullable } from './Util';
@@ -73,4 +74,17 @@ export type BridgeStatusResponse = {
   status: QuoteBundleStatus;
   bridge_request_status: QuoteRequestStatus[];
   error: boolean;
+};
+
+export type TokenTransfer = {
+  fromSymbol: TokenSymbol;
+  fromAmount: string;
+  toSymbol: TokenSymbol;
+  toAmount: string;
+};
+
+export type CrossChainTransferDetails = {
+  fromChain: string;
+  toChain: string;
+  transfers: TokenTransfer[];
 };
