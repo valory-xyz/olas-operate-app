@@ -1,5 +1,5 @@
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
-import { BACKEND_URL_V2 } from '@/constants/urls';
+import { BACKEND_URL } from '@/constants/urls';
 import {
   BridgeRefillRequirementsRequest,
   BridgeRefillRequirementsResponse,
@@ -62,7 +62,7 @@ const getBridgeStatusMock = {
 const getBridgeRefillRequirements = async (
   params: BridgeRefillRequirementsRequest,
 ): Promise<BridgeRefillRequirementsResponse> =>
-  fetch(`${BACKEND_URL_V2}/bridge/bridge_refill_requirements`, {
+  fetch(`${BACKEND_URL}/bridge/bridge_refill_requirements`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify(params),
@@ -81,7 +81,7 @@ const getBridgeRefillRequirements = async (
 const executeBridge = async (id: string): Promise<BridgeStatusResponse> =>
   IS_MOCK_ENABLED
     ? Promise.resolve(executeBridgeMock)
-    : fetch(`${BACKEND_URL_V2}/bridge/execute`, {
+    : fetch(`${BACKEND_URL}/bridge/execute`, {
         method: 'POST',
         headers: { ...CONTENT_TYPE_JSON_UTF8 },
         body: JSON.stringify({ id }),
@@ -100,7 +100,7 @@ const executeBridge = async (id: string): Promise<BridgeStatusResponse> =>
 const getBridgeStatus = async (id: string): Promise<BridgeStatusResponse> =>
   IS_MOCK_ENABLED
     ? Promise.resolve(getBridgeStatusMock)
-    : fetch(`${BACKEND_URL_V2}/bridge/status/${id}`, {
+    : fetch(`${BACKEND_URL}/bridge/status/${id}`, {
         method: 'GET',
         headers: { ...CONTENT_TYPE_JSON_UTF8 },
         body: JSON.stringify({ id }),

@@ -199,11 +199,7 @@ const SetupEoaFundingForChainV2 = ({
           {minRequiredBalance} {currency}
         </Text>
         <Line />
-        <Text
-          style={{ display: 'block', width: 202 }}
-          type="secondary"
-          className={isFunded ? '' : 'loading-ellipses'}
-        >
+        <Text type="secondary" className={isFunded ? '' : 'loading-ellipses'}>
           {statusMessage(isFunded)}
         </Text>
       </Flex>
