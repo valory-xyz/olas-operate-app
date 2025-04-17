@@ -28,6 +28,7 @@ import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
+import { CrossChainTransferDetails } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
@@ -48,25 +49,28 @@ const RootCard = styled(Flex)`
   border: 1px solid ${COLOR.BORDER_GRAY};
 `;
 
-type TokenInfoProps = {
+type TokenDetails = {
   symbol: TokenSymbol;
   totalRequiredInWei: bigint;
   currentBalanceInWei: bigint;
+  areFundsReceived: boolean;
   decimals: number;
   isNative?: boolean;
   precision?: number;
 };
 
+type TokenInfoProps = TokenDetails;
+
 const TokenInfo = ({
   symbol,
   totalRequiredInWei,
   currentBalanceInWei,
+  areFundsReceived,
   decimals,
   isNative,
   precision = 2,
-}: TokenInfoProps) => {
+}: TokenDetails) => {
   const depositRequiredInWei = totalRequiredInWei - currentBalanceInWei;
-  const areFundsReceived = depositRequiredInWei <= 0;
 
   return (
     <Flex gap={8} align="center">
@@ -166,15 +170,16 @@ const DepositAddress = () => {
 
 type DepositForBridgingProps = {
   chainName: string;
-  // TODO: uncomment and implement
-  // updateQuoteId: (quoteId: string) => void;
-  // updateTransfers: (amount: number) => void;
+  updateQuoteId: (quoteId: string) => void;
+  updateCrossChainTransferDetails: (details: CrossChainTransferDetails) => void;
+  onNext: () => void;
 };
 
 export const DepositForBridging = ({
   chainName,
   // updateQuoteId,
-  // updateTransfers,
+  // updateCrossChainTransferDetails,
+  // onNext,
 }: DepositForBridgingProps) => {
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
@@ -245,13 +250,16 @@ export const DepositForBridging = ({
           );
         }
 
+        const areFundsReceived = totalRequiredInWei - currentBalanceInWei <= 0;
+
         return {
           symbol: token.symbol,
           totalRequiredInWei,
           currentBalanceInWei,
+          areFundsReceived,
           decimals: token.decimals,
           isNative: token.tokenType === TokenType.NativeGas,
-        };
+        } satisfies TokenInfoProps;
       },
     );
   }, [bridgeRefillRequirements, masterEoa]);
@@ -281,11 +289,7 @@ export const DepositForBridging = ({
             {tokens.map((token) => (
               <TokenInfo
                 key={token.symbol}
-                isNative={token.isNative}
-                symbol={token.symbol}
-                totalRequiredInWei={token.totalRequiredInWei}
-                currentBalanceInWei={token.currentBalanceInWei}
-                decimals={token.decimals}
+                {...token}
                 precision={token.isNative ? 4 : 2}
               />
             ))}
