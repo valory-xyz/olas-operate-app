@@ -7,7 +7,7 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { TokenSymbol } from '@/enums/Token';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
-import { SetupCreateHeader } from './SetupCreateHeader';
+import { SetupCreateHeader } from '../SetupCreateHeader';
 
 const { Text, Title } = Typography;
 

@@ -22,7 +22,7 @@ import { Address } from '@/types/Address';
 import { BridgingStepStatus, CrossChainTransferDetails } from '@/types/Bridge';
 import { bigintMax } from '@/utils/calculations';
 
-import { SetupCreateHeader } from './SetupCreateHeader';
+import { SetupCreateHeader } from '../SetupCreateHeader';
 
 const { Text, Title } = Typography;
 
