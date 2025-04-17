@@ -28,6 +28,7 @@ import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
+import { areAddressesEqual } from '@/utils/address';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
@@ -169,7 +170,7 @@ type DepositForBridgingProps = {
 
 export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
   const { selectedAgentConfig } = useServices();
-  const { middlewareHomeChainId } = selectedAgentConfig;
+  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const { masterEoa } = useMasterWalletContext();
 
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
@@ -178,17 +179,18 @@ export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
   const bridgeRequirementsParams = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return null;
     if (!masterEoa) return null;
+    if (!refillRequirements) return null;
 
     return getBridgeRequirementsParams({
       fromAddress: masterEoa.address,
       toAddress: masterEoa.address,
-      toMiddlewareChain: middlewareHomeChainId,
+      toMiddlewareChain,
       refillRequirements,
     });
   }, [
     isBalancesAndFundingRequirementsLoading,
     masterEoa,
-    middlewareHomeChainId,
+    toMiddlewareChain,
     refillRequirements,
   ]);
 
@@ -212,9 +214,9 @@ export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
         masterEoa.address
       ] || {};
     const refillRequirements =
-      bridgeRefillRequirements.bridge_total_requirements[fromMiddlewareChain]?.[
-        masterEoa.address
-      ] || {};
+      bridgeRefillRequirements.bridge_refill_requirements[
+        fromMiddlewareChain
+      ]?.[masterEoa.address] || {};
 
     return Object.entries(totalRequirements).map(
       ([tokenAddress, totalRequired]) => {
@@ -225,9 +227,7 @@ export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
 
         const token = Object.values(ETHEREUM_TOKEN_CONFIG).find((tokenInfo) => {
           if (tokenAddress === AddressZero && !tokenInfo.address) return true;
-          return (
-            tokenInfo.address?.toLowerCase() === tokenAddress.toLowerCase()
-          );
+          return areAddressesEqual(tokenInfo.address!, tokenAddress);
         });
 
         if (!token) {
