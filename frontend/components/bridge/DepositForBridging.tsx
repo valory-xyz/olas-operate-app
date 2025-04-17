@@ -49,6 +49,25 @@ const RootCard = styled(Flex)`
   border: 1px solid ${COLOR.BORDER_GRAY};
 `;
 
+const DepositForBridgingHeader = ({ chainName }: { chainName: string }) => (
+  <Flex gap={8} align="center" className="p-16">
+    <Image
+      src={`/chains/${chainName}-chain.png`}
+      width={20}
+      height={20}
+      alt={`${chainName} logo`}
+    />
+    <Text>{upperFirst(chainName)}</Text>
+  </Flex>
+);
+
+const RequestingQuote = () => (
+  <Flex gap={8} className="p-16">
+    <Spin indicator={<LoadingOutlined spin style={LIGHT_ICON_STYLE} />} />
+    <Text>Requesting quote...</Text>
+  </Flex>
+);
+
 type TokenDetails = {
   symbol: TokenSymbol;
   totalRequiredInWei: bigint;
@@ -161,7 +180,6 @@ const DepositAddress = () => {
           </Tooltip>
         </Flex>
       </Flex>
-
       <span className="can-select-text break-word">{`${address}`}</span>
     </Flex>
   );
@@ -294,23 +312,11 @@ export const DepositForBridging = ({
 
   return (
     <RootCard vertical>
-      <Flex gap={8} align="center" className="p-16">
-        <Image
-          src={`/chains/${chainName}-chain.png`}
-          width={20}
-          height={20}
-          alt="chain logo"
-        />
-        <Text>{upperFirst(chainName)}</Text>
-      </Flex>
-
+      <DepositForBridgingHeader chainName={chainName} />
       <Divider className="m-0" />
 
       {isRequestingQuote ? (
-        <Flex gap={8} className="p-16">
-          <Spin indicator={<LoadingOutlined spin style={LIGHT_ICON_STYLE} />} />
-          <Text>Requesting quote...</Text>
-        </Flex>
+        <RequestingQuote />
       ) : (
         <>
           <Flex gap={8} align="start" vertical className="p-16">

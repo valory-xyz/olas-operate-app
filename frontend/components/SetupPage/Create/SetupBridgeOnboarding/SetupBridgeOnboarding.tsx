@@ -8,6 +8,10 @@ import { Nullable } from '@/types/Util';
 import { BridgeInProgress } from './BridgeInProgress';
 import { BridgeOnEvm } from './BridgeOnEvm';
 
+const quoteIdError = 'Quote ID is required for in progress state';
+const transferAmountsError =
+  'Transfer and receiving amounts are required for in progress state';
+
 type BridgeState = 'depositing' | 'in_progress';
 
 export const SetupBridgeOnboarding = () => {
@@ -51,14 +55,8 @@ export const SetupBridgeOnboarding = () => {
         />
       );
     case 'in_progress': {
-      if (!quoteId) {
-        throw new Error('Quote ID is required for in progress state');
-      }
-      if (!transferAndReceivingAmounts) {
-        throw new Error(
-          'Transfer and receiving amounts are required for in progress state',
-        );
-      }
+      if (!quoteId) throw new Error(quoteIdError);
+      if (!transferAndReceivingAmounts) throw new Error(transferAmountsError);
       return (
         <BridgeInProgress quoteId={quoteId} {...transferAndReceivingAmounts} />
       );

@@ -1,10 +1,9 @@
-import { Button, Typography } from 'antd';
+import { Typography } from 'antd';
 
 import { DepositForBridging } from '@/components/bridge/DepositForBridging';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { TokenSymbol } from '@/enums/Token';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
 import { SetupCreateHeader } from '../SetupCreateHeader';
@@ -24,32 +23,6 @@ export const BridgeOnEvm = ({
   updateQuoteId,
   updateCrossChainTransferDetails,
 }: BridgeOnEvmProps) => {
-  // TODO: only the "is_refill_required" is true, move to next page and pass the quote_id
-  // and the amount of the funds that are transferred.
-  // TODO: remove after automatic redirection to the next page
-  const handleNext = () => {
-    updateQuoteId('quoteId');
-    updateCrossChainTransferDetails({
-      fromChain: 'Ethereum',
-      toChain: 'Base',
-      transfers: [
-        {
-          fromSymbol: TokenSymbol.OLAS,
-          fromAmount: '100000000000000000000',
-          toSymbol: TokenSymbol.OLAS,
-          toAmount: '100000000000000000000',
-        },
-        {
-          fromSymbol: TokenSymbol.ETH,
-          fromAmount: '5500000000000000',
-          toSymbol: TokenSymbol.ETH,
-          toAmount: '5000000000000000',
-        },
-      ],
-    });
-    onNext();
-  };
-
   return (
     <CardFlex $noBorder>
       <SetupCreateHeader prev={SetupScreen.SetupEoaFunding} />
@@ -69,10 +42,6 @@ export const BridgeOnEvm = ({
           updateCrossChainTransferDetails={updateCrossChainTransferDetails}
           onNext={onNext}
         />
-        {/* TODO: remove after automatic redirection to the next page */}
-        <Button onClick={handleNext} block type="primary" size="large">
-          {'Next => In progress page'}
-        </Button>
       </CardSection>
     </CardFlex>
   );
