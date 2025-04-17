@@ -10,15 +10,13 @@ import { BridgeOnEvm } from './BridgeOnEvm';
 
 type BridgeState = 'depositing' | 'in_progress';
 
-export const SetupBridge = () => {
+export const SetupBridgeOnboarding = () => {
   const { goto } = usePageState();
   const [bridgeState, setBridgeState] = useState<BridgeState>('depositing');
   const [quoteId, setQuoteId] = useState<Nullable<string>>(null);
   const [transferAndReceivingAmounts, setTransferAndReceivingAmounts] =
     useState<Nullable<CrossChainTransferDetails>>(null);
 
-  // only the "is_refill_required" field is true, move to next page and pass the quote_id
-  // and the amount of the funds that are transferred
   const updateQuoteId = useCallback(
     (quoteId: string) => setQuoteId(quoteId),
     [setQuoteId],

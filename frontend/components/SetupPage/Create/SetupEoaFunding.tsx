@@ -274,7 +274,7 @@ export const SetupEoaFunding = () => {
   }, [currentFundingRequirements, handleFunded, isFunded, masterEoaAddress]);
 
   const handleBridgeFunds = useCallback(() => {
-    goto(SetupScreen.BridgeOnboarding);
+    goto(SetupScreen.SetupBridgeOnboardingScreen);
   }, [goto]);
 
   if (!currentFundingRequirements) return null;

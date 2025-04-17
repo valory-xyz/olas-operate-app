@@ -17,5 +17,5 @@ export enum SetupScreen {
   EarlyAccessOnly,
 
   /** Onboarding using the bridge */
-  BridgeOnboarding,
+  SetupBridgeOnboardingScreen,
 }

@@ -8,7 +8,7 @@ import { AgentSelection } from '../AgentSelection';
 import { CardFlex } from '../styled/CardFlex';
 import { AgentIntroduction } from './AgentIntroduction/AgentIntroduction';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
-import { SetupBridge } from './Create/SetupBridge';
+import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding';
 import { SetupCreateSafe } from './Create/SetupCreateSafe';
 import { SetupEoaFunding } from './Create/SetupEoaFunding';
 import { SetupPassword } from './Create/SetupPassword';
@@ -64,8 +64,8 @@ export const Setup = () => {
         return <SetupYourAgent />;
 
       // Bridge account
-      case SetupScreen.BridgeOnboarding:
-        return <SetupBridge />;
+      case SetupScreen.SetupBridgeOnboardingScreen:
+        return <SetupBridgeOnboarding />;
 
       // Restore account
       case SetupScreen.Restore:
