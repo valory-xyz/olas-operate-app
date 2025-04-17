@@ -51,13 +51,9 @@ const Header = () => (
   </>
 );
 
-// TODO: to be returned from the previous screen
-const useSymbols = () => [TokenSymbol.OLAS, TokenSymbol.ETH];
-
 // hook to fetch bridging steps (step 1)
-const useBridgingSteps = (quoteId: string) => {
+const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
   const { isOnline } = useOnlineStatusContext();
-  const symbols = useSymbols();
 
   // `/execute` bridge API should be called first before fetching the status.
   const { data: bridgeExecute } = useQuery({
@@ -87,7 +83,7 @@ const useBridgingSteps = (quoteId: string) => {
           })();
 
           return {
-            symbol: symbols[index],
+            symbol: tokenSymbols[index],
             status,
             txnLink: step.explorer_link,
           };
@@ -105,9 +101,8 @@ const useBridgingSteps = (quoteId: string) => {
 };
 
 // hook to create master safe and transfer funds (step 2 and 3)
-const useMasterSafeCreationAndTransfer = () => {
+const useMasterSafeCreationAndTransfer = (tokenSymbols: TokenSymbol[]) => {
   const backupSignerAddress = useBackupSigner();
-  const symbols = useSymbols();
   const { masterEoa } = useMasterWalletContext();
   const {
     isBalancesAndFundingRequirementsLoading,
@@ -163,7 +158,7 @@ const useMasterSafeCreationAndTransfer = () => {
 
         // NOTE: Currently, both creation and transfer are handled in the same API call.
         masterSafeTransferStatus: 'FINISHED',
-        transfers: symbols.map((symbol) => ({
+        transfers: tokenSymbols.map((symbol) => ({
           symbol,
           status: 'finish' as BridgingStepStatus, // Transferred as part of the creation, hence finish
           txnLink: null, // BE does not return the txn link yet
@@ -185,17 +180,19 @@ export const BridgeInProgress = ({
   transfers,
 }: BridgeInProgressProps) => {
   const { goto } = usePageState();
+  const symbols = transfers.map((transfer) => transfer.toSymbol);
+
   const {
     isLoading: isBridging,
     isError: isBridgeError,
     data: bridge,
-  } = useBridgingSteps(quoteId);
+  } = useBridgingSteps(quoteId, symbols);
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
     data: masterSafeDetails,
     mutateAsync: createMasterSafe,
-  } = useMasterSafeCreationAndTransfer();
+  } = useMasterSafeCreationAndTransfer(symbols);
 
   const isBridgingCompleted = !!(
     bridge?.status === 'FINISHED' && !bridge?.isBridgingFailed
