@@ -5,7 +5,7 @@ import Image from 'next/image';
 import React from 'react';
 
 import { COLOR } from '@/constants/colors';
-import { TokenSymbol } from '@/enums/Token';
+import { CrossChainTransferDetails, TokenTransfer } from '@/types/Bridge';
 import { formatEther } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
@@ -31,14 +31,7 @@ const TransferringAndReceivingRow = () => (
   </List.Item>
 );
 
-type Transfer = {
-  fromSymbol: TokenSymbol;
-  fromAmount: string;
-  toSymbol: TokenSymbol;
-  toAmount: string;
-};
-
-const TransferRow = ({ transfer }: { transfer: Transfer }) => {
+const TransferRow = ({ transfer }: { transfer: TokenTransfer }) => {
   const { fromAmount, fromSymbol, toSymbol, toAmount } = transfer;
   return (
     <List.Item>
@@ -54,11 +47,7 @@ const TransferRow = ({ transfer }: { transfer: Transfer }) => {
   );
 };
 
-type BridgeTransferFlowProps = {
-  fromChain: string;
-  toChain: string;
-  transfers: Transfer[];
-};
+type BridgeTransferFlowProps = CrossChainTransferDetails;
 
 /**
  * Presentational component for the bridge transfer flow

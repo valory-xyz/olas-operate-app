@@ -1,20 +1,26 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { BridgingSteps } from '@/components/bridge/BridgingSteps';
-import { EstimatedCompletionTime } from '@/components/bridge/EstimatedCompletionTime';
 import { CardFlex } from '@/components/styled/CardFlex';
-import { ONE_SECOND_INTERVAL } from '@/constants/intervals';
+import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
+import { useBackupSigner } from '@/hooks/useBackupSigner';
+import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 import { BridgeService } from '@/service/Bridge';
-import { BridgingStepStatus } from '@/types/Bridge';
+import { WalletService } from '@/service/Wallet';
+import { Address } from '@/types/Address';
+import { BridgingStepStatus, CrossChainTransferDetails } from '@/types/Bridge';
+import { bigintMax } from '@/utils/calculations';
 
 import { SetupCreateHeader } from './SetupCreateHeader';
 
@@ -33,38 +39,27 @@ const KeepAppOpenAlert = () => (
   />
 );
 
-// TODO: integrate with the API
-const useBridgeTransfers = () => {
-  return {
-    fromChain: 'Ethereum',
-    toChain: 'Base',
-    transfers: [
-      {
-        fromSymbol: TokenSymbol.OLAS,
-        fromAmount: '100000000000000000000',
-        toSymbol: TokenSymbol.OLAS,
-        toAmount: '100000000000000000000',
-      },
-      {
-        fromSymbol: TokenSymbol.ETH,
-        fromAmount: '5500000000000000',
-        toSymbol: TokenSymbol.ETH,
-        toAmount: '5000000000000000',
-      },
-    ],
-  };
-};
+const Header = () => (
+  <>
+    <CardFlex $noBorder $gap={20} $padding="0 24px">
+      <SetupCreateHeader />
+      <Title level={3} className="m-0">
+        Bridging in progress
+      </Title>
+    </CardFlex>
+    <KeepAppOpenAlert />
+  </>
+);
 
-// TODO: quote_bundle_id to be passed from previous screen
-const useQuoteBundleId = () => 'qb-bdaafd7f-0698-4e10-83dd-d742cc0e656d';
+// TODO: to be returned from the previous screen
+const useSymbols = () => [TokenSymbol.OLAS, TokenSymbol.ETH];
 
+// hook to fetch bridging steps (step 1)
 const useBridgingSteps = (quoteId: string) => {
   const { isOnline } = useOnlineStatusContext();
+  const symbols = useSymbols();
 
-  // TODO: array of symbols to be fetched from bridge refill API and passed
-  const symbols = [TokenSymbol.OLAS, TokenSymbol.ETH];
-
-  // Execute bridge API to be called before fetching the status
+  // `/execute` bridge API should be called first before fetching the status.
   const { data: bridgeExecute } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
     queryFn: async () => {
@@ -73,7 +68,6 @@ const useBridgingSteps = (quoteId: string) => {
     enabled: !!quoteId && isOnline,
   });
 
-  // Fetch the bridge status
   return useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY(quoteId),
     queryFn: async () => {
@@ -100,86 +94,132 @@ const useBridgingSteps = (quoteId: string) => {
         }),
       };
     },
+    // refetch every 5 seconds until the status is FINISHED
+    refetchInterval: ({ state }) => {
+      const status = state?.data?.status;
+      if (status === 'FINISHED') return false;
+      return FIVE_SECONDS_INTERVAL;
+    },
     enabled: !!quoteId && isOnline && !!bridgeExecute,
   });
 };
 
-// TODO: to update
-const useMasterSafeCreation = () => ({
-  isLoading: false,
-  isError: false,
-  data: {
-    isSafeCreated: false,
-    txnLink:
-      'https://etherscan.io/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
-  },
-});
+// hook to create master safe and transfer funds (step 2 and 3)
+const useMasterSafeCreationAndTransfer = () => {
+  const backupSignerAddress = useBackupSigner();
+  const symbols = useSymbols();
+  const { masterEoa } = useMasterWalletContext();
+  const {
+    isBalancesAndFundingRequirementsLoading,
+    balances,
+    refillRequirements,
+  } = useBalanceAndRefillRequirementsContext();
+  const { selectedAgentConfig } = useServices();
 
-// TODO: to update
-const useMasterSafeTransfers = () => ({
-  isLoading: false,
-  isError: false,
-  data: {
-    status: 'CREATED',
-    transfers: [
-      {
-        symbol: 'OLAS' as TokenSymbol,
-        status: 'wait' as BridgingStepStatus,
-        txnLink: null,
-      },
-      {
-        symbol: 'OLAS' as TokenSymbol,
-        status: 'wait' as BridgingStepStatus,
-        txnLink: null,
-      },
-    ],
-  },
-});
+  const chain = selectedAgentConfig.middlewareHomeChainId;
 
-const useTimeRemaining = () => {
-  const TIME_FOR_SAFE_CREATION = ONE_SECOND_INTERVAL * 4; // TODO: to update
-  const TIME_FOR_MASTER_SAFE_TRANSFER = ONE_SECOND_INTERVAL * 4; // TODO: to update
-  const timeToExecuteQuote = 1744690251; // TODO: to update
-  return {
-    isLoading: false,
-    isError: false,
-    timeRemaining:
-      timeToExecuteQuote +
-      TIME_FOR_SAFE_CREATION +
-      TIME_FOR_MASTER_SAFE_TRANSFER,
-  };
+  const initialFunds = useMemo(() => {
+    if (isBalancesAndFundingRequirementsLoading) return;
+    if (!balances) return;
+    if (!masterEoa) return;
+
+    return Object.entries(balances[masterEoa.address]).reduce(
+      (acc, [tokenAddress, tokenBalance]) => {
+        /** @example { [0xMasterEoaAddress]: { 0x00000000...: amount } } */
+        const requiredAmountsByMasterEoa =
+          refillRequirements?.[masterEoa.address];
+
+        if (!requiredAmountsByMasterEoa) return acc;
+
+        const amountRequiredByMasterEoaCurrentToken =
+          requiredAmountsByMasterEoa[tokenAddress as Address] || 0;
+
+        // NOTE: Need to keep some funds in the EOA for gas, and transfer the rest to the master safe.
+        const remainingBalanceForMasterSafe = bigintMax(
+          BigInt(tokenBalance) - BigInt(amountRequiredByMasterEoaCurrentToken),
+        );
+        acc[tokenAddress as Address] = remainingBalanceForMasterSafe.toString();
+
+        return acc;
+      },
+      {} as Record<Address, string>,
+    );
+  }, [
+    isBalancesAndFundingRequirementsLoading,
+    masterEoa,
+    balances,
+    refillRequirements,
+  ]);
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!initialFunds) return;
+
+      await WalletService.createSafe(chain, backupSignerAddress, initialFunds);
+
+      return {
+        isSafeCreated: true,
+        txnLink: null, // BE does not return the txn link yet
+
+        // NOTE: Currently, both creation and transfer are handled in the same API call.
+        masterSafeTransferStatus: 'FINISHED',
+        transfers: symbols.map((symbol) => ({
+          symbol,
+          status: 'finish' as BridgingStepStatus, // Transferred as part of the creation, hence finish
+          txnLink: null, // BE does not return the txn link yet
+        })),
+      };
+    },
+  });
 };
+
+type BridgeInProgressProps = { quoteId: string } & CrossChainTransferDetails;
 
 /**
  * Bridge in progress screen.
  */
-export const BridgeInProgress = () => {
+export const BridgeInProgress = ({
+  quoteId,
+  fromChain,
+  toChain,
+  transfers,
+}: BridgeInProgressProps) => {
   const { goto } = usePageState();
-  const quoteId = useQuoteBundleId();
-
-  const { fromChain, toChain, transfers } = useBridgeTransfers();
-  const { isLoading: isTimeRemainingLoading, timeRemaining } =
-    useTimeRemaining();
   const {
-    isLoading: isLoadingBridge,
-    isError: isErrorBridge,
+    isLoading: isBridging,
+    isError: isBridgeError,
     data: bridge,
   } = useBridgingSteps(quoteId);
   const {
-    isLoading: isLoadingMasterSafeCreation,
+    isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
-    data: masterSafeCreation,
-  } = useMasterSafeCreation();
-  const {
-    isLoading: isLoadingMasterSafeTransfer,
-    isError: isErrorMasterSafe,
-    data: masterSafeTransfer,
-  } = useMasterSafeTransfers();
+    data: masterSafeDetails,
+    mutateAsync: createMasterSafe,
+  } = useMasterSafeCreationAndTransfer();
 
-  const isBridgingCompleted = bridge?.status === 'FINISHED';
-  const isSafeCreated = masterSafeCreation?.isSafeCreated; // TODO: from the API
-  const isTransferCompleted = masterSafeTransfer.status === 'FINISHED'; // TODO: from the API
+  const isBridgingCompleted = !!(
+    bridge?.status === 'FINISHED' && !bridge?.isBridgingFailed
+  );
+  const isSafeCreated = masterSafeDetails?.isSafeCreated;
+  const isTransferCompleted =
+    masterSafeDetails?.masterSafeTransferStatus === 'FINISHED';
 
+  // Create master safe after the bridging is completed
+  // and if the master safe is not created yet
+  useEffect(() => {
+    if (!isBridgingCompleted) return;
+    if (isLoadingMasterSafeCreation) return;
+    if (masterSafeDetails?.isSafeCreated) return;
+
+    createMasterSafe();
+  }, [
+    isBridgingCompleted,
+    isLoadingMasterSafeCreation,
+    masterSafeDetails,
+    createMasterSafe,
+  ]);
+
+  // Redirect to main page if all steps are completed
   useEffect(() => {
     if (!isBridgingCompleted) return;
     if (!isSafeCreated) return;
@@ -190,8 +230,8 @@ export const BridgeInProgress = () => {
 
   const bridgeDetails = useMemo(() => {
     const currentBridgeStatus: BridgingStepStatus = (() => {
-      if (isErrorBridge) return 'error';
-      if (isLoadingBridge) return 'process';
+      if (isBridgeError) return 'error';
+      if (isBridging) return 'process';
       if (!bridge) return 'wait';
       if (bridge.isBridgingFailed) return 'error';
       return isBridgingCompleted ? 'finish' : 'process';
@@ -201,9 +241,8 @@ export const BridgeInProgress = () => {
       status: currentBridgeStatus,
       subSteps: bridge?.bridgeRequestStatus || [],
     };
-  }, [isLoadingBridge, isErrorBridge, isBridgingCompleted, bridge]);
+  }, [isBridging, isBridgeError, isBridgingCompleted, bridge]);
 
-  // TODO: to update and consolidate after the API integration (move to useQuery)
   const masterSafeCreationDetails = useMemo(() => {
     const currentMasterSafeCreationStatus: BridgingStepStatus = (() => {
       if (isErrorMasterSafeCreation) return 'error';
@@ -213,16 +252,9 @@ export const BridgeInProgress = () => {
       return 'process';
     })();
 
-    const creationTxnLink = (() => {
-      if (isSafeCreated) {
-        return 'https://etherscan.io/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3';
-      }
-      return null;
-    })();
-
     return {
       status: currentMasterSafeCreationStatus,
-      subSteps: [{ txnLink: creationTxnLink }],
+      subSteps: [{ txnLink: null }], // BE to be updated to return the txn link
     };
   }, [
     isBridgingCompleted,
@@ -231,47 +263,33 @@ export const BridgeInProgress = () => {
     isErrorMasterSafeCreation,
   ]);
 
-  // TODO: to update and consolidate after the API integration (move to useQuery)
   const masterSafeTransferDetails = useMemo(() => {
     const currentMasterSafeStatus: BridgingStepStatus = (() => {
-      if (isErrorMasterSafe) return 'error';
+      if (isErrorMasterSafeCreation) return 'error';
       if (!isBridgingCompleted || !isSafeCreated) return 'wait';
-      if (isLoadingMasterSafeTransfer) return 'process';
       return isTransferCompleted ? 'finish' : 'wait';
     })();
 
     return {
       status: currentMasterSafeStatus,
-      subSteps: masterSafeTransfer.transfers || [],
+      subSteps: masterSafeDetails?.transfers || [],
     };
   }, [
-    isLoadingMasterSafeTransfer,
-    isErrorMasterSafe,
+    isErrorMasterSafeCreation,
     isSafeCreated,
     isBridgingCompleted,
-    masterSafeTransfer,
     isTransferCompleted,
+    masterSafeDetails?.transfers,
   ]);
 
   return (
     <>
-      <CardFlex $noBorder $gap={20} $padding="0 24px">
-        <SetupCreateHeader />
-        <Title level={3} className="m-0">
-          Bridging in progress
-        </Title>
-      </CardFlex>
-      <KeepAppOpenAlert />
-
+      <Header />
       <CardFlex $noBorder $gap={20} $padding="0 24px">
         <BridgeTransferFlow
           fromChain={fromChain}
           toChain={toChain}
           transfers={transfers}
-        />
-        <EstimatedCompletionTime
-          isLoading={isTimeRemainingLoading}
-          time={timeRemaining}
         />
         {!!bridgeDetails && (
           <BridgingSteps

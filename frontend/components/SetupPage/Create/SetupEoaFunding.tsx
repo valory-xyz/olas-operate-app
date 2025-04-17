@@ -199,7 +199,11 @@ const SetupEoaFundingForChainV2 = ({
           {minRequiredBalance} {currency}
         </Text>
         <Line />
-        <Text type="secondary" className={isFunded ? '' : 'loading-ellipses'}>
+        <Text
+          style={{ display: 'block', width: 172 }}
+          type="secondary"
+          className={isFunded ? '' : 'loading-ellipses'}
+        >
           {statusMessage(isFunded)}
         </Text>
       </Flex>
@@ -270,7 +274,7 @@ export const SetupEoaFunding = () => {
   }, [currentFundingRequirements, handleFunded, isFunded, masterEoaAddress]);
 
   const handleBridgeFunds = useCallback(() => {
-    goto(SetupScreen.BridgeFromEvm);
+    goto(SetupScreen.SetupBridgeOnboardingScreen);
   }, [goto]);
 
   if (!currentFundingRequirements) return null;
@@ -287,16 +291,16 @@ export const SetupEoaFunding = () => {
   }
 
   return (
-    <CardFlex noBorder>
+    <CardFlex $noBorder>
       <SetupCreateHeader prev={SetupScreen.AgentSelection} />
       <Title level={3} className="mb-8">
         Fund your agent
       </Title>
       <Text type="secondary">Choose how.</Text>
       <CardSection
-        padding="20px 24px"
-        bordertop="true"
-        borderbottom="true"
+        $padding="20px 24px"
+        $borderTop
+        $borderBottom
         className="mt-12 mb-12"
       >
         <Segmented<SendFundAction>
@@ -321,7 +325,7 @@ export const SetupEoaFunding = () => {
           chainName={currentFundingRequirements.name}
         />
       ) : (
-        <CardSection padding="0px 24px" vertical gap={16}>
+        <CardSection $padding="0px 24px" vertical gap={16}>
           <Text className="text-base">
             Bridge from Ethereum directly to your agent. No further funds will
             be needed after bridging.
