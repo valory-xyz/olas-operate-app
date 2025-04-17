@@ -13,16 +13,24 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { formatEther } from 'ethers/lib/utils';
-import { kebabCase } from 'lodash';
+import { upperFirst } from 'lodash';
 import Image from 'next/image';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
+import { MiddlewareChain } from '@/client';
+import { ETHEREUM_TOKEN_CONFIG, TokenType } from '@/config/tokens';
+import { AddressZero } from '@/constants/address';
 import { COLOR } from '@/constants/colors';
 import { TokenSymbol } from '@/enums/Token';
+import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
+import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
+import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+import { Address } from '@/types/Address';
+import { areAddressesEqual } from '@/utils/address';
 import { copyToClipboard } from '@/utils/copyToClipboard';
+import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { InfoTooltip } from '../InfoTooltip';
 import {
@@ -30,6 +38,7 @@ import {
   SUCCESS_ICON_STYLE,
   WARNING_ICON_STYLE,
 } from '../ui/iconStyles';
+import { getBridgeRequirementsParams } from './utils';
 
 const { Text } = Typography;
 
@@ -43,14 +52,18 @@ type TokenInfoProps = {
   symbol: TokenSymbol;
   totalRequiredInWei: bigint;
   currentBalanceInWei: bigint;
+  decimals: number;
   isNative?: boolean;
+  precision?: number;
 };
 
 const TokenInfo = ({
   symbol,
   totalRequiredInWei,
   currentBalanceInWei,
+  decimals,
   isNative,
+  precision = 2,
 }: TokenInfoProps) => {
   const depositRequiredInWei = totalRequiredInWei - currentBalanceInWei;
   const areFundsReceived = depositRequiredInWei <= 0;
@@ -68,14 +81,15 @@ const TokenInfo = ({
           <Text className="loading-ellipses">
             Waiting for{' '}
             <Text strong>
-              {formatEther(depositRequiredInWei)}&nbsp;
+              {formatUnitsToNumber(depositRequiredInWei, decimals, precision)}
+              &nbsp;
               {symbol}
             </Text>
           </Text>
         </>
       )}
 
-      <InfoTooltip overlayInnerStyle={{ width: 320 }} placement="top">
+      <InfoTooltip overlayInnerStyle={{ width: 300 }} placement="top">
         <Flex vertical gap={12} className="p-8">
           <Flex justify="space-between">
             <Text type="secondary" className="text-sm">
@@ -84,7 +98,7 @@ const TokenInfo = ({
             <Text
               className="text-sm"
               strong
-            >{`${formatEther(totalRequiredInWei)} ${symbol}`}</Text>
+            >{`${formatUnitsToNumber(totalRequiredInWei, decimals, precision)} ${symbol}`}</Text>
           </Flex>
           <Flex justify="space-between">
             <Text type="secondary" className="text-sm">
@@ -93,7 +107,7 @@ const TokenInfo = ({
             <Text
               className="text-sm"
               strong
-            >{`${formatEther(currentBalanceInWei)} ${symbol}`}</Text>
+            >{`${formatUnitsToNumber(currentBalanceInWei, decimals, precision)} ${symbol}`}</Text>
           </Flex>
           <Divider className="m-0" />
           <Flex justify="space-between">
@@ -103,7 +117,7 @@ const TokenInfo = ({
             <Text
               className="text-sm"
               strong
-            >{`${formatEther(depositRequiredInWei)} ${symbol}`}</Text>
+            >{`${formatUnitsToNumber(depositRequiredInWei, decimals, precision)} ${symbol}`}</Text>
           </Flex>
           {isNative && (
             <Text type="secondary" className="text-sm">
@@ -155,32 +169,96 @@ type DepositForBridgingProps = {
 };
 
 export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
-  // TODO: use API for getting quote
-  const [isRequestingQuote] = useState(false);
-  const [tokens] = useState<TokenInfoProps[]>([
-    {
-      symbol: TokenSymbol.OLAS,
-      totalRequiredInWei: BigInt('40000000000000000000'), // 40 Ether
-      currentBalanceInWei: BigInt(0),
-    },
-    {
-      symbol: TokenSymbol.ETH,
-      isNative: true, // TODO: define by chainName using getNativeTokenSymbol
-      totalRequiredInWei: BigInt('55000000000000000'), // 0.055 Ether
-      currentBalanceInWei: BigInt('55000000000000000'), // 0.055 Ether
-    },
+  const { selectedAgentConfig } = useServices();
+  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
+  const { masterEoa } = useMasterWalletContext();
+
+  const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
+    useBalanceAndRefillRequirementsContext();
+
+  const bridgeRequirementsParams = useMemo(() => {
+    if (isBalancesAndFundingRequirementsLoading) return null;
+    if (!masterEoa) return null;
+    if (!refillRequirements) return null;
+
+    return getBridgeRequirementsParams({
+      fromAddress: masterEoa.address,
+      toAddress: masterEoa.address,
+      toMiddlewareChain,
+      refillRequirements,
+    });
+  }, [
+    isBalancesAndFundingRequirementsLoading,
+    masterEoa,
+    toMiddlewareChain,
+    refillRequirements,
   ]);
+
+  const {
+    data: bridgeRefillRequirements,
+    isLoading: isBridgeRefillRequirementsLoading,
+  } = useBridgeRefillRequirements(bridgeRequirementsParams);
+
+  const isRequestingQuote =
+    isBalancesAndFundingRequirementsLoading ||
+    isBridgeRefillRequirementsLoading;
+
+  const tokens = useMemo(() => {
+    if (!bridgeRefillRequirements) return [];
+    if (!masterEoa) return [];
+
+    const fromMiddlewareChain = MiddlewareChain.ETHEREUM;
+
+    const totalRequirements =
+      bridgeRefillRequirements.bridge_total_requirements[fromMiddlewareChain]?.[
+        masterEoa.address
+      ];
+    const refillRequirements =
+      bridgeRefillRequirements.bridge_refill_requirements[
+        fromMiddlewareChain
+      ]?.[masterEoa.address];
+
+    if (!totalRequirements || !refillRequirements) return [];
+
+    return Object.entries(totalRequirements).map(
+      ([tokenAddress, totalRequired]) => {
+        const totalRequiredInWei = BigInt(totalRequired);
+        const currentBalanceInWei =
+          totalRequiredInWei -
+          BigInt(refillRequirements[tokenAddress as Address] || 0);
+
+        const token = Object.values(ETHEREUM_TOKEN_CONFIG).find((tokenInfo) => {
+          if (tokenAddress === AddressZero && !tokenInfo.address) return true;
+          return areAddressesEqual(tokenInfo.address!, tokenAddress);
+        });
+
+        if (!token) {
+          throw new Error(
+            `Failed to get the token info for the following token address: ${tokenAddress}`,
+          );
+        }
+
+        return {
+          symbol: token.symbol,
+          totalRequiredInWei,
+          currentBalanceInWei,
+          decimals: token.decimals,
+          isNative: token.tokenType === TokenType.NativeGas,
+        };
+      },
+    );
+  }, [bridgeRefillRequirements, masterEoa]);
 
   return (
     <RootCard vertical>
       <Flex gap={8} align="center" className="p-16">
         <Image
-          src={`/chains/${kebabCase(chainName)}-chain.png`}
+          src={`/chains/${chainName}-chain.png`}
           width={20}
           height={20}
           alt="chain logo"
         />
-        <Text>{chainName}</Text>
+        <Text>{upperFirst(chainName)}</Text>
       </Flex>
 
       <Divider className="m-0" />
@@ -200,6 +278,8 @@ export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
                 symbol={token.symbol}
                 totalRequiredInWei={token.totalRequiredInWei}
                 currentBalanceInWei={token.currentBalanceInWei}
+                decimals={token.decimals}
+                precision={token.isNative ? 4 : 2}
               />
             ))}
           </Flex>

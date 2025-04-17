@@ -13,7 +13,6 @@ const { Text, Title } = Typography;
 
 const FROM_CHAIN_NAME = 'Ethereum';
 
-// TODO: Tanya to update the component
 export const BridgeOnEvm = () => {
   const { goto } = useSetup();
 

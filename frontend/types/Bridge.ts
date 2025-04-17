@@ -39,7 +39,7 @@ type BridgeFrom = {
   address: Address;
   token: Address;
 };
-type BridgeTo = BridgeFrom & { amount: bigint };
+type BridgeTo = BridgeFrom & { amount: string };
 
 export type BridgeRefillRequirementsRequest = {
   bridge_requests: { from: BridgeFrom; to: BridgeTo }[];

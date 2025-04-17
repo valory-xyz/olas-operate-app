@@ -33,8 +33,9 @@ export const formatUnits = (value: BigNumberish, decimals = 18): string => {
 export const formatUnitsToNumber = (
   value: BigNumberish,
   decimals = 18,
+  precision = 4,
 ): number => {
-  return round(parseFloat(formatUnits(value, decimals)), 4);
+  return round(parseFloat(formatUnits(value, decimals)), precision);
 };
 
 /**
