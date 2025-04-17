@@ -212,11 +212,13 @@ export const DepositForBridging = ({ chainName }: DepositForBridgingProps) => {
     const totalRequirements =
       bridgeRefillRequirements.bridge_total_requirements[fromMiddlewareChain]?.[
         masterEoa.address
-      ] || {};
+      ];
     const refillRequirements =
       bridgeRefillRequirements.bridge_refill_requirements[
         fromMiddlewareChain
-      ]?.[masterEoa.address] || {};
+      ]?.[masterEoa.address];
+
+    if (!totalRequirements || !refillRequirements) return [];
 
     return Object.entries(totalRequirements).map(
       ([tokenAddress, totalRequired]) => {

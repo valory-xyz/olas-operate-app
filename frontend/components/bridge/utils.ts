@@ -24,9 +24,8 @@ const getFromToken = (
     return AddressZero;
   }
 
-  const tokenSymbol = Object.values(toChainConfig).find(
-    (configToken) =>
-      configToken.address?.toLowerCase() === tokenAddress.toLowerCase(),
+  const tokenSymbol = Object.values(toChainConfig).find((configToken) =>
+    areAddressesEqual(configToken.address!, tokenAddress),
   )?.symbol;
 
   if (!tokenSymbol || !fromChainConfig[tokenSymbol]?.address) {
@@ -66,7 +65,7 @@ export const getBridgeRequirementsParams = ({
     // Only calculate the refill requirements from master EOA or master safe placeholder
     if (
       !(
-        walletAddress.toLowerCase() === toAddress.toLowerCase() ||
+        areAddressesEqual(walletAddress, toAddress) ||
         walletAddress === 'master_safe'
       )
     ) {
