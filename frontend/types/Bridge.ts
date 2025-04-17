@@ -48,6 +48,7 @@ export type BridgeRefillRequirementsRequest = {
 };
 
 export type BridgeRefillRequirementsResponse = {
+  /** quote bundle Id */
   id: string;
   balances: { [chain in MiddlewareChain]: AddressBalanceRecord };
   bridge_total_requirements: {

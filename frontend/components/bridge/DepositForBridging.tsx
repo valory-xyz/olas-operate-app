@@ -15,7 +15,7 @@ import {
 } from 'antd';
 import { upperFirst } from 'lodash';
 import Image from 'next/image';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { MiddlewareChain } from '@/client';
@@ -135,7 +135,6 @@ const TokenInfo = ({
 };
 
 // TODO: make a shared component similar to AccountCreationAddress
-// in frontend/components/SetupPage/Create/SetupEoaFunding.tsx
 const DepositAddress = () => {
   const { masterEoa } = useMasterWalletContext();
   const address = masterEoa?.address;
@@ -177,9 +176,9 @@ type DepositForBridgingProps = {
 
 export const DepositForBridging = ({
   chainName,
-  // updateQuoteId,
-  // updateCrossChainTransferDetails,
-  // onNext,
+  updateQuoteId,
+  updateCrossChainTransferDetails,
+  onNext,
 }: DepositForBridgingProps) => {
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
@@ -263,6 +262,35 @@ export const DepositForBridging = ({
       },
     );
   }, [bridgeRefillRequirements, masterEoa]);
+
+  useEffect(() => {
+    if (isRequestingQuote) return;
+    if (!bridgeRefillRequirements) return;
+
+    const areAllFundsReceived = tokens.every((token) => token.areFundsReceived);
+    if (!areAllFundsReceived) return;
+
+    updateQuoteId(bridgeRefillRequirements.id);
+    updateCrossChainTransferDetails({
+      fromChain: MiddlewareChain.ETHEREUM,
+      toChain: toMiddlewareChain,
+      transfers: tokens.map((token) => ({
+        fromSymbol: token.symbol,
+        fromAmount: token.currentBalanceInWei.toString(),
+        toSymbol: token.symbol,
+        toAmount: token.totalRequiredInWei.toString(),
+      })),
+    });
+    onNext();
+  }, [
+    bridgeRefillRequirements,
+    isRequestingQuote,
+    tokens,
+    toMiddlewareChain,
+    onNext,
+    updateQuoteId,
+    updateCrossChainTransferDetails,
+  ]);
 
   return (
     <RootCard vertical>
