@@ -7,6 +7,7 @@ import {
   TOKEN_CONFIG,
 } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
+import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
@@ -63,12 +64,8 @@ export const getBridgeRequirementsParams = ({
     refillRequirements,
   )) {
     // Only calculate the refill requirements from master EOA or master safe placeholder
-    if (
-      !(
-        areAddressesEqual(walletAddress, toAddress) ||
-        walletAddress === 'master_safe'
-      )
-    ) {
+    const isMasterSafe = walletAddress === 'master_safe';
+    if (!(areAddressesEqual(walletAddress, toAddress) || isMasterSafe)) {
       continue;
     }
 
@@ -76,6 +73,12 @@ export const getBridgeRequirementsParams = ({
       tokensWithRequirements,
     )) {
       if (!isAddress(tokenAddress)) continue;
+
+      // Skip OLAS token for testing purposes, to be removed later
+      const olasAddress = ETHEREUM_TOKEN_CONFIG[TokenSymbol.OLAS].address;
+      if (olasAddress && areAddressesEqual(tokenAddress, olasAddress)) {
+        continue;
+      }
 
       const fromToken = getFromToken(
         tokenAddress,
