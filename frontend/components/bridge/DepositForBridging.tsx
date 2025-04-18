@@ -1,21 +1,12 @@
 import {
   CheckSquareOutlined,
   ClockCircleOutlined,
-  CopyOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
-import {
-  Button,
-  Divider,
-  Flex,
-  message,
-  Spin,
-  Tooltip,
-  Typography,
-} from 'antd';
+import { Divider, Flex, Spin, Typography } from 'antd';
 import { upperFirst } from 'lodash';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { MiddlewareChain } from '@/client';
@@ -30,7 +21,6 @@ import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
-import { copyToClipboard } from '@/utils/copyToClipboard';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { InfoTooltip } from '../InfoTooltip';
@@ -39,6 +29,7 @@ import {
   SUCCESS_ICON_STYLE,
   WARNING_ICON_STYLE,
 } from '../ui/iconStyles';
+import { DepositAddress } from './DepositAddress';
 import { getBridgeRequirementsParams } from './utils';
 
 const { Text } = Typography;
@@ -149,38 +140,6 @@ const TokenInfo = ({
           )}
         </Flex>
       </InfoTooltip>
-    </Flex>
-  );
-};
-
-// TODO: make a shared component similar to AccountCreationAddress
-const DepositAddress = () => {
-  const { masterEoa } = useMasterWalletContext();
-  const address = masterEoa?.address;
-
-  const handleCopyAddress = useCallback(() => {
-    if (address) {
-      copyToClipboard(address).then(() => message.success('Address copied!'));
-    }
-  }, [address]);
-
-  return (
-    <Flex gap={8} vertical className="p-16">
-      <Flex justify="space-between" align="center">
-        <Text className="text-sm" type="secondary">
-          Deposit address
-        </Text>
-        <Flex gap={10}>
-          <Tooltip title="Copy to clipboard" placement="left">
-            <Button
-              onClick={handleCopyAddress}
-              size="small"
-              icon={<CopyOutlined style={LIGHT_ICON_STYLE} />}
-            />
-          </Tooltip>
-        </Flex>
-      </Flex>
-      <span className="can-select-text break-word">{`${address}`}</span>
     </Flex>
   );
 };
