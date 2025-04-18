@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 
+import { AddressBalanceRecord } from '@/client';
 import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { BridgingSteps } from '@/components/bridge/BridgingSteps';
@@ -121,8 +122,9 @@ const useMasterSafeCreationAndTransfer = (tokenSymbols: TokenSymbol[]) => {
     return Object.entries(balances[masterEoa.address]).reduce(
       (acc, [tokenAddress, tokenBalance]) => {
         /** @example { [0xMasterEoaAddress]: { 0x00000000...: amount } } */
-        const requiredAmountsByMasterEoa =
-          refillRequirements?.[masterEoa.address];
+        const requiredAmountsByMasterEoa = (
+          refillRequirements as AddressBalanceRecord
+        )?.[masterEoa.address];
 
         if (!requiredAmountsByMasterEoa) return acc;
 

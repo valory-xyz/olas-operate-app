@@ -9,7 +9,11 @@ import Image from 'next/image';
 import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { MiddlewareChain } from '@/client';
+import {
+  AddressBalanceRecord,
+  MasterSafeBalanceRecord,
+  MiddlewareChain,
+} from '@/client';
 import { ETHEREUM_TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { COLOR } from '@/constants/colors';
@@ -262,8 +266,15 @@ export const DepositForBridging = ({
       transfers: tokens.map((token) => {
         const toAmount = (() => {
           if (!masterEoa?.address) return;
-          if (!refillRequirements?.[masterEoa.address]) return;
-          return refillRequirements[masterEoa.address][token.address];
+
+          const masterSafeAmount = (
+            refillRequirements as MasterSafeBalanceRecord
+          )?.master_safe?.[token.address];
+          const masterEoaAmount = (
+            refillRequirements as AddressBalanceRecord
+          )?.[masterEoa.address]?.[token.address];
+
+          return (masterSafeAmount || 0) + (masterEoaAmount || 0);
         })();
 
         return {
