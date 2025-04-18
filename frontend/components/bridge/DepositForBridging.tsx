@@ -214,37 +214,41 @@ export const DepositForBridging = ({
 
     if (!bridgeTotalRequirements || !bridgeRefillRequirements) return [];
 
-    return Object.entries(bridgeTotalRequirements).map(
-      ([tokenAddress, totalRequired]) => {
-        const totalRequiredInWei = BigInt(totalRequired);
-        const currentBalanceInWei =
-          totalRequiredInWei -
-          BigInt(bridgeRefillRequirements[tokenAddress as Address] || 0);
-
-        const token = Object.values(ETHEREUM_TOKEN_CONFIG).find((tokenInfo) => {
-          if (tokenAddress === AddressZero && !tokenInfo.address) return true;
-          return areAddressesEqual(tokenInfo.address!, tokenAddress);
-        });
-
-        if (!token) {
-          throw new Error(
-            `Failed to get the token info for the following token address: ${tokenAddress}`,
-          );
-        }
-
-        const areFundsReceived = totalRequiredInWei - currentBalanceInWei <= 0;
-
-        return {
-          address: tokenAddress as Address,
-          symbol: token.symbol,
-          totalRequiredInWei,
-          currentBalanceInWei,
-          areFundsReceived,
-          decimals: token.decimals,
-          isNative: token.tokenType === TokenType.NativeGas,
-        } satisfies TokenInfoProps;
-      },
+    // TODO: OLAS token is not skipped for testing, to be removed!
+    const totalRequirements = Object.entries(bridgeTotalRequirements).filter(
+      ([tokenAddress]) =>
+        tokenAddress !== ETHEREUM_TOKEN_CONFIG[TokenSymbol.OLAS].address,
     );
+
+    return totalRequirements.map(([tokenAddress, totalRequired]) => {
+      const totalRequiredInWei = BigInt(totalRequired);
+      const currentBalanceInWei =
+        totalRequiredInWei -
+        BigInt(bridgeRefillRequirements[tokenAddress as Address] || 0);
+
+      const token = Object.values(ETHEREUM_TOKEN_CONFIG).find((tokenInfo) => {
+        if (tokenAddress === AddressZero && !tokenInfo.address) return true;
+        return areAddressesEqual(tokenInfo.address!, tokenAddress);
+      });
+
+      if (!token) {
+        throw new Error(
+          `Failed to get the token info for the following token address: ${tokenAddress}`,
+        );
+      }
+
+      const areFundsReceived = totalRequiredInWei - currentBalanceInWei <= 0;
+
+      return {
+        address: tokenAddress as Address,
+        symbol: token.symbol,
+        totalRequiredInWei,
+        currentBalanceInWei,
+        areFundsReceived,
+        decimals: token.decimals,
+        isNative: token.tokenType === TokenType.NativeGas,
+      } satisfies TokenInfoProps;
+    });
   }, [bridgeFundingRequirements, masterEoa]);
 
   // After the user has deposited the required funds,
