@@ -74,8 +74,9 @@ export const getBridgeRequirementsParams = ({
     )) {
       if (!isAddress(tokenAddress)) continue;
 
-      // Skip OLAS token for testing purposes, to be removed later
-      const olasAddress = ETHEREUM_TOKEN_CONFIG[TokenSymbol.OLAS].address;
+      // TODO: Skip OLAS token for testing purposes, to be removed later
+      const olasAddress =
+        TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)][TokenSymbol.OLAS].address;
       if (olasAddress && areAddressesEqual(tokenAddress, olasAddress)) {
         continue;
       }
