@@ -6,7 +6,6 @@ import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { BridgeService } from '@/service/Bridge';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
-import { delayInSeconds } from '@/utils/delay';
 
 export const useBridgeRefillRequirements = (
   params: BridgeRefillRequirementsRequest | null,
@@ -16,10 +15,7 @@ export const useBridgeRefillRequirements = (
   return useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_REFILL_REQUIREMENTS_KEY(params!),
     queryFn: async () => {
-      await delayInSeconds(1);
       const response = await BridgeService.getBridgeRefillRequirements(params!);
-
-      await delayInSeconds(4);
       return response;
     },
     refetchInterval: TEN_SECONDS_INTERVAL,

@@ -31,7 +31,6 @@ import { Address } from '@/types/Address';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
 import { copyToClipboard } from '@/utils/copyToClipboard';
-import { delayInSeconds } from '@/utils/delay';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { InfoTooltip } from '../InfoTooltip';
@@ -233,11 +232,7 @@ export const DepositForBridging = ({
     isBalancesAndFundingRequirementsLoading ||
     isBridgeRefillRequirementsLoading;
 
-  console.log('DepositForBridging', {
-    bridgeRefillRequirements,
-    masterEoa,
-  });
-
+  // List of tokens that need to be deposited
   const tokens = useMemo(() => {
     if (!bridgeRefillRequirements) return [];
     if (!masterEoa) return [];
@@ -252,11 +247,6 @@ export const DepositForBridging = ({
       bridgeRefillRequirements.bridge_refill_requirements[
         fromMiddlewareChain
       ]?.[masterEoa.address];
-
-    console.log('totalRequirements: ', {
-      totalRequirements,
-      refillRequirements,
-    });
 
     if (!totalRequirements || !refillRequirements) return [];
 
@@ -292,8 +282,8 @@ export const DepositForBridging = ({
     );
   }, [bridgeRefillRequirements, masterEoa]);
 
-  console.log('tokens: ', { tokens });
-
+  // After the user has deposited the required funds,
+  // send the quote ID, cross-chain transfer details to the next step
   useEffect(() => {
     if (isRequestingQuote) return;
     if (!bridgeRefillRequirements) return;
@@ -304,20 +294,18 @@ export const DepositForBridging = ({
       !bridgeRefillRequirements.is_refill_required;
     if (!areAllFundsReceived) return;
 
-    delayInSeconds(3).then(() => {
-      updateQuoteId(bridgeRefillRequirements.id);
-      updateCrossChainTransferDetails({
-        fromChain: upperFirst(MiddlewareChain.ETHEREUM),
-        toChain: upperFirst(toMiddlewareChain),
-        transfers: tokens.map((token) => ({
-          fromSymbol: token.symbol,
-          fromAmount: token.currentBalanceInWei.toString(),
-          toSymbol: token.symbol,
-          toAmount: token.totalRequiredInWei.toString(),
-        })),
-      });
-      onNext();
+    updateQuoteId(bridgeRefillRequirements.id);
+    updateCrossChainTransferDetails({
+      fromChain: upperFirst(MiddlewareChain.ETHEREUM),
+      toChain: upperFirst(toMiddlewareChain),
+      transfers: tokens.map((token) => ({
+        fromSymbol: token.symbol,
+        fromAmount: token.currentBalanceInWei.toString(),
+        toSymbol: token.symbol,
+        toAmount: token.totalRequiredInWei.toString(),
+      })),
     });
+    onNext();
   }, [
     bridgeRefillRequirements,
     isRequestingQuote,
