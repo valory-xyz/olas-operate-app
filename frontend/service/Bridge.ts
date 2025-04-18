@@ -12,23 +12,25 @@ const bridgeRefillRequirementsMock = {
   id: 'qb-bdaafd7f-0698-4e10-83dd-d742cc0e656d',
   balances: {
     ethereum: {
-      '0xDe6B572A049B27D349e89aD0cBEF102227e31473': {
-        '0x0000000000000000000000000000000000000000': 0,
-        '0x0001A500A6B18995B03f44bb040A5fFc28E45CB0': 0,
+      '0x5a0e3ec135063e6ca46eb7457C7eC61ab0fE2378': {
+        '0x0000000000000000000000000000000000000000': 10000000000000,
+        '0x0001A500A6B18995B03f44bb040A5fFc28E45CB0': 50000000000000,
       },
     },
   },
   bridge_total_requirements: {
     ethereum: {
-      '0x0000000000000000000000000000000000000000': 10000000000000,
-      '0x0001A500A6B18995B03f44bb040A5fFc28E45CB0': 50000000000000,
+      '0x5a0e3ec135063e6ca46eb7457C7eC61ab0fE2378': {
+        '0x0000000000000000000000000000000000000000': 10000000000000,
+        '0x0001A500A6B18995B03f44bb040A5fFc28E45CB0': 50000000000000,
+      },
     },
   },
   bridge_refill_requirements: {
     ethereum: {
-      '0xDe6B572A049B27D349e89aD0cBEF102227e31473': {
-        '0x0000000000000000000000000000000000000000': 10000000000000,
-        '0x0001A500A6B18995B03f44bb040A5fFc28E45CB0': 50000000000000,
+      '0x5a0e3ec135063e6ca46eb7457C7eC61ab0fE2378': {
+        '0x0000000000000000000000000000000000000000': 0,
+        '0x0001A500A6B18995B03f44bb040A5fFc28E45CB0': 0,
       },
     },
   },
@@ -43,7 +45,7 @@ const bridgeRefillRequirementsMock = {
     },
   ],
   expiration_timestamp: 1743000251,
-  is_refill_required: true,
+  is_refill_required: false,
   error: false,
 } as const satisfies BridgeRefillRequirementsResponse;
 

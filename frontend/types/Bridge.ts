@@ -1,4 +1,4 @@
-import { AddressBalanceRecord, MiddlewareChain, TokenBalances } from '@/client';
+import { AddressBalanceRecord, MiddlewareChain } from '@/client';
 import { TokenSymbol } from '@/enums/Token';
 
 import { Address } from './Address';
@@ -54,7 +54,7 @@ export type BridgeRefillRequirementsResponse = {
     [chain in MiddlewareChain]: AddressBalanceRecord;
   }>;
   bridge_total_requirements: Partial<{
-    [chain in MiddlewareChain]: TokenBalances;
+    [chain in MiddlewareChain]: AddressBalanceRecord;
   }>;
   bridge_refill_requirements: Partial<{
     [chain in MiddlewareChain]: AddressBalanceRecord;

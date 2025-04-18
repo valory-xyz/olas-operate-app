@@ -142,12 +142,10 @@ export type MiddlewareWalletResponse = {
   safe_nonce: number;
 };
 
-export type TokenBalances = {
-  [tokenAddress: Address]: number;
-};
-
 export type AddressBalanceRecord = {
-  [address: Address]: TokenBalances;
+  [address: Address]: {
+    [tokenAddress: Address]: number;
+  };
 };
 
 export type BalancesAndFundingRequirements = {
