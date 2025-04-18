@@ -8,6 +8,45 @@ import {
 
 const IS_MOCK_ENABLED = true; // TODO: remove
 
+const bridgeRefillRequirementsMock = {
+  id: 'qb-bdaafd7f-0698-4e10-83dd-d742cc0e656d',
+  balances: {
+    ethereum: {
+      '0xDe6B572A049B27D349e89aD0cBEF102227e31473': {
+        '0x0000000000000000000000000000000000000000': 0,
+        '0x0001A500A6B18995B03f44bb040A5fFc28E45CB0': 0,
+      },
+    },
+  },
+  bridge_total_requirements: {
+    ethereum: {
+      '0x0000000000000000000000000000000000000000': 10000000000000,
+      '0x0001A500A6B18995B03f44bb040A5fFc28E45CB0': 50000000000000,
+    },
+  },
+  bridge_refill_requirements: {
+    ethereum: {
+      '0xDe6B572A049B27D349e89aD0cBEF102227e31473': {
+        '0x0000000000000000000000000000000000000000': 10000000000000,
+        '0x0001A500A6B18995B03f44bb040A5fFc28E45CB0': 50000000000000,
+      },
+    },
+  },
+  bridge_request_status: [
+    {
+      message: '',
+      status: 'QUOTE_DONE',
+    },
+    {
+      message: '',
+      status: 'QUOTE_DONE',
+    },
+  ],
+  expiration_timestamp: 1743000251,
+  is_refill_required: true,
+  error: false,
+} as const satisfies BridgeRefillRequirementsResponse;
+
 // TODO: remove this mock
 const executeBridgeMock = {
   id: 'qb-bdaafd7f-0698-4e10-83dd-d742cc0e656d',
@@ -62,18 +101,18 @@ const getBridgeStatusMock = {
 const getBridgeRefillRequirements = async (
   params: BridgeRefillRequirementsRequest,
 ): Promise<BridgeRefillRequirementsResponse> =>
-  fetch(`${BACKEND_URL}/bridge/bridge_refill_requirements`, {
-    method: 'POST',
-    headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    body: JSON.stringify(params),
-  }).then((response) => {
-    if (response.ok) {
-      return response.json();
-    }
-    throw new Error(
-      `Failed to get bridge refill requirements for the following params: ${params}`,
-    );
-  });
+  IS_MOCK_ENABLED
+    ? Promise.resolve(bridgeRefillRequirementsMock)
+    : fetch(`${BACKEND_URL}/bridge/bridge_refill_requirements`, {
+        method: 'POST',
+        headers: { ...CONTENT_TYPE_JSON_UTF8 },
+        body: JSON.stringify(params),
+      }).then((response) => {
+        if (response.ok) return response.json();
+        throw new Error(
+          `Failed to get bridge refill requirements for the following params: ${params}`,
+        );
+      });
 
 /**
  * Execute bridge for the provided quote bundle id
@@ -86,9 +125,7 @@ const executeBridge = async (id: string): Promise<BridgeStatusResponse> =>
         headers: { ...CONTENT_TYPE_JSON_UTF8 },
         body: JSON.stringify({ id }),
       }).then((response) => {
-        if (response.ok) {
-          return response.json();
-        }
+        if (response.ok) return response.json();
         throw new Error(
           `Failed to execute bridge quote for the following quote id: ${id}`,
         );
@@ -105,9 +142,7 @@ const getBridgeStatus = async (id: string): Promise<BridgeStatusResponse> =>
         headers: { ...CONTENT_TYPE_JSON_UTF8 },
         body: JSON.stringify({ id }),
       }).then((response) => {
-        if (response.ok) {
-          return response.json();
-        }
+        if (response.ok) return response.json();
         throw new Error(
           `Failed to get bridge status for the following quote id: ${id}`,
         );

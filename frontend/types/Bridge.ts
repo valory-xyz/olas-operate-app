@@ -1,4 +1,4 @@
-import { AddressBalanceRecord, MiddlewareChain } from '@/client';
+import { AddressBalanceRecord, MiddlewareChain, TokenBalances } from '@/client';
 import { TokenSymbol } from '@/enums/Token';
 
 import { Address } from './Address';
@@ -50,17 +50,19 @@ export type BridgeRefillRequirementsRequest = {
 export type BridgeRefillRequirementsResponse = {
   /** quote bundle Id */
   id: string;
-  balances: { [chain in MiddlewareChain]: AddressBalanceRecord };
-  bridge_total_requirements: {
+  balances: Partial<{
     [chain in MiddlewareChain]: AddressBalanceRecord;
-  };
-  bridge_refill_requirements: {
+  }>;
+  bridge_total_requirements: Partial<{
+    [chain in MiddlewareChain]: TokenBalances;
+  }>;
+  bridge_refill_requirements: Partial<{
     [chain in MiddlewareChain]: AddressBalanceRecord;
-  };
+  }>;
+  bridge_request_status: { message: string; status: QuoteStatus }[];
   expiration_timestamp: number;
   is_refill_required: boolean;
   error: boolean;
-  bridge_request_status: { message: string; status: QuoteStatus }[];
 };
 
 type QuoteRequestStatus = {
