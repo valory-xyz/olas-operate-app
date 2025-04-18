@@ -411,6 +411,6 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;
 
 export const getServiceTemplate = (
-  templateHash: string
+  templateHash: string,
 ): ServiceTemplate | undefined =>
   SERVICE_TEMPLATES.find((template) => template.hash === templateHash);
