@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { createContext, PropsWithChildren, useMemo } from 'react';
 
-import { AddressBalanceRecord, BalancesAndFundingRequirements } from '@/client';
+import {
+  AddressBalanceRecord,
+  BalancesAndFundingRequirements,
+  MasterSafeBalanceRecord,
+} from '@/client';
 import {
   FIVE_SECONDS_INTERVAL,
   ONE_MINUTE_INTERVAL,
@@ -18,7 +22,7 @@ import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
   balances: Optional<AddressBalanceRecord>;
-  refillRequirements: Optional<AddressBalanceRecord>;
+  refillRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
   canStartAgent: boolean;
 }>({
   isBalancesAndFundingRequirementsLoading: false,

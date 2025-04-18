@@ -8,7 +8,7 @@ import { AgentSelection } from '../AgentSelection';
 import { CardFlex } from '../styled/CardFlex';
 import { AgentIntroduction } from './AgentIntroduction/AgentIntroduction';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
-import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding';
+import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding/SetupBridgeOnboarding';
 import { SetupCreateSafe } from './Create/SetupCreateSafe';
 import { SetupEoaFunding } from './Create/SetupEoaFunding';
 import { SetupPassword } from './Create/SetupPassword';

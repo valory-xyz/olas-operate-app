@@ -142,10 +142,12 @@ export type MiddlewareWalletResponse = {
   safe_nonce: number;
 };
 
+export type MasterSafeBalanceRecord = {
+  master_safe: { [tokenAddress: Address]: number };
+};
+
 export type AddressBalanceRecord = {
-  [address: Address]: {
-    [tokenAddress: Address]: number;
-  };
+  [address: Address]: { [tokenAddress: Address]: number };
 };
 
 export type BalancesAndFundingRequirements = {
@@ -158,7 +160,7 @@ export type BalancesAndFundingRequirements = {
    * If it not present or is 0, the balance is sufficient.
    */
   refill_requirements: Partial<{
-    [chain in MiddlewareChain]: AddressBalanceRecord;
+    [chain in MiddlewareChain]: AddressBalanceRecord | MasterSafeBalanceRecord;
   }>;
   bonded_olas: {
     [chain in MiddlewareChain]: number;

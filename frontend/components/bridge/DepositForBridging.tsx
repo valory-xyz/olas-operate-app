@@ -1,24 +1,19 @@
 import {
   CheckSquareOutlined,
   ClockCircleOutlined,
-  CopyOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
-import {
-  Button,
-  Divider,
-  Flex,
-  message,
-  Spin,
-  Tooltip,
-  Typography,
-} from 'antd';
+import { Divider, Flex, Spin, Typography } from 'antd';
 import { upperFirst } from 'lodash';
 import Image from 'next/image';
-import { useCallback, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { MiddlewareChain } from '@/client';
+import {
+  AddressBalanceRecord,
+  MasterSafeBalanceRecord,
+  MiddlewareChain,
+} from '@/client';
 import { ETHEREUM_TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { COLOR } from '@/constants/colors';
@@ -28,8 +23,8 @@ import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
+import { CrossChainTransferDetails } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
-import { copyToClipboard } from '@/utils/copyToClipboard';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { InfoTooltip } from '../InfoTooltip';
@@ -38,6 +33,7 @@ import {
   SUCCESS_ICON_STYLE,
   WARNING_ICON_STYLE,
 } from '../ui/iconStyles';
+import { DepositAddress } from './DepositAddress';
 import { getBridgeRequirementsParams } from './utils';
 
 const { Text } = Typography;
@@ -48,25 +44,48 @@ const RootCard = styled(Flex)`
   border: 1px solid ${COLOR.BORDER_GRAY};
 `;
 
-type TokenInfoProps = {
+const DepositForBridgingHeader = ({ chainName }: { chainName: string }) => (
+  <Flex gap={8} align="center" className="p-16">
+    <Image
+      src={`/chains/${chainName}-chain.png`}
+      width={20}
+      height={20}
+      alt={`${chainName} logo`}
+    />
+    <Text>{upperFirst(chainName)}</Text>
+  </Flex>
+);
+
+const RequestingQuote = () => (
+  <Flex gap={8} className="p-16">
+    <Spin indicator={<LoadingOutlined spin style={LIGHT_ICON_STYLE} />} />
+    <Text>Requesting quote...</Text>
+  </Flex>
+);
+
+type TokenDetails = {
+  address?: Address;
   symbol: TokenSymbol;
   totalRequiredInWei: bigint;
   currentBalanceInWei: bigint;
+  areFundsReceived: boolean;
   decimals: number;
   isNative?: boolean;
   precision?: number;
 };
 
+type TokenInfoProps = TokenDetails;
+
 const TokenInfo = ({
   symbol,
   totalRequiredInWei,
   currentBalanceInWei,
+  areFundsReceived,
   decimals,
   isNative,
   precision = 2,
-}: TokenInfoProps) => {
+}: TokenDetails) => {
   const depositRequiredInWei = totalRequiredInWei - currentBalanceInWei;
-  const areFundsReceived = depositRequiredInWei <= 0;
 
   return (
     <Flex gap={8} align="center">
@@ -130,51 +149,18 @@ const TokenInfo = ({
   );
 };
 
-// TODO: make a shared component similar to AccountCreationAddress
-// in frontend/components/SetupPage/Create/SetupEoaFunding.tsx
-const DepositAddress = () => {
-  const { masterEoa } = useMasterWalletContext();
-  const address = masterEoa?.address;
-
-  const handleCopyAddress = useCallback(() => {
-    if (address) {
-      copyToClipboard(address).then(() => message.success('Address copied!'));
-    }
-  }, [address]);
-
-  return (
-    <Flex gap={8} vertical className="p-16">
-      <Flex justify="space-between" align="center">
-        <Text className="text-sm" type="secondary">
-          Deposit address
-        </Text>
-        <Flex gap={10}>
-          <Tooltip title="Copy to clipboard" placement="left">
-            <Button
-              onClick={handleCopyAddress}
-              size="small"
-              icon={<CopyOutlined style={LIGHT_ICON_STYLE} />}
-            />
-          </Tooltip>
-        </Flex>
-      </Flex>
-
-      <span className="can-select-text break-word">{`${address}`}</span>
-    </Flex>
-  );
-};
-
 type DepositForBridgingProps = {
   chainName: string;
-  // TODO: uncomment and implement
-  // updateQuoteId: (quoteId: string) => void;
-  // updateTransfers: (amount: number) => void;
+  updateQuoteId: (quoteId: string) => void;
+  updateCrossChainTransferDetails: (details: CrossChainTransferDetails) => void;
+  onNext: () => void;
 };
 
 export const DepositForBridging = ({
   chainName,
-  // updateQuoteId,
-  // updateTransfers,
+  updateQuoteId,
+  updateCrossChainTransferDetails,
+  onNext,
 }: DepositForBridgingProps) => {
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
@@ -202,7 +188,7 @@ export const DepositForBridging = ({
   ]);
 
   const {
-    data: bridgeRefillRequirements,
+    data: bridgeFundingRequirements,
     isLoading: isBridgeRefillRequirementsLoading,
   } = useBridgeRefillRequirements(bridgeRequirementsParams);
 
@@ -210,29 +196,30 @@ export const DepositForBridging = ({
     isBalancesAndFundingRequirementsLoading ||
     isBridgeRefillRequirementsLoading;
 
+  // List of tokens that need to be deposited
   const tokens = useMemo(() => {
-    if (!bridgeRefillRequirements) return [];
+    if (!bridgeFundingRequirements) return [];
     if (!masterEoa) return [];
 
     const fromMiddlewareChain = MiddlewareChain.ETHEREUM;
 
-    const totalRequirements =
-      bridgeRefillRequirements.bridge_total_requirements[fromMiddlewareChain]?.[
-        masterEoa.address
-      ];
-    const refillRequirements =
-      bridgeRefillRequirements.bridge_refill_requirements[
+    const bridgeTotalRequirements =
+      bridgeFundingRequirements.bridge_total_requirements[
+        fromMiddlewareChain
+      ]?.[masterEoa.address];
+    const bridgeRefillRequirements =
+      bridgeFundingRequirements.bridge_refill_requirements[
         fromMiddlewareChain
       ]?.[masterEoa.address];
 
-    if (!totalRequirements || !refillRequirements) return [];
+    if (!bridgeTotalRequirements || !bridgeRefillRequirements) return [];
 
-    return Object.entries(totalRequirements).map(
+    return Object.entries(bridgeTotalRequirements).map(
       ([tokenAddress, totalRequired]) => {
         const totalRequiredInWei = BigInt(totalRequired);
         const currentBalanceInWei =
           totalRequiredInWei -
-          BigInt(refillRequirements[tokenAddress as Address] || 0);
+          BigInt(bridgeRefillRequirements[tokenAddress as Address] || 0);
 
         const token = Object.values(ETHEREUM_TOKEN_CONFIG).find((tokenInfo) => {
           if (tokenAddress === AddressZero && !tokenInfo.address) return true;
@@ -245,47 +232,86 @@ export const DepositForBridging = ({
           );
         }
 
+        const areFundsReceived = totalRequiredInWei - currentBalanceInWei <= 0;
+
         return {
+          address: tokenAddress as Address,
           symbol: token.symbol,
           totalRequiredInWei,
           currentBalanceInWei,
+          areFundsReceived,
           decimals: token.decimals,
           isNative: token.tokenType === TokenType.NativeGas,
-        };
+        } satisfies TokenInfoProps;
       },
     );
-  }, [bridgeRefillRequirements, masterEoa]);
+  }, [bridgeFundingRequirements, masterEoa]);
+
+  // After the user has deposited the required funds,
+  // send the quote ID, cross-chain transfer details to the next step
+  useEffect(() => {
+    if (isRequestingQuote) return;
+    if (!bridgeFundingRequirements) return;
+    if (tokens.length === 0) return;
+
+    const areAllFundsReceived =
+      tokens.every((token) => token.areFundsReceived) &&
+      !bridgeFundingRequirements.is_refill_required;
+    if (!areAllFundsReceived) return;
+
+    updateQuoteId(bridgeFundingRequirements.id);
+    updateCrossChainTransferDetails({
+      fromChain: upperFirst(MiddlewareChain.ETHEREUM),
+      toChain: upperFirst(toMiddlewareChain),
+      transfers: tokens.map((token) => {
+        const toAmount = (() => {
+          if (!masterEoa?.address) return;
+
+          const masterSafeAmount = (
+            refillRequirements as MasterSafeBalanceRecord
+          )?.master_safe?.[token.address];
+          const masterEoaAmount = (
+            refillRequirements as AddressBalanceRecord
+          )?.[masterEoa.address]?.[token.address];
+
+          return (masterSafeAmount || 0) + (masterEoaAmount || 0);
+        })();
+
+        return {
+          fromSymbol: token.symbol,
+          fromAmount: token.currentBalanceInWei.toString(),
+          toSymbol: token.symbol,
+          toAmount: toAmount?.toString() || '0',
+        };
+      }),
+    });
+    onNext();
+  }, [
+    isRequestingQuote,
+    toMiddlewareChain,
+    refillRequirements,
+    bridgeFundingRequirements,
+    masterEoa,
+    tokens,
+    onNext,
+    updateQuoteId,
+    updateCrossChainTransferDetails,
+  ]);
 
   return (
     <RootCard vertical>
-      <Flex gap={8} align="center" className="p-16">
-        <Image
-          src={`/chains/${chainName}-chain.png`}
-          width={20}
-          height={20}
-          alt="chain logo"
-        />
-        <Text>{upperFirst(chainName)}</Text>
-      </Flex>
-
+      <DepositForBridgingHeader chainName={chainName} />
       <Divider className="m-0" />
 
       {isRequestingQuote ? (
-        <Flex gap={8} className="p-16">
-          <Spin indicator={<LoadingOutlined spin style={LIGHT_ICON_STYLE} />} />
-          <Text>Requesting quote...</Text>
-        </Flex>
+        <RequestingQuote />
       ) : (
         <>
           <Flex gap={8} align="start" vertical className="p-16">
             {tokens.map((token) => (
               <TokenInfo
                 key={token.symbol}
-                isNative={token.isNative}
-                symbol={token.symbol}
-                totalRequiredInWei={token.totalRequiredInWei}
-                currentBalanceInWei={token.currentBalanceInWei}
-                decimals={token.decimals}
+                {...token}
                 precision={token.isNative ? 4 : 2}
               />
             ))}
