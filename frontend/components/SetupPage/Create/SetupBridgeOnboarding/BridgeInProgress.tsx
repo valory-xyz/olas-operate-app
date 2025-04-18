@@ -90,7 +90,7 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
         }),
       };
     },
-    // fetch every 5 seconds until the status is FINISHED
+    // fetch by interval until the status is FINISHED
     refetchInterval: ({ state }) => {
       const status = state?.data?.status;
       if (status === 'FINISHED') return false;
