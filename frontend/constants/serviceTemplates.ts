@@ -202,7 +202,7 @@ export const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChain.BASE,
   configurations: {
     [MiddlewareChain.BASE]: {
-      staking_program_id: StakingProgramId.MemeBaseAlpha2, // default, may be overwritten
+      staking_program_id: StakingProgramId.AgentsFun1, // default, may be overwritten
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 43,
