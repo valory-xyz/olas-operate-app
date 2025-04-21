@@ -1,9 +1,11 @@
 import {
   CheckSquareOutlined,
   ClockCircleOutlined,
+  CloseCircleOutlined,
   LoadingOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
-import { Divider, Flex, Spin, Typography } from 'antd';
+import { Button, Divider, Flex, Spin, Typography } from 'antd';
 import { upperFirst } from 'lodash';
 import Image from 'next/image';
 import { useEffect, useMemo } from 'react';
@@ -29,6 +31,7 @@ import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { InfoTooltip } from '../InfoTooltip';
 import {
+  ERROR_ICON_STYLE,
   LIGHT_ICON_STYLE,
   SUCCESS_ICON_STYLE,
   WARNING_ICON_STYLE,
@@ -60,6 +63,24 @@ const RequestingQuote = () => (
   <Flex gap={8} className="p-16">
     <Spin indicator={<LoadingOutlined spin style={LIGHT_ICON_STYLE} />} />
     <Text>Requesting quote...</Text>
+  </Flex>
+);
+
+const QuoteRequestFailed = () => (
+  <Flex
+    gap={8}
+    className="p-16 border-box"
+    align="center"
+    justify="space-between"
+    style={{ width: '100%' }}
+  >
+    <Flex gap={8} align="center">
+      <CloseCircleOutlined style={ERROR_ICON_STYLE} />
+      <Text>Quote request failed</Text>
+    </Flex>
+    <Button disabled icon={<ReloadOutlined />} size="small">
+      Try again
+    </Button>
   </Flex>
 );
 
@@ -190,6 +211,7 @@ export const DepositForBridging = ({
   const {
     data: bridgeFundingRequirements,
     isLoading: isBridgeRefillRequirementsLoading,
+    isError: isBridgeRefillRequirementsError,
   } = useBridgeRefillRequirements(bridgeRequirementsParams);
 
   const isRequestingQuote =
@@ -309,6 +331,8 @@ export const DepositForBridging = ({
 
       {isRequestingQuote ? (
         <RequestingQuote />
+      ) : isBridgeRefillRequirementsError ? (
+        <QuoteRequestFailed />
       ) : (
         <>
           <Flex gap={8} align="start" vertical className="p-16">
