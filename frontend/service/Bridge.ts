@@ -4,7 +4,44 @@ import {
   BridgeRefillRequirementsRequest,
   BridgeRefillRequirementsResponse,
   BridgeStatusResponse,
+  QuoteStatus,
 } from '@/types/Bridge';
+
+const TEST = true;
+
+const BRIDGE_REQUIREMENTS_MOCK = {
+  id: 'qb-56410704-b8da-49d9-85f2-1fd2133b24fb',
+  balances: {
+    ethereum: {
+      '0x45D1B6861A97fD10846e1185f54E5B639AaA80A4': {
+        '0x0000000000000000000000000000000000000000': 100000000000000,
+      },
+    },
+  },
+  bridge_total_requirements: {
+    ethereum: {
+      '0x45D1B6861A97fD10846e1185f54E5B639AaA80A4': {
+        '0x0000000000000000000000000000000000000000': 64223356851030,
+      },
+    },
+  },
+  bridge_refill_requirements: {
+    ethereum: {
+      '0x45D1B6861A97fD10846e1185f54E5B639AaA80A4': {
+        '0x0000000000000000000000000000000000000000': 0,
+      },
+    },
+  },
+  expiration_timestamp: 1745238494,
+  is_refill_required: false,
+  bridge_request_status: [
+    {
+      message: '',
+      status: 'QUOTE_DONE' as QuoteStatus,
+    },
+  ],
+  error: false,
+};
 
 /**
  * Get bridge refill requirements for the provided source and destination parameters
@@ -12,16 +49,18 @@ import {
 const getBridgeRefillRequirements = async (
   params: BridgeRefillRequirementsRequest,
 ): Promise<BridgeRefillRequirementsResponse> =>
-  fetch(`${BACKEND_URL}/bridge/bridge_refill_requirements`, {
-    method: 'POST',
-    headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    body: JSON.stringify(params),
-  }).then((response) => {
-    if (response.ok) return response.json();
-    throw new Error(
-      `Failed to get bridge refill requirements for the following params: ${params}`,
-    );
-  });
+  TEST
+    ? Promise.resolve(BRIDGE_REQUIREMENTS_MOCK) // mock
+    : fetch(`${BACKEND_URL}/bridge/bridge_refill_requirements`, {
+        method: 'POST',
+        headers: { ...CONTENT_TYPE_JSON_UTF8 },
+        body: JSON.stringify(params),
+      }).then((response) => {
+        if (response.ok) return response.json();
+        throw new Error(
+          `Failed to get bridge refill requirements for the following params: ${params}`,
+        );
+      });
 
 /**
  * Execute bridge for the provided quote bundle id

@@ -65,14 +65,18 @@ export const getBridgeRequirementsParams = ({
   )) {
     // Only calculate the refill requirements from master EOA or master safe placeholder
     const isMasterSafe = walletAddress === 'master_safe';
-    if (!(areAddressesEqual(walletAddress, toAddress) || isMasterSafe)) {
+    if (!isMasterSafe) {
       continue;
     }
+
+    console.log({ tokensWithRequirements });
 
     for (const [tokenAddress, amount] of Object.entries(
       tokensWithRequirements,
     )) {
       if (!isAddress(tokenAddress)) continue;
+
+      console.log({ tokenAddress, amount });
 
       // TODO: Skip OLAS token for testing purposes, to be removed later
       const olasAddress =
@@ -100,6 +104,8 @@ export const getBridgeRequirementsParams = ({
           areAddressesEqual(req.from.token, fromToken) &&
           areAddressesEqual(req.to.token, toToken),
       );
+
+      console.log({ amount, existingRequest });
 
       if (existingRequest) {
         existingRequest.to.amount = (

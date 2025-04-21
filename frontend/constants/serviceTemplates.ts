@@ -216,8 +216,8 @@ export const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
           // safe: +parseEther(0.0125),
 
           // TODO: just for testing, to be removed
-          agent: +parseEther(0.00001), // ~ 0.016 usd
-          safe: +parseEther(0.00001), // ~ 0.016 usd
+          agent: +parseEther(0.000015), // ~ 0.016 usd
+          safe: +parseEther(0.000015), // ~ 0.016 usd
         },
       },
     },
