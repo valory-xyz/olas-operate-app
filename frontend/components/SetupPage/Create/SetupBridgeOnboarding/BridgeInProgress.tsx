@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 
+import { AddressBalanceRecord } from '@/client';
 import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { BridgingSteps } from '@/components/bridge/BridgingSteps';
@@ -22,7 +23,7 @@ import { Address } from '@/types/Address';
 import { BridgingStepStatus, CrossChainTransferDetails } from '@/types/Bridge';
 import { bigintMax } from '@/utils/calculations';
 
-import { SetupCreateHeader } from './SetupCreateHeader';
+import { SetupCreateHeader } from '../SetupCreateHeader';
 
 const { Text, Title } = Typography;
 
@@ -51,13 +52,9 @@ const Header = () => (
   </>
 );
 
-// TODO: to be returned from the previous screen
-const useSymbols = () => [TokenSymbol.OLAS, TokenSymbol.ETH];
-
 // hook to fetch bridging steps (step 1)
-const useBridgingSteps = (quoteId: string) => {
+const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
   const { isOnline } = useOnlineStatusContext();
-  const symbols = useSymbols();
 
   // `/execute` bridge API should be called first before fetching the status.
   const { data: bridgeExecute } = useQuery({
@@ -87,14 +84,14 @@ const useBridgingSteps = (quoteId: string) => {
           })();
 
           return {
-            symbol: symbols[index],
+            symbol: tokenSymbols[index],
             status,
             txnLink: step.explorer_link,
           };
         }),
       };
     },
-    // refetch every 5 seconds until the status is FINISHED
+    // fetch by interval until the status is FINISHED
     refetchInterval: ({ state }) => {
       const status = state?.data?.status;
       if (status === 'FINISHED') return false;
@@ -105,9 +102,8 @@ const useBridgingSteps = (quoteId: string) => {
 };
 
 // hook to create master safe and transfer funds (step 2 and 3)
-const useMasterSafeCreationAndTransfer = () => {
+const useMasterSafeCreationAndTransfer = (tokenSymbols: TokenSymbol[]) => {
   const backupSignerAddress = useBackupSigner();
-  const symbols = useSymbols();
   const { masterEoa } = useMasterWalletContext();
   const {
     isBalancesAndFundingRequirementsLoading,
@@ -126,8 +122,9 @@ const useMasterSafeCreationAndTransfer = () => {
     return Object.entries(balances[masterEoa.address]).reduce(
       (acc, [tokenAddress, tokenBalance]) => {
         /** @example { [0xMasterEoaAddress]: { 0x00000000...: amount } } */
-        const requiredAmountsByMasterEoa =
-          refillRequirements?.[masterEoa.address];
+        const requiredAmountsByMasterEoa = (
+          refillRequirements as AddressBalanceRecord
+        )?.[masterEoa.address];
 
         if (!requiredAmountsByMasterEoa) return acc;
 
@@ -155,18 +152,24 @@ const useMasterSafeCreationAndTransfer = () => {
     mutationFn: async () => {
       if (!initialFunds) return;
 
-      await WalletService.createSafe(chain, backupSignerAddress, initialFunds);
+      const response = await WalletService.createSafe(
+        chain,
+        backupSignerAddress,
+        initialFunds,
+      );
 
       return {
         isSafeCreated: true,
-        txnLink: null, // BE does not return the txn link yet
+        txnLink: response.safe_creation_explorer_link || null,
 
         // NOTE: Currently, both creation and transfer are handled in the same API call.
+        // Hence, the response contains the transfer status as well.
         masterSafeTransferStatus: 'FINISHED',
-        transfers: symbols.map((symbol) => ({
+        transfers: tokenSymbols.map((symbol) => ({
           symbol,
-          status: 'finish' as BridgingStepStatus, // Transferred as part of the creation, hence finish
-          txnLink: null, // BE does not return the txn link yet
+          status: 'finish' as BridgingStepStatus,
+          // BE does not return the txn link yet 👇🏽
+          txnLink: null,
         })),
       };
     },
@@ -185,17 +188,19 @@ export const BridgeInProgress = ({
   transfers,
 }: BridgeInProgressProps) => {
   const { goto } = usePageState();
+  const symbols = transfers.map((transfer) => transfer.toSymbol);
+
   const {
     isLoading: isBridging,
     isError: isBridgeError,
     data: bridge,
-  } = useBridgingSteps(quoteId);
+  } = useBridgingSteps(quoteId, symbols);
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
     data: masterSafeDetails,
     mutateAsync: createMasterSafe,
-  } = useMasterSafeCreationAndTransfer();
+  } = useMasterSafeCreationAndTransfer(symbols);
 
   const isBridgingCompleted = !!(
     bridge?.status === 'FINISHED' && !bridge?.isBridgingFailed
