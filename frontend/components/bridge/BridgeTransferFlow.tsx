@@ -6,7 +6,7 @@ import React from 'react';
 
 import { COLOR } from '@/constants/colors';
 import { CrossChainTransferDetails, TokenTransfer } from '@/types/Bridge';
-import { formatEther } from '@/utils/numberFormatters';
+import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
 
@@ -37,10 +37,10 @@ const TransferRow = ({ transfer }: { transfer: TokenTransfer }) => {
     <List.Item>
       <Flex justify="space-between" className="w-full">
         <Text>
-          {formatEther(fromAmount)} {fromSymbol}
+          {formatUnitsToNumber(fromAmount, 18, 8)} {fromSymbol}
         </Text>
         <Text>
-          {formatEther(toAmount)} {toSymbol}
+          {formatUnitsToNumber(toAmount, 18, 8)} {toSymbol}
         </Text>
       </Flex>
     </List.Item>
