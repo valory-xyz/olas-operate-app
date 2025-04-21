@@ -47,6 +47,10 @@ textarea,
   /* Scrollbar color when hovered */
 }
 
+.border-box {
+  box-sizing: border-box;
+}
+
 // antd overrides
 .ant-card {
   -webkit-app-region: no-drag;
@@ -56,11 +60,6 @@ textarea,
   .anticon {
     margin-top: 3px;
   }
-}
-
-.antd-card {
-  background-color: #FFFFFF;
-  overflow-y: scroll;
 }
 
 .balance {
