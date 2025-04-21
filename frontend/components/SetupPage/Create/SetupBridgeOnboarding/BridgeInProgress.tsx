@@ -57,15 +57,21 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
   const { isOnline } = useOnlineStatusContext();
 
   // `/execute` bridge API should be called first before fetching the status.
-  const { data: bridgeExecute } = useQuery({
+  const {
+    isLoading: isBridgeExecuteLoading,
+    isError: isBridgeExecuteError,
+    data: bridgeExecute,
+  } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
     queryFn: async () => {
       return await BridgeService.executeBridge(quoteId);
     },
     enabled: !!quoteId && isOnline,
+    retry: 3,
+    refetchOnWindowFocus: false,
   });
 
-  return useQuery({
+  const statusQuery = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY(quoteId),
     queryFn: async () => {
       return await BridgeService.getBridgeStatus(quoteId);
@@ -99,6 +105,12 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
     },
     enabled: !!quoteId && isOnline && !!bridgeExecute,
   });
+
+  return {
+    isBridgeExecuteLoading,
+    isBridgeExecuteError,
+    ...statusQuery,
+  };
 };
 
 // hook to create master safe and transfer funds (step 2 and 3)
@@ -191,8 +203,9 @@ export const BridgeInProgress = ({
   const symbols = transfers.map((transfer) => transfer.toSymbol);
 
   const {
+    isBridgeExecuteLoading,
+    isBridgeExecuteError,
     isLoading: isBridging,
-    isError: isBridgeError,
     data: bridge,
   } = useBridgingSteps(quoteId, symbols);
   const {
@@ -205,6 +218,7 @@ export const BridgeInProgress = ({
   const isBridgingCompleted = !!(
     bridge?.status === 'FINISHED' && !bridge?.isBridgingFailed
   );
+
   const isSafeCreated = masterSafeDetails?.isSafeCreated;
   const isTransferCompleted =
     masterSafeDetails?.masterSafeTransferStatus === 'FINISHED';
@@ -235,8 +249,8 @@ export const BridgeInProgress = ({
 
   const bridgeDetails = useMemo(() => {
     const currentBridgeStatus: BridgingStepStatus = (() => {
-      if (isBridgeError) return 'error';
-      if (isBridging) return 'process';
+      if (isBridgeExecuteError) return 'error';
+      if (isBridgeExecuteLoading || isBridging) return 'process';
       if (!bridge) return 'wait';
       if (bridge.isBridgingFailed) return 'error';
       return isBridgingCompleted ? 'finish' : 'process';
@@ -246,7 +260,13 @@ export const BridgeInProgress = ({
       status: currentBridgeStatus,
       subSteps: bridge?.bridgeRequestStatus || [],
     };
-  }, [isBridging, isBridgeError, isBridgingCompleted, bridge]);
+  }, [
+    isBridging,
+    isBridgeExecuteLoading,
+    isBridgeExecuteError,
+    isBridgingCompleted,
+    bridge,
+  ]);
 
   const masterSafeCreationDetails = useMemo(() => {
     const currentMasterSafeCreationStatus: BridgingStepStatus = (() => {
