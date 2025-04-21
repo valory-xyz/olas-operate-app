@@ -214,7 +214,7 @@ export const DepositForBridging = ({
 
     if (!bridgeTotalRequirements || !bridgeRefillRequirements) return [];
 
-    // TODO: OLAS token is not skipped for testing, to be removed!
+    // TODO: OLAS token is skipped for testing, to be removed!
     const totalRequirements = Object.entries(bridgeTotalRequirements).filter(
       ([tokenAddress]) =>
         tokenAddress !== ETHEREUM_TOKEN_CONFIG[TokenSymbol.OLAS].address,
