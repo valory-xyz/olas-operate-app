@@ -84,6 +84,7 @@ export type TokenTransfer = {
   fromAmount: string;
   toSymbol: TokenSymbol;
   toAmount: string;
+  decimals?: number;
 };
 
 export type CrossChainTransferDetails = {

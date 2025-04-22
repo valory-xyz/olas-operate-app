@@ -32,15 +32,15 @@ const TransferringAndReceivingRow = () => (
 );
 
 const TransferRow = ({ transfer }: { transfer: TokenTransfer }) => {
-  const { fromAmount, fromSymbol, toSymbol, toAmount } = transfer;
+  const { fromAmount, fromSymbol, toSymbol, toAmount, decimals } = transfer;
   return (
     <List.Item>
       <Flex justify="space-between" className="w-full">
         <Text>
-          {formatUnitsToNumber(fromAmount, 18, 8)} {fromSymbol}
+          {formatUnitsToNumber(fromAmount, decimals, 8)} {fromSymbol}
         </Text>
         <Text>
-          {formatUnitsToNumber(toAmount, 18, 8)} {toSymbol}
+          {formatUnitsToNumber(toAmount, decimals, 8)} {toSymbol}
         </Text>
       </Flex>
     </List.Item>

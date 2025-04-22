@@ -258,6 +258,7 @@ export const BridgeInProgress = ({
     const currentBridgeStatus: BridgingStepStatus = (() => {
       if (isBridgeExecuteError) return 'error';
       if (isBridgeExecuteLoading || isBridging) return 'process';
+      if (isBridging) return 'process';
       if (!bridge) return 'wait';
       if (bridge.isBridgingFailed) return 'error';
       return isBridgingCompleted ? 'finish' : 'process';
@@ -269,8 +270,8 @@ export const BridgeInProgress = ({
     };
   }, [
     isBridging,
-    isBridgeExecuteLoading,
     isBridgeExecuteError,
+    isBridgeExecuteLoading,
     isBridgingCompleted,
     bridge,
   ]);

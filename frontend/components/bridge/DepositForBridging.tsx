@@ -308,6 +308,7 @@ export const DepositForBridging = ({
           fromAmount: token.currentBalanceInWei.toString(),
           toSymbol: token.symbol,
           toAmount: toAmount?.toString() || '0',
+          decimals: token.decimals,
         };
       }),
     });
