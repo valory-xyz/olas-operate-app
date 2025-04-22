@@ -50,26 +50,28 @@ export const HelpAndSupport = () => {
   const onSaveLogs = useCallback(() => setCanSaveLogs(true), []);
 
   useEffect(() => {
-    if (canSaveLogs && logs && !isLoading) {
-      setIsLoading(true);
-      saveLogs?.(logs)
-        .then((result) => {
-          if (result.success) {
-            message.success({
-              content: (
-                <LogsSavedMessage onClick={() => openPath?.(result.dirPath)} />
-              ),
-              duration: 10,
-            });
-          } else {
-            message.error('Save logs failed or cancelled');
-          }
-        })
-        .finally(() => {
-          setIsLoading(false);
-          setCanSaveLogs(false);
-        });
-    }
+    if (isLoading) return;
+    if (!logs) return;
+    if (!canSaveLogs) return;
+
+    setIsLoading(true);
+    saveLogs?.(logs)
+      .then((result) => {
+        if (result.success) {
+          message.success({
+            content: (
+              <LogsSavedMessage onClick={() => openPath?.(result.dirPath)} />
+            ),
+            duration: 10,
+          });
+        } else {
+          message.error('Save logs failed or cancelled');
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+        setCanSaveLogs(false);
+      });
   }, [canSaveLogs, isLoading, logs, openPath, saveLogs]);
 
   return (
