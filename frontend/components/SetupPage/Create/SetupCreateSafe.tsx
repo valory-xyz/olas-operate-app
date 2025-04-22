@@ -53,7 +53,7 @@ const CreationError = () => (
 );
 
 export const SetupCreateSafe = () => {
-  const { goto, setUserLoggedIn } = usePageState();
+  const { goto } = usePageState();
   const {
     masterSafes,
     refetch: updateWallets,
@@ -166,7 +166,6 @@ export const SetupCreateSafe = () => {
       }
     })().then(() => {
       setIsCreatingSafe(false);
-      setUserLoggedIn();
     });
   }, [
     backupSignerAddress,
@@ -177,7 +176,6 @@ export const SetupCreateSafe = () => {
     masterSafes,
     masterSafesOwnersIsLoading,
     serviceTemplate,
-    setUserLoggedIn,
   ]);
 
   // Only progress is the safe is created and accessible via context (updates on timeout)

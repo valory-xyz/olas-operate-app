@@ -6,7 +6,7 @@ import React from 'react';
 
 import { COLOR } from '@/constants/colors';
 import { CrossChainTransferDetails, TokenTransfer } from '@/types/Bridge';
-import { formatEther } from '@/utils/numberFormatters';
+import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
 
@@ -32,15 +32,15 @@ const TransferringAndReceivingRow = () => (
 );
 
 const TransferRow = ({ transfer }: { transfer: TokenTransfer }) => {
-  const { fromAmount, fromSymbol, toSymbol, toAmount } = transfer;
+  const { fromAmount, fromSymbol, toSymbol, toAmount, decimals } = transfer;
   return (
     <List.Item>
       <Flex justify="space-between" className="w-full">
         <Text>
-          {formatEther(fromAmount)} {fromSymbol}
+          {formatUnitsToNumber(fromAmount, decimals, 8)} {fromSymbol}
         </Text>
         <Text>
-          {formatEther(toAmount)} {toSymbol}
+          {formatUnitsToNumber(toAmount, decimals, 8)} {toSymbol}
         </Text>
       </Flex>
     </List.Item>
