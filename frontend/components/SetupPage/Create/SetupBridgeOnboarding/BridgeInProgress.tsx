@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Typography } from 'antd';
-import { useEffect, useMemo } from 'react';
+import { Button, Typography } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
 
 import { AddressBalanceRecord } from '@/client';
 import { CustomAlert } from '@/components/Alert';
@@ -53,7 +53,11 @@ const Header = () => (
 );
 
 // hook to fetch bridging steps (step 1)
-const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
+const useBridgingSteps = (
+  quoteId: string,
+  tokenSymbols: TokenSymbol[],
+  canExecuteBridge: boolean,
+) => {
   const { isOnline } = useOnlineStatusContext();
 
   // `/execute` bridge API should be called first before fetching the status.
@@ -66,7 +70,7 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
     queryFn: async () => {
       return await BridgeService.executeBridge(quoteId);
     },
-    enabled: !!quoteId && isOnline,
+    enabled: !!quoteId && isOnline && canExecuteBridge,
     retry: 3,
     refetchOnWindowFocus: false,
   });
@@ -201,13 +205,14 @@ export const BridgeInProgress = ({
 }: BridgeInProgressProps) => {
   const { goto } = usePageState();
   const symbols = transfers.map((transfer) => transfer.toSymbol);
+  const [canExecuteBridge, setCanExecuteBridge] = useState(false);
 
   const {
     isBridgeExecuteLoading,
     isBridgeExecuteError,
     isLoading: isBridging,
     data: bridge,
-  } = useBridgingSteps(quoteId, symbols);
+  } = useBridgingSteps(quoteId, symbols, canExecuteBridge);
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
@@ -229,6 +234,7 @@ export const BridgeInProgress = ({
     if (!isBridgingCompleted) return;
     if (isLoadingMasterSafeCreation) return;
     if (masterSafeDetails?.isSafeCreated) return;
+    if (!canExecuteBridge) return;
 
     createMasterSafe();
   }, [
@@ -236,6 +242,7 @@ export const BridgeInProgress = ({
     isLoadingMasterSafeCreation,
     masterSafeDetails,
     createMasterSafe,
+    canExecuteBridge,
   ]);
 
   // Redirect to main page if all steps are completed
@@ -316,6 +323,13 @@ export const BridgeInProgress = ({
           toChain={toChain}
           transfers={transfers}
         />
+        <Button
+          onClick={() => setCanExecuteBridge(true)}
+          type="primary"
+          loading={isBridging || isBridgeExecuteLoading}
+        >
+          Execute Bridge (For testing)
+        </Button>
         {!!bridgeDetails && (
           <BridgingSteps
             chainName="Base"

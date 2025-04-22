@@ -82,10 +82,10 @@ const generateBridgeStep = (
       const isFailed = status === 'error';
       const description = (() => {
         if (status === 'finish') {
-          return `Bridging ${symbol} transaction complete.`;
+          return `Bridging ${symbol || ''} transaction complete.`;
         }
         if (status === 'error') {
-          return `Bridging ${symbol} failed.`;
+          return `Bridging ${symbol || ''} failed.`;
         }
         return `Sending transaction...`;
       })();
