@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AddressBalanceRecord } from '@/client';
 import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
-import { BridgingSteps } from '@/components/bridge/BridgingSteps';
+import { BridgingSteps, StepEvent } from '@/components/bridge/BridgingSteps';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
@@ -63,8 +63,10 @@ const useBridgingSteps = (
   // `/execute` bridge API should be called first before fetching the status.
   const {
     isLoading: isBridgeExecuteLoading,
+    isFetching: isBridgeExecuteFetching,
     isError: isBridgeExecuteError,
     data: bridgeExecute,
+    refetch: refetchBridgeExecute,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
     queryFn: async () => {
@@ -98,7 +100,7 @@ const useBridgingSteps = (
             status,
             txnLink: step.explorer_link,
           };
-        }),
+        }) satisfies StepEvent[],
       };
     },
     // fetch by interval until the status is FINISHED
@@ -111,8 +113,9 @@ const useBridgingSteps = (
   });
 
   return {
-    isBridgeExecuteLoading,
+    isBridgeExecuteLoading: isBridgeExecuteFetching || isBridgeExecuteLoading,
     isBridgeExecuteError,
+    refetchBridgeExecute,
     ...statusQuery,
   };
 };
@@ -185,8 +188,7 @@ const useMasterSafeCreationAndTransfer = (tokenSymbols: TokenSymbol[]) => {
           transfers: tokenSymbols.map((symbol) => ({
             symbol,
             status: 'finish' as BridgingStepStatus,
-            // BE does not return the txn link yet 👇🏽
-            txnLink: null,
+            txnLink: null, // BE does not return the txn link yet
           })),
         };
       } catch (error) {
@@ -215,6 +217,7 @@ export const BridgeInProgress = ({
   const {
     isBridgeExecuteLoading,
     isBridgeExecuteError,
+    refetchBridgeExecute,
     isLoading: isBridging,
     data: bridge,
   } = useBridgingSteps(quoteId, symbols, canExecuteBridge);
@@ -265,7 +268,6 @@ export const BridgeInProgress = ({
     const currentBridgeStatus: BridgingStepStatus = (() => {
       if (isBridgeExecuteError) return 'error';
       if (isBridgeExecuteLoading || isBridging) return 'process';
-      if (isBridging) return 'process';
       if (!bridge) return 'wait';
       if (bridge.isBridgingFailed) return 'error';
       return isBridgingCompleted ? 'finish' : 'process';
@@ -273,14 +275,19 @@ export const BridgeInProgress = ({
 
     return {
       status: currentBridgeStatus,
-      subSteps: bridge?.bridgeRequestStatus || [],
+      subSteps: (bridge?.bridgeRequestStatus || []).map((step) => ({
+        ...step,
+        onRetry: refetchBridgeExecute,
+        onRetryProps: { isLoading: currentBridgeStatus === 'process' },
+      })) satisfies StepEvent[],
     };
   }, [
     isBridging,
-    isBridgeExecuteError,
     isBridgeExecuteLoading,
+    isBridgeExecuteError,
     isBridgingCompleted,
     bridge,
+    refetchBridgeExecute,
   ]);
 
   const masterSafeCreationDetails = useMemo(() => {
@@ -294,13 +301,22 @@ export const BridgeInProgress = ({
 
     return {
       status: currentMasterSafeCreationStatus,
-      subSteps: [{ txnLink: null }], // BE to be updated to return the txn link
+      subSteps: [
+        {
+          txnLink: null, // BE to be updated to return the txn link
+          onRetry: createMasterSafe,
+          onRetryProps: {
+            isLoading: currentMasterSafeCreationStatus === 'process',
+          },
+        },
+      ] satisfies StepEvent[],
     };
   }, [
     isBridgingCompleted,
     isSafeCreated,
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
+    createMasterSafe,
   ]);
 
   const masterSafeTransferDetails = useMemo(() => {
@@ -312,14 +328,22 @@ export const BridgeInProgress = ({
 
     return {
       status: currentMasterSafeStatus,
-      subSteps: masterSafeDetails?.transfers || [],
+      subSteps: (masterSafeDetails?.transfers || []).map((transfer) => ({
+        ...transfer,
+        onRetry: createMasterSafe,
+        onRetryProps: {
+          isLoading: masterSafeCreationDetails.status === 'process',
+        },
+      })) satisfies StepEvent[],
     };
   }, [
     isErrorMasterSafeCreation,
     isSafeCreated,
     isBridgingCompleted,
     isTransferCompleted,
+    masterSafeCreationDetails,
     masterSafeDetails?.transfers,
+    createMasterSafe,
   ]);
 
   return (
