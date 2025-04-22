@@ -152,26 +152,31 @@ const useMasterSafeCreationAndTransfer = (tokenSymbols: TokenSymbol[]) => {
     mutationFn: async () => {
       if (!initialFunds) return;
 
-      const response = await WalletService.createSafe(
-        chain,
-        backupSignerAddress,
-        initialFunds,
-      );
+      try {
+        const response = await WalletService.createSafe(
+          chain,
+          backupSignerAddress,
+          initialFunds,
+        );
 
-      return {
-        isSafeCreated: true,
-        txnLink: response.safe_creation_explorer_link || null,
+        return {
+          isSafeCreated: true,
+          txnLink: response.safe_creation_explorer_link || null,
 
-        // NOTE: Currently, both creation and transfer are handled in the same API call.
-        // Hence, the response contains the transfer status as well.
-        masterSafeTransferStatus: 'FINISHED',
-        transfers: tokenSymbols.map((symbol) => ({
-          symbol,
-          status: 'finish' as BridgingStepStatus,
-          // BE does not return the txn link yet 👇🏽
-          txnLink: null,
-        })),
-      };
+          // NOTE: Currently, both creation and transfer are handled in the same API call.
+          // Hence, the response contains the transfer status as well.
+          masterSafeTransferStatus: 'FINISHED',
+          transfers: tokenSymbols.map((symbol) => ({
+            symbol,
+            status: 'finish' as BridgingStepStatus,
+            // BE does not return the txn link yet 👇🏽
+            txnLink: null,
+          })),
+        };
+      } catch (error) {
+        console.error('Safe creation failed:', error);
+        throw error;
+      }
     },
   });
 };
@@ -214,6 +219,7 @@ export const BridgeInProgress = ({
   useEffect(() => {
     if (!isBridgingCompleted) return;
     if (isLoadingMasterSafeCreation) return;
+    if (isErrorMasterSafeCreation) return;
     if (masterSafeDetails?.isSafeCreated) return;
 
     createMasterSafe();
@@ -221,6 +227,7 @@ export const BridgeInProgress = ({
     isBridgingCompleted,
     isLoadingMasterSafeCreation,
     masterSafeDetails,
+    isErrorMasterSafeCreation,
     createMasterSafe,
   ]);
 
