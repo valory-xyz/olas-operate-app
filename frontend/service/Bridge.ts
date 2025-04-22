@@ -13,21 +13,21 @@ const BRIDGE_REQUIREMENTS_MOCK = {
   id: 'qb-56410704-b8da-49d9-85f2-1fd2133b24fb',
   balances: {
     ethereum: {
-      '0x74Ef2c54b359414B88779Ea61fBf4Bda713Dd0Ac': {
+      '0x922C7972F56aA738f2bbA30Ef1d5F54a5Cd6E61c': {
         '0x0000000000000000000000000000000000000000': 100000000000000,
       },
     },
   },
   bridge_total_requirements: {
     ethereum: {
-      '0x74Ef2c54b359414B88779Ea61fBf4Bda713Dd0Ac': {
+      '0x922C7972F56aA738f2bbA30Ef1d5F54a5Cd6E61c': {
         '0x0000000000000000000000000000000000000000': 64223356851030,
       },
     },
   },
   bridge_refill_requirements: {
     ethereum: {
-      '0x74Ef2c54b359414B88779Ea61fBf4Bda713Dd0Ac': {
+      '0x922C7972F56aA738f2bbA30Ef1d5F54a5Cd6E61c': {
         '0x0000000000000000000000000000000000000000': 0,
       },
     },
@@ -57,10 +57,9 @@ const executeBridgeMock = {
         '0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
     },
     {
-      explorer_link:
-        'https://scan.li.fi/tx/0x0e53f1b6aa5552f2d4cfe8e623dd95e54ca079c4b23b89d0c0aa6ed4a6442384',
+      explorer_link: null,
       message: null,
-      status: 'EXECUTION_DONE',
+      status: 'EXECUTION_FAILED',
       tx_hash:
         '0x0e53f1b6aa5552f2d4cfe8e623dd95e54ca079c4b23b89d0c0aa6ed4a6442384',
     },
@@ -82,15 +81,14 @@ const getBridgeStatusMock = {
         '0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
     },
     {
-      explorer_link:
-        'https://scan.li.fi/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
+      explorer_link: null,
       message: null,
-      status: 'EXECUTION_DONE',
+      status: 'EXECUTION_FAILED',
       tx_hash:
         '0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
     },
   ],
-  error: false,
+  error: true,
 } as const satisfies BridgeStatusResponse;
 
 /**
@@ -117,21 +115,23 @@ const getBridgeRefillRequirements = async (
 /**
  * Execute bridge for the provided quote bundle id
  */
-const executeBridge = async (id: string): Promise<BridgeStatusResponse> =>
-  TEST
-    ? new Promise((resolve) =>
-        setTimeout(() => resolve(executeBridgeMock), 5_000),
-      )
-    : fetch(`${BACKEND_URL}/bridge/execute`, {
-        method: 'POST',
-        headers: { ...CONTENT_TYPE_JSON_UTF8 },
-        body: JSON.stringify({ id }),
-      }).then((response) => {
-        if (response.ok) return response.json();
-        throw new Error(
-          `Failed to execute bridge quote for the following quote id: ${id}`,
-        );
-      });
+const executeBridge = async (id: string): Promise<BridgeStatusResponse> => {
+  if (TEST) {
+    return new Promise((resolve) =>
+      setTimeout(() => resolve(executeBridgeMock), 5_000),
+    );
+  }
+  return fetch(`${BACKEND_URL}/bridge/execute`, {
+    method: 'POST',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    body: JSON.stringify({ id }),
+  }).then((response) => {
+    if (response.ok) return response.json();
+    throw new Error(
+      `Failed to execute bridge quote for the following quote id: ${id}`,
+    );
+  });
+};
 
 /**
  * Get status of the bridge for the provided quote bundle id
