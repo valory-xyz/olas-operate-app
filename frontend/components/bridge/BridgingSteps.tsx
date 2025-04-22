@@ -10,6 +10,8 @@ import { TokenSymbol } from '@/enums/Token';
 import { BridgingStepStatus as Status } from '@/types/Bridge';
 import { Maybe, Nullable } from '@/types/Util';
 
+import { ExportLogsButton } from '../ExportLogsButton';
+
 const { Text } = Typography;
 
 const SubStepRow = styled.div`
@@ -47,7 +49,7 @@ const FundsAreSafeMessage = ({
           Retry
         </Button>
       )}
-      <Button size="small">Export logs</Button>
+      <ExportLogsButton size="small" />
     </Flex>
 
     <Text className="text-sm text-lighter">
