@@ -30,14 +30,25 @@ const TxnDetails = ({ link }: { link: string }) => (
   </a>
 );
 
-type FundsAreSafeMessageProps = { onRetry?: () => void };
-const FundsAreSafeMessage = ({ onRetry }: FundsAreSafeMessageProps) => (
+type FundsAreSafeMessageProps = Pick<StepEvent, 'onRetry' | 'onRetryProps'>;
+const FundsAreSafeMessage = ({
+  onRetry = noop,
+  onRetryProps,
+}: FundsAreSafeMessageProps) => (
   <Flex vertical gap={8} align="flex-start" className="mt-12 text-sm">
-    {onRetry && (
-      <Button onClick={onRetry} type="primary" size="small">
-        Retry
-      </Button>
-    )}
+    <Flex gap={8}>
+      {onRetry && (
+        <Button
+          loading={onRetryProps?.isLoading}
+          onClick={onRetry}
+          type="primary"
+          size="small"
+        >
+          Retry
+        </Button>
+      )}
+      <Button size="small">Export logs</Button>
+    </Flex>
 
     <Text className="text-sm text-lighter">
       Don&apos;t worry, your funds remain safe. You can access them by importing
@@ -62,14 +73,16 @@ type Step = {
     txnLink: Maybe<string>;
     isFailed?: boolean;
     onRetry?: () => void;
+    onRetryProps?: { isLoading: boolean };
   }[];
 };
 
-type StepEvent = {
+export type StepEvent = {
   symbol?: TokenSymbol;
   status?: Status;
   txnLink?: Maybe<string>;
   onRetry?: () => void;
+  onRetryProps?: { isLoading: boolean };
 };
 
 const generateBridgeStep = (
@@ -78,20 +91,22 @@ const generateBridgeStep = (
 ): Omit<Step, 'title'> => {
   return {
     status,
-    computedSubSteps: subSteps.map(({ symbol, status, txnLink }) => {
-      const isFailed = status === 'error';
-      const description = (() => {
-        if (status === 'finish') {
-          return `Bridging ${symbol} transaction complete.`;
-        }
-        if (status === 'error') {
-          return `Bridging ${symbol} failed.`;
-        }
-        return `Sending transaction...`;
-      })();
+    computedSubSteps: subSteps.map(
+      ({ symbol, status, txnLink, onRetry, onRetryProps }) => {
+        const isFailed = status === 'error';
+        const description = (() => {
+          if (status === 'finish') {
+            return `Bridging ${symbol || ''} transaction complete.`;
+          }
+          if (status === 'error') {
+            return `Bridging ${symbol || ''} failed.`;
+          }
+          return `Sending transaction...`;
+        })();
 
-      return { description, txnLink, isFailed };
-    }),
+        return { description, txnLink, isFailed, onRetry, onRetryProps };
+      },
+    ),
   };
 };
 
@@ -205,7 +220,10 @@ export const BridgingSteps = ({
               {subStep.description && <Desc text={subStep.description} />}
               {subStep.txnLink && <TxnDetails link={subStep.txnLink} />}
               {subStep.isFailed && (
-                <FundsAreSafeMessage onRetry={subStep.onRetry || noop} />
+                <FundsAreSafeMessage
+                  onRetry={subStep.onRetry}
+                  onRetryProps={subStep.onRetryProps}
+                />
               )}
             </SubStepRow>
           )),
