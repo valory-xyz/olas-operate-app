@@ -257,12 +257,12 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  service_version: 'v0.3.12',
+  service_version: 'v0.3.13',
   home_chain: MiddlewareChain.MODE,
   configurations: {
     [MiddlewareChain.MODE]: {
       staking_program_id: StakingProgramId.ModiusAlpha, // default, may be overwritten
-      nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
+      nft: 'bafybeic7txacg4n4snpldcaf46dp7eyrrbyrt7pejuaoztvuyidutqagby',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
       threshold: 1,
