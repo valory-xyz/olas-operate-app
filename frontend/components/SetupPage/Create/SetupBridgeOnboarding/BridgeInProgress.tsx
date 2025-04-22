@@ -167,13 +167,13 @@ const useMasterSafeCreationAndTransfer = (tokenSymbols: TokenSymbol[]) => {
     mutationFn: async () => {
       if (!initialFunds) return;
 
-      const response = await WalletService.createSafe(
-        chain,
-        backupSignerAddress,
-        initialFunds,
-      );
-
       try {
+        const response = await WalletService.createSafe(
+          chain,
+          backupSignerAddress,
+          initialFunds,
+        );
+
         return {
           isSafeCreated: true,
           txnLink: response.safe_creation_explorer_link || null,
@@ -235,6 +235,7 @@ export const BridgeInProgress = ({
   useEffect(() => {
     if (!isBridgingCompleted) return;
     if (isLoadingMasterSafeCreation) return;
+    if (isErrorMasterSafeCreation) return;
     if (masterSafeDetails?.isSafeCreated) return;
 
     createMasterSafe();
@@ -242,6 +243,7 @@ export const BridgeInProgress = ({
     isBridgingCompleted,
     isLoadingMasterSafeCreation,
     masterSafeDetails,
+    isErrorMasterSafeCreation,
     createMasterSafe,
   ]);
 

@@ -4,16 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useLogs } from '@/hooks/useLogs';
 
-const LogsSavedMessage = ({ onClick }: { onClick: () => void }) => {
-  return (
-    <span>
-      Logs saved
-      <Button type="link" size="small" onClick={onClick}>
-        Open folder
-      </Button>
-    </span>
-  );
-};
+const LogsSavedMessage = ({ onClick }: { onClick: () => void }) => (
+  <span>
+    Logs saved
+    <Button type="link" size="small" onClick={onClick}>
+      Open folder
+    </Button>
+  </span>
+);
 
 type ExportLogsButtonProps = { size?: ButtonProps['size'] };
 
