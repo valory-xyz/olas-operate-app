@@ -178,7 +178,7 @@ async function beforeQuit(event) {
     logger.electron('Killed backend server by shutdown endpoint!');
     logger.electron(
       'Killed backend server by shutdown endpoint! result:' +
-      JSON.stringify(result),
+        JSON.stringify(result),
     );
   } catch (err) {
     logger.electron('Backend stopped with error!');
