@@ -1,21 +1,21 @@
-import { Button, message } from 'antd';
+import { Button, ButtonProps, message } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useLogs } from '@/hooks/useLogs';
 
-const LogsSavedMessage = ({ onClick }: { onClick: () => void }) => {
-  return (
-    <span>
-      Logs saved
-      <Button type="link" size="small" onClick={onClick}>
-        Open folder
-      </Button>
-    </span>
-  );
-};
+const LogsSavedMessage = ({ onClick }: { onClick: () => void }) => (
+  <span>
+    Logs saved
+    <Button type="link" size="small" onClick={onClick}>
+      Open folder
+    </Button>
+  </span>
+);
 
-export const ExportLogsButton = () => {
+type ExportLogsButtonProps = { size?: ButtonProps['size'] };
+
+export const ExportLogsButton = ({ size }: ExportLogsButtonProps) => {
   const { openPath, saveLogs } = useElectronApi();
   const logs = useLogs();
 
@@ -53,7 +53,7 @@ export const ExportLogsButton = () => {
     <Button
       type="primary"
       ghost
-      size="large"
+      size={size || 'large'}
       loading={isLoading || canSaveLogs}
       onClick={onSaveLogs}
     >
