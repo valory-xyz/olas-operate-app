@@ -333,13 +333,21 @@ export const DepositForBridging = ({
       ) : (
         <>
           <Flex gap={8} align="start" vertical className="p-16">
-            {tokens.map((token) => (
-              <TokenInfo
-                key={token.symbol}
-                {...token}
-                precision={token.isNative ? 4 : 2}
-              />
-            ))}
+            {tokens.length === 0 ? (
+              <Flex gap={8} align="center">
+                No tokens to deposit!
+              </Flex>
+            ) : (
+              <>
+                {tokens.map((token) => (
+                  <TokenInfo
+                    key={token.symbol}
+                    {...token}
+                    precision={token.isNative ? 4 : 2}
+                  />
+                ))}
+              </>
+            )}
           </Flex>
           <Divider className="m-0" />
           <DepositAddress />

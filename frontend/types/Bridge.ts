@@ -14,11 +14,6 @@ import { Maybe, Nullable } from './Util';
 export type BridgingStepStatus = 'process' | 'wait' | 'finish' | 'error';
 
 /**
- * Status of the overall quote.
- */
-export type QuoteBundleStatus = 'CREATED' | 'QUOTED' | 'SUBMITTED' | 'FINISHED';
-
-/**
  * Execution status of each bridge step.
  * For example, status of bridging ethereum to base.
  *
@@ -29,6 +24,7 @@ export type QuoteBundleStatus = 'CREATED' | 'QUOTED' | 'SUBMITTED' | 'FINISHED';
  * EXECUTION_FAILED: Execution failed.
  */
 export type QuoteStatus =
+  | 'CREATED'
   | 'QUOTE_DONE'
   | 'QUOTE_FAILED'
   | 'EXECUTION_PENDING'
@@ -62,7 +58,6 @@ export type BridgeRefillRequirementsResponse = {
   bridge_request_status: { message: string; status: QuoteStatus }[];
   expiration_timestamp: number;
   is_refill_required: boolean;
-  error: boolean;
 };
 
 type QuoteRequestStatus = {
@@ -74,9 +69,8 @@ type QuoteRequestStatus = {
 
 export type BridgeStatusResponse = {
   id: string;
-  status: QuoteBundleStatus;
+  status: QuoteStatus;
   bridge_request_status: QuoteRequestStatus[];
-  error: boolean;
 };
 
 export type TokenTransfer = {
