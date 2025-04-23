@@ -61,7 +61,6 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
     isLoading: isBridgeExecuteLoading,
     isFetching: isBridgeExecuteFetching,
     isError: isBridgeExecuteError,
-    data: bridgeExecute,
     refetch: refetchBridgeExecute,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
@@ -88,8 +87,12 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
       const isBridgingFailed = bridge_request_status.some(
         (step) => step.status === 'EXECUTION_FAILED',
       );
+      const isBridgingCompleted = bridge_request_status.every(
+        (step) => step.status === 'EXECUTION_DONE',
+      );
       return {
         status,
+        isBridgingCompleted,
         isBridgingFailed,
         bridgeRequestStatus: bridge_request_status.map((step, index) => {
           const status: BridgingStepStatus = (() => {
@@ -114,7 +117,8 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
       );
       return isBridgingFailed ? false : FIVE_SECONDS_INTERVAL;
     },
-    enabled: !!quoteId && isOnline && !!bridgeExecute,
+    enabled:
+      !!quoteId && isOnline && !isBridgeExecuteLoading && !isBridgeExecuteError,
   });
 
   return {
@@ -232,10 +236,6 @@ export const BridgeInProgress = ({
     mutateAsync: createMasterSafe,
   } = useMasterSafeCreationAndTransfer(symbols);
 
-  const isBridgingCompleted = !!(
-    bridge?.status === 'EXECUTION_DONE' && !bridge?.isBridgingFailed
-  );
-
   const isSafeCreated = masterSafeDetails?.isSafeCreated;
   const isTransferCompleted =
     masterSafeDetails?.masterSafeTransferStatus === 'FINISHED';
@@ -275,7 +275,9 @@ export const BridgeInProgress = ({
       if (isBridgeExecuteLoading || isBridging) return 'process';
       if (!bridge) return 'wait';
       if (bridge.isBridgingFailed) return 'error';
-      return 'finish';
+      if (bridge.isBridgingCompleted) return 'finish';
+
+      return 'wait';
     })();
 
     return {
@@ -297,7 +299,7 @@ export const BridgeInProgress = ({
   const masterSafeCreationDetails = useMemo(() => {
     const currentMasterSafeCreationStatus: BridgingStepStatus = (() => {
       if (isErrorMasterSafeCreation) return 'error';
-      if (!isBridgingCompleted) return 'wait';
+      if (!bridge?.isBridgingCompleted) return 'wait';
       if (isLoadingMasterSafeCreation) return 'process';
       if (isSafeCreated) return 'finish';
       return 'process';
@@ -316,7 +318,7 @@ export const BridgeInProgress = ({
       ] satisfies StepEvent[],
     };
   }, [
-    isBridgingCompleted,
+    bridge?.isBridgingCompleted,
     isSafeCreated,
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
@@ -326,7 +328,7 @@ export const BridgeInProgress = ({
   const masterSafeTransferDetails = useMemo(() => {
     const currentMasterSafeStatus: BridgingStepStatus = (() => {
       if (isErrorMasterSafeCreation) return 'error';
-      if (!isBridgingCompleted || !isSafeCreated) return 'wait';
+      if (!bridge?.isBridgingCompleted || !isSafeCreated) return 'wait';
       return isTransferCompleted ? 'finish' : 'wait';
     })();
 
@@ -343,7 +345,7 @@ export const BridgeInProgress = ({
   }, [
     isErrorMasterSafeCreation,
     isSafeCreated,
-    isBridgingCompleted,
+    bridge?.isBridgingCompleted,
     isTransferCompleted,
     masterSafeCreationDetails,
     masterSafeDetails?.transfers,
