@@ -226,8 +226,8 @@ export const BridgeInProgress = ({
     mutateAsync: createMasterSafe,
   } = useMasterSafeCreationAndTransfer(symbols);
 
-  const isBridgingCompleted = !!(
-    bridge?.status === 'EXECUTION_DONE' && !bridge?.isBridgingFailed
+  const isBridgingCompleted = !!bridge?.bridgeRequestStatus.every(
+    (step) => step.status === 'finish',
   );
   const isSafeCreated = masterSafeDetails?.isSafeCreated;
   const isTransferCompleted =
