@@ -61,7 +61,6 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
     isLoading: isBridgeExecuteLoading,
     isFetching: isBridgeExecuteFetching,
     isError: isBridgeExecuteError,
-    data: bridgeExecute,
     refetch: refetchBridgeExecute,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
@@ -69,8 +68,9 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
       return await BridgeService.executeBridge(quoteId);
     },
     enabled: !!quoteId && isOnline,
-    retry: 3,
+    retry: false,
     refetchOnWindowFocus: false,
+    refetchInterval: false,
   });
 
   const statusQuery = useQuery({
@@ -112,7 +112,8 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
       );
       return isBridgingFailed ? false : FIVE_SECONDS_INTERVAL;
     },
-    enabled: !!quoteId && isOnline && !!bridgeExecute,
+    enabled:
+      !!quoteId && isOnline && !isBridgeExecuteLoading && !isBridgeExecuteError,
   });
 
   return {
