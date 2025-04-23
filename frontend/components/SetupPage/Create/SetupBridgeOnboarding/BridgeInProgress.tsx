@@ -79,8 +79,10 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
     queryFn: async () => {
       return await BridgeService.getBridgeStatus(quoteId);
     },
-    select: ({ status, error, bridge_request_status }) => {
-      const isBridgingFailed = status === 'FINISHED' && error;
+    select: ({ status, bridge_request_status }) => {
+      const isBridgingFailed = bridge_request_status.some(
+        (step) => step.status === 'EXECUTION_FAILED',
+      );
       return {
         status,
         isBridgingFailed,
@@ -88,7 +90,7 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
           const status: BridgingStepStatus = (() => {
             if (step.status === 'EXECUTION_DONE') return 'finish';
             if (step.status === 'EXECUTION_FAILED') return 'error';
-            if (step.status === 'QUOTE_FAILED') return 'process';
+            if (step.status === 'EXECUTION_PENDING') return 'process';
             return 'process';
           })();
 
@@ -102,9 +104,10 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
     },
     // fetch by interval until the status is FINISHED
     refetchInterval: ({ state }) => {
-      const status = state?.data?.status;
-      if (status === 'FINISHED') return false;
-      return FIVE_SECONDS_INTERVAL;
+      const isBridgingFailed = state?.data?.bridge_request_status.some(
+        (step) => step.status === 'EXECUTION_FAILED',
+      );
+      return isBridgingFailed ? false : FIVE_SECONDS_INTERVAL;
     },
     enabled: !!quoteId && isOnline && !!bridgeExecute,
   });
@@ -225,7 +228,7 @@ export const BridgeInProgress = ({
   } = useMasterSafeCreationAndTransfer(symbols);
 
   const isBridgingCompleted = !!(
-    bridge?.status === 'FINISHED' && !bridge?.isBridgingFailed
+    bridge?.status === 'EXECUTION_DONE' && !bridge?.isBridgingFailed
   );
 
   const isSafeCreated = masterSafeDetails?.isSafeCreated;
@@ -235,28 +238,31 @@ export const BridgeInProgress = ({
   // Create master safe after the bridging is completed
   // and if the master safe is not created yet
   useEffect(() => {
-    if (!isBridgingCompleted) return;
+    if (isBridgeExecuteLoading) return;
+    if (bridge?.isBridgingFailed || isBridgeExecuteError) return;
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
     if (masterSafeDetails?.isSafeCreated) return;
 
     createMasterSafe();
   }, [
-    isBridgingCompleted,
+    isBridgeExecuteLoading,
+    bridge?.isBridgingFailed,
+    isBridgeExecuteError,
     isLoadingMasterSafeCreation,
     masterSafeDetails,
     isErrorMasterSafeCreation,
     createMasterSafe,
   ]);
 
-  // Redirect to main page if all steps are completed
+  // Redirect to main page if all 3 steps are completed
   useEffect(() => {
-    if (!isBridgingCompleted) return;
+    if (bridge?.isBridgingFailed) return;
     if (!isSafeCreated) return;
     if (!isTransferCompleted) return;
 
     goto(Pages.Main);
-  }, [isBridgingCompleted, isSafeCreated, isTransferCompleted, goto]);
+  }, [bridge?.isBridgingFailed, isSafeCreated, isTransferCompleted, goto]);
 
   const bridgeDetails = useMemo(() => {
     const currentBridgeStatus: BridgingStepStatus = (() => {
@@ -264,7 +270,7 @@ export const BridgeInProgress = ({
       if (isBridgeExecuteLoading || isBridging) return 'process';
       if (!bridge) return 'wait';
       if (bridge.isBridgingFailed) return 'error';
-      return isBridgingCompleted ? 'finish' : 'process';
+      return 'finish';
     })();
 
     return {
@@ -279,7 +285,6 @@ export const BridgeInProgress = ({
     isBridging,
     isBridgeExecuteLoading,
     isBridgeExecuteError,
-    isBridgingCompleted,
     bridge,
     refetchBridgeExecute,
   ]);

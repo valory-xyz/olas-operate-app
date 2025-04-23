@@ -21,7 +21,7 @@ export const DepositAddress = () => {
   }, [address]);
 
   return (
-    <Flex gap={8} vertical className="p-16">
+    <Flex gap={8} vertical className="p-16 w-full border-box">
       <Flex justify="space-between" align="center">
         <Text className="text-sm" type="secondary">
           Deposit address
