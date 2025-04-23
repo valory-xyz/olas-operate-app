@@ -7,7 +7,7 @@ import {
   QuoteStatus,
 } from '@/types/Bridge';
 
-const TEST = true;
+const TEST = false;
 
 const BRIDGE_REQUIREMENTS_MOCK = {
   id: 'qb-56410704-b8da-49d9-85f2-1fd2133b24fb',
@@ -115,23 +115,21 @@ const getBridgeRefillRequirements = async (
 /**
  * Execute bridge for the provided quote bundle id
  */
-const executeBridge = async (id: string): Promise<BridgeStatusResponse> => {
-  if (TEST) {
-    return new Promise((resolve) =>
-      setTimeout(() => resolve(executeBridgeMock), 5_000),
-    );
-  }
-  return fetch(`${BACKEND_URL}/bridge/execute`, {
-    method: 'POST',
-    headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    body: JSON.stringify({ id }),
-  }).then((response) => {
-    if (response.ok) return response.json();
-    throw new Error(
-      `Failed to execute bridge quote for the following quote id: ${id}`,
-    );
-  });
-};
+const executeBridge = async (id: string): Promise<BridgeStatusResponse> =>
+  TEST
+    ? new Promise((resolve) =>
+        setTimeout(() => resolve(executeBridgeMock), 5_000),
+      )
+    : fetch(`${BACKEND_URL}/bridge/execute`, {
+        method: 'POST',
+        headers: { ...CONTENT_TYPE_JSON_UTF8 },
+        body: JSON.stringify({ id }),
+      }).then((response) => {
+        if (response.ok) return response.json();
+        throw new Error(
+          `Failed to execute bridge quote for the following quote id: ${id}`,
+        );
+      });
 
 /**
  * Get status of the bridge for the provided quote bundle id
