@@ -7,8 +7,8 @@ import {
   QuoteStatus,
 } from '@/types/Bridge';
 
-const TEST = true;
-const IS_FAILED = true;
+const TEST = false;
+const IS_FAILED = false;
 
 const BRIDGE_REQUIREMENTS_MOCK = {
   id: 'qb-56410704-b8da-49d9-85f2-1fd2133b24fb',
