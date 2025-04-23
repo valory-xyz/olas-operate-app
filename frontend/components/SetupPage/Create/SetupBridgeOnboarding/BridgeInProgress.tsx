@@ -269,7 +269,9 @@ export const BridgeInProgress = ({
       if (isBridgeExecuteLoading || isBridging) return 'process';
       if (!bridge) return 'wait';
       if (bridge.isBridgingFailed) return 'error';
-      return 'finish';
+      if (bridge.isBridgingCompleted) return 'finish';
+
+      return 'wait';
     })();
 
     return {
