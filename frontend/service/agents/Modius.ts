@@ -128,7 +128,7 @@ export abstract class ModiusService extends StakedAgentService {
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
     chainId: EvmChainId = EvmChainId.Mode,
-  ): Promise<number | undefined> => {
+  ): Promise<bigint | undefined> => {
     const stakingTokenProxy =
       STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
     if (!stakingTokenProxy) return;
@@ -145,9 +145,11 @@ export abstract class ModiusService extends StakedAgentService {
     const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
     const nowInSeconds = Math.floor(Date.now() / 1000);
 
-    return Math.max(
-      rewardsPerSecond * livenessPeriod, // expected rewards
-      rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+    return BigInt(
+      Math.max(
+        rewardsPerSecond * livenessPeriod, // expected rewards
+        rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+      ),
     );
   };
 

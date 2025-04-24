@@ -32,7 +32,7 @@ export abstract class AgentsFunCeloService extends AgentsFunService {
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
     chainId: EvmChainId = EvmChainId.Celo,
-  ): Promise<number | undefined> => {
+  ): Promise<bigint | undefined> => {
     return await AgentsFunService.getAvailableRewardsForEpoch(
       stakingProgramId,
       chainId,
