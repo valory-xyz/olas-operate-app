@@ -121,9 +121,17 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
       const isBridgingFailed = state?.data?.bridge_request_status.some(
         (step) => step.status === 'EXECUTION_FAILED',
       );
-      return isBridgingFailed ? false : FIVE_SECONDS_INTERVAL;
+      const isBridgingCompleted = state?.data?.bridge_request_status.every(
+        (step) => step.status === 'EXECUTION_DONE',
+      );
+
+      return isBridgingFailed || isBridgingCompleted
+        ? false
+        : FIVE_SECONDS_INTERVAL;
     },
     enabled: !!quoteId && isOnline && !!bridgeExecuteDetails,
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   return {
@@ -232,7 +240,6 @@ export const BridgeInProgress = ({
     isBridgeExecuteError,
     refetchBridgeExecute,
     isLoading: isBridgingStatusLoading,
-    isFetching: isBridgingStatusFetching,
     isError: isBridgingStatusError,
     data: bridge,
   } = useBridgingSteps(quoteId, symbols);
@@ -250,12 +257,7 @@ export const BridgeInProgress = ({
   const isBridging = useMemo(() => {
     if (isBridgeExecuteLoading) return true;
     if (isBridgingStatusLoading) return true;
-    if (isBridgingStatusFetching) return true;
-  }, [
-    isBridgeExecuteLoading,
-    isBridgingStatusLoading,
-    isBridgingStatusFetching,
-  ]);
+  }, [isBridgeExecuteLoading, isBridgingStatusLoading]);
 
   const isBridgingFailed = useMemo(() => {
     if (isBridgeExecuteError) return true;
@@ -305,8 +307,8 @@ export const BridgeInProgress = ({
 
   const bridgeDetails = useMemo(() => {
     const currentBridgeStatus: BridgingStepStatus = (() => {
-      if (isBridging) return 'process';
       if (isBridgingFailed) return 'error';
+      if (isBridging) return 'process';
       if (!bridge) return 'wait';
       if (bridge.isBridgingCompleted) return 'finish';
       return 'process';
