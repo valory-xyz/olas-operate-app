@@ -4,7 +4,6 @@ import {
   BridgeRefillRequirementsRequest,
   BridgeRefillRequirementsResponse,
   BridgeStatusResponse,
-  QuoteStatus,
 } from '@/types/Bridge';
 
 const TEST = false;
@@ -38,31 +37,24 @@ const BRIDGE_REQUIREMENTS_MOCK = {
   bridge_request_status: [
     {
       message: '',
-      status: 'QUOTE_DONE' as QuoteStatus,
+      status: 'QUOTE_DONE',
     },
   ],
-  error: false,
-};
+} satisfies BridgeRefillRequirementsResponse;
 
 // TODO: remove this mock
 const executeBridgeMock = {
-  id: 'qb-bdaafd7f-0698-4e10-83dd-d742cc0e656d',
-  status: 'EXECUTION_DONE',
+  id: 'br-7a133f01-a13e-48ab-85a1-5f7212e2cba1',
+  status: 'EXECUTION_PENDING',
   bridge_request_status: [
     {
       explorer_link:
-        'https://scan.li.fi/tx/0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
-      message: null,
-      status: 'EXECUTION_DONE',
+        'https://scan.li.fi/tx/0x0590ce4d5c835647b525e2ef222132062c6f6252d5fd23fab17113fa8f3a1869',
+      message:
+        'The bridge off-chain logic is being executed. Wait for the transaction to appear in the destination chain.',
+      status: 'EXECUTION_PENDING',
       tx_hash:
-        '0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
-    },
-    {
-      explorer_link: null,
-      message: null,
-      status: 'EXECUTION_FAILED',
-      tx_hash:
-        '0x0e53f1b6aa5552f2d4cfe8e623dd95e54ca079c4b23b89d0c0aa6ed4a6442384',
+        '0x0590ce4d5c835647b525e2ef222132062c6f6252d5fd23fab17113fa8f3a1869',
     },
   ],
 } as const satisfies BridgeStatusResponse;
@@ -83,7 +75,7 @@ const getBridgeStatusMock = {
     {
       explorer_link: null,
       message: null,
-      status: 'EXECUTION_FAILED',
+      status: 'EXECUTION_PENDING',
       tx_hash:
         '0x3795206347eae1537d852bea05e36c3e76b08cefdfa2d772e24bac2e24f31db3',
     },
