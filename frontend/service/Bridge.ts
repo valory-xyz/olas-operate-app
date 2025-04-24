@@ -6,7 +6,7 @@ import {
   BridgeStatusResponse,
 } from '@/types/Bridge';
 
-const TEST = false;
+const TEST = true;
 const IS_FAILED = false;
 
 const BRIDGE_REQUIREMENTS_MOCK = {
@@ -107,46 +107,53 @@ const getBridgeRefillRequirements = async (
  * Execute bridge for the provided quote bundle id
  */
 const executeBridge = async (id: string): Promise<BridgeStatusResponse> =>
-  IS_FAILED
-    ? new Promise((_resolve, reject) =>
+  // IS_FAILED
+  //   ? new Promise((_resolve, reject) =>
+  //       setTimeout(() => {
+  //         reject(new Error('Failed to execute bridge quote'));
+  //       }, 5_000),
+  //     )
+  //   :
+  TEST
+    ? new Promise((resolve) =>
         setTimeout(() => {
-          reject(new Error('Failed to execute bridge quote'));
+          resolve(executeBridgeMock);
         }, 5_000),
       )
-    : TEST
-      ? new Promise((resolve) =>
-          setTimeout(() => {
-            resolve(executeBridgeMock);
-          }, 5_000),
-        )
-      : fetch(`${BACKEND_URL}/bridge/execute`, {
-          method: 'POST',
-          headers: { ...CONTENT_TYPE_JSON_UTF8 },
-          body: JSON.stringify({ id }),
-        }).then((response) => {
-          if (response.ok) return response.json();
-          throw new Error(
-            `Failed to execute bridge quote for the following quote id: ${id}`,
-          );
-        });
+    : fetch(`${BACKEND_URL}/bridge/execute`, {
+        method: 'POST',
+        headers: { ...CONTENT_TYPE_JSON_UTF8 },
+        body: JSON.stringify({ id }),
+      }).then((response) => {
+        if (response.ok) return response.json();
+        throw new Error(
+          `Failed to execute bridge quote for the following quote id: ${id}`,
+        );
+      });
 
 /**
  * Get status of the bridge for the provided quote bundle id
  */
 const getBridgeStatus = async (id: string): Promise<BridgeStatusResponse> =>
-  TEST
-    ? new Promise((resolve) =>
-        setTimeout(() => resolve(getBridgeStatusMock), 5_000),
+  IS_FAILED
+    ? new Promise((_resolve, reject) =>
+        setTimeout(() => {
+          reject(new Error('Not found'));
+        }, 5_000),
       )
-    : fetch(`${BACKEND_URL}/bridge/status/${id}`, {
-        method: 'GET',
-        headers: { ...CONTENT_TYPE_JSON_UTF8 },
-      }).then((response) => {
-        if (response.ok) return response.json();
-        throw new Error(
-          `Failed to get bridge status for the following quote id: ${id}`,
-        );
-      });
+    : TEST
+      ? new Promise((resolve) =>
+          setTimeout(() => resolve(getBridgeStatusMock), 5_000),
+        )
+      : fetch(`${BACKEND_URL}/bridge/status/${id}`, {
+          method: 'GET',
+          headers: { ...CONTENT_TYPE_JSON_UTF8 },
+        }).then((response) => {
+          if (response.ok) return response.json();
+          throw new Error(
+            `Failed to get bridge status for the following quote id: ${id}`,
+          );
+        });
 
 export const BridgeService = {
   getBridgeRefillRequirements,
