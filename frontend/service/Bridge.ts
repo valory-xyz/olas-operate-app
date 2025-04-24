@@ -45,7 +45,6 @@ const getBridgeStatus = async (id: string): Promise<BridgeStatusResponse> =>
   fetch(`${BACKEND_URL}/bridge/status/${id}`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    body: JSON.stringify({ id }),
   }).then((response) => {
     if (response.ok) return response.json();
     throw new Error(
