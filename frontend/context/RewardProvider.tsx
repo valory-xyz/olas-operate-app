@@ -25,7 +25,7 @@ import { StakingProgramContext } from './StakingProgramProvider';
 export const RewardContext = createContext<{
   isAvailableRewardsForEpochLoading?: boolean;
   accruedServiceStakingRewards?: number;
-  availableRewardsForEpoch?: number;
+  availableRewardsForEpoch?: bigint;
   availableRewardsForEpochEth?: number;
   isEligibleForRewards?: boolean;
   optimisticRewardsEarnedForEpoch?: number;
