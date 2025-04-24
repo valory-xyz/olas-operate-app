@@ -5,7 +5,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
 
-import { BridgeInProgress } from './BridgeInProgress';
+import { BridgeInProgress } from './BridgeInProgress/BridgeInProgress';
 import { BridgeOnEvm } from './BridgeOnEvm';
 
 const QUOTE_ID_ERROR = 'Quote ID is required for in progress state';
