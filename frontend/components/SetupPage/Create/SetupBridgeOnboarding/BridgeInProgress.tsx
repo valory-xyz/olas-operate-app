@@ -66,7 +66,12 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
     queryFn: async () => {
-      return await BridgeService.executeBridge(quoteId);
+      try {
+        return await BridgeService.executeBridge(quoteId);
+      } catch (error) {
+        console.error('Error executing bridge', error);
+        throw error;
+      }
     },
     enabled: !!quoteId && isOnline,
     retry: false,
