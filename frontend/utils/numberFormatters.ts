@@ -3,6 +3,7 @@ import { round } from 'lodash';
 
 /**
  * Displays balance in a human readable format
+ * e.g. 10000000000 => 1.0B
  */
 export const balanceFormat = (
   balance: number | undefined,
