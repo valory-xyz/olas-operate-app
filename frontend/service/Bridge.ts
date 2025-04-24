@@ -6,7 +6,7 @@ import {
   BridgeStatusResponse,
 } from '@/types/Bridge';
 
-const TEST = true;
+const TEST = false;
 const IS_FAILED = false;
 
 const BRIDGE_REQUIREMENTS_MOCK = {
