@@ -83,7 +83,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
-      value: 'QmQkJ4P6r9qevSJN1nwppMqfgJ6NKR4suSgZax2wEuTmS2',
+      value: 'QmVCKTpXjK6gtcsCBivrGVaH1rQuBgtEVVMTjmn3uE1mZp',
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -253,11 +253,11 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeieoradwy6oat5i2aqfyxlfv52c4p5t7c3a5lz5x45l4kmu2j2lyhu',
+  hash: 'bafybeiecjxha2ouqupttgdax7j4xmzfr6icuu55kq5xo2bwhkrl2po5khq',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  service_version: 'v0.3.12',
+  service_version: 'v0.3.15',
   home_chain: MiddlewareChain.MODE,
   configurations: {
     [MiddlewareChain.MODE]: {

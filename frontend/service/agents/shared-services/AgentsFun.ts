@@ -133,7 +133,7 @@ export abstract class AgentsFunService extends StakedAgentService {
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
     chainId: EvmChainId,
-  ): Promise<number | undefined> => {
+  ): Promise<bigint | undefined> => {
     if (!chainId) throw new Error('ChainId is required');
 
     const stakingTokenProxy =
@@ -152,9 +152,11 @@ export abstract class AgentsFunService extends StakedAgentService {
     const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
     const nowInSeconds = Math.floor(Date.now() / 1000);
 
-    return Math.max(
-      rewardsPerSecond * livenessPeriod, // expected rewards
-      rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+    return BigInt(
+      Math.max(
+        rewardsPerSecond * livenessPeriod, // expected rewards
+        rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+      ),
     );
   };
 
