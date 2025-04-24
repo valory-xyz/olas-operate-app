@@ -67,9 +67,9 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
     queryFn: async () => {
       try {
-        return await BridgeService.getBridgeStatus(quoteId);
+        return await BridgeService.executeBridge(quoteId);
       } catch (error) {
-        console.error('Error fetching bridge status', error);
+        console.error('Error executing bridge', error);
         throw error;
       }
     },
@@ -82,7 +82,12 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
   const statusQuery = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY(quoteId),
     queryFn: async () => {
-      return await BridgeService.getBridgeStatus(quoteId);
+      try {
+        return await BridgeService.getBridgeStatus(quoteId);
+      } catch (error) {
+        console.error('Error fetching bridge status', error);
+        throw error;
+      }
     },
     select: ({ status, bridge_request_status }) => {
       const isBridgingFailed = bridge_request_status.some(
