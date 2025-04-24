@@ -110,7 +110,6 @@ const executeBridge = async (id: string): Promise<BridgeStatusResponse> =>
   IS_FAILED
     ? new Promise((_resolve, reject) =>
         setTimeout(() => {
-          // resolve(executeBridgeMock)
           reject(new Error('Failed to execute bridge quote'));
         }, 5_000),
       )
