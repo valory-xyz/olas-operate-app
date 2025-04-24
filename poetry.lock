@@ -2343,8 +2343,8 @@ web3 = "==6.1.0"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "702907404f4fcb1add78af3ccca804a87df123e3"
-resolved_reference = "702907404f4fcb1add78af3ccca804a87df123e3"
+reference = "2ccfa2bbb87bef84c81a6573d194ce5ea0bc9b82"
+resolved_reference = "2ccfa2bbb87bef84c81a6573d194ce5ea0bc9b82"
 
 [[package]]
 name = "open-aea"
@@ -3432,13 +3432,13 @@ files = [
 
 [[package]]
 name = "setuptools"
-version = "79.0.0"
+version = "79.0.1"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "setuptools-79.0.0-py3-none-any.whl", hash = "sha256:b9ab3a104bedb292323f53797b00864e10e434a3ab3906813a7169e4745b912a"},
-    {file = "setuptools-79.0.0.tar.gz", hash = "sha256:9828422e7541213b0aacb6e10bbf9dd8febeaa45a48570e09b6d100e063fc9f9"},
+    {file = "setuptools-79.0.1-py3-none-any.whl", hash = "sha256:e147c0549f27767ba362f9da434eab9c5dc0045d5304feb602a0af001089fc51"},
+    {file = "setuptools-79.0.1.tar.gz", hash = "sha256:128ce7b8f33c3079fd1b067ecbb4051a66e8526e7b65f6cec075dfc650ddfa88"},
 ]
 
 [package.extras]
@@ -4038,4 +4038,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "92885801a6ee060ec29352f1e980b74b528680069b9ff11dc487a793c2696913"
+content-hash = "ae25c912fb56a9aa530c5af50e066e95da05f987cc7d1eddd0503465b8101169"
