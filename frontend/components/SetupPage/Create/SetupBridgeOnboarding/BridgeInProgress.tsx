@@ -62,10 +62,16 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
     isFetching: isBridgeExecuteFetching,
     isError: isBridgeExecuteError,
     refetch: refetchBridgeExecute,
+    data: bridgeExecuteDetails,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
     queryFn: async () => {
-      return await BridgeService.executeBridge(quoteId);
+      try {
+        return await BridgeService.getBridgeStatus(quoteId);
+      } catch (error) {
+        console.error('Error fetching bridge status', error);
+        throw error;
+      }
     },
     enabled: !!quoteId && isOnline,
     retry: false,
@@ -112,8 +118,7 @@ const useBridgingSteps = (quoteId: string, tokenSymbols: TokenSymbol[]) => {
       );
       return isBridgingFailed ? false : FIVE_SECONDS_INTERVAL;
     },
-    enabled:
-      !!quoteId && isOnline && !isBridgeExecuteLoading && !isBridgeExecuteError,
+    enabled: !!quoteId && isOnline && !!bridgeExecuteDetails,
   });
 
   return {
@@ -272,7 +277,7 @@ export const BridgeInProgress = ({
       if (bridge.isBridgingFailed) return 'error';
       if (bridge.isBridgingCompleted) return 'finish';
 
-      return 'wait';
+      return 'process';
     })();
 
     return {

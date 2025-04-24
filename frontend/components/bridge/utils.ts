@@ -63,12 +63,8 @@ export const getBridgeRequirementsParams = ({
     refillRequirements,
   )) {
     // Only calculate the refill requirements from master EOA or master safe placeholder
-    if (
-      !(
-        areAddressesEqual(walletAddress, toAddress) ||
-        walletAddress === 'master_safe'
-      )
-    ) {
+    const isRecipientAddress = areAddressesEqual(walletAddress, toAddress);
+    if (!(isRecipientAddress || walletAddress === 'master_safe')) {
       continue;
     }
 
