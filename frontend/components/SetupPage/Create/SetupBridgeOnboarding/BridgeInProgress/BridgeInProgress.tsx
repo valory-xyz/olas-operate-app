@@ -102,15 +102,6 @@ export const BridgeInProgress = ({
     if (isErrorMasterSafeCreation) return;
     if (masterSafeDetails?.isSafeCreated) return;
 
-    window.console.log('Creating master safe after bridging is completed', {
-      isBridging,
-      isBridgingFailed,
-      isBridgingCompleted: bridgeStatus?.isBridgingCompleted,
-      isLoadingMasterSafeCreation,
-      isErrorMasterSafeCreation,
-      masterSafeDetails,
-    });
-
     createMasterSafe();
   }, [
     bridgeStatus?.isBridgingCompleted,
@@ -135,8 +126,8 @@ export const BridgeInProgress = ({
     if (!isSafeCreated) return;
     if (!isTransferCompleted) return;
 
+    // wait for 3 seconds before redirecting to main page.
     delayInSeconds(3).then(() => {
-      window.console.log('Redirecting to main page');
       goto(Pages.Main);
     });
   }, [
