@@ -60,7 +60,7 @@ export const BridgeInProgress = ({
     refetchBridgeExecute,
     isLoading: isBridgingStatusLoading,
     isError: isBridgingStatusError,
-    data: bridge,
+    data: bridgeStatus,
   } = useBridgingSteps(quoteId, symbols);
   const {
     isPending: isLoadingMasterSafeCreation,
@@ -81,22 +81,29 @@ export const BridgeInProgress = ({
   const isBridgingFailed = useMemo(() => {
     if (isBridgeExecuteError) return true;
     if (isBridgingStatusError) return true;
-    if (bridge?.isBridgingFailed) return true;
-  }, [isBridgeExecuteError, isBridgingStatusError, bridge?.isBridgingFailed]);
+    if (bridgeStatus?.isBridgingFailed) return true;
+  }, [
+    isBridgeExecuteError,
+    isBridgingStatusError,
+    bridgeStatus?.isBridgingFailed,
+  ]);
 
   // Create master safe after the bridging is completed
-  // and if the master safe is not created yet
+  // and if the master safe is not created yet.
   useEffect(() => {
+    // if bridging is in progress or if it has failed, do not create master safe.
     if (isBridging) return;
     if (isBridgingFailed) return;
+    if (!bridgeStatus?.isBridgingCompleted) return;
 
-    // if master safe creation is still loading or if it has failed
+    // if master safe creation is in progress or if it has failed, do not create master safe.
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
     if (masterSafeDetails?.isSafeCreated) return;
 
     createMasterSafe();
   }, [
+    bridgeStatus?.isBridgingCompleted,
     isBridging,
     isBridgingFailed,
     isBridgeExecuteError,
@@ -108,17 +115,24 @@ export const BridgeInProgress = ({
 
   // Redirect to main page if all 3 steps are completed
   useEffect(() => {
+    // if bridging is in progress or if it has failed, do not redirect.
     if (isBridging) return;
     if (isBridgingFailed) return;
-    if (!bridge?.isBridgingCompleted) return;
+    if (!bridgeStatus?.isBridgingCompleted) return;
+
+    // if master safe creation is in progress or if it has failed, do not redirect.
+    if (isLoadingMasterSafeCreation) return;
     if (!isSafeCreated) return;
     if (!isTransferCompleted) return;
 
-    goto(Pages.Main);
+    // wait for 3 seconds before redirecting to main page.
+    const timeoutId = setTimeout(() => goto(Pages.Main), 3000);
+    return () => clearTimeout(timeoutId);
   }, [
     isBridging,
     isBridgingFailed,
-    bridge?.isBridgingCompleted,
+    bridgeStatus?.isBridgingCompleted,
+    isLoadingMasterSafeCreation,
     isSafeCreated,
     isTransferCompleted,
     goto,
@@ -128,25 +142,25 @@ export const BridgeInProgress = ({
     const currentBridgeStatus: BridgingStepStatus = (() => {
       if (isBridgingFailed) return 'error';
       if (isBridging) return 'process';
-      if (!bridge) return 'wait';
-      if (bridge.isBridgingCompleted) return 'finish';
+      if (!bridgeStatus) return 'wait';
+      if (bridgeStatus.isBridgingCompleted) return 'finish';
 
       return 'process';
     })();
 
     return {
       status: currentBridgeStatus,
-      subSteps: (bridge?.bridgeRequestStatus || []).map((step) => ({
+      subSteps: (bridgeStatus?.bridgeRequestStatus || []).map((step) => ({
         ...step,
         onRetry: refetchBridgeExecute,
         onRetryProps: { isLoading: currentBridgeStatus === 'process' },
       })) satisfies StepEvent[],
     };
-  }, [isBridging, isBridgingFailed, bridge, refetchBridgeExecute]);
+  }, [isBridging, isBridgingFailed, bridgeStatus, refetchBridgeExecute]);
 
   const masterSafeCreationDetails = useMemo(() => {
     const currentMasterSafeCreationStatus: BridgingStepStatus = (() => {
-      if (!bridge?.isBridgingCompleted) return 'wait';
+      if (!bridgeStatus?.isBridgingCompleted) return 'wait';
       if (isErrorMasterSafeCreation) return 'error';
       if (isLoadingMasterSafeCreation) return 'process';
       if (isSafeCreated) return 'finish';
@@ -166,7 +180,7 @@ export const BridgeInProgress = ({
       ] satisfies StepEvent[],
     };
   }, [
-    bridge?.isBridgingCompleted,
+    bridgeStatus?.isBridgingCompleted,
     isSafeCreated,
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
@@ -176,7 +190,7 @@ export const BridgeInProgress = ({
   const masterSafeTransferDetails = useMemo(() => {
     const currentMasterSafeStatus: BridgingStepStatus = (() => {
       if (isErrorMasterSafeCreation) return 'error';
-      if (!bridge?.isBridgingCompleted || !isSafeCreated) return 'wait';
+      if (!bridgeStatus?.isBridgingCompleted || !isSafeCreated) return 'wait';
       return isTransferCompleted ? 'finish' : 'wait';
     })();
 
@@ -193,7 +207,7 @@ export const BridgeInProgress = ({
   }, [
     isErrorMasterSafeCreation,
     isSafeCreated,
-    bridge?.isBridgingCompleted,
+    bridgeStatus?.isBridgingCompleted,
     isTransferCompleted,
     masterSafeCreationDetails,
     masterSafeDetails?.transfers,
