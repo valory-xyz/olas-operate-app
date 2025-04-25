@@ -343,7 +343,7 @@ export const DepositForBridging = ({
                   <TokenInfo
                     key={token.symbol}
                     {...token}
-                    precision={token.isNative ? 4 : 2}
+                    precision={token.isNative ? 6 : 2}
                   />
                 ))}
               </>
