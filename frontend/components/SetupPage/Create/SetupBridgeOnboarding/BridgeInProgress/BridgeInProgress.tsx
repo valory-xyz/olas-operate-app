@@ -8,7 +8,6 @@ import { CardFlex } from '@/components/styled/CardFlex';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { BridgingStepStatus, CrossChainTransferDetails } from '@/types/Bridge';
-import { delayInSeconds } from '@/utils/delay';
 
 import { SetupCreateHeader } from '../../SetupCreateHeader';
 import { useBridgingSteps } from './useBridgingSteps';
@@ -135,10 +134,9 @@ export const BridgeInProgress = ({
     if (!isSafeCreated) return;
     if (!isTransferCompleted) return;
 
-    delayInSeconds(3).then(() => {
-      window.console.log('Redirecting to main page');
-      goto(Pages.Main);
-    });
+    // wait for 3 seconds before redirecting to main page.
+    const timeoutId = setTimeout(() => goto(Pages.Main), 3000);
+    return () => clearTimeout(timeoutId);
   }, [
     isBridging,
     isBridgingFailed,
