@@ -1,5 +1,5 @@
 import { BigNumberish, ethers } from 'ethers';
-import { round } from 'lodash';
+import { ceil } from 'lodash';
 
 /**
  * Displays balance in a human readable format
@@ -36,7 +36,7 @@ export const formatUnitsToNumber = (
   decimals = 18,
   precision = 4,
 ): number => {
-  return round(parseFloat(formatUnits(value, decimals)), precision);
+  return ceil(parseFloat(formatUnits(value, decimals)), precision);
 };
 
 /**
