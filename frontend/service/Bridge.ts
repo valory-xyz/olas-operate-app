@@ -45,14 +45,14 @@ const BRIDGE_REQUIREMENTS_MOCK = {
 // TODO: remove this mock
 const executeBridgeMock = {
   id: 'br-7a133f01-a13e-48ab-85a1-5f7212e2cba1',
-  status: 'EXECUTION_PENDING',
+  status: 'EXECUTION_DONE',
   bridge_request_status: [
     {
       explorer_link:
         'https://scan.li.fi/tx/0x0590ce4d5c835647b525e2ef222132062c6f6252d5fd23fab17113fa8f3a1869',
       message:
         'The bridge off-chain logic is being executed. Wait for the transaction to appear in the destination chain.',
-      status: 'EXECUTION_FAILED',
+      status: 'EXECUTION_DONE',
       tx_hash:
         '0x0590ce4d5c835647b525e2ef222132062c6f6252d5fd23fab17113fa8f3a1869',
     },
@@ -62,7 +62,7 @@ const executeBridgeMock = {
 // TODO: remove this mock
 const getBridgeStatusMock = {
   id: 'qb-bdaafd7f-0698-4e10-83dd-d742cc0e656d',
-  status: 'EXECUTION_DONE',
+  status: 'EXECUTION_PENDING',
   bridge_request_status: [
     // {
     //   explorer_link:
@@ -109,29 +109,28 @@ const getBridgeRefillRequirements = async (
  * Execute bridge for the provided quote bundle id
  */
 const executeBridge = async (id: string): Promise<BridgeStatusResponse> =>
-  // IS_FAILED
-  //   ? new Promise((_resolve, reject) =>
-  //       setTimeout(() => {
-  //         reject(new Error('Failed to execute bridge quote'));
-  //       }, 5_000),
-  //     )
-  //   :
-  TEST
-    ? new Promise((resolve) =>
+  IS_FAILED
+    ? new Promise((_resolve, reject) =>
         setTimeout(() => {
-          resolve(executeBridgeMock);
+          reject(new Error('Failed to execute bridge quote'));
         }, 5_000),
       )
-    : fetch(`${BACKEND_URL}/bridge/execute`, {
-        method: 'POST',
-        headers: { ...CONTENT_TYPE_JSON_UTF8 },
-        body: JSON.stringify({ id }),
-      }).then((response) => {
-        if (response.ok) return response.json();
-        throw new Error(
-          `Failed to execute bridge quote for the following quote id: ${id}`,
-        );
-      });
+    : TEST
+      ? new Promise((resolve) =>
+          setTimeout(() => {
+            resolve(executeBridgeMock);
+          }, 5_000),
+        )
+      : fetch(`${BACKEND_URL}/bridge/execute`, {
+          method: 'POST',
+          headers: { ...CONTENT_TYPE_JSON_UTF8 },
+          body: JSON.stringify({ id }),
+        }).then((response) => {
+          if (response.ok) return response.json();
+          throw new Error(
+            `Failed to execute bridge quote for the following quote id: ${id}`,
+          );
+        });
 
 /**
  * Get status of the bridge for the provided quote bundle id

@@ -110,15 +110,10 @@ export const useBridgingSteps = (
     return false;
   }, [isBridgeExecuteLoading, isBridgeStatusLoading]);
 
-  const isBridgingCompleted = useMemo(() => {
-    if (bridgeStatusData) {
-      return isBridgingCompletedFn(bridgeStatusData.bridge_request_status);
-    }
-    if (bridgeExecuteData) {
-      return isBridgingCompletedFn(bridgeExecuteData.bridge_request_status);
-    }
-    return false;
-  }, [bridgeStatusData, bridgeExecuteData]);
+  const isBridgingCompleted = useMemo(
+    () => isBridgingCompletedFn(bridgeStatusData?.bridge_request_status),
+    [bridgeStatusData],
+  );
 
   const hasAnyBridgeFailed = useMemo(
     () =>
