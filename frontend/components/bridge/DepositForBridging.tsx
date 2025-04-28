@@ -5,10 +5,10 @@ import {
   LoadingOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-import { Button, Divider, Flex, Spin, Typography } from 'antd';
+import { Button, Divider, Flex, message, Spin, Typography } from 'antd';
 import { upperFirst } from 'lodash';
 import Image from 'next/image';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import {
@@ -27,6 +27,7 @@ import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
+import { delayInSeconds } from '@/utils/delay';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { InfoTooltip } from '../InfoTooltip';
@@ -40,6 +41,8 @@ import { DepositAddress } from './DepositAddress';
 import { getBridgeRequirementsParams } from './utils';
 
 const { Text } = Typography;
+
+const FUNDS_RECEIVED_MESSAGE_KEY = 'deposited-funds';
 
 const RootCard = styled(Flex)`
   align-items: start;
@@ -129,8 +132,8 @@ const TokenInfo = ({
         </>
       )}
 
-      <InfoTooltip overlayInnerStyle={{ width: 300 }} placement="top">
-        <Flex vertical gap={12} className="p-8">
+      <InfoTooltip overlayInnerStyle={{ width: 340 }} placement="topRight">
+        <Flex vertical gap={8} className="p-8">
           <Flex justify="space-between">
             <Text type="secondary" className="text-sm">
               Total amount required
@@ -187,6 +190,11 @@ export const DepositForBridging = ({
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const { masterEoa } = useMasterWalletContext();
 
+  const [
+    isBridgeRefillRequirementsApiLoading,
+    setIsBridgeRefillRequirementsApiLoading,
+  ] = useState(true);
+
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
 
@@ -212,10 +220,26 @@ export const DepositForBridging = ({
     data: bridgeFundingRequirements,
     isLoading: isBridgeRefillRequirementsLoading,
     isError: isBridgeRefillRequirementsError,
+    isFetching: isBridgeRefillRequirementsFetching,
+    refetch: refetchBridgeRefillRequirements,
   } = useBridgeRefillRequirements(bridgeRequirementsParams);
+
+  // fetch bridge refill requirements manually on mount
+  useEffect(() => {
+    if (!isBridgeRefillRequirementsApiLoading) return;
+
+    refetchBridgeRefillRequirements().finally(() => {
+      setIsBridgeRefillRequirementsApiLoading(false);
+    });
+  }, [
+    isBridgeRefillRequirementsApiLoading,
+    refetchBridgeRefillRequirements,
+    setIsBridgeRefillRequirementsApiLoading,
+  ]);
 
   const isRequestingQuote =
     isBalancesAndFundingRequirementsLoading ||
+    isBridgeRefillRequirementsApiLoading ||
     isBridgeRefillRequirementsLoading;
 
   // List of tokens that need to be deposited
@@ -273,6 +297,7 @@ export const DepositForBridging = ({
   // send the quote ID, cross-chain transfer details to the next step
   useEffect(() => {
     if (isRequestingQuote) return;
+    if (isBridgeRefillRequirementsFetching) return;
     if (!bridgeFundingRequirements) return;
     if (tokens.length === 0) return;
 
@@ -308,9 +333,19 @@ export const DepositForBridging = ({
         };
       }),
     });
-    onNext();
+
+    // wait for 2 seconds before proceeding to the next step.
+    message.success({
+      content: 'Funds received, proceeding to next step...',
+      key: FUNDS_RECEIVED_MESSAGE_KEY,
+    });
+    delayInSeconds(2).then(() => {
+      message.destroy(FUNDS_RECEIVED_MESSAGE_KEY);
+      onNext();
+    });
   }, [
     isRequestingQuote,
+    isBridgeRefillRequirementsFetching,
     toMiddlewareChain,
     refillRequirements,
     bridgeFundingRequirements,
