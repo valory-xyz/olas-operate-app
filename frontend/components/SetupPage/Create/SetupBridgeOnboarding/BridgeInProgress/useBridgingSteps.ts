@@ -6,7 +6,15 @@ import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { TokenSymbol } from '@/enums/Token';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { BridgeService } from '@/service/Bridge';
-import { BridgingStepStatus } from '@/types/Bridge';
+import { BridgeStatusResponse, BridgingStepStatus } from '@/types/Bridge';
+
+const isBridgingFailed = (
+  requests: BridgeStatusResponse['bridge_request_status'] = [],
+) => requests.some((step) => step.status === 'EXECUTION_FAILED');
+
+const isBridgingCompleted = (
+  requests: BridgeStatusResponse['bridge_request_status'] = [],
+) => requests.every((step) => step.status === 'EXECUTION_DONE');
 
 // hook to fetch bridging steps (step 1)
 export const useBridgingSteps = (
@@ -20,8 +28,7 @@ export const useBridgingSteps = (
     isLoading: isBridgeExecuteLoading,
     isFetching: isBridgeExecuteFetching,
     isError: isBridgeExecuteError,
-    refetch: refetchBridgeExecute,
-    data: bridgeExecuteDetails,
+    data: bridgeExecuteData,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
     queryFn: async () => {
@@ -38,29 +45,32 @@ export const useBridgingSteps = (
     refetchInterval: false,
   });
 
+  const isBridgingExecuteFailed = isBridgingFailed(
+    bridgeExecuteData?.bridge_request_status,
+  );
+  const isBridgingExecuteCompleted = isBridgingCompleted(
+    bridgeExecuteData?.bridge_request_status,
+  );
+
   const statusQuery = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY(quoteId),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       try {
-        return await BridgeService.getBridgeStatus(quoteId);
+        return await BridgeService.getBridgeStatus(quoteId, signal);
       } catch (error) {
         console.error('Error fetching bridge status', error);
         throw error;
       }
     },
     select: ({ status, bridge_request_status }) => {
-      const isBridgingFailed = bridge_request_status.some(
-        (step) => step.status === 'EXECUTION_FAILED',
-      );
-      const isBridgingCompleted = bridge_request_status.every(
-        (step) => step.status === 'EXECUTION_DONE',
-      );
+      // TODO: Consolidate into single logic for /execute and /status
       return {
         status,
-        isBridgingCompleted,
-        isBridgingFailed,
+        isBridgingCompleted: isBridgingCompleted(bridge_request_status),
+        isBridgingFailed: isBridgingFailed(bridge_request_status),
         bridgeRequestStatus: bridge_request_status.map((step, index) => {
           const status: BridgingStepStatus = (() => {
+            if (isBridgingExecuteFailed) return 'error';
             if (step.status === 'EXECUTION_DONE') return 'finish';
             if (step.status === 'EXECUTION_FAILED') return 'error';
             if (step.status === 'EXECUTION_PENDING') return 'process';
@@ -76,27 +86,21 @@ export const useBridgingSteps = (
       };
     },
     // fetch by interval until the status is FINISHED
-    refetchInterval: ({ state }) => {
-      const isBridgingFailed = state?.data?.bridge_request_status.some(
-        (step) => step.status === 'EXECUTION_FAILED',
-      );
-      const isBridgingCompleted = state?.data?.bridge_request_status.every(
-        (step) => step.status === 'EXECUTION_DONE',
-      );
-
-      return isBridgingFailed || isBridgingCompleted
+    refetchInterval:
+      isBridgingExecuteFailed || isBridgingExecuteCompleted
         ? false
-        : FIVE_SECONDS_INTERVAL;
-    },
-    enabled: !!quoteId && isOnline && !!bridgeExecuteDetails,
+        : FIVE_SECONDS_INTERVAL,
+    enabled: !!quoteId && isOnline && !!bridgeExecuteData,
     retry: false,
     refetchOnWindowFocus: false,
   });
 
   return {
     isBridgeExecuteLoading: isBridgeExecuteFetching || isBridgeExecuteLoading,
+    /** Error when API is called */
     isBridgeExecuteError,
-    refetchBridgeExecute,
+    /** Error when bridging is executed and the status is 'EXECUTION_FAILED' */
+    isBridgingExecuteFailed,
     ...statusQuery,
   };
 };
