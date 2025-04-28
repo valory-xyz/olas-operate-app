@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
+import { Nullable } from '@/types/Util';
 
 import { BridgeRetryOutcome } from '../types';
 
@@ -13,14 +14,12 @@ export const useRetryBridge = () => {
   const { refetch } = useBalanceAndRefillRequirementsContext();
 
   return useCallback(
-    async (onRetryOutcome: (e: BridgeRetryOutcome) => void) => {
+    async (onRetryOutcome: (e: Nullable<BridgeRetryOutcome>) => void) => {
       onRetryOutcome('NAVIGATE_TO_REFILL');
       if (!refetch) return;
 
       const { data } = await refetch();
-      onRetryOutcome(
-        data?.is_refill_required ? 'NAVIGATE_TO_REFILL' : 'SKIP_BRIDGE_STEP',
-      );
+      onRetryOutcome(data?.is_refill_required ? 'NAVIGATE_TO_REFILL' : null);
     },
     [refetch],
   );

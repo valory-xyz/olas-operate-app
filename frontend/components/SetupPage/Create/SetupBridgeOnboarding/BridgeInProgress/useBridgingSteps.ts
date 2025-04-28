@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
-import { StepEvent } from '@/components/bridge/BridgingSteps';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { TokenSymbol } from '@/enums/Token';
@@ -8,13 +8,41 @@ import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { BridgeService } from '@/service/Bridge';
 import { BridgeStatusResponse, BridgingStepStatus } from '@/types/Bridge';
 
-const isBridgingFailed = (
+const isBridgingFailedFn = (
   requests: BridgeStatusResponse['bridge_request_status'] = [],
-) => requests.some((step) => step.status === 'EXECUTION_FAILED');
+) =>
+  requests
+    ? requests.some((step) => step.status === 'EXECUTION_FAILED')
+    : false;
 
-const isBridgingCompleted = (
+const isBridgingCompletedFn = (
   requests: BridgeStatusResponse['bridge_request_status'] = [],
 ) => requests.every((step) => step.status === 'EXECUTION_DONE');
+
+const getBridgeStats = ({
+  hasAnyBridgeFailed = false,
+  stats: bridge_request_status,
+  tokenSymbols,
+}: {
+  hasAnyBridgeFailed?: boolean;
+  tokenSymbols: TokenSymbol[];
+  stats: BridgeStatusResponse['bridge_request_status'];
+}) =>
+  bridge_request_status.map((step, index) => {
+    const stepStatus: BridgingStepStatus = (() => {
+      if (hasAnyBridgeFailed) return 'error';
+      if (step.status === 'EXECUTION_DONE') return 'finish';
+      if (step.status === 'EXECUTION_FAILED') return 'error';
+      if (step.status === 'EXECUTION_PENDING') return 'process';
+      return 'process';
+    })();
+
+    return {
+      symbol: tokenSymbols[index],
+      status: stepStatus,
+      txnLink: step.explorer_link,
+    };
+  });
 
 // hook to fetch bridging steps (step 1)
 export const useBridgingSteps = (
@@ -45,14 +73,18 @@ export const useBridgingSteps = (
     refetchInterval: false,
   });
 
-  const isBridgingExecuteFailed = isBridgingFailed(
+  const isBridgingExecuteFailed = isBridgingFailedFn(
     bridgeExecuteData?.bridge_request_status,
   );
-  const isBridgingExecuteCompleted = isBridgingCompleted(
+  const isBridgingExecuteCompleted = isBridgingCompletedFn(
     bridgeExecuteData?.bridge_request_status,
   );
 
-  const statusQuery = useQuery({
+  const {
+    isLoading: isBridgeStatusLoading,
+    isError: isBridgeStatusError,
+    data: bridgeStatusData,
+  } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY(quoteId),
     queryFn: async ({ signal }) => {
       try {
@@ -61,29 +93,6 @@ export const useBridgingSteps = (
         console.error('Error fetching bridge status', error);
         throw error;
       }
-    },
-    select: ({ status, bridge_request_status }) => {
-      // TODO: Consolidate into single logic for /execute and /status
-      return {
-        status,
-        isBridgingCompleted: isBridgingCompleted(bridge_request_status),
-        isBridgingFailed: isBridgingFailed(bridge_request_status),
-        bridgeRequestStatus: bridge_request_status.map((step, index) => {
-          const status: BridgingStepStatus = (() => {
-            if (isBridgingExecuteFailed) return 'error';
-            if (step.status === 'EXECUTION_DONE') return 'finish';
-            if (step.status === 'EXECUTION_FAILED') return 'error';
-            if (step.status === 'EXECUTION_PENDING') return 'process';
-            return 'process';
-          })();
-
-          return {
-            symbol: tokenSymbols[index],
-            status,
-            txnLink: step.explorer_link,
-          };
-        }) satisfies StepEvent[],
-      };
     },
     // fetch by interval until the status is FINISHED
     refetchInterval:
@@ -95,12 +104,80 @@ export const useBridgingSteps = (
     refetchOnWindowFocus: false,
   });
 
-  return {
-    isBridgeExecuteLoading: isBridgeExecuteFetching || isBridgeExecuteLoading,
-    /** Error when API is called */
-    isBridgeExecuteError,
-    /** Error when bridging is executed and the status is 'EXECUTION_FAILED' */
+  const isBridging = useMemo(() => {
+    if (isBridgeExecuteLoading) return true;
+    if (isBridgeStatusLoading) return true;
+    return false;
+  }, [isBridgeExecuteLoading, isBridgeStatusLoading]);
+
+  const isBridgingCompleted = useMemo(() => {
+    if (bridgeStatusData) {
+      return isBridgingCompletedFn(bridgeStatusData.bridge_request_status);
+    }
+    if (bridgeExecuteData) {
+      return isBridgingCompletedFn(bridgeExecuteData.bridge_request_status);
+    }
+    return false;
+  }, [bridgeStatusData, bridgeExecuteData]);
+
+  const hasAnyBridgeFailed = useMemo(
+    () =>
+      isBridgingExecuteFailed ||
+      isBridgingFailedFn(bridgeStatusData?.bridge_request_status),
+    [isBridgingExecuteFailed, bridgeStatusData],
+  );
+
+  // if the bridge status is 'EXECUTION_FAILED' or 'EXECUTION_PENDING'
+  // and the API has error, we can consider the bridging as failed.
+  const isBridgingFailed = useMemo(() => {
+    if (isBridgeExecuteError) return true;
+    if (isBridgeStatusError) return true;
+    if (hasAnyBridgeFailed) return true;
+    return false;
+  }, [isBridgeExecuteError, isBridgeStatusError, hasAnyBridgeFailed]);
+
+  const executeBridgeStatus = useMemo(() => {
+    if (isBridgeExecuteLoading) return;
+    if (isBridgeExecuteFetching) return;
+    if (isBridgeExecuteError) return;
+    if (!bridgeExecuteData) return;
+
+    return getBridgeStats({
+      hasAnyBridgeFailed: isBridgingExecuteFailed,
+      stats: bridgeExecuteData.bridge_request_status,
+      tokenSymbols,
+    });
+  }, [
     isBridgingExecuteFailed,
-    ...statusQuery,
+    isBridgeExecuteLoading,
+    isBridgeExecuteFetching,
+    isBridgeExecuteError,
+    bridgeExecuteData,
+    tokenSymbols,
+  ]);
+
+  const bridgeStatus = useMemo(() => {
+    if (isBridgeStatusLoading) return;
+    if (isBridgeStatusError) return;
+    if (!bridgeStatusData) return;
+
+    return getBridgeStats({
+      hasAnyBridgeFailed,
+      stats: bridgeStatusData.bridge_request_status,
+      tokenSymbols,
+    });
+  }, [
+    isBridgeStatusLoading,
+    isBridgeStatusError,
+    bridgeStatusData,
+    hasAnyBridgeFailed,
+    tokenSymbols,
+  ]);
+
+  return {
+    isBridging,
+    isBridgingFailed,
+    isBridgingCompleted,
+    bridgeStatus: executeBridgeStatus || bridgeStatus,
   };
 };

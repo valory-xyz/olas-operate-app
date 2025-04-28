@@ -1,1 +1,1 @@
-export type BridgeRetryOutcome = 'SKIP_BRIDGE_STEP' | 'NAVIGATE_TO_REFILL';
+export type BridgeRetryOutcome = 'NAVIGATE_TO_REFILL';

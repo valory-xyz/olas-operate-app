@@ -65,14 +65,8 @@ export const BridgeInProgress = ({
 
   const refetchBridgeExecute = useRetryBridge();
 
-  const {
-    isBridgeExecuteLoading,
-    isBridgeExecuteError,
-    isBridgingExecuteFailed,
-    isLoading: isBridgingStatusLoading,
-    isError: isBridgingStatusError,
-    data: bridgeStatus,
-  } = useBridgingSteps(quoteId, symbols);
+  const { isBridging, isBridgingFailed, isBridgingCompleted, bridgeStatus } =
+    useBridgingSteps(quoteId, symbols);
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
@@ -84,25 +78,6 @@ export const BridgeInProgress = ({
   const isTransferCompleted =
     masterSafeDetails?.masterSafeTransferStatus === 'FINISHED';
 
-  const isBridging = useMemo(() => {
-    if (isBridgeExecuteLoading) return true;
-    if (isBridgingStatusLoading) return true;
-    return false;
-  }, [isBridgeExecuteLoading, isBridgingStatusLoading]);
-
-  const isBridgingFailed = useMemo(() => {
-    if (isBridgeExecuteError) return true;
-    if (isBridgingStatusError) return true;
-    if (isBridgingExecuteFailed) return true;
-    if (bridgeStatus?.isBridgingFailed) return true;
-    return false;
-  }, [
-    isBridgeExecuteError,
-    isBridgingStatusError,
-    isBridgingExecuteFailed,
-    bridgeStatus?.isBridgingFailed,
-  ]);
-
   // Create master safe after the bridging is completed
   // and if the master safe is not created yet.
   useEffect(() => {
@@ -112,7 +87,7 @@ export const BridgeInProgress = ({
     // if bridging is in progress or if it has failed, do not create master safe.
     if (isBridging) return;
     if (isBridgingFailed) return;
-    if (!bridgeStatus?.isBridgingCompleted) return;
+    if (!isBridgingCompleted) return;
 
     // if master safe creation is in progress or if it has failed, do not create master safe.
     if (isLoadingMasterSafeCreation) return;
@@ -122,10 +97,9 @@ export const BridgeInProgress = ({
     createMasterSafe();
   }, [
     bridgeRetryOutcome,
-    bridgeStatus?.isBridgingCompleted,
+    isBridgingCompleted,
     isBridging,
     isBridgingFailed,
-    isBridgeExecuteError,
     isLoadingMasterSafeCreation,
     masterSafeDetails,
     isErrorMasterSafeCreation,
@@ -140,7 +114,7 @@ export const BridgeInProgress = ({
     // if bridging is in progress or if it has failed, do not redirect.
     if (isBridging) return;
     if (isBridgingFailed) return;
-    if (!bridgeStatus?.isBridgingCompleted) return;
+    if (!isBridgingCompleted) return;
 
     // if master safe creation is in progress or if it has failed, do not redirect.
     if (isLoadingMasterSafeCreation) return;
@@ -154,7 +128,7 @@ export const BridgeInProgress = ({
     bridgeRetryOutcome,
     isBridging,
     isBridgingFailed,
-    bridgeStatus?.isBridgingCompleted,
+    isBridgingCompleted,
     isLoadingMasterSafeCreation,
     isSafeCreated,
     isTransferCompleted,
@@ -162,24 +136,25 @@ export const BridgeInProgress = ({
   ]);
 
   const onBridgeFailRetry = useCallback(() => {
-    refetchBridgeExecute((e: BridgeRetryOutcome) => onBridgeRetryOutcome(e));
+    refetchBridgeExecute((e: Nullable<BridgeRetryOutcome>) =>
+      onBridgeRetryOutcome(e),
+    );
   }, [refetchBridgeExecute, onBridgeRetryOutcome]);
 
   const bridgeDetails = useMemo(() => {
     const currentBridgeStatus: BridgingStepStatus = (() => {
       if (bridgeRetryOutcome === 'NAVIGATE_TO_REFILL') return 'wait';
-      if (bridgeRetryOutcome === 'SKIP_BRIDGE_STEP') return 'finish';
       if (isBridgingFailed) return 'error';
       if (isBridging) return 'process';
       if (!bridgeStatus) return 'wait';
-      if (bridgeStatus.isBridgingCompleted) return 'finish';
+      if (isBridgingCompleted) return 'finish';
 
       return 'process';
     })();
 
     return {
       status: currentBridgeStatus,
-      subSteps: (bridgeStatus?.bridgeRequestStatus || []).map((step) => ({
+      subSteps: (bridgeStatus || []).map((step) => ({
         ...step,
         onRetry: onBridgeFailRetry,
         onRetryProps: { isLoading: currentBridgeStatus === 'process' },
@@ -189,6 +164,7 @@ export const BridgeInProgress = ({
     bridgeRetryOutcome,
     isBridging,
     isBridgingFailed,
+    isBridgingCompleted,
     bridgeStatus,
     onBridgeFailRetry,
   ]);
@@ -196,8 +172,7 @@ export const BridgeInProgress = ({
   const masterSafeCreationDetails = useMemo(() => {
     const currentMasterSafeCreationStatus: BridgingStepStatus = (() => {
       if (bridgeRetryOutcome === 'NAVIGATE_TO_REFILL') return 'wait';
-      // if (bridgeRetryOutcome === 'SKIP_BRIDGE_STEP') return 'finish';
-      if (!bridgeStatus?.isBridgingCompleted) return 'wait';
+      if (isBridging || !isBridgingCompleted) return 'wait';
       if (isErrorMasterSafeCreation) return 'error';
       if (isLoadingMasterSafeCreation) return 'process';
       if (isSafeCreated) return 'finish';
@@ -218,7 +193,8 @@ export const BridgeInProgress = ({
     };
   }, [
     bridgeRetryOutcome,
-    bridgeStatus?.isBridgingCompleted,
+    isBridging,
+    isBridgingCompleted,
     isSafeCreated,
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
@@ -229,7 +205,7 @@ export const BridgeInProgress = ({
     const currentMasterSafeStatus: BridgingStepStatus = (() => {
       if (bridgeRetryOutcome === 'NAVIGATE_TO_REFILL') return 'wait';
       if (isErrorMasterSafeCreation) return 'error';
-      if (!bridgeStatus?.isBridgingCompleted || !isSafeCreated) return 'wait';
+      if (isBridging || !isBridgingCompleted || !isSafeCreated) return 'wait';
       return isTransferCompleted ? 'finish' : 'wait';
     })();
 
@@ -247,7 +223,8 @@ export const BridgeInProgress = ({
     bridgeRetryOutcome,
     isErrorMasterSafeCreation,
     isSafeCreated,
-    bridgeStatus?.isBridgingCompleted,
+    isBridging,
+    isBridgingCompleted,
     isTransferCompleted,
     masterSafeCreationDetails,
     masterSafeDetails?.transfers,
