@@ -18,18 +18,18 @@ import { WalletService } from '@/service/Wallet';
 import { delayInSeconds } from '@/utils/delay';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const YouWillBeRedirected = ({ text }: { text: string }) => (
   <>
     <Image src="/onboarding-robot.svg" alt="logo" width={80} height={80} />
-    <Typography.Title
+    <Title
       level={4}
       className="m-0 mt-12 loading-ellipses"
-      style={{ width: '230px' }}
+      style={{ width: 'fit-content' }}
     >
       {text}
-    </Typography.Title>
+    </Title>
     <Text type="secondary">
       You will be redirected once the account is created.
     </Text>
@@ -193,7 +193,7 @@ export const SetupCreateSafe = () => {
         vertical
         align="center"
         justify="center"
-        padding="80px 24px"
+        $padding="80px 24px"
         gap={12}
       >
         {isFailed ? (
