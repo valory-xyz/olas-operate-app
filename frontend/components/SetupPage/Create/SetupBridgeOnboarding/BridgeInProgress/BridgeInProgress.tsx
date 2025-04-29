@@ -94,15 +94,6 @@ export const BridgeInProgress = ({
     if (isErrorMasterSafeCreation) return;
     if (masterSafeDetails?.isSafeCreated) return;
 
-    window.console.log('Creating master safe after bridging is completed', {
-      isBridging,
-      isBridgingFailed,
-      isBridgingCompleted: bridgeStatus?.isBridgingCompleted,
-      isLoadingMasterSafeCreation,
-      isErrorMasterSafeCreation,
-      masterSafeDetails,
-    });
-
     createMasterSafe();
   }, [
     bridgeRetryOutcome,
