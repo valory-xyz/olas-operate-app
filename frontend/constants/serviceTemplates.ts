@@ -83,7 +83,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
-      value: 'QmXbpSiocGi4qy4gjMKAw1iHSqmf6jhuWrxBCVwtHBPw9f',
+      value: 'QmVCKTpXjK6gtcsCBivrGVaH1rQuBgtEVVMTjmn3uE1mZp',
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -93,11 +93,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeiexs3bkq6om7z5djknrfddm3wka5is4mdqkd33rr6qspwlannmnqy',
+  hash: 'bafybeidxfdlaeywhnhafix2yzrnbldk5cybwal53o6mtabnamnxmwtprea',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.4.1-alpha2',
+  service_version: 'v0.4.2-alpha1',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -202,7 +202,7 @@ export const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChain.BASE,
   configurations: {
     [MiddlewareChain.BASE]: {
-      staking_program_id: StakingProgramId.MemeBaseAlpha2, // default, may be overwritten
+      staking_program_id: StakingProgramId.AgentsFun1, // default, may be overwritten
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 43,
@@ -253,11 +253,11 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeigadjx5ewnllaps5nwyc6ktdof24q5lf4s5p5qtu7xbwlga425shy',
+  hash: 'bafybeiecjxha2ouqupttgdax7j4xmzfr6icuu55kq5xo2bwhkrl2po5khq',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  service_version: 'v0.3.1',
+  service_version: 'v0.3.15',
   home_chain: MiddlewareChain.MODE,
   configurations: {
     [MiddlewareChain.MODE]: {

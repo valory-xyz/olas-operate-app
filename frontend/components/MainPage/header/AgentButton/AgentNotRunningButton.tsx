@@ -60,7 +60,8 @@ const useServiceDeployment = () => {
     setIsPaused: setIsStakingContractInfoPollingPaused,
     refetchSelectedStakingContractDetails: refetchActiveStakingContractDetails,
   } = useStakingContractContext();
-  const { selectedStakingProgramId } = useStakingProgram();
+  const { selectedStakingProgramId, selectedStakingProgramMeta } =
+    useStakingProgram();
   const {
     isEligibleForStaking,
     isAgentEvicted,
@@ -79,6 +80,9 @@ const useServiceDeployment = () => {
     if (isServicesLoading || isServiceRunning) return false;
 
     if (!isAllStakingContractDetailsRecordLoaded) return false;
+
+    // If staking contract is deprecated, return false
+    if (selectedStakingProgramMeta?.deprecated) return false;
 
     // If not enough service slots, and service is not staked, return false
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
@@ -106,6 +110,7 @@ const useServiceDeployment = () => {
     selectedService,
     isInitialFunded,
     needsInitialFunding,
+    selectedStakingProgramMeta?.deprecated,
     canStartAgent,
   ]);
 
