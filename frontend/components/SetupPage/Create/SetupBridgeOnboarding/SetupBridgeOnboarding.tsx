@@ -40,7 +40,7 @@ export const SetupBridgeOnboarding = () => {
     if (!bridgeRetryOutcome) return;
 
     switch (bridgeRetryOutcome) {
-      case 'NAVIGATE_TO_REFILL': {
+      case 'NEED_REFILL': {
         setBridgeState('depositing');
         setQuoteId(null);
         setTransferAndReceivingAmounts(null);
