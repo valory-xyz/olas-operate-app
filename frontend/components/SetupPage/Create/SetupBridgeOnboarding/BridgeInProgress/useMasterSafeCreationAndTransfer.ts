@@ -47,6 +47,7 @@ export const useMasterSafeCreationAndTransfer = (
         // NOTE: Need to keep some funds in the EOA for gas, and transfer the rest to the master safe.
         const remainingBalanceForMasterSafe = bigintMax(
           BigInt(tokenBalance) - BigInt(amountRequiredByMasterEoaCurrentToken),
+          BigInt(0),
         );
         acc[tokenAddress as Address] = remainingBalanceForMasterSafe.toString();
 
