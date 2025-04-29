@@ -37,10 +37,10 @@ const TransferRow = ({ transfer }: { transfer: TokenTransfer }) => {
     <List.Item>
       <Flex justify="space-between" className="w-full">
         <Text>
-          {formatUnitsToNumber(fromAmount, decimals, 8)} {fromSymbol}
+          {formatUnitsToNumber(fromAmount, decimals, 5)} {fromSymbol}
         </Text>
         <Text>
-          {formatUnitsToNumber(toAmount, decimals, 8)} {toSymbol}
+          {formatUnitsToNumber(toAmount, decimals, 5)} {toSymbol}
         </Text>
       </Flex>
     </List.Item>

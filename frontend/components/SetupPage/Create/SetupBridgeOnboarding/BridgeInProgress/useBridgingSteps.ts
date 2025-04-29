@@ -110,10 +110,13 @@ export const useBridgingSteps = (
     return false;
   }, [isBridgeExecuteLoading, isBridgeStatusLoading]);
 
-  const isBridgingCompleted = useMemo(
-    () => isBridgingCompletedFn(bridgeStatusData?.bridge_request_status),
-    [bridgeStatusData],
-  );
+  const isBridgingCompleted = useMemo(() => {
+    // If the bridge execute itself has EXECUTION_DONE, we can consider the bridging as completed.
+    // and we don't need to check the status.
+    if (isBridgingExecuteCompleted) return true;
+
+    return isBridgingCompletedFn(bridgeStatusData?.bridge_request_status);
+  }, [isBridgingExecuteCompleted, bridgeStatusData]);
 
   const hasAnyBridgeFailed = useMemo(
     () =>
@@ -131,7 +134,7 @@ export const useBridgingSteps = (
     return false;
   }, [isBridgeExecuteError, isBridgeStatusError, hasAnyBridgeFailed]);
 
-  const executeBridgeStatus = useMemo(() => {
+  const executeBridgeSteps = useMemo(() => {
     if (isBridgeExecuteLoading) return;
     if (isBridgeExecuteFetching) return;
     if (isBridgeExecuteError) return;
@@ -151,7 +154,7 @@ export const useBridgingSteps = (
     tokenSymbols,
   ]);
 
-  const bridgeStatus = useMemo(() => {
+  const statusBridgeSteps = useMemo(() => {
     if (isBridgeStatusLoading) return;
     if (isBridgeStatusError) return;
     if (!bridgeStatusData) return;
@@ -169,10 +172,15 @@ export const useBridgingSteps = (
     tokenSymbols,
   ]);
 
+  const bridgeStatus = useMemo(() => {
+    if (isBridgingExecuteCompleted) return executeBridgeSteps;
+    return statusBridgeSteps;
+  }, [isBridgingExecuteCompleted, executeBridgeSteps, statusBridgeSteps]);
+
   return {
     isBridging,
     isBridgingFailed,
     isBridgingCompleted,
-    bridgeStatus: executeBridgeStatus || bridgeStatus,
+    bridgeStatus,
   };
 };
