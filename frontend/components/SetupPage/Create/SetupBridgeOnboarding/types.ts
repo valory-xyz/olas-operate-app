@@ -1,1 +1,1 @@
-export type BridgeRetryOutcome = 'NAVIGATE_TO_REFILL';
+export type BridgeRetryOutcome = 'NEED_REFILL';

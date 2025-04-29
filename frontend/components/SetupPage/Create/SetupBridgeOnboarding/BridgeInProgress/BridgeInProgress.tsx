@@ -82,7 +82,7 @@ export const BridgeInProgress = ({
   // and if the master safe is not created yet.
   useEffect(() => {
     // if refill is required, do not create master safe.
-    if (bridgeRetryOutcome === 'NAVIGATE_TO_REFILL') return;
+    if (bridgeRetryOutcome === 'NEED_REFILL') return;
 
     // if bridging is in progress or if it has failed, do not create master safe.
     if (isBridging) return;
@@ -109,7 +109,7 @@ export const BridgeInProgress = ({
   // Redirect to main page if all 3 steps are completed
   useEffect(() => {
     // if retry outcome is not null, do not redirect.
-    if (bridgeRetryOutcome === 'NAVIGATE_TO_REFILL') return;
+    if (bridgeRetryOutcome === 'NEED_REFILL') return;
 
     // if bridging is in progress or if it has failed, do not redirect.
     if (isBridging) return;
@@ -143,7 +143,7 @@ export const BridgeInProgress = ({
 
   const bridgeDetails = useMemo(() => {
     const currentBridgeStatus: BridgingStepStatus = (() => {
-      if (bridgeRetryOutcome === 'NAVIGATE_TO_REFILL') return 'wait';
+      if (bridgeRetryOutcome === 'NEED_REFILL') return 'wait';
       if (isBridgingFailed) return 'error';
       if (isBridging) return 'process';
       if (!bridgeStatus) return 'wait';
@@ -171,7 +171,7 @@ export const BridgeInProgress = ({
 
   const masterSafeCreationDetails = useMemo(() => {
     const currentMasterSafeCreationStatus: BridgingStepStatus = (() => {
-      if (bridgeRetryOutcome === 'NAVIGATE_TO_REFILL') return 'wait';
+      if (bridgeRetryOutcome === 'NEED_REFILL') return 'wait';
       if (isBridging || !isBridgingCompleted) return 'wait';
       if (isErrorMasterSafeCreation) return 'error';
       if (isLoadingMasterSafeCreation) return 'process';
@@ -203,7 +203,7 @@ export const BridgeInProgress = ({
 
   const masterSafeTransferDetails = useMemo(() => {
     const currentMasterSafeStatus: BridgingStepStatus = (() => {
-      if (bridgeRetryOutcome === 'NAVIGATE_TO_REFILL') return 'wait';
+      if (bridgeRetryOutcome === 'NEED_REFILL') return 'wait';
       if (isErrorMasterSafeCreation) return 'error';
       if (isBridging || !isBridgingCompleted || !isSafeCreated) return 'wait';
       return isTransferCompleted ? 'finish' : 'wait';

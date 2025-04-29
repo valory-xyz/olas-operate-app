@@ -15,11 +15,10 @@ export const useRetryBridge = () => {
 
   return useCallback(
     async (onRetryOutcome: (e: Nullable<BridgeRetryOutcome>) => void) => {
-      onRetryOutcome('NAVIGATE_TO_REFILL');
       if (!refetch) return;
 
       const { data } = await refetch();
-      onRetryOutcome(data?.is_refill_required ? 'NAVIGATE_TO_REFILL' : null);
+      onRetryOutcome(data?.is_refill_required ? 'NEED_REFILL' : null);
     },
     [refetch],
   );
