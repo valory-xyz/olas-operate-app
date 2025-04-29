@@ -11,11 +11,13 @@ import {
  */
 const getBridgeRefillRequirements = async (
   params: BridgeRefillRequirementsRequest,
+  signal?: AbortSignal,
 ): Promise<BridgeRefillRequirementsResponse> =>
   fetch(`${BACKEND_URL}/bridge/bridge_refill_requirements`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify(params),
+    signal,
   }).then((response) => {
     if (response.ok) return response.json();
     throw new Error(
@@ -41,10 +43,14 @@ const executeBridge = async (id: string): Promise<BridgeStatusResponse> =>
 /**
  * Get status of the bridge for the provided quote bundle id
  */
-const getBridgeStatus = async (id: string): Promise<BridgeStatusResponse> =>
+const getBridgeStatus = async (
+  id: string,
+  signal: AbortSignal,
+): Promise<BridgeStatusResponse> =>
   fetch(`${BACKEND_URL}/bridge/status/${id}`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    signal,
   }).then((response) => {
     if (response.ok) return response.json();
     throw new Error(

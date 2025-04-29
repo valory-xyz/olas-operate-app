@@ -14,12 +14,19 @@ export const useBridgeRefillRequirements = (
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_REFILL_REQUIREMENTS_KEY(params!),
-    queryFn: async () => {
-      const response = await BridgeService.getBridgeRefillRequirements(params!);
+    queryFn: async ({ signal }) => {
+      const response = await BridgeService.getBridgeRefillRequirements(
+        params!,
+        signal,
+      );
       return response;
     },
     refetchInterval: TEN_SECONDS_INTERVAL,
     refetchOnWindowFocus: false,
     enabled: isOnline && !!params,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnReconnect: 'always',
+    refetchIntervalInBackground: true,
   });
 };

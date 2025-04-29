@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { QueryObserverResult, useQuery } from '@tanstack/react-query';
 import { createContext, PropsWithChildren, useMemo } from 'react';
 
 import {
@@ -16,7 +16,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { BalanceService } from '@/service/balances';
-import { Optional } from '@/types/Util';
+import { Nullable, Optional } from '@/types/Util';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
@@ -24,11 +24,17 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   balances: Optional<AddressBalanceRecord>;
   refillRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
   canStartAgent: boolean;
+  isRefillRequired: boolean;
+  refetch: Nullable<
+    () => Promise<QueryObserverResult<BalancesAndFundingRequirements, Error>>
+  >;
 }>({
   isBalancesAndFundingRequirementsLoading: false,
   balances: undefined,
   refillRequirements: undefined,
   canStartAgent: false,
+  isRefillRequired: false,
+  refetch: null,
 });
 
 export const BalancesAndRefillRequirementsProvider = ({
@@ -54,6 +60,7 @@ export const BalancesAndRefillRequirementsProvider = ({
   const {
     data: balancesAndRefillRequirements,
     isLoading: isBalancesAndFundingRequirementsLoading,
+    refetch,
   } = useQuery<BalancesAndFundingRequirements>({
     queryKey: REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(
       configId as string,
@@ -86,9 +93,9 @@ export const BalancesAndRefillRequirementsProvider = ({
       asMiddlewareChain(chainId)
     ];
   }, [
+    isBalancesAndFundingRequirementsLoading,
     balancesAndRefillRequirements,
     chainId,
-    isBalancesAndFundingRequirementsLoading,
   ]);
 
   return (
@@ -99,6 +106,9 @@ export const BalancesAndRefillRequirementsProvider = ({
         balances,
         canStartAgent:
           balancesAndRefillRequirements?.allow_start_agent || false,
+        isRefillRequired:
+          balancesAndRefillRequirements?.is_refill_required || false,
+        refetch: refetch || null,
       }}
     >
       {children}

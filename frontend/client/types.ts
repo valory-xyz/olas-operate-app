@@ -165,5 +165,6 @@ export type BalancesAndFundingRequirements = {
   bonded_olas: {
     [chain in MiddlewareChain]: number;
   };
+  is_refill_required: boolean;
   allow_start_agent: boolean;
 };
