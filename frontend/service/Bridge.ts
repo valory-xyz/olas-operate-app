@@ -87,6 +87,7 @@ const getBridgeStatusMock = {
  */
 const getBridgeRefillRequirements = async (
   params: BridgeRefillRequirementsRequest,
+  signal?: AbortSignal,
 ): Promise<BridgeRefillRequirementsResponse> =>
   TEST
     ? new Promise((resolve) =>
@@ -96,6 +97,7 @@ const getBridgeRefillRequirements = async (
         method: 'POST',
         headers: { ...CONTENT_TYPE_JSON_UTF8 },
         body: JSON.stringify(params),
+        signal,
       }).then((response) => {
         if (response.ok) return response.json();
         throw new Error(
