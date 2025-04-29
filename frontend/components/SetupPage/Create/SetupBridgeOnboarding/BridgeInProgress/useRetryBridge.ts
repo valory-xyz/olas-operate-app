@@ -8,7 +8,6 @@ import { BridgeRetryOutcome } from '../types';
 /***
  * Hook to handle retrying the bridge step
  * If refill is required, it will navigate to the refill page
- * If not, it will skip the bridge step
  */
 export const useRetryBridge = () => {
   const { refetch } = useBalanceAndRefillRequirementsContext();

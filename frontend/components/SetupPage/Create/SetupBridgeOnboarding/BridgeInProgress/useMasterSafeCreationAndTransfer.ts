@@ -77,6 +77,7 @@ export const useMasterSafeCreationAndTransfer = (
 
         return {
           isSafeCreated: true,
+          // TODO: key name is different
           txnLink: response.safe_creation_explorer_link || null,
 
           // NOTE: Currently, both creation and transfer are handled in the same API call.
@@ -85,7 +86,7 @@ export const useMasterSafeCreationAndTransfer = (
           transfers: tokenSymbols.map((symbol) => ({
             symbol,
             status: 'finish' as BridgingStepStatus,
-            txnLink: null, // BE does not return the txn link yet
+            txnLink: null, // BE does not return the txn link yet // TODO: BE returns the txn link
           })),
         };
       } catch (error) {
