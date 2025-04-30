@@ -81,6 +81,7 @@ const QuoteRequestFailed = () => (
       <CloseCircleOutlined style={ERROR_ICON_STYLE} />
       <Text>Quote request failed</Text>
     </Flex>
+    {/* TODO */}
     <Button disabled icon={<ReloadOutlined />} size="small">
       Try again
     </Button>
