@@ -8,7 +8,7 @@ import {
 import { Button, Divider, Flex, message, Spin, Typography } from 'antd';
 import { upperFirst } from 'lodash';
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import {
@@ -38,7 +38,7 @@ import {
   WARNING_ICON_STYLE,
 } from '../ui/iconStyles';
 import { DepositAddress } from './DepositAddress';
-import { getBridgeRequirementsParams } from './utils';
+import { useGetBridgeRequirementsParams } from './utils';
 
 const { Text } = Typography;
 
@@ -69,20 +69,18 @@ const RequestingQuote = () => (
   </Flex>
 );
 
-const QuoteRequestFailed = () => (
+const QuoteRequestFailed = ({ onTryAgain }: { onTryAgain: () => void }) => (
   <Flex
     gap={8}
-    className="p-16 border-box"
+    className="p-16 border-box w-full"
     align="center"
     justify="space-between"
-    style={{ width: '100%' }}
   >
     <Flex gap={8} align="center">
       <CloseCircleOutlined style={ERROR_ICON_STYLE} />
       <Text>Quote request failed</Text>
     </Flex>
-    {/* TODO */}
-    <Button disabled icon={<ReloadOutlined />} size="small">
+    <Button onClick={onTryAgain} icon={<ReloadOutlined />} size="small">
       Try again
     </Button>
   </Flex>
@@ -198,6 +196,7 @@ export const DepositForBridging = ({
 
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
+  const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
 
   const bridgeRequirementsParams = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return null;
@@ -215,6 +214,7 @@ export const DepositForBridging = ({
     masterEoa,
     toMiddlewareChain,
     refillRequirements,
+    getBridgeRequirementsParams,
   ]);
 
   const {
@@ -294,6 +294,19 @@ export const DepositForBridging = ({
     );
   }, [bridgeFundingRequirements, masterEoa]);
 
+  const isRequestingQuoteFailed = useMemo(() => {
+    if (isBridgeRefillRequirementsLoading) return false;
+    if (isBridgeRefillRequirementsError) return true;
+
+    return bridgeFundingRequirements?.bridge_request_status.some(
+      (request) => request.status === 'QUOTE_FAILED',
+    );
+  }, [
+    isBridgeRefillRequirementsLoading,
+    isBridgeRefillRequirementsError,
+    bridgeFundingRequirements,
+  ]);
+
   // After the user has deposited the required funds,
   // send the quote ID, cross-chain transfer details to the next step
   useEffect(() => {
@@ -357,6 +370,28 @@ export const DepositForBridging = ({
     updateCrossChainTransferDetails,
   ]);
 
+  const handleRetryAgain = useCallback(
+    () => {
+      // setIsBridgeRefillRequirementsApiLoading(true);
+      // refetchBridgeRefillRequirements()
+      //   .then(() => {})
+      //   .catch(() => {
+      //     message.error({
+      //       content: 'Failed to fetch refill requirements',
+      //       key: FUNDS_RECEIVED_MESSAGE_KEY,
+      //     });
+      //   })
+      //   .finally(() => {
+      //     setIsBridgeRefillRequirementsApiLoading(false);
+      //   });
+    },
+    [
+      // isBridgeRefillRequirementsApiLoading,
+      // setIsBridgeRefillRequirementsApiLoading,
+      // refetchBridgeRefillRequirements,
+    ],
+  );
+
   return (
     <RootCard vertical>
       <DepositForBridgingHeader chainName={chainName} />
@@ -364,8 +399,8 @@ export const DepositForBridging = ({
 
       {isRequestingQuote ? (
         <RequestingQuote />
-      ) : isBridgeRefillRequirementsError ? (
-        <QuoteRequestFailed />
+      ) : isRequestingQuoteFailed ? (
+        <QuoteRequestFailed onTryAgain={handleRetryAgain} />
       ) : (
         <>
           <Flex gap={8} align="start" vertical className="p-16">
