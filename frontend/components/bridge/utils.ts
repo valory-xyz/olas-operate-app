@@ -1,13 +1,16 @@
 import { isAddress } from 'ethers/lib/utils';
 import { useCallback } from 'react';
 
-import { AddressBalanceRecord, MiddlewareChain } from '@/client';
+import { MiddlewareChain } from '@/client';
 import {
   ChainTokenConfig,
   ETHEREUM_TOKEN_CONFIG,
   TOKEN_CONFIG,
 } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
+import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
+import { useServices } from '@/hooks/useServices';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
@@ -38,25 +41,26 @@ const getFromToken = (
   return fromChainConfig[tokenSymbol].address;
 };
 
-type BridgeRefillRequirementsRequestParams = {
-  toMiddlewareChain: MiddlewareChain;
-  fromAddress: Address;
-  toAddress: Address;
-  refillRequirements: AddressBalanceRecord;
-};
-
 /**
  * Helper to get bridge refill requirements parameters
  * based on current refill requirements
  */
-export const useGetBridgeRequirementsParams = () =>
-  useCallback(
-    ({
-      toMiddlewareChain,
-      fromAddress,
-      toAddress,
-      refillRequirements,
-    }: BridgeRefillRequirementsRequestParams) => {
+export const useGetBridgeRequirementsParams = () => {
+  const { selectedAgentConfig } = useServices();
+  const { masterEoa } = useMasterWalletContext();
+
+  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
+  const fromAddress = masterEoa?.address;
+  const toAddress = masterEoa?.address;
+  const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
+    useBalanceAndRefillRequirementsContext();
+
+  return useCallback(
+    (isForceUpdate = false) => {
+      if (!isBalancesAndFundingRequirementsLoading) return null;
+      if (!refillRequirements) return null;
+      if (!fromAddress || !toAddress) return null;
+
       const fromChainConfig = ETHEREUM_TOKEN_CONFIG; // TODO: make dynamic, get from token config
       const toChainConfig = TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)];
 
@@ -122,8 +126,15 @@ export const useGetBridgeRequirementsParams = () =>
 
       return {
         bridge_requests: bridgeRequests,
-        force_update: false,
+        force_update: isForceUpdate,
       } satisfies BridgeRefillRequirementsRequest;
     },
-    [],
+    [
+      fromAddress,
+      toAddress,
+      refillRequirements,
+      isBalancesAndFundingRequirementsLoading,
+      toMiddlewareChain,
+    ],
   );
+};

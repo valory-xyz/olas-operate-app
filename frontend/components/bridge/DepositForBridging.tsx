@@ -188,34 +188,19 @@ export const DepositForBridging = ({
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const { masterEoa } = useMasterWalletContext();
+  const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
+    useBalanceAndRefillRequirementsContext();
+  const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
 
   const [
     isBridgeRefillRequirementsApiLoading,
     setIsBridgeRefillRequirementsApiLoading,
   ] = useState(true);
 
-  const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
-    useBalanceAndRefillRequirementsContext();
-  const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
-
   const bridgeRequirementsParams = useMemo(() => {
-    if (isBalancesAndFundingRequirementsLoading) return null;
-    if (!masterEoa) return null;
-    if (!refillRequirements) return null;
-
-    return getBridgeRequirementsParams({
-      fromAddress: masterEoa.address,
-      toAddress: masterEoa.address,
-      toMiddlewareChain,
-      refillRequirements,
-    });
-  }, [
-    isBalancesAndFundingRequirementsLoading,
-    masterEoa,
-    toMiddlewareChain,
-    refillRequirements,
-    getBridgeRequirementsParams,
-  ]);
+    if (!getBridgeRequirementsParams) return null;
+    return getBridgeRequirementsParams();
+  }, [getBridgeRequirementsParams]);
 
   const {
     data: bridgeFundingRequirements,
