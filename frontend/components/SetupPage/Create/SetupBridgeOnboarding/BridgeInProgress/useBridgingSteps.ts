@@ -30,10 +30,10 @@ const getBridgeStats = ({
 }) =>
   stats.map((step, index) => {
     const stepStatus: BridgingStepStatus = (() => {
-      if (hasAnyBridgeFailed) return 'error';
       if (step.status === 'EXECUTION_DONE') return 'finish';
       if (step.status === 'EXECUTION_FAILED') return 'error';
       if (step.status === 'EXECUTION_PENDING') return 'process';
+      if (hasAnyBridgeFailed) return 'error';
       return 'process';
     })();
 
