@@ -5,10 +5,7 @@ import { TEN_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { BridgeService } from '@/service/Bridge';
-import {
-  BridgeRefillRequirementsRequest,
-  BridgeRefillRequirementsResponse,
-} from '@/types/Bridge';
+import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 
 export const useBridgeRefillRequirements = (
   params: BridgeRefillRequirementsRequest | null,
@@ -17,7 +14,7 @@ export const useBridgeRefillRequirements = (
 ) => {
   const { isOnline } = useContext(OnlineStatusContext);
 
-  return useQuery<BridgeRefillRequirementsResponse>({
+  return useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_REFILL_REQUIREMENTS_KEY(params!),
     queryFn: async ({ signal }) => {
       const response = await BridgeService.getBridgeRefillRequirements(

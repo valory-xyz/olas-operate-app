@@ -163,9 +163,8 @@ export const DepositForBridging = ({
 
   // If quote has failed, stop polling for bridge refill requirements
   useEffect(() => {
-    if (isRequestingQuoteFailed) {
-      setCanPollForBridgeRefillRequirements(false);
-    }
+    if (!isRequestingQuoteFailed) return;
+    setCanPollForBridgeRefillRequirements(false);
   }, [isRequestingQuoteFailed]);
 
   // List of tokens that need to be deposited
@@ -284,6 +283,7 @@ export const DepositForBridging = ({
     updateCrossChainTransferDetails,
   ]);
 
+  // Retry to fetch the bridge refill requirements
   const handleRetryAgain = useCallback(() => {
     setIsForceUpdate(true);
     setCanPollForBridgeRefillRequirements(true);

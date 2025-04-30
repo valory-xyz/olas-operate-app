@@ -67,10 +67,10 @@ export const useGetBridgeRequirementsParams = () => {
       const bridgeRequests: BridgeRefillRequirementsRequest['bridge_requests'] =
         [];
 
+      const tokensRefillList = Object.entries(refillRequirements);
+
       // Populate bridge requests from refill Requirements
-      for (const [walletAddress, tokensWithRequirements] of Object.entries(
-        refillRequirements,
-      )) {
+      for (const [walletAddress, tokensWithRequirements] of tokensRefillList) {
         // Only calculate the refill requirements from master EOA or master safe placeholder
         const isRecipientAddress = areAddressesEqual(walletAddress, toAddress);
         if (!(isRecipientAddress || walletAddress === 'master_safe')) {
@@ -103,9 +103,8 @@ export const useGetBridgeRequirementsParams = () => {
           );
 
           if (existingRequest) {
-            existingRequest.to.amount = (
-              BigInt(existingRequest.to.amount) + BigInt(amount)
-            ).toString();
+            const toAmount = BigInt(existingRequest.to.amount) + BigInt(amount);
+            existingRequest.to.amount = toAmount.toString();
           } else {
             bridgeRequests.push({
               from: {

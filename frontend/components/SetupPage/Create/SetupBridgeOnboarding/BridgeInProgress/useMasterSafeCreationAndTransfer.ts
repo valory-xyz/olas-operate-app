@@ -85,7 +85,7 @@ export const useMasterSafeCreationAndTransfer = (
           transfers: tokenSymbols.map((symbol) => ({
             symbol,
             status: 'finish' as BridgingStepStatus,
-            txnLink: null, // BE does not return the txn link yet // TODO: BE returns the txn link
+            txnLink: null, // TODO: to integrate
           })),
         };
       } catch (error) {
