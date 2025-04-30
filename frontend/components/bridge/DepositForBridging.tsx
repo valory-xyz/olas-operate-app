@@ -1,6 +1,4 @@
 import {
-  CheckSquareOutlined,
-  ClockCircleOutlined,
   CloseCircleOutlined,
   LoadingOutlined,
   ReloadOutlined,
@@ -19,7 +17,6 @@ import {
 import { ETHEREUM_TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { COLOR } from '@/constants/colors';
-import { TokenSymbol } from '@/enums/Token';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
 import { useServices } from '@/hooks/useServices';
@@ -28,16 +25,10 @@ import { Address } from '@/types/Address';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
 import { delayInSeconds } from '@/utils/delay';
-import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
-import { InfoTooltip } from '../InfoTooltip';
-import {
-  ERROR_ICON_STYLE,
-  LIGHT_ICON_STYLE,
-  SUCCESS_ICON_STYLE,
-  WARNING_ICON_STYLE,
-} from '../ui/iconStyles';
+import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '../ui/iconStyles';
 import { DepositAddress } from './DepositAddress';
+import { DepositTokenDetails, TokenDetails } from './TokenDetails';
 import { useGetBridgeRequirementsParams } from './utils';
 
 const { Text } = Typography;
@@ -85,92 +76,6 @@ const QuoteRequestFailed = ({ onTryAgain }: { onTryAgain: () => void }) => (
     </Button>
   </Flex>
 );
-
-type TokenDetails = {
-  address?: Address;
-  symbol: TokenSymbol;
-  totalRequiredInWei: bigint;
-  currentBalanceInWei: bigint;
-  areFundsReceived: boolean;
-  decimals: number;
-  isNative?: boolean;
-  precision?: number;
-};
-
-type TokenInfoProps = TokenDetails;
-
-const TokenInfo = ({
-  symbol,
-  totalRequiredInWei,
-  currentBalanceInWei,
-  areFundsReceived,
-  decimals,
-  isNative,
-  precision = 2,
-}: TokenDetails) => {
-  const depositRequiredInWei = totalRequiredInWei - currentBalanceInWei;
-
-  return (
-    <Flex gap={8} align="center">
-      {areFundsReceived ? (
-        <>
-          <CheckSquareOutlined style={SUCCESS_ICON_STYLE} />
-          <Text strong>{symbol}</Text> funds received!
-        </>
-      ) : (
-        <>
-          <ClockCircleOutlined style={WARNING_ICON_STYLE} />
-          <Text className="loading-ellipses">
-            Waiting for{' '}
-            <Text strong>
-              {formatUnitsToNumber(depositRequiredInWei, decimals, precision)}
-              &nbsp;
-              {symbol}
-            </Text>
-          </Text>
-        </>
-      )}
-
-      <InfoTooltip overlayInnerStyle={{ width: 340 }} placement="topRight">
-        <Flex vertical gap={8} className="p-8">
-          <Flex justify="space-between">
-            <Text type="secondary" className="text-sm">
-              Total amount required
-            </Text>
-            <Text
-              className="text-sm"
-              strong
-            >{`${formatUnitsToNumber(totalRequiredInWei, decimals, precision)} ${symbol}`}</Text>
-          </Flex>
-          <Flex justify="space-between">
-            <Text type="secondary" className="text-sm">
-              Balance at deposit address
-            </Text>
-            <Text
-              className="text-sm"
-              strong
-            >{`${formatUnitsToNumber(currentBalanceInWei, decimals, precision)} ${symbol}`}</Text>
-          </Flex>
-          <Divider className="m-0" />
-          <Flex justify="space-between">
-            <Text className="text-sm" strong>
-              Deposit required
-            </Text>
-            <Text
-              className="text-sm"
-              strong
-            >{`${formatUnitsToNumber(depositRequiredInWei, decimals, precision)} ${symbol}`}</Text>
-          </Flex>
-          {isNative && (
-            <Text type="secondary" className="text-sm">
-              The total amount may fluctuate due to periodic quote updates.
-            </Text>
-          )}
-        </Flex>
-      </InfoTooltip>
-    </Flex>
-  );
-};
 
 type DepositForBridgingProps = {
   chainName: string;
@@ -309,7 +214,7 @@ export const DepositForBridging = ({
           areFundsReceived,
           decimals: token.decimals,
           isNative: token.tokenType === TokenType.NativeGas,
-        } satisfies TokenInfoProps;
+        } satisfies DepositTokenDetails;
       },
     );
   }, [bridgeFundingRequirements, masterEoa]);
@@ -403,7 +308,7 @@ export const DepositForBridging = ({
             ) : (
               <>
                 {tokens.map((token) => (
-                  <TokenInfo
+                  <TokenDetails
                     key={token.symbol}
                     {...token}
                     precision={token.isNative ? 5 : 2}
