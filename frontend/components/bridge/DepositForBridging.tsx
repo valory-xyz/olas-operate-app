@@ -196,11 +196,20 @@ export const DepositForBridging = ({
     isBridgeRefillRequirementsApiLoading,
     setIsBridgeRefillRequirementsApiLoading,
   ] = useState(true);
+  const [isForceUpdate, setIsForceUpdate] = useState(false);
+  const [
+    canPollForBridgeRefillRequirements,
+    setCanPollForBridgeRefillRequirements,
+  ] = useState(true);
 
   const bridgeRequirementsParams = useMemo(() => {
     if (!getBridgeRequirementsParams) return null;
-    return getBridgeRequirementsParams();
-  }, [getBridgeRequirementsParams]);
+    return getBridgeRequirementsParams(isForceUpdate);
+  }, [isForceUpdate, getBridgeRequirementsParams]);
+
+  // force_update: true is used only when the user clicks on "Try again",
+  // hence reset it to false after the API call is made.
+  const resetForceUpdate = useCallback(() => setIsForceUpdate(false), []);
 
   const {
     data: bridgeFundingRequirements,
@@ -208,7 +217,11 @@ export const DepositForBridging = ({
     isError: isBridgeRefillRequirementsError,
     isFetching: isBridgeRefillRequirementsFetching,
     refetch: refetchBridgeRefillRequirements,
-  } = useBridgeRefillRequirements(bridgeRequirementsParams);
+  } = useBridgeRefillRequirements(
+    bridgeRequirementsParams,
+    canPollForBridgeRefillRequirements,
+    isForceUpdate ? resetForceUpdate : undefined,
+  );
 
   // fetch bridge refill requirements manually on mount
   useEffect(() => {
@@ -227,6 +240,28 @@ export const DepositForBridging = ({
     isBalancesAndFundingRequirementsLoading ||
     isBridgeRefillRequirementsApiLoading ||
     isBridgeRefillRequirementsLoading;
+
+  const isRequestingQuoteFailed = useMemo(() => {
+    if (isRequestingQuote) return false;
+    if (isBridgeRefillRequirementsError) return true;
+
+    // Even if the API call succeeds, if any entry has QUOTE_FAILED,
+    // we should still display an error message and allow the user to retry.
+    return bridgeFundingRequirements?.bridge_request_status.some(
+      (request) => request.status === 'QUOTE_FAILED',
+    );
+  }, [
+    isRequestingQuote,
+    isBridgeRefillRequirementsError,
+    bridgeFundingRequirements,
+  ]);
+
+  // If quote has failed, stop polling for bridge refill requirements
+  useEffect(() => {
+    if (isRequestingQuoteFailed) {
+      setCanPollForBridgeRefillRequirements(false);
+    }
+  }, [isRequestingQuoteFailed]);
 
   // List of tokens that need to be deposited
   const tokens = useMemo(() => {
@@ -279,19 +314,6 @@ export const DepositForBridging = ({
     );
   }, [bridgeFundingRequirements, masterEoa]);
 
-  const isRequestingQuoteFailed = useMemo(() => {
-    if (isBridgeRefillRequirementsLoading) return false;
-    if (isBridgeRefillRequirementsError) return true;
-
-    return bridgeFundingRequirements?.bridge_request_status.some(
-      (request) => request.status === 'QUOTE_FAILED',
-    );
-  }, [
-    isBridgeRefillRequirementsLoading,
-    isBridgeRefillRequirementsError,
-    bridgeFundingRequirements,
-  ]);
-
   // After the user has deposited the required funds,
   // send the quote ID, cross-chain transfer details to the next step
   useEffect(() => {
@@ -299,6 +321,7 @@ export const DepositForBridging = ({
     if (isBridgeRefillRequirementsFetching) return;
     if (!bridgeFundingRequirements) return;
     if (tokens.length === 0) return;
+    if (isRequestingQuoteFailed) return;
 
     const areAllFundsReceived =
       tokens.every((token) => token.areFundsReceived) &&
@@ -345,6 +368,7 @@ export const DepositForBridging = ({
   }, [
     isRequestingQuote,
     isBridgeRefillRequirementsFetching,
+    isRequestingQuoteFailed,
     toMiddlewareChain,
     refillRequirements,
     bridgeFundingRequirements,
@@ -355,27 +379,10 @@ export const DepositForBridging = ({
     updateCrossChainTransferDetails,
   ]);
 
-  const handleRetryAgain = useCallback(
-    () => {
-      // setIsBridgeRefillRequirementsApiLoading(true);
-      // refetchBridgeRefillRequirements()
-      //   .then(() => {})
-      //   .catch(() => {
-      //     message.error({
-      //       content: 'Failed to fetch refill requirements',
-      //       key: FUNDS_RECEIVED_MESSAGE_KEY,
-      //     });
-      //   })
-      //   .finally(() => {
-      //     setIsBridgeRefillRequirementsApiLoading(false);
-      //   });
-    },
-    [
-      // isBridgeRefillRequirementsApiLoading,
-      // setIsBridgeRefillRequirementsApiLoading,
-      // refetchBridgeRefillRequirements,
-    ],
-  );
+  const handleRetryAgain = useCallback(() => {
+    setIsForceUpdate(true);
+    setCanPollForBridgeRefillRequirements(true);
+  }, []);
 
   return (
     <RootCard vertical>

@@ -57,7 +57,7 @@ export const useGetBridgeRequirementsParams = () => {
 
   return useCallback(
     (isForceUpdate = false) => {
-      if (!isBalancesAndFundingRequirementsLoading) return null;
+      if (isBalancesAndFundingRequirementsLoading) return null;
       if (!refillRequirements) return null;
       if (!fromAddress || !toAddress) return null;
 
