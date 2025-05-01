@@ -14,9 +14,14 @@ import {
   MasterSafeBalanceRecord,
   MiddlewareChain,
 } from '@/client';
-import { ETHEREUM_TOKEN_CONFIG, TokenType } from '@/config/tokens';
+import {
+  ETHEREUM_TOKEN_CONFIG,
+  TOKEN_CONFIG,
+  TokenType,
+} from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { COLOR } from '@/constants/colors';
+import { TokenSymbol } from '@/enums/Token';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
 import { useServices } from '@/hooks/useServices';
@@ -25,6 +30,7 @@ import { Address } from '@/types/Address';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
 import { delayInSeconds } from '@/utils/delay';
+import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '../ui/iconStyles';
 import { DepositAddress } from './DepositAddress';
@@ -188,6 +194,10 @@ export const DepositForBridging = ({
     return Object.entries(bridgeTotalRequirements).map(
       ([tokenAddress, totalRequired]) => {
         const totalRequiredInWei = BigInt(totalRequired);
+
+        // current balance = total_required_amount - required_amount
+        // eg. if total_required_amount = 1000 and required_amount = 200,
+        // then the assumed current_balance = 1000 - 200 = 800
         const currentBalanceInWei =
           totalRequiredInWei -
           BigInt(bridgeRefillRequirements[tokenAddress as Address] || 0);
@@ -226,6 +236,7 @@ export const DepositForBridging = ({
     if (!bridgeFundingRequirements) return;
     if (tokens.length === 0) return;
     if (isRequestingQuoteFailed) return;
+    if (!masterEoa?.address) return;
 
     const areAllFundsReceived =
       tokens.every((token) => token.areFundsReceived) &&
@@ -233,31 +244,49 @@ export const DepositForBridging = ({
     if (!areAllFundsReceived) return;
 
     updateQuoteId(bridgeFundingRequirements.id);
+
+    const transfers = tokens.map((token) => {
+      const toAmount = (() => {
+        // Find the token address on the destination chain.
+        // eg. if the token is USDC on Ethereum, it will be USDC on Base
+        // but the address will be different.
+        const chainTokenConfig =
+          TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)][token.symbol];
+
+        const currentChainAddress =
+          token.symbol === TokenSymbol.ETH
+            ? token.address
+            : chainTokenConfig.address;
+
+        let masterSafeAmount: string | number = 0;
+        let masterEoaAmount: string | number = 0;
+
+        if (currentChainAddress) {
+          masterSafeAmount =
+            (refillRequirements as MasterSafeBalanceRecord)?.master_safe?.[
+              currentChainAddress
+            ] || 0;
+          masterEoaAmount =
+            (refillRequirements as AddressBalanceRecord)?.[masterEoa.address]?.[
+              currentChainAddress
+            ] || 0;
+        }
+
+        return BigInt(masterSafeAmount) + BigInt(masterEoaAmount);
+      })();
+
+      return {
+        fromSymbol: token.symbol,
+        fromAmount: token.currentBalanceInWei.toString(),
+        toSymbol: token.symbol,
+        toAmount: toAmount.toString(),
+        decimals: token.decimals,
+      };
+    });
     updateCrossChainTransferDetails({
       fromChain: upperFirst(MiddlewareChain.ETHEREUM),
       toChain: upperFirst(toMiddlewareChain),
-      transfers: tokens.map((token) => {
-        const toAmount = (() => {
-          if (!masterEoa?.address) return;
-
-          const masterSafeAmount = (
-            refillRequirements as MasterSafeBalanceRecord
-          )?.master_safe?.[token.address];
-          const masterEoaAmount = (
-            refillRequirements as AddressBalanceRecord
-          )?.[masterEoa.address]?.[token.address];
-
-          return (masterSafeAmount || 0) + (masterEoaAmount || 0);
-        })();
-
-        return {
-          fromSymbol: token.symbol,
-          fromAmount: token.currentBalanceInWei.toString(),
-          toSymbol: token.symbol,
-          toAmount: toAmount?.toString() || '0',
-          decimals: token.decimals,
-        };
-      }),
+      transfers,
     });
 
     // wait for 2 seconds before proceeding to the next step.
