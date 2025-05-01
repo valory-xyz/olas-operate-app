@@ -143,11 +143,11 @@ export type MiddlewareWalletResponse = {
 };
 
 export type MasterSafeBalanceRecord = {
-  master_safe: { [tokenAddress: Address]: number };
+  master_safe: { [tokenAddress: Address]: number | string };
 };
 
 export type AddressBalanceRecord = {
-  [address: Address]: { [tokenAddress: Address]: number };
+  [address: Address]: { [tokenAddress: Address]: number | string };
 };
 
 export type BalancesAndFundingRequirements = {
