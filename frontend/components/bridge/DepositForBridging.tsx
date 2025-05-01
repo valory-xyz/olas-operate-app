@@ -244,49 +244,47 @@ export const DepositForBridging = ({
     if (!areAllFundsReceived) return;
 
     updateQuoteId(bridgeFundingRequirements.id);
-
-    const transfers = tokens.map((token) => {
-      const toAmount = (() => {
-        // Find the token address on the destination chain.
-        // eg. if the token is USDC on Ethereum, it will be USDC on Base
-        // but the address will be different.
-        const chainTokenConfig =
-          TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)][token.symbol];
-
-        const currentChainAddress =
-          token.symbol === TokenSymbol.ETH
-            ? token.address
-            : chainTokenConfig.address;
-
-        let masterSafeAmount: string | number = 0;
-        let masterEoaAmount: string | number = 0;
-
-        if (currentChainAddress) {
-          masterSafeAmount =
-            (refillRequirements as MasterSafeBalanceRecord)?.master_safe?.[
-              currentChainAddress
-            ] || 0;
-          masterEoaAmount =
-            (refillRequirements as AddressBalanceRecord)?.[masterEoa.address]?.[
-              currentChainAddress
-            ] || 0;
-        }
-
-        return BigInt(masterSafeAmount) + BigInt(masterEoaAmount);
-      })();
-
-      return {
-        fromSymbol: token.symbol,
-        fromAmount: token.currentBalanceInWei.toString(),
-        toSymbol: token.symbol,
-        toAmount: toAmount.toString(),
-        decimals: token.decimals,
-      };
-    });
     updateCrossChainTransferDetails({
       fromChain: upperFirst(MiddlewareChain.ETHEREUM),
       toChain: upperFirst(toMiddlewareChain),
-      transfers,
+      transfers: tokens.map((token) => {
+        const toAmount = (() => {
+          // Find the token address on the destination chain.
+          // eg. if the token is USDC on Ethereum, it will be USDC on Base
+          // but the address will be different.
+          const chainTokenConfig =
+            TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)][token.symbol];
+          const currentChainAddress =
+            token.symbol === TokenSymbol.ETH
+              ? token.address
+              : chainTokenConfig.address;
+
+          let masterSafeAmount: string | number = 0;
+          let masterEoaAmount: string | number = 0;
+          if (currentChainAddress) {
+            const masterSafeBalances =
+              (refillRequirements as MasterSafeBalanceRecord)?.master_safe ??
+              {};
+            masterSafeAmount = masterSafeBalances[currentChainAddress] || 0;
+
+            const eoaBalances =
+              (refillRequirements as AddressBalanceRecord)?.[
+                masterEoa.address
+              ] ?? {};
+            masterEoaAmount = eoaBalances[currentChainAddress] || 0;
+          }
+
+          return BigInt(masterSafeAmount) + BigInt(masterEoaAmount);
+        })();
+
+        return {
+          fromSymbol: token.symbol,
+          fromAmount: token.currentBalanceInWei.toString(),
+          toSymbol: token.symbol,
+          toAmount: toAmount.toString(),
+          decimals: token.decimals,
+        };
+      }),
     });
 
     // wait for 2 seconds before proceeding to the next step.
