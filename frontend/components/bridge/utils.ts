@@ -38,7 +38,7 @@ const getFromToken = (
     );
   }
 
-  return fromChainConfig[tokenSymbol].address;
+  return fromChainConfig[tokenSymbol].address as Address;
 };
 
 /**
