@@ -21,14 +21,14 @@ const isBridgingCompletedFn = (
 
 const getBridgeStats = ({
   hasAnyBridgeFailed = false,
-  stats: bridge_request_status,
+  stats,
   tokenSymbols,
 }: {
   hasAnyBridgeFailed?: boolean;
   tokenSymbols: TokenSymbol[];
   stats: BridgeStatusResponse['bridge_request_status'];
 }) =>
-  bridge_request_status.map((step, index) => {
+  stats.map((step, index) => {
     const stepStatus: BridgingStepStatus = (() => {
       if (hasAnyBridgeFailed) return 'error';
       if (step.status === 'EXECUTION_DONE') return 'finish';

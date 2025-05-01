@@ -77,7 +77,7 @@ export const useMasterSafeCreationAndTransfer = (
 
         return {
           isSafeCreated: true,
-          txnLink: response.safe_creation_explorer_link || null,
+          txnLink: response.create_tx,
 
           // NOTE: Currently, both creation and transfer are handled in the same API call.
           // Hence, the response contains the transfer status as well.
@@ -85,7 +85,7 @@ export const useMasterSafeCreationAndTransfer = (
           transfers: tokenSymbols.map((symbol) => ({
             symbol,
             status: 'finish' as BridgingStepStatus,
-            txnLink: null, // BE does not return the txn link yet
+            txnLink: null, // TODO: to integrate
           })),
         };
       } catch (error) {
