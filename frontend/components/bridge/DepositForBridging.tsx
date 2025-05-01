@@ -1,6 +1,4 @@
 import {
-  CheckSquareOutlined,
-  ClockCircleOutlined,
   CloseCircleOutlined,
   LoadingOutlined,
   ReloadOutlined,
@@ -8,7 +6,7 @@ import {
 import { Button, Divider, Flex, message, Spin, Typography } from 'antd';
 import { upperFirst } from 'lodash';
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import {
@@ -16,7 +14,11 @@ import {
   MasterSafeBalanceRecord,
   MiddlewareChain,
 } from '@/client';
-import { ETHEREUM_TOKEN_CONFIG, TokenType } from '@/config/tokens';
+import {
+  ETHEREUM_TOKEN_CONFIG,
+  TOKEN_CONFIG,
+  TokenType,
+} from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { COLOR } from '@/constants/colors';
 import { TokenSymbol } from '@/enums/Token';
@@ -28,17 +30,12 @@ import { Address } from '@/types/Address';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
 import { delayInSeconds } from '@/utils/delay';
-import { formatUnitsToNumber } from '@/utils/numberFormatters';
+import { asEvmChainId } from '@/utils/middlewareHelpers';
 
-import { InfoTooltip } from '../InfoTooltip';
-import {
-  ERROR_ICON_STYLE,
-  LIGHT_ICON_STYLE,
-  SUCCESS_ICON_STYLE,
-  WARNING_ICON_STYLE,
-} from '../ui/iconStyles';
+import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '../ui/iconStyles';
 import { DepositAddress } from './DepositAddress';
-import { getBridgeRequirementsParams } from './utils';
+import { DepositTokenDetails, TokenDetails } from './TokenDetails';
+import { useGetBridgeRequirementsParams } from './utils';
 
 const { Text } = Typography;
 
@@ -69,109 +66,22 @@ const RequestingQuote = () => (
   </Flex>
 );
 
-const QuoteRequestFailed = () => (
+const QuoteRequestFailed = ({ onTryAgain }: { onTryAgain: () => void }) => (
   <Flex
     gap={8}
-    className="p-16 border-box"
+    className="p-16 border-box w-full"
     align="center"
     justify="space-between"
-    style={{ width: '100%' }}
   >
     <Flex gap={8} align="center">
       <CloseCircleOutlined style={ERROR_ICON_STYLE} />
       <Text>Quote request failed</Text>
     </Flex>
-    <Button disabled icon={<ReloadOutlined />} size="small">
+    <Button onClick={onTryAgain} icon={<ReloadOutlined />} size="small">
       Try again
     </Button>
   </Flex>
 );
-
-type TokenDetails = {
-  address?: Address;
-  symbol: TokenSymbol;
-  totalRequiredInWei: bigint;
-  currentBalanceInWei: bigint;
-  areFundsReceived: boolean;
-  decimals: number;
-  isNative?: boolean;
-  precision?: number;
-};
-
-type TokenInfoProps = TokenDetails;
-
-const TokenInfo = ({
-  symbol,
-  totalRequiredInWei,
-  currentBalanceInWei,
-  areFundsReceived,
-  decimals,
-  isNative,
-  precision = 2,
-}: TokenDetails) => {
-  const depositRequiredInWei = totalRequiredInWei - currentBalanceInWei;
-
-  return (
-    <Flex gap={8} align="center">
-      {areFundsReceived ? (
-        <>
-          <CheckSquareOutlined style={SUCCESS_ICON_STYLE} />
-          <Text strong>{symbol}</Text> funds received!
-        </>
-      ) : (
-        <>
-          <ClockCircleOutlined style={WARNING_ICON_STYLE} />
-          <Text className="loading-ellipses">
-            Waiting for{' '}
-            <Text strong>
-              {formatUnitsToNumber(depositRequiredInWei, decimals, precision)}
-              &nbsp;
-              {symbol}
-            </Text>
-          </Text>
-        </>
-      )}
-
-      <InfoTooltip overlayInnerStyle={{ width: 340 }} placement="topRight">
-        <Flex vertical gap={8} className="p-8">
-          <Flex justify="space-between">
-            <Text type="secondary" className="text-sm">
-              Total amount required
-            </Text>
-            <Text
-              className="text-sm"
-              strong
-            >{`${formatUnitsToNumber(totalRequiredInWei, decimals, precision)} ${symbol}`}</Text>
-          </Flex>
-          <Flex justify="space-between">
-            <Text type="secondary" className="text-sm">
-              Balance at deposit address
-            </Text>
-            <Text
-              className="text-sm"
-              strong
-            >{`${formatUnitsToNumber(currentBalanceInWei, decimals, precision)} ${symbol}`}</Text>
-          </Flex>
-          <Divider className="m-0" />
-          <Flex justify="space-between">
-            <Text className="text-sm" strong>
-              Deposit required
-            </Text>
-            <Text
-              className="text-sm"
-              strong
-            >{`${formatUnitsToNumber(depositRequiredInWei, decimals, precision)} ${symbol}`}</Text>
-          </Flex>
-          {isNative && (
-            <Text type="secondary" className="text-sm">
-              The total amount may fluctuate due to periodic quote updates.
-            </Text>
-          )}
-        </Flex>
-      </InfoTooltip>
-    </Flex>
-  );
-};
 
 type DepositForBridgingProps = {
   chainName: string;
@@ -189,32 +99,28 @@ export const DepositForBridging = ({
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const { masterEoa } = useMasterWalletContext();
+  const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
+    useBalanceAndRefillRequirementsContext();
+  const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
 
   const [
     isBridgeRefillRequirementsApiLoading,
     setIsBridgeRefillRequirementsApiLoading,
   ] = useState(true);
-
-  const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
-    useBalanceAndRefillRequirementsContext();
+  const [isForceUpdate, setIsForceUpdate] = useState(false);
+  const [
+    canPollForBridgeRefillRequirements,
+    setCanPollForBridgeRefillRequirements,
+  ] = useState(true);
 
   const bridgeRequirementsParams = useMemo(() => {
-    if (isBalancesAndFundingRequirementsLoading) return null;
-    if (!masterEoa) return null;
-    if (!refillRequirements) return null;
+    if (!getBridgeRequirementsParams) return null;
+    return getBridgeRequirementsParams(isForceUpdate);
+  }, [isForceUpdate, getBridgeRequirementsParams]);
 
-    return getBridgeRequirementsParams({
-      fromAddress: masterEoa.address,
-      toAddress: masterEoa.address,
-      toMiddlewareChain,
-      refillRequirements,
-    });
-  }, [
-    isBalancesAndFundingRequirementsLoading,
-    masterEoa,
-    toMiddlewareChain,
-    refillRequirements,
-  ]);
+  // force_update: true is used only when the user clicks on "Try again",
+  // hence reset it to false after the API call is made.
+  const resetForceUpdate = useCallback(() => setIsForceUpdate(false), []);
 
   const {
     data: bridgeFundingRequirements,
@@ -222,7 +128,11 @@ export const DepositForBridging = ({
     isError: isBridgeRefillRequirementsError,
     isFetching: isBridgeRefillRequirementsFetching,
     refetch: refetchBridgeRefillRequirements,
-  } = useBridgeRefillRequirements(bridgeRequirementsParams);
+  } = useBridgeRefillRequirements(
+    bridgeRequirementsParams,
+    canPollForBridgeRefillRequirements,
+    isForceUpdate ? resetForceUpdate : undefined,
+  );
 
   // fetch bridge refill requirements manually on mount
   useEffect(() => {
@@ -241,6 +151,27 @@ export const DepositForBridging = ({
     isBalancesAndFundingRequirementsLoading ||
     isBridgeRefillRequirementsApiLoading ||
     isBridgeRefillRequirementsLoading;
+
+  const isRequestingQuoteFailed = useMemo(() => {
+    if (isRequestingQuote) return false;
+    if (isBridgeRefillRequirementsError) return true;
+
+    // Even if the API call succeeds, if any entry has QUOTE_FAILED,
+    // we should still display an error message and allow the user to retry.
+    return bridgeFundingRequirements?.bridge_request_status.some(
+      (request) => request.status === 'QUOTE_FAILED',
+    );
+  }, [
+    isRequestingQuote,
+    isBridgeRefillRequirementsError,
+    bridgeFundingRequirements,
+  ]);
+
+  // If quote has failed, stop polling for bridge refill requirements
+  useEffect(() => {
+    if (!isRequestingQuoteFailed) return;
+    setCanPollForBridgeRefillRequirements(false);
+  }, [isRequestingQuoteFailed]);
 
   // List of tokens that need to be deposited
   const tokens = useMemo(() => {
@@ -263,6 +194,10 @@ export const DepositForBridging = ({
     return Object.entries(bridgeTotalRequirements).map(
       ([tokenAddress, totalRequired]) => {
         const totalRequiredInWei = BigInt(totalRequired);
+
+        // current balance = total_required_amount - required_amount
+        // eg. if total_required_amount = 1000 and required_amount = 200,
+        // then the assumed current_balance = 1000 - 200 = 800
         const currentBalanceInWei =
           totalRequiredInWei -
           BigInt(bridgeRefillRequirements[tokenAddress as Address] || 0);
@@ -288,7 +223,7 @@ export const DepositForBridging = ({
           areFundsReceived,
           decimals: token.decimals,
           isNative: token.tokenType === TokenType.NativeGas,
-        } satisfies TokenInfoProps;
+        } satisfies DepositTokenDetails;
       },
     );
   }, [bridgeFundingRequirements, masterEoa]);
@@ -300,6 +235,8 @@ export const DepositForBridging = ({
     if (isBridgeRefillRequirementsFetching) return;
     if (!bridgeFundingRequirements) return;
     if (tokens.length === 0) return;
+    if (isRequestingQuoteFailed) return;
+    if (!masterEoa?.address) return;
 
     const areAllFundsReceived =
       tokens.every((token) => token.areFundsReceived) &&
@@ -312,23 +249,41 @@ export const DepositForBridging = ({
       toChain: upperFirst(toMiddlewareChain),
       transfers: tokens.map((token) => {
         const toAmount = (() => {
-          if (!masterEoa?.address) return;
+          // TODO: reuse getFromToken function from utils.ts
 
-          const masterSafeAmount = (
-            refillRequirements as MasterSafeBalanceRecord
-          )?.master_safe?.[token.address];
-          const masterEoaAmount = (
-            refillRequirements as AddressBalanceRecord
-          )?.[masterEoa.address]?.[token.address];
+          // Find the token address on the destination chain.
+          // eg. if the token is USDC on Ethereum, it will be USDC on Base
+          // but the address will be different.
+          const chainTokenConfig =
+            TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)][token.symbol];
+          const toTokenAddress =
+            token.symbol === TokenSymbol.ETH
+              ? token.address
+              : chainTokenConfig.address;
 
-          return (masterSafeAmount || 0) + (masterEoaAmount || 0);
+          let masterSafeAmount: string | number = 0;
+          let masterEoaAmount: string | number = 0;
+          if (toTokenAddress) {
+            const masterSafeBalances =
+              (refillRequirements as MasterSafeBalanceRecord)?.master_safe ??
+              {};
+            masterSafeAmount = masterSafeBalances[toTokenAddress] || 0;
+
+            const eoaBalances =
+              (refillRequirements as AddressBalanceRecord)?.[
+                masterEoa.address
+              ] ?? {};
+            masterEoaAmount = eoaBalances[toTokenAddress] || 0;
+          }
+
+          return BigInt(masterSafeAmount) + BigInt(masterEoaAmount);
         })();
 
         return {
           fromSymbol: token.symbol,
           fromAmount: token.currentBalanceInWei.toString(),
           toSymbol: token.symbol,
-          toAmount: toAmount?.toString() || '0',
+          toAmount: toAmount.toString(),
           decimals: token.decimals,
         };
       }),
@@ -346,6 +301,7 @@ export const DepositForBridging = ({
   }, [
     isRequestingQuote,
     isBridgeRefillRequirementsFetching,
+    isRequestingQuoteFailed,
     toMiddlewareChain,
     refillRequirements,
     bridgeFundingRequirements,
@@ -356,6 +312,12 @@ export const DepositForBridging = ({
     updateCrossChainTransferDetails,
   ]);
 
+  // Retry to fetch the bridge refill requirements
+  const handleRetryAgain = useCallback(() => {
+    setIsForceUpdate(true);
+    setCanPollForBridgeRefillRequirements(true);
+  }, []);
+
   return (
     <RootCard vertical>
       <DepositForBridgingHeader chainName={chainName} />
@@ -363,8 +325,8 @@ export const DepositForBridging = ({
 
       {isRequestingQuote ? (
         <RequestingQuote />
-      ) : isBridgeRefillRequirementsError ? (
-        <QuoteRequestFailed />
+      ) : isRequestingQuoteFailed ? (
+        <QuoteRequestFailed onTryAgain={handleRetryAgain} />
       ) : (
         <>
           <Flex gap={8} align="start" vertical className="p-16">
@@ -375,7 +337,7 @@ export const DepositForBridging = ({
             ) : (
               <>
                 {tokens.map((token) => (
-                  <TokenInfo
+                  <TokenDetails
                     key={token.symbol}
                     {...token}
                     precision={token.isNative ? 5 : 2}

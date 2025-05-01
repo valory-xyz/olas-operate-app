@@ -20,17 +20,15 @@ const isBridgingCompletedFn = (
 ) => requests.every((step) => step.status === 'EXECUTION_DONE');
 
 const getBridgeStats = ({
-  hasAnyBridgeFailed = false,
-  stats: bridge_request_status,
+  stats,
   tokenSymbols,
 }: {
   hasAnyBridgeFailed?: boolean;
   tokenSymbols: TokenSymbol[];
   stats: BridgeStatusResponse['bridge_request_status'];
 }) =>
-  bridge_request_status.map((step, index) => {
+  stats.map((step, index) => {
     const stepStatus: BridgingStepStatus = (() => {
-      if (hasAnyBridgeFailed) return 'error';
       if (step.status === 'EXECUTION_DONE') return 'finish';
       if (step.status === 'EXECUTION_FAILED') return 'error';
       if (step.status === 'EXECUTION_PENDING') return 'process';
@@ -141,12 +139,10 @@ export const useBridgingSteps = (
     if (!bridgeExecuteData) return;
 
     return getBridgeStats({
-      hasAnyBridgeFailed: isBridgingExecuteFailed,
       stats: bridgeExecuteData.bridge_request_status,
       tokenSymbols,
     });
   }, [
-    isBridgingExecuteFailed,
     isBridgeExecuteLoading,
     isBridgeExecuteFetching,
     isBridgeExecuteError,
@@ -160,7 +156,6 @@ export const useBridgingSteps = (
     if (!bridgeStatusData) return;
 
     return getBridgeStats({
-      hasAnyBridgeFailed,
       stats: bridgeStatusData.bridge_request_status,
       tokenSymbols,
     });
@@ -168,7 +163,6 @@ export const useBridgingSteps = (
     isBridgeStatusLoading,
     isBridgeStatusError,
     bridgeStatusData,
-    hasAnyBridgeFailed,
     tokenSymbols,
   ]);
 

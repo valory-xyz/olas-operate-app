@@ -9,6 +9,8 @@ import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 
 export const useBridgeRefillRequirements = (
   params: BridgeRefillRequirementsRequest | null,
+  canPoll: boolean = true,
+  onSuccess?: () => void,
 ) => {
   const { isOnline } = useContext(OnlineStatusContext);
 
@@ -19,9 +21,12 @@ export const useBridgeRefillRequirements = (
         params!,
         signal,
       );
+
+      if (onSuccess) onSuccess();
       return response;
     },
-    refetchInterval: TEN_SECONDS_INTERVAL,
+
+    refetchInterval: canPoll ? TEN_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
     enabled: isOnline && !!params,
     staleTime: 0,

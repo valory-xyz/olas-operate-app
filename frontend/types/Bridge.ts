@@ -55,7 +55,7 @@ export type BridgeRefillRequirementsResponse = {
   bridge_refill_requirements: Partial<{
     [chain in MiddlewareChain]: AddressBalanceRecord;
   }>;
-  bridge_request_status: { message: string; status: QuoteStatus }[];
+  bridge_request_status: { message: Nullable<string>; status: QuoteStatus }[];
   expiration_timestamp: number;
   is_refill_required: boolean;
 };
