@@ -249,29 +249,31 @@ export const DepositForBridging = ({
       toChain: upperFirst(toMiddlewareChain),
       transfers: tokens.map((token) => {
         const toAmount = (() => {
+          // TODO: reuse getFromToken function from utils.ts
+
           // Find the token address on the destination chain.
           // eg. if the token is USDC on Ethereum, it will be USDC on Base
           // but the address will be different.
           const chainTokenConfig =
             TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)][token.symbol];
-          const currentChainAddress =
+          const toTokenAddress =
             token.symbol === TokenSymbol.ETH
               ? token.address
               : chainTokenConfig.address;
 
           let masterSafeAmount: string | number = 0;
           let masterEoaAmount: string | number = 0;
-          if (currentChainAddress) {
+          if (toTokenAddress) {
             const masterSafeBalances =
               (refillRequirements as MasterSafeBalanceRecord)?.master_safe ??
               {};
-            masterSafeAmount = masterSafeBalances[currentChainAddress] || 0;
+            masterSafeAmount = masterSafeBalances[toTokenAddress] || 0;
 
             const eoaBalances =
               (refillRequirements as AddressBalanceRecord)?.[
                 masterEoa.address
               ] ?? {};
-            masterEoaAmount = eoaBalances[currentChainAddress] || 0;
+            masterEoaAmount = eoaBalances[toTokenAddress] || 0;
           }
 
           return BigInt(masterSafeAmount) + BigInt(masterEoaAmount);
