@@ -83,7 +83,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
-      value: 'QmVCKTpXjK6gtcsCBivrGVaH1rQuBgtEVVMTjmn3uE1mZp',
+      value: 'QmTYyRB1C69EoC2rNLjrdJJFe8Bcx3EVKYuHw94YFmYJe8',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
+      name: 'Mech interact round timeout',
+      description: '',
+      value: '900', // 15 min
       provision_type: EnvProvisionType.FIXED,
     },
   },
