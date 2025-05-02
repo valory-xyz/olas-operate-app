@@ -99,6 +99,9 @@ export const updateServiceIfNeeded = async (
     };
   }
 
+  // Forcing to update for eliza POC as binary_path is missed sometimes?
+  partialServiceTemplate.binary_path = 'agentsFunEliza';
+
   if (isEmpty(partialServiceTemplate)) return;
 
   await ServicesService.updateService({

@@ -29,6 +29,7 @@ const FUNDS_REQUIRED_FOR_BY_AGENT_TYPE: { [key in AgentType]: string } = {
   [AgentType.Memeooorr]: 'for agent operations',
   [AgentType.Modius]: 'for investment',
   [AgentType.AgentsFunCelo]: 'for agent operations',
+  [AgentType.AgentsFunEliza]: 'for agent operations',
 } as const;
 
 export const FundsToActivate = ({

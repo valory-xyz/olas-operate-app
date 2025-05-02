@@ -87,4 +87,18 @@ export const AGENT_CONFIG: {
     description:
       'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Celo chain.',
   },
+  [AgentType.AgentsFunEliza]: {
+    isAgentEnabled: true,
+    isComingSoon: false,
+    requiresSetup: true,
+    name: '(Eliza POC) Agents.fun agent',
+    evmHomeChainId: EvmChainId.Base,
+    middlewareHomeChainId: MiddlewareChain.BASE,
+    requiresAgentSafesOn: [EvmChainId.Base],
+    requiresMasterSafesOn: [EvmChainId.Base],
+    serviceApi: AgentsFunBaseService,
+    displayName: '(Eliza POC) Agents.fun agent - Base',
+    description:
+      'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
+  },
 };

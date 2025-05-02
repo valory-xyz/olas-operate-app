@@ -69,7 +69,11 @@ export const AgentIntroduction = () => {
 
   const introductionSteps = useMemo(() => {
     if (selectedAgentType === 'trader') return PREDICTION_ONBOARDING_STEPS;
-    if (selectedAgentType === 'memeooorr') return AGENTS_FUND_ONBOARDING_STEPS;
+    if (
+      selectedAgentType === 'memeooorr' ||
+      selectedAgentType === 'agentsFunEliza'
+    )
+      return AGENTS_FUND_ONBOARDING_STEPS;
     if (selectedAgentType === 'modius') return MODIUS_ONBOARDING_STEPS;
 
     throw new Error('Invalid agent type');

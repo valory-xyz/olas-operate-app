@@ -38,9 +38,10 @@ export const SetupYourAgent = () => {
         <SetupCreateHeader prev={SetupScreen.AgentIntroduction} />
         <Title level={3}>Set up your agent</Title>
 
-        {selectedAgentType === AgentType.Memeooorr && (
-          <MemeooorrAgentForm serviceTemplate={serviceTemplate} />
-        )}
+        {selectedAgentType === AgentType.Memeooorr ||
+          (selectedAgentType === AgentType.AgentsFunEliza && (
+            <MemeooorrAgentForm serviceTemplate={serviceTemplate} />
+          ))}
 
         {selectedAgentType === AgentType.Modius && (
           <ModiusAgentForm serviceTemplate={serviceTemplate} />

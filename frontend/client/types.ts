@@ -78,6 +78,7 @@ export type ServiceTemplate = {
   agentType: AgentType;
   name: string;
   hash: string;
+  binary_path: string | null;
   description: string;
   image: string;
   service_version: string;
@@ -88,7 +89,7 @@ export type ServiceTemplate = {
 };
 
 export type ConfigurationTemplate = {
-  staking_program_id?: StakingProgramId; // added on deployment
+  staking_program_id?: StakingProgramId | 'no_staking'; // added on deployment
   nft: string;
   rpc?: string; // added on deployment
   agent_id: number;

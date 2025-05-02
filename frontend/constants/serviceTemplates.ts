@@ -9,6 +9,7 @@ import { parseEther, parseUnits } from '@/utils/numberFormatters';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
+  binary_path: null,
   name: 'Trader Agent', // Should be unique across all services and not be updated
   hash: 'bafybeihgmbbjtkrlu62bkm3e4j2ehqipv5huqpifjiyttvjrk4sikwsfzu',
   description: 'Trader agent for omen prediction markets',
@@ -91,9 +92,15 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 
 const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
-  'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
+  | 'env_variables'
+  | 'hash'
+  | 'image'
+  | 'description'
+  | 'service_version'
+  | 'binary_path'
 > = {
   hash: 'bafybeidxfdlaeywhnhafix2yzrnbldk5cybwal53o6mtabnamnxmwtprea',
+  binary_path: null,
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
@@ -252,6 +259,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
+  binary_path: null,
   name: 'Optimus', // Should be unique across all services and not be updated
   hash: 'bafybeiecjxha2ouqupttgdax7j4xmzfr6icuu55kq5xo2bwhkrl2po5khq',
   description: 'Optimus',
@@ -401,11 +409,91 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   },
 } as const;
 
+const ELIZA_AGENTS_FUN_TEMPLATE: ServiceTemplate = {
+  agentType: AgentType.AgentsFunEliza,
+  name: 'Memeooorr Eliza',
+  hash: 'bafybeiee7ctm33ctjgnnzv5nbwwczqq335kx5rmhiufpuyiba6rukxwekm',
+  binary_path: 'agentsFunEliza',
+  description: 'Memeooorr @twitter_handle',
+  image:
+    'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
+  service_version: 'v0.4.0-alpha7',
+  home_chain: MiddlewareChain.BASE,
+  configurations: {
+    [MiddlewareChain.BASE]: {
+      staking_program_id: 'no_staking',
+      agent_id: 51,
+      nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+      threshold: 1,
+      use_staking: false,
+      cost_of_bond: +parseEther(50),
+      monthly_gas_estimate: 1000000000000000 + 12500000000000000,
+      fund_requirements: {
+        '0x0000000000000000000000000000000000000000': {
+          agent: 1000000000000000,
+          safe: 12500000000000000,
+        },
+      },
+    },
+  },
+  env_variables: {
+    SAFE_CONTRACT_ADDRESSES: {
+      name: 'Safe contract addresses',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    STAKING_CONTRACT_ADDRESS: {
+      name: 'Staking contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    BASE_LEDGER_RPC: {
+      name: 'Base Ledger RPC',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    TWIKIT_USERNAME: {
+      name: 'Twitter Username',
+      description: 'Twitter Username of the user',
+      value: 'Keshav_Mis',
+      provision_type: EnvProvisionType.USER,
+    },
+    TWIKIT_PASSWORD: {
+      name: 'Twitter Password',
+      description: 'Password of your twitter account',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    TWIKIT_EMAIL: {
+      name: 'Twitter Email',
+      description: 'Email attached to your twitter account',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    OPENAI_API_KEY: {
+      name: 'OpenAI API Key',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    STORE_PATH: {
+      name: 'Store Path',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+  },
+};
+
 export const SERVICE_TEMPLATES: ServiceTemplate[] = [
   PREDICT_SERVICE_TEMPLATE,
   AGENTS_FUN_BASE_TEMPLATE,
   MODIUS_SERVICE_TEMPLATE,
   AGENTS_FUN_CELO_TEMPLATE,
+  ELIZA_AGENTS_FUN_TEMPLATE,
 ] as const;
 
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;

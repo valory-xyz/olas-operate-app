@@ -73,6 +73,17 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'backup-via-safe': false, // temporarily hidden until mode is available on safe https://app.safe.global/new-safe/create
     'agent-settings': true,
   },
+  [AgentType.AgentsFunEliza]: {
+    'manage-wallet': true,
+    'withdraw-funds': true,
+    'last-transactions': true,
+    'rewards-streak': true,
+    'staking-contract-section': true,
+    'low-funds': false,
+    'agent-activity': true,
+    'backup-via-safe': true,
+    'agent-settings': true,
+  },
 });
 
 type FeatureFlagReturn<T extends FeatureFlags | FeatureFlags[]> =

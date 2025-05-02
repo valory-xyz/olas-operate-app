@@ -26,6 +26,7 @@ const schema = {
     },
   },
   agentsFunCelo: { type: 'object', default: defaultInitialAgentSettings },
+  agentsFunEliza: { type: 'object', default: defaultInitialAgentSettings },
 };
 
 /**
