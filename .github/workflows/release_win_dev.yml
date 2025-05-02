@@ -13,7 +13,7 @@ jobs:
         include:
           - env: "development"
             OPTIMISM_RPC: "https://rpc-gate.autonolas.tech/optimism-rpc/"
-            BASE_RPC: "https://virtual.base.rpc.tenderly.co/d82d9c67-a1b8-4dc5-92b3-b26a62acf52a"
+            BASE_RPC: "https://virtual.base.rpc.tenderly.co/72a828af-1a18-471c-83e3-90bead64a098"
             GNOSIS_RPC: "https://virtual.gnosis.rpc.tenderly.co/c3515971-35be-4739-99d5-6a29ca1a8b2e"
             ETHEREUM_RPC: "https://rpc-gate.autonolas.tech/ethereum-rpc/"  
             MODE_RPC: "https://virtual.mode.rpc.tenderly.co/223302cf-9443-40c9-8a1c-d8fbc1aedef3"
