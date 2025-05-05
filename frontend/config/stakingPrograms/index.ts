@@ -2,7 +2,7 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
-import { StakingProgramId } from '@/enums/StakingProgram';
+import { StakingProgram, StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
 import { MechType } from '../mechs';
@@ -69,7 +69,7 @@ export const STAKING_PROGRAM_ADDRESS: {
 };
 
 export const DEFAULT_STAKING_PROGRAM_IDS: {
-  [chainId in EvmChainId]: StakingProgramId;
+  [chainId in EvmChainId]: StakingProgram;
 } = {
   [EvmChainId.Gnosis]: StakingProgramId.PearlBeta,
   [EvmChainId.Base]: StakingProgramId.MemeBaseAlpha2,

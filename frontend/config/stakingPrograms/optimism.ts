@@ -3,106 +3,100 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
 import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
-import { StakingProgramId } from '@/enums/StakingProgram';
+import {
+  OptimismStakingProgram,
+  OptimismStakingProgramId,
+  StakingProgramId,
+} from '@/enums/StakingProgram';
 import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 
 import { OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
-import { StakingProgramMap } from '.';
+import { StakingProgramConfig } from '.';
 
-// TODO: check
 export const OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
-  string,
+  OptimismStakingProgram,
   Address
 > = {
-  [StakingProgramId.ModiusAlpha]: '0x534C0A05B6d4d28d5f3630D6D74857B253cf8332',
-  [StakingProgramId.OptimusAlpha]: '0x5fc25f50e96857373c64dc0edb1abcbed4587e91',
-  [StakingProgramId.ModiusAlpha2]: '0xeC013E68FE4B5734643499887941eC197fd757D0',
-  [StakingProgramId.ModiusAlpha3]: '0x9034D0413D122015710f1744A19eFb1d7c2CEB13',
-  [StakingProgramId.ModiusAlpha4]: '0x8BcAdb2c291C159F9385964e5eD95a9887302862',
+  [StakingProgramId.OptimusAlpha1]:
+    '0x88996bbdE7f982D93214881756840cE2c77C4992',
+  [StakingProgramId.OptimusAlpha2]:
+    '0xBCA056952D2A7a8dD4A002079219807CFDF9fd29',
+  [StakingProgramId.OptimusAlpha3]:
+    '0x0f69f35652B1acdbD769049334f1AC580927E139',
+  [StakingProgramId.OptimusAlpha4]:
+    '0x6891Cf116f9a3bDbD1e89413118eF81F69D298C3',
 };
 
-// TODO: check
-export const OPTIMISM_STAKING_PROGRAMS: StakingProgramMap = {
-  [StakingProgramId.ModiusAlpha]: {
-    chainId: EvmChainId.Mode,
-    name: 'Modius Alpha',
-    agentsSupported: [AgentType.Modius],
-    stakingRequirements: {
-      [TokenSymbol.OLAS]: 40,
-    },
+export const OPTIMISM_STAKING_PROGRAMS: {
+  [stakingProgramId in OptimismStakingProgram]: StakingProgramConfig;
+} = {
+  [StakingProgramId.OptimusAlpha1]: {
+    chainId: EvmChainId.Optimism,
+    name: 'Optimus Alpha',
+    agentsSupported: [AgentType.Optimus],
+    stakingRequirements: { [TokenSymbol.OLAS]: 40 },
     activityChecker:
-      OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.ModiusAlpha],
+      OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        OptimismStakingProgramId.OptimusAlpha1
+      ],
     contract: new MulticallContract(
       OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-        StakingProgramId.ModiusAlpha
+        StakingProgramId.OptimusAlpha1
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
   },
-  // [StakingProgramId.ModiusAlpha2]: {
-  //   chainId: EvmChainId.Mode,
-  //   name: 'Modius Alpha II',
-  //   agentsSupported: [AgentType.Modius],
-  //   stakingRequirements: {
-  //     [TokenSymbol.OLAS]: 100,
-  //   },
-  //   activityChecker:
-  //     MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.ModiusAlpha2],
-  //   contract: new MulticallContract(
-  //     OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-  //       StakingProgramId.ModiusAlpha2
-  //     ],
-  //     STAKING_TOKEN_PROXY_ABI,
-  //   ),
-  // },
-  // [StakingProgramId.ModiusAlpha3]: {
-  //   chainId: EvmChainId.Mode,
-  //   name: 'Modius Alpha III',
-  //   agentsSupported: [AgentType.Modius],
-  //   stakingRequirements: {
-  //     [TokenSymbol.OLAS]: 1000,
-  //   },
-  //   activityChecker:
-  //     MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.ModiusAlpha3],
-  //   contract: new MulticallContract(
-  //     OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-  //       StakingProgramId.ModiusAlpha3
-  //     ],
-  //     STAKING_TOKEN_PROXY_ABI,
-  //   ),
-  // },
-  // [StakingProgramId.ModiusAlpha4]: {
-  //   chainId: EvmChainId.Mode,
-  //   name: 'Modius Alpha IV',
-  //   agentsSupported: [AgentType.Modius],
-  //   stakingRequirements: {
-  //     [TokenSymbol.OLAS]: 5000,
-  //   },
-  //   activityChecker:
-  //     MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.ModiusAlpha4],
-  //   contract: new MulticallContract(
-  //     OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-  //       StakingProgramId.ModiusAlpha4
-  //     ],
-  //     STAKING_TOKEN_PROXY_ABI,
-  //   ),
-  // },
-  // //optimus alpha
-  // [StakingProgramId.OptimusAlpha]: {
-  //   chainId: EvmChainId.Mode,
-  //   name: 'Optimus Alpha',
-  //   agentsSupported: [AgentType.Modius],
-  //   stakingRequirements: {
-  //     [TokenSymbol.OLAS]: 40,
-  //   },
-  //   activityChecker:
-  //     MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[StakingProgramId.OptimusAlpha],
-  //   contract: new MulticallContract(
-  //     OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-  //       StakingProgramId.OptimusAlpha
-  //     ],
-  //     STAKING_TOKEN_PROXY_ABI,
-  //   ),
-  // },
+  [StakingProgramId.OptimusAlpha2]: {
+    chainId: EvmChainId.Optimism,
+    name: 'Optimus Alpha II',
+    agentsSupported: [AgentType.Optimus],
+    stakingRequirements: { [TokenSymbol.OLAS]: 100 },
+    activityChecker:
+      OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        OptimismStakingProgramId.OptimusAlpha2
+      ],
+    contract: new MulticallContract(
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        StakingProgramId.OptimusAlpha2
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+  },
+  [StakingProgramId.OptimusAlpha3]: {
+    chainId: EvmChainId.Optimism,
+    name: 'Optimus Alpha III',
+    agentsSupported: [AgentType.Optimus],
+    stakingRequirements: {
+      [TokenSymbol.OLAS]: 1000,
+    },
+    activityChecker:
+      OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        OptimismStakingProgramId.OptimusAlpha3
+      ],
+    contract: new MulticallContract(
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        StakingProgramId.OptimusAlpha3
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+  },
+  [StakingProgramId.OptimusAlpha4]: {
+    chainId: EvmChainId.Optimism,
+    name: 'Optimus Alpha IV',
+    agentsSupported: [AgentType.Optimus],
+    stakingRequirements: {
+      [TokenSymbol.OLAS]: 5000,
+    },
+    activityChecker:
+      OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        OptimismStakingProgramId.OptimusAlpha4
+      ],
+    contract: new MulticallContract(
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        StakingProgramId.OptimusAlpha4
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+  },
 };

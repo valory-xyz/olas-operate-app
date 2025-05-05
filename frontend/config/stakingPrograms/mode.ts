@@ -14,14 +14,14 @@ export const MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
   {
     [StakingProgramId.ModiusAlpha]:
       '0x534C0A05B6d4d28d5f3630D6D74857B253cf8332',
-    [StakingProgramId.OptimusAlpha]:
-      '0x5fc25f50e96857373c64dc0edb1abcbed4587e91',
     [StakingProgramId.ModiusAlpha2]:
       '0xeC013E68FE4B5734643499887941eC197fd757D0',
     [StakingProgramId.ModiusAlpha3]:
       '0x9034D0413D122015710f1744A19eFb1d7c2CEB13',
     [StakingProgramId.ModiusAlpha4]:
       '0x8BcAdb2c291C159F9385964e5eD95a9887302862',
+    [StakingProgramId.OptimusAlpha]:
+      '0x5fc25f50e96857373c64dc0edb1abcbed4587e91',
   };
 
 export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
@@ -82,7 +82,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
       STAKING_TOKEN_PROXY_ABI,
     ),
   },
-  //optimus alpha
+  // optimus alpha
   [StakingProgramId.OptimusAlpha]: {
     chainId: EvmChainId.Mode,
     name: 'Optimus Alpha',

@@ -1,28 +1,39 @@
-export enum StakingProgramId {
-  PearlAlpha = 'pearl_alpha',
-  PearlBeta = 'pearl_beta',
-  PearlBeta2 = 'pearl_beta_2',
-  PearlBeta3 = 'pearl_beta_3',
-  PearlBeta4 = 'pearl_beta_4',
-  PearlBeta5 = 'pearl_beta_5',
-  PearlBeta6 = 'pearl_beta_6',
-  PearlBetaMechMarketplace = 'pearl_beta_mech_marketplace',
-  OptimusAlpha = 'optimus_alpha',
-  MemeBaseAlpha2 = 'meme_base_alpha_2',
-  MemeBaseBeta = 'meme_base_beta',
-  MemeBaseBeta2 = 'meme_base_beta_2',
-  MemeBaseBeta3 = 'meme_base_beta_3',
-  MemeCeloAlpha2 = 'meme_celo_alpha_2',
-  AgentsFun1 = 'agents_fun_1',
-  AgentsFun2 = 'agents_fun_2',
-  AgentsFun3 = 'agents_fun_3',
-  ModiusAlpha = 'modius_alpha',
-  ModiusAlpha2 = 'modius_alpha_2',
-  ModiusAlpha3 = 'modius_alpha_3',
-  ModiusAlpha4 = 'modius_alpha_4',
-  // TODO: check
-  OptimusAlpha1 = 'optimus_alpha_1',
-  OptimusAlpha2 = 'optimus_alpha_2',
-  OptimusAlpha3 = 'optimus_alpha_3',
-  OptimusAlpha4 = 'optimus_alpha_4',
-}
+import { ValueOf } from '@/types/Util';
+
+export const OptimismStakingProgramId = {
+  OptimusAlpha1: 'optimus_alpha_1',
+  OptimusAlpha2: 'optimus_alpha_2',
+  OptimusAlpha3: 'optimus_alpha_3',
+  OptimusAlpha4: 'optimus_alpha_4',
+} as const;
+
+export type OptimismStakingProgram = ValueOf<typeof OptimismStakingProgramId>;
+
+export const StakingProgramId = {
+  PearlAlpha: 'pearl_alpha',
+  PearlBeta: 'pearl_beta',
+  PearlBeta2: 'pearl_beta_2',
+  PearlBeta3: 'pearl_beta_3',
+  PearlBeta4: 'pearl_beta_4',
+  PearlBeta5: 'pearl_beta_5',
+  PearlBeta6: 'pearl_beta_6',
+  PearlBetaMechMarketplace: 'pearl_beta_mech_marketplace',
+  MemeBaseAlpha2: 'meme_base_alpha_2',
+  MemeBaseBeta: 'meme_base_beta',
+  MemeBaseBeta2: 'meme_base_beta_2',
+  MemeBaseBeta3: 'meme_base_beta_3',
+  MemeCeloAlpha2: 'meme_celo_alpha_2',
+  AgentsFun1: 'agents_fun_1',
+  AgentsFun2: 'agents_fun_2',
+  AgentsFun3: 'agents_fun_3',
+
+  // mode
+  ModiusAlpha: 'modius_alpha',
+  ModiusAlpha2: 'modius_alpha_2',
+  ModiusAlpha3: 'modius_alpha_3',
+  ModiusAlpha4: 'modius_alpha_4',
+  OptimusAlpha: 'optimus_alpha',
+  ...OptimismStakingProgramId,
+} as const;
+
+export type StakingProgram = ValueOf<typeof StakingProgramId>;

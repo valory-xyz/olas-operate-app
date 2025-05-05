@@ -4,7 +4,10 @@ import { MECH_ACTIVITY_CHECKER_ABI } from '@/abis/mechActivityChecker';
 import { MEME_ACTIVITY_CHECKER_ABI } from '@/abis/memeActivityChecker';
 import { REQUESTER_ACTIVITY_CHECKER_ABI } from '@/abis/requesterActivityChecker';
 import { STAKING_ACTIVITY_CHECKER_ABI } from '@/abis/stakingActivityChecker';
-import { StakingProgramId } from '@/enums/StakingProgram';
+import {
+  OptimismStakingProgram,
+  StakingProgramId,
+} from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
 export const getMechActivityCheckerContract = (
@@ -110,25 +113,21 @@ export const MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   ),
 } as const;
 
-// TODO: check everything
 export const OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
-  string,
+  OptimismStakingProgram,
   MulticallContract
 > = {
-  [StakingProgramId.ModiusAlpha]: getStakingActivityCheckerContract(
-    '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
+  [StakingProgramId.OptimusAlpha1]: getStakingActivityCheckerContract(
+    '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
   ),
-  [StakingProgramId.OptimusAlpha]: getStakingActivityCheckerContract(
-    '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
+  [StakingProgramId.OptimusAlpha2]: getStakingActivityCheckerContract(
+    '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
   ),
-  [StakingProgramId.ModiusAlpha2]: getStakingActivityCheckerContract(
-    '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
+  [StakingProgramId.OptimusAlpha3]: getStakingActivityCheckerContract(
+    '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
   ),
-  [StakingProgramId.ModiusAlpha3]: getStakingActivityCheckerContract(
-    '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
-  ),
-  [StakingProgramId.ModiusAlpha4]: getStakingActivityCheckerContract(
-    '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
+  [StakingProgramId.OptimusAlpha4]: getStakingActivityCheckerContract(
+    '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
   ),
 } as const;
 
