@@ -110,6 +110,28 @@ export const MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   ),
 } as const;
 
+// TODO: check everything
+export const OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
+  string,
+  MulticallContract
+> = {
+  [StakingProgramId.ModiusAlpha]: getStakingActivityCheckerContract(
+    '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
+  ),
+  [StakingProgramId.OptimusAlpha]: getStakingActivityCheckerContract(
+    '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
+  ),
+  [StakingProgramId.ModiusAlpha2]: getStakingActivityCheckerContract(
+    '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
+  ),
+  [StakingProgramId.ModiusAlpha3]: getStakingActivityCheckerContract(
+    '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
+  ),
+  [StakingProgramId.ModiusAlpha4]: getStakingActivityCheckerContract(
+    '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
+  ),
+} as const;
+
 export const CELO_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   string,
   MulticallContract

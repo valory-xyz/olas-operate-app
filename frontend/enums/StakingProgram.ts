@@ -20,4 +20,9 @@ export enum StakingProgramId {
   ModiusAlpha2 = 'modius_alpha_2',
   ModiusAlpha3 = 'modius_alpha_3',
   ModiusAlpha4 = 'modius_alpha_4',
+  // TODO: check
+  OptimusAlpha1 = 'optimus_alpha_1',
+  OptimusAlpha2 = 'optimus_alpha_2',
+  OptimusAlpha3 = 'optimus_alpha_3',
+  OptimusAlpha4 = 'optimus_alpha_4',
 }

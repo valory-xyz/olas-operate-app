@@ -22,6 +22,10 @@ import {
   MODE_STAKING_PROGRAMS,
   MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
 } from './mode';
+import {
+  OPTIMISM_STAKING_PROGRAMS,
+  OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
+} from './optimism';
 
 /**
  * Single non-chain specific staking program configuration
@@ -51,6 +55,7 @@ export const STAKING_PROGRAMS: {
   [EvmChainId.Base]: BASE_STAKING_PROGRAMS,
   [EvmChainId.Mode]: MODE_STAKING_PROGRAMS,
   [EvmChainId.Celo]: CELO_STAKING_PROGRAMS,
+  [EvmChainId.Optimism]: OPTIMISM_STAKING_PROGRAMS,
 };
 
 export const STAKING_PROGRAM_ADDRESS: {
@@ -60,6 +65,7 @@ export const STAKING_PROGRAM_ADDRESS: {
   [EvmChainId.Base]: BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
   [EvmChainId.Mode]: MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
   [EvmChainId.Celo]: CELO_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
+  [EvmChainId.Optimism]: OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
 };
 
 export const DEFAULT_STAKING_PROGRAM_IDS: {
@@ -69,4 +75,5 @@ export const DEFAULT_STAKING_PROGRAM_IDS: {
   [EvmChainId.Base]: StakingProgramId.MemeBaseAlpha2,
   [EvmChainId.Mode]: StakingProgramId.ModiusAlpha,
   [EvmChainId.Celo]: StakingProgramId.MemeCeloAlpha2,
+  [EvmChainId.Optimism]: StakingProgramId.OptimusAlpha1, // TODO: check
 };
