@@ -15,6 +15,7 @@ export type AgentConfig = {
   serviceApi: typeof PredictTraderService;
   displayName: string;
   description: string;
+  /** Whether the agent is enabled and can be shown in the UI */
   isAgentEnabled: boolean;
   /** If agent is enabled but not yet available to use */
   isComingSoon?: boolean;

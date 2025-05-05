@@ -61,6 +61,15 @@ export const CELO_CHAIN_CONFIG: ChainConfig = {
   safeCreationThreshold: 0.005,
 } as const;
 
+export const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
+  evmChainId: EvmChainId.Optimism,
+  name: 'Optimism',
+  nativeToken: TOKEN_CONFIG[EvmChainId.Optimism][TokenSymbol.ETH],
+  middlewareChain: MiddlewareChainId.OPTIMISM,
+  rpc: process.env.OPTIMISM_RPC as HttpUrl,
+  safeCreationThreshold: 0.0005, // TODO: check this value
+} as const;
+
 export const CHAIN_CONFIG: {
   [evmChainId in EvmChainId]: ChainConfig;
 } = {
@@ -68,4 +77,5 @@ export const CHAIN_CONFIG: {
   [EvmChainId.Gnosis]: GNOSIS_CHAIN_CONFIG,
   [EvmChainId.Mode]: MODE_CHAIN_CONFIG,
   [EvmChainId.Celo]: CELO_CHAIN_CONFIG,
+  [EvmChainId.Optimism]: OPTIMISM_CHAIN_CONFIG,
 } as const;

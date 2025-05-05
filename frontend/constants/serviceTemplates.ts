@@ -252,7 +252,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
-  name: 'Modius', // Should be unique across all services and not be updated
+  name: 'Optimus', // Should be unique across all services and not be updated
   hash: 'bafybeiecjxha2ouqupttgdax7j4xmzfr6icuu55kq5xo2bwhkrl2po5khq',
   description: 'Modius',
   image:
@@ -401,9 +401,10 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   },
 } as const;
 
+// TODO: update once the service is ready
 export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Optimus,
-  name: 'Optimus', // Should be unique across all services and not be updated
+  name: 'Optimus - Optimism',
   hash: 'bafybeiecjxha2ouqupttgdax7j4xmzfr6icuu55kq5xo2bwhkrl2po5khq',
   description: 'Optimus',
   image:
@@ -412,7 +413,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChain.OPTIMISM,
   configurations: {
     [MiddlewareChain.OPTIMISM]: {
-      staking_program_id: StakingProgramId.ModiusAlpha, // default, may be overwritten
+      staking_program_id: StakingProgramId.ModiusAlpha,
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,

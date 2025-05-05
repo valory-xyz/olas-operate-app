@@ -1,16 +1,20 @@
 import { formatUnits } from 'ethers/lib/utils';
 
 import { MiddlewareChain } from '@/client';
-import { MODIUS_SERVICE_TEMPLATE } from '@/constants/serviceTemplates';
+import {
+  MODIUS_SERVICE_TEMPLATE,
+  OPTIMUS_SERVICE_TEMPLATE,
+} from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
+import { OptimismService } from '@/service/agents/Optimism';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
 import { AgentConfig } from '@/types/Agent';
 
-import { MODE_TOKEN_CONFIG } from './tokens';
+import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from './tokens';
 
 const modiusFundRequirements =
   MODIUS_SERVICE_TEMPLATE.configurations[MiddlewareChain.MODE]
@@ -19,6 +23,17 @@ const modiusUsdcConfig =
   modiusFundRequirements?.[
     MODE_TOKEN_CONFIG[TokenSymbol.USDC].address as string
   ];
+
+const getOptimismUsdcConfig = () => {
+  const optimismFundRequirements =
+    OPTIMUS_SERVICE_TEMPLATE.configurations[MiddlewareChain.OPTIMISM]
+      .fund_requirements;
+  const optimismUsdcConfig = OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC];
+  const usdcSafeRequirement =
+    optimismFundRequirements?.[optimismUsdcConfig.address as string]?.safe || 0;
+
+  return Number(formatUnits(usdcSafeRequirement, optimismUsdcConfig.decimals));
+};
 
 export const AGENT_CONFIG: {
   [key in AgentType]: AgentConfig;
@@ -72,6 +87,23 @@ export const AGENT_CONFIG: {
     displayName: 'Modius agent',
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
+  },
+  [AgentType.Optimus]: {
+    isAgentEnabled: true,
+    isComingSoon: true,
+    requiresSetup: true,
+    name: 'Optimus agent',
+    evmHomeChainId: EvmChainId.Optimism,
+    middlewareHomeChainId: MiddlewareChain.OPTIMISM,
+    requiresAgentSafesOn: [EvmChainId.Optimism],
+    additionalRequirements: {
+      [EvmChainId.Optimism]: { [TokenSymbol.USDC]: getOptimismUsdcConfig() },
+    },
+    requiresMasterSafesOn: [EvmChainId.Optimism],
+    serviceApi: OptimismService,
+    displayName: 'Optimus agent',
+    description:
+      'Invests crypto assets on your behalf and grows your portfolio on Optimus network.',
   },
   // TODO: celo (check each key)
   [AgentType.AgentsFunCelo]: {
