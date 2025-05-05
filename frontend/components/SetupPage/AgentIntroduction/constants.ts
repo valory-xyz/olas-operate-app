@@ -49,9 +49,9 @@ export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
     desc: 'Modius learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest on your behalf.',
     imgSrc: 'setup-agent-modius-2',
   },
-  {
-    title: 'Take action',
-    desc: 'Based on its analysis and real-time market data, your Modius agent decides when its more convenient to buy, sell, or hold specific assets.',
-    imgSrc: 'setup-agent-modius-3',
-  },
+  // {
+  //   title: 'Take action',
+  //   desc: 'Based on its analysis and real-time market data, your Modius agent decides when its more convenient to buy, sell, or hold specific assets.',
+  //   imgSrc: 'setup-agent-modius-3',
+  // },
 ] as const;
