@@ -47,7 +47,6 @@ export const validateTwitterCredentials = async (
     password: string;
   }) => Promise<{ success: boolean; cookies?: XCookie[] }>,
 ): Promise<{ isValid: boolean; cookies?: string }> => {
-  return { isValid: true, cookies: {} };
   if (!email || !username || !password) return { isValid: false };
 
   try {

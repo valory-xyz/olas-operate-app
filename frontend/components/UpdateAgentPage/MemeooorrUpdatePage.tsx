@@ -28,7 +28,7 @@ type MemeooorrFormValues = {
   description: string;
   fireworksApiEnabled: boolean;
   env_variables: {
-    GENAI_API_KEY: string;
+    OPENAI_API_KEY: string;
     FIREWORKS_API_KEY: string;
     PERSONA: string;
     TWIKIT_USERNAME: string;
@@ -59,7 +59,7 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
   const handleFinish = async (values: MemeooorrFormValues) => {
     const cookies = await validateForm({
       personaDescription: values.env_variables.PERSONA,
-      geminiApiKey: values.env_variables.GENAI_API_KEY,
+      geminiApiKey: values.env_variables.OPENAI_API_KEY,
       fireworksApiKey: values.fireworksApiEnabled
         ? values.env_variables.FIREWORKS_API_KEY
         : '',
@@ -109,11 +109,11 @@ const MemeUpdateForm = ({ initialFormValues }: MemeUpdateFormProps) => {
 
       {/* Gemini credentials */}
       <Form.Item
-        label="Gemini API key"
-        name={['env_variables', 'GENAI_API_KEY']}
+        label="OpenAI API Key"
+        name={['env_variables', 'OPENAI_API_KEY']}
         {...commonFieldProps}
       >
-        <Input.Password placeholder="Google Gemini API key" />
+        <Input.Password placeholder="OpenAI API Key" />
       </Form.Item>
       {geminiApiKeyValidationStatus === 'invalid' && (
         <InvalidGeminiApiCredentials />
@@ -209,8 +209,8 @@ export const MemeooorrUpdatePage = () => {
       (acc, [key, { value }]) => {
         if (key === 'PERSONA') {
           acc.env_variables.PERSONA = value;
-        } else if (key === 'GENAI_API_KEY') {
-          acc.env_variables.GENAI_API_KEY = value;
+        } else if (key === 'OPENAI_API_KEY') {
+          acc.env_variables.OPENAI_API_KEY = value;
         } else if (key === 'FIREWORKS_API_KEY') {
           acc.env_variables.FIREWORKS_API_KEY = value;
           acc.fireworksApiEnabled = !!value;
