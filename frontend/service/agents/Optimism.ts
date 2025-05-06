@@ -72,7 +72,6 @@ export abstract class OptimismService extends StakedAgentService {
     ] = multicallResponse;
 
     const lastMultisigNonces = serviceInfo[2];
-
     const isServiceStaked = lastMultisigNonces.length > 0;
 
     // Calculate the number of requests required to be eligible for rewards
@@ -90,7 +89,7 @@ export abstract class OptimismService extends StakedAgentService {
     // Check eligibility for rewards
     const isEligibleForRewards = eligibleRequests >= requiredRequests;
 
-    // Compute the available rewards for the current epoch
+    // Available rewards for the current epoch
     const expectedEpochRewards = rewardsPerSecond * livenessPeriod;
     const lateCheckpointRewards = rewardsPerSecond * secondsSinceCheckpoint;
     const availableRewardsForEpoch = Math.max(
@@ -98,7 +97,7 @@ export abstract class OptimismService extends StakedAgentService {
       lateCheckpointRewards,
     );
 
-    // Calculate the minimum amount that must be staked (double the minimum deposit)
+    // Minimum amount that must be staked (double the minimum deposit)
     const minimumStakedAmount =
       parseFloat(ethers.utils.formatEther(`${minStakingDeposit}`)) * 2;
 
@@ -133,7 +132,6 @@ export abstract class OptimismService extends StakedAgentService {
     const multicallResponse = await multicallProvider.all(contractCalls);
 
     const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
-
     const expectedRewards = rewardsPerSecond * livenessPeriod;
     const lateCheckpointRewards =
       rewardsPerSecond * (getNowInSeconds() - tsCheckpoint);
@@ -210,7 +208,6 @@ export abstract class OptimismService extends StakedAgentService {
     const availableRewards = parseFloat(
       ethers.utils.formatUnits(availableRewardsInBN, 18),
     );
-
     const serviceIds: number[] = getServiceIdsInBN.map((id: bigint) =>
       Number(id),
     );
@@ -219,20 +216,20 @@ export abstract class OptimismService extends StakedAgentService {
     // Calculate annual rewards (used for APY)
     const rewardsPerYear = rewardsPerSecond.mul(ONE_YEAR);
 
-    // Initialize APY
+    // APY
     let apy = 0;
     if (rewardsPerSecond.gt(0) && minStakingDeposit.gt(0)) {
       const annualPercentage = rewardsPerYear.mul(100).div(minStakingDeposit);
       apy = Number(annualPercentage) / (1 + numAgentInstances.toNumber());
     }
 
-    // Calculate required OLAS stake (min deposit per agent instance)
+    // Required OLAS stake (min deposit per agent instance)
     const stakeRequiredInWei = minStakingDeposit.add(
       minStakingDeposit.mul(numAgentInstances),
     );
     const olasStakeRequired = Number(formatEther(stakeRequiredInWei));
 
-    // Calculate rewards earned per work period
+    // Rewards earned per work period
     const rewardsPerWorkPeriod =
       Number(formatEther(rewardsPerSecond as bigint)) *
       livenessPeriod.toNumber();

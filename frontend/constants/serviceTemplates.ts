@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 
 import { EnvProvisionType, MiddlewareChain, ServiceTemplate } from '@/client';
-import { MODE_TOKEN_CONFIG } from '@/config/tokens';
+import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from '@/config/tokens';
 import { AgentType } from '@/enums/Agent';
 import { STAKING_PROGRAM_IDS } from '@/enums/StakingProgram';
 import { TokenSymbol } from '@/enums/Token';
@@ -254,7 +254,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
   hash: 'bafybeiecjxha2ouqupttgdax7j4xmzfr6icuu55kq5xo2bwhkrl2po5khq',
-  description: 'Modius',
+  description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
   service_version: 'v0.3.15',
@@ -405,37 +405,40 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
 export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Optimus,
   name: 'Optimus - Optimism',
-  hash: 'bafybeiecjxha2ouqupttgdax7j4xmzfr6icuu55kq5xo2bwhkrl2po5khq',
-  description: 'Optimus',
+  hash: 'bafybeigcbzo7mxwsu45lmd2ffhfjzye3wkkjznqrelmfa3coo4pp2s4q54',
+  description: 'Optimus service deployment on Optimism network',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
   service_version: 'v0.3.15',
   home_chain: MiddlewareChain.OPTIMISM,
   configurations: {
     [MiddlewareChain.OPTIMISM]: {
-      staking_program_id: STAKING_PROGRAM_IDS.ModiusAlpha,
+      staking_program_id: STAKING_PROGRAM_IDS.OptimusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
       threshold: 1,
       use_staking: true,
       cost_of_bond: +parseEther(20),
-      monthly_gas_estimate: +parseEther(0.011), // TODO: should be 0.0055, temp fix to avoid low balance alerts until the refund is fixed in the middleware
+      monthly_gas_estimate: +parseEther(0.011),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0005),
-          safe: +parseEther(0.005),
+          agent: +parseEther(0.0007),
+          safe: +parseEther(0.0057),
         },
-        [MODE_TOKEN_CONFIG[TokenSymbol.USDC].address as string]: {
+        [OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC].address as string]: {
           agent: 0,
-          safe: +parseUnits(16, MODE_TOKEN_CONFIG[TokenSymbol.USDC].decimals),
+          safe: +parseUnits(
+            16,
+            OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC].decimals,
+          ),
         },
       },
     },
   },
   env_variables: {
-    OPTIMUS_LEDGER_RPC: {
-      name: 'Optimus ledger RPC',
+    OPTIMISM_LEDGER_RPC: {
+      name: 'Optimism ledger RPC',
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
@@ -477,7 +480,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.USER,
     },
     GENAI_API_KEY: {
-      name: 'Gemini api key',
+      name: 'Gemini API key',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
@@ -485,7 +488,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
     STAKING_CHAIN: {
       name: 'Staking chain',
       description: '',
-      value: 'mode',
+      value: 'optimism',
       provision_type: EnvProvisionType.FIXED,
     },
     ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
@@ -494,42 +497,17 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    STAKING_ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
-      // TODO: Unused, refactored - remove
-      name: 'Staking activity checker contract address',
-      description: '',
-      value: 'Unused',
-      provision_type: EnvProvisionType.FIXED,
-    },
-    MIN_SWAP_AMOUNT_THRESHOLD: {
-      name: 'Minimum swap amount threshold',
-      description: '',
-      value: '15',
-      provision_type: EnvProvisionType.FIXED,
-    },
-    ALLOWED_CHAINS: {
-      name: 'Allowed chains',
-      description: '',
-      value: '["mode"]',
-      provision_type: EnvProvisionType.FIXED,
-    },
     TARGET_INVESTMENT_CHAINS: {
       name: 'Target investment chains',
       description: '',
-      value: '["mode"]',
+      value: '["optimism"]',
       provision_type: EnvProvisionType.FIXED,
     },
     INITIAL_ASSETS: {
       name: 'Initial assets',
       description: '',
       value:
-        '{"mode":{"0x0000000000000000000000000000000000000000":"ETH","0xd988097fb8612cc24eeC14542bC03424c656005f":"USDC"}}',
-      provision_type: EnvProvisionType.FIXED,
-    },
-    SELECTED_STRATEGIES: {
-      name: 'Selected strategies',
-      description: '',
-      value: '["balancer_pools_search", "asset_lending"]',
+        '{"optimism":{"0x0000000000000000000000000000000000000000":"ETH","0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85":"USDC"}}',
       provision_type: EnvProvisionType.FIXED,
     },
     INIT_FALLBACK_GAS: {

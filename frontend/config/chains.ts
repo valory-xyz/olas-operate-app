@@ -18,8 +18,9 @@ export type ChainConfig = {
   rpc: HttpUrl;
   // TODO: the values are hardcoded, should be fetched from the backend
   /**
-   * Least amount of native token required to create a Safe
-   * @example for gnosis chain, 1.5 XDAI is required to create a Safe
+   * Least amount of native token required to create a Safe.
+   * @example for gnosis chain, 1.5 XDAI is required to create a Safe.
+   * For new chains, ask middleware team for the value.
    */
   safeCreationThreshold: number;
 };

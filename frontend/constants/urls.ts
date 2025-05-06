@@ -35,9 +35,8 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
     'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/Fe6oYUKbSGP7a16NowseTU82MVG9D2xWbBUCz4MPB4d4',
   [EvmChainId.Celo]:
     'https://api.studio.thegraph.com/query/67875/olas-celo-staking/version/latest',
-  // TODO: Optimus: update to thegraph URL
   [EvmChainId.Optimism]:
-    'https://api.studio.thegraph.com/query/67875/olas-optimism-staking/version/latest',
+    'https://gateway.thegraph.com/api/subgraphs/id/2fe1izA4aVvBHVwbPzP1BqxLkoR9ebygWM9iHXwLCnPE',
 };
 
 // discord
