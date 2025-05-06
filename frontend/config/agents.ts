@@ -85,7 +85,7 @@ export const AGENT_CONFIG: {
   },
   [AgentType.Optimus]: {
     isAgentEnabled: true,
-    isComingSoon: true,
+    isComingSoon: false,
     requiresSetup: true,
     name: 'Optimus agent',
     evmHomeChainId: EvmChainId.Optimism,

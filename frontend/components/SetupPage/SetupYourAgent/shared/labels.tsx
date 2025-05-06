@@ -25,7 +25,7 @@ export const TenderlyAccessTokenLabel = () => (
       <Paragraph className="text-sm m-0">
         To locate your personal access token:
       </Paragraph>
-      <ol className="pl-16 text-sm">
+      <ol className="pl-16 text-sm mb-4">
         <li>
           <Text className="text-sm">
             Connect to{' '}
@@ -125,6 +125,25 @@ export const ModiusGeminiApiKeyLabel = () => (
       <Paragraph className="text-sm m-0">
         The Gemini API key allows you to chat with your agent and update its
         goals through Modius’ profile. You can generate one for free on{' '}
+        <a target="_blank" href={GEMINI_API_URL}>
+          Google AI Studio
+        </a>
+        .
+      </Paragraph>
+    </InfoTooltip>
+    <Text type="secondary" className="text-sm">
+      (Optional)
+    </Text>
+  </Flex>
+);
+
+export const OptimusGeminiApiKeyLabel = () => (
+  <Flex align="center" gap={6}>
+    <Text>Gemini API key</Text>
+    <InfoTooltip placement="bottom" overlayInnerStyle={TOOLTIP_STYLE}>
+      <Paragraph className="text-sm m-0">
+        The Gemini API key allows you to chat with your agent and update its
+        goals through Optimus’ profile. You can generate one for free on{' '}
         <a target="_blank" href={GEMINI_API_URL}>
           Google AI Studio
         </a>

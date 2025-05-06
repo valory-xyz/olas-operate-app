@@ -13,6 +13,12 @@ export const modiusAgentFieldProps: FormItemProps = {
   normalize: (value: string) => value.trim(),
 } as const;
 
+export const optimusAgentFieldProps: FormItemProps = {
+  ...commonFieldProps,
+  validateFirst: true,
+  normalize: (value: string) => value.trim(),
+} as const;
+
 export const emailValidateMessages = {
   required: 'Field is required',
   types: { email: 'Enter a valid email' },

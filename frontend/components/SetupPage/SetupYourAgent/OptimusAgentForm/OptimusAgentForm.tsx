@@ -9,7 +9,7 @@ import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import {
-  modiusAgentFieldProps,
+  optimusAgentFieldProps,
   requiredRules,
   validateApiKey,
   validateMessages,
@@ -18,16 +18,16 @@ import {
 import { InvalidGeminiApiCredentials } from '../shared/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyLabel,
-  ModiusGeminiApiKeyLabel,
+  OptimusGeminiApiKeyLabel,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
 } from '../shared/labels';
 import { onDummyServiceCreation } from '../shared/utils';
 import {
-  ModiusFieldValues,
-  useModiusFormValidate,
-} from './useModiusFormValidate';
+  OptimusFieldValues,
+  useOptimusFormValidate,
+} from './useOptimusFormValidate';
 
 const { Text } = Typography;
 
@@ -45,23 +45,25 @@ const SetupHeader = () => (
   </Text>
 );
 
-type ModiusAgentFormProps = { serviceTemplate: ServiceTemplate };
+type OptimusAgentFormProps = { serviceTemplate: ServiceTemplate };
 
-export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
+export const OptimusAgentForm = ({
+  serviceTemplate,
+}: OptimusAgentFormProps) => {
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
-  const [form] = Form.useForm<ModiusFieldValues>();
+  const [form] = Form.useForm<OptimusFieldValues>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     geminiApiKeyValidationStatus,
     submitButtonText,
     updateSubmitButtonText,
     validateForm,
-  } = useModiusFormValidate();
+  } = useOptimusFormValidate();
 
   const onFinish = useCallback(
-    async (values: ModiusFieldValues) => {
+    async (values: OptimusFieldValues) => {
       if (!defaultStakingProgramId) return;
 
       try {
@@ -139,7 +141,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
       <SetupHeader />
       <Divider style={{ margin: '8px 0' }} />
 
-      <Form<ModiusFieldValues>
+      <Form<OptimusFieldValues>
         form={form}
         name="setup-your-agent"
         layout="vertical"
@@ -150,7 +152,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="tenderlyAccessToken"
           label={<TenderlyAccessTokenLabel />}
-          {...modiusAgentFieldProps}
+          {...optimusAgentFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input.Password />
@@ -159,7 +161,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="tenderlyAccountSlug"
           label={<TenderlyAccountSlugLabel />}
-          {...modiusAgentFieldProps}
+          {...optimusAgentFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
         >
           <Input />
@@ -168,7 +170,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="tenderlyProjectSlug"
           label={<TenderlyProjectSlugLabel />}
-          {...modiusAgentFieldProps}
+          {...optimusAgentFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
         >
           <Input />
@@ -177,7 +179,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="coinGeckoApiKey"
           label={<CoinGeckoApiKeyLabel />}
-          {...modiusAgentFieldProps}
+          {...optimusAgentFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input.Password />
@@ -185,8 +187,8 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
 
         <Form.Item
           name="geminiApiKey"
-          label={<ModiusGeminiApiKeyLabel />}
-          {...modiusAgentFieldProps}
+          label={<OptimusGeminiApiKeyLabel />}
+          {...optimusAgentFieldProps}
         >
           <Input.Password />
         </Form.Item>

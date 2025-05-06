@@ -73,6 +73,17 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'backup-via-safe': false, // temporarily hidden until mode is available on safe https://app.safe.global/new-safe/create
     'agent-settings': true,
   },
+  [AgentType.Optimus]: {
+    'manage-wallet': false,
+    'withdraw-funds': false,
+    'last-transactions': false,
+    'rewards-streak': false,
+    'staking-contract-section': false,
+    'low-funds': false,
+    'agent-activity': false,
+    'backup-via-safe': false, // temporarily hidden until mode is available on safe https://app.safe.global/new-safe/create
+    'agent-settings': false,
+  },
 });
 
 type FeatureFlagReturn<T extends FeatureFlags | FeatureFlags[]> =
