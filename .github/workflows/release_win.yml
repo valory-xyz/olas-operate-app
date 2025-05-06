@@ -50,7 +50,7 @@ jobs:
       - name: Install and configure Poetry
         uses: snok/install-poetry@v1
         with:
-          version: "1.8.3"
+          version: "2.1.1"
           virtualenvs-create: true
           virtualenvs-in-project: false
           virtualenvs-path: ~/my-custom-path
@@ -64,7 +64,11 @@ jobs:
         with:
           path: ~/my-custom-path
           key: middleware-venv-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.env }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-          
+      
+
+      - name: VirtualEnv fix
+        run: pip install virtualenv==20.30.0 -U
+  
       - name: Install Poetry dependencies (if venv cache miss)
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: yarn install:backend
