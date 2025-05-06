@@ -1,13 +1,15 @@
 import { ValueOf } from '@/types/Util';
 
-export const OptimismStakingProgramId = {
+export const OPTIMISM_STAKING_PROGRAM_IDS = {
   OptimusAlpha1: 'optimus_alpha_1',
   OptimusAlpha2: 'optimus_alpha_2',
   OptimusAlpha3: 'optimus_alpha_3',
   OptimusAlpha4: 'optimus_alpha_4',
 } as const;
 
-export type OptimismStakingProgram = ValueOf<typeof OptimismStakingProgramId>;
+export type OptimismStakingProgramId = ValueOf<
+  typeof OPTIMISM_STAKING_PROGRAM_IDS
+>;
 
 export const STAKING_PROGRAM_IDS = {
   PearlAlpha: 'pearl_alpha',
@@ -33,7 +35,7 @@ export const STAKING_PROGRAM_IDS = {
   ModiusAlpha3: 'modius_alpha_3',
   ModiusAlpha4: 'modius_alpha_4',
   OptimusAlpha: 'optimus_alpha',
-  ...OptimismStakingProgramId,
+  ...OPTIMISM_STAKING_PROGRAM_IDS,
 } as const;
 
 export type StakingProgramId = ValueOf<typeof STAKING_PROGRAM_IDS>;

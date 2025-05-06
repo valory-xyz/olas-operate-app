@@ -2,16 +2,20 @@ import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { MODE_STAKING_PROGRAMS } from '@/config/stakingPrograms/mode';
+import { OPTIMISM_STAKING_PROGRAMS } from '@/config/stakingPrograms/optimism';
 import { PROVIDERS } from '@/constants/providers';
 import { EvmChainId } from '@/enums/Chain';
-import { StakingProgramId } from '@/enums/StakingProgram';
+import {
+  OptimismStakingProgramId,
+  StakingProgramId,
+} from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 import {
   ServiceStakingDetails,
   StakingContractDetails,
   StakingRewardsInfo,
 } from '@/types/Autonolas';
+import { isValidServiceId } from '@/utils/service';
 
 import {
   ONE_YEAR,
@@ -20,7 +24,8 @@ import {
 
 const REQUESTS_SAFETY_MARGIN = 1;
 
-// TODO: check everything
+const getNowInSeconds = () => Math.floor(Date.now() / 1000);
+
 export abstract class OptimismService extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({
     agentMultisigAddress,
@@ -30,22 +35,19 @@ export abstract class OptimismService extends StakedAgentService {
   }: {
     agentMultisigAddress: Address;
     serviceId: number;
-    stakingProgramId: StakingProgramId;
+    stakingProgramId: StakingProgramId; // TODO: should infer type OptimismStakingProgramId
     chainId?: EvmChainId;
   }): Promise<StakingRewardsInfo | undefined> => {
     if (!agentMultisigAddress) return;
-    if (!serviceId) return;
-    if (serviceId === -1) return;
+    if (!isValidServiceId(serviceId)) return;
 
     const stakingProgramConfig = STAKING_PROGRAMS[chainId][stakingProgramId];
-
     if (!stakingProgramConfig) throw new Error('Staking program not found');
 
     const { activityChecker, contract: stakingTokenProxyContract } =
       stakingProgramConfig;
 
     const provider = PROVIDERS[chainId].multicallProvider;
-
     const contractCalls = [
       stakingTokenProxyContract.getServiceInfo(serviceId),
       stakingTokenProxyContract.livenessPeriod(),
@@ -69,46 +71,34 @@ export abstract class OptimismService extends StakedAgentService {
       currentMultisigNonces,
     ] = multicallResponse;
 
-    /**
-     * struct ServiceInfo {
-      // Service multisig address
-      address multisig;
-      // Service owner
-      address owner;
-      // Service multisig nonces
-      uint256[] nonces; <-- (we use this in the rewards eligibility check)
-      // Staking start time
-      uint256 tsStart;
-      // Accumulated service staking reward
-      uint256 reward;
-      // Accumulated inactivity that might lead to the service eviction
-      uint256 inactivity;}
-     */
-
     const lastMultisigNonces = serviceInfo[2];
-    const nowInSeconds = Math.floor(Date.now() / 1000);
 
-    const isServiceStaked = serviceInfo[2].length > 0;
+    const isServiceStaked = lastMultisigNonces.length > 0;
 
+    // Calculate the number of requests required to be eligible for rewards
+    const secondsSinceCheckpoint = getNowInSeconds() - tsCheckpoint;
+    const effectivePeriod = Math.max(livenessPeriod, secondsSinceCheckpoint);
     const requiredRequests =
-      (Math.ceil(Math.max(livenessPeriod, nowInSeconds - tsCheckpoint)) *
-        livenessRatio) /
-        1e18 +
+      (Math.ceil(effectivePeriod) * livenessRatio) / 1e18 +
       REQUESTS_SAFETY_MARGIN;
 
+    // Determine how many requests the service has handled since last checkpoint
     const eligibleRequests = isServiceStaked
       ? currentMultisigNonces[0] - lastMultisigNonces[0]
       : 0;
 
+    // Check eligibility for rewards
     const isEligibleForRewards = eligibleRequests >= requiredRequests;
 
+    // Compute the available rewards for the current epoch
+    const expectedEpochRewards = rewardsPerSecond * livenessPeriod;
+    const lateCheckpointRewards = rewardsPerSecond * secondsSinceCheckpoint;
     const availableRewardsForEpoch = Math.max(
-      rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
-      rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+      expectedEpochRewards,
+      lateCheckpointRewards,
     );
 
-    // Minimum staked amount is double the minimum staking deposit
-    // (all the bonds must be the same as deposit)
+    // Calculate the minimum amount that must be staked (double the minimum deposit)
     const minimumStakedAmount =
       parseFloat(ethers.utils.formatEther(`${minStakingDeposit}`)) * 2;
 
@@ -123,7 +113,7 @@ export abstract class OptimismService extends StakedAgentService {
         ethers.utils.formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
-    } as StakingRewardsInfo;
+    } satisfies StakingRewardsInfo;
   };
 
   static getAvailableRewardsForEpoch = async (
@@ -135,23 +125,20 @@ export abstract class OptimismService extends StakedAgentService {
     if (!stakingTokenProxy) return;
 
     const { multicallProvider } = PROVIDERS[chainId];
-
     const contractCalls = [
       stakingTokenProxy.rewardsPerSecond(),
       stakingTokenProxy.livenessPeriod(), // epoch length
       stakingTokenProxy.tsCheckpoint(), // last checkpoint timestamp
     ];
-
     const multicallResponse = await multicallProvider.all(contractCalls);
-    const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
-    const nowInSeconds = Math.floor(Date.now() / 1000);
 
-    return BigInt(
-      Math.max(
-        rewardsPerSecond * livenessPeriod, // expected rewards
-        rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
-      ),
-    );
+    const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
+
+    const expectedRewards = rewardsPerSecond * livenessPeriod;
+    const lateCheckpointRewards =
+      rewardsPerSecond * (getNowInSeconds() - tsCheckpoint);
+
+    return BigInt(Math.max(expectedRewards, lateCheckpointRewards));
   };
 
   /**
@@ -171,7 +158,6 @@ export abstract class OptimismService extends StakedAgentService {
       stakingTokenProxy.getServiceInfo(serviceNftTokenId),
       stakingTokenProxy.getStakingState(serviceNftTokenId),
     ];
-
     const multicallResponse = await multicallProvider.all(contractCalls);
     const [serviceInfo, serviceStakingState] = multicallResponse;
 
@@ -191,7 +177,9 @@ export abstract class OptimismService extends StakedAgentService {
   ): Promise<StakingContractDetails | undefined> => {
     const { multicallProvider } = PROVIDERS[chainId];
 
-    const stakingTokenProxy = MODE_STAKING_PROGRAMS[stakingProgramId]?.contract;
+    const stakingTokenProxy =
+      OPTIMISM_STAKING_PROGRAMS[stakingProgramId as OptimismStakingProgramId]
+        ?.contract;
     if (!stakingTokenProxy) return;
 
     const contractCalls = [
@@ -205,7 +193,6 @@ export abstract class OptimismService extends StakedAgentService {
       stakingTokenProxy.livenessPeriod(),
       stakingTokenProxy.epochCounter(),
     ];
-
     const multicallResponse = await multicallProvider.all(contractCalls);
 
     const [
@@ -224,28 +211,28 @@ export abstract class OptimismService extends StakedAgentService {
       ethers.utils.formatUnits(availableRewardsInBN, 18),
     );
 
-    const serviceIds = getServiceIdsInBN.map((id: bigint) => id);
-    const maxNumServices = maxNumServicesInBN.toNumber();
+    const serviceIds: number[] = getServiceIdsInBN.map((id: bigint) =>
+      Number(id),
+    );
+    const maxNumServices: number = maxNumServicesInBN.toNumber();
 
-    // APY
+    // Calculate annual rewards (used for APY)
     const rewardsPerYear = rewardsPerSecond.mul(ONE_YEAR);
 
+    // Initialize APY
     let apy = 0;
-
     if (rewardsPerSecond.gt(0) && minStakingDeposit.gt(0)) {
-      apy =
-        Number(rewardsPerYear.mul(100).div(minStakingDeposit)) /
-        (1 + numAgentInstances.toNumber());
+      const annualPercentage = rewardsPerYear.mul(100).div(minStakingDeposit);
+      apy = Number(annualPercentage) / (1 + numAgentInstances.toNumber());
     }
 
-    // Amount of OLAS required for Stake
+    // Calculate required OLAS stake (min deposit per agent instance)
     const stakeRequiredInWei = minStakingDeposit.add(
       minStakingDeposit.mul(numAgentInstances),
     );
-
     const olasStakeRequired = Number(formatEther(stakeRequiredInWei));
 
-    // Rewards per work period
+    // Calculate rewards earned per work period
     const rewardsPerWorkPeriod =
       Number(formatEther(rewardsPerSecond as bigint)) *
       livenessPeriod.toNumber();

@@ -5,7 +5,7 @@ import { MEME_ACTIVITY_CHECKER_ABI } from '@/abis/memeActivityChecker';
 import { REQUESTER_ACTIVITY_CHECKER_ABI } from '@/abis/requesterActivityChecker';
 import { STAKING_ACTIVITY_CHECKER_ABI } from '@/abis/stakingActivityChecker';
 import {
-  OptimismStakingProgram,
+  OptimismStakingProgramId,
   STAKING_PROGRAM_IDS,
 } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
@@ -114,7 +114,7 @@ export const MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
 } as const;
 
 export const OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
-  OptimismStakingProgram,
+  OptimismStakingProgramId,
   MulticallContract
 > = {
   [STAKING_PROGRAM_IDS.OptimusAlpha1]: getStakingActivityCheckerContract(

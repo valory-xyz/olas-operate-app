@@ -115,29 +115,28 @@ export const MODE_TOKEN_CONFIG: ChainTokenConfig = {
   },
 };
 
-// TODO: check
 export const OPTIMISM_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbol.ETH]: {
     tokenType: TokenType.NativeGas,
-    decimals: 18,
     symbol: TokenSymbol.ETH,
+    decimals: 18,
   },
   [TokenSymbol.OLAS]: {
-    address: '0xFC2E6e6BCbd49ccf3A5f029c79984372DcBFE527',
-    decimals: 18,
     tokenType: TokenType.Erc20,
     symbol: TokenSymbol.OLAS,
+    decimals: 18,
+    address: '0xFC2E6e6BCbd49ccf3A5f029c79984372DcBFE527',
   },
   /**
    * @warning USDC is a special case, it has 6 decimals, not 18.
-   * https://optimism.blockscout.com/address/0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85?tab=read_write_proxy&source_address=0xdEd3b9a8DBeDC2F9CB725B55d0E686A81E6d06dC#0x313ce567
+   * @link https://optimism.blockscout.com/address/0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85?tab=read_write_proxy&source_address=0xdEd3b9a8DBeDC2F9CB725B55d0E686A81E6d06dC#0x313ce567
    * @note When parsing or formatting units, use `decimals` (6) instead of the standard `ether` sizing (10^18).
    */
   [TokenSymbol.USDC]: {
-    address: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
-    decimals: 6,
     tokenType: TokenType.Erc20,
     symbol: TokenSymbol.USDC,
+    decimals: 6,
+    address: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
   },
 };
 

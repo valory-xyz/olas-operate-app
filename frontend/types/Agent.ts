@@ -1,6 +1,9 @@
 import { MiddlewareChain } from '@/client';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
+import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
+import { ModiusService } from '@/service/agents/Modius';
+import { OptimismService } from '@/service/agents/Optimism';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
 
 export type AgentConfig = {
@@ -12,7 +15,11 @@ export type AgentConfig = {
   additionalRequirements?: Partial<
     Record<EvmChainId, Partial<Record<TokenSymbol, number>>>
   >;
-  serviceApi: typeof PredictTraderService;
+  serviceApi:
+    | typeof PredictTraderService
+    | typeof ModiusService
+    | typeof OptimismService
+    | typeof AgentsFunBaseService;
   displayName: string;
   description: string;
   /** Whether the agent is enabled and can be shown in the UI */
@@ -26,7 +33,7 @@ export type AgentConfig = {
   requiresSetup: boolean;
 };
 
-export type AgentHealthCheck = {
+export type AgentHealthCheckResponse = {
   seconds_since_last_transition: number;
   is_tm_healthy: boolean;
   period: number;

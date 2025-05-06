@@ -4,7 +4,7 @@ import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
 import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
 import {
-  OptimismStakingProgram,
+  OPTIMISM_STAKING_PROGRAM_IDS,
   OptimismStakingProgramId,
   STAKING_PROGRAM_IDS,
 } from '@/enums/StakingProgram';
@@ -15,7 +15,7 @@ import { OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers
 import { StakingProgramConfig } from '.';
 
 export const OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
-  OptimismStakingProgram,
+  OptimismStakingProgramId,
   Address
 > = {
   [STAKING_PROGRAM_IDS.OptimusAlpha1]:
@@ -29,7 +29,7 @@ export const OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
 };
 
 export const OPTIMISM_STAKING_PROGRAMS: {
-  [stakingProgramId in OptimismStakingProgram]: StakingProgramConfig;
+  [stakingProgramId in OptimismStakingProgramId]: StakingProgramConfig;
 } = {
   [STAKING_PROGRAM_IDS.OptimusAlpha1]: {
     chainId: EvmChainId.Optimism,
@@ -38,7 +38,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     stakingRequirements: { [TokenSymbol.OLAS]: 40 },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-        OptimismStakingProgramId.OptimusAlpha1
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha1
       ],
     contract: new MulticallContract(
       OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
@@ -54,7 +54,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     stakingRequirements: { [TokenSymbol.OLAS]: 100 },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-        OptimismStakingProgramId.OptimusAlpha2
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2
       ],
     contract: new MulticallContract(
       OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
@@ -72,7 +72,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-        OptimismStakingProgramId.OptimusAlpha3
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3
       ],
     contract: new MulticallContract(
       OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
@@ -90,7 +90,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-        OptimismStakingProgramId.OptimusAlpha4
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4
       ],
     contract: new MulticallContract(
       OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
