@@ -16,23 +16,25 @@ import { AgentConfig } from '@/types/Agent';
 
 import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from './tokens';
 
-const modiusFundRequirements =
-  MODIUS_SERVICE_TEMPLATE.configurations[MiddlewareChain.MODE]
-    .fund_requirements;
-const modiusUsdcConfig =
-  modiusFundRequirements?.[
-    MODE_TOKEN_CONFIG[TokenSymbol.USDC].address as string
-  ];
+const getModiusUsdcConfig = () => {
+  const modiusFundRequirements =
+    MODIUS_SERVICE_TEMPLATE.configurations[MiddlewareChain.MODE]
+      .fund_requirements;
+  const modiusUsdcConfig = MODE_TOKEN_CONFIG[TokenSymbol.USDC];
+  const usdcSafeRequirement =
+    modiusFundRequirements?.[modiusUsdcConfig.address as string]?.safe || 0;
+  return Number(formatUnits(usdcSafeRequirement, modiusUsdcConfig.decimals));
+};
 
-const getOptimismUsdcConfig = () => {
-  const optimismFundRequirements =
+const getOptimusUsdcConfig = () => {
+  const optimusFundRequirements =
     OPTIMUS_SERVICE_TEMPLATE.configurations[MiddlewareChain.OPTIMISM]
       .fund_requirements;
-  const optimismUsdcConfig = OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC];
+  const optimusUsdcConfig = OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC];
   const usdcSafeRequirement =
-    optimismFundRequirements?.[optimismUsdcConfig.address as string]?.safe || 0;
+    optimusFundRequirements?.[optimusUsdcConfig.address as string]?.safe || 0;
 
-  return Number(formatUnits(usdcSafeRequirement, optimismUsdcConfig.decimals));
+  return Number(formatUnits(usdcSafeRequirement, optimusUsdcConfig.decimals));
 };
 
 export const AGENT_CONFIG: {
@@ -73,14 +75,7 @@ export const AGENT_CONFIG: {
     middlewareHomeChainId: MiddlewareChain.MODE,
     requiresAgentSafesOn: [EvmChainId.Mode],
     additionalRequirements: {
-      [EvmChainId.Mode]: {
-        [TokenSymbol.USDC]: Number(
-          formatUnits(
-            modiusUsdcConfig?.safe || 0,
-            MODE_TOKEN_CONFIG[TokenSymbol.USDC].decimals,
-          ),
-        ),
-      },
+      [EvmChainId.Mode]: { [TokenSymbol.USDC]: getModiusUsdcConfig() },
     },
     requiresMasterSafesOn: [EvmChainId.Mode],
     serviceApi: ModiusService,
@@ -97,7 +92,7 @@ export const AGENT_CONFIG: {
     middlewareHomeChainId: MiddlewareChain.OPTIMISM,
     requiresAgentSafesOn: [EvmChainId.Optimism],
     additionalRequirements: {
-      [EvmChainId.Optimism]: { [TokenSymbol.USDC]: getOptimismUsdcConfig() },
+      [EvmChainId.Optimism]: { [TokenSymbol.USDC]: getOptimusUsdcConfig() },
     },
     requiresMasterSafesOn: [EvmChainId.Optimism],
     serviceApi: OptimismService,

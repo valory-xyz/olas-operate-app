@@ -9,7 +9,7 @@ export const OptimismStakingProgramId = {
 
 export type OptimismStakingProgram = ValueOf<typeof OptimismStakingProgramId>;
 
-export const StakingProgramId = {
+export const STAKING_PROGRAM_IDS = {
   PearlAlpha: 'pearl_alpha',
   PearlBeta: 'pearl_beta',
   PearlBeta2: 'pearl_beta_2',
@@ -36,4 +36,4 @@ export const StakingProgramId = {
   ...OptimismStakingProgramId,
 } as const;
 
-export type StakingProgram = ValueOf<typeof StakingProgramId>;
+export type StakingProgramId = ValueOf<typeof STAKING_PROGRAM_IDS>;

@@ -21,6 +21,7 @@ export type ElectronStore = {
     isProfileWarningDisplayed: boolean;
   };
   [AgentType.AgentsFunCelo]?: AgentSettings;
+  [AgentType.Optimus]?: AgentSettings;
 };
 
 export type ElectronTrayIconStatus =
