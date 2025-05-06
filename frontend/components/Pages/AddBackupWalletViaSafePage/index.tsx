@@ -17,7 +17,7 @@ const { Text } = Typography;
 const safeChainPrefix = {
   [AllEvmChainId.Ethereum]: 'eth',
   [EvmChainId.Base]: 'base',
-  [AllEvmChainId.Optimism]: 'oeth',
+  [AllEvmChainId.Optimism]: 'oeth', // TODO: Optimus: check
   [EvmChainId.Gnosis]: 'gno',
   [EvmChainId.Mode]: '', // TODO: provide correct prefix once mode is supported on safe
   [EvmChainId.Celo]: 'celo',

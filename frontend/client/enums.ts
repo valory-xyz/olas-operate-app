@@ -1,3 +1,5 @@
+import { ValueOf } from '@/types/Util';
+
 export enum MiddlewareAction {
   STATUS = 0,
   BUILD = 1,
@@ -5,6 +7,10 @@ export enum MiddlewareAction {
   STOP = 3,
 }
 
+/**
+ * @note Use this enum to infer all the middleware chains existing in the system
+ * else use the MiddlewareChainType enum for the chains that are supported by the agents and to be strictly typed.
+ */
 export enum MiddlewareChain {
   ETHEREUM = 'ethereum',
   GOERLI = 'goerli',
@@ -15,6 +21,15 @@ export enum MiddlewareChain {
   MODE = 'mode',
   CELO = 'celo',
 }
+
+const MIDDLEWARE_CHAINS = {
+  gnosis: MiddlewareChain.GNOSIS,
+  optimism: MiddlewareChain.OPTIMISM,
+  base: MiddlewareChain.BASE,
+  mode: MiddlewareChain.MODE,
+  celo: MiddlewareChain.CELO,
+} as const;
+export type MiddlewareChainType = ValueOf<typeof MIDDLEWARE_CHAINS>;
 
 export enum MiddlewareLedger {
   ETHEREUM = 0,

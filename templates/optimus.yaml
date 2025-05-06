@@ -13,7 +13,7 @@ configurations:
     use_staking: false
     use_mech_marketplace: false
     cost_of_bond: 1
-    monthly_gas_estimate: 1000 #defaulted to 1000 as value unknown for now, needed for testing
+    monthly_gas_estimate: 1000 # defaulted to 1000 as value unknown for now, needed for testing
     fund_requirements:
       agent: 1000 
       safe: 1000

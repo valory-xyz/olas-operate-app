@@ -12,7 +12,7 @@ export const EvmChainName = {
   [EvmChainId.Mode]: 'Mode',
   [EvmChainId.Celo]: 'Celo',
   [EvmChainId.Optimism]: 'Optimism',
-};
+} as const;
 
 export enum AllEvmChainId {
   Ethereum = 1,

@@ -1,4 +1,4 @@
-import { MiddlewareChain } from '@/client';
+import { MiddlewareChain, MiddlewareChainType } from '@/client';
 import { EvmChainId } from '@/enums/Chain';
 
 type Url = `http${'s' | ''}://${string}`;
@@ -23,7 +23,10 @@ export const TERMS_AND_CONDITIONS_URL: Url = 'https://olas.network/pearl-terms';
 export const DOWNLOAD_URL: Url = 'https://olas.network/operate#download';
 
 // thegraph
-export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN = {
+export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
+  EvmChainId,
+  Url
+> = {
   [EvmChainId.Gnosis]:
     'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/F3iqL2iw5UTrP1qbb4S694pGEkBwzoxXp1TRikB2K4e',
   [EvmChainId.Base]:
@@ -32,6 +35,9 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN = {
     'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/Fe6oYUKbSGP7a16NowseTU82MVG9D2xWbBUCz4MPB4d4',
   [EvmChainId.Celo]:
     'https://api.studio.thegraph.com/query/67875/olas-celo-staking/version/latest',
+  // TODO: Optimus: update to thegraph URL
+  [EvmChainId.Optimism]:
+    'https://api.studio.thegraph.com/query/67875/olas-optimism-staking/version/latest',
 };
 
 // discord
@@ -50,6 +56,7 @@ const GNOSIS_EXPLORER_URL: Url = 'https://gnosisscan.io';
 const BASE_EXPLORER_URL: Url = 'https://basescan.org';
 const MODE_EXPLORER_URL: Url = 'https://modescan.io';
 const CELO_EXPLORER_URL: Url = 'https://celoscan.io';
+const OPTIMISM_EXPLORER_URL: Url = 'https://optimistic.etherscan.io';
 
 // others
 export const TENDERLY_URL: string = 'https://tenderly.co';
@@ -59,28 +66,31 @@ export const COINGECKO_DEMO_API_KEY: string =
 export const GEMINI_API_URL: string = 'https://aistudio.google.com/app/apikey';
 
 export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
-  string | MiddlewareChain,
+  MiddlewareChainType,
   Url
 > = {
   [MiddlewareChain.GNOSIS]: GNOSIS_EXPLORER_URL,
   [MiddlewareChain.BASE]: BASE_EXPLORER_URL,
   [MiddlewareChain.MODE]: MODE_EXPLORER_URL,
   [MiddlewareChain.CELO]: CELO_EXPLORER_URL,
+  [MiddlewareChain.OPTIMISM]: OPTIMISM_EXPLORER_URL,
 };
 
 export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
-  string | MiddlewareChain,
+  MiddlewareChainType,
   Url
 > = {
   [MiddlewareChain.GNOSIS]: 'https://gnosis.blockscout.com',
   [MiddlewareChain.BASE]: 'https://base.blockscout.com',
   [MiddlewareChain.MODE]: 'https://explorer.mode.network',
   [MiddlewareChain.CELO]: 'https://celo.blockscout.com',
+  [MiddlewareChain.OPTIMISM]: 'https://optimism.blockscout.com',
 };
 
-export const SWAP_URL_BY_EVM_CHAIN: Record<number | EvmChainId, Url> = {
+export const SWAP_URL_BY_EVM_CHAIN: Record<EvmChainId, Url> = {
   [EvmChainId.Gnosis]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
   [EvmChainId.Base]: SWAP_BASE_URL,
   [EvmChainId.Mode]: SWAP_MODE_URL,
   [EvmChainId.Celo]: SWAP_CELO_URL,
+  [EvmChainId.Optimism]: SWAP_MODE_URL,
 };
