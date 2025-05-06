@@ -165,6 +165,11 @@ jobs:
           cp ./tendermint electron/bins/tendermint
           chmod +x electron/bins/tendermint
 
+      # Download foreign agent binaries
+      - name: Download foreign agent binaries
+        run: |
+          curl https://github.com/valory-xyz/agents-fun-eliza/releases/download/v0.1.2/agentsFunEliza_darwin_${{ env.OS_ARCH }}_v0.1.2 -L -o electron/bins/agentsFunEliza
+
       # Add execution permissions to the binaries
       - name: Add exec permissions
         run: chmod +x electron/bins/*
