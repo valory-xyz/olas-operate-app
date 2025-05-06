@@ -48,8 +48,11 @@ endef
 	tar -xvf tendermint.tar.gz tendermint.exe
 	cp ./tendermint.exe ./electron/bins/tendermint.exe
 
+.foreign-agents:
+	curl https://github.com/valory-xyz/agents-fun-eliza/releases/download/v0.1.2/agentsFunEliza_windows_x64_v0.1.2.exe -L -o electron/bins/agentsFunEliza
+
 .PHONY: build
-build: ./dist/pearl_win.exe ./electron/bins/tendermint.exe
+build: ./dist/pearl_win.exe ./electron/bins/tendermint.exe .foreign-agents
 	$(call setup_env, prod)
 	cp -f dist/pearl_win.exe ./electron/bins/pearl_win.exe
 	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} yarn build:frontend
