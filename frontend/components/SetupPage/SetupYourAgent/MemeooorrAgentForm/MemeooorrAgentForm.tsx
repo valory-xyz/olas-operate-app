@@ -119,8 +119,8 @@ export const MemeooorrAgentForm = ({
               ...serviceTemplate.env_variables.TWIKIT_COOKIES,
               value: cookies,
             },
-            GENAI_API_KEY: {
-              ...serviceTemplate.env_variables.GENAI_API_KEY,
+            OPENAI_API_KEY: {
+              ...serviceTemplate.env_variables.OPENAI_API_KEY,
               value: values.geminiApiKey,
             },
             FIREWORKS_API_KEY: {
@@ -195,7 +195,7 @@ export const MemeooorrAgentForm = ({
 
         <Form.Item
           name="geminiApiKey"
-          label="Gemini API Key"
+          label="OpenAI API Key"
           {...commonFieldProps}
         >
           <Input.Password />
