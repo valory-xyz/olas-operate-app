@@ -1,4 +1,4 @@
-import { MiddlewareChain, MiddlewareChainType } from '@/client';
+import { MiddlewareChain, SupportedMiddlewareChain } from '@/client';
 import { EvmChainId } from '@/enums/Chain';
 
 type Url = `http${'s' | ''}://${string}`;
@@ -65,7 +65,7 @@ export const COINGECKO_DEMO_API_KEY: string =
 export const GEMINI_API_URL: string = 'https://aistudio.google.com/app/apikey';
 
 export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
-  MiddlewareChainType,
+  SupportedMiddlewareChain,
   Url
 > = {
   [MiddlewareChain.GNOSIS]: GNOSIS_EXPLORER_URL,
@@ -76,7 +76,7 @@ export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
 };
 
 export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
-  MiddlewareChainType,
+  SupportedMiddlewareChain,
   Url
 > = {
   [MiddlewareChain.GNOSIS]: 'https://gnosis.blockscout.com',

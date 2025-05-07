@@ -9,14 +9,17 @@ export enum MiddlewareAction {
 
 /**
  * @note Use this enum to infer all the middleware chains existing in the system
- * else use the MiddlewareChainType enum for the chains that are supported by the agents and to be strictly typed.
+ * else use the SupportedMiddlewareChain enum for the chains that are supported by the agents and to be strictly typed.
+ *
+ * @warning The value doesn’t actually represent the real chain name;
+ * it reflects the open-autonomy internal name instead.
  */
 export enum MiddlewareChain {
   ETHEREUM = 'ethereum',
   GOERLI = 'goerli',
   GNOSIS = 'gnosis',
   SOLANA = 'solana',
-  OPTIMISM = 'optimism',
+  OPTIMISM = 'optimistic', // @note "optimistic" and not "optimism"
   BASE = 'base',
   MODE = 'mode',
   CELO = 'celo',
@@ -29,7 +32,7 @@ const MIDDLEWARE_CHAINS = {
   mode: MiddlewareChain.MODE,
   celo: MiddlewareChain.CELO,
 } as const;
-export type MiddlewareChainType = ValueOf<typeof MIDDLEWARE_CHAINS>;
+export type SupportedMiddlewareChain = ValueOf<typeof MIDDLEWARE_CHAINS>;
 
 export enum MiddlewareLedger {
   ETHEREUM = 0,
