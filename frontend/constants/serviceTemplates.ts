@@ -11,7 +11,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   binary_path: null,
   name: 'Trader Agent', // Should be unique across all services and not be updated
-  hash: 'bafybeihgmbbjtkrlu62bkm3e4j2ehqipv5huqpifjiyttvjrk4sikwsfzu',
+  hash: 'bafybeid542wylhtfoir3ybeijdx43ppqfdvkjamw2ctoh7zkbwybyasnxi',
   description: 'Trader agent for omen prediction markets',
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
@@ -84,7 +84,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
-      value: 'QmVCKTpXjK6gtcsCBivrGVaH1rQuBgtEVVMTjmn3uE1mZp',
+      value: 'QmTzMoaEtSRdAnVxpziXVNwqYcE6HVZpGs6TM8vhWw1HPt',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
+      name: 'Mech interact round timeout',
+      description: '',
+      value: '900', // 15 min
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -99,12 +105,12 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   | 'service_version'
   | 'binary_path'
 > = {
-  hash: 'bafybeidxfdlaeywhnhafix2yzrnbldk5cybwal53o6mtabnamnxmwtprea',
+  hash: 'bafybeieqcjtgrn33q3mjevwp6ituytmudlq656ux6ofplzc7omtd5osdqy',
   binary_path: null,
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.4.2-alpha1',
+  service_version: 'v0.4.2-alpha2',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -261,7 +267,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   binary_path: null,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeiecjxha2ouqupttgdax7j4xmzfr6icuu55kq5xo2bwhkrl2po5khq',
+  hash: 'bafybeih3auhlvrg7lfw5yhcxnoucruxh5w2oibexabyw73q5qwhupn5oke',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
