@@ -1,17 +1,22 @@
 import { ValueOf } from '@/types/Util';
 
 export const OPTIMISM_STAKING_PROGRAM_IDS = {
-  OptimusAlpha1: 'optimus_alpha_1',
-  OptimusAlpha2: 'optimus_alpha_2',
-  OptimusAlpha3: 'optimus_alpha_3',
-  OptimusAlpha4: 'optimus_alpha_4',
+  OptimusAlpha1: 'optimus_alpha',
+  // OptimusAlpha2: 'optimus_alpha_2',
+  // OptimusAlpha3: 'optimus_alpha_3',
+  // OptimusAlpha4: 'optimus_alpha_4',
 } as const;
 
 export type OptimismStakingProgramId = ValueOf<
   typeof OPTIMISM_STAKING_PROGRAM_IDS
 >;
 
+/**
+ * @link https://github.com/valory-xyz/olas-operate-middleware/blob/9ca362f302ae749dd99b236d062ccc5c722acabf/operate/ledger/profiles.py#L115
+ * Refer the above link for the list of staking program ids.
+ */
 export const STAKING_PROGRAM_IDS = {
+  // gnosis
   PearlAlpha: 'pearl_alpha',
   PearlBeta: 'pearl_beta',
   PearlBeta2: 'pearl_beta_2',
@@ -20,6 +25,8 @@ export const STAKING_PROGRAM_IDS = {
   PearlBeta5: 'pearl_beta_5',
   PearlBeta6: 'pearl_beta_6',
   PearlBetaMechMarketplace: 'pearl_beta_mech_marketplace',
+
+  // base
   MemeBaseAlpha2: 'meme_base_alpha_2',
   MemeBaseBeta: 'meme_base_beta',
   MemeBaseBeta2: 'meme_base_beta_2',
@@ -35,6 +42,7 @@ export const STAKING_PROGRAM_IDS = {
   ModiusAlpha3: 'modius_alpha_3',
   ModiusAlpha4: 'modius_alpha_4',
   OptimusAlpha: 'optimus_alpha',
+
   ...OPTIMISM_STAKING_PROGRAM_IDS,
 } as const;
 

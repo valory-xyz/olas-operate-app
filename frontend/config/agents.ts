@@ -19,7 +19,7 @@ import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from './tokens';
 const getModiusUsdcConfig = () => {
   const modiusFundRequirements =
     MODIUS_SERVICE_TEMPLATE.configurations[MiddlewareChain.MODE]
-      .fund_requirements;
+      ?.fund_requirements;
   const modiusUsdcConfig = MODE_TOKEN_CONFIG[TokenSymbol.USDC];
   const usdcSafeRequirement =
     modiusFundRequirements?.[modiusUsdcConfig.address as string]?.safe || 0;
@@ -29,7 +29,7 @@ const getModiusUsdcConfig = () => {
 const getOptimusUsdcConfig = () => {
   const optimusFundRequirements =
     OPTIMUS_SERVICE_TEMPLATE.configurations[MiddlewareChain.OPTIMISM]
-      .fund_requirements;
+      ?.fund_requirements;
   const optimusUsdcConfig = OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC];
   const usdcSafeRequirement =
     optimusFundRequirements?.[optimusUsdcConfig.address as string]?.safe || 0;

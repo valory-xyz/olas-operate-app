@@ -1,4 +1,4 @@
-import { MiddlewareChain } from '@/client';
+import { SupportedMiddlewareChain } from '@/client';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
@@ -9,7 +9,7 @@ import { PredictTraderService } from '@/service/agents/PredictTrader';
 export type AgentConfig = {
   name: string;
   evmHomeChainId: EvmChainId;
-  middlewareHomeChainId: MiddlewareChain;
+  middlewareHomeChainId: SupportedMiddlewareChain;
   requiresAgentSafesOn: EvmChainId[];
   requiresMasterSafesOn: EvmChainId[];
   additionalRequirements?: Partial<

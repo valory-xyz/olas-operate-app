@@ -68,7 +68,7 @@ export const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
   nativeToken: TOKEN_CONFIG[EvmChainId.Optimism][TokenSymbol.ETH],
   middlewareChain: MiddlewareChainId.OPTIMISM,
   rpc: process.env.OPTIMISM_RPC as HttpUrl,
-  safeCreationThreshold: 0.0005, // Placeholder value. Consult the middleware team to confirm the correct threshold for Optimism.
+  safeCreationThreshold: 0.005,
 } as const;
 
 export const CHAIN_CONFIG: {
