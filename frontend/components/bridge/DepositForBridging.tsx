@@ -4,7 +4,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import { Button, Divider, Flex, message, Spin, Typography } from 'antd';
-import { upperFirst } from 'lodash';
+import { kebabCase, upperFirst } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
@@ -50,7 +50,7 @@ const RootCard = styled(Flex)`
 const DepositForBridgingHeader = ({ chainName }: { chainName: string }) => (
   <Flex gap={8} align="center" className="p-16">
     <Image
-      src={`/chains/${chainName}-chain.png`}
+      src={`/chains/${kebabCase(chainName)}-chain.png`}
       width={20}
       height={20}
       alt={`${chainName} logo`}
