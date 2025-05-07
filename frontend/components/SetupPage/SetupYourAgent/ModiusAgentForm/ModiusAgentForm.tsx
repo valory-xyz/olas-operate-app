@@ -9,7 +9,7 @@ import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import {
-  modiusAgentFieldProps,
+  agentFieldProps,
   requiredRules,
   validateApiKey,
   validateMessages,
@@ -150,7 +150,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="tenderlyAccessToken"
           label={<TenderlyAccessTokenLabel />}
-          {...modiusAgentFieldProps}
+          {...agentFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input.Password />
@@ -159,7 +159,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="tenderlyAccountSlug"
           label={<TenderlyAccountSlugLabel />}
-          {...modiusAgentFieldProps}
+          {...agentFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
         >
           <Input />
@@ -168,7 +168,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="tenderlyProjectSlug"
           label={<TenderlyProjectSlugLabel />}
-          {...modiusAgentFieldProps}
+          {...agentFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
         >
           <Input />
@@ -177,7 +177,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="coinGeckoApiKey"
           label={<CoinGeckoApiKeyLabel />}
-          {...modiusAgentFieldProps}
+          {...agentFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input.Password />
@@ -186,7 +186,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="geminiApiKey"
           label={<ModiusGeminiApiKeyLabel />}
-          {...modiusAgentFieldProps}
+          {...agentFieldProps}
         >
           <Input.Password />
         </Form.Item>

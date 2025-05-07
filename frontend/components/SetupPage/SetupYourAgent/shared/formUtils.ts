@@ -7,13 +7,7 @@ export const commonFieldProps: FormItemProps = {
   hasFeedback: true,
 } as const;
 
-export const modiusAgentFieldProps: FormItemProps = {
-  ...commonFieldProps,
-  validateFirst: true,
-  normalize: (value: string) => value.trim(),
-} as const;
-
-export const optimusAgentFieldProps: FormItemProps = {
+export const agentFieldProps: FormItemProps = {
   ...commonFieldProps,
   validateFirst: true,
   normalize: (value: string) => value.trim(),

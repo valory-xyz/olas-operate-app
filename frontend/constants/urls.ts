@@ -15,6 +15,8 @@ const SWAP_MODE_URL: Url =
   'https://balancer.fi/swap/mode/0xd988097fb8612cc24eec14542bc03424c656005f/0xcfd1d50ce23c46d3cf6407487b2f8934e96dc8f9';
 const SWAP_CELO_URL: Url =
   'https://app.ubeswap.org/#/swap?inputCurrency=0x471ece3750da237f93b8e339c536989b8978a438&outputCurrency=0xacffae8e57ec6e394eb1b41939a8cf7892dbdc51';
+const SWAP_OPTIMISM_URL: Url =
+  'https://balancer.fi/pools/optimism/v2/0x5bb3e58887264b667f915130fd04bbb56116c27800020000000000000000012a';
 
 // olas.network
 export const OPERATE_URL: Url = 'https://olas.network/operate';
@@ -36,7 +38,7 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
   [EvmChainId.Celo]:
     'https://api.studio.thegraph.com/query/67875/olas-celo-staking/version/latest',
   [EvmChainId.Optimism]:
-    'https://gateway.thegraph.com/api/subgraphs/id/2fe1izA4aVvBHVwbPzP1BqxLkoR9ebygWM9iHXwLCnPE',
+    'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/2fe1izA4aVvBHVwbPzP1BqxLkoR9ebygWM9iHXwLCnPE',
 };
 
 // discord
@@ -91,5 +93,5 @@ export const SWAP_URL_BY_EVM_CHAIN: Record<EvmChainId, Url> = {
   [EvmChainId.Base]: SWAP_BASE_URL,
   [EvmChainId.Mode]: SWAP_MODE_URL,
   [EvmChainId.Celo]: SWAP_CELO_URL,
-  [EvmChainId.Optimism]: SWAP_MODE_URL,
+  [EvmChainId.Optimism]: SWAP_OPTIMISM_URL,
 };

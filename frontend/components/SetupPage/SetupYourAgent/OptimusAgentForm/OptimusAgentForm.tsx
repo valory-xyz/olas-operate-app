@@ -9,7 +9,7 @@ import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import {
-  optimusAgentFieldProps,
+  agentFieldProps,
   requiredRules,
   validateApiKey,
   validateMessages,
@@ -152,7 +152,7 @@ export const OptimusAgentForm = ({
         <Form.Item
           name="tenderlyAccessToken"
           label={<TenderlyAccessTokenLabel />}
-          {...optimusAgentFieldProps}
+          {...agentFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input.Password />
@@ -161,7 +161,7 @@ export const OptimusAgentForm = ({
         <Form.Item
           name="tenderlyAccountSlug"
           label={<TenderlyAccountSlugLabel />}
-          {...optimusAgentFieldProps}
+          {...agentFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
         >
           <Input />
@@ -170,7 +170,7 @@ export const OptimusAgentForm = ({
         <Form.Item
           name="tenderlyProjectSlug"
           label={<TenderlyProjectSlugLabel />}
-          {...optimusAgentFieldProps}
+          {...agentFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
         >
           <Input />
@@ -179,7 +179,7 @@ export const OptimusAgentForm = ({
         <Form.Item
           name="coinGeckoApiKey"
           label={<CoinGeckoApiKeyLabel />}
-          {...optimusAgentFieldProps}
+          {...agentFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input.Password />
@@ -188,7 +188,7 @@ export const OptimusAgentForm = ({
         <Form.Item
           name="geminiApiKey"
           label={<OptimusGeminiApiKeyLabel />}
-          {...optimusAgentFieldProps}
+          {...agentFieldProps}
         >
           <Input.Password />
         </Form.Item>

@@ -6,7 +6,6 @@ import { EvmChainId } from '@/enums/Chain';
 import {
   OPTIMISM_STAKING_PROGRAM_IDS,
   OptimismStakingProgramId,
-  STAKING_PROGRAM_IDS,
 } from '@/enums/StakingProgram';
 import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
@@ -18,20 +17,20 @@ export const OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
   OptimismStakingProgramId,
   Address
 > = {
-  [STAKING_PROGRAM_IDS.OptimusAlpha1]:
+  [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha1]:
     '0x88996bbdE7f982D93214881756840cE2c77C4992',
-  // [STAKING_PROGRAM_IDS.OptimusAlpha2]:
+  // [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2]:
   //   '0xBCA056952D2A7a8dD4A002079219807CFDF9fd29',
-  // [STAKING_PROGRAM_IDS.OptimusAlpha3]:
+  // [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3]:
   //   '0x0f69f35652B1acdbD769049334f1AC580927E139',
-  // [STAKING_PROGRAM_IDS.OptimusAlpha4]:
+  // [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4]:
   //   '0x6891Cf116f9a3bDbD1e89413118eF81F69D298C3',
 };
 
 export const OPTIMISM_STAKING_PROGRAMS: {
   [stakingProgramId in OptimismStakingProgramId]: StakingProgramConfig;
 } = {
-  [STAKING_PROGRAM_IDS.OptimusAlpha1]: {
+  [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha1]: {
     chainId: EvmChainId.Optimism,
     name: 'Optimus Alpha',
     agentsSupported: [AgentType.Optimus],
@@ -42,12 +41,12 @@ export const OPTIMISM_STAKING_PROGRAMS: {
       ],
     contract: new MulticallContract(
       OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-        STAKING_PROGRAM_IDS.OptimusAlpha1
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha1
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
   },
-  // [STAKING_PROGRAM_IDS.OptimusAlpha2]: {
+  // [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2]: {
   //   chainId: EvmChainId.Optimism,
   //   name: 'Optimus Alpha II',
   //   agentsSupported: [AgentType.Optimus],
@@ -58,12 +57,12 @@ export const OPTIMISM_STAKING_PROGRAMS: {
   //     ],
   //   contract: new MulticallContract(
   //     OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-  //       STAKING_PROGRAM_IDS.OptimusAlpha2
+  //       OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2
   //     ],
   //     STAKING_TOKEN_PROXY_ABI,
   //   ),
   // },
-  // [STAKING_PROGRAM_IDS.OptimusAlpha3]: {
+  // [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3]: {
   //   chainId: EvmChainId.Optimism,
   //   name: 'Optimus Alpha III',
   //   agentsSupported: [AgentType.Optimus],
@@ -76,12 +75,12 @@ export const OPTIMISM_STAKING_PROGRAMS: {
   //     ],
   //   contract: new MulticallContract(
   //     OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-  //       STAKING_PROGRAM_IDS.OptimusAlpha3
+  //       OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3
   //     ],
   //     STAKING_TOKEN_PROXY_ABI,
   //   ),
   // },
-  // [STAKING_PROGRAM_IDS.OptimusAlpha4]: {
+  // [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4]: {
   //   chainId: EvmChainId.Optimism,
   //   name: 'Optimus Alpha IV',
   //   agentsSupported: [AgentType.Optimus],
@@ -94,7 +93,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
   //     ],
   //   contract: new MulticallContract(
   //     OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-  //       STAKING_PROGRAM_IDS.OptimusAlpha4
+  //       OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4
   //     ],
   //     STAKING_TOKEN_PROXY_ABI,
   //   ),

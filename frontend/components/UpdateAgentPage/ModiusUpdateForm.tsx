@@ -11,7 +11,7 @@ import { useModiusFormValidate } from '../SetupPage/SetupYourAgent/ModiusAgentFo
 // TODO: move the following hook/components to a shared place
 // once Modius work is merged
 import {
-  modiusAgentFieldProps,
+  agentFieldProps,
   requiredRules,
   validateApiKey,
   validateMessages,
@@ -93,7 +93,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<TenderlyAccessTokenLabel />}
         name={['env_variables', 'TENDERLY_ACCESS_KEY']}
-        {...modiusAgentFieldProps}
+        {...agentFieldProps}
         rules={[...requiredRules, { validator: validateApiKey }]}
       >
         <Input.Password />
@@ -102,7 +102,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<TenderlyAccountSlugLabel />}
         name={['env_variables', 'TENDERLY_ACCOUNT_SLUG']}
-        {...modiusAgentFieldProps}
+        {...agentFieldProps}
         rules={[...requiredRules, { validator: validateSlug }]}
       >
         <Input />
@@ -111,7 +111,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<TenderlyProjectSlugLabel />}
         name={['env_variables', 'TENDERLY_PROJECT_SLUG']}
-        {...modiusAgentFieldProps}
+        {...agentFieldProps}
         rules={[...requiredRules, { validator: validateSlug }]}
       >
         <Input />
@@ -120,7 +120,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<CoinGeckoApiKeyLabel />}
         name={['env_variables', 'COINGECKO_API_KEY']}
-        {...modiusAgentFieldProps}
+        {...agentFieldProps}
         rules={[...requiredRules, { validator: validateApiKey }]}
       >
         <Input.Password />
@@ -129,7 +129,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<ModiusGeminiApiKeyLabel />}
         name={['env_variables', 'GENAI_API_KEY']}
-        {...modiusAgentFieldProps}
+        {...agentFieldProps}
         rules={[{ validator: validateApiKey }]}
       >
         <Input.Password />
