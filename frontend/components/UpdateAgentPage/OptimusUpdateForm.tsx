@@ -7,9 +7,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 
-import { useModiusFormValidate } from '../SetupPage/SetupYourAgent/ModiusAgentForm/useModiusFormValidate';
-// TODO: move the following hook/components to a shared place
-// once Modius work is merged
+import { useOptimusFormValidate } from '../SetupPage/SetupYourAgent/OptimusAgentForm/useOptimusFormValidate';
 import {
   agentFieldProps,
   requiredRules,
@@ -20,7 +18,7 @@ import {
 import { InvalidGeminiApiCredentials } from '../SetupPage/SetupYourAgent/shared/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyLabel,
-  ModiusGeminiApiKeyLabel,
+  OptimusGeminiApiKeyLabel,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
@@ -28,7 +26,7 @@ import {
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
-type ModiusFormValues = {
+type OptimusFormValues = {
   env_variables: {
     TENDERLY_ACCESS_KEY: string;
     TENDERLY_ACCOUNT_SLUG: string;
@@ -38,11 +36,11 @@ type ModiusFormValues = {
   };
 };
 
-type ModiusUpdateFormProps = {
-  initialFormValues: Nullable<ModiusFormValues>;
+type OptimusUpdateFormProps = {
+  initialFormValues: Nullable<OptimusFormValues>;
 };
 
-const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
+const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
   const {
     isEditing,
     form,
@@ -54,10 +52,10 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
     submitButtonText,
     updateSubmitButtonText,
     validateForm,
-  } = useModiusFormValidate('Save Changes');
+  } = useOptimusFormValidate('Save Changes');
 
   const handleFinish = useCallback(
-    async (values: ModiusFormValues) => {
+    async (values: OptimusFormValues) => {
       try {
         const envVariables = values.env_variables;
         const userInputs = {
@@ -82,7 +80,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
   );
 
   return (
-    <Form<ModiusFormValues>
+    <Form<OptimusFormValues>
       form={form}
       layout="vertical"
       disabled={!isEditing}
@@ -127,7 +125,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       </Form.Item>
 
       <Form.Item
-        label={<ModiusGeminiApiKeyLabel />}
+        label={<OptimusGeminiApiKeyLabel />}
         name={['env_variables', 'GENAI_API_KEY']}
         {...agentFieldProps}
         rules={[{ validator: validateApiKey }]}
@@ -148,14 +146,14 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
 };
 
 /**
- * Form for updating Modius agent.
+ * Form for updating Optimus agent.
  */
-export const ModiusUpdatePage = () => {
+export const OptimusUpdatePage = () => {
   const { goto } = usePageState();
   const { selectedService } = useServices();
   const { unsavedModal, form } = useContext(UpdateAgentContext);
 
-  const initialValues = useMemo<Nullable<ModiusFormValues>>(() => {
+  const initialValues = useMemo<Nullable<OptimusFormValues>>(() => {
     if (!selectedService?.env_variables) return null;
 
     const envEntries = Object.entries(selectedService.env_variables);
@@ -176,7 +174,7 @@ export const ModiusUpdatePage = () => {
 
         return acc;
       },
-      { env_variables: {} } as ModiusFormValues,
+      { env_variables: {} } as OptimusFormValues,
     );
   }, [selectedService?.env_variables]);
 
@@ -198,7 +196,7 @@ export const ModiusUpdatePage = () => {
 
   return (
     <CardLayout onClickBack={handleBackClick}>
-      <ModiusUpdateForm initialFormValues={initialValues} />
+      <OptimusUpdateForm initialFormValues={initialValues} />
     </CardLayout>
   );
 };

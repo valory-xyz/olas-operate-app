@@ -1,9 +1,9 @@
 import { ethers } from 'ethers';
 
 import { EnvProvisionType, MiddlewareChain, ServiceTemplate } from '@/client';
-import { MODE_TOKEN_CONFIG } from '@/config/tokens';
+import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from '@/config/tokens';
 import { AgentType } from '@/enums/Agent';
-import { StakingProgramId } from '@/enums/StakingProgram';
+import { STAKING_PROGRAM_IDS } from '@/enums/StakingProgram';
 import { TokenSymbol } from '@/enums/Token';
 import { parseEther, parseUnits } from '@/utils/numberFormatters';
 
@@ -18,7 +18,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
-      staking_program_id: StakingProgramId.PearlBeta, // default, may be overwritten
+      staking_program_id: STAKING_PROGRAM_IDS.PearlBeta, // default, may be overwritten
       nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 14,
@@ -202,7 +202,7 @@ export const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChain.BASE,
   configurations: {
     [MiddlewareChain.BASE]: {
-      staking_program_id: StakingProgramId.AgentsFun1, // default, may be overwritten
+      staking_program_id: STAKING_PROGRAM_IDS.AgentsFun1, // default, may be overwritten
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 43,
@@ -231,7 +231,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChain.CELO,
   configurations: {
     [MiddlewareChain.CELO]: {
-      staking_program_id: StakingProgramId.MemeCeloAlpha2, // default, may be overwritten
+      staking_program_id: STAKING_PROGRAM_IDS.MemeCeloAlpha2, // default, may be overwritten
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 43,
@@ -261,7 +261,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChain.MODE,
   configurations: {
     [MiddlewareChain.MODE]: {
-      staking_program_id: StakingProgramId.ModiusAlpha, // default, may be overwritten
+      staking_program_id: STAKING_PROGRAM_IDS.ModiusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
@@ -401,11 +401,141 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   },
 } as const;
 
+export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
+  agentType: AgentType.Optimus,
+  name: 'Optimus - Optimism',
+  hash: 'bafybeiaatol6ujhey6wlijc3uk57k74bj4yqaehobpfrch7kjxnvghpqgy',
+  description: 'Optimus service deployment on Optimism network',
+  image:
+    'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+  service_version: 'v0.3.15',
+  home_chain: MiddlewareChain.OPTIMISM,
+  configurations: {
+    [MiddlewareChain.OPTIMISM]: {
+      staking_program_id: STAKING_PROGRAM_IDS.OptimusAlpha, // default, may be overwritten
+      nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
+      rpc: 'http://localhost:8545', // overwritten
+      agent_id: 40,
+      threshold: 1,
+      use_staking: true,
+      cost_of_bond: +parseEther(20),
+      monthly_gas_estimate: +parseEther(0.011),
+      fund_requirements: {
+        [ethers.constants.AddressZero]: {
+          agent: +parseEther(0.0007),
+          safe: +parseEther(0.0057),
+        },
+        [OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC].address as string]: {
+          agent: 0,
+          safe: +parseUnits(
+            16,
+            OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC].decimals,
+          ),
+        },
+      },
+    },
+  },
+  env_variables: {
+    OPTIMISM_LEDGER_RPC: {
+      name: 'Optimism ledger RPC',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    SAFE_CONTRACT_ADDRESSES: {
+      name: 'Safe contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    TENDERLY_ACCESS_KEY: {
+      name: 'Tenderly access key',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    TENDERLY_ACCOUNT_SLUG: {
+      name: 'Tenderly account slug',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    TENDERLY_PROJECT_SLUG: {
+      name: 'Tenderly project slug',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    STAKING_TOKEN_CONTRACT_ADDRESS: {
+      name: 'Staking token contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    COINGECKO_API_KEY: {
+      name: 'Coingecko API key',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    GENAI_API_KEY: {
+      name: 'Gemini API key',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    STAKING_CHAIN: {
+      name: 'Staking chain',
+      description: '',
+      value: 'optimism',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      name: 'Staking activity checker contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    TARGET_INVESTMENT_CHAINS: {
+      name: 'Target investment chains',
+      description: '',
+      value: '["optimism"]',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    INITIAL_ASSETS: {
+      name: 'Initial assets',
+      description: '',
+      value:
+        '{"optimism":{"0x0000000000000000000000000000000000000000":"ETH","0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85":"USDC"}}',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    INIT_FALLBACK_GAS: {
+      name: 'Init fallback gas',
+      description: '',
+      value: '250000',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    STORE_PATH: {
+      name: 'Store path',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    RESET_PAUSE_DURATION: {
+      name: 'Reset pause duration',
+      description: '',
+      value: '300',
+      provision_type: EnvProvisionType.FIXED,
+    },
+  },
+} as const;
+
 export const SERVICE_TEMPLATES: ServiceTemplate[] = [
   PREDICT_SERVICE_TEMPLATE,
   AGENTS_FUN_BASE_TEMPLATE,
   MODIUS_SERVICE_TEMPLATE,
   AGENTS_FUN_CELO_TEMPLATE,
+  OPTIMUS_SERVICE_TEMPLATE,
 ] as const;
 
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;

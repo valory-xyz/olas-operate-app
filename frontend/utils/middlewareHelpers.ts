@@ -16,6 +16,8 @@ export const asEvmChainId = (chain?: MiddlewareChain | string): EvmChainId => {
       return EvmChainId.Base;
     case MiddlewareChain.MODE:
       return EvmChainId.Mode;
+    case MiddlewareChain.OPTIMISM:
+      return EvmChainId.Optimism;
     case MiddlewareChain.CELO:
       return EvmChainId.Celo;
   }
@@ -34,6 +36,8 @@ export const asMiddlewareChain = (chainId?: EvmChainId | number) => {
       return MiddlewareChain.BASE;
     case EvmChainId.Mode:
       return MiddlewareChain.MODE;
+    case EvmChainId.Optimism:
+      return MiddlewareChain.OPTIMISM;
     case EvmChainId.Celo:
       return MiddlewareChain.CELO;
   }
