@@ -76,11 +76,11 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
   [AgentType.Optimus]: {
     'manage-wallet': false,
     'withdraw-funds': false,
-    'last-transactions': false,
-    'rewards-streak': false,
-    'staking-contract-section': false,
+    'last-transactions': true,
+    'rewards-streak': true,
+    'staking-contract-section': true,
     'low-funds': false,
-    'agent-activity': false,
+    'agent-activity': true,
     'backup-via-safe': false, // temporarily hidden until mode is available on safe https://app.safe.global/new-safe/create
     'agent-settings': false,
   },
