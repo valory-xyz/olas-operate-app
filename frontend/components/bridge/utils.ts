@@ -49,10 +49,11 @@ const getFromToken = (
 
 /**
  *
- * @warning a hook that should never exist. TODO: move this logic to backend
- * @deprecated This hook is planned for removal in future versions.
+ * @warning A HOOK THAT SHOULD NEVER EXIST.
+ * @deprecated TODO: This hook is planned for removal in future version
  *
- * Hook to return the updated bridge requirements params
+ * Hook to return the updated bridge requirements params to improve the
+ * initial funding requirements.
  *
  * Request quote with formula (will be moved to backend):
  *   max(refill_requirement_masterSafe, monthly_gas_estimate) + refill_requirements_masterEOA
@@ -72,29 +73,33 @@ const useGetUpdatedBridgeRequirementsParams = () => {
       if (!refillRequirements) return;
       if (!masterEoa?.address) return;
 
-      const zeroAddressIndex = bridgeRequests.findIndex((req) =>
+      const nativeTokenIndex = bridgeRequests.findIndex((req) =>
         areAddressesEqual(req.from.token, AddressZero),
       );
-      const zeroAddressBridgeRequest =
-        zeroAddressIndex !== -1 ? bridgeRequests[zeroAddressIndex] : null;
-      if (!zeroAddressBridgeRequest) return;
+      if (nativeTokenIndex === -1) return;
 
+      // refill_requirements_masterEOA
       const masterEoaRequirementAmount = (
         refillRequirements as AddressBalanceRecord
-      )[masterEoa?.address as Address][AddressZero];
+      )[masterEoa.address][AddressZero];
+
+      // refill_requirements_masterSafe
       const safeRequirementAmount = (
         refillRequirements as MasterSafeBalanceRecord
       )['master_safe'][AddressZero];
-      const monthlyGasEstimate = SERVICE_TEMPLATES.find(
-        (template) => template.home_chain === toMiddlewareChain,
-      )?.configurations[toMiddlewareChain].monthly_gas_estimate;
-      const amount =
-        bigintMax(
-          BigInt(safeRequirementAmount),
-          BigInt(monthlyGasEstimate || 0),
-        ) + BigInt(masterEoaRequirementAmount);
 
-      bridgeRequests[zeroAddressIndex].to.amount = amount.toString();
+      // monthly_gas_estimate
+      const monthlyGasEstimate =
+        SERVICE_TEMPLATES.find(
+          (template) => template.home_chain === toMiddlewareChain,
+        )?.configurations[toMiddlewareChain].monthly_gas_estimate ?? 0;
+
+      // amount = max(refill_requirement_masterSafe, monthly_gas_estimate) + refill_requirements_masterEOA
+      const amount =
+        bigintMax(BigInt(safeRequirementAmount), BigInt(monthlyGasEstimate)) +
+        BigInt(masterEoaRequirementAmount);
+
+      bridgeRequests[nativeTokenIndex].to.amount = amount.toString();
 
       return bridgeRequests;
     },
