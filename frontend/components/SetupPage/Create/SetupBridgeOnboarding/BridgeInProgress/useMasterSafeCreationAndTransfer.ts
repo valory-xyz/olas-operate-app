@@ -12,7 +12,9 @@ import { Address } from '@/types/Address';
 import { BridgingStepStatus } from '@/types/Bridge';
 import { bigintMax } from '@/utils/calculations';
 
-// hook to create master safe and transfer funds (step 2 and 3)
+/**
+ * Hook to create master safe and transfer funds (step 2 and 3)
+ */
 export const useMasterSafeCreationAndTransfer = (
   tokenSymbols: TokenSymbol[],
 ) => {
@@ -21,7 +23,7 @@ export const useMasterSafeCreationAndTransfer = (
   const {
     isBalancesAndFundingRequirementsLoading,
     balances,
-    refillRequirements,
+    totalRequirements,
   } = useBalanceAndRefillRequirementsContext();
   const { selectedAgentConfig } = useServices();
 
@@ -34,21 +36,28 @@ export const useMasterSafeCreationAndTransfer = (
 
     return Object.entries(balances[masterEoa.address]).reduce(
       (acc, [tokenAddress, tokenBalance]) => {
-        /** @example { [0xMasterEoaAddress]: { 0x00000000...: amount } } */
-        const requiredAmountsByMasterEoa = (
-          refillRequirements as AddressBalanceRecord
-        )?.[masterEoa.address];
+        /**
+         * @example
+         * {
+         *   [0xMasterEoaAddress]: { 0x00000000...: amount, 0x00000001...: amount }
+         * }
+         * */
+        const totalAmountRequiredByMasterEoaToken =
+          (totalRequirements as AddressBalanceRecord)?.[masterEoa.address]?.[
+            tokenAddress as Address
+          ] || 0;
 
-        if (!requiredAmountsByMasterEoa) return acc;
-
-        const amountRequiredByMasterEoaCurrentToken =
-          requiredAmountsByMasterEoa[tokenAddress as Address] || 0;
-
-        // NOTE: Need to keep some funds in the EOA for gas, and transfer the rest to the master safe.
-        // Amount to transfer to master safe =
-        //   (EOA balance - amount required by master EOA)
+        /**
+         * @note Need to keep some funds in the EOA for gas, and transfer the rest to the master safe.
+         * Amount to transfer to master safe = (amount available in EOA - amount required by master EOA)
+         *
+         * @example
+         * - EOA has "10 ETH" (User's balance)
+         * - Master EOA requires just "2 ETH"
+         * - Amount to transfer to master safe = 10 - 2 = "8 ETH"
+         */
         const amountToTransferToMasterSafe = bigintMax(
-          BigInt(tokenBalance) - BigInt(amountRequiredByMasterEoaCurrentToken),
+          BigInt(tokenBalance) - BigInt(totalAmountRequiredByMasterEoaToken),
           BigInt(0),
         );
         acc[tokenAddress as Address] = amountToTransferToMasterSafe.toString();
@@ -61,7 +70,7 @@ export const useMasterSafeCreationAndTransfer = (
     isBalancesAndFundingRequirementsLoading,
     masterEoa,
     balances,
-    refillRequirements,
+    totalRequirements,
   ]);
 
   return useMutation({

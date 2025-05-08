@@ -162,6 +162,9 @@ export type BalancesAndFundingRequirements = {
   refill_requirements: Partial<{
     [chain in MiddlewareChain]: AddressBalanceRecord | MasterSafeBalanceRecord;
   }>;
+  total_requirements: {
+    [chain in MiddlewareChain]: AddressBalanceRecord | MasterSafeBalanceRecord;
+  };
   bonded_olas: {
     [chain in MiddlewareChain]: number;
   };
