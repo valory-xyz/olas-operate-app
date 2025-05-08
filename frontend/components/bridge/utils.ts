@@ -48,18 +48,80 @@ const getFromToken = (
 };
 
 /**
+ *
+ * @warning a hook that should never exist. TODO: move this logic to backend
+ * @deprecated This hook is planned for removal in future versions.
+ *
+ * Hook to return the updated bridge requirements params
+ *
+ * Request quote with formula (will be moved to backend):
+ *   max(refill_requirement_masterSafe, monthly_gas_estimate) + refill_requirements_masterEOA
+ *
+ */
+const useGetUpdatedBridgeRequirementsParams = () => {
+  const { selectedAgentConfig } = useServices();
+  const { masterEoa } = useMasterWalletContext();
+  const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
+    useBalanceAndRefillRequirementsContext();
+
+  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
+
+  return useCallback(
+    (bridgeRequests: BridgeRefillRequirementsRequest['bridge_requests']) => {
+      if (isBalancesAndFundingRequirementsLoading) return;
+      if (!refillRequirements) return;
+      if (!masterEoa?.address) return;
+
+      const zeroAddressIndex = bridgeRequests.findIndex((req) =>
+        areAddressesEqual(req.from.token, AddressZero),
+      );
+      const zeroAddressBridgeRequest =
+        zeroAddressIndex !== -1 ? bridgeRequests[zeroAddressIndex] : null;
+      if (!zeroAddressBridgeRequest) return;
+
+      const masterEoaRequirementAmount = (
+        refillRequirements as AddressBalanceRecord
+      )[masterEoa?.address as Address][AddressZero];
+      const safeRequirementAmount = (
+        refillRequirements as MasterSafeBalanceRecord
+      )['master_safe'][AddressZero];
+      const monthlyGasEstimate = SERVICE_TEMPLATES.find(
+        (template) => template.home_chain === toMiddlewareChain,
+      )?.configurations[toMiddlewareChain].monthly_gas_estimate;
+      const amount =
+        bigintMax(
+          BigInt(safeRequirementAmount),
+          BigInt(monthlyGasEstimate || 0),
+        ) + BigInt(masterEoaRequirementAmount);
+
+      bridgeRequests[zeroAddressIndex].to.amount = amount.toString();
+
+      return bridgeRequests;
+    },
+    [
+      masterEoa,
+      refillRequirements,
+      toMiddlewareChain,
+      isBalancesAndFundingRequirementsLoading,
+    ],
+  );
+};
+
+/**
  * Helper to get bridge refill requirements parameters
  * based on current refill requirements
  */
 export const useGetBridgeRequirementsParams = () => {
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
+  const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
+    useBalanceAndRefillRequirementsContext();
+  const getUpdatedBridgeRequirementsParams =
+    useGetUpdatedBridgeRequirementsParams();
 
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const fromAddress = masterEoa?.address;
   const toAddress = masterEoa?.address;
-  const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
-    useBalanceAndRefillRequirementsContext();
 
   return useCallback(
     (isForceUpdate = false) => {
@@ -82,8 +144,6 @@ export const useGetBridgeRequirementsParams = () => {
         if (!(isRecipientAddress || walletAddress === 'master_safe')) {
           continue;
         }
-
-        console.log({ walletAddress, tokensWithRequirements });
 
         for (const [tokenAddress, amount] of Object.entries(
           tokensWithRequirements,
@@ -110,13 +170,6 @@ export const useGetBridgeRequirementsParams = () => {
               areAddressesEqual(req.to.token, toToken),
           );
 
-          console.log({
-            masterEoa,
-            bridgeRequests,
-            existingRequest,
-            refillRequirements,
-          });
-
           if (existingRequest) {
             // If the request already exists, update the amount
             const toAmount = BigInt(existingRequest.to.amount) + BigInt(amount);
@@ -136,48 +189,12 @@ export const useGetBridgeRequirementsParams = () => {
               },
             });
           }
-
-          // TODO: one of logic, to be moved to backend
-          const zeroAddressIndex = bridgeRequests.findIndex((req) =>
-            areAddressesEqual(req.from.token, AddressZero),
-          );
-          const zeroAddressBridgeRequest =
-            zeroAddressIndex !== -1 ? bridgeRequests[zeroAddressIndex] : null;
-          if (zeroAddressBridgeRequest) {
-            const masterEoaRequirementAmount = (
-              refillRequirements as AddressBalanceRecord
-            )[masterEoa?.address as Address][AddressZero];
-            const safeRequirementAmount = (
-              refillRequirements as MasterSafeBalanceRecord
-            )['master_safe'][AddressZero];
-            const monthlyGasEstimate = SERVICE_TEMPLATES.find(
-              (template) => template.home_chain === toMiddlewareChain,
-            )?.configurations[toMiddlewareChain].monthly_gas_estimate;
-            const amount =
-              bigintMax(
-                BigInt(safeRequirementAmount),
-                BigInt(monthlyGasEstimate || 0),
-              ) + BigInt(masterEoaRequirementAmount);
-
-            console.log('zeroAddressBridgeRequest', {
-              masterEoaRequirementAmount,
-              safeRequirementAmount,
-              monthlyGasEstimate,
-              amount,
-            });
-
-            bridgeRequests[zeroAddressIndex].to.amount = amount.toString();
-          }
-
-          console.log(
-            'current',
-            bridgeRequests.find((req) => req.to.token === toToken),
-          );
         }
       }
 
       return {
-        bridge_requests: bridgeRequests,
+        bridge_requests:
+          getUpdatedBridgeRequirementsParams(bridgeRequests) || bridgeRequests,
         force_update: isForceUpdate,
       } satisfies BridgeRefillRequirementsRequest;
     },
@@ -187,6 +204,7 @@ export const useGetBridgeRequirementsParams = () => {
       refillRequirements,
       isBalancesAndFundingRequirementsLoading,
       toMiddlewareChain,
+      getUpdatedBridgeRequirementsParams,
     ],
   );
 };
