@@ -1,19 +1,25 @@
 import { isAddress } from 'ethers/lib/utils';
 import { useCallback } from 'react';
 
-import { MiddlewareChain } from '@/client';
+import {
+  AddressBalanceRecord,
+  MasterSafeBalanceRecord,
+  MiddlewareChain,
+} from '@/client';
 import {
   ChainTokenConfig,
   ETHEREUM_TOKEN_CONFIG,
   TOKEN_CONFIG,
 } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
+import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
+import { bigintMax } from '@/utils/calculations';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 /**
@@ -77,6 +83,8 @@ export const useGetBridgeRequirementsParams = () => {
           continue;
         }
 
+        console.log({ walletAddress, tokensWithRequirements });
+
         for (const [tokenAddress, amount] of Object.entries(
           tokensWithRequirements,
         )) {
@@ -102,7 +110,15 @@ export const useGetBridgeRequirementsParams = () => {
               areAddressesEqual(req.to.token, toToken),
           );
 
+          console.log({
+            masterEoa,
+            bridgeRequests,
+            existingRequest,
+            refillRequirements,
+          });
+
           if (existingRequest) {
+            // If the request already exists, update the amount
             const toAmount = BigInt(existingRequest.to.amount) + BigInt(amount);
             existingRequest.to.amount = toAmount.toString();
           } else {
@@ -120,6 +136,43 @@ export const useGetBridgeRequirementsParams = () => {
               },
             });
           }
+
+          // TODO: one of logic, to be moved to backend
+          const zeroAddressIndex = bridgeRequests.findIndex((req) =>
+            areAddressesEqual(req.from.token, AddressZero),
+          );
+          const zeroAddressBridgeRequest =
+            zeroAddressIndex !== -1 ? bridgeRequests[zeroAddressIndex] : null;
+          if (zeroAddressBridgeRequest) {
+            const masterEoaRequirementAmount = (
+              refillRequirements as AddressBalanceRecord
+            )[masterEoa?.address as Address][AddressZero];
+            const safeRequirementAmount = (
+              refillRequirements as MasterSafeBalanceRecord
+            )['master_safe'][AddressZero];
+            const monthlyGasEstimate = SERVICE_TEMPLATES.find(
+              (template) => template.home_chain === toMiddlewareChain,
+            )?.configurations[toMiddlewareChain].monthly_gas_estimate;
+            const amount =
+              bigintMax(
+                BigInt(safeRequirementAmount),
+                BigInt(monthlyGasEstimate || 0),
+              ) + BigInt(masterEoaRequirementAmount);
+
+            console.log('zeroAddressBridgeRequest', {
+              masterEoaRequirementAmount,
+              safeRequirementAmount,
+              monthlyGasEstimate,
+              amount,
+            });
+
+            bridgeRequests[zeroAddressIndex].to.amount = amount.toString();
+          }
+
+          console.log(
+            'current',
+            bridgeRequests.find((req) => req.to.token === toToken),
+          );
         }
       }
 
