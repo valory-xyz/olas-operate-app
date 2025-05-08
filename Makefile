@@ -49,7 +49,7 @@ endef
 	cp ./tendermint.exe ./electron/bins/tendermint.exe
 
 .foreign-agents:
-	curl https://github.com/valory-xyz/agents-fun-eliza/releases/download/v0.1.3/agentsFunEliza_windows_x64_0.1.3.exe -L -o electron/bins/agentsFunEliza
+	curl https://github.com/valory-xyz/agents-fun-eliza/releases/download/v0.1.4/agentsFunEliza_windows_x64_0.1.4.exe -L -o electron/bins/agentsFunEliza
 
 .PHONY: build
 build: ./dist/pearl_win.exe ./electron/bins/tendermint.exe .foreign-agents
