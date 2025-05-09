@@ -142,6 +142,7 @@ export const MigrateButton = ({
                   configurations: {
                     ...Object.entries(serviceTemplate.configurations).reduce(
                       (acc, [middlewareChain]) => {
+                        // @ts-expect-error TODO: to be fixed
                         acc[middlewareChain] = {
                           staking_program_id: stakingProgramIdToMigrateTo,
                           use_mech_marketplace:
