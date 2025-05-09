@@ -2,6 +2,7 @@ import { Button, Checkbox, Form, Input, message, Typography } from 'antd';
 import { useState } from 'react';
 
 import { SetupScreen } from '@/enums/SetupScreen';
+import { usePageState } from '@/hooks/usePageState';
 import { useSetup } from '@/hooks/useSetup';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
@@ -13,6 +14,7 @@ const { Title, Text } = Typography;
 
 export const SetupPassword = () => {
   const { goto, setMnemonic } = useSetup();
+  const { setUserLoggedIn } = usePageState();
   const [form] = Form.useForm<{ password: string; terms: boolean }>();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +30,7 @@ export const SetupPassword = () => {
       .then(({ mnemonic }: { mnemonic: string[] }) => {
         setMnemonic(mnemonic);
         goto(SetupScreen.SetupSeedPhrase);
+        setUserLoggedIn();
       })
       .catch((e) => {
         console.error(e);
@@ -37,7 +40,7 @@ export const SetupPassword = () => {
   };
 
   return (
-    <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }} noBorder>
+    <CardFlex $gap={10} styles={{ body: { padding: '12px 24px' } }} $noBorder>
       <SetupCreateHeader prev={SetupScreen.Welcome} />
       <Title level={3}>Create password</Title>
       <Text>Come up with a strong password.</Text>

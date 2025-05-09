@@ -1,5 +1,6 @@
 import { MiddlewareChain } from '@/client';
 import { EvmChainId } from '@/enums/Chain';
+import { TokenSymbol } from '@/enums/Token';
 
 /**
  * Converts middleware chain enums to chain ids
@@ -38,4 +39,26 @@ export const asMiddlewareChain = (chainId?: EvmChainId | number) => {
       return MiddlewareChain.CELO;
   }
   throw new Error(`Invalid chain id: ${chainId}`);
+};
+
+/**
+ * Converts token symbol to middleware chain enums
+ */
+export const toMiddlewareChainFromTokenSymbol = (
+  tokenSymbol?: TokenSymbol,
+): MiddlewareChain | undefined => {
+  switch (tokenSymbol) {
+    case 'ETH':
+      return MiddlewareChain.ETHEREUM;
+    case 'OLAS':
+      return MiddlewareChain.GNOSIS;
+    case 'CELO':
+      return MiddlewareChain.CELO;
+    case 'XDAI':
+      return MiddlewareChain.GNOSIS;
+    case 'WXDAI':
+      return MiddlewareChain.GNOSIS;
+  }
+
+  throw new Error(`Invalid token symbol: ${tokenSymbol}`);
 };

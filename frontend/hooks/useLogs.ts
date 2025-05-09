@@ -106,18 +106,20 @@ export const useLogs = () => {
   const { isLoaded: isAddressesLoaded, data: addresses } = useAddressesLogs();
 
   const logs = useMemo(() => {
-    if (isServicesLoaded && isBalancesLoaded && isAddressesLoaded) {
-      return {
-        store: storeState,
-        debugData: { services, addresses, balances },
-      };
-    }
+    return {
+      store: storeState,
+      debugData: {
+        services: isServicesLoaded ? services : null,
+        addresses: isAddressesLoaded ? addresses : null,
+        balances: isBalancesLoaded ? balances : null,
+      },
+    };
   }, [
-    addresses,
-    balances,
     isAddressesLoaded,
     isBalancesLoaded,
     isServicesLoaded,
+    addresses,
+    balances,
     services,
     storeState,
   ]);

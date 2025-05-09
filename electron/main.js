@@ -762,7 +762,9 @@ function sanitizeLogs({
   return sanitizedLogsFilePath;
 }
 
-// EXPORT LOGS
+/**
+ * Exports logs by creating a zip file containing sanitized logs and other relevant data.
+ */
 ipcMain.handle('save-logs', async (_, data) => {
   const cliLogFiles = fs
     .readdirSync(paths.dotOperateDirectory)
@@ -794,11 +796,12 @@ ipcMain.handle('save-logs', async (_, data) => {
   fs.writeFileSync(osInfoFilePath, osInfo);
 
   // Persistent store
-  if (data.store)
+  if (data.store) {
     sanitizeLogs({
       name: 'store.txt',
       data: JSON.stringify(data.store, null, 2),
     });
+  }
 
   // Other debug data: balances, addresses, etc.
   if (data.debugData) {
@@ -822,6 +825,16 @@ ipcMain.handle('save-logs', async (_, data) => {
       name: 'debug_data.json',
       data: JSON.stringify(clonedDebugData, null, 2),
     });
+  }
+
+  // Bridge logs
+  try {
+    const bridgeLogFilePath = path.join(paths.bridgeDirectory, 'bridge.json');
+    if (fs.existsSync(bridgeLogFilePath)) {
+      sanitizeLogs({ name: 'bridge.json', filePath: bridgeLogFilePath });
+    }
+  } catch (e) {
+    logger.electron(e);
   }
 
   // Agent logs
@@ -898,12 +911,12 @@ ipcMain.handle('save-logs', async (_, data) => {
   }
 
   // Remove temporary files
-  fs.existsSync(paths.osPearlTempDir) &&
+  if (fs.existsSync(paths.osPearlTempDir)) {
     fs.rmSync(paths.osPearlTempDir, {
       recursive: true,
       force: true,
     });
-
+  }
   return result;
 });
 
