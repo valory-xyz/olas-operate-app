@@ -75,6 +75,7 @@ const createService = async ({
         // overwrite defaults with chain-specific configurations
         ...Object.entries(serviceTemplate.configurations).reduce(
           (acc, [middlewareChain, config]) => {
+            // @ts-expect-error TODO: to be fixed
             acc[middlewareChain] = {
               ...config,
               rpc: CHAIN_CONFIG[asEvmChainId(middlewareChain)].rpc,

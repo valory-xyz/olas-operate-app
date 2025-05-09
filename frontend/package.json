@@ -56,7 +56,8 @@
     "build": "bash -c \"GNOSIS_RPC=$GNOSIS_RPC BASE_RPC=$BASE_RPC OPTIMISM_RPC=$OPTIMISM_RPC ETHEREUM_RPC=$ETHEREUM_RPC MODE_RPC=$MODE_RPC CELO_RPC=$CELO_RPC NODE_ENV=production next build\"",
     "lint": "next lint",
     "test": "jest",
-    "start": "next start"
+    "start": "next start",
+    "check": "yarn run lint && tsc --noEmit"
   },
   "version": "0.1.0"
 }
