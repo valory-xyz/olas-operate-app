@@ -3,6 +3,7 @@ import {
   MiddlewareServiceResponse,
   ServiceConfigId,
   ServiceTemplate,
+  SupportedMiddlewareChain,
 } from '@/client';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
@@ -75,8 +76,7 @@ const createService = async ({
         // overwrite defaults with chain-specific configurations
         ...Object.entries(serviceTemplate.configurations).reduce(
           (acc, [middlewareChain, config]) => {
-            // @ts-expect-error TODO: to be fixed
-            acc[middlewareChain] = {
+            acc[middlewareChain as SupportedMiddlewareChain] = {
               ...config,
               rpc: CHAIN_CONFIG[asEvmChainId(middlewareChain)].rpc,
               staking_program_id: stakingProgramId,

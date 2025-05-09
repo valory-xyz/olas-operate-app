@@ -57,7 +57,7 @@
     "lint": "next lint",
     "test": "jest",
     "start": "next start",
-    "check": "yarn run lint && tsc --noEmit"
+    "check": "yarn run lint && tsc --noEmit --incremental false"
   },
   "version": "0.1.0"
 }
