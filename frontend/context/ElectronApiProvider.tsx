@@ -1,7 +1,7 @@
 import { get } from 'lodash';
 import { createContext, PropsWithChildren } from 'react';
 
-import { AgentHealthCheck } from '@/types/Agent';
+import { AgentHealthCheckResponse } from '@/types/Agent';
 import { XCookie } from '@/types/Cookies';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
 
@@ -53,7 +53,7 @@ type ElectronApiContextProps = {
     email: string;
   }) => Promise<{ success: boolean; cookies?: XCookie[] }>;
   healthCheck?: () => Promise<
-    { response: AgentHealthCheck | null } | { error: string }
+    { response: AgentHealthCheckResponse | null } | { error: string }
   >;
   agentActivityWindow?: Partial<ElectronApiAgentActivityWindow>;
 };

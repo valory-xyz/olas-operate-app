@@ -7,6 +7,7 @@ import { LOCAL_FORM_THEME } from '@/theme';
 import { UpdateAgentProvider } from './context/UpdateAgentProvider';
 import { MemeooorrUpdatePage } from './MemeooorrUpdatePage';
 import { ModiusUpdatePage } from './ModiusUpdateForm';
+import { OptimusUpdatePage } from './OptimusUpdateForm';
 
 export const UpdateAgentPage = () => {
   const { selectedAgentType } = useServices();
@@ -15,6 +16,7 @@ export const UpdateAgentPage = () => {
       <ConfigProvider theme={LOCAL_FORM_THEME}>
         {selectedAgentType === AgentType.Memeooorr && <MemeooorrUpdatePage />}
         {selectedAgentType === AgentType.Modius && <ModiusUpdatePage />}
+        {selectedAgentType === AgentType.Optimus && <OptimusUpdatePage />}
       </ConfigProvider>
     </UpdateAgentProvider>
   );

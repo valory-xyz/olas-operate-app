@@ -102,7 +102,6 @@ const useStakingContractDetailsByStakingProgram = ({
        * Request staking contract details
        * if service is present, request it's info and states on the staking contract
        */
-
       const promises: Promise<
         StakingContractDetails | ServiceStakingDetails | undefined
       >[] = [

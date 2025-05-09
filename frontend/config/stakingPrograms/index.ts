@@ -2,7 +2,7 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
-import { StakingProgramId } from '@/enums/StakingProgram';
+import { STAKING_PROGRAM_IDS, StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
 import { MechType } from '../mechs';
@@ -22,6 +22,10 @@ import {
   MODE_STAKING_PROGRAMS,
   MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
 } from './mode';
+import {
+  OPTIMISM_STAKING_PROGRAMS,
+  OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
+} from './optimism';
 
 /**
  * Single non-chain specific staking program configuration
@@ -51,6 +55,7 @@ export const STAKING_PROGRAMS: {
   [EvmChainId.Base]: BASE_STAKING_PROGRAMS,
   [EvmChainId.Mode]: MODE_STAKING_PROGRAMS,
   [EvmChainId.Celo]: CELO_STAKING_PROGRAMS,
+  [EvmChainId.Optimism]: OPTIMISM_STAKING_PROGRAMS,
 };
 
 export const STAKING_PROGRAM_ADDRESS: {
@@ -60,13 +65,15 @@ export const STAKING_PROGRAM_ADDRESS: {
   [EvmChainId.Base]: BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
   [EvmChainId.Mode]: MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
   [EvmChainId.Celo]: CELO_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
+  [EvmChainId.Optimism]: OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
 };
 
 export const DEFAULT_STAKING_PROGRAM_IDS: {
   [chainId in EvmChainId]: StakingProgramId;
 } = {
-  [EvmChainId.Gnosis]: StakingProgramId.PearlBeta,
-  [EvmChainId.Base]: StakingProgramId.MemeBaseAlpha2,
-  [EvmChainId.Mode]: StakingProgramId.ModiusAlpha,
-  [EvmChainId.Celo]: StakingProgramId.MemeCeloAlpha2,
+  [EvmChainId.Gnosis]: STAKING_PROGRAM_IDS.PearlBeta,
+  [EvmChainId.Base]: STAKING_PROGRAM_IDS.MemeBaseAlpha2,
+  [EvmChainId.Mode]: STAKING_PROGRAM_IDS.ModiusAlpha,
+  [EvmChainId.Celo]: STAKING_PROGRAM_IDS.MemeCeloAlpha2,
+  [EvmChainId.Optimism]: STAKING_PROGRAM_IDS.OptimusAlpha1,
 };

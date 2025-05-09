@@ -19,6 +19,7 @@ import { useServices } from '@/hooks/useServices';
 import { Address } from '@/types/Address';
 import { WalletBalance } from '@/types/Balance';
 import { balanceFormat } from '@/utils/numberFormatters';
+import { isValidServiceId } from '@/utils/service';
 import { truncateAddress } from '@/utils/truncate';
 
 import { AddressLink } from '../AddressLink';
@@ -281,7 +282,7 @@ const YourAgentWalletBreakdown = () => {
           </Flex>
         )}
 
-        {!isNil(serviceNftTokenId) && (
+        {serviceNftTokenId && isValidServiceId(serviceNftTokenId) && (
           <ServiceAndNftDetails serviceNftTokenId={serviceNftTokenId} />
         )}
       </Container>

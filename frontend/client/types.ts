@@ -81,8 +81,8 @@ export type ServiceTemplate = {
   description: string;
   image: string;
   service_version: string;
-  home_chain: string;
-  configurations: { [key: string]: ConfigurationTemplate };
+  home_chain: MiddlewareChain;
+  configurations: Partial<Record<MiddlewareChain, ConfigurationTemplate>>;
   env_variables: { [key: string]: EnvVariableAttributes };
   deploy?: boolean;
 };

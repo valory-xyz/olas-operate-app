@@ -4,7 +4,10 @@ import { MECH_ACTIVITY_CHECKER_ABI } from '@/abis/mechActivityChecker';
 import { MEME_ACTIVITY_CHECKER_ABI } from '@/abis/memeActivityChecker';
 import { REQUESTER_ACTIVITY_CHECKER_ABI } from '@/abis/requesterActivityChecker';
 import { STAKING_ACTIVITY_CHECKER_ABI } from '@/abis/stakingActivityChecker';
-import { StakingProgramId } from '@/enums/StakingProgram';
+import {
+  OptimismStakingProgramId,
+  STAKING_PROGRAM_IDS,
+} from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
 export const getMechActivityCheckerContract = (
@@ -35,28 +38,28 @@ export const GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   string,
   MulticallContract
 > = {
-  [StakingProgramId.PearlAlpha]: getMechActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.PearlAlpha]: getMechActivityCheckerContract(
     '0x155547857680A6D51bebC5603397488988DEb1c8',
   ),
-  [StakingProgramId.PearlBeta]: getMechActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.PearlBeta]: getMechActivityCheckerContract(
     '0x155547857680A6D51bebC5603397488988DEb1c8',
   ),
-  [StakingProgramId.PearlBeta2]: getMechActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.PearlBeta2]: getMechActivityCheckerContract(
     '0x155547857680A6D51bebC5603397488988DEb1c8',
   ),
-  [StakingProgramId.PearlBeta3]: getMechActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.PearlBeta3]: getMechActivityCheckerContract(
     '0x155547857680A6D51bebC5603397488988DEb1c8',
   ),
-  [StakingProgramId.PearlBeta4]: getMechActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.PearlBeta4]: getMechActivityCheckerContract(
     '0x155547857680A6D51bebC5603397488988DEb1c8',
   ),
-  [StakingProgramId.PearlBeta5]: getMechActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.PearlBeta5]: getMechActivityCheckerContract(
     '0x155547857680A6D51bebC5603397488988DEb1c8',
   ),
-  [StakingProgramId.PearlBeta6]: getRequesterActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.PearlBeta6]: getRequesterActivityCheckerContract(
     '0xfE1D36820546cE5F3A58405950dC2F5ccDf7975C',
   ),
-  [StakingProgramId.PearlBetaMechMarketplace]:
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace]:
     getRequesterActivityCheckerContract(
       '0x7Ec96996Cd146B91779f01419db42E67463817a0',
     ),
@@ -66,25 +69,25 @@ export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   string,
   MulticallContract
 > = {
-  [StakingProgramId.MemeBaseAlpha2]: getMemeActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.MemeBaseAlpha2]: getMemeActivityCheckerContract(
     '0x026AB1c5ea14E61f67d245685D9561c0c2Cb39Ba',
   ),
-  [StakingProgramId.MemeBaseBeta]: getMemeActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.MemeBaseBeta]: getMemeActivityCheckerContract(
     '0x008F52AF7009e262967caa7Cb79468F92AFEADF9',
   ),
-  [StakingProgramId.MemeBaseBeta2]: getMemeActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.MemeBaseBeta2]: getMemeActivityCheckerContract(
     '0x026AB1c5ea14E61f67d245685D9561c0c2Cb39Ba',
   ),
-  [StakingProgramId.MemeBaseBeta3]: getMemeActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.MemeBaseBeta3]: getMemeActivityCheckerContract(
     '0x026AB1c5ea14E61f67d245685D9561c0c2Cb39Ba',
   ),
-  [StakingProgramId.AgentsFun1]: getRequesterActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.AgentsFun1]: getRequesterActivityCheckerContract(
     '0x87C9922A099467E5A80367553e7003349FE50106',
   ),
-  [StakingProgramId.AgentsFun2]: getRequesterActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.AgentsFun2]: getRequesterActivityCheckerContract(
     '0x4bEb05F76f4563DE7BCB6276915C3E1F71184D8f',
   ),
-  [StakingProgramId.AgentsFun3]: getRequesterActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.AgentsFun3]: getRequesterActivityCheckerContract(
     '0xF0814A105c1b684922Fce8C3b80d7B6Ff1e399F9',
   ),
 } as const;
@@ -93,28 +96,46 @@ export const MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   string,
   MulticallContract
 > = {
-  [StakingProgramId.ModiusAlpha]: getStakingActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.ModiusAlpha]: getStakingActivityCheckerContract(
     '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
   ),
-  [StakingProgramId.OptimusAlpha]: getStakingActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.OptimusAlpha]: getStakingActivityCheckerContract(
     '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
   ),
-  [StakingProgramId.ModiusAlpha2]: getStakingActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.ModiusAlpha2]: getStakingActivityCheckerContract(
     '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
   ),
-  [StakingProgramId.ModiusAlpha3]: getStakingActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.ModiusAlpha3]: getStakingActivityCheckerContract(
     '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
   ),
-  [StakingProgramId.ModiusAlpha4]: getStakingActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.ModiusAlpha4]: getStakingActivityCheckerContract(
     '0x07bc3C23DbebEfBF866Ca7dD9fAA3b7356116164',
   ),
+} as const;
+
+export const OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
+  OptimismStakingProgramId,
+  MulticallContract
+> = {
+  [STAKING_PROGRAM_IDS.OptimusAlpha1]: getStakingActivityCheckerContract(
+    '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
+  ),
+  // [STAKING_PROGRAM_IDS.OptimusAlpha2]: getStakingActivityCheckerContract(
+  //   '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
+  // ),
+  // [STAKING_PROGRAM_IDS.OptimusAlpha3]: getStakingActivityCheckerContract(
+  //   '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
+  // ),
+  // [STAKING_PROGRAM_IDS.OptimusAlpha4]: getStakingActivityCheckerContract(
+  //   '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
+  // ),
 } as const;
 
 export const CELO_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   string,
   MulticallContract
 > = {
-  [StakingProgramId.MemeCeloAlpha2]: getMemeActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.MemeCeloAlpha2]: getMemeActivityCheckerContract(
     '0x3FD8C757dE190bcc82cF69Df3Cd9Ab15bCec1426',
   ),
 } as const;

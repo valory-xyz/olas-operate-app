@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { MiddlewareDeploymentStatus, ServiceTemplate } from '@/client';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { Pages } from '@/enums/Pages';
-import { StakingProgramId } from '@/enums/StakingProgram';
+import { STAKING_PROGRAM_IDS, StakingProgramId } from '@/enums/StakingProgram';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useModals } from '@/hooks/useModals';
 import { usePageState } from '@/hooks/usePageState';
@@ -146,7 +146,7 @@ export const MigrateButton = ({
                           staking_program_id: stakingProgramIdToMigrateTo,
                           use_mech_marketplace:
                             stakingProgramIdToMigrateTo ===
-                            StakingProgramId.PearlBetaMechMarketplace,
+                            STAKING_PROGRAM_IDS.PearlBetaMechMarketplace,
                         };
                         return acc;
                       },
@@ -164,7 +164,7 @@ export const MigrateButton = ({
                 deploy: true,
                 useMechMarketplace:
                   stakingProgramIdToMigrateTo ===
-                  StakingProgramId.PearlBetaMechMarketplace,
+                  STAKING_PROGRAM_IDS.PearlBetaMechMarketplace,
               };
 
               await ServicesService.createService(serviceConfigParams);
