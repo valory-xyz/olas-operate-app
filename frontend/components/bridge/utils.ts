@@ -50,7 +50,8 @@ const getFromToken = (
 /**
  *
  * @warning A HOOK THAT SHOULD NEVER EXIST.
- * @deprecated TODO: This hook is planned for removal in future version
+ * @deprecated TODO: This hook is used because BE doesn't support monthly_gas_estimate in the refill requirements yet.
+ * Remove the hook once it's supported
  *
  * Hook to return the updated bridge requirements params to improve the
  * initial funding requirements.
@@ -59,7 +60,7 @@ const getFromToken = (
  *   max(refill_requirement_masterSafe, monthly_gas_estimate) + refill_requirements_masterEOA
  *
  */
-const useGetUpdatedBridgeRequirementsParams = () => {
+const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
@@ -122,7 +123,7 @@ export const useGetBridgeRequirementsParams = () => {
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
   const getUpdatedBridgeRequirementsParams =
-    useGetUpdatedBridgeRequirementsParams();
+    useGetBridgeRequirementsParamsWithMonthlyGasEstimate();
 
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const fromAddress = masterEoa?.address;
