@@ -74,7 +74,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'agent-settings': true,
   },
   [AgentType.Optimus]: {
-    'manage-wallet': false,
+    'manage-wallet': true,
     'withdraw-funds': false,
     'last-transactions': true,
     'rewards-streak': true,
