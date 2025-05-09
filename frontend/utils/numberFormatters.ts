@@ -1,8 +1,9 @@
 import { BigNumberish, ethers } from 'ethers';
-import { round } from 'lodash';
+import { ceil } from 'lodash';
 
 /**
  * Displays balance in a human readable format
+ * e.g. 10000000000 => 1.0B
  */
 export const balanceFormat = (
   balance: number | undefined,
@@ -33,8 +34,9 @@ export const formatUnits = (value: BigNumberish, decimals = 18): string => {
 export const formatUnitsToNumber = (
   value: BigNumberish,
   decimals = 18,
+  precision = 4,
 ): number => {
-  return round(parseFloat(formatUnits(value, decimals)), 4);
+  return ceil(parseFloat(formatUnits(value, decimals)), precision);
 };
 
 /**

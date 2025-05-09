@@ -2343,8 +2343,8 @@ web3 = "==6.1.0"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "af5b50cc0dc127b8bc8462c85ae3ad2192717c5a"
-resolved_reference = "af5b50cc0dc127b8bc8462c85ae3ad2192717c5a"
+reference = "d2bece2337ba0f993d521716c4842085a7417154"
+resolved_reference = "d2bece2337ba0f993d521716c4842085a7417154"
 
 [[package]]
 name = "open-aea"
@@ -2505,13 +2505,13 @@ cli = ["click (>=8.1.0,<9)", "coverage (>=6.4.4,<8.0.0)", "open-aea-cli-ipfs (==
 
 [[package]]
 name = "orderly-set"
-version = "5.4.0"
+version = "5.4.1"
 description = "Orderly set"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "orderly_set-5.4.0-py3-none-any.whl", hash = "sha256:f0192a7f9ae3385b587b71688353fae491d1ca45878496eb71ea118be1623639"},
-    {file = "orderly_set-5.4.0.tar.gz", hash = "sha256:c8ff5ba824abe4eebcbbdd3f646ff3648ad0dd52239319d90056d8d30b6cccdd"},
+    {file = "orderly_set-5.4.1-py3-none-any.whl", hash = "sha256:b5e21d21680bd9ef456885db800c5cb4f76a03879880c0175e1b077fb166fd83"},
+    {file = "orderly_set-5.4.1.tar.gz", hash = "sha256:a1fb5a4fdc5e234e9e8d8e5c1bbdbc4540f4dfe50d12bf17c8bc5dbf1c9c878d"},
 ]
 
 [[package]]
@@ -4038,4 +4038,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "74e803fcfce91f871e4b9e210d23c69be95d5717101155c1f0396f12fc06e474"
+content-hash = "824344b0bfea33935adab92bb85d4457b4f075f411f02dccfca9a8b6414087bc"

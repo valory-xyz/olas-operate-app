@@ -18,6 +18,8 @@ export const mainTheme: ThemeConfig = {
       fontSize: 16,
     },
     Button: {
+      contentFontSizeSM: 14,
+      paddingInlineSM: 12,
       fontSize: 16,
       fontSizeLG: 16,
     },
@@ -45,6 +47,13 @@ export const mainTheme: ThemeConfig = {
     },
     Tag: {
       colorSuccess: '#135200',
+    },
+    List: {
+      colorBorder: '#DFE5EE',
+    },
+    Steps: {
+      fontSize: 16,
+      colorError: '#CF1322',
     },
   },
 };

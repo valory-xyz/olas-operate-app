@@ -1,4 +1,5 @@
 import { Safe } from '@/enums/Wallet';
+import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { Maybe } from '@/types/Util';
 
 export const REACT_QUERY_KEYS = {
@@ -77,4 +78,11 @@ export const REACT_QUERY_KEYS = {
   // balances and funding requirements
   BALANCES_AND_REFILL_REQUIREMENTS_KEY: (serviceConfigId: string) =>
     ['balancesAndRefillRequirements', serviceConfigId] as const,
+
+  // bridge
+  BRIDGE_REFILL_REQUIREMENTS_KEY: (params: BridgeRefillRequirementsRequest) =>
+    ['bridgeRefillRequirements', params] as const,
+  BRIDGE_STATUS_BY_QUOTE_ID_KEY: (quoteId: string) =>
+    ['bridgeStatusByQuoteId', quoteId] as const,
+  BRIDGE_EXECUTE_KEY: (quoteId: string) => ['bridgeExecute', quoteId] as const,
 } as const;

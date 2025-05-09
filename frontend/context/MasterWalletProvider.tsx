@@ -1,6 +1,12 @@
 import { QueryObserverBaseResult, useQuery } from '@tanstack/react-query';
 import { getAddress, isAddress } from 'ethers/lib/utils';
-import { createContext, PropsWithChildren, useContext, useState } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 
 import { MiddlewareWalletResponse } from '@/client';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
@@ -80,15 +86,24 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
       ),
   });
 
-  const masterEoa = masterWallets?.find(
-    (wallet): wallet is MasterEoa =>
-      wallet.type === WalletType.EOA && wallet.owner === WalletOwnerType.Master,
+  const masterEoa = useMemo(
+    () =>
+      masterWallets?.find(
+        (wallet): wallet is MasterEoa =>
+          wallet.type === WalletType.EOA &&
+          wallet.owner === WalletOwnerType.Master,
+      ),
+    [masterWallets],
   );
 
-  const masterSafes = masterWallets?.filter(
-    (wallet): wallet is MasterSafe =>
-      wallet.type === WalletType.Safe &&
-      wallet.owner === WalletOwnerType.Master,
+  const masterSafes = useMemo(
+    () =>
+      masterWallets?.filter(
+        (wallet): wallet is MasterSafe =>
+          wallet.type === WalletType.Safe &&
+          wallet.owner === WalletOwnerType.Master,
+      ),
+    [masterWallets],
   );
 
   return (
