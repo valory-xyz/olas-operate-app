@@ -66,7 +66,7 @@ export const DEFAULT_STAKING_PROGRAM_IDS: {
   [chainId in EvmChainId]: StakingProgramId;
 } = {
   [EvmChainId.Gnosis]: StakingProgramId.PearlBeta,
-  [EvmChainId.Base]: StakingProgramId.MemeBaseAlpha2,
+  [EvmChainId.Base]: StakingProgramId.AgentsFun1,
   [EvmChainId.Mode]: StakingProgramId.ModiusAlpha,
   [EvmChainId.Celo]: StakingProgramId.MemeCeloAlpha2,
 };
