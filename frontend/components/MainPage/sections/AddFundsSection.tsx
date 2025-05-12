@@ -129,9 +129,9 @@ export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
 OpenAddFundsSection.displayName = 'OpenAddFundsSection';
 
 const AddFundsBy = forwardRef<HTMLDivElement>((_, ref) => {
-  const [isBridgeEnabled, canAddFundsThroughBridge] = useFeatureFlag([
-    'bridge-funds',
-    'add-funds-through-bridge',
+  const [isBridgeOnboardingEnabled, isBridgeAddFundsEnabled] = useFeatureFlag([
+    'bridge-onboarding',
+    'bridge-add-funds',
   ]);
   const { selectedAgentConfig } = useServices();
   const { goto } = usePageState();
@@ -143,7 +143,7 @@ const AddFundsBy = forwardRef<HTMLDivElement>((_, ref) => {
 
   return (
     <>
-      {isBridgeEnabled && (
+      {isBridgeOnboardingEnabled && (
         <CardSection gap={12} $padding="24px" $borderTop>
           <Segmented<SendFundAction>
             options={[
@@ -180,7 +180,7 @@ const AddFundsBy = forwardRef<HTMLDivElement>((_, ref) => {
               size="large"
               block
               onClick={() => goto(Pages.AddFundsThroughBridge)}
-              disabled={!canAddFundsThroughBridge}
+              disabled={!isBridgeAddFundsEnabled}
             >
               Bridge funds
             </Button>
