@@ -141,6 +141,21 @@ const AddFundsBy = forwardRef<HTMLDivElement>((_, ref) => {
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
   const currentFundingRequirements = CHAIN_CONFIG[homeChainId];
 
+  const bridgeFundsBtn = useMemo(
+    () => (
+      <Button
+        type="primary"
+        size="large"
+        block
+        onClick={() => goto(Pages.AddFundsThroughBridge)}
+        disabled={!isBridgeAddFundsEnabled}
+      >
+        Bridge funds
+      </Button>
+    ),
+    [goto, isBridgeAddFundsEnabled],
+  );
+
   return (
     <>
       {isBridgeOnboardingEnabled && (
@@ -174,17 +189,11 @@ const AddFundsBy = forwardRef<HTMLDivElement>((_, ref) => {
             Bridge funds from Ethereum directly to your Pearl Safe on{' '}
             {EvmChainName[homeChainId]} chain.
           </Text>
-          <Tooltip title="Available soon">
-            <Button
-              type="primary"
-              size="large"
-              block
-              onClick={() => goto(Pages.AddFundsThroughBridge)}
-              disabled={!isBridgeAddFundsEnabled}
-            >
-              Bridge funds
-            </Button>
-          </Tooltip>
+          {isBridgeAddFundsEnabled ? (
+            bridgeFundsBtn
+          ) : (
+            <Tooltip title="Available soon">{bridgeFundsBtn}</Tooltip>
+          )}
         </CardSection>
       ) : (
         <OpenAddFundsSection ref={ref} />
