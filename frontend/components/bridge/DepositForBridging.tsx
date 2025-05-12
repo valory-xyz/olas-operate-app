@@ -258,10 +258,8 @@ export const DepositForBridging = ({
 
           if (!toTokenAddress) return BigInt(0);
 
-          const toToken = bridgeRequirementsParams?.bridge_requests.find(
-            ({ to }) => {
-              return areAddressesEqual(to.token, toTokenAddress);
-            },
+          const toToken = bridgeRequirementsParams?.bridge_requests?.find(
+            ({ to }) => areAddressesEqual(to.token, toTokenAddress),
           );
           if (!toToken) return BigInt(0);
 
