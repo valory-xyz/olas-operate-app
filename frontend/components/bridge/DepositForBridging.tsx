@@ -9,11 +9,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
-import {
-  AddressBalanceRecord,
-  MasterSafeBalanceRecord,
-  MiddlewareChain,
-} from '@/client';
+import { MiddlewareChain } from '@/client';
 import {
   ETHEREUM_TOKEN_CONFIG,
   TOKEN_CONFIG,
@@ -242,7 +238,6 @@ export const DepositForBridging = ({
       tokens.every((token) => token.areFundsReceived) &&
       !bridgeFundingRequirements.is_refill_required;
     if (!areAllFundsReceived) return;
-
     updateQuoteId(bridgeFundingRequirements.id);
     updateCrossChainTransferDetails({
       fromChain: upperFirst(MiddlewareChain.ETHEREUM),
@@ -261,22 +256,14 @@ export const DepositForBridging = ({
               ? token.address
               : chainTokenConfig.address;
 
-          let masterSafeAmount: string | number = 0;
-          let masterEoaAmount: string | number = 0;
-          if (toTokenAddress) {
-            const masterSafeBalances =
-              (refillRequirements as MasterSafeBalanceRecord)?.master_safe ??
-              {};
-            masterSafeAmount = masterSafeBalances[toTokenAddress] || 0;
+          if (!toTokenAddress) return BigInt(0);
 
-            const eoaBalances =
-              (refillRequirements as AddressBalanceRecord)?.[
-                masterEoa.address
-              ] ?? {};
-            masterEoaAmount = eoaBalances[toTokenAddress] || 0;
-          }
+          const toToken = bridgeRequirementsParams?.bridge_requests?.find(
+            ({ to }) => areAddressesEqual(to.token, toTokenAddress),
+          );
+          if (!toToken) return BigInt(0);
 
-          return BigInt(masterSafeAmount) + BigInt(masterEoaAmount);
+          return BigInt(toToken.to.amount);
         })();
 
         return {
@@ -307,6 +294,7 @@ export const DepositForBridging = ({
     bridgeFundingRequirements,
     masterEoa,
     tokens,
+    bridgeRequirementsParams,
     onNext,
     updateQuoteId,
     updateCrossChainTransferDetails,
