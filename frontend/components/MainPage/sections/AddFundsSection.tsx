@@ -129,7 +129,10 @@ export const OpenAddFundsSection = forwardRef<HTMLDivElement>((_, ref) => {
 OpenAddFundsSection.displayName = 'OpenAddFundsSection';
 
 const AddFundsBy = forwardRef<HTMLDivElement>((_, ref) => {
-  const isBridgeEnabled = useFeatureFlag('bridge-funds');
+  const [isBridgeEnabled, canAddFundsThroughBridge] = useFeatureFlag([
+    'bridge-funds',
+    'add-funds-through-bridge',
+  ]);
   const { selectedAgentConfig } = useServices();
   const { goto } = usePageState();
 
@@ -171,14 +174,17 @@ const AddFundsBy = forwardRef<HTMLDivElement>((_, ref) => {
             Bridge funds from Ethereum directly to your Pearl Safe on{' '}
             {EvmChainName[homeChainId]} chain.
           </Text>
-          <Button
-            type="primary"
-            size="large"
-            block
-            onClick={() => goto(Pages.AddFundsThroughBridge)}
-          >
-            Bridge funds
-          </Button>
+          <Tooltip title="Available soon">
+            <Button
+              type="primary"
+              size="large"
+              block
+              onClick={() => goto(Pages.AddFundsThroughBridge)}
+              disabled={!canAddFundsThroughBridge}
+            >
+              Bridge funds
+            </Button>
+          </Tooltip>
         </CardSection>
       ) : (
         <OpenAddFundsSection ref={ref} />

@@ -16,6 +16,7 @@ const FeatureFlagsSchema = z.enum([
   'backup-via-safe',
   'agent-settings',
   'bridge-funds',
+  'add-funds-through-bridge',
 ]);
 type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
 
@@ -41,6 +42,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'backup-via-safe': true,
     'agent-settings': false,
     'bridge-funds': false,
+    'add-funds-through-bridge': false,
   },
   [AgentType.Memeooorr]: {
     'manage-wallet': true,
@@ -53,6 +55,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'backup-via-safe': true,
     'agent-settings': true,
     'bridge-funds': true,
+    'add-funds-through-bridge': false,
   },
   [AgentType.AgentsFunCelo]: {
     'manage-wallet': true,
@@ -65,6 +68,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'backup-via-safe': true,
     'agent-settings': false,
     'bridge-funds': false,
+    'add-funds-through-bridge': false,
   },
   [AgentType.Modius]: {
     'manage-wallet': true,
@@ -77,6 +81,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'backup-via-safe': false, // temporarily hidden until mode is available on safe https://app.safe.global/new-safe/create
     'agent-settings': true,
     'bridge-funds': false,
+    'add-funds-through-bridge': false,
   },
 });
 
