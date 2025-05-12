@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 
 import { TokenSymbol } from '@/enums/Token';
 import { useBackupSigner } from '@/hooks/useBackupSigner';
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
 import { WalletService } from '@/service/Wallet';
 import { BridgingStepStatus } from '@/types/Bridge';
@@ -12,8 +13,9 @@ import { BridgingStepStatus } from '@/types/Bridge';
 export const useMasterSafeCreationAndTransfer = (
   tokenSymbols: TokenSymbol[],
 ) => {
+  const electronApi = useElectronApi();
   const backupSignerAddress = useBackupSigner();
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentType, selectedAgentConfig } = useServices();
 
   const chain = selectedAgentConfig.middlewareHomeChainId;
 
@@ -43,6 +45,11 @@ export const useMasterSafeCreationAndTransfer = (
         console.error('Safe creation failed:', error);
         throw error;
       }
+    },
+    onSuccess: () => {
+      // Since the master safe is created and the transfer is completed,
+      // we can update the store to indicate that the agent is initially funded.
+      electronApi.store?.set?.(`${selectedAgentType}.isInitialFunded`, true);
     },
   });
 };
