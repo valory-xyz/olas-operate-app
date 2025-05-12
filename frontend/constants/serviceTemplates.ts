@@ -432,7 +432,7 @@ const ELIZA_AGENTS_FUN_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       threshold: 1,
       use_staking: false,
-      cost_of_bond: +parseEther(50),
+      cost_of_bond: 1,
       monthly_gas_estimate: 1000000000000000 + 12500000000000000,
       fund_requirements: {
         '0x0000000000000000000000000000000000000000': {
