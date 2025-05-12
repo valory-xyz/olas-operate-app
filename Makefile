@@ -8,26 +8,6 @@ define setup_env
 endef
 
 
-./trader/:
-	pwd
-	git clone https://github.com/dvilelaf/meme-ooorr.git
-
-./dist/aea_win.exe: ./electron/bins/ ./trader/
-	mkdir -p dist
-	cd meme-ooorr && poetry lock && poetry install && poetry add backports.tarfile  gql==3.5.0 hypothesis==6.21.6 pycoingecko==3.2.0 numpy==2.2.0 pandas>=2.2.3 pyfolio==0.9.2 scipy==1.14.1 && poetry run pyinstaller --collect-all gql --collect-all hypothesis --collect-all pycoingecko --collect-all scipy --hidden-import numpy --collect-all pandas --collect-all pyfolio --collect-all twitter_text --collect-all google.generativeai --collect-all peewee --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots --hidden-import grpc --hidden-import openapi_core --collect-all google.protobuf --collect-all openapi_core --collect-all openapi_spec_validator --collect-all asn1crypto --hidden-import py_ecc --hidden-import pytz --collect-all twikit --collect-all twitter_text_parser --collect-all textblob --collect-all backports.tarfile --collect-all js2py --onefile pyinstaller/memeooorr_bin.py --name trader_win
-	ls -l  meme-ooorr/dist
-	cp -f meme-ooorr/dist/trader_win.exe ./dist/aea_win.exe
-	cp -f meme-ooorr/dist/trader_win.exe ./electron/bins/aea_win.exe
-	pwd
-
-
-./dist/aea_bin: ./trader/
-	mkdir -p dist
-	cd meme-ooorr && poetry lock --no-update && poetry install && poetry add backports.tarfile gql==3.5.0 hypothesis==6.21.6 pycoingecko==3.2.0 numpy==2.2.0 pandas>=2.2.3 pyfolio==0.9.2 scipy==1.14.1 && poetry run pyinstaller  --collect-all gql --collect-all hypothesis --collect-all pycoingecko --collect-all scipy --hidden-import numpy --collect-all pandas --collect-all pyfolio --collect-all twitter_text --collect-all google.generativeai --collect-all peewee --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots --hidden-import grpc --hidden-import openapi_core --collect-all google.protobuf --collect-all openapi_core --collect-all openapi_spec_validator --collect-all asn1crypto --hidden-import py_ecc --hidden-import pytz --collect-all twikit --collect-all twitter_text_parser --collect-all textblob --collect-all backports.tarfile --collect-all js2py --onefile pyinstaller/memeooorr_bin.py --name trader_bin
-	cp -f meme-ooorr/dist/trader_bin ./dist/aea_bin
-	pwd
-
-
 ./dist/tendermint_win.exe: ./electron/bins/ ./operate/
 	pwd
 	poetry install --no-root && poetry run pyinstaller operate/tendermint.py --onefile --name tendermint_win
@@ -35,7 +15,7 @@ endef
 	cp dist/tendermint_win.exe ./electron/bins/tendermint_win.exe
 
 
-./dist/pearl_win.exe: ./operate/ ./dist/aea_win.exe ./dist/tendermint_win.exe
+./dist/pearl_win.exe: ./operate/  ./dist/tendermint_win.exe
 	pwd
 	poetry install --no-root && poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all coincurve --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py --onefile --name pearl_win
 
