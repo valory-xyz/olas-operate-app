@@ -216,7 +216,7 @@ const SetupEoaFundingForChainV2 = ({
  * EOA funding setup screen
  */
 export const SetupEoaFunding = () => {
-  const isBridgeEnabled = useFeatureFlag('bridge-funds');
+  const isBridgeOnboardingEnabled = useFeatureFlag('bridge-onboarding');
   const { goto } = useSetup();
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
@@ -279,7 +279,7 @@ export const SetupEoaFunding = () => {
 
   if (!currentFundingRequirements) return null;
 
-  if (!isBridgeEnabled) {
+  if (!isBridgeOnboardingEnabled) {
     return (
       <SetupEoaFundingForChain
         isFunded={isFunded}
