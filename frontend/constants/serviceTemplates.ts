@@ -404,7 +404,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
 export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Optimus,
   name: 'Optimus - Optimism',
-  hash: 'bafybeicow5ce4hdgglydvuhcvqvmppeuzwatckrprbq6vlbjz26l67u3vq',
+  hash: 'bafybeienicyxffuxlwcacwr3qfj4ijvaih4opziogwncs2japau6vzh4bu',
   description: 'Optimus service deployment on Optimism network',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
