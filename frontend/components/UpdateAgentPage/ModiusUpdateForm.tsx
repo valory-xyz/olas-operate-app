@@ -18,8 +18,8 @@ import { useModiusFormValidate } from '../SetupPage/SetupYourAgent/ModiusAgentFo
 // TODO: move the following hook/components to a shared place
 // once Modius work is merged
 import {
+  modiusAgentFieldOptionalProps,
   modiusAgentFieldProps,
-  modiusAgentFieldPropsWithOptional,
   requiredRules,
   validateApiKey,
   validateMessages,
@@ -130,7 +130,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<ModiusGeminiApiKeyLabel />}
         name={['env_variables', 'GENAI_API_KEY']}
-        {...modiusAgentFieldPropsWithOptional}
+        {...modiusAgentFieldOptionalProps}
         rules={[{ validator: validateApiKey }]}
       >
         <Input.Password />

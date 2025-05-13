@@ -18,7 +18,7 @@ export const modiusAgentFieldProps: FormItemProps = {
   normalize: (value: string) => value.trim(),
 } as const;
 
-export const modiusAgentFieldPropsWithOptional: FormItemProps = {
+export const modiusAgentFieldOptionalProps: FormItemProps = {
   ...optionalFieldProps,
   validateFirst: true,
   normalize: (value: string) => value.trim(),
