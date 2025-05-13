@@ -9,6 +9,7 @@ import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import {
+  modiusAgentFieldOptionalProps,
   modiusAgentFieldProps,
   requiredRules,
   validateApiKey,
@@ -186,7 +187,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="geminiApiKey"
           label={<ModiusGeminiApiKeyLabel />}
-          {...modiusAgentFieldProps}
+          {...modiusAgentFieldOptionalProps}
         >
           <Input.Password />
         </Form.Item>
