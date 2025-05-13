@@ -2,13 +2,24 @@ import { FormItemProps } from 'antd';
 
 export const requiredRules = [{ required: true, message: 'Field is required' }];
 export const validateMessages = { required: 'Field is required' };
+
 export const commonFieldProps: FormItemProps = {
   rules: requiredRules,
   hasFeedback: true,
 } as const;
 
+export const optionalFieldProps: FormItemProps = {
+  rules: [{ required: false }],
+} as const;
+
 export const modiusAgentFieldProps: FormItemProps = {
   ...commonFieldProps,
+  validateFirst: true,
+  normalize: (value: string) => value.trim(),
+} as const;
+
+export const modiusAgentFieldPropsWithOptional: FormItemProps = {
+  ...optionalFieldProps,
   validateFirst: true,
   normalize: (value: string) => value.trim(),
 } as const;
