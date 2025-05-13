@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useCallback, useContext } from 'react';
 
 import { PageStateContext } from '@/context/PageStateProvider';
 import { Pages } from '@/enums/Pages';
@@ -6,9 +6,12 @@ import { Pages } from '@/enums/Pages';
 export const usePageState = () => {
   const pageState = useContext(PageStateContext);
 
-  const goto = (state: Pages) => {
-    pageState.setPageState(state);
-  };
+  const goto = useCallback(
+    (state: Pages) => {
+      pageState.setPageState(state);
+    },
+    [pageState],
+  );
 
   return { goto, ...pageState };
 };

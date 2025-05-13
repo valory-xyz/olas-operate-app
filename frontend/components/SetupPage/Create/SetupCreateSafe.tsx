@@ -9,27 +9,27 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
 import { EvmChainName } from '@/enums/Chain';
 import { Pages } from '@/enums/Pages';
+import { useBackupSigner } from '@/hooks/useBackupSigner';
 import { useMultisigs } from '@/hooks/useMultisig';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
-import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { WalletService } from '@/service/Wallet';
 import { delayInSeconds } from '@/utils/delay';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const YouWillBeRedirected = ({ text }: { text: string }) => (
   <>
     <Image src="/onboarding-robot.svg" alt="logo" width={80} height={80} />
-    <Typography.Title
+    <Title
       level={4}
       className="m-0 mt-12 loading-ellipses"
-      style={{ width: '230px' }}
+      style={{ width: 'fit-content' }}
     >
       {text}
-    </Typography.Title>
+    </Title>
     <Text type="secondary">
       You will be redirected once the account is created.
     </Text>
@@ -53,23 +53,25 @@ const CreationError = () => (
 );
 
 export const SetupCreateSafe = () => {
-  const { goto, setUserLoggedIn } = usePageState();
-
-  const { selectedAgentType } = useServices();
-  const serviceTemplate = SERVICE_TEMPLATES.find(
-    (template) => template.agentType === selectedAgentType,
-  );
-
+  const { goto } = usePageState();
   const {
     masterSafes,
     refetch: updateWallets,
     isFetched: isWalletsFetched,
   } = useMasterWalletContext();
+  const { masterSafesOwnersIsLoading } = useMultisigs(masterSafes);
+  const backupSignerAddress = useBackupSigner();
 
-  const { allBackupAddresses, masterSafesOwnersIsLoading } =
-    useMultisigs(masterSafes);
+  // current service template
+  const { selectedAgentType } = useServices();
+  const serviceTemplate = SERVICE_TEMPLATES.find(
+    (template) => template.agentType === selectedAgentType,
+  );
 
-  const { backupSigner } = useSetup();
+  // state for creating safes
+  const [isCreatingSafe, setIsCreatingSafe] = useState(false);
+  const [isFailed, setIsFailed] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const masterSafeAddress = useMemo(() => {
     if (!masterSafes) return;
@@ -77,13 +79,6 @@ export const SetupCreateSafe = () => {
       (safe) => safe.evmChainId === asEvmChainId(serviceTemplate?.home_chain),
     );
   }, [masterSafes, serviceTemplate?.home_chain]);
-
-  const [isCreatingSafe, setIsCreatingSafe] = useState(false);
-
-  const [isFailed, setIsFailed] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-
-  const backupSignerAddress = backupSigner ?? allBackupAddresses[0];
 
   const createSafeWithRetries = useCallback(
     async (middlewareChain: MiddlewareChain, retries: number) => {
@@ -171,7 +166,6 @@ export const SetupCreateSafe = () => {
       }
     })().then(() => {
       setIsCreatingSafe(false);
-      setUserLoggedIn();
     });
   }, [
     backupSignerAddress,
@@ -182,7 +176,6 @@ export const SetupCreateSafe = () => {
     masterSafes,
     masterSafesOwnersIsLoading,
     serviceTemplate,
-    setUserLoggedIn,
   ]);
 
   // Only progress is the safe is created and accessible via context (updates on timeout)
@@ -200,7 +193,7 @@ export const SetupCreateSafe = () => {
         vertical
         align="center"
         justify="center"
-        padding="80px 24px"
+        $padding="80px 24px"
         gap={12}
       >
         {isFailed ? (
