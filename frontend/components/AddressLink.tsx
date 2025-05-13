@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { MiddlewareChain } from '@/client';
+import { SupportedMiddlewareChain } from '@/client';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { Address } from '@/types/Address';
@@ -8,7 +8,7 @@ import { truncateAddress } from '@/utils/truncate';
 
 type AddressLinkProps = {
   address: Address;
-  middlewareChain: MiddlewareChain;
+  middlewareChain: SupportedMiddlewareChain;
   prefix?: ReactNode;
   hideLinkArrow?: boolean;
 };
