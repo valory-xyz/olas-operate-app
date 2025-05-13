@@ -8,6 +8,9 @@ export const commonFieldProps: FormItemProps = {
   hasFeedback: true,
 } as const;
 
+/**
+ * Field properties for optional form fields. These fields are not required.
+ */
 export const optionalFieldProps: FormItemProps = {
   rules: [{ required: false }],
 } as const;
