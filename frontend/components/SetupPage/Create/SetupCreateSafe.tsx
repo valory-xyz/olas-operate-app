@@ -7,7 +7,6 @@ import { CardSection } from '@/components/styled/CardSection';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
-import { EvmChainName } from '@/enums/Chain';
 import { Pages } from '@/enums/Pages';
 import { useMultisigs } from '@/hooks/useMultisig';
 import { usePageState } from '@/hooks/usePageState';
@@ -16,7 +15,7 @@ import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { WalletService } from '@/service/Wallet';
 import { delayInSeconds } from '@/utils/delay';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import { asEvmChainId, asEvmChainName } from '@/utils/middlewareHelpers';
 
 const { Text } = Typography;
 
@@ -159,12 +158,10 @@ export const SetupCreateSafe = () => {
         setIsCreatingSafe(true);
         try {
           await createSafeWithRetries(middlewareChain, 3);
-          message.success(
-            `${EvmChainName[asEvmChainId(middlewareChain)]} account created`,
-          );
+          message.success(`${asEvmChainName(middlewareChain)} account created`);
         } catch (e) {
           message.warning(
-            `Failed to create ${EvmChainName[asEvmChainId(middlewareChain)]} account`,
+            `Failed to create ${asEvmChainName(middlewareChain)} account`,
           );
           console.error(e);
         }

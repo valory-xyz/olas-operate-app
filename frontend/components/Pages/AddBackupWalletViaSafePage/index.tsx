@@ -3,9 +3,9 @@ import { Card, Flex, Skeleton, Typography } from 'antd';
 import { CardTitle } from '@/components/Card/CardTitle';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { DISCORD_TICKET_URL } from '@/constants/urls';
-import { AllEvmChainId, EvmChainId } from '@/enums/Chain';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+import { AllEvmChainId, EvmChainId } from '@/types/Chain';
 
 import { GoToMainPageButton } from '../GoToMainPageButton';
 
