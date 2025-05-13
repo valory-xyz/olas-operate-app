@@ -17,7 +17,7 @@ import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { type Address } from '@/types/Address';
 import { Optional } from '@/types/Util';
-import { asEvmChainName } from '@/utils/middlewareHelpers';
+import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 import { balanceFormat } from '@/utils/numberFormatters';
 
 import { FeatureNotEnabled } from '../FeatureNotEnabled';
@@ -97,7 +97,7 @@ const OlasBalance = () => {
   return (
     <Flex vertical gap={8}>
       <Text strong>
-        {TokenSymbol.OLAS} ({asEvmChainName(middlewareChain)})
+        {TokenSymbol.OLAS} ({asEvmChainDetails(middlewareChain).displayName})
       </Text>
       <InfoBreakdownList
         list={olasBalances.map((item) => ({
@@ -141,7 +141,8 @@ const MasterSafeNativeBalance = () => {
           {
             left: (
               <Text strong>
-                {nativeTokenSymbol} ({asEvmChainName(middlewareChain)})
+                {nativeTokenSymbol} (
+                {asEvmChainDetails(middlewareChain).displayName})
               </Text>
             ),
             leftClassName: 'text-light',
@@ -194,7 +195,7 @@ const MasterSafeErc20Balances = () => {
             {
               left: (
                 <Text strong>
-                  {symbol} ({asEvmChainName(middlewareChain)})
+                  {symbol} ({asEvmChainDetails(middlewareChain).displayName})
                 </Text>
               ),
               leftClassName: 'text-light',

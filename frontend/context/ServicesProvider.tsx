@@ -23,7 +23,7 @@ import { AgentType } from '@/enums/Agent';
 import {
   AgentEoa,
   AgentSafe,
-  AgentWallets,
+  AgentWallet,
   WalletOwnerType,
   WalletType,
 } from '@/enums/Wallet';
@@ -46,7 +46,7 @@ type ServicesResponse = Pick<
 
 type ServicesContextType = {
   services?: MiddlewareServiceResponse[];
-  serviceWallets?: AgentWallets;
+  serviceWallets?: AgentWallet[];
   selectedService?: Service;
   selectedServiceStatusOverride?: Maybe<MiddlewareDeploymentStatus>;
   isSelectedServiceDeploymentStatusLoading: boolean;
@@ -161,16 +161,16 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     return config;
   }, [selectedAgentType]);
 
-  const serviceWallets: Optional<AgentWallets> = useMemo(() => {
+  const serviceWallets: Optional<AgentWallet[]> = useMemo(() => {
     if (isServicesLoading) return;
     if (isNilOrEmpty(services)) return [];
 
-    return services.reduce<AgentWallets>(
+    return services.reduce<AgentWallet[]>(
       (acc, service: MiddlewareServiceResponse) => {
         return [
           ...acc,
           ...Object.keys(service.chain_configs).reduce(
-            (acc: AgentWallets, middlewareChain: string) => {
+            (acc: AgentWallet[], middlewareChain: string) => {
               const chainConfig =
                 service.chain_configs[middlewareChain as MiddlewareChain];
 

@@ -1,6 +1,5 @@
 import { MiddlewareChain } from '@/client';
 import { EvmChainId } from '@/enums/Chain';
-import { EvmChainName } from '@/types/Chain';
 
 /**
  * Converts middleware chain enums to chain ids
@@ -25,8 +24,26 @@ export const asEvmChainId = (chain?: MiddlewareChain | string): EvmChainId => {
   throw new Error(`Invalid middleware chain enum: ${chain}`);
 };
 
-export const asEvmChainName = (chain?: MiddlewareChain | string): string =>
-  EvmChainName[asEvmChainId(chain)];
+export const asEvmChainDetails = (
+  chain?: MiddlewareChain | string,
+): {
+  name: string;
+  displayName: string;
+} => {
+  switch (chain) {
+    case MiddlewareChain.GNOSIS:
+      return { name: 'gnosis', displayName: 'Gnosis' };
+    case MiddlewareChain.BASE:
+      return { name: 'base', displayName: 'Base' };
+    case MiddlewareChain.CELO:
+      return { name: 'celo', displayName: 'Celo' };
+    case MiddlewareChain.MODE:
+      return { name: 'mode', displayName: 'Mode' };
+    case MiddlewareChain.OPTIMISM:
+      return { name: 'optimism', displayName: 'Optimism' };
+  }
+  throw new Error(`Invalid middleware chain enum: ${chain}`);
+};
 
 /**
  * Converts chain ids to middleware chain enums

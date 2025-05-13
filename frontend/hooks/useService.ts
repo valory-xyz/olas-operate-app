@@ -10,7 +10,7 @@ import { EvmChainId } from '@/enums/Chain';
 import {
   AgentEoa,
   AgentSafe,
-  AgentWallets,
+  AgentWallet,
   WalletOwnerType,
   WalletType,
 } from '@/enums/Wallet';
@@ -53,7 +53,7 @@ export const useService = (serviceConfigId?: string) => {
     return service?.chain_configs?.[service?.home_chain]?.chain_data.token;
   }, [service?.chain_configs, service?.home_chain]);
 
-  const serviceWallets: AgentWallets = useMemo(() => {
+  const serviceWallets: AgentWallet[] = useMemo(() => {
     if (!service) return [];
     if (!selectedService?.home_chain) return [];
     if (!service.chain_configs?.[selectedService?.home_chain]) return [];
