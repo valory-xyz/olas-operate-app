@@ -1,0 +1,202 @@
+import { Button, Divider, Flex, Form, Input, Typography } from 'antd';
+import React, { useCallback, useState } from 'react';
+import { useUnmount } from 'usehooks-ts';
+
+import { CustomAlert } from '@/components/Alert';
+
+import {
+  commonFieldProps,
+  emailValidateMessages,
+  requiredRules,
+} from '../common/formUtils';
+import { InvalidGeminiApiCredentials } from '../common/InvalidGeminiApiCredentials';
+import { FireworksApiFields } from './FireworksApiField';
+import {
+  MemeooorrFieldValues,
+  useMemeFormValidate,
+} from './useMemeFormValidate';
+
+const { Title, Text } = Typography;
+
+type MemeooorrFormValues = MemeooorrFieldValues & {
+  fireworksApiEnabled: boolean;
+};
+
+export const XAccountCredentials = () => (
+  <Flex vertical>
+    <Divider style={{ margin: '8px 0 16px 0' }} />
+    <Title level={5} className="mt-0">
+      X account credentials
+    </Title>
+    <Text type="secondary" className="mb-16">
+      Create a new account for your agent at{' '}
+      <a href="https://x.com" target="_blank" rel="noreferrer">
+        x.com
+      </a>{' '}
+      and enter the login details. This enables your agent to view X and
+      interact with other agents.
+    </Text>
+    <CustomAlert
+      type="warning"
+      showIcon
+      message={
+        <Flex justify="space-between" gap={4} vertical>
+          <Text>
+            To avoid your X account getting suspended for bot activity, complete
+            the onboarding steps. You can find them on your profile page under
+            &quot;Let&lsquo;s get you set up&quot;.
+          </Text>
+        </Flex>
+      }
+      className="mb-16"
+    />
+  </Flex>
+);
+
+export const InvalidXCredentials = () => (
+  <CustomAlert
+    type="error"
+    showIcon
+    message={<Text>X account credentials are invalid or 2FA is enabled.</Text>}
+    className="mb-16"
+  />
+);
+
+type MemeooorrAgentFormProps = {
+  isFormEnabled?: boolean;
+  onSubmit?: (values: MemeooorrFormValues) => Promise<void>;
+};
+
+export const MemeooorrAgentForm = ({
+  isFormEnabled = true,
+  onSubmit,
+}: MemeooorrAgentFormProps) => {
+  const [form] = Form.useForm<MemeooorrFormValues>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const {
+    submitButtonText,
+    setSubmitButtonText,
+    geminiApiKeyValidationStatus,
+    setGeminiApiKeyValidationStatus,
+    twitterCredentialsValidationStatus,
+    setTwitterCredentialsValidationStatus,
+  } = useMemeFormValidate();
+
+  const onFinish = useCallback(
+    async (values: MemeooorrFormValues) => {
+      window.console.log('Form values:', values);
+      await onSubmit?.(values);
+    },
+    [onSubmit],
+  );
+
+  // Clean up
+  useUnmount(async () => {
+    setIsSubmitting(false);
+    setGeminiApiKeyValidationStatus('unknown');
+    setTwitterCredentialsValidationStatus('unknown');
+    setSubmitButtonText('Continue');
+  });
+
+  return (
+    <>
+      <Text>
+        Provide your agent with a persona, access to an LLM and an X account.
+      </Text>
+      <Divider style={{ margin: '8px 0' }} />
+
+      <Form<MemeooorrFormValues>
+        form={form}
+        onFinish={onFinish}
+        disabled={!isFormEnabled}
+        validateMessages={emailValidateMessages}
+        name="setup-your-memeooorr-agent"
+        layout="vertical"
+      >
+        <Form.Item
+          name="personaDescription"
+          label="Persona Description"
+          {...commonFieldProps}
+        >
+          <Input.TextArea size="small" rows={4} placeholder="e.g. ..." />
+        </Form.Item>
+
+        <Form.Item
+          name="geminiApiKey"
+          label="Gemini API Key"
+          {...commonFieldProps}
+        >
+          <Input.Password />
+        </Form.Item>
+        {geminiApiKeyValidationStatus === 'invalid' && (
+          <InvalidGeminiApiCredentials />
+        )}
+
+        <FireworksApiFields />
+
+        {/* X */}
+        <XAccountCredentials />
+        {twitterCredentialsValidationStatus === 'invalid' && (
+          <InvalidXCredentials />
+        )}
+
+        <Form.Item
+          name="xEmail"
+          label="X email"
+          rules={[{ required: true, type: 'email' }]}
+          hasFeedback
+        >
+          <Input />
+        </Form.Item>
+
+        <Form.Item name="xUsername" label="X username" {...commonFieldProps}>
+          <Input
+            addonBefore="@"
+            onKeyDown={(e) => {
+              if (e.key === '@') {
+                e.preventDefault();
+              }
+            }}
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="xPassword"
+          label="X password"
+          {...commonFieldProps}
+          rules={[
+            ...requiredRules,
+            {
+              validator: (_, value) => {
+                if (value && value.includes('$')) {
+                  return Promise.reject(
+                    new Error(
+                      'Password must not contain the “$” symbol. Please update your password on Twitter, then retry.',
+                    ),
+                  );
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
+        >
+          <Input.Password />
+        </Form.Item>
+
+        <Form.Item>
+          <Button
+            type="primary"
+            htmlType="submit"
+            size="large"
+            block
+            loading={isSubmitting}
+            disabled={!isFormEnabled}
+          >
+            {submitButtonText}
+          </Button>
+        </Form.Item>
+      </Form>
+    </>
+  );
+};
