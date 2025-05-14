@@ -64,7 +64,7 @@ export const InvalidXCredentials = () => (
 
 type MemeooorrAgentFormProps = {
   isFormEnabled?: boolean;
-  onSubmit?: (values: MemeooorrFormValues) => Promise<void>;
+  onSubmit?: (values: MemeooorrFormValues, cookies: string) => Promise<void>;
 };
 
 export const MemeooorrAgentForm = ({
@@ -81,14 +81,24 @@ export const MemeooorrAgentForm = ({
     setGeminiApiKeyValidationStatus,
     twitterCredentialsValidationStatus,
     setTwitterCredentialsValidationStatus,
+    validateForm,
   } = useMemeFormValidate();
 
   const onFinish = useCallback(
     async (values: MemeooorrFormValues) => {
-      window.console.log('Form values:', values);
-      await onSubmit?.(values);
+      try {
+        setIsSubmitting(true);
+
+        const cookies = await validateForm(values);
+        if (!cookies) return;
+
+        await onSubmit?.(values, cookies);
+      } finally {
+        setSubmitButtonText('Continue');
+        setIsSubmitting(false);
+      }
     },
-    [onSubmit],
+    [onSubmit, validateForm, setIsSubmitting, setSubmitButtonText],
   );
 
   // Clean up
@@ -100,103 +110,96 @@ export const MemeooorrAgentForm = ({
   });
 
   return (
-    <>
-      <Text>
-        Provide your agent with a persona, access to an LLM and an X account.
-      </Text>
-      <Divider style={{ margin: '8px 0' }} />
-
-      <Form<MemeooorrFormValues>
-        form={form}
-        onFinish={onFinish}
-        disabled={!isFormEnabled}
-        validateMessages={emailValidateMessages}
-        name="setup-your-memeooorr-agent"
-        layout="vertical"
+    <Form<MemeooorrFormValues>
+      form={form}
+      onFinish={onFinish}
+      disabled={!isFormEnabled || isSubmitting}
+      validateMessages={emailValidateMessages}
+      name="setup-your-memeooorr-agent"
+      layout="vertical"
+    >
+      <Form.Item
+        name="personaDescription"
+        label="Persona Description"
+        {...commonFieldProps}
       >
-        <Form.Item
-          name="personaDescription"
-          label="Persona Description"
-          {...commonFieldProps}
-        >
-          <Input.TextArea size="small" rows={4} placeholder="e.g. ..." />
-        </Form.Item>
+        <Input.TextArea size="small" rows={4} placeholder="e.g. ..." />
+      </Form.Item>
 
-        <Form.Item
-          name="geminiApiKey"
-          label="Gemini API Key"
-          {...commonFieldProps}
-        >
-          <Input.Password />
-        </Form.Item>
-        {geminiApiKeyValidationStatus === 'invalid' && (
-          <InvalidGeminiApiCredentials />
-        )}
+      <Form.Item
+        name="geminiApiKey"
+        label="Gemini API Key"
+        {...commonFieldProps}
+      >
+        <Input.Password />
+      </Form.Item>
+      {geminiApiKeyValidationStatus === 'invalid' && (
+        <InvalidGeminiApiCredentials />
+      )}
 
-        <FireworksApiFields />
+      <FireworksApiFields />
 
-        {/* X */}
-        <XAccountCredentials />
-        {twitterCredentialsValidationStatus === 'invalid' && (
-          <InvalidXCredentials />
-        )}
+      {/* X */}
+      <XAccountCredentials />
+      {twitterCredentialsValidationStatus === 'invalid' && (
+        <InvalidXCredentials />
+      )}
 
-        <Form.Item
-          name="xEmail"
-          label="X email"
-          rules={[{ required: true, type: 'email' }]}
-          hasFeedback
-        >
-          <Input />
-        </Form.Item>
+      <Form.Item
+        name="xEmail"
+        label="X email"
+        rules={[{ required: true, type: 'email' }]}
+        hasFeedback
+      >
+        <Input />
+      </Form.Item>
 
-        <Form.Item name="xUsername" label="X username" {...commonFieldProps}>
-          <Input
-            addonBefore="@"
-            onKeyDown={(e) => {
-              if (e.key === '@') {
-                e.preventDefault();
+      <Form.Item name="xUsername" label="X username" {...commonFieldProps}>
+        <Input
+          addonBefore="@"
+          onKeyDown={(e) => {
+            if (e.key === '@') {
+              e.preventDefault();
+            }
+          }}
+        />
+      </Form.Item>
+
+      <Form.Item
+        name="xPassword"
+        label="X password"
+        {...commonFieldProps}
+        rules={[
+          ...requiredRules,
+          {
+            validator: (_, value) => {
+              if (value && value.includes('$')) {
+                return Promise.reject(
+                  new Error(
+                    'Password must not contain the “$” symbol. Please update your password on Twitter, then retry.',
+                  ),
+                );
               }
-            }}
-          />
-        </Form.Item>
-
-        <Form.Item
-          name="xPassword"
-          label="X password"
-          {...commonFieldProps}
-          rules={[
-            ...requiredRules,
-            {
-              validator: (_, value) => {
-                if (value && value.includes('$')) {
-                  return Promise.reject(
-                    new Error(
-                      'Password must not contain the “$” symbol. Please update your password on Twitter, then retry.',
-                    ),
-                  );
-                }
-                return Promise.resolve();
-              },
+              return Promise.resolve();
             },
-          ]}
-        >
-          <Input.Password />
-        </Form.Item>
+          },
+        ]}
+      >
+        <Input.Password />
+      </Form.Item>
 
-        <Form.Item>
-          <Button
-            type="primary"
-            htmlType="submit"
-            size="large"
-            block
-            loading={isSubmitting}
-            disabled={!isFormEnabled}
-          >
-            {submitButtonText}
-          </Button>
-        </Form.Item>
-      </Form>
-    </>
+      <Form.Item>
+        <Button
+          type="primary"
+          htmlType="submit"
+          size="large"
+          block
+          loading={isSubmitting}
+          disabled={!isFormEnabled}
+        >
+          {submitButtonText}
+        </Button>
+      </Form.Item>
+    </Form>
   );
 };

@@ -14,11 +14,11 @@ import {
 } from '../AgentForms/common/formUtils';
 import { InvalidGeminiApiCredentials } from '../AgentForms/common/InvalidGeminiApiCredentials';
 import { FireworksApiFields } from '../AgentForms/MemeooorrAgentForm/FireworksApiField';
-import { useMemeFormValidate } from '../AgentForms/MemeooorrAgentForm/useMemeFormValidate';
 import {
   InvalidXCredentials,
   XAccountCredentials,
-} from '../SetupPage/SetupYourAgent/MemeooorrAgentForm';
+} from '../AgentForms/MemeooorrAgentForm/MemeooorrAgentForm';
+import { useMemeFormValidate } from '../AgentForms/MemeooorrAgentForm/useMemeFormValidate';
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
