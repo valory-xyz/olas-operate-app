@@ -3,6 +3,7 @@ import { isEmpty, isNil } from 'lodash';
 import { EnvProvisionType, ServiceTemplate } from '@/client';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { ServicesService } from '@/service/Services';
 import { Service } from '@/types/Service';
 import { DeepPartial } from '@/types/Util';
@@ -104,6 +105,17 @@ export const updateServiceIfNeeded = async (
   await ServicesService.updateService({
     serviceConfigId: service.service_config_id,
     partialServiceTemplate,
+  });
+};
+
+export const onDummyServiceCreation = async (
+  stakingProgramId: StakingProgramId,
+  serviceTemplateConfig: ServiceTemplate,
+) => {
+  await ServicesService.createService({
+    serviceTemplate: serviceTemplateConfig,
+    deploy: true,
+    stakingProgramId,
   });
 };
 

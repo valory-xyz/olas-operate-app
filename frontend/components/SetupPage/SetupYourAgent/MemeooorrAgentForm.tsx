@@ -7,19 +7,19 @@ import { CustomAlert } from '@/components/Alert';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { onDummyServiceCreation } from '@/utils/service';
 
 import {
   commonFieldProps,
   emailValidateMessages,
   requiredRules,
-} from '../shared/formUtils';
-import { InvalidGeminiApiCredentials } from '../shared/InvalidGeminiApiCredentials';
-import { onDummyServiceCreation } from '../shared/utils';
-import { FireworksApiFields } from './FireworksApiField';
+} from '../../AgentForms/common/formUtils';
+import { InvalidGeminiApiCredentials } from '../../AgentForms/common/InvalidGeminiApiCredentials';
+import { FireworksApiFields } from '../../AgentForms/MemeooorrAgentForm/FireworksApiField';
 import {
   MemeooorrFieldValues,
   useMemeFormValidate,
-} from './useMemeFormValidate';
+} from '../../AgentForms/MemeooorrAgentForm/useMemeFormValidate';
 
 const { Title, Text } = Typography;
 

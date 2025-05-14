@@ -10,7 +10,7 @@ import { useServices } from '@/hooks/useServices';
 import { LOCAL_FORM_THEME } from '@/theme';
 
 import { SetupCreateHeader } from '../Create/SetupCreateHeader';
-import { MemeooorrAgentForm } from './MemeooorrAgentForm/MemeooorrAgentForm';
+import { MemeooorrAgentForm } from './MemeooorrAgentForm';
 import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
 
 const { Title, Text } = Typography;
