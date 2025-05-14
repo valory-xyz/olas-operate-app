@@ -82,7 +82,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'low-funds': false,
     'agent-activity': true,
     'backup-via-safe': false, // temporarily hidden until mode is available on safe https://app.safe.global/new-safe/create
-    'agent-settings': false,
+    'agent-settings': true,
   },
 });
 
