@@ -15,4 +15,6 @@ export const COLOR = {
   NEUTRAL_4: '#A3AEBB',
   GRAY_1: '#f2f4f9',
   GRAY_2: '#4D596A',
+  SUCCESS: '#52C41A',
+  WARNING: '#FA8C16',
 };

@@ -23,12 +23,13 @@ export const SetupCreateHeader = ({ prev }: SetupCreateHeaderProps) => {
   return (
     <Row>
       <Col span={8}>
-        <Button
-          onClick={handleBack}
-          disabled={!prev}
-          icon={<ArrowLeftOutlined />}
-          size="large"
-        />
+        {prev && (
+          <Button
+            onClick={handleBack}
+            icon={<ArrowLeftOutlined />}
+            size="large"
+          />
+        )}
       </Col>
       <Col span={8}>
         <Flex justify="center">
