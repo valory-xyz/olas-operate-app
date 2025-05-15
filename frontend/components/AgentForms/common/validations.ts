@@ -1,3 +1,5 @@
+import { XCookie } from '@/types/Cookies';
+
 export type ValidationStatus = 'valid' | 'invalid' | 'unknown';
 
 /**
@@ -16,5 +18,53 @@ export const validateGeminiApiKey = async (apiKey: string) => {
   } catch (error) {
     console.error('Error validating Gemini API key:', error);
     return false;
+  }
+};
+
+const formatXCookies = (cookiesArray: XCookie[]) => {
+  const cookiesObject: Record<string, string> = {};
+  cookiesArray.forEach((cookie) => {
+    cookiesObject[cookie.key] = cookie.value;
+  });
+  return JSON.stringify(cookiesObject);
+};
+
+/**
+ * Validate the Twitter credentials
+ */
+export const validateTwitterCredentials = async (
+  email: string,
+  username: string,
+  password: string,
+  validateTwitterLogin: ({
+    username,
+    password,
+    email,
+  }: {
+    email: string;
+    username: string;
+    password: string;
+  }) => Promise<{ success: boolean; cookies?: XCookie[] }>,
+): Promise<{ isValid: boolean; cookies?: string }> => {
+  if (!email || !username || !password) return { isValid: false };
+
+  try {
+    const result = await validateTwitterLogin({
+      username,
+      password,
+      email,
+    });
+
+    const cookies = result.cookies;
+
+    if (cookies) {
+      return { isValid: true, cookies: formatXCookies(cookies) };
+    }
+
+    console.error('Error validating Twitter credentials:', result);
+    return { isValid: false };
+  } catch (error) {
+    console.error('Unexpected error validating Twitter credentials:', error);
+    return { isValid: false };
   }
 };
