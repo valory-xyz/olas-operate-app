@@ -308,8 +308,13 @@ ul.alert-list {
 .w-full {
   width: 100% !important;
 }
+
 .max-width-200 {
   max-width: 200px;
+}
+
+.fit-content {
+  width: fit-content;
 }
 
 .loading-ellipses {
