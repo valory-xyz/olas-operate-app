@@ -5,6 +5,7 @@ import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
+import { getXUsername } from '@/utils/x';
 
 import {
   MemeooorrAgentForm,
@@ -12,7 +13,6 @@ import {
 } from '../AgentForms/MemeooorrAgentForm';
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
-import { getXUsername } from '@/utils/x';
 
 export const MemeooorrUpdatePage = () => {
   const { goto } = usePageState();
@@ -28,7 +28,7 @@ export const MemeooorrUpdatePage = () => {
     if (!selectedService?.env_variables) return null;
 
     const envEntries = Object.entries(selectedService.env_variables);
-    const values= envEntries.reduce((acc, [key, { value }]) => {
+    const values = envEntries.reduce((acc, [key, { value }]) => {
       if (key === 'PERSONA') {
         acc.personaDescription = value;
       } else if (key === 'GENAI_API_KEY') {
@@ -51,7 +51,7 @@ export const MemeooorrUpdatePage = () => {
     }, {} as MemeooorrFormValues);
     values.xUsername = getXUsername(selectedService) || '';
     return values;
-  }, [selectedService?.env_variables]);
+  }, [selectedService]);
 
   // TODO: update
   const handleClickBack = useCallback(() => {

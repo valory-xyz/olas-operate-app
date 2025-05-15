@@ -173,8 +173,7 @@ export const AgentTitle = ({ address }: { address: Address }) => {
     const xUsername = getXUsername(service);
     if (
       middlewareChain === MiddlewareChain.BASE &&
-      selectedAgentType === AgentType.Memeooorr &&
-      xUsername
+      selectedAgentType === AgentType.Memeooorr
     ) {
       return (
         <ExternalAgentProfileLink
@@ -197,7 +196,7 @@ export const AgentTitle = ({ address }: { address: Address }) => {
     handleAgentUiBrowserLinkClick,
     middlewareChain,
     selectedAgentType,
-    service
+    service,
   ]);
 
   return (

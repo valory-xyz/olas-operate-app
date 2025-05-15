@@ -139,7 +139,6 @@ export const MemeooorrAgentForm = ({
       <Divider style={{ margin: '8px 0' }} />
       <XAccountApiTokens />
 
-
       <Form.Item name="xUsername" label="X username" {...commonFieldProps}>
         <Input
           placeholder="X Username"
