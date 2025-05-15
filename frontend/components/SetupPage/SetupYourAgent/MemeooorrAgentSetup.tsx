@@ -29,7 +29,7 @@ export const MemeooorrAgentSetup = ({
       try {
         const overriddenServiceConfig: ServiceTemplate = {
           ...serviceTemplate,
-          description: '',
+          description: `Memeooorr @${values.xUsername}`,
           env_variables: {
             ...serviceTemplate.env_variables,
             TWEEPY_CONSUMER_API_KEY: {

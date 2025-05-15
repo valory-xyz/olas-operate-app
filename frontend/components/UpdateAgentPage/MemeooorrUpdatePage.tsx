@@ -12,6 +12,7 @@ import {
 } from '../AgentForms/MemeooorrAgentForm';
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
+import { getXUsername } from '@/utils/x';
 
 export const MemeooorrUpdatePage = () => {
   const { goto } = usePageState();
@@ -27,7 +28,7 @@ export const MemeooorrUpdatePage = () => {
     if (!selectedService?.env_variables) return null;
 
     const envEntries = Object.entries(selectedService.env_variables);
-    return envEntries.reduce((acc, [key, { value }]) => {
+    const values= envEntries.reduce((acc, [key, { value }]) => {
       if (key === 'PERSONA') {
         acc.personaDescription = value;
       } else if (key === 'GENAI_API_KEY') {
@@ -48,6 +49,8 @@ export const MemeooorrUpdatePage = () => {
       }
       return acc;
     }, {} as MemeooorrFormValues);
+    values.xUsername = getXUsername(selectedService) || '';
+    return values;
   }, [selectedService?.env_variables]);
 
   // TODO: update

@@ -24,6 +24,7 @@ import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 import { Address } from '@/types/Address';
 import { generateName } from '@/utils/agentName';
+import { getXUsername } from '@/utils/x';
 
 import { useYourWallet } from './useYourWallet';
 
@@ -169,15 +170,15 @@ export const AgentTitle = ({ address }: { address: Address }) => {
     }
 
     // base - memeooorr
+    const xUsername = getXUsername(service);
     if (
       middlewareChain === MiddlewareChain.BASE &&
       selectedAgentType === AgentType.Memeooorr &&
-      service?.env_variables?.TWIKIT_USERNAME?.value
+      xUsername
     ) {
-      // TODO: ask Product about this!
       return (
         <ExternalAgentProfileLink
-          href={`https://www.agents.fun/services/${service.env_variables.TWIKIT_USERNAME.value ?? '#'}`}
+          href={`https://www.agents.fun/services/${xUsername ?? '#'}`}
         />
       );
     }
@@ -196,7 +197,7 @@ export const AgentTitle = ({ address }: { address: Address }) => {
     handleAgentUiBrowserLinkClick,
     middlewareChain,
     selectedAgentType,
-    service?.env_variables?.TWIKIT_USERNAME?.value,
+    service
   ]);
 
   return (

@@ -84,7 +84,7 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
 
     const formValuesWithoutEnv =
       selectedAgentType === AgentType.Memeooorr
-        ? { description: `Memeooorr` }
+        ? { description: `Memeooorr @${memeooorrFormValues.xUsername}` }
         : formValues;
 
     const partialServiceTemplate = {

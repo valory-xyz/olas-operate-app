@@ -117,12 +117,6 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    TWIKIT_USERNAME: {
-      name: 'Twitter username',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.USER,
-    },
     TWEEPY_CONSUMER_API_KEY: {
       name: 'Twitter consumer API key',
       description: '',

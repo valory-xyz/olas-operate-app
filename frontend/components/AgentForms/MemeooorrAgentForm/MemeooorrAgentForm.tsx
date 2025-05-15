@@ -139,6 +139,19 @@ export const MemeooorrAgentForm = ({
       <Divider style={{ margin: '8px 0' }} />
       <XAccountApiTokens />
 
+
+      <Form.Item name="xUsername" label="X username" {...commonFieldProps}>
+        <Input
+          placeholder="X Username"
+          addonBefore="@"
+          onKeyDown={(e) => {
+            if (e.key === '@') {
+              e.preventDefault();
+            }
+          }}
+        />
+      </Form.Item>
+
       <Form.Item
         name="xConsumerApiKey"
         label="Consumer API key"

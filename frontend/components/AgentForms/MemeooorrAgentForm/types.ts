@@ -4,6 +4,7 @@ export type MemeooorrFormValues = {
   fireworksApiKey: string;
   fireworksApiEnabled: boolean;
   fireworksApiKeyName?: string;
+  xUsername: string;
   xConsumerApiKey: string;
   xConsumerApiSecret: string;
   xBearerToken: string;
