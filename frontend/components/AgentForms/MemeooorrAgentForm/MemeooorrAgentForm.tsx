@@ -41,13 +41,6 @@ const XAccountApiTokens = () => (
   </Flex>
 );
 
-export type XCredentialsKeys =
-  | 'TWEEPY_CONSUMER_API_KEY'
-  | 'TWEEPY_CONSUMER_API_KEY_SECRET'
-  | 'TWEEPY_BEARER_TOKEN'
-  | 'TWEEPY_ACCESS_TOKEN'
-  | 'TWEEPY_ACCESS_TOKEN_SECRET';
-
 type MemeooorrAgentFormProps = {
   isFormEnabled?: boolean;
   initialValues?: MemeooorrFormValues;
