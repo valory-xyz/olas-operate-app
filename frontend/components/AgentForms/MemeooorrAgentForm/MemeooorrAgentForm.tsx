@@ -11,7 +11,7 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { CustomAlert } from '@/components/Alert';
+import { UNICODE_SYMBOLS } from '@/constants/symbols';
 
 import { commonFieldProps, emailValidateMessages } from '../common/formUtils';
 import { InvalidGeminiApiCredentials } from '../common/InvalidGeminiApiCredentials';
@@ -33,44 +33,28 @@ export type MemeooorrFormValues = MemeooorrFieldValues & {
   xAccessTokenSecret: string;
 };
 
-export const XAccountCredentials = () => (
-  <Flex vertical>
-    <Divider style={{ margin: '8px 0 16px 0' }} />
-    <Title level={5} className="mt-0">
-      X account credentials
+const XAccountApiTokens = () => (
+  <Flex vertical gap={4}>
+    <Title level={5} className="m-0">
+      X account API tokens
     </Title>
     <Text type="secondary" className="mb-16">
       Create a new account for your agent at{' '}
       <a href="https://x.com" target="_blank" rel="noreferrer">
         x.com
       </a>{' '}
-      and enter the login details. This enables your agent to view X and
-      interact with other agents.
+      and provide X API tokens from X Developer Portal. This enables your agent
+      to view X and interact with other agents. Please refer to the{' '}
+      <a
+        href="https://github.com/dvilelaf/meme-ooorr/blob/main/docs/twitter_dev_account.md"
+        target="_blank"
+        rel="noreferrer"
+      >
+        Step-by-step guide
+      </a>{' '}
+      {UNICODE_SYMBOLS.EXTERNAL_LINK}.
     </Text>
-    <CustomAlert
-      type="warning"
-      showIcon
-      message={
-        <Flex justify="space-between" gap={4} vertical>
-          <Text>
-            To avoid your X account getting suspended for bot activity, complete
-            the onboarding steps. You can find them on your profile page under
-            &quot;Let&lsquo;s get you set up&quot;.
-          </Text>
-        </Flex>
-      }
-      className="mb-16"
-    />
   </Flex>
-);
-
-export const InvalidXCredentials = () => (
-  <CustomAlert
-    type="error"
-    showIcon
-    message={<Text>X account credentials are invalid or 2FA is enabled.</Text>}
-    className="mb-16"
-  />
 );
 
 type MemeooorrAgentFormProps = {
@@ -165,45 +149,40 @@ export const MemeooorrAgentForm = ({
       <FireworksApiFields />
 
       {/* X account tokens */}
+      <Divider style={{ margin: '8px 0' }} />
+      <XAccountApiTokens />
+
       <Form.Item
         name="xConsumerApiKey"
-        label="X Consumer API key"
+        label="Consumer API key"
         {...commonFieldProps}
         hasFeedback
       >
-        <Input placeholder="X Consumer API Key" />
+        <Input placeholder="Consumer API key" />
       </Form.Item>
 
       <Form.Item
         name="xConsumerApiSecret"
-        label="X Consumer API secret"
+        label="Consumer API key secret"
         {...commonFieldProps}
       >
-        <Input placeholder="X Consumer API Secret" />
+        <Input placeholder="Consumer API key secret" />
       </Form.Item>
 
-      <Form.Item
-        name="xBearerToken"
-        label="X Bearer Token"
-        {...commonFieldProps}
-      >
-        <Input placeholder="X Bearer Token" />
+      <Form.Item name="xBearerToken" label="Bearer Token" {...commonFieldProps}>
+        <Input placeholder="Bearer token" />
       </Form.Item>
 
-      <Form.Item
-        name="xAccessToken"
-        label="X Access Token"
-        {...commonFieldProps}
-      >
-        <Input placeholder="X Access Token" />
+      <Form.Item name="xAccessToken" label="Access Token" {...commonFieldProps}>
+        <Input placeholder="Access token" />
       </Form.Item>
 
       <Form.Item
         name="xAccessTokenSecret"
-        label="X Access Token Secret"
+        label="Access token secret"
         {...commonFieldProps}
       >
-        <Input placeholder="X Access Token Secret" />
+        <Input placeholder="Access token secret" />
       </Form.Item>
 
       <Form.Item hidden={variant === 'borderless'}>

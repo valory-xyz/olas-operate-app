@@ -86,7 +86,7 @@ export const MemeooorrAgentSetup = ({
 
   return (
     <>
-      <Text>
+      <Text className="text-lighter">
         Provide your agent with a persona, access to an LLM and an X account.
       </Text>
       <Divider style={{ margin: '8px 0' }} />
