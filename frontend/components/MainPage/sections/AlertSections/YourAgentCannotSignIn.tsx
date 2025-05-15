@@ -11,6 +11,7 @@ import { useSharedContext } from '@/hooks/useSharedContext';
 
 const { Text } = Typography;
 
+// TODO: ask Product about this!
 const ENV_VARS_WITH_X_ISSUES = [
   'TWIKIT_USERNAME',
   'TWIKIT_EMAIL',

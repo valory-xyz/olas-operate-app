@@ -174,6 +174,7 @@ export const AgentTitle = ({ address }: { address: Address }) => {
       selectedAgentType === AgentType.Memeooorr &&
       service?.env_variables?.TWIKIT_USERNAME?.value
     ) {
+      // TODO: ask Product about this!
       return (
         <ExternalAgentProfileLink
           href={`https://www.agents.fun/services/${service.env_variables.TWIKIT_USERNAME.value ?? '#'}`}
