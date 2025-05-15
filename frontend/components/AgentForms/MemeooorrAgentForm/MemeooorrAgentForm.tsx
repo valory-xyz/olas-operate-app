@@ -16,22 +16,10 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { commonFieldProps, emailValidateMessages } from '../common/formUtils';
 import { InvalidGeminiApiCredentials } from '../common/InvalidGeminiApiCredentials';
 import { FireworksApiFields } from './FireworksApiField';
-import {
-  MemeooorrFieldValues,
-  useMemeFormValidate,
-} from './useMemeFormValidate';
+import { MemeooorrFormValues } from './types';
+import { useMemeFormValidate } from './useMemeFormValidate';
 
 const { Title, Text } = Typography;
-
-export type MemeooorrFormValues = MemeooorrFieldValues & {
-  fireworksApiEnabled: boolean;
-  fireworksApiKeyName?: string;
-  xConsumerApiKey: string;
-  xConsumerApiSecret: string;
-  xBearerToken: string;
-  xAccessToken: string;
-  xAccessTokenSecret: string;
-};
 
 const XAccountApiTokens = () => (
   <Flex vertical gap={4}>
@@ -39,12 +27,8 @@ const XAccountApiTokens = () => (
       X account API tokens
     </Title>
     <Text type="secondary" className="mb-16">
-      Create a new account for your agent at{' '}
-      <a href="https://x.com" target="_blank" rel="noreferrer">
-        x.com
-      </a>{' '}
-      and provide X API tokens from X Developer Portal. This enables your agent
-      to view X and interact with other agents. Please refer to the{' '}
+      X account API tokens enable your agent to view X and interact with other
+      agents. To get the API tokens, please refer to the{' '}
       <a
         href="https://github.com/dvilelaf/meme-ooorr/blob/main/docs/twitter_dev_account.md"
         target="_blank"
@@ -57,6 +41,13 @@ const XAccountApiTokens = () => (
   </Flex>
 );
 
+export type XCredentialsKeys =
+  | 'TWEEPY_CONSUMER_API_KEY'
+  | 'TWEEPY_CONSUMER_API_KEY_SECRET'
+  | 'TWEEPY_BEARER_TOKEN'
+  | 'TWEEPY_ACCESS_TOKEN'
+  | 'TWEEPY_ACCESS_TOKEN_SECRET';
+
 type MemeooorrAgentFormProps = {
   isFormEnabled?: boolean;
   initialValues?: MemeooorrFormValues;
@@ -65,6 +56,9 @@ type MemeooorrAgentFormProps = {
   onSubmit: (values: MemeooorrFormValues) => Promise<void>;
 };
 
+/**
+ * Form for setting up a Memeooorr agent (To setup and update the agent).
+ */
 export const MemeooorrAgentForm = ({
   isFormEnabled = true,
   initialValues,
@@ -158,7 +152,7 @@ export const MemeooorrAgentForm = ({
         {...commonFieldProps}
         hasFeedback
       >
-        <Input placeholder="Consumer API key" />
+        <Input.Password placeholder="Consumer API key" />
       </Form.Item>
 
       <Form.Item
@@ -166,15 +160,15 @@ export const MemeooorrAgentForm = ({
         label="Consumer API key secret"
         {...commonFieldProps}
       >
-        <Input placeholder="Consumer API key secret" />
+        <Input.Password placeholder="Consumer API key secret" />
       </Form.Item>
 
       <Form.Item name="xBearerToken" label="Bearer Token" {...commonFieldProps}>
-        <Input placeholder="Bearer token" />
+        <Input.Password placeholder="Bearer token" />
       </Form.Item>
 
       <Form.Item name="xAccessToken" label="Access Token" {...commonFieldProps}>
-        <Input placeholder="Access token" />
+        <Input.Password placeholder="Access token" />
       </Form.Item>
 
       <Form.Item
@@ -182,7 +176,7 @@ export const MemeooorrAgentForm = ({
         label="Access token secret"
         {...commonFieldProps}
       >
-        <Input placeholder="Access token secret" />
+        <Input.Password placeholder="Access token secret" />
       </Form.Item>
 
       <Form.Item hidden={variant === 'borderless'}>

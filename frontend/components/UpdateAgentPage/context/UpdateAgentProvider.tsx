@@ -18,7 +18,7 @@ import { useServices } from '@/hooks/useServices';
 import { ServicesService } from '@/service/Services';
 import { DeepPartial } from '@/types/Util';
 
-import { MemeooorrFormValues } from '../../AgentForms/MemeooorrAgentForm/MemeooorrAgentForm';
+import { MemeooorrFormValues } from '../../AgentForms/MemeooorrAgentForm';
 import { useConfirmUpdateModal } from '../hooks/useConfirmModal';
 import { defaultModalProps, ModalProps } from '../hooks/useModal';
 import { useUnsavedModal } from '../hooks/useUnsavedModal';

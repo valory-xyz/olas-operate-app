@@ -9,7 +9,7 @@ import { Nullable } from '@/types/Util';
 import {
   MemeooorrAgentForm,
   MemeooorrFormValues,
-} from '../AgentForms/MemeooorrAgentForm/MemeooorrAgentForm';
+} from '../AgentForms/MemeooorrAgentForm';
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 

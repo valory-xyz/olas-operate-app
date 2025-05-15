@@ -10,7 +10,7 @@ import { onDummyServiceCreation } from '@/utils/service';
 import {
   MemeooorrAgentForm,
   MemeooorrFormValues,
-} from '../../AgentForms/MemeooorrAgentForm/MemeooorrAgentForm';
+} from '../../AgentForms/MemeooorrAgentForm';
 
 const { Text } = Typography;
 
