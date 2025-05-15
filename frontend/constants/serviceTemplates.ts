@@ -117,26 +117,32 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    TWIKIT_USERNAME: {
-      name: 'Twitter username',
+    TWEEPY_CONSUMER_API_KEY: {
+      name: 'Twitter consumer API key',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    TWIKIT_EMAIL: {
-      name: 'Twitter email',
+    TWEEPY_CONSUMER_API_KEY_SECRET: {
+      name: 'Twitter consumer API key secret',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    TWIKIT_PASSWORD: {
-      name: 'Twitter password',
+    TWEEPY_BEARER_TOKEN: {
+      name: 'Twitter bearer token',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    TWIKIT_COOKIES: {
-      name: 'Twitter cookies',
+    TWEEPY_ACCESS_TOKEN: {
+      name: 'Twitter access token',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    TWEEPY_ACCESS_TOKEN_SECRET: {
+      name: 'Twitter access token secret',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,

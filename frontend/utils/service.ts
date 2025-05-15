@@ -26,17 +26,6 @@ export const updateServiceIfNeeded = async (
     partialServiceTemplate.hash = serviceTemplate.hash;
   }
 
-  // Temporary: check if the service has the default description
-  if (
-    serviceTemplate.agentType === AgentType.Memeooorr &&
-    service.description === serviceTemplate.description
-  ) {
-    const xUsername = service.env_variables?.TWIKIT_USERNAME?.value;
-    if (xUsername) {
-      partialServiceTemplate.description = `Memeooorr @${xUsername}`;
-    }
-  }
-
   // Temporary: check if the service has incorrect name
   if (
     serviceTemplate.agentType === AgentType.Memeooorr &&

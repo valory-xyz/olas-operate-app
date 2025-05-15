@@ -5,11 +5,12 @@ import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
+import { getXUsername } from '@/utils/x';
 
 import {
   MemeooorrAgentForm,
   MemeooorrFormValues,
-} from '../AgentForms/MemeooorrAgentForm/MemeooorrAgentForm';
+} from '../AgentForms/MemeooorrAgentForm';
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
@@ -27,7 +28,7 @@ export const MemeooorrUpdatePage = () => {
     if (!selectedService?.env_variables) return null;
 
     const envEntries = Object.entries(selectedService.env_variables);
-    return envEntries.reduce((acc, [key, { value }]) => {
+    const values = envEntries.reduce((acc, [key, { value }]) => {
       if (key === 'PERSONA') {
         acc.personaDescription = value;
       } else if (key === 'GENAI_API_KEY') {
@@ -35,17 +36,24 @@ export const MemeooorrUpdatePage = () => {
       } else if (key === 'FIREWORKS_API_KEY') {
         acc.fireworksApiKey = value;
         acc.fireworksApiEnabled = !!value;
-      } else if (key === 'TWIKIT_EMAIL') {
-        acc.xEmail = value;
-      } else if (key === 'TWIKIT_USERNAME') {
-        acc.xUsername = value;
-      } else if (key === 'TWIKIT_PASSWORD') {
-        acc.xPassword = value;
+      } else if (key === 'TWEEPY_CONSUMER_API_KEY') {
+        acc.xConsumerApiKey = value;
+      } else if (key === 'TWEEPY_CONSUMER_API_KEY_SECRET') {
+        acc.xConsumerApiSecret = value;
+      } else if (key === 'TWEEPY_BEARER_TOKEN') {
+        acc.xBearerToken = value;
+      } else if (key === 'TWEEPY_ACCESS_TOKEN') {
+        acc.xAccessToken = value;
+      } else if (key === 'TWEEPY_ACCESS_TOKEN_SECRET') {
+        acc.xAccessTokenSecret = value;
       }
       return acc;
     }, {} as MemeooorrFormValues);
-  }, [selectedService?.env_variables]);
+    values.xUsername = getXUsername(selectedService) || '';
+    return values;
+  }, [selectedService]);
 
+  // TODO: update
   const handleClickBack = useCallback(() => {
     const unsavedFields = omit(form?.getFieldsValue(), ['xCookies']);
     const currentValues = initialValues?.fireworksApiKey

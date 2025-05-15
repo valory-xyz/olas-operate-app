@@ -18,7 +18,7 @@ import { useServices } from '@/hooks/useServices';
 import { ServicesService } from '@/service/Services';
 import { DeepPartial } from '@/types/Util';
 
-import { MemeooorrFormValues } from '../../AgentForms/MemeooorrAgentForm/MemeooorrAgentForm';
+import { MemeooorrFormValues } from '../../AgentForms/MemeooorrAgentForm';
 import { useConfirmUpdateModal } from '../hooks/useConfirmModal';
 import { defaultModalProps, ModalProps } from '../hooks/useModal';
 import { useUnsavedModal } from '../hooks/useUnsavedModal';
@@ -71,10 +71,12 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
           FIREWORKS_API_KEY: memeooorrFormValues.fireworksApiEnabled
             ? memeooorrFormValues.fireworksApiKey
             : '',
-          TWIKIT_EMAIL: memeooorrFormValues.xEmail,
-          TWIKIT_USERNAME: memeooorrFormValues.xUsername,
-          TWIKIT_PASSWORD: memeooorrFormValues.xPassword,
-          TWIKIT_COOKIES: memeooorrFormValues?.xCookies,
+          TWEEPY_CONSUMER_API_KEY: memeooorrFormValues.xConsumerApiKey,
+          TWEEPY_CONSUMER_API_KEY_SECRET:
+            memeooorrFormValues.xConsumerApiSecret,
+          TWEEPY_BEARER_TOKEN: memeooorrFormValues.xBearerToken,
+          TWEEPY_ACCESS_TOKEN: memeooorrFormValues.xAccessToken,
+          TWEEPY_ACCESS_TOKEN_SECRET: memeooorrFormValues.xAccessTokenSecret,
         };
       }
       return formValues.env_variables;

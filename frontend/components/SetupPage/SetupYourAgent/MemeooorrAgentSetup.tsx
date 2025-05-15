@@ -2,19 +2,17 @@ import { Divider, message, Typography } from 'antd';
 import React, { useCallback } from 'react';
 
 import { ServiceTemplate } from '@/client';
-import { MemeooorrAgentForm } from '@/components/AgentForms/MemeooorrAgentForm/MemeooorrAgentForm';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { onDummyServiceCreation } from '@/utils/service';
 
-import { MemeooorrFieldValues } from '../../AgentForms/MemeooorrAgentForm/useMemeFormValidate';
+import {
+  MemeooorrAgentForm,
+  MemeooorrFormValues,
+} from '../../AgentForms/MemeooorrAgentForm';
 
 const { Text } = Typography;
-
-type MemeooorrFormValues = MemeooorrFieldValues & {
-  fireworksApiEnabled: boolean;
-};
 
 type MemeooorrAgentFormProps = { serviceTemplate: ServiceTemplate };
 
@@ -25,7 +23,7 @@ export const MemeooorrAgentSetup = ({
   const { defaultStakingProgramId } = useStakingProgram();
 
   const onSubmit = useCallback(
-    async (values: MemeooorrFormValues, cookies: string) => {
+    async (values: MemeooorrFormValues & { fireworksApiEnabled: boolean }) => {
       if (!defaultStakingProgramId) return;
 
       try {
@@ -34,21 +32,25 @@ export const MemeooorrAgentSetup = ({
           description: `Memeooorr @${values.xUsername}`,
           env_variables: {
             ...serviceTemplate.env_variables,
-            TWIKIT_USERNAME: {
-              ...serviceTemplate.env_variables.TWIKIT_USERNAME,
-              value: values.xUsername,
+            TWEEPY_CONSUMER_API_KEY: {
+              ...serviceTemplate.env_variables.TWEEPY_CONSUMER_API_KEY,
+              value: values.xConsumerApiKey,
             },
-            TWIKIT_EMAIL: {
-              ...serviceTemplate.env_variables.TWIKIT_EMAIL,
-              value: values.xEmail,
+            TWEEPY_CONSUMER_API_KEY_SECRET: {
+              ...serviceTemplate.env_variables.TWEEPY_CONSUMER_API_KEY_SECRET,
+              value: values.xConsumerApiSecret,
             },
-            TWIKIT_PASSWORD: {
-              ...serviceTemplate.env_variables.TWIKIT_PASSWORD,
-              value: values.xPassword,
+            TWEEPY_BEARER_TOKEN: {
+              ...serviceTemplate.env_variables.TWEEPY_BEARER_TOKEN,
+              value: values.xBearerToken,
             },
-            TWIKIT_COOKIES: {
-              ...serviceTemplate.env_variables.TWIKIT_COOKIES,
-              value: cookies,
+            TWEEPY_ACCESS_TOKEN: {
+              ...serviceTemplate.env_variables.TWEEPY_ACCESS_TOKEN,
+              value: values.xAccessToken,
+            },
+            TWEEPY_ACCESS_TOKEN_SECRET: {
+              ...serviceTemplate.env_variables.TWEEPY_ACCESS_TOKEN_SECRET,
+              value: values.xAccessTokenSecret,
             },
             GENAI_API_KEY: {
               ...serviceTemplate.env_variables.GENAI_API_KEY,
@@ -84,7 +86,7 @@ export const MemeooorrAgentSetup = ({
 
   return (
     <>
-      <Text>
+      <Text className="text-lighter">
         Provide your agent with a persona, access to an LLM and an X account.
       </Text>
       <Divider style={{ margin: '8px 0' }} />
