@@ -6,9 +6,6 @@ export type MemeooorrFieldValues = {
   personaDescription: string;
   geminiApiKey: string;
   fireworksApiKey: string;
-  xEmail: string;
-  xUsername: string;
-  xPassword: string;
 };
 
 export const useMemeFormValidate = () => {
@@ -16,16 +13,11 @@ export const useMemeFormValidate = () => {
   const [submitButtonText, setSubmitButtonText] = useState('Continue');
   const [geminiApiKeyValidationStatus, setGeminiApiKeyValidationStatus] =
     useState<ValidationStatus>('unknown');
-  const [
-    twitterCredentialsValidationStatus,
-    setTwitterCredentialsValidationStatus,
-  ] = useState<ValidationStatus>('unknown');
 
   const handleValidate = useCallback(async (values: MemeooorrFieldValues) => {
     setIsValidating(true);
 
     setGeminiApiKeyValidationStatus('unknown');
-    setTwitterCredentialsValidationStatus('unknown');
     setSubmitButtonText('Validating Gemini API key...');
 
     try {
@@ -52,8 +44,6 @@ export const useMemeFormValidate = () => {
     setSubmitButtonText,
     geminiApiKeyValidationStatus,
     setGeminiApiKeyValidationStatus,
-    twitterCredentialsValidationStatus,
-    setTwitterCredentialsValidationStatus,
     validateForm: handleValidate,
   };
 };

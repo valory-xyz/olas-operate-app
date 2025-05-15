@@ -13,11 +13,7 @@ import { useUnmount } from 'usehooks-ts';
 
 import { CustomAlert } from '@/components/Alert';
 
-import {
-  commonFieldProps,
-  emailValidateMessages,
-  requiredRules,
-} from '../common/formUtils';
+import { commonFieldProps, emailValidateMessages } from '../common/formUtils';
 import { InvalidGeminiApiCredentials } from '../common/InvalidGeminiApiCredentials';
 import { FireworksApiFields } from './FireworksApiField';
 import {
@@ -30,7 +26,11 @@ const { Title, Text } = Typography;
 export type MemeooorrFormValues = MemeooorrFieldValues & {
   fireworksApiEnabled: boolean;
   fireworksApiKeyName?: string;
-  xCookies?: string;
+  xConsumerApiKey: string;
+  xConsumerApiSecret: string;
+  xBearerToken: string;
+  xAccessToken: string;
+  xAccessTokenSecret: string;
 };
 
 export const XAccountCredentials = () => (
@@ -78,7 +78,7 @@ type MemeooorrAgentFormProps = {
   initialValues?: MemeooorrFormValues;
   form?: FormInstance;
   variant?: FormProps['variant'];
-  onSubmit: (values: MemeooorrFormValues, cookies: string) => Promise<void>;
+  onSubmit: (values: MemeooorrFormValues) => Promise<void>;
 };
 
 export const MemeooorrAgentForm = ({
@@ -100,8 +100,6 @@ export const MemeooorrAgentForm = ({
     setSubmitButtonText,
     geminiApiKeyValidationStatus,
     setGeminiApiKeyValidationStatus,
-    twitterCredentialsValidationStatus,
-    setTwitterCredentialsValidationStatus,
     validateForm,
   } = useMemeFormValidate();
 
@@ -110,24 +108,21 @@ export const MemeooorrAgentForm = ({
       try {
         setIsSubmitting(true);
 
-        const cookies = await validateForm(values);
-        if (!cookies) return;
-
-        form.setFieldValue('xCookies', cookies);
-        await onSubmit(values, cookies);
+        const isValidated = await validateForm(values);
+        if (!isValidated) return;
+        await onSubmit(values);
       } finally {
         setSubmitButtonText('Continue');
         setIsSubmitting(false);
       }
     },
-    [onSubmit, validateForm, setIsSubmitting, setSubmitButtonText, form],
+    [onSubmit, setIsSubmitting, setSubmitButtonText, validateForm],
   );
 
   // Clean up
   useUnmount(async () => {
     setIsSubmitting(false);
     setGeminiApiKeyValidationStatus('unknown');
-    setTwitterCredentialsValidationStatus('unknown');
     setSubmitButtonText('Continue');
   });
 
@@ -169,57 +164,47 @@ export const MemeooorrAgentForm = ({
 
       <FireworksApiFields />
 
-      {/* X */}
-      <XAccountCredentials />
-      {twitterCredentialsValidationStatus === 'invalid' && (
-        <InvalidXCredentials />
-      )}
-
+      {/* X account tokens */}
       <Form.Item
-        name="xEmail"
-        label="X email"
-        rules={[{ required: true, type: 'email' }]}
+        name="xConsumerApiKey"
+        label="X Consumer API key"
+        {...commonFieldProps}
         hasFeedback
       >
-        <Input placeholder="X Email" />
-      </Form.Item>
-
-      <Form.Item name="xUsername" label="X username" {...commonFieldProps}>
-        <Input
-          placeholder="X Username"
-          addonBefore="@"
-          onKeyDown={(e) => {
-            if (e.key === '@') {
-              e.preventDefault();
-            }
-          }}
-        />
+        <Input placeholder="X Consumer API Key" />
       </Form.Item>
 
       <Form.Item
-        name="xPassword"
-        label="X password"
+        name="xConsumerApiSecret"
+        label="X Consumer API secret"
         {...commonFieldProps}
-        rules={[
-          ...requiredRules,
-          {
-            validator: (_, value) => {
-              if (value && value.includes('$')) {
-                return Promise.reject(
-                  new Error(
-                    'Password must not contain the “$” symbol. Please update your password on Twitter, then retry.',
-                  ),
-                );
-              }
-              return Promise.resolve();
-            },
-          },
-        ]}
       >
-        <Input.Password placeholder="X Password" />
+        <Input placeholder="X Consumer API Secret" />
       </Form.Item>
 
-      <Form.Item name="xCookies" hidden />
+      <Form.Item
+        name="xBearerToken"
+        label="X Bearer Token"
+        {...commonFieldProps}
+      >
+        <Input placeholder="X Bearer Token" />
+      </Form.Item>
+
+      <Form.Item
+        name="xAccessToken"
+        label="X Access Token"
+        {...commonFieldProps}
+      >
+        <Input placeholder="X Access Token" />
+      </Form.Item>
+
+      <Form.Item
+        name="xAccessTokenSecret"
+        label="X Access Token Secret"
+        {...commonFieldProps}
+      >
+        <Input placeholder="X Access Token Secret" />
+      </Form.Item>
 
       <Form.Item hidden={variant === 'borderless'}>
         <Button
