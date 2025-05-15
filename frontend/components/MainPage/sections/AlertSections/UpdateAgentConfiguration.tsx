@@ -39,3 +39,11 @@ export const UpdateAgentConfiguration = () => {
     />
   );
 };
+
+/**
+ * TODO:
+ * 1. what if the agent is running?
+ * 2. Add appropriate validation if the above alert should be shown
+ * 3. Is the agent updated as expected?
+ * 4. Update and restart the agent as expected
+ */
