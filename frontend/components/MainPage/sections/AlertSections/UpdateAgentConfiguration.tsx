@@ -3,11 +3,15 @@ import { Button, Flex, Typography } from 'antd';
 import { CustomAlert } from '@/components/Alert';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
+import { useSharedContext } from '@/hooks/useSharedContext';
 
 const { Text } = Typography;
 
 export const UpdateAgentConfiguration = () => {
   const { goto } = usePageState();
+  const { isMemeooorrFieldUpdateCompleted } = useSharedContext();
+
+  if (isMemeooorrFieldUpdateCompleted) return null;
 
   return (
     <CustomAlert

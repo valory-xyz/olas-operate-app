@@ -2,10 +2,13 @@ import {
   createContext,
   PropsWithChildren,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from 'react';
 
+import { AgentType } from '@/enums/Agent';
+import { useServices } from '@/hooks/useServices';
 import { Optional } from '@/types/Util';
 
 import { useMainOlasBalance } from './useMainOlasBalance';
@@ -21,6 +24,9 @@ export const SharedContext = createContext<{
   onboardingStep: number;
   updateOnboardingStep: (step: number) => void;
 
+  // agent specific checks
+  isMemeooorrFieldUpdateCompleted: boolean;
+
   // others
 }>({
   isMainOlasBalanceLoading: true,
@@ -31,6 +37,9 @@ export const SharedContext = createContext<{
   // onboarding
   onboardingStep: 0,
   updateOnboardingStep: () => {},
+
+  // agent specific checks
+  isMemeooorrFieldUpdateCompleted: false,
 
   // others
 });
@@ -56,6 +65,26 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
     hasAnimatedRef.current = value;
   }, []);
 
+  // agent specific checks
+  const { selectedAgentType, selectedService } = useServices();
+  const [isMemeooorrFieldUpdateCompleted, setIsMemeooorrFieldUpdateCompleted] =
+    useState(true); // default to true to avoid showing the alert on first load
+  useEffect(() => {
+    if (!selectedAgentType) return;
+    if (selectedAgentType !== AgentType.Memeooorr) return;
+    if (!selectedService) return;
+
+    const areFieldsUpdated = [
+      'TWEEPY_CONSUMER_API_KEY',
+      'TWEEPY_CONSUMER_API_KEY_SECRET',
+      'TWEEPY_BEARER_TOKEN',
+      'TWEEPY_ACCESS_TOKEN',
+      'TWEEPY_ACCESS_TOKEN_SECRET',
+    ].every((key) => selectedService.env_variables?.[key]?.value);
+
+    setIsMemeooorrFieldUpdateCompleted(areFieldsUpdated);
+  }, [selectedAgentType, selectedService]);
+
   return (
     <SharedContext.Provider
       value={{
@@ -66,6 +95,9 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
         // onboarding
         onboardingStep,
         updateOnboardingStep,
+
+        // agent specific checks
+        isMemeooorrFieldUpdateCompleted,
       }}
     >
       {children}
