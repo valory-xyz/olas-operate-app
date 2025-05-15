@@ -7,7 +7,6 @@ import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { LowFunds } from './LowFunds/LowFunds';
 import { NoAvailableSlotsOnTheContract } from './NoAvailableSlotsOnTheContract';
 import { UpdateAvailableAlert } from './UpdateAvailableAlert';
-import { YourAgentCannotSignIn } from './YourAgentCannotSignIn';
 
 export const AlertSections = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
@@ -17,7 +16,6 @@ export const AlertSections = () => {
       {isBackupViaSafeEnabled && <AddBackupWalletAlert />}
       <ContractDeprecatedAlert />
       <AvoidSuspensionAlert />
-      <YourAgentCannotSignIn />
       <LowFunds />
       <NoAvailableSlotsOnTheContract />
     </CardSection>
