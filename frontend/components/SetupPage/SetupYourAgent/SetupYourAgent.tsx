@@ -10,7 +10,7 @@ import { useServices } from '@/hooks/useServices';
 import { LOCAL_FORM_THEME } from '@/theme';
 
 import { SetupCreateHeader } from '../Create/SetupCreateHeader';
-import { MemeooorrAgentForm } from './MemeooorrAgentForm/MemeooorrAgentForm';
+import { MemeooorrAgentSetup } from './MemeooorrAgentSetup';
 import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
 
 const { Title, Text } = Typography;
@@ -39,7 +39,7 @@ export const SetupYourAgent = () => {
         <Title level={3}>Set up your agent</Title>
 
         {selectedAgentType === AgentType.Memeooorr && (
-          <MemeooorrAgentForm serviceTemplate={serviceTemplate} />
+          <MemeooorrAgentSetup serviceTemplate={serviceTemplate} />
         )}
 
         {selectedAgentType === AgentType.Modius && (

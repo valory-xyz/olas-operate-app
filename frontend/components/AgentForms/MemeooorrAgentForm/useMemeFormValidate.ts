@@ -6,7 +6,7 @@ import {
   validateGeminiApiKey,
   validateTwitterCredentials,
   ValidationStatus,
-} from '../shared/validations';
+} from '../common/validations';
 
 export type MemeooorrFieldValues = {
   personaDescription: string;
