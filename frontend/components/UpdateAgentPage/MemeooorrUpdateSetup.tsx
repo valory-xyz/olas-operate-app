@@ -1,4 +1,4 @@
-import { isEqual, omit } from 'lodash';
+import { isEqual, omit, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import { Pages } from '@/enums/Pages';
@@ -14,7 +14,7 @@ import {
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
-export const MemeooorrUpdatePage = () => {
+export const MemeooorrUpdateSetup = () => {
   const { goto } = usePageState();
   const { selectedService } = useServices();
   const {
@@ -53,9 +53,11 @@ export const MemeooorrUpdatePage = () => {
     return values;
   }, [selectedService]);
 
-  // TODO: update
   const handleClickBack = useCallback(() => {
-    const unsavedFields = omit(form?.getFieldsValue(), ['xCookies']);
+    const unsavedFields = omitBy(
+      form?.getFieldsValue(),
+      (value) => value === undefined || value === '',
+    );
     const currentValues = initialValues?.fireworksApiKey
       ? initialValues
       : omit(initialValues, ['fireworksApiKey']);
