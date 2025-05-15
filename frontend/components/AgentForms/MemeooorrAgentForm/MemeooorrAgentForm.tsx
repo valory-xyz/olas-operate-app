@@ -1,5 +1,14 @@
-import { Button, Divider, Flex, Form, Input, Typography } from 'antd';
-import React, { useCallback, useState } from 'react';
+import {
+  Button,
+  Divider,
+  Flex,
+  Form,
+  FormInstance,
+  FormProps,
+  Input,
+  Typography,
+} from 'antd';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { CustomAlert } from '@/components/Alert';
@@ -18,8 +27,10 @@ import {
 
 const { Title, Text } = Typography;
 
-type MemeooorrFormValues = MemeooorrFieldValues & {
+export type MemeooorrFormValues = MemeooorrFieldValues & {
   fireworksApiEnabled: boolean;
+  fireworksApiKeyName?: string;
+  xCookies?: string;
 };
 
 export const XAccountCredentials = () => (
@@ -64,14 +75,24 @@ export const InvalidXCredentials = () => (
 
 type MemeooorrAgentFormProps = {
   isFormEnabled?: boolean;
-  onSubmit?: (values: MemeooorrFormValues, cookies: string) => Promise<void>;
+  initialValues?: MemeooorrFormValues;
+  form?: FormInstance;
+  variant?: FormProps['variant'];
+  onSubmit: (values: MemeooorrFormValues, cookies: string) => Promise<void>;
 };
 
 export const MemeooorrAgentForm = ({
   isFormEnabled = true,
+  initialValues,
   onSubmit,
+  variant,
+  form: formInstance,
 }: MemeooorrAgentFormProps) => {
-  const [form] = Form.useForm<MemeooorrFormValues>();
+  const [formState] = Form.useForm<MemeooorrFormValues>();
+  const form = useMemo(
+    () => formInstance || formState,
+    [formInstance, formState],
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -92,13 +113,14 @@ export const MemeooorrAgentForm = ({
         const cookies = await validateForm(values);
         if (!cookies) return;
 
-        await onSubmit?.(values, cookies);
+        form.setFieldValue('xCookies', cookies);
+        await onSubmit(values, cookies);
       } finally {
         setSubmitButtonText('Continue');
         setIsSubmitting(false);
       }
     },
-    [onSubmit, validateForm, setIsSubmitting, setSubmitButtonText],
+    [onSubmit, validateForm, setIsSubmitting, setSubmitButtonText, form],
   );
 
   // Clean up
@@ -109,12 +131,16 @@ export const MemeooorrAgentForm = ({
     setSubmitButtonText('Continue');
   });
 
+  const isFormDisabled = !isFormEnabled || isSubmitting;
+
   return (
     <Form<MemeooorrFormValues>
       form={form}
+      initialValues={initialValues}
       onFinish={onFinish}
-      disabled={!isFormEnabled || isSubmitting}
+      disabled={isFormDisabled}
       validateMessages={emailValidateMessages}
+      variant={variant}
       name="setup-your-memeooorr-agent"
       layout="vertical"
     >
@@ -123,7 +149,11 @@ export const MemeooorrAgentForm = ({
         label="Persona Description"
         {...commonFieldProps}
       >
-        <Input.TextArea size="small" rows={4} placeholder="e.g. ..." />
+        <Input.TextArea
+          size="small"
+          rows={4}
+          placeholder="Describe your agent's persona"
+        />
       </Form.Item>
 
       <Form.Item
@@ -131,7 +161,7 @@ export const MemeooorrAgentForm = ({
         label="Gemini API Key"
         {...commonFieldProps}
       >
-        <Input.Password />
+        <Input.Password placeholder="Google Gemini API key" />
       </Form.Item>
       {geminiApiKeyValidationStatus === 'invalid' && (
         <InvalidGeminiApiCredentials />
@@ -151,11 +181,12 @@ export const MemeooorrAgentForm = ({
         rules={[{ required: true, type: 'email' }]}
         hasFeedback
       >
-        <Input />
+        <Input placeholder="X Email" />
       </Form.Item>
 
       <Form.Item name="xUsername" label="X username" {...commonFieldProps}>
         <Input
+          placeholder="X Username"
           addonBefore="@"
           onKeyDown={(e) => {
             if (e.key === '@') {
@@ -185,10 +216,12 @@ export const MemeooorrAgentForm = ({
           },
         ]}
       >
-        <Input.Password />
+        <Input.Password placeholder="X Password" />
       </Form.Item>
 
-      <Form.Item>
+      <Form.Item name="xCookies" hidden />
+
+      <Form.Item hidden={variant === 'borderless'}>
         <Button
           type="primary"
           htmlType="submit"
