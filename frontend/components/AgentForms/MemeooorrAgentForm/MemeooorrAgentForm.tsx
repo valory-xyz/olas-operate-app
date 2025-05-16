@@ -11,7 +11,9 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
+import { CustomAlert } from '@/components/Alert';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { useSharedContext } from '@/hooks/useSharedContext';
 
 import { commonFieldProps, emailValidateMessages } from '../common/formUtils';
 import { InvalidGeminiApiCredentials } from '../common/InvalidGeminiApiCredentials';
@@ -21,7 +23,11 @@ import { useMemeFormValidate } from './useMemeFormValidate';
 
 const { Title, Text } = Typography;
 
-const XAccountApiTokens = () => (
+type XAccountApiTokensProps = { showTokensRequiredMessage?: boolean };
+
+const XAccountApiTokens = ({
+  showTokensRequiredMessage,
+}: XAccountApiTokensProps) => (
   <Flex vertical gap={4}>
     <Title level={5} className="m-0">
       X account API tokens
@@ -38,6 +44,18 @@ const XAccountApiTokens = () => (
       </a>{' '}
       {UNICODE_SYMBOLS.EXTERNAL_LINK}.
     </Text>
+    {showTokensRequiredMessage && (
+      <CustomAlert
+        type="error"
+        showIcon
+        className="mb-16"
+        message={
+          <Flex vertical>
+            <Text>X account API tokens are required.</Text>
+          </Flex>
+        }
+      />
+    )}
   </Flex>
 );
 
@@ -60,6 +78,8 @@ export const MemeooorrAgentForm = ({
   form: formInstance,
 }: MemeooorrAgentFormProps) => {
   const [formState] = Form.useForm<MemeooorrFormValues>();
+
+  const { isMemeooorrFieldUpdateCompleted } = useSharedContext();
   const form = useMemo(
     () => formInstance || formState,
     [formInstance, formState],
@@ -137,7 +157,11 @@ export const MemeooorrAgentForm = ({
 
       {/* X account tokens */}
       <Divider style={{ margin: '8px 0' }} />
-      <XAccountApiTokens />
+      <XAccountApiTokens
+        showTokensRequiredMessage={
+          !isMemeooorrFieldUpdateCompleted && variant !== 'borderless'
+        }
+      />
 
       <Form.Item name="xUsername" label="X username" {...commonFieldProps}>
         <Input
