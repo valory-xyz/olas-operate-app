@@ -82,7 +82,7 @@ export const MemeooorrUpdateSetup = () => {
         form={form}
         isFormEnabled={isEditing}
         initialValues={initialValues}
-        variant={isEditing ? 'outlined' : 'borderless'}
+        agentFormType={isEditing ? 'update' : 'view'}
         onSubmit={onSubmit}
       />
     </CardLayout>

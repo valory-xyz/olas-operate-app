@@ -93,6 +93,7 @@ export const MemeooorrAgentSetup = ({
 
       <MemeooorrAgentForm
         isFormEnabled={!!defaultStakingProgramId}
+        agentFormType="create"
         onSubmit={onSubmit}
       />
     </>

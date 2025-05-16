@@ -4,7 +4,6 @@ import {
   Flex,
   Form,
   FormInstance,
-  FormProps,
   Input,
   Typography,
 } from 'antd';
@@ -62,8 +61,8 @@ const XAccountApiTokens = ({
 type MemeooorrAgentFormProps = {
   isFormEnabled?: boolean;
   initialValues?: MemeooorrFormValues;
+  agentFormType: 'view' | 'create' | 'update';
   form?: FormInstance;
-  variant?: FormProps['variant'];
   onSubmit: (values: MemeooorrFormValues) => Promise<void>;
 };
 
@@ -72,9 +71,9 @@ type MemeooorrAgentFormProps = {
  */
 export const MemeooorrAgentForm = ({
   isFormEnabled = true,
+  agentFormType,
   initialValues,
   onSubmit,
-  variant,
   form: formInstance,
 }: MemeooorrAgentFormProps) => {
   const [formState] = Form.useForm<MemeooorrFormValues>();
@@ -126,7 +125,7 @@ export const MemeooorrAgentForm = ({
       onFinish={onFinish}
       disabled={isFormDisabled}
       validateMessages={emailValidateMessages}
-      variant={variant}
+      variant={agentFormType === 'view' ? 'borderless' : 'outlined'}
       name="setup-your-memeooorr-agent"
       layout="vertical"
     >
@@ -159,7 +158,7 @@ export const MemeooorrAgentForm = ({
       <Divider style={{ margin: '8px 0' }} />
       <XAccountApiTokens
         showTokensRequiredMessage={
-          !isMemeooorrFieldUpdateCompleted && variant !== 'borderless'
+          !isMemeooorrFieldUpdateCompleted && agentFormType !== 'create'
         }
       />
 
@@ -208,7 +207,7 @@ export const MemeooorrAgentForm = ({
         <Input.Password placeholder="Access token secret" />
       </Form.Item>
 
-      <Form.Item hidden={variant === 'borderless'}>
+      <Form.Item hidden={agentFormType === 'view'}>
         <Button
           type="primary"
           htmlType="submit"
