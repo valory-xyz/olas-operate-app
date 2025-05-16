@@ -69,6 +69,9 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   const { selectedAgentType, selectedService } = useServices();
   const [isMemeooorrFieldUpdateCompleted, setIsMemeooorrFieldUpdateCompleted] =
     useState(true); // default to true to avoid showing the alert on first load
+
+  // Users with the Memeooorr agent type are required to update their
+  // agent configurations to run the latest version of the agent.
   useEffect(() => {
     if (!selectedAgentType) return;
     if (selectedAgentType !== AgentType.Memeooorr) return;
