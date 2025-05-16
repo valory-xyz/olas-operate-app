@@ -106,7 +106,7 @@ export const AgentActivityPage = () => {
             <Text type="secondary" className="text-xs">
               Current activity
             </Text>
-            <Text className="text-sm loading-ellipses">
+            <Text className="text-sm loading-ellipses fit-content">
               {currentActivityRoundName}
             </Text>
           </Flex>

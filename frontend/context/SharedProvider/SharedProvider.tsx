@@ -2,10 +2,13 @@ import {
   createContext,
   PropsWithChildren,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from 'react';
 
+import { AgentType } from '@/enums/Agent';
+import { useServices } from '@/hooks/useServices';
 import { Optional } from '@/types/Util';
 
 import { useMainOlasBalance } from './useMainOlasBalance';
@@ -21,9 +24,8 @@ export const SharedContext = createContext<{
   onboardingStep: number;
   updateOnboardingStep: (step: number) => void;
 
-  // healthcheck alert shown to user
-  isHealthCheckAlertShown: boolean;
-  setHealthCheckAlertShown: (e: boolean) => void;
+  // agent specific checks
+  isMemeooorrFieldUpdateCompleted: boolean;
 
   // others
 }>({
@@ -36,9 +38,8 @@ export const SharedContext = createContext<{
   onboardingStep: 0,
   updateOnboardingStep: () => {},
 
-  // healthcheck alert shown to user
-  isHealthCheckAlertShown: false,
-  setHealthCheckAlertShown: () => {},
+  // agent specific checks
+  isMemeooorrFieldUpdateCompleted: false,
 
   // others
 });
@@ -64,12 +65,28 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
     hasAnimatedRef.current = value;
   }, []);
 
-  // state to show healthcheck alert to the user
-  const [isHealthCheckAlertShown, setHealthCheckErrorsShownToUser] =
-    useState(false);
-  const setHealthCheckAlertShown = useCallback((isShown: boolean) => {
-    setHealthCheckErrorsShownToUser(isShown);
-  }, []);
+  // agent specific checks
+  const { selectedAgentType, selectedService } = useServices();
+  const [isMemeooorrFieldUpdateCompleted, setIsMemeooorrFieldUpdateCompleted] =
+    useState(true); // default to true to avoid showing the alert on first load
+
+  // Users with the Memeooorr agent type are required to update their
+  // agent configurations to run the latest version of the agent.
+  useEffect(() => {
+    if (!selectedAgentType) return;
+    if (selectedAgentType !== AgentType.Memeooorr) return;
+    if (!selectedService) return;
+
+    const areFieldsUpdated = [
+      'TWEEPY_CONSUMER_API_KEY',
+      'TWEEPY_CONSUMER_API_KEY_SECRET',
+      'TWEEPY_BEARER_TOKEN',
+      'TWEEPY_ACCESS_TOKEN',
+      'TWEEPY_ACCESS_TOKEN_SECRET',
+    ].every((key) => selectedService.env_variables?.[key]?.value);
+
+    setIsMemeooorrFieldUpdateCompleted(areFieldsUpdated);
+  }, [selectedAgentType, selectedService]);
 
   return (
     <SharedContext.Provider
@@ -82,9 +99,8 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
         onboardingStep,
         updateOnboardingStep,
 
-        // healthcheck errors
-        isHealthCheckAlertShown,
-        setHealthCheckAlertShown,
+        // agent specific checks
+        isMemeooorrFieldUpdateCompleted,
       }}
     >
       {children}

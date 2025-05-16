@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 
-import { commonFieldProps } from '../shared/formUtils';
+import { commonFieldProps } from '../common/formUtils';
 
 const { Text } = Typography;
 
