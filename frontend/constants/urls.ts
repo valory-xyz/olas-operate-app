@@ -17,7 +17,7 @@ const SWAP_CELO_URL: Url =
   'https://app.ubeswap.org/#/swap?inputCurrency=0x471ece3750da237f93b8e339c536989b8978a438&outputCurrency=0xacffae8e57ec6e394eb1b41939a8cf7892dbdc51';
 
 // olas.network
-export const OPERATE_URL: Url = 'https://olas.network/pearl';
+export const PEARL_URL: Url = 'https://olas.network/pearl';
 export const FAQ_URL: Url = 'https://olas.network/pearl#faq';
 export const TERMS_AND_CONDITIONS_URL: Url = 'https://olas.network/pearl-terms';
 export const DOWNLOAD_URL: Url = 'https://olas.network/pearl#download';
