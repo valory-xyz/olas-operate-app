@@ -54,6 +54,12 @@ export const ETHEREUM_TOKEN_CONFIG: ChainTokenConfig = {
     tokenType: TokenType.Erc20,
     symbol: TokenSymbol.OLAS,
   },
+  [TokenSymbol.USDC]: {
+    address: '0xA0b86991c6218b36c1d19D4a2e9EB0CE3606EB48',
+    decimals: 6,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbol.USDC,
+  },
 } as const;
 
 const GNOSIS_TOKEN_CONFIG: ChainTokenConfig = {
