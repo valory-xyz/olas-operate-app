@@ -242,7 +242,7 @@ export const BridgeInProgress = ({
         />
         {!!bridgeDetails && (
           <BridgingSteps
-            chainName="Base"
+            chainName={toChain}
             bridge={bridgeDetails}
             masterSafeCreation={masterSafeCreationDetails}
             masterSafeTransfer={masterSafeTransferDetails}
