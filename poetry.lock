@@ -2351,8 +2351,8 @@ web3 = "==6.1.0"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "6fef95fa277d8e64979c48746d80b4d4c2e81297"
-resolved_reference = "6fef95fa277d8e64979c48746d80b4d4c2e81297"
+reference = "6a41fdd2eb128e9f345541cfb8eb67ba1e107d70"
+resolved_reference = "6a41fdd2eb128e9f345541cfb8eb67ba1e107d70"
 
 [[package]]
 name = "open-aea"
@@ -3452,13 +3452,13 @@ files = [
 
 [[package]]
 name = "setuptools"
-version = "80.7.1"
+version = "80.8.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "setuptools-80.7.1-py3-none-any.whl", hash = "sha256:ca5cc1069b85dc23070a6628e6bcecb3292acac802399c7f8edc0100619f9009"},
-    {file = "setuptools-80.7.1.tar.gz", hash = "sha256:f6ffc5f0142b1bd8d0ca94ee91b30c0ca862ffd50826da1ea85258a06fd94552"},
+    {file = "setuptools-80.8.0-py3-none-any.whl", hash = "sha256:95a60484590d24103af13b686121328cc2736bee85de8936383111e421b9edc0"},
+    {file = "setuptools-80.8.0.tar.gz", hash = "sha256:49f7af965996f26d43c8ae34539c8d99c5042fbff34302ea151eaa9c207cd257"},
 ]
 
 [package.extras]
@@ -4058,4 +4058,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "fc1f2e05bf7e8063530735254c8ce3d65c87ee66b8883f90b193fba2d9cc61a6"
+content-hash = "8866241270145a5079080ca390e1460deef20886fa8fb3aad9eab345d60c8b3c"
