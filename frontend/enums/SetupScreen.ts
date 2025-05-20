@@ -15,4 +15,7 @@ export enum SetupScreen {
   RestoreViaBackup,
   AgentIntroduction,
   EarlyAccessOnly,
+
+  /** Onboarding using the bridge */
+  SetupBridgeOnboardingScreen,
 }
