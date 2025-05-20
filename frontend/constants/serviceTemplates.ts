@@ -276,13 +276,23 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       cost_of_bond: +parseEther(20),
       monthly_gas_estimate: +parseEther(0.011), // TODO: should be 0.0055, temp fix to avoid low balance alerts until the refund is fixed in the middleware
       fund_requirements: {
+        // [ethers.constants.AddressZero]: {
+        //   // agent: +parseEther(0.0005),
+        //   // safe: +parseEther(0.005),
+        // },
+        // [MODE_TOKEN_CONFIG[TokenSymbol.USDC].address as string]: {
+        //   agent: 0,
+        //   safe: +parseUnits(16, MODE_TOKEN_CONFIG[TokenSymbol.USDC].decimals),
+        // },
+
+        // TODO: only for testing
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0005),
-          safe: +parseEther(0.005),
+          agent: +parseEther(0.000015), // ~ 0.016 usd
+          safe: +parseEther(0.000015), // ~ 0.016 usd
         },
         [MODE_TOKEN_CONFIG[TokenSymbol.USDC].address as string]: {
           agent: 0,
-          safe: +parseUnits(16, MODE_TOKEN_CONFIG[TokenSymbol.USDC].decimals),
+          safe: +parseUnits(0.1, MODE_TOKEN_CONFIG[TokenSymbol.USDC].decimals),
         },
       },
     },
