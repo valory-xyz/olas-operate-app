@@ -16,7 +16,7 @@ This guide explains how to withdraw funds stored in the
 > [!IMPORTANT]
 > This guide does **not** cover removing external investments (e.g., liquidity pools) made by the agent. Ensure that the agent has withdrawn any such funds to the **Agent Safe** before proceeding.
 
-## Step 1: Withdraw funds from and Agent Safe
+## Step 1: Withdraw funds from Agent Safe
 
 In this process you have to connect to **Master Safe** via **Master EOA** and execute a transaction in **Agent Safe**.
 
@@ -57,7 +57,7 @@ To withdraw funds from the Agent EOA and Agent Safe you have to access contents 
    4. This will, in turn, require approval from Metamask on the connected EOA.
    5. Repeat the process for as many tokens you wish to transfer.
 
-## Step 1: Withdraw funds from and Agent EOA
+## Step 2: Withdraw funds from Agent EOA
 
 1. **Import the Agent EOA into Metamask.**
    1. Copy the **Agent EOA private key**.
