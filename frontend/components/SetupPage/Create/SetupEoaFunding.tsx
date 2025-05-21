@@ -184,6 +184,7 @@ const SetupEoaFundingForChainV2 = ({
         }
       />
     </CardSection>
+
     <WaitingForTransactionCard className="mt-16">
       <Flex gap={8} align="center">
         <Image
