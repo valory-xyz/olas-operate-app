@@ -167,8 +167,8 @@ const SetupEoaFundingForChainV2 = ({
 }: SetupEoaFundingPropsV2) => (
   <>
     <Paragraph style={{ marginBottom: 12 }}>
-      Send funds on Base to create your account. Additional funds for staking
-      and operating your agent will be requested separately.
+      Send funds on {chainName} to create your account. Additional funds for
+      staking and operating your agent will be requested separately.
     </Paragraph>
 
     <CardSection>
@@ -184,6 +184,7 @@ const SetupEoaFundingForChainV2 = ({
         }
       />
     </CardSection>
+
     <WaitingForTransactionCard className="mt-16">
       <Flex gap={8} align="center">
         <Image
