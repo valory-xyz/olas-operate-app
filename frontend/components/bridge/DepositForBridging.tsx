@@ -187,41 +187,40 @@ export const DepositForBridging = ({
 
     if (!bridgeTotalRequirements || !bridgeRefillRequirements) return [];
 
-    return Object.entries(bridgeTotalRequirements).map(
-      ([tokenAddress, totalRequired]) => {
-        const totalRequiredInWei = BigInt(totalRequired);
+    const totalRequirements = Object.entries(bridgeTotalRequirements);
+    return totalRequirements.map(([tokenAddress, totalRequired]) => {
+      const totalRequiredInWei = BigInt(totalRequired);
 
-        // current balance = total_required_amount - required_amount
-        // eg. if total_required_amount = 1000 and required_amount = 200,
-        // then the assumed current_balance = 1000 - 200 = 800
-        const currentBalanceInWei =
-          totalRequiredInWei -
-          BigInt(bridgeRefillRequirements[tokenAddress as Address] || 0);
+      // current balance = total_required_amount - required_amount
+      // eg. if total_required_amount = 1000 and required_amount = 200,
+      // then the assumed current_balance = 1000 - 200 = 800
+      const currentBalanceInWei =
+        totalRequiredInWei -
+        BigInt(bridgeRefillRequirements[tokenAddress as Address] || 0);
 
-        const token = Object.values(ETHEREUM_TOKEN_CONFIG).find((tokenInfo) => {
-          if (tokenAddress === AddressZero && !tokenInfo.address) return true;
-          return areAddressesEqual(tokenInfo.address!, tokenAddress);
-        });
+      const token = Object.values(ETHEREUM_TOKEN_CONFIG).find((tokenInfo) => {
+        if (tokenAddress === AddressZero && !tokenInfo.address) return true;
+        return areAddressesEqual(tokenInfo.address!, tokenAddress);
+      });
 
-        if (!token) {
-          throw new Error(
-            `Failed to get the token info for the following token address: ${tokenAddress}`,
-          );
-        }
+      if (!token) {
+        throw new Error(
+          `Failed to get the token info for the following token address: ${tokenAddress}`,
+        );
+      }
 
-        const areFundsReceived = totalRequiredInWei - currentBalanceInWei <= 0;
+      const areFundsReceived = totalRequiredInWei - currentBalanceInWei <= 0;
 
-        return {
-          address: tokenAddress as Address,
-          symbol: token.symbol,
-          totalRequiredInWei,
-          currentBalanceInWei,
-          areFundsReceived,
-          decimals: token.decimals,
-          isNative: token.tokenType === TokenType.NativeGas,
-        } satisfies DepositTokenDetails;
-      },
-    );
+      return {
+        address: tokenAddress as Address,
+        symbol: token.symbol,
+        totalRequiredInWei,
+        currentBalanceInWei,
+        areFundsReceived,
+        decimals: token.decimals,
+        isNative: token.tokenType === TokenType.NativeGas,
+      } satisfies DepositTokenDetails;
+    });
   }, [bridgeFundingRequirements, masterEoa]);
 
   // After the user has deposited the required funds,
