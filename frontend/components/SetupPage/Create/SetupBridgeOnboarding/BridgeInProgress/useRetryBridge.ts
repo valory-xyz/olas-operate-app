@@ -1,3 +1,4 @@
+import { message } from 'antd';
 import { useCallback } from 'react';
 
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
@@ -17,7 +18,15 @@ export const useRetryBridge = () => {
       if (!refetch) return;
 
       const { data } = await refetch();
-      onRetryOutcome(data?.is_refill_required ? 'NEED_REFILL' : null);
+      if (!data) return;
+
+      if (data?.is_refill_required) {
+        onRetryOutcome('NEED_REFILL');
+      } else {
+        message.info(
+          'Funds have been successfully bridged, please reopen the app if you are not redirected automatically.',
+        );
+      }
     },
     [refetch],
   );
