@@ -25,7 +25,6 @@ export const useMasterSafeCreationAndTransfer = (
         const response = await WalletService.createSafe(
           chain,
           backupSignerAddress,
-          true, // transfer excess assets ("true" for bridge onboarding)
         );
 
         return {
