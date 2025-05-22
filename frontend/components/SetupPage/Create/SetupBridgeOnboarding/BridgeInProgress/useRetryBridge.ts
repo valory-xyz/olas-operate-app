@@ -23,9 +23,11 @@ export const useRetryBridge = () => {
       if (data?.is_refill_required) {
         onRetryOutcome('NEED_REFILL');
       } else {
-        message.info(
-          'Funds have been successfully bridged, please reopen the app if you are not redirected automatically.',
-        );
+        message.open({
+          icon: null,
+          content:
+            "Bridging complete! Please restart the app if you're not redirected automatically.",
+        });
       }
     },
     [refetch],
