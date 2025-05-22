@@ -8,6 +8,15 @@ import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 
 import {
+  modiusAgentFieldOptionalProps,
+  modiusAgentFieldProps,
+  requiredRules,
+  validateApiKey,
+  validateMessages,
+  validateSlug,
+} from '../AgentForms/common/formUtils';
+import { InvalidGeminiApiCredentials } from '../AgentForms/common/InvalidGeminiApiCredentials';
+import {
   CoinGeckoApiKeyLabel,
   ModiusGeminiApiKeyLabel,
   TenderlyAccessTokenLabel,
@@ -15,17 +24,6 @@ import {
   TenderlyProjectSlugLabel,
 } from '../SetupPage/SetupYourAgent/ModiusAgentForm/labels';
 import { useModiusFormValidate } from '../SetupPage/SetupYourAgent/ModiusAgentForm/useModiusFormValidate';
-// TODO: move the following hook/components to a shared place
-// once Modius work is merged
-import {
-  modiusAgentFieldOptionalProps,
-  modiusAgentFieldProps,
-  requiredRules,
-  validateApiKey,
-  validateMessages,
-  validateSlug,
-} from '../SetupPage/SetupYourAgent/shared/formUtils';
-import { InvalidGeminiApiCredentials } from '../SetupPage/SetupYourAgent/shared/InvalidGeminiApiCredentials';
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
