@@ -9,8 +9,8 @@ import { parseEther, parseUnits } from '@/utils/numberFormatters';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
-  name: 'Trader Agent', // Should be unique across all services and not be updated
-  hash: 'bafybeidjghfanh4ligtaqwjjxelebeykum23ckbaekxoxdgxrcpaxwhubm',
+  name: 'Trader Agent', // should be unique across all services and not be updated
+  hash: 'bafybeie2p3lw5iaj44yymwxjdjqpdx6jxgfz4vmq6gpt3e63yipjujaqnu',
   description: 'Trader agent for omen prediction markets',
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
@@ -99,11 +99,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeieqcjtgrn33q3mjevwp6ituytmudlq656ux6ofplzc7omtd5osdqy',
+  hash: 'bafybeiajnpysvflxlbsynl4ybsdhgbbrx5hdjvzzdsxnbb6ejia4mrdmdi',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.4.2-alpha2',
+  service_version: 'v0.5.0-alpha3',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -117,26 +117,32 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    TWIKIT_USERNAME: {
-      name: 'Twitter username',
+    TWEEPY_CONSUMER_API_KEY: {
+      name: 'Twitter consumer API key',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    TWIKIT_EMAIL: {
-      name: 'Twitter email',
+    TWEEPY_CONSUMER_API_KEY_SECRET: {
+      name: 'Twitter consumer API key secret',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    TWIKIT_PASSWORD: {
-      name: 'Twitter password',
+    TWEEPY_BEARER_TOKEN: {
+      name: 'Twitter bearer token',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    TWIKIT_COOKIES: {
-      name: 'Twitter cookies',
+    TWEEPY_ACCESS_TOKEN: {
+      name: 'Twitter access token',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    TWEEPY_ACCESS_TOKEN_SECRET: {
+      name: 'Twitter access token secret',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
@@ -259,7 +265,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeife3l2d2vlznwwfsyx27kd2csxi6apul7ggroy377t573oltezwlm',
+  hash: 'bafybeicjz2hqbptzoutvkiht6vxt255ibfmkg5spcypuavzpvgx3s4yiuq',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',

@@ -16,6 +16,7 @@ import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
+import { useSharedContext } from '@/hooks/useSharedContext';
 import {
   useActiveStakingContractDetails,
   useStakingContractContext,
@@ -33,6 +34,7 @@ import { updateServiceIfNeeded } from '@/utils/service';
  */
 const useServiceDeployment = () => {
   const { showNotification } = useElectronApi();
+  const { isMemeooorrFieldUpdateCompleted } = useSharedContext();
 
   const { goto: gotoPage } = usePageState();
   const { masterWallets, masterSafes, masterEoa } = useMasterWalletContext();
@@ -96,6 +98,10 @@ const useServiceDeployment = () => {
     // and rely on canStartAgent
     if (!selectedService && isInitialFunded) return !needsInitialFunding;
 
+    // agent specific checks
+    // If the memeooorr field update is not completed, can't start the agent
+    if (!isMemeooorrFieldUpdateCompleted) return false;
+
     // allow starting based on refill requirements
     return canStartAgent;
   }, [
@@ -112,6 +118,7 @@ const useServiceDeployment = () => {
     needsInitialFunding,
     selectedStakingProgramMeta?.deprecated,
     canStartAgent,
+    isMemeooorrFieldUpdateCompleted,
   ]);
 
   const pauseAllPolling = useCallback(() => {
