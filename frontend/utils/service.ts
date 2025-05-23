@@ -5,6 +5,7 @@ import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { ServicesService } from '@/service/Services';
+import { Address } from '@/types/Address';
 import { Service } from '@/types/Service';
 import { DeepPartial } from '@/types/Util';
 
@@ -75,8 +76,8 @@ export const updateServiceIfNeeded = async (
   if (
     Object.entries(serviceHomeChainFundRequirements).some(([key, item]) => {
       return (
-        templateFundRequirements[key].agent !== item.agent ||
-        templateFundRequirements[key].safe !== item.safe
+        templateFundRequirements[key as Address].agent !== item.agent ||
+        templateFundRequirements[key as Address].safe !== item.safe
       );
     })
   ) {

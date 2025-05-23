@@ -99,13 +99,11 @@ export type ConfigurationTemplate = {
   monthly_gas_estimate: number;
   fund_requirements: {
     // zero address means native currency
-    [tokenAddress: string]: FundRequirementsTemplate;
+    [tokenAddress: Address]: {
+      agent: number;
+      safe: number;
+    };
   };
-};
-
-export type FundRequirementsTemplate = {
-  agent: number;
-  safe: number;
 };
 
 export type DeployedNodes = {

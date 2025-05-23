@@ -1,5 +1,5 @@
 import { Typography } from 'antd';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
@@ -63,6 +63,7 @@ export const BridgeInProgress = ({
   const { goto } = usePageState();
   const symbols = transfers.map((transfer) => transfer.toSymbol);
 
+  const [isBridgeRetrying, setIsBridgeRetrying] = useState(false);
   const refetchBridgeExecute = useRetryBridge();
 
   const { isBridging, isBridgingFailed, isBridgingCompleted, bridgeStatus } =
@@ -136,9 +137,12 @@ export const BridgeInProgress = ({
   ]);
 
   const onBridgeFailRetry = useCallback(() => {
+    setIsBridgeRetrying(true);
     refetchBridgeExecute((e: Nullable<BridgeRetryOutcome>) =>
       onBridgeRetryOutcome(e),
-    );
+    ).finally(() => {
+      setIsBridgeRetrying(false);
+    });
   }, [refetchBridgeExecute, onBridgeRetryOutcome]);
 
   const bridgeDetails = useMemo(() => {
@@ -157,7 +161,9 @@ export const BridgeInProgress = ({
       subSteps: (bridgeStatus || []).map((step) => ({
         ...step,
         onRetry: onBridgeFailRetry,
-        onRetryProps: { isLoading: currentBridgeStatus === 'process' },
+        onRetryProps: {
+          isLoading: currentBridgeStatus === 'process' || isBridgeRetrying,
+        },
       })) satisfies StepEvent[],
     };
   }, [
@@ -166,6 +172,7 @@ export const BridgeInProgress = ({
     isBridgingFailed,
     isBridgingCompleted,
     bridgeStatus,
+    isBridgeRetrying,
     onBridgeFailRetry,
   ]);
 
@@ -242,7 +249,7 @@ export const BridgeInProgress = ({
         />
         {!!bridgeDetails && (
           <BridgingSteps
-            chainName="Base"
+            chainName={toChain}
             bridge={bridgeDetails}
             masterSafeCreation={masterSafeCreationDetails}
             masterSafeTransfer={masterSafeTransferDetails}

@@ -30,12 +30,11 @@ const createEoa = async () =>
 const createSafe = async (
   chain: MiddlewareChain,
   backup_owner?: string,
-  transfer_excess_assets?: boolean,
 ): Promise<SafeCreationResponse> =>
   fetch(`${BACKEND_URL}/wallet/safe`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    body: JSON.stringify({ chain, backup_owner, transfer_excess_assets }),
+    body: JSON.stringify({ chain, backup_owner, transfer_excess_assets: true }),
   }).then((res) => {
     if (res.ok) return res.json();
     throw new Error('Failed to create safe');

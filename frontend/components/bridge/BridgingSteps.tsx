@@ -1,6 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Flex, Steps, Typography } from 'antd';
-import { noop } from 'lodash';
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
@@ -34,7 +33,7 @@ const TxnDetails = ({ link }: { link: string }) => (
 
 type FundsAreSafeMessageProps = Pick<StepEvent, 'onRetry' | 'onRetryProps'>;
 const FundsAreSafeMessage = ({
-  onRetry = noop,
+  onRetry,
   onRetryProps,
 }: FundsAreSafeMessageProps) => (
   <Flex vertical gap={8} align="flex-start" className="mt-12 text-sm">
@@ -63,6 +62,10 @@ const FundsAreSafeMessage = ({
       <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">
         the Olas community Discord server {UNICODE_SYMBOLS.EXTERNAL_LINK}
       </a>
+    </Text>
+
+    <Text className="text-sm text-lighter">
+      You can also try restarting the app!
     </Text>
   </Flex>
 );
