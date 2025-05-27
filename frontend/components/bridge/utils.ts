@@ -93,7 +93,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
       const monthlyGasEstimate =
         SERVICE_TEMPLATES.find(
           (template) => template.home_chain === toMiddlewareChain,
-        )?.configurations[toMiddlewareChain].monthly_gas_estimate ?? 0;
+        )?.configurations[toMiddlewareChain]?.monthly_gas_estimate ?? 0;
 
       // amount = max(refill_requirement_masterSafe, monthly_gas_estimate) + refill_requirements_masterEOA
       const amount =
