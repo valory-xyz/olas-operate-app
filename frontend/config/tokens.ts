@@ -42,6 +42,26 @@ export type ChainTokenConfig = {
   [tokenSymbol: string]: TokenConfig;
 };
 
+export const ETHEREUM_TOKEN_CONFIG: ChainTokenConfig = {
+  [TokenSymbol.ETH]: {
+    tokenType: TokenType.NativeGas,
+    decimals: 18,
+    symbol: TokenSymbol.ETH,
+  },
+  [TokenSymbol.OLAS]: {
+    address: '0x0001A500A6B18995B03f44bb040A5fFc28E45CB0',
+    decimals: 18,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbol.OLAS,
+  },
+  [TokenSymbol.USDC]: {
+    address: '0xA0b86991c6218b36c1d19D4a2e9EB0CE3606EB48',
+    decimals: 6,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbol.USDC,
+  },
+} as const;
+
 const GNOSIS_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbol.XDAI]: {
     decimals: 18,
@@ -140,6 +160,11 @@ export const OPTIMISM_TOKEN_CONFIG: ChainTokenConfig = {
   },
 };
 
+/**
+ * TODO:
+ * 1. combine EvmChainId and AllEvmChainId into one thing to avoid confusion
+ * 2. include ethereum config into this and make it so balances are not requested for it
+ */
 export const TOKEN_CONFIG: Record<EvmChainId, ChainTokenConfig> = {
   [EvmChainId.Gnosis]: GNOSIS_TOKEN_CONFIG,
   [EvmChainId.Base]: BASE_TOKEN_CONFIG,

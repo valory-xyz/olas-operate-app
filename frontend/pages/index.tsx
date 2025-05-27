@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 
 import { AgentActivityPage } from '@/components/AgentActivity';
 import { AgentSelection } from '@/components/AgentSelection';
+import { AddFundsThroughBridge } from '@/components/bridge/AddFundsThroughBridge';
 import { Main } from '@/components/MainPage';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { AddBackupWalletViaSafePage } from '@/components/Pages/AddBackupWalletViaSafePage';
@@ -67,6 +68,11 @@ export default function Home() {
         return <AgentActivityPage />;
       case Pages.UpdateAgentTemplate:
         return <UpdateAgentPage />;
+
+      // bridge pages
+      case Pages.AddFundsThroughBridge:
+        return <AddFundsThroughBridge />;
+
       default:
         return <Main />;
     }

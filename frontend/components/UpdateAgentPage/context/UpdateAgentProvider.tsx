@@ -18,6 +18,7 @@ import { useServices } from '@/hooks/useServices';
 import { ServicesService } from '@/service/Services';
 import { DeepPartial } from '@/types/Util';
 
+import { MemeooorrFormValues } from '../../AgentForms/MemeooorrAgentForm';
 import { useConfirmUpdateModal } from '../hooks/useConfirmModal';
 import { defaultModalProps, ModalProps } from '../hooks/useModal';
 import { useUnsavedModal } from '../hooks/useUnsavedModal';
@@ -60,20 +61,38 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
         name === selectedService.name || agentType === selectedAgentType,
     );
 
-    // TODO: This should be in MemesUpdatePage and not here
-    // Better approach would be to pass formValues as a argument to the function
-    if (selectedAgentType === AgentType.Memeooorr) {
-      if ('fireworksApiEnabled' in formValues) {
-        delete formValues.fireworksApiEnabled;
+    const memeooorrFormValues = formValues as MemeooorrFormValues;
+
+    const envVariables = (() => {
+      if (selectedAgentType === AgentType.Memeooorr) {
+        return {
+          PERSONA: memeooorrFormValues.personaDescription,
+          GENAI_API_KEY: memeooorrFormValues.geminiApiKey,
+          FIREWORKS_API_KEY: memeooorrFormValues.fireworksApiEnabled
+            ? memeooorrFormValues.fireworksApiKey
+            : '',
+          TWEEPY_CONSUMER_API_KEY: memeooorrFormValues.xConsumerApiKey,
+          TWEEPY_CONSUMER_API_KEY_SECRET:
+            memeooorrFormValues.xConsumerApiSecret,
+          TWEEPY_BEARER_TOKEN: memeooorrFormValues.xBearerToken,
+          TWEEPY_ACCESS_TOKEN: memeooorrFormValues.xAccessToken,
+          TWEEPY_ACCESS_TOKEN_SECRET: memeooorrFormValues.xAccessTokenSecret,
+        };
       }
-    }
+      return formValues.env_variables;
+    })() as ServiceTemplate['env_variables'];
+
+    const formValuesWithoutEnv =
+      selectedAgentType === AgentType.Memeooorr
+        ? { description: `Memeooorr @${memeooorrFormValues.xUsername}` }
+        : formValues;
 
     const partialServiceTemplate = {
       serviceConfigId: selectedService.service_config_id,
       partialServiceTemplate: {
-        ...formValues,
+        ...formValuesWithoutEnv,
         env_variables: {
-          ...Object.entries(formValues.env_variables ?? {}).reduce(
+          ...Object.entries(envVariables).reduce(
             (acc, [key, value]) => ({
               ...acc,
               [key]: {

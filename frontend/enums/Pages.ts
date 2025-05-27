@@ -12,4 +12,5 @@ export enum Pages {
   SwitchAgent,
   AgentActivity,
   UpdateAgentTemplate,
+  AddFundsThroughBridge,
 }

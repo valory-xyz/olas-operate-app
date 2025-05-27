@@ -25,7 +25,6 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
-const { Scraper } = require('agent-twitter-client');
 const { checkUrl } = require('./utils');
 
 // Validates environment variables required for Pearl
@@ -177,8 +176,7 @@ async function beforeQuit(event) {
     );
     logger.electron('Killed backend server by shutdown endpoint!');
     logger.electron(
-      'Killed backend server by shutdown endpoint! result:' +
-        JSON.stringify(result),
+      `Killed backend server by shutdown endpoint! result: ${JSON.stringify(result)}`,
     );
   } catch (err) {
     logger.electron('Backend stopped with error!');
@@ -320,30 +318,6 @@ const createMainWindow = async () => {
   });
 
   ipcMain.handle('app-version', () => app.getVersion());
-
-  // Handle twitter login
-  ipcMain.handle('validate-twitter-login', async (_event, credentials) => {
-    const { username, password, email } = credentials;
-
-    logger.electron('Validating X login:', { username });
-    if (!username || !password || !email) {
-      logger.electron('Missing credentials for X login');
-      return { success: false, error: 'Missing credentials' };
-    }
-
-    try {
-      const scraper = new Scraper();
-
-      await scraper.login(username, password, email);
-      const cookies = await scraper.getCookies();
-      logger.electron('X login successful!');
-      return { success: true, cookies };
-    } catch (error) {
-      logger.electron('X login failed:', error);
-      console.error('X login error:', error);
-      return { success: false, error: error.message };
-    }
-  });
 
   // Get the agent's current state
   ipcMain.handle('health-check', async (_event) => {
@@ -762,7 +736,9 @@ function sanitizeLogs({
   return sanitizedLogsFilePath;
 }
 
-// EXPORT LOGS
+/**
+ * Exports logs by creating a zip file containing sanitized logs and other relevant data.
+ */
 ipcMain.handle('save-logs', async (_, data) => {
   const cliLogFiles = fs
     .readdirSync(paths.dotOperateDirectory)
@@ -794,11 +770,12 @@ ipcMain.handle('save-logs', async (_, data) => {
   fs.writeFileSync(osInfoFilePath, osInfo);
 
   // Persistent store
-  if (data.store)
+  if (data.store) {
     sanitizeLogs({
       name: 'store.txt',
       data: JSON.stringify(data.store, null, 2),
     });
+  }
 
   // Other debug data: balances, addresses, etc.
   if (data.debugData) {
@@ -822,6 +799,16 @@ ipcMain.handle('save-logs', async (_, data) => {
       name: 'debug_data.json',
       data: JSON.stringify(clonedDebugData, null, 2),
     });
+  }
+
+  // Bridge logs
+  try {
+    const bridgeLogFilePath = path.join(paths.bridgeDirectory, 'bridge.json');
+    if (fs.existsSync(bridgeLogFilePath)) {
+      sanitizeLogs({ name: 'bridge.json', filePath: bridgeLogFilePath });
+    }
+  } catch (e) {
+    logger.electron(e);
   }
 
   // Agent logs
@@ -898,12 +885,12 @@ ipcMain.handle('save-logs', async (_, data) => {
   }
 
   // Remove temporary files
-  fs.existsSync(paths.osPearlTempDir) &&
+  if (fs.existsSync(paths.osPearlTempDir)) {
     fs.rmSync(paths.osPearlTempDir, {
       recursive: true,
       force: true,
     });
-
+  }
   return result;
 });
 
