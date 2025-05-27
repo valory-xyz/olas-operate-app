@@ -8,6 +8,7 @@ import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
+import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
 
 import { MODE_TOKEN_CONFIG } from './tokens';
@@ -17,7 +18,7 @@ const modiusFundRequirements =
     .fund_requirements;
 const modiusUsdcConfig =
   modiusFundRequirements?.[
-    MODE_TOKEN_CONFIG[TokenSymbol.USDC].address as string
+    MODE_TOKEN_CONFIG[TokenSymbol.USDC].address as Address
   ];
 
 export const AGENT_CONFIG: {
