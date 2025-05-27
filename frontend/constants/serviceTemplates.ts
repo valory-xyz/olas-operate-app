@@ -7,11 +7,17 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { TokenSymbol } from '@/enums/Token';
 import { parseEther, parseUnits } from '@/utils/numberFormatters';
 
+/**
+ * Prefix for KPI description in service templates.
+ * This is used track services that are part of the Pearl service suite.
+ */
+export const KPI_DESC_PREFIX = '[Pearl service]';
+
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
   hash: 'bafybeihe7r2a2vnbbqrzczlzjhhmzypxbre3gobupc65w4ea266hmk5efu',
-  description: 'Trader agent for omen prediction markets',
+  description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
   service_version: 'v0.25.5',
@@ -102,7 +108,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   hash: 'bafybeiajnpysvflxlbsynl4ybsdhgbbrx5hdjvzzdsxnbb6ejia4mrdmdi',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
-  description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
+  description: `${KPI_DESC_PREFIX} Memeooorr @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
   service_version: 'v0.5.0-alpha3',
   env_variables: {
     BASE_LEDGER_RPC: {
@@ -210,7 +216,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
  */
 export const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Memeooorr,
-  name: 'Memeooorr', // Should be unique across all services and not be updated
+  name: 'Memeooorr',
   home_chain: MiddlewareChain.BASE,
   configurations: {
     [MiddlewareChain.BASE]: {
@@ -239,7 +245,7 @@ export const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
  */
 export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.AgentsFunCelo,
-  name: 'Memeooorr - Celo', // Should be unique across all services and not be updated
+  name: 'Memeooorr - Celo',
   home_chain: MiddlewareChain.CELO,
   configurations: {
     [MiddlewareChain.CELO]: {
@@ -264,9 +270,9 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
-  name: 'Optimus', // Should be unique across all services and not be updated
+  name: 'Optimus',
   hash: 'bafybeicxflz5lzklgc522zytvwi4rgycghdqdmzgkxojnjatommr7qvqfm',
-  description: 'Optimus',
+  description: `${KPI_DESC_PREFIX} Optimus`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
   service_version: 'v0.3.15',
