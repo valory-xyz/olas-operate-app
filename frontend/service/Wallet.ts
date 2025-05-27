@@ -1,6 +1,7 @@
 import { MiddlewareChain, MiddlewareWalletResponse } from '@/client';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL } from '@/constants/urls';
+import { SafeCreationResponse } from '@/types/Wallet';
 
 /**
  * Returns a list of available wallets
@@ -23,11 +24,17 @@ const createEoa = async () =>
     throw new Error('Failed to create EOA');
   });
 
-const createSafe = async (chain: MiddlewareChain, backup_owner?: string) =>
+/**
+ * @param initial_funds - Funds to be sent to master safe from master EOA
+ */
+const createSafe = async (
+  chain: MiddlewareChain,
+  backup_owner?: string,
+): Promise<SafeCreationResponse> =>
   fetch(`${BACKEND_URL}/wallet/safe`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    body: JSON.stringify({ chain, backup_owner, fund_amount: 0 }),
+    body: JSON.stringify({ chain, backup_owner, transfer_excess_assets: true }),
   }).then((res) => {
     if (res.ok) return res.json();
     throw new Error('Failed to create safe');

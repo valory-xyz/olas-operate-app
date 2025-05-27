@@ -12,6 +12,7 @@ import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
+import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
 
 import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from './tokens';
@@ -22,7 +23,7 @@ const getModiusUsdcConfig = () => {
       ?.fund_requirements;
   const modiusUsdcConfig = MODE_TOKEN_CONFIG[TokenSymbol.USDC];
   const usdcSafeRequirement =
-    modiusFundRequirements?.[modiusUsdcConfig.address as string]?.safe || 0;
+    modiusFundRequirements?.[modiusUsdcConfig.address as Address]?.safe || 0;
   return Number(formatUnits(usdcSafeRequirement, modiusUsdcConfig.decimals));
 };
 
@@ -32,7 +33,7 @@ const getOptimusUsdcConfig = () => {
       ?.fund_requirements;
   const optimusUsdcConfig = OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC];
   const usdcSafeRequirement =
-    optimusFundRequirements?.[optimusUsdcConfig.address as string]?.safe || 0;
+    optimusFundRequirements?.[optimusUsdcConfig.address as Address]?.safe || 0;
 
   return Number(formatUnits(usdcSafeRequirement, optimusUsdcConfig.decimals));
 };

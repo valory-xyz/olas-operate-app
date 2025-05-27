@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react';
 
-import { validateGeminiApiKey, ValidationStatus } from '../shared/validations';
+import {
+  validateGeminiApiKey,
+  ValidationStatus,
+} from '../../../AgentForms/common/validations';
 
 export type ModiusFieldValues = {
   tenderlyAccessToken: string;

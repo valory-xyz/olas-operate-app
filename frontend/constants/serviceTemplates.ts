@@ -9,12 +9,12 @@ import { parseEther, parseUnits } from '@/utils/numberFormatters';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
-  name: 'Trader Agent', // Should be unique across all services and not be updated
-  hash: 'bafybeihgmbbjtkrlu62bkm3e4j2ehqipv5huqpifjiyttvjrk4sikwsfzu',
+  name: 'Trader Agent', // should be unique across all services and not be updated
+  hash: 'bafybeihe7r2a2vnbbqrzczlzjhhmzypxbre3gobupc65w4ea266hmk5efu',
   description: 'Trader agent for omen prediction markets',
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.25.0',
+  service_version: 'v0.25.5',
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
@@ -83,7 +83,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
-      value: 'QmVCKTpXjK6gtcsCBivrGVaH1rQuBgtEVVMTjmn3uE1mZp',
+      value: 'QmTzMoaEtSRdAnVxpziXVNwqYcE6HVZpGs6TM8vhWw1HPt',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
+      name: 'Mech interact round timeout',
+      description: '',
+      value: '900', // 15 min
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -93,11 +99,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeidxfdlaeywhnhafix2yzrnbldk5cybwal53o6mtabnamnxmwtprea',
+  hash: 'bafybeiajnpysvflxlbsynl4ybsdhgbbrx5hdjvzzdsxnbb6ejia4mrdmdi',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
-  service_version: 'v0.4.2-alpha1',
+  service_version: 'v0.5.0-alpha3',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -111,26 +117,32 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    TWIKIT_USERNAME: {
-      name: 'Twitter username',
+    TWEEPY_CONSUMER_API_KEY: {
+      name: 'Twitter consumer API key',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    TWIKIT_EMAIL: {
-      name: 'Twitter email',
+    TWEEPY_CONSUMER_API_KEY_SECRET: {
+      name: 'Twitter consumer API key secret',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    TWIKIT_PASSWORD: {
-      name: 'Twitter password',
+    TWEEPY_BEARER_TOKEN: {
+      name: 'Twitter bearer token',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    TWIKIT_COOKIES: {
-      name: 'Twitter cookies',
+    TWEEPY_ACCESS_TOKEN: {
+      name: 'Twitter access token',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    TWEEPY_ACCESS_TOKEN_SECRET: {
+      name: 'Twitter access token secret',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
@@ -253,7 +265,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeiecjxha2ouqupttgdax7j4xmzfr6icuu55kq5xo2bwhkrl2po5khq',
+  hash: 'bafybeicxflz5lzklgc522zytvwi4rgycghdqdmzgkxojnjatommr7qvqfm',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',

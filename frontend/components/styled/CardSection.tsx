@@ -4,10 +4,15 @@ import styled from 'styled-components';
 import { COLOR } from '@/constants/colors';
 
 type CardSectionProps = FlexProps & {
+  /** @deprecated Use $borderTop instead */
   bordertop?: 'true' | 'false';
+  /** @deprecated Use $borderBottom instead */
   borderbottom?: 'true' | 'false';
+  /** @deprecated Use $padding instead */
   padding?: string;
-  vertical?: boolean;
+  $borderTop?: boolean;
+  $borderBottom?: boolean;
+  $padding?: string;
 };
 
 /**
@@ -17,19 +22,26 @@ type CardSectionProps = FlexProps & {
  */
 export const CardSection = styled(Flex)<CardSectionProps>`
   ${(props) => {
-    const { padding, borderbottom, bordertop } = props;
+    const {
+      padding,
+      borderbottom,
+      bordertop,
+      vertical,
+      $borderBottom,
+      $borderTop,
+      $padding,
+    } = props;
 
-    const paddingStyle = `padding: ${padding ?? '0px'};`;
+    const paddingStyle = `padding: ${(padding || $padding) ?? '0px'};`;
     const borderTopStyle =
-      bordertop === 'true'
+      bordertop === 'true' || $borderTop
         ? `border-top: 1px solid ${COLOR.BORDER_GRAY};`
         : 'border-top: none;';
     const borderBottomStyle =
-      borderbottom === 'true'
+      borderbottom === 'true' || $borderBottom
         ? `border-bottom: 1px solid ${COLOR.BORDER_GRAY};`
         : 'border-bottom: none;';
-
-    const verticalStyle = props.vertical ? 'flex-direction: column;' : '';
+    const verticalStyle = vertical ? 'flex-direction: column;' : '';
 
     return `
       ${paddingStyle}

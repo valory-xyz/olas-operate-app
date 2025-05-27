@@ -19,10 +19,10 @@ const SWAP_OPTIMISM_URL: Url =
   'https://balancer.fi/pools/optimism/v2/0x5bb3e58887264b667f915130fd04bbb56116c27800020000000000000000012a';
 
 // olas.network
-export const OPERATE_URL: Url = 'https://olas.network/operate';
-export const FAQ_URL: Url = 'https://olas.network/operate#faq';
+export const PEARL_URL: Url = 'https://olas.network/pearl';
+export const FAQ_URL: Url = 'https://olas.network/pearl#faq';
 export const TERMS_AND_CONDITIONS_URL: Url = 'https://olas.network/pearl-terms';
-export const DOWNLOAD_URL: Url = 'https://olas.network/operate#download';
+export const DOWNLOAD_URL: Url = 'https://olas.network/pearl#download';
 
 // thegraph
 export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
