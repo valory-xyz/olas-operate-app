@@ -99,7 +99,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeiajnpysvflxlbsynl4ybsdhgbbrx5hdjvzzdsxnbb6ejia4mrdmdi',
+  hash: 'bafybeiaymgtbsxf6zyoedpgocdjqd5qfnyr3ugybwo7u3iqyiseti4bzke',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
@@ -265,7 +265,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeicxflz5lzklgc522zytvwi4rgycghdqdmzgkxojnjatommr7qvqfm',
+  hash: 'bafybeidjtlrave3ck3usj3cr3wd6vjjipa7dhcoxv6manoqo6mayiyjuu4',
   description: 'Optimus',
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
