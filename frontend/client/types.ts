@@ -102,13 +102,11 @@ export type ConfigurationTemplate = {
   monthly_gas_estimate: number;
   fund_requirements: {
     // zero address means native currency
-    [tokenAddress: string]: FundRequirementsTemplate;
+    [tokenAddress: Address]: {
+      agent: number;
+      safe: number;
+    };
   };
-};
-
-export type FundRequirementsTemplate = {
-  agent: number;
-  safe: number;
 };
 
 export type DeployedNodes = {
@@ -145,10 +143,12 @@ export type MiddlewareWalletResponse = {
   safe_nonce: number;
 };
 
+export type MasterSafeBalanceRecord = {
+  master_safe: { [tokenAddress: Address]: number | string };
+};
+
 export type AddressBalanceRecord = {
-  [address: Address]: {
-    [tokenAddress: Address]: number;
-  };
+  [address: Address]: { [tokenAddress: Address]: number | string };
 };
 
 export type BalancesAndFundingRequirements = {
@@ -161,10 +161,14 @@ export type BalancesAndFundingRequirements = {
    * If it not present or is 0, the balance is sufficient.
    */
   refill_requirements: Partial<{
-    [chain in MiddlewareChain]: AddressBalanceRecord;
+    [chain in MiddlewareChain]: AddressBalanceRecord | MasterSafeBalanceRecord;
   }>;
+  total_requirements: {
+    [chain in MiddlewareChain]: AddressBalanceRecord | MasterSafeBalanceRecord;
+  };
   bonded_olas: {
     [chain in MiddlewareChain]: number;
   };
+  is_refill_required: boolean;
   allow_start_agent: boolean;
 };

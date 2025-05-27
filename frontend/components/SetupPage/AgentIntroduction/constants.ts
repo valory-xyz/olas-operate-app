@@ -41,7 +41,7 @@ export const AGENTS_FUND_ONBOARDING_STEPS: OnboardingStep[] = [
 export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: 'Your AI portfolio manager',
-    desc: 'Modius collects real-time market data from CoinGecko and autonomously manages your investments using Balancer and Sturdy — delivering hands-free portfolio growth. Requires ETH and USDC on Mode as initial investments.',
+    desc: 'Modius collects real-time market data from CoinGecko and autonomously manages your investments using Balancer, Sturdy and Velodrome — delivering hands-free portfolio growth. Requires ETH and USDC on Mode as initial investments.',
     imgSrc: 'setup-agent-modius-1',
   },
   {
@@ -49,11 +49,12 @@ export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
     desc: 'Modius learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest on your behalf.',
     imgSrc: 'setup-agent-modius-2',
   },
-  {
-    title: 'Take action',
-    desc: 'Based on its analysis and real-time market data, your Modius agent decides when its more convenient to buy, sell, or hold specific assets.',
-    imgSrc: 'setup-agent-modius-3',
-  },
+  // TODO: will be added back again.
+  // {
+  //   title: 'Take action',
+  //   desc: 'Based on its analysis and real-time market data, your Modius agent decides when its more convenient to buy, sell, or hold specific assets.',
+  //   imgSrc: 'setup-agent-modius-3',
+  // },
 ] as const;
 
 export const OPTIMUS_ONBOARDING_STEPS: OnboardingStep[] = [

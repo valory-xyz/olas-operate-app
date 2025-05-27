@@ -3,7 +3,9 @@ import { isEmpty, isNil } from 'lodash';
 import { EnvProvisionType, ServiceTemplate } from '@/client';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { ServicesService } from '@/service/Services';
+import { Address } from '@/types/Address';
 import { Service } from '@/types/Service';
 import { DeepPartial } from '@/types/Util';
 
@@ -23,17 +25,6 @@ export const updateServiceIfNeeded = async (
   // Check if the hash is different
   if (service.hash !== serviceTemplate.hash) {
     partialServiceTemplate.hash = serviceTemplate.hash;
-  }
-
-  // Temporary: check if the service has the default description
-  if (
-    serviceTemplate.agentType === AgentType.Memeooorr &&
-    service.description === serviceTemplate.description
-  ) {
-    const xUsername = service.env_variables?.TWIKIT_USERNAME?.value;
-    if (xUsername) {
-      partialServiceTemplate.description = `Memeooorr @${xUsername}`;
-    }
   }
 
   // Temporary: check if the service has incorrect name
@@ -85,8 +76,8 @@ export const updateServiceIfNeeded = async (
   if (
     Object.entries(serviceHomeChainFundRequirements).some(([key, item]) => {
       return (
-        templateFundRequirements?.[key]?.agent !== item.agent ||
-        templateFundRequirements?.[key]?.safe !== item.safe
+        templateFundRequirements?.[key as Address]?.agent !== item.agent ||
+        templateFundRequirements?.[key as Address]?.safe !== item.safe
       );
     })
   ) {
@@ -102,6 +93,17 @@ export const updateServiceIfNeeded = async (
   await ServicesService.updateService({
     serviceConfigId: service.service_config_id,
     partialServiceTemplate,
+  });
+};
+
+export const onDummyServiceCreation = async (
+  stakingProgramId: StakingProgramId,
+  serviceTemplateConfig: ServiceTemplate,
+) => {
+  await ServicesService.createService({
+    serviceTemplate: serviceTemplateConfig,
+    deploy: true,
+    stakingProgramId,
   });
 };
 

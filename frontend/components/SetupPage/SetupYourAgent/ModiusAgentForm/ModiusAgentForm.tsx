@@ -7,6 +7,7 @@ import { COINGECKO_URL, TENDERLY_URL } from '@/constants/urls';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { onDummyServiceCreation } from '@/utils/service';
 
 import {
   agentFieldProps,
@@ -14,16 +15,15 @@ import {
   validateApiKey,
   validateMessages,
   validateSlug,
-} from '../shared/formUtils';
-import { InvalidGeminiApiCredentials } from '../shared/InvalidGeminiApiCredentials';
+} from '../../../AgentForms/common/formUtils';
+import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyLabel,
   ModiusGeminiApiKeyLabel,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
-} from '../shared/labels';
-import { onDummyServiceCreation } from '../shared/utils';
+} from '../../../AgentForms/common/labels';
 import {
   ModiusFieldValues,
   useModiusFormValidate,

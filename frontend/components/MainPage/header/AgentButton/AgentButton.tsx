@@ -3,7 +3,6 @@ import { ErrorBoundary } from 'next/dist/client/components/error-boundary';
 import { useMemo } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
-import { ErrorComponent } from '@/components/errors/ErrorComponent';
 import { useServices } from '@/hooks/useServices';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -16,6 +15,11 @@ import { AgentNotRunningButton } from './AgentNotRunningButton';
 import { AgentRunningButton } from './AgentRunningButton';
 import { AgentStartingButton } from './AgentStartingButton';
 import { AgentStoppingButton } from './AgentStoppingButton';
+
+// TODO: add better error handling
+const ErrorComponent = () => {
+  return <strong>Something went wrong</strong>;
+};
 
 export const AgentButton = () => {
   const {
