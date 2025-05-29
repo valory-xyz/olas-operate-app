@@ -34,9 +34,9 @@ export type ModeStakingProgramId = ValueOf<typeof MODE_STAKING_PROGRAM_IDS>;
 
 export const OPTIMISM_STAKING_PROGRAM_IDS = {
   OptimusAlpha1: 'optimus_alpha',
-  // OptimusAlpha2: 'optimus_alpha_2',
-  // OptimusAlpha3: 'optimus_alpha_3',
-  // OptimusAlpha4: 'optimus_alpha_4',
+  OptimusAlpha2: 'optimus_alpha_2',
+  OptimusAlpha3: 'optimus_alpha_3',
+  OptimusAlpha4: 'optimus_alpha_4',
 } as const;
 
 export type OptimismStakingProgramId = ValueOf<

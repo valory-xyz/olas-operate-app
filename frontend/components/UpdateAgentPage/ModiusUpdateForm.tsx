@@ -8,6 +8,7 @@ import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 
 import {
+  agentFieldProps,
   requiredRules,
   validateApiKey,
   validateMessages,
