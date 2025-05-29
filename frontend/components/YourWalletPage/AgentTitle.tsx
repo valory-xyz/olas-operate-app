@@ -40,7 +40,7 @@ const ExternalAgentProfileLink = ({ href }: { href: string }) => {
   );
 };
 
-const ModiusAgentProfile = ({ onClick }: { onClick: () => void }) => {
+const PortfolioAndChatUi = ({ onClick }: { onClick: () => void }) => {
   const electronApi = useElectronApi();
   const { storeState } = useStore();
   const { selectedService, selectedAgentType } = useServices();
@@ -53,8 +53,14 @@ const ModiusAgentProfile = ({ onClick }: { onClick: () => void }) => {
 
   const canAccessProfile = useMemo(() => {
     if (!storeState) return false;
-    return storeState.modius?.isProfileWarningDisplayed ?? false;
-  }, [storeState]);
+    if (selectedAgentType === AgentType.Modius) {
+      return storeState.modius?.isProfileWarningDisplayed ?? false;
+    }
+    if (selectedAgentType === AgentType.Optimus) {
+      return storeState.optimus?.isProfileWarningDisplayed ?? false;
+    }
+    return false;
+  }, [storeState, selectedAgentType]);
 
   const handleAgentProfileClick = useCallback(() => {
     if (!!geminiApiKey || canAccessProfile) {
@@ -84,6 +90,12 @@ const ModiusAgentProfile = ({ onClick }: { onClick: () => void }) => {
     onClick();
   }, [dontShowAgain, handleDoNotShowAgain, onClick]);
 
+  const agentName = useMemo(() => {
+    if (selectedAgentType === AgentType.Modius) return 'Modius';
+    if (selectedAgentType === AgentType.Optimus) return 'Optimus';
+    return NA;
+  }, [selectedAgentType]);
+
   return (
     <>
       <a onClick={handleAgentProfileClick} className="text-sm" href="#">
@@ -98,8 +110,8 @@ const ModiusAgentProfile = ({ onClick }: { onClick: () => void }) => {
       >
         <Flex vertical gap={20}>
           <div>
-            To unlock the full functionality of Modius profile, a Gemini API key
-            is required. You can get a free Gemini API key through the{' '}
+            To unlock the full functionality of {agentName} profile, a Gemini
+            API key is required. You can get a free Gemini API key through the{' '}
             <a target="_blank" href={GEMINI_API_URL}>
               Google AI Studio
             </a>
@@ -187,7 +199,15 @@ export const AgentTitle = ({ address }: { address: Address }) => {
       middlewareChain === MiddlewareChain.MODE &&
       selectedAgentType === AgentType.Modius
     ) {
-      return <ModiusAgentProfile onClick={handleAgentUiBrowserLinkClick} />;
+      return <PortfolioAndChatUi onClick={handleAgentUiBrowserLinkClick} />;
+    }
+
+    // optimism - optimus
+    if (
+      middlewareChain === MiddlewareChain.OPTIMISM &&
+      selectedAgentType === AgentType.Optimus
+    ) {
+      return <PortfolioAndChatUi onClick={handleAgentUiBrowserLinkClick} />;
     }
 
     return null;
