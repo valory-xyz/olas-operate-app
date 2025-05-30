@@ -7,11 +7,17 @@ import { STAKING_PROGRAM_IDS } from '@/enums/StakingProgram';
 import { TokenSymbol } from '@/enums/Token';
 import { parseEther, parseUnits } from '@/utils/numberFormatters';
 
+/**
+ * Prefix for KPI description in service templates.
+ * This is used track services that are part of the Pearl service suite.
+ */
+export const KPI_DESC_PREFIX = '[Pearl service]';
+
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
   hash: 'bafybeihe7r2a2vnbbqrzczlzjhhmzypxbre3gobupc65w4ea266hmk5efu',
-  description: 'Trader agent for omen prediction markets',
+  description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
   service_version: 'v0.25.5',
@@ -83,7 +89,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
-      value: 'QmTzMoaEtSRdAnVxpziXVNwqYcE6HVZpGs6TM8vhWw1HPt',
+      value: 'QmSJ9CRvEjwsQCckMG9NXtxkQrtmmgnjpxfnTLoA1jQsUm',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
@@ -99,10 +105,10 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeiajnpysvflxlbsynl4ybsdhgbbrx5hdjvzzdsxnbb6ejia4mrdmdi',
+  hash: 'bafybeiaymgtbsxf6zyoedpgocdjqd5qfnyr3ugybwo7u3iqyiseti4bzke',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
-  description: 'Memeooorr @twitter_handle', // should be overwritten with twitter username
+  description: `${KPI_DESC_PREFIX} Memeooorr @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
   service_version: 'v0.5.0-alpha3',
   env_variables: {
     BASE_LEDGER_RPC: {
@@ -210,7 +216,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
  */
 export const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Memeooorr,
-  name: 'Memeooorr', // Should be unique across all services and not be updated
+  name: 'Memeooorr',
   home_chain: MiddlewareChain.BASE,
   configurations: {
     [MiddlewareChain.BASE]: {
@@ -239,7 +245,7 @@ export const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
  */
 export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.AgentsFunCelo,
-  name: 'Memeooorr - Celo', // Should be unique across all services and not be updated
+  name: 'Memeooorr - Celo',
   home_chain: MiddlewareChain.CELO,
   configurations: {
     [MiddlewareChain.CELO]: {
@@ -264,9 +270,9 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
-  name: 'Optimus', // Should be unique across all services and not be updated
-  hash: 'bafybeicxflz5lzklgc522zytvwi4rgycghdqdmzgkxojnjatommr7qvqfm',
-  description: 'Optimus',
+  name: 'Optimus',
+  hash: 'bafybeidjtlrave3ck3usj3cr3wd6vjjipa7dhcoxv6manoqo6mayiyjuu4',
+  description: `${KPI_DESC_PREFIX} Optimus`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
   service_version: 'v0.3.15',
