@@ -77,7 +77,7 @@ export type MiddlewareServiceResponse = {
 
 export type ServiceTemplate = {
   agentType: AgentType;
-  name: string;
+  name: string; // Should be unique across all services
   hash: string;
   description: string;
   image: string;
