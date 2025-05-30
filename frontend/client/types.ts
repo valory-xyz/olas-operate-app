@@ -76,7 +76,7 @@ export type MiddlewareServiceResponse = {
 
 export type ServiceTemplate = {
   agentType: AgentType;
-  name: string;
+  name: string; // Should be unique across all services
   hash: string;
   description: string;
   image: string;
@@ -99,13 +99,11 @@ export type ConfigurationTemplate = {
   monthly_gas_estimate: number;
   fund_requirements: {
     // zero address means native currency
-    [tokenAddress: string]: FundRequirementsTemplate;
+    [tokenAddress: Address]: {
+      agent: number;
+      safe: number;
+    };
   };
-};
-
-export type FundRequirementsTemplate = {
-  agent: number;
-  safe: number;
 };
 
 export type DeployedNodes = {

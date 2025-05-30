@@ -1,10 +1,14 @@
 import { isEmpty, isNil } from 'lodash';
 
 import { EnvProvisionType, ServiceTemplate } from '@/client';
-import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
+import {
+  KPI_DESC_PREFIX,
+  SERVICE_TEMPLATES,
+} from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { ServicesService } from '@/service/Services';
+import { Address } from '@/types/Address';
 import { Service } from '@/types/Service';
 import { DeepPartial } from '@/types/Util';
 
@@ -32,6 +36,11 @@ export const updateServiceIfNeeded = async (
     service.name !== serviceTemplate.name
   ) {
     partialServiceTemplate.name = serviceTemplate.name;
+  }
+
+  // If the description doesn't include "[Pearl service]" then update it
+  if (!service.description.includes(KPI_DESC_PREFIX)) {
+    partialServiceTemplate.description = `${KPI_DESC_PREFIX} ${service.description}`;
   }
 
   // Check if there's a need to update or add env variables
@@ -75,8 +84,8 @@ export const updateServiceIfNeeded = async (
   if (
     Object.entries(serviceHomeChainFundRequirements).some(([key, item]) => {
       return (
-        templateFundRequirements[key].agent !== item.agent ||
-        templateFundRequirements[key].safe !== item.safe
+        templateFundRequirements[key as Address].agent !== item.agent ||
+        templateFundRequirements[key as Address].safe !== item.safe
       );
     })
   ) {
