@@ -32,6 +32,8 @@ export const asEvmChainDetails = (
   displayName: string;
 } => {
   switch (chain) {
+    case MiddlewareChain.ETHEREUM:
+      return { name: 'ethereum', displayName: 'Ethereum' };
     case MiddlewareChain.GNOSIS:
       return { name: 'gnosis', displayName: 'Gnosis' };
     case MiddlewareChain.BASE:
@@ -44,6 +46,24 @@ export const asEvmChainDetails = (
       return { name: 'optimism', displayName: 'Optimism' };
   }
   throw new Error(`Invalid middleware chain enum: ${chain}`);
+};
+
+export const asEvmDisplayName = (displayName?: string): string => {
+  switch (displayName) {
+    case 'Ethereum':
+      return 'Ethereum';
+    case 'Gnosis':
+      return 'Gnosis';
+    case 'Base':
+      return 'Base';
+    case 'Celo':
+      return 'Celo';
+    case 'Mode':
+      return 'Mode';
+    case 'Optimistic':
+      return 'Optimism';
+  }
+  throw new Error(`Invalid display name: ${displayName}`);
 };
 
 /**
