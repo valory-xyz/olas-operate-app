@@ -10,6 +10,7 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { onDummyServiceCreation } from '@/utils/service';
 
 import {
+  agentFieldOptionalProps,
   agentFieldProps,
   requiredRules,
   validateApiKey,
@@ -186,7 +187,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="geminiApiKey"
           label={<ModiusGeminiApiKeyLabel />}
-          {...agentFieldProps}
+          {...agentFieldOptionalProps}
         >
           <Input.Password />
         </Form.Item>

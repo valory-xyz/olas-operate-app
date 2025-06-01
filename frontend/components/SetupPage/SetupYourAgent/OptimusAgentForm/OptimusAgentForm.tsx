@@ -10,6 +10,7 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { onDummyServiceCreation } from '@/utils/service';
 
 import {
+  agentFieldOptionalProps,
   agentFieldProps,
   requiredRules,
   validateApiKey,
@@ -188,7 +189,7 @@ export const OptimusAgentForm = ({
         <Form.Item
           name="geminiApiKey"
           label={<OptimusGeminiApiKeyLabel />}
-          {...agentFieldProps}
+          {...agentFieldOptionalProps}
         >
           <Input.Password />
         </Form.Item>
