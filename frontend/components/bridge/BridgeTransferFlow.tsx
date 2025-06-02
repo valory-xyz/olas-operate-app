@@ -4,28 +4,25 @@ import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import React from 'react';
 
+import { MiddlewareChain } from '@/client';
 import { COLOR } from '@/constants/colors';
 import { CrossChainTransferDetails, TokenTransfer } from '@/types/Bridge';
-import { asEvmDisplayName } from '@/utils/middlewareHelpers';
+import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
 
-const TransferChain = ({ chainName }: { chainName: string }) => {
-  const name = asEvmDisplayName(chainName);
-
-  return (
-    <Flex gap={8} align="center">
-      <Image
-        src={`/chains/${kebabCase(name)}-chain.png`}
-        width={20}
-        height={20}
-        alt="chain logo"
-      />
-      <Text>{name}</Text>
-    </Flex>
-  );
-};
+const TransferChain = ({ chainName }: { chainName: MiddlewareChain }) => (
+  <Flex gap={8} align="center">
+    <Image
+      src={`/chains/${kebabCase(chainName)}-chain.png`}
+      width={20}
+      height={20}
+      alt="chain logo"
+    />
+    <Text>{asEvmChainDetails(chainName).displayName}</Text>
+  </Flex>
+);
 
 const TransferringAndReceivingRow = () => (
   <List.Item>

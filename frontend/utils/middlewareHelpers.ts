@@ -48,24 +48,6 @@ export const asEvmChainDetails = (
   throw new Error(`Invalid middleware chain enum: ${chain}`);
 };
 
-export const asEvmDisplayName = (displayName?: string): string => {
-  switch (displayName) {
-    case 'Ethereum':
-      return 'Ethereum';
-    case 'Gnosis':
-      return 'Gnosis';
-    case 'Base':
-      return 'Base';
-    case 'Celo':
-      return 'Celo';
-    case 'Mode':
-      return 'Mode';
-    case 'Optimistic':
-      return 'Optimism';
-  }
-  throw new Error(`Invalid display name: ${displayName}`);
-};
-
 /**
  * Converts chain ids to middleware chain enums
  * @example asMiddlewareChain(1) => 'ethereum'
