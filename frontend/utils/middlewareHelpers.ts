@@ -32,6 +32,8 @@ export const asEvmChainDetails = (
   displayName: string;
 } => {
   switch (chain) {
+    case MiddlewareChain.ETHEREUM:
+      return { name: 'ethereum', displayName: 'Ethereum' };
     case MiddlewareChain.GNOSIS:
       return { name: 'gnosis', displayName: 'Gnosis' };
     case MiddlewareChain.BASE:

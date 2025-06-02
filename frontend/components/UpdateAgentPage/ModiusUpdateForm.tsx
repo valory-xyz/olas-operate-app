@@ -8,6 +8,7 @@ import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 
 import {
+  agentFieldOptionalProps,
   agentFieldProps,
   requiredRules,
   validateApiKey,
@@ -127,7 +128,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       <Form.Item
         label={<ModiusGeminiApiKeyLabel />}
         name={['env_variables', 'GENAI_API_KEY']}
-        {...agentFieldProps}
+        {...agentFieldOptionalProps}
         rules={[{ validator: validateApiKey }]}
       >
         <Input.Password />
