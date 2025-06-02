@@ -17,24 +17,15 @@ export const AgentSettingsButton = () => {
     goto(Pages.UpdateAgentTemplate);
   };
 
-  if (isAgentSettingsEnabled) {
-    return (
-      <Button
-        type="default"
-        size="large"
-        onClick={handleClick}
-        icon={<ControlOutlined />}
-      />
-    );
-  }
-
   return (
     <Tooltip
       arrow={false}
       title={
-        <Text className="text-sm">
-          The agent cannot be configured at the moment
-        </Text>
+        isAgentSettingsEnabled ? null : (
+          <Text className="text-sm">
+            The agent cannot be configured at the moment
+          </Text>
+        )
       }
       overlayInnerStyle={{ width: 'max-content' }}
       placement="bottomLeft"
@@ -42,7 +33,7 @@ export const AgentSettingsButton = () => {
       <Button
         type="default"
         size="large"
-        disabled
+        disabled={!isAgentSettingsEnabled}
         onClick={handleClick}
         icon={<ControlOutlined />}
       />

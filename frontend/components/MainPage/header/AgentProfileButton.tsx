@@ -1,5 +1,5 @@
 import { Button, Checkbox, Flex, message, Modal } from 'antd';
-import { useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 
 import { MiddlewareChain, MiddlewareDeploymentStatus } from '@/client';
 import { AgentProfileSvg } from '@/components/custom-icons/AgentProfile';
@@ -33,7 +33,7 @@ const ExternalAgentProfileLink = ({ href }: { href: string }) => {
   );
 };
 
-const PortfolioAndChatUi = ({ onClick }: { onClick: () => void }) => {
+const BabyDegenUi = ({ onClick }: { onClick: () => void }) => {
   const electronApi = useElectronApi();
   const { selectedService, selectedAgentType } = useServices();
   const { goto } = usePageState();
@@ -157,7 +157,7 @@ export const AgentProfileButton = () => {
     }
   }, [deploymentStatus, goto, show]);
 
-  const agentProfileLink: JSX.Element | null = useMemo(() => {
+  const agentProfileLink: ReactNode | null = useMemo(() => {
     if (!serviceSafe?.address) return null;
 
     // gnosis - trader
@@ -190,7 +190,7 @@ export const AgentProfileButton = () => {
       middlewareChain === MiddlewareChain.MODE &&
       selectedAgentType === AgentType.Modius
     ) {
-      return <PortfolioAndChatUi onClick={handleAgentUiBrowserLinkClick} />;
+      return <BabyDegenUi onClick={handleAgentUiBrowserLinkClick} />;
     }
 
     // optimism - optimus
@@ -198,7 +198,7 @@ export const AgentProfileButton = () => {
       middlewareChain === MiddlewareChain.OPTIMISM &&
       selectedAgentType === AgentType.Optimus
     ) {
-      return <PortfolioAndChatUi onClick={handleAgentUiBrowserLinkClick} />;
+      return <BabyDegenUi onClick={handleAgentUiBrowserLinkClick} />;
     }
 
     return null;
