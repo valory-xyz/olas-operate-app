@@ -34,7 +34,6 @@ from pathlib import Path
 
 import pandas as pd
 import requests
-from halo import Halo
 from tqdm import tqdm
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -75,7 +74,13 @@ def _get_safe_owners(chain: Chain, address: str) -> t.Optional[t.List[str]]:
         return None
 
 
-def _get_service_data(chain: Chain, service_id: int) -> t.Optional[t.Dict]:
+def _populate_service(
+    chain: Chain, services: t.Dict, service_id: int, update: bool = False
+) -> None:
+    service_key = str(service_id)
+    if service_key in services and not update:
+        return
+
     service_registry = SERVICE_REGISTRY[chain]
     (
         security_deposit,
@@ -89,7 +94,7 @@ def _get_service_data(chain: Chain, service_id: int) -> t.Optional[t.Dict]:
     ) = service_registry.functions.getService(service_id).call()
 
     if state == 0:
-        return None
+        return
 
     agent_instances = {}
     for agent_id in agent_ids:
@@ -107,11 +112,18 @@ def _get_service_data(chain: Chain, service_id: int) -> t.Optional[t.Dict]:
             }
 
     owner = service_registry.functions.ownerOf(service_id).call()
-    return {
+
+    config_hash = config_hash.hex()
+    url = f"{IPFS_ADDRESS}{CID_PREFIX}{config_hash}"
+    response = requests.get(url, timeout=30)
+    response.raise_for_status()
+    metadata = response.json()
+
+    services[service_key] = {
         "id": service_id,
         "security_deposit": security_deposit,
         "multisig": multisig,
-        "config_hash": config_hash.hex(),
+        "config_hash": config_hash,
         "threshold": threshold,
         "max_num_agent_instances": max_num_agent_instances,
         "num_agent_instances": num_agent_instances,
@@ -119,6 +131,7 @@ def _get_service_data(chain: Chain, service_id: int) -> t.Optional[t.Dict]:
         "agent_ids": agent_ids,
         "agent_instances": agent_instances,
         "owner": owner,
+        "metadata": metadata,
     }
 
 
@@ -126,56 +139,19 @@ def _populate_services(
     services: t.Dict, chain: Chain, start_from_id: int = 1, update: bool = False
 ) -> None:
     print(f"\nPopulating services {chain=} {start_from_id=} {update=}")
-    service_id = start_from_id
+    service_registry = SERVICE_REGISTRY[chain]
+    totalSupply = service_registry.functions.totalSupply().call()
 
-    spinner = Halo(text=f"Processing service_id={service_id}", spinner="dots")
-    spinner.start()
-
-    try:
-        while True:
-            service_key = str(service_id)
-            spinner.text = f"Processing service_id={service_id}"
-
-            if service_key not in services:
-                if service := _get_service_data(chain, service_id):
-                    services[service_key] = service
-                else:
-                    break
-            elif update:
-                if new_data := _get_service_data(chain, service_id):
-                    services[service_key].update(new_data)
-
-            service_id += 1
-
-            _save(services, "services", chain, False)
-    finally:
-        spinner.stop()
-        print(f"Finished processing up to service_id={service_id - 1}")
-
-    _save(services, "services", chain)
-
-
-def _populate_services_metadata(
-    services: t.Dict, chain: Chain, update: bool = False
-) -> None:
-    print(f"\nPopulating services metadata {chain=} {update=}")
     error_count = 0
-    pending_services = []
-    for _, service in services.items():
-        if "metadata" not in service or update:
-            config_hash = service["config_hash"]
-            url = f"{IPFS_ADDRESS}{CID_PREFIX}{config_hash}"
-            pending_services.append((service, url))
-
-    with ThreadPoolExecutor(max_workers=THREAD_POOL_EXECUTOR_MAX_WORKERS) as executor:
+    with ThreadPoolExecutor() as executor:
         futures = [
-            executor.submit(_populate_service_metadata, service, url)
-            for service, url in pending_services
+            executor.submit(_populate_service, chain, services, service_id, update)
+            for service_id in range(start_from_id, totalSupply + 1)
         ]
         for future in tqdm(
             as_completed(futures),
             total=len(futures),
-            desc="Fetching IPFS contents",
+            desc="Fetching services",
             miniters=1,
         ):
             try:
@@ -185,13 +161,13 @@ def _populate_services_metadata(
                 error_count += 1
                 print(f"Error occurred: {e}")
 
+    if error_count > 0:
+        print("\n" + "=" * 40)
+        print(f"WARNING: {error_count} error(s) encountered.")
+        print("We recommend to re-run the script.")
+        print("=" * 40)
+
     _save(services, "services", chain)
-
-
-def _populate_service_metadata(service: t.Dict, url: str) -> None:
-    response = requests.get(url, timeout=30)
-    response.raise_for_status()
-    service["metadata"] = response.json()
 
 
 def _find_block_range(
@@ -285,7 +261,7 @@ def _populate_services_create_event(
         service_id = int(log["topics"][1].hex(), 16)
         service_key = str(service_id)
         if service_key not in services:
-            services[service_key] = _get_service_data(chain, service_id)
+            _populate_service(chain, services, service_id, update=True)
 
         service = services[service_key]
         service["create_service_event"] = {
@@ -332,9 +308,16 @@ def _get_logs(
 
 
 def _populate_services_safe_transactions(
-    services: t.Dict, txs: t.Dict, chain: Chain, from_date: date, to_date: date
+    services: t.Dict,
+    txs: t.Dict,
+    chain: Chain,
+    from_date: date,
+    to_date: date,
+    update: bool = False,
 ) -> None:
-    print(f"\nFetching services Safe transactions {chain=} {from_date=} {to_date=}")
+    print(
+        f"\nFetching services Safe transactions {chain=} {from_date=} {to_date=} {update=}"
+    )
 
     if not services:
         print("No services")
@@ -361,7 +344,7 @@ def _populate_services_safe_transactions(
         dt = datetime(d.year, d.month, d.day, tzinfo=timezone.utc)
         day_str = dt.strftime("%Y-%m-%d")
 
-        if day_str in txs:
+        if day_str in txs and not update:
             continue
 
         from_ts = int(dt.timestamp())
@@ -378,12 +361,13 @@ def _populate_services_safe_transactions(
             [event_topic],
             title=f"Fetching logs for {day_str} {from_ts=} {to_ts=} {from_block=} {to_block=}",
         )
+        txs.setdefault(day_str, {})
         for log in logs:
             address = log["address"]
             if address in multisig_to_service:
                 tx_hash = log["transactionHash"].hex()
                 service_key = multisig_to_service[address]
-                txs.setdefault(day_str, {}).setdefault(service_key, []).append(tx_hash)
+                txs[day_str].setdefault(service_key, []).append(tx_hash)
 
     _save(txs, "txs", chain)
 
@@ -531,6 +515,11 @@ def main() -> None:
         type=lambda s: datetime.strptime(s, "%Y-%m-%d").date(),
         help="End date in YYYY-MM-DD",
     )
+    parser.add_argument(
+        "--update",
+        action="store_true",
+        help="If set, perform an update operation",
+    )
 
     args = parser.parse_args()
 
@@ -571,12 +560,13 @@ def main() -> None:
     for chain in CHAINS:
         print(f"\n=== Processing {chain} ===")
         services = _load("services", chain)
-        _populate_services(services, chain)
-        _populate_services_metadata(services, chain, update=True)
+        _populate_services(services, chain, update=args.update)
         _populate_services_create_event(services, chain, from_date, to_date)
 
         txs = _load("txs", chain)
-        _populate_services_safe_transactions(services, txs, chain, from_date, to_date)
+        _populate_services_safe_transactions(
+            services, txs, chain, from_date, to_date, update=args.update
+        )
 
         data[chain] = {"services": services, "txs": txs}
 
