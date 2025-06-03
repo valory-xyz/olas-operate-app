@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { useInterval } from 'usehooks-ts';
 
 import { ONE_MINUTE_INTERVAL } from '@/constants/intervals';
+import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { useService } from '@/hooks/useService';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -79,7 +80,7 @@ export const LastTransaction = ({ serviceConfigId }: LastTransactionProps) => {
         ellipsis
         type="secondary"
         className="text-xs pointer hover-underline"
-        style={{ maxWidth: 78 }}
+        style={{ maxWidth: 74 }}
         onClick={() =>
           window.open(
             `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[asMiddlewareChain(chainId)]}/tx/${transaction.hash}`,
@@ -88,7 +89,7 @@ export const LastTransaction = ({ serviceConfigId }: LastTransactionProps) => {
       >
         {getTimeAgo(transaction.timestamp)}
       </Text>
-      &nbsp;↗
+      &nbsp;{UNICODE_SYMBOLS.EXTERNAL_LINK}
     </Text>
   );
 };
