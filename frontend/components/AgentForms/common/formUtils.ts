@@ -68,10 +68,10 @@ export const validateSlug = (_: unknown, value?: string): Promise<void> => {
     return Promise.reject('Please enter only the slug, not the full URL.');
   }
 
-  // Slug should only contain lowercase letters, numbers, hyphens, and underscores
-  if (!/^[a-z0-9-_]+$/.test(value)) {
+  // Slug should only contain letters, numbers, hyphens, and underscores
+  if (!/^[a-zA-Z0-9-_]+$/.test(value)) {
     return Promise.reject(
-      'Invalid slug format. Only lowercase letters, numbers, hyphens, and underscores are allowed.',
+      'Invalid slug format. Only letters, numbers, hyphens, and underscores are allowed.',
     );
   }
 
