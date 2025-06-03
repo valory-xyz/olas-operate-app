@@ -27,7 +27,7 @@ const AgentProfile = ({ onClick }: { onClick?: () => void }) => (
 
 const ExternalAgentProfileLink = ({ href }: { href: string }) => {
   return (
-    <a href={href} target="_blank" className="text-sm">
+    <a href={href} target="_blank">
       <AgentProfile />
     </a>
   );
