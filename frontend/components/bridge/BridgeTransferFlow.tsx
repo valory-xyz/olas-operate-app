@@ -15,7 +15,7 @@ const { Text } = Typography;
 const TransferChain = ({ chainName }: { chainName: MiddlewareChain }) => (
   <Flex gap={8} align="center">
     <Image
-      src={`/chains/${kebabCase(chainName)}-chain.png`}
+      src={`/chains/${kebabCase(asEvmChainDetails(chainName).name)}-chain.png`}
       width={20}
       height={20}
       alt="chain logo"
