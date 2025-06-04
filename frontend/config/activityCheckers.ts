@@ -117,9 +117,6 @@ export const OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   OptimismStakingProgramId,
   MulticallContract
 > = {
-  [STAKING_PROGRAM_IDS.OptimusAlpha1]: getStakingActivityCheckerContract(
-    '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
-  ),
   [STAKING_PROGRAM_IDS.OptimusAlpha2]: getStakingActivityCheckerContract(
     '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
   ),

@@ -32,8 +32,10 @@ const MODE_STAKING_PROGRAM_IDS = {
 
 export type ModeStakingProgramId = ValueOf<typeof MODE_STAKING_PROGRAM_IDS>;
 
+/**
+ * @note: OptimusAlpha1 is deprecated and not used in the codebase.
+ */
 export const OPTIMISM_STAKING_PROGRAM_IDS = {
-  OptimusAlpha1: 'optimus_alpha',
   OptimusAlpha2: 'optimus_alpha_2',
   OptimusAlpha3: 'optimus_alpha_3',
   OptimusAlpha4: 'optimus_alpha_4',

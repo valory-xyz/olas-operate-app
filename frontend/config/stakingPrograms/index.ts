@@ -75,5 +75,5 @@ export const DEFAULT_STAKING_PROGRAM_IDS: {
   [EvmChainId.Base]: STAKING_PROGRAM_IDS.MemeBaseAlpha2,
   [EvmChainId.Mode]: STAKING_PROGRAM_IDS.ModiusAlpha,
   [EvmChainId.Celo]: STAKING_PROGRAM_IDS.MemeCeloAlpha2,
-  [EvmChainId.Optimism]: STAKING_PROGRAM_IDS.OptimusAlpha1,
+  [EvmChainId.Optimism]: STAKING_PROGRAM_IDS.OptimusAlpha2,
 };
