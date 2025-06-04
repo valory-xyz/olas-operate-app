@@ -1,3 +1,10 @@
+/**
+ * Check if the staking contract has been removed from Voting (i.e., it will no longer receive OLAS used for rewards):
+ * [Etherscan Contract Link](https://etherscan.io/address/0x95418b46d5566D3d1ea62C12Aea91227E566c5c1#readContract#F10)
+ * If it has been removed, it shouldn’t be considered a staking contract anymore and also won’t appear in the Voting list:
+ * [Govern App](https://govern.olas.network/contracts)
+ */
+
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { MECH_ACTIVITY_CHECKER_ABI } from '@/abis/mechActivityChecker';
