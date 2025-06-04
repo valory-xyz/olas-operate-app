@@ -20,7 +20,7 @@ import {
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyLabel,
-  ModiusGeminiApiKeyLabel,
+  GeminiApiKeyLabel,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
@@ -186,7 +186,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
 
         <Form.Item
           name="geminiApiKey"
-          label={<ModiusGeminiApiKeyLabel />}
+          label={<GeminiApiKeyLabel name="Modius" />}
           {...optionalFieldProps}
         >
           <Input.Password />

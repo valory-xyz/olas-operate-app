@@ -18,7 +18,7 @@ import {
 import { InvalidGeminiApiCredentials } from '../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyLabel,
-  OptimusGeminiApiKeyLabel,
+  GeminiApiKeyLabel,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
@@ -126,7 +126,7 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
       </Form.Item>
 
       <Form.Item
-        label={<OptimusGeminiApiKeyLabel />}
+        label={<GeminiApiKeyLabel name="Optimus" />}
         name={['env_variables', 'GENAI_API_KEY']}
         {...optionalFieldProps}
         rules={[{ validator: validateApiKey }]}

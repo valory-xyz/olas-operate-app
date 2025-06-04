@@ -20,7 +20,7 @@ import {
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyLabel,
-  OptimusGeminiApiKeyLabel,
+  GeminiApiKeyLabel,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
@@ -188,7 +188,7 @@ export const OptimusAgentForm = ({
 
         <Form.Item
           name="geminiApiKey"
-          label={<OptimusGeminiApiKeyLabel />}
+          label={<GeminiApiKeyLabel name="Optimus" />}
           {...optionalFieldProps}
         >
           <Input.Password />
