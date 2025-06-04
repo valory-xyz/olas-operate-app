@@ -125,7 +125,7 @@ export const ModiusGeminiApiKeyLabel = () => (
       <Paragraph className="text-sm m-0">
         The Gemini API key allows you to chat with your agent and update its
         goals through Modius’ profile. You can generate one for free on{' '}
-        <a target="_blank" href={GEMINI_API_URL}>
+        <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
           Google AI Studio
         </a>
         .
@@ -144,7 +144,7 @@ export const OptimusGeminiApiKeyLabel = () => (
       <Paragraph className="text-sm m-0">
         The Gemini API key allows you to chat with your agent and update its
         goals through Optimus’ profile. You can generate one for free on{' '}
-        <a target="_blank" href={GEMINI_API_URL}>
+        <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
           Google AI Studio
         </a>
         .
