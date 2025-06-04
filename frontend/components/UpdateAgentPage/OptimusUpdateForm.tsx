@@ -8,8 +8,8 @@ import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 
 import {
-  agentFieldOptionalProps,
-  agentFieldProps,
+  optionalFieldProps,
+  requiredFieldProps,
   requiredRules,
   validateApiKey,
   validateMessages,
@@ -18,7 +18,7 @@ import {
 import { InvalidGeminiApiCredentials } from '../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyLabel,
-  OptimusGeminiApiKeyLabel,
+  GeminiApiKeyLabel,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
@@ -92,7 +92,7 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
       <Form.Item
         label={<TenderlyAccessTokenLabel />}
         name={['env_variables', 'TENDERLY_ACCESS_KEY']}
-        {...agentFieldProps}
+        {...requiredFieldProps}
         rules={[...requiredRules, { validator: validateApiKey }]}
       >
         <Input.Password />
@@ -101,7 +101,7 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
       <Form.Item
         label={<TenderlyAccountSlugLabel />}
         name={['env_variables', 'TENDERLY_ACCOUNT_SLUG']}
-        {...agentFieldProps}
+        {...requiredFieldProps}
         rules={[...requiredRules, { validator: validateSlug }]}
       >
         <Input />
@@ -110,7 +110,7 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
       <Form.Item
         label={<TenderlyProjectSlugLabel />}
         name={['env_variables', 'TENDERLY_PROJECT_SLUG']}
-        {...agentFieldProps}
+        {...requiredFieldProps}
         rules={[...requiredRules, { validator: validateSlug }]}
       >
         <Input />
@@ -119,16 +119,16 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
       <Form.Item
         label={<CoinGeckoApiKeyLabel />}
         name={['env_variables', 'COINGECKO_API_KEY']}
-        {...agentFieldProps}
+        {...requiredFieldProps}
         rules={[...requiredRules, { validator: validateApiKey }]}
       >
         <Input.Password />
       </Form.Item>
 
       <Form.Item
-        label={<OptimusGeminiApiKeyLabel />}
+        label={<GeminiApiKeyLabel name="Optimus" />}
         name={['env_variables', 'GENAI_API_KEY']}
-        {...agentFieldOptionalProps}
+        {...optionalFieldProps}
         rules={[{ validator: validateApiKey }]}
       >
         <Input.Password />

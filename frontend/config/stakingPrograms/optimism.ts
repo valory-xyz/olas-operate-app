@@ -17,8 +17,6 @@ export const OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
   OptimismStakingProgramId,
   Address
 > = {
-  [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha1]:
-    '0x88996bbdE7f982D93214881756840cE2c77C4992',
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2]:
     '0xBCA056952D2A7a8dD4A002079219807CFDF9fd29',
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3]:
@@ -30,22 +28,6 @@ export const OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
 export const OPTIMISM_STAKING_PROGRAMS: {
   [stakingProgramId in OptimismStakingProgramId]: StakingProgramConfig;
 } = {
-  [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha1]: {
-    chainId: EvmChainId.Optimism,
-    name: 'Optimus Alpha',
-    agentsSupported: [AgentType.Optimus],
-    stakingRequirements: { [TokenSymbol.OLAS]: 40 },
-    activityChecker:
-      OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha1
-      ],
-    contract: new MulticallContract(
-      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha1
-      ],
-      STAKING_TOKEN_PROXY_ABI,
-    ),
-  },
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2]: {
     chainId: EvmChainId.Optimism,
     name: 'Optimus Alpha II',

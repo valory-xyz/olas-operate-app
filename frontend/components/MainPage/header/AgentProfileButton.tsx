@@ -103,7 +103,7 @@ const BabyDegenUi = ({ onClick }: { onClick: () => void }) => {
           <div>
             To unlock the full functionality of {agentName} profile, a Gemini
             API key is required. You can get a free Gemini API key through the{' '}
-            <a target="_blank" href={GEMINI_API_URL}>
+            <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
               Google AI Studio
             </a>
             .
