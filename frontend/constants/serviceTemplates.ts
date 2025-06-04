@@ -271,7 +271,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus',
-  hash: 'bafybeie2gdcoqlaugjqaxpuwrdn7hinzbnsubjycxjghpchai4m2ykau74',
+  hash: 'bafybeievj4uijthbnwykgaljd33ifxoitra7inwkn64zituxbzmgrl4ifq',
   description: `${KPI_DESC_PREFIX} Optimus`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
