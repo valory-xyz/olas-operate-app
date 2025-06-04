@@ -52,7 +52,6 @@ export const GITHUB_API_LATEST_RELEASE: Url =
   'https://api.github.com/repos/valory-xyz/olas-operate-app/releases/latest';
 
 // explorers @note DO NOT END WITH `/`
-// export const OPTIMISM_EXPLORER_URL: Url = 'https://optimistic.etherscan.io';
 const GNOSIS_EXPLORER_URL: Url = 'https://gnosisscan.io';
 const BASE_EXPLORER_URL: Url = 'https://basescan.org';
 const MODE_EXPLORER_URL: Url = 'https://modescan.io';
