@@ -11,18 +11,18 @@ export const commonFieldProps: FormItemProps = {
 /**
  * Field properties for optional form fields. These fields are not required.
  */
-export const optionalFieldProps: FormItemProps = {
+const optionalCommonFieldProps: FormItemProps = {
   rules: [{ required: false }],
 } as const;
 
-export const agentFieldProps: FormItemProps = {
+export const requiredFieldProps: FormItemProps = {
   ...commonFieldProps,
   validateFirst: true,
   normalize: (value: string) => value.trim(),
 } as const;
 
-export const agentFieldOptionalProps: FormItemProps = {
-  ...optionalFieldProps,
+export const optionalFieldProps: FormItemProps = {
+  ...optionalCommonFieldProps,
   validateFirst: true,
   normalize: (value: string) => value.trim(),
 } as const;
