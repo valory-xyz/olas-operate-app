@@ -12,6 +12,7 @@ import { LOCAL_FORM_THEME } from '@/theme';
 import { SetupCreateHeader } from '../Create/SetupCreateHeader';
 import { MemeooorrAgentSetup } from './MemeooorrAgentSetup';
 import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
+import { OptimusAgentForm } from './OptimusAgentForm/OptimusAgentForm';
 
 const { Title, Text } = Typography;
 
@@ -43,9 +44,11 @@ export const SetupYourAgent = () => {
         {selectedAgentType === AgentType.Memeooorr && (
           <MemeooorrAgentSetup serviceTemplate={serviceTemplate} />
         )}
-
         {selectedAgentType === AgentType.Modius && (
           <ModiusAgentForm serviceTemplate={serviceTemplate} />
+        )}
+        {selectedAgentType === AgentType.Optimus && (
+          <OptimusAgentForm serviceTemplate={serviceTemplate} />
         )}
       </CardFlex>
     </ConfigProvider>

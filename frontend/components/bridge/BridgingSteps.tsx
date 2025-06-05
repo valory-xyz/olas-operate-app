@@ -8,6 +8,7 @@ import { SUPPORT_URL } from '@/constants/urls';
 import { TokenSymbol } from '@/enums/Token';
 import { BridgingStepStatus as Status } from '@/types/Bridge';
 import { Maybe, Nullable } from '@/types/Util';
+import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
 import { ExportLogsButton } from '../ExportLogsButton';
 
@@ -183,7 +184,7 @@ export const BridgingSteps = ({
 }: BridgingStepsProps) => {
   const bridgeStep: Step = useMemo(() => {
     return {
-      title: `Bridge funds to ${chainName}`,
+      title: `Bridge funds to ${asEvmChainDetails(chainName).displayName}`,
       ...generateBridgeStep(bridge.status, bridge.subSteps),
     };
   }, [chainName, bridge]);

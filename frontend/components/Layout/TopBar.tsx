@@ -1,8 +1,11 @@
-import { Typography } from 'antd';
+import { QuestionCircleOutlined, SettingOutlined } from '@ant-design/icons';
+import { Button, Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
+import { Pages } from '@/enums/Pages';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { usePageState } from '@/hooks/usePageState';
 import { useStore } from '@/hooks/useStore';
 
 const { Text } = Typography;
@@ -11,7 +14,6 @@ const TrafficLightIcon = styled.div`
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  margin-left: 8px;
   -webkit-app-region: no-drag;
 `;
 
@@ -29,6 +31,7 @@ const DisabledLight = styled(TrafficLightIcon)`
 
 const TrafficLights = styled.div`
   display: flex;
+  gap: 8px;
   align-items: center;
   margin-right: 24px;
   -webkit-app-region: no-drag;
@@ -40,9 +43,10 @@ const TopBarContainer = styled.div`
   left: 0;
   right: 0;
   z-index: 1;
+  height: 45px;
   display: flex;
   align-items: center;
-  padding: 10px 8px;
+  padding: 0px 24px;
   border-radius: 8px 8px 0 0px;
   border-bottom: 1px solid ${COLOR.BORDER_GRAY};
   background: ${COLOR.WHITE};
@@ -52,6 +56,7 @@ const TopBarContainer = styled.div`
 export const TopBar = () => {
   const electronApi = useElectronApi();
   const store = useStore();
+  const { goto } = usePageState();
   const envName = store?.storeState?.environmentName;
 
   return (
@@ -63,6 +68,21 @@ export const TopBar = () => {
       </TrafficLights>
 
       <Text>{`Pearl (beta) ${envName ? `(${envName})` : ''}`.trim()}</Text>
+
+      <Flex align="center" className="ml-auto">
+        <Button
+          type="text"
+          shape="circle"
+          icon={<QuestionCircleOutlined />}
+          onClick={() => goto(Pages.HelpAndSupport)}
+        />
+        <Button
+          type="text"
+          shape="circle"
+          icon={<SettingOutlined />}
+          onClick={() => goto(Pages.Settings)}
+        />
+      </Flex>
     </TopBarContainer>
   );
 };

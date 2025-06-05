@@ -1,6 +1,6 @@
 import { Flex, Typography } from 'antd';
 
-import { MiddlewareChain } from '@/client';
+import { SupportedMiddlewareChain } from '@/client';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
@@ -11,7 +11,7 @@ const { Paragraph, Text, Title } = Typography;
 
 type SignerTitleProps = {
   signerAddress: Address;
-  middlewareChain: MiddlewareChain;
+  middlewareChain: SupportedMiddlewareChain;
 };
 
 export const SignerTitle = ({
