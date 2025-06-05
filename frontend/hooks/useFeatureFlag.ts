@@ -39,7 +39,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'agent-activity': true,
     'backup-via-safe': true,
     'agent-settings': false,
-    'bridge-onboarding': false,
+    'bridge-onboarding': true,
     'bridge-add-funds': false,
   },
   [AgentType.Memeooorr]: {
