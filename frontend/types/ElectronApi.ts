@@ -17,10 +17,13 @@ export type ElectronStore = {
   // Each agent has its own settings
   [AgentType.PredictTrader]?: AgentSettings;
   [AgentType.Memeooorr]?: AgentSettings;
+  [AgentType.AgentsFunCelo]?: AgentSettings;
   [AgentType.Modius]?: AgentSettings & {
     isProfileWarningDisplayed: boolean;
   };
-  [AgentType.AgentsFunCelo]?: AgentSettings;
+  [AgentType.Optimus]?: AgentSettings & {
+    isProfileWarningDisplayed: boolean;
+  };
 };
 
 export type ElectronTrayIconStatus =

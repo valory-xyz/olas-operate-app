@@ -239,8 +239,8 @@ export const DepositForBridging = ({
     if (!areAllFundsReceived) return;
     updateQuoteId(bridgeFundingRequirements.id);
     updateCrossChainTransferDetails({
-      fromChain: upperFirst(MiddlewareChain.ETHEREUM),
-      toChain: upperFirst(toMiddlewareChain),
+      fromChain: MiddlewareChain.ETHEREUM,
+      toChain: toMiddlewareChain,
       transfers: tokens.map((token) => {
         const toAmount = (() => {
           // TODO: reuse getFromToken function from utils.ts

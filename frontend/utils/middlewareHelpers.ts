@@ -17,8 +17,33 @@ export const asEvmChainId = (chain?: MiddlewareChain | string): EvmChainId => {
       return EvmChainId.Base;
     case MiddlewareChain.MODE:
       return EvmChainId.Mode;
+    case MiddlewareChain.OPTIMISM:
+      return EvmChainId.Optimism;
     case MiddlewareChain.CELO:
       return EvmChainId.Celo;
+  }
+  throw new Error(`Invalid middleware chain enum: ${chain}`);
+};
+
+export const asEvmChainDetails = (
+  chain?: MiddlewareChain | string,
+): {
+  name: string;
+  displayName: string;
+} => {
+  switch (chain) {
+    case MiddlewareChain.ETHEREUM:
+      return { name: 'ethereum', displayName: 'Ethereum' };
+    case MiddlewareChain.GNOSIS:
+      return { name: 'gnosis', displayName: 'Gnosis' };
+    case MiddlewareChain.BASE:
+      return { name: 'base', displayName: 'Base' };
+    case MiddlewareChain.CELO:
+      return { name: 'celo', displayName: 'Celo' };
+    case MiddlewareChain.MODE:
+      return { name: 'mode', displayName: 'Mode' };
+    case MiddlewareChain.OPTIMISM:
+      return { name: 'optimism', displayName: 'Optimism' };
   }
   throw new Error(`Invalid middleware chain enum: ${chain}`);
 };
@@ -35,6 +60,8 @@ export const asMiddlewareChain = (chainId?: EvmChainId | number) => {
       return MiddlewareChain.BASE;
     case EvmChainId.Mode:
       return MiddlewareChain.MODE;
+    case EvmChainId.Optimism:
+      return MiddlewareChain.OPTIMISM;
     case EvmChainId.Celo:
       return MiddlewareChain.CELO;
   }
