@@ -22,7 +22,7 @@ const SWAP_OPTIMISM_URL: Url =
 export const PEARL_URL: Url = 'https://olas.network/pearl';
 export const FAQ_URL: Url = 'https://olas.network/pearl#faq';
 export const TERMS_AND_CONDITIONS_URL: Url = 'https://olas.network/pearl-terms';
-export const DOWNLOAD_URL: Url = 'https://olas.network/pearl#download';
+export const DOWNLOAD_URL: Url = 'https://olas.network/pearl#update';
 
 // thegraph
 export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
