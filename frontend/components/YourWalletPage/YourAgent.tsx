@@ -18,7 +18,9 @@ import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { Address } from '@/types/Address';
 import { WalletBalance } from '@/types/Balance';
+import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 import { balanceFormat } from '@/utils/numberFormatters';
+import { isValidServiceId } from '@/utils/service';
 import { truncateAddress } from '@/utils/truncate';
 
 import { AddressLink } from '../AddressLink';
@@ -103,7 +105,7 @@ const ServiceAndNftDetails = ({
           <Flex vertical>
             <ServiceNftIdTitle />
             <a
-              href={`https://registry.olas.network/${middlewareChain}/services/${serviceNftTokenId}`}
+              href={`https://registry.olas.network/${asEvmChainDetails(middlewareChain).name}/services/${serviceNftTokenId}`}
               target="_blank"
             >
               {serviceNftTokenId} {UNICODE_SYMBOLS.EXTERNAL_LINK}
@@ -281,7 +283,7 @@ const YourAgentWalletBreakdown = () => {
           </Flex>
         )}
 
-        {!isNil(serviceNftTokenId) && (
+        {serviceNftTokenId && isValidServiceId(serviceNftTokenId) && (
           <ServiceAndNftDetails serviceNftTokenId={serviceNftTokenId} />
         )}
       </Container>

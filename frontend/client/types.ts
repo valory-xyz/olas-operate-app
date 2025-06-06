@@ -7,6 +7,7 @@ import {
   MiddlewareChain,
   MiddlewareDeploymentStatus,
   MiddlewareLedger,
+  SupportedMiddlewareChain,
 } from './enums';
 
 export type ServiceHash = string;
@@ -62,7 +63,7 @@ export type MiddlewareServiceResponse = {
   hash_history: {
     [block: string]: string;
   };
-  home_chain: MiddlewareChain;
+  home_chain: SupportedMiddlewareChain;
   keys: ServiceKeys[];
   service_path?: string;
   chain_configs: {
@@ -81,8 +82,10 @@ export type ServiceTemplate = {
   description: string;
   image: string;
   service_version: string;
-  home_chain: string;
-  configurations: { [key: string]: ConfigurationTemplate };
+  home_chain: SupportedMiddlewareChain;
+  configurations: Partial<
+    Record<SupportedMiddlewareChain, ConfigurationTemplate>
+  >;
   env_variables: { [key: string]: EnvVariableAttributes };
   deploy?: boolean;
 };

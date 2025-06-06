@@ -11,18 +11,18 @@ export const commonFieldProps: FormItemProps = {
 /**
  * Field properties for optional form fields. These fields are not required.
  */
-export const optionalFieldProps: FormItemProps = {
+const optionalCommonFieldProps: FormItemProps = {
   rules: [{ required: false }],
 } as const;
 
-export const modiusAgentFieldProps: FormItemProps = {
+export const requiredFieldProps: FormItemProps = {
   ...commonFieldProps,
   validateFirst: true,
   normalize: (value: string) => value.trim(),
 } as const;
 
-export const modiusAgentFieldOptionalProps: FormItemProps = {
-  ...optionalFieldProps,
+export const optionalFieldProps: FormItemProps = {
+  ...optionalCommonFieldProps,
   validateFirst: true,
   normalize: (value: string) => value.trim(),
 } as const;
@@ -68,10 +68,10 @@ export const validateSlug = (_: unknown, value?: string): Promise<void> => {
     return Promise.reject('Please enter only the slug, not the full URL.');
   }
 
-  // Slug should only contain lowercase letters, numbers, hyphens, and underscores
-  if (!/^[a-z0-9-_]+$/.test(value)) {
+  // Slug should only contain letters, numbers, hyphens, and underscores
+  if (!/^[a-zA-Z0-9-_]+$/.test(value)) {
     return Promise.reject(
-      'Invalid slug format. Only lowercase letters, numbers, hyphens, and underscores are allowed.',
+      'Invalid slug format. Only letters, numbers, hyphens, and underscores are allowed.',
     );
   }
 

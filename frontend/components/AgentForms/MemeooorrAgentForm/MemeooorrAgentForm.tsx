@@ -78,7 +78,7 @@ export const MemeooorrAgentForm = ({
 }: MemeooorrAgentFormProps) => {
   const [formState] = Form.useForm<MemeooorrFormValues>();
 
-  const { isMemeooorrFieldUpdateCompleted } = useSharedContext();
+  const { isMemeooorrFieldUpdateRequired } = useSharedContext();
   const form = useMemo(
     () => formInstance || formState,
     [formInstance, formState],
@@ -158,7 +158,7 @@ export const MemeooorrAgentForm = ({
       <Divider style={{ margin: '8px 0' }} />
       <XAccountApiTokens
         showTokensRequiredMessage={
-          !isMemeooorrFieldUpdateCompleted && agentFormType !== 'create'
+          isMemeooorrFieldUpdateRequired && agentFormType !== 'create'
         }
       />
 

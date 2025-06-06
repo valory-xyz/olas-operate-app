@@ -10,8 +10,8 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { onDummyServiceCreation } from '@/utils/service';
 
 import {
-  modiusAgentFieldOptionalProps,
-  modiusAgentFieldProps,
+  optionalFieldProps,
+  requiredFieldProps,
   requiredRules,
   validateApiKey,
   validateMessages,
@@ -20,11 +20,11 @@ import {
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyLabel,
-  ModiusGeminiApiKeyLabel,
+  GeminiApiKeyLabel,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
-} from './labels';
+} from '../../../AgentForms/common/labels';
 import {
   ModiusFieldValues,
   useModiusFormValidate,
@@ -151,7 +151,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="tenderlyAccessToken"
           label={<TenderlyAccessTokenLabel />}
-          {...modiusAgentFieldProps}
+          {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input.Password />
@@ -160,7 +160,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="tenderlyAccountSlug"
           label={<TenderlyAccountSlugLabel />}
-          {...modiusAgentFieldProps}
+          {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
         >
           <Input />
@@ -169,7 +169,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="tenderlyProjectSlug"
           label={<TenderlyProjectSlugLabel />}
-          {...modiusAgentFieldProps}
+          {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
         >
           <Input />
@@ -178,7 +178,7 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
         <Form.Item
           name="coinGeckoApiKey"
           label={<CoinGeckoApiKeyLabel />}
-          {...modiusAgentFieldProps}
+          {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input.Password />
@@ -186,8 +186,8 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
 
         <Form.Item
           name="geminiApiKey"
-          label={<ModiusGeminiApiKeyLabel />}
-          {...modiusAgentFieldOptionalProps}
+          label={<GeminiApiKeyLabel name="Modius" />}
+          {...optionalFieldProps}
         >
           <Input.Password />
         </Form.Item>

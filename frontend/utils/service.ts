@@ -79,22 +79,20 @@ export const updateServiceIfNeeded = async (
     service.chain_configs[serviceHomeChain].chain_data.user_params
       .fund_requirements;
   const templateFundRequirements =
-    serviceTemplate.configurations[serviceHomeChain].fund_requirements;
+    serviceTemplate.configurations[serviceHomeChain]?.fund_requirements;
 
   if (
     Object.entries(serviceHomeChainFundRequirements).some(([key, item]) => {
       return (
-        templateFundRequirements[key as Address].agent !== item.agent ||
-        templateFundRequirements[key as Address].safe !== item.safe
+        templateFundRequirements?.[key as Address]?.agent !== item.agent ||
+        templateFundRequirements?.[key as Address]?.safe !== item.safe
       );
     })
   ) {
     // Need to pass all fund requirements from the template
     // even if some of them were updated
     partialServiceTemplate.configurations = {
-      [serviceHomeChain]: {
-        fund_requirements: templateFundRequirements,
-      },
+      [serviceHomeChain]: { fund_requirements: templateFundRequirements },
     };
   }
 

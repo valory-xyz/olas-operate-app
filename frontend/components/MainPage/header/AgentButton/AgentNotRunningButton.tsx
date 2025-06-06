@@ -34,7 +34,7 @@ import { updateServiceIfNeeded } from '@/utils/service';
  */
 const useServiceDeployment = () => {
   const { showNotification } = useElectronApi();
-  const { isMemeooorrFieldUpdateCompleted } = useSharedContext();
+  const { isMemeooorrFieldUpdateRequired } = useSharedContext();
 
   const { goto: gotoPage } = usePageState();
   const { masterWallets, masterSafes, masterEoa } = useMasterWalletContext();
@@ -100,7 +100,7 @@ const useServiceDeployment = () => {
 
     // agent specific checks
     // If the memeooorr field update is not completed, can't start the agent
-    if (!isMemeooorrFieldUpdateCompleted) return false;
+    if (isMemeooorrFieldUpdateRequired) return false;
 
     // allow starting based on refill requirements
     return canStartAgent;
@@ -118,7 +118,7 @@ const useServiceDeployment = () => {
     needsInitialFunding,
     selectedStakingProgramMeta?.deprecated,
     canStartAgent,
-    isMemeooorrFieldUpdateCompleted,
+    isMemeooorrFieldUpdateRequired,
   ]);
 
   const pauseAllPolling = useCallback(() => {

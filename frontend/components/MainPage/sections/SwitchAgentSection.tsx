@@ -1,48 +1,15 @@
-import { ControlOutlined } from '@ant-design/icons';
-import { Button, Flex, Popover, Tooltip, Typography } from 'antd';
+import { Button, Flex, Popover, Typography } from 'antd';
 import Image from 'next/image';
 import { useMemo } from 'react';
 
 import { CardSection } from '@/components/styled/CardSection';
-import { COLOR } from '@/constants/colors';
 import { Pages } from '@/enums/Pages';
-import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 
 const { Text } = Typography;
-
-const UpdateTemplate = () => {
-  const { goto } = usePageState();
-
-  const isAgentSettingsEnabled = useFeatureFlag('agent-settings');
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    goto(Pages.UpdateAgentTemplate);
-  };
-
-  if (isAgentSettingsEnabled) {
-    return <ControlOutlined onClick={handleClick} />;
-  }
-
-  return (
-    <Tooltip
-      arrow={false}
-      title={
-        <Text className="text-sm">
-          The agent cannot be configured at the moment
-        </Text>
-      }
-      overlayInnerStyle={{ width: 'max-content' }}
-      placement="bottom"
-    >
-      <ControlOutlined style={{ color: COLOR.NEUTRAL_4, cursor: 'pointer' }} />
-    </Tooltip>
-  );
-};
 
 export const SwitchAgentSection = () => {
   const { goto } = usePageState();
@@ -71,24 +38,27 @@ export const SwitchAgentSection = () => {
   return (
     <CardSection
       gap={8}
-      padding="12px 24px"
+      $padding="8px 24px"
       justify="space-between"
       align="center"
-      borderbottom="true"
+      $borderBottom
     >
       <Flex gap={12} align="center">
         <Image
           src={`/agent-${selectedAgentType}-icon.png`}
-          width={24}
-          height={24}
+          width={32}
+          height={32}
           alt={selectedAgentConfig.displayName}
         />
         <Text>{selectedAgentConfig.displayName}</Text>
-        <UpdateTemplate />
       </Flex>
 
       {isSwitchAgentEnabled ? (
-        <Button onClick={() => goto(Pages.SwitchAgent)} type="primary" ghost>
+        <Button
+          onClick={() => goto(Pages.SwitchAgent)}
+          size="small"
+          className="text-sm"
+        >
           Switch agent
         </Button>
       ) : (
@@ -97,7 +67,9 @@ export const SwitchAgentSection = () => {
           content="To switch, stop the agent you're running"
           showArrow={false}
         >
-          <Button disabled>Switch agent</Button>
+          <Button disabled size="small" className="text-sm">
+            Switch agent
+          </Button>
         </Popover>
       )}
     </CardSection>

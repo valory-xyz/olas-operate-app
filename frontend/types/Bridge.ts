@@ -82,7 +82,7 @@ export type TokenTransfer = {
 };
 
 export type CrossChainTransferDetails = {
-  fromChain: string;
-  toChain: string;
+  fromChain: MiddlewareChain;
+  toChain: MiddlewareChain;
   transfers: TokenTransfer[];
 };

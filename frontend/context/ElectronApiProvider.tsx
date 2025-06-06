@@ -1,7 +1,7 @@
 import { get } from 'lodash';
 import { createContext, PropsWithChildren } from 'react';
 
-import { AgentHealthCheck } from '@/types/Agent';
+import { AgentHealthCheckResponse } from '@/types/Agent';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
 
 type ElectronApiAgentActivityWindow = {
@@ -43,7 +43,7 @@ type ElectronApiContextProps = {
   }) => Promise<{ success: true; dirPath: string } | { success?: false }>;
   openPath?: (filePath: string) => void;
   healthCheck?: () => Promise<
-    { response: AgentHealthCheck | null } | { error: string }
+    { response: AgentHealthCheckResponse | null } | { error: string }
   >;
   agentActivityWindow?: Partial<ElectronApiAgentActivityWindow>;
 };

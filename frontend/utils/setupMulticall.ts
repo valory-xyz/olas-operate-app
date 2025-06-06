@@ -14,6 +14,7 @@ const addresses: AddressesForAllChainIds = {
   [EvmChainId.Gnosis]: DEFAULT_MULTICALL_ADDRESS,
   [EvmChainId.Mode]: DEFAULT_MULTICALL_ADDRESS,
   [EvmChainId.Celo]: DEFAULT_MULTICALL_ADDRESS,
+  [EvmChainId.Optimism]: DEFAULT_MULTICALL_ADDRESS,
 };
 
 /**

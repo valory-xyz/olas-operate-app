@@ -142,7 +142,7 @@ const SetupEoaFundingForChain = ({
         The app needs these funds to create your account on-chain.
       </Paragraph>
 
-      <CardSection padding="12px 24px" bordertop="true" className="mt-12">
+      <CardSection $padding="12px 24px" $borderTop className="mt-12">
         <Text className={isFunded ? '' : 'loading-ellipses'}>
           Status: {statusMessage(isFunded)}
         </Text>

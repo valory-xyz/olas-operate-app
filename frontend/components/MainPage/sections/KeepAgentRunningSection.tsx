@@ -10,7 +10,7 @@ import { CardSection } from '../../styled/CardSection';
 
 const { Text } = Typography;
 
-const cardSectionStyle = { marginBottom: '-1px', marginTop: '24px' };
+const cardSectionStyle = { marginBottom: '-1px' };
 
 export const KeepAgentRunningSection = () => {
   const { storeState } = useStore();
