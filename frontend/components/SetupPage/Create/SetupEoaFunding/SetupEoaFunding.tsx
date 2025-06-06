@@ -277,7 +277,6 @@ export const SetupEoaFunding = () => {
   }, [currentFundingRequirements, handleFunded, isFunded, masterEoaAddress]);
 
   const handleBridgeFunds = useCallback(async () => {
-    // create a dummy service and then navigate to bridge onboarding
     try {
       await updateBeforeBridgingFunds();
       goto(SetupScreen.SetupBridgeOnboardingScreen);
