@@ -19,6 +19,7 @@ import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR } from '@/constants/colors';
+import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { NA } from '@/constants/symbols';
 import { EvmChainId } from '@/enums/Chain';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -26,11 +27,13 @@ import { useMasterBalances } from '@/hooks/useBalanceContext';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 import { delayInSeconds } from '@/utils/delay';
+import { onDummyServiceCreation } from '@/utils/service';
 
-import { SetupCreateHeader } from './SetupCreateHeader';
+import { SetupCreateHeader } from '../SetupCreateHeader';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -218,17 +221,21 @@ const SetupEoaFundingForChainV2 = ({
 export const SetupEoaFunding = () => {
   const isBridgeOnboardingEnabled = useFeatureFlag('bridge-onboarding');
   const { goto } = useSetup();
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedAgentType } = useServices();
   const { masterEoa } = useMasterWalletContext();
   const { masterWalletBalances } = useMasterBalances();
+  const { defaultStakingProgramId } = useStakingProgram();
 
   const [currentChain, setCurrentChain] = useState<EvmChainId>(
     selectedAgentConfig.evmHomeChainId,
   );
   const [fundType, setFundType] = useState<SendFundAction>('transfer');
 
-  const currentFundingRequirements = CHAIN_CONFIG[currentChain];
   const masterEoaAddress = masterEoa?.address;
+  const currentFundingRequirements = CHAIN_CONFIG[currentChain];
+  const serviceTemplate = SERVICE_TEMPLATES.find(
+    (template) => template.agentType === selectedAgentType,
+  );
 
   const eoaBalance = masterWalletBalances?.find(
     (balance) =>
@@ -274,9 +281,18 @@ export const SetupEoaFunding = () => {
     handleFunded();
   }, [currentFundingRequirements, handleFunded, isFunded, masterEoaAddress]);
 
-  const handleBridgeFunds = useCallback(() => {
+  const handleBridgeFunds = useCallback(async () => {
+    // create a dummy service and then navigate to bridge onboarding
+    if (
+      selectedAgentType === 'trader' &&
+      defaultStakingProgramId &&
+      serviceTemplate
+    ) {
+      await onDummyServiceCreation(defaultStakingProgramId, serviceTemplate);
+    }
+
     goto(SetupScreen.SetupBridgeOnboardingScreen);
-  }, [goto]);
+  }, [goto, defaultStakingProgramId, selectedAgentType, serviceTemplate]);
 
   if (!currentFundingRequirements) return null;
 
