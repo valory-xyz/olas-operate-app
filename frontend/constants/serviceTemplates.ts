@@ -271,7 +271,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus',
-  hash: 'bafybeigel7fm5i5r56rgak4oaydaxkaghrti2o4bvjlibz3xy5sx56x4zq',
+  hash: 'bafybeiblphkrzw4tlg7je7elt4yrhfcpqxgogcezqjskvze4g7neblry7u',
   description: `${KPI_DESC_PREFIX} Optimus`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
@@ -422,7 +422,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
 export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Optimus,
   name: 'Optimus - Optimism',
-  hash: 'bafybeigel7fm5i5r56rgak4oaydaxkaghrti2o4bvjlibz3xy5sx56x4zq',
+  hash: 'bafybeiblphkrzw4tlg7je7elt4yrhfcpqxgogcezqjskvze4g7neblry7u',
   description: `${KPI_DESC_PREFIX} Optimus service deployment on Optimism network`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
