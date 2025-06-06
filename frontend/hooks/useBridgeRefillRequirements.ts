@@ -17,8 +17,15 @@ export const useBridgeRefillRequirements = (
   return useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_REFILL_REQUIREMENTS_KEY(params!),
     queryFn: async ({ signal }) => {
+      if (!params) {
+        window.console.warn(
+          'No parameters provided for bridge refill requirements',
+        );
+        return null;
+      }
+
       const response = await BridgeService.getBridgeRefillRequirements(
-        params!,
+        params,
         signal,
       );
 

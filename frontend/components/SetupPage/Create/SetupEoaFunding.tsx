@@ -221,7 +221,6 @@ export const SetupEoaFunding = () => {
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
   const { masterWalletBalances } = useMasterBalances();
-  const masterEoaAddress = masterEoa?.address;
 
   const [currentChain, setCurrentChain] = useState<EvmChainId>(
     selectedAgentConfig.evmHomeChainId,
@@ -229,6 +228,7 @@ export const SetupEoaFunding = () => {
   const [fundType, setFundType] = useState<SendFundAction>('transfer');
 
   const currentFundingRequirements = CHAIN_CONFIG[currentChain];
+  const masterEoaAddress = masterEoa?.address;
 
   const eoaBalance = masterWalletBalances?.find(
     (balance) =>
@@ -240,6 +240,7 @@ export const SetupEoaFunding = () => {
     eoaBalance?.evmChainId === currentChain &&
     eoaBalance.balance >= CHAIN_CONFIG[currentChain].safeCreationThreshold;
 
+  // once funded, go to next chain or create safe
   const handleFunded = useCallback(async () => {
     message.success(
       `${currentFundingRequirements.name} funds have been received!`,
