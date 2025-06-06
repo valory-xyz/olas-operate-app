@@ -92,7 +92,7 @@ export const DepositForBridging = ({
   updateCrossChainTransferDetails,
   onNext,
 }: DepositForBridgingProps) => {
-  const { selectedAgentConfig } = useServices();
+  const { isLoading: isServicesLoading, selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const { masterEoa } = useMasterWalletContext();
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
@@ -146,7 +146,8 @@ export const DepositForBridging = ({
   const isRequestingQuote =
     isBalancesAndFundingRequirementsLoading ||
     isBridgeRefillRequirementsApiLoading ||
-    isBridgeRefillRequirementsLoading;
+    isBridgeRefillRequirementsLoading ||
+    isServicesLoading;
 
   const isRequestingQuoteFailed = useMemo(() => {
     if (isRequestingQuote) return false;
