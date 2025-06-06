@@ -26,7 +26,7 @@ import { Address } from '@/types/Address';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
 import { delayInSeconds } from '@/utils/delay';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '../ui/iconStyles';
 import { DepositAddress } from './DepositAddress';
@@ -269,7 +269,7 @@ export const DepositForBridging = ({
         return {
           fromSymbol: token.symbol,
           fromAmount: token.currentBalanceInWei.toString(),
-          toSymbol: token.symbol,
+          toSymbol: token.isNative ? asEvmChainDetails(toMiddlewareChain).symbol : token.symbol,
           toAmount: toAmount.toString(),
           decimals: token.decimals,
         };
