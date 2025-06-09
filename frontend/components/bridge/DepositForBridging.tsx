@@ -180,7 +180,7 @@ export const DepositForBridging = ({
       );
     if (quoteDoneRequests.length === 0) return;
 
-    return Math.max(...(quoteDoneRequests.map((request) => request.eta) || []));
+    return Math.max(...quoteDoneRequests.map((request) => request.eta || 0));
   }, [isRequestingQuote, isRequestingQuoteFailed, bridgeFundingRequirements]);
 
   // If quote has failed, stop polling for bridge refill requirements
