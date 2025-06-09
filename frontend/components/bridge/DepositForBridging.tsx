@@ -269,7 +269,9 @@ export const DepositForBridging = ({
         return {
           fromSymbol: token.symbol,
           fromAmount: token.currentBalanceInWei.toString(),
-          toSymbol: token.isNative ? asEvmChainDetails(toMiddlewareChain).symbol : token.symbol,
+          toSymbol: token.isNative
+            ? asEvmChainDetails(toMiddlewareChain).symbol
+            : token.symbol,
           toAmount: toAmount.toString(),
           decimals: token.decimals,
         };
