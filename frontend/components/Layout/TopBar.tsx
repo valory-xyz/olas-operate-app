@@ -6,7 +6,6 @@ import { COLOR } from '@/constants/colors';
 import { Pages } from '@/enums/Pages';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 
 const { Text } = Typography;
@@ -58,7 +57,6 @@ export const TopBar = () => {
   const electronApi = useElectronApi();
   const store = useStore();
   const { isUserLoggedIn, goto } = usePageState();
-  const { selectedService } = useServices();
 
   const envName = store?.storeState?.environmentName;
 
@@ -72,7 +70,7 @@ export const TopBar = () => {
 
       <Text>{`Pearl (beta) ${envName ? `(${envName})` : ''}`.trim()}</Text>
 
-      {isUserLoggedIn && selectedService && (
+      {isUserLoggedIn && (
         <Flex align="center" className="ml-auto">
           <Button
             type="text"
