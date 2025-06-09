@@ -164,6 +164,25 @@ export const DepositForBridging = ({
     bridgeFundingRequirements,
   ]);
 
+  /**
+   * Maximum of all the ETAs for the QUOTE_DONE requests.
+   * For example, If there are two QUOTE_DONE requests with ETAs of 300 and 900 seconds,
+   * then the quoteEta will be 900 seconds.
+   */
+  const quoteEta = useMemo(() => {
+    if (isRequestingQuote) return;
+    if (isRequestingQuoteFailed) return;
+    if (!bridgeFundingRequirements) return;
+
+    const quoteDoneRequests =
+      bridgeFundingRequirements.bridge_request_status.filter(
+        (request) => request.status === 'QUOTE_DONE',
+      );
+    if (quoteDoneRequests.length === 0) return;
+
+    return Math.max(...quoteDoneRequests.map((request) => request.eta || 0));
+  }, [isRequestingQuote, isRequestingQuoteFailed, bridgeFundingRequirements]);
+
   // If quote has failed, stop polling for bridge refill requirements
   useEffect(() => {
     if (!isRequestingQuoteFailed) return;
@@ -233,6 +252,7 @@ export const DepositForBridging = ({
     if (tokens.length === 0) return;
     if (isRequestingQuoteFailed) return;
     if (!masterEoa?.address) return;
+    if (!quoteEta) return;
 
     const areAllFundsReceived =
       tokens.every((token) => token.areFundsReceived) &&
@@ -242,6 +262,7 @@ export const DepositForBridging = ({
     updateCrossChainTransferDetails({
       fromChain: MiddlewareChain.ETHEREUM,
       toChain: toMiddlewareChain,
+      eta: quoteEta,
       transfers: tokens.map((token) => {
         const toAmount = (() => {
           // TODO: reuse getFromToken function from utils.ts
@@ -297,6 +318,7 @@ export const DepositForBridging = ({
     masterEoa,
     tokens,
     bridgeRequirementsParams,
+    quoteEta,
     onNext,
     updateQuoteId,
     updateCrossChainTransferDetails,
