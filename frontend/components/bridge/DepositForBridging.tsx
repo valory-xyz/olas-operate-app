@@ -177,7 +177,7 @@ export const DepositForBridging = ({
     const quoteStatus = bridgeFundingRequirements.bridge_request_status.filter(
       (request) => request.status === 'QUOTE_DONE',
     );
-    if (!quoteStatus) return;
+    if (quoteStatus.length === 0) return;
 
     return Math.max(...quoteStatus.map((request) => request.eta));
   }, [isRequestingQuote, isRequestingQuoteFailed, bridgeFundingRequirements]);
