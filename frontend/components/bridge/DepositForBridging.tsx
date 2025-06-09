@@ -174,12 +174,13 @@ export const DepositForBridging = ({
     if (isRequestingQuoteFailed) return;
     if (!bridgeFundingRequirements) return;
 
-    const quoteStatus = bridgeFundingRequirements.bridge_request_status.filter(
-      (request) => request.status === 'QUOTE_DONE',
-    );
-    if (quoteStatus.length === 0) return;
+    const quoteDoneRequests =
+      bridgeFundingRequirements.bridge_request_status.filter(
+        (request) => request.status === 'QUOTE_DONE',
+      );
+    if (quoteDoneRequests.length === 0) return;
 
-    return Math.max(...quoteStatus.map((request) => request.eta));
+    return Math.max(...(quoteDoneRequests.map((request) => request.eta) || []));
   }, [isRequestingQuote, isRequestingQuoteFailed, bridgeFundingRequirements]);
 
   // If quote has failed, stop polling for bridge refill requirements
