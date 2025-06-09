@@ -6,6 +6,7 @@ import { COLOR } from '@/constants/colors';
 import { Pages } from '@/enums/Pages';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 
 const { Text } = Typography;
@@ -56,7 +57,9 @@ const TopBarContainer = styled.div`
 export const TopBar = () => {
   const electronApi = useElectronApi();
   const store = useStore();
-  const { goto } = usePageState();
+  const { isUserLoggedIn, goto } = usePageState();
+  const { selectedService } = useServices();
+
   const envName = store?.storeState?.environmentName;
 
   return (
@@ -69,20 +72,22 @@ export const TopBar = () => {
 
       <Text>{`Pearl (beta) ${envName ? `(${envName})` : ''}`.trim()}</Text>
 
-      <Flex align="center" className="ml-auto">
-        <Button
-          type="text"
-          shape="circle"
-          icon={<QuestionCircleOutlined />}
-          onClick={() => goto(Pages.HelpAndSupport)}
-        />
-        <Button
-          type="text"
-          shape="circle"
-          icon={<SettingOutlined />}
-          onClick={() => goto(Pages.Settings)}
-        />
-      </Flex>
+      {isUserLoggedIn && selectedService && (
+        <Flex align="center" className="ml-auto">
+          <Button
+            type="text"
+            shape="circle"
+            icon={<QuestionCircleOutlined />}
+            onClick={() => goto(Pages.HelpAndSupport)}
+          />
+          <Button
+            type="text"
+            shape="circle"
+            icon={<SettingOutlined />}
+            onClick={() => goto(Pages.Settings)}
+          />
+        </Flex>
+      )}
     </TopBarContainer>
   );
 };
