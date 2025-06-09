@@ -281,6 +281,7 @@ export const SetupEoaFunding = () => {
       await updateBeforeBridgingFunds();
       goto(SetupScreen.SetupBridgeOnboardingScreen);
     } catch (error) {
+      message.error('Failed to prepare for bridging funds. Please try again.');
       console.error('Error updating before bridging funds:', error);
     }
   }, [goto, updateBeforeBridgingFunds]);

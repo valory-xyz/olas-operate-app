@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { AgentType } from '@/enums/Agent';
 import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { onDummyServiceCreation } from '@/utils/service';
@@ -23,30 +22,26 @@ export const useBeforeBridgeFunds = () => {
   );
 
   return useCallback(async () => {
-    // For predict agent: create a dummy service and then navigate to bridge onboarding
-    if (selectedAgentType === AgentType.PredictTrader) {
-      // If a service is already selected, do not create a service
-      if (selectedService) return;
+    // If a service is already selected, do not create a service
+    if (selectedService) return;
 
-      if (!defaultStakingProgramId) {
-        throw new Error('Default staking program ID unavailable');
-      }
-
-      if (!serviceTemplate) {
-        throw new Error('Service template unavailable');
-      }
-
-      await onDummyServiceCreation(defaultStakingProgramId, serviceTemplate);
-
-      // fetch services again to update the state after service creation
-      await refetchServices?.();
+    if (!defaultStakingProgramId) {
+      throw new Error('Default staking program ID unavailable');
     }
+
+    if (!serviceTemplate) {
+      throw new Error('Service template unavailable');
+    }
+
+    await onDummyServiceCreation(defaultStakingProgramId, serviceTemplate);
+
+    // fetch services again to update the state after service creation
+    await refetchServices?.();
 
     // For other agents, just navigate to bridge onboarding as
     // service creation is already handled in the agent setup.
   }, [
     defaultStakingProgramId,
-    selectedAgentType,
     serviceTemplate,
     selectedService,
     refetchServices,
