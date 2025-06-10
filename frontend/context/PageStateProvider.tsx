@@ -30,7 +30,7 @@ export const PageStateContext = createContext<PageStateContextType>({
 });
 
 export const PageStateProvider = ({ children }: PropsWithChildren) => {
-  const [pageState, setPageState] = useState(Pages.Setup);
+  const [pageState, setPageState] = useState<Pages>(Pages.Setup);
   const [isPageLoadedAndOneMinutePassed, setIsPageLoadedAndOneMinutePassed] =
     useState(false);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
