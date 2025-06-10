@@ -1,3 +1,4 @@
+// TODO: move to constants
 export const Pages = {
   Setup: 'Setup',
   Main: 'Main',

@@ -1,3 +1,4 @@
+// TODO: move to constants
 export const SetupScreen = {
   Loading: 'Loading',
   Welcome: 'Welcome',
@@ -15,6 +16,7 @@ export const SetupScreen = {
   RestoreViaBackup: 'RestoreViaBackup',
   AgentIntroduction: 'AgentIntroduction',
   EarlyAccessOnly: 'EarlyAccessOnly',
+
   /** Onboarding using the bridge */
   SetupBridgeOnboardingScreen: 'SetupBridgeOnboardingScreen',
 } as const;
