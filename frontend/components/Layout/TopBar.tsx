@@ -56,7 +56,7 @@ const TopBarContainer = styled.div`
 export const TopBar = () => {
   const electronApi = useElectronApi();
   const store = useStore();
-  const { isUserLoggedIn, goto } = usePageState();
+  const { isUserLoggedIn, goto, pageState } = usePageState();
 
   const envName = store?.storeState?.environmentName;
 
@@ -70,7 +70,8 @@ export const TopBar = () => {
 
       <Text>{`Pearl (beta) ${envName ? `(${envName})` : ''}`.trim()}</Text>
 
-      {isUserLoggedIn && (
+      {/* for now, showing only on Main page */}
+      {isUserLoggedIn && pageState === Pages.Main && (
         <Flex align="center" className="ml-auto">
           <Button
             type="text"

@@ -1,21 +1,22 @@
-export enum SetupScreen {
-  Loading,
-  Welcome,
-  SetupPassword,
-  SetupSeedPhrase,
-  SetupBackupSigner,
-  AgentSelection,
-  SetupYourAgent,
-  SetupEoaFunding,
-  SetupEoaFundingIncomplete,
-  SetupCreateSafe,
-  Restore,
-  RestoreViaSeed,
-  RestoreSetPassword,
-  RestoreViaBackup,
-  AgentIntroduction,
-  EarlyAccessOnly,
-
+export const SetupScreen = {
+  Loading: 'Loading',
+  Welcome: 'Welcome',
+  SetupPassword: 'SetupPassword',
+  SetupSeedPhrase: 'SetupSeedPhrase',
+  SetupBackupSigner: 'SetupBackupSigner',
+  AgentSelection: 'AgentSelection',
+  SetupYourAgent: 'SetupYourAgent',
+  SetupEoaFunding: 'SetupEoaFunding',
+  SetupEoaFundingIncomplete: 'SetupEoaFundingIncomplete',
+  SetupCreateSafe: 'SetupCreateSafe',
+  Restore: 'Restore',
+  RestoreViaSeed: 'RestoreViaSeed',
+  RestoreSetPassword: 'RestoreSetPassword',
+  RestoreViaBackup: 'RestoreViaBackup',
+  AgentIntroduction: 'AgentIntroduction',
+  EarlyAccessOnly: 'EarlyAccessOnly',
   /** Onboarding using the bridge */
-  SetupBridgeOnboardingScreen,
-}
+  SetupBridgeOnboardingScreen: 'SetupBridgeOnboardingScreen',
+} as const;
+
+export type SetupScreen = (typeof SetupScreen)[keyof typeof SetupScreen];
