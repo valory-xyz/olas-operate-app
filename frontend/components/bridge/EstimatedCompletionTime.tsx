@@ -25,14 +25,13 @@ export const EstimatedCompletionTime = ({
 }: EstimatedCompletionTimeProps) => {
   const deadline = useMemo(() => {
     if (!timeInSeconds) return 0;
-    return new Date(timeInSeconds * 1000).getTime();
+    return Date.now() + timeInSeconds * 1000;
   }, [timeInSeconds]);
 
   const minutesRemaining = useMemo(() => {
-    if (!deadline) return 0;
-    const minutes = Math.floor((deadline - new Date().getTime()) / 1000 / 60);
+    const minutes = Math.floor(timeInSeconds / 60);
     return Math.max(0, minutes);
-  }, [deadline]);
+  }, [timeInSeconds]);
 
   return (
     <EstimatedTimeRow gap={8}>

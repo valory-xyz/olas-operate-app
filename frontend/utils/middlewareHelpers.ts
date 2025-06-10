@@ -30,20 +30,33 @@ export const asEvmChainDetails = (
 ): {
   name: string;
   displayName: string;
+  symbol: TokenSymbol;
 } => {
   switch (chain) {
     case MiddlewareChain.ETHEREUM:
-      return { name: 'ethereum', displayName: 'Ethereum' };
+      return {
+        name: 'ethereum',
+        displayName: 'Ethereum',
+        symbol: TokenSymbol.ETH,
+      };
     case MiddlewareChain.GNOSIS:
-      return { name: 'gnosis', displayName: 'Gnosis' };
+      return {
+        name: 'gnosis',
+        displayName: 'Gnosis',
+        symbol: TokenSymbol.XDAI,
+      };
     case MiddlewareChain.BASE:
-      return { name: 'base', displayName: 'Base' };
+      return { name: 'base', displayName: 'Base', symbol: TokenSymbol.ETH };
     case MiddlewareChain.CELO:
-      return { name: 'celo', displayName: 'Celo' };
+      return { name: 'celo', displayName: 'Celo', symbol: TokenSymbol.CELO };
     case MiddlewareChain.MODE:
-      return { name: 'mode', displayName: 'Mode' };
+      return { name: 'mode', displayName: 'Mode', symbol: TokenSymbol.ETH };
     case MiddlewareChain.OPTIMISM:
-      return { name: 'optimism', displayName: 'Optimism' };
+      return {
+        name: 'optimism',
+        displayName: 'Optimism',
+        symbol: TokenSymbol.ETH,
+      };
   }
   throw new Error(`Invalid middleware chain enum: ${chain}`);
 };

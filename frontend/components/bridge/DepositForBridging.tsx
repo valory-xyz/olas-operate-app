@@ -26,7 +26,7 @@ import { Address } from '@/types/Address';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
 import { delayInSeconds } from '@/utils/delay';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '../ui/iconStyles';
 import { DepositAddress } from './DepositAddress';
@@ -92,7 +92,7 @@ export const DepositForBridging = ({
   updateCrossChainTransferDetails,
   onNext,
 }: DepositForBridgingProps) => {
-  const { selectedAgentConfig } = useServices();
+  const { isLoading: isServicesLoading, selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const { masterEoa } = useMasterWalletContext();
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
@@ -146,7 +146,8 @@ export const DepositForBridging = ({
   const isRequestingQuote =
     isBalancesAndFundingRequirementsLoading ||
     isBridgeRefillRequirementsApiLoading ||
-    isBridgeRefillRequirementsLoading;
+    isBridgeRefillRequirementsLoading ||
+    isServicesLoading;
 
   const isRequestingQuoteFailed = useMemo(() => {
     if (isRequestingQuote) return false;
@@ -162,6 +163,25 @@ export const DepositForBridging = ({
     isBridgeRefillRequirementsError,
     bridgeFundingRequirements,
   ]);
+
+  /**
+   * Maximum of all the ETAs for the QUOTE_DONE requests.
+   * For example, If there are two QUOTE_DONE requests with ETAs of 300 and 900 seconds,
+   * then the quoteEta will be 900 seconds.
+   */
+  const quoteEta = useMemo(() => {
+    if (isRequestingQuote) return;
+    if (isRequestingQuoteFailed) return;
+    if (!bridgeFundingRequirements) return;
+
+    const quoteDoneRequests =
+      bridgeFundingRequirements.bridge_request_status.filter(
+        (request) => request.status === 'QUOTE_DONE',
+      );
+    if (quoteDoneRequests.length === 0) return;
+
+    return Math.max(...quoteDoneRequests.map((request) => request.eta || 0));
+  }, [isRequestingQuote, isRequestingQuoteFailed, bridgeFundingRequirements]);
 
   // If quote has failed, stop polling for bridge refill requirements
   useEffect(() => {
@@ -232,6 +252,7 @@ export const DepositForBridging = ({
     if (tokens.length === 0) return;
     if (isRequestingQuoteFailed) return;
     if (!masterEoa?.address) return;
+    if (!quoteEta) return;
 
     const areAllFundsReceived =
       tokens.every((token) => token.areFundsReceived) &&
@@ -241,6 +262,7 @@ export const DepositForBridging = ({
     updateCrossChainTransferDetails({
       fromChain: MiddlewareChain.ETHEREUM,
       toChain: toMiddlewareChain,
+      eta: quoteEta,
       transfers: tokens.map((token) => {
         const toAmount = (() => {
           // TODO: reuse getFromToken function from utils.ts
@@ -268,7 +290,9 @@ export const DepositForBridging = ({
         return {
           fromSymbol: token.symbol,
           fromAmount: token.currentBalanceInWei.toString(),
-          toSymbol: token.symbol,
+          toSymbol: token.isNative
+            ? asEvmChainDetails(toMiddlewareChain).symbol
+            : token.symbol,
           toAmount: toAmount.toString(),
           decimals: token.decimals,
         };
@@ -294,6 +318,7 @@ export const DepositForBridging = ({
     masterEoa,
     tokens,
     bridgeRequirementsParams,
+    quoteEta,
     onNext,
     updateQuoteId,
     updateCrossChainTransferDetails,

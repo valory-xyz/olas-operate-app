@@ -30,7 +30,8 @@ import { useMasterWalletContext } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 import { delayInSeconds } from '@/utils/delay';
 
-import { SetupCreateHeader } from './SetupCreateHeader';
+import { SetupCreateHeader } from '../SetupCreateHeader';
+import { useBeforeBridgeFunds } from './useBeforeBridgeFunds';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -221,13 +222,14 @@ export const SetupEoaFunding = () => {
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
   const { masterWalletBalances } = useMasterBalances();
-  const masterEoaAddress = masterEoa?.address;
+  const updateBeforeBridgingFunds = useBeforeBridgeFunds();
 
   const [currentChain, setCurrentChain] = useState<EvmChainId>(
     selectedAgentConfig.evmHomeChainId,
   );
   const [fundType, setFundType] = useState<SendFundAction>('transfer');
 
+  const masterEoaAddress = masterEoa?.address;
   const currentFundingRequirements = CHAIN_CONFIG[currentChain];
 
   const eoaBalance = masterWalletBalances?.find(
@@ -240,6 +242,7 @@ export const SetupEoaFunding = () => {
     eoaBalance?.evmChainId === currentChain &&
     eoaBalance.balance >= CHAIN_CONFIG[currentChain].safeCreationThreshold;
 
+  // once funded, go to next chain or create safe
   const handleFunded = useCallback(async () => {
     message.success(
       `${currentFundingRequirements.name} funds have been received!`,
@@ -273,9 +276,15 @@ export const SetupEoaFunding = () => {
     handleFunded();
   }, [currentFundingRequirements, handleFunded, isFunded, masterEoaAddress]);
 
-  const handleBridgeFunds = useCallback(() => {
-    goto(SetupScreen.SetupBridgeOnboardingScreen);
-  }, [goto]);
+  const handleBridgeFunds = useCallback(async () => {
+    try {
+      await updateBeforeBridgingFunds();
+      goto(SetupScreen.SetupBridgeOnboardingScreen);
+    } catch (error) {
+      message.error('Failed to prepare for bridging funds. Please try again.');
+      console.error('Error updating before bridging funds:', error);
+    }
+  }, [goto, updateBeforeBridgingFunds]);
 
   if (!currentFundingRequirements) return null;
 
@@ -317,6 +326,7 @@ export const SetupEoaFunding = () => {
           className="w-full"
         />
       </CardSection>
+
       {fundType === 'transfer' ? (
         <SetupEoaFundingForChainV2
           isFunded={isFunded}

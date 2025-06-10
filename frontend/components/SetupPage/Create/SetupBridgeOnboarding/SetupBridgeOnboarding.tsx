@@ -19,7 +19,7 @@ export const SetupBridgeOnboarding = () => {
   const { goto } = usePageState();
   const [bridgeState, setBridgeState] = useState<BridgeState>('depositing');
   const [quoteId, setQuoteId] = useState<Nullable<string>>(null);
-  const [transferAndReceivingAmounts, setTransferAndReceivingAmounts] =
+  const [transferAndReceivingDetails, setTransferAndReceivingAmounts] =
     useState<Nullable<CrossChainTransferDetails>>(null);
   const [bridgeRetryOutcome, setBridgeRetryOutcome] =
     useState<Nullable<BridgeRetryOutcome>>(null);
@@ -76,11 +76,11 @@ export const SetupBridgeOnboarding = () => {
       );
     case 'in_progress': {
       if (!quoteId) throw new Error(QUOTE_ID_ERROR);
-      if (!transferAndReceivingAmounts) throw new Error(TRANSFER_AMOUNTS_ERROR);
+      if (!transferAndReceivingDetails) throw new Error(TRANSFER_AMOUNTS_ERROR);
       return (
         <BridgeInProgress
           quoteId={quoteId}
-          {...transferAndReceivingAmounts}
+          {...transferAndReceivingDetails}
           bridgeRetryOutcome={bridgeRetryOutcome}
           onBridgeRetryOutcome={(e: Nullable<BridgeRetryOutcome>) =>
             setBridgeRetryOutcome(e)
