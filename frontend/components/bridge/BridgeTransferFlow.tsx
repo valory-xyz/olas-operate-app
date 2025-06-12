@@ -49,7 +49,7 @@ const TransferRow = ({ transfer }: { transfer: TokenTransfer }) => {
   );
 };
 
-type BridgeTransferFlowProps = CrossChainTransferDetails;
+type BridgeTransferFlowProps = Omit<CrossChainTransferDetails, 'eta'>;
 
 /**
  * Presentational component for the bridge transfer flow

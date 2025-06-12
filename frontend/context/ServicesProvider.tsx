@@ -145,13 +145,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     selectedServiceStatusOverride,
   ]);
 
-  const updateAgentType = useCallback(
-    (agentType: AgentType) => {
-      store?.set?.('lastSelectedAgentType', agentType);
-    },
-    [store],
-  );
-
   const selectedAgentConfig = useMemo(() => {
     const config: Maybe<AgentConfig> = AGENT_CONFIG[selectedAgentType];
 
@@ -210,6 +203,13 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       [],
     );
   }, [isServicesLoading, services]);
+
+  const updateAgentType = useCallback(
+    (agentType: AgentType) => {
+      store?.set?.('lastSelectedAgentType', agentType);
+    },
+    [store],
+  );
 
   /**
    * Select the first service by default

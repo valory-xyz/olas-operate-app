@@ -17,6 +17,7 @@ import { Optional } from '@/types/Util';
 import { AddressLink } from '../AddressLink';
 import { CustomAlert } from '../Alert';
 import { CardTitle } from '../Card/CardTitle';
+import { GoToLoginPageButton } from '../Pages/GoToLoginPageButton';
 import { GoToMainPageButton } from '../Pages/GoToMainPageButton';
 import { CardSection } from '../styled/CardSection';
 import { DebugInfoSection } from './DebugInfoSection';
@@ -83,6 +84,7 @@ export const Settings = () => {
 
 const SettingsMain = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
+  const { isUserLoggedIn } = usePageState();
   const { selectedAgentConfig } = useServices();
   const { masterEoa, masterSafes } = useMasterWalletContext();
 
@@ -130,12 +132,12 @@ const SettingsMain = () => {
       title={<SettingsTitle />}
       bordered={false}
       styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}
-      extra={<GoToMainPageButton />}
+      extra={isUserLoggedIn ? <GoToMainPageButton /> : <GoToLoginPageButton />}
     >
       {/* Password */}
       <CardSection
-        padding="24px"
-        borderbottom="true"
+        $padding="24px"
+        $borderBottom={true}
         justify="space-between"
         align="center"
       >
@@ -151,8 +153,8 @@ const SettingsMain = () => {
       */}
       {!isBackupViaSafeEnabled && !masterSafeBackupAddress ? null : (
         <CardSection
-          padding="24px"
-          borderbottom={masterSafeBackupAddress ? 'true' : 'false'}
+          $padding="24px"
+          $borderBottom={masterSafeBackupAddress ? true : false}
           vertical
           gap={8}
         >
