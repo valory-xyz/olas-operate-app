@@ -606,7 +606,7 @@ def _summarize_dataframes(
     print(df_dau.sort_index())
 
     print("\n=== Pearl WoW ===")
-    periods_before = 5
+    periods_before = 1
     period_length = to_date - from_date + timedelta(days=1)
     prev_to_date = from_date - timedelta(days=1) - period_length * (periods_before - 1)
     prev_from_date = prev_to_date - period_length + timedelta(days=1)
