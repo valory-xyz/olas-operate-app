@@ -727,7 +727,7 @@ def main() -> None:
         print(f"WARNING: Excluding incomplete days (today or future): {to_date}")
         to_date = min(to_date, today - timedelta(days=1))
 
-    periods_before = 5
+    periods_before = 1
     period_length = to_date - from_date + timedelta(days=1)
     prev_to_date = from_date - timedelta(days=1) - period_length * (periods_before - 1)
     prev_from_date = prev_to_date - period_length + timedelta(days=1)
