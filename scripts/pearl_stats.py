@@ -536,7 +536,7 @@ def _generate_dataframes(data: t.Dict) -> t.Tuple[pd.DataFrame, pd.DataFrame]:
 
 
 def _summarize_dataframes(
-    df_services: pd.DataFrame, df_txs: pd.DataFrame, from_date: date, to_date: date
+    df_services: pd.DataFrame, df_txs: pd.DataFrame, from_date: date, to_date: date, periods_before: int
 ) -> None:
     df_services_pearl = df_services[df_services["is_pearl"]]
     df_txs_pearl = df_txs.merge(
@@ -606,7 +606,6 @@ def _summarize_dataframes(
     print(df_dau.sort_index())
 
     print("\n=== Pearl WoW ===")
-    periods_before = 1
     period_length = to_date - from_date + timedelta(days=1)
     prev_to_date = from_date - timedelta(days=1) - period_length * (periods_before - 1)
     prev_from_date = prev_to_date - period_length + timedelta(days=1)
@@ -698,14 +697,20 @@ def main() -> None:
     """Main method"""
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--from_date",
+        "--from-date",
         type=lambda s: datetime.strptime(s, "%Y-%m-%d").date(),
         help="Start date in YYYY-MM-DD",
     )
     parser.add_argument(
-        "--to_date",
+        "--to-date",
         type=lambda s: datetime.strptime(s, "%Y-%m-%d").date(),
         help="End date in YYYY-MM-DD",
+    )
+    parser.add_argument(
+        "--periods-before",
+        type=int,
+        help="Number of periods to look back for comparison. Compares the current period (`from_date` to `to_date`) with the period that occurred exactly this many periods before.",
+        default=1,
     )
     parser.add_argument(
         "--update",
@@ -727,9 +732,8 @@ def main() -> None:
         print(f"WARNING: Excluding incomplete days (today or future): {to_date}")
         to_date = min(to_date, today - timedelta(days=1))
 
-    periods_before = 1
     period_length = to_date - from_date + timedelta(days=1)
-    prev_to_date = from_date - timedelta(days=1) - period_length * (periods_before - 1)
+    prev_to_date = from_date - timedelta(days=1) - period_length * (args.periods_before - 1)
     prev_from_date = prev_to_date - period_length + timedelta(days=1)
 
     days = sorted(
@@ -785,7 +789,7 @@ def main() -> None:
         }
 
     (df_services, df_txs) = _generate_dataframes(data)
-    _summarize_dataframes(df_services, df_txs, from_date, to_date)
+    _summarize_dataframes(df_services, df_txs, from_date, to_date, args.periods_before)
 
 
 if __name__ == "__main__":
