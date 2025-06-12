@@ -22,6 +22,7 @@
 
 # pylint: disable=too-many-locals
 
+from operator import is_
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -44,7 +45,11 @@ from web3.middleware import geth_poa_middleware
 from operate.ledger import DEFAULT_RPCS
 from operate.ledger.profiles import CONTRACTS
 from operate.operate_types import Chain
-
+from dune_client.client import DuneClient
+from dune_client.types import QueryParameter
+from dune_client.client import DuneClient
+from dune_client.query import QueryBase
+import dotenv
 
 SCRIPT_PATH = Path(__file__).resolve().parent
 IPFS_ADDRESS = "https://gateway.autonolas.tech/ipfs/"
@@ -61,7 +66,26 @@ PEARL_TAG = "[Pearl service]"
 SERVICE_REGISTRY: t.Dict = {}
 GNOSIS_SAFE_ABI: t.Dict = {}
 W3: t.Dict = {}
-CHAINS = [Chain.OPTIMISTIC, Chain.GNOSIS, Chain.BASE, Chain.MODE]
+CHAINS = [Chain.BASE]# [Chain.OPTIMISTIC, Chain.GNOSIS, Chain.BASE, Chain.MODE]
+
+
+def _load_dune_pearl_staked(update: bool = False) -> t.Dict[str, t.List[int]]:
+
+    dune_db = _load("dune_pearl_staked")
+
+    if update or not dune_db:
+        print("Fetching Dune DB...")
+        dune = DuneClient.from_env()
+        result = dune.get_latest_result(5273766, max_age_hours=24)
+
+        for row in result.result.rows:
+            chain = row["chain"]
+            service_id = row["serviceId"]
+            dune_db.setdefault(chain, []).append(service_id)
+
+        _save(dune_db, "dune_pearl_staked")
+
+    return dune_db
 
 
 def _get_safe_owners(chain: Chain, address: str) -> t.Optional[t.List[str]]:
@@ -209,11 +233,16 @@ def _find_block_range(
 last_write_time = 0.0
 
 
-def _save(data: t.Dict, name: str, chain: Chain, force_write: bool = True) -> None:
+def _save(data: t.Dict, name: str, chain: t.Optional[Chain]=None, force_write: bool = True) -> None:
     global last_write_time  # pylint: disable=global-statement
     now = time.time()
-    if force_write or (now - last_write_time) >= MINIMUM_WRITE_FILE_DELAY_SECONDS:
+
+    if chain:
         file_path = DATA_PATH / f"{name}_{chain.value}.json"
+    else:
+        file_path = DATA_PATH / f"{name}.json"
+
+    if force_write or (now - last_write_time) >= MINIMUM_WRITE_FILE_DELAY_SECONDS:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         if file_path.exists():
@@ -225,8 +254,13 @@ def _save(data: t.Dict, name: str, chain: Chain, force_write: bool = True) -> No
         last_write_time = now
 
 
-def _load(name: str, chain: Chain) -> t.Dict:
-    file_path = DATA_PATH / f"{name}_{chain.value}.json"
+def _load(name: str, chain: t.Optional[Chain] = None) -> t.Dict:
+
+    if chain:
+        file_path = DATA_PATH / f"{name}_{chain.value}.json"
+    else:
+        file_path = DATA_PATH / f"{name}.json"
+
     if not os.path.exists(file_path):
         return {}
     with open(file_path, "r", encoding="utf-8") as f:
@@ -255,9 +289,16 @@ def _populate_services_create_event(
     service_registry_address = CONTRACTS[Chain(chain)]["service_registry"]
     event_signature = "CreateService(uint256,bytes32)"
     event_topic = Web3.keccak(text=event_signature).hex()
-    logs = _get_logs(
-        chain, from_block, to_block, [event_topic], service_registry_address
-    )
+
+    total_blocks = to_block - from_block + 1
+    with tqdm(
+        total=total_blocks,
+        desc=f"Fetching {chain.value} logs (blocks {from_block}-{to_block})",
+        unit="blocks",
+    ) as progress:
+        logs = _get_logs(
+            chain, from_block, to_block, [event_topic], service_registry_address, progress
+        )
 
     for log in logs:
         block = w3.eth.get_block(log["blockNumber"])
@@ -282,30 +323,30 @@ def _get_logs(
     to_block: int,
     topics: t.List,
     address: t.Optional[str] = None,
-    title: str = "Fetching logs",
+    progress: t.Optional[tqdm] = None,
 ) -> t.List:
     w3 = W3[chain]
     all_logs = []
     current_block = from_block
-    total_blocks = to_block - from_block + 1
 
-    with tqdm(total=total_blocks, desc=title, unit="blocks") as pbar:
-        while current_block <= to_block:
-            chunk_end = min(current_block + BLOCK_CHUNK_SIZE - 1, to_block)
-            params = {
-                "fromBlock": current_block,
-                "toBlock": chunk_end,
-                "topics": topics,
-            }
-            if address:
-                params["address"] = address
+    while current_block <= to_block:
+        chunk_end = min(current_block + BLOCK_CHUNK_SIZE - 1, to_block)
+        params = {
+            "fromBlock": current_block,
+            "toBlock": chunk_end,
+            "topics": topics,
+        }
+        if address:
+            params["address"] = address
 
-            logs = w3.eth.get_logs(params)
-            all_logs.extend(logs)
+        logs = w3.eth.get_logs(params)
+        all_logs.extend(logs)
 
-            processed = chunk_end - current_block + 1
-            pbar.update(processed)
-            current_block = chunk_end + 1
+        processed = chunk_end - current_block + 1
+        if progress:
+            progress.update(processed)
+
+        current_block = chunk_end + 1
 
     return all_logs
 
@@ -314,16 +355,59 @@ def _populate_services_safe_transactions(
     services: t.Dict,
     txs: t.Dict,
     chain: Chain,
-    from_date: date,
-    to_date: date,
+    days: t.List[date],
     update: bool = False,
 ) -> None:
+    """Populate Safe transactions for services."""
     print(
-        f"\nFetching services Safe transactions {chain=} {from_date=} {to_date=} {update=}"
+        f"Populating services Safe transactions {chain=} {days=} {update=}"
     )
 
     if not services:
         print("No services")
+        return
+
+    error_count = 0
+    with ThreadPoolExecutor() as executor:
+        futures = []
+        for i, day in enumerate(days):
+            dt = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
+            day_str = dt.strftime("%Y-%m-%d")
+            if day_str in txs and not update:
+                continue
+            futures.append(
+                executor.submit(_populate_services_safe_transactions_for_day, services, txs, chain, day, update, i)
+            )
+        for future in as_completed(futures):
+            try:
+                future.result()
+                _save(txs, "txs", chain, False)
+            except Exception as e:  # pylint: disable=broad-except
+                error_count += 1
+                print(f"Error occurred: {e}")
+
+    if error_count > 0:
+        print("\n" + "=" * 40)
+        print(f"WARNING: {error_count} error(s) encountered.")
+        print("We recommend to re-run the script.")
+        print("=" * 40)
+
+    _save(txs, "txs", chain)
+
+
+def _populate_services_safe_transactions_for_day(
+    services: t.Dict,
+    txs: t.Dict,
+    chain: Chain,
+    day: date,
+    update: bool = False,
+    position: int = 0,
+) -> None:
+
+    dt = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
+    day_str = dt.strftime("%Y-%m-%d")
+
+    if day_str in txs and not update:
         return
 
     event_signature = "ExecutionSuccess(bytes32,uint256)"
@@ -335,56 +419,43 @@ def _populate_services_safe_transactions(
         if "multisig" in s
     }
 
-    today = date.today()
-    if to_date >= today:
-        print(f"WARNING: Excluding incomplete days (today or future): {to_date}")
+    from_ts = int(dt.timestamp())
+    to_ts = from_ts + SECONDS_PER_DAY - 1
+    from_block, to_block = _find_block_range(chain, from_ts, to_ts)
 
-    effective_to_date = min(to_date, today - timedelta(days=1))
-    days = (effective_to_date - from_date).days + 1
+    if from_block > to_block:
+        raise RuntimeError("from_block > to_block")
 
-    for i in range(days):
-        d = from_date + timedelta(days=i)
-        dt = datetime(d.year, d.month, d.day, tzinfo=timezone.utc)
-        day_str = dt.strftime("%Y-%m-%d")
-
-        if day_str in txs and not update:
-            continue
-
-        from_ts = int(dt.timestamp())
-        to_ts = from_ts + SECONDS_PER_DAY - 1
-        from_block, to_block = _find_block_range(chain, from_ts, to_ts)
-
-        if from_block > to_block:
-            raise RuntimeError("from_block > to_block")
-
+    total_blocks = to_block - from_block + 1
+    with tqdm(
+        total=total_blocks,
+        desc=f"Fetching {chain.value} logs for {day_str} (blocks {from_block}-{to_block})",
+        position=position,
+        unit="blocks",
+    ) as progress:
         logs = _get_logs(
             chain,
             from_block,
             to_block,
             [event_topic],
-            title=f"Fetching logs for {day_str} {from_ts=} {to_ts=} {from_block=} {to_block=}",
+            progress=progress,
         )
-        txs.setdefault(day_str, {})
-        for log in logs:
-            address = log["address"]
-            if address in multisig_to_service:
-                tx_hash = log["transactionHash"].hex()
-                service_key = multisig_to_service[address]
-                txs[day_str].setdefault(service_key, []).append(tx_hash)
+
+    txs.setdefault(day_str, {})
+    for log in logs:
+        address = log["address"]
+        if address in multisig_to_service:
+            tx_hash = log["transactionHash"].hex()
+            service_key = multisig_to_service[address]
+            txs[day_str].setdefault(service_key, []).append(tx_hash)
 
     _save(txs, "txs", chain)
-
-
-def _is_pearl(service: t.Dict) -> bool:
-    metadata_description = service.get("metadata", {}).get("description", "")
-    if PEARL_TAG.lower() in metadata_description.lower():
-        return True
-    return False
 
 
 def _generate_dataframes(data: t.Dict) -> t.Tuple[pd.DataFrame, pd.DataFrame]:
     rows_services = []
     for chain, content in data.items():
+        dune_pearl_staked = content.get("dune_pearl_staked", [])
         services = content.get("services", {})
         for service_key, service in services.items():
             _id = service.get("id", int(service_key))
@@ -406,12 +477,20 @@ def _generate_dataframes(data: t.Dict) -> t.Tuple[pd.DataFrame, pd.DataFrame]:
                 operator = None
                 operator_owners = None
 
+            is_pearl = False
+            metadata_description = service.get("metadata", {}).get("description", "")
+            if PEARL_TAG.lower() in metadata_description.lower():
+                is_pearl = True
+            
+            if service_key in dune_pearl_staked:
+                is_pearl = True
+
             rows_services.append(
                 {
                     "chain": chain.value,
                     "service_id": _id,
                     "creation_timestamp": creation_ts,
-                    "is_pearl": _is_pearl(service),
+                    "is_pearl": is_pearl,
                     "creation_date": creation_date,
                     "operator": operator,
                     "operator_owners": operator_owners,
@@ -436,12 +515,51 @@ def _generate_dataframes(data: t.Dict) -> t.Tuple[pd.DataFrame, pd.DataFrame]:
                 )
 
     df_txs = pd.DataFrame(rows_txs)
+
+
+    #--------------------------
+
+    # Sort the dataframes before saving
+    df_services_sorted = df_services.sort_values(
+        by=["chain", "service_id", "creation_timestamp"]
+    )
+    df_txs_sorted = df_txs.sort_values(
+        by=["chain", "service_id", "tx_date"]
+    )
+
+    # Save to CSV files
+    df_services_sorted.to_csv("data/services.csv", index=False)
+    df_txs_sorted.to_csv("data/txs.csv", index=False)
+
+    # For df_txs
+    duplicates_txs = df_txs.duplicated()
+    if duplicates_txs.any():
+        print(f"df_txs has {duplicates_txs.sum()} duplicate rows.")
+    else:
+        print("df_txs has no duplicate rows.")
+
+    #--------------------------
+
     return (df_services, df_txs)
 
 
 def _summarize_dataframes(
     df_services: pd.DataFrame, df_txs: pd.DataFrame, from_date: date, to_date: date
 ) -> None:
+
+    df_services_pearl = df_services[df_services["is_pearl"]]
+    df_txs_pearl = df_txs.merge(
+        df_services_pearl[["chain", "service_id"]],
+        on=["chain", "service_id"],
+        how="inner"
+    )
+
+    df_txs_pearl_sorted = df_txs.sort_values(
+        by=["chain", "service_id", "tx_date"]
+    )
+    df_txs_pearl_sorted.to_csv("data/txs_pearl.csv", index=False)
+
+
     print("\n=================================")
     print("=== Summary of Pearl Services ===")
     print("=================================")
@@ -455,12 +573,10 @@ def _summarize_dataframes(
         datetime.combine(to_date, datetime.max.time(), tzinfo=timezone.utc).timestamp()
     )
 
-    df_pearl_services = df_services[df_services["is_pearl"]]
-
     print(f"\n=== Pearl Services Created ({from_date} - {to_date}) ===")
-    df_created = df_pearl_services[
-        (df_pearl_services["creation_timestamp"] >= from_ts)
-        & (df_pearl_services["creation_timestamp"] <= to_ts)
+    df_created = df_services_pearl[
+        (df_services_pearl["creation_timestamp"] >= from_ts)
+        & (df_services_pearl["creation_timestamp"] <= to_ts)
     ]
     pivot_created = (
         df_created.pivot_table(
@@ -479,7 +595,7 @@ def _summarize_dataframes(
     ]
 
     df_daa = df_active_txs.merge(
-        df_pearl_services, on=["service_id", "chain"], how="inner"
+        df_services_pearl, on=["service_id", "chain"], how="inner"
     )
 
     pivot_daa = (
@@ -503,6 +619,86 @@ def _summarize_dataframes(
     df_dau_total = df_daa.groupby("tx_date")["operator"].nunique().rename("global_dau")
     df_dau = df_dau_per_chain.join(df_dau_total)
     print(df_dau.sort_index())
+
+    print("\n=== Pearl WoW ===")
+    periods_before = 5
+    period_length = to_date - from_date + timedelta(days=1)
+    prev_to_date = from_date - timedelta(days=1) - period_length * (periods_before - 1)
+    prev_from_date = prev_to_date - period_length + timedelta(days=1)
+
+    print(f"Current period: from {from_date} to {to_date}")
+    print(f"Previous period: from {prev_from_date} to {prev_to_date}")
+    print()
+
+    # Previous period txs
+    df_prev_period_txs = df_txs_pearl[
+        (df_txs_pearl["tx_date"] >= prev_from_date) & (df_txs_pearl["tx_date"] <= prev_to_date)
+    ]
+
+
+    df_txs_pearl_prev_period_sorted = df_prev_period_txs.sort_values(
+        by=["chain", "service_id", "tx_date"]
+    )
+    df_txs_pearl_prev_period_sorted.to_csv("data/df_txs_pearl_prev_period_sorted.csv", index=False)
+
+
+    # Current period txs
+    df_curr_period_txs = df_txs_pearl[
+        (df_txs_pearl["tx_date"] >= from_date) & (df_txs_pearl["tx_date"] <= to_date)
+    ]
+
+
+    df_txs_pearl_curr_period_sorted = df_curr_period_txs.sort_values(
+        by=["chain", "service_id", "tx_date"]
+    )
+    df_txs_pearl_curr_period_sorted.to_csv("data/df_txs_pearl_curr_period_sorted.csv", index=False)
+
+
+    df_curr_period_txs = df_curr_period_txs.merge(
+        df_prev_period_txs[["chain", "service_id"]],
+        on=["chain", "service_id"],
+        how="inner"
+    )
+    df_curr_period_txs = df_curr_period_txs.drop_duplicates()
+
+
+    df_txs_pearl_curr_period_sorted = df_curr_period_txs.sort_values(
+        by=["chain", "service_id", "tx_date"]
+    )
+    df_txs_pearl_curr_period_sorted.to_csv("data/df_txs_pearl_curr_period_sorted2.csv", index=False)
+
+
+
+
+    print(df_curr_period_txs)
+
+    prev_grouped = df_prev_period_txs.groupby("chain")["service_id"].apply(lambda x: set(x)).to_dict()
+    curr_grouped = df_curr_period_txs.groupby("chain")["service_id"].apply(lambda x: set(x)).to_dict()
+
+    rows = []
+    all_chains = set(prev_grouped.keys()).union(curr_grouped.keys())
+
+    for chain in sorted(all_chains):
+        prev_services = prev_grouped.get(chain, set())
+        curr_services = curr_grouped.get(chain, set())
+
+        prev_count = len(prev_services)
+        curr_count = len(curr_services.intersection(prev_services))
+        pct = round((curr_count / prev_count) * 100, 1) if prev_count else 0.0
+
+        rows.append({
+            "chain": chain,
+            "services_prev_week": prev_count,
+            "active_in_curr_week": curr_count,
+            "percent_active": pct,
+        })
+
+    summary_df = pd.DataFrame(rows)
+    print(summary_df.to_string(index=False))
+
+
+def _date_range(start, end) -> t.List[date]:
+    return [start + timedelta(days=i) for i in range((end - start).days + 1)]
 
 
 def main() -> None:
@@ -528,10 +724,25 @@ def main() -> None:
 
     utc_today = datetime.now(timezone.utc).date()
     default_to_date = utc_today - timedelta(days=1)
-    default_from_date = default_to_date - timedelta(days=7)
+    default_from_date = default_to_date - timedelta(days=1)  # TODO CHANGE TO 6
 
     from_date = args.from_date if args.from_date else default_from_date
     to_date = args.to_date if args.to_date else default_to_date
+
+    today = date.today()
+    if to_date >= today:
+        print(f"WARNING: Excluding incomplete days (today or future): {to_date}")
+        to_date = min(to_date, today - timedelta(days=1))
+
+    periods_before = 5
+    period_length = to_date - from_date + timedelta(days=1)
+    prev_to_date = from_date - timedelta(days=1) - period_length * (periods_before - 1)
+    prev_from_date = prev_to_date - period_length + timedelta(days=1)
+
+    days = sorted(
+        set(_date_range(from_date, to_date))
+        | set(_date_range(prev_from_date, prev_to_date))
+    )
 
     print(f"=== Start Pearl Statistics {from_date=} {to_date=} ===")
 
@@ -559,19 +770,22 @@ def main() -> None:
             gnosis_safe_abi = json.load(f)["abi"]
         GNOSIS_SAFE_ABI[Chain(chain)] = gnosis_safe_abi
 
+    dune_pearl_staked = _load_dune_pearl_staked(update=args.update)
     data = {}
     for chain in CHAINS:
         print(f"\n=== Processing {chain} ===")
+
         services = _load("services", chain)
         _populate_services(services, chain, update=args.update)
-        _populate_services_create_event(services, chain, from_date, to_date)
+        # _populate_services_create_event(services, chain, from_date, to_date)
+        # _populate_services_create_event(services, chain, prev_from_date, prev_to_date)
 
         txs = _load("txs", chain)
         _populate_services_safe_transactions(
-            services, txs, chain, from_date, to_date, update=args.update
+            services, txs, chain, days, update=args.update
         )
 
-        data[chain] = {"services": services, "txs": txs}
+        data[chain] = {"services": services, "txs": txs, "dune_pearl_staked": dune_pearl_staked.get(chain.value, [])}
 
     (df_services, df_txs) = _generate_dataframes(data)
     _summarize_dataframes(df_services, df_txs, from_date, to_date)
