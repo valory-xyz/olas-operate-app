@@ -40,12 +40,11 @@ from tqdm import tqdm
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
+load_dotenv()
+
 from operate.ledger import DEFAULT_RPCS
 from operate.ledger.profiles import CONTRACTS
 from operate.operate_types import Chain
-
-
-load_dotenv()
 
 
 SCRIPT_PATH = Path(__file__).resolve().parent
@@ -377,13 +376,26 @@ def _populate_services_safe_transactions(
         return
 
     error_count = 0
+
+    pending_days = []
+    for day in days:
+        day_str = datetime(day.year, day.month, day.day, tzinfo=timezone.utc).strftime("%Y-%m-%d")
+        if day_str not in txs or update:
+            pending_days.append(day)
+
+    progress_bars = []
+    for i, day in enumerate(pending_days):
+        pbar = tqdm(
+            total=1,
+            desc=f"[Thread waiting...] Fetching {chain.value} logs for {day.strftime('%Y-%m-%d')} (blocks ???-???)",
+            position=i,
+            unit="blocks",
+        )
+        progress_bars.append(pbar)
+
     with ThreadPoolExecutor() as executor:
         futures = []
-        for i, day in enumerate(days):
-            dt = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
-            day_str = dt.strftime("%Y-%m-%d")
-            if day_str in txs and not update:
-                continue
+        for i, day in enumerate(pending_days):
             futures.append(
                 executor.submit(
                     _populate_services_safe_transactions_for_day,
@@ -392,16 +404,18 @@ def _populate_services_safe_transactions(
                     chain,
                     day,
                     update,
-                    i,
+                    progress_bars[i],
                 )
             )
         for future in as_completed(futures):
             try:
                 future.result()
-                _save(txs, "txs", chain, False)
             except Exception as e:  # pylint: disable=broad-except
                 error_count += 1
-                print(f"Error occurred: {e}")
+                tqdm.write(f"Error occurred: {e}")
+
+    for pbar in progress_bars:
+        pbar.close()
 
     if error_count > 0:
         print("\n" + "=" * 40)
@@ -418,7 +432,7 @@ def _populate_services_safe_transactions_for_day(
     chain: Chain,
     day: date,
     update: bool = False,
-    position: int = 0,
+    progress: tqdm = None,
 ) -> None:
     dt = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
     day_str = dt.strftime("%Y-%m-%d")
@@ -443,19 +457,21 @@ def _populate_services_safe_transactions_for_day(
         raise RuntimeError("from_block > to_block")
 
     total_blocks = to_block - from_block + 1
-    with tqdm(
-        total=total_blocks,
-        desc=f"Fetching {chain.value} logs for {day_str} (blocks {from_block}-{to_block})",
-        position=position,
-        unit="blocks",
-    ) as progress:
-        logs = _get_logs(
-            chain,
-            from_block,
-            to_block,
-            [event_topic],
-            progress=progress,
+
+    if progress:
+        progress.reset(total=total_blocks)
+        progress.n = 0
+        progress.set_description_str(
+            f"Fetching {chain.value} logs for {day_str} (blocks {from_block}-{to_block})"
         )
+
+    logs = _get_logs(
+        chain,
+        from_block,
+        to_block,
+        [event_topic],
+        progress=progress,
+    )
 
     txs.setdefault(day_str, {})
     for log in logs:
@@ -569,7 +585,10 @@ def _summarize_dataframes(
         )
         .assign(total=lambda df: df.sum(axis=1))
         .sort_index()
-    )
+        )
+    total_row = pivot_created.sum(numeric_only=True)
+    total_row.name = 'TOTAL'
+    pivot_created = pd.concat([pivot_created, pd.DataFrame([total_row])])
     print(pivot_created)
 
     print("\n=== Pearl DAAs (>0 Transactions) ===")
@@ -647,13 +666,25 @@ def _summarize_dataframes(
         rows.append(
             {
                 "chain": chain,
-                "services_prev_period": prev_count,
+                "active_in_prev_period": prev_count,
                 "active_in_curr_period": curr_count,
                 "percent_active": pct,
             }
         )
 
     summary_df = pd.DataFrame(rows)
+
+    totals = {
+        "chain": "TOTAL",
+        "active_in_prev_period": summary_df["active_in_prev_period"].sum(),
+        "active_in_curr_period": summary_df["active_in_curr_period"].sum(),
+    }
+    totals["percent_active"] = round(
+        (totals["active_in_curr_period"] / totals["active_in_prev_period"]) * 100, 1
+    ) if totals["active_in_prev_period"] else 0.0
+
+    summary_df.loc[len(summary_df)] = totals
+
     print(summary_df.to_string(index=False))
 
     print("\nDropped services (not active in current period):")
@@ -664,29 +695,14 @@ def _summarize_dataframes(
         df_curr_period_txs.groupby("chain")["service_id"].apply(set).to_dict()
     )
 
-    dropped_rows = []
-
     for chain in sorted(all_chains):
         prev = prev_services.get(chain, set())
         curr = curr_services.get(chain, set())
 
         dropped = sorted(prev - curr)
-
         if dropped:
-            dropped_rows.append(
-                {
-                    "chain": chain,
-                    "services": ", ".join(str(s) for s in dropped),
-                }
-            )
-
-    dropped_df = pd.DataFrame(dropped_rows)
-    print(
-        dropped_df.to_string(
-            index=False,
-            formatters={"chain": "{:<10}".format, "services": "{:<}".format},
-        )
-    )
+            dropped_str = ", ".join(str(s) for s in dropped)
+            print(f"{chain}: {dropped_str}")
 
 
 def _date_range(start: date, end: date) -> t.List[date]:
