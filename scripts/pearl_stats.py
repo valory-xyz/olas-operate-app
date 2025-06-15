@@ -320,9 +320,7 @@ def _populate_services_safe_transactions(
     days: t.List[date],
     update: bool = False,
 ) -> None:
-    print(
-        f"Populating {chain.value} services transactions {update=}..."
-    )
+    print(f"Populating {chain.value} services transactions {update=}...")
 
     if not services:
         print("No services.")
@@ -554,6 +552,7 @@ def print_subtitle(text: str) -> None:
 
 
 def print_title(title: str) -> None:
+    """Print text as a title."""
     line = "\u2550" * (8 + len(title))
     print(bold(f"\n{line}\n    {title}    \n{line}\n"))
 
@@ -562,16 +561,19 @@ class PearlDataSummarizer:
     """PearlDataSummarizer"""
 
     def __init__(self, df_services: pd.DataFrame, df_txs: pd.DataFrame) -> None:
+        """Initializes the PearlDataSummarizer"""
         self.df_services = df_services
         self.df_txs = df_txs
         self.df_services_pearl = df_services[df_services["is_pearl"]]
         self.df_txs_pearl = df_txs.merge(
             self.df_services_pearl[["chain", "service_id"]],
             on=["chain", "service_id"],
-            how="inner"
+            how="inner",
         )
 
-    def print_summary(self, from_date: date, to_date: date, periods_before: int = 1) -> None:
+    def print_summary(
+        self, from_date: date, to_date: date, periods_before: int = 1
+    ) -> None:
         """print_summary"""
         print_title("Summary of Pearl Services")
         print(f"From date: {from_date}")
@@ -596,7 +598,9 @@ class PearlDataSummarizer:
             ).timestamp()
         )
         to_ts = int(
-            datetime.combine(to_date, datetime.max.time(), tzinfo=timezone.utc).timestamp()
+            datetime.combine(
+                to_date, datetime.max.time(), tzinfo=timezone.utc
+            ).timestamp()
         )
 
         df_created = self.df_services_pearl[
@@ -612,7 +616,9 @@ class PearlDataSummarizer:
         )
         total_row = services_created_df.sum(numeric_only=True)
         total_row.name = "TOTAL"
-        services_created_df = pd.concat([services_created_df, pd.DataFrame([total_row])])
+        services_created_df = pd.concat(
+            [services_created_df, pd.DataFrame([total_row])]
+        )
         return services_created_df
 
     def _daa_table(self, from_date: date, to_date: date) -> pd.DataFrame:
@@ -649,12 +655,16 @@ class PearlDataSummarizer:
             aggfunc="nunique",
             fill_value=0,
         )
-        df_dau_total = df_active_txs.groupby("tx_date")["operator"].nunique().rename("global_dau")
+        df_dau_total = (
+            df_active_txs.groupby("tx_date")["operator"].nunique().rename("global_dau")
+        )
         dau_df["global_dau"] = df_dau_total
         dau_df = dau_df.sort_index()
         return dau_df
 
-    def _multi_service_operators_table(self, from_date: date, to_date: date) -> pd.DataFrame:
+    def _multi_service_operators_table(
+        self, from_date: date, to_date: date
+    ) -> pd.DataFrame:
         df_active_txs = self.df_txs_pearl[
             (self.df_txs_pearl["tx_date"] >= from_date)
             & (self.df_txs_pearl["tx_date"] <= to_date)
@@ -669,31 +679,42 @@ class PearlDataSummarizer:
             .groupby("operator", dropna=False)
             .size()
         )
-        operators_multi_services = operator_service_counts[operator_service_counts > 1].index
+        operators_multi_services = operator_service_counts[
+            operator_service_counts > 1
+        ].index
 
         df_active_txs_multi_service_operators = df_active_txs[
             df_active_txs["operator"].isin(operators_multi_services)
         ]
         grouped_services = (
-            df_active_txs_multi_service_operators
-            .drop_duplicates(subset=["operator", "chain", "service_id"])
+            df_active_txs_multi_service_operators.drop_duplicates(
+                subset=["operator", "chain", "service_id"]
+            )
             .groupby(["operator", "chain"], dropna=False)["service_id"]
             .apply(lambda s: sorted(set(s)))
             .reset_index()
         )
 
-        output = grouped_services.pivot(
-            index="operator",
-            columns="chain",
-            values="service_id"
-        ).map(
-            lambda lst: ", ".join(str(s) for s in lst) if isinstance(lst, (list, set)) else "-"
-        ).fillna("-")
+        output = (
+            grouped_services.pivot(
+                index="operator", columns="chain", values="service_id"
+            )
+            .map(
+                lambda lst: ", ".join(str(s) for s in lst)
+                if isinstance(lst, (list, set))
+                else "-"
+            )
+            .fillna("-")
+        )
         return output
 
-    def _wow_table(self, from_date: date, to_date: date, periods_before: int) -> pd.DataFrame:
+    def _wow_table(
+        self, from_date: date, to_date: date, periods_before: int
+    ) -> pd.DataFrame:
         period_length = to_date - from_date + timedelta(days=1)
-        prev_to_date = from_date - timedelta(days=1) - period_length * (periods_before - 1)
+        prev_to_date = (
+            from_date - timedelta(days=1) - period_length * (periods_before - 1)
+        )
         prev_from_date = prev_to_date - period_length + timedelta(days=1)
 
         print(f"Previous period: from {prev_from_date} to {prev_to_date}.")
@@ -707,14 +728,18 @@ class PearlDataSummarizer:
         ]
 
         # Current period txs of services that were active in the previous period
-        df_curr_period_txs = self.df_txs_pearl[
-            (self.df_txs_pearl["tx_date"] >= from_date)
-            & (self.df_txs_pearl["tx_date"] <= to_date)
-        ].merge(
-            df_prev_period_txs[["chain", "service_id"]],
-            on=["chain", "service_id"],
-            how="inner",
-        ).drop_duplicates()
+        df_curr_period_txs = (
+            self.df_txs_pearl[
+                (self.df_txs_pearl["tx_date"] >= from_date)
+                & (self.df_txs_pearl["tx_date"] <= to_date)
+            ]
+            .merge(
+                df_prev_period_txs[["chain", "service_id"]],
+                on=["chain", "service_id"],
+                how="inner",
+            )
+            .drop_duplicates()
+        )
 
         prev_counts = df_prev_period_txs.groupby("chain")["service_id"].nunique()
         curr_counts = df_curr_period_txs.groupby("chain")["service_id"].nunique()
@@ -744,7 +769,9 @@ class PearlDataSummarizer:
         }
         totals["percent_active"] = (
             round(
-                (totals["active_in_curr_period"] / totals["active_in_prev_period"]) * 100, 1
+                (totals["active_in_curr_period"] / totals["active_in_prev_period"])
+                * 100,
+                1,
             )
             if totals["active_in_prev_period"]
             else 0.0
@@ -754,9 +781,13 @@ class PearlDataSummarizer:
         wow_df = wow_df.set_index("chain")
         return wow_df
 
-    def _dropped_services_table(self, from_date: date, to_date: date, periods_before: int) -> pd.DataFrame:
+    def _dropped_services_table(
+        self, from_date: date, to_date: date, periods_before: int
+    ) -> pd.DataFrame:
         period_length = to_date - from_date + timedelta(days=1)
-        prev_to_date = from_date - timedelta(days=1) - period_length * (periods_before - 1)
+        prev_to_date = (
+            from_date - timedelta(days=1) - period_length * (periods_before - 1)
+        )
         prev_from_date = prev_to_date - period_length + timedelta(days=1)
 
         print(f"Previous period: from {prev_from_date} to {prev_to_date}.")
@@ -770,14 +801,18 @@ class PearlDataSummarizer:
         ]
 
         # Current period txs of services that were active in the previous period
-        df_curr_period_txs = self.df_txs_pearl[
-            (self.df_txs_pearl["tx_date"] >= from_date)
-            & (self.df_txs_pearl["tx_date"] <= to_date)
-        ].merge(
-            df_prev_period_txs[["chain", "service_id"]],
-            on=["chain", "service_id"],
-            how="inner",
-        ).drop_duplicates()
+        df_curr_period_txs = (
+            self.df_txs_pearl[
+                (self.df_txs_pearl["tx_date"] >= from_date)
+                & (self.df_txs_pearl["tx_date"] <= to_date)
+            ]
+            .merge(
+                df_prev_period_txs[["chain", "service_id"]],
+                on=["chain", "service_id"],
+                how="inner",
+            )
+            .drop_duplicates()
+        )
 
         prev_services = (
             df_prev_period_txs.groupby("chain")["service_id"].apply(set).to_dict()
@@ -786,7 +821,7 @@ class PearlDataSummarizer:
             df_curr_period_txs.groupby("chain")["service_id"].apply(set).to_dict()
         )
 
-        all_chains = set(prev_services.keys()).union(curr_services.keys())  # fixed here
+        all_chains = set(prev_services.keys()).union(curr_services.keys())
         rows = []
 
         for chain in all_chains:
