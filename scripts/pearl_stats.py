@@ -57,16 +57,17 @@ BLOCK_CHUNK_SIZE = 4000
 SECONDS_PER_DAY = 86400
 PEARL_TAG = "[Pearl service]"
 DUNE_QUERY_ID = 5284913
+MAX_WORKERS=20
 
 
 SERVICE_REGISTRY: t.Dict = {}
 GNOSIS_SAFE_ABI: t.Dict = {}
 W3: t.Dict = {}
 CHAINS = [
-    # Chain.BASE,
+    Chain.BASE,
     Chain.GNOSIS,
-    # Chain.MODE,
-    # Chain.OPTIMISTIC,
+    Chain.MODE,
+    Chain.OPTIMISTIC,
 ]
 
 
@@ -151,6 +152,7 @@ def _populate_service(
     response = requests.get(url, timeout=30)
     response.raise_for_status()
     metadata = response.json()
+    owner_owners = _get_safe_owners(chain, owner)
 
     services[service_key] = {
         "id": service_id,
@@ -164,17 +166,18 @@ def _populate_service(
         "agent_ids": agent_ids,
         "agent_instances": agent_instances,
         "owner": owner,
+        "owner_owners": owner_owners,
         "metadata": metadata,
     }
 
 
 def _populate_services(services: t.Dict, chain: Chain, update: bool = False) -> None:
-    print(f"\nPopulating {chain.value} services {update=}...")
+    print(f"Populating {chain.value} services {update=}...")
     service_registry = SERVICE_REGISTRY[chain]
     totalSupply = service_registry.functions.totalSupply().call()
 
     error_count = 0
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [
             executor.submit(_populate_service, chain, services, service_id, update)
             for service_id in range(1, totalSupply + 1)
@@ -318,7 +321,7 @@ def _populate_services_safe_transactions(
     update: bool = False,
 ) -> None:
     print(
-        f"Populating {chain.value} services transactions for days {', '.join(str(d) for d in days)}..."
+        f"Populating {chain.value} services transactions {update=}..."
     )
 
     if not services:
@@ -349,7 +352,7 @@ def _populate_services_safe_transactions(
         )
         progress_bars.append(pbar)
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = []
         for i, day in enumerate(pending_days):
             futures.append(
@@ -490,8 +493,8 @@ def _generate_dataframes(data: t.Dict) -> t.Tuple[pd.DataFrame, pd.DataFrame]:
                 operator = first_agent.get("operator")
                 operator_owners = first_agent.get("operator_owners")
             else:
-                operator = None
-                operator_owners = None
+                operator = service.get("owner")
+                operator_owners = service.get("owner_owners")
 
             is_pearl = False
             metadata_description = service.get("metadata", {}).get("description", "")
@@ -535,207 +538,266 @@ def _generate_dataframes(data: t.Dict) -> t.Tuple[pd.DataFrame, pd.DataFrame]:
     return (df_services, df_txs)
 
 
-def _summarize_dataframes(
-    df_services: pd.DataFrame,
-    df_txs: pd.DataFrame,
-    from_date: date,
-    to_date: date,
-    periods_before: int,
-) -> None:
-    df_services_pearl = df_services[df_services["is_pearl"]]
-    df_txs_pearl = df_txs.merge(
-        df_services_pearl[["chain", "service_id"]],
-        on=["chain", "service_id"],
-        how="inner",
-    )
+def bold(text: str) -> str:
+    """Return text formatted in bold."""
+    return f"\033[1m{text}\033[0m"
 
-    print("\n=================================")
-    print("    Summary of Pearl Services    ")
-    print("=================================")
 
-    from_ts = int(
-        datetime.combine(
-            from_date, datetime.min.time(), tzinfo=timezone.utc
-        ).timestamp()
-    )
-    to_ts = int(
-        datetime.combine(to_date, datetime.max.time(), tzinfo=timezone.utc).timestamp()
-    )
+def underline(text: str) -> str:
+    """Return text formatted with underline."""
+    return f"\033[4m{text}\033[0m"
 
-    print("\nPearl Services Created")
-    print("----------------------")
-    df_created = df_services_pearl[
-        (df_services_pearl["creation_timestamp"] >= from_ts)
-        & (df_services_pearl["creation_timestamp"] <= to_ts)
-    ]
-    pivot_created = (
-        df_created.pivot_table(
-            index="creation_date", columns="chain", aggfunc="size", fill_value=0
-        )
-        .assign(total=lambda df: df.sum(axis=1))
-        .sort_index()
-    )
-    total_row = pivot_created.sum(numeric_only=True)
-    total_row.name = "TOTAL"
-    pivot_created = pd.concat([pivot_created, pd.DataFrame([total_row])])
-    print(pivot_created)
 
-    print("\n\nPearl DAAs")
-    print("----------")
-    df_active_txs = df_txs[
-        (df_txs["tx_date"] >= from_date)
-        & (df_txs["tx_date"] <= to_date)
-        & (df_txs["tx_count"] > 0)
-    ]
+def print_subtitle(text: str) -> None:
+    """Print text as a subtitle."""
+    print("\n\n" + bold(underline(text)) + "\n")
 
-    df_daa = df_active_txs.merge(
-        df_services_pearl, on=["service_id", "chain"], how="inner"
-    )
 
-    pivot_daa = df_daa.pivot_table(
-        index="tx_date",
-        columns="chain",
-        values="service_id",
-        aggfunc="nunique",
-        fill_value=0,
-    )
-    pivot_daa["total"] = pivot_daa.sum(axis=1)
-    pivot_daa = pivot_daa.sort_index()
-    print(pivot_daa)
+def print_title(title: str) -> None:
+    line = "\u2550" * (8 + len(title))
+    print(bold(f"\n{line}\n    {title}    \n{line}\n"))
 
-    print("\n\nPearl DAUs")
-    print("----------")
-    pivot_dau = df_daa.pivot_table(
-        index="tx_date",
-        columns="chain",
-        values="operator",
-        aggfunc="nunique",
-        fill_value=0,
-    )
-    df_dau_total = df_daa.groupby("tx_date")["operator"].nunique().rename("global_dau")
-    pivot_dau["global_dau"] = df_dau_total
-    pivot_dau = pivot_dau.sort_index()
-    print(pivot_dau)
 
-    print("\n\nOperators with multiple services")
-    print("--------------------------------")
+class PearlDataSummarizer:
+    """PearlDataSummarizer"""
 
-    operator_service_counts = (
-        df_daa.drop_duplicates(subset=["operator", "chain", "service_id"])
-        .groupby("operator")
-        .size()
-    )
-
-    operators_multi_services = operator_service_counts[
-        operator_service_counts > 1
-    ].index
-    df_multi_ops_services = df_services[
-        df_services["operator"].isin(operators_multi_services)
-    ]
-
-    # Group by operator, then chain, aggregate service_ids into sorted lists
-    grouped_services = (
-        df_multi_ops_services.drop_duplicates(
-            subset=["operator", "chain", "service_id"]
-        )
-        .groupby(["operator", "chain"])["service_id"]
-        .apply(lambda s: sorted(set(s)))
-        .reset_index()
-    )
-
-    # Print formatted output
-    for operator in sorted(operators_multi_services):
-        print(f"  - {operator}")
-        op_rows = grouped_services[grouped_services["operator"] == operator]
-        for _, row in op_rows.iterrows():
-            services_str = ", ".join(str(s) for s in row["service_id"])
-            print(f"    - {row['chain']}: {services_str}")
-
-    print("\n\nPearl WoW")
-    print("----------")
-    period_length = to_date - from_date + timedelta(days=1)
-    prev_to_date = from_date - timedelta(days=1) - period_length * (periods_before - 1)
-    prev_from_date = prev_to_date - period_length + timedelta(days=1)
-
-    print(f"Previous period: from {prev_from_date} to {prev_to_date}.")
-    print(f"Current period: from {from_date} to {to_date}.")
-    print()
-
-    # Previous period txs
-    df_prev_period_txs = df_txs_pearl[
-        (df_txs_pearl["tx_date"] >= prev_from_date)
-        & (df_txs_pearl["tx_date"] <= prev_to_date)
-    ]
-
-    # Current period txs
-    df_curr_period_txs = df_txs_pearl[
-        (df_txs_pearl["tx_date"] >= from_date) & (df_txs_pearl["tx_date"] <= to_date)
-    ]
-
-    # Filter current period txs to only include services that were active in the previous period
-    df_curr_period_txs = df_curr_period_txs.merge(
-        df_prev_period_txs[["chain", "service_id"]],
-        on=["chain", "service_id"],
-        how="inner",
-    )
-    df_curr_period_txs = df_curr_period_txs.drop_duplicates()
-
-    prev_counts = df_prev_period_txs.groupby("chain")["service_id"].nunique()
-    curr_counts = df_curr_period_txs.groupby("chain")["service_id"].nunique()
-
-    rows = []
-    all_chains = set(prev_counts.index).union(curr_counts.index)
-
-    for chain in sorted(all_chains):
-        prev_count = prev_counts.get(chain, 0)
-        curr_count = curr_counts.get(chain, 0)
-        pct = round((curr_count / prev_count) * 100, 1) if prev_count else 0.0
-
-        rows.append(
-            {
-                "chain": chain,
-                "active_in_prev_period": prev_count,
-                "active_in_curr_period": curr_count,
-                "percent_active": pct,
-            }
+    def __init__(self, df_services: pd.DataFrame, df_txs: pd.DataFrame) -> None:
+        self.df_services = df_services
+        self.df_txs = df_txs
+        self.df_services_pearl = df_services[df_services["is_pearl"]]
+        self.df_txs_pearl = df_txs.merge(
+            self.df_services_pearl[["chain", "service_id"]],
+            on=["chain", "service_id"],
+            how="inner"
         )
 
-    summary_df = pd.DataFrame(rows)
+    def print_summary(self, from_date: date, to_date: date, periods_before: int = 1) -> None:
+        """print_summary"""
+        print_title("Summary of Pearl Services")
+        print(f"From date: {from_date}")
+        print(f"To date:   {to_date}")
+        print_subtitle("Pearl Services Created")
+        print(self._services_creted_table(from_date, to_date))
+        print_subtitle("Pearl DAAs")
+        print(self._daa_table(from_date, to_date))
+        print_subtitle("Pearl DAUs")
+        print(self._dau_table(from_date, to_date))
+        print_subtitle("Pearl operators with multiple services")
+        print(self._multi_service_operators_table(from_date, to_date))
+        print_subtitle("Pearl WoW")
+        print(self._wow_table(from_date, to_date, periods_before))
+        print_subtitle("Pearl dropped services")
+        print(self._dropped_services_table(from_date, to_date, periods_before))
 
-    totals = {
-        "chain": "TOTAL",
-        "active_in_prev_period": summary_df["active_in_prev_period"].sum(),
-        "active_in_curr_period": summary_df["active_in_curr_period"].sum(),
-    }
-    totals["percent_active"] = (
-        round(
-            (totals["active_in_curr_period"] / totals["active_in_prev_period"]) * 100, 1
+    def _services_creted_table(self, from_date: date, to_date: date) -> pd.DataFrame:
+        from_ts = int(
+            datetime.combine(
+                from_date, datetime.min.time(), tzinfo=timezone.utc
+            ).timestamp()
         )
-        if totals["active_in_prev_period"]
-        else 0.0
-    )
+        to_ts = int(
+            datetime.combine(to_date, datetime.max.time(), tzinfo=timezone.utc).timestamp()
+        )
 
-    summary_df.loc[len(summary_df)] = totals
+        df_created = self.df_services_pearl[
+            (self.df_services_pearl["creation_timestamp"] >= from_ts)
+            & (self.df_services_pearl["creation_timestamp"] <= to_ts)
+        ]
+        services_created_df = (
+            df_created.pivot_table(
+                index="creation_date", columns="chain", aggfunc="size", fill_value=0
+            )
+            .assign(total=lambda df: df.sum(axis=1))
+            .sort_index()
+        )
+        total_row = services_created_df.sum(numeric_only=True)
+        total_row.name = "TOTAL"
+        services_created_df = pd.concat([services_created_df, pd.DataFrame([total_row])])
+        return services_created_df
 
-    print(summary_df.to_string(index=False))
+    def _daa_table(self, from_date: date, to_date: date) -> pd.DataFrame:
+        df_active_txs = self.df_txs_pearl[
+            (self.df_txs_pearl["tx_date"] >= from_date)
+            & (self.df_txs_pearl["tx_date"] <= to_date)
+            & (self.df_txs_pearl["tx_count"] > 0)
+        ]
+        daa_df = df_active_txs.pivot_table(
+            index="tx_date",
+            columns="chain",
+            values="service_id",
+            aggfunc="nunique",
+            fill_value=0,
+        )
+        daa_df["total"] = daa_df.sum(axis=1)
+        daa_df = daa_df.sort_index()
+        return daa_df
 
-    print("\n\nDropped services (not active in current period)")
-    print("-----------------------------------------------")
-    prev_services = (
-        df_prev_period_txs.groupby("chain")["service_id"].apply(set).to_dict()
-    )
-    curr_services = (
-        df_curr_period_txs.groupby("chain")["service_id"].apply(set).to_dict()
-    )
+    def _dau_table(self, from_date: date, to_date: date) -> pd.DataFrame:
+        df_active_txs = self.df_txs_pearl[
+            (self.df_txs_pearl["tx_date"] >= from_date)
+            & (self.df_txs_pearl["tx_date"] <= to_date)
+            & (self.df_txs_pearl["tx_count"] > 0)
+        ].merge(
+            self.df_services_pearl,
+            on=["service_id", "chain"],
+            how="inner",
+        )
+        dau_df = df_active_txs.pivot_table(
+            index="tx_date",
+            columns="chain",
+            values="operator",
+            aggfunc="nunique",
+            fill_value=0,
+        )
+        df_dau_total = df_active_txs.groupby("tx_date")["operator"].nunique().rename("global_dau")
+        dau_df["global_dau"] = df_dau_total
+        dau_df = dau_df.sort_index()
+        return dau_df
 
-    for chain in sorted(all_chains):
-        prev = prev_services.get(chain, set())
-        curr = curr_services.get(chain, set())
+    def _multi_service_operators_table(self, from_date: date, to_date: date) -> pd.DataFrame:
+        df_active_txs = self.df_txs_pearl[
+            (self.df_txs_pearl["tx_date"] >= from_date)
+            & (self.df_txs_pearl["tx_date"] <= to_date)
+            & (self.df_txs_pearl["tx_count"] > 0)
+        ].merge(
+            self.df_services_pearl,
+            on=["service_id", "chain"],
+            how="inner",
+        )
+        operator_service_counts = (
+            df_active_txs.drop_duplicates(subset=["operator", "chain", "service_id"])
+            .groupby("operator", dropna=False)
+            .size()
+        )
+        operators_multi_services = operator_service_counts[operator_service_counts > 1].index
 
-        dropped = sorted(prev - curr)
-        if dropped:
-            dropped_str = ", ".join(str(s) for s in dropped)
-            print(f"{chain:>12}: {dropped_str}")
+        df_active_txs_multi_service_operators = df_active_txs[
+            df_active_txs["operator"].isin(operators_multi_services)
+        ]
+        grouped_services = (
+            df_active_txs_multi_service_operators
+            .drop_duplicates(subset=["operator", "chain", "service_id"])
+            .groupby(["operator", "chain"], dropna=False)["service_id"]
+            .apply(lambda s: sorted(set(s)))
+            .reset_index()
+        )
+
+        output = grouped_services.pivot(
+            index="operator",
+            columns="chain",
+            values="service_id"
+        ).map(
+            lambda lst: ", ".join(str(s) for s in lst) if isinstance(lst, (list, set)) else "-"
+        ).fillna("-")
+        return output
+
+    def _wow_table(self, from_date: date, to_date: date, periods_before: int) -> pd.DataFrame:
+        period_length = to_date - from_date + timedelta(days=1)
+        prev_to_date = from_date - timedelta(days=1) - period_length * (periods_before - 1)
+        prev_from_date = prev_to_date - period_length + timedelta(days=1)
+
+        print(f"Previous period: from {prev_from_date} to {prev_to_date}.")
+        print(f"Current period: from {from_date} to {to_date}.")
+        print()
+
+        # Previous period txs
+        df_prev_period_txs = self.df_txs_pearl[
+            (self.df_txs_pearl["tx_date"] >= prev_from_date)
+            & (self.df_txs_pearl["tx_date"] <= prev_to_date)
+        ]
+
+        # Current period txs of services that were active in the previous period
+        df_curr_period_txs = self.df_txs_pearl[
+            (self.df_txs_pearl["tx_date"] >= from_date)
+            & (self.df_txs_pearl["tx_date"] <= to_date)
+        ].merge(
+            df_prev_period_txs[["chain", "service_id"]],
+            on=["chain", "service_id"],
+            how="inner",
+        ).drop_duplicates()
+
+        prev_counts = df_prev_period_txs.groupby("chain")["service_id"].nunique()
+        curr_counts = df_curr_period_txs.groupby("chain")["service_id"].nunique()
+
+        rows = []
+        all_chains = set(prev_counts.index).union(curr_counts.index)
+
+        for chain in sorted(all_chains):
+            prev_count = prev_counts.get(chain, 0)
+            curr_count = curr_counts.get(chain, 0)
+            pct = round((curr_count / prev_count) * 100, 1) if prev_count else 0.0
+
+            rows.append(
+                {
+                    "chain": chain,
+                    "active_in_prev_period": prev_count,
+                    "active_in_curr_period": curr_count,
+                    "percent_active": pct,
+                }
+            )
+
+        wow_df = pd.DataFrame(rows)
+        totals = {
+            "chain": "TOTAL",
+            "active_in_prev_period": wow_df["active_in_prev_period"].sum(),
+            "active_in_curr_period": wow_df["active_in_curr_period"].sum(),
+        }
+        totals["percent_active"] = (
+            round(
+                (totals["active_in_curr_period"] / totals["active_in_prev_period"]) * 100, 1
+            )
+            if totals["active_in_prev_period"]
+            else 0.0
+        )
+
+        wow_df.loc[len(wow_df)] = totals
+        wow_df = wow_df.set_index("chain")
+        return wow_df
+
+    def _dropped_services_table(self, from_date: date, to_date: date, periods_before: int) -> pd.DataFrame:
+        period_length = to_date - from_date + timedelta(days=1)
+        prev_to_date = from_date - timedelta(days=1) - period_length * (periods_before - 1)
+        prev_from_date = prev_to_date - period_length + timedelta(days=1)
+
+        print(f"Previous period: from {prev_from_date} to {prev_to_date}.")
+        print(f"Current period: from {from_date} to {to_date}.")
+        print()
+
+        # Previous period txs
+        df_prev_period_txs = self.df_txs_pearl[
+            (self.df_txs_pearl["tx_date"] >= prev_from_date)
+            & (self.df_txs_pearl["tx_date"] <= prev_to_date)
+        ]
+
+        # Current period txs of services that were active in the previous period
+        df_curr_period_txs = self.df_txs_pearl[
+            (self.df_txs_pearl["tx_date"] >= from_date)
+            & (self.df_txs_pearl["tx_date"] <= to_date)
+        ].merge(
+            df_prev_period_txs[["chain", "service_id"]],
+            on=["chain", "service_id"],
+            how="inner",
+        ).drop_duplicates()
+
+        prev_services = (
+            df_prev_period_txs.groupby("chain")["service_id"].apply(set).to_dict()
+        )
+        curr_services = (
+            df_curr_period_txs.groupby("chain")["service_id"].apply(set).to_dict()
+        )
+
+        all_chains = set(prev_services.keys()).union(curr_services.keys())  # fixed here
+        rows = []
+
+        for chain in all_chains:
+            prev = prev_services.get(chain, set())
+            curr = curr_services.get(chain, set())
+            dropped = sorted(prev - curr)
+            if dropped:
+                dropped_str = ", ".join(str(s) for s in dropped)
+                rows.append({"chain": chain, "dropped_service_ids": dropped_str})
+
+        return pd.DataFrame(rows).set_index("chain")
 
 
 def _date_range(start: date, end: date) -> t.List[date]:
@@ -792,11 +854,7 @@ def main() -> None:
         | set(_date_range(prev_from_date, prev_to_date))
     )
 
-    print("")
-    print("===================")
-    print("    Pearl Stats    ")
-    print("===================")
-    print("")
+    print_title("Collecting data")
     print(f"From date: {from_date}")
     print(f"To date: {to_date}")
 
@@ -824,16 +882,12 @@ def main() -> None:
             gnosis_safe_abi = json.load(f)["abi"]
         GNOSIS_SAFE_ABI[Chain(chain)] = gnosis_safe_abi
 
-    print("\n-----------------")
-    print("Loading Dune data")
-    print("-----------------")
+    print_subtitle("Loading Dune data")
     dune_pearl_staked = _load_dune_pearl_staked(update=args.update)
 
     data = {}
     for chain in CHAINS:
-        print("\n---------------------------")
-        print(f"Processing chain {chain.value}")
-        print("---------------------------")
+        print_subtitle(f"Processing chain {chain.value}")
 
         services = _load("services", chain)
         _populate_services(services, chain, update=args.update)
@@ -850,7 +904,10 @@ def main() -> None:
         }
 
     (df_services, df_txs) = _generate_dataframes(data)
-    _summarize_dataframes(df_services, df_txs, from_date, to_date, args.periods_before)
+    print("")
+    PearlDataSummarizer(df_services, df_txs).print_summary(
+        from_date, to_date, args.periods_before
+    )
 
 
 if __name__ == "__main__":
