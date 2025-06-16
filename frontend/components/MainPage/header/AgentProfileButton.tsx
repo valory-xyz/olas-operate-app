@@ -165,11 +165,7 @@ export const AgentProfileButton = () => {
       middlewareChain === MiddlewareChain.GNOSIS &&
       selectedAgentType === AgentType.PredictTrader
     ) {
-      return (
-        <ExternalAgentProfileLink
-          href={`https://predict.olas.network/agents/${serviceSafe?.address}`}
-        />
-      );
+      return <AgentProfile onClick={handleAgentUiBrowserLinkClick} />;
     }
 
     // base - memeooorr
