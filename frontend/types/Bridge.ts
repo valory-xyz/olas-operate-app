@@ -55,7 +55,11 @@ export type BridgeRefillRequirementsResponse = {
   bridge_refill_requirements: Partial<{
     [chain in MiddlewareChain]: AddressBalanceRecord;
   }>;
-  bridge_request_status: { message: Nullable<string>; status: QuoteStatus }[];
+  bridge_request_status: {
+    message: Nullable<string>;
+    status: QuoteStatus;
+    eta: number;
+  }[];
   expiration_timestamp: number;
   is_refill_required: boolean;
 };
@@ -85,4 +89,5 @@ export type CrossChainTransferDetails = {
   fromChain: MiddlewareChain;
   toChain: MiddlewareChain;
   transfers: TokenTransfer[];
+  eta: number;
 };

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CustomAlert } from '@/components/Alert';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { BridgingSteps, StepEvent } from '@/components/bridge/BridgingSteps';
+import { EstimatedCompletionTime } from '@/components/bridge/EstimatedCompletionTime';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
@@ -56,6 +57,7 @@ export const BridgeInProgress = ({
   quoteId,
   fromChain,
   toChain,
+  eta,
   transfers,
   bridgeRetryOutcome,
   onBridgeRetryOutcome,
@@ -241,7 +243,8 @@ export const BridgeInProgress = ({
   return (
     <>
       <Header />
-      <CardFlex $noBorder $gap={20} $padding="0 24px">
+      <CardFlex $noBorder $gap={16} $padding="0 24px">
+        <EstimatedCompletionTime timeInSeconds={eta} />
         <BridgeTransferFlow
           fromChain={fromChain}
           toChain={toChain}

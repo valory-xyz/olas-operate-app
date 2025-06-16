@@ -56,7 +56,8 @@ const TopBarContainer = styled.div`
 export const TopBar = () => {
   const electronApi = useElectronApi();
   const store = useStore();
-  const { goto } = usePageState();
+  const { isUserLoggedIn, goto, pageState } = usePageState();
+
   const envName = store?.storeState?.environmentName;
 
   return (
@@ -69,20 +70,23 @@ export const TopBar = () => {
 
       <Text>{`Pearl (beta) ${envName ? `(${envName})` : ''}`.trim()}</Text>
 
-      <Flex align="center" className="ml-auto">
-        <Button
-          type="text"
-          shape="circle"
-          icon={<QuestionCircleOutlined />}
-          onClick={() => goto(Pages.HelpAndSupport)}
-        />
-        <Button
-          type="text"
-          shape="circle"
-          icon={<SettingOutlined />}
-          onClick={() => goto(Pages.Settings)}
-        />
-      </Flex>
+      {/* for now, showing only on Main page */}
+      {isUserLoggedIn && pageState === Pages.Main && (
+        <Flex align="center" className="ml-auto">
+          <Button
+            type="text"
+            shape="circle"
+            icon={<QuestionCircleOutlined />}
+            onClick={() => goto(Pages.HelpAndSupport)}
+          />
+          <Button
+            type="text"
+            shape="circle"
+            icon={<SettingOutlined />}
+            onClick={() => goto(Pages.Settings)}
+          />
+        </Flex>
+      )}
     </TopBarContainer>
   );
 };

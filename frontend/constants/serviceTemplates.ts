@@ -16,7 +16,7 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeihe7r2a2vnbbqrzczlzjhhmzypxbre3gobupc65w4ea266hmk5efu',
+  hash: 'bafybeid2n4pkts7u5uyf7k3khry7hmfoy7h6ciyvnozod66rg2ce6fsoy4',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
@@ -88,8 +88,8 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     TOOLS_ACCURACY_HASH: {
       name: 'Tools accuracy hash',
       description: '',
-      // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L74
-      value: 'QmXqH9SeW2KcpaMLRVNUXCPCjLhXfYB1cVA7Nr2KkfcgB6',
+      // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L86
+      value: 'QmUxogk5AqbjgEu9HQRCpFxxBrMfWcU2sezLkTBWDFuvQq',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
@@ -105,11 +105,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeigrt6ifhuvfg37woz5xtjaytrh5476cxiidoda6cgroczr6nwuaci',
+  hash: 'bafybeia5jxti7aibz2ebtfgbpoqmdq5hetmytk2z6eucq2enf7hm6wentq',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Memeooorr @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
-  service_version: 'v0.6.0-alpha2',
+  service_version: 'v0.7.0-alpha1',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -271,7 +271,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus',
-  hash: 'bafybeiblphkrzw4tlg7je7elt4yrhfcpqxgogcezqjskvze4g7neblry7u',
+  hash: 'bafybeidiihmwobybisuiyazcao4qgssq5ldn2buipfbgnkieq6djenflza',
   description: `${KPI_DESC_PREFIX} Optimus`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
@@ -422,7 +422,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
 export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Optimus,
   name: 'Optimus - Optimism',
-  hash: 'bafybeiblphkrzw4tlg7je7elt4yrhfcpqxgogcezqjskvze4g7neblry7u',
+  hash: 'bafybeidiihmwobybisuiyazcao4qgssq5ldn2buipfbgnkieq6djenflza',
   description: `${KPI_DESC_PREFIX} Optimus service deployment on Optimism network`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',

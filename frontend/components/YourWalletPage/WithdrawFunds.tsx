@@ -26,13 +26,13 @@ const afterWithdrawing =
   'Your agent will not be able to run again until it is refunded.';
 
 const getWithdrawMessage = (agentType: AgentType) => {
-  //predit
   switch (agentType) {
     case AgentType.PredictTrader:
       return `This will withdraw all OLAS and XDAI from your account. ${afterWithdrawing}`;
     case AgentType.Memeooorr:
       return `This will withdraw all OLAS and ETH from your account. ${afterWithdrawing}`;
     case AgentType.Modius:
+    case AgentType.Optimus:
       return `This will withdraw all OLAS, ETH and USDC from your account. ${afterWithdrawing}`;
     case AgentType.AgentsFunCelo:
       return `This will withdraw all OLAS and CELO from your account. ${afterWithdrawing}`;

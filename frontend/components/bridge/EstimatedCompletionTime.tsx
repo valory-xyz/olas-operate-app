@@ -1,9 +1,12 @@
 import { Flex, Skeleton, Statistic, Typography } from 'antd';
-import React, { useMemo } from 'react';
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
+import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 const { Text } = Typography;
-const { Countdown } = Statistic;
+
+dayjs.extend(duration);
 
 const EstimatedTimeRow = styled(Flex)`
   .ant-statistic .ant-statistic-content .ant-statistic-content-prefix {
@@ -14,6 +17,30 @@ const EstimatedTimeRow = styled(Flex)`
   }
 `;
 
+const CountUp = () => {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatted = dayjs.duration(seconds, 'seconds').format('HH:mm:ss');
+
+  return (
+    <Statistic
+      value={formatted}
+      valueRender={(value) => <Text type="secondary">{value}</Text>}
+      prefix="("
+      suffix=")"
+      valueStyle={{ fontSize: '16px' }}
+    />
+  );
+};
+
 type EstimatedCompletionTimeProps = {
   isLoading?: boolean;
   timeInSeconds: number;
@@ -23,19 +50,13 @@ export const EstimatedCompletionTime = ({
   isLoading,
   timeInSeconds,
 }: EstimatedCompletionTimeProps) => {
-  const deadline = useMemo(() => {
-    if (!timeInSeconds) return 0;
-    return new Date(timeInSeconds * 1000).getTime();
+  const minutesRemaining = useMemo(() => {
+    const minutes = Math.floor(timeInSeconds / 60);
+    return Math.max(0, minutes);
   }, [timeInSeconds]);
 
-  const minutesRemaining = useMemo(() => {
-    if (!deadline) return 0;
-    const minutes = Math.floor((deadline - new Date().getTime()) / 1000 / 60);
-    return Math.max(0, minutes);
-  }, [deadline]);
-
   return (
-    <EstimatedTimeRow gap={8}>
+    <EstimatedTimeRow gap={8} align="center">
       <Text type="secondary">Estimated completion time:</Text>
       {isLoading ? (
         <Skeleton.Input active size="small" style={{ width: 100 }} />
@@ -44,16 +65,7 @@ export const EstimatedCompletionTime = ({
           <Text strong>
             ~ {minutesRemaining} minute{minutesRemaining === 1 ? '' : 's'}
           </Text>
-          <Text type="secondary">
-            <Countdown
-              value={deadline}
-              format="HH:mm:ss"
-              valueStyle={{ fontSize: '16px' }}
-              style={{ display: 'inline-block' }}
-              prefix={'('}
-              suffix={')'}
-            />
-          </Text>
+          <CountUp />
         </>
       )}
     </EstimatedTimeRow>

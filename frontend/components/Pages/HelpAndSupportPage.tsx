@@ -7,10 +7,12 @@ import {
   SUPPORT_URL,
   TERMS_AND_CONDITIONS_URL,
 } from '@/constants/urls';
+import { usePageState } from '@/hooks/usePageState';
 
 import { CardTitle } from '../Card/CardTitle';
 import { ExportLogsButton } from '../ExportLogsButton';
 import { CardSection } from '../styled/CardSection';
+import { GoToLoginPageButton } from './GoToLoginPageButton';
 import { GoToMainPageButton } from './GoToMainPageButton';
 
 const { Title, Paragraph } = Typography;
@@ -27,17 +29,14 @@ const SettingsTitle = () => (
 );
 
 export const HelpAndSupport = () => {
+  const { isUserLoggedIn } = usePageState();
+
   return (
     <Card
       title={<SettingsTitle />}
       bordered={false}
-      styles={{
-        body: {
-          paddingTop: 0,
-          paddingBottom: 0,
-        },
-      }}
-      extra={<GoToMainPageButton />}
+      styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}
+      extra={isUserLoggedIn ? <GoToMainPageButton /> : <GoToLoginPageButton />}
     >
       <CardSection $borderBottom $padding="16px 24px 24px" vertical>
         <Title level={5} className="m-0 mb-16 text-base">
