@@ -57,11 +57,6 @@ jobs:
       - name: Install dependencies
         run: poetry install
 
-      # Download and build with PyInstaller
-      - name: Get trader bin
-        run: |
-          make ./dist/aea_bin
-        
       - name: Build with PyInstaller
         run: |
           poetry run pyinstaller operate/tendermint.py --onefile
@@ -80,12 +75,7 @@ jobs:
         with:
           name: tendermint_${{ env.OS_ARCH }}
           path: dist/tendermint_bin
-
-      - name: Upload aea
-        uses: actions/upload-artifact@v4
-        with:
-          name: aea_bin_${{ env.OS_ARCH }}
-          path: ./dist/aea_bin
+      
 
   # Jobs for production, running separately for x64 and arm64
   build-release:
@@ -127,12 +117,6 @@ jobs:
           name: pearl_${{ env.OS_ARCH }}
           path: electron/bins/
       
-      - name: Download aea binary for architecture
-        uses: actions/download-artifact@v4
-        with:
-          name: aea_bin_${{ env.OS_ARCH }}
-          path: electron/bins/
-
       - name: Download tendermint binary for architecture
         uses: actions/download-artifact@v4
         with:
