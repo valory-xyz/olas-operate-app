@@ -290,7 +290,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: +parseEther(0.0005),
-          safe: +parseEther(0.005),
+          safe: 0,
         },
         [MODE_TOKEN_CONFIG[TokenSymbol.USDC].address as string]: {
           agent: 0,
@@ -441,7 +441,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: +parseEther(0.0007),
-          safe: +parseEther(0.0057),
+          safe: 0,
         },
         [OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC].address as string]: {
           agent: 0,
