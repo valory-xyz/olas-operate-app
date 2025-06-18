@@ -89,7 +89,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L86
-      value: 'QmUxogk5AqbjgEu9HQRCpFxxBrMfWcU2sezLkTBWDFuvQq',
+      value: 'QmTAVVsPXVs45ZxfirhT3Zd6jaevByPL2Rhh1EfGcuc3i9',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
@@ -105,7 +105,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeia5jxti7aibz2ebtfgbpoqmdq5hetmytk2z6eucq2enf7hm6wentq',
+  hash: 'bafybeih3k44jrxizxzg4pfewak2xbzjtkr32o2shgd6t5dpwg6alspt5eu',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Memeooorr @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
@@ -271,7 +271,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus',
-  hash: 'bafybeidiihmwobybisuiyazcao4qgssq5ldn2buipfbgnkieq6djenflza',
+  hash: 'bafybeienyehkoixxoeacb4kfijioxyglbzoleiejvfbgjemv33wwm4furu',
   description: `${KPI_DESC_PREFIX} Optimus`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
@@ -422,7 +422,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
 export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Optimus,
   name: 'Optimus - Optimism',
-  hash: 'bafybeidiihmwobybisuiyazcao4qgssq5ldn2buipfbgnkieq6djenflza',
+  hash: 'bafybeienyehkoixxoeacb4kfijioxyglbzoleiejvfbgjemv33wwm4furu',
   description: `${KPI_DESC_PREFIX} Optimus service deployment on Optimism network`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
