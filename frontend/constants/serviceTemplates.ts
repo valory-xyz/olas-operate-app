@@ -16,11 +16,11 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeid2n4pkts7u5uyf7k3khry7hmfoy7h6ciyvnozod66rg2ce6fsoy4',
+  hash: 'bafybeidt5l4znlsy2kmsdtsnh7xukklbc6bccfenxhmugopmvxqqxbo334',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.25.5',
+  service_version: 'v0.25.8',
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
@@ -89,7 +89,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L86
-      value: 'QmUxogk5AqbjgEu9HQRCpFxxBrMfWcU2sezLkTBWDFuvQq',
+      value: 'QmTAVVsPXVs45ZxfirhT3Zd6jaevByPL2Rhh1EfGcuc3i9',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
@@ -105,11 +105,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeia5jxti7aibz2ebtfgbpoqmdq5hetmytk2z6eucq2enf7hm6wentq',
+  hash: 'bafybeicuhcobj6g5355h3eq3mwm55t2rc2krx4grgul7vayouj7fh7qy4i',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Memeooorr @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
-  service_version: 'v0.7.0-alpha1',
+  service_version: 'v0.7.0-alpha5',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -187,7 +187,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
     RESET_PAUSE_DURATION: {
       name: 'Reset pause duration',
       description: '',
-      value: '1800',
+      value: '300',
       provision_type: EnvProvisionType.FIXED,
     },
     STORE_PATH: {
@@ -268,14 +268,20 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
   ...AGENTS_FUN_COMMON_TEMPLATE,
 } as const;
 
+const BABYDEGEN_COMMON_TEMPLATE: Pick<
+  ServiceTemplate,
+  'hash' | 'service_version'
+> = {
+  hash: 'bafybeiada62ivzxblpkxgbxbvwpkkh33sytjwcmg4dtecfj3zkmenkuurm',
+  service_version: 'v0.3.15',
+};
+
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus',
-  hash: 'bafybeidiihmwobybisuiyazcao4qgssq5ldn2buipfbgnkieq6djenflza',
   description: `${KPI_DESC_PREFIX} Optimus`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  service_version: 'v0.3.15',
   home_chain: MiddlewareChain.MODE,
   configurations: {
     [MiddlewareChain.MODE]: {
@@ -417,16 +423,15 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
   },
+  ...BABYDEGEN_COMMON_TEMPLATE,
 } as const;
 
 export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Optimus,
   name: 'Optimus - Optimism',
-  hash: 'bafybeidiihmwobybisuiyazcao4qgssq5ldn2buipfbgnkieq6djenflza',
   description: `${KPI_DESC_PREFIX} Optimus service deployment on Optimism network`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  service_version: 'v0.3.15',
   home_chain: MiddlewareChain.OPTIMISM,
   configurations: {
     [MiddlewareChain.OPTIMISM]: {
@@ -546,6 +551,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
   },
+  ...BABYDEGEN_COMMON_TEMPLATE,
 } as const;
 
 export const SERVICE_TEMPLATES: ServiceTemplate[] = [

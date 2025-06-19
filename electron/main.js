@@ -811,6 +811,18 @@ ipcMain.handle('save-logs', async (_, data) => {
     logger.electron(e);
   }
 
+  // agent_runner.log wraps agent runner process even before agent started, so can check issues with executable start
+  try {
+    if (fs.existsSync(paths.agentRunnerLogFile)) {
+      sanitizeLogs({
+        name: 'agent_runner.log',
+        filePath: paths.agentRunnerLogFile,
+      });
+    }
+  } catch (e) {
+    logger.electron(e);
+  }
+
   // Agent logs
   try {
     fs.readdirSync(paths.servicesDir).forEach((serviceDirName) => {
