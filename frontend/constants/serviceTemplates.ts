@@ -268,7 +268,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
   ...AGENTS_FUN_COMMON_TEMPLATE,
 } as const;
 
-const MODIUS_AND_OPTIMUS_COMMON_TEMPLATE: Pick<
+const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version'
 > = {
@@ -423,7 +423,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
   },
-  ...MODIUS_AND_OPTIMUS_COMMON_TEMPLATE,
+  ...BABYDEGEN_COMMON_TEMPLATE,
 } as const;
 
 export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
@@ -551,7 +551,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
   },
-  ...MODIUS_AND_OPTIMUS_COMMON_TEMPLATE,
+  ...BABYDEGEN_COMMON_TEMPLATE,
 } as const;
 
 export const SERVICE_TEMPLATES: ServiceTemplate[] = [
