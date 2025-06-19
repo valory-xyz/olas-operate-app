@@ -105,11 +105,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeih3k44jrxizxzg4pfewak2xbzjtkr32o2shgd6t5dpwg6alspt5eu',
+  hash: 'bafybeicuhcobj6g5355h3eq3mwm55t2rc2krx4grgul7vayouj7fh7qy4i',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Memeooorr @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
-  service_version: 'v0.7.0-alpha1',
+  service_version: 'v0.7.0-alpha5',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -268,14 +268,20 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
   ...AGENTS_FUN_COMMON_TEMPLATE,
 } as const;
 
+const MODIUS_AND_OPTIMUS_COMMON_TEMPLATE: Pick<
+  ServiceTemplate,
+  'hash' | 'service_version'
+> = {
+  hash: 'bafybeiada62ivzxblpkxgbxbvwpkkh33sytjwcmg4dtecfj3zkmenkuurm',
+  service_version: 'v0.3.15',
+};
+
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus',
-  hash: 'bafybeihemzr5mpdvii5itqr65yn3tluz4piia2rrp2zs6w7lk76pphsioe',
   description: `${KPI_DESC_PREFIX} Optimus`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  service_version: 'v0.3.15',
   home_chain: MiddlewareChain.MODE,
   configurations: {
     [MiddlewareChain.MODE]: {
@@ -417,16 +423,15 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
   },
+  ...MODIUS_AND_OPTIMUS_COMMON_TEMPLATE,
 } as const;
 
 export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Optimus,
   name: 'Optimus - Optimism',
-  hash: 'bafybeihemzr5mpdvii5itqr65yn3tluz4piia2rrp2zs6w7lk76pphsioe',
   description: `${KPI_DESC_PREFIX} Optimus service deployment on Optimism network`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  service_version: 'v0.3.15',
   home_chain: MiddlewareChain.OPTIMISM,
   configurations: {
     [MiddlewareChain.OPTIMISM]: {
@@ -546,6 +551,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
   },
+  ...MODIUS_AND_OPTIMUS_COMMON_TEMPLATE,
 } as const;
 
 export const SERVICE_TEMPLATES: ServiceTemplate[] = [
