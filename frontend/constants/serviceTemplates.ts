@@ -187,7 +187,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
     RESET_PAUSE_DURATION: {
       name: 'Reset pause duration',
       description: '',
-      value: '1800',
+      value: '300',
       provision_type: EnvProvisionType.FIXED,
     },
     STORE_PATH: {
