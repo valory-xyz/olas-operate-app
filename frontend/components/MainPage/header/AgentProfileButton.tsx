@@ -14,7 +14,6 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
-import { getXUsername } from '@/utils/x';
 
 const AgentProfile = ({ onClick }: { onClick?: () => void }) => (
   <Button
@@ -24,14 +23,6 @@ const AgentProfile = ({ onClick }: { onClick?: () => void }) => (
     onClick={onClick}
   />
 );
-
-const ExternalAgentProfileLink = ({ href }: { href: string }) => {
-  return (
-    <a href={href} target="_blank">
-      <AgentProfile />
-    </a>
-  );
-};
 
 const BabyDegenUi = ({ onClick }: { onClick: () => void }) => {
   const electronApi = useElectronApi();
@@ -130,9 +121,7 @@ const BabyDegenUi = ({ onClick }: { onClick: () => void }) => {
 export const AgentProfileButton = () => {
   const { middlewareChain, serviceSafe } = useYourWallet();
   const { selectedAgentType, selectedService } = useServices();
-  const { service, deploymentStatus } = useService(
-    selectedService?.service_config_id,
-  );
+  const { deploymentStatus } = useService(selectedService?.service_config_id);
   const { goto, show } = useAgentUi();
 
   const handleAgentUiBrowserLinkClick = useCallback(async () => {
@@ -169,16 +158,11 @@ export const AgentProfileButton = () => {
     }
 
     // base - memeooorr
-    const xUsername = getXUsername(service);
     if (
       middlewareChain === MiddlewareChain.BASE &&
       selectedAgentType === AgentType.Memeooorr
     ) {
-      return (
-        <ExternalAgentProfileLink
-          href={`https://www.agents.fun/services/${xUsername ?? '#'}`}
-        />
-      );
+      return <AgentProfile onClick={handleAgentUiBrowserLinkClick} />;
     }
 
     // mode - modius
@@ -203,7 +187,6 @@ export const AgentProfileButton = () => {
     handleAgentUiBrowserLinkClick,
     middlewareChain,
     selectedAgentType,
-    service,
   ]);
 
   return agentProfileLink;
