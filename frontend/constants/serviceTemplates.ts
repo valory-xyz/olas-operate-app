@@ -105,7 +105,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeih3k44jrxizxzg4pfewak2xbzjtkr32o2shgd6t5dpwg6alspt5eu',
+  hash: 'bafybeiexkoyjhldporxwtamho6kty3vaig5u2g7g2cr7dfgu45spo3ghci',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Memeooorr @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
