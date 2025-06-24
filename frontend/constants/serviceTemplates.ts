@@ -16,7 +16,7 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeidt5l4znlsy2kmsdtsnh7xukklbc6bccfenxhmugopmvxqqxbo334',
+  hash: 'bafybeievvf3663md525u2khoxjlufgp6hsf6vf6kah4xqckksj5nmtkg5q',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
@@ -89,7 +89,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L86
-      value: 'QmTAVVsPXVs45ZxfirhT3Zd6jaevByPL2Rhh1EfGcuc3i9',
+      value: 'QmfPm5zbxSL7mBFarXUWFChihUcrWPxb16chojpppUKTJA',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
@@ -272,7 +272,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version'
 > = {
-  hash: 'bafybeiada62ivzxblpkxgbxbvwpkkh33sytjwcmg4dtecfj3zkmenkuurm',
+  hash: 'bafybeidtehicxxpvgj6tecbk5yyvod6emlvzdopjuieafzs6x66otj6cjy',
   service_version: 'v0.3.15',
 };
 
