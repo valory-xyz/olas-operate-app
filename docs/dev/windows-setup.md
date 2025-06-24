@@ -60,7 +60,7 @@ python3.10 -m pip install pipx
 
 ```powershell
 # run as administrator
-pipx install poetry
+pipx install poetry==1.8.5
 ```
 
 If prompted to add `poetry` to your PATH, follow the prompt.

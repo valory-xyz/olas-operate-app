@@ -62,7 +62,7 @@ brew install pipx
 ## 7. Poetry
 
 ```bash
-pipx install poetry
+pipx install poetry==1.8.5
 ```
 
 If prompted to add the `poetry` command to your shell's config file, accept the prompt.
