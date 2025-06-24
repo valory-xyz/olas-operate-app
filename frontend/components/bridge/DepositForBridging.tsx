@@ -23,7 +23,10 @@ import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
-import { CrossChainTransferDetails } from '@/types/Bridge';
+import {
+  BridgeRefillRequirementsRequest,
+  CrossChainTransferDetails,
+} from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
 import { delayInSeconds } from '@/utils/delay';
 import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
@@ -31,7 +34,6 @@ import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
 import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '../ui/iconStyles';
 import { DepositAddress } from './DepositAddress';
 import { DepositTokenDetails, TokenDetails } from './TokenDetails';
-import { useGetBridgeRequirementsParams } from './utils';
 
 const { Text } = Typography;
 
@@ -81,6 +83,9 @@ const QuoteRequestFailed = ({ onTryAgain }: { onTryAgain: () => void }) => (
 
 type DepositForBridgingProps = {
   chainName: string;
+  getBridgeRequirementsParams: (
+    forceUpdate?: boolean,
+  ) => BridgeRefillRequirementsRequest | null;
   updateQuoteId: (quoteId: string) => void;
   updateCrossChainTransferDetails: (details: CrossChainTransferDetails) => void;
   onNext: () => void;
@@ -88,6 +93,7 @@ type DepositForBridgingProps = {
 
 export const DepositForBridging = ({
   chainName,
+  getBridgeRequirementsParams,
   updateQuoteId,
   updateCrossChainTransferDetails,
   onNext,
@@ -95,9 +101,8 @@ export const DepositForBridging = ({
   const { isLoading: isServicesLoading, selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const { masterEoa } = useMasterWalletContext();
-  const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
+  const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
-  const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
 
   const [
     isBridgeRefillRequirementsApiLoading,
@@ -313,7 +318,6 @@ export const DepositForBridging = ({
     isBridgeRefillRequirementsFetching,
     isRequestingQuoteFailed,
     toMiddlewareChain,
-    refillRequirements,
     bridgeFundingRequirements,
     masterEoa,
     tokens,
@@ -347,15 +351,13 @@ export const DepositForBridging = ({
                 No tokens to deposit!
               </Flex>
             ) : (
-              <>
-                {tokens.map((token) => (
-                  <TokenDetails
-                    key={token.symbol}
-                    {...token}
-                    precision={token.isNative ? 5 : 2}
-                  />
-                ))}
-              </>
+              tokens.map((token) => (
+                <TokenDetails
+                  key={token.symbol}
+                  {...token}
+                  precision={token.isNative ? 5 : 2}
+                />
+              ))
             )}
           </Flex>
           <Divider className="m-0" />

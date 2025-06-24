@@ -41,23 +41,19 @@ const BridgeHeader = () => {
 const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
   const imgSrc = useMemo(() => {
     if (!symbol) return;
-    if (symbol === TokenSymbol.OLAS) {
-      return '/olas-icon.png';
-    }
+    if (symbol === TokenSymbol.OLAS) return '/olas-icon.png';
     return `/chains/${toMiddlewareChainFromTokenSymbol(symbol)}-chain.png`;
   }, [symbol]);
 
   return (
     <Flex align="center" justify="flex-start" gap={6} style={{ width: 78 }}>
       {imgSrc && (
-        <>
-          <Image
-            src={imgSrc}
-            alt={symbol}
-            style={{ width: 20, height: 20 }}
-            preview={false}
-          />{' '}
-        </>
+        <Image
+          src={imgSrc}
+          alt={symbol}
+          style={{ width: 20, height: 20, marginRight: 6 }}
+          preview={false}
+        />
       )}
 
       {symbol}
@@ -88,7 +84,7 @@ export const AddFundsThroughBridge = () => {
   }, [inputs, goto]);
 
   const isButtonDisabled = useMemo(() => {
-    return Object.values(inputs).some((value) => isNil(value) || value <= 0);
+    return Object.values(inputs).every((value) => isNil(value) || value <= 0);
   }, [inputs]);
 
   return (
@@ -125,12 +121,12 @@ export const AddFundsThroughBridge = () => {
           })}
 
           <Button
-            disabled={isButtonDisabled || true} // TODO: remove hardcoded true after API call
+            disabled={isButtonDisabled}
             onClick={handleBridgeFunds}
             type="primary"
             size="large"
           >
-            Bridge funds (coming soon)
+            Bridge funds
           </Button>
         </Flex>
       </Flex>

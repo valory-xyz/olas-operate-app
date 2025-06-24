@@ -8,6 +8,7 @@ import { Nullable } from '@/types/Util';
 import { BridgeInProgress } from './BridgeInProgress/BridgeInProgress';
 import { BridgeOnEvm } from './BridgeOnEvm';
 import { BridgeRetryOutcome } from './types';
+import { useGetBridgeRequirementsParams } from './useGetBridgeRequirementsParams';
 
 const QUOTE_ID_ERROR = 'Quote ID is required for in progress state';
 const TRANSFER_AMOUNTS_ERROR =
@@ -17,6 +18,8 @@ type BridgeState = 'depositing' | 'in_progress';
 
 export const SetupBridgeOnboarding = () => {
   const { goto } = usePageState();
+  const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
+
   const [bridgeState, setBridgeState] = useState<BridgeState>('depositing');
   const [quoteId, setQuoteId] = useState<Nullable<string>>(null);
   const [transferAndReceivingDetails, setTransferAndReceivingAmounts] =
@@ -69,6 +72,7 @@ export const SetupBridgeOnboarding = () => {
     case 'depositing':
       return (
         <BridgeOnEvm
+          getBridgeRequirementsParams={getBridgeRequirementsParams}
           updateQuoteId={updateQuoteId}
           updateCrossChainTransferDetails={updateCrossChainTransferDetails}
           onNext={handleNextStep}
