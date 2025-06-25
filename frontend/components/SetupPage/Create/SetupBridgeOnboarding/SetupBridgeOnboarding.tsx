@@ -7,6 +7,7 @@ import { useSetup } from '@/hooks/useSetup';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
 
+import { BridgeCompleted } from './BridgeCompleted';
 import { BridgeInProgress } from './BridgeInProgress/BridgeInProgress';
 import { BridgeOnEvm } from './BridgeOnEvm';
 import { BridgeRetryOutcome } from './types';
@@ -18,7 +19,8 @@ const TRANSFER_AMOUNTS_ERROR =
 const BRIDGE_FROM_MESSAGE =
   'The bridged amount covers all funds required to create your account and run your agent, including fees. No further funds will be needed.';
 
-type BridgeState = 'depositing' | 'in_progress';
+const showCompleteScreen = true; // TODO should be passed as a prop
+type BridgeState = 'depositing' | 'in_progress' | 'completed';
 
 export const SetupBridgeOnboarding = () => {
   const { goto } = usePageState();
@@ -69,7 +71,15 @@ export const SetupBridgeOnboarding = () => {
       case 'depositing':
         setBridgeState('in_progress');
         break;
-      case 'in_progress':
+      case 'in_progress': {
+        if (showCompleteScreen) {
+          setBridgeState('completed');
+        } else {
+          goto(Pages.Main);
+        }
+        break;
+      }
+      case 'completed':
         goto(Pages.Main);
         break;
       default:
@@ -103,6 +113,8 @@ export const SetupBridgeOnboarding = () => {
         />
       );
     }
+    case 'completed':
+      return <BridgeCompleted />;
     default:
       throw new Error('Invalid bridge state!');
   }

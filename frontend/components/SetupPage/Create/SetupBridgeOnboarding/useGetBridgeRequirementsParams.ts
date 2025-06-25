@@ -24,6 +24,8 @@ import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 /**
  * Helper to get source token address on the fromChain
+ * @example: if tokenAddress is USDC on the destination chain,
+ * it will return the USDC address on the fromChain (Ethereum).
  */
 const getFromToken = (
   tokenAddress: string,
@@ -35,7 +37,7 @@ const getFromToken = (
   }
 
   const tokenSymbol = Object.values(toChainConfig).find((configToken) =>
-    areAddressesEqual(configToken.address!, tokenAddress),
+    areAddressesEqual(configToken.address, tokenAddress),
   )?.symbol;
 
   if (!tokenSymbol || !fromChainConfig[tokenSymbol]?.address) {
