@@ -89,5 +89,5 @@ export type CrossChainTransferDetails = {
   fromChain: MiddlewareChain;
   toChain: MiddlewareChain;
   transfers: TokenTransfer[];
-  eta: number;
+  eta?: number;
 };

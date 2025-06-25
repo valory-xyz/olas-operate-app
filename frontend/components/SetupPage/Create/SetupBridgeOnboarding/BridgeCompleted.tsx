@@ -1,14 +1,20 @@
 import { Button, Flex, Result } from 'antd';
 
+import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
 import { CardTitle } from '@/components/Card/CardTitle';
 import { GoToMainPageButton } from '@/components/Pages/GoToMainPageButton';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
+import { CrossChainTransferDetails } from '@/types/Bridge';
 
-// const { Title, Text } = Typography;
+type BridgeCompletedProps = Omit<CrossChainTransferDetails, 'eta'>;
 
-export const BridgeCompleted = () => {
+export const BridgeCompleted = ({
+  fromChain,
+  toChain,
+  transfers,
+}: BridgeCompletedProps) => {
   const { goto } = usePageState();
 
   return (
@@ -22,12 +28,27 @@ export const BridgeCompleted = () => {
         // TODO: update with actual destination
         subTitle="Funds have been bridged to your Pearl Safe."
         extra={[
-          <Flex key="bridge-completed" gap={16} vertical>
-            <Button onClick={() => goto(Pages.ManageWallet)}>
+          <Flex
+            key="bridge-completed"
+            gap={24}
+            vertical
+            style={{ paddingTop: 8 }}
+          >
+            <BridgeTransferFlow
+              fromChain={fromChain}
+              toChain={toChain}
+              transfers={transfers}
+            />
+            <Button
+              onClick={() => goto(Pages.ManageWallet)}
+              size="large"
+              style={{ alignSelf: 'center' }}
+            >
               See wallet balance
             </Button>
           </Flex>,
         ]}
+        style={{ padding: '24px 0' }}
       />
     </CardFlex>
   );

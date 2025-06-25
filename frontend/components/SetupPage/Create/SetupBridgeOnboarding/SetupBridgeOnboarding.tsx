@@ -114,7 +114,8 @@ export const SetupBridgeOnboarding = () => {
       );
     }
     case 'completed':
-      return <BridgeCompleted />;
+      if (!transferAndReceivingDetails) throw new Error(TRANSFER_AMOUNTS_ERROR);
+      return <BridgeCompleted {...transferAndReceivingDetails} />;
     default:
       throw new Error('Invalid bridge state!');
   }

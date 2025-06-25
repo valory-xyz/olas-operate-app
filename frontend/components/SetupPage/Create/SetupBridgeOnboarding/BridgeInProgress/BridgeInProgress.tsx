@@ -256,7 +256,7 @@ export const BridgeInProgress = ({
     <>
       <Header />
       <CardFlex $noBorder $gap={16} $padding="0 24px">
-        <EstimatedCompletionTime timeInSeconds={eta} />
+        {eta && <EstimatedCompletionTime timeInSeconds={eta} />}
         <BridgeTransferFlow
           fromChain={fromChain}
           toChain={toChain}
