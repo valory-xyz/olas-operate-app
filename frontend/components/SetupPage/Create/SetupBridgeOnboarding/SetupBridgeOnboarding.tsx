@@ -10,9 +10,10 @@ export const SetupBridgeOnboarding = () => {
 
   return (
     <Bridge
+      enabledStepsAfterBridging={['masterSafeCreationAndTransfer']}
+      bridgeFromDescription={BRIDGE_FROM_MESSAGE}
       showCompleteScreen={false}
       getBridgeRequirementsParams={getBridgeRequirementsParams}
-      bridgeFromMessage={BRIDGE_FROM_MESSAGE}
     />
   );
 };

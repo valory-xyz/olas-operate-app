@@ -21,7 +21,7 @@ const AlertMessage = () => (
 );
 
 type BridgeOnEvmProps = {
-  bridgeFromMessage?: string;
+  bridgeFromDescription?: string;
   onPrev: () => void;
   onNext: () => void;
   getBridgeRequirementsParams: GetBridgeRequirementsParams;
@@ -30,7 +30,7 @@ type BridgeOnEvmProps = {
 };
 
 export const BridgeOnEvm = ({
-  bridgeFromMessage,
+  bridgeFromDescription,
   onPrev,
   onNext,
   getBridgeRequirementsParams,
@@ -45,7 +45,7 @@ export const BridgeOnEvm = ({
         <Title level={3} className="m-0">
           Bridge from {FROM_CHAIN_NAME}
         </Title>
-        <Text className="text-base text-lighter">{bridgeFromMessage}</Text>
+        <Text className="text-base text-lighter">{bridgeFromDescription}</Text>
       </Flex>
 
       <CardSection>

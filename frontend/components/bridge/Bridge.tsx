@@ -5,6 +5,7 @@ import { BridgeInProgress } from '@/components/bridge/BridgeInProgress/BridgeInP
 import { BridgeOnEvm } from '@/components/bridge/BridgeOnEvm/BridgeOnEvm';
 import {
   BridgeRetryOutcome,
+  EnabledSteps,
   GetBridgeRequirementsParams,
 } from '@/components/bridge/types';
 import { Pages } from '@/enums/Pages';
@@ -21,15 +22,17 @@ const TRANSFER_AMOUNTS_ERROR =
 type BridgeState = 'depositing' | 'in_progress' | 'completed';
 
 type BridgeProps = {
-  bridgeFromMessage: string;
+  bridgeFromDescription: string;
   showCompleteScreen?: boolean;
   getBridgeRequirementsParams: GetBridgeRequirementsParams;
+  enabledStepsAfterBridging?: EnabledSteps;
 };
 
 export const Bridge = ({
   showCompleteScreen = false,
   getBridgeRequirementsParams,
-  bridgeFromMessage,
+  bridgeFromDescription,
+  enabledStepsAfterBridging,
 }: BridgeProps) => {
   const { goto } = usePageState();
   const { goto: gotoSetup } = useSetup();
@@ -98,7 +101,7 @@ export const Bridge = ({
     case 'depositing':
       return (
         <BridgeOnEvm
-          bridgeFromMessage={bridgeFromMessage}
+          bridgeFromDescription={bridgeFromDescription}
           getBridgeRequirementsParams={getBridgeRequirementsParams}
           updateQuoteId={updateQuoteId}
           updateCrossChainTransferDetails={updateCrossChainTransferDetails}
@@ -117,6 +120,8 @@ export const Bridge = ({
           onBridgeRetryOutcome={(e: Nullable<BridgeRetryOutcome>) =>
             setBridgeRetryOutcome(e)
           }
+          enabledStepsAfterBridging={enabledStepsAfterBridging}
+          onNext={handleNextStep}
         />
       );
     }

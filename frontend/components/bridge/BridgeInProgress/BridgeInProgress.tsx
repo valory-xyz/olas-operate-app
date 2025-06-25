@@ -8,14 +8,14 @@ import {
 } from '@/components/bridge/BridgeInProgress/BridgingSteps';
 import { EstimatedCompletionTime } from '@/components/bridge/BridgeInProgress/EstimatedCompletionTime';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
-import { SetupCreateHeader } from '@/components/SetupPage/Create/SetupCreateHeader';
 import { CardFlex } from '@/components/styled/CardFlex';
+import { AgentHeader } from '@/components/ui/AgentHeader';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { BridgingStepStatus, CrossChainTransferDetails } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
 
-import { BridgeRetryOutcome } from '../types';
+import { BridgeRetryOutcome, EnabledSteps } from '../types';
 import { useBridgingSteps } from './useBridgingSteps';
 import { useMasterSafeCreationAndTransfer } from './useMasterSafeCreationAndTransfer';
 import { useRetryBridge } from './useRetryBridge';
@@ -38,7 +38,7 @@ const KeepAppOpenAlert = () => (
 const Header = () => (
   <>
     <CardFlex $noBorder $gap={20} $padding="0 24px">
-      <SetupCreateHeader />
+      <AgentHeader />
       <Title level={3} className="m-0">
         Bridging in progress
       </Title>
@@ -47,18 +47,12 @@ const Header = () => (
   </>
 );
 
-// TODO: pass an array of steps
-
-const ENABLED_STEPS = ['masterSafeCreation', 'transfer'] as const;
-type EnabledSteps =
-  | [(typeof ENABLED_STEPS)[0]]
-  | [(typeof ENABLED_STEPS)[0], (typeof ENABLED_STEPS)[1]];
-
 type BridgeInProgressProps = {
   quoteId: string;
   bridgeRetryOutcome: Nullable<BridgeRetryOutcome>;
   onBridgeRetryOutcome: (outcome: Nullable<BridgeRetryOutcome>) => void;
-  enabledSteps?: EnabledSteps;
+  enabledStepsAfterBridging?: EnabledSteps;
+  onNext: () => void;
 } & CrossChainTransferDetails;
 
 /**
@@ -72,7 +66,8 @@ export const BridgeInProgress = ({
   transfers,
   bridgeRetryOutcome,
   onBridgeRetryOutcome,
-  enabledSteps,
+  enabledStepsAfterBridging = [],
+  onNext,
 }: BridgeInProgressProps) => {
   const { goto } = usePageState();
   const symbols = transfers.map((transfer) => transfer.toSymbol);
@@ -89,6 +84,10 @@ export const BridgeInProgress = ({
     mutateAsync: createMasterSafe,
   } = useMasterSafeCreationAndTransfer(symbols);
 
+  const canCreateMasterSafeAndTransfer = enabledStepsAfterBridging.includes(
+    'masterSafeCreationAndTransfer',
+  );
+
   const isSafeCreated = masterSafeDetails?.isSafeCreated;
   const isTransferCompleted =
     masterSafeDetails?.masterSafeTransferStatus === 'FINISHED';
@@ -96,7 +95,7 @@ export const BridgeInProgress = ({
   // Create master safe after the bridging is completed
   // and if the master safe is not created yet.
   useEffect(() => {
-    if (!enabledSteps?.includes('masterSafeCreation')) return;
+    if (!canCreateMasterSafeAndTransfer) return;
 
     // if refill is required, do not create master safe.
     if (bridgeRetryOutcome === 'NEED_REFILL') return;
@@ -113,7 +112,8 @@ export const BridgeInProgress = ({
 
     createMasterSafe();
   }, [
-    enabledSteps,
+    canCreateMasterSafeAndTransfer,
+    enabledStepsAfterBridging,
     bridgeRetryOutcome,
     isBridgingCompleted,
     isBridging,
@@ -134,6 +134,12 @@ export const BridgeInProgress = ({
     if (isBridgingFailed) return;
     if (!isBridgingCompleted) return;
 
+    // if master safe creation is not enabled, do not redirect
+    if (!canCreateMasterSafeAndTransfer) {
+      onNext();
+      return;
+    }
+
     // if master safe creation is in progress or if it has failed, do not redirect.
     if (isLoadingMasterSafeCreation) return;
     if (!isSafeCreated) return;
@@ -143,6 +149,7 @@ export const BridgeInProgress = ({
     const timeoutId = setTimeout(() => goto(Pages.Main), 3000);
     return () => clearTimeout(timeoutId);
   }, [
+    canCreateMasterSafeAndTransfer,
     bridgeRetryOutcome,
     isBridging,
     isBridgingFailed,
@@ -151,6 +158,7 @@ export const BridgeInProgress = ({
     isSafeCreated,
     isTransferCompleted,
     goto,
+    onNext,
   ]);
 
   const onBridgeFailRetry = useCallback(() => {
@@ -194,6 +202,8 @@ export const BridgeInProgress = ({
   ]);
 
   const masterSafeCreationDetails = useMemo(() => {
+    if (!canCreateMasterSafeAndTransfer) return;
+
     const currentMasterSafeCreationStatus: BridgingStepStatus = (() => {
       if (bridgeRetryOutcome === 'NEED_REFILL') return 'wait';
       if (isBridging || !isBridgingCompleted) return 'wait';
@@ -216,6 +226,7 @@ export const BridgeInProgress = ({
       ] satisfies StepEvent[],
     };
   }, [
+    canCreateMasterSafeAndTransfer,
     bridgeRetryOutcome,
     isBridging,
     isBridgingCompleted,
@@ -226,6 +237,9 @@ export const BridgeInProgress = ({
   ]);
 
   const masterSafeTransferDetails = useMemo(() => {
+    if (!canCreateMasterSafeAndTransfer) return;
+    if (!masterSafeCreationDetails) return;
+
     const currentMasterSafeStatus: BridgingStepStatus = (() => {
       if (bridgeRetryOutcome === 'NEED_REFILL') return 'wait';
       if (isErrorMasterSafeCreation) return 'error';
@@ -244,6 +258,7 @@ export const BridgeInProgress = ({
       })) satisfies StepEvent[],
     };
   }, [
+    canCreateMasterSafeAndTransfer,
     bridgeRetryOutcome,
     isErrorMasterSafeCreation,
     isSafeCreated,
