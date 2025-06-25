@@ -8,6 +8,7 @@ import { TokenSymbol } from '@/enums/Token';
 import { usePageState } from '@/hooks/usePageState';
 import { toMiddlewareChainFromTokenSymbol } from '@/utils/middlewareHelpers';
 
+import { useGenerateInputsToAddFundsToMasterSafe } from '../AddFundsToMasterSafe/AddFundsToMasterSafe';
 import { NumberInput } from '../NumberInput';
 import { CardFlex } from '../styled/CardFlex';
 
@@ -70,6 +71,9 @@ export const AddFundsThroughBridge = () => {
     ),
   );
 
+  const abcd = useGenerateInputsToAddFundsToMasterSafe();
+  console.log(abcd);
+
   const handleInputChange = useCallback(
     (symbol: TokenSymbol, value: number | null) => {
       setInputs((prev) => ({ ...prev, [symbol]: value }));
@@ -103,7 +107,7 @@ export const AddFundsThroughBridge = () => {
         <Text className="font-xs" type="secondary">
           Amount to receive
         </Text>
-        <Flex gap={12} vertical>
+        <Flex gap={16} vertical>
           {fundsToReceive.map(({ symbol }) => {
             return (
               <NumberInput

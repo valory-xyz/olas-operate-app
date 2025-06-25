@@ -1,10 +1,10 @@
 import { Flex, Typography } from 'antd';
 
-import { AgentHeader } from '@/components/AgentHeader';
 import { CustomAlert } from '@/components/Alert';
 import { DepositForBridging } from '@/components/bridge/DepositForBridging';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
+import { AgentHeader } from '@/components/ui/AgentHeader';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
 import { GetBridgeRequirementsParams } from './types';
