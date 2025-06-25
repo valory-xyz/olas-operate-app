@@ -6,6 +6,8 @@ import { Nullable } from '@/types/Util';
 
 import { BridgeRetryOutcome } from '../types';
 
+// TODO: what happens if the bridging fails ?
+
 /***
  * Hook to handle retrying the bridge step
  * If refill is required, it will navigate to the refill page

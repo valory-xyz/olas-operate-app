@@ -44,10 +44,18 @@ const Header = () => (
   </>
 );
 
+// TODO: pass an array of steps
+
+const ENABLED_STEPS = ['masterSafeCreation', 'transfer'] as const;
+type EnabledSteps =
+  | [(typeof ENABLED_STEPS)[0]]
+  | [(typeof ENABLED_STEPS)[0], (typeof ENABLED_STEPS)[1]];
+
 type BridgeInProgressProps = {
   quoteId: string;
   bridgeRetryOutcome: Nullable<BridgeRetryOutcome>;
   onBridgeRetryOutcome: (outcome: Nullable<BridgeRetryOutcome>) => void;
+  enabledSteps?: EnabledSteps;
 } & CrossChainTransferDetails;
 
 /**
@@ -61,6 +69,7 @@ export const BridgeInProgress = ({
   transfers,
   bridgeRetryOutcome,
   onBridgeRetryOutcome,
+  enabledSteps,
 }: BridgeInProgressProps) => {
   const { goto } = usePageState();
   const symbols = transfers.map((transfer) => transfer.toSymbol);
@@ -84,6 +93,8 @@ export const BridgeInProgress = ({
   // Create master safe after the bridging is completed
   // and if the master safe is not created yet.
   useEffect(() => {
+    if (!enabledSteps?.includes('masterSafeCreation')) return;
+
     // if refill is required, do not create master safe.
     if (bridgeRetryOutcome === 'NEED_REFILL') return;
 
@@ -99,6 +110,7 @@ export const BridgeInProgress = ({
 
     createMasterSafe();
   }, [
+    enabledSteps,
     bridgeRetryOutcome,
     isBridgingCompleted,
     isBridging,
