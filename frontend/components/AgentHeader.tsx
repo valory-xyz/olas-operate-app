@@ -1,28 +1,23 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button, Col, Flex, Row } from 'antd';
-import { isFunction } from 'lodash';
 import Image from 'next/image';
 import { useCallback } from 'react';
 
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup } from '@/hooks/useSetup';
-
-type SetupCreateHeaderProps = {
-  prev?: SetupScreen | (() => void);
+type AgentHeaderProps = {
+  prev?: () => void;
   disabled?: boolean;
 };
 
 /**
  *
- * @deprecated Use `AgentHeader` instead.
+ * Displays the header for the agent onboarding process.
+ * It includes a back button if a previous action is provided,
+ * and a centered image representing the onboarding robot.
  */
-export const SetupCreateHeader = ({ prev }: SetupCreateHeaderProps) => {
-  const { goto } = useSetup();
+export const AgentHeader = ({ prev }: AgentHeaderProps) => {
   const handleBack = useCallback(() => {
-    if (!prev) return;
-
-    isFunction(prev) ? prev() : goto(prev);
-  }, [goto, prev]);
+    prev?.();
+  }, [prev]);
 
   return (
     <Row>
@@ -35,6 +30,7 @@ export const SetupCreateHeader = ({ prev }: SetupCreateHeaderProps) => {
           />
         )}
       </Col>
+
       <Col span={8}>
         <Flex justify="center">
           <Image

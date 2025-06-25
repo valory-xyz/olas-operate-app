@@ -1,13 +1,12 @@
 import { Flex, Typography } from 'antd';
 
+import { AgentHeader } from '@/components/AgentHeader';
 import { CustomAlert } from '@/components/Alert';
 import { DepositForBridging } from '@/components/bridge/DepositForBridging';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
-import { SetupScreen } from '@/enums/SetupScreen';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
-import { SetupCreateHeader } from '../SetupCreateHeader';
 import { GetBridgeRequirementsParams } from './types';
 
 const { Text, Title } = Typography;
@@ -22,6 +21,8 @@ const AlertMessage = () => (
 );
 
 type BridgeOnEvmProps = {
+  bridgeFromMessage?: string;
+  onPrev: () => void;
   onNext: () => void;
   getBridgeRequirementsParams: GetBridgeRequirementsParams;
   updateQuoteId: (quoteId: string) => void;
@@ -29,23 +30,22 @@ type BridgeOnEvmProps = {
 };
 
 export const BridgeOnEvm = ({
+  bridgeFromMessage,
+  onPrev,
   onNext,
   getBridgeRequirementsParams,
   updateQuoteId,
   updateCrossChainTransferDetails,
 }: BridgeOnEvmProps) => (
   <CardFlex $noBorder>
-    <SetupCreateHeader prev={SetupScreen.SetupEoaFunding} />
+    <AgentHeader prev={onPrev} />
 
     <CardSection vertical gap={24} className="m-0 pt-24">
       <Flex vertical gap={8}>
         <Title level={3} className="m-0">
           Bridge from {FROM_CHAIN_NAME}
         </Title>
-        <Text className="text-base text-lighter">
-          The bridged amount covers all funds required to create your account
-          and run your agent, including fees. No further funds will be needed.
-        </Text>
+        <Text className="text-base text-lighter">{bridgeFromMessage}</Text>
       </Flex>
 
       <CardSection>
