@@ -8,23 +8,11 @@ import { TokenSymbol } from '@/enums/Token';
 import { usePageState } from '@/hooks/usePageState';
 import { toMiddlewareChainFromTokenSymbol } from '@/utils/middlewareHelpers';
 
-import { useGenerateInputsToAddFundsToMasterSafe } from '../AddFundsToMasterSafe/AddFundsToMasterSafe';
+import { useGenerateInputsToAddFundsToMasterSafe } from '../AddFundsToMasterSafe/useGenerateInputsToAddFundsToMasterSafe';
 import { NumberInput } from '../NumberInput';
 import { CardFlex } from '../styled/CardFlex';
 
 const { Title, Text } = Typography;
-
-// TODO: from backend
-const fundsToReceive = [
-  {
-    symbol: TokenSymbol.OLAS,
-    amount: 0,
-  },
-  {
-    symbol: TokenSymbol.ETH,
-    amount: 0.005,
-  },
-];
 
 const BridgeHeader = () => {
   const { goto } = usePageState();
@@ -63,16 +51,15 @@ const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
 };
 
 export const AddFundsThroughBridge = () => {
-  const { goto } = usePageState();
+  // const { goto } = usePageState();
+  const amountsToReceive = useGenerateInputsToAddFundsToMasterSafe();
+
   const [inputs, setInputs] = useState(
-    fundsToReceive.reduce(
+    amountsToReceive.reduce(
       (acc, { symbol, amount }) => ({ ...acc, [symbol]: amount }),
       {} as Record<TokenSymbol, number | null>,
     ),
   );
-
-  const abcd = useGenerateInputsToAddFundsToMasterSafe();
-  console.log(abcd);
 
   const handleInputChange = useCallback(
     (symbol: TokenSymbol, value: number | null) => {
@@ -81,11 +68,17 @@ export const AddFundsThroughBridge = () => {
     [],
   );
 
-  // TODO: API call to bridge funds
   const handleBridgeFunds = useCallback(() => {
-    window.console.log('Bridging funds:', inputs);
-    goto(Pages.Main); // REMOVE and move to the next screen
-  }, [inputs, goto]);
+    const amountsToBridge = amountsToReceive
+      .map((tokenDetails) => {
+        const amount = inputs[tokenDetails.symbol];
+        if (!amount) return null;
+        return { ...tokenDetails, amount };
+      })
+      .filter((item) => item !== null);
+    window.console.log('Bridging funds:', amountsToBridge);
+    // goto(Pages.Main); // REMOVE and move to the next screen
+  }, [inputs, amountsToReceive]);
 
   const isButtonDisabled = useMemo(() => {
     return Object.values(inputs).every((value) => isNil(value) || value <= 0);
@@ -108,7 +101,7 @@ export const AddFundsThroughBridge = () => {
           Amount to receive
         </Text>
         <Flex gap={16} vertical>
-          {fundsToReceive.map(({ symbol }) => {
+          {amountsToReceive.map(({ symbol }) => {
             return (
               <NumberInput
                 key={symbol}
