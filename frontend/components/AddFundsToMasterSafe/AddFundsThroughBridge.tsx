@@ -8,9 +8,9 @@ import { TokenSymbol } from '@/enums/Token';
 import { usePageState } from '@/hooks/usePageState';
 import { toMiddlewareChainFromTokenSymbol } from '@/utils/middlewareHelpers';
 
-import { useGenerateInputsToAddFundsToMasterSafe } from '../AddFundsToMasterSafe/useGenerateInputsToAddFundsToMasterSafe';
 import { NumberInput } from '../NumberInput';
 import { CardFlex } from '../styled/CardFlex';
+import { useGenerateInputsToAddFundsToMasterSafe } from './useGenerateInputsToAddFundsToMasterSafe';
 
 const { Title, Text } = Typography;
 

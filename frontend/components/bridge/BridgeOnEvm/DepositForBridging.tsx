@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { MiddlewareChain } from '@/client';
+import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '@/components/ui/iconStyles';
 import {
   ETHEREUM_TOKEN_CONFIG,
   TOKEN_CONFIG,
@@ -31,7 +32,6 @@ import { areAddressesEqual } from '@/utils/address';
 import { delayInSeconds } from '@/utils/delay';
 import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
 
-import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '../ui/iconStyles';
 import { DepositAddress } from './DepositAddress';
 import { DepositTokenDetails, TokenDetails } from './TokenDetails';
 

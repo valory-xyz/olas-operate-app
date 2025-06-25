@@ -2,16 +2,19 @@ import { Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
+import {
+  BridgingSteps,
+  StepEvent,
+} from '@/components/bridge/BridgeInProgress/BridgingSteps';
+import { EstimatedCompletionTime } from '@/components/bridge/BridgeInProgress/EstimatedCompletionTime';
 import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
-import { BridgingSteps, StepEvent } from '@/components/bridge/BridgingSteps';
-import { EstimatedCompletionTime } from '@/components/bridge/EstimatedCompletionTime';
+import { SetupCreateHeader } from '@/components/SetupPage/Create/SetupCreateHeader';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { BridgingStepStatus, CrossChainTransferDetails } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
 
-import { SetupCreateHeader } from '../../SetupCreateHeader';
 import { BridgeRetryOutcome } from '../types';
 import { useBridgingSteps } from './useBridgingSteps';
 import { useMasterSafeCreationAndTransfer } from './useMasterSafeCreationAndTransfer';

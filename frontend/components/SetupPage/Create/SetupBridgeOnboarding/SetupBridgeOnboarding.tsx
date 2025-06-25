@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { BridgeCompleted } from '@/components/bridge/BridgeCompleted';
+import { BridgeInProgress } from '@/components/bridge/BridgeInProgress/BridgeInProgress';
+import { BridgeOnEvm } from '@/components/bridge/BridgeOnEvm/BridgeOnEvm';
+import { BridgeRetryOutcome } from '@/components/bridge/types';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { usePageState } from '@/hooks/usePageState';
@@ -7,10 +11,6 @@ import { useSetup } from '@/hooks/useSetup';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
 
-import { BridgeCompleted } from './BridgeCompleted';
-import { BridgeInProgress } from './BridgeInProgress/BridgeInProgress';
-import { BridgeOnEvm } from './BridgeOnEvm';
-import { BridgeRetryOutcome } from './types';
 import { useGetBridgeRequirementsParams } from './useGetBridgeRequirementsParams';
 
 const QUOTE_ID_ERROR = 'Quote ID is required for in progress state';
