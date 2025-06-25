@@ -9,9 +9,7 @@ import {
   GetBridgeRequirementsParams,
 } from '@/components/bridge/types';
 import { Pages } from '@/enums/Pages';
-import { SetupScreen } from '@/enums/SetupScreen';
 import { usePageState } from '@/hooks/usePageState';
-import { useSetup } from '@/hooks/useSetup';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
 
@@ -26,6 +24,7 @@ type BridgeProps = {
   showCompleteScreen?: boolean;
   getBridgeRequirementsParams: GetBridgeRequirementsParams;
   enabledStepsAfterBridging?: EnabledSteps;
+  onPrevBeforeBridging: () => void;
 };
 
 export const Bridge = ({
@@ -33,9 +32,9 @@ export const Bridge = ({
   getBridgeRequirementsParams,
   bridgeFromDescription,
   enabledStepsAfterBridging,
+  onPrevBeforeBridging,
 }: BridgeProps) => {
   const { goto } = usePageState();
-  const { goto: gotoSetup } = useSetup();
 
   const [bridgeState, setBridgeState] = useState<BridgeState>('depositing');
   const [quoteId, setQuoteId] = useState<Nullable<string>>(null);
@@ -72,10 +71,6 @@ export const Bridge = ({
     [setTransferAndReceivingAmounts],
   );
 
-  const handlePrevStep = useCallback(() => {
-    gotoSetup(SetupScreen.SetupEoaFunding);
-  }, [gotoSetup]);
-
   const handleNextStep = useCallback(() => {
     switch (bridgeState) {
       case 'depositing':
@@ -105,7 +100,7 @@ export const Bridge = ({
           getBridgeRequirementsParams={getBridgeRequirementsParams}
           updateQuoteId={updateQuoteId}
           updateCrossChainTransferDetails={updateCrossChainTransferDetails}
-          onPrev={handlePrevStep}
+          onPrev={onPrevBeforeBridging}
           onNext={handleNextStep}
         />
       );
