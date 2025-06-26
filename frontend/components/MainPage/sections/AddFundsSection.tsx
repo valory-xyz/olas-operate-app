@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
-import { SendFundAction } from '@/components/bridgeee/types';
+import { SendFundAction } from '@/components/Bridge/types';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { EvmChainName } from '@/constants/chains';
 import { NA, UNICODE_SYMBOLS } from '@/constants/symbols';

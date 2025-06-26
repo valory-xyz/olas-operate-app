@@ -18,8 +18,8 @@ import {
 } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
 
-import { Bridge } from '../bridgeee/Bridge';
-import { getFromToken } from '../bridgeee/utils';
+import { Bridge } from '../Bridge/Bridge';
+import { getFromToken } from '../Bridge/utils';
 import { NumberInput } from '../NumberInput';
 import { CardFlex } from '../styled/CardFlex';
 import { useGenerateInputsToAddFundsToMasterSafe } from './useGenerateInputsToAddFundsToMasterSafe';

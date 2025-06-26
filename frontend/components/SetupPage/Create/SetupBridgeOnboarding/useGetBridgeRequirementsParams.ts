@@ -6,7 +6,7 @@ import {
   MasterSafeBalanceRecord,
   MiddlewareChain,
 } from '@/client';
-import { getFromToken } from '@/components/bridgeee/utils';
+import { getFromToken } from '@/components/Bridge/utils';
 import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
