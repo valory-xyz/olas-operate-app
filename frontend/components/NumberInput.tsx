@@ -33,6 +33,7 @@ export const NumberInput = ({ value, ...rest }: InputNumberProps<number>) => (
   <InputNumber<number>
     {...rest}
     value={typeof value === 'string' ? parseFloat(value) : value}
+    // example: 1234567.8924 => "1,234,567.8924"
     formatter={(value) => {
       const [intPart, decPart] = `${value}`.split('.');
       const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');

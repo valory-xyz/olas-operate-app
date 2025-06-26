@@ -5,14 +5,11 @@ import { useCallback } from 'react';
 
 type AgentHeaderProps = {
   prev?: () => void;
-  disabled?: boolean;
 };
 
 /**
- *
- * Displays the header for the agent onboarding process.
- * It includes a back button if a previous action is provided,
- * and a centered image representing the onboarding robot.
+ * Displays the header for the agent which includes a back button
+ * if a previous action is provided, and a centered image representing the onboarding robot.
  */
 export const AgentHeader = ({ prev }: AgentHeaderProps) => {
   const handleBack = useCallback(() => {

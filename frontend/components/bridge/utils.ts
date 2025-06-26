@@ -4,8 +4,9 @@ import { Address } from '@/types/Address';
 import { areAddressesEqual } from '@/utils/address';
 
 /**
- * Helper to get source token address on the fromChain
- * @example: if tokenAddress is USDC on the destination chain,
+ * Helper to get source token address.
+ *
+ * Example, if tokenAddress is USDC on the destination chain,
  * it will return the USDC address on the fromChain (Ethereum).
  */
 export const getFromToken = (

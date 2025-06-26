@@ -8,12 +8,15 @@ import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
-type BridgeCompletedProps = Omit<CrossChainTransferDetails, 'eta'>;
+type BridgeCompletedProps = Omit<CrossChainTransferDetails, 'eta'> & {
+  completionMessage?: string;
+};
 
 export const BridgeCompleted = ({
   fromChain,
   toChain,
   transfers,
+  completionMessage,
 }: BridgeCompletedProps) => {
   const { goto } = usePageState();
 
@@ -25,8 +28,7 @@ export const BridgeCompleted = ({
     >
       <Result
         status="success"
-        // TODO: update with actual destination
-        subTitle="Funds have been bridged to your Pearl Safe."
+        subTitle={completionMessage || 'Funds have been bridged successfully.'}
         extra={[
           <Flex
             key="bridge-completed"

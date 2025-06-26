@@ -10,13 +10,15 @@ import { TokenSymbol } from '@/enums/Token';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
-import { BridgeRequest } from '@/types/Bridge';
+import { Address } from '@/types/Address';
+import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import {
   asEvmChainId,
   toMiddlewareChainFromTokenSymbol,
 } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
 
+import { Bridge } from '../bridge/Bridge';
 import { getFromToken } from '../bridge/utils';
 import { NumberInput } from '../NumberInput';
 import { CardFlex } from '../styled/CardFlex';
@@ -62,16 +64,51 @@ const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
 
 const fromChainConfig = ETHEREUM_TOKEN_CONFIG;
 
-const AddFundsInput = () => {
-  const amountsToReceive = useGenerateInputsToAddFundsToMasterSafe();
+const useGetBridgeRequirementsParams = () => {
   const { masterEoa, masterSafes } = useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const toChainConfig = TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)];
-
   const masterSafe = masterSafes?.find(
     ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
   );
+
+  return useCallback(
+    (tokenAddress: Address, amount: number): BridgeRequest => {
+      if (!masterEoa) throw new Error('Master EOA is not available');
+      if (!masterSafe) throw new Error('Master Safe is not available');
+
+      const fromToken = getFromToken(
+        tokenAddress,
+        fromChainConfig,
+        toChainConfig,
+      );
+
+      return {
+        from: {
+          chain: MiddlewareChain.ETHEREUM,
+          address: masterEoa.address,
+          token: fromToken,
+        },
+        to: {
+          chain: toMiddlewareChain,
+          address: masterSafe.address,
+          token: tokenAddress,
+          amount: parseUnits(amount),
+        },
+      };
+    },
+    [toMiddlewareChain, toChainConfig, masterEoa, masterSafe],
+  );
+};
+
+type AddFundsInputProps = {
+  onBridgeFunds: (bridgeRequirements: BridgeRequest[]) => void;
+};
+
+const AddFundsInput = ({ onBridgeFunds }: AddFundsInputProps) => {
+  const amountsToReceive = useGenerateInputsToAddFundsToMasterSafe();
+  const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
 
   const [inputs, setInputs] = useState(
     amountsToReceive.reduce(
@@ -88,9 +125,6 @@ const AddFundsInput = () => {
   );
 
   const handleBridgeFunds = useCallback(() => {
-    if (!masterEoa) return;
-    if (!masterSafe) return;
-
     const amountsToBridge = amountsToReceive
       .map((tokenDetails) => {
         const amount = inputs[tokenDetails.symbol];
@@ -100,41 +134,12 @@ const AddFundsInput = () => {
       .filter((item) => item !== null);
 
     const bridgeRequirementsParams: BridgeRequest[] = amountsToBridge.map(
-      ({ tokenAddress, amount }) => {
-        const fromToken = getFromToken(
-          tokenAddress,
-          fromChainConfig,
-          toChainConfig,
-        );
-
-        return {
-          from: {
-            chain: MiddlewareChain.ETHEREUM,
-            address: masterEoa.address,
-            token: fromToken,
-          },
-          to: {
-            chain: toMiddlewareChain,
-            address: masterSafe.address,
-            token: tokenAddress,
-            amount: parseUnits(amount),
-          },
-        };
-      },
+      ({ tokenAddress, amount }) =>
+        getBridgeRequirementsParams(tokenAddress, amount),
     );
 
-    window.console.log('Bridging funds:', {
-      amountsToBridge,
-      bridgeRequirementsParams,
-    });
-  }, [
-    inputs,
-    amountsToReceive,
-    masterEoa,
-    toMiddlewareChain,
-    masterSafe,
-    toChainConfig,
-  ]);
+    return onBridgeFunds(bridgeRequirementsParams);
+  }, [inputs, amountsToReceive, getBridgeRequirementsParams, onBridgeFunds]);
 
   const isButtonDisabled = useMemo(() => {
     return Object.values(inputs).every((value) => isNil(value) || value <= 0);
@@ -176,22 +181,60 @@ const AddFundsInput = () => {
 };
 
 export const AddFundsThroughBridge = () => {
-  // handle 2 different states:
-  // 1. Adding inputs
-  // 2. Bridging
-  return (
-    <CardFlex
-      $gap={20}
-      $noBorder
-      title={<BridgeHeader />}
-      styles={{ header: { minHeight: 56 }, body: { padding: '0 24px' } }}
-    >
-      <Text>
-        Specify the amount of tokens you&apos;d like to receive to your Pearl
-        Safe.
-      </Text>
-
-      <AddFundsInput />
-    </CardFlex>
+  const [bridgeState, setBridgeState] = useState<
+    BridgeRefillRequirementsRequest | undefined
+  >();
+  const [addFundsState, setAddFundsState] = useState<'funding' | 'bridging'>(
+    'funding',
   );
+
+  const handleBridgeFunds = useCallback(
+    (bridgeRequirements: BridgeRequest[]) => {
+      const requirements: BridgeRefillRequirementsRequest = {
+        bridge_requests: bridgeRequirements,
+        force_update: false,
+      };
+
+      setBridgeState(requirements);
+      setAddFundsState('bridging');
+    },
+    [setBridgeState, setAddFundsState],
+  );
+
+  const handleGetBridgeRequirementsParams = useCallback(() => {
+    if (!bridgeState) throw new Error('Bridge requirements are not set.');
+    return bridgeState;
+  }, [bridgeState]);
+
+  const handlePrevStep = useCallback(() => {
+    setAddFundsState('funding');
+  }, []);
+
+  switch (addFundsState) {
+    case 'funding':
+      return (
+        <CardFlex
+          $gap={20}
+          $noBorder
+          title={<BridgeHeader />}
+          styles={{ header: { minHeight: 56 }, body: { padding: '0 24px' } }}
+        >
+          <Text>
+            Specify the amount of tokens you&apos;d like to receive to your
+            Pearl Safe.
+          </Text>
+
+          <AddFundsInput onBridgeFunds={handleBridgeFunds} />
+        </CardFlex>
+      );
+    case 'bridging':
+      return (
+        <Bridge
+          bridgeFromDescription="Bridging amount includes fees."
+          showCompleteScreen={true}
+          getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
+          onPrevBeforeBridging={handlePrevStep}
+        />
+      );
+  }
 };
