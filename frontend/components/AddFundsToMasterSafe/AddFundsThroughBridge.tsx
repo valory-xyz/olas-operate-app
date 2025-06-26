@@ -22,7 +22,10 @@ import { Bridge } from '../Bridge/Bridge';
 import { getFromToken } from '../Bridge/utils';
 import { NumberInput } from '../NumberInput';
 import { CardFlex } from '../styled/CardFlex';
-import { useGenerateInputsToAddFundsToMasterSafe } from './useGenerateInputsToAddFundsToMasterSafe';
+import {
+  GeneratedInput,
+  useGenerateInputsToAddFundsToMasterSafe,
+} from './useGenerateInputsToAddFundsToMasterSafe';
 
 const { Title, Text } = Typography;
 
@@ -135,7 +138,7 @@ const AddFundsInput = ({ onBridgeFunds }: AddFundsInputProps) => {
         if (!amount) return null;
         return { ...tokenDetails, amount };
       })
-      .filter((item) => item !== null);
+      .filter((item): item is GeneratedInput => !!item);
 
     const bridgeRequirementsParams: BridgeRequest[] = amountsToBridge.map(
       ({ tokenAddress, amount }) =>

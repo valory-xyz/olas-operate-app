@@ -7,7 +7,7 @@ import { useServices } from '@/hooks/useServices';
 import { Address } from '@/types/Address';
 import { getTokenDetailsFromAddress } from '@/utils/middlewareHelpers';
 
-type GeneratedInput = {
+export type GeneratedInput = {
   tokenAddress: Address;
   symbol: TokenSymbol;
   amount: number;
