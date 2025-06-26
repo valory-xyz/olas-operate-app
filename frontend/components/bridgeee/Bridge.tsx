@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod';
 
-import { BridgeCompleted } from '@/components/bridge/BridgeCompleted';
-import { BridgeInProgress } from '@/components/bridge/BridgeInProgress/BridgeInProgress';
-import { BridgeOnEvm } from '@/components/bridge/BridgeOnEvm/BridgeOnEvm';
+import { BridgeCompleted } from '@/components/bridgeee/BridgeCompleted';
+import { BridgeInProgress } from '@/components/bridgeee/BridgeInProgress/BridgeInProgress';
+import { BridgeOnEvm } from '@/components/bridgeee/BridgeOnEvm/BridgeOnEvm';
 import {
   BridgeRetryOutcome,
   EnabledSteps,
   GetBridgeRequirementsParams,
-} from '@/components/bridge/types';
+} from '@/components/bridgeee/types';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { CrossChainTransferDetails } from '@/types/Bridge';

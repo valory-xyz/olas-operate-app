@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { Bridge } from '@/components/bridge/Bridge';
+import { Bridge } from '@/components/bridgeee/Bridge';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 

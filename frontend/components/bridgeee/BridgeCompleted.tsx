@@ -1,6 +1,6 @@
 import { Button, Flex, Result } from 'antd';
 
-import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
+import { BridgeTransferFlow } from '@/components/bridgeee/BridgeTransferFlow';
 import { CardTitle } from '@/components/Card/CardTitle';
 import { GoToMainPageButton } from '@/components/Pages/GoToMainPageButton';
 import { CardFlex } from '@/components/styled/CardFlex';

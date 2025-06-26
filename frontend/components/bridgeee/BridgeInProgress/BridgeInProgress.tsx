@@ -5,9 +5,9 @@ import { CustomAlert } from '@/components/Alert';
 import {
   BridgingSteps,
   StepEvent,
-} from '@/components/bridge/BridgeInProgress/BridgingSteps';
-import { EstimatedCompletionTime } from '@/components/bridge/BridgeInProgress/EstimatedCompletionTime';
-import { BridgeTransferFlow } from '@/components/bridge/BridgeTransferFlow';
+} from '@/components/bridgeee/BridgeInProgress/BridgingSteps';
+import { EstimatedCompletionTime } from '@/components/bridgeee/BridgeInProgress/EstimatedCompletionTime';
+import { BridgeTransferFlow } from '@/components/bridgeee/BridgeTransferFlow';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { AgentHeader } from '@/components/ui/AgentHeader';
 import { Pages } from '@/enums/Pages';
