@@ -64,6 +64,9 @@ const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
 
 const fromChainConfig = ETHEREUM_TOKEN_CONFIG;
 
+/**
+ * Get bridge requirements parameters from the input provided by the user
+ */
 const useGetBridgeRequirementsParams = () => {
   const { masterEoa, masterSafes } = useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
@@ -124,6 +127,7 @@ const AddFundsInput = ({ onBridgeFunds }: AddFundsInputProps) => {
     [],
   );
 
+  // covert user input to bridge requirements for bridging.
   const handleBridgeFunds = useCallback(() => {
     const amountsToBridge = amountsToReceive
       .map((tokenDetails) => {
@@ -141,6 +145,7 @@ const AddFundsInput = ({ onBridgeFunds }: AddFundsInputProps) => {
     return onBridgeFunds(bridgeRequirementsParams);
   }, [inputs, amountsToReceive, getBridgeRequirementsParams, onBridgeFunds]);
 
+  // If all inputs are empty or zero, disable the button
   const isButtonDisabled = useMemo(() => {
     return Object.values(inputs).every((value) => isNil(value) || value <= 0);
   }, [inputs]);
@@ -180,6 +185,10 @@ const AddFundsInput = ({ onBridgeFunds }: AddFundsInputProps) => {
   );
 };
 
+/**
+ * Add funds to the master safe through a bridge
+ * by specifying the amount to receive.
+ */
 export const AddFundsThroughBridge = () => {
   const [bridgeState, setBridgeState] = useState<
     BridgeRefillRequirementsRequest | undefined
@@ -232,9 +241,12 @@ export const AddFundsThroughBridge = () => {
         <Bridge
           bridgeFromDescription="Bridging amount includes fees."
           showCompleteScreen={true}
+          completionMessage="Funds have been bridged to your Pearl Safe."
           getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
           onPrevBeforeBridging={handlePrevStep}
         />
       );
+    default:
+      throw new Error('Invalid add funds state');
   }
 };

@@ -14,7 +14,6 @@ type GeneratedInput = {
 };
 
 /**
- *
  * Generate inputs to add funds for bridging.
  *
  * Example: If the chain is Gnosis, user can add OLAS and XDAI.
@@ -32,6 +31,7 @@ export const useGenerateInputsToAddFundsToMasterSafe = (): GeneratedInput[] => {
   // master_safe and master_eoa addresses in general.
   const allAddresses = Object.keys(totalRequirements) as Address[];
 
+  // all token addresses that can be used to add funds to the master safe.
   const tokenAddresses = allAddresses
     .map((address: Address) => {
       if (!(address in totalRequirements)) return;

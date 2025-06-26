@@ -109,7 +109,7 @@ export const toMiddlewareChainFromTokenSymbol = (
 };
 
 /**
- * Returns token details based on the provided token address.
+ * To get token details based on the provided token address.
  *
  * For example, if the chain is Gnosis and the token address is AddressZero (native token),
  * it will return the details of the XDAI token such as symbol, decimals, and address.

@@ -25,14 +25,21 @@ type BridgeProps = {
   getBridgeRequirementsParams: GetBridgeRequirementsParams;
   enabledStepsAfterBridging?: EnabledSteps;
   onPrevBeforeBridging: () => void;
+  completionMessage?: string;
 };
 
+/**
+ * Bridge component that handles the entire bridging flow.
+ * It manages the state of the bridging process, including depositing, in progress, and completed states.
+ * It also handles retry outcomes and updates the UI accordingly.
+ */
 export const Bridge = ({
   showCompleteScreen = false,
   getBridgeRequirementsParams,
   bridgeFromDescription,
   enabledStepsAfterBridging,
   onPrevBeforeBridging,
+  completionMessage,
 }: BridgeProps) => {
   const { goto } = usePageState();
 
@@ -122,7 +129,12 @@ export const Bridge = ({
     }
     case 'completed':
       if (!transferAndReceivingDetails) throw new Error(TRANSFER_AMOUNTS_ERROR);
-      return <BridgeCompleted {...transferAndReceivingDetails} />;
+      return (
+        <BridgeCompleted
+          {...transferAndReceivingDetails}
+          completionMessage={completionMessage}
+        />
+      );
     default:
       throw new Error('Invalid bridge state!');
   }

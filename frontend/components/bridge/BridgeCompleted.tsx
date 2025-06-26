@@ -12,6 +12,10 @@ type BridgeCompletedProps = Omit<CrossChainTransferDetails, 'eta'> & {
   completionMessage?: string;
 };
 
+/**
+ * Final screen displayed when the bridging process is completed.
+ * It shows the transfer details and a button to navigate to the wallet balance page.
+ */
 export const BridgeCompleted = ({
   fromChain,
   toChain,

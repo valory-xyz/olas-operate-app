@@ -29,6 +29,10 @@ type BridgeOnEvmProps = {
   updateCrossChainTransferDetails: (details: CrossChainTransferDetails) => void;
 };
 
+/**
+ * Initial bridge component for the Ethereum network to show the deposit requirements
+ * before proceeding with the bridging process.
+ */
 export const BridgeOnEvm = ({
   bridgeFromDescription,
   onPrev,
