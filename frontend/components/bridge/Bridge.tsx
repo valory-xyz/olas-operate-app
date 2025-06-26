@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { z } from 'zod';
 
 import { BridgeCompleted } from '@/components/bridge/BridgeCompleted';
 import { BridgeInProgress } from '@/components/bridge/BridgeInProgress/BridgeInProgress';
@@ -19,14 +20,28 @@ const TRANSFER_AMOUNTS_ERROR =
 
 type BridgeState = 'depositing' | 'in_progress' | 'completed';
 
-type BridgeProps = {
-  bridgeFromDescription: string;
-  showCompleteScreen?: boolean;
-  getBridgeRequirementsParams: GetBridgeRequirementsParams;
-  enabledStepsAfterBridging?: EnabledSteps;
-  onPrevBeforeBridging: () => void;
-  completionMessage?: string;
-};
+const BridgePropsSchema = z
+  .object({
+    bridgeFromDescription: z.string(),
+    showCompleteScreen: z.boolean().optional(),
+    getBridgeRequirementsParams: z.custom<GetBridgeRequirementsParams>(),
+    enabledStepsAfterBridging: z.custom<EnabledSteps>().optional(),
+    onPrevBeforeBridging: z.function(),
+    completionMessage: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    //  If showCompleteScreen is true, completionMessage  must be provided
+    if (data.showCompleteScreen && !data.completionMessage) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'completionMessage is required when showCompleteScreen is true',
+        path: ['completionMessage'],
+      });
+    }
+  });
+
+type BridgeProps = z.infer<typeof BridgePropsSchema>;
 
 /**
  * Bridge component that handles the entire bridging flow.
