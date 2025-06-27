@@ -32,13 +32,13 @@ export const useGenerateInputsToAddFundsToMasterSafe = (): GeneratedInput[] => {
   const allAddresses = Object.keys(totalRequirements) as Address[];
 
   // all token addresses that can be used to add funds to the master safe.
-  const tokenAddresses = allAddresses
-    .map((address: Address) => {
-      if (!(address in totalRequirements)) return;
-      return Object.keys(totalRequirements[address]) as Address[];
-    })
-    .flat()
-    .filter((e) => !!e) as Address[];
+  const tokenAddresses = allAddresses.reduce<Address[]>((acc, address) => {
+    const tokens = totalRequirements[address];
+    if (tokens) {
+      acc.push(...(Object.keys(tokens) as Address[]));
+    }
+    return acc;
+  }, []);
 
   return uniq(tokenAddresses).map((tokenAddress: Address) => {
     const symbol = getTokenDetailsFromAddress(

@@ -21,7 +21,6 @@ export const SetupBridgeOnboarding = () => {
     <Bridge
       enabledStepsAfterBridging={['masterSafeCreationAndTransfer']}
       bridgeFromDescription={BRIDGE_FROM_MESSAGE}
-      showCompleteScreen={false}
       getBridgeRequirementsParams={getBridgeRequirementsParams}
       onPrevBeforeBridging={handlePrevStep}
     />

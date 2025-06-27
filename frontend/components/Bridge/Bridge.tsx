@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { z } from 'zod';
 
 import { BridgeCompleted } from '@/components/Bridge/BridgeCompleted';
 import { BridgeInProgress } from '@/components/Bridge/BridgeInProgress/BridgeInProgress';
@@ -20,28 +19,13 @@ const TRANSFER_AMOUNTS_ERROR =
 
 type BridgeState = 'depositing' | 'in_progress' | 'completed';
 
-const BridgePropsSchema = z
-  .object({
-    bridgeFromDescription: z.string(),
-    showCompleteScreen: z.boolean().optional(),
-    getBridgeRequirementsParams: z.custom<GetBridgeRequirementsParams>(),
-    enabledStepsAfterBridging: z.custom<EnabledSteps>().optional(),
-    onPrevBeforeBridging: z.function(),
-    completionMessage: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    //  If showCompleteScreen is true, completionMessage  must be provided
-    if (data.showCompleteScreen && !data.completionMessage) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
-          'completionMessage is required when showCompleteScreen is true',
-        path: ['completionMessage'],
-      });
-    }
-  });
-
-type BridgeProps = z.infer<typeof BridgePropsSchema>;
+type BridgeProps = {
+  bridgeFromDescription: string;
+  showCompleteScreen?: { completionMessage: string } | null;
+  getBridgeRequirementsParams: GetBridgeRequirementsParams;
+  enabledStepsAfterBridging?: EnabledSteps;
+  onPrevBeforeBridging: () => void;
+};
 
 /**
  * Bridge component that handles the entire bridging flow.
@@ -49,12 +33,11 @@ type BridgeProps = z.infer<typeof BridgePropsSchema>;
  * It also handles retry outcomes and updates the UI accordingly.
  */
 export const Bridge = ({
-  showCompleteScreen = false,
+  showCompleteScreen,
   getBridgeRequirementsParams,
   bridgeFromDescription,
   enabledStepsAfterBridging,
   onPrevBeforeBridging,
-  completionMessage,
 }: BridgeProps) => {
   const { goto } = usePageState();
 
@@ -144,10 +127,13 @@ export const Bridge = ({
     }
     case 'completed':
       if (!transferAndReceivingDetails) throw new Error(TRANSFER_AMOUNTS_ERROR);
+      if (!showCompleteScreen || !showCompleteScreen.completionMessage) {
+        throw new Error('Completion message is required for completed state');
+      }
       return (
         <BridgeCompleted
           {...transferAndReceivingDetails}
-          completionMessage={completionMessage}
+          completionMessage={showCompleteScreen.completionMessage}
         />
       );
     default:

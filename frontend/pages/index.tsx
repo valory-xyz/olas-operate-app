@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
-import { AddFundsThroughBridge } from '@/components/AddFundsToMasterSafe/AddFundsThroughBridge';
+import { AddFundsThroughBridge } from '@/components/AddFundsThroughBridge/AddFundsThroughBridge';
 import { AgentActivityPage } from '@/components/AgentActivity';
 import { AgentSelection } from '@/components/AgentSelection';
 import { Main } from '@/components/MainPage';

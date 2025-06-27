@@ -1,31 +1,23 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Button, Flex, Image, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { isNil } from 'lodash';
+import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
 
-import { MiddlewareChain } from '@/client';
-import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
 import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
-import { useMasterWalletContext } from '@/hooks/useWallet';
-import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
-import {
-  asEvmChainId,
-  toMiddlewareChainFromTokenSymbol,
-} from '@/utils/middlewareHelpers';
-import { parseUnits } from '@/utils/numberFormatters';
+import { toMiddlewareChainFromTokenSymbol } from '@/utils/middlewareHelpers';
 
 import { Bridge } from '../Bridge/Bridge';
-import { getFromToken } from '../Bridge/utils';
 import { NumberInput } from '../NumberInput';
 import { CardFlex } from '../styled/CardFlex';
 import {
   GeneratedInput,
   useGenerateInputsToAddFundsToMasterSafe,
 } from './useGenerateInputsToAddFundsToMasterSafe';
+import { useGetBridgeRequirementsParams } from './useGetBridgeRequirementsParams';
 
 const { Title, Text } = Typography;
 
@@ -50,61 +42,10 @@ const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
   }, [symbol]);
 
   return (
-    <Flex align="center" justify="flex-start" gap={6} style={{ width: 78 }}>
-      {imgSrc && (
-        <Image
-          src={imgSrc}
-          alt={symbol}
-          style={{ width: 20, height: 20, marginRight: 6 }}
-          preview={false}
-        />
-      )}
-
+    <Flex align="center" justify="flex-start" gap={8} style={{ width: 78 }}>
+      {imgSrc && <Image src={imgSrc} alt={symbol} width={20} height={20} />}
       {symbol}
     </Flex>
-  );
-};
-
-const fromChainConfig = ETHEREUM_TOKEN_CONFIG;
-
-/**
- * Get bridge requirements parameters from the input provided by the user
- */
-const useGetBridgeRequirementsParams = () => {
-  const { masterEoa, masterSafes } = useMasterWalletContext();
-  const { selectedAgentConfig } = useServices();
-  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
-  const toChainConfig = TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)];
-  const masterSafe = masterSafes?.find(
-    ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
-  );
-
-  return useCallback(
-    (tokenAddress: Address, amount: number): BridgeRequest => {
-      if (!masterEoa) throw new Error('Master EOA is not available');
-      if (!masterSafe) throw new Error('Master Safe is not available');
-
-      const fromToken = getFromToken(
-        tokenAddress,
-        fromChainConfig,
-        toChainConfig,
-      );
-
-      return {
-        from: {
-          chain: MiddlewareChain.ETHEREUM,
-          address: masterEoa.address,
-          token: fromToken,
-        },
-        to: {
-          chain: toMiddlewareChain,
-          address: masterSafe.address,
-          token: tokenAddress,
-          amount: parseUnits(amount),
-        },
-      };
-    },
-    [toMiddlewareChain, toChainConfig, masterEoa, masterSafe],
   );
 };
 
@@ -168,9 +109,9 @@ const AddFundsInput = ({ onBridgeFunds }: AddFundsInputProps) => {
               placeholder="0.00"
               size="large"
               min={0}
-              onChange={(value: number | null) => {
-                handleInputChange(symbol, value);
-              }}
+              onChange={(value: number | null) =>
+                handleInputChange(symbol, value)
+              }
             />
           );
         })}
@@ -243,8 +184,9 @@ export const AddFundsThroughBridge = () => {
       return (
         <Bridge
           bridgeFromDescription="Bridging amount includes fees."
-          showCompleteScreen={true}
-          completionMessage="Funds have been bridged to your Pearl Safe."
+          showCompleteScreen={{
+            completionMessage: 'Funds have been bridged to your Pearl Safe.',
+          }}
           getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
           onPrevBeforeBridging={handlePrevStep}
         />
