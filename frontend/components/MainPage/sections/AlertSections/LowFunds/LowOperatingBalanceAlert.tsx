@@ -17,12 +17,13 @@ const { Text, Title } = Typography;
  * Alert for low operating (safe) balance
  */
 export const LowOperatingBalanceAlert = () => {
+  const isBridgeAddFundsEnabled = useFeatureFlag('bridge-add-funds');
   const { goto } = usePageState();
   const { storeState } = useStore();
   const { selectedAgentType } = useServices();
   const { isMasterSafeLowOnNativeGas, masterSafeNativeGasRequirement } =
     useMasterBalances();
-  const isBridgeAddFundsEnabled = useFeatureFlag('bridge-add-funds');
+
   const { chainName, tokenSymbol, masterSafeAddress } = useLowFundsDetails();
 
   if (!storeState?.[selectedAgentType]?.isInitialFunded) return;
