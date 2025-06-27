@@ -9,6 +9,7 @@ import { BridgeRequest } from '@/types/Bridge';
 import { typedKeys } from '@/types/Util';
 import { getTokenDetailsFromAddress } from '@/utils/middlewareHelpers';
 
+import { DefaultTokenAmount } from './types';
 import { useGetBridgeRequirementsParams } from './useGetBridgeRequirementsParams';
 
 export type GeneratedInput = {
@@ -24,7 +25,10 @@ export type GeneratedInput = {
  * Example: If the chain is Gnosis, user can add OLAS and XDAI.
  * This function will return an array of objects with tokenAddress, symbol, and amount set to 0.
  */
-export const useGenerateAddFunds = (requirements: AddressBalanceRecord) => {
+export const useGenerateAddFunds = (
+  requirements: AddressBalanceRecord,
+  defaultTokenAmounts?: DefaultTokenAmount[],
+) => {
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
@@ -48,8 +52,12 @@ export const useGenerateAddFunds = (requirements: AddressBalanceRecord) => {
         tokenAddress,
       ).symbol;
 
-      // amount is set to 0 and can be updated as per user input.
-      return { tokenAddress, symbol, amount: 0 };
+      // if no default token amounts are provided, set amount to 0.
+      // user can update the amount later.
+      const defaultAmount =
+        defaultTokenAmounts?.find((token) => token.symbol === symbol)?.amount ??
+        0;
+      return { tokenAddress, symbol, amount: defaultAmount };
     },
   );
 

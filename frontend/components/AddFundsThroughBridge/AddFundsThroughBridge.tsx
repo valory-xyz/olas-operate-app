@@ -14,6 +14,7 @@ import { toMiddlewareChainFromTokenSymbol } from '@/utils/middlewareHelpers';
 import { Bridge } from '../Bridge/Bridge';
 import { NumberInput } from '../NumberInput';
 import { CardFlex } from '../styled/CardFlex';
+import { DefaultTokenAmount } from './types';
 import { useGenerateAddFunds } from './useGenerateAddFunds';
 
 const { Title, Text } = Typography;
@@ -53,17 +54,22 @@ const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
 };
 
 type AddFundsInputProps = {
+  defaultTokenAmounts?: DefaultTokenAmount[];
   requirements: AddressBalanceRecord;
   onBridgeFunds: (bridgeRequirements: BridgeRequest[]) => void;
 };
 
-const AddFundsInput = ({ requirements, onBridgeFunds }: AddFundsInputProps) => {
+const AddFundsInput = ({
+  defaultTokenAmounts,
+  requirements,
+  onBridgeFunds,
+}: AddFundsInputProps) => {
   const {
     onInputChange,
     inputsToDisplay,
     isInputEmpty,
     bridgeRequirementsParams,
-  } = useGenerateAddFunds(requirements);
+  } = useGenerateAddFunds(requirements, defaultTokenAmounts);
 
   // covert user input to bridge requirements for bridging.
   const handleBridgeFunds = useCallback(
@@ -102,11 +108,17 @@ const AddFundsInput = ({ requirements, onBridgeFunds }: AddFundsInputProps) => {
   );
 };
 
+type AddFundsThroughBridgeProps = {
+  defaultTokenAmounts?: DefaultTokenAmount[];
+};
+
 /**
  * Add funds to the master safe through a bridge
  * by specifying the amount to receive.
  */
-export const AddFundsThroughBridge = () => {
+export const AddFundsThroughBridge = ({
+  defaultTokenAmounts,
+}: AddFundsThroughBridgeProps) => {
   const { isBalancesAndFundingRequirementsLoading, totalRequirements } =
     useBalanceAndRefillRequirementsContext();
 
@@ -157,6 +169,7 @@ export const AddFundsThroughBridge = () => {
             <Loader />
           ) : (
             <AddFundsInput
+              defaultTokenAmounts={defaultTokenAmounts}
               requirements={totalRequirements as AddressBalanceRecord}
               onBridgeFunds={handleBridgeFunds}
             />
