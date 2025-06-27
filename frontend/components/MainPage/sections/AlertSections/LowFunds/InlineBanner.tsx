@@ -44,7 +44,6 @@ export const InlineBanner = ({ text, address, extra }: InlineBannerProps) => {
 
       {extra && (
         <Flex
-          className="w-full"
           justify="space-between"
           style={{
             borderTop: `1px solid ${COLOR.BORDER_GRAY}`,

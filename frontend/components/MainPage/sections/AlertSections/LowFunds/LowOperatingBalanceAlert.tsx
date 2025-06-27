@@ -8,8 +8,8 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 
-import { InlineBanner } from '../InlineBanner';
-import { useLowFundsDetails } from '../useLowFunds';
+import { InlineBanner } from './InlineBanner';
+import { useLowFundsDetails } from './useLowFunds';
 
 const { Text, Title } = Typography;
 

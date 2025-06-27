@@ -12,7 +12,7 @@ import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { EmptyFunds } from './EmptyFunds';
-import { LowOperatingBalanceAlert } from './LowOperatingBalance/LowOperatingBalanceAlert';
+import { LowOperatingBalanceAlert } from './LowOperatingBalanceAlert';
 import { LowSafeSignerBalanceAlert } from './LowSafeSignerBalanceAlert';
 import { MainNeedsFunds } from './MainNeedsFunds';
 

@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from 'react';
 
 import { AddFundsThroughBridge } from '@/components/AddFundsThroughBridge/AddFundsThroughBridge';
+import { LowOperatingBalanceBridgeFunds } from '@/components/AddFundsThroughBridge/LowOperatingBalanceBridgeFunds';
 import { AgentActivityPage } from '@/components/AgentActivity';
 import { AgentSelection } from '@/components/AgentSelection';
 import { Main } from '@/components/MainPage';
-import { LowOperatingBalanceBridgeFunds } from '@/components/MainPage/sections/AlertSections/LowFunds/LowOperatingBalance/LowOperatingBalanceBridgeFunds';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { AddBackupWalletViaSafePage } from '@/components/Pages/AddBackupWalletViaSafePage';
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
