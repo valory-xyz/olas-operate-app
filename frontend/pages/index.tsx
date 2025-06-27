@@ -4,6 +4,7 @@ import { AddFundsThroughBridge } from '@/components/AddFundsThroughBridge/AddFun
 import { AgentActivityPage } from '@/components/AgentActivity';
 import { AgentSelection } from '@/components/AgentSelection';
 import { Main } from '@/components/MainPage';
+import { LowOperatingBalanceBridgeFunds } from '@/components/MainPage/sections/AlertSections/LowFunds/LowOperatingBalance/LowOperatingBalanceBridgeFunds';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { AddBackupWalletViaSafePage } from '@/components/Pages/AddBackupWalletViaSafePage';
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
@@ -72,6 +73,8 @@ export default function Home() {
       // bridge pages
       case Pages.AddFundsThroughBridge:
         return <AddFundsThroughBridge />;
+      case Pages.LowOperatingBalanceBridgeFunds:
+        return <LowOperatingBalanceBridgeFunds />;
 
       default:
         return <Main />;

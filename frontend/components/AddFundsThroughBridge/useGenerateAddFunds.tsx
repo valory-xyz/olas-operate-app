@@ -17,6 +17,7 @@ export type GeneratedInput = {
   amount: number;
 };
 
+// prefilledAmounts?: Record<Address, number>,
 /**
  * Generate inputs to add funds for bridging.
  *

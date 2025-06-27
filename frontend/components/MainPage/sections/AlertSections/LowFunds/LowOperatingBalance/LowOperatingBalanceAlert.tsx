@@ -1,12 +1,15 @@
-import { Flex, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
+import { Pages } from '@/enums/Pages';
 import { useMasterBalances } from '@/hooks/useBalanceContext';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
+import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 
-import { InlineBanner } from './InlineBanner';
-import { useLowFundsDetails } from './useLowFunds';
+import { InlineBanner } from '../InlineBanner';
+import { useLowFundsDetails } from '../useLowFunds';
 
 const { Text, Title } = Typography;
 
@@ -14,11 +17,12 @@ const { Text, Title } = Typography;
  * Alert for low operating (safe) balance
  */
 export const LowOperatingBalanceAlert = () => {
+  const { goto } = usePageState();
   const { storeState } = useStore();
   const { selectedAgentType } = useServices();
   const { isMasterSafeLowOnNativeGas, masterSafeNativeGasRequirement } =
     useMasterBalances();
-
+  const isBridgeAddFundsEnabled = useFeatureFlag('bridge-add-funds');
   const { chainName, tokenSymbol, masterSafeAddress } = useLowFundsDetails();
 
   if (!storeState?.[selectedAgentType]?.isInitialFunded) return;
@@ -50,6 +54,19 @@ export const LowOperatingBalanceAlert = () => {
             <InlineBanner
               text="Your safe address"
               address={masterSafeAddress}
+              extra={
+                isBridgeAddFundsEnabled && (
+                  <>
+                    <Text>{`Don’t have assets on ${chainName}?`}</Text>
+                    <Button
+                      size="small"
+                      onClick={() => goto(Pages.LowOperatingBalanceBridgeFunds)}
+                    >
+                      Bridge funds
+                    </Button>
+                  </>
+                )
+              }
             />
           )}
         </Flex>
