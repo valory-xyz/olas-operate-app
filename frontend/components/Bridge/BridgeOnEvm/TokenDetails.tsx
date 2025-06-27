@@ -5,8 +5,8 @@ import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
-import { InfoTooltip } from '../InfoTooltip';
-import { SUCCESS_ICON_STYLE, WARNING_ICON_STYLE } from '../ui/iconStyles';
+import { InfoTooltip } from '../../InfoTooltip';
+import { SUCCESS_ICON_STYLE, WARNING_ICON_STYLE } from '../../ui/iconStyles';
 
 const { Text } = Typography;
 
