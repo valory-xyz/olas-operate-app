@@ -47,3 +47,16 @@ export const ensureRequired = <T>(
   assertRequired(value, why);
   return value;
 };
+
+/**
+ * Get the typed keys of an object.
+ *
+ * example: { '0xabcd': 1, '0x1234': 2 } will return ['0xabcd', '0x1234']
+ */
+export const typedKeys = <T extends object>(obj: T): (keyof T)[] => {
+  if (typeof obj !== 'object' || obj === null) {
+    throw new TypeError('Expected an object');
+  }
+
+  return Object.keys(obj) as (keyof T)[];
+};

@@ -1,11 +1,12 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Button, Flex, Typography } from 'antd';
-import { isNil } from 'lodash';
+import { Button, Flex, Spin, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
 
+import { AddressBalanceRecord } from '@/client';
 import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
+import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { usePageState } from '@/hooks/usePageState';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { toMiddlewareChainFromTokenSymbol } from '@/utils/middlewareHelpers';
@@ -13,13 +14,15 @@ import { toMiddlewareChainFromTokenSymbol } from '@/utils/middlewareHelpers';
 import { Bridge } from '../Bridge/Bridge';
 import { NumberInput } from '../NumberInput';
 import { CardFlex } from '../styled/CardFlex';
-import {
-  GeneratedInput,
-  useGenerateInputsToAddFundsToMasterSafe,
-} from './useGenerateInputsToAddFundsToMasterSafe';
-import { useGetBridgeRequirementsParams } from './useGetBridgeRequirementsParams';
+import { useGenerateInitialAddFunds } from './useGenerateInitialAddFunds';
 
 const { Title, Text } = Typography;
+
+const Loader = () => (
+  <Flex justify="center" align="center" style={{ height: 240 }}>
+    <Spin />
+  </Flex>
+);
 
 const BridgeHeader = () => {
   const { goto } = usePageState();
@@ -50,49 +53,23 @@ const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
 };
 
 type AddFundsInputProps = {
+  requirements: AddressBalanceRecord;
   onBridgeFunds: (bridgeRequirements: BridgeRequest[]) => void;
 };
 
-const AddFundsInput = ({ onBridgeFunds }: AddFundsInputProps) => {
-  const amountsToReceive = useGenerateInputsToAddFundsToMasterSafe();
-  const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
-
-  const [inputs, setInputs] = useState(
-    amountsToReceive.reduce(
-      (acc, { symbol, amount }) => ({ ...acc, [symbol]: amount }),
-      {} as Record<TokenSymbol, number | null>,
-    ),
-  );
-
-  const handleInputChange = useCallback(
-    (symbol: TokenSymbol, value: number | null) => {
-      setInputs((prev) => ({ ...prev, [symbol]: value }));
-    },
-    [],
-  );
+const AddFundsInput = ({ requirements, onBridgeFunds }: AddFundsInputProps) => {
+  const {
+    onInputChange,
+    inputsToDisplay,
+    isInputEmpty,
+    bridgeRequirementsParams,
+  } = useGenerateInitialAddFunds(requirements);
 
   // covert user input to bridge requirements for bridging.
-  const handleBridgeFunds = useCallback(() => {
-    const amountsToBridge = amountsToReceive
-      .map((tokenDetails) => {
-        const amount = inputs[tokenDetails.symbol];
-        if (!amount) return null;
-        return { ...tokenDetails, amount };
-      })
-      .filter((item): item is GeneratedInput => !!item);
-
-    const bridgeRequirementsParams: BridgeRequest[] = amountsToBridge.map(
-      ({ tokenAddress, amount }) =>
-        getBridgeRequirementsParams(tokenAddress, amount),
-    );
-
-    return onBridgeFunds(bridgeRequirementsParams);
-  }, [inputs, amountsToReceive, getBridgeRequirementsParams, onBridgeFunds]);
-
-  // If all inputs are empty or zero, disable the button
-  const isButtonDisabled = useMemo(() => {
-    return Object.values(inputs).every((value) => isNil(value) || value <= 0);
-  }, [inputs]);
+  const handleBridgeFunds = useCallback(
+    () => onBridgeFunds(bridgeRequirementsParams),
+    [onBridgeFunds, bridgeRequirementsParams],
+  );
 
   return (
     <Flex gap={8} vertical>
@@ -100,24 +77,20 @@ const AddFundsInput = ({ onBridgeFunds }: AddFundsInputProps) => {
         Amount to receive
       </Text>
       <Flex gap={16} vertical>
-        {amountsToReceive.map(({ symbol }) => {
-          return (
-            <NumberInput
-              key={symbol}
-              value={inputs[symbol]}
-              addonBefore={<InputAddOn symbol={symbol} />}
-              placeholder="0.00"
-              size="large"
-              min={0}
-              onChange={(value: number | null) =>
-                handleInputChange(symbol, value)
-              }
-            />
-          );
-        })}
+        {inputsToDisplay.map(({ symbol, amount }) => (
+          <NumberInput
+            key={symbol}
+            value={amount}
+            addonBefore={<InputAddOn symbol={symbol} />}
+            placeholder="0.00"
+            size="large"
+            min={0}
+            onChange={(value: number | null) => onInputChange(symbol, value)}
+          />
+        ))}
 
         <Button
-          disabled={isButtonDisabled}
+          disabled={isInputEmpty}
           onClick={handleBridgeFunds}
           type="primary"
           size="large"
@@ -134,6 +107,9 @@ const AddFundsInput = ({ onBridgeFunds }: AddFundsInputProps) => {
  * by specifying the amount to receive.
  */
 export const AddFundsThroughBridge = () => {
+  const { isBalancesAndFundingRequirementsLoading, totalRequirements } =
+    useBalanceAndRefillRequirementsContext();
+
   const [bridgeState, setBridgeState] = useState<
     BridgeRefillRequirementsRequest | undefined
   >();
@@ -177,7 +153,14 @@ export const AddFundsThroughBridge = () => {
             Pearl Safe.
           </Text>
 
-          <AddFundsInput onBridgeFunds={handleBridgeFunds} />
+          {isBalancesAndFundingRequirementsLoading ? (
+            <Loader />
+          ) : (
+            <AddFundsInput
+              requirements={totalRequirements as AddressBalanceRecord}
+              onBridgeFunds={handleBridgeFunds}
+            />
+          )}
         </CardFlex>
       );
     case 'bridging':
