@@ -23,9 +23,7 @@ export type GeneratedInput = {
  * Example: If the chain is Gnosis, user can add OLAS and XDAI.
  * This function will return an array of objects with tokenAddress, symbol, and amount set to 0.
  */
-export const useGenerateInitialAddFunds = (
-  requirements: AddressBalanceRecord,
-) => {
+export const useGenerateAddFunds = (requirements: AddressBalanceRecord) => {
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
@@ -84,9 +82,10 @@ export const useGenerateInitialAddFunds = (
   }, [amountsToReceive, inputs, getBridgeRequirementsParams]);
 
   // If all inputs are empty or zero, disable the button
-  const isInputEmpty = useMemo(() => {
-    return Object.values(inputs).every((v) => !v || v <= 0);
-  }, [inputs]);
+  const isInputEmpty = useMemo(
+    () => Object.values(inputs).every((v) => !v || v <= 0),
+    [inputs],
+  );
 
   const inputsToDisplay = useMemo(
     () =>

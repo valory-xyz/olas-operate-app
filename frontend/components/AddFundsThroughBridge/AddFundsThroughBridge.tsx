@@ -14,7 +14,7 @@ import { toMiddlewareChainFromTokenSymbol } from '@/utils/middlewareHelpers';
 import { Bridge } from '../Bridge/Bridge';
 import { NumberInput } from '../NumberInput';
 import { CardFlex } from '../styled/CardFlex';
-import { useGenerateInitialAddFunds } from './useGenerateInitialAddFunds';
+import { useGenerateAddFunds } from './useGenerateAddFunds';
 
 const { Title, Text } = Typography;
 
@@ -63,7 +63,7 @@ const AddFundsInput = ({ requirements, onBridgeFunds }: AddFundsInputProps) => {
     inputsToDisplay,
     isInputEmpty,
     bridgeRequirementsParams,
-  } = useGenerateInitialAddFunds(requirements);
+  } = useGenerateAddFunds(requirements);
 
   // covert user input to bridge requirements for bridging.
   const handleBridgeFunds = useCallback(
