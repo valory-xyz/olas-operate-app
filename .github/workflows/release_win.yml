@@ -14,7 +14,7 @@ jobs:
           - env: "production"
             OPTIMISM_RPC: "https://rpc-gate.autonolas.tech/optimism-rpc/"
             BASE_RPC: "https://rpc-gate.autonolas.tech/base-rpc/"
-            GNOSIS_RPC: "https://rpc-gate.autonolas.tech/gnosis-rpc/"
+            GNOSIS_RPC: "https://gnosis-node.staging.autonolas.tech/"
             ETHEREUM_RPC: "https://rpc-gate.autonolas.tech/ethereum-rpc/"
             MODE_RPC: "https://mainnet.mode.network"
             CELO_RPC: "https://forno.celo.org"
