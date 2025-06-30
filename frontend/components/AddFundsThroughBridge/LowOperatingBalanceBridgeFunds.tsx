@@ -17,6 +17,7 @@ export const LowOperatingBalanceBridgeFunds = () => {
       defaultTokenAmounts={[
         { symbol, amount: masterSafeNativeGasRequirement ?? 0 },
       ]}
+      completionMessage="Funds have been bridged to your Pearl Safe."
     />
   );
 };

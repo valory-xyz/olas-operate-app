@@ -110,6 +110,7 @@ const AddFundsInput = ({
 
 type AddFundsThroughBridgeProps = {
   defaultTokenAmounts?: DefaultTokenAmount[];
+  completionMessage: string;
 };
 
 /**
@@ -118,6 +119,7 @@ type AddFundsThroughBridgeProps = {
  */
 export const AddFundsThroughBridge = ({
   defaultTokenAmounts,
+  completionMessage,
 }: AddFundsThroughBridgeProps) => {
   const { isBalancesAndFundingRequirementsLoading, totalRequirements } =
     useBalanceAndRefillRequirementsContext();
@@ -128,6 +130,10 @@ export const AddFundsThroughBridge = ({
   const [addFundsState, setAddFundsState] = useState<'funding' | 'bridging'>(
     'funding',
   );
+
+  const showCompleteScreen = useMemo(() => {
+    return { completionMessage };
+  }, [completionMessage]);
 
   const handleBridgeFunds = useCallback(
     (bridgeRequirements: BridgeRequest[]) => {
@@ -180,9 +186,7 @@ export const AddFundsThroughBridge = ({
       return (
         <Bridge
           bridgeFromDescription="Bridging amount includes fees."
-          showCompleteScreen={{
-            completionMessage: 'Funds have been bridged to your Pearl Safe.',
-          }}
+          showCompleteScreen={showCompleteScreen}
           getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
           onPrevBeforeBridging={handlePrevStep}
         />

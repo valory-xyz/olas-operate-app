@@ -7,16 +7,15 @@ import { useServices } from '@/hooks/useServices';
  * Add funds through bridge for low operating balance.
  */
 export const LowSafeSignerBalanceBridgeFunds = () => {
-  const { masterSafeNativeGasRequirement } = useMasterBalances();
+  const { masterEoaGasRequirement } = useMasterBalances();
   const { selectedAgentConfig } = useServices();
   const homeChainId = selectedAgentConfig.evmHomeChainId;
   const symbol = CHAIN_CONFIG[homeChainId].nativeToken.symbol;
 
   return (
     <AddFundsThroughBridge
-      defaultTokenAmounts={[
-        { symbol, amount: masterSafeNativeGasRequirement ?? 0 },
-      ]}
+      defaultTokenAmounts={[{ symbol, amount: masterEoaGasRequirement ?? 0 }]}
+      completionMessage="Funds have been bridged to your Pearl Safe Signer."
     />
   );
 };
