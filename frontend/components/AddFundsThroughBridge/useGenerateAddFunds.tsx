@@ -11,7 +11,7 @@ import { typedKeys } from '@/types/Util';
 import { getTokenDetailsFromAddress } from '@/utils/middlewareHelpers';
 
 import { DefaultTokenAmount } from './types';
-import { useGetBridgeRequirementsParams } from './useGetBridgeRequirementsParams';
+import { useAddFundsGetBridgeRequirementsParams } from './useAddFundsGetBridgeRequirementsParams';
 
 export type GeneratedInput = {
   tokenAddress: Address;
@@ -28,29 +28,32 @@ export type GeneratedInput = {
 export const useGenerateAddFunds = ({
   requirements,
   defaultTokenAmounts,
+  destinationAddress,
   onlyNativeToken = false,
 }: {
   requirements: AddressBalanceRecord;
   defaultTokenAmounts?: DefaultTokenAmount[];
+  destinationAddress?: Address;
   onlyNativeToken?: boolean;
 }) => {
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
-  const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
+  const getBridgeRequirementsParams =
+    useAddFundsGetBridgeRequirementsParams(destinationAddress);
 
-  // master_safe and master_eoa addresses in general.
+  // In general, master_safe and master_eoa addresses are used.
   const allAddresses = typedKeys(requirements);
 
   // all token addresses that can be used to add funds to the master safe.
   const tokenAddresses = allAddresses.reduce<Address[]>((acc, address) => {
     const tokens = requirements[address];
-    if (tokens) {
-      // If onlyNativeToken is true, filter to include only the native token.
-      const typedKeysTokens = typedKeys(tokens).filter((token) =>
-        onlyNativeToken ? token === AddressZero : true,
-      );
-      acc.push(...typedKeysTokens);
-    }
+    if (!tokens) return acc;
+
+    // If onlyNativeToken is true, filter to include only the native token.
+    const typedKeysTokens = typedKeys(tokens).filter((token) =>
+      onlyNativeToken ? token === AddressZero : true,
+    );
+    acc.push(...typedKeysTokens);
     return acc;
   }, []);
 

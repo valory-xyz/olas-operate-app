@@ -8,6 +8,7 @@ import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { usePageState } from '@/hooks/usePageState';
+import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { toMiddlewareChainFromTokenSymbol } from '@/utils/middlewareHelpers';
 
@@ -56,6 +57,8 @@ const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
 type AddFundsInputProps = {
   /** Default token amounts to display in the input fields */
   defaultTokenAmounts?: DefaultTokenAmount[];
+  /** Destination address to bridge funds to */
+  destinationAddress?: Address;
   /** To bridge only the native token */
   onlyNativeToken?: boolean;
   requirements: AddressBalanceRecord;
@@ -66,6 +69,7 @@ const AddFundsInput = ({
   defaultTokenAmounts,
   requirements,
   onlyNativeToken,
+  destinationAddress,
   onBridgeFunds,
 }: AddFundsInputProps) => {
   const {
@@ -76,6 +80,7 @@ const AddFundsInput = ({
   } = useGenerateAddFunds({
     requirements,
     defaultTokenAmounts,
+    destinationAddress,
     onlyNativeToken,
   });
 
@@ -118,7 +123,7 @@ const AddFundsInput = ({
 
 type AddFundsThroughBridgeProps = Pick<
   AddFundsInputProps,
-  'defaultTokenAmounts' | 'onlyNativeToken'
+  'defaultTokenAmounts' | 'onlyNativeToken' | 'destinationAddress'
 > & {
   completionMessage?: string;
 };
@@ -129,6 +134,7 @@ type AddFundsThroughBridgeProps = Pick<
  */
 export const AddFundsThroughBridge = ({
   defaultTokenAmounts,
+  destinationAddress,
   onlyNativeToken = false,
   completionMessage,
 }: AddFundsThroughBridgeProps) => {
@@ -189,6 +195,7 @@ export const AddFundsThroughBridge = ({
             <AddFundsInput
               defaultTokenAmounts={defaultTokenAmounts}
               onlyNativeToken={onlyNativeToken}
+              destinationAddress={destinationAddress}
               requirements={totalRequirements as AddressBalanceRecord}
               onBridgeFunds={handleBridgeFunds}
             />
