@@ -54,7 +54,10 @@ const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
 };
 
 type AddFundsInputProps = {
+  /** Default token amounts to display in the input fields */
   defaultTokenAmounts?: DefaultTokenAmount[];
+  /** To bridge only the native token */
+  onlyNativeToken?: boolean;
   requirements: AddressBalanceRecord;
   onBridgeFunds: (bridgeRequirements: BridgeRequest[]) => void;
 };
@@ -62,6 +65,7 @@ type AddFundsInputProps = {
 const AddFundsInput = ({
   defaultTokenAmounts,
   requirements,
+  onlyNativeToken,
   onBridgeFunds,
 }: AddFundsInputProps) => {
   const {
@@ -69,7 +73,11 @@ const AddFundsInput = ({
     inputsToDisplay,
     isInputEmpty,
     bridgeRequirementsParams,
-  } = useGenerateAddFunds(requirements, defaultTokenAmounts);
+  } = useGenerateAddFunds({
+    requirements,
+    defaultTokenAmounts,
+    onlyNativeToken,
+  });
 
   // covert user input to bridge requirements for bridging.
   const handleBridgeFunds = useCallback(
@@ -108,9 +116,11 @@ const AddFundsInput = ({
   );
 };
 
-type AddFundsThroughBridgeProps = {
-  defaultTokenAmounts?: DefaultTokenAmount[];
-  completionMessage: string;
+type AddFundsThroughBridgeProps = Pick<
+  AddFundsInputProps,
+  'defaultTokenAmounts' | 'onlyNativeToken'
+> & {
+  completionMessage?: string;
 };
 
 /**
@@ -119,6 +129,7 @@ type AddFundsThroughBridgeProps = {
  */
 export const AddFundsThroughBridge = ({
   defaultTokenAmounts,
+  onlyNativeToken = false,
   completionMessage,
 }: AddFundsThroughBridgeProps) => {
   const { isBalancesAndFundingRequirementsLoading, totalRequirements } =
@@ -132,6 +143,7 @@ export const AddFundsThroughBridge = ({
   );
 
   const showCompleteScreen = useMemo(() => {
+    if (!completionMessage) return;
     return { completionMessage };
   }, [completionMessage]);
 
@@ -176,6 +188,7 @@ export const AddFundsThroughBridge = ({
           ) : (
             <AddFundsInput
               defaultTokenAmounts={defaultTokenAmounts}
+              onlyNativeToken={onlyNativeToken}
               requirements={totalRequirements as AddressBalanceRecord}
               onBridgeFunds={handleBridgeFunds}
             />

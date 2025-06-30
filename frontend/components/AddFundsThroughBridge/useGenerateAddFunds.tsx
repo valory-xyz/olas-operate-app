@@ -2,6 +2,7 @@ import { uniq } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
 import { AddressBalanceRecord } from '@/client';
+import { AddressZero } from '@/constants/address';
 import { TokenSymbol } from '@/enums/Token';
 import { useServices } from '@/hooks/useServices';
 import { Address } from '@/types/Address';
@@ -24,10 +25,15 @@ export type GeneratedInput = {
  * Example: If the chain is Gnosis, user can add OLAS and XDAI.
  * This function will return an array of objects with tokenAddress, symbol, and amount set to 0.
  */
-export const useGenerateAddFunds = (
-  requirements: AddressBalanceRecord,
-  defaultTokenAmounts?: DefaultTokenAmount[],
-) => {
+export const useGenerateAddFunds = ({
+  requirements,
+  defaultTokenAmounts,
+  onlyNativeToken = false,
+}: {
+  requirements: AddressBalanceRecord;
+  defaultTokenAmounts?: DefaultTokenAmount[];
+  onlyNativeToken?: boolean;
+}) => {
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
@@ -39,26 +45,32 @@ export const useGenerateAddFunds = (
   const tokenAddresses = allAddresses.reduce<Address[]>((acc, address) => {
     const tokens = requirements[address];
     if (tokens) {
-      acc.push(...typedKeys(tokens));
+      // If onlyNativeToken is true, filter to include only the native token.
+      const typedKeysTokens = typedKeys(tokens).filter((token) =>
+        onlyNativeToken ? token === AddressZero : true,
+      );
+      acc.push(...typedKeysTokens);
     }
     return acc;
   }, []);
 
-  const amountsToReceive: GeneratedInput[] = uniq(tokenAddresses).map(
-    (tokenAddress: Address) => {
-      const symbol = getTokenDetailsFromAddress(
-        toMiddlewareChain,
-        tokenAddress,
-      ).symbol;
+  const amountsToReceive: GeneratedInput[] = uniq(tokenAddresses).reduce<
+    GeneratedInput[]
+  >((acc, tokenAddress: Address) => {
+    const symbol = getTokenDetailsFromAddress(
+      toMiddlewareChain,
+      tokenAddress,
+    )?.symbol;
 
-      // if no default token amounts are provided, set amount to 0.
-      // user can update the amount later.
-      const defaultAmount =
-        defaultTokenAmounts?.find((token) => token.symbol === symbol)?.amount ??
-        0;
-      return { tokenAddress, symbol, amount: defaultAmount };
-    },
-  );
+    // if no default token amounts are provided, set amount to 0.
+    // user can update the amount later.
+    const defaultAmount =
+      defaultTokenAmounts?.find((token) => token.symbol === symbol)?.amount ??
+      0;
+
+    acc.push({ tokenAddress, symbol, amount: defaultAmount });
+    return acc;
+  }, []);
 
   const [inputs, setInputs] = useState(
     amountsToReceive.reduce(

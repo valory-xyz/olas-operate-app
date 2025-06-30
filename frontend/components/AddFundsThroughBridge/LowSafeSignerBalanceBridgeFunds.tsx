@@ -15,6 +15,7 @@ export const LowSafeSignerBalanceBridgeFunds = () => {
   return (
     <AddFundsThroughBridge
       defaultTokenAmounts={[{ symbol, amount: masterEoaGasRequirement ?? 0 }]}
+      onlyNativeToken={true}
       completionMessage="Funds have been bridged to your Pearl Safe Signer."
     />
   );

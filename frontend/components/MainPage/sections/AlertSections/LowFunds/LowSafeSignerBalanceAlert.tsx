@@ -47,7 +47,7 @@ export const LowSafeSignerBalanceAlert = ({
               address={masterEoaAddress}
               bridgeFunds={{
                 chainName,
-                goto: () => goto(Pages.LowOperatingBalanceBridgeFunds),
+                goto: () => goto(Pages.LowSafeSignerBalanceBridgeFunds),
               }}
             />
           )}
