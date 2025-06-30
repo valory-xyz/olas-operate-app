@@ -104,11 +104,15 @@ export const DepositForBridging = ({
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
 
+  // State to control the force update of the bridge refill requirements API call
+  // This is used when the user clicks on "Try again" button
+  // to fetch the bridge refill requirements again.
+  // NOTE: It is reset to false after the API call is made.
+  const [isForceUpdate, setIsForceUpdate] = useState(false);
   const [
     isBridgeRefillRequirementsApiLoading,
     setIsBridgeRefillRequirementsApiLoading,
   ] = useState(true);
-  const [isForceUpdate, setIsForceUpdate] = useState(false);
   const [
     canPollForBridgeRefillRequirements,
     setCanPollForBridgeRefillRequirements,
