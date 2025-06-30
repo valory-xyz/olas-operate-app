@@ -8,6 +8,7 @@ import { Pages } from '@/enums/Pages';
 import { TokenSymbol } from '@/enums/Token';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { usePageState } from '@/hooks/usePageState';
+import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { toMiddlewareChainFromTokenSymbol } from '@/utils/middlewareHelpers';
 
@@ -54,7 +55,12 @@ const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
 };
 
 type AddFundsInputProps = {
+  /** Default token amounts to display in the input fields */
   defaultTokenAmounts?: DefaultTokenAmount[];
+  /** Destination address to bridge funds to */
+  destinationAddress?: Address;
+  /** To bridge only the native token */
+  onlyNativeToken?: boolean;
   requirements: AddressBalanceRecord;
   onBridgeFunds: (bridgeRequirements: BridgeRequest[]) => void;
 };
@@ -62,6 +68,8 @@ type AddFundsInputProps = {
 const AddFundsInput = ({
   defaultTokenAmounts,
   requirements,
+  onlyNativeToken,
+  destinationAddress,
   onBridgeFunds,
 }: AddFundsInputProps) => {
   const {
@@ -69,7 +77,12 @@ const AddFundsInput = ({
     inputsToDisplay,
     isInputEmpty,
     bridgeRequirementsParams,
-  } = useGenerateAddFunds(requirements, defaultTokenAmounts);
+  } = useGenerateAddFunds({
+    requirements,
+    defaultTokenAmounts,
+    destinationAddress,
+    onlyNativeToken,
+  });
 
   // covert user input to bridge requirements for bridging.
   const handleBridgeFunds = useCallback(
@@ -108,8 +121,11 @@ const AddFundsInput = ({
   );
 };
 
-type AddFundsThroughBridgeProps = {
-  defaultTokenAmounts?: DefaultTokenAmount[];
+type AddFundsThroughBridgeProps = Pick<
+  AddFundsInputProps,
+  'defaultTokenAmounts' | 'onlyNativeToken' | 'destinationAddress'
+> & {
+  completionMessage?: string;
 };
 
 /**
@@ -118,6 +134,9 @@ type AddFundsThroughBridgeProps = {
  */
 export const AddFundsThroughBridge = ({
   defaultTokenAmounts,
+  destinationAddress,
+  onlyNativeToken = false,
+  completionMessage,
 }: AddFundsThroughBridgeProps) => {
   const { isBalancesAndFundingRequirementsLoading, totalRequirements } =
     useBalanceAndRefillRequirementsContext();
@@ -128,6 +147,11 @@ export const AddFundsThroughBridge = ({
   const [addFundsState, setAddFundsState] = useState<'funding' | 'bridging'>(
     'funding',
   );
+
+  const showCompleteScreen = useMemo(() => {
+    if (!completionMessage) return;
+    return { completionMessage };
+  }, [completionMessage]);
 
   const handleBridgeFunds = useCallback(
     (bridgeRequirements: BridgeRequest[]) => {
@@ -170,6 +194,8 @@ export const AddFundsThroughBridge = ({
           ) : (
             <AddFundsInput
               defaultTokenAmounts={defaultTokenAmounts}
+              onlyNativeToken={onlyNativeToken}
+              destinationAddress={destinationAddress}
               requirements={totalRequirements as AddressBalanceRecord}
               onBridgeFunds={handleBridgeFunds}
             />
@@ -180,9 +206,7 @@ export const AddFundsThroughBridge = ({
       return (
         <Bridge
           bridgeFromDescription="Bridging amount includes fees."
-          showCompleteScreen={{
-            completionMessage: 'Funds have been bridged to your Pearl Safe.',
-          }}
+          showCompleteScreen={showCompleteScreen}
           getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
           onPrevBeforeBridging={handlePrevStep}
         />

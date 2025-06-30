@@ -14,9 +14,11 @@ import { getFromToken } from '../Bridge/utils';
 const fromChainConfig = ETHEREUM_TOKEN_CONFIG;
 
 /**
- * Get bridge requirements parameters from the input provided by the user
+ * Get bridge requirements parameters from the input provided by the user.
  */
-export const useGetBridgeRequirementsParams = () => {
+export const useAddFundsGetBridgeRequirementsParams = (
+  destinationAddress?: Address,
+) => {
   const { masterEoa, masterSafes } = useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
@@ -44,12 +46,18 @@ export const useGetBridgeRequirementsParams = () => {
         },
         to: {
           chain: toMiddlewareChain,
-          address: masterSafe.address,
+          address: destinationAddress ?? masterSafe.address,
           token: tokenAddress,
           amount: parseUnits(amount),
         },
       };
     },
-    [toMiddlewareChain, toChainConfig, masterEoa, masterSafe],
+    [
+      toMiddlewareChain,
+      toChainConfig,
+      masterEoa,
+      masterSafe,
+      destinationAddress,
+    ],
   );
 };

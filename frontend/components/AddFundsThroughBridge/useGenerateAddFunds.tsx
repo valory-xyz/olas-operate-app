@@ -2,6 +2,7 @@ import { uniq } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
 import { AddressBalanceRecord } from '@/client';
+import { AddressZero } from '@/constants/address';
 import { TokenSymbol } from '@/enums/Token';
 import { useServices } from '@/hooks/useServices';
 import { Address } from '@/types/Address';
@@ -10,7 +11,7 @@ import { typedKeys } from '@/types/Util';
 import { getTokenDetailsFromAddress } from '@/utils/middlewareHelpers';
 
 import { DefaultTokenAmount } from './types';
-import { useGetBridgeRequirementsParams } from './useGetBridgeRequirementsParams';
+import { useAddFundsGetBridgeRequirementsParams } from './useAddFundsGetBridgeRequirementsParams';
 
 export type GeneratedInput = {
   tokenAddress: Address;
@@ -24,23 +25,35 @@ export type GeneratedInput = {
  * Example: If the chain is Gnosis, user can add OLAS and XDAI.
  * This function will return an array of objects with tokenAddress, symbol, and amount set to 0.
  */
-export const useGenerateAddFunds = (
-  requirements: AddressBalanceRecord,
-  defaultTokenAmounts?: DefaultTokenAmount[],
-) => {
+export const useGenerateAddFunds = ({
+  requirements,
+  defaultTokenAmounts,
+  destinationAddress,
+  onlyNativeToken = false,
+}: {
+  requirements: AddressBalanceRecord;
+  defaultTokenAmounts?: DefaultTokenAmount[];
+  destinationAddress?: Address;
+  onlyNativeToken?: boolean;
+}) => {
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
-  const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
+  const getBridgeRequirementsParams =
+    useAddFundsGetBridgeRequirementsParams(destinationAddress);
 
-  // master_safe and master_eoa addresses in general.
+  // In general, master_safe and master_eoa addresses are used.
   const allAddresses = typedKeys(requirements);
 
-  // all token addresses that can be used to add funds to the master safe.
+  // All token addresses that can be used to add funds to the master safe.
   const tokenAddresses = allAddresses.reduce<Address[]>((acc, address) => {
     const tokens = requirements[address];
-    if (tokens) {
-      acc.push(...typedKeys(tokens));
-    }
+    if (!tokens) return acc;
+
+    // If onlyNativeToken is true, filter to include only the native token.
+    const typedKeysTokens = typedKeys(tokens).filter((token) =>
+      onlyNativeToken ? token === AddressZero : true,
+    );
+    acc.push(...typedKeysTokens);
     return acc;
   }, []);
 

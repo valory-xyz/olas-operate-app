@@ -1,4 +1,4 @@
-import { Button, Flex, Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
 import { Pages } from '@/enums/Pages';
@@ -55,18 +55,13 @@ export const LowOperatingBalanceAlert = () => {
             <InlineBanner
               text="Your safe address"
               address={masterSafeAddress}
-              extra={
-                isBridgeAddFundsEnabled && (
-                  <>
-                    <Text>{`Don’t have assets on ${chainName}?`}</Text>
-                    <Button
-                      size="small"
-                      onClick={() => goto(Pages.LowOperatingBalanceBridgeFunds)}
-                    >
-                      Bridge funds
-                    </Button>
-                  </>
-                )
+              bridgeFunds={
+                isBridgeAddFundsEnabled
+                  ? {
+                      chainName,
+                      goto: () => goto(Pages.LowOperatingBalanceBridgeFunds),
+                    }
+                  : undefined
               }
             />
           )}
