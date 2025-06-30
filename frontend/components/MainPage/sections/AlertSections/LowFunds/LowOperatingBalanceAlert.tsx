@@ -58,6 +58,7 @@ export const LowOperatingBalanceAlert = () => {
               extra={
                 isBridgeAddFundsEnabled && (
                   <>
+                    {/* TODO: little refactor */}
                     <Text>{`Don’t have assets on ${chainName}?`}</Text>
                     <Button
                       size="small"
