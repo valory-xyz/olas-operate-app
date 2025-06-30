@@ -166,10 +166,13 @@ export const AddFundsThroughBridge = ({
     [setBridgeState, setAddFundsState],
   );
 
-  const handleGetBridgeRequirementsParams = useCallback(() => {
-    if (!bridgeState) throw new Error('Bridge requirements are not set.');
-    return bridgeState;
-  }, [bridgeState]);
+  const handleGetBridgeRequirementsParams = useCallback(
+    (forceUpdate?: boolean): BridgeRefillRequirementsRequest => {
+      if (!bridgeState) throw new Error('Bridge requirements are not set.');
+      return { ...bridgeState, force_update: forceUpdate ?? false };
+    },
+    [bridgeState],
+  );
 
   const handlePrevStep = useCallback(() => {
     setAddFundsState('funding');
