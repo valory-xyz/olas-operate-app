@@ -5,7 +5,7 @@ import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 
 /**
- * Add funds through bridge for low operating balance.
+ * Add funds through bridge for safe signer with low balance (master EOA).
  */
 export const LowSafeSignerBalanceBridgeFunds = () => {
   const { masterEoaGasRequirement } = useMasterBalances();

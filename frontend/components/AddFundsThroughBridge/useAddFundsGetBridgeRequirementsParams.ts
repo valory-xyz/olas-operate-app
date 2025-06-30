@@ -14,7 +14,7 @@ import { getFromToken } from '../Bridge/utils';
 const fromChainConfig = ETHEREUM_TOKEN_CONFIG;
 
 /**
- * Get bridge requirements parameters from the input provided by the user
+ * Get bridge requirements parameters from the input provided by the user.
  */
 export const useAddFundsGetBridgeRequirementsParams = (
   destinationAddress?: Address,

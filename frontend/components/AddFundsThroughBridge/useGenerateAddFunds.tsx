@@ -44,7 +44,7 @@ export const useGenerateAddFunds = ({
   // In general, master_safe and master_eoa addresses are used.
   const allAddresses = typedKeys(requirements);
 
-  // all token addresses that can be used to add funds to the master safe.
+  // All token addresses that can be used to add funds to the master safe.
   const tokenAddresses = allAddresses.reduce<Address[]>((acc, address) => {
     const tokens = requirements[address];
     if (!tokens) return acc;
@@ -57,23 +57,22 @@ export const useGenerateAddFunds = ({
     return acc;
   }, []);
 
-  const amountsToReceive: GeneratedInput[] = uniq(tokenAddresses).reduce<
-    GeneratedInput[]
-  >((acc, tokenAddress: Address) => {
-    const symbol = getTokenDetailsFromAddress(
-      toMiddlewareChain,
-      tokenAddress,
-    )?.symbol;
+  const amountsToReceive: GeneratedInput[] = uniq(tokenAddresses).map(
+    (tokenAddress: Address) => {
+      const symbol = getTokenDetailsFromAddress(
+        toMiddlewareChain,
+        tokenAddress,
+      )?.symbol;
 
-    // if no default token amounts are provided, set amount to 0.
-    // user can update the amount later.
-    const defaultAmount =
-      defaultTokenAmounts?.find((token) => token.symbol === symbol)?.amount ??
-      0;
+      // if no default token amounts are provided, set amount to 0.
+      // user can update the amount later.
+      const defaultAmount =
+        defaultTokenAmounts?.find((token) => token.symbol === symbol)?.amount ??
+        0;
 
-    acc.push({ tokenAddress, symbol, amount: defaultAmount });
-    return acc;
-  }, []);
+      return { tokenAddress, symbol, amount: defaultAmount };
+    },
+  );
 
   const [inputs, setInputs] = useState(
     amountsToReceive.reduce(
