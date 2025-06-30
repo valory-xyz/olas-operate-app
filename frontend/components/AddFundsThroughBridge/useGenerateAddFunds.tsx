@@ -62,14 +62,13 @@ export const useGenerateAddFunds = ({
       const symbol = getTokenDetailsFromAddress(
         toMiddlewareChain,
         tokenAddress,
-      )?.symbol;
+      ).symbol;
 
       // if no default token amounts are provided, set amount to 0.
       // user can update the amount later.
       const defaultAmount =
         defaultTokenAmounts?.find((token) => token.symbol === symbol)?.amount ??
         0;
-
       return { tokenAddress, symbol, amount: defaultAmount };
     },
   );
