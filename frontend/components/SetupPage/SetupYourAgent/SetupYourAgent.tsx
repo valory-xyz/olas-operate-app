@@ -10,7 +10,7 @@ import { useServices } from '@/hooks/useServices';
 import { LOCAL_FORM_THEME } from '@/theme';
 
 import { SetupCreateHeader } from '../Create/SetupCreateHeader';
-import { MemeooorrAgentSetup } from './MemeooorrAgentSetup';
+import { AgentsFunAgentSetup } from './AgentsFunAgentSetup';
 import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
 import { OptimusAgentForm } from './OptimusAgentForm/OptimusAgentForm';
 
@@ -41,8 +41,8 @@ export const SetupYourAgent = () => {
           Set up your agent
         </Title>
 
-        {selectedAgentType === AgentType.Memeooorr && (
-          <MemeooorrAgentSetup serviceTemplate={serviceTemplate} />
+        {selectedAgentType === AgentType.AgentsFun && (
+          <AgentsFunAgentSetup serviceTemplate={serviceTemplate} />
         )}
         {selectedAgentType === AgentType.Modius && (
           <ModiusAgentForm serviceTemplate={serviceTemplate} />

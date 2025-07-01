@@ -42,7 +42,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-onboarding': true,
     'bridge-add-funds': false,
   },
-  [AgentType.Memeooorr]: {
+  [AgentType.AgentsFun]: {
     'manage-wallet': true,
     'withdraw-funds': true,
     'last-transactions': true,

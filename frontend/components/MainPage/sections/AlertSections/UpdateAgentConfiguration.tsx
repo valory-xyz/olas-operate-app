@@ -9,9 +9,9 @@ const { Text } = Typography;
 
 export const UpdateAgentConfiguration = () => {
   const { goto } = usePageState();
-  const { isMemeooorrFieldUpdateRequired } = useSharedContext();
+  const { isAgentsFunFieldUpdateRequired } = useSharedContext();
 
-  if (!isMemeooorrFieldUpdateRequired) return null;
+  if (!isAgentsFunFieldUpdateRequired) return null;
 
   return (
     <CustomAlert

@@ -215,7 +215,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
  * Agents.fun Base template
  */
 const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.Memeooorr,
+  agentType: AgentType.AgentsFun,
   name: 'Memeooorr',
   home_chain: MiddlewareChain.BASE,
   configurations: {

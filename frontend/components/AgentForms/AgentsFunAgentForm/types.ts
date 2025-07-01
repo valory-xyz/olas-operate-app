@@ -1,4 +1,4 @@
-export type MemeooorrFormValues = {
+export type AgentsFunFormValues = {
   personaDescription: string;
   geminiApiKey: string;
   fireworksApiKey: string;

@@ -17,7 +17,7 @@ const schema = {
 
   // Each agent has its own settings
   trader: { type: 'object', default: defaultInitialAgentSettings },
-  memeooorr: { type: 'object', default: defaultInitialAgentSettings },
+  agentsFun: { type: 'object', default: defaultInitialAgentSettings },
   modius: {
     type: 'object',
     default: {
@@ -60,12 +60,12 @@ const setupStoreIpc = (ipcMain, mainWindow) => {
   }
 
   /**
-   * agent: memeooorr Migration
+   * agent: agentsFun Migration
    */
-  if (store.has('isInitialFunded_memeooorr')) {
-    const memeooorrAgent = store.get('memeooorr') || {};
+  if (store.has('isInitialFunded_agentsFun')) {
+    const agentsFunAgent = store.get('memeooorr') || {};
     store.set('memeooorr', {
-      ...memeooorrAgent,
+      ...agentsFunAgent,
       isInitialFunded: store.get('isInitialFunded_memeooorr') || false,
     });
     store.delete('isInitialFunded_memeooorr');

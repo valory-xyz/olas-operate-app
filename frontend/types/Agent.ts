@@ -28,7 +28,7 @@ export type AgentConfig = {
   isComingSoon?: boolean;
   /**
    * Whether the agent requires setup before it can be used.
-   * (e.g. Persona for memeooorr)
+   * (e.g. Persona for agentsFun)
    */
   requiresSetup: boolean;
 };

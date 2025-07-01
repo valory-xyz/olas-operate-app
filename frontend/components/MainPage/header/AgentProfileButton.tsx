@@ -157,10 +157,10 @@ export const AgentProfileButton = () => {
       return <AgentProfile onClick={handleAgentUiBrowserLinkClick} />;
     }
 
-    // base - memeooorr
+    // base - agentsFun
     if (
       middlewareChain === MiddlewareChain.BASE &&
-      selectedAgentType === AgentType.Memeooorr
+      selectedAgentType === AgentType.AgentsFun
     ) {
       return <AgentProfile onClick={handleAgentUiBrowserLinkClick} />;
     }

@@ -18,7 +18,7 @@ import { useServices } from '@/hooks/useServices';
 import { ServicesService } from '@/service/Services';
 import { DeepPartial } from '@/types/Util';
 
-import { MemeooorrFormValues } from '../../AgentForms/MemeooorrAgentForm';
+import { AgentsFunFormValues } from '../../AgentForms/AgentsFunAgentForm';
 import { useConfirmUpdateModal } from '../hooks/useConfirmModal';
 import { defaultModalProps, ModalProps } from '../hooks/useModal';
 import { useUnsavedModal } from '../hooks/useUnsavedModal';
@@ -61,30 +61,30 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
         name === selectedService.name || agentType === selectedAgentType,
     );
 
-    const memeooorrFormValues = formValues as MemeooorrFormValues;
+    const agentsFunFormValues = formValues as AgentsFunFormValues;
 
     const envVariables = (() => {
-      if (selectedAgentType === AgentType.Memeooorr) {
+      if (selectedAgentType === AgentType.AgentsFun) {
         return {
-          PERSONA: memeooorrFormValues.personaDescription,
-          GENAI_API_KEY: memeooorrFormValues.geminiApiKey,
-          FIREWORKS_API_KEY: memeooorrFormValues.fireworksApiEnabled
-            ? memeooorrFormValues.fireworksApiKey
+          PERSONA: agentsFunFormValues.personaDescription,
+          GENAI_API_KEY: agentsFunFormValues.geminiApiKey,
+          FIREWORKS_API_KEY: agentsFunFormValues.fireworksApiEnabled
+            ? agentsFunFormValues.fireworksApiKey
             : '',
-          TWEEPY_CONSUMER_API_KEY: memeooorrFormValues.xConsumerApiKey,
+          TWEEPY_CONSUMER_API_KEY: agentsFunFormValues.xConsumerApiKey,
           TWEEPY_CONSUMER_API_KEY_SECRET:
-            memeooorrFormValues.xConsumerApiSecret,
-          TWEEPY_BEARER_TOKEN: memeooorrFormValues.xBearerToken,
-          TWEEPY_ACCESS_TOKEN: memeooorrFormValues.xAccessToken,
-          TWEEPY_ACCESS_TOKEN_SECRET: memeooorrFormValues.xAccessTokenSecret,
+            agentsFunFormValues.xConsumerApiSecret,
+          TWEEPY_BEARER_TOKEN: agentsFunFormValues.xBearerToken,
+          TWEEPY_ACCESS_TOKEN: agentsFunFormValues.xAccessToken,
+          TWEEPY_ACCESS_TOKEN_SECRET: agentsFunFormValues.xAccessTokenSecret,
         };
       }
       return formValues.env_variables;
     })() as ServiceTemplate['env_variables'];
 
     const formValuesWithoutEnv =
-      selectedAgentType === AgentType.Memeooorr
-        ? { description: `Memeooorr @${memeooorrFormValues.xUsername}` }
+      selectedAgentType === AgentType.AgentsFun
+        ? { description: `Memeooorr @${agentsFunFormValues.xUsername}` }
         : formValues;
 
     const partialServiceTemplate = {
