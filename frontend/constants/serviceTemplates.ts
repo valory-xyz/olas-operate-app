@@ -89,7 +89,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L86
-      value: 'QmfPm5zbxSL7mBFarXUWFChihUcrWPxb16chojpppUKTJA',
+      value: 'Qmeifg8mfa9CQuiHppE4rxJLyjfbhw7SetvoUURQJ8jpie',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
@@ -272,7 +272,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version'
 > = {
-  hash: 'bafybeibmqrkxfnzzmqqbaiwrpdkjm4khbleguvyfi4jxpjkadhankiltcq',
+  hash: 'bafybeihujfpbze4lno3wb33dx27fuljcmg4sp7t72w7cpwc5zaeo7uvs2a',
   service_version: 'v0.3.15',
 };
 
