@@ -16,7 +16,7 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeidt5l4znlsy2kmsdtsnh7xukklbc6bccfenxhmugopmvxqqxbo334',
+  hash: 'bafybeievvf3663md525u2khoxjlufgp6hsf6vf6kah4xqckksj5nmtkg5q',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
@@ -89,7 +89,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Tools accuracy hash',
       description: '',
       // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L86
-      value: 'QmTAVVsPXVs45ZxfirhT3Zd6jaevByPL2Rhh1EfGcuc3i9',
+      value: 'QmfPm5zbxSL7mBFarXUWFChihUcrWPxb16chojpppUKTJA',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
@@ -105,11 +105,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
 > = {
-  hash: 'bafybeicuhcobj6g5355h3eq3mwm55t2rc2krx4grgul7vayouj7fh7qy4i',
+  hash: 'bafybeiardecju3sygh7hwuywka2bgjinbr7vrzob4mpdrookyfsbdmoq2m',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Memeooorr @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
-  service_version: 'v0.7.0-alpha5',
+  service_version: 'v0.8.0-alpha3',
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -272,7 +272,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version'
 > = {
-  hash: 'bafybeiada62ivzxblpkxgbxbvwpkkh33sytjwcmg4dtecfj3zkmenkuurm',
+  hash: 'bafybeibmqrkxfnzzmqqbaiwrpdkjm4khbleguvyfi4jxpjkadhankiltcq',
   service_version: 'v0.3.15',
 };
 
