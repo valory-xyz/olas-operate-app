@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { MiddlewareChain } from '@/client';
+import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '@/components/ui/iconStyles';
 import {
   ETHEREUM_TOKEN_CONFIG,
   TOKEN_CONFIG,
@@ -23,15 +24,16 @@ import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
-import { CrossChainTransferDetails } from '@/types/Bridge';
+import {
+  BridgeRefillRequirementsRequest,
+  CrossChainTransferDetails,
+} from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
 import { delayInSeconds } from '@/utils/delay';
 import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
 
-import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '../ui/iconStyles';
 import { DepositAddress } from './DepositAddress';
 import { DepositTokenDetails, TokenDetails } from './TokenDetails';
-import { useGetBridgeRequirementsParams } from './utils';
 
 const { Text } = Typography;
 
@@ -81,6 +83,9 @@ const QuoteRequestFailed = ({ onTryAgain }: { onTryAgain: () => void }) => (
 
 type DepositForBridgingProps = {
   chainName: string;
+  getBridgeRequirementsParams: (
+    forceUpdate?: boolean,
+  ) => BridgeRefillRequirementsRequest | null;
   updateQuoteId: (quoteId: string) => void;
   updateCrossChainTransferDetails: (details: CrossChainTransferDetails) => void;
   onNext: () => void;
@@ -88,6 +93,7 @@ type DepositForBridgingProps = {
 
 export const DepositForBridging = ({
   chainName,
+  getBridgeRequirementsParams,
   updateQuoteId,
   updateCrossChainTransferDetails,
   onNext,
@@ -95,15 +101,18 @@ export const DepositForBridging = ({
   const { isLoading: isServicesLoading, selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const { masterEoa } = useMasterWalletContext();
-  const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
+  const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
-  const getBridgeRequirementsParams = useGetBridgeRequirementsParams();
 
+  // State to control the force update of the bridge refill requirements API call
+  // This is used when the user clicks on "Try again" button
+  // to fetch the bridge refill requirements again.
+  // NOTE: It is reset to false after the API call is made.
+  const [isForceUpdate, setIsForceUpdate] = useState(false);
   const [
     isBridgeRefillRequirementsApiLoading,
     setIsBridgeRefillRequirementsApiLoading,
   ] = useState(true);
-  const [isForceUpdate, setIsForceUpdate] = useState(false);
   const [
     canPollForBridgeRefillRequirements,
     setCanPollForBridgeRefillRequirements,
@@ -313,7 +322,6 @@ export const DepositForBridging = ({
     isBridgeRefillRequirementsFetching,
     isRequestingQuoteFailed,
     toMiddlewareChain,
-    refillRequirements,
     bridgeFundingRequirements,
     masterEoa,
     tokens,
@@ -347,15 +355,13 @@ export const DepositForBridging = ({
                 No tokens to deposit!
               </Flex>
             ) : (
-              <>
-                {tokens.map((token) => (
-                  <TokenDetails
-                    key={token.symbol}
-                    {...token}
-                    precision={token.isNative ? 5 : 2}
-                  />
-                ))}
-              </>
+              tokens.map((token) => (
+                <TokenDetails
+                  key={token.symbol}
+                  {...token}
+                  precision={token.isNative ? 5 : 2}
+                />
+              ))
             )}
           </Flex>
           <Divider className="m-0" />

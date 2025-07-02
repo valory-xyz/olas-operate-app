@@ -55,6 +55,9 @@ export const mainTheme: ThemeConfig = {
       fontSize: 16,
       colorError: '#CF1322',
     },
+    Result: {
+      iconFontSize: 48,
+    },
   },
 };
 

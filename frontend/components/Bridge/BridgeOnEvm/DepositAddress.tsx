@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 
-import { LIGHT_ICON_STYLE } from '../ui/iconStyles';
+import { LIGHT_ICON_STYLE } from '../../ui/iconStyles';
 
 const { Text } = Typography;
 

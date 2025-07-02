@@ -14,7 +14,7 @@ import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
-import { SendFundAction } from '@/components/bridge/types';
+import { SendFundAction } from '@/components/Bridge/types';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
 import { CHAIN_CONFIG } from '@/config/chains';

@@ -12,6 +12,10 @@ type SetupCreateHeaderProps = {
   disabled?: boolean;
 };
 
+/**
+ *
+ * @deprecated Use `AgentHeader` instead.
+ */
 export const SetupCreateHeader = ({ prev }: SetupCreateHeaderProps) => {
   const { goto } = useSetup();
   const handleBack = useCallback(() => {

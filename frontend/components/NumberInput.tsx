@@ -33,7 +33,14 @@ export const NumberInput = ({ value, ...rest }: InputNumberProps<number>) => (
   <InputNumber<number>
     {...rest}
     value={typeof value === 'string' ? parseFloat(value) : value}
-    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+    // example: 1234567.8924 => "1,234,567.8924"
+    formatter={(value) => {
+      const [intPart, decPart] = `${value}`.split('.');
+      const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return decPart !== undefined
+        ? `${formattedInt}.${decPart}`
+        : formattedInt;
+    }}
     onKeyDown={allowOnlyNumbers}
   />
 );

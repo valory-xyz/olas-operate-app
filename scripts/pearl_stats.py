@@ -73,11 +73,14 @@ CHAINS = [
 
 def _load_dune_pearl_staked(update: bool = False) -> t.Dict[str, t.List[int]]:
     dune_db = _load("dune_pearl_staked")
+    timestamp = dune_db.get("timestamp", 0)
+    now = int(time.time())
 
-    if update or not dune_db:
+    if update or not dune_db or timestamp + SECONDS_PER_DAY < now:
         print("Fetching Dune DB...")
         dune = DuneClient.from_env()
         result = dune.get_latest_result(DUNE_QUERY_ID, max_age_hours=24)
+        dune_db["timestamp"] = now
 
         for row in result.result.rows:
             chain = row["chain"]
