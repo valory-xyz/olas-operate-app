@@ -4,13 +4,12 @@ import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
 
 import { AddressBalanceRecord } from '@/client';
+import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import { Pages } from '@/enums/Pages';
-import { TokenSymbol } from '@/enums/Token';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { usePageState } from '@/hooks/usePageState';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
-import { toMiddlewareChainFromTokenSymbol } from '@/utils/middlewareHelpers';
 
 import { Bridge } from '../Bridge/Bridge';
 import { NumberInput } from '../NumberInput';
@@ -42,8 +41,7 @@ const BridgeHeader = () => {
 const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
   const imgSrc = useMemo(() => {
     if (!symbol) return;
-    if (symbol === TokenSymbol.OLAS) return '/olas-icon.png';
-    return `/chains/${toMiddlewareChainFromTokenSymbol(symbol)}-chain.png`;
+    return TokenSymbolMap[symbol].image;
   }, [symbol]);
 
   return (

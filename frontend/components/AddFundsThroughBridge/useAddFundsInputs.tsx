@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { AddressBalanceRecord } from '@/client';
 import { AddressZero } from '@/constants/address';
-import { TokenSymbol } from '@/enums/Token';
+import { TokenSymbol } from '@/constants/token';
 import { useServices } from '@/hooks/useServices';
 import { Address } from '@/types/Address';
 import { BridgeRequest } from '@/types/Bridge';
