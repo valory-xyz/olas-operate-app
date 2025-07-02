@@ -1,6 +1,9 @@
 import { Flex, Typography } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
+import { Pages } from '@/enums/Pages';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
+import { usePageState } from '@/hooks/usePageState';
 import { Optional } from '@/types/Util';
 
 import { InlineBanner } from './InlineBanner';
@@ -16,6 +19,9 @@ type LowSafeSignerBalanceAlert = { requiredSignerFunds: Optional<number> };
 export const LowSafeSignerBalanceAlert = ({
   requiredSignerFunds,
 }: LowSafeSignerBalanceAlert) => {
+  const isBridgeAddFundsEnabled = useFeatureFlag('bridge-add-funds');
+  const { goto } = usePageState();
+
   const { chainName, tokenSymbol, masterEoaAddress } = useLowFundsDetails();
 
   return (
@@ -42,6 +48,14 @@ export const LowSafeSignerBalanceAlert = ({
             <InlineBanner
               text="Safe signer address"
               address={masterEoaAddress}
+              bridgeFunds={
+                isBridgeAddFundsEnabled
+                  ? {
+                      chainName,
+                      goto: () => goto(Pages.LowSafeSignerBalanceBridgeFunds),
+                    }
+                  : undefined
+              }
             />
           )}
         </Flex>

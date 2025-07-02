@@ -38,8 +38,10 @@ type BridgeFrom = {
 };
 type BridgeTo = BridgeFrom & { amount: string };
 
+export type BridgeRequest = { from: BridgeFrom; to: BridgeTo };
+
 export type BridgeRefillRequirementsRequest = {
-  bridge_requests: { from: BridgeFrom; to: BridgeTo }[];
+  bridge_requests: BridgeRequest[];
   force_update: boolean;
 };
 
@@ -89,5 +91,5 @@ export type CrossChainTransferDetails = {
   fromChain: MiddlewareChain;
   toChain: MiddlewareChain;
   transfers: TokenTransfer[];
-  eta: number;
+  eta?: number;
 };

@@ -1,6 +1,11 @@
 import { MiddlewareChain } from '@/client';
+import { TOKEN_CONFIG } from '@/config/tokens';
+import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
+import { Address } from '@/types/Address';
+
+import { areAddressesEqual } from './address';
 
 /**
  * Converts middleware chain enums to chain ids
@@ -101,4 +106,27 @@ export const toMiddlewareChainFromTokenSymbol = (
   }
 
   throw new Error(`Invalid token symbol: ${tokenSymbol}`);
+};
+
+/**
+ * To get token details based on the provided token address.
+ *
+ * For example, if the chain is Gnosis and the token address is AddressZero (native token),
+ * it will return the details of the XDAI token such as symbol, decimals, and address.
+ */
+export const getTokenDetailsFromAddress = (
+  chainId: MiddlewareChain,
+  tokenAddress: Address,
+) => {
+  const chainConfigs = TOKEN_CONFIG[asEvmChainId(chainId)];
+  const details = Object.values(chainConfigs).find((tokenInfo) => {
+    if (tokenAddress === AddressZero && !tokenInfo.address) return true;
+    return areAddressesEqual(tokenInfo.address, tokenAddress);
+  });
+
+  if (!details) {
+    throw new Error(`Token details not found for address: ${tokenAddress}`);
+  }
+
+  return details;
 };
