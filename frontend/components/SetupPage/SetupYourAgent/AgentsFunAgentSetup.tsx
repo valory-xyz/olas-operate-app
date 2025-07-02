@@ -29,7 +29,7 @@ export const AgentsFunAgentSetup = ({
       try {
         const overriddenServiceConfig: ServiceTemplate = {
           ...serviceTemplate,
-          description: `Memeooorr @${values.xUsername}`,
+          description: `Agents.Fun @${values.xUsername}`,
           env_variables: {
             ...serviceTemplate.env_variables,
             TWEEPY_CONSUMER_API_KEY: {

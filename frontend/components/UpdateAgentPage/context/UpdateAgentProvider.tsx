@@ -84,7 +84,7 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
 
     const formValuesWithoutEnv =
       selectedAgentType === AgentType.AgentsFun
-        ? { description: `Memeooorr @${agentsFunFormValues.xUsername}` }
+        ? { description: `Agents.Fun @${agentsFunFormValues.xUsername}` }
         : formValues;
 
     const partialServiceTemplate = {
