@@ -42,7 +42,7 @@ export const BridgeOnEvm = ({
   updateCrossChainTransferDetails,
 }: BridgeOnEvmProps) => (
   <CardFlex $noBorder>
-    <AgentHeader prev={onPrev} />
+    <AgentHeader onPrev={onPrev} />
 
     <CardSection vertical gap={24} className="m-0 pt-24">
       <Flex vertical gap={8}>

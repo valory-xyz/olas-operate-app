@@ -16,7 +16,7 @@ import { Bridge } from '../Bridge/Bridge';
 import { NumberInput } from '../NumberInput';
 import { CardFlex } from '../styled/CardFlex';
 import { DefaultTokenAmount } from './types';
-import { useGenerateAddFunds } from './useGenerateAddFunds';
+import { useAddFundsInputs } from './useAddFundsInputs';
 
 const { Title, Text } = Typography;
 
@@ -77,7 +77,7 @@ const AddFundsInput = ({
     inputsToDisplay,
     isInputEmpty,
     bridgeRequirementsParams,
-  } = useGenerateAddFunds({
+  } = useAddFundsInputs({
     requirements,
     defaultTokenAmounts,
     destinationAddress,

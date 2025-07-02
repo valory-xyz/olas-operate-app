@@ -25,7 +25,7 @@ export type GeneratedInput = {
  * Example: If the chain is Gnosis, user can add OLAS and XDAI.
  * This function will return an array of objects with tokenAddress, symbol, and amount set to 0.
  */
-export const useGenerateAddFunds = ({
+export const useAddFundsInputs = ({
   requirements,
   defaultTokenAmounts,
   destinationAddress,
@@ -41,7 +41,6 @@ export const useGenerateAddFunds = ({
   const getBridgeRequirementsParams =
     useAddFundsGetBridgeRequirementsParams(destinationAddress);
 
-  // In general, master_safe and master_eoa addresses are used.
   const allAddresses = typedKeys(requirements);
 
   // All token addresses that can be used to add funds to the master safe.
@@ -57,20 +56,22 @@ export const useGenerateAddFunds = ({
     return acc;
   }, []);
 
-  const amountsToReceive: GeneratedInput[] = uniq(tokenAddresses).map(
-    (tokenAddress: Address) => {
-      const symbol = getTokenDetailsFromAddress(
-        toMiddlewareChain,
-        tokenAddress,
-      ).symbol;
+  const amountsToReceive: GeneratedInput[] = useMemo(
+    () =>
+      uniq(tokenAddresses).map((tokenAddress: Address) => {
+        const symbol = getTokenDetailsFromAddress(
+          toMiddlewareChain,
+          tokenAddress,
+        ).symbol;
 
-      // if no default token amounts are provided, set amount to 0.
-      // user can update the amount later.
-      const defaultAmount =
-        defaultTokenAmounts?.find((token) => token.symbol === symbol)?.amount ??
-        0;
-      return { tokenAddress, symbol, amount: defaultAmount };
-    },
+        // if no default token amounts are provided, set amount to 0.
+        // user can update the amount later.
+        const defaultAmount =
+          defaultTokenAmounts?.find((token) => token.symbol === symbol)
+            ?.amount ?? 0;
+        return { tokenAddress, symbol, amount: defaultAmount };
+      }),
+    [tokenAddresses, toMiddlewareChain, defaultTokenAmounts],
   );
 
   const [inputs, setInputs] = useState(
