@@ -20,6 +20,9 @@ export enum MiddlewareChain {
   CELO = 'celo',
 }
 
+/**
+ * @deprecated Use `MiddlewareChainsMap` from '@/constants/chains'.
+ */
 const MIDDLEWARE_CHAINS = {
   gnosis: MiddlewareChain.GNOSIS,
   optimism: MiddlewareChain.OPTIMISM,
@@ -27,8 +30,15 @@ const MIDDLEWARE_CHAINS = {
   mode: MiddlewareChain.MODE,
   celo: MiddlewareChain.CELO,
 } as const;
+
+/**
+ * @deprecated Use `SupportedMiddlewareChain` from '@/constants/chains'.
+ */
 export type SupportedMiddlewareChain = ValueOf<typeof MIDDLEWARE_CHAINS>;
 
+/**
+ * @deprecated Use `MiddlewareDeploymentStatusMap` from '@/constants/deployment'.
+ */
 export enum MiddlewareDeploymentStatus {
   CREATED = 0,
   BUILT = 1,

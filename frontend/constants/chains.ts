@@ -1,3 +1,5 @@
+import { ValueOf } from '@/types/Util';
+
 export const EvmChainId = {
   Gnosis: 100,
   Base: 8453,
@@ -40,3 +42,12 @@ export const MiddlewareChain = {
   MODE: 'mode',
   CELO: 'celo',
 } as const;
+
+const MiddlewareChainsMap = {
+  gnosis: MiddlewareChain.GNOSIS,
+  optimism: MiddlewareChain.OPTIMISM,
+  base: MiddlewareChain.BASE,
+  mode: MiddlewareChain.MODE,
+  celo: MiddlewareChain.CELO,
+} as const;
+export type SupportedMiddlewareChain = ValueOf<typeof MiddlewareChainsMap>;
