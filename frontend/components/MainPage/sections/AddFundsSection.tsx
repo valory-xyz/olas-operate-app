@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
-import { SendFundAction } from '@/components/bridge/types';
+import { SendFundAction } from '@/components/Bridge/types';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { EvmChainName } from '@/constants/chains';
 import { NA, UNICODE_SYMBOLS } from '@/constants/symbols';
@@ -141,21 +141,6 @@ const AddFundsBy = forwardRef<HTMLDivElement>((_, ref) => {
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
   const currentFundingRequirements = CHAIN_CONFIG[homeChainId];
 
-  const bridgeFundsBtn = useMemo(
-    () => (
-      <Button
-        type="primary"
-        size="large"
-        block
-        onClick={() => goto(Pages.AddFundsThroughBridge)}
-        disabled={!isBridgeAddFundsEnabled}
-      >
-        Bridge funds
-      </Button>
-    ),
-    [goto, isBridgeAddFundsEnabled],
-  );
-
   return (
     <>
       {isBridgeOnboardingEnabled && (
@@ -189,11 +174,17 @@ const AddFundsBy = forwardRef<HTMLDivElement>((_, ref) => {
             Bridge funds from Ethereum directly to your Pearl Safe on{' '}
             {EvmChainName[homeChainId]} chain.
           </Text>
-          {isBridgeAddFundsEnabled ? (
-            bridgeFundsBtn
-          ) : (
-            <Tooltip title="Available soon">{bridgeFundsBtn}</Tooltip>
-          )}
+          <Tooltip title={isBridgeAddFundsEnabled ? '' : 'Available soon'}>
+            <Button
+              type="primary"
+              size="large"
+              block
+              onClick={() => goto(Pages.AddFundsToMasterSafeThroughBridge)}
+              disabled={!isBridgeAddFundsEnabled}
+            >
+              Bridge funds
+            </Button>
+          </Tooltip>
         </CardSection>
       ) : (
         <OpenAddFundsSection ref={ref} />

@@ -10,7 +10,7 @@ import { BridgingStepStatus as Status } from '@/types/Bridge';
 import { Maybe, Nullable } from '@/types/Util';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
-import { ExportLogsButton } from '../ExportLogsButton';
+import { ExportLogsButton } from '../../ExportLogsButton';
 
 const { Text } = Typography;
 

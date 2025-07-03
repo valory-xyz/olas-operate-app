@@ -13,7 +13,9 @@ export const Pages = {
   SwitchAgent: 'SwitchAgent',
   AgentActivity: 'AgentActivity',
   UpdateAgentTemplate: 'UpdateAgentTemplate',
-  AddFundsThroughBridge: 'AddFundsThroughBridge',
+  AddFundsToMasterSafeThroughBridge: 'AddFundsToMasterSafeThroughBridge',
+  LowOperatingBalanceBridgeFunds: 'LowOperatingBalanceBridgeFunds',
+  LowSafeSignerBalanceBridgeFunds: 'LowSafeSignerBalanceBridgeFunds',
 } as const;
 
 export type Pages = (typeof Pages)[keyof typeof Pages];

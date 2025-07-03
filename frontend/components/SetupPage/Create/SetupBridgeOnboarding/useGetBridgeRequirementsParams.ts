@@ -6,11 +6,8 @@ import {
   MasterSafeBalanceRecord,
   MiddlewareChain,
 } from '@/client';
-import {
-  ChainTokenConfig,
-  ETHEREUM_TOKEN_CONFIG,
-  TOKEN_CONFIG,
-} from '@/config/tokens';
+import { getFromToken } from '@/components/Bridge/utils';
+import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
@@ -21,31 +18,6 @@ import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
 import { bigintMax } from '@/utils/calculations';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
-
-/**
- * Helper to get source token address on the fromChain
- */
-const getFromToken = (
-  tokenAddress: string,
-  fromChainConfig: ChainTokenConfig,
-  toChainConfig: ChainTokenConfig,
-): Address => {
-  if (tokenAddress.toLowerCase() === AddressZero) {
-    return AddressZero;
-  }
-
-  const tokenSymbol = Object.values(toChainConfig).find((configToken) =>
-    areAddressesEqual(configToken.address!, tokenAddress),
-  )?.symbol;
-
-  if (!tokenSymbol || !fromChainConfig[tokenSymbol]?.address) {
-    throw new Error(
-      `Failed to get source token for the destination token: ${tokenAddress}`,
-    );
-  }
-
-  return fromChainConfig[tokenSymbol].address as Address;
-};
 
 /**
  *
