@@ -87,28 +87,6 @@ export const asMiddlewareChain = (chainId?: EvmChainId | number) => {
 };
 
 /**
- * Converts token symbol to middleware chain enums
- */
-export const toMiddlewareChainFromTokenSymbol = (
-  tokenSymbol?: TokenSymbol,
-): MiddlewareChain | undefined => {
-  switch (tokenSymbol) {
-    case 'ETH':
-      return MiddlewareChain.ETHEREUM;
-    case 'OLAS':
-      return MiddlewareChain.GNOSIS;
-    case 'CELO':
-      return MiddlewareChain.CELO;
-    case 'XDAI':
-      return MiddlewareChain.GNOSIS;
-    case 'WXDAI':
-      return MiddlewareChain.GNOSIS;
-  }
-
-  throw new Error(`Invalid token symbol: ${tokenSymbol}`);
-};
-
-/**
  * To get token details based on the provided token address.
  *
  * For example, if the chain is Gnosis and the token address is AddressZero (native token),
