@@ -3,6 +3,10 @@ import { Button, Flex, Typography } from 'antd';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 
+import { UnderConstruction } from '@/components/MainPage/sections/AlertSections/UnderConstruction';
+import { AgentType } from '@/enums/Agent';
+import { useServices } from '@/hooks/useServices';
+
 const { Title, Text } = Typography;
 
 export type OnboardingStep = {
@@ -86,6 +90,8 @@ export const IntroductionStep = ({
   onPrev,
   onNext,
 }: IntroductionProps) => {
+  const { selectedAgentType } = useServices();
+
   return (
     <div style={{ overflow: 'hidden' }}>
       <AnimatedImage imgSrc={`/${imgSrc}.png`} alt={title} />
@@ -93,6 +99,8 @@ export const IntroductionStep = ({
       <div style={{ padding: '12px 24px 20px 24px' }}>
         <Flex vertical gap={24}>
           <AnimatedContent title={title} desc={desc} helper={helper} />
+
+          {selectedAgentType === AgentType.Memeooorr && <UnderConstruction />}
 
           <Flex gap={12}>
             <Button

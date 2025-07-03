@@ -1,7 +1,9 @@
 import { Divider, Flex, Typography } from 'antd';
 import { useCallback, useMemo } from 'react';
 
+import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
+import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { useSharedContext } from '@/hooks/useSharedContext';
@@ -19,9 +21,14 @@ const { Text } = Typography;
 type IntroductionProps = {
   steps: OnboardingStep[];
   onOnboardingComplete: () => void;
+  isUnderConstruction: boolean;
 };
 
-const Introduction = ({ steps, onOnboardingComplete }: IntroductionProps) => {
+const Introduction = ({
+  steps,
+  onOnboardingComplete,
+  isUnderConstruction,
+}: IntroductionProps) => {
   const { goto } = useSetup();
   const { onboardingStep, updateOnboardingStep } = useSharedContext();
 
@@ -53,7 +60,11 @@ const Introduction = ({ steps, onOnboardingComplete }: IntroductionProps) => {
       imgSrc={steps[onboardingStep].imgSrc}
       helper={steps[onboardingStep].helper}
       btnText={
-        onboardingStep === steps.length - 1 ? 'Set up agent' : 'Continue'
+        onboardingStep === steps.length - 1
+          ? isUnderConstruction
+            ? 'Return to agent selection'
+            : 'Set up agent'
+          : 'Continue'
       }
       onPrev={onPreviousStep}
       onNext={onNextStep}
@@ -66,6 +77,7 @@ const Introduction = ({ steps, onOnboardingComplete }: IntroductionProps) => {
  */
 export const AgentIntroduction = () => {
   const { goto } = useSetup();
+  const { goto: gotoPage } = usePageState();
   const { selectedAgentType, selectedAgentConfig } = useServices();
 
   const introductionSteps = useMemo(() => {
@@ -84,6 +96,11 @@ export const AgentIntroduction = () => {
       return;
     }
 
+    // if agent is under construction, goes back to agent selection
+    if (selectedAgentConfig.isUnderConstruction) {
+      gotoPage(Pages.SwitchAgent);
+    }
+
     // if the selected type requires setting up an agent,
     // should be redirected to setup screen.
     if (selectedAgentConfig.requiresSetup) {
@@ -91,7 +108,7 @@ export const AgentIntroduction = () => {
     } else {
       goto(SetupScreen.SetupEoaFunding);
     }
-  }, [goto, selectedAgentConfig]);
+  }, [goto, gotoPage, selectedAgentConfig]);
 
   return (
     <>
@@ -102,6 +119,7 @@ export const AgentIntroduction = () => {
       <Introduction
         steps={introductionSteps}
         onOnboardingComplete={onComplete}
+        isUnderConstruction={!!selectedAgentConfig.isUnderConstruction}
       />
     </>
   );

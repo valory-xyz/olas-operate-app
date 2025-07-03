@@ -22,30 +22,54 @@ import { CardFlex } from './styled/CardFlex';
 
 const { Title, Text } = Typography;
 
-const getCardStyle = (isCurrentAgent: boolean): CardProps['style'] =>
-  isCurrentAgent
-    ? { borderColor: COLOR.PURPLE_LIGHT, backgroundColor: COLOR.PURPLE_LIGHT_2 }
-    : {};
+const getCardStyle = (
+  isCurrentAgent: boolean,
+  isUnderConstruction: boolean,
+): CardProps['style'] => {
+  if (isCurrentAgent && !isUnderConstruction)
+    return {
+      borderColor: COLOR.PURPLE_LIGHT,
+      backgroundColor: COLOR.PURPLE_LIGHT_2,
+    };
 
-const getCardStyles = (isCurrentAgent: boolean): CardProps['styles'] => ({
-  header: isCurrentAgent
-    ? {
-        padding: 4,
-        minHeight: 0,
-        backgroundColor: COLOR.PURPLE_LIGHT_2,
-        color: COLOR.PURPLE,
-        textAlign: 'center',
-        fontSize: 'inherit',
-        borderColor: 'transparent',
-      }
-    : {},
-  body: {
+  return {};
+};
+
+const getCardStyles = (
+  isCurrentAgent: boolean,
+  isUnderConstruction?: boolean,
+): CardProps['styles'] => {
+  const header: React.CSSProperties = {};
+  const body: React.CSSProperties = {
     gap: 6,
     padding: isCurrentAgent ? '8px 16px 12px 16px' : '12px 16px',
     borderRadius: 'inherit',
     backgroundColor: isCurrentAgent ? COLOR.WHITE : undefined,
-  },
-});
+  };
+
+  if (isUnderConstruction) {
+    Object.assign(header, {
+      padding: 4,
+      minHeight: 0,
+      backgroundColor: COLOR.GRAY_1,
+      textAlign: 'center',
+      fontSize: 'inherit',
+      borderColor: 'transparent',
+    });
+  } else if (isCurrentAgent) {
+    Object.assign(header, {
+      padding: 4,
+      minHeight: 0,
+      backgroundColor: COLOR.PURPLE_LIGHT_2,
+      color: COLOR.PURPLE,
+      textAlign: 'center',
+      fontSize: 'inherit',
+      borderColor: 'transparent',
+    });
+  }
+
+  return { header, body };
+};
 
 type EachAgentProps = {
   showSelected: boolean;
@@ -71,6 +95,12 @@ const EachAgent = memo(
       ? selectedAgentType === agentType
       : false;
 
+    const isUnderConstruction = agentConfig.isUnderConstruction;
+    const isSafeCreated = masterSafes?.find(
+      (masterSafe) =>
+        masterSafe.evmChainId === AGENT_CONFIG[agentType].evmHomeChainId,
+    );
+
     const handleSelectAgent = useCallback(async () => {
       updateAgentType(agentType);
       updateOnboardingStep(0); // Reset onboarding step
@@ -79,11 +109,6 @@ const EachAgent = memo(
       // NOTE: the delay is added so that agentType is updated in electron store
       // and re-rendered with the updated agentType
       await delayInSeconds(0.5);
-
-      const isSafeCreated = masterSafes?.find(
-        (masterSafe) =>
-          masterSafe.evmChainId === AGENT_CONFIG[agentType].evmHomeChainId,
-      );
 
       // If safe is created for the agent type, then go to main page
       if (isSafeCreated) {
@@ -110,21 +135,27 @@ const EachAgent = memo(
       gotoPage(Pages.Setup);
       gotoSetup(SetupScreen.AgentIntroduction);
     }, [
+      updateOnboardingStep,
+      isSafeCreated,
       services,
-      agentType,
       gotoPage,
       gotoSetup,
-      masterSafes,
       updateAgentType,
-      updateOnboardingStep,
+      agentType,
     ]);
 
     return (
       <Card
         key={agentType}
-        style={getCardStyle(isCurrentAgent)}
-        styles={getCardStyles(isCurrentAgent)}
-        title={isCurrentAgent ? 'Current agent' : undefined}
+        style={getCardStyle(isCurrentAgent, !!isUnderConstruction)}
+        styles={getCardStyles(isCurrentAgent, isUnderConstruction)}
+        title={
+          isUnderConstruction
+            ? 'Agent is under construction. Select to learn more'
+            : isCurrentAgent
+              ? 'Current agent'
+              : undefined
+        }
       >
         <Flex vertical>
           <Flex align="center" justify="space-between" className="mb-8">
@@ -136,11 +167,11 @@ const EachAgent = memo(
             />
 
             <Button
-              type="primary"
+              type={isUnderConstruction ? 'default' : 'primary'}
               onClick={handleSelectAgent}
               disabled={isServicesLoading || isMasterWalletLoading}
             >
-              Select
+              {isUnderConstruction && !isSafeCreated ? 'Learn more' : 'Select'}
             </Button>
           </Flex>
         </Flex>

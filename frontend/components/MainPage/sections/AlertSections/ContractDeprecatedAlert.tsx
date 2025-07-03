@@ -3,6 +3,7 @@ import { Flex, Typography } from 'antd';
 import { NA } from '@/constants/symbols';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
@@ -11,6 +12,7 @@ import { CustomAlert } from '../../../Alert';
 const { Text } = Typography;
 
 export const ContractDeprecatedAlert = () => {
+  const { selectedAgentConfig } = useServices();
   const { goto } = usePageState();
 
   const { isActiveStakingProgramLoaded, selectedStakingProgramMeta } =
@@ -23,6 +25,7 @@ export const ContractDeprecatedAlert = () => {
   if (isSelectedStakingContractDetailsLoading) return null;
   if (!selectedStakingProgramMeta) return null;
   if (!selectedStakingProgramMeta.deprecated) return null;
+  if (selectedAgentConfig.isUnderConstruction) return null;
 
   return (
     <CustomAlert
