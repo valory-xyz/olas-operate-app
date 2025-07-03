@@ -6,6 +6,8 @@ import { ValueOf } from '@/types/Util';
  *
  * @warning The value doesn’t actually represent the real chain name;
  * it reflects the open-autonomy internal name instead.
+ *
+ * @deprecated Use `MiddlewareChain` from '@/constants/chains'.
  */
 export enum MiddlewareChain {
   ETHEREUM = 'ethereum',
@@ -37,24 +39,9 @@ export enum MiddlewareDeploymentStatus {
   DELETED = 6,
 }
 
-/** @note statuses where middleware deployment is moving from stopped to deployed, or vice versa, used for loading fallbacks */
-export const MiddlewareTransitioningStatuses = [
-  MiddlewareDeploymentStatus.DEPLOYING,
-  MiddlewareDeploymentStatus.STOPPING,
-];
-
-/** @note statuses where middleware deployment is running */
-export const MiddlewareRunningStatuses = [
-  MiddlewareDeploymentStatus.DEPLOYED,
-  ...MiddlewareTransitioningStatuses,
-];
-
-/** @note statuses where middleware is in the process of building/creating a new deployment */
-export const MiddlewareBuildingStatuses = [
-  MiddlewareDeploymentStatus.BUILT,
-  MiddlewareDeploymentStatus.CREATED,
-];
-
+/**
+ * @deprecated Use `MiddlewareChain` from '@/constants/envVariables'.
+ */
 export enum EnvProvisionType {
   FIXED = 'fixed',
   USER = 'user',
