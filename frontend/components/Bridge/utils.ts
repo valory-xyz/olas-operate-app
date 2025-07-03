@@ -4,15 +4,10 @@ import { Address } from '@/types/Address';
 import { areAddressesEqual } from '@/utils/address';
 
 /** Get the token details from the token address */
-const getTokenDetails = (
-  tokenAddress: string,
-  chainConfig: ChainTokenConfig,
-) => {
-  const token = Object.values(chainConfig).find((configToken) =>
+const getTokenDetails = (tokenAddress: string, chainConfig: ChainTokenConfig) =>
+  Object.values(chainConfig).find((configToken) =>
     areAddressesEqual(configToken.address, tokenAddress),
   );
-  return token;
-};
 
 const getTokenSymbol = (tokenAddress: string, chainConfig: ChainTokenConfig) =>
   getTokenDetails(tokenAddress, chainConfig)?.symbol;

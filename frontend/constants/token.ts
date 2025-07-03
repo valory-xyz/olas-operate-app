@@ -1,4 +1,4 @@
-export const TokenSymbol = {
+export const TokenSymbolMap = {
   ETH: 'ETH',
   OLAS: 'OLAS',
   USDC: 'USDC',
@@ -7,13 +7,13 @@ export const TokenSymbol = {
   WXDAI: 'WXDAI',
 } as const;
 
-export type TokenSymbol = (typeof TokenSymbol)[keyof typeof TokenSymbol];
+export type TokenSymbol = keyof typeof TokenSymbolMap;
 
-export const TokenSymbolMap: Record<TokenSymbol, { image: string }> = {
-  [TokenSymbol.ETH]: { image: '/chains/ethereum-chain.png' },
-  [TokenSymbol.OLAS]: { image: '/tokens/olas-icon.png' },
-  [TokenSymbol.USDC]: { image: '/tokens/usdc-icon.png' },
-  [TokenSymbol.XDAI]: { image: '/chains/gnosis-chain.png' },
-  [TokenSymbol.CELO]: { image: '' }, // TODO: Add CELO image
-  [TokenSymbol.WXDAI]: { image: '' }, // TODO: Add WXDAI image
-};
+export const TokenSymbolConfigMap: Record<TokenSymbol, { image: string }> = {
+  [TokenSymbolMap.ETH]: { image: '/chains/ethereum-chain.png' },
+  [TokenSymbolMap.CELO]: { image: '/chains/celo-chain.png' },
+  [TokenSymbolMap.XDAI]: { image: '/chains/gnosis-chain.png' },
+  [TokenSymbolMap.OLAS]: { image: '/tokens/olas-icon.png' },
+  [TokenSymbolMap.USDC]: { image: '/tokens/usdc-icon.png' },
+  [TokenSymbolMap.WXDAI]: { image: '/tokens/wxdai-icon.png' },
+} as const;

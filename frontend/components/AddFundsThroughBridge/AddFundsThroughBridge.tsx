@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
 
 import { AddressBalanceRecord } from '@/client';
-import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
+import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
 import { Pages } from '@/enums/Pages';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { usePageState } from '@/hooks/usePageState';
@@ -41,7 +41,7 @@ const BridgeHeader = () => {
 const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
   const imgSrc = useMemo(() => {
     if (!symbol) return;
-    return TokenSymbolMap[symbol].image;
+    return TokenSymbolConfigMap[symbol].image;
   }, [symbol]);
 
   return (
