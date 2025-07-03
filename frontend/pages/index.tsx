@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
-import { AddFundsThroughBridge } from '@/components/AddFundsThroughBridge/AddFundsThroughBridge';
+import { AddFundsToMasterSafeThroughBridge } from '@/components/AddFundsThroughBridge/AddFundsToMasterSafeThroughBridge';
 import { LowOperatingBalanceBridgeFunds } from '@/components/AddFundsThroughBridge/LowOperatingBalanceBridgeFunds';
 import { LowSafeSignerBalanceBridgeFunds } from '@/components/AddFundsThroughBridge/LowSafeSignerBalanceBridgeFunds';
 import { AgentActivityPage } from '@/components/AgentActivity';
@@ -72,8 +72,8 @@ export default function Home() {
         return <UpdateAgentPage />;
 
       // bridge pages
-      case Pages.AddFundsThroughBridge:
-        return <AddFundsThroughBridge />;
+      case Pages.AddFundsToMasterSafeThroughBridge:
+        return <AddFundsToMasterSafeThroughBridge />;
       case Pages.LowOperatingBalanceBridgeFunds:
         return <LowOperatingBalanceBridgeFunds />;
       case Pages.LowSafeSignerBalanceBridgeFunds:

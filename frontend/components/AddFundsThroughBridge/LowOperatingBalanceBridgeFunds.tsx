@@ -1,7 +1,8 @@
-import { AddFundsThroughBridge } from '@/components/AddFundsThroughBridge/AddFundsThroughBridge';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { useMasterBalances } from '@/hooks/useBalanceContext';
 import { useServices } from '@/hooks/useServices';
+
+import { AddFundsThroughBridge } from './AddFundsThroughBridge';
 
 /**
  * Add funds through bridge for low operating balance.
