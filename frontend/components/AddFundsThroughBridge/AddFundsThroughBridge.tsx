@@ -38,19 +38,17 @@ const BridgeHeader = () => {
   );
 };
 
-const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => {
-  const imgSrc = useMemo(() => {
-    if (!symbol) return;
-    return TokenSymbolConfigMap[symbol].image;
-  }, [symbol]);
-
-  return (
-    <Flex align="center" justify="flex-start" gap={8} style={{ width: 78 }}>
-      {imgSrc && <Image src={imgSrc} alt={symbol} width={20} height={20} />}
-      {symbol}
-    </Flex>
-  );
-};
+const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => (
+  <Flex align="center" justify="flex-start" gap={8} style={{ width: 78 }}>
+    <Image
+      src={TokenSymbolConfigMap[symbol].image}
+      alt={symbol}
+      width={20}
+      height={20}
+    />
+    {symbol}
+  </Flex>
+);
 
 type AddFundsInputProps = {
   /** Default token amounts to display in the input fields */
