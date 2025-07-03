@@ -6,7 +6,6 @@ import {
   EnvProvisionType,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
-  MiddlewareLedger,
   SupportedMiddlewareChain,
 } from './enums';
 
@@ -132,6 +131,11 @@ export type AppInfo = {
     key: Address;
   };
 };
+
+enum MiddlewareLedger {
+  ETHEREUM = 0,
+  SOLANA = 1,
+}
 
 export type MiddlewareWalletResponse = {
   address: Address;

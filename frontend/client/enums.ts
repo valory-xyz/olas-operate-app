@@ -1,12 +1,5 @@
 import { ValueOf } from '@/types/Util';
 
-export enum MiddlewareAction {
-  STATUS = 0,
-  BUILD = 1,
-  DEPLOY = 2,
-  STOP = 3,
-}
-
 /**
  * @note Use this enum to infer all the middleware chains existing in the system
  * else use the SupportedMiddlewareChain enum for the chains that are supported by the agents and to be strictly typed.
@@ -33,11 +26,6 @@ const MIDDLEWARE_CHAINS = {
   celo: MiddlewareChain.CELO,
 } as const;
 export type SupportedMiddlewareChain = ValueOf<typeof MIDDLEWARE_CHAINS>;
-
-export enum MiddlewareLedger {
-  ETHEREUM = 0,
-  SOLANA = 1,
-}
 
 export enum MiddlewareDeploymentStatus {
   CREATED = 0,
@@ -66,13 +54,6 @@ export const MiddlewareBuildingStatuses = [
   MiddlewareDeploymentStatus.BUILT,
   MiddlewareDeploymentStatus.CREATED,
 ];
-
-export enum MiddlewareAccountIsSetup {
-  True,
-  False,
-  Loading,
-  Error,
-}
 
 export enum EnvProvisionType {
   FIXED = 'fixed',
