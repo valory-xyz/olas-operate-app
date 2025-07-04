@@ -179,7 +179,7 @@ const AddFundsBy = forwardRef<HTMLDivElement>((_, ref) => {
               type="primary"
               size="large"
               block
-              onClick={() => goto(Pages.AddFundsThroughBridge)}
+              onClick={() => goto(Pages.AddFundsToMasterSafeThroughBridge)}
               disabled={!isBridgeAddFundsEnabled}
             >
               Bridge funds
