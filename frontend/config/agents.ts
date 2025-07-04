@@ -53,7 +53,7 @@ export const AGENT_CONFIG: {
     displayName: 'Prediction agent',
     description: 'Participates in prediction markets.',
   },
-  [AgentType.Memeooorr]: {
+  [AgentType.AgentsFun]: {
     isAgentEnabled: true,
     isComingSoon: false,
     requiresSetup: true,

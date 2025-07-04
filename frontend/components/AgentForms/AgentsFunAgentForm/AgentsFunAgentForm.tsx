@@ -17,7 +17,7 @@ import { useSharedContext } from '@/hooks/useSharedContext';
 import { commonFieldProps, emailValidateMessages } from '../common/formUtils';
 import { InvalidGeminiApiCredentials } from '../common/InvalidGeminiApiCredentials';
 import { FireworksApiFields } from './FireworksApiField';
-import { MemeooorrFormValues } from './types';
+import { AgentsFunFormValues } from './types';
 import { useMemeFormValidate } from './useMemeFormValidate';
 
 const { Title, Text } = Typography;
@@ -58,27 +58,27 @@ const XAccountApiTokens = ({
   </Flex>
 );
 
-type MemeooorrAgentFormProps = {
+type AgentsFunAgentFormProps = {
   isFormEnabled?: boolean;
-  initialValues?: MemeooorrFormValues;
+  initialValues?: AgentsFunFormValues;
   agentFormType: 'view' | 'create' | 'update';
   form?: FormInstance;
-  onSubmit: (values: MemeooorrFormValues) => Promise<void>;
+  onSubmit: (values: AgentsFunFormValues) => Promise<void>;
 };
 
 /**
- * Form for setting up a Memeooorr agent (To setup and update the agent).
+ * Form for setting up a AgentsFun agent (To setup and update the agent).
  */
-export const MemeooorrAgentForm = ({
+export const AgentsFunAgentForm = ({
   isFormEnabled = true,
   agentFormType,
   initialValues,
   onSubmit,
   form: formInstance,
-}: MemeooorrAgentFormProps) => {
-  const [formState] = Form.useForm<MemeooorrFormValues>();
+}: AgentsFunAgentFormProps) => {
+  const [formState] = Form.useForm<AgentsFunFormValues>();
 
-  const { isMemeooorrFieldUpdateRequired } = useSharedContext();
+  const { isAgentsFunFieldUpdateRequired } = useSharedContext();
   const form = useMemo(
     () => formInstance || formState,
     [formInstance, formState],
@@ -94,7 +94,7 @@ export const MemeooorrAgentForm = ({
   } = useMemeFormValidate();
 
   const onFinish = useCallback(
-    async (values: MemeooorrFormValues) => {
+    async (values: AgentsFunFormValues) => {
       try {
         setIsSubmitting(true);
 
@@ -119,7 +119,7 @@ export const MemeooorrAgentForm = ({
   const isFormDisabled = !isFormEnabled || isSubmitting;
 
   return (
-    <Form<MemeooorrFormValues>
+    <Form<AgentsFunFormValues>
       form={form}
       initialValues={initialValues}
       onFinish={onFinish}
@@ -158,7 +158,7 @@ export const MemeooorrAgentForm = ({
       <Divider style={{ margin: '8px 0' }} />
       <XAccountApiTokens
         showTokensRequiredMessage={
-          isMemeooorrFieldUpdateRequired && agentFormType !== 'create'
+          isAgentsFunFieldUpdateRequired && agentFormType !== 'create'
         }
       />
 

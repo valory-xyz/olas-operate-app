@@ -1,6 +1,6 @@
 export const AgentType = {
   PredictTrader: 'trader',
-  Memeooorr: 'memeooorr',
+  AgentsFun: 'memeooorr',
   AgentsFunCelo: 'agents-fun-celo',
   Modius: 'modius',
   Optimus: 'optimus',

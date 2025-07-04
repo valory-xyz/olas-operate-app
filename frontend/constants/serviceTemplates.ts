@@ -108,7 +108,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   hash: 'bafybeiardecju3sygh7hwuywka2bgjinbr7vrzob4mpdrookyfsbdmoq2m',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
-  description: `${KPI_DESC_PREFIX} Memeooorr @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
+  description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
   service_version: 'v0.8.0-alpha3',
   env_variables: {
     BASE_LEDGER_RPC: {
@@ -215,8 +215,8 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
  * Agents.fun Base template
  */
 const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.Memeooorr,
-  name: 'Memeooorr',
+  agentType: AgentType.AgentsFun,
+  name: 'Agents.Fun',
   home_chain: MiddlewareChain.BASE,
   configurations: {
     [MiddlewareChain.BASE]: {
@@ -245,7 +245,7 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
  */
 export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.AgentsFunCelo,
-  name: 'Memeooorr - Celo',
+  name: 'Agents.Fun - Celo',
   home_chain: MiddlewareChain.CELO,
   configurations: {
     [MiddlewareChain.CELO]: {
