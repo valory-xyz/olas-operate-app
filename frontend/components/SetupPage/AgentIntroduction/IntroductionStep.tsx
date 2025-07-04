@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 
 import { UnderConstruction } from '@/components/MainPage/sections/AlertSections/UnderConstruction';
-import { AgentType } from '@/enums/Agent';
 import { useServices } from '@/hooks/useServices';
 
 const { Title, Text } = Typography;
@@ -90,7 +89,7 @@ export const IntroductionStep = ({
   onPrev,
   onNext,
 }: IntroductionProps) => {
-  const { selectedAgentType } = useServices();
+  const { selectedAgentConfig } = useServices();
 
   return (
     <div style={{ overflow: 'hidden' }}>
@@ -100,7 +99,7 @@ export const IntroductionStep = ({
         <Flex vertical gap={24}>
           <AnimatedContent title={title} desc={desc} helper={helper} />
 
-          {selectedAgentType === AgentType.AgentsFun && <UnderConstruction />}
+          {selectedAgentConfig.isUnderConstruction && <UnderConstruction />}
 
           <Flex gap={12}>
             <Button

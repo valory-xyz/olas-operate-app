@@ -53,19 +53,20 @@ const Introduction = ({
     }
   }, [onboardingStep, goto, updateOnboardingStep]);
 
+  const buttonLabel = useMemo(() => {
+    if (onboardingStep === steps.length - 1) {
+      return isUnderConstruction ? 'Return to agent selection' : 'Set up agent';
+    }
+    return 'Continue';
+  }, [onboardingStep, steps.length, isUnderConstruction]);
+
   return (
     <IntroductionStep
       title={steps[onboardingStep].title}
       desc={steps[onboardingStep].desc}
       imgSrc={steps[onboardingStep].imgSrc}
       helper={steps[onboardingStep].helper}
-      btnText={
-        onboardingStep === steps.length - 1
-          ? isUnderConstruction
-            ? 'Return to agent selection'
-            : 'Set up agent'
-          : 'Continue'
-      }
+      btnText={buttonLabel}
       onPrev={onPreviousStep}
       onNext={onNextStep}
     />

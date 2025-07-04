@@ -1,7 +1,7 @@
 import { Button, Card, CardProps, Flex, Typography } from 'antd';
 import { entries } from 'lodash';
 import Image from 'next/image';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 
 import { AGENT_CONFIG } from '@/config/agents';
 import { COLOR } from '@/constants/colors';
@@ -39,34 +39,34 @@ const getCardStyles = (
   isCurrentAgent: boolean,
   isUnderConstruction?: boolean,
 ): CardProps['styles'] => {
-  const header: React.CSSProperties = {};
+  const baseHeader: React.CSSProperties = {
+    padding: 4,
+    minHeight: 0,
+    textAlign: 'center',
+    fontSize: 'inherit',
+    borderColor: 'transparent',
+  };
+
+  let header: React.CSSProperties = {};
+  if (isUnderConstruction) {
+    header = {
+      ...baseHeader,
+      backgroundColor: COLOR.GRAY_1,
+    };
+  } else if (isCurrentAgent) {
+    header = {
+      ...baseHeader,
+      backgroundColor: COLOR.PURPLE_LIGHT_2,
+      color: COLOR.PURPLE,
+    };
+  }
+
   const body: React.CSSProperties = {
     gap: 6,
     padding: isCurrentAgent ? '8px 16px 12px 16px' : '12px 16px',
     borderRadius: 'inherit',
     backgroundColor: isCurrentAgent ? COLOR.WHITE : undefined,
   };
-
-  if (isUnderConstruction) {
-    Object.assign(header, {
-      padding: 4,
-      minHeight: 0,
-      backgroundColor: COLOR.GRAY_1,
-      textAlign: 'center',
-      fontSize: 'inherit',
-      borderColor: 'transparent',
-    });
-  } else if (isCurrentAgent) {
-    Object.assign(header, {
-      padding: 4,
-      minHeight: 0,
-      backgroundColor: COLOR.PURPLE_LIGHT_2,
-      color: COLOR.PURPLE,
-      textAlign: 'center',
-      fontSize: 'inherit',
-      borderColor: 'transparent',
-    });
-  }
 
   return { header, body };
 };
@@ -144,18 +144,20 @@ const EachAgent = memo(
       agentType,
     ]);
 
+    const tabText = useMemo(() => {
+      return isUnderConstruction
+        ? 'Agent is under construction. Select to learn more'
+        : isCurrentAgent
+          ? 'Current agent'
+          : undefined;
+    }, [isUnderConstruction, isCurrentAgent]);
+
     return (
       <Card
         key={agentType}
         style={getCardStyle(isCurrentAgent, !!isUnderConstruction)}
         styles={getCardStyles(isCurrentAgent, isUnderConstruction)}
-        title={
-          isUnderConstruction
-            ? 'Agent is under construction. Select to learn more'
-            : isCurrentAgent
-              ? 'Current agent'
-              : undefined
-        }
+        title={tabText}
       >
         <Flex vertical>
           <Flex align="center" justify="space-between" className="mb-8">

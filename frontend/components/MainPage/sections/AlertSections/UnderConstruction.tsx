@@ -1,7 +1,6 @@
 import { Button, Flex, Typography } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
-import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
@@ -9,10 +8,10 @@ import { useServices } from '@/hooks/useServices';
 const { Text } = Typography;
 
 export const UnderConstruction = ({ moreInfo = false }) => {
-  const { selectedAgentType } = useServices();
+  const { selectedAgentConfig } = useServices();
   const { goto } = usePageState();
 
-  if (!(selectedAgentType === AgentType.AgentsFun)) return null;
+  if (!selectedAgentConfig.isUnderConstruction) return null;
 
   return (
     <CustomAlert
