@@ -12,7 +12,7 @@ export const UnderConstruction = ({ moreInfo = false }) => {
   const { selectedAgentType } = useServices();
   const { goto } = usePageState();
 
-  if (!(selectedAgentType === AgentType.Memeooorr)) return null;
+  if (!(selectedAgentType === AgentType.AgentsFun)) return null;
 
   return (
     <CustomAlert

@@ -100,7 +100,7 @@ export const IntroductionStep = ({
         <Flex vertical gap={24}>
           <AnimatedContent title={title} desc={desc} helper={helper} />
 
-          {selectedAgentType === AgentType.Memeooorr && <UnderConstruction />}
+          {selectedAgentType === AgentType.AgentsFun && <UnderConstruction />}
 
           <Flex gap={12}>
             <Button
