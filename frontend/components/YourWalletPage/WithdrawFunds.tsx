@@ -29,7 +29,7 @@ const getWithdrawMessage = (agentType: AgentType) => {
   switch (agentType) {
     case AgentType.PredictTrader:
       return `This will withdraw all OLAS and XDAI from your account. ${afterWithdrawing}`;
-    case AgentType.Memeooorr:
+    case AgentType.AgentsFun:
       return `This will withdraw all OLAS and ETH from your account. ${afterWithdrawing}`;
     case AgentType.Modius:
     case AgentType.Optimus:

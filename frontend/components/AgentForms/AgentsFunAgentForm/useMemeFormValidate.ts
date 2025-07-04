@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { validateGeminiApiKey, ValidationStatus } from '../common/validations';
 
-export type MemeooorrFieldValuesToValidate = {
+export type AgentsFunFieldValuesToValidate = {
   personaDescription: string;
   geminiApiKey: string;
   fireworksApiKey: string;
@@ -15,7 +15,7 @@ export const useMemeFormValidate = () => {
     useState<ValidationStatus>('unknown');
 
   const handleValidate = useCallback(
-    async (values: MemeooorrFieldValuesToValidate): Promise<boolean> => {
+    async (values: AgentsFunFieldValuesToValidate): Promise<boolean> => {
       setIsValidating(true);
 
       setGeminiApiKeyValidationStatus('unknown');

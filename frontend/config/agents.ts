@@ -53,6 +53,20 @@ export const AGENT_CONFIG: {
     displayName: 'Prediction agent',
     description: 'Participates in prediction markets.',
   },
+  [AgentType.AgentsFun]: {
+    isAgentEnabled: true,
+    isComingSoon: false,
+    requiresSetup: true,
+    name: 'Agents.fun agent',
+    evmHomeChainId: EvmChainId.Base,
+    middlewareHomeChainId: MiddlewareChain.BASE,
+    requiresAgentSafesOn: [EvmChainId.Base],
+    requiresMasterSafesOn: [EvmChainId.Base],
+    serviceApi: AgentsFunBaseService,
+    displayName: 'Agents.fun agent - Base',
+    description:
+      'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
+  },
   [AgentType.Modius]: {
     isAgentEnabled: true,
     isComingSoon: false,
@@ -86,21 +100,6 @@ export const AGENT_CONFIG: {
     displayName: 'Optimus agent',
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Optimus network.',
-  },
-  [AgentType.Memeooorr]: {
-    isUnderConstruction: true,
-    isAgentEnabled: true,
-    isComingSoon: false,
-    requiresSetup: true,
-    name: 'Agents.fun agent',
-    evmHomeChainId: EvmChainId.Base,
-    middlewareHomeChainId: MiddlewareChain.BASE,
-    requiresAgentSafesOn: [EvmChainId.Base],
-    requiresMasterSafesOn: [EvmChainId.Base],
-    serviceApi: AgentsFunBaseService,
-    displayName: 'Agents.fun agent - Base',
-    description:
-      'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
   },
   // TODO: celo (check each key)
   [AgentType.AgentsFunCelo]: {
