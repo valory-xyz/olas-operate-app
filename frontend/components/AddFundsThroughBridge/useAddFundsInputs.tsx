@@ -13,10 +13,11 @@ import { getTokenDetailsFromAddress } from '@/utils/middlewareHelpers';
 import { DefaultTokenAmount } from './types';
 import { useAddFundsGetBridgeRequirementsParams } from './useAddFundsGetBridgeRequirementsParams';
 
-export type GeneratedInput = {
+type GeneratedInput = {
   tokenAddress: Address;
   symbol: TokenSymbol;
   amount: number;
+  decimals: number;
 };
 
 /**
@@ -59,17 +60,18 @@ export const useAddFundsInputs = ({
   const amountsToReceive: GeneratedInput[] = useMemo(
     () =>
       uniq(tokenAddresses).map((tokenAddress: Address) => {
-        const symbol = getTokenDetailsFromAddress(
+        const details = getTokenDetailsFromAddress(
           toMiddlewareChain,
           tokenAddress,
-        ).symbol;
+        );
+        const { symbol, decimals } = details;
 
         // if no default token amounts are provided, set amount to 0.
         // user can update the amount later.
         const defaultAmount =
           defaultTokenAmounts?.find((token) => token.symbol === symbol)
             ?.amount ?? 0;
-        return { tokenAddress, symbol, amount: defaultAmount };
+        return { tokenAddress, symbol, decimals, amount: defaultAmount };
       }),
     [tokenAddresses, toMiddlewareChain, defaultTokenAmounts],
   );
@@ -83,9 +85,22 @@ export const useAddFundsInputs = ({
 
   const handleInputChange = useCallback(
     (symbol: TokenSymbol, value: number | null) => {
+      const token = amountsToReceive.find((t) => t.symbol === symbol);
+      const decimals = token?.decimals ?? 18;
+
+      if (typeof value === 'number' && !Number.isNaN(value)) {
+        // Get number of decimals in the value
+        const decimalPlaces = (value.toString().split('.')[1] || '').length;
+
+        // Do not update the input if the value has more
+        // decimal places than the token's decimals
+        if (decimalPlaces > decimals) return;
+      }
+
+      // Safe to update
       setInputs((prev) => ({ ...prev, [symbol]: value }));
     },
-    [],
+    [amountsToReceive],
   );
 
   // Generate bridge requirements params for the inputs provided by the user.
