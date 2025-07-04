@@ -8,28 +8,28 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { onDummyServiceCreation } from '@/utils/service';
 
 import {
-  MemeooorrAgentForm,
-  MemeooorrFormValues,
-} from '../../AgentForms/MemeooorrAgentForm';
+  AgentsFunAgentForm,
+  AgentsFunFormValues,
+} from '../../AgentForms/AgentsFunAgentForm';
 
 const { Text } = Typography;
 
-type MemeooorrAgentFormProps = { serviceTemplate: ServiceTemplate };
+type AgentsFunAgentFormProps = { serviceTemplate: ServiceTemplate };
 
-export const MemeooorrAgentSetup = ({
+export const AgentsFunAgentSetup = ({
   serviceTemplate,
-}: MemeooorrAgentFormProps) => {
+}: AgentsFunAgentFormProps) => {
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
   const onSubmit = useCallback(
-    async (values: MemeooorrFormValues & { fireworksApiEnabled: boolean }) => {
+    async (values: AgentsFunFormValues & { fireworksApiEnabled: boolean }) => {
       if (!defaultStakingProgramId) return;
 
       try {
         const overriddenServiceConfig: ServiceTemplate = {
           ...serviceTemplate,
-          description: `Memeooorr @${values.xUsername}`,
+          description: `Agents.Fun @${values.xUsername}`,
           env_variables: {
             ...serviceTemplate.env_variables,
             TWEEPY_CONSUMER_API_KEY: {
@@ -91,7 +91,7 @@ export const MemeooorrAgentSetup = ({
       </Text>
       <Divider style={{ margin: '8px 0' }} />
 
-      <MemeooorrAgentForm
+      <AgentsFunAgentForm
         isFormEnabled={!!defaultStakingProgramId}
         agentFormType="create"
         onSubmit={onSubmit}
