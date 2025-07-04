@@ -88,7 +88,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'backup-via-safe': true,
     'agent-settings': true,
     'bridge-onboarding': true,
-    'bridge-add-funds': false,
+    'bridge-add-funds': true,
   },
 });
 
