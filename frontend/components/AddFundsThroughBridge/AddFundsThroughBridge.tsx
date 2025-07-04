@@ -12,8 +12,8 @@ import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 
 import { Bridge } from '../Bridge/Bridge';
-import { NumberInput } from '../NumberInput';
 import { CardFlex } from '../styled/CardFlex';
+import { NumberInput } from '../ui/NumberInput';
 import { DefaultTokenAmount } from './types';
 import { useAddFundsInputs } from './useAddFundsInputs';
 
