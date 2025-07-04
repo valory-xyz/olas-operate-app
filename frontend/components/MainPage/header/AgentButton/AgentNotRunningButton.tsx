@@ -333,12 +333,13 @@ const createSafeIfNeeded = async ({
  */
 export const AgentNotRunningButton = () => {
   const { isDeployable, handleStart, buttonText } = useServiceDeployment();
+  const { selectedAgentConfig } = useServices();
 
   return (
     <Button
       type="primary"
       size="large"
-      disabled={!isDeployable}
+      disabled={!isDeployable || selectedAgentConfig.isUnderConstruction}
       onClick={isDeployable ? handleStart : undefined}
     >
       {buttonText}

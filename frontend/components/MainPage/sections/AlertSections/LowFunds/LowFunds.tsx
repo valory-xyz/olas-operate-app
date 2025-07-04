@@ -54,6 +54,8 @@ export const LowFunds = () => {
     balancesByChain,
   ]);
 
+  if (selectedAgentConfig.isUnderConstruction) return null;
+
   return (
     <>
       {isEmptyFundsVisible && (
