@@ -7,7 +7,7 @@ import { useServices } from '@/hooks/useServices';
 
 const { Text } = Typography;
 
-export const UnderConstruction = ({ moreInfo = false }) => {
+export const UnderConstruction = ({ showMoreInfo = false }) => {
   const { selectedAgentConfig } = useServices();
   const { goto } = usePageState();
 
@@ -24,9 +24,11 @@ export const UnderConstruction = ({ moreInfo = false }) => {
           <div className="text-sm">
             The agent is temporarily unavailable due to technical issues for an
             unspecified time.{' '}
-            {moreInfo && <span>You can withdraw agent funds at any time.</span>}
+            {showMoreInfo && (
+              <span>You can withdraw agent funds at any time.</span>
+            )}
           </div>
-          {!!moreInfo && (
+          {showMoreInfo && (
             <div className="w-fit">
               <Button
                 onClick={() => goto(Pages.ManageWallet)}

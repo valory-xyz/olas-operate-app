@@ -83,6 +83,9 @@ const useServiceDeployment = () => {
 
     if (!isAllStakingContractDetailsRecordLoaded) return false;
 
+    // If service is under construction, return false
+    if (selectedAgentConfig.isUnderConstruction) return false;
+
     // If staking contract is deprecated, return false
     if (selectedStakingProgramMeta?.deprecated) return false;
 
@@ -109,6 +112,8 @@ const useServiceDeployment = () => {
     isServicesLoading,
     isServiceRunning,
     isAllStakingContractDetailsRecordLoaded,
+    selectedAgentConfig.isUnderConstruction,
+    selectedStakingProgramMeta?.deprecated,
     hasEnoughServiceSlots,
     isServiceStaked,
     isAgentEvicted,
@@ -116,9 +121,8 @@ const useServiceDeployment = () => {
     selectedService,
     isInitialFunded,
     needsInitialFunding,
-    selectedStakingProgramMeta?.deprecated,
-    canStartAgent,
     isAgentsFunFieldUpdateRequired,
+    canStartAgent,
   ]);
 
   const pauseAllPolling = useCallback(() => {
@@ -333,13 +337,12 @@ const createSafeIfNeeded = async ({
  */
 export const AgentNotRunningButton = () => {
   const { isDeployable, handleStart, buttonText } = useServiceDeployment();
-  const { selectedAgentConfig } = useServices();
 
   return (
     <Button
       type="primary"
       size="large"
-      disabled={!isDeployable || selectedAgentConfig.isUnderConstruction}
+      disabled={!isDeployable}
       onClick={isDeployable ? handleStart : undefined}
     >
       {buttonText}

@@ -97,13 +97,13 @@ export const IntroductionStep = ({
 
       <div style={{ padding: '12px 0px 20px 0px' }}>
         <Flex vertical gap={24}>
-          <div style={{ padding: '0px 20px 0px 20px' }}>
+          <div style={{ padding: '0px 20px' }}>
             <AnimatedContent title={title} desc={desc} helper={helper} />
           </div>
 
           {selectedAgentConfig.isUnderConstruction && <UnderConstruction />}
 
-          <div style={{ padding: '0px 24px 0px 24px' }}>
+          <div style={{ padding: '0px 24px' }}>
             <Flex gap={12}>
               <Button
                 onClick={onPrev}
