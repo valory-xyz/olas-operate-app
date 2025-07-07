@@ -6,25 +6,24 @@ import {
   EnvProvisionType,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
-  MiddlewareLedger,
   SupportedMiddlewareChain,
 } from './enums';
 
 export type ServiceHash = string;
 export type ServiceConfigId = string;
 
-export type ServiceKeys = {
+type ServiceKeys = {
   address: Address;
   private_key: string;
   ledger: MiddlewareChain;
 };
 
-export type LedgerConfig = {
+type LedgerConfig = {
   rpc: string;
   chain: MiddlewareChain;
 };
 
-export type ChainData = {
+type ChainData = {
   instances?: Address[];
   token?: number;
   multisig?: Address;
@@ -47,7 +46,7 @@ export type ChainData = {
   };
 };
 
-export type EnvVariableAttributes = {
+type EnvVariableAttributes = {
   name: string;
   description: string;
   value: string;
@@ -75,22 +74,7 @@ export type MiddlewareServiceResponse = {
   env_variables: { [key: string]: EnvVariableAttributes };
 };
 
-export type ServiceTemplate = {
-  agentType: AgentType;
-  name: string; // Should be unique across all services
-  hash: string;
-  description: string;
-  image: string;
-  service_version: string;
-  home_chain: SupportedMiddlewareChain;
-  configurations: Partial<
-    Record<SupportedMiddlewareChain, ConfigurationTemplate>
-  >;
-  env_variables: { [key: string]: EnvVariableAttributes };
-  deploy?: boolean;
-};
-
-export type ConfigurationTemplate = {
+type ConfigurationTemplate = {
   staking_program_id?: StakingProgramId; // added on deployment
   nft: string;
   rpc?: string; // added on deployment
@@ -109,7 +93,22 @@ export type ConfigurationTemplate = {
   };
 };
 
-export type DeployedNodes = {
+export type ServiceTemplate = {
+  agentType: AgentType;
+  name: string; // Should be unique across all services
+  hash: string;
+  description: string;
+  image: string;
+  service_version: string;
+  home_chain: SupportedMiddlewareChain;
+  configurations: Partial<
+    Record<SupportedMiddlewareChain, ConfigurationTemplate>
+  >;
+  env_variables: { [key: string]: EnvVariableAttributes };
+  deploy?: boolean;
+};
+
+type DeployedNodes = {
   agent: string[];
   tendermint: string[];
 };
@@ -127,11 +126,10 @@ export type Deployment = {
   };
 };
 
-export type AppInfo = {
-  account?: {
-    key: Address;
-  };
-};
+enum MiddlewareLedger {
+  ETHEREUM = 0,
+  SOLANA = 1,
+}
 
 export type MiddlewareWalletResponse = {
   address: Address;

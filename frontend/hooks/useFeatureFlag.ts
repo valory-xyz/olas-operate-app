@@ -76,7 +76,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'backup-via-safe': false, // temporarily hidden until mode is available on safe https://app.safe.global/new-safe/create
     'agent-settings': true,
     'bridge-onboarding': true,
-    'bridge-add-funds': false,
+    'bridge-add-funds': true,
   },
   [AgentType.Optimus]: {
     'manage-wallet': true,
@@ -88,7 +88,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'backup-via-safe': true,
     'agent-settings': true,
     'bridge-onboarding': true,
-    'bridge-add-funds': false,
+    'bridge-add-funds': true,
   },
 });
 
