@@ -80,7 +80,7 @@ export const LastTransaction = ({ serviceConfigId }: LastTransactionProps) => {
         ellipsis
         type="secondary"
         className="text-xs pointer hover-underline"
-        style={{ maxWidth: 74 }}
+        style={{ maxWidth: 72 }}
         onClick={() =>
           window.open(
             `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[asMiddlewareChain(chainId)]}/tx/${transaction.hash}`,
