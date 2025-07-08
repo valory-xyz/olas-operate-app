@@ -146,12 +146,7 @@ const EachAgent = memo(
 
     const tabText = useMemo(() => {
       if (isUnderConstruction) {
-        return (
-          <>
-            Agent is under construction.{' '}
-            {!isSafeCreated && 'Select to learn more'}
-          </>
-        );
+        return 'Agent is under construction';
       }
 
       if (isCurrentAgent) {
@@ -159,7 +154,7 @@ const EachAgent = memo(
       }
 
       return undefined;
-    }, [isUnderConstruction, isCurrentAgent, isSafeCreated]);
+    }, [isUnderConstruction, isCurrentAgent]);
 
     return (
       <Card
