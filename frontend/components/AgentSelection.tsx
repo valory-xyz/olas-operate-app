@@ -148,8 +148,8 @@ const EachAgent = memo(
       if (isUnderConstruction) {
         return (
           <>
-            <span>Agent is under construction.</span>
-            {!isSafeCreated && <span> Select to learn more</span>}
+            Agent is under construction.{' '}
+            {!isSafeCreated && 'Select to learn more'}
           </>
         );
       }
