@@ -24,9 +24,7 @@ export const UnderConstruction = ({ showMoreInfo = false }) => {
           <div className="text-sm">
             The agent is temporarily unavailable due to technical issues for an
             unspecified time.{' '}
-            {showMoreInfo && (
-              <span>You can withdraw agent funds at any time.</span>
-            )}
+            {showMoreInfo && 'You can withdraw agent funds at any time.'}
           </div>
           {showMoreInfo && (
             <div className="w-fit">
