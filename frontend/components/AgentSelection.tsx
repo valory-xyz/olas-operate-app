@@ -145,12 +145,21 @@ const EachAgent = memo(
     ]);
 
     const tabText = useMemo(() => {
-      return isUnderConstruction
-        ? 'Agent is under construction. Select to learn more'
-        : isCurrentAgent
-          ? 'Current agent'
-          : undefined;
-    }, [isUnderConstruction, isCurrentAgent]);
+      if (isUnderConstruction) {
+        return (
+          <>
+            <span>Agent is under construction.</span>
+            {!isSafeCreated && <span> Select to learn more</span>}
+          </>
+        );
+      }
+
+      if (isCurrentAgent) {
+        return 'Current agent';
+      }
+
+      return undefined;
+    }, [isUnderConstruction, isCurrentAgent, isSafeCreated]);
 
     return (
       <Card
@@ -169,7 +178,9 @@ const EachAgent = memo(
             />
 
             <Button
-              type={isUnderConstruction ? 'default' : 'primary'}
+              type={
+                isUnderConstruction && !isSafeCreated ? 'default' : 'primary'
+              }
               onClick={handleSelectAgent}
               disabled={isServicesLoading || isMasterWalletLoading}
             >
