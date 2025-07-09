@@ -1,13 +1,14 @@
 import { Button, Card, Flex, Spin, Typography } from 'antd';
 import { kebabCase } from 'lodash';
 import Image from 'next/image';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
+import { TOKEN_CONFIG } from '@/config/tokens';
 import { MiddlewareChain } from '@/constants/chains';
 import { useServices } from '@/hooks/useServices';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
-import { balanceFormat } from '@/utils/numberFormatters';
+import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
 
@@ -34,31 +35,29 @@ type ShowBalancesProps = {
   onCancel: () => void;
 };
 
-const serviceSafeOlas = { balance: 1000 };
-const accruedServiceStakingRewards = 500;
-const reward = '200';
+const serviceSafeOlas = { balance: 100000 };
 
 export const ShowBalances = ({ onNext, onCancel }: ShowBalancesProps) => {
   const { isLoading: isServicesLoading, selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
+  const tokenConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
 
-  const serviceSafeRewards = useMemo(
-    () => [
-      {
-        title: 'OLAS',
-        value: `${balanceFormat(serviceSafeOlas?.balance ?? 0, 2)}`,
-      },
-      {
-        title: 'ETH',
-        value: `${balanceFormat(accruedServiceStakingRewards, 2)}`,
-      },
-      {
-        title: 'USDC',
-        value: reward,
-      },
-    ],
-    [],
-  );
+  const balancesList = Object.entries(tokenConfig).map(([symbol, token]) => {
+    const balance = serviceSafeOlas.balance; // TODO
+    const imageSrc =
+      symbol === 'ETH'
+        ? `/chains/ethereum-chain.png`
+        : `/tokens/${kebabCase(symbol)}-icon.png`;
+    return {
+      title: (
+        <Flex gap={8} align="center">
+          <Image src={imageSrc} width={20} height={20} alt={`${symbol} logo`} />
+          <Text>{token.symbol}</Text>
+        </Flex>
+      ),
+      value: `${formatUnitsToNumber(balance, token.decimals)}`,
+    };
+  });
 
   return (
     <Flex vertical gap={16}>
@@ -68,7 +67,7 @@ export const ShowBalances = ({ onNext, onCancel }: ShowBalancesProps) => {
           <Loader />
         ) : (
           <InfoBreakdownList
-            list={serviceSafeRewards.map((item) => ({
+            list={balancesList.map((item) => ({
               left: item.title,
               leftClassName: 'text-light text-sm',
               right: item.value,
