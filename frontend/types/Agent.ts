@@ -31,6 +31,8 @@ export type AgentConfig = {
    * (e.g. Persona for agentsFun)
    */
   requiresSetup: boolean;
+  /** Whether the agent has external funds available (eg. agent invests funds) */
+  hasExternalFunds: boolean;
 };
 
 export type AgentHealthCheckResponse = {

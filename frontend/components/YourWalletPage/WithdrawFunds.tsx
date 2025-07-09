@@ -84,7 +84,6 @@ export const WithdrawFunds = () => {
   const { isServiceStakedForMinimumDuration, selectedStakingContractDetails } =
     useActiveStakingContractDetails();
 
-  // state
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [withdrawAddress, setWithdrawAddress] = useState('');
   const [isWithdrawalLoading, setIsWithdrawalLoading] = useState(false);
