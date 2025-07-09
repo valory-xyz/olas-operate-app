@@ -11,7 +11,6 @@ import {
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { MiddlewareAccountIsSetup } from '@/client';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
@@ -31,6 +30,12 @@ import { FormFlex } from '../styled/FormFlex';
 
 const { Title } = Typography;
 
+enum MiddlewareAccountIsSetup {
+  True,
+  False,
+  Loading,
+  Error,
+}
 const SetupLoader = () => (
   <Flex
     justify="center"

@@ -25,7 +25,7 @@ export const SharedContext = createContext<{
   updateOnboardingStep: (step: number) => void;
 
   // agent specific checks
-  isMemeooorrFieldUpdateRequired: boolean;
+  isAgentsFunFieldUpdateRequired: boolean;
 
   // others
 }>({
@@ -39,7 +39,7 @@ export const SharedContext = createContext<{
   updateOnboardingStep: () => {},
 
   // agent specific checks
-  isMemeooorrFieldUpdateRequired: false,
+  isAgentsFunFieldUpdateRequired: false,
 
   // others
 });
@@ -67,15 +67,15 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
 
   // agent specific checks
   const { selectedAgentType, selectedService } = useServices();
-  const [isMemeooorrFieldUpdateRequired, setIsMemeooorrFieldUpdateRequired] =
+  const [isAgentsFunFieldUpdateRequired, setIsAgentsFunFieldUpdateRequired] =
     useState(false);
 
-  // Users with the Memeooorr agent type are required to update their
+  // Users with the AgentsFun agent type are required to update their
   // agent configurations to run the latest version of the agent.
   useEffect(() => {
     if (!selectedAgentType) return;
-    if (selectedAgentType !== AgentType.Memeooorr) {
-      setIsMemeooorrFieldUpdateRequired(false);
+    if (selectedAgentType !== AgentType.AgentsFun) {
+      setIsAgentsFunFieldUpdateRequired(false);
       return;
     }
     if (!selectedService) return;
@@ -88,7 +88,7 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
       'TWEEPY_ACCESS_TOKEN_SECRET',
     ].every((key) => selectedService.env_variables?.[key]?.value);
 
-    setIsMemeooorrFieldUpdateRequired(!areFieldsUpdated);
+    setIsAgentsFunFieldUpdateRequired(!areFieldsUpdated);
   }, [selectedAgentType, selectedService]);
 
   return (
@@ -103,7 +103,7 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
         updateOnboardingStep,
 
         // agent specific checks
-        isMemeooorrFieldUpdateRequired,
+        isAgentsFunFieldUpdateRequired,
       }}
     >
       {children}

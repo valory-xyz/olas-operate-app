@@ -3,6 +3,7 @@ import { Flex, Typography } from 'antd';
 import { NA } from '@/constants/symbols';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
 import {
   useActiveStakingContractDetails,
   useStakingContractDetails,
@@ -15,6 +16,7 @@ const { Text } = Typography;
 
 export const NoAvailableSlotsOnTheContract = () => {
   const { goto } = usePageState();
+  const { selectedAgentConfig } = useServices();
 
   const {
     isActiveStakingProgramLoaded,
@@ -34,6 +36,7 @@ export const NoAvailableSlotsOnTheContract = () => {
 
   if (hasEnoughServiceSlots) return null;
   if (isServiceStaked) return null;
+  if (selectedAgentConfig.isUnderConstruction) return null;
 
   return (
     <CustomAlert

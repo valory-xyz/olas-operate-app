@@ -9,7 +9,7 @@ import { BridgeRequest } from '@/types/Bridge';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
 
-import { getFromToken } from '../Bridge/utils';
+import { getFromToken, getTokenDecimal } from '../Bridge/utils';
 
 const fromChainConfig = ETHEREUM_TOKEN_CONFIG;
 
@@ -37,6 +37,7 @@ export const useAddFundsGetBridgeRequirementsParams = (
         fromChainConfig,
         toChainConfig,
       );
+      const tokenDecimal = getTokenDecimal(tokenAddress, toChainConfig);
 
       return {
         from: {
@@ -48,7 +49,7 @@ export const useAddFundsGetBridgeRequirementsParams = (
           chain: toMiddlewareChain,
           address: destinationAddress ?? masterSafe.address,
           token: tokenAddress,
-          amount: parseUnits(amount),
+          amount: parseUnits(amount, tokenDecimal),
         },
       };
     },

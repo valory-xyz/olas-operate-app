@@ -32,7 +32,7 @@ export const updateServiceIfNeeded = async (
 
   // Temporary: check if the service has incorrect name
   if (
-    serviceTemplate.agentType === AgentType.Memeooorr &&
+    serviceTemplate.agentType === AgentType.AgentsFun &&
     service.name !== serviceTemplate.name
   ) {
     partialServiceTemplate.name = serviceTemplate.name;

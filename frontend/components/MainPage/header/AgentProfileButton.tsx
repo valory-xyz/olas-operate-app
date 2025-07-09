@@ -15,14 +15,19 @@ import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 
-const AgentProfile = ({ onClick }: { onClick?: () => void }) => (
-  <Button
-    type="default"
-    size="large"
-    icon={<AgentProfileSvg />}
-    onClick={onClick}
-  />
-);
+const AgentProfile = ({ onClick }: { onClick?: () => void }) => {
+  const { selectedAgentConfig } = useServices();
+
+  return (
+    <Button
+      type="default"
+      size="large"
+      disabled={selectedAgentConfig.isUnderConstruction}
+      icon={<AgentProfileSvg />}
+      onClick={onClick}
+    />
+  );
+};
 
 const BabyDegenUi = ({ onClick }: { onClick: () => void }) => {
   const electronApi = useElectronApi();
@@ -157,10 +162,10 @@ export const AgentProfileButton = () => {
       return <AgentProfile onClick={handleAgentUiBrowserLinkClick} />;
     }
 
-    // base - memeooorr
+    // base - agentsFun
     if (
       middlewareChain === MiddlewareChain.BASE &&
-      selectedAgentType === AgentType.Memeooorr
+      selectedAgentType === AgentType.AgentsFun
     ) {
       return <AgentProfile onClick={handleAgentUiBrowserLinkClick} />;
     }

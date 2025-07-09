@@ -34,7 +34,7 @@ import { updateServiceIfNeeded } from '@/utils/service';
  */
 const useServiceDeployment = () => {
   const { showNotification } = useElectronApi();
-  const { isMemeooorrFieldUpdateRequired } = useSharedContext();
+  const { isAgentsFunFieldUpdateRequired } = useSharedContext();
 
   const { goto: gotoPage } = usePageState();
   const { masterWallets, masterSafes, masterEoa } = useMasterWalletContext();
@@ -83,6 +83,9 @@ const useServiceDeployment = () => {
 
     if (!isAllStakingContractDetailsRecordLoaded) return false;
 
+    // If service is under construction, return false
+    if (selectedAgentConfig.isUnderConstruction) return false;
+
     // If staking contract is deprecated, return false
     if (selectedStakingProgramMeta?.deprecated) return false;
 
@@ -99,8 +102,8 @@ const useServiceDeployment = () => {
     if (!selectedService && isInitialFunded) return !needsInitialFunding;
 
     // agent specific checks
-    // If the memeooorr field update is not completed, can't start the agent
-    if (isMemeooorrFieldUpdateRequired) return false;
+    // If the agentsFun field update is not completed, can't start the agent
+    if (isAgentsFunFieldUpdateRequired) return false;
 
     // allow starting based on refill requirements
     return canStartAgent;
@@ -109,6 +112,8 @@ const useServiceDeployment = () => {
     isServicesLoading,
     isServiceRunning,
     isAllStakingContractDetailsRecordLoaded,
+    selectedAgentConfig.isUnderConstruction,
+    selectedStakingProgramMeta?.deprecated,
     hasEnoughServiceSlots,
     isServiceStaked,
     isAgentEvicted,
@@ -116,9 +121,8 @@ const useServiceDeployment = () => {
     selectedService,
     isInitialFunded,
     needsInitialFunding,
-    selectedStakingProgramMeta?.deprecated,
+    isAgentsFunFieldUpdateRequired,
     canStartAgent,
-    isMemeooorrFieldUpdateRequired,
   ]);
 
   const pauseAllPolling = useCallback(() => {
