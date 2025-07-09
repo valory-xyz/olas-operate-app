@@ -22,6 +22,8 @@ export type AgentConfig = {
     | typeof AgentsFunBaseService;
   displayName: string;
   description: string;
+  /** Adds under construction tab above card */
+  isUnderConstruction?: boolean;
   /** Whether the agent is enabled and can be shown in the UI */
   isAgentEnabled: boolean;
   /** If agent is enabled but not yet available to use */

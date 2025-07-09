@@ -3,6 +3,7 @@ import { Button, Flex, Typography } from 'antd';
 import { CustomAlert } from '@/components/Alert';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
 import { useSharedContext } from '@/hooks/useSharedContext';
 
 const { Text } = Typography;
@@ -10,8 +11,10 @@ const { Text } = Typography;
 export const UpdateAgentConfiguration = () => {
   const { goto } = usePageState();
   const { isAgentsFunFieldUpdateRequired } = useSharedContext();
+  const { selectedAgentConfig } = useServices();
 
   if (!isAgentsFunFieldUpdateRequired) return null;
+  if (selectedAgentConfig.isUnderConstruction) return null;
 
   return (
     <CustomAlert
