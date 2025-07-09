@@ -6,7 +6,7 @@ import { AgentProfileSvg } from '@/components/custom-icons/AgentProfile';
 import { useYourWallet } from '@/components/YourWalletPage/useYourWallet';
 import { NA } from '@/constants/symbols';
 import { GEMINI_API_URL } from '@/constants/urls';
-import { MODAL_WIDTH } from '@/constants/width';
+import { MESSAGE_WIDTH, MODAL_WIDTH } from '@/constants/width';
 import { useAgentUi } from '@/context/AgentUiProvider';
 import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
@@ -15,21 +15,40 @@ import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 
-const AgentProfile = ({ onClick }: { onClick?: () => void }) => {
+type AgentProfileProps = {
+  onClick?: () => void;
+  renderContainer?: (props: {
+    onClick?: () => void;
+    disabled?: boolean;
+  }) => ReactNode;
+};
+
+const AgentProfileButton = ({
+  onClick,
+  renderContainer,
+}: AgentProfileProps) => {
   const { selectedAgentConfig } = useServices();
+  const disabled = selectedAgentConfig.isUnderConstruction;
+
+  if (renderContainer) {
+    return renderContainer({ onClick, disabled });
+  }
 
   return (
     <Button
       type="default"
       size="large"
-      disabled={selectedAgentConfig.isUnderConstruction}
+      disabled={disabled}
       icon={<AgentProfileSvg />}
       onClick={onClick}
     />
   );
 };
 
-const BabyDegenUi = ({ onClick }: { onClick: () => void }) => {
+const BabyDegenUi = ({
+  onClick,
+  renderContainer,
+}: { onClick: () => void } & Pick<AgentProfileProps, 'renderContainer'>) => {
   const electronApi = useElectronApi();
   const { selectedService, selectedAgentType } = useServices();
   const { goto } = usePageState();
@@ -86,7 +105,7 @@ const BabyDegenUi = ({ onClick }: { onClick: () => void }) => {
   return (
     <>
       <a onClick={handleAgentProfileClick} className="text-sm" href="#">
-        <AgentProfile />
+        <AgentProfileButton renderContainer={renderContainer} />
       </a>
       <Modal
         title="Provide Gemini API Key"
@@ -123,7 +142,9 @@ const BabyDegenUi = ({ onClick }: { onClick: () => void }) => {
   );
 };
 
-export const AgentProfileButton = () => {
+export const AgentProfile = ({
+  renderContainer,
+}: Pick<AgentProfileProps, 'renderContainer'>) => {
   const { middlewareChain, serviceSafe } = useYourWallet();
   const { selectedAgentType, selectedService } = useServices();
   const { deploymentStatus } = useService(selectedService?.service_config_id);
@@ -136,9 +157,12 @@ export const AgentProfileButton = () => {
     }
 
     if (deploymentStatus !== MiddlewareDeploymentStatus.DEPLOYED) {
-      message.error(
-        'Please run the agent first, before attempting to view the agent UI',
-      );
+      message.open({
+        type: 'error',
+        content:
+          'Please run the agent first, before attempting to view the agent UI',
+        style: { maxWidth: MESSAGE_WIDTH, margin: '0 auto' },
+      });
       return;
     }
 
@@ -151,6 +175,14 @@ export const AgentProfileButton = () => {
     }
   }, [deploymentStatus, goto, show]);
 
+  const commonProps = useMemo(
+    () => ({
+      onClick: handleAgentUiBrowserLinkClick,
+      renderContainer,
+    }),
+    [handleAgentUiBrowserLinkClick, renderContainer],
+  );
+
   const agentProfileLink: ReactNode | null = useMemo(() => {
     if (!serviceSafe?.address) return null;
 
@@ -159,7 +191,7 @@ export const AgentProfileButton = () => {
       middlewareChain === MiddlewareChain.GNOSIS &&
       selectedAgentType === AgentType.PredictTrader
     ) {
-      return <AgentProfile onClick={handleAgentUiBrowserLinkClick} />;
+      return <AgentProfileButton {...commonProps} />;
     }
 
     // base - agentsFun
@@ -167,7 +199,7 @@ export const AgentProfileButton = () => {
       middlewareChain === MiddlewareChain.BASE &&
       selectedAgentType === AgentType.AgentsFun
     ) {
-      return <AgentProfile onClick={handleAgentUiBrowserLinkClick} />;
+      return <AgentProfileButton {...commonProps} />;
     }
 
     // mode - modius
@@ -175,7 +207,7 @@ export const AgentProfileButton = () => {
       middlewareChain === MiddlewareChain.MODE &&
       selectedAgentType === AgentType.Modius
     ) {
-      return <BabyDegenUi onClick={handleAgentUiBrowserLinkClick} />;
+      return <BabyDegenUi {...commonProps} />;
     }
 
     // optimism - optimus
@@ -183,16 +215,11 @@ export const AgentProfileButton = () => {
       middlewareChain === MiddlewareChain.OPTIMISM &&
       selectedAgentType === AgentType.Optimus
     ) {
-      return <BabyDegenUi onClick={handleAgentUiBrowserLinkClick} />;
+      return <BabyDegenUi {...commonProps} />;
     }
 
     return null;
-  }, [
-    serviceSafe,
-    handleAgentUiBrowserLinkClick,
-    middlewareChain,
-    selectedAgentType,
-  ]);
+  }, [serviceSafe, middlewareChain, selectedAgentType, commonProps]);
 
   return agentProfileLink;
 };
