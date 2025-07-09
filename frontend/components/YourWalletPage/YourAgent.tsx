@@ -34,7 +34,7 @@ import {
   SignerTitle,
 } from './Titles';
 import { useYourWallet } from './useYourWallet';
-import { WithdrawFunds } from './WithdrawFunds';
+import { WithdrawFunds } from './WithdrawFunds/WithdrawFunds';
 
 const NftCard = styled(Card)`
   .ant-card-body {
