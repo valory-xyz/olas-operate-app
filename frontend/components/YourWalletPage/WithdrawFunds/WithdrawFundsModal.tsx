@@ -6,6 +6,7 @@ import { AgentType } from '@/enums/Agent';
 import { useServices } from '@/hooks/useServices';
 
 import { CustomAlert } from '../../Alert';
+import { ShowBalances } from './ShowBalances';
 
 const { Text } = Typography;
 
@@ -57,6 +58,38 @@ const WithdrawModalSteps = {
   WITHDRAW_FUNDS: 'WITHDRAW_FUNDS',
 };
 
+type FundsMayBeLockedMessageProps = {
+  onNext: () => void;
+  onCancel: () => void;
+};
+
+const FundsMayBeLocked = ({
+  onNext,
+  onCancel,
+}: FundsMayBeLockedMessageProps) => (
+  <>
+    <Text>{partOfFundsMayBeLockedMessage}</Text>
+    <Flex vertical gap={8}>
+      <AgentProfile
+        renderContainer={({ disabled, onClick }) => (
+          <Button
+            disabled={disabled}
+            onClick={onClick}
+            type="primary"
+            className="w-full"
+          >
+            Withdraw locked funds
+          </Button>
+        )}
+      />
+      <Button onClick={onNext} type="primary" ghost>
+        I have withdrawn my locked funds
+      </Button>
+      <Button onClick={onCancel}>Cancel</Button>
+    </Flex>
+  </>
+);
+
 type WithdrawFundsModalProps = {
   isWithdrawing?: boolean;
   onClose: () => void;
@@ -79,6 +112,8 @@ export const WithdrawFundsModal = ({
 
   const handleNext = useCallback(() => {
     if (withdrawStep === WithdrawModalSteps.FUNDS_MAY_BE_LOCKED) {
+      setWithdrawStep(WithdrawModalSteps.SHOW_BALANCES);
+    } else if (withdrawStep === WithdrawModalSteps.SHOW_BALANCES) {
       setWithdrawStep(WithdrawModalSteps.WITHDRAW_FUNDS);
     } else if (withdrawStep === WithdrawModalSteps.WITHDRAW_FUNDS) {
       onWithdraw(withdrawAddress);
@@ -114,29 +149,9 @@ export const WithdrawFundsModal = ({
     >
       <Flex vertical gap={16} style={{ marginTop: 12 }}>
         {withdrawStep === WithdrawModalSteps.FUNDS_MAY_BE_LOCKED ? (
-          <>
-            <Text>{partOfFundsMayBeLockedMessage}</Text>
-            <Flex vertical gap={8}>
-              <AgentProfile
-                renderContainer={({ disabled, onClick }) => (
-                  <Button
-                    disabled={disabled}
-                    onClick={onClick}
-                    type="primary"
-                    className="w-full"
-                  >
-                    Withdraw locked funds
-                  </Button>
-                )}
-              />
-              <Button onClick={handleNext} type="primary" ghost>
-                I have withdrawn my locked funds
-              </Button>
-              <Button onClick={handleCancel}>Cancel</Button>
-            </Flex>
-          </>
+          <FundsMayBeLocked onNext={handleNext} onCancel={handleCancel} />
         ) : withdrawStep === WithdrawModalSteps.SHOW_BALANCES ? (
-          <>2</>
+          <ShowBalances onNext={handleNext} onCancel={handleCancel} />
         ) : withdrawStep === WithdrawModalSteps.WITHDRAW_FUNDS ? (
           <>
             <ToProceedMessage />
@@ -171,6 +186,5 @@ export const WithdrawFundsModal = ({
 
 /**
  * TODO
- * - to open agent profile
  * - to display balances
  */
