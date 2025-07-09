@@ -15,18 +15,20 @@ import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 
-type AgentProfileProps = {
+type RenderContainerProps = (props: {
   onClick?: () => void;
-  renderContainer?: (props: {
-    onClick?: () => void;
-    disabled?: boolean;
-  }) => ReactNode;
+  disabled?: boolean;
+}) => ReactNode;
+
+type AgentProfileButtonProps = {
+  onClick?: () => void;
+  renderContainer?: RenderContainerProps;
 };
 
 const AgentProfileButton = ({
   onClick,
   renderContainer,
-}: AgentProfileProps) => {
+}: AgentProfileButtonProps) => {
   const { selectedAgentConfig } = useServices();
   const disabled = selectedAgentConfig.isUnderConstruction;
 
@@ -45,10 +47,12 @@ const AgentProfileButton = ({
   );
 };
 
-const BabyDegenUi = ({
-  onClick,
-  renderContainer,
-}: { onClick: () => void } & Pick<AgentProfileProps, 'renderContainer'>) => {
+type BabyDegenUiProps = {
+  onClick: () => void;
+  renderContainer?: RenderContainerProps;
+};
+
+const BabyDegenUi = ({ onClick, renderContainer }: BabyDegenUiProps) => {
   const electronApi = useElectronApi();
   const { selectedService, selectedAgentType } = useServices();
   const { goto } = usePageState();
@@ -142,9 +146,13 @@ const BabyDegenUi = ({
   );
 };
 
-export const AgentProfile = ({
-  renderContainer,
-}: Pick<AgentProfileProps, 'renderContainer'>) => {
+type AgentProfileProps = { renderContainer?: RenderContainerProps };
+
+/**
+ * Displays the agent profile container based on the selected agent type and middleware chain.
+ * And provides a link to the agent UI.
+ */
+export const AgentProfile = ({ renderContainer }: AgentProfileProps) => {
   const { middlewareChain, serviceSafe } = useYourWallet();
   const { selectedAgentType, selectedService } = useServices();
   const { deploymentStatus } = useService(selectedService?.service_config_id);

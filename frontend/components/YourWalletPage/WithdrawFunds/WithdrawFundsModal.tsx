@@ -1,6 +1,7 @@
 import { Button, Flex, Input, Modal, Typography } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import { AgentProfile } from '@/components/AgentProfile';
 import { AgentType } from '@/enums/Agent';
 import { useServices } from '@/hooks/useServices';
 
@@ -116,9 +117,18 @@ export const WithdrawFundsModal = ({
           <>
             <Text>{partOfFundsMayBeLockedMessage}</Text>
             <Flex vertical gap={8}>
-              <Button onClick={handleNext} type="primary">
-                Withdraw locked funds
-              </Button>
+              <AgentProfile
+                renderContainer={({ disabled, onClick }) => (
+                  <Button
+                    disabled={disabled}
+                    onClick={onClick}
+                    type="primary"
+                    className="w-full"
+                  >
+                    Withdraw locked funds
+                  </Button>
+                )}
+              />
               <Button onClick={handleNext} type="primary" ghost>
                 I have withdrawn my locked funds
               </Button>
