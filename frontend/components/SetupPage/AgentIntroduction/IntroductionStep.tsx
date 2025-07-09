@@ -3,6 +3,9 @@ import { Button, Flex, Typography } from 'antd';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 
+import { UnderConstruction } from '@/components/MainPage/sections/AlertSections/UnderConstruction';
+import { useServices } from '@/hooks/useServices';
+
 const { Title, Text } = Typography;
 
 export type OnboardingStep = {
@@ -86,25 +89,33 @@ export const IntroductionStep = ({
   onPrev,
   onNext,
 }: IntroductionProps) => {
+  const { selectedAgentConfig } = useServices();
+
   return (
     <div style={{ overflow: 'hidden' }}>
       <AnimatedImage imgSrc={`/${imgSrc}.png`} alt={title} />
 
-      <div style={{ padding: '12px 24px 20px 24px' }}>
+      <div style={{ padding: '12px 0px 20px 0px' }}>
         <Flex vertical gap={24}>
-          <AnimatedContent title={title} desc={desc} helper={helper} />
+          <div style={{ padding: '0px 20px' }}>
+            <AnimatedContent title={title} desc={desc} helper={helper} />
+          </div>
 
-          <Flex gap={12}>
-            <Button
-              onClick={onPrev}
-              size="large"
-              style={{ minWidth: 40 }}
-              icon={<LeftOutlined />}
-            />
-            <Button onClick={onNext} type="primary" block size="large">
-              {btnText}
-            </Button>
-          </Flex>
+          {selectedAgentConfig.isUnderConstruction && <UnderConstruction />}
+
+          <div style={{ padding: '0px 24px' }}>
+            <Flex gap={12}>
+              <Button
+                onClick={onPrev}
+                size="large"
+                style={{ minWidth: 40 }}
+                icon={<LeftOutlined />}
+              />
+              <Button onClick={onNext} type="primary" block size="large">
+                {btnText}
+              </Button>
+            </Flex>
+          </div>
         </Flex>
       </div>
     </div>
