@@ -32,7 +32,7 @@ export const AllEvmChainId = {
  * @warning The value doesn’t actually represent the real chain name;
  * it reflects the open-autonomy internal name instead.
  */
-export const MiddlewareChain = {
+export const MiddlewareChainMap = {
   ETHEREUM: 'ethereum',
   GOERLI: 'goerli',
   GNOSIS: 'gnosis',
@@ -42,12 +42,13 @@ export const MiddlewareChain = {
   MODE: 'mode',
   CELO: 'celo',
 } as const;
+export type MiddlewareChain = ValueOf<typeof MiddlewareChainMap>;
 
 const MiddlewareChainsMap = {
-  gnosis: MiddlewareChain.GNOSIS,
-  optimism: MiddlewareChain.OPTIMISM,
-  base: MiddlewareChain.BASE,
-  mode: MiddlewareChain.MODE,
-  celo: MiddlewareChain.CELO,
+  gnosis: MiddlewareChainMap.GNOSIS,
+  optimism: MiddlewareChainMap.OPTIMISM,
+  base: MiddlewareChainMap.BASE,
+  mode: MiddlewareChainMap.MODE,
+  celo: MiddlewareChainMap.CELO,
 } as const;
 export type SupportedMiddlewareChain = ValueOf<typeof MiddlewareChainsMap>;
