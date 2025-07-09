@@ -116,6 +116,9 @@ export const WithdrawFundsModal = ({
           <>
             <Text>{partOfFundsMayBeLockedMessage}</Text>
             <Flex vertical gap={8}>
+              <Button onClick={handleNext} type="primary">
+                Withdraw locked funds
+              </Button>
               <Button onClick={handleNext} type="primary" ghost>
                 I have withdrawn my locked funds
               </Button>

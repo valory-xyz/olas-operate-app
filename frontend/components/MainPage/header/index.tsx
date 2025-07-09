@@ -40,7 +40,6 @@ export const MainHeader = () => {
   const handleModalClose = useCallback(() => setIsFirstRunModalOpen(false), []);
 
   useSetupTrayIcon();
-  // TODO: support loading state
 
   return (
     <CardSection gap={6} padding="8px 24px" justify="space-between">

@@ -93,12 +93,8 @@ export const WithdrawFunds = () => {
           message.error(response.error);
         } else {
           message.success('Transaction complete.');
-
-          // refetch and keep up to date
-          await refetchDetails();
-
-          // Close modal after withdrawal is successful
-          handleCancel();
+          await refetchDetails(); // refetch and keep up to date
+          handleCancel(); // Close modal after withdrawal is successful
         }
       } catch (error) {
         message.error('Failed to withdraw funds. Please try again.');
@@ -115,7 +111,7 @@ export const WithdrawFunds = () => {
       return 'Available soon!';
     }
 
-    // countdown to withdrawal
+    // countdown for withdrawal
     if (!isServiceStakedForMinimumDuration) {
       return `${minDurationMessage} ${countdownDisplay}`;
     }
