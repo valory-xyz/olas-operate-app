@@ -6,6 +6,9 @@ import React from 'react';
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { MiddlewareChain } from '@/constants/chains';
+import { NA } from '@/constants/symbols';
+import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useServices } from '@/hooks/useServices';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
@@ -35,35 +38,48 @@ type ShowBalancesProps = {
   onCancel: () => void;
 };
 
-const serviceSafeOlas = { balance: 100000 };
-
 export const ShowBalances = ({ onNext, onCancel }: ShowBalancesProps) => {
   const { isLoading: isServicesLoading, selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const tokenConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
+  const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
+    useBalanceContext();
 
-  const balancesList = Object.entries(tokenConfig).map(([symbol, token]) => {
-    const balance = serviceSafeOlas.balance; // TODO
-    const imageSrc =
-      symbol === 'ETH'
-        ? `/chains/ethereum-chain.png`
-        : `/tokens/${kebabCase(symbol)}-icon.png`;
-    return {
-      title: (
-        <Flex gap={8} align="center">
-          <Image src={imageSrc} width={20} height={20} alt={`${symbol} logo`} />
-          <Text>{token.symbol}</Text>
-        </Flex>
-      ),
-      value: `${formatUnitsToNumber(balance, token.decimals)}`,
-    };
-  });
+  const balancesList = Object.entries(tokenConfig).map(
+    ([untypedSymbol, token]) => {
+      const symbol = untypedSymbol as TokenSymbol;
+      const imageSrc =
+        symbol === TokenSymbolMap.ETH
+          ? `/chains/ethereum-chain.png`
+          : `/tokens/${kebabCase(symbol)}-icon.png`;
+
+      const balance = (() => {
+        if (symbol === TokenSymbolMap.OLAS) return totalStakedOlasBalance;
+        return 0; // TODO
+      })();
+
+      return {
+        title: (
+          <Flex gap={8} align="center">
+            <Image
+              src={imageSrc}
+              width={20}
+              height={20}
+              alt={`${symbol} logo`}
+            />
+            <Text>{token.symbol}</Text>
+          </Flex>
+        ),
+        value: balance ? `${formatUnitsToNumber(balance, token.decimals)}` : NA,
+      };
+    },
+  );
 
   return (
     <Flex vertical gap={16}>
       <Text className="text-sm text-light">Available funds to withdraw</Text>
       <Card size="small" title={<ChainName chainName={toMiddlewareChain} />}>
-        {isServicesLoading ? (
+        {isServicesLoading || isBalanceLoading ? (
           <Loader />
         ) : (
           <InfoBreakdownList
@@ -72,7 +88,7 @@ export const ShowBalances = ({ onNext, onCancel }: ShowBalancesProps) => {
               leftClassName: 'text-light text-sm',
               right: item.value,
             }))}
-            parentStyle={{ gap: 8 }}
+            parentStyle={{ gap: 12 }}
           />
         )}
       </Card>
