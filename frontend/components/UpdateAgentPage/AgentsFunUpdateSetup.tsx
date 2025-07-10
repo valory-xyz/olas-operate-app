@@ -8,13 +8,13 @@ import { Nullable } from '@/types/Util';
 import { getXUsername } from '@/utils/x';
 
 import {
-  MemeooorrAgentForm,
-  MemeooorrFormValues,
-} from '../AgentForms/MemeooorrAgentForm';
+  AgentsFunAgentForm,
+  AgentsFunFormValues,
+} from '../AgentForms/AgentsFunAgentForm';
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
-export const MemeooorrUpdateSetup = () => {
+export const AgentsFunUpdateSetup = () => {
   const { goto } = usePageState();
   const { selectedService } = useServices();
   const {
@@ -24,7 +24,7 @@ export const MemeooorrUpdateSetup = () => {
     confirmUpdateModal: confirmModal,
   } = useContext(UpdateAgentContext);
 
-  const initialValues = useMemo<Nullable<MemeooorrFormValues>>(() => {
+  const initialValues = useMemo<Nullable<AgentsFunFormValues>>(() => {
     if (!selectedService?.env_variables) return null;
 
     const envEntries = Object.entries(selectedService.env_variables);
@@ -48,7 +48,7 @@ export const MemeooorrUpdateSetup = () => {
         acc.xAccessTokenSecret = value;
       }
       return acc;
-    }, {} as MemeooorrFormValues);
+    }, {} as AgentsFunFormValues);
     values.xUsername = getXUsername(selectedService) || '';
     return values;
   }, [selectedService]);
@@ -78,7 +78,7 @@ export const MemeooorrUpdateSetup = () => {
 
   return (
     <CardLayout onClickBack={handleClickBack}>
-      <MemeooorrAgentForm
+      <AgentsFunAgentForm
         form={form}
         isFormEnabled={isEditing}
         initialValues={initialValues}

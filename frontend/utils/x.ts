@@ -6,7 +6,7 @@ import { MiddlewareServiceResponse, ServiceTemplate } from '@/client';
  * @returns The X username or null if not found.
  *
  * @example
- * getXUsername({ description: "Memeooorr @exampleUser" }) => "exampleUser"
+ * getXUsername({ description: "Agents.Fun @exampleUser" }) => "exampleUser"
  */
 export const getXUsername = (
   service?: ServiceTemplate | MiddlewareServiceResponse,

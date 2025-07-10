@@ -16,7 +16,7 @@ export type ElectronStore = {
 
   // Each agent has its own settings
   [AgentType.PredictTrader]?: AgentSettings;
-  [AgentType.Memeooorr]?: AgentSettings;
+  [AgentType.AgentsFun]?: AgentSettings;
   [AgentType.AgentsFunCelo]?: AgentSettings;
   [AgentType.Modius]?: AgentSettings & {
     isProfileWarningDisplayed: boolean;

@@ -3,6 +3,20 @@ import { AddressZero } from '@/constants/address';
 import { Address } from '@/types/Address';
 import { areAddressesEqual } from '@/utils/address';
 
+/** Get the token details from the token address */
+const getTokenDetails = (tokenAddress: string, chainConfig: ChainTokenConfig) =>
+  Object.values(chainConfig).find((configToken) =>
+    areAddressesEqual(configToken.address, tokenAddress),
+  );
+
+const getTokenSymbol = (tokenAddress: string, chainConfig: ChainTokenConfig) =>
+  getTokenDetails(tokenAddress, chainConfig)?.symbol;
+
+export const getTokenDecimal = (
+  tokenAddress: string,
+  chainConfig: ChainTokenConfig,
+) => getTokenDetails(tokenAddress, chainConfig)?.decimals;
+
 /**
  * Helper to get source token address.
  *
@@ -14,14 +28,9 @@ export const getFromToken = (
   fromChainConfig: ChainTokenConfig,
   toChainConfig: ChainTokenConfig,
 ): Address => {
-  if (tokenAddress.toLowerCase() === AddressZero) {
-    return AddressZero;
-  }
+  if (areAddressesEqual(tokenAddress, AddressZero)) return AddressZero;
 
-  const tokenSymbol = Object.values(toChainConfig).find((configToken) =>
-    areAddressesEqual(configToken.address, tokenAddress),
-  )?.symbol;
-
+  const tokenSymbol = getTokenSymbol(tokenAddress, toChainConfig);
   if (!tokenSymbol || !fromChainConfig[tokenSymbol]?.address) {
     throw new Error(
       `Failed to get source token for the destination token: ${tokenAddress}`,

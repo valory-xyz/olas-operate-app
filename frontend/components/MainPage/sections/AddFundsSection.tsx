@@ -195,6 +195,7 @@ const AddFundsBy = forwardRef<HTMLDivElement>((_, ref) => {
 AddFundsBy.displayName = 'AddFundsBy';
 
 export const AddFundsSection = () => {
+  const { selectedAgentConfig } = useServices();
   const fundSectionRef = useRef<HTMLDivElement>(null);
   const [isAddFundsVisible, setIsAddFundsVisible] = useState(false);
 
@@ -212,8 +213,9 @@ export const AddFundsSection = () => {
         <Button
           type="primary"
           size="large"
-          ghost
+          ghost={!selectedAgentConfig.isUnderConstruction}
           block
+          disabled={!!selectedAgentConfig.isUnderConstruction}
           onClick={isAddFundsVisible ? closeAddFunds : addFunds}
         >
           {isAddFundsVisible ? 'Close instructions' : 'Add funds'}

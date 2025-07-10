@@ -6,6 +6,7 @@ import { AvoidSuspensionAlert } from './AvoidSuspensionAlert';
 import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { LowFunds } from './LowFunds/LowFunds';
 import { NoAvailableSlotsOnTheContract } from './NoAvailableSlotsOnTheContract';
+import { UnderConstruction } from './UnderConstruction';
 import { UpdateAgentConfiguration } from './UpdateAgentConfiguration';
 import { UpdateAvailableAlert } from './UpdateAvailableAlert';
 
@@ -15,6 +16,7 @@ export const AlertSections = () => {
     <CardSection vertical>
       <UpdateAvailableAlert />
       {isBackupViaSafeEnabled && <AddBackupWalletAlert />}
+      <UnderConstruction showMoreInfo />
       <ContractDeprecatedAlert />
       <AvoidSuspensionAlert />
       <UpdateAgentConfiguration />

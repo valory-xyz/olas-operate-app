@@ -16,7 +16,7 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeievvf3663md525u2khoxjlufgp6hsf6vf6kah4xqckksj5nmtkg5q',
+  hash: 'bafybeidiprm5pik5mkmmnyj7skxziqmjn6u2t77476rqostwep3lxp7dqq',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
@@ -88,8 +88,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     TOOLS_ACCURACY_HASH: {
       name: 'Tools accuracy hash',
       description: '',
-      // Use the latest value from https://github.com/valory-xyz/quickstart/blob/main/configs/config_predict_trader.json#L86
-      value: 'Qmeifg8mfa9CQuiHppE4rxJLyjfbhw7SetvoUURQJ8jpie',
+      value: 'QmbyrbZkQEUYHkXzwBqkmRSNqzcQLS7QpebB2xgjjBR1zP',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
@@ -108,7 +107,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   hash: 'bafybeiardecju3sygh7hwuywka2bgjinbr7vrzob4mpdrookyfsbdmoq2m',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
-  description: `${KPI_DESC_PREFIX} Memeooorr @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
+  description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
   service_version: 'v0.8.0-alpha3',
   env_variables: {
     BASE_LEDGER_RPC: {
@@ -215,8 +214,8 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
  * Agents.fun Base template
  */
 const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.Memeooorr,
-  name: 'Memeooorr',
+  agentType: AgentType.AgentsFun,
+  name: 'Agents.Fun',
   home_chain: MiddlewareChain.BASE,
   configurations: {
     [MiddlewareChain.BASE]: {
@@ -245,7 +244,7 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
  */
 export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.AgentsFunCelo,
-  name: 'Memeooorr - Celo',
+  name: 'Agents.Fun - Celo',
   home_chain: MiddlewareChain.CELO,
   configurations: {
     [MiddlewareChain.CELO]: {
@@ -272,7 +271,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version'
 > = {
-  hash: 'bafybeihujfpbze4lno3wb33dx27fuljcmg4sp7t72w7cpwc5zaeo7uvs2a',
+  hash: 'bafybeidtdw7ovm6nyosxk7hrzbq2hpp3mjhrhghibl6emmzkpij7my337a',
   service_version: 'v0.3.15',
 };
 

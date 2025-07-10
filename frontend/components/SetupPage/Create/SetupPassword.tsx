@@ -1,11 +1,13 @@
-import { Button, Checkbox, Form, Input, message, Typography } from 'antd';
+import { Button, Checkbox, Form, Input, Typography } from 'antd';
 import { useState } from 'react';
 
+import { useMessageApi } from '@/context/MessageProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { usePageState } from '@/hooks/usePageState';
 import { useSetup } from '@/hooks/useSetup';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
+import { getErrorMessage } from '@/utils/error';
 
 import { CardFlex } from '../../styled/CardFlex';
 import { SetupCreateHeader } from './SetupCreateHeader';
@@ -16,7 +18,7 @@ export const SetupPassword = () => {
   const { goto, setMnemonic } = useSetup();
   const { setUserLoggedIn } = usePageState();
   const [form] = Form.useForm<{ password: string; terms: boolean }>();
-
+  const message = useMessageApi();
   const [isLoading, setIsLoading] = useState(false);
   const isTermsAccepted = Form.useWatch('terms', form);
 
@@ -32,9 +34,8 @@ export const SetupPassword = () => {
         goto(SetupScreen.SetupSeedPhrase);
         setUserLoggedIn();
       })
-      .catch((e) => {
-        console.error(e);
-        message.error('Unable to create account, please try again.');
+      .catch((e: unknown) => {
+        message.error(getErrorMessage(e));
       })
       .finally(() => setIsLoading(false));
   };
