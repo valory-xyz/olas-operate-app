@@ -1,8 +1,9 @@
-import { get, isEmpty, isNil } from 'lodash';
+import { find, get, groupBy, isEmpty, isNil } from 'lodash';
 import { useContext, useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
 import { AddressZero } from '@/constants/address';
+import { TokenSymbolMap } from '@/constants/token';
 import { BalanceContext } from '@/context/BalanceProvider/BalanceProvider';
 import { WalletBalance } from '@/types/Balance';
 import { Maybe, Optional } from '@/types/Util';
@@ -54,6 +55,8 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
   const { allAgentAddresses, serviceSafes, serviceEoa } =
     useService(serviceConfigId);
   const { walletBalances, stakedBalances } = useBalanceContext();
+
+  const evmHomeChainId = selectedAgentConfig?.evmHomeChainId;
 
   /**
    * Staked balances, only relevant to safes
@@ -119,6 +122,57 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
   const serviceSafeNativeGasRequirementInWei =
     useRefillRequirement(serviceSafeNative);
 
+  const serviceSafeNativeBalances = useMemo(() => {
+    if (!serviceSafeBalances) return null;
+
+    const nativeBalances = serviceSafeBalances.filter(
+      ({ evmChainId }) => evmChainId === evmHomeChainId,
+    );
+
+    /**
+     * Native balances with wrapped token balances
+     * @example { xDai: 100, Wrapped xDai: 50 } => { xDai: 150 }
+     */
+    const groupedNativeBalances = Object.entries(
+      groupBy(nativeBalances, 'walletAddress'),
+    ).map(([address, items]) => {
+      const nativeTokenBalance = find(items, { isNative: true })?.balance || 0;
+      const wrappedBalance =
+        find(items, { isWrappedToken: true })?.balance || 0;
+      const totalBalance = nativeTokenBalance + wrappedBalance;
+
+      return {
+        ...items[0],
+        walletAddress: address,
+        balance: totalBalance,
+      } as WalletBalance;
+    });
+
+    return groupedNativeBalances;
+  }, [serviceSafeBalances, evmHomeChainId]);
+
+  /** service safe native balances for current chain */
+  const serviceSafeErc20Balances = useMemo(
+    () =>
+      serviceSafeBalances?.filter(
+        ({ isNative, symbol, evmChainId, isWrappedToken }) =>
+          !isNative &&
+          symbol !== TokenSymbolMap.OLAS &&
+          !isWrappedToken &&
+          evmChainId === evmHomeChainId,
+      ),
+    [serviceSafeBalances, evmHomeChainId],
+  );
+
+  /** service eoa native balance for current chain */
+  const serviceEoaNativeBalance = useMemo(
+    () =>
+      serviceEoaBalances?.find(
+        ({ isNative, evmChainId }) => isNative && evmChainId === evmHomeChainId,
+      ),
+    [serviceEoaBalances, evmHomeChainId],
+  );
+
   return {
     serviceWalletBalances,
     serviceStakedBalances,
@@ -128,6 +182,9 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
     isServiceSafeLowOnNativeGas: requiresFund(
       serviceSafeNativeGasRequirementInWei,
     ),
+    serviceSafeNativeBalances,
+    serviceSafeErc20Balances,
+    serviceEoaNativeBalance,
   };
 };
 

@@ -8,10 +8,13 @@ import { TOKEN_CONFIG } from '@/config/tokens';
 import { MiddlewareChain } from '@/constants/chains';
 import { NA } from '@/constants/symbols';
 import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
-import { useBalanceContext } from '@/hooks/useBalanceContext';
+import {
+  useBalanceContext,
+  useServiceBalances,
+} from '@/hooks/useBalanceContext';
 import { useServices } from '@/hooks/useServices';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
-import { formatUnitsToNumber } from '@/utils/numberFormatters';
+import { balanceFormat, formatUnitsToNumber } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
 
@@ -39,7 +42,13 @@ type ShowBalancesProps = {
 };
 
 export const ShowBalances = ({ onNext, onCancel }: ShowBalancesProps) => {
-  const { isLoading: isServicesLoading, selectedAgentConfig } = useServices();
+  const {
+    isLoading: isServicesLoading,
+    selectedAgentConfig,
+    selectedService,
+  } = useServices();
+  const { serviceSafeErc20Balances, serviceSafeNativeBalances } =
+    useServiceBalances(selectedService?.service_config_id);
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const tokenConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
@@ -54,8 +63,25 @@ export const ShowBalances = ({ onNext, onCancel }: ShowBalancesProps) => {
           : `/tokens/${kebabCase(symbol)}-icon.png`;
 
       const balance = (() => {
-        if (symbol === TokenSymbolMap.OLAS) return totalStakedOlasBalance;
-        return 0; // TODO
+        if (symbol === TokenSymbolMap.OLAS) {
+          return totalStakedOlasBalance
+            ? `${formatUnitsToNumber(totalStakedOlasBalance, token.decimals)}`
+            : NA;
+        }
+
+        const safeNativeBalance = serviceSafeNativeBalances?.find(
+          (b) => b.symbol === symbol,
+        );
+        if (safeNativeBalance) {
+          return balanceFormat(safeNativeBalance.balance, 4);
+        }
+
+        const serviceSafeBalance = serviceSafeErc20Balances?.find(
+          (b) => b.symbol === symbol,
+        );
+        return serviceSafeBalance
+          ? balanceFormat(serviceSafeBalance.balance, 4)
+          : 0;
       })();
 
       return {
@@ -70,7 +96,7 @@ export const ShowBalances = ({ onNext, onCancel }: ShowBalancesProps) => {
             <Text>{token.symbol}</Text>
           </Flex>
         ),
-        value: balance ? `${formatUnitsToNumber(balance, token.decimals)}` : NA,
+        value: balance,
       };
     },
   );
