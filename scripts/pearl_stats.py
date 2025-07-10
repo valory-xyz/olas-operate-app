@@ -70,6 +70,14 @@ CHAINS = [
     Chain.OPTIMISTIC,
 ]
 
+SERVICE_NAME_TO_TYPE = {
+    "service/valory/trader_pearl/0.1.0": "trader_pearl",
+    "service/valory/trader/0.1.0": "trader",
+    "service/valory/optimus/0.1.0": "optimus",
+    "service/dvilela/memeooorr/0.1.0": "agents_fun",
+    "service/valory/market_maker:0.1.0": "market_maker",
+}
+
 
 def _load_dune_pearl_staked(update: bool = False) -> t.Dict[str, t.List[int]]:
     dune_db = _load("dune_pearl_staked")
@@ -114,7 +122,7 @@ def _get_safe_owners(chain: Chain, address: str) -> t.Optional[t.List[str]]:
 def _populate_service(
     chain: Chain, services: t.Dict, service_id: int, update: bool = False
 ) -> None:
-    service_key = str(service_id)
+    service_key = f"{chain.value}_{str(service_id)}"
     if service_key in services and not update:
         return
 
@@ -420,9 +428,9 @@ def _populate_services_safe_transactions_for_day(
     event_signature = "ExecutionSuccess(bytes32,uint256)"
     event_topic = Web3.keccak(text=event_signature).hex()
     multisig_to_service = {
-        Web3.to_checksum_address(s["multisig"]): sid
-        for sid, s in services.items()
-        if "multisig" in s
+        Web3.to_checksum_address(service["multisig"]): service_key
+        for service_key, service in services.items()
+        if "multisig" in service
     }
 
     logs = _get_logs(
@@ -459,7 +467,7 @@ def _populate_services_safe_transactions_for_day(
     for log in logs:
         block = w3.eth.get_block(log["blockNumber"])
         service_id = int(log["topics"][1].hex(), 16)
-        service_key = str(service_id)
+        service_key = f"{chain.value}_{str(service_id)}"
         if service_key not in services:
             _populate_service(chain, services, service_id, update=True)
 
@@ -478,7 +486,7 @@ def _generate_dataframes(data: t.Dict) -> t.Tuple[pd.DataFrame, pd.DataFrame]:
         dune_pearl_staked = content.get("dune_pearl_staked", [])
         services = content.get("services", {})
         for service_key, service in services.items():
-            _id = service.get("id", int(service_key))
+            service_id = service["id"]
             creation_ts = service.get("create_service_event", {}).get(
                 "block_timestamp", 0
             )
@@ -502,13 +510,18 @@ def _generate_dataframes(data: t.Dict) -> t.Tuple[pd.DataFrame, pd.DataFrame]:
             if PEARL_TAG.lower() in metadata_description.lower():
                 is_pearl = True
 
-            if service_key in dune_pearl_staked:
+            if service_id in dune_pearl_staked:
                 is_pearl = True
+
+            service_name = service.get("metadata", {}).get("name", "other")
+            service_type = SERVICE_NAME_TO_TYPE.get(service_name, "other")
 
             rows_services.append(
                 {
                     "chain": chain.value,
-                    "service_id": _id,
+                    "service_id": service_id,
+                    "service_key": service_key,
+                    "service_type": service_type,
                     "creation_timestamp": creation_ts,
                     "is_pearl": is_pearl,
                     "creation_date": creation_date,
@@ -521,6 +534,7 @@ def _generate_dataframes(data: t.Dict) -> t.Tuple[pd.DataFrame, pd.DataFrame]:
 
     rows_txs = []
     for chain, content in data.items():
+        services = content.get("services", {})
         txs = content.get("txs", {})
         for tx_date_str, services_for_date in txs.items():
             tx_date = date.fromisoformat(tx_date_str)
@@ -529,7 +543,8 @@ def _generate_dataframes(data: t.Dict) -> t.Tuple[pd.DataFrame, pd.DataFrame]:
                     {
                         "chain": chain.value,
                         "tx_date": tx_date,
-                        "service_id": int(service_key),
+                        "service_id": services[service_key]["id"],
+                        "service_key": service_key,
                         "tx_count": len(tx_hashes),
                     }
                 )
@@ -569,8 +584,8 @@ class PearlDataSummarizer:
         self.df_txs = df_txs
         self.df_services_pearl = df_services[df_services["is_pearl"]]
         self.df_txs_pearl = df_txs.merge(
-            self.df_services_pearl[["chain", "service_id"]],
-            on=["chain", "service_id"],
+            self.df_services_pearl[["service_key"]],
+            on="service_key",
             how="inner",
         )
 
@@ -583,8 +598,10 @@ class PearlDataSummarizer:
         print(f"To date:   {to_date}")
         print_subtitle("Pearl Services Created")
         print(self._services_creted_table(from_date, to_date))
-        print_subtitle("Pearl DAAs")
-        print(self._daa_table(from_date, to_date))
+        print_subtitle("Pearl DAAs (per chain)")
+        print(self._daa_table_per_chain(from_date, to_date))
+        print_subtitle("Pearl DAAs (per service type)")
+        print(self._daa_table_per_service_type(from_date, to_date))
         print_subtitle("Pearl DAUs")
         print(self._dau_table(from_date, to_date))
         print_subtitle("Pearl operators with multiple services")
@@ -624,7 +641,7 @@ class PearlDataSummarizer:
         )
         return services_created_df
 
-    def _daa_table(self, from_date: date, to_date: date) -> pd.DataFrame:
+    def _daa_table_per_chain(self, from_date: date, to_date: date) -> pd.DataFrame:
         df_active_txs = self.df_txs_pearl[
             (self.df_txs_pearl["tx_date"] >= from_date)
             & (self.df_txs_pearl["tx_date"] <= to_date)
@@ -633,7 +650,29 @@ class PearlDataSummarizer:
         daa_df = df_active_txs.pivot_table(
             index="tx_date",
             columns="chain",
-            values="service_id",
+            values="service_key",
+            aggfunc="nunique",
+            fill_value=0,
+        )
+        daa_df["total"] = daa_df.sum(axis=1)
+        daa_df = daa_df.sort_index()
+        return daa_df
+
+    def _daa_table_per_service_type(self, from_date: date, to_date: date) -> pd.DataFrame:
+        df_active_txs = self.df_txs_pearl[
+            (self.df_txs_pearl["tx_date"] >= from_date)
+            & (self.df_txs_pearl["tx_date"] <= to_date)
+            & (self.df_txs_pearl["tx_count"] > 0)
+        ]
+        df_active_txs = df_active_txs.merge(
+            self.df_services[["service_key", "service_type"]],
+            on="service_key",
+            how="left"
+        )
+        daa_df = df_active_txs.pivot_table(
+            index="tx_date",
+            columns="service_type",
+            values="service_key",
             aggfunc="nunique",
             fill_value=0,
         )
