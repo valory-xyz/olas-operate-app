@@ -588,7 +588,11 @@ class ServicesDataSummarizer:
         self.df_txs = df_txs
 
     def print_summary(
-        self, from_date: date, to_date: date, periods_before: int = 1, title = "Pearl Services"
+        self,
+        from_date: date,
+        to_date: date,
+        periods_before: int = 1,
+        title="Services",
     ) -> None:
         """print_summary"""
         print_title(title)
@@ -613,9 +617,15 @@ class ServicesDataSummarizer:
         print_subtitle(f"{title} - Dropped services (per chain)")
         print(self._dropped_services_table(from_date, to_date, periods_before, "chain"))
         print_subtitle(f"{title} - Dropped services (per service type)")
-        print(self._dropped_services_table(from_date, to_date, periods_before, "service_type"))
+        print(
+            self._dropped_services_table(
+                from_date, to_date, periods_before, "service_type"
+            )
+        )
 
-    def _services_creted_table(self, from_date: date, to_date: date, group_col: str = "chain") -> pd.DataFrame:
+    def _services_creted_table(
+        self, from_date: date, to_date: date, group_col: str = "chain"
+    ) -> pd.DataFrame:
         from_ts = int(
             datetime.combine(
                 from_date, datetime.min.time(), tzinfo=timezone.utc
@@ -645,7 +655,9 @@ class ServicesDataSummarizer:
         )
         return services_created_df
 
-    def _daa_table(self, from_date: date, to_date: date, group_col: str = "chain") -> pd.DataFrame:
+    def _daa_table(
+        self, from_date: date, to_date: date, group_col: str = "chain"
+    ) -> pd.DataFrame:
         df_active_txs = self.df_txs[
             (self.df_txs["tx_date"] >= from_date)
             & (self.df_txs["tx_date"] <= to_date)
@@ -654,7 +666,7 @@ class ServicesDataSummarizer:
         df_active_txs = df_active_txs.merge(
             self.df_services[["service_key", "service_type"]],
             on="service_key",
-            how="left"
+            how="left",
         )
         daa_df = df_active_txs.pivot_table(
             index="tx_date",
@@ -738,7 +750,11 @@ class ServicesDataSummarizer:
         return output
 
     def _wow_table(
-        self, from_date: date, to_date: date, periods_before: int, group_col: str = "chain"
+        self,
+        from_date: date,
+        to_date: date,
+        periods_before: int,
+        group_col: str = "chain",
     ) -> pd.DataFrame:
         period_length = to_date - from_date + timedelta(days=1)
         prev_to_date = (
@@ -758,16 +774,13 @@ class ServicesDataSummarizer:
         df_prev_period_txs = df_prev_period_txs.merge(
             self.df_services[["service_key", "service_type"]],
             on="service_key",
-            how="left"
+            how="left",
         )
 
         # Current period txs of services that were active in the previous period
-        df_curr_period_txs = (
-            self.df_txs[
-                (self.df_txs["tx_date"] >= from_date)
-                & (self.df_txs["tx_date"] <= to_date)
-            ]
-        )
+        df_curr_period_txs = self.df_txs[
+            (self.df_txs["tx_date"] >= from_date) & (self.df_txs["tx_date"] <= to_date)
+        ]
 
         df_curr_period_txs = df_curr_period_txs[
             df_curr_period_txs["service_key"].isin(df_prev_period_txs["service_key"])
@@ -776,7 +789,7 @@ class ServicesDataSummarizer:
         df_curr_period_txs = df_curr_period_txs.merge(
             self.df_services[["service_key", "service_type"]],
             on="service_key",
-            how="left"
+            how="left",
         )
 
         prev_counts = df_prev_period_txs.groupby(group_col)["service_key"].nunique()
@@ -820,7 +833,11 @@ class ServicesDataSummarizer:
         return wow_df
 
     def _dropped_services_table(
-        self, from_date: date, to_date: date, periods_before: int, group_col: str = "chain"
+        self,
+        from_date: date,
+        to_date: date,
+        periods_before: int,
+        group_col: str = "chain",
     ) -> pd.DataFrame:
         period_length = to_date - from_date + timedelta(days=1)
         prev_to_date = (
@@ -840,16 +857,13 @@ class ServicesDataSummarizer:
         df_prev_period_txs = df_prev_period_txs.merge(
             self.df_services[["service_key", "service_type"]],
             on="service_key",
-            how="left"
+            how="left",
         )
 
         # Current period txs of services that were active in the previous period
-        df_curr_period_txs = (
-            self.df_txs[
-                (self.df_txs["tx_date"] >= from_date)
-                & (self.df_txs["tx_date"] <= to_date)
-            ]
-        )
+        df_curr_period_txs = self.df_txs[
+            (self.df_txs["tx_date"] >= from_date) & (self.df_txs["tx_date"] <= to_date)
+        ]
 
         df_curr_period_txs = df_curr_period_txs[
             df_curr_period_txs["service_key"].isin(df_prev_period_txs["service_key"])
@@ -858,7 +872,7 @@ class ServicesDataSummarizer:
         df_curr_period_txs = df_curr_period_txs.merge(
             self.df_services[["service_key", "service_type"]],
             on="service_key",
-            how="left"
+            how="left",
         )
 
         prev_services = (
