@@ -101,7 +101,7 @@ def _load_dune_pearl_staked(update: bool = False) -> t.Dict[str, t.List[int]]:
             if chain == "optimism":
                 chain = "optimistic"
 
-            service_id = row["serviceId"]
+            service_id = int(row["serviceId"])
             dune_db.setdefault(chain, []).append(service_id)
 
         _save(dune_db, "dune_pearl_staked")
@@ -526,6 +526,7 @@ def _generate_dataframes(data: t.Dict) -> t.Tuple[pd.DataFrame, pd.DataFrame]:
                     "service_id": service_id,
                     "service_key": service_key,
                     "service_type": service_type,
+                    "agent_ids": service.get("agent_ids", []),
                     "creation_timestamp": creation_ts,
                     "is_pearl": is_pearl,
                     "creation_date": creation_date,
@@ -1003,21 +1004,22 @@ def main() -> None:
     print("")
 
     df_services_pearl = df_services[df_services["is_pearl"]]
-    df_txs_pearl = df_txs.merge(
-        df_services[["service_key"]],
-        on="service_key",
-        how="inner",
-    )
+    df_txs_pearl = df_txs[df_txs["service_key"].isin(df_services_pearl["service_key"])]
     ServicesDataSummarizer(df_services_pearl, df_txs_pearl).print_summary(
         from_date, to_date, args.periods_before, "Pearl Services"
     )
 
-    df_services_non_pearl = df_services[~df_services["is_pearl"]]
-    df_txs_non_pearl = df_txs.merge(
-        df_services[["service_key"]],
-        on="service_key",
-        how="inner",
+    df_services_qs = df_services[df_services["chain"] == Chain.GNOSIS.value]
+    df_services_qs = df_services[
+        df_services["agent_ids"].isin([[25], [14]])
+    ]
+    df_txs_qs = df_txs[df_txs["service_key"].isin(df_services_qs["service_key"])]
+    ServicesDataSummarizer(df_services_qs, df_txs_qs).print_summary(
+        from_date, to_date, args.periods_before, "QS Trader Services"
     )
+
+    df_services_non_pearl = df_services[~df_services["is_pearl"]]
+    df_txs_non_pearl = df_txs[df_txs["service_key"].isin(df_services_non_pearl["service_key"])]
     ServicesDataSummarizer(df_services_non_pearl, df_txs_non_pearl).print_summary(
         from_date, to_date, args.periods_before, "Non-Pearl Services"
     )
