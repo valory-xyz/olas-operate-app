@@ -19,9 +19,7 @@ export const parseApiError = async (
     // silently ignore parse failure
   }
 
-  const apiError =
-    errorDetails?.error || errorDetails?.message || response.statusText;
-
+  const apiError = errorDetails?.error || errorDetails?.message;
   throw new Error(apiError || fallbackMessage);
 };
 
