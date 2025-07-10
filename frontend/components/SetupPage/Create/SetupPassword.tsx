@@ -15,6 +15,7 @@ const { Title, Text } = Typography;
 export const SetupPassword = () => {
   const { goto, setMnemonic } = useSetup();
   const { setUserLoggedIn } = usePageState();
+  const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm<{ password: string; terms: boolean }>();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -32,15 +33,17 @@ export const SetupPassword = () => {
         goto(SetupScreen.SetupSeedPhrase);
         setUserLoggedIn();
       })
-      .catch((e) => {
-        console.error(e);
-        message.error('Unable to create account, please try again.');
+      .catch((e: unknown) => {
+        messageApi.error(
+          e instanceof Error ? e.message : 'Something went wrong',
+        );
       })
       .finally(() => setIsLoading(false));
   };
 
   return (
     <CardFlex $gap={10} styles={{ body: { padding: '12px 24px' } }} $noBorder>
+      {contextHolder}
       <SetupCreateHeader prev={SetupScreen.Welcome} />
       <Title level={3}>Create password</Title>
       <Text>Come up with a strong password.</Text>

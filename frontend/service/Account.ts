@@ -20,9 +20,12 @@ const createAccount = (password: string) =>
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify({ password }),
-  }).then((res) => {
-    if (res.ok) return res.json();
-    throw new Error('Failed to create account');
+  }).then(async (response) => {
+    if (response.ok) return response.json();
+    const errorDetails = await response.json().catch(() => null);
+    const apiError =
+      errorDetails?.error || errorDetails?.message || response.statusText;
+    throw new Error(apiError || 'Failed to create account');
   });
 
 /**
