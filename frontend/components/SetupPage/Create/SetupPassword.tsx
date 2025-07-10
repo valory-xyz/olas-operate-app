@@ -7,6 +7,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { useSetup } from '@/hooks/useSetup';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
+import { getErrorMessage } from '@/utils/error';
 
 import { CardFlex } from '../../styled/CardFlex';
 import { SetupCreateHeader } from './SetupCreateHeader';
@@ -34,7 +35,7 @@ export const SetupPassword = () => {
         setUserLoggedIn();
       })
       .catch((e: unknown) => {
-        message.error(e instanceof Error ? e.message : 'Something went wrong');
+        message.error(getErrorMessage(e));
       })
       .finally(() => setIsLoading(false));
   };
