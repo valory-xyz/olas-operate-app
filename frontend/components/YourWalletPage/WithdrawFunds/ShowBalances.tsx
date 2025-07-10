@@ -41,7 +41,7 @@ type ShowBalancesProps = {
   onCancel: () => void;
 };
 
-export const ShowBalances = ({ onNext, onCancel }: ShowBalancesProps) => {
+const useShowBalances = () => {
   const {
     isLoading: isServicesLoading,
     selectedAgentConfig,
@@ -49,68 +49,77 @@ export const ShowBalances = ({ onNext, onCancel }: ShowBalancesProps) => {
   } = useServices();
   const { serviceSafeErc20Balances, serviceSafeNativeBalances } =
     useServiceBalances(selectedService?.service_config_id);
-  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
+  const middlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const tokenConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
 
-  const balancesList = Object.entries(tokenConfig).map(
-    ([untypedSymbol, token]) => {
-      const symbol = untypedSymbol as TokenSymbol;
-      const imageSrc =
-        symbol === TokenSymbolMap.ETH
-          ? `/chains/ethereum-chain.png`
-          : `/tokens/${kebabCase(symbol)}-icon.png`;
+  const balances = Object.entries(tokenConfig).map(([untypedSymbol, token]) => {
+    const symbol = untypedSymbol as TokenSymbol;
+    const imageSrc =
+      symbol === TokenSymbolMap.ETH
+        ? `/chains/ethereum-chain.png`
+        : `/tokens/${kebabCase(symbol)}-icon.png`;
 
-      const balance = (() => {
-        if (symbol === TokenSymbolMap.OLAS) {
-          return totalStakedOlasBalance
-            ? `${formatUnitsToNumber(totalStakedOlasBalance, token.decimals)}`
-            : NA;
-        }
+    const balance = (() => {
+      if (symbol === TokenSymbolMap.OLAS) {
+        return totalStakedOlasBalance
+          ? `${formatUnitsToNumber(totalStakedOlasBalance, token.decimals)}`
+          : NA;
+      }
 
-        const safeNativeBalance = serviceSafeNativeBalances?.find(
-          (b) => b.symbol === symbol,
-        );
-        if (safeNativeBalance) {
-          return balanceFormat(safeNativeBalance.balance, 4);
-        }
+      const safeNativeBalance = serviceSafeNativeBalances?.find(
+        (b) => b.symbol === symbol,
+      );
+      if (safeNativeBalance) {
+        return balanceFormat(safeNativeBalance.balance, 4);
+      }
 
-        const serviceSafeBalance = serviceSafeErc20Balances?.find(
-          (b) => b.symbol === symbol,
-        );
-        return serviceSafeBalance
-          ? balanceFormat(serviceSafeBalance.balance, 4)
-          : 0;
-      })();
+      const serviceSafeBalance = serviceSafeErc20Balances?.find(
+        (b) => b.symbol === symbol,
+      );
+      return serviceSafeBalance
+        ? balanceFormat(serviceSafeBalance.balance, 4)
+        : 0;
+    })();
 
-      return {
-        title: (
-          <Flex gap={8} align="center">
-            <Image
-              src={imageSrc}
-              width={20}
-              height={20}
-              alt={`${symbol} logo`}
-            />
-            <Text>{token.symbol}</Text>
-          </Flex>
-        ),
-        value: balance,
-      };
-    },
-  );
+    return {
+      symbol,
+      imageSrc,
+      value: balance,
+    };
+  });
+
+  return {
+    isLoading: isServicesLoading || isBalanceLoading,
+    middlewareChain,
+    balances,
+  };
+};
+
+export const ShowBalances = ({ onNext, onCancel }: ShowBalancesProps) => {
+  const { isLoading, middlewareChain, balances } = useShowBalances();
 
   return (
     <Flex vertical gap={16}>
       <Text className="text-sm text-light">Available funds to withdraw</Text>
-      <Card size="small" title={<ChainName chainName={toMiddlewareChain} />}>
-        {isServicesLoading || isBalanceLoading ? (
+      <Card size="small" title={<ChainName chainName={middlewareChain} />}>
+        {isLoading ? (
           <Loader />
         ) : (
           <InfoBreakdownList
-            list={balancesList.map((item) => ({
-              left: item.title,
+            list={balances.map((item) => ({
+              left: (
+                <Flex gap={8} align="center">
+                  <Image
+                    src={item.imageSrc}
+                    width={20}
+                    height={20}
+                    alt={`${item.symbol} logo`}
+                  />
+                  <Text>{item.symbol}</Text>
+                </Flex>
+              ),
               leftClassName: 'text-light text-sm',
               right: item.value,
             }))}
