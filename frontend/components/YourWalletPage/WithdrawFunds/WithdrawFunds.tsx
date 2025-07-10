@@ -32,24 +32,21 @@ const ServiceNotRunning = () => (
 );
 
 export const WithdrawFunds = () => {
+  const isWithdrawFundsEnabled = useFeatureFlag('withdraw-funds');
   const { selectedService, refetch: refetchServices } = useServices();
   const { refetch: refetchMasterWallets } = useMasterWalletContext();
   const { updateBalances } = useBalanceContext();
-  const isWithdrawFundsEnabled = useFeatureFlag('withdraw-funds');
-
   const { service, isServiceRunning } = useService(
     selectedService?.service_config_id,
   );
-
   const { isServiceStakedForMinimumDuration, selectedStakingContractDetails } =
     useActiveStakingContractDetails();
-
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isWithdrawalLoading, setIsWithdrawalLoading] = useState(false);
-
   const countdownDisplay = useStakingContractCountdown({
     currentStakingContractInfo: selectedStakingContractDetails,
   });
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isWithdrawalLoading, setIsWithdrawalLoading] = useState(false);
 
   const showModal = useCallback(() => {
     setIsModalVisible(true);

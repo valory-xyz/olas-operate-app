@@ -36,11 +36,6 @@ const ChainName = ({ chainName }: { chainName: MiddlewareChain }) => (
   </Flex>
 );
 
-type ShowBalancesProps = {
-  onNext: () => void;
-  onCancel: () => void;
-};
-
 const useShowBalances = () => {
   const {
     isLoading: isServicesLoading,
@@ -49,10 +44,11 @@ const useShowBalances = () => {
   } = useServices();
   const { serviceSafeErc20Balances, serviceSafeNativeBalances } =
     useServiceBalances(selectedService?.service_config_id);
-  const middlewareChain = selectedAgentConfig.middlewareHomeChainId;
-  const tokenConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
+
+  const middlewareChain = selectedAgentConfig.middlewareHomeChainId;
+  const tokenConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
 
   const balances = Object.entries(tokenConfig).map(([untypedSymbol, token]) => {
     const symbol = untypedSymbol as TokenSymbol;
@@ -83,11 +79,7 @@ const useShowBalances = () => {
         : 0;
     })();
 
-    return {
-      symbol,
-      imageSrc,
-      value: balance,
-    };
+    return { symbol, imageSrc, value: balance };
   });
 
   return {
@@ -95,6 +87,11 @@ const useShowBalances = () => {
     middlewareChain,
     balances,
   };
+};
+
+type ShowBalancesProps = {
+  onNext: () => void;
+  onCancel: () => void;
 };
 
 export const ShowBalances = ({ onNext, onCancel }: ShowBalancesProps) => {

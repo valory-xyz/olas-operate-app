@@ -16,31 +16,36 @@ const partOfFundsMayBeLockedMessage =
 const afterWithdrawing =
   'Your agent will not be able to run again until it is refunded.';
 
-const getWithdrawMessage = (agentType: AgentType) => {
-  switch (agentType) {
-    case AgentType.PredictTrader:
-      return `This will withdraw all OLAS and XDAI from your account. ${afterWithdrawing}`;
-    case AgentType.AgentsFun:
-      return `This will withdraw all OLAS and ETH from your account. ${afterWithdrawing}`;
-    case AgentType.Modius:
-    case AgentType.Optimus:
-      return `This will withdraw all OLAS, ETH and USDC from your account. ${afterWithdrawing}`;
-    case AgentType.AgentsFunCelo:
-      return `This will withdraw all OLAS and CELO from your account. ${afterWithdrawing}`;
-    default:
-      return `This will withdraw all funds from your account. ${afterWithdrawing}`;
-  }
+const WithdrawModalSteps = {
+  FUNDS_MAY_BE_LOCKED: 'FUNDS_MAY_BE_LOCKED',
+  SHOW_BALANCES: 'SHOW_BALANCES',
+  WITHDRAW_FUNDS: 'WITHDRAW_FUNDS',
 };
 
 const ToProceedMessage = () => {
   const { selectedAgentType } = useServices();
+
+  const withdrawMessage = useMemo(() => {
+    switch (selectedAgentType) {
+      case AgentType.PredictTrader:
+        return `This will withdraw all OLAS and XDAI from your account. ${afterWithdrawing}`;
+      case AgentType.AgentsFun:
+        return `This will withdraw all OLAS and ETH from your account. ${afterWithdrawing}`;
+      case AgentType.Modius:
+      case AgentType.Optimus:
+        return `This will withdraw all OLAS, ETH and USDC from your account. ${afterWithdrawing}`;
+      case AgentType.AgentsFunCelo:
+        return `This will withdraw all OLAS and CELO from your account. ${afterWithdrawing}`;
+      default:
+        return `This will withdraw all funds from your account. ${afterWithdrawing}`;
+    }
+  }, [selectedAgentType]);
+
   return (
     <CustomAlert
       type="warning"
       showIcon
-      message={
-        <Text className="text-sm">{getWithdrawMessage(selectedAgentType)}</Text>
-      }
+      message={<Text className="text-sm">{withdrawMessage}</Text>}
     />
   );
 };
@@ -51,12 +56,6 @@ const CompatibleMessage = () => (
     chains.
   </Text>
 );
-
-const WithdrawModalSteps = {
-  FUNDS_MAY_BE_LOCKED: 'FUNDS_MAY_BE_LOCKED',
-  SHOW_BALANCES: 'SHOW_BALANCES',
-  WITHDRAW_FUNDS: 'WITHDRAW_FUNDS',
-};
 
 type FundsMayBeLockedMessageProps = {
   onNext: () => void;
@@ -141,8 +140,8 @@ export const WithdrawFundsModal = ({
   return (
     <Modal
       title={modalTitle}
-      footer={null}
       onCancel={handleCancel}
+      footer={null}
       width={400}
       open
       destroyOnClose
@@ -178,13 +177,10 @@ export const WithdrawFundsModal = ({
               {modalButtonText}
             </Button>
           </>
-        ) : null}
+        ) : (
+          <Text>Unknown step</Text>
+        )}
       </Flex>
     </Modal>
   );
 };
-
-/**
- * TODO
- * - to display balances
- */
