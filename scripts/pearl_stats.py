@@ -1010,9 +1010,9 @@ def main() -> None:
     )
 
     df_services_qs = df_services[
-        (~df_services["is_pearl"]) &
-        (df_services["chain"] == Chain.GNOSIS.value) &
-        (df_services["agent_ids"].isin([[25], [14]]))
+        (~df_services["is_pearl"])
+        & (df_services["chain"] == Chain.GNOSIS.value)
+        & (df_services["agent_ids"].isin([[25], [14]]))
     ]
     df_txs_qs = df_txs[df_txs["service_key"].isin(df_services_qs["service_key"])]
     ServicesDataSummarizer(df_services_qs, df_txs_qs).print_summary(
@@ -1020,7 +1020,9 @@ def main() -> None:
     )
 
     df_services_non_pearl = df_services[~df_services["is_pearl"]]
-    df_txs_non_pearl = df_txs[df_txs["service_key"].isin(df_services_non_pearl["service_key"])]
+    df_txs_non_pearl = df_txs[
+        df_txs["service_key"].isin(df_services_non_pearl["service_key"])
+    ]
     ServicesDataSummarizer(df_services_non_pearl, df_txs_non_pearl).print_summary(
         from_date, to_date, args.periods_before, "Non-Pearl Services"
     )
