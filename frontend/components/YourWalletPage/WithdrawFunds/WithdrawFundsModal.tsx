@@ -2,8 +2,9 @@ import { Button, Flex, Input, Modal, Typography } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { AgentProfile } from '@/components/AgentProfile';
-import { AgentType } from '@/enums/Agent';
+import { TOKEN_CONFIG } from '@/config/tokens';
 import { useServices } from '@/hooks/useServices';
+import { typedKeys } from '@/types/Util';
 
 import { CustomAlert } from '../../Alert';
 import { ShowBalances } from './ShowBalances';
@@ -23,23 +24,20 @@ const WithdrawModalSteps = {
 };
 
 const ToProceedMessage = () => {
-  const { selectedAgentType } = useServices();
+  const { selectedAgentConfig } = useServices();
+  const tokenConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
 
   const withdrawMessage = useMemo(() => {
-    switch (selectedAgentType) {
-      case AgentType.PredictTrader:
-        return `This will withdraw all OLAS and XDAI from your account. ${afterWithdrawing}`;
-      case AgentType.AgentsFun:
-        return `This will withdraw all OLAS and ETH from your account. ${afterWithdrawing}`;
-      case AgentType.Modius:
-      case AgentType.Optimus:
-        return `This will withdraw all OLAS, ETH and USDC from your account. ${afterWithdrawing}`;
-      case AgentType.AgentsFunCelo:
-        return `This will withdraw all OLAS and CELO from your account. ${afterWithdrawing}`;
-      default:
-        return `This will withdraw all funds from your account. ${afterWithdrawing}`;
+    const tokens = typedKeys(tokenConfig);
+    if (!tokens) {
+      return `This will withdraw all funds from your account. ${afterWithdrawing}`;
     }
-  }, [selectedAgentType]);
+
+    const lastToken = tokens.pop();
+    const tokensString = `${tokens.join(', ')} and ${lastToken}`;
+
+    return `This will withdraw all ${tokensString} from your account. ${afterWithdrawing}`;
+  }, [tokenConfig]);
 
   return (
     <CustomAlert
@@ -147,11 +145,13 @@ export const WithdrawFundsModal = ({
       destroyOnClose
     >
       <Flex vertical gap={16} style={{ marginTop: 12 }}>
-        {withdrawStep === WithdrawModalSteps.FUNDS_MAY_BE_LOCKED ? (
+        {withdrawStep === WithdrawModalSteps.FUNDS_MAY_BE_LOCKED && (
           <FundsMayBeLocked onNext={handleNext} onCancel={handleCancel} />
-        ) : withdrawStep === WithdrawModalSteps.SHOW_BALANCES ? (
+        )}
+        {withdrawStep === WithdrawModalSteps.SHOW_BALANCES && (
           <ShowBalances onNext={handleNext} onCancel={handleCancel} />
-        ) : withdrawStep === WithdrawModalSteps.WITHDRAW_FUNDS ? (
+        )}
+        {withdrawStep === WithdrawModalSteps.WITHDRAW_FUNDS && (
           <>
             <ToProceedMessage />
             <Flex vertical gap={8}>
@@ -177,8 +177,6 @@ export const WithdrawFundsModal = ({
               {modalButtonText}
             </Button>
           </>
-        ) : (
-          <Text>Unknown step</Text>
         )}
       </Flex>
     </Modal>
