@@ -5,7 +5,7 @@ import React from 'react';
 
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { TOKEN_CONFIG } from '@/config/tokens';
-import { MiddlewareChain } from '@/constants/chains';
+import { SupportedMiddlewareChain } from '@/constants/chains';
 import { NA } from '@/constants/symbols';
 import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import {
@@ -24,7 +24,7 @@ const Loader = () => (
   </Flex>
 );
 
-const ChainName = ({ chainName }: { chainName: MiddlewareChain }) => (
+const ChainName = ({ chainName }: { chainName: SupportedMiddlewareChain }) => (
   <Flex gap={8} align="center">
     <Image
       src={`/chains/${kebabCase(asEvmChainDetails(chainName).name)}-chain.png`}
