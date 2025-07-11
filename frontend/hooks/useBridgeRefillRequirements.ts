@@ -28,7 +28,6 @@ export const useBridgeRefillRequirements = (
         signal,
       );
 
-      console.log('Bridge refill requirements response:', response);
       return response;
     },
 

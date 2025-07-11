@@ -120,7 +120,6 @@ export const DepositForBridging = ({
 
   const bridgeRequirementsParams = useMemo(() => {
     if (!getBridgeRequirementsParams) return null;
-    console.log('Fetching bridge refill requirements params');
     return getBridgeRequirementsParams(isForceUpdate);
   }, [isForceUpdate, getBridgeRequirementsParams]);
 
@@ -140,7 +139,6 @@ export const DepositForBridging = ({
     if (!isBridgeRefillRequirementsApiLoading) return;
 
     refetchBridgeRefillRequirements().finally(() => {
-      console.log('CALLLEDDD');
       setIsBridgeRefillRequirementsApiLoading(false);
     });
   }, [
@@ -340,24 +338,15 @@ export const DepositForBridging = ({
 
     refetchBridgeRefillRequirements()
       .then(() => {
-        console.log('Bridge refill requirements refetched successfully!!!!!!');
         // force_update: true is used only when the user clicks on "Try again",
         // hence reset it to false after the API call is made.
         setIsForceUpdate(false);
         setCanPollForBridgeRefillRequirements(true);
       })
       .finally(() => {
-        console.log('Is finally called?');
         setIsManuallyRefetching(false);
       });
   }, [refetchBridgeRefillRequirements]);
-
-  console.log({
-    isForceUpdate,
-    isBridgeRefillRequirementsLoading,
-    isBridgeRefillRequirementsFetching,
-    isManuallyRefetching,
-  });
 
   return (
     <RootCard vertical>
