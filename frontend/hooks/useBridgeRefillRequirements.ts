@@ -10,7 +10,6 @@ import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 export const useBridgeRefillRequirements = (
   params: BridgeRefillRequirementsRequest | null,
   canPoll: boolean = true,
-  onSuccess?: () => void,
 ) => {
   const { isOnline } = useContext(OnlineStatusContext);
 
@@ -29,7 +28,7 @@ export const useBridgeRefillRequirements = (
         signal,
       );
 
-      if (onSuccess) onSuccess();
+      console.log('Bridge refill requirements response:', response);
       return response;
     },
 
