@@ -571,7 +571,8 @@ def underline(text: str) -> str:
 
 def print_subtitle(text: str) -> None:
     """Print text as a subtitle."""
-    print("\n\n" + bold(underline(text)) + "\n")
+    line = "\u2500" * len(text)
+    print("\n\n" + bold(text) + "\n" + line)
 
 
 def print_title(title: str) -> None:
@@ -586,7 +587,9 @@ class ServicesDataSummarizer:
     def __init__(self, df_services: pd.DataFrame, df_txs: pd.DataFrame) -> None:
         """Initializes the ServicesDataSummarizer"""
         self.df_services = df_services
-        self.df_txs = df_txs
+        self.df_txs = df_txs[
+            df_txs["service_key"].isin(df_services["service_key"])
+        ]
 
     def print_summary(
         self,
@@ -1004,8 +1007,7 @@ def main() -> None:
     print("")
 
     df_services_pearl = df_services[df_services["is_pearl"]]
-    df_txs_pearl = df_txs[df_txs["service_key"].isin(df_services_pearl["service_key"])]
-    ServicesDataSummarizer(df_services_pearl, df_txs_pearl).print_summary(
+    ServicesDataSummarizer(df_services_pearl, df_txs).print_summary(
         from_date, to_date, args.periods_before, "Pearl Services"
     )
 
@@ -1014,16 +1016,12 @@ def main() -> None:
         & (df_services["chain"] == Chain.GNOSIS.value)
         & (df_services["agent_ids"].isin([[25], [14]]))
     ]
-    df_txs_qs = df_txs[df_txs["service_key"].isin(df_services_qs["service_key"])]
-    ServicesDataSummarizer(df_services_qs, df_txs_qs).print_summary(
+    ServicesDataSummarizer(df_services_qs, df_txs).print_summary(
         from_date, to_date, args.periods_before, "QS Trader Services"
     )
 
     df_services_non_pearl = df_services[~df_services["is_pearl"]]
-    df_txs_non_pearl = df_txs[
-        df_txs["service_key"].isin(df_services_non_pearl["service_key"])
-    ]
-    ServicesDataSummarizer(df_services_non_pearl, df_txs_non_pearl).print_summary(
+    ServicesDataSummarizer(df_services_non_pearl, df_txs).print_summary(
         from_date, to_date, args.periods_before, "Non-Pearl Services"
     )
 
