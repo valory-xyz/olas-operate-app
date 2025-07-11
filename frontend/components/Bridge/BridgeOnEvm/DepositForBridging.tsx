@@ -334,6 +334,7 @@ export const DepositForBridging = ({
     setIsManuallyRefetching(true);
     setCanPollForBridgeRefillRequirements(false);
 
+    // slight delay before refetching.
     await delayInSeconds(1);
 
     refetchBridgeRefillRequirements()
@@ -341,6 +342,7 @@ export const DepositForBridging = ({
         // force_update: true is used only when the user clicks on "Try again",
         // hence reset it to false after the API call is made.
         setIsForceUpdate(false);
+        // allow polling for bridge refill requirements again, once successful.
         setCanPollForBridgeRefillRequirements(true);
       })
       .finally(() => {
@@ -355,7 +357,7 @@ export const DepositForBridging = ({
 
       {isRequestingQuote ? (
         <RequestingQuote />
-      ) : !isRequestingQuoteFailed ? (
+      ) : isRequestingQuoteFailed ? (
         <QuoteRequestFailed onTryAgain={handleRetryAgain} />
       ) : (
         <>
