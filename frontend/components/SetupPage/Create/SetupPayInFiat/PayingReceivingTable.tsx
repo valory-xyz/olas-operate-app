@@ -1,11 +1,16 @@
 import { Flex, Skeleton, Table, type TableProps, Typography } from 'antd';
+import Image from 'next/image';
 import { ReactNode, useMemo } from 'react';
 
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
 import { useServices } from '@/hooks/useServices';
-import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
+import {
+  asEvmChainDetails,
+  asEvmChainId,
+  asMiddlewareChain,
+} from '@/utils/middlewareHelpers';
 
 import { useGetBridgeRequirementsParams } from '../hooks/useGetBridgeRequirementsParams';
 import { onRampChainMap } from './constants';
@@ -18,6 +23,39 @@ type DataType = {
   receiving: ReactNode;
 };
 
+const getColumns = (
+  chainName: string,
+  chainDisplayName: string,
+): TableProps<DataType>['columns'] => [
+  {
+    title: (
+      <Flex justify="space-between" align="center">
+        <Text>Paying</Text>
+        <Image src="/wallet.png" width={24} height={24} alt="Paying" />
+      </Flex>
+    ),
+    dataIndex: 'paying',
+    key: 'paying',
+    width: '50%',
+  },
+  {
+    title: (
+      <Flex justify="space-between" align="center">
+        <Text>Receiving</Text>
+        <Image
+          src={`/chains/${chainName}-chain.png`}
+          width={24}
+          height={24}
+          alt={chainDisplayName}
+        />
+      </Flex>
+    ),
+    dataIndex: 'receiving',
+    key: 'receiving',
+    width: '50%',
+  },
+];
+
 const TokenLoader = () => (
   <Skeleton.Input
     size="small"
@@ -25,41 +63,8 @@ const TokenLoader = () => (
   />
 );
 
-const columns: TableProps<DataType>['columns'] = [
-  {
-    title: 'Paying', // TODO: add icon
-    dataIndex: 'paying',
-    key: 'paying',
-    width: '50%',
-  },
-  {
-    title: 'Receiving', // TODO: add icon
-    dataIndex: 'receiving',
-    key: 'receiving',
-    width: '50%',
-  },
-];
-
 // TODO: add real data fetching logic
-const useTotalEthToPay = () => {
-  return {
-    isLoading: true,
-    totalEth: 0.056,
-  };
-};
-
-// TODO: add real data fetching logic
-const useTotalEthToUsdToPay = () => {
-  return {
-    isLoading: true,
-    totalUsd: 0.056,
-  };
-};
-
-export const PayingReceivingTable = () => {
-  const { isLoading, totalEth } = useTotalEthToPay();
-  const { isLoading: isUsdLoading, totalUsd } = useTotalEthToUsdToPay();
-
+const useEthToTokens = () => {
   const { selectedAgentConfig } = useServices();
   const fromChainId =
     onRampChainMap[asMiddlewareChain(selectedAgentConfig.evmHomeChainId)];
@@ -88,7 +93,28 @@ export const PayingReceivingTable = () => {
     isBridgeRefillRequirementsFetching,
   });
 
-  const data = useMemo<DataType[]>(
+  return {
+    isLoading: true,
+    totalEth: 0.056,
+    receivingTokens: ['100.00 OLAS', '16.00 USDC', '0.0200 ETH'],
+  };
+};
+
+// TODO: add real data fetching logic
+const useTotalEthToUsdToPay = () => {
+  return {
+    isLoading: true,
+    totalUsd: 0.056,
+  };
+};
+
+export const PayingReceivingTable = () => {
+  const { isLoading, totalEth, receivingTokens } = useEthToTokens();
+  const { isLoading: isUsdLoading, totalUsd } = useTotalEthToUsdToPay();
+  const { selectedAgentConfig } = useServices();
+  const toChain = asEvmChainDetails(selectedAgentConfig.middlewareHomeChainId);
+
+  const ethToTokenList = useMemo<DataType[]>(
     () => [
       {
         key: '1',
@@ -102,16 +128,26 @@ export const PayingReceivingTable = () => {
             </Text>
           </Flex>
         ),
-        receiving: '~35.39 USD for 0.06 ETH',
+        receiving: (
+          <Flex vertical justify="center" gap={6}>
+            {isLoading ? (
+              <TokenLoader />
+            ) : (
+              receivingTokens.map((token, index) => (
+                <Text key={index}>{isLoading ? <TokenLoader /> : token}</Text>
+              ))
+            )}
+          </Flex>
+        ),
       },
     ],
-    [isLoading, isUsdLoading, totalEth, totalUsd],
+    [isLoading, isUsdLoading, totalEth, totalUsd, receivingTokens],
   );
 
   return (
-    <Table
-      columns={columns}
-      dataSource={data}
+    <Table<DataType>
+      columns={getColumns(toChain.name, toChain.displayName)}
+      dataSource={ethToTokenList}
       pagination={false}
       bordered
       style={{ width: '100%', alignSelf: 'flex-start' }}

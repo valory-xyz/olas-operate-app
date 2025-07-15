@@ -26,16 +26,18 @@ const PayInFiatHeader = () => (
 );
 
 const KeepOpenAlert = () => (
-  <CustomAlert
-    fullWidth
-    type="warning"
-    showIcon
-    message={
-      <Flex vertical gap={5}>
-        <Text>Keep the app open until the process is complete.</Text>
-      </Flex>
-    }
-  />
+  <CardSection>
+    <CustomAlert
+      fullWidth
+      type="warning"
+      showIcon
+      message={
+        <Flex vertical gap={5}>
+          <Text>Keep the app open until the process is complete.</Text>
+        </Flex>
+      }
+    />
+  </CardSection>
 );
 
 export const SetupPayInFiat = () => {
@@ -48,12 +50,9 @@ export const SetupPayInFiat = () => {
   return (
     <CardFlex $noBorder>
       <AgentHeader onPrev={handlePrevStep} />
-
       <CardSection vertical gap={24} className="m-0 pt-24">
         <PayInFiatHeader />
-        <CardSection>
-          <KeepOpenAlert />
-        </CardSection>
+        <KeepOpenAlert />
 
         <Flex>
           <PayingReceivingTable />

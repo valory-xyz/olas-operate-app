@@ -42,7 +42,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'agent-settings': false,
     'bridge-onboarding': true,
     'bridge-add-funds': true,
-    'on-ramp': true,
+    'on-ramp': false,
   },
   [AgentType.AgentsFun]: {
     'manage-wallet': true,
