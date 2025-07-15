@@ -1,5 +1,6 @@
-import { Flex, Typography } from 'antd';
-import { useCallback } from 'react';
+import type { TableProps } from 'antd';
+import { Flex, Table, Typography } from 'antd';
+import React, { useCallback } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
@@ -35,6 +36,35 @@ const KeepOpenAlert = () => (
   />
 );
 
+interface DataType {
+  key: string;
+  paying: string;
+  receiving: string;
+}
+
+const columns: TableProps<DataType>['columns'] = [
+  {
+    title: 'Paying',
+    dataIndex: 'paying',
+    key: 'paying',
+    width: '50%',
+  },
+  {
+    title: 'Receiving',
+    dataIndex: 'receiving',
+    key: 'receiving',
+    width: '50%',
+  },
+];
+
+const data: DataType[] = [
+  {
+    key: '1',
+    paying: '~35.39 USD for 0.06 ETH',
+    receiving: '~35.39 USD for 0.06 ETH',
+  },
+];
+
 export const SetupPayInFiat = () => {
   const { goto: gotoSetup } = useSetup();
 
@@ -45,11 +75,22 @@ export const SetupPayInFiat = () => {
   return (
     <CardFlex $noBorder>
       <AgentHeader onPrev={handlePrevStep} />
+
       <CardSection vertical gap={24} className="m-0 pt-24">
         <PayInFiatHeader />
         <CardSection>
           <KeepOpenAlert />
         </CardSection>
+
+        <Flex>
+          <Table
+            columns={columns}
+            dataSource={data}
+            pagination={false}
+            bordered
+            style={{ width: '100%' }}
+          />
+        </Flex>
       </CardSection>
     </CardFlex>
   );

@@ -23,7 +23,7 @@ import { asEvmChainId } from '@/utils/middlewareHelpers';
  *
  * @warning A HOOK THAT SHOULD NEVER EXIST.
  * @deprecated TODO: This hook is used because BE doesn't support monthly_gas_estimate in the refill requirements yet.
- * Remove the hook once it's supported
+ * Remove the hook once it's supported.
  *
  * Hook to return the updated bridge requirements params to improve the
  * initial funding requirements.
@@ -87,7 +87,10 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
 
 /**
  * Helper to get bridge refill requirements parameters
- * based on current refill requirements
+ * based on current refill requirements.
+ *
+ * @returns A function that returns the bridge refill requirements request
+ * or null if requirements are not available or loading.
  */
 export const useGetBridgeRequirementsParams = () => {
   const { selectedAgentConfig } = useServices();
