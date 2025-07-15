@@ -289,6 +289,16 @@ export const SetupEoaFunding = () => {
     }
   }, [goto, updateBeforeBridgingFunds]);
 
+  const handlePayInFiat = useCallback(async () => {
+    try {
+      await updateBeforeBridgingFunds();
+      goto(SetupScreen.SetupPayInFiat);
+    } catch (error) {
+      message.error('Failed to prepare for fiat payment. Please try again.');
+      console.error('Error updating before fiat payment:', error);
+    }
+  }, [goto, updateBeforeBridgingFunds]);
+
   if (!currentFundingRequirements) return null;
 
   if (!isBridgeOnboardingEnabled) {
@@ -324,7 +334,7 @@ export const SetupEoaFunding = () => {
               value: 'transfer',
             },
             { label: 'Bridge', value: 'bridge' },
-            isOnRampEnabled ? { label: 'Buy', value: 'buy' } : null,
+            isOnRampEnabled ? { label: 'Buy', value: 'buyInFiat' } : null,
           ])}
           onChange={setFundType}
           value={fundType}
@@ -354,14 +364,14 @@ export const SetupEoaFunding = () => {
         </CardSection>
       )}
 
-      {fundType === 'buy' && (
+      {fundType === 'buyInFiat' && (
         <CardSection $padding="0px 24px" vertical gap={16}>
           <Text className="text-base">
             Pay in fiat by using your credit or debit card — funds convert and
             deposit to your agent automatically. No further funds will be needed
             after payment.
           </Text>
-          <Button onClick={handleBridgeFunds} block type="primary" size="large">
+          <Button onClick={handlePayInFiat} block type="primary" size="large">
             Pay in fiat
           </Button>
         </CardSection>
