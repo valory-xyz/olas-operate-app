@@ -335,7 +335,7 @@ const createMainWindow = async () => {
   // Get the agent's current state
   ipcMain.handle('health-check', async (_event) => {
     try {
-      const response = await fetch('https://localhost:8716/healthcheck', {
+      const response = await fetch('http://127.0.0.1:8716/healthcheck', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
       });
