@@ -1,6 +1,5 @@
-import type { TableProps } from 'antd';
-import { Flex, Table, Typography } from 'antd';
-import React, { useCallback } from 'react';
+import { Flex, Typography } from 'antd';
+import { useCallback } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
@@ -8,6 +7,9 @@ import { CardSection } from '@/components/styled/CardSection';
 import { AgentHeader } from '@/components/ui/AgentHeader';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
+
+import { FiatPaymentSteps } from './FiatPaymentSteps';
+import { PayingReceivingTable } from './PayingReceivingTable';
 
 const { Title, Text } = Typography;
 
@@ -36,35 +38,6 @@ const KeepOpenAlert = () => (
   />
 );
 
-interface DataType {
-  key: string;
-  paying: string;
-  receiving: string;
-}
-
-const columns: TableProps<DataType>['columns'] = [
-  {
-    title: 'Paying',
-    dataIndex: 'paying',
-    key: 'paying',
-    width: '50%',
-  },
-  {
-    title: 'Receiving',
-    dataIndex: 'receiving',
-    key: 'receiving',
-    width: '50%',
-  },
-];
-
-const data: DataType[] = [
-  {
-    key: '1',
-    paying: '~35.39 USD for 0.06 ETH',
-    receiving: '~35.39 USD for 0.06 ETH',
-  },
-];
-
 export const SetupPayInFiat = () => {
   const { goto: gotoSetup } = useSetup();
 
@@ -83,13 +56,8 @@ export const SetupPayInFiat = () => {
         </CardSection>
 
         <Flex>
-          <Table
-            columns={columns}
-            dataSource={data}
-            pagination={false}
-            bordered
-            style={{ width: '100%' }}
-          />
+          <PayingReceivingTable />
+          <FiatPaymentSteps />
         </Flex>
       </CardSection>
     </CardFlex>

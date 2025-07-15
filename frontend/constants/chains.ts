@@ -1,28 +1,29 @@
 import { ValueOf } from '@/types/Util';
 
-export const EvmChainId = {
+export const EvmChainIdMap = {
   Gnosis: 100,
   Base: 8453,
   Mode: 34443,
   Celo: 42220,
   Optimism: 10,
 } as const;
+export type EvmChainId = (typeof EvmChainIdMap)[keyof typeof EvmChainIdMap];
 
 export const EvmChainName = {
-  [EvmChainId.Gnosis]: 'Gnosis',
-  [EvmChainId.Base]: 'Base',
-  [EvmChainId.Mode]: 'Mode',
-  [EvmChainId.Celo]: 'Celo',
-  [EvmChainId.Optimism]: 'Optimism',
+  [EvmChainIdMap.Gnosis]: 'Gnosis',
+  [EvmChainIdMap.Base]: 'Base',
+  [EvmChainIdMap.Mode]: 'Mode',
+  [EvmChainIdMap.Celo]: 'Celo',
+  [EvmChainIdMap.Optimism]: 'Optimism',
 } as const;
 
 export const AllEvmChainId = {
   Ethereum: 1,
-  Gnosis: EvmChainId.Gnosis,
-  Base: EvmChainId.Base,
-  Mode: EvmChainId.Mode,
-  Celo: EvmChainId.Celo,
-  Optimism: EvmChainId.Optimism,
+  Gnosis: EvmChainIdMap.Gnosis,
+  Base: EvmChainIdMap.Base,
+  Mode: EvmChainIdMap.Mode,
+  Celo: EvmChainIdMap.Celo,
+  Optimism: EvmChainIdMap.Optimism,
 } as const;
 
 /**

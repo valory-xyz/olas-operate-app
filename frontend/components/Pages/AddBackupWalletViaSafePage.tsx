@@ -1,7 +1,7 @@
 import { Card, Flex, Skeleton, Typography } from 'antd';
 
 import { CardTitle } from '@/components/Card/CardTitle';
-import { AllEvmChainId, EvmChainId } from '@/constants/chains';
+import { AllEvmChainId, EvmChainIdMap } from '@/constants/chains';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { DISCORD_TICKET_URL } from '@/constants/urls';
 import { useServices } from '@/hooks/useServices';
@@ -16,11 +16,11 @@ const { Text } = Typography;
  */
 const safeChainPrefix = {
   [AllEvmChainId.Ethereum]: 'eth',
-  [EvmChainId.Base]: 'base',
+  [EvmChainIdMap.Base]: 'base',
   [AllEvmChainId.Optimism]: 'oeth',
-  [EvmChainId.Gnosis]: 'gno',
-  [EvmChainId.Mode]: '', // TODO: provide correct prefix once mode is supported on safe
-  [EvmChainId.Celo]: 'celo',
+  [EvmChainIdMap.Gnosis]: 'gno',
+  [EvmChainIdMap.Mode]: '', // TODO: provide correct prefix once mode is supported on safe
+  [EvmChainIdMap.Celo]: 'celo',
 };
 
 export const AddBackupWalletViaSafePage = () => {
