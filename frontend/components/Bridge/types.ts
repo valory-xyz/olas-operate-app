@@ -1,6 +1,6 @@
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 
-export type SendFundAction = 'transfer' | 'bridge';
+export type SendFundAction = 'transfer' | 'bridge' | 'buy';
 
 export type BridgeRetryOutcome = 'NEED_REFILL';
 
