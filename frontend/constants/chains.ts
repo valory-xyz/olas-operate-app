@@ -17,7 +17,7 @@ export const EvmChainName = {
   [EvmChainIdMap.Optimism]: 'Optimism',
 } as const;
 
-export const AllEvmChainId = {
+export const AllEvmChainIdMap = {
   Ethereum: 1,
   Gnosis: EvmChainIdMap.Gnosis,
   Base: EvmChainIdMap.Base,
@@ -25,6 +25,8 @@ export const AllEvmChainId = {
   Celo: EvmChainIdMap.Celo,
   Optimism: EvmChainIdMap.Optimism,
 } as const;
+export type AllEvmChainId =
+  (typeof AllEvmChainIdMap)[keyof typeof AllEvmChainIdMap];
 
 /**
  * @note Use this enum to infer all the middleware chains existing in the system
