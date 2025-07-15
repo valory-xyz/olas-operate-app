@@ -53,7 +53,7 @@ export const TokenDetails = ({
         </>
       )}
 
-      <InfoTooltip overlayInnerStyle={{ width: 340 }} placement="topRight">
+      <InfoTooltip overlayInnerStyle={{ width: 320 }} placement="top">
         <Flex vertical gap={8} className="p-8">
           <Flex justify="space-between">
             <Text type="secondary" className="text-sm">
