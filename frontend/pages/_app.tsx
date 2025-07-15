@@ -11,6 +11,7 @@ import { BalanceProvider } from '@/context/BalanceProvider/BalanceProvider';
 import { BalancesAndRefillRequirementsProvider } from '@/context/BalancesAndRefillRequirementsProvider';
 import { ElectronApiProvider } from '@/context/ElectronApiProvider';
 import { MasterWalletProvider } from '@/context/MasterWalletProvider';
+import { MessageProvider } from '@/context/MessageProvider';
 import { ModalProvider } from '@/context/ModalProvider';
 import { OnlineStatusProvider } from '@/context/OnlineStatusProvider';
 import { PageStateProvider } from '@/context/PageStateProvider';
@@ -49,19 +50,21 @@ export default function App({ Component, pageProps }: AppProps) {
                             <SetupProvider>
                               <SettingsProvider>
                                 <ConfigProvider theme={mainTheme}>
-                                  <ModalProvider>
-                                    <SharedProvider>
-                                      {isMounted ? (
-                                        <SystemNotificationTriggers>
-                                          <AgentUiProvider>
-                                            <Layout>
-                                              <Component {...pageProps} />
-                                            </Layout>
-                                          </AgentUiProvider>
-                                        </SystemNotificationTriggers>
-                                      ) : null}
-                                    </SharedProvider>
-                                  </ModalProvider>
+                                  <MessageProvider>
+                                    <ModalProvider>
+                                      <SharedProvider>
+                                        {isMounted ? (
+                                          <SystemNotificationTriggers>
+                                            <AgentUiProvider>
+                                              <Layout>
+                                                <Component {...pageProps} />
+                                              </Layout>
+                                            </AgentUiProvider>
+                                          </SystemNotificationTriggers>
+                                        ) : null}
+                                      </SharedProvider>
+                                    </ModalProvider>
+                                  </MessageProvider>
                                 </ConfigProvider>
                               </SettingsProvider>
                             </SetupProvider>
