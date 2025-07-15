@@ -1,5 +1,6 @@
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL } from '@/constants/urls';
+import { parseApiError } from '@/utils/error';
 
 /**
  * Gets account status "is_setup"
@@ -20,10 +21,11 @@ const createAccount = (password: string) =>
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify({ password }),
-  }).then((res) => {
-    if (res.ok) return res.json();
-    throw new Error('Failed to create account');
-  });
+  }).then((response) =>
+    response.ok
+      ? response.json()
+      : parseApiError(response, 'Failed to create account'),
+  );
 
 /**
  * Updates user's password
@@ -36,10 +38,11 @@ const updateAccount = (oldPassword: string, newPassword: string) =>
       old_password: oldPassword,
       new_password: newPassword,
     }),
-  }).then((res) => {
-    if (res.ok) return res.json();
-    throw new Error('Failed to update account');
-  });
+  }).then((response) =>
+    response.ok
+      ? response.json()
+      : parseApiError(response, 'Failed to update account'),
+  );
 
 /**
  * Logs in a user
@@ -49,10 +52,9 @@ const loginAccount = (password: string) =>
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify({ password }),
-  }).then((res) => {
-    if (res.ok) return res.json();
-    throw new Error('Failed to login');
-  });
+  }).then((response) =>
+    response.ok ? response.json() : parseApiError(response, 'Failed to login'),
+  );
 
 export const AccountService = {
   getAccount,
