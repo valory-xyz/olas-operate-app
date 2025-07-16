@@ -3,9 +3,9 @@ import { EvmChainId } from '@/enums/Chain';
 
 type Url = `http${'s' | ''}://${string}`;
 
-export const BACKEND_URL: Url = `http://localhost:${process.env.NODE_ENV === 'production' ? 8765 : 8000}/api`;
+export const BACKEND_URL: Url = `https://localhost:${process.env.NODE_ENV === 'production' ? 8765 : 8000}/api`;
 
-export const BACKEND_URL_V2: Url = `http://localhost:${process.env.NODE_ENV === 'production' ? 8765 : 8000}/api/v2`;
+export const BACKEND_URL_V2: Url = `https://localhost:${process.env.NODE_ENV === 'production' ? 8765 : 8000}/api/v2`;
 
 // swap URLs
 const COW_SWAP_GNOSIS_XDAI_OLAS_URL: Url =

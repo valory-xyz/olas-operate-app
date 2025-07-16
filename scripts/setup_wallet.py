@@ -28,7 +28,7 @@ from scripts.fund import fund
 print("Setting up user account")
 print(
     requests.post(
-        "http://localhost:8000/api/account",
+        "https://localhost:8000/api/account",
         json={
             "password": "password",
         },
@@ -38,7 +38,7 @@ print(
 print("Logging in")
 print(
     requests.post(
-        "http://localhost:8000/api/account/login",
+        "https://localhost:8000/api/account/login",
         json={
             "password": "password",
         },
@@ -46,7 +46,7 @@ print(
 )
 
 wallet = requests.post(
-    "http://localhost:8000/api/wallet",
+    "https://localhost:8000/api/wallet",
     json={
         "chain": Chain.GNOSIS,
     },
@@ -59,7 +59,7 @@ fund(wallet["wallet"]["address"], amount=20)
 
 print(
     requests.post(
-        "http://localhost:8000/api/wallet/safe",
+        "https://localhost:8000/api/wallet/safe",
         json={
             "chain": Chain.GNOSIS,
             "owner": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",  # Backup owner
@@ -69,6 +69,6 @@ print(
 
 print(
     requests.get(
-        "http://localhost:8000/api/wallet",
+        "https://localhost:8000/api/wallet",
     ).json()
 )
