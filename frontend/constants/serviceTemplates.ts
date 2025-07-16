@@ -271,7 +271,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version'
 > = {
-  hash: 'bafybeiaa3tws2tkmcc72wqdtvm4klargcrtxuc5x2a66kgolkwt4bxww24',
+  hash: 'bafybeigy4kxe7r4vmkqxizogtiodydf4ngxro4te2zro56fttw2cgyd7wm',
   service_version: 'v0.3.15',
 };
 
