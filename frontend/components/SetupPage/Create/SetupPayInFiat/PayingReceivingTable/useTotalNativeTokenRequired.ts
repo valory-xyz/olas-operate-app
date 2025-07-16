@@ -65,17 +65,21 @@ export const useTotalNativeTokenRequired = () => {
     canPollForBridgeRefillRequirements,
   );
 
-  // Calculate the total native token required for the bridge.
-  // Example: for Optimus, we require 0.01 ETH, 16 USDC, 100 OLAS
-  // olas_in_eth = 16 USDC bridged to ETH
-  // usdc_in_eth = 100 OLAS bridged to ETH
-  // Total native token required = 0.01 ETH + olas_in_eth + usdc_in_eth
+  /**
+   * Calculates the total native token required for the bridge.
+   *
+   * Example: for Optimus, we require 0.01 ETH, 16 USDC, 100 OLAS.
+   * olas_in_eth = 16 USDC bridged to ETH
+   * usdc_in_eth = 100 OLAS bridged to ETH
+   * Total native token required = 0.01 ETH + olas_in_eth + usdc_in_eth
+   *
+   */
   const totalNativeTokenRequired = useMemo(() => {
     if (!bridgeParams) return;
     if (!bridgeFundingRequirements) return;
     if (!masterEoa?.address) return;
 
-    const currentNativeToken = bridgeParams.bridge_requests.find(
+    const nativeTokeFromBridgeParams = bridgeParams.bridge_requests.find(
       (request) => request.to.token === AddressZero,
     )?.to.amount;
 
@@ -83,10 +87,13 @@ export const useTotalNativeTokenRequired = () => {
       bridgeFundingRequirements.bridge_refill_requirements[fromChainName]?.[
         masterEoa.address
       ];
-    const nativeTokenToBridge = bridgeRefillRequirements?.[AddressZero];
-    if (!nativeTokenToBridge) return;
+    const nativeTokenFromBridgeQuote = bridgeRefillRequirements?.[AddressZero];
+    if (!nativeTokenFromBridgeQuote) return;
 
-    return BigInt(nativeTokenToBridge) + BigInt(currentNativeToken || 0);
+    return (
+      BigInt(nativeTokenFromBridgeQuote) +
+      BigInt(nativeTokeFromBridgeParams || 0)
+    );
   }, [
     bridgeParams,
     bridgeFundingRequirements,
@@ -137,7 +144,6 @@ export const useTotalNativeTokenRequired = () => {
 
   const hasAnyQuoteFailed = useMemo(() => {
     if (!bridgeFundingRequirements) return false;
-
     return bridgeFundingRequirements.bridge_request_status.some(
       ({ status }) => status === 'QUOTE_FAILED',
     );

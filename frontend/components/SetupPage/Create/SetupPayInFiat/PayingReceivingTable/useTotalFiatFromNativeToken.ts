@@ -1,4 +1,3 @@
-// TODO: add real data fetching logic
 import { useQuery } from '@tanstack/react-query';
 
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';

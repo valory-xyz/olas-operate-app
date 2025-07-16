@@ -7,9 +7,6 @@
 /**
  * TODO
  *
- * Paying and receiving funds table:
- * - call getPrice API with appropriate parameters
- *
  * Step 1: Buy crypto for fiat
  * - Open transack window
  * - Complete the KYC and for testing use: https://docs.transak.com/docs/test-credentials
