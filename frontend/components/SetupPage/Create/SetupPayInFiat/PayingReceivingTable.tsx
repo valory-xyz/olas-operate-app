@@ -1,6 +1,14 @@
-import { Flex, Skeleton, Table, type TableProps, Typography } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
+import {
+  Button,
+  Flex,
+  Skeleton,
+  Table,
+  type TableProps,
+  Typography,
+} from 'antd';
 import Image from 'next/image';
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useCallback, useMemo } from 'react';
 
 import { getTokenDetails } from '@/components/Bridge/utils';
 import { TOKEN_CONFIG } from '@/config/tokens';
@@ -21,7 +29,7 @@ import { onRampChainMap } from './constants';
 
 const { Text } = Typography;
 
-type DataType = {
+type PaymentTableDataType = {
   key: string;
   paying: ReactNode;
   receiving: ReactNode;
@@ -30,7 +38,7 @@ type DataType = {
 const getColumns = (
   chainName: string,
   chainDisplayName: string,
-): TableProps<DataType>['columns'] => [
+): TableProps<PaymentTableDataType>['columns'] => [
   {
     title: (
       <Flex justify="space-between" align="center">
@@ -70,15 +78,30 @@ const TokenLoader = () => (
   />
 );
 
-const useNativeTokenRequired = () => {
+const useTotalNativeTokenRequired = () => {
   const { isLoading: isServiceLoading, selectedAgentConfig } = useServices();
+  const { masterEoa } = useMasterWalletContext();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
-  const chainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-  const fromChainId = onRampChainMap[chainName];
-  const toChainConfig =
-    TOKEN_CONFIG[asEvmChainId(selectedAgentConfig.middlewareHomeChainId)];
-  const { masterEoa } = useMasterWalletContext();
+
+  const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
+  const toChainId = asEvmChainId(selectedAgentConfig.middlewareHomeChainId);
+  const fromChainId = onRampChainMap[fromChainName];
+  const toChainConfig = TOKEN_CONFIG[toChainId];
+
+  // State to control the force update of the bridge refill requirements API call
+  // This is used when the user clicks on "Try again" button
+  // to fetch the bridge refill requirements again.
+  // NOTE: It is reset to false after the API call is made.
+  // const [isForceUpdate, setIsForceUpdate] = useState(false);
+  // const [
+  //   isBridgeRefillRequirementsApiLoading,
+  //   setIsBridgeRefillRequirementsApiLoading,
+  // ] = useState(true);
+  // const [
+  //   canPollForBridgeRefillRequirements,
+  //   setCanPollForBridgeRefillRequirements,
+  // ] = useState(true);
 
   const bridgeParams = useGetBridgeRequirementsParams(
     fromChainId,
@@ -99,10 +122,13 @@ const useNativeTokenRequired = () => {
   const {
     data: bridgeFundingRequirements,
     isLoading: isBridgeRefillRequirementsLoading,
-    // isError: isBridgeRefillRequirementsError,
+    isError: isBridgeRefillRequirementsError,
     // isFetching: isBridgeRefillRequirementsFetching,
-    // refetch: refetchBridgeRefillRequirements,
-  } = useBridgeRefillRequirements(bridgeParamsExceptNativeToken);
+    refetch: refetchBridgeRefillRequirements,
+  } = useBridgeRefillRequirements(
+    bridgeParamsExceptNativeToken,
+    // canPollForBridgeRefillRequirements,
+  );
 
   const totalNativeTokenRequired = useMemo(() => {
     if (!bridgeParams) return;
@@ -114,13 +140,18 @@ const useNativeTokenRequired = () => {
     )?.to.amount;
 
     const nativeTokenToBridge =
-      bridgeFundingRequirements.bridge_refill_requirements?.[chainName]?.[
+      bridgeFundingRequirements.bridge_refill_requirements?.[fromChainName]?.[
         masterEoa?.address
       ]?.[AddressZero];
     if (!nativeTokenToBridge) return;
 
     return BigInt(nativeTokenToBridge) + BigInt(currentNativeToken || 0);
-  }, [bridgeParams, bridgeFundingRequirements, masterEoa?.address, chainName]);
+  }, [
+    bridgeParams,
+    bridgeFundingRequirements,
+    masterEoa?.address,
+    fromChainName,
+  ]);
 
   const receivingTokens = useMemo(() => {
     if (!bridgeParams) return [];
@@ -136,20 +167,26 @@ const useNativeTokenRequired = () => {
     });
   }, [bridgeParams, toChainConfig]);
 
+  const onRetry = useCallback(() => {
+    refetchBridgeRefillRequirements();
+  }, [refetchBridgeRefillRequirements]);
+
   return {
     isLoading:
       isServiceLoading ||
       isBalancesAndFundingRequirementsLoading ||
       isBridgeRefillRequirementsLoading,
+    isError: isBridgeRefillRequirementsError,
     totalNativeToken: totalNativeTokenRequired
       ? formatUnitsToNumber(totalNativeTokenRequired, 18)
       : 0,
     receivingTokens,
+    onRetry,
   };
 };
 
 // TODO: add real data fetching logic
-const useTotalEthToUsdToPay = () => {
+const useTotalNativeTokenToFiatForPayment = () => {
   return {
     isLoading: true,
     totalUsd: 0.056,
@@ -157,30 +194,46 @@ const useTotalEthToUsdToPay = () => {
 };
 
 export const PayingReceivingTable = () => {
-  const { isLoading, totalNativeToken, receivingTokens } =
-    useNativeTokenRequired();
-  const { isLoading: isUsdLoading, totalUsd } = useTotalEthToUsdToPay();
   const { selectedAgentConfig } = useServices();
+  const {
+    isLoading: isNativeTokenLoading,
+    isError: isNativeTokenError,
+    totalNativeToken,
+    receivingTokens,
+    onRetry,
+  } = useTotalNativeTokenRequired();
+  const { isLoading: isFiatLoading, totalUsd } =
+    useTotalNativeTokenToFiatForPayment();
+
   const toChain = asEvmChainDetails(selectedAgentConfig.middlewareHomeChainId);
 
-  // TODO: add a retry button even if one of the quote is failed
-  const ethToTokenList = useMemo<DataType[]>(
+  const ethToTokenList = useMemo<PaymentTableDataType[]>(
     () => [
       {
         key: 'paying-receiving',
         paying: (
           <Flex vertical justify="center" gap={6}>
-            <Text>{isUsdLoading ? <TokenLoader /> : totalUsd}&nbsp;USD</Text>
-            <Text>
-              for&nbsp;
-              {isLoading ? <TokenLoader /> : totalNativeToken}
-              &nbsp;ETH
-            </Text>
+            {isNativeTokenError ? (
+              <Button onClick={onRetry} icon={<ReloadOutlined />} size="small">
+                Retry
+              </Button>
+            ) : (
+              <>
+                <Text>
+                  {isFiatLoading ? <TokenLoader /> : totalUsd}&nbsp;USD
+                </Text>
+                <Text>
+                  for&nbsp;
+                  {isNativeTokenLoading ? <TokenLoader /> : totalNativeToken}
+                  &nbsp;ETH
+                </Text>
+              </>
+            )}
           </Flex>
         ),
         receiving: (
           <Flex vertical justify="center" gap={6}>
-            {isLoading ? (
+            {isNativeTokenLoading ? (
               <TokenLoader />
             ) : (
               receivingTokens.map((token, index) => (
@@ -191,11 +244,19 @@ export const PayingReceivingTable = () => {
         ),
       },
     ],
-    [isLoading, isUsdLoading, totalNativeToken, totalUsd, receivingTokens],
+    [
+      isNativeTokenLoading,
+      isNativeTokenError,
+      isFiatLoading,
+      totalNativeToken,
+      totalUsd,
+      receivingTokens,
+      onRetry,
+    ],
   );
 
   return (
-    <Table<DataType>
+    <Table<PaymentTableDataType>
       columns={getColumns(toChain.name, toChain.displayName)}
       dataSource={ethToTokenList}
       pagination={false}

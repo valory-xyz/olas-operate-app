@@ -87,11 +87,8 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
 };
 
 /**
- * Helper to get bridge refill requirements parameters
- * based on current refill requirements.
- *
- * @returns A function that returns the bridge refill requirements request
- * or null if requirements are not available or loading.
+ * @returns A function that returns the bridge refill requirements parameters
+ * based on the current refill requirements OR null if requirements are not available or loading.
  */
 export const useGetBridgeRequirementsParams = (
   fromChainId: AllEvmChainId,
@@ -101,7 +98,7 @@ export const useGetBridgeRequirementsParams = (
   const { masterEoa } = useMasterWalletContext();
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
-  const getBridgeRequirementsParamsWithMonthlyGas =
+  const getUpdatedBridgeRequirementsParams =
     useGetBridgeRequirementsParamsWithMonthlyGasEstimate();
 
   const fromChainConfig =
@@ -180,8 +177,7 @@ export const useGetBridgeRequirementsParams = (
 
       return {
         bridge_requests:
-          getBridgeRequirementsParamsWithMonthlyGas(bridgeRequests) ||
-          bridgeRequests,
+          getUpdatedBridgeRequirementsParams(bridgeRequests) || bridgeRequests,
         force_update: isForceUpdate,
       } satisfies BridgeRefillRequirementsRequest;
     },
@@ -194,7 +190,7 @@ export const useGetBridgeRequirementsParams = (
       defaultFromToken,
       isBalancesAndFundingRequirementsLoading,
       toMiddlewareChain,
-      getBridgeRequirementsParamsWithMonthlyGas,
+      getUpdatedBridgeRequirementsParams,
     ],
   );
 };

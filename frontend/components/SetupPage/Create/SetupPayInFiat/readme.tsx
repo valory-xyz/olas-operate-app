@@ -1,11 +1,13 @@
+/*******************************/
+// IGNORE
+/*******************************/
+
+// TODO: file will be deleted
+
 /**
  * TODO
  *
- * Paying and receiving funds:
- * - add the mapping table of each chain
- * - Call each chain's bridge API with appropriate source and destination
- * eg. Optimism to Optimism
- * - Total amount to be calculated
+ * Paying and receiving funds table:
  * - call getPrice API with appropriate parameters
  *
  * Step 1: Buy crypto for fiat
@@ -24,7 +26,7 @@
  * Step 4: Transfer funds to the Master Safe
  * - Same as bridging funds (combine the steps 3 and 4)
  *
- * API Key: ask Iason to create company account
+ * API Key: ask Iason to create company account.
  *
  * Security:
  * - keep API key safe and do not expose it in client-side code

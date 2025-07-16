@@ -4,10 +4,9 @@ import { Address } from '@/types/Address';
 import { areAddressesEqual } from '@/utils/address';
 
 /**
- * Get the token details from the token address
- *
+ * Get the token details from the token address.
  * Example: if tokenAddress is USDC, it will return the USDC details from the chainConfig.
- * */
+ */
 export const getTokenDetails = (
   tokenAddress: string,
   chainConfig: ChainTokenConfig,

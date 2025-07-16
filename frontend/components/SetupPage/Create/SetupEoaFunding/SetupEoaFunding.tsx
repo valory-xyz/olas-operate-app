@@ -285,7 +285,7 @@ export const SetupEoaFunding = () => {
       goto(SetupScreen.SetupBridgeOnboardingScreen);
     } catch (error) {
       message.error('Failed to prepare for bridging funds. Please try again.');
-      console.error('Error updating before bridging funds:', error);
+      console.error(error);
     }
   }, [goto, updateBeforeBridgingFunds]);
 
@@ -295,7 +295,7 @@ export const SetupEoaFunding = () => {
       goto(SetupScreen.SetupPayInFiat);
     } catch (error) {
       message.error('Failed to prepare for fiat payment. Please try again.');
-      console.error('Error updating before fiat payment:', error);
+      console.error(error);
     }
   }, [goto, updateBeforeBridgingFunds]);
 
