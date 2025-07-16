@@ -67,6 +67,13 @@ const TokenLoader = () => (
   />
 );
 
+const ReceivingTokensLoader = () => (
+  <Flex vertical gap={6}>
+    <TokenLoader />
+    <TokenLoader />
+  </Flex>
+);
+
 export const PayingReceivingTable = () => {
   const { selectedAgentConfig } = useServices();
   const {
@@ -85,29 +92,29 @@ export const PayingReceivingTable = () => {
       {
         key: 'paying-receiving',
         paying: (
-          <Flex vertical justify="center" gap={6}>
+          <>
             {hasNativeTokenError ? (
               <Button onClick={onRetry} icon={<ReloadOutlined />} size="small">
                 Retry
               </Button>
             ) : (
-              <>
+              <Flex vertical justify="center" gap={6}>
                 <Text>
-                  {isFiatLoading ? <TokenLoader /> : totalUsd}&nbsp;USD
+                  {isFiatLoading ? <TokenLoader /> : `~${totalUsd}`}&nbsp;USD
                 </Text>
                 <Text>
                   for&nbsp;
                   {isNativeTokenLoading ? <TokenLoader /> : totalNativeToken}
                   &nbsp;ETH
                 </Text>
-              </>
+              </Flex>
             )}
-          </Flex>
+          </>
         ),
         receiving: (
           <Flex vertical justify="center" gap={6}>
             {isNativeTokenLoading ? (
-              <TokenLoader />
+              <ReceivingTokensLoader />
             ) : (
               receivingTokens.map((token, index) => (
                 <Text key={index}>{`${token?.amount} ${token?.symbol}`}</Text>
