@@ -8,6 +8,7 @@ import { AddressZero } from '@/constants/address';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
 import { useServices } from '@/hooks/useServices';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 import {
   asEvmChainDetails,
   asEvmChainId,
@@ -70,29 +71,73 @@ const TokenLoader = () => (
 );
 
 // TODO: add real data fetching logic
-const useEthToTokens = () => {
+const useNativeTokenRequired = () => {
   const { isLoading: isServiceLoading, selectedAgentConfig } = useServices();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
-  const fromChainId =
-    onRampChainMap[asMiddlewareChain(selectedAgentConfig.evmHomeChainId)];
+  const chainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
+  const fromChainId = onRampChainMap[chainName];
   const toChainConfig =
     TOKEN_CONFIG[asEvmChainId(selectedAgentConfig.middlewareHomeChainId)];
+  const { masterEoa } = useMasterWalletContext();
 
   const bridgeParams = useGetBridgeRequirementsParams(
     fromChainId,
     AddressZero,
   )();
 
-  // TODO: avoid the ETH in bridgeParams and add it in the total ETH (basically zero address)
+  const bridgeParamsExceptNativeToken = useMemo(() => {
+    if (!bridgeParams) return null;
+
+    return {
+      ...bridgeParams,
+      bridge_requests: bridgeParams.bridge_requests.filter(
+        (request) => request.to.token !== AddressZero,
+      ),
+    };
+  }, [bridgeParams]);
 
   const {
     data: bridgeFundingRequirements,
     isLoading: isBridgeRefillRequirementsLoading,
-    isError: isBridgeRefillRequirementsError,
-    isFetching: isBridgeRefillRequirementsFetching,
+    // isError: isBridgeRefillRequirementsError,
+    // isFetching: isBridgeRefillRequirementsFetching,
     // refetch: refetchBridgeRefillRequirements,
-  } = useBridgeRefillRequirements(bridgeParams, false);
+  } = useBridgeRefillRequirements(bridgeParamsExceptNativeToken, false);
+
+  // const totalNativeToken = bridgeParams?.bridge_requests.reduce((acc, request) => {
+  //   const amount = BigInt(request.to.amount);
+  //   const currentNativeToken = bridgeParams.bridge_requests.filter(
+  //     (request) => request.to.token !== AddressZero,
+  //   );
+  //   const nativeTokenToBridge =
+  //     bridgeFundingRequirements.bridge_refill_requirements?.[chainName]?.[
+  //       masterEoa?.address
+  //     ]?.[AddressZero];
+
+  //   return (
+  //     acc +
+  //     (areAddressesEqual(request.to.token, AddressZero) ? amount : BigInt(0))
+  //   );
+  // }, BigInt(0));
+
+  const totalNativeTokenRequired = useMemo(() => {
+    if (!bridgeParams) return;
+    if (!bridgeFundingRequirements) return;
+    if (!masterEoa?.address) return;
+
+    const currentNativeToken = bridgeParams.bridge_requests.find(
+      (request) => request.to.token === AddressZero,
+    )?.to.amount;
+
+    const nativeTokenToBridge =
+      bridgeFundingRequirements.bridge_refill_requirements?.[chainName]?.[
+        masterEoa?.address
+      ]?.[AddressZero];
+    if (!nativeTokenToBridge) return;
+
+    return BigInt(nativeTokenToBridge) + BigInt(currentNativeToken || 0);
+  }, [bridgeParams, bridgeFundingRequirements, masterEoa?.address, chainName]);
 
   const receivingTokens = useMemo(() => {
     if (!bridgeParams) return [];
@@ -108,9 +153,13 @@ const useEthToTokens = () => {
     });
   }, [bridgeParams, toChainConfig]);
 
-  console.log(receivingTokens);
+  // console.log({
+  //   receivingTokens,
+  //   bridgeParamsExceptNativeToken,
+  //   totalNativeTokenRequired,
+  // });
 
-  // window.console.log({
+  // console.log({
   //   fromChainId,
   //   toChainConfig,
   //   bridgeFundingRequirements,
@@ -120,8 +169,13 @@ const useEthToTokens = () => {
   // });
 
   return {
-    isLoading: isServiceLoading || isBalancesAndFundingRequirementsLoading,
-    totalEth: 0.056, // TODO
+    isLoading:
+      isServiceLoading ||
+      isBalancesAndFundingRequirementsLoading ||
+      isBridgeRefillRequirementsLoading,
+    totalNativeToken: totalNativeTokenRequired
+      ? formatUnitsToNumber(totalNativeTokenRequired, 18)
+      : 0,
     receivingTokens,
   };
 };
@@ -135,7 +189,8 @@ const useTotalEthToUsdToPay = () => {
 };
 
 export const PayingReceivingTable = () => {
-  const { isLoading, totalEth, receivingTokens } = useEthToTokens();
+  const { isLoading, totalNativeToken, receivingTokens } =
+    useNativeTokenRequired();
   const { isLoading: isUsdLoading, totalUsd } = useTotalEthToUsdToPay();
   const { selectedAgentConfig } = useServices();
   const toChain = asEvmChainDetails(selectedAgentConfig.middlewareHomeChainId);
@@ -143,13 +198,13 @@ export const PayingReceivingTable = () => {
   const ethToTokenList = useMemo<DataType[]>(
     () => [
       {
-        key: '1',
+        key: 'paying-receiving',
         paying: (
           <Flex vertical justify="center" gap={6}>
             <Text>{isUsdLoading ? <TokenLoader /> : totalUsd}&nbsp;USD</Text>
             <Text>
               for&nbsp;
-              {isLoading ? <TokenLoader /> : totalEth}
+              {isLoading ? <TokenLoader /> : totalNativeToken}
               &nbsp;ETH
             </Text>
           </Flex>
@@ -167,7 +222,7 @@ export const PayingReceivingTable = () => {
         ),
       },
     ],
-    [isLoading, isUsdLoading, totalEth, totalUsd, receivingTokens],
+    [isLoading, isUsdLoading, totalNativeToken, totalUsd, receivingTokens],
   );
 
   return (
@@ -176,7 +231,7 @@ export const PayingReceivingTable = () => {
       dataSource={ethToTokenList}
       pagination={false}
       bordered
-      style={{ width: '100%', alignSelf: 'flex-start' }}
+      style={{ width: '100%' }}
     />
   );
 };

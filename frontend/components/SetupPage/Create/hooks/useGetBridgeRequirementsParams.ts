@@ -1,5 +1,4 @@
 import { isAddress } from 'ethers/lib/utils';
-import { cloneDeep } from 'lodash';
 import { useCallback } from 'react';
 
 import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/client';
@@ -75,14 +74,6 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
         BigInt(masterEoaRequirementAmount);
 
       bridgeRequests[nativeTokenIndex].to.amount = amount.toString();
-      console.log('=====================================');
-      console.log(nativeTokenIndex, amount, {
-        monthlyGasEstimate,
-        safeRequirementAmount,
-        masterEoaRequirementAmount,
-        kk: bridgeRequests[nativeTokenIndex],
-      });
-      console.log(cloneDeep(bridgeRequests));
 
       return bridgeRequests;
     },
@@ -133,7 +124,6 @@ export const useGetBridgeRequirementsParams = (
         [];
 
       const tokensRefillList = Object.entries(refillRequirements);
-      console.log({ tokensWithRequirements: tokensRefillList });
 
       // Populate bridge requests from refill Requirements
       for (const [walletAddress, tokensWithRequirements] of tokensRefillList) {
@@ -170,14 +160,7 @@ export const useGetBridgeRequirementsParams = (
             // If the request already exists, update the amount
             const toAmount = BigInt(existingRequest.to.amount) + BigInt(amount);
             existingRequest.to.amount = toAmount.toString();
-            console.log({
-              existingRequest: { ...existingRequest },
-              oldAmount: existingRequest.to.amount,
-              amountToAdd: amount,
-              newAmount: toAmount.toString(),
-            });
           } else {
-            console.log({ amount });
             bridgeRequests.push({
               from: {
                 chain: fromChain,
@@ -192,11 +175,7 @@ export const useGetBridgeRequirementsParams = (
               },
             });
           }
-
-          console.log({ ...existingRequest });
         }
-
-        console.log(cloneDeep(bridgeRequests));
       }
 
       return {
