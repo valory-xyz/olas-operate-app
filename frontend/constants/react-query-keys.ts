@@ -85,4 +85,8 @@ export const REACT_QUERY_KEYS = {
   BRIDGE_STATUS_BY_QUOTE_ID_KEY: (quoteId: string) =>
     ['bridgeStatusByQuoteId', quoteId] as const,
   BRIDGE_EXECUTE_KEY: (quoteId: string) => ['bridgeExecute', quoteId] as const,
+
+  // on ramp
+  ON_RAMP_QUOTE_KEY: (amount: number | string) =>
+    ['onRampQuote', amount] as const,
 } as const;

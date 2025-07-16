@@ -83,7 +83,8 @@ export const PayingReceivingTable = () => {
     receivingTokens,
     onRetry,
   } = useTotalNativeTokenRequired();
-  const { isLoading: isFiatLoading, totalUsd } = useTotalFiatFromNativeToken();
+  const { isLoading: isFiatLoading, data: onRampQuote } =
+    useTotalFiatFromNativeToken(totalNativeToken);
 
   const toChain = asEvmChainDetails(selectedAgentConfig.middlewareHomeChainId);
 
@@ -100,7 +101,12 @@ export const PayingReceivingTable = () => {
             ) : (
               <Flex vertical justify="center" gap={6}>
                 <Text>
-                  {isFiatLoading ? <TokenLoader /> : `~${totalUsd}`}&nbsp;USD
+                  {isFiatLoading || isNativeTokenLoading ? (
+                    <TokenLoader />
+                  ) : (
+                    `~${onRampQuote?.fiatAmount}`
+                  )}
+                  &nbsp;USD
                 </Text>
                 <Text>
                   for&nbsp;
@@ -129,7 +135,7 @@ export const PayingReceivingTable = () => {
       hasNativeTokenError,
       isFiatLoading,
       totalNativeToken,
-      totalUsd,
+      onRampQuote?.fiatAmount,
       receivingTokens,
       onRetry,
     ],

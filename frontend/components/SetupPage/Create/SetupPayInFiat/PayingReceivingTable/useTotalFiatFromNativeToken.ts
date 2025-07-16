@@ -1,7 +1,99 @@
 // TODO: add real data fetching logic
-export const useTotalFiatFromNativeToken = () => {
-  return {
-    isLoading: false,
-    totalUsd: 0.056,
+import { useQuery } from '@tanstack/react-query';
+
+import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { useServices } from '@/hooks/useServices';
+import { asEvmChainDetails } from '@/utils/middlewareHelpers';
+
+type FeeBreakdownItem = {
+  name: string;
+  value: number;
+  id: string;
+  ids: string[];
+};
+
+type Quote = {
+  quoteId: string;
+  conversionPrice: number;
+  marketConversionPrice: number;
+  slippage: number;
+  fiatCurrency: string;
+  cryptoCurrency: string;
+  paymentMethod: string;
+  fiatAmount: number;
+  cryptoAmount: number;
+  isBuyOrSell: 'BUY' | 'SELL';
+  network: string;
+  feeDecimal: number;
+  totalFee: number;
+  feeBreakdown: FeeBreakdownItem[];
+  nonce: number;
+  cryptoLiquidityProvider: string;
+  notes: string[];
+};
+
+const transakPriceUrl =
+  'https://api-stg.transak.com/api/v1/pricing/public/quotes';
+
+const fetchTransakQuote = async (
+  network: string,
+  amount: number | string,
+  signal: AbortSignal,
+): Promise<{ response: Quote }> => {
+  const apiKey = process.env.TRANSAK_API_KEY as string;
+
+  if (!apiKey) {
+    throw new Error('TRANSAK_API_KEY is not defined');
+  }
+
+  const options = {
+    method: 'GET',
+    headers: { accept: 'application/json' },
+    signal,
   };
+
+  const params = new URLSearchParams({
+    partnerApiKey: apiKey,
+    fiatCurrency: 'USD',
+    cryptoCurrency: 'ETH',
+    isBuyOrSell: 'BUY',
+    network,
+    paymentMethod: 'credit_debit_card',
+    cryptoAmount: amount.toString(),
+  });
+
+  const response = await fetch(
+    `${transakPriceUrl}?${params.toString()}`,
+    options,
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch Transak quote: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
+  const { selectedAgentConfig } = useServices();
+  const networkName = asEvmChainDetails(
+    selectedAgentConfig.middlewareHomeChainId,
+  ).name;
+
+  return useQuery({
+    queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(nativeTokenAmount!),
+    queryFn: async ({ signal }) => {
+      try {
+        const { response } = await fetchTransakQuote(
+          networkName,
+          nativeTokenAmount!,
+          signal,
+        );
+        return response;
+      } catch (error) {
+        console.error('Error fetching Transak quote', error);
+      }
+    },
+    enabled: !!nativeTokenAmount && !!process.env.TRANSAK_API_KEY,
+  });
 };
