@@ -2,8 +2,10 @@ import { Flex, Skeleton, Table, type TableProps, Typography } from 'antd';
 import Image from 'next/image';
 import { ReactNode, useMemo } from 'react';
 
+import { getTokenDetails } from '@/components/Bridge/utils';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
+import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
 import { useServices } from '@/hooks/useServices';
 import {
@@ -11,6 +13,7 @@ import {
   asEvmChainId,
   asMiddlewareChain,
 } from '@/utils/middlewareHelpers';
+import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { useGetBridgeRequirementsParams } from '../hooks/useGetBridgeRequirementsParams';
 import { onRampChainMap } from './constants';
@@ -37,6 +40,7 @@ const getColumns = (
     dataIndex: 'paying',
     key: 'paying',
     width: '50%',
+    onCell: () => ({ style: { verticalAlign: 'top' } }),
   },
   {
     title: (
@@ -53,19 +57,23 @@ const getColumns = (
     dataIndex: 'receiving',
     key: 'receiving',
     width: '50%',
+    onCell: () => ({ style: { verticalAlign: 'top' } }),
   },
 ];
 
 const TokenLoader = () => (
   <Skeleton.Input
     size="small"
+    active
     style={{ width: '80px !important', minWidth: '80px !important' }}
   />
 );
 
 // TODO: add real data fetching logic
 const useEthToTokens = () => {
-  const { selectedAgentConfig } = useServices();
+  const { isLoading: isServiceLoading, selectedAgentConfig } = useServices();
+  const { isBalancesAndFundingRequirementsLoading } =
+    useBalanceAndRefillRequirementsContext();
   const fromChainId =
     onRampChainMap[asMiddlewareChain(selectedAgentConfig.evmHomeChainId)];
   const toChainConfig =
@@ -76,27 +84,45 @@ const useEthToTokens = () => {
     AddressZero,
   )();
 
+  // TODO: avoid the ETH in bridgeParams and add it in the total ETH (basically zero address)
+
   const {
     data: bridgeFundingRequirements,
     isLoading: isBridgeRefillRequirementsLoading,
     isError: isBridgeRefillRequirementsError,
     isFetching: isBridgeRefillRequirementsFetching,
     // refetch: refetchBridgeRefillRequirements,
-  } = useBridgeRefillRequirements(bridgeParams);
+  } = useBridgeRefillRequirements(bridgeParams, false);
 
-  window.console.log({
-    fromChainId,
-    toChainConfig,
-    bridgeFundingRequirements,
-    isBridgeRefillRequirementsLoading,
-    isBridgeRefillRequirementsError,
-    isBridgeRefillRequirementsFetching,
-  });
+  const receivingTokens = useMemo(() => {
+    if (!bridgeParams) return [];
+
+    return bridgeParams.bridge_requests.map((request) => {
+      const toToken = request.to.token;
+      const amount = request.to.amount;
+      const token = getTokenDetails(toToken, toChainConfig);
+      return {
+        amount: formatUnitsToNumber(amount, token?.decimals),
+        symbol: token?.symbol,
+      };
+    });
+  }, [bridgeParams, toChainConfig]);
+
+  console.log(receivingTokens);
+
+  // window.console.log({
+  //   fromChainId,
+  //   toChainConfig,
+  //   bridgeFundingRequirements,
+  //   isBridgeRefillRequirementsLoading,
+  //   isBridgeRefillRequirementsError,
+  //   isBridgeRefillRequirementsFetching,
+  // });
 
   return {
-    isLoading: true,
-    totalEth: 0.056,
-    receivingTokens: ['100.00 OLAS', '16.00 USDC', '0.0200 ETH'],
+    isLoading: isServiceLoading || isBalancesAndFundingRequirementsLoading,
+    totalEth: 0.056, // TODO
+    receivingTokens,
   };
 };
 
@@ -134,7 +160,7 @@ export const PayingReceivingTable = () => {
               <TokenLoader />
             ) : (
               receivingTokens.map((token, index) => (
-                <Text key={index}>{isLoading ? <TokenLoader /> : token}</Text>
+                <Text key={index}>{`${token?.amount} ${token?.symbol}`}</Text>
               ))
             )}
           </Flex>

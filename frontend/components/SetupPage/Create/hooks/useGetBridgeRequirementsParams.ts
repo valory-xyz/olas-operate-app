@@ -1,4 +1,5 @@
 import { isAddress } from 'ethers/lib/utils';
+import { cloneDeep } from 'lodash';
 import { useCallback } from 'react';
 
 import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/client';
@@ -48,7 +49,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
       if (!masterEoa?.address) return;
 
       const nativeTokenIndex = bridgeRequests.findIndex((req) =>
-        areAddressesEqual(req.from.token, AddressZero),
+        areAddressesEqual(req.to.token, AddressZero),
       );
       if (nativeTokenIndex === -1) return;
 
@@ -74,8 +75,14 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
         BigInt(masterEoaRequirementAmount);
 
       bridgeRequests[nativeTokenIndex].to.amount = amount.toString();
-      // console.log(nativeTokenIndex, amount);
-      // console.log(bridgeRequests);
+      console.log('=====================================');
+      console.log(nativeTokenIndex, amount, {
+        monthlyGasEstimate,
+        safeRequirementAmount,
+        masterEoaRequirementAmount,
+        kk: bridgeRequests[nativeTokenIndex],
+      });
+      console.log(cloneDeep(bridgeRequests));
 
       return bridgeRequests;
     },
@@ -103,7 +110,7 @@ export const useGetBridgeRequirementsParams = (
   const { masterEoa } = useMasterWalletContext();
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
-  const getUpdatedBridgeRequirementsParams =
+  const getBridgeRequirementsParamsWithMonthlyGas =
     useGetBridgeRequirementsParamsWithMonthlyGasEstimate();
 
   const fromChainConfig =
@@ -126,6 +133,7 @@ export const useGetBridgeRequirementsParams = (
         [];
 
       const tokensRefillList = Object.entries(refillRequirements);
+      console.log({ tokensWithRequirements: tokensRefillList });
 
       // Populate bridge requests from refill Requirements
       for (const [walletAddress, tokensWithRequirements] of tokensRefillList) {
@@ -162,7 +170,14 @@ export const useGetBridgeRequirementsParams = (
             // If the request already exists, update the amount
             const toAmount = BigInt(existingRequest.to.amount) + BigInt(amount);
             existingRequest.to.amount = toAmount.toString();
+            console.log({
+              existingRequest: { ...existingRequest },
+              oldAmount: existingRequest.to.amount,
+              amountToAdd: amount,
+              newAmount: toAmount.toString(),
+            });
           } else {
+            console.log({ amount });
             bridgeRequests.push({
               from: {
                 chain: fromChain,
@@ -177,12 +192,17 @@ export const useGetBridgeRequirementsParams = (
               },
             });
           }
+
+          console.log({ ...existingRequest });
         }
+
+        console.log(cloneDeep(bridgeRequests));
       }
 
       return {
         bridge_requests:
-          getUpdatedBridgeRequirementsParams(bridgeRequests) || bridgeRequests,
+          getBridgeRequirementsParamsWithMonthlyGas(bridgeRequests) ||
+          bridgeRequests,
         force_update: isForceUpdate,
       } satisfies BridgeRefillRequirementsRequest;
     },
@@ -195,7 +215,7 @@ export const useGetBridgeRequirementsParams = (
       defaultFromToken,
       isBalancesAndFundingRequirementsLoading,
       toMiddlewareChain,
-      getUpdatedBridgeRequirementsParams,
+      getBridgeRequirementsParamsWithMonthlyGas,
     ],
   );
 };

@@ -3,11 +3,23 @@ import { AddressZero } from '@/constants/address';
 import { Address } from '@/types/Address';
 import { areAddressesEqual } from '@/utils/address';
 
-/** Get the token details from the token address */
-const getTokenDetails = (tokenAddress: string, chainConfig: ChainTokenConfig) =>
-  Object.values(chainConfig).find((configToken) =>
+/**
+ * Get the token details from the token address
+ *
+ * Example: if tokenAddress is USDC, it will return the USDC details from the chainConfig.
+ * */
+export const getTokenDetails = (
+  tokenAddress: string,
+  chainConfig: ChainTokenConfig,
+) => {
+  if (areAddressesEqual(tokenAddress, AddressZero)) {
+    return { symbol: 'ETH', decimals: 18 }; // TODO: native token
+  }
+
+  return Object.values(chainConfig).find((configToken) =>
     areAddressesEqual(configToken.address, tokenAddress),
   );
+};
 
 const getTokenSymbol = (tokenAddress: string, chainConfig: ChainTokenConfig) =>
   getTokenDetails(tokenAddress, chainConfig)?.symbol;
