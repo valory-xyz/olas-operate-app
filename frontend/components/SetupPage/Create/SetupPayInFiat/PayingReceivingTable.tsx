@@ -70,7 +70,6 @@ const TokenLoader = () => (
   />
 );
 
-// TODO: add real data fetching logic
 const useNativeTokenRequired = () => {
   const { isLoading: isServiceLoading, selectedAgentConfig } = useServices();
   const { isBalancesAndFundingRequirementsLoading } =
@@ -103,23 +102,7 @@ const useNativeTokenRequired = () => {
     // isError: isBridgeRefillRequirementsError,
     // isFetching: isBridgeRefillRequirementsFetching,
     // refetch: refetchBridgeRefillRequirements,
-  } = useBridgeRefillRequirements(bridgeParamsExceptNativeToken, false);
-
-  // const totalNativeToken = bridgeParams?.bridge_requests.reduce((acc, request) => {
-  //   const amount = BigInt(request.to.amount);
-  //   const currentNativeToken = bridgeParams.bridge_requests.filter(
-  //     (request) => request.to.token !== AddressZero,
-  //   );
-  //   const nativeTokenToBridge =
-  //     bridgeFundingRequirements.bridge_refill_requirements?.[chainName]?.[
-  //       masterEoa?.address
-  //     ]?.[AddressZero];
-
-  //   return (
-  //     acc +
-  //     (areAddressesEqual(request.to.token, AddressZero) ? amount : BigInt(0))
-  //   );
-  // }, BigInt(0));
+  } = useBridgeRefillRequirements(bridgeParamsExceptNativeToken);
 
   const totalNativeTokenRequired = useMemo(() => {
     if (!bridgeParams) return;
@@ -153,21 +136,6 @@ const useNativeTokenRequired = () => {
     });
   }, [bridgeParams, toChainConfig]);
 
-  // console.log({
-  //   receivingTokens,
-  //   bridgeParamsExceptNativeToken,
-  //   totalNativeTokenRequired,
-  // });
-
-  // console.log({
-  //   fromChainId,
-  //   toChainConfig,
-  //   bridgeFundingRequirements,
-  //   isBridgeRefillRequirementsLoading,
-  //   isBridgeRefillRequirementsError,
-  //   isBridgeRefillRequirementsFetching,
-  // });
-
   return {
     isLoading:
       isServiceLoading ||
@@ -195,6 +163,7 @@ export const PayingReceivingTable = () => {
   const { selectedAgentConfig } = useServices();
   const toChain = asEvmChainDetails(selectedAgentConfig.middlewareHomeChainId);
 
+  // TODO: add a retry button even if one of the quote is failed
   const ethToTokenList = useMemo<DataType[]>(
     () => [
       {
