@@ -9,7 +9,7 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 
 import { FiatPaymentSteps } from './FiatPaymentSteps';
-import { PayingReceivingTable } from './PayingReceivingTable';
+import { PayingReceivingTable } from './PayingReceivingTable/PayingReceivingTable';
 
 const { Title, Text } = Typography;
 
