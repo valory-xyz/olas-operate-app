@@ -104,10 +104,8 @@ export const DepositForBridging = ({
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
 
-  // State to control the force update of the bridge refill requirements API call
-  // This is used when the user clicks on "Try again" button
-  // to fetch the bridge refill requirements again.
-  // NOTE: It is reset to false after the API call is made.
+  // State to control the force update of the bridge_refill_requirements API call
+  // This is used when the user clicks on "Try again" button.
   const [isForceUpdate, setIsForceUpdate] = useState(false);
   const [
     isBridgeRefillRequirementsApiLoading,
@@ -117,15 +115,13 @@ export const DepositForBridging = ({
     canPollForBridgeRefillRequirements,
     setCanPollForBridgeRefillRequirements,
   ] = useState(true);
+  // State to control the manual refetching of the bridge refill requirements
+  const [isManuallyRefetching, setIsManuallyRefetching] = useState(false);
 
   const bridgeRequirementsParams = useMemo(() => {
     if (!getBridgeRequirementsParams) return null;
     return getBridgeRequirementsParams(isForceUpdate);
   }, [isForceUpdate, getBridgeRequirementsParams]);
-
-  // force_update: true is used only when the user clicks on "Try again",
-  // hence reset it to false after the API call is made.
-  const resetForceUpdate = useCallback(() => setIsForceUpdate(false), []);
 
   const {
     data: bridgeFundingRequirements,
@@ -136,7 +132,6 @@ export const DepositForBridging = ({
   } = useBridgeRefillRequirements(
     bridgeRequirementsParams,
     canPollForBridgeRefillRequirements,
-    isForceUpdate ? resetForceUpdate : undefined,
   );
 
   // fetch bridge refill requirements manually on mount
@@ -156,7 +151,8 @@ export const DepositForBridging = ({
     isBalancesAndFundingRequirementsLoading ||
     isBridgeRefillRequirementsApiLoading ||
     isBridgeRefillRequirementsLoading ||
-    isServicesLoading;
+    isServicesLoading ||
+    isManuallyRefetching;
 
   const isRequestingQuoteFailed = useMemo(() => {
     if (isRequestingQuote) return false;
@@ -333,10 +329,26 @@ export const DepositForBridging = ({
   ]);
 
   // Retry to fetch the bridge refill requirements
-  const handleRetryAgain = useCallback(() => {
+  const handleRetryAgain = useCallback(async () => {
     setIsForceUpdate(true);
-    setCanPollForBridgeRefillRequirements(true);
-  }, []);
+    setIsManuallyRefetching(true);
+    setCanPollForBridgeRefillRequirements(false);
+
+    // slight delay before refetching.
+    await delayInSeconds(1);
+
+    refetchBridgeRefillRequirements()
+      .then(() => {
+        // force_update: true is used only when the user clicks on "Try again",
+        // hence reset it to false after the API call is made.
+        setIsForceUpdate(false);
+        // allow polling for bridge refill requirements again, once successful.
+        setCanPollForBridgeRefillRequirements(true);
+      })
+      .finally(() => {
+        setIsManuallyRefetching(false);
+      });
+  }, [refetchBridgeRefillRequirements]);
 
   return (
     <RootCard vertical>
