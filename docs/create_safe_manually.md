@@ -13,7 +13,7 @@ Steps to create a Safe{Wallet}
 
 1. Make sure no agent is running and that Pearl is stopped.
 2. Open Pearl and wait until the login screen appears. Enter your password, but do **not** run any agent.
-3. Ensure that your MasterEOA is funded in the desired chain
+3. Ensure that your MasterEOA is funded in the target chain.
 4. Open a terminal window/command prompt:
    - **Windows**: Press `Win` + `R`, type `cmd`, and press **Enter**.  
    - **macOS**: Press `Cmd` + `Space`, type `Terminal`, and press **Enter**.  
