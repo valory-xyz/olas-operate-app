@@ -94,7 +94,7 @@ export const PayingReceivingTable = () => {
         key: 'paying-receiving',
         paying: (
           <>
-            {hasNativeTokenError ? (
+            {hasNativeTokenError && !isNativeTokenLoading ? (
               <Button onClick={onRetry} icon={<ReloadOutlined />} size="small">
                 Retry
               </Button>
