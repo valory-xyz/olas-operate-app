@@ -5,8 +5,9 @@ This guide helps you create manually a Safe{Wallet} through Pearl.
 > [!IMPORTANT]
 > If you are creating a Safe{Wallet} on chain *A* because you accidentally transferred funds intended for a
 > Safe{Wallet} on chain *B*, **you must ensure to use the same backup owner that you originally used to
-> create the Safe{Wallet} on chain *B*** (independently if you later changed the backup owner). This is a
-> technical requirement because the Safe{Wallet} address depends on the creation parameters.
+> create the Safe{Wallet} on chain *B*** (even if changed the backup owner since then).
+>
+> This is necessary because the Safe{Wallet} address is derived from the original creation parameters, including the backup owner.
 
 
 > [!IMPORTANT]
