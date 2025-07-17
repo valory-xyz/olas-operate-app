@@ -26,7 +26,7 @@ from aea.helpers.yaml_utils import yaml_load
 from aea_ledger_ethereum.ethereum import EthereumApi, EthereumCrypto
 
 
-BASE_URL = "http://localhost:8000/api"
+BASE_URL = "https://localhost:8000/api"
 
 
 def test_endpoint_e2e() -> None:

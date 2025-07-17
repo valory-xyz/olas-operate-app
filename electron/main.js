@@ -26,6 +26,19 @@ const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
 const { checkUrl } = require('./utils');
+const { pki } = require('node-forge');
+
+// Configure Electron to accept self-signed certificates for localhost
+app.on('certificate-error', (event, _webContents, url, error, _certificate, callback) => {
+  // Allow self-signed certificates for localhost only for specific SSL format errors
+  logger.electron(`Certificate error for URL: ${url}, Error: ${error}`);
+  if (url.startsWith('https://localhost:') && error === 'net::ERR_CERT_AUTHORITY_INVALID') {
+    event.preventDefault();
+    callback(true);
+  } else {
+    callback(false);
+  }
+});
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -169,10 +182,10 @@ async function beforeQuit(event) {
   logger.electron('Stop backend gracefully:');
   try {
     logger.electron(
-      `Killing backend server by shutdown endpoint: http://localhost:${appConfig.ports.prod.operate}/shutdown`,
+      `Killing backend server by shutdown endpoint: https://localhost:${appConfig.ports.prod.operate}/shutdown`,
     );
     let result = await fetch(
-      `http://localhost:${appConfig.ports.prod.operate}/shutdown`,
+      `https://localhost:${appConfig.ports.prod.operate}/shutdown`,
     );
     logger.electron('Killed backend server by shutdown endpoint!');
     logger.electron(
@@ -402,17 +415,80 @@ const createAgentActivityWindow = async () => {
   return agentWindow;
 };
 
+// Create SSL certificate for the backend
+function createSSLCertificate() {
+  try {
+    logger.electron('Creating SSL certificate...');
+
+    const certDir = path.join(paths.dotOperateDirectory, 'ssl');
+    if (!fs.existsSync(certDir)) {
+      fs.mkdirSync(certDir, { recursive: true });
+    }
+
+    const keyPath = path.join(certDir, 'key.pem');
+    const certPath = path.join(certDir, 'cert.pem');
+
+    // Generate a key pair
+    const keys = pki.rsa.generateKeyPair(2048);
+
+    // Create a certificate
+    const cert = pki.createCertificate();
+    cert.publicKey = keys.publicKey;
+    cert.serialNumber = '01';
+    cert.validity.notBefore = new Date();
+    cert.validity.notAfter = new Date(cert.validity.notBefore.getTime() + 365 * 24 * 60 * 60 * 1000); // Valid for 1 year
+
+    const attrs = [
+      { name: 'countryName', value: 'CH' },
+      { name: 'stateOrProvinceName', value: 'Local' },
+      { name: 'localityName', value: 'Local' },
+      { name: 'organizationName', value: 'Valory AG' },
+      { name: 'commonName', value: 'localhost' }
+    ];
+
+    cert.setSubject(attrs);
+    cert.setIssuer(attrs);
+    cert.setExtensions([
+      { name: 'basicConstraints', cA: false },
+      { name: 'keyUsage', digitalSignature: true, keyEncipherment: true },
+      { name: 'extKeyUsage', serverAuth: true },
+    ]);
+
+    // Sign the certificate
+    cert.sign(keys.privateKey);
+
+    // Convert to PEM format
+    const privateKeyPem = pki.privateKeyToPem(keys.privateKey);
+    const certificatePem = pki.certificateToPem(cert);
+
+    // Write to files
+    fs.writeFileSync(keyPath, privateKeyPem);
+    fs.writeFileSync(certPath, certificatePem);
+    logger.electron(
+      `SSL certificate created successfully at ${keyPath} and ${certPath}`,
+    );
+
+    return {
+      keyPath,
+      certPath,
+    };
+  } catch (error) {
+    logger.electron('Failed to create SSL certificate:', error.message);
+    throw error;
+  }
+}
+
 async function launchDaemon() {
   // Free up backend port if already occupied
   try {
-    await fetch(`http://localhost:${appConfig.ports.prod.operate}/api`);
+    await fetch(`https://localhost:${appConfig.ports.prod.operate}/api`);
     logger.electron('Killing backend server!');
     let endpoint = fs
       .readFileSync(`${paths.dotOperateDirectory}/operate.kill`)
       .toString()
       .trim();
 
-    await fetch(`http://localhost:${appConfig.ports.prod.operate}/${endpoint}`);
+    await fetch(`https://localhost:${appConfig.ports.prod.operate}/${endpoint}`);
   } catch (err) {
     logger.electron('Backend not running!' + JSON.stringify(err, null, 2));
   }
@@ -420,7 +496,7 @@ async function launchDaemon() {
   try {
     logger.electron('Killing backend server by shutdown endpoint!');
     let result = await fetch(
-      `http://localhost:${appConfig.ports.prod.operate}/shutdown`,
+      `https://localhost:${appConfig.ports.prod.operate}/shutdown`,
     );
     logger.electron(
       'Backend stopped with result: ' + JSON.stringify(result, null, 2),
@@ -432,6 +508,7 @@ async function launchDaemon() {
   }
 
   const check = new Promise(function (resolve, _reject) {
+    const { keyPath, certPath } = createSSLCertificate();
     operateDaemon = spawn(
       path.join(
         process.resourcesPath,
@@ -441,6 +518,8 @@ async function launchDaemon() {
         'daemon',
         `--port=${appConfig.ports.prod.operate}`,
         `--home=${paths.dotOperateDirectory}`,
+        `--ssl-keyfile=${keyPath}`,
+        `--ssl-certfile=${certPath}`,
       ],
       { env: Env },
     );
@@ -473,6 +552,7 @@ async function launchDaemon() {
 }
 
 async function launchDaemonDev() {
+  const { keyPath, certPath } = createSSLCertificate();
   const check = new Promise(function (resolve, _reject) {
     operateDaemon = spawn('poetry', [
       'run',
@@ -480,6 +560,8 @@ async function launchDaemonDev() {
       'daemon',
       `--port=${appConfig.ports.dev.operate}`,
       '--home=.operate',
+      `--ssl-keyfile=${keyPath}`,
+      `--ssl-certfile=${certPath}`,
     ]);
     operateDaemonPid = operateDaemon.pid;
     operateDaemon.stderr.on('data', (data) => {
