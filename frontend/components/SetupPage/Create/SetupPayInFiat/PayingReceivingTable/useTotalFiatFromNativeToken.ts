@@ -80,7 +80,10 @@ export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
   ).name;
 
   return useQuery({
-    queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(nativeTokenAmount!),
+    queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(
+      networkName,
+      nativeTokenAmount!,
+    ),
     queryFn: async ({ signal }) => {
       try {
         const { response } = await fetchTransakQuote(
@@ -91,8 +94,10 @@ export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
         return response;
       } catch (error) {
         console.error('Error fetching Transak quote', error);
+        throw error;
       }
     },
-    enabled: !!nativeTokenAmount && !!process.env.TRANSAK_API_KEY,
+    enabled:
+      !!process.env.TRANSAK_API_KEY && !!networkName && !!nativeTokenAmount,
   });
 };

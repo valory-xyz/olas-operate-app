@@ -333,7 +333,9 @@ export const SetupEoaFunding = () => {
                 : `Send on ${currentFundingRequirements.name}`,
               value: 'transfer',
             },
-            { label: 'Bridge', value: 'bridge' },
+            isBridgeOnboardingEnabled
+              ? { label: 'Bridge', value: 'bridge' }
+              : null,
             isOnRampEnabled ? { label: 'Buy', value: 'buyInFiat' } : null,
           ])}
           onChange={setFundType}
