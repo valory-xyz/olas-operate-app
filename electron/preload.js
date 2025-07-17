@@ -10,6 +10,12 @@ const agentActivityWindow = {
   minimize: () => ipcRenderer.invoke('agent-activity-window-minimize'),
 };
 
+/** IPC methods for transak window */
+const onRampWindow = {
+  show: () => ipcRenderer.invoke('onramp-window-show'),
+  hide: () => ipcRenderer.invoke('onramp-window-hide'),
+};
+
 contextBridge.exposeInMainWorld('electronAPI', {
   setIsAppLoaded: (isAppLoaded) =>
     ipcRenderer.send('is-app-loaded', isAppLoaded),
@@ -37,4 +43,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('app-version'),
   healthCheck: () => ipcRenderer.invoke('health-check'),
   agentActivityWindow,
+  onRampWindow,
 });

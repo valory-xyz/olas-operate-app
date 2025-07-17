@@ -8,7 +8,7 @@ import { AgentHeader } from '@/components/ui/AgentHeader';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 
-import { FiatPaymentSteps } from './FiatPaymentSteps';
+import { FiatPaymentSteps } from './FiatPaymentSteps/FiatPaymentSteps';
 import { PayingReceivingTable } from './PayingReceivingTable/PayingReceivingTable';
 
 const { Title, Text } = Typography;
@@ -54,7 +54,7 @@ export const SetupPayInFiat = () => {
         <PayInFiatHeader />
         <KeepOpenAlert />
 
-        <Flex>
+        <Flex vertical gap={24}>
           <PayingReceivingTable />
           <FiatPaymentSteps />
         </Flex>

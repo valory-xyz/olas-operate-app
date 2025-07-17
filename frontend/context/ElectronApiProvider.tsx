@@ -46,6 +46,10 @@ type ElectronApiContextProps = {
     { response: AgentHealthCheckResponse | null } | { error: string }
   >;
   agentActivityWindow?: Partial<ElectronApiAgentActivityWindow>;
+  onRampWindow?: {
+    show?: () => void;
+    hide?: () => void;
+  };
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -77,6 +81,10 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     show: () => {},
     close: () => {},
     minimize: () => {},
+  },
+  onRampWindow: {
+    show: () => {},
+    hide: () => {},
   },
 });
 
@@ -126,6 +134,10 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           show: getElectronApiFunction('agentActivityWindow.show'),
           close: getElectronApiFunction('agentActivityWindow.close'),
           minimize: getElectronApiFunction('agentActivityWindow.minimize'),
+        },
+        onRampWindow: {
+          show: getElectronApiFunction('onRampWindow.show'),
+          hide: getElectronApiFunction('onRampWindow.hide'),
         },
       }}
     >

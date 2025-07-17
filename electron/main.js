@@ -29,16 +29,22 @@ const { checkUrl } = require('./utils');
 const { pki } = require('node-forge');
 
 // Configure Electron to accept self-signed certificates for localhost
-app.on('certificate-error', (event, _webContents, url, error, _certificate, callback) => {
-  // Allow self-signed certificates for localhost only for specific SSL format errors
-  logger.electron(`Certificate error for URL: ${url}, Error: ${error}`);
-  if (url.startsWith('https://localhost:') && error === 'net::ERR_CERT_AUTHORITY_INVALID') {
-    event.preventDefault();
-    callback(true);
-  } else {
-    callback(false);
-  }
-});
+app.on(
+  'certificate-error',
+  (event, _webContents, url, error, _certificate, callback) => {
+    // Allow self-signed certificates for localhost only for specific SSL format errors
+    logger.electron(`Certificate error for URL: ${url}, Error: ${error}`);
+    if (
+      url.startsWith('https://localhost:') &&
+      error === 'net::ERR_CERT_AUTHORITY_INVALID'
+    ) {
+      event.preventDefault();
+      callback(true);
+    } else {
+      callback(false);
+    }
+  },
+);
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -113,6 +119,9 @@ let splashWindow = null;
 /** @type {Electron.BrowserWindow | null} */
 let agentWindow = null;
 const getAgentWindow = () => agentWindow;
+/** @type {Electron.BrowserWindow | null} */
+let onRampWindow = null;
+const getOnRampWindow = () => onRampWindow;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
@@ -436,14 +445,16 @@ function createSSLCertificate() {
     cert.publicKey = keys.publicKey;
     cert.serialNumber = '01';
     cert.validity.notBefore = new Date();
-    cert.validity.notAfter = new Date(cert.validity.notBefore.getTime() + 365 * 24 * 60 * 60 * 1000); // Valid for 1 year
+    cert.validity.notAfter = new Date(
+      cert.validity.notBefore.getTime() + 365 * 24 * 60 * 60 * 1000,
+    ); // Valid for 1 year
 
     const attrs = [
       { name: 'countryName', value: 'CH' },
       { name: 'stateOrProvinceName', value: 'Local' },
       { name: 'localityName', value: 'Local' },
       { name: 'organizationName', value: 'Valory AG' },
-      { name: 'commonName', value: 'localhost' }
+      { name: 'commonName', value: 'localhost' },
     ];
 
     cert.setSubject(attrs);
@@ -478,6 +489,38 @@ function createSSLCertificate() {
   }
 }
 
+/**
+ * Create the on-ramping window for displaying transak widget
+ */
+/** @type {()=>Promise<BrowserWindow|undefined>} */
+const createOnRampWindow = async () => {
+  if (!getOnRampWindow() || getOnRampWindow().isDestroyed) {
+    onRampWindow = new BrowserWindow({
+      title: 'On Ramp',
+      width: 500,
+      height: 700,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, 'preload.js'),
+      },
+    });
+
+    onRampWindow.loadURL('http://localhost:3000/onramp').then(() => {
+      logger.electron('onRampWindow', onRampWindow.url);
+    });
+  } else {
+    logger.electron('OnRamp window already exists');
+  }
+
+  onRampWindow.on('close', function (event) {
+    event.preventDefault();
+    onRampWindow?.hide();
+  });
+
+  return onRampWindow;
+};
+
 async function launchDaemon() {
   // Free up backend port if already occupied
   try {
@@ -488,7 +531,9 @@ async function launchDaemon() {
       .toString()
       .trim();
 
-    await fetch(`https://localhost:${appConfig.ports.prod.operate}/${endpoint}`);
+    await fetch(
+      `https://localhost:${appConfig.ports.prod.operate}/${endpoint}`,
+    );
   } catch (err) {
     logger.electron('Backend not running!' + JSON.stringify(err, null, 2));
   }
@@ -988,6 +1033,9 @@ ipcMain.handle('save-logs', async (_, data) => {
   return result;
 });
 
+/**
+ * Agent UI window handlers
+ */
 ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
   logger.electron(`agent-activity-window-goto: ${url}`);
 
@@ -1048,4 +1096,26 @@ ipcMain.handle('agent-activity-window-minimize', () => {
   logger.electron('agent-activity-window-minimize');
   if (!getAgentWindow() || getAgentWindow().isDestroyed()) return; // nothing to minimize
   getAgentWindow()?.then((aaw) => aaw.minimize());
+});
+
+/**
+ * OnRamp window handlers
+ */
+ipcMain.handle('onramp-window-show', () => {
+  logger.electron('onramp-window-show');
+
+  if (!getOnRampWindow() || getOnRampWindow()?.isDestroyed()) {
+    createOnRampWindow()?.then((window) => window.show());
+  } else {
+    getOnRampWindow()?.show();
+  }
+});
+
+ipcMain.handle('onramp-window-hide', () => {
+  logger.electron('onramp-window-hide');
+
+  // already destroyed or not created
+  if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) return;
+
+  getOnRampWindow()?.hide();
 });
