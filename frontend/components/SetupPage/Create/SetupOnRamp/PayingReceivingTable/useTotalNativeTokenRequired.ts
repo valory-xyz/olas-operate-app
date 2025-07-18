@@ -14,7 +14,7 @@ import { formatUnitsToNumber } from '@/utils/numberFormatters';
 import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
 import { onRampChainMap } from '../constants';
 
-// TODO: some of the logic can be reused
+// TODO: some of the logic can be reused with bridging
 
 export const useTotalNativeTokenRequired = () => {
   const { selectedAgentConfig } = useServices();

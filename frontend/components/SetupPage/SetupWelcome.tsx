@@ -196,11 +196,7 @@ const SetupWelcomeLogin = () => {
   ]);
 
   return (
-    <FormFlex
-      form={form}
-      onFinish={handleLogin}
-      initialValues={{ password: '12345678' }}
-    >
+    <FormFlex form={form} onFinish={handleLogin}>
       <Form.Item
         name="password"
         rules={[{ required: true, message: 'Please input your Password!' }]}

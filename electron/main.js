@@ -445,9 +445,11 @@ function createSSLCertificate() {
     cert.publicKey = keys.publicKey;
     cert.serialNumber = '01';
     cert.validity.notBefore = new Date();
+
+    // Valid for 1 year
     cert.validity.notAfter = new Date(
       cert.validity.notBefore.getTime() + 365 * 24 * 60 * 60 * 1000,
-    ); // Valid for 1 year
+    );
 
     const attrs = [
       { name: 'countryName', value: 'CH' },
@@ -506,7 +508,7 @@ const createOnRampWindow = async () => {
       },
     });
 
-    onRampWindow.loadURL('http://localhost:3000/onramp').then(() => {
+    onRampWindow.loadURL('https://localhost:3000/onramp').then(() => {
       logger.electron('onRampWindow', onRampWindow.url);
     });
   } else {
