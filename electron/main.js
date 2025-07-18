@@ -501,6 +501,8 @@ const createOnRampWindow = async () => {
       title: 'On Ramp',
       width: 500,
       height: 700,
+      closable: false,
+      maximizable: false,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
@@ -508,7 +510,7 @@ const createOnRampWindow = async () => {
       },
     });
 
-    onRampWindow.loadURL('https://localhost:3000/onramp').then(() => {
+    onRampWindow.loadURL('http://localhost:3000/onramp').then(() => {
       logger.electron('onRampWindow', onRampWindow.url);
     });
   } else {
@@ -673,27 +675,6 @@ async function launchNextAppDev() {
 }
 
 ipcMain.on('check', async function (event, _argument) {
-  // Update
-  try {
-    // macUpdater.checkForUpdates().then((res) => {
-    //   if (!res) return;
-    //   if (!res.downloadPromise) return;
-    //   new Notification({
-    //     title: 'Update Available',
-    //     body: 'Downloading update...',
-    //   }).show();
-    //   res.downloadPromise.then(() => {
-    //     new Notification({
-    //       title: 'Update Downloaded',
-    //       body: 'Restarting application...',
-    //     }).show();
-    //     macUpdater.quitAndInstall();
-    //   });
-    // });
-  } catch (e) {
-    logger.electron(e);
-  }
-
   // Setup
   try {
     handleAppSettings();
@@ -761,12 +742,8 @@ ipcMain.on('check', async function (event, _argument) {
     tray = new PearlTray(getActiveWindow);
   } catch (e) {
     logger.electron(e);
-    new Notification({
-      title: 'Error',
-      body: e,
-    }).show();
+    new Notification({ title: 'Error', body: e }).show();
     event.sender.send('response', e);
-    // app.quit();
   }
 });
 
@@ -1120,4 +1097,10 @@ ipcMain.handle('onramp-window-hide', () => {
   if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) return;
 
   getOnRampWindow()?.hide();
+
+  // Notify all other windows that it has been hidden
+  BrowserWindow.getAllWindows().forEach((win) => {
+    console.log('Sending onramp-window-did-hide to', win.id);
+    win.webContents.send('onramp-window-did-hide');
+  });
 });

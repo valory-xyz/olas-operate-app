@@ -8,6 +8,7 @@ import {
 } from 'react';
 
 import { AgentType } from '@/enums/Agent';
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
 import { Nullable, Optional } from '@/types/Util';
 
@@ -29,7 +30,7 @@ export const SharedContext = createContext<{
 
   // on ramping
   usdAmountToPay: Nullable<number>;
-  updateUsdAmountToPay: (amount: number) => void;
+  updateUsdAmountToPay: (amount: Nullable<number>) => void;
   isBuyCryptoBtnLoading: boolean;
   updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
 
@@ -64,6 +65,8 @@ export const SharedContext = createContext<{
  * - Track the healthcheck alert shown to the user (so that they are not shown again).
  */
 export const SharedProvider = ({ children }: PropsWithChildren) => {
+  const { ipcRenderer } = useElectronApi();
+
   // state to track the onboarding step of the user (independent of the agent)
   const [onboardingStep, setOnboardingStep] = useState(0);
   const updateOnboardingStep = useCallback((step: number) => {
@@ -87,15 +90,13 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   const [isBuyCryptoBtnLoading, setIsBuyCryptoBtnLoading] = useState(false);
 
   // Function to set the USD amount to pay
-  const updateUsdAmountToPay = useCallback((amount: number) => {
+  const updateUsdAmountToPay = useCallback((amount: Nullable<number>) => {
     setUsdAmountToPay(amount);
   }, []);
 
   const updateIsBuyCryptoBtnLoading = useCallback((loading: boolean) => {
     setIsBuyCryptoBtnLoading(loading);
   }, []);
-
-  console.log({ isBuyCryptoBtnLoading });
 
   // Users with the AgentsFun agent type are required to update their
   // agent configurations to run the latest version of the agent.
@@ -117,6 +118,18 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
 
     setIsAgentsFunFieldUpdateRequired(!areFieldsUpdated);
   }, [selectedAgentType, selectedService]);
+
+  // Listen for onramp window hide event to reset the loading state
+  useEffect(() => {
+    const handleHide = () => {
+      updateIsBuyCryptoBtnLoading(false);
+    };
+
+    ipcRenderer?.on?.('onramp-window-did-hide', handleHide);
+    return () => {
+      ipcRenderer?.removeListener?.('onramp-window-did-hide', handleHide);
+    };
+  }, [ipcRenderer, updateIsBuyCryptoBtnLoading]);
 
   return (
     <SharedContext.Provider

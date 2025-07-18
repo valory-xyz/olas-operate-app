@@ -97,6 +97,7 @@ export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
         throw error;
       }
     },
+    select: (data) => data.fiatAmount,
     enabled:
       !!process.env.TRANSAK_API_KEY && !!networkName && !!nativeTokenAmount,
   });

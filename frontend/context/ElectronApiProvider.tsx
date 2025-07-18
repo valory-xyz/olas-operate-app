@@ -20,12 +20,20 @@ type ElectronApiContextProps = {
   minimizeApp?: () => void;
   setTrayIcon?: (status: ElectronTrayIconStatus) => void;
   ipcRenderer?: {
-    send?: (channel: string, data: unknown) => void; // send messages to main process
+    /** send messages to main process */
+    send?: (channel: string, data: unknown) => void;
+    /** listen to messages from main process */
     on?: (
       channel: string,
       func: (event: unknown, data: unknown) => void,
-    ) => void; // listen to messages from main process
-    invoke?: (channel: string, data: unknown) => Promise<unknown>; // send message to main process and get Promise response
+    ) => void;
+    /** send message to main process and get Promise response */
+    invoke?: (channel: string, data: unknown) => Promise<unknown>;
+    /** remove listener for messages from main process */
+    removeListener?: (
+      channel: string,
+      func: (event: unknown, data: unknown) => void,
+    ) => void;
   };
   store?: {
     store?: () => Promise<ElectronStore>;
@@ -62,6 +70,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     send: () => {},
     on: () => {},
     invoke: async () => {},
+    removeListener: () => {},
   },
   store: {
     store: async () => ({}),
@@ -114,6 +123,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           send: getElectronApiFunction('ipcRenderer.send'),
           on: getElectronApiFunction('ipcRenderer.on'),
           invoke: getElectronApiFunction('ipcRenderer.invoke'),
+          removeListener: getElectronApiFunction('ipcRenderer.removeListener'),
         },
         store: {
           store: getElectronApiFunction('store.store'),

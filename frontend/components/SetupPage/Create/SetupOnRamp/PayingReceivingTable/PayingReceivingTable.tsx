@@ -8,10 +8,11 @@ import {
   Typography,
 } from 'antd';
 import Image from 'next/image';
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useEffect, useMemo } from 'react';
 
 import { NA } from '@/constants/symbols';
 import { useServices } from '@/hooks/useServices';
+import { useSharedContext } from '@/hooks/useSharedContext';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
 import { useTotalFiatFromNativeToken } from './useTotalFiatFromNativeToken';
@@ -84,12 +85,35 @@ export const PayingReceivingTable = () => {
     receivingTokens,
     onRetry,
   } = useTotalNativeTokenRequired();
-  const { isLoading: isFiatLoading, data: onRampQuote } =
+  const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(totalNativeToken);
+  const { updateUsdAmountToPay } = useSharedContext();
 
-  const toChain = asEvmChainDetails(selectedAgentConfig.middlewareHomeChainId);
+  const isReceivingAmountLoading = isFiatLoading || isNativeTokenLoading;
+  const receivingAmount = fiatAmount ? `~${fiatAmount} USD` : NA;
 
-  const ethToTokenList = useMemo<PaymentTableDataType[]>(
+  // NOTE: update the USD amount to pay in shared context
+  // to be used in the component requiring it.
+  useEffect(() => {
+    // TODO: remove
+    if (hasNativeTokenError) {
+      updateUsdAmountToPay(120.55);
+      return;
+    }
+
+    if (isReceivingAmountLoading || hasNativeTokenError) {
+      updateUsdAmountToPay(null);
+    } else if (fiatAmount) {
+      updateUsdAmountToPay(fiatAmount);
+    }
+  }, [
+    isReceivingAmountLoading,
+    hasNativeTokenError,
+    fiatAmount,
+    updateUsdAmountToPay,
+  ]);
+
+  const ethToTokenDataSource = useMemo<PaymentTableDataType[]>(
     () => [
       {
         key: 'paying-receiving',
@@ -102,18 +126,14 @@ export const PayingReceivingTable = () => {
             ) : (
               <Flex vertical justify="center" gap={6}>
                 <Text>
-                  {isFiatLoading || isNativeTokenLoading ? (
-                    <TokenLoader />
-                  ) : onRampQuote?.fiatAmount ? (
-                    `~${onRampQuote?.fiatAmount} USD`
-                  ) : (
-                    NA
-                  )}
+                  {isReceivingAmountLoading ? <TokenLoader /> : receivingAmount}
                 </Text>
                 <Text>
-                  for&nbsp;
-                  {isNativeTokenLoading ? <TokenLoader /> : totalNativeToken}
-                  &nbsp;ETH
+                  {isNativeTokenLoading ? (
+                    <TokenLoader />
+                  ) : (
+                    `for ${totalNativeToken} ETH`
+                  )}
                 </Text>
               </Flex>
             )}
@@ -135,18 +155,20 @@ export const PayingReceivingTable = () => {
     [
       isNativeTokenLoading,
       hasNativeTokenError,
-      isFiatLoading,
       totalNativeToken,
-      onRampQuote?.fiatAmount,
       receivingTokens,
       onRetry,
+      receivingAmount,
+      isReceivingAmountLoading,
     ],
   );
+
+  const toChain = asEvmChainDetails(selectedAgentConfig.middlewareHomeChainId);
 
   return (
     <Table<PaymentTableDataType>
       columns={getColumns(toChain.name, toChain.displayName)}
-      dataSource={ethToTokenList}
+      dataSource={ethToTokenDataSource}
       pagination={false}
       bordered
       style={{ width: '100%' }}

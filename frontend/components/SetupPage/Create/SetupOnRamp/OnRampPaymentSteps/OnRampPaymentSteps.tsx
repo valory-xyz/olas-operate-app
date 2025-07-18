@@ -1,12 +1,13 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Steps, Typography } from 'antd';
-import React, { ReactNode, useCallback } from 'react';
+import React, { FC, ReactNode, useCallback } from 'react';
 import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useSharedContext } from '@/hooks/useSharedContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+import { delayInSeconds } from '@/utils/delay';
 
 type SubStep = {
   description?: ReactNode;
@@ -45,10 +46,14 @@ const TxnDetails = ({ link }: { link: string }) => (
   </a>
 );
 
-const FundsAreSafeMessage: React.FC<{
+type FundsAreSafeMessageProps = {
   onRetry?: () => void;
   onRetryProps?: Record<string, unknown>;
-}> = ({ onRetry, onRetryProps }) => (
+};
+const FundsAreSafeMessage: FC<FundsAreSafeMessageProps> = ({
+  onRetry,
+  onRetryProps,
+}) => (
   <div style={{ color: 'red' }}>
     Something went wrong.{' '}
     {onRetry && (
@@ -59,17 +64,18 @@ const FundsAreSafeMessage: React.FC<{
   </div>
 );
 
-export const FiatPaymentSteps = () => {
+export const OnRampPaymentSteps = () => {
   const { onRampWindow } = useElectronApi();
   const { masterEoa } = useMasterWalletContext();
-  const { isBuyCryptoBtnLoading, updateIsBuyCryptoBtnLoading } =
+  const { isBuyCryptoBtnLoading, usdAmountToPay, updateIsBuyCryptoBtnLoading } =
     useSharedContext();
 
-  const handleBuyCrypto = useCallback(() => {
-    if (onRampWindow?.show) {
-      updateIsBuyCryptoBtnLoading(true);
-      onRampWindow.show();
-    }
+  const handleBuyCrypto = useCallback(async () => {
+    if (!onRampWindow?.show) return;
+
+    onRampWindow.show();
+    await delayInSeconds(1);
+    updateIsBuyCryptoBtnLoading(true);
   }, [onRampWindow, updateIsBuyCryptoBtnLoading]);
 
   const steps: StepItem[] = [
@@ -85,7 +91,7 @@ export const FiatPaymentSteps = () => {
           description: (
             <Button
               loading={isBuyCryptoBtnLoading}
-              disabled={!masterEoa?.address}
+              disabled={!masterEoa?.address || !usdAmountToPay}
               onClick={handleBuyCrypto}
               type="primary"
             >
@@ -95,32 +101,6 @@ export const FiatPaymentSteps = () => {
         },
       ],
     },
-    // {
-    //   status: 'process',
-    //   title: 'Step 2: Processing',
-    //   computedSubSteps: [
-    //     {
-    //       description: 'Waiting for block confirmation.',
-    //       txnLink: 'https://etherscan.io/tx/0xdef456',
-    //     },
-    //     {
-    //       description: 'Relayer is finalizing...',
-    //     },
-    //   ],
-    // },
-    // {
-    //   status: 'error',
-    //   title: 'Step 3: Failed',
-    //   computedSubSteps: [
-    //     {
-    //       description: 'Transaction reverted.',
-    //       txnLink: 'https://etherscan.io/tx/0xghi789',
-    //       isFailed: true,
-    //       onRetry: () => alert('Retrying transaction...'),
-    //       onRetryProps: {},
-    //     },
-    //   ],
-    // },
   ];
 
   return (

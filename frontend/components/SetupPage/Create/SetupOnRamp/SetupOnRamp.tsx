@@ -8,7 +8,7 @@ import { AgentHeader } from '@/components/ui/AgentHeader';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 
-import { FiatPaymentSteps } from './FiatPaymentSteps/FiatPaymentSteps';
+import { OnRampPaymentSteps } from './OnRampPaymentSteps/OnRampPaymentSteps';
 import { PayingReceivingTable } from './PayingReceivingTable/PayingReceivingTable';
 
 const { Title, Text } = Typography;
@@ -56,7 +56,7 @@ export const SetupOnRamp = () => {
 
         <Flex vertical gap={24}>
           <PayingReceivingTable />
-          <FiatPaymentSteps />
+          <OnRampPaymentSteps />
         </Flex>
       </CardSection>
     </CardFlex>

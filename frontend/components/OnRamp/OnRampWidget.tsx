@@ -5,23 +5,30 @@ import { useEffect, useState } from 'react';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useSharedContext } from '@/hooks/useSharedContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+
+import { useOnRampMessage } from './useOnRampMessage';
+
+const { Title } = Typography;
+
 /**
  * https://docs.transak.com/docs/transak-sdk
  */
 export const OnRampWidget = () => {
   const { onRampWindow } = useElectronApi();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isWidgetLoading, setIsWidgetLoading] = useState(true);
   const { masterEoa } = useMasterWalletContext();
   const { updateIsBuyCryptoBtnLoading } = useSharedContext();
+  const {
+    orderInProgressMessage,
+    successfulTransactionMessage,
+    errorTransactionMessage,
+  } = useOnRampMessage();
 
   // TODO: dynamic fields, should get from query parameters
 
   useEffect(() => {
-    console.log('OnRampWidget mounted', masterEoa);
     if (!masterEoa?.address) return;
 
-    // if (1 + 1 === 2) return;
-    console.log(process.env.TRANSAK_API_KEY);
     const transak = new Transak({
       apiKey: process.env.TRANSAK_API_KEY as string,
       environment: Transak.ENVIRONMENTS.STAGING, // or 'PRODUCTION'
@@ -40,57 +47,70 @@ export const OnRampWidget = () => {
 
     transak.init();
 
+    // TODO: add all the events to logger from here.
     // To get all the events
-    Transak.on('*', (data) => {
-      console.log(data);
-    });
+    // Transak.on('*', (data) => {});
 
     // This will trigger when the user closed the widget
     Transak.on(Transak.EVENTS.TRANSAK_WIDGET_CLOSE, () => {
       updateIsBuyCryptoBtnLoading(false);
-      console.log('Transak SDK closed!');
       onRampWindow?.hide?.();
     });
 
     // This will trigger when the widget is loaded
     Transak.on(Transak.EVENTS.TRANSAK_WIDGET_INITIALISED, () => {
-      console.log('Transak is loaded!');
-      setIsLoading(false);
+      setIsWidgetLoading(false);
     });
 
-    /*
-     * This will trigger when the user has confirmed the order
-     * This doesn't guarantee that payment has completed in all scenarios
-     * If you want to close/navigate away, use the TRANSAK_ORDER_SUCCESSFUL event
-     */
-    Transak.on(Transak.EVENTS.TRANSAK_ORDER_CREATED, (orderData) => {
-      console.log(orderData);
+    // This will trigger when the user has confirmed the order.
+    // This doesn't guarantee that payment has completed in all scenarios.
+    Transak.on(Transak.EVENTS.TRANSAK_ORDER_CREATED, () => {
+      orderInProgressMessage();
     });
 
-    /*
-     * This will trigger when the user marks payment is made
-     * You can close/navigate away at this event
-     */
-    Transak.on(Transak.EVENTS.TRANSAK_ORDER_SUCCESSFUL, (orderData) => {
-      console.log(orderData);
+    // This will trigger when the user marks payment is made.
+    // User can close/navigate away at this event.
+    Transak.on(Transak.EVENTS.TRANSAK_ORDER_SUCCESSFUL, () => {
+      successfulTransactionMessage();
+      updateIsBuyCryptoBtnLoading(false);
+      transak.close();
+      onRampWindow?.hide?.();
+    });
+
+    // This will trigger when the user marks payment is failed.
+    Transak.on(Transak.EVENTS.TRANSAK_ORDER_FAILED, () => {
       transak.close();
       updateIsBuyCryptoBtnLoading(false);
+      errorTransactionMessage();
     });
 
     return () => {
       transak.close();
       updateIsBuyCryptoBtnLoading(false);
     };
-  }, [onRampWindow]);
+  }, [
+    onRampWindow,
+    masterEoa,
+    updateIsBuyCryptoBtnLoading,
+    successfulTransactionMessage,
+    errorTransactionMessage,
+    orderInProgressMessage,
+  ]);
 
   return (
     <>
-      <Flex justify="center" align="center" vertical>
-        <Typography.Title level={3} style={{ marginBottom: 24 }}>
-          Buy via fiat
-        </Typography.Title>
+      <Flex
+        justify="center"
+        align="center"
+        vertical
+        style={{ overflow: 'hidden' }}
+      >
+        <Title level={5} style={{ marginBottom: 24 }}>
+          Buying crypto is in progress...
+        </Title>
+
         <div id="transak-container" />
-        {isLoading && <Spin />}
+        {isWidgetLoading && <Spin />}
       </Flex>
     </>
   );
