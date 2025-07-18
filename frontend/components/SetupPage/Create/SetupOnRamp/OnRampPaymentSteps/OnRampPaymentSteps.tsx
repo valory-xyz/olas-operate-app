@@ -1,6 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Steps, Typography } from 'antd';
-import React, { FC, ReactNode, useCallback } from 'react';
+import React, { FC, ReactNode, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
@@ -67,8 +67,12 @@ const FundsAreSafeMessage: FC<FundsAreSafeMessageProps> = ({
 export const OnRampPaymentSteps = () => {
   const { onRampWindow } = useElectronApi();
   const { masterEoa } = useMasterWalletContext();
-  const { isBuyCryptoBtnLoading, usdAmountToPay, updateIsBuyCryptoBtnLoading } =
-    useSharedContext();
+  const {
+    isBuyCryptoBtnLoading,
+    usdAmountToPay,
+    updateIsBuyCryptoBtnLoading,
+    isOnRampingTransactionSuccessful,
+  } = useSharedContext();
 
   const handleBuyCrypto = useCallback(async () => {
     if (!onRampWindow?.show) return;
@@ -78,9 +82,15 @@ export const OnRampPaymentSteps = () => {
     updateIsBuyCryptoBtnLoading(true);
   }, [onRampWindow, updateIsBuyCryptoBtnLoading]);
 
+  const buyCryptoStatus = useMemo(() => {
+    if (isBuyCryptoBtnLoading) return 'process';
+    if (isOnRampingTransactionSuccessful) return 'finish';
+    return 'wait';
+  }, [isBuyCryptoBtnLoading, isOnRampingTransactionSuccessful]);
+
   const steps: StepItem[] = [
     {
-      status: 'wait',
+      status: buyCryptoStatus,
       title: 'Buy crypto for fiat',
       computedSubSteps: [
         {

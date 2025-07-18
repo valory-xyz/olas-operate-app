@@ -17,17 +17,30 @@ export const OnRampWidget = () => {
   const { onRampWindow } = useElectronApi();
   const [isWidgetLoading, setIsWidgetLoading] = useState(true);
   const { masterEoa } = useMasterWalletContext();
-  const { updateIsBuyCryptoBtnLoading } = useSharedContext();
+  const {
+    usdAmountToPay,
+    updateIsBuyCryptoBtnLoading,
+    updateIsOnRampingTransactionSuccessful,
+  } = useSharedContext();
   const {
     orderInProgressMessage,
     successfulTransactionMessage,
     errorTransactionMessage,
   } = useOnRampMessage();
 
+  console.log('OnRampWidget', {
+    onRampWindow,
+    masterEoa,
+    usdAmountToPay,
+  });
+
   // TODO: dynamic fields, should get from query parameters
 
   useEffect(() => {
     if (!masterEoa?.address) return;
+
+    // Transak SDK requires a valid amount to proceed
+    if (!usdAmountToPay) return;
 
     const transak = new Transak({
       apiKey: process.env.TRANSAK_API_KEY as string,
@@ -39,7 +52,7 @@ export const OnRampWidget = () => {
       network: 'optimism', // TODO: dynamic
       productsAvailed: 'BUY', // Default
       paymentMethod: 'credit_debit_card',
-      fiatAmount: 500, // TODO: dynamic
+      fiatAmount: usdAmountToPay, // TODO: dynamic
       fiatCurrency: 'USD',
       cryptoCurrencyCode: 'ETH', // TODO: dynamic
       walletAddress: masterEoa.address,
@@ -73,6 +86,7 @@ export const OnRampWidget = () => {
     Transak.on(Transak.EVENTS.TRANSAK_ORDER_SUCCESSFUL, () => {
       successfulTransactionMessage();
       updateIsBuyCryptoBtnLoading(false);
+      updateIsOnRampingTransactionSuccessful(true);
       transak.close();
       onRampWindow?.hide?.();
     });
@@ -91,6 +105,8 @@ export const OnRampWidget = () => {
   }, [
     onRampWindow,
     masterEoa,
+    usdAmountToPay,
+    updateIsOnRampingTransactionSuccessful,
     updateIsBuyCryptoBtnLoading,
     successfulTransactionMessage,
     errorTransactionMessage,

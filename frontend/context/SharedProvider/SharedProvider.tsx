@@ -33,6 +33,8 @@ export const SharedContext = createContext<{
   updateUsdAmountToPay: (amount: Nullable<number>) => void;
   isBuyCryptoBtnLoading: boolean;
   updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
+  isOnRampingTransactionSuccessful: boolean;
+  updateIsOnRampingTransactionSuccessful: (successful: boolean) => void;
 
   // others
 }>({
@@ -53,6 +55,8 @@ export const SharedContext = createContext<{
   updateUsdAmountToPay: () => {},
   isBuyCryptoBtnLoading: false,
   updateIsBuyCryptoBtnLoading: () => {},
+  isOnRampingTransactionSuccessful: false,
+  updateIsOnRampingTransactionSuccessful: () => {},
 
   // others
 });
@@ -89,6 +93,12 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
   const [isBuyCryptoBtnLoading, setIsBuyCryptoBtnLoading] = useState(false);
 
+  // state to track if the onramping transaction was successful (step 1)
+  const [
+    isOnRampingTransactionSuccessful,
+    setIsOnRampingTransactionSuccessful,
+  ] = useState(false);
+
   // Function to set the USD amount to pay
   const updateUsdAmountToPay = useCallback((amount: Nullable<number>) => {
     setUsdAmountToPay(amount);
@@ -97,6 +107,13 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   const updateIsBuyCryptoBtnLoading = useCallback((loading: boolean) => {
     setIsBuyCryptoBtnLoading(loading);
   }, []);
+
+  const updateIsOnRampingTransactionSuccessful = useCallback(
+    (successful: boolean) => {
+      setIsOnRampingTransactionSuccessful(successful);
+    },
+    [],
+  );
 
   // Users with the AgentsFun agent type are required to update their
   // agent configurations to run the latest version of the agent.
@@ -150,6 +167,10 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
         updateUsdAmountToPay,
         isBuyCryptoBtnLoading,
         updateIsBuyCryptoBtnLoading,
+        isOnRampingTransactionSuccessful,
+        updateIsOnRampingTransactionSuccessful,
+
+        // others
       }}
     >
       {children}
