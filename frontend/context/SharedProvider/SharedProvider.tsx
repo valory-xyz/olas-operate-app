@@ -9,7 +9,7 @@ import {
 
 import { AgentType } from '@/enums/Agent';
 import { useServices } from '@/hooks/useServices';
-import { Optional } from '@/types/Util';
+import { Nullable, Optional } from '@/types/Util';
 
 import { useMainOlasBalance } from './useMainOlasBalance';
 
@@ -27,6 +27,12 @@ export const SharedContext = createContext<{
   // agent specific checks
   isAgentsFunFieldUpdateRequired: boolean;
 
+  // on ramping
+  usdAmountToPay: Nullable<number>;
+  updateUsdAmountToPay: (amount: number) => void;
+  isBuyCryptoBtnLoading: boolean;
+  updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
+
   // others
 }>({
   isMainOlasBalanceLoading: true,
@@ -40,6 +46,12 @@ export const SharedContext = createContext<{
 
   // agent specific checks
   isAgentsFunFieldUpdateRequired: false,
+
+  // on ramping
+  usdAmountToPay: null,
+  updateUsdAmountToPay: () => {},
+  isBuyCryptoBtnLoading: false,
+  updateIsBuyCryptoBtnLoading: () => {},
 
   // others
 });
@@ -69,6 +81,21 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   const { selectedAgentType, selectedService } = useServices();
   const [isAgentsFunFieldUpdateRequired, setIsAgentsFunFieldUpdateRequired] =
     useState(false);
+
+  // on ramping
+  const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
+  const [isBuyCryptoBtnLoading, setIsBuyCryptoBtnLoading] = useState(false);
+
+  // Function to set the USD amount to pay
+  const updateUsdAmountToPay = useCallback((amount: number) => {
+    setUsdAmountToPay(amount);
+  }, []);
+
+  const updateIsBuyCryptoBtnLoading = useCallback((loading: boolean) => {
+    setIsBuyCryptoBtnLoading(loading);
+  }, []);
+
+  console.log({ isBuyCryptoBtnLoading });
 
   // Users with the AgentsFun agent type are required to update their
   // agent configurations to run the latest version of the agent.
@@ -104,6 +131,12 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
 
         // agent specific checks
         isAgentsFunFieldUpdateRequired,
+
+        // on ramping
+        usdAmountToPay,
+        updateUsdAmountToPay,
+        isBuyCryptoBtnLoading,
+        updateIsBuyCryptoBtnLoading,
       }}
     >
       {children}

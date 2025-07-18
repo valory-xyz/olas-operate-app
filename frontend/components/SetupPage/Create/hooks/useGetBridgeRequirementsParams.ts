@@ -47,6 +47,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
       if (!refillRequirements) return;
       if (!masterEoa?.address) return;
 
+      // TODO: check the "to" and "from"
       const nativeTokenIndex = bridgeRequests.findIndex((req) =>
         areAddressesEqual(req.to.token, AddressZero),
       );

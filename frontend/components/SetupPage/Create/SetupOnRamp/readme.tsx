@@ -30,5 +30,9 @@
  *
  * Doubts:
  * - Staging vs Production
+ *
+ * Docs
+ * - https://docs.transak.com/reference/get-price
+ * - https://docs.transak.com/docs/test-credentials#kyc
  * -
  */

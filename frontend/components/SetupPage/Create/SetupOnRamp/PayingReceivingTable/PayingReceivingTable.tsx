@@ -10,6 +10,7 @@ import {
 import Image from 'next/image';
 import { ReactNode, useMemo } from 'react';
 
+import { NA } from '@/constants/symbols';
 import { useServices } from '@/hooks/useServices';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
@@ -103,10 +104,11 @@ export const PayingReceivingTable = () => {
                 <Text>
                   {isFiatLoading || isNativeTokenLoading ? (
                     <TokenLoader />
+                  ) : onRampQuote?.fiatAmount ? (
+                    `~${onRampQuote?.fiatAmount} USD`
                   ) : (
-                    `~${onRampQuote?.fiatAmount}`
+                    NA
                   )}
-                  &nbsp;USD
                 </Text>
                 <Text>
                   for&nbsp;
@@ -119,7 +121,7 @@ export const PayingReceivingTable = () => {
         ),
         receiving: (
           <Flex vertical justify="center" gap={6}>
-            {isNativeTokenLoading ? (
+            {receivingTokens.length === 0 ? (
               <ReceivingTokensLoader />
             ) : (
               receivingTokens.map((token, index) => (

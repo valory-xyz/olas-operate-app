@@ -9,6 +9,7 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 
 import { FiatPaymentSteps } from './FiatPaymentSteps/FiatPaymentSteps';
+import { OnRampProvider } from './OnRampProvider';
 import { PayingReceivingTable } from './PayingReceivingTable/PayingReceivingTable';
 
 const { Title, Text } = Typography;
@@ -40,7 +41,7 @@ const KeepOpenAlert = () => (
   </CardSection>
 );
 
-export const SetupPayInFiat = () => {
+export const SetupOnRamp = () => {
   const { goto: gotoSetup } = useSetup();
 
   const handlePrevStep = useCallback(() => {
@@ -48,17 +49,19 @@ export const SetupPayInFiat = () => {
   }, [gotoSetup]);
 
   return (
-    <CardFlex $noBorder>
-      <AgentHeader onPrev={handlePrevStep} />
-      <CardSection vertical gap={24} className="m-0 pt-24">
-        <PayInFiatHeader />
-        <KeepOpenAlert />
+    <OnRampProvider>
+      <CardFlex $noBorder>
+        <AgentHeader onPrev={handlePrevStep} />
+        <CardSection vertical gap={24} className="m-0 pt-24">
+          <PayInFiatHeader />
+          <KeepOpenAlert />
 
-        <Flex vertical gap={24}>
-          <PayingReceivingTable />
-          <FiatPaymentSteps />
-        </Flex>
-      </CardSection>
-    </CardFlex>
+          <Flex vertical gap={24}>
+            <PayingReceivingTable />
+            <FiatPaymentSteps />
+          </Flex>
+        </CardSection>
+      </CardFlex>
+    </OnRampProvider>
   );
 };

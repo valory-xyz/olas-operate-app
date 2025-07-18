@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { getTokenDetails } from '@/components/Bridge/utils';
 import { TOKEN_CONFIG } from '@/config/tokens';
@@ -14,6 +14,8 @@ import { formatUnitsToNumber } from '@/utils/numberFormatters';
 import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
 import { onRampChainMap } from '../constants';
 
+// TODO: some of the logic can be reused
+
 export const useTotalNativeTokenRequired = () => {
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
@@ -28,6 +30,10 @@ export const useTotalNativeTokenRequired = () => {
   // State to control the force update of the bridge_refill_requirements API call
   // This is used when the user clicks on "Try again" button.
   const [isForceUpdate, setIsForceUpdate] = useState(false);
+  const [
+    isBridgeRefillRequirementsApiLoading,
+    setIsBridgeRefillRequirementsApiLoading,
+  ] = useState(true);
   const [
     canPollForBridgeRefillRequirements,
     setCanPollForBridgeRefillRequirements,
@@ -62,8 +68,21 @@ export const useTotalNativeTokenRequired = () => {
     refetch: refetchBridgeRefillRequirements,
   } = useBridgeRefillRequirements(
     bridgeParamsExceptNativeToken,
-    canPollForBridgeRefillRequirements,
+    canPollForBridgeRefillRequirements && false, // TODO: remove, just to avoid polling
   );
+
+  // fetch bridge refill requirements manually on mount
+  useEffect(() => {
+    if (!isBridgeRefillRequirementsApiLoading) return;
+
+    refetchBridgeRefillRequirements().finally(() => {
+      setIsBridgeRefillRequirementsApiLoading(false);
+    });
+  }, [
+    isBridgeRefillRequirementsApiLoading,
+    refetchBridgeRefillRequirements,
+    setIsBridgeRefillRequirementsApiLoading,
+  ]);
 
   /**
    * Calculates the total native token required for the bridge.
@@ -105,8 +124,7 @@ export const useTotalNativeTokenRequired = () => {
     if (!bridgeParams) return [];
 
     return bridgeParams.bridge_requests.map((request) => {
-      const toToken = request.to.token;
-      const amount = request.to.amount;
+      const { token: toToken, amount } = request.to;
       const token = getTokenDetails(toToken, toChainConfig);
       return {
         amount: formatUnitsToNumber(amount, token?.decimals),
@@ -140,6 +158,7 @@ export const useTotalNativeTokenRequired = () => {
   const isLoading =
     isBalancesAndFundingRequirementsLoading ||
     isBridgeRefillRequirementsLoading ||
+    isBridgeRefillRequirementsApiLoading ||
     isManuallyRefetching;
 
   const hasAnyQuoteFailed = useMemo(() => {
