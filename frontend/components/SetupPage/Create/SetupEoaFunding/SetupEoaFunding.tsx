@@ -8,7 +8,7 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { kebabCase } from 'lodash';
+import { compact, kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
@@ -217,7 +217,10 @@ const SetupEoaFundingForChainV2 = ({
  * EOA funding setup screen
  */
 export const SetupEoaFunding = () => {
-  const isBridgeOnboardingEnabled = useFeatureFlag('bridge-onboarding');
+  const [isBridgeOnboardingEnabled, isOnRampEnabled] = useFeatureFlag([
+    'bridge-onboarding',
+    'on-ramp',
+  ]);
   const { goto } = useSetup();
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
@@ -282,7 +285,17 @@ export const SetupEoaFunding = () => {
       goto(SetupScreen.SetupBridgeOnboardingScreen);
     } catch (error) {
       message.error('Failed to prepare for bridging funds. Please try again.');
-      console.error('Error updating before bridging funds:', error);
+      console.error(error);
+    }
+  }, [goto, updateBeforeBridgingFunds]);
+
+  const handlePayInFiat = useCallback(async () => {
+    try {
+      await updateBeforeBridgingFunds();
+      goto(SetupScreen.SetupPayInFiat);
+    } catch (error) {
+      message.error('Failed to prepare for fiat payment. Please try again.');
+      console.error(error);
     }
   }, [goto, updateBeforeBridgingFunds]);
 
@@ -313,13 +326,18 @@ export const SetupEoaFunding = () => {
         className="mt-12 mb-12"
       >
         <Segmented<SendFundAction>
-          options={[
+          options={compact([
             {
-              label: `Send on ${currentFundingRequirements.name}`,
+              label: isOnRampEnabled
+                ? 'Transfer'
+                : `Send on ${currentFundingRequirements.name}`,
               value: 'transfer',
             },
-            { label: 'Bridge from Ethereum', value: 'bridge' },
-          ]}
+            isBridgeOnboardingEnabled
+              ? { label: 'Bridge', value: 'bridge' }
+              : null,
+            isOnRampEnabled ? { label: 'Buy', value: 'buyInFiat' } : null,
+          ])}
           onChange={setFundType}
           value={fundType}
           block
@@ -327,14 +345,16 @@ export const SetupEoaFunding = () => {
         />
       </CardSection>
 
-      {fundType === 'transfer' ? (
+      {fundType === 'transfer' && (
         <SetupEoaFundingForChainV2
           isFunded={isFunded}
           minRequiredBalance={currentFundingRequirements.safeCreationThreshold}
           currency={currentFundingRequirements.nativeToken.symbol}
           chainName={currentFundingRequirements.name}
         />
-      ) : (
+      )}
+
+      {fundType === 'bridge' && (
         <CardSection $padding="0px 24px" vertical gap={16}>
           <Text className="text-base">
             Bridge from Ethereum directly to your agent. No further funds will
@@ -342,6 +362,19 @@ export const SetupEoaFunding = () => {
           </Text>
           <Button onClick={handleBridgeFunds} block type="primary" size="large">
             Bridge funds
+          </Button>
+        </CardSection>
+      )}
+
+      {fundType === 'buyInFiat' && (
+        <CardSection $padding="0px 24px" vertical gap={16}>
+          <Text className="text-base">
+            Pay in fiat by using your credit or debit card — funds convert and
+            deposit to your agent automatically. No further funds will be needed
+            after payment.
+          </Text>
+          <Button onClick={handlePayInFiat} block type="primary" size="large">
+            Pay in fiat
           </Button>
         </CardSection>
       )}

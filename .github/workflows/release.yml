@@ -202,6 +202,7 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}
+          TRANSAK_API_KEY: ${{ secrets.TRANSAK_API_KEY }}
           NODE_ENV: ${{ matrix.env }}
           ARCH: ${{ env.OS_ARCH }}
           ELECTRON_BUILDER_CACHE: ~/.cache/electron-builder

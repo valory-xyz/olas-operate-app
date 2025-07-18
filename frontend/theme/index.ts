@@ -58,6 +58,12 @@ export const mainTheme: ThemeConfig = {
     Result: {
       iconFontSize: 48,
     },
+    Table: {
+      padding: 12,
+      headerColor: '#1F2229',
+      headerBg: '#F2F4F9',
+      borderColor: '#DFE5EE',
+    },
   },
 };
 

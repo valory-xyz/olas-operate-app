@@ -18,6 +18,8 @@ const nextConfig = {
     '@ant-design',
     'rc-pagination',
     'rc-picker',
+    'rc-tree',
+    'rc-table',
   ],
   webpack: (config) => {
     if (config.snapshot) {

@@ -12,6 +12,7 @@ import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding/SetupBridg
 import { SetupCreateSafe } from './Create/SetupCreateSafe';
 import { SetupEoaFunding } from './Create/SetupEoaFunding/SetupEoaFunding';
 import { SetupPassword } from './Create/SetupPassword';
+import { SetupPayInFiat } from './Create/SetupPayInFiat/SetupPayInFiat';
 import { SetupSeedPhrase } from './Create/SetupSeedPhrase';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
 import {
@@ -66,6 +67,10 @@ export const Setup = () => {
       // Bridge account
       case SetupScreen.SetupBridgeOnboardingScreen:
         return <SetupBridgeOnboarding />;
+
+      // Pay in fiat
+      case SetupScreen.SetupPayInFiat:
+        return <SetupPayInFiat />;
 
       // Restore account
       case SetupScreen.Restore:

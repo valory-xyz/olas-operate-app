@@ -1,14 +1,15 @@
 import { isAddress } from 'ethers/lib/utils';
 import { useCallback } from 'react';
 
-import {
-  AddressBalanceRecord,
-  MasterSafeBalanceRecord,
-  MiddlewareChain,
-} from '@/client';
+import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/client';
 import { getFromToken } from '@/components/Bridge/utils';
 import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
+import {
+  AllEvmChainId,
+  AllEvmChainIdMap,
+  EvmChainId,
+} from '@/constants/chains';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useServices } from '@/hooks/useServices';
@@ -17,13 +18,13 @@ import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { areAddressesEqual } from '@/utils/address';
 import { bigintMax } from '@/utils/calculations';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import { asAllMiddlewareChain, asEvmChainId } from '@/utils/middlewareHelpers';
 
 /**
  *
  * @warning A HOOK THAT SHOULD NEVER EXIST.
  * @deprecated TODO: This hook is used because BE doesn't support monthly_gas_estimate in the refill requirements yet.
- * Remove the hook once it's supported
+ * Remove the hook once it's supported.
  *
  * Hook to return the updated bridge requirements params to improve the
  * initial funding requirements.
@@ -47,7 +48,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
       if (!masterEoa?.address) return;
 
       const nativeTokenIndex = bridgeRequests.findIndex((req) =>
-        areAddressesEqual(req.from.token, AddressZero),
+        areAddressesEqual(req.to.token, AddressZero),
       );
       if (nativeTokenIndex === -1) return;
 
@@ -86,10 +87,13 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
 };
 
 /**
- * Helper to get bridge refill requirements parameters
- * based on current refill requirements
+ * @returns A function that returns the bridge refill requirements parameters
+ * based on the current refill requirements OR null if requirements are not available or loading.
  */
-export const useGetBridgeRequirementsParams = () => {
+export const useGetBridgeRequirementsParams = (
+  fromChainId: AllEvmChainId,
+  defaultFromToken?: Address,
+) => {
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
@@ -97,6 +101,10 @@ export const useGetBridgeRequirementsParams = () => {
   const getUpdatedBridgeRequirementsParams =
     useGetBridgeRequirementsParamsWithMonthlyGasEstimate();
 
+  const fromChainConfig =
+    fromChainId === AllEvmChainIdMap.Ethereum
+      ? ETHEREUM_TOKEN_CONFIG
+      : TOKEN_CONFIG[fromChainId as EvmChainId];
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const fromAddress = masterEoa?.address;
   const toAddress = masterEoa?.address;
@@ -107,7 +115,6 @@ export const useGetBridgeRequirementsParams = () => {
       if (!refillRequirements) return null;
       if (!fromAddress || !toAddress) return null;
 
-      const fromChainConfig = ETHEREUM_TOKEN_CONFIG; // TODO: make dynamic, get from token config
       const toChainConfig = TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)];
 
       const bridgeRequests: BridgeRefillRequirementsRequest['bridge_requests'] =
@@ -128,13 +135,11 @@ export const useGetBridgeRequirementsParams = () => {
         )) {
           if (!isAddress(tokenAddress)) continue;
 
-          const fromToken = getFromToken(
-            tokenAddress,
-            fromChainConfig,
-            toChainConfig,
-          );
+          const fromToken =
+            defaultFromToken ||
+            getFromToken(tokenAddress, fromChainConfig, toChainConfig);
 
-          const fromChain = MiddlewareChain.ETHEREUM;
+          const fromChain = asAllMiddlewareChain(fromChainId);
           const toChain = toMiddlewareChain;
           const toToken = tokenAddress as Address;
 
@@ -179,7 +184,10 @@ export const useGetBridgeRequirementsParams = () => {
     [
       fromAddress,
       toAddress,
+      fromChainConfig,
       refillRequirements,
+      fromChainId,
+      defaultFromToken,
       isBalancesAndFundingRequirementsLoading,
       toMiddlewareChain,
       getUpdatedBridgeRequirementsParams,
