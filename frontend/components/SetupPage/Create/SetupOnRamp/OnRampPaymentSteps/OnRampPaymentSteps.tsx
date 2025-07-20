@@ -1,9 +1,8 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Steps, Typography } from 'antd';
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { OnRampWidget } from '@/components/OnRamp/OnRampWidget';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
@@ -50,14 +49,11 @@ const TxnDetails = ({ link }: { link: string }) => (
   </a>
 );
 
-type FundsAreSafeMessageProps = {
+type RetryProps = {
   onRetry?: () => void;
   onRetryProps?: Record<string, unknown>;
 };
-const FundsAreSafeMessage = ({
-  onRetry,
-  onRetryProps,
-}: FundsAreSafeMessageProps) => (
+const Retry = ({ onRetry, onRetryProps }: RetryProps) => (
   <div style={{ color: 'red' }}>
     Something went wrong.{' '}
     {onRetry && (
@@ -68,7 +64,7 @@ const FundsAreSafeMessage = ({
   </div>
 );
 
-export const OnRampPaymentSteps = () => {
+const useBuyCryptoSteps = () => {
   const { onRampWindow } = useElectronApi();
   const { masterEoa } = useMasterWalletContext();
   const {
@@ -77,7 +73,6 @@ export const OnRampPaymentSteps = () => {
     updateIsBuyCryptoBtnLoading,
     isOnRampingTransactionSuccessful,
   } = useOnRampContext();
-  const [isWidgetVisible, setIsWidgetVisible] = useState(false);
 
   const handleBuyCrypto = useCallback(async () => {
     if (!onRampWindow?.show) return;
@@ -94,71 +89,56 @@ export const OnRampPaymentSteps = () => {
     return 'wait';
   }, [isBuyCryptoBtnLoading, isOnRampingTransactionSuccessful]);
 
-  const steps: StepItem[] = [
-    {
-      status: buyCryptoStatus,
-      title: 'Buy crypto for fiat',
-      computedSubSteps: isOnRampingTransactionSuccessful
-        ? [{ description: 'Funds received by the agent.' }]
-        : [
-            { description: FOLLOW_INSTRUCTIONS_MESSAGE },
-            {
-              description: (
-                <>
-                  <Button
-                    loading={isBuyCryptoBtnLoading}
-                    disabled={!masterEoa?.address || !usdAmountToPay}
-                    onClick={handleBuyCrypto}
-                    type="primary"
-                  >
-                    Buy crypto
-                  </Button>
-
-                  <Button
-                    onClick={() => setIsWidgetVisible(true)}
-                    type="primary"
-                    className="ml-8"
-                  >
-                    Widget
-                  </Button>
-
-                  {isWidgetVisible && <OnRampWidget usdAmountToPay={100} />}
-                </>
-              ),
-            },
-          ],
-    },
-  ];
-
-  return (
-    <Steps
-      size="small"
-      direction="vertical"
-      current={0}
-      items={steps.map(({ status, title, computedSubSteps }) => ({
-        status,
-        title,
-        description: (
-          <>
-            {computedSubSteps.map((subStep, index) => (
-              <SubStepRow
-                key={index}
-                style={{ marginTop: index === 0 ? 4 : 6 }}
+  const step: StepItem = {
+    status: buyCryptoStatus,
+    title: 'Buy crypto for fiat',
+    computedSubSteps: isOnRampingTransactionSuccessful
+      ? [{ description: 'Funds received by the agent.' }]
+      : [
+          { description: FOLLOW_INSTRUCTIONS_MESSAGE },
+          {
+            description: (
+              <Button
+                loading={isBuyCryptoBtnLoading}
+                disabled={!masterEoa?.address || !usdAmountToPay}
+                onClick={handleBuyCrypto}
+                type="primary"
               >
-                {subStep.description && <Desc text={subStep.description} />}
-                {subStep.txnLink && <TxnDetails link={subStep.txnLink} />}
-                {subStep.isFailed && (
-                  <FundsAreSafeMessage
-                    onRetry={subStep.onRetry}
-                    onRetryProps={subStep.onRetryProps}
-                  />
-                )}
-              </SubStepRow>
-            ))}
-          </>
-        ),
-        icon: status === 'process' ? <LoadingOutlined /> : undefined,
-      }))}
-    />
-  );
+                Buy crypto
+              </Button>
+            ),
+          },
+        ],
+  };
+
+  return step;
 };
+
+export const OnRampPaymentSteps = () => (
+  <Steps
+    size="small"
+    direction="vertical"
+    current={0}
+    items={[useBuyCryptoSteps()].map(({ status, title, computedSubSteps }) => ({
+      status,
+      title,
+      description: (
+        <>
+          {computedSubSteps.map((subStep, index) => (
+            <SubStepRow key={index} style={{ marginTop: index === 0 ? 4 : 6 }}>
+              {subStep.description && <Desc text={subStep.description} />}
+              {subStep.txnLink && <TxnDetails link={subStep.txnLink} />}
+              {subStep.isFailed && (
+                <Retry
+                  onRetry={subStep.onRetry}
+                  onRetryProps={subStep.onRetryProps}
+                />
+              )}
+            </SubStepRow>
+          ))}
+        </>
+      ),
+      icon: status === 'process' ? <LoadingOutlined /> : undefined,
+    }))}
+  />
+);
