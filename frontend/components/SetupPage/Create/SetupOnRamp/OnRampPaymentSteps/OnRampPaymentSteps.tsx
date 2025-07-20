@@ -1,8 +1,9 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Steps, Typography } from 'antd';
-import { ReactNode, useCallback, useMemo } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
+import { OnRampWidget } from '@/components/OnRamp/OnRampWidget';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
@@ -10,6 +11,9 @@ import { useMasterWalletContext } from '@/hooks/useWallet';
 import { delayInSeconds } from '@/utils/delay';
 
 const { Text } = Typography;
+
+const FOLLOW_INSTRUCTIONS_MESSAGE =
+  'Follow the instructions to fund your agent for the preferred fiat currency. Pearl will handle the rest.';
 
 type SubStep = {
   description?: ReactNode;
@@ -73,6 +77,7 @@ export const OnRampPaymentSteps = () => {
     updateIsBuyCryptoBtnLoading,
     isOnRampingTransactionSuccessful,
   } = useOnRampContext();
+  const [isWidgetVisible, setIsWidgetVisible] = useState(false);
 
   const handleBuyCrypto = useCallback(async () => {
     if (!onRampWindow?.show) return;
@@ -93,24 +98,35 @@ export const OnRampPaymentSteps = () => {
     {
       status: buyCryptoStatus,
       title: 'Buy crypto for fiat',
-      computedSubSteps: [
-        {
-          description:
-            'Follow the instructions to fund your agent for the preferred fiat currency. Pearl will handle the rest.',
-        },
-        {
-          description: (
-            <Button
-              loading={isBuyCryptoBtnLoading}
-              disabled={!masterEoa?.address || !usdAmountToPay}
-              onClick={handleBuyCrypto}
-              type="primary"
-            >
-              Buy crypto
-            </Button>
-          ),
-        },
-      ],
+      computedSubSteps: isOnRampingTransactionSuccessful
+        ? [{ description: 'Funds received by the agent.' }]
+        : [
+            { description: FOLLOW_INSTRUCTIONS_MESSAGE },
+            {
+              description: (
+                <>
+                  <Button
+                    loading={isBuyCryptoBtnLoading}
+                    disabled={!masterEoa?.address || !usdAmountToPay}
+                    onClick={handleBuyCrypto}
+                    type="primary"
+                  >
+                    Buy crypto
+                  </Button>
+
+                  <Button
+                    onClick={() => setIsWidgetVisible(true)}
+                    type="primary"
+                    className="ml-8"
+                  >
+                    Widget
+                  </Button>
+
+                  {isWidgetVisible && <OnRampWidget usdAmountToPay={100} />}
+                </>
+              ),
+            },
+          ],
     },
   ];
 

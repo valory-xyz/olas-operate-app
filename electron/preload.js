@@ -14,6 +14,7 @@ const agentActivityWindow = {
 const onRampWindow = {
   show: (amountToPay) => ipcRenderer.invoke('onramp-window-show', amountToPay),
   hide: () => ipcRenderer.invoke('onramp-window-hide'),
+  transactionSuccess: () => ipcRenderer.invoke('onramp-transaction-success'),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', {

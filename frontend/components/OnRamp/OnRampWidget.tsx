@@ -1,10 +1,16 @@
 import { Transak } from '@transak/transak-sdk';
 import { Flex, Spin, Typography } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import { onRampChainMap } from '@/constants/chains';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
+import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+import {
+  asEvmChainDetails,
+  asMiddlewareChain,
+} from '@/utils/middlewareHelpers';
 
 import { useOnRampMessage } from './useOnRampMessage';
 
@@ -16,8 +22,21 @@ type OnRampWidgetProps = {
 
 export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
   const { onRampWindow } = useElectronApi();
-  const [isWidgetLoading, setIsWidgetLoading] = useState(true);
+  const { selectedAgentConfig } = useServices();
+
   const { masterEoa } = useMasterWalletContext();
+
+  // TODO: move to context
+  const { network, cryptoCurrencyCode } = useMemo(() => {
+    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
+    const onRampChainName = asMiddlewareChain(onRampChainMap[fromChainName]);
+    const chainDetails = asEvmChainDetails(onRampChainName);
+    return {
+      network: chainDetails.name,
+      cryptoCurrencyCode: chainDetails.symbol,
+    };
+  }, [selectedAgentConfig]);
+
   const {
     updateIsBuyCryptoBtnLoading,
     updateIsOnRampingTransactionSuccessful,
@@ -28,7 +47,11 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     errorTransactionMessage,
   } = useOnRampMessage();
 
+  const [isWidgetLoading, setIsWidgetLoading] = useState(true);
+
   useEffect(() => {
+    if (!masterEoa?.address) return;
+
     // Transak SDK requires a valid amount to proceed
     if (!usdAmountToPay) return;
 
@@ -37,8 +60,6 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
       console.error('TRANSAK_API_KEY is not set');
       return;
     }
-
-    if (!masterEoa?.address) return;
 
     /**
      * https://docs.transak.com/docs/transak-sdk
@@ -53,8 +74,8 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
       /** only credit_debit_card allowed */
       paymentMethod: 'credit_debit_card',
       /** only USD allowed */
-      network: 'optimism', // TODO: dynamic
-      cryptoCurrencyCode: 'ETH', // TODO: dynamic
+      network,
+      cryptoCurrencyCode,
       fiatCurrency: 'USD',
       fiatAmount: usdAmountToPay,
       walletAddress: masterEoa.address,
@@ -90,14 +111,15 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
       updateIsBuyCryptoBtnLoading(false);
       updateIsOnRampingTransactionSuccessful(true);
       transak.close();
-      onRampWindow?.hide?.();
+      onRampWindow?.transactionSuccess?.();
     });
 
     // This will trigger when the user marks payment is failed.
     Transak.on(Transak.EVENTS.TRANSAK_ORDER_FAILED, () => {
-      transak.close();
       updateIsBuyCryptoBtnLoading(false);
       errorTransactionMessage();
+      transak.close();
+      onRampWindow?.hide?.();
     });
 
     return () => {
@@ -108,6 +130,8 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     onRampWindow,
     masterEoa,
     usdAmountToPay,
+    network,
+    cryptoCurrencyCode,
     updateIsOnRampingTransactionSuccessful,
     updateIsBuyCryptoBtnLoading,
     successfulTransactionMessage,

@@ -1113,3 +1113,13 @@ ipcMain.handle('onramp-window-hide', () => {
     win.webContents.send('onramp-window-did-hide');
   });
 });
+
+ipcMain.handle('onramp-transaction-success', () => {
+  logger.electron('onramp-transaction-success');
+
+  // Notify all other windows that the transaction was successful
+  BrowserWindow.getAllWindows().forEach((win) => {
+    console.log('Sending onramp-transaction-success to', win.id);
+    win.webContents.send('onramp-transaction-success');
+  });
+});

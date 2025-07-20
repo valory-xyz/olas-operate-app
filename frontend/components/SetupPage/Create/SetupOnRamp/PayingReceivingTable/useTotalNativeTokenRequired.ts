@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getTokenDetails } from '@/components/Bridge/utils';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
+import { onRampChainMap } from '@/constants/chains';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
 import { useServices } from '@/hooks/useServices';
@@ -12,7 +13,6 @@ import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
-import { onRampChainMap } from '../constants';
 
 // TODO: some of the logic can be reused with bridging
 
