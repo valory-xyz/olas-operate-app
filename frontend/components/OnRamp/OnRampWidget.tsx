@@ -3,7 +3,7 @@ import { Flex, Spin, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 
 import { useElectronApi } from '@/hooks/useElectronApi';
-import { useSharedContext } from '@/hooks/useSharedContext';
+import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 
 import { useOnRampMessage } from './useOnRampMessage';
@@ -14,9 +14,6 @@ type OnRampWidgetProps = {
   usdAmountToPay: number;
 };
 
-/**
- * https://docs.transak.com/docs/transak-sdk
- */
 export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
   const { onRampWindow } = useElectronApi();
   const [isWidgetLoading, setIsWidgetLoading] = useState(true);
@@ -24,7 +21,7 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
   const {
     updateIsBuyCryptoBtnLoading,
     updateIsOnRampingTransactionSuccessful,
-  } = useSharedContext();
+  } = useOnRampContext();
   const {
     orderInProgressMessage,
     successfulTransactionMessage,
@@ -43,6 +40,9 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
 
     if (!masterEoa?.address) return;
 
+    /**
+     * https://docs.transak.com/docs/transak-sdk
+     */
     const transak = new Transak({
       apiKey: process.env.TRANSAK_API_KEY,
       environment: Transak.ENVIRONMENTS.STAGING, // or 'PRODUCTION' // TODO: how to know which environment to use?

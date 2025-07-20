@@ -1,13 +1,15 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Steps, Typography } from 'antd';
-import React, { FC, ReactNode, useCallback, useMemo } from 'react';
+import { ReactNode, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { useElectronApi } from '@/hooks/useElectronApi';
-import { useSharedContext } from '@/hooks/useSharedContext';
+import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { delayInSeconds } from '@/utils/delay';
+
+const { Text } = Typography;
 
 type SubStep = {
   description?: ReactNode;
@@ -16,8 +18,6 @@ type SubStep = {
   onRetry?: () => void;
   onRetryProps?: Record<string, unknown>;
 };
-
-const { Text } = Typography;
 
 type StepItem = {
   status: 'wait' | 'process' | 'finish' | 'error';
@@ -50,10 +50,10 @@ type FundsAreSafeMessageProps = {
   onRetry?: () => void;
   onRetryProps?: Record<string, unknown>;
 };
-const FundsAreSafeMessage: FC<FundsAreSafeMessageProps> = ({
+const FundsAreSafeMessage = ({
   onRetry,
   onRetryProps,
-}) => (
+}: FundsAreSafeMessageProps) => (
   <div style={{ color: 'red' }}>
     Something went wrong.{' '}
     {onRetry && (
@@ -72,7 +72,7 @@ export const OnRampPaymentSteps = () => {
     usdAmountToPay,
     updateIsBuyCryptoBtnLoading,
     isOnRampingTransactionSuccessful,
-  } = useSharedContext();
+  } = useOnRampContext();
 
   const handleBuyCrypto = useCallback(async () => {
     if (!onRampWindow?.show) return;

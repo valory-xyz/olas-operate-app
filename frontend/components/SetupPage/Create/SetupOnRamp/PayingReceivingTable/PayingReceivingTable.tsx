@@ -12,8 +12,8 @@ import { ReactNode, useEffect, useMemo } from 'react';
 
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
+import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
-import { useSharedContext } from '@/hooks/useSharedContext';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
 import { useTotalFiatFromNativeToken } from './useTotalFiatFromNativeToken';
@@ -99,7 +99,7 @@ export const PayingReceivingTable = () => {
   } = useTotalNativeTokenRequired();
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(totalNativeToken);
-  const { updateUsdAmountToPay } = useSharedContext();
+  const { updateUsdAmountToPay } = useOnRampContext();
 
   const isReceivingAmountLoading = isFiatLoading || isNativeTokenLoading;
   const receivingAmount = fiatAmount ? `~${fiatAmount} USD` : NA;
@@ -125,7 +125,7 @@ export const PayingReceivingTable = () => {
         paying: (
           <>
             {hasNativeTokenError && !isNativeTokenLoading ? (
-              <Flex vertical gap={8}>
+              <Flex vertical gap={8} align="flex-start">
                 <CloseCircleOutlined style={{ color: COLOR.RED }} />
                 <Text>Quote request failed</Text>
                 <Button

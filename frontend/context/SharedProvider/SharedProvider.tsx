@@ -8,9 +8,8 @@ import {
 } from 'react';
 
 import { AgentType } from '@/enums/Agent';
-import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
-import { Nullable, Optional } from '@/types/Util';
+import { Optional } from '@/types/Util';
 
 import { useMainOlasBalance } from './useMainOlasBalance';
 
@@ -28,14 +27,6 @@ export const SharedContext = createContext<{
   // agent specific checks
   isAgentsFunFieldUpdateRequired: boolean;
 
-  // on ramping
-  usdAmountToPay: Nullable<number>;
-  updateUsdAmountToPay: (amount: Nullable<number>) => void;
-  isBuyCryptoBtnLoading: boolean;
-  updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
-  isOnRampingTransactionSuccessful: boolean;
-  updateIsOnRampingTransactionSuccessful: (successful: boolean) => void;
-
   // others
 }>({
   isMainOlasBalanceLoading: true,
@@ -50,14 +41,6 @@ export const SharedContext = createContext<{
   // agent specific checks
   isAgentsFunFieldUpdateRequired: false,
 
-  // on ramping
-  usdAmountToPay: null,
-  updateUsdAmountToPay: () => {},
-  isBuyCryptoBtnLoading: false,
-  updateIsBuyCryptoBtnLoading: () => {},
-  isOnRampingTransactionSuccessful: false,
-  updateIsOnRampingTransactionSuccessful: () => {},
-
   // others
 });
 
@@ -69,8 +52,6 @@ export const SharedContext = createContext<{
  * - Track the healthcheck alert shown to the user (so that they are not shown again).
  */
 export const SharedProvider = ({ children }: PropsWithChildren) => {
-  const { ipcRenderer } = useElectronApi();
-
   // state to track the onboarding step of the user (independent of the agent)
   const [onboardingStep, setOnboardingStep] = useState(0);
   const updateOnboardingStep = useCallback((step: number) => {
@@ -88,32 +69,6 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   const { selectedAgentType, selectedService } = useServices();
   const [isAgentsFunFieldUpdateRequired, setIsAgentsFunFieldUpdateRequired] =
     useState(false);
-
-  // on ramping
-  const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
-  const [isBuyCryptoBtnLoading, setIsBuyCryptoBtnLoading] = useState(false);
-
-  // state to track if the onramping transaction was successful (step 1)
-  const [
-    isOnRampingTransactionSuccessful,
-    setIsOnRampingTransactionSuccessful,
-  ] = useState(false);
-
-  // Function to set the USD amount to pay
-  const updateUsdAmountToPay = useCallback((amount: Nullable<number>) => {
-    setUsdAmountToPay(amount);
-  }, []);
-
-  const updateIsBuyCryptoBtnLoading = useCallback((loading: boolean) => {
-    setIsBuyCryptoBtnLoading(loading);
-  }, []);
-
-  const updateIsOnRampingTransactionSuccessful = useCallback(
-    (successful: boolean) => {
-      setIsOnRampingTransactionSuccessful(successful);
-    },
-    [],
-  );
 
   // Users with the AgentsFun agent type are required to update their
   // agent configurations to run the latest version of the agent.
@@ -136,18 +91,6 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
     setIsAgentsFunFieldUpdateRequired(!areFieldsUpdated);
   }, [selectedAgentType, selectedService]);
 
-  // Listen for onramp window hide event to reset the loading state
-  useEffect(() => {
-    const handleHide = () => {
-      updateIsBuyCryptoBtnLoading(false);
-    };
-
-    ipcRenderer?.on?.('onramp-window-did-hide', handleHide);
-    return () => {
-      ipcRenderer?.removeListener?.('onramp-window-did-hide', handleHide);
-    };
-  }, [ipcRenderer, updateIsBuyCryptoBtnLoading]);
-
   return (
     <SharedContext.Provider
       value={{
@@ -161,14 +104,6 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
 
         // agent specific checks
         isAgentsFunFieldUpdateRequired,
-
-        // on ramping
-        usdAmountToPay,
-        updateUsdAmountToPay,
-        isBuyCryptoBtnLoading,
-        updateIsBuyCryptoBtnLoading,
-        isOnRampingTransactionSuccessful,
-        updateIsOnRampingTransactionSuccessful,
 
         // others
       }}
