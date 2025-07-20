@@ -76,11 +76,12 @@ export const OnRampPaymentSteps = () => {
 
   const handleBuyCrypto = useCallback(async () => {
     if (!onRampWindow?.show) return;
+    if (!usdAmountToPay) return;
 
-    onRampWindow.show();
+    onRampWindow.show(usdAmountToPay);
     await delayInSeconds(1);
     updateIsBuyCryptoBtnLoading(true);
-  }, [onRampWindow, updateIsBuyCryptoBtnLoading]);
+  }, [onRampWindow, usdAmountToPay, updateIsBuyCryptoBtnLoading]);
 
   const buyCryptoStatus = useMemo(() => {
     if (isBuyCryptoBtnLoading) return 'process';

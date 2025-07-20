@@ -33,7 +33,9 @@ const KeepOpenAlert = () => (
       showIcon
       message={
         <Flex vertical gap={5}>
-          <Text>Keep the app open until the process is complete.</Text>
+          <Text className="text-sm">
+            Keep the app open until the process is complete.
+          </Text>
         </Flex>
       }
     />

@@ -55,7 +55,7 @@ type ElectronApiContextProps = {
   >;
   agentActivityWindow?: Partial<ElectronApiAgentActivityWindow>;
   onRampWindow?: {
-    show?: () => void;
+    show?: (amountToPay: number) => void;
     hide?: () => void;
   };
 };

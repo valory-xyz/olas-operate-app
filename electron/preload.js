@@ -12,7 +12,7 @@ const agentActivityWindow = {
 
 /** IPC methods for transak window */
 const onRampWindow = {
-  show: () => ipcRenderer.invoke('onramp-window-show'),
+  show: (amountToPay) => ipcRenderer.invoke('onramp-window-show', amountToPay),
   hide: () => ipcRenderer.invoke('onramp-window-hide'),
 };
 

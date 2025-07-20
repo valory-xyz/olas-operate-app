@@ -495,7 +495,7 @@ function createSSLCertificate() {
  * Create the on-ramping window for displaying transak widget
  */
 /** @type {()=>Promise<BrowserWindow|undefined>} */
-const createOnRampWindow = async () => {
+const createOnRampWindow = async (amountToPay) => {
   if (!getOnRampWindow() || getOnRampWindow().isDestroyed) {
     onRampWindow = new BrowserWindow({
       title: 'On Ramp',
@@ -510,7 +510,16 @@ const createOnRampWindow = async () => {
       },
     });
 
-    onRampWindow.loadURL('http://localhost:3000/onramp').then(() => {
+    // query parameters for the on-ramp URL
+    const onRampQuery = new URLSearchParams();
+    if (amountToPay) {
+      onRampQuery.append('amount', amountToPay.toString());
+    }
+    const onRampUrl = `http://localhost:3000/onramp?${onRampQuery.toString()}`;
+    console.log('OnRamp URL:', onRampUrl);
+    logger.electron('OnRamp URL:', onRampUrl);
+
+    onRampWindow.loadURL(onRampUrl).then(() => {
       logger.electron('onRampWindow', onRampWindow.url);
     });
   } else {
@@ -1080,11 +1089,11 @@ ipcMain.handle('agent-activity-window-minimize', () => {
 /**
  * OnRamp window handlers
  */
-ipcMain.handle('onramp-window-show', () => {
+ipcMain.handle('onramp-window-show', (_event, amountToPay) => {
   logger.electron('onramp-window-show');
 
   if (!getOnRampWindow() || getOnRampWindow()?.isDestroyed()) {
-    createOnRampWindow()?.then((window) => window.show());
+    createOnRampWindow(amountToPay)?.then((window) => window.show());
   } else {
     getOnRampWindow()?.show();
   }

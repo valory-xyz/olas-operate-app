@@ -1,4 +1,4 @@
-import { ReloadOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import {
   Button,
   Flex,
@@ -10,6 +10,7 @@ import {
 import Image from 'next/image';
 import { ReactNode, useEffect, useMemo } from 'react';
 
+import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
 import { useServices } from '@/hooks/useServices';
 import { useSharedContext } from '@/hooks/useSharedContext';
@@ -69,10 +70,21 @@ const TokenLoader = () => (
   />
 );
 
-const ReceivingTokensLoader = () => (
-  <Flex vertical gap={6}>
-    <TokenLoader />
-    <TokenLoader />
+type ReceivingTokensProps = {
+  receivingTokens: { amount: number; symbol?: string }[];
+};
+const ReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
+  <Flex vertical justify="center" gap={6}>
+    {receivingTokens.length === 0 ? (
+      <Flex vertical gap={6}>
+        <TokenLoader />
+        <TokenLoader />
+      </Flex>
+    ) : (
+      receivingTokens.map((token, index) => (
+        <Text key={index}>{`${token?.amount} ${token?.symbol}`}</Text>
+      ))
+    )}
   </Flex>
 );
 
@@ -91,16 +103,9 @@ export const PayingReceivingTable = () => {
 
   const isReceivingAmountLoading = isFiatLoading || isNativeTokenLoading;
   const receivingAmount = fiatAmount ? `~${fiatAmount} USD` : NA;
+  const nativeTokenAmount = `for ${totalNativeToken} ETH`;
 
-  // NOTE: update the USD amount to pay in shared context
-  // to be used in the component requiring it.
   useEffect(() => {
-    // TODO: remove
-    if (hasNativeTokenError) {
-      updateUsdAmountToPay(120.55);
-      return;
-    }
-
     if (isReceivingAmountLoading || hasNativeTokenError) {
       updateUsdAmountToPay(null);
     } else if (fiatAmount) {
@@ -120,42 +125,36 @@ export const PayingReceivingTable = () => {
         paying: (
           <>
             {hasNativeTokenError && !isNativeTokenLoading ? (
-              <Button onClick={onRetry} icon={<ReloadOutlined />} size="small">
-                Retry
-              </Button>
+              <Flex vertical gap={8}>
+                <CloseCircleOutlined style={{ color: COLOR.RED }} />
+                <Text>Quote request failed</Text>
+                <Button
+                  onClick={onRetry}
+                  icon={<ReloadOutlined />}
+                  size="small"
+                >
+                  Try again
+                </Button>
+              </Flex>
             ) : (
               <Flex vertical justify="center" gap={6}>
                 <Text>
                   {isReceivingAmountLoading ? <TokenLoader /> : receivingAmount}
                 </Text>
                 <Text>
-                  {isNativeTokenLoading ? (
-                    <TokenLoader />
-                  ) : (
-                    `for ${totalNativeToken} ETH`
-                  )}
+                  {isNativeTokenLoading ? <TokenLoader /> : nativeTokenAmount}
                 </Text>
               </Flex>
             )}
           </>
         ),
-        receiving: (
-          <Flex vertical justify="center" gap={6}>
-            {receivingTokens.length === 0 ? (
-              <ReceivingTokensLoader />
-            ) : (
-              receivingTokens.map((token, index) => (
-                <Text key={index}>{`${token?.amount} ${token?.symbol}`}</Text>
-              ))
-            )}
-          </Flex>
-        ),
+        receiving: <ReceivingTokens receivingTokens={receivingTokens} />,
       },
     ],
     [
       isNativeTokenLoading,
       hasNativeTokenError,
-      totalNativeToken,
+      nativeTokenAmount,
       receivingTokens,
       onRetry,
       receivingAmount,

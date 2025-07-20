@@ -10,15 +10,18 @@ import { useOnRampMessage } from './useOnRampMessage';
 
 const { Title } = Typography;
 
+type OnRampWidgetProps = {
+  usdAmountToPay: number;
+};
+
 /**
  * https://docs.transak.com/docs/transak-sdk
  */
-export const OnRampWidget = () => {
+export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
   const { onRampWindow } = useElectronApi();
   const [isWidgetLoading, setIsWidgetLoading] = useState(true);
   const { masterEoa } = useMasterWalletContext();
   const {
-    usdAmountToPay,
     updateIsBuyCryptoBtnLoading,
     updateIsOnRampingTransactionSuccessful,
   } = useSharedContext();
@@ -28,33 +31,32 @@ export const OnRampWidget = () => {
     errorTransactionMessage,
   } = useOnRampMessage();
 
-  console.log('OnRampWidget', {
-    onRampWindow,
-    masterEoa,
-    usdAmountToPay,
-  });
-
-  // TODO: dynamic fields, should get from query parameters
-
   useEffect(() => {
-    if (!masterEoa?.address) return;
-
     // Transak SDK requires a valid amount to proceed
     if (!usdAmountToPay) return;
 
+    // Check if Transak API key is set
+    if (!process.env.TRANSAK_API_KEY) {
+      console.error('TRANSAK_API_KEY is not set');
+      return;
+    }
+
+    if (!masterEoa?.address) return;
+
     const transak = new Transak({
-      apiKey: process.env.TRANSAK_API_KEY as string,
-      environment: Transak.ENVIRONMENTS.STAGING, // or 'PRODUCTION'
-      // widgetHeight: '100%',
-      // widgetWidth: '100%',
+      apiKey: process.env.TRANSAK_API_KEY,
+      environment: Transak.ENVIRONMENTS.STAGING, // or 'PRODUCTION' // TODO: how to know which environment to use?
       widgetHeight: '700px',
       widgetWidth: '500px',
-      network: 'optimism', // TODO: dynamic
-      productsAvailed: 'BUY', // Default
+      /** default to BUY */
+      productsAvailed: 'BUY',
+      /** only credit_debit_card allowed */
       paymentMethod: 'credit_debit_card',
-      fiatAmount: usdAmountToPay, // TODO: dynamic
-      fiatCurrency: 'USD',
+      /** only USD allowed */
+      network: 'optimism', // TODO: dynamic
       cryptoCurrencyCode: 'ETH', // TODO: dynamic
+      fiatCurrency: 'USD',
+      fiatAmount: usdAmountToPay,
       walletAddress: masterEoa.address,
     });
 
