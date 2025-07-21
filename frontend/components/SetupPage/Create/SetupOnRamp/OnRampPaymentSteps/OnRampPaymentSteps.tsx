@@ -114,31 +114,38 @@ const useBuyCryptoSteps = () => {
   return step;
 };
 
-export const OnRampPaymentSteps = () => (
-  <Steps
-    size="small"
-    direction="vertical"
-    current={0}
-    items={[useBuyCryptoSteps()].map(({ status, title, computedSubSteps }) => ({
-      status,
-      title,
-      description: (
-        <>
-          {computedSubSteps.map((subStep, index) => (
-            <SubStepRow key={index} style={{ marginTop: index === 0 ? 4 : 6 }}>
-              {subStep.description && <Desc text={subStep.description} />}
-              {subStep.txnLink && <TxnDetails link={subStep.txnLink} />}
-              {subStep.isFailed && (
-                <Retry
-                  onRetry={subStep.onRetry}
-                  onRetryProps={subStep.onRetryProps}
-                />
-              )}
-            </SubStepRow>
-          ))}
-        </>
-      ),
-      icon: status === 'process' ? <LoadingOutlined /> : undefined,
-    }))}
-  />
-);
+export const OnRampPaymentSteps = () => {
+  const steps = [useBuyCryptoSteps()];
+
+  return (
+    <Steps
+      size="small"
+      direction="vertical"
+      current={0}
+      items={steps.map(({ status, title, computedSubSteps }) => ({
+        status,
+        title,
+        description: (
+          <>
+            {computedSubSteps.map((subStep, index) => (
+              <SubStepRow
+                key={index}
+                style={{ marginTop: index === 0 ? 4 : 6 }}
+              >
+                {subStep.description && <Desc text={subStep.description} />}
+                {subStep.txnLink && <TxnDetails link={subStep.txnLink} />}
+                {subStep.isFailed && (
+                  <Retry
+                    onRetry={subStep.onRetry}
+                    onRetryProps={subStep.onRetryProps}
+                  />
+                )}
+              </SubStepRow>
+            ))}
+          </>
+        ),
+        icon: status === 'process' ? <LoadingOutlined /> : undefined,
+      }))}
+    />
+  );
+};
