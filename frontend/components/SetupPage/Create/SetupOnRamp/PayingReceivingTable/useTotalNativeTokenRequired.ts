@@ -67,7 +67,7 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     refetch: refetchBridgeRefillRequirements,
   } = useBridgeRefillRequirements(
     bridgeParamsExceptNativeToken,
-    canPollForBridgeRefillRequirements && false, // TODO: remove, just to avoid polling
+    canPollForBridgeRefillRequirements,
   );
 
   // fetch bridge refill requirements manually on mount
