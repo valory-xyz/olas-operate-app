@@ -54,6 +54,8 @@ Steps to create a Safe{Wallet}:
     --cacert "$OPERATE_HOME/ssl/cert.pem"
     ```
 
+     If the execution is successful, you should see the message `Safe created!` in the command's output. Example:
+
     ```json
     {"create_tx":"0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef","transfer_txs":{},"safe":"0xabcdefabcdefabcdefabcdefabcdefabcdefabcd","message":"Safe created!"}
     ```
