@@ -92,6 +92,7 @@ const ReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
 type PaymentTableProps = { onRampChainId: EvmChainId };
 export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const { selectedAgentConfig } = useServices();
+  const { updateUsdAmountToPay } = useOnRampContext();
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
@@ -101,7 +102,6 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   } = useTotalNativeTokenRequired(onRampChainId);
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(totalNativeToken);
-  const { updateUsdAmountToPay } = useOnRampContext();
 
   const isReceivingAmountLoading = isFiatLoading || isNativeTokenLoading;
   const receivingAmount = fiatAmount ? `~${fiatAmount} USD` : NA;

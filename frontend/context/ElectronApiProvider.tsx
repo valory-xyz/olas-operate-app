@@ -59,6 +59,7 @@ type ElectronApiContextProps = {
     hide?: () => void;
     transactionSuccess?: () => void;
   };
+  logEvent?: (message: string) => void;
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -97,6 +98,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     hide: () => {},
     transactionSuccess: () => {},
   },
+  logEvent: () => {},
 });
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
@@ -154,6 +156,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             'onRampWindow.transactionSuccess',
           ),
         },
+        logEvent: getElectronApiFunction('logEvent'),
       }}
     >
       {children}

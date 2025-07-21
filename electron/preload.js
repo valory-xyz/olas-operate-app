@@ -47,4 +47,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   healthCheck: () => ipcRenderer.invoke('health-check'),
   agentActivityWindow,
   onRampWindow,
+  logEvent: (message) => ipcRenderer.invoke('log-event', message),
 });

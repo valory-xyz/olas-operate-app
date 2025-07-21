@@ -18,8 +18,6 @@ type SubStep = {
   description?: ReactNode;
   txnLink?: string;
   isFailed?: boolean;
-  onRetry?: () => void;
-  onRetryProps?: Record<string, unknown>;
 };
 
 type StepItem = {
@@ -100,7 +98,7 @@ const useBuyCryptoSteps = () => {
 };
 
 export const OnRampPaymentSteps = () => {
-  const steps = [useBuyCryptoSteps()];
+  const steps = [useBuyCryptoSteps()]; // TODO: 3 more steps
 
   return (
     <Steps

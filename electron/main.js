@@ -1086,6 +1086,13 @@ ipcMain.handle('agent-activity-window-minimize', () => {
 });
 
 /**
+ * Logs an event message to the logger.
+ */
+ipcMain.handle('log-event', (_event, message) => {
+  logger.electron(message);
+});
+
+/**
  * OnRamp window handlers
  */
 ipcMain.handle('onramp-window-show', (_event, amountToPay) => {

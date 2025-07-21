@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
 
-import { OnRampWidget } from '@/components/OnRamp/OnRampWidget';
+import { OnRampWidget } from '@/components/OnRampWidget/OnRampWidget';
 
 export default function OnRamp() {
   const router = useRouter();
