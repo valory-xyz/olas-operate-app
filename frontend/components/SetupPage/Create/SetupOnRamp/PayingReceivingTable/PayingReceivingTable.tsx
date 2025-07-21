@@ -10,6 +10,7 @@ import {
 import Image from 'next/image';
 import { ReactNode, useEffect, useMemo } from 'react';
 
+import { EvmChainId } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
@@ -88,7 +89,8 @@ const ReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
   </Flex>
 );
 
-export const PayingReceivingTable = () => {
+type PaymentTableProps = { onRampChainId: EvmChainId };
+export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const { selectedAgentConfig } = useServices();
   const {
     isLoading: isNativeTokenLoading,
@@ -96,7 +98,7 @@ export const PayingReceivingTable = () => {
     totalNativeToken,
     receivingTokens,
     onRetry,
-  } = useTotalNativeTokenRequired();
+  } = useTotalNativeTokenRequired(onRampChainId);
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(totalNativeToken);
   const { updateUsdAmountToPay } = useOnRampContext();

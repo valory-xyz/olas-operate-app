@@ -3,12 +3,19 @@ import {
   PropsWithChildren,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
+import { EvmChainId, onRampChainMap } from '@/constants/chains';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 import { delayInSeconds } from '@/utils/delay';
+import {
+  asEvmChainDetails,
+  asMiddlewareChain,
+} from '@/utils/middlewareHelpers';
 
 export const OnRampContext = createContext<{
   usdAmountToPay: Nullable<number>;
@@ -17,6 +24,10 @@ export const OnRampContext = createContext<{
   updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
   isOnRampingTransactionSuccessful: boolean;
   updateIsOnRampingTransactionSuccessful: (successful: boolean) => void;
+
+  networkId: Nullable<EvmChainId>;
+  networkName: Nullable<string>;
+  cryptoCurrencyCode: Nullable<string>;
 }>({
   usdAmountToPay: null,
   updateUsdAmountToPay: () => {},
@@ -24,17 +35,15 @@ export const OnRampContext = createContext<{
   updateIsBuyCryptoBtnLoading: () => {},
   isOnRampingTransactionSuccessful: false,
   updateIsOnRampingTransactionSuccessful: () => {},
+
+  networkId: null,
+  networkName: null,
+  cryptoCurrencyCode: null,
 });
 
-/**
- * Shared provider to provide shared context to all components in the app.
- * @example
- * - Track the main OLAS balance animation state & mount state.
- * - Track the onboarding step of the user (independent of the agent).
- * - Track the healthcheck alert shown to the user (so that they are not shown again).
- */
 export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { ipcRenderer, onRampWindow } = useElectronApi();
+  const { selectedAgentConfig } = useServices();
 
   // on ramping
   const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
@@ -96,6 +105,17 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     updateIsOnRampingTransactionSuccessful,
   ]);
 
+  const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
+    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
+    const networkId = onRampChainMap[fromChainName];
+    const chainDetails = asEvmChainDetails(asMiddlewareChain(networkId));
+    return {
+      networkId,
+      networkName: chainDetails.name,
+      cryptoCurrencyCode: chainDetails.symbol,
+    };
+  }, [selectedAgentConfig]);
+
   return (
     <OnRampContext.Provider
       value={{
@@ -105,6 +125,13 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
         updateIsBuyCryptoBtnLoading,
         isOnRampingTransactionSuccessful,
         updateIsOnRampingTransactionSuccessful,
+
+        /** Network id to on-ramp */
+        networkId,
+        /** Network name to on-ramp */
+        networkName,
+        /** Crypto currency code to on-ramp */
+        cryptoCurrencyCode,
       }}
     >
       {children}

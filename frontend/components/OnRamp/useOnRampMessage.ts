@@ -19,7 +19,7 @@ export const useOnRampMessage = () => {
     message.open({
       key: messageKey,
       type: 'success',
-      content: 'Transaction successful',
+      content: 'Transaction successful.',
     });
   }, [message]);
 

@@ -516,7 +516,6 @@ const createOnRampWindow = async (amountToPay) => {
       onRampQuery.append('amount', amountToPay.toString());
     }
     const onRampUrl = `http://localhost:3000/onramp?${onRampQuery.toString()}`;
-    console.log('OnRamp URL:', onRampUrl);
     logger.electron('OnRamp URL:', onRampUrl);
 
     onRampWindow.loadURL(onRampUrl).then(() => {
@@ -1109,7 +1108,7 @@ ipcMain.handle('onramp-window-hide', () => {
 
   // Notify all other windows that it has been hidden
   BrowserWindow.getAllWindows().forEach((win) => {
-    console.log('Sending onramp-window-did-hide to', win.id);
+    logger.electron('onramp-window-did-hide to', win.id);
     win.webContents.send('onramp-window-did-hide');
   });
 });
@@ -1119,7 +1118,7 @@ ipcMain.handle('onramp-transaction-success', () => {
 
   // Notify all other windows that the transaction was successful
   BrowserWindow.getAllWindows().forEach((win) => {
-    console.log('Sending onramp-transaction-success to', win.id);
+    logger.electron('onramp-transaction-success to', win.id);
     win.webContents.send('onramp-transaction-success');
   });
 });

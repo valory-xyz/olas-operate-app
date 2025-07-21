@@ -49,21 +49,6 @@ const TxnDetails = ({ link }: { link: string }) => (
   </a>
 );
 
-type RetryProps = {
-  onRetry?: () => void;
-  onRetryProps?: Record<string, unknown>;
-};
-const Retry = ({ onRetry, onRetryProps }: RetryProps) => (
-  <div style={{ color: 'red' }}>
-    Something went wrong.{' '}
-    {onRetry && (
-      <Button onClick={onRetry} style={{ marginLeft: 8 }} {...onRetryProps}>
-        Retry
-      </Button>
-    )}
-  </div>
-);
-
 const useBuyCryptoSteps = () => {
   const { onRampWindow } = useElectronApi();
   const { masterEoa } = useMasterWalletContext();
@@ -125,25 +110,12 @@ export const OnRampPaymentSteps = () => {
       items={steps.map(({ status, title, computedSubSteps }) => ({
         status,
         title,
-        description: (
-          <>
-            {computedSubSteps.map((subStep, index) => (
-              <SubStepRow
-                key={index}
-                style={{ marginTop: index === 0 ? 4 : 6 }}
-              >
-                {subStep.description && <Desc text={subStep.description} />}
-                {subStep.txnLink && <TxnDetails link={subStep.txnLink} />}
-                {subStep.isFailed && (
-                  <Retry
-                    onRetry={subStep.onRetry}
-                    onRetryProps={subStep.onRetryProps}
-                  />
-                )}
-              </SubStepRow>
-            ))}
-          </>
-        ),
+        description: computedSubSteps.map((subStep, index) => (
+          <SubStepRow key={index} style={{ marginTop: index === 0 ? 4 : 6 }}>
+            {subStep.description && <Desc text={subStep.description} />}
+            {subStep.txnLink && <TxnDetails link={subStep.txnLink} />}
+          </SubStepRow>
+        )),
         icon: status === 'process' ? <LoadingOutlined /> : undefined,
       }))}
     />

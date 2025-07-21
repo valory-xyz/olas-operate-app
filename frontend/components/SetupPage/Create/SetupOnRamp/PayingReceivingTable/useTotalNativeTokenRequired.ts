@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getTokenDetails } from '@/components/Bridge/utils';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
-import { onRampChainMap } from '@/constants/chains';
+import { EvmChainId } from '@/constants/chains';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
 import { useServices } from '@/hooks/useServices';
@@ -16,7 +16,7 @@ import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirem
 
 // TODO: some of the logic can be reused with bridging
 
-export const useTotalNativeTokenRequired = () => {
+export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
   const { isBalancesAndFundingRequirementsLoading } =
@@ -24,7 +24,6 @@ export const useTotalNativeTokenRequired = () => {
 
   const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
   const toChainId = asEvmChainId(selectedAgentConfig.middlewareHomeChainId);
-  const fromChainId = onRampChainMap[fromChainName];
   const toChainConfig = TOKEN_CONFIG[toChainId];
 
   // State to control the force update of the bridge_refill_requirements API call
@@ -41,7 +40,7 @@ export const useTotalNativeTokenRequired = () => {
   const [isManuallyRefetching, setIsManuallyRefetching] = useState(false);
 
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
-    fromChainId,
+    onRampChainId,
     AddressZero,
   );
 
