@@ -6,6 +6,7 @@ import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
+import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { delayInSeconds } from '@/utils/delay';
@@ -19,6 +20,7 @@ import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirem
 export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
+  const { isOnRampingTransactionSuccessful } = useOnRampContext();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
 
@@ -67,7 +69,7 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     refetch: refetchBridgeRefillRequirements,
   } = useBridgeRefillRequirements(
     bridgeParamsExceptNativeToken,
-    canPollForBridgeRefillRequirements,
+    canPollForBridgeRefillRequirements && !isOnRampingTransactionSuccessful,
   );
 
   // fetch bridge refill requirements manually on mount
