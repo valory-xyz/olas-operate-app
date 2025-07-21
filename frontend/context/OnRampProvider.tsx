@@ -45,7 +45,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { ipcRenderer, onRampWindow } = useElectronApi();
   const { selectedAgentConfig } = useServices();
 
-  // on ramping
   const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
   const [isBuyCryptoBtnLoading, setIsBuyCryptoBtnLoading] = useState(false);
 
@@ -55,7 +54,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsOnRampingTransactionSuccessful,
   ] = useState(false);
 
-  // Function to set the USD amount to pay
+  // Function to set the USD amount for on-ramping
   const updateUsdAmountToPay = useCallback((amount: Nullable<number>) => {
     setUsdAmountToPay(amount);
   }, []);

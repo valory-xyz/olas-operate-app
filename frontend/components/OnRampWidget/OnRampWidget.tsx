@@ -17,7 +17,6 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
   const { masterEoa } = useMasterWalletContext();
 
   const {
-    updateIsBuyCryptoBtnLoading,
     updateIsOnRampingTransactionSuccessful,
     networkName,
     cryptoCurrencyCode,
@@ -58,14 +57,12 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
 
     transak.init();
 
-    // TODO: add all the events to logger from here.
     // To get all the events
     Transak.on('*', (data) => {
       logEvent?.(`Transak event: ${JSON.stringify(data)}`);
     });
 
     Transak.on(Transak.EVENTS.TRANSAK_WIDGET_CLOSE, () => {
-      updateIsBuyCryptoBtnLoading(false);
       onRampWindow?.hide?.();
     });
 
@@ -76,21 +73,18 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     // This will trigger when the user marks payment is made.
     // User can close/navigate away at this event.
     Transak.on(Transak.EVENTS.TRANSAK_ORDER_SUCCESSFUL, () => {
-      updateIsBuyCryptoBtnLoading(false);
       updateIsOnRampingTransactionSuccessful(true);
       transak.close();
       onRampWindow?.transactionSuccess?.();
     });
 
     Transak.on(Transak.EVENTS.TRANSAK_ORDER_FAILED, () => {
-      updateIsBuyCryptoBtnLoading(false);
       transak.close();
       onRampWindow?.hide?.();
     });
 
     return () => {
       transak.close();
-      updateIsBuyCryptoBtnLoading(false);
     };
   }, [
     onRampWindow,
@@ -99,7 +93,6 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     networkName,
     cryptoCurrencyCode,
     updateIsOnRampingTransactionSuccessful,
-    updateIsBuyCryptoBtnLoading,
     logEvent,
   ]);
 
