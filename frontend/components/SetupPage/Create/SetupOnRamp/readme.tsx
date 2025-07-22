@@ -8,10 +8,8 @@
  * TODO
  *
  * Step 1: Buy crypto for fiat
- * - Open transack window
- * - Complete the KYC and for testing use: https://docs.transak.com/docs/test-credentials
- * - wait for the event to be emitted and wait for the transaction to be confirmed
  * - If failed: show the setup as failed and maybe add "Retry" button??
+ * - what happens if we close the window when widget is visible
  *
  * Step 2: Swap funds
  * - TODO: ask Jose on how to swap funds
@@ -30,5 +28,9 @@
  *
  * Doubts:
  * - Staging vs Production
+ *
+ * Docs
+ * - https://docs.transak.com/reference/get-price
+ * - https://docs.transak.com/docs/test-credentials#kyc
  * -
  */

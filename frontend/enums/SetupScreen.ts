@@ -19,7 +19,7 @@ export const SetupScreen = {
 
   /** Onboarding using the bridge */
   SetupBridgeOnboardingScreen: 'SetupBridgeOnboardingScreen',
-  SetupPayInFiat: 'SetupPayInFiat',
+  SetupOnRamp: 'SetupOnRamp',
 } as const;
 
 export type SetupScreen = (typeof SetupScreen)[keyof typeof SetupScreen];

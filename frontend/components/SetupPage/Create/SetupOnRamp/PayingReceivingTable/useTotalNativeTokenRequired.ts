@@ -1,10 +1,12 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { getTokenDetails } from '@/components/Bridge/utils';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
+import { EvmChainId } from '@/constants/chains';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
+import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { delayInSeconds } from '@/utils/delay';
@@ -12,22 +14,27 @@ import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
-import { onRampChainMap } from '../constants';
 
-export const useTotalNativeTokenRequired = () => {
+// TODO: some of the logic can be reused with bridging
+
+export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
+  const { isOnRampingTransactionSuccessful } = useOnRampContext();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
 
   const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
   const toChainId = asEvmChainId(selectedAgentConfig.middlewareHomeChainId);
-  const fromChainId = onRampChainMap[fromChainName];
   const toChainConfig = TOKEN_CONFIG[toChainId];
 
   // State to control the force update of the bridge_refill_requirements API call
   // This is used when the user clicks on "Try again" button.
   const [isForceUpdate, setIsForceUpdate] = useState(false);
+  const [
+    isBridgeRefillRequirementsApiLoading,
+    setIsBridgeRefillRequirementsApiLoading,
+  ] = useState(true);
   const [
     canPollForBridgeRefillRequirements,
     setCanPollForBridgeRefillRequirements,
@@ -35,7 +42,7 @@ export const useTotalNativeTokenRequired = () => {
   const [isManuallyRefetching, setIsManuallyRefetching] = useState(false);
 
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
-    fromChainId,
+    onRampChainId,
     AddressZero,
   );
 
@@ -62,8 +69,21 @@ export const useTotalNativeTokenRequired = () => {
     refetch: refetchBridgeRefillRequirements,
   } = useBridgeRefillRequirements(
     bridgeParamsExceptNativeToken,
-    canPollForBridgeRefillRequirements,
+    canPollForBridgeRefillRequirements && !isOnRampingTransactionSuccessful,
   );
+
+  // fetch bridge refill requirements manually on mount
+  useEffect(() => {
+    if (!isBridgeRefillRequirementsApiLoading) return;
+
+    refetchBridgeRefillRequirements().finally(() => {
+      setIsBridgeRefillRequirementsApiLoading(false);
+    });
+  }, [
+    isBridgeRefillRequirementsApiLoading,
+    refetchBridgeRefillRequirements,
+    setIsBridgeRefillRequirementsApiLoading,
+  ]);
 
   /**
    * Calculates the total native token required for the bridge.
@@ -105,8 +125,7 @@ export const useTotalNativeTokenRequired = () => {
     if (!bridgeParams) return [];
 
     return bridgeParams.bridge_requests.map((request) => {
-      const toToken = request.to.token;
-      const amount = request.to.amount;
+      const { token: toToken, amount } = request.to;
       const token = getTokenDetails(toToken, toChainConfig);
       return {
         amount: formatUnitsToNumber(amount, token?.decimals),
@@ -140,6 +159,7 @@ export const useTotalNativeTokenRequired = () => {
   const isLoading =
     isBalancesAndFundingRequirementsLoading ||
     isBridgeRefillRequirementsLoading ||
+    isBridgeRefillRequirementsApiLoading ||
     isManuallyRefetching;
 
   const hasAnyQuoteFailed = useMemo(() => {

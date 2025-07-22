@@ -1,4 +1,4 @@
-import { Flex, Typography } from 'antd';
+import { Flex, Spin, Typography } from 'antd';
 import { useCallback } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
@@ -6,12 +6,19 @@ import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
 import { AgentHeader } from '@/components/ui/AgentHeader';
 import { SetupScreen } from '@/enums/SetupScreen';
+import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useSetup } from '@/hooks/useSetup';
 
-import { FiatPaymentSteps } from './FiatPaymentSteps';
+import { OnRampPaymentSteps } from './OnRampPaymentSteps/OnRampPaymentSteps';
 import { PayingReceivingTable } from './PayingReceivingTable/PayingReceivingTable';
 
 const { Title, Text } = Typography;
+
+const Loader = () => (
+  <Flex justify="center" align="center" style={{ height: 120 }}>
+    <Spin />
+  </Flex>
+);
 
 const PayInFiatHeader = () => (
   <Flex vertical gap={8}>
@@ -33,15 +40,18 @@ const KeepOpenAlert = () => (
       showIcon
       message={
         <Flex vertical gap={5}>
-          <Text>Keep the app open until the process is complete.</Text>
+          <Text className="text-sm">
+            Keep the app open until the process is complete.
+          </Text>
         </Flex>
       }
     />
   </CardSection>
 );
 
-export const SetupPayInFiat = () => {
+export const SetupOnRamp = () => {
   const { goto: gotoSetup } = useSetup();
+  const { networkId } = useOnRampContext();
 
   const handlePrevStep = useCallback(() => {
     gotoSetup(SetupScreen.SetupEoaFunding);
@@ -54,10 +64,14 @@ export const SetupPayInFiat = () => {
         <PayInFiatHeader />
         <KeepOpenAlert />
 
-        <Flex>
-          <PayingReceivingTable />
-          <FiatPaymentSteps />
-        </Flex>
+        {networkId ? (
+          <Flex vertical gap={24}>
+            <PayingReceivingTable onRampChainId={networkId} />
+            <OnRampPaymentSteps />
+          </Flex>
+        ) : (
+          <Loader />
+        )}
       </CardSection>
     </CardFlex>
   );

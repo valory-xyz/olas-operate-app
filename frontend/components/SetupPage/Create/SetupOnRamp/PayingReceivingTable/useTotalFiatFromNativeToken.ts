@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { isDev } from '@/constants/env';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useServices } from '@/hooks/useServices';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
@@ -31,8 +32,9 @@ type Quote = {
   notes: string[];
 };
 
-const transakPriceUrl =
-  'https://api-stg.transak.com/api/v1/pricing/public/quotes';
+const transakPriceUrl = isDev
+  ? 'https://api-stg.transak.com/api/v1/pricing/public/quotes'
+  : 'https://api.transak.com/api/v1/pricing/public/quotes';
 
 const fetchTransakQuote = async (
   network: string,
@@ -41,9 +43,7 @@ const fetchTransakQuote = async (
 ): Promise<{ response: Quote }> => {
   const apiKey = process.env.TRANSAK_API_KEY as string;
 
-  if (!apiKey) {
-    throw new Error('TRANSAK_API_KEY is not defined');
-  }
+  if (!apiKey) throw new Error('TRANSAK_API_KEY is not defined');
 
   const options = {
     method: 'GET',
@@ -97,6 +97,7 @@ export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
         throw error;
       }
     },
+    select: (data) => data.fiatAmount,
     enabled:
       !!process.env.TRANSAK_API_KEY && !!networkName && !!nativeTokenAmount,
   });

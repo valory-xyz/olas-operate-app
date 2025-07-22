@@ -11,8 +11,8 @@ import { SetupBackupSigner } from './Create/SetupBackupSigner';
 import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding/SetupBridgeOnboarding';
 import { SetupCreateSafe } from './Create/SetupCreateSafe';
 import { SetupEoaFunding } from './Create/SetupEoaFunding/SetupEoaFunding';
+import { SetupOnRamp } from './Create/SetupOnRamp/SetupOnRamp';
 import { SetupPassword } from './Create/SetupPassword';
-import { SetupPayInFiat } from './Create/SetupPayInFiat/SetupPayInFiat';
 import { SetupSeedPhrase } from './Create/SetupSeedPhrase';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
 import {
@@ -69,8 +69,8 @@ export const Setup = () => {
         return <SetupBridgeOnboarding />;
 
       // Pay in fiat
-      case SetupScreen.SetupPayInFiat:
-        return <SetupPayInFiat />;
+      case SetupScreen.SetupOnRamp:
+        return <SetupOnRamp />;
 
       // Restore account
       case SetupScreen.Restore:

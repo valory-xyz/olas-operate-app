@@ -292,7 +292,7 @@ export const SetupEoaFunding = () => {
   const handlePayInFiat = useCallback(async () => {
     try {
       await updateBeforeBridgingFunds();
-      goto(SetupScreen.SetupPayInFiat);
+      goto(SetupScreen.SetupOnRamp);
     } catch (error) {
       message.error('Failed to prepare for fiat payment. Please try again.');
       console.error(error);
@@ -336,7 +336,7 @@ export const SetupEoaFunding = () => {
             isBridgeOnboardingEnabled
               ? { label: 'Bridge', value: 'bridge' }
               : null,
-            isOnRampEnabled ? { label: 'Buy', value: 'buyInFiat' } : null,
+            isOnRampEnabled ? { label: 'Buy', value: 'onRamp' } : null,
           ])}
           onChange={setFundType}
           value={fundType}
@@ -366,7 +366,7 @@ export const SetupEoaFunding = () => {
         </CardSection>
       )}
 
-      {fundType === 'buyInFiat' && (
+      {fundType === 'onRamp' && (
         <CardSection $padding="0px 24px" vertical gap={16}>
           <Text className="text-base">
             Pay in fiat by using your credit or debit card — funds convert and
