@@ -515,7 +515,7 @@ const createOnRampWindow = async (amountToPay) => {
     if (amountToPay) {
       onRampQuery.append('amount', amountToPay.toString());
     }
-    const onRampUrl = `http://localhost:3000/onramp?${onRampQuery.toString()}`;
+    const onRampUrl = `http://localhost:${appConfig.ports.prod.operate}/onramp?${onRampQuery.toString()}`;
     logger.electron('OnRamp URL:', onRampUrl);
 
     onRampWindow.loadURL(onRampUrl).then(() => {
@@ -1098,7 +1098,7 @@ ipcMain.handle('log-event', (_event, message) => {
 ipcMain.handle('onramp-window-show', (_event, amountToPay) => {
   logger.electron('onramp-window-show');
 
-  if (!getOnRampWindow() || getOnRampWindow()?.isDestroyed()) {
+  if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) {
     createOnRampWindow(amountToPay)?.then((window) => window.show());
   } else {
     getOnRampWindow()?.show();

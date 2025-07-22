@@ -48,7 +48,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
   const [isBuyCryptoBtnLoading, setIsBuyCryptoBtnLoading] = useState(false);
 
-  // state to track if the onramp-ing transaction was successful (step 1)
+  // state to track if the on-ramping transaction was successful (step 1)
   const [
     isOnRampingTransactionSuccessful,
     setIsOnRampingTransactionSuccessful,

@@ -2,9 +2,11 @@ import { Transak } from '@transak/transak-sdk';
 import { Flex, Spin, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 
+import { isDev } from '@/constants/env';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+import { delayInSeconds } from '@/utils/delay';
 
 const { Title } = Typography;
 
@@ -40,7 +42,9 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     /** https://docs.transak.com/docs/transak-sdk */
     const transak = new Transak({
       apiKey: process.env.TRANSAK_API_KEY,
-      environment: Transak.ENVIRONMENTS.STAGING, // or 'PRODUCTION' // TODO: how to know which environment to use?
+      environment: isDev
+        ? Transak.ENVIRONMENTS.STAGING
+        : Transak.ENVIRONMENTS.PRODUCTION,
       widgetHeight: '700px',
       widgetWidth: '500px',
       /** default to BUY */
@@ -58,7 +62,7 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     transak.init();
 
     // To get all the events
-    Transak.on('*', (data) => {
+    Transak.on('*', (data: unknown) => {
       logEvent?.(`Transak event: ${JSON.stringify(data)}`);
     });
 
@@ -73,14 +77,18 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     // This will trigger when the user marks payment is made.
     // User can close/navigate away at this event.
     Transak.on(Transak.EVENTS.TRANSAK_ORDER_SUCCESSFUL, () => {
-      updateIsOnRampingTransactionSuccessful(true);
-      transak.close();
-      onRampWindow?.transactionSuccess?.();
+      delayInSeconds(3).then(() => {
+        updateIsOnRampingTransactionSuccessful(true);
+        onRampWindow?.transactionSuccess?.();
+        transak.close();
+      });
     });
 
     Transak.on(Transak.EVENTS.TRANSAK_ORDER_FAILED, () => {
-      transak.close();
-      onRampWindow?.hide?.();
+      delayInSeconds(3).then(() => {
+        transak.close();
+        onRampWindow?.hide?.();
+      });
     });
 
     return () => {
@@ -97,20 +105,18 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
   ]);
 
   return (
-    <>
-      <Flex
-        justify="center"
-        align="center"
-        vertical
-        style={{ overflow: 'hidden' }}
-      >
-        <Title level={5} style={{ marginBottom: 24 }}>
-          Buying crypto is in progress...
-        </Title>
+    <Flex
+      justify="center"
+      align="center"
+      vertical
+      style={{ overflow: 'hidden' }}
+    >
+      <Title level={5} style={{ marginBottom: 24 }}>
+        Buying crypto is in progress...
+      </Title>
 
-        <div id="transak-container" />
-        {isWidgetLoading && <Spin />}
-      </Flex>
-    </>
+      <div id="transak-container" />
+      {isWidgetLoading && <Spin />}
+    </Flex>
   );
 };
