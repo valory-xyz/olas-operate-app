@@ -25,7 +25,7 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
-const { checkUrl } = require('./utils');
+const { checkUrl, safeFetch } = require('./utils');
 const { pki } = require('node-forge');
 
 // Configure Electron to accept self-signed certificates for localhost
@@ -184,7 +184,7 @@ async function beforeQuit(event) {
     logger.electron(
       `Killing backend server by shutdown endpoint: https://localhost:${appConfig.ports.prod.operate}/shutdown`,
     );
-    let result = await fetch(
+    let result = await safeFetch(
       `https://localhost:${appConfig.ports.prod.operate}/shutdown`,
     );
     logger.electron('Killed backend server by shutdown endpoint!');
@@ -335,7 +335,7 @@ const createMainWindow = async () => {
   // Get the agent's current state
   ipcMain.handle('health-check', async (_event) => {
     try {
-      const response = await fetch('http://127.0.0.1:8716/healthcheck', {
+      const response = await safeFetch('http://127.0.0.1:8716/healthcheck', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
       });
@@ -481,21 +481,21 @@ function createSSLCertificate() {
 async function launchDaemon() {
   // Free up backend port if already occupied
   try {
-    await fetch(`https://localhost:${appConfig.ports.prod.operate}/api`);
+    await safeFetch(`https://localhost:${appConfig.ports.prod.operate}/api`);
     logger.electron('Killing backend server!');
     let endpoint = fs
       .readFileSync(`${paths.dotOperateDirectory}/operate.kill`)
       .toString()
       .trim();
 
-    await fetch(`https://localhost:${appConfig.ports.prod.operate}/${endpoint}`);
+    await safeFetch(`https://localhost:${appConfig.ports.prod.operate}/${endpoint}`);
   } catch (err) {
     logger.electron('Backend not running!' + JSON.stringify(err, null, 2));
   }
 
   try {
     logger.electron('Killing backend server by shutdown endpoint!');
-    let result = await fetch(
+    let result = await safeFetch(
       `https://localhost:${appConfig.ports.prod.operate}/shutdown`,
     );
     logger.electron(
