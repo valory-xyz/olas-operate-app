@@ -1,6 +1,8 @@
 import { Button, Checkbox, Form, Input, Typography } from 'antd';
-import { useState } from 'react';
+import React, { useState } from 'react';
+import zxcvbn from 'zxcvbn';
 
+import { COLOR } from '@/constants/colors';
 import { useMessageApi } from '@/context/MessageProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { usePageState } from '@/hooks/usePageState';
@@ -14,16 +16,43 @@ import { SetupCreateHeader } from './SetupCreateHeader';
 
 const { Title, Text } = Typography;
 
+const PasswordStrength = ({ score }: { score: number }) => {
+  const strength = [
+    'Too weak',
+    'Weak',
+    'Moderate',
+    'Strong',
+    'Very strong! Nice job!',
+  ];
+  const colors = [
+    COLOR.RED,
+    COLOR.WARNING,
+    COLOR.SUCCESS,
+    COLOR.SUCCESS,
+    COLOR.PURPLE,
+  ];
+
+  return (
+    <Text style={{ color: COLOR.GRAY_2 }}>
+      Password strength:{' '}
+      <span style={{ color: colors[score] }}>{strength[score]}</span>
+    </Text>
+  );
+};
+
 export const SetupPassword = () => {
   const { goto, setMnemonic } = useSetup();
   const { setUserLoggedIn } = usePageState();
   const [form] = Form.useForm<{ password: string; terms: boolean }>();
+  const [passwordScore, setPasswordScore] = useState(0);
   const message = useMessageApi();
   const [isLoading, setIsLoading] = useState(false);
   const isTermsAccepted = Form.useWatch('terms', form);
+  const password = Form.useWatch('password', form);
 
   const handleCreateEoa = async ({ password }: { password: string }) => {
-    if (!isTermsAccepted) return;
+    if (!isTermsAccepted || passwordScore < 2) return;
+    console.log(password);
 
     setIsLoading(true);
     AccountService.createAccount(password)
@@ -40,23 +69,41 @@ export const SetupPassword = () => {
       .finally(() => setIsLoading(false));
   };
 
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    form.setFieldsValue({ password: value });
+    const result = zxcvbn(value);
+    setPasswordScore(result.score);
+  };
+
   return (
     <CardFlex $gap={10} styles={{ body: { padding: '12px 24px' } }} $noBorder>
       <SetupCreateHeader prev={SetupScreen.Welcome} />
-      <Title level={3}>Create password</Title>
-      <Text>Come up with a strong password.</Text>
+      <div>
+        <Title level={3}>Create account</Title>
+        <Text style={{ color: COLOR.GRAY_2 }}>
+          Your password must be at least 8 characters long. For a strong
+          password, use a mix of letters, numbers, and symbols.
+        </Text>
+      </div>
 
       <Form
         name="createEoa"
         form={form}
+        layout="horizontal"
         onFinish={handleCreateEoa}
-        onValuesChange={() => form.validateFields(['terms'])}
       >
         <Form.Item
           name="password"
-          rules={[{ required: true, message: 'Please input a Password!' }]}
+          label="Password"
+          rules={[{ required: false }]}
         >
-          <Input.Password size="large" placeholder="Password" />
+          <Input.Password
+            size="large"
+            placeholder="Password"
+            onChange={handlePasswordChange}
+          />
+          {password && <PasswordStrength score={passwordScore} />}
         </Form.Item>
 
         <Form.Item name="terms" valuePropName="checked">
@@ -77,7 +124,7 @@ export const SetupPassword = () => {
             size="large"
             type="primary"
             htmlType="submit"
-            disabled={!isTermsAccepted}
+            disabled={!isTermsAccepted || passwordScore < 2}
             loading={isLoading}
             style={{ width: '100%' }}
           >
