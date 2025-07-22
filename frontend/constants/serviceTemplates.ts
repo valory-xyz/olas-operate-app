@@ -271,7 +271,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version'
 > = {
-  hash: 'bafybeih7ohx7j5vrrl4kvs5igreh5jlt6tc35o7qho4qdonco27krutxkq',
+  hash: 'bafybeibtxgkjyv22jwmlbjbvhlmwprbbwmmwkw4mr62olp3uf34pb7k74q',
   service_version: 'v0.3.15',
 };
 
@@ -421,6 +421,18 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '300',
       provision_type: EnvProvisionType.FIXED,
     },
+    SSL_CERT_PATH: {
+      name: 'SSL certificate path',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    SSL_KEY_PATH: {
+      name: 'SSL key path',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
   },
   ...BABYDEGEN_COMMON_TEMPLATE,
 } as const;
@@ -548,6 +560,18 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: '300',
       provision_type: EnvProvisionType.FIXED,
+    },
+    SSL_CERT_PATH: {
+      name: 'SSL certificate path',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    SSL_KEY_PATH: {
+      name: 'SSL key path',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
     },
   },
   ...BABYDEGEN_COMMON_TEMPLATE,
