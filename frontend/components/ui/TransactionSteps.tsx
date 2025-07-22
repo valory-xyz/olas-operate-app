@@ -4,63 +4,77 @@ import React, { ReactNode } from 'react';
 import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { BridgingStepStatus as Status } from '@/types/Bridge';
+import { BridgingStepStatus } from '@/types/Bridge';
 
 const { Text } = Typography;
 
-const SubStepRow = styled.div`
+const SubStepContainer = styled.div`
   line-height: normal;
 `;
 
-const Desc = ({ text }: { text: ReactNode }) =>
-  typeof text === 'string' ? (
+const Description = ({ children }: { children: ReactNode }) =>
+  typeof children === 'string' ? (
     <Text className="text-sm text-lighter" style={{ lineHeight: 'normal' }}>
-      {text}
+      {children}
     </Text>
   ) : (
-    text
+    <>{children}</>
   );
 
-const TxnDetails = ({ link }: { link: string }) => (
-  <a href={link} target="_blank" rel="noopener noreferrer" className="pl-4">
+const TransactionLink = ({ href }: { href: string }) => (
+  <a href={href} target="_blank" rel="noopener noreferrer" className="pl-4">
     <Text className="text-sm text-primary">
       Txn details {UNICODE_SYMBOLS.EXTERNAL_LINK}
     </Text>
   </a>
 );
 
-type StepEvent = {
+type TransactionSubStep = {
   description?: ReactNode;
   txnLink?: string;
   failed?: ReactNode;
 };
 
+export type TransactionStep = {
+  status: BridgingStepStatus;
+  title: string;
+  subSteps: TransactionSubStep[];
+};
+
 type TransactionStepsProps = {
-  steps: { status: Status; title: string; subSteps: StepEvent[] }[];
+  steps: TransactionStep[];
 };
 
 /**
- * Presentational component for the transaction steps.
+ * Presentational component for displaying transaction steps.
+ * Renders a vertical list of steps, each with sub-steps and optional transaction links.
  */
-export const TransactionSteps = ({ steps }: TransactionStepsProps) => {
-  return (
-    <Steps
-      size="small"
-      direction="vertical"
-      items={steps.map(({ status, title, subSteps }) => {
-        return {
-          status,
-          title,
-          description: subSteps.map((subStep, index) => (
-            <SubStepRow key={index} style={{ marginTop: index === 0 ? 4 : 6 }}>
-              {subStep.description && <Desc text={subStep.description} />}
-              {subStep.txnLink && <TxnDetails link={subStep.txnLink} />}
-              {subStep.failed && subStep.failed}
-            </SubStepRow>
-          )),
-          icon: status === 'process' ? <LoadingOutlined /> : undefined,
-        };
-      })}
-    />
-  );
-};
+export const TransactionSteps: React.FC<TransactionStepsProps> = ({
+  steps,
+}) => (
+  <Steps
+    size="small"
+    direction="vertical"
+    items={steps.map(({ status, title, subSteps }) => ({
+      status,
+      title,
+      description: (
+        <>
+          {subSteps.map((subStep, idx) => (
+            <SubStepContainer
+              key={idx}
+              style={{ marginTop: idx === 0 ? 4 : 6 }}
+            >
+              {subStep.description && (
+                <Description>{subStep.description}</Description>
+              )}
+              {subStep.txnLink && <TransactionLink href={subStep.txnLink} />}
+              {subStep.failed}
+            </SubStepContainer>
+          ))}
+        </>
+      ),
+      icon: status === 'process' ? <LoadingOutlined /> : undefined,
+    }))}
+  />
+);
