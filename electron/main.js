@@ -31,7 +31,9 @@ const { pki } = require('node-forge');
 // Configure Electron to accept self-signed certificates for localhost
 app.on('certificate-error', (event, _webContents, url, error, _certificate, callback) => {
   // Allow self-signed certificates for localhost only for specific SSL format errors
-  logger.electron(`Certificate error for URL: ${url}, Error: ${error}`);
+  if (isDev) {
+    logger.electron(`Certificate error for URL: ${url}, Error: ${error}`);
+  }
   if (url.startsWith('https://localhost:') && error === 'net::ERR_CERT_AUTHORITY_INVALID') {
     event.preventDefault();
     callback(true);
@@ -194,7 +196,7 @@ async function beforeQuit(event) {
   } catch (err) {
     logger.electron('Backend stopped with error!');
     logger.electron(
-      'Backend stopped with error, result: ' + JSON.stringify(err),
+      'Backend stopped with error, result: ' + JSON.stringify(err, Object.getOwnPropertyNames(err), 2),
     );
   }
 
@@ -205,7 +207,7 @@ async function beforeQuit(event) {
       logger.electron('Killing backend server kill process');
       operateDaemonPid && (await killProcesses(operateDaemonPid));
     } catch (e) {
-      logger.electron("Couldn't kill daemon processes via pid:");
+      logger.electron("Couldn't kill daemon processes via pid: " + JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
     }
 
     // attempt to kill the daemon process via kill
@@ -216,7 +218,7 @@ async function beforeQuit(event) {
         logger.electron('Daemon process still alive after kill');
       }
     } catch (e) {
-      logger.electron("Couldn't kill operate daemon process via kill:");
+      logger.electron("Couldn't kill operate daemon process via kill: " + JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
     }
   }
 
@@ -228,21 +230,21 @@ async function beforeQuit(event) {
         logger.electron('Dev NextApp process still alive after kill');
       }
     } catch (e) {
-      logger.electron("Couldn't kill devNextApp process via kill:");
+      logger.electron("Couldn't kill devNextApp process via kill: " + JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
     }
 
     // attempt to kill the dev next app process via pid
     try {
       devNextAppPid && (await killProcesses(devNextAppPid));
     } catch (e) {
-      logger.electron("Couldn't kill devNextApp processes via pid:");
+      logger.electron("Couldn't kill devNextApp processes via pid: " + JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
     }
   }
 
   if (nextApp) {
     // attempt graceful close of prod next app
-    await nextApp.close().catch(() => {
-      logger.electron("Couldn't close NextApp gracefully:");
+    await nextApp.close().catch((err) => {
+      logger.electron("Couldn't close NextApp gracefully: " + JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
     });
     // electron will kill next service on exit
   }
@@ -375,7 +377,7 @@ const createMainWindow = async () => {
     logger.electron('Setting up store IPC');
     setupStoreIpc(ipcMain, mainWindow);
   } catch (e) {
-    logger.electron('Store IPC failed:', JSON.stringify(e));
+    logger.electron('Store IPC failed:', JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
   }
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
@@ -490,7 +492,7 @@ async function launchDaemon() {
 
     await safeFetch(`https://localhost:${appConfig.ports.prod.operate}/${endpoint}`);
   } catch (err) {
-    logger.electron('Backend not running!' + JSON.stringify(err, null, 2));
+    logger.electron('Backend not running!' + JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
   }
 
   try {
@@ -503,7 +505,7 @@ async function launchDaemon() {
     );
   } catch (err) {
     logger.electron(
-      'Backend stopped with error: ' + JSON.stringify(err, null, 2),
+      'Backend stopped with error: ' + JSON.stringify(err, Object.getOwnPropertyNames(err), 2),
     );
   }
 
