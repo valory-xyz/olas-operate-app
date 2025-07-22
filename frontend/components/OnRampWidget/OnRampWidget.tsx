@@ -18,11 +18,7 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
   const { onRampWindow, logEvent } = useElectronApi();
   const { masterEoa } = useMasterWalletContext();
 
-  const {
-    updateIsOnRampingTransactionSuccessful,
-    networkName,
-    cryptoCurrencyCode,
-  } = useOnRampContext();
+  const { networkName, cryptoCurrencyCode } = useOnRampContext();
 
   const [isWidgetLoading, setIsWidgetLoading] = useState(true);
 
@@ -78,7 +74,6 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     // User can close/navigate away at this event.
     Transak.on(Transak.EVENTS.TRANSAK_ORDER_SUCCESSFUL, () => {
       delayInSeconds(3).then(() => {
-        updateIsOnRampingTransactionSuccessful(true);
         onRampWindow?.transactionSuccess?.();
         transak.close();
       });
@@ -87,7 +82,7 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     Transak.on(Transak.EVENTS.TRANSAK_ORDER_FAILED, () => {
       delayInSeconds(3).then(() => {
         transak.close();
-        onRampWindow?.hide?.();
+        onRampWindow?.transactionFailure?.();
       });
     });
 
@@ -100,7 +95,6 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     usdAmountToPay,
     networkName,
     cryptoCurrencyCode,
-    updateIsOnRampingTransactionSuccessful,
     logEvent,
   ]);
 

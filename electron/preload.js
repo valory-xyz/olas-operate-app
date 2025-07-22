@@ -15,6 +15,7 @@ const onRampWindow = {
   show: (amountToPay) => ipcRenderer.invoke('onramp-window-show', amountToPay),
   hide: () => ipcRenderer.invoke('onramp-window-hide'),
   transactionSuccess: () => ipcRenderer.invoke('onramp-transaction-success'),
+  transactionFailure: () => ipcRenderer.invoke('onramp-transaction-failure'),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', {

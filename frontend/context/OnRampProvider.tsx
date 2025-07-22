@@ -104,6 +104,28 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     updateIsOnRampingTransactionSuccessful,
   ]);
 
+  // Listen for onramp window transaction failure event to reset the loading state
+  useEffect(() => {
+    const handleTransactionFailure = () => {
+      updateIsBuyCryptoBtnLoading(false);
+      updateIsOnRampingTransactionSuccessful(false);
+      delayInSeconds(1).then(() => onRampWindow?.hide?.());
+    };
+
+    ipcRenderer?.on?.('onramp-transaction-failure', handleTransactionFailure);
+    return () => {
+      ipcRenderer?.removeListener?.(
+        'onramp-transaction-failure',
+        handleTransactionFailure,
+      );
+    };
+  }, [
+    ipcRenderer,
+    onRampWindow,
+    updateIsBuyCryptoBtnLoading,
+    updateIsOnRampingTransactionSuccessful,
+  ]);
+
   const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
     const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
     const networkId = onRampChainMap[fromChainName];
