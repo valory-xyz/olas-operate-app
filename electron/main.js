@@ -25,22 +25,8 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
-const { checkUrl, safeFetch } = require('./utils');
+const { checkUrl, safeFetch, configureSessionCertificates } = require('./utils');
 const { pki } = require('node-forge');
-
-// Configure Electron to accept self-signed certificates for localhost
-app.on('certificate-error', (event, _webContents, url, error, _certificate, callback) => {
-  // Allow self-signed certificates for localhost only for specific SSL format errors
-  if (isDev) {
-    logger.electron(`Certificate error for URL: ${url}, Error: ${error}`);
-  }
-  if (url.startsWith('https://localhost:') && error === 'net::ERR_CERT_AUTHORITY_INVALID') {
-    event.preventDefault();
-    callback(true);
-  } else {
-    callback(false);
-  }
-});
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -194,9 +180,8 @@ async function beforeQuit(event) {
       `Killed backend server by shutdown endpoint! result: ${JSON.stringify(result)}`,
     );
   } catch (err) {
-    logger.electron('Backend stopped with error!');
     logger.electron(
-      'Backend stopped with error, result: ' + JSON.stringify(err, Object.getOwnPropertyNames(err), 2),
+      'Backend stopped with error: ' + JSON.stringify(err, Object.getOwnPropertyNames(err), 2),
     );
   }
 
@@ -745,6 +730,8 @@ app.on('second-instance', () => {
 });
 
 app.once('ready', async () => {
+  configureSessionCertificates();
+
   app.on('window-all-closed', () => {
     app.quit();
   });
