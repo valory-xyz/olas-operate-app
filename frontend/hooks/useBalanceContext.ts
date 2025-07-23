@@ -322,7 +322,6 @@ export const useMasterBalances = () => {
     )
     .reduce((acc, balance) => acc + balance.balance, 0);
 
-  // master safe
   const masterSafe = useMemo(() => {
     return masterSafes?.find(({ evmChainId }) => evmChainId === evmHomeChainId);
   }, [masterSafes, evmHomeChainId]);
@@ -343,6 +342,30 @@ export const useMasterBalances = () => {
       .reduce((acc, { balance }) => acc + balance, 0);
   }, [masterSafeBalances, masterSafe?.address, evmHomeChainId]);
 
+  const masterSafeErc20Balances = useMemo(() => {
+    if (isNil(masterSafe?.address)) return;
+    if (isNil(masterSafeBalances)) return;
+
+    return masterSafeBalances
+      .filter(
+        ({ walletAddress, evmChainId, symbol, isNative, isWrappedToken }) => {
+          return (
+            evmChainId === evmHomeChainId &&
+            !isNative &&
+            !isWrappedToken &&
+            symbol !== TokenSymbolMap.OLAS &&
+            walletAddress === masterSafe.address
+          );
+        },
+      )
+      .reduce<{ [tokenSymbol: string]: number }>((acc, { balance, symbol }) => {
+        if (!acc[symbol]) acc[symbol] = 0;
+        acc[symbol] += balance;
+
+        return acc;
+      }, {});
+  }, [masterSafeBalances, masterSafe?.address, evmHomeChainId]);
+
   return {
     isLoaded,
     masterWalletBalances,
@@ -356,6 +379,7 @@ export const useMasterBalances = () => {
     masterSafeNativeBalance,
     masterSafeNativeGasBalance: masterSafeNative?.balance,
     masterSafeOlasBalance,
+    masterSafeErc20Balances,
 
     // master eoa
     masterEoaNativeGasBalance: masterEoaNative?.balance,

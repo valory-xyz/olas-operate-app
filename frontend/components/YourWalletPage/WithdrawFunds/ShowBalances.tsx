@@ -45,8 +45,12 @@ const getImgSrc = (symbol: TokenSymbol) =>
 const useShowBalances = () => {
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
-  const { masterEoaBalance, masterSafeOlasBalance, masterSafeNativeBalance } =
-    useMasterBalances();
+  const {
+    masterEoaBalance,
+    masterSafeNativeBalance,
+    masterSafeOlasBalance,
+    masterSafeErc20Balances,
+  } = useMasterBalances();
   const { accruedServiceStakingRewards } = useRewardContext();
   const {
     isLoading: isServicesLoading,
@@ -96,9 +100,12 @@ const useShowBalances = () => {
       const serviceSafeBalance = serviceSafeErc20Balances?.find(
         (b) => b.symbol === symbol,
       );
-      return serviceSafeBalance
-        ? balanceFormat(serviceSafeBalance.balance, 4)
-        : 0;
+      const masterSafeBalance = masterSafeErc20Balances?.[symbol] ?? 0;
+      const totalBalance = sum([
+        masterSafeBalance,
+        serviceSafeBalance?.balance,
+      ]);
+      return balanceFormat(totalBalance, 4);
     })();
 
     return { symbol, imageSrc: getImgSrc(symbol), value: balance };
