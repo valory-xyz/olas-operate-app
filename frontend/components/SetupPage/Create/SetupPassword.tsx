@@ -1,5 +1,5 @@
 import { Button, Checkbox, Form, Input, Typography } from 'antd';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import zxcvbn from 'zxcvbn';
 
 import { COLOR } from '@/constants/colors';
@@ -26,8 +26,20 @@ export const SetupPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const isTermsAccepted = Form.useWatch('terms', form);
   const password = Form.useWatch('password', form);
+  const [isPasswordValid, setIsPasswordValid] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (password !== undefined) {
+      form
+        .validateFields(['password'])
+        .then(() => setIsPasswordValid(true))
+        .catch(() => setIsPasswordValid(false));
+    } else {
+      setIsPasswordValid(false);
+    }
+  }, [password, form]);
+
+  useEffect(() => {
     if (password) {
       const result = zxcvbn(password);
       setPasswordScore(result.score);
@@ -72,26 +84,33 @@ export const SetupPassword = () => {
         onFinish={handleCreateEoa}
         requiredMark={false}
       >
-        <div>
-          <Form.Item
-            name="password"
-            label="Password"
-            rules={[{ required: true, message: 'Please input a Password!' }]}
-          >
-            <Input.Password size="large" placeholder="Password" />
-          </Form.Item>
-          <Form.Item
-            shouldUpdate={(prev, curr) => prev.password !== curr.password}
-          >
-            {({ getFieldValue }) => {
-              const password = getFieldValue('password') || '';
-              const score = password ? zxcvbn(password).score : 0;
-              return password.length > 0 ? (
-                <PasswordStrength score={score} />
-              ) : null;
-            }}
-          </Form.Item>
-        </div>
+        <Form.Item
+          name="password"
+          label="Password"
+          help={
+            password && password.length > 0 && isPasswordValid ? (
+              <PasswordStrength score={zxcvbn(password).score} />
+            ) : null
+          }
+          rules={[
+            { required: true, message: 'Please input a Password!' },
+            {
+              validator: (_, value) => {
+                if (!value) return Promise.resolve();
+                // eslint-disable-next-line no-control-regex
+                const isAscii = /^[\x00-\x7F]*$/.test(value);
+                if (!isAscii) {
+                  return Promise.reject(
+                    new Error('Password must only contain ASCII characters.'),
+                  );
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
+        >
+          <Input.Password size="large" placeholder="Password" />
+        </Form.Item>
 
         <Form.Item name="terms" valuePropName="checked">
           <Checkbox>
@@ -111,7 +130,7 @@ export const SetupPassword = () => {
             size="large"
             type="primary"
             htmlType="submit"
-            disabled={!isTermsAccepted || passwordScore < 2}
+            disabled={!isTermsAccepted || passwordScore < 2 || !isPasswordValid}
             loading={isLoading}
             style={{ width: '100%' }}
           >
