@@ -49,9 +49,10 @@ const useShowBalances = () => {
     selectedService,
   } = useServices();
   const {
-    serviceSafeErc20Balances,
-    serviceSafeNativeBalances,
     serviceSafeOlas,
+    serviceSafeNativeBalances,
+    serviceEoaNativeBalance,
+    serviceSafeErc20Balances,
   } = useServiceBalances(selectedService?.service_config_id);
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
@@ -65,26 +66,30 @@ const useShowBalances = () => {
     const symbol = untypedSymbol as TokenSymbol;
 
     const balance = (() => {
+      // balance for OLAS
       if (symbol === TokenSymbolMap.OLAS) {
         const totalOlasBalance = sum([
           serviceSafeOlas?.balance || 0,
           accruedServiceStakingRewards,
           totalStakedOlasBalance,
         ]);
-
         return `${balanceFormat(totalOlasBalance, 4)}`;
       }
 
+      // balance for native tokens
       const safeNativeBalance = serviceSafeNativeBalances?.find(
         (b) => b.symbol === symbol,
       );
-      if (safeNativeBalance) {
-        return balanceFormat(
-          sum([masterEoaBalance, safeNativeBalance.balance]),
-          4,
-        );
+      if (symbol === asEvmChainDetails(middlewareChain).symbol) {
+        const totalNativeBalance = sum([
+          masterEoaBalance,
+          safeNativeBalance?.balance,
+          serviceEoaNativeBalance?.balance,
+        ]);
+        return balanceFormat(totalNativeBalance, 4);
       }
 
+      // balance for other required tokens
       const serviceSafeBalance = serviceSafeErc20Balances?.find(
         (b) => b.symbol === symbol,
       );
