@@ -77,7 +77,7 @@ const safeFetch = (url, options = {}) => {
 /**
  * Configure session to handle self-signed certificates for localhost
  * This is the Electron equivalent of setting { ca: localCert } in Node.js HTTPS agent
- * docs: https://www.electronjs.org/docs/latest/api/session#sessetcertificateverifyprocproc
+ * @link docs: https://www.electronjs.org/docs/latest/api/session#sessetcertificateverifyprocproc
  */
 const configureSessionCertificates = () => {
   const { session } = require('electron');
