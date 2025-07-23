@@ -121,8 +121,7 @@ export const SetupPassword = () => {
             {
               validator: (_, value) => {
                 if (!value) return Promise.resolve();
-                // eslint-disable-next-line no-control-regex
-                const isAscii = /^[\x00-\x7F]*$/.test(value);
+                const isAscii = /^[\x20-\x7E]*$/.test(value);
                 if (!isAscii) {
                   return Promise.reject(
                     new Error('Password must only contain ASCII characters.'),
