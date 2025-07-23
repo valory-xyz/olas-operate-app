@@ -8,7 +8,6 @@ import { OLAS_CONTRACTS } from '@/config/olasContracts';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { ContractType } from '@/enums/Contract';
-import { TokenSymbol } from '@/enums/Token';
 import {
   useBalanceContext,
   useServiceBalances,
@@ -123,12 +122,12 @@ const YourAgentWalletBreakdown = () => {
     selectedService?.service_config_id,
   );
   const {
-    serviceSafeBalances,
     serviceSafeErc20Balances,
     serviceEoaNativeBalance,
     serviceSafeNativeBalances,
+    serviceSafeOlas,
   } = useServiceBalances(selectedService?.service_config_id);
-  const { serviceSafe, middlewareChain, evmHomeChainId } = useYourWallet();
+  const { serviceSafe, middlewareChain } = useYourWallet();
 
   const {
     availableRewardsForEpochEth,
@@ -144,15 +143,6 @@ const YourAgentWalletBreakdown = () => {
 
     return 'Not yet earned';
   }, [isLoaded, isEligibleForRewards, availableRewardsForEpochEth]);
-
-  const serviceSafeOlas = useMemo(
-    () =>
-      serviceSafeBalances?.find(
-        ({ symbol, evmChainId }) =>
-          symbol === TokenSymbol.OLAS && evmChainId === evmHomeChainId,
-      ),
-    [serviceSafeBalances, evmHomeChainId],
-  );
 
   const serviceSafeRewards = useMemo(
     () => [

@@ -173,10 +173,21 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
     [serviceEoaBalances, evmHomeChainId],
   );
 
+  /** claimed OLAS */
+  const serviceSafeOlas = useMemo(
+    () =>
+      serviceSafeBalances?.find(
+        ({ symbol, evmChainId }) =>
+          symbol === TokenSymbolMap.OLAS && evmChainId === evmHomeChainId,
+      ),
+    [serviceSafeBalances, evmHomeChainId],
+  );
+
   return {
     serviceWalletBalances,
     serviceStakedBalances,
     serviceSafeBalances,
+    serviceSafeOlas,
     serviceEoaBalances,
     serviceSafeNative,
     isServiceSafeLowOnNativeGas: requiresFund(

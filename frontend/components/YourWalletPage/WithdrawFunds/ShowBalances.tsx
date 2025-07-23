@@ -1,20 +1,20 @@
 import { Button, Card, Flex, Spin, Typography } from 'antd';
-import { kebabCase } from 'lodash';
+import { kebabCase, sum } from 'lodash';
 import Image from 'next/image';
 import React from 'react';
 
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { SupportedMiddlewareChain } from '@/constants/chains';
-import { NA } from '@/constants/symbols';
 import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import {
   useBalanceContext,
   useServiceBalances,
 } from '@/hooks/useBalanceContext';
+import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
-import { balanceFormat, formatUnitsToNumber } from '@/utils/numberFormatters';
+import { balanceFormat } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
 
@@ -36,32 +36,41 @@ const ChainName = ({ chainName }: { chainName: SupportedMiddlewareChain }) => (
   </Flex>
 );
 
+const getImgSrc = (symbol: TokenSymbol) =>
+  symbol === TokenSymbolMap.ETH
+    ? `/chains/ethereum-chain.png`
+    : `/tokens/${kebabCase(symbol)}-icon.png`;
+
 const useShowBalances = () => {
   const {
     isLoading: isServicesLoading,
     selectedAgentConfig,
     selectedService,
   } = useServices();
-  const { serviceSafeErc20Balances, serviceSafeNativeBalances } =
-    useServiceBalances(selectedService?.service_config_id);
+  const {
+    serviceSafeErc20Balances,
+    serviceSafeNativeBalances,
+    serviceSafeOlas,
+  } = useServiceBalances(selectedService?.service_config_id);
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
+  const { accruedServiceStakingRewards } = useRewardContext();
 
   const middlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const tokenConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
 
-  const balances = Object.entries(tokenConfig).map(([untypedSymbol, token]) => {
+  const balances = Object.entries(tokenConfig).map(([untypedSymbol]) => {
     const symbol = untypedSymbol as TokenSymbol;
-    const imageSrc =
-      symbol === TokenSymbolMap.ETH
-        ? `/chains/ethereum-chain.png`
-        : `/tokens/${kebabCase(symbol)}-icon.png`;
 
     const balance = (() => {
       if (symbol === TokenSymbolMap.OLAS) {
-        return totalStakedOlasBalance
-          ? `${formatUnitsToNumber(totalStakedOlasBalance, token.decimals)}`
-          : NA;
+        const totalOlasBalance = sum([
+          serviceSafeOlas?.balance || 0,
+          accruedServiceStakingRewards,
+          totalStakedOlasBalance,
+        ]);
+
+        return `${balanceFormat(totalOlasBalance, 4)}`;
       }
 
       const safeNativeBalance = serviceSafeNativeBalances?.find(
@@ -79,7 +88,7 @@ const useShowBalances = () => {
         : 0;
     })();
 
-    return { symbol, imageSrc, value: balance };
+    return { symbol, imageSrc: getImgSrc(symbol), value: balance };
   });
 
   return {
