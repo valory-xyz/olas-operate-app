@@ -27,7 +27,7 @@ export const SetupPassword = () => {
   const isTermsAccepted = Form.useWatch('terms', form);
   const password = Form.useWatch('password', form);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (password) {
       const result = zxcvbn(password);
       setPasswordScore(result.score);
