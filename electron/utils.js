@@ -5,6 +5,7 @@ const { logger } = require('./logger');
 const fs = require('fs');
 const path = require('path');
 const { paths } = require('./constants');
+const { session } = require('electron');
 
 /**
  * Get the self-signed certificate for localhost HTTPS requests
@@ -18,7 +19,7 @@ const getLocalCertificate = () => {
   } catch (error) {
     logger.electron('Failed to read local certificate: ', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
   }
-   return null;
+  return null;
 };
 
 /**
@@ -80,7 +81,6 @@ const safeFetch = (url, options = {}) => {
  * @link docs: https://www.electronjs.org/docs/latest/api/session#sessetcertificateverifyprocproc
  */
 const configureSessionCertificates = () => {
-  const { session } = require('electron');
   const defaultSession = session.defaultSession;
 
   logger.electron('Configuring session to trust localhost certificates');
