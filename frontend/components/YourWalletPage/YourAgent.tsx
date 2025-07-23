@@ -1,5 +1,5 @@
 import { Card, Flex, Skeleton } from 'antd';
-import { find, groupBy, isArray, isEmpty, isNil } from 'lodash';
+import { isArray, isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import styled from 'styled-components';
@@ -17,7 +17,6 @@ import { useRewardContext } from '@/hooks/useRewardContext';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { Address } from '@/types/Address';
-import { WalletBalance } from '@/types/Balance';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 import { balanceFormat } from '@/utils/numberFormatters';
 import { isValidServiceId } from '@/utils/service';
@@ -123,9 +122,12 @@ const YourAgentWalletBreakdown = () => {
   const { serviceNftTokenId, serviceEoa } = useService(
     selectedService?.service_config_id,
   );
-  const { serviceSafeBalances, serviceEoaBalances } = useServiceBalances(
-    selectedService?.service_config_id,
-  );
+  const {
+    serviceSafeBalances,
+    serviceSafeErc20Balances,
+    serviceEoaNativeBalance,
+    serviceSafeNativeBalances,
+  } = useServiceBalances(selectedService?.service_config_id);
   const { serviceSafe, middlewareChain, evmHomeChainId } = useYourWallet();
 
   const {
@@ -168,55 +170,6 @@ const YourAgentWalletBreakdown = () => {
       },
     ],
     [accruedServiceStakingRewards, reward, serviceSafeOlas],
-  );
-
-  const serviceSafeNativeBalances = useMemo(() => {
-    if (!serviceSafeBalances) return null;
-
-    const nativeBalances = serviceSafeBalances.filter(
-      ({ evmChainId }) => evmChainId === evmHomeChainId,
-    );
-
-    /**
-     * Native balances with wrapped token balances
-     * @example { xDai: 100, Wrapped xDai: 50 } => { xDai: 150 }
-     */
-    const groupedNativeBalances = Object.entries(
-      groupBy(nativeBalances, 'walletAddress'),
-    ).map(([address, items]) => {
-      const nativeTokenBalance = find(items, { isNative: true })?.balance || 0;
-      const wrappedBalance =
-        find(items, { isWrappedToken: true })?.balance || 0;
-      const totalBalance = nativeTokenBalance + wrappedBalance;
-
-      return {
-        ...items[0],
-        walletAddress: address,
-        balance: totalBalance,
-      } as WalletBalance;
-    });
-
-    return groupedNativeBalances;
-  }, [serviceSafeBalances, evmHomeChainId]);
-
-  const serviceSafeErc20Balances = useMemo(
-    () =>
-      serviceSafeBalances?.filter(
-        ({ isNative, symbol, evmChainId, isWrappedToken }) =>
-          !isNative &&
-          symbol !== TokenSymbol.OLAS &&
-          !isWrappedToken &&
-          evmChainId === evmHomeChainId,
-      ),
-    [serviceSafeBalances, evmHomeChainId],
-  );
-
-  const serviceEoaNativeBalance = useMemo(
-    () =>
-      serviceEoaBalances?.find(
-        ({ isNative, evmChainId }) => isNative && evmChainId === evmHomeChainId,
-      ),
-    [serviceEoaBalances, evmHomeChainId],
   );
 
   if (!serviceSafe) return null;
