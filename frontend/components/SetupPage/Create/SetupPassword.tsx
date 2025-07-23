@@ -12,33 +12,10 @@ import { WalletService } from '@/service/Wallet';
 import { getErrorMessage } from '@/utils/error';
 
 import { CardFlex } from '../../styled/CardFlex';
+import { PasswordStrength } from './PasswordStrength';
 import { SetupCreateHeader } from './SetupCreateHeader';
 
 const { Title, Text } = Typography;
-
-const PasswordStrength = ({ score }: { score: number }) => {
-  const strength = [
-    'Too weak',
-    'Weak',
-    'Moderate',
-    'Strong',
-    'Very strong! Nice job!',
-  ];
-  const colors = [
-    COLOR.RED,
-    COLOR.WARNING,
-    COLOR.SUCCESS,
-    COLOR.SUCCESS,
-    COLOR.PURPLE,
-  ];
-
-  return (
-    <Text style={{ color: COLOR.GRAY_2 }}>
-      Password strength:{' '}
-      <span style={{ color: colors[score] }}>{strength[score]}</span>
-    </Text>
-  );
-};
 
 export const SetupPassword = () => {
   const { goto, setMnemonic } = useSetup();
@@ -49,6 +26,15 @@ export const SetupPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const isTermsAccepted = Form.useWatch('terms', form);
   const password = Form.useWatch('password', form);
+
+  React.useEffect(() => {
+    if (password) {
+      const result = zxcvbn(password);
+      setPasswordScore(result.score);
+    } else {
+      setPasswordScore(0);
+    }
+  }, [password]);
 
   const handleCreateEoa = async ({ password }: { password: string }) => {
     if (!isTermsAccepted || passwordScore < 2) return;
@@ -68,13 +54,6 @@ export const SetupPassword = () => {
       .finally(() => setIsLoading(false));
   };
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    form.setFieldsValue({ password: value });
-    const result = zxcvbn(value);
-    setPasswordScore(result.score);
-  };
-
   return (
     <CardFlex $gap={10} styles={{ body: { padding: '12px 24px' } }} $noBorder>
       <SetupCreateHeader prev={SetupScreen.Welcome} />
@@ -91,19 +70,28 @@ export const SetupPassword = () => {
         form={form}
         layout="horizontal"
         onFinish={handleCreateEoa}
+        requiredMark={false}
       >
-        <Form.Item
-          name="password"
-          label="Password"
-          rules={[{ required: false }]}
-        >
-          <Input.Password
-            size="large"
-            placeholder="Password"
-            onChange={handlePasswordChange}
-          />
-          {password && <PasswordStrength score={passwordScore} />}
-        </Form.Item>
+        <div>
+          <Form.Item
+            name="password"
+            label="Password"
+            rules={[{ required: true, message: 'Please input a Password!' }]}
+          >
+            <Input.Password size="large" placeholder="Password" />
+          </Form.Item>
+          <Form.Item
+            shouldUpdate={(prev, curr) => prev.password !== curr.password}
+          >
+            {({ getFieldValue }) => {
+              const password = getFieldValue('password') || '';
+              const score = password ? zxcvbn(password).score : 0;
+              return password.length > 0 ? (
+                <PasswordStrength score={score} />
+              ) : null;
+            }}
+          </Form.Item>
+        </div>
 
         <Form.Item name="terms" valuePropName="checked">
           <Checkbox>
