@@ -43,6 +43,10 @@ const getImgSrc = (symbol: TokenSymbol) =>
     : `/tokens/${kebabCase(symbol)}-icon.png`;
 
 const useShowBalances = () => {
+  const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
+    useBalanceContext();
+  const { masterEoaBalance } = useMasterBalances();
+  const { accruedServiceStakingRewards } = useRewardContext();
   const {
     isLoading: isServicesLoading,
     selectedAgentConfig,
@@ -54,10 +58,6 @@ const useShowBalances = () => {
     serviceEoaNativeBalance,
     serviceSafeErc20Balances,
   } = useServiceBalances(selectedService?.service_config_id);
-  const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
-    useBalanceContext();
-  const { masterEoaBalance } = useMasterBalances();
-  const { accruedServiceStakingRewards } = useRewardContext();
 
   const middlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const tokenConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
