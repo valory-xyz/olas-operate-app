@@ -125,7 +125,7 @@ const MasterSafeNativeBalance = () => {
     return masterSafeBalances
       .filter(({ walletAddress, evmChainId, isNative, isWrappedToken }) => {
         return (
-          evmChainId === evmHomeChainId && // TODO: address multi chain, need to refactor as per product requirement
+          evmChainId === evmHomeChainId &&
           isNative &&
           !isWrappedToken &&
           walletAddress === masterSafeAddress
@@ -168,7 +168,7 @@ const MasterSafeErc20Balances = () => {
       .filter(
         ({ walletAddress, evmChainId, symbol, isNative, isWrappedToken }) => {
           return (
-            evmChainId === evmHomeChainId && // TODO: address multi chain, need to refactor as per product requirement
+            evmChainId === evmHomeChainId &&
             !isNative &&
             !isWrappedToken &&
             symbol !== TokenSymbol.OLAS &&

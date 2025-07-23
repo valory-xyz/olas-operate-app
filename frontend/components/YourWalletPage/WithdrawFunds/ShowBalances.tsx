@@ -43,10 +43,15 @@ const getImgSrc = (symbol: TokenSymbol) =>
     : `/tokens/${kebabCase(symbol)}-icon.png`;
 
 const useShowBalances = () => {
+  const { accruedServiceStakingRewards } = useRewardContext();
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
-  const { masterEoaBalance } = useMasterBalances();
-  const { accruedServiceStakingRewards } = useRewardContext();
+  const {
+    masterEoaBalance,
+    masterSafeNativeBalance,
+    masterSafeOlasBalance,
+    masterSafeErc20Balances,
+  } = useMasterBalances();
   const {
     isLoading: isServicesLoading,
     selectedAgentConfig,
@@ -69,33 +74,38 @@ const useShowBalances = () => {
       // balance for OLAS
       if (symbol === TokenSymbolMap.OLAS) {
         const totalOlasBalance = sum([
+          totalStakedOlasBalance,
+          masterSafeOlasBalance,
           serviceSafeOlas?.balance,
           accruedServiceStakingRewards,
-          totalStakedOlasBalance,
         ]);
         return `${balanceFormat(totalOlasBalance, 4)}`;
       }
 
       // balance for native tokens
-      const safeNativeBalance = serviceSafeNativeBalances?.find(
+      const serviceSafeNativeBalance = serviceSafeNativeBalances?.find(
         (b) => b.symbol === symbol,
       );
       if (symbol === asEvmChainDetails(middlewareChain).symbol) {
         const totalNativeBalance = sum([
+          masterSafeNativeBalance,
           masterEoaBalance,
-          safeNativeBalance?.balance,
+          serviceSafeNativeBalance?.balance,
           serviceEoaNativeBalance?.balance,
         ]);
         return balanceFormat(totalNativeBalance, 4);
       }
 
-      // balance for other required tokens
-      const serviceSafeBalance = serviceSafeErc20Balances?.find(
+      // balance for other required tokens (eg. USDC)
+      const serviceSafeErc20Balance = serviceSafeErc20Balances?.find(
         (b) => b.symbol === symbol,
       );
-      return serviceSafeBalance
-        ? balanceFormat(serviceSafeBalance.balance, 4)
-        : 0;
+      const masterSafeErc20Balance = masterSafeErc20Balances?.[symbol] ?? 0;
+      const totalBalance = sum([
+        masterSafeErc20Balance,
+        serviceSafeErc20Balance?.balance,
+      ]);
+      return balanceFormat(totalBalance, 4);
     })();
 
     return { symbol, imageSrc: getImgSrc(symbol), value: balance };
