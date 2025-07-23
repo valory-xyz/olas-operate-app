@@ -52,7 +52,6 @@ export const SetupPassword = () => {
 
   const handleCreateEoa = async ({ password }: { password: string }) => {
     if (!isTermsAccepted || passwordScore < 2) return;
-    console.log(password);
 
     setIsLoading(true);
     AccountService.createAccount(password)
