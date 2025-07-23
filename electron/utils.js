@@ -54,7 +54,7 @@ const checkUrl = (url) => {
 
 /**
  * Fetches a URL with proper certificate validation for localhost HTTPS requests.
- * Will throw an error if the local certificate cannot be found for localhost HTTPS requests.
+ * @throws an error if the local certificate cannot be found for localhost HTTPS requests.
  */
 const safeFetch = (url, options = {}) => {
   const urlObj = new URL(url);
