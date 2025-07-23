@@ -44,6 +44,7 @@ const formatRequirement = (requirement: number | undefined) => {
   return formatUnitsToNumber(`${requirement}`);
 };
 
+// TODO: move to a separate file
 /**
  * Balances relevant to a specific service (agent)
  * @param serviceConfigId
@@ -199,6 +200,7 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
   };
 };
 
+// TODO: move to a separate file
 /**
  * Balances relevant to the master wallets, eoa, and safes
  * @note master wallets are *shared* wallets across all services
