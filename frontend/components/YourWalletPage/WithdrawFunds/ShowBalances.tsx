@@ -45,7 +45,8 @@ const getImgSrc = (symbol: TokenSymbol) =>
 const useShowBalances = () => {
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
-  const { masterEoaBalance } = useMasterBalances();
+  const { masterEoaBalance, masterSafeOlasBalance, masterSafeNativeBalance } =
+    useMasterBalances();
   const { accruedServiceStakingRewards } = useRewardContext();
   const {
     isLoading: isServicesLoading,
@@ -69,9 +70,10 @@ const useShowBalances = () => {
       // balance for OLAS
       if (symbol === TokenSymbolMap.OLAS) {
         const totalOlasBalance = sum([
+          totalStakedOlasBalance,
+          masterSafeOlasBalance,
           serviceSafeOlas?.balance,
           accruedServiceStakingRewards,
-          totalStakedOlasBalance,
         ]);
         return `${balanceFormat(totalOlasBalance, 4)}`;
       }
@@ -82,6 +84,7 @@ const useShowBalances = () => {
       );
       if (symbol === asEvmChainDetails(middlewareChain).symbol) {
         const totalNativeBalance = sum([
+          masterSafeNativeBalance,
           masterEoaBalance,
           safeNativeBalance?.balance,
           serviceEoaNativeBalance?.balance,

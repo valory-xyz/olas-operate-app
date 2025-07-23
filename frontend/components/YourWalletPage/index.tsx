@@ -16,7 +16,6 @@ import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { type Address } from '@/types/Address';
-import { Optional } from '@/types/Util';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 import { balanceFormat } from '@/utils/numberFormatters';
 
@@ -64,20 +63,9 @@ const Address = () => {
 };
 
 const OlasBalance = () => {
-  const { selectedAgentConfig } = useServices();
   const { totalStakedOlasBalance } = useBalanceContext();
-  const { masterWalletBalances } = useMasterBalances();
+  const { masterSafeOlasBalance } = useMasterBalances();
   const { middlewareChain } = useYourWallet();
-
-  const masterSafeOlasBalance = masterWalletBalances
-    ?.filter(
-      (walletBalance) =>
-        walletBalance.symbol === TokenSymbol.OLAS &&
-        selectedAgentConfig.requiresMasterSafesOn.includes(
-          walletBalance.evmChainId,
-        ),
-    )
-    .reduce((acc, balance) => acc + balance.balance, 0);
 
   const olasBalances = useMemo(() => {
     return [
@@ -112,27 +100,10 @@ const OlasBalance = () => {
 };
 
 const MasterSafeNativeBalance = () => {
-  const { evmHomeChainId, masterSafeAddress, middlewareChain } =
-    useYourWallet();
-  const { masterSafeBalances } = useMasterBalances();
+  const { evmHomeChainId, middlewareChain } = useYourWallet();
+  const { masterSafeNativeBalance } = useMasterBalances();
 
   const nativeTokenSymbol = getNativeTokenSymbol(evmHomeChainId);
-
-  const masterSafeNativeBalance: Optional<number> = useMemo(() => {
-    if (isNil(masterSafeAddress)) return;
-    if (isNil(masterSafeBalances)) return;
-
-    return masterSafeBalances
-      .filter(({ walletAddress, evmChainId, isNative, isWrappedToken }) => {
-        return (
-          evmChainId === evmHomeChainId && // TODO: address multi chain, need to refactor as per product requirement
-          isNative &&
-          !isWrappedToken &&
-          walletAddress === masterSafeAddress
-        );
-      })
-      .reduce((acc, { balance }) => acc + balance, 0);
-  }, [masterSafeBalances, masterSafeAddress, evmHomeChainId]);
 
   return (
     <Flex vertical gap={8}>
