@@ -295,6 +295,22 @@ export const useMasterBalances = () => {
     masterEoaGasRequirementInWei,
   );
 
+  /** master EOA balance of selected agent home chain */
+  const masterEoaBalance: Optional<number> = useMemo(() => {
+    if (!selectedAgentConfig.evmHomeChainId) return;
+    if (isNil(masterEoa)) return;
+    if (isNil(masterWalletBalances)) return;
+
+    return masterWalletBalances
+      .filter(
+        ({ walletAddress, isNative, evmChainId }) =>
+          walletAddress === masterEoa.address &&
+          isNative &&
+          selectedAgentConfig.evmHomeChainId === evmChainId,
+      )
+      .reduce((acc, { balance }) => acc + balance, 0);
+  }, [masterEoa, masterWalletBalances, selectedAgentConfig.evmHomeChainId]);
+
   return {
     isLoaded,
     masterWalletBalances,
@@ -312,5 +328,6 @@ export const useMasterBalances = () => {
     isMasterEoaLowOnGas: requiresFund(masterEoaGasRequirementInWei),
     masterEoaGasRequirement,
     masterEoaBalances,
+    masterEoaBalance,
   };
 };

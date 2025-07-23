@@ -9,6 +9,7 @@ import { SupportedMiddlewareChain } from '@/constants/chains';
 import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import {
   useBalanceContext,
+  useMasterBalances,
   useServiceBalances,
 } from '@/hooks/useBalanceContext';
 import { useRewardContext } from '@/hooks/useRewardContext';
@@ -54,6 +55,7 @@ const useShowBalances = () => {
   } = useServiceBalances(selectedService?.service_config_id);
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
+  const { masterEoaBalance } = useMasterBalances();
   const { accruedServiceStakingRewards } = useRewardContext();
 
   const middlewareChain = selectedAgentConfig.middlewareHomeChainId;
@@ -77,7 +79,10 @@ const useShowBalances = () => {
         (b) => b.symbol === symbol,
       );
       if (safeNativeBalance) {
-        return balanceFormat(safeNativeBalance.balance, 4);
+        return balanceFormat(
+          sum([masterEoaBalance, safeNativeBalance.balance]),
+          4,
+        );
       }
 
       const serviceSafeBalance = serviceSafeErc20Balances?.find(
