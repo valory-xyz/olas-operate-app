@@ -12,10 +12,34 @@ import { WalletService } from '@/service/Wallet';
 import { getErrorMessage } from '@/utils/error';
 
 import { CardFlex } from '../../styled/CardFlex';
-import { PasswordStrength } from './PasswordStrength';
 import { SetupCreateHeader } from './SetupCreateHeader';
 
 const { Title, Text } = Typography;
+
+const strength = [
+  'Too weak',
+  'Weak',
+  'Moderate',
+  'Strong',
+  'Very strong! Nice job!',
+];
+
+const colors = [
+  COLOR.RED,
+  COLOR.WARNING,
+  COLOR.SUCCESS,
+  COLOR.SUCCESS,
+  COLOR.PURPLE,
+];
+
+export const PasswordStrength = ({ score }: { score: number }) => {
+  return (
+    <Text style={{ color: COLOR.GRAY_2 }}>
+      Password strength:{' '}
+      <span style={{ color: colors[score] }}>{strength[score]}</span>
+    </Text>
+  );
+};
 
 export const SetupPassword = () => {
   const { goto, setMnemonic } = useSetup();
@@ -49,7 +73,7 @@ export const SetupPassword = () => {
   }, [password]);
 
   const handleCreateEoa = async ({ password }: { password: string }) => {
-    if (!isTermsAccepted || passwordScore < 2) return;
+    if (!isTermsAccepted || passwordScore < 2 || !isPasswordValid) return;
 
     setIsLoading(true);
     AccountService.createAccount(password)
