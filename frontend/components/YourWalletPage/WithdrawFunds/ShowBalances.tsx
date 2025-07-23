@@ -69,7 +69,7 @@ const useShowBalances = () => {
       // balance for OLAS
       if (symbol === TokenSymbolMap.OLAS) {
         const totalOlasBalance = sum([
-          serviceSafeOlas?.balance || 0,
+          serviceSafeOlas?.balance,
           accruedServiceStakingRewards,
           totalStakedOlasBalance,
         ]);
