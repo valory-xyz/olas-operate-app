@@ -15,11 +15,10 @@ const getLocalCertificate = () => {
     if (fs.existsSync(certPath)) {
       return fs.readFileSync(certPath);
     }
-    return null;
   } catch (error) {
     logger.electron('Failed to read local certificate: ', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
-    return null;
   }
+   return null;
 };
 
 /**
