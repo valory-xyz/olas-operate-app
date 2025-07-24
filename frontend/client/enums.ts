@@ -21,7 +21,7 @@ export enum MiddlewareChain {
 }
 
 /**
- * @deprecated Use `MiddlewareChainsMap` from '@/constants/chains'.
+ * @deprecated Use `SupportedMiddlewareChainMap` from '@/constants/chains'.
  */
 const MIDDLEWARE_CHAINS = {
   gnosis: MiddlewareChain.GNOSIS,

@@ -39,7 +39,7 @@ export type TokenConfig =
   | WrappedTokenConfig;
 
 export type ChainTokenConfig = {
-  [tokenSymbol: string]: TokenConfig;
+  [tokenSymbol: string]: TokenConfig; // TODO: tokenSymbol should be TokenSymbol
 };
 
 export const ETHEREUM_TOKEN_CONFIG: ChainTokenConfig = {

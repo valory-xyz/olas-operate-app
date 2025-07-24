@@ -125,7 +125,7 @@ const MasterSafeNativeBalance = () => {
     return masterSafeBalances
       .filter(({ walletAddress, evmChainId, isNative, isWrappedToken }) => {
         return (
-          evmChainId === evmHomeChainId && // TODO: address multi chain, need to refactor as per product requirement
+          evmChainId === evmHomeChainId &&
           isNative &&
           !isWrappedToken &&
           walletAddress === masterSafeAddress
@@ -168,7 +168,7 @@ const MasterSafeErc20Balances = () => {
       .filter(
         ({ walletAddress, evmChainId, symbol, isNative, isWrappedToken }) => {
           return (
-            evmChainId === evmHomeChainId && // TODO: address multi chain, need to refactor as per product requirement
+            evmChainId === evmHomeChainId &&
             !isNative &&
             !isWrappedToken &&
             symbol !== TokenSymbol.OLAS &&
@@ -211,24 +211,10 @@ const MasterSafeErc20Balances = () => {
 
 const MasterEoaSignerNativeBalance = () => {
   const { masterEoa } = useMasterWalletContext();
-  const { masterWalletBalances } = useMasterBalances();
+  const { masterEoaBalance } = useMasterBalances();
   const { evmHomeChainId, middlewareChain } = useYourWallet();
 
   const nativeTokenSymbol = getNativeTokenSymbol(evmHomeChainId);
-
-  const masterEoaBalance: Optional<number> = useMemo(() => {
-    if (isNil(masterEoa)) return;
-    if (isNil(masterWalletBalances)) return;
-
-    return masterWalletBalances
-      .filter(
-        ({ walletAddress, isNative, evmChainId }) =>
-          walletAddress === masterEoa.address &&
-          isNative &&
-          evmHomeChainId === evmChainId, // TODO: address multi chain, need to refactor as per product requirement
-      )
-      .reduce((acc, { balance }) => acc + balance, 0);
-  }, [masterEoa, masterWalletBalances, evmHomeChainId]);
 
   return (
     <Flex vertical gap={8}>
