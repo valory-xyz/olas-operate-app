@@ -35,7 +35,7 @@ export type AllEvmChainId =
  * @warning The value doesn’t actually represent the real chain name;
  * it reflects the open-autonomy internal name instead.
  */
-export const MiddlewareChain = {
+export const MiddlewareChainMap = {
   ETHEREUM: 'ethereum',
   GOERLI: 'goerli',
   GNOSIS: 'gnosis',
@@ -45,24 +45,27 @@ export const MiddlewareChain = {
   MODE: 'mode',
   CELO: 'celo',
 } as const;
+export type MiddlewareChain = ValueOf<typeof MiddlewareChainMap>;
 
-const MiddlewareChainsMap = {
-  gnosis: MiddlewareChain.GNOSIS,
-  optimism: MiddlewareChain.OPTIMISM,
-  base: MiddlewareChain.BASE,
-  mode: MiddlewareChain.MODE,
-  celo: MiddlewareChain.CELO,
+const SupportedMiddlewareChainMap = {
+  gnosis: MiddlewareChainMap.GNOSIS,
+  optimism: MiddlewareChainMap.OPTIMISM,
+  base: MiddlewareChainMap.BASE,
+  mode: MiddlewareChainMap.MODE,
+  celo: MiddlewareChainMap.CELO,
 } as const;
-export type SupportedMiddlewareChain = ValueOf<typeof MiddlewareChainsMap>;
+export type SupportedMiddlewareChain = ValueOf<
+  typeof SupportedMiddlewareChainMap
+>;
 
 /**
  * Map of middleware chains to EVM chain IDs for on-ramp purposes.
  * For example, If the agent is on Gnosis, the on-ramp will be done on Optimism.
  */
 export const onRampChainMap: Record<SupportedMiddlewareChain, EvmChainId> = {
-  [MiddlewareChain.GNOSIS]: EvmChainIdMap.Optimism,
-  [MiddlewareChain.OPTIMISM]: EvmChainIdMap.Optimism,
-  [MiddlewareChain.BASE]: EvmChainIdMap.Base,
-  [MiddlewareChain.MODE]: EvmChainIdMap.Optimism,
-  [MiddlewareChain.CELO]: EvmChainIdMap.Celo,
+  [MiddlewareChainMap.GNOSIS]: EvmChainIdMap.Optimism,
+  [MiddlewareChainMap.OPTIMISM]: EvmChainIdMap.Optimism,
+  [MiddlewareChainMap.BASE]: EvmChainIdMap.Base,
+  [MiddlewareChainMap.MODE]: EvmChainIdMap.Optimism,
+  [MiddlewareChainMap.CELO]: EvmChainIdMap.Celo,
 };
