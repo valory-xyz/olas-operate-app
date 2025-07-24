@@ -12,10 +12,14 @@ import { delayInSeconds } from '@/utils/delay';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
-import { useGetBridgeRequirementsParams } from '../components/SetupPage/Create/hooks/useGetBridgeRequirementsParams';
+import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
 
 // TODO: some of the logic can be reused with bridging
 
+/**
+ * Hook to calculate the bridge requirements for the on-ramp process,
+ * get quote and function to retry fetching the quote.
+ */
 export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
   const { selectedAgentConfig } = useServices();
   const { isOnRampingTransactionSuccessful } = useOnRampContext();
@@ -133,6 +137,8 @@ export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
   return {
     isLoading,
     hasError: isBridgeRefillRequirementsError || hasAnyQuoteFailed,
+    bridgeParams,
+    bridgeFundingRequirements,
     receivingTokens,
     onRetry,
   };
