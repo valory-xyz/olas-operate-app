@@ -45,7 +45,6 @@ export const SetupPassword = () => {
   const { goto, setMnemonic } = useSetup();
   const { setUserLoggedIn } = usePageState();
   const [form] = Form.useForm<{ password: string; terms: boolean }>();
-  const [passwordScore, setPasswordScore] = useState(0);
   const message = useMessageApi();
   const [isLoading, setIsLoading] = useState(false);
   const isTermsAccepted = Form.useWatch('terms', form);
@@ -63,17 +62,8 @@ export const SetupPassword = () => {
     }
   }, [password, form]);
 
-  useEffect(() => {
-    if (password) {
-      const result = zxcvbn(password);
-      setPasswordScore(result.score);
-    } else {
-      setPasswordScore(0);
-    }
-  }, [password]);
-
   const handleCreateEoa = async ({ password }: { password: string }) => {
-    if (!isTermsAccepted || passwordScore < 2 || !isPasswordValid) return;
+    if (!isTermsAccepted || !isPasswordValid) return;
 
     setIsLoading(true);
     AccountService.createAccount(password)
@@ -118,6 +108,7 @@ export const SetupPassword = () => {
           }
           rules={[
             { required: true, message: 'Please input a Password!' },
+            { min: 8, message: 'Password must be at least 8 characters long.' },
             {
               validator: (_, value) => {
                 if (!value) return Promise.resolve();
@@ -132,7 +123,7 @@ export const SetupPassword = () => {
             },
           ]}
         >
-          <Input.Password size="large" placeholder="Password" />
+          <Input.Password size="large" placeholder="Password" maxLength={64} />
         </Form.Item>
 
         <Form.Item name="terms" valuePropName="checked">
@@ -153,7 +144,7 @@ export const SetupPassword = () => {
             size="large"
             type="primary"
             htmlType="submit"
-            disabled={!isTermsAccepted || passwordScore < 2 || !isPasswordValid}
+            disabled={!isTermsAccepted || !isPasswordValid}
             loading={isLoading}
             style={{ width: '100%' }}
           >
