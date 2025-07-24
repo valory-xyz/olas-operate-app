@@ -63,9 +63,9 @@ export type SupportedMiddlewareChain = ValueOf<
  * For example, If the agent is on Gnosis, the on-ramp will be done on Optimism.
  */
 export const onRampChainMap: Record<SupportedMiddlewareChain, EvmChainId> = {
-  [MiddlewareChainMap.GNOSIS]: EvmChainIdMap.Optimism,
-  [MiddlewareChainMap.OPTIMISM]: EvmChainIdMap.Optimism,
-  [MiddlewareChainMap.BASE]: EvmChainIdMap.Base,
-  [MiddlewareChainMap.MODE]: EvmChainIdMap.Optimism,
-  [MiddlewareChainMap.CELO]: EvmChainIdMap.Celo,
+  [SupportedMiddlewareChainMap.gnosis]: EvmChainIdMap.Optimism,
+  [SupportedMiddlewareChainMap.optimism]: EvmChainIdMap.Optimism,
+  [SupportedMiddlewareChainMap.base]: EvmChainIdMap.Base,
+  [SupportedMiddlewareChainMap.mode]: EvmChainIdMap.Optimism,
+  [SupportedMiddlewareChainMap.celo]: EvmChainIdMap.Celo,
 };
