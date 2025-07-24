@@ -11,11 +11,13 @@ const { Text } = Typography;
 type FundsAreSafeMessageProps = {
   onRetry?: () => void;
   onRetryProps?: { isLoading: boolean };
+  canRestart?: boolean;
 };
 
 export const FundsAreSafeMessage = ({
   onRetry,
   onRetryProps,
+  canRestart,
 }: FundsAreSafeMessageProps) => (
   <Flex vertical gap={8} align="flex-start" className="mt-12 text-sm">
     <Flex gap={8}>
@@ -45,8 +47,10 @@ export const FundsAreSafeMessage = ({
       </a>
     </Text>
 
-    <Text className="text-sm text-lighter">
-      You can also try restarting the app!
-    </Text>
+    {canRestart && (
+      <Text className="text-sm text-lighter">
+        You can also try restarting the app!
+      </Text>
+    )}
   </Flex>
 );
