@@ -4,17 +4,16 @@ import { getTokenDetails } from '@/components/Bridge/utils';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
+import { TokenSymbol } from '@/constants/token';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { delayInSeconds } from '@/utils/delay';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
-
-// TODO: some of the logic can be reused with bridging
 
 /**
  * Hook to calculate the bridge requirements for the on-ramp process,
@@ -49,16 +48,21 @@ export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
     return getBridgeRequirementsParams(isForceUpdate);
   }, [isForceUpdate, getBridgeRequirementsParams]);
 
+  const canIgnoreNativeToken =
+    selectedAgentConfig.evmHomeChainId === onRampChainId;
+
   const bridgeParamsExceptNativeToken = useMemo(() => {
     if (!bridgeParams) return null;
 
     return {
       ...bridgeParams,
-      bridge_requests: bridgeParams.bridge_requests.filter(
-        (request) => request.to.token !== AddressZero,
-      ),
+      bridge_requests: canIgnoreNativeToken
+        ? bridgeParams.bridge_requests.filter(
+            (request) => request.to.token !== AddressZero,
+          )
+        : bridgeParams.bridge_requests,
     };
-  }, [bridgeParams]);
+  }, [bridgeParams, canIgnoreNativeToken]);
 
   const {
     data: bridgeFundingRequirements,
@@ -83,6 +87,19 @@ export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
     setIsBridgeRefillRequirementsApiLoading,
   ]);
 
+  const isLoading =
+    isBalancesAndFundingRequirementsLoading ||
+    isBridgeRefillRequirementsLoading ||
+    isBridgeRefillRequirementsApiLoading ||
+    isManuallyRefetching;
+
+  const hasAnyQuoteFailed = useMemo(() => {
+    if (!bridgeFundingRequirements) return false;
+    return bridgeFundingRequirements.bridge_request_status.some(
+      ({ status }) => status === 'QUOTE_FAILED',
+    );
+  }, [bridgeFundingRequirements]);
+
   const receivingTokens = useMemo(() => {
     if (!bridgeParams) return [];
 
@@ -94,10 +111,38 @@ export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
       const token = getTokenDetails(toToken, toChainConfig);
       return {
         amount: formatUnitsToNumber(amount, token?.decimals),
-        symbol: token?.symbol,
+        symbol: token?.symbol as TokenSymbol,
       };
     });
   }, [bridgeParams, selectedAgentConfig.middlewareHomeChainId]);
+
+  /**
+   * List of tokens to bridge, excluding the native token, if onRampChainId
+   * matches the middleware home chain.
+   *
+   * For example,
+   * - Optimus, tokens to bridge: [USDC, OLAS]
+   * - Gnosis, tokens to bridge: [ETH, USDC, OLAS]
+   */
+  const tokensToBeBridged = useMemo(() => {
+    if (receivingTokens.length === 0) return [];
+
+    const currentChainSymbol = asEvmChainDetails(
+      selectedAgentConfig.middlewareHomeChainId,
+    ).symbol;
+
+    if (bridgeParamsExceptNativeToken) {
+      return receivingTokens
+        .filter((token) => token.symbol !== currentChainSymbol)
+        .map((token) => token.symbol);
+    }
+
+    return receivingTokens.map((token) => token.symbol);
+  }, [
+    selectedAgentConfig.middlewareHomeChainId,
+    bridgeParamsExceptNativeToken,
+    receivingTokens,
+  ]);
 
   // Retry to fetch the bridge refill requirements
   const onRetry = useCallback(async () => {
@@ -121,25 +166,13 @@ export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
       });
   }, [refetchBridgeRefillRequirements]);
 
-  const isLoading =
-    isBalancesAndFundingRequirementsLoading ||
-    isBridgeRefillRequirementsLoading ||
-    isBridgeRefillRequirementsApiLoading ||
-    isManuallyRefetching;
-
-  const hasAnyQuoteFailed = useMemo(() => {
-    if (!bridgeFundingRequirements) return false;
-    return bridgeFundingRequirements.bridge_request_status.some(
-      ({ status }) => status === 'QUOTE_FAILED',
-    );
-  }, [bridgeFundingRequirements]);
-
   return {
     isLoading,
     hasError: isBridgeRefillRequirementsError || hasAnyQuoteFailed,
     bridgeParams,
     bridgeFundingRequirements,
     receivingTokens,
+    tokensToBeBridged,
     onRetry,
   };
 };

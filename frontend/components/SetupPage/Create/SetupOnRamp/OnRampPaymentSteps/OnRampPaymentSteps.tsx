@@ -1,11 +1,16 @@
 import { useEffect } from 'react';
 
 import { TransactionSteps } from '@/components/ui/TransactionSteps';
+import { EvmChainId } from '@/constants/chains';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 
 import { useBuyCryptoStep } from './useBuyCryptoStep';
 import { useCreateAndTransferFundsToMasterSafeSteps } from './useCreateAndTransferFundsToMasterSafeSteps';
 import { useSwapFundsStep } from './useSwapFundsStep';
+
+type OnRampPaymentStepsProps = {
+  onRampChainId: EvmChainId;
+};
 
 /**
  * Steps for the OnRamp payment process.
@@ -14,11 +19,14 @@ import { useSwapFundsStep } from './useSwapFundsStep';
  * 3. Create Master Safe
  * 4. Transfer funds to the Master Safe
  */
-export const OnRampPaymentSteps = () => {
+export const OnRampPaymentSteps = ({
+  onRampChainId,
+}: OnRampPaymentStepsProps) => {
   const { isOnRampingTransactionSuccessful } = useOnRampContext();
   const buyCryptoStep = useBuyCryptoStep();
 
   const { isSwapCompleted, step: swapStep } = useSwapFundsStep(
+    onRampChainId,
     isOnRampingTransactionSuccessful,
   );
   const {

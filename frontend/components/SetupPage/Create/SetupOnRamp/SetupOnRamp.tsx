@@ -67,7 +67,7 @@ export const SetupOnRamp = () => {
         {networkId ? (
           <Flex vertical gap={24}>
             <PayingReceivingTable onRampChainId={networkId} />
-            <OnRampPaymentSteps />
+            <OnRampPaymentSteps onRampChainId={networkId} />
           </Flex>
         ) : (
           <Loader />

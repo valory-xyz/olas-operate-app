@@ -118,10 +118,9 @@ export const useGetBridgeRequirementsParams = (
 
       const toChainConfig = TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)];
 
+      const tokensRefillList = Object.entries(refillRequirements);
       const bridgeRequests: BridgeRefillRequirementsRequest['bridge_requests'] =
         [];
-
-      const tokensRefillList = Object.entries(refillRequirements);
 
       // Populate bridge requests from refill Requirements
       for (const [walletAddress, tokensWithRequirements] of tokensRefillList) {

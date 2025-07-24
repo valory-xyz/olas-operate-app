@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
-import { TokenSymbol } from '@/enums/Token';
+import { TokenSymbol } from '@/constants/token';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { BridgeService } from '@/service/Bridge';
 import { BridgeStatusResponse, BridgingStepStatus } from '@/types/Bridge';
@@ -42,10 +42,12 @@ const getBridgeStats = ({
     };
   });
 
-// hook to fetch bridging steps (step 1)
+/**
+ * Hook to fetch bridging steps
+ */
 export const useBridgingSteps = (
-  quoteId: string,
   tokenSymbols: TokenSymbol[],
+  quoteId?: string,
 ) => {
   const { isOnline } = useOnlineStatusContext();
 
@@ -56,10 +58,10 @@ export const useBridgingSteps = (
     isError: isBridgeExecuteError,
     data: bridgeExecuteData,
   } = useQuery({
-    queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
+    queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId!),
     queryFn: async () => {
       try {
-        return await BridgeService.executeBridge(quoteId);
+        return await BridgeService.executeBridge(quoteId!);
       } catch (error) {
         console.error('Error executing bridge', error);
         throw error;
@@ -74,6 +76,8 @@ export const useBridgingSteps = (
   const isBridgingExecuteFailed = isBridgingFailedFn(
     bridgeExecuteData?.bridge_request_status,
   );
+
+  /** Check if the bridging execution is completed for all status */
   const isBridgingExecuteCompleted = isBridgingCompletedFn(
     bridgeExecuteData?.bridge_request_status,
   );
@@ -83,10 +87,10 @@ export const useBridgingSteps = (
     isError: isBridgeStatusError,
     data: bridgeStatusData,
   } = useQuery({
-    queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY(quoteId),
+    queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY(quoteId!),
     queryFn: async ({ signal }) => {
       try {
-        return await BridgeService.getBridgeStatus(quoteId, signal);
+        return await BridgeService.getBridgeStatus(quoteId!, signal);
       } catch (error) {
         console.error('Error fetching bridge status', error);
         throw error;
