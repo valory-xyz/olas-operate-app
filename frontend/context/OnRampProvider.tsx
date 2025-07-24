@@ -63,6 +63,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsBuyCryptoBtnLoading(loading);
   }, []);
 
+  // TODO: need to check if the on-ramping transaction was successful
+  // by polling the masterEOA balance.
   const updateIsOnRampingTransactionSuccessful = useCallback(
     (successful: boolean) => {
       setIsOnRampingTransactionSuccessful(successful);

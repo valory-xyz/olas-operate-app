@@ -10,7 +10,7 @@ import { BridgingStepStatus } from '@/types/Bridge';
 /**
  * Hook to create master safe and transfer funds (step 2 and 3)
  */
-export const useMasterSafeCreationAndTransfer = (
+export const useMasterSafeCreationAndTransferAfterBridging = (
   tokenSymbols: TokenSymbol[],
 ) => {
   const electronApi = useElectronApi();

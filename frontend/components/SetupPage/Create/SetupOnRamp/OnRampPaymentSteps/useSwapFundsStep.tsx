@@ -1,13 +1,14 @@
 import { TransactionStep } from '@/components/ui/TransactionSteps';
 
-export const SwapFunds = () => null;
-
-export const useSwapFundsStep = () => {
+export const useSwapFundsStep = (isOnRampingCompleted: boolean) => {
   const step: TransactionStep = {
     status: 'wait',
     title: 'Swap funds',
     subSteps: [],
   };
 
-  return step;
+  return {
+    isSwapCompleted: false,
+    step: isOnRampingCompleted ? step : step, // TODO
+  };
 };

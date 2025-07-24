@@ -29,33 +29,42 @@ export const useBuyCryptoStep = () => {
     updateIsBuyCryptoBtnLoading(true);
   }, [onRampWindow, usdAmountToPay, updateIsBuyCryptoBtnLoading]);
 
-  const buyCryptoStatus = useMemo(() => {
-    if (isBuyCryptoBtnLoading) return 'process';
-    if (isOnRampingTransactionSuccessful) return 'finish';
-    return 'wait';
-  }, [isBuyCryptoBtnLoading, isOnRampingTransactionSuccessful]);
+  const cannotBuyCrypto = !masterEoa?.address || !usdAmountToPay;
 
-  const step: TransactionStep = {
-    status: buyCryptoStatus,
-    title: 'Buy crypto for fiat',
-    subSteps: isOnRampingTransactionSuccessful
-      ? [{ description: 'Funds received by the agent.' }]
-      : [
-          { description: FOLLOW_INSTRUCTIONS_MESSAGE },
-          {
-            description: (
-              <Button
-                loading={isBuyCryptoBtnLoading}
-                disabled={!masterEoa?.address || !usdAmountToPay}
-                onClick={handleBuyCrypto}
-                type="primary"
-              >
-                Buy crypto
-              </Button>
-            ),
-          },
-        ],
-  };
+  const step = useMemo<TransactionStep>(() => {
+    const status = (() => {
+      if (isBuyCryptoBtnLoading) return 'process';
+      if (isOnRampingTransactionSuccessful) return 'finish';
+      return 'wait';
+    })();
+
+    return {
+      status,
+      title: 'Buy crypto for fiat',
+      subSteps: isOnRampingTransactionSuccessful
+        ? [{ description: 'Funds received by the agent.' }]
+        : [
+            { description: FOLLOW_INSTRUCTIONS_MESSAGE },
+            {
+              description: (
+                <Button
+                  loading={isBuyCryptoBtnLoading}
+                  disabled={cannotBuyCrypto}
+                  onClick={handleBuyCrypto}
+                  type="primary"
+                >
+                  Buy crypto
+                </Button>
+              ),
+            },
+          ],
+    };
+  }, [
+    isOnRampingTransactionSuccessful,
+    isBuyCryptoBtnLoading,
+    cannotBuyCrypto,
+    handleBuyCrypto,
+  ]);
 
   return step;
 };

@@ -11,13 +11,13 @@ import { BridgeTransferFlow } from '@/components/Bridge/BridgeTransferFlow';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { AgentHeader } from '@/components/ui/AgentHeader';
 import { Pages } from '@/enums/Pages';
+import { useMasterSafeCreationAndTransferAfterBridging } from '@/hooks/useMasterSafeCreationAndTransferAfterBridging';
 import { usePageState } from '@/hooks/usePageState';
 import { BridgingStepStatus, CrossChainTransferDetails } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
 
 import { BridgeRetryOutcome, EnabledSteps } from '../types';
 import { useBridgingSteps } from './useBridgingSteps';
-import { useMasterSafeCreationAndTransfer } from './useMasterSafeCreationAndTransfer';
 import { useRetryBridge } from './useRetryBridge';
 
 const { Text, Title } = Typography;
@@ -82,7 +82,7 @@ export const BridgeInProgress = ({
     isError: isErrorMasterSafeCreation,
     data: masterSafeDetails,
     mutateAsync: createMasterSafe,
-  } = useMasterSafeCreationAndTransfer(symbols);
+  } = useMasterSafeCreationAndTransferAfterBridging(symbols);
 
   const canCreateMasterSafeAndTransfer = enabledStepsAfterBridging.includes(
     'masterSafeCreationAndTransfer',
