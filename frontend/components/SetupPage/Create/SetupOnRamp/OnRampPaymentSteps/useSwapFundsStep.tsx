@@ -2,6 +2,7 @@ import { ReloadOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
 import { useMemo } from 'react';
 
+import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
 import { TransactionStep } from '@/components/ui/TransactionSteps';
 import { EvmChainId } from '@/constants/chains';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
@@ -92,10 +93,12 @@ export const useSwapFundsStep = (
         return {
           description,
           txnLink: step.txnLink ?? undefined,
-          onRetry,
-          onRetryProps: {
-            isLoading: bridgeStepStatus === 'process',
-          },
+          failed: step.status === 'error' && (
+            <FundsAreSafeMessage
+              onRetry={onRetry}
+              onRetryProps={{ isLoading: bridgeStepStatus === 'process' }}
+            />
+          ),
         };
       }),
     } satisfies TransactionStep,

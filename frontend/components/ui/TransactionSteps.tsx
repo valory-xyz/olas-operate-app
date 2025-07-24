@@ -1,6 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Steps, Typography } from 'antd';
-import React, { ReactNode } from 'react';
+import { FC, ReactNode } from 'react';
 import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
@@ -49,9 +49,7 @@ type TransactionStepsProps = {
  * Presentational component for displaying transaction steps.
  * Renders a vertical list of steps, each with sub-steps and optional transaction links.
  */
-export const TransactionSteps: React.FC<TransactionStepsProps> = ({
-  steps,
-}) => (
+export const TransactionSteps: FC<TransactionStepsProps> = ({ steps }) => (
   <Steps
     size="small"
     direction="vertical"
