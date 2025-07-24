@@ -21,14 +21,6 @@
  * Step 4: Transfer funds to the Master Safe
  * - Same as bridging funds (combine the steps 3 and 4)
  *
- * API Key: ask Iason to create company account.
- *
- * Security:
- * - keep API key safe and do not expose it in client-side code
- *
- * Doubts:
- * - Staging vs Production
- *
  * Docs
  * - https://docs.transak.com/reference/get-price
  * - https://docs.transak.com/docs/test-credentials#kyc
