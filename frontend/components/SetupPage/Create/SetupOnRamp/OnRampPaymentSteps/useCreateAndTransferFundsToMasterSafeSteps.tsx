@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
 import { TransactionStep } from '@/components/ui/TransactionSteps';
 import { TokenSymbol } from '@/constants/token';
-import { useMasterSafeCreationAndTransferAfterBridging } from '@/hooks/useMasterSafeCreationAndTransferAfterBridging';
+import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
 
 const EMPTY_STATE: TransactionStep[] = [
   { status: 'wait', title: 'Create Master Safe' },
@@ -19,7 +19,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     isError: isErrorMasterSafeCreation,
     data: masterSafeDetails,
     mutateAsync: createMasterSafe,
-  } = useMasterSafeCreationAndTransferAfterBridging(tokensToBeTransferred);
+  } = useMasterSafeCreationAndTransfer(tokensToBeTransferred);
 
   useEffect(() => {
     if (!isSwapCompleted) return;

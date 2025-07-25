@@ -188,7 +188,7 @@ export const BridgingSteps = ({
                 <FundsAreSafeMessage
                   onRetry={subStep.onRetry}
                   onRetryProps={subStep.onRetryProps}
-                  canRestart
+                  showRestartMessage
                 />
               )}
             </SubStepRow>

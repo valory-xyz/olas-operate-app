@@ -8,9 +8,9 @@ import { WalletService } from '@/service/Wallet';
 import { BridgingStepStatus } from '@/types/Bridge';
 
 /**
- * Hook to create master safe and transfer funds (step 2 and 3)
+ * Hook to create master safe and transfer funds.
  */
-export const useMasterSafeCreationAndTransferAfterBridging = (
+export const useMasterSafeCreationAndTransfer = (
   tokenSymbols: TokenSymbol[],
 ) => {
   const electronApi = useElectronApi();

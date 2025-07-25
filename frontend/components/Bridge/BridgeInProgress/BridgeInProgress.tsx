@@ -12,7 +12,7 @@ import { CardFlex } from '@/components/styled/CardFlex';
 import { AgentHeader } from '@/components/ui/AgentHeader';
 import { Pages } from '@/enums/Pages';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
-import { useMasterSafeCreationAndTransferAfterBridging } from '@/hooks/useMasterSafeCreationAndTransferAfterBridging';
+import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
 import { usePageState } from '@/hooks/usePageState';
 import { BridgingStepStatus, CrossChainTransferDetails } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
@@ -82,7 +82,7 @@ export const BridgeInProgress = ({
     isError: isErrorMasterSafeCreation,
     data: masterSafeDetails,
     mutateAsync: createMasterSafe,
-  } = useMasterSafeCreationAndTransferAfterBridging(symbols);
+  } = useMasterSafeCreationAndTransfer(symbols);
 
   const canCreateMasterSafeAndTransfer = enabledStepsAfterBridging.includes(
     'masterSafeCreationAndTransfer',

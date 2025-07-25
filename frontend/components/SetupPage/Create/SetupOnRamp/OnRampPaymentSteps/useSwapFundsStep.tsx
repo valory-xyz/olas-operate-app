@@ -107,21 +107,17 @@ export const useSwapFundsStep = (
     step: {
       status: bridgeStepStatus,
       title: TITLE,
-      subSteps: (bridgeStatus || []).map((step) => {
+      subSteps: (bridgeStatus || []).map(({ status, symbol, txnLink }) => {
         const description = (() => {
-          if (step.status === 'finish') {
-            return `Swap ${step.symbol || ''} complete.`;
-          }
-          if (step.status === 'error') {
-            return `Swap ${step.symbol || ''} failed.`;
-          }
+          if (status === 'finish') return `Swap ${symbol || ''} complete.`;
+          if (status === 'error') return `Swap ${symbol || ''} failed.`;
           return `Sending transaction...`;
         })();
 
         return {
           description,
-          txnLink: step.txnLink ?? undefined,
-          failed: step.status === 'error' && (
+          txnLink,
+          failed: status === 'error' && (
             <FundsAreSafeMessage
               onRetry={onRetry}
               onRetryProps={{ isLoading: bridgeStepStatus === 'process' }}

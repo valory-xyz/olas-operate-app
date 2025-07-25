@@ -2,7 +2,9 @@ import { useEffect } from 'react';
 
 import { TransactionSteps } from '@/components/ui/TransactionSteps';
 import { EvmChainId } from '@/constants/chains';
+import { Pages } from '@/enums/Pages';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
+import { usePageState } from '@/hooks/usePageState';
 
 import { useBuyCryptoStep } from './useBuyCryptoStep';
 import { useCreateAndTransferFundsToMasterSafeSteps } from './useCreateAndTransferFundsToMasterSafeSteps';
@@ -22,9 +24,10 @@ type OnRampPaymentStepsProps = {
 export const OnRampPaymentSteps = ({
   onRampChainId,
 }: OnRampPaymentStepsProps) => {
+  const { goto } = usePageState();
   const { isOnRampingTransactionSuccessful } = useOnRampContext();
-  const buyCryptoStep = useBuyCryptoStep();
 
+  const buyCryptoStep = useBuyCryptoStep();
   const {
     isSwapCompleted,
     tokensToBeTransferred,
@@ -38,26 +41,27 @@ export const OnRampPaymentSteps = ({
     tokensToBeTransferred,
   );
 
+  // Navigate to the main page after all steps are completed
   useEffect(() => {
     if (!isOnRampingTransactionSuccessful) return;
     if (!isSwapCompleted) return;
     if (!isMasterSafeCreatedAndFundsTransferred) return;
 
-    // TODO: user logged in and move to main page
-    window.console.log(
-      'All steps completed. You can now proceed to the main page.',
-    );
+    goto(Pages.Main);
   }, [
     isOnRampingTransactionSuccessful,
     isSwapCompleted,
     isMasterSafeCreatedAndFundsTransferred,
+    goto,
   ]);
 
-  const steps = [
-    buyCryptoStep,
-    swapStep,
-    ...createAndTransferFundsToMasterSafeSteps,
-  ];
-
-  return <TransactionSteps steps={steps} />;
+  return (
+    <TransactionSteps
+      steps={[
+        buyCryptoStep,
+        swapStep,
+        ...createAndTransferFundsToMasterSafeSteps,
+      ]}
+    />
+  );
 };
