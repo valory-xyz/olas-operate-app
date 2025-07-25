@@ -44,7 +44,7 @@ export const useBuyCryptoStep = () => {
 
   const cannotBuyCrypto = !masterEoa?.address || !usdAmountToPay;
 
-  const step = useMemo<TransactionStep>(() => {
+  const buyCryptoStep = useMemo<TransactionStep>(() => {
     const status = (() => {
       if (isBuyCryptoBtnLoading) return 'process';
       if (isOnRampingTransactionSuccessful) return 'finish';
@@ -79,5 +79,5 @@ export const useBuyCryptoStep = () => {
     handleBuyCrypto,
   ]);
 
-  return step;
+  return buyCryptoStep;
 };

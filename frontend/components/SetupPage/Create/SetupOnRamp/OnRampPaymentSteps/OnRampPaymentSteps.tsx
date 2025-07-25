@@ -27,12 +27,17 @@ export const OnRampPaymentSteps = ({
   const { goto } = usePageState();
   const { isOnRampingTransactionSuccessful } = useOnRampContext();
 
+  // step 1: Buy crypto
   const buyCryptoStep = useBuyCryptoStep();
+
+  // step 2: Swap funds
   const {
     isSwapCompleted,
     tokensToBeTransferred,
     step: swapStep,
   } = useSwapFundsStep(onRampChainId, isOnRampingTransactionSuccessful);
+
+  // step 3 & 4: Create Master Safe and transfer funds
   const {
     isMasterSafeCreatedAndFundsTransferred,
     steps: createAndTransferFundsToMasterSafeSteps,

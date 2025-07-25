@@ -54,14 +54,12 @@ export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
   const bridgeParamsExceptNativeToken = useMemo(() => {
     if (!bridgeParams) return null;
 
-    return {
-      ...bridgeParams,
-      bridge_requests: canIgnoreNativeToken
-        ? bridgeParams.bridge_requests.filter(
-            (request) => request.to.token !== AddressZero,
-          )
-        : bridgeParams.bridge_requests,
-    };
+    const bridgeRequest = canIgnoreNativeToken
+      ? bridgeParams.bridge_requests.filter(
+          (request) => request.to.token !== AddressZero,
+        )
+      : bridgeParams.bridge_requests;
+    return { ...bridgeParams, bridge_requests: bridgeRequest };
   }, [bridgeParams, canIgnoreNativeToken]);
 
   const {
@@ -131,16 +129,17 @@ export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
       selectedAgentConfig.middlewareHomeChainId,
     ).symbol;
 
-    if (bridgeParamsExceptNativeToken) {
-      return receivingTokens
-        .filter((token) => token.symbol !== currentChainSymbol)
-        .map((token) => token.symbol);
+    if (!canIgnoreNativeToken) {
+      return receivingTokens.map((token) => token.symbol);
     }
 
-    return receivingTokens.map((token) => token.symbol);
+    const filteredTokens = receivingTokens.filter(
+      (token) => token.symbol !== currentChainSymbol,
+    );
+    return filteredTokens.map((token) => token.symbol);
   }, [
     selectedAgentConfig.middlewareHomeChainId,
-    bridgeParamsExceptNativeToken,
+    canIgnoreNativeToken,
     receivingTokens,
   ]);
 

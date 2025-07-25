@@ -10,6 +10,9 @@ const EMPTY_STATE: TransactionStep[] = [
   { status: 'wait', title: 'Transfer funds to the Master Safe' },
 ];
 
+/**
+ * Hook to create a Master Safe and transfer funds to it after the swap is completed.
+ */
 export const useCreateAndTransferFundsToMasterSafeSteps = (
   isSwapCompleted: boolean,
   tokensToBeTransferred: TokenSymbol[],
@@ -21,15 +24,17 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     mutateAsync: createMasterSafe,
   } = useMasterSafeCreationAndTransfer(tokensToBeTransferred);
 
+  const isSafeCreated = masterSafeDetails?.isSafeCreated;
+
+  // Check if the swap is completed and tokens are available for transfer
   useEffect(() => {
     if (!isSwapCompleted) return;
     if (tokensToBeTransferred.length === 0) return;
     createMasterSafe();
   }, [isSwapCompleted, tokensToBeTransferred, createMasterSafe]);
 
-  const isSafeCreated = masterSafeDetails?.isSafeCreated;
-
-  const masterSafeCreationStep: TransactionStep = useMemo(() => {
+  // Step for creating the Master Safe
+  const masterSafeCreationStep = useMemo<TransactionStep>(() => {
     const currentMasterSafeCreationStatus = (() => {
       if (!isSwapCompleted) return 'wait';
       if (isErrorMasterSafeCreation) return 'error';
@@ -71,7 +76,8 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     createMasterSafe,
   ]);
 
-  const masterSafeTransferFundStep: TransactionStep = useMemo(() => {
+  // Step for transferring funds to the Master Safe
+  const masterSafeTransferFundStep = useMemo<TransactionStep>(() => {
     const currentMasterSafeCreationStatus = (() => {
       if (!isSwapCompleted) return 'wait';
       if (isErrorMasterSafeCreation) return 'error';
@@ -124,11 +130,15 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     if (tokensToBeTransferred.length === 0) return false;
 
     const transfers = masterSafeDetails?.transfers || [];
-    if (tokensToBeTransferred.length !== transfers.length) return false;
+    if (tokensToBeTransferred.length !== transfers.length) {
+      window.console.warn(
+        `Expected ${tokensToBeTransferred.length} transfers, but got ${transfers.length}.
+        This might indicate that not all tokens were transferred.`,
+      );
+      return false;
+    }
 
-    return masterSafeDetails?.transfers.every(
-      (transfer) => transfer.status === 'finish',
-    );
+    return transfers.every((transfer) => transfer.status === 'finish');
   }, [
     isErrorMasterSafeCreation,
     isSafeCreated,
