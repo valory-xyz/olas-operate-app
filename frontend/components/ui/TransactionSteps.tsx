@@ -5,6 +5,7 @@ import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { BridgingStepStatus } from '@/types/Bridge';
+import { Nullable } from '@/types/Util';
 
 const { Text } = Typography;
 
@@ -29,9 +30,9 @@ const TransactionLink = ({ href }: { href: string }) => (
   </a>
 );
 
-type TransactionSubStep = {
+export type TransactionSubStep = {
   description?: ReactNode;
-  txnLink?: string;
+  txnLink?: Nullable<string>;
   failed?: ReactNode;
 };
 

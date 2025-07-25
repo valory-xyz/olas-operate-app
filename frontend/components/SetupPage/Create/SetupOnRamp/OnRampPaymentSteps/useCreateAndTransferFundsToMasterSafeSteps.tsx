@@ -14,11 +14,6 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   isSwapCompleted: boolean,
   tokensToBeTransferred: TokenSymbol[],
 ) => {
-  // const [
-  //   isMasterSafeCreatedAndFundsTransferred,
-  //   setIsMasterSafeCreatedAndFundsTransferred,
-  // ] = useState(false);
-
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
@@ -55,6 +50,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
       subSteps: [
         {
           description,
+          txnLink: masterSafeDetails?.txnLink,
           failed: isErrorMasterSafeCreation ? (
             <FundsAreSafeMessage
               onRetry={createMasterSafe}
@@ -71,7 +67,73 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     isErrorMasterSafeCreation,
     isLoadingMasterSafeCreation,
     isSafeCreated,
+    masterSafeDetails?.txnLink,
     createMasterSafe,
+  ]);
+
+  const masterSafeTransferFundStep: TransactionStep = useMemo(() => {
+    const currentMasterSafeCreationStatus = (() => {
+      if (!isSwapCompleted) return 'wait';
+      if (isErrorMasterSafeCreation) return 'error';
+      if (isLoadingMasterSafeCreation) return 'process';
+      if (isSafeCreated) return 'finish';
+      return 'process';
+    })();
+
+    return {
+      status: currentMasterSafeCreationStatus,
+      title: 'Transfer funds to the Master Safe',
+      subSteps: masterSafeDetails?.transfers.map(
+        ({ status, symbol, txnLink }) => {
+          const description = (() => {
+            if (status === 'finish') return `Transfer ${symbol} complete.`;
+            if (status === 'process') return 'Sending transaction...';
+            if (status === 'error') return `Transfer ${symbol} failed.`;
+            return null;
+          })();
+
+          return {
+            description,
+            txnLink,
+            failed:
+              status === 'error' ? (
+                <FundsAreSafeMessage
+                  onRetry={createMasterSafe}
+                  onRetryProps={{
+                    isLoading: currentMasterSafeCreationStatus === 'process',
+                  }}
+                />
+              ) : null,
+          };
+        },
+      ),
+    };
+  }, [
+    isSwapCompleted,
+    isErrorMasterSafeCreation,
+    isLoadingMasterSafeCreation,
+    isSafeCreated,
+    masterSafeDetails?.transfers,
+    createMasterSafe,
+  ]);
+
+  // Check if the master safe is created and funds are transferred
+  const isMasterSafeCreatedAndFundsTransferred = useMemo(() => {
+    if (isErrorMasterSafeCreation) return false;
+    if (!isSafeCreated) return false;
+    if (tokensToBeTransferred.length === 0) return false;
+
+    const transfers = masterSafeDetails?.transfers || [];
+    if (tokensToBeTransferred.length !== transfers.length) return false;
+
+    return masterSafeDetails?.transfers.every(
+      (transfer) => transfer.status === 'finish',
+    );
+  }, [
+    isErrorMasterSafeCreation,
+    isSafeCreated,
+    tokensToBeTransferred.length,
+    masterSafeDetails?.transfers,
   ]);
 
   if (!isSwapCompleted) {
@@ -82,7 +144,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   }
 
   return {
-    isMasterSafeCreatedAndFundsTransferred: false, // TODO: replace with actual state
-    steps: [masterSafeCreationStep],
+    isMasterSafeCreatedAndFundsTransferred,
+    steps: [masterSafeCreationStep, masterSafeTransferFundStep],
   };
 };
