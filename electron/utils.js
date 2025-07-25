@@ -1,6 +1,6 @@
 const http = require('http');
 const https = require('https');
-const { Agent } = require('undici');
+const { fetch: undiciFetch, Agent } = require('undici');
 const { logger } = require('./logger');
 const fs = require('fs');
 const path = require('path');
@@ -57,22 +57,24 @@ const checkUrl = (url) => {
  * Fetches a URL with proper certificate validation for localhost HTTPS requests.
  * @throws an error if the local certificate cannot be found for localhost HTTPS requests.
  */
-const safeFetch = (url, options = {}) => {
+const safeFetch = async (url, options = {}) => {
   const urlObj = new URL(url);
 
   // Use custom agent for localhost HTTPS requests with proper certificate validation
   if (urlObj.hostname === 'localhost' && urlObj.protocol === 'https:') {
     const localCert = getLocalCertificate();
     if (localCert) {
-      return fetch(url, {
+      // Use undici fetch with custom agent
+      return await undiciFetch(url, {
         ...options,
         dispatcher: new Agent({ connect: { ca: localCert } })
       });
+    } else {
+      logger.electron('Local certificate not found for localhost HTTPS request');
     }
   }
 
-  // Use normal fetch for all other requests
-  return fetch(url, options);
+  return await undiciFetch(url, options);
 };
 
 /**

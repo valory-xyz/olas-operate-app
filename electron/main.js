@@ -177,7 +177,7 @@ async function beforeQuit(event) {
     );
     logger.electron('Killed backend server by shutdown endpoint!');
     logger.electron(
-      `Killed backend server by shutdown endpoint! result: ${JSON.stringify(result)}`,
+      `Killed backend server by shutdown endpoint! result: ${JSON.stringify(await result.json())}`,
     );
   } catch (err) {
     logger.electron(
@@ -486,7 +486,7 @@ async function launchDaemon() {
       `https://localhost:${appConfig.ports.prod.operate}/shutdown`,
     );
     logger.electron(
-      'Backend stopped with result: ' + JSON.stringify(result, null, 2),
+      'Backend stopped with result: ' + JSON.stringify(await result.json()),
     );
   } catch (err) {
     logger.electron(
