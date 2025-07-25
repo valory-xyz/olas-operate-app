@@ -25,8 +25,11 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
-const { checkUrl, safeFetch, configureSessionCertificates } = require('./utils');
+const { checkUrl, configureSessionCertificates, loadLocalCertificate } = require('./utils');
 const { pki } = require('node-forge');
+
+// Load the self-signed certificate for localhost HTTPS requests
+loadLocalCertificate();
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -169,11 +172,12 @@ async function beforeQuit(event) {
 
   logger.electron('Stop backend gracefully:');
   try {
+    const backendPort = isDev ? appConfig.ports.dev.operate : appConfig.ports.prod.operate;
     logger.electron(
-      `Killing backend server by shutdown endpoint: https://localhost:${appConfig.ports.prod.operate}/shutdown`,
+      `Killing backend server by shutdown endpoint: https://localhost:${backendPort}/shutdown`,
     );
-    let result = await safeFetch(
-      `https://localhost:${appConfig.ports.prod.operate}/shutdown`,
+    let result = await fetch(
+      `https://localhost:${backendPort}/shutdown`,
     );
     logger.electron('Killed backend server by shutdown endpoint!');
     logger.electron(
@@ -322,7 +326,7 @@ const createMainWindow = async () => {
   // Get the agent's current state
   ipcMain.handle('health-check', async (_event) => {
     try {
-      const response = await safeFetch('http://127.0.0.1:8716/healthcheck', {
+      const response = await fetch('http://127.0.0.1:8716/healthcheck', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
       });
@@ -403,7 +407,7 @@ const createAgentActivityWindow = async () => {
 };
 
 // Create SSL certificate for the backend
-function createSSLCertificate() {
+function createAndLoadSSLCertificate() {
   try {
     logger.electron('Creating SSL certificate...');
 
@@ -451,6 +455,7 @@ function createSSLCertificate() {
     // Write to files
     fs.writeFileSync(keyPath, privateKeyPem);
     fs.writeFileSync(certPath, certificatePem);
+    loadLocalCertificate();
     logger.electron(
       `SSL certificate created successfully at ${keyPath} and ${certPath}`,
     );
@@ -468,21 +473,21 @@ function createSSLCertificate() {
 async function launchDaemon() {
   // Free up backend port if already occupied
   try {
-    await safeFetch(`https://localhost:${appConfig.ports.prod.operate}/api`);
+    await fetch(`https://localhost:${appConfig.ports.prod.operate}/api`);
     logger.electron('Killing backend server!');
     let endpoint = fs
       .readFileSync(`${paths.dotOperateDirectory}/operate.kill`)
       .toString()
       .trim();
 
-    await safeFetch(`https://localhost:${appConfig.ports.prod.operate}/${endpoint}`);
+    await fetch(`https://localhost:${appConfig.ports.prod.operate}/${endpoint}`);
   } catch (err) {
     logger.electron('Backend not running!' + JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
   }
 
   try {
     logger.electron('Killing backend server by shutdown endpoint!');
-    let result = await safeFetch(
+    let result = await fetch(
       `https://localhost:${appConfig.ports.prod.operate}/shutdown`,
     );
     logger.electron(
@@ -495,7 +500,7 @@ async function launchDaemon() {
   }
 
   const check = new Promise(function (resolve, _reject) {
-    const { keyPath, certPath } = createSSLCertificate();
+    const { keyPath, certPath } = createAndLoadSSLCertificate();
     operateDaemon = spawn(
       path.join(
         process.resourcesPath,
@@ -539,7 +544,7 @@ async function launchDaemon() {
 }
 
 async function launchDaemonDev() {
-  const { keyPath, certPath } = createSSLCertificate();
+  const { keyPath, certPath } = createAndLoadSSLCertificate();
   const check = new Promise(function (resolve, _reject) {
     operateDaemon = spawn('poetry', [
       'run',

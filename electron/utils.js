@@ -1,25 +1,31 @@
 const http = require('http');
 const https = require('https');
-const { fetch: undiciFetch, Agent } = require('undici');
 const { logger } = require('./logger');
 const fs = require('fs');
 const path = require('path');
 const { paths } = require('./constants');
 const { session } = require('electron');
+const tls = require('tls');
 
 /**
- * Get the self-signed certificate for localhost HTTPS requests
+ * Load the self-signed certificate for localhost HTTPS requests
  */
-const getLocalCertificate = () => {
+const loadLocalCertificate = () => {
   try {
     const certPath = path.join(paths.dotOperateDirectory, 'ssl', 'cert.pem');
     if (fs.existsSync(certPath)) {
-      return fs.readFileSync(certPath);
+      const cert = fs.readFileSync(certPath);
+      // Add the certificate to Node.js's trusted CA store at runtime
+      const originalCreateSecureContext = tls.createSecureContext;
+      tls.createSecureContext = (options = {}) => {
+        const context = originalCreateSecureContext(options);
+        context.context.addCACert(cert);
+        return context;
+      };
     }
   } catch (error) {
     logger.electron('Failed to read local certificate: ', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
   }
-  return null;
 };
 
 /**
@@ -32,18 +38,7 @@ const checkUrl = (url) => {
     // Choose the correct module based on the protocol
     const client = url.startsWith('https') ? https : http;
 
-    const urlObj = new URL(url);
-    const options = { method: 'HEAD' };
-
-    // Use custom agent for localhost HTTPS requests with proper certificate validation
-    if (urlObj.hostname === 'localhost' && urlObj.protocol === 'https:') {
-      const localCert = getLocalCertificate();
-      if (localCert) {
-        options.agent = new https.Agent({ ca: localCert });
-      }
-    }
-
-    const request = client.request(url, options, (response) => {
+    const request = client.request(url, { method: 'HEAD' }, (response) => {
       resolve(response.statusCode >= 200 && response.statusCode < 300);
     });
 
@@ -52,30 +47,6 @@ const checkUrl = (url) => {
   });
 };
 
-
-/**
- * Fetches a URL with proper certificate validation for localhost HTTPS requests.
- * @throws an error if the local certificate cannot be found for localhost HTTPS requests.
- */
-const safeFetch = async (url, options = {}) => {
-  const urlObj = new URL(url);
-
-  // Use custom agent for localhost HTTPS requests with proper certificate validation
-  if (urlObj.hostname === 'localhost' && urlObj.protocol === 'https:') {
-    const localCert = getLocalCertificate();
-    if (localCert) {
-      // Use undici fetch with custom agent
-      return await undiciFetch(url, {
-        ...options,
-        dispatcher: new Agent({ connect: { ca: localCert } })
-      });
-    } else {
-      logger.electron('Local certificate not found for localhost HTTPS request');
-    }
-  }
-
-  return await undiciFetch(url, options);
-};
 
 /**
  * Configure session to handle self-signed certificates for localhost
@@ -103,4 +74,4 @@ const configureSessionCertificates = () => {
   });
 };
 
-module.exports = { checkUrl, safeFetch, configureSessionCertificates };
+module.exports = { checkUrl, configureSessionCertificates, loadLocalCertificate };
