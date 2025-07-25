@@ -30,6 +30,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   useEffect(() => {
     if (!isSwapCompleted) return;
     if (tokensToBeTransferred.length === 0) return;
+
     createMasterSafe();
   }, [isSwapCompleted, tokensToBeTransferred, createMasterSafe]);
 
@@ -40,7 +41,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
       if (isErrorMasterSafeCreation) return 'error';
       if (isLoadingMasterSafeCreation) return 'process';
       if (isSafeCreated) return 'finish';
-      return 'process';
+      return 'wait';
     })();
 
     const description = (() => {
@@ -83,7 +84,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
       if (isErrorMasterSafeCreation) return 'error';
       if (isLoadingMasterSafeCreation) return 'process';
       if (isSafeCreated) return 'finish';
-      return 'process';
+      return 'wait';
     })();
 
     return {
