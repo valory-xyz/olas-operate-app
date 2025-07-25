@@ -5,6 +5,7 @@ import { EvmChainId } from '@/constants/chains';
 import { Pages } from '@/enums/Pages';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { usePageState } from '@/hooks/usePageState';
+import { delayInSeconds } from '@/utils/delay';
 
 import { useBuyCryptoStep } from './useBuyCryptoStep';
 import { useCreateAndTransferFundsToMasterSafeSteps } from './useCreateAndTransferFundsToMasterSafeSteps';
@@ -52,7 +53,8 @@ export const OnRampPaymentSteps = ({
     if (!isSwapCompleted) return;
     if (!isMasterSafeCreatedAndFundsTransferred) return;
 
-    goto(Pages.Main);
+    // Delay to ensure the UI updates before navigating
+    delayInSeconds(2).then(() => goto(Pages.Main));
   }, [
     isOnRampingTransactionSuccessful,
     isSwapCompleted,

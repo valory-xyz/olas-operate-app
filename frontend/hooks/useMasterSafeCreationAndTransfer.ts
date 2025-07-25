@@ -51,5 +51,8 @@ export const useMasterSafeCreationAndTransfer = (
       // TODO: logic to be moved to BE in the future.
       electronApi.store?.set?.(`${selectedAgentType}.isInitialFunded`, true);
     },
+    onError: (error) => {
+      console.error(error);
+    },
   });
 };

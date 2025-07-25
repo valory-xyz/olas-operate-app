@@ -29,10 +29,18 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   // Check if the swap is completed and tokens are available for transfer
   useEffect(() => {
     if (!isSwapCompleted) return;
-    if (tokensToBeTransferred.length === 0) return;
+    if (isLoadingMasterSafeCreation) return;
+    if (isErrorMasterSafeCreation) return;
+    if (masterSafeDetails?.isSafeCreated) return;
 
     createMasterSafe();
-  }, [isSwapCompleted, tokensToBeTransferred, createMasterSafe]);
+  }, [
+    isSwapCompleted,
+    isLoadingMasterSafeCreation,
+    isErrorMasterSafeCreation,
+    masterSafeDetails,
+    createMasterSafe,
+  ]);
 
   // Step for creating the Master Safe
   const masterSafeCreationStep = useMemo<TransactionStep>(() => {
@@ -81,8 +89,15 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   const masterSafeTransferFundStep = useMemo<TransactionStep>(() => {
     const currentMasterSafeCreationStatus = (() => {
       if (!isSwapCompleted) return 'wait';
-      if (isErrorMasterSafeCreation) return 'error';
+
+      const statuses = masterSafeDetails?.transfers.map(({ status }) => status);
+      const hasError = statuses?.some((x) => x === 'error');
+      if (hasError) return 'error';
+
+      const areFundsBeingTransferred = statuses?.map((x) => x === 'process');
+      if (areFundsBeingTransferred?.some((x) => x)) return 'process';
       if (isLoadingMasterSafeCreation) return 'process';
+
       if (isSafeCreated) return 'finish';
       return 'wait';
     })();
@@ -117,7 +132,6 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     };
   }, [
     isSwapCompleted,
-    isErrorMasterSafeCreation,
     isLoadingMasterSafeCreation,
     isSafeCreated,
     masterSafeDetails?.transfers,
