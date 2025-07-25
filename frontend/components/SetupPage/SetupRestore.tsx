@@ -5,6 +5,7 @@ import { memo, useMemo, useState } from 'react';
 
 import { CardFlex } from '@/components/styled/CardFlex';
 import { CardSection } from '@/components/styled/CardSection';
+import { COMMUNITY_ASSISTANCE_URL } from '@/constants/urls';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 
@@ -186,7 +187,7 @@ export const SetupRestoreViaBackup = () => {
       title={
         <Flex justify="space-between" align="center">
           <Typography.Title className="m-0" level={4}>
-            Set password
+            Restore funds with backup wallet
           </Typography.Title>
           <ExitButton />
         </Flex>
@@ -195,13 +196,24 @@ export const SetupRestoreViaBackup = () => {
     >
       <Flex vertical gap={10}>
         <Typography.Text>
-          To restore access to the funds in your Pearl account, please follow
-          the instructions below.
+          To restore access to the fund in your Pearl account, use your seed
+          phrase to connect with your Safe account and restore your funds.
         </Typography.Text>
-        <Typography.Text>
-          Note that the backup wallet feature is not designed to restore access
-          to your Pearl account but rather the funds stored on it.
-        </Typography.Text>
+        <a
+          target="_blank"
+          rel="noopener noreferrer"
+          href="https://app.safe.global/welcome/accounts"
+        >
+          Open Safe interface ↗
+        </a>
+        <Typography.Text>Not sure how?</Typography.Text>
+        <a
+          target="_blank"
+          rel="noopener noreferrer"
+          href={COMMUNITY_ASSISTANCE_URL}
+        >
+          Get community assistance via a Discord ticket ↗
+        </a>
       </Flex>
     </CardFlex>
   );
