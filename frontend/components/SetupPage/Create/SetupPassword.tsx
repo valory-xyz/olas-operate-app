@@ -63,7 +63,7 @@ export const SetupPassword = () => {
   }, [password, form]);
 
   const handleCreateEoa = async ({ password }: { password: string }) => {
-    if (!isTermsAccepted || !isPasswordValid) return;
+    if (!isTermsAccepted || !isPasswordValid || password.length < 8) return;
 
     setIsLoading(true);
     AccountService.createAccount(password)
@@ -108,7 +108,6 @@ export const SetupPassword = () => {
           }
           rules={[
             { required: true, message: 'Please input a Password!' },
-            { min: 8, message: 'Password must be at least 8 characters long.' },
             {
               validator: (_, value) => {
                 if (!value) return Promise.resolve();
@@ -144,7 +143,9 @@ export const SetupPassword = () => {
             size="large"
             type="primary"
             htmlType="submit"
-            disabled={!isTermsAccepted || !isPasswordValid}
+            disabled={
+              !isTermsAccepted || !isPasswordValid || password.length < 8
+            }
             loading={isLoading}
             style={{ width: '100%' }}
           >
