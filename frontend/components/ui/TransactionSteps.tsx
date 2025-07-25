@@ -48,7 +48,7 @@ type TransactionStepsProps = {
 
 /**
  * Presentational component for displaying transaction steps.
- * Renders a vertical list of steps, each with sub-steps and optional transaction links.
+ * To list vertical steps, each with sub-steps and optional transaction links.
  */
 export const TransactionSteps: FC<TransactionStepsProps> = ({ steps }) => (
   <Steps

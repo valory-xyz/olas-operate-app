@@ -109,8 +109,8 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
         ({ status, symbol, txnLink }) => {
           const description = (() => {
             if (status === 'finish') return `Transfer ${symbol} complete.`;
-            if (status === 'process') return 'Sending transaction...';
             if (status === 'error') return `Transfer ${symbol} failed.`;
+            if (status === 'process') return 'Sending transaction...';
             return null;
           })();
 
