@@ -5,41 +5,65 @@ import { useMemo } from 'react';
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
 import { TransactionStep } from '@/components/ui/TransactionSteps';
 import { EvmChainId } from '@/constants/chains';
+import { TokenSymbol } from '@/constants/token';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 
 import { useBridgeRequirementsQuery } from '../hooks/useBridgeRequirementsQuery';
 
 const { Text } = Typography;
 
-const EMPTY_STATE: TransactionStep = {
-  status: 'wait',
-  title: 'Swap funds',
-  subSteps: [],
+const TITLE = 'Swap funds';
+
+type SwapFundsStep = {
+  isSwapCompleted: boolean;
+  tokensToBeTransferred: TokenSymbol[];
+  step: TransactionStep;
 };
 
-const IN_PROCESS_STATE: TransactionStep = {
-  status: 'process',
-  title: 'Swap funds',
-  subSteps: [{ description: 'Sending transaction...' }],
+const EMPTY_STATE: SwapFundsStep = {
+  isSwapCompleted: false,
+  tokensToBeTransferred: [],
+  step: {
+    status: 'wait',
+    title: TITLE,
+    subSteps: [],
+  },
 };
 
-const getQuoteFailedErrorState = (onRetry: () => void): TransactionStep => ({
-  status: 'error',
-  title: 'Swap funds',
-  subSteps: [
-    {
-      failed: (
-        <Flex vertical gap={8} align="flex-start">
-          <Text className="text-sm text-lighter">Quote request failed</Text>
-          <Button onClick={onRetry} icon={<ReloadOutlined />} size="small">
-            Try again
-          </Button>
-        </Flex>
-      ),
-    },
-  ],
+const PROCESS_STATE: SwapFundsStep = {
+  isSwapCompleted: false,
+  tokensToBeTransferred: [],
+  step: {
+    status: 'process',
+    title: TITLE,
+    subSteps: [{ description: 'Sending transaction...' }],
+  },
+};
+
+const getQuoteFailedErrorState = (onRetry: () => void): SwapFundsStep => ({
+  isSwapCompleted: false,
+  tokensToBeTransferred: [],
+  step: {
+    status: 'error',
+    title: TITLE,
+    subSteps: [
+      {
+        failed: (
+          <Flex vertical gap={8} align="flex-start">
+            <Text className="text-sm text-lighter">Quote request failed</Text>
+            <Button onClick={onRetry} icon={<ReloadOutlined />} size="small">
+              Try again
+            </Button>
+          </Flex>
+        ),
+      },
+    ],
+  },
 });
 
+/**
+ * Hook to manage the swap funds step in the on-ramping process.
+ */
 export const useSwapFundsStep = (
   onRampChainId: EvmChainId,
   isOnRampingCompleted: boolean,
@@ -48,12 +72,15 @@ export const useSwapFundsStep = (
     isLoading,
     hasError,
     bridgeFundingRequirements,
+    receivingTokens,
     tokensToBeBridged,
     onRetry,
   } = useBridgeRequirementsQuery(onRampChainId);
 
+  // If the on-ramping is not completed, we do not proceed with the swap step.
+  const quoteId = isOnRampingCompleted ? bridgeFundingRequirements?.id : null;
   const { isBridgingCompleted, isBridgingFailed, isBridging, bridgeStatus } =
-    useBridgingSteps(tokensToBeBridged, bridgeFundingRequirements?.id);
+    useBridgingSteps(tokensToBeBridged, quoteId);
 
   const bridgeStepStatus = useMemo(() => {
     if (isBridging) return 'process';
@@ -62,23 +89,21 @@ export const useSwapFundsStep = (
     return 'wait';
   }, [isBridging, isBridgingFailed, isBridgingCompleted]);
 
-  if (!isOnRampingCompleted) {
-    return { isSwapCompleted: false, step: EMPTY_STATE };
-  }
+  const tokensToBeTransferred = useMemo(() => {
+    if (!receivingTokens) return [];
+    return receivingTokens.map(({ symbol }) => symbol);
+  }, [receivingTokens]);
 
-  if (isLoading || isBridging) {
-    return { isSwapCompleted: false, step: IN_PROCESS_STATE };
-  }
-
-  if (hasError) {
-    return { isSwapCompleted: false, step: getQuoteFailedErrorState(onRetry) };
-  }
+  if (!isOnRampingCompleted) return EMPTY_STATE;
+  if (isLoading || isBridging) return PROCESS_STATE;
+  if (hasError) return getQuoteFailedErrorState(onRetry);
 
   return {
-    isSwapCompleted: false,
+    isSwapCompleted: isBridgingCompleted,
+    tokensToBeTransferred,
     step: {
       status: bridgeStepStatus,
-      title: 'Swap funds',
+      title: TITLE,
       subSteps: (bridgeStatus || []).map((step) => {
         const description = (() => {
           if (step.status === 'finish') {
@@ -101,6 +126,6 @@ export const useSwapFundsStep = (
           ),
         };
       }),
-    } satisfies TransactionStep,
-  };
+    },
+  } satisfies SwapFundsStep;
 };

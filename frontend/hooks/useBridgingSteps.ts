@@ -7,6 +7,7 @@ import { TokenSymbol } from '@/constants/token';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { BridgeService } from '@/service/Bridge';
 import { BridgeStatusResponse, BridgingStepStatus } from '@/types/Bridge';
+import { Nullable } from '@/types/Util';
 
 const isBridgingFailedFn = (
   requests: BridgeStatusResponse['bridge_request_status'] = [],
@@ -47,7 +48,7 @@ const getBridgeStats = ({
  */
 export const useBridgingSteps = (
   tokenSymbols: TokenSymbol[],
-  quoteId?: string,
+  quoteId?: Nullable<string>,
 ) => {
   const { isOnline } = useOnlineStatusContext();
 

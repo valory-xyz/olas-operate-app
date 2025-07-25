@@ -25,14 +25,18 @@ export const OnRampPaymentSteps = ({
   const { isOnRampingTransactionSuccessful } = useOnRampContext();
   const buyCryptoStep = useBuyCryptoStep();
 
-  const { isSwapCompleted, step: swapStep } = useSwapFundsStep(
-    onRampChainId,
-    isOnRampingTransactionSuccessful,
-  );
+  const {
+    isSwapCompleted,
+    tokensToBeTransferred,
+    step: swapStep,
+  } = useSwapFundsStep(onRampChainId, isOnRampingTransactionSuccessful);
   const {
     isMasterSafeCreatedAndFundsTransferred,
     steps: createAndTransferFundsToMasterSafeSteps,
-  } = useCreateAndTransferFundsToMasterSafeSteps(isSwapCompleted);
+  } = useCreateAndTransferFundsToMasterSafeSteps(
+    isSwapCompleted,
+    tokensToBeTransferred,
+  );
 
   useEffect(() => {
     if (!isOnRampingTransactionSuccessful) return;

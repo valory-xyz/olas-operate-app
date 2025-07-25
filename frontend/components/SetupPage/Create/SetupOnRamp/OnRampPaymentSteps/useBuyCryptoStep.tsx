@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button, Typography } from 'antd';
 import { useCallback, useMemo } from 'react';
 
 import { TransactionStep } from '@/components/ui/TransactionSteps';
@@ -7,8 +7,21 @@ import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { delayInSeconds } from '@/utils/delay';
 
-const FOLLOW_INSTRUCTIONS_MESSAGE =
-  'Follow the instructions to fund your agent for the preferred fiat currency. Pearl will handle the rest.';
+const { Text } = Typography;
+
+const TransakAgreement = () => (
+  <Text className="text-sm text-lighter">
+    By proceeding, you agree to the Transak&nbsp;
+    <a target="_blank" href="https://transak.com/terms-of-service">
+      Terms and Conditions
+    </a>
+    &nbsp;and&nbsp;
+    <a target="_blank" href="https://transak.com/privacy-policy">
+      Privacy Policy
+    </a>
+    .
+  </Text>
+);
 
 export const useBuyCryptoStep = () => {
   const { onRampWindow } = useElectronApi();
@@ -44,7 +57,7 @@ export const useBuyCryptoStep = () => {
       subSteps: isOnRampingTransactionSuccessful
         ? [{ description: 'Funds received by the agent.' }]
         : [
-            { description: FOLLOW_INSTRUCTIONS_MESSAGE },
+            { description: <TransakAgreement /> },
             {
               description: (
                 <Button
