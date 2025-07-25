@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 
-import { TokenSymbol } from '@/enums/Token';
+import { TokenSymbol } from '@/constants/token';
 import { useBackupSigner } from '@/hooks/useBackupSigner';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';

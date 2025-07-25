@@ -38,7 +38,7 @@ type TransactionSubStep = {
 export type TransactionStep = {
   status: BridgingStepStatus;
   title: string;
-  subSteps: TransactionSubStep[];
+  subSteps?: TransactionSubStep[];
 };
 
 type TransactionStepsProps = {
@@ -51,28 +51,21 @@ type TransactionStepsProps = {
  */
 export const TransactionSteps: FC<TransactionStepsProps> = ({ steps }) => (
   <Steps
-    size="small"
-    direction="vertical"
     items={steps.map(({ status, title, subSteps }) => ({
       status,
       title,
-      description: (
-        <>
-          {subSteps.map((subStep, idx) => (
-            <SubStepContainer
-              key={idx}
-              style={{ marginTop: idx === 0 ? 4 : 6 }}
-            >
-              {subStep.description && (
-                <Description>{subStep.description}</Description>
-              )}
-              {subStep.txnLink && <TransactionLink href={subStep.txnLink} />}
-              {subStep.failed}
-            </SubStepContainer>
-          ))}
-        </>
-      ),
+      description: (subSteps || []).map((subStep, idx) => (
+        <SubStepContainer key={idx} style={{ marginTop: idx === 0 ? 4 : 6 }}>
+          {subStep.description && (
+            <Description>{subStep.description}</Description>
+          )}
+          {subStep.txnLink && <TransactionLink href={subStep.txnLink} />}
+          {subStep.failed}
+        </SubStepContainer>
+      )),
       icon: status === 'process' ? <LoadingOutlined /> : undefined,
     }))}
+    size="small"
+    direction="vertical"
   />
 );

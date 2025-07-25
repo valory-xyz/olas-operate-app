@@ -48,7 +48,7 @@ const getBridgeStats = ({
  */
 export const useBridgingSteps = (
   tokenSymbols: TokenSymbol[],
-  quoteId?: Nullable<string>,
+  quoteId: Nullable<string>,
 ) => {
   const { isOnline } = useOnlineStatusContext();
 

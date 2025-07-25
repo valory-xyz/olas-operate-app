@@ -78,7 +78,10 @@ export const useSwapFundsStep = (
   } = useBridgeRequirementsQuery(onRampChainId);
 
   // If the on-ramping is not completed, we do not proceed with the swap step.
-  const quoteId = isOnRampingCompleted ? bridgeFundingRequirements?.id : null;
+  const quoteId =
+    isOnRampingCompleted && bridgeFundingRequirements
+      ? bridgeFundingRequirements?.id
+      : null;
   const { isBridgingCompleted, isBridgingFailed, isBridging, bridgeStatus } =
     useBridgingSteps(tokensToBeBridged, quoteId);
 
