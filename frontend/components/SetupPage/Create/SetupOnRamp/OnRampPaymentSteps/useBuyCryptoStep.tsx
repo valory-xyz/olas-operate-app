@@ -53,7 +53,7 @@ export const useBuyCryptoStep = () => {
 
     return {
       status,
-      title: 'Buy crypto for fiat',
+      title: 'Buy crypto on Transak',
       subSteps: isOnRampingTransactionSuccessful
         ? [{ description: 'Funds received by the agent.' }]
         : [
