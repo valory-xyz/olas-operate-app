@@ -86,11 +86,18 @@ export const useSwapFundsStep = (
     useBridgingSteps(tokensToBeBridged, quoteId);
 
   const bridgeStepStatus = useMemo(() => {
-    if (isBridging) return 'process';
+    if (!isOnRampingCompleted) return 'wait';
+    if (isLoading || isBridging) return 'process';
     if (isBridgingFailed) return 'error';
     if (isBridgingCompleted) return 'finish';
-    return 'wait';
-  }, [isBridging, isBridgingFailed, isBridgingCompleted]);
+    return 'process';
+  }, [
+    isOnRampingCompleted,
+    isLoading,
+    isBridging,
+    isBridgingFailed,
+    isBridgingCompleted,
+  ]);
 
   const tokensToBeTransferred = useMemo(() => {
     if (!receivingTokens) return [];
