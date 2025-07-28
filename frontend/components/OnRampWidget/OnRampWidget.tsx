@@ -10,6 +10,8 @@ import { delayInSeconds } from '@/utils/delay';
 
 const { Title } = Typography;
 
+const apiKey = '8015f7f6-0a15-4e0c-8793-d332789af7f7';
+
 type OnRampWidgetProps = {
   usdAmountToPay: number;
 };
@@ -28,15 +30,9 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     // Transak SDK requires a valid amount to proceed
     if (!usdAmountToPay) return;
 
-    // Check if Transak API key is set
-    if (!process.env.TRANSAK_API_KEY) {
-      console.error('TRANSAK_API_KEY is not set');
-      return;
-    }
-
     /** https://docs.transak.com/docs/transak-sdk */
     const transak = new Transak({
-      apiKey: process.env.TRANSAK_API_KEY,
+      apiKey,
       environment: isDev
         ? Transak.ENVIRONMENTS.STAGING
         : Transak.ENVIRONMENTS.PRODUCTION,

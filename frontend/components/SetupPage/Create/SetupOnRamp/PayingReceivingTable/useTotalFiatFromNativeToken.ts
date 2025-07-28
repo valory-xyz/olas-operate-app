@@ -5,6 +5,8 @@ import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useServices } from '@/hooks/useServices';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
+const apiKey = '8015f7f6-0a15-4e0c-8793-d332789af7f7';
+
 type FeeBreakdownItem = {
   name: string;
   value: number;
@@ -41,10 +43,6 @@ const fetchTransakQuote = async (
   amount: number | string,
   signal: AbortSignal,
 ): Promise<{ response: Quote }> => {
-  const apiKey = process.env.TRANSAK_API_KEY as string;
-
-  if (!apiKey) throw new Error('TRANSAK_API_KEY is not defined');
-
   const options = {
     method: 'GET',
     headers: { accept: 'application/json' },
@@ -98,7 +96,6 @@ export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
       }
     },
     select: (data) => data.fiatAmount,
-    enabled:
-      !!process.env.TRANSAK_API_KEY && !!networkName && !!nativeTokenAmount,
+    enabled: !!apiKey && !!networkName && !!nativeTokenAmount,
   });
 };
