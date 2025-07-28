@@ -51,30 +51,32 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { selectedAgentConfig } = useServices();
   const { masterEoaBalance } = useMasterBalances();
 
-  // State to track the amount of ETH to pay for on-ramping
-  const [ethAmountToPay, setEthAmountToPay] = useState<Nullable<number>>(null);
-
-  // equivalent USD amount to pay for on-ramping
-  const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
   const [isBuyCryptoBtnLoading, setIsBuyCryptoBtnLoading] = useState(false);
 
-  // state to track if the on-ramping transaction was successful (step 1)
+  // State to track the amount of ETH to pay for on-ramping and the USD equivalent
+  const [ethAmountToPay, setEthAmountToPay] = useState<Nullable<number>>(null);
+  const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
+
+  // state to track if the on-ramping transaction was successful
   const [
     isOnRampingTransactionSuccessful,
     setIsOnRampingTransactionSuccessful,
   ] = useState(false);
+
+  // State to track if the user has received funds after on-ramping
   const [hasFundsReceivedAfterOnRamp, setHasFundsReceivedAfterOnRamp] =
     useState(false);
 
-  // check if the user has received funds after on-ramping on the master EOA
+  // check if the user has received funds after on-ramping to the master EOA
   useEffect(() => {
     if (!isOnRampingTransactionSuccessful) return;
-    if (hasFundsReceivedAfterOnRamp) return;
     if (!ethAmountToPay) return;
     if (!masterEoaBalance) return;
+    if (hasFundsReceivedAfterOnRamp) return;
 
-    // Only start polling if on-ramping transaction is marked successful and funds not yet received
-    if (masterEoaBalance >= ethAmountToPay) {
+    // If the master EOA balance is greater than or equal to 90% of the ETH amount to pay,
+    // we consider that the user has received the funds after on-ramping.
+    if (masterEoaBalance >= ethAmountToPay * 0.9) {
       setHasFundsReceivedAfterOnRamp(true);
     }
   }, [
@@ -145,7 +147,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   }, [ipcRenderer, onRampWindow, updateIsBuyCryptoBtnLoading]);
 
   // Check if the on-ramping step is completed
-  // ie. if the on-ramping is successful AND funds received
+  // ie. if the on-ramping is successful AND funds are received in the master EOA.
   const isOnRampingStepCompleted =
     isOnRampingTransactionSuccessful && hasFundsReceivedAfterOnRamp;
 
