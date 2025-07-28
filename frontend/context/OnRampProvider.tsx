@@ -163,6 +163,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     updateIsOnRampingTransactionSuccessful,
   ]);
 
+  // Check if the on-ramping step is completed
+  // ie. if the on-ramping is successful AND funds received
   const isOnRampingStepCompleted =
     isOnRampingTransactionSuccessful && hasFundsReceivedAfterOnRamp;
 

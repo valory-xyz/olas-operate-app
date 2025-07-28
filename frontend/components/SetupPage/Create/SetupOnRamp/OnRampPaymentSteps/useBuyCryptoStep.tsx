@@ -30,7 +30,7 @@ export const useBuyCryptoStep = () => {
     isBuyCryptoBtnLoading,
     usdAmountToPay,
     updateIsBuyCryptoBtnLoading,
-    isOnRampingTransactionSuccessful,
+    isOnRampingStepCompleted,
   } = useOnRampContext();
 
   const handleBuyCrypto = useCallback(async () => {
@@ -47,14 +47,14 @@ export const useBuyCryptoStep = () => {
   const buyCryptoStep = useMemo<TransactionStep>(() => {
     const status = (() => {
       if (isBuyCryptoBtnLoading) return 'process';
-      if (isOnRampingTransactionSuccessful) return 'finish';
+      if (isOnRampingStepCompleted) return 'finish';
       return 'wait';
     })();
 
     return {
       status,
       title: 'Buy crypto on Transak',
-      subSteps: isOnRampingTransactionSuccessful
+      subSteps: isOnRampingStepCompleted
         ? [{ description: 'Funds received by the agent.' }]
         : [
             { description: <TransakAgreement /> },
@@ -73,7 +73,7 @@ export const useBuyCryptoStep = () => {
           ],
     };
   }, [
-    isOnRampingTransactionSuccessful,
+    isOnRampingStepCompleted,
     isBuyCryptoBtnLoading,
     cannotBuyCrypto,
     handleBuyCrypto,
