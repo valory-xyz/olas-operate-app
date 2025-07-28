@@ -1,121 +1,74 @@
-import { LoadingOutlined } from '@ant-design/icons';
-import { Button, Steps, Typography } from 'antd';
-import { ReactNode, useCallback, useMemo } from 'react';
-import styled from 'styled-components';
+import { useEffect } from 'react';
 
-import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { useElectronApi } from '@/hooks/useElectronApi';
+import { TransactionSteps } from '@/components/ui/TransactionSteps';
+import { EvmChainId } from '@/constants/chains';
+import { Pages } from '@/enums/Pages';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
-import { useMasterWalletContext } from '@/hooks/useWallet';
+import { usePageState } from '@/hooks/usePageState';
 import { delayInSeconds } from '@/utils/delay';
 
-const { Text } = Typography;
+import { useBuyCryptoStep } from './useBuyCryptoStep';
+import { useCreateAndTransferFundsToMasterSafeSteps } from './useCreateAndTransferFundsToMasterSafeSteps';
+import { useSwapFundsStep } from './useSwapFundsStep';
 
-const FOLLOW_INSTRUCTIONS_MESSAGE =
-  'Follow the instructions to fund your agent for the preferred fiat currency. Pearl will handle the rest.';
-
-type SubStep = {
-  description?: ReactNode;
-  txnLink?: string;
-  isFailed?: boolean;
+type OnRampPaymentStepsProps = {
+  onRampChainId: EvmChainId;
 };
 
-type StepItem = {
-  status: 'wait' | 'process' | 'finish' | 'error';
-  title: string;
-  computedSubSteps: SubStep[];
-};
+/**
+ * Steps for the OnRamp payment process.
+ * 1. Buy crypto
+ * 2. Swap funds
+ * 3. Create Master Safe
+ * 4. Transfer funds to the Master Safe
+ */
+export const OnRampPaymentSteps = ({
+  onRampChainId,
+}: OnRampPaymentStepsProps) => {
+  const { goto } = usePageState();
+  const { isOnRampingStepCompleted } = useOnRampContext();
 
-const SubStepRow = styled.div`
-  line-height: normal;
-`;
+  // step 1: Buy crypto
+  const buyCryptoStep = useBuyCryptoStep();
 
-const Desc = ({ text }: { text: ReactNode }) =>
-  typeof text === 'string' ? (
-    <Text className="text-sm text-lighter" style={{ lineHeight: 'normal' }}>
-      {text}
-    </Text>
-  ) : (
-    text
+  // step 2: Swap funds
+  const {
+    isSwapCompleted,
+    tokensToBeTransferred,
+    step: swapStep,
+  } = useSwapFundsStep(onRampChainId, isOnRampingStepCompleted);
+
+  // step 3 & 4: Create Master Safe and transfer funds
+  const {
+    isMasterSafeCreatedAndFundsTransferred,
+    steps: createAndTransferFundsToMasterSafeSteps,
+  } = useCreateAndTransferFundsToMasterSafeSteps(
+    isSwapCompleted,
+    tokensToBeTransferred,
   );
 
-const TxnDetails = ({ link }: { link: string }) => (
-  <a href={link} target="_blank" rel="noopener noreferrer" className="pl-4">
-    <Text className="text-sm text-primary">
-      Txn details {UNICODE_SYMBOLS.EXTERNAL_LINK}
-    </Text>
-  </a>
-);
+  // Navigate to the main page after all steps are completed
+  useEffect(() => {
+    if (!isOnRampingStepCompleted) return;
+    if (!isSwapCompleted) return;
+    if (!isMasterSafeCreatedAndFundsTransferred) return;
 
-const useBuyCryptoSteps = () => {
-  const { onRampWindow } = useElectronApi();
-  const { masterEoa } = useMasterWalletContext();
-  const {
-    isBuyCryptoBtnLoading,
-    usdAmountToPay,
-    updateIsBuyCryptoBtnLoading,
-    isOnRampingTransactionSuccessful,
-  } = useOnRampContext();
-
-  const handleBuyCrypto = useCallback(async () => {
-    if (!onRampWindow?.show) return;
-    if (!usdAmountToPay) return;
-
-    onRampWindow.show(usdAmountToPay);
-    await delayInSeconds(1);
-    updateIsBuyCryptoBtnLoading(true);
-  }, [onRampWindow, usdAmountToPay, updateIsBuyCryptoBtnLoading]);
-
-  const buyCryptoStatus = useMemo(() => {
-    if (isBuyCryptoBtnLoading) return 'process';
-    if (isOnRampingTransactionSuccessful) return 'finish';
-    return 'wait';
-  }, [isBuyCryptoBtnLoading, isOnRampingTransactionSuccessful]);
-
-  const step: StepItem = {
-    status: buyCryptoStatus,
-    title: 'Buy crypto for fiat',
-    computedSubSteps: isOnRampingTransactionSuccessful
-      ? [{ description: 'Funds received by the agent.' }]
-      : [
-          { description: FOLLOW_INSTRUCTIONS_MESSAGE },
-          {
-            description: (
-              <Button
-                loading={isBuyCryptoBtnLoading}
-                disabled={!masterEoa?.address || !usdAmountToPay}
-                onClick={handleBuyCrypto}
-                type="primary"
-              >
-                Buy crypto
-              </Button>
-            ),
-          },
-        ],
-  };
-
-  return step;
-};
-
-export const OnRampPaymentSteps = () => {
-  const steps = [useBuyCryptoSteps()]; // TODO: 3 more steps
+    // Delay to ensure the UI updates before navigating
+    delayInSeconds(2).then(() => goto(Pages.Main));
+  }, [
+    isOnRampingStepCompleted,
+    isSwapCompleted,
+    isMasterSafeCreatedAndFundsTransferred,
+    goto,
+  ]);
 
   return (
-    <Steps
-      size="small"
-      direction="vertical"
-      current={0}
-      items={steps.map(({ status, title, computedSubSteps }) => ({
-        status,
-        title,
-        description: computedSubSteps.map((subStep, index) => (
-          <SubStepRow key={index} style={{ marginTop: index === 0 ? 4 : 6 }}>
-            {subStep.description && <Desc text={subStep.description} />}
-            {subStep.txnLink && <TxnDetails link={subStep.txnLink} />}
-          </SubStepRow>
-        )),
-        icon: status === 'process' ? <LoadingOutlined /> : undefined,
-      }))}
+    <TransactionSteps
+      steps={[
+        buyCryptoStep,
+        swapStep,
+        ...createAndTransferFundsToMasterSafeSteps,
+      ]}
     />
   );
 };

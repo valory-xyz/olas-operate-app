@@ -93,6 +93,38 @@ const AccountCreationAddress = () => {
   );
 };
 
+const OnBridgeFunds = ({ onBridgeFunds }: { onBridgeFunds: () => void }) => (
+  <CardSection $padding="0px 24px" vertical gap={16}>
+    <Text className="text-base">
+      Bridge from Ethereum directly to your agent. No further funds will be
+      needed after bridging.
+    </Text>
+    <Button onClick={onBridgeFunds} block type="primary" size="large">
+      Bridge funds
+    </Button>
+  </CardSection>
+);
+
+const OnRamp = ({ onPayInFiat }: { onPayInFiat: () => void }) => (
+  <CardSection $padding="0px 24px" vertical gap={16}>
+    <Text className="text-base">
+      Pay in fiat by using your credit or debit card — funds convert and deposit
+      to your agent automatically. No further funds will be needed after
+      payment.
+    </Text>
+    <Button onClick={onPayInFiat} block type="primary" size="large">
+      Pay in fiat
+    </Button>
+    <Text className="text-sm text-lighter text-center">
+      The service is provided by{' '}
+      <a href="https://transak.com/" target="_blank" rel="noopener noreferrer">
+        Transak
+      </a>
+      .
+    </Text>
+  </CardSection>
+);
+
 type SetupEoaFundingWaitingProps = { chainName: string };
 
 /**
@@ -355,29 +387,10 @@ export const SetupEoaFunding = () => {
       )}
 
       {fundType === 'bridge' && (
-        <CardSection $padding="0px 24px" vertical gap={16}>
-          <Text className="text-base">
-            Bridge from Ethereum directly to your agent. No further funds will
-            be needed after bridging.
-          </Text>
-          <Button onClick={handleBridgeFunds} block type="primary" size="large">
-            Bridge funds
-          </Button>
-        </CardSection>
+        <OnBridgeFunds onBridgeFunds={handleBridgeFunds} />
       )}
 
-      {fundType === 'onRamp' && (
-        <CardSection $padding="0px 24px" vertical gap={16}>
-          <Text className="text-base">
-            Pay in fiat by using your credit or debit card — funds convert and
-            deposit to your agent automatically. No further funds will be needed
-            after payment.
-          </Text>
-          <Button onClick={handlePayInFiat} block type="primary" size="large">
-            Pay in fiat
-          </Button>
-        </CardSection>
-      )}
+      {fundType === 'onRamp' && <OnRamp onPayInFiat={handlePayInFiat} />}
     </CardFlex>
   );
 };

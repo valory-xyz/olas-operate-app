@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 
-import { TokenSymbol } from '@/enums/Token';
+import { TokenSymbol } from '@/constants/token';
 import { useBackupSigner } from '@/hooks/useBackupSigner';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
@@ -8,7 +8,7 @@ import { WalletService } from '@/service/Wallet';
 import { BridgingStepStatus } from '@/types/Bridge';
 
 /**
- * Hook to create master safe and transfer funds (step 2 and 3)
+ * Hook to create master safe and transfer funds.
  */
 export const useMasterSafeCreationAndTransfer = (
   tokenSymbols: TokenSymbol[],
@@ -50,6 +50,9 @@ export const useMasterSafeCreationAndTransfer = (
       // we can update the store to indicate that the agent is initially funded.
       // TODO: logic to be moved to BE in the future.
       electronApi.store?.set?.(`${selectedAgentType}.isInitialFunded`, true);
+    },
+    onError: (error) => {
+      console.error(error);
     },
   });
 };

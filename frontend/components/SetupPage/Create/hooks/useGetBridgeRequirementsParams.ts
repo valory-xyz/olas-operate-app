@@ -20,6 +20,8 @@ import { areAddressesEqual } from '@/utils/address';
 import { bigintMax } from '@/utils/calculations';
 import { asAllMiddlewareChain, asEvmChainId } from '@/utils/middlewareHelpers';
 
+type TransferDirection = 'to' | 'from';
+
 /**
  *
  * @warning A HOOK THAT SHOULD NEVER EXIST.
@@ -33,7 +35,9 @@ import { asAllMiddlewareChain, asEvmChainId } from '@/utils/middlewareHelpers';
  *   max(refill_requirement_masterSafe, monthly_gas_estimate) + refill_requirements_masterEOA
  *
  */
-const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
+const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
+  transferDirection: TransferDirection,
+) => {
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
@@ -49,7 +53,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
 
       // TODO: check the "to" and "from"
       const nativeTokenIndex = bridgeRequests.findIndex((req) =>
-        areAddressesEqual(req.to.token, AddressZero),
+        areAddressesEqual(req[transferDirection].token, AddressZero),
       );
       if (nativeTokenIndex === -1) return;
 
@@ -83,6 +87,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
       refillRequirements,
       toMiddlewareChain,
       isBalancesAndFundingRequirementsLoading,
+      transferDirection,
     ],
   );
 };
@@ -94,13 +99,14 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = () => {
 export const useGetBridgeRequirementsParams = (
   fromChainId: AllEvmChainId,
   defaultFromToken?: Address,
+  transferDirection: TransferDirection = 'from',
 ) => {
   const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
   const getUpdatedBridgeRequirementsParams =
-    useGetBridgeRequirementsParamsWithMonthlyGasEstimate();
+    useGetBridgeRequirementsParamsWithMonthlyGasEstimate(transferDirection);
 
   const fromChainConfig =
     fromChainId === AllEvmChainIdMap.Ethereum
@@ -118,10 +124,9 @@ export const useGetBridgeRequirementsParams = (
 
       const toChainConfig = TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)];
 
+      const tokensRefillList = Object.entries(refillRequirements);
       const bridgeRequests: BridgeRefillRequirementsRequest['bridge_requests'] =
         [];
-
-      const tokensRefillList = Object.entries(refillRequirements);
 
       // Populate bridge requests from refill Requirements
       for (const [walletAddress, tokensWithRequirements] of tokensRefillList) {

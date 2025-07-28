@@ -16,9 +16,8 @@ type OnRampWidgetProps = {
 
 export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
   const { onRampWindow, logEvent } = useElectronApi();
-  const { masterEoa } = useMasterWalletContext();
-
   const { networkName, cryptoCurrencyCode } = useOnRampContext();
+  const { masterEoa } = useMasterWalletContext();
 
   const [isWidgetLoading, setIsWidgetLoading] = useState(true);
 
@@ -43,7 +42,7 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
         : Transak.ENVIRONMENTS.PRODUCTION,
       widgetHeight: '700px',
       widgetWidth: '500px',
-      /** default to BUY */
+      /** only BUY allowed */
       productsAvailed: 'BUY',
       /** only credit_debit_card allowed */
       paymentMethod: 'credit_debit_card',
@@ -57,7 +56,7 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
 
     transak.init();
 
-    // To get all the events
+    // To get all the events and log them
     Transak.on('*', (data: unknown) => {
       logEvent?.(`Transak event: ${JSON.stringify(data)}`);
     });

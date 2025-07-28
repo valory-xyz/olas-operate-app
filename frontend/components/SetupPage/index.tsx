@@ -68,7 +68,7 @@ export const Setup = () => {
       case SetupScreen.SetupBridgeOnboardingScreen:
         return <SetupBridgeOnboarding />;
 
-      // Pay in fiat
+      // On Ramp
       case SetupScreen.SetupOnRamp:
         return <SetupOnRamp />;
 
