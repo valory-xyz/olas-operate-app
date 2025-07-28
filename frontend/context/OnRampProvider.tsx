@@ -18,6 +18,8 @@ import {
   asMiddlewareChain,
 } from '@/utils/middlewareHelpers';
 
+const ETH_RECEIVED_THRESHOLD = 0.9;
+
 export const OnRampContext = createContext<{
   ethAmountToPay: Nullable<number>;
   updateEthAmountToPay: (amount: Nullable<number>) => void;
@@ -76,7 +78,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
     // If the master EOA balance is greater than or equal to 90% of the ETH amount to pay,
     // we consider that the user has received the funds after on-ramping.
-    if (masterEoaBalance >= ethAmountToPay * 0.9) {
+    if (masterEoaBalance >= ethAmountToPay * ETH_RECEIVED_THRESHOLD) {
       setHasFundsReceivedAfterOnRamp(true);
     }
   }, [
