@@ -24,7 +24,10 @@ const loadLocalCertificate = () => {
       };
     }
   } catch (error) {
-    logger.electron('Failed to read local certificate: ', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    logger.electron(
+      'Failed to read local certificate: ',
+      JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
+    );
   }
 };
 
@@ -46,7 +49,6 @@ const checkUrl = (url) => {
     request.end();
   });
 };
-
 
 /**
  * Configure session to handle self-signed certificates for localhost
@@ -74,4 +76,8 @@ const configureSessionCertificates = () => {
   });
 };
 
-module.exports = { checkUrl, configureSessionCertificates, loadLocalCertificate };
+module.exports = {
+  checkUrl,
+  configureSessionCertificates,
+  loadLocalCertificate,
+};
