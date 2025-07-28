@@ -25,7 +25,11 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
-const { checkUrl, configureSessionCertificates, loadLocalCertificate } = require('./utils');
+const {
+  checkUrl,
+  configureSessionCertificates,
+  loadLocalCertificate,
+} = require('./utils');
 const { pki } = require('node-forge');
 
 // Load the self-signed certificate for localhost HTTPS requests
@@ -93,6 +97,9 @@ let appConfig = {
     },
   },
 };
+
+const stringifyError = (e) =>
+  JSON.stringify(e, Object.getOwnPropertyNames(e), 2);
 
 const nextUrl = () =>
   `http://localhost:${isDev ? appConfig.ports.dev.next : appConfig.ports.prod.next}`;
@@ -172,21 +179,19 @@ async function beforeQuit(event) {
 
   logger.electron('Stop backend gracefully:');
   try {
-    const backendPort = isDev ? appConfig.ports.dev.operate : appConfig.ports.prod.operate;
+    const backendPort = isDev
+      ? appConfig.ports.dev.operate
+      : appConfig.ports.prod.operate;
     logger.electron(
       `Killing backend server by shutdown endpoint: https://localhost:${backendPort}/shutdown`,
     );
-    let result = await fetch(
-      `https://localhost:${backendPort}/shutdown`,
-    );
+    let result = await fetch(`https://localhost:${backendPort}/shutdown`);
     logger.electron('Killed backend server by shutdown endpoint!');
     logger.electron(
       `Killed backend server by shutdown endpoint! result: ${JSON.stringify(await result.json())}`,
     );
   } catch (err) {
-    logger.electron(
-      'Backend stopped with error: ' + JSON.stringify(err, Object.getOwnPropertyNames(err), 2),
-    );
+    logger.electron(`Backend stopped with error: ${stringifyError(err)}`);
   }
 
   if (operateDaemon || operateDaemonPid) {
@@ -196,7 +201,9 @@ async function beforeQuit(event) {
       logger.electron('Killing backend server kill process');
       operateDaemonPid && (await killProcesses(operateDaemonPid));
     } catch (e) {
-      logger.electron("Couldn't kill daemon processes via pid: " + JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
+      logger.electron(
+        `Couldn't kill daemon processes via pid: ${JSON.stringify(e, Object.getOwnPropertyNames(e), 2)}`,
+      );
     }
 
     // attempt to kill the daemon process via kill
@@ -207,7 +214,9 @@ async function beforeQuit(event) {
         logger.electron('Daemon process still alive after kill');
       }
     } catch (e) {
-      logger.electron("Couldn't kill operate daemon process via kill: " + JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
+      logger.electron(
+        `Couldn't kill operate daemon process via kill: ${stringifyError(e)}`,
+      );
     }
   }
 
@@ -219,21 +228,27 @@ async function beforeQuit(event) {
         logger.electron('Dev NextApp process still alive after kill');
       }
     } catch (e) {
-      logger.electron("Couldn't kill devNextApp process via kill: " + JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
+      logger.electron(
+        `Couldn't kill devNextApp process via kill: ${stringifyError(e)}`,
+      );
     }
 
     // attempt to kill the dev next app process via pid
     try {
       devNextAppPid && (await killProcesses(devNextAppPid));
     } catch (e) {
-      logger.electron("Couldn't kill devNextApp processes via pid: " + JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
+      logger.electron(
+        `Couldn't kill devNextApp processes via pid: ${stringifyError(e)}`,
+      );
     }
   }
 
   if (nextApp) {
     // attempt graceful close of prod next app
     await nextApp.close().catch((err) => {
-      logger.electron("Couldn't close NextApp gracefully: " + JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
+      logger.electron(
+        `Couldn't close NextApp gracefully: ${stringifyError(err)}`,
+      );
     });
     // electron will kill next service on exit
   }
@@ -366,7 +381,10 @@ const createMainWindow = async () => {
     logger.electron('Setting up store IPC');
     setupStoreIpc(ipcMain, mainWindow);
   } catch (e) {
-    logger.electron('Store IPC failed:', JSON.stringify(e, Object.getOwnPropertyNames(e), 2));
+    logger.electron(
+      'Store IPC failed:',
+      JSON.stringify(e, Object.getOwnPropertyNames(e), 2),
+    );
   }
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
@@ -427,14 +445,16 @@ function createAndLoadSSLCertificate() {
     cert.publicKey = keys.publicKey;
     cert.serialNumber = '01';
     cert.validity.notBefore = new Date();
-    cert.validity.notAfter = new Date(cert.validity.notBefore.getTime() + 365 * 24 * 60 * 60 * 1000); // Valid for 1 year
+    cert.validity.notAfter = new Date(
+      cert.validity.notBefore.getTime() + 365 * 24 * 60 * 60 * 1000,
+    ); // Valid for 1 year
 
     const attrs = [
       { name: 'countryName', value: 'CH' },
       { name: 'stateOrProvinceName', value: 'Local' },
       { name: 'localityName', value: 'Local' },
       { name: 'organizationName', value: 'Valory AG' },
-      { name: 'commonName', value: 'localhost' }
+      { name: 'commonName', value: 'localhost' },
     ];
 
     cert.setSubject(attrs);
@@ -480,9 +500,11 @@ async function launchDaemon() {
       .toString()
       .trim();
 
-    await fetch(`https://localhost:${appConfig.ports.prod.operate}/${endpoint}`);
+    await fetch(
+      `https://localhost:${appConfig.ports.prod.operate}/${endpoint}`,
+    );
   } catch (err) {
-    logger.electron('Backend not running!' + JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
+    logger.electron(`Backend not running! ${stringifyError(err)}`);
   }
 
   try {
@@ -494,9 +516,7 @@ async function launchDaemon() {
       'Backend stopped with result: ' + JSON.stringify(await result.json()),
     );
   } catch (err) {
-    logger.electron(
-      'Backend stopped with error: ' + JSON.stringify(err, Object.getOwnPropertyNames(err), 2),
-    );
+    logger.electron(`Backend stopped with error: ${stringifyError(err)}`);
   }
 
   const check = new Promise(function (resolve, _reject) {
