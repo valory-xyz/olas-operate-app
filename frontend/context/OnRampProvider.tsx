@@ -98,15 +98,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsBuyCryptoBtnLoading(loading);
   }, []);
 
-  // TODO: need to check if the on-ramping transaction was successful
-  // by polling the masterEOA balance.
-  const updateIsOnRampingTransactionSuccessful = useCallback(
-    (successful: boolean) => {
-      setIsOnRampingTransactionSuccessful(successful);
-    },
-    [],
-  );
-
   // Listen for onramp window hide event to reset the loading state
   useEffect(() => {
     const handleHide = () => {
@@ -123,7 +114,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     const handleTransactionSuccess = () => {
       updateIsBuyCryptoBtnLoading(false);
-      updateIsOnRampingTransactionSuccessful(true);
+      setIsOnRampingTransactionSuccessful(true);
       delayInSeconds(1).then(() => onRampWindow?.hide?.());
     };
 
@@ -134,18 +125,13 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
         handleTransactionSuccess,
       );
     };
-  }, [
-    ipcRenderer,
-    onRampWindow,
-    updateIsBuyCryptoBtnLoading,
-    updateIsOnRampingTransactionSuccessful,
-  ]);
+  }, [ipcRenderer, onRampWindow, updateIsBuyCryptoBtnLoading]);
 
   // Listen for onramp window transaction failure event to reset the loading state
   useEffect(() => {
     const handleTransactionFailure = () => {
       updateIsBuyCryptoBtnLoading(false);
-      updateIsOnRampingTransactionSuccessful(false);
+      setIsOnRampingTransactionSuccessful(false);
       delayInSeconds(1).then(() => onRampWindow?.hide?.());
     };
 
@@ -156,12 +142,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
         handleTransactionFailure,
       );
     };
-  }, [
-    ipcRenderer,
-    onRampWindow,
-    updateIsBuyCryptoBtnLoading,
-    updateIsOnRampingTransactionSuccessful,
-  ]);
+  }, [ipcRenderer, onRampWindow, updateIsBuyCryptoBtnLoading]);
 
   // Check if the on-ramping step is completed
   // ie. if the on-ramping is successful AND funds received
