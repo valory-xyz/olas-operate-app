@@ -90,13 +90,14 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     const currentMasterSafeCreationStatus = (() => {
       if (!isSwapCompleted) return 'wait';
 
+      if (isLoadingMasterSafeCreation) return 'process';
+
       const statuses = masterSafeDetails?.transfers.map(({ status }) => status);
       const hasError = statuses?.some((x) => x === 'error');
       if (hasError) return 'error';
 
       const areFundsBeingTransferred = statuses?.map((x) => x === 'process');
       if (areFundsBeingTransferred?.some((x) => x)) return 'process';
-      if (isLoadingMasterSafeCreation) return 'process';
 
       if (isSafeCreated) return 'finish';
       return 'wait';

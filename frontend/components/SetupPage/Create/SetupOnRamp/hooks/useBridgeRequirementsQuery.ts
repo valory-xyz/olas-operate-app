@@ -49,6 +49,8 @@ export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
     return getBridgeRequirementsParams(isForceUpdate);
   }, [isForceUpdate, getBridgeRequirementsParams]);
 
+  // Cannot bridge the token if the onRampChainId is the same as the middleware home chain.
+  // eg. for Optimism, we cannot bridge ETH to Optimism if we are on Optimism.
   const canIgnoreNativeToken =
     selectedAgentConfig.evmHomeChainId === onRampChainId;
 

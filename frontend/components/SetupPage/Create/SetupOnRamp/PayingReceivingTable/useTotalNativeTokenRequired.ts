@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
+import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
@@ -19,7 +20,9 @@ import { useBridgeRequirementsQuery } from '../hooks/useBridgeRequirementsQuery'
  */
 export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
   const { selectedAgentConfig } = useServices();
+  const { updateEthAmountToPay } = useOnRampContext();
   const { masterEoa } = useMasterWalletContext();
+
   const {
     isLoading,
     hasError,
@@ -38,7 +41,7 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
    * Total native token required = 0.01 ETH + olas_in_eth + usdc_in_eth
    *
    */
-  const totalNativeTokenRequired = useMemo(() => {
+  const totalNativeToken = useMemo(() => {
     if (!bridgeParams) return;
     if (!bridgeFundingRequirements) return;
     if (!masterEoa?.address) return;
@@ -55,10 +58,13 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     const nativeTokenFromBridgeQuote = bridgeRefillRequirements?.[AddressZero];
     if (!nativeTokenFromBridgeQuote) return;
 
-    return (
+    const totalNativeTokenRequired =
       BigInt(nativeTokenFromBridgeQuote) +
-      BigInt(nativeTokeFromBridgeParams || 0)
-    );
+      BigInt(nativeTokeFromBridgeParams || 0);
+
+    return totalNativeTokenRequired
+      ? formatUnitsToNumber(totalNativeTokenRequired, 18)
+      : 0;
   }, [
     bridgeParams,
     bridgeFundingRequirements,
@@ -66,9 +72,11 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     selectedAgentConfig.evmHomeChainId,
   ]);
 
-  const totalNativeToken = totalNativeTokenRequired
-    ? formatUnitsToNumber(totalNativeTokenRequired, 18)
-    : 0;
+  // Update the ETH amount to pay in the on-ramp context
+  useEffect(() => {
+    if (!totalNativeToken) return;
+    updateEthAmountToPay(totalNativeToken);
+  }, [totalNativeToken, updateEthAmountToPay]);
 
   return {
     isLoading,

@@ -51,7 +51,6 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
       if (!refillRequirements) return;
       if (!masterEoa?.address) return;
 
-      // TODO: check the "to" and "from"
       const nativeTokenIndex = bridgeRequests.findIndex((req) =>
         areAddressesEqual(req[transferDirection].token, AddressZero),
       );
@@ -94,7 +93,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
 
 /**
  * @returns A function that returns the bridge refill requirements parameters
- * based on the current refill requirements OR null if requirements are not available or loading.
+ * based on the current refill requirements OR null if requirements are not available/loading.
  */
 export const useGetBridgeRequirementsParams = (
   fromChainId: AllEvmChainId,

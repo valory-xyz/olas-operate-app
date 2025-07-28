@@ -28,8 +28,8 @@ export const OnRampContext = createContext<{
   isBuyCryptoBtnLoading: boolean;
   updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
   isOnRampingTransactionSuccessful: boolean;
-
   isOnRampingStepCompleted: boolean;
+
   networkId: Nullable<EvmChainId>;
   networkName: Nullable<string>;
   cryptoCurrencyCode: Nullable<string>;
@@ -41,8 +41,8 @@ export const OnRampContext = createContext<{
   isBuyCryptoBtnLoading: false,
   updateIsBuyCryptoBtnLoading: () => {},
   isOnRampingTransactionSuccessful: false,
-
   isOnRampingStepCompleted: false,
+
   networkId: null,
   networkName: null,
   cryptoCurrencyCode: null,
@@ -77,7 +77,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     if (hasFundsReceivedAfterOnRamp) return;
 
     // If the master EOA balance is greater than or equal to 90% of the ETH amount to pay,
-    // we consider that the user has received the funds after on-ramping.
+    // considering that the user has received the funds after on-ramping.
     if (masterEoaBalance >= ethAmountToPay * ETH_RECEIVED_THRESHOLD) {
       setHasFundsReceivedAfterOnRamp(true);
     }
@@ -148,8 +148,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     };
   }, [ipcRenderer, onRampWindow, updateIsBuyCryptoBtnLoading]);
 
-  // Check if the on-ramping step is completed
-  // ie. if the on-ramping is successful AND funds are received in the master EOA.
+  /**
+   * Check if the on-ramping step is completed
+   * ie. if the on-ramping is successful AND funds are received in the master EOA.
+   */
   const isOnRampingStepCompleted =
     isOnRampingTransactionSuccessful && hasFundsReceivedAfterOnRamp;
 
