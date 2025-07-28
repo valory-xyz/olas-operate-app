@@ -41,6 +41,7 @@ export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
     onRampChainId,
     AddressZero,
+    'to',
   );
 
   const bridgeParams = useMemo(() => {
