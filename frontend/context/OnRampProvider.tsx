@@ -8,6 +8,7 @@ import {
 } from 'react';
 
 import { EvmChainId, onRampChainMap } from '@/constants/chains';
+import { useMasterBalances } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
@@ -18,24 +19,28 @@ import {
 } from '@/utils/middlewareHelpers';
 
 export const OnRampContext = createContext<{
+  ethAmountToPay: Nullable<number>;
+  updateEthAmountToPay: (amount: Nullable<number>) => void;
   usdAmountToPay: Nullable<number>;
   updateUsdAmountToPay: (amount: Nullable<number>) => void;
   isBuyCryptoBtnLoading: boolean;
   updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
   isOnRampingTransactionSuccessful: boolean;
-  updateIsOnRampingTransactionSuccessful: (successful: boolean) => void;
 
+  isOnRampingStepCompleted: boolean;
   networkId: Nullable<EvmChainId>;
   networkName: Nullable<string>;
   cryptoCurrencyCode: Nullable<string>;
 }>({
+  ethAmountToPay: null,
+  updateEthAmountToPay: () => {},
   usdAmountToPay: null,
   updateUsdAmountToPay: () => {},
   isBuyCryptoBtnLoading: false,
   updateIsBuyCryptoBtnLoading: () => {},
   isOnRampingTransactionSuccessful: false,
-  updateIsOnRampingTransactionSuccessful: () => {},
 
+  isOnRampingStepCompleted: false,
   networkId: null,
   networkName: null,
   cryptoCurrencyCode: null,
@@ -44,7 +49,12 @@ export const OnRampContext = createContext<{
 export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { ipcRenderer, onRampWindow } = useElectronApi();
   const { selectedAgentConfig } = useServices();
+  const { masterEoaBalance } = useMasterBalances();
 
+  // State to track the amount of ETH to pay for on-ramping
+  const [ethAmountToPay, setEthAmountToPay] = useState<Nullable<number>>(null);
+
+  // equivalent USD amount to pay for on-ramping
   const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
   const [isBuyCryptoBtnLoading, setIsBuyCryptoBtnLoading] = useState(false);
 
@@ -53,6 +63,31 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     isOnRampingTransactionSuccessful,
     setIsOnRampingTransactionSuccessful,
   ] = useState(false);
+  const [hasFundsReceivedAfterOnRamp, setHasFundsReceivedAfterOnRamp] =
+    useState(false);
+
+  // check if the user has received funds after on-ramping on the master EOA
+  useEffect(() => {
+    if (!isOnRampingTransactionSuccessful) return;
+    if (hasFundsReceivedAfterOnRamp) return;
+    if (!ethAmountToPay) return;
+    if (!masterEoaBalance) return;
+
+    // Only start polling if on-ramping transaction is marked successful and funds not yet received
+    if (masterEoaBalance >= ethAmountToPay) {
+      setHasFundsReceivedAfterOnRamp(true);
+    }
+  }, [
+    isOnRampingTransactionSuccessful,
+    hasFundsReceivedAfterOnRamp,
+    masterEoaBalance,
+    ethAmountToPay,
+  ]);
+
+  // Function to set the ETH amount to pay for on-ramping
+  const updateEthAmountToPay = useCallback((amount: Nullable<number>) => {
+    setEthAmountToPay(amount);
+  }, []);
 
   // Function to set the USD amount for on-ramping
   const updateUsdAmountToPay = useCallback((amount: Nullable<number>) => {
@@ -128,6 +163,9 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     updateIsOnRampingTransactionSuccessful,
   ]);
 
+  const isOnRampingStepCompleted =
+    isOnRampingTransactionSuccessful && hasFundsReceivedAfterOnRamp;
+
   const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
     const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
     const networkId = onRampChainMap[fromChainName];
@@ -142,12 +180,16 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   return (
     <OnRampContext.Provider
       value={{
+        ethAmountToPay,
+        updateEthAmountToPay,
         usdAmountToPay,
         updateUsdAmountToPay,
         isBuyCryptoBtnLoading,
         updateIsBuyCryptoBtnLoading,
         isOnRampingTransactionSuccessful,
-        updateIsOnRampingTransactionSuccessful,
+
+        /** Whether the on-ramping step is completed */
+        isOnRampingStepCompleted,
 
         /** Network id to on-ramp */
         networkId,
