@@ -8,6 +8,7 @@ import {
 } from 'react';
 
 import { EvmChainId, onRampChainMap } from '@/constants/chains';
+import { useMasterBalances } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
@@ -17,25 +18,31 @@ import {
   asMiddlewareChain,
 } from '@/utils/middlewareHelpers';
 
+const ETH_RECEIVED_THRESHOLD = 0.9;
+
 export const OnRampContext = createContext<{
+  ethAmountToPay: Nullable<number>;
+  updateEthAmountToPay: (amount: Nullable<number>) => void;
   usdAmountToPay: Nullable<number>;
   updateUsdAmountToPay: (amount: Nullable<number>) => void;
   isBuyCryptoBtnLoading: boolean;
   updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
   isOnRampingTransactionSuccessful: boolean;
-  updateIsOnRampingTransactionSuccessful: (successful: boolean) => void;
 
+  isOnRampingStepCompleted: boolean;
   networkId: Nullable<EvmChainId>;
   networkName: Nullable<string>;
   cryptoCurrencyCode: Nullable<string>;
 }>({
+  ethAmountToPay: null,
+  updateEthAmountToPay: () => {},
   usdAmountToPay: null,
   updateUsdAmountToPay: () => {},
   isBuyCryptoBtnLoading: false,
   updateIsBuyCryptoBtnLoading: () => {},
   isOnRampingTransactionSuccessful: false,
-  updateIsOnRampingTransactionSuccessful: () => {},
 
+  isOnRampingStepCompleted: false,
   networkId: null,
   networkName: null,
   cryptoCurrencyCode: null,
@@ -44,15 +51,47 @@ export const OnRampContext = createContext<{
 export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { ipcRenderer, onRampWindow } = useElectronApi();
   const { selectedAgentConfig } = useServices();
+  const { masterEoaBalance } = useMasterBalances();
 
-  const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
   const [isBuyCryptoBtnLoading, setIsBuyCryptoBtnLoading] = useState(false);
 
-  // state to track if the on-ramping transaction was successful (step 1)
+  // State to track the amount of ETH to pay for on-ramping and the USD equivalent
+  const [ethAmountToPay, setEthAmountToPay] = useState<Nullable<number>>(null);
+  const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
+
+  // state to track if the on-ramping transaction was successful
   const [
     isOnRampingTransactionSuccessful,
     setIsOnRampingTransactionSuccessful,
   ] = useState(false);
+
+  // State to track if the user has received funds after on-ramping
+  const [hasFundsReceivedAfterOnRamp, setHasFundsReceivedAfterOnRamp] =
+    useState(false);
+
+  // check if the user has received funds after on-ramping to the master EOA
+  useEffect(() => {
+    if (!isOnRampingTransactionSuccessful) return;
+    if (!ethAmountToPay) return;
+    if (!masterEoaBalance) return;
+    if (hasFundsReceivedAfterOnRamp) return;
+
+    // If the master EOA balance is greater than or equal to 90% of the ETH amount to pay,
+    // we consider that the user has received the funds after on-ramping.
+    if (masterEoaBalance >= ethAmountToPay * ETH_RECEIVED_THRESHOLD) {
+      setHasFundsReceivedAfterOnRamp(true);
+    }
+  }, [
+    isOnRampingTransactionSuccessful,
+    hasFundsReceivedAfterOnRamp,
+    masterEoaBalance,
+    ethAmountToPay,
+  ]);
+
+  // Function to set the ETH amount to pay for on-ramping
+  const updateEthAmountToPay = useCallback((amount: Nullable<number>) => {
+    setEthAmountToPay(amount);
+  }, []);
 
   // Function to set the USD amount for on-ramping
   const updateUsdAmountToPay = useCallback((amount: Nullable<number>) => {
@@ -62,15 +101,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const updateIsBuyCryptoBtnLoading = useCallback((loading: boolean) => {
     setIsBuyCryptoBtnLoading(loading);
   }, []);
-
-  // TODO: need to check if the on-ramping transaction was successful
-  // by polling the masterEOA balance.
-  const updateIsOnRampingTransactionSuccessful = useCallback(
-    (successful: boolean) => {
-      setIsOnRampingTransactionSuccessful(successful);
-    },
-    [],
-  );
 
   // Listen for onramp window hide event to reset the loading state
   useEffect(() => {
@@ -88,7 +118,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     const handleTransactionSuccess = () => {
       updateIsBuyCryptoBtnLoading(false);
-      updateIsOnRampingTransactionSuccessful(true);
+      setIsOnRampingTransactionSuccessful(true);
       delayInSeconds(1).then(() => onRampWindow?.hide?.());
     };
 
@@ -99,18 +129,13 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
         handleTransactionSuccess,
       );
     };
-  }, [
-    ipcRenderer,
-    onRampWindow,
-    updateIsBuyCryptoBtnLoading,
-    updateIsOnRampingTransactionSuccessful,
-  ]);
+  }, [ipcRenderer, onRampWindow, updateIsBuyCryptoBtnLoading]);
 
   // Listen for onramp window transaction failure event to reset the loading state
   useEffect(() => {
     const handleTransactionFailure = () => {
       updateIsBuyCryptoBtnLoading(false);
-      updateIsOnRampingTransactionSuccessful(false);
+      setIsOnRampingTransactionSuccessful(false);
       delayInSeconds(1).then(() => onRampWindow?.hide?.());
     };
 
@@ -121,12 +146,12 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
         handleTransactionFailure,
       );
     };
-  }, [
-    ipcRenderer,
-    onRampWindow,
-    updateIsBuyCryptoBtnLoading,
-    updateIsOnRampingTransactionSuccessful,
-  ]);
+  }, [ipcRenderer, onRampWindow, updateIsBuyCryptoBtnLoading]);
+
+  // Check if the on-ramping step is completed
+  // ie. if the on-ramping is successful AND funds are received in the master EOA.
+  const isOnRampingStepCompleted =
+    isOnRampingTransactionSuccessful && hasFundsReceivedAfterOnRamp;
 
   const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
     const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
@@ -142,12 +167,16 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   return (
     <OnRampContext.Provider
       value={{
+        ethAmountToPay,
+        updateEthAmountToPay,
         usdAmountToPay,
         updateUsdAmountToPay,
         isBuyCryptoBtnLoading,
         updateIsBuyCryptoBtnLoading,
         isOnRampingTransactionSuccessful,
-        updateIsOnRampingTransactionSuccessful,
+
+        /** Whether the on-ramping step is completed */
+        isOnRampingStepCompleted,
 
         /** Network id to on-ramp */
         networkId,
