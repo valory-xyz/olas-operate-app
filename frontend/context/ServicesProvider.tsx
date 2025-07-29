@@ -105,6 +105,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     refetchInterval: FIVE_SECONDS_INTERVAL,
   });
 
+  // TODO: what should happen if the above query fails with 500 error code
+
   const {
     data: deploymentDetails,
     isLoading: isSelectedServiceDeploymentStatusLoading,

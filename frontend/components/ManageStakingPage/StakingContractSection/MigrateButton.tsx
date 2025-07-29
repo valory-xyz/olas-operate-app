@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { MiddlewareDeploymentStatus, ServiceTemplate } from '@/client';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { Pages } from '@/enums/Pages';
-import { STAKING_PROGRAM_IDS, StakingProgramId } from '@/enums/StakingProgram';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useModals } from '@/hooks/useModals';
 import { usePageState } from '@/hooks/usePageState';
@@ -155,16 +155,11 @@ export const MigrateButton = ({
               });
             } else {
               // create service if it doesn't exist
-
               const serviceConfigParams = {
                 stakingProgramId: stakingProgramIdToMigrateTo,
                 serviceTemplate,
                 deploy: true,
-                useMechMarketplace:
-                  stakingProgramIdToMigrateTo ===
-                  STAKING_PROGRAM_IDS.PearlBetaMechMarketplace,
               };
-
               await ServicesService.createService(serviceConfigParams);
             }
 

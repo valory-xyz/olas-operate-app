@@ -59,7 +59,6 @@ const createService = async ({
   deploy,
   serviceTemplate,
   stakingProgramId,
-  useMechMarketplace = false,
 }: {
   deploy: boolean;
   serviceTemplate: ServiceTemplate;
