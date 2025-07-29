@@ -6,8 +6,9 @@ const path = require('path');
 const { paths } = require('./constants');
 const { session } = require('electron');
 const tls = require('tls');
-// import { Agent, request } from 'undici';
 const { Agent, request } = require('undici');
+
+const parseError = (e) => JSON.stringify(e, Object.getOwnPropertyNames(e), 2);
 
 /**
  * Load the self-signed certificate for localhost HTTPS requests
@@ -17,6 +18,7 @@ const loadLocalCertificate = () => {
     const certPath = path.join(paths.dotOperateDirectory, 'ssl', 'cert.pem');
     if (fs.existsSync(certPath)) {
       const cert = fs.readFileSync(certPath);
+
       // Add the certificate to Node.js's trusted CA store at runtime
       const originalCreateSecureContext = tls.createSecureContext;
       tls.createSecureContext = (options = {}) => {
@@ -25,13 +27,10 @@ const loadLocalCertificate = () => {
         return context;
       };
 
-      console.log('✅ TLS patched');
+      logger.electron('✅ TLS patched');
     }
   } catch (error) {
-    logger.electron(
-      'Failed to read local certificate: ',
-      JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
-    );
+    logger.electron(`Failed to read local certificate: ${parseError(error)}`);
   }
 };
 
@@ -69,7 +68,7 @@ const configureSessionCertificates = () => {
     if (hostname === 'localhost') {
       // For localhost, trust the certificate (equivalent to having it as a trusted CA)
       // We know we control this endpoint and have generated the certificate
-      callback(0); // Certificate is valid
+      callback(0);
       return;
     }
 
@@ -78,8 +77,6 @@ const configureSessionCertificates = () => {
   });
 };
 
-const parseError = (e) => JSON.stringify(e, Object.getOwnPropertyNames(e), 2);
-
 const secureFetch = async (url, options = {}) => {
   const certPath = path.join(paths.dotOperateDirectory, 'ssl', 'cert.pem');
   if (!fs.existsSync(certPath)) {
@@ -87,7 +84,6 @@ const secureFetch = async (url, options = {}) => {
   }
 
   const cert = fs.readFileSync(certPath, 'utf-8');
-
   const agent = new Agent({
     connect: {
       ca: cert,
