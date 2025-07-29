@@ -88,7 +88,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     TOOLS_ACCURACY_HASH: {
       name: 'Tools accuracy hash',
       description: '',
-      value: 'QmbyrbZkQEUYHkXzwBqkmRSNqzcQLS7QpebB2xgjjBR1zP',
+      value: 'QmeZeKc3gN4JkfLdjaNrsHaGMs1ViHHy3YNaoxPjS2Z9VF',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
