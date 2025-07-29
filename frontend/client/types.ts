@@ -79,7 +79,6 @@ type ConfigurationTemplate = {
   nft: string;
   rpc?: string; // added on deployment
   agent_id: number;
-  threshold: number;
   cost_of_bond: number;
   monthly_gas_estimate: number;
   fund_requirements: {
