@@ -1,4 +1,17 @@
 require('dotenv').config();
+
+const {
+  checkUrl,
+  configureSessionCertificates,
+  loadLocalCertificate,
+  tryFetching,
+  stringifyError,
+  secureFetch,
+} = require('./utils');
+
+// Load the self-signed certificate for localhost HTTPS requests
+loadLocalCertificate();
+
 const {
   app,
   BrowserWindow,
@@ -25,15 +38,8 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
-const {
-  checkUrl,
-  configureSessionCertificates,
-  loadLocalCertificate,
-} = require('./utils');
-const { pki } = require('node-forge');
 
-// Load the self-signed certificate for localhost HTTPS requests
-loadLocalCertificate();
+const { pki } = require('node-forge');
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -97,9 +103,6 @@ let appConfig = {
     },
   },
 };
-
-const stringifyError = (e) =>
-  JSON.stringify(e, Object.getOwnPropertyNames(e), 2);
 
 const nextUrl = () =>
   `http://localhost:${isDev ? appConfig.ports.dev.next : appConfig.ports.prod.next}`;
@@ -177,20 +180,23 @@ async function beforeQuit(event) {
   splashWindow?.destroy();
   mainWindow?.destroy();
 
-  logger.electron('Stop backend gracefully:');
+  logger.electron('--------------- Stop backend gracefully: ---------------');
   try {
     const backendPort = isDev
       ? appConfig.ports.dev.operate
       : appConfig.ports.prod.operate;
+    // await tryFetching(backendPort);
     logger.electron(
       `Killing backend server by shutdown endpoint: https://localhost:${backendPort}/shutdown`,
     );
-    let result = await fetch(`https://localhost:${backendPort}/shutdown`);
-    logger.electron('Killed backend server by shutdown endpoint!');
+    const body = await secureFetch(`https://localhost:${backendPort}/shutdown`);
+    const response = await body.json();
+
     logger.electron(
-      `Killed backend server by shutdown endpoint! result: ${JSON.stringify(await result.json())}`,
+      `Killed backend server by shutdown endpoint! result: ${JSON.stringify(response)}`,
     );
   } catch (err) {
+    logger.electron('>>>>>>>>>>>> Sorry: >>>>>>>>>> ');
     logger.electron(`Backend stopped with error: ${stringifyError(err)}`);
   }
 
@@ -245,10 +251,11 @@ async function beforeQuit(event) {
 
   if (nextApp) {
     // attempt graceful close of prod next app
-    await nextApp.close().catch((err) => {
-      logger.electron(
-        `Couldn't close NextApp gracefully: ${stringifyError(err)}`,
-      );
+    await nextApp.close().catch((e) => {
+      // logger.electron(
+      //   `Couldn't close NextApp gracefully: ${stringifyError(e)}`,
+      // );
+      logger.electron(`Couldn't close NextApp gracefully`);
     });
     // electron will kill next service on exit
   }
@@ -762,6 +769,22 @@ app.once('ready', async () => {
   });
 
   app.on('before-quit', async (event) => {
+    if (typeof event.preventDefault === 'function' && !appRealClose) {
+      event.preventDefault();
+      logger.electron('onquit event.preventDefault');
+    }
+
+    const backendPort = isDev
+      ? appConfig.ports.dev.operate
+      : appConfig.ports.prod.operate;
+
+    try {
+      // await tryFetching(backendPort);
+      logger.electron('Attempting to fetch from backend before quitting.');
+    } catch (err) {
+      logger.error('Failed to fetch backend before quitting:', err);
+    }
+
     await beforeQuit(event);
   });
 
@@ -770,7 +793,23 @@ app.once('ready', async () => {
       path.join(__dirname, 'assets/icons/splash-robot-head-dock.png'),
     );
   }
+
   createSplashWindow();
+
+  await new Promise((resolve) => setTimeout(resolve, 3000));
+
+  try {
+    logger.electron('Attempting to fetch on start');
+    const backendPort = isDev
+      ? appConfig.ports.dev.operate
+      : appConfig.ports.prod.operate;
+    await tryFetching(backendPort);
+  } catch (err) {
+    logger.error(
+      '################ Failed to fetch backend before quitting:',
+      err,
+    );
+  }
 });
 
 // PROCESS SPECIFIC EVENTS (HANDLES NON-GRACEFUL TERMINATION)

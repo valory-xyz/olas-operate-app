@@ -6,6 +6,8 @@ const path = require('path');
 const { paths } = require('./constants');
 const { session } = require('electron');
 const tls = require('tls');
+// import { Agent, request } from 'undici';
+const { Agent, request } = require('undici');
 
 /**
  * Load the self-signed certificate for localhost HTTPS requests
@@ -22,6 +24,8 @@ const loadLocalCertificate = () => {
         context.context.addCACert(cert);
         return context;
       };
+
+      console.log('✅ TLS patched');
     }
   } catch (error) {
     logger.electron(
@@ -58,7 +62,9 @@ const checkUrl = (url) => {
 const configureSessionCertificates = () => {
   const defaultSession = session.defaultSession;
 
-  logger.electron('Configuring session to trust localhost certificates');
+  logger.electron(
+    '++++++++++++ Configuring session to trust localhost certificates ++++++++++++',
+  );
 
   // Configure certificate verification - this is the Electron equivalent of the CA approach
   defaultSession.setCertificateVerifyProc((request, callback) => {
@@ -76,8 +82,98 @@ const configureSessionCertificates = () => {
   });
 };
 
+const stringifyError = (e) =>
+  JSON.stringify(e, Object.getOwnPropertyNames(e), 2);
+
+// const tryFetching = (port) => {
+//   return new Promise((resolve, reject) => {
+//     console.log(`Trying to fetch from https://localhost:${port}/api`);
+//     const certPath = path.join(paths.dotOperateDirectory, 'ssl', 'cert.pem');
+//     const cert = fs.readFileSync(certPath);
+//     const agent = new https.Agent({ ca: cert });
+
+//     fetch(`https://localhost:${port}/api`, { agent })
+//       .then((res) => res.text())
+//       .then((responseText) => {
+//         console.log(`Response from port ${port}: ${responseText}`);
+//         resolve(responseText);
+//       })
+//       .catch((e) => {
+//         console.error(`Error fetching from port ${port}: ${stringifyError(e)}`);
+//         reject(e);
+//       })
+//       .finally(() => {
+//         console.log(
+//           `!!!!!!!!!!!!! Fetch attempt completed for port ${port}>>>>>>>>>>>>>>>>>>>>`,
+//         );
+//       });
+//   });
+// };
+
+const tryFetching = async (port) => {
+  // Print the fetch attempt in cyan color for visibility
+  console.log(
+    `\x1b[36mTrying to fetch from https://localhost:${port}/api\x1b[0m`,
+  );
+
+  const certPath = path.join(paths.dotOperateDirectory, 'ssl', 'cert.pem');
+  const cert = fs.readFileSync(certPath, 'utf-8');
+
+  const agent = new Agent({
+    connect: {
+      ca: cert, // Trust the self-signed cert
+      rejectUnauthorized: false, // ✅ Validate cert — but trust our CA
+    },
+  });
+
+  try {
+    const { body } = await request(`http://localhost:${port}/api`, {
+      method: 'GET',
+      dispatcher: agent,
+    });
+
+    const responseText = await body.text();
+    console.log(`\x1b[32mResponse from port ${port}: ${responseText}\x1b[0m`);
+    return responseText;
+  } catch (e) {
+    console.error(
+      `\x1b[31mError fetching from port ${port}: ${stringifyError(e)}\x1b[0m`,
+    );
+    throw e;
+  } finally {
+    console.log(
+      `\x1b[32m!!!!!!!!!!!!! Fetch attempt completed for port ${port} >>>>>>>>>\x1b[0m`,
+    );
+  }
+};
+const secureFetch = async (url, options = {}) => {
+  const certPath = path.join(paths.dotOperateDirectory, 'ssl', 'cert.pem');
+  if (!fs.existsSync(certPath)) {
+    throw new Error('SSL certificate not found');
+  }
+
+  const cert = fs.readFileSync(certPath, 'utf-8');
+
+  const agent = new Agent({
+    connect: {
+      ca: cert,
+      rejectUnauthorized: false,
+    },
+  });
+
+  const { body } = await request(url, {
+    method: options.method || 'GET',
+    dispatcher: agent,
+    ...options,
+  });
+
+  return body;
+};
 module.exports = {
   checkUrl,
   configureSessionCertificates,
   loadLocalCertificate,
+  tryFetching,
+  stringifyError,
+  secureFetch,
 };
