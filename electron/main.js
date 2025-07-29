@@ -4,7 +4,7 @@ const {
   checkUrl,
   configureSessionCertificates,
   loadLocalCertificate,
-  stringifyError,
+  parseError,
   secureFetch,
 } = require('./utils');
 
@@ -107,7 +107,7 @@ const nextUrl = () =>
   `http://localhost:${isDev ? appConfig.ports.dev.next : appConfig.ports.prod.next}`;
 
 const backendUrl = () =>
-  `http://localhost:${isDev ? appConfig.ports.dev.operate : appConfig.ports.prod.operate}`;
+  `https://localhost:${isDev ? appConfig.ports.dev.operate : appConfig.ports.prod.operate}`;
 
 /** @type {Electron.BrowserWindow | null} */
 let mainWindow = null;
@@ -184,8 +184,6 @@ async function beforeQuit(event) {
 
   logger.electron('Stop backend gracefully:');
   try {
-    const ports = appConfig.ports;
-    const backendPort = isDev ? ports.dev.operate : ports.prod.operate;
     logger.electron(
       `Killing backend server by shutdown endpoint: ${backendUrl()}/shutdown`,
     );
@@ -196,7 +194,9 @@ async function beforeQuit(event) {
       `Killed backend server by shutdown endpoint! result: ${JSON.stringify(response)}`,
     );
   } catch (err) {
-    logger.electron(`Backend stopped with error: ${stringifyError(err)}`);
+    logger.electron(
+      `\x1b[31mBackend stopped with error: ${parseError(err)}\x1b[0m`,
+    );
   }
 
   if (operateDaemon || operateDaemonPid) {
@@ -220,7 +220,7 @@ async function beforeQuit(event) {
       }
     } catch (e) {
       logger.electron(
-        `Couldn't kill operate daemon process via kill: ${stringifyError(e)}`,
+        `Couldn't kill operate daemon process via kill: ${parseError(e)}`,
       );
     }
   }
@@ -234,7 +234,7 @@ async function beforeQuit(event) {
       }
     } catch (e) {
       logger.electron(
-        `Couldn't kill devNextApp process via kill: ${stringifyError(e)}`,
+        `Couldn't kill devNextApp process via kill: ${parseError(e)}`,
       );
     }
 
@@ -243,7 +243,7 @@ async function beforeQuit(event) {
       devNextAppPid && (await killProcesses(devNextAppPid));
     } catch (e) {
       logger.electron(
-        `Couldn't kill devNextApp processes via pid: ${stringifyError(e)}`,
+        `Couldn't kill devNextApp processes via pid: ${parseError(e)}`,
       );
     }
   }
@@ -251,9 +251,7 @@ async function beforeQuit(event) {
   if (nextApp) {
     // attempt graceful close of prod next app
     await nextApp.close().catch((e) => {
-      logger.electron(
-        `Couldn't close NextApp gracefully: ${stringifyError(e)}`,
-      );
+      logger.electron(`Couldn't close NextApp gracefully: ${parseError(e)}`);
     });
     // electron will kill next service on exit
   }
@@ -386,7 +384,7 @@ const createMainWindow = async () => {
     logger.electron('Setting up store IPC');
     setupStoreIpc(ipcMain, mainWindow);
   } catch (e) {
-    logger.electron(`Store IPC failed: ${stringifyError(e)}`);
+    logger.electron(`Store IPC failed: ${parseError(e)}`);
   }
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
@@ -506,7 +504,7 @@ async function launchDaemon() {
       `https://localhost:${appConfig.ports.prod.operate}/${endpoint}`,
     );
   } catch (err) {
-    logger.electron(`Backend not running! ${stringifyError(err)}`);
+    logger.electron(`Backend not running! ${parseError(err)}`);
   }
 
   try {
@@ -518,7 +516,7 @@ async function launchDaemon() {
       `Backend stopped with result: ${JSON.stringify(await result.json())}`,
     );
   } catch (err) {
-    logger.electron(`Backend stopped with error: ${stringifyError(err)}`);
+    logger.electron(`Backend stopped with error: ${parseError(err)}`);
   }
 
   const check = new Promise(function (resolve, _reject) {
@@ -764,8 +762,6 @@ app.once('ready', async () => {
   });
 
   app.on('before-quit', async (event) => {
-    await secureFetch();
-
     await beforeQuit(event);
   });
 

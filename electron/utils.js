@@ -62,13 +62,9 @@ const checkUrl = (url) => {
 const configureSessionCertificates = () => {
   const defaultSession = session.defaultSession;
 
-  logger.electron(
-    '++++++++++++ Configuring session to trust localhost certificates ++++++++++++',
-  );
-
   // Configure certificate verification - this is the Electron equivalent of the CA approach
   defaultSession.setCertificateVerifyProc((request, callback) => {
-    const { hostname, verificationResult, errorCode } = request;
+    const { hostname } = request;
 
     if (hostname === 'localhost') {
       // For localhost, trust the certificate (equivalent to having it as a trusted CA)
@@ -82,8 +78,7 @@ const configureSessionCertificates = () => {
   });
 };
 
-const stringifyError = (e) =>
-  JSON.stringify(e, Object.getOwnPropertyNames(e), 2);
+const parseError = (e) => JSON.stringify(e, Object.getOwnPropertyNames(e), 2);
 
 const secureFetch = async (url, options = {}) => {
   const certPath = path.join(paths.dotOperateDirectory, 'ssl', 'cert.pem');
@@ -92,8 +87,12 @@ const secureFetch = async (url, options = {}) => {
   }
 
   const cert = fs.readFileSync(certPath, 'utf-8');
+
   const agent = new Agent({
-    connect: { ca: cert, rejectUnauthorized: false },
+    connect: {
+      ca: cert,
+      rejectUnauthorized: false,
+    },
   });
 
   const { body } = await request(url, {
@@ -104,10 +103,11 @@ const secureFetch = async (url, options = {}) => {
 
   return body;
 };
+
 module.exports = {
   checkUrl,
   configureSessionCertificates,
   loadLocalCertificate,
-  stringifyError,
+  parseError,
   secureFetch,
 };
