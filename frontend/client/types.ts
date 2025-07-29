@@ -80,7 +80,6 @@ type ConfigurationTemplate = {
   rpc?: string; // added on deployment
   agent_id: number;
   threshold: number;
-  use_staking: boolean;
   use_mech_marketplace?: boolean;
   cost_of_bond: number;
   monthly_gas_estimate: number;
