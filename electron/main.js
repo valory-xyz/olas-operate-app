@@ -4,7 +4,6 @@ const {
   checkUrl,
   configureSessionCertificates,
   loadLocalCertificate,
-  tryFetching,
   stringifyError,
   secureFetch,
 } = require('./utils');
@@ -107,6 +106,9 @@ let appConfig = {
 const nextUrl = () =>
   `http://localhost:${isDev ? appConfig.ports.dev.next : appConfig.ports.prod.next}`;
 
+const backendUrl = () =>
+  `http://localhost:${isDev ? appConfig.ports.dev.operate : appConfig.ports.prod.operate}`;
+
 /** @type {Electron.BrowserWindow | null} */
 let mainWindow = null;
 /** @type {Electron.BrowserWindow | null} */
@@ -180,23 +182,20 @@ async function beforeQuit(event) {
   splashWindow?.destroy();
   mainWindow?.destroy();
 
-  logger.electron('--------------- Stop backend gracefully: ---------------');
+  logger.electron('Stop backend gracefully:');
   try {
-    const backendPort = isDev
-      ? appConfig.ports.dev.operate
-      : appConfig.ports.prod.operate;
-    // await tryFetching(backendPort);
+    const ports = appConfig.ports;
+    const backendPort = isDev ? ports.dev.operate : ports.prod.operate;
     logger.electron(
-      `Killing backend server by shutdown endpoint: https://localhost:${backendPort}/shutdown`,
+      `Killing backend server by shutdown endpoint: ${backendUrl()}/shutdown`,
     );
-    const body = await secureFetch(`https://localhost:${backendPort}/shutdown`);
+    const body = await secureFetch(`${backendUrl()}/shutdown`);
     const response = await body.json();
 
     logger.electron(
       `Killed backend server by shutdown endpoint! result: ${JSON.stringify(response)}`,
     );
   } catch (err) {
-    logger.electron('>>>>>>>>>>>> Sorry: >>>>>>>>>> ');
     logger.electron(`Backend stopped with error: ${stringifyError(err)}`);
   }
 
@@ -252,10 +251,9 @@ async function beforeQuit(event) {
   if (nextApp) {
     // attempt graceful close of prod next app
     await nextApp.close().catch((e) => {
-      // logger.electron(
-      //   `Couldn't close NextApp gracefully: ${stringifyError(e)}`,
-      // );
-      logger.electron(`Couldn't close NextApp gracefully`);
+      logger.electron(
+        `Couldn't close NextApp gracefully: ${stringifyError(e)}`,
+      );
     });
     // electron will kill next service on exit
   }
@@ -388,10 +386,7 @@ const createMainWindow = async () => {
     logger.electron('Setting up store IPC');
     setupStoreIpc(ipcMain, mainWindow);
   } catch (e) {
-    logger.electron(
-      'Store IPC failed:',
-      JSON.stringify(e, Object.getOwnPropertyNames(e), 2),
-    );
+    logger.electron(`Store IPC failed: ${stringifyError(e)}`);
   }
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
@@ -432,7 +427,7 @@ const createAgentActivityWindow = async () => {
 };
 
 // Create SSL certificate for the backend
-function createAndLoadSSLCertificate() {
+function createAndLoadSslCertificate() {
   try {
     logger.electron('Creating SSL certificate...');
 
@@ -520,14 +515,14 @@ async function launchDaemon() {
       `https://localhost:${appConfig.ports.prod.operate}/shutdown`,
     );
     logger.electron(
-      'Backend stopped with result: ' + JSON.stringify(await result.json()),
+      `Backend stopped with result: ${JSON.stringify(await result.json())}`,
     );
   } catch (err) {
     logger.electron(`Backend stopped with error: ${stringifyError(err)}`);
   }
 
   const check = new Promise(function (resolve, _reject) {
-    const { keyPath, certPath } = createAndLoadSSLCertificate();
+    const { keyPath, certPath } = createAndLoadSslCertificate();
     operateDaemon = spawn(
       path.join(
         process.resourcesPath,
@@ -571,7 +566,7 @@ async function launchDaemon() {
 }
 
 async function launchDaemonDev() {
-  const { keyPath, certPath } = createAndLoadSSLCertificate();
+  const { keyPath, certPath } = createAndLoadSslCertificate();
   const check = new Promise(function (resolve, _reject) {
     operateDaemon = spawn('poetry', [
       'run',
@@ -769,21 +764,7 @@ app.once('ready', async () => {
   });
 
   app.on('before-quit', async (event) => {
-    if (typeof event.preventDefault === 'function' && !appRealClose) {
-      event.preventDefault();
-      logger.electron('onquit event.preventDefault');
-    }
-
-    const backendPort = isDev
-      ? appConfig.ports.dev.operate
-      : appConfig.ports.prod.operate;
-
-    try {
-      // await tryFetching(backendPort);
-      logger.electron('Attempting to fetch from backend before quitting.');
-    } catch (err) {
-      logger.error('Failed to fetch backend before quitting:', err);
-    }
+    await secureFetch();
 
     await beforeQuit(event);
   });
@@ -795,21 +776,6 @@ app.once('ready', async () => {
   }
 
   createSplashWindow();
-
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
-  try {
-    logger.electron('Attempting to fetch on start');
-    const backendPort = isDev
-      ? appConfig.ports.dev.operate
-      : appConfig.ports.prod.operate;
-    await tryFetching(backendPort);
-  } catch (err) {
-    logger.error(
-      '################ Failed to fetch backend before quitting:',
-      err,
-    );
-  }
 });
 
 // PROCESS SPECIFIC EVENTS (HANDLES NON-GRACEFUL TERMINATION)
