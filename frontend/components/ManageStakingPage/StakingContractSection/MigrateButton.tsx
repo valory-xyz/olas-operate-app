@@ -145,9 +145,6 @@ export const MigrateButton = ({
                         // @ts-expect-error TODO: to be fixed
                         acc[middlewareChain] = {
                           staking_program_id: stakingProgramIdToMigrateTo,
-                          use_mech_marketplace:
-                            stakingProgramIdToMigrateTo ===
-                            STAKING_PROGRAM_IDS.PearlBetaMechMarketplace,
                         };
                         return acc;
                       },

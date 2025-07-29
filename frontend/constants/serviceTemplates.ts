@@ -29,7 +29,6 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 14,
       threshold: 1,
-      use_mech_marketplace: false,
       // TODO: pull fund requirements from staking program config
       cost_of_bond: +parseEther(0.001),
       monthly_gas_estimate: +parseEther(10),

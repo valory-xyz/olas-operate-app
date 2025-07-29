@@ -80,7 +80,6 @@ const createService = async ({
               ...config,
               rpc: CHAIN_CONFIG[asEvmChainId(middlewareChain)].rpc,
               staking_program_id: stakingProgramId,
-              use_mech_marketplace: useMechMarketplace,
             };
             return acc;
           },
