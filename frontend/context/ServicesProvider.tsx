@@ -97,7 +97,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const { store } = useElectronApi();
   const { storeState } = useStore();
   const { pageState } = usePageState();
-
   const { paused, setPaused, togglePaused } = usePause();
 
   // state to track the services ids message shown
