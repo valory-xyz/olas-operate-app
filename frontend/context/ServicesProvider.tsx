@@ -1,4 +1,5 @@
 import { QueryObserverBaseResult, useQuery } from '@tanstack/react-query';
+import { message, MessageArgsProps } from 'antd';
 import { noop } from 'lodash';
 import {
   createContext,
@@ -15,11 +16,17 @@ import {
   MiddlewareChain,
   MiddlewareDeploymentStatus,
   MiddlewareServiceResponse,
+  ServiceValidationResponse,
 } from '@/client';
 import { AGENT_CONFIG } from '@/config/agents';
-import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
+import {
+  FIFTEEN_SECONDS_INTERVAL,
+  FIVE_SECONDS_INTERVAL,
+} from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { MESSAGE_WIDTH } from '@/constants/width';
 import { AgentType } from '@/enums/Agent';
+import { Pages } from '@/enums/Pages';
 import {
   AgentEoa,
   AgentSafe,
@@ -28,6 +35,7 @@ import {
   WalletType,
 } from '@/enums/Wallet';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { usePageState } from '@/hooks/usePageState';
 import { UsePause, usePause } from '@/hooks/usePause';
 import { useStore } from '@/hooks/useStore';
 import { ServicesService } from '@/service/Services';
@@ -38,6 +46,14 @@ import { isNilOrEmpty } from '@/utils/lodashExtensions';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
+
+const TECHNICAL_ISSUE: MessageArgsProps = {
+  type: 'error',
+  content:
+    "It looks like one of your agents has encountered a technical issue and might won't be able to run. You can open a Discord ticket and connect with the community to resolve this.",
+  key: 'service-error',
+  style: { maxWidth: MESSAGE_WIDTH, margin: '0 auto' },
+};
 
 type ServicesResponse = Pick<
   QueryObserverBaseResult<MiddlewareServiceResponse[]>,
@@ -81,8 +97,15 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
   const { store } = useElectronApi();
   const { storeState } = useStore();
+  const { pageState } = usePageState();
+
   const { paused, setPaused, togglePaused } = usePause();
 
+  // state to track the services ids message shown
+  // so that it is not shown again for the same service
+  const [servicesIdsMessageShown, setServicesIdsMessageShown] = useState(
+    new Set<string>(),
+  );
   const agentTypeFromStore = storeState?.lastSelectedAgentType;
 
   // set the agent type from the store on load
@@ -105,6 +128,24 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     queryFn: ({ signal }) => ServicesService.getServices(signal),
     enabled: isOnline && !paused,
     refetchInterval: FIVE_SECONDS_INTERVAL,
+  });
+
+  const {
+    data: servicesValidationStatus,
+    isLoading: isServicesValidationStatusLoading,
+    isError: isServicesValidationStatusError,
+  } = useQuery<ServiceValidationResponse>({
+    queryKey: REACT_QUERY_KEYS.SERVICES_VALIDATION_STATUS_KEY,
+    queryFn: ({ signal }) =>
+      ServicesService.getServicesValidationStatus(signal),
+    enabled: isOnline && !paused,
+    refetchInterval: FIFTEEN_SECONDS_INTERVAL,
+  });
+
+  console.log('Services validation status:', {
+    servicesValidationStatus,
+    isServicesValidationStatusLoading,
+    isServicesValidationStatusError,
   });
 
   const {
@@ -133,6 +174,39 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       (service) => service.service_config_id === selectedServiceConfigId,
     );
   }, [selectedServiceConfigId, services]);
+
+  console.log('Selected service:', {
+    selectedService,
+    selectedServiceConfigId,
+    services,
+    servicesIdsMessageShown,
+  });
+
+  // If the selected service is not valid,
+  // show a message to the user only in the main screen.
+  useEffect(() => {
+    if (!selectedService) return;
+    if (!servicesValidationStatus) return;
+    if (!selectedServiceConfigId) return;
+    if (!selectedServiceConfigId) return;
+    if (pageState !== Pages.Main) return;
+
+    const isValid = servicesValidationStatus[selectedServiceConfigId];
+    if (isValid) return;
+
+    if (servicesIdsMessageShown.has(selectedServiceConfigId)) return;
+
+    message.error(TECHNICAL_ISSUE);
+    setServicesIdsMessageShown((prev) =>
+      new Set(prev).add(selectedServiceConfigId),
+    );
+  }, [
+    selectedServiceConfigId,
+    servicesValidationStatus,
+    selectedService,
+    servicesIdsMessageShown,
+    pageState,
+  ]);
 
   const selectedServiceWithStatus = useMemo<Service | undefined>(() => {
     if (!selectedService) return;

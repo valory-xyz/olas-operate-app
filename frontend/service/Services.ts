@@ -3,6 +3,7 @@ import {
   MiddlewareServiceResponse,
   ServiceConfigId,
   ServiceTemplate,
+  ServiceValidationResponse,
   SupportedMiddlewareChain,
 } from '@/client';
 import { CHAIN_CONFIG } from '@/config/chains';
@@ -48,6 +49,22 @@ const getServices = async (
   }).then((response) => {
     if (response.ok) return response.json();
     throw new Error('Failed to fetch services');
+  });
+
+/**
+ * Gets an array of services from the backend
+ * @returns An array of services
+ */
+const getServicesValidationStatus = async (
+  signal?: AbortSignal,
+): Promise<ServiceValidationResponse> =>
+  fetch(`${BACKEND_URL_V2}/services/validate`, {
+    method: 'GET',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    signal,
+  }).then((response) => {
+    if (response.ok) return response.json();
+    throw new Error('Failed to fetch services validation status');
   });
 
 /**
@@ -198,6 +215,7 @@ const withdrawBalance = async ({
 export const ServicesService = {
   getService,
   getServices,
+  getServicesValidationStatus,
   getDeployment,
   startService,
   createService,

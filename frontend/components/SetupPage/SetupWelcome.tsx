@@ -26,7 +26,6 @@ import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { AccountService } from '@/service/Account';
-import { ServicesService } from '@/service/Services';
 import { getErrorMessage } from '@/utils/error';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 
@@ -131,21 +130,13 @@ const SetupWelcomeLogin = () => {
     async ({ password }: { password: string }) => {
       setIsLoggingIn(true);
 
-      // Check if account is valid
       try {
         await AccountService.loginAccount(password);
         await updateBalances();
-      } catch (e) {
-        message.error(getErrorMessage(e));
-      }
-
-      // Check if services are available
-      try {
-        await ServicesService.getServices();
         setCanNavigate(true);
         setUserLoggedIn();
       } catch (e) {
-        message.open(TECHNICAL_ISSUE);
+        message.error(getErrorMessage(e));
       } finally {
         setIsLoggingIn(false);
       }

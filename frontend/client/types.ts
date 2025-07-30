@@ -74,6 +74,10 @@ export type MiddlewareServiceResponse = {
   env_variables: { [key: string]: EnvVariableAttributes };
 };
 
+export type ServiceValidationResponse = {
+  [service_config_id: string]: boolean;
+};
+
 type ConfigurationTemplate = {
   staking_program_id?: StakingProgramId; // added on deployment
   nft: string;
