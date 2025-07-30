@@ -87,7 +87,7 @@ const secureFetch = async (url, options = {}) => {
   const agent = new Agent({
     connect: {
       ca: cert,
-      rejectUnauthorized: true, // TODO: To figure out how to handle this properly
+      rejectUnauthorized: false, // TODO: To figure out how to handle this properly
     },
   });
 
