@@ -62,27 +62,29 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     [isPaused],
   );
 
-  const canRunQuery = isOnline && !!masterWallets?.length && !!services?.length;
-
   const { isLoading, data, refetch } = useQuery({
-    queryKey: canRunQuery
-      ? [
-          'balances',
-          isOnline,
-          masterWallets.map((w) => w.address),
-          services.map((s) => s.service_config_id),
-        ]
-      : ['balances-disabled'],
-    queryFn: () => {
-      if (!canRunQuery) {
-        return Promise.resolve({ walletBalances: [], stakedBalances: [] });
+    queryKey: [
+      'balances',
+      isOnline,
+      masterWallets?.map((w) => w.address),
+      services?.map((s) => s.service_config_id),
+      serviceWallets?.map((sw) => sw.address),
+    ],
+    queryFn: async () => {
+      if (!isOnline || !masterWallets?.length || !services) {
+        throw new Error('Invalid state, should not be enabled');
       }
 
-      return getCrossChainBalances({ services, masterWallets, serviceWallets });
+      return getCrossChainBalances({
+        services,
+        masterWallets,
+        serviceWallets,
+      });
     },
-    enabled: canRunQuery,
+    enabled: isOnline && !!masterWallets?.length && !!services,
     refetchInterval,
   });
+
   const walletBalances = useMemo(() => data?.walletBalances ?? [], [data]);
   const stakedBalances = useMemo(() => data?.stakedBalances ?? [], [data]);
 

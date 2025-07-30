@@ -57,7 +57,7 @@ const TECHNICAL_ISSUE: MessageArgsProps = {
 
 type ServicesResponse = Pick<
   QueryObserverBaseResult<MiddlewareServiceResponse[]>,
-  'isLoading' | 'refetch' | 'isFetched' | 'isError'
+  'isLoading' | 'refetch' | 'isFetched'
 >;
 
 type ServicesContextType = {
@@ -78,7 +78,6 @@ type ServicesContextType = {
 
 export const ServicesContext = createContext<ServicesContextType>({
   isFetched: false,
-  isError: false,
   paused: false,
   setPaused: noop,
   togglePaused: noop,
@@ -121,7 +120,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const {
     data: services,
     isLoading: isServicesLoading,
-    isError: isServicesError,
     refetch,
   } = useQuery<MiddlewareServiceResponse[]>({
     queryKey: REACT_QUERY_KEYS.SERVICES_KEY,
@@ -133,19 +131,12 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const {
     data: servicesValidationStatus,
     isLoading: isServicesValidationStatusLoading,
-    isError: isServicesValidationStatusError,
   } = useQuery<ServiceValidationResponse>({
     queryKey: REACT_QUERY_KEYS.SERVICES_VALIDATION_STATUS_KEY,
     queryFn: ({ signal }) =>
       ServicesService.getServicesValidationStatus(signal),
     enabled: isOnline && !paused,
     refetchInterval: FIFTEEN_SECONDS_INTERVAL,
-  });
-
-  console.log('Services validation status:', {
-    servicesValidationStatus,
-    isServicesValidationStatusLoading,
-    isServicesValidationStatusError,
   });
 
   const {
@@ -175,19 +166,11 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     );
   }, [selectedServiceConfigId, services]);
 
-  console.log('Selected service:', {
-    selectedService,
-    selectedServiceConfigId,
-    services,
-    servicesIdsMessageShown,
-  });
-
   // If the selected service is not valid,
   // show a message to the user only in the main screen.
   useEffect(() => {
-    if (!selectedService) return;
+    if (isServicesValidationStatusLoading) return;
     if (!servicesValidationStatus) return;
-    if (!selectedServiceConfigId) return;
     if (!selectedServiceConfigId) return;
     if (pageState !== Pages.Main) return;
 
@@ -201,9 +184,9 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       new Set(prev).add(selectedServiceConfigId),
     );
   }, [
-    selectedServiceConfigId,
+    isServicesValidationStatusLoading,
     servicesValidationStatus,
-    selectedService,
+    selectedServiceConfigId,
     servicesIdsMessageShown,
     pageState,
   ]);
@@ -313,7 +296,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         serviceWallets,
         isFetched: !isServicesLoading,
         isLoading: isServicesLoading,
-        isError: isServicesError,
         refetch,
 
         // pause
