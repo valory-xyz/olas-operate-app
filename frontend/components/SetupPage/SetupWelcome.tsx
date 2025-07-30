@@ -1,7 +1,17 @@
-import { Button, Card, Flex, Form, Input, Spin, Typography } from 'antd';
+import {
+  Button,
+  Card,
+  Flex,
+  Form,
+  Input,
+  MessageArgsProps,
+  Spin,
+  Typography,
+} from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { MESSAGE_WIDTH } from '@/constants/width';
 import { useMessageApi } from '@/context/MessageProvider';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -16,12 +26,21 @@ import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { AccountService } from '@/service/Account';
+import { ServicesService } from '@/service/Services';
 import { getErrorMessage } from '@/utils/error';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { FormFlex } from '../styled/FormFlex';
 
 const { Title } = Typography;
+
+const TECHNICAL_ISSUE: MessageArgsProps = {
+  type: 'error',
+  content:
+    "It looks like one of your agents has encountered a technical issue and might won't be able to run. You can open a Discord ticket and connect with the community to resolve this.",
+  key: 'service-error',
+  style: { maxWidth: MESSAGE_WIDTH, margin: '0 auto' },
+};
 
 enum MiddlewareAccountIsSetup {
   True,
@@ -111,13 +130,22 @@ const SetupWelcomeLogin = () => {
   const handleLogin = useCallback(
     async ({ password }: { password: string }) => {
       setIsLoggingIn(true);
+
+      // Check if account is valid
       try {
         await AccountService.loginAccount(password);
         await updateBalances();
+      } catch (e) {
+        message.error(getErrorMessage(e));
+      }
+
+      // Check if services are available
+      try {
+        await ServicesService.getServices();
         setCanNavigate(true);
         setUserLoggedIn();
       } catch (e) {
-        message.error(getErrorMessage(e));
+        message.open(TECHNICAL_ISSUE);
       } finally {
         setIsLoggingIn(false);
       }

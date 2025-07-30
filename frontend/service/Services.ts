@@ -39,7 +39,7 @@ const getService = async ({
  * @returns An array of services
  */
 const getServices = async (
-  signal: AbortSignal,
+  signal?: AbortSignal,
 ): Promise<MiddlewareServiceResponse[]> =>
   fetch(`${BACKEND_URL_V2}/services`, {
     method: 'GET',
