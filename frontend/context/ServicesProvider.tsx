@@ -1,4 +1,5 @@
 import { QueryObserverBaseResult, useQuery } from '@tanstack/react-query';
+import { message } from 'antd';
 import { noop } from 'lodash';
 import {
   createContext,
@@ -19,7 +20,9 @@ import {
 import { AGENT_CONFIG } from '@/config/agents';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { MESSAGE_WIDTH } from '@/constants/width';
 import { AgentType } from '@/enums/Agent';
+import { Pages } from '@/enums/Pages';
 import {
   AgentEoa,
   AgentSafe,
@@ -28,6 +31,7 @@ import {
   WalletType,
 } from '@/enums/Wallet';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { usePageState } from '@/hooks/usePageState';
 import { UsePause, usePause } from '@/hooks/usePause';
 import { useStore } from '@/hooks/useStore';
 import { ServicesService } from '@/service/Services';
@@ -79,8 +83,12 @@ export const ServicesContext = createContext<ServicesContextType>({
 export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
   const { store } = useElectronApi();
-  const { paused, setPaused, togglePaused } = usePause();
+  const { isUserLoggedIn, pageState } = usePageState();
   const { storeState } = useStore();
+  const { paused, setPaused, togglePaused } = usePause();
+
+  const [isServiceCorruptedMessageShown, setIsServiceCorruptedMessageShown] =
+    useState(false);
 
   const agentTypeFromStore = storeState?.lastSelectedAgentType;
 
@@ -97,6 +105,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const {
     data: services,
     isLoading: isServicesLoading,
+    isError: isServicesError,
     refetch,
   } = useQuery<MiddlewareServiceResponse[]>({
     queryKey: REACT_QUERY_KEYS.SERVICES_KEY,
@@ -106,6 +115,29 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   });
 
   // TODO: what should happen if the above query fails with 500 error code
+  useEffect(() => {
+    if (!isServicesError) return;
+    if (!isUserLoggedIn) return;
+    if (pageState !== Pages.Main) return;
+    if (!isOnline) return;
+    if (isServiceCorruptedMessageShown) return;
+
+    message.open({
+      type: 'error',
+      content:
+        "It looks like one of your agents has encountered a technical issue and might won't be able to run. You can open a Discord ticket and connect with the community to resolve this.",
+      key: 'service-error',
+      style: { maxWidth: MESSAGE_WIDTH, margin: '0 auto' },
+    });
+
+    setIsServiceCorruptedMessageShown(true);
+  }, [
+    isServicesError,
+    isUserLoggedIn,
+    pageState,
+    isOnline,
+    isServiceCorruptedMessageShown,
+  ]);
 
   const {
     data: deploymentDetails,
