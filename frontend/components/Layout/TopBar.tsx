@@ -8,6 +8,8 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 import { useStore } from '@/hooks/useStore';
 
+import { ExportLogsButton } from '../ExportLogsButton';
+
 const { Text } = Typography;
 
 const TrafficLightIcon = styled.div`
@@ -71,7 +73,7 @@ export const TopBar = () => {
       <Text>{`Pearl (beta) ${envName ? `(${envName})` : ''}`.trim()}</Text>
 
       {/* for now, showing only on Main page */}
-      {isUserLoggedIn && pageState === Pages.Main && (
+      {isUserLoggedIn && pageState === Pages.Main ? (
         <Flex align="center" className="ml-auto">
           <Button
             type="text"
@@ -85,6 +87,10 @@ export const TopBar = () => {
             icon={<SettingOutlined />}
             onClick={() => goto(Pages.Settings)}
           />
+        </Flex>
+      ) : (
+        <Flex align="flex-end" className="ml-auto">
+          <ExportLogsButton size="small" />
         </Flex>
       )}
     </TopBarContainer>
