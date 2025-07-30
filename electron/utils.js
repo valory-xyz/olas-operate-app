@@ -27,7 +27,7 @@ const loadLocalCertificate = () => {
         return context;
       };
 
-      logger.electron('✅ TLS patched');
+      logger.electron('TLS patched to trust local certificate');
     }
   } catch (error) {
     logger.electron(`Failed to read local certificate: ${parseError(error)}`);
