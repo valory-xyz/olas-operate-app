@@ -1,6 +1,5 @@
-import { FileZipOutlined } from '@ant-design/icons';
 import { Button, ButtonProps, message } from 'antd';
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useLogs } from '@/hooks/useLogs';
@@ -14,9 +13,9 @@ const LogsSavedMessage = ({ onClick }: { onClick: () => void }) => (
   </span>
 );
 
-type ExportLogsButtonProps = { size?: ButtonProps['size']; icon?: ReactNode };
+type ExportLogsButtonProps = { size?: ButtonProps['size'] };
 
-export const ExportLogsButton = ({ size, icon }: ExportLogsButtonProps) => {
+export const ExportLogsButton = ({ size }: ExportLogsButtonProps) => {
   const { openPath, saveLogs } = useElectronApi();
   const logs = useLogs();
 
@@ -55,7 +54,6 @@ export const ExportLogsButton = ({ size, icon }: ExportLogsButtonProps) => {
       loading={isLoading || canSaveLogs}
       onClick={onSaveLogs}
       size={size || 'large'}
-      icon={icon ? <FileZipOutlined /> : null}
       type="primary"
       ghost
     >
