@@ -88,7 +88,7 @@ export const TopBar = () => {
             onClick={() => goto(Pages.Settings)}
           />
         </Flex>
-      ) : (
+      ) : pageState === Pages.HelpAndSupport ? null : (
         <Flex align="flex-end" className="ml-auto">
           <ExportLogsButton size="small" />
         </Flex>

@@ -16,7 +16,7 @@ const LogsSavedMessage = ({ onClick }: { onClick: () => void }) => (
 
 type ExportLogsButtonProps = { size?: ButtonProps['size']; icon?: ReactNode };
 
-export const ExportLogsButton = ({ size }: ExportLogsButtonProps) => {
+export const ExportLogsButton = ({ size, icon }: ExportLogsButtonProps) => {
   const { openPath, saveLogs } = useElectronApi();
   const logs = useLogs();
 
@@ -55,7 +55,7 @@ export const ExportLogsButton = ({ size }: ExportLogsButtonProps) => {
       loading={isLoading || canSaveLogs}
       onClick={onSaveLogs}
       size={size || 'large'}
-      icon={<FileZipOutlined />}
+      icon={icon ? <FileZipOutlined /> : null}
       type="primary"
       ghost
     >
