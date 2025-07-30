@@ -200,14 +200,14 @@ async function beforeQuit(event) {
   }
 
   if (operateDaemon || operateDaemonPid) {
-    // clean-up via pid first*
+    // clean-up via pid first
     // may have dangling subprocesses
     try {
       logger.electron('Killing backend server kill process');
       operateDaemonPid && (await killProcesses(operateDaemonPid));
     } catch (e) {
       logger.electron(
-        `Couldn't kill daemon processes via pid: ${JSON.stringify(e, Object.getOwnPropertyNames(e), 2)}`,
+        `Couldn't kill daemon processes via pid: ${parseError(e)}`,
       );
     }
 
@@ -504,7 +504,7 @@ async function launchDaemon() {
       `https://localhost:${appConfig.ports.prod.operate}/${endpoint}`,
     );
   } catch (err) {
-    logger.electron(`Backend not running! ${parseError(err)}`);
+    logger.electron(`Backend not running: ${parseError(err)}`);
   }
 
   try {
