@@ -2,7 +2,6 @@ import { Transak } from '@transak/transak-sdk';
 import { Flex, Spin, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 
-import { isDev } from '@/constants/env';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
@@ -33,9 +32,11 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     /** https://docs.transak.com/docs/transak-sdk */
     const transak = new Transak({
       apiKey,
-      environment: isDev
-        ? Transak.ENVIRONMENTS.STAGING
-        : Transak.ENVIRONMENTS.PRODUCTION,
+      // environment: isDev
+      //   ? Transak.ENVIRONMENTS.STAGING
+      //   : Transak.ENVIRONMENTS.PRODUCTION,
+      environment: Transak.ENVIRONMENTS.STAGING,
+
       widgetHeight: '700px',
       widgetWidth: '500px',
       /** only BUY allowed */

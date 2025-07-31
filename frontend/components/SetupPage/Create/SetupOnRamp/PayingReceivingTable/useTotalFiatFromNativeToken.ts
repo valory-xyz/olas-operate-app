@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { isDev } from '@/constants/env';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useServices } from '@/hooks/useServices';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
@@ -34,9 +33,12 @@ type Quote = {
   notes: string[];
 };
 
-const transakPriceUrl = isDev
-  ? 'https://api-stg.transak.com/api/v1/pricing/public/quotes'
-  : 'https://api.transak.com/api/v1/pricing/public/quotes';
+// const transakPriceUrl = isDev
+//   ? 'https://api-stg.transak.com/api/v1/pricing/public/quotes'
+//   : 'https://api.transak.com/api/v1/pricing/public/quotes';
+
+const transakPriceUrl =
+  'https://api-stg.transak.com/api/v1/pricing/public/quotes';
 
 const fetchTransakQuote = async (
   network: string,
