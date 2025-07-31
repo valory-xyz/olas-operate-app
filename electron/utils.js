@@ -8,7 +8,8 @@ const { session } = require('electron');
 const tls = require('tls');
 const { Agent, request } = require('undici');
 
-const parseError = (e) => JSON.stringify(e, Object.getOwnPropertyNames(e), 2);
+const stringifyJson = (e) =>
+  JSON.stringify(e, Object.getOwnPropertyNames(e), 2);
 
 /**
  * Load the self-signed certificate for localhost HTTPS requests
@@ -30,7 +31,9 @@ const loadLocalCertificate = () => {
       logger.electron('TLS patched to trust local certificate');
     }
   } catch (error) {
-    logger.electron(`Failed to read local certificate: ${parseError(error)}`);
+    logger.electron(
+      `Failed to read local certificate: ${stringifyJson(error)}`,
+    );
   }
 };
 
@@ -104,6 +107,6 @@ module.exports = {
   checkUrl,
   configureSessionCertificates,
   loadLocalCertificate,
-  parseError,
+  stringifyJson,
   secureFetch,
 };
