@@ -4,12 +4,14 @@ import { CustomAlert } from '@/components/Alert';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
+import { useSharedContext } from '@/hooks/useSharedContext';
 
 const { Text } = Typography;
 
 export const UnderConstruction = ({ showMoreInfo = false }) => {
   const { selectedAgentConfig } = useServices();
   const { goto } = usePageState();
+  const { mainOlasBalance } = useSharedContext();
 
   if (!selectedAgentConfig.isUnderConstruction) return null;
 
@@ -26,7 +28,7 @@ export const UnderConstruction = ({ showMoreInfo = false }) => {
             unspecified time.{' '}
             {showMoreInfo && 'You can withdraw agent funds at any time.'}
           </div>
-          {showMoreInfo && (
+          {showMoreInfo && mainOlasBalance !== 0 && (
             <div className="w-fit">
               <Button
                 onClick={() => goto(Pages.ManageWallet)}
