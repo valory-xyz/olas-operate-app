@@ -168,6 +168,32 @@ function handleAppSettings() {
 let isBeforeQuitting = false;
 let appRealClose = false;
 
+async function stopBackend() {
+  // Free up backend port if already occupied
+  try {
+    logger.electron('Killing backend server by shutdown endpoint!');
+    let result = await secureFetch(`${backendUrl()}/shutdown`);
+    logger.electron(
+      `Backend stopped with result: ${JSON.stringify(await result.json())}`,
+    );
+  } catch (err) {
+    logger.electron(`Backend stopped with error: ${parseError(err)}`);
+  }
+
+  try {
+    await secureFetch(`${backendUrl()}/api`);
+    logger.electron('Killing backend server!');
+    let endpoint = fs
+      .readFileSync(`${paths.dotOperateDirectory}/operate.kill`)
+      .toString()
+      .trim();
+
+    await secureFetch(`${backendUrl()}/${endpoint}`);
+  } catch (err) {
+    logger.electron(`Backend not running: ${parseError(err)}`);
+  }
+}
+
 async function beforeQuit(event) {
   if (typeof event.preventDefault === 'function' && !appRealClose) {
     event.preventDefault();
@@ -183,21 +209,7 @@ async function beforeQuit(event) {
   mainWindow?.destroy();
 
   logger.electron('Stop backend gracefully:');
-  try {
-    logger.electron(
-      `Killing backend server by shutdown endpoint: ${backendUrl()}/shutdown`,
-    );
-    const body = await secureFetch(`${backendUrl()}/shutdown`);
-    const response = await body.json();
-
-    logger.electron(
-      `Killed backend server by shutdown endpoint! result: ${JSON.stringify(response)}`,
-    );
-  } catch (err) {
-    logger.electron(
-      `\x1b[31mBackend stopped with error: ${parseError(err)}\x1b[0m`,
-    );
-  }
+  await stopBackend();
 
   if (operateDaemon || operateDaemonPid) {
     // clean-up via pid first
@@ -491,34 +503,6 @@ function createAndLoadSslCertificate() {
 }
 
 async function launchDaemon() {
-  // Free up backend port if already occupied
-  try {
-    await fetch(`https://localhost:${appConfig.ports.prod.operate}/api`);
-    logger.electron('Killing backend server!');
-    let endpoint = fs
-      .readFileSync(`${paths.dotOperateDirectory}/operate.kill`)
-      .toString()
-      .trim();
-
-    await fetch(
-      `https://localhost:${appConfig.ports.prod.operate}/${endpoint}`,
-    );
-  } catch (err) {
-    logger.electron(`Backend not running: ${parseError(err)}`);
-  }
-
-  try {
-    logger.electron('Killing backend server by shutdown endpoint!');
-    let result = await fetch(
-      `https://localhost:${appConfig.ports.prod.operate}/shutdown`,
-    );
-    logger.electron(
-      `Backend stopped with result: ${JSON.stringify(await result.json())}`,
-    );
-  } catch (err) {
-    logger.electron(`Backend stopped with error: ${parseError(err)}`);
-  }
-
   const check = new Promise(function (resolve, _reject) {
     const { keyPath, certPath } = createAndLoadSslCertificate();
     operateDaemon = spawn(
@@ -671,6 +655,9 @@ ipcMain.on('check', async function (event, _argument) {
     } else {
       await setupUbuntu(event.sender);
     }
+
+    // Free up backend port if already occupied
+    await stopBackend();
 
     if (isDev) {
       event.sender.send(
