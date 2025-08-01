@@ -48,12 +48,3 @@ export enum MiddlewareDeploymentStatus {
   STOPPED = 5,
   DELETED = 6,
 }
-
-/**
- * @deprecated Use `MiddlewareChain` from '@/constants/envVariables'.
- */
-export enum EnvProvisionType {
-  FIXED = 'fixed',
-  USER = 'user',
-  COMPUTED = 'computed',
-}
