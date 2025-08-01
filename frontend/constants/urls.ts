@@ -46,6 +46,8 @@ export const SUPPORT_URL: Url =
   'https://discord.com/channels/899649805582737479/1244588374736502847';
 export const DISCORD_TICKET_URL: Url =
   'https://discord.com/channels/899649805582737479/1245674435160178712/1263815577240076308';
+export const COMMUNITY_ASSISTANCE_URL: Url =
+  'https://discord.com/channels/899649805582737479/1335000001797034044';
 
 // github
 export const GITHUB_API_LATEST_RELEASE: Url =
