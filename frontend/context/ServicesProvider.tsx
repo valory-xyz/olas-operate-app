@@ -52,6 +52,7 @@ const TECHNICAL_ISSUE: MessageArgsProps = {
   content:
     "It looks like one of your agents has encountered a technical issue and might won't be able to run. You can open a Discord ticket and connect with the community to resolve this.",
   key: 'service-error',
+  duration: 5,
   style: { maxWidth: MESSAGE_WIDTH, margin: '0 auto' },
 };
 
@@ -101,9 +102,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   // state to track the services ids message shown
   // so that it is not shown again for the same service
-  const [servicesIdsMessageShown, setServicesIdsMessageShown] = useState(
-    new Set<string>(),
-  );
+  const [isInvalidMessageShown, setIsInvalidMessageShown] = useState(false);
   const agentTypeFromStore = storeState?.lastSelectedAgentType;
 
   // set the agent type from the store on load
@@ -172,21 +171,18 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     if (!servicesValidationStatus) return;
     if (!selectedServiceConfigId) return;
     if (pageState !== Pages.Main) return;
+    if (isInvalidMessageShown) return;
 
     const isValid = servicesValidationStatus[selectedServiceConfigId];
     if (isValid) return;
 
-    if (servicesIdsMessageShown.has(selectedServiceConfigId)) return;
-
     message.error(TECHNICAL_ISSUE);
-    setServicesIdsMessageShown((prev) =>
-      new Set(prev).add(selectedServiceConfigId),
-    );
+    setIsInvalidMessageShown(true);
   }, [
     isServicesValidationStatusLoading,
     servicesValidationStatus,
     selectedServiceConfigId,
-    servicesIdsMessageShown,
+    isInvalidMessageShown,
     pageState,
   ]);
 
@@ -265,6 +261,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const updateAgentType = useCallback(
     (agentType: AgentType) => {
       store?.set?.('lastSelectedAgentType', agentType);
+      setIsInvalidMessageShown(false);
     },
     [store],
   );
