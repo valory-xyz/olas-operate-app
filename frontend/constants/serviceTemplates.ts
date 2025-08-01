@@ -88,7 +88,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     TOOLS_ACCURACY_HASH: {
       name: 'Tools accuracy hash',
       description: '',
-      value: 'QmbyrbZkQEUYHkXzwBqkmRSNqzcQLS7QpebB2xgjjBR1zP',
+      value: 'QmcYUt8ABT3Q3okg7RQVgFwi2uTSJJzLxsW8f8GnASZ88v',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
@@ -271,7 +271,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version'
 > = {
-  hash: 'bafybeifwuv6ba2aw3vycfdsbkyhlw6ehzugasf56tbv65qv4emrvczogyy',
+  hash: 'bafybeieim7q7ydmmdg7d3lulxxfrmp5ykdfu7slhcooe5nba3nsubblxly',
   service_version: 'v0.3.15',
 };
 
