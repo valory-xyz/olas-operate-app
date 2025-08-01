@@ -2275,7 +2275,7 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.8.2"
+version = "0.9.0"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.9"
@@ -2308,7 +2308,7 @@ open-aea-cli-ipfs = "==1.65.0"
 open-aea-ledger-cosmos = "==1.65.0"
 open-aea-ledger-ethereum = "==1.65.0"
 open-aea-ledger-ethereum-flashbots = "==1.65.0"
-open-autonomy = "^0.19.11"
+open-autonomy = "^0.20.0"
 psutil = "^5.9.8"
 pyinstaller = "^6.8.0"
 requests-toolbelt = "1.0.0"
@@ -2320,8 +2320,8 @@ web3 = "==6.1.0"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "3d0f715e4b296e5de630631b771a898384c4f961"
-resolved_reference = "3d0f715e4b296e5de630631b771a898384c4f961"
+reference = "518b0ec2444ca535983ba1a9de8a0413f9c40752"
+resolved_reference = "518b0ec2444ca535983ba1a9de8a0413f9c40752"
 
 [[package]]
 name = "open-aea"
@@ -2445,13 +2445,13 @@ open-aea-ledger-ethereum = ">=1.65.0,<1.66.0"
 
 [[package]]
 name = "open-autonomy"
-version = "0.19.11"
+version = "0.20.1"
 description = "A framework for the creation of autonomous agent services."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "open_autonomy-0.19.11-py3-none-any.whl", hash = "sha256:0bf7f7281457092a68995454e985781fb430cd6f01dac076d82d1f874e3417c1"},
-    {file = "open_autonomy-0.19.11.tar.gz", hash = "sha256:e45dec413ec1005484e315be1ff91914ec1630eb35150e32668beb52bd9b525b"},
+    {file = "open_autonomy-0.20.1-py3-none-any.whl", hash = "sha256:061d4631ff991d6c7b1015808cd467afe3fe6b266103f31d21605b78fbd003a4"},
+    {file = "open_autonomy-0.20.1.tar.gz", hash = "sha256:5f807a95a464993408cc00728769f351c556c171d43d0f6670e4f4052d4502e4"},
 ]
 
 [package.dependencies]
@@ -4038,4 +4038,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "7ba57df05fb8a48eeb6bf13c35563627f7ee66efe3969bb59707c4a5332c9fb4"
+content-hash = "47b0c8b09bf416a7bdfa53ff63833195e1a16759ee05c72114de5778aa2e3a94"

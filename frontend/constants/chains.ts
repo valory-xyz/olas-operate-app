@@ -37,7 +37,7 @@ export const MiddlewareChainMap = {
   GOERLI: 'goerli',
   GNOSIS: 'gnosis',
   SOLANA: 'solana',
-  OPTIMISM: 'optimistic', // @note "optimistic" and not "optimism"
+  OPTIMISM: 'optimism',
   BASE: 'base',
   MODE: 'mode',
   CELO: 'celo',
