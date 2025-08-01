@@ -48,7 +48,7 @@ const logger = winston.createLogger({
       level: 'cli',
       format: combine(levelFilter('cli'), timestamp(), logFormat),
       maxsize: TEN_MEGABYTES,
-      maxFiles: 1000,
+      maxFiles: 5,
     }),
     new winston.transports.File({
       filename: 'electron.log',
