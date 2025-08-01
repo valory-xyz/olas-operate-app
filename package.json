@@ -30,6 +30,7 @@
     "semver": "^7.6.3",
     "styled-components": "^6.1.8",
     "sudo-prompt": "9.2.1",
+    "undici": "^7.12.0",
     "usehooks-ts": "^2.14.0",
     "winston": "^3.13.0",
     "zod": "^3.23.8",
@@ -76,7 +77,7 @@
     "start:frontend": "cd frontend && yarn start",
     "test:frontend": "cd frontend && yarn test"
   },
-  "version": "0.2.0-rc198",
+  "version": "0.2.0-rc317",
   "engine": {
     "node": ">=20",
     "yarn": ">=1.22.0",

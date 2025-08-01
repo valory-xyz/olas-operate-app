@@ -162,7 +162,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     return parseFloat(formatUnits(`${availableRewardsForEpoch}`));
   }, [availableRewardsForEpoch]);
 
-  // optimistic rewards earned for the current epoch in ETH
+  // optimism rewards earned for the current epoch in ETH
   const optimisticRewardsEarnedForEpoch = useMemo<number | undefined>(() => {
     if (!isEligibleForRewards) return;
     if (!availableRewardsForEpochEth) return;
