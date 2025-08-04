@@ -95,6 +95,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '900', // 15 min
       provision_type: EnvProvisionType.FIXED,
     },
+    STORE_PATH: {
+      name: 'Store path',
+      description: '',
+      value: 'persistent_data/',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
   },
 } as const;
 
