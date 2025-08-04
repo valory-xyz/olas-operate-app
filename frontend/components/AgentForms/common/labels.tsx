@@ -55,8 +55,8 @@ export const TenderlyAccountSlugLabel = () => (
     <InfoTooltip placement="bottom" overlayInnerStyle={TOOLTIP_STYLE}>
       <Paragraph className="text-sm m-0">
         The account slug is a unique identifier for your Tenderly account that
-        represents your username. You can find your account slug in your
-        Tenderly project settings.
+        represents your username. You can find the project slug in your Tenderly
+        project settings.
       </Paragraph>
     </InfoTooltip>
   </Flex>
