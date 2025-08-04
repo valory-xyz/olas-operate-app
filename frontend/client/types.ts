@@ -1,9 +1,9 @@
+import { EnvProvision } from '@/constants/envVariables';
 import { AgentType } from '@/enums/Agent';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
 import {
-  EnvProvisionType,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
   SupportedMiddlewareChain,
@@ -50,7 +50,7 @@ type EnvVariableAttributes = {
   name: string;
   description: string;
   value: string;
-  provision_type: EnvProvisionType;
+  provision_type: EnvProvision;
 };
 
 export type MiddlewareServiceResponse = {
