@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { SupportedMiddlewareChain } from '@/client';
+import { SupportedMiddlewareChain } from '@/constants/chains';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { Address } from '@/types/Address';

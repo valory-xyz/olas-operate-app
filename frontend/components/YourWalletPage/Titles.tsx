@@ -1,7 +1,7 @@
 import { Flex, Typography } from 'antd';
 
-import { SupportedMiddlewareChain } from '@/client';
 import { InfoTooltip } from '@/components/InfoTooltip';
+import { SupportedMiddlewareChain } from '@/constants/chains';
 import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 
