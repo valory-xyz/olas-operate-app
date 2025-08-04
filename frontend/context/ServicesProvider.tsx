@@ -169,11 +169,10 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (isServicesValidationStatusLoading) return;
     if (!servicesValidationStatus) return;
-    if (!selectedServiceConfigId) return;
     if (pageState !== Pages.Main) return;
     if (isInvalidMessageShown) return;
 
-    const isValid = servicesValidationStatus[selectedServiceConfigId];
+    const isValid = Object.values(servicesValidationStatus).every((x) => !!x);
     if (isValid) return;
 
     message.error(TECHNICAL_ISSUE);
@@ -181,7 +180,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   }, [
     isServicesValidationStatusLoading,
     servicesValidationStatus,
-    selectedServiceConfigId,
     isInvalidMessageShown,
     pageState,
   ]);
