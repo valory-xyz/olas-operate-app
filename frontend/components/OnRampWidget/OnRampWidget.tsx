@@ -52,6 +52,7 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
       fiatCurrency: 'USD',
       fiatAmount: usdAmountToPay,
       walletAddress: masterEoa.address,
+      hideMenu: true,
     });
 
     transak.init();

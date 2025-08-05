@@ -519,10 +519,15 @@ const createOnRampWindow = async (amountToPay) => {
   if (!getOnRampWindow() || getOnRampWindow().isDestroyed) {
     onRampWindow = new BrowserWindow({
       title: 'On Ramp',
+      resizable: false,
+      draggable: true,
+      frame: false,
+      transparent: true,
+      fullscreenable: false,
+      maximizable: false,
+      closable: false,
       width: 500,
       height: 700,
-      closable: false,
-      maximizable: false,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
