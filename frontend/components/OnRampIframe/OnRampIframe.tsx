@@ -2,7 +2,7 @@ import { Flex } from 'antd';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 
-import { APP_HEIGHT } from '@/constants/width';
+import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 
@@ -17,9 +17,11 @@ type OnRampIframeProps = {
   usdAmountToPay: number;
 };
 
-const STAGING_URL = `https://transak-double-iframe-supporter.vercel.app/staging?environment=STAGING`;
+// const STAGING_URL = `https://transak-double-iframe-supporter.vercel.app/staging?environment=STAGING`;
+// const PRODUCTION_URL = `https://transak-double-iframe-supporter.vercel.app/production?environment=PRODUCTION`;
 
-const PRODUCTION_URL = `https://transak-double-iframe-supporter.vercel.app/production?environment=PRODUCTION`;
+const STAGING_URL = `https://global-stg.transak.com/`;
+const PRODUCTION_URL = `https://global.transak.com/`;
 
 export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
   const router = useRouter();
@@ -60,7 +62,6 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
     const url = new URL(
       environment === 'STAGING' ? STAGING_URL : PRODUCTION_URL,
     );
-
     url.searchParams.set('apiKey', apiKey);
     url.searchParams.set('productsAvailed', 'BUY');
     url.searchParams.set('paymentMethod', 'credit_debit_card');
@@ -71,13 +72,6 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
     url.searchParams.set('walletAddress', masterEoa.address);
     url.searchParams.set('hideMenu', 'true');
 
-    console.log('OnRamp URL:', url.toString());
-
-    // network: networkName,
-    // cryptoCurrencyCode,
-    // fiatCurrency: 'USD',
-    // fiatAmount: usdAmountToPay,
-    // walletAddress: masterEoa.address,
     return url.toString();
   }, [
     environment,
@@ -93,13 +87,20 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
       justify="center"
       align="center"
       vertical
-      style={{ overflow: 'hidden', height: `calc(${APP_HEIGHT}px - 45px)` }}
+      style={{
+        overflow: 'hidden',
+        height: `calc(${APP_HEIGHT}px - 45px)`,
+        width: APP_WIDTH,
+      }}
     >
-      <iframe
-        style={{ width: '100%', height: '100%', border: 'none' }}
-        src={onRampUrl}
-        allow="camera;microphone;payment"
-      />
+      {onRampUrl && (
+        <iframe
+          id="transak-iframe"
+          style={{ width: '100%', height: '100%', border: 'none' }}
+          src={onRampUrl}
+          allow="camera;microphone;payment"
+        />
+      )}
     </Flex>
   );
 };
