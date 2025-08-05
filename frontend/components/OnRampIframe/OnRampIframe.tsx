@@ -1,15 +1,12 @@
 import { Flex, Spin } from 'antd';
 import { useEffect, useMemo, useRef } from 'react';
 
+import { isDev } from '@/constants/env';
 import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { delayInSeconds } from '@/utils/delay';
-
-import { KEY } from './constants';
-
-const env: 'STAGING' | 'PRODUCTION' = 'STAGING';
 
 const STAGING_URL = `https://global-stg.transak.com/`;
 const PRODUCTION_URL = `https://global.transak.com/`;
@@ -34,8 +31,6 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
   const { masterEoa } = useMasterWalletContext();
 
   const ref = useRef<HTMLIFrameElement>(null);
-
-  const apiKey = process.env.TRANSAK_API_KEY || KEY; // TODO: remove the fallback KEY
 
   useEffect(() => {
     const transakIframe = ref.current?.contentWindow;
@@ -77,12 +72,13 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
     if (!masterEoa?.address) return;
     if (!networkName || !cryptoCurrencyCode) return;
 
+    const apiKey = process.env.TRANSAK_API_KEY;
     if (!apiKey) {
       console.error('TRANSAK_API_KEY is not set');
       return;
     }
 
-    const url = new URL(env === 'STAGING' ? STAGING_URL : PRODUCTION_URL);
+    const url = new URL(isDev ? STAGING_URL : PRODUCTION_URL);
     url.searchParams.set('apiKey', apiKey);
     url.searchParams.set('productsAvailed', 'BUY');
     url.searchParams.set('paymentMethod', 'credit_debit_card');
@@ -94,7 +90,7 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
     url.searchParams.set('hideMenu', 'true');
 
     return url.toString();
-  }, [masterEoa, networkName, cryptoCurrencyCode, usdAmountToPay, apiKey]);
+  }, [masterEoa, networkName, cryptoCurrencyCode, usdAmountToPay]);
 
   return (
     <Flex
