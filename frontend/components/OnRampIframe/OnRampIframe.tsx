@@ -9,16 +9,7 @@ import { delayInSeconds } from '@/utils/delay';
 
 import { KEY } from './constants';
 
-type Environment = 'STAGING' | 'PRODUCTION';
-
-const env: Environment = 'STAGING';
-
-type OnRampIframeProps = {
-  usdAmountToPay: number;
-};
-
-// const STAGING_URL = `https://transak-double-iframe-supporter.vercel.app/staging?environment=STAGING`;
-// const PRODUCTION_URL = `https://transak-double-iframe-supporter.vercel.app/production?environment=PRODUCTION`;
+const env: 'STAGING' | 'PRODUCTION' = 'STAGING';
 
 const STAGING_URL = `https://global-stg.transak.com/`;
 const PRODUCTION_URL = `https://global.transak.com/`;
@@ -35,13 +26,14 @@ type TransakEvent = {
   };
 };
 
+type OnRampIframeProps = { usdAmountToPay: number };
+
 export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
   const { onRampWindow, logEvent } = useElectronApi();
   const { networkName, cryptoCurrencyCode } = useOnRampContext();
   const { masterEoa } = useMasterWalletContext();
 
-  // TODO: remove the fallback KEY
-  const apiKey = process.env.TRANSAK_API_KEY || KEY;
+  const apiKey = process.env.TRANSAK_API_KEY || KEY; // TODO: remove the fallback KEY
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
