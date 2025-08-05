@@ -29,9 +29,6 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 14,
-      threshold: 1,
-      use_staking: true,
-      use_mech_marketplace: false,
       // TODO: pull fund requirements from staking program config
       cost_of_bond: +parseEther(0.001),
       monthly_gas_estimate: +parseEther(10),
@@ -97,6 +94,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: '900', // 15 min
       provision_type: EnvProvisionType.FIXED,
+    },
+    STORE_PATH: {
+      name: 'Store path',
+      description: '',
+      value: 'persistent_data/',
+      provision_type: EnvProvisionType.COMPUTED,
     },
   },
 } as const;
@@ -224,8 +227,6 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 43,
-      threshold: 1,
-      use_staking: true,
       cost_of_bond: +parseEther(50),
       monthly_gas_estimate: +parseEther(0.03),
       fund_requirements: {
@@ -253,8 +254,6 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 43,
-      threshold: 1,
-      use_staking: true,
       cost_of_bond: +parseEther(50), // TODO: celo
       monthly_gas_estimate: +parseEther(0.03), // TODO: celo
       fund_requirements: {
@@ -289,8 +288,6 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
-      threshold: 1,
-      use_staking: true,
       cost_of_bond: +parseEther(20),
       monthly_gas_estimate: +parseEther(0.011), // TODO: should be 0.0055, temp fix to avoid low balance alerts until the refund is fixed in the middleware
       fund_requirements: {
@@ -451,8 +448,6 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
-      threshold: 1,
-      use_staking: true,
       cost_of_bond: +parseEther(20),
       monthly_gas_estimate: +parseEther(0.011),
       fund_requirements: {
