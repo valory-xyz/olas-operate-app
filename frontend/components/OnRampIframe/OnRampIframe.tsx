@@ -1,16 +1,17 @@
-import { Flex } from 'antd';
-import { useMemo } from 'react';
+import { Flex, Spin } from 'antd';
+import { useEffect, useMemo } from 'react';
 
 import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+import { delayInSeconds } from '@/utils/delay';
 
 import { KEY } from './constants';
 
 type Environment = 'STAGING' | 'PRODUCTION';
 
-const apiKey = KEY;
-const environment: Environment = 'STAGING';
+const env: Environment = 'STAGING';
 
 type OnRampIframeProps = {
   usdAmountToPay: number;
@@ -22,9 +23,58 @@ type OnRampIframeProps = {
 const STAGING_URL = `https://global-stg.transak.com/`;
 const PRODUCTION_URL = `https://global.transak.com/`;
 
+type TransakEvent = {
+  event: string;
+  data: {
+    event_id:
+      | 'TRANSAK_WIDGET_CLOSE'
+      | 'TRANSAK_WIDGET_INITIALISED'
+      | 'TRANSAK_ORDER_SUCCESSFUL'
+      | 'TRANSAK_ORDER_FAILED';
+    data: unknown;
+  };
+};
+
 export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
+  const { onRampWindow, logEvent } = useElectronApi();
   const { networkName, cryptoCurrencyCode } = useOnRampContext();
   const { masterEoa } = useMasterWalletContext();
+
+  // TODO: remove the fallback KEY
+  const apiKey = process.env.TRANSAK_API_KEY || KEY;
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const eventDetails = event as unknown as TransakEvent;
+      if (!eventDetails.data) return;
+      if (!eventDetails.data.event_id) return;
+
+      // To get all the events and log them
+      logEvent?.(`Transak event: ${JSON.stringify(eventDetails)}`);
+      window.console.log('😀 Transak event:', eventDetails.data);
+
+      if (eventDetails.data.event_id === 'TRANSAK_WIDGET_CLOSE') {
+        onRampWindow?.hide?.();
+      }
+
+      // This will trigger when the user marks payment is made.
+      // User can close/navigate away at this event.
+      if (eventDetails.data.event_id === 'TRANSAK_ORDER_SUCCESSFUL') {
+        delayInSeconds(3).then(() => {
+          onRampWindow?.transactionSuccess?.();
+        });
+      }
+
+      if (eventDetails.data.event_id === 'TRANSAK_ORDER_FAILED') {
+        delayInSeconds(3).then(() => {
+          onRampWindow?.transactionFailure?.();
+        });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [logEvent, onRampWindow]);
 
   const onRampUrl = useMemo(() => {
     if (!masterEoa?.address) return;
@@ -35,9 +85,7 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
       return;
     }
 
-    const url = new URL(
-      environment === 'STAGING' ? STAGING_URL : PRODUCTION_URL,
-    );
+    const url = new URL(env === 'STAGING' ? STAGING_URL : PRODUCTION_URL);
     url.searchParams.set('apiKey', apiKey);
     url.searchParams.set('productsAvailed', 'BUY');
     url.searchParams.set('paymentMethod', 'credit_debit_card');
@@ -49,7 +97,7 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
     url.searchParams.set('hideMenu', 'true');
 
     return url.toString();
-  }, [masterEoa, networkName, cryptoCurrencyCode, usdAmountToPay]);
+  }, [masterEoa, networkName, cryptoCurrencyCode, usdAmountToPay, apiKey]);
 
   return (
     <Flex
@@ -62,13 +110,15 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
         width: APP_WIDTH,
       }}
     >
-      {onRampUrl && (
+      {onRampUrl ? (
         <iframe
           id="transak-iframe"
           style={{ width: '100%', height: '100%', border: 'none' }}
           src={onRampUrl}
           allow="camera;microphone;payment"
         />
+      ) : (
+        <Spin />
       )}
     </Flex>
   );
