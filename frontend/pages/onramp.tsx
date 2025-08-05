@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { OnRampIframe } from '@/components/OnRampIframe/OnRampIframe';
 import { OnRampWidget } from '@/components/OnRampWidget/OnRampWidget';
 
-const isWidget = false;
+const TYPE: 'widget' | 'iframe' = 'iframe';
 
 export default function OnRamp() {
   const router = useRouter();
@@ -12,7 +12,7 @@ export default function OnRamp() {
   const amountToPay = amount ? Number(amount) : undefined;
   if (!amountToPay) return null;
 
-  if (isWidget) {
+  if (TYPE === 'widget') {
     return <OnRampWidget usdAmountToPay={amountToPay} />;
   } else {
     return <OnRampIframe usdAmountToPay={amountToPay} />;

@@ -1,5 +1,5 @@
 import { Flex, Spin } from 'antd';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -33,17 +33,22 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
   const { networkName, cryptoCurrencyCode } = useOnRampContext();
   const { masterEoa } = useMasterWalletContext();
 
+  const ref = useRef<HTMLIFrameElement>(null);
+
   const apiKey = process.env.TRANSAK_API_KEY || KEY; // TODO: remove the fallback KEY
 
   useEffect(() => {
+    const transakIframe = ref.current?.contentWindow;
+
     const handleMessage = (event: MessageEvent) => {
+      if (event.source !== transakIframe) return;
+
       const eventDetails = event as unknown as TransakEvent;
       if (!eventDetails.data) return;
       if (!eventDetails.data.event_id) return;
 
       // To get all the events and log them
       logEvent?.(`Transak event: ${JSON.stringify(eventDetails)}`);
-      window.console.log('😀 Transak event:', eventDetails.data);
 
       if (eventDetails.data.event_id === 'TRANSAK_WIDGET_CLOSE') {
         onRampWindow?.hide?.();
@@ -104,9 +109,10 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
     >
       {onRampUrl ? (
         <iframe
+          src={onRampUrl}
+          ref={ref}
           id="transak-iframe"
           style={{ width: '100%', height: '100%', border: 'none' }}
-          src={onRampUrl}
           allow="camera;microphone;payment"
         />
       ) : (
