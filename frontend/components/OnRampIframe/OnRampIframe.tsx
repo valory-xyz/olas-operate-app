@@ -1,6 +1,5 @@
 import { Flex } from 'antd';
-import { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
@@ -10,8 +9,8 @@ import { KEY } from './constants';
 
 type Environment = 'STAGING' | 'PRODUCTION';
 
-const apiKeyFromQuery = KEY;
-const envFromQuery = 'STAGING';
+const apiKey = KEY;
+const environment: Environment = 'STAGING';
 
 type OnRampIframeProps = {
   usdAmountToPay: number;
@@ -24,31 +23,8 @@ const STAGING_URL = `https://global-stg.transak.com/`;
 const PRODUCTION_URL = `https://global.transak.com/`;
 
 export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
-  const router = useRouter();
   const { networkName, cryptoCurrencyCode } = useOnRampContext();
   const { masterEoa } = useMasterWalletContext();
-
-  const [environment, setEnvironment] = useState<Environment>('STAGING');
-  const [apiKey, setApiKey] = useState<string>('');
-
-  // Initialize state from URL query parameters once router is ready
-  useEffect(() => {
-    if (!router.isReady) return;
-
-    // const envFromQuery = router.query.environment as Environment;
-    // const apiKeyFromQuery = router.query.apiKey as string;
-
-    if (
-      envFromQuery &&
-      (envFromQuery === 'STAGING' || envFromQuery === 'PRODUCTION')
-    ) {
-      setEnvironment(envFromQuery);
-    }
-
-    if (apiKeyFromQuery) {
-      setApiKey(apiKeyFromQuery);
-    }
-  }, [router.isReady, router.query]);
 
   const onRampUrl = useMemo(() => {
     if (!masterEoa?.address) return;
@@ -73,14 +49,7 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
     url.searchParams.set('hideMenu', 'true');
 
     return url.toString();
-  }, [
-    environment,
-    apiKey,
-    masterEoa,
-    networkName,
-    cryptoCurrencyCode,
-    usdAmountToPay,
-  ]);
+  }, [masterEoa, networkName, cryptoCurrencyCode, usdAmountToPay]);
 
   return (
     <Flex
