@@ -28,6 +28,7 @@ export const OnRampContext = createContext<{
   isBuyCryptoBtnLoading: boolean;
   updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
   isOnRampingTransactionSuccessful: boolean;
+  isTransactionSuccessfulButFundsNotReceived: boolean;
   isOnRampingStepCompleted: boolean;
 
   networkId: Nullable<EvmChainId>;
@@ -42,6 +43,7 @@ export const OnRampContext = createContext<{
   updateIsBuyCryptoBtnLoading: () => {},
   isOnRampingTransactionSuccessful: false,
   isOnRampingStepCompleted: false,
+  isTransactionSuccessfulButFundsNotReceived: false,
 
   networkId: null,
   networkName: null,
@@ -119,7 +121,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     const handleTransactionSuccess = () => {
       updateIsBuyCryptoBtnLoading(false);
       setIsOnRampingTransactionSuccessful(true);
-      delayInSeconds(1).then(() => onRampWindow?.hide?.());
+      delayInSeconds(0.5).then(() => onRampWindow?.hide?.());
     };
 
     ipcRenderer?.on?.('onramp-transaction-success', handleTransactionSuccess);
@@ -136,7 +138,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     const handleTransactionFailure = () => {
       updateIsBuyCryptoBtnLoading(false);
       setIsOnRampingTransactionSuccessful(false);
-      delayInSeconds(1).then(() => onRampWindow?.hide?.());
+      delayInSeconds(0.5).then(() => onRampWindow?.hide?.());
     };
 
     ipcRenderer?.on?.('onramp-transaction-failure', handleTransactionFailure);
@@ -154,6 +156,12 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
    */
   const isOnRampingStepCompleted =
     isOnRampingTransactionSuccessful && hasFundsReceivedAfterOnRamp;
+
+  /**
+   * Check if the on-ramping transaction was successful but funds are not received
+   */
+  const isTransactionSuccessfulButFundsNotReceived =
+    isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
 
   const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
     const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
@@ -179,6 +187,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
         /** Whether the on-ramping step is completed */
         isOnRampingStepCompleted,
+
+        isTransactionSuccessfulButFundsNotReceived,
 
         /** Network id to on-ramp */
         networkId,

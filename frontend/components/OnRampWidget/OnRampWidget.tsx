@@ -49,6 +49,7 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
       fiatCurrency: 'USD',
       fiatAmount: usdAmountToPay,
       walletAddress: masterEoa.address,
+      hideMenu: true,
     });
 
     transak.init();
@@ -69,14 +70,14 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     // This will trigger when the user marks payment is made.
     // User can close/navigate away at this event.
     Transak.on(Transak.EVENTS.TRANSAK_ORDER_SUCCESSFUL, () => {
-      delayInSeconds(3).then(() => {
+      delayInSeconds(7.5).then(() => {
         onRampWindow?.transactionSuccess?.();
         transak.close();
       });
     });
 
     Transak.on(Transak.EVENTS.TRANSAK_ORDER_FAILED, () => {
-      delayInSeconds(3).then(() => {
+      delayInSeconds(7.5).then(() => {
         transak.close();
         onRampWindow?.transactionFailure?.();
       });

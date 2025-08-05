@@ -30,6 +30,7 @@ export const useBuyCryptoStep = () => {
     isBuyCryptoBtnLoading,
     usdAmountToPay,
     updateIsBuyCryptoBtnLoading,
+    isTransactionSuccessfulButFundsNotReceived,
     isOnRampingStepCompleted,
   } = useOnRampContext();
 
@@ -46,8 +47,9 @@ export const useBuyCryptoStep = () => {
 
   const buyCryptoStep = useMemo<TransactionStep>(() => {
     const status = (() => {
-      if (isBuyCryptoBtnLoading) return 'process';
       if (isOnRampingStepCompleted) return 'finish';
+      if (isTransactionSuccessfulButFundsNotReceived) return 'process';
+      if (isBuyCryptoBtnLoading) return 'process';
       return 'wait';
     })();
 
@@ -61,7 +63,10 @@ export const useBuyCryptoStep = () => {
             {
               description: (
                 <Button
-                  loading={isBuyCryptoBtnLoading}
+                  loading={
+                    isBuyCryptoBtnLoading ||
+                    isTransactionSuccessfulButFundsNotReceived
+                  }
                   disabled={cannotBuyCrypto}
                   onClick={handleBuyCrypto}
                   type="primary"
@@ -75,6 +80,7 @@ export const useBuyCryptoStep = () => {
   }, [
     isOnRampingStepCompleted,
     isBuyCryptoBtnLoading,
+    isTransactionSuccessfulButFundsNotReceived,
     cannotBuyCrypto,
     handleBuyCrypto,
   ]);
