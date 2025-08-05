@@ -1,20 +1,31 @@
-import './App.css';
-
-import { Card, Input, Layout, Select, Space, Typography } from 'antd';
+import { Flex } from 'antd';
 import { useRouter } from 'next/router';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-const { Content } = Layout;
-const { Title, Text } = Typography;
-const { Option } = Select;
+import { APP_HEIGHT } from '@/constants/width';
+import { useOnRampContext } from '@/hooks/useOnRampContext';
+import { useMasterWalletContext } from '@/hooks/useWallet';
+
+import { KEY } from './constants';
 
 type Environment = 'STAGING' | 'PRODUCTION';
 
-const apiKeyFromQuery = '';
+const apiKeyFromQuery = KEY;
 const envFromQuery = 'STAGING';
 
-export default function OuterIframe() {
+type OnRampIframeProps = {
+  usdAmountToPay: number;
+};
+
+const STAGING_URL = `https://transak-double-iframe-supporter.vercel.app/staging?environment=STAGING`;
+
+const PRODUCTION_URL = `https://transak-double-iframe-supporter.vercel.app/production?environment=PRODUCTION`;
+
+export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
   const router = useRouter();
+  const { networkName, cryptoCurrencyCode } = useOnRampContext();
+  const { masterEoa } = useMasterWalletContext();
+
   const [environment, setEnvironment] = useState<Environment>('STAGING');
   const [apiKey, setApiKey] = useState<string>('');
 
@@ -37,92 +48,58 @@ export default function OuterIframe() {
     }
   }, [router.isReady, router.query]);
 
-  const handleEnvironmentChange = (value: Environment) => {
-    setEnvironment(value);
-    // Update URL with new environment
-    router.push(
-      {
-        query: {
-          ...router.query,
-          environment: value,
-        },
-      },
-      undefined,
-      { shallow: true },
+  const onRampUrl = useMemo(() => {
+    if (!masterEoa?.address) return;
+    if (!networkName || !cryptoCurrencyCode) return;
+
+    if (!apiKey) {
+      console.error('TRANSAK_API_KEY is not set');
+      return;
+    }
+
+    const url = new URL(
+      environment === 'STAGING' ? STAGING_URL : PRODUCTION_URL,
     );
-  };
 
-  const handleApiChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setApiKey(e.target.value);
-    // Update URL with new API key
-    router.push(
-      {
-        query: {
-          ...router.query,
-          apiKey: e.target.value,
-        },
-      },
-      undefined,
-      { shallow: true },
-    );
-  };
+    url.searchParams.set('apiKey', apiKey);
+    url.searchParams.set('productsAvailed', 'BUY');
+    url.searchParams.set('paymentMethod', 'credit_debit_card');
+    url.searchParams.set('network', networkName);
+    url.searchParams.set('cryptoCurrencyCode', cryptoCurrencyCode);
+    url.searchParams.set('fiatCurrency', 'USD');
+    url.searchParams.set('fiatAmount', String(usdAmountToPay));
+    url.searchParams.set('walletAddress', masterEoa.address);
+    url.searchParams.set('hideMenu', 'true');
 
-  const apiUrl =
-    environment === 'STAGING'
-      ? `https://transak-double-iframe-supporter.vercel.app/staging?environment=${environment}`
-      : `https://transak-double-iframe-supporter.vercel.app/production?environment=${environment}`;
+    console.log('OnRamp URL:', url.toString());
 
-  const finalUrl = `${apiUrl}${apiKey ? `&apiKey=${apiKey}` : ''}`;
+    // network: networkName,
+    // cryptoCurrencyCode,
+    // fiatCurrency: 'USD',
+    // fiatAmount: usdAmountToPay,
+    // walletAddress: masterEoa.address,
+    return url.toString();
+  }, [
+    environment,
+    apiKey,
+    masterEoa,
+    networkName,
+    cryptoCurrencyCode,
+    usdAmountToPay,
+  ]);
 
   return (
-    <Layout>
-      <Content style={{ padding: '24px' }}>
-        <Card
-          title="On-Ramp Configuration"
-          bordered
-          style={{ marginBottom: '24px' }}
-        >
-          <Space direction="vertical" style={{ width: '100%' }}>
-            <div>
-              <Text>Select Environment:</Text>
-              <Select
-                value={environment}
-                onChange={handleEnvironmentChange}
-                style={{ width: '100%', marginTop: '8px' }}
-              >
-                <Option value="STAGING">Staging</Option>
-                <Option value="PRODUCTION">Production</Option>
-              </Select>
-            </div>
-
-            <div>
-              <Text>API Key:</Text>
-              <Input
-                placeholder="Enter API key"
-                value={apiKey}
-                onChange={handleApiChange}
-                style={{ marginTop: '8px' }}
-              />
-            </div>
-          </Space>
-        </Card>
-
-        <div
-          style={{
-            width: '100%',
-            height: 'calc(100vh - 250px)',
-            border: '1px solid #f0f0f0',
-            borderRadius: '8px',
-            overflow: 'hidden',
-          }}
-        >
-          <iframe
-            style={{ width: '100%', height: '100%', border: 'none' }}
-            src={finalUrl}
-            allow="camera;microphone;payment"
-          />
-        </div>
-      </Content>
-    </Layout>
+    <Flex
+      justify="center"
+      align="center"
+      vertical
+      style={{ overflow: 'hidden', height: `calc(${APP_HEIGHT}px - 45px)` }}
+    >
+      <iframe
+        style={{ width: '100%', height: '100%', border: 'none' }}
+        src={onRampUrl}
+        allow="camera;microphone;payment"
+      />
+    </Flex>
   );
-}
+};
