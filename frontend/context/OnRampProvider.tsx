@@ -121,7 +121,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     const handleTransactionSuccess = () => {
       updateIsBuyCryptoBtnLoading(false);
       setIsOnRampingTransactionSuccessful(true);
-      delayInSeconds(5).then(() => onRampWindow?.hide?.());
+      delayInSeconds(0.5).then(() => onRampWindow?.hide?.());
     };
 
     ipcRenderer?.on?.('onramp-transaction-success', handleTransactionSuccess);
@@ -138,7 +138,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     const handleTransactionFailure = () => {
       updateIsBuyCryptoBtnLoading(false);
       setIsOnRampingTransactionSuccessful(false);
-      delayInSeconds(1).then(() => onRampWindow?.hide?.());
+      delayInSeconds(0.5).then(() => onRampWindow?.hide?.());
     };
 
     ipcRenderer?.on?.('onramp-transaction-failure', handleTransactionFailure);
