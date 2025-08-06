@@ -58,11 +58,12 @@ export const useBridgingSteps = (
     isFetching: isBridgeExecuteFetching,
     isError: isBridgeExecuteError,
     data: bridgeExecuteData,
+    error: bridgeExecuteError,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId!),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       try {
-        return await BridgeService.executeBridge(quoteId!);
+        return await BridgeService.executeBridge(quoteId!, signal);
       } catch (error) {
         console.error('Error executing bridge', error);
         throw error;
@@ -72,6 +73,11 @@ export const useBridgingSteps = (
     retry: false,
     refetchOnWindowFocus: false,
     refetchInterval: false,
+  });
+
+  console.log('%cBridgeInProgress', 'color: blue;', {
+    quoteId,
+    bridgeExecuteError,
   });
 
   const isBridgingExecuteFailed = isBridgingFailedFn(
