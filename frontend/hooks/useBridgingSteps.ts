@@ -75,7 +75,7 @@ export const useBridgingSteps = (
     refetchInterval: false,
   });
 
-  console.log('%cBridgeInProgress', 'color: blue;', {
+  window.console.log('%cBridgeInProgress', 'color: blue;', {
     quoteId,
     bridgeExecuteError,
   });
