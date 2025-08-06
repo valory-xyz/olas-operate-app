@@ -83,7 +83,7 @@ export const useSwapFundsStep = (
       ? bridgeFundingRequirements?.id
       : null;
 
-  console.log('%cuseSwapFundsSteps', 'color: green;', quoteId);
+  window.console.log('%cuseSwapFundsSteps', 'color: green;', quoteId);
   const { isBridgingCompleted, isBridgingFailed, isBridging, bridgeStatus } =
     useBridgingSteps(tokensToBeBridged, quoteId);
 

@@ -56,7 +56,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
       );
       if (nativeTokenIndex === -1) return;
 
-      console.log(refillRequirements);
+      window.console.log(refillRequirements);
 
       // refill_requirements_masterEOA
       const masterEoaRequirement = (refillRequirements as AddressBalanceRecord)[
@@ -64,7 +64,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
       ];
       const masterEoaRequirementAmount =
         masterEoaRequirement?.[AddressZero] ?? 0;
-      console.log({ masterEoaRequirement });
+      window.console.log({ masterEoaRequirement });
 
       // refill_requirements_masterSafe
       const safeRequirement: MasterSafeBalanceRecord['master_safe'] | null =
@@ -72,7 +72,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
           ? refillRequirements.master_safe
           : null;
       const safeRequirementAmount = safeRequirement?.[AddressZero] ?? 0;
-      console.log({ safeRequirement });
+      window.console.log({ safeRequirement });
 
       // monthly_gas_estimate
       const monthlyGasEstimate =
@@ -80,7 +80,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
           (template) => template.home_chain === toMiddlewareChain,
         )?.configurations[toMiddlewareChain]?.monthly_gas_estimate ?? 0;
 
-      console.log({
+      window.console.log({
         masterEoaRequirementAmount,
         safeRequirementAmount,
         monthlyGasEstimate,
