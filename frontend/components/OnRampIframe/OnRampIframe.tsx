@@ -1,7 +1,6 @@
 import { Flex, Spin } from 'antd';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { isDev } from '@/constants/env';
 import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
@@ -11,7 +10,6 @@ import { delayInSeconds } from '@/utils/delay';
 import { apiKey } from '../OnRampWidget/OnRampWidget';
 
 const STAGING_URL = `https://global-stg.transak.com/`;
-const PRODUCTION_URL = `https://global.transak.com/`;
 
 type TransakEvent = {
   event: string;
@@ -79,7 +77,7 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
       return;
     }
 
-    const url = new URL(isDev ? STAGING_URL : PRODUCTION_URL);
+    const url = new URL(STAGING_URL);
     url.searchParams.set('apiKey', apiKey);
     url.searchParams.set('productsAvailed', 'BUY');
     url.searchParams.set('paymentMethod', 'credit_debit_card');
