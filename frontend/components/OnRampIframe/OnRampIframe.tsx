@@ -8,6 +8,8 @@ import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { delayInSeconds } from '@/utils/delay';
 
+import { apiKey } from '../OnRampWidget/OnRampWidget';
+
 const STAGING_URL = `https://global-stg.transak.com/`;
 const PRODUCTION_URL = `https://global.transak.com/`;
 
@@ -72,7 +74,6 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
     if (!masterEoa?.address) return;
     if (!networkName || !cryptoCurrencyCode) return;
 
-    const apiKey = process.env.TRANSAK_API_KEY;
     if (!apiKey) {
       console.error('TRANSAK_API_KEY is not set');
       return;

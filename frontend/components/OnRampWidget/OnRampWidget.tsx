@@ -9,7 +9,7 @@ import { delayInSeconds } from '@/utils/delay';
 
 const { Title } = Typography;
 
-const apiKey = '8015f7f6-0a15-4e0c-8793-d332789af7f7';
+export const apiKey = '8015f7f6-0a15-4e0c-8793-d332789af7f7';
 
 type OnRampWidgetProps = {
   usdAmountToPay: number;
