@@ -526,7 +526,7 @@ const createOnRampWindow = async (amountToPay) => {
       fullscreenable: false,
       maximizable: false,
       closable: false,
-      width: 500,
+      width: APP_WIDTH,
       height: 700,
       webPreferences: {
         nodeIntegration: false,
