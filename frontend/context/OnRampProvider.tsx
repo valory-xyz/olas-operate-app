@@ -34,6 +34,7 @@ export const OnRampContext = createContext<{
   networkId: Nullable<EvmChainId>;
   networkName: Nullable<string>;
   cryptoCurrencyCode: Nullable<string>;
+  resetOnRampState: () => void;
 }>({
   ethAmountToPay: null,
   updateEthAmountToPay: () => {},
@@ -48,6 +49,7 @@ export const OnRampContext = createContext<{
   networkId: null,
   networkName: null,
   cryptoCurrencyCode: null,
+  resetOnRampState: () => {},
 });
 
 export const OnRampProvider = ({ children }: PropsWithChildren) => {
@@ -71,6 +73,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const [hasFundsReceivedAfterOnRamp, setHasFundsReceivedAfterOnRamp] =
     useState(false);
 
+  const updateIsBuyCryptoBtnLoading = useCallback((loading: boolean) => {
+    setIsBuyCryptoBtnLoading(loading);
+  }, []);
+
   // check if the user has received funds after on-ramping to the master EOA
   useEffect(() => {
     if (!isOnRampingTransactionSuccessful) return;
@@ -81,6 +87,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     // If the master EOA balance is greater than or equal to 90% of the ETH amount to pay,
     // considering that the user has received the funds after on-ramping.
     if (masterEoaBalance >= ethAmountToPay * ETH_RECEIVED_THRESHOLD) {
+      updateIsBuyCryptoBtnLoading(false);
       setHasFundsReceivedAfterOnRamp(true);
     }
   }, [
@@ -88,6 +95,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     hasFundsReceivedAfterOnRamp,
     masterEoaBalance,
     ethAmountToPay,
+    updateIsBuyCryptoBtnLoading,
   ]);
 
   // Function to set the ETH amount to pay for on-ramping
@@ -98,10 +106,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // Function to set the USD amount for on-ramping
   const updateUsdAmountToPay = useCallback((amount: Nullable<number>) => {
     setUsdAmountToPay(amount);
-  }, []);
-
-  const updateIsBuyCryptoBtnLoading = useCallback((loading: boolean) => {
-    setIsBuyCryptoBtnLoading(loading);
   }, []);
 
   // Listen for onramp window hide event to reset the loading state
@@ -119,7 +123,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // Listen for onramp window transaction success event to reset the loading state
   useEffect(() => {
     const handleTransactionSuccess = () => {
-      updateIsBuyCryptoBtnLoading(false);
       setIsOnRampingTransactionSuccessful(true);
       delayInSeconds(0.5).then(() => onRampWindow?.hide?.());
     };
@@ -174,6 +177,14 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     };
   }, [selectedAgentConfig]);
 
+  const resetOnRampState = useCallback(() => {
+    setEthAmountToPay(null);
+    setUsdAmountToPay(null);
+    setIsBuyCryptoBtnLoading(false);
+    setIsOnRampingTransactionSuccessful(false);
+    setHasFundsReceivedAfterOnRamp(false);
+  }, []);
+
   return (
     <OnRampContext.Provider
       value={{
@@ -187,7 +198,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
         /** Whether the on-ramping step is completed */
         isOnRampingStepCompleted,
-
         isTransactionSuccessfulButFundsNotReceived,
 
         /** Network id to on-ramp */
@@ -196,6 +206,9 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
         networkName,
         /** Crypto currency code to on-ramp */
         cryptoCurrencyCode,
+
+        /** Function to reset the on-ramp state */
+        resetOnRampState,
       }}
     >
       {children}

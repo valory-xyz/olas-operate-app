@@ -20,7 +20,8 @@ import { useBridgeRequirementsQuery } from '../hooks/useBridgeRequirementsQuery'
  */
 export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
   const { selectedAgentConfig } = useServices();
-  const { updateEthAmountToPay } = useOnRampContext();
+  const { updateEthAmountToPay, isOnRampingTransactionSuccessful } =
+    useOnRampContext();
   const { masterEoa } = useMasterWalletContext();
 
   const {
@@ -30,7 +31,10 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     bridgeFundingRequirements,
     receivingTokens,
     onRetry,
-  } = useBridgeRequirementsQuery(onRampChainId);
+  } = useBridgeRequirementsQuery(
+    onRampChainId,
+    isOnRampingTransactionSuccessful,
+  );
 
   /**
    * Calculates the total native token required for the bridge.
@@ -52,10 +56,9 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     )?.to.amount;
 
     const bridgeRefillRequirements =
-      bridgeFundingRequirements.bridge_refill_requirements[fromChainName]?.[
-        masterEoa.address
-      ];
-    const nativeTokenFromBridgeQuote = bridgeRefillRequirements?.[AddressZero];
+      bridgeFundingRequirements.bridge_refill_requirements[fromChainName];
+    const masterEoaRequirements = bridgeRefillRequirements?.[masterEoa.address];
+    const nativeTokenFromBridgeQuote = masterEoaRequirements?.[AddressZero];
     if (!nativeTokenFromBridgeQuote) return;
 
     const totalNativeTokenRequired =

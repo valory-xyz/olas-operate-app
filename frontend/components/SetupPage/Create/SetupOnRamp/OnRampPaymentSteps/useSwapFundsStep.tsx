@@ -7,6 +7,7 @@ import { TransactionStep } from '@/components/ui/TransactionSteps';
 import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol } from '@/constants/token';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
+import { useOnRampContext } from '@/hooks/useOnRampContext';
 
 import { useBridgeRequirementsQuery } from '../hooks/useBridgeRequirementsQuery';
 
@@ -68,6 +69,7 @@ export const useSwapFundsStep = (
   onRampChainId: EvmChainId,
   isOnRampingCompleted: boolean,
 ) => {
+  const { isOnRampingStepCompleted } = useOnRampContext();
   const {
     isLoading,
     hasError,
@@ -75,17 +77,33 @@ export const useSwapFundsStep = (
     receivingTokens,
     tokensToBeBridged,
     onRetry,
-  } = useBridgeRequirementsQuery(onRampChainId);
+  } = useBridgeRequirementsQuery(
+    onRampChainId,
+    false, // don't stop polling
+    isOnRampingStepCompleted,
+  );
 
   // If the on-ramping is not completed, we do not proceed with the swap step.
-  const quoteId =
-    !isLoading && isOnRampingCompleted && bridgeFundingRequirements
-      ? bridgeFundingRequirements?.id
-      : null;
+  const quoteId = useMemo(() => {
+    if (isLoading) return;
+    if (!isOnRampingCompleted) return;
+    if (!bridgeFundingRequirements) return;
+    return bridgeFundingRequirements.id;
+  }, [isLoading, isOnRampingCompleted, bridgeFundingRequirements]);
 
+  // LOG
   window.console.log('%cuseSwapFundsSteps', 'color: green;', quoteId);
+
   const { isBridgingCompleted, isBridgingFailed, isBridging, bridgeStatus } =
     useBridgingSteps(tokensToBeBridged, quoteId);
+
+  // LOG
+  window.console.log('useBridgingSteps', {
+    isBridging,
+    isBridgingFailed,
+    isBridgingCompleted,
+    bridgeStatus,
+  });
 
   const bridgeStepStatus = useMemo(() => {
     if (!isOnRampingCompleted) return 'wait';
