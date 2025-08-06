@@ -518,7 +518,7 @@ function createAndLoadSslCertificate() {
 const createOnRampWindow = async (amountToPay) => {
   if (!getOnRampWindow() || getOnRampWindow().isDestroyed) {
     onRampWindow = new BrowserWindow({
-      title: 'On Ramp',
+      title: 'Buy Crypto on Transak',
       resizable: false,
       draggable: true,
       frame: false,
