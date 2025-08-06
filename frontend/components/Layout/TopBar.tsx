@@ -64,18 +64,23 @@ export const TopBar = () => {
   const envName = store?.storeState?.environmentName;
   const currentPage = router.pathname;
 
+  const isOnRamp = currentPage === '/onramp';
+  const isNotMain = [isOnRamp].some(Boolean);
+
   const name = useMemo(() => {
-    if (currentPage === '/onramp') return 'Buy Crypto on Transak';
+    if (isOnRamp) return 'Buy Crypto on Transak';
     return `Pearl (beta) ${envName ? `(${envName})` : ''}`.trim();
-  }, [currentPage, envName]);
+  }, [isOnRamp, envName]);
 
   return (
     <TopBarContainer>
-      <TrafficLights>
-        <RedLight onClick={() => electronApi?.closeApp?.()} />
-        <YellowLight onClick={() => electronApi?.minimizeApp?.()} />
-        <DisabledLight />
-      </TrafficLights>
+      {!isNotMain && (
+        <TrafficLights>
+          <RedLight onClick={() => electronApi?.closeApp?.()} />
+          <YellowLight onClick={() => electronApi?.minimizeApp?.()} />
+          <DisabledLight />
+        </TrafficLights>
+      )}
 
       <Text>{name}</Text>
 
