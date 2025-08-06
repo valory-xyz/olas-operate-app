@@ -93,16 +93,6 @@ export const useSwapFundsStep = (
     return bridgeFundingRequirements.id;
   }, [isLoading, isOnRampingCompleted, bridgeFundingRequirements]);
 
-  // If the quoteId is not set, we set it to the fetched quoteId.
-  useEffect(() => {
-    if (hasError) {
-      setQuoteId(undefined);
-    }
-    if (updatedQuoteId && !quoteId) {
-      setQuoteId(updatedQuoteId);
-    }
-  }, [hasError, updatedQuoteId, quoteId]);
-
   const { isBridgingCompleted, isBridgingFailed, isBridging, bridgeStatus } =
     useBridgingSteps(tokensToBeBridged, quoteId);
 
@@ -114,6 +104,16 @@ export const useSwapFundsStep = (
     isBridgingCompleted,
     bridgeStatus,
   });
+
+  // If the quoteId is not set, we set it to the fetched quoteId.
+  useEffect(() => {
+    if (hasError) {
+      setQuoteId(undefined);
+    }
+    if (updatedQuoteId && !quoteId) {
+      setQuoteId(updatedQuoteId);
+    }
+  }, [hasError, updatedQuoteId, quoteId]);
 
   const bridgeStepStatus = useMemo(() => {
     if (!isOnRampingCompleted) return 'wait';
