@@ -101,6 +101,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: 'persistent_data/',
       provision_type: EnvProvisionType.COMPUTED,
     },
+    LOG_DIR: {
+      name: 'Log directory',
+      description: '',
+      value: 'benchmarks/',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
   },
 } as const;
 
@@ -197,6 +203,12 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       name: 'Store path',
       description: '',
       value: 'persistent_data/',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    LOG_DIR: {
+      name: 'Log directory',
+      description: '',
+      value: 'benchmarks/',
       provision_type: EnvProvisionType.COMPUTED,
     },
     STAKING_TOKEN_CONTRACT_ADDRESS: {
@@ -413,6 +425,12 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
+    LOG_DIR: {
+      name: 'Log directory',
+      description: '',
+      value: 'benchmarks/',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
     RESET_PAUSE_DURATION: {
       name: 'Reset pause duration',
       description: '',
@@ -549,6 +567,12 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Store path',
       description: '',
       value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    LOG_DIR: {
+      name: 'Log directory',
+      description: '',
+      value: 'benchmarks/',
       provision_type: EnvProvisionType.COMPUTED,
     },
     RESET_PAUSE_DURATION: {
