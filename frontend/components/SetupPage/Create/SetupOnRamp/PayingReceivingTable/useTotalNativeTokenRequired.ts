@@ -33,6 +33,7 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     onRetry,
   } = useBridgeRequirementsQuery(
     onRampChainId,
+    !isOnRampingTransactionSuccessful,
     isOnRampingTransactionSuccessful,
   );
 

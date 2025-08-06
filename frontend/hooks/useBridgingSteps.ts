@@ -78,16 +78,19 @@ export const useBridgingSteps = (
   window.console.log('%cBridgeInProgress', 'color: blue;', {
     quoteId,
     bridgeExecuteError,
+    bridgeExecuteData,
   });
 
-  const isBridgingExecuteFailed = isBridgingFailedFn(
-    bridgeExecuteData?.bridge_request_status,
-  );
+  const isBridgingExecuteFailed = useMemo(() => {
+    if (isBridgeExecuteError) return true;
+    return isBridgingFailedFn(bridgeExecuteData?.bridge_request_status);
+  }, [isBridgeExecuteError, bridgeExecuteData]);
 
   /** Check if the bridging execution is completed for all status */
-  const isBridgingExecuteCompleted = isBridgingCompletedFn(
-    bridgeExecuteData?.bridge_request_status,
-  );
+  const isBridgingExecuteCompleted = useMemo(() => {
+    if (!bridgeExecuteData) return false;
+    return isBridgingCompletedFn(bridgeExecuteData.bridge_request_status);
+  }, [bridgeExecuteData]);
 
   const {
     isLoading: isBridgeStatusLoading,
@@ -123,6 +126,8 @@ export const useBridgingSteps = (
     // If the bridge execute itself has EXECUTION_DONE, we can consider the bridging as completed.
     // and we don't need to check the status.
     if (isBridgingExecuteCompleted) return true;
+
+    if (!bridgeStatusData) return false;
 
     return isBridgingCompletedFn(bridgeStatusData?.bridge_request_status);
   }, [isBridgingExecuteCompleted, bridgeStatusData]);

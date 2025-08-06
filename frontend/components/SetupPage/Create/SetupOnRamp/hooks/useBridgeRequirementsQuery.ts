@@ -20,8 +20,8 @@ import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirem
  */
 export const useBridgeRequirementsQuery = (
   onRampChainId: EvmChainId,
-  stopPollingCondition: boolean,
   enabled: boolean = true,
+  stopPollingCondition: boolean,
 ) => {
   const { selectedAgentConfig } = useServices();
   const { isBalancesAndFundingRequirementsLoading } =
@@ -37,7 +37,7 @@ export const useBridgeRequirementsQuery = (
   const [
     canPollForBridgeRefillRequirements,
     setCanPollForBridgeRefillRequirements,
-  ] = useState(true);
+  ] = useState(enabled);
   const [isManuallyRefetching, setIsManuallyRefetching] = useState(false);
 
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(

@@ -1,6 +1,6 @@
 import { ReloadOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
 import { TransactionStep } from '@/components/ui/TransactionSteps';
@@ -79,26 +79,36 @@ export const useSwapFundsStep = (
     onRetry,
   } = useBridgeRequirementsQuery(
     onRampChainId,
-    false, // don't stop polling
     isOnRampingStepCompleted,
+    true, // stop polling, since we want to execute the swap immediately
   );
 
+  const [quoteId, setQuoteId] = useState<string | undefined>();
+
   // If the on-ramping is not completed, we do not proceed with the swap step.
-  const quoteId = useMemo(() => {
+  const updatedQuoteId = useMemo(() => {
     if (isLoading) return;
     if (!isOnRampingCompleted) return;
     if (!bridgeFundingRequirements) return;
     return bridgeFundingRequirements.id;
   }, [isLoading, isOnRampingCompleted, bridgeFundingRequirements]);
 
-  // LOG
-  window.console.log('%cuseSwapFundsSteps', 'color: green;', quoteId);
+  // If the quoteId is not set, we set it to the fetched quoteId.
+  useEffect(() => {
+    if (hasError) {
+      setQuoteId(undefined);
+    }
+    if (updatedQuoteId && !quoteId) {
+      setQuoteId(updatedQuoteId);
+    }
+  }, [hasError, updatedQuoteId, quoteId]);
 
   const { isBridgingCompleted, isBridgingFailed, isBridging, bridgeStatus } =
     useBridgingSteps(tokensToBeBridged, quoteId);
 
   // LOG
   window.console.log('useBridgingSteps', {
+    quoteId,
     isBridging,
     isBridgingFailed,
     isBridgingCompleted,
