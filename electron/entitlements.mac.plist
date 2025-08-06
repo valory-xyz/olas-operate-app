@@ -22,9 +22,5 @@
     <true/>
     <key>com.apple.security.automation.apple-events</key>
     <true/>
-    <key>com.apple.security.device.camera</key>
-    <true/>
-    <key>com.apple.security.device.microphone</key>
-    <true/>
   </dict>
 </plist>
