@@ -7,7 +7,6 @@ import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol } from '@/constants/token';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
-import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { delayInSeconds } from '@/utils/delay';
 import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
@@ -19,9 +18,12 @@ import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirem
  * Hook to calculate the bridge requirements for the on-ramp process,
  * get quote and function to retry fetching the quote.
  */
-export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
+export const useBridgeRequirementsQuery = (
+  onRampChainId: EvmChainId,
+  enabled: boolean = true,
+  stopPollingCondition: boolean,
+) => {
   const { selectedAgentConfig } = useServices();
-  const { isOnRampingTransactionSuccessful } = useOnRampContext();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
 
@@ -35,7 +37,7 @@ export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
   const [
     canPollForBridgeRefillRequirements,
     setCanPollForBridgeRefillRequirements,
-  ] = useState(true);
+  ] = useState(enabled);
   const [isManuallyRefetching, setIsManuallyRefetching] = useState(false);
 
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
@@ -57,10 +59,11 @@ export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
   const bridgeParamsExceptNativeToken = useMemo(() => {
     if (!bridgeParams) return null;
 
+    const filteredParams = bridgeParams.bridge_requests.filter(
+      ({ to }) => to.token !== AddressZero,
+    );
     const bridgeRequest = canIgnoreNativeToken
-      ? bridgeParams.bridge_requests.filter(
-          (request) => request.to.token !== AddressZero,
-        )
+      ? filteredParams
       : bridgeParams.bridge_requests;
     return { ...bridgeParams, bridge_requests: bridgeRequest };
   }, [bridgeParams, canIgnoreNativeToken]);
@@ -72,7 +75,8 @@ export const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
     refetch: refetchBridgeRefillRequirements,
   } = useBridgeRefillRequirements(
     bridgeParamsExceptNativeToken,
-    canPollForBridgeRefillRequirements && !isOnRampingTransactionSuccessful,
+    canPollForBridgeRefillRequirements && !stopPollingCondition,
+    enabled,
   );
 
   // fetch bridge refill requirements manually on mount

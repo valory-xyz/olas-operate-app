@@ -64,7 +64,6 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
       ];
       const masterEoaRequirementAmount =
         masterEoaRequirement?.[AddressZero] ?? 0;
-      window.console.log({ masterEoaRequirement });
 
       // refill_requirements_masterSafe
       const safeRequirement: MasterSafeBalanceRecord['master_safe'] | null =
@@ -72,7 +71,6 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
           ? refillRequirements.master_safe
           : null;
       const safeRequirementAmount = safeRequirement?.[AddressZero] ?? 0;
-      window.console.log({ safeRequirement });
 
       // monthly_gas_estimate
       const monthlyGasEstimate =
