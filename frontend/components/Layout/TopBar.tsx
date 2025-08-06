@@ -1,5 +1,7 @@
 import { QuestionCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
+import { useRouter } from 'next/router';
+import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
@@ -54,11 +56,18 @@ const TopBarContainer = styled.div`
 `;
 
 export const TopBar = () => {
+  const router = useRouter();
   const electronApi = useElectronApi();
   const store = useStore();
   const { isUserLoggedIn, goto, pageState } = usePageState();
 
   const envName = store?.storeState?.environmentName;
+  const currentPage = router.pathname;
+
+  const name = useMemo(() => {
+    if (currentPage === '/onramp') return 'Buy Crypto on Transak';
+    return `Pearl (beta) ${envName ? `(${envName})` : ''}`.trim();
+  }, [currentPage, envName]);
 
   return (
     <TopBarContainer>
@@ -68,7 +77,7 @@ export const TopBar = () => {
         <DisabledLight />
       </TrafficLights>
 
-      <Text>{`Pearl (beta) ${envName ? `(${envName})` : ''}`.trim()}</Text>
+      <Text>{name}</Text>
 
       {/* for now, showing only on Main page */}
       {isUserLoggedIn && pageState === Pages.Main && (
