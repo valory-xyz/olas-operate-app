@@ -214,6 +214,8 @@ async function beforeQuit(event) {
   tray?.destroy();
   splashWindow?.destroy();
   mainWindow?.destroy();
+  agentWindow?.destroy();
+  onRampWindow?.destroy();
 
   logger.electron('Stop backend gracefully:');
   await stopBackend();
