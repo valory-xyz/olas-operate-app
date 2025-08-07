@@ -1,5 +1,6 @@
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { Card, Flex, Typography } from 'antd';
+import { useEffect, useState } from 'react';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import {
@@ -31,15 +32,21 @@ const SettingsTitle = () => (
 
 export const HelpAndSupport = () => {
   const { isUserLoggedIn } = usePageState();
+  const [latestTag, setLatestTag] = useState<string | null>(null);
 
-  const GetTag = async () => {
-    const response = await fetch(GITHUB_API_LATEST_RELEASE);
-    if (!response.ok) return { isPearlNewlyUpdated: false, latestTag: null };
+  useEffect(() => {
+    const GetTag = async () => {
+      const response = await fetch(GITHUB_API_LATEST_RELEASE);
+      if (!response.ok) return null;
 
-    const data = await response.json();
-    const latestTag = data.tag_name;
-    return latestTag;
-  };
+      const data = await response.json();
+      return data.tag_name;
+    };
+
+    GetTag().then((tag) => {
+      setLatestTag(tag);
+    });
+  }, []);
 
   return (
     <Card
@@ -56,9 +63,10 @@ export const HelpAndSupport = () => {
           Read FAQ {UNICODE_SYMBOLS.EXTERNAL_LINK}
         </a>
         <a
-          href={`https://github.com/valory-xyz/olas-operate-app/releases/tag/${GetTag()}`}
+          href={`https://github.com/valory-xyz/olas-operate-app/releases/tag/${latestTag}`}
           target="_blank"
           rel="noopener noreferrer"
+          className="mb-8"
         >
           Release notes {UNICODE_SYMBOLS.EXTERNAL_LINK}
         </a>
