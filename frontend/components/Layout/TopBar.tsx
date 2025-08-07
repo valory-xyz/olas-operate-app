@@ -62,9 +62,7 @@ export const TopBar = () => {
   const { isUserLoggedIn, goto, pageState } = usePageState();
 
   const envName = store?.storeState?.environmentName;
-  const currentPage = router.pathname;
-
-  const isOnRamp = currentPage === '/onramp';
+  const isOnRamp = router.pathname === '/onramp';
   const isNotMain = [isOnRamp].some(Boolean);
 
   const name = useMemo(() => {

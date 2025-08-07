@@ -23,10 +23,9 @@ import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirem
 const { Text } = Typography;
 
 /**
- * Hook to calculate the bridge requirements for the on-ramp process,
- * get quote and function to retry fetching the quote.
+ * Hook to calculate the bridge requirements for the swapping process after on-ramp,
  */
-const useBridgeRequirementsInternalQuery = (onRampChainId: EvmChainId) => {
+const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   const { isOnRampingStepCompleted } = useOnRampContext();
   const { selectedAgentConfig } = useServices();
   const { isBalancesAndFundingRequirementsLoading } =
@@ -78,9 +77,8 @@ const useBridgeRequirementsInternalQuery = (onRampChainId: EvmChainId) => {
     refetch: refetchBridgeRefillRequirements,
   } = useBridgeRefillRequirements(
     bridgeParamsExceptNativeToken,
-    false,
+    false, // do not poll the API
     isOnRampingStepCompleted,
-    'SWAP',
   );
 
   // fetch bridge refill requirements manually on mount
@@ -247,7 +245,7 @@ export const useSwapFundsStep = (
     receivingTokens,
     tokensToBeBridged,
     onRetry,
-  } = useBridgeRequirementsInternalQuery(onRampChainId);
+  } = useBridgeRequirements(onRampChainId);
 
   // If the on-ramping is not completed, we do not proceed with the swap step.
   const quoteId = useMemo(() => {

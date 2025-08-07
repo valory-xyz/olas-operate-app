@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 
 import { TokenSymbol } from '@/constants/token';
+import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { useBackupSigner } from '@/hooks/useBackupSigner';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
@@ -30,7 +31,7 @@ export const useMasterSafeCreationAndTransfer = (
 
         return {
           isSafeCreated: true,
-          txnLink: response.create_tx,
+          txnLink: `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[chain]}/tx/${response.create_tx}`,
 
           // NOTE: Currently, both creation and transfer are handled in the same API call.
           // Hence, the response contains the transfer status as well.

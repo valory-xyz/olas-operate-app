@@ -11,7 +11,6 @@ export const useBridgeRefillRequirements = (
   params: BridgeRefillRequirementsRequest | null,
   canPoll: boolean = true,
   enabled: boolean = true,
-  comingFrom?: string,
 ) => {
   const { isOnline } = useContext(OnlineStatusContext);
 
