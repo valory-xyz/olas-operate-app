@@ -62,11 +62,11 @@ export const OnRampPaymentSteps = ({
     goto,
   ]);
 
-  window.console.log('OnRampPaymentSteps', {
-    isOnRampingStepCompleted,
-    isSwapCompleted,
-    isMasterSafeCreatedAndFundsTransferred,
-  });
+  // window.console.log('OnRampPaymentSteps', {
+  //   isOnRampingStepCompleted,
+  //   isSwapCompleted,
+  //   isMasterSafeCreatedAndFundsTransferred,
+  // });
 
   return (
     <TransactionSteps

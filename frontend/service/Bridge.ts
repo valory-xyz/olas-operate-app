@@ -49,7 +49,7 @@ const executeBridge = async (
  */
 const getBridgeStatus = async (
   id: string,
-  signal: AbortSignal,
+  signal?: AbortSignal,
 ): Promise<BridgeStatusResponse> =>
   fetch(`${BACKEND_URL}/bridge/status/${id}`, {
     method: 'GET',

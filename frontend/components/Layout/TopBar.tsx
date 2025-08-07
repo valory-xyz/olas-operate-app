@@ -57,7 +57,7 @@ const TopBarContainer = styled.div`
 
 export const TopBar = () => {
   const router = useRouter();
-  const electronApi = useElectronApi();
+  const { closeApp, minimizeApp, onRampWindow } = useElectronApi();
   const store = useStore();
   const { isUserLoggedIn, goto, pageState } = usePageState();
 
@@ -70,12 +70,28 @@ export const TopBar = () => {
     return `Pearl (beta) ${envName ? `(${envName})` : ''}`.trim();
   }, [isOnRamp, envName]);
 
+  // const onClose = useCallback(() => {
+  //   if (isOnRamp) {
+  //     onRampWindow?.hide?.();
+  //     return;
+  //   }
+  //   closeApp?.();
+  // }, [closeApp, isOnRamp, onRampWindow]);
+
+  // const onMinimize = useCallback(() => {
+  //   if (isOnRamp) {
+  //     onRampWindow?.minimize?.();
+  //     return;
+  //   }
+  //   minimizeApp?.();
+  // }, [isOnRamp, minimizeApp, onRampWindow]);
+
   return (
     <TopBarContainer>
       {!isNotMain && (
         <TrafficLights>
-          <RedLight onClick={() => electronApi?.closeApp?.()} />
-          <YellowLight onClick={() => electronApi?.minimizeApp?.()} />
+          <RedLight onClick={() => closeApp?.()} />
+          <YellowLight onClick={() => minimizeApp?.()} />
           <DisabledLight />
         </TrafficLights>
       )}
