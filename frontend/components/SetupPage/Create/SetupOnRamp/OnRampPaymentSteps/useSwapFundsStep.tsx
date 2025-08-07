@@ -79,7 +79,7 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
 
   // fetch bridge refill requirements manually on mount
   useEffect(() => {
-    if (!isBridgeRefillRequirementsApiLoading) return;
+    if (isBridgeRefillRequirementsApiLoading) return;
     if (!isOnRampingStepCompleted) return;
 
     refetchBridgeRefillRequirements().finally(() => {
@@ -244,6 +244,12 @@ export const useSwapFundsStep = (
     tokensToBeBridged,
     onRetry,
   } = useBridgeRequirements(onRampChainId);
+
+  console.log('useSwapFundsStep', {
+    isLoading,
+    isOnRampingCompleted,
+    bridgeFundingRequirements,
+  });
 
   // If the on-ramping is not completed, we do not proceed with the swap step.
   const quoteId = useMemo(() => {

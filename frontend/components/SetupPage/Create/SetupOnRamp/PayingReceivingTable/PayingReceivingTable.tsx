@@ -71,6 +71,16 @@ const TokenLoader = () => (
   />
 );
 
+const TryAgain = ({ onRetry }: { onRetry: () => void }) => (
+  <Flex vertical gap={8} align="flex-start">
+    <CloseCircleOutlined style={{ color: COLOR.RED }} />
+    <Text>Quote request failed</Text>
+    <Button onClick={onRetry} icon={<ReloadOutlined />} size="small">
+      Try again
+    </Button>
+  </Flex>
+);
+
 type ReceivingTokensProps = {
   receivingTokens: { amount: number; symbol?: string }[];
 };
@@ -92,7 +102,12 @@ const ReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
 type PaymentTableProps = { onRampChainId: EvmChainId };
 export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const { selectedAgentConfig } = useServices();
-  const { updateUsdAmountToPay } = useOnRampContext();
+  const {
+    isOnRampingStepCompleted,
+    usdAmountToPay,
+    ethAmountToPay,
+    updateUsdAmountToPay,
+  } = useOnRampContext();
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
@@ -106,16 +121,20 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     );
 
   const isReceivingAmountLoading = isFiatLoading || isNativeTokenLoading;
-  const receivingAmount = fiatAmount ? `~${fiatAmount} USD` : NA;
-  const nativeTokenAmount = `for ${totalNativeToken} ETH`;
+  const receivingAmount = usdAmountToPay ? `~${usdAmountToPay} USD` : NA;
+  const nativeTokenAmount = `for ${ethAmountToPay} ETH`;
 
+  // Update the USD amount to pay only if the on-ramping step is not completed.
   useEffect(() => {
+    if (isOnRampingStepCompleted) return;
+
     if (isReceivingAmountLoading || hasNativeTokenError) {
       updateUsdAmountToPay(null);
     } else if (fiatAmount) {
       updateUsdAmountToPay(fiatAmount);
     }
   }, [
+    isOnRampingStepCompleted,
     isReceivingAmountLoading,
     hasNativeTokenError,
     fiatAmount,
@@ -129,17 +148,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
         paying: (
           <>
             {hasNativeTokenError && !isNativeTokenLoading ? (
-              <Flex vertical gap={8} align="flex-start">
-                <CloseCircleOutlined style={{ color: COLOR.RED }} />
-                <Text>Quote request failed</Text>
-                <Button
-                  onClick={onRetry}
-                  icon={<ReloadOutlined />}
-                  size="small"
-                >
-                  Try again
-                </Button>
-              </Flex>
+              <TryAgain onRetry={onRetry} />
             ) : (
               <Flex vertical justify="center" gap={6}>
                 <Text>

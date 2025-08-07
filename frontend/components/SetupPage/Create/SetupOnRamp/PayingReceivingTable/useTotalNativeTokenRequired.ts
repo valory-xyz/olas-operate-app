@@ -79,8 +79,14 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
   // Update the ETH amount to pay in the on-ramp context
   useEffect(() => {
     if (!totalNativeToken) return;
+    if (isOnRampingTransactionSuccessful) return;
+
     updateEthAmountToPay(totalNativeToken);
-  }, [totalNativeToken, updateEthAmountToPay]);
+  }, [
+    totalNativeToken,
+    isOnRampingTransactionSuccessful,
+    updateEthAmountToPay,
+  ]);
 
   return {
     isLoading,
