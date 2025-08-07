@@ -1,9 +1,9 @@
+import { EnvProvision } from '@/constants/envVariables';
 import { AgentType } from '@/enums/Agent';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
 import {
-  EnvProvisionType,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
   SupportedMiddlewareChain,
@@ -50,7 +50,7 @@ type EnvVariableAttributes = {
   name: string;
   description: string;
   value: string;
-  provision_type: EnvProvisionType;
+  provision_type: EnvProvision;
 };
 
 export type MiddlewareServiceResponse = {
@@ -74,14 +74,15 @@ export type MiddlewareServiceResponse = {
   env_variables: { [key: string]: EnvVariableAttributes };
 };
 
+export type ServiceValidationResponse = {
+  [service_config_id: string]: boolean;
+};
+
 type ConfigurationTemplate = {
   staking_program_id?: StakingProgramId; // added on deployment
   nft: string;
   rpc?: string; // added on deployment
   agent_id: number;
-  threshold: number;
-  use_staking: boolean;
-  use_mech_marketplace?: boolean;
   cost_of_bond: number;
   monthly_gas_estimate: number;
   fund_requirements: {

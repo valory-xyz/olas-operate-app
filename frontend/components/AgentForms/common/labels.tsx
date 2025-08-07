@@ -68,8 +68,8 @@ export const TenderlyProjectSlugLabel = () => (
     <InfoTooltip placement="bottom" overlayInnerStyle={TOOLTIP_STYLE}>
       <Paragraph className="text-sm m-0">
         The project slug is a unique identifier for each project in Tenderly.
-        It’s automatically generated from your project’s name. You can find your
-        account slug in your Tenderly project settings.
+        It’s automatically generated from your project’s name. You can find the
+        project slug in your Tenderly project settings.
       </Paragraph>
     </InfoTooltip>
   </Flex>
