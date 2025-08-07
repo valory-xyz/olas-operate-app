@@ -10,7 +10,7 @@ import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol } from '@/constants/token';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
-import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
+import { useBridgeRefillRequirementsOnDemand } from '@/hooks/useBridgeRefillRequirementsOnDemand';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
@@ -75,21 +75,19 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
     isError: isBridgeRefillRequirementsError,
     isFetching: isBridgeRefillRequirementsFetching,
     refetch: refetchBridgeRefillRequirements,
-  } = useBridgeRefillRequirements(
-    bridgeParamsExceptNativeToken,
-    false, // do not poll the API
-    isOnRampingStepCompleted,
-  );
+  } = useBridgeRefillRequirementsOnDemand(bridgeParamsExceptNativeToken);
 
   // fetch bridge refill requirements manually on mount
   useEffect(() => {
     if (!isBridgeRefillRequirementsApiLoading) return;
+    if (!isOnRampingStepCompleted) return;
 
     refetchBridgeRefillRequirements().finally(() => {
       setIsBridgeRefillRequirementsApiLoading(false);
     });
   }, [
     isBridgeRefillRequirementsApiLoading,
+    isOnRampingStepCompleted,
     refetchBridgeRefillRequirements,
     setIsBridgeRefillRequirementsApiLoading,
   ]);
