@@ -5,6 +5,7 @@ import { Maybe } from '@/types/Util';
 export const REACT_QUERY_KEYS = {
   // services
   SERVICES_KEY: ['services'] as const,
+  SERVICES_VALIDATION_STATUS_KEY: ['servicesValidationStatus'] as const,
   SERVICE_DEPLOYMENT_STATUS_KEY: (serviceConfigId: Maybe<string>) =>
     ['serviceStatus', serviceConfigId ?? ''] as const,
 
