@@ -108,17 +108,30 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setUsdAmountToPay(amount);
   }, []);
 
-  // Listen for onramp window hide event to reset the loading state
-  useEffect(() => {
-    const handleHide = () => {
-      updateIsBuyCryptoBtnLoading(false);
-    };
+  /**
+   * Check if the on-ramping step is completed
+   * ie. if the on-ramping is successful AND funds are received in the master EOA.
+   */
+  const isOnRampingStepCompleted =
+    isOnRampingTransactionSuccessful && hasFundsReceivedAfterOnRamp;
 
-    ipcRenderer?.on?.('onramp-window-did-hide', handleHide);
-    return () => {
-      ipcRenderer?.removeListener?.('onramp-window-did-hide', handleHide);
-    };
-  }, [ipcRenderer, updateIsBuyCryptoBtnLoading]);
+  /**
+   * Check if the on-ramping transaction was successful but funds are not received
+   */
+  const isTransactionSuccessfulButFundsNotReceived =
+    isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
+
+  // Listen for onramp window hide event to reset the loading state
+  // useEffect(() => {
+  //   const handleHide = () => {
+  //     updateIsBuyCryptoBtnLoading(false);
+  //   };
+
+  //   ipcRenderer?.on?.('onramp-window-did-hide', handleHide);
+  //   return () => {
+  //     ipcRenderer?.removeListener?.('onramp-window-did-hide', handleHide);
+  //   };
+  // }, [ipcRenderer, updateIsBuyCryptoBtnLoading]);
 
   // Listen for onramp window transaction success event to reset the loading state
   useEffect(() => {
@@ -152,19 +165,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
       );
     };
   }, [ipcRenderer, onRampWindow, updateIsBuyCryptoBtnLoading]);
-
-  /**
-   * Check if the on-ramping step is completed
-   * ie. if the on-ramping is successful AND funds are received in the master EOA.
-   */
-  const isOnRampingStepCompleted =
-    isOnRampingTransactionSuccessful && hasFundsReceivedAfterOnRamp;
-
-  /**
-   * Check if the on-ramping transaction was successful but funds are not received
-   */
-  const isTransactionSuccessfulButFundsNotReceived =
-    isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
 
   const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
     const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
