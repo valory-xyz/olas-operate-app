@@ -36,7 +36,7 @@ export const OnRampPaymentSteps = ({
     isSwapCompleted,
     tokensToBeTransferred,
     step: swapStep,
-  } = useSwapFundsStep(onRampChainId, isOnRampingStepCompleted);
+  } = useSwapFundsStep(onRampChainId);
 
   // step 3 & 4: Create Master Safe and transfer funds
   const {

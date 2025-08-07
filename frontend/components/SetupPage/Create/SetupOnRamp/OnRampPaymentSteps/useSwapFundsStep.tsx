@@ -73,14 +73,20 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
     data: bridgeFundingRequirements,
     isLoading: isBridgeRefillRequirementsLoading,
     isError: isBridgeRefillRequirementsError,
-    isFetching: isBridgeRefillRequirementsFetching,
+    // isFetching: isBridgeRefillRequirementsFetching,
     refetch: refetchBridgeRefillRequirements,
   } = useBridgeRefillRequirementsOnDemand(bridgeParamsExceptNativeToken);
 
   // fetch bridge refill requirements manually on mount
   useEffect(() => {
-    if (isBridgeRefillRequirementsApiLoading) return;
+    console.log({
+      isBridgeRefillRequirementsApiLoading,
+      isOnRampingStepCompleted,
+    });
+    if (!isBridgeRefillRequirementsApiLoading) return;
     if (!isOnRampingStepCompleted) return;
+
+    console.log('>>>>> Fetching bridge refill requirements');
 
     refetchBridgeRefillRequirements().finally(() => {
       setIsBridgeRefillRequirementsApiLoading(false);
@@ -95,7 +101,7 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   const isLoading =
     isBalancesAndFundingRequirementsLoading ||
     isBridgeRefillRequirementsLoading ||
-    isBridgeRefillRequirementsFetching ||
+    // isBridgeRefillRequirementsFetching ||
     isBridgeRefillRequirementsApiLoading ||
     isManuallyRefetching;
 
@@ -232,10 +238,9 @@ const getQuoteFailedErrorState = (onRetry: () => void): SwapFundsStep => ({
 /**
  * Hook to manage the swap funds step in the on-ramping process.
  */
-export const useSwapFundsStep = (
-  onRampChainId: EvmChainId,
-  isOnRampingCompleted: boolean,
-) => {
+export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
+  const { isOnRampingStepCompleted } = useOnRampContext();
+
   const {
     isLoading,
     hasError,
@@ -247,29 +252,29 @@ export const useSwapFundsStep = (
 
   console.log('useSwapFundsStep', {
     isLoading,
-    isOnRampingCompleted,
+    isOnRampingStepCompleted,
     bridgeFundingRequirements,
   });
 
   // If the on-ramping is not completed, we do not proceed with the swap step.
   const quoteId = useMemo(() => {
     if (isLoading) return;
-    if (!isOnRampingCompleted) return;
+    if (!isOnRampingStepCompleted) return;
     if (!bridgeFundingRequirements) return;
     return bridgeFundingRequirements.id;
-  }, [isLoading, isOnRampingCompleted, bridgeFundingRequirements]);
+  }, [isLoading, isOnRampingStepCompleted, bridgeFundingRequirements]);
 
   const { isBridgingCompleted, isBridgingFailed, isBridging, bridgeStatus } =
     useBridgingSteps(tokensToBeBridged, quoteId);
 
   const bridgeStepStatus = useMemo(() => {
-    if (!isOnRampingCompleted) return 'wait';
+    if (!isOnRampingStepCompleted) return 'wait';
     if (isLoading || isBridging) return 'process';
     if (isBridgingFailed) return 'error';
     if (isBridgingCompleted) return 'finish';
     return 'process';
   }, [
-    isOnRampingCompleted,
+    isOnRampingStepCompleted,
     isLoading,
     isBridging,
     isBridgingFailed,
@@ -281,7 +286,7 @@ export const useSwapFundsStep = (
     return receivingTokens.map(({ symbol }) => symbol);
   }, [receivingTokens]);
 
-  if (!isOnRampingCompleted) return EMPTY_STATE;
+  if (!isOnRampingStepCompleted) return EMPTY_STATE;
   if (isLoading || isBridging) return PROCESS_STATE;
   if (hasError) return getQuoteFailedErrorState(onRetry);
 
