@@ -51,11 +51,11 @@ export const ExportLogsButton = ({ size }: ExportLogsButtonProps) => {
 
   return (
     <Button
-      type="primary"
-      ghost
-      size={size || 'large'}
       loading={isLoading || canSaveLogs}
       onClick={onSaveLogs}
+      size={size || 'large'}
+      type="primary"
+      ghost
     >
       Export logs
     </Button>

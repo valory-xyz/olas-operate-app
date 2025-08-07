@@ -84,7 +84,7 @@ const useServicesLogs = () => {
 
       return {
         ...item,
-        keys: item.keys.map((key) => key.address),
+        keys: item?.keys?.map((key) => key.address),
         deploymentStatus: isSameService
           ? selectedService.deploymentStatus
           : item.deploymentStatus,

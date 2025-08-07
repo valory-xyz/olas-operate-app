@@ -2275,13 +2275,13 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.8.2"
+version = "0.10.0"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.9"
 files = [
-    {file = "olas_operate_middleware-0.8.2-py3-none-any.whl", hash = "sha256:c5e2021e6abffb3447f17ddf582267fa3db2c3263bb79fd048d8c3acfc8fd6ff"},
-    {file = "olas_operate_middleware-0.8.2.tar.gz", hash = "sha256:f5fd450c0de015966ba9f9383ba31742c4ccb3effc47883a81f1a66808f2ec25"},
+    {file = "olas_operate_middleware-0.10.0-py3-none-any.whl", hash = "sha256:4cd400be2a5cd88e16d919267ea804cea9570a7975e89bd42f211e0896199f0a"},
+    {file = "olas_operate_middleware-0.10.0.tar.gz", hash = "sha256:8ae7bc6c87bcfc3dfa2676f46788c3d2bc80e0077161592bfcf0678a477f9948"},
 ]
 
 [package.dependencies]
@@ -2310,7 +2310,7 @@ open-aea-cli-ipfs = "1.65.0"
 open-aea-ledger-cosmos = "1.65.0"
 open-aea-ledger-ethereum = "1.65.0"
 open-aea-ledger-ethereum-flashbots = "1.65.0"
-open-autonomy = ">=0.19.11,<0.20.0"
+open-autonomy = ">=0.20.0,<0.21.0"
 psutil = ">=5.9.8,<6.0.0"
 pyinstaller = ">=6.8.0,<7.0.0"
 requests-toolbelt = "1.0.0"
@@ -2441,13 +2441,13 @@ open-aea-ledger-ethereum = ">=1.65.0,<1.66.0"
 
 [[package]]
 name = "open-autonomy"
-version = "0.19.11"
+version = "0.20.1"
 description = "A framework for the creation of autonomous agent services."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "open_autonomy-0.19.11-py3-none-any.whl", hash = "sha256:0bf7f7281457092a68995454e985781fb430cd6f01dac076d82d1f874e3417c1"},
-    {file = "open_autonomy-0.19.11.tar.gz", hash = "sha256:e45dec413ec1005484e315be1ff91914ec1630eb35150e32668beb52bd9b525b"},
+    {file = "open_autonomy-0.20.1-py3-none-any.whl", hash = "sha256:061d4631ff991d6c7b1015808cd467afe3fe6b266103f31d21605b78fbd003a4"},
+    {file = "open_autonomy-0.20.1.tar.gz", hash = "sha256:5f807a95a464993408cc00728769f351c556c171d43d0f6670e4f4052d4502e4"},
 ]
 
 [package.dependencies]
@@ -4034,4 +4034,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "6fa247aa0f0c3c96154c60b75815fa373bb15658a470d587e0461271be8915bf"
+content-hash = "1866e5df6531df2739acb48f34c731d538b88857d5c33471f80702dcf26abba1"
