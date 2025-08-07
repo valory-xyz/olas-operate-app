@@ -58,7 +58,6 @@ export const useBridgingSteps = (
     isFetching: isBridgeExecuteFetching,
     isError: isBridgeExecuteError,
     data: bridgeExecuteData,
-    error: bridgeExecuteError,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId!),
     queryFn: async ({ signal }) => {
@@ -79,23 +78,6 @@ export const useBridgingSteps = (
     refetchOnWindowFocus: false,
     refetchInterval: false,
   });
-
-  console.log('%c11: BridgeInProgress', 'color: blue;', {
-    quoteId,
-    bridgeExecuteError,
-    bridgeExecuteData,
-  });
-
-  // const isBridgingExecuteFailed = useMemo(() => {
-  //   if (isBridgeExecuteError) return true;
-  //   return isBridgingFailedFn(bridgeExecuteData?.bridge_request_status);
-  // }, [isBridgeExecuteError, bridgeExecuteData]);
-
-  // /** Check if the bridging execution is completed for all status */
-  // const isBridgingExecuteCompleted = useMemo(() => {
-  //   if (!bridgeExecuteData) return false;
-  //   return isBridgingCompletedFn(bridgeExecuteData.bridge_request_status);
-  // }, [bridgeExecuteData]);
 
   const isBridgingExecuteFailed = isBridgingFailedFn(
     bridgeExecuteData?.bridge_request_status,
@@ -134,12 +116,6 @@ export const useBridgingSteps = (
     refetchOnWindowFocus: false,
   });
 
-  window.console.log('22: bridge status', {
-    isBridgeStatusLoading,
-    isBridgeStatusError,
-    bridgeStatusData,
-  });
-
   const isBridging = useMemo(() => {
     if (isBridgeExecuteLoading) return true;
     if (isBridgeStatusLoading) return true;
@@ -150,8 +126,6 @@ export const useBridgingSteps = (
     // If the bridge execute itself has EXECUTION_DONE, we can consider the bridging as completed.
     // and we don't need to check the status.
     if (isBridgingExecuteCompleted) return true;
-
-    // if (!bridgeStatusData) return false;
 
     return isBridgingCompletedFn(bridgeStatusData?.bridge_request_status);
   }, [isBridgingExecuteCompleted, bridgeStatusData]);

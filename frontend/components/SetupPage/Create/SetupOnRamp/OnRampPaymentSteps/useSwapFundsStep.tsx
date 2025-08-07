@@ -60,11 +60,10 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   const bridgeParamsExceptNativeToken = useMemo(() => {
     if (!bridgeParams) return null;
 
-    const filteredParams = bridgeParams.bridge_requests.filter(
-      ({ to }) => to.token !== AddressZero,
-    );
     const bridgeRequest = canIgnoreNativeToken
-      ? filteredParams
+      ? bridgeParams.bridge_requests.filter(
+          (request) => request.to.token !== AddressZero,
+        )
       : bridgeParams.bridge_requests;
     return { ...bridgeParams, bridge_requests: bridgeRequest };
   }, [bridgeParams, canIgnoreNativeToken]);
@@ -73,20 +72,13 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
     data: bridgeFundingRequirements,
     isLoading: isBridgeRefillRequirementsLoading,
     isError: isBridgeRefillRequirementsError,
-    // isFetching: isBridgeRefillRequirementsFetching,
     refetch: refetchBridgeRefillRequirements,
   } = useBridgeRefillRequirementsOnDemand(bridgeParamsExceptNativeToken);
 
   // fetch bridge refill requirements manually on mount
   useEffect(() => {
-    console.log({
-      isBridgeRefillRequirementsApiLoading,
-      isOnRampingStepCompleted,
-    });
     if (!isBridgeRefillRequirementsApiLoading) return;
     if (!isOnRampingStepCompleted) return;
-
-    console.log('>>>>> Fetching bridge refill requirements');
 
     refetchBridgeRefillRequirements().finally(() => {
       setIsBridgeRefillRequirementsApiLoading(false);
@@ -101,7 +93,6 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   const isLoading =
     isBalancesAndFundingRequirementsLoading ||
     isBridgeRefillRequirementsLoading ||
-    // isBridgeRefillRequirementsFetching ||
     isBridgeRefillRequirementsApiLoading ||
     isManuallyRefetching;
 
@@ -249,12 +240,6 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     tokensToBeBridged,
     onRetry,
   } = useBridgeRequirements(onRampChainId);
-
-  console.log('useSwapFundsStep', {
-    isLoading,
-    isOnRampingStepCompleted,
-    bridgeFundingRequirements,
-  });
 
   // If the on-ramping is not completed, we do not proceed with the swap step.
   const quoteId = useMemo(() => {

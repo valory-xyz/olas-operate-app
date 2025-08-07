@@ -121,18 +121,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const isTransactionSuccessfulButFundsNotReceived =
     isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
 
-  // Listen for onramp window hide event to reset the loading state
-  // useEffect(() => {
-  //   const handleHide = () => {
-  //     updateIsBuyCryptoBtnLoading(false);
-  //   };
-
-  //   ipcRenderer?.on?.('onramp-window-did-hide', handleHide);
-  //   return () => {
-  //     ipcRenderer?.removeListener?.('onramp-window-did-hide', handleHide);
-  //   };
-  // }, [ipcRenderer, updateIsBuyCryptoBtnLoading]);
-
   // Listen for onramp window transaction success event to reset the loading state
   useEffect(() => {
     const handleTransactionSuccess = () => {

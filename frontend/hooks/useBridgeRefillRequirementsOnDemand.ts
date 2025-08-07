@@ -15,8 +15,6 @@ export const useBridgeRefillRequirementsOnDemand = (
       params!,
     ),
     queryFn: async ({ signal }) => {
-      console.log('!!!! CALLED');
-
       if (!params) {
         window.console.warn(
           'No parameters provided for bridge refill requirements',
@@ -28,7 +26,6 @@ export const useBridgeRefillRequirementsOnDemand = (
         params,
         signal,
       );
-
       return response;
     },
 

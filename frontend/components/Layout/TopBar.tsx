@@ -57,7 +57,7 @@ const TopBarContainer = styled.div`
 
 export const TopBar = () => {
   const router = useRouter();
-  const { closeApp, minimizeApp, onRampWindow } = useElectronApi();
+  const { closeApp, minimizeApp } = useElectronApi();
   const store = useStore();
   const { isUserLoggedIn, goto, pageState } = usePageState();
 
@@ -69,22 +69,6 @@ export const TopBar = () => {
     if (isOnRamp) return 'Buy Crypto on Transak';
     return `Pearl (beta) ${envName ? `(${envName})` : ''}`.trim();
   }, [isOnRamp, envName]);
-
-  // const onClose = useCallback(() => {
-  //   if (isOnRamp) {
-  //     onRampWindow?.hide?.();
-  //     return;
-  //   }
-  //   closeApp?.();
-  // }, [closeApp, isOnRamp, onRampWindow]);
-
-  // const onMinimize = useCallback(() => {
-  //   if (isOnRamp) {
-  //     onRampWindow?.minimize?.();
-  //     return;
-  //   }
-  //   minimizeApp?.();
-  // }, [isOnRamp, minimizeApp, onRampWindow]);
 
   return (
     <TopBarContainer>
