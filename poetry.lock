@@ -2275,53 +2275,49 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.9.0"
+version = "0.10.0"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.9"
-files = []
-develop = false
+files = [
+    {file = "olas_operate_middleware-0.10.0-py3-none-any.whl", hash = "sha256:4cd400be2a5cd88e16d919267ea804cea9570a7975e89bd42f211e0896199f0a"},
+    {file = "olas_operate_middleware-0.10.0.tar.gz", hash = "sha256:8ae7bc6c87bcfc3dfa2676f46788c3d2bc80e0077161592bfcf0678a477f9948"},
+]
 
 [package.dependencies]
 aiohttp = "3.9.5"
-argon2-cffi = "==23.1.0"
-clea = "==0.1.0rc4"
-cytoolz = "==0.12.3"
-deepdiff = "^8.0.1"
+argon2-cffi = "23.1.0"
+clea = "0.1.0rc4"
+cytoolz = "0.12.3"
+deepdiff = ">=8.0.1,<9.0.0"
 docker = "6.1.2"
-eth-abi = "==5.1.0"
-eth-account = "==0.8.0"
-eth-hash = "==0.7.0"
-eth-keyfile = "==0.6.1"
-eth-keys = "==0.4.0"
-eth-rlp = "==0.3.0"
-eth-typing = "==3.5.2"
-eth-utils = "==2.3.1"
+eth-abi = "5.1.0"
+eth-account = "0.8.0"
+eth-hash = "0.7.0"
+eth-keyfile = "0.6.1"
+eth-keys = "0.4.0"
+eth-rlp = "0.3.0"
+eth-typing = "3.5.2"
+eth-utils = "2.3.1"
 fastapi = "0.110.3"
-frozenlist = "==1.4.1"
-halo = "==0.0.31"
-hexbytes = "==0.3.1"
-ipfshttpclient = "==0.8.0a2"
-jsonschema = "==4.3.3"
-multidict = "==6.0.5"
-open-aea-cli-ipfs = "==1.65.0"
-open-aea-ledger-cosmos = "==1.65.0"
-open-aea-ledger-ethereum = "==1.65.0"
-open-aea-ledger-ethereum-flashbots = "==1.65.0"
-open-autonomy = "^0.20.0"
-psutil = "^5.9.8"
-pyinstaller = "^6.8.0"
+frozenlist = "1.4.1"
+halo = "0.0.31"
+hexbytes = "0.3.1"
+ipfshttpclient = "0.8.0a2"
+jsonschema = "4.3.3"
+multidict = "6.0.5"
+open-aea-cli-ipfs = "1.65.0"
+open-aea-ledger-cosmos = "1.65.0"
+open-aea-ledger-ethereum = "1.65.0"
+open-aea-ledger-ethereum-flashbots = "1.65.0"
+open-autonomy = ">=0.20.0,<0.21.0"
+psutil = ">=5.9.8,<6.0.0"
+pyinstaller = ">=6.8.0,<7.0.0"
 requests-toolbelt = "1.0.0"
 starlette = "0.37.2"
-twikit = "==2.2.0"
-uvicorn = "==0.27.0"
-web3 = "==6.1.0"
-
-[package.source]
-type = "git"
-url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "344d86992f9c150c583c36f992ed3659c33dcb68"
-resolved_reference = "344d86992f9c150c583c36f992ed3659c33dcb68"
+twikit = "2.2.0"
+uvicorn = "0.27.0"
+web3 = "6.1.0"
 
 [[package]]
 name = "open-aea"
@@ -4038,4 +4034,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "a49f2fe168ea2d52012587f9c2aa740dbd7e99f6df84d7368ca95b3e3867a67e"
+content-hash = "1866e5df6531df2739acb48f34c731d538b88857d5c33471f80702dcf26abba1"
