@@ -1,17 +1,185 @@
 import { ReloadOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { getTokenDetails } from '@/components/Bridge/utils';
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
 import { TransactionStep } from '@/components/ui/TransactionSteps';
+import { TOKEN_CONFIG } from '@/config/tokens';
+import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol } from '@/constants/token';
+import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
+import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
+import { useServices } from '@/hooks/useServices';
+import { delayInSeconds } from '@/utils/delay';
+import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
+import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
-import { useBridgeRequirementsQuery } from '../hooks/useBridgeRequirementsQuery';
+import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
 
 const { Text } = Typography;
+
+/**
+ * Hook to calculate the bridge requirements for the on-ramp process,
+ * get quote and function to retry fetching the quote.
+ */
+const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
+  const { isOnRampingStepCompleted } = useOnRampContext();
+  const { selectedAgentConfig } = useServices();
+  const { isBalancesAndFundingRequirementsLoading } =
+    useBalanceAndRefillRequirementsContext();
+
+  // State to control the force update of the bridge_refill_requirements API call
+  // This is used when the user clicks on "Try again" button.
+  const [isForceUpdate, setIsForceUpdate] = useState(false);
+  const [
+    isBridgeRefillRequirementsApiLoading,
+    setIsBridgeRefillRequirementsApiLoading,
+  ] = useState(true);
+  const [isManuallyRefetching, setIsManuallyRefetching] = useState(false);
+
+  const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
+    onRampChainId,
+    AddressZero,
+    'to',
+  );
+
+  const bridgeParams = useMemo(() => {
+    if (!getBridgeRequirementsParams) return null;
+    return getBridgeRequirementsParams(isForceUpdate);
+  }, [isForceUpdate, getBridgeRequirementsParams]);
+
+  // Cannot bridge the token if the onRampChainId is the same as the middleware home chain.
+  // eg. for Optimism, we cannot bridge ETH to Optimism if we are on Optimism.
+  const canIgnoreNativeToken =
+    selectedAgentConfig.evmHomeChainId === onRampChainId;
+
+  // Filter out the native token from the bridge requests
+  const bridgeParamsExceptNativeToken = useMemo(() => {
+    if (!bridgeParams) return null;
+
+    const filteredParams = bridgeParams.bridge_requests.filter(
+      ({ to }) => to.token !== AddressZero,
+    );
+    const bridgeRequest = canIgnoreNativeToken
+      ? filteredParams
+      : bridgeParams.bridge_requests;
+    return { ...bridgeParams, bridge_requests: bridgeRequest };
+  }, [bridgeParams, canIgnoreNativeToken]);
+
+  const {
+    data: bridgeFundingRequirements,
+    isLoading: isBridgeRefillRequirementsLoading,
+    isError: isBridgeRefillRequirementsError,
+    refetch: refetchBridgeRefillRequirements,
+  } = useBridgeRefillRequirements(
+    bridgeParamsExceptNativeToken,
+    false,
+    isOnRampingStepCompleted,
+  );
+
+  // fetch bridge refill requirements manually on mount
+  useEffect(() => {
+    if (!isBridgeRefillRequirementsApiLoading) return;
+
+    refetchBridgeRefillRequirements().finally(() => {
+      setIsBridgeRefillRequirementsApiLoading(false);
+    });
+  }, [
+    isBridgeRefillRequirementsApiLoading,
+    refetchBridgeRefillRequirements,
+    setIsBridgeRefillRequirementsApiLoading,
+  ]);
+
+  const isLoading =
+    isBalancesAndFundingRequirementsLoading ||
+    isBridgeRefillRequirementsLoading ||
+    isBridgeRefillRequirementsApiLoading ||
+    isManuallyRefetching;
+
+  const hasAnyQuoteFailed = useMemo(() => {
+    if (!bridgeFundingRequirements) return false;
+    return bridgeFundingRequirements.bridge_request_status.some(
+      ({ status }) => status === 'QUOTE_FAILED',
+    );
+  }, [bridgeFundingRequirements]);
+
+  const receivingTokens = useMemo(() => {
+    if (!bridgeParams) return [];
+
+    const toChainId = asEvmChainId(selectedAgentConfig.middlewareHomeChainId);
+    const toChainConfig = TOKEN_CONFIG[toChainId];
+
+    return bridgeParams.bridge_requests.map((request) => {
+      const { token: toToken, amount } = request.to;
+      const token = getTokenDetails(toToken, toChainConfig);
+      return {
+        amount: formatUnitsToNumber(amount, token?.decimals),
+        symbol: token?.symbol as TokenSymbol,
+      };
+    });
+  }, [bridgeParams, selectedAgentConfig.middlewareHomeChainId]);
+
+  /**
+   * List of tokens to bridge, excluding the native token, if onRampChainId
+   * matches the middleware home chain.
+   *
+   * For example,
+   * - Optimus, tokens to bridge: [USDC, OLAS]
+   * - Gnosis, tokens to bridge: [ETH, USDC, OLAS]
+   */
+  const tokensToBeBridged = useMemo(() => {
+    if (receivingTokens.length === 0) return [];
+
+    const currentChainSymbol = asEvmChainDetails(
+      selectedAgentConfig.middlewareHomeChainId,
+    ).symbol;
+
+    if (!canIgnoreNativeToken) {
+      return receivingTokens.map((token) => token.symbol);
+    }
+
+    const filteredTokens = receivingTokens.filter(
+      (token) => token.symbol !== currentChainSymbol,
+    );
+    return filteredTokens.map((token) => token.symbol);
+  }, [
+    selectedAgentConfig.middlewareHomeChainId,
+    canIgnoreNativeToken,
+    receivingTokens,
+  ]);
+
+  // Retry to fetch the bridge refill requirements
+  const onRetry = useCallback(async () => {
+    setIsForceUpdate(true);
+    setIsManuallyRefetching(true);
+
+    // slight delay before refetching.
+    await delayInSeconds(1);
+
+    refetchBridgeRefillRequirements()
+      .then(() => {
+        // force_update: true is used only when the user clicks on "Try again",
+        // hence reset it to false after the API call is made.
+        setIsForceUpdate(false);
+      })
+      .finally(() => {
+        setIsManuallyRefetching(false);
+      });
+  }, [refetchBridgeRefillRequirements]);
+
+  return {
+    isLoading,
+    hasError: isBridgeRefillRequirementsError || hasAnyQuoteFailed,
+    bridgeFundingRequirements,
+    receivingTokens,
+    tokensToBeBridged,
+    onRetry,
+  };
+};
 
 const TITLE = 'Swap funds';
 
@@ -69,7 +237,6 @@ export const useSwapFundsStep = (
   onRampChainId: EvmChainId,
   isOnRampingCompleted: boolean,
 ) => {
-  const { isOnRampingStepCompleted } = useOnRampContext();
   const {
     isLoading,
     hasError,
@@ -77,16 +244,10 @@ export const useSwapFundsStep = (
     receivingTokens,
     tokensToBeBridged,
     onRetry,
-  } = useBridgeRequirementsQuery(
-    onRampChainId,
-    isOnRampingStepCompleted,
-    true, // stop polling, since we want to execute the swap immediately
-  );
-
-  const [quoteId, setQuoteId] = useState<string | undefined>();
+  } = useBridgeRequirementsQuery(onRampChainId);
 
   // If the on-ramping is not completed, we do not proceed with the swap step.
-  const updatedQuoteId = useMemo(() => {
+  const quoteId = useMemo(() => {
     if (isLoading) return;
     if (!isOnRampingCompleted) return;
     if (!bridgeFundingRequirements) return;
@@ -95,25 +256,6 @@ export const useSwapFundsStep = (
 
   const { isBridgingCompleted, isBridgingFailed, isBridging, bridgeStatus } =
     useBridgingSteps(tokensToBeBridged, quoteId);
-
-  // LOG
-  window.console.log('useBridgingSteps', {
-    quoteId,
-    isBridging,
-    isBridgingFailed,
-    isBridgingCompleted,
-    bridgeStatus,
-  });
-
-  // If the quoteId is not set, we set it to the fetched quoteId.
-  useEffect(() => {
-    if (hasError) {
-      setQuoteId(undefined);
-    }
-    if (updatedQuoteId && !quoteId) {
-      setQuoteId(updatedQuoteId);
-    }
-  }, [hasError, updatedQuoteId, quoteId]);
 
   const bridgeStepStatus = useMemo(() => {
     if (!isOnRampingCompleted) return 'wait';
