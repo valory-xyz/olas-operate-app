@@ -4,6 +4,7 @@ import { Card, Flex, Typography } from 'antd';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import {
   FAQ_URL,
+  GITHUB_API_LATEST_RELEASE,
   SUPPORT_URL,
   TERMS_AND_CONDITIONS_URL,
 } from '@/constants/urls';
@@ -31,6 +32,15 @@ const SettingsTitle = () => (
 export const HelpAndSupport = () => {
   const { isUserLoggedIn } = usePageState();
 
+  const GetTag = async () => {
+    const response = await fetch(GITHUB_API_LATEST_RELEASE);
+    if (!response.ok) return { isPearlNewlyUpdated: false, latestTag: null };
+
+    const data = await response.json();
+    const latestTag = data.tag_name;
+    return latestTag;
+  };
+
   return (
     <Card
       title={<SettingsTitle />}
@@ -44,6 +54,13 @@ export const HelpAndSupport = () => {
         </Title>
         <a target="_blank" href={FAQ_URL} className="mb-8">
           Read FAQ {UNICODE_SYMBOLS.EXTERNAL_LINK}
+        </a>
+        <a
+          href={`https://github.com/valory-xyz/olas-operate-app/releases/tag/${GetTag()}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Release notes {UNICODE_SYMBOLS.EXTERNAL_LINK}
         </a>
         <a target="_blank" href={TERMS_AND_CONDITIONS_URL}>
           Terms and Conditions {UNICODE_SYMBOLS.EXTERNAL_LINK}
