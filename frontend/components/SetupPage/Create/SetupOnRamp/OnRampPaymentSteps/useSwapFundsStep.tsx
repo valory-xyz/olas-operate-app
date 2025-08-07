@@ -26,7 +26,7 @@ const { Text } = Typography;
  * Hook to calculate the bridge requirements for the on-ramp process,
  * get quote and function to retry fetching the quote.
  */
-const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
+const useBridgeRequirementsInternalQuery = (onRampChainId: EvmChainId) => {
   const { isOnRampingStepCompleted } = useOnRampContext();
   const { selectedAgentConfig } = useServices();
   const { isBalancesAndFundingRequirementsLoading } =
@@ -74,11 +74,13 @@ const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
     data: bridgeFundingRequirements,
     isLoading: isBridgeRefillRequirementsLoading,
     isError: isBridgeRefillRequirementsError,
+    isFetching: isBridgeRefillRequirementsFetching,
     refetch: refetchBridgeRefillRequirements,
   } = useBridgeRefillRequirements(
     bridgeParamsExceptNativeToken,
     false,
     isOnRampingStepCompleted,
+    'SWAP',
   );
 
   // fetch bridge refill requirements manually on mount
@@ -97,6 +99,7 @@ const useBridgeRequirementsQuery = (onRampChainId: EvmChainId) => {
   const isLoading =
     isBalancesAndFundingRequirementsLoading ||
     isBridgeRefillRequirementsLoading ||
+    isBridgeRefillRequirementsFetching ||
     isBridgeRefillRequirementsApiLoading ||
     isManuallyRefetching;
 
@@ -244,7 +247,7 @@ export const useSwapFundsStep = (
     receivingTokens,
     tokensToBeBridged,
     onRetry,
-  } = useBridgeRequirementsQuery(onRampChainId);
+  } = useBridgeRequirementsInternalQuery(onRampChainId);
 
   // If the on-ramping is not completed, we do not proceed with the swap step.
   const quoteId = useMemo(() => {

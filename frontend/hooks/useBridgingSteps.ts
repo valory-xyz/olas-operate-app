@@ -62,8 +62,10 @@ export const useBridgingSteps = (
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId!),
     queryFn: async ({ signal }) => {
+      if (!quoteId) return;
+
       try {
-        return await BridgeService.executeBridge(quoteId!, signal);
+        return await BridgeService.executeBridge(quoteId, signal);
       } catch (error) {
         console.error('Error executing bridge', error);
         throw error;
