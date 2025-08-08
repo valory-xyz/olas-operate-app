@@ -189,28 +189,6 @@ export const useBridgingSteps = (
     return statusBridgeSteps;
   }, [isBridgingExecuteCompleted, executeBridgeSteps, statusBridgeSteps]);
 
-  window.console.log({
-    quoteId,
-
-    e01: isBridgeExecuteLoading,
-    e02: isBridgeExecuteFetching,
-    e2: isBridgeExecuteError,
-    e3: bridgeExecuteData,
-    e4: isBridgingExecuteCompleted,
-
-    s1: isBridgeStatusLoading,
-    s2: isBridgeStatusError,
-    s3: bridgeStatusData,
-
-    x1: isBridging,
-    x2: isBridgingFailed,
-    x3: isBridgingCompleted,
-    x4: bridgeStatus,
-
-    a1: executeBridgeSteps,
-    a2: statusBridgeSteps,
-  });
-
   return {
     isBridging,
     isBridgingFailed,

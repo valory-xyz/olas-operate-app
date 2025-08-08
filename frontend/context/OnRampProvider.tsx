@@ -145,7 +145,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // Listen for onramp window transaction success event to reset the loading state
   useEffect(() => {
     const handleTransactionSuccess = () => {
-      console.log('OnRamp transaction successful');
       setIsOnRampingTransactionSuccessful(true);
       delayInSeconds(0.5).then(() => onRampWindow?.hide?.());
     };

@@ -176,8 +176,6 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     isSwappingFundsStepCompleted,
     updateIsSwappingStepCompleted,
   } = useOnRampContext();
-  const [swapFundsSteps, setSwapFundsSteps] = useState<BridgeStatuses>();
-
   const {
     isLoading,
     hasError,
@@ -186,6 +184,9 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     tokensToBeBridged,
     onRetry,
   } = useBridgeRequirements(onRampChainId);
+
+  // State to hold the steps for the swap funds process
+  const [swapFundsSteps, setSwapFundsSteps] = useState<BridgeStatuses>();
 
   // If the on-ramping is not completed, we do not proceed with the swap step.
   const quoteId = useMemo(() => {
@@ -198,12 +199,9 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
   const { isBridgingCompleted, isBridgingFailed, isBridging, bridgeStatus } =
     useBridgingSteps(tokensToBeBridged, quoteId);
 
-  // If the swap step is already completed, we do not proceed further;
-  // and we do not fetch the bridging steps.
+  // If the swap step is already completed, we do not swap funds again
   useEffect(() => {
     if (isSwappingFundsStepCompleted) return;
-
-    console.log('>>>>>>> CORRECTTTTT');
     if (isBridgingCompleted) {
       updateIsSwappingStepCompleted(true);
       if (bridgeStatus?.length) {
@@ -216,19 +214,6 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     bridgeStatus,
     updateIsSwappingStepCompleted,
   ]);
-
-  window.console.log('useSwapFundsStep', {
-    isLoading,
-    isOnRampingStepCompleted,
-    isSwappingFundsStepCompleted,
-    bridgeFundingRequirements,
-    quoteId,
-    isBridgingCompleted,
-    swapFundsSteps,
-    receivingTokens,
-    isBridging,
-    isBridgingFailed,
-  });
 
   const bridgeStepStatus = useMemo(() => {
     if (isSwappingFundsStepCompleted) return 'finish';
