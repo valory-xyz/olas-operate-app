@@ -11,6 +11,7 @@ import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRef
 import { useBridgeRefillRequirementsOnDemand } from '@/hooks/useBridgeRefillRequirementsOnDemand';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
+import { BridgeStatuses } from '@/types/Bridge';
 import { delayInSeconds } from '@/utils/delay';
 
 import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
@@ -124,13 +125,11 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
 const TITLE = 'Swap funds';
 
 type SwapFundsStep = {
-  isSwapCompleted: boolean;
   tokensToBeTransferred: TokenSymbol[];
   step: TransactionStep;
 };
 
 const EMPTY_STATE: SwapFundsStep = {
-  isSwapCompleted: false,
   tokensToBeTransferred: [],
   step: {
     status: 'wait',
@@ -140,7 +139,6 @@ const EMPTY_STATE: SwapFundsStep = {
 };
 
 const PROCESS_STATE: SwapFundsStep = {
-  isSwapCompleted: false,
   tokensToBeTransferred: [],
   step: {
     status: 'process',
@@ -150,7 +148,6 @@ const PROCESS_STATE: SwapFundsStep = {
 };
 
 const getQuoteFailedErrorState = (onRetry: () => void): SwapFundsStep => ({
-  isSwapCompleted: false,
   tokensToBeTransferred: [],
   step: {
     status: 'error',
@@ -174,8 +171,11 @@ const getQuoteFailedErrorState = (onRetry: () => void): SwapFundsStep => ({
  * Hook to manage the swap funds step in the on-ramping process.
  */
 export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
-  const { isOnRampingStepCompleted } = useOnRampContext();
-
+  const {
+    isOnRampingStepCompleted,
+    isSwappingFundsStepCompleted,
+    updateIsSwappingStepCompleted,
+  } = useOnRampContext();
   const {
     isLoading,
     hasError,
@@ -184,6 +184,9 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     tokensToBeBridged,
     onRetry,
   } = useBridgeRequirements(onRampChainId);
+
+  // State to hold the steps for the swap funds process
+  const [swapFundsSteps, setSwapFundsSteps] = useState<BridgeStatuses>();
 
   // If the on-ramping is not completed, we do not proceed with the swap step.
   const quoteId = useMemo(() => {
@@ -196,13 +199,31 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
   const { isBridgingCompleted, isBridgingFailed, isBridging, bridgeStatus } =
     useBridgingSteps(tokensToBeBridged, quoteId);
 
+  // If the swap step is already completed, we do not swap funds again
+  useEffect(() => {
+    if (isSwappingFundsStepCompleted) return;
+    if (isBridgingCompleted) {
+      updateIsSwappingStepCompleted(true);
+      if (bridgeStatus?.length) {
+        setSwapFundsSteps(bridgeStatus);
+      }
+    }
+  }, [
+    isBridgingCompleted,
+    isSwappingFundsStepCompleted,
+    bridgeStatus,
+    updateIsSwappingStepCompleted,
+  ]);
+
   const bridgeStepStatus = useMemo(() => {
+    if (isSwappingFundsStepCompleted) return 'finish';
     if (!isOnRampingStepCompleted) return 'wait';
-    if (isLoading || isBridging) return 'process';
     if (isBridgingFailed) return 'error';
+    if (isLoading || isBridging) return 'process';
     if (isBridgingCompleted) return 'finish';
     return 'process';
   }, [
+    isSwappingFundsStepCompleted,
     isOnRampingStepCompleted,
     isLoading,
     isBridging,
@@ -216,16 +237,18 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
   }, [receivingTokens]);
 
   if (!isOnRampingStepCompleted) return EMPTY_STATE;
-  if (isLoading || isBridging) return PROCESS_STATE;
-  if (hasError) return getQuoteFailedErrorState(onRetry);
+
+  if (!isSwappingFundsStepCompleted) {
+    if (isLoading || isBridging) return PROCESS_STATE;
+    if (hasError) return getQuoteFailedErrorState(onRetry);
+  }
 
   return {
-    isSwapCompleted: isBridgingCompleted,
     tokensToBeTransferred,
     step: {
       status: bridgeStepStatus,
       title: TITLE,
-      subSteps: (bridgeStatus || []).map(({ status, symbol, txnLink }) => {
+      subSteps: (swapFundsSteps || []).map(({ status, symbol, txnLink }) => {
         const description = (() => {
           if (status === 'finish') return `Swap ${symbol || ''} complete.`;
           if (status === 'error') return `Swap ${symbol || ''} failed.`;

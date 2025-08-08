@@ -8,13 +8,14 @@ import {
   Typography,
 } from 'antd';
 import Image from 'next/image';
-import { ReactNode, useEffect, useMemo } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { EvmChainId } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
+import { ReceivingTokens } from '@/types/Bridge';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
 import { useTotalFiatFromNativeToken } from './useTotalFiatFromNativeToken';
@@ -82,9 +83,9 @@ const TryAgain = ({ onRetry }: { onRetry: () => void }) => (
 );
 
 type ReceivingTokensProps = {
-  receivingTokens: { amount: number; symbol?: string }[];
+  receivingTokens: ReceivingTokens;
 };
-const ReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
+const ViewReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
   <Flex vertical justify="center" gap={6}>
     {receivingTokens.length === 0 ? (
       <Flex vertical gap={6}>
@@ -119,6 +120,15 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
     );
+
+  // State to hold the tokens to be displayed in the receiving column
+  // and update only if the on-ramping step is not completed already.
+  const [tokens, setTokens] = useState<ReceivingTokens>();
+  useEffect(() => {
+    if (!receivingTokens) return;
+    if (isOnRampingStepCompleted) return;
+    setTokens(receivingTokens);
+  }, [isOnRampingStepCompleted, receivingTokens]);
 
   const isReceivingAmountLoading = isFiatLoading || isNativeTokenLoading;
   const receivingAmount = usdAmountToPay ? `~${usdAmountToPay} USD` : NA;
@@ -161,14 +171,16 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
             )}
           </>
         ),
-        receiving: <ReceivingTokens receivingTokens={receivingTokens} />,
+        receiving: tokens ? (
+          <ViewReceivingTokens receivingTokens={tokens} />
+        ) : null,
       },
     ],
     [
       isNativeTokenLoading,
       hasNativeTokenError,
       nativeTokenAmount,
-      receivingTokens,
+      tokens,
       onRetry,
       receivingAmount,
       isReceivingAmountLoading,

@@ -27,9 +27,15 @@ export const OnRampContext = createContext<{
   updateUsdAmountToPay: (amount: Nullable<number>) => void;
   isBuyCryptoBtnLoading: boolean;
   updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
+
+  // on-ramping step
   isOnRampingTransactionSuccessful: boolean;
   isTransactionSuccessfulButFundsNotReceived: boolean;
   isOnRampingStepCompleted: boolean;
+
+  // swapping funds step
+  isSwappingFundsStepCompleted: boolean;
+  updateIsSwappingStepCompleted: (completed: boolean) => void;
 
   networkId: Nullable<EvmChainId>;
   networkName: Nullable<string>;
@@ -42,9 +48,15 @@ export const OnRampContext = createContext<{
   updateUsdAmountToPay: () => {},
   isBuyCryptoBtnLoading: false,
   updateIsBuyCryptoBtnLoading: () => {},
+
+  // on-ramping step
   isOnRampingTransactionSuccessful: false,
-  isOnRampingStepCompleted: false,
   isTransactionSuccessfulButFundsNotReceived: false,
+  isOnRampingStepCompleted: false,
+
+  // swapping funds step
+  isSwappingFundsStepCompleted: false,
+  updateIsSwappingStepCompleted: () => {},
 
   networkId: null,
   networkName: null,
@@ -71,6 +83,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
   // State to track if the user has received funds after on-ramping
   const [hasFundsReceivedAfterOnRamp, setHasFundsReceivedAfterOnRamp] =
+    useState(false);
+
+  // State to track if the swapping step is completed
+  const [isSwappingFundsStepCompleted, setIsSwappingStepCompleted] =
     useState(false);
 
   const updateIsBuyCryptoBtnLoading = useCallback((loading: boolean) => {
@@ -106,6 +122,11 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // Function to set the USD amount for on-ramping
   const updateUsdAmountToPay = useCallback((amount: Nullable<number>) => {
     setUsdAmountToPay(amount);
+  }, []);
+
+  // Function to set the swapping step completion state
+  const updateIsSwappingStepCompleted = useCallback((completed: boolean) => {
+    setIsSwappingStepCompleted(completed);
   }, []);
 
   /**
@@ -187,6 +208,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
         /** Whether the on-ramping step is completed */
         isOnRampingStepCompleted,
         isTransactionSuccessfulButFundsNotReceived,
+
+        /** Whether the swapping step is completed */
+        isSwappingFundsStepCompleted,
+        updateIsSwappingStepCompleted,
 
         /** Network id to on-ramp */
         networkId,
