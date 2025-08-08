@@ -2,6 +2,7 @@ import { Transak } from '@transak/transak-sdk';
 import { Flex, Spin, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 
+import { COLOR } from '@/constants/colors';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
@@ -50,6 +51,7 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
       fiatAmount: usdAmountToPay,
       walletAddress: masterEoa.address,
       hideMenu: true,
+      themeColor: COLOR.PURPLE,
     });
 
     transak.init();

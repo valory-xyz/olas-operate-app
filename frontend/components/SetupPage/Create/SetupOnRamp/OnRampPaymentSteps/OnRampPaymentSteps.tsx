@@ -26,39 +26,37 @@ export const OnRampPaymentSteps = ({
   onRampChainId,
 }: OnRampPaymentStepsProps) => {
   const { goto } = usePageState();
-  const { isOnRampingStepCompleted } = useOnRampContext();
+  const { isOnRampingStepCompleted, isSwappingFundsStepCompleted } =
+    useOnRampContext();
 
   // step 1: Buy crypto
   const buyCryptoStep = useBuyCryptoStep();
 
   // step 2: Swap funds
-  const {
-    isSwapCompleted,
-    tokensToBeTransferred,
-    step: swapStep,
-  } = useSwapFundsStep(onRampChainId);
+  const { tokensToBeTransferred, step: swapStep } =
+    useSwapFundsStep(onRampChainId);
 
   // step 3 & 4: Create Master Safe and transfer funds
   const {
     isMasterSafeCreatedAndFundsTransferred,
     steps: createAndTransferFundsToMasterSafeSteps,
   } = useCreateAndTransferFundsToMasterSafeSteps(
-    isSwapCompleted,
+    isSwappingFundsStepCompleted,
     tokensToBeTransferred,
   );
 
   // Navigate to the main page after all steps are completed
   useEffect(() => {
     if (!isOnRampingStepCompleted) return;
-    if (!isSwapCompleted) return;
+    if (!isSwappingFundsStepCompleted) return;
     if (!isMasterSafeCreatedAndFundsTransferred) return;
 
     // Delay to ensure the UI updates before navigating
-    delayInSeconds(0).then(() => goto(Pages.Main));
+    delayInSeconds(1).then(() => goto(Pages.Main));
   }, [
     isOnRampingStepCompleted,
-    isSwapCompleted,
     isMasterSafeCreatedAndFundsTransferred,
+    isSwappingFundsStepCompleted,
     goto,
   ]);
 

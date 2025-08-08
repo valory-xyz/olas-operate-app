@@ -7,7 +7,7 @@ import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements
 import { delayInSeconds } from '@/utils/delay';
 
 import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
-import { useBridgeRequirementsUtils } from '../utils';
+import { useBridgeRequirementsUtils } from '../hooks/useBridgeRequirementsUtils';
 
 /**
  * Hook to calculate the bridge requirements for the on-ramp process,
@@ -20,8 +20,11 @@ export const useBridgeRequirementsQuery = (
 ) => {
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
-  const { canIgnoreNativeToken, getReceivingTokens, getTokensToBeBridged } =
-    useBridgeRequirementsUtils(onRampChainId);
+  const {
+    getReceivingTokens,
+    getTokensToBeBridged,
+    getBridgeParamsExceptNativeToken,
+  } = useBridgeRequirementsUtils(onRampChainId);
 
   // State to control the force update of the bridge_refill_requirements API call
   // This is used when the user clicks on "Try again" button.
@@ -47,17 +50,8 @@ export const useBridgeRequirementsQuery = (
     return getBridgeRequirementsParams(isForceUpdate);
   }, [isForceUpdate, getBridgeRequirementsParams]);
 
-  const bridgeParamsExceptNativeToken = useMemo(() => {
-    if (!bridgeParams) return null;
-
-    const filteredParams = bridgeParams.bridge_requests.filter(
-      ({ to }) => to.token !== AddressZero,
-    );
-    const bridgeRequest = canIgnoreNativeToken
-      ? filteredParams
-      : bridgeParams.bridge_requests;
-    return { ...bridgeParams, bridge_requests: bridgeRequest };
-  }, [bridgeParams, canIgnoreNativeToken]);
+  const bridgeParamsExceptNativeToken =
+    getBridgeParamsExceptNativeToken(bridgeParams);
 
   const {
     data: bridgeFundingRequirements,
