@@ -27,12 +27,14 @@ export const OnRampContext = createContext<{
   updateUsdAmountToPay: (amount: Nullable<number>) => void;
   isBuyCryptoBtnLoading: boolean;
   updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
+
+  // on-ramping step
   isOnRampingTransactionSuccessful: boolean;
   isTransactionSuccessfulButFundsNotReceived: boolean;
   isOnRampingStepCompleted: boolean;
 
-  // swapping step
-  isSwappingStepCompleted: boolean;
+  // swapping funds step
+  isSwappingFundsStepCompleted: boolean;
   updateIsSwappingStepCompleted: (completed: boolean) => void;
 
   networkId: Nullable<EvmChainId>;
@@ -46,13 +48,14 @@ export const OnRampContext = createContext<{
   updateUsdAmountToPay: () => {},
   isBuyCryptoBtnLoading: false,
   updateIsBuyCryptoBtnLoading: () => {},
+
+  // on-ramping step
   isOnRampingTransactionSuccessful: false,
   isTransactionSuccessfulButFundsNotReceived: false,
   isOnRampingStepCompleted: false,
-  isTransactionSuccessfulButFundsNotReceived: false,
 
-  // swapping step
-  isSwappingStepCompleted: false,
+  // swapping funds step
+  isSwappingFundsStepCompleted: false,
   updateIsSwappingStepCompleted: () => {},
 
   networkId: null,
@@ -83,7 +86,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     useState(false);
 
   // State to track if the swapping step is completed
-  const [isSwappingStepCompleted, setIsSwappingStepCompleted] = useState(false);
+  const [isSwappingFundsStepCompleted, setIsSwappingStepCompleted] =
+    useState(false);
 
   const updateIsBuyCryptoBtnLoading = useCallback((loading: boolean) => {
     setIsBuyCryptoBtnLoading(loading);
@@ -207,7 +211,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
         isTransactionSuccessfulButFundsNotReceived,
 
         /** Whether the swapping step is completed */
-        isSwappingStepCompleted,
+        isSwappingFundsStepCompleted,
         updateIsSwappingStepCompleted,
 
         /** Network id to on-ramp */

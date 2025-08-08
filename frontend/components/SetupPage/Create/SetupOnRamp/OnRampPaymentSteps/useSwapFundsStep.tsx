@@ -173,10 +173,10 @@ const getQuoteFailedErrorState = (onRetry: () => void): SwapFundsStep => ({
 export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
   const {
     isOnRampingStepCompleted,
-    isSwappingStepCompleted,
+    isSwappingFundsStepCompleted,
     updateIsSwappingStepCompleted,
   } = useOnRampContext();
-  const [swapSubSteps, setSwapSubSteps] = useState<BridgeStatuses>();
+  const [swapFundsSteps, setSwapFundsSteps] = useState<BridgeStatuses>();
 
   const {
     isLoading,
@@ -208,30 +208,30 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
   // If the swap step is already completed, we do not proceed further.
   // and we do not fetch the bridging steps.
   useEffect(() => {
-    if (isSwappingStepCompleted) return;
+    if (isSwappingFundsStepCompleted) return;
 
     if (isBridgingCompleted) {
       updateIsSwappingStepCompleted(true);
       if (bridgeStatus?.length) {
-        setSwapSubSteps(bridgeStatus);
+        setSwapFundsSteps(bridgeStatus);
       }
     }
   }, [
     isBridgingCompleted,
-    isSwappingStepCompleted,
+    isSwappingFundsStepCompleted,
     bridgeStatus,
     updateIsSwappingStepCompleted,
   ]);
 
   const bridgeStepStatus = useMemo(() => {
-    if (isSwappingStepCompleted) return 'finish';
+    if (isSwappingFundsStepCompleted) return 'finish';
     if (!isOnRampingStepCompleted) return 'wait';
     if (isLoading || isBridging) return 'process';
     if (isBridgingFailed) return 'error';
     if (isBridgingCompleted) return 'finish';
     return 'process';
   }, [
-    isSwappingStepCompleted,
+    isSwappingFundsStepCompleted,
     isOnRampingStepCompleted,
     isLoading,
     isBridging,
@@ -253,7 +253,7 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     step: {
       status: bridgeStepStatus,
       title: TITLE,
-      subSteps: (swapSubSteps || []).map(({ status, symbol, txnLink }) => {
+      subSteps: (swapFundsSteps || []).map(({ status, symbol, txnLink }) => {
         const description = (() => {
           if (status === 'finish') return `Swap ${symbol || ''} complete.`;
           if (status === 'error') return `Swap ${symbol || ''} failed.`;

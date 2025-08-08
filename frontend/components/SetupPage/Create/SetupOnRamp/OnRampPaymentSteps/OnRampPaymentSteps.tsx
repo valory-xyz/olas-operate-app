@@ -26,7 +26,7 @@ export const OnRampPaymentSteps = ({
   onRampChainId,
 }: OnRampPaymentStepsProps) => {
   const { goto } = usePageState();
-  const { isOnRampingStepCompleted, isSwappingStepCompleted } =
+  const { isOnRampingStepCompleted, isSwappingFundsStepCompleted } =
     useOnRampContext();
 
   // step 1: Buy crypto
@@ -41,14 +41,14 @@ export const OnRampPaymentSteps = ({
     isMasterSafeCreatedAndFundsTransferred,
     steps: createAndTransferFundsToMasterSafeSteps,
   } = useCreateAndTransferFundsToMasterSafeSteps(
-    isSwappingStepCompleted,
+    isSwappingFundsStepCompleted,
     tokensToBeTransferred,
   );
 
   // Navigate to the main page after all steps are completed
   useEffect(() => {
     if (!isOnRampingStepCompleted) return;
-    if (!isSwappingStepCompleted) return;
+    if (!isSwappingFundsStepCompleted) return;
     if (!isMasterSafeCreatedAndFundsTransferred) return;
 
     // Delay to ensure the UI updates before navigating
@@ -56,7 +56,7 @@ export const OnRampPaymentSteps = ({
   }, [
     isOnRampingStepCompleted,
     isMasterSafeCreatedAndFundsTransferred,
-    isSwappingStepCompleted,
+    isSwappingFundsStepCompleted,
     goto,
   ]);
 

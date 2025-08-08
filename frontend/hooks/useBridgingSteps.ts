@@ -64,14 +64,14 @@ export const useBridgingSteps = (
     data: bridgeExecuteData,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId!),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!quoteId) {
         window.console.warn('No quoteId provided to execute bridge');
         return;
       }
 
       try {
-        return await BridgeService.executeBridge(quoteId);
+        return await BridgeService.executeBridge(quoteId, signal);
       } catch (error) {
         console.error('Error executing bridge', error);
         throw error;
@@ -86,7 +86,7 @@ export const useBridgingSteps = (
   const isBridgingExecuteFailed = useMemo(() => {
     if (isBridgeExecuteError) return true;
     if (!bridgeExecuteData) return false;
-    return isBridgingFailedFn(bridgeExecuteData?.bridge_request_status);
+    return isBridgingFailedFn(bridgeExecuteData.bridge_request_status);
   }, [isBridgeExecuteError, bridgeExecuteData]);
 
   /** Check if the bridging execution is completed for all status */
