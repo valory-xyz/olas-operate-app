@@ -58,12 +58,16 @@ export const useBridgingSteps = (
     isFetching: isBridgeExecuteFetching,
     isError: isBridgeExecuteError,
     data: bridgeExecuteData,
-    error: bridgeExecuteError,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId!),
     queryFn: async ({ signal }) => {
+      if (!quoteId) {
+        window.console.warn('No quoteId provided to execute bridge');
+        return;
+      }
+
       try {
-        return await BridgeService.executeBridge(quoteId!, signal);
+        return await BridgeService.executeBridge(quoteId, signal);
       } catch (error) {
         console.error('Error executing bridge', error);
         throw error;
@@ -75,22 +79,14 @@ export const useBridgingSteps = (
     refetchInterval: false,
   });
 
-  window.console.log('%cBridgeInProgress', 'color: blue;', {
-    quoteId,
-    bridgeExecuteError,
-    bridgeExecuteData,
-  });
-
-  const isBridgingExecuteFailed = useMemo(() => {
-    if (isBridgeExecuteError) return true;
-    return isBridgingFailedFn(bridgeExecuteData?.bridge_request_status);
-  }, [isBridgeExecuteError, bridgeExecuteData]);
+  const isBridgingExecuteFailed = isBridgingFailedFn(
+    bridgeExecuteData?.bridge_request_status,
+  );
 
   /** Check if the bridging execution is completed for all status */
-  const isBridgingExecuteCompleted = useMemo(() => {
-    if (!bridgeExecuteData) return false;
-    return isBridgingCompletedFn(bridgeExecuteData.bridge_request_status);
-  }, [bridgeExecuteData]);
+  const isBridgingExecuteCompleted = isBridgingCompletedFn(
+    bridgeExecuteData?.bridge_request_status,
+  );
 
   const {
     isLoading: isBridgeStatusLoading,
@@ -98,9 +94,14 @@ export const useBridgingSteps = (
     data: bridgeStatusData,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY(quoteId!),
-    queryFn: async ({ signal }) => {
+    queryFn: async () => {
+      if (!quoteId) {
+        window.console.warn('No quoteId provided to fetch bridge status');
+        return;
+      }
+
       try {
-        return await BridgeService.getBridgeStatus(quoteId!, signal);
+        return await BridgeService.getBridgeStatus(quoteId);
       } catch (error) {
         console.error('Error fetching bridge status', error);
         throw error;
@@ -111,8 +112,7 @@ export const useBridgingSteps = (
       isBridgingExecuteFailed || isBridgingExecuteCompleted
         ? false
         : FIVE_SECONDS_INTERVAL,
-    enabled: !!quoteId && isOnline && !!bridgeExecuteData,
-    retry: false,
+    enabled: isOnline && !!quoteId && !!bridgeExecuteData,
     refetchOnWindowFocus: false,
   });
 
@@ -126,8 +126,6 @@ export const useBridgingSteps = (
     // If the bridge execute itself has EXECUTION_DONE, we can consider the bridging as completed.
     // and we don't need to check the status.
     if (isBridgingExecuteCompleted) return true;
-
-    if (!bridgeStatusData) return false;
 
     return isBridgingCompletedFn(bridgeStatusData?.bridge_request_status);
   }, [isBridgingExecuteCompleted, bridgeStatusData]);

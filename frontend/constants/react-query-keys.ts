@@ -5,6 +5,7 @@ import { Maybe } from '@/types/Util';
 export const REACT_QUERY_KEYS = {
   // services
   SERVICES_KEY: ['services'] as const,
+  SERVICES_VALIDATION_STATUS_KEY: ['servicesValidationStatus'] as const,
   SERVICE_DEPLOYMENT_STATUS_KEY: (serviceConfigId: Maybe<string>) =>
     ['serviceStatus', serviceConfigId ?? ''] as const,
 
@@ -82,6 +83,9 @@ export const REACT_QUERY_KEYS = {
   // bridge
   BRIDGE_REFILL_REQUIREMENTS_KEY: (params: BridgeRefillRequirementsRequest) =>
     ['bridgeRefillRequirements', params] as const,
+  BRIDGE_REFILL_REQUIREMENTS_KEY_ON_DEMAND: (
+    params: BridgeRefillRequirementsRequest,
+  ) => ['useBridgeRefillRequirementsOnDemand', params] as const,
   BRIDGE_STATUS_BY_QUOTE_ID_KEY: (quoteId: string) =>
     ['bridgeStatusByQuoteId', quoteId] as const,
   BRIDGE_EXECUTE_KEY: (quoteId: string) => ['bridgeExecute', quoteId] as const,

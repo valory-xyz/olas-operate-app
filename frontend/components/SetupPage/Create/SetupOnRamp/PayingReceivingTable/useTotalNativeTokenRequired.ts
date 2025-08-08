@@ -8,7 +8,7 @@ import { useMasterWalletContext } from '@/hooks/useWallet';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
-import { useBridgeRequirementsQuery } from '../hooks/useBridgeRequirementsQuery';
+import { useBridgeRequirementsQuery } from './useBridgeRequirementsQuery';
 
 /**
  * Hook to fetch the bridge refill requirements for the on-ramp process and
@@ -79,8 +79,14 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
   // Update the ETH amount to pay in the on-ramp context
   useEffect(() => {
     if (!totalNativeToken) return;
+    if (isOnRampingTransactionSuccessful) return;
+
     updateEthAmountToPay(totalNativeToken);
-  }, [totalNativeToken, updateEthAmountToPay]);
+  }, [
+    totalNativeToken,
+    isOnRampingTransactionSuccessful,
+    updateEthAmountToPay,
+  ]);
 
   return {
     isLoading,

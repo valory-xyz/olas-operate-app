@@ -57,14 +57,12 @@ const TopBarContainer = styled.div`
 
 export const TopBar = () => {
   const router = useRouter();
-  const electronApi = useElectronApi();
+  const { closeApp, minimizeApp } = useElectronApi();
   const store = useStore();
   const { isUserLoggedIn, goto, pageState } = usePageState();
 
   const envName = store?.storeState?.environmentName;
-  const currentPage = router.pathname;
-
-  const isOnRamp = currentPage === '/onramp';
+  const isOnRamp = router.pathname === '/onramp';
   const isNotMain = [isOnRamp].some(Boolean);
 
   const name = useMemo(() => {
@@ -76,8 +74,8 @@ export const TopBar = () => {
     <TopBarContainer>
       {!isNotMain && (
         <TrafficLights>
-          <RedLight onClick={() => electronApi?.closeApp?.()} />
-          <YellowLight onClick={() => electronApi?.minimizeApp?.()} />
+          <RedLight onClick={() => closeApp?.()} />
+          <YellowLight onClick={() => minimizeApp?.()} />
           <DisabledLight />
         </TrafficLights>
       )}

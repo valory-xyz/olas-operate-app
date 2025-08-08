@@ -36,7 +36,7 @@ export const OnRampPaymentSteps = ({
     isSwapCompleted,
     tokensToBeTransferred,
     step: swapStep,
-  } = useSwapFundsStep(onRampChainId, isOnRampingStepCompleted);
+  } = useSwapFundsStep(onRampChainId);
 
   // step 3 & 4: Create Master Safe and transfer funds
   const {
@@ -54,19 +54,13 @@ export const OnRampPaymentSteps = ({
     if (!isMasterSafeCreatedAndFundsTransferred) return;
 
     // Delay to ensure the UI updates before navigating
-    delayInSeconds(2).then(() => goto(Pages.Main));
+    delayInSeconds(0).then(() => goto(Pages.Main));
   }, [
     isOnRampingStepCompleted,
     isSwapCompleted,
     isMasterSafeCreatedAndFundsTransferred,
     goto,
   ]);
-
-  window.console.log('OnRampPaymentSteps', {
-    isOnRampingStepCompleted,
-    isSwapCompleted,
-    isMasterSafeCreatedAndFundsTransferred,
-  });
 
   return (
     <TransactionSteps
