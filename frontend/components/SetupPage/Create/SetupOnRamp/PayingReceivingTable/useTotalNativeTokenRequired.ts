@@ -8,7 +8,7 @@ import { useMasterWalletContext } from '@/hooks/useWallet';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
-import { useBridgeRequirementsQuery } from '../hooks/useBridgeRequirementsQuery';
+import { useBridgeRequirementsQuery } from './useBridgeRequirementsQuery';
 
 /**
  * Hook to fetch the bridge refill requirements for the on-ramp process and

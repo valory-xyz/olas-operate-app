@@ -2,10 +2,8 @@ import { ReloadOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { getTokenDetails } from '@/components/Bridge/utils';
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
 import { TransactionStep } from '@/components/ui/TransactionSteps';
-import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol } from '@/constants/token';
@@ -15,10 +13,10 @@ import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { delayInSeconds } from '@/utils/delay';
-import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
-import { formatUnitsToNumber } from '@/utils/numberFormatters';
+import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
 import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
+import { useBridgeRequirementsUtils } from '../utils';
 
 const { Text } = Typography;
 
@@ -30,6 +28,7 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   const { selectedAgentConfig } = useServices();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
+  const { getReceivingTokens } = useBridgeRequirementsUtils(onRampChainId);
 
   // State to control the force update of the bridge_refill_requirements API call
   // This is used when the user clicks on "Try again" button.
@@ -103,21 +102,7 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
     );
   }, [bridgeFundingRequirements]);
 
-  const receivingTokens = useMemo(() => {
-    if (!bridgeParams) return [];
-
-    const toChainId = asEvmChainId(selectedAgentConfig.middlewareHomeChainId);
-    const toChainConfig = TOKEN_CONFIG[toChainId];
-
-    return bridgeParams.bridge_requests.map((request) => {
-      const { token: toToken, amount } = request.to;
-      const token = getTokenDetails(toToken, toChainConfig);
-      return {
-        amount: formatUnitsToNumber(amount, token?.decimals),
-        symbol: token?.symbol as TokenSymbol,
-      };
-    });
-  }, [bridgeParams, selectedAgentConfig.middlewareHomeChainId]);
+  const receivingTokens = getReceivingTokens(bridgeParams);
 
   /**
    * List of tokens to bridge, excluding the native token, if onRampChainId
