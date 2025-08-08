@@ -125,13 +125,11 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
 const TITLE = 'Swap funds';
 
 type SwapFundsStep = {
-  isSwapCompleted: boolean;
   tokensToBeTransferred: TokenSymbol[];
   step: TransactionStep;
 };
 
 const EMPTY_STATE: SwapFundsStep = {
-  isSwapCompleted: false,
   tokensToBeTransferred: [],
   step: {
     status: 'wait',
@@ -141,7 +139,6 @@ const EMPTY_STATE: SwapFundsStep = {
 };
 
 const PROCESS_STATE: SwapFundsStep = {
-  isSwapCompleted: false,
   tokensToBeTransferred: [],
   step: {
     status: 'process',
@@ -151,7 +148,6 @@ const PROCESS_STATE: SwapFundsStep = {
 };
 
 const getQuoteFailedErrorState = (onRetry: () => void): SwapFundsStep => ({
-  isSwapCompleted: false,
   tokensToBeTransferred: [],
   step: {
     status: 'error',
@@ -253,7 +249,6 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
   if (hasError) return getQuoteFailedErrorState(onRetry);
 
   return {
-    isSwapCompleted: isSwappingStepCompleted,
     tokensToBeTransferred,
     step: {
       status: bridgeStepStatus,
