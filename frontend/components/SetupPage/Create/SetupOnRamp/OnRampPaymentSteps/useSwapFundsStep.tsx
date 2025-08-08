@@ -211,9 +211,9 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     if (isSwappingFundsStepCompleted) return;
     if (isBridgingCompleted) {
       updateIsSwappingStepCompleted(true);
-      if (bridgeStatus?.length) {
-        setSwapFundsSteps(bridgeStatus);
-      }
+    }
+    if (bridgeStatus?.length) {
+      setSwapFundsSteps(bridgeStatus);
     }
   }, [
     isBridgingCompleted,
