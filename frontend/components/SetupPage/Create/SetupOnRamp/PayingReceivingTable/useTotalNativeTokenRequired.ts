@@ -61,7 +61,7 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     )?.to.amount;
 
     // Remaining native token from the bridge quote.
-    // eg, For optimus, OLAS and USDC are bridged to ETH and
+    // e.g, For optimus, OLAS and USDC are bridged to ETH
     const bridgeRefillRequirements =
       bridgeFundingRequirements.bridge_refill_requirements[toOnRampNetworkName];
     const nativeTokenFromBridgeQuote =
@@ -69,6 +69,7 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
 
     if (!nativeTokenFromBridgeQuote) return;
 
+    // e.g, For optimus, addition of (ETH required) + (OLAS and USDC bridged to ETH).
     const totalNativeTokenRequired =
       BigInt(nativeTokenFromBridgeQuote) +
       BigInt(nativeTokenFromBridgeParams || 0);
