@@ -28,11 +28,7 @@ export const useBridgeRefillRequirementsOnDemand = (
       );
       return response;
     },
-
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
     enabled: false,
-    staleTime: 0,
     retry: false,
   });
 };

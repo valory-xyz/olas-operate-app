@@ -195,21 +195,15 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     return bridgeFundingRequirements.id;
   }, [isLoading, isOnRampingStepCompleted, bridgeFundingRequirements]);
 
-  window.console.log('useSwapFundsStep', {
-    isLoading,
-    isOnRampingStepCompleted,
-    bridgeFundingRequirements,
-    quoteId,
-  });
-
   const { isBridgingCompleted, isBridgingFailed, isBridging, bridgeStatus } =
     useBridgingSteps(tokensToBeBridged, quoteId);
 
-  // If the swap step is already completed, we do not proceed further.
+  // If the swap step is already completed, we do not proceed further;
   // and we do not fetch the bridging steps.
   useEffect(() => {
     if (isSwappingFundsStepCompleted) return;
 
+    console.log('>>>>>>> CORRECTTTTT');
     if (isBridgingCompleted) {
       updateIsSwappingStepCompleted(true);
       if (bridgeStatus?.length) {
@@ -223,11 +217,24 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     updateIsSwappingStepCompleted,
   ]);
 
+  window.console.log('useSwapFundsStep', {
+    isLoading,
+    isOnRampingStepCompleted,
+    isSwappingFundsStepCompleted,
+    bridgeFundingRequirements,
+    quoteId,
+    isBridgingCompleted,
+    swapFundsSteps,
+    receivingTokens,
+    isBridging,
+    isBridgingFailed,
+  });
+
   const bridgeStepStatus = useMemo(() => {
     if (isSwappingFundsStepCompleted) return 'finish';
     if (!isOnRampingStepCompleted) return 'wait';
-    if (isLoading || isBridging) return 'process';
     if (isBridgingFailed) return 'error';
+    if (isLoading || isBridging) return 'process';
     if (isBridgingCompleted) return 'finish';
     return 'process';
   }, [
@@ -245,8 +252,11 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
   }, [receivingTokens]);
 
   if (!isOnRampingStepCompleted) return EMPTY_STATE;
-  if (isLoading || isBridging) return PROCESS_STATE;
-  if (hasError) return getQuoteFailedErrorState(onRetry);
+
+  if (!isSwappingFundsStepCompleted) {
+    if (isLoading || isBridging) return PROCESS_STATE;
+    if (hasError) return getQuoteFailedErrorState(onRetry);
+  }
 
   return {
     tokensToBeTransferred,
