@@ -94,10 +94,13 @@ export type CrossChainTransferDetails = {
   eta?: number;
 };
 
-export type BridgeStatusDetails = {
+export type BridgeStatuses = {
   symbol: TokenSymbol;
   status: BridgingStepStatus;
   txnLink: Maybe<string>;
-};
+}[];
 
-export type BridgeStatuses = BridgeStatusDetails[];
+export type ReceivingTokens = {
+  amount: number;
+  symbol?: TokenSymbol;
+}[];
