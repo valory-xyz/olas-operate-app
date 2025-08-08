@@ -48,7 +48,7 @@ const getBridgeStats = ({
  */
 export const useBridgingSteps = (
   tokenSymbols: TokenSymbol[],
-  quoteId: Nullable<string>,
+  quoteId?: Nullable<string>,
 ) => {
   const { isOnline } = useOnlineStatusContext();
 
@@ -60,9 +60,14 @@ export const useBridgingSteps = (
     data: bridgeExecuteData,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId!),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
+      if (!quoteId) {
+        window.console.warn('No quoteId provided to execute bridge');
+        return;
+      }
+
       try {
-        return await BridgeService.executeBridge(quoteId!);
+        return await BridgeService.executeBridge(quoteId, signal);
       } catch (error) {
         console.error('Error executing bridge', error);
         throw error;
@@ -89,9 +94,14 @@ export const useBridgingSteps = (
     data: bridgeStatusData,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY(quoteId!),
-    queryFn: async ({ signal }) => {
+    queryFn: async () => {
+      if (!quoteId) {
+        window.console.warn('No quoteId provided to fetch bridge status');
+        return;
+      }
+
       try {
-        return await BridgeService.getBridgeStatus(quoteId!, signal);
+        return await BridgeService.getBridgeStatus(quoteId);
       } catch (error) {
         console.error('Error fetching bridge status', error);
         throw error;
@@ -102,8 +112,7 @@ export const useBridgingSteps = (
       isBridgingExecuteFailed || isBridgingExecuteCompleted
         ? false
         : FIVE_SECONDS_INTERVAL,
-    enabled: !!quoteId && isOnline && !!bridgeExecuteData,
-    retry: false,
+    enabled: isOnline && !!quoteId && !!bridgeExecuteData,
     refetchOnWindowFocus: false,
   });
 

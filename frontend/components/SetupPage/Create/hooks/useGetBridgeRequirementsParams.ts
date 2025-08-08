@@ -180,11 +180,12 @@ export const useGetBridgeRequirementsParams = (
         }
       }
 
-      return {
+      const request: BridgeRefillRequirementsRequest = {
         bridge_requests:
           getUpdatedBridgeRequirementsParams(bridgeRequests) || bridgeRequests,
         force_update: isForceUpdate,
-      } satisfies BridgeRefillRequirementsRequest;
+      };
+      return request;
     },
     [
       fromAddress,

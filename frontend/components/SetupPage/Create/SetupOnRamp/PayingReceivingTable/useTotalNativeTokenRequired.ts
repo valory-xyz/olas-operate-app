@@ -8,7 +8,7 @@ import { useMasterWalletContext } from '@/hooks/useWallet';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
-import { useBridgeRequirementsQuery } from '../hooks/useBridgeRequirementsQuery';
+import { useBridgeRequirementsQuery } from './useBridgeRequirementsQuery';
 
 /**
  * Hook to fetch the bridge refill requirements for the on-ramp process and
@@ -20,7 +20,8 @@ import { useBridgeRequirementsQuery } from '../hooks/useBridgeRequirementsQuery'
  */
 export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
   const { selectedAgentConfig } = useServices();
-  const { updateEthAmountToPay } = useOnRampContext();
+  const { updateEthAmountToPay, isOnRampingTransactionSuccessful } =
+    useOnRampContext();
   const { masterEoa } = useMasterWalletContext();
 
   const {
@@ -30,7 +31,11 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     bridgeFundingRequirements,
     receivingTokens,
     onRetry,
-  } = useBridgeRequirementsQuery(onRampChainId);
+  } = useBridgeRequirementsQuery(
+    onRampChainId,
+    !isOnRampingTransactionSuccessful,
+    isOnRampingTransactionSuccessful,
+  );
 
   /**
    * Calculates the total native token required for the bridge.
@@ -52,10 +57,9 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     )?.to.amount;
 
     const bridgeRefillRequirements =
-      bridgeFundingRequirements.bridge_refill_requirements[fromChainName]?.[
-        masterEoa.address
-      ];
-    const nativeTokenFromBridgeQuote = bridgeRefillRequirements?.[AddressZero];
+      bridgeFundingRequirements.bridge_refill_requirements[fromChainName];
+    const masterEoaRequirements = bridgeRefillRequirements?.[masterEoa.address];
+    const nativeTokenFromBridgeQuote = masterEoaRequirements?.[AddressZero];
     if (!nativeTokenFromBridgeQuote) return;
 
     const totalNativeTokenRequired =
@@ -75,8 +79,14 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
   // Update the ETH amount to pay in the on-ramp context
   useEffect(() => {
     if (!totalNativeToken) return;
+    if (isOnRampingTransactionSuccessful) return;
+
     updateEthAmountToPay(totalNativeToken);
-  }, [totalNativeToken, updateEthAmountToPay]);
+  }, [
+    totalNativeToken,
+    isOnRampingTransactionSuccessful,
+    updateEthAmountToPay,
+  ]);
 
   return {
     isLoading,

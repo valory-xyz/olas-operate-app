@@ -1,21 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
-import { useContext } from 'react';
 
-import { TEN_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
-import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { BridgeService } from '@/service/Bridge';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 
-export const useBridgeRefillRequirements = (
+/**
+ * Hook to fetch bridge refill requirements on demand.
+ */
+export const useBridgeRefillRequirementsOnDemand = (
   params: BridgeRefillRequirementsRequest | null,
-  canPoll: boolean = true,
-  enabled: boolean = true,
 ) => {
-  const { isOnline } = useContext(OnlineStatusContext);
-
   return useQuery({
-    queryKey: REACT_QUERY_KEYS.BRIDGE_REFILL_REQUIREMENTS_KEY(params!),
+    queryKey: REACT_QUERY_KEYS.BRIDGE_REFILL_REQUIREMENTS_KEY_ON_DEMAND(
+      params!,
+    ),
     queryFn: async ({ signal }) => {
       if (!params) {
         window.console.warn(
@@ -24,22 +22,17 @@ export const useBridgeRefillRequirements = (
         return null;
       }
 
-      if (!enabled && !canPoll) return null;
-
       const response = await BridgeService.getBridgeRefillRequirements(
         params,
         signal,
       );
-
       return response;
     },
 
-    refetchInterval: enabled && canPoll ? TEN_SECONDS_INTERVAL : false,
+    refetchInterval: false,
     refetchOnWindowFocus: false,
-    enabled: isOnline && !!params && !!enabled,
+    enabled: false,
     staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnReconnect: 'always',
-    refetchIntervalInBackground: true,
+    retry: false,
   });
 };

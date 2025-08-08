@@ -83,6 +83,9 @@ export const REACT_QUERY_KEYS = {
   // bridge
   BRIDGE_REFILL_REQUIREMENTS_KEY: (params: BridgeRefillRequirementsRequest) =>
     ['bridgeRefillRequirements', params] as const,
+  BRIDGE_REFILL_REQUIREMENTS_KEY_ON_DEMAND: (
+    params: BridgeRefillRequirementsRequest,
+  ) => ['useBridgeRefillRequirementsOnDemand', params] as const,
   BRIDGE_STATUS_BY_QUOTE_ID_KEY: (quoteId: string) =>
     ['bridgeStatusByQuoteId', quoteId] as const,
   BRIDGE_EXECUTE_KEY: (quoteId: string) => ['bridgeExecute', quoteId] as const,
