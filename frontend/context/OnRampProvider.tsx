@@ -49,6 +49,7 @@ export const OnRampContext = createContext<{
   isOnRampingTransactionSuccessful: false,
   isTransactionSuccessfulButFundsNotReceived: false,
   isOnRampingStepCompleted: false,
+  isTransactionSuccessfulButFundsNotReceived: false,
 
   // swapping step
   isSwappingStepCompleted: false,
