@@ -54,7 +54,7 @@ export const OnRampPaymentSteps = ({
     if (!isMasterSafeCreatedAndFundsTransferred) return;
 
     // Delay to ensure the UI updates before navigating
-    delayInSeconds(0).then(() => goto(Pages.Main));
+    delayInSeconds(1).then(() => goto(Pages.Main));
   }, [
     isOnRampingStepCompleted,
     isSwapCompleted,

@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { getTokenDetails } from '@/components/Bridge/utils';
 import { TOKEN_CONFIG } from '@/config/tokens';
+import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol } from '@/constants/token';
 import { useServices } from '@/hooks/useServices';
@@ -64,9 +65,26 @@ export const useBridgeRequirementsUtils = (onRampChainId: EvmChainId) => {
     [selectedAgentConfig.middlewareHomeChainId, canIgnoreNativeToken],
   );
 
+  // Filter out the native token from the bridge requests
+  const getBridgeParamsExceptNativeToken = useCallback(
+    (bridgeParams: BridgeRefillRequirementsRequest | null) => {
+      if (!bridgeParams) return null;
+
+      const filteredParams = bridgeParams.bridge_requests.filter(
+        (request) => request.to.token !== AddressZero,
+      );
+      const bridgeRequest = canIgnoreNativeToken
+        ? filteredParams
+        : bridgeParams.bridge_requests;
+      return { ...bridgeParams, bridge_requests: bridgeRequest };
+    },
+    [canIgnoreNativeToken],
+  );
+
   return {
     canIgnoreNativeToken,
     getReceivingTokens,
     getTokensToBeBridged,
+    getBridgeParamsExceptNativeToken,
   };
 };

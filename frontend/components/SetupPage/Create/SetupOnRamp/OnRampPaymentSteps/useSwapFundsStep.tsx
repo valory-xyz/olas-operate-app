@@ -11,12 +11,10 @@ import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRef
 import { useBridgeRefillRequirementsOnDemand } from '@/hooks/useBridgeRefillRequirementsOnDemand';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
-import { useServices } from '@/hooks/useServices';
 import { delayInSeconds } from '@/utils/delay';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
 import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
-import { useBridgeRequirementsUtils } from '../utils';
+import { useBridgeRequirementsUtils } from '../hooks/useBridgeRequirementsUtils';
 
 const { Text } = Typography;
 
@@ -25,10 +23,13 @@ const { Text } = Typography;
  */
 const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   const { isOnRampingStepCompleted } = useOnRampContext();
-  const { selectedAgentConfig } = useServices();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
-  const { getReceivingTokens } = useBridgeRequirementsUtils(onRampChainId);
+  const {
+    getReceivingTokens,
+    getTokensToBeBridged,
+    getBridgeParamsExceptNativeToken,
+  } = useBridgeRequirementsUtils(onRampChainId);
 
   // State to control the force update of the bridge_refill_requirements API call
   // This is used when the user clicks on "Try again" button.
@@ -50,22 +51,8 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
     return getBridgeRequirementsParams(isForceUpdate);
   }, [isForceUpdate, getBridgeRequirementsParams]);
 
-  // Cannot bridge the token if the onRampChainId is the same as the middleware home chain.
-  // eg. for Optimism, we cannot bridge ETH to Optimism if we are on Optimism.
-  const canIgnoreNativeToken =
-    selectedAgentConfig.evmHomeChainId === onRampChainId;
-
-  // Filter out the native token from the bridge requests
-  const bridgeParamsExceptNativeToken = useMemo(() => {
-    if (!bridgeParams) return null;
-
-    const bridgeRequest = canIgnoreNativeToken
-      ? bridgeParams.bridge_requests.filter(
-          (request) => request.to.token !== AddressZero,
-        )
-      : bridgeParams.bridge_requests;
-    return { ...bridgeParams, bridge_requests: bridgeRequest };
-  }, [bridgeParams, canIgnoreNativeToken]);
+  const bridgeParamsExceptNativeToken =
+    getBridgeParamsExceptNativeToken(bridgeParams);
 
   const {
     data: bridgeFundingRequirements,
@@ -103,35 +90,7 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   }, [bridgeFundingRequirements]);
 
   const receivingTokens = getReceivingTokens(bridgeParams);
-
-  /**
-   * List of tokens to bridge, excluding the native token, if onRampChainId
-   * matches the middleware home chain.
-   *
-   * For example,
-   * - Optimus, tokens to bridge: [USDC, OLAS]
-   * - Gnosis, tokens to bridge: [ETH, USDC, OLAS]
-   */
-  const tokensToBeBridged = useMemo(() => {
-    if (receivingTokens.length === 0) return [];
-
-    const currentChainSymbol = asEvmChainDetails(
-      selectedAgentConfig.middlewareHomeChainId,
-    ).symbol;
-
-    if (!canIgnoreNativeToken) {
-      return receivingTokens.map((token) => token.symbol);
-    }
-
-    const filteredTokens = receivingTokens.filter(
-      (token) => token.symbol !== currentChainSymbol,
-    );
-    return filteredTokens.map((token) => token.symbol);
-  }, [
-    selectedAgentConfig.middlewareHomeChainId,
-    canIgnoreNativeToken,
-    receivingTokens,
-  ]);
+  const tokensToBeBridged = getTokensToBeBridged(receivingTokens);
 
   // Retry to fetch the bridge refill requirements
   const onRetry = useCallback(async () => {
