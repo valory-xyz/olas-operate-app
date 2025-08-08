@@ -62,6 +62,7 @@ export const OnRampWidget = ({ usdAmountToPay }: OnRampWidgetProps) => {
     // To get all the events and log them
     Transak.on('*', (data: unknown) => {
       logEvent?.(`Transak event: ${JSON.stringify(data)}`);
+      console.log('Transak event:', data);
     });
 
     Transak.on(Transak.EVENTS.TRANSAK_WIDGET_CLOSE, () => {

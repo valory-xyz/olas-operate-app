@@ -11,6 +11,7 @@ import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRef
 import { useBridgeRefillRequirementsOnDemand } from '@/hooks/useBridgeRefillRequirementsOnDemand';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
+import { BridgeStatuses } from '@/types/Bridge';
 import { delayInSeconds } from '@/utils/delay';
 
 import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
@@ -174,7 +175,12 @@ const getQuoteFailedErrorState = (onRetry: () => void): SwapFundsStep => ({
  * Hook to manage the swap funds step in the on-ramping process.
  */
 export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
-  const { isOnRampingStepCompleted } = useOnRampContext();
+  const {
+    isOnRampingStepCompleted,
+    isSwappingStepCompleted,
+    updateIsSwappingStepCompleted,
+  } = useOnRampContext();
+  const [swapSubSteps, setSwapSubSteps] = useState<BridgeStatuses>();
 
   const {
     isLoading,
@@ -193,16 +199,43 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     return bridgeFundingRequirements.id;
   }, [isLoading, isOnRampingStepCompleted, bridgeFundingRequirements]);
 
+  window.console.log('useSwapFundsStep', {
+    isLoading,
+    isOnRampingStepCompleted,
+    bridgeFundingRequirements,
+    quoteId,
+  });
+
   const { isBridgingCompleted, isBridgingFailed, isBridging, bridgeStatus } =
     useBridgingSteps(tokensToBeBridged, quoteId);
 
+  // If the swap step is already completed, we do not proceed further.
+  // and we do not fetch the bridging steps.
+  useEffect(() => {
+    if (isSwappingStepCompleted) return;
+
+    if (isBridgingCompleted) {
+      updateIsSwappingStepCompleted(true);
+      if (bridgeStatus?.length) {
+        setSwapSubSteps(bridgeStatus);
+      }
+    }
+  }, [
+    isBridgingCompleted,
+    isSwappingStepCompleted,
+    bridgeStatus,
+    updateIsSwappingStepCompleted,
+  ]);
+
   const bridgeStepStatus = useMemo(() => {
+    if (isSwappingStepCompleted) return 'finish';
     if (!isOnRampingStepCompleted) return 'wait';
     if (isLoading || isBridging) return 'process';
     if (isBridgingFailed) return 'error';
     if (isBridgingCompleted) return 'finish';
     return 'process';
   }, [
+    isSwappingStepCompleted,
     isOnRampingStepCompleted,
     isLoading,
     isBridging,
@@ -220,12 +253,12 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
   if (hasError) return getQuoteFailedErrorState(onRetry);
 
   return {
-    isSwapCompleted: isBridgingCompleted,
+    isSwapCompleted: isSwappingStepCompleted,
     tokensToBeTransferred,
     step: {
       status: bridgeStepStatus,
       title: TITLE,
-      subSteps: (bridgeStatus || []).map(({ status, symbol, txnLink }) => {
+      subSteps: (swapSubSteps || []).map(({ status, symbol, txnLink }) => {
         const description = (() => {
           if (status === 'finish') return `Swap ${symbol || ''} complete.`;
           if (status === 'error') return `Swap ${symbol || ''} failed.`;

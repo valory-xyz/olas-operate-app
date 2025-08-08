@@ -1,5 +1,5 @@
 import { AddressBalanceRecord, MiddlewareChain } from '@/client';
-import { TokenSymbol } from '@/enums/Token';
+import { TokenSymbol } from '@/constants/token';
 
 import { Address } from './Address';
 import { Maybe, Nullable } from './Util';
@@ -93,3 +93,11 @@ export type CrossChainTransferDetails = {
   transfers: TokenTransfer[];
   eta?: number;
 };
+
+export type BridgeStatusDetails = {
+  symbol: TokenSymbol;
+  status: BridgingStepStatus;
+  txnLink: Maybe<string>;
+};
+
+export type BridgeStatuses = BridgeStatusDetails[];

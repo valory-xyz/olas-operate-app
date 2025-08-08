@@ -31,6 +31,10 @@ export const OnRampContext = createContext<{
   isTransactionSuccessfulButFundsNotReceived: boolean;
   isOnRampingStepCompleted: boolean;
 
+  // swapping step
+  isSwappingStepCompleted: boolean;
+  updateIsSwappingStepCompleted: (completed: boolean) => void;
+
   networkId: Nullable<EvmChainId>;
   networkName: Nullable<string>;
   cryptoCurrencyCode: Nullable<string>;
@@ -43,8 +47,12 @@ export const OnRampContext = createContext<{
   isBuyCryptoBtnLoading: false,
   updateIsBuyCryptoBtnLoading: () => {},
   isOnRampingTransactionSuccessful: false,
-  isOnRampingStepCompleted: false,
   isTransactionSuccessfulButFundsNotReceived: false,
+  isOnRampingStepCompleted: false,
+
+  // swapping step
+  isSwappingStepCompleted: false,
+  updateIsSwappingStepCompleted: () => {},
 
   networkId: null,
   networkName: null,
@@ -72,6 +80,9 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // State to track if the user has received funds after on-ramping
   const [hasFundsReceivedAfterOnRamp, setHasFundsReceivedAfterOnRamp] =
     useState(false);
+
+  // State to track if the swapping step is completed
+  const [isSwappingStepCompleted, setIsSwappingStepCompleted] = useState(false);
 
   const updateIsBuyCryptoBtnLoading = useCallback((loading: boolean) => {
     setIsBuyCryptoBtnLoading(loading);
@@ -108,6 +119,11 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setUsdAmountToPay(amount);
   }, []);
 
+  // Function to set the swapping step completion state
+  const updateIsSwappingStepCompleted = useCallback((completed: boolean) => {
+    setIsSwappingStepCompleted(completed);
+  }, []);
+
   /**
    * Check if the on-ramping step is completed
    * ie. if the on-ramping is successful AND funds are received in the master EOA.
@@ -124,6 +140,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // Listen for onramp window transaction success event to reset the loading state
   useEffect(() => {
     const handleTransactionSuccess = () => {
+      console.log('OnRamp transaction successful');
       setIsOnRampingTransactionSuccessful(true);
       delayInSeconds(0.5).then(() => onRampWindow?.hide?.());
     };
@@ -187,6 +204,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
         /** Whether the on-ramping step is completed */
         isOnRampingStepCompleted,
         isTransactionSuccessfulButFundsNotReceived,
+
+        /** Whether the swapping step is completed */
+        isSwappingStepCompleted,
+        updateIsSwappingStepCompleted,
 
         /** Network id to on-ramp */
         networkId,
