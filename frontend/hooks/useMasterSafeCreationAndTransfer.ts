@@ -27,7 +27,6 @@ export const useMasterSafeCreationAndTransfer = (
           chain,
           backupSignerAddress,
         );
-        window.console.log('Safe creation response:', response);
 
         return {
           isSafeCreated: true,

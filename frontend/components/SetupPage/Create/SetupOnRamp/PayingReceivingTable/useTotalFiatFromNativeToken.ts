@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { onRampChainMap, SupportedMiddlewareChain } from '@/constants/chains';
 import { isDev } from '@/constants/env';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useServices } from '@/hooks/useServices';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
+import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 type FeeBreakdownItem = {
   name: string;
@@ -37,7 +38,7 @@ const transakPriceUrl = isDev
   : 'https://api.transak.com/api/v1/pricing/public/quotes';
 
 const fetchTransakQuote = async (
-  network: string,
+  network: SupportedMiddlewareChain,
   amount: number | string,
   signal: AbortSignal,
 ): Promise<{ response: Quote }> => {
@@ -75,9 +76,8 @@ const fetchTransakQuote = async (
 
 export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
   const { selectedAgentConfig } = useServices();
-  const networkName = asEvmChainDetails(
-    selectedAgentConfig.middlewareHomeChainId,
-  ).name;
+  const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
+  const networkName = asMiddlewareChain(onRampChainMap[fromChainName]);
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(
