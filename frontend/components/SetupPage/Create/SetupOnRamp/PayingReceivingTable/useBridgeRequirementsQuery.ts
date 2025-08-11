@@ -90,8 +90,14 @@ export const useBridgeRequirementsQuery = (
     );
   }, [bridgeFundingRequirements]);
 
-  const receivingTokens = getReceivingTokens(bridgeParams);
-  const tokensToBeBridged = getTokensToBeBridged(receivingTokens);
+  const receivingTokens = useMemo(
+    () => getReceivingTokens(bridgeParams),
+    [getReceivingTokens, bridgeParams],
+  );
+  const tokensToBeBridged = useMemo(
+    () => getTokensToBeBridged(receivingTokens),
+    [getTokensToBeBridged, receivingTokens],
+  );
 
   // Retry to fetch the bridge refill requirements
   const onRetry = useCallback(async () => {
@@ -99,8 +105,7 @@ export const useBridgeRequirementsQuery = (
     setIsManuallyRefetching(true);
     setCanPollForBridgeRefillRequirements(false);
 
-    // slight delay before refetching.
-    await delayInSeconds(1);
+    await delayInSeconds(1); // slight delay before refetching.
 
     refetchBridgeRefillRequirements()
       .then(() => {

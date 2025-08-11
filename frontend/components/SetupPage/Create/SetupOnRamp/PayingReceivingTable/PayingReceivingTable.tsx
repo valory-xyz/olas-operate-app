@@ -121,13 +121,13 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
       hasNativeTokenError ? undefined : totalNativeToken,
     );
 
-  // State to hold the tokens to be displayed in the receiving column
+  // State to hold the tokensRequired to be displayed in the receiving column
   // and update only if the on-ramping step is not completed already.
-  const [tokens, setTokens] = useState<ReceivingTokens>();
+  const [tokensRequired, setTokensRequired] = useState<ReceivingTokens>();
   useEffect(() => {
     if (!receivingTokens) return;
     if (isOnRampingStepCompleted) return;
-    setTokens(receivingTokens);
+    setTokensRequired(receivingTokens);
   }, [isOnRampingStepCompleted, receivingTokens]);
 
   const isReceivingAmountLoading = isFiatLoading || isNativeTokenLoading;
@@ -171,8 +171,8 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
             )}
           </>
         ),
-        receiving: tokens ? (
-          <ViewReceivingTokens receivingTokens={tokens} />
+        receiving: tokensRequired ? (
+          <ViewReceivingTokens receivingTokens={tokensRequired} />
         ) : null,
       },
     ],
@@ -180,7 +180,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
       isNativeTokenLoading,
       hasNativeTokenError,
       nativeTokenAmount,
-      tokens,
+      tokensRequired,
       onRetry,
       receivingAmount,
       isReceivingAmountLoading,

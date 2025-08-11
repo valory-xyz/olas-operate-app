@@ -21,6 +21,11 @@ import {
 const ETH_RECEIVED_THRESHOLD = 0.9;
 
 export const OnRampContext = createContext<{
+  networkId: Nullable<EvmChainId>;
+  networkName: Nullable<string>;
+  cryptoCurrencyCode: Nullable<string>;
+  resetOnRampState: () => void;
+
   ethAmountToPay: Nullable<number>;
   updateEthAmountToPay: (amount: Nullable<number>) => void;
   usdAmountToPay: Nullable<number>;
@@ -36,12 +41,12 @@ export const OnRampContext = createContext<{
   // swapping funds step
   isSwappingFundsStepCompleted: boolean;
   updateIsSwappingStepCompleted: (completed: boolean) => void;
-
-  networkId: Nullable<EvmChainId>;
-  networkName: Nullable<string>;
-  cryptoCurrencyCode: Nullable<string>;
-  resetOnRampState: () => void;
 }>({
+  networkId: null,
+  networkName: null,
+  cryptoCurrencyCode: null,
+  resetOnRampState: () => {},
+
   ethAmountToPay: null,
   updateEthAmountToPay: () => {},
   usdAmountToPay: null,
@@ -57,11 +62,6 @@ export const OnRampContext = createContext<{
   // swapping funds step
   isSwappingFundsStepCompleted: false,
   updateIsSwappingStepCompleted: () => {},
-
-  networkId: null,
-  networkName: null,
-  cryptoCurrencyCode: null,
-  resetOnRampState: () => {},
 });
 
 export const OnRampProvider = ({ children }: PropsWithChildren) => {
@@ -175,6 +175,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     };
   }, [ipcRenderer, onRampWindow, updateIsBuyCryptoBtnLoading]);
 
+  // Get the network id, name, and crypto currency code based on the selected agent's home chain
+  // This is used to determine the network and currency to on-ramp to.
   const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
     const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
     const networkId = onRampChainMap[fromChainName];
