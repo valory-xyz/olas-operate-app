@@ -52,8 +52,10 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
     return getBridgeRequirementsParams(isForceUpdate);
   }, [isForceUpdate, getBridgeRequirementsParams]);
 
-  const bridgeParamsExceptNativeToken =
-    getBridgeParamsExceptNativeToken(bridgeParams);
+  const bridgeParamsExceptNativeToken = useMemo(
+    () => getBridgeParamsExceptNativeToken(bridgeParams),
+    [getBridgeParamsExceptNativeToken, bridgeParams],
+  );
 
   const {
     data: bridgeFundingRequirements,
@@ -90,16 +92,21 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
     );
   }, [bridgeFundingRequirements]);
 
-  const receivingTokens = getReceivingTokens(bridgeParams);
-  const tokensToBeBridged = getTokensToBeBridged(receivingTokens);
+  const receivingTokens = useMemo(
+    () => getReceivingTokens(bridgeParams),
+    [getReceivingTokens, bridgeParams],
+  );
+  const tokensToBeBridged = useMemo(
+    () => getTokensToBeBridged(receivingTokens),
+    [getTokensToBeBridged, receivingTokens],
+  );
 
   // Retry to fetch the bridge refill requirements
   const onRetry = useCallback(async () => {
     setIsForceUpdate(true);
     setIsManuallyRefetching(true);
 
-    // slight delay before refetching.
-    await delayInSeconds(1);
+    await delayInSeconds(1); // slight delay before refetching.
 
     refetchBridgeRefillRequirements()
       .then(() => {
@@ -204,9 +211,9 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     if (isSwappingFundsStepCompleted) return;
     if (isBridgingCompleted) {
       updateIsSwappingStepCompleted(true);
-      if (bridgeStatus?.length) {
-        setSwapFundsSteps(bridgeStatus);
-      }
+    }
+    if (bridgeStatus?.length) {
+      setSwapFundsSteps(bridgeStatus);
     }
   }, [
     isBridgingCompleted,

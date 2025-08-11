@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { AddressZero } from '@/constants/address';
-import { EvmChainId } from '@/constants/chains';
+import { EvmChainId, onRampChainMap } from '@/constants/chains';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
@@ -19,9 +19,9 @@ import { useBridgeRequirementsQuery } from './useBridgeRequirementsQuery';
  *
  */
 export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
-  const { selectedAgentConfig } = useServices();
   const { updateEthAmountToPay, isOnRampingTransactionSuccessful } =
     useOnRampContext();
+  const { selectedAgentConfig } = useServices();
   const { masterEoa } = useMasterWalletContext();
 
   const {
@@ -41,10 +41,9 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
    * Calculates the total native token required for the bridge.
    *
    * Example: for Optimus, we require 0.01 ETH, 16 USDC, 100 OLAS.
-   * olas_in_eth = 16 USDC bridged to ETH
-   * usdc_in_eth = 100 OLAS bridged to ETH
-   * Total native token required = 0.01 ETH + olas_in_eth + usdc_in_eth
-   *
+   * - OLAS_in_ETH = 16 USDC bridged to ETH
+   * - USDC_in_ETH = 100 OLAS bridged to ETH
+   * Total native token required = 0.01 ETH + OLAS_in_ETH + USDC_in_ETH
    */
   const totalNativeToken = useMemo(() => {
     if (!bridgeParams) return;
@@ -52,19 +51,28 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     if (!masterEoa?.address) return;
 
     const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-    const nativeTokeFromBridgeParams = bridgeParams.bridge_requests.find(
+    const toOnRampNetworkName = asMiddlewareChain(
+      onRampChainMap[fromChainName],
+    );
+
+    // Native token from the bridge params (ie, refill requirements).
+    const nativeTokenFromBridgeParams = bridgeParams.bridge_requests.find(
       (request) => request.to.token === AddressZero,
     )?.to.amount;
 
+    // Remaining native token from the bridge quote.
+    // e.g, For optimus, OLAS and USDC are bridged to ETH
     const bridgeRefillRequirements =
-      bridgeFundingRequirements.bridge_refill_requirements[fromChainName];
-    const masterEoaRequirements = bridgeRefillRequirements?.[masterEoa.address];
-    const nativeTokenFromBridgeQuote = masterEoaRequirements?.[AddressZero];
+      bridgeFundingRequirements.bridge_refill_requirements[toOnRampNetworkName];
+    const nativeTokenFromBridgeQuote =
+      bridgeRefillRequirements?.[masterEoa.address]?.[AddressZero];
+
     if (!nativeTokenFromBridgeQuote) return;
 
+    // e.g, For optimus, addition of (ETH required) + (OLAS and USDC bridged to ETH).
     const totalNativeTokenRequired =
       BigInt(nativeTokenFromBridgeQuote) +
-      BigInt(nativeTokeFromBridgeParams || 0);
+      BigInt(nativeTokenFromBridgeParams || 0);
 
     return totalNativeTokenRequired
       ? formatUnitsToNumber(totalNativeTokenRequired, 18)
