@@ -20,6 +20,7 @@ import { getErrorMessage } from '@/utils/error';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { FormFlex } from '../styled/FormFlex';
+import { FormLabel } from '../ui/Typography';
 import { SetupWelcomeCreate } from './SetupWelcomeCreate';
 
 const { Title, Text } = Typography;
@@ -191,8 +192,9 @@ const SetupWelcomeLogin = () => {
       <FormFlex form={form} onFinish={handleLogin} layout="vertical">
         <Form.Item
           name="password"
-          label="Enter password"
+          label={<FormLabel>Enter password</FormLabel>}
           rules={[{ required: true, message: 'Please input your Password.' }]}
+          labelCol={{ style: { paddingBottom: 4 } }}
         >
           <Input.Password size="large" />
         </Form.Item>

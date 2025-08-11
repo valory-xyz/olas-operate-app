@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import zxcvbn from 'zxcvbn';
 
 import { AgentHeaderV1 } from '@/components/ui/AgentHeaderV1';
+import { FormLabel } from '@/components/ui/Typography';
 import { COLOR } from '@/constants/colors';
 import { useMessageApi } from '@/context/MessageProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -105,7 +106,7 @@ export const SetupPassword = () => {
       >
         <Form.Item
           name="password"
-          label="Enter password"
+          label={<FormLabel>Enter password</FormLabel>}
           help={
             password && password.length > 0 && isPasswordValid ? (
               <PasswordStrength score={zxcvbn(password).score} />
@@ -126,6 +127,7 @@ export const SetupPassword = () => {
               },
             },
           ]}
+          labelCol={{ style: { paddingBottom: 4 } }}
         >
           <Input.Password size="large" maxLength={64} />
         </Form.Item>

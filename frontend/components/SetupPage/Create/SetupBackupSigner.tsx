@@ -1,9 +1,11 @@
 import { Button, Flex, Form, Input, Typography } from 'antd';
 import { getAddress } from 'ethers/lib/utils';
+import { useCallback } from 'react';
 
 import { CardFlex } from '@/components/styled/CardFlex';
 import { FormFlex } from '@/components/styled/FormFlex';
 import { AgentHeaderV1 } from '@/components/ui/AgentHeaderV1';
+import { FormLabel } from '@/components/ui/Typography';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { Address } from '@/types/Address';
@@ -29,23 +31,28 @@ export const SetupBackupSigner = () => {
   const { setBackupSigner } = useSetup();
   const [form] = Form.useForm();
 
-  const handleFinish = (values: { 'backup-signer': string }) => {
-    // important to lowercase the address before check summing, invalid checksums will cause ethers to throw
-    // returns null if invalid, ethers type is incorrect...
-    const checksummedAddress = getAddress(
-      values['backup-signer'].toLowerCase(),
-    ) as Address | null;
+  const handleFinish = useCallback(
+    (values: { backupSigner: string }) => {
+      // important to lowercase the address before check summing, invalid checksums will cause ethers to throw
+      // returns null if invalid, ethers type is incorrect...
+      const checksummedAddress = getAddress(
+        values['backupSigner'].toLowerCase(),
+      ) as Address | null;
 
-    // If the address is invalid, show an error message
-    if (!checksummedAddress) {
-      return form.setFields([
-        { name: 'backup-signer', errors: [invalidAddressMessage] },
-      ]);
-    }
+      // If the address is invalid, show an error message
+      if (!checksummedAddress) {
+        return form.setFields([
+          { name: 'backupSigner', errors: [invalidAddressMessage] },
+        ]);
+      }
 
-    setBackupSigner(checksummedAddress);
-    goto(SetupScreen.AgentSelection);
-  };
+      setBackupSigner(checksummedAddress);
+      goto(SetupScreen.AgentSelection);
+    },
+    [form, setBackupSigner, goto],
+  );
+
+  const backupSigner = Form.useWatch('backupSigner', form);
 
   return (
     <CardFlex noBorder>
@@ -55,8 +62,9 @@ export const SetupBackupSigner = () => {
       <Flex vertical gap={10}>
         <FormFlex layout="vertical" form={form} onFinish={handleFinish}>
           <Form.Item
-            name="backup-signer"
-            label="Enter Backup Wallet Address"
+            name="backupSigner"
+            label={<FormLabel>Enter Backup Wallet Address</FormLabel>}
+            required={false}
             rules={[
               {
                 required: true,
@@ -66,10 +74,16 @@ export const SetupBackupSigner = () => {
                 message: invalidAddressMessage,
               },
             ]}
+            labelCol={{ style: { paddingBottom: 4 } }}
           >
             <Input size="large" placeholder="0x..." />
           </Form.Item>
-          <Button type="primary" size="large" htmlType="submit">
+          <Button
+            type="primary"
+            size="large"
+            htmlType="submit"
+            disabled={!backupSigner}
+          >
             Continue
           </Button>
         </FormFlex>
