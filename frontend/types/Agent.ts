@@ -10,6 +10,7 @@ export type AgentConfig = {
   name: string;
   evmHomeChainId: EvmChainId;
   middlewareHomeChainId: SupportedMiddlewareChain;
+  agentIds: number[];
   requiresAgentSafesOn: EvmChainId[];
   requiresMasterSafesOn: EvmChainId[];
   additionalRequirements?: Partial<

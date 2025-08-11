@@ -1,5 +1,7 @@
 import { ThemeConfig } from 'antd';
 
+import { COLOR } from '@/constants/colors';
+
 export const mainTheme: ThemeConfig = {
   token: {
     colorLink: '#7E22CE',
@@ -33,6 +35,9 @@ export const mainTheme: ThemeConfig = {
       fontSize: 20,
       colorTextDisabled: '#334155',
     },
+    Menu: {
+      activeBarBorderWidth: 0,
+    },
     Tooltip: {
       fontSize: 16,
       colorText: 'black',
@@ -50,6 +55,9 @@ export const mainTheme: ThemeConfig = {
     },
     List: {
       colorBorder: '#DFE5EE',
+    },
+    Layout: {
+      bodyBg: COLOR.BACKGROUND,
     },
     Steps: {
       fontSize: 16,
