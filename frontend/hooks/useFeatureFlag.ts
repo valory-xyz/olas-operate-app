@@ -81,7 +81,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'agent-settings': true,
     'bridge-onboarding': true,
     'bridge-add-funds': true,
-    'on-ramp': true,
+    'on-ramp': false,
   },
   [AgentType.Optimus]: {
     'manage-wallet': true,
@@ -94,7 +94,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'agent-settings': true,
     'bridge-onboarding': true,
     'bridge-add-funds': true,
-    'on-ramp': true,
+    'on-ramp': false,
   },
 });
 
