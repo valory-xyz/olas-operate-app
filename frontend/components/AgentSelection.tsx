@@ -1,9 +1,8 @@
 import { Button, Card, CardProps, Flex, Typography } from 'antd';
-import { entries } from 'lodash';
 import Image from 'next/image';
 import { memo, useCallback, useMemo } from 'react';
 
-import { AGENT_CONFIG } from '@/config/agents';
+import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { COLOR } from '@/constants/colors';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
@@ -212,19 +211,15 @@ export const AgentSelection = ({
     <SetupCreateHeader prev={onPrev} />
     <Title level={3}>Select your agent</Title>
 
-    {entries(AGENT_CONFIG)
-      .filter(([, agentConfig]) => {
-        return !!agentConfig.isAgentEnabled;
-      })
-      .map(([agentType, agentConfig]) => {
-        return (
-          <EachAgent
-            key={agentType}
-            showSelected={showSelected}
-            agentType={agentType as AgentType}
-            agentConfig={agentConfig}
-          />
-        );
-      })}
+    {ACTIVE_AGENTS.map(([agentType, agentConfig]) => {
+      return (
+        <EachAgent
+          key={agentType}
+          showSelected={showSelected}
+          agentType={agentType as AgentType}
+          agentConfig={agentConfig}
+        />
+      );
+    })}
   </CardFlex>
 );

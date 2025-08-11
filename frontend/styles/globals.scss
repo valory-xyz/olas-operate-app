@@ -11,7 +11,6 @@ body {
 }
 
 body {
-  max-width: 480px;
   border-radius: 8px;
   user-select: none;
   scroll-behavior: smooth;
@@ -193,6 +192,10 @@ textarea,
   margin-top: 24px !important;
 }
 
+.mt-auto {
+  margin-top: auto !important;
+}
+
 // padding
 .p-0 {
   padding: 0 !important;
@@ -312,9 +315,17 @@ ul.alert-list {
 .w-full {
   width: 100% !important;
 }
+.w-max {
+  width: max-content !important;
+}
 
 .max-width-200 {
   max-width: 200px;
+}
+
+// Flexbox & Grid
+.self-center {
+  align-self: center;
 }
 
 .loading-ellipses {

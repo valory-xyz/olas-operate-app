@@ -5,7 +5,7 @@ import { LowOperatingBalanceBridgeFunds } from '@/components/AddFundsThroughBrid
 import { LowSafeSignerBalanceBridgeFunds } from '@/components/AddFundsThroughBridge/LowSafeSignerBalanceBridgeFunds';
 import { AgentActivityPage } from '@/components/AgentActivity';
 import { AgentSelection } from '@/components/AgentSelection';
-import { Main } from '@/components/MainPage';
+import { Main } from '@/components/MainPageV1';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { AddBackupWalletViaSafePage } from '@/components/Pages/AddBackupWalletViaSafePage';
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
@@ -18,8 +18,6 @@ import { Pages } from '@/enums/Pages';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 
-const DEFAULT_APP_HEIGHT = 700;
-
 export default function Home() {
   const { pageState, goto } = usePageState();
   const electronApi = useElectronApi();
@@ -27,23 +25,6 @@ export default function Home() {
   useEffect(() => {
     // Notify the main process that the app is loaded
     electronApi?.setIsAppLoaded?.(true);
-
-    // Set the app height to the body scroll height
-    function updateAppHeight() {
-      const bodyElement = document.querySelector('body');
-      if (bodyElement) {
-        const scrollHeight = bodyElement.scrollHeight;
-        electronApi?.setAppHeight?.(Math.min(DEFAULT_APP_HEIGHT, scrollHeight));
-      }
-    }
-
-    const resizeObserver = new ResizeObserver(updateAppHeight);
-    resizeObserver.observe(document.body);
-    updateAppHeight();
-
-    return () => {
-      resizeObserver.unobserve(document.body);
-    };
   }, [electronApi]);
 
   const page = useMemo(() => {

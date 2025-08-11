@@ -34,7 +34,6 @@ type ElectronApiContextProps = {
     delete?: (key: string) => Promise<void>;
     clear?: () => Promise<void>;
   };
-  setAppHeight?: (height: unknown) => void;
   notifyAgentRunning?: () => void;
   showNotification?: (title: string, body?: string) => void;
   saveLogs?: (data: {
@@ -66,7 +65,6 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     delete: async () => {},
     clear: async () => {},
   },
-  setAppHeight: () => {},
   saveLogs: async () => ({ success: false }),
   openPath: () => {},
   healthCheck: async () => ({ response: null }),
@@ -114,7 +112,6 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           delete: getElectronApiFunction('store.delete'),
           clear: getElectronApiFunction('store.clear'),
         },
-        setAppHeight: getElectronApiFunction('setAppHeight'),
         showNotification: getElectronApiFunction('showNotification'),
         saveLogs: getElectronApiFunction('saveLogs'),
         openPath: getElectronApiFunction('openPath'),
