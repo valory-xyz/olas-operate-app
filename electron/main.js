@@ -1,4 +1,16 @@
 require('dotenv').config();
+
+const {
+  checkUrl,
+  configureSessionCertificates,
+  loadLocalCertificate,
+  stringifyJson,
+  secureFetch,
+} = require('./utils');
+
+// Load the self-signed certificate for localhost HTTPS requests
+loadLocalCertificate();
+
 const {
   app,
   BrowserWindow,
@@ -25,20 +37,8 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
-const { checkUrl } = require('./utils');
-const { pki } = require('node-forge');
 
-// Configure Electron to accept self-signed certificates for localhost
-app.on('certificate-error', (event, _webContents, url, error, _certificate, callback) => {
-  // Allow self-signed certificates for localhost only for specific SSL format errors
-  logger.electron(`Certificate error for URL: ${url}, Error: ${error}`);
-  if (url.startsWith('https://localhost:') && error === 'net::ERR_CERT_AUTHORITY_INVALID') {
-    event.preventDefault();
-    callback(true);
-  } else {
-    callback(false);
-  }
-});
+const { pki } = require('node-forge');
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -106,6 +106,9 @@ let appConfig = {
 const nextUrl = () =>
   `http://localhost:${isDev ? appConfig.ports.dev.next : appConfig.ports.prod.next}`;
 
+const backendUrl = () =>
+  `https://localhost:${isDev ? appConfig.ports.dev.operate : appConfig.ports.prod.operate}`;
+
 /** @type {Electron.BrowserWindow | null} */
 let mainWindow = null;
 /** @type {Electron.BrowserWindow | null} */
@@ -165,6 +168,36 @@ function handleAppSettings() {
 let isBeforeQuitting = false;
 let appRealClose = false;
 
+/**
+ * function to stop the backend server gracefully and
+ * kill the child processes if they are running.
+ */
+async function stopBackend() {
+  // Free up backend port if already occupied
+  try {
+    logger.electron('Killing backend server by shutdown endpoint!');
+    const result = await secureFetch(`${backendUrl()}/shutdown`);
+    logger.electron(
+      `Backend stopped with result: ${stringifyJson(await result.json())}`,
+    );
+  } catch (e) {
+    logger.electron(`Backend stopped with error: ${stringifyJson(e)}`);
+  }
+
+  try {
+    await secureFetch(`${backendUrl()}/api`);
+    logger.electron('Killing backend server!');
+    const endpoint = fs
+      .readFileSync(`${paths.dotOperateDirectory}/operate.kill`)
+      .toString()
+      .trim();
+
+    await secureFetch(`${backendUrl()}/${endpoint}`);
+  } catch (e) {
+    logger.electron(`Backend not running: ${stringifyJson(e)}`);
+  }
+}
+
 async function beforeQuit(event) {
   if (typeof event.preventDefault === 'function' && !appRealClose) {
     event.preventDefault();
@@ -180,32 +213,18 @@ async function beforeQuit(event) {
   mainWindow?.destroy();
 
   logger.electron('Stop backend gracefully:');
-  try {
-    logger.electron(
-      `Killing backend server by shutdown endpoint: https://localhost:${appConfig.ports.prod.operate}/shutdown`,
-    );
-    let result = await fetch(
-      `https://localhost:${appConfig.ports.prod.operate}/shutdown`,
-    );
-    logger.electron('Killed backend server by shutdown endpoint!');
-    logger.electron(
-      `Killed backend server by shutdown endpoint! result: ${JSON.stringify(result)}`,
-    );
-  } catch (err) {
-    logger.electron('Backend stopped with error!');
-    logger.electron(
-      'Backend stopped with error, result: ' + JSON.stringify(err),
-    );
-  }
+  await stopBackend();
 
   if (operateDaemon || operateDaemonPid) {
-    // clean-up via pid first*
+    // clean-up via pid first
     // may have dangling subprocesses
     try {
       logger.electron('Killing backend server kill process');
       operateDaemonPid && (await killProcesses(operateDaemonPid));
     } catch (e) {
-      logger.electron("Couldn't kill daemon processes via pid:");
+      logger.electron(
+        `Couldn't kill daemon processes via pid: ${stringifyJson(e)}`,
+      );
     }
 
     // attempt to kill the daemon process via kill
@@ -216,7 +235,9 @@ async function beforeQuit(event) {
         logger.electron('Daemon process still alive after kill');
       }
     } catch (e) {
-      logger.electron("Couldn't kill operate daemon process via kill:");
+      logger.electron(
+        `Couldn't kill operate daemon process via kill: ${stringifyJson(e)}`,
+      );
     }
   }
 
@@ -228,21 +249,25 @@ async function beforeQuit(event) {
         logger.electron('Dev NextApp process still alive after kill');
       }
     } catch (e) {
-      logger.electron("Couldn't kill devNextApp process via kill:");
+      logger.electron(
+        `Couldn't kill devNextApp process via kill: ${stringifyJson(e)}`,
+      );
     }
 
     // attempt to kill the dev next app process via pid
     try {
       devNextAppPid && (await killProcesses(devNextAppPid));
     } catch (e) {
-      logger.electron("Couldn't kill devNextApp processes via pid:");
+      logger.electron(
+        `Couldn't kill devNextApp processes via pid: ${stringifyJson(e)}`,
+      );
     }
   }
 
   if (nextApp) {
     // attempt graceful close of prod next app
-    await nextApp.close().catch(() => {
-      logger.electron("Couldn't close NextApp gracefully:");
+    await nextApp.close().catch((e) => {
+      logger.electron(`Couldn't close NextApp gracefully: ${stringifyJson(e)}`);
     });
     // electron will kill next service on exit
   }
@@ -375,7 +400,7 @@ const createMainWindow = async () => {
     logger.electron('Setting up store IPC');
     setupStoreIpc(ipcMain, mainWindow);
   } catch (e) {
-    logger.electron('Store IPC failed:', JSON.stringify(e));
+    logger.electron(`Store IPC failed: ${stringifyJson(e)}`);
   }
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
@@ -416,7 +441,7 @@ const createAgentActivityWindow = async () => {
 };
 
 // Create SSL certificate for the backend
-function createSSLCertificate() {
+function createAndLoadSslCertificate() {
   try {
     logger.electron('Creating SSL certificate...');
 
@@ -436,14 +461,16 @@ function createSSLCertificate() {
     cert.publicKey = keys.publicKey;
     cert.serialNumber = '01';
     cert.validity.notBefore = new Date();
-    cert.validity.notAfter = new Date(cert.validity.notBefore.getTime() + 365 * 24 * 60 * 60 * 1000); // Valid for 1 year
+    cert.validity.notAfter = new Date(
+      cert.validity.notBefore.getTime() + 365 * 24 * 60 * 60 * 1000,
+    ); // Valid for 1 year
 
     const attrs = [
       { name: 'countryName', value: 'CH' },
       { name: 'stateOrProvinceName', value: 'Local' },
       { name: 'localityName', value: 'Local' },
       { name: 'organizationName', value: 'Valory AG' },
-      { name: 'commonName', value: 'localhost' }
+      { name: 'commonName', value: 'localhost' },
     ];
 
     cert.setSubject(attrs);
@@ -464,6 +491,7 @@ function createSSLCertificate() {
     // Write to files
     fs.writeFileSync(keyPath, privateKeyPem);
     fs.writeFileSync(certPath, certificatePem);
+    loadLocalCertificate();
     logger.electron(
       `SSL certificate created successfully at ${keyPath} and ${certPath}`,
     );
@@ -479,36 +507,8 @@ function createSSLCertificate() {
 }
 
 async function launchDaemon() {
-  // Free up backend port if already occupied
-  try {
-    await fetch(`https://localhost:${appConfig.ports.prod.operate}/api`);
-    logger.electron('Killing backend server!');
-    let endpoint = fs
-      .readFileSync(`${paths.dotOperateDirectory}/operate.kill`)
-      .toString()
-      .trim();
-
-    await fetch(`https://localhost:${appConfig.ports.prod.operate}/${endpoint}`);
-  } catch (err) {
-    logger.electron('Backend not running!' + JSON.stringify(err, null, 2));
-  }
-
-  try {
-    logger.electron('Killing backend server by shutdown endpoint!');
-    let result = await fetch(
-      `https://localhost:${appConfig.ports.prod.operate}/shutdown`,
-    );
-    logger.electron(
-      'Backend stopped with result: ' + JSON.stringify(result, null, 2),
-    );
-  } catch (err) {
-    logger.electron(
-      'Backend stopped with error: ' + JSON.stringify(err, null, 2),
-    );
-  }
-
   const check = new Promise(function (resolve, _reject) {
-    const { keyPath, certPath } = createSSLCertificate();
+    const { keyPath, certPath } = createAndLoadSslCertificate();
     operateDaemon = spawn(
       path.join(
         process.resourcesPath,
@@ -552,7 +552,7 @@ async function launchDaemon() {
 }
 
 async function launchDaemonDev() {
-  const { keyPath, certPath } = createSSLCertificate();
+  const { keyPath, certPath } = createAndLoadSslCertificate();
   const check = new Promise(function (resolve, _reject) {
     operateDaemon = spawn('poetry', [
       'run',
@@ -660,6 +660,9 @@ ipcMain.on('check', async function (event, _argument) {
       await setupUbuntu(event.sender);
     }
 
+    // Free up backend port if already occupied
+    await stopBackend();
+
     if (isDev) {
       event.sender.send(
         'response',
@@ -743,6 +746,8 @@ app.on('second-instance', () => {
 });
 
 app.once('ready', async () => {
+  configureSessionCertificates();
+
   app.on('window-all-closed', () => {
     app.quit();
   });
@@ -756,6 +761,7 @@ app.once('ready', async () => {
       path.join(__dirname, 'assets/icons/splash-robot-head-dock.png'),
     );
   }
+
   createSplashWindow();
 });
 
