@@ -58,12 +58,7 @@ export const Sidebar = () => {
         if (!agent) return result;
 
         const [agentType, agentConfig] = agent;
-
-        result.push({
-          name: agentConfig.name,
-          agentType,
-        });
-
+        result.push({ name: agentConfig.name, agentType });
         return result;
       },
       [],
