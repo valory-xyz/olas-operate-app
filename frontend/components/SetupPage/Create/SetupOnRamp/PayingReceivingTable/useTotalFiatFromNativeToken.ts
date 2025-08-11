@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { apiKey } from '@/components/OnRampWidget/OnRampWidget';
 import { onRampChainMap, SupportedMiddlewareChain } from '@/constants/chains';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useServices } from '@/hooks/useServices';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
-
-const apiKey = '8015f7f6-0a15-4e0c-8793-d332789af7f7';
 
 type FeeBreakdownItem = {
   name: string;
