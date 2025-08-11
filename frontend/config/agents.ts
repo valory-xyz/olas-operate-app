@@ -1,4 +1,5 @@
 import { formatUnits } from 'ethers/lib/utils';
+import { entries } from 'lodash';
 
 import { MiddlewareChain } from '@/client';
 import {
@@ -47,6 +48,7 @@ export const AGENT_CONFIG: {
     name: 'Predict Trader',
     evmHomeChainId: EvmChainId.Gnosis,
     middlewareHomeChainId: MiddlewareChain.GNOSIS,
+    agentIds: [14, 25],
     requiresAgentSafesOn: [EvmChainId.Gnosis],
     requiresMasterSafesOn: [EvmChainId.Gnosis],
     serviceApi: PredictTraderService,
@@ -61,6 +63,7 @@ export const AGENT_CONFIG: {
     name: 'Modius agent',
     evmHomeChainId: EvmChainId.Mode,
     middlewareHomeChainId: MiddlewareChain.MODE,
+    agentIds: [40],
     requiresAgentSafesOn: [EvmChainId.Mode],
     additionalRequirements: {
       [EvmChainId.Mode]: { [TokenSymbol.USDC]: getModiusUsdcConfig() },
@@ -79,6 +82,7 @@ export const AGENT_CONFIG: {
     name: 'Optimus agent',
     evmHomeChainId: EvmChainId.Optimism,
     middlewareHomeChainId: MiddlewareChain.OPTIMISM,
+    agentIds: [40],
     requiresAgentSafesOn: [EvmChainId.Optimism],
     additionalRequirements: {
       [EvmChainId.Optimism]: { [TokenSymbol.USDC]: getOptimusUsdcConfig() },
@@ -98,6 +102,7 @@ export const AGENT_CONFIG: {
     name: 'Agents.fun agent',
     evmHomeChainId: EvmChainId.Base,
     middlewareHomeChainId: MiddlewareChain.BASE,
+    agentIds: [43],
     requiresAgentSafesOn: [EvmChainId.Base],
     requiresMasterSafesOn: [EvmChainId.Base],
     serviceApi: AgentsFunBaseService,
@@ -113,6 +118,7 @@ export const AGENT_CONFIG: {
     name: 'Agents.fun agent (Celo)',
     evmHomeChainId: EvmChainId.Celo,
     middlewareHomeChainId: MiddlewareChain.CELO,
+    agentIds: [43],
     requiresAgentSafesOn: [EvmChainId.Celo],
     requiresMasterSafesOn: [EvmChainId.Celo],
     serviceApi: AgentsFunBaseService,
@@ -122,3 +128,7 @@ export const AGENT_CONFIG: {
     hasExternalFunds: false,
   },
 };
+
+export const ACTIVE_AGENTS = entries(AGENT_CONFIG).filter(([, agentConfig]) => {
+  return !!agentConfig.isAgentEnabled;
+});
