@@ -22,6 +22,8 @@ import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { FormFlex } from '../styled/FormFlex';
 import { SetupWelcomeCreate } from './SetupWelcomeCreate';
 
+const { Title, Text } = Typography;
+
 enum MiddlewareAccountIsSetup {
   True,
   False,
@@ -40,9 +42,7 @@ const SetupLoader = () => (
 
 const SetupError = () => (
   <Flex justify="center" style={{ margin: '32px 0', textAlign: 'center' }}>
-    <Typography.Text>
-      Unable to determine the account setup status, please try again.
-    </Typography.Text>
+    <Text>Unable to determine the account setup status, please try again.</Text>
   </Flex>
 );
 
@@ -175,32 +175,48 @@ const SetupWelcomeLogin = () => {
   ]);
 
   return (
-    <FormFlex form={form} onFinish={handleLogin}>
-      <Form.Item
-        name="password"
-        rules={[{ required: true, message: 'Please input your Password!' }]}
+    <Flex vertical>
+      <Flex
+        vertical
+        align="center"
+        gap={12}
+        style={{ margin: '24px 0 40px 0' }}
       >
-        <Input.Password size="large" placeholder="Password" />
-      </Form.Item>
-      <Flex vertical gap={10}>
-        <Button
-          htmlType="submit"
-          type="primary"
-          size="large"
-          loading={isLoggingIn}
-        >
-          Login
-        </Button>
-        <Button
-          type="link"
-          target="_blank"
-          size="small"
-          onClick={() => goto(SetupScreen.Restore)}
-        >
-          Forgot password? Restore access
-        </Button>
+        <Title level={3} className="m-0">
+          Welcome Back to Pearl
+        </Title>
+        <Text type="secondary">Sign in to your account to proceed.</Text>
       </Flex>
-    </FormFlex>
+
+      <FormFlex form={form} onFinish={handleLogin} layout="vertical">
+        <Form.Item
+          name="password"
+          label="Enter password"
+          rules={[{ required: true, message: 'Please input your Password.' }]}
+        >
+          <Input.Password size="large" />
+        </Form.Item>
+
+        <Flex vertical gap={10}>
+          <Button
+            htmlType="submit"
+            type="primary"
+            size="large"
+            loading={isLoggingIn}
+          >
+            Continue
+          </Button>
+          <Button
+            type="link"
+            target="_blank"
+            size="small"
+            onClick={() => goto(SetupScreen.Restore)}
+          >
+            Forgot password? Restore access
+          </Button>
+        </Flex>
+      </FormFlex>
+    </Flex>
   );
 };
 
@@ -254,6 +270,7 @@ export const SetupWelcome = () => {
     }
   }, [isSetup]);
 
+  // TODO: think about the widths of card
   return (
     <Card bordered={false}>
       <Flex vertical align="center">

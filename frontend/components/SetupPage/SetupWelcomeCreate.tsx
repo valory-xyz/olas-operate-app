@@ -17,7 +17,7 @@ const Title = styled(AntTitle)`
 const CheckedCircle = styled(CheckCircleOutlined)`
   display: inline-block;
   margin: 4px 8px 0 0;
-  color: ${COLOR.SUCCESS_V1};
+  color: ${COLOR.V1_SUCCESS};
 `;
 
 const OwnYourAgentCard = styled(Flex)`

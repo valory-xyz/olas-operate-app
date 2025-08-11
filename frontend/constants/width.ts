@@ -4,6 +4,7 @@ export const APP_HEIGHT = 796;
 export const TOP_BAR_HEIGHT = 44;
 
 export const MODAL_WIDTH = 412;
+export const MODAL_WIDTH_V1 = 512;
 
 export const POPOVER_WIDTH_MEDIUM = 260;
 
