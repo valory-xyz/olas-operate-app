@@ -14,6 +14,7 @@ import { MasterWalletProvider } from '@/context/MasterWalletProvider';
 import { MessageProvider } from '@/context/MessageProvider';
 import { ModalProvider } from '@/context/ModalProvider';
 import { OnlineStatusProvider } from '@/context/OnlineStatusProvider';
+import { OnRampProvider } from '@/context/OnRampProvider';
 import { PageStateProvider } from '@/context/PageStateProvider';
 import { RewardProvider } from '@/context/RewardProvider';
 import { ServicesProvider } from '@/context/ServicesProvider';
@@ -53,15 +54,17 @@ export default function App({ Component, pageProps }: AppProps) {
                                   <MessageProvider>
                                     <ModalProvider>
                                       <SharedProvider>
-                                        {isMounted ? (
-                                          <SystemNotificationTriggers>
-                                            <AgentUiProvider>
-                                              <Layout>
-                                                <Component {...pageProps} />
-                                              </Layout>
-                                            </AgentUiProvider>
-                                          </SystemNotificationTriggers>
-                                        ) : null}
+                                        <OnRampProvider>
+                                          {isMounted ? (
+                                            <SystemNotificationTriggers>
+                                              <AgentUiProvider>
+                                                <Layout>
+                                                  <Component {...pageProps} />
+                                                </Layout>
+                                              </AgentUiProvider>
+                                            </SystemNotificationTriggers>
+                                          ) : null}
+                                        </OnRampProvider>
                                       </SharedProvider>
                                     </ModalProvider>
                                   </MessageProvider>

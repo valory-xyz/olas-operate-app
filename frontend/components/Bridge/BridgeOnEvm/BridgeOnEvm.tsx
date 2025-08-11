@@ -13,11 +13,22 @@ const { Text, Title } = Typography;
 
 const FROM_CHAIN_NAME = 'Ethereum';
 
-const AlertMessage = () => (
-  <Flex vertical gap={5}>
-    <Text strong>Only send funds on Ethereum!</Text>
-    <Text>Full amount of funds is required to initiate the bridging.</Text>
-  </Flex>
+const OnlySendFundsOnEthereumAlert = () => (
+  <CardSection>
+    <CustomAlert
+      fullWidth
+      type="warning"
+      showIcon
+      message={
+        <Flex vertical gap={5}>
+          <Text strong>Only send funds on Ethereum!</Text>
+          <Text>
+            Full amount of funds is required to initiate the bridging.
+          </Text>
+        </Flex>
+      }
+    />
+  </CardSection>
 );
 
 type BridgeOnEvmProps = {
@@ -52,14 +63,7 @@ export const BridgeOnEvm = ({
         <Text className="text-base text-lighter">{bridgeFromDescription}</Text>
       </Flex>
 
-      <CardSection>
-        <CustomAlert
-          fullWidth
-          type="warning"
-          showIcon
-          message={<AlertMessage />}
-        />
-      </CardSection>
+      <OnlySendFundsOnEthereumAlert />
 
       <DepositForBridging
         chainName={FROM_CHAIN_NAME}

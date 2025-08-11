@@ -116,6 +116,9 @@ let splashWindow = null;
 /** @type {Electron.BrowserWindow | null} */
 let agentWindow = null;
 const getAgentWindow = () => agentWindow;
+/** @type {Electron.BrowserWindow | null} */
+let onRampWindow = null;
+const getOnRampWindow = () => onRampWindow;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
@@ -461,9 +464,11 @@ function createAndLoadSslCertificate() {
     cert.publicKey = keys.publicKey;
     cert.serialNumber = '01';
     cert.validity.notBefore = new Date();
+
+    // Valid for 1 year
     cert.validity.notAfter = new Date(
       cert.validity.notBefore.getTime() + 365 * 24 * 60 * 60 * 1000,
-    ); // Valid for 1 year
+    );
 
     const attrs = [
       { name: 'countryName', value: 'CH' },
@@ -505,6 +510,53 @@ function createAndLoadSslCertificate() {
     throw error;
   }
 }
+
+/**
+ * Create the on-ramping window for displaying transak widget
+ */
+/** @type {()=>Promise<BrowserWindow|undefined>} */
+const createOnRampWindow = async (amountToPay) => {
+  if (!getOnRampWindow() || getOnRampWindow().isDestroyed) {
+    onRampWindow = new BrowserWindow({
+      title: 'Buy Crypto on Transak',
+      resizable: false,
+      draggable: true,
+      frame: false,
+      transparent: true,
+      fullscreenable: false,
+      maximizable: false,
+      closable: false,
+      width: APP_WIDTH,
+      height: 700,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, 'preload.js'),
+      },
+    });
+
+    // query parameters for the on-ramp URL
+    const onRampQuery = new URLSearchParams();
+    if (amountToPay) {
+      onRampQuery.append('amount', amountToPay.toString());
+    }
+    const onRampUrl = `${nextUrl()}/onramp?${onRampQuery.toString()}`;
+    logger.electron('OnRamp URL:', onRampUrl);
+
+    onRampWindow.loadURL(onRampUrl).then(() => {
+      logger.electron('onRampWindow', onRampWindow.url);
+    });
+  } else {
+    logger.electron('OnRamp window already exists');
+  }
+
+  onRampWindow.on('close', function (event) {
+    event.preventDefault();
+    onRampWindow?.hide();
+  });
+
+  return onRampWindow;
+};
 
 async function launchDaemon() {
   const check = new Promise(function (resolve, _reject) {
@@ -626,27 +678,6 @@ async function launchNextAppDev() {
 }
 
 ipcMain.on('check', async function (event, _argument) {
-  // Update
-  try {
-    // macUpdater.checkForUpdates().then((res) => {
-    //   if (!res) return;
-    //   if (!res.downloadPromise) return;
-    //   new Notification({
-    //     title: 'Update Available',
-    //     body: 'Downloading update...',
-    //   }).show();
-    //   res.downloadPromise.then(() => {
-    //     new Notification({
-    //       title: 'Update Downloaded',
-    //       body: 'Restarting application...',
-    //     }).show();
-    //     macUpdater.quitAndInstall();
-    //   });
-    // });
-  } catch (e) {
-    logger.electron(e);
-  }
-
   // Setup
   try {
     handleAppSettings();
@@ -717,12 +748,8 @@ ipcMain.on('check', async function (event, _argument) {
     tray = new PearlTray(getActiveWindow);
   } catch (e) {
     logger.electron(e);
-    new Notification({
-      title: 'Error',
-      body: e,
-    }).show();
+    new Notification({ title: 'Error', body: e }).show();
     event.sender.send('response', e);
-    // app.quit();
   }
 });
 
@@ -994,6 +1021,9 @@ ipcMain.handle('save-logs', async (_, data) => {
   return result;
 });
 
+/**
+ * Agent UI window handlers
+ */
 ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
   logger.electron(`agent-activity-window-goto: ${url}`);
 
@@ -1054,4 +1084,59 @@ ipcMain.handle('agent-activity-window-minimize', () => {
   logger.electron('agent-activity-window-minimize');
   if (!getAgentWindow() || getAgentWindow().isDestroyed()) return; // nothing to minimize
   getAgentWindow()?.then((aaw) => aaw.minimize());
+});
+
+/**
+ * Logs an event message to the logger.
+ */
+ipcMain.handle('log-event', (_event, message) => {
+  logger.electron(message);
+});
+
+/**
+ * OnRamp window handlers
+ */
+ipcMain.handle('onramp-window-show', (_event, amountToPay) => {
+  logger.electron('onramp-window-show');
+
+  if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) {
+    createOnRampWindow(amountToPay)?.then((window) => window.show());
+  } else {
+    getOnRampWindow()?.show();
+  }
+});
+
+ipcMain.handle('onramp-window-hide', () => {
+  logger.electron('onramp-window-hide');
+
+  // already destroyed or not created
+  if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) return;
+
+  getOnRampWindow()?.hide();
+
+  // Notify all other windows that it has been hidden
+  BrowserWindow.getAllWindows().forEach((win) => {
+    logger.electron('onramp-window-did-hide to', win.id);
+    win.webContents.send('onramp-window-did-hide');
+  });
+});
+
+ipcMain.handle('onramp-transaction-success', () => {
+  logger.electron('onramp-transaction-success');
+
+  // Notify all other windows that the transaction was successful
+  BrowserWindow.getAllWindows().forEach((win) => {
+    logger.electron('onramp-transaction-success to', win.id);
+    win.webContents.send('onramp-transaction-success');
+  });
+});
+
+ipcMain.handle('onramp-transaction-failure', () => {
+  logger.electron('onramp-transaction-failure');
+
+  // Notify all other windows that the transaction was failed
+  BrowserWindow.getAllWindows().forEach((win) => {
+    logger.electron('onramp-transaction-failure to', win.id);
+    win.webContents.send('onramp-transaction-failure');
+  });
 });

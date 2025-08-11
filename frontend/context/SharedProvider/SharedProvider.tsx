@@ -104,6 +104,8 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
 
         // agent specific checks
         isAgentsFunFieldUpdateRequired,
+
+        // others
       }}
     >
       {children}
