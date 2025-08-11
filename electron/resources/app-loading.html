@@ -27,17 +27,35 @@
         font-size: 18px;
       }
 
-      img {
+      .splash-robot-head {
         margin: 0 auto;
         width: 80px !important;
         height: 80px !important;
+      }
+
+      .powered-by {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .powered-by-text {
+        color: #617084;
+        font-size: 14px;
+      }
+
+      .powered-by-logo {
+        margin-top: 8px;
+        width: 72px;
+        height: auto;
       }
     </style>
   </head>
 
   <body>
     <main>
-      <img src="../assets/icons/splash-robot-head.png" alt="logo" />
+      <img src="../assets/icons/splash-robot-head.png" alt="logo" class="splash-robot-head" />
       <div class="ant-spin ant-spin-spinning" aria-live="polite" aria-busy="true">
         <span role="img" aria-label="loading" class="anticon anticon-loading anticon-spin ant-spin-dot"
           style="font-size: 24px;">
@@ -50,6 +68,10 @@
         </span>
       </div>
       <div id="text" class="text"></div>
+      <div class="powered-by">
+        <div class="powered-by-text">Powered by</div>
+        <img src="../assets/icons/olas-logo.png" alt="OLAS logo" class="powered-by-logo" />
+      </div>
     </main>
   </body>
 
