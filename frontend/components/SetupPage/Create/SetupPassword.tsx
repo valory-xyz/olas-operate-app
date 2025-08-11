@@ -1,7 +1,8 @@
-import { Button, Checkbox, Form, Input, Typography } from 'antd';
+import { Button, Flex, Form, Input, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import zxcvbn from 'zxcvbn';
 
+import { AgentHeaderV1 } from '@/components/ui/AgentHeaderV1';
 import { COLOR } from '@/constants/colors';
 import { useMessageApi } from '@/context/MessageProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -12,7 +13,6 @@ import { WalletService } from '@/service/Wallet';
 import { getErrorMessage } from '@/utils/error';
 
 import { CardFlex } from '../../styled/CardFlex';
-import { SetupCreateHeader } from './SetupCreateHeader';
 
 const { Title, Text } = Typography;
 
@@ -47,9 +47,8 @@ export const SetupPassword = () => {
   const [form] = Form.useForm<{ password: string; terms: boolean }>();
   const message = useMessageApi();
   const [isLoading, setIsLoading] = useState(false);
-  const isTermsAccepted = Form.useWatch('terms', form);
   const password = Form.useWatch('password', form);
-  const [isPasswordValid, setIsPasswordValid] = useState(true);
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
 
   useEffect(() => {
     if (password !== undefined) {
@@ -63,7 +62,7 @@ export const SetupPassword = () => {
   }, [password, form]);
 
   const handleCreateEoa = async ({ password }: { password: string }) => {
-    if (!isTermsAccepted || !isPasswordValid || password.length < 8) return;
+    if (!isPasswordValid || password.length < 8) return;
 
     setIsLoading(true);
     AccountService.createAccount(password)
@@ -82,25 +81,27 @@ export const SetupPassword = () => {
 
   return (
     <CardFlex $gap={10} styles={{ body: { padding: '12px 24px' } }} $noBorder>
-      <SetupCreateHeader prev={SetupScreen.Welcome} />
-      <div>
-        <Title level={3}>Create account</Title>
+      <AgentHeaderV1 onPrev={() => goto(SetupScreen.Welcome)} />
+      <Flex vertical gap={12} style={{ marginBottom: 24 }}>
+        <Title level={3} className="m-0">
+          Set Password
+        </Title>
         <Text style={{ color: COLOR.GRAY_2 }}>
-          Your password must be at least 8 characters long. For a strong
-          password, use a mix of letters, numbers, and symbols.
+          Your password must be at least 8 characters long. Use a mix of
+          letters, numbers, and symbols.
         </Text>
-      </div>
+      </Flex>
 
       <Form
         name="createEoa"
         form={form}
-        layout="horizontal"
+        layout="vertical"
         onFinish={handleCreateEoa}
         requiredMark={false}
       >
         <Form.Item
           name="password"
-          label="Password"
+          label="Enter password"
           help={
             password && password.length > 0 && isPasswordValid ? (
               <PasswordStrength score={zxcvbn(password).score} />
@@ -125,28 +126,14 @@ export const SetupPassword = () => {
           <Input.Password size="large" placeholder="Password" maxLength={64} />
         </Form.Item>
 
-        <Form.Item name="terms" valuePropName="checked">
-          <Checkbox>
-            I agree to the Pearl’s{' '}
-            <a
-              href="https://olas.network/pearl-terms"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Terms & Conditions
-            </a>
-          </Checkbox>
-        </Form.Item>
-
         <Form.Item style={{ marginBottom: 0 }}>
           <Button
             size="large"
             type="primary"
             htmlType="submit"
-            disabled={
-              !isTermsAccepted || !isPasswordValid || password.length < 8
-            }
+            disabled={!isPasswordValid || password?.length < 8}
             loading={isLoading}
+            className="mt-24"
             style={{ width: '100%' }}
           >
             Continue
