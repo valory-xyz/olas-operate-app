@@ -194,6 +194,7 @@ const SetupWelcomeLogin = () => {
           name="password"
           label={<FormLabel>Enter password</FormLabel>}
           rules={[{ required: true, message: 'Please input your Password.' }]}
+          required={false}
           labelCol={{ style: { paddingBottom: 4 } }}
         >
           <Input.Password size="large" />

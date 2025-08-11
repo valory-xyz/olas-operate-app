@@ -64,7 +64,6 @@ export const SetupBackupSigner = () => {
           <Form.Item
             name="backupSigner"
             label={<FormLabel>Enter Backup Wallet Address</FormLabel>}
-            required={false}
             rules={[
               {
                 required: true,
@@ -74,6 +73,7 @@ export const SetupBackupSigner = () => {
                 message: invalidAddressMessage,
               },
             ]}
+            required={false}
             labelCol={{ style: { paddingBottom: 4 } }}
           >
             <Input size="large" placeholder="0x..." />

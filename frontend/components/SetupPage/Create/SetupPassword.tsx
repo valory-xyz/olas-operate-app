@@ -127,6 +127,7 @@ export const SetupPassword = () => {
               },
             },
           ]}
+          required={false}
           labelCol={{ style: { paddingBottom: 4 } }}
         >
           <Input.Password size="large" maxLength={64} />
