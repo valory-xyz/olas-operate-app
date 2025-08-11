@@ -1,5 +1,6 @@
 import { CheckCircleOutlined } from '@ant-design/icons';
-import { Button, Flex, Typography } from 'antd';
+import { Button, Checkbox, Flex, Typography } from 'antd';
+import { useState } from 'react';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
@@ -41,7 +42,7 @@ const OwnYourAgents = () => {
       {ownYourAgentsList.map((item, index) => (
         <Flex key={index} align="stretch" justify="start">
           <CheckedCircle />
-          <Text>{item}</Text>
+          <Text className="text-light">{item}</Text>
         </Flex>
       ))}
     </OwnYourAgentCard>
@@ -50,25 +51,35 @@ const OwnYourAgents = () => {
 
 export const SetupWelcomeCreate = () => {
   const { goto } = useSetup();
+  const [isFormValid, setIsFormValid] = useState(false);
 
   return (
-    <Flex vertical gap={24}>
+    <Flex vertical gap={24} style={{ marginTop: 24 }}>
       <Title level={4} className="text-center">
         Hi, let&apos;s create your Pearl account
       </Title>
       <OwnYourAgents />
+
+      <Checkbox onChange={(e) => setIsFormValid(e.target.checked)}>
+        I agree to the Pearl&nbsp;
+        <a
+          href="https://olas.network/pearl-terms"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Terms & Conditions
+        </a>
+      </Checkbox>
 
       <Flex vertical gap={16}>
         <Button
           color="primary"
           type="primary"
           size="large"
+          disabled={!isFormValid}
           onClick={() => goto(SetupScreen.SetupPassword)}
         >
           Create account
-        </Button>
-        <Button size="large" disabled>
-          Restore access
         </Button>
       </Flex>
     </Flex>
