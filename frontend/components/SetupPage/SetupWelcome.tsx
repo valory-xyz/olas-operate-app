@@ -20,8 +20,7 @@ import { getErrorMessage } from '@/utils/error';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { FormFlex } from '../styled/FormFlex';
-
-const { Title } = Typography;
+import { SetupWelcomeCreate } from './SetupWelcomeCreate';
 
 enum MiddlewareAccountIsSetup {
   True,
@@ -46,26 +45,6 @@ const SetupError = () => (
     </Typography.Text>
   </Flex>
 );
-
-const SetupWelcomeCreate = () => {
-  const { goto } = useSetup();
-
-  return (
-    <Flex vertical gap={10}>
-      <Button
-        color="primary"
-        type="primary"
-        size="large"
-        onClick={() => goto(SetupScreen.SetupPassword)}
-      >
-        Create account
-      </Button>
-      <Button size="large" disabled>
-        Restore access
-      </Button>
-    </Flex>
-  );
-};
 
 const SetupWelcomeLogin = () => {
   const [form] = Form.useForm();
@@ -281,10 +260,9 @@ export const SetupWelcome = () => {
         <Image
           src={'/onboarding-robot.svg'}
           alt="Onboarding Robot"
-          width={80}
-          height={80}
+          width={64}
+          height={64}
         />
-        <Title>Pearl</Title>
       </Flex>
       {welcomeScreen}
     </Card>

@@ -18,4 +18,7 @@ export const COLOR = {
   GRAY_2: '#4D596A',
   SUCCESS: '#52C41A',
   WARNING: '#FA8C16',
+
+  // v1 colors
+  SUCCESS_V1: '#28B858',
 };
