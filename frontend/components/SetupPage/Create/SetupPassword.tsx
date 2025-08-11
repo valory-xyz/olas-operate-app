@@ -32,6 +32,18 @@ const colors = [
   COLOR.PURPLE,
 ];
 
+const SetupPasswordTitle = () => (
+  <Flex vertical gap={12} style={{ marginBottom: 24 }}>
+    <Title level={3} className="m-0">
+      Set Password
+    </Title>
+    <Text type="secondary">
+      Your password must be at least 8 characters long. Use a mix of letters,
+      numbers, and symbols.
+    </Text>
+  </Flex>
+);
+
 export const PasswordStrength = ({ score }: { score: number }) => {
   return (
     <Text style={{ color: COLOR.GRAY_2 }}>
@@ -82,15 +94,7 @@ export const SetupPassword = () => {
   return (
     <CardFlex $gap={10} styles={{ body: { padding: '12px 24px' } }} $noBorder>
       <AgentHeaderV1 onPrev={() => goto(SetupScreen.Welcome)} />
-      <Flex vertical gap={12} style={{ marginBottom: 24 }}>
-        <Title level={3} className="m-0">
-          Set Password
-        </Title>
-        <Text style={{ color: COLOR.GRAY_2 }}>
-          Your password must be at least 8 characters long. Use a mix of
-          letters, numbers, and symbols.
-        </Text>
-      </Flex>
+      <SetupPasswordTitle />
 
       <Form
         name="createEoa"
@@ -123,7 +127,7 @@ export const SetupPassword = () => {
             },
           ]}
         >
-          <Input.Password size="large" placeholder="Password" maxLength={64} />
+          <Input.Password size="large" maxLength={64} />
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 0 }}>

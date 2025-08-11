@@ -3,15 +3,26 @@ import { getAddress } from 'ethers/lib/utils';
 
 import { CardFlex } from '@/components/styled/CardFlex';
 import { FormFlex } from '@/components/styled/FormFlex';
+import { AgentHeaderV1 } from '@/components/ui/AgentHeaderV1';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { Address } from '@/types/Address';
 
-import { SetupCreateHeader } from './SetupCreateHeader';
-
 const { Title, Text } = Typography;
 
 const invalidAddressMessage = 'Please input a valid backup wallet address!';
+
+const SetupBackupTitle = () => (
+  <Flex vertical gap={12} style={{ margin: '16px 0 32px 0' }}>
+    <Title level={3} className="m-0">
+      Set Up Backup Wallet
+    </Title>
+    <Text type="secondary">
+      To help keep your funds safe, set up a backup wallet. Alternatively, you
+      can add your existing crypto wallet as a backup if you have one.
+    </Text>
+  </Flex>
+);
 
 export const SetupBackupSigner = () => {
   const { goto } = useSetup();
@@ -38,19 +49,14 @@ export const SetupBackupSigner = () => {
 
   return (
     <CardFlex noBorder>
-      <SetupCreateHeader prev={SetupScreen.SetupSeedPhrase} />
-      <Title level={3}>Set backup wallet</Title>
-      <Flex vertical gap={10}>
-        <Text>
-          To help keep your funds safe, we encourage you to add one of your
-          existing crypto wallets as a backup. You may recover your funds to
-          your backup wallet if you lose both your password and seed phrase.
-        </Text>
+      <AgentHeaderV1 onPrev={() => goto(SetupScreen.SetupSeedPhrase)} />
+      <SetupBackupTitle />
 
+      <Flex vertical gap={10}>
         <FormFlex layout="vertical" form={form} onFinish={handleFinish}>
           <Form.Item
             name="backup-signer"
-            label="Backup wallet address"
+            label="Enter Backup Wallet Address"
             rules={[
               {
                 required: true,
@@ -61,10 +67,10 @@ export const SetupBackupSigner = () => {
               },
             ]}
           >
-            <Input size="large" placeholder="e.g. 0x12345...54321" />
+            <Input size="large" placeholder="0x..." />
           </Form.Item>
           <Button type="primary" size="large" htmlType="submit">
-            Add backup wallet and continue
+            Continue
           </Button>
         </FormFlex>
 

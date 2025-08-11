@@ -30,6 +30,16 @@ enum MiddlewareAccountIsSetup {
   Loading,
   Error,
 }
+
+const WelcomeBack = () => (
+  <Flex vertical align="center" gap={12} style={{ margin: '24px 0 40px 0' }}>
+    <Title level={3} className="m-0">
+      Welcome Back to Pearl
+    </Title>
+    <Text type="secondary">Sign in to your account to proceed.</Text>
+  </Flex>
+);
+
 const SetupLoader = () => (
   <Flex
     justify="center"
@@ -176,17 +186,7 @@ const SetupWelcomeLogin = () => {
 
   return (
     <Flex vertical>
-      <Flex
-        vertical
-        align="center"
-        gap={12}
-        style={{ margin: '24px 0 40px 0' }}
-      >
-        <Title level={3} className="m-0">
-          Welcome Back to Pearl
-        </Title>
-        <Text type="secondary">Sign in to your account to proceed.</Text>
-      </Flex>
+      <WelcomeBack />
 
       <FormFlex form={form} onFinish={handleLogin} layout="vertical">
         <Form.Item

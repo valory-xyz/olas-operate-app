@@ -33,21 +33,19 @@ const ownYourAgentsList = [
   'You take responsibility, these are your agents and you take care of them.',
 ];
 
-const OwnYourAgents = () => {
-  return (
-    <OwnYourAgentCard vertical gap={16}>
-      <Title level={4} className="text-center">
-        Own your AI agents
-      </Title>
-      {ownYourAgentsList.map((item, index) => (
-        <Flex key={index} align="stretch" justify="start">
-          <CheckedCircle />
-          <Text className="text-light">{item}</Text>
-        </Flex>
-      ))}
-    </OwnYourAgentCard>
-  );
-};
+const OwnYourAgents = () => (
+  <OwnYourAgentCard vertical gap={16}>
+    <Title level={4} className="text-center">
+      Own your AI agents
+    </Title>
+    {ownYourAgentsList.map((item, index) => (
+      <Flex key={index} align="stretch" justify="start">
+        <CheckedCircle />
+        <Text className="text-light">{item}</Text>
+      </Flex>
+    ))}
+  </OwnYourAgentCard>
+);
 
 export const SetupWelcomeCreate = () => {
   const { goto } = useSetup();

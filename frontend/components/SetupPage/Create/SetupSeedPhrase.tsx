@@ -50,7 +50,7 @@ export const SetupSeedPhrase = () => {
           </Text>
         </Flex>
       ),
-      okText: 'Confirm & continue',
+      okText: 'Confirm and Continue',
       cancelText: 'Cancel',
       onOk: () => goto(SetupScreen.SetupBackupSigner),
       icon: null,
