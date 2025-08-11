@@ -2,6 +2,8 @@ import { Safe } from '@/enums/Wallet';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { Maybe } from '@/types/Util';
 
+import { SupportedMiddlewareChain } from './chains';
+
 export const REACT_QUERY_KEYS = {
   // services
   SERVICES_KEY: ['services'] as const,
@@ -91,6 +93,8 @@ export const REACT_QUERY_KEYS = {
   BRIDGE_EXECUTE_KEY: (quoteId: string) => ['bridgeExecute', quoteId] as const,
 
   // on ramp
-  ON_RAMP_QUOTE_KEY: (chain: string, amount: number | string) =>
-    ['onRampQuote', chain, amount] as const,
+  ON_RAMP_QUOTE_KEY: (
+    chain: SupportedMiddlewareChain,
+    amount: number | string,
+  ) => ['onRampQuote', chain, amount] as const,
 } as const;

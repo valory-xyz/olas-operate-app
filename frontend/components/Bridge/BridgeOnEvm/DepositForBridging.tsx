@@ -334,8 +334,7 @@ export const DepositForBridging = ({
     setIsManuallyRefetching(true);
     setCanPollForBridgeRefillRequirements(false);
 
-    // slight delay before refetching.
-    await delayInSeconds(1);
+    await delayInSeconds(1); // slight delay before refetching.
 
     refetchBridgeRefillRequirements()
       .then(() => {
