@@ -142,8 +142,10 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const nativeTokenAmount = `for ${ethAmountToPay} ETH`;
 
   // Update the USD amount to pay only if the on-ramping step is not completed.
+  // Or if the transaction is successful but funds are not received.
   useEffect(() => {
     if (isOnRampingStepCompleted) return;
+    if (isTransactionSuccessfulButFundsNotReceived) return;
 
     if (isReceivingAmountLoading || hasNativeTokenError) {
       updateUsdAmountToPay(null);
@@ -151,6 +153,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
       updateUsdAmountToPay(fiatAmount);
     }
   }, [
+    isTransactionSuccessfulButFundsNotReceived,
     isOnRampingStepCompleted,
     isReceivingAmountLoading,
     hasNativeTokenError,
