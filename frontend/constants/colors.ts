@@ -14,12 +14,8 @@ export const COLOR = {
   TEXT: '#1f2229',
   TEXT_LIGHT: '#606F85',
   NEUTRAL_4: '#A3AEBB',
-  GRAY_1: '#f2f4f9',
+  GRAY_1: '#EDF2F7',
   GRAY_2: '#4D596A',
-  SUCCESS: '#52C41A',
+  SUCCESS: '#28B858',
   WARNING: '#FA8C16',
-
-  // v1 colors
-  V1_SUCCESS: '#28B858',
-  V1_GRAY_1: '#EDF2F7',
 };

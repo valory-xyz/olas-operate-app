@@ -2,7 +2,7 @@ import { Button, Flex, Form, Input, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import zxcvbn from 'zxcvbn';
 
-import { AgentHeaderV1 } from '@/components/ui/AgentHeaderV1';
+import { BackButton } from '@/components/ui/BackButton';
 import { FormLabel } from '@/components/ui/Typography';
 import { COLOR } from '@/constants/colors';
 import { useMessageApi } from '@/context/MessageProvider';
@@ -94,7 +94,7 @@ export const SetupPassword = () => {
 
   return (
     <CardFlex $gap={10} styles={{ body: { padding: '12px 24px' } }} $noBorder>
-      <AgentHeaderV1 onPrev={() => goto(SetupScreen.Welcome)} />
+      <BackButton onPrev={() => goto(SetupScreen.Welcome)} />
       <SetupPasswordTitle />
 
       <Form

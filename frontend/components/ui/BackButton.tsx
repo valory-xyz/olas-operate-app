@@ -8,7 +8,7 @@ type AgentHeaderV1Props = {
 /**
  * Displays a header for the agent which includes a back button.
  */
-export const AgentHeaderV1 = ({ onPrev }: AgentHeaderV1Props) => (
+export const BackButton = ({ onPrev }: AgentHeaderV1Props) => (
   <Flex>
     {onPrev && (
       <Button

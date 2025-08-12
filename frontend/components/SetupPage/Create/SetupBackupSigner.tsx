@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 import { CardFlex } from '@/components/styled/CardFlex';
 import { FormFlex } from '@/components/styled/FormFlex';
-import { AgentHeaderV1 } from '@/components/ui/AgentHeaderV1';
+import { BackButton } from '@/components/ui/BackButton';
 import { FormLabel } from '@/components/ui/Typography';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
@@ -56,7 +56,7 @@ export const SetupBackupSigner = () => {
 
   return (
     <CardFlex noBorder>
-      <AgentHeaderV1 onPrev={() => goto(SetupScreen.SetupSeedPhrase)} />
+      <BackButton onPrev={() => goto(SetupScreen.SetupSeedPhrase)} />
       <SetupBackupTitle />
 
       <Flex vertical gap={10}>

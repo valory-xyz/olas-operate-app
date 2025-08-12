@@ -11,7 +11,7 @@ import { useCallback, useState } from 'react';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
-import { MODAL_WIDTH_V1 } from '@/constants/width';
+import { MODAL_WIDTH } from '@/constants/width';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { copyToClipboard } from '@/utils/copyToClipboard';
@@ -19,7 +19,7 @@ import { copyToClipboard } from '@/utils/copyToClipboard';
 const { Text, Title } = Typography;
 
 const Tag = styled(AntDTag)`
-  background-color: ${COLOR.V1_GRAY_1};
+  background-color: ${COLOR.GRAY_1};
   text-align: center;
 `;
 
@@ -55,7 +55,7 @@ export const SetupSeedPhrase = () => {
       onOk: () => goto(SetupScreen.SetupBackupSigner),
       icon: null,
       centered: true,
-      width: MODAL_WIDTH_V1,
+      width: MODAL_WIDTH,
     });
   }, [goto, modal]);
 
