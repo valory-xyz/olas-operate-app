@@ -108,6 +108,9 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     if (masterEoaBalance >= ethAmountToPay * ETH_RECEIVED_THRESHOLD) {
       updateIsBuyCryptoBtnLoading(false);
       setHasFundsReceivedAfterOnRamp(true);
+
+      // If not closed already, hide the on-ramp window after receiving funds
+      onRampWindow?.hide?.();
     }
   }, [
     isOnRampingTransactionSuccessful,
@@ -115,6 +118,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     masterEoaBalance,
     ethAmountToPay,
     updateIsBuyCryptoBtnLoading,
+    onRampWindow,
   ]);
 
   // Function to set the ETH amount to pay for on-ramping
