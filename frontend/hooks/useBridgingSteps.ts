@@ -15,12 +15,10 @@ import { Nullable } from '@/types/Util';
 
 const isBridgingFailedFn = (
   requests: BridgeStatusResponse['bridge_request_status'] = [],
-) => {
-  if (!requests) return false;
-  return requests.some((step) =>
-    ['EXECUTION_FAILED', 'EXECUTION_UNKNOWN'].some((s) => s === step.status),
-  );
-};
+) =>
+  requests
+    ? requests.some((step) => step.status === 'EXECUTION_FAILED')
+    : false;
 
 const isBridgingCompletedFn = (
   requests: BridgeStatusResponse['bridge_request_status'] = [],
