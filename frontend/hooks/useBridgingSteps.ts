@@ -18,7 +18,7 @@ const isBridgingFailedFn = (
 ) => {
   if (!requests) return false;
   return requests.some((step) =>
-    ['EXECUTION_FAILED', 'EXECUTION_PENDING'].some((s) => s === step.status),
+    ['EXECUTION_FAILED', 'EXECUTION_UNKNOWN'].some((s) => s === step.status),
   );
 };
 
