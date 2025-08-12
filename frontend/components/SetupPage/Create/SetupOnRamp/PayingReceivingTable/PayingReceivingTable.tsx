@@ -7,6 +7,7 @@ import {
   type TableProps,
   Typography,
 } from 'antd';
+import { cloneDeep } from 'lodash';
 import Image from 'next/image';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 
@@ -105,6 +106,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const { selectedAgentConfig } = useServices();
   const {
     isOnRampingStepCompleted,
+    isTransactionSuccessfulButFundsNotReceived,
     usdAmountToPay,
     ethAmountToPay,
     updateUsdAmountToPay,
@@ -126,17 +128,24 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const [tokensRequired, setTokensRequired] = useState<ReceivingTokens>();
   useEffect(() => {
     if (!receivingTokens) return;
+    if (isTransactionSuccessfulButFundsNotReceived) return;
     if (isOnRampingStepCompleted) return;
-    setTokensRequired(receivingTokens);
-  }, [isOnRampingStepCompleted, receivingTokens]);
+    setTokensRequired(cloneDeep(receivingTokens));
+  }, [
+    isOnRampingStepCompleted,
+    isTransactionSuccessfulButFundsNotReceived,
+    receivingTokens,
+  ]);
 
   const isReceivingAmountLoading = isFiatLoading || isNativeTokenLoading;
   const receivingAmount = usdAmountToPay ? `~${usdAmountToPay} USD` : NA;
   const nativeTokenAmount = `for ${ethAmountToPay} ETH`;
 
   // Update the USD amount to pay only if the on-ramping step is not completed.
+  // Or if the transaction is successful but funds are not received.
   useEffect(() => {
     if (isOnRampingStepCompleted) return;
+    if (isTransactionSuccessfulButFundsNotReceived) return;
 
     if (isReceivingAmountLoading || hasNativeTokenError) {
       updateUsdAmountToPay(null);
@@ -144,6 +153,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
       updateUsdAmountToPay(fiatAmount);
     }
   }, [
+    isTransactionSuccessfulButFundsNotReceived,
     isOnRampingStepCompleted,
     isReceivingAmountLoading,
     hasNativeTokenError,
