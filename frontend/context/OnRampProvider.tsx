@@ -8,8 +8,10 @@ import {
 } from 'react';
 
 import { EvmChainId, onRampChainMap } from '@/constants/chains';
+import { Pages } from '@/enums/Pages';
 import { useMasterBalances } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 import { delayInSeconds } from '@/utils/delay';
@@ -66,6 +68,7 @@ export const OnRampContext = createContext<{
 
 export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { ipcRenderer, onRampWindow } = useElectronApi();
+  const { pageState } = usePageState();
   const { selectedAgentConfig } = useServices();
   const { masterEoaBalance } = useMasterBalances();
 
@@ -195,6 +198,14 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsOnRampingTransactionSuccessful(false);
     setHasFundsReceivedAfterOnRamp(false);
   }, []);
+
+  // Reset the on-ramp state when navigating to the main page
+  useEffect(() => {
+    if (pageState === Pages.Main) {
+      const timer = setTimeout(() => resetOnRampState(), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [pageState, resetOnRampState]);
 
   return (
     <OnRampContext.Provider

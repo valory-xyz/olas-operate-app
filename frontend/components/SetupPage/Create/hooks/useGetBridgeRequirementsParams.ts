@@ -61,24 +61,20 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
       // refill_requirements_masterEOA
       const masterEoaRequirementAmount = (
         refillRequirements as AddressBalanceRecord
-      )[masterEoa.address][AddressZero];
+      )[masterEoa.address]?.[AddressZero];
 
       // refill_requirements_masterSafe
       const safeRequirementAmount = (
         refillRequirements as MasterSafeBalanceRecord
-      )['master_safe'][AddressZero];
+      )['master_safe']?.[AddressZero];
+
+      if (!safeRequirementAmount) return;
 
       // monthly_gas_estimate
       const monthlyGasEstimate =
         SERVICE_TEMPLATES.find(
           (template) => template.home_chain === toMiddlewareChain,
         )?.configurations[toMiddlewareChain]?.monthly_gas_estimate ?? 0;
-
-      window.console.log({
-        masterEoaRequirementAmount,
-        safeRequirementAmount,
-        monthlyGasEstimate,
-      });
 
       // amount = max(refill_requirement_masterSafe, monthly_gas_estimate) + refill_requirements_masterEOA
       const amount =
