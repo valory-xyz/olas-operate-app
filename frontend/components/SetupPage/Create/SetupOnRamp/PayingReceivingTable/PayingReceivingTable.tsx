@@ -7,6 +7,7 @@ import {
   type TableProps,
   Typography,
 } from 'antd';
+import { cloneDeep } from 'lodash';
 import Image from 'next/image';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 
@@ -105,6 +106,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const { selectedAgentConfig } = useServices();
   const {
     isOnRampingStepCompleted,
+    isTransactionSuccessfulButFundsNotReceived,
     usdAmountToPay,
     ethAmountToPay,
     updateUsdAmountToPay,
@@ -126,9 +128,14 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const [tokensRequired, setTokensRequired] = useState<ReceivingTokens>();
   useEffect(() => {
     if (!receivingTokens) return;
+    if (isTransactionSuccessfulButFundsNotReceived) return;
     if (isOnRampingStepCompleted) return;
-    setTokensRequired(receivingTokens);
-  }, [isOnRampingStepCompleted, receivingTokens]);
+    setTokensRequired(cloneDeep(receivingTokens));
+  }, [
+    isOnRampingStepCompleted,
+    isTransactionSuccessfulButFundsNotReceived,
+    receivingTokens,
+  ]);
 
   const isReceivingAmountLoading = isFiatLoading || isNativeTokenLoading;
   const receivingAmount = usdAmountToPay ? `~${usdAmountToPay} USD` : NA;
