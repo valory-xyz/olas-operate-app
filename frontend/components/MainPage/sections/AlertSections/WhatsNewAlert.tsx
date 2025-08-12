@@ -6,7 +6,6 @@ import { CustomAlert } from '@/components/Alert';
 import { ArrowUpRightSvg } from '@/components/custom-icons/ArrowUpRight';
 import { useElectronApi } from '@/hooks/useElectronApi';
 
-const ALERT_STORAGE_KEY = 'lastSeenAppVersion';
 const { Text } = Typography;
 const { useToken } = theme;
 
@@ -26,7 +25,7 @@ export const WhatsNewAlert = () => {
       setCurrentVersion(version);
 
       if (store?.get) {
-        const lastSeenVersion = await store.get(ALERT_STORAGE_KEY);
+        const lastSeenVersion = await store?.get('knownVersion');
 
         if (!lastSeenVersion || semver.gt(version, lastSeenVersion as string)) {
           setShouldShowAlert(true);
@@ -39,7 +38,7 @@ export const WhatsNewAlert = () => {
 
   const handleClose = () => {
     if (currentVersion && store?.set) {
-      store.set(ALERT_STORAGE_KEY, currentVersion);
+      store.set('knownVersion', currentVersion);
     }
     setShouldShowAlert(false);
   };
