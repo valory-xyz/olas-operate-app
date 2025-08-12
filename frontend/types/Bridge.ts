@@ -1,5 +1,4 @@
-import { AddressBalanceRecord } from '@/client';
-import { MiddlewareChain } from '@/constants/chains';
+import { AddressBalanceRecord, MiddlewareChain } from '@/client';
 import { TokenSymbol } from '@/constants/token';
 
 import { Address } from './Address';
