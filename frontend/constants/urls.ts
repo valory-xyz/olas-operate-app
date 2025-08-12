@@ -52,6 +52,8 @@ export const COMMUNITY_ASSISTANCE_URL: Url =
 // github
 export const GITHUB_API_LATEST_RELEASE: Url =
   'https://api.github.com/repos/valory-xyz/olas-operate-app/releases/latest';
+export const GITHUB_API_RELEASES: Url =
+  'https://github.com/valory-xyz/olas-operate-app/releases';
 
 // explorers @note DO NOT END WITH `/`
 const GNOSIS_EXPLORER_URL: Url = 'https://gnosisscan.io';

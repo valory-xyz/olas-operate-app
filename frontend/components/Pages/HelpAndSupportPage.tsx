@@ -6,6 +6,7 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import {
   FAQ_URL,
   GITHUB_API_LATEST_RELEASE,
+  GITHUB_API_RELEASES,
   SUPPORT_URL,
   TERMS_AND_CONDITIONS_URL,
 } from '@/constants/urls';
@@ -35,7 +36,7 @@ export const HelpAndSupport = () => {
   const [latestTag, setLatestTag] = useState<string | null>(null);
 
   useEffect(() => {
-    const GetTag = async () => {
+    const getTag = async () => {
       const response = await fetch(GITHUB_API_LATEST_RELEASE);
       if (!response.ok) return null;
 
@@ -43,7 +44,7 @@ export const HelpAndSupport = () => {
       return data.tag_name;
     };
 
-    GetTag().then((tag) => {
+    getTag().then((tag) => {
       setLatestTag(tag);
     });
   }, []);
@@ -62,14 +63,16 @@ export const HelpAndSupport = () => {
         <a target="_blank" href={FAQ_URL} className="mb-8">
           Read FAQ {UNICODE_SYMBOLS.EXTERNAL_LINK}
         </a>
-        <a
-          href={`https://github.com/valory-xyz/olas-operate-app/releases/tag/${latestTag}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mb-8"
-        >
-          Release notes {UNICODE_SYMBOLS.EXTERNAL_LINK}
-        </a>
+        {latestTag && (
+          <a
+            href={`${GITHUB_API_RELEASES}/tag/${latestTag}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mb-8"
+          >
+            Release notes {UNICODE_SYMBOLS.EXTERNAL_LINK}
+          </a>
+        )}
         <a target="_blank" href={TERMS_AND_CONDITIONS_URL}>
           Terms and Conditions {UNICODE_SYMBOLS.EXTERNAL_LINK}
         </a>

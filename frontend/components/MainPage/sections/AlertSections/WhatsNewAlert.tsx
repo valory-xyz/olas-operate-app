@@ -1,4 +1,4 @@
-import useToken from 'antd/es/theme/useToken';
+import { theme, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import semver from 'semver';
 
@@ -7,10 +7,12 @@ import { ArrowUpRightSvg } from '@/components/custom-icons/ArrowUpRight';
 import { useElectronApi } from '@/hooks/useElectronApi';
 
 const ALERT_STORAGE_KEY = 'lastSeenAppVersion';
+const { Text } = Typography;
+const { useToken } = theme;
 
 export const WhatsNewAlert = () => {
-  const { getAppVersion } = useElectronApi();
-  const [, token] = useToken();
+  const { getAppVersion, store } = useElectronApi();
+  const { token } = useToken();
   const [shouldShowAlert, setShouldShowAlert] = useState(false);
   const [currentVersion, setCurrentVersion] = useState<string | null>(null);
 
@@ -23,19 +25,21 @@ export const WhatsNewAlert = () => {
 
       setCurrentVersion(version);
 
-      const lastSeenVersion = localStorage.getItem(ALERT_STORAGE_KEY);
+      if (store?.get) {
+        const lastSeenVersion = await store.get(ALERT_STORAGE_KEY);
 
-      if (!lastSeenVersion || semver.gt(version, lastSeenVersion)) {
-        setShouldShowAlert(true);
+        if (!lastSeenVersion || semver.gt(version, lastSeenVersion as string)) {
+          setShouldShowAlert(true);
+        }
       }
     };
 
     checkIfJustUpdated();
-  }, [getAppVersion]);
+  }, [getAppVersion, store]);
 
   const handleClose = () => {
-    if (currentVersion) {
-      localStorage.setItem(ALERT_STORAGE_KEY, currentVersion);
+    if (currentVersion && store?.set) {
+      store.set(ALERT_STORAGE_KEY, currentVersion);
     }
     setShouldShowAlert(false);
   };
@@ -51,7 +55,7 @@ export const WhatsNewAlert = () => {
       onClose={handleClose}
       message={
         <>
-          <span>Read </span>
+          <Text>Read </Text>
           <a
             href={`https://github.com/valory-xyz/olas-operate-app/releases/tag/v${currentVersion}`}
             target="_blank"
@@ -63,7 +67,7 @@ export const WhatsNewAlert = () => {
               style={{ marginBottom: -2 }}
             />
           </a>{' '}
-          <span>and discover specific agent updates in the Agent Profile.</span>
+          <Text>and discover specific agent updates in the Agent Profile.</Text>
         </>
       }
     />
