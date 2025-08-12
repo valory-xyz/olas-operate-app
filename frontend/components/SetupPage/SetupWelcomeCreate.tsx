@@ -29,7 +29,7 @@ const OwnYourAgentCard = styled(Flex)`
 const ownYourAgentsList = [
   'This is open-source software, you can inspect it all.',
   'You are self-custodying your agents, they are yours and yours only.',
-  'You are self-custodying your funds, you&apos;re in control.',
+  "You are self-custodying your funds, you're in control.",
   'You take responsibility, these are your agents and you take care of them.',
 ];
 
