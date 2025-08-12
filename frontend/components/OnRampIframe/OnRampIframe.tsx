@@ -1,15 +1,12 @@
 import { Flex, Spin } from 'antd';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { isDev } from '@/constants/env';
+import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
 import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { delayInSeconds } from '@/utils/delay';
-
-const STAGING_URL = `https://global-stg.transak.com/`;
-const PRODUCTION_URL = `https://global.transak.com/`;
 
 type TransakEvent = {
   event: string;
@@ -72,14 +69,7 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
     if (!masterEoa?.address) return;
     if (!networkName || !cryptoCurrencyCode) return;
 
-    const apiKey = process.env.TRANSAK_API_KEY;
-    if (!apiKey) {
-      console.error('TRANSAK_API_KEY is not set');
-      return;
-    }
-
-    const url = new URL(isDev ? STAGING_URL : PRODUCTION_URL);
-    url.searchParams.set('apiKey', apiKey);
+    const url = new URL(ON_RAMP_GATEWAY_URL);
     url.searchParams.set('productsAvailed', 'BUY');
     url.searchParams.set('paymentMethod', 'credit_debit_card');
     url.searchParams.set('network', networkName);
