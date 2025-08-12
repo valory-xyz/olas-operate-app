@@ -66,6 +66,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
         refillRequirements as MasterSafeBalanceRecord
       )['master_safe']?.[AddressZero];
 
+      if (!masterEoaRequirementAmount) return;
       if (!safeRequirementAmount) return;
 
       // monthly_gas_estimate

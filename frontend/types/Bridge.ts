@@ -1,4 +1,5 @@
-import { AddressBalanceRecord, MiddlewareChain } from '@/client';
+import { AddressBalanceRecord } from '@/client';
+import { MiddlewareChain } from '@/constants/chains';
 import { TokenSymbol } from '@/constants/token';
 
 import { Address } from './Address';
@@ -29,8 +30,7 @@ export type QuoteStatus =
   | 'QUOTE_FAILED'
   | 'EXECUTION_PENDING'
   | 'EXECUTION_DONE'
-  | 'EXECUTION_FAILED'
-  | 'EXECUTION_UNKNOWN';
+  | 'EXECUTION_FAILED';
 
 type BridgeFrom = {
   chain: MiddlewareChain;
