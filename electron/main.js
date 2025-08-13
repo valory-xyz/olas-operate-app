@@ -30,7 +30,7 @@ const AdmZip = require('adm-zip');
 
 const { setupDarwin, setupUbuntu, setupWindows, Env } = require('./install');
 
-const { paths } = require('./constants');
+const { paths, isMac } = require('./constants');
 const { killProcesses } = require('./processes');
 const { isPortAvailable, findAvailablePort } = require('./ports');
 const { PORT_RANGE } = require('./constants');
@@ -558,7 +558,14 @@ const createOnRampWindow = async (amountToPay) => {
     logger.electron('OnRamp URL:', onRampUrl);
 
     // request camera access for KYC
-    await systemPreferences.askForMediaAccess('camera');
+    if (isMac) {
+      try {
+        const granted = await systemPreferences.askForMediaAccess('camera');
+        logger.electron('macOS camera permission granted:', granted);
+      } catch (e) {
+        logger.electron('Error requesting macOS camera permission:', e);
+      }
+    }
 
     onRampWindow.loadURL(onRampUrl).then(() => {
       logger.electron('onRampWindow', onRampWindow.url);
