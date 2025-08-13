@@ -18,6 +18,7 @@ const {
   ipcMain,
   dialog,
   shell,
+  systemPreferences,
 } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
@@ -435,6 +436,12 @@ const createAgentActivityWindow = async () => {
     logger.electron('Agent activity window already exists');
   }
 
+  agentWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // open url in a browser and prevent default
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
   agentWindow.on('close', function (event) {
     event.preventDefault();
     agentWindow?.hide();
@@ -528,11 +535,18 @@ const createOnRampWindow = async (amountToPay) => {
       closable: false,
       width: APP_WIDTH,
       height: 700,
+      media: true,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
         preload: path.join(__dirname, 'preload.js'),
       },
+    });
+
+    onRampWindow.webContents.setWindowOpenHandler(({ url }) => {
+      // open url in a browser and prevent default
+      shell.openExternal(url);
+      return { action: 'deny' };
     });
 
     // query parameters for the on-ramp URL
@@ -542,6 +556,9 @@ const createOnRampWindow = async (amountToPay) => {
     }
     const onRampUrl = `${nextUrl()}/onramp?${onRampQuery.toString()}`;
     logger.electron('OnRamp URL:', onRampUrl);
+
+    // request camera access for KYC
+    await systemPreferences.askForMediaAccess('camera');
 
     onRampWindow.loadURL(onRampUrl).then(() => {
       logger.electron('onRampWindow', onRampWindow.url);
