@@ -11,7 +11,10 @@ import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRef
 import { useBridgeRefillRequirementsOnDemand } from '@/hooks/useBridgeRefillRequirementsOnDemand';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
-import { BridgeStatuses } from '@/types/Bridge';
+import {
+  BridgeRefillRequirementsResponse,
+  BridgeStatuses,
+} from '@/types/Bridge';
 import { delayInSeconds } from '@/utils/delay';
 
 import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
@@ -23,6 +26,8 @@ const { Text } = Typography;
  * Hook to calculate the bridge requirements for the swapping process after on-ramp,
  */
 const useBridgeRequirements = (onRampChainId: EvmChainId) => {
+  const [bridgeFundingRequirements, setBridgeFundingRequirements] =
+    useState<BridgeRefillRequirementsResponse | null>(null);
   const { isOnRampingStepCompleted } = useOnRampContext();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
@@ -58,7 +63,6 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   );
 
   const {
-    data: bridgeFundingRequirements,
     isLoading: isBridgeRefillRequirementsLoading,
     isError: isBridgeRefillRequirementsError,
     refetch: refetchBridgeRefillRequirements,
@@ -69,9 +73,11 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
     if (!isBridgeRefillRequirementsApiLoading) return;
     if (!isOnRampingStepCompleted) return;
 
-    refetchBridgeRefillRequirements().finally(() => {
-      setIsBridgeRefillRequirementsApiLoading(false);
-    });
+    refetchBridgeRefillRequirements()
+      .then(({ data }) => setBridgeFundingRequirements(data ?? null))
+      .finally(() => {
+        setIsBridgeRefillRequirementsApiLoading(false);
+      });
   }, [
     isBridgeRefillRequirementsApiLoading,
     isOnRampingStepCompleted,
@@ -109,7 +115,9 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
     await delayInSeconds(1); // slight delay before refetching.
 
     refetchBridgeRefillRequirements()
-      .then(() => {
+      .then(({ data }) => {
+        setBridgeFundingRequirements(data ?? null);
+
         // force_update: true is used only when the user clicks on "Try again",
         // hence reset it to false after the API call is made.
         setIsForceUpdate(false);

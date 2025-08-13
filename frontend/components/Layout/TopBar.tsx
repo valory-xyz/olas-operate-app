@@ -1,7 +1,7 @@
 import { QuestionCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
 import { useRouter } from 'next/router';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
@@ -57,7 +57,7 @@ const TopBarContainer = styled.div`
 
 export const TopBar = () => {
   const router = useRouter();
-  const { closeApp, minimizeApp } = useElectronApi();
+  const { closeApp, minimizeApp, onRampWindow } = useElectronApi();
   const store = useStore();
   const { isUserLoggedIn, goto, pageState } = usePageState();
 
@@ -70,15 +70,27 @@ export const TopBar = () => {
     return `Pearl (beta) ${envName ? `(${envName})` : ''}`.trim();
   }, [isOnRamp, envName]);
 
+  const handleClose = useCallback(() => {
+    if (isOnRamp) {
+      onRampWindow?.close?.();
+      return;
+    }
+
+    if (!closeApp) return;
+    closeApp();
+  }, [closeApp, isOnRamp, onRampWindow]);
+
   return (
     <TopBarContainer>
-      {!isNotMain && (
-        <TrafficLights>
-          <RedLight onClick={() => closeApp?.()} />
-          <YellowLight onClick={() => minimizeApp?.()} />
+      <TrafficLights>
+        <RedLight onClick={handleClose} />
+        {isNotMain ? (
           <DisabledLight />
-        </TrafficLights>
-      )}
+        ) : (
+          <YellowLight onClick={() => minimizeApp?.()} />
+        )}
+        <DisabledLight />
+      </TrafficLights>
 
       <Text>{name}</Text>
 
