@@ -558,7 +558,29 @@ const createOnRampWindow = async (amountToPay) => {
     logger.electron('OnRamp URL:', onRampUrl);
 
     // request camera access for KYC
-    await systemPreferences.askForMediaAccess('camera');
+    const isMac = process.platform === 'darwin';
+    if (isMac) {
+      try {
+        const granted = await systemPreferences.askForMediaAccess('camera');
+        logger.electron('macOS camera permission granted:', granted);
+      } catch (e) {
+        logger.electron('Error requesting macOS camera permission:', e);
+      }
+    } else {
+      // Windows/Linux: Use browser API after window loads
+      onRampWindow.webContents.once('did-finish-load', () => {
+        onRampWindow.webContents.executeJavaScript(`
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(stream => {
+            console.log('Camera access granted');
+            stream.getTracks().forEach(track => track.stop()); // stop immediately if not using
+          })
+          .catch(err => {
+            console.error('Camera access denied:', err);
+          });
+      `);
+      });
+    }
 
     onRampWindow.loadURL(onRampUrl).then(() => {
       logger.electron('onRampWindow', onRampWindow.url);
