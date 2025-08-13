@@ -5,15 +5,16 @@ import { BridgeService } from '@/service/Bridge';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 
 /**
- * Hook to fetch bridge refill requirements on demand.
+ * Hook to fetch bridge refill requirements on demand, always returning fresh data.
  */
 export const useBridgeRefillRequirementsOnDemand = (
   params: BridgeRefillRequirementsRequest | null,
 ) => {
   return useQuery({
-    queryKey: REACT_QUERY_KEYS.BRIDGE_REFILL_REQUIREMENTS_KEY_ON_DEMAND(
+    queryKey: [
+      REACT_QUERY_KEYS.BRIDGE_REFILL_REQUIREMENTS_KEY_ON_DEMAND,
       params!,
-    ),
+    ],
     queryFn: async ({ signal }) => {
       if (!params) {
         window.console.warn(
@@ -30,5 +31,6 @@ export const useBridgeRefillRequirementsOnDemand = (
     },
     enabled: false,
     retry: false,
+    staleTime: 0,
   });
 };
