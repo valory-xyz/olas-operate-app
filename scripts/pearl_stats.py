@@ -67,7 +67,7 @@ CHAINS = [
     Chain.BASE,
     Chain.GNOSIS,
     Chain.MODE,
-    Chain.OPTIMISTIC,
+    Chain.OPTIMISM,
 ]
 
 SERVICE_NAME_TO_TYPE = {
@@ -96,11 +96,6 @@ def _load_dune_pearl_staked(update: bool = False) -> t.Dict[str, t.List[int]]:
 
         for row in result.result.rows:
             chain = row["chain"]
-
-            # TODO Patch
-            if chain == "optimism":
-                chain = "optimistic"
-
             service_id = int(row["serviceId"])
             dune_db.setdefault(chain, []).append(service_id)
 
@@ -612,20 +607,25 @@ class ServicesDataSummarizer:
         print(self._daa_table(from_date, to_date, "service_type"))
         print_subtitle(f"{title} - DAUs")
         print(self._dau_table(from_date, to_date))
-        print_subtitle(f"{title} - Operators with multiple services")
-        print(self._multi_service_operators_table(from_date, to_date))
+
+        # Not used
+        # print_subtitle(f"{title} - Operators with multiple services")
+        # print(self._multi_service_operators_table(from_date, to_date))
+
         print_subtitle(f"{title} - WoW (per chain)")
         print(self._wow_table(from_date, to_date, periods_before, "chain"))
         print_subtitle(f"{title} - WoW (per service type)")
         print(self._wow_table(from_date, to_date, periods_before, "service_type"))
-        print_subtitle(f"{title} - Dropped services (per chain)")
-        print(self._dropped_services_table(from_date, to_date, periods_before, "chain"))
-        print_subtitle(f"{title} - Dropped services (per service type)")
-        print(
-            self._dropped_services_table(
-                from_date, to_date, periods_before, "service_type"
-            )
-        )
+
+        # Not used
+        # print_subtitle(f"{title} - Dropped services (per chain)")
+        # print(self._dropped_services_table(from_date, to_date, periods_before, "chain"))
+        # print_subtitle(f"{title} - Dropped services (per service type)")
+        # print(
+        #     self._dropped_services_table(
+        #         from_date, to_date, periods_before, "service_type"
+        #     )
+        # )
 
     def _services_creted_table(
         self, from_date: date, to_date: date, group_col: str = "chain"
@@ -962,7 +962,7 @@ def main() -> None:
         rpc = DEFAULT_RPCS[Chain(chain)]
         w3 = Web3(Web3.HTTPProvider(rpc))
 
-        if Chain(chain) == Chain.OPTIMISTIC:
+        if Chain(chain) == Chain.OPTIMISM:
             w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
         W3[Chain(chain)] = w3

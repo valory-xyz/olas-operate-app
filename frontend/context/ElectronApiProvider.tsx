@@ -20,12 +20,20 @@ type ElectronApiContextProps = {
   minimizeApp?: () => void;
   setTrayIcon?: (status: ElectronTrayIconStatus) => void;
   ipcRenderer?: {
-    send?: (channel: string, data: unknown) => void; // send messages to main process
+    /** send messages to main process */
+    send?: (channel: string, data: unknown) => void;
+    /** listen to messages from main process */
     on?: (
       channel: string,
       func: (event: unknown, data: unknown) => void,
-    ) => void; // listen to messages from main process
-    invoke?: (channel: string, data: unknown) => Promise<unknown>; // send message to main process and get Promise response
+    ) => void;
+    /** send message to main process and get Promise response */
+    invoke?: (channel: string, data: unknown) => Promise<unknown>;
+    /** remove listener for messages from main process */
+    removeListener?: (
+      channel: string,
+      func: (event: unknown, data: unknown) => void,
+    ) => void;
   };
   store?: {
     store?: () => Promise<ElectronStore>;
@@ -46,6 +54,13 @@ type ElectronApiContextProps = {
     { response: AgentHealthCheckResponse | null } | { error: string }
   >;
   agentActivityWindow?: Partial<ElectronApiAgentActivityWindow>;
+  onRampWindow?: {
+    show?: (amountToPay: number) => void;
+    hide?: () => void;
+    transactionSuccess?: () => void;
+    transactionFailure?: () => void;
+  };
+  logEvent?: (message: string) => void;
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -58,6 +73,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     send: () => {},
     on: () => {},
     invoke: async () => {},
+    removeListener: () => {},
   },
   store: {
     store: async () => ({}),
@@ -78,6 +94,12 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     close: () => {},
     minimize: () => {},
   },
+  onRampWindow: {
+    show: () => {},
+    hide: () => {},
+    transactionSuccess: () => {},
+  },
+  logEvent: () => {},
 });
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
@@ -106,6 +128,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           send: getElectronApiFunction('ipcRenderer.send'),
           on: getElectronApiFunction('ipcRenderer.on'),
           invoke: getElectronApiFunction('ipcRenderer.invoke'),
+          removeListener: getElectronApiFunction('ipcRenderer.removeListener'),
         },
         store: {
           store: getElectronApiFunction('store.store'),
@@ -127,6 +150,17 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           close: getElectronApiFunction('agentActivityWindow.close'),
           minimize: getElectronApiFunction('agentActivityWindow.minimize'),
         },
+        onRampWindow: {
+          show: getElectronApiFunction('onRampWindow.show'),
+          hide: getElectronApiFunction('onRampWindow.hide'),
+          transactionSuccess: getElectronApiFunction(
+            'onRampWindow.transactionSuccess',
+          ),
+          transactionFailure: getElectronApiFunction(
+            'onRampWindow.transactionFailure',
+          ),
+        },
+        logEvent: getElectronApiFunction('logEvent'),
       }}
     >
       {children}
