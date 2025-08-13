@@ -1121,6 +1121,21 @@ ipcMain.handle('onramp-window-hide', () => {
   });
 });
 
+ipcMain.handle('onramp-window-close', () => {
+  logger.electron('onramp-window-close');
+
+  // already destroyed or not created
+  if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) return;
+
+  getOnRampWindow()?.destroy();
+
+  // Notify all other windows that it has been closed
+  BrowserWindow.getAllWindows().forEach((win) => {
+    logger.electron('onramp-window-did-close to', win.id);
+    win.webContents.send('onramp-window-did-close');
+  });
+});
+
 ipcMain.handle('onramp-transaction-success', () => {
   logger.electron('onramp-transaction-success');
 
