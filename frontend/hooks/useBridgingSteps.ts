@@ -12,6 +12,7 @@ import {
   BridgingStepStatus,
 } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
+import { delayInSeconds } from '@/utils/delay';
 
 const isBridgingFailedFn = (
   requests: BridgeStatusResponse['bridge_request_status'] = [],
@@ -70,6 +71,8 @@ export const useBridgingSteps = (
         return;
       }
 
+      await delayInSeconds(1); // minor delay before executing the bridge.
+
       try {
         return await BridgeService.executeBridge(quoteId, signal);
       } catch (error) {
@@ -119,7 +122,12 @@ export const useBridgingSteps = (
       isBridgingExecuteFailed || isBridgingExecuteCompleted
         ? false
         : FIVE_SECONDS_INTERVAL,
-    enabled: isOnline && !!quoteId && !!bridgeExecuteData,
+    enabled:
+      isOnline &&
+      !!quoteId &&
+      !isBridgeExecuteFetching &&
+      !isBridgeExecuteLoading &&
+      !!bridgeExecuteData,
     refetchOnWindowFocus: false,
   });
 
