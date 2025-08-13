@@ -15,7 +15,7 @@ const Container = styled.div<{ $blur: boolean }>`
   border-radius: 8px;
 
   height: ${APP_HEIGHT}px;
-  width: ${APP_WIDTH}px;
+  /* width: ${APP_WIDTH}px; */
 
   display: flex;
   flex-direction: column;

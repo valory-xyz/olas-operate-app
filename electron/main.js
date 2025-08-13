@@ -275,7 +275,7 @@ async function beforeQuit(event) {
   app.quit();
 }
 
-const APP_WIDTH = 1320;
+const APP_WIDTH = 1320 / 2;
 const APP_HEIGHT = 796;
 
 /**
@@ -305,7 +305,7 @@ const createMainWindow = async () => {
   if (mainWindow) return;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
-    resizable: false,
+    resizable: true,
     draggable: true,
     frame: false,
     transparent: true,

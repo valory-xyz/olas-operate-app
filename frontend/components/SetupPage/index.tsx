@@ -50,6 +50,8 @@ const SetupCard = styled.div`
     0 3px 6px 0 rgba(170, 193, 203, 0.1);
 `;
 
+const screenWithoutCards: SetupScreen[] = [SetupScreen.AgentSelection];
+
 export const Setup = () => {
   const { setupObject } = useContext(SetupContext);
 
@@ -97,6 +99,10 @@ export const Setup = () => {
         return <UnexpectedError />;
     }
   }, [setupObject.state]);
+
+  if (screenWithoutCards.includes(setupObject.state)) {
+    return setupScreen;
+  }
 
   return <SetupCard>{setupScreen}</SetupCard>;
 };
