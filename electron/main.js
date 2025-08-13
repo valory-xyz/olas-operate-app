@@ -558,7 +558,15 @@ const createOnRampWindow = async (amountToPay) => {
     logger.electron('OnRamp URL:', onRampUrl);
 
     // request camera access for KYC
-    await systemPreferences.askForMediaAccess('camera');
+    const isMac = process.platform === 'darwin';
+    if (isMac) {
+      try {
+        const granted = await systemPreferences.askForMediaAccess('camera');
+        logger.electron('macOS camera permission granted:', granted);
+      } catch (e) {
+        logger.electron('Error requesting macOS camera permission:', e);
+      }
+    }
 
     onRampWindow.loadURL(onRampUrl).then(() => {
       logger.electron('onRampWindow', onRampWindow.url);
