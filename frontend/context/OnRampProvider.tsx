@@ -153,7 +153,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     const handleTransactionSuccess = () => {
       setIsOnRampingTransactionSuccessful(true);
-      delayInSeconds(0.5).then(() => onRampWindow?.hide?.());
+      delayInSeconds(0.5).then(() => onRampWindow?.close?.());
     };
 
     ipcRenderer?.on?.('onramp-transaction-success', handleTransactionSuccess);
@@ -170,7 +170,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     const handleTransactionFailure = () => {
       updateIsBuyCryptoBtnLoading(false);
       setIsOnRampingTransactionSuccessful(false);
-      delayInSeconds(0.5).then(() => onRampWindow?.hide?.());
+      delayInSeconds(0.5).then(() => onRampWindow?.close?.());
     };
 
     ipcRenderer?.on?.('onramp-transaction-failure', handleTransactionFailure);
@@ -181,6 +181,17 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
       );
     };
   }, [ipcRenderer, onRampWindow, updateIsBuyCryptoBtnLoading]);
+
+  useEffect(() => {
+    const handleClose = () => {
+      setIsBuyCryptoBtnLoading(false);
+    };
+
+    ipcRenderer?.on?.('onramp-window-did-close', handleClose);
+    return () => {
+      ipcRenderer?.removeListener?.('onramp-window-did-close', handleClose);
+    };
+  }, [ipcRenderer]);
 
   // Get the network id, name, and crypto currency code based on the selected agent's home chain
   // This is used to determine the network and currency to on-ramp to.

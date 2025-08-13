@@ -57,6 +57,7 @@ type ElectronApiContextProps = {
   onRampWindow?: {
     show?: (amountToPay: number) => void;
     hide?: () => void;
+    close?: () => void;
     transactionSuccess?: () => void;
     transactionFailure?: () => void;
   };
@@ -153,6 +154,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         onRampWindow: {
           show: getElectronApiFunction('onRampWindow.show'),
           hide: getElectronApiFunction('onRampWindow.hide'),
+          close: getElectronApiFunction('onRampWindow.close'),
           transactionSuccess: getElectronApiFunction(
             'onRampWindow.transactionSuccess',
           ),
