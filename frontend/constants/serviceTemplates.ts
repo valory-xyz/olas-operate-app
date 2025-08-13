@@ -283,8 +283,8 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version'
 > = {
-  hash: 'bafybeifztelj6c6v4avwjipecfnzohk6d5dscrav2cmvuvllnbsrsdrwbe',
-  service_version: 'v0.3.15',
+  hash: 'bafybeigyks7h2pkugcn6exhyy3gq2iipzoy4ljt67fbw4q2axyc52lv6cq',
+  service_version: 'v0.5.1',
 };
 
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
