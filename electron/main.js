@@ -566,20 +566,6 @@ const createOnRampWindow = async (amountToPay) => {
       } catch (e) {
         logger.electron('Error requesting macOS camera permission:', e);
       }
-    } else {
-      // Windows/Linux: Use browser API after window loads
-      onRampWindow.webContents.once('did-finish-load', () => {
-        onRampWindow.webContents.executeJavaScript(`
-        navigator.mediaDevices.getUserMedia({ video: true })
-          .then(stream => {
-            console.log('Camera access granted');
-            stream.getTracks().forEach(track => track.stop()); // stop immediately if not using
-          })
-          .catch(err => {
-            console.error('Camera access denied:', err);
-          });
-      `);
-      });
     }
 
     onRampWindow.loadURL(onRampUrl).then(() => {
