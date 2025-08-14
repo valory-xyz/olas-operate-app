@@ -1,6 +1,8 @@
-import { Divider, Flex, Typography } from 'antd';
+import { Typography } from 'antd';
 import { useCallback, useMemo } from 'react';
+import styled from 'styled-components';
 
+import { COLOR } from '@/constants/colors';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { usePageState } from '@/hooks/usePageState';
@@ -17,6 +19,19 @@ import {
 import { IntroductionStep, OnboardingStep } from './IntroductionStep';
 
 const { Text } = Typography;
+
+const Container = styled.div`
+  max-width: 460px;
+  background-color: ${COLOR.WHITE}; // TODO: remove
+  margin: 0 auto;
+`;
+
+const Dot = styled.div<{ color?: string }>`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: ${({ color }) => color || COLOR.GRAY_3};
+`;
 
 type IntroductionProps = {
   steps: OnboardingStep[];
@@ -53,23 +68,25 @@ const Introduction = ({
     }
   }, [onboardingStep, goto, updateOnboardingStep]);
 
-  const buttonLabel = useMemo(() => {
-    if (onboardingStep === steps.length - 1) {
-      return isUnderConstruction ? 'Return to agent selection' : 'Set up agent';
-    }
-    return 'Continue';
-  }, [onboardingStep, steps.length, isUnderConstruction]);
-
   return (
-    <IntroductionStep
-      title={steps[onboardingStep].title}
-      desc={steps[onboardingStep].desc}
-      imgSrc={steps[onboardingStep].imgSrc}
-      helper={steps[onboardingStep].helper}
-      btnText={buttonLabel}
-      onPrev={onPreviousStep}
-      onNext={onNextStep}
-    />
+    <>
+      <IntroductionStep
+        title={steps[onboardingStep].title}
+        desc={steps[onboardingStep].desc}
+        imgSrc={steps[onboardingStep].imgSrc}
+        helper={steps[onboardingStep].helper}
+        onPrev={onboardingStep === 0 ? undefined : onPreviousStep}
+        onNext={onboardingStep === steps.length - 1 ? undefined : onNextStep}
+        renderDot={() =>
+          steps.map((_, index) => (
+            <Dot
+              key={index}
+              color={index === onboardingStep ? COLOR.PURPLE : COLOR.GRAY_3}
+            />
+          ))
+        }
+      />
+    </>
   );
 };
 
@@ -112,16 +129,12 @@ export const AgentIntroduction = () => {
   }, [goto, gotoPage, selectedAgentConfig]);
 
   return (
-    <>
-      <Flex align="center" justify="center" style={{ paddingTop: 12 }}>
-        <Text>{selectedAgentConfig.displayName}</Text>
-      </Flex>
-      <Divider style={{ margin: '12px 0 0 0' }} />
+    <Container>
       <Introduction
         steps={introductionSteps}
         onOnboardingComplete={onComplete}
         isUnderConstruction={!!selectedAgentConfig.isUnderConstruction}
       />
-    </>
+    </Container>
   );
 };

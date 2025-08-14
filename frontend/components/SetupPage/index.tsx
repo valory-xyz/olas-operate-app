@@ -50,7 +50,7 @@ const SetupCard = styled.div`
     0 3px 6px 0 rgba(170, 193, 203, 0.1);
 `;
 
-const screenWithoutCards: SetupScreen[] = [SetupScreen.AgentSelection];
+const screenWithoutCards: SetupScreen[] = [SetupScreen.AgentIntroduction];
 
 export const Setup = () => {
   const { setupObject } = useContext(SetupContext);
