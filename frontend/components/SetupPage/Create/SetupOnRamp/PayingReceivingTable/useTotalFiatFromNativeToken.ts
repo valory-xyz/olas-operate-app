@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { onRampChainMap, SupportedMiddlewareChain } from '@/constants/chains';
-import { isDev } from '@/constants/env';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
 import { useServices } from '@/hooks/useServices';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
@@ -33,19 +33,13 @@ type Quote = {
   notes: string[];
 };
 
-const transakPriceUrl = isDev
-  ? 'https://api-stg.transak.com/api/v1/pricing/public/quotes'
-  : 'https://api.transak.com/api/v1/pricing/public/quotes';
+const transakPriceUrl = `${ON_RAMP_GATEWAY_URL}price-quote/`;
 
 const fetchTransakQuote = async (
   network: SupportedMiddlewareChain,
   amount: number | string,
   signal: AbortSignal,
 ): Promise<{ response: Quote }> => {
-  const apiKey = process.env.TRANSAK_API_KEY as string;
-
-  if (!apiKey) throw new Error('TRANSAK_API_KEY is not defined');
-
   const options = {
     method: 'GET',
     headers: { accept: 'application/json' },
@@ -53,7 +47,6 @@ const fetchTransakQuote = async (
   };
 
   const params = new URLSearchParams({
-    partnerApiKey: apiKey,
     fiatCurrency: 'USD',
     cryptoCurrency: 'ETH',
     isBuyOrSell: 'BUY',
@@ -98,7 +91,6 @@ export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
       }
     },
     select: (data) => data.fiatAmount,
-    enabled:
-      !!process.env.TRANSAK_API_KEY && !!networkName && !!nativeTokenAmount,
+    enabled: !!networkName && !!nativeTokenAmount,
   });
 };
