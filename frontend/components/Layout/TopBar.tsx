@@ -1,5 +1,7 @@
 import { QuestionCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
+import { useRouter } from 'next/router';
+import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
@@ -54,21 +56,43 @@ const TopBarContainer = styled.div`
 `;
 
 export const TopBar = () => {
-  const electronApi = useElectronApi();
+  const router = useRouter();
+  const { closeApp, minimizeApp, onRampWindow } = useElectronApi();
   const store = useStore();
   const { isUserLoggedIn, goto, pageState } = usePageState();
 
   const envName = store?.storeState?.environmentName;
+  const isOnRamp = router.pathname === '/onramp';
+  const isNotMain = [isOnRamp].some(Boolean);
+
+  const name = useMemo(() => {
+    if (isOnRamp) return 'Buy Crypto on Transak';
+    return `Pearl (beta) ${envName ? `(${envName})` : ''}`.trim();
+  }, [isOnRamp, envName]);
+
+  const handleClose = useCallback(() => {
+    if (isOnRamp) {
+      onRampWindow?.close?.();
+      return;
+    }
+
+    if (!closeApp) return;
+    closeApp();
+  }, [closeApp, isOnRamp, onRampWindow]);
 
   return (
     <TopBarContainer>
       <TrafficLights>
-        <RedLight onClick={() => electronApi?.closeApp?.()} />
-        <YellowLight onClick={() => electronApi?.minimizeApp?.()} />
+        <RedLight onClick={handleClose} />
+        {isNotMain ? (
+          <DisabledLight />
+        ) : (
+          <YellowLight onClick={() => minimizeApp?.()} />
+        )}
         <DisabledLight />
       </TrafficLights>
 
-      <Text>{`Pearl (beta) ${envName ? `(${envName})` : ''}`.trim()}</Text>
+      <Text>{name}</Text>
 
       {/* for now, showing only on Main page */}
       {isUserLoggedIn && pageState === Pages.Main && (

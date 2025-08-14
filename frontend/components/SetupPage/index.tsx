@@ -11,6 +11,7 @@ import { SetupBackupSigner } from './Create/SetupBackupSigner';
 import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding/SetupBridgeOnboarding';
 import { SetupCreateSafe } from './Create/SetupCreateSafe';
 import { SetupEoaFunding } from './Create/SetupEoaFunding/SetupEoaFunding';
+import { SetupOnRamp } from './Create/SetupOnRamp/SetupOnRamp';
 import { SetupPassword } from './Create/SetupPassword';
 import { SetupSeedPhrase } from './Create/SetupSeedPhrase';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
@@ -66,6 +67,10 @@ export const Setup = () => {
       // Bridge account
       case SetupScreen.SetupBridgeOnboardingScreen:
         return <SetupBridgeOnboarding />;
+
+      // On Ramp
+      case SetupScreen.SetupOnRamp:
+        return <SetupOnRamp />;
 
       // Restore account
       case SetupScreen.Restore:
