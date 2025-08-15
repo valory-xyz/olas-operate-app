@@ -60,6 +60,38 @@ const SelectYourAgent = () => (
   </Flex>
 );
 
+type SelectYourAgentListProps = {
+  onSelectYourAgent: (agentType: AgentType) => void;
+  selectedAgent?: AgentType;
+};
+
+const SelectYourAgentList = ({
+  onSelectYourAgent,
+  selectedAgent,
+}: SelectYourAgentListProps) =>
+  ACTIVE_AGENTS.map(([agentType, agentConfig]) => {
+    return (
+      <AgentSelectionContainer
+        key={agentType}
+        onClick={() => onSelectYourAgent(agentType as AgentType)}
+        gap={12}
+        align="center"
+        active={selectedAgent === agentType}
+      >
+        <Image
+          src={`/agent-${agentType}-icon.png`}
+          width={36}
+          height={36}
+          alt={agentConfig.displayName}
+        />
+
+        <Flex>
+          <Text>{agentConfig.displayName}</Text>
+        </Flex>
+      </AgentSelectionContainer>
+    );
+  });
+
 const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
   trader: PREDICTION_ONBOARDING_STEPS,
   memeooorr: AGENTS_FUND_ONBOARDING_STEPS,
@@ -123,29 +155,10 @@ export const AgentOnboarding = () => {
         style={{ width: 380, borderRight: `1px solid ${COLOR.GRAY_4}` }}
       >
         <SelectYourAgent />
-
-        {ACTIVE_AGENTS.map(([agentType, agentConfig]) => {
-          return (
-            <AgentSelectionContainer
-              key={agentType}
-              onClick={() => handleSelectYourAgent(agentType as AgentType)}
-              gap={12}
-              align="center"
-              active={selectedAgent === agentType}
-            >
-              <Image
-                src={`/agent-${agentType}-icon.png`}
-                width={36}
-                height={36}
-                alt={agentConfig.displayName}
-              />
-
-              <Flex>
-                <Text>{agentConfig.displayName}</Text>
-              </Flex>
-            </AgentSelectionContainer>
-          );
-        })}
+        <SelectYourAgentList
+          onSelectYourAgent={handleSelectYourAgent}
+          selectedAgent={selectedAgent}
+        />
       </Flex>
 
       <Flex style={{ width: 460, minHeight: 600 }}>
