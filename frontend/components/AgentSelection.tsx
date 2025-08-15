@@ -15,6 +15,7 @@ import { useMasterWalletContext } from '@/hooks/useWallet';
 import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 
+import { SetupCreateHeader } from './SetupPage/Create/SetupCreateHeader';
 import { CardFlex } from './styled/CardFlex';
 
 const { Title, Text } = Typography;
@@ -200,25 +201,21 @@ type AgentSelectionProps = {
  */
 export const AgentSelection = ({
   showSelected = true,
+  onPrev,
 }: AgentSelectionProps) => (
-  <Flex
-    align="center"
-    justify="center"
-    style={{ width: 700, margin: '16px auto 0px auto' }}
-  >
-    <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }} noBorder>
-      <Title level={3}>Select your agent</Title>
+  <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }} noBorder>
+    <SetupCreateHeader prev={onPrev} />
+    <Title level={3}>Select your agent</Title>
 
-      {ACTIVE_AGENTS.map(([agentType, agentConfig]) => {
-        return (
-          <EachAgent
-            key={agentType}
-            showSelected={showSelected}
-            agentType={agentType as AgentType}
-            agentConfig={agentConfig}
-          />
-        );
-      })}
-    </CardFlex>
-  </Flex>
+    {ACTIVE_AGENTS.map(([agentType, agentConfig]) => {
+      return (
+        <EachAgent
+          key={agentType}
+          showSelected={showSelected}
+          agentType={agentType as AgentType}
+          agentConfig={agentConfig}
+        />
+      );
+    })}
+  </CardFlex>
 );
