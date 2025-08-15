@@ -5,11 +5,11 @@ import { useEffect, useState } from 'react';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import {
   FAQ_URL,
-  GITHUB_API_LATEST_RELEASE,
   GITHUB_API_RELEASES,
   SUPPORT_URL,
   TERMS_AND_CONDITIONS_URL,
 } from '@/constants/urls';
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 
 import { CardTitle } from '../Card/CardTitle';
@@ -34,20 +34,29 @@ const SettingsTitle = () => (
 export const HelpAndSupport = () => {
   const { isUserLoggedIn } = usePageState();
   const [latestTag, setLatestTag] = useState<string | null>(null);
+  const { getAppVersion } = useElectronApi();
 
   useEffect(() => {
-    const getTag = async () => {
-      const response = await fetch(GITHUB_API_LATEST_RELEASE);
-      if (!response.ok) return null;
+    let isMounted = true;
 
-      const data = await response.json();
-      return data.tag_name;
+    const getTag = async () => {
+      if (typeof getAppVersion !== 'function') return;
+      try {
+        const version = await getAppVersion();
+        if (version && isMounted) {
+          setLatestTag(version);
+        }
+      } catch (error) {
+        console.error('Failed to get app version:', error);
+      }
     };
 
-    getTag().then((tag) => {
-      setLatestTag(tag);
-    });
-  }, []);
+    getTag();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [getAppVersion]);
 
   return (
     <Card
@@ -65,7 +74,7 @@ export const HelpAndSupport = () => {
         </a>
         {latestTag && (
           <a
-            href={`${GITHUB_API_RELEASES}/tag/${latestTag}`}
+            href={`${GITHUB_API_RELEASES}/tag/v${latestTag}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mb-8"
