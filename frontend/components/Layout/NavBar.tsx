@@ -46,6 +46,7 @@ const TopBarContainer = styled.div`
 `;
 
 const PearlHeaderContainer = styled(Flex)`
+  display: none; // TODO: show only for onboarding pages
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
