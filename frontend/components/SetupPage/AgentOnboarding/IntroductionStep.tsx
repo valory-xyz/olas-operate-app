@@ -5,9 +5,7 @@ import Image from 'next/image';
 import { ReactNode } from 'react';
 
 import { UnderConstruction } from '@/components/MainPage/sections/AlertSections/UnderConstruction';
-import { SetupScreen } from '@/enums/SetupScreen';
 import { useServices } from '@/hooks/useServices';
-import { useSetup } from '@/hooks/useSetup';
 
 const { Title, Text } = Typography;
 
@@ -78,6 +76,7 @@ type IntroductionProps = OnboardingStep & {
   onPrev: (() => void) | undefined;
   onNext: (() => void) | undefined;
   renderDot?: () => ReactNode;
+  onAgentSelect: () => void;
 };
 
 /**
@@ -91,9 +90,8 @@ export const IntroductionStep = ({
   onPrev,
   onNext,
   renderDot,
+  onAgentSelect,
 }: IntroductionProps) => {
-  const { goto } = useSetup();
-
   const { selectedAgentConfig } = useServices();
 
   return (
@@ -132,12 +130,7 @@ export const IntroductionStep = ({
               />
             </Flex>
 
-            <Button
-              type="primary"
-              block
-              size="large"
-              onClick={() => goto(SetupScreen.AgentSelection)}
-            >
+            <Button type="primary" block size="large" onClick={onAgentSelect}>
               Select Agent
             </Button>
           </Flex>
