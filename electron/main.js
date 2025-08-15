@@ -275,7 +275,7 @@ async function beforeQuit(event) {
   app.quit();
 }
 
-const APP_WIDTH = 1320 / 2;
+const APP_WIDTH = 1320;
 const APP_HEIGHT = 796;
 
 /**

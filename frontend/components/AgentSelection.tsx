@@ -16,7 +16,6 @@ import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 
 import { CardFlex } from './styled/CardFlex';
-import { PearlMiniHeader } from './ui/PearlMiniHeader';
 
 const { Title, Text } = Typography;
 
@@ -202,28 +201,24 @@ type AgentSelectionProps = {
 export const AgentSelection = ({
   showSelected = true,
 }: AgentSelectionProps) => (
-  <>
-    <PearlMiniHeader />
+  <Flex
+    align="center"
+    justify="center"
+    style={{ width: 700, margin: '16px auto 0px auto' }}
+  >
+    <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }} noBorder>
+      <Title level={3}>Select your agent</Title>
 
-    <Flex
-      align="center"
-      justify="center"
-      style={{ width: 700, margin: '16px auto 0px auto' }}
-    >
-      <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }} noBorder>
-        <Title level={3}>Select your agent</Title>
-
-        {ACTIVE_AGENTS.map(([agentType, agentConfig]) => {
-          return (
-            <EachAgent
-              key={agentType}
-              showSelected={showSelected}
-              agentType={agentType as AgentType}
-              agentConfig={agentConfig}
-            />
-          );
-        })}
-      </CardFlex>
-    </Flex>
-  </>
+      {ACTIVE_AGENTS.map(([agentType, agentConfig]) => {
+        return (
+          <EachAgent
+            key={agentType}
+            showSelected={showSelected}
+            agentType={agentType as AgentType}
+            agentConfig={agentConfig}
+          />
+        );
+      })}
+    </CardFlex>
+  </Flex>
 );

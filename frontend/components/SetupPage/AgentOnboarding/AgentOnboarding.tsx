@@ -1,6 +1,6 @@
 import { Flex, Typography } from 'antd';
 import Image from 'next/image';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import styled from 'styled-components';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
@@ -19,12 +19,12 @@ import {
   OPTIMUS_ONBOARDING_STEPS,
   PREDICTION_ONBOARDING_STEPS,
 } from './constants';
-import { IntroductionStep } from './IntroductionStep';
+import { IntroductionStep, OnboardingStep } from './IntroductionStep';
 
 const { Text, Title } = Typography;
 
 const Container = styled(Flex)`
-  margin: 0 auto;
+  margin: 16px auto 0 auto;
   border-radius: 8px;
   background-color: ${COLOR.WHITE};
 `;
@@ -60,6 +60,14 @@ const SelectYourAgent = () => (
   </Flex>
 );
 
+const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
+  trader: PREDICTION_ONBOARDING_STEPS,
+  memeooorr: AGENTS_FUND_ONBOARDING_STEPS,
+  modius: MODIUS_ONBOARDING_STEPS,
+  optimus: OPTIMUS_ONBOARDING_STEPS,
+  'agents-fun-celo': [], // TODO: remove once agents-fun-celo is removed
+};
+
 /**
  * Display the onboarding of the selected agent.
  */
@@ -70,14 +78,7 @@ export const AgentOnboarding = () => {
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
   const [onboardingStep, setOnboardingStep] = useState(0);
 
-  const steps = useMemo(() => {
-    if (selectedAgent === 'trader') return PREDICTION_ONBOARDING_STEPS;
-    if (selectedAgent === 'memeooorr') return AGENTS_FUND_ONBOARDING_STEPS;
-    if (selectedAgent === 'modius') return MODIUS_ONBOARDING_STEPS;
-    if (selectedAgent === 'optimus') return OPTIMUS_ONBOARDING_STEPS;
-
-    return [];
-  }, [selectedAgent]);
+  const steps = selectedAgent ? onboardingStepsMap[selectedAgent] : [];
 
   const onNextStep = useCallback(() => {
     if (onboardingStep === steps.length - 1) return;
