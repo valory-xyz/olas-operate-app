@@ -135,7 +135,7 @@ const SetupEoaFundingForChain = ({
 }: SetupEoaFundingProps) => {
   return (
     <CardFlex noBorder>
-      <SetupCreateHeader prev={SetupScreen.AgentSelection} />
+      <SetupCreateHeader prev={SetupScreen.AgentOnboarding} />
       <Title level={3}>
         {`Deposit ${minRequiredBalance} ${currency} on ${chainName}`}
       </Title>
@@ -301,7 +301,7 @@ export const SetupEoaFunding = () => {
 
   return (
     <CardFlex $noBorder>
-      <SetupCreateHeader prev={SetupScreen.AgentSelection} />
+      <SetupCreateHeader prev={SetupScreen.AgentOnboarding} />
       <Title level={3} className="mb-8">
         Fund your agent
       </Title>

@@ -14,7 +14,7 @@ export const SetupScreen = {
   RestoreViaSeed: 'RestoreViaSeed',
   RestoreSetPassword: 'RestoreSetPassword',
   RestoreViaBackup: 'RestoreViaBackup',
-  AgentIntroduction: 'AgentIntroduction',
+  AgentOnboarding: 'AgentOnboarding',
   EarlyAccessOnly: 'EarlyAccessOnly',
 
   /** Onboarding using the bridge */

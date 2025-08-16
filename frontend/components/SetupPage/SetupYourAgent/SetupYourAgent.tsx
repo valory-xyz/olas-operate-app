@@ -36,7 +36,7 @@ export const SetupYourAgent = () => {
   return (
     <ConfigProvider theme={LOCAL_FORM_THEME}>
       <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }} noBorder>
-        <SetupCreateHeader prev={SetupScreen.AgentIntroduction} />
+        <SetupCreateHeader prev={SetupScreen.AgentOnboarding} />
         <Title level={3} className="mb-0">
           Set up your agent
         </Title>

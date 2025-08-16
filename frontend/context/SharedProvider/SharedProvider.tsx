@@ -20,10 +20,6 @@ export const SharedContext = createContext<{
   hasMainOlasBalanceAnimatedOnLoad: boolean;
   setMainOlasBalanceAnimated: (value: boolean) => void;
 
-  // onboarding
-  onboardingStep: number;
-  updateOnboardingStep: (step: number) => void;
-
   // agent specific checks
   isAgentsFunFieldUpdateRequired: boolean;
 
@@ -33,10 +29,6 @@ export const SharedContext = createContext<{
   mainOlasBalance: undefined,
   hasMainOlasBalanceAnimatedOnLoad: false,
   setMainOlasBalanceAnimated: () => {},
-
-  // onboarding
-  onboardingStep: 0,
-  updateOnboardingStep: () => {},
 
   // agent specific checks
   isAgentsFunFieldUpdateRequired: false,
@@ -52,12 +44,6 @@ export const SharedContext = createContext<{
  * - Track the healthcheck alert shown to the user (so that they are not shown again).
  */
 export const SharedProvider = ({ children }: PropsWithChildren) => {
-  // state to track the onboarding step of the user (independent of the agent)
-  const [onboardingStep, setOnboardingStep] = useState(0);
-  const updateOnboardingStep = useCallback((step: number) => {
-    setOnboardingStep(step);
-  }, []);
-
   // state to track the main OLAS balance animation state & mount state
   const hasAnimatedRef = useRef(false);
   const mainOlasBalanceDetails = useMainOlasBalance();
@@ -97,10 +83,6 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
         ...mainOlasBalanceDetails,
         hasMainOlasBalanceAnimatedOnLoad: hasAnimatedRef.current,
         setMainOlasBalanceAnimated,
-
-        // onboarding
-        onboardingStep,
-        updateOnboardingStep,
 
         // agent specific checks
         isAgentsFunFieldUpdateRequired,
