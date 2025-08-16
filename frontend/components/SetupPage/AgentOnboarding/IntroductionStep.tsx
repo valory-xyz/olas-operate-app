@@ -1,7 +1,8 @@
-import { LeftOutlined } from '@ant-design/icons';
+import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
+import { ReactNode } from 'react';
 
 import { UnderConstruction } from '@/components/MainPage/sections/AlertSections/UnderConstruction';
 import { useServices } from '@/hooks/useServices';
@@ -72,9 +73,10 @@ const AnimatedContent = ({
 );
 
 type IntroductionProps = OnboardingStep & {
-  btnText: string;
-  onPrev: () => void;
-  onNext: () => void;
+  onPrev: (() => void) | undefined;
+  onNext: (() => void) | undefined;
+  renderDot?: () => ReactNode;
+  onAgentSelect: () => void;
 };
 
 /**
@@ -85,9 +87,10 @@ export const IntroductionStep = ({
   desc,
   imgSrc,
   helper,
-  btnText,
   onPrev,
   onNext,
+  renderDot,
+  onAgentSelect,
 }: IntroductionProps) => {
   const { selectedAgentConfig } = useServices();
 
@@ -103,19 +106,34 @@ export const IntroductionStep = ({
 
           {selectedAgentConfig.isUnderConstruction && <UnderConstruction />}
 
-          <div style={{ padding: '0px 24px' }}>
-            <Flex gap={12}>
+          <Flex
+            vertical
+            gap={24}
+            align="center"
+            style={{ padding: '0px 24px' }}
+          >
+            <Flex gap={12} align="center">
               <Button
                 onClick={onPrev}
+                disabled={!onPrev}
                 size="large"
                 style={{ minWidth: 40 }}
                 icon={<LeftOutlined />}
               />
-              <Button onClick={onNext} type="primary" block size="large">
-                {btnText}
-              </Button>
+              {renderDot && renderDot()}
+              <Button
+                onClick={onNext}
+                disabled={!onNext}
+                size="large"
+                style={{ minWidth: 40 }}
+                icon={<RightOutlined />}
+              />
             </Flex>
-          </div>
+
+            <Button type="primary" block size="large" onClick={onAgentSelect}>
+              Select Agent
+            </Button>
+          </Flex>
         </Flex>
       </div>
     </div>

@@ -305,7 +305,7 @@ const createMainWindow = async () => {
   if (mainWindow) return;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
-    resizable: false,
+    resizable: true,
     draggable: true,
     frame: false,
     transparent: true,

@@ -47,7 +47,7 @@ export const SetupBackupSigner = () => {
       }
 
       setBackupSigner(checksummedAddress);
-      goto(SetupScreen.AgentSelection);
+      goto(SetupScreen.AgentOnboarding);
     },
     [form, setBackupSigner, goto],
   );
