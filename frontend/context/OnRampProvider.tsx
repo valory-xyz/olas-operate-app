@@ -96,29 +96,41 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsBuyCryptoBtnLoading(loading);
   }, []);
 
+  /**
+   * Check if the on-ramping step is completed
+   * ie. if the on-ramping is successful AND funds are received in the master EOA.
+   */
+  const isOnRampingStepCompleted =
+    isOnRampingTransactionSuccessful && hasFundsReceivedAfterOnRamp;
+
+  /**
+   * Check if the on-ramping transaction was successful but funds are not received
+   */
+  const isTransactionSuccessfulButFundsNotReceived =
+    isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
+
   // check if the user has received funds after on-ramping to the master EOA
   useEffect(() => {
-    if (!isOnRampingTransactionSuccessful) return;
     if (!ethAmountToPay) return;
     if (!masterEoaBalance) return;
-    if (hasFundsReceivedAfterOnRamp) return;
+    if (isOnRampingStepCompleted) return;
 
     // If the master EOA balance is greater than or equal to 90% of the ETH amount to pay,
     // considering that the user has received the funds after on-ramping.
     if (masterEoaBalance >= ethAmountToPay * ETH_RECEIVED_THRESHOLD) {
       updateIsBuyCryptoBtnLoading(false);
       setHasFundsReceivedAfterOnRamp(true);
+      setIsOnRampingTransactionSuccessful(true);
 
-      // If not closed already, hide the on-ramp window after receiving funds
-      onRampWindow?.hide?.();
+      // If not closed already, close the on-ramp window after receiving funds
+      onRampWindow?.close?.();
     }
   }, [
-    isOnRampingTransactionSuccessful,
-    hasFundsReceivedAfterOnRamp,
     masterEoaBalance,
     ethAmountToPay,
     updateIsBuyCryptoBtnLoading,
     onRampWindow,
+    isOnRampingStepCompleted,
   ]);
 
   // Function to set the ETH amount to pay for on-ramping
@@ -135,19 +147,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const updateIsSwappingStepCompleted = useCallback((completed: boolean) => {
     setIsSwappingStepCompleted(completed);
   }, []);
-
-  /**
-   * Check if the on-ramping step is completed
-   * ie. if the on-ramping is successful AND funds are received in the master EOA.
-   */
-  const isOnRampingStepCompleted =
-    isOnRampingTransactionSuccessful && hasFundsReceivedAfterOnRamp;
-
-  /**
-   * Check if the on-ramping transaction was successful but funds are not received
-   */
-  const isTransactionSuccessfulButFundsNotReceived =
-    isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
 
   // Listen for onramp window transaction success event to reset the loading state
   useEffect(() => {

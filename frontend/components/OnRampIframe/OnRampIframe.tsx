@@ -40,7 +40,9 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
       if (!eventDetails.data.event_id) return;
 
       // To get all the events and log them
-      logEvent?.(`Transak event: ${JSON.stringify(eventDetails)}`);
+      logEvent?.(
+        `Transak event: ${JSON.stringify(eventDetails.data.event_id)}`,
+      );
 
       if (eventDetails.data.event_id === 'TRANSAK_WIDGET_CLOSE') {
         onRampWindow?.hide?.();
@@ -49,13 +51,13 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
       // This will trigger when the user marks payment is made.
       // User can close/navigate away at this event.
       if (eventDetails.data.event_id === 'TRANSAK_ORDER_SUCCESSFUL') {
-        delayInSeconds(3).then(() => {
+        delayInSeconds(7.5).then(() => {
           onRampWindow?.transactionSuccess?.();
         });
       }
 
       if (eventDetails.data.event_id === 'TRANSAK_ORDER_FAILED') {
-        delayInSeconds(3).then(() => {
+        delayInSeconds(7.5).then(() => {
           onRampWindow?.transactionFailure?.();
         });
       }
