@@ -1,8 +1,9 @@
 import { find, get, groupBy, isEmpty, isNil } from 'lodash';
-import { useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
 import { AddressZero } from '@/constants/address';
+import { EvmChainId } from '@/constants/chains';
 import { TokenSymbolMap } from '@/constants/token';
 import { BalanceContext } from '@/context/BalanceProvider/BalanceProvider';
 import { WalletBalance } from '@/types/Balance';
@@ -314,6 +315,27 @@ export const useMasterBalances = () => {
       .reduce((acc, { balance }) => acc + balance, 0);
   }, [masterEoa, masterWalletBalances, selectedAgentConfig.evmHomeChainId]);
 
+  /**
+   * Function to get the master EOA balance of a specific chain
+   */
+  const getMasterEoaBalanceOf = useCallback(
+    (chainId: EvmChainId) => {
+      if (!chainId) return;
+      if (isNil(masterEoa)) return;
+      if (isNil(masterWalletBalances)) return;
+
+      return masterWalletBalances
+        .filter(
+          ({ walletAddress, isNative, evmChainId }) =>
+            walletAddress === masterEoa.address &&
+            isNative &&
+            chainId === evmChainId,
+        )
+        .reduce((acc, { balance }) => acc + balance, 0);
+    },
+    [masterEoa, masterWalletBalances],
+  );
+
   const masterSafeOlasBalance = masterWalletBalances
     ?.filter(
       (walletBalance) =>
@@ -389,5 +411,6 @@ export const useMasterBalances = () => {
     masterEoaGasRequirement,
     masterEoaBalances,
     masterEoaBalance,
+    getMasterEoaBalanceOf,
   };
 };
