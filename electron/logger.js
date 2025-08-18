@@ -4,78 +4,8 @@ const { paths } = require('./constants');
 
 const { combine, timestamp, printf } = format;
 
-const DEFAULT_SENSITIVE_KEYS = [
-  'password',
-  'apiKey',
-  'token',
-  'secret',
-  'authorization',
-];
-
-/**
- * Recursively sanitize objects/arrays by masking sensitive keys.
- */
-function sanitizeObject(x, sensitiveKeys = DEFAULT_SENSITIVE_KEYS) {
-  if (Array.isArray(x)) {
-    return x.map((v) => sanitizeObject(v, sensitiveKeys));
-  } else if (x && typeof x === 'object') {
-    return Object.fromEntries(
-      Object.entries(x).map(([k, v]) => {
-        if (sensitiveKeys.some((sk) => sk.toLowerCase() === k.toLowerCase())) {
-          return [k, '***'];
-        }
-        return [k, sanitizeObject(v, sensitiveKeys)];
-      }),
-    );
-  }
-  return x;
-}
-
-/**
- * Try to sanitize a string: if it's JSON, parse + sanitize + re-stringify.
- * Otherwise, redact using regex.
- */
-function sanitizeString(str, sensitiveKeys = DEFAULT_SENSITIVE_KEYS) {
-  let sanitized = str;
-
-  // Try JSON parse
-  try {
-    const parsed = JSON.parse(str);
-    return JSON.stringify(sanitizeObject(parsed, sensitiveKeys));
-  } catch {
-    // Regex-based replacement for "key=value" or "key: value"
-    const pattern = new RegExp(
-      `(${sensitiveKeys.join('|')})\\s*[:=]\\s*["']?([A-Za-z0-9._-]+)["']?`,
-      'gi',
-    );
-    return sanitized.replace(pattern, (_, key) => `${key}: ***`);
-  }
-}
-
-/**
- * Winston format that sanitizes log messages.
- */
-const sanitizeFormat = (sensitiveKeys = DEFAULT_SENSITIVE_KEYS) =>
-  format((info) => {
-    if (typeof info.message === 'object') {
-      info.message = sanitizeObject(info.message, sensitiveKeys);
-    } else if (typeof info.message === 'string') {
-      info.message = sanitizeString(info.message, sensitiveKeys);
-    }
-    return info;
-  })();
-
-module.exports = {
-  sanitizeObject,
-  sanitizeString,
-  sanitizeFormat,
-  DEFAULT_SENSITIVE_KEYS,
-};
-
 const logFormat = printf(({ level, message, timestamp }) => {
-  const msg =
-    typeof message === 'object' ? JSON.stringify(message, null, 2) : message;
-  return `${timestamp} ${level}: ${msg}`;
+  return `${timestamp} ${level}: ${message}`;
 });
 
 const customLevels = {
@@ -107,27 +37,16 @@ const TEN_MEGABYTES = 10 * 1024 * 1024;
 
 const logger = winston.createLogger({
   levels: customLevels.levels,
-
   transports: [
     new winston.transports.Console({
       level: 'electron',
-      format: combine(
-        winston.format.colorize(),
-        sanitizeFormat(),
-        timestamp(),
-        logFormat,
-      ),
+      format: combine(winston.format.colorize(), timestamp(), logFormat),
     }),
     new winston.transports.File({
       filename: 'cli.log',
       dirname: paths.dotOperateDirectory,
       level: 'cli',
-      format: combine(
-        levelFilter('cli'),
-        sanitizeFormat(),
-        timestamp(),
-        logFormat,
-      ),
+      format: combine(levelFilter('cli'), timestamp(), logFormat),
       maxsize: TEN_MEGABYTES,
       maxFiles: 5,
     }),
@@ -135,12 +54,7 @@ const logger = winston.createLogger({
       filename: 'electron.log',
       dirname: paths.dotOperateDirectory,
       level: 'electron',
-      format: combine(
-        levelFilter('electron'),
-        sanitizeFormat(),
-        timestamp(),
-        logFormat,
-      ),
+      format: combine(levelFilter('electron'), timestamp(), logFormat),
       maxFiles: 1,
       maxsize: TEN_MEGABYTES,
     }),
@@ -148,12 +62,7 @@ const logger = winston.createLogger({
       filename: 'next.log',
       dirname: paths.dotOperateDirectory,
       level: 'next',
-      format: combine(
-        levelFilter('next'),
-        sanitizeFormat(),
-        timestamp(),
-        logFormat,
-      ),
+      format: combine(levelFilter('next'), timestamp(), logFormat),
       maxFiles: 1,
       maxsize: TEN_MEGABYTES,
     }),
