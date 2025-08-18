@@ -8,7 +8,7 @@ import { SetupScreen } from '@/enums/SetupScreen';
 
 import { AgentSelection } from '../AgentSelection';
 import { CardFlex } from '../styled/CardFlex';
-import { AgentIntroduction } from './AgentIntroduction/AgentIntroduction';
+import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
 import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding/SetupBridgeOnboarding';
 import { SetupCreateSafe } from './Create/SetupCreateSafe';
@@ -50,6 +50,8 @@ const SetupCard = styled.div`
     0 3px 6px 0 rgba(170, 193, 203, 0.1);
 `;
 
+const screenWithoutCards: SetupScreen[] = [SetupScreen.AgentOnboarding];
+
 export const Setup = () => {
   const { setupObject } = useContext(SetupContext);
 
@@ -73,8 +75,8 @@ export const Setup = () => {
         return <SetupCreateSafe />;
       case SetupScreen.AgentSelection:
         return <AgentSelection showSelected={false} />;
-      case SetupScreen.AgentIntroduction:
-        return <AgentIntroduction />;
+      case SetupScreen.AgentOnboarding:
+        return <AgentOnboarding />;
       case SetupScreen.EarlyAccessOnly:
         return <EarlyAccessOnly />;
       case SetupScreen.SetupYourAgent:
@@ -97,6 +99,10 @@ export const Setup = () => {
         return <UnexpectedError />;
     }
   }, [setupObject.state]);
+
+  if (screenWithoutCards.includes(setupObject.state)) {
+    return setupScreen;
+  }
 
   return <SetupCard>{setupScreen}</SetupCard>;
 };

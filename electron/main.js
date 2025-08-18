@@ -275,8 +275,8 @@ async function beforeQuit(event) {
   app.quit();
 }
 
-const SPLASH_SCREEN_WIDTH = 420;
-const SPLASH_SCREEN_HEIGHT = 480;
+const APP_WIDTH = 1320;
+const APP_HEIGHT = 796;
 
 /**
  * Creates the splash window
@@ -284,8 +284,8 @@ const SPLASH_SCREEN_HEIGHT = 480;
 const createSplashWindow = () => {
   /** @type {Electron.BrowserWindow} */
   splashWindow = new BrowserWindow({
-    width: SPLASH_SCREEN_WIDTH,
-    height: SPLASH_SCREEN_HEIGHT,
+    width: APP_WIDTH,
+    height: APP_HEIGHT,
     resizable: false,
     show: true,
     title: 'Pearl',
@@ -298,9 +298,6 @@ const createSplashWindow = () => {
   splashWindow.loadURL('file://' + __dirname + '/resources/app-loading.html');
 };
 
-const APP_WIDTH = 1320;
-const APP_HEIGHT = 796;
-
 /**
  * Creates the main window
  */
@@ -308,7 +305,7 @@ const createMainWindow = async () => {
   if (mainWindow) return;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
-    resizable: false,
+    resizable: true,
     draggable: true,
     frame: false,
     transparent: true,
