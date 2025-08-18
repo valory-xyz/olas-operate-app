@@ -143,6 +143,7 @@ jobs:
           CELO_RPC: ${{ matrix.CELO_RPC }}
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
           GH_TOKEN: ${{ secrets.github_token}}
+          TRANSAK_API_KEY: ${{ secrets.TRANSAK_API_KEY }}
         run: |
           echo NODE_ENV=$NODE_ENV >> prod.env
           echo IS_STAGING=$IS_STAGING >> prod.env
@@ -154,6 +155,7 @@ jobs:
           echo CELO_RPC=$CELO_RPC >> prod.env
           cat prod.env
           echo GH_TOKEN=$GH_TOKEN >> prod.env
+          echo TRANSAK_API_KEY=$TRANSAK_API_KEY >> prod.env
       - run: rm -rf /dist
       - name: "Build, notarize, publish"
         run: make build

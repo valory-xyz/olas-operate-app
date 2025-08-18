@@ -4,19 +4,7 @@ import { EvmChainId } from '@/enums/Chain';
 type Url = `http${'s' | ''}://${string}`;
 
 export const BACKEND_URL: Url = `https://localhost:${process.env.NODE_ENV === 'production' ? 8765 : 8000}/api`;
-
 export const BACKEND_URL_V2: Url = `https://localhost:${process.env.NODE_ENV === 'production' ? 8765 : 8000}/api/v2`;
-
-// swap URLs
-const COW_SWAP_GNOSIS_XDAI_OLAS_URL: Url =
-  'https://swap.cow.fi/#/100/swap/WXDAI/OLAS';
-const SWAP_BASE_URL: Url = 'https://balancer.fi/swap/base/ETH/OLAS';
-const SWAP_MODE_URL: Url =
-  'https://balancer.fi/swap/mode/0xd988097fb8612cc24eec14542bc03424c656005f/0xcfd1d50ce23c46d3cf6407487b2f8934e96dc8f9';
-const SWAP_CELO_URL: Url =
-  'https://app.ubeswap.org/#/swap?inputCurrency=0x471ece3750da237f93b8e339c536989b8978a438&outputCurrency=0xacffae8e57ec6e394eb1b41939a8cf7892dbdc51';
-const SWAP_OPTIMISM_URL: Url =
-  'https://balancer.fi/pools/optimism/v2/0x5bb3e58887264b667f915130fd04bbb56116c27800020000000000000000012a';
 
 // olas.network
 export const PEARL_URL: Url = 'https://olas.network/pearl';
@@ -53,19 +41,19 @@ export const COMMUNITY_ASSISTANCE_URL: Url =
 export const GITHUB_API_LATEST_RELEASE: Url =
   'https://api.github.com/repos/valory-xyz/olas-operate-app/releases/latest';
 
-// explorers @note DO NOT END WITH `/`
-const GNOSIS_EXPLORER_URL: Url = 'https://gnosisscan.io';
-const BASE_EXPLORER_URL: Url = 'https://basescan.org';
-const MODE_EXPLORER_URL: Url = 'https://modescan.io';
-const CELO_EXPLORER_URL: Url = 'https://celoscan.io';
-const OPTIMISM_EXPLORER_URL: Url = 'https://optimistic.etherscan.io';
-
 // others
 export const TENDERLY_URL: string = 'https://tenderly.co';
 export const COINGECKO_URL: string = 'https://www.coingecko.com';
 export const COINGECKO_DEMO_API_KEY: string =
   'https://support.coingecko.com/hc/en-us/articles/21880397454233-User-Guide-How-to-sign-up-for-CoinGecko-Demo-API-and-generate-an-API-key';
 export const GEMINI_API_URL: string = 'https://aistudio.google.com/app/apikey';
+
+// explorers @note DO NOT END WITH `/`
+const GNOSIS_EXPLORER_URL: Url = 'https://gnosisscan.io';
+const BASE_EXPLORER_URL: Url = 'https://basescan.org';
+const MODE_EXPLORER_URL: Url = 'https://modescan.io';
+const CELO_EXPLORER_URL: Url = 'https://celoscan.io';
+const OPTIMISM_EXPLORER_URL: Url = 'https://optimistic.etherscan.io';
 
 export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   SupportedMiddlewareChain,
@@ -89,6 +77,17 @@ export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChain.OPTIMISM]: 'https://optimism.blockscout.com',
 };
 
+// swap URLs
+const COW_SWAP_GNOSIS_XDAI_OLAS_URL: Url =
+  'https://swap.cow.fi/#/100/swap/WXDAI/OLAS';
+const SWAP_BASE_URL: Url = 'https://balancer.fi/swap/base/ETH/OLAS';
+const SWAP_MODE_URL: Url =
+  'https://balancer.fi/swap/mode/0xd988097fb8612cc24eec14542bc03424c656005f/0xcfd1d50ce23c46d3cf6407487b2f8934e96dc8f9';
+const SWAP_CELO_URL: Url =
+  'https://app.ubeswap.org/#/swap?inputCurrency=0x471ece3750da237f93b8e339c536989b8978a438&outputCurrency=0xacffae8e57ec6e394eb1b41939a8cf7892dbdc51';
+const SWAP_OPTIMISM_URL: Url =
+  'https://balancer.fi/pools/optimism/v2/0x5bb3e58887264b667f915130fd04bbb56116c27800020000000000000000012a';
+
 export const SWAP_URL_BY_EVM_CHAIN: Record<EvmChainId, Url> = {
   [EvmChainId.Gnosis]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
   [EvmChainId.Base]: SWAP_BASE_URL,
@@ -96,3 +95,6 @@ export const SWAP_URL_BY_EVM_CHAIN: Record<EvmChainId, Url> = {
   [EvmChainId.Celo]: SWAP_CELO_URL,
   [EvmChainId.Optimism]: SWAP_OPTIMISM_URL,
 };
+
+// on-ramp
+export const ON_RAMP_GATEWAY_URL = `https://on-ramp.${process.env.NODE_ENV === 'production' ? '' : 'staging.'}autonolas.tech/`;
