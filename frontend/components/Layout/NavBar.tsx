@@ -1,9 +1,13 @@
+import { Flex, Typography } from 'antd';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useCallback } from 'react';
 import styled from 'styled-components';
 
 import { TOP_BAR_HEIGHT } from '@/constants/width';
 import { useElectronApi } from '@/hooks/useElectronApi';
+
+const { Text } = Typography;
 
 const TrafficLightIcon = styled.div`
   width: 12px;
@@ -44,6 +48,26 @@ const TopBarContainer = styled.div`
   -webkit-app-region: drag;
 `;
 
+const PearlHeaderContainer = styled(Flex)`
+  display: none; // TODO: show only for onboarding pages
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+`;
+
+const PearHeader = () => (
+  <PearlHeaderContainer justify="center" align="center" gap={8}>
+    <Image
+      src="/onboarding-robot.svg"
+      alt="logo"
+      width={24}
+      height={24}
+      style={{ marginTop: -2 }}
+    />
+    <Text>Pearl</Text>
+  </PearlHeaderContainer>
+);
+
 export const NavBar = () => {
   const router = useRouter();
   const { closeApp, minimizeApp, onRampWindow } = useElectronApi();
@@ -72,6 +96,8 @@ export const NavBar = () => {
         )}
         <DisabledLight />
       </TrafficLights>
+
+      <PearHeader />
     </TopBarContainer>
   );
 };

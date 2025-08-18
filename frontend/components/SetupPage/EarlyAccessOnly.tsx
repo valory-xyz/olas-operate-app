@@ -15,7 +15,7 @@ export const EarlyAccessOnly = () => {
   const { goto } = useSetup();
 
   const onGoBack = useCallback(() => {
-    goto(SetupScreen.AgentSelection);
+    goto(SetupScreen.AgentOnboarding);
   }, [goto]);
 
   return (
