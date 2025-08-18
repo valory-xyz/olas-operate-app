@@ -1,6 +1,7 @@
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { Card, Flex, Typography } from 'antd';
 import { useEffect, useState } from 'react';
+import { useIsMounted } from 'usehooks-ts';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import {
@@ -35,15 +36,14 @@ export const HelpAndSupport = () => {
   const { isUserLoggedIn } = usePageState();
   const [latestTag, setLatestTag] = useState<string | null>(null);
   const { getAppVersion } = useElectronApi();
+  const isMounted = useIsMounted();
 
   useEffect(() => {
-    let isMounted = true;
-
     const getTag = async () => {
       if (typeof getAppVersion !== 'function') return;
       try {
         const version = await getAppVersion();
-        if (version && isMounted) {
+        if (version && isMounted()) {
           setLatestTag(version);
         }
       } catch (error) {
@@ -52,10 +52,8 @@ export const HelpAndSupport = () => {
     };
 
     getTag();
-
-    return () => {
-      isMounted = false;
-    };
+    // useIsMounted function is stable:
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getAppVersion]);
 
   return (
