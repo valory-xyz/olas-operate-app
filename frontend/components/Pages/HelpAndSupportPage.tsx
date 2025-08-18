@@ -52,9 +52,7 @@ export const HelpAndSupport = () => {
     };
 
     getTag();
-    // useIsMounted function is stable:
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getAppVersion]);
+  }, [getAppVersion, isMounted]);
 
   return (
     <Card
