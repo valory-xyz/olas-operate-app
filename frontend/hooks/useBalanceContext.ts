@@ -8,6 +8,7 @@ import { TokenSymbolMap } from '@/constants/token';
 import { BalanceContext } from '@/context/BalanceProvider/BalanceProvider';
 import { WalletBalance } from '@/types/Balance';
 import { Maybe, Optional } from '@/types/Util';
+import { areAddressesEqual } from '@/utils/address';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { useBalanceAndRefillRequirementsContext } from './useBalanceAndRefillRequirementsContext';
@@ -227,8 +228,8 @@ export const useMasterBalances = () => {
 
   const masterEoaBalances = useMemo<Optional<WalletBalance[]>>(
     () =>
-      walletBalances?.filter(
-        ({ walletAddress }) => walletAddress === masterEoa?.address,
+      walletBalances?.filter(({ walletAddress }) =>
+        areAddressesEqual(walletAddress, masterEoa?.address),
       ),
     [masterEoa?.address, walletBalances],
   );

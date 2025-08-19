@@ -112,7 +112,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
   // check if the user has received funds after on-ramping to the master EOA
   useEffect(() => {
-    if (!isOnRampingTransactionSuccessful) return;
     if (!ethAmountToPay) return;
     if (hasFundsReceivedAfterOnRamp) return;
 
@@ -124,6 +123,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     // considering that the user has received the funds after on-ramping.
     if (balance >= ethAmountToPay * ETH_RECEIVED_THRESHOLD) {
       updateIsBuyCryptoBtnLoading(false);
+      setIsOnRampingTransactionSuccessful(true);
       setHasFundsReceivedAfterOnRamp(true);
 
       // If not closed already, hide the on-ramp window after receiving funds
