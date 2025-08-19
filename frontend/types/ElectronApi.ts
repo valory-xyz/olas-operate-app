@@ -8,6 +8,7 @@ export type ElectronStore = {
   // Global settings
   environmentName?: string;
   lastSelectedAgentType?: AgentType;
+  knownVersion?: string;
 
   // First time user settings
   firstStakingRewardAchieved?: boolean;
