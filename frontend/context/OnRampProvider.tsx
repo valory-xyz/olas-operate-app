@@ -127,7 +127,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
       setHasFundsReceivedAfterOnRamp(true);
 
       // If not closed already, hide the on-ramp window after receiving funds
-      onRampWindow?.hide?.();
+      onRampWindow?.close?.();
     }
   }, [
     isOnRampingTransactionSuccessful,
