@@ -309,9 +309,9 @@ export const useMasterBalances = () => {
     return masterWalletBalances
       .filter(
         ({ walletAddress, isNative, evmChainId }) =>
-          walletAddress === masterEoa.address &&
           isNative &&
-          selectedAgentConfig.evmHomeChainId === evmChainId,
+          selectedAgentConfig.evmHomeChainId === evmChainId &&
+          areAddressesEqual(walletAddress, masterEoa.address),
       )
       .reduce((acc, { balance }) => acc + balance, 0);
   }, [masterEoa, masterWalletBalances, selectedAgentConfig.evmHomeChainId]);
@@ -328,9 +328,9 @@ export const useMasterBalances = () => {
       return masterWalletBalances
         .filter(
           ({ walletAddress, isNative, evmChainId }) =>
-            walletAddress === masterEoa.address &&
             isNative &&
-            chainId === evmChainId,
+            chainId === evmChainId &&
+            areAddressesEqual(walletAddress, masterEoa.address),
         )
         .reduce((acc, { balance }) => acc + balance, 0);
     },
