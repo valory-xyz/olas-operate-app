@@ -52,6 +52,7 @@ export const mainTheme: ThemeConfig = {
     },
     Tag: {
       colorSuccess: '#135200',
+      defaultBg: COLOR.GRAY_1,
     },
     List: {
       colorBorder: '#DFE5EE',

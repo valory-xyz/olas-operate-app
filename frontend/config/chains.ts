@@ -16,6 +16,7 @@ export type ChainConfig = {
   evmChainId: EvmChainId;
   middlewareChain: MiddlewareChainId;
   rpc: HttpUrl;
+  color: string;
   // TODO: the values are hardcoded, should be fetched from the backend
   /**
    * Least amount of native token required to create a Safe.
@@ -32,6 +33,7 @@ export const GNOSIS_CHAIN_CONFIG: ChainConfig = {
   middlewareChain: MiddlewareChainId.GNOSIS,
   rpc: process.env.GNOSIS_RPC as HttpUrl,
   safeCreationThreshold: 1.5,
+  color: '#04795B0F',
 } as const;
 
 export const BASE_CHAIN_CONFIG: ChainConfig = {
@@ -41,6 +43,7 @@ export const BASE_CHAIN_CONFIG: ChainConfig = {
   middlewareChain: MiddlewareChainId.BASE,
   rpc: process.env.BASE_RPC as HttpUrl,
   safeCreationThreshold: 0.005,
+  color: '#0052FF12',
 } as const;
 
 export const MODE_CHAIN_CONFIG: ChainConfig = {
@@ -50,6 +53,7 @@ export const MODE_CHAIN_CONFIG: ChainConfig = {
   middlewareChain: MiddlewareChainId.MODE,
   rpc: process.env.MODE_RPC as HttpUrl,
   safeCreationThreshold: 0.0005,
+  color: '#DFFE0029',
 } as const;
 
 // TODO: celo - check each key
@@ -60,6 +64,7 @@ export const CELO_CHAIN_CONFIG: ChainConfig = {
   middlewareChain: MiddlewareChainId.CELO,
   rpc: process.env.CELO_RPC as HttpUrl,
   safeCreationThreshold: 0.005,
+  color: '#DFFE0029',
 } as const;
 
 export const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
@@ -69,6 +74,7 @@ export const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
   middlewareChain: MiddlewareChainId.OPTIMISM,
   rpc: process.env.OPTIMISM_RPC as HttpUrl,
   safeCreationThreshold: 0.005,
+  color: '#FF042012',
 } as const;
 
 export const CHAIN_CONFIG: {
