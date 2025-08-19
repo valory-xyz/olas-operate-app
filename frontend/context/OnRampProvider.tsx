@@ -97,6 +97,19 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsBuyCryptoBtnLoading(loading);
   }, []);
 
+  /**
+   * Check if the on-ramping step is completed
+   * ie. if the on-ramping is successful AND funds are received in the master EOA.
+   */
+  const isOnRampingStepCompleted =
+    isOnRampingTransactionSuccessful && hasFundsReceivedAfterOnRamp;
+
+  /**
+   * Check if the on-ramping transaction was successful but funds are not received
+   */
+  const isTransactionSuccessfulButFundsNotReceived =
+    isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
+
   // Get the network id, name, and crypto currency code based on the selected agent's home chain
   // This is used to determine the network and currency to on-ramp to.
   const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
@@ -113,7 +126,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // check if the user has received funds after on-ramping to the master EOA
   useEffect(() => {
     if (!ethAmountToPay) return;
-    if (hasFundsReceivedAfterOnRamp) return;
+    if (isOnRampingStepCompleted) return;
 
     // Get the master EOA balance of the network to on-ramp
     const balance = getMasterEoaBalanceOf(networkId);
@@ -123,20 +136,19 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     // considering that the user has received the funds after on-ramping.
     if (balance >= ethAmountToPay * ETH_RECEIVED_THRESHOLD) {
       updateIsBuyCryptoBtnLoading(false);
-      setIsOnRampingTransactionSuccessful(true);
       setHasFundsReceivedAfterOnRamp(true);
+      setIsOnRampingTransactionSuccessful(true);
 
       // If not closed already, hide the on-ramp window after receiving funds
       onRampWindow?.close?.();
     }
   }, [
-    isOnRampingTransactionSuccessful,
-    hasFundsReceivedAfterOnRamp,
     ethAmountToPay,
     networkId,
     getMasterEoaBalanceOf,
     updateIsBuyCryptoBtnLoading,
     onRampWindow,
+    isOnRampingStepCompleted,
   ]);
 
   // Function to set the ETH amount to pay for on-ramping
@@ -153,19 +165,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const updateIsSwappingStepCompleted = useCallback((completed: boolean) => {
     setIsSwappingStepCompleted(completed);
   }, []);
-
-  /**
-   * Check if the on-ramping step is completed
-   * ie. if the on-ramping is successful AND funds are received in the master EOA.
-   */
-  const isOnRampingStepCompleted =
-    isOnRampingTransactionSuccessful && hasFundsReceivedAfterOnRamp;
-
-  /**
-   * Check if the on-ramping transaction was successful but funds are not received
-   */
-  const isTransactionSuccessfulButFundsNotReceived =
-    isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
 
   // Listen for onramp window transaction success event to reset the loading state
   useEffect(() => {
