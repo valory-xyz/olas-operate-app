@@ -70,13 +70,14 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { ipcRenderer, onRampWindow } = useElectronApi();
   const { pageState } = usePageState();
   const { selectedAgentConfig } = useServices();
-  const { masterEoaBalance } = useMasterBalances();
-
-  const [isBuyCryptoBtnLoading, setIsBuyCryptoBtnLoading] = useState(false);
+  const { getMasterEoaBalanceOf } = useMasterBalances();
 
   // State to track the amount of ETH to pay for on-ramping and the USD equivalent
   const [ethAmountToPay, setEthAmountToPay] = useState<Nullable<number>>(null);
   const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
+
+  // State to track if the buy crypto button is loading
+  const [isBuyCryptoBtnLoading, setIsBuyCryptoBtnLoading] = useState(false);
 
   // state to track if the on-ramping transaction was successful
   const [
@@ -96,16 +97,32 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsBuyCryptoBtnLoading(loading);
   }, []);
 
+  // Get the network id, name, and crypto currency code based on the selected agent's home chain
+  // This is used to determine the network and currency to on-ramp to.
+  const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
+    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
+    const networkId = onRampChainMap[fromChainName];
+    const chainDetails = asEvmChainDetails(asMiddlewareChain(networkId));
+    return {
+      networkId,
+      networkName: chainDetails.name,
+      cryptoCurrencyCode: chainDetails.symbol,
+    };
+  }, [selectedAgentConfig]);
+
   // check if the user has received funds after on-ramping to the master EOA
   useEffect(() => {
     if (!isOnRampingTransactionSuccessful) return;
     if (!ethAmountToPay) return;
-    if (!masterEoaBalance) return;
     if (hasFundsReceivedAfterOnRamp) return;
+
+    // Get the master EOA balance of the network to on-ramp
+    const balance = getMasterEoaBalanceOf(networkId);
+    if (!balance) return;
 
     // If the master EOA balance is greater than or equal to 90% of the ETH amount to pay,
     // considering that the user has received the funds after on-ramping.
-    if (masterEoaBalance >= ethAmountToPay * ETH_RECEIVED_THRESHOLD) {
+    if (balance >= ethAmountToPay * ETH_RECEIVED_THRESHOLD) {
       updateIsBuyCryptoBtnLoading(false);
       setHasFundsReceivedAfterOnRamp(true);
 
@@ -115,8 +132,9 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   }, [
     isOnRampingTransactionSuccessful,
     hasFundsReceivedAfterOnRamp,
-    masterEoaBalance,
     ethAmountToPay,
+    networkId,
+    getMasterEoaBalanceOf,
     updateIsBuyCryptoBtnLoading,
     onRampWindow,
   ]);
@@ -193,31 +211,19 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     };
   }, [ipcRenderer]);
 
-  // Get the network id, name, and crypto currency code based on the selected agent's home chain
-  // This is used to determine the network and currency to on-ramp to.
-  const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
-    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-    const networkId = onRampChainMap[fromChainName];
-    const chainDetails = asEvmChainDetails(asMiddlewareChain(networkId));
-    return {
-      networkId,
-      networkName: chainDetails.name,
-      cryptoCurrencyCode: chainDetails.symbol,
-    };
-  }, [selectedAgentConfig]);
-
   const resetOnRampState = useCallback(() => {
     setEthAmountToPay(null);
     setUsdAmountToPay(null);
     setIsBuyCryptoBtnLoading(false);
     setIsOnRampingTransactionSuccessful(false);
     setHasFundsReceivedAfterOnRamp(false);
+    setIsSwappingStepCompleted(false);
   }, []);
 
   // Reset the on-ramp state when navigating to the main page
   useEffect(() => {
     if (pageState === Pages.Main) {
-      const timer = setTimeout(() => resetOnRampState(), 2000);
+      const timer = setTimeout(() => resetOnRampState(), 1000);
       return () => clearTimeout(timer);
     }
   }, [pageState, resetOnRampState]);
