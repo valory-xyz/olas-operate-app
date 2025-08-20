@@ -148,7 +148,7 @@ function showNotification(title, body) {
 }
 
 function setAppAutostart(is_set) {
-  logger.electron('Set app autostart: ' + is_set);
+  logger.electron(`Set app autostart: ${is_set}`);
   app.setLoginItemSettings({ openAtLogin: is_set });
 }
 
@@ -162,7 +162,7 @@ function handleAppSettings() {
       fs.writeFileSync(app_settings_file, JSON.stringify(obj));
     }
     let data = JSON.parse(fs.readFileSync(app_settings_file));
-    logger.electron('Loaded app settings file ' + JSON.stringify(data));
+    logger.electron(`Loaded app settings file: ${JSON.stringify(data)}`);
     setAppAutostart(data.app_auto_start);
   } catch {
     logger.electron('Error loading settings');
@@ -555,20 +555,20 @@ const createOnRampWindow = async (amountToPay) => {
       onRampQuery.append('amount', amountToPay.toString());
     }
     const onRampUrl = `${nextUrl()}/onramp?${onRampQuery.toString()}`;
-    logger.electron('OnRamp URL:', onRampUrl);
+    logger.electron(`OnRamp URL: ${onRampUrl}`);
 
     // request camera access for KYC
     if (isMac) {
       try {
         const granted = await systemPreferences.askForMediaAccess('camera');
-        logger.electron('macOS camera permission granted:', granted);
+        logger.electron(`macOS camera permission granted: ${granted}`);
       } catch (e) {
-        logger.electron('Error requesting macOS camera permission:', e);
+        logger.electron(`Error requesting macOS camera permission: ${e}`);
       }
     }
 
     onRampWindow.loadURL(onRampUrl).then(() => {
-      logger.electron('onRampWindow', onRampWindow.url);
+      logger.electron(`onRampWindow: ${onRampWindow.url}`);
     });
   } else {
     logger.electron('OnRamp window already exists');
@@ -1155,7 +1155,7 @@ ipcMain.handle('onramp-window-close', () => {
 
   // Notify all other windows that it has been closed
   BrowserWindow.getAllWindows().forEach((win) => {
-    logger.electron('onramp-window-did-close to', win.id);
+    logger.electron(`onramp-window-did-close to ${win.id}`);
     win.webContents.send('onramp-window-did-close');
   });
 });
@@ -1165,7 +1165,7 @@ ipcMain.handle('onramp-transaction-success', () => {
 
   // Notify all other windows that the transaction was successful
   BrowserWindow.getAllWindows().forEach((win) => {
-    logger.electron('onramp-transaction-success to', win.id);
+    logger.electron(`onramp-transaction-success to ${win.id}`);
     win.webContents.send('onramp-transaction-success');
   });
 });
@@ -1175,7 +1175,7 @@ ipcMain.handle('onramp-transaction-failure', () => {
 
   // Notify all other windows that the transaction was failed
   BrowserWindow.getAllWindows().forEach((win) => {
-    logger.electron('onramp-transaction-failure to', win.id);
+    logger.electron(`onramp-transaction-failure to ${win.id}`);
     win.webContents.send('onramp-transaction-failure');
   });
 });
