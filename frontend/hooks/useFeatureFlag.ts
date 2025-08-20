@@ -94,7 +94,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'agent-settings': true,
     'bridge-onboarding': true,
     'bridge-add-funds': true,
-    'on-ramp': false,
+    'on-ramp': true,
   },
 });
 
