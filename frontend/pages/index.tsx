@@ -8,9 +8,7 @@ import { AgentSelection } from '@/components/AgentSelection';
 import { Main } from '@/components/MainPageV1';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { AddBackupWalletViaSafePage } from '@/components/Pages/AddBackupWalletViaSafePage';
-import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { RewardsHistory } from '@/components/RewardsHistory/RewardsHistory';
-import { Settings } from '@/components/SettingsPage';
 import { Setup } from '@/components/SetupPage';
 import { UpdateAgentPage } from '@/components/UpdateAgentPage';
 import { YourWalletPage } from '@/components/YourWalletPage';
@@ -35,10 +33,6 @@ export default function Home() {
         return <Main />;
       case Pages.SwitchAgent:
         return <AgentSelection onPrev={() => goto(Pages.Main)} />;
-      case Pages.Settings:
-        return <Settings />;
-      case Pages.HelpAndSupport:
-        return <HelpAndSupport />;
       case Pages.ManageStaking:
         return <ManageStakingPage />;
       case Pages.ManageWallet:
