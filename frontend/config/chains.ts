@@ -16,7 +16,7 @@ export type ChainConfig = {
   evmChainId: EvmChainId;
   middlewareChain: MiddlewareChainId;
   rpc: HttpUrl;
-  color: string;
+  color: `#${string}`;
   // TODO: the values are hardcoded, should be fetched from the backend
   /**
    * Least amount of native token required to create a Safe.
