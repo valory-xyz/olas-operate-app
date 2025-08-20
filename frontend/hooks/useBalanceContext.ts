@@ -8,6 +8,7 @@ import { TokenSymbolMap } from '@/constants/token';
 import { BalanceContext } from '@/context/BalanceProvider/BalanceProvider';
 import { WalletBalance } from '@/types/Balance';
 import { Maybe, Optional } from '@/types/Util';
+import { areAddressesEqual } from '@/utils/address';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { useBalanceAndRefillRequirementsContext } from './useBalanceAndRefillRequirementsContext';
@@ -227,8 +228,8 @@ export const useMasterBalances = () => {
 
   const masterEoaBalances = useMemo<Optional<WalletBalance[]>>(
     () =>
-      walletBalances?.filter(
-        ({ walletAddress }) => walletAddress === masterEoa?.address,
+      walletBalances?.filter(({ walletAddress }) =>
+        areAddressesEqual(walletAddress, masterEoa?.address),
       ),
     [masterEoa?.address, walletBalances],
   );
@@ -308,9 +309,9 @@ export const useMasterBalances = () => {
     return masterWalletBalances
       .filter(
         ({ walletAddress, isNative, evmChainId }) =>
-          walletAddress === masterEoa.address &&
           isNative &&
-          selectedAgentConfig.evmHomeChainId === evmChainId,
+          selectedAgentConfig.evmHomeChainId === evmChainId &&
+          areAddressesEqual(walletAddress, masterEoa.address),
       )
       .reduce((acc, { balance }) => acc + balance, 0);
   }, [masterEoa, masterWalletBalances, selectedAgentConfig.evmHomeChainId]);
@@ -327,9 +328,9 @@ export const useMasterBalances = () => {
       return masterWalletBalances
         .filter(
           ({ walletAddress, isNative, evmChainId }) =>
-            walletAddress === masterEoa.address &&
             isNative &&
-            chainId === evmChainId,
+            chainId === evmChainId &&
+            areAddressesEqual(walletAddress, masterEoa.address),
         )
         .reduce((acc, { balance }) => acc + balance, 0);
     },
