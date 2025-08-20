@@ -64,6 +64,15 @@ export const mainTheme: ThemeConfig = {
       fontSize: 16,
       colorError: '#CF1322',
     },
+    Segmented: {
+      trackPadding: 0,
+      trackBg: COLOR.GRAY_1,
+      itemHoverBg: COLOR.GRAY_3,
+      itemActiveBg: COLOR.GRAY_3,
+      borderRadiusLG: 10,
+      controlPaddingHorizontal: 16,
+      fontSizeLG: 16,
+    },
     Result: {
       iconFontSize: 48,
     },
