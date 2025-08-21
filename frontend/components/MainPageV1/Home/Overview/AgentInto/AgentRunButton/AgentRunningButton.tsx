@@ -8,11 +8,14 @@ import { ServicesService } from '@/service/Services';
 
 export const AgentRunningButton = () => {
   const { showNotification } = useElectronApi();
-  const { selectedService, overrideSelectedServiceStatus } = useServices();
+  const { selectedService, overrideSelectedServiceStatus, setPaused } =
+    useServices();
 
   const handlePause = useCallback(async () => {
     if (!selectedService) return;
 
+    // Paused to stop overlapping service poll while waiting for response
+    setPaused(true);
     // Optimistically update service status
     overrideSelectedServiceStatus(MiddlewareDeploymentStatusMap.STOPPING);
     try {
@@ -21,9 +24,16 @@ export const AgentRunningButton = () => {
       console.error(error);
       showNotification?.('Error while stopping agent');
     } finally {
+      // Resume polling, will update to correct status regardless of success
+      setPaused(false);
       overrideSelectedServiceStatus(null); // remove override
     }
-  }, [overrideSelectedServiceStatus, selectedService, showNotification]);
+  }, [
+    overrideSelectedServiceStatus,
+    selectedService,
+    setPaused,
+    showNotification,
+  ]);
 
   return (
     <Button type="default" size="large" onClick={handlePause}>
