@@ -52,7 +52,7 @@ export const Sidebar = () => {
     return services.reduce<{ name: string; agentType: string }[]>(
       (result, service) => {
         const agent = ACTIVE_AGENTS.find(
-          ([_, agentConfig]) =>
+          ([, agentConfig]) =>
             agentConfig.middlewareHomeChainId === service.home_chain,
         );
         if (!agent) return result;
@@ -66,6 +66,7 @@ export const Sidebar = () => {
   }, [services]);
 
   const handleAgentSelect: MenuProps['onClick'] = (info) => {
+    // eslint-disable-next-line no-console
     console.log('agent item clicked', info);
   };
 

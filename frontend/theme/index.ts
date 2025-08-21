@@ -30,6 +30,7 @@ export const mainTheme: ThemeConfig = {
       padding: 20,
       fontWeightStrong: 400,
       colorBorderSecondary: '#E4E4E4',
+      borderRadiusLG: 10,
     },
     Input: {
       fontSize: 20,
