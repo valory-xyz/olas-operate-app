@@ -55,10 +55,18 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
       onRampChainMap[fromChainName],
     );
 
-    // Native token from the bridge params (ie, refill requirements).
-    // If the on-ramp chain is the same as the home chain, we need to ADD the native token.
-    // e.g, For optimus, we need to add 0.01 ETH but the home chain is also Optimism.
-    // So, we don't set the native token amount to bridge as it is already in the same chain.
+    /**
+     * Calculate native token amount needed from direct requirements (not from bridging)
+     *
+     * When the source chain (where user is on-ramping) matches the destination chain:
+     *   - We need to include the native token amount in our total calculation.
+     *   - This amount won't go through bridging since it's already on the correct chain.
+     *
+     * Example: For Optimus on Optimism
+     *   - We need 0.01 ETH for agent operation.
+     *   - Since on-ramping is already on Optimism, this ETH will be directly funded.
+     *   - We add this to our total required amount (separate from bridge calculations)
+     */
     const nativeTokenAmount = bridgeParams.bridge_requests.find(
       (request) => request.to.token === AddressZero,
     )?.to.amount;
@@ -71,8 +79,6 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
       bridgeFundingRequirements.bridge_refill_requirements[toOnRampNetworkName];
     const nativeTokenFromBridgeQuote =
       bridgeRefillRequirements?.[masterEoa.address]?.[AddressZero];
-
-    console.log({ nativeTokenFromBridgeParams, nativeTokenFromBridgeQuote });
 
     if (!nativeTokenFromBridgeQuote) return;
 
