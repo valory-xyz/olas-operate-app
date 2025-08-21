@@ -166,22 +166,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsSwappingStepCompleted(completed);
   }, []);
 
-  // Listen for onramp window transaction success event to reset the loading state
-  useEffect(() => {
-    const handleTransactionSuccess = () => {
-      setIsOnRampingTransactionSuccessful(true);
-      delayInSeconds(0.5).then(() => onRampWindow?.close?.());
-    };
-
-    ipcRenderer?.on?.('onramp-transaction-success', handleTransactionSuccess);
-    return () => {
-      ipcRenderer?.removeListener?.(
-        'onramp-transaction-success',
-        handleTransactionSuccess,
-      );
-    };
-  }, [ipcRenderer, onRampWindow, updateIsBuyCryptoBtnLoading]);
-
   // Listen for onramp window transaction failure event to reset the loading state
   useEffect(() => {
     const handleTransactionFailure = () => {

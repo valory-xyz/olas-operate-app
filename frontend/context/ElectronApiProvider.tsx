@@ -57,6 +57,10 @@ type ElectronApiContextProps = {
   onRampWindow?: {
     show?: (amountToPay: number) => void;
     close?: () => void;
+    /**
+     * @deprecated On-ramp window will be closed automatically
+     * after the master EOA receives the funds.
+     */
     transactionSuccess?: () => void;
     transactionFailure?: () => void;
   };

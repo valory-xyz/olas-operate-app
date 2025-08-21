@@ -6,6 +6,7 @@ import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+import { delayInSeconds } from '@/utils/delay';
 
 type TransakEvent = {
   event: string;
@@ -45,6 +46,13 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
 
       if (eventDetails.data.event_id === 'TRANSAK_WIDGET_CLOSE') {
         onRampWindow?.close?.();
+      }
+
+      // Close the on-ramp window if the transaction fails
+      if (eventDetails.data.event_id === 'TRANSAK_ORDER_FAILED') {
+        delayInSeconds(3).then(() => {
+          onRampWindow?.transactionFailure?.();
+        });
       }
     };
 
