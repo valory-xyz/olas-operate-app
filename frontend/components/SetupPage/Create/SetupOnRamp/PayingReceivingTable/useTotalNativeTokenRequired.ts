@@ -56,16 +56,23 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     );
 
     // Native token from the bridge params (ie, refill requirements).
-    const nativeTokenFromBridgeParams = bridgeParams.bridge_requests.find(
+    // If the on-ramp chain is the same as the home chain, we need to ADD the native token.
+    // e.g, For optimus, we need to add 0.01 ETH but the home chain is also Optimism.
+    // So, we don't set the native token amount to bridge as it is already in the same chain.
+    const nativeTokenAmount = bridgeParams.bridge_requests.find(
       (request) => request.to.token === AddressZero,
     )?.to.amount;
+    const nativeTokenFromBridgeParams =
+      fromChainName === toOnRampNetworkName ? nativeTokenAmount : 0;
 
-    // Remaining native token from the bridge quote.
+    // Remaining token from the bridge quote.
     // e.g, For optimus, OLAS and USDC are bridged to ETH
     const bridgeRefillRequirements =
       bridgeFundingRequirements.bridge_refill_requirements[toOnRampNetworkName];
     const nativeTokenFromBridgeQuote =
       bridgeRefillRequirements?.[masterEoa.address]?.[AddressZero];
+
+    console.log({ nativeTokenFromBridgeParams, nativeTokenFromBridgeQuote });
 
     if (!nativeTokenFromBridgeQuote) return;
 
