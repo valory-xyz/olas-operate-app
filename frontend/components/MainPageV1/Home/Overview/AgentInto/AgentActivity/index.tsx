@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
+
 import { useAgentActivity } from '@/hooks/useAgentActivity';
+
+import { Container, CurrentActionText, Text, TopCorner } from './styles';
 import { AgentStatus } from './types';
-import { Container, CurrentActionText, TopCorner, Text } from './styles';
 
 export const AgentActivity = () => {
   const { deploymentDetails, isServiceRunning, isServiceDeploying } =

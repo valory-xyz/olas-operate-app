@@ -1,8 +1,8 @@
-import styled from "styled-components";
+import styled from 'styled-components';
 
-import { COLOR } from "@/constants/colors";
+import { COLOR } from '@/constants/colors';
 
-import { AgentStatus } from "./types";
+import { AgentStatus } from './types';
 
 const LINE_HEIGHT = 46;
 const CARD_MARGIN = 24;
@@ -13,10 +13,10 @@ const CARD_MARGIN = 24;
 
 const getContainerStylesByStatus = (status: AgentStatus) => {
   switch (status) {
-    case "loading":
-    case "activity-not-ready":
+    case 'loading':
+    case 'activity-not-ready':
       return `background: ${COLOR.PURPLE_LIGHT_2};`;
-    case "running":
+    case 'running':
       return `background: linear-gradient(180deg, ${COLOR.PURPLE_LIGHT_3} 80%, ${COLOR.PURPLE_LIGHT_4} 100%);`;
     default:
       return `background: ${COLOR.GRAY_4};`;
@@ -38,24 +38,28 @@ export const Container = styled.div<{
 
 const getTopCornerStylesByStatus = (status: AgentStatus) => {
   switch (status) {
-    case "loading":
-    case "activity-not-ready":
+    case 'loading':
+    case 'activity-not-ready':
       return `background: ${COLOR.PURPLE_LIGHT_2};`;
-    case "running":
+    case 'running':
       return `background: ${COLOR.PURPLE_LIGHT_3};`;
     default:
       return `background: ${COLOR.GRAY_4};`;
   }
 };
 
-const getTopCornerStylesByPosition = (position: "left" | "right") => 
-  position === 'left' ? `left: -${CARD_MARGIN - 1}px;` : `right: -${CARD_MARGIN - 1}px;`;
+const getTopCornerStylesByPosition = (position: 'left' | 'right') =>
+  position === 'left'
+    ? `left: -${CARD_MARGIN - 1}px;`
+    : `right: -${CARD_MARGIN - 1}px;`;
 
-const getTopCornerAfterStylesByPosition = (position: "left" | "right") => 
-  position === 'left' ? `left: 0; border-radius: 0 0 0 20px;` :  `right: 0; border-radius: 0 0 20px 0;`
+const getTopCornerAfterStylesByPosition = (position: 'left' | 'right') =>
+  position === 'left'
+    ? `left: 0; border-radius: 0 0 0 20px;`
+    : `right: 0; border-radius: 0 0 20px 0;`;
 
 export const TopCorner = styled.div<{
-  $position: "left" | "right";
+  $position: 'left' | 'right';
   $status: AgentStatus;
 }>`
   position: absolute;
@@ -66,7 +70,7 @@ export const TopCorner = styled.div<{
   ${({ $position }) => getTopCornerStylesByPosition($position)}
 
   &:after {
-    content: "";
+    content: '';
     position: absolute;
     bottom: 0;
     height: ${CARD_MARGIN}px;
@@ -82,13 +86,13 @@ export const TopCorner = styled.div<{
 
 const getTextStylesByStatus = (status: AgentStatus) => {
   switch (status) {
-    case "loading":
-    case "activity-not-ready":
+    case 'loading':
+    case 'activity-not-ready':
       return `
         color: ${COLOR.TEXT_INFO};
         margin: auto;
       `;
-    case "running":
+    case 'running':
       return `color: ${COLOR.PURPLE};`;
     default:
       return `
