@@ -519,7 +519,7 @@ function createAndLoadSslCertificate() {
 }
 
 /**
- * Create the on-ramping window for displaying transak widget
+ * Create the on-ramping window for displaying transak iframe
  */
 /** @type {()=>Promise<BrowserWindow|undefined>} */
 const createOnRampWindow = async (amountToPay) => {
