@@ -1,12 +1,16 @@
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { Card, Flex, Typography } from 'antd';
+import { useEffect, useState } from 'react';
+import { useIsMounted } from 'usehooks-ts';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import {
   FAQ_URL,
+  GITHUB_API_RELEASES,
   SUPPORT_URL,
   TERMS_AND_CONDITIONS_URL,
 } from '@/constants/urls';
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 
 import { CardTitle } from '../Card/CardTitle';
@@ -30,6 +34,25 @@ const SettingsTitle = () => (
 
 export const HelpAndSupport = () => {
   const { isUserLoggedIn } = usePageState();
+  const [latestTag, setLatestTag] = useState<string | null>(null);
+  const { getAppVersion } = useElectronApi();
+  const isMounted = useIsMounted();
+
+  useEffect(() => {
+    const getTag = async () => {
+      if (typeof getAppVersion !== 'function') return;
+      try {
+        const version = await getAppVersion();
+        if (version && isMounted()) {
+          setLatestTag(version);
+        }
+      } catch (error) {
+        console.error('Failed to get app version:', error);
+      }
+    };
+
+    getTag();
+  }, [getAppVersion, isMounted]);
 
   return (
     <Card
@@ -45,6 +68,16 @@ export const HelpAndSupport = () => {
         <a target="_blank" href={FAQ_URL} className="mb-8">
           Read FAQ {UNICODE_SYMBOLS.EXTERNAL_LINK}
         </a>
+        {latestTag && (
+          <a
+            href={`${GITHUB_API_RELEASES}/tag/v${latestTag}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mb-8"
+          >
+            Release notes {UNICODE_SYMBOLS.EXTERNAL_LINK}
+          </a>
+        )}
         <a target="_blank" href={TERMS_AND_CONDITIONS_URL}>
           Terms and Conditions {UNICODE_SYMBOLS.EXTERNAL_LINK}
         </a>

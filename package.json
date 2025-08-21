@@ -5,7 +5,6 @@
     "@ant-design/icons": "^5.3.0",
     "@fontsource/inter": "^5.0.17",
     "@tanstack/react-query": "^5.29.0",
-    "@transak/transak-sdk": "^3.2.0",
     "adm-zip": "^0.5.12",
     "antd": "^5.14.0",
     "axios": "^1.7.7",
@@ -78,7 +77,7 @@
     "start:frontend": "cd frontend && yarn start",
     "test:frontend": "cd frontend && yarn test"
   },
-  "version": "0.2.0-rc334",
+  "version": "0.2.0-rc336",
   "engine": {
     "node": ">=20",
     "yarn": ">=1.22.0",
