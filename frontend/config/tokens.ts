@@ -96,20 +96,6 @@ const BASE_TOKEN_CONFIG: ChainTokenConfig = {
   },
 } as const;
 
-const CELO_TOKEN_CONFIG: ChainTokenConfig = {
-  [TokenSymbol.ETH]: {
-    tokenType: TokenType.NativeGas,
-    decimals: 18,
-    symbol: TokenSymbol.ETH,
-  },
-  [TokenSymbol.OLAS]: {
-    address: '0xaCFfAe8e57Ec6E394Eb1b41939A8CF7892DbDc51',
-    decimals: 18,
-    tokenType: TokenType.Erc20,
-    symbol: TokenSymbol.OLAS,
-  },
-} as const;
-
 export const MODE_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbol.ETH]: {
     tokenType: TokenType.NativeGas,
@@ -169,10 +155,14 @@ export const TOKEN_CONFIG: Record<EvmChainId, ChainTokenConfig> = {
   [EvmChainId.Gnosis]: GNOSIS_TOKEN_CONFIG,
   [EvmChainId.Base]: BASE_TOKEN_CONFIG,
   [EvmChainId.Mode]: MODE_TOKEN_CONFIG,
-  [EvmChainId.Celo]: CELO_TOKEN_CONFIG,
   [EvmChainId.Optimism]: OPTIMISM_TOKEN_CONFIG,
 } as const;
 
+type ChainErc20TokenConfig = {
+  [chainId in EvmChainId]: {
+    [tokenSymbol: string]: Erc20TokenConfig;
+  };
+};
 /**
  * @note This is a mapping of all ERC20 tokens on each chain.
  */
@@ -185,12 +175,13 @@ export const ERC20_TOKEN_CONFIG = Object.fromEntries(
       ),
     ),
   ]),
-) as {
+) as ChainErc20TokenConfig;
+
+type ChainNativeTokenConfig = {
   [chainId in EvmChainId]: {
-    [tokenSymbol: string]: Erc20TokenConfig;
+    [tokenSymbol: string]: NativeTokenConfig;
   };
 };
-
 /**
  * @note This is a mapping of all native tokens on each chain.
  */
@@ -203,11 +194,7 @@ export const NATIVE_TOKEN_CONFIG = Object.fromEntries(
       ),
     ),
   ]),
-) as {
-  [chainId in EvmChainId]: {
-    [tokenSymbol: string]: NativeTokenConfig;
-  };
-};
+) as ChainNativeTokenConfig;
 
 export const getNativeTokenSymbol = (chainId: EvmChainId): TokenSymbol =>
   Object.keys(NATIVE_TOKEN_CONFIG[chainId])[0] as TokenSymbol;
