@@ -71,11 +71,11 @@ export abstract class AgentsFunService extends StakedAgentService {
 
     const isServiceStaked = serviceInfo[2].length > 0;
 
+    const safetyMargin = 1e18 + REQUESTS_SAFETY_MARGIN;
     const requiredRequests =
       (Math.ceil(Math.max(livenessPeriod, nowInSeconds - tsCheckpoint)) *
         livenessRatio) /
-      1e18 +
-      REQUESTS_SAFETY_MARGIN;
+      safetyMargin;
 
     let isEligibleForRewards = false;
 
