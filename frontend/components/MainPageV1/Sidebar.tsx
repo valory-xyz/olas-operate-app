@@ -4,15 +4,22 @@ import {
   SettingOutlined,
 } from '@ant-design/icons';
 import { Button, Flex, Layout, Menu, MenuProps, Spin, Typography } from 'antd';
+import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
+import { CHAIN_CONFIG } from '@/config/chains';
+import { EvmChainId } from '@/constants/chains';
 import { TOP_BAR_HEIGHT } from '@/constants/width';
+import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
+import { SetupScreen } from '@/enums/SetupScreen';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
+import { useSetup } from '@/hooks/useSetup';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -41,43 +48,65 @@ const Content = styled.div`
 `;
 
 export const Sidebar = () => {
-  const { goto } = usePageState();
+  const { goto: gotoSetup } = useSetup();
+  const { goto: gotoPage } = usePageState();
 
   // TODO: in order for predict to display correctly,
   // we need to create a dummy service before going to main page
-  const { services, isLoading, selectedAgentType } = useServices();
+  const { services, isLoading, selectedAgentType, updateAgentType } =
+    useServices();
+
+  const { masterSafes, isLoading: isMasterWalletLoading } =
+    useMasterWalletContext();
 
   const myAgents = useMemo(() => {
     if (!services) return [];
-    return services.reduce<{ name: string; agentType: string }[]>(
-      (result, service) => {
-        const agent = ACTIVE_AGENTS.find(
-          ([, agentConfig]) =>
-            agentConfig.middlewareHomeChainId === service.home_chain,
-        );
-        if (!agent) return result;
+    return services.reduce<
+      {
+        name: string;
+        agentType: string;
+        chainName: string;
+        chainId: EvmChainId;
+      }[]
+    >((result, service) => {
+      const agent = ACTIVE_AGENTS.find(
+        ([, agentConfig]) =>
+          agentConfig.middlewareHomeChainId === service.home_chain,
+      );
+      if (!agent) return result;
 
-        const [agentType, agentConfig] = agent;
-        result.push({ name: agentConfig.name, agentType });
-        return result;
-      },
-      [],
-    );
+      const [agentType, agentConfig] = agent;
+      const chainId = agentConfig.evmHomeChainId;
+      const chainName = CHAIN_CONFIG[chainId].name;
+      result.push({ name: agentConfig.name, agentType, chainName, chainId });
+      return result;
+    }, []);
   }, [services]);
 
   const handleAgentSelect: MenuProps['onClick'] = (info) => {
-    // eslint-disable-next-line no-console
-    console.log('agent item clicked', info);
+    updateAgentType(info.key as AgentType);
+
+    const agent = myAgents.find((item) => item.agentType === info.key);
+    const isSafeCreated = masterSafes?.find(
+      (masterSafe) => masterSafe.evmChainId === agent?.chainId,
+    );
+
+    // TODO: make back button on funding screen properly sending back to main
+    // if was redirected from here
+    if (!isSafeCreated) {
+      gotoPage(Pages.Setup);
+      gotoSetup(SetupScreen.SetupEoaFundingIncomplete);
+    }
   };
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     switch (key) {
       case 'help': {
-        goto(Pages.HelpAndSupport);
+        gotoPage(Pages.HelpAndSupport);
         return;
       }
       case 'settings': {
-        goto(Pages.Settings);
+        gotoPage(Pages.Settings);
         return;
       }
     }
@@ -96,7 +125,7 @@ export const Sidebar = () => {
             />
           </Flex>
           <Text className="font-weight-600">My Agents</Text>
-          {isLoading ? (
+          {isLoading || isMasterWalletLoading ? (
             <Spin />
           ) : myAgents.length > 0 ? (
             <Menu
@@ -114,18 +143,33 @@ export const Sidebar = () => {
                     alt={agent.name}
                   />
                 ),
-                label: agent.name,
+                label: (
+                  <Flex justify="space-between" align="center">
+                    {agent.name}{' '}
+                    <Image
+                      src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
+                      width={14}
+                      height={14}
+                      alt={`${agent.chainName} logo`}
+                    />
+                  </Flex>
+                ),
               }))}
             />
           ) : null}
-          <Button
-            size="large"
-            className="self-center w-max"
-            onClick={() => goto(Pages.SwitchAgent)}
-            icon={<PlusOutlined />}
-          >
-            Add New Agent
-          </Button>
+          {myAgents.length < ACTIVE_AGENTS.length && (
+            <Button
+              size="large"
+              className="self-center w-max"
+              onClick={() => {
+                gotoPage(Pages.Setup);
+                gotoSetup(SetupScreen.AgentOnboarding);
+              }}
+              icon={<PlusOutlined />}
+            >
+              Add New Agent
+            </Button>
+          )}
 
           <Menu
             mode="inline"
