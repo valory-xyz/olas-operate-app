@@ -97,7 +97,6 @@ const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
   memeooorr: AGENTS_FUND_ONBOARDING_STEPS,
   modius: MODIUS_ONBOARDING_STEPS,
   optimus: OPTIMUS_ONBOARDING_STEPS,
-  'agents-fun-celo': [], // TODO: remove once agents-fun-celo is removed
 };
 
 /**
