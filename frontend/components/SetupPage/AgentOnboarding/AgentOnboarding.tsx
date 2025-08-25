@@ -95,6 +95,7 @@ const SelectYourAgentList = ({
           width={36}
           height={36}
           alt={agentConfig.displayName}
+          style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
         />
 
         <Flex>
@@ -153,12 +154,6 @@ export const AgentOnboarding = () => {
       return;
     }
 
-    // if agent is under construction, goes back to agent selection
-    if (currentAgentConfig.isUnderConstruction) {
-      gotoPage(Pages.SwitchAgent);
-      return;
-    }
-
     // if the selected type requires setting up an agent,
     // should be redirected to setup screen.
     if (currentAgentConfig.requiresSetup) {
@@ -194,9 +189,9 @@ export const AgentOnboarding = () => {
             desc={steps[onboardingStep].desc}
             imgSrc={steps[onboardingStep].imgSrc}
             helper={steps[onboardingStep].helper}
-            renderFundingRequirements={() =>
+            renderFundingRequirements={(desc) =>
               selectedAgent ? (
-                <FundingRequirementStep agentType={selectedAgent} />
+                <FundingRequirementStep agentType={selectedAgent} desc={desc} />
               ) : null
             }
             onPrev={onboardingStep === 0 ? undefined : onPreviousStep}

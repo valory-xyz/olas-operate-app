@@ -2,7 +2,6 @@ import { OnboardingStep } from './IntroductionStep';
 
 export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    title: 'Market opportunity finder',
     desc: 'An autonomous AI agent that interacts with decentralized prediction markets — platforms where users trade on the outcomes of future events.',
   },
   {
