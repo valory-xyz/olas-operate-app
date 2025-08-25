@@ -3,6 +3,10 @@ import { OnboardingStep } from './IntroductionStep';
 export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: 'Market opportunity finder',
+    desc: 'An autonomous AI agent that interacts with decentralized prediction markets — platforms where users trade on the outcomes of future events.',
+  },
+  {
+    title: 'Market opportunity finder',
     desc: 'Prediction agents actively scan prediction markets to identify new opportunities for investment.',
     imgSrc: 'setup-agent-prediction-1',
   },
@@ -18,7 +22,7 @@ export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
   },
 ] as const;
 
-export const AGENTS_FUND_ONBOARDING_STEPS: OnboardingStep[] = [
+export const AGENTS_FUN_ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: 'Your personal AI influencer',
     desc: 'Create a custom persona, and your agent will post autonomously on X, crafting engaging content to match the character you design',

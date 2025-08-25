@@ -314,7 +314,7 @@ const createMainWindow = async () => {
     frame: false,
     transparent: true,
     fullscreenable: false,
-    maximizable: false,
+    maximizable: true,
     width: APP_WIDTH,
     height: APP_HEIGHT,
     webPreferences: {

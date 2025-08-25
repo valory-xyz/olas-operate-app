@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useCallback, useState } from 'react';
 import styled from 'styled-components';
 
-import { ACTIVE_AGENTS } from '@/config/agents';
+import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { COLOR } from '@/constants/colors';
 import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
@@ -12,21 +12,33 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { Optional } from '@/types/Util';
+import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import {
-  AGENTS_FUND_ONBOARDING_STEPS,
+  AGENTS_FUN_ONBOARDING_STEPS,
   MODIUS_ONBOARDING_STEPS,
   OPTIMUS_ONBOARDING_STEPS,
   PREDICTION_ONBOARDING_STEPS,
 } from './constants';
+import { FundingRequirementStep } from './FundingRequirementStep';
 import { IntroductionStep, OnboardingStep } from './IntroductionStep';
 
 const { Text, Title } = Typography;
 
 const Container = styled(Flex)`
+  width: 840px;
   margin: 16px auto 0 auto;
   border-radius: 8px;
   background-color: ${COLOR.WHITE};
+  .agent-selection-left-content {
+    width: 380px;
+    border-right: 1px solid ${COLOR.GRAY_4};
+  }
+  .agent-selection-right-content {
+    width: 460px;
+    min-height: 600px;
+    overflow: hidden;
+  }
 `;
 
 const Dot = styled.div<{ color?: string }>`
@@ -94,7 +106,7 @@ const SelectYourAgentList = ({
 
 const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
   trader: PREDICTION_ONBOARDING_STEPS,
-  memeooorr: AGENTS_FUND_ONBOARDING_STEPS,
+  memeooorr: AGENTS_FUN_ONBOARDING_STEPS,
   modius: MODIUS_ONBOARDING_STEPS,
   optimus: OPTIMUS_ONBOARDING_STEPS,
 };
@@ -104,8 +116,8 @@ const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
  */
 export const AgentOnboarding = () => {
   const { goto } = useSetup();
+  const { services } = useServices();
   const { goto: gotoPage } = usePageState();
-  const { selectedAgentConfig } = useServices();
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
   const [onboardingStep, setOnboardingStep] = useState(0);
 
@@ -122,25 +134,39 @@ export const AgentOnboarding = () => {
   }, [onboardingStep]);
 
   const handleAgentSelect = useCallback(() => {
+    if (!selectedAgent) return;
+    const currentAgentConfig = AGENT_CONFIG[selectedAgent];
+
+    // if already exists
+    const isAccountCreated = services?.find(
+      (service) =>
+        asEvmChainId(service.home_chain) === currentAgentConfig.evmHomeChainId,
+    );
+    if (isAccountCreated) {
+      gotoPage(Pages.Main);
+      return;
+    }
+
     // if agent is "coming soon" should be redirected to EARLY ACCESS PAGE
-    if (selectedAgentConfig.isComingSoon) {
+    if (currentAgentConfig.isComingSoon) {
       goto(SetupScreen.EarlyAccessOnly);
       return;
     }
 
     // if agent is under construction, goes back to agent selection
-    if (selectedAgentConfig.isUnderConstruction) {
+    if (currentAgentConfig.isUnderConstruction) {
       gotoPage(Pages.SwitchAgent);
+      return;
     }
 
     // if the selected type requires setting up an agent,
     // should be redirected to setup screen.
-    if (selectedAgentConfig.requiresSetup) {
+    if (currentAgentConfig.requiresSetup) {
       goto(SetupScreen.SetupYourAgent);
     } else {
       goto(SetupScreen.SetupEoaFunding);
     }
-  }, [goto, gotoPage, selectedAgentConfig]);
+  }, [goto, gotoPage, selectedAgent, services]);
 
   const handleSelectYourAgent = useCallback((agentType: AgentType) => {
     setSelectedAgent(agentType as AgentType);
@@ -149,10 +175,7 @@ export const AgentOnboarding = () => {
 
   return (
     <Container>
-      <Flex
-        vertical
-        style={{ width: 380, borderRight: `1px solid ${COLOR.GRAY_4}` }}
-      >
+      <Flex vertical className="agent-selection-left-content">
         <SelectYourAgent />
         <SelectYourAgentList
           onSelectYourAgent={handleSelectYourAgent}
@@ -160,7 +183,7 @@ export const AgentOnboarding = () => {
         />
       </Flex>
 
-      <Flex style={{ width: 460, minHeight: 600 }}>
+      <Flex className="agent-selection-right-content">
         {steps.length === 0 ? (
           <Flex align="center" justify="center" className="w-full">
             <Text>Select an agent.</Text>
@@ -171,6 +194,11 @@ export const AgentOnboarding = () => {
             desc={steps[onboardingStep].desc}
             imgSrc={steps[onboardingStep].imgSrc}
             helper={steps[onboardingStep].helper}
+            renderFundingRequirements={() =>
+              selectedAgent ? (
+                <FundingRequirementStep agentType={selectedAgent} />
+              ) : null
+            }
             onPrev={onboardingStep === 0 ? undefined : onPreviousStep}
             onNext={
               onboardingStep === steps.length - 1 ? undefined : onNextStep
