@@ -22,6 +22,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
   service_version: 'v0.26.0',
+  agent_release: {
+    "is_aea": true,
+    "repo_owner": "valory",
+    "repo_name": "trader",
+    "version": 'v0.0.1001'
+  },
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
