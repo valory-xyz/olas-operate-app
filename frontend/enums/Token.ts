@@ -6,6 +6,5 @@ export enum TokenSymbol {
   OLAS = 'OLAS',
   USDC = 'USDC',
   XDAI = 'XDAI',
-  CELO = 'CELO',
   WXDAI = 'WXDAI',
 }

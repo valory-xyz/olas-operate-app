@@ -106,19 +106,4 @@ export const AGENT_CONFIG: {
       'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
     hasExternalFunds: false,
   },
-  // TODO: celo (check each key)
-  [AgentType.AgentsFunCelo]: {
-    isAgentEnabled: false,
-    requiresSetup: true,
-    name: 'Agents.fun agent (Celo)',
-    evmHomeChainId: EvmChainId.Celo,
-    middlewareHomeChainId: MiddlewareChain.CELO,
-    requiresAgentSafesOn: [EvmChainId.Celo],
-    requiresMasterSafesOn: [EvmChainId.Celo],
-    serviceApi: AgentsFunBaseService,
-    displayName: 'Agents.fun agent - Celo',
-    description:
-      'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Celo chain.',
-    hasExternalFunds: false,
-  },
 };

@@ -3,7 +3,6 @@ import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { BASE_STAKING_PROGRAMS } from '@/config/stakingPrograms/base';
-import { CELO_STAKING_PROGRAMS } from '@/config/stakingPrograms/celo';
 import { PROVIDERS } from '@/constants/providers';
 import { EvmChainId } from '@/enums/Chain';
 import { StakingProgramId } from '@/enums/StakingProgram';
@@ -72,11 +71,11 @@ export abstract class AgentsFunService extends StakedAgentService {
 
     const isServiceStaked = serviceInfo[2].length > 0;
 
+    const effectivePeriod = Math.ceil(
+      Math.max(livenessPeriod, nowInSeconds - tsCheckpoint),
+    );
     const requiredRequests =
-      (Math.ceil(Math.max(livenessPeriod, nowInSeconds - tsCheckpoint)) *
-        livenessRatio) /
-        1e18 +
-      REQUESTS_SAFETY_MARGIN;
+      (effectivePeriod * livenessRatio) / 1e18 + REQUESTS_SAFETY_MARGIN;
 
     let isEligibleForRewards = false;
 
@@ -202,8 +201,6 @@ export abstract class AgentsFunService extends StakedAgentService {
     const { multicallProvider } = PROVIDERS[chainId];
 
     const getStakingTokenConfig = () => {
-      if (chainId === EvmChainId.Celo)
-        return CELO_STAKING_PROGRAMS[stakingProgramId];
       if (chainId === EvmChainId.Base)
         return BASE_STAKING_PROGRAMS[stakingProgramId];
       return null;

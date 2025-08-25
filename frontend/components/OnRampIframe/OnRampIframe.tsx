@@ -45,19 +45,12 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
       );
 
       if (eventDetails.data.event_id === 'TRANSAK_WIDGET_CLOSE') {
-        onRampWindow?.hide?.();
+        onRampWindow?.close?.();
       }
 
-      // This will trigger when the user marks payment is made.
-      // User can close/navigate away at this event.
-      if (eventDetails.data.event_id === 'TRANSAK_ORDER_SUCCESSFUL') {
-        delayInSeconds(7.5).then(() => {
-          onRampWindow?.transactionSuccess?.();
-        });
-      }
-
+      // Close the on-ramp window if the transaction fails
       if (eventDetails.data.event_id === 'TRANSAK_ORDER_FAILED') {
-        delayInSeconds(7.5).then(() => {
+        delayInSeconds(3).then(() => {
           onRampWindow?.transactionFailure?.();
         });
       }

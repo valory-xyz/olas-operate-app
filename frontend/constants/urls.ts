@@ -23,8 +23,6 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
     'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/9etc5Ht8eQGghXrkbWJk2yMzNypCFTL46m1iLXqE2rnq',
   [EvmChainId.Mode]:
     'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/Fe6oYUKbSGP7a16NowseTU82MVG9D2xWbBUCz4MPB4d4',
-  [EvmChainId.Celo]:
-    'https://api.studio.thegraph.com/query/67875/olas-celo-staking/version/latest',
   [EvmChainId.Optimism]:
     'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/2fe1izA4aVvBHVwbPzP1BqxLkoR9ebygWM9iHXwLCnPE',
 };
@@ -54,7 +52,6 @@ export const GEMINI_API_URL: string = 'https://aistudio.google.com/app/apikey';
 const GNOSIS_EXPLORER_URL: Url = 'https://gnosisscan.io';
 const BASE_EXPLORER_URL: Url = 'https://basescan.org';
 const MODE_EXPLORER_URL: Url = 'https://modescan.io';
-const CELO_EXPLORER_URL: Url = 'https://celoscan.io';
 const OPTIMISM_EXPLORER_URL: Url = 'https://optimistic.etherscan.io';
 
 export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
@@ -64,7 +61,6 @@ export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChain.GNOSIS]: GNOSIS_EXPLORER_URL,
   [MiddlewareChain.BASE]: BASE_EXPLORER_URL,
   [MiddlewareChain.MODE]: MODE_EXPLORER_URL,
-  [MiddlewareChain.CELO]: CELO_EXPLORER_URL,
   [MiddlewareChain.OPTIMISM]: OPTIMISM_EXPLORER_URL,
 };
 
@@ -75,7 +71,6 @@ export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChain.GNOSIS]: 'https://gnosis.blockscout.com',
   [MiddlewareChain.BASE]: 'https://base.blockscout.com',
   [MiddlewareChain.MODE]: 'https://explorer.mode.network',
-  [MiddlewareChain.CELO]: 'https://celo.blockscout.com',
   [MiddlewareChain.OPTIMISM]: 'https://optimism.blockscout.com',
 };
 
@@ -85,8 +80,6 @@ const COW_SWAP_GNOSIS_XDAI_OLAS_URL: Url =
 const SWAP_BASE_URL: Url = 'https://balancer.fi/swap/base/ETH/OLAS';
 const SWAP_MODE_URL: Url =
   'https://balancer.fi/swap/mode/0xd988097fb8612cc24eec14542bc03424c656005f/0xcfd1d50ce23c46d3cf6407487b2f8934e96dc8f9';
-const SWAP_CELO_URL: Url =
-  'https://app.ubeswap.org/#/swap?inputCurrency=0x471ece3750da237f93b8e339c536989b8978a438&outputCurrency=0xacffae8e57ec6e394eb1b41939a8cf7892dbdc51';
 const SWAP_OPTIMISM_URL: Url =
   'https://balancer.fi/pools/optimism/v2/0x5bb3e58887264b667f915130fd04bbb56116c27800020000000000000000012a';
 
@@ -94,7 +87,6 @@ export const SWAP_URL_BY_EVM_CHAIN: Record<EvmChainId, Url> = {
   [EvmChainId.Gnosis]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
   [EvmChainId.Base]: SWAP_BASE_URL,
   [EvmChainId.Mode]: SWAP_MODE_URL,
-  [EvmChainId.Celo]: SWAP_CELO_URL,
   [EvmChainId.Optimism]: SWAP_OPTIMISM_URL,
 };
 

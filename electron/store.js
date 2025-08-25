@@ -26,7 +26,6 @@ const schema = {
       isProfileWarningDisplayed: false,
     },
   },
-  agentsFunCelo: { type: 'object', default: defaultInitialAgentSettings },
   optimus: { type: 'object', default: defaultInitialAgentSettings },
 };
 
