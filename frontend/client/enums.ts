@@ -17,7 +17,6 @@ export enum MiddlewareChain {
   OPTIMISM = 'optimism',
   BASE = 'base',
   MODE = 'mode',
-  CELO = 'celo',
 }
 
 /**
@@ -28,7 +27,6 @@ const MIDDLEWARE_CHAINS = {
   optimism: MiddlewareChain.OPTIMISM,
   base: MiddlewareChain.BASE,
   mode: MiddlewareChain.MODE,
-  celo: MiddlewareChain.CELO,
 } as const;
 
 /**

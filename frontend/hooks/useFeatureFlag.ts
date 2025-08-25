@@ -57,19 +57,6 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-add-funds': false,
     'on-ramp': false,
   },
-  [AgentType.AgentsFunCelo]: {
-    'manage-wallet': true,
-    'withdraw-funds': true,
-    'last-transactions': false,
-    'rewards-streak': false,
-    'staking-contract-section': false,
-    'agent-activity': true,
-    'backup-via-safe': true,
-    'agent-settings': false,
-    'bridge-onboarding': false,
-    'bridge-add-funds': false,
-    'on-ramp': false,
-  },
   [AgentType.Modius]: {
     'manage-wallet': true,
     'withdraw-funds': true,
@@ -81,7 +68,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'agent-settings': true,
     'bridge-onboarding': true,
     'bridge-add-funds': true,
-    'on-ramp': false,
+    'on-ramp': true,
   },
   [AgentType.Optimus]: {
     'manage-wallet': true,
@@ -94,7 +81,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'agent-settings': true,
     'bridge-onboarding': true,
     'bridge-add-funds': true,
-    'on-ramp': false,
+    'on-ramp': true,
   },
 });
 

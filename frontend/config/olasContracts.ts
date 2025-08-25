@@ -53,23 +53,11 @@ const OPTIMISM_OLAS_CONTRACTS: ContractsByType = {
   ),
 };
 
-const CELO_OLAS_CONTRACTS: ContractsByType = {
-  [ContractType.ServiceRegistryL2]: new MulticallContract(
-    '0xE3607b00E75f6405248323A9417ff6b39B244b50',
-    SERVICE_REGISTRY_L2_ABI,
-  ),
-  [ContractType.ServiceRegistryTokenUtility]: new MulticallContract(
-    '0x3d77596beb0f130a4415df3D2D8232B3d3D31e44',
-    SERVICE_REGISTRY_TOKEN_UTILITY_ABI,
-  ),
-};
-
 export const OLAS_CONTRACTS: {
   [evmHomeChainId in EvmChainId]: ContractsByType;
 } = {
   [EvmChainId.Gnosis]: GNOSIS_OLAS_CONTRACTS,
   [EvmChainId.Base]: BASE_OLAS_CONTRACTS,
   [EvmChainId.Mode]: MODE_OLAS_CONTRACTS,
-  [EvmChainId.Celo]: CELO_OLAS_CONTRACTS,
   [EvmChainId.Optimism]: OPTIMISM_OLAS_CONTRACTS,
 };

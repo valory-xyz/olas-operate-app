@@ -55,8 +55,11 @@ type ElectronApiContextProps = {
   agentActivityWindow?: Partial<ElectronApiAgentActivityWindow>;
   onRampWindow?: {
     show?: (amountToPay: number) => void;
-    hide?: () => void;
     close?: () => void;
+    /**
+     * @deprecated On-ramp window will be closed automatically
+     * after the master EOA receives the funds.
+     */
     transactionSuccess?: () => void;
     transactionFailure?: () => void;
   };
@@ -95,7 +98,6 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   },
   onRampWindow: {
     show: () => {},
-    hide: () => {},
     transactionSuccess: () => {},
   },
   logEvent: () => {},
@@ -150,7 +152,6 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         onRampWindow: {
           show: getElectronApiFunction('onRampWindow.show'),
-          hide: getElectronApiFunction('onRampWindow.hide'),
           close: getElectronApiFunction('onRampWindow.close'),
           transactionSuccess: getElectronApiFunction(
             'onRampWindow.transactionSuccess',

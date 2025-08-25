@@ -252,39 +252,12 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
   ...AGENTS_FUN_COMMON_TEMPLATE,
 } as const;
 
-// TODO: celo template (check each key)
-/**
- * Agents.fun Celo template
- */
-export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.AgentsFunCelo,
-  name: 'Agents.Fun - Celo',
-  home_chain: MiddlewareChain.CELO,
-  configurations: {
-    [MiddlewareChain.CELO]: {
-      staking_program_id: STAKING_PROGRAM_IDS.MemeCeloAlpha2, // default, may be overwritten
-      nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-      rpc: 'http://localhost:8545', // overwritten
-      agent_id: 43,
-      cost_of_bond: +parseEther(50), // TODO: celo
-      monthly_gas_estimate: +parseEther(0.03), // TODO: celo
-      fund_requirements: {
-        [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.00625), // TODO: celo
-          safe: +parseEther(0.0125), // TODO: celo
-        },
-      },
-    },
-  },
-  ...AGENTS_FUN_COMMON_TEMPLATE,
-} as const;
-
 const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version'
 > = {
-  hash: 'bafybeigutmhw2fkjyxi6mrc3ud2hxus7pefliq3nb65z63gmiwzgyis3be',
-  service_version: 'v0.5.1',
+  hash: 'bafybeif43dhf2s4vzulscbxu5jbt5uv3chotrj7hqkhqixvvjwbx2ijyhi',
+  service_version: 'v0.5.2',
 };
 
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
@@ -601,7 +574,6 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
   PREDICT_SERVICE_TEMPLATE,
   AGENTS_FUN_BASE_TEMPLATE,
   MODIUS_SERVICE_TEMPLATE,
-  AGENTS_FUN_CELO_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
 ] as const;
 
