@@ -9,7 +9,7 @@ import {
 } from '@/config/stakingPrograms';
 import { AgentType } from '@/constants/agent';
 import { COLOR } from '@/constants/colors';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
+import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { AnimatedContent } from './AnimatedContent';
 
@@ -79,14 +79,10 @@ type MinimumStakingRequirementsProps = {
 const MinimumStakingRequirements = ({
   agentType,
 }: MinimumStakingRequirementsProps) => {
-  const { evmHomeChainId, middlewareHomeChainId } = AGENT_CONFIG[agentType];
+  const { evmHomeChainId } = AGENT_CONFIG[agentType];
   const stakingProgramId = DEFAULT_STAKING_PROGRAM_IDS[evmHomeChainId];
   const stakingRequirements =
     STAKING_PROGRAMS[evmHomeChainId][stakingProgramId].stakingRequirements;
-  // console.log('abcd', abcd);
-  // const stakingRequirements = SERVICE_TEMPLATES.find(
-  //   (template) => template.home_chain === middlewareHomeChainId,
-  // )?.configurations?.[middlewareHomeChainId]?.staking_program_id;
 
   return (
     <Flex vertical gap={8}>
@@ -104,7 +100,7 @@ const MinimumStakingRequirements = ({
               {amount} {token}
             </Text>
 
-            {/* TODO */}
+            {/* TODO: get real time conversion to USD */}
             <Text type="secondary" className="text-sm">
               (~${(amount * 0.283).toFixed(2)})
             </Text>
@@ -121,20 +117,34 @@ type MinimumFundingRequirementsProps = {
 const MinimumFundingRequirements = ({
   agentType,
 }: MinimumFundingRequirementsProps) => {
-  const { displayName } = AGENT_CONFIG[agentType];
+  const { middlewareHomeChainId, additionalRequirements } =
+    AGENT_CONFIG[agentType];
+  const chainId = asEvmChainId(middlewareHomeChainId);
+  const otherRequirements = additionalRequirements?.[chainId];
+
   return (
     <Flex vertical gap={8}>
       <Text type="secondary">Minimum funding requirement</Text>
-      <Text className="text-tag">
-        <Image
-          src={`/tokens/wxdai-icon.png`}
-          // src={`/tokens/${name}-token.png`}
-          width={24}
-          height={24}
-          alt={displayName}
-        />
-        11 XDAI (~$11.48)
-      </Text>
+      <Flex vertical className="text-tag">
+        {entries(otherRequirements).map(([token, amount]) => (
+          <Flex key={token} gap={8} align="flex-start">
+            <Image
+              src={`/tokens/${token.toLowerCase()}-icon.png`}
+              alt={`${token} token`}
+              width={24}
+              height={24}
+            />
+            <Text>
+              {amount} {token}
+            </Text>
+
+            {/* TODO: get real time conversion to USD */}
+            <Text type="secondary" className="text-sm">
+              (~${(amount * 0.283).toFixed(2)})
+            </Text>
+          </Flex>
+        ))}
+      </Flex>
     </Flex>
   );
 };
