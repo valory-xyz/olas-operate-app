@@ -91,10 +91,12 @@ export const Sidebar = () => {
       (masterSafe) => masterSafe.evmChainId === agent?.chainId,
     );
 
-    // TODO: make back button on funding screen properly sending back to main
-    // if was redirected from here
-    if (!isSafeCreated) {
+    if (isSafeCreated) {
+      gotoPage(Pages.Main);
+    } else {
       gotoPage(Pages.Setup);
+      // TODO: make back button on funding screen properly sending back to main
+      // if was redirected from here
       gotoSetup(SetupScreen.SetupEoaFundingIncomplete);
     }
   };
