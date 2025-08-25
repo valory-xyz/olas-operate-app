@@ -56,8 +56,8 @@ You must repeat this process for as many chains the agent is in.
 
 1. **Stop Pearl.**
 
-2. **Locate data in the Olas Registry page of the agent.**
-   1. Navigate to: https://registry.olas.network/gnosis/services/OWNERSHIP_NFT_ID (replace `gnosis` by the correct chain, e.g., `gnosis`, `ethereum`, ..., and replace `OWNERSHIP_NFT_ID` from Step 1.2).
+2. **Locate data in the Olas Marketplace page of the agent.**
+   1. Navigate to: https://marketplace.olas.network/gnosis/ai-agents/OWNERSHIP_NFT_ID (replace `gnosis` by the correct chain, e.g., `gnosis`, `ethereum`, ..., and replace `OWNERSHIP_NFT_ID` from Step 1.2).
    2. Locate **Master Safe address** under *Operators*.
    3. Locate **Staking contract address** under *Owner address*. If this address matches the **Master Safe address**, your service is not staked.
 
@@ -76,11 +76,11 @@ You must repeat this process for as many chains the agent is in.
    4. On the staking contract Blockscout interface scroll down to method *41. Unstake*. Enter your Ownership NFT ID and press *Write*. This transaction will be transferred to the Safe webapp.
    5. On the Safe webapp, **approve** and **execute** the transaction.
 
-6. **Terminate and Unbond Service.** Make sure the service is unstaked before proceeding in this step. If the service is in *Pre-Registration* on the Olas Registry, you can skip this step.
-   1. Open the Olas Registry page: https://registry.olas.network/gnosis/services/OWNERSHIP_NFT_ID (replace `gnosis` by the correct chain, e.g., `gnosis`, `ethereum`, ..., and replace `OWNERSHIP_NFT_ID` from Step 1.2).
+6. **Terminate and Unbond Service.** Make sure the service is unstaked before proceeding in this step. If the service is in *Pre-Registration* on the Olas Marketplace, you can skip this step.
+   1. Open the Olas Marketplace page: https://marketplace.olas.network/gnosis/ai-agents/OWNERSHIP_NFT_ID (replace `gnosis` by the correct chain, e.g., `gnosis`, `ethereum`, ..., and replace `OWNERSHIP_NFT_ID` from Step 1.2).
    2. Press *Connect* (top right) &#8594; *Wallet Connect* &#8594; Copy the link.
    3. On the Safe webapp, press the *Wallet Connect* button ![Wallet Connect](./images/wallet_connect.png) and paste the link and approve the connection.
-   4. On the Olas Registry, press *Terminate*. This transaction will be transferred to the Safe webapp.
+   4. On the Olas Marketplace, press *Terminate*. This transaction will be transferred to the Safe webapp.
    5. On the Safe webapp, **approve** and **execute** the transaction.
    6. If required, return to the Olas Registry, press *Unbond* and execute similarly.
    7. The service should now be in *Pre-Registration*, with funds transferred to the Master Safe, including bonds and security deposits.
