@@ -4,7 +4,6 @@ import { AddFundsToMasterSafeThroughBridge } from '@/components/AddFundsThroughB
 import { LowOperatingBalanceBridgeFunds } from '@/components/AddFundsThroughBridge/LowOperatingBalanceBridgeFunds';
 import { LowSafeSignerBalanceBridgeFunds } from '@/components/AddFundsThroughBridge/LowSafeSignerBalanceBridgeFunds';
 import { AgentActivityPage } from '@/components/AgentActivity';
-import { AgentSelection } from '@/components/AgentSelection';
 import { Main } from '@/components/MainPageV1';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { AddBackupWalletViaSafePage } from '@/components/Pages/AddBackupWalletViaSafePage';
@@ -17,7 +16,7 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 
 export default function Home() {
-  const { pageState, goto } = usePageState();
+  const { pageState } = usePageState();
   const electronApi = useElectronApi();
 
   useEffect(() => {
@@ -31,8 +30,6 @@ export default function Home() {
         return <Setup />;
       case Pages.Main:
         return <Main />;
-      case Pages.SwitchAgent:
-        return <AgentSelection onPrev={() => goto(Pages.Main)} />;
       case Pages.ManageStaking:
         return <ManageStakingPage />;
       case Pages.ManageWallet:
@@ -57,7 +54,7 @@ export default function Home() {
       default:
         return <Main />;
     }
-  }, [pageState, goto]);
+  }, [pageState]);
 
   return page;
 }

@@ -10,7 +10,6 @@ export const Pages = {
   ManageWallet: 'ManageWallet',
   RewardsHistory: 'RewardsHistory',
   AddBackupWalletViaSafe: 'AddBackupWalletViaSafe',
-  SwitchAgent: 'SwitchAgent',
   AgentActivity: 'AgentActivity',
   UpdateAgentTemplate: 'UpdateAgentTemplate',
   AddFundsToMasterSafeThroughBridge: 'AddFundsToMasterSafeThroughBridge',
