@@ -22,6 +22,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
   service_version: 'v0.26.0',
+  agent_release: {
+    "is_aea": true,
+    "repo_owner": "valory",
+    "repo_name": "trader",
+    "version": 'v0.0.1001'
+  },
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
@@ -233,6 +239,7 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.AgentsFun,
   name: 'Agents.Fun',
   home_chain: MiddlewareChain.BASE,
+  agent_release: {},
   configurations: {
     [MiddlewareChain.BASE]: {
       staking_program_id: STAKING_PROGRAM_IDS.AgentsFun1, // default, may be overwritten
@@ -260,6 +267,7 @@ export const AGENTS_FUN_CELO_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.AgentsFunCelo,
   name: 'Agents.Fun - Celo',
   home_chain: MiddlewareChain.CELO,
+  agent_release: {},
   configurations: {
     [MiddlewareChain.CELO]: {
       staking_program_id: STAKING_PROGRAM_IDS.MemeCeloAlpha2, // default, may be overwritten
@@ -291,6 +299,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus',
   description: `${KPI_DESC_PREFIX} Optimus`,
+  agent_release: {},
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
   home_chain: MiddlewareChain.MODE,
@@ -460,6 +469,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
   home_chain: MiddlewareChain.OPTIMISM,
+  agent_release: {},
   configurations: {
     [MiddlewareChain.OPTIMISM]: {
       staking_program_id: STAKING_PROGRAM_IDS.OptimusAlpha, // default, may be overwritten
