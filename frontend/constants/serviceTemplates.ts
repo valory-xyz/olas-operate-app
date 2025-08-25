@@ -86,7 +86,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     TOOLS_ACCURACY_HASH: {
       name: 'Tools accuracy hash',
       description: '',
-      value: 'QmcYUt8ABT3Q3okg7RQVgFwi2uTSJJzLxsW8f8GnASZ88v',
+      value: 'QmWgsqncF22hPLNTyWtDzVoKPJ9gmgR1jcuLL5t31xyzzr',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    ACC_INFO_FIELDS_REQUESTS: {
+      name: 'Acc info fields requests',
+      description: '',
+      value: 'nr_responses',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
@@ -106,6 +112,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: 'benchmarks/',
       provision_type: EnvProvisionType.COMPUTED,
+    },
+    IRRELEVANT_TOOLS: {
+      name: 'Irrelevant tools',
+      description: '',
+      value:
+        '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot"]',
+      provision_type: EnvProvisionType.FIXED,
     },
   },
 } as const;
