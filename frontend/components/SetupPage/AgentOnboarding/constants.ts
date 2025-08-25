@@ -43,6 +43,10 @@ export const AGENTS_FUN_ONBOARDING_STEPS: OnboardingStep[] = [
 
 export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
   {
+    desc: 'An autonomous AI agent that invests crypto assets on your behalf and grows your portfolio on Mode.',
+  },
+
+  {
     title: 'Your AI portfolio manager',
     desc: 'Modius collects real-time market data from CoinGecko and autonomously manages your investments using Balancer, Sturdy and Velodrome — delivering hands-free portfolio growth. Requires ETH and USDC on Mode as initial investments.',
     imgSrc: 'setup-agent-modius-1',
@@ -61,6 +65,9 @@ export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
 ] as const;
 
 export const OPTIMUS_ONBOARDING_STEPS: OnboardingStep[] = [
+  {
+    desc: 'An autonomous AI agent that streamlines your DeFi experience by intelligently managing your assets across the Superchain.',
+  },
   {
     title: 'Your AI portfolio manager',
     desc: 'Optimus collects real-time market data from CoinGecko and autonomously manages your investments using Balancer, Sturdy and Uniswap — delivering hands-free portfolio growth. Requires ETH and USDC on Optimism as initial investments.',
