@@ -81,7 +81,9 @@ const SelectYourAgentList = ({
   onSelectYourAgent,
   selectedAgent,
 }: SelectYourAgentListProps) =>
-  ACTIVE_AGENTS.map(([agentType, agentConfig]) => {
+  ACTIVE_AGENTS.filter(
+    ([, agentConfig]) => !agentConfig.isUnderConstruction,
+  ).map(([agentType, agentConfig]) => {
     return (
       <AgentSelectionContainer
         key={agentType}

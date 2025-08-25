@@ -155,10 +155,8 @@ export const FundingRequirementStep = ({
  * TODO:
  * - get the minimum staking requirements
  * - get the minimum funding requirements
- * - add some space below
  */
 
 /**
- * - Select your agent list - only those not under construction
  * - Select your agent list - only those not already has account
  */
