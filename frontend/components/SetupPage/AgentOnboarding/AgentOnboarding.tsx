@@ -14,7 +14,7 @@ import { useSetup } from '@/hooks/useSetup';
 import { Optional } from '@/types/Util';
 
 import {
-  AGENTS_FUND_ONBOARDING_STEPS,
+  AGENTS_FUN_ONBOARDING_STEPS,
   MODIUS_ONBOARDING_STEPS,
   OPTIMUS_ONBOARDING_STEPS,
   PREDICTION_ONBOARDING_STEPS,
@@ -24,9 +24,19 @@ import { IntroductionStep, OnboardingStep } from './IntroductionStep';
 const { Text, Title } = Typography;
 
 const Container = styled(Flex)`
+  width: 840px;
   margin: 16px auto 0 auto;
   border-radius: 8px;
   background-color: ${COLOR.WHITE};
+  .agent-selection-left-content {
+    width: 380px;
+    border-right: 1px solid ${COLOR.GRAY_4};
+  }
+  .agent-selection-right-content {
+    width: 460px;
+    min-height: 600px;
+    overflow: hidden;
+  }
 `;
 
 const Dot = styled.div<{ color?: string }>`
@@ -94,7 +104,7 @@ const SelectYourAgentList = ({
 
 const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
   trader: PREDICTION_ONBOARDING_STEPS,
-  memeooorr: AGENTS_FUND_ONBOARDING_STEPS,
+  memeooorr: AGENTS_FUN_ONBOARDING_STEPS,
   modius: MODIUS_ONBOARDING_STEPS,
   optimus: OPTIMUS_ONBOARDING_STEPS,
 };
@@ -149,10 +159,7 @@ export const AgentOnboarding = () => {
 
   return (
     <Container>
-      <Flex
-        vertical
-        style={{ width: 380, borderRight: `1px solid ${COLOR.GRAY_4}` }}
-      >
+      <Flex vertical className="agent-selection-left-content">
         <SelectYourAgent />
         <SelectYourAgentList
           onSelectYourAgent={handleSelectYourAgent}
@@ -160,7 +167,7 @@ export const AgentOnboarding = () => {
         />
       </Flex>
 
-      <Flex style={{ width: 460, minHeight: 600 }}>
+      <Flex className="agent-selection-right-content">
         {steps.length === 0 ? (
           <Flex align="center" justify="center" className="w-full">
             <Text>Select an agent.</Text>
