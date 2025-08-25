@@ -279,7 +279,8 @@ async function beforeQuit(event) {
   app.quit();
 }
 
-const APP_WIDTH = 480;
+const APP_WIDTH = 1320;
+const APP_HEIGHT = 796;
 
 /**
  * Creates the splash window
@@ -288,7 +289,7 @@ const createSplashWindow = () => {
   /** @type {Electron.BrowserWindow} */
   splashWindow = new BrowserWindow({
     width: APP_WIDTH,
-    height: APP_WIDTH,
+    height: APP_HEIGHT,
     resizable: false,
     show: true,
     title: 'Pearl',
@@ -301,23 +302,21 @@ const createSplashWindow = () => {
   splashWindow.loadURL('file://' + __dirname + '/resources/app-loading.html');
 };
 
-const HEIGHT = 700;
 /**
  * Creates the main window
  */
 const createMainWindow = async () => {
   if (mainWindow) return;
-  const width = APP_WIDTH;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
-    resizable: false,
+    resizable: true,
     draggable: true,
     frame: false,
     transparent: true,
     fullscreenable: false,
     maximizable: false,
-    width,
-    maxHeight: HEIGHT,
+    width: APP_WIDTH,
+    height: APP_HEIGHT,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -341,10 +340,6 @@ const createMainWindow = async () => {
     } else {
       mainWindow?.show();
     }
-  });
-
-  ipcMain.on('set-height', (_event, height) => {
-    mainWindow?.setSize(width, height);
   });
 
   ipcMain.on('show-notification', (_event, title, description) => {

@@ -1,5 +1,7 @@
 import { ThemeConfig } from 'antd';
 
+import { COLOR } from '@/constants/colors';
+
 export const mainTheme: ThemeConfig = {
   token: {
     colorLink: '#7E22CE',
@@ -28,10 +30,14 @@ export const mainTheme: ThemeConfig = {
       padding: 20,
       fontWeightStrong: 400,
       colorBorderSecondary: '#E4E4E4',
+      borderRadiusLG: 10,
     },
     Input: {
       fontSize: 20,
       colorTextDisabled: '#334155',
+    },
+    Menu: {
+      activeBarBorderWidth: 0,
     },
     Tooltip: {
       fontSize: 16,
@@ -47,13 +53,26 @@ export const mainTheme: ThemeConfig = {
     },
     Tag: {
       colorSuccess: '#135200',
+      defaultBg: COLOR.GRAY_1,
     },
     List: {
       colorBorder: '#DFE5EE',
     },
+    Layout: {
+      bodyBg: COLOR.BACKGROUND,
+    },
     Steps: {
       fontSize: 16,
       colorError: '#CF1322',
+    },
+    Segmented: {
+      trackPadding: 0,
+      trackBg: COLOR.GRAY_1,
+      itemHoverBg: COLOR.GRAY_3,
+      itemActiveBg: COLOR.GRAY_3,
+      borderRadiusLG: 10,
+      controlPaddingHorizontal: 16,
+      fontSizeLG: 16,
     },
     Result: {
       iconFontSize: 48,

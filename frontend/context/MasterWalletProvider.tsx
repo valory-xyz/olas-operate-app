@@ -1,12 +1,6 @@
 import { QueryObserverBaseResult, useQuery } from '@tanstack/react-query';
 import { getAddress, isAddress } from 'ethers/lib/utils';
-import {
-  createContext,
-  PropsWithChildren,
-  useContext,
-  useMemo,
-  useState,
-} from 'react';
+import { createContext, PropsWithChildren, useContext, useMemo } from 'react';
 
 import { MiddlewareWalletResponse } from '@/client';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
@@ -18,7 +12,6 @@ import {
   WalletOwnerType,
   WalletType,
 } from '@/enums/Wallet';
-import { UsePause } from '@/hooks/usePause';
 import { WalletService } from '@/service/Wallet';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
@@ -28,14 +21,9 @@ type MasterWalletContext = {
   masterEoa?: MasterEoa;
   masterSafes?: MasterSafe[];
   masterWallets?: MasterWallet[];
-} & Partial<QueryObserverBaseResult<MasterWallet[]>> &
-  UsePause;
+} & Partial<QueryObserverBaseResult<MasterWallet[]>>;
 
-export const MasterWalletContext = createContext<MasterWalletContext>({
-  paused: false,
-  setPaused: () => {},
-  togglePaused: () => {},
-});
+export const MasterWalletContext = createContext<MasterWalletContext>({});
 
 const transformMiddlewareWalletResponse = (
   data: MiddlewareWalletResponse[],
@@ -69,8 +57,6 @@ const transformMiddlewareWalletResponse = (
 export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
 
-  const [paused, setPaused] = useState(false);
-
   const {
     data: masterWallets,
     refetch,
@@ -78,7 +64,7 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.WALLETS_KEY,
     queryFn: ({ signal }) => WalletService.getWallets(signal),
-    refetchInterval: isOnline && !paused ? FIVE_SECONDS_INTERVAL : false,
+    refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
     select: (data) =>
       transformMiddlewareWalletResponse(data).filter(
         (wallet) =>
@@ -112,9 +98,6 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
         masterWallets,
         masterEoa,
         masterSafes,
-        setPaused,
-        paused,
-        togglePaused: () => setPaused((prev) => !prev),
         refetch,
         isFetched,
       }}

@@ -1,9 +1,8 @@
 import { Button, Card, CardProps, Flex, Typography } from 'antd';
-import { entries } from 'lodash';
 import Image from 'next/image';
 import { memo, useCallback, useMemo } from 'react';
 
-import { AGENT_CONFIG } from '@/config/agents';
+import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { COLOR } from '@/constants/colors';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
@@ -12,7 +11,6 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
-import { useSharedContext } from '@/hooks/useSharedContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
@@ -81,7 +79,6 @@ const EachAgent = memo(
   ({ showSelected, agentType, agentConfig }: EachAgentProps) => {
     const { goto: gotoSetup } = useSetup();
     const { goto: gotoPage } = usePageState();
-    const { updateOnboardingStep } = useSharedContext();
     const {
       isLoading: isServicesLoading,
       services,
@@ -103,7 +100,6 @@ const EachAgent = memo(
 
     const handleSelectAgent = useCallback(async () => {
       updateAgentType(agentType);
-      updateOnboardingStep(0); // Reset onboarding step
 
       // DO NOTE REMOVE THIS DELAY
       // NOTE: the delay is added so that agentType is updated in electron store
@@ -131,11 +127,10 @@ const EachAgent = memo(
         return;
       }
 
-      // If service is NOT created, then go to agent introduction
+      // If service is NOT created, then go to agent onboarding
       gotoPage(Pages.Setup);
-      gotoSetup(SetupScreen.AgentIntroduction);
+      gotoSetup(SetupScreen.AgentOnboarding);
     }, [
-      updateOnboardingStep,
       isSafeCreated,
       services,
       gotoPage,
@@ -212,19 +207,15 @@ export const AgentSelection = ({
     <SetupCreateHeader prev={onPrev} />
     <Title level={3}>Select your agent</Title>
 
-    {entries(AGENT_CONFIG)
-      .filter(([, agentConfig]) => {
-        return !!agentConfig.isAgentEnabled;
-      })
-      .map(([agentType, agentConfig]) => {
-        return (
-          <EachAgent
-            key={agentType}
-            showSelected={showSelected}
-            agentType={agentType as AgentType}
-            agentConfig={agentConfig}
-          />
-        );
-      })}
+    {ACTIVE_AGENTS.map(([agentType, agentConfig]) => {
+      return (
+        <EachAgent
+          key={agentType}
+          showSelected={showSelected}
+          agentType={agentType as AgentType}
+          agentConfig={agentConfig}
+        />
+      );
+    })}
   </CardFlex>
 );

@@ -1,14 +1,11 @@
-import { QuestionCircleOutlined, SettingOutlined } from '@ant-design/icons';
-import { Button, Flex, Typography } from 'antd';
+import { Flex, Typography } from 'antd';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
-import { Pages } from '@/enums/Pages';
+import { TOP_BAR_HEIGHT } from '@/constants/width';
 import { useElectronApi } from '@/hooks/useElectronApi';
-import { usePageState } from '@/hooks/usePageState';
-import { useStore } from '@/hooks/useStore';
 
 const { Text } = Typography;
 
@@ -35,7 +32,7 @@ const TrafficLights = styled.div`
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-right: 24px;
+  padding-left: 20px;
   -webkit-app-region: no-drag;
 `;
 
@@ -45,30 +42,38 @@ const TopBarContainer = styled.div`
   left: 0;
   right: 0;
   z-index: 1;
-  height: 45px;
+  height: ${TOP_BAR_HEIGHT}px;
   display: flex;
   align-items: center;
-  padding: 0px 24px;
-  border-radius: 8px 8px 0 0px;
-  border-bottom: 1px solid ${COLOR.BORDER_GRAY};
-  background: ${COLOR.WHITE};
   -webkit-app-region: drag;
 `;
 
-export const TopBar = () => {
+const PearlHeaderContainer = styled(Flex)`
+  display: none; // TODO: show only for onboarding pages
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+`;
+
+const PearHeader = () => (
+  <PearlHeaderContainer justify="center" align="center" gap={8}>
+    <Image
+      src="/onboarding-robot.svg"
+      alt="logo"
+      width={24}
+      height={24}
+      style={{ marginTop: -2 }}
+    />
+    <Text>Pearl</Text>
+  </PearlHeaderContainer>
+);
+
+export const NavBar = () => {
   const router = useRouter();
   const { closeApp, minimizeApp, onRampWindow } = useElectronApi();
-  const store = useStore();
-  const { isUserLoggedIn, goto, pageState } = usePageState();
 
-  const envName = store?.storeState?.environmentName;
   const isOnRamp = router.pathname === '/onramp';
   const isNotMain = [isOnRamp].some(Boolean);
-
-  const name = useMemo(() => {
-    if (isOnRamp) return 'Buy Crypto on Transak';
-    return `Pearl (beta) ${envName ? `(${envName})` : ''}`.trim();
-  }, [isOnRamp, envName]);
 
   const handleClose = useCallback(() => {
     if (isOnRamp) {
@@ -92,25 +97,7 @@ export const TopBar = () => {
         <DisabledLight />
       </TrafficLights>
 
-      <Text>{name}</Text>
-
-      {/* for now, showing only on Main page */}
-      {isUserLoggedIn && pageState === Pages.Main && (
-        <Flex align="center" className="ml-auto">
-          <Button
-            type="text"
-            shape="circle"
-            icon={<QuestionCircleOutlined />}
-            onClick={() => goto(Pages.HelpAndSupport)}
-          />
-          <Button
-            type="text"
-            shape="circle"
-            icon={<SettingOutlined />}
-            onClick={() => goto(Pages.Settings)}
-          />
-        </Flex>
-      )}
+      <PearHeader />
     </TopBarContainer>
   );
 };

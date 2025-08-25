@@ -1,28 +1,27 @@
-import { CopyOutlined } from '@ant-design/icons';
-import { Button, Card, Flex, message, Modal, Tag, Typography } from 'antd';
+import {
+  Button,
+  Card,
+  Flex,
+  message,
+  Modal,
+  Tag as AntDTag,
+  Typography,
+} from 'antd';
 import { useCallback, useState } from 'react';
+import styled from 'styled-components';
 
-import { CustomAlert } from '@/components/Alert';
+import { COLOR } from '@/constants/colors';
+import { MODAL_WIDTH } from '@/constants/width';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 
-import { SetupCreateHeader } from './SetupCreateHeader';
-
 const { Text, Title } = Typography;
 
-const SeedPhraseAlert = () => (
-  <CustomAlert
-    type="warning"
-    showIcon
-    message={
-      <Text>
-        Without seed phrase, access to your Pearl account will be lost forever,
-        so keep it safe.
-      </Text>
-    }
-  />
-);
+const Tag = styled(AntDTag)`
+  background-color: ${COLOR.GRAY_1};
+  text-align: center;
+`;
 
 export const SetupSeedPhrase = () => {
   const { mnemonic, goto } = useSetup();
@@ -51,39 +50,37 @@ export const SetupSeedPhrase = () => {
           </Text>
         </Flex>
       ),
-      okText: 'Confirm & continue',
+      okText: 'Confirm and Continue',
       cancelText: 'Cancel',
       onOk: () => goto(SetupScreen.SetupBackupSigner),
       icon: null,
+      centered: true,
+      width: MODAL_WIDTH,
     });
   }, [goto, modal]);
 
   return (
     <Card style={{ border: 'none' }}>
-      <SetupCreateHeader />
       <Title level={3}>Back up seed phrase</Title>
 
-      <Flex gap={16} vertical>
-        <Text>
-          Seed phrase is required to regain access to your account if you forget
-          your password.
+      <Flex gap={32} vertical>
+        <Text type="secondary">
+          Seed phrase is a master key to your Pearl wallet. It’s needed to
+          regain access to your account if you forgot the password. Copy the
+          seed phrase and store in a secure location.
         </Text>
-        <SeedPhraseAlert />
 
-        <Flex gap={8} wrap="wrap" style={{ marginBottom: 8 }}>
+        <Flex gap={12} wrap="wrap" style={{ marginBottom: 8 }}>
           {mnemonic.map((word: string) => (
-            <Tag
-              key={word}
-              style={{ width: 80, textAlign: 'center', fontSize: 14 }}
-            >
+            <Tag key={word} bordered={false}>
               {word}
             </Tag>
           ))}
         </Flex>
 
-        <Flex gap={16} vertical>
+        <Flex gap={16}>
           <Button size="large" onClick={handleCopy} block>
-            <CopyOutlined /> Copy to clipboard
+            Copy to clipboard
           </Button>
           <Button
             disabled={!hasCopied}

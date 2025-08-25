@@ -59,7 +59,6 @@ export const AgentRunningButton = () => {
   const {
     selectedService,
     isFetched: isLoaded,
-    setPaused,
     overrideSelectedServiceStatus,
   } = useServices();
 
@@ -83,10 +82,10 @@ export const AgentRunningButton = () => {
       showNotification?.('Error while stopping agent');
     } finally {
       // Resume polling, will update to correct status regardless of success
-      setPaused(false);
+      // setPaused(false);
       overrideSelectedServiceStatus(null); // remove override
     }
-  }, [overrideSelectedServiceStatus, service, setPaused, showNotification]);
+  }, [overrideSelectedServiceStatus, service, showNotification]);
 
   // Do not show the last transaction if the delay is not reached
   const canShowLastTransaction =

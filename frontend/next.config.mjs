@@ -20,6 +20,7 @@ const nextConfig = {
     'rc-picker',
     'rc-tree',
     'rc-table',
+    'rc-input',
   ],
   webpack: (config) => {
     if (config.snapshot) {
