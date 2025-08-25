@@ -1,7 +1,12 @@
 import { Flex, Tag, Typography } from 'antd';
+import { entries } from 'lodash';
 import Image from 'next/image';
 
 import { AGENT_CONFIG } from '@/config/agents';
+import {
+  DEFAULT_STAKING_PROGRAM_IDS,
+  STAKING_PROGRAMS,
+} from '@/config/stakingPrograms';
 import { AgentType } from '@/constants/agent';
 import { COLOR } from '@/constants/colors';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
@@ -74,20 +79,38 @@ type MinimumStakingRequirementsProps = {
 const MinimumStakingRequirements = ({
   agentType,
 }: MinimumStakingRequirementsProps) => {
-  const { displayName } = AGENT_CONFIG[agentType];
+  const { evmHomeChainId, middlewareHomeChainId } = AGENT_CONFIG[agentType];
+  const stakingProgramId = DEFAULT_STAKING_PROGRAM_IDS[evmHomeChainId];
+  const stakingRequirements =
+    STAKING_PROGRAMS[evmHomeChainId][stakingProgramId].stakingRequirements;
+  // console.log('abcd', abcd);
+  // const stakingRequirements = SERVICE_TEMPLATES.find(
+  //   (template) => template.home_chain === middlewareHomeChainId,
+  // )?.configurations?.[middlewareHomeChainId]?.staking_program_id;
+
   return (
     <Flex vertical gap={8}>
       <Text type="secondary">Minimum staking requirement</Text>
-      <Text className="text-tag">
-        <Image
-          src={`/tokens/olas-icon.png`}
-          // src={`/tokens/${name}-token.png`}
-          width={24}
-          height={24}
-          alt={displayName}
-        />
-        40 OLAS (~$11.32)
-      </Text>
+      <Flex vertical className="text-tag">
+        {entries(stakingRequirements).map(([token, amount]) => (
+          <Flex key={token} gap={8} align="flex-start">
+            <Image
+              src={`/tokens/${token.toLowerCase()}-icon.png`}
+              alt={`${token} token for staking`}
+              width={24}
+              height={24}
+            />
+            <Text>
+              {amount} {token}
+            </Text>
+
+            {/* TODO */}
+            <Text type="secondary" className="text-sm">
+              (~${(amount * 0.283).toFixed(2)})
+            </Text>
+          </Flex>
+        ))}
+      </Flex>
     </Flex>
   );
 };

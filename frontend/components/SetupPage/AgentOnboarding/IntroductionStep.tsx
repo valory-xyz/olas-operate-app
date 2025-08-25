@@ -7,10 +7,12 @@ import { ReactNode } from 'react';
 import { UnderConstruction } from '@/components/MainPage/sections/AlertSections/UnderConstruction';
 import { useServices } from '@/hooks/useServices';
 
+import { AnimatedContent } from './AnimatedContent';
+
 const { Title, Text } = Typography;
 
 export type OnboardingStep = {
-  title: string;
+  title?: string;
   desc: string;
   imgSrc?: string;
   helper?: string;
@@ -44,38 +46,10 @@ const AnimatedImage = ({ imgSrc, alt }: AnimatedImageProps) => (
   </AnimatePresence>
 );
 
-const AnimatedContent = ({
-  title,
-  desc,
-  helper,
-}: Pick<OnboardingStep, 'title' | 'desc' | 'helper'>) => (
-  <AnimatePresence mode="wait">
-    <motion.div
-      key={title}
-      initial={{ opacity: 0, x: 5 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -5 }}
-      transition={{ duration: 0.1 }}
-    >
-      <Flex vertical gap={8}>
-        <Title level={5} className="m-0">
-          {title}
-        </Title>
-        <Text>{desc}</Text>
-        {helper && (
-          <Text type="secondary" className="text-sm">
-            {helper}
-          </Text>
-        )}
-      </Flex>
-    </motion.div>
-  </AnimatePresence>
-);
-
 type IntroductionProps = OnboardingStep & {
   onPrev: (() => void) | undefined;
   onNext: (() => void) | undefined;
-  renderFundingRequirements?: () => ReactNode;
+  renderFundingRequirements?: (desc: string) => ReactNode;
   renderDot?: () => ReactNode;
   onAgentSelect: () => void;
 };
@@ -95,22 +69,41 @@ export const IntroductionStep = ({
   onNext,
 }: IntroductionProps) => {
   const { selectedAgentConfig } = useServices();
+  const isFundingDetailsStep = !title && !imgSrc;
 
   return (
     <div style={{ overflow: 'hidden' }}>
-      {imgSrc ? (
-        <AnimatedImage imgSrc={`/${imgSrc}.png`} alt={title} />
+      {isFundingDetailsStep ? (
+        renderFundingRequirements?.(desc)
       ) : (
-        renderFundingRequirements?.()
+        <AnimatedImage imgSrc={`/${imgSrc}.png`} alt={title ?? ''} />
       )}
 
       <div style={{ padding: '12px 0px 20px 0px' }}>
         <Flex vertical gap={24}>
-          <div style={{ padding: '0px 20px', overflow: 'hidden' }}>
-            <AnimatedContent title={title} desc={desc} helper={helper} />
-          </div>
+          {isFundingDetailsStep ? null : (
+            <>
+              <div style={{ padding: '0px 20px', overflow: 'hidden' }}>
+                <AnimatedContent>
+                  <Flex vertical gap={8}>
+                    {title && (
+                      <Title level={5} className="m-0">
+                        {title}
+                      </Title>
+                    )}
+                    <Text>{desc}</Text>
+                    {helper && (
+                      <Text type="secondary" className="text-sm">
+                        {helper}
+                      </Text>
+                    )}
+                  </Flex>
+                </AnimatedContent>
+              </div>
 
-          {selectedAgentConfig.isUnderConstruction && <UnderConstruction />}
+              {selectedAgentConfig.isUnderConstruction && <UnderConstruction />}
+            </>
+          )}
 
           <Flex
             vertical
