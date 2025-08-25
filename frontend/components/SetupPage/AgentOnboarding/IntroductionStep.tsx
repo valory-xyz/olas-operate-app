@@ -12,7 +12,7 @@ const { Title, Text } = Typography;
 export type OnboardingStep = {
   title: string;
   desc: string;
-  imgSrc: string;
+  imgSrc?: string;
   helper?: string;
 };
 
@@ -75,6 +75,7 @@ const AnimatedContent = ({
 type IntroductionProps = OnboardingStep & {
   onPrev: (() => void) | undefined;
   onNext: (() => void) | undefined;
+  renderFundingRequirements?: () => ReactNode;
   renderDot?: () => ReactNode;
   onAgentSelect: () => void;
 };
@@ -87,20 +88,25 @@ export const IntroductionStep = ({
   desc,
   imgSrc,
   helper,
-  onPrev,
-  onNext,
+  renderFundingRequirements,
   renderDot,
   onAgentSelect,
+  onPrev,
+  onNext,
 }: IntroductionProps) => {
   const { selectedAgentConfig } = useServices();
 
   return (
     <div style={{ overflow: 'hidden' }}>
-      <AnimatedImage imgSrc={`/${imgSrc}.png`} alt={title} />
+      {imgSrc ? (
+        <AnimatedImage imgSrc={`/${imgSrc}.png`} alt={title} />
+      ) : (
+        renderFundingRequirements?.()
+      )}
 
       <div style={{ padding: '12px 0px 20px 0px' }}>
         <Flex vertical gap={24}>
-          <div style={{ padding: '0px 20px' }}>
+          <div style={{ padding: '0px 20px', overflow: 'hidden' }}>
             <AnimatedContent title={title} desc={desc} helper={helper} />
           </div>
 
