@@ -14,7 +14,11 @@ import { AgentType } from '@/constants/agent';
 import { EvmChainId } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { TokenSymbolMap } from '@/constants/token';
+import {
+  TokenSymbol,
+  TokenSymbolConfigMap,
+  TokenSymbolMap,
+} from '@/constants/token';
 import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { AnimatedContent } from './AnimatedContent';
@@ -111,8 +115,8 @@ const OperatingChain = ({
     <Text className="text-tag">
       <Image
         src={`/chains/${chainName}-chain.png`}
-        width={24}
-        height={24}
+        width={20}
+        height={20}
         alt={chainDisplayName}
       />
       {chainDisplayName}
@@ -138,10 +142,10 @@ const MinimumStakingRequirements = ({
           <Image
             src="/tokens/olas-icon.png"
             alt="OLAS token for staking"
-            width={22}
-            height={24}
+            width={18}
+            height={20}
           />
-          <Text>
+          <Text className="leading-normal">
             {olasAmount} {TokenSymbolMap.OLAS}
           </Text>
         </Flex>
@@ -156,72 +160,38 @@ type MinimumFundingRequirementsProps = {
 const MinimumFundingRequirements = ({
   agentType,
 }: MinimumFundingRequirementsProps) => {
-  const serviceTemplate = SERVICE_TEMPLATES.find(
-    (template) => template.agentType === agentType,
-  );
-  const { middlewareHomeChainId, additionalRequirements, evmHomeChainId } =
-    AGENT_CONFIG[agentType];
-  const chainId = asEvmChainId(middlewareHomeChainId);
-  const additionalTokens = additionalRequirements?.[chainId];
-  const stakingProgramId = DEFAULT_STAKING_PROGRAM_IDS[evmHomeChainId];
+  const { evmHomeChainId } = AGENT_CONFIG[agentType];
+  const tokens = useFundingRequirements(agentType);
 
-  const serviceFundRequirements = useMemo<ChainTokenSymbol>(() => {
-    if (isNil(serviceTemplate)) return {} as ChainTokenSymbol;
+  const allTokens = Object.entries(tokens[evmHomeChainId] || {})
+    .map(([token, amount]) => ({
+      token,
+      amount,
+      icon:
+        token === 'XDAI'
+          ? '/tokens/wxdai-icon.png'
+          : (TokenSymbolConfigMap[token as TokenSymbol]?.image as string),
+    }))
+    // filter out OLAS as it's shown in staking requirements
+    .filter(({ token }) => token !== TokenSymbolMap.OLAS);
 
-    const results = {} as ChainTokenSymbol;
-
-    Object.entries(serviceTemplate.configurations).forEach(
-      ([middlewareChain, config]) => {
-        const evmChainId = asEvmChainId(middlewareChain);
-
-        if (!stakingProgramId) return;
-
-        // Gas requirements
-        const gasEstimate = config.monthly_gas_estimate;
-        const monthlyGasEstimate = Number(formatUnits(`${gasEstimate}`, 18));
-        const nativeTokenSymbol = getNativeTokenSymbol(evmChainId);
-
-        // OLAS staking requirements
-        const minimumStakedAmountRequired =
-          STAKING_PROGRAMS[evmChainId]?.[stakingProgramId]
-            ?.stakingRequirements?.[TokenSymbolMap.OLAS] || 0;
-
-        // Additional tokens requirements
-        const additionalTokens = additionalRequirements?.[evmChainId] ?? {};
-
-        results[evmChainId] = {
-          [TokenSymbolMap.OLAS]: minimumStakedAmountRequired,
-          [nativeTokenSymbol]: monthlyGasEstimate,
-          ...additionalTokens,
-        };
-      },
+  if (allTokens.length === 0) {
+    return (
+      <Flex vertical gap={8}>
+        <Text type="secondary">Minimum funding requirement</Text>
+        <Text className="text-tag">No funding required</Text>
+      </Flex>
     );
-
-    return results;
-  }, [serviceTemplate, stakingProgramId, additionalRequirements]);
-
-  console.log(serviceFundRequirements);
-
-  const allTokens = useMemo(() => {
-    const tokens = Object.entries(additionalTokens || []).map(
-      ([token, amount]) => ({
-        token,
-        amount,
-        icon: `/tokens/${token.toLowerCase()}-icon.png`,
-      }),
-    );
-
-    return [...tokens];
-  }, [additionalTokens]);
+  }
 
   return (
     <Flex vertical gap={8}>
       <Text type="secondary">Minimum funding requirement</Text>
-      <Flex vertical className="text-tag">
+      <Flex vertical className="text-tag" gap={12}>
         {allTokens.map(({ token, amount, icon }) => (
           <Flex key={token} gap={8} align="flex-start">
-            <Image src={icon} alt={`${token} token`} width={24} height={24} />
-            <Text>
+            <Image src={icon} alt={`${token} token`} width={20} height={20} />
+            <Text className="leading-normal">
               {amount} {token}
             </Text>
           </Flex>
