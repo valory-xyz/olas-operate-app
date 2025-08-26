@@ -6,17 +6,17 @@ import { assertRequired } from '@/types/Util';
 import { useServices } from './useServices';
 
 const FeatureFlagsSchema = z.enum([
-  'manage-wallet',
-  'withdraw-funds',
-  'last-transactions',
-  'rewards-streak',
-  'staking-contract-section',
-  'agent-activity',
-  'backup-via-safe',
-  'agent-settings',
-  'bridge-onboarding',
-  'bridge-add-funds',
-  'on-ramp',
+  'manage-wallet', // Enables the wallet management UI (balance breakdown)
+  'withdraw-funds', // Enables withdrawing funds from the wallet (Manage Wallet → Withdraw)
+  'last-transactions', // Shows the recent transactions UI element
+  'rewards-streak', // Displays rewards history and streak
+  'staking-contract-section', // Shows the staking contract section and related management UI
+  'agent-activity', // Enables the "What's My Agent Doing" feed based on health-check rounds
+  'backup-via-safe', // Enables wallet backup via Safe (alerts and settings)
+  'agent-settings', // Shows the Agent Settings button/screens for configurable agents requiring user input
+  'bridge-onboarding', // Enables the bridge funds flow during setup
+  'bridge-add-funds', // Enables the bridge funds flow in low-balance alerts when agents require a refill
+  'on-ramp', // Enables the fiat on-ramp (buy crypto) flow/screens
 ]);
 type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
 
