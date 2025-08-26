@@ -22,6 +22,14 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
   service_version: 'v0.26.0',
+  agent_release: {
+    "is_aea": true,
+    "repository": {
+      "owner": "valory-xyz",
+      "name": "trader",
+      "version": 'v0.0.1001'
+    }
+  },
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
@@ -112,13 +120,14 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 
 const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
-  'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
+  'env_variables' | 'hash' | 'image' | 'description' | 'service_version' | 'agent_release'
 > = {
   hash: 'bafybeiardecju3sygh7hwuywka2bgjinbr7vrzob4mpdrookyfsbdmoq2m',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
   service_version: 'v0.8.0-alpha3',
+  agent_release: {  },
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -254,10 +263,11 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
 
 const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
-  'hash' | 'service_version'
+  'hash' | 'service_version' | 'agent_release'
 > = {
   hash: 'bafybeif43dhf2s4vzulscbxu5jbt5uv3chotrj7hqkhqixvvjwbx2ijyhi',
   service_version: 'v0.5.2',
+  agent_release: {}
 };
 
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {

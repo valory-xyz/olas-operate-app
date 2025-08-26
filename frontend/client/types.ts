@@ -101,6 +101,7 @@ export type ServiceTemplate = {
   description: string;
   image: string;
   service_version: string;
+  agent_release: {};
   home_chain: SupportedMiddlewareChain;
   configurations: Partial<
     Record<SupportedMiddlewareChain, ConfigurationTemplate>
