@@ -1,4 +1,4 @@
-import { isEmpty, isNil } from 'lodash';
+import { isEmpty, isEqual, isNil } from 'lodash';
 
 import { ServiceTemplate } from '@/client';
 import { EnvProvisionMap } from '@/constants/envVariables';
@@ -98,7 +98,7 @@ export const updateServiceIfNeeded = async (
   }
 
   // Check if the agent release was updated
-  if (JSON.stringify(service.agent_release) !== JSON.stringify(serviceTemplate.agent_release)) {
+  if (!isEqual(service.agent_release, serviceTemplate.agent_release)) {
     partialServiceTemplate.agent_release = serviceTemplate.agent_release;
   }
 
