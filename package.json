@@ -5,6 +5,7 @@
     "@ant-design/icons": "^5.3.0",
     "@fontsource/inter": "^5.0.17",
     "@tanstack/react-query": "^5.29.0",
+    "@web3auth/modal": "^10.3.0",
     "adm-zip": "^0.5.12",
     "antd": "^5.14.0",
     "axios": "^1.7.7",
@@ -80,7 +81,7 @@
   },
   "version": "0.2.0-rc336",
   "engine": {
-    "node": ">=20",
+    "node": "20.18.1",
     "yarn": ">=1.22.0",
     "npm": "please-use-yarn"
   }
