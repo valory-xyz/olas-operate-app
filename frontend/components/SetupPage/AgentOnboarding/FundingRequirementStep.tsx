@@ -243,7 +243,3 @@ export const FundingRequirementStep = ({
     </AnimatedContent>
   );
 };
-
-/**
- * - Select your agent list - only those not already has account
- */

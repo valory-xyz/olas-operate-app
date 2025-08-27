@@ -1,6 +1,6 @@
 import { Flex, Typography } from 'antd';
 import Image from 'next/image';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
@@ -11,6 +11,7 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
+import { AgentConfig } from '@/types/Agent';
 import { Optional } from '@/types/Util';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
@@ -80,32 +81,42 @@ type SelectYourAgentListProps = {
 const SelectYourAgentList = ({
   onSelectYourAgent,
   selectedAgent,
-}: SelectYourAgentListProps) =>
-  ACTIVE_AGENTS.filter(
-    ([, agentConfig]) => !agentConfig.isUnderConstruction,
-  ).map(([agentType, agentConfig]) => {
-    return (
-      <AgentSelectionContainer
-        key={agentType}
-        onClick={() => onSelectYourAgent(agentType as AgentType)}
-        gap={12}
-        align="center"
-        active={selectedAgent === agentType}
-      >
-        <Image
-          src={`/agent-${agentType}-icon.png`}
-          width={36}
-          height={36}
-          alt={agentConfig.displayName}
-          style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
-        />
+}: SelectYourAgentListProps) => {
+  const { services } = useServices();
+  const agents = useMemo(() => {
+    const isActive = ([, agentConfig]: [string, AgentConfig]) =>
+      !agentConfig.isUnderConstruction;
 
-        <Flex>
-          <Text>{agentConfig.displayName}</Text>
-        </Flex>
-      </AgentSelectionContainer>
-    );
-  });
+    const isNotInServices = ([, agentConfig]: [string, AgentConfig]) =>
+      !services?.some(
+        (service) => service.home_chain === agentConfig.middlewareHomeChainId,
+      );
+
+    return ACTIVE_AGENTS.filter(isActive).filter(isNotInServices);
+  }, [services]);
+
+  return agents.map(([agentType, agentConfig]) => (
+    <AgentSelectionContainer
+      key={agentType}
+      onClick={() => onSelectYourAgent(agentType as AgentType)}
+      gap={12}
+      align="center"
+      active={selectedAgent === agentType}
+    >
+      <Image
+        src={`/agent-${agentType}-icon.png`}
+        width={36}
+        height={36}
+        alt={agentConfig.displayName}
+        style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
+      />
+
+      <Flex>
+        <Text>{agentConfig.displayName}</Text>
+      </Flex>
+    </AgentSelectionContainer>
+  ));
+};
 
 const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
   trader: PREDICTION_ONBOARDING_STEPS,
