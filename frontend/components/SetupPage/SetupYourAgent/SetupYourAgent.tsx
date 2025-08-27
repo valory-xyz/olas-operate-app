@@ -1,13 +1,13 @@
-import { ConfigProvider, Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import React from 'react';
+import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
-import { CardFlex } from '@/components/styled/CardFlex';
+import { COLOR } from '@/constants/colors';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useServices } from '@/hooks/useServices';
-import { LOCAL_FORM_THEME } from '@/theme';
 
 import { SetupCreateHeader } from '../Create/SetupCreateHeader';
 import { AgentsFunAgentSetup } from './AgentsFunAgentSetup';
@@ -15,6 +15,22 @@ import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
 import { OptimusAgentForm } from './OptimusAgentForm/OptimusAgentForm';
 
 const { Title, Text } = Typography;
+
+const Container = styled(Flex)`
+  margin: -44px 0;
+  background: ${COLOR.WHITE};
+  height: 796px;
+  .setup-left-content {
+    width: 492px;
+    margin: 0 auto;
+    padding: 64px 32px;
+  }
+  .setup-right-content {
+    width: 392px;
+    padding: 64px 32px;
+    background: ${COLOR.BACKGROUND};
+  }
+`;
 
 export const SetupYourAgent = () => {
   const { selectedAgentType } = useServices();
@@ -34,8 +50,8 @@ export const SetupYourAgent = () => {
   }
 
   return (
-    <ConfigProvider theme={LOCAL_FORM_THEME}>
-      <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }} noBorder>
+    <Container>
+      <Flex vertical className="setup-left-content">
         <SetupCreateHeader prev={SetupScreen.AgentOnboarding} />
         <Title level={3} className="mb-0">
           Set up your agent
@@ -50,7 +66,8 @@ export const SetupYourAgent = () => {
         {selectedAgentType === AgentType.Optimus && (
           <OptimusAgentForm serviceTemplate={serviceTemplate} />
         )}
-      </CardFlex>
-    </ConfigProvider>
+      </Flex>
+      <Flex className="setup-right-content">HEY</Flex>
+    </Container>
   );
 };
