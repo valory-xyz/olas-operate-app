@@ -2,11 +2,11 @@ import { formatUnits } from 'ethers/lib/utils';
 import { entries } from 'lodash';
 
 import { MiddlewareChain } from '@/client';
+import { AgentMap, AgentType } from '@/constants/agent';
 import {
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
 } from '@/constants/serviceTemplates';
-import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
@@ -42,7 +42,7 @@ const getOptimusUsdcConfig = () => {
 export const AGENT_CONFIG: {
   [key in AgentType]: AgentConfig;
 } = {
-  [AgentType.PredictTrader]: {
+  [AgentMap.PredictTrader]: {
     isAgentEnabled: true,
     requiresSetup: false,
     name: 'Predict Trader',
@@ -57,7 +57,7 @@ export const AGENT_CONFIG: {
     hasExternalFunds: false,
     category: 'Prediction Markets',
   },
-  [AgentType.Modius]: {
+  [AgentMap.Modius]: {
     isAgentEnabled: true,
     isComingSoon: false,
     requiresSetup: true,
@@ -77,7 +77,7 @@ export const AGENT_CONFIG: {
     hasExternalFunds: true,
     category: 'DeFi',
   },
-  [AgentType.Optimus]: {
+  [AgentMap.Optimus]: {
     isAgentEnabled: true,
     isComingSoon: false,
     requiresSetup: true,
@@ -97,7 +97,7 @@ export const AGENT_CONFIG: {
     hasExternalFunds: true,
     category: 'DeFi',
   },
-  [AgentType.AgentsFun]: {
+  [AgentMap.AgentsFun]: {
     isAgentEnabled: true,
     isUnderConstruction: true,
     isComingSoon: false,
