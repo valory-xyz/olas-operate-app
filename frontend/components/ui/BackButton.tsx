@@ -15,7 +15,7 @@ export const BackButton = ({ onPrev }: AgentHeaderV1Props) => (
         onClick={() => onPrev()}
         icon={<LeftOutlined className="text-xs" />}
         type="text"
-        className="text-light"
+        className="text-light back-button"
         size="small"
         style={{ paddingLeft: 4 }}
       >
