@@ -3,13 +3,14 @@ import React from 'react';
 import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
+import { AgentHeader } from '@/components/ui/AgentHeader';
 import { COLOR } from '@/constants/colors';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useServices } from '@/hooks/useServices';
+import { useSetup } from '@/hooks/useSetup';
 
-import { SetupCreateHeader } from '../Create/SetupCreateHeader';
 import { AgentsFunAgentSetup } from './AgentsFunAgentSetup';
 import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
 import { OptimusAgentForm } from './OptimusAgentForm/OptimusAgentForm';
@@ -33,6 +34,7 @@ const Container = styled(Flex)`
 `;
 
 export const SetupYourAgent = () => {
+  const { goto } = useSetup();
   const { selectedAgentType } = useServices();
   const serviceTemplate = SERVICE_TEMPLATES.find(
     (template) => template.agentType === selectedAgentType,
@@ -52,9 +54,13 @@ export const SetupYourAgent = () => {
   return (
     <Container>
       <Flex vertical className="setup-left-content">
-        <SetupCreateHeader prev={SetupScreen.AgentOnboarding} />
+        <AgentHeader
+          onPrev={() => goto(SetupScreen.AgentOnboarding)}
+          hideLogo
+        />
+
         <Title level={3} className="mb-0">
-          Set up your agent
+          Configure Your Agent
         </Title>
 
         {selectedAgentType === AgentType.AgentsFun && (
@@ -67,7 +73,11 @@ export const SetupYourAgent = () => {
           <OptimusAgentForm serviceTemplate={serviceTemplate} />
         )}
       </Flex>
-      <Flex className="setup-right-content">HEY</Flex>
+      <Flex className="setup-right-content">
+        <Title level={4} className="mb-0">
+          Agent Details
+        </Title>
+      </Flex>
     </Container>
   );
 };
