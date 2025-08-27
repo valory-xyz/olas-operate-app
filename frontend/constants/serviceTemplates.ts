@@ -17,11 +17,11 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeidugmpnwbxyfe74dli7cgs27kjwirvlw2ufqeuyqqbrbzktoklfsi',
+  hash: 'bafybeifhxeoar5hdwilmnzhy6jf664zqp5lgrzi6lpbkc4qmoqrr24ow4q',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.26.0',
+  service_version: 'v0.26.1',
   agent_release: {
     is_aea: true,
     repository: {
@@ -94,7 +94,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     TOOLS_ACCURACY_HASH: {
       name: 'Tools accuracy hash',
       description: '',
-      value: 'QmcYUt8ABT3Q3okg7RQVgFwi2uTSJJzLxsW8f8GnASZ88v',
+      value: 'QmWgsqncF22hPLNTyWtDzVoKPJ9gmgR1jcuLL5t31xyzzr',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    ACC_INFO_FIELDS_REQUESTS: {
+      name: 'Acc info fields requests',
+      description: '',
+      value: 'nr_responses',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
@@ -114,6 +120,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: 'benchmarks/',
       provision_type: EnvProvisionType.COMPUTED,
+    },
+    IRRELEVANT_TOOLS: {
+      name: 'Irrelevant tools',
+      description: '',
+      value:
+        '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot"]',
+      provision_type: EnvProvisionType.FIXED,
     },
   },
 } as const;
@@ -273,7 +286,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   'hash' | 'service_version' | 'agent_release'
 > = {
   hash: 'bafybeif43dhf2s4vzulscbxu5jbt5uv3chotrj7hqkhqixvvjwbx2ijyhi',
-  service_version: 'v0.5.2',
+  service_version: 'v0.5.3',
   agent_release: {
     is_aea: true,
     repository: {
