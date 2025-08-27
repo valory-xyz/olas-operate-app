@@ -97,6 +97,11 @@ export const updateServiceIfNeeded = async (
     };
   }
 
+  // Check if the agent release was updated
+  if (JSON.stringify(service.agent_release) !== JSON.stringify(serviceTemplate.agent_release)) {
+    partialServiceTemplate.agent_release = serviceTemplate.agent_release;
+  }
+
   if (isEmpty(partialServiceTemplate)) return;
 
   await ServicesService.updateService({

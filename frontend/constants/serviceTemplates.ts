@@ -23,11 +23,11 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
   service_version: 'v0.26.0',
   agent_release: {
-    "is_aea": true,
-    "repository": {
-      "owner": "valory-xyz",
-      "name": "trader",
-      "version": 'v0.0.1001'
+    is_aea: true,
+    repository: {
+      owner: "valory-xyz",
+      name: "trader",
+      version: 'v0.0.101'
     }
   },
   home_chain: MiddlewareChain.GNOSIS,
@@ -127,7 +127,14 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
   service_version: 'v0.8.0-alpha3',
-  agent_release: {  },
+  agent_release: {
+    is_aea: true,
+    repository: {
+      owner: "valory-xyz",
+      name: "meme-ooorr",
+      version: 'v0.0.101'
+    }
+  },
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -267,7 +274,14 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
 > = {
   hash: 'bafybeif43dhf2s4vzulscbxu5jbt5uv3chotrj7hqkhqixvvjwbx2ijyhi',
   service_version: 'v0.5.2',
-  agent_release: {}
+  agent_release: {
+    is_aea: true,
+    repository: {
+      owner: "valory-xyz",
+      name: "optimus",
+      version: 'v0.0.103'
+    }
+  },
 };
 
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
