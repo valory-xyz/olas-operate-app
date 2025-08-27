@@ -2,6 +2,9 @@ import { OnboardingStep } from './IntroductionStep';
 
 export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
   {
+    desc: 'An autonomous AI agent that interacts with decentralized prediction markets — platforms where users trade on the outcomes of future events.',
+  },
+  {
     title: 'Market opportunity finder',
     desc: 'Prediction agents actively scan prediction markets to identify new opportunities for investment.',
     imgSrc: 'setup-agent-prediction-1',
@@ -18,7 +21,7 @@ export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
   },
 ] as const;
 
-export const AGENTS_FUND_ONBOARDING_STEPS: OnboardingStep[] = [
+export const AGENTS_FUN_ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: 'Your personal AI influencer',
     desc: 'Create a custom persona, and your agent will post autonomously on X, crafting engaging content to match the character you design',
@@ -40,6 +43,10 @@ export const AGENTS_FUND_ONBOARDING_STEPS: OnboardingStep[] = [
 
 export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
   {
+    desc: 'An autonomous AI agent that invests crypto assets on your behalf and grows your portfolio on Mode.',
+  },
+
+  {
     title: 'Your AI portfolio manager',
     desc: 'Modius collects real-time market data from CoinGecko and autonomously manages your investments using Balancer, Sturdy and Velodrome — delivering hands-free portfolio growth. Requires ETH and USDC on Mode as initial investments.',
     imgSrc: 'setup-agent-modius-1',
@@ -58,6 +65,9 @@ export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
 ] as const;
 
 export const OPTIMUS_ONBOARDING_STEPS: OnboardingStep[] = [
+  {
+    desc: 'An autonomous AI agent that streamlines your DeFi experience by intelligently managing your assets across the Superchain.',
+  },
   {
     title: 'Your AI portfolio manager',
     desc: 'Optimus collects real-time market data from CoinGecko and autonomously manages your investments using Balancer, Sturdy and Uniswap — delivering hands-free portfolio growth. Requires ETH and USDC on Optimism as initial investments.',

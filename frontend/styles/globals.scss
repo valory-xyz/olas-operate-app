@@ -329,6 +329,11 @@ ul.alert-list {
   max-width: 200px;
 }
 
+// line-height
+.leading-normal {
+  line-height: normal !important;
+}
+
 // Flexbox & Grid
 .self-center {
   align-self: center;
@@ -351,6 +356,14 @@ ul.alert-list {
     left: 100%;
     white-space: nowrap;
   }
+}
+
+.text-tag {
+  display: inline-flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #F4F7FA;
+  border-radius: 8px;
 }
 
 .hover-underline {
