@@ -1,4 +1,5 @@
-import { Flex, Typography } from 'antd';
+import { LeftOutlined } from '@ant-design/icons';
+import { Button, Flex, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
@@ -6,7 +7,9 @@ import styled from 'styled-components';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { COLOR } from '@/constants/colors';
 import { AgentType } from '@/enums/Agent';
+import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
+import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { AgentConfig } from '@/types/Agent';
@@ -56,19 +59,30 @@ const AgentSelectionContainer = styled(Flex)<{ active?: boolean }>`
   }
 `;
 
-const SelectYourAgent = () => (
-  <Flex
-    vertical
-    gap={16}
-    className="p-24"
-    style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}
-  >
-    <Title level={3} className="m-0">
-      Select your agent
-    </Title>
-    <Text type="secondary">Review and select the AI agent you like.</Text>
-  </Flex>
-);
+const SelectYourAgent = () => {
+  const { goto } = usePageState();
+  return (
+    <Flex
+      vertical
+      gap={16}
+      className="p-24"
+      style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}
+    >
+      <Button
+        onClick={() => goto(Pages.Main)}
+        icon={<LeftOutlined />}
+        type="default"
+        style={{ alignSelf: 'self-start' }}
+      >
+        Back
+      </Button>
+      <Title level={3} className="m-0">
+        Select your agent
+      </Title>
+      <Text type="secondary">Review and select the AI agent you like.</Text>
+    </Flex>
+  );
+};
 
 type SelectYourAgentListProps = {
   onSelectYourAgent: (agentType: AgentType) => void;
