@@ -47,13 +47,15 @@ const useFundingRequirements = (agentType: AgentType) => {
     Object.entries(serviceTemplate.configurations).forEach(
       ([middlewareChain, config]) => {
         const evmChainId = asEvmChainId(middlewareChain);
+        const { safeCreationThreshold } = CHAIN_CONFIG[evmChainId];
 
         if (!stakingProgramId) return;
 
-        // Gas requirements
+        // Total native token requirement = monthly gas estimate + safe creation threshold
         const gasEstimate = config.monthly_gas_estimate;
         const monthlyGasEstimate = Number(formatUnits(`${gasEstimate}`, 18));
         const nativeTokenSymbol = getNativeTokenSymbol(evmChainId);
+        const totalNativeAmount = monthlyGasEstimate + safeCreationThreshold;
 
         // OLAS staking requirements
         const minimumStakedAmountRequired =
@@ -65,7 +67,7 @@ const useFundingRequirements = (agentType: AgentType) => {
 
         results[evmChainId] = {
           [TokenSymbolMap.OLAS]: minimumStakedAmountRequired,
-          [nativeTokenSymbol]: monthlyGasEstimate,
+          [nativeTokenSymbol]: totalNativeAmount,
           ...additionalTokens,
         };
       },
@@ -162,19 +164,10 @@ const MinimumFundingRequirements = ({
   agentType,
 }: MinimumFundingRequirementsProps) => {
   const { evmHomeChainId } = AGENT_CONFIG[agentType];
-  const { safeCreationThreshold, nativeToken } = CHAIN_CONFIG[evmHomeChainId];
   const tokens = useFundingRequirements(agentType);
 
   const allTokens = Object.entries(tokens[evmHomeChainId] || {})
-    .map(([token, minAmount]) => {
-      const amount = (() => {
-        // For native token, add amount for safe creation
-        if (token === nativeToken.symbol) {
-          return minAmount + safeCreationThreshold;
-        }
-        return minAmount;
-      })();
-
+    .map(([token, amount]) => {
       const icon = (() => {
         if (token === 'XDAI') return '/tokens/wxdai-icon.png';
         return TokenSymbolConfigMap[token as TokenSymbol]?.image as string;
@@ -182,7 +175,7 @@ const MinimumFundingRequirements = ({
 
       return { token, amount, icon };
     })
-    // filter out OLAS as it's shown in staking requirements
+    // filter out OLAS as it's shown in staking requirements above.
     .filter(({ token }) => token !== TokenSymbolMap.OLAS);
 
   if (allTokens.length === 0) {

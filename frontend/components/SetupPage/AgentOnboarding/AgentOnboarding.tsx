@@ -89,7 +89,7 @@ const SelectYourAgentList = ({
 
     const isNotInServices = ([, agentConfig]: [string, AgentConfig]) =>
       !services?.some(
-        (service) => service.home_chain === agentConfig.middlewareHomeChainId,
+        ({ home_chain }) => home_chain === agentConfig.middlewareHomeChainId,
       );
 
     return ACTIVE_AGENTS.filter(isActive).filter(isNotInServices);
@@ -98,19 +98,18 @@ const SelectYourAgentList = ({
   return agents.map(([agentType, agentConfig]) => (
     <AgentSelectionContainer
       key={agentType}
+      active={selectedAgent === agentType}
       onClick={() => onSelectYourAgent(agentType as AgentType)}
       gap={12}
       align="center"
-      active={selectedAgent === agentType}
     >
       <Image
         src={`/agent-${agentType}-icon.png`}
+        alt={agentConfig.displayName}
         width={36}
         height={36}
-        alt={agentConfig.displayName}
         style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
       />
-
       <Flex>
         <Text>{agentConfig.displayName}</Text>
       </Flex>
@@ -153,8 +152,8 @@ export const AgentOnboarding = () => {
 
     // if already exists
     const isAccountCreated = services?.find(
-      (service) =>
-        asEvmChainId(service.home_chain) === currentAgentConfig.evmHomeChainId,
+      ({ home_chain }) =>
+        asEvmChainId(home_chain) === currentAgentConfig.evmHomeChainId,
     );
     if (isAccountCreated) {
       gotoPage(Pages.Main);

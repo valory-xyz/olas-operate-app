@@ -19,7 +19,6 @@ export type OnboardingStep = {
 };
 
 type AnimatedImageProps = { imgSrc: string; alt: string };
-
 const AnimatedImage = ({ imgSrc, alt }: AnimatedImageProps) => (
   <AnimatePresence mode="wait">
     <motion.div
@@ -44,6 +43,24 @@ const AnimatedImage = ({ imgSrc, alt }: AnimatedImageProps) => (
       />
     </motion.div>
   </AnimatePresence>
+);
+
+const Content = ({ title, desc, helper }: OnboardingStep) => (
+  <AnimatedContent>
+    <Flex vertical gap={8}>
+      {title && (
+        <Title level={5} className="m-0">
+          {title}
+        </Title>
+      )}
+      <Text>{desc}</Text>
+      {helper && (
+        <Text type="secondary" className="text-sm">
+          {helper}
+        </Text>
+      )}
+    </Flex>
+  </AnimatedContent>
 );
 
 type IntroductionProps = OnboardingStep & {
@@ -84,23 +101,8 @@ export const IntroductionStep = ({
           {isFundingDetailsStep ? null : (
             <>
               <div style={{ padding: '0px 20px', overflow: 'hidden' }}>
-                <AnimatedContent>
-                  <Flex vertical gap={8}>
-                    {title && (
-                      <Title level={5} className="m-0">
-                        {title}
-                      </Title>
-                    )}
-                    <Text>{desc}</Text>
-                    {helper && (
-                      <Text type="secondary" className="text-sm">
-                        {helper}
-                      </Text>
-                    )}
-                  </Flex>
-                </AnimatedContent>
+                <Content title={title} desc={desc} helper={helper} />
               </div>
-
               {selectedAgentConfig.isUnderConstruction && <UnderConstruction />}
             </>
           )}

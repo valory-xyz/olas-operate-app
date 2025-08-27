@@ -5,6 +5,9 @@ type OnboardingStep = {
   children: ReactNode;
 };
 
+/**
+ * An animated container for onboarding steps.
+ */
 export const AnimatedContent = ({ children }: OnboardingStep) => (
   <AnimatePresence mode="wait">
     <motion.div
