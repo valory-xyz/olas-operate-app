@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useMemo } from 'react';
 
 import { AGENT_CONFIG } from '@/config/agents';
+import { CHAIN_CONFIG } from '@/config/chains';
 import {
   DEFAULT_STAKING_PROGRAM_IDS,
   STAKING_PROGRAMS,
@@ -161,17 +162,26 @@ const MinimumFundingRequirements = ({
   agentType,
 }: MinimumFundingRequirementsProps) => {
   const { evmHomeChainId } = AGENT_CONFIG[agentType];
+  const { safeCreationThreshold, nativeToken } = CHAIN_CONFIG[evmHomeChainId];
   const tokens = useFundingRequirements(agentType);
 
   const allTokens = Object.entries(tokens[evmHomeChainId] || {})
-    .map(([token, amount]) => ({
-      token,
-      amount,
-      icon:
-        token === 'XDAI'
-          ? '/tokens/wxdai-icon.png'
-          : (TokenSymbolConfigMap[token as TokenSymbol]?.image as string),
-    }))
+    .map(([token, minAmount]) => {
+      const amount = (() => {
+        // For native token, add amount for safe creation
+        if (token === nativeToken.symbol) {
+          return minAmount + safeCreationThreshold;
+        }
+        return minAmount;
+      })();
+
+      const icon = (() => {
+        if (token === 'XDAI') return '/tokens/wxdai-icon.png';
+        return TokenSymbolConfigMap[token as TokenSymbol]?.image as string;
+      })();
+
+      return { token, amount, icon };
+    })
     // filter out OLAS as it's shown in staking requirements
     .filter(({ token }) => token !== TokenSymbolMap.OLAS);
 
@@ -233,12 +243,6 @@ export const FundingRequirementStep = ({
     </AnimatedContent>
   );
 };
-
-/**
- * TODO:
- * - get the minimum staking requirements
- * - get the minimum funding requirements
- */
 
 /**
  * - Select your agent list - only those not already has account
