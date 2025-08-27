@@ -10,6 +10,6 @@ export const useBackupSigner = () => {
   const { masterSafes } = useMasterWalletContext();
   const { allBackupAddresses } = useMultisigs(masterSafes);
 
-  const backupSignerAddress = backupSigner ?? allBackupAddresses[0];
+  const backupSignerAddress = backupSigner?.address ?? allBackupAddresses[0];
   return backupSignerAddress;
 };

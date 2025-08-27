@@ -69,8 +69,25 @@ cp .env.example .env
 Then fill in the required environment variables.
 
 - `NODE_ENV` - Set to `development` for development. `production` is only used for production builds built through the release script.
-- `FORK_URL` - Set to your desired HTTP RPC endpoint.
-- `DEV_RPC` - Set to the same value as `FORK_URL`.
+- RPC endpoints are per-chain. Provide HTTPS RPC URLs for the chains you plan to use:
+  - `GNOSIS_RPC`
+  - `BASE_RPC`
+  - `OPTIMISM_RPC`
+  - `ETHEREUM_RPC`
+  - `MODE_RPC`
+  - `CELO_RPC`
+
+Example `.env` snippet:
+
+```env
+# Set only the chains you need; leave others unset or blank
+GNOSIS_RPC=https://...
+BASE_RPC=https://...
+OPTIMISM_RPC=https://...
+ETHEREUM_RPC=https://...
+MODE_RPC=https://...
+CELO_RPC=https://...
+```
 
 ### Run the project
 
