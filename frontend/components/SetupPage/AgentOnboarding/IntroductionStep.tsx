@@ -72,7 +72,7 @@ type IntroductionProps = OnboardingStep & {
 };
 
 /**
- * Functional component to display the introduction step of the onboarding process.
+ * To display the introduction step of the onboarding process.
  */
 export const IntroductionStep = ({
   title,

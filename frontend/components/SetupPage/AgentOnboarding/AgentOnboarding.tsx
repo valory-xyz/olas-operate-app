@@ -6,14 +6,11 @@ import styled from 'styled-components';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { COLOR } from '@/constants/colors';
 import { AgentType } from '@/enums/Agent';
-import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { AgentConfig } from '@/types/Agent';
 import { Optional } from '@/types/Util';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import {
   AGENTS_FUN_ONBOARDING_STEPS,
@@ -129,8 +126,6 @@ const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
  */
 export const AgentOnboarding = () => {
   const { goto } = useSetup();
-  const { services } = useServices();
-  const { goto: gotoPage } = usePageState();
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
   const [onboardingStep, setOnboardingStep] = useState(0);
 
@@ -150,16 +145,6 @@ export const AgentOnboarding = () => {
     if (!selectedAgent) return;
     const currentAgentConfig = AGENT_CONFIG[selectedAgent];
 
-    // if already exists
-    const isAccountCreated = services?.find(
-      ({ home_chain }) =>
-        asEvmChainId(home_chain) === currentAgentConfig.evmHomeChainId,
-    );
-    if (isAccountCreated) {
-      gotoPage(Pages.Main);
-      return;
-    }
-
     // if agent is "coming soon" should be redirected to EARLY ACCESS PAGE
     if (currentAgentConfig.isComingSoon) {
       goto(SetupScreen.EarlyAccessOnly);
@@ -173,7 +158,7 @@ export const AgentOnboarding = () => {
     } else {
       goto(SetupScreen.SetupEoaFunding);
     }
-  }, [goto, gotoPage, selectedAgent, services]);
+  }, [goto, selectedAgent]);
 
   const handleSelectYourAgent = useCallback((agentType: AgentType) => {
     setSelectedAgent(agentType as AgentType);
