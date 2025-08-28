@@ -13,7 +13,7 @@ import { BackupWalletWeb3Auth } from './BackupWalletWeb3Auth';
 const { Title, Text } = Typography;
 
 export const SetupBackupSigner = () => {
-  const [backupWalletView, setBackupWalletView] =
+  const [backupWalletType, setBackupWalletType] =
     useState<BackupWalletType>('web3auth');
 
   return (
@@ -27,12 +27,12 @@ export const SetupBackupSigner = () => {
             you can add your existing crypto wallet as a backup if you have one.
           </Text>
 
-          {backupWalletView === 'web3auth' && (
+          {backupWalletType === 'web3auth' && (
             <BackupWalletWeb3Auth
-              onSetUpManuallyClick={() => setBackupWalletView('manual')}
+              onSetUpManuallyClick={() => setBackupWalletType('manual')}
             />
           )}
-          {backupWalletView === 'manual' && <BackupWalletManual />}
+          {backupWalletType === 'manual' && <BackupWalletManual />}
         </Flex>
       </CardFlex>
     </Web3AuthProvider>

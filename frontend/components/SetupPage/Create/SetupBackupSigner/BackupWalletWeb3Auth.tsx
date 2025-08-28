@@ -19,6 +19,32 @@ type BackupWalletWeb3AuthProps = {
   onSetUpManuallyClick: () => void;
 };
 
+const Web3AuthCaption = () => (
+  <Text type="secondary" className="text-sm mt-16">
+    Set Up with&nbsp;
+    <GoogleIcon
+      fill={COLOR.GRAY_2}
+      height={14}
+      width={14}
+      viewBox="0 0 14 15"
+    />
+    &nbsp;/&nbsp;
+    <AppleIcon fill={COLOR.GRAY_2} height={15} width={15} viewBox="0 0 15 16" />
+    &nbsp; authentication service is provided by Web3Auth. For details on how
+    your data is handled during authentication, please refer to the&nbsp;
+    <a target="_blank" href={WEB3AUTH_PRIVACY_POLICY_URL}>
+      Web3Auth&apos;s Privacy Policy
+      {UNICODE_SYMBOLS.EXTERNAL_LINK}
+    </a>
+    &nbsp;and&nbsp;
+    <a target="_blank" href={WEB3AUTH_TERMS_AND_CONDITIONS_URL}>
+      Terms and Conditions&nbsp;
+      {UNICODE_SYMBOLS.EXTERNAL_LINK}
+    </a>
+    .
+  </Text>
+);
+
 export const BackupWalletWeb3Auth = ({
   onSetUpManuallyClick,
 }: BackupWalletWeb3AuthProps) => {
@@ -46,35 +72,7 @@ export const BackupWalletWeb3Auth = ({
         Provide Existing Backup Wallet
       </Button>
 
-      <Text type="secondary" className="text-sm mt-16">
-        Set Up with&nbsp;
-        <GoogleIcon
-          fill={COLOR.GRAY_2}
-          height={14}
-          width={14}
-          viewBox="0 0 14 15"
-        />
-        &nbsp;/&nbsp;
-        <AppleIcon
-          fill={COLOR.GRAY_2}
-          height={15}
-          width={15}
-          viewBox="0 0 15 16"
-        />
-        &nbsp; authentication service is provided by Web3Auth. For details on
-        how your data is handled during authentication, please refer to
-        the&nbsp;
-        <a target="_blank" href={WEB3AUTH_PRIVACY_POLICY_URL}>
-          Web3Auth&apos;s Privacy Policy
-          {UNICODE_SYMBOLS.EXTERNAL_LINK}
-        </a>
-        &nbsp;and&nbsp;
-        <a target="_blank" href={WEB3AUTH_TERMS_AND_CONDITIONS_URL}>
-          Terms and Conditions&nbsp;
-          {UNICODE_SYMBOLS.EXTERNAL_LINK}
-        </a>
-        .
-      </Text>
+      <Web3AuthCaption />
     </>
   );
 };
