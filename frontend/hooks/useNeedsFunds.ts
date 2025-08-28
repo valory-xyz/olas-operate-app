@@ -124,10 +124,6 @@ export const useNeedsFunds = (stakingProgramId: Maybe<StakingProgramId>) => {
     return serviceChainIds.every((chainId) => {
       const nativeTokenSymbol = getNativeTokenSymbol(chainId);
       const nativeTokenBalance =
-        // TODO: temporarily use .? here, because when switching between agents,
-        // the memoized serviceChainIds and balancesByChain can have different keys
-        // leading balancesByChain[chainId] to be undefined and this code fail.
-        // We need to properly check if the data is loading in both useMemo and return null
         balancesByChain[chainId]?.[nativeTokenSymbol] || 0;
       const nativeTokenRequired =
         serviceFundRequirements[chainId]?.[nativeTokenSymbol] || 0;
@@ -144,10 +140,6 @@ export const useNeedsFunds = (stakingProgramId: Maybe<StakingProgramId>) => {
     if (isEmpty(balancesByChain)) return;
 
     return serviceChainIds.every((chainId) => {
-      // TODO: temporarily use .? here, because when switching between agents,
-      // the memoized serviceChainIds and balancesByChain can have different keys
-      // leading balancesByChain[chainId] to be undefined and this code fail.
-      // We need to properly check if the data is loading in both useMemo and return null
       const olasBalance = balancesByChain[chainId]?.[TokenSymbol.OLAS] || 0;
       const olasRequired =
         serviceFundRequirements[chainId]?.[TokenSymbol.OLAS] || 0;

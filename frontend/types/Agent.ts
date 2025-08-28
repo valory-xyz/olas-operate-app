@@ -6,6 +6,12 @@ import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
 
+type ServiceApi =
+  | typeof PredictTraderService
+  | typeof ModiusService
+  | typeof OptimismService
+  | typeof AgentsFunBaseService;
+
 export type AgentConfig = {
   name: string;
   evmHomeChainId: EvmChainId;
@@ -16,11 +22,7 @@ export type AgentConfig = {
   additionalRequirements?: Partial<
     Record<EvmChainId, Partial<Record<TokenSymbol, number>>>
   >;
-  serviceApi:
-    | typeof PredictTraderService
-    | typeof ModiusService
-    | typeof OptimismService
-    | typeof AgentsFunBaseService;
+  serviceApi: ServiceApi;
   displayName: string;
   description: string;
   /** Adds under construction tab above card */
@@ -36,6 +38,7 @@ export type AgentConfig = {
   requiresSetup: boolean;
   /** Whether the agent has external funds available (eg. agent invests funds) */
   hasExternalFunds: boolean;
+  category?: 'Prediction Markets' | 'DeFi';
 };
 
 export type AgentHealthCheckResponse = {

@@ -55,6 +55,7 @@ export const AGENT_CONFIG: {
     displayName: 'Prediction agent',
     description: 'Participates in prediction markets.',
     hasExternalFunds: false,
+    category: 'Prediction Markets',
   },
   [AgentType.Modius]: {
     isAgentEnabled: true,
@@ -74,6 +75,7 @@ export const AGENT_CONFIG: {
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
     hasExternalFunds: true,
+    category: 'DeFi',
   },
   [AgentType.Optimus]: {
     isAgentEnabled: true,
@@ -93,6 +95,7 @@ export const AGENT_CONFIG: {
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Optimus network.',
     hasExternalFunds: true,
+    category: 'DeFi',
   },
   [AgentType.AgentsFun]: {
     isAgentEnabled: true,

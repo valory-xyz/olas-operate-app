@@ -26,7 +26,7 @@ export type ChainConfig = {
   safeCreationThreshold: number;
 };
 
-export const GNOSIS_CHAIN_CONFIG: ChainConfig = {
+const GNOSIS_CHAIN_CONFIG: ChainConfig = {
   evmChainId: EvmChainId.Gnosis,
   name: 'Gnosis',
   nativeToken: TOKEN_CONFIG[EvmChainId.Gnosis][TokenSymbol.XDAI],
@@ -36,7 +36,7 @@ export const GNOSIS_CHAIN_CONFIG: ChainConfig = {
   color: '#04795B0F',
 } as const;
 
-export const BASE_CHAIN_CONFIG: ChainConfig = {
+const BASE_CHAIN_CONFIG: ChainConfig = {
   evmChainId: EvmChainId.Base,
   name: 'Base',
   nativeToken: TOKEN_CONFIG[EvmChainId.Base][TokenSymbol.ETH],
@@ -46,7 +46,7 @@ export const BASE_CHAIN_CONFIG: ChainConfig = {
   color: '#0052FF12',
 } as const;
 
-export const MODE_CHAIN_CONFIG: ChainConfig = {
+const MODE_CHAIN_CONFIG: ChainConfig = {
   evmChainId: EvmChainId.Mode,
   name: 'Mode',
   nativeToken: TOKEN_CONFIG[EvmChainId.Mode][TokenSymbol.ETH],
@@ -56,7 +56,7 @@ export const MODE_CHAIN_CONFIG: ChainConfig = {
   color: '#DFFE0029',
 } as const;
 
-export const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
+const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
   evmChainId: EvmChainId.Optimism,
   name: 'Optimism',
   nativeToken: TOKEN_CONFIG[EvmChainId.Optimism][TokenSymbol.ETH],
