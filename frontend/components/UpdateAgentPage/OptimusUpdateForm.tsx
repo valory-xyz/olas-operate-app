@@ -148,18 +148,18 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
   );
 };
 
-/**
- * Form for updating Optimus agent.
- */
-export const OptimusUpdatePage = ({
-  renderForm,
-}: {
+type OptimusUpdatePageProps = {
   renderForm: (
     form: ReactNode,
     desc: ReactNode,
     onBack?: () => void,
   ) => ReactNode;
-}) => {
+};
+
+/**
+ * Form for updating Optimus agent.
+ */
+export const OptimusUpdatePage = ({ renderForm }: OptimusUpdatePageProps) => {
   const { goto } = usePageState();
   const { selectedService } = useServices();
   const { unsavedModal, form } = useContext(UpdateAgentContext);

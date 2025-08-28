@@ -1,9 +1,8 @@
-import { Button, Divider, Form, Input, message, Typography } from 'antd';
+import { Button, Form, Input, message } from 'antd';
 import React, { ReactNode, useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
-import { COINGECKO_URL, TENDERLY_URL } from '@/constants/urls';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -19,35 +18,18 @@ import {
 } from '../../../AgentForms/common/formUtils';
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
-  CoinGeckoApiKeyLabel,
+  CoingeckoApiKeyDesc,
   CoinGeckoApiKeyLabelV2,
+  GeminiApiKeyDesc,
   GeminiApiKeyLabel,
   GeminiApiKeyLabelV2,
-  TenderlyAccessTokenLabel,
   TenderlyAccessTokenLabelV2,
-  TenderlyAccountSlugLabel,
-  TenderlyProjectSlugLabel,
+  TenderlyApiKeyDesc,
 } from '../../../AgentForms/common/labels';
 import {
   ModiusFieldValues,
   useModiusFormValidate,
 } from './useModiusFormValidate';
-
-const { Text } = Typography;
-
-const SetupHeader = () => (
-  <Text>
-    Set up your agent with access to a{' '}
-    <a target="_blank" href={TENDERLY_URL}>
-      Tenderly
-    </a>{' '}
-    project for simulating bridge and swap routes, and swap routes and provide a{' '}
-    <a target="_blank" href={COINGECKO_URL}>
-      CoinGecko API key
-    </a>{' '}
-    as a price source.
-  </Text>
-);
 
 type ModiusAgentFormContentProps = {
   serviceTemplate: ServiceTemplate;
@@ -144,9 +126,6 @@ export const ModiusAgentFormContent = ({
 
   return (
     <>
-      <SetupHeader />
-      <Divider style={{ margin: '8px 0' }} />
-
       <Form<ModiusFieldValues>
         form={form}
         name="setup-your-agent"
@@ -155,9 +134,10 @@ export const ModiusAgentFormContent = ({
         validateMessages={validateMessages}
         disabled={canSubmitForm}
       >
+        <TenderlyApiKeyDesc isSetupPage />
         <Form.Item
+          label="Tenderly access token"
           name="tenderlyAccessToken"
-          label={<TenderlyAccessTokenLabel />}
           {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
@@ -165,8 +145,8 @@ export const ModiusAgentFormContent = ({
         </Form.Item>
 
         <Form.Item
+          label="Tenderly account slug"
           name="tenderlyAccountSlug"
-          label={<TenderlyAccountSlugLabel />}
           {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
         >
@@ -174,26 +154,30 @@ export const ModiusAgentFormContent = ({
         </Form.Item>
 
         <Form.Item
+          label="Tenderly project slug"
           name="tenderlyProjectSlug"
-          label={<TenderlyProjectSlugLabel />}
           {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
         >
           <Input />
         </Form.Item>
+        <div style={{ paddingBottom: 42 }} />
 
+        <CoingeckoApiKeyDesc isSetupPage />
         <Form.Item
+          label="CoinGecko API key"
           name="coinGeckoApiKey"
-          label={<CoinGeckoApiKeyLabel />}
           {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input.Password />
         </Form.Item>
+        <div style={{ paddingBottom: 42 }} />
 
+        <GeminiApiKeyDesc name="Modius" isSetupPage />
         <Form.Item
           name="geminiApiKey"
-          label={<GeminiApiKeyLabel name="Modius" />}
+          label={<GeminiApiKeyLabel />}
           {...optionalFieldProps}
         >
           <Input.Password />
