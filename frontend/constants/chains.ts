@@ -63,3 +63,12 @@ export const onRampChainMap: Record<SupportedMiddlewareChain, EvmChainId> = {
   [SupportedMiddlewareChainMap.base]: EvmChainIdMap.Base,
   [SupportedMiddlewareChainMap.mode]: EvmChainIdMap.Optimism,
 };
+
+export const ChainImageMap = {
+  [EvmChainIdMap.Gnosis]: '/chains/gnosis-chain.png',
+  [EvmChainIdMap.Base]: '/chains/base-chain.png',
+  [EvmChainIdMap.Mode]: '/chains/mode-chain.png',
+  [EvmChainIdMap.Optimism]: '/chains/optimism-chain.png',
+} as const;
+
+export type ChainImage = ValueOf<typeof ChainImageMap>;
