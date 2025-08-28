@@ -2,6 +2,7 @@ import {
   PlusOutlined,
   QuestionCircleOutlined,
   SettingOutlined,
+  WalletOutlined,
 } from '@ant-design/icons';
 import { Button, Flex, Layout, Menu, MenuProps, Spin, Typography } from 'antd';
 import { kebabCase } from 'lodash';
@@ -111,6 +112,10 @@ export const Sidebar = () => {
         gotoPage(Pages.Settings);
         return;
       }
+      case 'agent-form-settings': {
+        gotoPage(Pages.UpdateAgentTemplate);
+        return;
+      }
     }
   };
 
@@ -179,6 +184,18 @@ export const Sidebar = () => {
             className="mt-auto"
             onClick={handleMenuClick}
             items={[
+              {
+                key: 'wallet',
+                icon: <WalletOutlined />,
+                label: 'Pearl Wallet',
+                disabled: true,
+              },
+              // TODO: ask Roman about settings
+              {
+                key: 'agent-form-settings',
+                icon: <SettingOutlined />,
+                label: 'Agent Settings',
+              },
               {
                 key: 'help',
                 icon: <QuestionCircleOutlined />,

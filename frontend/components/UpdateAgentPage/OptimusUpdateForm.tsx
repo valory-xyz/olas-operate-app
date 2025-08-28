@@ -1,6 +1,6 @@
 import { Button, Form, Input } from 'antd';
 import { get, isEqual, isUndefined, omitBy } from 'lodash';
-import { useCallback, useContext, useMemo } from 'react';
+import { ReactNode, useCallback, useContext, useMemo } from 'react';
 
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
@@ -17,14 +17,15 @@ import {
 } from '../AgentForms/common/formUtils';
 import { InvalidGeminiApiCredentials } from '../AgentForms/common/InvalidGeminiApiCredentials';
 import {
-  CoinGeckoApiKeyLabel,
+  CoingeckoApiKeyDesc,
+  CoinGeckoApiKeyLabelV2,
+  GeminiApiKeyDesc,
   GeminiApiKeyLabel,
-  TenderlyAccessTokenLabel,
-  TenderlyAccountSlugLabel,
-  TenderlyProjectSlugLabel,
+  GeminiApiKeyLabelV2,
+  TenderlyAccessTokenLabelV2,
+  TenderlyApiKeyDesc,
 } from '../AgentForms/common/labels';
 import { useOptimusFormValidate } from '../SetupPage/SetupYourAgent/OptimusAgentForm/useOptimusFormValidate';
-import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
 type OptimusFormValues = {
@@ -42,11 +43,8 @@ type OptimusUpdateFormProps = {
 };
 
 const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
-  const {
-    isEditing,
-    form,
-    confirmUpdateModal: confirmModal,
-  } = useContext(UpdateAgentContext);
+  const { form, confirmUpdateModal: confirmModal } =
+    useContext(UpdateAgentContext);
 
   const {
     geminiApiKeyValidationStatus,
@@ -84,13 +82,13 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
     <Form<OptimusFormValues>
       form={form}
       layout="vertical"
-      disabled={!isEditing}
       onFinish={handleFinish}
       validateMessages={validateMessages}
       initialValues={{ ...initialFormValues }}
     >
+      <TenderlyApiKeyDesc />
       <Form.Item
-        label={<TenderlyAccessTokenLabel />}
+        label="Tenderly access token"
         name={['env_variables', 'TENDERLY_ACCESS_KEY']}
         {...requiredFieldProps}
         rules={[...requiredRules, { validator: validateApiKey }]}
@@ -99,7 +97,7 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
       </Form.Item>
 
       <Form.Item
-        label={<TenderlyAccountSlugLabel />}
+        label="Tenderly account slug"
         name={['env_variables', 'TENDERLY_ACCOUNT_SLUG']}
         {...requiredFieldProps}
         rules={[...requiredRules, { validator: validateSlug }]}
@@ -108,25 +106,29 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
       </Form.Item>
 
       <Form.Item
-        label={<TenderlyProjectSlugLabel />}
+        label="Tenderly project slug"
         name={['env_variables', 'TENDERLY_PROJECT_SLUG']}
         {...requiredFieldProps}
         rules={[...requiredRules, { validator: validateSlug }]}
       >
         <Input />
       </Form.Item>
+      <div style={{ paddingBottom: 42 }} />
 
+      <CoingeckoApiKeyDesc />
       <Form.Item
-        label={<CoinGeckoApiKeyLabel />}
+        label="CoinGecko API key"
         name={['env_variables', 'COINGECKO_API_KEY']}
         {...requiredFieldProps}
         rules={[...requiredRules, { validator: validateApiKey }]}
       >
         <Input.Password />
       </Form.Item>
+      <div style={{ paddingBottom: 42 }} />
 
+      <GeminiApiKeyDesc name="Optimus" />
       <Form.Item
-        label={<GeminiApiKeyLabel name="Optimus" />}
+        label={<GeminiApiKeyLabel />}
         name={['env_variables', 'GENAI_API_KEY']}
         {...optionalFieldProps}
         rules={[{ validator: validateApiKey }]}
@@ -137,7 +139,7 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
         <InvalidGeminiApiCredentials />
       )}
 
-      <Form.Item hidden={!isEditing}>
+      <Form.Item>
         <Button size="large" type="primary" htmlType="submit" block>
           {submitButtonText}
         </Button>
@@ -149,7 +151,15 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
 /**
  * Form for updating Optimus agent.
  */
-export const OptimusUpdatePage = () => {
+export const OptimusUpdatePage = ({
+  renderForm,
+}: {
+  renderForm: (
+    form: ReactNode,
+    desc: ReactNode,
+    onBack?: () => void,
+  ) => ReactNode;
+}) => {
   const { goto } = usePageState();
   const { selectedService } = useServices();
   const { unsavedModal, form } = useContext(UpdateAgentContext);
@@ -195,9 +205,13 @@ export const OptimusUpdatePage = () => {
     }
   }, [initialValues, form, unsavedModal, goto]);
 
-  return (
-    <CardLayout onClickBack={handleBackClick}>
-      <OptimusUpdateForm initialFormValues={initialValues} />
-    </CardLayout>
+  return renderForm(
+    <OptimusUpdateForm initialFormValues={initialValues} />,
+    <>
+      <TenderlyAccessTokenLabelV2 />
+      <CoinGeckoApiKeyLabelV2 />
+      <GeminiApiKeyLabelV2 />
+    </>,
+    handleBackClick,
   );
 };

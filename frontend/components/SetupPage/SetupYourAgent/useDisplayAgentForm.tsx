@@ -3,26 +3,18 @@ import { Flex, Typography } from 'antd';
 import React, { ReactNode, useCallback } from 'react';
 import styled from 'styled-components';
 
-import { CustomAlert } from '@/components/Alert';
 import { AgentHeader } from '@/components/ui/AgentHeader';
-import { AgentMap } from '@/constants/agent';
 import { COLOR } from '@/constants/colors';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 
-import { AgentsFunAgentSetup } from './AgentsFunAgentSetup';
-import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
-import { OptimusAgentForm } from './OptimusAgentForm/OptimusAgentForm';
+const { Title } = Typography;
 
-const { Title, Text } = Typography;
-
-const Container = styled(Flex)`
+export const AgentFormContainer = styled(Flex)`
   margin: -44px 0;
   background: ${COLOR.WHITE};
-  /* min-height: 796px; */
-  /* overflow: auto; */
   .setup-left-content {
     width: 492px;
     margin: 0 auto;
@@ -35,7 +27,7 @@ const Container = styled(Flex)`
   }
 `;
 
-export const SetupYourAgent = () => {
+export const useDisplayAgentForm = () => {
   const { goto } = useSetup();
   const { selectedAgentType } = useServices();
   const serviceTemplate = SERVICE_TEMPLATES.find(
@@ -71,37 +63,5 @@ export const SetupYourAgent = () => {
     [serviceTemplate, goto],
   );
 
-  if (!serviceTemplate) {
-    return (
-      <CustomAlert
-        type="error"
-        showIcon
-        message={<Text>Please select an agent type first!</Text>}
-        className="mb-8"
-      />
-    );
-  }
-
-  return (
-    <Container>
-      {selectedAgentType === AgentMap.Modius && (
-        <ModiusAgentForm
-          serviceTemplate={serviceTemplate}
-          renderForm={displayForm}
-        />
-      )}
-      {selectedAgentType === AgentMap.Optimus && (
-        <OptimusAgentForm
-          serviceTemplate={serviceTemplate}
-          renderForm={displayForm}
-        />
-      )}
-      {selectedAgentType === AgentMap.AgentsFun && (
-        <AgentsFunAgentSetup
-          serviceTemplate={serviceTemplate}
-          renderForm={displayForm}
-        />
-      )}
-    </Container>
-  );
+  return displayForm;
 };
