@@ -1,5 +1,5 @@
 import { Divider, message, Typography } from 'antd';
-import React, { useCallback } from 'react';
+import React, { ReactNode, useCallback } from 'react';
 
 import { ServiceTemplate } from '@/client';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -14,7 +14,10 @@ import {
 
 const { Text } = Typography;
 
-type AgentsFunAgentFormProps = { serviceTemplate: ServiceTemplate };
+type AgentsFunAgentFormProps = {
+  serviceTemplate: ServiceTemplate;
+  renderDesc: (desc: ReactNode) => ReactNode;
+};
 
 export const AgentsFunAgentSetup = ({
   serviceTemplate,

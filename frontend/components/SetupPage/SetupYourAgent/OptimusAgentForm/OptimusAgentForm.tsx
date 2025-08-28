@@ -1,9 +1,8 @@
-import { Button, Divider, Form, Input, message, Typography } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { Button, Form, Input, message, Typography } from 'antd';
+import React, { ReactNode, useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
-import { COINGECKO_URL, TENDERLY_URL } from '@/constants/urls';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -20,8 +19,11 @@ import {
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyLabel,
+  CoinGeckoApiKeyLabelV2,
   GeminiApiKeyLabel,
+  GeminiApiKeyLabelV2,
   TenderlyAccessTokenLabel,
+  TenderlyAccessTokenLabelV2,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
 } from '../../../AgentForms/common/labels';
@@ -34,23 +36,18 @@ const { Text } = Typography;
 
 const SetupHeader = () => (
   <Text>
-    Set up your agent with access to a{' '}
-    <a target="_blank" href={TENDERLY_URL}>
-      Tenderly
-    </a>{' '}
-    project for simulating bridge and swap routes, and swap routes and provide a{' '}
-    <a target="_blank" href={COINGECKO_URL}>
-      CoinGecko API key
-    </a>{' '}
-    as a price source.
+    Your agent needs access to a Tenderly project for simulating bridge and swap
+    routes for on-chain transactions.
   </Text>
 );
 
-type OptimusAgentFormProps = { serviceTemplate: ServiceTemplate };
+type OptimusAgentFormContentProps = {
+  serviceTemplate: ServiceTemplate;
+};
 
-export const OptimusAgentForm = ({
+const OptimusAgentFormContent = ({
   serviceTemplate,
-}: OptimusAgentFormProps) => {
+}: OptimusAgentFormContentProps) => {
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
@@ -140,7 +137,7 @@ export const OptimusAgentForm = ({
   return (
     <>
       <SetupHeader />
-      <Divider style={{ margin: '8px 0' }} />
+      {/* {renderDesc(<TenderlyInfo />)} */}
 
       <Form<OptimusFieldValues>
         form={form}
@@ -213,3 +210,18 @@ export const OptimusAgentForm = ({
     </>
   );
 };
+
+export const OptimusAgentForm = ({
+  serviceTemplate,
+  renderForm,
+}: OptimusAgentFormContentProps & {
+  renderForm: (form: ReactNode, desc: ReactNode) => ReactNode;
+}) =>
+  renderForm(
+    <OptimusAgentFormContent serviceTemplate={serviceTemplate} />,
+    <>
+      <TenderlyAccessTokenLabelV2 />
+      <CoinGeckoApiKeyLabelV2 />
+      <GeminiApiKeyLabelV2 />
+    </>,
+  );

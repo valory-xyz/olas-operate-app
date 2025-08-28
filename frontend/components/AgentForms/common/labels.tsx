@@ -13,6 +13,9 @@ const { Paragraph, Text } = Typography;
 
 const TOOLTIP_STYLE = { width: '340px' };
 
+/**
+ * @deprecated Use `TenderlyAccessTokenLabelV2` instead.
+ */
 export const TenderlyAccessTokenLabel = () => (
   <Flex align="center" gap={6}>
     <Text>Tenderly access token</Text>
@@ -49,6 +52,9 @@ export const TenderlyAccessTokenLabel = () => (
   </Flex>
 );
 
+/**
+ * @deprecated Use `TenderlyAccessTokenLabelV2` instead.
+ */
 export const TenderlyAccountSlugLabel = () => (
   <Flex align="center" gap={6}>
     <Text>Tenderly account slug</Text>
@@ -62,6 +68,9 @@ export const TenderlyAccountSlugLabel = () => (
   </Flex>
 );
 
+/**
+ * @deprecated Use `TenderlyAccessTokenLabelV2` instead.
+ */
 export const TenderlyProjectSlugLabel = () => (
   <Flex align="center" gap={6}>
     <Text>Tenderly project slug</Text>
@@ -75,6 +84,9 @@ export const TenderlyProjectSlugLabel = () => (
   </Flex>
 );
 
+/**
+ * @deprecated Use `CoinGeckoApiKeyLabelV2` instead.
+ */
 export const CoinGeckoApiKeyLabel = () => (
   <Flex align="center" gap={6}>
     <Text>CoinGecko API key</Text>
@@ -118,6 +130,9 @@ export const CoinGeckoApiKeyLabel = () => (
   </Flex>
 );
 
+/**
+ * @deprecated Use `GeminiApiKeyLabelV2` instead.
+ */
 export const GeminiApiKeyLabel = ({ name }: { name: 'Modius' | 'Optimus' }) => (
   <Flex align="center" gap={6}>
     <Text>Gemini API key</Text>
@@ -133,6 +148,84 @@ export const GeminiApiKeyLabel = ({ name }: { name: 'Modius' | 'Optimus' }) => (
     </InfoTooltip>
     <Text type="secondary" className="text-sm">
       (Optional)
+    </Text>
+  </Flex>
+);
+
+export const TenderlyAccessTokenLabelV2 = () => (
+  <Flex vertical gap={32}>
+    <Text>
+      <Text strong>The Tenderly access</Text> token allows your agent to
+      interact with Tenderly’s simulation tools, helping it analyze and optimize
+      bridge and swap routes.
+      <Text> To locate your personal access token:</Text>
+      <ol>
+        <li>
+          Connect to{' '}
+          <a href={TENDERLY_URL} target="_blank" rel="noreferrer">
+            Tenderly {UNICODE_SYMBOLS.EXTERNAL_LINK}
+          </a>{' '}
+          and click on your profile photo.
+        </li>
+        <li>Go to Account Settings → Access Tokens.</li>
+      </ol>
+    </Text>
+    <Text>
+      <Text strong>The account slug</Text> is a unique identifier for your
+      Tenderly account that represents your username. You can find your account
+      slug in your Tenderly project settings.
+    </Text>
+    <Text>
+      <Text strong>The project slug</Text> is a unique identifier for each
+      project in Tenderly. It’s automatically generated from your project’s
+      name. You can find the project slug in your Tenderly project settings.
+    </Text>
+  </Flex>
+);
+
+export const CoinGeckoApiKeyLabelV2 = () => (
+  <Flex vertical>
+    <Text>
+      To create your <Text strong>CoinGecko API key</Text>:
+    </Text>
+    <Text>
+      <ol>
+        <li>
+          <Text>
+            Log in to your{' '}
+            <a target="_blank" href={COINGECKO_URL}>
+              CoinGecko account&nbsp;
+              {UNICODE_SYMBOLS.EXTERNAL_LINK}
+            </a>
+            .
+          </Text>
+        </li>
+        <li>
+          <Text>Go to Developer Dashboard.</Text>
+        </li>
+        <li>
+          <Text>Find your key under the My API Keys section.</Text>
+        </li>
+      </ol>
+    </Text>
+
+    <Text>
+      <a target="_blank" href={COINGECKO_DEMO_API_KEY}>
+        Learn how to create a demo API key&nbsp;
+        {UNICODE_SYMBOLS.EXTERNAL_LINK}
+      </a>
+    </Text>
+  </Flex>
+);
+
+export const GeminiApiKeyLabelV2 = () => (
+  <Flex vertical>
+    <Text>
+      You can generate <Text strong>Gemini API key</Text> for free on{' '}
+      <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
+        Google AI Studio
+      </a>
+      .
     </Text>
   </Flex>
 );

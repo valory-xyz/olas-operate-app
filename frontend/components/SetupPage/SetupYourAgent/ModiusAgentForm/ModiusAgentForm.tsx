@@ -1,5 +1,5 @@
 import { Button, Divider, Form, Input, message, Typography } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { ReactNode, useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
@@ -46,7 +46,10 @@ const SetupHeader = () => (
   </Text>
 );
 
-type ModiusAgentFormProps = { serviceTemplate: ServiceTemplate };
+type ModiusAgentFormProps = {
+  serviceTemplate: ServiceTemplate;
+  renderDesc: (desc: ReactNode) => ReactNode;
+};
 
 export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
   const { goto } = useSetup();
