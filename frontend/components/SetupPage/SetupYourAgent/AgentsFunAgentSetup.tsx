@@ -14,14 +14,13 @@ import {
 
 const { Text } = Typography;
 
-type AgentsFunAgentFormProps = {
+type AgentsFunAgentFormContentProps = {
   serviceTemplate: ServiceTemplate;
-  renderDesc: (desc: ReactNode) => ReactNode;
 };
 
-export const AgentsFunAgentSetup = ({
+export const AgentsFunAgentFormContent = ({
   serviceTemplate,
-}: AgentsFunAgentFormProps) => {
+}: AgentsFunAgentFormContentProps) => {
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
@@ -102,3 +101,14 @@ export const AgentsFunAgentSetup = ({
     </>
   );
 };
+
+export const AgentsFunAgentSetup = ({
+  serviceTemplate,
+  renderForm,
+}: AgentsFunAgentFormContentProps & {
+  renderForm: (form: ReactNode, desc: ReactNode) => ReactNode;
+}) =>
+  renderForm(
+    <AgentsFunAgentFormContent serviceTemplate={serviceTemplate} />,
+    <>TODO</>,
+  );

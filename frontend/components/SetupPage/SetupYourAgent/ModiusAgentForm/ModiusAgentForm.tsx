@@ -20,8 +20,11 @@ import {
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyLabel,
+  CoinGeckoApiKeyLabelV2,
   GeminiApiKeyLabel,
+  GeminiApiKeyLabelV2,
   TenderlyAccessTokenLabel,
+  TenderlyAccessTokenLabelV2,
   TenderlyAccountSlugLabel,
   TenderlyProjectSlugLabel,
 } from '../../../AgentForms/common/labels';
@@ -46,12 +49,13 @@ const SetupHeader = () => (
   </Text>
 );
 
-type ModiusAgentFormProps = {
+type ModiusAgentFormContentProps = {
   serviceTemplate: ServiceTemplate;
-  renderDesc: (desc: ReactNode) => ReactNode;
 };
 
-export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
+export const ModiusAgentFormContent = ({
+  serviceTemplate,
+}: ModiusAgentFormContentProps) => {
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
@@ -214,3 +218,18 @@ export const ModiusAgentForm = ({ serviceTemplate }: ModiusAgentFormProps) => {
     </>
   );
 };
+
+export const ModiusAgentForm = ({
+  serviceTemplate,
+  renderForm,
+}: ModiusAgentFormContentProps & {
+  renderForm: (form: ReactNode, desc: ReactNode) => ReactNode;
+}) =>
+  renderForm(
+    <ModiusAgentFormContent serviceTemplate={serviceTemplate} />,
+    <>
+      <TenderlyAccessTokenLabelV2 />
+      <CoinGeckoApiKeyLabelV2 />
+      <GeminiApiKeyLabelV2 />
+    </>,
+  );

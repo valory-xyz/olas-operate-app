@@ -1,4 +1,4 @@
-import { Button, Form, Input, message, Typography } from 'antd';
+import { Button, Form, Input, message } from 'antd';
 import React, { ReactNode, useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
@@ -18,28 +18,18 @@ import {
 } from '../../../AgentForms/common/formUtils';
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
-  CoinGeckoApiKeyLabel,
+  CoingeckoApiKeyDesc,
   CoinGeckoApiKeyLabelV2,
+  GeminiApiKeyDesc,
   GeminiApiKeyLabel,
   GeminiApiKeyLabelV2,
-  TenderlyAccessTokenLabel,
   TenderlyAccessTokenLabelV2,
-  TenderlyAccountSlugLabel,
-  TenderlyProjectSlugLabel,
+  TenderlyApiKeyDesc,
 } from '../../../AgentForms/common/labels';
 import {
   OptimusFieldValues,
   useOptimusFormValidate,
 } from './useOptimusFormValidate';
-
-const { Text } = Typography;
-
-const SetupHeader = () => (
-  <Text>
-    Your agent needs access to a Tenderly project for simulating bridge and swap
-    routes for on-chain transactions.
-  </Text>
-);
 
 type OptimusAgentFormContentProps = {
   serviceTemplate: ServiceTemplate;
@@ -136,9 +126,7 @@ const OptimusAgentFormContent = ({
 
   return (
     <>
-      <SetupHeader />
-      {/* {renderDesc(<TenderlyInfo />)} */}
-
+      <TenderlyApiKeyDesc isSetupPage />
       <Form<OptimusFieldValues>
         form={form}
         name="setup-your-agent"
@@ -149,7 +137,7 @@ const OptimusAgentFormContent = ({
       >
         <Form.Item
           name="tenderlyAccessToken"
-          label={<TenderlyAccessTokenLabel />}
+          label="Tenderly access token"
           {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
@@ -158,7 +146,7 @@ const OptimusAgentFormContent = ({
 
         <Form.Item
           name="tenderlyAccountSlug"
-          label={<TenderlyAccountSlugLabel />}
+          label="Tenderly account slug"
           {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
         >
@@ -167,22 +155,26 @@ const OptimusAgentFormContent = ({
 
         <Form.Item
           name="tenderlyProjectSlug"
-          label={<TenderlyProjectSlugLabel />}
+          label="Tenderly project slug"
           {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
         >
           <Input />
         </Form.Item>
 
+        <div style={{ paddingTop: 42 }} />
+        <CoingeckoApiKeyDesc isSetupPage />
         <Form.Item
           name="coinGeckoApiKey"
-          label={<CoinGeckoApiKeyLabel />}
+          label="CoinGecko API key"
           {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input.Password />
         </Form.Item>
 
+        <div style={{ paddingTop: 42 }} />
+        <GeminiApiKeyDesc name="Optimus" isSetupPage />
         <Form.Item
           name="geminiApiKey"
           label={<GeminiApiKeyLabel name="Optimus" />}

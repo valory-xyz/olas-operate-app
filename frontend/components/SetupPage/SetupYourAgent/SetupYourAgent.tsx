@@ -3,16 +3,11 @@ import { Flex, Typography } from 'antd';
 import React, { ReactNode, useCallback } from 'react';
 import styled from 'styled-components';
 
-import {
-  CoinGeckoApiKeyLabelV2,
-  GeminiApiKeyLabelV2,
-  TenderlyAccessTokenLabelV2,
-} from '@/components/AgentForms/common/labels';
 import { CustomAlert } from '@/components/Alert';
 import { AgentHeader } from '@/components/ui/AgentHeader';
+import { AgentMap } from '@/constants/agent';
 import { COLOR } from '@/constants/colors';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { AgentType } from '@/enums/Agent';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
@@ -26,7 +21,7 @@ const { Title, Text } = Typography;
 const Container = styled(Flex)`
   margin: -44px 0;
   background: ${COLOR.WHITE};
-  height: 796px;
+  /* min-height: 796px; */
   /* overflow: auto; */
   .setup-left-content {
     width: 492px;
@@ -76,16 +71,6 @@ export const SetupYourAgent = () => {
     [serviceTemplate, goto],
   );
 
-  const renderDesc = useCallback(
-    (desc: ReactNode) => (
-      <Flex className="setup-right-content" vertical gap={24}>
-        <InfoCircleOutlined style={{ fontSize: 24, color: COLOR.TEXT_LIGHT }} />
-        {desc}
-      </Flex>
-    ),
-    [],
-  );
-
   if (!serviceTemplate) {
     return (
       <CustomAlert
@@ -99,47 +84,24 @@ export const SetupYourAgent = () => {
 
   return (
     <Container>
-      {selectedAgentType === AgentType.Optimus && (
+      {selectedAgentType === AgentMap.AgentsFun && (
+        <AgentsFunAgentSetup
+          serviceTemplate={serviceTemplate}
+          renderForm={renderForm}
+        />
+      )}
+      {selectedAgentType === AgentMap.Optimus && (
         <OptimusAgentForm
           serviceTemplate={serviceTemplate}
           renderForm={renderForm}
         />
       )}
-      <Flex vertical className="setup-left-content" style={{ display: 'none' }}>
-        <AgentHeader
-          onPrev={() => goto(SetupScreen.AgentOnboarding)}
-          hideLogo
+      {selectedAgentType === AgentMap.Modius && (
+        <ModiusAgentForm
+          serviceTemplate={serviceTemplate}
+          renderForm={renderForm}
         />
-
-        <Title level={3} style={{ margin: '16px 0 24px 0' }}>
-          Configure Your Agent
-        </Title>
-
-        {selectedAgentType === AgentType.AgentsFun && (
-          <AgentsFunAgentSetup
-            serviceTemplate={serviceTemplate}
-            renderDesc={renderDesc}
-          />
-        )}
-        {selectedAgentType === AgentType.Modius && (
-          <ModiusAgentForm
-            serviceTemplate={serviceTemplate}
-            renderDesc={renderDesc}
-          />
-        )}
-      </Flex>
-
-      <Flex
-        vertical
-        gap={24}
-        className="setup-right-content"
-        style={{ display: 'none' }}
-      >
-        <InfoCircleOutlined style={{ fontSize: 24, color: COLOR.TEXT_LIGHT }} />
-        <TenderlyAccessTokenLabelV2 />
-        <CoinGeckoApiKeyLabelV2 />
-        <GeminiApiKeyLabelV2 />
-      </Flex>
+      )}
     </Container>
   );
 };

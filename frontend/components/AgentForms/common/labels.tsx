@@ -9,7 +9,7 @@ import {
   TENDERLY_URL,
 } from '@/constants/urls';
 
-const { Paragraph, Text } = Typography;
+const { Paragraph, Text, Title } = Typography;
 
 const TOOLTIP_STYLE = { width: '340px' };
 
@@ -152,24 +152,81 @@ export const GeminiApiKeyLabel = ({ name }: { name: 'Modius' | 'Optimus' }) => (
   </Flex>
 );
 
-export const TenderlyAccessTokenLabelV2 = () => (
-  <Flex vertical gap={32}>
-    <Text>
-      <Text strong>The Tenderly access</Text> token allows your agent to
-      interact with Tenderly’s simulation tools, helping it analyze and optimize
-      bridge and swap routes.
-      <Text> To locate your personal access token:</Text>
-      <ol>
-        <li>
-          Connect to{' '}
-          <a href={TENDERLY_URL} target="_blank" rel="noreferrer">
-            Tenderly {UNICODE_SYMBOLS.EXTERNAL_LINK}
-          </a>{' '}
-          and click on your profile photo.
-        </li>
-        <li>Go to Account Settings → Access Tokens.</li>
-      </ol>
+export const TenderlyApiKeyDesc = ({
+  isSetupPage = false,
+}: {
+  isSetupPage?: boolean;
+}) => (
+  <Flex gap={8} vertical className="mb-32">
+    <Title level={5} className="m-0">
+      {isSetupPage ? 'Step 1. ' : ''}
+      Tenderly
+    </Title>
+    <Text type="secondary">
+      Your agent needs access to a Tenderly project for simulating bridge and
+      swap routes for on-chain transactions.
     </Text>
+  </Flex>
+);
+
+export const CoingeckoApiKeyDesc = ({
+  isSetupPage = false,
+}: {
+  isSetupPage?: boolean;
+}) => (
+  <Flex gap={8} vertical className="mb-32">
+    <Title level={5} className="m-0">
+      {isSetupPage ? 'Step 2. ' : ''}
+      CoinGecko
+    </Title>
+    <Text type="secondary">
+      The CoinGecko API key enables your agent to fetch real-time token price
+      data, ensuring accurate investment calculations.
+    </Text>
+  </Flex>
+);
+
+export const GeminiApiKeyDesc = ({
+  isSetupPage = false,
+  name,
+}: {
+  isSetupPage?: boolean;
+  name: 'Modius' | 'Optimus';
+}) => (
+  <Flex gap={8} vertical className="mb-32">
+    <Title level={5} className="m-0">
+      {isSetupPage ? 'Step 3. ' : ''}
+      Gemini API key
+    </Title>
+    <Text type="secondary">
+      The Gemini API key allows you to chat with your agent and update its goals
+      through {name} profile.
+    </Text>
+  </Flex>
+);
+
+export const TenderlyAccessTokenLabelV2 = () => (
+  <Flex vertical gap={24} style={{ marginBottom: 42 }}>
+    <Flex vertical gap={6}>
+      <Text>
+        <Text strong>The Tenderly access</Text> token allows your agent to
+        interact with Tenderly’s simulation tools, helping it analyze and
+        optimize bridge and swap routes.
+      </Text>
+      <Text>To locate your personal access token:</Text>
+      <Text>
+        <ol className="m-0">
+          <li>
+            Connect to{' '}
+            <a href={TENDERLY_URL} target="_blank" rel="noreferrer">
+              Tenderly {UNICODE_SYMBOLS.EXTERNAL_LINK}
+            </a>{' '}
+            and click on your profile photo.
+          </li>
+          <li>Go to Account Settings → Access Tokens.</li>
+        </ol>
+      </Text>
+    </Flex>
     <Text>
       <Text strong>The account slug</Text> is a unique identifier for your
       Tenderly account that represents your username. You can find your account
@@ -184,12 +241,13 @@ export const TenderlyAccessTokenLabelV2 = () => (
 );
 
 export const CoinGeckoApiKeyLabelV2 = () => (
-  <Flex vertical>
+  <Flex vertical gap={4} style={{ marginBottom: 90 }}>
     <Text>
       To create your <Text strong>CoinGecko API key</Text>:
     </Text>
+
     <Text>
-      <ol>
+      <ol className="m-0">
         <li>
           <Text>
             Log in to your{' '}
