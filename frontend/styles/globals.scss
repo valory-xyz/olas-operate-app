@@ -50,6 +50,10 @@ textarea,
 .border-box {
   box-sizing: border-box;
 }
+// web3auth overrides
+.w3a-parent-container >div {
+  background-color: rgba(0, 0, 0, 0.45);
+}
 
 // antd overrides
 .ant-card {

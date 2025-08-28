@@ -38,7 +38,7 @@ Keep forks fresh by recreating them periodically and updating the corresponding 
 
 ## Managed RPC providers
 
-For mainnet/testnet access without forking, obtain endpoints from providers and map them to the env vars above:
+For mainnet/testnet access without forking, obtain endpoints from providers and map them to the env variables above:
 
 - Alchemy: https://dashboard.alchemy.com/
 - Infura: https://app.infura.io/

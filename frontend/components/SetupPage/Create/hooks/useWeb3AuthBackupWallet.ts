@@ -4,6 +4,7 @@ import {
   useWeb3AuthConnect,
   useWeb3AuthDisconnect,
 } from '@web3auth/modal/react';
+import { message } from 'antd';
 import { useEffect, useRef } from 'react';
 
 import { useSetup } from '@/hooks/useSetup';
@@ -36,6 +37,7 @@ export const useWeb3AuthBackupWallet = ({
         setBackupSigner({ address: accounts[0], type: 'web3auth' });
         disconnect();
         isAddressUpdated.current = true;
+        message.success('Backup wallet successfully set');
         onFinish();
       } catch (error) {
         console.error('Error getting address:', error);

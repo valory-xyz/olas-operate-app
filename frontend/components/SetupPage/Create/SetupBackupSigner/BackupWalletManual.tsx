@@ -1,4 +1,4 @@
-import { Button, Flex, Form, Input, Typography } from 'antd';
+import { Button, Flex, Form, FormItemProps, Input, Typography } from 'antd';
 import { getAddress } from 'ethers/lib/utils';
 
 import { AppleIcon } from '@/components/custom-icons/AppleIcon';
@@ -14,15 +14,23 @@ import { useWeb3AuthBackupWallet } from '../hooks/useWeb3AuthBackupWallet';
 const { Text } = Typography;
 
 const invalidAddressMessage = 'Please input a valid backup wallet address!';
+const walletFieldRules: FormItemProps['rules'] = [
+  {
+    required: true,
+    len: 42,
+    pattern: /^0x[a-fA-F0-9]{40}$/,
+    type: 'string',
+    message: invalidAddressMessage,
+  },
+];
 
 export const BackupWalletManual = () => {
-  const { goto } = useSetup();
-  const { setBackupSigner } = useSetup();
+  const { goto, setBackupSigner } = useSetup();
   const [form] = Form.useForm();
 
   const handleFinish = (values: { 'backup-signer': string }) => {
-    // important to lowercase the address before check summing, invalid checksums will cause ethers to throw
-    // returns null if invalid, ethers type is incorrect...
+    // important to lowercase the address before check summing, invalid checksums will
+    // return null if invalid, ethers type is incorrect.
     const checksummedAddress = getAddress(
       values['backup-signer'].toLowerCase(),
     ) as Address | null;
@@ -52,15 +60,7 @@ export const BackupWalletManual = () => {
         <Form.Item
           name="backup-signer"
           label="Enter Backup Wallet Address"
-          rules={[
-            {
-              required: true,
-              len: 42,
-              pattern: /^0x[a-fA-F0-9]{40}$/,
-              type: 'string',
-              message: invalidAddressMessage,
-            },
-          ]}
+          rules={walletFieldRules}
         >
           <Input size="large" placeholder="e.g. 0x12345...54321" />
         </Form.Item>
