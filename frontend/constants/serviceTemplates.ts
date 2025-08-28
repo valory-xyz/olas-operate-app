@@ -25,10 +25,10 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agent_release: {
     is_aea: true,
     repository: {
-      owner: "valory-xyz",
-      name: "trader",
-      version: 'v0.0.101'
-    }
+      owner: 'valory-xyz',
+      name: 'trader',
+      version: 'v0.0.1001',
+    },
   },
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
@@ -133,7 +133,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 
 const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
-  'env_variables' | 'hash' | 'image' | 'description' | 'service_version' | 'agent_release'
+  | 'env_variables'
+  | 'hash'
+  | 'image'
+  | 'description'
+  | 'service_version'
+  | 'agent_release'
 > = {
   hash: 'bafybeiardecju3sygh7hwuywka2bgjinbr7vrzob4mpdrookyfsbdmoq2m',
   image:
@@ -143,10 +148,10 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   agent_release: {
     is_aea: true,
     repository: {
-      owner: "valory-xyz",
-      name: "meme-ooorr",
-      version: 'v0.0.101'
-    }
+      owner: 'valory-xyz',
+      name: 'meme-ooorr',
+      version: 'v0.0.1001',
+    },
   },
   env_variables: {
     BASE_LEDGER_RPC: {
@@ -290,10 +295,10 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   agent_release: {
     is_aea: true,
     repository: {
-      owner: "valory-xyz",
-      name: "optimus",
-      version: 'v0.0.103'
-    }
+      owner: 'valory-xyz',
+      name: 'optimus',
+      version: 'v0.0.1001',
+    },
   },
 };
 
