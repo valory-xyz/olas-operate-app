@@ -17,6 +17,7 @@ import { SetupOnRamp } from './Create/SetupOnRamp/SetupOnRamp';
 import { SetupPassword } from './Create/SetupPassword';
 import { SetupSeedPhrase } from './Create/SetupSeedPhrase';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
+import { FundYourAgent } from './FundYourAgent/FundYourAgent';
 import {
   SetupRestoreMain,
   SetupRestoreSetPassword,
@@ -54,6 +55,7 @@ const SetupCard = styled.div`
 const screenWithoutCards: SetupScreen[] = [
   SetupScreen.AgentOnboarding,
   SetupScreen.SetupYourAgent,
+  SetupScreen.SetupEoaFunding,
 ];
 
 export const Setup = () => {
@@ -72,7 +74,7 @@ export const Setup = () => {
       case SetupScreen.SetupBackupSigner:
         return <SetupBackupSigner />;
       case SetupScreen.SetupEoaFunding:
-        return <SetupEoaFunding />;
+        return <FundYourAgent />;
       case SetupScreen.SetupEoaFundingIncomplete:
         return <SetupEoaFunding />;
       case SetupScreen.SetupCreateSafe:

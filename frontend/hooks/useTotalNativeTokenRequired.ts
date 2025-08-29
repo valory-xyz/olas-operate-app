@@ -8,7 +8,7 @@ import { useMasterWalletContext } from '@/hooks/useWallet';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
-import { useBridgeRequirementsQuery } from './useBridgeRequirementsQuery';
+import { useBridgeRequirementsQuery } from '../components/SetupPage/Create/SetupOnRamp/PayingReceivingTable/useBridgeRequirementsQuery';
 
 /**
  * Hook to fetch the bridge refill requirements for the on-ramp process and
@@ -55,12 +55,25 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
       onRampChainMap[fromChainName],
     );
 
-    // Native token from the bridge params (ie, refill requirements).
-    const nativeTokenFromBridgeParams = bridgeParams.bridge_requests.find(
+    /**
+     * Calculate native token amount needed from direct requirements (not from bridging)
+     *
+     * When the source chain (where user is on-ramping) matches the destination chain:
+     *   - We need to include the native token amount in our total calculation.
+     *   - This amount won't go through bridging since it's already on the correct chain.
+     *
+     * Example: For Optimus on Optimism
+     *   - We need 0.01 ETH for agent operation.
+     *   - Since on-ramping is already on Optimism, this ETH will be directly funded.
+     *   - We add this to our total required amount (separate from bridge calculations)
+     */
+    const nativeTokenAmount = bridgeParams.bridge_requests.find(
       (request) => request.to.token === AddressZero,
     )?.to.amount;
+    const nativeTokenFromBridgeParams =
+      fromChainName === toOnRampNetworkName ? nativeTokenAmount : 0;
 
-    // Remaining native token from the bridge quote.
+    // Remaining token from the bridge quote.
     // e.g, For optimus, OLAS and USDC are bridged to ETH
     const bridgeRefillRequirements =
       bridgeFundingRequirements.bridge_refill_requirements[toOnRampNetworkName];

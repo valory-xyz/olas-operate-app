@@ -13,6 +13,15 @@ import {
 export type ServiceHash = string;
 export type ServiceConfigId = string;
 
+type AgentRelease = {
+  is_aea: boolean;
+  repository: {
+    owner: string,
+    name: string,
+    version: string,
+  }
+}
+
 type ServiceKeys = {
   address: Address;
   private_key: string;
@@ -63,6 +72,7 @@ export type MiddlewareServiceResponse = {
   hash_history: {
     [block: string]: string;
   };
+  agent_release: AgentRelease;
   home_chain: SupportedMiddlewareChain;
   keys: ServiceKeys[];
   service_path?: string;
@@ -102,6 +112,7 @@ export type ServiceTemplate = {
   description: string;
   image: string;
   service_version: string;
+  agent_release: AgentRelease;
   home_chain: SupportedMiddlewareChain;
   configurations: Partial<
     Record<SupportedMiddlewareChain, ConfigurationTemplate>

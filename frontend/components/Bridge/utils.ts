@@ -12,7 +12,13 @@ export const getTokenDetails = (
   chainConfig: ChainTokenConfig,
 ) => {
   if (areAddressesEqual(tokenAddress, AddressZero)) {
-    return { symbol: 'ETH', decimals: 18 }; // TODO: native token
+    const nativeToken = Object.values(chainConfig).find(
+      (configToken) => configToken.tokenType === 'native',
+    );
+    return {
+      symbol: nativeToken?.symbol ?? 'ETH',
+      decimals: nativeToken?.decimals ?? 18,
+    };
   }
 
   return Object.values(chainConfig).find((configToken) =>
