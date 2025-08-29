@@ -1,4 +1,4 @@
-import { Flex, Skeleton, Typography } from 'antd';
+import { Flex, Image, Skeleton, Typography } from 'antd';
 import styled from 'styled-components';
 
 import { SendFundAction } from '@/components/Bridge/types';
@@ -8,7 +8,6 @@ const { Text } = Typography;
 
 const RequirementsContainer = styled(Flex)`
   flex-direction: column;
-  gap: 12px;
   background-color: ${COLOR.BACKGROUND};
   padding: 12px 16px;
   border-radius: 12px;
@@ -18,12 +17,16 @@ const RequirementsContainer = styled(Flex)`
 const RequirementsSkeleton = () => (
   <div style={{ marginTop: 16 }}>
     <Text className="text-neutral-tertiary">Requirements</Text>
-    <RequirementsContainer>
+    <RequirementsContainer gap={12}>
       {[1, 2, 3].map((index) => (
         <Flex key={index} align="center" gap={8} style={{ width: '100%' }}>
           <Skeleton.Input
             size="small"
-            style={{ width: 220, height: 16, backgroundColor: '#e0e0e0' }}
+            style={{
+              width: 220,
+              height: 16,
+              backgroundColor: COLOR.BACKGROUND,
+            }}
             active
           />
         </Flex>
@@ -45,76 +48,72 @@ const formatAmount = (amount: number): string => {
   return amount.toFixed(4).replace(/\.?0+$/, '');
 };
 
+const RequirementsForOnRamp = ({ fiatAmount }: { fiatAmount: string }) => (
+  <div>
+    <Text className="text-neutral-tertiary">Requirements</Text>
+    <RequirementsContainer gap={12}>
+      <Text>~${fiatAmount}</Text>
+      <Text className="text-neutral-tertiary" style={{ fontSize: 14 }}>
+        The service is provided by{' '}
+        <a
+          href="https://transak.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Transak
+        </a>
+        .
+      </Text>
+    </RequirementsContainer>
+  </div>
+);
+
+type TokenRequirementsProps = {
+  tokenRequirements?: TokenRequirement[];
+  fiatAmount?: number;
+  chainName?: string;
+  isLoading: boolean;
+  fundType: SendFundAction;
+};
+
 export const TokenRequirements = ({
   tokenRequirements = [],
   fiatAmount,
   chainName,
   isLoading,
   fundType,
-}: {
-  tokenRequirements?: TokenRequirement[];
-  fiatAmount?: number;
-  chainName?: string;
-  isLoading: boolean;
-  fundType: SendFundAction;
-}) => {
+}: TokenRequirementsProps) => {
   if (isLoading) return <RequirementsSkeleton />;
 
-  if (fundType === 'onRamp') {
-    return (
-      <div>
-        <Text className="text-neutral-tertiary">Requirements</Text>
-        <RequirementsContainer>
-          <Text>~${fiatAmount?.toFixed(2)}</Text>
-          <Text className="text-neutral-tertiary" style={{ fontSize: 14 }}>
-            The service is provided by{' '}
-            <a
-              href="https://transak.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Transak
-            </a>
-            .
-          </Text>
-        </RequirementsContainer>
-      </div>
-    );
-  }
+  if (fundType === 'onRamp')
+    return <RequirementsForOnRamp fiatAmount={fiatAmount?.toFixed(2) ?? '0'} />;
+
+  if (!tokenRequirements?.length) return null;
 
   return (
-    <>
-      {tokenRequirements?.length && (
-        <div style={{ marginTop: 16 }}>
-          <Text className="text-neutral-tertiary">Requirements</Text>
-          <RequirementsContainer>
-            {tokenRequirements?.map(({ amount, symbol, iconSrc }) => (
-              <Flex
-                key={symbol}
-                align="center"
-                gap={8}
-                style={{ width: '100%' }}
-              >
-                <img
-                  src={iconSrc}
-                  alt={symbol}
-                  style={{
-                    height: 20,
-                  }}
-                />
-                <Text>
-                  {formatAmount(amount)} {symbol}
-                </Text>
-              </Flex>
-            ))}
-            <Text className="text-neutral-tertiary" style={{ fontSize: 14 }}>
-              {fundType === 'bridge'
-                ? '+ transaction fees on Ethereum Mainnet.'
-                : `+ transaction fees on ${chainName}.`}
+    <div style={{ marginTop: 16 }}>
+      <Text className="text-neutral-tertiary">Requirements</Text>
+      <RequirementsContainer gap={12}>
+        {tokenRequirements.map(({ amount, symbol, iconSrc }) => (
+          <Flex key={symbol} align="center" gap={8} style={{ width: '100%' }}>
+            <Image
+              src={iconSrc}
+              alt={symbol}
+              style={{
+                height: 20,
+              }}
+            />
+            <Text>
+              {formatAmount(amount)} {symbol}
             </Text>
-          </RequirementsContainer>
-        </div>
-      )}
-    </>
+          </Flex>
+        ))}
+        <Text className="text-neutral-tertiary" style={{ fontSize: 14 }}>
+          {fundType === 'bridge'
+            ? '+ bridging fees on Ethereum Mainnet.'
+            : `+ transaction fees on ${chainName}.`}
+        </Text>
+      </RequirementsContainer>
+    </div>
   );
 };

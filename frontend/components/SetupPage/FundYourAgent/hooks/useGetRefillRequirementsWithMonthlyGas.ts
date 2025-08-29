@@ -2,20 +2,11 @@ import { useEffect, useMemo } from 'react';
 
 import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/client';
 import { getTokenDetails } from '@/components/Bridge/utils';
-import {
-  ChainTokenConfig,
-  getNativeTokenSymbol,
-  TOKEN_CONFIG,
-  TokenConfig,
-} from '@/config/tokens';
+import { ChainTokenConfig, TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import {
-  TokenSymbol,
-  TokenSymbolConfigMap,
-  TokenSymbolMap,
-} from '@/constants/token';
+import { TokenSymbolConfigMap, TokenSymbolMap } from '@/constants/token';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
@@ -26,57 +17,86 @@ import { formatUnitsToNumber } from '@/utils/numberFormatters';
 import { useBeforeBridgeFunds } from '../../Create/SetupEoaFunding/useBeforeBridgeFunds';
 import { TokenRequirement } from '../TokensRequirements';
 
+const ICON_OVERRIDES: Record<string, string> = {
+  [TokenSymbolMap['XDAI']]: '/tokens/wxdai-icon.png',
+};
+
+const getTokenMeta = (tokenAddress: Address, chainConfig: ChainTokenConfig) => {
+  const tokenDetails = getTokenDetails(
+    tokenAddress,
+    chainConfig,
+  ) as TokenConfig;
+
+  return {
+    symbol: tokenDetails.symbol,
+    decimals: tokenDetails.decimals,
+    iconSrc: TokenSymbolConfigMap[tokenDetails.symbol].image || '',
+  };
+};
+
 const getTokensDetailsForFunding = (
   requirementsPerToken: { [tokenAddress: Address]: string },
   evmHomeChainId: EvmChainId,
   chainConfig: ChainTokenConfig,
 ) => {
-  const tokenRequirements: TokenRequirement[] = [];
-
-  Object.entries(requirementsPerToken).forEach(([tokenAddress, amount]) => {
-    let symbol: string, iconSrc: string, decimals: number;
-
-    if (tokenAddress === AddressZero) {
-      const nativeTokenSymbol = getNativeTokenSymbol(evmHomeChainId);
-      const nativeTokenConfig = chainConfig[nativeTokenSymbol];
-      symbol = nativeTokenSymbol;
-      iconSrc = TokenSymbolConfigMap[nativeTokenSymbol].image;
-      decimals = nativeTokenConfig.decimals;
-    } else {
-      const tokenDetails = getTokenDetails(
-        tokenAddress,
+  const tokenRequirements: TokenRequirement[] = Object.entries(
+    requirementsPerToken,
+  )
+    .map(([tokenAddress, amount]) => {
+      const { symbol, decimals, iconSrc } = getTokenMeta(
+        tokenAddress as Address,
         chainConfig,
-      ) as TokenConfig;
-      symbol = tokenDetails.symbol;
-      iconSrc = TokenSymbolConfigMap[tokenDetails.symbol as TokenSymbol]?.image;
-      decimals = tokenDetails.decimals;
-    }
+      );
+      const parsedAmount = formatUnitsToNumber(amount, decimals);
 
-    if (symbol === TokenSymbolMap['XDAI']) {
-      iconSrc = '/tokens/wxdai-icon.png';
-    }
-
-    const parsedAmount = formatUnitsToNumber(amount, decimals);
-
-    if (parsedAmount > 0) {
-      tokenRequirements.push({
-        amount: parsedAmount,
-        symbol,
-        iconSrc,
-      });
-    }
-  });
+      if (parsedAmount > 0) {
+        return {
+          amount: parsedAmount,
+          symbol,
+          iconSrc: ICON_OVERRIDES[symbol] || iconSrc,
+        };
+      }
+    })
+    .filter(Boolean) as TokenRequirement[];
 
   return tokenRequirements.sort((a, b) => b.amount - a.amount);
 };
 
+/**
+ *
+ * @warning A HOOK THAT SHOULD NEVER EXIST.
+ * TODO: This hook is used because BE doesn't support monthly_gas_estimate in the refill requirements yet.
+ * Remove the hook once it's supported.
+ *
+ * Hook to get the refill requirements for the selectedAgent — considers the monthly_gas_estimate
+ * in order to evaluate the requirements.
+ * @example
+ * {
+ *   tokenRequirements: [
+ *     {
+ *       amount: 0.5,
+ *       symbol: "XDAI",
+ *       iconSrc: "/tokens/wxdai-icon.png"
+ *     },
+ *     {
+ *       amount: 100,
+ *       symbol: "USDC",
+ *       iconSrc: "/tokens/usdc-icon.png"
+ *     }
+ *   ],
+ *   isLoading: false
+ * }
+ */
 export const useGetRefillRequimentsWithMonthlyGas = ({
   selectedAgentConfig,
   shouldCreateDummyService = false,
 }: {
   selectedAgentConfig: AgentConfig;
   shouldCreateDummyService?: boolean;
-}) => {
+}): {
+  tokenRequirements: TokenRequirement[];
+  isLoading: boolean;
+} => {
   const updateBeforeBridgingFunds = useBeforeBridgeFunds();
   const {
     refillRequirements,
@@ -97,7 +117,7 @@ export const useGetRefillRequimentsWithMonthlyGas = ({
   }, [updateBeforeBridgingFunds, refetch, shouldCreateDummyService]);
 
   const tokenRequirements = useMemo(() => {
-    if (!masterEoa || isBalancesAndFundingRequirementsLoading) return;
+    if (!masterEoa || isBalancesAndFundingRequirementsLoading) return [];
 
     const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
     const chainConfig = TOKEN_CONFIG[evmHomeChainId];

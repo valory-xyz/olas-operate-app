@@ -1,4 +1,4 @@
-import { isEmpty, isNil } from 'lodash';
+import { isEmpty, isEqual, isNil } from 'lodash';
 
 import { ServiceTemplate } from '@/client';
 import { EnvProvisionMap } from '@/constants/envVariables';
@@ -95,6 +95,11 @@ export const updateServiceIfNeeded = async (
     partialServiceTemplate.configurations = {
       [serviceHomeChain]: { fund_requirements: templateFundRequirements },
     };
+  }
+
+  // Check if the agent release was updated
+  if (!isEqual(service.agent_release, serviceTemplate.agent_release)) {
+    partialServiceTemplate.agent_release = serviceTemplate.agent_release;
   }
 
   if (isEmpty(partialServiceTemplate)) return;
