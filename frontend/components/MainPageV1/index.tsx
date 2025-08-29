@@ -20,7 +20,7 @@ const Content = styled(AntdContent)<{ $isFullPage?: boolean }>`
     props.$isFullPage
       ? ``
       : `
-        padding: 0 16px;
+        padding: 40px 16px;
         max-width: 744px;`}
 `;
 

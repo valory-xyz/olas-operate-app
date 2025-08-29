@@ -13,7 +13,6 @@ import { useSetup } from '@/hooks/useSetup';
 const { Title } = Typography;
 
 export const AgentFormContainer = styled(Flex)`
-  margin: -44px 0;
   background: ${COLOR.WHITE};
   .setup-left-content {
     width: 492px;
@@ -30,6 +29,12 @@ export const AgentFormContainer = styled(Flex)`
   }
 `;
 
+export type RenderForm = (
+  form: ReactNode,
+  desc: ReactNode,
+  options?: { isUpdate?: boolean; onBack: (() => void) | undefined },
+) => ReactNode;
+
 export const useDisplayAgentForm = () => {
   const { goto } = useSetup();
   const { selectedAgentType } = useServices();
@@ -38,7 +43,12 @@ export const useDisplayAgentForm = () => {
   );
 
   const displayForm = useCallback(
-    (form: ReactNode, desc: ReactNode, onBack?: () => void) => {
+    (
+      form: ReactNode,
+      desc: ReactNode,
+      options?: { isUpdate?: boolean; onBack: (() => void) | undefined },
+    ) => {
+      const { isUpdate, onBack } = options || {};
       if (!serviceTemplate) return null;
 
       return (
@@ -49,7 +59,7 @@ export const useDisplayAgentForm = () => {
               hideLogo
             />
             <Title level={3} style={{ margin: '16px 0 24px 0' }}>
-              Configure Your Agent
+              {isUpdate ? 'Agent Settings' : 'Configure Your Agent'}
             </Title>
             {form}
           </Flex>

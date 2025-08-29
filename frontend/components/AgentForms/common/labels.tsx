@@ -90,7 +90,7 @@ export const GeminiApiKeyLabel = () => (
 );
 
 export const TenderlyAccessTokenDesc = () => (
-  <Flex vertical gap={24} style={{ marginBottom: 64 }}>
+  <Flex vertical gap={24} style={{ marginBottom: 68 }}>
     <Flex vertical gap={6}>
       <Text>
         <Text strong>The Tenderly access</Text> token allows your agent to
@@ -125,7 +125,7 @@ export const TenderlyAccessTokenDesc = () => (
 );
 
 export const CoinGeckoApiKeyDesc = () => (
-  <Flex vertical gap={4} style={{ marginBottom: 104 }}>
+  <Flex vertical gap={4} style={{ marginBottom: 100 }}>
     <Text>
       To create your <Text strong>CoinGecko API key</Text>:
     </Text>

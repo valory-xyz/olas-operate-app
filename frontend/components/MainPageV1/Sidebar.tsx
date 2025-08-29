@@ -12,10 +12,10 @@ import styled from 'styled-components';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
+import { AgentType } from '@/constants/agent';
 import { EvmChainId } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
-import { TOP_BAR_HEIGHT } from '@/constants/width';
-import { AgentType } from '@/enums/Agent';
+import { APP_HEIGHT, SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { usePageState } from '@/hooks/usePageState';
@@ -29,11 +29,12 @@ const { Text } = Typography;
 const SiderContainer = styled.div`
   display: flex;
   border-right: 1px solid ${COLOR.GRAY_4};
+  height: ${APP_HEIGHT}px;
 
   .ant-layout-sider {
-    margin-top: -${TOP_BAR_HEIGHT}px;
-    margin-bottom: -${TOP_BAR_HEIGHT}px;
-    padding-top: ${TOP_BAR_HEIGHT}px;
+    /* margin-top: -${TOP_BAR_HEIGHT}px; */
+    /* margin-bottom: -${TOP_BAR_HEIGHT}px; */
+    /* padding-top: ${TOP_BAR_HEIGHT}px; */
   }
 
   .ant-layout-sider-children {
@@ -57,16 +58,8 @@ const menuItems: MenuProps['items'] = [
     label: 'Pearl Wallet',
     disabled: true,
   },
-  {
-    key: 'help',
-    icon: <QuestionCircleOutlined />,
-    label: 'Help',
-  },
-  {
-    key: 'settings',
-    icon: <SettingOutlined />,
-    label: 'Settings',
-  },
+  { key: 'help', icon: <QuestionCircleOutlined />, label: 'Help' },
+  { key: 'settings', icon: <SettingOutlined />, label: 'Settings' },
 ];
 
 const MyAgentsHeader = () => (
@@ -87,19 +80,19 @@ type AgentList = {
 
 type AgentListMenuProps = {
   myAgents: AgentList;
-  selectedAgentType: string;
-  handleAgentSelect: MenuProps['onClick'];
+  selectedAgentType: AgentType;
+  onAgentSelect: MenuProps['onClick'];
 };
 const AgentListMenu = ({
   myAgents,
   selectedAgentType,
-  handleAgentSelect,
+  onAgentSelect,
 }: AgentListMenuProps) => (
   <Menu
     defaultSelectedKeys={[selectedAgentType]}
     mode="inline"
     inlineIndent={4}
-    onClick={handleAgentSelect}
+    onClick={onAgentSelect}
     items={myAgents.map((agent) => ({
       key: agent.agentType,
       icon: (
@@ -166,6 +159,7 @@ export const Sidebar = () => {
       gotoPage(Pages.Main);
     } else {
       gotoPage(Pages.Setup);
+
       // TODO: make back button on funding screen properly sending back to main
       // if was redirected from here
       gotoSetup(SetupScreen.SetupEoaFundingIncomplete);
@@ -194,7 +188,7 @@ export const Sidebar = () => {
 
   return (
     <SiderContainer>
-      <Sider breakpoint="lg" theme="light" width={256}>
+      <Sider breakpoint="lg" theme="light" width={SIDER_WIDTH}>
         <Content>
           <MyAgentsHeader />
           {isLoading || isMasterWalletLoading ? (
@@ -203,7 +197,7 @@ export const Sidebar = () => {
             <AgentListMenu
               myAgents={myAgents}
               selectedAgentType={selectedAgentType}
-              handleAgentSelect={handleAgentSelect}
+              onAgentSelect={handleAgentSelect}
             />
           ) : null}
 

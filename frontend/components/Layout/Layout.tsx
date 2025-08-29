@@ -44,8 +44,9 @@ const Body = styled.div`
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: ${TOP_BAR_HEIGHT}px 0;
-  height: calc(${APP_HEIGHT}px - ${2 * TOP_BAR_HEIGHT}px);
+  /* padding: ${TOP_BAR_HEIGHT}px 0; */
+  height: ${APP_HEIGHT}px;
+  /* height: calc(${APP_HEIGHT}px - ${2 * TOP_BAR_HEIGHT}px); */
 `;
 
 const useSystemLevelNotifications = () => {

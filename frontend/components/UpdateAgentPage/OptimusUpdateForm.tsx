@@ -1,6 +1,6 @@
 import { Button, Form, Input } from 'antd';
 import { get, isEqual, isUndefined, omitBy } from 'lodash';
-import { ReactNode, useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from 'react';
 
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
@@ -30,6 +30,7 @@ import {
   TenderlyProjectSlugLabel,
 } from '../AgentForms/common/labels';
 import { useOptimusFormValidate } from '../SetupPage/SetupYourAgent/OptimusAgentForm/useOptimusFormValidate';
+import { RenderForm } from '../SetupPage/SetupYourAgent/useDisplayAgentForm';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
 type OptimusFormValues = {
@@ -154,11 +155,7 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
 };
 
 type OptimusUpdatePageProps = {
-  renderForm: (
-    form: ReactNode,
-    desc: ReactNode,
-    onBack?: () => void,
-  ) => ReactNode;
+  renderForm: RenderForm;
 };
 
 /**
@@ -217,6 +214,6 @@ export const OptimusUpdatePage = ({ renderForm }: OptimusUpdatePageProps) => {
       <CoinGeckoApiKeyDesc />
       <GeminiApiKeyDesc />
     </>,
-    handleBackClick,
+    { isUpdate: true, onBack: handleBackClick },
   );
 };
