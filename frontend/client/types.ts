@@ -2,6 +2,7 @@ import { EnvProvision } from '@/constants/envVariables';
 import { AgentType } from '@/enums/Agent';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
+import { AgentHealthCheckResponse } from '@/types/Agent';
 
 import {
   MiddlewareChain,
@@ -128,14 +129,16 @@ type DeployedNodes = {
 export type Deployment = {
   status: MiddlewareDeploymentStatus;
   nodes: DeployedNodes;
-  healthcheck: {
-    env_var_status?: {
-      needs_update: boolean;
-      env_vars: {
-        [key: string]: string;
-      };
-    };
-  };
+  healthcheck:
+    | ({
+        env_var_status?: {
+          needs_update: boolean;
+          env_vars: {
+            [key: string]: string;
+          };
+        };
+      } & AgentHealthCheckResponse)
+    | Record<string, never>;
 };
 
 enum MiddlewareLedger {
