@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "olas-operate-app"
-version = "0.2.0-rc334"
+version = "0.2.0-rc336"
 description = ""
 authors = ["David Vilela <dvilelaf@gmail.com>", "Viraj Patel <vptl185@gmail.com>"]
 readme = "README.md"
@@ -10,7 +10,7 @@ include = []
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
-olas-operate-middleware = "==0.10.3"
+olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "e1036e02ad715ae2055518eb8b126c76f9b0619c" }
 
 [build-system]
 requires = ["poetry-core"]

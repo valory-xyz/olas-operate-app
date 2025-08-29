@@ -67,6 +67,24 @@ if (isDev) {
   });
 }
 
+// Add context menu in development mode when enabled via environment variable
+if (isDev && process.env.ENABLE_DEVELOPER_TOOLS_CONTEXT_MENU === 'true') {
+  import('electron-context-menu')
+    .then((contextMenuModule) => {
+      const contextMenu = contextMenuModule.default;
+      const disposeContextMenu = contextMenu({
+        showInspectElement: true,
+      });
+
+      app.on('before-quit', () => {
+        disposeContextMenu();
+      });
+    })
+    .catch((error) => {
+      console.error('Failed to load electron-context-menu:', error);
+    });
+}
+
 // Attempt to acquire the single instance lock
 const singleInstanceLock = app.requestSingleInstanceLock();
 if (!singleInstanceLock) {
