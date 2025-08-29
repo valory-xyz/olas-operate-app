@@ -2,12 +2,7 @@ import { useEffect, useMemo } from 'react';
 
 import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/client';
 import { getTokenDetails } from '@/components/Bridge/utils';
-import {
-  ChainTokenConfig,
-  getNativeTokenSymbol,
-  TOKEN_CONFIG,
-  TokenConfig,
-} from '@/config/tokens';
+import { ChainTokenConfig, TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
@@ -26,21 +21,7 @@ const ICON_OVERRIDES: Record<string, string> = {
   [TokenSymbolMap['XDAI']]: '/tokens/wxdai-icon.png',
 };
 
-const getTokenMeta = (
-  tokenAddress: Address,
-  chainConfig: ChainTokenConfig,
-  evmHomeChainId: EvmChainId,
-) => {
-  if (tokenAddress === AddressZero) {
-    const symbol = getNativeTokenSymbol(evmHomeChainId);
-    const config = chainConfig[symbol];
-    return {
-      symbol,
-      decimals: config.decimals,
-      iconSrc: TokenSymbolConfigMap[symbol].image || '',
-    };
-  }
-
+const getTokenMeta = (tokenAddress: Address, chainConfig: ChainTokenConfig) => {
   const tokenDetails = getTokenDetails(
     tokenAddress,
     chainConfig,
@@ -65,7 +46,6 @@ const getTokensDetailsForFunding = (
       const { symbol, decimals, iconSrc } = getTokenMeta(
         tokenAddress as Address,
         chainConfig,
-        evmHomeChainId,
       );
       const parsedAmount = formatUnitsToNumber(amount, decimals);
 
