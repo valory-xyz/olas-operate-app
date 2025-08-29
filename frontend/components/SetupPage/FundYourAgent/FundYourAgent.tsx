@@ -10,7 +10,6 @@ import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
-import { AgentConfig } from '@/types/Agent';
 
 import { useTotalFiatFromNativeToken } from '../Create/SetupOnRamp/PayingReceivingTable/useTotalFiatFromNativeToken';
 import { useTotalNativeTokenRequired } from '../Create/SetupOnRamp/PayingReceivingTable/useTotalNativeTokenRequired';
@@ -75,7 +74,7 @@ const CardDescription = ({ children }: { children: React.ReactNode }) => (
 );
 
 type FundMethodCardProps = {
-  selectedAgentConfig: AgentConfig;
+  chainName: string;
   tokenRequirements: TokenRequirement[] | undefined;
   isBalancesAndFundingRequirementsLoading: boolean;
 };
@@ -115,64 +114,56 @@ const OnRamp = () => {
 };
 
 const Transfer = ({
-  selectedAgentConfig,
+  chainName,
   tokenRequirements,
   isBalancesAndFundingRequirementsLoading,
-}: FundMethodCardProps) => {
-  const { evmHomeChainId } = selectedAgentConfig;
-  const chainName = EvmChainName[evmHomeChainId];
-
-  return (
-    <FundMethodCard>
-      <div>
-        <CardTitle>Transfer</CardTitle>
-        <CardDescription>
-          Send funds directly on Optimism chain with lowest fees — ideal for
-          crypto-savvy users.
-        </CardDescription>
-        <TokenRequirements
-          fundType="transfer"
-          tokenRequirements={tokenRequirements}
-          chainName={chainName}
-          isLoading={isBalancesAndFundingRequirementsLoading}
-        />
-      </div>
-      <Button size="large">Transfer Crypto on {chainName}</Button>
-    </FundMethodCard>
-  );
-};
+}: FundMethodCardProps) => (
+  <FundMethodCard>
+    <div>
+      <CardTitle>Transfer</CardTitle>
+      <CardDescription>
+        Send funds directly on Optimism chain with lowest fees — ideal for
+        crypto-savvy users.
+      </CardDescription>
+      <TokenRequirements
+        fundType="transfer"
+        tokenRequirements={tokenRequirements}
+        chainName={chainName}
+        isLoading={isBalancesAndFundingRequirementsLoading}
+      />
+    </div>
+    <Button size="large">Transfer Crypto on {chainName}</Button>
+  </FundMethodCard>
+);
 
 const Bridge = ({
-  selectedAgentConfig,
+  chainName,
   tokenRequirements,
   isBalancesAndFundingRequirementsLoading,
-}: FundMethodCardProps) => {
-  const { evmHomeChainId } = selectedAgentConfig;
-  const chainName = EvmChainName[evmHomeChainId];
-
-  return (
-    <FundMethodCard>
-      <div>
-        <CardTitle>Bridge</CardTitle>
-        <CardDescription>
-          Bridge from Ethereum Mainnet directly to your agent. Slightly more
-          expensive.
-        </CardDescription>
-        <TokenRequirements
-          tokenRequirements={tokenRequirements}
-          chainName={chainName}
-          isLoading={isBalancesAndFundingRequirementsLoading}
-          fundType="bridge"
-        />
-      </div>
-      <Button size="large">Bridge Crypto from Ethereum</Button>
-    </FundMethodCard>
-  );
-};
+}: FundMethodCardProps) => (
+  <FundMethodCard>
+    <div>
+      <CardTitle>Bridge</CardTitle>
+      <CardDescription>
+        Bridge from Ethereum Mainnet directly to your agent. Slightly more
+        expensive.
+      </CardDescription>
+      <TokenRequirements
+        tokenRequirements={tokenRequirements}
+        chainName={chainName}
+        isLoading={isBalancesAndFundingRequirementsLoading}
+        fundType="bridge"
+      />
+    </div>
+    <Button size="large">Bridge Crypto from Ethereum</Button>
+  </FundMethodCard>
+);
 
 export const FundYourAgent = () => {
   const { selectedAgentConfig } = useServices();
   const { goto } = useSetup();
+  const { evmHomeChainId } = selectedAgentConfig;
+  const chainName = EvmChainName[evmHomeChainId];
   const { tokenRequirements, isLoading } = useGetRefillRequimentsWithMonthlyGas(
     {
       selectedAgentConfig,
@@ -201,13 +192,13 @@ export const FundYourAgent = () => {
       <Flex gap={24} style={{ marginTop: 56 }}>
         {isOnRampEnabled && <OnRamp />}
         <Transfer
-          selectedAgentConfig={selectedAgentConfig}
+          chainName={chainName}
           tokenRequirements={tokenRequirements}
           isBalancesAndFundingRequirementsLoading={isLoading}
         />
         {isBridgeOnboardingEnabled && (
           <Bridge
-            selectedAgentConfig={selectedAgentConfig}
+            chainName={chainName}
             tokenRequirements={tokenRequirements}
             isBalancesAndFundingRequirementsLoading={isLoading}
           />
