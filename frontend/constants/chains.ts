@@ -4,7 +4,6 @@ export const EvmChainIdMap = {
   Gnosis: 100,
   Base: 8453,
   Mode: 34443,
-  Celo: 42220,
   Optimism: 10,
 } as const;
 export type EvmChainId = (typeof EvmChainIdMap)[keyof typeof EvmChainIdMap];
@@ -13,7 +12,6 @@ export const EvmChainName = {
   [EvmChainIdMap.Gnosis]: 'Gnosis',
   [EvmChainIdMap.Base]: 'Base',
   [EvmChainIdMap.Mode]: 'Mode',
-  [EvmChainIdMap.Celo]: 'Celo',
   [EvmChainIdMap.Optimism]: 'Optimism',
 } as const;
 
@@ -22,7 +20,6 @@ export const AllEvmChainIdMap = {
   Gnosis: EvmChainIdMap.Gnosis,
   Base: EvmChainIdMap.Base,
   Mode: EvmChainIdMap.Mode,
-  Celo: EvmChainIdMap.Celo,
   Optimism: EvmChainIdMap.Optimism,
 } as const;
 export type AllEvmChainId =
@@ -43,7 +40,6 @@ export const MiddlewareChainMap = {
   OPTIMISM: 'optimism',
   BASE: 'base',
   MODE: 'mode',
-  CELO: 'celo',
 } as const;
 export type MiddlewareChain = ValueOf<typeof MiddlewareChainMap>;
 
@@ -52,7 +48,6 @@ const SupportedMiddlewareChainMap = {
   optimism: MiddlewareChainMap.OPTIMISM,
   base: MiddlewareChainMap.BASE,
   mode: MiddlewareChainMap.MODE,
-  celo: MiddlewareChainMap.CELO,
 } as const;
 export type SupportedMiddlewareChain = ValueOf<
   typeof SupportedMiddlewareChainMap
@@ -63,9 +58,8 @@ export type SupportedMiddlewareChain = ValueOf<
  * For example, If the agent is on Gnosis, the on-ramp will be done on Optimism.
  */
 export const onRampChainMap: Record<SupportedMiddlewareChain, EvmChainId> = {
-  [SupportedMiddlewareChainMap.gnosis]: EvmChainIdMap.Optimism,
+  [SupportedMiddlewareChainMap.gnosis]: EvmChainIdMap.Base,
   [SupportedMiddlewareChainMap.optimism]: EvmChainIdMap.Optimism,
   [SupportedMiddlewareChainMap.base]: EvmChainIdMap.Base,
   [SupportedMiddlewareChainMap.mode]: EvmChainIdMap.Optimism,
-  [SupportedMiddlewareChainMap.celo]: EvmChainIdMap.Celo,
 };

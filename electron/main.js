@@ -67,6 +67,24 @@ if (isDev) {
   });
 }
 
+// Add context menu in development mode when enabled via environment variable
+if (isDev && process.env.ENABLE_DEVELOPER_TOOLS_CONTEXT_MENU === 'true') {
+  import('electron-context-menu')
+    .then((contextMenuModule) => {
+      const contextMenu = contextMenuModule.default;
+      const disposeContextMenu = contextMenu({
+        showInspectElement: true,
+      });
+
+      app.on('before-quit', () => {
+        disposeContextMenu();
+      });
+    })
+    .catch((error) => {
+      console.error('Failed to load electron-context-menu:', error);
+    });
+}
+
 // Attempt to acquire the single instance lock
 const singleInstanceLock = app.requestSingleInstanceLock();
 if (!singleInstanceLock) {
@@ -576,7 +594,7 @@ const createOnRampWindow = async (amountToPay) => {
 
   onRampWindow.on('close', function (event) {
     event.preventDefault();
-    onRampWindow?.hide();
+    onRampWindow?.destroy();
   });
 
   return onRampWindow;
@@ -1128,21 +1146,6 @@ ipcMain.handle('onramp-window-show', (_event, amountToPay) => {
   } else {
     getOnRampWindow()?.show();
   }
-});
-
-ipcMain.handle('onramp-window-hide', () => {
-  logger.electron('onramp-window-hide');
-
-  // already destroyed or not created
-  if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) return;
-
-  getOnRampWindow()?.hide();
-
-  // Notify all other windows that it has been hidden
-  BrowserWindow.getAllWindows().forEach((win) => {
-    logger.electron('onramp-window-did-hide to', win.id);
-    win.webContents.send('onramp-window-did-hide');
-  });
 });
 
 ipcMain.handle('onramp-window-close', () => {

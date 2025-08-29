@@ -42,6 +42,7 @@
     "dotenv-cli": "^7.4.2",
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8",
+    "electron-context-menu": "^4.1.1",
     "electron-devtools-installer": "^4.0.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
@@ -77,7 +78,7 @@
     "start:frontend": "cd frontend && yarn start",
     "test:frontend": "cd frontend && yarn test"
   },
-  "version": "0.2.0-rc340",
+  "version": "0.2.0-rc336",
   "engine": {
     "node": ">=20",
     "yarn": ">=1.22.0",
