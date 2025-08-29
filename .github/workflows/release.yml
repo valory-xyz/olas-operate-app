@@ -23,6 +23,9 @@ jobs:
         with:
           python-version: "3.10"
 
+      - name: Set PYTHON for node-gyp
+        run: echo "PYTHON=$(which python3)" >> $GITHUB_ENV
+
       - name: Ensure setuptools (distutils replacement) is installed
         run: |
           python3 -m pip install --upgrade pip
@@ -207,6 +210,13 @@ jobs:
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
           MODE_RPC: https://mainnet.mode.network
           CELO_RPC: https://forno.celo.org
+
+      - name: Debug Python environment
+        run: |
+          echo "Python executable: $(which python3 || which python)"
+          python3 --version || python --version
+          python3 -m pip list || python -m pip list
+          python3 -c "import distutils.version; print('distutils available')"
 
       # Run the build and notarization process for production
       - name: Build, notarize, and publish (Production)
