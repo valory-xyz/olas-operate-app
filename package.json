@@ -80,7 +80,7 @@
   },
   "version": "v0.2.0-rc348",
   "engine": {
-    "node": "20.18.1",
+    "node": ">=20",
     "yarn": ">=1.22.0",
     "npm": "please-use-yarn"
   }
