@@ -18,13 +18,13 @@ import {
 } from '../../../AgentForms/common/formUtils';
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
-  CoingeckoApiKeyDesc,
-  CoinGeckoApiKeyLabelV2,
+  CoinGeckoApiKeyDesc,
+  CoinGeckoApiKeySubHeader,
   GeminiApiKeyDesc,
   GeminiApiKeyLabel,
-  GeminiApiKeyLabelV2,
-  TenderlyAccessTokenLabelV2,
-  TenderlyApiKeyDesc,
+  GeminiApiKeySubHeader,
+  TenderlyAccessTokenDesc,
+  TenderlyApiKeySubHeader,
 } from '../../../AgentForms/common/labels';
 import {
   OptimusFieldValues,
@@ -163,7 +163,7 @@ const OptimusAgentFormContent = ({
       >
         {isTenderlySectionVisible && (
           <>
-            <TenderlyApiKeyDesc isSetupPage />
+            <TenderlyApiKeySubHeader isSetupPage />
             <Form.Item
               label="Tenderly access token"
               name="tenderlyAccessToken"
@@ -196,7 +196,7 @@ const OptimusAgentFormContent = ({
 
         {isCoinGeckoSectionVisible && (
           <>
-            <CoingeckoApiKeyDesc isSetupPage />
+            <CoinGeckoApiKeySubHeader isSetupPage />
             <Form.Item
               label="CoinGecko API key"
               name="coinGeckoApiKey"
@@ -211,7 +211,7 @@ const OptimusAgentFormContent = ({
 
         {isGeminiSectionVisible && (
           <>
-            <GeminiApiKeyDesc name="Optimus" isSetupPage />
+            <GeminiApiKeySubHeader name="Optimus" isSetupPage />
             <Form.Item
               name="geminiApiKey"
               label={<GeminiApiKeyLabel />}
@@ -251,8 +251,8 @@ export const OptimusAgentForm = ({
   renderForm(
     <OptimusAgentFormContent serviceTemplate={serviceTemplate} />,
     <>
-      <TenderlyAccessTokenLabelV2 />
-      <CoinGeckoApiKeyLabelV2 />
-      <GeminiApiKeyLabelV2 />
+      <TenderlyAccessTokenDesc />
+      <CoinGeckoApiKeyDesc />
+      <GeminiApiKeyDesc />
     </>,
   );

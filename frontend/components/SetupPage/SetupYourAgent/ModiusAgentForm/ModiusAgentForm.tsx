@@ -18,13 +18,13 @@ import {
 } from '../../../AgentForms/common/formUtils';
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
-  CoingeckoApiKeyDesc,
-  CoinGeckoApiKeyLabelV2,
+  CoinGeckoApiKeyDesc,
+  CoinGeckoApiKeySubHeader,
   GeminiApiKeyDesc,
   GeminiApiKeyLabel,
-  GeminiApiKeyLabelV2,
-  TenderlyAccessTokenLabelV2,
-  TenderlyApiKeyDesc,
+  GeminiApiKeySubHeader,
+  TenderlyAccessTokenDesc,
+  TenderlyApiKeySubHeader,
 } from '../../../AgentForms/common/labels';
 import {
   ModiusFieldValues,
@@ -134,7 +134,7 @@ export const ModiusAgentFormContent = ({
         validateMessages={validateMessages}
         disabled={canSubmitForm}
       >
-        <TenderlyApiKeyDesc isSetupPage />
+        <TenderlyApiKeySubHeader isSetupPage />
         <Form.Item
           label="Tenderly access token"
           name="tenderlyAccessToken"
@@ -163,7 +163,7 @@ export const ModiusAgentFormContent = ({
         </Form.Item>
         <div style={{ paddingBottom: 42 }} />
 
-        <CoingeckoApiKeyDesc isSetupPage />
+        <CoinGeckoApiKeySubHeader isSetupPage />
         <Form.Item
           label="CoinGecko API key"
           name="coinGeckoApiKey"
@@ -174,7 +174,7 @@ export const ModiusAgentFormContent = ({
         </Form.Item>
         <div style={{ paddingBottom: 42 }} />
 
-        <GeminiApiKeyDesc name="Modius" isSetupPage />
+        <GeminiApiKeySubHeader name="Modius" isSetupPage />
         <Form.Item
           name="geminiApiKey"
           label={<GeminiApiKeyLabel />}
@@ -212,8 +212,8 @@ export const ModiusAgentForm = ({
   renderForm(
     <ModiusAgentFormContent serviceTemplate={serviceTemplate} />,
     <>
-      <TenderlyAccessTokenLabelV2 />
-      <CoinGeckoApiKeyLabelV2 />
-      <GeminiApiKeyLabelV2 />
+      <TenderlyAccessTokenDesc />
+      <CoinGeckoApiKeyDesc />
+      <GeminiApiKeyDesc />
     </>,
   );

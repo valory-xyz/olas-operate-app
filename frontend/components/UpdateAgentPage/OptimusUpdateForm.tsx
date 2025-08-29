@@ -17,13 +17,13 @@ import {
 } from '../AgentForms/common/formUtils';
 import { InvalidGeminiApiCredentials } from '../AgentForms/common/InvalidGeminiApiCredentials';
 import {
-  CoingeckoApiKeyDesc,
-  CoinGeckoApiKeyLabelV2,
+  CoinGeckoApiKeyDesc,
+  CoinGeckoApiKeySubHeader,
   GeminiApiKeyDesc,
   GeminiApiKeyLabel,
-  GeminiApiKeyLabelV2,
-  TenderlyAccessTokenLabelV2,
-  TenderlyApiKeyDesc,
+  GeminiApiKeySubHeader,
+  TenderlyAccessTokenDesc,
+  TenderlyApiKeySubHeader,
 } from '../AgentForms/common/labels';
 import { useOptimusFormValidate } from '../SetupPage/SetupYourAgent/OptimusAgentForm/useOptimusFormValidate';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
@@ -86,7 +86,7 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
       validateMessages={validateMessages}
       initialValues={{ ...initialFormValues }}
     >
-      <TenderlyApiKeyDesc />
+      <TenderlyApiKeySubHeader />
       <Form.Item
         label="Tenderly access token"
         name={['env_variables', 'TENDERLY_ACCESS_KEY']}
@@ -115,7 +115,7 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
       </Form.Item>
       <div style={{ paddingBottom: 42 }} />
 
-      <CoingeckoApiKeyDesc />
+      <CoinGeckoApiKeySubHeader />
       <Form.Item
         label="CoinGecko API key"
         name={['env_variables', 'COINGECKO_API_KEY']}
@@ -126,7 +126,7 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
       </Form.Item>
       <div style={{ paddingBottom: 42 }} />
 
-      <GeminiApiKeyDesc name="Optimus" />
+      <GeminiApiKeySubHeader name="Optimus" />
       <Form.Item
         label={<GeminiApiKeyLabel />}
         name={['env_variables', 'GENAI_API_KEY']}
@@ -208,9 +208,9 @@ export const OptimusUpdatePage = ({ renderForm }: OptimusUpdatePageProps) => {
   return renderForm(
     <OptimusUpdateForm initialFormValues={initialValues} />,
     <>
-      <TenderlyAccessTokenLabelV2 />
-      <CoinGeckoApiKeyLabelV2 />
-      <GeminiApiKeyLabelV2 />
+      <TenderlyAccessTokenDesc />
+      <CoinGeckoApiKeyDesc />
+      <GeminiApiKeyDesc />
     </>,
     handleBackClick,
   );

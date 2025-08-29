@@ -22,7 +22,9 @@ export const UpdateAgentPage = () => {
       <UpdateAgentProvider>
         <ConfigProvider theme={LOCAL_FORM_THEME}>
           {selectedAgentType === AgentMap.AgentsFun && <AgentsFunUpdateSetup />}
-          {selectedAgentType === AgentMap.Modius && <ModiusUpdatePage />}
+          {selectedAgentType === AgentMap.Modius && (
+            <ModiusUpdatePage renderForm={displayForm} />
+          )}
           {selectedAgentType === AgentMap.Optimus && (
             <OptimusUpdatePage renderForm={displayForm} />
           )}
