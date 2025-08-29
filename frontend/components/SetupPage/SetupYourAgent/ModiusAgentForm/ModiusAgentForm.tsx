@@ -19,12 +19,16 @@ import {
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyDesc,
+  CoinGeckoApiKeyLabel,
   CoinGeckoApiKeySubHeader,
   GeminiApiKeyDesc,
   GeminiApiKeyLabel,
   GeminiApiKeySubHeader,
+  TenderAccessTokenLabel,
   TenderlyAccessTokenDesc,
+  TenderlyAccountSlugLabel,
   TenderlyApiKeySubHeader,
+  TenderlyProjectSlugLabel,
 } from '../../../AgentForms/common/labels';
 import {
   ModiusFieldValues,
@@ -133,10 +137,11 @@ export const ModiusAgentFormContent = ({
         onFinish={onFinish}
         validateMessages={validateMessages}
         disabled={canSubmitForm}
+        className="label-no-padding"
       >
         <TenderlyApiKeySubHeader isSetupPage />
         <Form.Item
-          label="Tenderly access token"
+          label={<TenderAccessTokenLabel />}
           name="tenderlyAccessToken"
           {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
@@ -145,7 +150,7 @@ export const ModiusAgentFormContent = ({
         </Form.Item>
 
         <Form.Item
-          label="Tenderly account slug"
+          label={<TenderlyAccountSlugLabel />}
           name="tenderlyAccountSlug"
           {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
@@ -154,7 +159,7 @@ export const ModiusAgentFormContent = ({
         </Form.Item>
 
         <Form.Item
-          label="Tenderly project slug"
+          label={<TenderlyProjectSlugLabel />}
           name="tenderlyProjectSlug"
           {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateSlug }]}
@@ -165,7 +170,7 @@ export const ModiusAgentFormContent = ({
 
         <CoinGeckoApiKeySubHeader isSetupPage />
         <Form.Item
-          label="CoinGecko API key"
+          label={<CoinGeckoApiKeyLabel />}
           name="coinGeckoApiKey"
           {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}

@@ -1,5 +1,6 @@
 import { Flex, Typography } from 'antd';
 
+import { FormLabel } from '@/components/ui/Typography';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import {
   COINGECKO_DEMO_API_KEY,
@@ -63,9 +64,25 @@ export const GeminiApiKeySubHeader = ({
   </Flex>
 );
 
+export const TenderAccessTokenLabel = () => (
+  <FormLabel>Tenderly access token</FormLabel>
+);
+
+export const TenderlyAccountSlugLabel = () => (
+  <FormLabel>Tenderly account slug</FormLabel>
+);
+
+export const TenderlyProjectSlugLabel = () => (
+  <FormLabel>Tenderly project slug</FormLabel>
+);
+
+export const CoinGeckoApiKeyLabel = () => (
+  <FormLabel>CoinGecko API key</FormLabel>
+);
+
 export const GeminiApiKeyLabel = () => (
   <Flex align="center" gap={6}>
-    <Text>Gemini API key</Text>
+    <FormLabel>Gemini API key</FormLabel>
     <Text type="secondary" className="text-sm">
       – optional
     </Text>
@@ -73,7 +90,7 @@ export const GeminiApiKeyLabel = () => (
 );
 
 export const TenderlyAccessTokenDesc = () => (
-  <Flex vertical gap={24} style={{ marginBottom: 42 }}>
+  <Flex vertical gap={24} style={{ marginBottom: 24 }}>
     <Flex vertical gap={6}>
       <Text>
         <Text strong>The Tenderly access</Text> token allows your agent to
@@ -108,7 +125,7 @@ export const TenderlyAccessTokenDesc = () => (
 );
 
 export const CoinGeckoApiKeyDesc = () => (
-  <Flex vertical gap={4} style={{ marginBottom: 90 }}>
+  <Flex vertical gap={4} style={{ marginBottom: 80 }}>
     <Text>
       To create your <Text strong>CoinGecko API key</Text>:
     </Text>

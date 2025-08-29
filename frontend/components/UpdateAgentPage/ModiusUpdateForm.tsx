@@ -18,12 +18,16 @@ import {
 import { InvalidGeminiApiCredentials } from '../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyDesc,
+  CoinGeckoApiKeyLabel,
   CoinGeckoApiKeySubHeader,
   GeminiApiKeyDesc,
   GeminiApiKeyLabel,
   GeminiApiKeySubHeader,
+  TenderAccessTokenLabel,
   TenderlyAccessTokenDesc,
+  TenderlyAccountSlugLabel,
   TenderlyApiKeySubHeader,
+  TenderlyProjectSlugLabel,
 } from '../AgentForms/common/labels';
 import { useModiusFormValidate } from '../SetupPage/SetupYourAgent/ModiusAgentForm/useModiusFormValidate';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
@@ -85,10 +89,11 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       onFinish={handleFinish}
       validateMessages={validateMessages}
       initialValues={{ ...initialFormValues }}
+      className="label-no-padding"
     >
       <TenderlyApiKeySubHeader />
       <Form.Item
-        label="Tenderly access token"
+        label={<TenderAccessTokenLabel />}
         name={['env_variables', 'TENDERLY_ACCESS_KEY']}
         {...requiredFieldProps}
         rules={[...requiredRules, { validator: validateApiKey }]}
@@ -97,7 +102,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       </Form.Item>
 
       <Form.Item
-        label="Tenderly account slug"
+        label={<TenderlyAccountSlugLabel />}
         name={['env_variables', 'TENDERLY_ACCOUNT_SLUG']}
         {...requiredFieldProps}
         rules={[...requiredRules, { validator: validateSlug }]}
@@ -106,7 +111,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       </Form.Item>
 
       <Form.Item
-        label="Tenderly project slug"
+        label={<TenderlyProjectSlugLabel />}
         name={['env_variables', 'TENDERLY_PROJECT_SLUG']}
         {...requiredFieldProps}
         rules={[...requiredRules, { validator: validateSlug }]}
@@ -117,7 +122,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
 
       <CoinGeckoApiKeySubHeader />
       <Form.Item
-        label="CoinGecko API key"
+        label={<CoinGeckoApiKeyLabel />}
         name={['env_variables', 'COINGECKO_API_KEY']}
         {...requiredFieldProps}
         rules={[...requiredRules, { validator: validateApiKey }]}

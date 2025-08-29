@@ -160,6 +160,7 @@ const OptimusAgentFormContent = ({
         onFinish={onFinish}
         validateMessages={validateMessages}
         disabled={canSubmitForm}
+        className="label-no-padding"
       >
         {isTenderlySectionVisible && (
           <>

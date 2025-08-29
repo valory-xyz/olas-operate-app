@@ -61,6 +61,12 @@ textarea,
   }
 }
 
+.ant-form.label-no-padding {
+  .ant-form-item-label {
+    padding-bottom: 0 !important;
+  }
+}
+
 .ant-segmented {
   overflow: hidden;
   border: 2px solid white;
