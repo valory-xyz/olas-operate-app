@@ -82,13 +82,36 @@ const getTokensDetailsForFunding = (
   return tokenRequirements.sort((a, b) => b.amount - a.amount);
 };
 
+/**
+ * Hook to get the refill requirements for the selectedAgent — considers the monthly_gas_estimate
+ * in order to evaluate the requirements.
+ * example output:
+ * {
+ *   tokenRequirements: [
+ *     {
+ *       amount: 0.5,
+ *       symbol: "XDAI",
+ *       iconSrc: "/tokens/wxdai-icon.png"
+ *     },
+ *     {
+ *       amount: 100,
+ *       symbol: "USDC",
+ *       iconSrc: "/tokens/usdc-icon.png"
+ *     }
+ *   ],
+ *   isLoading: false
+ * }
+ */
 export const useGetRefillRequimentsWithMonthlyGas = ({
   selectedAgentConfig,
   shouldCreateDummyService = false,
 }: {
   selectedAgentConfig: AgentConfig;
   shouldCreateDummyService?: boolean;
-}) => {
+}): {
+  tokenRequirements: TokenRequirement[];
+  isLoading: boolean;
+} => {
   const updateBeforeBridgingFunds = useBeforeBridgeFunds();
   const {
     refillRequirements,
@@ -109,7 +132,7 @@ export const useGetRefillRequimentsWithMonthlyGas = ({
   }, [updateBeforeBridgingFunds, refetch, shouldCreateDummyService]);
 
   const tokenRequirements = useMemo(() => {
-    if (!masterEoa || isBalancesAndFundingRequirementsLoading) return;
+    if (!masterEoa || isBalancesAndFundingRequirementsLoading) return [];
 
     const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
     const chainConfig = TOKEN_CONFIG[evmHomeChainId];
