@@ -7,7 +7,7 @@ import {
 import { Button, Flex, Layout, Menu, MenuProps, Spin, Typography } from 'antd';
 import { kebabCase } from 'lodash';
 import Image from 'next/image';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
@@ -22,6 +22,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+import { AgentConfig } from '@/types/Agent';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -73,7 +74,7 @@ const MyAgentsHeader = () => (
 
 type AgentList = {
   name: string;
-  agentType: string;
+  agentType: AgentType;
   chainName: string;
   chainId: EvmChainId;
 }[];
@@ -89,7 +90,7 @@ const AgentListMenu = ({
   onAgentSelect,
 }: AgentListMenuProps) => (
   <Menu
-    defaultSelectedKeys={[selectedAgentType]}
+    selectedKeys={[selectedAgentType]}
     mode="inline"
     inlineIndent={4}
     onClick={onAgentSelect}
@@ -139,13 +140,26 @@ export const Sidebar = () => {
       );
       if (!agent) return result;
 
-      const [agentType, agentConfig] = agent;
+      const [agentType, agentConfig] = agent as [AgentType, AgentConfig];
+      if (!agentConfig.evmHomeChainId) return result;
       const chainId = agentConfig.evmHomeChainId;
       const chainName = CHAIN_CONFIG[chainId].name;
       result.push({ name: agentConfig.name, agentType, chainName, chainId });
       return result;
     }, []);
   }, [services]);
+
+  // if the selectedAgentType is not in myAgents, select the first one
+  useEffect(() => {
+    const isSelectedAgentAvailable = myAgents.some(
+      (agent) => agent.agentType === selectedAgentType,
+    );
+    if (isSelectedAgentAvailable) return;
+
+    if (selectedAgentType && myAgents.length > 0) {
+      updateAgentType(myAgents[0].agentType);
+    }
+  }, [myAgents, selectedAgentType, updateAgentType]);
 
   const handleAgentSelect: MenuProps['onClick'] = (info) => {
     updateAgentType(info.key as AgentType);

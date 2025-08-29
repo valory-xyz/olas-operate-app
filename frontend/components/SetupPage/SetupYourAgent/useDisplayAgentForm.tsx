@@ -20,8 +20,9 @@ export const AgentFormContainer = styled(Flex)`
     padding: 64px 0;
   }
   .setup-right-content {
-    width: 392px;
+    width: 336px;
     padding: 64px 32px;
+    box-sizing: content-box;
     background: ${COLOR.BACKGROUND};
     .ant-typography {
       font-size: 14px !important;
