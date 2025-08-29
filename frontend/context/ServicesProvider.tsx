@@ -19,13 +19,13 @@ import {
   ServiceValidationResponse,
 } from '@/client';
 import { AGENT_CONFIG } from '@/config/agents';
+import { AgentMap, AgentType } from '@/constants/agent';
 import {
   FIFTEEN_SECONDS_INTERVAL,
   FIVE_SECONDS_INTERVAL,
 } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { MESSAGE_WIDTH } from '@/constants/width';
-import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
 import {
   AgentEoa,
@@ -83,8 +83,8 @@ export const ServicesContext = createContext<ServicesContextType>({
   setPaused: noop,
   togglePaused: noop,
   isSelectedServiceDeploymentStatusLoading: true,
-  selectedAgentConfig: AGENT_CONFIG[AgentType.PredictTrader],
-  selectedAgentType: AgentType.PredictTrader,
+  selectedAgentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
+  selectedAgentType: AgentMap.PredictTrader,
   deploymentDetails: undefined,
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
@@ -107,7 +107,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   // set the agent type from the store on load
   const selectedAgentType = useMemo(() => {
-    if (!agentTypeFromStore) return AgentType.PredictTrader;
+    if (!agentTypeFromStore) return AgentMap.PredictTrader;
     return agentTypeFromStore;
   }, [agentTypeFromStore]);
 

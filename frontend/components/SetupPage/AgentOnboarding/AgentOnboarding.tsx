@@ -5,8 +5,8 @@ import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
+import { AgentType } from '@/constants/agent';
 import { COLOR } from '@/constants/colors';
-import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { usePageState } from '@/hooks/usePageState';
@@ -177,9 +177,9 @@ export const AgentOnboarding = () => {
 
   const handleSelectYourAgent = useCallback(
     (agentType: AgentType) => {
-      setSelectedAgent(agentType as AgentType);
-      setOnboardingStep(0);
       updateAgentType(agentType);
+      setSelectedAgent(agentType);
+      setOnboardingStep(0);
     },
     [updateAgentType],
   );

@@ -1,9 +1,8 @@
-import { Button, Divider, Form, Input, message, Typography } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { Button, Form, Input, message } from 'antd';
+import React, { ReactNode, useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
-import { COINGECKO_URL, TENDERLY_URL } from '@/constants/urls';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -19,42 +18,35 @@ import {
 } from '../../../AgentForms/common/formUtils';
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
-  CoinGeckoApiKeyLabel,
+  CoinGeckoApiKeyDesc,
+  CoinGeckoApiKeySubHeader,
+  GeminiApiKeyDesc,
   GeminiApiKeyLabel,
-  TenderlyAccessTokenLabel,
-  TenderlyAccountSlugLabel,
-  TenderlyProjectSlugLabel,
+  GeminiApiKeySubHeader,
+  TenderlyAccessTokenDesc,
+  TenderlyApiKeySubHeader,
 } from '../../../AgentForms/common/labels';
 import {
   OptimusFieldValues,
   useOptimusFormValidate,
 } from './useOptimusFormValidate';
 
-const { Text } = Typography;
+type OptimusAgentFormContentProps = {
+  serviceTemplate: ServiceTemplate;
+};
 
-const SetupHeader = () => (
-  <Text>
-    Set up your agent with access to a{' '}
-    <a target="_blank" href={TENDERLY_URL}>
-      Tenderly
-    </a>{' '}
-    project for simulating bridge and swap routes, and swap routes and provide a{' '}
-    <a target="_blank" href={COINGECKO_URL}>
-      CoinGecko API key
-    </a>{' '}
-    as a price source.
-  </Text>
-);
+type FormStep = 'tenderly' | 'coingecko' | 'gemini';
 
-type OptimusAgentFormProps = { serviceTemplate: ServiceTemplate };
+const isSetupPage = false; // TODO;
 
-export const OptimusAgentForm = ({
+const OptimusAgentFormContent = ({
   serviceTemplate,
-}: OptimusAgentFormProps) => {
+}: OptimusAgentFormContentProps) => {
+  const [form] = Form.useForm<OptimusFieldValues>();
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
-  const [form] = Form.useForm<OptimusFieldValues>();
+  const [currentStep, setCurrentStep] = useState<FormStep>('tenderly');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     geminiApiKeyValidationStatus,
@@ -63,9 +55,21 @@ export const OptimusAgentForm = ({
     validateForm,
   } = useOptimusFormValidate();
 
+  const moveToNextStep = useCallback(() => {
+    if (currentStep === 'tenderly') {
+      setCurrentStep('coingecko');
+    } else if (currentStep === 'coingecko') {
+      setCurrentStep('gemini');
+    }
+  }, [currentStep]);
+
   const onFinish = useCallback(
     async (values: OptimusFieldValues) => {
       if (!defaultStakingProgramId) return;
+      if (isSetupPage && currentStep !== 'gemini') {
+        moveToNextStep();
+        return;
+      }
 
       try {
         setIsSubmitting(true);
@@ -126,6 +130,8 @@ export const OptimusAgentForm = ({
       validateForm,
       updateSubmitButtonText,
       goto,
+      currentStep,
+      moveToNextStep,
     ],
   );
 
@@ -137,11 +143,16 @@ export const OptimusAgentForm = ({
 
   const canSubmitForm = isSubmitting || !defaultStakingProgramId;
 
+  const isTenderlySectionVisible = isSetupPage
+    ? currentStep === 'tenderly'
+    : true;
+  const isCoinGeckoSectionVisible = isSetupPage
+    ? currentStep === 'coingecko'
+    : true;
+  const isGeminiSectionVisible = isSetupPage ? currentStep === 'gemini' : true;
+
   return (
     <>
-      <SetupHeader />
-      <Divider style={{ margin: '8px 0' }} />
-
       <Form<OptimusFieldValues>
         form={form}
         name="setup-your-agent"
@@ -149,52 +160,70 @@ export const OptimusAgentForm = ({
         onFinish={onFinish}
         validateMessages={validateMessages}
         disabled={canSubmitForm}
+        className="label-no-padding"
       >
-        <Form.Item
-          name="tenderlyAccessToken"
-          label={<TenderlyAccessTokenLabel />}
-          {...requiredFieldProps}
-          rules={[...requiredRules, { validator: validateApiKey }]}
-        >
-          <Input.Password />
-        </Form.Item>
+        {isTenderlySectionVisible && (
+          <>
+            <TenderlyApiKeySubHeader isSetupPage />
+            <Form.Item
+              label="Tenderly access token"
+              name="tenderlyAccessToken"
+              {...requiredFieldProps}
+              rules={[...requiredRules, { validator: validateApiKey }]}
+            >
+              <Input.Password />
+            </Form.Item>
 
-        <Form.Item
-          name="tenderlyAccountSlug"
-          label={<TenderlyAccountSlugLabel />}
-          {...requiredFieldProps}
-          rules={[...requiredRules, { validator: validateSlug }]}
-        >
-          <Input />
-        </Form.Item>
+            <Form.Item
+              label="Tenderly account slug"
+              name="tenderlyAccountSlug"
+              {...requiredFieldProps}
+              rules={[...requiredRules, { validator: validateSlug }]}
+            >
+              <Input />
+            </Form.Item>
 
-        <Form.Item
-          name="tenderlyProjectSlug"
-          label={<TenderlyProjectSlugLabel />}
-          {...requiredFieldProps}
-          rules={[...requiredRules, { validator: validateSlug }]}
-        >
-          <Input />
-        </Form.Item>
+            <Form.Item
+              label="Tenderly project slug"
+              name="tenderlyProjectSlug"
+              {...requiredFieldProps}
+              rules={[...requiredRules, { validator: validateSlug }]}
+            >
+              <Input />
+            </Form.Item>
+            <div style={{ paddingBottom: 42 }} />
+          </>
+        )}
 
-        <Form.Item
-          name="coinGeckoApiKey"
-          label={<CoinGeckoApiKeyLabel />}
-          {...requiredFieldProps}
-          rules={[...requiredRules, { validator: validateApiKey }]}
-        >
-          <Input.Password />
-        </Form.Item>
+        {isCoinGeckoSectionVisible && (
+          <>
+            <CoinGeckoApiKeySubHeader isSetupPage />
+            <Form.Item
+              label="CoinGecko API key"
+              name="coinGeckoApiKey"
+              {...requiredFieldProps}
+              rules={[...requiredRules, { validator: validateApiKey }]}
+            >
+              <Input.Password />
+            </Form.Item>
+            <div style={{ paddingBottom: 42 }} />
+          </>
+        )}
 
-        <Form.Item
-          name="geminiApiKey"
-          label={<GeminiApiKeyLabel name="Optimus" />}
-          {...optionalFieldProps}
-        >
-          <Input.Password />
-        </Form.Item>
-        {geminiApiKeyValidationStatus === 'invalid' && (
-          <InvalidGeminiApiCredentials />
+        {isGeminiSectionVisible && (
+          <>
+            <GeminiApiKeySubHeader name="Optimus" isSetupPage />
+            <Form.Item
+              name="geminiApiKey"
+              label={<GeminiApiKeyLabel />}
+              {...optionalFieldProps}
+            >
+              <Input.Password />
+            </Form.Item>
+            {geminiApiKeyValidationStatus === 'invalid' && (
+              <InvalidGeminiApiCredentials />
+            )}
+          </>
         )}
 
         <Form.Item>
@@ -213,3 +242,18 @@ export const OptimusAgentForm = ({
     </>
   );
 };
+
+export const OptimusAgentForm = ({
+  serviceTemplate,
+  renderForm,
+}: OptimusAgentFormContentProps & {
+  renderForm: (form: ReactNode, desc: ReactNode) => ReactNode;
+}) =>
+  renderForm(
+    <OptimusAgentFormContent serviceTemplate={serviceTemplate} />,
+    <>
+      <TenderlyAccessTokenDesc />
+      <CoinGeckoApiKeyDesc />
+      <GeminiApiKeyDesc />
+    </>,
+  );

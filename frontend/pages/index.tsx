@@ -9,7 +9,6 @@ import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { AddBackupWalletViaSafePage } from '@/components/Pages/AddBackupWalletViaSafePage';
 import { RewardsHistory } from '@/components/RewardsHistory/RewardsHistory';
 import { Setup } from '@/components/SetupPage';
-import { UpdateAgentPage } from '@/components/UpdateAgentPage';
 import { YourWalletPage } from '@/components/YourWalletPage';
 import { Pages } from '@/enums/Pages';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -40,8 +39,6 @@ export default function Home() {
         return <AddBackupWalletViaSafePage />;
       case Pages.AgentActivity:
         return <AgentActivityPage />;
-      case Pages.UpdateAgentTemplate:
-        return <UpdateAgentPage />;
 
       // bridge pages
       case Pages.AddFundsToMasterSafeThroughBridge:
