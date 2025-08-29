@@ -2410,53 +2410,49 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.10.7"
+version = "0.10.8"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.9"
-files = []
-develop = false
+files = [
+    {file = "olas_operate_middleware-0.10.8-py3-none-any.whl", hash = "sha256:154a9f8941e38d294eb282530f61d919c86c30fb0601d7b2de23776ffbe58275"},
+    {file = "olas_operate_middleware-0.10.8.tar.gz", hash = "sha256:8e9165fa11a691f5c9bda62459d9f50e84c2ab4c2248ee7edab022f54d413768"},
+]
 
 [package.dependencies]
 aiohttp = "3.9.5"
-argon2-cffi = "==23.1.0"
-clea = "==0.1.0rc4"
-cytoolz = "==0.12.3"
-deepdiff = "^8.0.1"
+argon2-cffi = "23.1.0"
+clea = "0.1.0rc4"
+cytoolz = "0.12.3"
+deepdiff = ">=8.0.1,<9.0.0"
 docker = "6.1.2"
-eth-abi = "==5.1.0"
-eth-account = "==0.8.0"
-eth-hash = "==0.7.0"
-eth-keyfile = "==0.6.1"
-eth-keys = "==0.4.0"
-eth-rlp = "==0.3.0"
-eth-typing = "==3.5.2"
-eth-utils = "==2.3.1"
+eth-abi = "5.1.0"
+eth-account = "0.8.0"
+eth-hash = "0.7.0"
+eth-keyfile = "0.6.1"
+eth-keys = "0.4.0"
+eth-rlp = "0.3.0"
+eth-typing = "3.5.2"
+eth-utils = "2.3.1"
 fastapi = "0.110.3"
-frozenlist = "==1.4.1"
-halo = "==0.0.31"
-hexbytes = "==0.3.1"
-ipfshttpclient = "==0.8.0a2"
-jsonschema = "==4.3.3"
-multidict = "==6.0.5"
-open-aea-cli-ipfs = "==1.65.0"
-open-aea-ledger-cosmos = "==1.65.0"
-open-aea-ledger-ethereum = "==1.65.0"
-open-aea-ledger-ethereum-flashbots = "==1.65.0"
-open-autonomy = "^0.20.2"
-psutil = "^5.9.8"
-pyinstaller = "^6.8.0"
+frozenlist = "1.4.1"
+halo = "0.0.31"
+hexbytes = "0.3.1"
+ipfshttpclient = "0.8.0a2"
+jsonschema = "4.3.3"
+multidict = "6.0.5"
+open-aea-cli-ipfs = "1.65.0"
+open-aea-ledger-cosmos = "1.65.0"
+open-aea-ledger-ethereum = "1.65.0"
+open-aea-ledger-ethereum-flashbots = "1.65.0"
+open-autonomy = ">=0.20.2,<0.21.0"
+psutil = ">=5.9.8,<6.0.0"
+pyinstaller = ">=6.8.0,<7.0.0"
 requests-toolbelt = "1.0.0"
 starlette = "0.37.2"
-twikit = "==2.2.0"
-uvicorn = "==0.27.0"
+twikit = "2.2.0"
+uvicorn = "0.27.0"
 web3 = "6.20.4"
-
-[package.source]
-type = "git"
-url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "0ae45514b758e5f0532abeca2d4da99eb53a9a4e"
-resolved_reference = "0ae45514b758e5f0532abeca2d4da99eb53a9a4e"
 
 [[package]]
 name = "open-aea"
@@ -3623,13 +3619,13 @@ files = [
 
 [[package]]
 name = "soupsieve"
-version = "2.7"
+version = "2.8"
 description = "A modern CSS selector implementation for Beautiful Soup."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "soupsieve-2.7-py3-none-any.whl", hash = "sha256:6e60cc5c1ffaf1cebcc12e8188320b72071e922c2e897f737cadce79ad5d30c4"},
-    {file = "soupsieve-2.7.tar.gz", hash = "sha256:ad282f9b6926286d2ead4750552c8a6142bc4c783fd66b0293547c8fe6ae126a"},
+    {file = "soupsieve-2.8-py3-none-any.whl", hash = "sha256:0cc76456a30e20f5d7f2e14a98a4ae2ee4e5abdc7c5ea0aafe795f344bc7984c"},
+    {file = "soupsieve-2.8.tar.gz", hash = "sha256:e2dd4a40a628cb5f28f6d4b0db8800b8f581b65bb380b97de22ba5ca8d72572f"},
 ]
 
 [[package]]
@@ -4195,4 +4191,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "9b932c78cedf9999a28dfa3ee69d43b6261d9438b2269e3038cd010e4c01b088"
+content-hash = "6c104577dabb98723e86d6455849363741e3189027c235b27dbfdde8cf08d610"
