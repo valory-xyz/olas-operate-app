@@ -20,6 +20,7 @@ const nextConfig = {
     'rc-picker',
     'rc-tree',
     'rc-table',
+    'rc-input',
   ],
   webpack: (config) => {
     if (config.snapshot) {
@@ -30,6 +31,11 @@ const nextConfig = {
         managedPaths: [/^(.+?[\\/]node_modules[\\/])(?!@next)/],
       };
     }
+
+    config.resolve.alias = {
+      ...(config.resolve.alias ?? {}),
+      '@react-native-async-storage/async-storage': false,
+    };
 
     return config;
   },
