@@ -48,7 +48,6 @@ const FundMethodCard = styled.div`
 
 const CardTitle = ({ children }: { children: React.ReactNode }) => (
   <Title
-    className="text-neutral-primary"
     level={4}
     style={{
       fontSize: 20,
@@ -64,7 +63,7 @@ const CardTitle = ({ children }: { children: React.ReactNode }) => (
 
 const CardDescription = ({ children }: { children: React.ReactNode }) => (
   <Paragraph
-    className="text-neutral-secondary"
+    type="secondary"
     style={{
       minHeight: '4.5rem',
     }}
@@ -178,14 +177,10 @@ export const FundYourAgent = () => {
   return (
     <FundYourAgentContainer>
       <BackButton onPrev={() => goto(SetupScreen.AgentOnboarding)} />
-      <Title
-        className="text-neutral-primary"
-        level={4}
-        style={{ fontSize: 24, fontWeight: 500, marginTop: 12 }}
-      >
+      <Title level={4} style={{ fontSize: 24, fontWeight: 500, marginTop: 12 }}>
         Fund your {selectedAgentConfig.displayName}
       </Title>
-      <Text className="text-neutral-secondary">
+      <Text type="secondary">
         Select the payment method that suits you best.
       </Text>
 
