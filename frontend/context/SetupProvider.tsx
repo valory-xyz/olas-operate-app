@@ -8,11 +8,15 @@ import {
 
 import { SetupScreen } from '@/enums/SetupScreen';
 import { Address } from '@/types/Address';
+import { BackupWalletType } from '@/types/BackupWallet';
 
 type SetupObjectType = {
   state: SetupScreen;
   mnemonic: string[];
-  backupSigner?: Address;
+  backupSigner?: {
+    address: Address;
+    type: BackupWalletType;
+  };
 };
 
 type SetupContextType = {

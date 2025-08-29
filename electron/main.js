@@ -408,6 +408,9 @@ const createMainWindow = async () => {
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // web3auth links should be open in Pearl for redirect to work
+    if (url.includes('web3auth')) return { action: 'allow' };
+
     // open url in a browser and prevent default
     require('electron').shell.openExternal(url);
     return { action: 'deny' };

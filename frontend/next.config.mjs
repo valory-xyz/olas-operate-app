@@ -20,6 +20,7 @@ const nextConfig = {
     'rc-picker',
     'rc-tree',
     'rc-table',
+    'rc-input',
   ],
   webpack: (config) => {
     if (config.snapshot) {
@@ -31,6 +32,11 @@ const nextConfig = {
       };
     }
 
+    config.resolve.alias = {
+      ...(config.resolve.alias ?? {}),
+      '@react-native-async-storage/async-storage': false,
+    };
+
     return config;
   },
   env: {
@@ -40,6 +46,7 @@ const nextConfig = {
     ETHEREUM_RPC: process.env.ETHEREUM_RPC,
     MODE_RPC: process.env.MODE_RPC,
     CELO_RPC: process.env.CELO_RPC,
+    WEB3AUTH_CLIENT_ID: process.env.WEB3AUTH_CLIENT_ID,
   },
 };
 
