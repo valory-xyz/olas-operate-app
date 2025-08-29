@@ -7,7 +7,7 @@ import {
 import { Button, Flex, Layout, Menu, MenuProps, Spin, Typography } from 'antd';
 import { kebabCase } from 'lodash';
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
@@ -50,6 +50,81 @@ const Content = styled.div`
   padding: 16px;
 `;
 
+const menuItems: MenuProps['items'] = [
+  {
+    key: 'wallet',
+    icon: <WalletOutlined />,
+    label: 'Pearl Wallet',
+    disabled: true,
+  },
+  {
+    key: 'help',
+    icon: <QuestionCircleOutlined />,
+    label: 'Help',
+  },
+  {
+    key: 'settings',
+    icon: <SettingOutlined />,
+    label: 'Settings',
+  },
+];
+
+const MyAgentsHeader = () => (
+  <>
+    <Flex justify="center" className="mt-24">
+      <Image src="/happy-robot.svg" alt="Happy Robot" width={40} height={40} />
+    </Flex>
+    <Text className="font-weight-600">My Agents</Text>
+  </>
+);
+
+type AgentList = {
+  name: string;
+  agentType: string;
+  chainName: string;
+  chainId: EvmChainId;
+}[];
+
+type AgentListMenuProps = {
+  myAgents: AgentList;
+  selectedAgentType: string;
+  handleAgentSelect: MenuProps['onClick'];
+};
+const AgentListMenu = ({
+  myAgents,
+  selectedAgentType,
+  handleAgentSelect,
+}: AgentListMenuProps) => (
+  <Menu
+    defaultSelectedKeys={[selectedAgentType]}
+    mode="inline"
+    inlineIndent={4}
+    onClick={handleAgentSelect}
+    items={myAgents.map((agent) => ({
+      key: agent.agentType,
+      icon: (
+        <Image
+          src={`/agent-${agent.agentType}-icon.png`}
+          width={32}
+          height={32}
+          alt={agent.name}
+        />
+      ),
+      label: (
+        <Flex justify="space-between" align="center">
+          {agent.name}{' '}
+          <Image
+            src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
+            width={14}
+            height={14}
+            alt={`${agent.chainName} logo`}
+          />
+        </Flex>
+      ),
+    }))}
+  />
+);
+
 export const Sidebar = () => {
   const { goto: gotoSetup } = useSetup();
   const { goto: gotoPage } = usePageState();
@@ -64,14 +139,7 @@ export const Sidebar = () => {
 
   const myAgents = useMemo(() => {
     if (!services) return [];
-    return services.reduce<
-      {
-        name: string;
-        agentType: string;
-        chainName: string;
-        chainId: EvmChainId;
-      }[]
-    >((result, service) => {
+    return services.reduce<AgentList>((result, service) => {
       const agent = ACTIVE_AGENTS.find(
         ([, agentConfig]) =>
           agentConfig.middlewareHomeChainId === service.home_chain,
@@ -104,68 +172,41 @@ export const Sidebar = () => {
     }
   };
 
-  const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
-    switch (key) {
-      case 'help': {
-        gotoPage(Pages.HelpAndSupport);
-        return;
+  const handleMenuClick = useCallback<NonNullable<MenuProps['onClick']>>(
+    ({ key }) => {
+      switch (key) {
+        case 'help': {
+          gotoPage(Pages.HelpAndSupport);
+          return;
+        }
+        case 'settings': {
+          gotoPage(Pages.Settings);
+          return;
+        }
+        case 'agent-form-settings': {
+          gotoPage(Pages.UpdateAgentTemplate);
+          return;
+        }
       }
-      case 'settings': {
-        gotoPage(Pages.Settings);
-        return;
-      }
-      case 'agent-form-settings': {
-        gotoPage(Pages.UpdateAgentTemplate);
-        return;
-      }
-    }
-  };
+    },
+    [gotoPage],
+  );
 
   return (
     <SiderContainer>
       <Sider breakpoint="lg" theme="light" width={256}>
         <Content>
-          <Flex justify="center" className="mt-24">
-            <Image
-              src="/happy-robot.svg"
-              alt="Happy Robot"
-              width={40}
-              height={40}
-            />
-          </Flex>
-          <Text className="font-weight-600">My Agents</Text>
+          <MyAgentsHeader />
           {isLoading || isMasterWalletLoading ? (
             <Spin />
           ) : myAgents.length > 0 ? (
-            <Menu
-              defaultSelectedKeys={[selectedAgentType]}
-              mode="inline"
-              inlineIndent={4}
-              onClick={handleAgentSelect}
-              items={myAgents.map((agent) => ({
-                key: agent.agentType,
-                icon: (
-                  <Image
-                    src={`/agent-${agent.agentType}-icon.png`}
-                    width={32}
-                    height={32}
-                    alt={agent.name}
-                  />
-                ),
-                label: (
-                  <Flex justify="space-between" align="center">
-                    {agent.name}{' '}
-                    <Image
-                      src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
-                      width={14}
-                      height={14}
-                      alt={`${agent.chainName} logo`}
-                    />
-                  </Flex>
-                ),
-              }))}
+            <AgentListMenu
+              myAgents={myAgents}
+              selectedAgentType={selectedAgentType}
+              handleAgentSelect={handleAgentSelect}
             />
           ) : null}
+
           {myAgents.length < ACTIVE_AGENTS.length && (
             <Button
               size="large"
@@ -185,24 +226,7 @@ export const Sidebar = () => {
             inlineIndent={12}
             className="mt-auto"
             onClick={handleMenuClick}
-            items={[
-              {
-                key: 'wallet',
-                icon: <WalletOutlined />,
-                label: 'Pearl Wallet',
-                disabled: true,
-              },
-              {
-                key: 'help',
-                icon: <QuestionCircleOutlined />,
-                label: 'Help',
-              },
-              {
-                key: 'settings',
-                icon: <SettingOutlined />,
-                label: 'Settings',
-              },
-            ]}
+            items={menuItems}
           />
         </Content>
       </Sider>
