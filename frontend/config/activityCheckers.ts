@@ -134,12 +134,3 @@ export const OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
     '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
   ),
 } as const;
-
-export const CELO_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
-  string,
-  MulticallContract
-> = {
-  [STAKING_PROGRAM_IDS.MemeCeloAlpha2]: getMemeActivityCheckerContract(
-    '0x3FD8C757dE190bcc82cF69Df3Cd9Ab15bCec1426',
-  ),
-} as const;

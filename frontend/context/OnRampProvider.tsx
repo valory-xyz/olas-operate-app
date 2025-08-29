@@ -139,7 +139,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
       setHasFundsReceivedAfterOnRamp(true);
       setIsOnRampingTransactionSuccessful(true);
 
-      // If not closed already, hide the on-ramp window after receiving funds
+      // If not closed already, close the on-ramp window after receiving funds
       onRampWindow?.close?.();
     }
   }, [
@@ -165,22 +165,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const updateIsSwappingStepCompleted = useCallback((completed: boolean) => {
     setIsSwappingStepCompleted(completed);
   }, []);
-
-  // Listen for onramp window transaction success event to reset the loading state
-  useEffect(() => {
-    const handleTransactionSuccess = () => {
-      setIsOnRampingTransactionSuccessful(true);
-      delayInSeconds(0.5).then(() => onRampWindow?.close?.());
-    };
-
-    ipcRenderer?.on?.('onramp-transaction-success', handleTransactionSuccess);
-    return () => {
-      ipcRenderer?.removeListener?.(
-        'onramp-transaction-success',
-        handleTransactionSuccess,
-      );
-    };
-  }, [ipcRenderer, onRampWindow, updateIsBuyCryptoBtnLoading]);
 
   // Listen for onramp window transaction failure event to reset the loading state
   useEffect(() => {

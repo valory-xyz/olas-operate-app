@@ -103,7 +103,7 @@ const ServiceAndNftDetails = ({
           <Flex vertical>
             <ServiceNftIdTitle />
             <a
-              href={`https://registry.olas.network/${asEvmChainDetails(middlewareChain).name}/services/${serviceNftTokenId}`}
+              href={`https://marketplace.olas.network/${asEvmChainDetails(middlewareChain).name}/ai-agents/${serviceNftTokenId}`}
               target="_blank"
             >
               {serviceNftTokenId} {UNICODE_SYMBOLS.EXTERNAL_LINK}
