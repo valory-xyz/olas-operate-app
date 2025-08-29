@@ -9,7 +9,7 @@ export const mainTheme: ThemeConfig = {
     colorWarning: '#FF9C27',
     colorInfoText: '#36075F',
     colorText: '#0F172A',
-    colorTextSecondary: COLOR.TEXT_NEUTRAL_SECONDARY,
+    colorTextSecondary: '#4D596A',
     colorFillSecondary: '#E4E4E4',
     fontSize: 16,
     fontFamily: 'Inter',
@@ -46,8 +46,7 @@ export const mainTheme: ThemeConfig = {
       colorBgSpotlight: 'white',
     },
     Typography: {
-      colorTextHeading: COLOR.TEXT_NEUTRAL_PRIMARY,
-      colorTextDescription: COLOR.TEXT_NEUTRAL_SECONDARY,
+      colorTextDescription: '#4D596A',
     },
     Popover: {
       fontSize: 14,

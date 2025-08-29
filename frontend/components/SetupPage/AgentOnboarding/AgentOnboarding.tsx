@@ -140,7 +140,6 @@ const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
  */
 export const AgentOnboarding = () => {
   const { goto } = useSetup();
-  const { updateAgentType } = useServices();
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
   const [onboardingStep, setOnboardingStep] = useState(0);
 
@@ -175,14 +174,10 @@ export const AgentOnboarding = () => {
     }
   }, [goto, selectedAgent]);
 
-  const handleSelectYourAgent = useCallback(
-    (agentType: AgentType) => {
-      setSelectedAgent(agentType as AgentType);
-      setOnboardingStep(0);
-      updateAgentType(agentType);
-    },
-    [updateAgentType],
-  );
+  const handleSelectYourAgent = useCallback((agentType: AgentType) => {
+    setSelectedAgent(agentType as AgentType);
+    setOnboardingStep(0);
+  }, []);
 
   return (
     <Container>
