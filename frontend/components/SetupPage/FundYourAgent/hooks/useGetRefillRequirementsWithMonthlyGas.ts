@@ -83,9 +83,14 @@ const getTokensDetailsForFunding = (
 };
 
 /**
+ *
+ * @warning A HOOK THAT SHOULD NEVER EXIST.
+ * TODO: This hook is used because BE doesn't support monthly_gas_estimate in the refill requirements yet.
+ * Remove the hook once it's supported.
+ *
  * Hook to get the refill requirements for the selectedAgent — considers the monthly_gas_estimate
  * in order to evaluate the requirements.
- * example output:
+ * @example
  * {
  *   tokenRequirements: [
  *     {

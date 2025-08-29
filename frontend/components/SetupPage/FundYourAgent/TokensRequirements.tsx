@@ -88,32 +88,32 @@ export const TokenRequirements = ({
   if (fundType === 'onRamp')
     return <RequirementsForOnRamp fiatAmount={fiatAmount?.toFixed(2) ?? '0'} />;
 
+  if (!tokenRequirements?.length) return null;
+
   return (
-    tokenRequirements?.length && (
-      <div style={{ marginTop: 16 }}>
-        <Text className="text-neutral-tertiary">Requirements</Text>
-        <RequirementsContainer gap={12}>
-          {tokenRequirements.map(({ amount, symbol, iconSrc }) => (
-            <Flex key={symbol} align="center" gap={8} style={{ width: '100%' }}>
-              <Image
-                src={iconSrc}
-                alt={symbol}
-                style={{
-                  height: 20,
-                }}
-              />
-              <Text>
-                {formatAmount(amount)} {symbol}
-              </Text>
-            </Flex>
-          ))}
-          <Text className="text-neutral-tertiary" style={{ fontSize: 14 }}>
-            {fundType === 'bridge'
-              ? '+ bridging fees on Ethereum Mainnet.'
-              : `+ transaction fees on ${chainName}.`}
-          </Text>
-        </RequirementsContainer>
-      </div>
-    )
+    <div style={{ marginTop: 16 }}>
+      <Text className="text-neutral-tertiary">Requirements</Text>
+      <RequirementsContainer gap={12}>
+        {tokenRequirements.map(({ amount, symbol, iconSrc }) => (
+          <Flex key={symbol} align="center" gap={8} style={{ width: '100%' }}>
+            <Image
+              src={iconSrc}
+              alt={symbol}
+              style={{
+                height: 20,
+              }}
+            />
+            <Text>
+              {formatAmount(amount)} {symbol}
+            </Text>
+          </Flex>
+        ))}
+        <Text className="text-neutral-tertiary" style={{ fontSize: 14 }}>
+          {fundType === 'bridge'
+            ? '+ bridging fees on Ethereum Mainnet.'
+            : `+ transaction fees on ${chainName}.`}
+        </Text>
+      </RequirementsContainer>
+    </div>
   );
 };

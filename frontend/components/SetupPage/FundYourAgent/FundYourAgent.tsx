@@ -2,7 +2,9 @@ import { Button, Flex, Typography } from 'antd';
 import Paragraph from 'antd/es/typography/Paragraph';
 import styled from 'styled-components';
 
+import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
+import { CardTitle, Title3 } from '@/components/ui/Typography';
 import { EvmChainName } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -10,13 +12,13 @@ import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
+import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
+import { useTotalNativeTokenRequired } from '@/hooks/useTotalNativeTokenRequired';
 
-import { useTotalFiatFromNativeToken } from '../Create/SetupOnRamp/PayingReceivingTable/useTotalFiatFromNativeToken';
-import { useTotalNativeTokenRequired } from '../Create/SetupOnRamp/PayingReceivingTable/useTotalNativeTokenRequired';
 import { useGetRefillRequimentsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
 import { type TokenRequirement, TokenRequirements } from './TokensRequirements';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const FundYourAgentContainer = styled(Flex)`
   align-items: center;
@@ -28,38 +30,25 @@ const FundYourAgentContainer = styled(Flex)`
   }
 `;
 
-const FundMethodCard = styled.div`
-  background-color: ${COLOR.WHITE};
+const FundMethodCard = styled(CardFlex)`
   border-radius: 16px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
   width: 370px;
-  justify-content: space-between;
-  border: 1px solid ${COLOR.WHITE};
+  border-color: ${COLOR.WHITE};
   box-shadow:
     0 74px 21px 0 rgba(170, 193, 203, 0),
     0 47px 19px 0 rgba(170, 193, 203, 0.01),
     0 26px 16px 0 rgba(170, 193, 203, 0.05),
     0 12px 12px 0 rgba(170, 193, 203, 0.09),
     0 3px 6px 0 rgba(170, 193, 203, 0.1);
-`;
 
-const CardTitle = ({ children }: { children: React.ReactNode }) => (
-  <Title
-    level={4}
-    style={{
-      fontSize: 20,
-      fontWeight: 500,
-      textAlign: 'center',
-      marginTop: 20,
-      marginBottom: 24,
-    }}
-  >
-    {children}
-  </Title>
-);
+  .ant-card-body {
+    height: 100%;
+  }
+
+  .fund-method-card-body {
+    flex: 1;
+  }
+`;
 
 const CardDescription = ({ children }: { children: React.ReactNode }) => (
   <Paragraph
@@ -93,7 +82,7 @@ const OnRamp = () => {
 
   return (
     <FundMethodCard>
-      <div>
+      <div className="fund-method-card-body">
         <CardTitle>Buy</CardTitle>
         <CardDescription>
           Pay in fiat by using your credit or debit card — perfect for speed and
@@ -118,7 +107,7 @@ const Transfer = ({
   isBalancesAndFundingRequirementsLoading,
 }: FundMethodCardProps) => (
   <FundMethodCard>
-    <div>
+    <div className="fund-method-card-body">
       <CardTitle>Transfer</CardTitle>
       <CardDescription>
         Send funds directly on Optimism chain with lowest fees — ideal for
@@ -141,7 +130,7 @@ const Bridge = ({
   isBalancesAndFundingRequirementsLoading,
 }: FundMethodCardProps) => (
   <FundMethodCard>
-    <div>
+    <div className="fund-method-card-body">
       <CardTitle>Bridge</CardTitle>
       <CardDescription>
         Bridge from Ethereum Mainnet directly to your agent. Slightly more
@@ -177,9 +166,7 @@ export const FundYourAgent = () => {
   return (
     <FundYourAgentContainer>
       <BackButton onPrev={() => goto(SetupScreen.AgentOnboarding)} />
-      <Title level={4} style={{ fontSize: 24, fontWeight: 500, marginTop: 12 }}>
-        Fund your {selectedAgentConfig.displayName}
-      </Title>
+      <Title3>Fund your {selectedAgentConfig.displayName}</Title3>
       <Text type="secondary">
         Select the payment method that suits you best.
       </Text>

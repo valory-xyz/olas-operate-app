@@ -16,11 +16,10 @@ import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
+import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
+import { useTotalNativeTokenRequired } from '@/hooks/useTotalNativeTokenRequired';
 import { ReceivingTokens } from '@/types/Bridge';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
-
-import { useTotalFiatFromNativeToken } from './useTotalFiatFromNativeToken';
-import { useTotalNativeTokenRequired } from './useTotalNativeTokenRequired';
 
 const { Text } = Typography;
 
