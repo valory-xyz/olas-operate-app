@@ -18,12 +18,15 @@ export const AgentFormContainer = styled(Flex)`
   .setup-left-content {
     width: 492px;
     margin: 0 auto;
-    padding: 64px 32px;
+    padding: 64px 0;
   }
   .setup-right-content {
     width: 392px;
     padding: 64px 32px;
     background: ${COLOR.BACKGROUND};
+    .ant-typography {
+      font-size: 14px !important;
+    }
   }
 `;
 

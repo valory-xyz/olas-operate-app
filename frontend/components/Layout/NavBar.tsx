@@ -42,7 +42,7 @@ const TopBarContainer = styled.div`
   left: 0;
   right: 0;
   z-index: 1;
-  height: ${TOP_BAR_HEIGHT}px;
+  height: ${TOP_BAR_HEIGHT}px; // TODO: fix the height
   display: flex;
   align-items: center;
   -webkit-app-region: drag;

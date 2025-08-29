@@ -13,6 +13,7 @@ import styled from 'styled-components';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { EvmChainId } from '@/constants/chains';
+import { COLOR } from '@/constants/colors';
 import { TOP_BAR_HEIGHT } from '@/constants/width';
 import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
@@ -27,6 +28,7 @@ const { Text } = Typography;
 
 const SiderContainer = styled.div`
   display: flex;
+  border-right: 1px solid ${COLOR.GRAY_4};
 
   .ant-layout-sider {
     margin-top: -${TOP_BAR_HEIGHT}px;
@@ -189,12 +191,6 @@ export const Sidebar = () => {
                 icon: <WalletOutlined />,
                 label: 'Pearl Wallet',
                 disabled: true,
-              },
-              // TODO: ask Roman about settings
-              {
-                key: 'agent-form-settings',
-                icon: <SettingOutlined />,
-                label: 'Agent Settings',
               },
               {
                 key: 'help',

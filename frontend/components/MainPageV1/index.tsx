@@ -7,15 +7,21 @@ import { Settings } from '@/components/SettingsPage';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 
+import { UpdateAgentPage } from '../UpdateAgentPage';
 import { Home } from './Home';
 import { Sidebar } from './Sidebar';
 
 const { Content: AntdContent } = Layout;
 
-const Content = styled(AntdContent)`
-  padding: 0 16px;
-  max-width: 744px;
+const Content = styled(AntdContent)<{ $isFullPage?: boolean }>`
   margin: 0 auto;
+  overflow: auto;
+  ${(props) =>
+    props.$isFullPage
+      ? ``
+      : `
+        padding: 0 16px;
+        max-width: 744px;`}
 `;
 
 export const Main = () => {
@@ -27,15 +33,19 @@ export const Main = () => {
         return <Settings />;
       case Pages.HelpAndSupport:
         return <HelpAndSupport />;
+      case Pages.UpdateAgentTemplate:
+        return <UpdateAgentPage />;
       default:
         return <Home />;
     }
   }, [pageState]);
 
+  const isFullPage = pageState === Pages.UpdateAgentTemplate;
+
   return (
     <Layout>
       <Sidebar />
-      <Content className="pl-16 pr-16">{mainContent}</Content>
+      <Content $isFullPage={isFullPage}>{mainContent}</Content>
     </Layout>
   );
 };
