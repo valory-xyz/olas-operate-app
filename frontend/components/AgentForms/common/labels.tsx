@@ -64,7 +64,7 @@ export const GeminiApiKeySubHeader = ({
   </Flex>
 );
 
-export const TenderAccessTokenLabel = () => (
+export const TenderlyAccessTokenLabel = () => (
   <FormLabel>Tenderly access token</FormLabel>
 );
 

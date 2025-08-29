@@ -23,8 +23,8 @@ import {
   GeminiApiKeyDesc,
   GeminiApiKeyLabel,
   GeminiApiKeySubHeader,
-  TenderAccessTokenLabel,
   TenderlyAccessTokenDesc,
+  TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyApiKeySubHeader,
   TenderlyProjectSlugLabel,
@@ -93,7 +93,7 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
     >
       <TenderlyApiKeySubHeader />
       <Form.Item
-        label={<TenderAccessTokenLabel />}
+        label={<TenderlyAccessTokenLabel />}
         name={['env_variables', 'TENDERLY_ACCESS_KEY']}
         {...requiredFieldProps}
         rules={[...requiredRules, { validator: validateApiKey }]}

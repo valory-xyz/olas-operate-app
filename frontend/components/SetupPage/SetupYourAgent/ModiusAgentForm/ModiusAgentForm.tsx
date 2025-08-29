@@ -24,8 +24,8 @@ import {
   GeminiApiKeyDesc,
   GeminiApiKeyLabel,
   GeminiApiKeySubHeader,
-  TenderAccessTokenLabel,
   TenderlyAccessTokenDesc,
+  TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
   TenderlyApiKeySubHeader,
   TenderlyProjectSlugLabel,
@@ -141,7 +141,7 @@ export const ModiusAgentFormContent = ({
       >
         <TenderlyApiKeySubHeader isSetupPage />
         <Form.Item
-          label={<TenderAccessTokenLabel />}
+          label={<TenderlyAccessTokenLabel />}
           name="tenderlyAccessToken"
           {...requiredFieldProps}
           rules={[...requiredRules, { validator: validateApiKey }]}
