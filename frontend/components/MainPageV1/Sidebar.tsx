@@ -15,7 +15,7 @@ import { CHAIN_CONFIG } from '@/config/chains';
 import { AgentType } from '@/constants/agent';
 import { EvmChainId } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
-import { APP_HEIGHT, SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants/width';
+import { APP_HEIGHT, SIDER_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { usePageState } from '@/hooks/usePageState';
@@ -31,25 +31,10 @@ const SiderContainer = styled.div`
   display: flex;
   border-right: 1px solid ${COLOR.GRAY_4};
   height: ${APP_HEIGHT}px;
-
-  .ant-layout-sider {
-    /* margin-top: -${TOP_BAR_HEIGHT}px; */
-    /* margin-bottom: -${TOP_BAR_HEIGHT}px; */
-    /* padding-top: ${TOP_BAR_HEIGHT}px; */
-  }
-
   .ant-layout-sider-children {
     display: flex;
     width: 100%;
   }
-`;
-
-const Content = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex: auto;
-  gap: 16px;
-  padding: 16px;
 `;
 
 const menuItems: MenuProps['items'] = [
@@ -203,7 +188,7 @@ export const Sidebar = () => {
   return (
     <SiderContainer>
       <Sider breakpoint="lg" theme="light" width={SIDER_WIDTH}>
-        <Content>
+        <Flex vertical gap={16} flex={1} className="p-16">
           <MyAgentsHeader />
           {isLoading || isMasterWalletLoading ? (
             <Spin />
@@ -236,7 +221,7 @@ export const Sidebar = () => {
             onClick={handleMenuClick}
             items={menuItems}
           />
-        </Content>
+        </Flex>
       </Sider>
     </SiderContainer>
   );
