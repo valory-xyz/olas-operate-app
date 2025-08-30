@@ -1,228 +1,20 @@
-import { ClockCircleOutlined } from '@ant-design/icons';
-import {
-  Button,
-  Flex,
-  Image as AntdImage,
-  message,
-  Modal,
-  Tag,
-  Typography,
-} from 'antd';
-import Image from 'next/image';
-import { useCallback, useState } from 'react';
-import styled from 'styled-components';
+import { Flex, Typography } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
-import { CopySvg } from '@/components/custom-icons/Copy';
-import { WalletSvg } from '@/components/custom-icons/Wallet';
-import { InfoTooltip } from '@/components/InfoTooltip';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
-import { CustomTable } from '@/components/ui/CustomTable';
 import { ChainImageMap, EvmChainName } from '@/constants/chains';
-import { COLOR } from '@/constants/colors';
-import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
+import { SetupScreen } from '@/enums/SetupScreen';
 import { useServices } from '@/hooks/useServices';
-import { useMasterWalletContext } from '@/hooks/useWallet';
-import { copyToClipboard } from '@/utils/copyToClipboard';
+import { useSetup } from '@/hooks/useSetup';
 
-import { useGetRefillRequimentsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
+import { FundingDescription } from './FundingDescription';
+import { TokenRequirementsTable } from './TokenRequirementsTable';
 
 const { Title, Text } = Typography;
 
-const TransferDetailsContainer = styled(Flex)`
-  background-color: ${COLOR.BACKGROUND};
-  padding: 16px;
-  border-radius: 10px;
-  margin-top: 32px;
-`;
-
-const WaitingTag = styled(Tag)`
-  color: ${COLOR.TEXT_NEUTRAL_TERTIARY};
-  padding: 4px 10px;
-  border-radius: 8px;
-  border: none;
-  line-height: 20px;
-`;
-
-const TOOLTIP_STYLE = {
-  width: 'max-content',
-  borderRadius: 10,
-  padding: '8px 12px',
-};
-
-const ChainConfirmationMessageTooltip = ({
-  chainName,
-  chainImage,
-  onClose,
-}: {
-  chainName: string;
-  chainImage: string;
-  onClose: () => void;
-}) => {
-  return (
-    <Modal
-      open={true}
-      onCancel={onClose}
-      footer={null}
-      closable={false}
-      centered
-      width={440}
-      styles={{
-        content: {
-          padding: 24,
-          borderRadius: 24,
-        },
-        mask: {
-          backgroundColor: 'rgba(0, 0, 0, 0)',
-        },
-      }}
-    >
-      <Flex vertical gap={24} align="center">
-        <Image width={60} height={60} src={chainImage} alt={chainName} />
-        <Title level={4} style={{ margin: 0 }}>
-          Send funds on {chainName} Chain
-        </Title>
-        <Text type="secondary" style={{ textAlign: 'center' }}>
-          Sending funds on any other network will result in permanent loss. Make
-          sure you&apos;re sending on {chainName} Chain before proceeding.
-        </Text>
-        <Button type="primary" onClick={onClose} style={{ width: '100%' }}>
-          I Understand
-        </Button>
-      </Flex>
-    </Modal>
-  );
-};
-
-const ExternalWalletTooltip = () => (
-  <InfoTooltip
-    placement="top"
-    overlayInnerStyle={TOOLTIP_STYLE}
-    iconStyles={{ color: COLOR.TEXT_NEUTRAL_PRIMARY }}
-  >
-    <Text className="text-sm">This is the wallet you use outside Pearl</Text>
-  </InfoTooltip>
-);
-
-const TransferDetailsSection = ({
-  chainName,
-  chainImage,
-}: {
-  chainName: string;
-  chainImage: string;
-}) => {
-  const { masterEoa } = useMasterWalletContext();
-  const address = masterEoa?.address;
-  const [
-    isChainConfirmationMessageTooltipOpen,
-    setIsChainConfirmationMessageTooltipOpen,
-  ] = useState(false);
-
-  const handleCopyAddress = useCallback(() => {
-    if (address)
-      copyToClipboard(address).then(() => message.success('Address copied!'));
-    setIsChainConfirmationMessageTooltipOpen(true);
-  }, [address]);
-
-  return (
-    <TransferDetailsContainer vertical gap={24}>
-      <Flex vertical gap={8}>
-        <Text className="text-neutral-tertiary">On</Text>
-        <Flex align="center" gap={8}>
-          <AntdImage width={20} height={20} src={chainImage} alt={chainName} />
-          <Text className="text-neutral-primary" style={{ fontSize: 16 }}>
-            {chainName} Chain
-          </Text>
-        </Flex>
-      </Flex>
-
-      <Flex vertical gap={8}>
-        <Text className="text-neutral-tertiary">From</Text>
-        <Flex align="center" gap={8}>
-          <WalletSvg />
-          <Text>Your external wallet</Text>
-          <ExternalWalletTooltip />
-        </Flex>
-      </Flex>
-
-      <Flex vertical gap={8}>
-        <Text className="text-neutral-tertiary">To Pearl Wallet</Text>
-        <Flex align="center" gap={8}>
-          <WalletSvg />
-          <Text>{address}</Text>
-        </Flex>
-      </Flex>
-
-      {isChainConfirmationMessageTooltipOpen && (
-        <ChainConfirmationMessageTooltip
-          chainName={chainName}
-          chainImage={chainImage}
-          onClose={() => setIsChainConfirmationMessageTooltipOpen(false)}
-        />
-      )}
-      <Flex style={{ marginTop: -8 }}>
-        <Button
-          size="small"
-          style={{ display: 'flex', alignItems: 'center', gap: 4 }}
-          onClick={handleCopyAddress}
-        >
-          <CopySvg /> Copy
-        </Button>
-      </Flex>
-    </TransferDetailsContainer>
-  );
-};
-
-const TokenRequirementsTable = () => {
-  const { selectedAgentConfig } = useServices();
-  const { tokenRequirements, isLoading } = useGetRefillRequimentsWithMonthlyGas(
-    // TODO: remove the dummy service prop when integrated properly.
-    { selectedAgentConfig, shouldCreateDummyService: true },
-  );
-
-  const data = (tokenRequirements ?? []).map((token) => ({
-    ...token,
-    status: 'Waiting',
-  }));
-
-  const columns = [
-    {
-      title: 'Token',
-      render: (_: unknown, record: (typeof data)[number]) => (
-        <Flex align="center" gap={8}>
-          <AntdImage width={20} src={record.iconSrc} alt={record.symbol} />
-          <Text>{record.symbol}</Text>
-        </Flex>
-      ),
-    },
-    {
-      title: 'Amount',
-      render: (_: unknown, record: (typeof data)[number]) => (
-        <Text>{record.amount}</Text>
-      ),
-    },
-    {
-      title: 'Status',
-      render: () => (
-        <WaitingTag icon={<ClockCircleOutlined />}>Waiting</WaitingTag>
-      ),
-    },
-  ];
-
-  return (
-    <CustomTable
-      dataSource={data}
-      columns={columns}
-      loading={isLoading}
-      pagination={false}
-    />
-  );
-};
-
 export const TransferFunds = () => {
-  const { goto } = usePageState();
+  const { goto } = useSetup();
   const { selectedAgentConfig } = useServices();
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
@@ -231,7 +23,7 @@ export const TransferFunds = () => {
   return (
     <Flex justify="center" style={{ marginTop: 40 }}>
       <CardFlex $noBorder style={{ width: 624, padding: 8 }}>
-        <BackButton onPrev={() => goto(Pages.Main)} />
+        <BackButton onPrev={() => goto(SetupScreen.FundYourAgent)} />
         <Title
           className="text-neutral-primary"
           level={4}
@@ -251,7 +43,7 @@ export const TransferFunds = () => {
           message={`Only send on ${chainName} Chain — funds on other networks are unrecoverable.`}
         />
 
-        <TransferDetailsSection chainName={chainName} chainImage={chainImage} />
+        <FundingDescription chainName={chainName} chainImage={chainImage} />
 
         <TokenRequirementsTable />
       </CardFlex>

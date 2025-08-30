@@ -21,6 +21,7 @@ export const SetupScreen = {
   SetupBridgeOnboardingScreen: 'SetupBridgeOnboardingScreen',
   SetupOnRamp: 'SetupOnRamp',
 
+  FundYourAgent: 'FundYourAgent',
   TransferFunds: 'TransferFunds',
 } as const;
 

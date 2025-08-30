@@ -55,7 +55,7 @@ const SetupCard = styled.div`
 
 const screenWithoutCards: SetupScreen[] = [
   SetupScreen.AgentOnboarding,
-  SetupScreen.SetupEoaFunding,
+  SetupScreen.FundYourAgent,
   SetupScreen.TransferFunds,
 ];
 
@@ -74,7 +74,7 @@ export const Setup = () => {
         return <SetupSeedPhrase />;
       case SetupScreen.SetupBackupSigner:
         return <SetupBackupSigner />;
-      case SetupScreen.SetupEoaFunding:
+      case SetupScreen.FundYourAgent:
         return <FundYourAgent />;
       case SetupScreen.TransferFunds:
         return <TransferFunds />;
