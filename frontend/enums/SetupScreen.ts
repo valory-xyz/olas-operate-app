@@ -20,6 +20,9 @@ export const SetupScreen = {
   /** Onboarding using the bridge */
   SetupBridgeOnboardingScreen: 'SetupBridgeOnboardingScreen',
   SetupOnRamp: 'SetupOnRamp',
+
+  FundYourAgent: 'FundYourAgent',
+  TransferFunds: 'TransferFunds',
 } as const;
 
 export type SetupScreen = (typeof SetupScreen)[keyof typeof SetupScreen];

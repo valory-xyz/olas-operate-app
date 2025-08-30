@@ -105,24 +105,29 @@ const Transfer = ({
   chainName,
   tokenRequirements,
   isBalancesAndFundingRequirementsLoading,
-}: FundMethodCardProps) => (
-  <FundMethodCard>
-    <div className="fund-method-card-body">
-      <CardTitle>Transfer</CardTitle>
-      <CardDescription>
-        Send funds directly on Optimism chain with lowest fees — ideal for
-        crypto-savvy users.
-      </CardDescription>
-      <TokenRequirements
-        fundType="transfer"
-        tokenRequirements={tokenRequirements}
-        chainName={chainName}
-        isLoading={isBalancesAndFundingRequirementsLoading}
-      />
-    </div>
-    <Button size="large">Transfer Crypto on {chainName}</Button>
-  </FundMethodCard>
-);
+}: FundMethodCardProps) => {
+  const { goto } = useSetup();
+  return (
+    <FundMethodCard>
+      <div className="fund-method-card-body">
+        <CardTitle>Transfer</CardTitle>
+        <CardDescription>
+          Send funds directly on Optimism chain with lowest fees — ideal for
+          crypto-savvy users.
+        </CardDescription>
+        <TokenRequirements
+          fundType="transfer"
+          tokenRequirements={tokenRequirements}
+          chainName={chainName}
+          isLoading={isBalancesAndFundingRequirementsLoading}
+        />
+      </div>
+      <Button size="large" onClick={() => goto(SetupScreen.TransferFunds)}>
+        Transfer Crypto on {chainName}
+      </Button>
+    </FundMethodCard>
+  );
+};
 
 const Bridge = ({
   chainName,

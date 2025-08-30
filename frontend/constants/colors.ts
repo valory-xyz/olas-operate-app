@@ -27,4 +27,19 @@ export const COLOR = {
   TEXT_NEUTRAL_PRIMARY: '#000000',
   TEXT_NEUTRAL_SECONDARY: '#363F49',
   TEXT_NEUTRAL_TERTIARY: '#617084',
+  TEXT_COLOR: {
+    WARNING: {
+      DEFAULT: '#676709',
+    },
+  },
+  BG: {
+    WARNING: {
+      DEFAULT: '#FCFCE3',
+    },
+  },
+  BORDER_COLOR: {
+    WARNING: {
+      DEFAULT: '#ECEC93',
+    },
+  },
 };
