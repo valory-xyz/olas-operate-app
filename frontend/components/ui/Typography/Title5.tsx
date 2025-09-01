@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 
 const { Title } = Typography;
 
-export const Title4 = ({
+export const Title5 = ({
   children,
   ...props
 }: {
@@ -11,9 +11,9 @@ export const Title4 = ({
   const { style, className, ...rest } = props;
   return (
     <Title
-      className={`text-neutral-primary ${className}`}
-      level={4}
-      style={{ fontWeight: 500, margin: '12px 0', ...style }}
+      className={`m-0 ${className}`}
+      level={5}
+      style={{ fontSize: 20, lineHeight: 1.4, fontWeight: 500, ...style }}
       {...rest}
     >
       {children}

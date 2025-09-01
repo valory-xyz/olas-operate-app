@@ -15,6 +15,7 @@ import { delayInSeconds } from '@/utils/delay';
 
 import { FundingDescription } from './components/FundingDescription';
 import { TokenRequirementsTable } from './components/TokenRequirementsTable';
+import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
 import { useTokensFundingStatus } from './hooks/useTokensFundingStatus';
 
 const { Text } = Typography;
@@ -24,12 +25,25 @@ export const TransferFunds = () => {
   const { goto: gotoPage } = usePageState();
 
   const { selectedAgentConfig } = useServices();
-  const { isFullyFunded } = useTokensFundingStatus({
+  const { isFullyFunded, tokensFundingStatus } = useTokensFundingStatus({
     selectedAgentConfig,
   });
+  const { initialTokenRequirements, isLoading } =
+    useGetRefillRequirementsWithMonthlyGas({
+      selectedAgentConfig,
+    });
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const chainImage = ChainImageMap[evmHomeChainId];
+
+  const tableData = (initialTokenRequirements ?? []).map((token) => ({
+    ...token,
+    status: tokensFundingStatus[
+      token.symbol as keyof typeof tokensFundingStatus
+    ]
+      ? 'Received'
+      : 'Waiting',
+  }));
 
   const handleFunded = useCallback(async () => {
     message.success(
@@ -67,7 +81,7 @@ export const TransferFunds = () => {
 
         <FundingDescription chainName={chainName} chainImage={chainImage} />
 
-        <TokenRequirementsTable />
+        <TokenRequirementsTable isLoading={isLoading} tableData={tableData} />
       </CardFlex>
     </Flex>
   );

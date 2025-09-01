@@ -26,11 +26,6 @@ const { Text } = Typography;
 const FundYourAgentContainer = styled(Flex)`
   align-items: center;
   flex-direction: column;
-
-  .back-button {
-    font-size: 16px;
-    color: ${COLOR.TEXT_NEUTRAL_TERTIARY} !important;
-  }
 `;
 
 const FundMethodCard = styled(CardFlex)`
@@ -136,24 +131,32 @@ const Bridge = ({
   chainName,
   tokenRequirements,
   isBalancesAndFundingRequirementsLoading,
-}: FundMethodCardProps) => (
-  <FundMethodCard>
-    <div className="fund-method-card-body">
-      <CardTitle>Bridge</CardTitle>
-      <CardDescription>
-        Bridge from Ethereum Mainnet directly to your agent. Slightly more
-        expensive.
-      </CardDescription>
-      <TokenRequirements
-        tokenRequirements={tokenRequirements}
-        chainName={chainName}
-        isLoading={isBalancesAndFundingRequirementsLoading}
-        fundType="bridge"
-      />
-    </div>
-    <Button size="large">Bridge Crypto from Ethereum</Button>
-  </FundMethodCard>
-);
+}: FundMethodCardProps) => {
+  const { goto } = useSetup();
+  return (
+    <FundMethodCard>
+      <div className="fund-method-card-body">
+        <CardTitle>Bridge</CardTitle>
+        <CardDescription>
+          Bridge from Ethereum Mainnet directly to your agent. Slightly more
+          expensive.
+        </CardDescription>
+        <TokenRequirements
+          tokenRequirements={tokenRequirements}
+          chainName={chainName}
+          isLoading={isBalancesAndFundingRequirementsLoading}
+          fundType="bridge"
+        />
+      </div>
+      <Button
+        size="large"
+        onClick={() => goto(SetupScreen.SetupBridgeOnboardingScreen)}
+      >
+        Bridge Crypto from Ethereum
+      </Button>
+    </FundMethodCard>
+  );
+};
 
 export const FundYourAgent = () => {
   const { selectedAgentConfig } = useServices();
