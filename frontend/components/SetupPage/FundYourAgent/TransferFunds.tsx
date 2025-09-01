@@ -13,9 +13,9 @@ import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { delayInSeconds } from '@/utils/delay';
 
-import { FundingDescription } from './FundingDescription';
+import { FundingDescription } from './components/FundingDescription';
+import { TokenRequirementsTable } from './components/TokenRequirementsTable';
 import { useTokensFundingStatus } from './hooks/useTokensFundingStatus';
-import { TokenRequirementsTable } from './TokenRequirementsTable';
 
 const { Text } = Typography;
 

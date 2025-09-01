@@ -12,8 +12,8 @@ import { CustomTable } from '@/components/ui/CustomTable';
 import { COLOR } from '@/constants/colors';
 import { useServices } from '@/hooks/useServices';
 
-import { useGetRefillRequimentsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
-import { useTokensFundingStatus } from './hooks/useTokensFundingStatus';
+import { useGetRefillRequimentsWithMonthlyGas } from '../hooks/useGetRefillRequirementsWithMonthlyGas';
+import { useTokensFundingStatus } from '../hooks/useTokensFundingStatus';
 
 const { Text } = Typography;
 

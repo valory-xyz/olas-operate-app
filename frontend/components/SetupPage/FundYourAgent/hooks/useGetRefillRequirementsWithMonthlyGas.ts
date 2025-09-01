@@ -15,7 +15,7 @@ import { bigintMax } from '@/utils/calculations';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { useBeforeBridgeFunds } from '../../Create/SetupEoaFunding/useBeforeBridgeFunds';
-import { TokenRequirement } from '../TokensRequirements';
+import { TokenRequirement } from '../components/TokensRequirements';
 
 const ICON_OVERRIDES: Record<string, string> = {
   [TokenSymbolMap['XDAI']]: '/tokens/wxdai-icon.png',
