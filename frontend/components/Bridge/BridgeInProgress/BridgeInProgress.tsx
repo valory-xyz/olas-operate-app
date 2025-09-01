@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
@@ -6,10 +6,10 @@ import {
   BridgingSteps,
   StepEvent,
 } from '@/components/Bridge/BridgeInProgress/BridgingSteps';
-import { EstimatedCompletionTime } from '@/components/Bridge/BridgeInProgress/EstimatedCompletionTime';
 import { BridgeTransferFlow } from '@/components/Bridge/BridgeTransferFlow';
 import { CardFlex } from '@/components/styled/CardFlex';
-import { AgentHeader } from '@/components/ui/AgentHeader';
+import { Title3 } from '@/components/ui/Typography';
+import { Title5 } from '@/components/ui/Typography/Title5';
 import { Pages } from '@/enums/Pages';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
@@ -20,31 +20,15 @@ import { Nullable } from '@/types/Util';
 import { BridgeRetryOutcome, EnabledSteps } from '../types';
 import { useRetryBridge } from './useRetryBridge';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const KeepAppOpenAlert = () => (
   <CustomAlert
     type="warning"
-    fullWidth
     showIcon
-    message={
-      <Text className="text-sm">
-        Keep the app open until bridging is complete.
-      </Text>
-    }
+    message={'Keep the app open until the process is complete.'}
+    className="mb-32"
   />
-);
-
-const Header = () => (
-  <>
-    <CardFlex $noBorder $gap={20} $padding="0 24px">
-      <AgentHeader />
-      <Title level={3} className="m-0">
-        Bridging in progress
-      </Title>
-    </CardFlex>
-    <KeepAppOpenAlert />
-  </>
 );
 
 type BridgeInProgressProps = {
@@ -62,7 +46,6 @@ export const BridgeInProgress = ({
   quoteId,
   fromChain,
   toChain,
-  eta,
   transfers,
   bridgeRetryOutcome,
   onBridgeRetryOutcome,
@@ -271,15 +254,23 @@ export const BridgeInProgress = ({
   ]);
 
   return (
-    <>
-      <Header />
-      <CardFlex $noBorder $gap={16} $padding="0 24px">
-        {eta && <EstimatedCompletionTime timeInSeconds={eta} />}
+    <Flex justify="center" style={{ marginTop: 40 }}>
+      <CardFlex $noBorder style={{ width: 624, padding: 8 }}>
+        <Title3 className="mt-0">Bridge Crypto</Title3>
+        <Title5 className="mt-12 mb-8">Step 2. Bridging In Progress</Title5>
+        <Text type="secondary" className="mb-24">
+          Funds have been received, and the bridging process has been started.
+          Estimated time: 25-30 minutes.
+        </Text>
+
+        <KeepAppOpenAlert />
+
         <BridgeTransferFlow
           fromChain={fromChain}
           toChain={toChain}
           transfers={transfers}
         />
+
         {!!bridgeDetails && (
           <BridgingSteps
             chainName={toChain}
@@ -289,6 +280,6 @@ export const BridgeInProgress = ({
           />
         )}
       </CardFlex>
-    </>
+    </Flex>
   );
 };

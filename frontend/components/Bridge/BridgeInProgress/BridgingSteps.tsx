@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
+import { COLOR } from '@/constants/colors';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { TokenSymbol } from '@/constants/token';
 import { BridgingStepStatus as Status } from '@/types/Bridge';
@@ -11,6 +12,30 @@ import { Maybe, Nullable } from '@/types/Util';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
 const { Text } = Typography;
+
+const StyledSteps = styled(Steps)`
+  .ant-steps-item-title {
+    color: ${COLOR.TEXT} !important;
+  }
+
+  .ant-steps-item-error .ant-steps-item-title {
+    color: ${COLOR.RED} !important;
+  }
+
+  .ant-steps-item-wait .ant-steps-item-icon {
+    background-color: ${COLOR.GRAY_1};
+  }
+
+  .ant-steps-item-icon {
+    font-size: 16px !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+`;
 
 const SubStepRow = styled.div`
   line-height: normal;
@@ -173,9 +198,10 @@ export const BridgingSteps = ({
   );
 
   return (
-    <Steps
+    <StyledSteps
       size="small"
       direction="vertical"
+      className="mt-32"
       items={steps.map(({ status, title, computedSubSteps }) => {
         return {
           status,

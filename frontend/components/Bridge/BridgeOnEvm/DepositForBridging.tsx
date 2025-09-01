@@ -245,7 +245,7 @@ export const DepositForBridging = ({
         ),
         symbol: token.symbol,
         iconSrc: TokenSymbolConfigMap[token.symbol].image,
-        status: token.areFundsReceived ? 'Received' : 'Waiting',
+        areFundsReceived: token.areFundsReceived,
       }))
       .sort((a, b) => b.amount - a.amount);
   }, [tokens]);

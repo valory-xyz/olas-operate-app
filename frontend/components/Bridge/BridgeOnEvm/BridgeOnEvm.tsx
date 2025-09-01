@@ -3,7 +3,7 @@ import { Flex, Typography } from 'antd';
 import { FundingDescription } from '@/components/SetupPage/FundYourAgent/components/FundingDescription';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
-import { Title4 } from '@/components/ui/Typography/Title4';
+import { Title3 } from '@/components/ui/Typography';
 import { Title5 } from '@/components/ui/Typography/Title5';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
@@ -39,7 +39,7 @@ export const BridgeOnEvm = ({
   <Flex justify="center" style={{ marginTop: 40 }}>
     <CardFlex $noBorder style={{ width: 624, padding: 8 }}>
       <BackButton onPrev={onPrev} />
-      <Title4 className="mt-24">Bridge Crypto from {FROM_CHAIN_NAME}</Title4>
+      <Title3 className="mt-24">Bridge Crypto from {FROM_CHAIN_NAME}</Title3>
       <Title5 className="mt-12 mb-8">Step 1. Send Funds</Title5>
       <Text className="text-base text-lighter">{bridgeFromDescription}</Text>
 

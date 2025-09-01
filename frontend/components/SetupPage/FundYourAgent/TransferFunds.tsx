@@ -1,5 +1,5 @@
 import { Flex, message, Typography } from 'antd';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
@@ -36,14 +36,13 @@ export const TransferFunds = () => {
   const chainName = EvmChainName[evmHomeChainId];
   const chainImage = ChainImageMap[evmHomeChainId];
 
-  const tableData = (initialTokenRequirements ?? []).map((token) => ({
-    ...token,
-    status: tokensFundingStatus[
-      token.symbol as keyof typeof tokensFundingStatus
-    ]
-      ? 'Received'
-      : 'Waiting',
-  }));
+  const tableData = useMemo(() => {
+    return (initialTokenRequirements ?? []).map((token) => ({
+      ...token,
+      areFundsReceived:
+        tokensFundingStatus[token.symbol as keyof typeof tokensFundingStatus],
+    }));
+  }, [initialTokenRequirements, tokensFundingStatus]);
 
   const handleFunded = useCallback(async () => {
     message.success(

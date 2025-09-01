@@ -26,7 +26,7 @@ type TokenRowData = {
   amount: number;
   symbol: string;
   iconSrc: string;
-  status: string;
+  areFundsReceived: boolean;
 };
 
 const columns: TableColumnsType = [
@@ -54,14 +54,14 @@ const columns: TableColumnsType = [
     title: 'Status',
     key: 'status',
     render: (_: unknown, record: TokenRowData) => {
-      const isWaiting = record.status === 'Waiting';
+      const isWaiting = !record.areFundsReceived;
       return (
         <CustomTag
           $isWaiting={isWaiting}
           color={isWaiting ? undefined : COLOR.SUCCESS}
           icon={isWaiting ? <ClockCircleOutlined /> : <CheckCircleOutlined />}
         >
-          {record.status}
+          {record.areFundsReceived ? 'Received' : 'Waiting'}
         </CustomTag>
       );
     },
