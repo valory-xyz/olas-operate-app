@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/client';
 import { getTokenDetails } from '@/components/Bridge/utils';
@@ -95,6 +95,7 @@ export const useGetRefillRequimentsWithMonthlyGas = ({
   shouldCreateDummyService?: boolean;
 }): {
   tokenRequirements: TokenRequirement[];
+  initialTokenRequirements: TokenRequirement[];
   isLoading: boolean;
 } => {
   const updateBeforeBridgingFunds = useBeforeBridgeFunds();
@@ -105,6 +106,7 @@ export const useGetRefillRequimentsWithMonthlyGas = ({
     isBalancesAndFundingRequirementsLoading,
   } = useBalanceAndRefillRequirementsContext();
   const { masterEoa } = useMasterWalletContext();
+  const initialTokenRequirementsRef = useRef<TokenRequirement[] | null>(null);
 
   useEffect(() => {
     const createDummyService = async () => {
@@ -176,8 +178,17 @@ export const useGetRefillRequimentsWithMonthlyGas = ({
     balances,
   ]);
 
+  // Capture the initial token requirements once, when they are first available
+  useEffect(() => {
+    if (!initialTokenRequirementsRef.current && tokenRequirements.length) {
+      initialTokenRequirementsRef.current = tokenRequirements;
+    }
+  }, [tokenRequirements]);
+
   return {
     tokenRequirements,
+    initialTokenRequirements:
+      initialTokenRequirementsRef.current ?? tokenRequirements,
     isLoading: isBalancesAndFundingRequirementsLoading,
   };
 };

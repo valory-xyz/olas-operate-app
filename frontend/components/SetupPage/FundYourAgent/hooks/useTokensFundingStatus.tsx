@@ -15,9 +15,10 @@ export const useTokensFundingStatus = ({
 }: UseTokensFundingStatusProps) => {
   const { masterEoa } = useMasterWalletContext();
   const { masterWalletBalances } = useMasterBalances();
-  const { tokenRequirements } = useGetRefillRequimentsWithMonthlyGas({
-    selectedAgentConfig,
-  });
+  const { initialTokenRequirements: tokenRequirements } =
+    useGetRefillRequimentsWithMonthlyGas({
+      selectedAgentConfig,
+    });
   const currentChain: number = selectedAgentConfig.evmHomeChainId;
 
   const requiredTokens = tokenRequirements?.map((token) => token.symbol);
