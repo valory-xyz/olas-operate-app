@@ -110,5 +110,5 @@ export const AgentsFunAgentSetup = ({
 }) =>
   renderForm(
     <AgentsFunAgentFormContent serviceTemplate={serviceTemplate} />,
-    <>TODO</>,
+    <></>,
   );

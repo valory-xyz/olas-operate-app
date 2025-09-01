@@ -32,7 +32,7 @@ export const SetupYourAgent = () => {
   }
 
   return (
-    <AgentFormContainer $isFullHeight>
+    <AgentFormContainer flex="none">
       {selectedAgentType === AgentMap.Modius && (
         <ModiusAgentForm
           serviceTemplate={serviceTemplate}

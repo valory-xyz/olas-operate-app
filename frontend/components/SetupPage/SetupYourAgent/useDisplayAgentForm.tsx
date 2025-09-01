@@ -12,9 +12,9 @@ import { useSetup } from '@/hooks/useSetup';
 
 const { Title } = Typography;
 
-export const AgentFormContainer = styled(Flex)<{ $isFullHeight?: boolean }>`
+export const AgentFormContainer = styled(Flex)`
   background: ${COLOR.WHITE};
-  height: ${(props) => (props.$isFullHeight ? '100%' : 'auto')};
+  flex: 1;
   .setup-left-content {
     width: 492px;
     margin: 0 auto;
