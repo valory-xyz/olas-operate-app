@@ -1,24 +1,26 @@
 import { WifiOutlined } from '@ant-design/icons';
 import { message } from 'antd';
-import { PropsWithChildren, useEffect } from 'react';
+import { PropsWithChildren, useEffect, useMemo } from 'react';
 import styled, { css } from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
-import { APP_HEIGHT, APP_WIDTH, TOP_BAR_HEIGHT } from '@/constants/width';
+import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
+import { Pages } from '@/enums/Pages';
+import { SetupScreen } from '@/enums/SetupScreen';
 import { useNotifyOnNewEpoch } from '@/hooks/useNotifyOnNewEpoch';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
+import { usePageState } from '@/hooks/usePageState';
+import { useSetup } from '@/hooks/useSetup';
 
 import { NavBar } from './NavBar';
 
 const Container = styled.div<{ $blur: boolean }>`
-  background-color: ${COLOR.BACKGROUND};
-  border-radius: 8px;
-
-  height: ${APP_HEIGHT}px;
-  width: ${APP_WIDTH}px;
-
   display: flex;
   flex-direction: column;
+  height: ${APP_HEIGHT}px;
+  width: ${APP_WIDTH}px;
+  background-color: ${COLOR.BACKGROUND};
+  border-radius: 8px;
 
   ${(props) =>
     props.$blur &&
@@ -40,12 +42,14 @@ const Container = styled.div<{ $blur: boolean }>`
     `}
 `;
 
-const Body = styled.div`
+const layoutWithFullHeight: SetupScreen[] = [SetupScreen.SetupYourAgent];
+
+const Body = styled.div<{ $hasPadding?: boolean }>`
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: ${TOP_BAR_HEIGHT}px 0;
-  height: calc(${APP_HEIGHT}px - ${2 * TOP_BAR_HEIGHT}px);
+  padding: ${(props) => (props.$hasPadding ? '40px 0' : undefined)};
+  height: ${APP_HEIGHT}px;
 `;
 
 const useSystemLevelNotifications = () => {
@@ -54,6 +58,8 @@ const useSystemLevelNotifications = () => {
 
 export const Layout = ({ children }: PropsWithChildren) => {
   const { isOnline } = useOnlineStatusContext();
+  const { state } = useSetup();
+  const { pageState } = usePageState();
 
   // all the app level notifications
   useSystemLevelNotifications();
@@ -72,10 +78,18 @@ export const Layout = ({ children }: PropsWithChildren) => {
     }
   }, [isOnline]);
 
+  const hasPadding = useMemo(() => {
+    if (pageState === Pages.Setup) {
+      return layoutWithFullHeight.includes(state) ? false : true;
+    }
+
+    return false;
+  }, [pageState, state]);
+
   return (
     <Container $blur={!isOnline}>
       <NavBar />
-      <Body>{children}</Body>
+      <Body $hasPadding={hasPadding}>{children}</Body>
     </Container>
   );
 };

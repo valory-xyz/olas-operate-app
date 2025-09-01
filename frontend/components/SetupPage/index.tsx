@@ -55,6 +55,7 @@ const SetupCard = styled.div`
 
 const screenWithoutCards: SetupScreen[] = [
   SetupScreen.AgentOnboarding,
+  SetupScreen.SetupYourAgent,
   SetupScreen.FundYourAgent,
   SetupScreen.TransferFunds,
 ];

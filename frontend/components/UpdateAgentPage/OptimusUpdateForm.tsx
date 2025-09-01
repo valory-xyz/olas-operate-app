@@ -17,14 +17,20 @@ import {
 } from '../AgentForms/common/formUtils';
 import { InvalidGeminiApiCredentials } from '../AgentForms/common/InvalidGeminiApiCredentials';
 import {
+  CoinGeckoApiKeyDesc,
   CoinGeckoApiKeyLabel,
+  CoinGeckoApiKeySubHeader,
+  GeminiApiKeyDesc,
   GeminiApiKeyLabel,
+  GeminiApiKeySubHeader,
+  TenderlyAccessTokenDesc,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
+  TenderlyApiKeySubHeader,
   TenderlyProjectSlugLabel,
 } from '../AgentForms/common/labels';
 import { useOptimusFormValidate } from '../SetupPage/SetupYourAgent/OptimusAgentForm/useOptimusFormValidate';
-import { CardLayout } from './CardLayout';
+import { RenderForm } from '../SetupPage/SetupYourAgent/useDisplayAgentForm';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
 type OptimusFormValues = {
@@ -42,11 +48,8 @@ type OptimusUpdateFormProps = {
 };
 
 const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
-  const {
-    isEditing,
-    form,
-    confirmUpdateModal: confirmModal,
-  } = useContext(UpdateAgentContext);
+  const { form, confirmUpdateModal: confirmModal } =
+    useContext(UpdateAgentContext);
 
   const {
     geminiApiKeyValidationStatus,
@@ -84,11 +87,12 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
     <Form<OptimusFormValues>
       form={form}
       layout="vertical"
-      disabled={!isEditing}
       onFinish={handleFinish}
       validateMessages={validateMessages}
       initialValues={{ ...initialFormValues }}
+      className="label-no-padding"
     >
+      <TenderlyApiKeySubHeader />
       <Form.Item
         label={<TenderlyAccessTokenLabel />}
         name={['env_variables', 'TENDERLY_ACCESS_KEY']}
@@ -115,7 +119,9 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
       >
         <Input />
       </Form.Item>
+      <div style={{ paddingBottom: 42 }} />
 
+      <CoinGeckoApiKeySubHeader />
       <Form.Item
         label={<CoinGeckoApiKeyLabel />}
         name={['env_variables', 'COINGECKO_API_KEY']}
@@ -124,9 +130,11 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
       >
         <Input.Password />
       </Form.Item>
+      <div style={{ paddingBottom: 42 }} />
 
+      <GeminiApiKeySubHeader name="Optimus" />
       <Form.Item
-        label={<GeminiApiKeyLabel name="Optimus" />}
+        label={<GeminiApiKeyLabel />}
         name={['env_variables', 'GENAI_API_KEY']}
         {...optionalFieldProps}
         rules={[{ validator: validateApiKey }]}
@@ -137,7 +145,7 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
         <InvalidGeminiApiCredentials />
       )}
 
-      <Form.Item hidden={!isEditing}>
+      <Form.Item>
         <Button size="large" type="primary" htmlType="submit" block>
           {submitButtonText}
         </Button>
@@ -146,10 +154,14 @@ const OptimusUpdateForm = ({ initialFormValues }: OptimusUpdateFormProps) => {
   );
 };
 
+type OptimusUpdatePageProps = {
+  renderForm: RenderForm;
+};
+
 /**
  * Form for updating Optimus agent.
  */
-export const OptimusUpdatePage = () => {
+export const OptimusUpdatePage = ({ renderForm }: OptimusUpdatePageProps) => {
   const { goto } = usePageState();
   const { selectedService } = useServices();
   const { unsavedModal, form } = useContext(UpdateAgentContext);
@@ -195,9 +207,13 @@ export const OptimusUpdatePage = () => {
     }
   }, [initialValues, form, unsavedModal, goto]);
 
-  return (
-    <CardLayout onClickBack={handleBackClick}>
-      <OptimusUpdateForm initialFormValues={initialValues} />
-    </CardLayout>
+  return renderForm(
+    <OptimusUpdateForm initialFormValues={initialValues} />,
+    <>
+      <TenderlyAccessTokenDesc />
+      <CoinGeckoApiKeyDesc />
+      <GeminiApiKeyDesc />
+    </>,
+    { isUpdate: true, onBack: handleBackClick },
   );
 };

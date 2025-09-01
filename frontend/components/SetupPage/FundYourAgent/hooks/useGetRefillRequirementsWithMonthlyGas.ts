@@ -87,7 +87,7 @@ const getTokensDetailsForFunding = (
  *   isLoading: false
  * }
  */
-export const useGetRefillRequimentsWithMonthlyGas = ({
+export const useGetRefillRequirementsWithMonthlyGas = ({
   selectedAgentConfig,
   shouldCreateDummyService = false,
 }: {
@@ -120,6 +120,7 @@ export const useGetRefillRequimentsWithMonthlyGas = ({
 
   const tokenRequirements = useMemo(() => {
     if (!masterEoa || isBalancesAndFundingRequirementsLoading) return [];
+    if (!refillRequirements) return [];
 
     const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
     const chainConfig = TOKEN_CONFIG[evmHomeChainId];

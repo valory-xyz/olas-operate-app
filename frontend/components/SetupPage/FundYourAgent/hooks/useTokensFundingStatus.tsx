@@ -4,7 +4,7 @@ import { EvmChainId } from '@/constants/chains';
 import { useMasterBalances } from '@/hooks/useBalanceContext';
 import { AgentConfig } from '@/types/Agent';
 
-import { useGetRefillRequimentsWithMonthlyGas } from './useGetRefillRequirementsWithMonthlyGas';
+import { useGetRefillRequirementsWithMonthlyGas } from './useGetRefillRequirementsWithMonthlyGas';
 
 type UseTokensFundingStatusProps = {
   selectedAgentConfig: AgentConfig;
@@ -28,7 +28,7 @@ export const useTokensFundingStatus = ({
 }: UseTokensFundingStatusProps) => {
   const { filterMasterEoaBalancesByChain } = useMasterBalances();
   const { initialTokenRequirements: tokenRequirements } =
-    useGetRefillRequimentsWithMonthlyGas({
+    useGetRefillRequirementsWithMonthlyGas({
       selectedAgentConfig,
     });
   const currentChain: number = selectedAgentConfig.evmHomeChainId;

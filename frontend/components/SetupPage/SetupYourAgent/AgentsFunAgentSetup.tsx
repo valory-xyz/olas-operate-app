@@ -1,5 +1,5 @@
 import { Divider, message, Typography } from 'antd';
-import React, { useCallback } from 'react';
+import React, { ReactNode, useCallback } from 'react';
 
 import { ServiceTemplate } from '@/client';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -14,11 +14,13 @@ import {
 
 const { Text } = Typography;
 
-type AgentsFunAgentFormProps = { serviceTemplate: ServiceTemplate };
+type AgentsFunAgentFormContentProps = {
+  serviceTemplate: ServiceTemplate;
+};
 
-export const AgentsFunAgentSetup = ({
+export const AgentsFunAgentFormContent = ({
   serviceTemplate,
-}: AgentsFunAgentFormProps) => {
+}: AgentsFunAgentFormContentProps) => {
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
@@ -99,3 +101,14 @@ export const AgentsFunAgentSetup = ({
     </>
   );
 };
+
+export const AgentsFunAgentSetup = ({
+  serviceTemplate,
+  renderForm,
+}: AgentsFunAgentFormContentProps & {
+  renderForm: (form: ReactNode, desc: ReactNode) => ReactNode;
+}) =>
+  renderForm(
+    <AgentsFunAgentFormContent serviceTemplate={serviceTemplate} />,
+    <></>,
+  );

@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import { useCallback } from 'react';
 import styled from 'styled-components';
 
-import { TOP_BAR_HEIGHT } from '@/constants/width';
+import { SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants/width';
 import { useElectronApi } from '@/hooks/useElectronApi';
 
 const { Text } = Typography;
@@ -42,6 +42,7 @@ const TopBarContainer = styled.div`
   left: 0;
   right: 0;
   z-index: 1;
+  width: ${SIDER_WIDTH}px;
   height: ${TOP_BAR_HEIGHT}px;
   display: flex;
   align-items: center;
