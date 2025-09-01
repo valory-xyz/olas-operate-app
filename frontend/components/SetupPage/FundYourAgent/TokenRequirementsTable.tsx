@@ -57,7 +57,7 @@ const columns: TableColumnsType = [
       return (
         <CustomTag
           $isWaiting={isWaiting}
-          color={!isWaiting ? COLOR.SUCCESS : undefined}
+          color={isWaiting ? undefined : COLOR.SUCCESS}
           icon={isWaiting ? <ClockCircleOutlined /> : <CheckCircleOutlined />}
         >
           {record.status}
@@ -71,12 +71,14 @@ export const TokenRequirementsTable = () => {
   const { selectedAgentConfig } = useServices();
   const { initialTokenRequirements: tokenRequirements, isLoading } =
     useGetRefillRequimentsWithMonthlyGas({ selectedAgentConfig });
-  const { tokenFundingStatus } = useTokensFundingStatus({
+  const { tokensFundingStatus } = useTokensFundingStatus({
     selectedAgentConfig,
   });
   const tableRows: TokenRowData[] = (tokenRequirements ?? []).map((token) => ({
     ...token,
-    status: tokenFundingStatus[token.symbol as keyof typeof tokenFundingStatus]
+    status: tokensFundingStatus[
+      token.symbol as keyof typeof tokensFundingStatus
+    ]
       ? 'Received'
       : 'Waiting',
   }));

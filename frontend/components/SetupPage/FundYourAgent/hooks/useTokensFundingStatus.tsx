@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
+import { EvmChainId } from '@/constants/chains';
 import { useMasterBalances } from '@/hooks/useBalanceContext';
-import { useMasterWalletContext } from '@/hooks/useWallet';
 import { AgentConfig } from '@/types/Agent';
 
 import { useGetRefillRequimentsWithMonthlyGas } from './useGetRefillRequirementsWithMonthlyGas';
@@ -10,11 +10,23 @@ type UseTokensFundingStatusProps = {
   selectedAgentConfig: AgentConfig;
 };
 
+/**
+ * Hook to get the funding status of the tokens required for the agent onboarding.
+ * It compares the required token amount with the token's balance
+ * in masterEoa to determine whether the requirement is met or not.
+ * @example
+ * {
+ *  isFullyFunded: false,
+ *  tokenFundingStatus: {
+ *    OLAS: true,
+ *    XDAI: false,
+ *  }
+ * }
+ */
 export const useTokensFundingStatus = ({
   selectedAgentConfig,
 }: UseTokensFundingStatusProps) => {
-  const { masterEoa } = useMasterWalletContext();
-  const { masterWalletBalances } = useMasterBalances();
+  const { filterMasterEoaBalancesByChain } = useMasterBalances();
   const { initialTokenRequirements: tokenRequirements } =
     useGetRefillRequimentsWithMonthlyGas({
       selectedAgentConfig,
@@ -22,43 +34,40 @@ export const useTokensFundingStatus = ({
   const currentChain: number = selectedAgentConfig.evmHomeChainId;
 
   const requiredTokens = tokenRequirements?.map((token) => token.symbol);
-  const masterEoaAddress = masterEoa?.address;
-  const eoaBalances = useMemo(() => {
-    return masterWalletBalances?.filter(
-      (balance) =>
-        balance.walletAddress === masterEoaAddress &&
-        balance.evmChainId === currentChain &&
-        requiredTokens?.includes(balance.symbol),
-    );
-  }, [masterWalletBalances, masterEoaAddress, currentChain, requiredTokens]);
+  const eoaBalances = useMemo(
+    () =>
+      filterMasterEoaBalancesByChain(currentChain as EvmChainId).filter(
+        (balance) => requiredTokens?.includes(balance.symbol),
+      ),
+    [filterMasterEoaBalancesByChain, currentChain, requiredTokens],
+  );
 
   const fundingStatus = useMemo(() => {
     if (!tokenRequirements || !eoaBalances) {
       return {
         isFullyFunded: false,
-        tokenFundingStatus: {},
-        missingTokens: [],
+        tokensFundingStatus: {},
       };
     }
 
     // Create a map of required tokens with their funding status
-    const tokenFundingStatus: Record<string, boolean> = {};
+    const tokensFundingStatus: Record<string, boolean> = {};
 
     tokenRequirements.forEach((requirement) => {
-      const balance = eoaBalances.find(
+      const eoa = eoaBalances.find(
         (balance) => balance.symbol === requirement.symbol,
       );
 
-      if (balance && balance.balance >= requirement.amount) {
-        tokenFundingStatus[requirement.symbol] = true;
+      if (eoa && eoa.balance >= requirement.amount) {
+        tokensFundingStatus[requirement.symbol] = true;
       } else {
-        tokenFundingStatus[requirement.symbol] = false;
+        tokensFundingStatus[requirement.symbol] = false;
       }
     });
 
     return {
-      isFullyFunded: Object.values(tokenFundingStatus).every(Boolean),
-      tokenFundingStatus,
+      isFullyFunded: Object.values(tokensFundingStatus).every(Boolean),
+      tokensFundingStatus,
     };
   }, [eoaBalances, tokenRequirements]);
 

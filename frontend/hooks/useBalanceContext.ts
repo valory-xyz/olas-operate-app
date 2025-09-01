@@ -337,6 +337,21 @@ export const useMasterBalances = () => {
     [masterEoa, masterWalletBalances],
   );
 
+  const filterMasterEoaBalancesByChain = useCallback(
+    (chainId: EvmChainId) => {
+      if (!chainId) return [];
+      if (isNil(masterEoa)) return [];
+      if (isNil(masterWalletBalances)) return [];
+
+      return masterWalletBalances.filter(
+        ({ walletAddress, evmChainId }) =>
+          chainId === evmChainId &&
+          areAddressesEqual(walletAddress, masterEoa.address),
+      );
+    },
+    [masterEoa, masterWalletBalances],
+  );
+
   const masterSafeOlasBalance = masterWalletBalances
     ?.filter(
       (walletBalance) =>
@@ -413,5 +428,6 @@ export const useMasterBalances = () => {
     masterEoaBalances,
     masterEoaBalance,
     getMasterEoaBalanceOf,
+    filterMasterEoaBalancesByChain,
   };
 };

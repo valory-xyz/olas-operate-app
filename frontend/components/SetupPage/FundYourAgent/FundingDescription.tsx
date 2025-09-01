@@ -32,6 +32,16 @@ const TOOLTIP_STYLE = {
   padding: '8px 12px',
 };
 
+const MODAL_STYLE = {
+  content: {
+    padding: 24,
+    borderRadius: 24,
+  },
+  mask: {
+    backgroundColor: 'rgba(0, 0, 0, 0)',
+  },
+};
+
 const ChainConfirmationMessageModal = ({
   chainName,
   chainImage,
@@ -43,32 +53,24 @@ const ChainConfirmationMessageModal = ({
 }) => {
   return (
     <Modal
-      open={true}
+      open
       onCancel={onClose}
       footer={null}
       closable={false}
       centered
       width={440}
-      styles={{
-        content: {
-          padding: 24,
-          borderRadius: 24,
-        },
-        mask: {
-          backgroundColor: 'rgba(0, 0, 0, 0)',
-        },
-      }}
+      styles={MODAL_STYLE}
     >
       <Flex vertical gap={24} align="center">
         <Image width={60} height={60} src={chainImage} alt={chainName} />
         <Title level={4} style={{ margin: 0 }}>
           Send funds on {chainName} Chain
         </Title>
-        <Text type="secondary" style={{ textAlign: 'center' }}>
+        <Text type="secondary" className="text-center">
           Sending funds on any other network will result in permanent loss. Make
           sure you&apos;re sending on {chainName} Chain before proceeding.
         </Text>
-        <Button type="primary" onClick={onClose} style={{ width: '100%' }}>
+        <Button type="primary" onClick={onClose} block>
           I Understand
         </Button>
       </Flex>

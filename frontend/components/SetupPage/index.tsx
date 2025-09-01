@@ -78,6 +78,8 @@ export const Setup = () => {
         return <FundYourAgent />;
       case SetupScreen.TransferFunds:
         return <TransferFunds />;
+      case SetupScreen.SetupEoaFunding:
+        return <SetupEoaFunding />;
       case SetupScreen.SetupEoaFundingIncomplete:
         return <SetupEoaFunding />;
       case SetupScreen.SetupCreateSafe:
