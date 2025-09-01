@@ -26,7 +26,7 @@ type UseTokensFundingStatusProps = {
 export const useTokensFundingStatus = ({
   selectedAgentConfig,
 }: UseTokensFundingStatusProps) => {
-  const { filterMasterEoaBalancesByChain } = useMasterBalances();
+  const { masterEoaBalancesByChain } = useMasterBalances();
   const { initialTokenRequirements: tokenRequirements } =
     useGetRefillRequirementsWithMonthlyGas({
       selectedAgentConfig,
@@ -36,10 +36,10 @@ export const useTokensFundingStatus = ({
   const requiredTokens = tokenRequirements?.map((token) => token.symbol);
   const eoaBalances = useMemo(
     () =>
-      filterMasterEoaBalancesByChain(currentChain as EvmChainId).filter(
-        (balance) => requiredTokens?.includes(balance.symbol),
+      masterEoaBalancesByChain(currentChain as EvmChainId).filter((balance) =>
+        requiredTokens?.includes(balance.symbol),
       ),
-    [filterMasterEoaBalancesByChain, currentChain, requiredTokens],
+    [masterEoaBalancesByChain, currentChain, requiredTokens],
   );
 
   const fundingStatus = useMemo(() => {

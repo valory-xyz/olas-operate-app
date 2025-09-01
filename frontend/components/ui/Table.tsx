@@ -1,9 +1,9 @@
-import { Table } from 'antd';
+import { Table as AntdTable } from 'antd';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
 
-export const CustomTable = styled(Table)`
+export const Table = styled(AntdTable)`
   margin-top: 32px;
 
   .ant-table-thead {

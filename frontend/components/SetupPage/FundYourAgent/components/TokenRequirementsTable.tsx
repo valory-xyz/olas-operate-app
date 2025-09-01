@@ -8,7 +8,7 @@ import {
 } from 'antd';
 import styled from 'styled-components';
 
-import { CustomTable } from '@/components/ui/CustomTable';
+import { Table } from '@/components/ui/Table';
 import { COLOR } from '@/constants/colors';
 import { useServices } from '@/hooks/useServices';
 
@@ -86,7 +86,7 @@ export const TokenRequirementsTable = () => {
   if (!isLoading && tableRows.length === 0) return null;
 
   return (
-    <CustomTable
+    <Table
       dataSource={tableRows}
       columns={columns}
       loading={isLoading}

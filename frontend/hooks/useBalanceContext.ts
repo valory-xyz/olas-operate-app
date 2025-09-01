@@ -337,7 +337,7 @@ export const useMasterBalances = () => {
     [masterEoa, masterWalletBalances],
   );
 
-  const filterMasterEoaBalancesByChain = useCallback(
+  const masterEoaBalancesByChain = useCallback(
     (chainId: EvmChainId) => {
       if (!chainId) return [];
       if (isNil(masterEoa)) return [];
@@ -428,6 +428,6 @@ export const useMasterBalances = () => {
     masterEoaBalances,
     masterEoaBalance,
     getMasterEoaBalanceOf,
-    filterMasterEoaBalancesByChain,
+    masterEoaBalancesByChain,
   };
 };
