@@ -41,7 +41,7 @@ import {
 type OptimusAgentFormContentProps = {
   serviceTemplate: ServiceTemplate;
   currentStep: BabyDegenFormStep;
-  updateNextStep: (step: BabyDegenFormStep) => void;
+  updateNextStep: () => void;
 };
 
 const OptimusAgentFormContent = ({
@@ -73,10 +73,10 @@ const OptimusAgentFormContent = ({
           'tenderlyAccountSlug',
           'tenderlyProjectSlug',
         ]);
-        updateNextStep('coingecko');
+        updateNextStep();
       } else if (isCoinGeckoStep) {
         await form.validateFields(['coinGeckoApiKey']);
-        updateNextStep('gemini');
+        updateNextStep();
       }
     } catch (error) {
       console.error('Error in handleContinue:', error);
@@ -255,17 +255,13 @@ export const OptimusAgentForm = ({
     BABYDEGEN_FORM_STEP.tenderly,
   );
 
-  const updateNextStep = useCallback(
-    (step: BabyDegenFormStep) => {
-      setCurrentStep(step);
-      if (currentStep === BABYDEGEN_FORM_STEP.coingecko) {
-        setCurrentStep('gemini');
-      } else if (currentStep === BABYDEGEN_FORM_STEP.tenderly) {
-        setCurrentStep('coingecko');
-      }
-    },
-    [currentStep],
-  );
+  const updateNextStep = useCallback(() => {
+    if (currentStep === BABYDEGEN_FORM_STEP.coingecko) {
+      setCurrentStep('gemini');
+    } else if (currentStep === BABYDEGEN_FORM_STEP.tenderly) {
+      setCurrentStep('coingecko');
+    }
+  }, [currentStep]);
 
   const handleBack = useCallback(() => {
     if (currentStep === BABYDEGEN_FORM_STEP.coingecko) {
