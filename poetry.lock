@@ -2410,13 +2410,13 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.10.8"
+version = "0.10.9"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.9"
 files = [
-    {file = "olas_operate_middleware-0.10.8-py3-none-any.whl", hash = "sha256:154a9f8941e38d294eb282530f61d919c86c30fb0601d7b2de23776ffbe58275"},
-    {file = "olas_operate_middleware-0.10.8.tar.gz", hash = "sha256:8e9165fa11a691f5c9bda62459d9f50e84c2ab4c2248ee7edab022f54d413768"},
+    {file = "olas_operate_middleware-0.10.9-py3-none-any.whl", hash = "sha256:c6d4dcccecc28452ebfdf4002f4c9cb2f60c0d76e0f7bd16447284d3e452d1ef"},
+    {file = "olas_operate_middleware-0.10.9.tar.gz", hash = "sha256:3c3ceb088f311ed5418cd3531fa1d944fe4f2a4a585636d80796aea64d9d78c6"},
 ]
 
 [package.dependencies]
@@ -4191,4 +4191,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "6c104577dabb98723e86d6455849363741e3189027c235b27dbfdde8cf08d610"
+content-hash = "7678109e22c9d3b249a57fcac3db302d21e6ce5b971ac38eee7574e3451fb133"
