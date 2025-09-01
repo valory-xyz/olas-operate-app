@@ -42,6 +42,8 @@ const Container = styled.div<{ $blur: boolean }>`
     `}
 `;
 
+const layoutWithFullHeight: SetupScreen[] = [SetupScreen.SetupYourAgent];
+
 const Body = styled.div<{ $hasPadding?: boolean }>`
   display: flex;
   flex-direction: column;
@@ -78,10 +80,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
 
   const hasPadding = useMemo(() => {
     if (pageState === Pages.Setup) {
-      if (state === SetupScreen.SetupYourAgent) {
-        return false;
-      }
-      return true;
+      return layoutWithFullHeight.includes(state) ? false : true;
     }
 
     return false;
