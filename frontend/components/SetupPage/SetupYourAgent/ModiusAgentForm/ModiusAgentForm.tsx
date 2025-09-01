@@ -1,5 +1,5 @@
 import { Button, Form, Input, message } from 'antd';
-import React, { ReactNode, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
@@ -32,6 +32,7 @@ import {
   TenderlyApiKeySubHeader,
   TenderlyProjectSlugLabel,
 } from '../../../AgentForms/common/labels';
+import { RenderForm } from '../useDisplayAgentForm';
 import {
   ModiusFieldValues,
   useModiusFormValidate,
@@ -39,18 +40,19 @@ import {
 
 type ModiusAgentFormContentProps = {
   serviceTemplate: ServiceTemplate;
+  currentStep: BabyDegenFormStep;
+  updateNextStep: (step: BabyDegenFormStep) => void;
 };
 
 export const ModiusAgentFormContent = ({
   serviceTemplate,
+  currentStep,
+  updateNextStep,
 }: ModiusAgentFormContentProps) => {
   const [form] = Form.useForm<ModiusFieldValues>();
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
-  const [currentStep, setCurrentStep] = useState<BabyDegenFormStep>(
-    BABYDEGEN_FORM_STEP.tenderly,
-  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     geminiApiKeyValidationStatus,
@@ -59,12 +61,11 @@ export const ModiusAgentFormContent = ({
     validateForm,
   } = useModiusFormValidate('Finish Agent Configuration');
 
-  console.log('Current Step:', currentStep);
-
   const isTenderlyStep = currentStep === BABYDEGEN_FORM_STEP.tenderly;
   const isCoinGeckoStep = currentStep === BABYDEGEN_FORM_STEP.coingecko;
+  const isGeminiStep = currentStep === BABYDEGEN_FORM_STEP.gemini;
 
-  const handleContinue = async () => {
+  const handleContinue = useCallback(async () => {
     try {
       if (isTenderlyStep) {
         await form.validateFields([
@@ -72,24 +73,18 @@ export const ModiusAgentFormContent = ({
           'tenderlyAccountSlug',
           'tenderlyProjectSlug',
         ]);
-        setCurrentStep('coingecko');
+        updateNextStep('coingecko');
       } else if (isCoinGeckoStep) {
         await form.validateFields(['coinGeckoApiKey']);
-        setCurrentStep('gemini');
+        updateNextStep('gemini');
       }
-      // else if (currentStep === 'gemini') {
-      //   form.submit();
-      // }
     } catch (error) {
       console.error('Error in handleContinue:', error);
     }
-  };
+  }, [form, isTenderlyStep, isCoinGeckoStep, updateNextStep]);
 
   const onFinish = useCallback(
     async (values: ModiusFieldValues) => {
-      console.log('Form values on submit:', values);
-      return;
-
       if (!defaultStakingProgramId) return;
 
       try {
@@ -159,8 +154,6 @@ export const ModiusAgentFormContent = ({
     setIsSubmitting(false);
     updateSubmitButtonText('Continue');
   });
-
-  const isGeminiStep = currentStep === BABYDEGEN_FORM_STEP.gemini;
 
   // Disable the submit button if the form is submitting OR
   // if the defaultStakingProgramId is not available
@@ -255,15 +248,49 @@ export const ModiusAgentFormContent = ({
 export const ModiusAgentForm = ({
   serviceTemplate,
   renderForm,
-}: ModiusAgentFormContentProps & {
-  renderForm: (form: ReactNode, desc: ReactNode) => ReactNode;
+}: Pick<ModiusAgentFormContentProps, 'serviceTemplate'> & {
+  renderForm: RenderForm;
 }) => {
+  const [currentStep, setCurrentStep] = useState<BabyDegenFormStep>(
+    BABYDEGEN_FORM_STEP.tenderly,
+  );
+
+  const updateNextStep = useCallback(
+    (step: BabyDegenFormStep) => {
+      setCurrentStep(step);
+      if (currentStep === BABYDEGEN_FORM_STEP.coingecko) {
+        setCurrentStep('gemini');
+      } else if (currentStep === BABYDEGEN_FORM_STEP.tenderly) {
+        setCurrentStep('coingecko');
+      }
+    },
+    [currentStep],
+  );
+
+  const handleBack = useCallback(() => {
+    if (currentStep === BABYDEGEN_FORM_STEP.coingecko) {
+      setCurrentStep('tenderly');
+    } else if (currentStep === BABYDEGEN_FORM_STEP.gemini) {
+      setCurrentStep('coingecko');
+    }
+  }, [currentStep]);
+
   return renderForm(
-    <ModiusAgentFormContent serviceTemplate={serviceTemplate} />,
+    <ModiusAgentFormContent
+      serviceTemplate={serviceTemplate}
+      currentStep={currentStep}
+      updateNextStep={updateNextStep}
+    />,
     <>
-      <TenderlyAccessTokenDesc />
-      <CoinGeckoApiKeyDesc />
-      <GeminiApiKeyDesc />
+      {currentStep === BABYDEGEN_FORM_STEP.tenderly && (
+        <TenderlyAccessTokenDesc />
+      )}
+      {currentStep === BABYDEGEN_FORM_STEP.coingecko && <CoinGeckoApiKeyDesc />}
+      {currentStep === BABYDEGEN_FORM_STEP.gemini && <GeminiApiKeyDesc />}
     </>,
+    {
+      onBack:
+        currentStep === BABYDEGEN_FORM_STEP.tenderly ? undefined : handleBack,
+    },
   );
 };
