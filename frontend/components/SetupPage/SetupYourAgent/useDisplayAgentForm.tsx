@@ -12,9 +12,9 @@ import { useSetup } from '@/hooks/useSetup';
 
 const { Title } = Typography;
 
-export const AgentFormContainer = styled(Flex)`
+export const AgentFormContainer = styled(Flex)<{ $isFullHeight?: boolean }>`
   background: ${COLOR.WHITE};
-  height: 100%;
+  height: ${(props) => (props.$isFullHeight ? '100%' : 'auto')};
   .setup-left-content {
     width: 492px;
     margin: 0 auto;
@@ -34,7 +34,10 @@ export const AgentFormContainer = styled(Flex)`
 export type RenderForm = (
   form: ReactNode,
   desc: ReactNode,
-  options?: { isUpdate?: boolean; onBack: (() => void) | undefined },
+  options?: {
+    isUpdate?: boolean;
+    onBack: (() => void) | undefined;
+  },
 ) => ReactNode;
 
 export const useDisplayAgentForm = () => {
