@@ -1,5 +1,5 @@
 import { Button, Form, Input, message } from 'antd';
-import React, { ReactNode, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
@@ -9,6 +9,8 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { onDummyServiceCreation } from '@/utils/service';
 
 import {
+  BABYDEGEN_FORM_STEP,
+  BabyDegenFormStep,
   optionalFieldProps,
   requiredFieldProps,
   requiredRules,
@@ -19,13 +21,18 @@ import {
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyDesc,
+  CoinGeckoApiKeyLabel,
   CoinGeckoApiKeySubHeader,
   GeminiApiKeyDesc,
   GeminiApiKeyLabel,
   GeminiApiKeySubHeader,
   TenderlyAccessTokenDesc,
+  TenderlyAccessTokenLabel,
+  TenderlyAccountSlugLabel,
   TenderlyApiKeySubHeader,
+  TenderlyProjectSlugLabel,
 } from '../../../AgentForms/common/labels';
+import { RenderForm } from '../useDisplayAgentForm';
 import {
   OptimusFieldValues,
   useOptimusFormValidate,
@@ -33,43 +40,52 @@ import {
 
 type OptimusAgentFormContentProps = {
   serviceTemplate: ServiceTemplate;
+  currentStep: BabyDegenFormStep;
+  updateNextStep: (step: BabyDegenFormStep) => void;
 };
-
-type FormStep = 'tenderly' | 'coingecko' | 'gemini';
-
-const isSetupPage = false; // TODO;
 
 const OptimusAgentFormContent = ({
   serviceTemplate,
+  currentStep,
+  updateNextStep,
 }: OptimusAgentFormContentProps) => {
   const [form] = Form.useForm<OptimusFieldValues>();
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
-  const [currentStep, setCurrentStep] = useState<FormStep>('tenderly');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     geminiApiKeyValidationStatus,
     submitButtonText,
     updateSubmitButtonText,
     validateForm,
-  } = useOptimusFormValidate();
+  } = useOptimusFormValidate('Finish Agent Configuration');
 
-  const moveToNextStep = useCallback(() => {
-    if (currentStep === 'tenderly') {
-      setCurrentStep('coingecko');
-    } else if (currentStep === 'coingecko') {
-      setCurrentStep('gemini');
+  const isTenderlyStep = currentStep === BABYDEGEN_FORM_STEP.tenderly;
+  const isCoinGeckoStep = currentStep === BABYDEGEN_FORM_STEP.coingecko;
+  const isGeminiStep = currentStep === BABYDEGEN_FORM_STEP.gemini;
+
+  const handleContinue = useCallback(async () => {
+    try {
+      if (isTenderlyStep) {
+        await form.validateFields([
+          'tenderlyAccessToken',
+          'tenderlyAccountSlug',
+          'tenderlyProjectSlug',
+        ]);
+        updateNextStep('coingecko');
+      } else if (isCoinGeckoStep) {
+        await form.validateFields(['coinGeckoApiKey']);
+        updateNextStep('gemini');
+      }
+    } catch (error) {
+      console.error('Error in handleContinue:', error);
     }
-  }, [currentStep]);
+  }, [form, isTenderlyStep, isCoinGeckoStep, updateNextStep]);
 
   const onFinish = useCallback(
     async (values: OptimusFieldValues) => {
       if (!defaultStakingProgramId) return;
-      if (isSetupPage && currentStep !== 'gemini') {
-        moveToNextStep();
-        return;
-      }
 
       try {
         setIsSubmitting(true);
@@ -130,8 +146,6 @@ const OptimusAgentFormContent = ({
       validateForm,
       updateSubmitButtonText,
       goto,
-      currentStep,
-      moveToNextStep,
     ],
   );
 
@@ -141,15 +155,9 @@ const OptimusAgentFormContent = ({
     updateSubmitButtonText('Continue');
   });
 
+  // Disable the submit button if the form is submitting OR
+  // if the defaultStakingProgramId is not available
   const canSubmitForm = isSubmitting || !defaultStakingProgramId;
-
-  const isTenderlySectionVisible = isSetupPage
-    ? currentStep === 'tenderly'
-    : true;
-  const isCoinGeckoSectionVisible = isSetupPage
-    ? currentStep === 'coingecko'
-    : true;
-  const isGeminiSectionVisible = isSetupPage ? currentStep === 'gemini' : true;
 
   return (
     <>
@@ -162,80 +170,74 @@ const OptimusAgentFormContent = ({
         disabled={canSubmitForm}
         className="label-no-padding"
       >
-        {isTenderlySectionVisible && (
-          <>
-            <TenderlyApiKeySubHeader isSetupPage />
-            <Form.Item
-              label="Tenderly access token"
-              name="tenderlyAccessToken"
-              {...requiredFieldProps}
-              rules={[...requiredRules, { validator: validateApiKey }]}
-            >
-              <Input.Password />
-            </Form.Item>
+        {isTenderlyStep && <TenderlyApiKeySubHeader isSetupPage />}
+        <TenderlyApiKeySubHeader isSetupPage />
+        <Form.Item
+          label={<TenderlyAccessTokenLabel />}
+          name="tenderlyAccessToken"
+          {...requiredFieldProps}
+          hidden={!isTenderlyStep}
+          rules={[...requiredRules, { validator: validateApiKey }]}
+        >
+          <Input.Password />
+        </Form.Item>
 
-            <Form.Item
-              label="Tenderly account slug"
-              name="tenderlyAccountSlug"
-              {...requiredFieldProps}
-              rules={[...requiredRules, { validator: validateSlug }]}
-            >
-              <Input />
-            </Form.Item>
+        <Form.Item
+          label={<TenderlyAccountSlugLabel />}
+          name="tenderlyAccountSlug"
+          {...requiredFieldProps}
+          hidden={!isTenderlyStep}
+          rules={[...requiredRules, { validator: validateSlug }]}
+        >
+          <Input />
+        </Form.Item>
 
-            <Form.Item
-              label="Tenderly project slug"
-              name="tenderlyProjectSlug"
-              {...requiredFieldProps}
-              rules={[...requiredRules, { validator: validateSlug }]}
-            >
-              <Input />
-            </Form.Item>
-            <div style={{ paddingBottom: 42 }} />
-          </>
-        )}
+        <Form.Item
+          label={<TenderlyProjectSlugLabel />}
+          name="tenderlyProjectSlug"
+          {...requiredFieldProps}
+          hidden={!isTenderlyStep}
+          rules={[...requiredRules, { validator: validateSlug }]}
+        >
+          <Input />
+        </Form.Item>
+        {isTenderlyStep && <div style={{ paddingBottom: 42 }} />}
 
-        {isCoinGeckoSectionVisible && (
-          <>
-            <CoinGeckoApiKeySubHeader isSetupPage />
-            <Form.Item
-              label="CoinGecko API key"
-              name="coinGeckoApiKey"
-              {...requiredFieldProps}
-              rules={[...requiredRules, { validator: validateApiKey }]}
-            >
-              <Input.Password />
-            </Form.Item>
-            <div style={{ paddingBottom: 42 }} />
-          </>
-        )}
+        {isCoinGeckoStep && <CoinGeckoApiKeySubHeader isSetupPage />}
+        <Form.Item
+          label={<CoinGeckoApiKeyLabel />}
+          name="coinGeckoApiKey"
+          {...requiredFieldProps}
+          hidden={!isCoinGeckoStep}
+          rules={[...requiredRules, { validator: validateApiKey }]}
+        >
+          <Input.Password />
+        </Form.Item>
+        {isCoinGeckoStep && <div style={{ paddingBottom: 42 }} />}
 
-        {isGeminiSectionVisible && (
-          <>
-            <GeminiApiKeySubHeader name="Optimus" isSetupPage />
-            <Form.Item
-              name="geminiApiKey"
-              label={<GeminiApiKeyLabel />}
-              {...optionalFieldProps}
-            >
-              <Input.Password />
-            </Form.Item>
-            {geminiApiKeyValidationStatus === 'invalid' && (
-              <InvalidGeminiApiCredentials />
-            )}
-          </>
+        {isGeminiStep && <GeminiApiKeySubHeader name="Modius" isSetupPage />}
+        <Form.Item
+          name="geminiApiKey"
+          label={<GeminiApiKeyLabel />}
+          {...optionalFieldProps}
+          hidden={!isGeminiStep}
+        >
+          <Input.Password />
+        </Form.Item>
+        {geminiApiKeyValidationStatus === 'invalid' && (
+          <InvalidGeminiApiCredentials />
         )}
 
         <Form.Item>
           <Button
-            type="primary"
-            htmlType="submit"
-            size="large"
-            block
             loading={isSubmitting}
             disabled={canSubmitForm}
+            onClick={isGeminiStep ? form.submit : handleContinue}
+            type="primary"
+            size="large"
+            block
           >
-            {submitButtonText}
+            {isGeminiStep ? submitButtonText : 'Continue'}
           </Button>
         </Form.Item>
       </Form>
@@ -246,14 +248,49 @@ const OptimusAgentFormContent = ({
 export const OptimusAgentForm = ({
   serviceTemplate,
   renderForm,
-}: OptimusAgentFormContentProps & {
-  renderForm: (form: ReactNode, desc: ReactNode) => ReactNode;
-}) =>
-  renderForm(
-    <OptimusAgentFormContent serviceTemplate={serviceTemplate} />,
-    <>
-      <TenderlyAccessTokenDesc />
-      <CoinGeckoApiKeyDesc />
-      <GeminiApiKeyDesc />
-    </>,
+}: Pick<OptimusAgentFormContentProps, 'serviceTemplate'> & {
+  renderForm: RenderForm;
+}) => {
+  const [currentStep, setCurrentStep] = useState<BabyDegenFormStep>(
+    BABYDEGEN_FORM_STEP.tenderly,
   );
+
+  const updateNextStep = useCallback(
+    (step: BabyDegenFormStep) => {
+      setCurrentStep(step);
+      if (currentStep === BABYDEGEN_FORM_STEP.coingecko) {
+        setCurrentStep('gemini');
+      } else if (currentStep === BABYDEGEN_FORM_STEP.tenderly) {
+        setCurrentStep('coingecko');
+      }
+    },
+    [currentStep],
+  );
+
+  const handleBack = useCallback(() => {
+    if (currentStep === BABYDEGEN_FORM_STEP.coingecko) {
+      setCurrentStep('tenderly');
+    } else if (currentStep === BABYDEGEN_FORM_STEP.gemini) {
+      setCurrentStep('coingecko');
+    }
+  }, [currentStep]);
+
+  return renderForm(
+    <OptimusAgentFormContent
+      serviceTemplate={serviceTemplate}
+      currentStep={currentStep}
+      updateNextStep={updateNextStep}
+    />,
+    <>
+      {currentStep === BABYDEGEN_FORM_STEP.tenderly && (
+        <TenderlyAccessTokenDesc />
+      )}
+      {currentStep === BABYDEGEN_FORM_STEP.coingecko && <CoinGeckoApiKeyDesc />}
+      {currentStep === BABYDEGEN_FORM_STEP.gemini && <GeminiApiKeyDesc />}
+    </>,
+    {
+      onBack:
+        currentStep === BABYDEGEN_FORM_STEP.tenderly ? undefined : handleBack,
+    },
+  );
+};
