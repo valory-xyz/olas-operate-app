@@ -1,6 +1,6 @@
 import { Flex } from 'antd';
 
-import { AgentInfo } from './AgentInto';
+import { AgentInfo } from './AgentInfo';
 
 export const Overview = () => {
   return (
