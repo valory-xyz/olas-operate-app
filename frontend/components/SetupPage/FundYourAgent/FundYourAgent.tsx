@@ -15,8 +15,11 @@ import { useSetup } from '@/hooks/useSetup';
 import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
 import { useTotalNativeTokenRequired } from '@/hooks/useTotalNativeTokenRequired';
 
+import {
+  type TokenRequirement,
+  TokenRequirements,
+} from './components/TokensRequirements';
 import { useGetRefillRequimentsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
-import { type TokenRequirement, TokenRequirements } from './components/TokensRequirements';
 
 const { Text } = Typography;
 
