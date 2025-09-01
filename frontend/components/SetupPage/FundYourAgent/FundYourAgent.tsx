@@ -15,7 +15,7 @@ import { useSetup } from '@/hooks/useSetup';
 import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
 import { useTotalNativeTokenRequired } from '@/hooks/useTotalNativeTokenRequired';
 
-import { useGetRefillRequimentsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
+import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
 import { type TokenRequirement, TokenRequirements } from './TokensRequirements';
 
 const { Text } = Typography;
@@ -152,12 +152,11 @@ export const FundYourAgent = () => {
   const { goto } = useSetup();
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
-  const { tokenRequirements, isLoading } = useGetRefillRequimentsWithMonthlyGas(
-    {
+  const { tokenRequirements, isLoading } =
+    useGetRefillRequirementsWithMonthlyGas({
       selectedAgentConfig,
       shouldCreateDummyService: true,
-    },
-  );
+    });
   const [isBridgeOnboardingEnabled, isOnRampEnabled] = useFeatureFlag([
     'bridge-onboarding',
     'on-ramp',
