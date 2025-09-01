@@ -7,9 +7,9 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { z } from 'zod';
 
 import { STAKING_PROGRAM_ADDRESS } from '@/config/stakingPrograms';
+import { EvmChainId } from '@/constants/chains';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
-import { EvmChainId } from '@/enums/Chain';
 import { Address } from '@/types/Address';
 import { Nullable } from '@/types/Util';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
@@ -121,12 +121,14 @@ const useTransformCheckpoints = () => {
             reward = isRewardFinite ? currentReward ?? '0' : '0';
           }
 
+          const blockTimestamp = Number(checkpoint.blockTimestamp);
+          const epochLength = Number(checkpoint.epochLength);
+
           // If the epoch is 0, it means it's the first epoch else,
           // the start time of the epoch is the end time of the previous epoch
           const epochStartTimeStamp =
             checkpoint.epoch === '0'
-              ? Number(checkpoint.blockTimestamp) -
-                Number(checkpoint.epochLength)
+              ? blockTimestamp - epochLength
               : checkpoints[index + 1]?.blockTimestamp ?? 0;
 
           const stakingContractId = agent.getStakingProgramIdByAddress(

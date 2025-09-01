@@ -1,30 +1,23 @@
-import { RightOutlined, ShareAltOutlined } from '@ant-design/icons';
-import { Button, Flex, Skeleton, Tooltip, Typography } from 'antd';
+import { ShareAltOutlined } from '@ant-design/icons';
+import { Button, Flex, Skeleton, Tooltip } from 'antd';
 import { useCallback } from 'react';
-import styled from 'styled-components';
 
 import { FireNoStreak } from '@/components/custom-icons/FireNoStreak';
 import { FireStreak } from '@/components/custom-icons/FireStreak';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
 import { PEARL_URL } from '@/constants/urls';
-import { Pages } from '@/enums/Pages';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
-import { usePageState } from '@/hooks/usePageState';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useRewardsHistory } from '@/hooks/useRewardsHistory';
 
-const { Text } = Typography;
+const NoStreak = () => (
+  <>
+    <FireNoStreak /> No streak
+  </>
+);
 
-const RewardsStreakFlex = styled(Flex)`
-  padding: 8px 16px;
-  height: 40px;
-  background: ${COLOR.GRAY_1};
-  border-radius: 6px;
-  margin-bottom: 16px;
-`;
-
-const Streak = () => {
+export const Streak = () => {
   const { isLoaded: isBalanceLoaded } = useBalanceContext();
   const { isEligibleForRewards } = useRewardContext();
   const {
@@ -35,7 +28,7 @@ const Streak = () => {
 
   // Graph does not account for the current day,
   // so we need to add 1 to the streak, if the user is eligible for rewards
-  const optimisticStreak = isEligibleForRewards ? streak + 1 : streak;
+  const optimisticStreak = (isEligibleForRewards ? streak + 1 : streak) + 10;
 
   const onStreakShare = useCallback(() => {
     const encodedText = encodeURIComponent(
@@ -77,29 +70,8 @@ const Streak = () => {
           </Tooltip>
         </>
       ) : (
-        <>
-          <FireNoStreak /> No streak
-        </>
+        <NoStreak />
       )}
     </Flex>
-  );
-};
-
-export const RewardsStreak = () => {
-  const { goto } = usePageState();
-
-  return (
-    <RewardsStreakFlex align="center" justify="space-between">
-      <Streak />
-
-      <Text
-        type="secondary"
-        className="text-sm pointer hover-underline"
-        onClick={() => goto(Pages.RewardsHistory)}
-      >
-        See rewards history
-        <RightOutlined style={{ fontSize: 12, paddingLeft: 6 }} />
-      </Text>
-    </RewardsStreakFlex>
   );
 };
