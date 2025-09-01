@@ -5,16 +5,13 @@ import {
 } from '@web3auth/modal/react';
 import { PropsWithChildren } from 'react';
 
-import { isDev } from '@/constants/env';
-
-const clientId = `${process.env.WEB3AUTH_CLIENT_ID}`;
+const clientId =
+  'BIbjF8vZWdH8UA4MkKGfOWNE2mOSxj_os5umaImVDG3WL_zFQIg1S0j2gQvsC7ylKme2WfdQDlDJ0JYO_fJeUJU';
 
 const web3AuthContextConfig: Web3AuthContextConfig = {
   web3AuthOptions: {
     clientId,
-    web3AuthNetwork: isDev
-      ? WEB3AUTH_NETWORK.SAPPHIRE_DEVNET
-      : WEB3AUTH_NETWORK.SAPPHIRE_MAINNET,
+    web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
     modalConfig: {
       connectors: {
         metamask: {
