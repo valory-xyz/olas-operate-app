@@ -8,8 +8,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { MiddlewareChain } from '@/client';
-import { TokenRequirementsTable } from '@/components/SetupPage/FundYourAgent/components/TokenRequirementsTable';
 import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '@/components/ui/iconStyles';
+import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
 import {
   ETHEREUM_TOKEN_CONFIG,
   TOKEN_CONFIG,

@@ -53,13 +53,13 @@ export const BridgeCompleted = ({
               <Button
                 onClick={() => goto(Pages.ManageWallet)}
                 size="large"
-                style={{ alignSelf: 'center' }}
+                className="self-center"
               >
                 See wallet balance
               </Button>
             </Flex>,
           ]}
-          style={{ padding: '24px 0' }}
+          className="py-24 px-0"
         />
       </CardFlex>
     </Flex>

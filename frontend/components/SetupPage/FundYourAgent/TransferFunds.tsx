@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
+import { FundingDescription } from '@/components/ui/FundingDescription';
+import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
 import { Title4 } from '@/components/ui/Typography';
 import { ChainImageMap, EvmChainName } from '@/constants/chains';
 import { Pages } from '@/enums/Pages';
@@ -13,8 +15,6 @@ import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { delayInSeconds } from '@/utils/delay';
 
-import { FundingDescription } from './components/FundingDescription';
-import { TokenRequirementsTable } from './components/TokenRequirementsTable';
 import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
 import { useTokensFundingStatus } from './hooks/useTokensFundingStatus';
 
