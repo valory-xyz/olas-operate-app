@@ -313,6 +313,18 @@ export const useRewardsHistory = () => {
     serviceNftTokenId && refetch();
   }, [refetch, serviceNftTokenId]);
 
+  // find the recent contract address where the service has participated in
+  const recentStakingContractAddress = useMemo(() => {
+    if (!contractCheckpoints) return;
+
+    return Object.values(contractCheckpoints)
+      .flat()
+      .sort((a, b) => b.epochEndTimeStamp - a.epochEndTimeStamp)
+      .find((checkpoint) =>
+        checkpoint.serviceIds.includes(`${serviceNftTokenId}`),
+      )?.contractAddress;
+  }, [contractCheckpoints, serviceNftTokenId]);
+
   return {
     isError,
     isFetched,
@@ -321,5 +333,6 @@ export const useRewardsHistory = () => {
     refetch,
     allCheckpoints: epochSortedCheckpoints,
     contractCheckpoints,
+    recentStakingContractAddress,
   };
 };

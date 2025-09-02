@@ -47,7 +47,7 @@ export const Staking = () => {
           {!isServiceRunning && <RunAgentAlert />}
           <Flex flex={1}>
             <Flex flex={1} vertical gap={4}>
-              <Text>Epoch lifetime</Text>
+              <Text>Current Epoch lifetime</Text>
               <Flex align="center" gap={8}>
                 <Clock />
                 <Text>23:12:59</Text>

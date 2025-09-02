@@ -29,7 +29,6 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useRewardContext } from '@/hooks/useRewardContext';
-import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { AgentConfig } from '@/types/Agent';
 import { balanceFormat } from '@/utils/numberFormatters';
@@ -268,34 +267,29 @@ const ContractRewards = ({
   );
 };
 
-// TODO: Refactor, only supports a single service for now
 export const RewardsHistory = () => {
-  const { contractCheckpoints, isError, isFetched, refetch } =
-    useRewardsHistory();
+  const {
+    contractCheckpoints,
+    isError,
+    isFetched,
+    recentStakingContractAddress,
+    refetch,
+  } = useRewardsHistory();
   const { selectedService, selectedAgentConfig } = useServices();
-  const { serviceNftTokenId } = useService(selectedService?.service_config_id);
 
   const history = useMemo(() => {
     if (!isFetched || !selectedService?.service_config_id) return <Loading />;
-    if (isError) return <ErrorLoadingHistory refetch={refetch} />; // TODO: don't do this
+    if (isError) return <ErrorLoadingHistory refetch={refetch} />;
     if (!contractCheckpoints) return <NoRewardsHistory />;
     if (Object.keys(contractCheckpoints).length === 0) {
       return <NoRewardsHistory />;
     }
 
-    // find the recent contract address where the service has participated in
-    const recentContractAddress = Object.values(contractCheckpoints)
-      .flat()
-      .sort((a, b) => b.epochEndTimeStamp - a.epochEndTimeStamp)
-      .find((checkpoint) =>
-        checkpoint.serviceIds.includes(`${serviceNftTokenId}`),
-      )?.contractAddress;
-
     // most recent transaction staking contract at the top of the list
     const latestContractAddresses = Object.keys(contractCheckpoints).sort(
       (a, b) => {
-        if (a === recentContractAddress) return -1;
-        if (b === recentContractAddress) return 1;
+        if (a === recentStakingContractAddress) return -1;
+        if (b === recentStakingContractAddress) return 1;
         return 0;
       },
     );
@@ -336,13 +330,13 @@ export const RewardsHistory = () => {
     refetch,
     contractCheckpoints,
     selectedAgentConfig,
-    serviceNftTokenId,
+    recentStakingContractAddress,
   ]);
 
   return (
     <ConfigProvider theme={yourWalletTheme}>
       <CardFlex
-        bordered={false}
+        $noBorder
         title={<CardTitle title="Staking rewards history" />}
         noBodyPadding="true"
         extra={<GoToMainPageButton />}
