@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/client';
 import { getTokenDetails } from '@/components/Bridge/utils';
@@ -15,7 +15,7 @@ import { bigintMax } from '@/utils/calculations';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { useBeforeBridgeFunds } from '../../Create/SetupEoaFunding/useBeforeBridgeFunds';
-import { TokenRequirement } from '../TokensRequirements';
+import { TokenRequirement } from '../components/TokensRequirements';
 
 const ICON_OVERRIDES: Record<string, string> = {
   [TokenSymbolMap['XDAI']]: '/tokens/wxdai-icon.png',
@@ -95,6 +95,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
   shouldCreateDummyService?: boolean;
 }): {
   tokenRequirements: TokenRequirement[];
+  initialTokenRequirements: TokenRequirement[];
   isLoading: boolean;
 } => {
   const updateBeforeBridgingFunds = useBeforeBridgeFunds();
@@ -105,6 +106,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     isBalancesAndFundingRequirementsLoading,
   } = useBalanceAndRefillRequirementsContext();
   const { masterEoa } = useMasterWalletContext();
+  const initialTokenRequirementsRef = useRef<TokenRequirement[] | null>(null);
 
   useEffect(() => {
     const createDummyService = async () => {
@@ -177,8 +179,17 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     balances,
   ]);
 
+  // Capture the initial token requirements once, when they are first available
+  useEffect(() => {
+    if (!initialTokenRequirementsRef.current && tokenRequirements.length) {
+      initialTokenRequirementsRef.current = tokenRequirements;
+    }
+  }, [tokenRequirements]);
+
   return {
     tokenRequirements,
+    initialTokenRequirements:
+      initialTokenRequirementsRef.current ?? tokenRequirements,
     isLoading: isBalancesAndFundingRequirementsLoading,
   };
 };

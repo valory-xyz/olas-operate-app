@@ -99,6 +99,7 @@ textarea,
 }
 
 .custom-alert {
+  padding: 12px;
   align-items: flex-start;
 
   &--primary {
@@ -116,7 +117,13 @@ textarea,
   }
 
   &--warning {
-    color: #873800;
+    color: #676709;
+    background-color: #FCFCE3;
+    border-color: #ECEC93;
+
+    .ant-alert-icon {
+      color: #676709;
+    }
   }
 
   &--error {
