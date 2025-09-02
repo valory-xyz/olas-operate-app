@@ -33,7 +33,16 @@ import { delayInSeconds } from '@/utils/delay';
 import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
-import { DepositTokenDetails } from './TokenDetails';
+type DepositTokenDetails = {
+  address?: Address;
+  symbol: TokenSymbol;
+  totalRequiredInWei: bigint;
+  currentBalanceInWei: bigint;
+  areFundsReceived: boolean;
+  decimals: number;
+  isNative?: boolean;
+  precision?: number;
+};
 
 const { Text } = Typography;
 
