@@ -7,6 +7,7 @@ import {
   Statistic,
   Typography,
 } from 'antd';
+import { isEmpty } from 'lodash';
 import { useMemo } from 'react';
 
 import { Clock } from '@/components/custom-icons/Clock';
@@ -58,12 +59,12 @@ const useStakingDetails = () => {
   // so we need to add 1 to the streak, if the user is eligible for rewards
   const optimisticStreak = isEligibleForRewards ? streak + 1 : streak;
 
+  // Calculate the time remaining in the current epoch
   const currentEpochLifetime = useMemo(() => {
-    const checkpoints =
-      contractCheckpoints && recentStakingContractAddress
-        ? contractCheckpoints[recentStakingContractAddress]
-        : [];
+    if (!contractCheckpoints || isEmpty(contractCheckpoints)) return;
+    if (!recentStakingContractAddress) return;
 
+    const checkpoints = contractCheckpoints[recentStakingContractAddress];
     if (checkpoints.length === 0) return;
 
     const currentEpoch = checkpoints[0];
@@ -75,13 +76,14 @@ const useStakingDetails = () => {
 
   // Determine fire color based on hours left in the epoch
   const fireColor = useMemo(() => {
+    if (isEligibleForRewards) return COLOR.PURPLE;
     if (!currentEpochLifetime) return;
 
     const hoursLeft = (currentEpochLifetime - Date.now()) / (1000 * 60 * 60);
     if (hoursLeft > 12) return COLOR.TEXT_NEUTRAL_TERTIARY;
     if (hoursLeft > 3) return COLOR.WARNING;
     return COLOR.RED;
-  }, [currentEpochLifetime]);
+  }, [isEligibleForRewards, currentEpochLifetime]);
 
   // If rewards history is loading for the first time
   // or balances are not fetched yet - show loading state
@@ -150,11 +152,15 @@ export const Staking = () => {
               <Text type="secondary">Current Epoch lifetime</Text>
               <Flex align="center" gap={8}>
                 <Clock />
-                <Timer
-                  type="countdown"
-                  value={currentEpochLifetime}
-                  valueStyle={{ fontSize: 16 }}
-                />
+                {currentEpochLifetime ? (
+                  <Timer
+                    type="countdown"
+                    value={currentEpochLifetime}
+                    valueStyle={{ fontSize: 16 }}
+                  />
+                ) : (
+                  <Text>Soon</Text>
+                )}
               </Flex>
             </Flex>
             <Flex flex={1} vertical gap={4}>
@@ -167,10 +173,3 @@ export const Staking = () => {
     </Flex>
   );
 };
-
-/**
- * TODO
- * - Countdown timer for epoch lifetime
- * - On ZERO, show "Soon"
- * - 3 different states for Streak:
- */
