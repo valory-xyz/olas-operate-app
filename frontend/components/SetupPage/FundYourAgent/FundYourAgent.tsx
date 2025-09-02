@@ -67,6 +67,7 @@ type FundMethodCardProps = {
 
 const OnRamp = () => {
   const { networkId: onRampChainId } = useOnRampContext();
+  const { goto } = useSetup();
 
   const {
     isLoading: isNativeTokenLoading,
@@ -92,7 +93,12 @@ const OnRamp = () => {
           fundType="onRamp"
         />
       </div>
-      <Button type="primary" size="large">
+      <Button
+        type="primary"
+        size="large"
+        onClick={() => goto(SetupScreen.SetupOnRamp)}
+        disabled={isNativeTokenLoading || isFiatLoading}
+      >
         Buy Crypto with USD
       </Button>
     </FundMethodCard>
@@ -120,7 +126,11 @@ const Transfer = ({
           isLoading={isBalancesAndFundingRequirementsLoading}
         />
       </div>
-      <Button size="large" onClick={() => goto(SetupScreen.TransferFunds)}>
+      <Button
+        size="large"
+        onClick={() => goto(SetupScreen.TransferFunds)}
+        disabled={isBalancesAndFundingRequirementsLoading}
+      >
         Transfer Crypto on {chainName}
       </Button>
     </FundMethodCard>
@@ -151,6 +161,7 @@ const Bridge = ({
       <Button
         size="large"
         onClick={() => goto(SetupScreen.SetupBridgeOnboardingScreen)}
+        disabled={isBalancesAndFundingRequirementsLoading}
       >
         Bridge Crypto from Ethereum
       </Button>

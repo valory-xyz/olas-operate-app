@@ -4,8 +4,6 @@ import styled from 'styled-components';
 import { COLOR } from '@/constants/colors';
 
 export const Table = styled(AntdTable)`
-  margin-top: 32px;
-
   .ant-table-thead {
     .ant-table-cell {
       padding: 10px 16px;
