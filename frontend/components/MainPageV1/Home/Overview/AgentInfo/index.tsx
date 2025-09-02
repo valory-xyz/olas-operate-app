@@ -11,6 +11,7 @@ import { useServices } from '@/hooks/useServices';
 import { generateName } from '@/utils/agentName';
 
 import { AgentActivity } from './AgentActivity';
+import { AgentDisabledAlert } from './AgentDisabledAlert';
 import { AgentRunButton } from './AgentRunButton';
 
 const { Title } = Typography;
@@ -25,7 +26,7 @@ export const AgentInfo = () => {
   const { serviceSafe } = useYourWallet();
 
   return (
-    <Card bordered={false}>
+    <Card variant="borderless">
       <AgentInfoContainer>
         <Flex justify="start" align="center" gap={24}>
           <Image
@@ -52,6 +53,7 @@ export const AgentInfo = () => {
             <AgentRunButton />
           </Flex>
         </Flex>
+        <AgentDisabledAlert />
         <AgentActivity />
       </AgentInfoContainer>
     </Card>
