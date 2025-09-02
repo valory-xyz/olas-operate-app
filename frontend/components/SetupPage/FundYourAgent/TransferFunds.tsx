@@ -1,10 +1,11 @@
 import { Flex, message, Typography } from 'antd';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
-import { Title4 } from '@/components/ui/Typography/Title4';
+import { FundingDescription } from '@/components/ui/FundingDescription';
+import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
 import { ChainImageMap, EvmChainName } from '@/constants/chains';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -13,23 +14,34 @@ import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { delayInSeconds } from '@/utils/delay';
 
-import { FundingDescription } from './components/FundingDescription';
-import { TokenRequirementsTable } from './components/TokenRequirementsTable';
+import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
 import { useTokensFundingStatus } from './hooks/useTokensFundingStatus';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 export const TransferFunds = () => {
   const { goto: gotoSetup } = useSetup();
   const { goto: gotoPage } = usePageState();
 
   const { selectedAgentConfig } = useServices();
-  const { isFullyFunded } = useTokensFundingStatus({
+  const { isFullyFunded, tokensFundingStatus } = useTokensFundingStatus({
     selectedAgentConfig,
   });
+  const { initialTokenRequirements, isLoading } =
+    useGetRefillRequirementsWithMonthlyGas({
+      selectedAgentConfig,
+    });
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const chainImage = ChainImageMap[evmHomeChainId];
+
+  const tableData = useMemo(() => {
+    return (initialTokenRequirements ?? []).map((token) => ({
+      ...token,
+      areFundsReceived:
+        tokensFundingStatus[token.symbol as keyof typeof tokensFundingStatus],
+    }));
+  }, [initialTokenRequirements, tokensFundingStatus]);
 
   const handleFunded = useCallback(async () => {
     message.success(
@@ -52,7 +64,9 @@ export const TransferFunds = () => {
     <Flex justify="center" style={{ marginTop: 40 }}>
       <CardFlex $noBorder style={{ width: 624, padding: 8 }}>
         <BackButton onPrev={() => gotoSetup(SetupScreen.FundYourAgent)} />
-        <Title4>Transfer Crypto on {chainName}</Title4>
+        <Title level={3} className="mt-16">
+          Transfer Crypto on {chainName}
+        </Title>
         <Text className="text-neutral-secondary">
           Send the specified amounts from your external wallet to the Pearl
           Wallet address below. Pearl will automatically detect your transfer.
@@ -67,7 +81,7 @@ export const TransferFunds = () => {
 
         <FundingDescription chainName={chainName} chainImage={chainImage} />
 
-        <TokenRequirementsTable />
+        <TokenRequirementsTable isLoading={isLoading} tableData={tableData} />
       </CardFlex>
     </Flex>
   );

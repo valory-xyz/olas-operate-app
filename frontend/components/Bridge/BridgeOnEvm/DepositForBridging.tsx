@@ -3,14 +3,13 @@ import {
   LoadingOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-import { Button, Divider, Flex, message, Spin, Typography } from 'antd';
-import { kebabCase, upperFirst } from 'lodash';
-import Image from 'next/image';
+import { Button, Flex, message, Spin, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { MiddlewareChain } from '@/client';
 import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '@/components/ui/iconStyles';
+import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
 import {
   ETHEREUM_TOKEN_CONFIG,
   TOKEN_CONFIG,
@@ -18,6 +17,7 @@ import {
 } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { COLOR } from '@/constants/colors';
+import { TokenSymbolConfigMap } from '@/constants/token';
 import { TokenSymbol } from '@/enums/Token';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
@@ -31,9 +31,18 @@ import {
 import { areAddressesEqual } from '@/utils/address';
 import { delayInSeconds } from '@/utils/delay';
 import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
+import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
-import { DepositAddress } from './DepositAddress';
-import { DepositTokenDetails, TokenDetails } from './TokenDetails';
+type DepositTokenDetails = {
+  address?: Address;
+  symbol: TokenSymbol;
+  totalRequiredInWei: bigint;
+  currentBalanceInWei: bigint;
+  areFundsReceived: boolean;
+  decimals: number;
+  isNative?: boolean;
+  precision?: number;
+};
 
 const { Text } = Typography;
 
@@ -43,19 +52,8 @@ const RootCard = styled(Flex)`
   align-items: start;
   border-radius: 12px;
   border: 1px solid ${COLOR.BORDER_GRAY};
+  margin-top: 32px;
 `;
-
-const DepositForBridgingHeader = ({ chainName }: { chainName: string }) => (
-  <Flex gap={8} align="center" className="p-16">
-    <Image
-      src={`/chains/${kebabCase(chainName)}-chain.png`}
-      width={20}
-      height={20}
-      alt={`${chainName} logo`}
-    />
-    <Text>{upperFirst(chainName)}</Text>
-  </Flex>
-);
 
 const RequestingQuote = () => (
   <Flex gap={8} className="p-16">
@@ -82,7 +80,6 @@ const QuoteRequestFailed = ({ onTryAgain }: { onTryAgain: () => void }) => (
 );
 
 type DepositForBridgingProps = {
-  chainName: string;
   getBridgeRequirementsParams: (
     forceUpdate?: boolean,
   ) => BridgeRefillRequirementsRequest | null;
@@ -92,7 +89,6 @@ type DepositForBridgingProps = {
 };
 
 export const DepositForBridging = ({
-  chainName,
   getBridgeRequirementsParams,
   updateQuoteId,
   updateCrossChainTransferDetails,
@@ -248,6 +244,21 @@ export const DepositForBridging = ({
     });
   }, [bridgeFundingRequirements, masterEoa]);
 
+  const tableData = useMemo(() => {
+    return tokens
+      .map((token) => ({
+        amount: formatUnitsToNumber(
+          token.totalRequiredInWei,
+          token.decimals,
+          token.isNative ? 5 : 2,
+        ),
+        symbol: token.symbol,
+        iconSrc: TokenSymbolConfigMap[token.symbol].image,
+        areFundsReceived: token.areFundsReceived,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [tokens]);
+
   // After the user has deposited the required funds,
   // send the quote ID, cross-chain transfer details to the next step
   useEffect(() => {
@@ -350,35 +361,22 @@ export const DepositForBridging = ({
   }, [refetchBridgeRefillRequirements]);
 
   return (
-    <RootCard vertical>
-      <DepositForBridgingHeader chainName={chainName} />
-      <Divider className="m-0" />
-
+    <>
       {isRequestingQuote ? (
-        <RequestingQuote />
+        <RootCard>
+          <RequestingQuote />
+        </RootCard>
       ) : isRequestingQuoteFailed ? (
-        <QuoteRequestFailed onTryAgain={handleRetryAgain} />
+        <RootCard>
+          <QuoteRequestFailed onTryAgain={handleRetryAgain} />
+        </RootCard>
       ) : (
-        <>
-          <Flex gap={8} align="start" vertical className="p-16">
-            {tokens.length === 0 ? (
-              <Flex gap={8} align="center">
-                No tokens to deposit!
-              </Flex>
-            ) : (
-              tokens.map((token) => (
-                <TokenDetails
-                  key={token.symbol}
-                  {...token}
-                  precision={token.isNative ? 5 : 2}
-                />
-              ))
-            )}
-          </Flex>
-          <Divider className="m-0" />
-          <DepositAddress />
-        </>
+        <TokenRequirementsTable
+          isLoading={isRequestingQuote}
+          tableData={tableData}
+          locale={{ emptyText: 'No tokens to deposit!' }}
+        />
       )}
-    </RootCard>
+    </>
   );
 };

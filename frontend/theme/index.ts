@@ -14,6 +14,10 @@ export const mainTheme: ThemeConfig = {
     fontSize: 16,
     fontFamily: 'Inter',
     colorBgContainer: '#FFFFFF',
+    fontSizeHeading3: 24,
+    fontSizeHeading5: 20,
+    lineHeightHeading5: 1.4,
+    fontWeightStrong: 500,
   },
   components: {
     Alert: {

@@ -198,6 +198,10 @@ textarea,
   margin-bottom: 16px !important;
 }
 
+.mb-24 {
+  margin-bottom: 24px !important;
+}
+
 .mb-32 {
   margin-bottom: 32px !important;
 }
@@ -256,6 +260,10 @@ textarea,
   padding-right: 16px !important;
 }
 
+.pt-8 {
+  padding-top: 8px !important;
+}
+
 .pt-16 {
   padding-top: 16px !important;
 }
@@ -286,6 +294,16 @@ textarea,
 
 .p-24 {
   padding: 24px;
+}
+
+.py-24 {
+  padding-top: 24px !important;
+  padding-bottom: 24px !important;
+}
+
+.px-0 {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
 .mx-auto {

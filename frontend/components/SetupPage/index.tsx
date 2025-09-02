@@ -58,6 +58,7 @@ const screenWithoutCards: SetupScreen[] = [
   SetupScreen.SetupYourAgent,
   SetupScreen.FundYourAgent,
   SetupScreen.TransferFunds,
+  SetupScreen.SetupBridgeOnboardingScreen,
 ];
 
 export const Setup = () => {

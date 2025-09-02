@@ -6,14 +6,15 @@ import {
   Tag,
   Typography,
 } from 'antd';
+import { type TableLocale } from 'antd/es/table/interface';
 import styled from 'styled-components';
 
 import { Table } from '@/components/ui/Table';
 import { COLOR } from '@/constants/colors';
-import { useServices } from '@/hooks/useServices';
 
-import { useGetRefillRequirementsWithMonthlyGas } from '../hooks/useGetRefillRequirementsWithMonthlyGas';
-import { useTokensFundingStatus } from '../hooks/useTokensFundingStatus';
+const LOCALE = {
+  emptyText: 'No token requirements',
+};
 
 const { Text } = Typography;
 
@@ -30,7 +31,7 @@ type TokenRowData = {
   amount: number;
   symbol: string;
   iconSrc: string;
-  status: 'Waiting' | 'Received';
+  areFundsReceived: boolean;
 };
 
 const columns: TableColumnsType = [
@@ -39,7 +40,12 @@ const columns: TableColumnsType = [
     key: 'token',
     render: (_: unknown, record: TokenRowData) => (
       <Flex align="center" gap={8}>
-        <AntdImage width={20} src={record.iconSrc} alt={record.symbol} />
+        <AntdImage
+          width={20}
+          src={record.iconSrc}
+          alt={record.symbol}
+          style={{ display: 'flex' }}
+        />
         <Text>{record.symbol}</Text>
       </Flex>
     ),
@@ -53,44 +59,36 @@ const columns: TableColumnsType = [
     title: 'Status',
     key: 'status',
     render: (_: unknown, record: TokenRowData) => {
-      const isWaiting = record.status === 'Waiting';
+      const isWaiting = !record.areFundsReceived;
       return (
         <CustomTag
           $isWaiting={isWaiting}
           color={isWaiting ? undefined : COLOR.SUCCESS}
           icon={isWaiting ? <ClockCircleOutlined /> : <CheckCircleOutlined />}
         >
-          {record.status}
+          {record.areFundsReceived ? 'Received' : 'Waiting'}
         </CustomTag>
       );
     },
   },
 ];
 
-export const TokenRequirementsTable = () => {
-  const { selectedAgentConfig } = useServices();
-  const { initialTokenRequirements: tokenRequirements, isLoading } =
-    useGetRefillRequirementsWithMonthlyGas({ selectedAgentConfig });
-  const { tokensFundingStatus } = useTokensFundingStatus({
-    selectedAgentConfig,
-  });
-  const tableRows: TokenRowData[] = (tokenRequirements ?? []).map((token) => ({
-    ...token,
-    status: tokensFundingStatus[
-      token.symbol as keyof typeof tokensFundingStatus
-    ]
-      ? 'Received'
-      : 'Waiting',
-  }));
-
-  if (!isLoading && tableRows.length === 0) return null;
-
+export const TokenRequirementsTable = ({
+  isLoading,
+  tableData,
+  locale = LOCALE,
+}: {
+  isLoading: boolean;
+  tableData: TokenRowData[];
+  locale?: TableLocale;
+}) => {
   return (
     <Table
-      dataSource={tableRows}
+      dataSource={tableData}
       columns={columns}
       loading={isLoading}
       pagination={false}
+      locale={locale}
     />
   );
 };

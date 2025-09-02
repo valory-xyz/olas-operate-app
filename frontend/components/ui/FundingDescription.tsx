@@ -46,10 +46,12 @@ const ChainConfirmationMessageModal = ({
   chainName,
   chainImage,
   onClose,
+  isMainnet,
 }: {
   chainName: string;
   chainImage: string;
   onClose: () => void;
+  isMainnet?: boolean;
 }) => {
   return (
     <Modal
@@ -64,11 +66,12 @@ const ChainConfirmationMessageModal = ({
       <Flex vertical gap={24} align="center">
         <Image width={60} height={60} src={chainImage} alt={chainName} />
         <Title level={4} style={{ margin: 0 }}>
-          Send funds on {chainName} Chain
+          Send funds on {chainName} {isMainnet ? 'Mainnet' : 'Chain'}
         </Title>
         <Text type="secondary" className="text-center">
           Sending funds on any other network will result in permanent loss. Make
-          sure you&apos;re sending on {chainName} Chain before proceeding.
+          sure you&apos;re sending on {chainName}{' '}
+          {isMainnet ? 'Mainnet' : 'Chain'} before proceeding.
         </Text>
         <Button type="primary" onClick={onClose} block>
           I Understand
@@ -91,9 +94,11 @@ const ExternalWalletTooltip = () => (
 export const FundingDescription = ({
   chainName,
   chainImage,
+  isMainnet = false,
 }: {
   chainName: string;
   chainImage: string;
+  isMainnet?: boolean;
 }) => {
   const { masterEoa } = useMasterWalletContext();
   const address = masterEoa?.address;
@@ -113,9 +118,15 @@ export const FundingDescription = ({
       <Flex vertical gap={8}>
         <Text className="text-neutral-tertiary">On</Text>
         <Flex align="center" gap={8}>
-          <AntdImage width={20} height={20} src={chainImage} alt={chainName} />
+          <AntdImage
+            width={20}
+            height={20}
+            src={chainImage}
+            alt={chainName}
+            style={{ display: 'flex' }}
+          />
           <Text className="text-neutral-primary" style={{ fontSize: 16 }}>
-            {chainName} Chain
+            {chainName} {isMainnet ? 'Mainnet' : 'Chain'}
           </Text>
         </Flex>
       </Flex>
@@ -141,6 +152,7 @@ export const FundingDescription = ({
         <ChainConfirmationMessageModal
           chainName={chainName}
           chainImage={chainImage}
+          isMainnet={isMainnet}
           onClose={() => setIsChainConfirmationMessageModalOpen(false)}
         />
       )}
