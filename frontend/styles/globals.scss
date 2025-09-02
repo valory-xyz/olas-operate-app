@@ -127,7 +127,9 @@ textarea,
   }
 
   &--error {
-    color: #A8071A;
+    border-color: #FFD6DA;
+    background-color: #FFEBEC;
+    color: #F00014;
   }
 
   .ant-typography {
@@ -141,6 +143,14 @@ textarea,
     border-right: 0;
     padding: 12px 24px;
     margin: 0;
+  }
+
+  &--centered {
+    justify-content: center;
+
+    .ant-alert-content {
+      flex: none
+    }
   }
 }
 

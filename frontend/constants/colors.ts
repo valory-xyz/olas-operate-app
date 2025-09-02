@@ -28,18 +28,33 @@ export const COLOR = {
   TEXT_NEUTRAL_SECONDARY: '#363F49',
   TEXT_NEUTRAL_TERTIARY: '#617084',
   TEXT_COLOR: {
+    SUCCESS: {
+      DEFAULT: '#176932',
+    },
     WARNING: {
       DEFAULT: '#676709',
     },
+    ERROR: {
+      DEFAULT: '#F00014',
+    },
   },
   BG: {
+    SUCCESS: {
+      DEFAULT: '#DEF8E7',
+    },
     WARNING: {
       DEFAULT: '#FCFCE3',
+    },
+    ERROR: {
+      DEFAULT: '#FFEBEC',
     },
   },
   BORDER_COLOR: {
     WARNING: {
       DEFAULT: '#ECEC93',
+    },
+    ERROR: {
+      DEFAULT: '#FFD6DA',
     },
   },
 };

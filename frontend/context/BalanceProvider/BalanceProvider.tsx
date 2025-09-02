@@ -33,6 +33,7 @@ export const BalanceContext = createContext<{
   totalOlasBalance?: number;
   totalEthBalance?: number;
   totalStakedOlasBalance?: number;
+  /** @deprecated not used */
   lowBalances?: {
     serviceConfigId: string;
     chainId: EvmChainId;
@@ -40,6 +41,7 @@ export const BalanceContext = createContext<{
     balance: number;
     expectedBalance: number;
   }[];
+  /** @deprecated not used */
   isLowBalance?: boolean;
   isPaused: boolean;
 }>({
