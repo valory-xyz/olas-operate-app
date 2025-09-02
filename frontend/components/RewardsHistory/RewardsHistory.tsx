@@ -336,7 +336,7 @@ export const RewardsHistory = () => {
   return (
     <ConfigProvider theme={yourWalletTheme}>
       <CardFlex
-        $noBorder
+        variant="borderless"
         title={<CardTitle title="Staking rewards history" />}
         noBodyPadding="true"
         extra={<GoToMainPageButton />}

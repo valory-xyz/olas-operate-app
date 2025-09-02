@@ -25,6 +25,8 @@ import { useRewardsHistory } from '@/hooks/useRewardsHistory';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 import { ONE_DAY_IN_S } from '@/utils/time';
 
+import { useServiceDeployment } from './AgentInfo/AgentRunButton/hooks/useServiceDeployment';
+
 const { Text } = Typography;
 const { Timer } = Statistic;
 
@@ -45,7 +47,9 @@ const RunAgentAlert = () => (
 );
 
 const useStakingDetails = () => {
-  const { isLoading } = useBalanceContext();
+  const { isLoading: isBalanceLoading } = useBalanceContext();
+  const { isAgentEvicted } = useActiveStakingContractDetails();
+  const { isDeployable } = useServiceDeployment();
   const { isEligibleForRewards } = useRewardContext();
   const {
     latestRewardStreak: streak,
@@ -73,18 +77,23 @@ const useStakingDetails = () => {
 
   // Determine fire color based on hours left in the epoch
   const fireColor = useMemo(() => {
+    if (!currentEpochLifetime || isAgentEvicted || !isDeployable) return;
     if (isEligibleForRewards) return COLOR.PURPLE;
-    if (!currentEpochLifetime) return COLOR.TEXT_NEUTRAL_TERTIARY;
 
     const hoursLeft = (currentEpochLifetime - Date.now()) / (1000 * 60 * 60);
     if (hoursLeft > 12) return COLOR.TEXT_NEUTRAL_TERTIARY;
     if (hoursLeft > 3) return COLOR.WARNING;
     return COLOR.RED;
-  }, [isEligibleForRewards, currentEpochLifetime]);
+  }, [
+    isEligibleForRewards,
+    isDeployable,
+    isAgentEvicted,
+    currentEpochLifetime,
+  ]);
 
   // If rewards history is loading for the first time
   // or balances are not fetched yet - show loading state
-  const isStreakLoading = isLoading || isRewardsHistoryLoading;
+  const isStreakLoading = isBalanceLoading || isRewardsHistoryLoading;
 
   return {
     isStreakLoading,
@@ -109,7 +118,7 @@ const Streak = () => {
         </>
       ) : (
         <>
-          <FireV1 color={fireColor} />
+          <FireV1 fill={fireColor} />
           {optimisticStreak}
         </>
       )}
