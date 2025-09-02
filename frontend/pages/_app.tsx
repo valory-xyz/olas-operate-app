@@ -11,8 +11,10 @@ import { BalanceProvider } from '@/context/BalanceProvider/BalanceProvider';
 import { BalancesAndRefillRequirementsProvider } from '@/context/BalancesAndRefillRequirementsProvider';
 import { ElectronApiProvider } from '@/context/ElectronApiProvider';
 import { MasterWalletProvider } from '@/context/MasterWalletProvider';
+import { MessageProvider } from '@/context/MessageProvider';
 import { ModalProvider } from '@/context/ModalProvider';
 import { OnlineStatusProvider } from '@/context/OnlineStatusProvider';
+import { OnRampProvider } from '@/context/OnRampProvider';
 import { PageStateProvider } from '@/context/PageStateProvider';
 import { RewardProvider } from '@/context/RewardProvider';
 import { ServicesProvider } from '@/context/ServicesProvider';
@@ -49,19 +51,23 @@ export default function App({ Component, pageProps }: AppProps) {
                             <SetupProvider>
                               <SettingsProvider>
                                 <ConfigProvider theme={mainTheme}>
-                                  <ModalProvider>
-                                    <SharedProvider>
-                                      {isMounted ? (
-                                        <SystemNotificationTriggers>
-                                          <AgentUiProvider>
-                                            <Layout>
-                                              <Component {...pageProps} />
-                                            </Layout>
-                                          </AgentUiProvider>
-                                        </SystemNotificationTriggers>
-                                      ) : null}
-                                    </SharedProvider>
-                                  </ModalProvider>
+                                  <MessageProvider>
+                                    <ModalProvider>
+                                      <SharedProvider>
+                                        <OnRampProvider>
+                                          {isMounted ? (
+                                            <SystemNotificationTriggers>
+                                              <AgentUiProvider>
+                                                <Layout>
+                                                  <Component {...pageProps} />
+                                                </Layout>
+                                              </AgentUiProvider>
+                                            </SystemNotificationTriggers>
+                                          ) : null}
+                                        </OnRampProvider>
+                                      </SharedProvider>
+                                    </ModalProvider>
+                                  </MessageProvider>
                                 </ConfigProvider>
                               </SettingsProvider>
                             </SetupProvider>

@@ -22,6 +22,7 @@ export const StakingContractSection = () => {
   const { isAllStakingContractDetailsRecordLoaded } =
     useStakingContractContext();
   const { selectedService } = useServices();
+  const { selectedAgentConfig } = useServices();
 
   const { isServiceTransitioning } = useService(
     selectedService?.service_config_id,
@@ -36,7 +37,9 @@ export const StakingContractSection = () => {
         className="p-0"
         onClick={() => goto(Pages.ManageStaking)}
         disabled={
-          !isAllStakingContractDetailsRecordLoaded || isServiceTransitioning
+          !isAllStakingContractDetailsRecordLoaded ||
+          isServiceTransitioning ||
+          selectedAgentConfig.isUnderConstruction
         }
       >
         {selectedStakingProgramMeta?.name || NA}
@@ -47,6 +50,7 @@ export const StakingContractSection = () => {
     isActiveStakingProgramLoaded,
     isAllStakingContractDetailsRecordLoaded,
     isServiceTransitioning,
+    selectedAgentConfig,
     selectedStakingProgramMeta?.name,
     goto,
   ]);

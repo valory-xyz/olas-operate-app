@@ -17,11 +17,34 @@ Steps to change the password:
    - **Windows**: Press `Win` + `R`, type `cmd`, and press **Enter**.  
    - **macOS**: Press `Cmd` + `Space`, type `Terminal`, and press **Enter**.  
    - **Linux**: Press `Ctrl` + `Alt` + `T`.  
-4. In the terminal window, type the command to change the password and then press **Enter**:
+4. In the terminal window, export the path to the `.operate` folder (replace `YOUR_USERNAME` with your actual username):
+   - **Windows**:
+
+      ```bash
+      set OPERATE_HOME=C:\Users\YOUR_USERNAME\.operate
+      ```
+
+   - **macOS**:
+
+      ```bash
+      export OPERATE_HOME=/Users/YOUR_USERNAME/.operate
+      ```
+
+   - **Linux**:
+
+    ```bash
+    export OPERATE_HOME=/home/YOUR_USERNAME/.operate
+    ```
+
+5. In the terminal window, type the command to change the password and then press **Enter**:
+
    - (Preferred) If you know the old password, use:
 
        ```bash
-       curl -X PUT "http://localhost:8765/api/account" -H "Content-Type: application/json" -d "{\"old_password\": \"YOUR_OLD_PASSWORD\", \"new_password\": \"YOUR_NEW_PASSWORD\"}"
+        curl -X PUT "https://localhost:8765/api/account" \
+        -H "Content-Type: application/json" \
+        -d "{\"old_password\": \"YOUR_OLD_PASSWORD\", \"new_password\": \"YOUR_NEW_PASSWORD\"}" \
+        --cacert "$OPERATE_HOME/ssl/cert.pem"
        ```
 
        Replace `YOUR_OLD_PASSWORD` with your current password and `YOUR_NEW_PASSWORD` with your desired password.
@@ -29,8 +52,11 @@ Steps to change the password:
    - If you know the BIP-39 backup seed phrase:
 
        ```bash
-       curl -X PUT "http://localhost:8765/api/account" -H "Content-Type: application/json" -d "{\"mnemonic\": \"YOUR_SEED_PHRASE\", \"new_password\": \"YOUR_NEW_PASSWORD\"}"
+        curl -X PUT "https://localhost:8765/api/account" \
+        -H "Content-Type: application/json" \
+        -d "{\"mnemonic\": \"YOUR_SEED_PHRASE\", \"new_password\": \"YOUR_NEW_PASSWORD\"}" \
+        --cacert "$OPERATE_HOME/ssl/cert.pem"
        ```
 
        Replace `YOUR_SEED_PHRASE` with your **lowercase, space-separated** BIP-39 seed phrase, and `YOUR_NEW_PASSWORD` with your desired password.
-5. Close and restart Pearl.
+6. Close and restart Pearl.

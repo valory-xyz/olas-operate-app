@@ -27,9 +27,19 @@ const rowCommonStyle: CSSProperties = {
   padding: '8px 12px',
 };
 
-type InlineBannerProps = { text: string; address: Address; extra?: ReactNode };
+type InlineBannerProps = {
+  text: string;
+  address: Address;
+  extra?: ReactNode;
+  bridgeFunds?: { chainName: string; goto: () => void };
+};
 
-export const InlineBanner = ({ text, address, extra }: InlineBannerProps) => {
+export const InlineBanner = ({
+  text,
+  address,
+  extra,
+  bridgeFunds,
+}: InlineBannerProps) => {
   return (
     <InlineBannerContainer vertical>
       <Flex justify="space-between" align="center" style={rowCommonStyle}>
@@ -44,13 +54,28 @@ export const InlineBanner = ({ text, address, extra }: InlineBannerProps) => {
 
       {extra && (
         <Flex
-          className="w-full"
+          justify="space-between"
           style={{
             borderTop: `1px solid ${COLOR.BORDER_GRAY}`,
             ...rowCommonStyle,
           }}
         >
           {extra}
+        </Flex>
+      )}
+
+      {bridgeFunds && (
+        <Flex
+          justify="space-between"
+          style={{
+            borderTop: `1px solid ${COLOR.BORDER_GRAY}`,
+            ...rowCommonStyle,
+          }}
+        >
+          <Text>{`Don’t have assets on ${bridgeFunds.chainName}?`}</Text>
+          <Button size="small" onClick={bridgeFunds.goto}>
+            Bridge funds
+          </Button>
         </Flex>
       )}
     </InlineBannerContainer>

@@ -1,4 +1,16 @@
 require('dotenv').config();
+
+const {
+  checkUrl,
+  configureSessionCertificates,
+  loadLocalCertificate,
+  stringifyJson,
+  secureFetch,
+} = require('./utils');
+
+// Load the self-signed certificate for localhost HTTPS requests
+loadLocalCertificate();
+
 const {
   app,
   BrowserWindow,
@@ -6,6 +18,7 @@ const {
   ipcMain,
   dialog,
   shell,
+  systemPreferences,
 } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
@@ -17,7 +30,7 @@ const AdmZip = require('adm-zip');
 
 const { setupDarwin, setupUbuntu, setupWindows, Env } = require('./install');
 
-const { paths } = require('./constants');
+const { paths, isMac } = require('./constants');
 const { killProcesses } = require('./processes');
 const { isPortAvailable, findAvailablePort } = require('./ports');
 const { PORT_RANGE } = require('./constants');
@@ -25,8 +38,8 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
-const { Scraper } = require('agent-twitter-client');
-const { checkUrl } = require('./utils');
+
+const { pki } = require('node-forge');
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -52,6 +65,24 @@ if (isDev) {
 
     createAgentActivityWindow();
   });
+}
+
+// Add context menu in development mode when enabled via environment variable
+if (isDev && process.env.ENABLE_DEVELOPER_TOOLS_CONTEXT_MENU === 'true') {
+  import('electron-context-menu')
+    .then((contextMenuModule) => {
+      const contextMenu = contextMenuModule.default;
+      const disposeContextMenu = contextMenu({
+        showInspectElement: true,
+      });
+
+      app.on('before-quit', () => {
+        disposeContextMenu();
+      });
+    })
+    .catch((error) => {
+      console.error('Failed to load electron-context-menu:', error);
+    });
 }
 
 // Attempt to acquire the single instance lock
@@ -94,6 +125,9 @@ let appConfig = {
 const nextUrl = () =>
   `http://localhost:${isDev ? appConfig.ports.dev.next : appConfig.ports.prod.next}`;
 
+const backendUrl = () =>
+  `https://localhost:${isDev ? appConfig.ports.dev.operate : appConfig.ports.prod.operate}`;
+
 /** @type {Electron.BrowserWindow | null} */
 let mainWindow = null;
 /** @type {Electron.BrowserWindow | null} */
@@ -101,6 +135,9 @@ let splashWindow = null;
 /** @type {Electron.BrowserWindow | null} */
 let agentWindow = null;
 const getAgentWindow = () => agentWindow;
+/** @type {Electron.BrowserWindow | null} */
+let onRampWindow = null;
+const getOnRampWindow = () => onRampWindow;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
@@ -129,7 +166,7 @@ function showNotification(title, body) {
 }
 
 function setAppAutostart(is_set) {
-  logger.electron('Set app autostart: ' + is_set);
+  logger.electron(`Set app autostart: ${is_set}`);
   app.setLoginItemSettings({ openAtLogin: is_set });
 }
 
@@ -143,7 +180,7 @@ function handleAppSettings() {
       fs.writeFileSync(app_settings_file, JSON.stringify(obj));
     }
     let data = JSON.parse(fs.readFileSync(app_settings_file));
-    logger.electron('Loaded app settings file ' + JSON.stringify(data));
+    logger.electron(`Loaded app settings file: ${JSON.stringify(data)}`);
     setAppAutostart(data.app_auto_start);
   } catch {
     logger.electron('Error loading settings');
@@ -152,6 +189,36 @@ function handleAppSettings() {
 
 let isBeforeQuitting = false;
 let appRealClose = false;
+
+/**
+ * function to stop the backend server gracefully and
+ * kill the child processes if they are running.
+ */
+async function stopBackend() {
+  // Free up backend port if already occupied
+  try {
+    logger.electron('Killing backend server by shutdown endpoint!');
+    const result = await secureFetch(`${backendUrl()}/shutdown`);
+    logger.electron(
+      `Backend stopped with result: ${stringifyJson(await result.json())}`,
+    );
+  } catch (e) {
+    logger.electron(`Backend stopped with error: ${stringifyJson(e)}`);
+  }
+
+  try {
+    await secureFetch(`${backendUrl()}/api`);
+    logger.electron('Killing backend server!');
+    const endpoint = fs
+      .readFileSync(`${paths.dotOperateDirectory}/operate.kill`)
+      .toString()
+      .trim();
+
+    await secureFetch(`${backendUrl()}/${endpoint}`);
+  } catch (e) {
+    logger.electron(`Backend not running: ${stringifyJson(e)}`);
+  }
+}
 
 async function beforeQuit(event) {
   if (typeof event.preventDefault === 'function' && !appRealClose) {
@@ -168,33 +235,18 @@ async function beforeQuit(event) {
   mainWindow?.destroy();
 
   logger.electron('Stop backend gracefully:');
-  try {
-    logger.electron(
-      `Killing backend server by shutdown endpoint: http://localhost:${appConfig.ports.prod.operate}/shutdown`,
-    );
-    let result = await fetch(
-      `http://localhost:${appConfig.ports.prod.operate}/shutdown`,
-    );
-    logger.electron('Killed backend server by shutdown endpoint!');
-    logger.electron(
-      'Killed backend server by shutdown endpoint! result:' +
-        JSON.stringify(result),
-    );
-  } catch (err) {
-    logger.electron('Backend stopped with error!');
-    logger.electron(
-      'Backend stopped with error, result: ' + JSON.stringify(err),
-    );
-  }
+  await stopBackend();
 
   if (operateDaemon || operateDaemonPid) {
-    // clean-up via pid first*
+    // clean-up via pid first
     // may have dangling subprocesses
     try {
       logger.electron('Killing backend server kill process');
       operateDaemonPid && (await killProcesses(operateDaemonPid));
     } catch (e) {
-      logger.electron("Couldn't kill daemon processes via pid:");
+      logger.electron(
+        `Couldn't kill daemon processes via pid: ${stringifyJson(e)}`,
+      );
     }
 
     // attempt to kill the daemon process via kill
@@ -205,7 +257,9 @@ async function beforeQuit(event) {
         logger.electron('Daemon process still alive after kill');
       }
     } catch (e) {
-      logger.electron("Couldn't kill operate daemon process via kill:");
+      logger.electron(
+        `Couldn't kill operate daemon process via kill: ${stringifyJson(e)}`,
+      );
     }
   }
 
@@ -217,21 +271,25 @@ async function beforeQuit(event) {
         logger.electron('Dev NextApp process still alive after kill');
       }
     } catch (e) {
-      logger.electron("Couldn't kill devNextApp process via kill:");
+      logger.electron(
+        `Couldn't kill devNextApp process via kill: ${stringifyJson(e)}`,
+      );
     }
 
     // attempt to kill the dev next app process via pid
     try {
       devNextAppPid && (await killProcesses(devNextAppPid));
     } catch (e) {
-      logger.electron("Couldn't kill devNextApp processes via pid:");
+      logger.electron(
+        `Couldn't kill devNextApp processes via pid: ${stringifyJson(e)}`,
+      );
     }
   }
 
   if (nextApp) {
     // attempt graceful close of prod next app
-    await nextApp.close().catch(() => {
-      logger.electron("Couldn't close NextApp gracefully:");
+    await nextApp.close().catch((e) => {
+      logger.electron(`Couldn't close NextApp gracefully: ${stringifyJson(e)}`);
     });
     // electron will kill next service on exit
   }
@@ -321,30 +379,6 @@ const createMainWindow = async () => {
 
   ipcMain.handle('app-version', () => app.getVersion());
 
-  // Handle twitter login
-  ipcMain.handle('validate-twitter-login', async (_event, credentials) => {
-    const { username, password, email } = credentials;
-
-    logger.electron('Validating X login:', { username });
-    if (!username || !password || !email) {
-      logger.electron('Missing credentials for X login');
-      return { success: false, error: 'Missing credentials' };
-    }
-
-    try {
-      const scraper = new Scraper();
-
-      await scraper.login(username, password, email);
-      const cookies = await scraper.getCookies();
-      logger.electron('X login successful!');
-      return { success: true, cookies };
-    } catch (error) {
-      logger.electron('X login failed:', error);
-      console.error('X login error:', error);
-      return { success: false, error: error.message };
-    }
-  });
-
   // Get the agent's current state
   ipcMain.handle('health-check', async (_event) => {
     try {
@@ -388,7 +422,7 @@ const createMainWindow = async () => {
     logger.electron('Setting up store IPC');
     setupStoreIpc(ipcMain, mainWindow);
   } catch (e) {
-    logger.electron('Store IPC failed:', JSON.stringify(e));
+    logger.electron(`Store IPC failed: ${stringifyJson(e)}`);
   }
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
@@ -420,6 +454,12 @@ const createAgentActivityWindow = async () => {
     logger.electron('Agent activity window already exists');
   }
 
+  agentWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // open url in a browser and prevent default
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
   agentWindow.on('close', function (event) {
     event.preventDefault();
     agentWindow?.hide();
@@ -428,36 +468,141 @@ const createAgentActivityWindow = async () => {
   return agentWindow;
 };
 
+// Create SSL certificate for the backend
+function createAndLoadSslCertificate() {
+  try {
+    logger.electron('Creating SSL certificate...');
+
+    const certDir = path.join(paths.dotOperateDirectory, 'ssl');
+    if (!fs.existsSync(certDir)) {
+      fs.mkdirSync(certDir, { recursive: true });
+    }
+
+    const keyPath = path.join(certDir, 'key.pem');
+    const certPath = path.join(certDir, 'cert.pem');
+
+    // Generate a key pair
+    const keys = pki.rsa.generateKeyPair(2048);
+
+    // Create a certificate
+    const cert = pki.createCertificate();
+    cert.publicKey = keys.publicKey;
+    cert.serialNumber = '01';
+    cert.validity.notBefore = new Date();
+
+    // Valid for 1 year
+    cert.validity.notAfter = new Date(
+      cert.validity.notBefore.getTime() + 365 * 24 * 60 * 60 * 1000,
+    );
+
+    const attrs = [
+      { name: 'countryName', value: 'CH' },
+      { name: 'stateOrProvinceName', value: 'Local' },
+      { name: 'localityName', value: 'Local' },
+      { name: 'organizationName', value: 'Valory AG' },
+      { name: 'commonName', value: 'localhost' },
+    ];
+
+    cert.setSubject(attrs);
+    cert.setIssuer(attrs);
+    cert.setExtensions([
+      { name: 'basicConstraints', cA: false },
+      { name: 'keyUsage', digitalSignature: true, keyEncipherment: true },
+      { name: 'extKeyUsage', serverAuth: true },
+    ]);
+
+    // Sign the certificate
+    cert.sign(keys.privateKey);
+
+    // Convert to PEM format
+    const privateKeyPem = pki.privateKeyToPem(keys.privateKey);
+    const certificatePem = pki.certificateToPem(cert);
+
+    // Write to files
+    fs.writeFileSync(keyPath, privateKeyPem);
+    fs.writeFileSync(certPath, certificatePem);
+    loadLocalCertificate();
+    logger.electron(
+      `SSL certificate created successfully at ${keyPath} and ${certPath}`,
+    );
+
+    return {
+      keyPath,
+      certPath,
+    };
+  } catch (error) {
+    logger.electron('Failed to create SSL certificate:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Create the on-ramping window for displaying transak iframe
+ */
+/** @type {()=>Promise<BrowserWindow|undefined>} */
+const createOnRampWindow = async (amountToPay) => {
+  if (!getOnRampWindow() || getOnRampWindow().isDestroyed) {
+    onRampWindow = new BrowserWindow({
+      title: 'Buy Crypto on Transak',
+      resizable: false,
+      draggable: true,
+      frame: false,
+      transparent: true,
+      fullscreenable: false,
+      maximizable: false,
+      closable: false,
+      width: APP_WIDTH,
+      height: 700,
+      media: true,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, 'preload.js'),
+      },
+    });
+
+    onRampWindow.webContents.setWindowOpenHandler(({ url }) => {
+      // open url in a browser and prevent default
+      shell.openExternal(url);
+      return { action: 'deny' };
+    });
+
+    // query parameters for the on-ramp URL
+    const onRampQuery = new URLSearchParams();
+    if (amountToPay) {
+      onRampQuery.append('amount', amountToPay.toString());
+    }
+    const onRampUrl = `${nextUrl()}/onramp?${onRampQuery.toString()}`;
+    logger.electron(`OnRamp URL: ${onRampUrl}`);
+
+    // request camera access for KYC
+    if (isMac) {
+      try {
+        const granted = await systemPreferences.askForMediaAccess('camera');
+        logger.electron(`macOS camera permission granted: ${granted}`);
+      } catch (e) {
+        logger.electron(`Error requesting macOS camera permission: ${e}`);
+      }
+    }
+
+    onRampWindow.loadURL(onRampUrl).then(() => {
+      logger.electron(`onRampWindow: ${onRampWindow.url}`);
+    });
+  } else {
+    logger.electron('OnRamp window already exists');
+  }
+
+  onRampWindow.on('close', function (event) {
+    event.preventDefault();
+    onRampWindow?.destroy();
+  });
+
+  return onRampWindow;
+};
+
 async function launchDaemon() {
-  // Free up backend port if already occupied
-  try {
-    await fetch(`http://localhost:${appConfig.ports.prod.operate}/api`);
-    logger.electron('Killing backend server!');
-    let endpoint = fs
-      .readFileSync(`${paths.dotOperateDirectory}/operate.kill`)
-      .toString()
-      .trim();
-
-    await fetch(`http://localhost:${appConfig.ports.prod.operate}/${endpoint}`);
-  } catch (err) {
-    logger.electron('Backend not running!' + JSON.stringify(err, null, 2));
-  }
-
-  try {
-    logger.electron('Killing backend server by shutdown endpoint!');
-    let result = await fetch(
-      `http://localhost:${appConfig.ports.prod.operate}/shutdown`,
-    );
-    logger.electron(
-      'Backend stopped with result: ' + JSON.stringify(result, null, 2),
-    );
-  } catch (err) {
-    logger.electron(
-      'Backend stopped with error: ' + JSON.stringify(err, null, 2),
-    );
-  }
-
   const check = new Promise(function (resolve, _reject) {
+    const { keyPath, certPath } = createAndLoadSslCertificate();
     operateDaemon = spawn(
       path.join(
         process.resourcesPath,
@@ -467,6 +612,8 @@ async function launchDaemon() {
         'daemon',
         `--port=${appConfig.ports.prod.operate}`,
         `--home=${paths.dotOperateDirectory}`,
+        `--ssl-keyfile=${keyPath}`,
+        `--ssl-certfile=${certPath}`,
       ],
       { env: Env },
     );
@@ -499,6 +646,7 @@ async function launchDaemon() {
 }
 
 async function launchDaemonDev() {
+  const { keyPath, certPath } = createAndLoadSslCertificate();
   const check = new Promise(function (resolve, _reject) {
     operateDaemon = spawn('poetry', [
       'run',
@@ -506,6 +654,8 @@ async function launchDaemonDev() {
       'daemon',
       `--port=${appConfig.ports.dev.operate}`,
       '--home=.operate',
+      `--ssl-keyfile=${keyPath}`,
+      `--ssl-certfile=${certPath}`,
     ]);
     operateDaemonPid = operateDaemon.pid;
     operateDaemon.stderr.on('data', (data) => {
@@ -570,27 +720,6 @@ async function launchNextAppDev() {
 }
 
 ipcMain.on('check', async function (event, _argument) {
-  // Update
-  try {
-    // macUpdater.checkForUpdates().then((res) => {
-    //   if (!res) return;
-    //   if (!res.downloadPromise) return;
-    //   new Notification({
-    //     title: 'Update Available',
-    //     body: 'Downloading update...',
-    //   }).show();
-    //   res.downloadPromise.then(() => {
-    //     new Notification({
-    //       title: 'Update Downloaded',
-    //       body: 'Restarting application...',
-    //     }).show();
-    //     macUpdater.quitAndInstall();
-    //   });
-    // });
-  } catch (e) {
-    logger.electron(e);
-  }
-
   // Setup
   try {
     handleAppSettings();
@@ -603,6 +732,9 @@ ipcMain.on('check', async function (event, _argument) {
     } else {
       await setupUbuntu(event.sender);
     }
+
+    // Free up backend port if already occupied
+    await stopBackend();
 
     if (isDev) {
       event.sender.send(
@@ -658,12 +790,8 @@ ipcMain.on('check', async function (event, _argument) {
     tray = new PearlTray(getActiveWindow);
   } catch (e) {
     logger.electron(e);
-    new Notification({
-      title: 'Error',
-      body: e,
-    }).show();
+    new Notification({ title: 'Error', body: e }).show();
     event.sender.send('response', e);
-    // app.quit();
   }
 });
 
@@ -687,6 +815,8 @@ app.on('second-instance', () => {
 });
 
 app.once('ready', async () => {
+  configureSessionCertificates();
+
   app.on('window-all-closed', () => {
     app.quit();
   });
@@ -700,6 +830,7 @@ app.once('ready', async () => {
       path.join(__dirname, 'assets/icons/splash-robot-head-dock.png'),
     );
   }
+
   createSplashWindow();
 });
 
@@ -762,7 +893,9 @@ function sanitizeLogs({
   return sanitizedLogsFilePath;
 }
 
-// EXPORT LOGS
+/**
+ * Exports logs by creating a zip file containing sanitized logs and other relevant data.
+ */
 ipcMain.handle('save-logs', async (_, data) => {
   const cliLogFiles = fs
     .readdirSync(paths.dotOperateDirectory)
@@ -794,11 +927,12 @@ ipcMain.handle('save-logs', async (_, data) => {
   fs.writeFileSync(osInfoFilePath, osInfo);
 
   // Persistent store
-  if (data.store)
+  if (data.store) {
     sanitizeLogs({
       name: 'store.txt',
       data: JSON.stringify(data.store, null, 2),
     });
+  }
 
   // Other debug data: balances, addresses, etc.
   if (data.debugData) {
@@ -822,6 +956,28 @@ ipcMain.handle('save-logs', async (_, data) => {
       name: 'debug_data.json',
       data: JSON.stringify(clonedDebugData, null, 2),
     });
+  }
+
+  // Bridge logs
+  try {
+    const bridgeLogFilePath = path.join(paths.bridgeDirectory, 'bridge.json');
+    if (fs.existsSync(bridgeLogFilePath)) {
+      sanitizeLogs({ name: 'bridge.json', filePath: bridgeLogFilePath });
+    }
+  } catch (e) {
+    logger.electron(e);
+  }
+
+  // agent_runner.log wraps agent runner process even before agent started, so can check issues with executable start
+  try {
+    if (fs.existsSync(paths.agentRunnerLogFile)) {
+      sanitizeLogs({
+        name: 'agent_runner.log',
+        filePath: paths.agentRunnerLogFile,
+      });
+    }
+  } catch (e) {
+    logger.electron(e);
   }
 
   // Agent logs
@@ -898,15 +1054,18 @@ ipcMain.handle('save-logs', async (_, data) => {
   }
 
   // Remove temporary files
-  fs.existsSync(paths.osPearlTempDir) &&
+  if (fs.existsSync(paths.osPearlTempDir)) {
     fs.rmSync(paths.osPearlTempDir, {
       recursive: true,
       force: true,
     });
-
+  }
   return result;
 });
 
+/**
+ * Agent UI window handlers
+ */
 ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
   logger.electron(`agent-activity-window-goto: ${url}`);
 
@@ -967,4 +1126,59 @@ ipcMain.handle('agent-activity-window-minimize', () => {
   logger.electron('agent-activity-window-minimize');
   if (!getAgentWindow() || getAgentWindow().isDestroyed()) return; // nothing to minimize
   getAgentWindow()?.then((aaw) => aaw.minimize());
+});
+
+/**
+ * Logs an event message to the logger.
+ */
+ipcMain.handle('log-event', (_event, message) => {
+  logger.electron(message);
+});
+
+/**
+ * OnRamp window handlers
+ */
+ipcMain.handle('onramp-window-show', (_event, amountToPay) => {
+  logger.electron('onramp-window-show');
+
+  if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) {
+    createOnRampWindow(amountToPay)?.then((window) => window.show());
+  } else {
+    getOnRampWindow()?.show();
+  }
+});
+
+ipcMain.handle('onramp-window-close', () => {
+  logger.electron('onramp-window-close');
+
+  // already destroyed or not created
+  if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) return;
+
+  getOnRampWindow()?.destroy();
+
+  // Notify all other windows that it has been closed
+  BrowserWindow.getAllWindows().forEach((win) => {
+    logger.electron(`onramp-window-did-close to ${win.id}`);
+    win.webContents.send('onramp-window-did-close');
+  });
+});
+
+ipcMain.handle('onramp-transaction-success', () => {
+  logger.electron('onramp-transaction-success');
+
+  // Notify all other windows that the transaction was successful
+  BrowserWindow.getAllWindows().forEach((win) => {
+    logger.electron(`onramp-transaction-success to ${win.id}`);
+    win.webContents.send('onramp-transaction-success');
+  });
+});
+
+ipcMain.handle('onramp-transaction-failure', () => {
+  logger.electron('onramp-transaction-failure');
+
+  // Notify all other windows that the transaction was failed
+  BrowserWindow.getAllWindows().forEach((win) => {
+    logger.electron(`onramp-transaction-failure to ${win.id}`);
+    win.webContents.send('onramp-transaction-failure');
+  });
 });

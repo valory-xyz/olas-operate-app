@@ -10,6 +10,14 @@ const agentActivityWindow = {
   minimize: () => ipcRenderer.invoke('agent-activity-window-minimize'),
 };
 
+/** IPC methods for transak window */
+const onRampWindow = {
+  show: (amountToPay) => ipcRenderer.invoke('onramp-window-show', amountToPay),
+  close: () => ipcRenderer.invoke('onramp-window-close'),
+  transactionSuccess: () => ipcRenderer.invoke('onramp-transaction-success'),
+  transactionFailure: () => ipcRenderer.invoke('onramp-transaction-failure'),
+};
+
 contextBridge.exposeInMainWorld('electronAPI', {
   setIsAppLoaded: (isAppLoaded) =>
     ipcRenderer.send('is-app-loaded', isAppLoaded),
@@ -21,6 +29,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     on: (channel, func) =>
       ipcRenderer.on(channel, (event, ...args) => func(...args)),
     invoke: (channel, data) => ipcRenderer.invoke(channel, data),
+    removeListener: (channel, func) =>
+      ipcRenderer.removeListener(channel, func),
   },
   store: {
     store: () => ipcRenderer.invoke('store'),
@@ -35,8 +45,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveLogs: (data) => ipcRenderer.invoke('save-logs', data),
   openPath: (filePath) => ipcRenderer.send('open-path', filePath),
   getAppVersion: () => ipcRenderer.invoke('app-version'),
-  validateTwitterLogin: (credentials) =>
-    ipcRenderer.invoke('validate-twitter-login', credentials),
   healthCheck: () => ipcRenderer.invoke('health-check'),
   agentActivityWindow,
+  onRampWindow,
+  logEvent: (message) => ipcRenderer.invoke('log-event', message),
 });

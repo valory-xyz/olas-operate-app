@@ -1,17 +1,8 @@
-import {
-  Button,
-  Card,
-  Flex,
-  Form,
-  Input,
-  message,
-  Spin,
-  Typography,
-} from 'antd';
+import { Button, Card, Flex, Form, Input, Spin, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { MiddlewareAccountIsSetup } from '@/client';
+import { useMessageApi } from '@/context/MessageProvider';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
@@ -25,12 +16,19 @@ import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { AccountService } from '@/service/Account';
+import { getErrorMessage } from '@/utils/error';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { FormFlex } from '../styled/FormFlex';
 
 const { Title } = Typography;
 
+enum MiddlewareAccountIsSetup {
+  True,
+  False,
+  Loading,
+  Error,
+}
 const SetupLoader = () => (
   <Flex
     justify="center"
@@ -71,6 +69,7 @@ const SetupWelcomeCreate = () => {
 
 const SetupWelcomeLogin = () => {
   const [form] = Form.useForm();
+  const message = useMessageApi();
   const { goto } = useSetup();
   const { isOnline } = useOnlineStatusContext();
   const { goto: gotoPage, setUserLoggedIn } = usePageState();
@@ -118,13 +117,12 @@ const SetupWelcomeLogin = () => {
         setCanNavigate(true);
         setUserLoggedIn();
       } catch (e) {
-        message.error('Invalid password');
-        console.error(e);
+        message.error(getErrorMessage(e));
       } finally {
         setIsLoggingIn(false);
       }
     },
-    [updateBalances, setUserLoggedIn],
+    [updateBalances, setUserLoggedIn, message],
   );
 
   const isServiceCreatedForAgent = useMemo(() => {

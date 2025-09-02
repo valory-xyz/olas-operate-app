@@ -8,8 +8,10 @@ const zodBigNumber = z.object({
 export const StakingRewardsInfoSchema = z.object({
   // mechRequestCount: z.number(),
   serviceInfo: z.array(z.unknown()),
+  /* checkpoint period (in seconds). eg. 86400 */
   livenessPeriod: zodBigNumber,
   livenessRatio: zodBigNumber,
+  /* rewards per second */
   rewardsPerSecond: zodBigNumber,
   isEligibleForRewards: z.boolean(),
   availableRewardsForEpoch: z.number(),

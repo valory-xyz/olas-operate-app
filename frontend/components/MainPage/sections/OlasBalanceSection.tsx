@@ -96,9 +96,9 @@ export const MainOlasBalance = () => {
     <CardSection
       vertical
       gap={8}
-      bordertop="true"
-      borderbottom="true"
-      padding="16px 24px"
+      $borderTop={true}
+      $borderBottom={true}
+      $padding="16px 24px"
     >
       <Flex vertical gap={8}>
         <Flex align="center" justify="space-between">

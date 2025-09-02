@@ -1,16 +1,11 @@
 import { useMemo } from 'react';
 
-import {
-  MiddlewareBuildingStatuses,
-  MiddlewareDeploymentStatus,
-  MiddlewareRunningStatuses,
-  MiddlewareTransitioningStatuses,
-} from '@/client';
+import { MiddlewareDeploymentStatus } from '@/client';
 import { EvmChainId } from '@/enums/Chain';
 import {
   AgentEoa,
   AgentSafe,
-  AgentWallets,
+  AgentWallet,
   WalletOwnerType,
   WalletType,
 } from '@/enums/Wallet';
@@ -20,6 +15,24 @@ import { Nullable, Optional } from '@/types/Util';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { useServices } from './useServices';
+
+/** @note statuses where middleware deployment is moving from stopped to deployed, or vice versa, used for loading fallbacks */
+const MiddlewareTransitioningStatuses = [
+  MiddlewareDeploymentStatus.DEPLOYING,
+  MiddlewareDeploymentStatus.STOPPING,
+];
+
+/** @note statuses where middleware deployment is running */
+const MiddlewareRunningStatuses = [
+  MiddlewareDeploymentStatus.DEPLOYED,
+  ...MiddlewareTransitioningStatuses,
+];
+
+/** @note statuses where middleware is in the process of building/creating a new deployment */
+const MiddlewareBuildingStatuses = [
+  MiddlewareDeploymentStatus.BUILT,
+  MiddlewareDeploymentStatus.CREATED,
+];
 
 type ServiceChainIdAddressRecord = {
   [evmChainId in EvmChainId]: {
@@ -53,7 +66,7 @@ export const useService = (serviceConfigId?: string) => {
     return service?.chain_configs?.[service?.home_chain]?.chain_data.token;
   }, [service?.chain_configs, service?.home_chain]);
 
-  const serviceWallets: AgentWallets = useMemo(() => {
+  const serviceWallets: AgentWallet[] = useMemo(() => {
     if (!service) return [];
     if (!selectedService?.home_chain) return [];
     if (!service.chain_configs?.[selectedService?.home_chain]) return [];

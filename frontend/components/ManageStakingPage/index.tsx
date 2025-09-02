@@ -1,4 +1,4 @@
-import { Card } from 'antd';
+import { Card, Collapse, Flex, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
@@ -10,7 +10,42 @@ import { CardTitle } from '../Card/CardTitle';
 import { GoToMainPageButton } from '../Pages/GoToMainPageButton';
 import { CardSection } from '../styled/CardSection';
 import { StakingContractSection } from './StakingContractSection';
-import { WhatAreStakingContractsSection } from './WhatAreStakingContracts';
+
+const { Text } = Typography;
+
+const collapseItems = [
+  {
+    key: 1,
+    label: <Text className="font-weight-600">What are staking contracts?</Text>,
+    children: (
+      <Flex vertical gap={12}>
+        <Text>
+          When your agent goes to work, it participates in staking contracts.
+        </Text>
+        <Text>
+          Staking contracts define what the agent needs to do, how much OLAS
+          needs to be staked, etc., to be eligible for rewards.
+        </Text>
+        <Text>
+          Your agent can only participate in one staking contract at a time.
+        </Text>
+      </Flex>
+    ),
+  },
+];
+
+const WhatAreStakingContractsSection = () => {
+  return (
+    <CardSection
+      borderbottom="true"
+      justify="space-between"
+      align="center"
+      padding="0"
+    >
+      <Collapse items={collapseItems} ghost />
+    </CardSection>
+  );
+};
 
 export const ManageStakingPage = () => {
   const { selectedAgentConfig } = useServices();
@@ -98,9 +133,7 @@ export const ManageStakingPage = () => {
         )}
 
       <CardSection
-        style={{
-          padding: 24,
-        }}
+        style={{ padding: 24 }}
         borderbottom="true"
         vertical
         gap={16}

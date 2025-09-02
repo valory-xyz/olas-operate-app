@@ -9,6 +9,7 @@ const schema = {
   // Global settings
   environmentName: { type: 'string', default: '' },
   lastSelectedAgentType: { type: 'string', default: 'trader' },
+  knownVersion: { type: 'string', default: '' },
 
   // First time user settings
   firstStakingRewardAchieved: { type: 'boolean', default: false },
@@ -25,8 +26,8 @@ const schema = {
       isProfileWarningDisplayed: false,
     },
   },
-  agentsFunCelo: { type: 'object', default: defaultInitialAgentSettings },
   agentsFunEliza: { type: 'object', default: defaultInitialAgentSettings },
+  optimus: { type: 'object', default: defaultInitialAgentSettings },
 };
 
 /**
@@ -60,12 +61,12 @@ const setupStoreIpc = (ipcMain, mainWindow) => {
   }
 
   /**
-   * agent: memeooorr Migration
+   * agent: agentsFun Migration
    */
   if (store.has('isInitialFunded_memeooorr')) {
-    const memeooorrAgent = store.get('memeooorr') || {};
+    const agentsFunAgent = store.get('memeooorr') || {};
     store.set('memeooorr', {
-      ...memeooorrAgent,
+      ...agentsFunAgent,
       isInitialFunded: store.get('isInitialFunded_memeooorr') || false,
     });
     store.delete('isInitialFunded_memeooorr');

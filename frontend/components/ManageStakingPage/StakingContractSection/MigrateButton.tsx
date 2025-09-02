@@ -142,11 +142,9 @@ export const MigrateButton = ({
                   configurations: {
                     ...Object.entries(serviceTemplate.configurations).reduce(
                       (acc, [middlewareChain]) => {
+                        // @ts-expect-error TODO: to be fixed
                         acc[middlewareChain] = {
                           staking_program_id: stakingProgramIdToMigrateTo,
-                          use_mech_marketplace:
-                            stakingProgramIdToMigrateTo ===
-                            StakingProgramId.PearlBetaMechMarketplace,
                         };
                         return acc;
                       },
@@ -157,16 +155,11 @@ export const MigrateButton = ({
               });
             } else {
               // create service if it doesn't exist
-
               const serviceConfigParams = {
                 stakingProgramId: stakingProgramIdToMigrateTo,
                 serviceTemplate,
                 deploy: true,
-                useMechMarketplace:
-                  stakingProgramIdToMigrateTo ===
-                  StakingProgramId.PearlBetaMechMarketplace,
               };
-
               await ServicesService.createService(serviceConfigParams);
             }
 

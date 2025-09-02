@@ -6,3 +6,6 @@ daf41a143aa8c483db584ba1e7222e8eafec1d3b:backend/controller.py:generic-api-key:2
 af77e930289cbc87987567bff0efc25936484df2:backend/controller.py:generic-api-key:354b04972639d66053109596d3b73a1d91688964ebb:electron/constants/publishOptions.js:github-fine-grained-pat:3
 b04972639d66053109596d3b73a1d91688964ebb:electron/constants/publishOptions.js:github-fine-grained-pat:3
 af77e930289cbc87987567bff0efc25936484df2:backend/controller.py:generic-api-key:354
+109e5e452b22cade347872b3a6c7dfb8822131d8:frontend/components/SetupPage/Create/SetupOnRamp/PayingReceivingTable/useTotalFiatFromNativeToken.ts:generic-api-key:8
+109e5e452b22cade347872b3a6c7dfb8822131d8:frontend/components/OnRampWidget/OnRampWidget.tsx:generic-api-key:13
+6f85db13b048497b7dd735d65017fbd4d714424b:frontend/components/OnRampWidget/OnRampWidget.tsx:generic-api-key:12

@@ -37,6 +37,3 @@ export type AgentSafe = Safe & { owner: WalletOwnerType.Agent };
 export type MasterWallet = MasterEoa | MasterSafe;
 export type AgentWallet = AgentEoa | AgentSafe;
 export type Wallet = MasterWallet | AgentWallet;
-
-/** @deprecated use AgentWallet[] instead */
-export type AgentWallets = AgentWallet[];

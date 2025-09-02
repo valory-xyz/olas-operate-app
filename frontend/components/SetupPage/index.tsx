@@ -1,13 +1,17 @@
+import { Typography } from 'antd';
 import { useContext, useMemo } from 'react';
 
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
 import { AgentSelection } from '../AgentSelection';
+import { CardFlex } from '../styled/CardFlex';
 import { AgentIntroduction } from './AgentIntroduction/AgentIntroduction';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
+import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding/SetupBridgeOnboarding';
 import { SetupCreateSafe } from './Create/SetupCreateSafe';
-import { SetupEoaFunding } from './Create/SetupEoaFunding';
+import { SetupEoaFunding } from './Create/SetupEoaFunding/SetupEoaFunding';
+import { SetupOnRamp } from './Create/SetupOnRamp/SetupOnRamp';
 import { SetupPassword } from './Create/SetupPassword';
 import { SetupSeedPhrase } from './Create/SetupSeedPhrase';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
@@ -20,8 +24,14 @@ import {
 import { SetupWelcome } from './SetupWelcome';
 import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
 
+const { Title } = Typography;
+
 const UnexpectedError = () => (
-  <div style={{ height: 400 }}>Something went wrong!</div>
+  <CardFlex style={{ height: 400, textAlign: 'center' }} $noBorder>
+    <Title level={4} className="m-0">
+      Something went wrong!
+    </Title>
+  </CardFlex>
 );
 
 export const Setup = () => {
@@ -53,6 +63,14 @@ export const Setup = () => {
         return <EarlyAccessOnly />;
       case SetupScreen.SetupYourAgent:
         return <SetupYourAgent />;
+
+      // Bridge account
+      case SetupScreen.SetupBridgeOnboardingScreen:
+        return <SetupBridgeOnboarding />;
+
+      // On Ramp
+      case SetupScreen.SetupOnRamp:
+        return <SetupOnRamp />;
 
       // Restore account
       case SetupScreen.Restore:

@@ -39,8 +39,28 @@ export type TokenConfig =
   | WrappedTokenConfig;
 
 export type ChainTokenConfig = {
-  [tokenSymbol: string]: TokenConfig;
+  [tokenSymbol: string]: TokenConfig; // TODO: tokenSymbol should be TokenSymbol
 };
+
+export const ETHEREUM_TOKEN_CONFIG: ChainTokenConfig = {
+  [TokenSymbol.ETH]: {
+    tokenType: TokenType.NativeGas,
+    decimals: 18,
+    symbol: TokenSymbol.ETH,
+  },
+  [TokenSymbol.OLAS]: {
+    address: '0x0001A500A6B18995B03f44bb040A5fFc28E45CB0',
+    decimals: 18,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbol.OLAS,
+  },
+  [TokenSymbol.USDC]: {
+    address: '0xA0b86991c6218b36c1d19D4a2e9EB0CE3606EB48',
+    decimals: 6,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbol.USDC,
+  },
+} as const;
 
 const GNOSIS_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbol.XDAI]: {
@@ -76,20 +96,6 @@ const BASE_TOKEN_CONFIG: ChainTokenConfig = {
   },
 } as const;
 
-const CELO_TOKEN_CONFIG: ChainTokenConfig = {
-  [TokenSymbol.ETH]: {
-    tokenType: TokenType.NativeGas,
-    decimals: 18,
-    symbol: TokenSymbol.ETH,
-  },
-  [TokenSymbol.OLAS]: {
-    address: '0xaCFfAe8e57Ec6E394Eb1b41939A8CF7892DbDc51',
-    decimals: 18,
-    tokenType: TokenType.Erc20,
-    symbol: TokenSymbol.OLAS,
-  },
-} as const;
-
 export const MODE_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbol.ETH]: {
     tokenType: TokenType.NativeGas,
@@ -115,13 +121,48 @@ export const MODE_TOKEN_CONFIG: ChainTokenConfig = {
   },
 };
 
+export const OPTIMISM_TOKEN_CONFIG: ChainTokenConfig = {
+  [TokenSymbol.ETH]: {
+    tokenType: TokenType.NativeGas,
+    symbol: TokenSymbol.ETH,
+    decimals: 18,
+  },
+  [TokenSymbol.OLAS]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbol.OLAS,
+    decimals: 18,
+    address: '0xFC2E6e6BCbd49ccf3A5f029c79984372DcBFE527',
+  },
+  /**
+   * @warning USDC is a special case, it has 6 decimals, not 18.
+   * @link https://optimism.blockscout.com/address/0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85?tab=read_write_proxy&source_address=0xdEd3b9a8DBeDC2F9CB725B55d0E686A81E6d06dC#0x313ce567
+   * @note When parsing or formatting units, use `decimals` (6) instead of the standard `ether` sizing (10^18).
+   */
+  [TokenSymbol.USDC]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbol.USDC,
+    decimals: 6,
+    address: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
+  },
+};
+
+/**
+ * TODO:
+ * 1. combine EvmChainId and AllEvmChainId into one thing to avoid confusion
+ * 2. include ethereum config into this and make it so balances are not requested for it
+ */
 export const TOKEN_CONFIG: Record<EvmChainId, ChainTokenConfig> = {
   [EvmChainId.Gnosis]: GNOSIS_TOKEN_CONFIG,
   [EvmChainId.Base]: BASE_TOKEN_CONFIG,
   [EvmChainId.Mode]: MODE_TOKEN_CONFIG,
-  [EvmChainId.Celo]: CELO_TOKEN_CONFIG,
+  [EvmChainId.Optimism]: OPTIMISM_TOKEN_CONFIG,
 } as const;
 
+type ChainErc20TokenConfig = {
+  [chainId in EvmChainId]: {
+    [tokenSymbol: string]: Erc20TokenConfig;
+  };
+};
 /**
  * @note This is a mapping of all ERC20 tokens on each chain.
  */
@@ -134,12 +175,13 @@ export const ERC20_TOKEN_CONFIG = Object.fromEntries(
       ),
     ),
   ]),
-) as {
+) as ChainErc20TokenConfig;
+
+type ChainNativeTokenConfig = {
   [chainId in EvmChainId]: {
-    [tokenSymbol: string]: Erc20TokenConfig;
+    [tokenSymbol: string]: NativeTokenConfig;
   };
 };
-
 /**
  * @note This is a mapping of all native tokens on each chain.
  */
@@ -152,11 +194,7 @@ export const NATIVE_TOKEN_CONFIG = Object.fromEntries(
       ),
     ),
   ]),
-) as {
-  [chainId in EvmChainId]: {
-    [tokenSymbol: string]: NativeTokenConfig;
-  };
-};
+) as ChainNativeTokenConfig;
 
 export const getNativeTokenSymbol = (chainId: EvmChainId): TokenSymbol =>
   Object.keys(NATIVE_TOKEN_CONFIG[chainId])[0] as TokenSymbol;

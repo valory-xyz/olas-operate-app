@@ -32,6 +32,7 @@
     "@types/node": "20.14.10",
     "@types/react": "18.3.3",
     "@types/react-dom": "^18",
+    "@types/zxcvbn": "^4.4.5",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.56.0",
@@ -56,7 +57,8 @@
     "build": "bash -c \"GNOSIS_RPC=$GNOSIS_RPC BASE_RPC=$BASE_RPC OPTIMISM_RPC=$OPTIMISM_RPC ETHEREUM_RPC=$ETHEREUM_RPC MODE_RPC=$MODE_RPC CELO_RPC=$CELO_RPC NODE_ENV=production next build\"",
     "lint": "next lint",
     "test": "jest",
-    "start": "next start"
+    "start": "next start",
+    "check": "yarn run lint && tsc --noEmit --incremental false"
   },
   "version": "0.1.0"
 }
