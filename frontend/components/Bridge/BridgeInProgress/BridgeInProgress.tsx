@@ -8,6 +8,7 @@ import {
 } from '@/components/Bridge/BridgeInProgress/BridgingSteps';
 import { BridgeTransferFlow } from '@/components/Bridge/BridgeTransferFlow';
 import { CardFlex } from '@/components/styled/CardFlex';
+import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
 import { Pages } from '@/enums/Pages';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
@@ -35,6 +36,7 @@ type BridgeInProgressProps = {
   onBridgeRetryOutcome: (outcome: Nullable<BridgeRetryOutcome>) => void;
   enabledStepsAfterBridging?: EnabledSteps;
   onNext: () => void;
+  isBridgeCompleted?: boolean;
 } & CrossChainTransferDetails;
 
 /**
@@ -49,6 +51,7 @@ export const BridgeInProgress = ({
   onBridgeRetryOutcome,
   enabledStepsAfterBridging = [],
   onNext,
+  isBridgeCompleted = false,
 }: BridgeInProgressProps) => {
   const { goto } = usePageState();
   const symbols = transfers.map((transfer) => transfer.toSymbol);
@@ -271,6 +274,7 @@ export const BridgeInProgress = ({
           fromChain={fromChain}
           toChain={toChain}
           transfers={transfers}
+          isBridgeCompleted={isBridgeCompleted}
         />
 
         {!!bridgeDetails && (
@@ -282,6 +286,8 @@ export const BridgeInProgress = ({
           />
         )}
       </CardFlex>
+
+      {isBridgeCompleted && <AgentSetupCompleteModal />}
     </Flex>
   );
 };

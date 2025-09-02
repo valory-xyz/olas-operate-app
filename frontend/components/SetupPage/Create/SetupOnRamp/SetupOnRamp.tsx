@@ -33,12 +33,12 @@ const KeepOpenAlert = () => (
 );
 
 export const SetupOnRamp = () => {
-  const { goto: gotoSetup } = useSetup();
+  const { goto: gotoSetup, prevState } = useSetup();
   const { networkId } = useOnRampContext();
 
   const handlePrevStep = useCallback(() => {
-    gotoSetup(SetupScreen.SetupEoaFunding);
-  }, [gotoSetup]);
+    gotoSetup(prevState ?? SetupScreen.SetupEoaFunding);
+  }, [gotoSetup, prevState]);
 
   return (
     <Flex justify="center" style={{ marginTop: 40 }}>

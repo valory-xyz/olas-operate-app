@@ -28,6 +28,7 @@ export const SetupBridgeOnboarding = () => {
       bridgeFromDescription={BRIDGE_FROM_MESSAGE}
       getBridgeRequirementsParams={getBridgeRequirementsParams}
       onPrevBeforeBridging={handlePrevStep}
+      isOnboarding
     />
   );
 };

@@ -25,6 +25,7 @@ type BridgeProps = {
   getBridgeRequirementsParams: GetBridgeRequirementsParams;
   enabledStepsAfterBridging?: EnabledSteps;
   onPrevBeforeBridging: () => void;
+  isOnboarding?: boolean;
 };
 
 /**
@@ -38,6 +39,7 @@ export const Bridge = ({
   bridgeFromDescription,
   enabledStepsAfterBridging,
   onPrevBeforeBridging,
+  isOnboarding = false,
 }: BridgeProps) => {
   const { goto } = usePageState();
 
@@ -97,8 +99,8 @@ export const Bridge = ({
     }
   }, [showCompleteScreen, bridgeState, goto]);
 
-  switch (bridgeState) {
-    case 'depositing':
+  switch (true) {
+    case bridgeState === 'depositing':
       return (
         <BridgeOnEvm
           bridgeFromDescription={bridgeFromDescription}
@@ -109,7 +111,12 @@ export const Bridge = ({
           onNext={handleNextStep}
         />
       );
-    case 'in_progress': {
+    /**
+     * In case of onboarding, instead of showing the `BridgeCompleted` component to the user,
+     * Show the Setup complete modal on top of the `BridgeInProgress` component
+     */
+    case bridgeState === 'in_progress':
+    case bridgeState === 'completed' && isOnboarding: {
       if (!quoteId) throw new Error(QUOTE_ID_ERROR);
       if (!transferAndReceivingDetails) throw new Error(TRANSFER_AMOUNTS_ERROR);
       return (
@@ -122,10 +129,11 @@ export const Bridge = ({
           }
           enabledStepsAfterBridging={enabledStepsAfterBridging}
           onNext={handleNextStep}
+          isBridgeCompleted={bridgeState === 'completed'}
         />
       );
     }
-    case 'completed':
+    case bridgeState === 'completed':
       if (!transferAndReceivingDetails) throw new Error(TRANSFER_AMOUNTS_ERROR);
       if (!showCompleteScreen || !showCompleteScreen.completionMessage) {
         throw new Error('Completion message is required for completed state');
