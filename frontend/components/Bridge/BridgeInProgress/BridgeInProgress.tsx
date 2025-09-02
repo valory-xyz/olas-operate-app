@@ -8,8 +8,7 @@ import {
 } from '@/components/Bridge/BridgeInProgress/BridgingSteps';
 import { BridgeTransferFlow } from '@/components/Bridge/BridgeTransferFlow';
 import { CardFlex } from '@/components/styled/CardFlex';
-import { Title3 } from '@/components/ui/Typography';
-import { Title5 } from '@/components/ui/Typography/Title5';
+import { Title3, Title5 } from '@/components/ui/Typography';
 import { Pages } from '@/enums/Pages';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
@@ -26,7 +25,7 @@ const KeepAppOpenAlert = () => (
   <CustomAlert
     type="warning"
     showIcon
-    message={'Keep the app open until the process is complete.'}
+    message="Keep the app open until the process is complete."
     className="mb-32"
   />
 );

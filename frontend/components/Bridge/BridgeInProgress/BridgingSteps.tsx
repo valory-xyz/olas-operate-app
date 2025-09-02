@@ -1,5 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { Steps, Typography } from 'antd';
+import { Steps as AntdSteps, Typography } from 'antd';
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
@@ -13,7 +13,7 @@ import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
 const { Text } = Typography;
 
-const StyledSteps = styled(Steps)`
+const Steps = styled(AntdSteps)`
   .ant-steps-item-title {
     color: ${COLOR.TEXT} !important;
   }
@@ -198,7 +198,7 @@ export const BridgingSteps = ({
   );
 
   return (
-    <StyledSteps
+    <Steps
       size="small"
       direction="vertical"
       className="mt-32"

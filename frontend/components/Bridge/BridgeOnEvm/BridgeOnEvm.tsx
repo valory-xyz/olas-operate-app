@@ -3,8 +3,7 @@ import { Flex, Typography } from 'antd';
 import { FundingDescription } from '@/components/SetupPage/FundYourAgent/components/FundingDescription';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
-import { Title3 } from '@/components/ui/Typography';
-import { Title5 } from '@/components/ui/Typography/Title5';
+import { Title3, Title5 } from '@/components/ui/Typography';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
 import { GetBridgeRequirementsParams } from '../types';

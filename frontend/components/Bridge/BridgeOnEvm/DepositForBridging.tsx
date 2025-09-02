@@ -374,6 +374,7 @@ export const DepositForBridging = ({
         <TokenRequirementsTable
           isLoading={isRequestingQuote}
           tableData={tableData}
+          locale={{ emptyText: 'No tokens to deposit!' }}
         />
       )}
     </>

@@ -1,5 +1,5 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Button, Flex } from 'antd';
+import { Button as AntdButton, Flex } from 'antd';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
@@ -8,7 +8,7 @@ type AgentHeaderV1Props = {
   onPrev?: () => void;
 };
 
-const CustomButton = styled(Button)`
+const Button = styled(AntdButton)`
   font-size: 16px;
   color: ${COLOR.TEXT_NEUTRAL_TERTIARY} !important;
 `;
@@ -19,7 +19,7 @@ const CustomButton = styled(Button)`
 export const BackButton = ({ onPrev }: AgentHeaderV1Props) => (
   <Flex>
     {onPrev && (
-      <CustomButton
+      <Button
         onClick={() => onPrev()}
         icon={<LeftOutlined className="text-xs" />}
         type="text"
@@ -28,7 +28,7 @@ export const BackButton = ({ onPrev }: AgentHeaderV1Props) => (
         style={{ paddingLeft: 4 }}
       >
         Back
-      </CustomButton>
+      </Button>
     )}
   </Flex>
 );

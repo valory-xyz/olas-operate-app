@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
-import { Title4 } from '@/components/ui/Typography/Title4';
+import { Title4 } from '@/components/ui/Typography';
 import { ChainImageMap, EvmChainName } from '@/constants/chains';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';

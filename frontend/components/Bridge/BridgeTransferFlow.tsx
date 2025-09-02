@@ -1,4 +1,4 @@
-import { Flex, Image, List, Typography } from 'antd';
+import { Flex, Image, List as AntdList, Typography } from 'antd';
 import { kebabCase } from 'lodash';
 import React from 'react';
 import styled from 'styled-components';
@@ -12,7 +12,7 @@ import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
 
-const StyledList = styled(List)`
+const List = styled(AntdList<TokenTransfer>)`
   .ant-list-header {
     background-color: ${COLOR.BACKGROUND};
     border-top-left-radius: 8px;
@@ -26,7 +26,7 @@ const StyledList = styled(List)`
 `;
 
 const TransferChain = ({ chainName }: { chainName: MiddlewareChain }) => (
-  <Flex gap={8} align="center" style={{ width: '50%' }}>
+  <Flex gap={8} align="center" flex={1}>
     <Image
       src={`/chains/${kebabCase(asEvmChainDetails(chainName).name)}-chain.png`}
       width={20}
@@ -48,13 +48,13 @@ const TransferringAndReceivingRow = ({
     <Flex className="w-full">
       <Text
         className="text-sm text-neutral-tertiary"
-        style={{ width: '50%', textAlign: 'left' }}
+        style={{ flex: 1, textAlign: 'left' }}
       >
         You Sent
       </Text>
       <Text
         className="text-sm text-neutral-tertiary"
-        style={{ width: '50%', textAlign: 'left' }}
+        style={{ flex: 1, textAlign: 'left' }}
       >
         {isBridgeCompleted ? 'You Received' : 'You Receive'}
       </Text>
@@ -69,7 +69,7 @@ const TransferRow = ({ transfer }: { transfer: TokenTransfer }) => {
   return (
     <List.Item>
       <Flex justify="space-between" className="w-full">
-        <Flex style={{ width: '50%' }} align="center" gap={8}>
+        <Flex flex={1} align="center" gap={8}>
           <Image
             src={fromIconSrc}
             alt={fromSymbol}
@@ -80,7 +80,7 @@ const TransferRow = ({ transfer }: { transfer: TokenTransfer }) => {
             {formatUnitsToNumber(fromAmount, decimals, 5)} {fromSymbol}
           </Text>
         </Flex>
-        <Flex style={{ width: '50%' }} align="center" gap={8}>
+        <Flex flex={1} align="center" gap={8}>
           <Image
             src={toIconSrc}
             alt={toSymbol}
@@ -111,7 +111,7 @@ export const BridgeTransferFlow = ({
   isBridgeCompleted = false,
 }: BridgeTransferFlowProps) => {
   return (
-    <StyledList
+    <List
       dataSource={transfers}
       header={
         <Flex align="center" className="w-full">
@@ -126,7 +126,7 @@ export const BridgeTransferFlow = ({
               isBridgeCompleted={isBridgeCompleted}
             />
           )}
-          <TransferRow transfer={transfer as TokenTransfer} />
+          <TransferRow transfer={transfer} />
         </>
       )}
       bordered

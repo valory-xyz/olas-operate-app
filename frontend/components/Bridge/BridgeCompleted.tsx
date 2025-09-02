@@ -12,6 +12,8 @@ type BridgeCompletedProps = Omit<CrossChainTransferDetails, 'eta'> & {
   completionMessage?: string;
 };
 
+const CARD_WIDTH = 624;
+
 /**
  * Final screen displayed when the bridging process is completed.
  * It shows the transfer details and a button to navigate to the wallet balance page.
@@ -26,7 +28,11 @@ export const BridgeCompleted = ({
 
   return (
     <Flex justify="center" style={{ marginTop: 40 }}>
-      <CardFlex $noBorder bordered={false} style={{ width: 624, padding: 8 }}>
+      <CardFlex
+        $noBorder
+        bordered={false}
+        style={{ width: CARD_WIDTH, padding: 8 }}
+      >
         <Flex justify="space-between" align="center">
           <Title3>Bridge Completed</Title3>
           <GoToMainPageButton />
@@ -37,12 +43,7 @@ export const BridgeCompleted = ({
             completionMessage || 'Funds have been bridged successfully.'
           }
           extra={[
-            <Flex
-              key="bridge-completed"
-              gap={24}
-              vertical
-              style={{ paddingTop: 8 }}
-            >
+            <Flex key="bridge-completed" gap={24} vertical className="pt-8">
               <BridgeTransferFlow
                 fromChain={fromChain}
                 toChain={toChain}

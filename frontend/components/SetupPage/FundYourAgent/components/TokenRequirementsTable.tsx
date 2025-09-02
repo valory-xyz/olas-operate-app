@@ -6,10 +6,15 @@ import {
   Tag,
   Typography,
 } from 'antd';
+import { type TableLocale } from 'antd/es/table/interface';
 import styled from 'styled-components';
 
 import { Table } from '@/components/ui/Table';
 import { COLOR } from '@/constants/colors';
+
+const LOCALE = {
+  emptyText: 'No token requirements',
+};
 
 const { Text } = Typography;
 
@@ -71,18 +76,19 @@ const columns: TableColumnsType = [
 export const TokenRequirementsTable = ({
   isLoading,
   tableData,
+  locale = LOCALE,
 }: {
   isLoading: boolean;
   tableData: TokenRowData[];
+  locale?: TableLocale;
 }) => {
-  if (!isLoading && tableData.length === 0) return null;
-
   return (
     <Table
       dataSource={tableData}
       columns={columns}
       loading={isLoading}
       pagination={false}
+      locale={locale}
     />
   );
 };
