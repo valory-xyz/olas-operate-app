@@ -45,7 +45,7 @@ const RunAgentAlert = () => (
 );
 
 const useStakingDetails = () => {
-  const { isLoaded: isBalanceLoaded } = useBalanceContext();
+  const { isLoading } = useBalanceContext();
   const { isEligibleForRewards } = useRewardContext();
   const {
     latestRewardStreak: streak,
@@ -68,16 +68,13 @@ const useStakingDetails = () => {
     if (checkpoints.length === 0) return;
 
     const currentEpoch = checkpoints[0];
-    const timeRemaining =
-      (currentEpoch.epochEndTimeStamp + ONE_DAY_IN_S) * 1000;
-
-    return timeRemaining;
+    return (currentEpoch.epochEndTimeStamp + ONE_DAY_IN_S) * 1000;
   }, [contractCheckpoints, recentStakingContractAddress]);
 
   // Determine fire color based on hours left in the epoch
   const fireColor = useMemo(() => {
     if (isEligibleForRewards) return COLOR.PURPLE;
-    if (!currentEpochLifetime) return;
+    if (!currentEpochLifetime) return COLOR.TEXT_NEUTRAL_TERTIARY;
 
     const hoursLeft = (currentEpochLifetime - Date.now()) / (1000 * 60 * 60);
     if (hoursLeft > 12) return COLOR.TEXT_NEUTRAL_TERTIARY;
@@ -87,7 +84,7 @@ const useStakingDetails = () => {
 
   // If rewards history is loading for the first time
   // or balances are not fetched yet - show loading state
-  const isStreakLoading = isRewardsHistoryLoading || !isBalanceLoaded;
+  const isStreakLoading = isLoading || isRewardsHistoryLoading;
 
   return {
     isStreakLoading,
@@ -138,9 +135,6 @@ export const Staking = () => {
         <Title4>Staking</Title4>
         <Button size="small" onClick={() => goto(Pages.ManageStaking)}>
           Manage Staking
-        </Button>
-        <Button size="small" onClick={() => goto(Pages.RewardsHistory)}>
-          History
         </Button>
       </Flex>
 
