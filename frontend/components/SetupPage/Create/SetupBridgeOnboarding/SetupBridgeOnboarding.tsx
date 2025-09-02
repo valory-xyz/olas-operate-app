@@ -19,7 +19,7 @@ export const SetupBridgeOnboarding = () => {
   );
 
   const handlePrevStep = useCallback(() => {
-    gotoSetup(SetupScreen.SetupEoaFunding);
+    gotoSetup(SetupScreen.FundYourAgent);
   }, [gotoSetup]);
 
   return (
