@@ -11,6 +11,7 @@ import { Address } from '@/types/Address';
 
 type SetupObjectType = {
   state: SetupScreen;
+  prevState?: SetupScreen | null;
   mnemonic: string[];
   backupSigner?: Address;
 };
@@ -23,6 +24,7 @@ type SetupContextType = {
 export const SetupContext = createContext<SetupContextType>({
   setupObject: {
     state: SetupScreen.Welcome,
+    prevState: null,
     mnemonic: [],
     backupSigner: undefined,
   },
@@ -32,6 +34,7 @@ export const SetupContext = createContext<SetupContextType>({
 export const SetupProvider = ({ children }: PropsWithChildren) => {
   const [setupObject, setSetupObject] = useState<SetupObjectType>({
     state: SetupScreen.Welcome,
+    prevState: null,
     mnemonic: [],
     backupSigner: undefined,
   });

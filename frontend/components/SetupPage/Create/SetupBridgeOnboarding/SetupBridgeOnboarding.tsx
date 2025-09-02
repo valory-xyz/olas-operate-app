@@ -11,7 +11,7 @@ const BRIDGE_FROM_MESSAGE =
   'Send the specified amounts from your external wallet to the Pearl Wallet address below. Pearl will automatically detect your transfer and bridge the funds for you.';
 
 export const SetupBridgeOnboarding = () => {
-  const { goto: gotoSetup } = useSetup();
+  const { goto: gotoSetup, prevState } = useSetup();
 
   // Bridging is supported only for Ethereum at the moment.
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
@@ -19,8 +19,8 @@ export const SetupBridgeOnboarding = () => {
   );
 
   const handlePrevStep = useCallback(() => {
-    gotoSetup(SetupScreen.FundYourAgent);
-  }, [gotoSetup]);
+    gotoSetup(prevState || SetupScreen.SetupEoaFunding);
+  }, [gotoSetup, prevState]);
 
   return (
     <Bridge
