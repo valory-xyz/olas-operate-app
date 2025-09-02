@@ -19,7 +19,7 @@ export const LowBalanceAlert = () => {
 
   return (
     <>
-      {!isMasterEoaLowOnGas ? (
+      {isMasterEoaLowOnGas ? (
         <CustomAlert
           showIcon
           className="mt-16"
@@ -53,7 +53,7 @@ export const LowBalanceAlert = () => {
         />
       ) : null}
 
-      {!isMasterSafeLowOnNativeGas ? (
+      {isMasterSafeLowOnNativeGas ? (
         <CustomAlert
           showIcon
           className="mt-16"

@@ -12,6 +12,18 @@ import { AgentStatus } from './types';
 
 const { Paragraph } = Typography;
 
+const IdleContent = () => (
+  <>
+    Agent has earned staking rewards and is in standby mode for the next epoch{' '}
+    <InfoTooltip iconStyles={{ color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT }}>
+      <Paragraph className="text-sm m-0">
+        The agent is inactive during standby. If you keep it running, it will
+        resume activity automatically at the start of the next epoch.
+      </Paragraph>
+    </InfoTooltip>
+  </>
+);
+
 export const AgentActivity = () => {
   const { isDeployable } = useServiceDeployment();
   const { deploymentDetails, isServiceRunning, isServiceDeploying } =
@@ -33,21 +45,7 @@ export const AgentActivity = () => {
       if (isEligibleForRewards) {
         return {
           status: 'idle',
-          content: (
-            <>
-              Agent has earned staking rewards and is in standby mode for the
-              next epoch{' '}
-              <InfoTooltip
-                iconStyles={{ color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT }}
-              >
-                <Paragraph className="text-sm m-0">
-                  The agent is inactive during standby. If you keep it running,
-                  it will resume activity automatically at the start of the next
-                  epoch.
-                </Paragraph>
-              </InfoTooltip>
-            </>
-          ),
+          content: <IdleContent />,
         };
       }
       if (deploymentDetails?.healthcheck?.rounds) {

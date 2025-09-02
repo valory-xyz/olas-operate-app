@@ -23,8 +23,11 @@ export const AgentDisabledAlert = () => {
   if (selectedAgentConfig.isUnderConstruction)
     return <UnderConstructionAlert />;
 
-  if (isSelectedStakingContractDetailsLoading) return null;
-  if (!isServiceStaked && !hasEnoughServiceSlots)
+  if (
+    !isSelectedStakingContractDetailsLoading &&
+    !isServiceStaked &&
+    !hasEnoughServiceSlots
+  )
     return <NoSlotsAvailableAlert />;
 
   if (isAgentEvicted && !isEligibleForStaking) return <EvictedAlert />;
