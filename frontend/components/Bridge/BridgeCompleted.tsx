@@ -1,9 +1,9 @@
 import { Button, Flex, Result } from 'antd';
 
 import { BridgeTransferFlow } from '@/components/Bridge/BridgeTransferFlow';
-import { CardTitle } from '@/components/Card/CardTitle';
 import { GoToMainPageButton } from '@/components/Pages/GoToMainPageButton';
 import { CardFlex } from '@/components/styled/CardFlex';
+import { Title3 } from '@/components/ui/Typography';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { CrossChainTransferDetails } from '@/types/Bridge';
@@ -26,13 +26,11 @@ export const BridgeCompleted = ({
 
   return (
     <Flex justify="center" style={{ marginTop: 40 }}>
-      <CardFlex
-        $noBorder
-        bordered={false}
-        title={<CardTitle title="Bridge Completed" />}
-        extra={<GoToMainPageButton />}
-        style={{ width: 624, padding: 8 }}
-      >
+      <CardFlex $noBorder bordered={false} style={{ width: 624, padding: 8 }}>
+        <Flex justify="space-between" align="center">
+          <Title3>Bridge Completed</Title3>
+          <GoToMainPageButton />
+        </Flex>
         <Result
           status="success"
           subTitle={
@@ -49,6 +47,7 @@ export const BridgeCompleted = ({
                 fromChain={fromChain}
                 toChain={toChain}
                 transfers={transfers}
+                isBridgeCompleted
               />
               <Button
                 onClick={() => goto(Pages.ManageWallet)}

@@ -39,7 +39,11 @@ const TransferChain = ({ chainName }: { chainName: MiddlewareChain }) => (
   </Flex>
 );
 
-const TransferringAndReceivingRow = () => (
+const TransferringAndReceivingRow = ({
+  isBridgeCompleted,
+}: {
+  isBridgeCompleted?: boolean;
+}) => (
   <List.Item>
     <Flex className="w-full">
       <Text
@@ -52,7 +56,7 @@ const TransferringAndReceivingRow = () => (
         className="text-sm text-neutral-tertiary"
         style={{ width: '50%', textAlign: 'left' }}
       >
-        You Receive
+        {isBridgeCompleted ? 'You Received' : 'You Receive'}
       </Text>
     </Flex>
   </List.Item>
@@ -92,7 +96,9 @@ const TransferRow = ({ transfer }: { transfer: TokenTransfer }) => {
   );
 };
 
-type BridgeTransferFlowProps = Omit<CrossChainTransferDetails, 'eta'>;
+type BridgeTransferFlowProps = Omit<CrossChainTransferDetails, 'eta'> & {
+  isBridgeCompleted?: boolean;
+};
 
 /**
  * Presentational component for the bridge transfer flow
@@ -102,6 +108,7 @@ export const BridgeTransferFlow = ({
   fromChain,
   toChain,
   transfers,
+  isBridgeCompleted = false,
 }: BridgeTransferFlowProps) => {
   return (
     <StyledList
@@ -114,7 +121,11 @@ export const BridgeTransferFlow = ({
       }
       renderItem={(transfer, index) => (
         <>
-          {index === 0 && <TransferringAndReceivingRow />}
+          {index === 0 && (
+            <TransferringAndReceivingRow
+              isBridgeCompleted={isBridgeCompleted}
+            />
+          )}
           <TransferRow transfer={transfer as TokenTransfer} />
         </>
       )}
