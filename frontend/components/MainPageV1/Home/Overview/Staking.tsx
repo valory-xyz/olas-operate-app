@@ -95,7 +95,7 @@ const useStakingDetails = () => {
   };
 };
 
-export const Streak = () => {
+const Streak = () => {
   const { isStreakLoading, isStreakError, optimisticStreak, fireColor } =
     useStakingDetails();
 
@@ -117,6 +117,9 @@ export const Streak = () => {
   );
 };
 
+/**
+ * To display current epoch lifetime, streak, and relevant alerts.
+ */
 export const Staking = () => {
   const { goto } = usePageState();
   const { isAgentEvicted } = useActiveStakingContractDetails();
