@@ -6,7 +6,6 @@ import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
 import { FundingDescription } from '@/components/ui/FundingDescription';
 import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
-import { Title4 } from '@/components/ui/Typography';
 import { ChainImageMap, EvmChainName } from '@/constants/chains';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -18,7 +17,7 @@ import { delayInSeconds } from '@/utils/delay';
 import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
 import { useTokensFundingStatus } from './hooks/useTokensFundingStatus';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 export const TransferFunds = () => {
   const { goto: gotoSetup } = useSetup();
@@ -65,7 +64,9 @@ export const TransferFunds = () => {
     <Flex justify="center" style={{ marginTop: 40 }}>
       <CardFlex $noBorder style={{ width: 624, padding: 8 }}>
         <BackButton onPrev={() => gotoSetup(SetupScreen.FundYourAgent)} />
-        <Title4>Transfer Crypto on {chainName}</Title4>
+        <Title level={3} className="mt-16">
+          Transfer Crypto on {chainName}
+        </Title>
         <Text className="text-neutral-secondary">
           Send the specified amounts from your external wallet to the Pearl
           Wallet address below. Pearl will automatically detect your transfer.

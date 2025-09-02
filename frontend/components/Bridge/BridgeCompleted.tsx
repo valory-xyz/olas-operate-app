@@ -1,12 +1,13 @@
-import { Button, Flex, Result } from 'antd';
+import { Button, Flex, Result, Typography } from 'antd';
 
 import { BridgeTransferFlow } from '@/components/Bridge/BridgeTransferFlow';
 import { GoToMainPageButton } from '@/components/Pages/GoToMainPageButton';
 import { CardFlex } from '@/components/styled/CardFlex';
-import { Title3 } from '@/components/ui/Typography';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { CrossChainTransferDetails } from '@/types/Bridge';
+
+const { Title } = Typography;
 
 type BridgeCompletedProps = Omit<CrossChainTransferDetails, 'eta'> & {
   completionMessage?: string;
@@ -34,7 +35,9 @@ export const BridgeCompleted = ({
         style={{ width: CARD_WIDTH, padding: 8 }}
       >
         <Flex justify="space-between" align="center">
-          <Title3>Bridge Completed</Title3>
+          <Title level={3} className="mt-12">
+            Bridge Completed
+          </Title>
           <GoToMainPageButton />
         </Flex>
         <Result

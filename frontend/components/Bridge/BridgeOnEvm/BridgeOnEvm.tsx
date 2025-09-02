@@ -3,13 +3,12 @@ import { Flex, Typography } from 'antd';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
 import { FundingDescription } from '@/components/ui/FundingDescription';
-import { Title3, Title5 } from '@/components/ui/Typography';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
 import { GetBridgeRequirementsParams } from '../types';
 import { DepositForBridging } from './DepositForBridging';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const FROM_CHAIN_NAME = 'Ethereum';
 const FROM_CHAIN_IMAGE = '/chains/ethereum-chain.png';
@@ -38,8 +37,12 @@ export const BridgeOnEvm = ({
   <Flex justify="center" style={{ marginTop: 40 }}>
     <CardFlex $noBorder style={{ width: 624, padding: 8 }}>
       <BackButton onPrev={onPrev} />
-      <Title3 className="mt-24">Bridge Crypto from {FROM_CHAIN_NAME}</Title3>
-      <Title5 className="mt-12 mb-8">Step 1. Send Funds</Title5>
+      <Title level={3} className="mt-16">
+        Bridge Crypto from {FROM_CHAIN_NAME}
+      </Title>
+      <Title level={5} className="mt-12 mb-8">
+        Step 1. Send Funds
+      </Title>
       <Text className="text-base text-lighter">{bridgeFromDescription}</Text>
 
       <FundingDescription

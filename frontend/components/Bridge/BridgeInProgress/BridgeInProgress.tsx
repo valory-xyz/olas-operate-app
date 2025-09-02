@@ -8,7 +8,6 @@ import {
 } from '@/components/Bridge/BridgeInProgress/BridgingSteps';
 import { BridgeTransferFlow } from '@/components/Bridge/BridgeTransferFlow';
 import { CardFlex } from '@/components/styled/CardFlex';
-import { Title3, Title5 } from '@/components/ui/Typography';
 import { Pages } from '@/enums/Pages';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
@@ -19,7 +18,7 @@ import { Nullable } from '@/types/Util';
 import { BridgeRetryOutcome, EnabledSteps } from '../types';
 import { useRetryBridge } from './useRetryBridge';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const KeepAppOpenAlert = () => (
   <CustomAlert
@@ -255,8 +254,12 @@ export const BridgeInProgress = ({
   return (
     <Flex justify="center" style={{ marginTop: 40 }}>
       <CardFlex $noBorder style={{ width: 624, padding: 8 }}>
-        <Title3 className="mt-0">Bridge Crypto</Title3>
-        <Title5 className="mt-12 mb-8">Step 2. Bridging In Progress</Title5>
+        <Title level={3} className="mt-0">
+          Bridge Crypto
+        </Title>
+        <Title level={5} className="mt-12 mb-8">
+          Step 2. Bridging In Progress
+        </Title>
         <Text type="secondary" className="mb-24">
           Funds have been received, and the bridging process has been started.
           Estimated time: 25-30 minutes.

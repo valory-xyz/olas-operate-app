@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
-import { CardTitle, Title3 } from '@/components/ui/Typography';
+import { CardTitle } from '@/components/ui/Typography';
 import { EvmChainName } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -21,7 +21,7 @@ import {
 } from './components/TokensRequirements';
 import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const FundYourAgentContainer = styled(Flex)`
   align-items: center;
@@ -176,7 +176,9 @@ export const FundYourAgent = () => {
   return (
     <FundYourAgentContainer>
       <BackButton onPrev={() => goto(SetupScreen.AgentOnboarding)} />
-      <Title3>Fund your {selectedAgentConfig.displayName}</Title3>
+      <Title level={3} className="mt-12">
+        Fund your {selectedAgentConfig.displayName}
+      </Title>
       <Text type="secondary">
         Select the payment method that suits you best.
       </Text>
