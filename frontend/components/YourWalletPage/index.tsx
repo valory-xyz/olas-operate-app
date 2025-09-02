@@ -244,7 +244,7 @@ export const YourWalletPage = () => {
   return (
     <ConfigProvider theme={yourWalletTheme}>
       <CardFlex
-        bordered={false}
+        variant="borderless"
         title={<CardTitle title="Your wallets" />}
         extra={<GoToMainPageButton />}
       >
