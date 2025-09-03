@@ -128,6 +128,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
         '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot"]',
       provision_type: EnvProvisionType.FIXED,
     },
+    // TODO: yet to be confirmed by the backend
+    GENAI_API_KEY: {
+      name: 'Gemini api key',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
   },
 } as const;
 
@@ -214,7 +221,6 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    // These are fixed, but may become user provided in the future
     FEEDBACK_PERIOD_HOURS: {
       name: 'Feedback period',
       description: '',

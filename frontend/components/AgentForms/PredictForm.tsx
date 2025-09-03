@@ -10,11 +10,14 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
+import { GEMINI_API_URL } from '@/constants/urls';
+
 import { optionalFieldProps } from './common/formUtils';
 import { InvalidGeminiApiCredentials } from './common/InvalidGeminiApiCredentials';
 import { validateGeminiApiKey, ValidationStatus } from './common/validations';
 
 const { Text } = Typography;
+
 const GeminiApiKeyLabel = () => (
   <Flex align="center" gap={6}>
     <Text>Gemini API key</Text>
@@ -22,6 +25,17 @@ const GeminiApiKeyLabel = () => (
       (Optional)
     </Text>
   </Flex>
+);
+
+const GoogleAiStudioHelper = () => (
+  <Text type="secondary" className="text-sm">
+    The Gemini API key allows you to chat with your agent and update its goals
+    through Optimus profile. You can generate one for free on{' '}
+    <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
+      Google AI Studio
+    </a>
+    .
+  </Text>
 );
 
 export type PredictFormValues = {
@@ -143,30 +157,24 @@ export const PredictAgentForm = ({
       onFinish={onFinish}
       disabled={isFormDisabled}
       variant={agentFormType === 'view' ? 'borderless' : 'outlined'}
-      name="setup-your-memeooorr-agent"
+      name="setup-your-predict-agent"
       layout="vertical"
     >
-      <Text className="text-lighter">
-        The Gemini API key allows you to chat with your agent and update its
-        goals through Prediction profile. You can generate one for free on
-        Google AI Studio.
-      </Text>
-
-      <Divider style={{ margin: '8px 0' }} />
-      <br />
-
-      {/* TODO: ask Roman about the design */}
-
+      <Divider style={{ margin: '12px 0 24px 0' }} />
       <Form.Item
         name="geminiApiKey"
         label={<GeminiApiKeyLabel />}
         {...optionalFieldProps}
+        style={{ marginBottom: 4 }}
       >
         <Input.Password placeholder="Google Gemini API key" />
       </Form.Item>
+      <GoogleAiStudioHelper />
       {geminiApiKeyValidationStatus === 'invalid' && (
-        <InvalidGeminiApiCredentials />
+        <InvalidGeminiApiCredentials style={{ marginTop: 12 }} />
       )}
+
+      <Divider />
 
       <Form.Item hidden={agentFormType === 'view'}>
         <Button

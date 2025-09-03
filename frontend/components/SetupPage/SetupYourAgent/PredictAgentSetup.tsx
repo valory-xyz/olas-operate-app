@@ -28,6 +28,7 @@ export const PredictAgentSetup = ({
           ...serviceTemplate,
           env_variables: {
             ...serviceTemplate.env_variables,
+            // TODO: yet to be confirmed by the backend
             GENAI_API_KEY: {
               ...serviceTemplate.env_variables.GENAI_API_KEY,
               value: values.geminiApiKey,
