@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { NA } from '@/constants/symbols';
-import { OPERATE_URL } from '@/constants/urls';
+import { PEARL_URL } from '@/constants/urls';
 import { useMainOlasBalance } from '@/context/SharedProvider/useMainOlasBalance';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useRewardContext } from '@/hooks/useRewardContext';
@@ -70,7 +70,7 @@ export const NotifyRewardsModal = () => {
 
   const onTwitterShare = useCallback(() => {
     const encodedText = encodeURIComponent(SHARE_TEXT);
-    const encodedURL = encodeURIComponent(`${OPERATE_URL}?pearl=first-reward`);
+    const encodedURL = encodeURIComponent(`${PEARL_URL}?pearl=first-reward`);
 
     window.open(
       `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedURL}`,

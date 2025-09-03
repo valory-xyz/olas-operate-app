@@ -6,15 +6,17 @@ import { assertRequired } from '@/types/Util';
 import { useServices } from './useServices';
 
 const FeatureFlagsSchema = z.enum([
-  'manage-wallet',
-  'withdraw-funds',
-  'last-transactions',
-  'rewards-streak',
-  'staking-contract-section',
-  'low-funds',
-  'agent-activity',
-  'backup-via-safe',
-  'agent-settings',
+  'manage-wallet', // Enables the wallet management UI (balance breakdown)
+  'withdraw-funds', // Enables withdrawing funds from the wallet (Manage Wallet → Withdraw)
+  'last-transactions', // Shows the recent transactions UI element
+  'rewards-streak', // Displays rewards history and streak
+  'staking-contract-section', // Shows the staking contract section and related management UI
+  'agent-activity', // Enables the "What's My Agent Doing" feed based on health-check rounds
+  'backup-via-safe', // Enables wallet backup via Safe (alerts and settings)
+  'agent-settings', // Shows the Agent Settings button/screens for configurable agents requiring user input
+  'bridge-onboarding', // Enables the bridge funds flow during setup
+  'bridge-add-funds', // Enables the bridge funds flow in low-balance alerts when agents require a refill
+  'on-ramp', // Enables the fiat on-ramp (buy crypto) flow/screens
 ]);
 type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
 
@@ -35,43 +37,51 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'last-transactions': true,
     'rewards-streak': true,
     'staking-contract-section': true,
-    'low-funds': true,
     'agent-activity': true,
     'backup-via-safe': true,
     'agent-settings': false,
+    'bridge-onboarding': true,
+    'bridge-add-funds': true,
+    'on-ramp': true,
   },
-  [AgentType.Memeooorr]: {
+  [AgentType.AgentsFun]: {
     'manage-wallet': true,
     'withdraw-funds': true,
     'last-transactions': true,
     'rewards-streak': true,
     'staking-contract-section': true,
-    'low-funds': false,
     'agent-activity': true,
     'backup-via-safe': true,
     'agent-settings': true,
-  },
-  [AgentType.AgentsFunCelo]: {
-    'manage-wallet': true,
-    'withdraw-funds': true,
-    'last-transactions': false,
-    'rewards-streak': false,
-    'staking-contract-section': false,
-    'low-funds': false,
-    'agent-activity': true,
-    'backup-via-safe': true,
-    'agent-settings': false,
+    'bridge-onboarding': true,
+    'bridge-add-funds': false,
+    'on-ramp': false,
   },
   [AgentType.Modius]: {
     'manage-wallet': true,
-    'withdraw-funds': false,
+    'withdraw-funds': true,
     'last-transactions': true,
     'rewards-streak': true,
     'staking-contract-section': true,
-    'low-funds': false,
     'agent-activity': true,
     'backup-via-safe': false, // temporarily hidden until mode is available on safe https://app.safe.global/new-safe/create
     'agent-settings': true,
+    'bridge-onboarding': true,
+    'bridge-add-funds': true,
+    'on-ramp': true,
+  },
+  [AgentType.Optimus]: {
+    'manage-wallet': true,
+    'withdraw-funds': true,
+    'last-transactions': true,
+    'rewards-streak': true,
+    'staking-contract-section': true,
+    'agent-activity': true,
+    'backup-via-safe': true,
+    'agent-settings': true,
+    'bridge-onboarding': true,
+    'bridge-add-funds': true,
+    'on-ramp': true,
   },
   [AgentType.AgentsFunEliza]: {
     'manage-wallet': true,
@@ -79,10 +89,12 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'last-transactions': true,
     'rewards-streak': true,
     'staking-contract-section': true,
-    'low-funds': false,
     'agent-activity': true,
     'backup-via-safe': true,
     'agent-settings': true,
+    'bridge-onboarding': true,
+    'bridge-add-funds': false,
+    'on-ramp': false,
   },
 });
 

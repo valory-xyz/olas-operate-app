@@ -1,5 +1,5 @@
 import { Card, Flex, Skeleton } from 'antd';
-import { find, groupBy, isArray, isEmpty, isNil } from 'lodash';
+import { isArray, isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import styled from 'styled-components';
@@ -8,7 +8,6 @@ import { OLAS_CONTRACTS } from '@/config/olasContracts';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { ContractType } from '@/enums/Contract';
-import { TokenSymbol } from '@/enums/Token';
 import {
   useBalanceContext,
   useServiceBalances,
@@ -17,8 +16,9 @@ import { useRewardContext } from '@/hooks/useRewardContext';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { Address } from '@/types/Address';
-import { WalletBalance } from '@/types/Balance';
+import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 import { balanceFormat } from '@/utils/numberFormatters';
+import { isValidServiceId } from '@/utils/service';
 import { truncateAddress } from '@/utils/truncate';
 
 import { AddressLink } from '../AddressLink';
@@ -103,7 +103,7 @@ const ServiceAndNftDetails = ({
           <Flex vertical>
             <ServiceNftIdTitle />
             <a
-              href={`https://registry.olas.network/${middlewareChain}/services/${serviceNftTokenId}`}
+              href={`https://marketplace.olas.network/${asEvmChainDetails(middlewareChain).name}/ai-agents/${serviceNftTokenId}`}
               target="_blank"
             >
               {serviceNftTokenId} {UNICODE_SYMBOLS.EXTERNAL_LINK}
@@ -121,10 +121,13 @@ const YourAgentWalletBreakdown = () => {
   const { serviceNftTokenId, serviceEoa } = useService(
     selectedService?.service_config_id,
   );
-  const { serviceSafeBalances, serviceEoaBalances } = useServiceBalances(
-    selectedService?.service_config_id,
-  );
-  const { serviceSafe, middlewareChain, evmHomeChainId } = useYourWallet();
+  const {
+    serviceSafeErc20Balances,
+    serviceEoaNativeBalance,
+    serviceSafeNativeBalances,
+    serviceSafeOlas,
+  } = useServiceBalances(selectedService?.service_config_id);
+  const { serviceSafe, middlewareChain } = useYourWallet();
 
   const {
     availableRewardsForEpochEth,
@@ -140,15 +143,6 @@ const YourAgentWalletBreakdown = () => {
 
     return 'Not yet earned';
   }, [isLoaded, isEligibleForRewards, availableRewardsForEpochEth]);
-
-  const serviceSafeOlas = useMemo(
-    () =>
-      serviceSafeBalances?.find(
-        ({ symbol, evmChainId }) =>
-          symbol === TokenSymbol.OLAS && evmChainId === evmHomeChainId,
-      ),
-    [serviceSafeBalances, evmHomeChainId],
-  );
 
   const serviceSafeRewards = useMemo(
     () => [
@@ -166,55 +160,6 @@ const YourAgentWalletBreakdown = () => {
       },
     ],
     [accruedServiceStakingRewards, reward, serviceSafeOlas],
-  );
-
-  const serviceSafeNativeBalances = useMemo(() => {
-    if (!serviceSafeBalances) return null;
-
-    const nativeBalances = serviceSafeBalances.filter(
-      ({ evmChainId }) => evmChainId === evmHomeChainId,
-    );
-
-    /**
-     * Native balances with wrapped token balances
-     * @example { xDai: 100, Wrapped xDai: 50 } => { xDai: 150 }
-     */
-    const groupedNativeBalances = Object.entries(
-      groupBy(nativeBalances, 'walletAddress'),
-    ).map(([address, items]) => {
-      const nativeTokenBalance = find(items, { isNative: true })?.balance || 0;
-      const wrappedBalance =
-        find(items, { isWrappedToken: true })?.balance || 0;
-      const totalBalance = nativeTokenBalance + wrappedBalance;
-
-      return {
-        ...items[0],
-        walletAddress: address,
-        balance: totalBalance,
-      } as WalletBalance;
-    });
-
-    return groupedNativeBalances;
-  }, [serviceSafeBalances, evmHomeChainId]);
-
-  const serviceSafeErc20Balances = useMemo(
-    () =>
-      serviceSafeBalances?.filter(
-        ({ isNative, symbol, evmChainId, isWrappedToken }) =>
-          !isNative &&
-          symbol !== TokenSymbol.OLAS &&
-          !isWrappedToken &&
-          evmChainId === evmHomeChainId,
-      ),
-    [serviceSafeBalances, evmHomeChainId],
-  );
-
-  const serviceEoaNativeBalance = useMemo(
-    () =>
-      serviceEoaBalances?.find(
-        ({ isNative, evmChainId }) => isNative && evmChainId === evmHomeChainId,
-      ),
-    [serviceEoaBalances, evmHomeChainId],
   );
 
   if (!serviceSafe) return null;
@@ -281,7 +226,7 @@ const YourAgentWalletBreakdown = () => {
           </Flex>
         )}
 
-        {!isNil(serviceNftTokenId) && (
+        {serviceNftTokenId && isValidServiceId(serviceNftTokenId) && (
           <ServiceAndNftDetails serviceNftTokenId={serviceNftTokenId} />
         )}
       </Container>

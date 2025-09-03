@@ -8,6 +8,7 @@ export type ElectronStore = {
   // Global settings
   environmentName?: string;
   lastSelectedAgentType?: AgentType;
+  knownVersion?: string;
 
   // First time user settings
   firstStakingRewardAchieved?: boolean;
@@ -16,12 +17,12 @@ export type ElectronStore = {
 
   // Each agent has its own settings
   [AgentType.PredictTrader]?: AgentSettings;
-  [AgentType.Memeooorr]?: AgentSettings;
+  [AgentType.AgentsFun]?: AgentSettings;
   [AgentType.Modius]?: AgentSettings & {
     isProfileWarningDisplayed: boolean;
   };
-  [AgentType.AgentsFunCelo]?: AgentSettings;
   [AgentType.AgentsFunEliza]?: AgentSettings;
+  [AgentType.Optimus]?: AgentSettings;
 };
 
 export type ElectronTrayIconStatus =

@@ -1,10 +1,14 @@
-export enum MiddlewareAction {
-  STATUS = 0,
-  BUILD = 1,
-  DEPLOY = 2,
-  STOP = 3,
-}
+import { ValueOf } from '@/types/Util';
 
+/**
+ * @note Use this enum to infer all the middleware chains existing in the system
+ * else use the SupportedMiddlewareChain enum for the chains that are supported by the agents and to be strictly typed.
+ *
+ * @warning The value doesn’t actually represent the real chain name;
+ * it reflects the open-autonomy internal name instead.
+ *
+ * @deprecated Use `MiddlewareChain` from '@/constants/chains'.
+ */
 export enum MiddlewareChain {
   ETHEREUM = 'ethereum',
   GOERLI = 'goerli',
@@ -13,14 +17,26 @@ export enum MiddlewareChain {
   OPTIMISM = 'optimism',
   BASE = 'base',
   MODE = 'mode',
-  CELO = 'celo',
 }
 
-export enum MiddlewareLedger {
-  ETHEREUM = 0,
-  SOLANA = 1,
-}
+/**
+ * @deprecated Use `SupportedMiddlewareChainMap` from '@/constants/chains'.
+ */
+const MIDDLEWARE_CHAINS = {
+  gnosis: MiddlewareChain.GNOSIS,
+  optimism: MiddlewareChain.OPTIMISM,
+  base: MiddlewareChain.BASE,
+  mode: MiddlewareChain.MODE,
+} as const;
 
+/**
+ * @deprecated Use `SupportedMiddlewareChain` from '@/constants/chains'.
+ */
+export type SupportedMiddlewareChain = ValueOf<typeof MIDDLEWARE_CHAINS>;
+
+/**
+ * @deprecated Use `MiddlewareDeploymentStatusMap` from '@/constants/deployment'.
+ */
 export enum MiddlewareDeploymentStatus {
   CREATED = 0,
   BUILT = 1,
@@ -29,35 +45,4 @@ export enum MiddlewareDeploymentStatus {
   STOPPING = 4,
   STOPPED = 5,
   DELETED = 6,
-}
-
-/** @note statuses where middleware deployment is moving from stopped to deployed, or vice versa, used for loading fallbacks */
-export const MiddlewareTransitioningStatuses = [
-  MiddlewareDeploymentStatus.DEPLOYING,
-  MiddlewareDeploymentStatus.STOPPING,
-];
-
-/** @note statuses where middleware deployment is running */
-export const MiddlewareRunningStatuses = [
-  MiddlewareDeploymentStatus.DEPLOYED,
-  ...MiddlewareTransitioningStatuses,
-];
-
-/** @note statuses where middleware is in the process of building/creating a new deployment */
-export const MiddlewareBuildingStatuses = [
-  MiddlewareDeploymentStatus.BUILT,
-  MiddlewareDeploymentStatus.CREATED,
-];
-
-export enum MiddlewareAccountIsSetup {
-  True,
-  False,
-  Loading,
-  Error,
-}
-
-export enum EnvProvisionType {
-  FIXED = 'fixed',
-  USER = 'user',
-  COMPUTED = 'computed',
 }

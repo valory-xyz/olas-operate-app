@@ -1,5 +1,5 @@
 import { ConfigProvider, Flex, Skeleton, ThemeConfig, Typography } from 'antd';
-import { capitalize, isNil } from 'lodash';
+import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
 import { AddressLink } from '@/components/AddressLink';
@@ -17,6 +17,7 @@ import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { type Address } from '@/types/Address';
 import { Optional } from '@/types/Util';
+import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 import { balanceFormat } from '@/utils/numberFormatters';
 
 import { FeatureNotEnabled } from '../FeatureNotEnabled';
@@ -96,7 +97,7 @@ const OlasBalance = () => {
   return (
     <Flex vertical gap={8}>
       <Text strong>
-        {TokenSymbol.OLAS} ({capitalize(middlewareChain)})
+        {TokenSymbol.OLAS} ({asEvmChainDetails(middlewareChain).displayName})
       </Text>
       <InfoBreakdownList
         list={olasBalances.map((item) => ({
@@ -124,7 +125,7 @@ const MasterSafeNativeBalance = () => {
     return masterSafeBalances
       .filter(({ walletAddress, evmChainId, isNative, isWrappedToken }) => {
         return (
-          evmChainId === evmHomeChainId && // TODO: address multi chain, need to refactor as per product requirement
+          evmChainId === evmHomeChainId &&
           isNative &&
           !isWrappedToken &&
           walletAddress === masterSafeAddress
@@ -140,7 +141,8 @@ const MasterSafeNativeBalance = () => {
           {
             left: (
               <Text strong>
-                {nativeTokenSymbol} ({capitalize(middlewareChain)})
+                {nativeTokenSymbol} (
+                {asEvmChainDetails(middlewareChain).displayName})
               </Text>
             ),
             leftClassName: 'text-light',
@@ -166,7 +168,7 @@ const MasterSafeErc20Balances = () => {
       .filter(
         ({ walletAddress, evmChainId, symbol, isNative, isWrappedToken }) => {
           return (
-            evmChainId === evmHomeChainId && // TODO: address multi chain, need to refactor as per product requirement
+            evmChainId === evmHomeChainId &&
             !isNative &&
             !isWrappedToken &&
             symbol !== TokenSymbol.OLAS &&
@@ -193,7 +195,7 @@ const MasterSafeErc20Balances = () => {
             {
               left: (
                 <Text strong>
-                  {symbol} ({capitalize(middlewareChain)})
+                  {symbol} ({asEvmChainDetails(middlewareChain).displayName})
                 </Text>
               ),
               leftClassName: 'text-light',
@@ -209,24 +211,10 @@ const MasterSafeErc20Balances = () => {
 
 const MasterEoaSignerNativeBalance = () => {
   const { masterEoa } = useMasterWalletContext();
-  const { masterWalletBalances } = useMasterBalances();
+  const { masterEoaBalance } = useMasterBalances();
   const { evmHomeChainId, middlewareChain } = useYourWallet();
 
   const nativeTokenSymbol = getNativeTokenSymbol(evmHomeChainId);
-
-  const masterEoaBalance: Optional<number> = useMemo(() => {
-    if (isNil(masterEoa)) return;
-    if (isNil(masterWalletBalances)) return;
-
-    return masterWalletBalances
-      .filter(
-        ({ walletAddress, isNative, evmChainId }) =>
-          walletAddress === masterEoa.address &&
-          isNative &&
-          evmHomeChainId === evmChainId, // TODO: address multi chain, need to refactor as per product requirement
-      )
-      .reduce((acc, { balance }) => acc + balance, 0);
-  }, [masterEoa, masterWalletBalances, evmHomeChainId]);
 
   return (
     <Flex vertical gap={8}>

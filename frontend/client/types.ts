@@ -1,29 +1,38 @@
+import { EnvProvision } from '@/constants/envVariables';
 import { AgentType } from '@/enums/Agent';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
 import {
-  EnvProvisionType,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
-  MiddlewareLedger,
+  SupportedMiddlewareChain,
 } from './enums';
 
 export type ServiceHash = string;
 export type ServiceConfigId = string;
 
-export type ServiceKeys = {
+type AgentRelease = {
+  is_aea: boolean;
+  repository: {
+    owner: string,
+    name: string,
+    version: string,
+  }
+}
+
+type ServiceKeys = {
   address: Address;
   private_key: string;
   ledger: MiddlewareChain;
 };
 
-export type LedgerConfig = {
+type LedgerConfig = {
   rpc: string;
   chain: MiddlewareChain;
 };
 
-export type ChainData = {
+type ChainData = {
   instances?: Address[];
   token?: number;
   multisig?: Address;
@@ -46,11 +55,11 @@ export type ChainData = {
   };
 };
 
-export type EnvVariableAttributes = {
+type EnvVariableAttributes = {
   name: string;
   description: string;
   value: string;
-  provision_type: EnvProvisionType;
+  provision_type: EnvProvision;
 };
 
 export type MiddlewareServiceResponse = {
@@ -62,7 +71,8 @@ export type MiddlewareServiceResponse = {
   hash_history: {
     [block: string]: string;
   };
-  home_chain: MiddlewareChain;
+  agent_release: AgentRelease;
+  home_chain: SupportedMiddlewareChain;
   keys: ServiceKeys[];
   service_path?: string;
   chain_configs: {
@@ -74,42 +84,43 @@ export type MiddlewareServiceResponse = {
   env_variables: { [key: string]: EnvVariableAttributes };
 };
 
-export type ServiceTemplate = {
-  agentType: AgentType;
-  name: string;
-  hash: string;
-  binary_path: string | null;
-  description: string;
-  image: string;
-  service_version: string;
-  home_chain: string;
-  configurations: { [key: string]: ConfigurationTemplate };
-  env_variables: { [key: string]: EnvVariableAttributes };
-  deploy?: boolean;
+export type ServiceValidationResponse = {
+  [service_config_id: string]: boolean;
 };
 
-export type ConfigurationTemplate = {
+type ConfigurationTemplate = {
   staking_program_id?: StakingProgramId | 'no_staking'; // added on deployment
   nft: string;
   rpc?: string; // added on deployment
   agent_id: number;
-  threshold: number;
-  use_staking: boolean;
-  use_mech_marketplace?: boolean;
   cost_of_bond: number;
   monthly_gas_estimate: number;
   fund_requirements: {
     // zero address means native currency
-    [tokenAddress: string]: FundRequirementsTemplate;
+    [tokenAddress: Address]: {
+      agent: number;
+      safe: number;
+    };
   };
 };
 
-export type FundRequirementsTemplate = {
-  agent: number;
-  safe: number;
+export type ServiceTemplate = {
+  agentType: AgentType;
+  name: string; // Should be unique across all services
+  hash: string;
+  description: string;
+  image: string;
+  service_version: string;
+  agent_release: AgentRelease;
+  home_chain: SupportedMiddlewareChain;
+  configurations: Partial<
+    Record<SupportedMiddlewareChain, ConfigurationTemplate>
+  >;
+  env_variables: { [key: string]: EnvVariableAttributes };
+  deploy?: boolean;
 };
 
-export type DeployedNodes = {
+type DeployedNodes = {
   agent: string[];
   tendermint: string[];
 };
@@ -127,11 +138,10 @@ export type Deployment = {
   };
 };
 
-export type AppInfo = {
-  account?: {
-    key: Address;
-  };
-};
+enum MiddlewareLedger {
+  ETHEREUM = 0,
+  SOLANA = 1,
+}
 
 export type MiddlewareWalletResponse = {
   address: Address;
@@ -143,10 +153,12 @@ export type MiddlewareWalletResponse = {
   safe_nonce: number;
 };
 
+export type MasterSafeBalanceRecord = {
+  master_safe: { [tokenAddress: Address]: number | string };
+};
+
 export type AddressBalanceRecord = {
-  [address: Address]: {
-    [tokenAddress: Address]: number;
-  };
+  [address: Address]: { [tokenAddress: Address]: number | string };
 };
 
 export type BalancesAndFundingRequirements = {
@@ -159,10 +171,14 @@ export type BalancesAndFundingRequirements = {
    * If it not present or is 0, the balance is sufficient.
    */
   refill_requirements: Partial<{
-    [chain in MiddlewareChain]: AddressBalanceRecord;
+    [chain in MiddlewareChain]: AddressBalanceRecord | MasterSafeBalanceRecord;
   }>;
+  total_requirements: {
+    [chain in MiddlewareChain]: AddressBalanceRecord | MasterSafeBalanceRecord;
+  };
   bonded_olas: {
     [chain in MiddlewareChain]: number;
   };
+  is_refill_required: boolean;
   allow_start_agent: boolean;
 };

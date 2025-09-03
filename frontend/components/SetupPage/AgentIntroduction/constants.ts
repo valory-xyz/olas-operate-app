@@ -56,3 +56,21 @@ export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
   //   imgSrc: 'setup-agent-modius-3',
   // },
 ] as const;
+
+export const OPTIMUS_ONBOARDING_STEPS: OnboardingStep[] = [
+  {
+    title: 'Your AI portfolio manager',
+    desc: 'Optimus collects real-time market data from CoinGecko and autonomously manages your investments using Balancer, Sturdy and Uniswap — delivering hands-free portfolio growth. Requires ETH and USDC on Optimism as initial investments.',
+    imgSrc: 'setup-agent-optimus-1',
+  },
+  {
+    title: 'Choose the best strategy',
+    desc: 'Optimus learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest on your behalf.',
+    imgSrc: 'setup-agent-optimus-2',
+  },
+  // {
+  //   title: 'Take action',
+  //   desc: 'Based on its analysis and real-time market data, your Optimus agent decides when its more convenient to buy, sell, or hold specific assets.',
+  //   imgSrc: 'setup-agent-optimus-3',
+  // },
+] as const;

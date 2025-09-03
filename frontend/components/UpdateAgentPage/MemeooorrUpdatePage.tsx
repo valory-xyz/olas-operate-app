@@ -7,20 +7,20 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 
-import { FireworksApiFields } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/FireworksApiField';
+import { FireworksApiFields } from '../AgentForms/AgentsFunAgentForm/FireworksApiField';
+import { useMemeFormValidate } from '../AgentForms/AgentsFunAgentForm/useMemeFormValidate';
+import {
+  commonFieldProps,
+  requiredRules,
+  validateMessages,
+} from '../AgentForms/common/formUtils';
+import { InvalidGeminiApiCredentials } from '../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   InvalidXCredentials,
   XAccountCredentials,
 } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/MemeooorrAgentForm';
 // TODO: move the following hook/components to a shared place
 // once Modius work is merged
-import { useMemeFormValidate } from '../SetupPage/SetupYourAgent/MemeooorrAgentForm/useMemeFormValidate';
-import {
-  commonFieldProps,
-  requiredRules,
-  validateMessages,
-} from '../SetupPage/SetupYourAgent/shared/formUtils';
-import { InvalidGeminiApiCredentials } from '../SetupPage/SetupYourAgent/shared/InvalidGeminiApiCredentials';
 import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 

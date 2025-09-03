@@ -29,6 +29,8 @@ const paths = {
   electronLogFile: path.join(dotOperateDirectory, 'electron.log'),
   nextLogFile: path.join(dotOperateDirectory, 'next.log'),
   osPearlTempDir: path.join(os.tmpdir(), 'pearl'),
+  bridgeDirectory: path.join(dotOperateDirectory, 'bridge'),
+  agentRunnerLogFile: path.join(dotOperateDirectory, 'agent_runner.log'),
 };
 
 // Publish options

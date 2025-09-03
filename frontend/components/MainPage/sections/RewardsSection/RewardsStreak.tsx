@@ -7,7 +7,7 @@ import { FireNoStreak } from '@/components/custom-icons/FireNoStreak';
 import { FireStreak } from '@/components/custom-icons/FireStreak';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
-import { OPERATE_URL } from '@/constants/urls';
+import { PEARL_URL } from '@/constants/urls';
 import { Pages } from '@/enums/Pages';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { usePageState } from '@/hooks/usePageState';
@@ -41,7 +41,7 @@ const Streak = () => {
     const encodedText = encodeURIComponent(
       `🎉 I've just completed a ${optimisticStreak}-day streak with my agent on Pearl and earned OLAS every single day! 🏆 How long can you keep your streak going? \n\nDownload the Pearl app:`,
     );
-    const encodedURL = encodeURIComponent(`${OPERATE_URL}?pearl=share-streak`);
+    const encodedURL = encodeURIComponent(`${PEARL_URL}?pearl=share-streak`);
 
     window.open(
       `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedURL}`,

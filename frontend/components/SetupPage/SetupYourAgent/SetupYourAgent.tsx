@@ -10,8 +10,9 @@ import { useServices } from '@/hooks/useServices';
 import { LOCAL_FORM_THEME } from '@/theme';
 
 import { SetupCreateHeader } from '../Create/SetupCreateHeader';
-import { MemeooorrAgentForm } from './MemeooorrAgentForm/MemeooorrAgentForm';
+import { AgentsFunAgentSetup } from './AgentsFunAgentSetup';
 import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
+import { OptimusAgentForm } from './OptimusAgentForm/OptimusAgentForm';
 
 const { Title, Text } = Typography;
 
@@ -36,15 +37,20 @@ export const SetupYourAgent = () => {
     <ConfigProvider theme={LOCAL_FORM_THEME}>
       <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }} noBorder>
         <SetupCreateHeader prev={SetupScreen.AgentIntroduction} />
-        <Title level={3}>Set up your agent</Title>
+        <Title level={3} className="mb-0">
+          Set up your agent
+        </Title>
 
-        {selectedAgentType === AgentType.Memeooorr ||
+        {selectedAgentType === AgentType.AgentsFun ||
           (selectedAgentType === AgentType.AgentsFunEliza && (
-            <MemeooorrAgentForm serviceTemplate={serviceTemplate} />
+            <AgentsFunAgentSetup serviceTemplate={serviceTemplate} />
           ))}
 
         {selectedAgentType === AgentType.Modius && (
           <ModiusAgentForm serviceTemplate={serviceTemplate} />
+        )}
+        {selectedAgentType === AgentType.Optimus && (
+          <OptimusAgentForm serviceTemplate={serviceTemplate} />
         )}
       </CardFlex>
     </ConfigProvider>

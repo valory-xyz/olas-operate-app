@@ -3,6 +3,8 @@ import {
   MiddlewareServiceResponse,
   ServiceConfigId,
   ServiceTemplate,
+  ServiceValidationResponse,
+  SupportedMiddlewareChain,
 } from '@/client';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
@@ -38,7 +40,7 @@ const getService = async ({
  * @returns An array of services
  */
 const getServices = async (
-  signal: AbortSignal,
+  signal?: AbortSignal,
 ): Promise<MiddlewareServiceResponse[]> =>
   fetch(`${BACKEND_URL_V2}/services`, {
     method: 'GET',
@@ -50,6 +52,22 @@ const getServices = async (
   });
 
 /**
+ * Gets an array of services from the backend
+ * @returns An array of services
+ */
+const getServicesValidationStatus = async (
+  signal?: AbortSignal,
+): Promise<ServiceValidationResponse> =>
+  fetch(`${BACKEND_URL_V2}/services/validate`, {
+    method: 'GET',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    signal,
+  }).then((response) => {
+    if (response.ok) return response.json();
+    throw new Error('Failed to fetch services validation status');
+  });
+
+/**
  * Creates a service
  * @param serviceTemplate
  * @returns Promise<Service>
@@ -58,7 +76,6 @@ const createService = async ({
   deploy,
   serviceTemplate,
   stakingProgramId,
-  useMechMarketplace = false,
 }: {
   deploy: boolean;
   serviceTemplate: ServiceTemplate;
@@ -75,11 +92,10 @@ const createService = async ({
         // overwrite defaults with chain-specific configurations
         ...Object.entries(serviceTemplate.configurations).reduce(
           (acc, [middlewareChain, config]) => {
-            acc[middlewareChain] = {
+            acc[middlewareChain as SupportedMiddlewareChain] = {
               ...config,
               rpc: CHAIN_CONFIG[asEvmChainId(middlewareChain)].rpc,
               staking_program_id: 'no_staking',
-              use_mech_marketplace: useMechMarketplace,
             };
             return acc;
           },
@@ -199,6 +215,7 @@ const withdrawBalance = async ({
 export const ServicesService = {
   getService,
   getServices,
+  getServicesValidationStatus,
   getDeployment,
   startService,
   createService,

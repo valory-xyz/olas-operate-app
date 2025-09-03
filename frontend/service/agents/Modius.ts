@@ -5,7 +5,7 @@ import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { MODE_STAKING_PROGRAMS } from '@/config/stakingPrograms/mode';
 import { PROVIDERS } from '@/constants/providers';
 import { EvmChainId } from '@/enums/Chain';
-import { StakingProgramId } from '@/enums/StakingProgram';
+import { ModeStakingProgramId, StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 import {
   ServiceStakingDetails,
@@ -67,22 +67,6 @@ export abstract class ModiusService extends StakedAgentService {
       livenessRatio,
       currentMultisigNonces,
     ] = multicallResponse;
-
-    /**
-     * struct ServiceInfo {
-      // Service multisig address
-      address multisig;
-      // Service owner
-      address owner;
-      // Service multisig nonces
-      uint256[] nonces; <-- (we use this in the rewards eligibility check)
-      // Staking start time
-      uint256 tsStart;
-      // Accumulated service staking reward
-      uint256 reward;
-      // Accumulated inactivity that might lead to the service eviction
-      uint256 inactivity;}
-     */
 
     const lastMultisigNonces = serviceInfo[2];
     const nowInSeconds = Math.floor(Date.now() / 1000);
@@ -190,7 +174,9 @@ export abstract class ModiusService extends StakedAgentService {
   ): Promise<StakingContractDetails | undefined> => {
     const { multicallProvider } = PROVIDERS[chainId];
 
-    const stakingTokenProxy = MODE_STAKING_PROGRAMS[stakingProgramId]?.contract;
+    const modeStakingProgram =
+      MODE_STAKING_PROGRAMS[stakingProgramId as ModeStakingProgramId];
+    const stakingTokenProxy = modeStakingProgram?.contract;
     if (!stakingTokenProxy) return;
 
     const contractCalls = [

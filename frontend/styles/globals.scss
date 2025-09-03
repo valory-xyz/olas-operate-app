@@ -47,6 +47,10 @@ textarea,
   /* Scrollbar color when hovered */
 }
 
+.border-box {
+  box-sizing: border-box;
+}
+
 // antd overrides
 .ant-card {
   -webkit-app-region: no-drag;
@@ -56,11 +60,6 @@ textarea,
   .anticon {
     margin-top: 3px;
   }
-}
-
-.antd-card {
-  background-color: #FFFFFF;
-  overflow-y: scroll;
 }
 
 .balance {
@@ -142,12 +141,20 @@ textarea,
   margin-top: 4px !important;
 }
 
+.mb-0 {
+  margin-bottom: 0px !important;
+}
+
 .mb-4 {
   margin-bottom: 4px !important;
 }
 
 .mb-8 {
   margin-bottom: 8px !important;
+}
+
+.mb-12 {
+  margin-bottom: 12px !important;
 }
 
 .mb-16 {
@@ -178,9 +185,21 @@ textarea,
   margin-top: 12px !important;
 }
 
+.mt-16 {
+  margin-top: 16px !important;
+}
+
+.mt-24 {
+  margin-top: 24px !important;
+}
+
 // padding
 .p-0 {
   padding: 0 !important;
+}
+
+.pl-4 {
+  padding-left: 4px !important;
 }
 
 .pl-16 {
@@ -189,6 +208,22 @@ textarea,
 
 .pr-16 {
   padding-right: 16px !important;
+}
+
+.pt-16 {
+  padding-top: 16px !important;
+}
+
+.pt-24 {
+  padding-top: 24px !important;
+}
+
+.p-8 {
+  padding: 8px;
+}
+
+.p-16 {
+  padding: 16px;
 }
 
 .p-24 {
@@ -221,6 +256,7 @@ textarea,
 .text-center {
   text-align: center !important;
 }
+
 .text-right {
   text-align: right !important;
 }
@@ -228,6 +264,10 @@ textarea,
 // font color
 .text-light {
   color: #4D596A !important;
+}
+
+.text-lighter {
+  color: #606F85 !important;
 }
 
 .text-right {
@@ -263,25 +303,37 @@ ul.alert-list {
 }
 
 // width
+.w-1\/4 {
+  width: 25% !important;
+}
 .w-3\/4 {
   width: 75% !important;
 }
 .w-full {
   width: 100% !important;
 }
+
 .max-width-200 {
   max-width: 200px;
 }
 
-.loading-ellipses:after {
-  overflow: hidden;
+.loading-ellipses {
   display: inline-block;
-  vertical-align: bottom;
-  -webkit-animation: ellipsis steps(4, end) 900ms infinite;
-  animation: ellipsis steps(4, end) 900ms infinite;
-  content: "\2026";
-  /* ascii code for the ellipsis character */
-  width: 0px;
+  position: relative; /* Ensures absolute positioned :after is placed relative to this */
+  white-space: nowrap; /* Prevents line breaks */
+  margin-right: 16px;
+  
+  &:after {
+    overflow: hidden;
+    display: inline-block;
+    -webkit-animation: ellipsis steps(4, end) 1.5s infinite;
+    animation: ellipsis steps(4, end) 1.5s infinite;
+    content: "\2026"; /* ascii code for the ellipsis character */
+    width: 0px;
+    position: absolute;
+    left: 100%;
+    white-space: nowrap;
+  }
 }
 
 .hover-underline {

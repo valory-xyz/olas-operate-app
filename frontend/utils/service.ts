@@ -1,9 +1,15 @@
-import { isEmpty, isNil } from 'lodash';
+import { isEmpty, isEqual, isNil } from 'lodash';
 
-import { EnvProvisionType, ServiceTemplate } from '@/client';
-import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
+import { ServiceTemplate } from '@/client';
+import { EnvProvisionMap } from '@/constants/envVariables';
+import {
+  KPI_DESC_PREFIX,
+  SERVICE_TEMPLATES,
+} from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
+import { StakingProgramId } from '@/enums/StakingProgram';
 import { ServicesService } from '@/service/Services';
+import { Address } from '@/types/Address';
 import { Service } from '@/types/Service';
 import { DeepPartial } from '@/types/Util';
 
@@ -25,23 +31,17 @@ export const updateServiceIfNeeded = async (
     partialServiceTemplate.hash = serviceTemplate.hash;
   }
 
-  // Temporary: check if the service has the default description
-  if (
-    serviceTemplate.agentType === AgentType.Memeooorr &&
-    service.description === serviceTemplate.description
-  ) {
-    const xUsername = service.env_variables?.TWIKIT_USERNAME?.value;
-    if (xUsername) {
-      partialServiceTemplate.description = `Memeooorr @${xUsername}`;
-    }
-  }
-
   // Temporary: check if the service has incorrect name
   if (
-    serviceTemplate.agentType === AgentType.Memeooorr &&
+    serviceTemplate.agentType === AgentType.AgentsFun &&
     service.name !== serviceTemplate.name
   ) {
     partialServiceTemplate.name = serviceTemplate.name;
+  }
+
+  // If the description doesn't include "[Pearl service]" then update it
+  if (!service.description.includes(KPI_DESC_PREFIX)) {
+    partialServiceTemplate.description = `${KPI_DESC_PREFIX} ${service.description}`;
   }
 
   // Check if there's a need to update or add env variables
@@ -53,8 +53,8 @@ export const updateServiceIfNeeded = async (
       // If there's a new variable in the template but it's not in the service
       if (
         !serviceEnvVariable &&
-        (templateVariable.provision_type === EnvProvisionType.FIXED ||
-          templateVariable.provision_type === EnvProvisionType.COMPUTED)
+        (templateVariable.provision_type === EnvProvisionMap.FIXED ||
+          templateVariable.provision_type === EnvProvisionMap.COMPUTED)
       ) {
         envVariablesToUpdate[key] = templateVariable;
       }
@@ -63,7 +63,7 @@ export const updateServiceIfNeeded = async (
       if (
         serviceEnvVariable &&
         serviceEnvVariable.value !== templateVariable.value &&
-        templateVariable.provision_type === EnvProvisionType.FIXED
+        templateVariable.provision_type === EnvProvisionMap.FIXED
       ) {
         envVariablesToUpdate[key] = templateVariable;
       }
@@ -80,33 +80,44 @@ export const updateServiceIfNeeded = async (
     service.chain_configs[serviceHomeChain].chain_data.user_params
       .fund_requirements;
   const templateFundRequirements =
-    serviceTemplate.configurations[serviceHomeChain].fund_requirements;
+    serviceTemplate.configurations[serviceHomeChain]?.fund_requirements;
 
   if (
     Object.entries(serviceHomeChainFundRequirements).some(([key, item]) => {
       return (
-        templateFundRequirements[key].agent !== item.agent ||
-        templateFundRequirements[key].safe !== item.safe
+        templateFundRequirements?.[key as Address]?.agent !== item.agent ||
+        templateFundRequirements?.[key as Address]?.safe !== item.safe
       );
     })
   ) {
     // Need to pass all fund requirements from the template
     // even if some of them were updated
     partialServiceTemplate.configurations = {
-      [serviceHomeChain]: {
-        fund_requirements: templateFundRequirements,
-      },
+      [serviceHomeChain]: { fund_requirements: templateFundRequirements },
     };
   }
 
-  // Forcing to update for eliza POC as binary_path is missed sometimes?
-  partialServiceTemplate.binary_path = 'agentsFunEliza';
+  // Check if the agent release was updated
+  if (!isEqual(service.agent_release, serviceTemplate.agent_release)) {
+    partialServiceTemplate.agent_release = serviceTemplate.agent_release;
+  }
 
   if (isEmpty(partialServiceTemplate)) return;
 
   await ServicesService.updateService({
     serviceConfigId: service.service_config_id,
     partialServiceTemplate,
+  });
+};
+
+export const onDummyServiceCreation = async (
+  stakingProgramId: StakingProgramId,
+  serviceTemplateConfig: ServiceTemplate,
+) => {
+  await ServicesService.createService({
+    serviceTemplate: serviceTemplateConfig,
+    deploy: true,
+    stakingProgramId,
   });
 };
 

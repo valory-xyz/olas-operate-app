@@ -26,10 +26,10 @@ type FundsToActivateProps = {
 
 const FUNDS_REQUIRED_FOR_BY_AGENT_TYPE: { [key in AgentType]: string } = {
   [AgentType.PredictTrader]: 'for trading',
-  [AgentType.Memeooorr]: 'for agent operations',
+  [AgentType.AgentsFun]: 'for agent operations',
   [AgentType.Modius]: 'for investment',
-  [AgentType.AgentsFunCelo]: 'for agent operations',
   [AgentType.AgentsFunEliza]: 'for agent operations',
+  [AgentType.Optimus]: 'for investment',
 } as const;
 
 export const FundsToActivate = ({
@@ -82,7 +82,10 @@ export const FundsToActivate = ({
 
   const getOlasText = useMemo(() => {
     const chainName = CHAIN_CONFIG[homeChainId].name;
-    if (homeChainId === EvmChainId.Mode) {
+    if (
+      homeChainId === EvmChainId.Mode ||
+      homeChainId === EvmChainId.Optimism
+    ) {
       return `Get OLAS + USDC on ${chainName}`;
     }
     return `Get OLAS on ${chainName}`;

@@ -3,27 +3,26 @@ import React, { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
-import { CustomAlert } from '@/components/Alert';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup } from '@/hooks/useSetup';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
-
+import { FireworksApiFields } from '@/components/AgentForms/AgentsFunAgentForm/FireworksApiField';
+import {
+  AgentsFunFieldValues,
+  useMemeFormValidate,
+} from '@/components/AgentForms/AgentsFunAgentForm/useMemeFormValidate';
 import {
   commonFieldProps,
   emailValidateMessages,
   requiredRules,
-} from '../shared/formUtils';
-import { InvalidGeminiApiCredentials } from '../shared/InvalidGeminiApiCredentials';
-import { onDummyServiceCreation } from '../shared/utils';
-import { FireworksApiFields } from './FireworksApiField';
-import {
-  MemeooorrFieldValues,
-  useMemeFormValidate,
-} from './useMemeFormValidate';
+} from '@/components/AgentForms/common/formUtils';
+import { InvalidGeminiApiCredentials } from '@/components/AgentForms/common/InvalidGeminiApiCredentials';
+import { CustomAlert } from '@/components/Alert';
+import { SetupScreen } from '@/enums/SetupScreen';
+import { useSetup } from '@/hooks/useSetup';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { onDummyServiceCreation } from '@/utils/service';
 
 const { Title, Text } = Typography;
 
-type MemeooorrFormValues = MemeooorrFieldValues & {
+type MemeooorrFormValues = AgentsFunFieldValues & {
   fireworksApiEnabled: boolean;
 };
 

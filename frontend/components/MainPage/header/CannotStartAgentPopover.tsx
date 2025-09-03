@@ -73,7 +73,7 @@ const AgentEvictedPopover = () => {
             <Paragraph className="m-0">
               <Text className="text-sm">Eviction ends at</Text>{' '}
               <Text strong className="text-sm">
-                {formatToShortDateTime(evictionExpiresAt * 1000)}
+                {formatToShortDateTime(evictionExpiresAt * 1000)} (UTC)
               </Text>
             </Paragraph>
           )}

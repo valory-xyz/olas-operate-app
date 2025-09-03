@@ -18,6 +18,7 @@
 # ------------------------------------------------------------------------------
 
 """Tendermint manager."""
+import atexit
 import contextlib
 import json
 import logging
@@ -36,11 +37,12 @@ from pathlib import Path
 from threading import Event, Thread
 from time import sleep
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
+from xml.sax import handler
 
 import requests
 from flask import Flask, Response, jsonify, request
 from werkzeug.exceptions import InternalServerError, NotFound
-
+import ctypes
 
 ENCODING = "utf-8"
 DEFAULT_LOG_FILE = "com.log"
@@ -246,12 +248,21 @@ class TendermintNode:
             return
         cmd = self.params.build_node_command(debug)
         kwargs = self.params.get_node_command_kwargs()
+        
+        if os.name != "nt":
+            kwargs.update(dict(preexec_fn=os.setpgrp))
+
         self.log(f"Starting Tendermint: {cmd}\n")
         self._process = (
             subprocess.Popen(  # nosec # pylint: disable=consider-using-with,W1509
                 cmd, **kwargs
             )
         )
+        if os.name == "nt":
+            self._wh = WinHelper()
+            self._wh.assign_to_job(self._process.pid)
+        
+
         self.log("Tendermint process started\n")
 
     def _start_monitoring_thread(self) -> None:
@@ -652,8 +663,9 @@ def create_server() -> Any:
 def run_app_in_subprocess(q: multiprocessing.Queue) -> None:
     """Run flask app in a subprocess to kill it when needed."""
     print("app in subprocess")
+    
     app, tendermint_node = create_app()
-
+    atexit.register(tendermint_node.stop)
     @app.route("/exit")
     def handle_server_exit() -> Response:
         """Handle server exit."""
@@ -667,13 +679,108 @@ def run_app_in_subprocess(q: multiprocessing.Queue) -> None:
     app.run(host="localhost", port=8080)
 
 
+class WinHelper:
+    def __init__(self):
+        self.job = self.create_job_object()
+
+    @staticmethod
+    def get_proc_handler(pid):
+
+        import ctypes.wintypes
+
+        kernel32 = ctypes.windll.kernel32
+        PROCESS_ALL_ACCESS = 0x1F0FFF
+
+        return kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
+
+    @staticmethod
+    def create_job_object():
+        import ctypes.wintypes
+        from ctypes import wintypes
+        kernel32 = ctypes.windll.kernel32
+        import ctypes
+        class JOBOBJECT_BASIC_LIMIT_INFORMATION(ctypes.Structure):
+            _fields_ = [
+                ("PerProcessUserTimeLimit", wintypes.LARGE_INTEGER),
+                ("PerJobUserTimeLimit", wintypes.LARGE_INTEGER),
+                ("LimitFlags", wintypes.DWORD),
+                ("MinimumWorkingSetSize", ctypes.c_size_t),
+                ("MaximumWorkingSetSize", ctypes.c_size_t),
+                ("ActiveProcessLimit", wintypes.DWORD),
+                ("Affinity", ctypes.POINTER(wintypes.ULONG)),
+                ("PriorityClass", wintypes.DWORD),
+                ("SchedulingClass", wintypes.DWORD),
+            ]
+
+        class IO_COUNTERS(ctypes.Structure):
+            _fields_ = [
+                ("ReadOperationCount", ctypes.c_ulonglong),
+                ("WriteOperationCount", ctypes.c_ulonglong),
+                ("OtherOperationCount", ctypes.c_ulonglong),
+                ("ReadTransferCount", ctypes.c_ulonglong),
+                ("WriteTransferCount", ctypes.c_ulonglong),
+                ("OtherTransferCount", ctypes.c_ulonglong),
+            ]
+
+        class JOBOBJECT_EXTENDED_LIMIT_INFORMATION(ctypes.Structure):
+            _fields_ = [
+                ("BasicLimitInformation", JOBOBJECT_BASIC_LIMIT_INFORMATION),
+                ("IoInfo", IO_COUNTERS),
+                ("ProcessMemoryLimit", ctypes.c_size_t),
+                ("JobMemoryLimit", ctypes.c_size_t),
+                ("PeakProcessMemoryUsed", ctypes.c_size_t),
+                ("PeakJobMemoryUsed", ctypes.c_size_t),
+            ]
+
+
+        # Создаем Job Object
+        job = kernel32.CreateJobObjectW(None, None)
+        if not job:
+            raise ctypes.WinError()
+
+        # Настраиваем автоматическое завершение процессов при закрытии Job
+        info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
+        info.BasicLimitInformation.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+
+        if not kernel32.SetInformationJobObject(
+            job,
+            9,  # JobObjectExtendedLimitInformation
+            ctypes.byref(info),
+            ctypes.sizeof(info)
+        ):
+            kernel32.CloseHandle(job)
+            raise ctypes.WinError()
+
+        return job
+
+
+    def assign_to_job(self, pid):
+        import ctypes.wintypes
+
+        kernel32 = ctypes.windll.kernel32
+        job = self.job
+        handle = self.get_proc_handler(pid)
+        if not kernel32.AssignProcessToJobObject(job, handle):
+            raise ctypes.WinError()
+
+
+
 def run_stoppable_main() -> None:
     """Main to spawn flask in a subprocess."""
     print("run stoppable main!")
+    if os.name != "nt":
+        os.setpgrp()
+
     q: multiprocessing.Queue = multiprocessing.Queue()
     p = multiprocessing.Process(target=run_app_in_subprocess, args=(q,))
     p.start()
     # wait for stop marker
+    atexit.register(p.terminate)
+
+    if os.name == "nt":
+        win_helper = WinHelper()
+        win_helper.assign_to_job(p.pid)
+
     try:
         q.get(block=True)
         sleep(1)

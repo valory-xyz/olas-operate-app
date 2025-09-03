@@ -23,6 +23,7 @@ export const AddBackupWalletAlert = () => {
     );
 
   if (!masterSafeOwnersIsFetched) return null;
+  if (selectedAgentConfig.isUnderConstruction) return null;
 
   if (isNil(backupOwners)) return null;
 
