@@ -17,11 +17,11 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeifhxeoar5hdwilmnzhy6jf664zqp5lgrzi6lpbkc4qmoqrr24ow4q',
+  hash: 'bafybeicp7tzzvbg5t6d5hpt6skxpxjzgtbd5izj4qm6c5wn3kw7cc2r5g4',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.26.1',
+  service_version: 'v0.26.2',
   agent_release: {
     is_aea: true,
     repository: {
