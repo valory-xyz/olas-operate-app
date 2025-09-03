@@ -3,11 +3,11 @@ import { Flex, Typography } from 'antd';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
 import { FundingDescription } from '@/components/ui/FundingDescription';
+import { ONBOARDING_PAYMENT_CARD_WIDTH } from '@/constants/width';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
 import { GetBridgeRequirementsParams } from '../types';
 import { DepositForBridging } from './DepositForBridging';
-import { ONBOARDING_PAYMENT_CARD_WIDTH } from '@/constants/width';
 
 const { Text, Title } = Typography;
 
@@ -36,7 +36,11 @@ export const BridgeOnEvm = ({
   updateCrossChainTransferDetails,
 }: BridgeOnEvmProps) => (
   <Flex justify="center" style={{ marginTop: 40 }}>
-    <CardFlex $noBorder className="p-8" style={{ width: ONBOARDING_PAYMENT_CARD_WIDTH }}>
+    <CardFlex
+      $noBorder
+      className="p-8"
+      style={{ width: ONBOARDING_PAYMENT_CARD_WIDTH }}
+    >
       <BackButton onPrev={onPrev} />
       <Title level={3} className="mt-16">
         Bridge Crypto from {FROM_CHAIN_NAME}

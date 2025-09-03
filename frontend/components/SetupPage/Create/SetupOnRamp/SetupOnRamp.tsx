@@ -4,13 +4,13 @@ import { useCallback } from 'react';
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
+import { ONBOARDING_PAYMENT_CARD_WIDTH } from '@/constants/width';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useSetup } from '@/hooks/useSetup';
 
 import { OnRampPaymentSteps } from './OnRampPaymentSteps/OnRampPaymentSteps';
 import { PayingReceivingTable } from './PayingReceivingTable/PayingReceivingTable';
-import { ONBOARDING_PAYMENT_CARD_WIDTH } from '@/constants/width';
 
 const { Text, Title } = Typography;
 
@@ -38,12 +38,16 @@ export const SetupOnRamp = () => {
   const { networkId } = useOnRampContext();
 
   const handlePrevStep = useCallback(() => {
-    gotoSetup(prevState ?? SetupScreen.SetupEoaFunding);
+    gotoSetup(prevState ?? SetupScreen.FundYourAgent);
   }, [gotoSetup, prevState]);
 
   return (
     <Flex justify="center" style={{ marginTop: 40 }}>
-      <CardFlex $noBorder className="p-8" style={{ width: ONBOARDING_PAYMENT_CARD_WIDTH }}>
+      <CardFlex
+        $noBorder
+        className="p-8"
+        style={{ width: ONBOARDING_PAYMENT_CARD_WIDTH }}
+      >
         <BackButton onPrev={handlePrevStep} />
         <Title level={3} className="mt-16">
           Buy Crypto with USD

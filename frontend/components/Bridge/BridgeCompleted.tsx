@@ -3,10 +3,10 @@ import { Button, Flex, Result, Typography } from 'antd';
 import { BridgeTransferFlow } from '@/components/Bridge/BridgeTransferFlow';
 import { GoToMainPageButton } from '@/components/Pages/GoToMainPageButton';
 import { CardFlex } from '@/components/styled/CardFlex';
+import { ONBOARDING_PAYMENT_CARD_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { CrossChainTransferDetails } from '@/types/Bridge';
-import { ONBOARDING_PAYMENT_CARD_WIDTH } from '@/constants/width';
 
 const { Title } = Typography;
 
