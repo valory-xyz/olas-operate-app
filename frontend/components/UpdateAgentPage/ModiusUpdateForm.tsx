@@ -24,8 +24,8 @@ import {
   TenderlyProjectSlugLabel,
 } from '../AgentForms/common/labels';
 import { useModiusFormValidate } from '../SetupPage/SetupYourAgent/ModiusAgentForm/useModiusFormValidate';
-import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
+import { UpdateAgentCard } from './UpdateAgentCard';
 
 type ModiusFormValues = {
   env_variables: {
@@ -196,8 +196,8 @@ export const ModiusUpdatePage = () => {
   }, [initialValues, form, unsavedModal, goto]);
 
   return (
-    <CardLayout onClickBack={handleBackClick}>
+    <UpdateAgentCard onClickBack={handleBackClick}>
       <ModiusUpdateForm initialFormValues={initialValues} />
-    </CardLayout>
+    </UpdateAgentCard>
   );
 };

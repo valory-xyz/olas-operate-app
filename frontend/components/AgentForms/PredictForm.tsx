@@ -160,7 +160,6 @@ export const PredictAgentForm = ({
       name="setup-your-predict-agent"
       layout="vertical"
     >
-      <Divider style={{ margin: '12px 0 24px 0' }} />
       <Form.Item
         name="geminiApiKey"
         label={<GeminiApiKeyLabel />}
@@ -174,7 +173,7 @@ export const PredictAgentForm = ({
         <InvalidGeminiApiCredentials style={{ marginTop: 12 }} />
       )}
 
-      <Divider />
+      {agentFormType !== 'view' && <Divider />}
 
       <Form.Item hidden={agentFormType === 'view'}>
         <Button

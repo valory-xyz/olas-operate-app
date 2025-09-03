@@ -1,4 +1,4 @@
-import { message } from 'antd';
+import { Divider, message } from 'antd';
 import React, { useCallback } from 'react';
 
 import { ServiceTemplate } from '@/client';
@@ -54,10 +54,13 @@ export const PredictAgentSetup = ({
   );
 
   return (
-    <PredictAgentForm
-      isFormEnabled={!!defaultStakingProgramId}
-      agentFormType="create"
-      onSubmit={onSubmit}
-    />
+    <>
+      <Divider style={{ margin: '12px 0 24px 0' }} />
+      <PredictAgentForm
+        isFormEnabled={!!defaultStakingProgramId}
+        agentFormType="create"
+        onSubmit={onSubmit}
+      />
+    </>
   );
 };
