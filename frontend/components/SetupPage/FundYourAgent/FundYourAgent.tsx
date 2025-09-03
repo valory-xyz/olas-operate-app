@@ -173,13 +173,16 @@ const Bridge = ({
 export const FundYourAgent = () => {
   const { selectedAgentConfig } = useServices();
   const { goto } = useSetup();
-  const { evmHomeChainId } = selectedAgentConfig;
+  const { evmHomeChainId, requiresSetup } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const { tokenRequirements, isLoading } =
     useGetRefillRequirementsWithMonthlyGas({
       selectedAgentConfig,
-      // Temporary fix, remove this once we have the form for Prediction agent.
-      shouldCreateDummyService: selectedAgentConfig.name === 'Predict Trader',
+      /**
+       * service creation for agents requiring setup is already handled
+       * at the time of agent form
+       */
+      shouldCreateDummyService: !requiresSetup,
     });
   const [isBridgeOnboardingEnabled, isOnRampEnabled] = useFeatureFlag([
     'bridge-onboarding',

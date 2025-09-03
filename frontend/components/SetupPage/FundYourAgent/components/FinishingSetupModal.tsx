@@ -6,8 +6,12 @@ const { Title, Text } = Typography;
 const MODAL_STYLES: ModalProps['styles'] = {
   content: {
     width: '452px',
+    minHeight: '264px',
     padding: '32px',
     borderRadius: '12px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
   },
 };
 
