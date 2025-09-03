@@ -1,3 +1,5 @@
+import { Button } from 'antd';
+
 import { SuccessTickSvg } from '@/components/custom-icons/successTick';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
@@ -11,8 +13,17 @@ export const AgentSetupCompleteModal = () => {
       header={<SuccessTickSvg />}
       title="Setup Complete"
       description="Your autonomous AI agent is ready to work for you."
-      actionButtonText="View Agent"
-      actionButtonOnClick={() => goto(Pages.Main)}
+      action={
+        <Button
+          type="primary"
+          size="large"
+          block
+          className="mt-32"
+          onClick={() => goto(Pages.Main)}
+        >
+          View Agent
+        </Button>
+      }
     />
   );
 };

@@ -1,5 +1,4 @@
 import {
-  Button,
   Flex,
   Modal as AntdModal,
   ModalProps as AntdModalProps,
@@ -24,16 +23,14 @@ type ModalProps = {
   header?: React.ReactNode | null;
   title: string;
   description: string;
-  actionButtonText?: string;
-  actionButtonOnClick?: () => void;
+  action?: React.ReactNode;
 };
 
 export const Modal = ({
   header = null,
   title,
   description,
-  actionButtonText,
-  actionButtonOnClick,
+  action = null,
   ...props
 }: ModalProps & AntdModalProps) => {
   return (
@@ -53,17 +50,7 @@ export const Modal = ({
         <Text type="secondary" className="text-center">
           {description}
         </Text>
-        {actionButtonText && actionButtonOnClick && (
-          <Button
-            type="primary"
-            size="large"
-            block
-            className="mt-32"
-            onClick={actionButtonOnClick}
-          >
-            {actionButtonText}
-          </Button>
-        )}
+        {action}
       </Flex>
     </AntdModal>
   );
