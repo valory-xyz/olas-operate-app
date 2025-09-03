@@ -78,6 +78,7 @@ const OnRamp = () => {
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
     );
+  const isLoading = isNativeTokenLoading || isFiatLoading || !fiatAmount;
 
   return (
     <FundMethodCard>
@@ -89,7 +90,7 @@ const OnRamp = () => {
         </CardDescription>
         <TokenRequirements
           fiatAmount={fiatAmount ?? 0}
-          isLoading={isNativeTokenLoading || isFiatLoading}
+          isLoading={isLoading}
           fundType="onRamp"
         />
       </div>
@@ -97,7 +98,7 @@ const OnRamp = () => {
         type="primary"
         size="large"
         onClick={() => goto(SetupScreen.SetupOnRamp)}
-        disabled={isNativeTokenLoading || isFiatLoading}
+        disabled={isLoading}
       >
         Buy Crypto with USD
       </Button>
@@ -177,12 +178,15 @@ export const FundYourAgent = () => {
   const { tokenRequirements, isLoading } =
     useGetRefillRequirementsWithMonthlyGas({
       selectedAgentConfig,
-      shouldCreateDummyService: true,
+      // Temporary fix, remove this once we have the form for Prediction agent.
+      shouldCreateDummyService: selectedAgentConfig.name === 'Predict Trader',
     });
   const [isBridgeOnboardingEnabled, isOnRampEnabled] = useFeatureFlag([
     'bridge-onboarding',
     'on-ramp',
   ]);
+  const areTokenRequirementsLoading =
+    isLoading || tokenRequirements.length === 0;
 
   return (
     <FundYourAgentContainer>
@@ -199,13 +203,15 @@ export const FundYourAgent = () => {
         <Transfer
           chainName={chainName}
           tokenRequirements={tokenRequirements}
-          isBalancesAndFundingRequirementsLoading={isLoading}
+          isBalancesAndFundingRequirementsLoading={areTokenRequirementsLoading}
         />
         {isBridgeOnboardingEnabled && (
           <Bridge
             chainName={chainName}
             tokenRequirements={tokenRequirements}
-            isBalancesAndFundingRequirementsLoading={isLoading}
+            isBalancesAndFundingRequirementsLoading={
+              areTokenRequirementsLoading
+            }
           />
         )}
       </Flex>

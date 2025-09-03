@@ -105,7 +105,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     refetch,
     isBalancesAndFundingRequirementsLoading,
   } = useBalanceAndRefillRequirementsContext();
-  const { masterEoa } = useMasterWalletContext();
+  const { masterEoa, masterSafes } = useMasterWalletContext();
   const initialTokenRequirementsRef = useRef<TokenRequirement[] | null>(null);
 
   useEffect(() => {
@@ -120,7 +120,11 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
 
   const tokenRequirements = useMemo(() => {
     if (!masterEoa || isBalancesAndFundingRequirementsLoading) return [];
-    if (!refillRequirements) return [];
+    if (
+      !refillRequirements ||
+      !(refillRequirements as MasterSafeBalanceRecord)?.['master_safe']
+    )
+      return [];
 
     const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
     const chainConfig = TOKEN_CONFIG[evmHomeChainId];
@@ -137,10 +141,18 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
       )?.configurations[middlewareHomeChainId]?.monthly_gas_estimate ?? 0,
     );
 
-    // native_token_amount in master_safe
-    const nativeTokenBalanceInMasterSafe = BigInt(
-      (balances as MasterSafeBalanceRecord)?.['master_safe']?.[AddressZero],
+    /**
+     * If master_safe for the chainID exists, get funds from there.
+     */
+    let nativeTokenBalanceInMasterSafe = 0n;
+    const masterSafe = (masterSafes || []).find(
+      ({ evmChainId }) => evmChainId === evmHomeChainId,
     );
+    if (masterSafe) {
+      nativeTokenBalanceInMasterSafe = BigInt(
+        balances?.[masterSafe.address]?.[AddressZero] ?? 0n,
+      );
+    }
 
     const requirementsPerToken = {} as { [tokenAddress: Address]: string };
 
@@ -149,12 +161,15 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     )?.forEach(([tokenAddress, amount]) => {
       if (tokenAddress === AddressZero) {
         /**
+         * No funds needed for master_safe, if it already exists
+         */
+        const masterSafeRequirementAmount = masterSafe ? 0n : BigInt(amount);
+        const gasDeficit = monthlyGasEstimate - nativeTokenBalanceInMasterSafe;
+        const amountNeededForGas = bigintMax(0n, gasDeficit);
+        /**
          * If monthly gas estimate is greater than master_safe requirements, then consider that
          * else, check the native tokens required to meet the gas requirements
          */
-        const masterSafeRequirementAmount = BigInt(amount);
-        const gasDeficit = monthlyGasEstimate - nativeTokenBalanceInMasterSafe;
-        const amountNeededForGas = bigintMax(0n, gasDeficit);
         const nativeTotalRequired =
           bigintMax(masterSafeRequirementAmount, amountNeededForGas) +
           BigInt(masterEoaRequirementAmount ?? 0);
@@ -172,10 +187,11 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
       chainConfig,
     );
   }, [
-    refillRequirements,
     masterEoa,
-    selectedAgentConfig,
     isBalancesAndFundingRequirementsLoading,
+    refillRequirements,
+    selectedAgentConfig,
+    masterSafes,
     balances,
   ]);
 

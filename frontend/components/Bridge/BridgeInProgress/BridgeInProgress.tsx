@@ -9,6 +9,7 @@ import {
 import { BridgeTransferFlow } from '@/components/Bridge/BridgeTransferFlow';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
+import { ONBOARDING_PAYMENT_CARD_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
@@ -256,7 +257,11 @@ export const BridgeInProgress = ({
 
   return (
     <Flex justify="center" style={{ marginTop: 40 }}>
-      <CardFlex $noBorder style={{ width: 624, padding: 8 }}>
+      <CardFlex
+        $noBorder
+        className="p-8"
+        style={{ width: ONBOARDING_PAYMENT_CARD_WIDTH }}
+      >
         <Title level={3} className="mt-0">
           Bridge Crypto
         </Title>

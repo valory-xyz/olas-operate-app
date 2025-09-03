@@ -10,6 +10,7 @@ import { useSetup } from '@/hooks/useSetup';
 
 import { OnRampPaymentSteps } from './OnRampPaymentSteps/OnRampPaymentSteps';
 import { PayingReceivingTable } from './PayingReceivingTable/PayingReceivingTable';
+import { ONBOARDING_PAYMENT_CARD_WIDTH } from '@/constants/width';
 
 const { Text, Title } = Typography;
 
@@ -42,7 +43,7 @@ export const SetupOnRamp = () => {
 
   return (
     <Flex justify="center" style={{ marginTop: 40 }}>
-      <CardFlex $noBorder style={{ width: 624, padding: 8 }}>
+      <CardFlex $noBorder className="p-8" style={{ width: ONBOARDING_PAYMENT_CARD_WIDTH }}>
         <BackButton onPrev={handlePrevStep} />
         <Title level={3} className="mt-16">
           Buy Crypto with USD

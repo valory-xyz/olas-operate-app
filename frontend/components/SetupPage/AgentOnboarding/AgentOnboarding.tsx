@@ -171,7 +171,7 @@ export const AgentOnboarding = () => {
     if (currentAgentConfig.requiresSetup) {
       goto(SetupScreen.SetupYourAgent);
     } else {
-      goto(SetupScreen.SetupEoaFunding);
+      goto(SetupScreen.FundYourAgent);
     }
   }, [goto, selectedAgent]);
 

@@ -6,14 +6,13 @@ import { CardFlex } from '@/components/styled/CardFlex';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { CrossChainTransferDetails } from '@/types/Bridge';
+import { ONBOARDING_PAYMENT_CARD_WIDTH } from '@/constants/width';
 
 const { Title } = Typography;
 
 type BridgeCompletedProps = Omit<CrossChainTransferDetails, 'eta'> & {
   completionMessage?: string;
 };
-
-const CARD_WIDTH = 624;
 
 /**
  * Final screen displayed when the bridging process is completed.
@@ -32,7 +31,8 @@ export const BridgeCompleted = ({
       <CardFlex
         $noBorder
         bordered={false}
-        style={{ width: CARD_WIDTH, padding: 8 }}
+        className="p-8"
+        style={{ width: ONBOARDING_PAYMENT_CARD_WIDTH }}
       >
         <Flex justify="space-between" align="center">
           <Title level={3} className="mt-12">
