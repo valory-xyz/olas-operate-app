@@ -1,4 +1,4 @@
-import { isEqual, omitBy } from 'lodash';
+import { isEqual, isUndefined, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import { Pages } from '@/enums/Pages';
@@ -34,9 +34,9 @@ export const PredictUpdateSetup = () => {
   }, [selectedService]);
 
   const handleClickBack = useCallback(() => {
-    const unsavedFields = omitBy(
-      form?.getFieldsValue(),
-      (value) => value === undefined || value === '',
+    // Check if there are unsaved changes and omit empty fields
+    const unsavedFields = omitBy(form?.getFieldsValue(), (value) =>
+      isUndefined(value),
     );
     const hasUnsavedChanges = !isEqual(unsavedFields, initialValues);
 
