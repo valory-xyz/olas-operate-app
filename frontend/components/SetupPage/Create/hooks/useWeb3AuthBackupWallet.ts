@@ -21,12 +21,12 @@ export const useWeb3AuthBackupWallet = ({
 
   const { setBackupSigner } = useSetup();
   const isAddressUpdated = useRef(false);
+  const isMessageShown = useRef(false);
 
   useEffect(() => {
-    if (isAddressUpdated.current) return;
-
     const getAccountAddressAndDisconnect = async () => {
       if (!provider) return;
+      if (isAddressUpdated.current) return;
 
       try {
         const accounts: Maybe<Address[]> = await provider.request({
@@ -35,10 +35,14 @@ export const useWeb3AuthBackupWallet = ({
 
         if (!accounts || !accounts[0]) return;
         setBackupSigner({ address: accounts[0], type: 'web3auth' });
-        disconnect();
         isAddressUpdated.current = true;
-        message.success('Backup wallet successfully set');
+        disconnect();
         onFinish();
+
+        if (!isMessageShown.current) {
+          message.success('Backup wallet successfully set');
+          isMessageShown.current = true;
+        }
       } catch (error) {
         console.error('Error getting address:', error);
       }
