@@ -4,7 +4,6 @@ import { useCallback } from 'react';
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
-import { ONBOARDING_PAYMENT_CARD_WIDTH } from '@/constants/width';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useSetup } from '@/hooks/useSetup';
@@ -42,12 +41,8 @@ export const SetupOnRamp = () => {
   }, [gotoSetup, prevState]);
 
   return (
-    <Flex justify="center" style={{ marginTop: 40 }}>
-      <CardFlex
-        $noBorder
-        className="p-8"
-        style={{ width: ONBOARDING_PAYMENT_CARD_WIDTH }}
-      >
+    <Flex justify="center" className="pt-48">
+      <CardFlex $noBorder $onboarding className="p-8">
         <BackButton onPrev={handlePrevStep} />
         <Title level={3} className="mt-16">
           Buy Crypto with USD

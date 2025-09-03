@@ -48,7 +48,7 @@ const Body = styled.div<{ $hasPadding?: boolean }>`
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: ${(props) => (props.$hasPadding ? '40px 0' : undefined)};
+  padding: ${(props) => (props.$hasPadding ? '48px 0' : undefined)};
   height: ${APP_HEIGHT}px;
 `;
 

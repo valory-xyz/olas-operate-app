@@ -90,11 +90,11 @@ const getColumns = (
   },
 ];
 
-const TokenLoader = () => (
+const TokenLoader = ({ size = 'small' }: { size?: 'small' | 'large' }) => (
   <Skeleton.Input
     size="small"
     active
-    style={{ width: '80px !important', minWidth: '80px !important' }}
+    style={{ width: size === 'small' ? '80px' : '200px' }}
   />
 );
 
@@ -215,20 +215,20 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
               <TryAgain onRetry={onRetry} />
             ) : (
               <Flex align="center" gap={4}>
-                <Text>
-                  {isReceivingAmountLoading ? <TokenLoader /> : receivingAmount}
-                </Text>
-                {!isReceivingAmountLoading && !isNativeTokenLoading && (
-                  <Image
-                    width={20}
-                    height={20}
-                    src="/chains/ethereum-chain.png"
-                    alt="ETH"
-                  />
+                {isReceivingAmountLoading || isNativeTokenLoading ? (
+                  <TokenLoader size="large" />
+                ) : (
+                  <>
+                    <Text>{receivingAmount}</Text>
+                    <Image
+                      width={20}
+                      height={20}
+                      src="/chains/ethereum-chain.png"
+                      alt="ETH"
+                    />
+                    <Text>{nativeTokenAmount}</Text>
+                  </>
                 )}
-                <Text>
-                  {isNativeTokenLoading ? <TokenLoader /> : nativeTokenAmount}
-                </Text>
               </Flex>
             )}
           </>

@@ -1,42 +1,15 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { Steps as AntdSteps, Typography } from 'antd';
+import { Typography } from 'antd';
 import { FC, ReactNode } from 'react';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { BridgingStepStatus } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
 
+import { Steps } from './Steps';
+
 const { Text } = Typography;
-
-const Steps = styled(AntdSteps)`
-  .ant-steps-item-title {
-    color: ${COLOR.TEXT} !important;
-  }
-
-  .ant-steps-item-description {
-    color: ${COLOR.TEXT_NEUTRAL_TERTIARY} !important;
-  }
-
-  .ant-steps-item-wait .ant-steps-item-icon {
-    background-color: ${COLOR.GRAY_1};
-  }
-
-  .ant-steps-item-icon {
-    width: 32px !important;
-    height: 32px !important;
-    border-radius: 50% !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .ant-steps-item-tail {
-    inset-inline-start: 16px !important;
-    top: 4px !important;
-  }
-`;
 
 const SubStepContainer = styled.div`
   line-height: normal;

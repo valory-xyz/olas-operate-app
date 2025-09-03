@@ -108,6 +108,12 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
   const { masterEoa, masterSafes } = useMasterWalletContext();
   const initialTokenRequirementsRef = useRef<TokenRequirement[] | null>(null);
 
+  const masterSafe = useMemo(() => {
+    return (masterSafes || []).find(
+      ({ evmChainId }) => evmChainId === selectedAgentConfig.evmHomeChainId,
+    );
+  }, [masterSafes, selectedAgentConfig.evmHomeChainId]);
+
   useEffect(() => {
     const createDummyService = async () => {
       await updateBeforeBridgingFunds();
@@ -120,11 +126,13 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
 
   const tokenRequirements = useMemo(() => {
     if (!masterEoa || isBalancesAndFundingRequirementsLoading) return [];
-    if (
-      !refillRequirements ||
-      !(refillRequirements as MasterSafeBalanceRecord)?.['master_safe']
-    )
-      return [];
+    if (!refillRequirements) return [];
+
+    const masterSafeRequirements = masterSafe
+      ? (refillRequirements as AddressBalanceRecord)?.[masterSafe.address]
+      : (refillRequirements as MasterSafeBalanceRecord)?.['master_safe'];
+
+    if (!masterSafeRequirements) return [];
 
     const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
     const chainConfig = TOKEN_CONFIG[evmHomeChainId];
@@ -145,9 +153,6 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
      * If master_safe for the chainID exists, get funds from there.
      */
     let nativeTokenBalanceInMasterSafe = 0n;
-    const masterSafe = (masterSafes || []).find(
-      ({ evmChainId }) => evmChainId === evmHomeChainId,
-    );
     if (masterSafe) {
       nativeTokenBalanceInMasterSafe = BigInt(
         balances?.[masterSafe.address]?.[AddressZero] ?? 0n,
@@ -156,30 +161,31 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
 
     const requirementsPerToken = {} as { [tokenAddress: Address]: string };
 
-    Object.entries(
-      (refillRequirements as MasterSafeBalanceRecord)['master_safe'],
-    )?.forEach(([tokenAddress, amount]) => {
-      if (tokenAddress === AddressZero) {
-        /**
-         * No funds needed for master_safe, if it already exists
-         */
-        const masterSafeRequirementAmount = masterSafe ? 0n : BigInt(amount);
-        const gasDeficit = monthlyGasEstimate - nativeTokenBalanceInMasterSafe;
-        const amountNeededForGas = bigintMax(0n, gasDeficit);
-        /**
-         * If monthly gas estimate is greater than master_safe requirements, then consider that
-         * else, check the native tokens required to meet the gas requirements
-         */
-        const nativeTotalRequired =
-          bigintMax(masterSafeRequirementAmount, amountNeededForGas) +
-          BigInt(masterEoaRequirementAmount ?? 0);
+    Object.entries(masterSafeRequirements)?.forEach(
+      ([tokenAddress, amount]) => {
+        if (tokenAddress === AddressZero) {
+          /**
+           * No funds needed for master_safe, if it already exists
+           */
+          const masterSafeRequirementAmount = masterSafe ? 0n : BigInt(amount);
+          const gasDeficit =
+            monthlyGasEstimate - nativeTokenBalanceInMasterSafe;
+          const amountNeededForGas = bigintMax(0n, gasDeficit);
+          /**
+           * If monthly gas estimate is greater than master_safe requirements, then consider that
+           * else, check the native tokens required to meet the gas requirements
+           */
+          const nativeTotalRequired =
+            bigintMax(masterSafeRequirementAmount, amountNeededForGas) +
+            BigInt(masterEoaRequirementAmount ?? 0);
 
-        requirementsPerToken[tokenAddress as Address] =
-          nativeTotalRequired.toString();
-      } else {
-        requirementsPerToken[tokenAddress as Address] = amount.toString();
-      }
-    });
+          requirementsPerToken[tokenAddress as Address] =
+            nativeTotalRequired.toString();
+        } else {
+          requirementsPerToken[tokenAddress as Address] = amount.toString();
+        }
+      },
+    );
 
     return getTokensDetailsForFunding(
       requirementsPerToken,
@@ -187,11 +193,11 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
       chainConfig,
     );
   }, [
+    masterSafe,
+    refillRequirements,
     masterEoa,
     isBalancesAndFundingRequirementsLoading,
-    refillRequirements,
     selectedAgentConfig,
-    masterSafes,
     balances,
   ]);
 

@@ -57,7 +57,7 @@ const columns: TableColumnsType = [
   },
   {
     title: 'Status',
-    key: 'status',
+    key: 'token',
     render: (_: unknown, record: TokenRowData) => {
       const isWaiting = !record.areFundsReceived;
       return (
