@@ -30,7 +30,7 @@ const GeminiApiKeyLabel = () => (
 const GoogleAiStudioHelper = () => (
   <Text type="secondary" className="text-sm">
     The Gemini API key allows you to chat with your agent and update its goals
-    through Optimus profile. You can generate one for free on{' '}
+    through Prediction profile. You can generate one for free on{' '}
     <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
       Google AI Studio
     </a>
@@ -42,7 +42,7 @@ export type PredictFormValues = {
   geminiApiKey: string;
 };
 
-export const usePredictFormValidate = () => {
+const usePredictFormValidate = () => {
   const [isValidating, setIsValidating] = useState(false);
   const [submitButtonText, setSubmitButtonText] = useState('Continue');
   const [geminiApiKeyValidationStatus, setGeminiApiKeyValidationStatus] =
@@ -51,7 +51,6 @@ export const usePredictFormValidate = () => {
   const handleValidate = useCallback(
     async (values: PredictFormValues): Promise<boolean> => {
       setIsValidating(true);
-
       setGeminiApiKeyValidationStatus('unknown');
       setSubmitButtonText('Validating Gemini API key...');
 
