@@ -74,6 +74,8 @@
     "install:backend": "poetry install --no-root",
     "install:frontend": "cd frontend && yarn",
     "lint:frontend": "cd frontend && yarn lint",
+    "typecheck:frontend": "cd frontend && yarn typecheck",
+    "check:frontend": "cd frontend && yarn check",
     "start": "yarn electron .",
     "start:frontend": "cd frontend && yarn start",
     "test:frontend": "cd frontend && yarn test"

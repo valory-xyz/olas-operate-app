@@ -34,7 +34,7 @@ type TokenRowData = {
   areFundsReceived: boolean;
 };
 
-const columns: TableColumnsType = [
+const columns: TableColumnsType<TokenRowData> = [
   {
     title: 'Token',
     key: 'token',
@@ -83,7 +83,7 @@ export const TokenRequirementsTable = ({
   locale?: TableLocale;
 }) => {
   return (
-    <Table
+    <Table<TokenRowData>
       dataSource={tableData}
       columns={columns}
       loading={isLoading}

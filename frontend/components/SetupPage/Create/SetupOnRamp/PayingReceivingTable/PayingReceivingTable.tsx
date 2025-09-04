@@ -13,7 +13,7 @@ import { ReactNode, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { CreditCardSvg } from '@/components/custom-icons/CreditCard';
-import { Table as CustomTable } from '@/components/ui/Table';
+import { Table } from '@/components/ui/Table';
 import { EvmChainId } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
@@ -27,7 +27,7 @@ import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
 const { Text } = Typography;
 
-const Table = styled(CustomTable)`
+const TableWrapper = styled.div`
   .ant-table-thead {
     .ant-table-cell {
       padding: 12px 16px !important;
@@ -58,7 +58,7 @@ type PaymentTableDataType = {
 const getColumns = (
   chainName: string,
   chainDisplayName: string,
-): TableProps['columns'] => [
+): TableProps<PaymentTableDataType>['columns'] => [
   {
     title: (
       <Flex align="center" gap={8}>
@@ -251,11 +251,13 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const toChain = asEvmChainDetails(selectedAgentConfig.middlewareHomeChainId);
 
   return (
-    <Table
-      columns={getColumns(toChain.name, toChain.displayName)}
-      dataSource={ethToTokenDataSource}
-      pagination={false}
-      bordered
-    />
+    <TableWrapper>
+      <Table<PaymentTableDataType>
+        columns={getColumns(toChain.name, toChain.displayName)}
+        dataSource={ethToTokenDataSource}
+        pagination={false}
+        bordered
+      />
+    </TableWrapper>
   );
 };
