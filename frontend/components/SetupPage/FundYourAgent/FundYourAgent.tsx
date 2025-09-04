@@ -67,6 +67,7 @@ type FundMethodCardProps = {
 
 const OnRamp = () => {
   const { networkId: onRampChainId } = useOnRampContext();
+  const { goto } = useSetup();
 
   const {
     isLoading: isNativeTokenLoading,
@@ -77,6 +78,7 @@ const OnRamp = () => {
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
     );
+  const isLoading = isNativeTokenLoading || isFiatLoading || !fiatAmount;
 
   return (
     <FundMethodCard>
@@ -88,11 +90,16 @@ const OnRamp = () => {
         </CardDescription>
         <TokenRequirements
           fiatAmount={fiatAmount ?? 0}
-          isLoading={isNativeTokenLoading || isFiatLoading}
+          isLoading={isLoading}
           fundType="onRamp"
         />
       </div>
-      <Button type="primary" size="large">
+      <Button
+        type="primary"
+        size="large"
+        onClick={() => goto(SetupScreen.SetupOnRamp)}
+        disabled={isLoading}
+      >
         Buy Crypto with USD
       </Button>
     </FundMethodCard>
@@ -120,7 +127,11 @@ const Transfer = ({
           isLoading={isBalancesAndFundingRequirementsLoading}
         />
       </div>
-      <Button size="large" onClick={() => goto(SetupScreen.TransferFunds)}>
+      <Button
+        size="large"
+        onClick={() => goto(SetupScreen.TransferFunds)}
+        disabled={isBalancesAndFundingRequirementsLoading}
+      >
         Transfer Crypto on {chainName}
       </Button>
     </FundMethodCard>
@@ -151,6 +162,7 @@ const Bridge = ({
       <Button
         size="large"
         onClick={() => goto(SetupScreen.SetupBridgeOnboardingScreen)}
+        disabled={isBalancesAndFundingRequirementsLoading}
       >
         Bridge Crypto from Ethereum
       </Button>
@@ -161,17 +173,23 @@ const Bridge = ({
 export const FundYourAgent = () => {
   const { selectedAgentConfig } = useServices();
   const { goto } = useSetup();
-  const { evmHomeChainId } = selectedAgentConfig;
+  const { evmHomeChainId, requiresSetup } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const { tokenRequirements, isLoading } =
     useGetRefillRequirementsWithMonthlyGas({
       selectedAgentConfig,
-      shouldCreateDummyService: true,
+      /**
+       * service creation for agents requiring setup is already handled
+       * at the time of agent form
+       */
+      shouldCreateDummyService: !requiresSetup,
     });
   const [isBridgeOnboardingEnabled, isOnRampEnabled] = useFeatureFlag([
     'bridge-onboarding',
     'on-ramp',
   ]);
+  const areTokenRequirementsLoading =
+    isLoading || tokenRequirements.length === 0;
 
   return (
     <FundYourAgentContainer>
@@ -188,13 +206,15 @@ export const FundYourAgent = () => {
         <Transfer
           chainName={chainName}
           tokenRequirements={tokenRequirements}
-          isBalancesAndFundingRequirementsLoading={isLoading}
+          isBalancesAndFundingRequirementsLoading={areTokenRequirementsLoading}
         />
         {isBridgeOnboardingEnabled && (
           <Bridge
             chainName={chainName}
             tokenRequirements={tokenRequirements}
-            isBalancesAndFundingRequirementsLoading={isLoading}
+            isBalancesAndFundingRequirementsLoading={
+              areTokenRequirementsLoading
+            }
           />
         )}
       </Flex>

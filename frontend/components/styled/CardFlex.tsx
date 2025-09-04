@@ -12,6 +12,7 @@ type CardFlexProps = {
   $noBodyPadding?: boolean;
   $noBorder?: boolean;
   $padding?: string;
+  $onboarding?: boolean;
 };
 
 export const CardFlex = styled(Card).withConfig({
@@ -19,6 +20,8 @@ export const CardFlex = styled(Card).withConfig({
     !['gap', 'noBodyPadding', 'noBorder'].includes(prop),
 })<CardFlexProps>`
   ${(props) => !!(props.noBorder || props.$noBorder) && 'border: none;'}
+
+  ${(props) => !!props.$onboarding && 'width: 624px;'}
 
   .ant-card-body {
     ${(props) => {

@@ -161,7 +161,7 @@ export const Sidebar = () => {
 
       // TODO: make back button on funding screen properly sending back to main
       // if was redirected from here
-      gotoSetup(SetupScreen.SetupEoaFundingIncomplete);
+      gotoSetup(SetupScreen.FundYourAgent);
     }
   };
 

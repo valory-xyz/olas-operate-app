@@ -1,15 +1,19 @@
-import { Flex, message, Typography } from 'antd';
-import { useCallback, useEffect, useMemo } from 'react';
+import { LoadingOutlined } from '@ant-design/icons';
+import { Flex, Spin, Typography } from 'antd';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useUnmount } from 'usehooks-ts';
 
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
+import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
 import { BackButton } from '@/components/ui/BackButton';
 import { FundingDescription } from '@/components/ui/FundingDescription';
+import { Modal } from '@/components/ui/Modal';
 import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
 import { ChainImageMap, EvmChainName } from '@/constants/chains';
-import { Pages } from '@/enums/Pages';
+import { TokenSymbol } from '@/constants/token';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { usePageState } from '@/hooks/usePageState';
+import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { delayInSeconds } from '@/utils/delay';
@@ -19,9 +23,17 @@ import { useTokensFundingStatus } from './hooks/useTokensFundingStatus';
 
 const { Text, Title } = Typography;
 
+const FinishingSetupModal = () => (
+  <Modal
+    header={<Spin indicator={<LoadingOutlined spin />} size="large" />}
+    title="Finishing Setup"
+    description="It usually takes a few minutes. Please keep the app open until the
+process is complete."
+  />
+);
+
 export const TransferFunds = () => {
   const { goto: gotoSetup } = useSetup();
-  const { goto: gotoPage } = usePageState();
 
   const { selectedAgentConfig } = useServices();
   const { isFullyFunded, tokensFundingStatus } = useTokensFundingStatus({
@@ -31,6 +43,17 @@ export const TransferFunds = () => {
     useGetRefillRequirementsWithMonthlyGas({
       selectedAgentConfig,
     });
+  const {
+    isPending: isLoadingMasterSafeCreation,
+    isError: isErrorMasterSafeCreation,
+    mutateAsync: createMasterSafe,
+    isSuccess: isSuccessMasterSafeCreation,
+    data: masterSafeDetails,
+  } = useMasterSafeCreationAndTransfer(
+    Object.keys(tokensFundingStatus) as TokenSymbol[],
+  );
+  const [showSetupFinishedModal, setShowSetupFinishedModal] = useState(false);
+
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const chainImage = ChainImageMap[evmHomeChainId];
@@ -44,15 +67,9 @@ export const TransferFunds = () => {
   }, [initialTokenRequirements, tokensFundingStatus]);
 
   const handleFunded = useCallback(async () => {
-    message.success(
-      `${selectedAgentConfig.displayName} has been fully funded!`,
-    );
-
-    await delayInSeconds(1);
-
-    // TODO: before moving on to the main page we should first create the master safe, logic for that is still in discussion.
-    gotoPage(Pages.Main);
-  }, [gotoPage, selectedAgentConfig.displayName]);
+    if (masterSafeDetails?.isSafeCreated) return;
+    createMasterSafe();
+  }, [createMasterSafe, masterSafeDetails?.isSafeCreated]);
 
   useEffect(() => {
     if (isFullyFunded) {
@@ -60,9 +77,29 @@ export const TransferFunds = () => {
     }
   }, [isFullyFunded, handleFunded]);
 
+  useEffect(() => {
+    if (isLoadingMasterSafeCreation) return;
+    if (isErrorMasterSafeCreation) return;
+    if (!isSuccessMasterSafeCreation) return;
+
+    // Show setup finished modal after a bit of delay so the finishing setup modal is closed.
+    delayInSeconds(0.25).then(() => {
+      setShowSetupFinishedModal(true);
+    });
+  }, [
+    isLoadingMasterSafeCreation,
+    isErrorMasterSafeCreation,
+    isSuccessMasterSafeCreation,
+    setShowSetupFinishedModal,
+  ]);
+
+  useUnmount(() => {
+    setShowSetupFinishedModal(false);
+  });
+
   return (
-    <Flex justify="center" style={{ marginTop: 40 }}>
-      <CardFlex $noBorder style={{ width: 624, padding: 8 }}>
+    <Flex justify="center" className="pt-48">
+      <CardFlex $noBorder $onboarding className="p-8">
         <BackButton onPrev={() => gotoSetup(SetupScreen.FundYourAgent)} />
         <Title level={3} className="mt-16">
           Transfer Crypto on {chainName}
@@ -83,6 +120,11 @@ export const TransferFunds = () => {
 
         <TokenRequirementsTable isLoading={isLoading} tableData={tableData} />
       </CardFlex>
+
+      {isLoadingMasterSafeCreation && !showSetupFinishedModal && (
+        <FinishingSetupModal />
+      )}
+      {showSetupFinishedModal && <AgentSetupCompleteModal />}
     </Flex>
   );
 };

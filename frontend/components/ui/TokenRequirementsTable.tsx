@@ -89,6 +89,8 @@ export const TokenRequirementsTable = ({
       loading={isLoading}
       pagination={false}
       locale={locale}
+      className="mt-32"
+      rowKey={(record) => record.symbol}
     />
   );
 };

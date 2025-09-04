@@ -1,11 +1,13 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { Steps, Typography } from 'antd';
+import { Typography } from 'antd';
 import { FC, ReactNode } from 'react';
 import styled from 'styled-components';
 
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { BridgingStepStatus } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
+
+import { Steps } from './Steps';
 
 const { Text } = Typography;
 
@@ -56,7 +58,7 @@ export const TransactionSteps: FC<TransactionStepsProps> = ({ steps }) => (
       status,
       title,
       description: (subSteps || []).map((subStep, idx) => (
-        <SubStepContainer key={idx} style={{ marginTop: idx === 0 ? 4 : 6 }}>
+        <SubStepContainer key={idx} style={{ marginTop: idx === 0 ? 4 : 16 }}>
           {subStep.description && (
             <Description>{subStep.description}</Description>
           )}

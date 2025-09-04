@@ -19,7 +19,7 @@ export const SetupBridgeOnboarding = () => {
   );
 
   const handlePrevStep = useCallback(() => {
-    gotoSetup(prevState || SetupScreen.SetupEoaFunding);
+    gotoSetup(prevState ?? SetupScreen.FundYourAgent);
   }, [gotoSetup, prevState]);
 
   return (
@@ -28,6 +28,7 @@ export const SetupBridgeOnboarding = () => {
       bridgeFromDescription={BRIDGE_FROM_MESSAGE}
       getBridgeRequirementsParams={getBridgeRequirementsParams}
       onPrevBeforeBridging={handlePrevStep}
+      isOnboarding
     />
   );
 };

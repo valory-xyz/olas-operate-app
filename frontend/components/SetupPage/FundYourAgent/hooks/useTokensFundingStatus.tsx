@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { EvmChainId } from '@/constants/chains';
 import { useMasterBalances } from '@/hooks/useBalanceContext';
@@ -17,7 +17,7 @@ type UseTokensFundingStatusProps = {
  * @example
  * {
  *  isFullyFunded: false,
- *  tokenFundingStatus: {
+ *  tokensFundingStatus: {
  *    OLAS: true,
  *    XDAI: false,
  *  }
@@ -31,6 +31,7 @@ export const useTokensFundingStatus = ({
     useGetRefillRequirementsWithMonthlyGas({
       selectedAgentConfig,
     });
+  const [hasBeenFullyFunded, setHasBeenFullyFunded] = useState(false);
   const currentChain: number = selectedAgentConfig.evmHomeChainId;
 
   const requiredTokens = tokenRequirements?.map((token) => token.symbol);
@@ -65,11 +66,30 @@ export const useTokensFundingStatus = ({
       }
     });
 
+    const isFullyFunded = Object.values(tokensFundingStatus).every(Boolean);
     return {
-      isFullyFunded: Object.values(tokensFundingStatus).every(Boolean),
+      isFullyFunded,
       tokensFundingStatus,
     };
   }, [eoaBalances, tokenRequirements]);
+
+  /**
+   * Once the funds have been recieved completely, don't recalculate the statuses,
+   * as the EOA balance might change if the funds are transferred to the newly created master_safe
+   */
+  useEffect(() => {
+    if (fundingStatus.isFullyFunded && !hasBeenFullyFunded) {
+      setHasBeenFullyFunded(true);
+    }
+  }, [fundingStatus.isFullyFunded, hasBeenFullyFunded]);
+
+  if (hasBeenFullyFunded)
+    return {
+      isFullyFunded: true,
+      tokensFundingStatus: requiredTokens
+        ? Object.fromEntries(requiredTokens.map((token) => [token, true]) || [])
+        : {},
+    };
 
   return fundingStatus;
 };

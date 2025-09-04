@@ -2,18 +2,22 @@ import { CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import {
   Button,
   Flex,
+  Image as AntdImage,
   Skeleton,
-  Table,
   type TableProps,
   Typography,
 } from 'antd';
 import { cloneDeep } from 'lodash';
 import Image from 'next/image';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
+import styled from 'styled-components';
 
+import { CreditCardSvg } from '@/components/custom-icons/CreditCard';
+import { Table as CustomTable } from '@/components/ui/Table';
 import { EvmChainId } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
+import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
@@ -22,6 +26,28 @@ import { ReceivingTokens } from '@/types/Bridge';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
 const { Text } = Typography;
+
+const Table = styled(CustomTable)`
+  .ant-table-thead {
+    .ant-table-cell {
+      padding: 12px 16px !important;
+
+      &:first-child {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 0;
+      }
+
+      &:last-child {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 0;
+      }
+    }
+  }
+
+  .ant-table-cell:first-child {
+    border-inline-end: none !important;
+  }
+`;
 
 type PaymentTableDataType = {
   key: string;
@@ -32,12 +58,12 @@ type PaymentTableDataType = {
 const getColumns = (
   chainName: string,
   chainDisplayName: string,
-): TableProps<PaymentTableDataType>['columns'] => [
+): TableProps['columns'] => [
   {
     title: (
-      <Flex justify="space-between" align="center">
-        <Text>Paying</Text>
-        <Image src="/wallet.png" width={24} height={24} alt="Paying" />
+      <Flex align="center" gap={8}>
+        <CreditCardSvg />
+        <Text className="text-sm">Credit or Debit Card</Text>
       </Flex>
     ),
     dataIndex: 'paying',
@@ -47,14 +73,9 @@ const getColumns = (
   },
   {
     title: (
-      <Flex justify="space-between" align="center">
-        <Text>Receiving</Text>
-        <Image
-          src={`/chains/${chainName}-chain.png`}
-          width={24}
-          height={24}
-          alt={chainDisplayName}
-        />
+      <Flex align="center" gap={8}>
+        <ChainLogo chainName={chainName} alt={chainDisplayName} />
+        <Text className="text-sm">Receiving</Text>
       </Flex>
     ),
     dataIndex: 'receiving',
@@ -64,11 +85,11 @@ const getColumns = (
   },
 ];
 
-const TokenLoader = () => (
+const TokenLoader = ({ size = 'small' }: { size?: 'small' | 'large' }) => (
   <Skeleton.Input
     size="small"
     active
-    style={{ width: '80px !important', minWidth: '80px !important' }}
+    style={{ width: size === 'small' ? '80px' : '200px' }}
   />
 );
 
@@ -82,6 +103,15 @@ const TryAgain = ({ onRetry }: { onRetry: () => void }) => (
   </Flex>
 );
 
+const ChainLogo = ({ chainName, alt }: { chainName: string; alt: string }) => (
+  <Image
+    width={20}
+    height={20}
+    src={`/chains/${chainName}-chain.png`}
+    alt={alt}
+  />
+);
+
 type ReceivingTokensProps = {
   receivingTokens: ReceivingTokens;
 };
@@ -93,9 +123,21 @@ const ViewReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
         <TokenLoader />
       </Flex>
     ) : (
-      receivingTokens.map((token, index) => (
-        <Text key={index}>{`${token?.amount} ${token?.symbol}`}</Text>
-      ))
+      receivingTokens.map((token, index) => {
+        const iconSrc =
+          TokenSymbolConfigMap[token.symbol as TokenSymbol]?.image;
+        return (
+          <Flex key={index} align="center" gap={8} className="mb-16">
+            <AntdImage
+              src={iconSrc}
+              alt={token.symbol}
+              width={20}
+              className="flex"
+            />
+            <Text>{`${token?.amount} ${token?.symbol}`}</Text>
+          </Flex>
+        );
+      })
     )}
   </Flex>
 );
@@ -137,8 +179,8 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   ]);
 
   const isReceivingAmountLoading = isFiatLoading || isNativeTokenLoading;
-  const receivingAmount = usdAmountToPay ? `~${usdAmountToPay} USD` : NA;
-  const nativeTokenAmount = `for ${ethAmountToPay} ETH`;
+  const receivingAmount = usdAmountToPay ? `~$${usdAmountToPay} for` : NA;
+  const nativeTokenAmount = `${ethAmountToPay} ETH`;
 
   // Update the USD amount to pay only if the on-ramping step is not completed.
   // Or if the transaction is successful but funds are not received.
@@ -163,19 +205,29 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const ethToTokenDataSource = useMemo<PaymentTableDataType[]>(
     () => [
       {
+        key: 'headers',
+        paying: <Text className="text-sm text-neutral-tertiary">You Pay</Text>,
+        receiving: (
+          <Text className="text-sm text-neutral-tertiary">You Receive</Text>
+        ),
+      },
+      {
         key: 'paying-receiving',
         paying: (
           <>
             {hasNativeTokenError && !isNativeTokenLoading ? (
               <TryAgain onRetry={onRetry} />
             ) : (
-              <Flex vertical justify="center" gap={6}>
-                <Text>
-                  {isReceivingAmountLoading ? <TokenLoader /> : receivingAmount}
-                </Text>
-                <Text>
-                  {isNativeTokenLoading ? <TokenLoader /> : nativeTokenAmount}
-                </Text>
+              <Flex align="center" gap={4}>
+                {isReceivingAmountLoading || isNativeTokenLoading ? (
+                  <TokenLoader size="large" />
+                ) : (
+                  <>
+                    <Text>{receivingAmount}</Text>
+                    <ChainLogo chainName="ethereum" alt="ETH" />
+                    <Text>{nativeTokenAmount}</Text>
+                  </>
+                )}
               </Flex>
             )}
           </>
@@ -199,12 +251,11 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const toChain = asEvmChainDetails(selectedAgentConfig.middlewareHomeChainId);
 
   return (
-    <Table<PaymentTableDataType>
+    <Table
       columns={getColumns(toChain.name, toChain.displayName)}
       dataSource={ethToTokenDataSource}
       pagination={false}
       bordered
-      style={{ width: '100%' }}
     />
   );
 };

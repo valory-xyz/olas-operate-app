@@ -34,8 +34,8 @@ export const BridgeOnEvm = ({
   updateQuoteId,
   updateCrossChainTransferDetails,
 }: BridgeOnEvmProps) => (
-  <Flex justify="center" style={{ marginTop: 40 }}>
-    <CardFlex $noBorder style={{ width: 624, padding: 8 }}>
+  <Flex justify="center" className="pt-48">
+    <CardFlex $noBorder $onboarding className="p-8">
       <BackButton onPrev={onPrev} />
       <Title level={3} className="mt-16">
         Bridge Crypto from {FROM_CHAIN_NAME}

@@ -13,8 +13,6 @@ type BridgeCompletedProps = Omit<CrossChainTransferDetails, 'eta'> & {
   completionMessage?: string;
 };
 
-const CARD_WIDTH = 624;
-
 /**
  * Final screen displayed when the bridging process is completed.
  * It shows the transfer details and a button to navigate to the wallet balance page.
@@ -28,12 +26,8 @@ export const BridgeCompleted = ({
   const { goto } = usePageState();
 
   return (
-    <Flex justify="center" style={{ marginTop: 40 }}>
-      <CardFlex
-        $noBorder
-        bordered={false}
-        style={{ width: CARD_WIDTH, padding: 8 }}
-      >
+    <Flex justify="center" className="pt-48">
+      <CardFlex $noBorder $onboarding bordered={false} className="p-8">
         <Flex justify="space-between" align="center">
           <Title level={3} className="mt-12">
             Bridge Completed
