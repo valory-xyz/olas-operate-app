@@ -58,7 +58,7 @@ type PaymentTableDataType = {
 const getColumns = (
   chainName: string,
   chainDisplayName: string,
-): TableProps['columns'] => [
+): TableProps<PaymentTableDataType>['columns'] => [
   {
     title: (
       <Flex align="center" gap={8}>

@@ -113,7 +113,7 @@ let appConfig = {
   ports: {
     dev: {
       operate: 8000,
-      next: 3000,
+      next: 4000,
     },
     prod: {
       operate: 8765,

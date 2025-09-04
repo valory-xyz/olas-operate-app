@@ -34,7 +34,7 @@ type TokenRowData = {
   areFundsReceived: boolean;
 };
 
-const columns: TableColumnsType = [
+const columns: TableColumnsType<TokenRowData> = [
   {
     title: 'Token',
     key: 'token',
