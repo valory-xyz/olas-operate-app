@@ -83,7 +83,7 @@ export const TokenRequirementsTable = ({
   locale?: TableLocale;
 }) => {
   return (
-    <Table
+    <Table<TokenRowData>
       dataSource={tableData}
       columns={columns}
       loading={isLoading}

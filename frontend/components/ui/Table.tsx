@@ -1,9 +1,9 @@
-import { Table as AntdTable } from 'antd';
+import { Table as AntdTable, TableProps } from 'antd';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
 
-export const Table = styled(AntdTable)`
+export const TableWrapper = styled.div`
   .ant-table-thead {
     .ant-table-cell {
       padding: 10px 16px;
@@ -36,3 +36,11 @@ export const Table = styled(AntdTable)`
     }
   }
 `;
+
+export function Table<T extends Record<string, unknown>>(props: TableProps<T>) {
+  return (
+    <TableWrapper>
+      <AntdTable<T> {...props} />
+    </TableWrapper>
+  );
+}
