@@ -57,7 +57,7 @@ const columns: TableColumnsType = [
   },
   {
     title: 'Status',
-    key: 'token',
+    key: 'status',
     render: (_: unknown, record: TokenRowData) => {
       const isWaiting = !record.areFundsReceived;
       return (
@@ -90,6 +90,7 @@ export const TokenRequirementsTable = ({
       pagination={false}
       locale={locale}
       className="mt-32"
+      rowKey={(record) => record.symbol}
     />
   );
 };

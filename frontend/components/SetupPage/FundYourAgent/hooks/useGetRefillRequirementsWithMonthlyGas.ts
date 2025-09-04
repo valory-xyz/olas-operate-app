@@ -152,12 +152,9 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     /**
      * If master_safe for the chainID exists, get funds from there.
      */
-    let nativeTokenBalanceInMasterSafe = 0n;
-    if (masterSafe) {
-      nativeTokenBalanceInMasterSafe = BigInt(
-        balances?.[masterSafe.address]?.[AddressZero] ?? 0n,
-      );
-    }
+    const nativeTokenBalanceInMasterSafe = masterSafe
+      ? BigInt(balances?.[masterSafe.address]?.[AddressZero] ?? 0n)
+      : 0n;
 
     const requirementsPerToken = {} as { [tokenAddress: Address]: string };
 

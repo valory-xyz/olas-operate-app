@@ -74,12 +74,7 @@ const getColumns = (
   {
     title: (
       <Flex align="center" gap={8}>
-        <Image
-          src={`/chains/${chainName}-chain.png`}
-          width={20}
-          height={20}
-          alt={chainDisplayName}
-        />
+        <ChainLogo chainName={chainName} alt={chainDisplayName} />
         <Text className="text-sm">Receiving</Text>
       </Flex>
     ),
@@ -106,6 +101,15 @@ const TryAgain = ({ onRetry }: { onRetry: () => void }) => (
       Try again
     </Button>
   </Flex>
+);
+
+const ChainLogo = ({ chainName, alt }: { chainName: string; alt: string }) => (
+  <Image
+    width={20}
+    height={20}
+    src={`/chains/${chainName}-chain.png`}
+    alt={alt}
+  />
 );
 
 type ReceivingTokensProps = {
@@ -220,12 +224,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
                 ) : (
                   <>
                     <Text>{receivingAmount}</Text>
-                    <Image
-                      width={20}
-                      height={20}
-                      src="/chains/ethereum-chain.png"
-                      alt="ETH"
-                    />
+                    <ChainLogo chainName="ethereum" alt="ETH" />
                     <Text>{nativeTokenAmount}</Text>
                   </>
                 )}

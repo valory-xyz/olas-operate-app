@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
 import { TransactionSteps } from '@/components/ui/TransactionSteps';
 import { EvmChainId } from '@/constants/chains';
@@ -42,17 +40,10 @@ export const OnRampPaymentSteps = ({
     tokensToBeTransferred,
   );
 
-  const isSetupComplete = useMemo(() => {
-    return (
-      isOnRampingStepCompleted &&
-      isSwappingFundsStepCompleted &&
-      isMasterSafeCreatedAndFundsTransferred
-    );
-  }, [
-    isOnRampingStepCompleted,
-    isSwappingFundsStepCompleted,
-    isMasterSafeCreatedAndFundsTransferred,
-  ]);
+  const isSetupComplete =
+    isOnRampingStepCompleted &&
+    isSwappingFundsStepCompleted &&
+    isMasterSafeCreatedAndFundsTransferred;
 
   return (
     <>

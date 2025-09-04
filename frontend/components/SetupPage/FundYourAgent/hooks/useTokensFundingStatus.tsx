@@ -17,7 +17,7 @@ type UseTokensFundingStatusProps = {
  * @example
  * {
  *  isFullyFunded: false,
- *  tokenFundingStatus: {
+ *  tokensFundingStatus: {
  *    OLAS: true,
  *    XDAI: false,
  *  }
@@ -86,9 +86,9 @@ export const useTokensFundingStatus = ({
   if (hasBeenFullyFunded)
     return {
       isFullyFunded: true,
-      tokensFundingStatus: Object.fromEntries(
-        requiredTokens?.map((token) => [token, true]) || [],
-      ),
+      tokensFundingStatus: requiredTokens
+        ? Object.fromEntries(requiredTokens.map((token) => [token, true]) || [])
+        : {},
     };
 
   return fundingStatus;

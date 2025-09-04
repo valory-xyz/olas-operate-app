@@ -1,6 +1,6 @@
 import { Button } from 'antd';
 
-import { SuccessTickSvg } from '@/components/custom-icons/successTick';
+import { SuccessTickSvg } from '@/components/custom-icons/SuccessTick';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 

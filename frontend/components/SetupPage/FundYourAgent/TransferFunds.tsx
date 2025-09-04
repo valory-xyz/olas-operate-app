@@ -1,6 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Flex, Spin, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useUnmount } from 'usehooks-ts';
 
 import { CustomAlert } from '@/components/Alert';
 import { CardFlex } from '@/components/styled/CardFlex';
@@ -21,6 +22,15 @@ import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequ
 import { useTokensFundingStatus } from './hooks/useTokensFundingStatus';
 
 const { Text, Title } = Typography;
+
+const FinishingSetupModal = () => (
+  <Modal
+    header={<Spin indicator={<LoadingOutlined spin />} size="large" />}
+    title="Finishing Setup"
+    description="It usually takes a few minutes. Please keep the app open until the
+process is complete."
+  />
+);
 
 export const TransferFunds = () => {
   const { goto: gotoSetup } = useSetup();
@@ -68,16 +78,14 @@ export const TransferFunds = () => {
   }, [isFullyFunded, handleFunded]);
 
   useEffect(() => {
-    const handleSetupFinished = async () => {
-      // Show setup finished modal after a bit of delay so the finishing setup modal is closed.
-      await delayInSeconds(0.25);
-      setShowSetupFinishedModal(true);
-    };
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
     if (!isSuccessMasterSafeCreation) return;
 
-    handleSetupFinished();
+    // Show setup finished modal after a bit of delay so the finishing setup modal is closed.
+    delayInSeconds(0.25).then(() => {
+      setShowSetupFinishedModal(true);
+    });
   }, [
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
@@ -85,11 +93,9 @@ export const TransferFunds = () => {
     setShowSetupFinishedModal,
   ]);
 
-  useEffect(() => {
-    return () => {
-      setShowSetupFinishedModal(false);
-    };
-  }, []);
+  useUnmount(() => {
+    setShowSetupFinishedModal(false);
+  });
 
   return (
     <Flex justify="center" className="pt-48">
@@ -116,12 +122,7 @@ export const TransferFunds = () => {
       </CardFlex>
 
       {isLoadingMasterSafeCreation && !showSetupFinishedModal && (
-        <Modal
-          header={<Spin indicator={<LoadingOutlined spin />} size="large" />}
-          title="Finishing Setup"
-          description="It usually takes a few minutes. Please keep the app open until the
-        process is complete."
-        />
+        <FinishingSetupModal />
       )}
       {showSetupFinishedModal && <AgentSetupCompleteModal />}
     </Flex>
