@@ -1,19 +1,11 @@
-import {
-  Alert,
-  Button,
-  Card,
-  Flex,
-  Skeleton,
-  Statistic,
-  Typography,
-} from 'antd';
+import { Alert, Button, Flex, Skeleton, Statistic, Typography } from 'antd';
 import { isEmpty } from 'lodash';
 import { useMemo } from 'react';
 
 import { Clock } from '@/components/custom-icons/Clock';
 import { FireNoStreak } from '@/components/custom-icons/FireNoStreak';
 import { FireV1 } from '@/components/custom-icons/FireV1';
-import { Title4 } from '@/components/ui/Typography/Title4';
+import { CardFlex } from '@/components/styled/CardFlex';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
 import { Pages } from '@/enums/Pages';
@@ -27,8 +19,8 @@ import { ONE_DAY_IN_S } from '@/utils/time';
 
 import { useServiceDeployment } from './AgentInfo/AgentRunButton/hooks/useServiceDeployment';
 
-const { Text } = Typography;
-const { Timer } = Statistic;
+const { Text, Title } = Typography;
+const { Countdown } = Statistic;
 
 const EvictionAlert = () => (
   <Alert
@@ -144,13 +136,13 @@ export const Staking = () => {
   return (
     <Flex vertical>
       <Flex justify="space-between" align="center">
-        <Title4>Staking</Title4>
+        <Title level={4}>Staking</Title>
         <Button size="small" onClick={() => goto(Pages.ManageStaking)}>
           Manage Staking
         </Button>
       </Flex>
 
-      <Card variant="borderless">
+      <CardFlex $noBorder>
         <Flex vertical gap={24}>
           {alert}
           <Flex flex={1}>
@@ -159,8 +151,7 @@ export const Staking = () => {
               <Flex align="center" gap={8}>
                 <Clock />
                 {currentEpochLifetime ? (
-                  <Timer
-                    type="countdown"
+                  <Countdown
                     value={currentEpochLifetime}
                     valueStyle={{ fontSize: 16 }}
                   />
@@ -175,7 +166,7 @@ export const Staking = () => {
             </Flex>
           </Flex>
         </Flex>
-      </Card>
+      </CardFlex>
     </Flex>
   );
 };

@@ -1,8 +1,9 @@
 import { SettingOutlined } from '@ant-design/icons';
-import { Button, Card, Flex, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import Image from 'next/image';
 import styled from 'styled-components';
 
+import { CardFlex } from '@/components/styled/CardFlex';
 import { useYourWallet } from '@/components/YourWalletPage/useYourWallet';
 import { AddressZero } from '@/constants/address';
 import { Pages } from '@/enums/Pages';
@@ -26,7 +27,7 @@ export const AgentInfo = () => {
   const { serviceSafe } = useYourWallet();
 
   return (
-    <Card variant="borderless">
+    <CardFlex $noBorder>
       <AgentInfoContainer>
         <Flex justify="start" align="center" gap={24}>
           <Image
@@ -56,6 +57,6 @@ export const AgentInfo = () => {
         <AgentDisabledAlert />
         <AgentActivity />
       </AgentInfoContainer>
-    </Card>
+    </CardFlex>
   );
 };

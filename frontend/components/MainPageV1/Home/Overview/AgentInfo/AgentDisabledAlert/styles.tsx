@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
 
-import { AgentStatus } from './types';
+import { AgentStatus } from '../AgentActivity/types';
 
 const LINE_HEIGHT = 46;
 const CARD_MARGIN = 24;
