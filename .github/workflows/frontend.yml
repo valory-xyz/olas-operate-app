@@ -27,10 +27,8 @@ jobs:
         run: yarn install:frontend
 
       # Lint and test
-      - name: Lint
-        run: yarn lint:frontend
-      - name: Type check
-        run: yarn typecheck:frontend
+      - name: Lint & Typecheck
+        run: yarn check:frontend
       # Test
       # - name: Test
       # run: yarn test:frontend

@@ -59,7 +59,7 @@
     "test": "jest",
     "start": "next start",
     "typecheck": "tsc --noEmit --skipLibCheck",
-    "check": "yarn run lint && tsc --noEmit --incremental false"
+    "check": "yarn run lint && tsc --noEmit --skipLibCheck --incremental false"
   },
   "version": "0.1.0"
 }
