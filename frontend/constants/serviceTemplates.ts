@@ -17,11 +17,19 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeifhxeoar5hdwilmnzhy6jf664zqp5lgrzi6lpbkc4qmoqrr24ow4q',
+  hash: 'bafybeicp7tzzvbg5t6d5hpt6skxpxjzgtbd5izj4qm6c5wn3kw7cc2r5g4',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.26.1',
+  service_version: 'v0.26.2',
+  agent_release: {
+    is_aea: true,
+    repository: {
+      owner: 'valory-xyz',
+      name: 'trader',
+      version: 'v0.0.1001',
+    },
+  },
   home_chain: MiddlewareChain.GNOSIS,
   configurations: {
     [MiddlewareChain.GNOSIS]: {
@@ -125,13 +133,26 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 
 const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
-  'env_variables' | 'hash' | 'image' | 'description' | 'service_version'
+  | 'env_variables'
+  | 'hash'
+  | 'image'
+  | 'description'
+  | 'service_version'
+  | 'agent_release'
 > = {
   hash: 'bafybeiardecju3sygh7hwuywka2bgjinbr7vrzob4mpdrookyfsbdmoq2m',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
   service_version: 'v0.8.0-alpha3',
+  agent_release: {
+    is_aea: true,
+    repository: {
+      owner: 'valory-xyz',
+      name: 'meme-ooorr',
+      version: 'v0.0.1001',
+    },
+  },
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
@@ -267,10 +288,18 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
 
 const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
-  'hash' | 'service_version'
+  'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeifkomacg442ua3normikyv32bpaiikrz5qajhgxrnastzhbf3lwtm',
-  service_version: 'v0.5.3',
+  hash: 'bafybeidbhytl4wxdzbohs2wuvtbytqexkdjvg7iynz7q2et3wo7d2znn6i',
+  service_version: 'v0.5.4',
+  agent_release: {
+    is_aea: true,
+    repository: {
+      owner: 'valory-xyz',
+      name: 'optimus',
+      version: 'v0.0.1001',
+    },
+  },
 };
 
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
