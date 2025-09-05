@@ -56,7 +56,7 @@ export const StakingContractDetails = () => {
         </Button>
       </Flex>
 
-      <CardFlex $noBorder $padding="32px 0 0">
+      <CardFlex $noBorder $padding="32px 0 0" $newStyles>
         <Flex justify="space-between" gap={24} flex={1} className="px-24 pb-32">
           <Tooltip title="Annual Percentage Yield" trigger="hover">
             <ContractDetailWrapper
@@ -81,7 +81,7 @@ export const StakingContractDetails = () => {
               vertical
               flex={1}
             >
-              <IconWrapper justify="center">
+              <IconWrapper justify="center" align="center">
                 <SparklesSvg />
               </IconWrapper>
               <Title level={5} className="mt-16 mb-0">
@@ -97,7 +97,7 @@ export const StakingContractDetails = () => {
               vertical
               flex={1}
             >
-              <IconWrapper justify="center">
+              <IconWrapper justify="center" align="center">
                 <LockSvg />
               </IconWrapper>
               <Title level={5} className="mt-16 mb-0">

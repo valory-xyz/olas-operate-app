@@ -13,6 +13,7 @@ type CardFlexProps = {
   $noBorder?: boolean;
   $padding?: string;
   $onboarding?: boolean;
+  $newStyles?: boolean;
 };
 
 export const CardFlex = styled(Card).withConfig({
@@ -22,6 +23,17 @@ export const CardFlex = styled(Card).withConfig({
   ${(props) => !!(props.noBorder || props.$noBorder) && 'border: none;'}
 
   ${(props) => !!props.$onboarding && 'width: 624px;'}
+  
+  ${(props) =>
+    !!props.$newStyles &&
+    `border-radius: 16px;
+      box-shadow: 
+    0 35px 10px 0 rgba(170, 193, 203, 0.00),
+    0 23px 9px 0 rgba(170, 193, 203, 0.01),
+    0 13px 8px 0 rgba(170, 193, 203, 0.05),
+    0 6px 6px 0 rgba(170, 193, 203, 0.09),
+    0 1px 3px 0 rgba(170, 193, 203, 0.10);
+  `}
 
   .ant-card-body {
     ${(props) => {

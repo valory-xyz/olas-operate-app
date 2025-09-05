@@ -1,25 +1,51 @@
-import { Flex, Segmented, Typography } from 'antd';
+import { HistoryOutlined } from '@ant-design/icons';
+import { Flex, Typography } from 'antd';
+import { formatUnits } from 'ethers/lib/utils';
 import { useState } from 'react';
 
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
+import { COLOR } from '@/constants/colors';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
+import { useRewardContext } from '@/hooks/useRewardContext';
+import { useStakingDetails } from '@/hooks/useStakingDetails';
 
+import { ContractSvg } from '../custom-icons/Contract';
+import { FireNoStreak } from '../custom-icons/FireNoStreak';
+import { FireV1 } from '../custom-icons/FireV1';
+import { Segmented } from '../ui/Segmented';
 import { StakingContractDetails } from './StakingContractDetails';
 
 const { Title, Text } = Typography;
 
 const StakingStats = () => {
+  const { optimisticStreak } = useStakingDetails();
+  const { accruedServiceStakingRewards } = useRewardContext();
+
   return (
-    <CardFlex $noBorder>
+    <CardFlex $noBorder $newStyles>
       <Flex gap={56}>
-        <Flex vertical flex={1}>
+        <Flex vertical gap={8} flex={1}>
           <Text type="secondary">Total rewards earned</Text>
+          <Title level={5} className="mt-0 mb-0">
+            {formatUnits(accruedServiceStakingRewards ?? 0, 18)} OLAS
+          </Title>
         </Flex>
 
-        <Flex vertical flex={1}>
+        <Flex vertical gap={8} flex={1}>
           <Text type="secondary">Current streak</Text>
+
+          <Flex>
+            {optimisticStreak > 0 ? (
+              <FireV1 fill={COLOR.PURPLE} />
+            ) : (
+              <FireNoStreak />
+            )}
+            <Title level={5} className="mt-0 mb-0 ml-8">
+              {optimisticStreak}
+            </Title>
+          </Flex>
         </Flex>
       </Flex>
     </CardFlex>
@@ -31,16 +57,62 @@ type SelectionTabsProps = {
   setCurrentTab: (value: 'StakingContract' | 'RewardsHistory') => void;
 };
 
+const SelectionTab = ({
+  label,
+  value,
+  isSelected,
+}: {
+  label: string;
+  value: string;
+  isSelected: boolean;
+}) => {
+  const textColor = isSelected
+    ? COLOR.TEXT_NEUTRAL_PRIMARY
+    : COLOR.TEXT_NEUTRAL_TERTIARY;
+  const textClass = isSelected
+    ? 'text-neutral-primary'
+    : 'text-neutral-tertiary';
+  return (
+    <Flex align="center" gap={8}>
+      {value === 'StakingContract' ? (
+        <ContractSvg fill={textColor} stroke={textColor} />
+      ) : (
+        <HistoryOutlined color={textColor} />
+      )}
+      <Text className={textClass}>{label}</Text>
+    </Flex>
+  );
+};
+
 const SelectionTabs = ({ currentTab, setCurrentTab }: SelectionTabsProps) => {
   return (
     <Flex className="mt-32 mb-32">
       <Segmented
         value={currentTab}
-        style={{ marginBottom: 8 }}
-        onChange={setCurrentTab}
+        onChange={(value) =>
+          setCurrentTab(value as 'StakingContract' | 'RewardsHistory')
+        }
         options={[
-          { label: 'Staking Contract', value: 'StakingContract' },
-          { label: 'Rewards History', value: 'RewardsHistory' },
+          {
+            label: (
+              <SelectionTab
+                label="Staking Contract"
+                value="StakingContract"
+                isSelected={currentTab === 'StakingContract'}
+              />
+            ),
+            value: 'StakingContract',
+          },
+          {
+            label: (
+              <SelectionTab
+                label="Rewards History"
+                value="RewardsHistory"
+                isSelected={currentTab === 'RewardsHistory'}
+              />
+            ),
+            value: 'RewardsHistory',
+          },
         ]}
       />
     </Flex>
