@@ -2,6 +2,7 @@
 export const Pages = {
   Setup: 'Setup',
   Main: 'Main',
+  AgentStaking: 'AgentStaking',
   Settings: 'Settings',
   HelpAndSupport: 'HelpAndSupport',
   Receive: 'Receive',
