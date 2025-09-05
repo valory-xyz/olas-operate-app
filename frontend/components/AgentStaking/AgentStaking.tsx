@@ -1,15 +1,17 @@
 import { HistoryOutlined } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
-import { formatUnits } from 'ethers/lib/utils';
 import { useState } from 'react';
 
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
 import { COLOR } from '@/constants/colors';
 import { Pages } from '@/enums/Pages';
+import { useServiceBalances } from '@/hooks/useBalanceContext';
 import { usePageState } from '@/hooks/usePageState';
 import { useRewardContext } from '@/hooks/useRewardContext';
+import { useServices } from '@/hooks/useServices';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
+import { balanceFormat } from '@/utils/numberFormatters';
 
 import { ContractSvg } from '../custom-icons/Contract';
 import { FireNoStreak } from '../custom-icons/FireNoStreak';
@@ -21,7 +23,15 @@ const { Title, Text } = Typography;
 
 const StakingStats = () => {
   const { optimisticStreak } = useStakingDetails();
-  const { accruedServiceStakingRewards } = useRewardContext();
+  const { selectedService } = useServices();
+  const { accruedServiceStakingRewards: unclaimedRewards = 0 } =
+    useRewardContext();
+  const { serviceSafeOlas } = useServiceBalances(
+    selectedService?.service_config_id,
+  );
+  // TO Check: this might still not have olas that have been removed from the wallet
+  const claimedRewards = serviceSafeOlas?.balance ?? 0;
+  const totalRewards = claimedRewards + unclaimedRewards;
 
   return (
     <CardFlex $noBorder $newStyles>
@@ -29,7 +39,7 @@ const StakingStats = () => {
         <Flex vertical gap={8} flex={1}>
           <Text type="secondary">Total rewards earned</Text>
           <Title level={5} className="mt-0 mb-0">
-            {formatUnits(accruedServiceStakingRewards ?? 0, 18)} OLAS
+            {balanceFormat(totalRewards ?? 0, 2)} OLAS
           </Title>
         </Flex>
 
