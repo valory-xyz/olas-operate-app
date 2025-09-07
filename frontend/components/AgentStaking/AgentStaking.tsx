@@ -1,15 +1,13 @@
 import { HistoryOutlined } from '@ant-design/icons';
-import { Flex, Typography } from 'antd';
+import { Flex, Skeleton, Typography } from 'antd';
 import { useState } from 'react';
 
 import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
 import { COLOR } from '@/constants/colors';
 import { Pages } from '@/enums/Pages';
-import { useServiceBalances } from '@/hooks/useBalanceContext';
 import { usePageState } from '@/hooks/usePageState';
-import { useRewardContext } from '@/hooks/useRewardContext';
-import { useServices } from '@/hooks/useServices';
+import { useRewardsHistory } from '@/hooks/useRewardsHistory';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
 import { balanceFormat } from '@/utils/numberFormatters';
 
@@ -21,17 +19,12 @@ import { StakingContractDetails } from './StakingContractDetails';
 
 const { Title, Text } = Typography;
 
+const StatsSkeleton = () => <Skeleton.Input active size="small" />;
+
 const StakingStats = () => {
-  const { optimisticStreak } = useStakingDetails();
-  const { selectedService } = useServices();
-  const { accruedServiceStakingRewards: unclaimedRewards = 0 } =
-    useRewardContext();
-  const { serviceSafeOlas } = useServiceBalances(
-    selectedService?.service_config_id,
-  );
-  // TO Check: this might still not have olas that have been removed from the wallet
-  const claimedRewards = serviceSafeOlas?.balance ?? 0;
-  const totalRewards = claimedRewards + unclaimedRewards;
+  const { optimisticStreak, isStreakLoading } = useStakingDetails();
+  const { totalRewards, isLoading: isRewardsHistoryLoading } =
+    useRewardsHistory();
 
   return (
     <CardFlex $noBorder $newStyles>
@@ -39,7 +32,11 @@ const StakingStats = () => {
         <Flex vertical gap={8} flex={1}>
           <Text type="secondary">Total rewards earned</Text>
           <Title level={5} className="mt-0 mb-0">
-            {balanceFormat(totalRewards ?? 0, 2)} OLAS
+            {isRewardsHistoryLoading ? (
+              <StatsSkeleton />
+            ) : (
+              balanceFormat(totalRewards ?? 0, 2) + ' OLAS'
+            )}
           </Title>
         </Flex>
 
@@ -47,14 +44,20 @@ const StakingStats = () => {
           <Text type="secondary">Current streak</Text>
 
           <Flex>
-            {optimisticStreak > 0 ? (
-              <FireV1 fill={COLOR.PURPLE} />
+            {isStreakLoading ? (
+              <StatsSkeleton />
             ) : (
-              <FireNoStreak />
+              <>
+                {optimisticStreak > 0 ? (
+                  <FireV1 fill={COLOR.PURPLE} />
+                ) : (
+                  <FireNoStreak />
+                )}
+                <Title level={5} className="mt-0 mb-0 ml-8">
+                  {optimisticStreak}
+                </Title>
+              </>
             )}
-            <Title level={5} className="mt-0 mb-0 ml-8">
-              {optimisticStreak}
-            </Title>
           </Flex>
         </Flex>
       </Flex>
