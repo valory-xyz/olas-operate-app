@@ -1,6 +1,9 @@
-import { Button, Flex, Typography } from 'antd';
+import { Button, Flex, Statistic, Typography } from 'antd';
 import styled from 'styled-components';
 
+import { LockSvg } from '@/components/custom-icons/Lock';
+import { PercentagsSvg } from '@/components/custom-icons/Percentags';
+import { SparklesSvg } from '@/components/custom-icons/Sparkles';
 import { CardFlex } from '@/components/styled/CardFlex';
 import { Divider } from '@/components/styled/Divider';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -11,18 +14,16 @@ import { useStakingContractDetails } from '@/hooks/useStakingContractDetails';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
-import { LockSvg } from '../custom-icons/Lock';
-import { PercentagsSvg } from '../custom-icons/Percentags';
-import { SparklesSvg } from '../custom-icons/Sparkles';
-
 const { Title, Text } = Typography;
+const { Countdown } = Statistic;
 
 const IconWrapper = styled(Flex)`
   width: 48px;
   height: 48px;
   border-radius: 12px;
   border: 1px solid ${COLOR.PURPLE_LIGHT_4};
-  transition: background-color 0.2s ease;
+  background-color: ${COLOR.WHITE};
+  transition: background-color 0.2s ease-in-out;
 `;
 
 const ContractDetailWrapper = styled(Flex)`
@@ -32,6 +33,11 @@ const ContractDetailWrapper = styled(Flex)`
     }
   }
 `;
+
+const COUNTDOWN_VALUE_STYLE = {
+  fontSize: 16,
+  color: COLOR.TEXT_NEUTRAL_SECONDARY,
+};
 
 export const StakingContractDetails = () => {
   const { goto } = usePageState();
@@ -44,7 +50,7 @@ export const StakingContractDetails = () => {
     stakingContractInfo || {};
   const { currentEpochLifetime } = useStakingDetails();
 
-  if (!stakingContractInfo) return null;
+  if (!stakingContractInfo || !selectedStakingProgramMeta) return null;
   return (
     <Flex vertical gap={12}>
       <Flex justify="space-between" align="center">
@@ -109,9 +115,15 @@ export const StakingContractDetails = () => {
 
         <Divider />
 
-        <Text type="secondary" className="mt-16 mb-16 text-center">
-          Current Epoch {epochCounter} ends in {currentEpochLifetime}
-        </Text>
+        {currentEpochLifetime && (
+          <Flex align="center" justify="center" gap={4} className="mt-16 mb-16">
+            <Text type="secondary">Current Epoch {epochCounter} ends in </Text>
+            <Countdown
+              value={currentEpochLifetime}
+              valueStyle={COUNTDOWN_VALUE_STYLE}
+            />
+          </Flex>
+        )}
       </CardFlex>
     </Flex>
   );
