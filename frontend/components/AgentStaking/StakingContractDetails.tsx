@@ -24,12 +24,15 @@ const IconWrapper = styled(Flex)`
   border: 1px solid ${COLOR.PURPLE_LIGHT_4};
   background-color: ${COLOR.WHITE};
   transition: background-color 0.2s ease-in-out;
+  background: url('/empty-icon-background.svg') no-repeat center center;
+  background-size: cover;
 `;
 
 const ContractDetailWrapper = styled(Flex)`
   &:hover {
     ${IconWrapper} {
       background-color: ${COLOR.PURPLE_LIGHT_3};
+      border-color: ${COLOR.BORDER_COLOR.HOVER.DEFAULT};
     }
   }
 `;
@@ -54,7 +57,7 @@ export const StakingContractDetails = () => {
   return (
     <Flex vertical gap={12}>
       <Flex justify="space-between" align="center">
-        <Title level={4} className="m-0">
+        <Title level={5} className="m-0">
           {selectedStakingProgramMeta?.name}
         </Title>
         <Button size="small" onClick={() => goto(Pages.ManageStaking)}>
@@ -96,7 +99,7 @@ export const StakingContractDetails = () => {
             </ContractDetailWrapper>
           </Tooltip>
 
-          <Tooltip title="Staking deposite" trigger="hover">
+          <Tooltip title="Staking deposits" trigger="hover">
             <ContractDetailWrapper
               justify="center"
               align="center"
