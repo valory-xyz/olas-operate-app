@@ -9,6 +9,7 @@ export const Pages = {
   Send: 'Send',
   ManageStaking: 'ManageStaking',
   ManageWallet: 'ManageWallet',
+  PearlWallet: 'PearlWallet',
   RewardsHistory: 'RewardsHistory',
   AddBackupWalletViaSafe: 'AddBackupWalletViaSafe',
   AgentActivity: 'AgentActivity',

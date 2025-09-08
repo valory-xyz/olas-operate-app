@@ -14,6 +14,7 @@ type SwitcherProps = {
   value: View;
   onChange: Dispatch<SetStateAction<View>>;
 };
+
 const Switcher = ({ value, onChange }: SwitcherProps) => {
   const { selectedService } = useServices();
   const isRunning =

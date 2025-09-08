@@ -8,6 +8,7 @@ import { Settings } from '@/components/SettingsPage';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 
+import { PearlWallet } from '../PearlWallet';
 import { UpdateAgentPage } from '../UpdateAgentPage';
 import { Home } from './Home';
 import { Sidebar } from './Sidebar';
@@ -30,6 +31,8 @@ export const Main = () => {
 
   const mainContent = useMemo(() => {
     switch (pageState) {
+      case Pages.PearlWallet:
+        return <PearlWallet />;
       case Pages.Settings:
         return <Settings />;
       case Pages.HelpAndSupport:
