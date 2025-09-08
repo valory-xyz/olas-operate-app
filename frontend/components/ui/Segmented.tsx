@@ -2,6 +2,7 @@ import { Segmented as AntdSegmented, SegmentedProps } from 'antd';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
+import { ValueOf } from '@/types/Util';
 
 const SegmentedWrapper = styled.div`
   .ant-segmented {
@@ -24,10 +25,12 @@ const SegmentedWrapper = styled.div`
   }
 `;
 
-export const Segmented = ({ ...props }: SegmentedProps) => {
+export function Segmented<T extends ValueOf<SegmentedProps<T>>>(
+  props: SegmentedProps<T>,
+) {
   return (
     <SegmentedWrapper>
-      <AntdSegmented {...props} />
+      <AntdSegmented<T> {...props} />
     </SegmentedWrapper>
   );
-};
+}

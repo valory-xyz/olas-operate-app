@@ -16,8 +16,8 @@ import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
 import { SendFundAction } from '@/components/Bridge/types';
-import { CardFlex } from '@/components/styled/CardFlex';
-import { CardSection } from '@/components/styled/CardSection';
+import { CardFlex } from '@/components/ui/CardFlex';
+import { CardSection } from '@/components/ui/CardSection';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';

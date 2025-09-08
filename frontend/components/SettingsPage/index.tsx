@@ -19,7 +19,7 @@ import { CustomAlert } from '../Alert';
 import { CardTitle } from '../Card/CardTitle';
 import { GoToLoginPageButton } from '../Pages/GoToLoginPageButton';
 import { GoToMainPageButton } from '../Pages/GoToMainPageButton';
-import { CardSection } from '../styled/CardSection';
+import { CardSection } from '../ui/CardSection';
 import { DebugInfoSection } from './DebugInfoSection';
 
 const { Text, Paragraph } = Typography;

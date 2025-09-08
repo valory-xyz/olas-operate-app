@@ -5,8 +5,8 @@ import { useState } from 'react';
 import { ContractSvg } from '@/components/custom-icons/Contract';
 import { FireNoStreak } from '@/components/custom-icons/FireNoStreak';
 import { FireV1 } from '@/components/custom-icons/FireV1';
-import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
+import { CardFlex } from '@/components/ui/CardFlex';
 import { Segmented } from '@/components/ui/Segmented';
 import { COLOR } from '@/constants/colors';
 import { Pages } from '@/enums/Pages';
@@ -62,20 +62,20 @@ const StakingStats = () => {
   );
 };
 
+type SelectionTabValue = 'StakingContract' | 'RewardsHistory';
+
 type SelectionTabsProps = {
-  currentTab: 'StakingContract' | 'RewardsHistory';
-  setCurrentTab: (value: 'StakingContract' | 'RewardsHistory') => void;
+  currentTab: SelectionTabValue;
+  setCurrentTab: (value: SelectionTabValue) => void;
 };
 
-const SelectionTab = ({
-  label,
-  value,
-  isSelected,
-}: {
+type SelectionTabProps = {
   label: string;
   value: string;
   isSelected: boolean;
-}) => {
+};
+
+const SelectionTab = ({ label, value, isSelected }: SelectionTabProps) => {
   const textColor = isSelected
     ? COLOR.TEXT_NEUTRAL_PRIMARY
     : COLOR.TEXT_NEUTRAL_TERTIARY;
@@ -96,11 +96,9 @@ const SelectionTab = ({
 
 const SelectionTabs = ({ currentTab, setCurrentTab }: SelectionTabsProps) => (
   <Flex className="mt-32 mb-32">
-    <Segmented
+    <Segmented<SelectionTabValue>
       value={currentTab}
-      onChange={(value) =>
-        setCurrentTab(value as SelectionTabsProps['currentTab'])
-      }
+      onChange={(value) => setCurrentTab(value)}
       options={[
         {
           label: (

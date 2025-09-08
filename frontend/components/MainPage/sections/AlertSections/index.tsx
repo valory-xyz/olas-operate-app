@@ -1,4 +1,4 @@
-import { CardSection } from '@/components/styled/CardSection';
+import { CardSection } from '@/components/ui/CardSection';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
 import { AddBackupWalletAlert } from './AddBackupWalletAlert';

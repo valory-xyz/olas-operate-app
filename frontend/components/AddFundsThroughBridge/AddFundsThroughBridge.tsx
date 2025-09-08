@@ -12,7 +12,7 @@ import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 
 import { Bridge } from '../Bridge/Bridge';
-import { CardFlex } from '../styled/CardFlex';
+import { CardFlex } from '../ui/CardFlex';
 import { NumberInput } from '../ui/NumberInput';
 import { DefaultTokenAmount } from './types';
 import { useAddFundsInputs } from './useAddFundsInputs';

@@ -24,16 +24,13 @@ export const CardFlex = styled(Card).withConfig({
 
   ${(props) => !!props.$onboarding && 'width: 624px;'}
   
-  ${(props) =>
-    !!props.$newStyles &&
-    `border-radius: 16px;
-      box-shadow: 
-    0 35px 10px 0 rgba(170, 193, 203, 0.00),
+  border-radius: 16px;
+  box-shadow:
+    0 35px 10px 0 rgba(170, 193, 203, 0),
     0 23px 9px 0 rgba(170, 193, 203, 0.01),
     0 13px 8px 0 rgba(170, 193, 203, 0.05),
     0 6px 6px 0 rgba(170, 193, 203, 0.09),
-    0 1px 3px 0 rgba(170, 193, 203, 0.10);
-  `}
+    0 1px 3px 0 rgba(170, 193, 203, 0.1);
 
   .ant-card-body {
     ${(props) => {

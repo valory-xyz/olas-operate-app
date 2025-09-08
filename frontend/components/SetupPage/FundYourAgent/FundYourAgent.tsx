@@ -2,8 +2,8 @@ import { Button, Flex, Typography } from 'antd';
 import Paragraph from 'antd/es/typography/Paragraph';
 import styled from 'styled-components';
 
-import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
+import { CardFlex } from '@/components/ui/CardFlex';
 import { CardTitle } from '@/components/ui/Typography';
 import { EvmChainName } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
@@ -29,15 +29,8 @@ const FundYourAgentContainer = styled(Flex)`
 `;
 
 const FundMethodCard = styled(CardFlex)`
-  border-radius: 16px;
   width: 370px;
   border-color: ${COLOR.WHITE};
-  box-shadow:
-    0 74px 21px 0 rgba(170, 193, 203, 0),
-    0 47px 19px 0 rgba(170, 193, 203, 0.01),
-    0 26px 16px 0 rgba(170, 193, 203, 0.05),
-    0 12px 12px 0 rgba(170, 193, 203, 0.09),
-    0 3px 6px 0 rgba(170, 193, 203, 0.1);
 
   .ant-card-body {
     height: 100%;

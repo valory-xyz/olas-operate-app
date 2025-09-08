@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { Clock } from '@/components/custom-icons/Clock';
 import { FireNoStreak } from '@/components/custom-icons/FireNoStreak';
 import { FireV1 } from '@/components/custom-icons/FireV1';
-import { CardFlex } from '@/components/styled/CardFlex';
+import { CardFlex } from '@/components/ui/CardFlex';
 import { NA } from '@/constants/symbols';
 import { Pages } from '@/enums/Pages';
 import { useAgentActivity } from '@/hooks/useAgentActivity';

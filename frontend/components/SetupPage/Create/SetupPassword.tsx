@@ -13,7 +13,7 @@ import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
 import { getErrorMessage } from '@/utils/error';
 
-import { CardFlex } from '../../styled/CardFlex';
+import { CardFlex } from '../../ui/CardFlex';
 
 const { Title, Text } = Typography;
 
