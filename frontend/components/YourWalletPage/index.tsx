@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { AddressLink } from '@/components/AddressLink';
 import { CardTitle } from '@/components/Card/CardTitle';
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
-import { CardFlex } from '@/components/styled/CardFlex';
+import { CardFlex } from '@/components/ui/CardFlex';
 import { getNativeTokenSymbol } from '@/config/tokens';
 import { TokenSymbol } from '@/enums/Token';
 import {

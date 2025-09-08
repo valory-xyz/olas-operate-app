@@ -11,7 +11,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { usePrevious } from '@/hooks/usePrevious';
 import { useSharedContext } from '@/hooks/useSharedContext';
 
-import { CardSection } from '../../styled/CardSection';
+import { CardSection } from '../../ui/CardSection';
 
 const { Text } = Typography;
 

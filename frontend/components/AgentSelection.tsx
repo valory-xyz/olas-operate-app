@@ -17,7 +17,7 @@ import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 
 import { SetupCreateHeader } from './SetupPage/Create/SetupCreateHeader';
-import { CardFlex } from './styled/CardFlex';
+import { CardFlex } from './ui/CardFlex';
 
 const { Title, Text } = Typography;
 

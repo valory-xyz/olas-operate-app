@@ -9,7 +9,7 @@ import { useRewardContext } from '@/hooks/useRewardContext';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { balanceFormat } from '@/utils/numberFormatters';
 
-import { CardSection } from '../../../styled/CardSection';
+import { CardSection } from '../../../ui/CardSection';
 import { NotifyRewardsModal } from './NotifyRewardsModal';
 import { RewardsStreak } from './RewardsStreak';
 import { StakingRewardsThisEpoch } from './StakingRewardsThisEpoch';

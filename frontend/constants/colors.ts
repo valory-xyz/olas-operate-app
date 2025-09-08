@@ -56,5 +56,8 @@ export const COLOR = {
     ERROR: {
       DEFAULT: '#FFD6DA',
     },
+    HOVER: {
+      DEFAULT: '#E2CAF6',
+    },
   },
 };

@@ -7,8 +7,8 @@ import {
   StepEvent,
 } from '@/components/Bridge/BridgeInProgress/BridgingSteps';
 import { BridgeTransferFlow } from '@/components/Bridge/BridgeTransferFlow';
-import { CardFlex } from '@/components/styled/CardFlex';
 import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
+import { CardFlex } from '@/components/ui/CardFlex';
 import { Pages } from '@/enums/Pages';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';

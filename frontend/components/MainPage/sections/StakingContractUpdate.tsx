@@ -10,7 +10,7 @@ import { useServices } from '@/hooks/useServices';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
-import { CardSection } from '../../styled/CardSection';
+import { CardSection } from '../../ui/CardSection';
 
 const { Text } = Typography;
 

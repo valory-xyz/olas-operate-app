@@ -19,7 +19,7 @@ import { AccountService } from '@/service/Account';
 import { getErrorMessage } from '@/utils/error';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 
-import { FormFlex } from '../styled/FormFlex';
+import { FormFlex } from '../ui/FormFlex';
 import { FormLabel } from '../ui/Typography';
 import { SetupWelcomeCreate } from './SetupWelcomeCreate';
 

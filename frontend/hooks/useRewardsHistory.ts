@@ -263,6 +263,14 @@ export const useRewardsHistory = () => {
     [contractCheckpoints],
   );
 
+  const totalRewards = useMemo<number>(() => {
+    if (!epochSortedCheckpoints.length) return 0;
+
+    return epochSortedCheckpoints.reduce((acc, checkpoint) => {
+      return acc + checkpoint.reward;
+    }, 0);
+  }, [epochSortedCheckpoints]);
+
   const latestRewardStreak = useMemo<number>(() => {
     if (isLoading || !isFetched) return 0;
     if (!contractCheckpoints) return 0;
@@ -334,5 +342,6 @@ export const useRewardsHistory = () => {
     allCheckpoints: epochSortedCheckpoints,
     contractCheckpoints,
     recentStakingContractAddress,
+    totalRewards,
   };
 };

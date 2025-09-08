@@ -19,7 +19,7 @@ import { CSSProperties, ReactNode, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { CardTitle } from '@/components/Card/CardTitle';
-import { CardFlex } from '@/components/styled/CardFlex';
+import { CardFlex } from '@/components/ui/CardFlex';
 import {
   STAKING_PROGRAM_ADDRESS,
   STAKING_PROGRAMS,

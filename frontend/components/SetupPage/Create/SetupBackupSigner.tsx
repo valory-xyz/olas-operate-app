@@ -2,9 +2,9 @@ import { Button, Flex, Form, Input, Typography } from 'antd';
 import { getAddress } from 'ethers/lib/utils';
 import { useCallback } from 'react';
 
-import { CardFlex } from '@/components/styled/CardFlex';
-import { FormFlex } from '@/components/styled/FormFlex';
 import { BackButton } from '@/components/ui/BackButton';
+import { CardFlex } from '@/components/ui/CardFlex';
+import { FormFlex } from '@/components/ui/FormFlex';
 import { FormLabel } from '@/components/ui/Typography';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
