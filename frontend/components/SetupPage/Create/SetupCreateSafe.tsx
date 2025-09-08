@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { MiddlewareChain } from '@/client';
-import { CardSection } from '@/components/styled/CardSection';
+import { CardSection } from '@/components/ui/CardSection';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';

@@ -2,6 +2,7 @@ import { Layout } from 'antd';
 import { useMemo } from 'react';
 import styled from 'styled-components';
 
+import { AgentStaking } from '@/components/AgentStaking/AgentStaking';
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { Settings } from '@/components/SettingsPage';
 import { Pages } from '@/enums/Pages';
@@ -35,6 +36,8 @@ export const Main = () => {
         return <HelpAndSupport />;
       case Pages.UpdateAgentTemplate:
         return <UpdateAgentPage />;
+      case Pages.AgentStaking:
+        return <AgentStaking />;
       default:
         return <Home />;
     }

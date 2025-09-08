@@ -7,7 +7,7 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 
-import { CardFlex } from '../styled/CardFlex';
+import { CardFlex } from '../ui/CardFlex';
 
 const { Title, Paragraph } = Typography;
 

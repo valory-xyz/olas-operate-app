@@ -15,7 +15,7 @@ import { usePageState } from '@/hooks/usePageState';
 
 import { CardTitle } from '../Card/CardTitle';
 import { ExportLogsButton } from '../ExportLogsButton';
-import { CardSection } from '../styled/CardSection';
+import { CardSection } from '../ui/CardSection';
 import { GoToLoginPageButton } from './GoToLoginPageButton';
 import { GoToMainPageButton } from './GoToMainPageButton';
 

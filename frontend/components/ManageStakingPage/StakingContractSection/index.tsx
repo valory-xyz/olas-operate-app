@@ -2,7 +2,7 @@ import { Flex, Tag, theme, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { AddressLink } from '@/components/AddressLink';
-import { CardSection } from '@/components/styled/CardSection';
+import { CardSection } from '@/components/ui/CardSection';
 import { STAKING_PROGRAM_ADDRESS } from '@/config/stakingPrograms';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { StakingProgramStatus } from '@/enums/StakingProgramStatus';

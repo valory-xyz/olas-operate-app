@@ -2,8 +2,8 @@ import { Flex, Spin, Typography } from 'antd';
 import { useCallback } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
-import { CardFlex } from '@/components/styled/CardFlex';
 import { BackButton } from '@/components/ui/BackButton';
+import { CardFlex } from '@/components/ui/CardFlex';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useSetup } from '@/hooks/useSetup';

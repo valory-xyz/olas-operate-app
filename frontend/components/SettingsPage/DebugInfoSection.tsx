@@ -9,8 +9,8 @@ import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 import { StakingState } from '@/types/Autonolas';
 import { formatDate } from '@/utils/dateFormatter';
 
-import { CardSection } from '../styled/CardSection';
-import { CustomModal } from '../styled/CustomModal';
+import { CardSection } from '../ui/CardSection';
+import { CustomModal } from '../ui/CustomModal';
 
 const { Text } = Typography;
 

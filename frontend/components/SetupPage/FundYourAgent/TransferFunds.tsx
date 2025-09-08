@@ -4,9 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { CustomAlert } from '@/components/Alert';
-import { CardFlex } from '@/components/styled/CardFlex';
 import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
 import { BackButton } from '@/components/ui/BackButton';
+import { CardFlex } from '@/components/ui/CardFlex';
 import { FundingDescription } from '@/components/ui/FundingDescription';
 import { Modal } from '@/components/ui/Modal';
 import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';

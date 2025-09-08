@@ -11,6 +11,8 @@ type AgentHeaderV1Props = {
 const Button = styled(AntdButton)`
   font-size: 16px;
   color: ${COLOR.TEXT_NEUTRAL_TERTIARY} !important;
+  display: flex;
+  align-items: center;
 `;
 
 /**

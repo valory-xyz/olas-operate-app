@@ -2,7 +2,7 @@
 import { Flex, Typography } from 'antd';
 import Image from 'next/image';
 
-import { CardSection } from '@/components/styled/CardSection';
+import { CardSection } from '@/components/ui/CardSection';
 import { useServices } from '@/hooks/useServices';
 
 const { Text } = Typography;
