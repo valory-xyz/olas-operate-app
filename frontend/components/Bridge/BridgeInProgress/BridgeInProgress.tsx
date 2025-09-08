@@ -52,6 +52,7 @@ export const BridgeInProgress = ({
   enabledStepsAfterBridging = [],
   onNext,
   isBridgeCompleted = false,
+  eta,
 }: BridgeInProgressProps) => {
   const { goto } = usePageState();
   const symbols = transfers.map((transfer) => transfer.toSymbol);
@@ -254,6 +255,11 @@ export const BridgeInProgress = ({
     createMasterSafe,
   ]);
 
+  const estimatedTimeInMinutes = useMemo(() => {
+    const minutes = Math.floor((eta || 0) / 60);
+    return Math.max(0, minutes);
+  }, [eta]);
+
   return (
     <Flex justify="center" className="pt-48">
       <CardFlex $noBorder $onboarding bordered={false} className="p-8">
@@ -265,7 +271,7 @@ export const BridgeInProgress = ({
         </Title>
         <Text type="secondary" className="mb-24">
           Funds have been received, and the bridging process has been started.
-          Estimated time: 25-30 minutes.
+          Estimated time: ~{estimatedTimeInMinutes} minutes.
         </Text>
 
         <KeepAppOpenAlert />

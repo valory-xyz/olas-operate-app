@@ -107,19 +107,22 @@ export const TenderlyAccessTokenDesc = () => (
             </a>{' '}
             and click on your profile photo.
           </li>
-          <li>Go to Account Settings → Access Tokens.</li>
+          <li>
+            Go to <Text strong>Account Settings → Access Tokens.</Text>
+          </li>
         </ol>
       </Text>
     </Flex>
     <Text>
       <Text strong>The account slug</Text> is a unique identifier for your
       Tenderly account that represents your username. You can find your account
-      slug in your Tenderly project settings.
+      slug in your <Text strong>Tenderly project settings.</Text>
     </Text>
     <Text>
       <Text strong>The project slug</Text> is a unique identifier for each
       project in Tenderly. It’s automatically generated from your project’s
-      name. You can find the project slug in your Tenderly project settings.
+      name. You can find the project slug in your{' '}
+      <Text strong>Tenderly project settings.</Text>
     </Text>
   </Flex>
 );

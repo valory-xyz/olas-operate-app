@@ -7,9 +7,11 @@ import { BackButton } from '@/components/ui/BackButton';
 import { CardTitle } from '@/components/ui/Typography';
 import { EvmChainName } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
+import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
+import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
@@ -172,7 +174,7 @@ const Bridge = ({
 
 export const FundYourAgent = () => {
   const { selectedAgentConfig } = useServices();
-  const { goto } = useSetup();
+  const { goto } = usePageState();
   const { evmHomeChainId, requiresSetup } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const { tokenRequirements, isLoading } =
@@ -193,7 +195,7 @@ export const FundYourAgent = () => {
 
   return (
     <FundYourAgentContainer>
-      <BackButton onPrev={() => goto(SetupScreen.AgentOnboarding)} />
+      <BackButton onPrev={() => goto(Pages.Main)} />
       <Title level={3} className="mt-12">
         Fund your {selectedAgentConfig.displayName}
       </Title>
