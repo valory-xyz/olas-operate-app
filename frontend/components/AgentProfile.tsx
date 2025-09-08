@@ -48,12 +48,12 @@ const AgentProfileButton = ({
   );
 };
 
-type BabyDegenUiProps = {
+type AgentUiProps = {
   onClick: () => void;
   renderContainer?: RenderContainerProps;
 };
 
-const AgentUi = ({ onClick, renderContainer }: BabyDegenUiProps) => {
+const AgentUi = ({ onClick, renderContainer }: AgentUiProps) => {
   const electronApi = useElectronApi();
   const { selectedService, selectedAgentType } = useServices();
   const { goto } = usePageState();

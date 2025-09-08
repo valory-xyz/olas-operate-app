@@ -118,7 +118,11 @@ export const CoinGeckoApiKeyLabel = () => (
   </Flex>
 );
 
-export const GeminiApiKeyLabel = ({ name }: { name: 'Modius' | 'Optimus' }) => (
+export const GeminiApiKeyLabel = ({
+  name,
+}: {
+  name: 'Modius' | 'Optimus' | 'Prediction';
+}) => (
   <Flex align="center" gap={6}>
     <Text>Gemini API key</Text>
     <InfoTooltip placement="bottom" overlayInnerStyle={TOOLTIP_STYLE}>

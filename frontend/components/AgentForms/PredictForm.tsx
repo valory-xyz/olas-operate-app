@@ -10,10 +10,9 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { GEMINI_API_URL } from '@/constants/urls';
-
 import { optionalFieldProps } from './common/formUtils';
 import { InvalidGeminiApiCredentials } from './common/InvalidGeminiApiCredentials';
+import { GeminiApiKeyLabel as GoogleAiStudioHelper } from './common/labels';
 import { validateGeminiApiKey, ValidationStatus } from './common/validations';
 
 const { Text } = Typography;
@@ -25,17 +24,6 @@ const GeminiApiKeyLabel = () => (
       (Optional)
     </Text>
   </Flex>
-);
-
-const GoogleAiStudioHelper = () => (
-  <Text type="secondary" className="text-sm">
-    The Gemini API key allows you to chat with your agent and update its goals
-    through Prediction profile. You can generate one for free on{' '}
-    <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
-      Google AI Studio
-    </a>
-    .
-  </Text>
 );
 
 export type PredictFormValues = {
@@ -167,7 +155,7 @@ export const PredictAgentForm = ({
       >
         <Input.Password placeholder="Google Gemini API key" />
       </Form.Item>
-      <GoogleAiStudioHelper />
+      <GoogleAiStudioHelper name="Prediction" />
       {geminiApiKeyValidationStatus === 'invalid' && (
         <InvalidGeminiApiCredentials style={{ marginTop: 12 }} />
       )}
