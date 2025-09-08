@@ -37,6 +37,7 @@ type BridgeInProgressProps = {
   enabledStepsAfterBridging?: EnabledSteps;
   onNext: () => void;
   isBridgeCompleted?: boolean;
+  isOnboarding?: boolean;
 } & CrossChainTransferDetails;
 
 /**
@@ -53,6 +54,7 @@ export const BridgeInProgress = ({
   onNext,
   isBridgeCompleted = false,
   eta,
+  isOnboarding,
 }: BridgeInProgressProps) => {
   const { goto } = usePageState();
   const symbols = transfers.map((transfer) => transfer.toSymbol);
@@ -130,6 +132,15 @@ export const BridgeInProgress = ({
     if (!isSafeCreated) return;
     if (!isTransferCompleted) return;
 
+    /**
+     * Do not redirect in case of onboarding, instead show the `AgentSetupCompleteModal`
+     * modal on the same page
+     */
+    if (isOnboarding) {
+      onNext();
+      return;
+    }
+
     // wait for 3 seconds before redirecting to main page.
     const timeoutId = setTimeout(() => goto(Pages.Main), 3000);
     return () => clearTimeout(timeoutId);
@@ -144,6 +155,7 @@ export const BridgeInProgress = ({
     isTransferCompleted,
     goto,
     onNext,
+    isOnboarding,
   ]);
 
   const onBridgeFailRetry = useCallback(() => {
