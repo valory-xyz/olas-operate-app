@@ -8,6 +8,7 @@ import { CardFlex } from '@/components/ui/CardFlex';
 import { Divider } from '@/components/ui/Divider';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { COLOR } from '@/constants/colors';
+import { NA } from '@/constants/symbols';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useStakingContractDetails } from '@/hooks/useStakingContractDetails';
@@ -91,7 +92,7 @@ export const StakingContractDetails = () => {
           <ContractDetailsSection
             icon={<PercentagsSvg />}
             title="Annual Percentage Yield"
-            value={apy ? `${apy}%` : 'N/A'}
+            value={apy ? `${apy}%` : NA}
           />
 
           <ContractDetailsSection
@@ -100,14 +101,14 @@ export const StakingContractDetails = () => {
             value={
               rewardsPerWorkPeriod
                 ? `~${rewardsPerWorkPeriod?.toFixed(2)} OLAS`
-                : 'N/A'
+                : NA
             }
           />
 
           <ContractDetailsSection
             icon={<LockSvg />}
             title="Staking deposits"
-            value={olasStakeRequired ? `${olasStakeRequired} OLAS` : 'N/A'}
+            value={olasStakeRequired ? `${olasStakeRequired} OLAS` : NA}
           />
         </Flex>
 
