@@ -3,6 +3,8 @@ import { Button, Flex, Typography } from 'antd';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { formatNumber } from '@/utils/numberFormatters';
 
+import { Withdraw } from './Withdraw/Withdraw';
+
 const { Text, Title } = Typography;
 
 /**
@@ -33,7 +35,7 @@ export const PearlWallet = () => {
             </Title>
           </Flex>
           <Flex gap={8}>
-            <Button>Withdraw</Button>
+            <Withdraw />
             <Button type="primary">Deposit</Button>
           </Flex>
         </Flex>
