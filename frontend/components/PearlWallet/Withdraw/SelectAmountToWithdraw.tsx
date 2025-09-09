@@ -1,39 +1,19 @@
-import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
 import { CSSProperties } from 'react';
 
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
-import { Divider } from '@/components/ui/Divider';
 
-const { Text, Title } = Typography;
+import { PearlWalletToExternalWallet } from './common';
+
+const { Title } = Typography;
 
 const cardStyles: CSSProperties = {
   width: 552,
   margin: '0 auto',
 };
 
-const PearlWalletToExternalWallet = () => (
-  <Flex vertical style={{ margin: '0 -32px' }}>
-    <Divider />
-    <Flex gap={16} style={{ padding: '12px 32px' }}>
-      <Text>
-        From{' '}
-        <Text strong type="secondary">
-          Pearl Wallet
-        </Text>
-      </Text>
-      <ArrowRightOutlined style={{ fontSize: 12 }} />
-      <Text>
-        To{' '}
-        <Text strong type="secondary">
-          External Wallet
-        </Text>
-      </Text>
-    </Flex>
-    <Divider />
-  </Flex>
-);
+const TokenAmountInput = () => null;
 
 type SelectAmountToWithdrawProps = {
   onBack: () => void;
@@ -59,7 +39,7 @@ export const SelectAmountToWithdraw = ({
         <PearlWalletToExternalWallet />
 
         <Flex justify="space-between" align="center">
-          SOON!
+          <TokenAmountInput />
         </Flex>
 
         <Button onClick={onContinue} type="primary" block>
