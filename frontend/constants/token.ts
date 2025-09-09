@@ -15,3 +15,14 @@ export const TokenSymbolConfigMap: Record<TokenSymbol, { image: string }> = {
   [TokenSymbolMap.USDC]: { image: '/tokens/usdc-icon.png' },
   [TokenSymbolMap.WXDAI]: { image: '/tokens/wxdai-icon.png' },
 } as const;
+
+/**
+ * XDAI token symbol maps to WXDAI.
+ */
+export const TokenSymbolConfigMapV2: Record<TokenSymbol, { image: string }> = {
+  [TokenSymbolMap.ETH]: { image: '/chains/ethereum-chain.png' },
+  [TokenSymbolMap.XDAI]: { image: '/tokens/wxdai-icon.png' },
+  [TokenSymbolMap.OLAS]: { image: '/tokens/olas-icon.png' },
+  [TokenSymbolMap.USDC]: { image: '/tokens/usdc-icon.png' },
+  [TokenSymbolMap.WXDAI]: { image: '/tokens/wxdai-icon.png' },
+} as const;

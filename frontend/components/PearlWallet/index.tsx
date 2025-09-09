@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { ValueOf } from '@/types/Util';
 
-import { BalancesAndAssets } from './Withdraw/BalancesAndAssets';
+import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw';
 
 const STEPS = {
@@ -48,3 +48,20 @@ export const PearlWallet = () => {
       throw new Error('Invalid step');
   }
 };
+
+/**
+ * Pearl Wallet
+ * - Chain Toggle
+ * - Available Assets
+ * - Staked Assets
+ *
+ * Select Amount to Withdraw
+ * - Chain dropdown
+ * - List of inputs
+ * - Validation
+ * - Continue button (disabled, errors, etc)
+ *
+ * Enter Withdrawal Address
+ * - Withdrawal address input
+ * - Authorize Withdrawal (enter password)
+ */
