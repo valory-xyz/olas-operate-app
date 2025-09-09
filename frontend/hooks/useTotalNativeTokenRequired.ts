@@ -18,7 +18,10 @@ import { useBridgeRequirementsQuery } from '../components/SetupPage/Create/Setup
  * So, total ETH required = 0.01 ETH + 16 USDC in ETH + 100 OLAS in ETH.
  *
  */
-export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
+export const useTotalNativeTokenRequired = (
+  onRampChainId: EvmChainId,
+  queryKey: 'paying-receiving-table' | 'fund-your-agent' = 'fund-your-agent',
+) => {
   const { updateEthAmountToPay, isOnRampingTransactionSuccessful } =
     useOnRampContext();
   const { selectedAgentConfig } = useServices();
@@ -35,6 +38,7 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     onRampChainId,
     !isOnRampingTransactionSuccessful,
     isOnRampingTransactionSuccessful,
+    queryKey,
   );
 
   /**
