@@ -1,45 +1,50 @@
-import { Button, Flex, Typography } from 'antd';
+import { useCallback, useState } from 'react';
 
-import { CardFlex } from '@/components/ui/CardFlex';
-import { formatNumber } from '@/utils/numberFormatters';
+import { ValueOf } from '@/types/Util';
 
-import { Withdraw } from './Withdraw/Withdraw';
+import { BalancesAndAssets } from './Withdraw/BalancesAndAssets';
+import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw';
 
-const { Text, Title } = Typography;
+const STEPS = {
+  PEARL_WALLET_SCREEN: 'PEARL_WALLET_SCREEN',
+  SELECT_AMOUNT: 'SELECT_AMOUNT',
+  ENTER_WITHDRAWAL_ADDRESS: 'ENTER_WITHDRAWAL_ADDRESS',
+} as const;
 
 /**
  * To display the Pearl Wallet page.
  */
 export const PearlWallet = () => {
-  const aggregatedBalance = 2123.8123;
-
-  return (
-    <Flex vertical gap={32}>
-      <Flex vertical justify="space-between" gap={12}>
-        <Title level={4} className="m-0">
-          Pearl Wallet
-        </Title>
-        <Text type="secondary">
-          Manage your funds and power your agents for their on-chain activity.{' '}
-        </Text>
-      </Flex>
-
-      <CardFlex $noBorder>
-        <Flex justify="space-between" align="center">
-          <Flex vertical gap={8}>
-            <Text type="secondary" className="text-sm">
-              Aggregated balance
-            </Text>
-            <Title level={4} className="m-0">
-              ${formatNumber(aggregatedBalance)}
-            </Title>
-          </Flex>
-          <Flex gap={8}>
-            <Withdraw />
-            <Button type="primary">Deposit</Button>
-          </Flex>
-        </Flex>
-      </CardFlex>
-    </Flex>
+  const [step, setStep] = useState<ValueOf<typeof STEPS>>(
+    STEPS.PEARL_WALLET_SCREEN,
   );
+
+  const handleNext = useCallback(() => {
+    if (step === STEPS.PEARL_WALLET_SCREEN) {
+      setStep(STEPS.SELECT_AMOUNT);
+    } else if (step === STEPS.SELECT_AMOUNT) {
+      setStep(STEPS.ENTER_WITHDRAWAL_ADDRESS);
+    }
+  }, [step]);
+
+  const handleBack = useCallback(() => {
+    if (step === STEPS.SELECT_AMOUNT) {
+      setStep(STEPS.PEARL_WALLET_SCREEN);
+    } else if (step === STEPS.ENTER_WITHDRAWAL_ADDRESS) {
+      setStep(STEPS.SELECT_AMOUNT);
+    }
+  }, [step]);
+
+  switch (step) {
+    case STEPS.PEARL_WALLET_SCREEN:
+      return <BalancesAndAssets onWithdraw={handleNext} />;
+    case STEPS.SELECT_AMOUNT:
+      return (
+        <SelectAmountToWithdraw onBack={handleBack} onContinue={handleNext} />
+      );
+    case STEPS.ENTER_WITHDRAWAL_ADDRESS:
+      return 2;
+    default:
+      throw new Error('Invalid step');
+  }
 };
