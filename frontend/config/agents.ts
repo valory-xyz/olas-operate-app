@@ -54,24 +54,6 @@ export const AGENT_CONFIG: {
     description: 'Participates in prediction markets.',
     hasExternalFunds: false,
   },
-  [AgentType.Modius]: {
-    isAgentEnabled: true,
-    isComingSoon: false,
-    requiresSetup: true,
-    name: 'Modius agent',
-    evmHomeChainId: EvmChainId.Mode,
-    middlewareHomeChainId: MiddlewareChain.MODE,
-    requiresAgentSafesOn: [EvmChainId.Mode],
-    additionalRequirements: {
-      [EvmChainId.Mode]: { [TokenSymbol.USDC]: getModiusUsdcConfig() },
-    },
-    requiresMasterSafesOn: [EvmChainId.Mode],
-    serviceApi: ModiusService,
-    displayName: 'Modius agent',
-    description:
-      'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
-    hasExternalFunds: true,
-  },
   [AgentType.Optimus]: {
     isAgentEnabled: true,
     isComingSoon: false,
@@ -88,6 +70,25 @@ export const AGENT_CONFIG: {
     displayName: 'Optimus agent',
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Optimus network.',
+    hasExternalFunds: true,
+  },
+  [AgentType.Modius]: {
+    isAgentEnabled: true,
+    isUnderConstruction: true,
+    isComingSoon: false,
+    requiresSetup: true,
+    name: 'Modius agent',
+    evmHomeChainId: EvmChainId.Mode,
+    middlewareHomeChainId: MiddlewareChain.MODE,
+    requiresAgentSafesOn: [EvmChainId.Mode],
+    additionalRequirements: {
+      [EvmChainId.Mode]: { [TokenSymbol.USDC]: getModiusUsdcConfig() },
+    },
+    requiresMasterSafesOn: [EvmChainId.Mode],
+    serviceApi: ModiusService,
+    displayName: 'Modius agent',
+    description:
+      'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
     hasExternalFunds: true,
   },
   [AgentType.AgentsFun]: {
