@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
+import { RequiredMark } from '@/components/ui/RequiredMark';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -170,6 +171,7 @@ export const ModiusAgentFormContent = ({
         disabled={canSubmitForm}
         preserve
         className="label-no-padding"
+        requiredMark={RequiredMark}
       >
         {isTenderlyStep && <TenderlyApiKeySubHeader isSetupPage />}
         <Form.Item
