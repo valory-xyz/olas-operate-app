@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { CardTitle } from '@/components/ui/Typography';
-import { EvmChainName } from '@/constants/chains';
+import { EvmChainId, EvmChainName } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
@@ -58,15 +58,14 @@ type FundMethodCardProps = {
   isBalancesAndFundingRequirementsLoading: boolean;
 };
 
-const OnRamp = () => {
-  const { networkId: onRampChainId } = useOnRampContext();
+const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
   const { goto } = useSetup();
 
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
     totalNativeToken,
-  } = useTotalNativeTokenRequired(onRampChainId!);
+  } = useTotalNativeTokenRequired(onRampChainId);
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
@@ -105,6 +104,7 @@ const Transfer = ({
   isBalancesAndFundingRequirementsLoading,
 }: FundMethodCardProps) => {
   const { goto } = useSetup();
+
   return (
     <FundMethodCard>
       <div className="fund-method-card-body">
@@ -137,6 +137,7 @@ const Bridge = ({
   isBalancesAndFundingRequirementsLoading,
 }: FundMethodCardProps) => {
   const { goto } = useSetup();
+
   return (
     <FundMethodCard>
       <div className="fund-method-card-body">
@@ -166,6 +167,8 @@ const Bridge = ({
 export const FundYourAgent = () => {
   const { selectedAgentConfig } = useServices();
   const { goto } = useSetup();
+  const { networkId: onRampChainId } = useOnRampContext();
+
   const { evmHomeChainId, requiresSetup } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const { tokenRequirements, isLoading } =
@@ -195,7 +198,9 @@ export const FundYourAgent = () => {
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>
-        {isOnRampEnabled && <OnRamp />}
+        {isOnRampEnabled && onRampChainId && (
+          <OnRamp onRampChainId={onRampChainId} />
+        )}
         <Transfer
           chainName={chainName}
           tokenRequirements={tokenRequirements}
