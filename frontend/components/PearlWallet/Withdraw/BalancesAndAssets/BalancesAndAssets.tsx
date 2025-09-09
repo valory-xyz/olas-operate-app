@@ -4,7 +4,9 @@ import { CardFlex } from '@/components/ui/CardFlex';
 import { NA } from '@/constants/symbols';
 import { formatNumber } from '@/utils/numberFormatters';
 
+import { useWithdraw } from '../useWithdraw';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
+import { StakedAssetsTable } from './StakedAssetsTable';
 
 const { Text, Title } = Typography;
 
@@ -24,6 +26,7 @@ type BalancesAndAssetsProps = {
 };
 
 export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
+  const { agentName, agentImgSrc } = useWithdraw();
   const aggregatedBalance = null;
   // const aggregatedBalance = 2123.8123;
 
@@ -78,22 +81,18 @@ export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
             Staked Assets
           </Title>
           <CardFlex $noBorder>
-            <Flex justify="space-between" align="center">
-              <Flex vertical gap={8}>
-                <Text type="secondary" className="text-sm">
-                  Aggregated balance
-                </Text>
-                <Title level={4} className="m-0">
-                  {aggregatedBalance
-                    ? `$${formatNumber(aggregatedBalance)}`
-                    : NA}
-                </Title>
-              </Flex>
-              <Flex gap={8}>
-                <Button onClick={onWithdraw}>Withdraw</Button>
-                <Button type="primary">Deposit</Button>
-              </Flex>
-            </Flex>
+            <StakedAssetsTable
+              isLoading={false}
+              tableData={[
+                {
+                  agentName,
+                  agentImgSrc,
+                  symbol: 'OLAS',
+                  amount: 5000,
+                  value: 4000,
+                },
+              ]}
+            />
           </CardFlex>
         </Flex>
       </Flex>
