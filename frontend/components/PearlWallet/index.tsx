@@ -11,7 +11,7 @@ const { Text, Title } = Typography;
  * To display the Pearl Wallet page.
  */
 export const PearlWallet = () => {
-  const aggregatedBalance = 2123.8123; // TODO: fetch and calculate aggregated balance
+  const aggregatedBalance = 2123.8123;
 
   return (
     <Flex vertical gap={32}>
