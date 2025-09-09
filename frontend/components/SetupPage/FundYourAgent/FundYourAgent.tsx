@@ -184,6 +184,7 @@ export const FundYourAgent = () => {
     'bridge-onboarding',
     'on-ramp',
   ]);
+  const { networkId: onRampChainId } = useOnRampContext();
   const areTokenRequirementsLoading =
     isLoading || tokenRequirements.length === 0;
 
