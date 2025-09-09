@@ -17,17 +17,17 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeifhxeoar5hdwilmnzhy6jf664zqp5lgrzi6lpbkc4qmoqrr24ow4q',
+  hash: 'bafybeieg2dy5a7pz53j5caq5g5smfuga23q42v23e2ohvboywtxdgyinoa',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.26.1',
+  service_version: 'v0.27.1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.0.1001',
+      version: 'v27.0.1',
     },
   },
   home_chain: MiddlewareChain.GNOSIS,
@@ -129,8 +129,8 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
     GENAI_API_KEY: {
-      name: 'Gemini api key',
-      description: '',
+      name: 'Gemini API Key',
+      description: 'Gemini api key to allow the agent to use Gemini',
       value: '',
       provision_type: EnvProvisionType.USER,
     },
