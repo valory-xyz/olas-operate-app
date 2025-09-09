@@ -4,11 +4,13 @@ import styled from 'styled-components';
 
 import { AgentStaking } from '@/components/AgentStaking/AgentStaking';
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
+import { SelectStaking } from '@/components/SelectStaking/SelectStaking';
 import { Settings } from '@/components/SettingsPage';
+import { UpdateAgentPage } from '@/components/UpdateAgentPage';
+import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 
-import { UpdateAgentPage } from '../UpdateAgentPage';
 import { Home } from './Home';
 import { Sidebar } from './Sidebar';
 
@@ -22,7 +24,7 @@ const Content = styled(AntdContent)<{ $isFullPage?: boolean }>`
       ? ``
       : `
         margin: 40px auto;
-        max-width: 744px;`}
+        max-width: ${MAIN_CONTENT_MAX_WIDTH}px;`}
 `;
 
 export const Main = () => {
@@ -38,12 +40,16 @@ export const Main = () => {
         return <UpdateAgentPage />;
       case Pages.AgentStaking:
         return <AgentStaking />;
+      case Pages.SelectStaking:
+        return <SelectStaking />;
       default:
         return <Home />;
     }
   }, [pageState]);
 
-  const isFullPage = pageState === Pages.UpdateAgentTemplate;
+  const isFullPage =
+    pageState === Pages.UpdateAgentTemplate ||
+    pageState === Pages.SelectStaking;
 
   return (
     <Layout>

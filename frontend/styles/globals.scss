@@ -167,6 +167,14 @@ textarea,
   display: flex;
 }
 
+.justify-center {
+  justify-content: center;
+}
+
+.align-center {
+  align-items: center;
+}
+
 .m-0 {
   margin: 0 !important;
 }
@@ -226,6 +234,10 @@ textarea,
 
 .ml-12 {
   margin-left: 12px !important;
+}
+
+.ml-2 {
+  margin-left: 2px !important;
 }
 
 .mt-8 {
@@ -306,6 +318,16 @@ textarea,
   padding-bottom: 24px !important;
 }
 
+.py-4 {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+.px-8 {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
 .px-0 {
   padding-left: 0 !important;
   padding-right: 0 !important;
@@ -323,6 +345,15 @@ textarea,
 .mx-auto {
   margin-left: auto !important;
   margin-right: auto !important;
+}
+
+.mr-6 {
+  margin-right: 6px !important;
+}
+
+// radius
+.radius-8 {
+  border-radius: 8px
 }
 
 // font size
@@ -404,6 +435,10 @@ ul.alert-list {
 }
 
 // width
+.w-max-content {
+  width: max-content !important;
+}
+
 .w-1\/4 {
   width: 25% !important;
 }

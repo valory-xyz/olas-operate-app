@@ -12,3 +12,5 @@ export const POPOVER_WIDTH_MEDIUM = 260;
 export const POPOVER_WIDTH_LARGE = 340;
 
 export const MESSAGE_WIDTH = 280;
+
+export const MAIN_CONTENT_MAX_WIDTH = 744;
