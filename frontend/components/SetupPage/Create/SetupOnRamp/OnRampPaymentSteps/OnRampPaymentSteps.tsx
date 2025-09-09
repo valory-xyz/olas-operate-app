@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
 import { TransactionSteps } from '@/components/ui/TransactionSteps';
 import { EvmChainId } from '@/constants/chains';
@@ -40,10 +42,19 @@ export const OnRampPaymentSteps = ({
     tokensToBeTransferred,
   );
 
-  const isSetupComplete =
-    isOnRampingStepCompleted &&
-    isSwappingFundsStepCompleted &&
-    isMasterSafeCreatedAndFundsTransferred;
+  // Check if all steps are completed to show the setup complete modal
+  const [isSetupCompleted, setIsSetupCompleted] = useState(false);
+  useEffect(() => {
+    if (!isOnRampingStepCompleted) return;
+    if (!isSwappingFundsStepCompleted) return;
+    if (!isMasterSafeCreatedAndFundsTransferred) return;
+
+    setIsSetupCompleted(true);
+  }, [
+    isOnRampingStepCompleted,
+    isMasterSafeCreatedAndFundsTransferred,
+    isSwappingFundsStepCompleted,
+  ]);
 
   return (
     <>
@@ -54,7 +65,7 @@ export const OnRampPaymentSteps = ({
           ...createAndTransferFundsToMasterSafeSteps,
         ]}
       />
-      {isSetupComplete && <AgentSetupCompleteModal />}
+      {isSetupCompleted && <AgentSetupCompleteModal />}
     </>
   );
 };

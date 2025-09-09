@@ -17,6 +17,7 @@ export const useBridgeRequirementsQuery = (
   onRampChainId: EvmChainId,
   enabled: boolean = true,
   stopPollingCondition: boolean,
+  queryKeySuffix?: string,
 ) => {
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
@@ -62,6 +63,7 @@ export const useBridgeRequirementsQuery = (
     bridgeParamsExceptNativeToken,
     canPollForBridgeRefillRequirements && !stopPollingCondition,
     enabled,
+    queryKeySuffix,
   );
 
   // fetch bridge refill requirements manually on mount

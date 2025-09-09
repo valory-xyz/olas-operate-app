@@ -83,8 +83,10 @@ export const REACT_QUERY_KEYS = {
     ['balancesAndRefillRequirements', serviceConfigId] as const,
 
   // bridge
-  BRIDGE_REFILL_REQUIREMENTS_KEY: (params: BridgeRefillRequirementsRequest) =>
-    ['bridgeRefillRequirements', params] as const,
+  BRIDGE_REFILL_REQUIREMENTS_KEY: (
+    params: BridgeRefillRequirementsRequest,
+    type = 'default',
+  ) => ['bridgeRefillRequirements', params, type] as const,
   BRIDGE_REFILL_REQUIREMENTS_KEY_ON_DEMAND: (
     params: BridgeRefillRequirementsRequest,
   ) => ['useBridgeRefillRequirementsOnDemand', params] as const,

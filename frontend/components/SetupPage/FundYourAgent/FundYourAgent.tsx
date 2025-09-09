@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { CardTitle } from '@/components/ui/Typography';
-import { EvmChainName } from '@/constants/chains';
+import { EvmChainId, EvmChainName } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -60,15 +60,14 @@ type FundMethodCardProps = {
   isBalancesAndFundingRequirementsLoading: boolean;
 };
 
-const OnRamp = () => {
-  const { networkId: onRampChainId } = useOnRampContext();
+const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
   const { goto } = useSetup();
 
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
     totalNativeToken,
-  } = useTotalNativeTokenRequired(onRampChainId!);
+  } = useTotalNativeTokenRequired(onRampChainId, 'fund-your-agent');
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
@@ -107,6 +106,7 @@ const Transfer = ({
   isBalancesAndFundingRequirementsLoading,
 }: FundMethodCardProps) => {
   const { goto } = useSetup();
+
   return (
     <FundMethodCard>
       <div className="fund-method-card-body">
@@ -139,6 +139,7 @@ const Bridge = ({
   isBalancesAndFundingRequirementsLoading,
 }: FundMethodCardProps) => {
   const { goto } = useSetup();
+
   return (
     <FundMethodCard>
       <div className="fund-method-card-body">
@@ -197,7 +198,9 @@ export const FundYourAgent = () => {
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>
-        {isOnRampEnabled && <OnRamp />}
+        {isOnRampEnabled && onRampChainId && (
+          <OnRamp onRampChainId={onRampChainId} />
+        )}
         <Transfer
           chainName={chainName}
           tokenRequirements={tokenRequirements}

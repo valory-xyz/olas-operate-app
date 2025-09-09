@@ -11,11 +11,15 @@ export const useBridgeRefillRequirements = (
   params: BridgeRefillRequirementsRequest | null,
   canPoll: boolean = true,
   enabled: boolean = true,
+  queryKeySuffix?: string,
 ) => {
   const { isOnline } = useContext(OnlineStatusContext);
 
   return useQuery({
-    queryKey: REACT_QUERY_KEYS.BRIDGE_REFILL_REQUIREMENTS_KEY(params!),
+    queryKey: REACT_QUERY_KEYS.BRIDGE_REFILL_REQUIREMENTS_KEY(
+      params!,
+      queryKeySuffix,
+    ),
     queryFn: async ({ signal }) => {
       if (!params) {
         window.console.warn(
