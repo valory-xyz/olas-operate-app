@@ -5,6 +5,7 @@ import { NA } from '@/constants/symbols';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { usePearlWallet } from '../../PearlWalletContext';
+import { AgentNft } from './AgentNft';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { StakedAssetsTable } from './StakedAssetsTable';
 
@@ -66,6 +67,7 @@ export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
           </Title>
           <CardFlex $noBorder>
             <StakedAssetsTable />
+            <AgentNft />
           </CardFlex>
         </Flex>
       </Flex>

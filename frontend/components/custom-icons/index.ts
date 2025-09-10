@@ -8,6 +8,7 @@ export * from './FireNoStreak';
 export * from './FireStreak';
 export * from './FireV1';
 export * from './Lock';
+export * from './NftFilled';
 export * from './PercentTag';
 export * from './Sparkles';
 export * from './SuccessTick';
