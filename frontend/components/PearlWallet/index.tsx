@@ -3,7 +3,8 @@ import { useCallback, useState } from 'react';
 import { ValueOf } from '@/types/Util';
 
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
-import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw';
+import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
+import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw/SelectAmountToWithdraw';
 
 const STEPS = {
   PEARL_WALLET_SCREEN: 'PEARL_WALLET_SCREEN',
@@ -43,7 +44,7 @@ export const PearlWallet = () => {
         <SelectAmountToWithdraw onBack={handleBack} onContinue={handleNext} />
       );
     case STEPS.ENTER_WITHDRAWAL_ADDRESS:
-      return 2;
+      return <EnterWithdrawalAddress />;
     default:
       throw new Error('Invalid step');
   }
