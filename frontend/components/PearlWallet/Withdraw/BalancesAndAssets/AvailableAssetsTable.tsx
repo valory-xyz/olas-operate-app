@@ -2,6 +2,7 @@ import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
 
 import { Table } from '@/components/ui/Table';
 import { TokenSymbolConfigMapV2 } from '@/constants/token';
+import { formatNumber } from '@/utils/numberFormatters';
 
 import { usePearlWallet } from '../../PearlWalletContext';
 import { AvailableAsset } from '../types';
@@ -29,7 +30,7 @@ const columns: TableColumnsType<AvailableAsset> = [
     title: 'Amount',
     key: 'amount',
     render: (_: unknown, record: AvailableAsset) => (
-      <Text>{record.amount}</Text>
+      <Text>{formatNumber(record.amount)}</Text>
     ),
     align: 'right',
     width: '30%',
@@ -38,7 +39,7 @@ const columns: TableColumnsType<AvailableAsset> = [
     title: 'Value',
     key: 'value',
     render: (_: unknown, record: AvailableAsset) => (
-      <Text>${record.value}</Text>
+      <Text>${formatNumber(record.value)}</Text>
     ),
     align: 'right',
     width: '40%',

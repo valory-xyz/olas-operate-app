@@ -3,6 +3,7 @@ import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
 import { Table } from '@/components/ui/Table';
 import { NA } from '@/constants/symbols';
 import { TokenSymbolConfigMapV2 } from '@/constants/token';
+import { formatNumber } from '@/utils/numberFormatters';
 
 import { usePearlWallet } from '../../PearlWalletContext';
 import { StakedAsset } from '../types';
@@ -51,7 +52,7 @@ const columns: TableColumnsType<StakedAsset> = [
       <Flex vertical>
         <Text>{record.amount}</Text>
         <Text type="secondary" className="text-sm">
-          (${record.value})
+          (${formatNumber(record.value)})
         </Text>
       </Flex>
     ),

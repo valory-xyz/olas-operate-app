@@ -49,15 +49,11 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     },
   ];
 
-  const agentName = serviceSafe?.address
-    ? generateName(serviceSafe.address)
-    : null;
-  const agentImgSrc = agentType ? `/agent-${agentType}-icon.png` : null;
-
   const stakedAssets: StakedAsset[] = [
+    // Staked OLAS
     {
-      agentName,
-      agentImgSrc,
+      agentName: generateName(serviceSafe?.address),
+      agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
       symbol: 'OLAS',
       amount: totalStakedOlasBalance ?? 0,
       value: toUsd('OLAS', totalStakedOlasBalance ?? 0),
