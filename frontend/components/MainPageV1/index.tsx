@@ -11,6 +11,7 @@ import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 
+import { ConfirmSwitch } from '../ConfirmSwitch/ConfirmSwitch';
 import { Home } from './Home';
 import { Sidebar } from './Sidebar';
 
@@ -42,6 +43,8 @@ export const Main = () => {
         return <AgentStaking />;
       case Pages.SelectStaking:
         return <SelectStaking />;
+      case Pages.ConfirmSwitch:
+        return <ConfirmSwitch />;
       default:
         return <Home />;
     }

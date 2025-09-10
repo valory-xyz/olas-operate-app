@@ -20,6 +20,8 @@ export const useStakingProgram = () => {
     defaultStakingProgramId,
     selectedStakingProgramId,
     setDefaultStakingProgramId,
+    stakingProgramIdToMigrateTo,
+    setStakingProgramIdToMigrateTo,
   } = useContext(StakingProgramContext);
   const { selectedAgentConfig } = useServices();
 
@@ -81,5 +83,9 @@ export const useStakingProgram = () => {
     allStakingProgramIds: Object.keys(allStakingProgramNameAddressPair),
     allStakingProgramAddress: Object.values(allStakingProgramNameAddressPair),
     allStakingProgramsMeta,
+
+    // staking program id to migrate to
+    stakingProgramIdToMigrateTo,
+    setStakingProgramIdToMigrateTo,
   };
 };

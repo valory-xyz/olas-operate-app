@@ -21,10 +21,14 @@ export const StakingProgramContext = createContext<{
   defaultStakingProgramId?: Maybe<StakingProgramId>;
   selectedStakingProgramId: Nullable<StakingProgramId>;
   setDefaultStakingProgramId: (stakingProgramId: StakingProgramId) => void;
+  stakingProgramIdToMigrateTo: Nullable<StakingProgramId>;
+  setStakingProgramIdToMigrateTo: (stakingProgramId: StakingProgramId) => void;
 }>({
   isActiveStakingProgramLoaded: false,
   selectedStakingProgramId: null,
   setDefaultStakingProgramId: () => {},
+  stakingProgramIdToMigrateTo: null,
+  setStakingProgramIdToMigrateTo: () => {},
 });
 
 /**
@@ -99,6 +103,9 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     DEFAULT_STAKING_PROGRAM_IDS[selectedAgentConfig.evmHomeChainId],
   );
 
+  const [stakingProgramIdToMigrateTo, setStakingProgramIdToMigrateTo] =
+    useState<Nullable<StakingProgramId>>(null);
+
   useEffect(() => {
     setDefaultStakingProgramId(
       DEFAULT_STAKING_PROGRAM_IDS[selectedAgentConfig.evmHomeChainId],
@@ -125,6 +132,8 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
         defaultStakingProgramId,
         selectedStakingProgramId,
         setDefaultStakingProgramId,
+        stakingProgramIdToMigrateTo,
+        setStakingProgramIdToMigrateTo,
       }}
     >
       {children}

@@ -81,7 +81,7 @@ export const CooldownContentTooltip = ({
   children: React.ReactNode;
 }) => (
   <Tooltip
-    open
+    trigger="hover"
     placement="top"
     title={CooldownPeriodContent}
     arrow={false}
