@@ -12,7 +12,7 @@ import { useUnmount } from 'usehooks-ts';
 
 import { optionalFieldProps } from './common/formUtils';
 import { InvalidGeminiApiCredentials } from './common/InvalidGeminiApiCredentials';
-import { GeminiApiKeyLabelDesc } from './common/labels';
+import { GoogleAiStudioHelper } from './common/labels';
 import { validateGeminiApiKey, ValidationStatus } from './common/validations';
 
 const { Text } = Typography;
@@ -154,7 +154,7 @@ export const PredictAgentForm = ({
       >
         <Input.Password />
       </Form.Item>
-      <GeminiApiKeyLabelDesc name="Prediction" />
+      <GoogleAiStudioHelper name="Prediction" />
       {geminiApiKeyValidationStatus === 'invalid' && (
         <InvalidGeminiApiCredentials style={{ marginTop: 12 }} />
       )}

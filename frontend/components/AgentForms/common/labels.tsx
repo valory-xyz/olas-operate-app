@@ -120,7 +120,7 @@ export const CoinGeckoApiKeyLabel = () => (
   </Flex>
 );
 
-export const GeminiApiKeyLabelDesc = ({ name }: { name: AgentsNameLabel }) => (
+export const GoogleAiStudioHelper = ({ name }: { name: AgentsNameLabel }) => (
   <Paragraph className="text-sm m-0">
     The Gemini API key allows you to chat with your agent and update its goals
     through {name} profile. You can generate one for free on{' '}
@@ -135,7 +135,7 @@ export const GeminiApiKeyLabel = ({ name }: { name: AgentsNameLabel }) => (
   <Flex align="center" gap={6}>
     <Text>Gemini API key</Text>
     <InfoTooltip placement="bottom" overlayInnerStyle={TOOLTIP_STYLE}>
-      <GeminiApiKeyLabelDesc name={name} />
+      <GoogleAiStudioHelper name={name} />
     </InfoTooltip>
     <Text type="secondary" className="text-sm">
       (Optional)
