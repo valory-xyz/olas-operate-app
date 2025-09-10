@@ -2,7 +2,7 @@ import { Button, Flex, Statistic, Typography } from 'antd';
 import styled from 'styled-components';
 
 import { LockSvg } from '@/components/custom-icons/Lock';
-import { PercentagsSvg } from '@/components/custom-icons/Percentags';
+import { PercentTagIcon } from '@/components/custom-icons/PercentTag';
 import { SparklesSvg } from '@/components/custom-icons/Sparkles';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Divider } from '@/components/ui/Divider';
@@ -90,7 +90,7 @@ export const StakingContractDetails = () => {
       <CardFlex $noBorder $padding="32px 0 0" $newStyles>
         <Flex justify="space-between" gap={24} flex={1} className="px-24 pb-32">
           <ContractDetailsSection
-            icon={<PercentagsSvg />}
+            icon={<PercentTagIcon />}
             title="Annual Percentage Yield"
             value={apy ? `${apy}%` : NA}
           />
