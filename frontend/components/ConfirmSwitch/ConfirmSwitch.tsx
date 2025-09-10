@@ -9,6 +9,7 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { BackButton } from '../ui/BackButton';
 import { ContractCard } from './ContractCard';
+import { CtaSection } from './CtaSection';
 
 const { Title, Text } = Typography;
 
@@ -53,6 +54,8 @@ export const ConfirmSwitch = () => {
           isCurrentStakingProgram={false}
         />
       </Flex>
+
+      <CtaSection />
     </Flex>
   );
 };

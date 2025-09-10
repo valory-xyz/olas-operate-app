@@ -1,5 +1,6 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Button as AntdButton, Flex } from 'antd';
+import { useEffect } from 'react';
 import styled from 'styled-components';
 
 import { Pages } from '@/enums/Pages';
@@ -43,6 +44,11 @@ export const SwitchStakingButton = ({
     setStakingProgramIdToMigrateTo(stakingProgramId);
     goto(Pages.ConfirmSwitch);
   };
+
+  // Reset the staking program id to null when component mounts.
+  useEffect(() => {
+    setStakingProgramIdToMigrateTo(null);
+  }, [setStakingProgramIdToMigrateTo]);
 
   return (
     <Flex className="px-24 py-24">

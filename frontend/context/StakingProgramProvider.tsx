@@ -22,7 +22,9 @@ export const StakingProgramContext = createContext<{
   selectedStakingProgramId: Nullable<StakingProgramId>;
   setDefaultStakingProgramId: (stakingProgramId: StakingProgramId) => void;
   stakingProgramIdToMigrateTo: Nullable<StakingProgramId>;
-  setStakingProgramIdToMigrateTo: (stakingProgramId: StakingProgramId) => void;
+  setStakingProgramIdToMigrateTo: (
+    stakingProgramId: Nullable<StakingProgramId>,
+  ) => void;
 }>({
   isActiveStakingProgramLoaded: false,
   selectedStakingProgramId: null,
