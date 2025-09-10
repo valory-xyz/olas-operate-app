@@ -1,10 +1,10 @@
 import { Button, Flex, Typography } from 'antd';
-import { isNumber } from 'lodash';
-import { CSSProperties, useState } from 'react';
+import { CSSProperties } from 'react';
 
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 
+import { usePearlWallet } from '../../PearlWalletContext';
 import { PearlWalletToExternalWallet } from '../common';
 import { TokenAmountInput } from './TokenAmountInput';
 
@@ -24,13 +24,8 @@ export const SelectAmountToWithdraw = ({
   onBack,
   onContinue,
 }: SelectAmountToWithdrawProps) => {
-  const [value, setValue] = useState(100);
-  const totalAmount = 10000000;
-
-  const handleOnChange = (x: number | null) => {
-    if (!isNumber(x)) return;
-    setValue(x);
-  };
+  const { availableAssets, amountsToWithdraw, onAmountChange } =
+    usePearlWallet();
 
   return (
     <CardFlex $noBorder $padding="32px" style={cardStyles}>
@@ -46,14 +41,17 @@ export const SelectAmountToWithdraw = ({
 
         <PearlWalletToExternalWallet />
 
-        <Flex justify="space-between" align="center">
-          <TokenAmountInput
-            tokenSymbol="OLAS"
-            onChange={handleOnChange}
-            value={value}
-            totalAmount={totalAmount}
-            totalAmountInUsd={555}
-          />
+        <Flex justify="space-between" align="center" vertical gap={16}>
+          {availableAssets.map(({ amount, valueInUsd, symbol }) => (
+            <TokenAmountInput
+              key={symbol}
+              tokenSymbol={symbol}
+              value={amountsToWithdraw?.[symbol] ?? 0}
+              totalAmount={amount}
+              totalAmountInUsd={valueInUsd}
+              onChange={(x) => onAmountChange(symbol, x ?? 0)}
+            />
+          ))}
         </Flex>
 
         <Button onClick={onContinue} type="primary" block>

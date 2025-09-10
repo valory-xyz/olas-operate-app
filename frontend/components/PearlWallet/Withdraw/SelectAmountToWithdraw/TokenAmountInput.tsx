@@ -4,7 +4,6 @@ import styled from 'styled-components';
 import { WalletOutlined } from '@/components/custom-icons';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { COLOR } from '@/constants/colors';
-import { NA } from '@/constants/symbols';
 import { TokenSymbol, TokenSymbolConfigMapV2 } from '@/constants/token';
 import { formatNumber } from '@/utils/numberFormatters';
 
@@ -24,7 +23,7 @@ const Container = styled.div`
   border: 1px solid ${COLOR.GRAY_4};
   background-color: ${COLOR.BACKGROUND};
   .input-wrapper {
-    padding: 24px 20px;
+    padding: 16px 20px;
     border-radius: 16px;
     background-color: ${COLOR.WHITE};
   }
@@ -73,7 +72,7 @@ export const TokenAmountInput = ({
         style={{ padding: '10px 20px' }}
       >
         <Text type="secondary" className="text-sm leading-normal">
-          {totalAmountInUsd ? `≈ ${formatNumber(totalAmountInUsd)}` : NA}
+          {totalAmountInUsd ? `≈ ${formatNumber(totalAmountInUsd, 4)}` : null}
         </Text>
 
         <Flex align="center" gap={24}>
@@ -81,11 +80,15 @@ export const TokenAmountInput = ({
             {[10, 25, 50, 100].map((percentage) => (
               <Button
                 key={percentage}
+                onClick={() =>
+                  onChange(
+                    Number(((totalAmount * percentage) / 100).toFixed(4)),
+                  )
+                }
                 type="text"
                 size="small"
                 className="text-neutral-secondary"
                 style={{ padding: '0 4px' }}
-                onClick={() => onChange((totalAmount * percentage) / 100)}
               >
                 {percentage}%
               </Button>
@@ -94,7 +97,7 @@ export const TokenAmountInput = ({
           <Flex gap={6} align="center">
             <WalletOutlined width={20} height={20} />
             <Text type="secondary" className="text-sm leading-normal">
-              {formatNumber(totalAmount)}
+              {formatNumber(totalAmount, 4)}
             </Text>
           </Flex>
         </Flex>

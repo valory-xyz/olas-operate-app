@@ -5,5 +5,5 @@ import { TokenSymbol } from '@/constants/token';
  * Function to convert a token amount to its USD equivalent.
  */
 export const toUsd = (token: TokenSymbol, amount: number): number => {
-  return amount;
+  return amount * 0;
 };

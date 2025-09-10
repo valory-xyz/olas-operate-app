@@ -2,9 +2,10 @@ import { TokenSymbol } from '@/constants/token';
 import { Nullable } from '@/types/Util';
 
 export type AvailableAsset = {
+  address?: string;
   symbol: TokenSymbol;
   amount: number;
-  value: number;
+  valueInUsd: number;
 };
 
 export type StakedAsset = {
