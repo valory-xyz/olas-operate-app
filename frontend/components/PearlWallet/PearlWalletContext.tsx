@@ -1,8 +1,10 @@
 import { createContext, ReactNode, useContext, useMemo } from 'react';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
+import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
+import { toUsd } from '@/service/toUsd';
 import { generateName } from '@/utils/agentName';
 
 import { AvailableAsset, StakedAsset } from './Withdraw/types';
@@ -18,6 +20,7 @@ const PearlWalletContext = createContext<{
 export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const { selectedAgentConfig, selectedService } = useServices();
   const { serviceSafes } = useService(selectedService?.service_config_id);
+  const { totalStakedOlasBalance } = useBalanceContext();
 
   const evmHomeChainId = selectedAgentConfig?.evmHomeChainId;
   const agent = ACTIVE_AGENTS.find(
@@ -56,8 +59,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       agentName,
       agentImgSrc,
       symbol: 'OLAS',
-      amount: 5000,
-      value: 4000,
+      amount: totalStakedOlasBalance ?? 0,
+      value: toUsd('OLAS', totalStakedOlasBalance ?? 0),
     },
   ];
 
@@ -69,7 +72,12 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const usePearlWallet = () => {
-  const { availableAssets, stakedAssets } = useContext(PearlWalletContext);
+  const context = useContext(PearlWalletContext);
+  if (!context) {
+    throw new Error('usePearlWallet must be used within a PearlWalletProvider');
+  }
+
+  const { availableAssets, stakedAssets } = context;
   const { selectedAgentConfig } = useServices();
 
   const evmHomeChainId = selectedAgentConfig?.evmHomeChainId;

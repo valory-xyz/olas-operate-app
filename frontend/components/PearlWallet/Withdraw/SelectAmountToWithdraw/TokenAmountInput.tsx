@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { WalletOutlined } from '@/components/custom-icons';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { COLOR } from '@/constants/colors';
+import { NA } from '@/constants/symbols';
 import { TokenSymbol, TokenSymbolConfigMapV2 } from '@/constants/token';
 import { formatNumber } from '@/utils/numberFormatters';
 
@@ -72,7 +73,7 @@ export const TokenAmountInput = ({
         style={{ padding: '10px 20px' }}
       >
         <Text type="secondary" className="text-sm leading-normal">
-          ${formatNumber(totalAmountInUsd)}
+          {totalAmountInUsd ? `≈ ${formatNumber(totalAmountInUsd)}` : NA}
         </Text>
 
         <Flex align="center" gap={24}>

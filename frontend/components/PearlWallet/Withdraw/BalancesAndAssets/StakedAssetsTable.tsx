@@ -49,7 +49,7 @@ const columns: TableColumnsType<StakedAsset> = [
     key: 'amount',
     render: (_: unknown, record: StakedAsset) => (
       <Flex vertical>
-        <Text>${record.amount}</Text>
+        <Text>{record.amount}</Text>
         <Text type="secondary" className="text-sm">
           (${record.value})
         </Text>

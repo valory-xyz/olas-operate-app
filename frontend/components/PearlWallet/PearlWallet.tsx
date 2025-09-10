@@ -1,7 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { ValueOf } from '@/types/Util';
 
+import { PearlWalletProvider } from './PearlWalletContext';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
 import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw/SelectAmountToWithdraw';
@@ -36,18 +37,22 @@ export const PearlWallet = () => {
     }
   }, [step]);
 
-  switch (step) {
-    case STEPS.PEARL_WALLET_SCREEN:
-      return <BalancesAndAssets onWithdraw={handleNext} />;
-    case STEPS.SELECT_AMOUNT:
-      return (
-        <SelectAmountToWithdraw onBack={handleBack} onContinue={handleNext} />
-      );
-    case STEPS.ENTER_WITHDRAWAL_ADDRESS:
-      return <EnterWithdrawalAddress />;
-    default:
-      throw new Error('Invalid step');
-  }
+  const content = useMemo(() => {
+    switch (step) {
+      case STEPS.PEARL_WALLET_SCREEN:
+        return <BalancesAndAssets onWithdraw={handleNext} />;
+      case STEPS.SELECT_AMOUNT:
+        return (
+          <SelectAmountToWithdraw onBack={handleBack} onContinue={handleNext} />
+        );
+      case STEPS.ENTER_WITHDRAWAL_ADDRESS:
+        return <EnterWithdrawalAddress />;
+      default:
+        throw new Error('Invalid step');
+    }
+  }, [step, handleBack, handleNext]);
+
+  return <PearlWalletProvider>{content}</PearlWalletProvider>;
 };
 
 /**
