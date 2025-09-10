@@ -72,6 +72,22 @@ export const AGENT_CONFIG: {
       'Invests crypto assets on your behalf and grows your portfolio on Optimus network.',
     hasExternalFunds: true,
   },
+  [AgentType.AgentsFun]: {
+    isAgentEnabled: true,
+    isUnderConstruction: true,
+    isComingSoon: false,
+    requiresSetup: true,
+    name: 'Agents.fun agent',
+    evmHomeChainId: EvmChainId.Base,
+    middlewareHomeChainId: MiddlewareChain.BASE,
+    requiresAgentSafesOn: [EvmChainId.Base],
+    requiresMasterSafesOn: [EvmChainId.Base],
+    serviceApi: AgentsFunBaseService,
+    displayName: 'Agents.fun agent - Base',
+    description:
+      'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
+    hasExternalFunds: false,
+  },
   [AgentType.Modius]: {
     isAgentEnabled: true,
     isUnderConstruction: true,
@@ -90,21 +106,5 @@ export const AGENT_CONFIG: {
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
     hasExternalFunds: true,
-  },
-  [AgentType.AgentsFun]: {
-    isAgentEnabled: true,
-    isUnderConstruction: true,
-    isComingSoon: false,
-    requiresSetup: true,
-    name: 'Agents.fun agent',
-    evmHomeChainId: EvmChainId.Base,
-    middlewareHomeChainId: MiddlewareChain.BASE,
-    requiresAgentSafesOn: [EvmChainId.Base],
-    requiresMasterSafesOn: [EvmChainId.Base],
-    serviceApi: AgentsFunBaseService,
-    displayName: 'Agents.fun agent - Base',
-    description:
-      'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
-    hasExternalFunds: false,
   },
 };

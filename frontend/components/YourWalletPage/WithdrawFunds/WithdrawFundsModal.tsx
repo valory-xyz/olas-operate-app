@@ -68,13 +68,8 @@ const FundsMayBeLocked = ({
     <Text>{partOfFundsMayBeLockedMessage}</Text>
     <Flex vertical gap={8}>
       <AgentProfile
-        renderContainer={({ disabled, onClick }) => (
-          <Button
-            disabled={disabled}
-            onClick={onClick}
-            type="primary"
-            className="w-full"
-          >
+        renderContainer={({ onClick }) => (
+          <Button onClick={onClick} type="primary" className="w-full">
             Withdraw locked funds
           </Button>
         )}

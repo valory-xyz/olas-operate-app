@@ -464,6 +464,18 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
+    AIRDROP_STARTED: {
+      name: ' Airdrop started',
+      description: '',
+      value: 'true',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    AIRDROP_CONTRACT_ADDRESS: {
+      name: 'Airdrop contact address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
   ...BABYDEGEN_COMMON_TEMPLATE,
 } as const;

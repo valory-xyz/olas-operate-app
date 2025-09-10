@@ -83,8 +83,12 @@ const useServiceDeployment = () => {
 
     if (!isAllStakingContractDetailsRecordLoaded) return false;
 
-    // If service is under construction, return false
-    if (selectedAgentConfig.isUnderConstruction) return false;
+    // If service is under construction and is NOT Modius agent, return false
+    if (
+      selectedAgentConfig.isUnderConstruction &&
+      selectedAgentConfig.name !== 'Modius agent'
+    )
+      return false;
 
     // If staking contract is deprecated, return false
     if (selectedStakingProgramMeta?.deprecated) return false;
@@ -113,6 +117,7 @@ const useServiceDeployment = () => {
     isServiceRunning,
     isAllStakingContractDetailsRecordLoaded,
     selectedAgentConfig.isUnderConstruction,
+    selectedAgentConfig.name,
     selectedStakingProgramMeta?.deprecated,
     hasEnoughServiceSlots,
     isServiceStaked,
