@@ -11,4 +11,5 @@ export * from './Lock';
 export * from './PercentTag';
 export * from './Sparkles';
 export * from './SuccessTick';
-export * from './Wallet';
+export * from './WalletIFilled';
+export * from './WalletOutlined';
