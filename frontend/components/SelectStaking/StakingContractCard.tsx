@@ -1,4 +1,5 @@
-import { Button, Flex, Tag, Typography } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Button as AntdButton, Flex, Tag, Typography } from 'antd';
 import { useMemo } from 'react';
 import styled from 'styled-components';
 
@@ -8,6 +9,7 @@ import { PercentageSvg } from '@/components/custom-icons/Percentage';
 import { SparklesSvg } from '@/components/custom-icons/Sparkles';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Divider } from '@/components/ui/Divider';
+import { Progress } from '@/components/ui/Progress';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { COLOR } from '@/constants/colors';
 import { Pages } from '@/enums/Pages';
@@ -16,7 +18,8 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 
-import { Progress } from '../ui/Progress';
+import { CooldownContentTooltip } from './CooldownTooltip';
+import { CantMigrateReason, useCanMigrate } from './hooks/useCanMigrate';
 
 const { Text, Title } = Typography;
 
@@ -24,6 +27,46 @@ const ContractCard = styled(CardFlex)`
   width: 360px;
   border-color: ${COLOR.WHITE};
 `;
+
+const Button = styled(AntdButton)<{ overrideDisabledStyle?: boolean }>`
+  &:disabled {
+    cursor: pointer !important;
+
+    > * {
+      pointer-events: unset !important;
+    }
+  }
+`;
+
+const SwitchStakingButton = ({
+  buttonText,
+  canMigrate,
+}: {
+  buttonText: string;
+  canMigrate: boolean;
+}) => {
+  const { goto } = usePageState();
+  const agentInCooldownPeriod =
+    buttonText === CantMigrateReason.AgentInCooldownPeriod;
+  return (
+    <Button
+      size="large"
+      type="primary"
+      onClick={() => goto(Pages.ManageStaking)}
+      block
+      disabled={!canMigrate}
+      overrideDisabledStyle={agentInCooldownPeriod}
+    >
+      {agentInCooldownPeriod ? (
+        <CooldownContentTooltip>
+          {buttonText} <InfoCircleOutlined />
+        </CooldownContentTooltip>
+      ) : (
+        buttonText
+      )}
+    </Button>
+  );
+};
 
 type StakingContractProps = {
   stakingProgramId: StakingProgramId;
@@ -34,11 +77,14 @@ export const StakingContract = ({
   stakingProgramId,
   isCurrentStakingProgram,
 }: StakingContractProps) => {
-  const { goto } = usePageState();
   const { selectedAgentConfig } = useServices();
   const stakingProgramMeta =
     STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][stakingProgramId];
   const { allStakingContractDetailsRecord } = useStakingContractContext();
+  const { buttonText, canMigrate } = useCanMigrate({
+    stakingProgramId,
+    isCurrentStakingProgram,
+  });
 
   const contractDetails = allStakingContractDetailsRecord?.[stakingProgramId];
   const maxSlots = contractDetails?.maxNumServices;
@@ -64,6 +110,7 @@ export const StakingContract = ({
             {stakingProgramMeta.name}
           </Text>
         </Tag>
+
         <Flex align="center" gap={6}>
           <PercentageSvg width={20} fill={COLOR.TEXT_NEUTRAL_TERTIARY} />{' '}
           <Title level={3} className="m-0">
@@ -114,17 +161,7 @@ export const StakingContract = ({
       </Flex>
 
       <Flex className="px-24 py-24">
-        <Button
-          size="large"
-          type={isCurrentStakingProgram ? 'default' : 'primary'}
-          onClick={() => goto(Pages.ManageStaking)}
-          block
-          disabled={isCurrentStakingProgram}
-        >
-          {isCurrentStakingProgram
-            ? 'Current Contract'
-            : 'Switch Staking Contract'}
-        </Button>
+        <SwitchStakingButton buttonText={buttonText} canMigrate={canMigrate} />
       </Flex>
     </ContractCard>
   );
