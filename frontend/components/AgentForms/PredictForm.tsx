@@ -12,7 +12,7 @@ import { useUnmount } from 'usehooks-ts';
 
 import { optionalFieldProps } from './common/formUtils';
 import { InvalidGeminiApiCredentials } from './common/InvalidGeminiApiCredentials';
-import { GeminiApiKeyLabel as GoogleAiStudioHelper } from './common/labels';
+import { GoogleAiStudioHelper } from './common/labels';
 import { validateGeminiApiKey, ValidationStatus } from './common/validations';
 
 const { Text } = Typography;
@@ -143,7 +143,6 @@ export const PredictAgentForm = ({
       initialValues={initialValues}
       onFinish={onFinish}
       disabled={isFormDisabled}
-      variant={agentFormType === 'view' ? 'borderless' : 'outlined'}
       name="setup-your-predict-agent"
       layout="vertical"
     >
@@ -153,7 +152,7 @@ export const PredictAgentForm = ({
         {...optionalFieldProps}
         style={{ marginBottom: 4 }}
       >
-        <Input.Password placeholder="Google Gemini API key" />
+        <Input.Password />
       </Form.Item>
       <GoogleAiStudioHelper name="Prediction" />
       {geminiApiKeyValidationStatus === 'invalid' && (
