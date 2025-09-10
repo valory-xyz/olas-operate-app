@@ -15,10 +15,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 
-type RenderContainerProps = (props: {
-  onClick?: () => void;
-  disabled?: boolean;
-}) => ReactNode;
+type RenderContainerProps = (props: { onClick?: () => void }) => ReactNode;
 
 type AgentProfileButtonProps = {
   onClick?: () => void;
@@ -29,18 +26,14 @@ const AgentProfileButton = ({
   onClick,
   renderContainer,
 }: AgentProfileButtonProps) => {
-  const { selectedAgentConfig } = useServices();
-  const disabled = selectedAgentConfig.isUnderConstruction;
-
   if (renderContainer) {
-    return renderContainer({ onClick, disabled });
+    return renderContainer({ onClick });
   }
 
   return (
     <Button
       type="default"
       size="large"
-      disabled={disabled}
       icon={<AgentProfileSvg />}
       onClick={onClick}
     />

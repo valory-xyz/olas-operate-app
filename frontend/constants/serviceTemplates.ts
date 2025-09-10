@@ -465,7 +465,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.COMPUTED,
     },
     AIRDROP_STARTED: {
-      name: ' Airdrop started',
+      name: 'Airdrop started',
       description: '',
       value: 'true',
       provision_type: EnvProvisionType.FIXED,
@@ -473,7 +473,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
     AIRDROP_CONTRACT_ADDRESS: {
       name: 'Airdrop contact address',
       description: '',
-      value: '',
+      value: '0x7056506e819FAD9eE077221Ac0a20Cd5642fAECF',
       provision_type: EnvProvisionType.FIXED,
     },
   },

@@ -13,7 +13,7 @@ export const UnderConstruction = ({ showMoreInfo = false }) => {
   const { goto } = usePageState();
   const { mainOlasBalance } = useSharedContext();
 
-  const agentType = selectedAgentConfig.name;
+  const hasExternalFunds = selectedAgentConfig.hasExternalFunds;
 
   if (!selectedAgentConfig.isUnderConstruction) return null;
 
@@ -28,30 +28,20 @@ export const UnderConstruction = ({ showMoreInfo = false }) => {
           <div className="text-sm">
             The agent is temporarily unavailable due to technical issues for an
             unspecified time.{' '}
-            {showMoreInfo && (
-              <>
-                {agentType === 'Agents.fun agent' && (
-                  <div>You can withdraw agent funds at any time.</div>
-                )}
-
-                {agentType === 'Modius agent' && (
-                  <div>
-                    You can start your agent to withdraw its funds at any time.
-                  </div>
-                )}
-
-                {mainOlasBalance !== 0 && (
-                  <div className="w-fit">
-                    <Button
-                      onClick={() => goto(Pages.ManageWallet)}
-                      size="small"
-                      className="text-sm"
-                    >
-                      Withdraw
-                    </Button>
-                  </div>
-                )}
-              </>
+            {showMoreInfo &&
+              (hasExternalFunds
+                ? 'You can withdraw agent funds at any time'
+                : 'You can start your agent to withdraw its funds at any time.')}
+            {showMoreInfo && (mainOlasBalance !== 0 || hasExternalFunds) && (
+              <div className="w-fit">
+                <Button
+                  onClick={() => goto(Pages.ManageWallet)}
+                  size="small"
+                  className="text-sm mt-8"
+                >
+                  Withdraw
+                </Button>
+              </div>
             )}
           </div>
         </Flex>

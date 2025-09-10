@@ -83,10 +83,10 @@ const useServiceDeployment = () => {
 
     if (!isAllStakingContractDetailsRecordLoaded) return false;
 
-    // If service is under construction and is NOT Modius agent, return false
+    // If service is under construction and does NOT have external funds, return false
     if (
       selectedAgentConfig.isUnderConstruction &&
-      selectedAgentConfig.name !== 'Modius agent'
+      !selectedAgentConfig.hasExternalFunds
     )
       return false;
 

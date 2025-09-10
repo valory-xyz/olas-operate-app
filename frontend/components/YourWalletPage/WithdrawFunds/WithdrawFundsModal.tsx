@@ -63,24 +63,33 @@ type FundsMayBeLockedMessageProps = {
 const FundsMayBeLocked = ({
   onNext,
   onCancel,
-}: FundsMayBeLockedMessageProps) => (
-  <>
-    <Text>{partOfFundsMayBeLockedMessage}</Text>
-    <Flex vertical gap={8}>
-      <AgentProfile
-        renderContainer={({ onClick }) => (
-          <Button onClick={onClick} type="primary" className="w-full">
-            Withdraw locked funds
-          </Button>
-        )}
-      />
-      <Button onClick={onNext} type="primary" ghost>
-        I have withdrawn my locked funds
-      </Button>
-      <Button onClick={onCancel}>Cancel</Button>
-    </Flex>
-  </>
-);
+}: FundsMayBeLockedMessageProps) => {
+  const { selectedAgentConfig } = useServices();
+
+  return (
+    <>
+      <Text>{partOfFundsMayBeLockedMessage}</Text>
+      <Flex vertical gap={8}>
+        <AgentProfile
+          renderContainer={({ onClick }) => (
+            <Button
+              disabled={!selectedAgentConfig.hasExternalFunds}
+              onClick={onClick}
+              type="primary"
+              className="w-full"
+            >
+              Withdraw locked funds
+            </Button>
+          )}
+        />
+        <Button onClick={onNext} type="primary" ghost>
+          I have withdrawn my locked funds
+        </Button>
+        <Button onClick={onCancel}>Cancel</Button>
+      </Flex>
+    </>
+  );
+};
 
 type WithdrawFundsModalProps = {
   isWithdrawing?: boolean;
