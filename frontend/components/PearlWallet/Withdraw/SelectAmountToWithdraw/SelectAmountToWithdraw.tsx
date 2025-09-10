@@ -1,4 +1,5 @@
 import { Button, Flex, Typography } from 'antd';
+import { isNumber } from 'lodash';
 import { CSSProperties, useState } from 'react';
 
 import { BackButton } from '@/components/ui/BackButton';
@@ -24,12 +25,11 @@ export const SelectAmountToWithdraw = ({
   onContinue,
 }: SelectAmountToWithdrawProps) => {
   const [value, setValue] = useState(100);
-  const totalAmount = 1000;
+  const totalAmount = 10000000;
 
   const handleOnChange = (x: number | null) => {
-    if (x !== null && x > 0 && x <= totalAmount) {
-      setValue(x);
-    }
+    if (!isNumber(x)) return;
+    setValue(x);
   };
 
   return (
