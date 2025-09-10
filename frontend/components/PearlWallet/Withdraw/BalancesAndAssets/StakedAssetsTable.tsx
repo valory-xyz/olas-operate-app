@@ -2,24 +2,18 @@ import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
 
 import { Table } from '@/components/ui/Table';
 import { NA } from '@/constants/symbols';
-import { TokenSymbol, TokenSymbolConfigMapV2 } from '@/constants/token';
-import { Nullable } from '@/types/Util';
+import { TokenSymbolConfigMapV2 } from '@/constants/token';
+
+import { usePearlWallet } from '../../PearlWalletContext';
+import { StakedAsset } from '../types';
 
 const { Text } = Typography;
 
-type StakedAssetRow = {
-  agentName: Nullable<string>;
-  agentImgSrc: Nullable<string>;
-  symbol: TokenSymbol;
-  amount: number;
-  value: number;
-};
-
-const columns: TableColumnsType<StakedAssetRow> = [
+const columns: TableColumnsType<StakedAsset> = [
   {
     title: 'Agent',
     key: 'agent',
-    render: (_: unknown, record: StakedAssetRow) => (
+    render: (_: unknown, record: StakedAsset) => (
       <Flex align="center" gap={8}>
         {record.agentImgSrc && (
           <AntdImage
@@ -37,7 +31,7 @@ const columns: TableColumnsType<StakedAssetRow> = [
   {
     title: 'Token',
     key: 'token',
-    render: (_: unknown, record: StakedAssetRow) => (
+    render: (_: unknown, record: StakedAsset) => (
       <Flex align="center" gap={8}>
         <AntdImage
           width={20}
@@ -53,7 +47,7 @@ const columns: TableColumnsType<StakedAssetRow> = [
   {
     title: 'Amount',
     key: 'amount',
-    render: (_: unknown, record: StakedAssetRow) => (
+    render: (_: unknown, record: StakedAsset) => (
       <Flex vertical>
         <Text>${record.amount}</Text>
         <Text type="secondary" className="text-sm">
@@ -66,19 +60,13 @@ const columns: TableColumnsType<StakedAssetRow> = [
   },
 ];
 
-type StakedAssetsTableProps = {
-  isLoading: boolean;
-  tableData: StakedAssetRow[];
-};
+export const StakedAssetsTable = () => {
+  const { isLoading, stakedAssets } = usePearlWallet();
 
-export const StakedAssetsTable = ({
-  isLoading,
-  tableData,
-}: StakedAssetsTableProps) => {
   return (
-    <Table<StakedAssetRow>
+    <Table<StakedAsset>
       loading={isLoading}
-      dataSource={tableData}
+      dataSource={stakedAssets}
       columns={columns}
       rowKey={(record) => record.symbol}
       pagination={false}

@@ -1,21 +1,18 @@
 import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
 
 import { Table } from '@/components/ui/Table';
-import { TokenSymbol, TokenSymbolConfigMapV2 } from '@/constants/token';
+import { TokenSymbolConfigMapV2 } from '@/constants/token';
+
+import { usePearlWallet } from '../../PearlWalletContext';
+import { AvailableAsset } from '../types';
 
 const { Text } = Typography;
 
-type AssetRow = {
-  symbol: TokenSymbol;
-  amount: number;
-  value: number;
-};
-
-const columns: TableColumnsType<AssetRow> = [
+const columns: TableColumnsType<AvailableAsset> = [
   {
     title: 'Token',
     key: 'token',
-    render: (_: unknown, record: AssetRow) => (
+    render: (_: unknown, record: AvailableAsset) => (
       <Flex align="center" gap={8}>
         <AntdImage
           width={20}
@@ -31,32 +28,30 @@ const columns: TableColumnsType<AssetRow> = [
   {
     title: 'Amount',
     key: 'amount',
-    render: (_: unknown, record: AssetRow) => <Text>{record.amount}</Text>,
+    render: (_: unknown, record: AvailableAsset) => (
+      <Text>{record.amount}</Text>
+    ),
     align: 'right',
     width: '30%',
   },
   {
     title: 'Value',
     key: 'value',
-    render: (_: unknown, record: AssetRow) => <Text>${record.value}</Text>,
+    render: (_: unknown, record: AvailableAsset) => (
+      <Text>${record.value}</Text>
+    ),
     align: 'right',
     width: '40%',
   },
 ];
 
-type AvailableAssetsTableProps = {
-  isLoading: boolean;
-  tableData: AssetRow[];
-};
+export const AvailableAssetsTable = () => {
+  const { isLoading, availableAssets } = usePearlWallet();
 
-export const AvailableAssetsTable = ({
-  isLoading,
-  tableData,
-}: AvailableAssetsTableProps) => {
   return (
-    <Table<AssetRow>
+    <Table<AvailableAsset>
       loading={isLoading}
-      dataSource={tableData}
+      dataSource={availableAssets}
       columns={columns}
       rowKey={(record) => record.symbol}
       pagination={false}

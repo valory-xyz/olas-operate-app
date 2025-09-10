@@ -4,7 +4,7 @@ import { CardFlex } from '@/components/ui/CardFlex';
 import { NA } from '@/constants/symbols';
 import { formatNumber } from '@/utils/numberFormatters';
 
-import { useWithdraw } from '../useWithdraw';
+import { usePearlWallet } from '../../PearlWalletContext';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { StakedAssetsTable } from './StakedAssetsTable';
 
@@ -26,9 +26,7 @@ type BalancesAndAssetsProps = {
 };
 
 export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
-  const { agentName, agentImgSrc } = useWithdraw();
-  const aggregatedBalance = null;
-  // const aggregatedBalance = 2123.8123;
+  const { aggregatedBalance } = usePearlWallet();
 
   return (
     <Flex vertical gap={32}>
@@ -56,21 +54,7 @@ export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
             Available Assets
           </Title>
           <CardFlex $noBorder>
-            <AvailableAssetsTable
-              isLoading={false}
-              tableData={[
-                {
-                  symbol: 'ETH',
-                  amount: 2.5,
-                  value: 4000,
-                },
-                {
-                  symbol: 'XDAI',
-                  amount: 1500,
-                  value: 1500,
-                },
-              ]}
-            />
+            <AvailableAssetsTable />
           </CardFlex>
         </Flex>
       </Flex>
@@ -81,18 +65,7 @@ export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
             Staked Assets
           </Title>
           <CardFlex $noBorder>
-            <StakedAssetsTable
-              isLoading={false}
-              tableData={[
-                {
-                  agentName,
-                  agentImgSrc,
-                  symbol: 'OLAS',
-                  amount: 5000,
-                  value: 4000,
-                },
-              ]}
-            />
+            <StakedAssetsTable />
           </CardFlex>
         </Flex>
       </Flex>
