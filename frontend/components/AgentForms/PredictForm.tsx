@@ -143,7 +143,6 @@ export const PredictAgentForm = ({
       initialValues={initialValues}
       onFinish={onFinish}
       disabled={isFormDisabled}
-      variant={agentFormType === 'view' ? 'borderless' : 'outlined'}
       name="setup-your-predict-agent"
       layout="vertical"
     >
