@@ -13,17 +13,24 @@ import { useRewardContext } from '@/hooks/useRewardContext';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { toUsd } from '@/service/toUsd';
+import { Nullable } from '@/types/Util';
 import { generateName } from '@/utils/agentName';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
 import { AvailableAsset, StakedAsset } from './Withdraw/types';
 
 const PearlWalletContext = createContext<{
+  isLoading: boolean;
+  aggregatedBalance: Nullable<number>;
+  walletChainId: Nullable<EvmChainId>;
   availableAssets: AvailableAsset[];
   stakedAssets: StakedAsset[];
   amountsToWithdraw: Partial<Record<TokenSymbol, number>>;
   onAmountChange: (symbol: TokenSymbol, amount: number) => void;
 }>({
+  isLoading: false,
+  aggregatedBalance: null,
+  walletChainId: null,
   stakedAssets: [],
   availableAssets: [],
   amountsToWithdraw: {},
@@ -31,9 +38,16 @@ const PearlWalletContext = createContext<{
 });
 
 export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
-  const { selectedAgentConfig, selectedService } = useServices();
-  const { serviceSafes } = useService(selectedService?.service_config_id);
-  const { totalStakedOlasBalance } = useBalanceContext();
+  const {
+    isLoading: isServicesLoading,
+    selectedAgentConfig,
+    selectedService,
+  } = useServices();
+  const { isLoaded, serviceSafes } = useService(
+    selectedService?.service_config_id,
+  );
+  const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
+    useBalanceContext();
   const { accruedServiceStakingRewards } = useRewardContext();
   const {
     masterEoaBalance,
@@ -43,7 +57,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   } = useMasterBalances();
 
   // wallet chain ID
-  const [walletChainId, setWalletChainId] = useState<EvmChainId>(
+  const [walletChainId, setWalletChainId] = useState<Nullable<EvmChainId>>(
     selectedAgentConfig.evmHomeChainId,
   );
   const [amountsToWithdraw, setAmountsToWithdraw] = useState<
@@ -126,6 +140,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PearlWalletContext.Provider
       value={{
+        isLoading: isServicesLoading || !isLoaded || isBalanceLoading,
+        aggregatedBalance: null,
+        walletChainId: evmHomeChainId,
         availableAssets,
         stakedAssets,
         amountsToWithdraw,
@@ -142,18 +159,5 @@ export const usePearlWallet = () => {
   if (!context) {
     throw new Error('usePearlWallet must be used within a PearlWalletProvider');
   }
-
-  const { selectedAgentConfig } = useServices();
-
-  const evmHomeChainId = selectedAgentConfig?.evmHomeChainId;
-
-  return {
-    isLoading: false, // TODO: add loading state if needed
-    aggregatedBalance: null, // TODO: fetch real aggregated balance
-
-    // TODO: unused yet, remove if not needed
-    middlewareChain: selectedAgentConfig?.middlewareHomeChainId,
-    evmHomeChainId,
-    ...context,
-  };
+  return context;
 };

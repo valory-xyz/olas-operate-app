@@ -27,6 +27,11 @@ export const SelectAmountToWithdraw = ({
   const { availableAssets, amountsToWithdraw, onAmountChange } =
     usePearlWallet();
 
+  const isContinueDisabled = availableAssets.every(({ symbol, amount }) => {
+    const amountToWithdraw = amountsToWithdraw?.[symbol] ?? 0;
+    return amountToWithdraw <= 0 || amountToWithdraw > amount;
+  });
+
   return (
     <CardFlex $noBorder $padding="32px" style={cardStyles}>
       <Flex gap={32} vertical>
@@ -54,7 +59,12 @@ export const SelectAmountToWithdraw = ({
           ))}
         </Flex>
 
-        <Button onClick={onContinue} type="primary" block>
+        <Button
+          disabled={isContinueDisabled}
+          onClick={onContinue}
+          type="primary"
+          block
+        >
           Continue
         </Button>
       </Flex>

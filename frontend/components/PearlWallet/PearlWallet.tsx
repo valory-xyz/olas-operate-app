@@ -46,7 +46,9 @@ export const PearlWallet = () => {
           <SelectAmountToWithdraw onBack={handleBack} onContinue={handleNext} />
         );
       case STEPS.ENTER_WITHDRAWAL_ADDRESS:
-        return <EnterWithdrawalAddress />;
+        return (
+          <EnterWithdrawalAddress onBack={handleBack} onContinue={handleNext} />
+        );
       default:
         throw new Error('Invalid step');
     }
