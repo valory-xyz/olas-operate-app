@@ -43,7 +43,7 @@ export const MiddlewareChainMap = {
 } as const;
 export type MiddlewareChain = ValueOf<typeof MiddlewareChainMap>;
 
-const SupportedMiddlewareChainMap = {
+export const SupportedMiddlewareChainMap = {
   gnosis: MiddlewareChainMap.GNOSIS,
   optimism: MiddlewareChainMap.OPTIMISM,
   base: MiddlewareChainMap.BASE,

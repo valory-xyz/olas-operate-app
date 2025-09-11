@@ -63,6 +63,7 @@ export const SelectAmountToWithdraw = ({
           disabled={isContinueDisabled}
           onClick={onContinue}
           type="primary"
+          size="large"
           block
         >
           Continue
