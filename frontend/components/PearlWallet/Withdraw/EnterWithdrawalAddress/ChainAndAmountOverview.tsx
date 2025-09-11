@@ -21,6 +21,14 @@ const OverviewContainer = styled(Flex)`
   background-color: ${COLOR.BACKGROUND};
 `;
 
+const WithdrawalAddressTitle = () => (
+  <Flex vertical justify="space-between" gap={12}>
+    <Title level={4} className="m-0">
+      Enter Withdrawal Address
+    </Title>
+  </Flex>
+);
+
 export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
   const { walletChainId, amountsToWithdraw } = usePearlWallet();
 
@@ -32,13 +40,8 @@ export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
       <Flex gap={32} vertical>
         <Flex gap={12} vertical>
           <BackButton onPrev={onBack} />
-          <Flex vertical justify="space-between" gap={12}>
-            <Title level={4} className="m-0">
-              Enter Withdrawal Address
-            </Title>
-          </Flex>
+          <WithdrawalAddressTitle />
         </Flex>
-
         <PearlWalletToExternalWallet />
 
         <Flex vertical gap={32}>
