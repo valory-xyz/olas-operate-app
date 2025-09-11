@@ -473,7 +473,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
     AIRDROP_CONTRACT_ADDRESS: {
       name: 'Airdrop contact address',
       description: '',
-      value: '0x7056506e819FAD9eE077221Ac0a20Cd5642fAECF',
+      value: '0x5b5F79BB667A25400a8f91F0c18D080abCfD430f',
       provision_type: EnvProvisionType.FIXED,
     },
   },
