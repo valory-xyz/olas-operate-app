@@ -46,6 +46,7 @@ export const StakingContract = ({
     STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][stakingProgramId];
   const { allStakingContractDetailsRecord } = useStakingContractContext();
   const contractDetails = allStakingContractDetailsRecord?.[stakingProgramId];
+
   return (
     <ContractCard $noBodyPadding $isConfirmSwitchPage={isConfirmSwitchPage}>
       <Flex gap={24} vertical className="px-24 py-24">

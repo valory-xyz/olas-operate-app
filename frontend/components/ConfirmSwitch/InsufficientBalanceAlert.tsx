@@ -3,6 +3,7 @@ import { Button, Flex, Typography } from 'antd';
 import { CustomAlert } from '@/components/Alert';
 import { getNativeTokenSymbol } from '@/config/tokens';
 import { useServices } from '@/hooks/useServices';
+import { balanceFormat } from '@/utils/numberFormatters';
 
 import { NotAllowedSwitchReason } from './hooks/useShouldAllowSwitch';
 
@@ -26,7 +27,7 @@ export const InsufficientBalanceAlert = ({
   const insufficientOlasBalance =
     reason === NotAllowedSwitchReason.InsufficientOlasBalance;
   const messageText = insufficientOlasBalance
-    ? `Insufficient balance. Add ${requiredOlasBalance} OLAS on ${chainName}{' '}
+    ? `Insufficient balance. Add ${balanceFormat(requiredOlasBalance)} OLAS on ${chainName}
             Chain to continue.`
     : `Insufficient balance. Add the required amount of ${tokenSymbol} on ${chainName} Chain to continue.`;
   return (

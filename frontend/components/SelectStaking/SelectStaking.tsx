@@ -11,11 +11,6 @@ import { StakingContract } from './StakingContractCard';
 
 const { Title } = Typography;
 
-const SelectStakingContainer = styled(Flex)`
-  margin: 40px auto;
-  width: 100%;
-`;
-
 const StakingContractsWrapper = styled.div`
   display: grid;
   grid-template-columns: auto auto;
@@ -29,7 +24,7 @@ export const SelectStaking = () => {
     useStakingContracts();
 
   return (
-    <SelectStakingContainer vertical justify="center">
+    <Flex vertical justify="center" className="w-full my-40">
       <Flex
         vertical
         className="mx-auto"
@@ -52,6 +47,6 @@ export const SelectStaking = () => {
           />
         ))}
       </StakingContractsWrapper>
-    </SelectStakingContainer>
+    </Flex>
   );
 };

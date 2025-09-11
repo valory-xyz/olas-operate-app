@@ -1,16 +1,15 @@
 import { Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
+import { StakingContract } from '@/components/SelectStaking/StakingContractCard';
 import { COLOR } from '@/constants/colors';
 import { StakingProgramId } from '@/enums/StakingProgram';
-
-import { StakingContract } from '../SelectStaking/StakingContractCard';
 
 const { Text } = Typography;
 
 const CardHeader = styled(Flex)<{ $isCurrentStakingProgram: boolean }>`
   width: 342px;
-  height: 50px;
+  height: calc(40px + 10px); // 10px to compensate for the relative positioning.
   position: relative;
   top: 10px;
   border-radius: 20px 20px 0 0;

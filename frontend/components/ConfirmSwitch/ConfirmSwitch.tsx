@@ -13,7 +13,7 @@ import { ContractCard } from './ContractCard';
 
 const { Title, Text } = Typography;
 
-const CircleButton = styled(Flex)`
+const CircularIconContainer = styled(Flex)`
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -46,9 +46,9 @@ export const ConfirmSwitch = () => {
           stakingProgramId={activeStakingProgramId}
           isCurrentStakingProgram={true}
         />
-        <CircleButton>
+        <CircularIconContainer>
           <ArrowRightOutlined />
-        </CircleButton>
+        </CircularIconContainer>
         <ContractCard
           stakingProgramId={stakingProgramIdToMigrateTo}
           isCurrentStakingProgram={false}

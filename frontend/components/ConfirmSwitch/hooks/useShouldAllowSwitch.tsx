@@ -44,21 +44,6 @@ export const useShouldAllowSwitch = () => {
     [homeChainId, stakingProgramIdToMigrateTo],
   );
 
-  const isFirstDeploy = useMemo(() => {
-    if (!isServicesLoaded) return false;
-
-    // check if the service is deployed (has service id assigned)
-    const currentChainId = selectedAgentConfig.evmHomeChainId;
-    const chainData = !isNil(selectedService?.chain_configs)
-      ? selectedService?.chain_configs?.[asMiddlewareChain(currentChainId)]
-          ?.chain_data
-      : null;
-    const token = chainData?.token;
-    if (selectedService && isValidServiceId(token)) return false;
-
-    return true;
-  }, [isServicesLoaded, selectedAgentConfig.evmHomeChainId, selectedService]);
-
   const safeOlasBalance = useMemo(() => {
     if (!isBalanceLoaded) return 0;
     if (isNil(masterSafeBalances) || isEmpty(masterSafeBalances)) return 0;
@@ -75,6 +60,20 @@ export const useShouldAllowSwitch = () => {
   const totalOlas = safeOlasBalance + (totalStakedOlasBalance || 0);
   const hasEnoughOlasToMigrate = totalOlas >= minimumOlasRequiredToMigrate;
   const olasRequiredToMigrate = minimumOlasRequiredToMigrate - totalOlas;
+
+  const isFirstDeploy = useMemo(() => {
+    if (!isServicesLoaded) return false;
+
+    // check if the service is deployed (has service id assigned)
+    const currentChainId = selectedAgentConfig.evmHomeChainId;
+    const chainData = !isNil(selectedService?.chain_configs)
+      ? selectedService?.chain_configs?.[asMiddlewareChain(currentChainId)]
+          ?.chain_data
+      : null;
+    const token = chainData?.token;
+    if (selectedService && isValidServiceId(token)) return false;
+    return true;
+  }, [isServicesLoaded, selectedAgentConfig.evmHomeChainId, selectedService]);
 
   const shouldAllowSwitch: ShouldAllowSwitch = useMemo(() => {
     if (isFirstDeploy) {
@@ -94,7 +93,9 @@ export const useShouldAllowSwitch = () => {
         allowSwitch: true,
         reason: null,
       };
-    } else if (!hasEnoughOlasToMigrate) {
+    }
+
+    if (!hasEnoughOlasToMigrate) {
       return {
         allowSwitch: false,
         reason: NotAllowedSwitchReason.InsufficientOlasBalance,

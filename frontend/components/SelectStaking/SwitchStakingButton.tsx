@@ -9,7 +9,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { CooldownContentTooltip } from './CooldownTooltip';
-import { CantMigrateReason, useCanMigrate } from './hooks/useCanMigrate';
+import { MigrateButtonText, useCanMigrate } from './hooks/useCanMigrate';
 
 const Button = styled(AntdButton)<{ $overrideDisabledStyle?: boolean }>`
   &:disabled {
@@ -38,7 +38,7 @@ export const SwitchStakingButton = ({
 
   const { setStakingProgramIdToMigrateTo } = useStakingProgram();
   const agentInCooldownPeriod =
-    buttonText === CantMigrateReason.AgentInCooldownPeriod;
+    buttonText === MigrateButtonText.AgentInCooldownPeriod;
 
   const handleMigrate = () => {
     setStakingProgramIdToMigrateTo(stakingProgramId);
