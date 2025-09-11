@@ -1,19 +1,34 @@
 import { Button, Flex, Typography } from 'antd';
 
-import { CustomAlert } from '../Alert';
+import { CustomAlert } from '@/components/Alert';
+import { getNativeTokenSymbol } from '@/config/tokens';
+import { useServices } from '@/hooks/useServices';
+
+import { NotAllowedSwitchReason } from './hooks/useShouldAllowSwitch';
 
 const { Text } = Typography;
 
 type InsufficientBalanceAlertProps = {
-  olasBalance: number;
   requiredOlasBalance: number;
   chainName: string;
+  reason: string;
 };
 
 export const InsufficientBalanceAlert = ({
   requiredOlasBalance,
   chainName,
+  reason,
 }: InsufficientBalanceAlertProps) => {
+  const { selectedAgentConfig } = useServices();
+  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
+  const tokenSymbol = getNativeTokenSymbol(homeChainId);
+
+  const insufficientOlasBalance =
+    reason === NotAllowedSwitchReason.InsufficientOlasBalance;
+  const messageText = insufficientOlasBalance
+    ? `Insufficient balance. Add ${requiredOlasBalance} OLAS on ${chainName}{' '}
+            Chain to continue.`
+    : `Insufficient balance. Add the required amount of ${tokenSymbol} on ${chainName} Chain to continue.`;
   return (
     <CustomAlert
       type="warning"
@@ -21,13 +36,12 @@ export const InsufficientBalanceAlert = ({
       className="mb-24"
       message={
         <Flex justify="space-between">
-          <Text className="text-sm">
-            Insufficient balance. Add {requiredOlasBalance} OLAS on {chainName}{' '}
-            Chain to continue.
-          </Text>
+          <Text className="text-sm">{messageText}</Text>
 
           {/* TODO: add button action */}
-          <Button size="small">Deposit OLAS</Button>
+          <Button size="small">
+            Deposit {insufficientOlasBalance ? 'OLAS' : tokenSymbol}
+          </Button>
         </Flex>
       }
     />

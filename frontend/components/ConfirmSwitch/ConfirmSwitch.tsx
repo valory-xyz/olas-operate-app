@@ -8,8 +8,8 @@ import { usePageState } from '@/hooks/usePageState';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { BackButton } from '../ui/BackButton';
+import { ConfirmSwitchSection } from './ConfirmSwitchSection';
 import { ContractCard } from './ContractCard';
-import { CtaSection } from './CtaSection';
 
 const { Title, Text } = Typography;
 
@@ -55,7 +55,7 @@ export const ConfirmSwitch = () => {
         />
       </Flex>
 
-      <CtaSection />
+      <ConfirmSwitchSection />
     </Flex>
   );
 };
