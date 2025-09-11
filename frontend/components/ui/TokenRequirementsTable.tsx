@@ -28,7 +28,8 @@ const CustomTag = styled(Tag)<{ $isWaiting: boolean }>`
 `;
 
 type TokenRowData = {
-  amount: number;
+  totalAmount: number;
+  pendingAmount: number;
   symbol: string;
   iconSrc: string;
   areFundsReceived: boolean;
@@ -51,13 +52,15 @@ const columns: TableColumnsType<TokenRowData> = [
     ),
   },
   {
-    title: 'Amount',
-    key: 'amount',
-    render: (_: unknown, record: TokenRowData) => <Text>{record.amount}</Text>,
+    title: 'Total Amount Required',
+    key: 'totalAmount',
+    render: (_: unknown, record: TokenRowData) => (
+      <Text>{record.totalAmount}</Text>
+    ),
   },
   {
-    title: 'Status',
-    key: 'status',
+    title: 'Amount Pending',
+    key: 'pendingAmount',
     render: (_: unknown, record: TokenRowData) => {
       const isWaiting = !record.areFundsReceived;
       return (
@@ -66,7 +69,9 @@ const columns: TableColumnsType<TokenRowData> = [
           color={isWaiting ? undefined : COLOR.SUCCESS}
           icon={isWaiting ? <ClockCircleOutlined /> : <CheckCircleOutlined />}
         >
-          {record.areFundsReceived ? 'Received' : 'Waiting'}
+          {record.areFundsReceived
+            ? 'No pending amount'
+            : `Pending ${record.pendingAmount}`}
         </CustomTag>
       );
     },

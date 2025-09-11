@@ -7,6 +7,7 @@ import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { TokenSymbolConfigMap, TokenSymbolMap } from '@/constants/token';
+import { MasterEoa, MasterSafe } from '@/enums/Wallet';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
@@ -62,6 +63,80 @@ const getTokensDetailsForFunding = (
   return tokenRequirements.sort((a, b) => b.amount - a.amount);
 };
 
+const getRequirementsPerToken = (
+  masterEoa: MasterEoa | undefined,
+  balances: AddressBalanceRecord | undefined,
+  isBalancesAndFundingRequirementsLoading: boolean,
+  refillRequirements:
+    | AddressBalanceRecord
+    | MasterSafeBalanceRecord
+    | undefined,
+  masterSafe: MasterSafe | undefined,
+  selectedAgentConfig: AgentConfig,
+) => {
+  if (!masterEoa || isBalancesAndFundingRequirementsLoading) return [];
+  if (!refillRequirements) return [];
+
+  const masterSafeRequirements = masterSafe
+    ? (refillRequirements as AddressBalanceRecord)?.[masterSafe.address]
+    : (refillRequirements as MasterSafeBalanceRecord)?.['master_safe'];
+
+  if (!masterSafeRequirements) return [];
+
+  const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
+  const chainConfig = TOKEN_CONFIG[evmHomeChainId];
+
+  // refill_requirements_masterEOA
+  const masterEoaRequirementAmount = (
+    refillRequirements as AddressBalanceRecord
+  )[masterEoa.address]?.[AddressZero];
+
+  // monthly_gas_estimate
+  const monthlyGasEstimate = BigInt(
+    SERVICE_TEMPLATES.find(
+      (template) => template.home_chain === middlewareHomeChainId,
+    )?.configurations[middlewareHomeChainId]?.monthly_gas_estimate ?? 0,
+  );
+
+  /**
+   * If master_safe for the chainID exists, get funds from there.
+   */
+  const nativeTokenBalanceInMasterSafe = masterSafe
+    ? BigInt(balances?.[masterSafe.address]?.[AddressZero] ?? 0n)
+    : 0n;
+
+  const requirementsPerToken = {} as { [tokenAddress: Address]: string };
+
+  Object.entries(masterSafeRequirements)?.forEach(([tokenAddress, amount]) => {
+    if (tokenAddress === AddressZero) {
+      /**
+       * No funds needed for master_safe, if it already exists
+       */
+      const masterSafeRequirementAmount = masterSafe ? 0n : BigInt(amount);
+      const gasDeficit = monthlyGasEstimate - nativeTokenBalanceInMasterSafe;
+      const amountNeededForGas = bigintMax(0n, gasDeficit);
+      /**
+       * If monthly gas estimate is greater than master_safe requirements, then consider that
+       * else, check the native tokens required to meet the gas requirements
+       */
+      const nativeTotalRequired =
+        bigintMax(masterSafeRequirementAmount, amountNeededForGas) +
+        BigInt(masterEoaRequirementAmount ?? 0);
+
+      requirementsPerToken[tokenAddress as Address] =
+        nativeTotalRequired.toString();
+    } else {
+      requirementsPerToken[tokenAddress as Address] = amount.toString();
+    }
+  });
+
+  return getTokensDetailsForFunding(
+    requirementsPerToken,
+    evmHomeChainId,
+    chainConfig,
+  );
+};
+
 /**
  *
  * @warning A HOOK THAT SHOULD NEVER EXIST.
@@ -94,18 +169,22 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
   selectedAgentConfig: AgentConfig;
   shouldCreateDummyService?: boolean;
 }): {
+  originalTokenRequirements: TokenRequirement[];
   tokenRequirements: TokenRequirement[];
   initialTokenRequirements: TokenRequirement[];
   isLoading: boolean;
 } => {
   const updateBeforeBridgingFunds = useBeforeBridgeFunds();
   const {
+    totalRequirements,
     refillRequirements,
     balances,
     refetch,
     isBalancesAndFundingRequirementsLoading,
   } = useBalanceAndRefillRequirementsContext();
   const { masterEoa, masterSafes } = useMasterWalletContext();
+
+  const originalTokenRequirementsRef = useRef<TokenRequirement[] | null>(null);
   const initialTokenRequirementsRef = useRef<TokenRequirement[] | null>(null);
 
   const masterSafe = useMemo(() => {
@@ -124,78 +203,40 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     }
   }, [updateBeforeBridgingFunds, refetch, shouldCreateDummyService]);
 
-  const tokenRequirements = useMemo(() => {
-    if (!masterEoa || isBalancesAndFundingRequirementsLoading) return [];
-    if (!refillRequirements) return [];
-
-    const masterSafeRequirements = masterSafe
-      ? (refillRequirements as AddressBalanceRecord)?.[masterSafe.address]
-      : (refillRequirements as MasterSafeBalanceRecord)?.['master_safe'];
-
-    if (!masterSafeRequirements) return [];
-
-    const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
-    const chainConfig = TOKEN_CONFIG[evmHomeChainId];
-
-    // refill_requirements_masterEOA
-    const masterEoaRequirementAmount = (
-      refillRequirements as AddressBalanceRecord
-    )[masterEoa.address]?.[AddressZero];
-
-    // monthly_gas_estimate
-    const monthlyGasEstimate = BigInt(
-      SERVICE_TEMPLATES.find(
-        (template) => template.home_chain === middlewareHomeChainId,
-      )?.configurations[middlewareHomeChainId]?.monthly_gas_estimate ?? 0,
-    );
-
-    /**
-     * If master_safe for the chainID exists, get funds from there.
-     */
-    const nativeTokenBalanceInMasterSafe = masterSafe
-      ? BigInt(balances?.[masterSafe.address]?.[AddressZero] ?? 0n)
-      : 0n;
-
-    const requirementsPerToken = {} as { [tokenAddress: Address]: string };
-
-    Object.entries(masterSafeRequirements)?.forEach(
-      ([tokenAddress, amount]) => {
-        if (tokenAddress === AddressZero) {
-          /**
-           * No funds needed for master_safe, if it already exists
-           */
-          const masterSafeRequirementAmount = masterSafe ? 0n : BigInt(amount);
-          const gasDeficit =
-            monthlyGasEstimate - nativeTokenBalanceInMasterSafe;
-          const amountNeededForGas = bigintMax(0n, gasDeficit);
-          /**
-           * If monthly gas estimate is greater than master_safe requirements, then consider that
-           * else, check the native tokens required to meet the gas requirements
-           */
-          const nativeTotalRequired =
-            bigintMax(masterSafeRequirementAmount, amountNeededForGas) +
-            BigInt(masterEoaRequirementAmount ?? 0);
-
-          requirementsPerToken[tokenAddress as Address] =
-            nativeTotalRequired.toString();
-        } else {
-          requirementsPerToken[tokenAddress as Address] = amount.toString();
-        }
-      },
-    );
-
-    return getTokensDetailsForFunding(
-      requirementsPerToken,
-      evmHomeChainId,
-      chainConfig,
+  const originalTokenRequirements = useMemo(() => {
+    return getRequirementsPerToken(
+      masterEoa,
+      balances,
+      isBalancesAndFundingRequirementsLoading,
+      totalRequirements,
+      masterSafe,
+      selectedAgentConfig,
     );
   }, [
-    masterSafe,
-    refillRequirements,
     masterEoa,
-    isBalancesAndFundingRequirementsLoading,
-    selectedAgentConfig,
     balances,
+    isBalancesAndFundingRequirementsLoading,
+    totalRequirements,
+    masterSafe,
+    selectedAgentConfig,
+  ]);
+
+  const tokenRequirements = useMemo(() => {
+    return getRequirementsPerToken(
+      masterEoa,
+      balances,
+      isBalancesAndFundingRequirementsLoading,
+      refillRequirements,
+      masterSafe,
+      selectedAgentConfig,
+    );
+  }, [
+    masterEoa,
+    balances,
+    isBalancesAndFundingRequirementsLoading,
+    refillRequirements,
+    masterSafe,
+    selectedAgentConfig,
   ]);
 
   // Capture the initial token requirements once, when they are first available
@@ -205,7 +246,18 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     }
   }, [tokenRequirements]);
 
+  useEffect(() => {
+    if (
+      !originalTokenRequirementsRef.current &&
+      originalTokenRequirements.length
+    ) {
+      originalTokenRequirementsRef.current = originalTokenRequirements;
+    }
+  }, [originalTokenRequirements]);
+
   return {
+    originalTokenRequirements:
+      originalTokenRequirementsRef.current ?? originalTokenRequirements,
     tokenRequirements,
     initialTokenRequirements:
       initialTokenRequirementsRef.current ?? tokenRequirements,
