@@ -1,57 +1,47 @@
-import { Maybe } from '@web3auth/modal';
-import {
-  useWeb3Auth,
-  useWeb3AuthConnect,
-  useWeb3AuthDisconnect,
-} from '@web3auth/modal/react';
 import { message } from 'antd';
 import { useEffect, useRef } from 'react';
 
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { useSetup } from '@/hooks/useSetup';
 import { Address } from '@/types/Address';
+
+type Web3AuthData = { address: Address };
 
 export const useWeb3AuthBackupWallet = ({
   onFinish,
 }: {
   onFinish: () => void;
 }) => {
-  const { provider } = useWeb3Auth();
-  const { connect, isConnected } = useWeb3AuthConnect();
-  const { disconnect } = useWeb3AuthDisconnect();
-
+  const { ipcRenderer, web3AuthWindow } = useElectronApi();
   const { setBackupSigner } = useSetup();
-  const isAddressUpdated = useRef(false);
-  const isMessageShown = useRef(false);
+
+  const isAddressReceived = useRef(false);
+
+  const openWeb3AuthModel = () => {
+    if (!web3AuthWindow?.show) return;
+    web3AuthWindow?.show();
+  };
 
   useEffect(() => {
-    const getAccountAddressAndDisconnect = async () => {
-      if (!provider) return;
-      if (isAddressUpdated.current) return;
-
-      try {
-        const accounts: Maybe<Address[]> = await provider.request({
-          method: 'eth_accounts',
-        });
-
-        if (!accounts || !accounts[0]) return;
-        setBackupSigner({ address: accounts[0], type: 'web3auth' });
-        isAddressUpdated.current = true;
-        disconnect();
+    const handleSaveWeb3AuthAddress = (_event: unknown, data: unknown) => {
+      if (isAddressReceived.current) return;
+      const web3AuthData = data as Web3AuthData;
+      if (web3AuthData.address) {
+        isAddressReceived.current = true;
+        setBackupSigner({ address: web3AuthData.address, type: 'web3auth' });
         onFinish();
-
-        if (!isMessageShown.current) {
-          message.success('Backup wallet successfully set');
-          isMessageShown.current = true;
-        }
-      } catch (error) {
-        console.error('Error getting address:', error);
+        message.success('Backup wallet successfully set');
       }
     };
 
-    if (isConnected) {
-      getAccountAddressAndDisconnect();
-    }
-  }, [disconnect, isConnected, provider, setBackupSigner, onFinish]);
+    ipcRenderer?.on?.('web3auth-address-received', handleSaveWeb3AuthAddress);
+    return () => {
+      ipcRenderer?.removeListener?.(
+        'web3auth-address-received',
+        handleSaveWeb3AuthAddress,
+      );
+    };
+  });
 
-  return { connect };
+  return { openWeb3AuthModel };
 };

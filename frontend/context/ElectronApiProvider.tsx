@@ -64,6 +64,10 @@ type ElectronApiContextProps = {
     transactionSuccess?: () => void;
     transactionFailure?: () => void;
   };
+  web3AuthWindow?: {
+    show?: () => void;
+    close?: () => void;
+  };
   logEvent?: (message: string) => void;
 };
 
@@ -102,6 +106,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     show: () => {},
     transactionSuccess: () => {},
   },
+  web3AuthWindow,
   logEvent: () => {},
 });
 
@@ -162,6 +167,10 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           transactionFailure: getElectronApiFunction(
             'onRampWindow.transactionFailure',
           ),
+        },
+        web3AuthWindow: {
+          show: getElectronApiFunction('web3AuthWindow.show'),
+          close: getElectronApiFunction('web3AuthWindow.close'),
         },
         logEvent: getElectronApiFunction('logEvent'),
       }}

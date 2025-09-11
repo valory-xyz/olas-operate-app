@@ -50,7 +50,7 @@ export const BackupWalletManual = () => {
     goto(SetupScreen.AgentSelection);
   };
 
-  const { connect } = useWeb3AuthBackupWallet({
+  const { openWeb3AuthModel } = useWeb3AuthBackupWallet({
     onFinish: handleWeb3AuthSetupFinish,
   });
 
@@ -69,7 +69,7 @@ export const BackupWalletManual = () => {
         </Button>
       </FormFlex>
 
-      <Button type="link" size="large" onClick={connect}>
+      <Button type="link" size="large" onClick={openWeb3AuthModel}>
         <Flex justify="center" align="center">
           Set Up Wallet with&nbsp;
           <GoogleIcon fill={COLOR.PRIMARY} />
