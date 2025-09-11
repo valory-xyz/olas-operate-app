@@ -1,4 +1,5 @@
 import { Button, Flex, Typography } from 'antd';
+import { useEffect } from 'react';
 
 import { CardFlex } from '@/components/ui/CardFlex';
 import { NA } from '@/constants/symbols';
@@ -27,7 +28,12 @@ type BalancesAndAssetsProps = {
 };
 
 export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
-  const { aggregatedBalance } = usePearlWallet();
+  const { aggregatedBalance, onReset } = usePearlWallet();
+
+  // reset the state when we enter the pearl wallet screen
+  useEffect(() => {
+    onReset();
+  }, [onReset]);
 
   return (
     <Flex vertical gap={32}>

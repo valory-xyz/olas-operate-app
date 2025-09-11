@@ -1,5 +1,12 @@
 import { sum } from 'lodash';
-import { createContext, ReactNode, useContext, useMemo, useState } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
@@ -27,6 +34,7 @@ const PearlWalletContext = createContext<{
   stakedAssets: StakedAsset[];
   amountsToWithdraw: Partial<Record<TokenSymbol, number>>;
   onAmountChange: (symbol: TokenSymbol, amount: number) => void;
+  onReset: () => void;
 }>({
   isLoading: false,
   aggregatedBalance: null,
@@ -35,6 +43,7 @@ const PearlWalletContext = createContext<{
   availableAssets: [],
   amountsToWithdraw: {},
   onAmountChange: () => {},
+  onReset: () => {},
 });
 
 export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
@@ -63,8 +72,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const [amountsToWithdraw, setAmountsToWithdraw] = useState<
     Partial<Record<TokenSymbol, number>>
   >({});
-
-  console.log('amountsToWithdraw', amountsToWithdraw);
 
   const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
   const agent = ACTIVE_AGENTS.find(
@@ -137,6 +144,10 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     setAmountsToWithdraw((prev) => ({ ...prev, [symbol]: amount }));
   };
 
+  const onReset = useCallback(() => {
+    setAmountsToWithdraw({});
+  }, []);
+
   return (
     <PearlWalletContext.Provider
       value={{
@@ -147,6 +158,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         stakedAssets,
         amountsToWithdraw,
         onAmountChange,
+        onReset,
       }}
     >
       {children}
