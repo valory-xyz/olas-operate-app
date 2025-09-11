@@ -13,6 +13,8 @@ export const UnderConstruction = ({ showMoreInfo = false }) => {
   const { goto } = usePageState();
   const { mainOlasBalance } = useSharedContext();
 
+  const hasExternalFunds = selectedAgentConfig.hasExternalFunds;
+
   if (!selectedAgentConfig.isUnderConstruction) return null;
 
   return (
@@ -26,19 +28,22 @@ export const UnderConstruction = ({ showMoreInfo = false }) => {
           <div className="text-sm">
             The agent is temporarily unavailable due to technical issues for an
             unspecified time.{' '}
-            {showMoreInfo && 'You can withdraw agent funds at any time.'}
+            {showMoreInfo &&
+              (hasExternalFunds
+                ? 'You can withdraw agent funds at any time'
+                : 'You can start your agent to withdraw its funds at any time.')}
+            {showMoreInfo && (mainOlasBalance !== 0 || hasExternalFunds) && (
+              <div className="w-fit">
+                <Button
+                  onClick={() => goto(Pages.ManageWallet)}
+                  size="small"
+                  className="text-sm mt-8"
+                >
+                  Withdraw
+                </Button>
+              </div>
+            )}
           </div>
-          {showMoreInfo && mainOlasBalance !== 0 && (
-            <div className="w-fit">
-              <Button
-                onClick={() => goto(Pages.ManageWallet)}
-                size="small"
-                className="text-sm"
-              >
-                Withdraw
-              </Button>
-            </div>
-          )}
         </Flex>
       }
     />
