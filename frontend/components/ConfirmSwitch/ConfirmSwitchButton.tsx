@@ -96,7 +96,7 @@ export const ConfirmSwitchButton = ({
       setContractSwitchStatus('COMPLETED');
     } catch (error) {
       console.error(error);
-      message.error(error as string);
+      message.error('An error occurred while switching contract.');
       setContractSwitchStatus('ERROR');
     } finally {
       overrideSelectedServiceStatus(null);
