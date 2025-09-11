@@ -130,7 +130,7 @@ export const useWithdrawFunds = () => {
     });
 
   const onAuthorizeWithdrawal = useCallback(
-    async (withdrawAddress: Address, password: string) => {
+    async (withdrawAddress: string, password: string) => {
       if (!walletChainId) return;
 
       const chainConfig = TOKEN_CONFIG[walletChainId];
@@ -139,7 +139,7 @@ export const useWithdrawFunds = () => {
 
       const request = {
         password,
-        to: withdrawAddress,
+        to: withdrawAddress as Address,
         withdraw_assets: { [middlewareChain]: assets },
       } satisfies WithdrawalRequest;
 

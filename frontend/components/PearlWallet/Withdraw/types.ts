@@ -1,3 +1,4 @@
+import { EvmChainId, EvmChainName } from '@/constants/chains';
 import { TokenSymbol } from '@/constants/token';
 import { Nullable } from '@/types/Util';
 
@@ -15,3 +16,5 @@ export type StakedAsset = {
   amount: number;
   value: number;
 };
+
+export type WalletChain = { chainId: EvmChainId; chainName: EvmChainName };

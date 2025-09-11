@@ -1,7 +1,9 @@
 import { Button, Flex, Typography } from 'antd';
+import Image from 'next/image';
 import { useEffect } from 'react';
 
 import { CardFlex } from '@/components/ui/CardFlex';
+import { Segmented } from '@/components/ui/Segmented';
 import { NA } from '@/constants/symbols';
 import { formatNumber } from '@/utils/numberFormatters';
 
@@ -23,12 +25,45 @@ const PearlWalletTitle = () => (
   </Flex>
 );
 
+const AvailableAssets = () => (
+  <Flex vertical gap={24}>
+    <Flex vertical gap={12}>
+      <Title level={5} className="m-0 text-lg">
+        Available Assets
+      </Title>
+      <CardFlex $noBorder>
+        <AvailableAssetsTable />
+      </CardFlex>
+    </Flex>
+  </Flex>
+);
+
+const StakedAssets = () => (
+  <Flex vertical gap={24}>
+    <Flex vertical gap={12}>
+      <Title level={5} className="m-0 text-lg">
+        Staked Assets
+      </Title>
+      <CardFlex $noBorder>
+        <StakedAssetsTable />
+        <AgentNft />
+      </CardFlex>
+    </Flex>
+  </Flex>
+);
+
 type BalancesAndAssetsProps = {
   onWithdraw: () => void;
 };
 
 export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
-  const { aggregatedBalance, onReset } = usePearlWallet();
+  const {
+    aggregatedBalance,
+    chains,
+    walletChainId,
+    onWalletChainChange,
+    onReset,
+  } = usePearlWallet();
 
   // reset the state when we enter the pearl wallet screen
   useEffect(() => {
@@ -38,6 +73,7 @@ export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
   return (
     <Flex vertical gap={32}>
       <PearlWalletTitle />
+
       <CardFlex $noBorder>
         <Flex justify="space-between" align="center">
           <Flex vertical gap={8}>
@@ -55,28 +91,29 @@ export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
         </Flex>
       </CardFlex>
 
-      <Flex vertical gap={24}>
-        <Flex vertical gap={12}>
-          <Title level={5} className="m-0 text-lg">
-            Available Assets
-          </Title>
-          <CardFlex $noBorder>
-            <AvailableAssetsTable />
-          </CardFlex>
-        </Flex>
-      </Flex>
+      {walletChainId && (
+        <Segmented
+          value={walletChainId}
+          onChange={(chainId) => onWalletChainChange?.(chainId)}
+          options={chains.map((chain) => ({
+            value: chain.chainId,
+            label: (
+              <Flex gap={8}>
+                <Image
+                  src={`/chains/${chain.chainName}-chain.png`}
+                  alt={chain.chainName}
+                  width={24}
+                  height={24}
+                />
+                <Text>{chain.chainName}</Text>
+              </Flex>
+            ),
+          }))}
+        />
+      )}
 
-      <Flex vertical gap={24}>
-        <Flex vertical gap={12}>
-          <Title level={5} className="m-0 text-lg">
-            Staked Assets
-          </Title>
-          <CardFlex $noBorder>
-            <StakedAssetsTable />
-            <AgentNft />
-          </CardFlex>
-        </Flex>
-      </Flex>
+      <AvailableAssets />
+      <StakedAssets />
     </Flex>
   );
 };

@@ -1,4 +1,4 @@
-import { sum } from 'lodash';
+import { compact, sum } from 'lodash';
 import {
   createContext,
   ReactNode,
@@ -9,7 +9,10 @@ import {
 } from 'react';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
+import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
+import { AgentType } from '@/constants/agent';
+import { type EvmChainName } from '@/constants/chains';
 import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import {
@@ -20,16 +23,19 @@ import { useRewardContext } from '@/hooks/useRewardContext';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { toUsd } from '@/service/toUsd';
+import { AgentConfig } from '@/types/Agent';
 import { Nullable } from '@/types/Util';
 import { generateName } from '@/utils/agentName';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
-import { AvailableAsset, StakedAsset } from './Withdraw/types';
+import { AvailableAsset, StakedAsset, WalletChain } from './Withdraw/types';
 
 const PearlWalletContext = createContext<{
   isLoading: boolean;
   aggregatedBalance: Nullable<number>;
+  chains: WalletChain[];
   walletChainId: Nullable<EvmChainId>;
+  onWalletChainChange?: (chainId: EvmChainId) => void;
   availableAssets: AvailableAsset[];
   stakedAssets: StakedAsset[];
   amountsToWithdraw: Partial<Record<TokenSymbol, number>>;
@@ -39,6 +45,8 @@ const PearlWalletContext = createContext<{
   isLoading: false,
   aggregatedBalance: null,
   walletChainId: null,
+  onWalletChainChange: () => {},
+  chains: [],
   stakedAssets: [],
   availableAssets: [],
   amountsToWithdraw: {},
@@ -51,6 +59,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     isLoading: isServicesLoading,
     selectedAgentConfig,
     selectedService,
+    services,
   } = useServices();
   const { isLoaded, serviceSafes } = useService(
     selectedService?.service_config_id,
@@ -65,15 +74,15 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     masterSafeErc20Balances,
   } = useMasterBalances();
 
+  const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
+
   // wallet chain ID
-  const [walletChainId, setWalletChainId] = useState<Nullable<EvmChainId>>(
-    selectedAgentConfig.evmHomeChainId,
-  );
+  const [walletChainId, setWalletChainId] =
+    useState<Nullable<EvmChainId>>(evmHomeChainId);
   const [amountsToWithdraw, setAmountsToWithdraw] = useState<
     Partial<Record<TokenSymbol, number>>
   >({});
 
-  const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) =>
       agentConfig.middlewareHomeChainId === selectedService?.home_chain,
@@ -82,14 +91,35 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
 
   // agent safe
   const serviceSafe = useMemo(
-    () => serviceSafes?.find(({ evmChainId }) => evmChainId === evmHomeChainId),
-    [serviceSafes, evmHomeChainId],
+    () => serviceSafes?.find(({ evmChainId }) => evmChainId === walletChainId),
+    [serviceSafes, walletChainId],
   );
+
+  const chains = useMemo(() => {
+    if (!services) return [];
+    return compact(
+      services.map((service) => {
+        const agent = ACTIVE_AGENTS.find(
+          ([, agentConfig]) =>
+            agentConfig.middlewareHomeChainId === service.home_chain,
+        );
+        if (!agent) return null;
+
+        const [, agentConfig] = agent as [AgentType, AgentConfig];
+        if (!agentConfig.evmHomeChainId) return null;
+
+        const chainId = agentConfig.evmHomeChainId;
+        const chainName = CHAIN_CONFIG[chainId].name as EvmChainName;
+        return { chainId, chainName };
+      }),
+    );
+  }, [services]);
 
   // OLAS token, Native Token, other ERC20 tokens
   const availableAssets: AvailableAsset[] = useMemo(() => {
-    const tokenConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
+    if (!walletChainId) return [];
 
+    const tokenConfig = TOKEN_CONFIG[walletChainId];
     return Object.entries(tokenConfig).map(
       ([untypedSymbol, untypedTokenDetails]) => {
         const symbol = untypedSymbol as TokenSymbol;
@@ -120,7 +150,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       },
     );
   }, [
-    selectedAgentConfig,
+    walletChainId,
     masterSafeOlasBalance,
     accruedServiceStakingRewards,
     middlewareHomeChainId,
@@ -140,20 +170,30 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     },
   ];
 
-  const onAmountChange = (symbol: TokenSymbol, amount: number) => {
+  const onAmountChange = useCallback((symbol: TokenSymbol, amount: number) => {
     setAmountsToWithdraw((prev) => ({ ...prev, [symbol]: amount }));
-  };
+  }, []);
 
   const onReset = useCallback(() => {
     setAmountsToWithdraw({});
   }, []);
+
+  const onWalletChainChange = useCallback(
+    (chainId: EvmChainId) => {
+      setWalletChainId(chainId);
+      onReset();
+    },
+    [onReset],
+  );
 
   return (
     <PearlWalletContext.Provider
       value={{
         isLoading: isServicesLoading || !isLoaded || isBalanceLoading,
         aggregatedBalance: null,
-        walletChainId: evmHomeChainId,
+        walletChainId,
+        onWalletChainChange,
+        chains,
         availableAssets,
         stakedAssets,
         amountsToWithdraw,

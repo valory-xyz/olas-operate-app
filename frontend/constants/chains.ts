@@ -14,6 +14,7 @@ export const EvmChainName = {
   [EvmChainIdMap.Mode]: 'Mode',
   [EvmChainIdMap.Optimism]: 'Optimism',
 } as const;
+export type EvmChainName = ValueOf<typeof EvmChainName>;
 
 export const AllEvmChainIdMap = {
   Ethereum: 1,
