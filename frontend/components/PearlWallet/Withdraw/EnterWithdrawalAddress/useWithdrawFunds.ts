@@ -1,33 +1,95 @@
 import { useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
+import { entries } from 'lodash';
+import { useCallback } from 'react';
 
+import { CHAIN_CONFIG } from '@/config/chains';
+import { ChainTokenConfig, TOKEN_CONFIG, TokenType } from '@/config/tokens';
+import { AddressZero } from '@/constants/address';
 import {
   SupportedMiddlewareChain,
   SupportedMiddlewareChainMap,
 } from '@/constants/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL } from '@/constants/urls';
-import { Address } from '@/types/Address';
+import { Address, TxnHash } from '@/types/Address';
+import { parseUnits } from '@/utils/numberFormatters';
 
+import { usePearlWallet } from '../../PearlWalletContext';
+
+/**
+ * {
+ *   "password": "your_password",
+ *   "to": "0x...",
+ *    "withdraw_assets": {
+ *      "gnosis": {
+ *       "0x0000000000000000000000000000000000000000": 1000000000000000000, ...
+ *     }
+ *   }
+ * }
+ */
 type WithdrawalRequest = {
   password: string;
   to: Address;
   withdraw_assets: {
-    [chain in keyof SupportedMiddlewareChainMap]: {
-      [token: Address]: number;
+    [chain in keyof typeof SupportedMiddlewareChainMap]?: {
+      [token: Address]: string;
     };
   };
 };
 
+/**
+ * {
+ *   "message": "Funds withdrawn successfully.",
+ *   "transfer_txs": {
+ *     "gnosis": {
+ *       // List of successful txs from Master Safe and/or Master EOA
+ *       "0x0000000000000000000000000000000000000000": ["0x...", "0x..."], 
+ *       "0x...": ["0x...", "0x..."]
+ *     }
+ *   }
+}
+ */
 type WithdrawalResponse = {
   message: string;
   transfer_txs: {
     [chain in keyof SupportedMiddlewareChain]?: {
-      [token: Address]: string[]; // List of successful txs from Master Safe and/or Master EOA
+      [token: Address]: TxnHash[];
     };
   };
 };
 
+/**
+ * Convert amountsToWithdraw to the required format
+ * @example
+ * {
+ *   "gnosis": {
+ *     "0x0000000000000000000000000000000000000000": "1000000000000000000",
+ *     "0x...": "1000000000000000000"
+ *   }
+ * }
+ */
+const formatWithdrawAssets = (
+  amountsToWithdraw: { [symbol: string]: number },
+  chainConfig: ChainTokenConfig,
+) =>
+  entries(amountsToWithdraw).reduce(
+    (acc, [symbol, amount]) => {
+      if (amount <= 0) return acc;
+      if (!chainConfig[symbol]) return acc;
+
+      const { tokenType, address, decimals } = chainConfig[symbol];
+      const tokenAddress =
+        tokenType === TokenType.NativeGas ? AddressZero : address;
+
+      if (tokenAddress) {
+        acc[tokenAddress] = parseUnits(amount, decimals);
+      }
+      return acc;
+    },
+    {} as { [token: Address]: string },
+  );
+
+// API call to withdraw funds
 const withdrawFunds = async (
   request: WithdrawalRequest,
 ): Promise<WithdrawalResponse> =>
@@ -46,59 +108,48 @@ const withdrawFunds = async (
       throw error;
     });
 
-/*
-{
-  "password": "your_password",
-  "to": "0x...",
-  "withdraw_assets": {
-    "gnosis": {
-      "0x0000000000000000000000000000000000000000": 1000000000000000000,
-      "0x...": 500000000000000000
-    }
-  }
-}
+/**
+ * Hook to handle withdrawal of funds
+ */
+export const useWithdrawFunds = () => {
+  const { walletChainId, amountsToWithdraw } = usePearlWallet();
+  // const [message, setMessage] = useState<string | null>(null);
 
-{
-  "message": "Funds withdrawn successfully.",
-  "transfer_txs": {
-    "gnosis": {
-      "0x0000000000000000000000000000000000000000": ["0x...", "0x..."],  // List of successful txs from Master Safe and/or Master EOA
-      "0x...": ["0x...", "0x..."]
-    }
-  }
-}
+  const { isPending, isSuccess, isError, data, mutateAsync, status } =
+    useMutation({
+      // onMutate: () => {
+      //   setMessage(null);
+      // },
+      mutationFn: async (withdrawalRequest: WithdrawalRequest) => {
+        const response = await withdrawFunds({
+          ...withdrawalRequest,
+        });
+        // setMessage(response.message);
+        return response;
+      },
+    });
 
+  const onAuthorizeWithdrawal = useCallback(
+    async (withdrawAddress: Address, password: string) => {
+      if (!walletChainId) return;
 
-*/
+      const chainConfig = TOKEN_CONFIG[walletChainId];
+      const assets = formatWithdrawAssets(amountsToWithdraw, chainConfig);
+      const { middlewareChain } = CHAIN_CONFIG[walletChainId];
 
-export const useWithdrawFunds = (withdrawAddress: string, password: string) => {
-  const [message, setMessage] = useState<string | null>(null);
-
-  const mutation = useMutation({
-    mutationFn: async (
-      withdrawAssets: WithdrawalRequest['withdraw_assets'],
-    ) => {
-      const response = await withdrawFunds({
+      const request = {
         password,
-        to: withdrawAddress as Address,
-        withdraw_assets: withdrawAssets,
-      });
-      setMessage(response.message);
-      return response;
+        to: withdrawAddress,
+        withdraw_assets: { [middlewareChain]: assets },
+      } satisfies WithdrawalRequest;
+
+      console.log({ request });
+      // await mutateAsync(request);
     },
-  });
+    [walletChainId, amountsToWithdraw],
+  );
 
-  const isLoading = mutation.isPending;
-  const hasError = mutation.isError;
+  const isPasswordError = isError && data;
 
-  return {
-    isLoading,
-    hasError,
-    message,
-    mutate: mutation.mutate,
-  };
-  return {
-    isLoading: false,
-    hasError: true,
-  };
+  return { isLoading: isPending, onAuthorizeWithdrawal };
 };
