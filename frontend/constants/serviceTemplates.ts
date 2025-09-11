@@ -290,7 +290,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeidbhytl4wxdzbohs2wuvtbytqexkdjvg7iynz7q2et3wo7d2znn6i',
+  hash: 'bafybeihax6laqpsefknuj2pkvv4jugsfs6jnkm4p4wekfyk5gdaozf4zti',
   service_version: 'v0.5.4',
   agent_release: {
     is_aea: true,
@@ -463,6 +463,18 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
+    },
+    AIRDROP_STARTED: {
+      name: 'Airdrop started',
+      description: '',
+      value: 'true',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    AIRDROP_CONTRACT_ADDRESS: {
+      name: 'Airdrop contact address',
+      description: '',
+      value: '0x7056506e819FAD9eE077221Ac0a20Cd5642fAECF',
+      provision_type: EnvProvisionType.FIXED,
     },
   },
   ...BABYDEGEN_COMMON_TEMPLATE,
