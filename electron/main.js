@@ -139,6 +139,10 @@ const getAgentWindow = () => agentWindow;
 let onRampWindow = null;
 const getOnRampWindow = () => onRampWindow;
 
+/** @type {Electron.BrowserWindow | null} */
+let termsWindow = null;
+const getTermsWindow = () => termsWindow;
+
 /** @type {Electron.Tray | null} */
 let tray = null;
 
@@ -598,6 +602,52 @@ const createOnRampWindow = async (amountToPay) => {
   });
 
   return onRampWindow;
+};
+
+/**
+ * Create the terms window for displaying terms iframe
+ */
+/** @type {()=>Promise<BrowserWindow|undefined>} */
+const createTermsWindow = async () => {
+  if (!getTermsWindow() || getTermsWindow().isDestroyed) {
+    termsWindow = new BrowserWindow({
+      title: 'Terms & Conditions',
+      resizable: false,
+      draggable: true,
+      frame: false,
+      transparent: true,
+      fullscreenable: false,
+      maximizable: false,
+      closable: true,
+      width: APP_WIDTH,
+      height: 700,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, 'preload.js'),
+      },
+    });
+
+    termsWindow.webContents.setWindowOpenHandler(({ url }) => {
+      shell.openExternal(url);
+      return { action: 'deny' };
+    });
+
+    const termsUrl = `${nextUrl()}/terms-and-conditions`;
+    logger.electron(`Terms URL: ${termsUrl}`);
+    termsWindow.loadURL(termsUrl).then(() => {
+      logger.electron(`termsWindow: ${termsWindow.url}`);
+    });
+  } else {
+    logger.electron('Terms window already exists');
+  }
+
+  termsWindow.on('close', function (event) {
+    event.preventDefault();
+    termsWindow?.destroy();
+  });
+
+  return termsWindow;
 };
 
 async function launchDaemon() {
@@ -1181,4 +1231,22 @@ ipcMain.handle('onramp-transaction-failure', () => {
     logger.electron(`onramp-transaction-failure to ${win.id}`);
     win.webContents.send('onramp-transaction-failure');
   });
+});
+
+/**
+ * Terms window handlers
+ */
+ipcMain.handle('terms-window-show', () => {
+  logger.electron('terms-window-show');
+  if (!getTermsWindow() || getTermsWindow().isDestroyed()) {
+    createTermsWindow()?.then((window) => window.show());
+  } else {
+    getTermsWindow()?.show();
+  }
+});
+
+ipcMain.handle('terms-window-close', () => {
+  logger.electron('terms-window-close');
+  if (!getTermsWindow() || getTermsWindow().isDestroyed()) return;
+  getTermsWindow()?.destroy();
 });

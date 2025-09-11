@@ -1,25 +1,22 @@
 import { Badge } from 'antd';
-import { useLottie } from 'lottie-react';
 import Image from 'next/image';
-import styled from 'styled-components';
 
 import { MiddlewareDeploymentStatus } from '@/client';
-import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
 
 const badgeOffset: [number, number] = [-5, 32.5];
 
-const AnimationContainer = styled.div`
-  position: relative;
-  top: -4px;
-  width: 42px;
-  height: 42px;
-  padding: 2px 0;
-  > div {
-    width: 100%;
-    height: 100%;
-  }
-`;
+// const AnimationContainer = styled.div`
+//   position: relative;
+//   top: -4px;
+//   width: 42px;
+//   height: 42px;
+//   padding: 2px 0;
+//   > div {
+//     width: 100%;
+//     height: 100%;
+//   }
+// `;
 
 const TransitionalAgentHead = () => (
   <Badge status="processing" color="orange" dot offset={badgeOffset}>
@@ -27,15 +24,15 @@ const TransitionalAgentHead = () => (
   </Badge>
 );
 
-const DeployedAgentHead = () => {
-  const { View } = useLottie({
-    animationData: require('../../ui/animations/robot-running.json'),
-    loop: true,
-    autoplay: true,
-  });
+// const DeployedAgentHead = () => {
+//   const { View } = useLottie({
+//     animationData: require('../../ui/animations/robot-running.json'),
+//     loop: true,
+//     autoplay: true,
+//   });
 
-  return <AnimationContainer>{View}</AnimationContainer>;
-};
+//   return <AnimationContainer>{View}</AnimationContainer>;
+// };
 
 const StoppedAgentHead = () => (
   <Badge dot color="red" offset={badgeOffset}>
@@ -51,7 +48,7 @@ const IdleAgentHead = () => (
 
 export const AgentHead = () => {
   const { selectedService } = useServices();
-  const { isEligibleForRewards } = useRewardContext();
+  // const { isEligibleForRewards } = useRewardContext();
   const status = selectedService?.deploymentStatus;
 
   if (
@@ -63,7 +60,8 @@ export const AgentHead = () => {
 
   if (status === MiddlewareDeploymentStatus.DEPLOYED) {
     // If the agent is eligible for rewards, agent is idle
-    return isEligibleForRewards ? <IdleAgentHead /> : <DeployedAgentHead />;
+    // return isEligibleForRewards ? <IdleAgentHead /> : <DeployedAgentHead />;
+    return <IdleAgentHead />;
   }
   return <StoppedAgentHead />;
 };
