@@ -82,7 +82,7 @@ export const StakingContractDetails = () => {
         <Title level={5} className="m-0">
           {selectedStakingProgramMeta?.name}
         </Title>
-        <Button size="small" onClick={() => goto(Pages.ManageStaking)}>
+        <Button size="small" onClick={() => goto(Pages.SelectStaking)}>
           Switch Staking Contract
         </Button>
       </Flex>

@@ -4,12 +4,14 @@ import styled from 'styled-components';
 
 import { AgentStaking } from '@/components/AgentStaking/AgentStaking';
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
+import { SelectStaking } from '@/components/SelectStaking/SelectStaking';
 import { Settings } from '@/components/SettingsPage';
+import { UpdateAgentPage } from '@/components/UpdateAgentPage';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 
+import { ConfirmSwitch } from '../ConfirmSwitch/ConfirmSwitch';
 import { PearlWallet } from '../PearlWallet';
-import { UpdateAgentPage } from '../UpdateAgentPage';
 import { Home } from './Home';
 import { Sidebar } from './Sidebar';
 
@@ -46,12 +48,18 @@ export const Main = () => {
         return <UpdateAgentPage />;
       case Pages.AgentStaking:
         return <AgentStaking />;
+      case Pages.SelectStaking:
+        return <SelectStaking />;
+      case Pages.ConfirmSwitch:
+        return <ConfirmSwitch />;
       default:
         return <Home />;
     }
   }, [pageState]);
 
-  const isFullPage = pageState === Pages.UpdateAgentTemplate;
+  const isFullPage =
+    pageState === Pages.UpdateAgentTemplate ||
+    pageState === Pages.SelectStaking;
 
   return (
     <Layout>

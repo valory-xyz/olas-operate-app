@@ -57,8 +57,9 @@ export const mainTheme: ThemeConfig = {
       fontSize: 14,
     },
     Tag: {
-      colorSuccess: '#135200',
+      colorSuccess: COLOR.TEXT_COLOR.SUCCESS.DEFAULT,
       defaultBg: COLOR.GRAY_1,
+      colorSuccessBg: COLOR.BG.SUCCESS.DEFAULT,
     },
     List: {
       colorBorder: '#DFE5EE',
