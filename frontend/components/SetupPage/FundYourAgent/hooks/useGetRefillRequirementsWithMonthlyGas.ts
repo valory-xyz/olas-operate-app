@@ -4,7 +4,6 @@ import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/client';
 import { getTokenDetails } from '@/components/Bridge/utils';
 import { ChainTokenConfig, TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
-import { EvmChainId } from '@/constants/chains';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { TokenSymbolConfigMap, TokenSymbolMap } from '@/constants/token';
 import { MasterEoa, MasterSafe } from '@/enums/Wallet';
@@ -37,10 +36,9 @@ const getTokenMeta = (tokenAddress: Address, chainConfig: ChainTokenConfig) => {
 
 const getTokensDetailsForFunding = (
   requirementsPerToken: { [tokenAddress: Address]: string },
-  evmHomeChainId: EvmChainId,
   chainConfig: ChainTokenConfig,
 ) => {
-  const tokenRequirements: TokenRequirement[] = Object.entries(
+  const currentTokenRequirements: TokenRequirement[] = Object.entries(
     requirementsPerToken,
   )
     .map(([tokenAddress, amount]) => {
@@ -60,7 +58,7 @@ const getTokensDetailsForFunding = (
     })
     .filter(Boolean) as TokenRequirement[];
 
-  return tokenRequirements.sort((a, b) => b.amount - a.amount);
+  return currentTokenRequirements.sort((a, b) => b.amount - a.amount);
 };
 
 const getRequirementsPerToken = (
@@ -130,11 +128,33 @@ const getRequirementsPerToken = (
     }
   });
 
-  return getTokensDetailsForFunding(
-    requirementsPerToken,
-    evmHomeChainId,
-    chainConfig,
-  );
+  return getTokensDetailsForFunding(requirementsPerToken, chainConfig);
+};
+
+type UseGetRefillRequirementsWithMonthlyGasProps = {
+  selectedAgentConfig: AgentConfig;
+  shouldCreateDummyService?: boolean;
+};
+
+type UseGetRefillRequirementsWithMonthlyGasReturn = {
+  /**
+   * Total token requirements, doesn't consider the eoa balances. This is what we show on the
+   * funding cards (fund your agent screen)
+   */
+  totalTokenRequirements: TokenRequirement[];
+  /**
+   * Initial token requirements, calculated when the funds are requested for the first time,
+   * considers the eoa balances. This is the actual funds that user has to send in order to meet the
+   * initial funding requirements.
+   */
+  initialTokenRequirements: TokenRequirement[];
+  /**
+   * Current token requirements, used to get the token requirements at any moment
+   * @warning Shouldn't be used ideally, as it can be unreliable in the case of
+   * native tokens as monthly_gas is not accounted in the BE.
+   */
+  currentTokenRequirements: TokenRequirement[];
+  isLoading: boolean;
 };
 
 /**
@@ -147,7 +167,7 @@ const getRequirementsPerToken = (
  * in order to evaluate the requirements.
  * @example
  * {
- *   tokenRequirements: [
+ *   totalTokenRequirements: [
  *     {
  *       amount: 0.5,
  *       symbol: "XDAI",
@@ -159,21 +179,15 @@ const getRequirementsPerToken = (
  *       iconSrc: "/tokens/usdc-icon.png"
  *     }
  *   ],
+ *   initialTokenRequirements: [...],
+ *   currentTokenRequirements: [...],
  *   isLoading: false
  * }
  */
 export const useGetRefillRequirementsWithMonthlyGas = ({
   selectedAgentConfig,
   shouldCreateDummyService = false,
-}: {
-  selectedAgentConfig: AgentConfig;
-  shouldCreateDummyService?: boolean;
-}): {
-  originalTokenRequirements: TokenRequirement[];
-  tokenRequirements: TokenRequirement[];
-  initialTokenRequirements: TokenRequirement[];
-  isLoading: boolean;
-} => {
+}: UseGetRefillRequirementsWithMonthlyGasProps): UseGetRefillRequirementsWithMonthlyGasReturn => {
   const updateBeforeBridgingFunds = useBeforeBridgeFunds();
   const {
     totalRequirements,
@@ -184,7 +198,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
   } = useBalanceAndRefillRequirementsContext();
   const { masterEoa, masterSafes } = useMasterWalletContext();
 
-  const originalTokenRequirementsRef = useRef<TokenRequirement[] | null>(null);
+  const totalTokenRequirementsRef = useRef<TokenRequirement[] | null>(null);
   const initialTokenRequirementsRef = useRef<TokenRequirement[] | null>(null);
 
   const masterSafe = useMemo(() => {
@@ -203,25 +217,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     }
   }, [updateBeforeBridgingFunds, refetch, shouldCreateDummyService]);
 
-  const originalTokenRequirements = useMemo(() => {
-    return getRequirementsPerToken(
-      masterEoa,
-      balances,
-      isBalancesAndFundingRequirementsLoading,
-      totalRequirements,
-      masterSafe,
-      selectedAgentConfig,
-    );
-  }, [
-    masterEoa,
-    balances,
-    isBalancesAndFundingRequirementsLoading,
-    totalRequirements,
-    masterSafe,
-    selectedAgentConfig,
-  ]);
-
-  const tokenRequirements = useMemo(() => {
+  const currentTokenRequirements = useMemo(() => {
     return getRequirementsPerToken(
       masterEoa,
       balances,
@@ -241,26 +237,42 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
 
   // Capture the initial token requirements once, when they are first available
   useEffect(() => {
-    if (!initialTokenRequirementsRef.current && tokenRequirements.length) {
-      initialTokenRequirementsRef.current = tokenRequirements;
-    }
-  }, [tokenRequirements]);
-
-  useEffect(() => {
     if (
-      !originalTokenRequirementsRef.current &&
-      originalTokenRequirements.length
+      !initialTokenRequirementsRef.current &&
+      currentTokenRequirements.length
     ) {
-      originalTokenRequirementsRef.current = originalTokenRequirements;
+      initialTokenRequirementsRef.current = currentTokenRequirements;
     }
-  }, [originalTokenRequirements]);
+  }, [currentTokenRequirements]);
+
+  // Get the total token requirements, using "totalRequirements" from BE, instead of "refillRequirements"
+  useEffect(() => {
+    if (!totalTokenRequirementsRef.current) {
+      totalTokenRequirementsRef.current = getRequirementsPerToken(
+        masterEoa,
+        balances,
+        isBalancesAndFundingRequirementsLoading,
+        totalRequirements,
+        masterSafe,
+        selectedAgentConfig,
+      );
+    }
+  }, [
+    masterEoa,
+    balances,
+    isBalancesAndFundingRequirementsLoading,
+    totalRequirements,
+    masterSafe,
+    selectedAgentConfig,
+  ]);
 
   return {
-    originalTokenRequirements:
-      originalTokenRequirementsRef.current ?? originalTokenRequirements,
-    tokenRequirements,
+    totalTokenRequirements: totalTokenRequirementsRef.current ?? [],
+    currentTokenRequirements,
     initialTokenRequirements:
-      initialTokenRequirementsRef.current ?? tokenRequirements,
-    isLoading: isBalancesAndFundingRequirementsLoading,
+      initialTokenRequirementsRef.current ?? currentTokenRequirements,
+    isLoading:
+      isBalancesAndFundingRequirementsLoading ||
+      !totalTokenRequirementsRef.current,
   };
 };

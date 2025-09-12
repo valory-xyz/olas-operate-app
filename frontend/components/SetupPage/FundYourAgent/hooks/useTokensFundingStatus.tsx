@@ -33,7 +33,7 @@ export const useTokensFundingStatus = ({
   selectedAgentConfig,
 }: UseTokensFundingStatusProps) => {
   const { masterEoaBalancesByChain } = useMasterBalances();
-  const { originalTokenRequirements: tokenRequirements } =
+  const { totalTokenRequirements: tokenRequirements } =
     useGetRefillRequirementsWithMonthlyGas({
       selectedAgentConfig,
     });
@@ -50,7 +50,7 @@ export const useTokensFundingStatus = ({
   );
 
   const fundingStatus = useMemo(() => {
-    if (!tokenRequirements || !eoaBalances) {
+    if (!tokenRequirements || tokenRequirements.length === 0 || !eoaBalances) {
       return {
         isFullyFunded: false,
         tokensFundingStatus: {},

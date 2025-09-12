@@ -89,7 +89,7 @@ export const TokenRequirementsTable = ({
 }) => {
   return (
     <Table<TokenRowData>
-      dataSource={tableData}
+      dataSource={isLoading ? [] : tableData}
       columns={columns}
       loading={isLoading}
       pagination={false}
