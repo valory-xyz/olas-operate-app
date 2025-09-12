@@ -39,6 +39,7 @@ const columns: TableColumnsType<TokenRowData> = [
   {
     title: 'Token',
     key: 'token',
+    width: '25%',
     render: (_: unknown, record: TokenRowData) => (
       <Flex align="center" gap={8}>
         <AntdImage
@@ -54,6 +55,7 @@ const columns: TableColumnsType<TokenRowData> = [
   {
     title: 'Total Amount Required',
     key: 'totalAmount',
+    width: '35%',
     render: (_: unknown, record: TokenRowData) => (
       <Text>{record.totalAmount}</Text>
     ),
@@ -61,6 +63,7 @@ const columns: TableColumnsType<TokenRowData> = [
   {
     title: 'Amount Pending',
     key: 'pendingAmount',
+    width: '35%',
     render: (_: unknown, record: TokenRowData) => {
       const isWaiting = !record.areFundsReceived;
       return (
