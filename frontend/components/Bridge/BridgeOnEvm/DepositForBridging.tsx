@@ -4,6 +4,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import { Button, Flex, message, Spin, Typography } from 'antd';
+import { sortBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
@@ -258,25 +259,25 @@ export const DepositForBridging = ({
   }, [bridgeFundingRequirements, masterEoa]);
 
   const tableData = useMemo(() => {
-    return tokens
-      .map((token) => {
-        const { totalRequiredInWei, pendingAmountInWei, decimals, isNative } =
-          token;
-        const formatToken = (valueInWei: bigint) =>
-          formatTokenAmount({
-            amountInWei: valueInWei,
-            decimals,
-            isNative,
-          });
-        return {
-          totalAmount: formatToken(totalRequiredInWei),
-          pendingAmount: formatToken(pendingAmountInWei),
-          symbol: token.symbol,
-          iconSrc: TokenSymbolConfigMap[token.symbol].image,
-          areFundsReceived: token.areFundsReceived,
-        };
-      })
-      .sort((a, b) => b.totalAmount - a.totalAmount);
+    const mappedTokens = tokens.map((token) => {
+      const { totalRequiredInWei, pendingAmountInWei, decimals, isNative } =
+        token;
+      const formatToken = (valueInWei: bigint) =>
+        formatTokenAmount({
+          amountInWei: valueInWei,
+          decimals,
+          isNative,
+        });
+      return {
+        totalAmount: formatToken(totalRequiredInWei),
+        pendingAmount: formatToken(pendingAmountInWei),
+        symbol: token.symbol,
+        iconSrc: TokenSymbolConfigMap[token.symbol].image,
+        areFundsReceived: token.areFundsReceived,
+      };
+    });
+
+    return sortBy(mappedTokens, 'totalAmount').reverse();
   }, [tokens]);
 
   // After the user has deposited the required funds,
