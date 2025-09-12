@@ -259,21 +259,25 @@ export const DepositForBridging = ({
 
   const tableData = useMemo(() => {
     return tokens
-      .map((token) => ({
-        totalAmount: formatTokenAmount({
-          amountInWei: token.totalRequiredInWei,
-          decimals: token.decimals,
-          isNative: token.isNative,
-        }),
-        pendingAmount: formatTokenAmount({
-          amountInWei: token.pendingAmountInWei,
-          decimals: token.decimals,
-          isNative: token.isNative,
-        }),
-        symbol: token.symbol,
-        iconSrc: TokenSymbolConfigMap[token.symbol].image,
-        areFundsReceived: token.areFundsReceived,
-      }))
+      .map((token) => {
+        const { totalRequiredInWei, pendingAmountInWei, decimals, isNative } =
+          token;
+        return {
+          totalAmount: formatTokenAmount({
+            amountInWei: totalRequiredInWei,
+            decimals,
+            isNative,
+          }),
+          pendingAmount: formatTokenAmount({
+            amountInWei: pendingAmountInWei,
+            decimals,
+            isNative,
+          }),
+          symbol: token.symbol,
+          iconSrc: TokenSymbolConfigMap[token.symbol].image,
+          areFundsReceived: token.areFundsReceived,
+        };
+      })
       .sort((a, b) => b.totalAmount - a.totalAmount);
   }, [tokens]);
 
