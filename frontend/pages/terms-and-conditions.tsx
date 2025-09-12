@@ -4,7 +4,7 @@ import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
 
 const { Title, Paragraph, Text } = Typography;
 
-const TermsAndConditionsPage = () => {
+export default function TermsAndConditionsPage() {
   return (
     <Flex
       align="center"
