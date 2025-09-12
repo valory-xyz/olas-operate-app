@@ -19,7 +19,8 @@ const columns: TableColumnsType<AvailableAsset> = [
           width={20}
           src={TokenSymbolConfigMap[record.symbol].image}
           alt={record.symbol}
-          style={{ display: 'flex' }}
+          preview={false}
+          className="flex"
         />
         <Text>{record.symbol}</Text>
       </Flex>

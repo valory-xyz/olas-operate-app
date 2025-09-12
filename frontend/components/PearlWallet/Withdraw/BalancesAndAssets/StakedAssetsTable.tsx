@@ -2,7 +2,7 @@ import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
 
 import { Table } from '@/components/ui/Table';
 import { NA } from '@/constants/symbols';
-import { TokenSymbolConfigMapV2 } from '@/constants/token';
+import { TokenSymbolConfigMap } from '@/constants/token';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { usePearlWallet } from '../../PearlWalletContext';
@@ -36,7 +36,7 @@ const columns: TableColumnsType<StakedAsset> = [
       <Flex align="center" gap={8}>
         <AntdImage
           width={20}
-          src={TokenSymbolConfigMapV2[record.symbol].image}
+          src={TokenSymbolConfigMap[record.symbol].image}
           alt={record.symbol}
           style={{ display: 'flex' }}
         />

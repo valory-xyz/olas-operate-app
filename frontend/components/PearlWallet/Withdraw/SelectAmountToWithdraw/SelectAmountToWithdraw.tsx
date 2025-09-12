@@ -1,19 +1,13 @@
 import { Button, Flex, Typography } from 'antd';
-import { CSSProperties } from 'react';
 
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 
 import { usePearlWallet } from '../../PearlWalletContext';
-import { PearlWalletToExternalWallet } from '../common';
+import { cardStyles, PearlWalletToExternalWallet } from '../common';
 import { TokenAmountInput } from './TokenAmountInput';
 
 const { Title } = Typography;
-
-const cardStyles: CSSProperties = {
-  width: 552,
-  margin: '0 auto',
-};
 
 type SelectAmountToWithdrawProps = {
   onBack: () => void;

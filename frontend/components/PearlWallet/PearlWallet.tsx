@@ -13,18 +13,28 @@ const PearlWalletContent = () => {
   const { walletStep: step, updateStep } = usePearlWallet();
 
   const handleNext = useCallback(() => {
-    if (step === STEPS.PEARL_WALLET_SCREEN) {
-      updateStep(STEPS.SELECT_AMOUNT);
-    } else if (step === STEPS.SELECT_AMOUNT) {
-      updateStep(STEPS.ENTER_WITHDRAWAL_ADDRESS);
+    switch (step) {
+      case STEPS.PEARL_WALLET_SCREEN:
+        updateStep(STEPS.SELECT_AMOUNT);
+        break;
+      case STEPS.SELECT_AMOUNT:
+        updateStep(STEPS.ENTER_WITHDRAWAL_ADDRESS);
+        break;
+      default:
+        break;
     }
   }, [step, updateStep]);
 
   const handleBack = useCallback(() => {
-    if (step === STEPS.SELECT_AMOUNT) {
-      updateStep(STEPS.PEARL_WALLET_SCREEN);
-    } else if (step === STEPS.ENTER_WITHDRAWAL_ADDRESS) {
-      updateStep(STEPS.SELECT_AMOUNT);
+    switch (step) {
+      case STEPS.SELECT_AMOUNT:
+        updateStep(STEPS.PEARL_WALLET_SCREEN);
+        break;
+      case STEPS.ENTER_WITHDRAWAL_ADDRESS:
+        updateStep(STEPS.SELECT_AMOUNT);
+        break;
+      default:
+        break;
     }
   }, [step, updateStep]);
 
