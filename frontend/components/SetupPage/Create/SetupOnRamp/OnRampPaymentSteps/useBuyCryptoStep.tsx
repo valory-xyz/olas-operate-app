@@ -9,14 +9,12 @@ import { delayInSeconds } from '@/utils/delay';
 
 const { Text } = Typography;
 
-const TransakAgreement = ({ onClick }: { onClick?: () => void }) => {
-  return (
+const TransakAgreement = ({ onClick }: { onClick?: () => void }) => (
     <Text className="text-sm text-lighter">
       By proceeding, you agree to the service&apos;s&nbsp;
       <a onClick={onClick}>Terms & Conditions</a>.
     </Text>
-  );
-};
+)
 
 export const useBuyCryptoStep = () => {
   const { onRampWindow, termsWindow } = useElectronApi();
