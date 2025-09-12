@@ -2,6 +2,7 @@ import { Button, message } from 'antd';
 import { useMemo, useState } from 'react';
 
 import { ServiceTemplate } from '@/client/types';
+import { SupportedMiddlewareChain } from '@/constants/chains';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
@@ -52,7 +53,7 @@ export const ConfirmSwitchButton = ({
   );
 
   const handleSwitchContract = async () => {
-    if (!serviceTemplate) return;
+    if (!serviceTemplate || !stakingProgramIdToMigrateTo) return;
 
     setContractSwitchStatus('IN_PROGRESS');
     setIsServicePollingPaused(true);
@@ -70,10 +71,9 @@ export const ConfirmSwitchButton = ({
             configurations: {
               ...Object.entries(serviceTemplate.configurations).reduce(
                 (acc, [middlewareChain]) => {
-                  // @ts-expect-error TODO: to be fixed
-                  acc[middlewareChain] = {
+                  acc[middlewareChain as SupportedMiddlewareChain] = {
                     staking_program_id: stakingProgramIdToMigrateTo,
-                  };
+                  } as (typeof serviceTemplate.configurations)[SupportedMiddlewareChain];
                   return acc;
                 },
                 {} as DeepPartial<typeof serviceTemplate.configurations>,

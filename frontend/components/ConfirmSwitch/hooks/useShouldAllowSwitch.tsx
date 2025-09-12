@@ -20,7 +20,7 @@ export enum NotAllowedSwitchReason {
 
 type ShouldAllowSwitch =
   | { allowSwitch: false; reason: NotAllowedSwitchReason }
-  | { allowSwitch: true; reason: null };
+  | { allowSwitch: true; reason: undefined };
 
 export const useShouldAllowSwitch = () => {
   const { isLoaded: isBalanceLoaded, totalStakedOlasBalance } =
@@ -91,7 +91,6 @@ export const useShouldAllowSwitch = () => {
       }
       return {
         allowSwitch: true,
-        reason: null,
       };
     }
 
@@ -103,7 +102,6 @@ export const useShouldAllowSwitch = () => {
     }
     return {
       allowSwitch: true,
-      reason: null,
     };
   }, [
     isFirstDeploy,
