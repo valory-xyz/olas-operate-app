@@ -108,7 +108,7 @@ export const useTokensFundingStatus = ({
             requiredTokens.map((token) => [
               token,
               { funded: true, pendingAmount: 0 },
-            ]) || [],
+            ]),
           )
         : {},
     };

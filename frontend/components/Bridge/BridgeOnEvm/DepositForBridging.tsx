@@ -262,17 +262,15 @@ export const DepositForBridging = ({
       .map((token) => {
         const { totalRequiredInWei, pendingAmountInWei, decimals, isNative } =
           token;
+        const formatToken = (valueInWei: bigint) =>
+          formatTokenAmount({
+            amountInWei: valueInWei,
+            decimals,
+            isNative,
+          });
         return {
-          totalAmount: formatTokenAmount({
-            amountInWei: totalRequiredInWei,
-            decimals,
-            isNative,
-          }),
-          pendingAmount: formatTokenAmount({
-            amountInWei: pendingAmountInWei,
-            decimals,
-            isNative,
-          }),
+          totalAmount: formatToken(totalRequiredInWei),
+          pendingAmount: formatToken(pendingAmountInWei),
           symbol: token.symbol,
           iconSrc: TokenSymbolConfigMap[token.symbol].image,
           areFundsReceived: token.areFundsReceived,
