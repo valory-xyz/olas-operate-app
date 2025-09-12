@@ -43,7 +43,7 @@ export const AGENT_CONFIG: {
 } = {
   [AgentType.PredictTrader]: {
     isAgentEnabled: true,
-    requiresSetup: false,
+    requiresSetup: true,
     name: 'Predict Trader',
     evmHomeChainId: EvmChainId.Gnosis,
     middlewareHomeChainId: MiddlewareChain.GNOSIS,

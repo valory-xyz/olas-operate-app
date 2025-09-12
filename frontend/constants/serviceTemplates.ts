@@ -17,17 +17,17 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeicp7tzzvbg5t6d5hpt6skxpxjzgtbd5izj4qm6c5wn3kw7cc2r5g4',
+  hash: 'bafybeihnzvqexxegm6auq7vcpb6prybd2xcz5glbvhos2lmmuazqt75nuq',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.26.2',
+  service_version: 'v0.26.3',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.0.1001',
+      version: 'v27.0.1',
     },
   },
   home_chain: MiddlewareChain.GNOSIS,
@@ -128,6 +128,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
         '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot"]',
       provision_type: EnvProvisionType.FIXED,
     },
+    GENAI_API_KEY: {
+      name: 'Gemini API Key',
+      description: 'Gemini api key to allow the agent to use Gemini',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
   },
 } as const;
 
@@ -214,7 +220,6 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    // These are fixed, but may become user provided in the future
     FEEDBACK_PERIOD_HOURS: {
       name: 'Feedback period',
       description: '',
@@ -473,7 +478,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
     AIRDROP_CONTRACT_ADDRESS: {
       name: 'Airdrop contact address',
       description: '',
-      value: '0x7056506e819FAD9eE077221Ac0a20Cd5642fAECF',
+      value: '0x5b5F79BB667A25400a8f91F0c18D080abCfD430f',
       provision_type: EnvProvisionType.FIXED,
     },
   },
