@@ -28,7 +28,7 @@ jobs:
 
       # Lint and test
       - name: Lint & Typecheck
-        run: yarn check:frontend
+        run: yarn quality-check:frontend
       # Test
       # - name: Test
       # run: yarn test:frontend

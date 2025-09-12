@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import { ContractSvg } from '@/components/custom-icons/Contract';
 import { LockSvg } from '@/components/custom-icons/Lock';
-import { PercentageSvg } from '@/components/custom-icons/Percentage';
+import { PercentageOutlined } from '@/components/custom-icons/Percentage';
 import { SparklesSvg } from '@/components/custom-icons/Sparkles';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Divider } from '@/components/ui/Divider';
@@ -67,7 +67,7 @@ export const StakingContract = ({
         </ContractTag>
 
         <Flex align="center" gap={6}>
-          <PercentageSvg width={20} fill={COLOR.TEXT_NEUTRAL_TERTIARY} />{' '}
+          <PercentageOutlined width={20} fill={COLOR.TEXT_NEUTRAL_TERTIARY} />{' '}
           <Title level={3} className="m-0">
             {contractDetails?.apy}%
           </Title>

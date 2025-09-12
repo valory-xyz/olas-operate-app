@@ -284,6 +284,22 @@ textarea,
   padding-left: 0 !important;
 }
 
+.p-8 {
+  padding: 8px;
+}
+
+.p-16 {
+  padding: 16px;
+}
+
+.p-24 {
+  padding: 24px;
+}
+
+.p-32 {
+  padding: 24px !important;
+}
+
 .pl-4 {
   padding-left: 4px !important;
 }
@@ -322,18 +338,6 @@ textarea,
 
 .pt-56 {
   padding-top: 56px !important;
-}
-
-.p-8 {
-  padding: 8px;
-}
-
-.p-16 {
-  padding: 16px;
-}
-
-.p-24 {
-  padding: 24px;
 }
 
 .py-24 {
@@ -382,6 +386,10 @@ textarea,
 // font size
 .text-xl {
   font-size: 20px;
+}
+
+.text-lg {
+  font-size: 18px !important;
 }
 
 .text-base {

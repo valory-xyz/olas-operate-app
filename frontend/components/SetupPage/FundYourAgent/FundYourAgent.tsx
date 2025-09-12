@@ -168,7 +168,7 @@ export const FundYourAgent = () => {
   const { goto } = useSetup();
   const { evmHomeChainId, requiresSetup } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
-  const { tokenRequirements, isLoading } =
+  const { totalTokenRequirements: tokenRequirements, isLoading } =
     useGetRefillRequirementsWithMonthlyGas({
       selectedAgentConfig,
       /**

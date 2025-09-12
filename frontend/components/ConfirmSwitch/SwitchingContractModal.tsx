@@ -1,7 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Spin } from 'antd';
 
-import { SuccessTickSvg } from '@/components/custom-icons/SuccessTick';
+import { SuccessOutlined } from '@/components/custom-icons/SuccessOutlined';
 import { Modal } from '@/components/ui/Modal';
 import { useYourWallet } from '@/components/YourWalletPage/useYourWallet';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
@@ -14,7 +14,7 @@ const ModalHeader = ({ isLoading }: { isLoading: boolean }) =>
   isLoading ? (
     <Spin indicator={<LoadingOutlined spin />} size="large" />
   ) : (
-    <SuccessTickSvg />
+    <SuccessOutlined />
   );
 
 type SwitchingContractModalProps = {

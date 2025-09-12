@@ -31,8 +31,13 @@ export const TableWrapper = styled.div`
 
   .ant-table-tbody {
     .ant-table-cell {
-      padding: 14px 16px;
+      padding: 12px 16px;
       border-color: ${COLOR.GRAY_4};
+    }
+    .ant-table-row:last-child {
+      .ant-table-cell {
+        border-bottom: none;
+      }
     }
   }
 `;

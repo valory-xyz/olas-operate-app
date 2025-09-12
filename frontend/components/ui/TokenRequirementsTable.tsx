@@ -28,7 +28,8 @@ const CustomTag = styled(Tag)<{ $isWaiting: boolean }>`
 `;
 
 type TokenRowData = {
-  amount: number;
+  totalAmount: number;
+  pendingAmount: number;
   symbol: string;
   iconSrc: string;
   areFundsReceived: boolean;
@@ -38,6 +39,7 @@ const columns: TableColumnsType<TokenRowData> = [
   {
     title: 'Token',
     key: 'token',
+    width: '25%',
     render: (_: unknown, record: TokenRowData) => (
       <Flex align="center" gap={8}>
         <AntdImage
@@ -51,13 +53,17 @@ const columns: TableColumnsType<TokenRowData> = [
     ),
   },
   {
-    title: 'Amount',
-    key: 'amount',
-    render: (_: unknown, record: TokenRowData) => <Text>{record.amount}</Text>,
+    title: 'Total Amount Required',
+    key: 'totalAmount',
+    width: '35%',
+    render: (_: unknown, record: TokenRowData) => (
+      <Text>{record.totalAmount}</Text>
+    ),
   },
   {
-    title: 'Status',
-    key: 'status',
+    title: 'Amount Pending',
+    key: 'pendingAmount',
+    width: '35%',
     render: (_: unknown, record: TokenRowData) => {
       const isWaiting = !record.areFundsReceived;
       return (
@@ -66,7 +72,9 @@ const columns: TableColumnsType<TokenRowData> = [
           color={isWaiting ? undefined : COLOR.SUCCESS}
           icon={isWaiting ? <ClockCircleOutlined /> : <CheckCircleOutlined />}
         >
-          {record.areFundsReceived ? 'Received' : 'Waiting'}
+          {record.areFundsReceived
+            ? 'No pending amount'
+            : `Pending ${record.pendingAmount}`}
         </CustomTag>
       );
     },
@@ -84,7 +92,7 @@ export const TokenRequirementsTable = ({
 }) => {
   return (
     <Table<TokenRowData>
-      dataSource={tableData}
+      dataSource={isLoading ? [] : tableData}
       columns={columns}
       loading={isLoading}
       pagination={false}

@@ -59,11 +59,17 @@ export const TransferFunds = () => {
   const chainImage = ChainImageMap[evmHomeChainId];
 
   const tableData = useMemo(() => {
-    return (initialTokenRequirements ?? []).map((token) => ({
-      ...token,
-      areFundsReceived:
-        tokensFundingStatus[token.symbol as keyof typeof tokensFundingStatus],
-    }));
+    return (initialTokenRequirements ?? []).map((token) => {
+      const { amount: totalAmount } = token;
+      const { pendingAmount, funded: areFundsReceived } =
+        tokensFundingStatus?.[token.symbol] ?? {};
+      return {
+        ...token,
+        totalAmount,
+        pendingAmount,
+        areFundsReceived,
+      };
+    });
   }, [initialTokenRequirements, tokensFundingStatus]);
 
   const handleFunded = useCallback(async () => {
