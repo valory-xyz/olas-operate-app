@@ -18,8 +18,6 @@ const CircularIconContainer = styled(Flex)`
   height: 36px;
   border-radius: 50%;
   display: flex;
-  align-items: center;
-  justify-content: center;
   background-color: ${COLOR.WHITE};
 `;
 
@@ -46,7 +44,7 @@ export const ConfirmSwitch = () => {
           stakingProgramId={activeStakingProgramId}
           isCurrentStakingProgram={true}
         />
-        <CircularIconContainer>
+        <CircularIconContainer align="center" justify="center">
           <ArrowRightOutlined />
         </CircularIconContainer>
         <ContractCard

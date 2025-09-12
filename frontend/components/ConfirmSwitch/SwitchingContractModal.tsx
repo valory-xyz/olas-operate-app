@@ -5,18 +5,13 @@ import { SuccessTickSvg } from '@/components/custom-icons/SuccessTick';
 import { Modal } from '@/components/ui/Modal';
 import { useYourWallet } from '@/components/YourWalletPage/useYourWallet';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { AddressZero } from '@/constants/address';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { generateName } from '@/utils/agentName';
 
-const ModalHeader = ({
-  isSwitchingContract,
-}: {
-  isSwitchingContract: boolean;
-}) =>
-  isSwitchingContract ? (
+const ModalHeader = ({ isLoading }: { isLoading: boolean }) =>
+  isLoading ? (
     <Spin indicator={<LoadingOutlined spin />} size="large" />
   ) : (
     <SuccessTickSvg />
@@ -34,7 +29,9 @@ export const SwitchingContractModal = ({
   const { goto } = usePageState();
   const { selectedAgentConfig } = useServices();
   const { serviceSafe } = useYourWallet();
-  const agentName = generateName(serviceSafe?.address ?? AddressZero);
+  const agentName = serviceSafe?.address
+    ? generateName(serviceSafe?.address)
+    : '-';
   const stakingProgramMeta =
     STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
       stakingProgramIdToMigrateTo
@@ -49,7 +46,7 @@ export const SwitchingContractModal = ({
 
   return (
     <Modal
-      header={<ModalHeader isSwitchingContract={isSwitchingContract} />}
+      header={<ModalHeader isLoading={isSwitchingContract} />}
       title={title}
       description={description}
       action={

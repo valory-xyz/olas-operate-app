@@ -30,6 +30,15 @@ const ContractCard = styled(CardFlex)<{ $isConfirmSwitchPage?: boolean }>`
   `}
 `;
 
+const ContractTag = styled(Tag)`
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  width: max-content;
+  border-radius: 8px;
+  border-color: ${COLOR.GRAY_1};
+`;
+
 type StakingContractProps = {
   stakingProgramId: StakingProgramId;
   isCurrentStakingProgram: boolean;
@@ -50,15 +59,12 @@ export const StakingContract = ({
   return (
     <ContractCard $noBodyPadding $isConfirmSwitchPage={isConfirmSwitchPage}>
       <Flex gap={24} vertical className="px-24 py-24">
-        <Tag
-          className="flex align-center py-4 px-8 radius-8 w-max-content"
-          style={{ borderColor: COLOR.GRAY_1 }}
-        >
+        <ContractTag>
           <ContractSvg width={16} height={16} className="mr-6" />
           <Text className="text-sm text-neutral-tertiary">
             {stakingProgramMeta.name}
           </Text>
-        </Tag>
+        </ContractTag>
 
         <Flex align="center" gap={6}>
           <PercentageSvg width={20} fill={COLOR.TEXT_NEUTRAL_TERTIARY} />{' '}
@@ -91,17 +97,16 @@ export const StakingContract = ({
       </Flex>
 
       {!isConfirmSwitchPage && (
-        <SlotsLeft
-          contractDetails={contractDetails}
-          isCurrentStakingProgram={isCurrentStakingProgram}
-        />
-      )}
-
-      {!isConfirmSwitchPage && (
-        <SwitchStakingButton
-          isCurrentStakingProgram={isCurrentStakingProgram}
-          stakingProgramId={stakingProgramId}
-        />
+        <>
+          <SlotsLeft
+            contractDetails={contractDetails}
+            isCurrentStakingProgram={isCurrentStakingProgram}
+          />
+          <SwitchStakingButton
+            isCurrentStakingProgram={isCurrentStakingProgram}
+            stakingProgramId={stakingProgramId}
+          />
+        </>
       )}
     </ContractCard>
   );

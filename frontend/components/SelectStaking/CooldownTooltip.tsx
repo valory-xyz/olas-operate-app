@@ -1,6 +1,6 @@
 import { Flex, Statistic, Tooltip, Typography } from 'antd';
 import { isNil } from 'lodash';
-import { useMemo } from 'react';
+import { type CSSProperties, useMemo } from 'react';
 
 import { COLOR } from '@/constants/colors';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
@@ -8,15 +8,38 @@ import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetai
 const { Text, Paragraph } = Typography;
 const { Countdown } = Statistic;
 
-const overlayStyle = {
+const overlayStyle: CSSProperties = {
   maxWidth: 368,
 };
 
-const overlayInnerStyle = {
+const overlayInnerStyle: CSSProperties = {
   padding: 16,
   borderRadius: 16,
   backgroundColor: COLOR.WHITE,
 };
+
+const CooldownExplanation = () => (
+  <>
+    <div>
+      <Paragraph className="mb-4 text-sm" strong>
+        What is the cooldown?
+      </Paragraph>
+      <Text className="text-sm">
+        Whenever an agent unstakes from a contract, it enters a cooldown period.
+      </Text>
+    </div>
+
+    <div>
+      <Paragraph className="mb-4 text-sm" strong>
+        Why does a cooldown happen?
+      </Paragraph>
+      <ol className="mt-0 pl-20 mb-0 text-sm">
+        <li>You recently switched the staking contract.</li>
+        <li>Your agent is currently evicted.</li>
+      </ol>
+    </div>
+  </>
+);
 
 const CooldownPeriodContent = () => {
   const { selectedStakingContractDetails } = useActiveStakingContractDetails();
@@ -34,26 +57,7 @@ const CooldownPeriodContent = () => {
 
   return (
     <Flex vertical gap={16}>
-      <div>
-        <Paragraph className="mb-4 text-sm" strong>
-          What is the cooldown?
-        </Paragraph>
-        <Text className="text-sm">
-          Whenever an agent unstakes from a contract, it enters a cooldown
-          period.
-        </Text>
-      </div>
-
-      <div>
-        <Paragraph className="mb-4 text-sm" strong>
-          Why does a cooldown happen?
-        </Paragraph>
-        <ol className="mt-0 pl-20 mb-0 text-sm">
-          <li>You recently switched the staking contract.</li>
-          <li>Your agent is currently evicted.</li>
-        </ol>
-      </div>
-
+      <CooldownExplanation />
       <div>
         <Paragraph className="mb-4 text-sm" strong>
           When can I switch the staking contract?

@@ -14,16 +14,15 @@ export const SlotsLeft = ({
   contractDetails: Partial<StakingContractDetails> | undefined;
   isCurrentStakingProgram: boolean;
 }) => {
-  const maxSlots = contractDetails?.maxNumServices;
-  const slotsLeft =
-    maxSlots && contractDetails?.serviceIds
-      ? maxSlots - contractDetails.serviceIds.length
-      : 0;
-  const slotPercentage = useMemo(() => {
-    return maxSlots && contractDetails?.serviceIds
-      ? (contractDetails.serviceIds.length / maxSlots) * 100
-      : 0;
-  }, [contractDetails, maxSlots]);
+  const { maxNumServices = 0, serviceIds = [] } = contractDetails ?? {};
+
+  const { slotsLeft, slotPercentage } = useMemo(() => {
+    const usedSlots = serviceIds.length;
+    const slotsLeft = maxNumServices - usedSlots;
+    const slotPercentage =
+      maxNumServices > 0 ? (usedSlots / maxNumServices) * 100 : 0;
+    return { slotsLeft, slotPercentage };
+  }, [maxNumServices, serviceIds]);
   return (
     <Flex vertical className="px-24 pt-24 mt-16">
       <Flex align="center" justify="space-between">
@@ -31,7 +30,7 @@ export const SlotsLeft = ({
           Slots left
         </Text>
         <Text className="text-sm text-neutral-tertiary">
-          {slotsLeft} / {maxSlots}
+          {slotsLeft} / {maxNumServices}
         </Text>
       </Flex>
       <Progress

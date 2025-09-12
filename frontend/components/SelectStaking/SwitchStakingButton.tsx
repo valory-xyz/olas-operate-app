@@ -35,8 +35,8 @@ export const SwitchStakingButton = ({
     stakingProgramId,
     isCurrentStakingProgram,
   });
-
   const { setStakingProgramIdToMigrateTo } = useStakingProgram();
+
   const agentInCooldownPeriod =
     buttonText === MigrateButtonText.AgentInCooldownPeriod;
 

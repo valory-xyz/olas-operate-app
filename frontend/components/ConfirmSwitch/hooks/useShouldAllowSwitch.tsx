@@ -70,39 +70,32 @@ export const useShouldAllowSwitch = () => {
       ? selectedService?.chain_configs?.[asMiddlewareChain(currentChainId)]
           ?.chain_data
       : null;
-    const token = chainData?.token;
-    if (selectedService && isValidServiceId(token)) return false;
-    return true;
+    return !(selectedService && isValidServiceId(chainData?.token));
   }, [isServicesLoaded, selectedAgentConfig.evmHomeChainId, selectedService]);
 
   const shouldAllowSwitch: ShouldAllowSwitch = useMemo(() => {
-    if (isFirstDeploy) {
-      if (safeOlasBalance < minimumOlasRequiredToMigrate) {
-        return {
-          allowSwitch: false,
+    const rules: Array<{ condition: boolean; reason: NotAllowedSwitchReason }> =
+      [
+        {
+          condition:
+            isFirstDeploy && safeOlasBalance < minimumOlasRequiredToMigrate,
           reason: NotAllowedSwitchReason.InsufficientOlasBalance,
-        };
-      }
-      if (!hasEnoughNativeTokenForInitialFunding) {
-        return {
-          allowSwitch: false,
+        },
+        {
+          condition: isFirstDeploy && !hasEnoughNativeTokenForInitialFunding,
           reason: NotAllowedSwitchReason.InsufficientNativeTokenBalance,
-        };
-      }
-      return {
-        allowSwitch: true,
-      };
-    }
+        },
+        {
+          condition: !isFirstDeploy && !hasEnoughOlasToMigrate,
+          reason: NotAllowedSwitchReason.InsufficientOlasBalance,
+        },
+      ];
 
-    if (!hasEnoughOlasToMigrate) {
-      return {
-        allowSwitch: false,
-        reason: NotAllowedSwitchReason.InsufficientOlasBalance,
-      };
-    }
-    return {
-      allowSwitch: true,
-    };
+    const failingRule = rules.find((rule) => rule.condition);
+
+    return failingRule
+      ? { allowSwitch: false, reason: failingRule.reason }
+      : { allowSwitch: true };
   }, [
     isFirstDeploy,
     safeOlasBalance,
