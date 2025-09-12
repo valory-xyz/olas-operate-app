@@ -34,7 +34,8 @@ const createWeb3AuthWindow = async () => {
       },
     });
 
-    const web3AuthUrl = 'http://localhost:4200/web3auth/login';
+    const web3AuthUrl =
+      'https://pearl-api-git-feat-pearl-api-app-autonolas.vercel.app/web3auth/login';
 
     web3AuthWindow.loadURL(web3AuthUrl).then(() => {
       logger.electron(`Open Web3Auth window: ${web3AuthWindow.url}`);

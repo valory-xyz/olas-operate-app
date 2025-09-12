@@ -106,7 +106,10 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     show: () => {},
     transactionSuccess: () => {},
   },
-  web3AuthWindow,
+  web3AuthWindow: {
+    show: () => {},
+    close: () => {},
+  },
   logEvent: () => {},
 });
 
