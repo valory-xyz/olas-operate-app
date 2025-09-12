@@ -57,7 +57,8 @@ const TopBarContainer = styled.div`
 
 export const TopBar = () => {
   const router = useRouter();
-  const { closeApp, minimizeApp, onRampWindow, onRampTermsWindow } = useElectronApi();
+  const { closeApp, minimizeApp, onRampWindow, onRampTermsWindow } =
+    useElectronApi();
   const store = useStore();
   const { isUserLoggedIn, goto, pageState } = usePageState();
 
