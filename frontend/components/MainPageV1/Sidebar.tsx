@@ -38,12 +38,7 @@ const SiderContainer = styled.div`
 `;
 
 const menuItems: MenuProps['items'] = [
-  {
-    key: 'wallet',
-    icon: <WalletOutlined />,
-    label: 'Pearl Wallet',
-    disabled: true,
-  },
+  { key: 'pearl-wallet', icon: <WalletOutlined />, label: 'Pearl Wallet' },
   { key: 'help', icon: <QuestionCircleOutlined />, label: 'Help' },
   { key: 'settings', icon: <SettingOutlined />, label: 'Settings' },
 ];
@@ -168,6 +163,10 @@ export const Sidebar = () => {
   const handleMenuClick = useCallback<NonNullable<MenuProps['onClick']>>(
     ({ key }) => {
       switch (key) {
+        case 'pearl-wallet': {
+          gotoPage(Pages.PearlWallet);
+          return;
+        }
         case 'help': {
           gotoPage(Pages.HelpAndSupport);
           return;

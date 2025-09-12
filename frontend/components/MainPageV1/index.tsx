@@ -8,11 +8,14 @@ import { Settings } from '@/components/SettingsPage';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 
+import { PearlWallet } from '../PearlWallet';
 import { UpdateAgentPage } from '../UpdateAgentPage';
 import { Home } from './Home';
 import { Sidebar } from './Sidebar';
 
 const { Content: AntdContent } = Layout;
+
+const ContentDiv = styled.div``;
 
 const Content = styled(AntdContent)<{ $isFullPage?: boolean }>`
   margin: 0 auto;
@@ -20,9 +23,12 @@ const Content = styled(AntdContent)<{ $isFullPage?: boolean }>`
   ${(props) =>
     props.$isFullPage
       ? ``
-      : `
-        margin: 40px auto;
-        max-width: 744px;`}
+      : `padding: 40px 0px; 
+          ${ContentDiv} {
+            margin: 0 auto;
+            max-width: 744px;
+          }
+      `}
 `;
 
 export const Main = () => {
@@ -30,6 +36,8 @@ export const Main = () => {
 
   const mainContent = useMemo(() => {
     switch (pageState) {
+      case Pages.PearlWallet:
+        return <PearlWallet />;
       case Pages.Settings:
         return <Settings />;
       case Pages.HelpAndSupport:
@@ -48,7 +56,9 @@ export const Main = () => {
   return (
     <Layout>
       <Sidebar />
-      <Content $isFullPage={isFullPage}>{mainContent}</Content>
+      <Content $isFullPage={isFullPage}>
+        <ContentDiv>{mainContent}</ContentDiv>
+      </Content>
     </Layout>
   );
 };

@@ -18,6 +18,21 @@ export const balanceFormat = (
 };
 
 /**
+ * Displays balance in a human readable format
+ * e.g. 1234.578 => 1,234.58
+ */
+export const formatNumber = (
+  amount: number | undefined,
+  decimals = 2,
+): string => {
+  if (amount === undefined) return '--';
+  return Intl.NumberFormat('en-US', {
+    maximumFractionDigits: decimals,
+    minimumFractionDigits: decimals,
+  }).format(amount);
+};
+
+/**
  * Formats larger numbers into small numbers
  * @note **divides** the input by 10^decimals
  * @example `formatUnits('1000000000000000000', 18)` => '1.0'
