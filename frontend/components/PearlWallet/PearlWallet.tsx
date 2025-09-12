@@ -1,8 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { ValueOf } from '@/types/Util';
-
-import { PearlWalletProvider } from './PearlWalletContext';
+import { PearlWalletProvider, usePearlWallet } from './PearlWalletContext';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
 import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw/SelectAmountToWithdraw';
@@ -16,26 +14,24 @@ const STEPS = {
 /**
  * To display the Pearl Wallet page.
  */
-export const PearlWallet = () => {
-  const [step, setStep] = useState<ValueOf<typeof STEPS>>(
-    STEPS.PEARL_WALLET_SCREEN,
-  );
+const PearlWalletContent = () => {
+  const { walletStep: step, updateStep } = usePearlWallet();
 
   const handleNext = useCallback(() => {
     if (step === STEPS.PEARL_WALLET_SCREEN) {
-      setStep(STEPS.SELECT_AMOUNT);
+      updateStep(STEPS.SELECT_AMOUNT);
     } else if (step === STEPS.SELECT_AMOUNT) {
-      setStep(STEPS.ENTER_WITHDRAWAL_ADDRESS);
+      updateStep(STEPS.ENTER_WITHDRAWAL_ADDRESS);
     }
-  }, [step]);
+  }, [step, updateStep]);
 
   const handleBack = useCallback(() => {
     if (step === STEPS.SELECT_AMOUNT) {
-      setStep(STEPS.PEARL_WALLET_SCREEN);
+      updateStep(STEPS.PEARL_WALLET_SCREEN);
     } else if (step === STEPS.ENTER_WITHDRAWAL_ADDRESS) {
-      setStep(STEPS.SELECT_AMOUNT);
+      updateStep(STEPS.SELECT_AMOUNT);
     }
-  }, [step]);
+  }, [step, updateStep]);
 
   const content = useMemo(() => {
     switch (step) {
@@ -52,22 +48,11 @@ export const PearlWallet = () => {
     }
   }, [step, handleBack, handleNext]);
 
-  return <PearlWalletProvider>{content}</PearlWalletProvider>;
+  return content;
 };
 
-/**
- * Pearl Wallet
- * - Chain Toggle
- * - Available Assets
- * - Staked Assets
- *
- * Select Amount to Withdraw
- * - Chain dropdown
- * - List of inputs
- * - Validation
- * - Continue button (disabled, errors, etc)
- *
- * Enter Withdrawal Address
- * - Withdrawal address input
- * - Authorize Withdrawal (enter password)
- */
+export const PearlWallet = () => (
+  <PearlWalletProvider>
+    <PearlWalletContent />
+  </PearlWalletProvider>
+);

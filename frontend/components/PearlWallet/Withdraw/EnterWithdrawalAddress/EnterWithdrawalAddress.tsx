@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { useMessageApi } from '@/context/MessageProvider';
 
+import { usePearlWallet } from '../../PearlWalletContext';
 import { cardStyles } from '../common';
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { useWithdrawFunds } from './useWithdrawFunds';
@@ -123,6 +124,7 @@ export const EnterWithdrawalAddress = ({
   onBack,
 }: EnterWithdrawalAddressProps) => {
   const message = useMessageApi();
+  const { onReset } = usePearlWallet();
   const { isLoading, isError, isSuccess, txnHashes, onAuthorizeWithdrawal } =
     useWithdrawFunds();
 
@@ -183,7 +185,7 @@ export const EnterWithdrawalAddress = ({
           ) : isError ? (
             <WithdrawalFailed onTryAgain={handleWithdraw} />
           ) : isSuccess ? (
-            <WithdrawalComplete transactions={txnHashes} />
+            <WithdrawalComplete transactions={txnHashes} onClose={onReset} />
           ) : (
             <WithdrawalPasswordInput
               password={password}

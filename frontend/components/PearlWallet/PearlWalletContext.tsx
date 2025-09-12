@@ -24,13 +24,20 @@ import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { toUsd } from '@/service/toUsd';
 import { AgentConfig } from '@/types/Agent';
-import { Nullable } from '@/types/Util';
+import { Nullable, ValueOf } from '@/types/Util';
 import { generateName } from '@/utils/agentName';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
-import { AvailableAsset, StakedAsset, WalletChain } from './Withdraw/types';
+import {
+  AvailableAsset,
+  StakedAsset,
+  STEPS,
+  WalletChain,
+} from './Withdraw/types';
 
 const PearlWalletContext = createContext<{
+  walletStep: ValueOf<typeof STEPS>;
+  updateStep: (newStep: ValueOf<typeof STEPS>) => void;
   isLoading: boolean;
   aggregatedBalance: Nullable<number>;
   chains: WalletChain[];
@@ -42,6 +49,8 @@ const PearlWalletContext = createContext<{
   onAmountChange: (symbol: TokenSymbol, amount: number) => void;
   onReset: () => void;
 }>({
+  walletStep: STEPS.PEARL_WALLET_SCREEN,
+  updateStep: () => {},
   isLoading: false,
   aggregatedBalance: null,
   walletChainId: null,
@@ -77,6 +86,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
 
   // wallet chain ID
+  const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
+    STEPS.PEARL_WALLET_SCREEN,
+  );
   const [walletChainId, setWalletChainId] =
     useState<Nullable<EvmChainId>>(evmHomeChainId);
   const [amountsToWithdraw, setAmountsToWithdraw] = useState<
@@ -95,6 +107,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [serviceSafes, walletChainId],
   );
 
+  // list of chains where the user has services
   const chains = useMemo(() => {
     if (!services) return [];
     return compact(
@@ -170,11 +183,19 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     },
   ];
 
+  const updateStep = useCallback(
+    (newStep: ValueOf<typeof STEPS>) => {
+      setWalletStep(newStep);
+    },
+    [setWalletStep],
+  );
+
   const onAmountChange = useCallback((symbol: TokenSymbol, amount: number) => {
     setAmountsToWithdraw((prev) => ({ ...prev, [symbol]: amount }));
   }, []);
 
   const onReset = useCallback(() => {
+    setWalletStep(STEPS.PEARL_WALLET_SCREEN);
     setAmountsToWithdraw({});
   }, []);
 
@@ -189,6 +210,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PearlWalletContext.Provider
       value={{
+        walletStep,
+        updateStep,
         isLoading: isServicesLoading || !isLoaded || isBalanceLoading,
         aggregatedBalance: null,
         walletChainId,

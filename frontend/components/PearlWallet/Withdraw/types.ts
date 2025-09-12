@@ -18,3 +18,9 @@ export type StakedAsset = {
 };
 
 export type WalletChain = { chainId: EvmChainId; chainName: EvmChainName };
+
+export const STEPS = {
+  PEARL_WALLET_SCREEN: 'PEARL_WALLET_SCREEN',
+  SELECT_AMOUNT: 'SELECT_AMOUNT',
+  ENTER_WITHDRAWAL_ADDRESS: 'ENTER_WITHDRAWAL_ADDRESS',
+} as const;
