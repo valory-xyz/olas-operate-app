@@ -64,7 +64,7 @@ type ElectronApiContextProps = {
     transactionSuccess?: () => void;
     transactionFailure?: () => void;
   };
-  termsWindow?: {
+  onRampTermsWindow?: {
     show?: () => void;
     close?: () => void;
   };
@@ -106,7 +106,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     show: () => {},
     transactionSuccess: () => {},
   },
-  termsWindow: {
+  onRampTermsWindow: {
     show: () => {},
     close: () => {},
   },
@@ -171,9 +171,9 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             'onRampWindow.transactionFailure',
           ),
         },
-        termsWindow: {
-          show: getElectronApiFunction('termsWindow.show'),
-          close: getElectronApiFunction('termsWindow.close'),
+        onRampTermsWindow: {
+          show: getElectronApiFunction('onRampTermsWindow.show'),
+          close: getElectronApiFunction('onRampTermsWindow.close'),
         },
         logEvent: getElectronApiFunction('logEvent'),
       }}

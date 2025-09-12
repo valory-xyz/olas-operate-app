@@ -9,15 +9,15 @@ import { delayInSeconds } from '@/utils/delay';
 
 const { Text } = Typography;
 
-const TransakAgreement = ({ onClick }: { onClick?: () => void }) => (
-    <Text className="text-sm text-lighter">
-      By proceeding, you agree to the service&apos;s&nbsp;
-      <a onClick={onClick}>Terms & Conditions</a>.
-    </Text>
-)
+const OnRampAgreement = ({ onClick }: { onClick?: () => void }) => (
+  <Text className="text-sm text-lighter">
+    By proceeding, you agree to the service&apos;s&nbsp;
+    <a onClick={onClick}>Terms & Conditions</a>.
+  </Text>
+);
 
 export const useBuyCryptoStep = () => {
-  const { onRampWindow, termsWindow } = useElectronApi();
+  const { onRampWindow, onRampTermsWindow } = useElectronApi();
   const { masterEoa } = useMasterWalletContext();
   const {
     isBuyCryptoBtnLoading,
@@ -39,8 +39,8 @@ export const useBuyCryptoStep = () => {
   const cannotBuyCrypto = !masterEoa?.address || !usdAmountToPay;
 
   const openTerms = useCallback(async () => {
-    termsWindow?.show?.();
-  }, [termsWindow]);
+    onRampTermsWindow?.show?.();
+  }, [onRampTermsWindow]);
 
   const buyCryptoStep = useMemo<TransactionStep>(() => {
     const status = (() => {
@@ -57,7 +57,7 @@ export const useBuyCryptoStep = () => {
         ? [{ description: 'Funds received by the agent.' }]
         : [
             {
-              description: <TransakAgreement onClick={openTerms} />,
+              description: <OnRampAgreement onClick={openTerms} />,
             },
             {
               description: (

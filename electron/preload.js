@@ -19,7 +19,7 @@ const onRampWindow = {
 };
 
 /** IPC methods for terms window */
-const termsWindow = {
+const onRampTermsWindow = {
   show: () => ipcRenderer.invoke('terms-window-show'),
   close: () => ipcRenderer.invoke('terms-window-close'),
 };
@@ -54,6 +54,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   healthCheck: () => ipcRenderer.invoke('health-check'),
   agentActivityWindow,
   onRampWindow,
-  termsWindow,
+  onRampTermsWindow,
   logEvent: (message) => ipcRenderer.invoke('log-event', message),
 });

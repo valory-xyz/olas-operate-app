@@ -140,8 +140,8 @@ let onRampWindow = null;
 const getOnRampWindow = () => onRampWindow;
 
 /** @type {Electron.BrowserWindow | null} */
-let termsWindow = null;
-const getTermsWindow = () => termsWindow;
+let onRampTermsWindow = null;
+const getonRampTermsWindow = () => onRampTermsWindow;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
@@ -608,9 +608,9 @@ const createOnRampWindow = async (amountToPay) => {
  * Create the terms window for displaying terms iframe
  */
 /** @type {()=>Promise<BrowserWindow|undefined>} */
-const createTermsWindow = async () => {
-  if (!getTermsWindow() || getTermsWindow().isDestroyed) {
-    termsWindow = new BrowserWindow({
+const createonRampTermsWindow = async () => {
+  if (!getonRampTermsWindow() || getonRampTermsWindow().isDestroyed) {
+    onRampTermsWindow = new BrowserWindow({
       title: 'Terms & Conditions',
       resizable: false,
       draggable: true,
@@ -628,26 +628,26 @@ const createTermsWindow = async () => {
       },
     });
 
-    termsWindow.webContents.setWindowOpenHandler(({ url }) => {
+    onRampTermsWindow.webContents.setWindowOpenHandler(({ url }) => {
       shell.openExternal(url);
       return { action: 'deny' };
     });
 
     const termsUrl = `${nextUrl()}/terms-and-conditions`;
     logger.electron(`Terms URL: ${termsUrl}`);
-    termsWindow.loadURL(termsUrl).then(() => {
-      logger.electron(`termsWindow: ${termsWindow.url}`);
+    onRampTermsWindow.loadURL(termsUrl).then(() => {
+      logger.electron(`onRampTermsWindow: ${onRampTermsWindow.url}`);
     });
   } else {
     logger.electron('Terms window already exists');
   }
 
-  termsWindow.on('close', function (event) {
+  onRampTermsWindow.on('close', function (event) {
     event.preventDefault();
-    termsWindow?.destroy();
+    onRampTermsWindow?.destroy();
   });
 
-  return termsWindow;
+  return onRampTermsWindow;
 };
 
 async function launchDaemon() {
@@ -1238,15 +1238,15 @@ ipcMain.handle('onramp-transaction-failure', () => {
  */
 ipcMain.handle('terms-window-show', () => {
   logger.electron('terms-window-show');
-  if (!getTermsWindow() || getTermsWindow().isDestroyed()) {
-    createTermsWindow()?.then((window) => window.show());
+  if (!getonRampTermsWindow() || getonRampTermsWindow().isDestroyed()) {
+    createonRampTermsWindow()?.then((window) => window.show());
   } else {
-    getTermsWindow()?.show();
+    getonRampTermsWindow()?.show();
   }
 });
 
 ipcMain.handle('terms-window-close', () => {
   logger.electron('terms-window-close');
-  if (!getTermsWindow() || getTermsWindow().isDestroyed()) return;
-  getTermsWindow()?.destroy();
+  if (!getonRampTermsWindow() || getonRampTermsWindow().isDestroyed()) return;
+  getonRampTermsWindow()?.destroy();
 });

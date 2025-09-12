@@ -1,21 +1,22 @@
 import { Flex, Typography } from 'antd';
+import styled from 'styled-components';
 
 import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
 
 const { Title, Paragraph, Text } = Typography;
 
+const TermsContainer = styled(Flex)`
+  align-items: center;
+  flex-direction: column;
+  overflow-y: auto;
+  height: calc(${APP_HEIGHT}px - 45px);
+  width: calc(${APP_WIDTH}px - 45px);
+  margin: auto;
+`;
+
 export default function TermsAndConditionsPage() {
   return (
-    <Flex
-      align="center"
-      vertical
-      style={{
-        overflowY: 'auto',
-        height: `calc(${APP_HEIGHT}px - 45px)`,
-        width: `calc(${APP_WIDTH}px - 45px)`,
-        margin: 'auto',
-      }}
-    >
+    <TermsContainer>
       <Title level={4}>Third-Party Onramp Disclaimer and Terms</Title>
       <div>
         <Paragraph>
@@ -82,8 +83,6 @@ export default function TermsAndConditionsPage() {
           services.
         </Paragraph>
       </div>
-    </Flex>
+    </TermsContainer>
   );
-};
-
-export default TermsAndConditionsPage;
+}
