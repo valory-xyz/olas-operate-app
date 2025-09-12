@@ -223,7 +223,7 @@ export const DepositForBridging = ({
     return totalRequirements.map(([tokenAddress, totalRequired]) => {
       const totalRequiredInWei = BigInt(totalRequired);
       const pendingAmountInWei = BigInt(
-        bridgeRefillRequirements[tokenAddress as Address] || 0,
+        bridgeRefillRequirements?.[tokenAddress as Address],
       );
 
       // current balance = total_required_amount - required_amount
