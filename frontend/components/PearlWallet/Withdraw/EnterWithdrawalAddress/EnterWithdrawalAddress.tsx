@@ -8,6 +8,11 @@ import { useMessageApi } from '@/context/MessageProvider';
 import { cardStyles } from '../common';
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { useWithdrawFunds } from './useWithdrawFunds';
+import {
+  WithdrawalComplete,
+  WithdrawalFailed,
+  WithdrawalInProgress,
+} from './WithdrawStatusMessage';
 
 const { Text } = Typography;
 
@@ -60,15 +65,17 @@ const WithdrawalAddressInput = ({
 type WithdrawalPasswordInputProps = {
   password: string;
   onPasswordChange: (value: string) => void;
-  onCancel: () => void;
+  isSubmitDisabled?: boolean;
   onWithdrawalFunds: () => void;
+  onCancel: () => void;
 };
 
 const WithdrawalPasswordInput = ({
   password,
   onPasswordChange,
-  onCancel,
+  isSubmitDisabled,
   onWithdrawalFunds,
+  onCancel,
 }: WithdrawalPasswordInputProps) => {
   return (
     <Flex vertical gap={24}>
@@ -95,7 +102,12 @@ const WithdrawalPasswordInput = ({
         <Button onClick={onCancel} size="large">
           Cancel
         </Button>
-        <Button onClick={onWithdrawalFunds} type="primary" size="large">
+        <Button
+          disabled={isSubmitDisabled}
+          onClick={onWithdrawalFunds}
+          type="primary"
+          size="large"
+        >
           Withdraw Funds
         </Button>
       </Flex>
@@ -111,13 +123,18 @@ export const EnterWithdrawalAddress = ({
   onBack,
 }: EnterWithdrawalAddressProps) => {
   const message = useMessageApi();
-  const { onAuthorizeWithdrawal } = useWithdrawFunds();
+  const { isLoading, isError, isSuccess, txnHashes, onAuthorizeWithdrawal } =
+    useWithdrawFunds();
 
   const [withdrawalAddress, setWithdrawalAddress] = useState(
     '0x07b5302e01D44bD5b90C63C6Fb24807946704bFC',
   );
   const [password, setPassword] = useState('');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+  const handleWithdraw = useCallback(() => {
+    onAuthorizeWithdrawal(withdrawalAddress, password);
+  }, [onAuthorizeWithdrawal, withdrawalAddress, password]);
 
   const handleWithAddressChange = useCallback((value: string) => {
     setWithdrawalAddress(value);
@@ -133,8 +150,8 @@ export const EnterWithdrawalAddress = ({
     setIsPasswordModalOpen(true);
   }, [withdrawalAddress, message]);
 
-  const canShowModalTitle = true;
-  const canCloseModal = true;
+  const hasApiNotTriggered = ![isLoading, isError, isSuccess].some(Boolean);
+  const canCloseModal = isSuccess && !hasApiNotTriggered;
 
   return (
     <Flex gap={16} vertical style={cardStyles}>
@@ -147,7 +164,7 @@ export const EnterWithdrawalAddress = ({
 
       {isPasswordModalOpen && (
         <Modal
-          title={canShowModalTitle ? 'Authorize Withdrawal' : null}
+          title={hasApiNotTriggered ? 'Authorize Withdrawal' : null}
           onCancel={
             canCloseModal ? () => setIsPasswordModalOpen(false) : undefined
           }
@@ -156,25 +173,26 @@ export const EnterWithdrawalAddress = ({
           width={436}
           footer={null}
           styles={
-            canShowModalTitle
+            hasApiNotTriggered
               ? { header: { marginBottom: 16 } }
               : { content: { padding: '32px' } }
           }
         >
-          <WithdrawalPasswordInput
-            password={password}
-            onPasswordChange={setPassword}
-            onCancel={() => setIsPasswordModalOpen(false)}
-            onWithdrawalFunds={() =>
-              onAuthorizeWithdrawal(withdrawalAddress, password)
-            }
-          />
-          {/* <WithdrawalComplete
-            transactions={[
-              'https://gnosisscan.io/address/0xd3b0b28f56c9eeb3e8ac992f388be9a92bf8e20d',
-            ]}
-          /> */}
-          {/* <WithdrawalFailed onTryAgain={() => {}} /> */}
+          {isLoading ? (
+            <WithdrawalInProgress />
+          ) : isError ? (
+            <WithdrawalFailed onTryAgain={handleWithdraw} />
+          ) : isSuccess ? (
+            <WithdrawalComplete transactions={txnHashes} />
+          ) : (
+            <WithdrawalPasswordInput
+              password={password}
+              onPasswordChange={setPassword}
+              isSubmitDisabled={!password || isLoading || isSuccess}
+              onWithdrawalFunds={handleWithdraw}
+              onCancel={() => setIsPasswordModalOpen(false)}
+            />
+          )}
         </Modal>
       )}
     </Flex>

@@ -1,17 +1,18 @@
 import { useMutation } from '@tanstack/react-query';
 import { entries } from 'lodash';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
 import { ChainTokenConfig, TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
-import {
-  SupportedMiddlewareChain,
-  SupportedMiddlewareChainMap,
-} from '@/constants/chains';
+import { SupportedMiddlewareChainMap } from '@/constants/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
-import { BACKEND_URL } from '@/constants/urls';
+import {
+  BACKEND_URL,
+  EXPLORER_URL_BY_MIDDLEWARE_CHAIN,
+} from '@/constants/urls';
 import { Address, TxnHash } from '@/types/Address';
+import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
 
 import { usePearlWallet } from '../../PearlWalletContext';
@@ -52,9 +53,7 @@ type WithdrawalRequest = {
 type WithdrawalResponse = {
   message: string;
   transfer_txs: {
-    [chain in keyof SupportedMiddlewareChain]?: {
-      [token: Address]: TxnHash[];
-    };
+    [chain in keyof typeof SupportedMiddlewareChainMap]?: TxnHash[];
   };
 };
 
@@ -113,29 +112,28 @@ const withdrawFunds = async (
  */
 export const useWithdrawFunds = () => {
   const { walletChainId, amountsToWithdraw } = usePearlWallet();
-  // const [message, setMessage] = useState<string | null>(null);
 
-  const { isPending, isSuccess, isError, data, mutateAsync, status } =
-    useMutation({
-      // onMutate: () => {
-      //   setMessage(null);
-      // },
-      mutationFn: async (withdrawalRequest: WithdrawalRequest) => {
+  const { isPending, isSuccess, isError, data, mutateAsync } = useMutation({
+    mutationFn: async (withdrawalRequest: WithdrawalRequest) => {
+      try {
         const response = await withdrawFunds({
           ...withdrawalRequest,
         });
-        // setMessage(response.message);
         return response;
-      },
-    });
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    },
+  });
 
   const onAuthorizeWithdrawal = useCallback(
     async (withdrawAddress: string, password: string) => {
       if (!walletChainId) return;
 
+      const { middlewareChain } = CHAIN_CONFIG[walletChainId];
       const chainConfig = TOKEN_CONFIG[walletChainId];
       const assets = formatWithdrawAssets(amountsToWithdraw, chainConfig);
-      const { middlewareChain } = CHAIN_CONFIG[walletChainId];
 
       const request = {
         password,
@@ -149,7 +147,27 @@ export const useWithdrawFunds = () => {
     [walletChainId, amountsToWithdraw],
   );
 
-  const isPasswordError = isError && data;
+  const txnHashes = useMemo(() => {
+    if (!isSuccess) return [];
+    if (!walletChainId) return [];
+    if (!data?.transfer_txs || !walletChainId) return [];
 
-  return { isLoading: isPending, onAuthorizeWithdrawal };
+    const { middlewareChain } = CHAIN_CONFIG[walletChainId];
+    const chainTxs =
+      data.transfer_txs[middlewareChain as keyof typeof data.transfer_txs];
+    if (!chainTxs) return [];
+
+    return chainTxs.map(
+      (txHash) =>
+        `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[asMiddlewareChain(walletChainId)]}/tx/${txHash}`,
+    );
+  }, [isSuccess, data, walletChainId]);
+
+  return {
+    isLoading: isPending,
+    isSuccess,
+    isError,
+    txnHashes,
+    onAuthorizeWithdrawal,
+  };
 };
