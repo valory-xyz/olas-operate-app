@@ -13,6 +13,8 @@ const { Paragraph, Text } = Typography;
 
 const TOOLTIP_STYLE = { width: '340px' };
 
+type AgentsNameLabel = 'Modius' | 'Optimus' | 'Prediction';
+
 export const TenderlyAccessTokenLabel = () => (
   <Flex align="center" gap={6}>
     <Text>Tenderly access token</Text>
@@ -118,18 +120,22 @@ export const CoinGeckoApiKeyLabel = () => (
   </Flex>
 );
 
-export const GeminiApiKeyLabel = ({ name }: { name: 'Modius' | 'Optimus' }) => (
+export const GoogleAiStudioHelper = ({ name }: { name: AgentsNameLabel }) => (
+  <Paragraph className="text-sm m-0">
+    The Gemini API key allows you to chat with your agent and update its goals
+    through {name} profile. You can generate one for free on{' '}
+    <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
+      Google AI Studio
+    </a>
+    .
+  </Paragraph>
+);
+
+export const GeminiApiKeyLabel = ({ name }: { name: AgentsNameLabel }) => (
   <Flex align="center" gap={6}>
     <Text>Gemini API key</Text>
     <InfoTooltip placement="bottom" overlayInnerStyle={TOOLTIP_STYLE}>
-      <Paragraph className="text-sm m-0">
-        The Gemini API key allows you to chat with your agent and update its
-        goals through {name}’ profile. You can generate one for free on{' '}
-        <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
-          Google AI Studio
-        </a>
-        .
-      </Paragraph>
+      <GoogleAiStudioHelper name={name} />
     </InfoTooltip>
     <Text type="secondary" className="text-sm">
       (Optional)
