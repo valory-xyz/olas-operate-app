@@ -18,8 +18,14 @@ type UseTokensFundingStatusProps = {
  * {
  *  isFullyFunded: false,
  *  tokensFundingStatus: {
- *    OLAS: true,
- *    XDAI: false,
+ *    OLAS: {
+ *      funded: false,
+ *      pendingAmount: 100,
+ *    },
+ *    XDAI: {
+ *      funded: true,
+ *      pendingAmount: 0,
+ *    },
  *  }
  * }
  */
@@ -27,7 +33,7 @@ export const useTokensFundingStatus = ({
   selectedAgentConfig,
 }: UseTokensFundingStatusProps) => {
   const { masterEoaBalancesByChain } = useMasterBalances();
-  const { initialTokenRequirements: tokenRequirements } =
+  const { totalTokenRequirements: tokenRequirements } =
     useGetRefillRequirementsWithMonthlyGas({
       selectedAgentConfig,
     });
@@ -44,7 +50,7 @@ export const useTokensFundingStatus = ({
   );
 
   const fundingStatus = useMemo(() => {
-    if (!tokenRequirements || !eoaBalances) {
+    if (!tokenRequirements || tokenRequirements.length === 0 || !eoaBalances) {
       return {
         isFullyFunded: false,
         tokensFundingStatus: {},
@@ -52,7 +58,10 @@ export const useTokensFundingStatus = ({
     }
 
     // Create a map of required tokens with their funding status
-    const tokensFundingStatus: Record<string, boolean> = {};
+    const tokensFundingStatus: Record<
+      string,
+      { funded: boolean; pendingAmount: number }
+    > = {};
 
     tokenRequirements.forEach((requirement) => {
       const eoa = eoaBalances.find(
@@ -60,13 +69,21 @@ export const useTokensFundingStatus = ({
       );
 
       if (eoa && eoa.balance >= requirement.amount) {
-        tokensFundingStatus[requirement.symbol] = true;
+        tokensFundingStatus[requirement.symbol] = {
+          funded: true,
+          pendingAmount: 0,
+        };
       } else {
-        tokensFundingStatus[requirement.symbol] = false;
+        tokensFundingStatus[requirement.symbol] = {
+          funded: false,
+          pendingAmount: requirement.amount - (eoa?.balance ?? 0),
+        };
       }
     });
 
-    const isFullyFunded = Object.values(tokensFundingStatus).every(Boolean);
+    const isFullyFunded = Object.values(tokensFundingStatus).every(
+      (status) => status.funded,
+    );
     return {
       isFullyFunded,
       tokensFundingStatus,
@@ -87,7 +104,12 @@ export const useTokensFundingStatus = ({
     return {
       isFullyFunded: true,
       tokensFundingStatus: requiredTokens
-        ? Object.fromEntries(requiredTokens.map((token) => [token, true]) || [])
+        ? Object.fromEntries(
+            requiredTokens.map((token) => [
+              token,
+              { funded: true, pendingAmount: 0 },
+            ]),
+          )
         : {},
     };
 

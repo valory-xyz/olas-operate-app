@@ -4,6 +4,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import { Button, Flex, message, Spin, Typography } from 'antd';
+import { sortBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
@@ -37,6 +38,7 @@ type DepositTokenDetails = {
   address?: Address;
   symbol: TokenSymbol;
   totalRequiredInWei: bigint;
+  pendingAmountInWei: bigint;
   currentBalanceInWei: bigint;
   areFundsReceived: boolean;
   decimals: number;
@@ -87,6 +89,16 @@ type DepositForBridgingProps = {
   updateCrossChainTransferDetails: (details: CrossChainTransferDetails) => void;
   onNext: () => void;
 };
+
+const formatTokenAmount = ({
+  amountInWei,
+  decimals,
+  isNative,
+}: {
+  amountInWei: bigint;
+  decimals: number;
+  isNative: boolean;
+}) => formatUnitsToNumber(amountInWei, decimals, isNative ? 5 : 2);
 
 export const DepositForBridging = ({
   getBridgeRequirementsParams,
@@ -211,13 +223,14 @@ export const DepositForBridging = ({
     const totalRequirements = Object.entries(bridgeTotalRequirements);
     return totalRequirements.map(([tokenAddress, totalRequired]) => {
       const totalRequiredInWei = BigInt(totalRequired);
+      const pendingAmountInWei = BigInt(
+        bridgeRefillRequirements?.[tokenAddress as Address] || 0,
+      );
 
       // current balance = total_required_amount - required_amount
       // eg. if total_required_amount = 1000 and required_amount = 200,
       // then the assumed current_balance = 1000 - 200 = 800
-      const currentBalanceInWei =
-        totalRequiredInWei -
-        BigInt(bridgeRefillRequirements[tokenAddress as Address] || 0);
+      const currentBalanceInWei = totalRequiredInWei - pendingAmountInWei;
 
       const token = Object.values(ETHEREUM_TOKEN_CONFIG).find((tokenInfo) => {
         if (tokenAddress === AddressZero && !tokenInfo.address) return true;
@@ -236,6 +249,7 @@ export const DepositForBridging = ({
         address: tokenAddress as Address,
         symbol: token.symbol,
         totalRequiredInWei,
+        pendingAmountInWei,
         currentBalanceInWei,
         areFundsReceived,
         decimals: token.decimals,
@@ -245,18 +259,25 @@ export const DepositForBridging = ({
   }, [bridgeFundingRequirements, masterEoa]);
 
   const tableData = useMemo(() => {
-    return tokens
-      .map((token) => ({
-        amount: formatUnitsToNumber(
-          token.totalRequiredInWei,
-          token.decimals,
-          token.isNative ? 5 : 2,
-        ),
+    const mappedTokens = tokens.map((token) => {
+      const { totalRequiredInWei, pendingAmountInWei, decimals, isNative } =
+        token;
+      const formatToken = (valueInWei: bigint) =>
+        formatTokenAmount({
+          amountInWei: valueInWei,
+          decimals,
+          isNative,
+        });
+      return {
+        totalAmount: formatToken(totalRequiredInWei),
+        pendingAmount: formatToken(pendingAmountInWei),
         symbol: token.symbol,
         iconSrc: TokenSymbolConfigMap[token.symbol].image,
         areFundsReceived: token.areFundsReceived,
-      }))
-      .sort((a, b) => b.amount - a.amount);
+      };
+    });
+
+    return sortBy(mappedTokens, 'totalAmount').reverse();
   }, [tokens]);
 
   // After the user has deposited the required funds,
