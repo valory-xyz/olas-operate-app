@@ -13,7 +13,6 @@ export * from './NftFilled';
 export * from './Percentage';
 export * from './Sparkles';
 export * from './SuccessOutlined';
-export * from './SuccessTick';
 export * from './WalletIFilled';
 export * from './WalletOutlined';
 export * from './WarningOutlined';
