@@ -4,12 +4,7 @@ import { PearlWalletProvider, usePearlWallet } from './PearlWalletContext';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
 import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw/SelectAmountToWithdraw';
-
-const STEPS = {
-  PEARL_WALLET_SCREEN: 'PEARL_WALLET_SCREEN',
-  SELECT_AMOUNT: 'SELECT_AMOUNT',
-  ENTER_WITHDRAWAL_ADDRESS: 'ENTER_WITHDRAWAL_ADDRESS',
-} as const;
+import { STEPS } from './Withdraw/types';
 
 /**
  * To display the Pearl Wallet page.

@@ -116,15 +116,14 @@ export const useWithdrawFunds = () => {
   const { isPending, isSuccess, isError, data, mutateAsync } = useMutation({
     mutationFn: async (withdrawalRequest: WithdrawalRequest) => {
       try {
-        const response = await withdrawFunds({
-          ...withdrawalRequest,
-        });
+        const response = await withdrawFunds(withdrawalRequest);
         return response;
       } catch (error) {
         console.error(error);
         throw error;
       }
     },
+    onError: (error) => console.error(error),
   });
 
   const onAuthorizeWithdrawal = useCallback(
@@ -141,10 +140,9 @@ export const useWithdrawFunds = () => {
         withdraw_assets: { [middlewareChain]: assets },
       } satisfies WithdrawalRequest;
 
-      console.log({ request });
-      // await mutateAsync(request);
+      await mutateAsync(request);
     },
-    [walletChainId, amountsToWithdraw],
+    [walletChainId, amountsToWithdraw, mutateAsync],
   );
 
   const txnHashes = useMemo(() => {

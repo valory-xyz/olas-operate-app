@@ -79,20 +79,6 @@ textarea,
     0 1px 3px 0 rgba(170, 193, 203, 0.10);
   }
 
-.hide-input-number-controls {
-  /* Chrome, Safari, Edge, Opera */
-  &input::-webkit-outer-spin-button,
-  &input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  /* Firefox */
-  &input[type=number] {
-    -moz-appearance: textfield;
-  }
-}
-
 .balance {
   font-family: 'Inter';
   font-weight: 900;

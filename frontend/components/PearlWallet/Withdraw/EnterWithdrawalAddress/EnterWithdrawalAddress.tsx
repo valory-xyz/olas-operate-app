@@ -26,6 +26,15 @@ const WithdrawAddressLabel = () => (
   </Text>
 );
 
+const PasswordLabel = () => (
+  <Text className="text-sm text-neutral-tertiary">
+    Enter password{' '}
+    <Text type="danger" className="text-sm">
+      *
+    </Text>
+  </Text>
+);
+
 type WithdrawalAddressInputProps = {
   withdrawAddress: string;
   onWithAddressChange: (value: string) => void;
@@ -77,48 +86,39 @@ const WithdrawalPasswordInput = ({
   isSubmitDisabled,
   onWithdrawalFunds,
   onCancel,
-}: WithdrawalPasswordInputProps) => {
-  return (
-    <Flex vertical gap={24}>
-      <Flex gap={24} vertical>
-        <Flex vertical gap={4}>
-          <Text className="text-sm text-neutral-tertiary">
-            Enter your wallet password{' '}
-            <Text type="danger" className="text-sm">
-              *
-            </Text>
-          </Text>
-          <Input.Password
-            value={password}
-            onChange={(e) => onPasswordChange(e.target.value)}
-            placeholder="Enter your password"
-            size="small"
-            className="text-base"
-            style={{ padding: '6px 12px' }}
-          />
-        </Flex>
-      </Flex>
-
-      <Flex gap={16} justify="end">
-        <Button onClick={onCancel} size="large">
-          Cancel
-        </Button>
-        <Button
-          disabled={isSubmitDisabled}
-          onClick={onWithdrawalFunds}
-          type="primary"
-          size="large"
-        >
-          Withdraw Funds
-        </Button>
+}: WithdrawalPasswordInputProps) => (
+  <Flex vertical gap={24}>
+    <Flex gap={24} vertical>
+      <Flex vertical gap={4}>
+        <PasswordLabel />
+        <Input.Password
+          value={password}
+          onChange={(e) => onPasswordChange(e.target.value)}
+          placeholder="Enter your password"
+          size="small"
+          className="text-base"
+          style={{ padding: '6px 12px' }}
+        />
       </Flex>
     </Flex>
-  );
-};
 
-type EnterWithdrawalAddressProps = {
-  onBack: () => void;
-};
+    <Flex gap={16} justify="end">
+      <Button onClick={onCancel} size="large">
+        Cancel
+      </Button>
+      <Button
+        disabled={isSubmitDisabled}
+        onClick={onWithdrawalFunds}
+        type="primary"
+        size="large"
+      >
+        Withdraw Funds
+      </Button>
+    </Flex>
+  </Flex>
+);
+
+type EnterWithdrawalAddressProps = { onBack: () => void };
 
 export const EnterWithdrawalAddress = ({
   onBack,
@@ -128,15 +128,9 @@ export const EnterWithdrawalAddress = ({
   const { isLoading, isError, isSuccess, txnHashes, onAuthorizeWithdrawal } =
     useWithdrawFunds();
 
-  const [withdrawalAddress, setWithdrawalAddress] = useState(
-    '0x07b5302e01D44bD5b90C63C6Fb24807946704bFC',
-  );
+  const [withdrawalAddress, setWithdrawalAddress] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-
-  const handleWithdraw = useCallback(() => {
-    onAuthorizeWithdrawal(withdrawalAddress, password);
-  }, [onAuthorizeWithdrawal, withdrawalAddress, password]);
 
   const handleWithAddressChange = useCallback((value: string) => {
     setWithdrawalAddress(value);
@@ -152,8 +146,12 @@ export const EnterWithdrawalAddress = ({
     setIsPasswordModalOpen(true);
   }, [withdrawalAddress, message]);
 
+  const handleWithdraw = useCallback(() => {
+    onAuthorizeWithdrawal(withdrawalAddress, password);
+  }, [onAuthorizeWithdrawal, withdrawalAddress, password]);
+
   const hasApiNotTriggered = ![isLoading, isError, isSuccess].some(Boolean);
-  const canCloseModal = isSuccess && !hasApiNotTriggered;
+  const canCloseModal = isError || !hasApiNotTriggered;
 
   return (
     <Flex gap={16} vertical style={cardStyles}>
