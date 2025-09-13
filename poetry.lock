@@ -1275,24 +1275,25 @@ gmpy2 = ["gmpy2"]
 
 [[package]]
 name = "eth-abi"
-version = "5.1.0"
+version = "4.0.0"
 description = "eth_abi: Python utilities for working with Ethereum ABI definitions, especially encoding and decoding"
 optional = false
-python-versions = "<4,>=3.8"
+python-versions = ">=3.7, <4"
 files = [
-    {file = "eth_abi-5.1.0-py3-none-any.whl", hash = "sha256:84cac2626a7db8b7d9ebe62b0fdca676ab1014cc7f777189e3c0cd721a4c16d8"},
-    {file = "eth_abi-5.1.0.tar.gz", hash = "sha256:33ddd756206e90f7ddff1330cc8cac4aa411a824fe779314a0a52abea2c8fc14"},
+    {file = "eth_abi-4.0.0-py3-none-any.whl", hash = "sha256:79d258669f3505319e53638d644a75e1c816db552a1ab1927c3063763cc41031"},
+    {file = "eth_abi-4.0.0.tar.gz", hash = "sha256:6949baba61a2c453f0719309ca145e8876a1cbae7ba377c991e67240c13ec7fc"},
 ]
 
 [package.dependencies]
 eth-typing = ">=3.0.0"
 eth-utils = ">=2.0.0"
-parsimonious = ">=0.10.0,<0.11.0"
+parsimonious = ">=0.9.0,<0.10.0"
 
 [package.extras]
-dev = ["build (>=0.9.0)", "bumpversion (>=0.5.3)", "eth-hash[pycryptodome]", "hypothesis (>=4.18.2,<5.0.0)", "ipython", "pre-commit (>=3.4.0)", "pytest (>=7.0.0)", "pytest-pythonpath (>=0.7.1)", "pytest-timeout (>=2.0.0)", "pytest-xdist (>=2.4.0)", "sphinx (>=6.0.0)", "sphinx-rtd-theme (>=1.0.0)", "towncrier (>=21,<22)", "tox (>=4.0.0)", "twine", "wheel"]
-docs = ["sphinx (>=6.0.0)", "sphinx-rtd-theme (>=1.0.0)", "towncrier (>=21,<22)"]
-test = ["eth-hash[pycryptodome]", "hypothesis (>=4.18.2,<5.0.0)", "pytest (>=7.0.0)", "pytest-pythonpath (>=0.7.1)", "pytest-timeout (>=2.0.0)", "pytest-xdist (>=2.4.0)"]
+dev = ["black", "bumpversion (>=0.5.3,<1)", "eth-hash[pycryptodome]", "flake8", "hypothesis (>=4.18.2,<5.0.0)", "ipython", "isort (>=4.2.15,<5)", "jinja2 (>=3.0.0,<3.1.0)", "mypy (==0.910)", "pydocstyle (>=6.0.0,<7)", "pytest (>=6.2.5,<7)", "pytest-pythonpath (>=0.7.1)", "pytest-watch (>=4.1.0,<5)", "pytest-xdist (>=2.5.0,<3)", "sphinx (>=4.5.0,<5)", "sphinx-rtd-theme (>=1.0.0)", "towncrier (==18.5.0)", "tox (>=2.9.1,<3)", "twine", "wheel"]
+doc = ["jinja2 (>=3.0.0,<3.1.0)", "sphinx (>=4.5.0,<5)", "sphinx-rtd-theme (>=1.0.0)", "towncrier (==18.5.0)"]
+lint = ["black", "flake8", "isort (>=4.2.15,<5)", "mypy (==0.910)", "pydocstyle (>=6.0.0,<7)"]
+test = ["eth-hash[pycryptodome]", "hypothesis (>=4.18.2,<5.0.0)", "pytest (>=6.2.5,<7)", "pytest-pythonpath (>=0.7.1)", "pytest-xdist (>=2.5.0,<3)", "tox (>=2.9.1,<3)"]
 tools = ["hypothesis (>=4.18.2,<5.0.0)"]
 
 [[package]]
@@ -1431,13 +1432,13 @@ test = ["pytest (>=7.0.0)", "pytest-xdist (>=2.4.0)"]
 
 [[package]]
 name = "eth-utils"
-version = "2.3.1"
+version = "2.2.0"
 description = "eth-utils: Common utility functions for python code that interacts with Ethereum"
 optional = false
 python-versions = ">=3.7,<4"
 files = [
-    {file = "eth-utils-2.3.1.tar.gz", hash = "sha256:56a969b0536d4969dcb27e580521de35abf2dbed8b1bf072b5c80770c4324e27"},
-    {file = "eth_utils-2.3.1-py3-none-any.whl", hash = "sha256:614eedc5ffcaf4e6708ca39e23b12bd69526a312068c1170c773bd1307d13972"},
+    {file = "eth-utils-2.2.0.tar.gz", hash = "sha256:7f1a9e10400ee332432a778c321f446abaedb8f538df550e7c9964f446f7e265"},
+    {file = "eth_utils-2.2.0-py3-none-any.whl", hash = "sha256:d6e107d522f83adff31237a95bdcc329ac0819a3ac698fe43c8a56fd80813eab"},
 ]
 
 [package.dependencies]
@@ -1448,7 +1449,7 @@ toolz = {version = ">0.8.2", markers = "implementation_name == \"pypy\""}
 
 [package.extras]
 dev = ["black (>=23)", "build (>=0.9.0)", "bumpversion (>=0.5.3)", "eth-hash[pycryptodome]", "flake8 (==3.8.3)", "hypothesis (>=4.43.0)", "ipython", "isort (>=5.11.0)", "mypy (==0.971)", "pydocstyle (>=5.0.0)", "pytest (>=7.0.0)", "pytest-watch (>=4.1.0)", "pytest-xdist (>=2.4.0)", "sphinx (>=5.0.0)", "sphinx-rtd-theme (>=1.0.0)", "towncrier (>=21,<22)", "tox (>=4.0.0)", "twine", "types-setuptools", "wheel"]
-docs = ["sphinx (>=5.0.0)", "sphinx-rtd-theme (>=1.0.0)", "towncrier (>=21,<22)"]
+doc = ["sphinx (>=5.0.0)", "sphinx-rtd-theme (>=1.0.0)", "towncrier (>=21,<22)"]
 lint = ["black (>=23)", "flake8 (==3.8.3)", "isort (>=5.11.0)", "mypy (==0.971)", "pydocstyle (>=5.0.0)", "types-setuptools"]
 test = ["hypothesis (>=4.43.0)", "mypy (==0.971)", "pytest (>=7.0.0)", "pytest-xdist (>=2.4.0)", "types-setuptools"]
 
@@ -2410,13 +2411,13 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.10.11"
+version = "0.10.14"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.9"
 files = [
-    {file = "olas_operate_middleware-0.10.11-py3-none-any.whl", hash = "sha256:38020642bb924170638621aa8d2e6e532be3da3a2ff16ff0db3f5a5b43db7016"},
-    {file = "olas_operate_middleware-0.10.11.tar.gz", hash = "sha256:9c7a3d61f6fc612e1d2aa0ff56197574116f775ffedea6be31cbf44ebccaff81"},
+    {file = "olas_operate_middleware-0.10.14-py3-none-any.whl", hash = "sha256:d6bd14a5ff98effb5dd00c6171c7b9dfa27098b3dd22811de6f8f6d6a4ecd9f4"},
+    {file = "olas_operate_middleware-0.10.14.tar.gz", hash = "sha256:48b1f93f23ab9306fcfbc4badcecd7e63cce5035392f09297277090585a1ff95"},
 ]
 
 [package.dependencies]
@@ -2426,14 +2427,14 @@ clea = "0.1.0rc4"
 cytoolz = "0.12.3"
 deepdiff = ">=8.0.1,<9.0.0"
 docker = "6.1.2"
-eth-abi = "5.1.0"
+eth-abi = "4.0.0"
 eth-account = "0.8.0"
 eth-hash = "0.7.0"
 eth-keyfile = "0.6.1"
 eth-keys = "0.4.0"
 eth-rlp = "0.3.0"
 eth-typing = "3.5.2"
-eth-utils = "2.3.1"
+eth-utils = "2.2.0"
 fastapi = "0.110.3"
 frozenlist = "1.4.1"
 halo = "0.0.31"
@@ -2662,13 +2663,12 @@ gssapi = ["gssapi (>=1.4.1)", "pyasn1 (>=0.1.7)", "pywin32 (>=2.1.8)"]
 
 [[package]]
 name = "parsimonious"
-version = "0.10.0"
+version = "0.9.0"
 description = "(Soon to be) the fastest pure-Python PEG parser I could muster"
 optional = false
 python-versions = "*"
 files = [
-    {file = "parsimonious-0.10.0-py3-none-any.whl", hash = "sha256:982ab435fabe86519b57f6b35610aa4e4e977e9f02a14353edf4bbc75369fc0f"},
-    {file = "parsimonious-0.10.0.tar.gz", hash = "sha256:8281600da180ec8ae35427a4ab4f7b82bfec1e3d1e52f80cb60ea82b9512501c"},
+    {file = "parsimonious-0.9.0.tar.gz", hash = "sha256:b2ad1ae63a2f65bd78f5e0a8ac510a98f3607a43f1db2a8d46636a5d9e4a30c1"},
 ]
 
 [package.dependencies]
@@ -4191,4 +4191,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "b6bc4941eba53338bff03640862cf5c162215824f815f15b11bb43ff89c21e37"
+content-hash = "0bd6bc1690dffe865e21f0820cdc95a0a204e3650f06aa3363b9e0a42901ae51"
