@@ -36,7 +36,10 @@ export const SetupYourAgent = () => {
     <AgentFormContainer flex="none">
       {selectedAgentType === AgentMap.PredictTrader && (
         // TODO: ensure Predict Agent Form works in Pearl V1
-        <PredictAgentSetup serviceTemplate={serviceTemplate} />
+        <PredictAgentSetup
+          serviceTemplate={serviceTemplate}
+          renderForm={displayForm}
+        />
       )}
       {selectedAgentType === AgentMap.Modius && (
         <ModiusAgentForm

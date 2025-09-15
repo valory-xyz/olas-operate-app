@@ -1,7 +1,8 @@
-import { Divider, message } from 'antd';
+import { message } from 'antd';
 import React, { useCallback } from 'react';
 
 import { ServiceTemplate } from '@/client';
+import { GoogleAiStudioHelper } from '@/components/AgentForms/common/labels';
 import {
   PredictAgentForm,
   PredictFormValues,
@@ -11,11 +12,16 @@ import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { onDummyServiceCreation } from '@/utils/service';
 
+import { RenderForm } from './useDisplayAgentForm';
+
 type PredictAgentSetupFormProps = { serviceTemplate: ServiceTemplate };
 
 export const PredictAgentSetup = ({
   serviceTemplate,
-}: PredictAgentSetupFormProps) => {
+  renderForm,
+}: PredictAgentSetupFormProps & {
+  renderForm: RenderForm;
+}) => {
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
@@ -52,14 +58,15 @@ export const PredictAgentSetup = ({
     [defaultStakingProgramId, serviceTemplate, goto],
   );
 
-  return (
+  return renderForm(
+    <PredictAgentForm
+      isFormEnabled={!!defaultStakingProgramId}
+      agentFormType="create"
+      onSubmit={onSubmit}
+    />,
     <>
-      <Divider style={{ margin: '12px 0 16px 0' }} />
-      <PredictAgentForm
-        isFormEnabled={!!defaultStakingProgramId}
-        agentFormType="create"
-        onSubmit={onSubmit}
-      />
-    </>
+      <GoogleAiStudioHelper name="Prediction" />
+    </>,
+    { onBack: undefined },
   );
 };

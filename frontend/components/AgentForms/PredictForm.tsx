@@ -1,18 +1,9 @@
-import {
-  Button,
-  Divider,
-  Flex,
-  Form,
-  FormInstance,
-  Input,
-  Typography,
-} from 'antd';
+import { Button, Flex, Form, FormInstance, Input, Typography } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { optionalFieldProps } from './common/formUtils';
 import { InvalidGeminiApiCredentials } from './common/InvalidGeminiApiCredentials';
-import { GoogleAiStudioHelper } from './common/labels';
 import { validateGeminiApiKey, ValidationStatus } from './common/validations';
 
 const { Text } = Typography;
@@ -145,6 +136,7 @@ export const PredictAgentForm = ({
       disabled={isFormDisabled}
       name="setup-your-predict-agent"
       layout="vertical"
+      className="label-no-padding"
     >
       <Form.Item
         name="geminiApiKey"
@@ -154,12 +146,10 @@ export const PredictAgentForm = ({
       >
         <Input.Password />
       </Form.Item>
-      <GoogleAiStudioHelper name="Prediction" />
+
       {geminiApiKeyValidationStatus === 'invalid' && (
         <InvalidGeminiApiCredentials style={{ marginTop: 12 }} />
       )}
-
-      {agentFormType !== 'view' && <Divider />}
 
       <Form.Item hidden={agentFormType === 'view'}>
         <Button
