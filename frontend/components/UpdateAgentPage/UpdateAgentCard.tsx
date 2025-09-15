@@ -22,7 +22,7 @@ const EditButton = () => {
 
 type CardLayoutProps = { onClickBack: () => void; children: ReactNode };
 
-export const CardLayout = ({ onClickBack, children }: CardLayoutProps) => {
+export const UpdateAgentCard = ({ onClickBack, children }: CardLayoutProps) => {
   const { isEditing } = useContext(UpdateAgentContext);
 
   return (
