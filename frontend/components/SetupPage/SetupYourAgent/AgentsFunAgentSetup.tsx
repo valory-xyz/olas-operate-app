@@ -54,7 +54,7 @@ export const AgentsFunAgentSetup = ({
             },
             GENAI_API_KEY: {
               ...serviceTemplate.env_variables.GENAI_API_KEY,
-              value: values.geminiApiKey,
+              value: values.geminiApiKey || '',
             },
             FIREWORKS_API_KEY: {
               ...serviceTemplate.env_variables.FIREWORKS_API_KEY,
