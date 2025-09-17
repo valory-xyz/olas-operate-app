@@ -24,8 +24,8 @@ import {
   TenderlyProjectSlugLabel,
 } from '../AgentForms/common/labels';
 import { useOptimusFormValidate } from '../SetupPage/SetupYourAgent/OptimusAgentForm/useOptimusFormValidate';
-import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
+import { UpdateAgentCard } from './UpdateAgentCard';
 
 type OptimusFormValues = {
   env_variables: {
@@ -196,8 +196,8 @@ export const OptimusUpdatePage = () => {
   }, [initialValues, form, unsavedModal, goto]);
 
   return (
-    <CardLayout onClickBack={handleBackClick}>
+    <UpdateAgentCard onClickBack={handleBackClick}>
       <OptimusUpdateForm initialFormValues={initialValues} />
-    </CardLayout>
+    </UpdateAgentCard>
   );
 };
