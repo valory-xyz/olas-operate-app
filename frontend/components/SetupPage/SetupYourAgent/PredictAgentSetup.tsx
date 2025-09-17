@@ -36,7 +36,7 @@ export const PredictAgentSetup = ({
             ...serviceTemplate.env_variables,
             GENAI_API_KEY: {
               ...serviceTemplate.env_variables.GENAI_API_KEY,
-              value: values.geminiApiKey,
+              value: values.geminiApiKey || '',
             },
           },
         };
