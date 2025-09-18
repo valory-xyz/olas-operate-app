@@ -1,38 +1,19 @@
 import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
 
 import { Table } from '@/components/ui/Table';
-import { NA } from '@/constants/symbols';
 import { TokenSymbolConfigMap } from '@/constants/token';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { usePearlWallet } from '../../AgentWalletContext';
-import { StakedAsset } from '../types';
+import { TransactionHistory } from '../types';
 
 const { Text } = Typography;
 
-const columns: TableColumnsType<StakedAsset> = [
-  {
-    title: 'Agent',
-    key: 'agent',
-    render: (_: unknown, record: StakedAsset) => (
-      <Flex align="center" gap={8}>
-        {record.agentImgSrc && (
-          <AntdImage
-            width={28}
-            src={record.agentImgSrc}
-            alt={record.symbol}
-            style={{ display: 'flex' }}
-          />
-        )}
-        <Text>{record.agentName || NA}</Text>
-      </Flex>
-    ),
-    width: '40%',
-  },
+const columns: TableColumnsType<TransactionHistory> = [
   {
     title: 'Token',
     key: 'token',
-    render: (_: unknown, record: StakedAsset) => (
+    render: (_: unknown, record: TransactionHistory) => (
       <Flex align="center" gap={8}>
         <AntdImage
           width={20}
@@ -48,11 +29,11 @@ const columns: TableColumnsType<StakedAsset> = [
   {
     title: 'Amount',
     key: 'amount',
-    render: (_: unknown, record: StakedAsset) => (
+    render: (_: unknown, record: TransactionHistory) => (
       <Flex vertical>
         <Text>{record.amount}</Text>
         <Text type="secondary" className="text-sm">
-          (${formatNumber(record.value)})
+          (${formatNumber(record.amount)})
         </Text>
       </Flex>
     ),
@@ -61,18 +42,18 @@ const columns: TableColumnsType<StakedAsset> = [
   },
 ];
 
-export const StakedAssetsTable = () => {
-  const { isLoading, stakedAssets } = usePearlWallet();
+export const TransactionHistoryTable = () => {
+  const { isLoading, transactionHistory } = usePearlWallet();
 
   return (
-    <Table<StakedAsset>
+    <Table<TransactionHistory>
       loading={isLoading}
-      dataSource={stakedAssets}
+      dataSource={transactionHistory}
       columns={columns}
       rowKey={(record) => record.symbol}
       pagination={false}
       rowHoverable={false}
-      locale={{ emptyText: 'No available assets' }}
+      locale={{ emptyText: 'No available transactions' }}
     />
   );
 };

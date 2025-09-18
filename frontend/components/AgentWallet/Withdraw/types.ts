@@ -9,6 +9,12 @@ export type AvailableAsset = {
   valueInUsd: number;
 };
 
+export type TransactionHistory = {
+  type: 'deposit' | 'withdrawal';
+  amount: number;
+  symbol: TokenSymbol;
+};
+
 export type StakedAsset = {
   agentName: Nullable<string>;
   agentImgSrc: Nullable<string>;
@@ -21,6 +27,5 @@ export type WalletChain = { chainId: EvmChainId; chainName: EvmChainName };
 
 export const STEPS = {
   AGENT_WALLET_SCREEN: 'AGENT_WALLET_SCREEN',
-  SELECT_AMOUNT: 'SELECT_AMOUNT',
-  ENTER_WITHDRAWAL_ADDRESS: 'ENTER_WITHDRAWAL_ADDRESS',
+  WITHDRAW_FROM_AGENT_WALLET: 'WITHDRAW_FROM_AGENT_WALLET',
 } as const;

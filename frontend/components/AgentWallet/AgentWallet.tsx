@@ -4,7 +4,6 @@ import { YourWalletPage } from '../YourWalletPage';
 import { AgentWalletProvider, usePearlWallet } from './AgentWalletContext';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
-import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw/SelectAmountToWithdraw';
 import { STEPS } from './Withdraw/types';
 
 /**
@@ -16,10 +15,7 @@ const AgentWalletContent = () => {
   const handleNext = useCallback(() => {
     switch (step) {
       case STEPS.AGENT_WALLET_SCREEN:
-        updateStep(STEPS.SELECT_AMOUNT);
-        break;
-      case STEPS.SELECT_AMOUNT:
-        updateStep(STEPS.ENTER_WITHDRAWAL_ADDRESS);
+        updateStep(STEPS.WITHDRAW_FROM_AGENT_WALLET);
         break;
       default:
         break;
@@ -28,11 +24,8 @@ const AgentWalletContent = () => {
 
   const handleBack = useCallback(() => {
     switch (step) {
-      case STEPS.SELECT_AMOUNT:
+      case STEPS.WITHDRAW_FROM_AGENT_WALLET:
         updateStep(STEPS.AGENT_WALLET_SCREEN);
-        break;
-      case STEPS.ENTER_WITHDRAWAL_ADDRESS:
-        updateStep(STEPS.SELECT_AMOUNT);
         break;
       default:
         break;
@@ -43,11 +36,7 @@ const AgentWalletContent = () => {
     switch (step) {
       case STEPS.AGENT_WALLET_SCREEN:
         return <BalancesAndAssets onWithdraw={handleNext} />;
-      case STEPS.SELECT_AMOUNT:
-        return (
-          <SelectAmountToWithdraw onBack={handleBack} onContinue={handleNext} />
-        );
-      case STEPS.ENTER_WITHDRAWAL_ADDRESS:
+      case STEPS.WITHDRAW_FROM_AGENT_WALLET:
         return <EnterWithdrawalAddress onBack={handleBack} />;
       default:
         throw new Error('Invalid step');

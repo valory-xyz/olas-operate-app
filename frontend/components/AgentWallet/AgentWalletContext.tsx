@@ -32,6 +32,7 @@ import {
   AvailableAsset,
   StakedAsset,
   STEPS,
+  TransactionHistory,
   WalletChain,
 } from './Withdraw/types';
 
@@ -42,21 +43,21 @@ const PearlWalletContext = createContext<{
   aggregatedBalance: Nullable<number>;
   chains: WalletChain[];
   walletChainId: Nullable<EvmChainId>;
+  transactionHistory: TransactionHistory[];
   availableAssets: AvailableAsset[];
   stakedAssets: StakedAsset[];
   amountsToWithdraw: Partial<Record<TokenSymbol, number>>;
-  onAmountChange: (symbol: TokenSymbol, amount: number) => void;
 }>({
   walletStep: STEPS.AGENT_WALLET_SCREEN,
   updateStep: () => {},
   isLoading: false,
   aggregatedBalance: null,
   walletChainId: null,
+  transactionHistory: [],
   chains: [],
   stakedAssets: [],
   availableAssets: [],
   amountsToWithdraw: {},
-  onAmountChange: () => {},
 });
 
 export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
@@ -79,17 +80,13 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
     masterSafeErc20Balances,
   } = useMasterBalances();
 
-  const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
+  const { evmHomeChainId: walletChainId, middlewareHomeChainId } =
+    selectedAgentConfig;
 
   // wallet chain ID
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
     STEPS.AGENT_WALLET_SCREEN,
   );
-  const [walletChainId, setWalletChainId] =
-    useState<Nullable<EvmChainId>>(evmHomeChainId);
-  const [amountsToWithdraw, setAmountsToWithdraw] = useState<
-    Partial<Record<TokenSymbol, number>>
-  >({});
 
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) =>
@@ -186,10 +183,6 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
     [setWalletStep],
   );
 
-  const onAmountChange = useCallback((symbol: TokenSymbol, amount: number) => {
-    setAmountsToWithdraw((prev) => ({ ...prev, [symbol]: amount }));
-  }, []);
-
   return (
     <PearlWalletContext.Provider
       value={{
@@ -198,11 +191,11 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
         isLoading: isServicesLoading || !isLoaded || isBalanceLoading,
         aggregatedBalance: null,
         walletChainId,
+        transactionHistory: [],
         chains,
         availableAssets,
         stakedAssets,
-        amountsToWithdraw,
-        onAmountChange,
+        amountsToWithdraw: {},
       }}
     >
       {children}

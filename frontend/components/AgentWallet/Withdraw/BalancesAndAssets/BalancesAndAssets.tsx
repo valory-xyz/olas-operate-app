@@ -10,6 +10,7 @@ import { formatNumber } from '@/utils/numberFormatters';
 
 import { usePearlWallet } from '../../AgentWalletContext';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
+import { TransactionHistoryTable } from './TransactionHistoryTable';
 
 const { Text, Title } = Typography;
 
@@ -33,6 +34,19 @@ const AvailableAssets = () => (
       </Title>
       <CardFlex $noBorder>
         <AvailableAssetsTable />
+      </CardFlex>
+    </Flex>
+  </Flex>
+);
+
+const TransactionHistory = () => (
+  <Flex vertical gap={24}>
+    <Flex vertical gap={12}>
+      <Title level={5} className="m-0 text-lg">
+        Transaction History
+      </Title>
+      <CardFlex $noBorder>
+        <TransactionHistoryTable />
       </CardFlex>
     </Flex>
   </Flex>
@@ -70,6 +84,7 @@ export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
       </CardFlex>
 
       <AvailableAssets />
+      <TransactionHistory />
     </Flex>
   );
 };
