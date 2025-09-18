@@ -67,7 +67,7 @@ export const TopCorner = styled.div<{
   $status: AgentStatus;
 }>`
   position: absolute;
-  bottom: ${LINE_HEIGHT}px;
+  bottom: ${LINE_HEIGHT / 2}px;
   height: ${CARD_MARGIN}px;
   width: ${CARD_MARGIN}px;
   ${({ $status }) => getTopCornerStylesByStatus($status)}
