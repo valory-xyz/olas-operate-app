@@ -5,5 +5,5 @@ import { COLOR } from '@/constants/colors';
 
 export const Divider = styled(AntdDivider)`
   margin: 0;
-  bordercolor: ${COLOR.GRAY_3};
+  border-color: ${COLOR.GRAY_3};
 `;

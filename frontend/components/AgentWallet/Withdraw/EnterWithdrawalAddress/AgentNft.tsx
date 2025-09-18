@@ -24,7 +24,7 @@ export const AgentNft = () => {
   const agentNftSrc = useAgentNft();
 
   return (
-    <Flex justify="center" align="center" gap={8} className="w-full">
+    <Flex justify="center" align="center" gap={8}>
       <NftFilled />
       <a href={agentNftSrc} target="_blank">
         Agent NFT {UNICODE_SYMBOLS.EXTERNAL_LINK}

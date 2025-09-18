@@ -4,7 +4,7 @@ import { Table } from '@/components/ui/Table';
 import { TokenSymbolConfigMap } from '@/constants/token';
 import { formatNumber } from '@/utils/numberFormatters';
 
-import { usePearlWallet } from '../../AgentWalletContext';
+import { useAgentWallet } from '../../AgentWalletContext';
 import { TransactionHistory } from '../types';
 
 const { Text } = Typography;
@@ -43,7 +43,7 @@ const columns: TableColumnsType<TransactionHistory> = [
 ];
 
 export const TransactionHistoryTable = () => {
-  const { isLoading, transactionHistory } = usePearlWallet();
+  const { isLoading, transactionHistory } = useAgentWallet();
 
   return (
     <Table<TransactionHistory>

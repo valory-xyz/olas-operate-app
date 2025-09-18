@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { YourWalletPage } from '../YourWalletPage';
-import { AgentWalletProvider, usePearlWallet } from './AgentWalletContext';
+import { AgentWalletProvider, useAgentWallet } from './AgentWalletContext';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
 import { STEPS } from './Withdraw/types';
@@ -10,7 +10,7 @@ import { STEPS } from './Withdraw/types';
  * To display the Agent Wallet page.
  */
 const AgentWalletContent = () => {
-  const { walletStep: step, updateStep } = usePearlWallet();
+  const { walletStep: step, updateStep } = useAgentWallet();
 
   const handleNext = useCallback(() => {
     switch (step) {

@@ -4,7 +4,7 @@ import { Table } from '@/components/ui/Table';
 import { TokenSymbolConfigMap } from '@/constants/token';
 import { formatNumber } from '@/utils/numberFormatters';
 
-import { usePearlWallet } from '../../AgentWalletContext';
+import { useAgentWallet } from '../../AgentWalletContext';
 import { AvailableAsset } from '../types';
 
 const { Text } = Typography;
@@ -48,7 +48,7 @@ const columns: TableColumnsType<AvailableAsset> = [
 ];
 
 export const AvailableAssetsTable = () => {
-  const { isLoading, availableAssets } = usePearlWallet();
+  const { isLoading, availableAssets } = useAgentWallet();
 
   return (
     <Table<AvailableAsset>

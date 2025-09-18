@@ -37,6 +37,9 @@ const PearlWalletContext = createContext<{
   aggregatedBalance: Nullable<number>;
   walletChainId: Nullable<EvmChainId>;
   transactionHistory: TransactionHistory[];
+  agentName: Nullable<string>;
+  agentImgSrc: Nullable<string>;
+
   availableAssets: AvailableAsset[];
   stakedAssets: StakedAsset[];
   amountsToWithdraw: Partial<Record<TokenSymbol, number>>;
@@ -47,6 +50,8 @@ const PearlWalletContext = createContext<{
   aggregatedBalance: null,
   walletChainId: null,
   transactionHistory: [],
+  agentName: null,
+  agentImgSrc: null,
   stakedAssets: [],
   availableAssets: [],
   amountsToWithdraw: {},
@@ -174,6 +179,8 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
         aggregatedBalance: null,
         walletChainId,
         transactionHistory: [],
+        agentName: generateName(serviceSafe?.address),
+        agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
 
         availableAssets,
         stakedAssets,
@@ -185,10 +192,10 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const usePearlWallet = () => {
+export const useAgentWallet = () => {
   const context = useContext(PearlWalletContext);
   if (!context) {
-    throw new Error('usePearlWallet must be used within a AgentWalletProvider');
+    throw new Error('useAgentWallet must be used within a AgentWalletProvider');
   }
   return context;
 };

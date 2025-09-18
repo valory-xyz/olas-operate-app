@@ -15,7 +15,7 @@ import { Address, TxnHash } from '@/types/Address';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
 
-import { usePearlWallet } from '../../AgentWalletContext';
+import { useAgentWallet } from '../../AgentWalletContext';
 
 /**
  * {
@@ -111,7 +111,7 @@ const withdrawFunds = async (
  * Hook to handle withdrawal of funds
  */
 export const useWithdrawFunds = () => {
-  const { walletChainId, amountsToWithdraw } = usePearlWallet();
+  const { walletChainId, amountsToWithdraw } = useAgentWallet();
 
   const { isPending, isSuccess, isError, data, mutateAsync } = useMutation({
     mutationFn: async (withdrawalRequest: WithdrawalRequest) => {

@@ -9,7 +9,7 @@ import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { formatNumber } from '@/utils/numberFormatters';
 
-import { usePearlWallet } from '../../AgentWalletContext';
+import { useAgentWallet } from '../../AgentWalletContext';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { TransactionHistoryTable } from './TransactionHistoryTable';
 
@@ -102,7 +102,7 @@ type BalancesAndAssetsProps = {
 
 export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
   const { info } = useMessageApi();
-  const { aggregatedBalance } = usePearlWallet();
+  const { aggregatedBalance } = useAgentWallet();
   const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
 
   return (
