@@ -145,7 +145,7 @@ textarea,
     0 4px 8px 0 rgba(255, 255, 255, 0.5) inset,
     0 0 8px 2px #edf2f7 inset;
   border: 1px transparent;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.2s ease, box-shadow 0.1s ease;
 }
 
 .ant-btn-default:hover {
@@ -156,8 +156,7 @@ textarea,
 }
 
 .ant-btn-default:focus,
-.ant-btn-default:active,
-.ant-btn-default.ant-btn-clicked {
+.ant-btn-default:active {
   background: #dfe6ec !important;
   box-shadow:
     0 -1px 0 0 rgba(0, 0, 0, 0.1) inset,
@@ -178,13 +177,18 @@ textarea,
 }
 
 .ant-btn-link:hover {
-  background: #eef2f6 !important;
+  background: rgba(0, 0, 0, 0.07) !important;
 }
 
 .ant-btn-link:focus,
-.ant-btn-link:active,
-.ant-btn-link:ant-btn-clicked {
-  background: #dde5ed !important;
+.ant-btn-link:active {
+  background: rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.10) inset, 0 1.25px 0.5px 1px rgba(0, 0, 0, 0.10) inset;
+}
+
+.ant-btn-link:disabled {
+  opacity: 0.4;
+  color: #000000 !important;
 }
 
 .balance {
