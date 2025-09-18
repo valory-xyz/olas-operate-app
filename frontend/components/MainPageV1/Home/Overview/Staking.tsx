@@ -13,7 +13,7 @@ import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetai
 import { useStakingDetails } from '@/hooks/useStakingDetails';
 
 const { Text, Title } = Typography;
-const { Timer } = Statistic;
+const { Countdown } = Statistic;
 
 const EvictionAlert = () => (
   <Alert
@@ -86,8 +86,7 @@ export const Staking = () => {
               <Flex align="center" gap={8}>
                 <Clock />
                 {currentEpochLifetime ? (
-                  <Timer
-                    type="countdown"
+                  <Countdown
                     value={currentEpochLifetime}
                     valueStyle={{ fontSize: 16 }}
                   />

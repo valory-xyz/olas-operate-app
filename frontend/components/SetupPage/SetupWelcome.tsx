@@ -213,7 +213,6 @@ const SetupWelcomeLogin = () => {
             type="link"
             target="_blank"
             size="small"
-            disabled
             onClick={() => goto(SetupScreen.Restore)}
           >
             Forgot password? Restore access
