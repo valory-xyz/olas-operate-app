@@ -11,6 +11,7 @@ import { Segmented } from '@/components/ui/Segmented';
 import { EvmChainName } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { TokenSymbolMap } from '@/constants/token';
+import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useRewardsHistory } from '@/hooks/useRewardsHistory';
@@ -57,7 +58,7 @@ const StakingStats = () => {
             <StatsSkeleton />
           ) : (
             <Title level={5} className="mt-0 mb-0">
-              ${totalRewardsInUsd}
+              ${totalRewardsInUsd.toFixed(2)}
             </Title>
           )}
         </Flex>
@@ -150,7 +151,7 @@ export const AgentStaking = () => {
     useState<SelectionTabsProps['currentTab']>('StakingContract');
 
   return (
-    <Flex vertical>
+    <Flex vertical style={{ width: MAIN_CONTENT_MAX_WIDTH, margin: '0 auto' }}>
       <BackButton onPrev={() => goto(Pages.Main)} />
       <Title level={3} className="mt-12 mb-32">
         Agent Staking
