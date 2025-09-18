@@ -117,7 +117,7 @@ const useServiceDeployment = () => {
     isServiceRunning,
     isAllStakingContractDetailsRecordLoaded,
     selectedAgentConfig.isUnderConstruction,
-    selectedAgentConfig.name,
+    selectedAgentConfig.hasExternalFunds,
     selectedStakingProgramMeta?.deprecated,
     hasEnoughServiceSlots,
     isServiceStaked,
