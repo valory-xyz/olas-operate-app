@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
+import { RequiredMark } from '@/components/ui/RequiredMark';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -169,9 +170,9 @@ const OptimusAgentFormContent = ({
         validateMessages={validateMessages}
         disabled={canSubmitForm}
         className="label-no-padding"
+        requiredMark={RequiredMark}
       >
         {isTenderlyStep && <TenderlyApiKeySubHeader isSetupPage />}
-        <TenderlyApiKeySubHeader isSetupPage />
         <Form.Item
           label={<TenderlyAccessTokenLabel />}
           name="tenderlyAccessToken"

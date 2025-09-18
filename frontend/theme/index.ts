@@ -37,8 +37,9 @@ export const mainTheme: ThemeConfig = {
       borderRadiusLG: 10,
     },
     Input: {
-      fontSize: 20,
+      fontSize: 16,
       colorTextDisabled: '#334155',
+      paddingBlock: 8,
     },
     Menu: {
       activeBarBorderWidth: 0,
