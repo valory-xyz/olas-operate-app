@@ -13,7 +13,7 @@ import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetai
 import { useStakingDetails } from '@/hooks/useStakingDetails';
 
 const { Text, Title } = Typography;
-const { Countdown } = Statistic;
+const { Timer } = Statistic;
 
 const EvictionAlert = () => (
   <Alert
@@ -72,7 +72,7 @@ export const Staking = () => {
     <Flex vertical>
       <Flex justify="space-between" align="center">
         <Title level={4}>Staking</Title>
-        <Button size="small" onClick={() => goto(Pages.SelectStaking)}>
+        <Button size="small" onClick={() => goto(Pages.AgentStaking)}>
           Manage Staking
         </Button>
       </Flex>
@@ -86,7 +86,8 @@ export const Staking = () => {
               <Flex align="center" gap={8}>
                 <Clock />
                 {currentEpochLifetime ? (
-                  <Countdown
+                  <Timer
+                    type="countdown"
                     value={currentEpochLifetime}
                     valueStyle={{ fontSize: 16 }}
                   />
