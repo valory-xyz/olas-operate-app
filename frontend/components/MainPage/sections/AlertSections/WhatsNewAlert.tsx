@@ -66,7 +66,7 @@ export const WhatsNewAlert = () => {
               style={{ marginBottom: -2 }}
             />
           </a>{' '}
-          <Text>and discover specific agent updates in the Agent Profile.</Text>
+          <Text>and discover specific agent updates.</Text>
         </>
       }
     />

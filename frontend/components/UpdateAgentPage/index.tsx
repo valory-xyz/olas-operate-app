@@ -12,6 +12,7 @@ import { AgentsFunUpdateSetup } from './AgentsFunUpdateSetup';
 import { UpdateAgentProvider } from './context/UpdateAgentProvider';
 import { ModiusUpdatePage } from './ModiusUpdateForm';
 import { OptimusUpdatePage } from './OptimusUpdateForm';
+import { PredictUpdateSetup } from './PredictUpdateSetup';
 
 export const UpdateAgentPage = () => {
   const { selectedAgentType } = useServices();
@@ -21,6 +22,9 @@ export const UpdateAgentPage = () => {
     <AgentFormContainer>
       <UpdateAgentProvider>
         <ConfigProvider theme={LOCAL_FORM_THEME}>
+          {selectedAgentType === AgentMap.PredictTrader && (
+            <PredictUpdateSetup />
+          )}
           {selectedAgentType === AgentMap.AgentsFun && <AgentsFunUpdateSetup />}
           {selectedAgentType === AgentMap.Modius && (
             <ModiusUpdatePage renderForm={displayForm} />

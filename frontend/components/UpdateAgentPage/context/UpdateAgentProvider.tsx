@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import { ServiceTemplate } from '@/client';
+import { PredictFormValues } from '@/components/AgentForms/PredictForm';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
@@ -61,13 +62,12 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
         name === selectedService.name || agentType === selectedAgentType,
     );
 
-    const agentsFunFormValues = formValues as AgentsFunFormValues;
-
     const envVariables = (() => {
       if (selectedAgentType === AgentType.AgentsFun) {
+        const agentsFunFormValues = formValues as AgentsFunFormValues;
         return {
           PERSONA: agentsFunFormValues.personaDescription,
-          GENAI_API_KEY: agentsFunFormValues.geminiApiKey,
+          GENAI_API_KEY: agentsFunFormValues.geminiApiKey || '',
           FIREWORKS_API_KEY: agentsFunFormValues.fireworksApiEnabled
             ? agentsFunFormValues.fireworksApiKey
             : '',
@@ -78,14 +78,22 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
           TWEEPY_ACCESS_TOKEN: agentsFunFormValues.xAccessToken,
           TWEEPY_ACCESS_TOKEN_SECRET: agentsFunFormValues.xAccessTokenSecret,
         };
+      } else if (selectedAgentType === AgentType.PredictTrader) {
+        const predictFormValues = formValues as PredictFormValues;
+        return {
+          GENAI_API_KEY: predictFormValues.geminiApiKey || '',
+        };
       }
       return formValues.env_variables;
     })() as ServiceTemplate['env_variables'];
 
-    const formValuesWithoutEnv =
-      selectedAgentType === AgentType.AgentsFun
-        ? { description: `Agents.Fun @${agentsFunFormValues.xUsername}` }
-        : formValues;
+    const formValuesWithoutEnv = (() => {
+      if (selectedAgentType === AgentType.AgentsFun) {
+        const agentsFunFormValues = formValues as AgentsFunFormValues;
+        return { description: `Agents.Fun @${agentsFunFormValues.xUsername}` };
+      }
+      return formValues;
+    })();
 
     const partialServiceTemplate = {
       serviceConfigId: selectedService.service_config_id,

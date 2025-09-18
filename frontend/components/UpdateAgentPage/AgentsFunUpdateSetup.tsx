@@ -11,8 +11,8 @@ import {
   AgentsFunAgentForm,
   AgentsFunFormValues,
 } from '../AgentForms/AgentsFunAgentForm';
-import { CardLayout } from './CardLayout';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
+import { UpdateAgentCard } from './UpdateAgentCard';
 
 export const AgentsFunUpdateSetup = () => {
   const { goto } = usePageState();
@@ -77,7 +77,7 @@ export const AgentsFunUpdateSetup = () => {
   if (!initialValues) return null;
 
   return (
-    <CardLayout onClickBack={handleClickBack}>
+    <UpdateAgentCard onClickBack={handleClickBack}>
       <AgentsFunAgentForm
         form={form}
         isFormEnabled={isEditing}
@@ -85,6 +85,6 @@ export const AgentsFunUpdateSetup = () => {
         agentFormType={isEditing ? 'update' : 'view'}
         onSubmit={onSubmit}
       />
-    </CardLayout>
+    </UpdateAgentCard>
   );
 };

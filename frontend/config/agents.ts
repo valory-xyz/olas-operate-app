@@ -44,7 +44,7 @@ export const AGENT_CONFIG: {
 } = {
   [AgentMap.PredictTrader]: {
     isAgentEnabled: true,
-    requiresSetup: false,
+    requiresSetup: true,
     name: 'Predict Trader',
     evmHomeChainId: EvmChainId.Gnosis,
     middlewareHomeChainId: MiddlewareChain.GNOSIS,
@@ -56,26 +56,6 @@ export const AGENT_CONFIG: {
     description: 'Participates in prediction markets.',
     hasExternalFunds: false,
     category: 'Prediction Markets',
-  },
-  [AgentMap.Modius]: {
-    isAgentEnabled: true,
-    isComingSoon: false,
-    requiresSetup: true,
-    name: 'Modius agent',
-    evmHomeChainId: EvmChainId.Mode,
-    middlewareHomeChainId: MiddlewareChain.MODE,
-    agentIds: [40],
-    requiresAgentSafesOn: [EvmChainId.Mode],
-    additionalRequirements: {
-      [EvmChainId.Mode]: { [TokenSymbol.USDC]: getModiusUsdcConfig() },
-    },
-    requiresMasterSafesOn: [EvmChainId.Mode],
-    serviceApi: ModiusService,
-    displayName: 'Modius agent',
-    description:
-      'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
-    hasExternalFunds: true,
-    category: 'DeFi',
   },
   [AgentMap.Optimus]: {
     isAgentEnabled: true,
@@ -113,6 +93,27 @@ export const AGENT_CONFIG: {
     description:
       'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
     hasExternalFunds: false,
+  },
+  [AgentMap.Modius]: {
+    isAgentEnabled: true,
+    isUnderConstruction: true,
+    isComingSoon: false,
+    requiresSetup: true,
+    name: 'Modius agent',
+    evmHomeChainId: EvmChainId.Mode,
+    agentIds: [40],
+    middlewareHomeChainId: MiddlewareChain.MODE,
+    requiresAgentSafesOn: [EvmChainId.Mode],
+    additionalRequirements: {
+      [EvmChainId.Mode]: { [TokenSymbol.USDC]: getModiusUsdcConfig() },
+    },
+    requiresMasterSafesOn: [EvmChainId.Mode],
+    serviceApi: ModiusService,
+    displayName: 'Modius agent',
+    description:
+      'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
+    hasExternalFunds: true,
+    category: 'DeFi',
   },
 };
 

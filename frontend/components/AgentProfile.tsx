@@ -1,4 +1,5 @@
 import { Button, Checkbox, Flex, message, Modal } from 'antd';
+import { isBoolean } from 'lodash';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 
 import { MiddlewareChain, MiddlewareDeploymentStatus } from '@/client';
@@ -15,10 +16,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 
-type RenderContainerProps = (props: {
-  onClick?: () => void;
-  disabled?: boolean;
-}) => ReactNode;
+type RenderContainerProps = (props: { onClick?: () => void }) => ReactNode;
 
 type AgentProfileButtonProps = {
   onClick?: () => void;
@@ -29,30 +27,26 @@ const AgentProfileButton = ({
   onClick,
   renderContainer,
 }: AgentProfileButtonProps) => {
-  const { selectedAgentConfig } = useServices();
-  const disabled = selectedAgentConfig.isUnderConstruction;
-
   if (renderContainer) {
-    return renderContainer({ onClick, disabled });
+    return renderContainer({ onClick });
   }
 
   return (
     <Button
       type="default"
       size="large"
-      disabled={disabled}
       icon={<AgentProfileSvg />}
       onClick={onClick}
     />
   );
 };
 
-type BabyDegenUiProps = {
+type AgentUiProps = {
   onClick: () => void;
   renderContainer?: RenderContainerProps;
 };
 
-const BabyDegenUi = ({ onClick, renderContainer }: BabyDegenUiProps) => {
+const AgentUi = ({ onClick, renderContainer }: AgentUiProps) => {
   const electronApi = useElectronApi();
   const { selectedService, selectedAgentType } = useServices();
   const { goto } = usePageState();
@@ -65,15 +59,16 @@ const BabyDegenUi = ({ onClick, renderContainer }: BabyDegenUiProps) => {
   const canAccessProfile = useMemo(() => {
     if (!electronApi.store) return false;
 
-    return (
-      electronApi.store.get?.(
-        `${selectedAgentType}.isProfileWarningDisplayed`,
-      ) ?? false
-    );
+    const key = `${selectedAgentType}.isProfileWarningDisplayed`;
+    return electronApi.store.get?.(key) ?? false;
   }, [electronApi.store, selectedAgentType]);
 
-  const handleAgentProfileClick = useCallback(() => {
-    if (!!geminiApiKey || canAccessProfile) {
+  const handleAgentProfileClick = useCallback(async () => {
+    const canAccess = isBoolean(canAccessProfile)
+      ? canAccessProfile
+      : await canAccessProfile;
+
+    if (!!geminiApiKey || canAccess) {
       onClick();
       return;
     }
@@ -101,6 +96,7 @@ const BabyDegenUi = ({ onClick, renderContainer }: BabyDegenUiProps) => {
   }, [dontShowAgain, handleDoNotShowAgain, onClick]);
 
   const agentName = useMemo(() => {
+    if (selectedAgentType === AgentType.PredictTrader) return 'Prediction';
     if (selectedAgentType === AgentType.Modius) return 'Modius';
     if (selectedAgentType === AgentType.Optimus) return 'Optimus';
     return NA;
@@ -199,7 +195,7 @@ export const AgentProfile = ({ renderContainer }: AgentProfileProps) => {
       middlewareChain === MiddlewareChain.GNOSIS &&
       selectedAgentType === AgentType.PredictTrader
     ) {
-      return <AgentProfileButton {...commonProps} />;
+      return <AgentUi {...commonProps} />;
     }
 
     // base - agentsFun
@@ -215,7 +211,7 @@ export const AgentProfile = ({ renderContainer }: AgentProfileProps) => {
       middlewareChain === MiddlewareChain.MODE &&
       selectedAgentType === AgentType.Modius
     ) {
-      return <BabyDegenUi {...commonProps} />;
+      return <AgentUi {...commonProps} />;
     }
 
     // optimism - optimus
@@ -223,7 +219,7 @@ export const AgentProfile = ({ renderContainer }: AgentProfileProps) => {
       middlewareChain === MiddlewareChain.OPTIMISM &&
       selectedAgentType === AgentType.Optimus
     ) {
-      return <BabyDegenUi {...commonProps} />;
+      return <AgentUi {...commonProps} />;
     }
 
     return null;

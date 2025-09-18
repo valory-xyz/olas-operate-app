@@ -11,7 +11,7 @@ import { useCallback, useState } from 'react';
 import styled from 'styled-components';
 
 import { CopySvg } from '@/components/custom-icons/Copy';
-import { WalletSvg } from '@/components/custom-icons/Wallet';
+import { WalletIFilled } from '@/components/custom-icons/WalletIFilled';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { COLOR } from '@/constants/colors';
 import { useMasterWalletContext } from '@/hooks/useWallet';
@@ -134,7 +134,7 @@ export const FundingDescription = ({
       <Flex vertical gap={8}>
         <Text className="text-neutral-tertiary">From</Text>
         <Flex align="center" gap={8}>
-          <WalletSvg />
+          <WalletIFilled />
           <Text>Your external wallet</Text>
           <ExternalWalletTooltip />
         </Flex>
@@ -143,7 +143,7 @@ export const FundingDescription = ({
       <Flex vertical gap={8}>
         <Text className="text-neutral-tertiary">To Pearl Wallet</Text>
         <Flex align="center" gap={8}>
-          <WalletSvg />
+          <WalletIFilled />
           <Text>{address}</Text>
         </Flex>
       </Flex>

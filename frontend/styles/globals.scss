@@ -167,8 +167,31 @@ textarea,
   display: flex;
 }
 
+.justify-center {
+  justify-content: center;
+}
+
+.align-center {
+  align-items: center;
+}
+
 .m-0 {
   margin: 0 !important;
+}
+
+.my-0 {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.my-12 {
+  margin-top: 12px !important;
+  margin-bottom: 12px !important;
+}
+
+.my-40 {
+  margin-top: 40px !important;
+  margin-bottom: 40px !important;
 }
 
 .mt-0 {
@@ -228,6 +251,10 @@ textarea,
   margin-left: 12px !important;
 }
 
+.ml-2 {
+  margin-left: 2px !important;
+}
+
 .mt-8 {
   margin-top: 8px !important;
 }
@@ -253,12 +280,36 @@ textarea,
   padding: 0 !important;
 }
 
+.pl-0 {
+  padding-left: 0 !important;
+}
+
+.p-8 {
+  padding: 8px;
+}
+
+.p-16 {
+  padding: 16px;
+}
+
+.p-24 {
+  padding: 24px;
+}
+
+.p-32 {
+  padding: 24px !important;
+}
+
 .pl-4 {
   padding-left: 4px !important;
 }
 
 .pl-16 {
   padding-left: 16px !important;
+}
+
+.pl-20 {
+  padding-left: 20px !important;
 }
 
 .pr-16 {
@@ -289,21 +340,19 @@ textarea,
   padding-top: 56px !important;
 }
 
-.p-8 {
-  padding: 8px;
-}
-
-.p-16 {
-  padding: 16px;
-}
-
-.p-24 {
-  padding: 24px;
-}
-
 .py-24 {
   padding-top: 24px !important;
   padding-bottom: 24px !important;
+}
+
+.py-4 {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+.px-8 {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
 }
 
 .px-0 {
@@ -325,9 +374,22 @@ textarea,
   margin-right: auto !important;
 }
 
+.mr-6 {
+  margin-right: 6px !important;
+}
+
+// radius
+.rounded-8 {
+  border-radius: 8px
+}
+
 // font size
 .text-xl {
   font-size: 20px;
+}
+
+.text-lg {
+  font-size: 18px !important;
 }
 
 .text-base {
@@ -404,6 +466,10 @@ ul.alert-list {
 }
 
 // width
+.w-max-content {
+  width: max-content !important;
+}
+
 .w-1\/4 {
   width: 25% !important;
 }
