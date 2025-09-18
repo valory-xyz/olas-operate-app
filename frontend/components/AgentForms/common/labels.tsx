@@ -9,7 +9,7 @@ import {
   TENDERLY_URL,
 } from '@/constants/urls';
 
-const { Text, Title, Paragraph } = Typography;
+const { Text, Title } = Typography;
 
 export const TenderlyApiKeySubHeader = ({
   isSetupPage = false,
@@ -45,12 +45,14 @@ export const CoinGeckoApiKeySubHeader = ({
   </Flex>
 );
 
+type AgentsNameLabel = 'Modius' | 'Optimus' | 'Prediction';
+
 export const GeminiApiKeySubHeader = ({
   isSetupPage = false,
   name,
 }: {
   isSetupPage?: boolean;
-  name: 'Modius' | 'Optimus';
+  name: AgentsNameLabel;
 }) => (
   <Flex gap={8} vertical className="mb-32">
     <Title level={5} className="m-0">
@@ -63,8 +65,6 @@ export const GeminiApiKeySubHeader = ({
     </Text>
   </Flex>
 );
-
-type AgentsNameLabel = 'Modius' | 'Optimus' | 'Prediction';
 
 export const TenderlyAccessTokenLabel = () => (
   <FormLabel>Tenderly access token</FormLabel>
@@ -172,16 +172,4 @@ export const GeminiApiKeyDesc = () => (
       .
     </Text>
   </Flex>
-);
-
-// TODO: ensure Predict Agent Form works in Pearl V1
-export const GoogleAiStudioHelper = ({ name }: { name: AgentsNameLabel }) => (
-  <Paragraph className="text-sm m-0">
-    The Gemini API key allows you to chat with your agent and update its goals
-    through {name} profile. You can generate one for free on{' '}
-    <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
-      Google AI Studio
-    </a>
-    .
-  </Paragraph>
 );
