@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 
-import { YourWalletPage } from '../YourWalletPage';
 import { AgentWalletProvider, useAgentWallet } from './AgentWalletContext';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
@@ -49,7 +48,5 @@ const AgentWalletContent = () => {
 export const AgentWallet = () => (
   <AgentWalletProvider>
     <AgentWalletContent />
-    <br />
-    <YourWalletPage />
   </AgentWalletProvider>
 );
