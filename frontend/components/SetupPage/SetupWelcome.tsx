@@ -158,7 +158,7 @@ const SetupWelcomeLogin = () => {
 
     // If no balance is loaded, redirect to setup screen
     if (!eoaBalanceEth) {
-      goto(SetupScreen.SetupEoaFundingIncomplete);
+      goto(SetupScreen.FundYourAgent);
       return;
     }
 

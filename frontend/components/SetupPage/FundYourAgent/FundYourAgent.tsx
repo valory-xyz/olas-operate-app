@@ -5,11 +5,13 @@ import styled from 'styled-components';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { CardTitle } from '@/components/ui/Typography';
-import { EvmChainName } from '@/constants/chains';
+import { EvmChainId, EvmChainName } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
+import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
+import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
@@ -58,15 +60,14 @@ type FundMethodCardProps = {
   isBalancesAndFundingRequirementsLoading: boolean;
 };
 
-const OnRamp = () => {
-  const { networkId: onRampChainId } = useOnRampContext();
+const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
   const { goto } = useSetup();
 
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
     totalNativeToken,
-  } = useTotalNativeTokenRequired(onRampChainId!);
+  } = useTotalNativeTokenRequired(onRampChainId, 'onboarding');
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
@@ -105,6 +106,7 @@ const Transfer = ({
   isBalancesAndFundingRequirementsLoading,
 }: FundMethodCardProps) => {
   const { goto } = useSetup();
+
   return (
     <FundMethodCard>
       <div className="fund-method-card-body">
@@ -137,6 +139,7 @@ const Bridge = ({
   isBalancesAndFundingRequirementsLoading,
 }: FundMethodCardProps) => {
   const { goto } = useSetup();
+
   return (
     <FundMethodCard>
       <div className="fund-method-card-body">
@@ -165,7 +168,7 @@ const Bridge = ({
 
 export const FundYourAgent = () => {
   const { selectedAgentConfig } = useServices();
-  const { goto } = useSetup();
+  const { goto } = usePageState();
   const { evmHomeChainId, requiresSetup } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const { totalTokenRequirements: tokenRequirements, isLoading } =
@@ -181,12 +184,13 @@ export const FundYourAgent = () => {
     'bridge-onboarding',
     'on-ramp',
   ]);
+  const { networkId: onRampChainId } = useOnRampContext();
   const areTokenRequirementsLoading =
     isLoading || tokenRequirements.length === 0;
 
   return (
     <FundYourAgentContainer>
-      <BackButton onPrev={() => goto(SetupScreen.AgentOnboarding)} />
+      <BackButton onPrev={() => goto(Pages.Main)} />
       <Title level={3} className="mt-12">
         Fund your {selectedAgentConfig.displayName}
       </Title>
@@ -195,7 +199,9 @@ export const FundYourAgent = () => {
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>
-        {isOnRampEnabled && <OnRamp />}
+        {isOnRampEnabled && onRampChainId && (
+          <OnRamp onRampChainId={onRampChainId} />
+        )}
         <Transfer
           chainName={chainName}
           tokenRequirements={tokenRequirements}
