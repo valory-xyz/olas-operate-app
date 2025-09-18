@@ -17,20 +17,12 @@ import { Sidebar } from './Sidebar';
 
 const { Content: AntdContent } = Layout;
 
-const ContentDiv = styled.div``;
-
-const Content = styled(AntdContent)<{ $isFullPage?: boolean }>`
+const Content = styled(AntdContent)<{ $isSplitScreenPage?: boolean }>`
+  display: flex;
+  flex-direction: column;
   margin: 0 auto;
   overflow: auto;
-  ${(props) =>
-    props.$isFullPage
-      ? ``
-      : `padding: 40px 0px; 
-          ${ContentDiv} {
-            margin: 0 auto;
-            max-width: 744px;
-          }
-      `}
+  ${(props) => (props.$isSplitScreenPage ? `` : `padding: 40px 0px;`)}
 `;
 
 export const Main = () => {
@@ -57,16 +49,12 @@ export const Main = () => {
     }
   }, [pageState]);
 
-  const isFullPage =
-    pageState === Pages.UpdateAgentTemplate ||
-    pageState === Pages.SelectStaking;
+  const isSplitScreenPage = pageState === Pages.UpdateAgentTemplate;
 
   return (
     <Layout>
       <Sidebar />
-      <Content $isFullPage={isFullPage}>
-        <ContentDiv>{mainContent}</ContentDiv>
-      </Content>
+      <Content $isSplitScreenPage={isSplitScreenPage}>{mainContent}</Content>
     </Layout>
   );
 };

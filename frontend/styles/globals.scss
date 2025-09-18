@@ -249,7 +249,8 @@ textarea,
     color: inherit;
   }
 
-  &--full-width {
+  &--full-width
+   {
     flex: auto;
     border-radius: 0;
     border-left: 0;
@@ -277,6 +278,10 @@ textarea,
 
 .flex {
   display: flex;
+}
+
+.flex-auto {
+  flex: auto;
 }
 
 .justify-center {
