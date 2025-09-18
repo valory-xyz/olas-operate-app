@@ -10,6 +10,7 @@ import { UpdateAgentPage } from '@/components/UpdateAgentPage';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 
+import { AgentWallet } from '../AgentWallet';
 import { ConfirmSwitch } from '../ConfirmSwitch/ConfirmSwitch';
 import { PearlWallet } from '../PearlWallet';
 import { Home } from './Home';
@@ -40,6 +41,8 @@ export const Main = () => {
     switch (pageState) {
       case Pages.PearlWallet:
         return <PearlWallet />;
+      case Pages.AgentWallet:
+        return <AgentWallet />;
       case Pages.Settings:
         return <Settings />;
       case Pages.HelpAndSupport:

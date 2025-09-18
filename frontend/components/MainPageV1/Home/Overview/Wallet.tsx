@@ -1,8 +1,8 @@
-import { Button, Flex, Skeleton, Statistic, Typography } from 'antd';
+import { Button, Flex, Skeleton, Typography } from 'antd';
+import { isNumber } from 'lodash';
 import { useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
-import { Clock } from '@/components/custom-icons/Clock';
 import { FireNoStreak } from '@/components/custom-icons/FireNoStreak';
 import { FireV1 } from '@/components/custom-icons/FireV1';
 import { CardFlex } from '@/components/ui/CardFlex';
@@ -12,7 +12,6 @@ import { usePageState } from '@/hooks/usePageState';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
 
 const { Text, Title } = Typography;
-const { Countdown } = Statistic;
 
 const LowPearlWalletBalance = () => (
   <CustomAlert
@@ -71,7 +70,8 @@ const showAlert = true;
  */
 export const Wallet = () => {
   const { goto } = usePageState();
-  const { currentEpochLifetime } = useStakingDetails();
+  // const { currentEpochLifetime } = useStakingDetails();
+  const aggregatedBalanceInUsdTODO = null;
 
   // TODO
   const alert = useMemo(() => {
@@ -83,7 +83,7 @@ export const Wallet = () => {
     <Flex vertical>
       <Flex justify="space-between" align="center">
         <Title level={4}>Wallet</Title>
-        <Button size="small" onClick={() => goto(Pages.PearlWallet)}>
+        <Button size="small" onClick={() => goto(Pages.AgentWallet)}>
           Manage Wallet
         </Button>
       </Flex>
@@ -93,21 +93,15 @@ export const Wallet = () => {
           {alert}
           <Flex flex={1}>
             <Flex flex={1} vertical gap={4}>
-              <Text type="secondary">Current Epoch lifetime</Text>
+              <Text className="text-neutral-tertiary">Aggregated balance</Text>
               <Flex align="center" gap={8}>
-                <Clock />
-                {currentEpochLifetime ? (
-                  <Countdown
-                    value={currentEpochLifetime}
-                    valueStyle={{ fontSize: 16 }}
-                  />
-                ) : (
-                  <Text>Soon</Text>
-                )}
+                {isNumber(aggregatedBalanceInUsdTODO)
+                  ? `$${aggregatedBalanceInUsdTODO}`
+                  : NA}
               </Flex>
             </Flex>
             <Flex flex={1} vertical gap={4}>
-              <Text type="secondary">Streak</Text>
+              <Text className="text-neutral-tertiary">Tokens</Text>
               <Streak />
             </Flex>
           </Flex>
