@@ -158,7 +158,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     totalNativeToken,
     receivingTokens,
     onRetry,
-  } = useTotalNativeTokenRequired(onRampChainId, 'paying-receiving-table');
+  } = useTotalNativeTokenRequired(onRampChainId, 'preview');
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,

@@ -20,7 +20,7 @@ import { useBridgeRequirementsQuery } from '../components/SetupPage/Create/Setup
  */
 export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,
-  queryKey: 'paying-receiving-table' | 'fund-your-agent' = 'fund-your-agent',
+  queryKey: 'preview' | 'onboarding' = 'onboarding',
 ) => {
   const { updateEthAmountToPay, isOnRampingTransactionSuccessful } =
     useOnRampContext();
@@ -34,12 +34,12 @@ export const useTotalNativeTokenRequired = (
     bridgeFundingRequirements,
     receivingTokens,
     onRetry,
-  } = useBridgeRequirementsQuery(
+  } = useBridgeRequirementsQuery({
     onRampChainId,
-    !isOnRampingTransactionSuccessful,
-    isOnRampingTransactionSuccessful,
-    queryKey,
-  );
+    enabled: !isOnRampingTransactionSuccessful,
+    stopPollingCondition: isOnRampingTransactionSuccessful,
+    queryKeySuffix: queryKey,
+  });
 
   /**
    * Calculates the total native token required for the bridge.

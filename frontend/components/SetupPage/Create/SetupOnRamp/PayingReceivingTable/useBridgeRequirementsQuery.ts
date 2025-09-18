@@ -9,16 +9,23 @@ import { delayInSeconds } from '@/utils/delay';
 import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
 import { useBridgeRequirementsUtils } from '../hooks/useBridgeRequirementsUtils';
 
+type UseBridgeRequirementsQueryParams = {
+  onRampChainId: EvmChainId;
+  enabled: boolean;
+  stopPollingCondition: boolean;
+  queryKeySuffix?: string;
+};
+
 /**
  * Hook to calculate the bridge requirements for the on-ramp process,
  * get quote and function to retry fetching the quote.
  */
-export const useBridgeRequirementsQuery = (
-  onRampChainId: EvmChainId,
-  enabled: boolean = true,
-  stopPollingCondition: boolean,
-  queryKeySuffix?: string,
-) => {
+export const useBridgeRequirementsQuery = ({
+  onRampChainId,
+  enabled = true,
+  stopPollingCondition,
+  queryKeySuffix,
+}: UseBridgeRequirementsQueryParams) => {
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
   const {

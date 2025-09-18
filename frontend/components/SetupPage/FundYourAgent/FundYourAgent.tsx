@@ -67,7 +67,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
     totalNativeToken,
-  } = useTotalNativeTokenRequired(onRampChainId, 'fund-your-agent');
+  } = useTotalNativeTokenRequired(onRampChainId, 'onboarding');
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
