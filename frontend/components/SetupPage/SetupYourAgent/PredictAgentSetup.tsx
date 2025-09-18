@@ -49,7 +49,7 @@ export const PredictAgentSetup = ({
         message.success('Agent setup complete');
 
         // move to next page
-        goto(SetupScreen.SetupEoaFunding);
+        goto(SetupScreen.FundYourAgent);
       } catch (error) {
         message.error('Something went wrong. Please try again.');
         console.error(error);
