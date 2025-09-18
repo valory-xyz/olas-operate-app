@@ -9,12 +9,15 @@ const Container = styled(Flex)`
   display: flex;
   flex: auto;
   text-align: center;
+  margin-bottom: -32px;
+  padding: 0 8px;
 `;
 
 const Iframe = styled.iframe`
   width: 100%;
   height: 100%;
   border: none;
+  border-radius: 8px;
 `;
 
 export const Profile = () => {
