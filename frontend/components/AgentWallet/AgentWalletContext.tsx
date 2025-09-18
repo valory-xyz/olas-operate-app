@@ -16,6 +16,7 @@ import {
   useBalanceContext,
   useServiceBalances,
 } from '@/hooks/useBalanceContext';
+import { useRewardContext } from '@/hooks/useRewardContext';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { toUsd } from '@/service/toUsd';
@@ -39,6 +40,7 @@ const PearlWalletContext = createContext<{
   transactionHistory: TransactionHistory[];
   agentName: Nullable<string>;
   agentImgSrc: Nullable<string>;
+  stakingRewards: number;
 
   availableAssets: AvailableAsset[];
   stakedAssets: StakedAsset[];
@@ -52,6 +54,8 @@ const PearlWalletContext = createContext<{
   transactionHistory: [],
   agentName: null,
   agentImgSrc: null,
+  stakingRewards: 0,
+
   stakedAssets: [],
   availableAssets: [],
   amountsToWithdraw: {},
@@ -74,6 +78,8 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
   } = useServiceBalances(selectedService?.service_config_id);
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
+  const { availableRewardsForEpochEth, accruedServiceStakingRewards } =
+    useRewardContext();
 
   const { evmHomeChainId: walletChainId, middlewareHomeChainId } =
     selectedAgentConfig;
@@ -152,6 +158,11 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
     serviceSafeOlas?.balance,
   ]);
 
+  // rewards not yet claimed from staking contract
+  const stakingRewards = useMemo(() => {
+    return sum([accruedServiceStakingRewards, availableRewardsForEpochEth]);
+  }, [accruedServiceStakingRewards, availableRewardsForEpochEth]);
+
   // staked OLAS
   const stakedAssets: StakedAsset[] = [
     {
@@ -181,6 +192,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
         transactionHistory: [],
         agentName: generateName(serviceSafe?.address),
         agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
+        stakingRewards,
 
         availableAssets,
         stakedAssets,

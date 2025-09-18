@@ -1,13 +1,14 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Divider, Flex, Image, Typography } from 'antd';
-import { entries, kebabCase } from 'lodash';
+import { Button, Divider, Flex, Image, Typography } from 'antd';
+import { kebabCase } from 'lodash';
 import styled from 'styled-components';
 
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR } from '@/constants/colors';
-import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
+import { TokenSymbolConfigMap } from '@/constants/token';
+import { useMessageApi } from '@/context/MessageProvider';
 import { toUsd } from '@/service/toUsd';
 import { formatNumber } from '@/utils/numberFormatters';
 
@@ -60,10 +61,9 @@ const PearlWalletToExternalWallet = () => {
 };
 
 export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
-  const { walletChainId, amountsToWithdraw, availableAssets } =
-    useAgentWallet();
+  const message = useMessageApi();
+  const { walletChainId, availableAssets, stakingRewards } = useAgentWallet();
 
-  const amounts = entries(amountsToWithdraw).filter(([, amount]) => amount > 0);
   const chainDetails = walletChainId ? CHAIN_CONFIG[walletChainId] : null;
 
   return (
@@ -122,31 +122,32 @@ export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
               Assets from staking contract
             </Text>
             <OverviewContainer vertical gap={12} align="start">
-              {amounts.map(([untypedSymbol, amount]) => {
-                const symbol = untypedSymbol as TokenSymbol;
-                const valueInUsd = toUsd(symbol, amount);
+              <Flex gap={8} align="center">
+                <Image
+                  src={`/tokens/olas-icon.png`}
+                  alt="OLAS rewards"
+                  width={20}
+                  className="flex"
+                />
+                <Text>{formatNumber(stakingRewards, 4)} OLAS</Text>
+                <Text className="text-neutral-tertiary">
+                  {toUsd('OLAS', stakingRewards) || ''}
+                </Text>
+              </Flex>
 
-                return (
-                  <Flex key={symbol} gap={8} align="center">
-                    <Image
-                      src={TokenSymbolConfigMap[symbol as TokenSymbol].image}
-                      alt={symbol}
-                      width={20}
-                      className="flex"
-                    />
-                    <Text>{formatNumber(amount, 4)}</Text>
-                    <Text>{symbol}</Text>
-                    &nbsp;
-                    <Text className="text-neutral-tertiary">
-                      {valueInUsd ? `≈ ${valueInUsd}` : null}
-                    </Text>
-                  </Flex>
-                );
-              })}
               <AgentNft />
             </OverviewContainer>
           </Flex>
         </Flex>
+
+        <Button
+          type="primary"
+          onClick={() => message.info('Withdraw coming soon!')}
+          block
+          size="large"
+        >
+          Withdraw
+        </Button>
       </Flex>
     </CardFlex>
   );
