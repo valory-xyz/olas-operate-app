@@ -26,21 +26,24 @@ export const AgentDisabledAlert = () => {
 
   if (!isInitialFunded) return <UnfinishedSetupAlert />;
 
-  if (selectedAgentConfig.isUnderConstruction)
+  if (selectedAgentConfig.isUnderConstruction) {
     return <UnderConstructionAlert />;
+  }
 
   if (
     !isSelectedStakingContractDetailsLoading &&
     !isServiceStaked &&
-    hasEnoughServiceSlots === false
-  )
+    !hasEnoughServiceSlots
+  ) {
     return <NoSlotsAvailableAlert />;
+  }
 
   if (isAgentEvicted && !isEligibleForStaking) return <EvictedAlert />;
 
   // TODO: verify how this should be handled, new funding job is currently under discussion
-  if (isMasterEoaLowOnGas || isMasterSafeLowOnNativeGas)
+  if (isMasterEoaLowOnGas || isMasterSafeLowOnNativeGas) {
     return <LowBalanceAlert />;
+  }
 
   return null;
 };

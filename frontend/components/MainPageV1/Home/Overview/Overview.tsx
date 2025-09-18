@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import { AgentInfo } from './AgentInfo';
 import { Staking } from './Staking';
+import { Wallet } from './Wallet';
 
 const Container = styled(Flex)`
   max-width: 744px;
@@ -14,5 +15,6 @@ export const Overview = () => (
   <Container vertical gap={40}>
     <AgentInfo />
     <Staking />
+    <Wallet />
   </Container>
 );
