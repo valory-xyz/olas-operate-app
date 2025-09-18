@@ -11,8 +11,8 @@ const { Text } = Typography;
 
 const columns: TableColumnsType<TransactionHistory> = [
   {
-    title: 'Token',
-    key: 'token',
+    title: null,
+    key: 'transactionType',
     render: (_: unknown, record: TransactionHistory) => (
       <Flex align="center" gap={8}>
         <AntdImage
@@ -27,7 +27,7 @@ const columns: TableColumnsType<TransactionHistory> = [
     width: '35%',
   },
   {
-    title: 'Amount',
+    title: null,
     key: 'amount',
     render: (_: unknown, record: TransactionHistory) => (
       <Flex vertical>
@@ -53,6 +53,7 @@ export const TransactionHistoryTable = () => {
       rowKey={(record) => record.symbol}
       pagination={false}
       rowHoverable={false}
+      showHeader={false}
       locale={{ emptyText: 'No available transactions' }}
     />
   );
