@@ -18,7 +18,10 @@ import { useBridgeRequirementsQuery } from '../components/SetupPage/Create/Setup
  * So, total ETH required = 0.01 ETH + 16 USDC in ETH + 100 OLAS in ETH.
  *
  */
-export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
+export const useTotalNativeTokenRequired = (
+  onRampChainId: EvmChainId,
+  queryKey: 'preview' | 'onboarding' = 'onboarding',
+) => {
   const { updateEthAmountToPay, isOnRampingTransactionSuccessful } =
     useOnRampContext();
   const { selectedAgentConfig } = useServices();
@@ -31,11 +34,12 @@ export const useTotalNativeTokenRequired = (onRampChainId: EvmChainId) => {
     bridgeFundingRequirements,
     receivingTokens,
     onRetry,
-  } = useBridgeRequirementsQuery(
+  } = useBridgeRequirementsQuery({
     onRampChainId,
-    !isOnRampingTransactionSuccessful,
-    isOnRampingTransactionSuccessful,
-  );
+    enabled: !isOnRampingTransactionSuccessful,
+    stopPollingCondition: isOnRampingTransactionSuccessful,
+    queryKeySuffix: queryKey,
+  });
 
   /**
    * Calculates the total native token required for the bridge.

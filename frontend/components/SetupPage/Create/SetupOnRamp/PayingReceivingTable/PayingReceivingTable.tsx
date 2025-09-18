@@ -116,7 +116,7 @@ type ReceivingTokensProps = {
   receivingTokens: ReceivingTokens;
 };
 const ViewReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
-  <Flex vertical justify="center" gap={6}>
+  <Flex vertical justify="center" gap={16}>
     {receivingTokens.length === 0 ? (
       <Flex vertical gap={6}>
         <TokenLoader />
@@ -127,7 +127,7 @@ const ViewReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
         const iconSrc =
           TokenSymbolConfigMap[token.symbol as TokenSymbol]?.image;
         return (
-          <Flex key={index} align="center" gap={8} className="mb-16">
+          <Flex key={index} align="center" gap={8}>
             <AntdImage
               src={iconSrc}
               alt={token.symbol}
@@ -158,7 +158,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     totalNativeToken,
     receivingTokens,
     onRetry,
-  } = useTotalNativeTokenRequired(onRampChainId);
+  } = useTotalNativeTokenRequired(onRampChainId, 'preview');
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
@@ -179,8 +179,6 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   ]);
 
   const isReceivingAmountLoading = isFiatLoading || isNativeTokenLoading;
-  const receivingAmount = usdAmountToPay ? `~$${usdAmountToPay} for` : NA;
-  const nativeTokenAmount = `${ethAmountToPay} ETH`;
 
   // Update the USD amount to pay only if the on-ramping step is not completed.
   // Or if the transaction is successful but funds are not received.
@@ -223,9 +221,11 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
                   <TokenLoader size="large" />
                 ) : (
                   <>
-                    <Text>{receivingAmount}</Text>
+                    <Text>
+                      {usdAmountToPay ? `~$${usdAmountToPay} for` : NA}
+                    </Text>
                     <ChainLogo chainName="ethereum" alt="ETH" />
-                    <Text>{nativeTokenAmount}</Text>
+                    <Text>{`${ethAmountToPay} ETH`}</Text>
                   </>
                 )}
               </Flex>
@@ -240,10 +240,10 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     [
       isNativeTokenLoading,
       hasNativeTokenError,
-      nativeTokenAmount,
+      ethAmountToPay,
+      usdAmountToPay,
       tokensRequired,
       onRetry,
-      receivingAmount,
       isReceivingAmountLoading,
     ],
   );

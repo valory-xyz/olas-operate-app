@@ -84,7 +84,7 @@ export const Bridge = ({
         setBridgeState('in_progress');
         break;
       case 'in_progress': {
-        if (showCompleteScreen) {
+        if (showCompleteScreen || isOnboarding) {
           setBridgeState('completed');
         } else {
           goto(Pages.Main);
@@ -97,7 +97,7 @@ export const Bridge = ({
       default:
         throw new Error('Invalid bridge state');
     }
-  }, [showCompleteScreen, bridgeState, goto]);
+  }, [bridgeState, goto, isOnboarding, showCompleteScreen]);
 
   switch (true) {
     case bridgeState === 'depositing':
@@ -130,6 +130,7 @@ export const Bridge = ({
           enabledStepsAfterBridging={enabledStepsAfterBridging}
           onNext={handleNextStep}
           isBridgeCompleted={bridgeState === 'completed'}
+          isOnboarding={isOnboarding}
         />
       );
     }
