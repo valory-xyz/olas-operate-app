@@ -146,7 +146,6 @@ export const PredictAgentForm = ({
         name="geminiApiKey"
         label={<GeminiApiKeyLabel />}
         {...optionalFieldProps}
-        style={{ marginBottom: 4 }}
       >
         <Input.Password />
       </Form.Item>

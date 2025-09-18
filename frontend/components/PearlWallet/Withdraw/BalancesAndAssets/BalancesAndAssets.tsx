@@ -91,7 +91,7 @@ export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
         </Flex>
       </CardFlex>
 
-      {walletChainId && (
+      {walletChainId && chains.length >= 2 && (
         <Segmented
           value={walletChainId}
           onChange={(chainId) => onWalletChainChange?.(chainId)}
