@@ -1,15 +1,12 @@
-import { Button, Flex, Skeleton, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { isNumber } from 'lodash';
 import { useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
-import { FireNoStreak } from '@/components/custom-icons/FireNoStreak';
-import { FireV1 } from '@/components/custom-icons/FireV1';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { NA, UNICODE_SYMBOLS } from '@/constants/symbols';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
-import { useStakingDetails } from '@/hooks/useStakingDetails';
 
 const { Text, Title } = Typography;
 
@@ -41,29 +38,7 @@ const LowPearlWalletBalance = () => (
   />
 );
 
-const Streak = () => {
-  const { isStreakLoading, isStreakError, optimisticStreak, fireColor } =
-    useStakingDetails();
-
-  if (isStreakLoading) return <Skeleton.Input active size="small" />;
-  if (isStreakError) return NA;
-  return (
-    <Flex gap={6} align="center">
-      {optimisticStreak === 0 ? (
-        <>
-          <FireNoStreak /> No streak
-        </>
-      ) : (
-        <>
-          <FireV1 fill={fireColor} />
-          {optimisticStreak}
-        </>
-      )}
-    </Flex>
-  );
-};
-
-const showAlert = true;
+const showAlert = false;
 
 /**
  * To display current epoch lifetime, streak, and relevant alerts.
@@ -102,7 +77,7 @@ export const Wallet = () => {
             </Flex>
             <Flex flex={1} vertical gap={4}>
               <Text className="text-neutral-tertiary">Tokens</Text>
-              <Streak />
+              {NA}
             </Flex>
           </Flex>
         </Flex>
