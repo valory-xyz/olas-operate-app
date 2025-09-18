@@ -42,6 +42,8 @@ export default async function handler(
       typeof data?.[key]?.usd === 'number' ? data[key].usd : 0;
     return res.status(200).json({ price });
   } catch (error: unknown) {
-    return res.status(500).json({ error: error?.message ?? 'Unknown error' });
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
   }
 }
