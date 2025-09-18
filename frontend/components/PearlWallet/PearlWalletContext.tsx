@@ -22,6 +22,7 @@ import {
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
+import { useUsdAmounts } from '@/hooks/useUsdAmounts';
 import { toUsd } from '@/service/toUsd';
 import { AgentConfig } from '@/types/Agent';
 import { Nullable, ValueOf } from '@/types/Util';
@@ -128,6 +129,17 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     );
   }, [services]);
 
+  const chainName = walletChainId
+    ? (CHAIN_CONFIG[walletChainId].name as string)
+    : '';
+  const { breakdown: usdBreakdown } = useUsdAmounts(
+    chainName,
+    Object.entries(TOKEN_CONFIG[walletChainId!]).map(([untypedSymbol]) => {
+      const symbol = untypedSymbol as TokenSymbol;
+      return { symbol, amount: 0 };
+    }),
+  );
+
   // OLAS token, Native Token, other ERC20 tokens
   const availableAssets: AvailableAsset[] = useMemo(() => {
     if (!walletChainId) return [];
@@ -137,6 +149,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       ([untypedSymbol, untypedTokenDetails]) => {
         const symbol = untypedSymbol as TokenSymbol;
         const { address } = untypedTokenDetails as TokenConfig;
+        const { usdPrice } = usdBreakdown.find(
+          ({ symbol: s }) => s === symbol,
+        ) ?? { usdPrice: 0 };
 
         const balance = (() => {
           // balance for OLAS
@@ -157,20 +172,25 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
           address,
           symbol,
           amount: balance,
-          valueInUsd: toUsd(symbol, balance),
+          valueInUsd: usdPrice * balance,
         };
         return asset;
       },
     );
   }, [
     walletChainId,
+    usdBreakdown,
+    middlewareHomeChainId,
+    masterSafeErc20Balances,
     masterSafeOlasBalance,
     accruedServiceStakingRewards,
-    middlewareHomeChainId,
     masterSafeNativeBalance,
     masterEoaBalance,
-    masterSafeErc20Balances,
   ]);
+
+  const aggregatedBalance = useMemo(() => {
+    return sum(availableAssets.map(({ valueInUsd }) => valueInUsd));
+  }, [availableAssets]);
 
   // staked OLAS
   const stakedAssets: StakedAsset[] = [
@@ -213,7 +233,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         walletStep,
         updateStep,
         isLoading: isServicesLoading || !isLoaded || isBalanceLoading,
-        aggregatedBalance: null,
+        aggregatedBalance,
         walletChainId,
         onWalletChainChange,
         chains,

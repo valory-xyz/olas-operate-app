@@ -1,4 +1,4 @@
-// TODO: remove this file
+// TODO: remove this file when Pearl V1 is released
 import { Button, Card, CardProps, Flex, Typography } from 'antd';
 import Image from 'next/image';
 import { memo, useCallback, useMemo } from 'react';

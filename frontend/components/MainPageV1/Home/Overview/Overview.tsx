@@ -1,13 +1,20 @@
 import { Flex } from 'antd';
+import styled from 'styled-components';
 
 import { AgentInfo } from './AgentInfo';
 import { Staking } from './Staking';
 import { Wallet } from './Wallet';
 
+const Container = styled(Flex)`
+  max-width: 744px;
+  width: 100%;
+  margin: 0 auto;
+`;
+
 export const Overview = () => (
-  <Flex vertical gap={40}>
+  <Container vertical gap={40}>
     <AgentInfo />
     <Staking />
     <Wallet />
-  </Flex>
+  </Container>
 );

@@ -24,7 +24,7 @@ export const SelectStaking = () => {
     useStakingContracts();
 
   return (
-    <Flex vertical justify="center" className="w-full my-40">
+    <Flex vertical justify="center" className="w-full">
       <Flex
         vertical
         className="mx-auto"

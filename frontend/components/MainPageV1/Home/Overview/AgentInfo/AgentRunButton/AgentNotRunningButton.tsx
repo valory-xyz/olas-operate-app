@@ -1,7 +1,8 @@
 import { Button } from 'antd';
 
+import { useServiceDeployment } from '@/hooks';
+
 import { AgentBusyButton } from './AgentBusyButton';
-import { useServiceDeployment } from './hooks/useServiceDeployment';
 
 /**
  * Agent Not Running Button

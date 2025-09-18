@@ -1,13 +1,13 @@
 import { isEmpty } from 'lodash';
 import { useMemo } from 'react';
 
-import { useServiceDeployment } from '@/components/MainPageV1/Home/Overview/AgentInfo/AgentRunButton/hooks/useServiceDeployment';
 import { COLOR } from '@/constants/colors';
 import { ONE_DAY_IN_S } from '@/utils/time';
 
 import { useBalanceContext } from './useBalanceContext';
 import { useRewardContext } from './useRewardContext';
 import { useRewardsHistory } from './useRewardsHistory';
+import { useServiceDeployment } from './useServiceDeployment';
 import { useActiveStakingContractDetails } from './useStakingContractDetails';
 
 export const useStakingDetails = () => {

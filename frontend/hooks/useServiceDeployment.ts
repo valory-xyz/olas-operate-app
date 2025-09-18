@@ -1,10 +1,10 @@
-import { Button, message } from 'antd';
+import { message } from 'antd';
 import { isNil } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import { MiddlewareDeploymentStatus } from '@/client';
 import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { Pages } from '@/enums/Pages';
 import { MasterEoa, MasterSafe } from '@/enums/Wallet';
@@ -32,7 +32,7 @@ import { updateServiceIfNeeded } from '@/utils/service';
 /**
  * hook to handle service deployment and starting the service
  */
-const useServiceDeployment = () => {
+export const useServiceDeployment = () => {
   const { showNotification } = useElectronApi();
   const { isAgentsFunFieldUpdateRequired } = useSharedContext();
 
@@ -77,18 +77,23 @@ const useServiceDeployment = () => {
     selectedStakingProgramId,
   );
 
+  const isLoading = useMemo(() => {
+    if (isBalancesAndFundingRequirementsLoading) return true;
+    if (isServicesLoading || isServiceRunning) return true;
+    if (!isAllStakingContractDetailsRecordLoaded) return true;
+    return false;
+  }, [
+    isAllStakingContractDetailsRecordLoaded,
+    isBalancesAndFundingRequirementsLoading,
+    isServiceRunning,
+    isServicesLoading,
+  ]);
+
   const isDeployable = useMemo(() => {
-    if (isBalancesAndFundingRequirementsLoading) return false;
-    if (isServicesLoading || isServiceRunning) return false;
+    if (isLoading) return false;
 
-    if (!isAllStakingContractDetailsRecordLoaded) return false;
-
-    // If service is under construction and does NOT have external funds, return false
-    if (
-      selectedAgentConfig.isUnderConstruction &&
-      !selectedAgentConfig.hasExternalFunds
-    )
-      return false;
+    // If service is under construction, return false
+    if (selectedAgentConfig.isUnderConstruction) return false;
 
     // If staking contract is deprecated, return false
     if (selectedStakingProgramMeta?.deprecated) return false;
@@ -112,22 +117,18 @@ const useServiceDeployment = () => {
     // allow starting based on refill requirements
     return canStartAgent;
   }, [
-    isBalancesAndFundingRequirementsLoading,
-    isServicesLoading,
-    isServiceRunning,
-    isAllStakingContractDetailsRecordLoaded,
-    selectedAgentConfig.isUnderConstruction,
-    selectedAgentConfig.hasExternalFunds,
-    selectedStakingProgramMeta?.deprecated,
-    hasEnoughServiceSlots,
-    isServiceStaked,
-    isAgentEvicted,
-    isEligibleForStaking,
-    selectedService,
-    isInitialFunded,
-    needsInitialFunding,
-    isAgentsFunFieldUpdateRequired,
     canStartAgent,
+    hasEnoughServiceSlots,
+    isAgentEvicted,
+    isAgentsFunFieldUpdateRequired,
+    isEligibleForStaking,
+    isInitialFunded,
+    isLoading,
+    isServiceStaked,
+    needsInitialFunding,
+    selectedAgentConfig.isUnderConstruction,
+    selectedService,
+    selectedStakingProgramMeta?.deprecated,
   ]);
 
   const pauseAllPolling = useCallback(() => {
@@ -228,7 +229,7 @@ const useServiceDeployment = () => {
     if (!selectedServiceTemplate) throw new Error('Service template required');
 
     pauseAllPolling();
-    overrideSelectedServiceStatus(MiddlewareDeploymentStatus.DEPLOYING);
+    overrideSelectedServiceStatus(MiddlewareDeploymentStatusMap.DEPLOYING);
 
     try {
       await createSafeIfNeeded({
@@ -254,7 +255,7 @@ const useServiceDeployment = () => {
       showNotification?.('Failed to update state.');
     }
 
-    overrideSelectedServiceStatus(MiddlewareDeploymentStatus.DEPLOYED);
+    overrideSelectedServiceStatus(MiddlewareDeploymentStatusMap.DEPLOYED);
     resumeAllPolling();
     await delayInSeconds(5);
     overrideSelectedServiceStatus(null);
@@ -275,9 +276,7 @@ const useServiceDeployment = () => {
     selectedAgentType,
   ]);
 
-  const buttonText = `Start agent ${isServiceStaked ? '' : '& stake'}`;
-
-  return { isDeployable, handleStart, buttonText };
+  return { isLoading, isDeployable, handleStart };
 };
 
 const createSafeIfNeeded = async ({
@@ -334,23 +333,5 @@ const createSafeIfNeeded = async ({
   await WalletService.createSafe(
     selectedAgentConfig.middlewareHomeChainId,
     [...otherChainOwners][0],
-  );
-};
-
-/**
- * Agent Not Running Button
- */
-export const AgentNotRunningButton = () => {
-  const { isDeployable, handleStart, buttonText } = useServiceDeployment();
-
-  return (
-    <Button
-      type="primary"
-      size="large"
-      disabled={!isDeployable}
-      onClick={isDeployable ? handleStart : undefined}
-    >
-      {buttonText}
-    </Button>
   );
 };

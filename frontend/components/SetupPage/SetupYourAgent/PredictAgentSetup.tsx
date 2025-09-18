@@ -2,7 +2,7 @@ import { message } from 'antd';
 import React, { useCallback } from 'react';
 
 import { ServiceTemplate } from '@/client';
-import { GoogleAiStudioHelper } from '@/components/AgentForms/common/labels';
+import { GeminiApiKeyDesc } from '@/components/AgentForms/common/labels';
 import {
   PredictAgentForm,
   PredictFormValues,
@@ -49,7 +49,7 @@ export const PredictAgentSetup = ({
         message.success('Agent setup complete');
 
         // move to next page
-        goto(SetupScreen.SetupEoaFunding);
+        goto(SetupScreen.FundYourAgent);
       } catch (error) {
         message.error('Something went wrong. Please try again.');
         console.error(error);
@@ -65,7 +65,7 @@ export const PredictAgentSetup = ({
       onSubmit={onSubmit}
     />,
     <>
-      <GoogleAiStudioHelper name="Prediction" />
+      <GeminiApiKeyDesc />
     </>,
     { onBack: undefined },
   );

@@ -3,10 +3,10 @@ import { useMemo } from 'react';
 
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { COLOR } from '@/constants/colors';
+import { useServiceDeployment } from '@/hooks';
 import { useAgentActivity } from '@/hooks/useAgentActivity';
 import { useRewardContext } from '@/hooks/useRewardContext';
 
-import { useServiceDeployment } from '../AgentRunButton/hooks/useServiceDeployment';
 import { Container, CurrentActionText, Text, TopCorner } from './styles';
 import { AgentStatus } from './types';
 
@@ -80,7 +80,8 @@ export const AgentActivity = () => {
     isServiceRunning,
   ]);
 
-  if (!isDeployable) return null;
+  if (isServiceRunning || isServiceDeploying ? false : !isDeployable)
+    return null;
 
   return (
     <Container $status={activityInfo.status}>

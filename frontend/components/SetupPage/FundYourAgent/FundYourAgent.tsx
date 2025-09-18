@@ -112,7 +112,7 @@ const Transfer = ({
       <div className="fund-method-card-body">
         <CardTitle>Transfer</CardTitle>
         <CardDescription>
-          Send funds directly on Optimism chain with lowest fees — ideal for
+          Send funds directly on {chainName} with lowest fees — ideal for
           crypto-savvy users.
         </CardDescription>
         <TokenRequirements

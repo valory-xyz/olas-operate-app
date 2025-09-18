@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import { SendFundAction } from '@/components/Bridge/types';
 import { COLOR } from '@/constants/colors';
+import { useUsdAmounts } from '@/hooks/useUsdAmounts';
 
 const { Text } = Typography;
 
@@ -76,6 +77,11 @@ type TokenRequirementsProps = {
   fundType: SendFundAction;
 };
 
+const getUsdAmount = (
+  symbol: string,
+  breakdown: ReturnType<typeof useUsdAmounts>['breakdown'],
+) => breakdown.find((b) => b.symbol === symbol)?.usdAmount.toFixed(2);
+
 export const TokenRequirements = ({
   tokenRequirements = [],
   fiatAmount,
@@ -83,7 +89,12 @@ export const TokenRequirements = ({
   isLoading,
   fundType,
 }: TokenRequirementsProps) => {
-  if (isLoading) return <RequirementsSkeleton />;
+  const { breakdown, isLoading: isUsdAmountsLoading } = useUsdAmounts(
+    chainName!,
+    tokenRequirements,
+  );
+
+  if (isLoading || isUsdAmountsLoading) return <RequirementsSkeleton />;
 
   if (fundType === 'onRamp')
     return <RequirementsForOnRamp fiatAmount={fiatAmount?.toFixed(2) ?? '0'} />;
@@ -105,6 +116,9 @@ export const TokenRequirements = ({
             />
             <Text>
               {formatAmount(amount)} {symbol}
+            </Text>
+            <Text className="text-neutral-tertiary">
+              (${getUsdAmount(symbol, breakdown)})
             </Text>
           </Flex>
         ))}

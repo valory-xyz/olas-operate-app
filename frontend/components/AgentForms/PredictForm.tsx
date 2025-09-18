@@ -4,6 +4,7 @@ import { useUnmount } from 'usehooks-ts';
 
 import { optionalFieldProps } from './common/formUtils';
 import { InvalidGeminiApiCredentials } from './common/InvalidGeminiApiCredentials';
+import { GeminiApiKeySubHeader } from './common/labels';
 import { validateGeminiApiKey, ValidationStatus } from './common/validations';
 
 const { Text } = Typography;
@@ -23,7 +24,9 @@ export type PredictFormValues = {
 
 const usePredictFormValidate = () => {
   const [isValidating, setIsValidating] = useState(false);
-  const [submitButtonText, setSubmitButtonText] = useState('Continue');
+  const [submitButtonText, setSubmitButtonText] = useState(
+    'Finish Agent Configuration',
+  );
   const [geminiApiKeyValidationStatus, setGeminiApiKeyValidationStatus] =
     useState<ValidationStatus>('unknown');
 
@@ -138,6 +141,7 @@ export const PredictAgentForm = ({
       layout="vertical"
       className="label-no-padding"
     >
+      <GeminiApiKeySubHeader name="Prediction" />
       <Form.Item
         name="geminiApiKey"
         label={<GeminiApiKeyLabel />}
@@ -149,6 +153,13 @@ export const PredictAgentForm = ({
       {geminiApiKeyValidationStatus === 'invalid' && (
         <InvalidGeminiApiCredentials style={{ marginTop: 12 }} />
       )}
+
+      <div
+        style={{
+          // TODO: replace this with normal margin here and in other forms
+          paddingBottom: 42,
+        }}
+      />
 
       <Form.Item hidden={agentFormType === 'view'}>
         <Button
