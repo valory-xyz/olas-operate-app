@@ -71,13 +71,121 @@ textarea,
 .ant-segmented {
   overflow: hidden;
   border: 2px solid white;
-  box-shadow: 
+  box-shadow:
     0 35px 10px 0 rgba(170, 193, 203, 0.00),
     0 23px 9px 0 rgba(170, 193, 203, 0.01),
     0 13px 8px 0 rgba(170, 193, 203, 0.05),
     0 6px 6px 0 rgba(170, 193, 203, 0.09),
     0 1px 3px 0 rgba(170, 193, 203, 0.10);
-  }
+}
+
+// button redesigns
+.ant-btn-primary {
+  background: linear-gradient(0deg,
+      rgba(0, 0, 0, 0.1) 0%,
+      rgba(0, 0, 0, 0.1) 100%),
+    #7e22ce;
+  background-blend-mode: overlay, normal;
+  box-shadow:
+    0 -1px 0 0 rgba(0, 0, 0, 0.05) inset,
+    0 0 0 1px rgba(0, 0, 0, 0.1) inset,
+    0 -4px 16px 0 rgba(255, 255, 255, 0.24) inset,
+    0 4px 16px 0 rgba(255, 255, 255, 0.24) inset,
+    0 0 0 2px rgba(255, 255, 255, 0.12) inset;
+}
+
+.ant-btn-primary:hover {
+  background: linear-gradient(0deg,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.3) 100%),
+    #7e22ce;
+  background-blend-mode: overlay, normal;
+  box-shadow:
+    0 -1px 0 0 rgba(0, 0, 0, 0.05) inset,
+    0 0 0 1px rgba(0, 0, 0, 0.1) inset,
+    0 -4px 16px 0 rgba(255, 255, 255, 0.24) inset,
+    0 4px 16px 0 rgba(255, 255, 255, 0.24) inset,
+    0 0 0 2px rgba(255, 255, 255, 0.06) inset;
+}
+
+.ant-btn-primary:focus,
+.ant-btn-primary:active {
+  background: linear-gradient(180deg,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.1) 100%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.3) 100%),
+    #7e22ce;
+  background-blend-mode: normal, overlay, normal;
+  box-shadow:
+    0 -1px 0 0 rgba(0, 0, 0, 0.5) inset,
+    0 1.5px 0.5px 0.5px rgba(0, 0, 0, 0.15) inset;
+}
+
+.ant-btn-primary:disabled {
+  opacity: 0.4;
+  background: linear-gradient(0deg,
+      rgba(0, 0, 0, 0.1) 0%,
+      rgba(0, 0, 0, 0.1) 100%),
+    #7e22ce;
+  background-blend-mode: overlay, normal;
+  box-shadow:
+    0 -1px 0 0 rgba(0, 0, 0, 0.05) inset,
+    0 0 0 1px rgba(0, 0, 0, 0.1) inset,
+    0 -4px 16px 0 rgba(255, 255, 255, 0.24) inset,
+    0 4px 16px 0 rgba(255, 255, 255, 0.24) inset,
+    0 0 0 2px rgba(255, 255, 255, 0.12) inset;
+}
+
+.ant-btn-default {
+  background: #fff;
+  box-shadow:
+    0 -1px 0 0 #dfe6ec inset,
+    0 0 0 1px #eaedf1 inset,
+    0 0 0 2px #fff inset,
+    0 4px 8px 0 rgba(255, 255, 255, 0.5) inset,
+    0 0 8px 2px #edf2f7 inset;
+  border: 1px transparent;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ant-btn-default:hover {
+  border: 1px transparent;
+  color: #000000 !important;
+  background: #EDF2F7;
+  box-shadow: 0 -1px 0 0 #D1D9E6 inset, 0 0 0 1px #DFE6EC inset, 0 0 0 2px rgba(255, 255, 255, 0.50) inset;
+}
+
+.ant-btn-default:focus,
+.ant-btn-default:active,
+.ant-btn-default.ant-btn-clicked {
+  background: #dfe6ec !important;
+  box-shadow:
+    0 -1px 0 0 rgba(0, 0, 0, 0.1) inset,
+    0 1.25px 0.5px 1px rgba(0, 0, 0, 0.1) inset;
+}
+
+.ant-btn-default:disabled {
+  border: 1px solid #dfe6ec;
+  opacity: 0.4;
+  background: #fff;
+  box-shadow:
+    0 -1px 0 0 #dfe6ec inset,
+    0 0 0 1px #eaedf1 inset,
+    0 0 0 2px #fff inset,
+    0 0 0 3px #f4f7fa inset,
+    0 4px 8px 0 rgba(255, 255, 255, 0.5) inset,
+    0 0 6px 2px #edf2f7 inset;
+}
+
+.ant-btn-link:hover {
+  background: #eef2f6 !important;
+}
+
+.ant-btn-link:focus,
+.ant-btn-link:active,
+.ant-btn-link:ant-btn-clicked {
+  background: #dde5ed !important;
+}
 
 .balance {
   font-family: 'Inter';
@@ -473,12 +581,15 @@ ul.alert-list {
 .w-1\/4 {
   width: 25% !important;
 }
+
 .w-3\/4 {
   width: 75% !important;
 }
+
 .w-full {
   width: 100% !important;
 }
+
 .w-max {
   width: max-content !important;
 }
@@ -499,16 +610,19 @@ ul.alert-list {
 
 .loading-ellipses {
   display: inline-block;
-  position: relative; /* Ensures absolute positioned :after is placed relative to this */
-  white-space: nowrap; /* Prevents line breaks */
+  position: relative;
+  /* Ensures absolute positioned :after is placed relative to this */
+  white-space: nowrap;
+  /* Prevents line breaks */
   margin-right: 16px;
-  
+
   &:after {
     overflow: hidden;
     display: inline-block;
     -webkit-animation: ellipsis steps(4, end) 1.5s infinite;
     animation: ellipsis steps(4, end) 1.5s infinite;
-    content: "\2026"; /* ascii code for the ellipsis character */
+    content: "\2026";
+    /* ascii code for the ellipsis character */
     width: 0px;
     position: absolute;
     left: 100%;
