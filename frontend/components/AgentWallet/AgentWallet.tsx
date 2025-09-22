@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 
-import { AgentWalletProvider, useAgentWallet } from './AgentWalletContext';
+import { AgentWalletProvider, useAgentWallet } from './AgentWalletProvider';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
 import { STEPS } from './Withdraw/types';

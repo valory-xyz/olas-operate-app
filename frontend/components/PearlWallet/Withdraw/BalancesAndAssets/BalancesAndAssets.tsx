@@ -7,7 +7,7 @@ import { Segmented } from '@/components/ui/Segmented';
 import { NA } from '@/constants/symbols';
 import { formatNumber } from '@/utils/numberFormatters';
 
-import { usePearlWallet } from '../../PearlWalletContext';
+import { usePearlWallet } from '../../PearlWalletProvider';
 import { AgentNft } from './AgentNft';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { StakedAssetsTable } from './StakedAssetsTable';

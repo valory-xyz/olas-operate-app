@@ -4,7 +4,7 @@ import { Table } from '@/components/ui/Table';
 import { TokenSymbolConfigMap } from '@/constants/token';
 import { formatNumber } from '@/utils/numberFormatters';
 
-import { useAgentWallet } from '../../AgentWalletContext';
+import { useAgentWallet } from '../../AgentWalletProvider';
 import { TransactionHistory } from '../types';
 
 const { Text } = Typography;

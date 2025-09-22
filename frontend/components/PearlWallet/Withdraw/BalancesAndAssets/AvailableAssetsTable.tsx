@@ -4,7 +4,7 @@ import { Table } from '@/components/ui/Table';
 import { TokenSymbolConfigMap } from '@/constants/token';
 import { formatNumber } from '@/utils/numberFormatters';
 
-import { usePearlWallet } from '../../PearlWalletContext';
+import { usePearlWallet } from '../../PearlWalletProvider';
 import { AvailableAsset } from '../types';
 
 const { Text } = Typography;

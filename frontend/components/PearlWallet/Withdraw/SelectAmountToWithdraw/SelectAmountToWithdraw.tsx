@@ -3,7 +3,7 @@ import { Button, Flex, Typography } from 'antd';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 
-import { usePearlWallet } from '../../PearlWalletContext';
+import { usePearlWallet } from '../../PearlWalletProvider';
 import { cardStyles, PearlWalletToExternalWallet } from '../common';
 import { TokenAmountInput } from './TokenAmountInput';
 

@@ -12,7 +12,7 @@ import { useMessageApi } from '@/context/MessageProvider';
 import { toUsd } from '@/service/toUsd';
 import { formatNumber } from '@/utils/numberFormatters';
 
-import { useAgentWallet } from '../../AgentWalletContext';
+import { useAgentWallet } from '../../AgentWalletProvider';
 import { AgentNft } from './AgentNft';
 
 const { Title, Text } = Typography;
