@@ -24,7 +24,8 @@ export const AgentDisabledAlert = () => {
   const { selectedStakingProgramId } = useStakingProgram();
   const { isInitialFunded } = useNeedsFunds(selectedStakingProgramId);
 
-  if (!isInitialFunded) return <UnfinishedSetupAlert />;
+  // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
+  if (isInitialFunded === false) return <UnfinishedSetupAlert />;
 
   if (selectedAgentConfig.isUnderConstruction) {
     return <UnderConstructionAlert />;
