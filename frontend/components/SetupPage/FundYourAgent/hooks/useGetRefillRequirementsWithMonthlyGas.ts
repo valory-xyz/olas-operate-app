@@ -238,11 +238,18 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
 
   // Get the total token requirements, using "totalRequirements" from BE, instead of "refillRequirements"
   useEffect(() => {
-    if (!totalTokenRequirementsRef.current) {
+    if (!totalTokenRequirementsRef.current && !!totalRequirements) {
       totalTokenRequirementsRef.current =
         getRequirementsPerToken(totalRequirements);
     }
   }, [totalRequirements, getRequirementsPerToken]);
+
+  // Reset cached requirements when the selected agent changes
+  useEffect(() => {
+    totalTokenRequirementsRef.current = null;
+    initialTokenRequirementsRef.current = null;
+    refetch?.();
+  }, [selectedAgentConfig, refetch]);
 
   return {
     totalTokenRequirements: totalTokenRequirementsRef.current ?? [],

@@ -72,7 +72,7 @@ export const Staking = () => {
     <Flex vertical>
       <Flex justify="space-between" align="center">
         <Title level={4}>Staking</Title>
-        <Button size="small" onClick={() => goto(Pages.SelectStaking)}>
+        <Button size="small" onClick={() => goto(Pages.AgentStaking)}>
           Manage Staking
         </Button>
       </Flex>
