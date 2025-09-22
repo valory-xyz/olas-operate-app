@@ -15,7 +15,7 @@ import { CHAIN_CONFIG } from '@/config/chains';
 import { AgentType } from '@/constants/agent';
 import { EvmChainId } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
-import { APP_HEIGHT, SIDER_WIDTH } from '@/constants/width';
+import { ANTD_BREAKPOINTS, APP_HEIGHT, SIDER_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { usePageState } from '@/hooks/usePageState';
@@ -27,13 +27,26 @@ import { AgentConfig } from '@/types/Agent';
 const { Sider } = Layout;
 const { Text } = Typography;
 
+const SIDEBAR_BREAKPOINT = 'md';
+
 const SiderContainer = styled.div`
   display: flex;
   border-right: 1px solid ${COLOR.GRAY_4};
   height: ${APP_HEIGHT}px;
   .ant-layout-sider-children {
-    display: flex;
-    width: 100%;
+    @media (min-width: ${ANTD_BREAKPOINTS[SIDEBAR_BREAKPOINT] + 1}px) {
+      display: flex;
+      width: 100%;
+    }
+  }
+`;
+
+// TODO: make reusable for new styled buttons in Pearl v1
+const ResponsiveButton = styled(Button)`
+  @media (max-width: ${ANTD_BREAKPOINTS[SIDEBAR_BREAKPOINT]}px) {
+    > span:not(.ant-btn-icon) {
+      display: none;
+    }
   }
 `;
 
@@ -186,7 +199,7 @@ export const Sidebar = () => {
 
   return (
     <SiderContainer>
-      <Sider breakpoint="lg" theme="light" width={SIDER_WIDTH}>
+      <Sider breakpoint={SIDEBAR_BREAKPOINT} theme="light" width={SIDER_WIDTH}>
         <Flex vertical gap={16} flex={1} className="p-16">
           <MyAgentsHeader />
           {isLoading || isMasterWalletLoading ? (
@@ -200,7 +213,7 @@ export const Sidebar = () => {
           ) : null}
 
           {myAgents.length < ACTIVE_AGENTS.length && (
-            <Button
+            <ResponsiveButton
               size="large"
               className="self-center w-max"
               onClick={() => {
@@ -210,7 +223,7 @@ export const Sidebar = () => {
               icon={<PlusOutlined />}
             >
               Add New Agent
-            </Button>
+            </ResponsiveButton>
           )}
 
           <Menu

@@ -4,15 +4,6 @@ import { createContext, PropsWithChildren } from 'react';
 import { AgentHealthCheckResponse } from '@/types/Agent';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
 
-type ElectronApiAgentActivityWindow = {
-  init: () => Promise<void>;
-  goto: (url: string) => Promise<void>;
-  hide: () => void;
-  show: () => void;
-  close: () => void;
-  minimize: () => void;
-};
-
 type ElectronApiContextProps = {
   getAppVersion?: () => Promise<string>;
   setIsAppLoaded?: (isLoaded: boolean) => void;
@@ -52,7 +43,6 @@ type ElectronApiContextProps = {
   healthCheck?: () => Promise<
     { response: AgentHealthCheckResponse | null } | { error: string }
   >;
-  agentActivityWindow?: Partial<ElectronApiAgentActivityWindow>;
   onRampWindow?: {
     show?: (amountToPay: number) => void;
     close?: () => void;
@@ -88,14 +78,6 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   saveLogs: async () => ({ success: false }),
   openPath: () => {},
   healthCheck: async () => ({ response: null }),
-  agentActivityWindow: {
-    init: async () => {},
-    goto: async () => {},
-    hide: () => {},
-    show: () => {},
-    close: () => {},
-    minimize: () => {},
-  },
   onRampWindow: {
     show: () => {},
     transactionSuccess: () => {},
@@ -142,14 +124,6 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         saveLogs: getElectronApiFunction('saveLogs'),
         openPath: getElectronApiFunction('openPath'),
         healthCheck: getElectronApiFunction('healthCheck'),
-        agentActivityWindow: {
-          init: getElectronApiFunction('agentActivityWindow.init'),
-          goto: getElectronApiFunction('agentActivityWindow.goto'),
-          hide: getElectronApiFunction('agentActivityWindow.hide'),
-          show: getElectronApiFunction('agentActivityWindow.show'),
-          close: getElectronApiFunction('agentActivityWindow.close'),
-          minimize: getElectronApiFunction('agentActivityWindow.minimize'),
-        },
         onRampWindow: {
           show: getElectronApiFunction('onRampWindow.show'),
           close: getElectronApiFunction('onRampWindow.close'),

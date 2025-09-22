@@ -1,4 +1,7 @@
+import { Flex } from 'antd';
 import { useCallback, useMemo } from 'react';
+
+import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 
 import { PearlWalletProvider, usePearlWallet } from './PearlWalletContext';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
@@ -58,6 +61,8 @@ const PearlWalletContent = () => {
 
 export const PearlWallet = () => (
   <PearlWalletProvider>
-    <PearlWalletContent />
+    <Flex vertical style={{ width: MAIN_CONTENT_MAX_WIDTH, margin: '0 auto' }}>
+      <PearlWalletContent />
+    </Flex>
   </PearlWalletProvider>
 );

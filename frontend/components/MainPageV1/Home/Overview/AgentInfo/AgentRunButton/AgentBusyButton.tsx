@@ -5,7 +5,7 @@ type AgentBusyButtonProps = {
 };
 
 export const AgentBusyButton = ({ text }: AgentBusyButtonProps) => (
-  <Button type="default" size="large" ghost disabled loading>
+  <Button type="primary" size="large" ghost disabled loading>
     {text}
   </Button>
 );

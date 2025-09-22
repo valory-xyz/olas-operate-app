@@ -222,6 +222,13 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     }
   }, [updateBeforeBridgingFunds, refetch, shouldCreateDummyService]);
 
+  // Reset cached requirements when the selected agent changes
+  useEffect(() => {
+    totalTokenRequirementsRef.current = null;
+    initialTokenRequirementsRef.current = null;
+    refetch?.();
+  }, [selectedAgentConfig, refetch]);
+
   const currentTokenRequirements = useMemo(() => {
     return getRequirementsPerToken(refillRequirements);
   }, [getRequirementsPerToken, refillRequirements]);
@@ -238,14 +245,14 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
 
   // Get the total token requirements, using "totalRequirements" from BE, instead of "refillRequirements"
   useEffect(() => {
-    if (!totalTokenRequirementsRef.current) {
+    if (!totalTokenRequirementsRef.current && !!totalRequirements) {
       totalTokenRequirementsRef.current =
         getRequirementsPerToken(totalRequirements);
     }
   }, [totalRequirements, getRequirementsPerToken]);
 
   return {
-    totalTokenRequirements: totalTokenRequirementsRef.current ?? [],
+    totalTokenRequirements: totalTokenRequirementsRef.current || [],
     currentTokenRequirements,
     initialTokenRequirements:
       initialTokenRequirementsRef.current ?? currentTokenRequirements,

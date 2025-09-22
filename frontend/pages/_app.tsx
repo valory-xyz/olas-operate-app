@@ -6,7 +6,6 @@ import type { AppProps } from 'next/app';
 import { useEffect, useState } from 'react';
 
 import { Layout } from '@/components/Layout/Layout';
-import { AgentUiProvider } from '@/context/AgentUiProvider';
 import { BalanceProvider } from '@/context/BalanceProvider/BalanceProvider';
 import { BalancesAndRefillRequirementsProvider } from '@/context/BalancesAndRefillRequirementsProvider';
 import { ElectronApiProvider } from '@/context/ElectronApiProvider';
@@ -57,11 +56,9 @@ export default function App({ Component, pageProps }: AppProps) {
                                         <OnRampProvider>
                                           {isMounted ? (
                                             <SystemNotificationTriggers>
-                                              <AgentUiProvider>
-                                                <Layout>
-                                                  <Component {...pageProps} />
-                                                </Layout>
-                                              </AgentUiProvider>
+                                              <Layout>
+                                                <Component {...pageProps} />
+                                              </Layout>
                                             </SystemNotificationTriggers>
                                           ) : null}
                                         </OnRampProvider>

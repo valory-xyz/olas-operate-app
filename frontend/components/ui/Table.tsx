@@ -39,6 +39,11 @@ export const TableWrapper = styled.div`
         border-bottom: none;
       }
     }
+    .ant-table-placeholder {
+      .ant-table-cell {
+        border-bottom: none;
+      }
+    }
   }
 `;
 

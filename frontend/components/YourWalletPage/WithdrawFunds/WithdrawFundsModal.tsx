@@ -1,7 +1,6 @@
 import { Button, Flex, Input, Modal, Typography } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { AgentProfile } from '@/components/AgentProfile';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { useServices } from '@/hooks/useServices';
 import { typedKeys } from '@/types/Util';
@@ -64,12 +63,11 @@ const FundsMayBeLocked = ({
   onNext,
   onCancel,
 }: FundsMayBeLockedMessageProps) => {
-  const { selectedAgentConfig } = useServices();
-
   return (
     <>
       <Text>{partOfFundsMayBeLockedMessage}</Text>
       <Flex vertical gap={8}>
+        {/* TODO: navigate to Pearl v1 profile if needed
         <AgentProfile
           renderContainer={({ onClick }) => (
             <Button
@@ -81,7 +79,7 @@ const FundsMayBeLocked = ({
               Withdraw locked funds
             </Button>
           )}
-        />
+        /> */}
         <Button onClick={onNext} type="primary" ghost>
           I have withdrawn my locked funds
         </Button>

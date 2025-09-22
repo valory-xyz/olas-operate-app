@@ -2,6 +2,7 @@ import { AgentType } from '@/enums/Agent';
 
 type AgentSettings = {
   isInitialFunded: boolean;
+  isProfileWarningDisplayed: boolean;
 };
 
 export type ElectronStore = {
@@ -18,12 +19,8 @@ export type ElectronStore = {
   // Each agent has its own settings
   [AgentType.PredictTrader]?: AgentSettings;
   [AgentType.AgentsFun]?: AgentSettings;
-  [AgentType.Modius]?: AgentSettings & {
-    isProfileWarningDisplayed: boolean;
-  };
-  [AgentType.Optimus]?: AgentSettings & {
-    isProfileWarningDisplayed: boolean;
-  };
+  [AgentType.Modius]?: AgentSettings;
+  [AgentType.Optimus]?: AgentSettings;
 };
 
 export type ElectronTrayIconStatus =

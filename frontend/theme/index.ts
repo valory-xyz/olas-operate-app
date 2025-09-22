@@ -28,6 +28,25 @@ export const mainTheme: ThemeConfig = {
       paddingInlineSM: 12,
       fontSize: 16,
       fontSizeLG: 16,
+
+      // For "primary" buttons
+      colorPrimary: '#7e22ce',
+      colorPrimaryHover: '#6a1cb1',
+      colorPrimaryActive: '#5c1a9e',
+      colorTextLightSolid: '#ffffff',
+      colorTextDisabled: '#ffffff',
+
+      // For "default" buttons
+      colorText: '#000000',
+      colorBorder: '#dfe6ec',
+      colorBgBase: '#ffffff',
+      colorBgTextActive: '#dfe6ec',
+      colorBgTextHover: 'transparent',
+
+      // For "link" buttons
+      colorLink: '#000000',
+      colorLinkHover: '#000000',
+      colorLinkActive: '#000000',
     },
     Card: {
       colorBgContainer: '#FFFFFF',

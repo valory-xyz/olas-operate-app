@@ -8,12 +8,16 @@ import { FireV1 } from '@/components/custom-icons/FireV1';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Segmented } from '@/components/ui/Segmented';
+import { EvmChainName } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
+import { TokenSymbolMap } from '@/constants/token';
+import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useRewardsHistory } from '@/hooks/useRewardsHistory';
+import { useServices } from '@/hooks/useServices';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
-import { balanceFormat } from '@/utils/numberFormatters';
+import { useUsdAmounts } from '@/hooks/useUsdAmounts';
 
 import { StakingContractDetails } from './StakingContractDetails';
 
@@ -21,10 +25,26 @@ const { Title, Text } = Typography;
 
 const StatsSkeleton = () => <Skeleton.Input active size="small" />;
 
+const useUsdRewards = () => {
+  const { selectedAgentConfig } = useServices();
+  const { evmHomeChainId } = selectedAgentConfig;
+  const chainName = EvmChainName[evmHomeChainId];
+  const { totalRewards } = useRewardsHistory();
+
+  const { totalUsd } = useUsdAmounts(chainName, [
+    {
+      symbol: TokenSymbolMap.OLAS,
+      amount: totalRewards,
+    },
+  ]);
+
+  return totalUsd;
+};
+
 const StakingStats = () => {
   const { optimisticStreak, isStreakLoading } = useStakingDetails();
-  const { totalRewards, isLoading: isRewardsHistoryLoading } =
-    useRewardsHistory();
+  const { isLoading: isRewardsHistoryLoading } = useRewardsHistory();
+  const totalRewardsInUsd = useUsdRewards();
 
   const fireIcon =
     optimisticStreak > 0 ? <FireV1 fill={COLOR.PURPLE} /> : <FireNoStreak />;
@@ -38,7 +58,7 @@ const StakingStats = () => {
             <StatsSkeleton />
           ) : (
             <Title level={5} className="mt-0 mb-0">
-              {balanceFormat(totalRewards ?? 0, 2) + ' OLAS'}
+              ${totalRewardsInUsd.toFixed(2)}
             </Title>
           )}
         </Flex>
@@ -131,7 +151,7 @@ export const AgentStaking = () => {
     useState<SelectionTabsProps['currentTab']>('StakingContract');
 
   return (
-    <Flex vertical>
+    <Flex vertical style={{ width: MAIN_CONTENT_MAX_WIDTH, margin: '0 auto' }}>
       <BackButton onPrev={() => goto(Pages.Main)} />
       <Title level={3} className="mt-12 mb-32">
         Agent Staking
