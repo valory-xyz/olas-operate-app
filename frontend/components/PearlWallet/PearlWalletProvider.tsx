@@ -132,13 +132,18 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const chainName = walletChainId
     ? (CHAIN_CONFIG[walletChainId].name as string)
     : '';
-  const { breakdown: usdBreakdown } = useUsdAmounts(
-    chainName,
-    Object.entries(TOKEN_CONFIG[walletChainId!]).map(([untypedSymbol]) => {
-      const symbol = untypedSymbol as TokenSymbol;
-      return { symbol, amount: 0 };
-    }),
-  );
+
+  const usdRequirements = useMemo(() => {
+    if (!walletChainId) return [];
+    return Object.entries(TOKEN_CONFIG[walletChainId!]).map(
+      ([untypedSymbol]) => {
+        const symbol = untypedSymbol as TokenSymbol;
+        return { symbol, amount: 0 };
+      },
+    );
+  }, [walletChainId]);
+
+  const { breakdown: usdBreakdown } = useUsdAmounts(chainName, usdRequirements);
 
   // OLAS token, Native Token, other ERC20 tokens
   const availableAssets: AvailableAsset[] = useMemo(() => {

@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
+import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
 import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
@@ -18,8 +19,8 @@ import {
   useService,
   useServiceBalances,
   useServices,
+  useUsdAmounts,
 } from '@/hooks';
-import { toUsd } from '@/service/toUsd';
 import { Nullable, ValueOf } from '@/types/Util';
 import { generateName } from '@/utils/agentName';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
@@ -91,6 +92,22 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
     [serviceSafes, walletChainId],
   );
 
+  const chainName = walletChainId
+    ? (CHAIN_CONFIG[walletChainId].name as string)
+    : '';
+
+  const usdRequirements = useMemo(() => {
+    if (!walletChainId) return [];
+    return Object.entries(TOKEN_CONFIG[walletChainId!]).map(
+      ([untypedSymbol]) => {
+        const symbol = untypedSymbol as TokenSymbol;
+        return { symbol, amount: 0 };
+      },
+    );
+  }, [walletChainId]);
+
+  const { breakdown: usdBreakdown } = useUsdAmounts(chainName, usdRequirements);
+
   // OLAS token, Native Token, other ERC20 tokens
   const availableAssets: AvailableAsset[] = useMemo(() => {
     if (!walletChainId) return [];
@@ -108,6 +125,9 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
       ([untypedSymbol, untypedTokenDetails]) => {
         const symbol = untypedSymbol as TokenSymbol;
         const { address } = untypedTokenDetails as TokenConfig;
+        const { usdPrice } = usdBreakdown.find(
+          (breakdown) => breakdown.symbol === symbol,
+        ) ?? { usdPrice: 0 };
 
         const balance = (() => {
           // balance for OLAS
@@ -134,7 +154,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
           address,
           symbol,
           amount: balance,
-          valueInUsd: toUsd(symbol, balance),
+          valueInUsd: usdPrice * balance,
         };
         return asset;
       },
@@ -146,6 +166,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
     serviceEoaNativeBalance,
     serviceSafeErc20Balances,
     serviceSafeOlas?.balance,
+    usdBreakdown,
   ]);
 
   // rewards not yet claimed from staking contract
@@ -160,21 +181,25 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
     [setWalletStep],
   );
 
+  const aggregatedBalance = useMemo(() => {
+    return sum(availableAssets.map(({ valueInUsd }) => valueInUsd));
+  }, [availableAssets]);
+
   return (
     <PearlWalletContext.Provider
       value={{
         walletStep,
         updateStep,
         isLoading: isServicesLoading || !isLoaded || isBalanceLoading,
-        aggregatedBalance: null,
+        aggregatedBalance,
         walletChainId,
         transactionHistory: [],
         agentName: generateName(serviceSafe?.address),
         agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
         stakingRewards,
+        availableAssets,
 
         // TODO: withdraw ticket
-        availableAssets,
         amountsToWithdraw: {},
       }}
     >
