@@ -3,6 +3,7 @@ import { Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
+import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -29,7 +30,11 @@ export const ConfirmSwitch = () => {
   if (!activeStakingProgramId || !stakingProgramIdToMigrateTo) return null;
 
   return (
-    <Flex vertical>
+    <Flex
+      vertical
+      className="mx-auto"
+      style={{ width: MAIN_CONTENT_MAX_WIDTH }}
+    >
       <BackButton onPrev={() => goto(Pages.SelectStaking)} />
       <Title level={3} className="my-12">
         Confirm Switch

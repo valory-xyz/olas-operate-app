@@ -8,6 +8,7 @@ import {
   useActiveStakingContractDetails,
   useStakingContractContext,
 } from '@/hooks/useStakingContractDetails';
+import { isValidServiceId } from '@/utils/service';
 
 type UseCanMigrateProps = {
   stakingProgramId: StakingProgramId;
@@ -31,7 +32,9 @@ export const useCanMigrate = ({
   const { isServiceStakedForMinimumDuration } =
     useActiveStakingContractDetails();
   const serviceConfigId = selectedService?.service_config_id;
-  const { deploymentStatus: serviceStatus } = useService(serviceConfigId);
+  const { deploymentStatus: serviceStatus, serviceNftTokenId } =
+    useService(serviceConfigId);
+  const isDummyService = !isValidServiceId(serviceNftTokenId);
 
   const { buttonText, canMigrate } = useMemo(() => {
     const contractDetails = allStakingContractDetailsRecord?.[stakingProgramId];
@@ -50,7 +53,8 @@ export const useCanMigrate = ({
           buttonText: MigrateButtonText.CurrentContract,
           canMigrate: false,
         };
-      case !isServiceStakedForMinimumDuration:
+      // If service is not dummy (never deployed), check if it was staked for min-duration
+      case !isServiceStakedForMinimumDuration && !isDummyService:
         return {
           buttonText: MigrateButtonText.AgentInCooldownPeriod,
           canMigrate: false,
