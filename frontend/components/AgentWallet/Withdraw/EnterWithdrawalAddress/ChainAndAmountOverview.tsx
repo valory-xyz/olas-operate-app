@@ -60,10 +60,81 @@ const PearlWalletToExternalWallet = () => {
   );
 };
 
+const DestinationChain = ({ chainName }: { chainName: string }) => (
+  <Flex vertical gap={8}>
+    <Text className="text-neutral-tertiary">Destination chain</Text>
+    <OverviewContainer gap={8} align="center">
+      <Image
+        src={`/chains/${kebabCase(chainName)}-chain.png`}
+        width={20}
+        preview={false}
+        alt={`${chainName} logo`}
+        className="flex"
+      />
+      {chainName}
+    </OverviewContainer>
+  </Flex>
+);
+
+const AssetsFromAgentWallet = () => {
+  const { availableAssets } = useAgentWallet();
+
+  if (availableAssets.length === 0) return null;
+  return (
+    <Flex vertical gap={8}>
+      <Text className="text-neutral-tertiary">Assets from Agent Wallet</Text>
+      <OverviewContainer gap={8} vertical>
+        {availableAssets.map((asset) => (
+          <Flex key={asset.symbol} gap={8} align="center">
+            <Image
+              src={TokenSymbolConfigMap[asset.symbol].image}
+              alt={asset.symbol}
+              width={20}
+              className="flex"
+            />
+            <Text>{formatNumber(asset.amount, 4)}</Text>
+            <Text>{asset.symbol}</Text>
+            <Text className="text-neutral-tertiary">
+              {asset.valueInUsd ? `≈ ${asset.valueInUsd}` : null}
+            </Text>
+          </Flex>
+        ))}
+      </OverviewContainer>
+    </Flex>
+  );
+};
+
+const AssetsFromStakingContract = () => {
+  const { stakingRewards } = useAgentWallet();
+
+  return (
+    <Flex vertical gap={8}>
+      <Text className="text-neutral-tertiary">
+        Assets from staking contract
+      </Text>
+      <OverviewContainer vertical gap={12} align="start">
+        <Flex gap={8} align="center">
+          <Image
+            src={`/tokens/olas-icon.png`}
+            alt="OLAS rewards"
+            width={20}
+            className="flex"
+          />
+          <Text>{formatNumber(stakingRewards, 4)} OLAS</Text>
+          <Text className="text-neutral-tertiary">
+            {toUsd('OLAS', stakingRewards) || ''}
+          </Text>
+        </Flex>
+
+        <AgentNft />
+      </OverviewContainer>
+    </Flex>
+  );
+};
+
 export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
   const message = useMessageApi();
-  const { walletChainId, availableAssets, stakingRewards } = useAgentWallet();
-
+  const { walletChainId } = useAgentWallet();
   const chainDetails = walletChainId ? CHAIN_CONFIG[walletChainId] : null;
 
   return (
@@ -77,67 +148,10 @@ export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
 
         <Flex vertical gap={32}>
           {chainDetails?.name && (
-            <Flex vertical gap={8}>
-              <Text className="text-neutral-tertiary">Destination chain</Text>
-              <OverviewContainer gap={8} align="center">
-                <Image
-                  src={`/chains/${kebabCase(chainDetails.name)}-chain.png`}
-                  width={20}
-                  preview={false}
-                  alt={`${chainDetails.name} logo`}
-                  className="flex"
-                />
-                {chainDetails.name}
-              </OverviewContainer>
-            </Flex>
+            <DestinationChain chainName={chainDetails.name} />
           )}
-
-          {availableAssets.length > 0 && (
-            <Flex vertical gap={8}>
-              <Text className="text-neutral-tertiary">
-                Assets from Agent Wallet
-              </Text>
-              <OverviewContainer gap={8} vertical>
-                {availableAssets.map((asset) => (
-                  <Flex key={asset.symbol} gap={8} align="center">
-                    <Image
-                      src={TokenSymbolConfigMap[asset.symbol].image}
-                      alt={asset.symbol}
-                      width={20}
-                      className="flex"
-                    />
-                    <Text>{formatNumber(asset.amount, 4)}</Text>
-                    <Text>{asset.symbol}</Text>
-                    <Text className="text-neutral-tertiary">
-                      {asset.valueInUsd ? `≈ ${asset.valueInUsd}` : null}
-                    </Text>
-                  </Flex>
-                ))}
-              </OverviewContainer>
-            </Flex>
-          )}
-
-          <Flex vertical gap={8}>
-            <Text className="text-neutral-tertiary">
-              Assets from staking contract
-            </Text>
-            <OverviewContainer vertical gap={12} align="start">
-              <Flex gap={8} align="center">
-                <Image
-                  src={`/tokens/olas-icon.png`}
-                  alt="OLAS rewards"
-                  width={20}
-                  className="flex"
-                />
-                <Text>{formatNumber(stakingRewards, 4)} OLAS</Text>
-                <Text className="text-neutral-tertiary">
-                  {toUsd('OLAS', stakingRewards) || ''}
-                </Text>
-              </Flex>
-
-              <AgentNft />
-            </OverviewContainer>
-          </Flex>
+          <AssetsFromAgentWallet />
+          <AssetsFromStakingContract />
         </Flex>
 
         <Button
