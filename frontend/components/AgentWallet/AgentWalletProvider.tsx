@@ -29,7 +29,7 @@ import {
   StakedAsset,
   STEPS,
   TransactionHistory,
-} from './Withdraw/types';
+} from './types';
 
 const PearlWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;

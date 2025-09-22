@@ -69,7 +69,7 @@ const WithdrawalPasswordInput = ({
 
 type EnterWithdrawalAddressProps = { onBack: () => void };
 
-export const EnterWithdrawalAddress = ({
+export const WithdrawFromAgentWallet = ({
   onBack,
 }: EnterWithdrawalAddressProps) => {
   const { isLoading, isError, isSuccess } = useWithdrawFunds();

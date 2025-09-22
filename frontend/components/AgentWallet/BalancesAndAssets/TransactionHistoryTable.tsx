@@ -5,7 +5,7 @@ import { TokenSymbolConfigMap } from '@/constants/token';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { useAgentWallet } from '../AgentWalletProvider';
-import { TransactionHistory } from '../Withdraw/types';
+import { TransactionHistory } from '../types';
 
 const { Text } = Typography;
 

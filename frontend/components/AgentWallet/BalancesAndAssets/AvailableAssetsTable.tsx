@@ -5,7 +5,7 @@ import { TokenSymbolConfigMap } from '@/constants/token';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { useAgentWallet } from '../AgentWalletProvider';
-import { AvailableAsset } from '../Withdraw/types';
+import { AvailableAsset } from '../types';
 
 const { Text } = Typography;
 
