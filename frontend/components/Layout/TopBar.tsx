@@ -57,28 +57,35 @@ const TopBarContainer = styled.div`
 
 export const TopBar = () => {
   const router = useRouter();
-  const { closeApp, minimizeApp, onRampWindow } = useElectronApi();
+  const { closeApp, minimizeApp, onRampWindow, onRampTermsWindow } =
+    useElectronApi();
   const store = useStore();
   const { isUserLoggedIn, goto, pageState } = usePageState();
 
   const envName = store?.storeState?.environmentName;
   const isOnRamp = router.pathname === '/onramp';
-  const isNotMain = [isOnRamp].some(Boolean);
+  const isTerms = router.pathname === '/terms-and-conditions';
+  const isNotMain = [isOnRamp, isTerms].some(Boolean);
 
   const name = useMemo(() => {
     if (isOnRamp) return 'Buy Crypto on Transak';
+    if (isTerms) return 'Terms & Conditions';
     return `Pearl (beta) ${envName ? `(${envName})` : ''}`.trim();
-  }, [isOnRamp, envName]);
+  }, [isOnRamp, isTerms, envName]);
 
   const handleClose = useCallback(() => {
     if (isOnRamp) {
       onRampWindow?.close?.();
       return;
     }
+    if (isTerms) {
+      onRampTermsWindow?.close?.();
+      return;
+    }
 
     if (!closeApp) return;
     closeApp();
-  }, [closeApp, isOnRamp, onRampWindow]);
+  }, [closeApp, isOnRamp, isTerms, onRampWindow, onRampTermsWindow]);
 
   return (
     <TopBarContainer>

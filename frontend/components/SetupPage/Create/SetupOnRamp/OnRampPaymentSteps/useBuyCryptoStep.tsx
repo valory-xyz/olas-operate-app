@@ -9,22 +9,15 @@ import { delayInSeconds } from '@/utils/delay';
 
 const { Text } = Typography;
 
-const TransakAgreement = () => (
+const OnRampAgreement = ({ onClick }: { onClick?: () => void }) => (
   <Text className="text-sm text-lighter">
-    By proceeding, you agree to the Transak&nbsp;
-    <a target="_blank" href="https://transak.com/terms-of-service">
-      Terms and Conditions
-    </a>
-    &nbsp;and&nbsp;
-    <a target="_blank" href="https://transak.com/privacy-policy">
-      Privacy Policy
-    </a>
-    .
+    By proceeding, you agree to the service&apos;s&nbsp;
+    <a onClick={onClick}>Terms & Conditions</a>.
   </Text>
 );
 
 export const useBuyCryptoStep = () => {
-  const { onRampWindow } = useElectronApi();
+  const { onRampWindow, onRampTermsWindow } = useElectronApi();
   const { masterEoa } = useMasterWalletContext();
   const {
     isBuyCryptoBtnLoading,
@@ -45,6 +38,10 @@ export const useBuyCryptoStep = () => {
 
   const cannotBuyCrypto = !masterEoa?.address || !usdAmountToPay;
 
+  const openTerms = useCallback(async () => {
+    onRampTermsWindow?.show?.();
+  }, [onRampTermsWindow]);
+
   const buyCryptoStep = useMemo<TransactionStep>(() => {
     const status = (() => {
       if (isOnRampingStepCompleted) return 'finish';
@@ -59,7 +56,9 @@ export const useBuyCryptoStep = () => {
       subSteps: isOnRampingStepCompleted
         ? [{ description: 'Funds received by the agent.' }]
         : [
-            { description: <TransakAgreement /> },
+            {
+              description: <OnRampAgreement onClick={openTerms} />,
+            },
             {
               description: (
                 <Button
@@ -83,6 +82,7 @@ export const useBuyCryptoStep = () => {
     isTransactionSuccessfulButFundsNotReceived,
     cannotBuyCrypto,
     handleBuyCrypto,
+    openTerms,
   ]);
 
   return buyCryptoStep;
