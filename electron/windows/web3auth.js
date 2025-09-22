@@ -3,7 +3,7 @@
 const { BrowserWindow } = require('electron');
 const path = require('path');
 
-const { logger } = require('./logger');
+const { logger } = require('../logger');
 
 /** @type {Electron.BrowserWindow | null} */
 let web3AuthWindow = null;
@@ -13,7 +13,7 @@ const getWeb3AuthWindow = () => web3AuthWindow;
  * Create the web3auth window for displaying web3auth modal
  */
 /** @type {()=>Promise<BrowserWindow|undefined>} */
-const createWeb3AuthWindow = async () => {
+const createWeb3AuthWindow = async (baseUrl) => {
   if (!getWeb3AuthWindow() || getWeb3AuthWindow().isDestroyed) {
     web3AuthWindow = new BrowserWindow({
       title: 'Web3Auth',
@@ -24,17 +24,17 @@ const createWeb3AuthWindow = async () => {
       fullscreenable: false,
       maximizable: false,
       closable: false,
-      width: 600,
+      width: 480,
       height: 700,
       media: true,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
-        preload: path.join(__dirname, 'preload.js'),
+        preload: path.join(__dirname, '../preload.js'),
       },
     });
 
-    const web3AuthUrl = 'http://localhost:4200/web3auth/login';
+    const web3AuthUrl = `${baseUrl}/web3auth`;
 
     web3AuthWindow.loadURL(web3AuthUrl).then(() => {
       logger.electron(`Open Web3Auth window: ${web3AuthWindow.url}`);
@@ -51,31 +51,30 @@ const createWeb3AuthWindow = async () => {
   return web3AuthWindow;
 };
 
-const handleWeb3AuthWindowShow = () => {
+const handleWeb3AuthWindowShow = (baseUrl) => {
   logger.electron('web3auth-window-show');
 
   if (!getWeb3AuthWindow() || getWeb3AuthWindow().isDestroyed()) {
-    createWeb3AuthWindow()?.then((window) => window.show());
+    createWeb3AuthWindow(baseUrl)?.then((window) => window.show());
   } else {
     getWeb3AuthWindow()?.show();
   }
 };
 
 const handleWeb3AuthWindowClose = () => {
-  logger.electron('web3auth-window-show');
+  logger.electron('web3auth-window-close');
 
-  if (!getWeb3AuthWindow() || getWeb3AuthWindow().isDestroyed()) {
-    createWeb3AuthWindow()?.then((window) => window.show());
-  } else {
-    getWeb3AuthWindow()?.show();
-  }
+  // already destroyed or not created
+  if (!getWeb3AuthWindow() || getWeb3AuthWindow().isDestroyed()) return;
+
+  getWeb3AuthWindow()?.destroy();
 };
 
-const handleWeb3AuthSuccessLogin = (window, address) => {
+const handleWeb3AuthSuccessLogin = (mainWindow, address) => {
   if (!address) return;
 
   logger.electron(`web3auth-address-received: ${address}`);
-  window.webContents.send('web3auth-address-received', address);
+  mainWindow.webContents.send('web3auth-address-received', address);
 };
 
 module.exports = {

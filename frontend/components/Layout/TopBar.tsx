@@ -57,18 +57,21 @@ const TopBarContainer = styled.div`
 
 export const TopBar = () => {
   const router = useRouter();
-  const { closeApp, minimizeApp, onRampWindow } = useElectronApi();
+  const { closeApp, minimizeApp, onRampWindow, web3AuthWindow } =
+    useElectronApi();
   const store = useStore();
   const { isUserLoggedIn, goto, pageState } = usePageState();
 
   const envName = store?.storeState?.environmentName;
   const isOnRamp = router.pathname === '/onramp';
-  const isNotMain = [isOnRamp].some(Boolean);
+  const isWeb3Auth = router.pathname === '/web3auth';
+  const isNotMain = [isOnRamp, isWeb3Auth].some(Boolean);
 
   const name = useMemo(() => {
     if (isOnRamp) return 'Buy Crypto on Transak';
+    if (isWeb3Auth) return 'Web3auth';
     return `Pearl (beta) ${envName ? `(${envName})` : ''}`.trim();
-  }, [isOnRamp, envName]);
+  }, [isOnRamp, envName, isWeb3Auth]);
 
   const handleClose = useCallback(() => {
     if (isOnRamp) {
@@ -76,9 +79,14 @@ export const TopBar = () => {
       return;
     }
 
+    if (isWeb3Auth) {
+      web3AuthWindow?.close?.();
+      return;
+    }
+
     if (!closeApp) return;
     closeApp();
-  }, [closeApp, isOnRamp, onRampWindow]);
+  }, [closeApp, isOnRamp, isWeb3Auth, onRampWindow, web3AuthWindow]);
 
   return (
     <TopBarContainer>

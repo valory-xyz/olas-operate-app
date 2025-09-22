@@ -96,3 +96,9 @@ export const SWAP_URL_BY_EVM_CHAIN: Record<EvmChainId, Url> = {
 
 // on-ramp
 export const ON_RAMP_GATEWAY_URL = `https://on-ramp.${process.env.NODE_ENV === 'production' ? '' : 'staging.'}autonolas.tech/`;
+
+// pearl-api url
+export const PEARL_API_URL = 'https://pearl-api.olas.network';
+
+// web3auth
+export const WEB3AUTH_GATEWAY_URL = `${PEARL_API_URL}/web3auth/login`;

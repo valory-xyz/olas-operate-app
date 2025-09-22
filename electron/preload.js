@@ -22,6 +22,8 @@ const onRampWindow = {
 const web3AuthWindow = {
   show: () => ipcRenderer.invoke('web3auth-window-show'),
   close: () => ipcRenderer.invoke('web3auth-window-close'),
+  authSuccess: (address) =>
+    ipcRenderer.invoke('web3auth-address-received', address),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', {

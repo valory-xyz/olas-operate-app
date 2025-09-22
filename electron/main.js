@@ -8,11 +8,11 @@ const {
   secureFetch,
 } = require('./utils');
 
-// const {
-//   handleWeb3AuthWindowShow,
-//   handleWeb3AuthWindowClose,
-//   handleWeb3AuthSuccessLogin,
-// } = require('./windows');
+const {
+  handleWeb3AuthWindowShow,
+  handleWeb3AuthWindowClose,
+  handleWeb3AuthSuccessLogin,
+} = require('./windows/web3auth');
 
 // Load the self-signed certificate for localhost HTTPS requests
 loadLocalCertificate();
@@ -195,51 +195,6 @@ function handleAppSettings() {
 
 let isBeforeQuitting = false;
 let appRealClose = false;
-
-// register custom protocol for deep links
-// const protocol = 'xyz.valory.olas-operate-app';
-// if (process.defaultApp) {
-//   if (process.argv.length >= 2) {
-//     app.setAsDefaultProtocolClient(protocol, process.execPath, [
-//       path.resolve(process.argv[1]),
-//     ]);
-//   }
-// } else {
-//   app.setAsDefaultProtocolClient(protocol);
-// }
-
-// function handleWeb3AuthRedirect(url) {
-//   if (url.startsWith(`${protocol}://web3auth/login`)) {
-//     const urlObject = new URL(url);
-//     const address = urlObject.searchParams.get('address');
-//     handleWeb3AuthSuccessLogin(mainWindow, address);
-//   }
-// }
-
-// // process deep links for windows and linux
-// // https://www.electronjs.org/docs/latest/tutorial/launch-app-from-url-in-another-app#windows-and-linux-code
-// const gotTheLock = app.requestSingleInstanceLock();
-
-// if (!gotTheLock) {
-//   app.quit();
-// } else {
-//   app.on('second-instance', (_, commandLine) => {
-//     // Someone tried to run a second instance, we should focus our window.
-//     if (mainWindow) {
-//       if (mainWindow.isMinimized()) mainWindow.restore();
-//       mainWindow.focus();
-//     }
-//     // the commandLine is array of strings in which last element is deep link url
-//     const url = commandLine.pop();
-//     handleWeb3AuthRedirect(url);
-//   });
-// }
-
-// // process deep links for mac
-// // https://www.electronjs.org/docs/latest/tutorial/launch-app-from-url-in-another-app#macos-code
-// app.on('open-url', (_, url) => {
-//   handleWeb3AuthRedirect(url);
-// });
 
 /**
  * function to stop the backend server gracefully and
@@ -1240,5 +1195,10 @@ ipcMain.handle('onramp-transaction-failure', () => {
 /**
  * Web3Auth window handlers
  */
-// ipcMain.handle('web3auth-window-show', handleWeb3AuthWindowShow);
-// ipcMain.handle('web3auth-window-close', handleWeb3AuthWindowClose);
+ipcMain.handle('web3auth-window-show', () =>
+  handleWeb3AuthWindowShow(nextUrl()),
+);
+ipcMain.handle('web3auth-window-close', handleWeb3AuthWindowClose);
+ipcMain.handle('web3auth-address-received', (address) =>
+  handleWeb3AuthSuccessLogin(mainWindow, address),
+);

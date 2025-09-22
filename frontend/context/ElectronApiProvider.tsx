@@ -1,6 +1,7 @@
 import { get } from 'lodash';
 import { createContext, PropsWithChildren } from 'react';
 
+import { Address } from '@/types/Address';
 import { AgentHealthCheckResponse } from '@/types/Agent';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
 
@@ -67,6 +68,7 @@ type ElectronApiContextProps = {
   web3AuthWindow?: {
     show?: () => void;
     close?: () => void;
+    authSuccess?: (address: Address) => void;
   };
   logEvent?: (message: string) => void;
 };
@@ -106,7 +108,10 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     show: () => {},
     transactionSuccess: () => {},
   },
-  web3AuthWindow,
+  web3AuthWindow: {
+    show: () => {},
+    close: () => {},
+  },
   logEvent: () => {},
 });
 
@@ -171,6 +176,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         web3AuthWindow: {
           show: getElectronApiFunction('web3AuthWindow.show'),
           close: getElectronApiFunction('web3AuthWindow.close'),
+          authSuccess: getElectronApiFunction('web3AuthWindow.authSuccess'),
         },
         logEvent: getElectronApiFunction('logEvent'),
       }}
