@@ -67,7 +67,7 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
         const agentsFunFormValues = formValues as AgentsFunFormValues;
         return {
           PERSONA: agentsFunFormValues.personaDescription,
-          GENAI_API_KEY: agentsFunFormValues.geminiApiKey,
+          GENAI_API_KEY: agentsFunFormValues.geminiApiKey || '',
           FIREWORKS_API_KEY: agentsFunFormValues.fireworksApiEnabled
             ? agentsFunFormValues.fireworksApiKey
             : '',
@@ -81,7 +81,7 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
       } else if (selectedAgentType === AgentType.PredictTrader) {
         const predictFormValues = formValues as PredictFormValues;
         return {
-          GENAI_API_KEY: predictFormValues.geminiApiKey,
+          GENAI_API_KEY: predictFormValues.geminiApiKey || '',
         };
       }
       return formValues.env_variables;

@@ -26,6 +26,12 @@ const web3AuthWindow = {
     ipcRenderer.invoke('web3auth-address-received', address),
 };
 
+/** IPC methods for terms window */
+const onRampTermsWindow = {
+  show: () => ipcRenderer.invoke('terms-window-show'),
+  close: () => ipcRenderer.invoke('terms-window-close'),
+};
+
 contextBridge.exposeInMainWorld('electronAPI', {
   setIsAppLoaded: (isAppLoaded) =>
     ipcRenderer.send('is-app-loaded', isAppLoaded),
@@ -57,5 +63,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   agentActivityWindow,
   onRampWindow,
   web3AuthWindow,
+  onRampTermsWindow,
   logEvent: (message) => ipcRenderer.invoke('log-event', message),
 });
