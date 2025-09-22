@@ -17,7 +17,7 @@ const BASE_STAKING_PROGRAM_IDS = {
   MemeBaseBeta2: 'meme_base_beta_2',
   MemeBaseBeta3: 'meme_base_beta_3',
   MemeCeloAlpha2: 'meme_celo_alpha_2',
-  AgentsFun1: 'agents_fun_1',
+  AgentsFun1: 'no_staking',
   AgentsFun2: 'agents_fun_2',
   AgentsFun3: 'agents_fun_3',
 } as const;

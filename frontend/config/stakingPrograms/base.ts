@@ -107,7 +107,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.AgentsFun1]: {
     chainId: EvmChainId.Base,
     name: 'Agents.fun 1',
-    agentsSupported: [AgentType.AgentsFun],
+    agentsSupported: [AgentType.AgentsFunEliza],
     stakingRequirements: {
       [TokenSymbol.OLAS]: 100,
     },

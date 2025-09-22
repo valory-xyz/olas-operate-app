@@ -623,9 +623,9 @@ const ELIZA_AGENTS_FUN_TEMPLATE: ServiceTemplate = {
   agent_release: {
     is_aea: false,
     repository: {
-      owner: 'valory-xyz',
+      owner: 'OjusWiZard',
       name: 'agents-fun-eliza',
-      version: 'v0.1.5'
+      version: 'v0.1.6'
     }
   },
   home_chain: MiddlewareChain.BASE,
