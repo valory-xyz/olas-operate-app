@@ -150,7 +150,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         const symbol = untypedSymbol as TokenSymbol;
         const { address } = untypedTokenDetails as TokenConfig;
         const { usdPrice } = usdBreakdown.find(
-          ({ symbol: s }) => s === symbol,
+          (breakdown) => breakdown.symbol === symbol,
         ) ?? { usdPrice: 0 };
 
         const balance = (() => {

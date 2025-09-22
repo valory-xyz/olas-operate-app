@@ -14,22 +14,17 @@ import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import {
   useBalanceContext,
+  useRewardContext,
+  useService,
   useServiceBalances,
-} from '@/hooks/useBalanceContext';
-import { useRewardContext } from '@/hooks/useRewardContext';
-import { useService } from '@/hooks/useService';
-import { useServices } from '@/hooks/useServices';
+  useServices,
+} from '@/hooks';
 import { toUsd } from '@/service/toUsd';
 import { Nullable, ValueOf } from '@/types/Util';
 import { generateName } from '@/utils/agentName';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
-import {
-  AvailableAsset,
-  StakedAsset,
-  STEPS,
-  TransactionHistory,
-} from './types';
+import { AvailableAsset, STEPS, TransactionHistory } from './types';
 
 const PearlWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;
@@ -41,9 +36,7 @@ const PearlWalletContext = createContext<{
   agentName: Nullable<string>;
   agentImgSrc: Nullable<string>;
   stakingRewards: number;
-
   availableAssets: AvailableAsset[];
-  stakedAssets: StakedAsset[];
   amountsToWithdraw: Partial<Record<TokenSymbol, number>>;
 }>({
   walletStep: STEPS.AGENT_WALLET_SCREEN,
@@ -55,8 +48,6 @@ const PearlWalletContext = createContext<{
   agentName: null,
   agentImgSrc: null,
   stakingRewards: 0,
-
-  stakedAssets: [],
   availableAssets: [],
   amountsToWithdraw: {},
 });
@@ -76,8 +67,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
     serviceSafeNativeBalances,
     serviceSafeOlas,
   } = useServiceBalances(selectedService?.service_config_id);
-  const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
-    useBalanceContext();
+  const { isLoading: isBalanceLoading } = useBalanceContext();
   const { availableRewardsForEpochEth, accruedServiceStakingRewards } =
     useRewardContext();
 
@@ -163,17 +153,6 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
     return sum([accruedServiceStakingRewards, availableRewardsForEpochEth]);
   }, [accruedServiceStakingRewards, availableRewardsForEpochEth]);
 
-  // staked OLAS
-  const stakedAssets: StakedAsset[] = [
-    {
-      agentName: generateName(serviceSafe?.address),
-      agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
-      symbol: 'OLAS',
-      amount: totalStakedOlasBalance ?? 0,
-      value: toUsd('OLAS', totalStakedOlasBalance ?? 0),
-    },
-  ];
-
   const updateStep = useCallback(
     (newStep: ValueOf<typeof STEPS>) => {
       setWalletStep(newStep);
@@ -194,8 +173,8 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
         agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
         stakingRewards,
 
+        // TODO: withdraw ticket
         availableAssets,
-        stakedAssets,
         amountsToWithdraw: {},
       }}
     >

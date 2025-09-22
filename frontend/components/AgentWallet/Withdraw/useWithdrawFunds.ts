@@ -1,10 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
-import { entries } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
-import { ChainTokenConfig, TOKEN_CONFIG, TokenType } from '@/config/tokens';
-import { AddressZero } from '@/constants/address';
 import { SupportedMiddlewareChainMap } from '@/constants/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import {
@@ -13,7 +10,6 @@ import {
 } from '@/constants/urls';
 import { Address, TxnHash } from '@/types/Address';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
-import { parseUnits } from '@/utils/numberFormatters';
 
 import { useAgentWallet } from '../AgentWalletProvider';
 
@@ -57,37 +53,6 @@ type WithdrawalResponse = {
   };
 };
 
-/**
- * Convert amountsToWithdraw to the required format
- * @example
- * {
- *   "gnosis": {
- *     "0x0000000000000000000000000000000000000000": "1000000000000000000",
- *     "0x...": "1000000000000000000"
- *   }
- * }
- */
-const formatWithdrawAssets = (
-  amountsToWithdraw: { [symbol: string]: number },
-  chainConfig: ChainTokenConfig,
-) =>
-  entries(amountsToWithdraw).reduce(
-    (acc, [symbol, amount]) => {
-      if (amount <= 0) return acc;
-      if (!chainConfig[symbol]) return acc;
-
-      const { tokenType, address, decimals } = chainConfig[symbol];
-      const tokenAddress =
-        tokenType === TokenType.NativeGas ? AddressZero : address;
-
-      if (tokenAddress) {
-        acc[tokenAddress] = parseUnits(amount, decimals);
-      }
-      return acc;
-    },
-    {} as { [token: Address]: string },
-  );
-
 // API call to withdraw funds
 const withdrawFunds = async (
   request: WithdrawalRequest,
@@ -111,9 +76,9 @@ const withdrawFunds = async (
  * Hook to handle withdrawal of funds
  */
 export const useWithdrawFunds = () => {
-  const { walletChainId, amountsToWithdraw } = useAgentWallet();
+  const { walletChainId } = useAgentWallet();
 
-  const { isPending, isSuccess, isError, data, mutateAsync } = useMutation({
+  const { isPending, isSuccess, isError, data } = useMutation({
     mutationFn: async (withdrawalRequest: WithdrawalRequest) => {
       try {
         const response = await withdrawFunds(withdrawalRequest);
@@ -125,25 +90,6 @@ export const useWithdrawFunds = () => {
     },
     onError: (error) => console.error(error),
   });
-
-  const onAuthorizeWithdrawal = useCallback(
-    async (withdrawAddress: string, password: string) => {
-      if (!walletChainId) return;
-
-      const { middlewareChain } = CHAIN_CONFIG[walletChainId];
-      const chainConfig = TOKEN_CONFIG[walletChainId];
-      const assets = formatWithdrawAssets(amountsToWithdraw, chainConfig);
-
-      const request = {
-        password,
-        to: withdrawAddress as Address,
-        withdraw_assets: { [middlewareChain]: assets },
-      } satisfies WithdrawalRequest;
-
-      await mutateAsync(request);
-    },
-    [walletChainId, amountsToWithdraw, mutateAsync],
-  );
 
   const txnHashes = useMemo(() => {
     if (!isSuccess) return [];
@@ -166,6 +112,5 @@ export const useWithdrawFunds = () => {
     isSuccess,
     isError,
     txnHashes,
-    onAuthorizeWithdrawal,
   };
 };

@@ -1,7 +1,6 @@
 import { Button, Flex, Input, Modal, Typography } from 'antd';
-import { useCallback, useState } from 'react';
+import { CSSProperties, useCallback, useState } from 'react';
 
-import { cardStyles } from '../common';
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { useWithdrawFunds } from './useWithdrawFunds';
 import {
@@ -11,6 +10,11 @@ import {
 } from './WithdrawStatusMessage';
 
 const { Text } = Typography;
+
+export const cardStyles: CSSProperties = {
+  width: 552,
+  margin: '0 auto',
+} as const;
 
 const PasswordLabel = () => (
   <Text className="text-sm text-neutral-tertiary">
