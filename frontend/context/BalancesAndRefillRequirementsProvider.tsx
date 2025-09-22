@@ -1,4 +1,8 @@
-import { QueryObserverResult, useQuery } from '@tanstack/react-query';
+import {
+  QueryObserverResult,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { createContext, PropsWithChildren, useMemo } from 'react';
 
 import {
@@ -29,6 +33,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   refetch: Nullable<
     () => Promise<QueryObserverResult<BalancesAndFundingRequirements, Error>>
   >;
+  resetQueryCache: Nullable<() => Promise<void>>;
 }>({
   isBalancesAndFundingRequirementsLoading: false,
   balances: undefined,
@@ -37,6 +42,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   canStartAgent: false,
   isRefillRequired: false,
   refetch: null,
+  resetQueryCache: null,
 });
 
 export const BalancesAndRefillRequirementsProvider = ({
@@ -45,6 +51,7 @@ export const BalancesAndRefillRequirementsProvider = ({
   const { isUserLoggedIn } = usePageState();
   const { selectedService, selectedAgentConfig } = useServices();
   const { isOnline } = useOnlineStatusContext();
+  const queryClient = useQueryClient();
   const configId = selectedService?.service_config_id;
   const chainId = selectedAgentConfig.evmHomeChainId;
 
@@ -113,6 +120,18 @@ export const BalancesAndRefillRequirementsProvider = ({
     balancesAndRefillRequirements,
   ]);
 
+  const resetQueryCache = useMemo(() => {
+    if (!configId) return null;
+
+    return async () => {
+      // Invalidate the query
+      await queryClient.removeQueries({
+        queryKey:
+          REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(configId),
+      });
+    };
+  }, [queryClient, configId]);
+
   return (
     <BalancesAndRefillRequirementsProviderContext.Provider
       value={{
@@ -125,6 +144,7 @@ export const BalancesAndRefillRequirementsProvider = ({
         isRefillRequired:
           balancesAndRefillRequirements?.is_refill_required || false,
         refetch: refetch || null,
+        resetQueryCache,
       }}
     >
       {children}

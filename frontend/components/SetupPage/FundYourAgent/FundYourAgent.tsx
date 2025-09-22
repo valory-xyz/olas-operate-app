@@ -171,15 +171,18 @@ export const FundYourAgent = () => {
   const { goto } = usePageState();
   const { evmHomeChainId, requiresSetup } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
-  const { totalTokenRequirements: tokenRequirements, isLoading } =
-    useGetRefillRequirementsWithMonthlyGas({
-      selectedAgentConfig,
-      /**
-       * service creation for agents requiring setup is already handled
-       * at the time of agent form
-       */
-      shouldCreateDummyService: !requiresSetup,
-    });
+  const {
+    totalTokenRequirements: tokenRequirements,
+    isLoading,
+    resetTokenRequirements,
+  } = useGetRefillRequirementsWithMonthlyGas({
+    selectedAgentConfig,
+    /**
+     * service creation for agents requiring setup is already handled
+     * at the time of agent form
+     */
+    shouldCreateDummyService: !requiresSetup,
+  });
   const [isBridgeOnboardingEnabled, isOnRampEnabled] = useFeatureFlag([
     'bridge-onboarding',
     'on-ramp',
@@ -190,7 +193,12 @@ export const FundYourAgent = () => {
 
   return (
     <FundYourAgentContainer>
-      <BackButton onPrev={() => goto(Pages.Main)} />
+      <BackButton
+        onPrev={() => {
+          resetTokenRequirements();
+          goto(Pages.Main);
+        }}
+      />
       <Title level={3} className="mt-12">
         Fund your {selectedAgentConfig.displayName}
       </Title>

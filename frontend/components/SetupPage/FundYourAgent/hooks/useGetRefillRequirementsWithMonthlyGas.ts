@@ -84,6 +84,7 @@ type UseGetRefillRequirementsWithMonthlyGasReturn = {
    */
   currentTokenRequirements: TokenRequirement[];
   isLoading: boolean;
+  resetTokenRequirements: () => void;
 };
 
 /**
@@ -123,6 +124,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     refillRequirements,
     balances,
     refetch,
+    resetQueryCache,
     isBalancesAndFundingRequirementsLoading,
   } = useBalanceAndRefillRequirementsContext();
   const { masterEoa, masterSafes } = useMasterWalletContext();
@@ -238,18 +240,24 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
 
   // Get the total token requirements, using "totalRequirements" from BE, instead of "refillRequirements"
   useEffect(() => {
-    if (!totalTokenRequirementsRef.current && !!totalRequirements) {
+    if (
+      totalTokenRequirementsRef.current === null ||
+      totalTokenRequirementsRef.current.length === 0
+    ) {
       totalTokenRequirementsRef.current =
         getRequirementsPerToken(totalRequirements);
     }
   }, [totalRequirements, getRequirementsPerToken]);
 
-  // Reset cached requirements when the selected agent changes
-  useEffect(() => {
+  /**
+   * Reset the token requirements and query cache manually so the user
+   * doesn't see stale values / values from other agents.
+   */
+  const resetTokenRequirements = () => {
     totalTokenRequirementsRef.current = null;
     initialTokenRequirementsRef.current = null;
-    refetch?.();
-  }, [selectedAgentConfig, refetch]);
+    resetQueryCache?.();
+  };
 
   return {
     totalTokenRequirements: totalTokenRequirementsRef.current || [],
@@ -259,5 +267,6 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     isLoading:
       isBalancesAndFundingRequirementsLoading ||
       !totalTokenRequirementsRef.current,
+    resetTokenRequirements,
   };
 };
