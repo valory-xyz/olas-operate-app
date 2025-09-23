@@ -9,7 +9,7 @@ import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { formatNumber } from '@/utils/numberFormatters';
 
-import { useAgentWallet } from '../../AgentWalletContext';
+import { useAgentWallet } from '../AgentWalletProvider';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { TransactionHistoryTable } from './TransactionHistoryTable';
 

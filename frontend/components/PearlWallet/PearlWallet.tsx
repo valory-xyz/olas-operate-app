@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 
-import { PearlWalletProvider, usePearlWallet } from './PearlWalletContext';
+import { PearlWalletProvider, usePearlWallet } from './PearlWalletProvider';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
 import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw/SelectAmountToWithdraw';

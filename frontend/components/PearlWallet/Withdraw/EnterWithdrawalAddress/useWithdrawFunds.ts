@@ -15,7 +15,7 @@ import { Address, TxnHash } from '@/types/Address';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
 
-import { usePearlWallet } from '../../PearlWalletContext';
+import { usePearlWallet } from '../../PearlWalletProvider';
 
 /**
  * {
