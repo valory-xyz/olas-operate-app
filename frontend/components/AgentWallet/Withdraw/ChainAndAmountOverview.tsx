@@ -9,7 +9,6 @@ import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR } from '@/constants/colors';
 import { TokenSymbolConfigMap } from '@/constants/token';
 import { useMessageApi } from '@/context/MessageProvider';
-import { toUsd } from '@/service/toUsd';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { useAgentWallet } from '../AgentWalletProvider';
@@ -120,9 +119,11 @@ const AssetsFromStakingContract = () => {
             width={20}
             className="flex"
           />
-          <Text>{formatNumber(stakingRewards, 4)} OLAS</Text>
+          <Text>{formatNumber(stakingRewards.value, 4)} OLAS</Text>
           <Text className="text-neutral-tertiary">
-            {toUsd('OLAS', stakingRewards) || ''}
+            {stakingRewards.valueInUsd
+              ? `≈ $${formatNumber(stakingRewards.valueInUsd)}`
+              : null}
           </Text>
         </Flex>
 
