@@ -3,6 +3,7 @@ import { Button, Divider, Flex, Image, Tooltip, Typography } from 'antd';
 import { kebabCase } from 'lodash';
 import styled from 'styled-components';
 
+import { AgentNft } from '@/components/AgentNft';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { CHAIN_CONFIG } from '@/config/chains';
@@ -11,7 +12,6 @@ import { TokenSymbolConfigMap } from '@/constants/token';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { useAgentWallet } from '../AgentWalletProvider';
-import { AgentNft } from './AgentNft';
 
 const { Title, Text } = Typography;
 
