@@ -37,7 +37,7 @@ const AgentWalletContent = () => {
   const content = useMemo(() => {
     switch (step) {
       case STEPS.AGENT_WALLET_SCREEN:
-        return <BalancesAndAssets onWithdraw={handleNext} />;
+        return <BalancesAndAssets onLockedFundsWithdrawn={handleNext} />;
       case STEPS.WITHDRAW_FROM_AGENT_WALLET:
         return <Withdraw onBack={handleBack} />;
       default:
