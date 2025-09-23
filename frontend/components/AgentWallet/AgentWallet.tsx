@@ -6,7 +6,7 @@ import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 import { AgentWalletProvider, useAgentWallet } from './AgentWalletProvider';
 import { BalancesAndAssets } from './BalancesAndAssets/BalancesAndAssets';
 import { STEPS } from './types';
-import { WithdrawFromAgentWallet } from './Withdraw/WithdrawFromAgentWallet';
+import { Withdraw } from './Withdraw/Withdraw';
 
 /**
  * To display the Agent Wallet page.
@@ -39,7 +39,7 @@ const AgentWalletContent = () => {
       case STEPS.AGENT_WALLET_SCREEN:
         return <BalancesAndAssets onWithdraw={handleNext} />;
       case STEPS.WITHDRAW_FROM_AGENT_WALLET:
-        return <WithdrawFromAgentWallet onBack={handleBack} />;
+        return <Withdraw onBack={handleBack} />;
       default:
         throw new Error('Invalid step');
     }
