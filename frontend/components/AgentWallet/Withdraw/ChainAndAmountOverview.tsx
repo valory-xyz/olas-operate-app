@@ -95,7 +95,7 @@ const AssetsFromAgentWallet = () => {
             <Text>{formatNumber(asset.amount, 4)}</Text>
             <Text>{asset.symbol}</Text>
             <Text className="text-neutral-tertiary">
-              {asset.valueInUsd ? `≈ ${asset.valueInUsd}` : null}
+              {asset.valueInUsd ? `≈ $${formatNumber(asset.valueInUsd)}` : null}
             </Text>
           </Flex>
         ))}
