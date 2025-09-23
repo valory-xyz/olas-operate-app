@@ -88,7 +88,9 @@ const formatWithdrawAssets = (
     {} as { [token: Address]: string },
   );
 
-// API call to withdraw funds
+/**
+ * API call to withdraw funds
+ */
 const withdrawFunds = async (
   request: WithdrawalRequest,
 ): Promise<WithdrawalResponse> =>
@@ -113,17 +115,13 @@ const withdrawFunds = async (
 export const useWithdrawFunds = () => {
   const { walletChainId, amountsToWithdraw } = usePearlWallet();
 
-  const { isPending, isSuccess, isError, data, mutateAsync } = useMutation({
-    mutationFn: async (withdrawalRequest: WithdrawalRequest) => {
-      try {
-        const response = await withdrawFunds(withdrawalRequest);
-        return response;
-      } catch (error) {
-        console.error(error);
-        throw error;
-      }
-    },
-    onError: (error) => console.error(error),
+  const { isPending, isSuccess, isError, data, mutateAsync } = useMutation<
+    WithdrawalResponse,
+    unknown,
+    WithdrawalRequest
+  >({
+    mutationFn: async (withdrawalRequest) =>
+      await withdrawFunds(withdrawalRequest),
   });
 
   const onAuthorizeWithdrawal = useCallback(
@@ -141,6 +139,13 @@ export const useWithdrawFunds = () => {
       } satisfies WithdrawalRequest;
 
       await mutateAsync(request);
+      try {
+        const response = await mutateAsync(request);
+        return response;
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
     },
     [walletChainId, amountsToWithdraw, mutateAsync],
   );

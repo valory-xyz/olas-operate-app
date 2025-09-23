@@ -35,7 +35,6 @@ export const useWithdrawFunds = () => {
         serviceConfigId: selectedService.service_config_id,
       });
     },
-    onError: (error) => console.error(error),
   });
 
   const onWithdrawFunds = useCallback(async () => {
