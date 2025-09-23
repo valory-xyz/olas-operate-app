@@ -1,72 +1,95 @@
-import { Button, Flex, Input, Modal, Typography } from 'antd';
+import { Button, Flex, Modal, Typography } from 'antd';
 import { CSSProperties, useCallback, useState } from 'react';
+
+import {
+  LoadingOutlined,
+  SuccessOutlined,
+  WarningOutlined,
+} from '@/components/custom-icons';
+import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { SUPPORT_URL } from '@/constants/urls';
+import { Pages } from '@/enums/Pages';
+import { usePageState } from '@/hooks/usePageState';
 
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { useWithdrawFunds } from './useWithdrawFunds';
-import {
-  WithdrawalComplete,
-  WithdrawalFailed,
-  WithdrawalInProgress,
-} from './WithdrawStatusMessage';
 
-const { Text } = Typography;
+const { Title, Text, Link } = Typography;
 
-export const cardStyles: CSSProperties = {
+const cardStyles: CSSProperties = {
   width: 552,
   margin: '0 auto',
 } as const;
 
-const PasswordLabel = () => (
-  <Text className="text-sm text-neutral-tertiary">
-    Enter password{' '}
-    <Text type="danger" className="text-sm">
-      *
-    </Text>
-  </Text>
+const WithdrawalInProgress = () => (
+  <Flex gap={32} vertical>
+    <Flex align="center" justify="center">
+      <LoadingOutlined />
+    </Flex>
+    <Flex gap={12} vertical align="center" className="text-center">
+      <Title level={4} className="m-0">
+        Withdrawal in Progress
+      </Title>
+      <Text className="text-neutral-tertiary">
+        It usually takes 1-2 minutes.
+      </Text>
+    </Flex>
+  </Flex>
 );
 
-type WithdrawalPasswordInputProps = {
-  password: string;
-  onPasswordChange: (value: string) => void;
-  isSubmitDisabled?: boolean;
-  onWithdrawalFunds: () => void;
-  onCancel: () => void;
-};
-
-const WithdrawalPasswordInput = ({
-  password,
-  onPasswordChange,
-  isSubmitDisabled,
-  onWithdrawalFunds,
-  onCancel,
-}: WithdrawalPasswordInputProps) => (
-  <Flex vertical gap={24}>
-    <Flex gap={24} vertical>
-      <Flex vertical gap={4}>
-        <PasswordLabel />
-        <Input.Password
-          value={password}
-          onChange={(e) => onPasswordChange(e.target.value)}
-          placeholder="Enter your password"
-          size="small"
-          className="text-base"
-          style={{ padding: '6px 12px' }}
-        />
+const WithdrawalComplete = () => {
+  const { goto } = usePageState();
+  return (
+    <Flex gap={32} vertical>
+      <Flex align="center" justify="center">
+        <SuccessOutlined />
       </Flex>
-    </Flex>
 
-    <Flex gap={16} justify="end">
-      <Button onClick={onCancel} size="large">
-        Cancel
-      </Button>
+      <Flex gap={12} vertical className="text-center">
+        <Title level={4} className="m-0">
+          Withdrawal Complete!
+        </Title>
+        <Text className="text-neutral-tertiary">
+          Funds transferred to the Pearl wallet.
+        </Text>
+      </Flex>
+
       <Button
-        disabled={isSubmitDisabled}
-        onClick={onWithdrawalFunds}
+        onClick={() => goto(Pages.PearlWallet)}
         type="primary"
+        block
         size="large"
       >
-        Withdraw Funds
+        Go to Pearl Wallet
       </Button>
+    </Flex>
+  );
+};
+
+type WithdrawalFailedProps = { onTryAgain: () => void };
+const WithdrawalFailed = ({ onTryAgain }: WithdrawalFailedProps) => (
+  <Flex gap={32} vertical>
+    <Flex align="center" justify="center">
+      <WarningOutlined />
+    </Flex>
+
+    <Flex gap={12} vertical className="text-center">
+      <Title level={4} className="m-0">
+        Withdrawal Failed
+      </Title>
+      <Text className="text-neutral-tertiary">
+        Something went wrong with your withdrawal. Please try again or contact
+        the Olas community.
+      </Text>
+    </Flex>
+
+    <Flex gap={16} vertical className="text-center">
+      <Button onClick={onTryAgain} type="primary" block size="large">
+        Try Again
+      </Button>
+      <Link href={SUPPORT_URL}>
+        Join Olas Community Discord Server {UNICODE_SYMBOLS.EXTERNAL_LINK}
+      </Link>
     </Flex>
   </Flex>
 );
@@ -74,55 +97,44 @@ const WithdrawalPasswordInput = ({
 type EnterWithdrawalAddressProps = { onBack: () => void };
 
 export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
-  const { isLoading, isError, isSuccess } = useWithdrawFunds();
+  const { isLoading, isError, isSuccess, onWithdrawFunds } = useWithdrawFunds();
 
-  const [password, setPassword] = useState('');
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isPasswordModalOpen, isWithdrawModalVisible] = useState(false);
 
-  const handleWithdraw = useCallback(() => {
-    window.console.log('hello world!');
-  }, []);
-
-  const hasApiNotTriggered = ![isLoading, isError, isSuccess].some(Boolean);
-  const canCloseModal = isError || !hasApiNotTriggered;
+  const handleWithdrawFunds = useCallback(() => {
+    isWithdrawModalVisible(true);
+    onWithdrawFunds();
+  }, [onWithdrawFunds]);
 
   return (
     <Flex gap={16} vertical style={cardStyles}>
-      <ChainAndAmountOverview onBack={onBack} />
+      <ChainAndAmountOverview
+        onBack={onBack}
+        onWithdraw={handleWithdrawFunds}
+      />
 
       {isPasswordModalOpen && (
         <Modal
-          title={hasApiNotTriggered ? 'Authorize Withdrawal' : null}
-          onCancel={
-            canCloseModal ? () => setIsPasswordModalOpen(false) : undefined
-          }
-          closable={canCloseModal}
+          onCancel={isLoading ? undefined : () => isWithdrawModalVisible(false)}
+          closable={!isLoading}
           open
           width={436}
+          title={null}
           footer={null}
-          styles={
-            hasApiNotTriggered
-              ? { header: { marginBottom: 16 } }
-              : { content: { padding: '32px' } }
-          }
         >
-          {isLoading ? (
-            <WithdrawalInProgress />
-          ) : isError ? (
-            <WithdrawalFailed onTryAgain={handleWithdraw} />
+          {isError ? (
+            <WithdrawalFailed onTryAgain={handleWithdrawFunds} />
           ) : isSuccess ? (
             <WithdrawalComplete />
           ) : (
-            <WithdrawalPasswordInput
-              password={password}
-              onPasswordChange={setPassword}
-              isSubmitDisabled={!password || isLoading || isSuccess}
-              onWithdrawalFunds={handleWithdraw}
-              onCancel={() => setIsPasswordModalOpen(false)}
-            />
+            <WithdrawalInProgress />
           )}
         </Modal>
       )}
     </Flex>
   );
 };
+
+/**
+ * - create a path for "Profile" page
+ */

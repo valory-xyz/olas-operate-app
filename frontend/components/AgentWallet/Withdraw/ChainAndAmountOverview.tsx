@@ -8,7 +8,6 @@ import { CardFlex } from '@/components/ui/CardFlex';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR } from '@/constants/colors';
 import { TokenSymbolConfigMap } from '@/constants/token';
-import { useMessageApi } from '@/context/MessageProvider';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { useAgentWallet } from '../AgentWalletProvider';
@@ -150,8 +149,15 @@ const AssetsFromStakingContract = () => {
   );
 };
 
-export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
-  const message = useMessageApi();
+type ChainAndAmountOverviewProps = {
+  onBack: () => void;
+  onWithdraw: () => void;
+};
+
+export const ChainAndAmountOverview = ({
+  onBack,
+  onWithdraw,
+}: ChainAndAmountOverviewProps) => {
   const { walletChainId } = useAgentWallet();
   const chainDetails = walletChainId ? CHAIN_CONFIG[walletChainId] : null;
 
@@ -172,12 +178,7 @@ export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
           <AssetsFromStakingContract />
         </Flex>
 
-        <Button
-          type="primary"
-          onClick={() => message.info('Withdraw coming soon!')}
-          block
-          size="large"
-        >
+        <Button type="primary" onClick={onWithdraw} block size="large">
           Withdraw
         </Button>
       </Flex>
