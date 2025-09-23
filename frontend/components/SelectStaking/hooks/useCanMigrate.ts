@@ -52,16 +52,16 @@ export const useCanMigrate = ({
           buttonText: MigrateButtonText.CurrentContract,
           canMigrate: false,
         };
+      case isServiceRunning:
+        return {
+          buttonText: MigrateButtonText.CurrentlyRunning,
+          canMigrate: false,
+        };
       // If service is valid (not dummy), check if it was staked for min-duration
       case !isServiceStakedForMinimumDuration &&
         isValidServiceId(serviceNftTokenId):
         return {
           buttonText: MigrateButtonText.AgentInCooldownPeriod,
-          canMigrate: false,
-        };
-      case isServiceRunning:
-        return {
-          buttonText: MigrateButtonText.CurrentlyRunning,
           canMigrate: false,
         };
       case slotsTaken >= maxSlots:

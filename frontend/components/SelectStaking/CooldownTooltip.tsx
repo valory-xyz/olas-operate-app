@@ -47,12 +47,20 @@ const CooldownPeriodContent = () => {
   const timeUntilMigration = useMemo(() => {
     const { serviceStakingStartTime, minimumStakingDuration } =
       selectedStakingContractDetails ?? {};
+
     if (isNil(minimumStakingDuration) || isNil(serviceStakingStartTime)) return;
 
     const now = Math.round(Date.now() / 1000);
     const timeSinceLastStaked = now - serviceStakingStartTime;
-    const timeUntilMigration = minimumStakingDuration - timeSinceLastStaked;
-    return timeUntilMigration;
+    const timeUntilMigrationInSeconds =
+      minimumStakingDuration - timeSinceLastStaked;
+
+    // Convert to target timestamp in milliseconds (current time + remaining seconds)
+    const targetTimestamp =
+      timeUntilMigrationInSeconds <= 0
+        ? Date.now()
+        : Date.now() + timeUntilMigrationInSeconds * 1000;
+    return targetTimestamp;
   }, [selectedStakingContractDetails]);
 
   return (
