@@ -1,6 +1,6 @@
 import { ArrowRightOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Button, Divider, Flex, Image, Tooltip, Typography } from 'antd';
-import { kebabCase } from 'lodash';
+import { isNumber, kebabCase } from 'lodash';
 import styled from 'styled-components';
 
 import { AgentNft } from '@/components/AgentNft';
@@ -112,7 +112,9 @@ const AssetsFromAgentWallet = () => {
             <Text>{formatNumber(asset.amount, 4)}</Text>
             <Text>{asset.symbol}</Text>
             <Text className="text-neutral-tertiary">
-              {asset.valueInUsd ? `≈ $${formatNumber(asset.valueInUsd)}` : null}
+              {isNumber(asset.valueInUsd)
+                ? `≈ $${formatNumber(asset.valueInUsd)}`
+                : null}
             </Text>
           </Flex>
         ))}
