@@ -43,8 +43,6 @@ const Switcher = ({ value, onChange }: SwitcherProps) => {
   );
 };
 
-// const Container =
-
 export const Home = () => {
   const { storeState } = useStore();
   const { selectedAgentType, selectedService, selectedAgentConfig } =

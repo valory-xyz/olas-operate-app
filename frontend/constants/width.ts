@@ -22,4 +22,4 @@ export const ANTD_BREAKPOINTS = {
   lg: 992,
   xl: 1200,
   xxl: 1600,
-};
+} as const;

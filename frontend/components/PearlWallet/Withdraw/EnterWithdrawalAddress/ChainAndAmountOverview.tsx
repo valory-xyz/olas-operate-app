@@ -10,7 +10,7 @@ import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
 import { toUsd } from '@/service/toUsd';
 import { formatNumber } from '@/utils/numberFormatters';
 
-import { usePearlWallet } from '../../PearlWalletContext';
+import { usePearlWallet } from '../../PearlWalletProvider';
 import { PearlWalletToExternalWallet } from '../common';
 
 const { Title, Text } = Typography;

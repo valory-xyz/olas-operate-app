@@ -5,7 +5,7 @@ import { NA } from '@/constants/symbols';
 import { TokenSymbolConfigMap } from '@/constants/token';
 import { formatNumber } from '@/utils/numberFormatters';
 
-import { usePearlWallet } from '../../PearlWalletContext';
+import { usePearlWallet } from '../../PearlWalletProvider';
 import { StakedAsset } from '../types';
 
 const { Text } = Typography;

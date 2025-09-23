@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { useMessageApi } from '@/context/MessageProvider';
 
-import { usePearlWallet } from '../../PearlWalletContext';
+import { usePearlWallet } from '../../PearlWalletProvider';
 import { cardStyles } from '../common';
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { useWithdrawFunds } from './useWithdrawFunds';
