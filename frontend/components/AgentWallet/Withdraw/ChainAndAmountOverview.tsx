@@ -1,5 +1,5 @@
-import { ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Divider, Flex, Image, Typography } from 'antd';
+import { ArrowRightOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Button, Divider, Flex, Image, Tooltip, Typography } from 'antd';
 import { kebabCase } from 'lodash';
 import styled from 'styled-components';
 
@@ -21,6 +21,25 @@ const OverviewContainer = styled(Flex)`
   border-radius: 10px;
   background-color: ${COLOR.BACKGROUND};
 `;
+
+const AssetsFromStakingContractTitle = () => (
+  <Flex align="center" gap={4}>
+    <Text className="text-neutral-tertiary">Assets from staking contract</Text>
+    <Tooltip
+      title={
+        <Text className="text-sm">
+          Each AI agent has staked assets defined by its staking contract — an
+          Agent NFT and an OLAS deposit. You can find these in your Pearl
+          Wallet.
+        </Text>
+      }
+      placement="right"
+      style={{ fontSize: 14 }}
+    >
+      <InfoCircleOutlined style={{ color: COLOR.TEXT_NEUTRAL_TERTIARY }} />
+    </Tooltip>
+  </Flex>
+);
 
 const WithdrawalAddressTitle = () => (
   <Flex vertical justify="space-between" gap={12}>
@@ -108,9 +127,7 @@ const AssetsFromStakingContract = () => {
 
   return (
     <Flex vertical gap={8}>
-      <Text className="text-neutral-tertiary">
-        Assets from staking contract
-      </Text>
+      <AssetsFromStakingContractTitle />
       <OverviewContainer vertical gap={12} align="start">
         <Flex gap={8} align="center">
           <Image
