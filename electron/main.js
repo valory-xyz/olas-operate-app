@@ -1249,7 +1249,7 @@ ipcMain.handle('web3auth-window-show', () =>
   handleWeb3AuthWindowShow(nextUrl()),
 );
 ipcMain.handle('web3auth-window-close', handleWeb3AuthWindowClose);
-ipcMain.handle('web3auth-address-received', (address) =>
+ipcMain.handle('web3auth-address-received', (_event, address) =>
   handleWeb3AuthSuccessLogin(mainWindow, address),
 );
 
