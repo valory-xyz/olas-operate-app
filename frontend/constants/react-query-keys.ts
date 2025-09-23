@@ -117,7 +117,7 @@ export const REACT_QUERY_KEYS = {
   }) => [
     'usdPrice',
     chainName,
-    req.symbol,
+    Object.keys(req)[0],
     isNative ? coinId : chainName,
     isNative ? 'native' : contractAddress,
   ],
