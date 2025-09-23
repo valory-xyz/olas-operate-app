@@ -52,4 +52,6 @@ There are three parts to the project: the Electron app (CommonJS), the NextJS fr
 
 ## Security
 
+dfas
+
 - [Security Policy](SECURITY.md)
