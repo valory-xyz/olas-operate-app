@@ -8,6 +8,12 @@ const onRampWindow = {
   transactionFailure: () => ipcRenderer.invoke('onramp-transaction-failure'),
 };
 
+/** IPC methods for terms window */
+const onRampTermsWindow = {
+  show: () => ipcRenderer.invoke('terms-window-show'),
+  close: () => ipcRenderer.invoke('terms-window-close'),
+};
+
 contextBridge.exposeInMainWorld('electronAPI', {
   setIsAppLoaded: (isAppLoaded) =>
     ipcRenderer.send('is-app-loaded', isAppLoaded),
@@ -36,5 +42,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('app-version'),
   healthCheck: () => ipcRenderer.invoke('health-check'),
   onRampWindow,
+  onRampTermsWindow,
   logEvent: (message) => ipcRenderer.invoke('log-event', message),
 });
