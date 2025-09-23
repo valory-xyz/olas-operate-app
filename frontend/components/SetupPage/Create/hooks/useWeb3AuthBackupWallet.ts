@@ -5,8 +5,6 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { useSetup } from '@/hooks/useSetup';
 import { Address } from '@/types/Address';
 
-type Web3AuthData = { address: Address };
-
 export const useWeb3AuthBackupWallet = ({
   onFinish,
 }: {
@@ -23,12 +21,13 @@ export const useWeb3AuthBackupWallet = ({
   };
 
   useEffect(() => {
-    const handleSaveWeb3AuthAddress = (_event: unknown, data: unknown) => {
+    const handleSaveWeb3AuthAddress = (data: unknown) => {
       if (isAddressReceived.current) return;
-      const web3AuthData = data as Web3AuthData;
-      if (web3AuthData.address) {
+      const backupWallet = data as Address;
+      if (backupWallet) {
         isAddressReceived.current = true;
-        setBackupSigner({ address: web3AuthData.address, type: 'web3auth' });
+        web3AuthWindow?.close?.();
+        setBackupSigner({ address: backupWallet, type: 'web3auth' });
         onFinish();
         message.success('Backup wallet successfully set');
       }
