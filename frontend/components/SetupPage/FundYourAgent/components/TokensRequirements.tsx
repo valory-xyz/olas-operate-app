@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import { SendFundAction } from '@/components/Bridge/types';
 import { COLOR } from '@/constants/colors';
-import { useUsdAmounts } from '@/hooks/useUsdAmounts';
+import { TokenDetails, useUsdAmounts } from '@/hooks/useUsdAmounts';
 
 const { Text } = Typography;
 
@@ -72,12 +72,13 @@ const RequirementsForOnRamp = ({ fiatAmount }: { fiatAmount: string }) => (
 type TokenRequirementsProps = {
   tokenRequirements?: TokenRequirement[];
   fiatAmount?: number;
-  chainName?: string;
   isLoading: boolean;
-  fundType: SendFundAction;
-};
+} & (
+  | { fundType: Extract<SendFundAction, 'onRamp'>; chainName?: undefined }
+  | { fundType: Exclude<SendFundAction, 'onRamp'>; chainName: string }
+);
 
-const getUsdAmount = (
+const getTokenUsdValue = (
   symbol: string,
   breakdown: ReturnType<typeof useUsdAmounts>['breakdown'],
 ) => breakdown.find((b) => b.symbol === symbol)?.usdAmount.toFixed(2);
@@ -90,8 +91,10 @@ export const TokenRequirements = ({
   fundType,
 }: TokenRequirementsProps) => {
   const { breakdown, isLoading: isUsdAmountsLoading } = useUsdAmounts(
-    chainName!,
-    tokenRequirements,
+    chainName || '',
+    tokenRequirements.map(({ symbol, amount }) => ({
+      [symbol as keyof TokenDetails]: amount,
+    })),
   );
 
   if (isLoading || isUsdAmountsLoading) return <RequirementsSkeleton />;
@@ -118,7 +121,7 @@ export const TokenRequirements = ({
               {formatAmount(amount)} {symbol}
             </Text>
             <Text className="text-neutral-tertiary">
-              (${getUsdAmount(symbol, breakdown)})
+              (${getTokenUsdValue(symbol, breakdown)})
             </Text>
           </Flex>
         ))}

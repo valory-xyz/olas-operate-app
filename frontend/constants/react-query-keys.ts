@@ -1,4 +1,5 @@
 import { Safe } from '@/enums/Wallet';
+import { TokenDetails } from '@/hooks';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { Maybe } from '@/types/Util';
 
@@ -99,4 +100,25 @@ export const REACT_QUERY_KEYS = {
     chain: SupportedMiddlewareChain,
     amount: number | string,
   ) => ['onRampQuote', chain, amount] as const,
+
+  // USD Price
+  USD_PRICE_KEY: ({
+    chainName,
+    req,
+    isNative,
+    coinId,
+    contractAddress,
+  }: {
+    chainName: string;
+    req: TokenDetails;
+    isNative: boolean;
+    coinId: string;
+    contractAddress: string;
+  }) => [
+    'usdPrice',
+    chainName,
+    req.symbol,
+    isNative ? coinId : chainName,
+    isNative ? 'native' : contractAddress,
+  ],
 } as const;

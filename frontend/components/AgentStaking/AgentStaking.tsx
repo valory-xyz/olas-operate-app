@@ -33,8 +33,7 @@ const useUsdRewards = () => {
 
   const { totalUsd } = useUsdAmounts(chainName, [
     {
-      symbol: TokenSymbolMap.OLAS,
-      amount: totalRewards,
+      [TokenSymbolMap.OLAS]: totalRewards,
     },
   ]);
 

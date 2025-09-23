@@ -101,7 +101,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
     return Object.entries(TOKEN_CONFIG[walletChainId!]).map(
       ([untypedSymbol]) => {
         const symbol = untypedSymbol as TokenSymbol;
-        return { symbol, amount: 0 };
+        return { [symbol]: 0 };
       },
     );
   }, [walletChainId]);
