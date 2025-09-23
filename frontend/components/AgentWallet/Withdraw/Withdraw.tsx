@@ -99,10 +99,10 @@ type EnterWithdrawalAddressProps = { onBack: () => void };
 export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
   const { isLoading, isError, isSuccess, onWithdrawFunds } = useWithdrawFunds();
 
-  const [isPasswordModalOpen, isWithdrawModalVisible] = useState(false);
+  const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
 
   const handleWithdrawFunds = useCallback(() => {
-    isWithdrawModalVisible(true);
+    setWithdrawModalVisible(true);
     onWithdrawFunds();
   }, [onWithdrawFunds]);
 
@@ -113,9 +113,11 @@ export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
         onWithdraw={handleWithdrawFunds}
       />
 
-      {isPasswordModalOpen && (
+      {isWithdrawModalVisible && (
         <Modal
-          onCancel={isLoading ? undefined : () => isWithdrawModalVisible(false)}
+          onCancel={
+            isLoading ? undefined : () => setWithdrawModalVisible(false)
+          }
           closable={!isLoading}
           open
           width={436}
@@ -134,7 +136,3 @@ export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
     </Flex>
   );
 };
-
-/**
- * - create a path for "Profile" page
- */
