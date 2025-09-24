@@ -136,7 +136,7 @@ const getOnRampWindow = () => onRampWindow;
 
 /** @type {Electron.BrowserWindow | null} */
 let onRampTermsWindow = null;
-const getonRampTermsWindow = () => onRampTermsWindow;
+const getOnRampTermsWindow = () => onRampTermsWindow;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
@@ -562,8 +562,8 @@ const createOnRampWindow = async (amountToPay) => {
  * Create the terms window for displaying terms iframe
  */
 /** @type {()=>Promise<BrowserWindow|undefined>} */
-const createonRampTermsWindow = async () => {
-  if (!getonRampTermsWindow() || getonRampTermsWindow().isDestroyed) {
+const createOnRampTermsWindow = async () => {
+  if (!getOnRampTermsWindow() || getOnRampTermsWindow().isDestroyed) {
     onRampTermsWindow = new BrowserWindow({
       title: 'Terms & Conditions',
       resizable: false,
@@ -1127,15 +1127,15 @@ ipcMain.handle('onramp-transaction-failure', () => {
  */
 ipcMain.handle('terms-window-show', () => {
   logger.electron('terms-window-show');
-  if (!getonRampTermsWindow() || getonRampTermsWindow().isDestroyed()) {
-    createonRampTermsWindow()?.then((window) => window.show());
+  if (!getOnRampTermsWindow() || getOnRampTermsWindow().isDestroyed()) {
+    createOnRampTermsWindow()?.then((window) => window.show());
   } else {
-    getonRampTermsWindow()?.show();
+    getOnRampTermsWindow()?.show();
   }
 });
 
 ipcMain.handle('terms-window-close', () => {
   logger.electron('terms-window-close');
-  if (!getonRampTermsWindow() || getonRampTermsWindow().isDestroyed()) return;
-  getonRampTermsWindow()?.destroy();
+  if (!getOnRampTermsWindow() || getOnRampTermsWindow().isDestroyed()) return;
+  getOnRampTermsWindow()?.destroy();
 });
