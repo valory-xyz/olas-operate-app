@@ -1,7 +1,6 @@
 require('dotenv').config();
 
 const {
-  checkUrl,
   configureSessionCertificates,
   loadLocalCertificate,
   stringifyJson,
@@ -404,7 +403,7 @@ const createMainWindow = async () => {
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     // open url in a browser and prevent default
-    require('electron').shell.openExternal(url);
+    shell.openExternal(url);
     return { action: 'deny' };
   });
 
@@ -622,13 +621,6 @@ async function launchDaemon() {
       { env: Env },
     );
     operateDaemonPid = operateDaemon.pid;
-    // fs.appendFileSync(
-    //   `${paths.OperateDirectory}/operate.pip`,
-    //   `${operateDaemon.pid}`,
-    //   {
-    //     encoding: 'utf-8',
-    //   },
-    // );
 
     operateDaemon.stderr.on('data', (data) => {
       if (data.toString().includes('Uvicorn running on')) {
