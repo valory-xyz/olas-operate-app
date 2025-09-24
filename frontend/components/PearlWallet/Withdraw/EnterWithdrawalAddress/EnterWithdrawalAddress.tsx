@@ -78,7 +78,7 @@ const WithdrawalComplete = ({
 );
 
 type WithdrawalFailedProps = { onTryAgain: () => void };
-export const WithdrawalFailed = ({ onTryAgain }: WithdrawalFailedProps) => (
+const WithdrawalFailed = ({ onTryAgain }: WithdrawalFailedProps) => (
   <Flex gap={32} vertical>
     <Flex align="center" justify="center">
       <WarningOutlined />
