@@ -2,13 +2,13 @@ import { Button, Flex, Typography } from 'antd';
 import Image from 'next/image';
 import { useEffect } from 'react';
 
+import { AgentNft } from '@/components/AgentNft';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Segmented } from '@/components/ui/Segmented';
 import { NA } from '@/constants/symbols';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
-import { AgentNft } from './AgentNft';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { StakedAssetsTable } from './StakedAssetsTable';
 

@@ -1,19 +1,17 @@
-import { ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Divider, Flex, Image, Typography } from 'antd';
-import { kebabCase } from 'lodash';
+import { ArrowRightOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Button, Divider, Flex, Image, Tooltip, Typography } from 'antd';
+import { isNumber, kebabCase } from 'lodash';
 import styled from 'styled-components';
 
+import { AgentNft } from '@/components/AgentNft';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR } from '@/constants/colors';
 import { TokenSymbolConfigMap } from '@/constants/token';
-import { useMessageApi } from '@/context/MessageProvider';
-import { toUsd } from '@/service/toUsd';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { useAgentWallet } from '../AgentWalletProvider';
-import { AgentNft } from './AgentNft';
 
 const { Title, Text } = Typography;
 
@@ -22,6 +20,25 @@ const OverviewContainer = styled(Flex)`
   border-radius: 10px;
   background-color: ${COLOR.BACKGROUND};
 `;
+
+const AssetsFromStakingContractTitle = () => (
+  <Flex align="center" gap={4}>
+    <Text className="text-neutral-tertiary">Assets from staking contract</Text>
+    <Tooltip
+      title={
+        <Text className="text-sm">
+          Each AI agent has staked assets defined by its staking contract — an
+          Agent NFT and an OLAS deposit. You can find these in your Pearl
+          Wallet.
+        </Text>
+      }
+      placement="right"
+      style={{ fontSize: 14 }}
+    >
+      <InfoCircleOutlined className="text-neutral-tertiary" />
+    </Tooltip>
+  </Flex>
+);
 
 const WithdrawalAddressTitle = () => (
   <Flex vertical justify="space-between" gap={12}>
@@ -95,7 +112,9 @@ const AssetsFromAgentWallet = () => {
             <Text>{formatNumber(asset.amount, 4)}</Text>
             <Text>{asset.symbol}</Text>
             <Text className="text-neutral-tertiary">
-              {asset.valueInUsd ? `≈ $${formatNumber(asset.valueInUsd)}` : null}
+              {isNumber(asset.valueInUsd)
+                ? `≈ $${formatNumber(asset.valueInUsd)}`
+                : null}
             </Text>
           </Flex>
         ))}
@@ -109,9 +128,7 @@ const AssetsFromStakingContract = () => {
 
   return (
     <Flex vertical gap={8}>
-      <Text className="text-neutral-tertiary">
-        Assets from staking contract
-      </Text>
+      <AssetsFromStakingContractTitle />
       <OverviewContainer vertical gap={12} align="start">
         <Flex gap={8} align="center">
           <Image
@@ -120,9 +137,11 @@ const AssetsFromStakingContract = () => {
             width={20}
             className="flex"
           />
-          <Text>{formatNumber(stakingRewards, 4)} OLAS</Text>
+          <Text>{formatNumber(stakingRewards.value, 4)} OLAS</Text>
           <Text className="text-neutral-tertiary">
-            {toUsd('OLAS', stakingRewards) || ''}
+            {isNumber(stakingRewards.valueInUsd)
+              ? `≈ $${formatNumber(stakingRewards.valueInUsd)}`
+              : null}
           </Text>
         </Flex>
 
@@ -132,8 +151,15 @@ const AssetsFromStakingContract = () => {
   );
 };
 
-export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
-  const message = useMessageApi();
+type ChainAndAmountOverviewProps = {
+  onBack: () => void;
+  onWithdraw: () => void;
+};
+
+export const ChainAndAmountOverview = ({
+  onBack,
+  onWithdraw,
+}: ChainAndAmountOverviewProps) => {
   const { walletChainId } = useAgentWallet();
   const chainDetails = walletChainId ? CHAIN_CONFIG[walletChainId] : null;
 
@@ -154,12 +180,7 @@ export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
           <AssetsFromStakingContract />
         </Flex>
 
-        <Button
-          type="primary"
-          onClick={() => message.info('Withdraw coming soon!')}
-          block
-          size="large"
-        >
+        <Button type="primary" onClick={onWithdraw} block size="large">
           Withdraw
         </Button>
       </Flex>

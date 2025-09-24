@@ -36,7 +36,7 @@ const PearlWalletContext = createContext<{
   transactionHistory: TransactionHistory[];
   agentName: Nullable<string>;
   agentImgSrc: Nullable<string>;
-  stakingRewards: number;
+  stakingRewards: { value: number; valueInUsd: number };
   availableAssets: AvailableAsset[];
   amountsToWithdraw: Partial<Record<TokenSymbol, number>>;
 }>({
@@ -48,7 +48,7 @@ const PearlWalletContext = createContext<{
   transactionHistory: [],
   agentName: null,
   agentImgSrc: null,
-  stakingRewards: 0,
+  stakingRewards: { value: 0, valueInUsd: 0 },
   availableAssets: [],
   amountsToWithdraw: {},
 });
@@ -171,8 +171,16 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
 
   // rewards not yet claimed from staking contract
   const stakingRewards = useMemo(() => {
-    return sum([accruedServiceStakingRewards, availableRewardsForEpochEth]);
-  }, [accruedServiceStakingRewards, availableRewardsForEpochEth]);
+    const total = sum([
+      accruedServiceStakingRewards,
+      availableRewardsForEpochEth,
+    ]);
+    const usdPrice = usdBreakdown.find(
+      ({ symbol }) => symbol === TokenSymbolMap.OLAS,
+    )?.usdPrice;
+
+    return { value: total, valueInUsd: usdPrice ? usdPrice * total : 0 };
+  }, [accruedServiceStakingRewards, availableRewardsForEpochEth, usdBreakdown]);
 
   const updateStep = useCallback(
     (newStep: ValueOf<typeof STEPS>) => {
