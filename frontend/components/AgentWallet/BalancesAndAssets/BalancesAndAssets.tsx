@@ -1,11 +1,13 @@
 import { Button, Flex, Modal, Typography } from 'antd';
 import { useState } from 'react';
 
+import { CustomAlert } from '@/components/Alert';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { NA } from '@/constants/symbols';
 import { useMessageApi } from '@/context/MessageProvider';
 import { Pages } from '@/enums/Pages';
+import { useActiveStakingContractDetails } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
 import { formatNumber } from '@/utils/numberFormatters';
 
@@ -14,6 +16,16 @@ import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { TransactionHistoryTable } from './TransactionHistoryTable';
 
 const { Text, Title } = Typography;
+
+const EvictedAgentAlert = () => (
+  <CustomAlert
+    message="Your agent has been evicted. Withdraw your funds before re-staking."
+    type="warning"
+    showIcon
+    centered
+    className="mb-24"
+  />
+);
 
 const AgentWalletTitle = () => {
   const { goto } = usePageState();
@@ -24,6 +36,41 @@ const AgentWalletTitle = () => {
         Agent Wallet
       </Title>
     </Flex>
+  );
+};
+
+type AggregatedBalanceAndOperationsProps = {
+  onWithdraw: () => void;
+};
+export const AggregatedBalanceAndOperations = ({
+  onWithdraw,
+}: AggregatedBalanceAndOperationsProps) => {
+  const { info } = useMessageApi();
+  const { aggregatedBalance } = useAgentWallet();
+  const { isAgentEvicted } = useActiveStakingContractDetails();
+
+  return (
+    <CardFlex $noBorder>
+      {isAgentEvicted && <EvictedAgentAlert />}
+      <Flex justify="space-between" align="center">
+        <Flex vertical gap={8}>
+          <Text type="secondary" className="text-sm">
+            Aggregated balance
+          </Text>
+          <Title level={4} className="m-0">
+            {aggregatedBalance ? `$${formatNumber(aggregatedBalance)}` : NA}
+          </Title>
+        </Flex>
+        <Flex gap={8}>
+          <Button disabled={isAgentEvicted} onClick={onWithdraw}>
+            Withdraw
+          </Button>
+          <Button type="primary" onClick={() => info('Feature coming soon!')}>
+            Fund Agent
+          </Button>
+        </Flex>
+      </Flex>
+    </CardFlex>
   );
 };
 
@@ -58,7 +105,7 @@ type SomeFundsMaybeLockedModal = {
   onCancel: () => void;
 };
 
-export const SomeFundsMaybeLockedModal = ({
+const SomeFundsMaybeLockedModal = ({
   onNext,
   onCancel,
 }: SomeFundsMaybeLockedModal) => {
@@ -97,39 +144,20 @@ export const SomeFundsMaybeLockedModal = ({
 };
 
 type BalancesAndAssetsProps = {
-  onWithdraw: () => void;
+  onLockedFundsWithdrawn: () => void;
 };
 
-export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
-  const { info } = useMessageApi();
-  const { aggregatedBalance } = useAgentWallet();
+export const BalancesAndAssets = ({
+  onLockedFundsWithdrawn,
+}: BalancesAndAssetsProps) => {
   const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
 
   return (
     <Flex vertical gap={32}>
       <AgentWalletTitle />
-
-      <CardFlex $noBorder>
-        <Flex justify="space-between" align="center">
-          <Flex vertical gap={8}>
-            <Text type="secondary" className="text-sm">
-              Aggregated balance
-            </Text>
-            <Title level={4} className="m-0">
-              {aggregatedBalance ? `$${formatNumber(aggregatedBalance)}` : NA}
-            </Title>
-          </Flex>
-          <Flex gap={8}>
-            <Button onClick={() => setWithdrawModalVisible(true)}>
-              Withdraw
-            </Button>
-            <Button type="primary" onClick={() => info('Feature coming soon!')}>
-              Fund Agent
-            </Button>
-          </Flex>
-        </Flex>
-      </CardFlex>
-
+      <AggregatedBalanceAndOperations
+        onWithdraw={() => setWithdrawModalVisible(true)}
+      />
       <AvailableAssets />
       <TransactionHistory />
 
@@ -138,7 +166,7 @@ export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
           onCancel={() => setWithdrawModalVisible(false)}
           onNext={() => {
             setWithdrawModalVisible(false);
-            onWithdraw();
+            onLockedFundsWithdrawn();
           }}
         />
       )}
