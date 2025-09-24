@@ -133,6 +133,12 @@ export const BridgeInProgress = ({
     if (!isTransferCompleted) return;
 
     /**
+     * If all the steps are finished for onboarding and bridgeStatus is changed to `completed`,
+     * don't redirect automatically, let the user manually redirect via `AgentSetupCompleteModal`
+     */
+    if (isOnboarding && isBridgeCompleted) return;
+
+    /**
      * Do not redirect in case of onboarding, instead show the `AgentSetupCompleteModal`
      * modal on the same page
      */
@@ -156,6 +162,7 @@ export const BridgeInProgress = ({
     goto,
     onNext,
     isOnboarding,
+    isBridgeCompleted,
   ]);
 
   const onBridgeFailRetry = useCallback(() => {
