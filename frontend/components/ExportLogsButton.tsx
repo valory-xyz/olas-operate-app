@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useLogs } from '@/hooks/useLogs';
 
+import { ExportIcon } from './custom-icons/Export';
+
 const LogsSavedMessage = ({ onClick }: { onClick: () => void }) => (
   <span>
     Logs saved
@@ -53,10 +55,10 @@ export const ExportLogsButton = ({ size }: ExportLogsButtonProps) => {
     <Button
       loading={isLoading || canSaveLogs}
       onClick={onSaveLogs}
-      size={size || 'large'}
-      type="primary"
-      ghost
+      size={size || 'middle'}
+      type="default"
     >
+      <ExportIcon />
       Export logs
     </Button>
   );
