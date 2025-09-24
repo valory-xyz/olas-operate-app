@@ -1,5 +1,5 @@
 import { Button, Flex, Modal, Typography } from 'antd';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { BackButton } from '@/components/ui/BackButton';
@@ -27,6 +27,24 @@ const EvictedAgentAlert = () => (
   />
 );
 
+const LowAgentWalletBalanceAlert = () => (
+  <CustomAlert
+    message={
+      <Flex vertical gap={4}>
+        <Text>Low Agent Wallet Balance</Text>
+        <Text className="text-sm">
+          Fund your agent with at least 2.5 XDAI to keep your agent running.
+          It’s needed for the agent to perform on-chain activity and meet
+          staking requirements.
+        </Text>
+      </Flex>
+    }
+    type="error"
+    showIcon
+    className="mb-24"
+  />
+);
+
 const AgentWalletTitle = () => {
   const { goto } = usePageState();
   return (
@@ -39,6 +57,8 @@ const AgentWalletTitle = () => {
   );
 };
 
+const isLowBalance = true;
+
 type AggregatedBalanceAndOperationsProps = {
   onWithdraw: () => void;
 };
@@ -48,10 +68,15 @@ export const AggregatedBalanceAndOperations = ({
   const { info } = useMessageApi();
   const { aggregatedBalance } = useAgentWallet();
   const { isAgentEvicted } = useActiveStakingContractDetails();
+  const alert = useMemo(() => {
+    if (!isAgentEvicted) return <EvictedAgentAlert />;
+    if (isLowBalance) return <LowAgentWalletBalanceAlert />;
+    return null;
+  }, [isAgentEvicted]);
 
   return (
     <CardFlex $noBorder>
-      {isAgentEvicted && <EvictedAgentAlert />}
+      {alert}
       <Flex justify="space-between" align="center">
         <Flex vertical gap={8}>
           <Text type="secondary" className="text-sm">
@@ -100,11 +125,7 @@ const TransactionHistory = () => (
   </Flex>
 );
 
-type SomeFundsMaybeLockedModal = {
-  onNext: () => void;
-  onCancel: () => void;
-};
-
+type SomeFundsMaybeLockedModal = { onNext: () => void; onCancel: () => void };
 const SomeFundsMaybeLockedModal = ({
   onNext,
   onCancel,
