@@ -138,7 +138,6 @@ export const useWithdrawFunds = () => {
         withdraw_assets: { [middlewareChain]: assets },
       } satisfies WithdrawalRequest;
 
-      await mutateAsync(request);
       try {
         const response = await mutateAsync(request);
         return response;

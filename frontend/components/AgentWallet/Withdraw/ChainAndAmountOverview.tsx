@@ -35,7 +35,7 @@ const AssetsFromStakingContractTitle = () => (
       placement="right"
       style={{ fontSize: 14 }}
     >
-      <InfoCircleOutlined style={{ color: COLOR.TEXT_NEUTRAL_TERTIARY }} />
+      <InfoCircleOutlined className="text-neutral-tertiary" />
     </Tooltip>
   </Flex>
 );
