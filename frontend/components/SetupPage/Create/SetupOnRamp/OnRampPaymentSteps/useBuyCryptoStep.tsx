@@ -17,7 +17,7 @@ const OnRampAgreement = ({ onClick }: { onClick?: () => void }) => (
 );
 
 export const useBuyCryptoStep = () => {
-  const { onRampWindow, onRampTermsWindow } = useElectronApi();
+  const { onRampWindow, termsAndConditionsWindow } = useElectronApi();
   const { masterEoa } = useMasterWalletContext();
   const {
     isBuyCryptoBtnLoading,
@@ -39,8 +39,8 @@ export const useBuyCryptoStep = () => {
   const cannotBuyCrypto = !masterEoa?.address || !usdAmountToPay;
 
   const openTerms = useCallback(async () => {
-    onRampTermsWindow?.show?.();
-  }, [onRampTermsWindow]);
+    termsAndConditionsWindow?.show?.('transak');
+  }, [termsAndConditionsWindow]);
 
   const buyCryptoStep = useMemo<TransactionStep>(() => {
     const status = (() => {

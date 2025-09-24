@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import zxcvbn from 'zxcvbn';
 
 import { COLOR } from '@/constants/colors';
+import { TERMS_AND_CONDITIONS_URL } from '@/constants/urls';
 import { useMessageApi } from '@/context/MessageProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { usePageState } from '@/hooks/usePageState';
@@ -128,11 +129,7 @@ export const SetupPassword = () => {
         <Form.Item name="terms" valuePropName="checked">
           <Checkbox>
             I agree to the Pearl’s{' '}
-            <a
-              href="https://olas.network/pearl-terms"
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a href={TERMS_AND_CONDITIONS_URL} target="_blank" rel="noreferrer">
               Terms & Conditions
             </a>
           </Checkbox>

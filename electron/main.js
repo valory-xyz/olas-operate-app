@@ -14,6 +14,11 @@ const {
   handleWeb3AuthSuccessLogin,
 } = require('./windows/web3auth');
 
+const {
+  handleTermsAndConditionsWindowShow,
+  handleTermsAndConditionsWindowClose,
+} = require('./windows/termsAndConditions');
+
 // Load the self-signed certificate for localhost HTTPS requests
 loadLocalCertificate();
 
@@ -144,10 +149,6 @@ const getAgentWindow = () => agentWindow;
 /** @type {Electron.BrowserWindow | null} */
 let onRampWindow = null;
 const getOnRampWindow = () => onRampWindow;
-
-/** @type {Electron.BrowserWindow | null} */
-let onRampTermsWindow = null;
-const getonRampTermsWindow = () => onRampTermsWindow;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
@@ -611,52 +612,6 @@ const createOnRampWindow = async (amountToPay) => {
   });
 
   return onRampWindow;
-};
-
-/**
- * Create the terms window for displaying terms iframe
- */
-/** @type {()=>Promise<BrowserWindow|undefined>} */
-const createonRampTermsWindow = async () => {
-  if (!getonRampTermsWindow() || getonRampTermsWindow().isDestroyed) {
-    onRampTermsWindow = new BrowserWindow({
-      title: 'Terms & Conditions',
-      resizable: false,
-      draggable: true,
-      frame: false,
-      transparent: true,
-      fullscreenable: false,
-      maximizable: false,
-      closable: true,
-      width: APP_WIDTH,
-      height: 700,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        preload: path.join(__dirname, 'preload.js'),
-      },
-    });
-
-    onRampTermsWindow.webContents.setWindowOpenHandler(({ url }) => {
-      shell.openExternal(url);
-      return { action: 'deny' };
-    });
-
-    const termsUrl = `${nextUrl()}/terms-and-conditions`;
-    logger.electron(`Terms URL: ${termsUrl}`);
-    onRampTermsWindow.loadURL(termsUrl).then(() => {
-      logger.electron(`onRampTermsWindow: ${onRampTermsWindow.url}`);
-    });
-  } else {
-    logger.electron('Terms window already exists');
-  }
-
-  onRampTermsWindow.on('close', function (event) {
-    event.preventDefault();
-    onRampTermsWindow?.destroy();
-  });
-
-  return onRampTermsWindow;
 };
 
 async function launchDaemon() {
@@ -1256,17 +1211,7 @@ ipcMain.handle('web3auth-address-received', (_event, address) =>
 /**
  * Terms window handlers
  */
-ipcMain.handle('terms-window-show', () => {
-  logger.electron('terms-window-show');
-  if (!getonRampTermsWindow() || getonRampTermsWindow().isDestroyed()) {
-    createonRampTermsWindow()?.then((window) => window.show());
-  } else {
-    getonRampTermsWindow()?.show();
-  }
-});
-
-ipcMain.handle('terms-window-close', () => {
-  logger.electron('terms-window-close');
-  if (!getonRampTermsWindow() || getonRampTermsWindow().isDestroyed()) return;
-  getonRampTermsWindow()?.destroy();
-});
+ipcMain.handle('terms-window-show', (_event, type) =>
+  handleTermsAndConditionsWindowShow(nextUrl(), type),
+);
+ipcMain.handle('terms-window-close', handleTermsAndConditionsWindowClose);
