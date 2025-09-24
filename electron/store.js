@@ -27,6 +27,10 @@ const schema = {
     },
   },
   optimus: { type: 'object', default: defaultInitialAgentSettings },
+  lastProvidedBackupWallet: {
+    type: 'object',
+    default: { address: null, type: 'manual' },
+  },
 };
 
 /**
