@@ -71,20 +71,26 @@ const PearHeader = () => (
 
 export const NavBar = () => {
   const router = useRouter();
-  const { closeApp, minimizeApp, onRampWindow } = useElectronApi();
+  const { closeApp, minimizeApp, onRampWindow, onRampTermsWindow } =
+    useElectronApi();
 
   const isOnRamp = router.pathname === '/onramp';
-  const isNotMain = [isOnRamp].some(Boolean);
+  const isTerms = router.pathname === '/terms-and-conditions';
+  const isNotMain = [isOnRamp, isTerms].some(Boolean);
 
   const handleClose = useCallback(() => {
     if (isOnRamp) {
       onRampWindow?.close?.();
       return;
     }
+    if (isTerms) {
+      onRampTermsWindow?.close?.();
+      return;
+    }
 
     if (!closeApp) return;
     closeApp();
-  }, [closeApp, isOnRamp, onRampWindow]);
+  }, [closeApp, isOnRamp, isTerms, onRampWindow, onRampTermsWindow]);
 
   return (
     <TopBarContainer>
