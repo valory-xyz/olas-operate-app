@@ -143,7 +143,6 @@ export const useWithdrawFunds = () => {
         return response;
       } catch (error) {
         console.error(error);
-        throw error;
       }
     },
     [walletChainId, amountsToWithdraw, mutateAsync],
