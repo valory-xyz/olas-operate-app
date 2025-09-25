@@ -6,7 +6,6 @@ import { CustomAlert } from '@/components/Alert';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { NA } from '@/constants/symbols';
-import { useMessageApi } from '@/context/MessageProvider';
 import { Pages } from '@/enums/Pages';
 import { useActiveStakingContractDetails } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
@@ -42,11 +41,12 @@ const AgentWalletTitle = () => {
 
 type AggregatedBalanceAndOperationsProps = {
   onWithdraw: () => void;
+  onFundAgent: () => void;
 };
 export const AggregatedBalanceAndOperations = ({
   onWithdraw,
+  onFundAgent,
 }: AggregatedBalanceAndOperationsProps) => {
-  const { info } = useMessageApi();
   const { aggregatedBalance } = useAgentWallet();
   const { isAgentEvicted } = useActiveStakingContractDetails();
 
@@ -68,7 +68,7 @@ export const AggregatedBalanceAndOperations = ({
           <Button disabled={isAgentEvicted} onClick={onWithdraw}>
             Withdraw
           </Button>
-          <Button type="primary" onClick={() => info('Feature coming soon!')}>
+          <Button type="primary" onClick={onFundAgent}>
             Fund Agent
           </Button>
         </Flex>
@@ -148,9 +148,11 @@ const SomeFundsMaybeLockedModal = ({
 
 type BalancesAndAssetsProps = {
   onLockedFundsWithdrawn: () => void;
+  onFundAgent: () => void;
 };
 
 export const BalancesAndAssets = ({
+  onFundAgent,
   onLockedFundsWithdrawn,
 }: BalancesAndAssetsProps) => {
   const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
@@ -160,6 +162,7 @@ export const BalancesAndAssets = ({
       <AgentWalletTitle />
       <AggregatedBalanceAndOperations
         onWithdraw={() => setWithdrawModalVisible(true)}
+        onFundAgent={onFundAgent}
       />
       <AvailableAssets />
       <TransactionHistory />
