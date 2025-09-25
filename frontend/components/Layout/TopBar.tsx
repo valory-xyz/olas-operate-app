@@ -57,28 +57,55 @@ const TopBarContainer = styled.div`
 
 export const TopBar = () => {
   const router = useRouter();
-  const { closeApp, minimizeApp, onRampWindow } = useElectronApi();
+  const {
+    closeApp,
+    minimizeApp,
+    onRampWindow,
+    web3AuthWindow,
+    onRampTermsWindow,
+  } = useElectronApi();
   const store = useStore();
   const { isUserLoggedIn, goto, pageState } = usePageState();
 
   const envName = store?.storeState?.environmentName;
   const isOnRamp = router.pathname === '/onramp';
-  const isNotMain = [isOnRamp].some(Boolean);
+  const isWeb3Auth = router.pathname === '/web3auth';
+  const isTerms = router.pathname === '/terms-and-conditions';
+  const isNotMain = [isOnRamp, isWeb3Auth, isTerms].some(Boolean);
 
   const name = useMemo(() => {
     if (isOnRamp) return 'Buy Crypto on Transak';
+    if (isWeb3Auth) return 'Web3auth';
+    if (isTerms) return 'Terms & Conditions';
     return `Pearl (beta) ${envName ? `(${envName})` : ''}`.trim();
-  }, [isOnRamp, envName]);
+  }, [isOnRamp, isWeb3Auth, isTerms, envName]);
 
   const handleClose = useCallback(() => {
     if (isOnRamp) {
       onRampWindow?.close?.();
       return;
     }
+    if (isTerms) {
+      onRampTermsWindow?.close?.();
+      return;
+    }
+
+    if (isWeb3Auth) {
+      web3AuthWindow?.close?.();
+      return;
+    }
 
     if (!closeApp) return;
     closeApp();
-  }, [closeApp, isOnRamp, onRampWindow]);
+  }, [
+    closeApp,
+    isOnRamp,
+    isTerms,
+    isWeb3Auth,
+    onRampTermsWindow,
+    onRampWindow,
+    web3AuthWindow,
+  ]);
 
   return (
     <TopBarContainer>

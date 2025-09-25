@@ -1,43 +1,56 @@
 # Acquiring RPC Endpoints for Development
 
-## Tenderly
+The app supports multiple EVM chains. Provide HTTPS RPC URLs per chain in your `.env`:
 
-We use Tenderly to fork the Gnosis Mainnet chain for development purposes. This allows us to interact with the chain without risking real funds.
+```env
+# Set only the chains you need; leave others unset or blank
+GNOSIS_RPC=https://...
+BASE_RPC=https://...
+OPTIMISM_RPC=https://...
+ETHEREUM_RPC=https://...
+MODE_RPC=https://...
+CELO_RPC=https://...
+```
 
-### 1. Create a Tenderly Account
+You can use Tenderly forks, Alchemy, Infura, QuickNode, or your own nodes. For local development, forks are convenient and safe.
 
-Go to [Tenderly](https://tenderly.co/) and create an account.
+## Tenderly (recommended for forks)
 
-### 2. Create a Project
+1. Create a Tenderly account at https://tenderly.co/ and a project.
+2. Create a new Fork under Development → Forks.
+3. Select your target network and note the Chain ID:
+   - Gnosis Chain (id: 100)
+   - Base (id: 8453)
+   - Optimism (id: 10)
+   - Ethereum Mainnet (id: 1)
+   - Mode (id: 34443)
+   - Celo (id: 42220)
+4. Copy the Fork RPC URL and set the matching env variable(s), e.g.:
 
-Create a new project in Tenderly.
+```env
+GNOSIS_RPC=https://rpc.tenderly.co/fork/...
+BASE_RPC=https://rpc.tenderly.co/fork/...
+```
 
-### 3. Fork the Gnosis Mainnet
+Use Tenderly’s Fund Accounts to faucet test funds where supported.
 
-1. Go to the _Forks_ section under the _Development_ tab in your Tenderly dashboard.
+Keep forks fresh by recreating them periodically and updating the corresponding env values.
 
-2. Click _Create Fork_.
+## Managed RPC providers
 
-3. Select "Gnosis Chain" as the network.
+For mainnet/testnet access without forking, obtain endpoints from providers and map them to the env variables above:
 
-4. Use Chain ID `100`.
+- Alchemy: https://dashboard.alchemy.com/
+- Infura: https://app.infura.io/
+- QuickNode: https://www.quicknode.com/
+- Public RPCs: consult each chain’s docs; rate limits may apply.
 
-5. Copy the RPC URL provided by Tenderly.
+## Notes
 
-### 4. Set the RPC URL
-
-Set the `FORK_URL` and `DEV_RPC` environment variables in your `.env` file to the RPC URL provided by Tenderly.
-
-### 5. Fund Your Accounts
-
-Click the _Fund Accounts_ button in Tenderly to fund your accounts with XDAI (native token) and [OLAS](https://gnosisscan.io/token/0xce11e14225575945b8e6dc0d4f2dd4c570f79d9f).
-
-### 6. Keeping Your Fork Up-to-Date
-
-It is important to update your fork periodically to ensure that your forked chain is up-to-date with mainnet. You can do this by creating a new fork in Tenderly and updating your `FORK_URL` and `DEV_RPC` environment variables.
-
-Alternatively, you can try the Tenderly's virtual testnet feature, which can automatically update your fork for you relative to mainnet. Though, this sometimes results in instability.
+- Only set the env variables for chains you actually use.
+- Ensure URLs are HTTPS. WebSocket endpoints are not required.
+- If an RPC becomes rate-limited or unreliable, switch providers or a fresh Tenderly fork.
 
 ## Hardhat (deprecated)
 
-Hardhat is a local alternative to Tenderly for forking EVM chains. It is useful for development purposes, though the chain state is lost once the Hardhat node is turned off.
+Hardhat local forking is possible but not maintained here; state resets on restart and requires additional configuration.
