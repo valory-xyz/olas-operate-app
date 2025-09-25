@@ -78,10 +78,10 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     useBalanceContext();
   const { accruedServiceStakingRewards } = useRewardContext();
   const {
-    masterEoaBalance,
-    masterSafeNativeBalance,
-    masterSafeOlasBalance,
-    masterSafeErc20Balances,
+    getMasterSafeNativeBalanceOf,
+    getMasterSafeOlasBalanceOf,
+    getMasterSafeErc20Balances,
+    getMasterEoaNativeBalanceOf,
   } = useMasterBalances();
 
   const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
@@ -161,16 +161,26 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         const balance = (() => {
           // balance for OLAS
           if (symbol === TokenSymbolMap.OLAS) {
-            return sum([masterSafeOlasBalance, accruedServiceStakingRewards]);
+            return sum([
+              getMasterSafeOlasBalanceOf(walletChainId),
+              accruedServiceStakingRewards,
+            ]);
           }
 
           // balance for native tokens
           if (symbol === asEvmChainDetails(middlewareHomeChainId).symbol) {
-            return sum([masterSafeNativeBalance, masterEoaBalance]);
+            return sum([
+              sum(
+                getMasterSafeNativeBalanceOf(walletChainId)?.map(
+                  ({ balance }) => balance,
+                ) ?? [],
+              ),
+              getMasterEoaNativeBalanceOf(walletChainId),
+            ]);
           }
 
           // balance for other required tokens (eg. USDC)
-          return masterSafeErc20Balances?.[symbol] ?? 0;
+          return getMasterSafeErc20Balances(walletChainId)?.[symbol] ?? 0;
         })();
 
         const asset: AvailableAsset = {
@@ -186,11 +196,11 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     walletChainId,
     usdBreakdown,
     middlewareHomeChainId,
-    masterSafeErc20Balances,
-    masterSafeOlasBalance,
+    getMasterSafeOlasBalanceOf,
     accruedServiceStakingRewards,
-    masterSafeNativeBalance,
-    masterEoaBalance,
+    getMasterSafeNativeBalanceOf,
+    getMasterEoaNativeBalanceOf,
+    getMasterSafeErc20Balances,
   ]);
 
   const aggregatedBalance = useMemo(() => {

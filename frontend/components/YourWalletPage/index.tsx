@@ -211,7 +211,7 @@ const MasterSafeErc20Balances = () => {
 
 const MasterEoaSignerNativeBalance = () => {
   const { masterEoa } = useMasterWalletContext();
-  const { masterEoaBalance } = useMasterBalances();
+  const { masterEoaNativeBalance } = useMasterBalances();
   const { evmHomeChainId, middlewareChain } = useYourWallet();
 
   const nativeTokenSymbol = getNativeTokenSymbol(evmHomeChainId);
@@ -228,7 +228,7 @@ const MasterEoaSignerNativeBalance = () => {
               />
             ),
             leftClassName: 'text-light',
-            right: `${balanceFormat(masterEoaBalance, 4)} ${nativeTokenSymbol}`,
+            right: `${balanceFormat(masterEoaNativeBalance, 4)} ${nativeTokenSymbol}`,
           },
         ]}
         parentStyle={infoBreakdownParentStyle}
