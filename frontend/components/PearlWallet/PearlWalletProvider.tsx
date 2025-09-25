@@ -18,7 +18,7 @@ import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import {
   useBalanceContext,
   useMasterBalances,
-  useRewardContext,
+  // useRewardContext,
   useService,
   useServices,
   useUsdAmounts,
@@ -76,7 +76,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   );
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
-  const { accruedServiceStakingRewards } = useRewardContext();
+
+  // TODO: https://linear.app/valory-xyz/issue/OPE-744
+  // const { accruedServiceStakingRewards } = useRewardContext();
   const {
     getMasterSafeNativeBalanceOf,
     getMasterSafeOlasBalanceOf,
@@ -163,7 +165,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
           if (symbol === TokenSymbolMap.OLAS) {
             return sum([
               getMasterSafeOlasBalanceOf(walletChainId),
-              accruedServiceStakingRewards,
+              // accruedServiceStakingRewards,
             ]);
           }
 
@@ -196,8 +198,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     walletChainId,
     usdBreakdown,
     middlewareHomeChainId,
+    // accruedServiceStakingRewards,
     getMasterSafeOlasBalanceOf,
-    accruedServiceStakingRewards,
     getMasterSafeNativeBalanceOf,
     getMasterEoaNativeBalanceOf,
     getMasterSafeErc20Balances,
