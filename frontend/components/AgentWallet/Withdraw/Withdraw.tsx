@@ -87,7 +87,7 @@ const WithdrawalFailed = ({ onTryAgain }: WithdrawalFailedProps) => (
       <Button onClick={onTryAgain} type="primary" block size="large">
         Try Again
       </Button>
-      <Link href={SUPPORT_URL}>
+      <Link href={SUPPORT_URL} target="_blank" rel="noreferrer">
         Join Olas Community Discord Server {UNICODE_SYMBOLS.EXTERNAL_LINK}
       </Link>
     </Flex>

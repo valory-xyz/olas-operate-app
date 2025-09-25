@@ -1,4 +1,5 @@
 import { Button, Flex, Typography } from 'antd';
+import { isNumber } from 'lodash';
 import Image from 'next/image';
 import { useEffect } from 'react';
 
@@ -81,7 +82,9 @@ export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
               Aggregated balance
             </Text>
             <Title level={4} className="m-0">
-              {aggregatedBalance ? `$${formatNumber(aggregatedBalance)}` : NA}
+              {isNumber(aggregatedBalance)
+                ? `$${formatNumber(aggregatedBalance)}`
+                : NA}
             </Title>
           </Flex>
           <Flex gap={8}>
