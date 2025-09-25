@@ -19,6 +19,7 @@ import { useServices } from '@/hooks/useServices';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
 import { useUsdAmounts } from '@/hooks/useUsdAmounts';
 
+import { RewardsHistory } from './RewardsHistory';
 import { StakingContractDetails } from './StakingContractDetails';
 
 const { Title, Text } = Typography;
@@ -161,7 +162,7 @@ export const AgentStaking = () => {
       <SelectionTabs currentTab={currentTab} setCurrentTab={setCurrentTab} />
 
       {currentTab === 'StakingContract' && <StakingContractDetails />}
-      {/* {currentTab === 'RewardsHistory' && <RewardsHistory />} */}
+      {currentTab === 'RewardsHistory' && <RewardsHistory />}
     </Flex>
   );
 };
