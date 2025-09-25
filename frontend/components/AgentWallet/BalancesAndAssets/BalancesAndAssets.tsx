@@ -1,4 +1,5 @@
 import { Button, Flex, Modal, Typography } from 'antd';
+import { isNumber } from 'lodash';
 import { useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
@@ -58,7 +59,9 @@ export const AggregatedBalanceAndOperations = ({
             Aggregated balance
           </Text>
           <Title level={4} className="m-0">
-            {aggregatedBalance ? `$${formatNumber(aggregatedBalance)}` : NA}
+            {isNumber(aggregatedBalance)
+              ? `$${formatNumber(aggregatedBalance)}`
+              : NA}
           </Title>
         </Flex>
         <Flex gap={8}>

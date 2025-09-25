@@ -139,7 +139,7 @@ const AssetsFromStakingContract = () => {
           />
           <Text>{formatNumber(stakingRewards.value, 4)} OLAS</Text>
           <Text className="text-neutral-tertiary">
-            {stakingRewards.valueInUsd
+            {isNumber(stakingRewards.valueInUsd)
               ? `≈ $${formatNumber(stakingRewards.valueInUsd)}`
               : null}
           </Text>
