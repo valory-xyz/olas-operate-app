@@ -7,7 +7,7 @@ import { Deposit } from './Deposit/Deposit';
 import { PearlWalletProvider, usePearlWallet } from './PearlWalletProvider';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
-import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw/SelectAmountToWithdraw';
+import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw';
 import { STEPS } from './Withdraw/types';
 
 /**
