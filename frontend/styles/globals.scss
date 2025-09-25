@@ -250,8 +250,7 @@ textarea,
     color: inherit;
   }
 
-  &--full-width
-   {
+  &--full-width {
     flex: auto;
     border-radius: 0;
     border-left: 0;
@@ -267,6 +266,14 @@ textarea,
       flex: none
     }
   }
+}
+
+.help-and-settings-container {
+  width: 552px;
+  margin-left: auto;
+  margin-right: auto;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .can-select-text {

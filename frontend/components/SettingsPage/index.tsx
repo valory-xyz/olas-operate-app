@@ -3,7 +3,6 @@ import Title from 'antd/es/typography/Title';
 import { isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
-import styled from 'styled-components';
 
 import { Pages } from '@/enums/Pages';
 import { SettingsScreen } from '@/enums/SettingsScreen';
@@ -21,15 +20,6 @@ import { CustomAlert } from '../Alert';
 import { CardSection } from '../ui/CardSection';
 
 const { Text, Paragraph } = Typography;
-
-const SettingsContainer = styled.div`
-  width: 552px;
-  margin-left: auto;
-  margin-right: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
 
 const NoBackupWallet = () => {
   const { goto } = usePageState();
@@ -80,6 +70,21 @@ export const Settings = () => {
   return settingsScreen;
 };
 
+const BackupWalletInfo = () => (
+  <Flex gap={16}>
+    <Image
+      src="/wallet-icon.png"
+      alt="wallet"
+      width={36}
+      height={36}
+      className="mb-auto"
+    />
+    <div style={{ marginTop: 6, marginBottom: 6 }}>
+      <Text strong>Backup wallet</Text>
+    </div>
+  </Flex>
+);
+
 const SettingsMain = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
   const { selectedAgentConfig } = useServices();
@@ -127,10 +132,9 @@ const SettingsMain = () => {
   const showWallet = !isBackupViaSafeEnabled && !masterSafeBackupAddress;
 
   return (
-    <SettingsContainer>
+    <Flex className="help-and-settings-container">
       <Title level={3}>Settings</Title>
       <Card styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}>
-        {/* Password */}
         <CardSection
           $padding="24px"
           $borderBottom={!showWallet}
@@ -155,35 +159,17 @@ const SettingsMain = () => {
           </Flex>
         </CardSection>
 
-        {/* Wallet backup 
-        If there's no backup address and adding it
-        via safe is disabled - hide the section
-      */}
         {showWallet ? null : (
           <CardSection
             $padding="24px"
-            $borderBottom={masterSafeBackupAddress ? true : false}
+            $borderBottom={!!masterSafeBackupAddress}
             vertical
           >
-            <Flex gap={16}>
-              <Image
-                src="/wallet-icon.png"
-                alt="wallet"
-                width={36}
-                height={36}
-                className="mb-auto"
-              />
-              <div style={{ marginTop: 6, marginBottom: 6 }}>
-                <Text strong>Backup wallet</Text>
-              </div>
-            </Flex>
+            <BackupWalletInfo />
             {walletBackup}
           </CardSection>
         )}
-
-        {/* Debug info */}
-        {/* <DebugInfoSection /> */}
       </Card>
-    </SettingsContainer>
+    </Flex>
   );
 };
