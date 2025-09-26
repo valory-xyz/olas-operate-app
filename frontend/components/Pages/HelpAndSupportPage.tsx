@@ -44,32 +44,34 @@ export const HelpAndSupport = () => {
     getTag();
   }, [getAppVersion, isMounted]);
 
-  const helpItems = useMemo<HelpItem[]>(() => {
-    return [
-      latestTag
-        ? {
-            label: 'Latest release notes',
-            href: `${GITHUB_API_RELEASES}/tag/v${latestTag}`,
-            isExternal: true,
-          }
-        : null,
-      {
-        label: 'Olas community Discord server',
-        href: SUPPORT_URL,
-        isExternal: true,
-      },
-      {
-        label: 'Frequently asked questions',
-        href: FAQ_URL,
-        isExternal: false,
-      },
-      {
-        label: 'Pearl Terms and Conditions',
-        href: TERMS_AND_CONDITIONS_URL,
-        isExternal: false,
-      },
-    ].filter(Boolean) as HelpItem[];
-  }, [latestTag]);
+  const helpItems: HelpItem[] = useMemo(
+    () =>
+      compact([
+        latestTag
+          ? {
+              label: 'Latest release notes',
+              href: `${GITHUB_API_RELEASES}/tag/v${latestTag}`,
+              isExternal: true,
+            }
+          : null,
+        {
+          label: 'Olas community Discord server',
+          href: SUPPORT_URL,
+          isExternal: true,
+        },
+        {
+          label: 'Frequently asked questions',
+          href: FAQ_URL,
+          isExternal: false,
+        },
+        {
+          label: 'Pearl Terms and Conditions',
+          href: TERMS_AND_CONDITIONS_URL,
+          isExternal: false,
+        },
+      ]),
+    [latestTag],
+  );
 
   return (
     <Flex className="help-and-settings-container">
