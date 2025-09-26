@@ -3,19 +3,18 @@ import { Button, Col, Flex, Image, Row, Spin, Typography } from 'antd';
 import { CSSProperties, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { CardFlex } from '@/components/ui/CardFlex';
-import { Collapse } from '@/components/ui/Collapse';
+import { InfoTooltip } from '@/components/InfoTooltip';
+import { CardFlex, Collapse } from '@/components/ui';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import {
   COLOR,
   EXPLORER_URL_BY_MIDDLEWARE_CHAIN,
+  NA,
   UNICODE_SYMBOLS,
 } from '@/constants';
 import { Checkpoint, useRewardsHistory, useServices } from '@/hooks';
 import { balanceFormat } from '@/utils/numberFormatters';
-import { formatToShortDateTime } from '@/utils/time';
-
-import { InfoTooltip } from '../InfoTooltip';
+import { formatToMonthYear, formatToShortDateTime } from '@/utils/time';
 
 const { Text, Title } = Typography;
 
@@ -29,41 +28,37 @@ const RewardRow = styled(Row)`
   align-items: center;
 `;
 
+type MonthsArray = Array<{
+  monthYear: string;
+  checkpoints: Checkpoint[];
+  totalMonthlyRewards: number;
+}>;
+
 const useCheckoutPointsByMonths = () => {
   // Show checkpoints across all contracts
   const { allCheckpoints = [], isLoading } = useRewardsHistory();
 
   const checkpointsByMonths = useMemo(() => {
     if (!allCheckpoints.length || isLoading) return [];
-    const monthsArray = allCheckpoints.reduce(
-      (acc, checkpoint) => {
-        const epochEndTimeInMs = checkpoint.epochEndTimeStamp * 1000;
-        const date = new Date(epochEndTimeInMs);
-        const monthYear = date.toLocaleDateString('en-US', {
-          month: 'long',
-          year: 'numeric',
-          timeZone: 'UTC',
-        });
+    const monthsArray: MonthsArray = [];
+    allCheckpoints.forEach((checkpoint) => {
+      const epochEndTimeInMs = checkpoint.epochEndTimeStamp * 1000;
+      const monthYear = formatToMonthYear(epochEndTimeInMs);
 
-        const existingMonth = acc.find((item) => item.monthYear === monthYear);
-        if (existingMonth) {
-          existingMonth.checkpoints.push(checkpoint);
-          existingMonth.totalMonthlyRewards += checkpoint.reward;
-        } else {
-          acc.push({
-            monthYear,
-            checkpoints: [checkpoint],
-            totalMonthlyRewards: checkpoint.reward,
-          });
-        }
-        return acc;
-      },
-      [] as Array<{
-        monthYear: string;
-        checkpoints: Checkpoint[];
-        totalMonthlyRewards: number;
-      }>,
-    );
+      const existingMonth = monthsArray.find(
+        (item) => item.monthYear === monthYear,
+      );
+      if (existingMonth) {
+        existingMonth.checkpoints.push(checkpoint);
+        existingMonth.totalMonthlyRewards += checkpoint.reward;
+      } else {
+        monthsArray.push({
+          monthYear,
+          checkpoints: [checkpoint],
+          totalMonthlyRewards: checkpoint.reward,
+        });
+      }
+    });
 
     return monthsArray.sort(
       (a, b) =>
@@ -134,7 +129,7 @@ const EpochDurationPopup = ({ checkpoint }: { checkpoint: Checkpoint }) => {
     if (epochStartTimeStamp && epochEndTimeStamp) {
       return `${formatToShortDateTime(epochStartTimeStamp * 1000)} - ${formatToShortDateTime(epochEndTimeStamp * 1000)} (UTC)`;
     }
-    return 'NA';
+    return NA;
   }, [epochStartTimeStamp, epochEndTimeStamp]);
 
   return (
