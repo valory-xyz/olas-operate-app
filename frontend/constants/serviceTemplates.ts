@@ -134,6 +134,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.USER,
     },
+    GNOSIS_STAKING_SUBGRAPH_URL: {
+      name: "Gnosis staking subgraph URL",
+      description: "",
+      value: "https://gateway-arbitrum.network.thegraph.com/api/{SUBGRAPH_API_KEY}/subgraphs/id/F3iqL2iw5UTrP1qbb4S694pGEkBwzoxXp1TRikB2K4e",
+      provision_type: EnvProvisionType.COMPUTED
+    },
   },
 } as const;
 
