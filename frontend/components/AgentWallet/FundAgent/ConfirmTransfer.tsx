@@ -91,28 +91,24 @@ const TransferFailed = ({ onTryAgain }: TransferFailedProps) => (
   </Flex>
 );
 
-type FundsObj = {
-  [address: Address]: string;
+type TokenAmountMap = {
+  [address: Address]: string; // amount (in wei/units)
 };
 
-type FundsTo = {
+type ChainFunds = Partial<{
   [chain in SupportedMiddlewareChain]: {
-    [address: Address]: FundsObj;
+    [safeAddress: Address]: TokenAmountMap;
   };
-};
+}>;
 
 /**
- * Withdraws the balance of a service
- *
- * @param withdrawAddress Address
- * @param serviceTemplate ServiceTemplate
- * @returns Promise<Service>
+ * Fund an agent by sending funds to its service safe.
  */
 const fundAgent = async ({
   funds,
   serviceConfigId,
 }: {
-  funds: FundsTo;
+  funds: ChainFunds;
   serviceConfigId: ServiceConfigId;
 }): Promise<{ error: string | null }> =>
   new Promise((resolve, reject) =>
@@ -124,7 +120,7 @@ const fundAgent = async ({
       if (response.ok) {
         resolve(response.json());
       } else {
-        reject('Failed to withdraw balance');
+        reject('Failed to fund agent');
       }
     }),
   );
@@ -132,7 +128,7 @@ const fundAgent = async ({
 const useConfirmTransfer = () => {
   const { selectedService } = useServices();
   const { isPending, isSuccess, isError, mutateAsync } = useMutation({
-    mutationFn: async (funds: FundsTo) => {
+    mutationFn: async (funds: ChainFunds) => {
       if (!selectedService) {
         throw new Error('No service selected');
       }
@@ -145,7 +141,7 @@ const useConfirmTransfer = () => {
   });
 
   const onFundAgent = useCallback(
-    async (fundsToPass: FundsTo) => {
+    async (fundsToPass: ChainFunds) => {
       try {
         await mutateAsync(fundsToPass);
       } catch (error) {
@@ -187,7 +183,7 @@ export const ConfirmTransfer = ({ fundsToTransfer }: ConfirmTransferProps) => {
 
     const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(middlewareChain)];
 
-    const fundsObj: FundsObj = {};
+    const fundsObj: TokenAmountMap = {};
     Object.entries(fundsToTransfer).forEach(([symbol, amount]) => {
       if (amount > 0) {
         const { address: tokenAddress, decimals } = chainTokenConfig[symbol];
@@ -197,16 +193,14 @@ export const ConfirmTransfer = ({ fundsToTransfer }: ConfirmTransferProps) => {
       }
     });
 
-    const fundsTo: FundsTo = {
+    const fundsTo: ChainFunds = {
       [middlewareChain]: {
         [serviceSafe.address]: fundsObj,
       },
     };
 
-    console.log({ fundsTo });
-
-    // onFundAgent(fundsTo as FundsTo);
-    // setIsTransferStateModalVisible(true);
+    setIsTransferStateModalVisible(true);
+    onFundAgent(fundsTo);
   }, [onFundAgent, fundsToTransfer, middlewareChain, serviceSafe]);
 
   return (

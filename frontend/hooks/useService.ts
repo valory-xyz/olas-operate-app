@@ -74,6 +74,13 @@ export const useService = (serviceConfigId?: string) => {
     const chainConfig = service.chain_configs[selectedService?.home_chain];
     if (!chainConfig) return [];
 
+    const agentSafe = {
+      address: chainConfig.chain_data.multisig,
+      owner: WalletOwnerType.Agent,
+      type: WalletType.Safe,
+      evmChainId: asEvmChainId(selectedService?.home_chain),
+    } as AgentSafe;
+
     return [
       ...(chainConfig.chain_data.instances ?? []).map(
         (address) =>
@@ -83,16 +90,7 @@ export const useService = (serviceConfigId?: string) => {
             type: WalletType.EOA,
           }) as AgentEoa,
       ),
-      ...(chainConfig.chain_data.multisig
-        ? [
-          {
-            address: chainConfig.chain_data.multisig,
-            owner: WalletOwnerType.Agent,
-            type: WalletType.Safe,
-            evmChainId: asEvmChainId(selectedService?.home_chain),
-          } as AgentSafe,
-        ]
-        : []),
+      ...(chainConfig.chain_data.multisig ? [agentSafe] : []),
     ];
   }, [service, selectedService]);
 
@@ -143,8 +141,6 @@ export const useService = (serviceConfigId?: string) => {
         wallet.type === WalletType.Safe,
     );
   }, [allAgentAddresses, serviceWallets]);
-
-  console.log({ allAgentAddresses, serviceWallets });
 
   const serviceEoa = useMemo(() => {
     if (!serviceWallets) return null;
