@@ -1,4 +1,5 @@
 import { Card, Flex, Typography } from 'antd';
+import { compact } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { useIsMounted } from 'usehooks-ts';
 
@@ -14,7 +15,6 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { ArrowUpRightSvg, ExternalLink } from '../custom-icons';
 import { ExportLogsButton } from '../ExportLogsButton';
 import { CardSection } from '../ui/CardSection';
-import { compact } from 'lodash';
 
 const { Title, Paragraph } = Typography;
 
