@@ -27,7 +27,10 @@ import { toUsd } from '@/service/toUsd';
 import { AgentConfig } from '@/types/Agent';
 import { Nullable, ValueOf } from '@/types/Util';
 import { generateName } from '@/utils/agentName';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
+import {
+  asEvmChainDetails,
+  asMiddlewareChain,
+} from '@/utils/middlewareHelpers';
 
 import {
   AvailableAsset,
@@ -86,7 +89,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     getMasterEoaNativeBalanceOf,
   } = useMasterBalances();
 
-  const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
+  const { evmHomeChainId } = selectedAgentConfig;
 
   // wallet chain ID
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
@@ -170,7 +173,10 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
           }
 
           // balance for native tokens
-          if (symbol === asEvmChainDetails(middlewareHomeChainId).symbol) {
+          if (
+            symbol ===
+            asEvmChainDetails(asMiddlewareChain(walletChainId)).symbol
+          ) {
             return sum([
               sum(
                 getMasterSafeNativeBalanceOf(walletChainId)?.map(
@@ -197,7 +203,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   }, [
     walletChainId,
     usdBreakdown,
-    middlewareHomeChainId,
     // accruedServiceStakingRewards,
     getMasterSafeOlasBalanceOf,
     getMasterSafeNativeBalanceOf,
