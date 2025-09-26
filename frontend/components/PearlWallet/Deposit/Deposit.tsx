@@ -5,6 +5,7 @@ import { CardFlex } from '@/components/ui/CardFlex';
 
 const { Title, Text } = Typography;
 
+// TODO: different ticket
 const DepositTitle = () => (
   <Flex vertical justify="space-between" gap={12}>
     <Title level={4} className="m-0">

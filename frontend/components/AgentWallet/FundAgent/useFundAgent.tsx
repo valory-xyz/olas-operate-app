@@ -4,7 +4,7 @@ import { useUnmount } from 'usehooks-ts';
 
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
-import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
+import { TokenSymbol, TokenSymbolMap } from '@/constants';
 import {
   useBalanceContext,
   useMasterBalances,
@@ -13,17 +13,11 @@ import {
   useServices,
   useUsdAmounts,
 } from '@/hooks';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
+import { asEvmChainDetails } from '@/utils';
 
 import { AvailableAsset } from '../types';
 
 export const useFundAgent = () => {
-  const {
-    isLoading: isServicesLoading,
-    selectedAgentConfig,
-    selectedService,
-  } = useServices();
-  const { isLoaded } = useService(selectedService?.service_config_id);
   const { isLoading: isBalanceLoading } = useBalanceContext();
   const { accruedServiceStakingRewards } = useRewardContext();
   const {
@@ -32,16 +26,18 @@ export const useFundAgent = () => {
     masterSafeOlasBalance,
     masterSafeErc20Balances,
   } = useMasterBalances();
+  const {
+    isLoading: isServicesLoading,
+    selectedAgentConfig,
+    selectedService,
+  } = useServices();
+  const { isLoaded } = useService(selectedService?.service_config_id);
 
   const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
 
   const [amountsToWithdraw, setAmountsToWithdraw] = useState<
     Partial<Record<TokenSymbol, number>>
   >({});
-
-  const chainName = evmHomeChainId
-    ? (CHAIN_CONFIG[evmHomeChainId].name as string)
-    : '';
 
   const usdRequirements = useMemo(() => {
     if (!evmHomeChainId) return [];
@@ -53,6 +49,9 @@ export const useFundAgent = () => {
     );
   }, [evmHomeChainId]);
 
+  const chainName = evmHomeChainId
+    ? (CHAIN_CONFIG[evmHomeChainId].name as string)
+    : '';
   const { breakdown: usdBreakdown } = useUsdAmounts(chainName, usdRequirements);
 
   // OLAS token, Native Token, other ERC20 tokens

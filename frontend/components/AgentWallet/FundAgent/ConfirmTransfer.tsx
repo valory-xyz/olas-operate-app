@@ -129,14 +129,10 @@ const useConfirmTransfer = () => {
   const { selectedService } = useServices();
   const { isPending, isSuccess, isError, mutateAsync } = useMutation({
     mutationFn: async (funds: ChainFunds) => {
-      if (!selectedService) {
-        throw new Error('No service selected');
-      }
+      if (!selectedService) throw new Error('No service selected');
 
-      await fundAgent({
-        funds,
-        serviceConfigId: selectedService.service_config_id,
-      });
+      const serviceConfigId = selectedService.service_config_id;
+      await fundAgent({ funds, serviceConfigId });
     },
   });
 
@@ -162,54 +158,55 @@ export const ConfirmTransfer = ({ fundsToTransfer }: ConfirmTransferProps) => {
   const { selectedAgentConfig, selectedService } = useServices();
   const { serviceSafes } = useService(selectedService?.service_config_id);
   const { onFundAgent, isLoading, isSuccess, isError } = useConfirmTransfer();
+
   const [isTransferStateModalVisible, setIsTransferStateModalVisible] =
     useState(false);
 
-  const middlewareChain = selectedAgentConfig.middlewareHomeChainId;
-
-  // agent safe
+  const { middlewareHomeChainId, evmHomeChainId } = selectedAgentConfig;
   const serviceSafe = useMemo(
-    () =>
-      serviceSafes?.find(
-        ({ evmChainId }) => evmChainId === selectedAgentConfig.evmHomeChainId,
-      ),
-    [serviceSafes, selectedAgentConfig.evmHomeChainId],
+    () => serviceSafes?.find(({ evmChainId }) => evmChainId === evmHomeChainId),
+    [serviceSafes, evmHomeChainId],
   );
 
   const onConfirmTransfer = useCallback(() => {
     if (!serviceSafe) {
-      throw new Error('Service Safe is not available');
+      throw new Error('Service Safe is not available'); // Agent safe
     }
 
-    const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(middlewareChain)];
-
+    const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(middlewareHomeChainId)];
     const fundsObj: TokenAmountMap = {};
+
     Object.entries(fundsToTransfer).forEach(([symbol, amount]) => {
       if (amount > 0) {
         const { address: tokenAddress, decimals } = chainTokenConfig[symbol];
-
-        const address = tokenAddress ?? AddressZero;
-        fundsObj[address] = parseUnits(amount, decimals);
+        fundsObj[tokenAddress ?? AddressZero] = parseUnits(amount, decimals);
       }
     });
 
     const fundsTo: ChainFunds = {
-      [middlewareChain]: {
+      [middlewareHomeChainId]: {
         [serviceSafe.address]: fundsObj,
       },
     };
 
     setIsTransferStateModalVisible(true);
     onFundAgent(fundsTo);
-  }, [onFundAgent, fundsToTransfer, middlewareChain, serviceSafe]);
+  }, [onFundAgent, fundsToTransfer, middlewareHomeChainId, serviceSafe]);
+
+  const handleCancel = useCallback(
+    () => setIsTransferStateModalVisible(false),
+    [],
+  );
+
+  const canConfirmTransfer = useMemo(() => {
+    if (isEmpty(fundsToTransfer)) return false;
+    return !values(fundsToTransfer).every((x) => x === 0);
+  }, [fundsToTransfer]);
 
   return (
     <CardFlex $noBorder $padding="32px" className="w-full">
       <Button
-        disabled={
-          isEmpty(fundsToTransfer) ||
-          values(fundsToTransfer).every((x) => x === 0)
-        }
+        disabled={!canConfirmTransfer || isLoading || isSuccess}
         onClick={onConfirmTransfer}
         type="primary"
         className="w-full"
@@ -220,20 +217,17 @@ export const ConfirmTransfer = ({ fundsToTransfer }: ConfirmTransferProps) => {
 
       {isTransferStateModalVisible && (
         <Modal
-          onCancel={
-            isLoading ? undefined : () => setIsTransferStateModalVisible(false)
-          }
+          onCancel={isLoading ? undefined : handleCancel}
           closable={!isLoading}
           open
           width={436}
           title={null}
           footer={null}
         >
-          {/* TODO */}
           {isError ? (
-            <TransferFailed onTryAgain={() => {}} />
+            <TransferFailed onTryAgain={onConfirmTransfer} />
           ) : isSuccess ? (
-            <TransferComplete onClose={() => {}} />
+            <TransferComplete onClose={handleCancel} />
           ) : (
             <TransferInProgress />
           )}
