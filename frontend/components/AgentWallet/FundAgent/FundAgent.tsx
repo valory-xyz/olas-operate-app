@@ -1,16 +1,23 @@
-import { ArrowRightOutlined } from '@ant-design/icons';
+import {
+  ArrowRightOutlined,
+  LoadingOutlined,
+  WarningOutlined,
+} from '@ant-design/icons';
 import { Button, Flex, Image, Typography } from 'antd';
+import { isEmpty, values } from 'lodash';
 
+import { SuccessOutlined } from '@/components/custom-icons';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Divider } from '@/components/ui/Divider';
 import { TokenAmountInput } from '@/components/ui/TokenAmountInput';
+import { SUPPORT_URL, UNICODE_SYMBOLS } from '@/constants';
 
 import { useAgentWallet } from '../AgentWalletProvider';
 import { cardStyles } from '../common';
 import { useFundAgent } from './useFundAgent';
 
-const { Title, Text } = Typography;
+const { Title, Text, Link } = Typography;
 
 const FundAgentTitle = () => (
   <Flex vertical justify="space-between" gap={12}>
@@ -47,10 +54,80 @@ const PearlWalletToExternalWallet = () => {
   );
 };
 
+const FundTransferInProgress = () => (
+  <Flex gap={32} vertical>
+    <Flex align="center" justify="center">
+      <LoadingOutlined />
+    </Flex>
+    <Flex gap={12} vertical align="center" className="text-center">
+      <Title level={4} className="m-0">
+        Transfer in Progress
+      </Title>
+      <Text className="text-neutral-tertiary">
+        It usually takes 1-2 minutes.
+      </Text>
+    </Flex>
+  </Flex>
+);
+
+const TransferComplete = ({ onClose }: { onClose: () => void }) => (
+  <Flex gap={32} vertical>
+    <Flex align="center" justify="center">
+      <SuccessOutlined />
+    </Flex>
+
+    <Flex gap={12} vertical className="text-center">
+      <Title level={4} className="m-0">
+        Transfer Complete!
+      </Title>
+      <Text className="text-neutral-tertiary">
+        Funds transferred to the Pearl wallet.
+      </Text>
+    </Flex>
+
+    <Button onClick={onClose} type="primary" block size="large">
+      Close
+    </Button>
+  </Flex>
+);
+
+type WithdrawalFailedProps = { onTryAgain: () => void };
+const WithdrawalFailed = ({ onTryAgain }: WithdrawalFailedProps) => (
+  <Flex gap={32} vertical>
+    <Flex align="center" justify="center">
+      <WarningOutlined />
+    </Flex>
+
+    <Flex gap={12} vertical className="text-center">
+      <Title level={4} className="m-0">
+        Transfer Failed
+      </Title>
+      <Text className="text-neutral-tertiary">
+        Something went wrong with your transfer. Please try again or contact the
+        Olas community.
+      </Text>
+    </Flex>
+
+    <Flex gap={16} vertical className="text-center">
+      <Button onClick={onTryAgain} type="primary" block size="large">
+        Try Again
+      </Button>
+      <Link href={SUPPORT_URL} target="_blank" rel="noreferrer">
+        Join Olas Community Discord Server {UNICODE_SYMBOLS.EXTERNAL_LINK}
+      </Link>
+    </Flex>
+  </Flex>
+);
+
 type FundAgentProps = { onBack: () => void };
 
 export const FundAgent = ({ onBack }: FundAgentProps) => {
-  const { availableAssets, amountsToWithdraw, onAmountChange } = useFundAgent();
+  const {
+    availableAssets,
+    amountsToWithdraw,
+    onAmountChange,
+    onConfirmTransfer,
+  } = useFundAgent();
 
   return (
     <Flex gap={16} vertical style={cardStyles}>
@@ -78,7 +155,16 @@ export const FundAgent = ({ onBack }: FundAgentProps) => {
       </CardFlex>
 
       <CardFlex $noBorder $padding="32px" className="w-full">
-        <Button type="primary" className="w-full" size="large">
+        <Button
+          disabled={
+            isEmpty(amountsToWithdraw) ||
+            values(amountsToWithdraw).every((x) => x === 0)
+          }
+          onClick={onConfirmTransfer}
+          type="primary"
+          className="w-full"
+          size="large"
+        >
           Confirm Transfer
         </Button>
       </CardFlex>
