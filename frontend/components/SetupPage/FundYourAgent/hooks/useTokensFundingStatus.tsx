@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { EvmChainId } from '@/constants/chains';
 import { useMasterBalances } from '@/hooks/useBalanceContext';
 import { AgentConfig } from '@/types/Agent';
 
@@ -32,21 +31,21 @@ type UseTokensFundingStatusProps = {
 export const useTokensFundingStatus = ({
   selectedAgentConfig,
 }: UseTokensFundingStatusProps) => {
-  const { masterEoaBalancesByChain } = useMasterBalances();
+  const { getMasterEoaBalancesOf } = useMasterBalances();
   const { totalTokenRequirements: tokenRequirements } =
     useGetRefillRequirementsWithMonthlyGas({
       selectedAgentConfig,
     });
   const [hasBeenFullyFunded, setHasBeenFullyFunded] = useState(false);
-  const currentChain: number = selectedAgentConfig.evmHomeChainId;
+  const currentChain = selectedAgentConfig.evmHomeChainId;
 
   const requiredTokens = tokenRequirements?.map((token) => token.symbol);
   const eoaBalances = useMemo(
     () =>
-      masterEoaBalancesByChain(currentChain as EvmChainId).filter((balance) =>
+      getMasterEoaBalancesOf(currentChain).filter((balance) =>
         requiredTokens?.includes(balance.symbol),
       ),
-    [masterEoaBalancesByChain, currentChain, requiredTokens],
+    [getMasterEoaBalancesOf, currentChain, requiredTokens],
   );
 
   const fundingStatus = useMemo(() => {
@@ -91,7 +90,7 @@ export const useTokensFundingStatus = ({
   }, [eoaBalances, tokenRequirements]);
 
   /**
-   * Once the funds have been recieved completely, don't recalculate the statuses,
+   * Once the funds have been received completely, don't recalculate the statuses,
    * as the EOA balance might change if the funds are transferred to the newly created master_safe
    */
   useEffect(() => {

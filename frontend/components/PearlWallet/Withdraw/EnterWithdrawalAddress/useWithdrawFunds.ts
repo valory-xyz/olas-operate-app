@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { entries } from 'lodash';
+import { entries, values } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
@@ -53,7 +53,9 @@ type WithdrawalRequest = {
 type WithdrawalResponse = {
   message: string;
   transfer_txs: {
-    [chain in keyof typeof SupportedMiddlewareChainMap]?: TxnHash[];
+    [chain in keyof typeof SupportedMiddlewareChainMap]?: {
+      [token: Address]: TxnHash[];
+    };
   };
 };
 
@@ -158,7 +160,8 @@ export const useWithdrawFunds = () => {
       data.transfer_txs[middlewareChain as keyof typeof data.transfer_txs];
     if (!chainTxs) return [];
 
-    return chainTxs.map(
+    const txnHashes: TxnHash[] = values(chainTxs).flat();
+    return txnHashes.map(
       (txHash) =>
         `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[asMiddlewareChain(walletChainId)]}/tx/${txHash}`,
     );
