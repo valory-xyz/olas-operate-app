@@ -1,9 +1,12 @@
-import { LoadingOutlined, WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Typography } from 'antd';
 import { isEmpty, values } from 'lodash';
 import { useState } from 'react';
 
-import { SuccessOutlined } from '@/components/custom-icons';
+import {
+  LoadingOutlined,
+  SuccessOutlined,
+  WarningOutlined,
+} from '@/components/custom-icons';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { SUPPORT_URL, UNICODE_SYMBOLS } from '@/constants';
 
@@ -80,10 +83,10 @@ type ConfirmTransferProps = {
 
 export const ConfirmTransfer = ({ fundsToTransfer }: ConfirmTransferProps) => {
   const [isTransferStateModalVisible, setIsTransferStateModalVisible] =
-    useState(false);
+    useState(true);
   const isLoading = false;
-  const isError = false;
-  const isSuccess = false;
+  const isError = true;
+  const isSuccess = true;
 
   return (
     <CardFlex $noBorder $padding="32px" className="w-full">
