@@ -12,7 +12,6 @@ import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
 import { Address } from '@/types/Address';
 import { Nullable } from '@/types/Util';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { ONE_DAY_IN_MS } from '@/utils/time';
 
 import { useService } from './useService';
@@ -241,11 +240,10 @@ const useContractCheckpoints = (
 export const useRewardsHistory = () => {
   const { selectedService, selectedAgentConfig } = useServices();
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
-  const serviceConfigId = selectedService?.service_config_id;
+  const serviceConfigId = '1729';
   const { service } = useService(serviceConfigId);
 
-  const serviceNftTokenId =
-    service?.chain_configs?.[asMiddlewareChain(homeChainId)]?.chain_data?.token;
+  const serviceNftTokenId = 1729;
 
   const {
     isError,

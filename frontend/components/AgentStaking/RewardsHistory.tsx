@@ -1,72 +1,75 @@
-import { Col, Flex, Image, Row, Typography } from 'antd';
+import { ApiOutlined, HistoryOutlined } from '@ant-design/icons';
+import { Button, Col, Flex, Image, Row, Spin, Typography } from 'antd';
 import { CSSProperties, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Collapse } from '@/components/ui/Collapse';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { COLOR } from '@/constants';
+import {
+  COLOR,
+  EXPLORER_URL_BY_MIDDLEWARE_CHAIN,
+  UNICODE_SYMBOLS,
+} from '@/constants';
 import { Checkpoint, useRewardsHistory, useServices } from '@/hooks';
+import { balanceFormat } from '@/utils/numberFormatters';
+import { formatToShortDateTime } from '@/utils/time';
 
-const { Text } = Typography;
+import { InfoTooltip } from '../InfoTooltip';
+
+const { Text, Title } = Typography;
 
 const panelStyle: CSSProperties = {
   background: COLOR.WHITE,
 };
 
 const RewardRow = styled(Row)`
-  padding: 12px 16px 12px 36px;
+  padding: 12px 16px 12px 40px;
   border-top: 1px solid ${COLOR.GRAY_3};
   align-items: center;
 `;
 
 const useCheckoutPointsByMonths = () => {
-  /**
-   * TODO: check if we should use "allCheckpoints" instead???
-   */
-  const { contractCheckpoints = {}, isLoading } = useRewardsHistory();
+  // Show checkpoints across all contracts
+  const { allCheckpoints = [], isLoading } = useRewardsHistory();
 
   const checkpointsByMonths = useMemo(() => {
-    if (!Object.entries(contractCheckpoints).length || isLoading) return [];
-    const monthsArray = Object.values(contractCheckpoints)
-      .flat()
-      .reduce(
-        (acc, checkpoint) => {
-          const epochEndTimeInMs = checkpoint.epochEndTimeStamp * 1000;
-          const date = new Date(epochEndTimeInMs);
-          const monthYear = date.toLocaleDateString('en-US', {
-            month: 'long',
-            year: 'numeric',
-            timeZone: 'UTC',
-          });
+    if (!allCheckpoints.length || isLoading) return [];
+    const monthsArray = allCheckpoints.reduce(
+      (acc, checkpoint) => {
+        const epochEndTimeInMs = checkpoint.epochEndTimeStamp * 1000;
+        const date = new Date(epochEndTimeInMs);
+        const monthYear = date.toLocaleDateString('en-US', {
+          month: 'long',
+          year: 'numeric',
+          timeZone: 'UTC',
+        });
 
-          const existingMonth = acc.find(
-            (item) => item.monthYear === monthYear,
-          );
-          if (existingMonth) {
-            existingMonth.checkpoints.push(checkpoint);
-            existingMonth.totalMonthlyRewards += checkpoint.reward;
-          } else {
-            acc.push({
-              monthYear,
-              checkpoints: [checkpoint],
-              totalMonthlyRewards: checkpoint.reward,
-            });
-          }
-          return acc;
-        },
-        [] as Array<{
-          monthYear: string;
-          checkpoints: Checkpoint[];
-          totalMonthlyRewards: number;
-        }>,
-      );
+        const existingMonth = acc.find((item) => item.monthYear === monthYear);
+        if (existingMonth) {
+          existingMonth.checkpoints.push(checkpoint);
+          existingMonth.totalMonthlyRewards += checkpoint.reward;
+        } else {
+          acc.push({
+            monthYear,
+            checkpoints: [checkpoint],
+            totalMonthlyRewards: checkpoint.reward,
+          });
+        }
+        return acc;
+      },
+      [] as Array<{
+        monthYear: string;
+        checkpoints: Checkpoint[];
+        totalMonthlyRewards: number;
+      }>,
+    );
 
     return monthsArray.sort(
       (a, b) =>
         b.checkpoints[0].epochEndTimeStamp - a.checkpoints[0].epochEndTimeStamp,
     );
-  }, [contractCheckpoints, isLoading]);
+  }, [allCheckpoints, isLoading]);
 
   return checkpointsByMonths;
 };
@@ -91,7 +94,7 @@ const EarnedRewardsColumn = ({
       className={`${className} ${hasRewards ? 'text-success-default' : 'text-neutral-primary'}`}
     >
       {hasRewards && '+'}
-      {rewards.toFixed(2)} OLAS
+      {balanceFormat(rewards ?? 0, 2)} OLAS
     </Text>
   </Flex>
 );
@@ -121,6 +124,40 @@ const PanelHeader = ({
   );
 };
 
+const EpochDurationPopup = ({ checkpoint }: { checkpoint: Checkpoint }) => {
+  const { selectedAgentConfig } = useServices();
+  const { middlewareHomeChainId } = selectedAgentConfig;
+  const { transactionHash, epochStartTimeStamp, epochEndTimeStamp } =
+    checkpoint;
+
+  const timePeriod = useMemo(() => {
+    if (epochStartTimeStamp && epochEndTimeStamp) {
+      return `${formatToShortDateTime(epochStartTimeStamp * 1000)} - ${formatToShortDateTime(epochEndTimeStamp * 1000)} (UTC)`;
+    }
+    return 'NA';
+  }, [epochStartTimeStamp, epochEndTimeStamp]);
+
+  return (
+    <Flex vertical gap={4} className="p-8">
+      <Title level={5} className="text-sm m-0">
+        Epoch duration
+      </Title>
+      <Text type="secondary" className="text-sm m-0">
+        {timePeriod}
+      </Text>
+      {transactionHash && (
+        <a
+          href={`${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[middlewareHomeChainId]}/tx/${transactionHash}`}
+          target="_blank"
+          className="text-sm"
+        >
+          End of epoch transaction {UNICODE_SYMBOLS.EXTERNAL_LINK}
+        </a>
+      )}
+    </Flex>
+  );
+};
+
 const CheckpointRow = ({ checkpoint }: { checkpoint: Checkpoint }) => {
   const { selectedAgentConfig } = useServices();
   const stakingProgramId = checkpoint.contractName;
@@ -135,7 +172,10 @@ const CheckpointRow = ({ checkpoint }: { checkpoint: Checkpoint }) => {
       </Col>
       <Col span={4} className="leading-20">
         <Text className="text-sm text-neutral-tertiary">
-          Epoch {checkpoint.epoch}
+          Epoch {checkpoint.epoch}{' '}
+          <InfoTooltip placement="top">
+            <EpochDurationPopup checkpoint={checkpoint} />
+          </InfoTooltip>
         </Text>
       </Col>
       <Col span={10} className="justify-items-end">
@@ -149,8 +189,42 @@ const CheckpointRow = ({ checkpoint }: { checkpoint: Checkpoint }) => {
   );
 };
 
+const LoadingHistory = () => (
+  <CardFlex $noBorder>
+    <Spin />
+  </CardFlex>
+);
+
+const ErrorLoadingHistory = ({ refetch }: { refetch: () => void }) => (
+  <CardFlex $noBorder>
+    <Flex vertical gap={8} align="center" justify="center">
+      <Text type="secondary">
+        <ApiOutlined className="mr-4" /> Error loading rewards history.
+      </Text>
+      <Button size="small" onClick={refetch} className="mt-4 w-max-content">
+        Try again
+      </Button>
+    </Flex>
+  </CardFlex>
+);
+
+const NoRewards = () => (
+  <CardFlex $noBorder>
+    <Flex justify="center" gap={8}>
+      <HistoryOutlined />
+      <Text type="secondary">There’s no history of rewards yet.</Text>
+    </Flex>
+  </CardFlex>
+);
+
 export const RewardsHistory = () => {
+  const { totalRewards, isError, isFetched, refetch } = useRewardsHistory();
   const checkpointsByMonths = useCheckoutPointsByMonths();
+
+  if (!isFetched) return <LoadingHistory />;
+  if (!totalRewards) return <NoRewards />;
+  if (isError) return <ErrorLoadingHistory refetch={refetch} />;
+
   return (
     <CardFlex $noBorder $padding="16px">
       <Collapse

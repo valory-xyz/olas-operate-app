@@ -12,10 +12,12 @@ export const Collapse = styled(AntdCollapse)`
       align-items: center;
 
       .ant-collapse-expand-icon {
-        width: 16px;
-        height: 16px;
-        margin-left: 0;
-        margin-right: 20px;
+        margin: 0 6px;
+
+        svg {
+          width: 16px;
+          height: 16px;
+        }
       }
     }
 
