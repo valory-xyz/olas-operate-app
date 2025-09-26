@@ -51,12 +51,7 @@ const PearlWalletToExternalWallet = () => {
 type FundAgentProps = { onBack: () => void };
 
 export const FundAgent = ({ onBack }: FundAgentProps) => {
-  const {
-    availableAssets,
-    amountsToWithdraw,
-    onAmountChange,
-    onConfirmTransfer,
-  } = useFundAgent();
+  const { availableAssets, amountsToWithdraw, onAmountChange } = useFundAgent();
 
   return (
     <Flex gap={16} vertical style={cardStyles}>

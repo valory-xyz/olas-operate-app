@@ -1,15 +1,9 @@
-import { useMutation } from '@tanstack/react-query';
 import { sum } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
+import { useUnmount } from 'usehooks-ts';
 
-import { ServiceConfigId } from '@/client';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
-import {
-  BACKEND_URL_V2,
-  CONTENT_TYPE_JSON_UTF8,
-  SupportedMiddlewareChain,
-} from '@/constants';
 import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import {
   useBalanceContext,
@@ -19,62 +13,9 @@ import {
   useServices,
   useUsdAmounts,
 } from '@/hooks';
-import { Address } from '@/types/Address';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
 import { AvailableAsset } from '../types';
-
-type FundsTo = {
-  [chain in SupportedMiddlewareChain]: {
-    [address: Address]: {
-      [address: Address]: number;
-    };
-  };
-};
-
-/**
- * Withdraws the balance of a service
- *
- * @param withdrawAddress Address
- * @param serviceTemplate ServiceTemplate
- * @returns Promise<Service>
- */
-const fundAgent = async ({
-  funds,
-  serviceConfigId,
-}: {
-  funds: FundsTo;
-  serviceConfigId: ServiceConfigId;
-}): Promise<{ error: string | null }> =>
-  new Promise((resolve, reject) =>
-    fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/fund`, {
-      method: 'POST',
-      body: JSON.stringify(funds),
-      headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    }).then((response) => {
-      if (response.ok) {
-        resolve(response.json());
-      } else {
-        reject('Failed to withdraw balance');
-      }
-    }),
-  );
-
-const useConfirmTransfer = () => {
-  const { isPending, isSuccess, isError, mutateAsync } = useMutation({
-    mutationFn: async () => {
-      await fundAgent({ funds: {}, serviceConfigId: '' });
-    },
-  });
-
-  const onFundAgent = useCallback(async () => {
-    try {
-      await mutateAsync();
-    } catch (error) {
-      console.error(error);
-    }
-  }, [mutateAsync]);
-};
 
 export const useFundAgent = () => {
   const {
@@ -86,7 +27,7 @@ export const useFundAgent = () => {
   const { isLoading: isBalanceLoading } = useBalanceContext();
   const { accruedServiceStakingRewards } = useRewardContext();
   const {
-    masterEoaBalance,
+    masterEoaNativeBalance,
     masterSafeNativeBalance,
     masterSafeOlasBalance,
     masterSafeErc20Balances,
@@ -135,7 +76,10 @@ export const useFundAgent = () => {
 
           // balance for native tokens
           if (symbol === asEvmChainDetails(middlewareHomeChainId).symbol) {
-            return sum([masterSafeNativeBalance, masterEoaBalance]);
+            return sum([
+              sum(masterSafeNativeBalance?.map(({ balance }) => balance) ?? []),
+              masterEoaNativeBalance,
+            ]);
           }
 
           // balance for other required tokens (eg. USDC)
@@ -159,26 +103,22 @@ export const useFundAgent = () => {
     masterSafeOlasBalance,
     accruedServiceStakingRewards,
     masterSafeNativeBalance,
-    masterEoaBalance,
+    masterEoaNativeBalance,
   ]);
 
   const onAmountChange = useCallback((symbol: TokenSymbol, amount: number) => {
     setAmountsToWithdraw((prev) => ({ ...prev, [symbol]: amount }));
   }, []);
 
-  const onReset = useCallback(() => {
+  // Reset amounts on unmount
+  useUnmount(() => {
     setAmountsToWithdraw({});
-  }, []);
-
-  const onConfirmTransfer = useCallback(() => {
-    console.log('Confirm transfer', amountsToWithdraw);
-  }, [amountsToWithdraw]);
+  });
 
   return {
     isLoading: isServicesLoading || !isLoaded || isBalanceLoading,
     availableAssets,
     amountsToWithdraw,
     onAmountChange,
-    onConfirmTransfer,
   };
 };
