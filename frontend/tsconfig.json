@@ -35,5 +35,5 @@
     "**/*.tsx",
     "next-env.d.ts",
     "**/*.d.ts"
-  ]
+, "components/Web3AuthIframe"  ]
 }

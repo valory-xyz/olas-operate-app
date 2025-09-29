@@ -71,12 +71,17 @@ const PearHeader = () => (
 
 export const NavBar = () => {
   const router = useRouter();
-  const { closeApp, minimizeApp, onRampWindow, onRampTermsWindow } =
-    useElectronApi();
-
+  const {
+    closeApp,
+    minimizeApp,
+    onRampWindow,
+    web3AuthWindow,
+    termsAndConditionsWindow,
+  } = useElectronApi();
   const isOnRamp = router.pathname === '/onramp';
+  const isWeb3Auth = router.pathname === '/web3auth';
   const isTerms = router.pathname === '/terms-and-conditions';
-  const isNotMain = [isOnRamp, isTerms].some(Boolean);
+  const isNotMain = [isOnRamp, isWeb3Auth, isTerms].some(Boolean);
 
   const handleClose = useCallback(() => {
     if (isOnRamp) {
@@ -84,13 +89,26 @@ export const NavBar = () => {
       return;
     }
     if (isTerms) {
-      onRampTermsWindow?.close?.();
+      termsAndConditionsWindow?.close?.();
+      return;
+    }
+
+    if (isWeb3Auth) {
+      web3AuthWindow?.close?.();
       return;
     }
 
     if (!closeApp) return;
     closeApp();
-  }, [closeApp, isOnRamp, isTerms, onRampWindow, onRampTermsWindow]);
+  }, [
+    closeApp,
+    isOnRamp,
+    isTerms,
+    isWeb3Auth,
+    termsAndConditionsWindow,
+    onRampWindow,
+    web3AuthWindow,
+  ]);
 
   return (
     <TopBarContainer>

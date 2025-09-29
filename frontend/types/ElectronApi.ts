@@ -1,5 +1,8 @@
 import { AgentType } from '@/enums/Agent';
 
+import { BackupWalletType } from './BackupWallet';
+import { Nullable } from './Util';
+
 type AgentSettings = {
   isInitialFunded: boolean;
   isProfileWarningDisplayed: boolean;
@@ -21,6 +24,10 @@ export type ElectronStore = {
   [AgentType.AgentsFun]?: AgentSettings;
   [AgentType.Modius]?: AgentSettings;
   [AgentType.Optimus]?: AgentSettings;
+  lastProvidedBackupWallet?: {
+    address: Nullable<string>;
+    type: BackupWalletType;
+  };
 };
 
 export type ElectronTrayIconStatus =
