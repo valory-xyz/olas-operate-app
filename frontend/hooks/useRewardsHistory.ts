@@ -44,7 +44,7 @@ const CheckpointGraphResponseSchema = z.object({
 const CheckpointsGraphResponseSchema = z.array(CheckpointGraphResponseSchema);
 type CheckpointResponse = z.infer<typeof CheckpointGraphResponseSchema>;
 
-const fetchRewardsQuery = (chainId: EvmChainId) => {
+const fetchRewardsQuery = (chainId: EvmChainId, serviceId: Maybe<number>) => {
   const supportedStakingContracts = Object.values(
     STAKING_PROGRAM_ADDRESS[chainId],
   ).map((address) => `"${address}"`);
@@ -57,6 +57,7 @@ const fetchRewardsQuery = (chainId: EvmChainId) => {
       first: 1000
       where: {
         contractAddress_in: [${supportedStakingContracts}]
+        ${serviceId ? `,serviceIds_contains: "${serviceId}"` : ''}
       }
     ) {
       id
@@ -171,6 +172,7 @@ type CheckpointsResponse = { checkpoints: CheckpointResponse[] };
 const useContractCheckpoints = (
   chainId: EvmChainId,
   serviceId: Maybe<number>,
+  filterQueryByServiceId: boolean = false,
 ) => {
   const transformCheckpoints = useTransformCheckpoints();
 
@@ -179,7 +181,7 @@ const useContractCheckpoints = (
     queryFn: async () => {
       const checkpointsResponse = await request<CheckpointsResponse>(
         REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId],
-        fetchRewardsQuery(chainId),
+        fetchRewardsQuery(chainId, filterQueryByServiceId ? serviceId : null),
       );
 
       const parsedCheckpoints = CheckpointsGraphResponseSchema.safeParse(
@@ -236,6 +238,44 @@ const useContractCheckpoints = (
     refetchInterval: ONE_DAY_IN_MS,
     refetchOnWindowFocus: false,
   });
+};
+
+/**
+ * Hook to get the total rewards for a service ID. It adds the serviceId filter to the query
+ * in order to fetch only the relevant contract checkpoints.
+ */
+export const useTotalRewards = () => {
+  const { selectedService, selectedAgentConfig } = useServices();
+  const { evmHomeChainId: homeChainId } = selectedAgentConfig;
+  const serviceConfigId = selectedService?.service_config_id;
+  const { service } = useService(serviceConfigId);
+
+  const serviceNftTokenId =
+    service?.chain_configs?.[asMiddlewareChain(homeChainId)]?.chain_data?.token;
+  const {
+    isError,
+    isLoading,
+    isFetched,
+    refetch,
+    data: contractCheckpoints,
+  } = useContractCheckpoints(homeChainId, serviceNftTokenId, true);
+
+  const totalRewards = useMemo(() => {
+    if (!contractCheckpoints) return 0;
+    return Object.values(contractCheckpoints)
+      .flat()
+      .reduce((acc, checkpoint) => {
+        return acc + checkpoint.reward;
+      }, 0);
+  }, [contractCheckpoints]);
+
+  return {
+    isError,
+    isLoading,
+    isFetched,
+    refetch,
+    totalRewards,
+  };
 };
 
 export const useRewardsHistory = () => {
