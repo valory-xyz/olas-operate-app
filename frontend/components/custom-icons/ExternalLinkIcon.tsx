@@ -1,6 +1,6 @@
 import { SVGProps } from 'react';
 
-export const ExternalLink = (props: SVGProps<SVGSVGElement>) => (
+export const ExternalLinkIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="16"

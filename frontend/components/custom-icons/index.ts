@@ -5,7 +5,7 @@ export * from './Contract';
 export * from './Copy';
 export * from './CreditCard';
 export * from './Export';
-export * from './ExternalLink';
+export * from './ExternalLinkIcon';
 export * from './FireNoStreak';
 export * from './FireStreak';
 export * from './FireV1';

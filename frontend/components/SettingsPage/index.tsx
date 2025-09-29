@@ -17,6 +17,7 @@ import { Optional } from '@/types/Util';
 
 import { AddressLink } from '../AddressLink';
 import { CustomAlert } from '../Alert';
+import { cardStyles } from '../PearlWallet/Withdraw/common';
 import { CardSection } from '../ui/CardSection';
 
 const { Text, Paragraph } = Typography;
@@ -129,15 +130,15 @@ const SettingsMain = () => {
     selectedAgentConfig.middlewareHomeChainId,
   ]);
 
-  const showWallet = !isBackupViaSafeEnabled && !masterSafeBackupAddress;
+  const hideWallet = !isBackupViaSafeEnabled && !masterSafeBackupAddress;
 
   return (
-    <Flex className="help-and-settings-container">
+    <Flex style={cardStyles} vertical gap={16}>
       <Title level={3}>Settings</Title>
       <Card styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}>
         <CardSection
           $padding="24px"
-          $borderBottom={!showWallet}
+          $borderBottom={!hideWallet}
           align="center"
           gap={16}
         >
@@ -159,7 +160,7 @@ const SettingsMain = () => {
           </Flex>
         </CardSection>
 
-        {showWallet ? null : (
+        {hideWallet ? null : (
           <CardSection
             $padding="24px"
             $borderBottom={!!masterSafeBackupAddress}

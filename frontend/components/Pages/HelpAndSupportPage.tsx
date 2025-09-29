@@ -12,8 +12,10 @@ import {
 } from '@/constants/urls';
 import { useElectronApi } from '@/hooks/useElectronApi';
 
-import { ArrowUpRightSvg, ExternalLink } from '../custom-icons';
+import { ArrowUpRightSvg } from '../custom-icons';
+import { ExternalLinkIcon } from '../custom-icons/ExternalLinkIcon';
 import { ExportLogsButton } from '../ExportLogsButton';
+import { cardStyles } from '../PearlWallet/Withdraw/common';
 import { CardSection } from '../ui/CardSection';
 
 const { Title, Paragraph } = Typography;
@@ -75,7 +77,7 @@ export const HelpAndSupport = () => {
   );
 
   return (
-    <Flex className="help-and-settings-container">
+    <Flex style={cardStyles} vertical gap={16}>
       <Title level={3}>Help Center</Title>
       <Card styles={{ body: { paddingTop: 8, paddingBottom: 8 } }}>
         {helpItems.map(({ label, href, isExternal }, index) => (
@@ -90,7 +92,7 @@ export const HelpAndSupport = () => {
                 {label}
 
                 {isExternal ? (
-                  <ExternalLink color={COLOR.PURPLE} />
+                  <ExternalLinkIcon fill={COLOR.PURPLE} />
                 ) : (
                   <ArrowUpRightSvg fill={COLOR.PURPLE} />
                 )}
