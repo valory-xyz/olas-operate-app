@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
-import { EvmChainId } from '@/enums/Chain';
+import { EvmChainId } from '@/constants';
 import {
   AgentEoa,
   AgentSafe,
@@ -152,6 +152,14 @@ export const useService = (serviceConfigId?: string) => {
     );
   }, [allAgentAddresses, serviceWallets]);
 
+  // agent safe
+  const serviceSafeOf = useCallback(
+    (chainId: EvmChainId) => {
+      return serviceSafes?.find((safe) => safe.evmChainId === chainId);
+    },
+    [serviceSafes],
+  );
+
   /** @note deployment is transitioning from stopped to deployed (and vice versa) */
   const isServiceTransitioning = deploymentStatus
     ? MiddlewareTransitioningStatuses.includes(deploymentStatus)
@@ -179,5 +187,6 @@ export const useService = (serviceConfigId?: string) => {
     serviceSafes,
     serviceEoa,
     service,
+    serviceSafeOf,
   };
 };
