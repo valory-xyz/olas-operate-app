@@ -3,7 +3,6 @@ import { Button, Flex, Modal, Typography } from 'antd';
 import { isEmpty, values } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
-import { ServiceConfigId } from '@/client';
 import {
   LoadingOutlined,
   SuccessOutlined,
@@ -11,16 +10,13 @@ import {
 } from '@/components/custom-icons';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { TOKEN_CONFIG } from '@/config/tokens';
-import {
-  AddressZero,
-  BACKEND_URL_V2,
-  CONTENT_TYPE_JSON_UTF8,
-  SUPPORT_URL,
-  SupportedMiddlewareChain,
-  UNICODE_SYMBOLS,
-} from '@/constants';
+import { AddressZero, SUPPORT_URL, UNICODE_SYMBOLS } from '@/constants';
 import { useService, useServices } from '@/hooks';
-import { Address } from '@/types/Address';
+import {
+  type ChainFunds,
+  FundService,
+  type TokenAmountMap,
+} from '@/service/Fund';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
 
@@ -63,8 +59,7 @@ const TransferComplete = ({ onClose }: { onClose: () => void }) => (
   </Flex>
 );
 
-type TransferFailedProps = { onTryAgain: () => void };
-const TransferFailed = ({ onTryAgain }: TransferFailedProps) => (
+const TransferFailed = ({ onTryAgain }: { onTryAgain: () => void }) => (
   <Flex gap={32} vertical>
     <Flex align="center" justify="center">
       <WarningOutlined />
@@ -91,40 +86,6 @@ const TransferFailed = ({ onTryAgain }: TransferFailedProps) => (
   </Flex>
 );
 
-type TokenAmountMap = {
-  [address: Address]: string; // amount (in wei/units)
-};
-
-type ChainFunds = Partial<{
-  [chain in SupportedMiddlewareChain]: {
-    [safeAddress: Address]: TokenAmountMap;
-  };
-}>;
-
-/**
- * Fund an agent by sending funds to its service safe.
- */
-const fundAgent = async ({
-  funds,
-  serviceConfigId,
-}: {
-  funds: ChainFunds;
-  serviceConfigId: ServiceConfigId;
-}): Promise<{ error: string | null }> =>
-  new Promise((resolve, reject) =>
-    fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/fund`, {
-      method: 'POST',
-      body: JSON.stringify(funds),
-      headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    }).then((response) => {
-      if (response.ok) {
-        resolve(response.json());
-      } else {
-        reject('Failed to fund agent');
-      }
-    }),
-  );
-
 const useConfirmTransfer = () => {
   const { selectedService } = useServices();
   const { isPending, isSuccess, isError, mutateAsync } = useMutation({
@@ -132,7 +93,7 @@ const useConfirmTransfer = () => {
       if (!selectedService) throw new Error('No service selected');
 
       const serviceConfigId = selectedService.service_config_id;
-      await fundAgent({ funds, serviceConfigId });
+      await FundService.fundAgent({ funds, serviceConfigId });
     },
   });
 
@@ -168,24 +129,27 @@ export const ConfirmTransfer = ({ fundsToTransfer }: ConfirmTransferProps) => {
     [serviceSafes, evmHomeChainId],
   );
 
-  const onConfirmTransfer = useCallback(() => {
+  const handleConfirmTransfer = useCallback(() => {
     if (!serviceSafe) {
-      throw new Error('Service Safe is not available'); // Agent safe
+      throw new Error('Service Safe is not available.'); // Agent safe
     }
 
     const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(middlewareHomeChainId)];
-    const fundsObj: TokenAmountMap = {};
+    const tokenAmountsByAddress: TokenAmountMap = {};
 
     Object.entries(fundsToTransfer).forEach(([symbol, amount]) => {
       if (amount > 0) {
         const { address: tokenAddress, decimals } = chainTokenConfig[symbol];
-        fundsObj[tokenAddress ?? AddressZero] = parseUnits(amount, decimals);
+        tokenAmountsByAddress[tokenAddress ?? AddressZero] = parseUnits(
+          amount,
+          decimals,
+        );
       }
     });
 
     const fundsTo: ChainFunds = {
       [middlewareHomeChainId]: {
-        [serviceSafe.address]: fundsObj,
+        [serviceSafe.address]: tokenAmountsByAddress,
       },
     };
 
@@ -193,21 +157,22 @@ export const ConfirmTransfer = ({ fundsToTransfer }: ConfirmTransferProps) => {
     onFundAgent(fundsTo);
   }, [onFundAgent, fundsToTransfer, middlewareHomeChainId, serviceSafe]);
 
-  const handleCancel = useCallback(
+  const handleClose = useCallback(
     () => setIsTransferStateModalVisible(false),
     [],
   );
 
   const canConfirmTransfer = useMemo(() => {
+    if (!serviceSafe) return false;
     if (isEmpty(fundsToTransfer)) return false;
     return !values(fundsToTransfer).every((x) => x === 0);
-  }, [fundsToTransfer]);
+  }, [fundsToTransfer, serviceSafe]);
 
   return (
     <CardFlex $noBorder $padding="32px" className="w-full">
       <Button
-        disabled={!canConfirmTransfer || isLoading || isSuccess}
-        onClick={onConfirmTransfer}
+        disabled={!canConfirmTransfer || isLoading}
+        onClick={handleConfirmTransfer}
         type="primary"
         className="w-full"
         size="large"
@@ -217,7 +182,7 @@ export const ConfirmTransfer = ({ fundsToTransfer }: ConfirmTransferProps) => {
 
       {isTransferStateModalVisible && (
         <Modal
-          onCancel={isLoading ? undefined : handleCancel}
+          onCancel={isLoading ? undefined : handleClose}
           closable={!isLoading}
           open
           width={436}
@@ -225,9 +190,9 @@ export const ConfirmTransfer = ({ fundsToTransfer }: ConfirmTransferProps) => {
           footer={null}
         >
           {isError ? (
-            <TransferFailed onTryAgain={onConfirmTransfer} />
+            <TransferFailed onTryAgain={handleConfirmTransfer} />
           ) : isSuccess ? (
-            <TransferComplete onClose={handleCancel} />
+            <TransferComplete onClose={handleClose} />
           ) : (
             <TransferInProgress />
           )}

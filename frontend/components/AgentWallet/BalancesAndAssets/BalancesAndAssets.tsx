@@ -107,11 +107,14 @@ const TransactionHistory = () => (
   </Flex>
 );
 
-type SomeFundsMaybeLockedModal = { onNext: () => void; onCancel: () => void };
+type SomeFundsMaybeLockedModalProps = {
+  onNext: () => void;
+  onCancel: () => void;
+};
 const SomeFundsMaybeLockedModal = ({
   onNext,
   onCancel,
-}: SomeFundsMaybeLockedModal) => {
+}: SomeFundsMaybeLockedModalProps) => {
   const { goto } = usePageState();
 
   return (

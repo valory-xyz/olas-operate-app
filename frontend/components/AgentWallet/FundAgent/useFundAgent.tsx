@@ -35,7 +35,7 @@ export const useFundAgent = () => {
 
   const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
 
-  const [amountsToWithdraw, setAmountsToWithdraw] = useState<
+  const [amountsToFund, setAmountsToFund] = useState<
     Partial<Record<TokenSymbol, number>>
   >({});
 
@@ -106,18 +106,18 @@ export const useFundAgent = () => {
   ]);
 
   const onAmountChange = useCallback((symbol: TokenSymbol, amount: number) => {
-    setAmountsToWithdraw((prev) => ({ ...prev, [symbol]: amount }));
+    setAmountsToFund((prev) => ({ ...prev, [symbol]: amount }));
   }, []);
 
   // Reset amounts on unmount
   useUnmount(() => {
-    setAmountsToWithdraw({});
+    setAmountsToFund({});
   });
 
   return {
     isLoading: isServicesLoading || !isLoaded || isBalanceLoading,
     availableAssets,
-    amountsToWithdraw,
+    amountsToFund,
     onAmountChange,
   };
 };
