@@ -28,7 +28,7 @@ const RewardRow = styled(Row)`
   align-items: center;
 `;
 
-type MonthsArray = Array<{
+type Months = Array<{
   monthYear: string;
   checkpoints: Checkpoint[];
   totalMonthlyRewards: number;
@@ -36,23 +36,21 @@ type MonthsArray = Array<{
 
 const useCheckoutPointsByMonths = () => {
   // Show checkpoints across all contracts
-  const { allCheckpoints = [], isLoading } = useRewardsHistory();
+  const { allCheckpoints = [], isFetched } = useRewardsHistory();
 
   const checkpointsByMonths = useMemo(() => {
-    if (!allCheckpoints.length || isLoading) return [];
-    const monthsArray: MonthsArray = [];
+    if (!allCheckpoints.length || !isFetched) return [];
+    const months: Months = [];
     allCheckpoints.forEach((checkpoint) => {
       const epochEndTimeInMs = checkpoint.epochEndTimeStamp * 1000;
       const monthYear = formatToMonthYear(epochEndTimeInMs);
 
-      const existingMonth = monthsArray.find(
-        (item) => item.monthYear === monthYear,
-      );
+      const existingMonth = months.find((item) => item.monthYear === monthYear);
       if (existingMonth) {
         existingMonth.checkpoints.push(checkpoint);
         existingMonth.totalMonthlyRewards += checkpoint.reward;
       } else {
-        monthsArray.push({
+        months.push({
           monthYear,
           checkpoints: [checkpoint],
           totalMonthlyRewards: checkpoint.reward,
@@ -60,11 +58,11 @@ const useCheckoutPointsByMonths = () => {
       }
     });
 
-    return monthsArray.sort(
+    return months.sort(
       (a, b) =>
         b.checkpoints[0].epochEndTimeStamp - a.checkpoints[0].epochEndTimeStamp,
     );
-  }, [allCheckpoints, isLoading]);
+  }, [allCheckpoints, isFetched]);
 
   return checkpointsByMonths;
 };
@@ -213,11 +211,11 @@ const NoRewards = () => (
 );
 
 export const RewardsHistory = () => {
-  const { totalRewards, isError, isFetched, refetch } = useRewardsHistory();
+  const { isError, isFetched, refetch } = useRewardsHistory();
   const checkpointsByMonths = useCheckoutPointsByMonths();
 
   if (!isFetched) return <LoadingHistory />;
-  if (!totalRewards) return <NoRewards />;
+  if (!checkpointsByMonths.length) return <NoRewards />;
   if (isError) return <ErrorLoadingHistory refetch={refetch} />;
 
   return (

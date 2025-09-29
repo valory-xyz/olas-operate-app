@@ -14,7 +14,7 @@ import { TokenSymbolMap } from '@/constants/token';
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
-import { useRewardsHistory } from '@/hooks/useRewardsHistory';
+import { useTotalRewards } from '@/hooks/useRewardsHistory';
 import { useServices } from '@/hooks/useServices';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
 import { useUsdAmounts } from '@/hooks/useUsdAmounts';
@@ -30,7 +30,7 @@ const useUsdRewards = () => {
   const { selectedAgentConfig } = useServices();
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
-  const { totalRewards } = useRewardsHistory();
+  const { totalRewards } = useTotalRewards();
 
   const { totalUsd } = useUsdAmounts(chainName, [
     {
@@ -44,7 +44,7 @@ const useUsdRewards = () => {
 
 const StakingStats = () => {
   const { optimisticStreak, isStreakLoading } = useStakingDetails();
-  const { isLoading: isRewardsHistoryLoading } = useRewardsHistory();
+  const { isLoading: isTotalRewardsLoading } = useTotalRewards();
   const totalRewardsInUsd = useUsdRewards();
 
   const fireIcon =
@@ -55,7 +55,7 @@ const StakingStats = () => {
       <Flex gap={56}>
         <Flex vertical gap={8} flex={1}>
           <Text type="secondary">Total rewards earned</Text>
-          {isRewardsHistoryLoading ? (
+          {isTotalRewardsLoading ? (
             <StatsSkeleton />
           ) : (
             <Title level={5} className="mt-0 mb-0">
