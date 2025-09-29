@@ -39,6 +39,15 @@ export const formatToMonthDay = (timeInMs: number) => {
   });
 };
 
+export const formatToMonthYear = (timeInMs: number) => {
+  if (!isNumber(timeInMs)) return '--';
+  return new Date(timeInMs).toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+};
+
 /**
  * @returns formatted time in the format of 'HH:MM AM/PM'
  * @example 1626825600 => '12:00 PM'

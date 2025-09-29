@@ -130,7 +130,7 @@ export const SetupPassword = () => {
           required={false}
           labelCol={{ style: { paddingBottom: 4 } }}
         >
-          <Input.Password size="large" maxLength={64} />
+          <Input.Password size="large" placeholder="Password" maxLength={64} />
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 0 }}>

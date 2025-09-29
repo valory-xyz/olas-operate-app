@@ -7,6 +7,17 @@ const {
   secureFetch,
 } = require('./utils');
 
+const {
+  handleWeb3AuthWindowShow,
+  handleWeb3AuthWindowClose,
+  handleWeb3AuthSuccessLogin,
+} = require('./windows/web3auth');
+
+const {
+  handleTermsAndConditionsWindowShow,
+  handleTermsAndConditionsWindowClose,
+} = require('./windows/termsAndConditions');
+
 // Load the self-signed certificate for localhost HTTPS requests
 loadLocalCertificate();
 
@@ -132,10 +143,6 @@ let splashWindow = null;
 /** @type {Electron.BrowserWindow | null} */
 let onRampWindow = null;
 const getOnRampWindow = () => onRampWindow;
-
-/** @type {Electron.BrowserWindow | null} */
-let onRampTermsWindow = null;
-const getOnRampTermsWindow = () => onRampTermsWindow;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
@@ -402,6 +409,9 @@ const createMainWindow = async () => {
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // // web3auth links should be open in Pearl for redirect to work
+    // if (url.includes('web3auth')) return { action: 'allow' };
+
     // open url in a browser and prevent default
     shell.openExternal(url);
     return { action: 'deny' };
@@ -555,52 +565,6 @@ const createOnRampWindow = async (amountToPay) => {
   });
 
   return onRampWindow;
-};
-
-/**
- * Create the terms window for displaying terms iframe
- */
-/** @type {()=>Promise<BrowserWindow|undefined>} */
-const createOnRampTermsWindow = async () => {
-  if (!getOnRampTermsWindow() || getOnRampTermsWindow().isDestroyed) {
-    onRampTermsWindow = new BrowserWindow({
-      title: 'Terms & Conditions',
-      resizable: false,
-      draggable: true,
-      frame: false,
-      transparent: true,
-      fullscreenable: false,
-      maximizable: false,
-      closable: true,
-      width: APP_WIDTH,
-      height: 700,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        preload: path.join(__dirname, 'preload.js'),
-      },
-    });
-
-    onRampTermsWindow.webContents.setWindowOpenHandler(({ url }) => {
-      shell.openExternal(url);
-      return { action: 'deny' };
-    });
-
-    const termsUrl = `${nextUrl()}/terms-and-conditions`;
-    logger.electron(`Terms URL: ${termsUrl}`);
-    onRampTermsWindow.loadURL(termsUrl).then(() => {
-      logger.electron(`onRampTermsWindow: ${onRampTermsWindow.url}`);
-    });
-  } else {
-    logger.electron('Terms window already exists');
-  }
-
-  onRampTermsWindow.on('close', function (event) {
-    event.preventDefault();
-    onRampTermsWindow?.destroy();
-  });
-
-  return onRampTermsWindow;
 };
 
 async function launchDaemon() {
@@ -1115,19 +1079,20 @@ ipcMain.handle('onramp-transaction-failure', () => {
 });
 
 /**
+ * Web3Auth window handlers
+ */
+ipcMain.handle('web3auth-window-show', () =>
+  handleWeb3AuthWindowShow(nextUrl()),
+);
+ipcMain.handle('web3auth-window-close', handleWeb3AuthWindowClose);
+ipcMain.handle('web3auth-address-received', (_event, address) =>
+  handleWeb3AuthSuccessLogin(mainWindow, address),
+);
+
+/**
  * Terms window handlers
  */
-ipcMain.handle('terms-window-show', () => {
-  logger.electron('terms-window-show');
-  if (!getOnRampTermsWindow() || getOnRampTermsWindow().isDestroyed()) {
-    createOnRampTermsWindow()?.then((window) => window.show());
-  } else {
-    getOnRampTermsWindow()?.show();
-  }
-});
-
-ipcMain.handle('terms-window-close', () => {
-  logger.electron('terms-window-close');
-  if (!getOnRampTermsWindow() || getOnRampTermsWindow().isDestroyed()) return;
-  getOnRampTermsWindow()?.destroy();
-});
+ipcMain.handle('terms-window-show', (_event, type) =>
+  handleTermsAndConditionsWindowShow(nextUrl(), type),
+);
+ipcMain.handle('terms-window-close', handleTermsAndConditionsWindowClose);
