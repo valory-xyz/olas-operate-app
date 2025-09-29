@@ -18,11 +18,11 @@ import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import {
   useBalanceContext,
   useMasterBalances,
-  // useRewardContext,
   useService,
   useServices,
   useUsdAmounts,
 } from '@/hooks';
+import { useStakingRewardsDetails } from '@/hooks/useStakingRewardsOf';
 import { toUsd } from '@/service/toUsd';
 import { AgentConfig } from '@/types/Agent';
 import { Nullable, ValueOf } from '@/types/Util';
@@ -79,9 +79,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   );
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
-
-  // TODO: https://linear.app/valory-xyz/issue/OPE-744
-  // const { accruedServiceStakingRewards } = useRewardContext();
   const {
     getMasterSafeNativeBalanceOf,
     getMasterSafeOlasBalanceOf,
@@ -89,21 +86,20 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     getMasterEoaNativeBalanceOf,
   } = useMasterBalances();
 
-  const { evmHomeChainId } = selectedAgentConfig;
-
-  // wallet chain ID
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
     STEPS.PEARL_WALLET_SCREEN,
   );
-  const [walletChainId, setWalletChainId] =
-    useState<Nullable<EvmChainId>>(evmHomeChainId);
+  const [walletChainId, setWalletChainId] = useState<EvmChainId>(
+    selectedAgentConfig.evmHomeChainId,
+  );
   const [amountsToWithdraw, setAmountsToWithdraw] = useState<
     Partial<Record<TokenSymbol, number>>
   >({});
+  const { isLoading: isStakingRewardsLoading, data: stakingRewards } =
+    useStakingRewardsDetails(walletChainId);
 
   const agent = ACTIVE_AGENTS.find(
-    ([, agentConfig]) =>
-      agentConfig.middlewareHomeChainId === selectedService?.home_chain,
+    ([, agentConfig]) => agentConfig.evmHomeChainId === walletChainId,
   );
   const agentType = agent ? agent[0] : null;
 
@@ -162,7 +158,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
           if (symbol === TokenSymbolMap.OLAS) {
             return sum([
               getMasterSafeOlasBalanceOf(walletChainId),
-              // accruedServiceStakingRewards,
+              stakingRewards?.accruedServiceStakingRewards,
             ]);
           }
 
@@ -197,7 +193,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   }, [
     walletChainId,
     usdBreakdown,
-    // accruedServiceStakingRewards,
+    stakingRewards?.accruedServiceStakingRewards,
     getMasterSafeOlasBalanceOf,
     getMasterSafeNativeBalanceOf,
     getMasterEoaNativeBalanceOf,
@@ -209,17 +205,27 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   }, [availableAssets]);
 
   // staked OLAS
-  const stakedAssets: StakedAsset[] = [
-    {
-      agentName: walletChainId
-        ? generateName(serviceSafeOf(walletChainId)?.address)
-        : 'Agent',
-      agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
-      symbol: 'OLAS',
-      amount: totalStakedOlasBalance ?? 0,
-      value: toUsd('OLAS', totalStakedOlasBalance ?? 0),
-    },
-  ];
+  const stakedAssets: StakedAsset[] = useMemo(
+    () => [
+      {
+        agentName: walletChainId
+          ? generateName(serviceSafeOf(walletChainId)?.address)
+          : 'Agent',
+        agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
+        symbol: 'OLAS',
+        amount: totalStakedOlasBalance ?? 0,
+        value: toUsd('OLAS', totalStakedOlasBalance ?? 0),
+      },
+    ],
+    [walletChainId, agentType, totalStakedOlasBalance, serviceSafeOf],
+  );
+
+  // console.log({
+  //   // stakedAssets,
+  //   // walletChainId,
+  //   // k: walletChainId ? serviceSafeOf(walletChainId) : null,
+  //   accruedServiceStakingRewards,
+  // });
 
   const updateStep = useCallback(
     (newStep: ValueOf<typeof STEPS>) => {
@@ -245,12 +251,18 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [onReset],
   );
 
+  const isLoading =
+    isServicesLoading ||
+    !isLoaded ||
+    isBalanceLoading ||
+    isStakingRewardsLoading;
+
   return (
     <PearlWalletContext.Provider
       value={{
         walletStep,
         updateStep,
-        isLoading: isServicesLoading || !isLoaded || isBalanceLoading,
+        isLoading,
         aggregatedBalance,
         walletChainId,
         onWalletChainChange,
