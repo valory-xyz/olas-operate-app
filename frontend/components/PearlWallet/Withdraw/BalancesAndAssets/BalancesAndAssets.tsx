@@ -55,9 +55,13 @@ const StakedAssets = () => (
 
 type BalancesAndAssetsProps = {
   onWithdraw: () => void;
+  onDeposit: () => void;
 };
 
-export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
+export const BalancesAndAssets = ({
+  onWithdraw,
+  onDeposit,
+}: BalancesAndAssetsProps) => {
   const {
     aggregatedBalance,
     chains,
@@ -89,7 +93,9 @@ export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
           </Flex>
           <Flex gap={8}>
             <Button onClick={onWithdraw}>Withdraw</Button>
-            <Button type="primary">Deposit</Button>
+            <Button onClick={onDeposit} type="primary">
+              Deposit
+            </Button>
           </Flex>
         </Flex>
       </CardFlex>

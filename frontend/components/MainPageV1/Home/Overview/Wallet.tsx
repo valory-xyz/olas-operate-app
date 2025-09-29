@@ -4,6 +4,7 @@ import { isNumber } from 'lodash';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { NA } from '@/constants/symbols';
 import { Pages } from '@/enums/Pages';
+import { useSharedContext } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
 
 const { Text, Title } = Typography;
@@ -13,6 +14,7 @@ const { Text, Title } = Typography;
  * To display wallet overview on the main page.
  */
 export const Wallet = () => {
+  const { isMainOlasBalanceLoading } = useSharedContext();
   const { goto } = usePageState();
   const aggregatedBalanceInUsdTODO = null;
 
@@ -20,7 +22,11 @@ export const Wallet = () => {
     <Flex vertical>
       <Flex justify="space-between" align="center">
         <Title level={4}>Wallet</Title>
-        <Button size="small" onClick={() => goto(Pages.AgentWallet)}>
+        <Button
+          disabled={isMainOlasBalanceLoading}
+          onClick={() => goto(Pages.AgentWallet)}
+          size="small"
+        >
           Manage Wallet
         </Button>
       </Flex>

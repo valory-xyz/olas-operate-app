@@ -5,7 +5,6 @@ import { useCallback, useState } from 'react';
 
 import { COLOR } from '@/constants/colors';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
-import { MESSAGE_WIDTH } from '@/constants/width';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 
@@ -68,7 +67,7 @@ export const Home = () => {
           type: 'error',
           content:
             'Please run the agent first, before attempting to view the agent UI',
-          style: { maxWidth: MESSAGE_WIDTH, margin: '0 auto' },
+          style: { margin: '0 auto' },
         });
         return;
       }

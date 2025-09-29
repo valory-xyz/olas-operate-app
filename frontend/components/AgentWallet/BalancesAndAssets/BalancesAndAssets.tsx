@@ -1,12 +1,11 @@
 import { Button, Flex, Modal, Typography } from 'antd';
 import { isNumber } from 'lodash';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { NA } from '@/constants/symbols';
-import { useMessageApi } from '@/context/MessageProvider';
 import { Pages } from '@/enums/Pages';
 import { useActiveStakingContractDetails } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
@@ -42,17 +41,22 @@ const AgentWalletTitle = () => {
 
 type AggregatedBalanceAndOperationsProps = {
   onWithdraw: () => void;
+  onFundAgent: () => void;
 };
 export const AggregatedBalanceAndOperations = ({
   onWithdraw,
+  onFundAgent,
 }: AggregatedBalanceAndOperationsProps) => {
-  const { info } = useMessageApi();
   const { aggregatedBalance } = useAgentWallet();
   const { isAgentEvicted } = useActiveStakingContractDetails();
+  const alert = useMemo(() => {
+    if (!isAgentEvicted) return <EvictedAgentAlert />;
+    return null;
+  }, [isAgentEvicted]);
 
   return (
     <CardFlex $noBorder>
-      {isAgentEvicted && <EvictedAgentAlert />}
+      {alert}
       <Flex justify="space-between" align="center">
         <Flex vertical gap={8}>
           <Text type="secondary" className="text-sm">
@@ -68,7 +72,7 @@ export const AggregatedBalanceAndOperations = ({
           <Button disabled={isAgentEvicted} onClick={onWithdraw}>
             Withdraw
           </Button>
-          <Button type="primary" onClick={() => info('Feature coming soon!')}>
+          <Button type="primary" onClick={onFundAgent}>
             Fund Agent
           </Button>
         </Flex>
@@ -103,15 +107,14 @@ const TransactionHistory = () => (
   </Flex>
 );
 
-type SomeFundsMaybeLockedModal = {
+type SomeFundsMaybeLockedModalProps = {
   onNext: () => void;
   onCancel: () => void;
 };
-
 const SomeFundsMaybeLockedModal = ({
   onNext,
   onCancel,
-}: SomeFundsMaybeLockedModal) => {
+}: SomeFundsMaybeLockedModalProps) => {
   const { goto } = usePageState();
 
   return (
@@ -148,9 +151,11 @@ const SomeFundsMaybeLockedModal = ({
 
 type BalancesAndAssetsProps = {
   onLockedFundsWithdrawn: () => void;
+  onFundAgent: () => void;
 };
 
 export const BalancesAndAssets = ({
+  onFundAgent,
   onLockedFundsWithdrawn,
 }: BalancesAndAssetsProps) => {
   const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
@@ -160,6 +165,7 @@ export const BalancesAndAssets = ({
       <AgentWalletTitle />
       <AggregatedBalanceAndOperations
         onWithdraw={() => setWithdrawModalVisible(true)}
+        onFundAgent={onFundAgent}
       />
       <AvailableAssets />
       <TransactionHistory />
