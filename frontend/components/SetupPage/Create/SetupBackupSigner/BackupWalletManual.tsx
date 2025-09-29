@@ -43,11 +43,11 @@ export const BackupWalletManual = () => {
     }
 
     setBackupSigner({ address: checksummedAddress, type: 'manual' });
-    goto(SetupScreen.AgentSelection);
+    goto(SetupScreen.AgentOnboarding);
   };
 
   const handleWeb3AuthSetupFinish = () => {
-    goto(SetupScreen.AgentSelection);
+    goto(SetupScreen.AgentOnboarding);
   };
 
   const { openWeb3AuthModel } = useWeb3AuthBackupWallet({

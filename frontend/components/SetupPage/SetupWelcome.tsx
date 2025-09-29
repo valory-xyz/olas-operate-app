@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMessageApi } from '@/context/MessageProvider';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
+import { useBackupSigner } from '@/hooks';
 import {
   useBalanceContext,
   useMasterBalances,
@@ -88,6 +89,7 @@ const SetupWelcomeLogin = () => {
   } = useMasterWalletContext();
   const { isLoaded: isBalanceLoaded, updateBalances } = useBalanceContext();
   const { masterWalletBalances } = useMasterBalances();
+  const backupSignerAddress = useBackupSigner();
 
   const selectedServiceOrAgentChainId = selectedService?.home_chain
     ? asEvmChainId(selectedService?.home_chain)
@@ -150,6 +152,12 @@ const SetupWelcomeLogin = () => {
 
     if (!selectedAgentConfig) return;
 
+    // If no services are created and backup wallet is not set as well.
+    if (!services?.length && !backupSignerAddress) {
+      goto(SetupScreen.SetupBackupSigner);
+      return;
+    }
+
     // If the agent is disabled then redirect to agent selection,
     // if the disabled agent was previously selected.
     if (!selectedAgentConfig.isAgentEnabled) {
@@ -193,6 +201,8 @@ const SetupWelcomeLogin = () => {
     selectedAgentConfig,
     selectedAgentType,
     isOnline,
+    services?.length,
+    backupSignerAddress,
   ]);
 
   return (
