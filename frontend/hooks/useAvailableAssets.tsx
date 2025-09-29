@@ -1,13 +1,16 @@
 import { sum } from 'lodash';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
 import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
-import { useMasterBalances, useServices, useUsdAmounts } from '@/hooks';
+import { useMasterBalances, useUsdAmounts } from '@/hooks';
 import { Nullable } from '@/types/Util';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
+import {
+  asEvmChainDetails,
+  asMiddlewareChain,
+} from '@/utils/middlewareHelpers';
 
 export type AvailableAsset = {
   address?: string;
@@ -16,20 +19,13 @@ export type AvailableAsset = {
   valueInUsd: number;
 };
 
-export const useAvailableAssets = () => {
-  const { selectedAgentConfig } = useServices();
-
+export const useAvailableAssets = (walletChainId: EvmChainId) => {
   const {
     getMasterSafeNativeBalanceOf,
     getMasterSafeOlasBalanceOf,
     getMasterSafeErc20Balances,
     getMasterEoaNativeBalanceOf,
   } = useMasterBalances();
-
-  const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
-
-  const [walletChainId, setWalletChainId] =
-    useState<Nullable<EvmChainId>>(evmHomeChainId);
 
   const chainName = walletChainId
     ? (CHAIN_CONFIG[walletChainId].name as string)
@@ -71,7 +67,9 @@ export const useAvailableAssets = () => {
             }
 
             // balance for native tokens
-            if (symbol === asEvmChainDetails(middlewareHomeChainId).symbol) {
+            if (
+              symbol === asEvmChainDetails(asMiddlewareChain(chainId)).symbol
+            ) {
               return sum([
                 sum(
                   getMasterSafeNativeBalanceOf(chainId)?.map(
@@ -98,7 +96,6 @@ export const useAvailableAssets = () => {
     },
     [
       usdBreakdown,
-      middlewareHomeChainId,
       // accruedServiceStakingRewards,
       getMasterSafeOlasBalanceOf,
       getMasterSafeNativeBalanceOf,
