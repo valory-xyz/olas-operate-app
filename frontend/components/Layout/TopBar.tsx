@@ -62,7 +62,7 @@ export const TopBar = () => {
     minimizeApp,
     onRampWindow,
     web3AuthWindow,
-    onRampTermsWindow,
+    termsAndConditionsWindow,
   } = useElectronApi();
   const store = useStore();
   const { isUserLoggedIn, goto, pageState } = usePageState();
@@ -86,7 +86,7 @@ export const TopBar = () => {
       return;
     }
     if (isTerms) {
-      onRampTermsWindow?.close?.();
+      termsAndConditionsWindow?.close?.();
       return;
     }
 
@@ -102,7 +102,7 @@ export const TopBar = () => {
     isOnRamp,
     isTerms,
     isWeb3Auth,
-    onRampTermsWindow,
+    termsAndConditionsWindow,
     onRampWindow,
     web3AuthWindow,
   ]);
