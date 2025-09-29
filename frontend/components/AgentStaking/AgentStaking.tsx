@@ -14,7 +14,7 @@ import { TokenSymbolMap } from '@/constants/token';
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
-import { useTotalRewards } from '@/hooks/useRewardsHistory';
+import { useServiceOnlyRewardsHistory } from '@/hooks/useRewardsHistory';
 import { useServices } from '@/hooks/useServices';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
 import { useUsdAmounts } from '@/hooks/useUsdAmounts';
@@ -30,7 +30,7 @@ const useUsdRewards = () => {
   const { selectedAgentConfig } = useServices();
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
-  const { totalRewards } = useTotalRewards();
+  const { totalRewards } = useServiceOnlyRewardsHistory();
 
   const { totalUsd } = useUsdAmounts(chainName, [
     {
@@ -44,7 +44,7 @@ const useUsdRewards = () => {
 
 const StakingStats = () => {
   const { optimisticStreak, isStreakLoading } = useStakingDetails();
-  const { isLoading: isTotalRewardsLoading } = useTotalRewards();
+  const { isLoading: isTotalRewardsLoading } = useServiceOnlyRewardsHistory();
   const totalRewardsInUsd = useUsdRewards();
 
   const fireIcon =

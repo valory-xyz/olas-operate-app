@@ -12,7 +12,12 @@ import {
   NA,
   UNICODE_SYMBOLS,
 } from '@/constants';
-import { Checkpoint, useRewardsHistory, useServices } from '@/hooks';
+import {
+  Checkpoint,
+  useRewardsHistory,
+  useServiceOnlyRewardsHistory,
+  useServices,
+} from '@/hooks';
 import { balanceFormat } from '@/utils/numberFormatters';
 import { formatToMonthYear, formatToShortDateTime } from '@/utils/time';
 
@@ -36,7 +41,7 @@ type Months = Array<{
 
 const useCheckoutPointsByMonths = () => {
   // Show checkpoints across all contracts
-  const { allCheckpoints = [], isFetched } = useRewardsHistory();
+  const { allCheckpoints = [], isFetched } = useServiceOnlyRewardsHistory();
 
   const checkpointsByMonths = useMemo(() => {
     if (!allCheckpoints.length || !isFetched) return [];
