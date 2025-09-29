@@ -2428,7 +2428,7 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.10.13"
+version = "0.10.15"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.9"
@@ -2464,6 +2464,7 @@ open-aea-ledger-ethereum-flashbots = "==1.65.0"
 open-autonomy = "^0.20.2"
 psutil = "^5.9.8"
 pyinstaller = "^6.8.0"
+requests-mock = "^1.12.1"
 requests-toolbelt = "1.0.0"
 starlette = "0.37.2"
 twikit = "==2.2.0"
@@ -2473,8 +2474,8 @@ web3 = "6.20.4"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "feat/funding_v2_flow5_fix"
-resolved_reference = "a52c27e8d61160e3d5da83aafe4327e21678479b"
+reference = "feat/funding_v2_flow2"
+resolved_reference = "bba46b87a679b9502207bc468816150ed7e6fcf2"
 
 [[package]]
 name = "open-aea"
@@ -3557,6 +3558,23 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "requests-mock"
+version = "1.12.1"
+description = "Mock out responses from the requests package"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "requests-mock-1.12.1.tar.gz", hash = "sha256:e9e12e333b525156e82a3c852f22016b9158220d2f47454de9cae8a77d371401"},
+    {file = "requests_mock-1.12.1-py2.py3-none-any.whl", hash = "sha256:b1e37054004cdd5e56c84454cc7df12b25f90f382159087f4b6915aaeef39563"},
+]
+
+[package.dependencies]
+requests = ">=2.22,<3"
+
+[package.extras]
+fixture = ["fixtures"]
+
+[[package]]
 name = "requests-toolbelt"
 version = "1.0.0"
 description = "A utility belt for advanced users of python-requests"
@@ -4229,4 +4247,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "37e8ac7103456988477372e81dc4a23be71a76f85dba2cdf261171374974467d"
+content-hash = "0924494b7d756878d010a52f632181c61e64b6562f58fabf8b4702dd7c1a1589"
