@@ -16,11 +16,11 @@ export type ServiceConfigId = string;
 type AgentRelease = {
   is_aea: boolean;
   repository: {
-    owner: string,
-    name: string,
-    version: string,
-  }
-}
+    owner: string;
+    name: string;
+    version: string;
+  };
+};
 
 type ServiceKeys = {
   address: Address;
@@ -126,19 +126,19 @@ type DeployedNodes = {
   tendermint: string[];
 };
 
+type AgentHealthCheck = {
+  env_var_status?: {
+    needs_update: boolean;
+    env_vars: {
+      [key: string]: string;
+    };
+  };
+} & AgentHealthCheckResponse;
+
 export type Deployment = {
   status: MiddlewareDeploymentStatus;
   nodes: DeployedNodes;
-  healthcheck:
-    | ({
-        env_var_status?: {
-          needs_update: boolean;
-          env_vars: {
-            [key: string]: string;
-          };
-        };
-      } & AgentHealthCheckResponse)
-    | Record<string, never>;
+  healthcheck: AgentHealthCheck | Record<string, never>;
 };
 
 enum MiddlewareLedger {
