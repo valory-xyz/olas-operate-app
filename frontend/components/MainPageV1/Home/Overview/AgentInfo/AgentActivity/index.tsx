@@ -1,12 +1,14 @@
-import { Typography } from 'antd';
-import { useMemo } from 'react';
+import { Flex, Typography } from 'antd';
+import { useMemo, useState } from 'react';
 
+import { ChevronUpDown } from '@/components/custom-icons/ChevronUpDown';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { COLOR } from '@/constants/colors';
 import { useServiceDeployment } from '@/hooks';
 import { useAgentActivity } from '@/hooks/useAgentActivity';
 import { useRewardContext } from '@/hooks/useRewardContext';
 
+import { AgentActivityModal } from './AgentActivityModal';
 import { Container, CurrentActionText, Text, TopCorner } from './styles';
 import { AgentStatus } from './types';
 
@@ -29,6 +31,15 @@ export const AgentActivity = () => {
   const { deploymentDetails, isServiceRunning, isServiceDeploying } =
     useAgentActivity();
   const { isEligibleForRewards } = useRewardContext();
+  const [IsModalOpen, setIsModalOpen] = useState(false);
+
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleClose = () => {
+    setIsModalOpen(false);
+  };
 
   const activityInfo = useMemo<{
     status: AgentStatus;
@@ -57,9 +68,13 @@ export const AgentActivity = () => {
         return {
           status: 'running',
           content: (
-            <>
-              <CurrentActionText>Current action:</CurrentActionText> {roundInfo}
-            </>
+            <Flex justify="space-between" align="center">
+              <div>
+                <CurrentActionText>Current action:</CurrentActionText>
+                {roundInfo}
+              </div>
+              <ChevronUpDown />
+            </Flex>
           ),
         };
       }
@@ -84,10 +99,39 @@ export const AgentActivity = () => {
     return null;
 
   return (
-    <Container $status={activityInfo.status}>
+    <Container $status={activityInfo.status} onClick={showModal}>
       <TopCorner $position="left" $status={activityInfo.status} />
       <TopCorner $position="right" $status={activityInfo.status} />
-      <Text $status={activityInfo.status}>{activityInfo.content}</Text>
+      <AgentActivityModal
+        open={IsModalOpen}
+        onClose={handleClose}
+        items={
+          deploymentDetails?.healthcheck?.rounds?.map((roundId, index) => {
+            const roundInfo =
+              deploymentDetails.healthcheck.rounds_info?.[roundId];
+            return {
+              key: roundId,
+              label: roundInfo?.name || `Round ${index + 1}`,
+              children: roundInfo?.description || 'No details provided.',
+            };
+          }) || []
+        }
+        currentActionName={(() => {
+          const currentRound = deploymentDetails?.healthcheck?.rounds?.[0];
+          return (
+            deploymentDetails?.healthcheck?.rounds_info?.[currentRound]?.name ||
+            currentRound
+          );
+        })()}
+        currentActionDescription={(() => {
+          const currentRound = deploymentDetails?.healthcheck?.rounds?.[0];
+          return deploymentDetails?.healthcheck?.rounds_info?.[currentRound]
+            ?.description;
+        })()}
+      />
+      <div style={{ width: '100%' }}>
+        <Text $status={activityInfo.status}>{activityInfo.content}</Text>
+      </div>
     </Container>
   );
 };

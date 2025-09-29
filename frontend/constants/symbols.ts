@@ -4,5 +4,6 @@ export const UNICODE_SYMBOLS = {
   OLAS: '☴',
   EXTERNAL_LINK: '↗',
   BULLET: '•',
+  CHEVRON_RIGHT: '>',
   SMALL_BULLET: '·',
 };
