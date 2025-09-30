@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { isNil } from 'lodash';
-import { useContext, useMemo } from 'react';
+import { useContext } from 'react';
 
-import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
-import { AgentType, EvmChainId } from '@/constants';
+import { EvmChainId } from '@/constants';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
@@ -11,35 +10,22 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { useServices } from '@/hooks/useServices';
 import { AgentConfig } from '@/types/Agent';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
-import { assertRequired, Maybe } from '@/types/Util';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { isValidServiceId } from '@/utils/service';
 
 /**
  * hook to fetch staking rewards details of a service on a given chain.
  */
-export const useStakingRewardsOf = (
+export const useAgentStakingRewardsDetails = (
   chainId: EvmChainId,
   stakingProgramId: StakingProgramId,
+  agentConfig: AgentConfig,
 ) => {
   const { isOnline } = useContext(OnlineStatusContext);
   const { services } = useServices();
   const service = services?.find(
     (s) => s.home_chain === asMiddlewareChain(chainId),
   );
-
-  // Find an active agent for the given chainId.
-  // NOTE: the logic needs to be updated once multiple agent in single chain is supported
-  const agent = ACTIVE_AGENTS.find(
-    ([, agentConfig]) => agentConfig.evmHomeChainId === chainId,
-  );
-  assertRequired(agent, 'Agent not found for the given chainId.');
-  const agentType = agent[0] as AgentType;
-
-  const agentConfig = useMemo(() => {
-    const config: Maybe<AgentConfig> = AGENT_CONFIG[agentType];
-    return config;
-  }, [agentType]);
 
   const serviceConfigId = service?.service_config_id;
   const chainConfigs = service?.chain_configs;
