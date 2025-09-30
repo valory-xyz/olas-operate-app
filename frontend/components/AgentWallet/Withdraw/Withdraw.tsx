@@ -6,12 +6,12 @@ import {
   SuccessOutlined,
   WarningOutlined,
 } from '@/components/custom-icons';
+import { cardStyles } from '@/components/ui/cardStyles';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 
-import { cardStyles } from '../common';
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { useWithdrawFunds } from './useWithdrawFunds';
 

@@ -8,6 +8,7 @@ import {
   WarningOutlined,
 } from '@/components/custom-icons';
 import { CardFlex } from '@/components/ui/CardFlex';
+import { cardStyles } from '@/components/ui/cardStyles';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
 import { useMessageApi } from '@/context/MessageProvider';
