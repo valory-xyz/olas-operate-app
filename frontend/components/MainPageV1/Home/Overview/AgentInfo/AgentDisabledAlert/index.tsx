@@ -33,8 +33,8 @@ export const AgentDisabledAlert = () => {
 
   if (
     !isSelectedStakingContractDetailsLoading &&
-    !isServiceStaked &&
-    !hasEnoughServiceSlots
+    isServiceStaked === false &&
+    hasEnoughServiceSlots === false
   ) {
     return <NoSlotsAvailableAlert />;
   }
