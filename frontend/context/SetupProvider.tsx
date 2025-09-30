@@ -17,6 +17,7 @@ type SetupObjectType = {
     address: Address;
     type: BackupWalletType;
   };
+  prevState?: SetupScreen | null;
 };
 
 type SetupContextType = {
@@ -29,6 +30,7 @@ export const SetupContext = createContext<SetupContextType>({
     state: SetupScreen.Welcome,
     mnemonic: [],
     backupSigner: undefined,
+    prevState: null,
   },
   setSetupObject: () => {},
 });
@@ -38,6 +40,7 @@ export const SetupProvider = ({ children }: PropsWithChildren) => {
     state: SetupScreen.Welcome,
     mnemonic: [],
     backupSigner: undefined,
+    prevState: null,
   });
 
   return (

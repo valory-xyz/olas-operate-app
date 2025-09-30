@@ -50,7 +50,7 @@ export const BackupWalletWeb3Auth = ({
   const { goto } = useSetup();
 
   const handleWeb3AuthSetupFinish = () => {
-    goto(SetupScreen.AgentOnboarding);
+    goto(SetupScreen.AgentSelection);
   };
 
   const { openWeb3AuthModel } = useWeb3AuthBackupWallet({

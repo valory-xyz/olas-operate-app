@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMessageApi } from '@/context/MessageProvider';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useBackupSigner } from '@/hooks';
+import { useBackupSigner } from '@/hooks/useBackupSigner';
 import {
   useBalanceContext,
   useMasterBalances,
