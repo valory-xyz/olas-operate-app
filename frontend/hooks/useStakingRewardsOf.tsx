@@ -15,12 +15,14 @@ import { assertRequired, Maybe } from '@/types/Util';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { isValidServiceId } from '@/utils/service';
 
+import { useActiveStakingProgramId } from './useActiveStakingProgramId';
+
 /**
  * hook to fetch staking rewards details of a service on a given chain.
  */
 export const useStakingRewardsDetails = (chainId: EvmChainId) => {
   const { isOnline } = useContext(OnlineStatusContext);
-  const { isFetched: isServicesLoaded, services } = useServices();
+  const { services } = useServices();
   const service = services?.find(
     (s) => s.home_chain === asMiddlewareChain(chainId),
   );
@@ -45,26 +47,10 @@ export const useStakingRewardsDetails = (chainId: EvmChainId) => {
   const multisig = chainDetails?.multisig;
   const serviceNftTokenId = chainDetails?.token;
 
-  const { isLoading, data: activeStakingProgramId } = useQuery({
-    queryKey: REACT_QUERY_KEYS.STAKING_PROGRAM_KEY(chainId, serviceNftTokenId!),
-    queryFn: async () => {
-      if (!serviceNftTokenId) return null;
-      if (!Number(serviceNftTokenId)) return null;
-
-      const currentStakingProgramId =
-        await agentConfig.serviceApi.getCurrentStakingProgramByServiceId(
-          serviceNftTokenId,
-          chainId,
-        );
-
-      return (
-        currentStakingProgramId ||
-        DEFAULT_STAKING_PROGRAM_IDS[agentConfig.evmHomeChainId]
-      );
-    },
-    enabled: !isNil(chainId) && isServicesLoaded && !!serviceNftTokenId,
-    refetchInterval: FIVE_SECONDS_INTERVAL,
-  });
+  const { isLoading, data: activeStakingProgramId } = useActiveStakingProgramId(
+    serviceNftTokenId,
+    agentConfig,
+  );
 
   const selectedStakingProgramId = isLoading
     ? null
