@@ -1,11 +1,13 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Flex, Image, Typography } from 'antd';
 
-import { BackButton } from '@/components/ui/BackButton';
-import { CardFlex } from '@/components/ui/CardFlex';
-import { cardStyles } from '@/components/ui/cardStyles';
-import { Divider } from '@/components/ui/Divider';
-import { TokenAmountInput } from '@/components/ui/TokenAmountInput';
+import {
+  BackButton,
+  CardFlex,
+  cardStyles,
+  Divider,
+  TokenAmountInput,
+} from '@/components/ui';
 
 import { useAgentWallet } from '../AgentWalletProvider';
 import { ConfirmTransfer } from './ConfirmTransfer';

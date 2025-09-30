@@ -17,8 +17,7 @@ import { Optional } from '@/types/Util';
 
 import { AddressLink } from '../AddressLink';
 import { CustomAlert } from '../Alert';
-import { CardSection } from '../ui/CardSection';
-import { cardStyles } from '../ui/cardStyles';
+import { CardSection, cardStyles } from '../ui';
 
 const { Text, Paragraph } = Typography;
 
