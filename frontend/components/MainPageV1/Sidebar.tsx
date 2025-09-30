@@ -78,7 +78,7 @@ type AgentList = {
 
 type AgentListMenuProps = {
   myAgents: AgentList;
-  selectedMenuKeys: [Pages];
+  selectedMenuKeys: (Pages | AgentType)[];
   onAgentSelect: MenuProps['onClick'];
 };
 const AgentListMenu = ({
