@@ -10,27 +10,16 @@ import {
 
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
 import { AgentType } from '@/constants/agent';
 import { type EvmChainName } from '@/constants/chains';
 import { EvmChainId } from '@/constants/chains';
-import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
-import {
-  useBalanceContext,
-  useMasterBalances,
-  useService,
-  useServices,
-  useUsdAmounts,
-} from '@/hooks';
-import { useStakingRewardsOf } from '@/hooks/useStakingRewardsOf';
+import { TokenSymbol } from '@/constants/token';
+import { useBalanceContext, useService, useServices } from '@/hooks';
+import { useAvailableAssets } from '@/hooks/useAvailableAssets';
 import { toUsd } from '@/service/toUsd';
 import { AgentConfig } from '@/types/Agent';
 import { Nullable, ValueOf } from '@/types/Util';
 import { generateName } from '@/utils/agentName';
-import {
-  asEvmChainDetails,
-  asMiddlewareChain,
-} from '@/utils/middlewareHelpers';
 
 import {
   AvailableAsset,
@@ -67,21 +56,6 @@ const PearlWalletContext = createContext<{
   onReset: () => {},
 });
 
-const useUsdBreakdown = (chainId: EvmChainId) => {
-  const chainName = chainId ? CHAIN_CONFIG[chainId].name : '';
-
-  const usdRequirements = useMemo(() => {
-    if (!chainId) return [];
-    return Object.entries(TOKEN_CONFIG[chainId!]).map(([untypedSymbol]) => {
-      const symbol = untypedSymbol as TokenSymbol;
-      return { symbol, amount: 0 };
-    });
-  }, [chainId]);
-
-  const { breakdown: usdBreakdown } = useUsdAmounts(chainName, usdRequirements);
-  return usdBreakdown;
-};
-
 export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const {
     isLoading: isServicesLoading,
@@ -94,12 +68,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   );
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
-  const {
-    getMasterSafeNativeBalanceOf,
-    getMasterSafeOlasBalanceOf,
-    getMasterSafeErc20Balances,
-    getMasterEoaNativeBalanceOf,
-  } = useMasterBalances();
 
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
     STEPS.PEARL_WALLET_SCREEN,
@@ -110,9 +78,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const [amountsToWithdraw, setAmountsToWithdraw] = useState<
     Partial<Record<TokenSymbol, number>>
   >({});
-  const { isLoading: isStakingRewardsLoading, data: stakingRewards } =
-    useStakingRewardsOf(walletChainId);
-  const usdBreakdown = useUsdBreakdown(walletChainId);
+  const { isLoading: isAvailableAssetsLoading, availableAssets } =
+    useAvailableAssets(walletChainId);
 
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) => agentConfig.evmHomeChainId === walletChainId,
@@ -139,66 +106,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       }),
     );
   }, [services]);
-
-  // OLAS token, Native Token, other ERC20 tokens
-  const availableAssets: AvailableAsset[] = useMemo(() => {
-    if (!walletChainId) return [];
-
-    const tokenConfig = TOKEN_CONFIG[walletChainId];
-    return Object.entries(tokenConfig).map(
-      ([untypedSymbol, untypedTokenDetails]) => {
-        const symbol = untypedSymbol as TokenSymbol;
-        const { address } = untypedTokenDetails as TokenConfig;
-        const { usdPrice } = usdBreakdown.find(
-          (breakdown) => breakdown.symbol === symbol,
-        ) ?? { usdPrice: 0 };
-
-        const balance = (() => {
-          // balance for OLAS
-          if (symbol === TokenSymbolMap.OLAS) {
-            return sum([
-              getMasterSafeOlasBalanceOf(walletChainId),
-              stakingRewards?.accruedServiceStakingRewards,
-            ]);
-          }
-
-          // balance for native tokens
-          if (
-            symbol ===
-            asEvmChainDetails(asMiddlewareChain(walletChainId)).symbol
-          ) {
-            return sum([
-              sum(
-                getMasterSafeNativeBalanceOf(walletChainId)?.map(
-                  ({ balance }) => balance,
-                ) ?? [],
-              ),
-              getMasterEoaNativeBalanceOf(walletChainId),
-            ]);
-          }
-
-          // balance for other required tokens (eg. USDC)
-          return getMasterSafeErc20Balances(walletChainId)?.[symbol] ?? 0;
-        })();
-
-        const asset: AvailableAsset = {
-          address,
-          symbol,
-          amount: balance,
-          valueInUsd: usdPrice * balance,
-        };
-        return asset;
-      },
-    );
-  }, [
-    walletChainId,
-    usdBreakdown,
-    stakingRewards?.accruedServiceStakingRewards,
-    getMasterSafeOlasBalanceOf,
-    getMasterSafeNativeBalanceOf,
-    getMasterEoaNativeBalanceOf,
-    getMasterSafeErc20Balances,
-  ]);
 
   const aggregatedBalance = useMemo(() => {
     return sum(availableAssets.map(({ valueInUsd }) => valueInUsd));
@@ -248,7 +155,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     isServicesLoading ||
     !isLoaded ||
     isBalanceLoading ||
-    isStakingRewardsLoading;
+    isAvailableAssetsLoading;
 
   return (
     <PearlWalletContext.Provider
