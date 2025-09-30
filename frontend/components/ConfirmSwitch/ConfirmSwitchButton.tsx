@@ -1,10 +1,13 @@
 import { Button, message } from 'antd';
 import { useMemo, useState } from 'react';
+import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client/types';
 import { SupportedMiddlewareChain } from '@/constants/chains';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
+import { Pages } from '@/enums/Pages';
+import { usePageState } from '@/hooks';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -29,6 +32,7 @@ export const ConfirmSwitchButton = ({
   const [contractSwitchStatus, setContractSwitchStatus] =
     useState<ContractSwitchStatus>('NOT_STARTED');
 
+  const { goto } = usePageState();
   const {
     setPaused: setIsServicePollingPaused,
     isFetched: isServicesLoaded,
@@ -51,6 +55,12 @@ export const ConfirmSwitchButton = ({
       ),
     [selectedAgentType],
   );
+
+  const resetState = () => {
+    overrideSelectedServiceStatus(null);
+    setIsServicePollingPaused(false);
+    setIsBalancePollingPaused(false);
+  };
 
   const handleSwitchContract = async () => {
     if (!serviceTemplate || !stakingProgramIdToMigrateTo) return;
@@ -94,16 +104,17 @@ export const ConfirmSwitchButton = ({
       // start service after updating or creating
       await ServicesService.startService(serviceConfigId);
       setContractSwitchStatus('COMPLETED');
+      message.success('Contract switched successfully.');
+      goto(Pages.Main);
     } catch (error) {
       console.error(error);
       message.error('An error occurred while switching contract.');
       setContractSwitchStatus('ERROR');
-    } finally {
-      overrideSelectedServiceStatus(null);
-      setIsServicePollingPaused(false);
-      setIsBalancePollingPaused(false);
+      resetState();
     }
   };
+
+  useUnmount(() => resetState());
 
   return (
     <>
