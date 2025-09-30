@@ -7,7 +7,6 @@ import { AgentNft } from '@/components/AgentNft';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Segmented } from '@/components/ui/Segmented';
 import { NA } from '@/constants/symbols';
-import { asEvmChainDetails } from '@/utils';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
@@ -110,7 +109,7 @@ export const BalancesAndAssets = ({
             label: (
               <Flex gap={8}>
                 <Image
-                  src={`/chains/${kebabCase(asEvmChainDetails(chain.chainName).name)}-chain.png`}
+                  src={`/chains/${kebabCase(chain.chainName)}-chain.png`}
                   alt={chain.chainName}
                   width={24}
                   height={24}
