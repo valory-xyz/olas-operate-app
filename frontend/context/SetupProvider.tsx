@@ -9,6 +9,7 @@ import {
 import { SetupScreen } from '@/enums/SetupScreen';
 import { Address } from '@/types/Address';
 import { BackupWalletType } from '@/types/BackupWallet';
+import { Maybe } from '@/types/Util';
 
 type SetupObjectType = {
   state: SetupScreen;
@@ -17,7 +18,7 @@ type SetupObjectType = {
     address: Address;
     type: BackupWalletType;
   };
-  prevState?: SetupScreen | null;
+  prevState: Maybe<SetupScreen>;
 };
 
 type SetupContextType = {
