@@ -89,7 +89,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     selectedService,
     services,
   } = useServices();
-  const { isLoaded, serviceSafeOf } = useService(
+  const { isLoaded, getServiceSafeOf } = useService(
     selectedService?.service_config_id,
   );
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
@@ -209,7 +209,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     () => [
       {
         agentName: walletChainId
-          ? generateName(serviceSafeOf(walletChainId)?.address)
+          ? generateName(getServiceSafeOf(walletChainId)?.address)
           : 'Agent',
         agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
         symbol: 'OLAS',
@@ -217,7 +217,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         value: toUsd('OLAS', totalStakedOlasBalance ?? 0),
       },
     ],
-    [walletChainId, agentType, totalStakedOlasBalance, serviceSafeOf],
+    [walletChainId, agentType, totalStakedOlasBalance, getServiceSafeOf],
   );
 
   const updateStep = useCallback(

@@ -79,7 +79,7 @@ export const useService = (serviceConfigId?: string) => {
     return service?.chain_configs?.[service?.home_chain]?.chain_data.token;
   }, [service?.chain_configs, service?.home_chain]);
 
-  const serviceWalletsOf = useCallback(
+  const getServiceWalletsOf = useCallback(
     (chainId: EvmChainId): AgentWallet[] => {
       const chainName = asMiddlewareChain(chainId);
       const service = services?.find((s) => s.home_chain === chainName);
@@ -107,14 +107,13 @@ export const useService = (serviceConfigId?: string) => {
 
   const serviceWallets: AgentWallet[] = useMemo(() => {
     if (!selectedService?.home_chain) return [];
-    return serviceWalletsOf(asEvmChainId(selectedService.home_chain));
-  }, [selectedService, serviceWalletsOf]);
+    return getServiceWalletsOf(asEvmChainId(selectedService.home_chain));
+  }, [selectedService, getServiceWalletsOf]);
 
-  const addressesOf = useCallback(
+  const getAddressesOf = useCallback(
     (chainId: EvmChainId): Nullable<ServiceChainIdAddressRecord> => {
-      const service = services?.find(
-        ({ home_chain }) => home_chain === asMiddlewareChain(chainId),
-      );
+      const chainName = asMiddlewareChain(chainId);
+      const service = services?.find((s) => s.home_chain === chainName);
       const chainData = service?.chain_configs;
 
       if (!chainData) return null;
@@ -137,10 +136,10 @@ export const useService = (serviceConfigId?: string) => {
    * Flat list of all addresses associated with the service.
    * ie, all agentSafe and agentEoas
    */
-  const allAgentAddressesOf = useCallback(
+  const getAgentAddressesOf = useCallback(
     (chainId: EvmChainId): Address[] => {
       if (!service) return [];
-      const chainAddresses = addressesOf(chainId);
+      const chainAddresses = getAddressesOf(chainId);
       if (!chainAddresses) return [];
 
       return Object.values(chainAddresses).reduce(
@@ -152,50 +151,52 @@ export const useService = (serviceConfigId?: string) => {
         [] as Address[],
       );
     },
-    [service, addressesOf],
+    [service, getAddressesOf],
   );
 
-  const allAgentAddresses = useMemo(() => {
+  const agentAddresses = useMemo(() => {
     if (!service?.home_chain) return [];
-    return allAgentAddressesOf(asEvmChainId(service.home_chain));
-  }, [allAgentAddressesOf, service]);
+    return getAgentAddressesOf(asEvmChainId(service.home_chain));
+  }, [getAgentAddressesOf, service]);
 
-  const servicesSafesOf = useCallback(
+  console.log('agentAddresses', { agentAddresses, serviceWallets });
+
+  const getServicesSafesOf = useCallback(
     (chainId: EvmChainId) =>
-      serviceWalletsOf(chainId).filter(
+      getServiceWalletsOf(chainId).filter(
         (wallet): wallet is AgentSafe =>
-          allAgentAddressesOf(chainId).includes(wallet.address) &&
+          getAgentAddressesOf(chainId).includes(wallet.address) &&
           wallet.owner === WalletOwnerType.Agent &&
           wallet.type === WalletType.Safe,
       ),
-    [serviceWalletsOf, allAgentAddressesOf],
+    [getServiceWalletsOf, getAgentAddressesOf],
   );
 
   const serviceSafes = useMemo(() => {
     if (!serviceWallets) return [];
     return serviceWallets.filter(
       (wallet): wallet is AgentSafe =>
-        allAgentAddresses.includes(wallet.address) &&
+        agentAddresses.includes(wallet.address) &&
         wallet.owner === WalletOwnerType.Agent &&
         wallet.type === WalletType.Safe,
     );
-  }, [allAgentAddresses, serviceWallets]);
+  }, [agentAddresses, serviceWallets]);
 
   const serviceEoa = useMemo(() => {
     if (!serviceWallets) return null;
     return serviceWallets.find(
       (wallet): wallet is AgentEoa =>
-        allAgentAddresses.includes(wallet.address) &&
+        agentAddresses.includes(wallet.address) &&
         wallet.owner === WalletOwnerType.Agent &&
         wallet.type === WalletType.EOA,
     );
-  }, [allAgentAddresses, serviceWallets]);
+  }, [agentAddresses, serviceWallets]);
 
   // agent safe
-  const serviceSafeOf = useCallback(
+  const getServiceSafeOf = useCallback(
     (chainId: EvmChainId) =>
-      servicesSafesOf(chainId)?.find((safe) => safe.evmChainId === chainId),
-    [servicesSafesOf],
+      getServicesSafesOf(chainId)?.find((safe) => safe.evmChainId === chainId),
+    [getServicesSafesOf],
   );
 
   /** @note deployment is transitioning from stopped to deployed (and vice versa) */
@@ -217,12 +218,12 @@ export const useService = (serviceConfigId?: string) => {
     isLoaded,
     isServiceTransitioning,
 
-    allAgentAddresses,
+    agentAddresses,
     deploymentStatus,
     serviceSafes,
     serviceEoa,
     service,
-    serviceSafeOf,
+    getServiceSafeOf,
 
     // service status
     isServiceRunning,
