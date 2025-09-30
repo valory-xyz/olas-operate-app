@@ -15,8 +15,8 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { ArrowUpRightSvg } from '../custom-icons';
 import { ExternalLinkIcon } from '../custom-icons/ExternalLinkIcon';
 import { ExportLogsButton } from '../ExportLogsButton';
-import { cardStyles } from '../PearlWallet/Withdraw/common';
 import { CardSection } from '../ui/CardSection';
+import { cardStyles } from '../ui/cardStyles';
 
 const { Title, Paragraph } = Typography;
 

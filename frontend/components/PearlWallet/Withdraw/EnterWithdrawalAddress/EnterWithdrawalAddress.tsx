@@ -3,10 +3,10 @@ import { isAddress } from 'ethers/lib/utils';
 import { useCallback, useState } from 'react';
 
 import { CardFlex } from '@/components/ui/CardFlex';
+import { cardStyles } from '@/components/ui/cardStyles';
 import { useMessageApi } from '@/context/MessageProvider';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
-import { cardStyles } from '../common';
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { useWithdrawFunds } from './useWithdrawFunds';
 import {

@@ -17,8 +17,8 @@ import { Optional } from '@/types/Util';
 
 import { AddressLink } from '../AddressLink';
 import { CustomAlert } from '../Alert';
-import { cardStyles } from '../PearlWallet/Withdraw/common';
 import { CardSection } from '../ui/CardSection';
+import { cardStyles } from '../ui/cardStyles';
 
 const { Text, Paragraph } = Typography;
 
