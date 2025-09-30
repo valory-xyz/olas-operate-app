@@ -133,11 +133,6 @@ export const useService = (serviceConfigId?: string) => {
     [services],
   );
 
-  const addresses: Nullable<ServiceChainIdAddressRecord> = useMemo(() => {
-    if (!selectedService?.home_chain) return null;
-    return addressesOf(asEvmChainId(selectedService?.home_chain));
-  }, [selectedService?.home_chain, addressesOf]);
-
   /**
    * Flat list of all addresses associated with the service.
    * ie, all agentSafe and agentEoas
@@ -221,15 +216,17 @@ export const useService = (serviceConfigId?: string) => {
   return {
     isLoaded,
     isServiceTransitioning,
-    isServiceRunning,
-    isServiceBuilding,
-    serviceNftTokenId,
-    addresses,
+
     allAgentAddresses,
     deploymentStatus,
     serviceSafes,
     serviceEoa,
     service,
     serviceSafeOf,
+
+    // service status
+    isServiceRunning,
+    isServiceBuilding,
+    serviceNftTokenId,
   };
 };

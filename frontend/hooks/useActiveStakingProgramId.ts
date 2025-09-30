@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { isNil } from 'lodash';
 
-import { DEFAULT_STAKING_PROGRAM_IDS } from '@/config/stakingPrograms';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useServices } from '@/hooks/useServices';
@@ -11,6 +10,7 @@ import { isValidServiceId } from '@/utils';
 
 /**
  * Hook to get the active staking program id.
+ * If there is no active staking program, it returns null.
  */
 export const useActiveStakingProgramId = (
   serviceNftTokenId: Maybe<number>,
@@ -29,14 +29,11 @@ export const useActiveStakingProgramId = (
 
       const currentStakingProgramId =
         await serviceApi.getCurrentStakingProgramByServiceId(
-          serviceNftTokenId!,
+          serviceNftTokenId,
           evmHomeChainId,
         );
 
-      return (
-        currentStakingProgramId ||
-        DEFAULT_STAKING_PROGRAM_IDS[agentConfig.evmHomeChainId]
-      );
+      return currentStakingProgramId;
     },
     enabled:
       !isNil(evmHomeChainId) &&

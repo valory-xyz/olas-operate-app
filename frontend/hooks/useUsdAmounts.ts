@@ -95,8 +95,9 @@ export const useUsdAmounts = (
         ? COINGECKO_COIN_ID_BY_NATIVE_SYMBOL[req.symbol] ?? ''
         : '';
       const contractAddress = isErc20OrWrapped ? tokenConfig!.address : '';
-      const hasValidTokenQueryParams =
-        isErc20OrWrapped && platform && contractAddress;
+      const hasValidTokenQueryParams = Boolean(
+        isErc20OrWrapped && platform && contractAddress,
+      );
 
       return {
         queryKey: [
@@ -106,7 +107,7 @@ export const useUsdAmounts = (
           isNative ? coinId : platform,
           isNative ? 'native' : contractAddress,
         ] as const,
-        enabled: Boolean((isNative && coinId) || hasValidTokenQueryParams),
+        enabled: Boolean(isNative && coinId) || hasValidTokenQueryParams,
         queryFn: async ({ signal }) => {
           if (isNative) return fetchNativeUsdPrice(coinId, signal);
           return fetchTokenUsdPrice(platform, contractAddress, signal);
