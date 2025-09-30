@@ -12,7 +12,7 @@ import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
 import { Address } from '@/types/Address';
 import { Nullable } from '@/types/Util';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { asMiddlewareChain } from '@/utils';
 import { ONE_DAY_IN_MS } from '@/utils/time';
 
 import { useService } from './useService';
@@ -245,8 +245,9 @@ const useContractCheckpoints = (
 };
 
 /**
- * Hook to get the total rewards for a service ID. It adds the serviceId filter to the query
- * in order to fetch only the relevant contract checkpoints.
+ * Hook to get the rewards for a service ID. It adds the serviceId filter to the query
+ * in order to fetch only the relevant contract checkpoints. Use this to get more accurate
+ * rewards history for the service
  */
 export const useServiceOnlyRewardsHistory = () => {
   const { selectedService, selectedAgentConfig } = useServices();
@@ -263,6 +264,8 @@ export const useServiceOnlyRewardsHistory = () => {
     refetch,
     data: contractCheckpointsWithServiceId,
   } = useContractCheckpoints(homeChainId, serviceNftTokenId, true);
+
+  // All contract checkpoints (without serviceId filter)
   const { data: allContractCheckpoints } = useContractCheckpoints(
     homeChainId,
     serviceNftTokenId,
@@ -278,6 +281,10 @@ export const useServiceOnlyRewardsHistory = () => {
       }, 0);
   }, [contractCheckpointsWithServiceId]);
 
+  /**
+   * Sorts the checkpoints as per the epoch timestampss, uses `allContractCheckpoints` to
+   * fills in the missing epochs (where the service didn't earn any rewards).
+   */
   const epochSortedCheckpoints = useMemo<Checkpoint[]>(() => {
     if (!contractCheckpointsWithServiceId) return [];
     if (!allContractCheckpoints) return [];
@@ -285,7 +292,7 @@ export const useServiceOnlyRewardsHistory = () => {
     const filledCheckpoints: Checkpoint[] = [];
     let previousCheckpoint: Checkpoint | null = null;
 
-    Object.values(contractCheckpointsWithServiceId ?? {})
+    Object.values(contractCheckpointsWithServiceId)
       .flat()
       .sort((a, b) => a.epochEndTimeStamp - b.epochEndTimeStamp)
       .forEach((checkpoint) => {
@@ -297,12 +304,20 @@ export const useServiceOnlyRewardsHistory = () => {
         } = previousCheckpoint ?? {};
 
         switch (true) {
+          /**
+           * 1. If it is the first time service has earned any rewards.
+           * 2. If it's the same contract and the current epoch is right next to the previous epoch.
+           */
           case previousCheckpoint === null:
           case contractAddress === previousContractAddress &&
             Number(epoch) === Number(previousEpoch) + 1: {
             filledCheckpoints.push(checkpoint);
             break;
           }
+          /**
+           * If it's the same contract (but we missed some epochs - implicit,
+           * as the first condition isn't true), fill in the missing epochs.
+           */
           case contractAddress === previousContractAddress: {
             const missingEpochs = allContractCheckpoints?.[
               contractAddress
@@ -316,6 +331,7 @@ export const useServiceOnlyRewardsHistory = () => {
             filledCheckpoints.push(checkpoint);
             break;
           }
+          // If the contract is switched, check if we need to fill in any epochs
           case contractAddress !== previousContractAddress: {
             const missingEpochs = allContractCheckpoints?.[
               contractAddress
