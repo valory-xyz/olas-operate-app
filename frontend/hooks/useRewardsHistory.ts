@@ -57,7 +57,7 @@ const fetchRewardsQuery = (chainId: EvmChainId, serviceId: Maybe<number>) => {
       first: 1000
       where: {
         contractAddress_in: [${supportedStakingContracts}]
-        ${serviceId ? `,serviceIds_contains: ["${serviceId}"]` : ''}
+        ${serviceId ? `serviceIds_contains: ["${serviceId}"]` : ''}
       }
     ) {
       id
@@ -269,7 +269,6 @@ export const useServiceOnlyRewardsHistory = () => {
   const { data: allContractCheckpoints } = useContractCheckpoints(
     homeChainId,
     serviceNftTokenId,
-    false,
   );
 
   const totalRewards = useMemo(() => {
@@ -303,55 +302,59 @@ export const useServiceOnlyRewardsHistory = () => {
           epochEndTimeStamp: previousEpochEndTimeStamp,
         } = previousCheckpoint ?? {};
 
-        switch (true) {
-          /**
-           * 1. If it is the first time service has earned any rewards.
-           * 2. If it's the same contract and the current epoch is right next to the previous epoch.
-           */
-          case previousCheckpoint === null:
-          case contractAddress === previousContractAddress &&
-            Number(epoch) === Number(previousEpoch) + 1: {
-            filledCheckpoints.push(checkpoint);
-            break;
-          }
+        /**
+         * 1. If it is the first time service has earned any rewards, i.e. the first item of the list
+         * 2. If it's the same contract and the current epoch is right next to the previous epoch.
+         * eg:
+         *    previousCheckpoint = {epoch: 299, ...}
+         *    checkpoint = {epoch: 300, ...}
+         */
+        if (
+          previousCheckpoint === null ||
+          (contractAddress === previousContractAddress &&
+            Number(epoch) === Number(previousEpoch) + 1)
+        ) {
+          filledCheckpoints.push(checkpoint);
+        } else if (contractAddress === previousContractAddress) {
           /**
            * If it's the same contract (but we missed some epochs - implicit,
            * as the first condition isn't true), fill in the missing epochs.
+           * eg:
+           *    previousCheckpoint = {epoch: 302, contractAddress: "0x155547857680A6D51bebC5603397488988DEb1c8", ...}
+           *    checkpoint = {epoch: 310, contractAddress: "0x155547857680A6D51bebC5603397488988DEb1c8", ...}
            */
-          case contractAddress === previousContractAddress: {
-            const missingEpochs = allContractCheckpoints?.[
-              contractAddress
-            ]?.filter(
-              ({ epoch: checkpointEpoch }) =>
-                Number(checkpointEpoch) > Number(previousEpoch) &&
-                Number(checkpointEpoch) < Number(epoch),
-            );
+          const missingEpochs = allContractCheckpoints?.[
+            contractAddress
+          ]?.filter(
+            ({ epoch: checkpointEpoch }) =>
+              Number(checkpointEpoch) > Number(previousEpoch) &&
+              Number(checkpointEpoch) < Number(epoch),
+          );
 
-            filledCheckpoints.push(...(missingEpochs ?? []));
-            filledCheckpoints.push(checkpoint);
-            break;
-          }
-          // If the contract is switched, check if we need to fill in any epochs
-          case contractAddress !== previousContractAddress: {
-            const missingEpochs = allContractCheckpoints?.[
-              contractAddress
-            ]?.filter(
-              ({ epochStartTimeStamp, epochEndTimeStamp }) =>
-                Number(epochStartTimeStamp) >
-                  Number(previousEpochEndTimeStamp) &&
-                Number(epochEndTimeStamp) < Number(epochStartTimeStamp),
-            );
-            filledCheckpoints.push(...(missingEpochs ?? []));
-            filledCheckpoints.push(checkpoint);
-            break;
-          }
-          default: {
-            filledCheckpoints.push(checkpoint);
-            break;
-          }
+          filledCheckpoints.push(...(missingEpochs ?? []));
+          filledCheckpoints.push(checkpoint);
+        } else if (contractAddress !== previousContractAddress) {
+          /**
+           * If the contract is switched, check if we need to fill in any epochs
+           * eg:
+           *    previousCheckpoint = {epoch: 101, contractAddress: "0x155547857680A6D51bebC5603397488988DEb1c8", ...}
+           *    checkpoint = {epoch: 61, contractAddress: "0xfE1D36820546cE5F3A58405950dC2F5ccDf7975C", ...}
+           */
+          const missingEpochs = allContractCheckpoints?.[
+            contractAddress
+          ]?.filter(
+            ({ epochStartTimeStamp, epochEndTimeStamp }) =>
+              Number(epochStartTimeStamp) > Number(previousEpochEndTimeStamp) &&
+              Number(epochEndTimeStamp) < Number(epochStartTimeStamp),
+          );
+          filledCheckpoints.push(...(missingEpochs ?? []));
+          filledCheckpoints.push(checkpoint);
+        } else {
+          filledCheckpoints.push(checkpoint);
         }
         previousCheckpoint = checkpoint;
       });
+
     return filledCheckpoints.sort(
       (a, b) => b.epochEndTimeStamp - a.epochEndTimeStamp,
     );

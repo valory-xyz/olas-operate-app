@@ -1,5 +1,5 @@
 import { Button, message } from 'antd';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client/types';
@@ -56,11 +56,15 @@ export const ConfirmSwitchButton = ({
     [selectedAgentType],
   );
 
-  const resetState = () => {
+  const resetState = useCallback(() => {
     overrideSelectedServiceStatus(null);
     setIsServicePollingPaused(false);
     setIsBalancePollingPaused(false);
-  };
+  }, [
+    overrideSelectedServiceStatus,
+    setIsServicePollingPaused,
+    setIsBalancePollingPaused,
+  ]);
 
   const handleSwitchContract = async () => {
     if (!serviceTemplate || !stakingProgramIdToMigrateTo) return;
