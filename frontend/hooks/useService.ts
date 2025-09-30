@@ -140,6 +140,7 @@ export const useService = (serviceConfigId?: string) => {
     (chainId: EvmChainId): Address[] => {
       if (!service) return [];
       const chainAddresses = getAddressesOf(chainId);
+
       if (!chainAddresses) return [];
 
       return Object.values(chainAddresses).reduce(
@@ -158,8 +159,6 @@ export const useService = (serviceConfigId?: string) => {
     if (!service?.home_chain) return [];
     return getAgentAddressesOf(asEvmChainId(service.home_chain));
   }, [getAgentAddressesOf, service]);
-
-  console.log('agentAddresses', { agentAddresses, serviceWallets });
 
   const getServicesSafesOf = useCallback(
     (chainId: EvmChainId) =>
@@ -220,6 +219,7 @@ export const useService = (serviceConfigId?: string) => {
 
     agentAddresses,
     deploymentStatus,
+    serviceWallets,
     serviceSafes,
     serviceEoa,
     service,
