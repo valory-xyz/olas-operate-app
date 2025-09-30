@@ -22,7 +22,7 @@ import {
   useServices,
   useUsdAmounts,
 } from '@/hooks';
-import { useStakingRewardsDetails } from '@/hooks/useStakingRewardsOf';
+import { useStakingRewardsOf } from '@/hooks/useStakingRewardsOf';
 import { toUsd } from '@/service/toUsd';
 import { AgentConfig } from '@/types/Agent';
 import { Nullable, ValueOf } from '@/types/Util';
@@ -111,7 +111,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     Partial<Record<TokenSymbol, number>>
   >({});
   const { isLoading: isStakingRewardsLoading, data: stakingRewards } =
-    useStakingRewardsDetails(walletChainId);
+    useStakingRewardsOf(walletChainId);
   const usdBreakdown = useUsdBreakdown(walletChainId);
 
   const agent = ACTIVE_AGENTS.find(

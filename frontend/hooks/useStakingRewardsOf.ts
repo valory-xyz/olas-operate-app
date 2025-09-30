@@ -20,7 +20,7 @@ import { useActiveStakingProgramId } from './useActiveStakingProgramId';
 /**
  * hook to fetch staking rewards details of a service on a given chain.
  */
-export const useStakingRewardsDetails = (chainId: EvmChainId) => {
+export const useStakingRewardsOf = (chainId: EvmChainId) => {
   const { isOnline } = useContext(OnlineStatusContext);
   const { services } = useServices();
   const service = services?.find(
@@ -41,9 +41,10 @@ export const useStakingRewardsDetails = (chainId: EvmChainId) => {
   }, [agentType]);
 
   const serviceConfigId = service?.service_config_id;
-  const chainDetails = isNil(service?.chain_configs)
+  const chainConfigs = service?.chain_configs;
+  const chainDetails = isNil(chainConfigs)
     ? null
-    : service.chain_configs?.[asMiddlewareChain(chainId)]?.chain_data;
+    : chainConfigs[asMiddlewareChain(chainId)]?.chain_data;
   const multisig = chainDetails?.multisig;
   const serviceNftTokenId = chainDetails?.token;
 
@@ -52,10 +53,11 @@ export const useStakingRewardsDetails = (chainId: EvmChainId) => {
     agentConfig,
   );
 
-  const selectedStakingProgramId = isLoading
-    ? null
-    : activeStakingProgramId ||
+  const selectedStakingProgramId = useMemo(() => {
+    const defaultStakingProgramId =
       DEFAULT_STAKING_PROGRAM_IDS[agentConfig.evmHomeChainId];
+    return isLoading ? null : activeStakingProgramId || defaultStakingProgramId;
+  }, [agentConfig.evmHomeChainId, isLoading, activeStakingProgramId]);
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.REWARDS_KEY(
