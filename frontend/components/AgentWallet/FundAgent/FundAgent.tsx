@@ -1,5 +1,7 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Flex, Image, Typography } from 'antd';
+import { useCallback, useState } from 'react';
+import { useUnmount } from 'usehooks-ts';
 
 import {
   BackButton,
@@ -8,10 +10,12 @@ import {
   Divider,
   TokenAmountInput,
 } from '@/components/ui';
+import { TokenSymbol } from '@/constants';
+import { useServices } from '@/hooks';
+import { useAvailableAssets } from '@/hooks/useAvailableAssets';
 
 import { useAgentWallet } from '../AgentWalletProvider';
 import { ConfirmTransfer } from './ConfirmTransfer';
-import { useFundAgent } from './useFundAgent';
 
 const { Title, Text } = Typography;
 
@@ -50,9 +54,33 @@ const PearlWalletToExternalWallet = () => {
   );
 };
 
-type FundAgentProps = { onBack: () => void };
+const useFundAgent = () => {
+  const { selectedAgentConfig } = useServices();
+  const { isLoading: isAvailableAssetsLoading, availableAssets } =
+    useAvailableAssets(selectedAgentConfig.evmHomeChainId);
 
-export const FundAgent = ({ onBack }: FundAgentProps) => {
+  const [amountsToFund, setAmountsToFund] = useState<
+    Partial<Record<TokenSymbol, number>>
+  >({});
+
+  const onAmountChange = useCallback((symbol: TokenSymbol, amount: number) => {
+    setAmountsToFund((prev) => ({ ...prev, [symbol]: amount }));
+  }, []);
+
+  // Reset amounts on unmount
+  useUnmount(() => {
+    setAmountsToFund({});
+  });
+
+  return {
+    isLoading: isAvailableAssetsLoading,
+    availableAssets,
+    amountsToFund,
+    onAmountChange,
+  };
+};
+
+export const FundAgent = ({ onBack }: { onBack: () => void }) => {
   const { availableAssets, amountsToFund, onAmountChange } = useFundAgent();
 
   return (
