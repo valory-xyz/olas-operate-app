@@ -286,3 +286,9 @@ export const usePearlWallet = () => {
   }
   return context;
 };
+
+/**
+ * - Re-use assets table
+ * - use useStakingRewardsOf to get the staking rewards
+ * - fix the agentName in the staked assets table
+ */

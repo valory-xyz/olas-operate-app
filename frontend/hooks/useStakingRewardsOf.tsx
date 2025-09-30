@@ -25,6 +25,9 @@ export const useStakingRewardsDetails = (chainId: EvmChainId) => {
     (s) => s.home_chain === asMiddlewareChain(chainId),
   );
 
+  // find an active agent for the given chainId
+  // we assume there is always an active agent for a given chainId
+  // NOTE: the logic needs to be updated once multiple agent in single chain is supported
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) => agentConfig.evmHomeChainId === chainId,
   );
