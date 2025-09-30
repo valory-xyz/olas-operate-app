@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { CSSProperties } from 'styled-components';
 
 export const cardStyles: CSSProperties = {
   width: 552,

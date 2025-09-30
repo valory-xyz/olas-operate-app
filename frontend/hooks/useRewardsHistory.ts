@@ -12,7 +12,7 @@ import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
 import { Address } from '@/types/Address';
 import { Nullable } from '@/types/Util';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { asMiddlewareChain } from '@/utils';
 import { ONE_DAY_IN_MS } from '@/utils/time';
 
 import { useService } from './useService';
@@ -57,7 +57,7 @@ const fetchRewardsQuery = (chainId: EvmChainId, serviceId: Maybe<number>) => {
       first: 1000
       where: {
         contractAddress_in: [${supportedStakingContracts}]
-        ${serviceId ? `,serviceIds_contains: "${serviceId}"` : ''}
+        ${serviceId ? `serviceIds_contains: ["${serviceId}"]` : ''}
       }
     ) {
       id
@@ -177,7 +177,11 @@ const useContractCheckpoints = (
   const transformCheckpoints = useTransformCheckpoints();
 
   return useQuery({
-    queryKey: REACT_QUERY_KEYS.REWARDS_HISTORY_KEY(chainId, serviceId!),
+    queryKey: REACT_QUERY_KEYS.REWARDS_HISTORY_KEY(
+      chainId,
+      serviceId!,
+      filterQueryByServiceId,
+    ),
     queryFn: async () => {
       const checkpointsResponse = await request<CheckpointsResponse>(
         REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId],
@@ -241,10 +245,11 @@ const useContractCheckpoints = (
 };
 
 /**
- * Hook to get the total rewards for a service ID. It adds the serviceId filter to the query
- * in order to fetch only the relevant contract checkpoints.
+ * Hook to get the rewards for a service ID. It adds the serviceId filter to the query
+ * in order to fetch only the relevant contract checkpoints. Use this to get more accurate
+ * rewards history for the service
  */
-export const useTotalRewards = () => {
+export const useServiceOnlyRewardsHistory = () => {
   const { selectedService, selectedAgentConfig } = useServices();
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
   const serviceConfigId = selectedService?.service_config_id;
@@ -257,17 +262,103 @@ export const useTotalRewards = () => {
     isLoading,
     isFetched,
     refetch,
-    data: contractCheckpoints,
+    data: contractCheckpointsWithServiceId,
   } = useContractCheckpoints(homeChainId, serviceNftTokenId, true);
 
+  // All contract checkpoints (without serviceId filter)
+  const { data: allContractCheckpoints } = useContractCheckpoints(
+    homeChainId,
+    serviceNftTokenId,
+  );
+
   const totalRewards = useMemo(() => {
-    if (!contractCheckpoints) return 0;
-    return Object.values(contractCheckpoints)
+    if (!contractCheckpointsWithServiceId) return 0;
+    return Object.values(contractCheckpointsWithServiceId)
       .flat()
       .reduce((acc, checkpoint) => {
         return acc + checkpoint.reward;
       }, 0);
-  }, [contractCheckpoints]);
+  }, [contractCheckpointsWithServiceId]);
+
+  /**
+   * Sorts the checkpoints as per the epoch timestampss, uses `allContractCheckpoints` to
+   * fills in the missing epochs (where the service didn't earn any rewards).
+   */
+  const epochSortedCheckpoints = useMemo<Checkpoint[]>(() => {
+    if (!contractCheckpointsWithServiceId) return [];
+    if (!allContractCheckpoints) return [];
+
+    const filledCheckpoints: Checkpoint[] = [];
+    let previousCheckpoint: Checkpoint | null = null;
+
+    Object.values(contractCheckpointsWithServiceId)
+      .flat()
+      .sort((a, b) => a.epochEndTimeStamp - b.epochEndTimeStamp)
+      .forEach((checkpoint) => {
+        const { contractAddress, epoch } = checkpoint;
+        const {
+          contractAddress: previousContractAddress,
+          epoch: previousEpoch,
+          epochEndTimeStamp: previousEpochEndTimeStamp,
+        } = previousCheckpoint ?? {};
+
+        /**
+         * 1. If it is the first time service has earned any rewards, i.e. the first item of the list
+         * 2. If it's the same contract and the current epoch is right next to the previous epoch.
+         * eg:
+         *    previousCheckpoint = {epoch: 299, ...}
+         *    checkpoint = {epoch: 300, ...}
+         */
+        if (
+          previousCheckpoint === null ||
+          (contractAddress === previousContractAddress &&
+            Number(epoch) === Number(previousEpoch) + 1)
+        ) {
+          filledCheckpoints.push(checkpoint);
+        } else if (contractAddress === previousContractAddress) {
+          /**
+           * If it's the same contract (but we missed some epochs - implicit,
+           * as the first condition isn't true), fill in the missing epochs.
+           * eg:
+           *    previousCheckpoint = {epoch: 302, contractAddress: "0x155547857680A6D51bebC5603397488988DEb1c8", ...}
+           *    checkpoint = {epoch: 310, contractAddress: "0x155547857680A6D51bebC5603397488988DEb1c8", ...}
+           */
+          const missingEpochs = allContractCheckpoints?.[
+            contractAddress
+          ]?.filter(
+            ({ epoch: checkpointEpoch }) =>
+              Number(checkpointEpoch) > Number(previousEpoch) &&
+              Number(checkpointEpoch) < Number(epoch),
+          );
+
+          filledCheckpoints.push(...(missingEpochs ?? []));
+          filledCheckpoints.push(checkpoint);
+        } else if (contractAddress !== previousContractAddress) {
+          /**
+           * If the contract is switched, check if we need to fill in any epochs
+           * eg:
+           *    previousCheckpoint = {epoch: 101, contractAddress: "0x155547857680A6D51bebC5603397488988DEb1c8", ...}
+           *    checkpoint = {epoch: 61, contractAddress: "0xfE1D36820546cE5F3A58405950dC2F5ccDf7975C", ...}
+           */
+          const missingEpochs = allContractCheckpoints?.[
+            contractAddress
+          ]?.filter(
+            ({ epochStartTimeStamp, epochEndTimeStamp }) =>
+              Number(epochStartTimeStamp) > Number(previousEpochEndTimeStamp) &&
+              Number(epochEndTimeStamp) < Number(epochStartTimeStamp),
+          );
+          filledCheckpoints.push(...(missingEpochs ?? []));
+          filledCheckpoints.push(checkpoint);
+        } else {
+          filledCheckpoints.push(checkpoint);
+        }
+        previousCheckpoint = checkpoint;
+      });
+
+    return filledCheckpoints.sort(
+      (a, b) => b.epochEndTimeStamp - a.epochEndTimeStamp,
+    );
+  }, [contractCheckpointsWithServiceId, allContractCheckpoints]);
 
   return {
     isError,
@@ -275,6 +366,7 @@ export const useTotalRewards = () => {
     isFetched,
     refetch,
     totalRewards,
+    allCheckpoints: epochSortedCheckpoints,
   };
 };
 
@@ -302,14 +394,6 @@ export const useRewardsHistory = () => {
         .sort((a, b) => b.epochEndTimeStamp - a.epochEndTimeStamp),
     [contractCheckpoints],
   );
-
-  const totalRewards = useMemo<number>(() => {
-    if (!epochSortedCheckpoints.length) return 0;
-
-    return epochSortedCheckpoints.reduce((acc, checkpoint) => {
-      return acc + checkpoint.reward;
-    }, 0);
-  }, [epochSortedCheckpoints]);
 
   const latestRewardStreak = useMemo<number>(() => {
     if (isLoading || !isFetched) return 0;
@@ -382,6 +466,5 @@ export const useRewardsHistory = () => {
     allCheckpoints: epochSortedCheckpoints,
     contractCheckpoints,
     recentStakingContractAddress,
-    totalRewards,
   };
 };

@@ -7,6 +7,7 @@ import { FireV1 } from '@/components/custom-icons/FireV1';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { NA } from '@/constants/symbols';
 import { Pages } from '@/enums/Pages';
+import { useServices } from '@/hooks';
 import { useAgentActivity } from '@/hooks/useAgentActivity';
 import { usePageState } from '@/hooks/usePageState';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
@@ -61,6 +62,7 @@ export const Staking = () => {
   const { isAgentEvicted } = useActiveStakingContractDetails();
   const { isServiceRunning } = useAgentActivity();
   const { currentEpochLifetime } = useStakingDetails();
+  const { selectedAgentConfig } = useServices();
 
   const alert = useMemo(() => {
     if (isAgentEvicted) return <EvictionAlert />;
@@ -72,9 +74,11 @@ export const Staking = () => {
     <Flex vertical>
       <Flex justify="space-between" align="center">
         <Title level={4}>Staking</Title>
-        <Button size="small" onClick={() => goto(Pages.AgentStaking)}>
-          Manage Staking
-        </Button>
+        {!selectedAgentConfig?.isUnderConstruction && (
+          <Button size="small" onClick={() => goto(Pages.AgentStaking)}>
+            Manage Staking
+          </Button>
+        )}
       </Flex>
 
       <CardFlex $noBorder>
