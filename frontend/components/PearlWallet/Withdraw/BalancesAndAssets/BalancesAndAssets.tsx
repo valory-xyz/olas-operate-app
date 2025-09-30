@@ -1,14 +1,15 @@
 import { Button, Flex, Typography } from 'antd';
+import { isNumber } from 'lodash';
 import Image from 'next/image';
 import { useEffect } from 'react';
 
+import { AgentNft } from '@/components/AgentNft';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Segmented } from '@/components/ui/Segmented';
 import { NA } from '@/constants/symbols';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
-import { AgentNft } from './AgentNft';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { StakedAssetsTable } from './StakedAssetsTable';
 
@@ -54,9 +55,13 @@ const StakedAssets = () => (
 
 type BalancesAndAssetsProps = {
   onWithdraw: () => void;
+  onDeposit: () => void;
 };
 
-export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
+export const BalancesAndAssets = ({
+  onWithdraw,
+  onDeposit,
+}: BalancesAndAssetsProps) => {
   const {
     aggregatedBalance,
     chains,
@@ -81,12 +86,16 @@ export const BalancesAndAssets = ({ onWithdraw }: BalancesAndAssetsProps) => {
               Aggregated balance
             </Text>
             <Title level={4} className="m-0">
-              {aggregatedBalance ? `$${formatNumber(aggregatedBalance)}` : NA}
+              {isNumber(aggregatedBalance)
+                ? `$${formatNumber(aggregatedBalance)}`
+                : NA}
             </Title>
           </Flex>
           <Flex gap={8}>
             <Button onClick={onWithdraw}>Withdraw</Button>
-            <Button type="primary">Deposit</Button>
+            <Button onClick={onDeposit} type="primary">
+              Deposit
+            </Button>
           </Flex>
         </Flex>
       </CardFlex>

@@ -4,6 +4,10 @@
 @import '@fontsource/inter/700.css';
 @import '@fontsource/inter/900.css';
 
+* {
+  --text-success-default: #176932;
+}
+
 html,
 body {
   margin: 0;
@@ -288,6 +292,10 @@ textarea,
   justify-content: center;
 }
 
+.justify-items-end {
+  justify-items: end;
+}
+
 .align-center {
   align-items: center;
 }
@@ -462,6 +470,11 @@ textarea,
   padding-bottom: 24px !important;
 }
 
+.py-2 {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
 .py-4 {
   padding-top: 4px !important;
   padding-bottom: 4px !important;
@@ -489,6 +502,10 @@ textarea,
 .mx-auto {
   margin-left: auto !important;
   margin-right: auto !important;
+}
+
+.mr-4 {
+  margin-right: 4px !important;
 }
 
 .mr-6 {
@@ -555,6 +572,10 @@ textarea,
   color: #617084 !important;
 }
 
+.text-success-default {
+  color: var(--text-success-default) !important;
+}
+
 .pointer {
   cursor: pointer;
 }
@@ -610,6 +631,14 @@ ul.alert-list {
 // line-height
 .leading-normal {
   line-height: normal !important;
+}
+
+.leading-20 {
+  line-height: 20px !important;
+}
+
+.leading-24 {
+  line-height: 24px !important;
 }
 
 // Flexbox & Grid

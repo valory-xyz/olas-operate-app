@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
-import { EvmChainId } from '@/enums/Chain';
+import { EvmChainId } from '@/constants';
 import {
   AgentEoa,
   AgentSafe,
@@ -74,6 +74,13 @@ export const useService = (serviceConfigId?: string) => {
     const chainConfig = service.chain_configs[selectedService?.home_chain];
     if (!chainConfig) return [];
 
+    const agentSafe = {
+      address: chainConfig.chain_data.multisig,
+      owner: WalletOwnerType.Agent,
+      type: WalletType.Safe,
+      evmChainId: asEvmChainId(selectedService?.home_chain),
+    } as AgentSafe;
+
     return [
       ...(chainConfig.chain_data.instances ?? []).map(
         (address) =>
@@ -83,16 +90,7 @@ export const useService = (serviceConfigId?: string) => {
             type: WalletType.EOA,
           }) as AgentEoa,
       ),
-      ...(chainConfig.chain_data.multisig
-        ? [
-            {
-              address: chainConfig.chain_data.multisig,
-              owner: WalletOwnerType.Agent,
-              type: WalletType.Safe,
-              evmChainId: asEvmChainId(selectedService?.home_chain),
-            } as AgentSafe,
-          ]
-        : []),
+      ...(chainConfig.chain_data.multisig ? [agentSafe] : []),
     ];
   }, [service, selectedService]);
 
@@ -154,6 +152,14 @@ export const useService = (serviceConfigId?: string) => {
     );
   }, [allAgentAddresses, serviceWallets]);
 
+  // agent safe
+  const serviceSafeOf = useCallback(
+    (chainId: EvmChainId) => {
+      return serviceSafes?.find((safe) => safe.evmChainId === chainId);
+    },
+    [serviceSafes],
+  );
+
   /** @note deployment is transitioning from stopped to deployed (and vice versa) */
   const isServiceTransitioning = deploymentStatus
     ? MiddlewareTransitioningStatuses.includes(deploymentStatus)
@@ -181,5 +187,6 @@ export const useService = (serviceConfigId?: string) => {
     serviceSafes,
     serviceEoa,
     service,
+    serviceSafeOf,
   };
 };

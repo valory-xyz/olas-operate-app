@@ -18,16 +18,19 @@ import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import {
   useBalanceContext,
   useMasterBalances,
-} from '@/hooks/useBalanceContext';
-import { useRewardContext } from '@/hooks/useRewardContext';
-import { useService } from '@/hooks/useService';
-import { useServices } from '@/hooks/useServices';
-import { useUsdAmounts } from '@/hooks/useUsdAmounts';
+  // useRewardContext,
+  useService,
+  useServices,
+  useUsdAmounts,
+} from '@/hooks';
 import { toUsd } from '@/service/toUsd';
 import { AgentConfig } from '@/types/Agent';
 import { Nullable, ValueOf } from '@/types/Util';
 import { generateName } from '@/utils/agentName';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
+import {
+  asEvmChainDetails,
+  asMiddlewareChain,
+} from '@/utils/middlewareHelpers';
 
 import {
   AvailableAsset,
@@ -71,20 +74,22 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     selectedService,
     services,
   } = useServices();
-  const { isLoaded, serviceSafes } = useService(
+  const { isLoaded, serviceSafeOf } = useService(
     selectedService?.service_config_id,
   );
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
-  const { accruedServiceStakingRewards } = useRewardContext();
+
+  // TODO: https://linear.app/valory-xyz/issue/OPE-744
+  // const { accruedServiceStakingRewards } = useRewardContext();
   const {
-    masterEoaBalance,
-    masterSafeNativeBalance,
-    masterSafeOlasBalance,
-    masterSafeErc20Balances,
+    getMasterSafeNativeBalanceOf,
+    getMasterSafeOlasBalanceOf,
+    getMasterSafeErc20Balances,
+    getMasterEoaNativeBalanceOf,
   } = useMasterBalances();
 
-  const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
+  const { evmHomeChainId } = selectedAgentConfig;
 
   // wallet chain ID
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
@@ -101,12 +106,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       agentConfig.middlewareHomeChainId === selectedService?.home_chain,
   );
   const agentType = agent ? agent[0] : null;
-
-  // agent safe
-  const serviceSafe = useMemo(
-    () => serviceSafes?.find(({ evmChainId }) => evmChainId === walletChainId),
-    [serviceSafes, walletChainId],
-  );
 
   // list of chains where the user has services
   const chains = useMemo(() => {
@@ -161,16 +160,29 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         const balance = (() => {
           // balance for OLAS
           if (symbol === TokenSymbolMap.OLAS) {
-            return sum([masterSafeOlasBalance, accruedServiceStakingRewards]);
+            return sum([
+              getMasterSafeOlasBalanceOf(walletChainId),
+              // accruedServiceStakingRewards,
+            ]);
           }
 
           // balance for native tokens
-          if (symbol === asEvmChainDetails(middlewareHomeChainId).symbol) {
-            return sum([masterSafeNativeBalance, masterEoaBalance]);
+          if (
+            symbol ===
+            asEvmChainDetails(asMiddlewareChain(walletChainId)).symbol
+          ) {
+            return sum([
+              sum(
+                getMasterSafeNativeBalanceOf(walletChainId)?.map(
+                  ({ balance }) => balance,
+                ) ?? [],
+              ),
+              getMasterEoaNativeBalanceOf(walletChainId),
+            ]);
           }
 
           // balance for other required tokens (eg. USDC)
-          return masterSafeErc20Balances?.[symbol] ?? 0;
+          return getMasterSafeErc20Balances(walletChainId)?.[symbol] ?? 0;
         })();
 
         const asset: AvailableAsset = {
@@ -185,12 +197,11 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   }, [
     walletChainId,
     usdBreakdown,
-    middlewareHomeChainId,
-    masterSafeErc20Balances,
-    masterSafeOlasBalance,
-    accruedServiceStakingRewards,
-    masterSafeNativeBalance,
-    masterEoaBalance,
+    // accruedServiceStakingRewards,
+    getMasterSafeOlasBalanceOf,
+    getMasterSafeNativeBalanceOf,
+    getMasterEoaNativeBalanceOf,
+    getMasterSafeErc20Balances,
   ]);
 
   const aggregatedBalance = useMemo(() => {
@@ -200,7 +211,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   // staked OLAS
   const stakedAssets: StakedAsset[] = [
     {
-      agentName: generateName(serviceSafe?.address),
+      agentName: walletChainId
+        ? generateName(serviceSafeOf(walletChainId)?.address)
+        : 'Agent',
       agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
       symbol: 'OLAS',
       amount: totalStakedOlasBalance ?? 0,

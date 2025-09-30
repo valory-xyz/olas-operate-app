@@ -62,8 +62,11 @@ export const REACT_QUERY_KEYS = {
       serviceConfigId,
       stakingProgramId,
     ] as const,
-  REWARDS_HISTORY_KEY: (chainId: number, serviceId: number) =>
-    ['rewardsHistory', chainId, serviceId] as const,
+  REWARDS_HISTORY_KEY: (
+    chainId: number,
+    serviceId: number,
+    filterQueryByServiceId: boolean,
+  ) => ['rewardsHistory', chainId, serviceId, filterQueryByServiceId] as const,
 
   // multisigs
   MULTISIG_GET_OWNERS_KEY: (multisig: Safe) =>
