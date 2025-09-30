@@ -67,6 +67,21 @@ const PearlWalletContext = createContext<{
   onReset: () => {},
 });
 
+const useUsdBreakdown = (chainId: EvmChainId) => {
+  const chainName = chainId ? CHAIN_CONFIG[chainId].name : '';
+
+  const usdRequirements = useMemo(() => {
+    if (!chainId) return [];
+    return Object.entries(TOKEN_CONFIG[chainId!]).map(([untypedSymbol]) => {
+      const symbol = untypedSymbol as TokenSymbol;
+      return { symbol, amount: 0 };
+    });
+  }, [chainId]);
+
+  const { breakdown: usdBreakdown } = useUsdAmounts(chainName, usdRequirements);
+  return usdBreakdown;
+};
+
 export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const {
     isLoading: isServicesLoading,
@@ -97,6 +112,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   >({});
   const { isLoading: isStakingRewardsLoading, data: stakingRewards } =
     useStakingRewardsDetails(walletChainId);
+  const usdBreakdown = useUsdBreakdown(walletChainId);
 
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) => agentConfig.evmHomeChainId === walletChainId,
@@ -123,22 +139,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       }),
     );
   }, [services]);
-
-  const chainName = walletChainId
-    ? (CHAIN_CONFIG[walletChainId].name as string)
-    : '';
-
-  const usdRequirements = useMemo(() => {
-    if (!walletChainId) return [];
-    return Object.entries(TOKEN_CONFIG[walletChainId!]).map(
-      ([untypedSymbol]) => {
-        const symbol = untypedSymbol as TokenSymbol;
-        return { symbol, amount: 0 };
-      },
-    );
-  }, [walletChainId]);
-
-  const { breakdown: usdBreakdown } = useUsdAmounts(chainName, usdRequirements);
 
   // OLAS token, Native Token, other ERC20 tokens
   const availableAssets: AvailableAsset[] = useMemo(() => {

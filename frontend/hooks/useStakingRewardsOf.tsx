@@ -25,13 +25,12 @@ export const useStakingRewardsDetails = (chainId: EvmChainId) => {
     (s) => s.home_chain === asMiddlewareChain(chainId),
   );
 
-  // find an active agent for the given chainId
-  // we assume there is always an active agent for a given chainId
+  // Find an active agent for the given chainId.
   // NOTE: the logic needs to be updated once multiple agent in single chain is supported
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) => agentConfig.evmHomeChainId === chainId,
   );
-  assertRequired(agent, 'Agent not found for the given chainId');
+  assertRequired(agent, 'Agent not found for the given chainId.');
   const agentType = agent[0] as AgentType;
 
   const agentConfig = useMemo(() => {
@@ -40,17 +39,11 @@ export const useStakingRewardsDetails = (chainId: EvmChainId) => {
   }, [agentType]);
 
   const serviceConfigId = service?.service_config_id;
-  const currentChainId = agentConfig.evmHomeChainId;
-  const serviceNftTokenId = isNil(service?.chain_configs)
+  const chainDetails = isNil(service?.chain_configs)
     ? null
-    : service.chain_configs?.[service?.home_chain]?.chain_data?.token;
-
-  // fetch chain data from the selected service
-  const chainData = !isNil(service?.chain_configs)
-    ? service?.chain_configs?.[asMiddlewareChain(currentChainId)]?.chain_data
-    : null;
-  const multisig = chainData?.multisig;
-  const token = chainData?.token;
+    : service.chain_configs?.[asMiddlewareChain(chainId)]?.chain_data;
+  const multisig = chainDetails?.multisig;
+  const serviceNftTokenId = chainDetails?.token;
 
   const { isLoading, data: activeStakingProgramId } = useQuery({
     queryKey: REACT_QUERY_KEYS.STAKING_PROGRAM_KEY(chainId, serviceNftTokenId!),
@@ -80,20 +73,20 @@ export const useStakingRewardsDetails = (chainId: EvmChainId) => {
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.REWARDS_KEY(
-      currentChainId,
+      chainId,
       serviceConfigId!,
       selectedStakingProgramId!,
       multisig!,
-      token!,
+      serviceNftTokenId!,
     ),
     queryFn: async () => {
       try {
         const response =
           await agentConfig.serviceApi.getAgentStakingRewardsInfo({
             agentMultisigAddress: multisig!,
-            serviceId: token!,
+            serviceId: serviceNftTokenId!,
             stakingProgramId: selectedStakingProgramId!,
-            chainId: currentChainId,
+            chainId,
           });
 
         if (!response) return null;
@@ -115,7 +108,7 @@ export const useStakingRewardsDetails = (chainId: EvmChainId) => {
       !!serviceConfigId &&
       !!selectedStakingProgramId &&
       !!multisig &&
-      isValidServiceId(token),
+      isValidServiceId(serviceNftTokenId),
     refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });
