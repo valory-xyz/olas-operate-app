@@ -1,15 +1,9 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
-import { CSSProperties } from 'styled-components';
 
 import { Divider } from '@/components/ui/Divider';
 
 const { Text } = Typography;
-
-export const cardStyles: CSSProperties = {
-  width: 552,
-  margin: '0 auto',
-} as const;
 
 export const PearlWalletToExternalWallet = () => (
   <Flex vertical style={{ margin: '0 -32px' }}>
