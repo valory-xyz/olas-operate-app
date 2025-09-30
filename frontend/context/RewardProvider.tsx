@@ -85,7 +85,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     isLoading: isStakingRewardsDetailsLoading,
   } = useAgentStakingRewardsDetails(
     currentChainId,
-    selectedStakingProgramId!,
+    selectedStakingProgramId,
     selectedAgentConfig,
   );
 

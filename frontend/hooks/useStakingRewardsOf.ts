@@ -4,13 +4,13 @@ import { useMemo } from 'react';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { DEFAULT_STAKING_PROGRAM_IDS } from '@/config/stakingPrograms';
 import { AgentType, EvmChainId } from '@/constants';
-import { useServices } from '@/hooks/useServices';
 import { AgentConfig } from '@/types/Agent';
 import { assertRequired, Maybe } from '@/types/Util';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { useActiveStakingProgramId } from './useActiveStakingProgramId';
 import { useAgentStakingRewardsDetails } from './useAgentStakingRewardsDetails';
+import { useServices } from './useServices';
 
 /**
  * Hook to fetch staking rewards details of a service on a given chain.

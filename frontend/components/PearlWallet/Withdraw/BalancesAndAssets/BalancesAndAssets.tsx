@@ -1,5 +1,5 @@
 import { Button, Flex, Typography } from 'antd';
-import { isNumber } from 'lodash';
+import { isNumber, kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useEffect } from 'react';
 
@@ -7,6 +7,7 @@ import { AgentNft } from '@/components/AgentNft';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Segmented } from '@/components/ui/Segmented';
 import { NA } from '@/constants/symbols';
+import { asEvmChainDetails } from '@/utils';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
@@ -109,7 +110,7 @@ export const BalancesAndAssets = ({
             label: (
               <Flex gap={8}>
                 <Image
-                  src={`/chains/${chain.chainName}-chain.png`}
+                  src={`/chains/${kebabCase(asEvmChainDetails(chain.chainName).name)}-chain.png`}
                   alt={chain.chainName}
                   width={24}
                   height={24}

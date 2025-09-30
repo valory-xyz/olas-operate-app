@@ -120,21 +120,15 @@ export const useService = (serviceConfigId?: string) => {
       if (!chainData) return null;
 
       // group multisigs by chainId
-      const addressesByChainId = Object.keys(chainData).reduce(
-        (acc, middlewareChain) => {
-          const { multisig, instances } =
-            chainData[middlewareChain as keyof typeof chainData].chain_data;
-          const evmChainId = asEvmChainId(middlewareChain);
-
-          return {
-            ...acc,
-            [evmChainId]: { agentSafe: multisig, agentEoas: instances },
-          };
-        },
-        {},
-      ) satisfies ServiceChainIdAddressRecord;
-
-      return addressesByChainId;
+      return Object.keys(chainData).reduce((acc, middlewareChain) => {
+        const { multisig, instances } =
+          chainData[middlewareChain as keyof typeof chainData].chain_data;
+        const evmChainId = asEvmChainId(middlewareChain);
+        return {
+          ...acc,
+          [evmChainId]: { agentSafe: multisig, agentEoas: instances },
+        };
+      }, {}) satisfies ServiceChainIdAddressRecord;
     },
     [services],
   );
