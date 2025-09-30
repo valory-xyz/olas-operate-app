@@ -7,9 +7,10 @@ import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useServices } from '@/hooks/useServices';
 import { AgentConfig } from '@/types/Agent';
 import { Maybe } from '@/types/Util';
+import { isValidServiceId } from '@/utils';
 
 /**
- * hook to get the active staking program id
+ * Hook to get the active staking program id.
  */
 export const useActiveStakingProgramId = (
   serviceNftTokenId: Maybe<number>,
@@ -24,12 +25,11 @@ export const useActiveStakingProgramId = (
       serviceNftTokenId!,
     ),
     queryFn: async () => {
-      if (!serviceNftTokenId) return null;
-      if (!Number(serviceNftTokenId)) return null;
+      if (!isValidServiceId(serviceNftTokenId)) return null;
 
       const currentStakingProgramId =
         await serviceApi.getCurrentStakingProgramByServiceId(
-          serviceNftTokenId,
+          serviceNftTokenId!,
           evmHomeChainId,
         );
 
@@ -38,7 +38,10 @@ export const useActiveStakingProgramId = (
         DEFAULT_STAKING_PROGRAM_IDS[agentConfig.evmHomeChainId]
       );
     },
-    enabled: !isNil(evmHomeChainId) && isServicesLoaded && !!serviceNftTokenId,
+    enabled:
+      !isNil(evmHomeChainId) &&
+      isServicesLoaded &&
+      isValidServiceId(serviceNftTokenId),
     refetchInterval: FIVE_SECONDS_INTERVAL,
   });
 };

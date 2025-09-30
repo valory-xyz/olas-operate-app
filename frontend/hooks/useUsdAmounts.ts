@@ -26,8 +26,6 @@ const getHeaders = () => {
   return headers;
 };
 
-const IS_MOCK = true;
-
 export const fetchTokenUsdPrice = async (
   platform: string,
   contractAddress: string,
@@ -36,11 +34,6 @@ export const fetchTokenUsdPrice = async (
   if (!platform || !contractAddress) return 0;
   const params = new URLSearchParams({ platform, address: contractAddress });
   const requestUrl = `/api/price/token?${params.toString()}`;
-
-  if (IS_MOCK) {
-    return Promise.resolve(0);
-  }
-
   const response = await fetch(requestUrl, {
     method: 'GET',
     signal,
@@ -60,11 +53,6 @@ const fetchNativeUsdPrice = async (
   if (!coinId) return 0;
   const params = new URLSearchParams({ ids: coinId, vs_currencies: 'usd' });
   const requestUrl = `${COINGECKO_API_BASE}/simple/price?${params.toString()}`;
-
-  if (IS_MOCK) {
-    return Promise.resolve(0);
-  }
-
   const response = await fetch(requestUrl, {
     method: 'GET',
     headers: getHeaders(),

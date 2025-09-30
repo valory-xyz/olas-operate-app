@@ -10,15 +10,16 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 import { useServices } from '@/hooks/useServices';
 import { AgentConfig } from '@/types/Agent';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
+import { Nullable } from '@/types/Util';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { isValidServiceId } from '@/utils/service';
 
 /**
- * hook to fetch staking rewards details of a service on a given chain.
+ * Hook to fetch staking rewards details of a service on a given chain.
  */
 export const useAgentStakingRewardsDetails = (
   chainId: EvmChainId,
-  stakingProgramId: StakingProgramId,
+  stakingProgramId: Nullable<StakingProgramId>,
   agentConfig: AgentConfig,
 ) => {
   const { isOnline } = useContext(OnlineStatusContext);

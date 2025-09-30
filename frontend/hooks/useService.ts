@@ -50,7 +50,7 @@ const getAgentEoas = (addresses?: Address[]) => {
         address,
         owner: WalletOwnerType.Agent,
         type: WalletType.EOA,
-      }) as AgentEoa,
+      }) satisfies AgentEoa,
   );
 };
 
@@ -91,11 +91,11 @@ export const useService = (serviceConfigId?: string) => {
       if (!chainConfig) return [];
 
       const agentSafe = {
-        address: chainConfig.chain_data.multisig,
+        address: chainConfig.chain_data.multisig as Address,
         owner: WalletOwnerType.Agent,
         type: WalletType.Safe,
         evmChainId: chainId,
-      } as AgentSafe;
+      } satisfies AgentSafe;
 
       return [
         ...getAgentEoas(chainConfig.chain_data.instances),
@@ -132,7 +132,7 @@ export const useService = (serviceConfigId?: string) => {
           };
         },
         {},
-      ) as ServiceChainIdAddressRecord;
+      ) satisfies ServiceChainIdAddressRecord;
 
       return addressesByChainId;
     },

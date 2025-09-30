@@ -220,13 +220,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [walletChainId, agentType, totalStakedOlasBalance, serviceSafeOf],
   );
 
-  // console.log({
-  //   // stakedAssets,
-  //   // walletChainId,
-  //   // k: walletChainId ? serviceSafeOf(walletChainId) : null,
-  //   accruedServiceStakingRewards,
-  // });
-
   const updateStep = useCallback(
     (newStep: ValueOf<typeof STEPS>) => {
       setWalletStep(newStep);
@@ -286,9 +279,3 @@ export const usePearlWallet = () => {
   }
   return context;
 };
-
-/**
- * - Re-use assets table
- * - use useStakingRewardsOf to get the staking rewards
- * - fix the agentName in the staked assets table
- */

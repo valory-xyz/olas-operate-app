@@ -13,7 +13,7 @@ import { useActiveStakingProgramId } from './useActiveStakingProgramId';
 import { useAgentStakingRewardsDetails } from './useAgentStakingRewardsDetails';
 
 /**
- * hook to fetch staking rewards details of a service on a given chain.
+ * Hook to fetch staking rewards details of a service on a given chain.
  */
 export const useStakingRewardsOf = (chainId: EvmChainId) => {
   const { services } = useServices();
@@ -29,10 +29,10 @@ export const useStakingRewardsOf = (chainId: EvmChainId) => {
   assertRequired(agent, 'Agent not found for the given chainId.');
   const agentType = agent[0] as AgentType;
 
-  const agentConfig = useMemo(() => {
-    const config: Maybe<AgentConfig> = AGENT_CONFIG[agentType];
-    return config;
-  }, [agentType]);
+  const agentConfig: Maybe<AgentConfig> = useMemo(
+    () => AGENT_CONFIG[agentType],
+    [agentType],
+  );
 
   const chainConfigs = service?.chain_configs;
   const chainDetails = isNil(chainConfigs)
@@ -53,7 +53,7 @@ export const useStakingRewardsOf = (chainId: EvmChainId) => {
 
   return useAgentStakingRewardsDetails(
     chainId,
-    selectedStakingProgramId!,
+    selectedStakingProgramId,
     agentConfig,
   );
 };
