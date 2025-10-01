@@ -2475,7 +2475,7 @@ web3 = "6.20.4"
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
 reference = "feat/funding_v2_flow2"
-resolved_reference = "3f70716baaed58e6afa090dc57dc55796623a8f8"
+resolved_reference = "ff156cc27d8904cdba4e1bc0e7fa330b540f24ee"
 
 [[package]]
 name = "open-aea"
