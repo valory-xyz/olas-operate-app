@@ -3,9 +3,9 @@ import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
 import { Table } from '@/components/ui/Table';
 import { NA } from '@/constants/symbols';
 import { TokenSymbolConfigMap } from '@/constants/token';
+import { StakedAsset } from '@/types/Wallet';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
-import { StakedAsset } from '../types';
 
 const { Text } = Typography;
 

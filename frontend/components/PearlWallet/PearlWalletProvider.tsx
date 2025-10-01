@@ -18,10 +18,10 @@ import { useBalanceContext, useService, useServices } from '@/hooks';
 import { useAvailableAssets } from '@/hooks/useAvailableAssets';
 import { AgentConfig } from '@/types/Agent';
 import { Nullable, ValueOf } from '@/types/Util';
-import { AvailableAsset } from '@/types/Wallet';
+import { AvailableAsset, StakedAsset } from '@/types/Wallet';
 import { generateName } from '@/utils/agentName';
 
-import { StakedAsset, STEPS, WalletChain } from './Withdraw/types';
+import { STEPS, WalletChain } from './Withdraw/types';
 
 const PearlWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;
