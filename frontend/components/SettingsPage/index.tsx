@@ -17,8 +17,7 @@ import { Optional } from '@/types/Util';
 
 import { AddressLink } from '../AddressLink';
 import { CustomAlert } from '../Alert';
-import { CardSection } from '../ui/CardSection';
-import { cardStyles } from '../ui/cardStyles';
+import { CardSection, cardStyles } from '../ui';
 
 const { Text, Paragraph } = Typography;
 
@@ -70,6 +69,21 @@ export const Settings = () => {
 
   return settingsScreen;
 };
+
+const BackupWalletInfo = () => (
+  <Flex gap={16}>
+    <Image
+      src="/wallet-icon.png"
+      alt="wallet"
+      width={36}
+      height={36}
+      className="mb-auto"
+    />
+    <div style={{ marginTop: 6, marginBottom: 6 }}>
+      <Text strong>Backup wallet</Text>
+    </div>
+  </Flex>
+);
 
 const SettingsMain = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');

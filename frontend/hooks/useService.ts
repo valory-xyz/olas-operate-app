@@ -12,7 +12,7 @@ import {
 import { Address } from '@/types/Address';
 import { Service } from '@/types/Service';
 import { Nullable, Optional } from '@/types/Util';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { useServices } from './useServices';
 
@@ -35,10 +35,23 @@ const MiddlewareBuildingStatuses = [
 ];
 
 type ServiceChainIdAddressRecord = {
-  [evmChainId in EvmChainId]: {
+  [evmChainId in EvmChainId]?: {
     agentSafe?: Address;
     agentEoas?: Address[];
   };
+};
+
+const getAgentEoas = (addresses?: Address[]) => {
+  if (!addresses || addresses.length === 0) return [];
+
+  return addresses.map(
+    (address) =>
+      ({
+        address,
+        owner: WalletOwnerType.Agent,
+        type: WalletType.EOA,
+      }) satisfies AgentEoa,
+  );
 };
 
 /**
@@ -66,98 +79,123 @@ export const useService = (serviceConfigId?: string) => {
     return service?.chain_configs?.[service?.home_chain]?.chain_data.token;
   }, [service?.chain_configs, service?.home_chain]);
 
+  const getServiceWalletsOf = useCallback(
+    (chainId: EvmChainId): AgentWallet[] => {
+      const chainName = asMiddlewareChain(chainId);
+      const service = services?.find((s) => s.home_chain === chainName);
+
+      if (!service) return [];
+      if (!service.chain_configs?.[chainName]) return [];
+
+      const chainConfig = service.chain_configs[chainName];
+      if (!chainConfig) return [];
+
+      const agentSafe = {
+        address: chainConfig.chain_data.multisig as Address,
+        owner: WalletOwnerType.Agent,
+        type: WalletType.Safe,
+        evmChainId: chainId,
+      } satisfies AgentSafe;
+
+      return [
+        ...getAgentEoas(chainConfig.chain_data.instances),
+        ...(chainConfig.chain_data.multisig ? [agentSafe] : []),
+      ];
+    },
+    [services],
+  );
+
   const serviceWallets: AgentWallet[] = useMemo(() => {
-    if (!service) return [];
     if (!selectedService?.home_chain) return [];
-    if (!service.chain_configs?.[selectedService?.home_chain]) return [];
+    return getServiceWalletsOf(asEvmChainId(selectedService.home_chain));
+  }, [selectedService, getServiceWalletsOf]);
 
-    const chainConfig = service.chain_configs[selectedService?.home_chain];
-    if (!chainConfig) return [];
+  const getAddressesOf = useCallback(
+    (chainId: EvmChainId): Nullable<ServiceChainIdAddressRecord> => {
+      const chainName = asMiddlewareChain(chainId);
+      const service = services?.find((s) => s.home_chain === chainName);
+      const chainData = service?.chain_configs;
 
-    const agentSafe = {
-      address: chainConfig.chain_data.multisig,
-      owner: WalletOwnerType.Agent,
-      type: WalletType.Safe,
-      evmChainId: asEvmChainId(selectedService?.home_chain),
-    } as AgentSafe;
+      if (!chainData) return null;
 
-    return [
-      ...(chainConfig.chain_data.instances ?? []).map(
-        (address) =>
-          ({
-            address,
-            owner: WalletOwnerType.Agent,
-            type: WalletType.EOA,
-          }) as AgentEoa,
-      ),
-      ...(chainConfig.chain_data.multisig ? [agentSafe] : []),
-    ];
-  }, [service, selectedService]);
-
-  const addresses: Nullable<ServiceChainIdAddressRecord> = useMemo(() => {
-    const chainData = service?.chain_configs;
-
-    if (!chainData) return null;
-
-    // group multisigs by chainId
-    const addressesByChainId = Object.keys(chainData).reduce(
-      (acc, middlewareChain) => {
+      // group multisigs by chainId
+      return Object.keys(chainData).reduce((acc, middlewareChain) => {
         const { multisig, instances } =
           chainData[middlewareChain as keyof typeof chainData].chain_data;
         const evmChainId = asEvmChainId(middlewareChain);
-
         return {
           ...acc,
           [evmChainId]: { agentSafe: multisig, agentEoas: instances },
         };
-      },
-      {},
-    ) as ServiceChainIdAddressRecord;
-
-    return addressesByChainId;
-  }, [service]);
+      }, {}) satisfies ServiceChainIdAddressRecord;
+    },
+    [services],
+  );
 
   /**
    * Flat list of all addresses associated with the service.
    * ie, all agentSafe and agentEoas
    */
-  const allAgentAddresses = useMemo(() => {
-    if (!service) return [];
-    if (!addresses) return [];
+  const getAgentAddressesOf = useCallback(
+    (chainId: EvmChainId): Address[] => {
+      if (!service) return [];
+      const chainAddresses = getAddressesOf(chainId);
 
-    return Object.values(addresses).reduce((acc, { agentSafe, agentEoas }) => {
-      if (agentSafe) acc.push(agentSafe);
-      if (agentEoas) acc.push(...agentEoas);
-      return acc;
-    }, [] as Address[]);
-  }, [addresses, service]);
+      if (!chainAddresses) return [];
+
+      return Object.values(chainAddresses).reduce(
+        (acc, { agentSafe, agentEoas }) => {
+          if (agentSafe) acc.push(agentSafe);
+          if (agentEoas) acc.push(...agentEoas);
+          return acc;
+        },
+        [] as Address[],
+      );
+    },
+    [service, getAddressesOf],
+  );
+
+  const agentAddresses = useMemo(() => {
+    if (!service?.home_chain) return [];
+    return getAgentAddressesOf(asEvmChainId(service.home_chain));
+  }, [getAgentAddressesOf, service]);
+
+  const getServicesSafesOf = useCallback(
+    (chainId: EvmChainId) =>
+      getServiceWalletsOf(chainId).filter(
+        (wallet): wallet is AgentSafe =>
+          getAgentAddressesOf(chainId).includes(wallet.address) &&
+          wallet.owner === WalletOwnerType.Agent &&
+          wallet.type === WalletType.Safe,
+      ),
+    [getServiceWalletsOf, getAgentAddressesOf],
+  );
 
   const serviceSafes = useMemo(() => {
     if (!serviceWallets) return [];
     return serviceWallets.filter(
       (wallet): wallet is AgentSafe =>
-        allAgentAddresses.includes(wallet.address) &&
+        agentAddresses.includes(wallet.address) &&
         wallet.owner === WalletOwnerType.Agent &&
         wallet.type === WalletType.Safe,
     );
-  }, [allAgentAddresses, serviceWallets]);
+  }, [agentAddresses, serviceWallets]);
 
   const serviceEoa = useMemo(() => {
     if (!serviceWallets) return null;
     return serviceWallets.find(
       (wallet): wallet is AgentEoa =>
-        allAgentAddresses.includes(wallet.address) &&
+        agentAddresses.includes(wallet.address) &&
         wallet.owner === WalletOwnerType.Agent &&
         wallet.type === WalletType.EOA,
     );
-  }, [allAgentAddresses, serviceWallets]);
+  }, [agentAddresses, serviceWallets]);
 
   // agent safe
-  const serviceSafeOf = useCallback(
-    (chainId: EvmChainId) => {
-      return serviceSafes?.find((safe) => safe.evmChainId === chainId);
-    },
-    [serviceSafes],
+  const getServiceSafeOf = useCallback(
+    (chainId: EvmChainId) =>
+      getServicesSafesOf(chainId)?.find((safe) => safe.evmChainId === chainId),
+    [getServicesSafesOf],
   );
 
   /** @note deployment is transitioning from stopped to deployed (and vice versa) */
@@ -178,15 +216,18 @@ export const useService = (serviceConfigId?: string) => {
   return {
     isLoaded,
     isServiceTransitioning,
-    isServiceRunning,
-    isServiceBuilding,
-    serviceNftTokenId,
-    addresses,
-    allAgentAddresses,
+
+    agentAddresses,
     deploymentStatus,
+    serviceWallets,
     serviceSafes,
     serviceEoa,
     service,
-    serviceSafeOf,
+    getServiceSafeOf,
+
+    // service status
+    isServiceRunning,
+    isServiceBuilding,
+    serviceNftTokenId,
   };
 };

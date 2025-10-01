@@ -1,5 +1,5 @@
 import { Button, Flex, Typography } from 'antd';
-import { isNumber } from 'lodash';
+import { isNumber, kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useEffect } from 'react';
 
@@ -109,7 +109,7 @@ export const BalancesAndAssets = ({
             label: (
               <Flex gap={8}>
                 <Image
-                  src={`/chains/${chain.chainName}-chain.png`}
+                  src={`/chains/${kebabCase(chain.chainName)}-chain.png`}
                   alt={chain.chainName}
                   width={24}
                   height={24}

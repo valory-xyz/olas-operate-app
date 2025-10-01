@@ -338,7 +338,7 @@ export const RewardsHistory = () => {
       <CardFlex
         $noBorder
         title={<CardTitle title="Staking rewards history" />}
-        noBodyPadding="true"
+        $noBodyPadding={true}
         extra={<GoToMainPageButton />}
       >
         {history}

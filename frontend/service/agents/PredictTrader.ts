@@ -72,29 +72,13 @@ export abstract class PredictTraderService extends StakedAgentService {
       tsCheckpoint,
     ] = multicallResponse;
 
-    /**
-     * struct ServiceInfo {
-      // Service multisig address
-      address multisig;
-      // Service owner
-      address owner;
-      // Service multisig nonces
-      uint256[] nonces; <-- (we use this in the rewards eligibility check)
-      // Staking start time
-      uint256 tsStart;
-      // Accumulated service staking reward
-      uint256 reward;
-      // Accumulated inactivity that might lead to the service eviction
-      uint256 inactivity;}
-     */
-
     const nowInSeconds = Math.floor(Date.now() / 1000);
 
+    const livenessWeightedRequestThreshold =
+      Math.ceil(Math.max(livenessPeriod, nowInSeconds - tsCheckpoint)) *
+      livenessRatio;
     const requiredMechRequests =
-      (Math.ceil(Math.max(livenessPeriod, nowInSeconds - tsCheckpoint)) *
-        livenessRatio) /
-        1e18 +
-      MECH_REQUESTS_SAFETY_MARGIN;
+      livenessWeightedRequestThreshold / 1e18 + MECH_REQUESTS_SAFETY_MARGIN;
 
     const mechRequestCountOnLastCheckpoint = serviceInfo[2][1];
     const eligibleRequests =
@@ -104,7 +88,7 @@ export abstract class PredictTraderService extends StakedAgentService {
 
     const availableRewardsForEpoch = Math.max(
       rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
-      rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+      rewardsPerSecond * (nowInSeconds - tsCheckpoint), // in case of late checkpoint
     );
 
     // Minimum staked amount is double the minimum staking deposit

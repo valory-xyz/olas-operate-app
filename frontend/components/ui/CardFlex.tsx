@@ -2,12 +2,6 @@ import { Card } from 'antd';
 import styled from 'styled-components';
 
 type CardFlexProps = {
-  /** @deprecated Use $gap instead */
-  gap?: number;
-  /** @deprecated Use $noBodyPadding instead */
-  noBodyPadding?: 'true' | 'false';
-  /** @deprecated Use $noBorder instead */
-  noBorder?: boolean;
   $gap?: number;
   $noBodyPadding?: boolean;
   $noBorder?: boolean;
@@ -16,11 +10,8 @@ type CardFlexProps = {
   $newStyles?: boolean;
 };
 
-export const CardFlex = styled(Card).withConfig({
-  shouldForwardProp: (prop: string) =>
-    !['gap', 'noBodyPadding', 'noBorder'].includes(prop),
-})<CardFlexProps>`
-  ${(props) => !!(props.noBorder || props.$noBorder) && 'border: none;'}
+export const CardFlex = styled(Card)<CardFlexProps>`
+  ${(props) => !!props.$noBorder && 'border: none;'}
 
   ${(props) => !!props.$onboarding && 'width: 624px;'}
   
@@ -34,17 +25,9 @@ export const CardFlex = styled(Card).withConfig({
 
   .ant-card-body {
     ${(props) => {
-      const {
-        gap: legacyGap,
-        $gap,
-        noBodyPadding: legacyNoBodyPadding,
-        $noBodyPadding,
-      } = props;
-      const gap = legacyGap || $gap;
-      const noBodyPadding = legacyNoBodyPadding === 'true' || $noBodyPadding;
-
-      const gapStyle = gap ? `gap: ${gap}px;` : '';
-      const paddingStyle = noBodyPadding
+      const { $gap, $noBodyPadding } = props;
+      const gapStyle = $gap ? `gap: ${$gap}px;` : '';
+      const paddingStyle = $noBodyPadding
         ? 'padding: 0;'
         : (props.$padding && `padding: ${props.$padding};`) || '';
 

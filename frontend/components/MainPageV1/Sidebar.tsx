@@ -51,9 +51,13 @@ const ResponsiveButton = styled(Button)`
 `;
 
 const menuItems: MenuProps['items'] = [
-  { key: 'pearl-wallet', icon: <WalletOutlined />, label: 'Pearl Wallet' },
-  { key: 'help', icon: <QuestionCircleOutlined />, label: 'Help Center' },
-  { key: 'settings', icon: <SettingOutlined />, label: 'Settings' },
+  { key: Pages.PearlWallet, icon: <WalletOutlined />, label: 'Pearl Wallet' },
+  {
+    key: Pages.HelpAndSupport,
+    icon: <QuestionCircleOutlined />,
+    label: 'Help Center',
+  },
+  { key: Pages.Settings, icon: <SettingOutlined />, label: 'Settings' },
 ];
 
 const MyAgentsHeader = () => (
@@ -74,16 +78,16 @@ type AgentList = {
 
 type AgentListMenuProps = {
   myAgents: AgentList;
-  selectedAgentType: AgentType;
+  selectedMenuKeys: (Pages | AgentType)[];
   onAgentSelect: MenuProps['onClick'];
 };
 const AgentListMenu = ({
   myAgents,
-  selectedAgentType,
+  selectedMenuKeys,
   onAgentSelect,
 }: AgentListMenuProps) => (
   <Menu
-    selectedKeys={[selectedAgentType]}
+    selectedKeys={selectedMenuKeys}
     mode="inline"
     inlineIndent={4}
     onClick={onAgentSelect}
@@ -114,7 +118,7 @@ const AgentListMenu = ({
 
 export const Sidebar = () => {
   const { goto: gotoSetup } = useSetup();
-  const { goto: gotoPage } = usePageState();
+  const { pageState, goto: gotoPage } = usePageState();
 
   // TODO: in order for predict to display correctly,
   // we need to create a dummy service before going to main page
@@ -175,27 +179,15 @@ export const Sidebar = () => {
 
   const handleMenuClick = useCallback<NonNullable<MenuProps['onClick']>>(
     ({ key }) => {
-      switch (key) {
-        case 'pearl-wallet': {
-          gotoPage(Pages.PearlWallet);
-          return;
-        }
-        case 'help': {
-          gotoPage(Pages.HelpAndSupport);
-          return;
-        }
-        case 'settings': {
-          gotoPage(Pages.Settings);
-          return;
-        }
-        case 'agent-form-settings': {
-          gotoPage(Pages.UpdateAgentTemplate);
-          return;
-        }
-      }
+      gotoPage(key as Pages);
     },
     [gotoPage],
   );
+
+  const selectedMenuKey = useMemo(() => {
+    if (pageState === Pages.Main) return [selectedAgentType];
+    return [pageState];
+  }, [pageState, selectedAgentType]);
 
   return (
     <SiderContainer>
@@ -207,7 +199,7 @@ export const Sidebar = () => {
           ) : myAgents.length > 0 ? (
             <AgentListMenu
               myAgents={myAgents}
-              selectedAgentType={selectedAgentType}
+              selectedMenuKeys={selectedMenuKey}
               onAgentSelect={handleAgentSelect}
             />
           ) : null}
@@ -227,6 +219,7 @@ export const Sidebar = () => {
           )}
 
           <Menu
+            selectedKeys={selectedMenuKey}
             mode="inline"
             inlineIndent={12}
             className="mt-auto"

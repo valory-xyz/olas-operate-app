@@ -6,7 +6,7 @@ import {
   SuccessOutlined,
   WarningOutlined,
 } from '@/components/custom-icons';
-import { cardStyles } from '@/components/ui/cardStyles';
+import { cardStyles } from '@/components/ui';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
 import { Pages } from '@/enums/Pages';

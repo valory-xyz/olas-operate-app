@@ -8,7 +8,7 @@ import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { Address } from '@/types/Address';
 
-import { LIGHT_ICON_STYLE } from '../ui/iconStyles';
+import { LIGHT_ICON_STYLE } from '../ui/styles/iconStyles';
 
 type AUTH_SUCCESS_EVENT_DATA = {
   event_id: 'WEB3AUTH_AUTH_SUCCESS';
