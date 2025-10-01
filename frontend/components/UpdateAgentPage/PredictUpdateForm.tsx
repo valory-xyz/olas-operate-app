@@ -18,7 +18,7 @@ import {
   GeminiApiKeyLabel,
   GeminiApiKeySubHeader,
 } from '../AgentForms/common/labels';
-import { usePredictFormValidate } from '../SetupPage/SetupYourAgent/PredictAgentSetup/usePredictFormValidate';
+import { usePredictFormValidate } from '../SetupPage/SetupYourAgent/PredictAgentForm/usePredictFormValidate';
 import { RenderForm } from '../SetupPage/SetupYourAgent/useDisplayAgentForm';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
@@ -130,7 +130,9 @@ export const PredictUpdatePage = ({ renderForm }: PredictUpdatePageProps) => {
       get(form?.getFieldsValue(), 'env_variables'),
       (value) => isUndefined(value),
     );
-    const hasUnsavedChanges = !isEqual(unsavedFields, initialValues);
+    const previousValues = initialValues?.env_variables;
+
+    const hasUnsavedChanges = !isEqual(unsavedFields, previousValues);
     if (hasUnsavedChanges) {
       unsavedModal.openModal();
     } else {
