@@ -38,7 +38,7 @@ type TransferDirection = 'to' | 'from';
 const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
   transferDirection: TransferDirection,
 ) => {
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedAgentType } = useServices();
   const { masterEoa } = useMasterWalletContext();
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
@@ -72,7 +72,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
       // monthly_gas_estimate
       const monthlyGasEstimate =
         SERVICE_TEMPLATES.find(
-          (template) => template.home_chain === toMiddlewareChain,
+          (template) => template.agentType === selectedAgentType,
         )?.configurations[toMiddlewareChain]?.monthly_gas_estimate ?? 0;
 
       // amount = max(refill_requirement_masterSafe, monthly_gas_estimate) + refill_requirements_masterEOA

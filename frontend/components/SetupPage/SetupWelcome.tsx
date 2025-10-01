@@ -17,7 +17,7 @@ import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { AccountService } from '@/service/Account';
 import { getErrorMessage } from '@/utils/error';
-import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { FormFlex } from '../styled/FormFlex';
 
@@ -132,8 +132,8 @@ const SetupWelcomeLogin = () => {
     if (!selectedAgentConfig) return false;
 
     return services.some(
-      ({ home_chain }) =>
-        home_chain === asMiddlewareChain(selectedAgentConfig.evmHomeChainId),
+      ({ service_public_id }) =>
+        service_public_id === selectedAgentConfig.servicePublicId,
     );
   }, [isServicesFetched, services, selectedService, selectedAgentConfig]);
 

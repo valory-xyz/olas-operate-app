@@ -272,8 +272,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     if (isNilOrEmpty(services)) return;
 
     const currentService = services.find(
-      ({ home_chain }) =>
-        home_chain === selectedAgentConfig.middlewareHomeChainId,
+      ({ service_public_id }) =>
+        service_public_id === selectedAgentConfig.servicePublicId,
     );
     if (!currentService) {
       setSelectedServiceConfigId(null);
