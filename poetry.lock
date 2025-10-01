@@ -2428,13 +2428,13 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.10.15"
+version = "0.10.16"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.9"
 files = [
-    {file = "olas_operate_middleware-0.10.15-py3-none-any.whl", hash = "sha256:b603fbe9e2d380e63b4ec4ba2f8bbcf73cc1f17fbf446d7e34636eab0700045e"},
-    {file = "olas_operate_middleware-0.10.15.tar.gz", hash = "sha256:dc47a6328edcbd3fbaca8b91743f33afcaedf28301202e66d9eb8a78cdd599d9"},
+    {file = "olas_operate_middleware-0.10.16-py3-none-any.whl", hash = "sha256:a919858a3132d3d09f24a3af1c6956b9e47cd4f41fc6c39d2285f2ccbfd6f635"},
+    {file = "olas_operate_middleware-0.10.16.tar.gz", hash = "sha256:37acb3a5714a1beba226bbc3a9e3a5727c50c1a130189c0d90766ab5b2270162"},
 ]
 
 [package.dependencies]
@@ -2442,7 +2442,7 @@ aiohttp = "3.9.5"
 argon2-cffi = "23.1.0"
 clea = "0.1.0rc4"
 cytoolz = "0.12.3"
-deepdiff = ">=8.0.1,<9.0.0"
+deepdiff = ">=8.6.1,<9.0.0"
 docker = "6.1.2"
 eth-abi = "4.0.0"
 eth-account = "0.8.0"
@@ -4225,4 +4225,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "0e401a9b84569148381e948796308066f0c4ea8f24dd2f05c564f1e8b542029d"
+content-hash = "0ccc6fc92f20192b9e683ee712d9a11b2805d108ca27967bf9d6e6ae458787f5"
