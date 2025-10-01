@@ -15,8 +15,7 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { ArrowUpRightSvg } from '../custom-icons';
 import { ExternalLinkIcon } from '../custom-icons/ExternalLinkIcon';
 import { ExportLogsButton } from '../ExportLogsButton';
-import { CardSection } from '../ui/CardSection';
-import { cardStyles } from '../ui/cardStyles';
+import { CardSection, cardStyles } from '../ui';
 
 const { Title, Paragraph } = Typography;
 

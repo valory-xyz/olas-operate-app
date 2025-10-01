@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { MiddlewareChain } from '@/client';
-import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '@/components/ui/iconStyles';
+import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '@/components/ui';
 import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
 import {
   ETHEREUM_TOKEN_CONFIG,

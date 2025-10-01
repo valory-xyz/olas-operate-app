@@ -26,8 +26,6 @@ const getHeaders = () => {
   return headers;
 };
 
-const API_BASE = '/api/price';
-
 export const fetchTokenUsdPrice = async (
   platform: string,
   contractAddress: string,
@@ -35,8 +33,7 @@ export const fetchTokenUsdPrice = async (
 ): Promise<number> => {
   if (!platform || !contractAddress) return 0;
   const params = new URLSearchParams({ platform, address: contractAddress });
-  const requestUrl = `${API_BASE}/token?${params.toString()}`;
-
+  const requestUrl = `/api/price/token?${params.toString()}`;
   const response = await fetch(requestUrl, {
     method: 'GET',
     signal,
@@ -98,6 +95,9 @@ export const useUsdAmounts = (
         ? COINGECKO_COIN_ID_BY_NATIVE_SYMBOL[req.symbol] ?? ''
         : '';
       const contractAddress = isErc20OrWrapped ? tokenConfig!.address : '';
+      const hasValidTokenQueryParams = Boolean(
+        isErc20OrWrapped && platform && contractAddress,
+      );
 
       return {
         queryKey: [
@@ -107,10 +107,7 @@ export const useUsdAmounts = (
           isNative ? coinId : platform,
           isNative ? 'native' : contractAddress,
         ] as const,
-        enabled: Boolean(
-          (isNative && coinId) ||
-            (isErc20OrWrapped && platform && contractAddress),
-        ),
+        enabled: Boolean(isNative && coinId) || hasValidTokenQueryParams,
         queryFn: async ({ signal }) => {
           if (isNative) return fetchNativeUsdPrice(coinId, signal);
           return fetchTokenUsdPrice(platform, contractAddress, signal);
