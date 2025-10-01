@@ -6,11 +6,19 @@ import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { Nullable } from '@/types/Util';
 
+import { GeminiApiKeyDesc } from '../AgentForms/common/labels';
 import { PredictAgentForm, PredictFormValues } from '../AgentForms/PredictForm';
+import { RenderForm } from '../SetupPage/SetupYourAgent/useDisplayAgentForm';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
-import { UpdateAgentCard } from './UpdateAgentCard';
 
-export const PredictUpdateSetup = () => {
+type PredictUpdatePageProps = {
+  renderForm: RenderForm;
+};
+
+/**
+ * Form for updating Predict agent.
+ */
+export const PredictUpdatePage = ({ renderForm }: PredictUpdatePageProps) => {
   const { goto } = usePageState();
   const { selectedService } = useServices();
   const {
@@ -53,15 +61,17 @@ export const PredictUpdateSetup = () => {
 
   if (!initialValues) return null;
 
-  return (
-    <UpdateAgentCard onClickBack={handleClickBack}>
-      <PredictAgentForm
-        form={form}
-        isFormEnabled={isEditing}
-        initialValues={initialValues}
-        agentFormType={isEditing ? 'update' : 'view'}
-        onSubmit={onSubmit}
-      />
-    </UpdateAgentCard>
+  return renderForm(
+    <PredictAgentForm
+      form={form}
+      isFormEnabled={isEditing}
+      initialValues={initialValues}
+      agentFormType={isEditing ? 'update' : 'view'}
+      onSubmit={onSubmit}
+    />,
+    <>
+      <GeminiApiKeyDesc />
+    </>,
+    { isUpdate: true, onBack: handleClickBack },
   );
 };

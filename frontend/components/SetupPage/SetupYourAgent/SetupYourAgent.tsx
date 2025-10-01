@@ -9,7 +9,7 @@ import { useServices } from '@/hooks/useServices';
 import { AgentsFunAgentSetup } from './AgentsFunAgentSetup';
 import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
 import { OptimusAgentForm } from './OptimusAgentForm/OptimusAgentForm';
-import { PredictAgentSetup } from './PredictAgentSetup';
+import { PredictAgentSetup } from './PredictAgentSetup/PredictAgentSetup';
 import { AgentFormContainer, useDisplayAgentForm } from './useDisplayAgentForm';
 
 const { Text } = Typography;
@@ -35,7 +35,6 @@ export const SetupYourAgent = () => {
   return (
     <AgentFormContainer flex="none">
       {selectedAgentType === AgentMap.PredictTrader && (
-        // TODO: ensure Predict Agent Form works in Pearl V1
         <PredictAgentSetup
           serviceTemplate={serviceTemplate}
           renderForm={displayForm}

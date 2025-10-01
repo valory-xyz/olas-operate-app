@@ -12,7 +12,7 @@ import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { onDummyServiceCreation } from '@/utils/service';
 
-import { RenderForm } from './useDisplayAgentForm';
+import { RenderForm } from '../useDisplayAgentForm';
 
 type PredictAgentSetupFormProps = { serviceTemplate: ServiceTemplate };
 
