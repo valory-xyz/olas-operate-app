@@ -112,7 +112,7 @@ export const PredictUpdatePage = ({ renderForm }: PredictUpdatePageProps) => {
 
     const envEntries = Object.entries(selectedService.env_variables);
 
-    const values = envEntries.reduce(
+    return envEntries.reduce(
       (acc, [key, { value }]) => {
         if (key === 'GENAI_API_KEY') {
           acc.env_variables.GENAI_API_KEY = value;
@@ -121,7 +121,6 @@ export const PredictUpdatePage = ({ renderForm }: PredictUpdatePageProps) => {
       },
       { env_variables: {} } as PredictFormValues,
     );
-    return values;
   }, [selectedService?.env_variables]);
 
   const handleClickBack = useCallback(() => {

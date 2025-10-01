@@ -10,9 +10,8 @@ import {
 } from 'react';
 
 import { ServiceTemplate } from '@/client';
-import { PredictFormValues } from '@/components/AgentForms/PredictForm';
+import { AgentMap } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { AgentType } from '@/enums/Agent';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
@@ -63,7 +62,7 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
     );
 
     const envVariables = (() => {
-      if (selectedAgentType === AgentType.AgentsFun) {
+      if (selectedAgentType === AgentMap.AgentsFun) {
         const agentsFunFormValues = formValues as AgentsFunFormValues;
         return {
           PERSONA: agentsFunFormValues.personaDescription,
@@ -78,17 +77,12 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
           TWEEPY_ACCESS_TOKEN: agentsFunFormValues.xAccessToken,
           TWEEPY_ACCESS_TOKEN_SECRET: agentsFunFormValues.xAccessTokenSecret,
         };
-      } else if (selectedAgentType === AgentType.PredictTrader) {
-        const predictFormValues = formValues as PredictFormValues;
-        return {
-          GENAI_API_KEY: predictFormValues.geminiApiKey || '',
-        };
       }
       return formValues.env_variables;
     })() as ServiceTemplate['env_variables'];
 
     const formValuesWithoutEnv = (() => {
-      if (selectedAgentType === AgentType.AgentsFun) {
+      if (selectedAgentType === AgentMap.AgentsFun) {
         const agentsFunFormValues = formValues as AgentsFunFormValues;
         return { description: `Agents.Fun @${agentsFunFormValues.xUsername}` };
       }
