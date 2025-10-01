@@ -1,5 +1,5 @@
 import { Button, Form, Input, message } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
@@ -95,7 +95,7 @@ export const PredictAgentFormContent = ({
   );
 
   // Clean up
-  useUnmount(async () => {
+  useUnmount(() => {
     setIsSubmitting(false);
     updateSubmitButtonText('Continue');
   });
