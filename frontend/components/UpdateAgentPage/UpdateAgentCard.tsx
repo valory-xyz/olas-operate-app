@@ -34,7 +34,7 @@ export const UpdateAgentCard = ({ onClickBack, children }: CardLayoutProps) => {
         />
       }
       extra={isEditing ? null : <EditButton />}
-      bordered={false}
+      $noBorder
     >
       {children}
     </CardFlex>

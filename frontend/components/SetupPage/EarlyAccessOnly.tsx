@@ -20,8 +20,8 @@ export const EarlyAccessOnly = () => {
 
   return (
     <CardFlex
-      gap={20}
-      noBorder
+      $gap={20}
+      $noBorder
       styles={{ body: { padding: '24px 48px', alignItems: 'center' } }}
     >
       <IdcardOutlined style={{ fontSize: '48px', color: COLOR.TEXT_LIGHT }} />

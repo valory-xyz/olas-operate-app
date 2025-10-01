@@ -204,7 +204,7 @@ export const AgentSelection = ({
   showSelected = true,
   onPrev,
 }: AgentSelectionProps) => (
-  <CardFlex gap={10} styles={{ body: { padding: '12px 24px' } }} noBorder>
+  <CardFlex $gap={10} styles={{ body: { padding: '12px 24px' } }} $noBorder>
     <SetupCreateHeader prev={onPrev} />
     <Title level={3}>Select your agent</Title>
 

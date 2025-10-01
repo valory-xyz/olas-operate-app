@@ -45,7 +45,7 @@ const StakedAssets = () => (
       <Title level={5} className="m-0 text-lg">
         Staked Assets
       </Title>
-      <CardFlex $noBorder>
+      <CardFlex $noBorder className="mb-8">
         <StakedAssetsTable />
         <AgentNft />
       </CardFlex>
