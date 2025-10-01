@@ -66,10 +66,17 @@ const ContractDetailsSection = ({
 
 export const StakingContractDetails = () => {
   const { goto } = usePageState();
-  const { activeStakingProgramId, selectedStakingProgramMeta } =
-    useStakingProgram();
-  const { stakingContractInfo } = useStakingContractDetails(
+  const {
     activeStakingProgramId,
+    defaultStakingProgramId,
+    isActiveStakingProgramLoaded,
+    selectedStakingProgramMeta,
+  } = useStakingProgram();
+  const currentStakingProgramId = isActiveStakingProgramLoaded
+    ? activeStakingProgramId || defaultStakingProgramId
+    : null;
+  const { stakingContractInfo } = useStakingContractDetails(
+    currentStakingProgramId,
   );
   const { epochCounter, olasStakeRequired, apy, rewardsPerWorkPeriod } =
     stakingContractInfo || {};

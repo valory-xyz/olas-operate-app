@@ -1,6 +1,7 @@
-import { Alert, Button, Flex, Skeleton, Statistic, Typography } from 'antd';
+import { Button, Flex, Skeleton, Statistic, Typography } from 'antd';
 import { useMemo } from 'react';
 
+import { CustomAlert } from '@/components/Alert';
 import { Clock } from '@/components/custom-icons/Clock';
 import { FireNoStreak } from '@/components/custom-icons/FireNoStreak';
 import { FireV1 } from '@/components/custom-icons/FireV1';
@@ -17,7 +18,7 @@ const { Text, Title } = Typography;
 const { Countdown } = Statistic;
 
 const EvictionAlert = () => (
-  <Alert
+  <CustomAlert
     message="The agent is evicted and cannot participate in staking until the eviction period ends."
     type="warning"
     showIcon
@@ -25,7 +26,7 @@ const EvictionAlert = () => (
 );
 
 const RunAgentAlert = () => (
-  <Alert
+  <CustomAlert
     message="Start the agent to join staking and unlock protocol rewards."
     type="info"
     showIcon
