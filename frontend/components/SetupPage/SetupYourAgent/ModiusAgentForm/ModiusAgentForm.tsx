@@ -5,9 +5,8 @@ import { useUnmount } from 'usehooks-ts';
 import { ServiceTemplate } from '@/client';
 import { RequiredMark } from '@/components/ui/RequiredMark';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup } from '@/hooks/useSetup';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
-import { onDummyServiceCreation } from '@/utils/service';
+import { useSetup, useStakingProgram } from '@/hooks';
+import { onDummyServiceCreation } from '@/utils';
 
 import {
   BABYDEGEN_FORM_STEP,

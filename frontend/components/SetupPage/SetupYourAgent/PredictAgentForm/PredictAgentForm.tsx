@@ -1,35 +1,65 @@
-import { message } from 'antd';
-import React, { useCallback } from 'react';
+import { Button, Form, Input, message } from 'antd';
+import React, { useCallback, useState } from 'react';
+import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
-import { GeminiApiKeyDesc } from '@/components/AgentForms/common/labels';
 import {
-  PredictAgentForm,
-  PredictFormValues,
-} from '@/components/AgentForms/PredictForm';
+  optionalFieldProps,
+  validateMessages,
+} from '@/components/AgentForms/common/formUtils';
+import { InvalidGeminiApiCredentials } from '@/components/AgentForms/common/InvalidGeminiApiCredentials';
+import {
+  GeminiApiKeyDesc,
+  GeminiApiKeyLabel,
+  GeminiApiKeySubHeader,
+} from '@/components/AgentForms/common/labels';
+import { RequiredMark } from '@/components/ui';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup } from '@/hooks/useSetup';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
-import { onDummyServiceCreation } from '@/utils/service';
+import { useSetup, useStakingProgram } from '@/hooks';
+import { onDummyServiceCreation } from '@/utils';
 
 import { RenderForm } from '../useDisplayAgentForm';
+import {
+  PredictFieldValues,
+  usePredictFormValidate,
+} from './usePredictFormValidate';
 
-type PredictAgentSetupFormProps = { serviceTemplate: ServiceTemplate };
+type PredictAgentFormProps = {
+  serviceTemplate: ServiceTemplate;
+};
 
-export const PredictAgentSetup = ({
+/**
+ * Form for setting up a Predict agent (To setup and update the agent).
+ */
+export const PredictAgentFormContent = ({
   serviceTemplate,
-  renderForm,
-}: PredictAgentSetupFormProps & {
-  renderForm: RenderForm;
-}) => {
+}: PredictAgentFormProps) => {
+  const [form] = Form.useForm<PredictFieldValues>();
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
-  const onSubmit = useCallback(
-    async (values: PredictFormValues) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const {
+    geminiApiKeyValidationStatus,
+    submitButtonText,
+    updateSubmitButtonText,
+    validateForm,
+  } = usePredictFormValidate('Finish Agent Configuration');
+
+  const onFinish = useCallback(
+    async (values: PredictFieldValues) => {
       if (!defaultStakingProgramId) return;
 
       try {
+        setIsSubmitting(true);
+
+        // wait for agent setup to complete
+        updateSubmitButtonText('Setting up agent...');
+
+        const isFormValid = await validateForm(values);
+        if (!isFormValid) return;
+
         const overriddenServiceConfig: ServiceTemplate = {
           ...serviceTemplate,
           env_variables: {
@@ -50,20 +80,81 @@ export const PredictAgentSetup = ({
 
         // move to next page
         goto(SetupScreen.FundYourAgent);
-      } catch (error) {
-        message.error('Something went wrong. Please try again.');
-        console.error(error);
+      } finally {
+        updateSubmitButtonText('Continue');
+        setIsSubmitting(false);
       }
     },
-    [defaultStakingProgramId, serviceTemplate, goto],
+    [
+      defaultStakingProgramId,
+      serviceTemplate,
+      validateForm,
+      updateSubmitButtonText,
+      goto,
+    ],
   );
 
+  // Clean up
+  useUnmount(async () => {
+    setIsSubmitting(false);
+    updateSubmitButtonText('Continue');
+  });
+
+  // Disable the submit button if the form is submitting OR
+  // if the defaultStakingProgramId is not available
+  const canSubmitForm = isSubmitting || !defaultStakingProgramId;
+
+  return (
+    <Form<PredictFieldValues>
+      form={form}
+      name="setup-your-predict-agent"
+      layout="vertical"
+      onFinish={onFinish}
+      validateMessages={validateMessages}
+      disabled={canSubmitForm}
+      preserve
+      className="label-no-padding"
+      requiredMark={RequiredMark}
+    >
+      <GeminiApiKeySubHeader name="Prediction" />
+      <Form.Item
+        name="geminiApiKey"
+        label={<GeminiApiKeyLabel />}
+        {...optionalFieldProps}
+      >
+        <Input.Password />
+      </Form.Item>
+
+      {geminiApiKeyValidationStatus === 'invalid' && (
+        <InvalidGeminiApiCredentials style={{ marginTop: 12 }} />
+      )}
+
+      <Form.Item>
+        <Button
+          loading={isSubmitting}
+          disabled={canSubmitForm}
+          onClick={form.submit}
+          type="primary"
+          size="large"
+          block
+        >
+          {submitButtonText}
+        </Button>
+      </Form.Item>
+    </Form>
+  );
+};
+
+type PredictAgentSetupFormProps = { serviceTemplate: ServiceTemplate };
+
+export const PredictAgentSetup = ({
+  serviceTemplate,
+  renderForm,
+}: Pick<PredictAgentSetupFormProps, 'serviceTemplate'> & {
+  renderForm: RenderForm;
+}) => {
   return renderForm(
-    <PredictAgentForm
-      isFormEnabled={!!defaultStakingProgramId}
-      agentFormType="create"
-      onSubmit={onSubmit}
-    />,
+    <PredictAgentFormContent serviceTemplate={serviceTemplate} />,
     <>
       <GeminiApiKeyDesc />
     </>,
