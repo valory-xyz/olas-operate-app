@@ -21,41 +21,6 @@ import { CardSection, cardStyles } from '../ui';
 
 const { Text, Paragraph } = Typography;
 
-const NoBackupWallet = () => {
-  const { goto } = usePageState();
-
-  return (
-    <>
-      <Text type="secondary" style={{ marginLeft: 52 }}>
-        No backup wallet added.
-      </Text>
-
-      <CardSection style={{ marginTop: 12 }}>
-        <CustomAlert
-          type="warning"
-          fullWidth
-          showIcon
-          message={
-            <Flex vertical gap={5}>
-              <span className="font-weight-600">Your funds are at risk!</span>
-              <span>
-                Add a backup wallet to allow you to retrieve funds if you lose
-                your password and seed phrase.
-              </span>
-              <Text
-                className="pointer hover-underline text-primary"
-                onClick={() => goto(Pages.AddBackupWalletViaSafe)}
-              >
-                See instructions
-              </Text>
-            </Flex>
-          }
-        />
-      </CardSection>
-    </>
-  );
-};
-
 export const Settings = () => {
   const { screen } = useSettings();
   const settingsScreen = useMemo(() => {
@@ -70,25 +35,11 @@ export const Settings = () => {
   return settingsScreen;
 };
 
-const BackupWalletInfo = () => (
-  <Flex gap={16}>
-    <Image
-      src="/wallet-icon.png"
-      alt="wallet"
-      width={36}
-      height={36}
-      className="mb-auto"
-    />
-    <div style={{ marginTop: 6, marginBottom: 6 }}>
-      <Text strong>Backup wallet</Text>
-    </div>
-  </Flex>
-);
-
 const SettingsMain = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
   const { selectedAgentConfig } = useServices();
   const { masterEoa, masterSafes } = useMasterWalletContext();
+  const { goto } = usePageState();
 
   const masterSafe = masterSafes?.find(
     ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
@@ -115,7 +66,8 @@ const SettingsMain = () => {
 
   const walletBackup = useMemo(() => {
     if (!ownersIsFetched) return <Skeleton.Input />;
-    if (!masterSafeBackupAddress) return <NoBackupWallet />;
+    if (!masterSafeBackupAddress)
+      return <Text type="secondary">No backup wallet added.</Text>;
 
     return (
       <AddressLink
@@ -163,21 +115,49 @@ const SettingsMain = () => {
           <CardSection
             $padding="24px"
             $borderBottom={!!masterSafeBackupAddress}
-            gap={16}
+            vertical
           >
-            <Image
-              src="/wallet-icon.png"
-              alt="wallet"
-              width={36}
-              height={36}
-              className="mb-auto"
-            />
-            <Flex vertical gap={6}>
-              <div style={{ marginTop: 6, marginBottom: 6 }}>
-                <Text strong>Backup wallet</Text>
-              </div>
-              {walletBackup}
+            <Flex gap={16}>
+              <Image
+                src="/wallet-icon.png"
+                alt="wallet"
+                width={36}
+                height={36}
+                className="mb-auto"
+              />
+              <Flex vertical gap={6}>
+                <div style={{ marginTop: 6, marginBottom: 6 }}>
+                  <Text strong>Backup wallet</Text>
+                </div>
+                {walletBackup}
+              </Flex>
             </Flex>
+            {!masterSafeBackupAddress && (
+              <CardSection style={{ marginTop: 12 }}>
+                <CustomAlert
+                  type="warning"
+                  fullWidth
+                  showIcon
+                  message={
+                    <Flex vertical gap={5}>
+                      <span className="font-weight-600">
+                        Your funds are at risk!
+                      </span>
+                      <span>
+                        Add a backup wallet to allow you to retrieve funds if
+                        you lose your password and seed phrase.
+                      </span>
+                      <Text
+                        className="pointer hover-underline text-primary"
+                        onClick={() => goto(Pages.AddBackupWalletViaSafe)}
+                      >
+                        See instructions
+                      </Text>
+                    </Flex>
+                  }
+                />
+              </CardSection>
+            )}
           </CardSection>
         )}
       </Card>
