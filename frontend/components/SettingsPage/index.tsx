@@ -71,21 +71,6 @@ export const Settings = () => {
   return settingsScreen;
 };
 
-const BackupWalletInfo = () => (
-  <Flex gap={16}>
-    <Image
-      src="/wallet-icon.png"
-      alt="wallet"
-      width={36}
-      height={36}
-      className="mb-auto"
-    />
-    <div style={{ marginTop: 6, marginBottom: 6 }}>
-      <Text strong>Backup wallet</Text>
-    </div>
-  </Flex>
-);
-
 const SettingsMain = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
   const { selectedAgentConfig } = useServices();
@@ -119,12 +104,10 @@ const SettingsMain = () => {
     if (!masterSafeBackupAddress) return <NoBackupWallet />;
 
     return (
-      <div style={{ marginLeft: 52, marginTop: 6 }}>
-        <AddressLink
-          address={masterSafeBackupAddress}
-          middlewareChain={selectedAgentConfig.middlewareHomeChainId}
-        />
-      </div>
+      <AddressLink
+        address={masterSafeBackupAddress}
+        middlewareChain={selectedAgentConfig.middlewareHomeChainId}
+      />
     );
   }, [
     masterSafeBackupAddress,
@@ -166,10 +149,21 @@ const SettingsMain = () => {
           <CardSection
             $padding="24px"
             $borderBottom={!!masterSafeBackupAddress}
-            vertical
+            gap={16}
           >
-            <BackupWalletInfo />
-            {walletBackup}
+            <Image
+              src="/wallet-icon.png"
+              alt="wallet"
+              width={36}
+              height={36}
+              className="mb-auto"
+            />
+            <Flex vertical gap={6}>
+              <div style={{ marginTop: 6, marginBottom: 6 }}>
+                <Text strong>Backup wallet</Text>
+              </div>
+              {walletBackup}
+            </Flex>
           </CardSection>
         )}
       </Card>
