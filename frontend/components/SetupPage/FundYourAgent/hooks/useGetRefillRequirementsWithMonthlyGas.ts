@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/client';
 import { getTokenDetails } from '@/components/Bridge/utils';
@@ -129,8 +129,12 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
   } = useBalanceAndRefillRequirementsContext();
   const { masterEoa, masterSafes } = useMasterWalletContext();
 
-  const totalTokenRequirementsRef = useRef<TokenRequirement[] | null>(null);
-  const initialTokenRequirementsRef = useRef<TokenRequirement[] | null>(null);
+  const [initialTokenRequirements, setInitialTokenRequirements] = useState<
+    TokenRequirement[] | null
+  >(null);
+  const [totalTokenRequirements, setTotalTokenRequirements] = useState<
+    TokenRequirement[] | null
+  >(null);
 
   const masterSafe = useMemo(() => {
     return (masterSafes || []).find(
@@ -230,43 +234,38 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
 
   // Capture the initial token requirements once, when they are first available
   useEffect(() => {
-    if (
-      !initialTokenRequirementsRef.current &&
-      currentTokenRequirements.length
-    ) {
-      initialTokenRequirementsRef.current = currentTokenRequirements;
+    if (!initialTokenRequirements && currentTokenRequirements.length) {
+      setInitialTokenRequirements(currentTokenRequirements);
     }
-  }, [currentTokenRequirements]);
+  }, [currentTokenRequirements, initialTokenRequirements]);
 
   // Get the total token requirements, using "totalRequirements" from BE, instead of "refillRequirements"
   useEffect(() => {
     if (
-      totalTokenRequirementsRef.current === null ||
-      totalTokenRequirementsRef.current.length === 0
+      totalTokenRequirements === null ||
+      totalTokenRequirements.length === 0
     ) {
-      totalTokenRequirementsRef.current =
-        getRequirementsPerToken(totalRequirements);
+      setTotalTokenRequirements(getRequirementsPerToken(totalRequirements));
     }
-  }, [totalRequirements, getRequirementsPerToken]);
+  }, [totalRequirements, getRequirementsPerToken, totalTokenRequirements]);
 
   /**
    * Reset the token requirements and query cache manually so the user
    * doesn't see stale values / values from other agents.
    */
   const resetTokenRequirements = () => {
-    totalTokenRequirementsRef.current = null;
-    initialTokenRequirementsRef.current = null;
+    setTotalTokenRequirements(null);
+    setInitialTokenRequirements(null);
     resetQueryCache?.();
   };
 
   return {
-    totalTokenRequirements: totalTokenRequirementsRef.current || [],
+    totalTokenRequirements: totalTokenRequirements || [],
     currentTokenRequirements,
     initialTokenRequirements:
-      initialTokenRequirementsRef.current ?? currentTokenRequirements,
+      initialTokenRequirements ?? currentTokenRequirements,
     isLoading:
-      isBalancesAndFundingRequirementsLoading ||
-      !totalTokenRequirementsRef.current,
+      isBalancesAndFundingRequirementsLoading || !totalTokenRequirements,
     resetTokenRequirements,
   };
 };
