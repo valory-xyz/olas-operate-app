@@ -101,7 +101,7 @@ const SettingsMain = () => {
             className="mb-auto"
           />
           <Flex vertical gap={6}>
-            <div style={{ marginTop: 6, marginBottom: 6 }}>
+            <div className="my-6">
               <Paragraph strong className="mb-0">
                 Password
               </Paragraph>
@@ -126,7 +126,7 @@ const SettingsMain = () => {
                 className="mb-auto"
               />
               <Flex vertical gap={6}>
-                <div style={{ marginTop: 6, marginBottom: 6 }}>
+                <div className="my-6">
                   <Text strong>Backup wallet</Text>
                 </div>
                 {walletBackup}
