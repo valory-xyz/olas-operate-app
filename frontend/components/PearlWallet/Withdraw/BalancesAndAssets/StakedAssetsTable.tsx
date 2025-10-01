@@ -69,6 +69,7 @@ export const StakedAssetsTable = () => {
       pagination={false}
       rowHoverable={false}
       locale={{ emptyText: 'No available assets' }}
+      className="mb-8"
     />
   );
 };

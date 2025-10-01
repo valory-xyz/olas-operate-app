@@ -7,7 +7,6 @@ import { CardFlex } from '@/components/ui/CardFlex';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR } from '@/constants/colors';
 import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
-import { toUsd } from '@/service/toUsd';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
@@ -66,7 +65,6 @@ export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
             <OverviewContainer vertical gap={12}>
               {amounts.map(([untypedSymbol, amount]) => {
                 const symbol = untypedSymbol as TokenSymbol;
-                const valueInUsd = toUsd(symbol, amount);
 
                 return (
                   <Flex key={symbol} gap={8} align="center">
@@ -78,10 +76,6 @@ export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
                     />
                     <Text>{formatNumber(amount, 4)}</Text>
                     <Text>{symbol}</Text>
-                    &nbsp;
-                    <Text className="text-neutral-tertiary">
-                      {valueInUsd ? `≈ ${valueInUsd}` : null}
-                    </Text>
                   </Flex>
                 );
               })}
