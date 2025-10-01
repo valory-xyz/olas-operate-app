@@ -7,7 +7,7 @@ export type StakedAsset = {
   agentImgSrc: Nullable<string>;
   symbol: TokenSymbol;
   amount: number;
-  value: number;
+  value?: number;
 };
 
 export type WalletChain = { chainId: EvmChainId; chainName: EvmChainName };
