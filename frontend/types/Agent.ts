@@ -35,6 +35,7 @@ export type AgentConfig = {
   requiresSetup: boolean;
   /** Whether the agent has external funds available (eg. agent invests funds) */
   hasExternalFunds: boolean;
+  servicePublicId: string;
 };
 
 export type AgentHealthCheckResponse = {

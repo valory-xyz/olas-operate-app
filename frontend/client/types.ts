@@ -63,6 +63,7 @@ type EnvVariableAttributes = {
 };
 
 export type MiddlewareServiceResponse = {
+  service_public_id: string;
   service_config_id: string; // TODO: update with uuid once middleware integrated
   version: number;
   name: string;
