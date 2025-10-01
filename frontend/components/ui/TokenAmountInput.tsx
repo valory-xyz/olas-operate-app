@@ -74,8 +74,8 @@ export const TokenAmountInput = ({
       align="center"
       style={{ padding: '10px 20px' }}
     >
-      <Text type="secondary" className="text-sm leading-normal">
-        {totalAmountInUsd ? `≈ ${formatNumber(totalAmountInUsd, 4)}` : null}
+      <Text className="text-sm leading-normal text-neutral-tertiary">
+        {totalAmountInUsd ? `≈ $${formatNumber(totalAmountInUsd, 4)}` : null}
       </Text>
 
       <Flex align="center" gap={24}>
@@ -88,7 +88,7 @@ export const TokenAmountInput = ({
               }
               type="text"
               size="small"
-              className="text-neutral-secondary"
+              className="text-neutral-tertiary"
               style={{ padding: '0 4px' }}
             >
               {percentage}%
@@ -97,7 +97,7 @@ export const TokenAmountInput = ({
         </Flex>
         <Flex gap={6} align="center">
           <WalletOutlined width={20} height={20} />
-          <Text type="secondary" className="text-sm leading-normal">
+          <Text className="text-sm leading-normal text-neutral-tertiary">
             {formatNumber(totalAmount, 4)}
           </Text>
         </Flex>

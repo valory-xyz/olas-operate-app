@@ -1,6 +1,7 @@
-import { SettingOutlined } from '@ant-design/icons';
 import { Card, Flex, Skeleton, Typography } from 'antd';
+import Title from 'antd/es/typography/Title';
 import { isEmpty, isNil } from 'lodash';
+import Image from 'next/image';
 import { useMemo } from 'react';
 
 import { Pages } from '@/enums/Pages';
@@ -16,31 +17,19 @@ import { Optional } from '@/types/Util';
 
 import { AddressLink } from '../AddressLink';
 import { CustomAlert } from '../Alert';
-import { CardTitle } from '../Card/CardTitle';
-import { GoToLoginPageButton } from '../Pages/GoToLoginPageButton';
-import { GoToMainPageButton } from '../Pages/GoToMainPageButton';
 import { CardSection } from '../ui/CardSection';
-import { DebugInfoSection } from './DebugInfoSection';
+import { cardStyles } from '../ui/cardStyles';
 
 const { Text, Paragraph } = Typography;
-
-const SettingsTitle = () => (
-  <CardTitle
-    title={
-      <Flex gap={10}>
-        <SettingOutlined />
-        Settings
-      </Flex>
-    }
-  />
-);
 
 const NoBackupWallet = () => {
   const { goto } = usePageState();
 
   return (
     <>
-      <Text type="secondary">No backup wallet added.</Text>
+      <Text type="secondary" style={{ marginLeft: 52 }}>
+        No backup wallet added.
+      </Text>
 
       <CardSection style={{ marginTop: 12 }}>
         <CustomAlert
@@ -82,9 +71,23 @@ export const Settings = () => {
   return settingsScreen;
 };
 
+const BackupWalletInfo = () => (
+  <Flex gap={16}>
+    <Image
+      src="/wallet-icon.png"
+      alt="wallet"
+      width={36}
+      height={36}
+      className="mb-auto"
+    />
+    <div style={{ marginTop: 6, marginBottom: 6 }}>
+      <Text strong>Backup wallet</Text>
+    </div>
+  </Flex>
+);
+
 const SettingsMain = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
-  const { isUserLoggedIn } = usePageState();
   const { selectedAgentConfig } = useServices();
   const { masterEoa, masterSafes } = useMasterWalletContext();
 
@@ -127,44 +130,47 @@ const SettingsMain = () => {
     selectedAgentConfig.middlewareHomeChainId,
   ]);
 
-  return (
-    <Card
-      title={<SettingsTitle />}
-      bordered={false}
-      styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}
-      extra={isUserLoggedIn ? <GoToMainPageButton /> : <GoToLoginPageButton />}
-    >
-      {/* Password */}
-      <CardSection
-        $padding="24px"
-        $borderBottom={true}
-        justify="space-between"
-        align="center"
-      >
-        <Flex vertical>
-          <Paragraph strong>Password</Paragraph>
-          <Text style={{ lineHeight: 1 }}>********</Text>
-        </Flex>
-      </CardSection>
+  const hideWallet = !isBackupViaSafeEnabled && !masterSafeBackupAddress;
 
-      {/* Wallet backup 
-        If there's no backup address and adding it
-        via safe is disabled - hide the section
-      */}
-      {!isBackupViaSafeEnabled && !masterSafeBackupAddress ? null : (
+  return (
+    <Flex style={cardStyles} vertical gap={16}>
+      <Title level={3}>Settings</Title>
+      <Card styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}>
         <CardSection
           $padding="24px"
-          $borderBottom={masterSafeBackupAddress ? true : false}
-          vertical
-          gap={8}
+          $borderBottom={!hideWallet}
+          align="center"
+          gap={16}
         >
-          <Text strong>Backup wallet</Text>
-          {walletBackup}
-        </CardSection>
-      )}
+          <Image
+            src="/password-icon.png"
+            alt="password"
+            width={36}
+            height={36}
+            className="mb-auto"
+          />
+          <Flex vertical gap={6}>
+            <div style={{ marginTop: 6, marginBottom: 6 }}>
+              <Paragraph strong className="mb-0">
+                Password
+              </Paragraph>
+            </div>
 
-      {/* Debug info */}
-      <DebugInfoSection />
-    </Card>
+            <Text style={{ lineHeight: 1 }}>••••••••••••••••••••</Text>
+          </Flex>
+        </CardSection>
+
+        {hideWallet ? null : (
+          <CardSection
+            $padding="24px"
+            $borderBottom={!!masterSafeBackupAddress}
+            vertical
+          >
+            <BackupWalletInfo />
+            {walletBackup}
+          </CardSection>
+        )}
+      </Card>
+    </Flex>
   );
 };

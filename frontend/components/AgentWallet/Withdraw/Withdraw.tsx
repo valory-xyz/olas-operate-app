@@ -1,11 +1,12 @@
 import { Button, Flex, Modal, Typography } from 'antd';
-import { CSSProperties, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import {
   LoadingOutlined,
   SuccessOutlined,
   WarningOutlined,
 } from '@/components/custom-icons';
+import { cardStyles } from '@/components/ui/cardStyles';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
 import { Pages } from '@/enums/Pages';
@@ -15,11 +16,6 @@ import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { useWithdrawFunds } from './useWithdrawFunds';
 
 const { Title, Text, Link } = Typography;
-
-const cardStyles: CSSProperties = {
-  width: 552,
-  margin: '0 auto',
-} as const;
 
 const WithdrawalInProgress = () => (
   <Flex gap={32} vertical>

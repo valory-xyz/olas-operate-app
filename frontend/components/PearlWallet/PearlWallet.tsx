@@ -3,10 +3,11 @@ import { useCallback, useMemo } from 'react';
 
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 
+import { Deposit } from './Deposit/Deposit';
 import { PearlWalletProvider, usePearlWallet } from './PearlWalletProvider';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
-import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw/SelectAmountToWithdraw';
+import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw';
 import { STEPS } from './Withdraw/types';
 
 /**
@@ -31,6 +32,7 @@ const PearlWalletContent = () => {
   const handleBack = useCallback(() => {
     switch (step) {
       case STEPS.SELECT_AMOUNT:
+      case STEPS.DEPOSIT:
         updateStep(STEPS.PEARL_WALLET_SCREEN);
         break;
       case STEPS.ENTER_WITHDRAWAL_ADDRESS:
@@ -44,17 +46,24 @@ const PearlWalletContent = () => {
   const content = useMemo(() => {
     switch (step) {
       case STEPS.PEARL_WALLET_SCREEN:
-        return <BalancesAndAssets onWithdraw={handleNext} />;
+        return (
+          <BalancesAndAssets
+            onWithdraw={handleNext}
+            onDeposit={() => updateStep(STEPS.DEPOSIT)}
+          />
+        );
       case STEPS.SELECT_AMOUNT:
         return (
           <SelectAmountToWithdraw onBack={handleBack} onContinue={handleNext} />
         );
       case STEPS.ENTER_WITHDRAWAL_ADDRESS:
         return <EnterWithdrawalAddress onBack={handleBack} />;
+      case STEPS.DEPOSIT:
+        return <Deposit onBack={handleBack} />;
       default:
         throw new Error('Invalid step');
     }
-  }, [step, handleBack, handleNext]);
+  }, [step, handleBack, handleNext, updateStep]);
 
   return content;
 };

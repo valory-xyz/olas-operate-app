@@ -108,6 +108,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
 
   const { breakdown: usdBreakdown } = useUsdAmounts(chainName, usdRequirements);
 
+  // TODO: create a separate hook and reuse it in FundAgent and PearlWalletProvider
   // OLAS token, Native Token, other ERC20 tokens
   const availableAssets: AvailableAsset[] = useMemo(() => {
     if (!walletChainId) return [];

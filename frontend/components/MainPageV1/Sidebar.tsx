@@ -52,7 +52,7 @@ const ResponsiveButton = styled(Button)`
 
 const menuItems: MenuProps['items'] = [
   { key: 'pearl-wallet', icon: <WalletOutlined />, label: 'Pearl Wallet' },
-  { key: 'help', icon: <QuestionCircleOutlined />, label: 'Help' },
+  { key: 'help', icon: <QuestionCircleOutlined />, label: 'Help Center' },
   { key: 'settings', icon: <SettingOutlined />, label: 'Settings' },
 ];
 

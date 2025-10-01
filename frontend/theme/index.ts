@@ -4,8 +4,8 @@ import { COLOR } from '@/constants/colors';
 
 export const mainTheme: ThemeConfig = {
   token: {
-    colorLink: '#7E22CE',
-    colorPrimary: '#7E22CE',
+    colorLink: COLOR.PRIMARY,
+    colorPrimary: COLOR.PRIMARY,
     colorWarning: '#FF9C27',
     colorInfoText: '#36075F',
     colorText: '#0F172A',
