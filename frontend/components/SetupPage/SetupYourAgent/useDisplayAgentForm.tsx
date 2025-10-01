@@ -15,7 +15,7 @@ const { Title } = Typography;
 export const AgentFormContainer = styled(Flex)`
   background: ${COLOR.WHITE};
   flex: 1;
-  min-height: 100%;
+  /* min-height: 100%; */
 
   .setup-left-content {
     width: 492px;
