@@ -89,7 +89,7 @@ export const AGENT_CONFIG: {
     description:
       'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
     hasExternalFunds: false,
-    servicePublicId: '',
+    servicePublicId: 'dvilela/memeooorr/0.1.0',
   },
   [AgentType.Modius]: {
     isAgentEnabled: true,
@@ -109,6 +109,6 @@ export const AGENT_CONFIG: {
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
     hasExternalFunds: true,
-    servicePublicId: '',
+    servicePublicId: 'valory/optimus:0.1.0',
   },
 };
