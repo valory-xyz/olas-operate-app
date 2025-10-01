@@ -119,10 +119,12 @@ const SettingsMain = () => {
     if (!masterSafeBackupAddress) return <NoBackupWallet />;
 
     return (
-      <AddressLink
-        address={masterSafeBackupAddress}
-        middlewareChain={selectedAgentConfig.middlewareHomeChainId}
-      />
+      <div style={{ marginLeft: 52, marginTop: 6 }}>
+        <AddressLink
+          address={masterSafeBackupAddress}
+          middlewareChain={selectedAgentConfig.middlewareHomeChainId}
+        />
+      </div>
     );
   }, [
     masterSafeBackupAddress,
