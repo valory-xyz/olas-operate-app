@@ -19,14 +19,10 @@ import { useAvailableAssets } from '@/hooks/useAvailableAssets';
 import { toUsd } from '@/service/toUsd';
 import { AgentConfig } from '@/types/Agent';
 import { Nullable, ValueOf } from '@/types/Util';
+import { AvailableAsset } from '@/types/Wallet';
 import { generateName } from '@/utils/agentName';
 
-import {
-  AvailableAsset,
-  StakedAsset,
-  STEPS,
-  WalletChain,
-} from './Withdraw/types';
+import { StakedAsset, STEPS, WalletChain } from './Withdraw/types';
 
 const PearlWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;
