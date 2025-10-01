@@ -73,12 +73,13 @@ const PredictUpdateForm = ({ initialFormValues }: PredictUpdateFormProps) => {
       initialValues={{ ...initialFormValues }}
       className="label-no-padding"
     >
-      <GeminiApiKeySubHeader name="Modius" />
+      <GeminiApiKeySubHeader name="Prediction" />
       <Form.Item
         label={<GeminiApiKeyLabel />}
         name={['env_variables', 'GENAI_API_KEY']}
         {...optionalFieldProps}
         rules={[{ validator: validateApiKey }]}
+        className="mb-8"
       >
         <Input.Password />
       </Form.Item>
@@ -87,7 +88,13 @@ const PredictUpdateForm = ({ initialFormValues }: PredictUpdateFormProps) => {
       )}
 
       <Form.Item>
-        <Button size="large" type="primary" htmlType="submit" block>
+        <Button
+          size="large"
+          type="primary"
+          htmlType="submit"
+          block
+          className="mt-12"
+        >
           {submitButtonText}
         </Button>
       </Form.Item>

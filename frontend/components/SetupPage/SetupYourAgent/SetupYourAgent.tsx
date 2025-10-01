@@ -33,7 +33,7 @@ export const SetupYourAgent = () => {
   }
 
   return (
-    <AgentFormContainer flex="none">
+    <AgentFormContainer flex="none" $hasMinHeight>
       {selectedAgentType === AgentMap.PredictTrader && (
         <PredictAgentSetup
           serviceTemplate={serviceTemplate}

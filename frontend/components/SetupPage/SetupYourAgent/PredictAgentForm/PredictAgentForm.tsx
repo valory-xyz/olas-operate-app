@@ -121,12 +121,13 @@ export const PredictAgentFormContent = ({
         name="geminiApiKey"
         label={<GeminiApiKeyLabel />}
         {...optionalFieldProps}
+        className="mb-8"
       >
         <Input.Password />
       </Form.Item>
 
       {geminiApiKeyValidationStatus === 'invalid' && (
-        <InvalidGeminiApiCredentials style={{ marginTop: 12 }} />
+        <InvalidGeminiApiCredentials />
       )}
 
       <Form.Item>
@@ -137,6 +138,7 @@ export const PredictAgentFormContent = ({
           type="primary"
           size="large"
           block
+          className="mt-12"
         >
           {submitButtonText}
         </Button>
