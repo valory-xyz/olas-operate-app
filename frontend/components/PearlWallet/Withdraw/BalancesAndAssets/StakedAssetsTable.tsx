@@ -3,10 +3,9 @@ import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
 import { Table } from '@/components/ui/Table';
 import { NA } from '@/constants/symbols';
 import { TokenSymbolConfigMap } from '@/constants/token';
-import { formatNumber } from '@/utils/numberFormatters';
+import { StakedAsset } from '@/types/Wallet';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
-import { StakedAsset } from '../types';
 
 const { Text } = Typography;
 
@@ -51,9 +50,6 @@ const columns: TableColumnsType<StakedAsset> = [
     render: (_: unknown, record: StakedAsset) => (
       <Flex vertical>
         <Text>{record.amount}</Text>
-        <Text type="secondary" className="text-sm">
-          (${formatNumber(record.value)})
-        </Text>
       </Flex>
     ),
     width: '25%',
@@ -73,6 +69,7 @@ export const StakedAssetsTable = () => {
       pagination={false}
       rowHoverable={false}
       locale={{ emptyText: 'No available assets' }}
+      className="mb-8"
     />
   );
 };

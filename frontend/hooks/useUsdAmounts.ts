@@ -1,4 +1,5 @@
 import { useQueries } from '@tanstack/react-query';
+import { isNil } from 'lodash';
 
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
@@ -83,8 +84,9 @@ export const useUsdAmounts = (
 
   const queries = useQueries({
     queries: (requirements ?? []).map((req) => {
-      const tokenConfig =
-        evmChainId != null ? TOKEN_CONFIG[evmChainId]?.[req.symbol] : undefined;
+      const tokenConfig = isNil(evmChainId)
+        ? undefined
+        : TOKEN_CONFIG[evmChainId]?.[req.symbol];
 
       const isNative = tokenConfig?.tokenType === TokenType.NativeGas;
       const isErc20OrWrapped =

@@ -16,17 +16,12 @@ import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol } from '@/constants/token';
 import { useBalanceContext, useService, useServices } from '@/hooks';
 import { useAvailableAssets } from '@/hooks/useAvailableAssets';
-import { toUsd } from '@/service/toUsd';
 import { AgentConfig } from '@/types/Agent';
 import { Nullable, ValueOf } from '@/types/Util';
+import { AvailableAsset, StakedAsset } from '@/types/Wallet';
 import { generateName } from '@/utils/agentName';
 
-import {
-  AvailableAsset,
-  StakedAsset,
-  STEPS,
-  WalletChain,
-} from './Withdraw/types';
+import { STEPS, WalletChain } from './Withdraw/types';
 
 const PearlWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;
@@ -66,7 +61,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const { isLoaded, getServiceSafeOf } = useService(
     selectedService?.service_config_id,
   );
-  const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
+  const { isLoading: isBalanceLoading, getTotalStakedOlasBalanceOf } =
     useBalanceContext();
 
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
@@ -120,11 +115,10 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
           : 'Agent',
         agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
         symbol: 'OLAS',
-        amount: totalStakedOlasBalance ?? 0,
-        value: toUsd('OLAS', totalStakedOlasBalance ?? 0),
+        amount: getTotalStakedOlasBalanceOf(walletChainId) ?? 0,
       },
     ],
-    [walletChainId, agentType, totalStakedOlasBalance, getServiceSafeOf],
+    [walletChainId, agentType, getTotalStakedOlasBalanceOf, getServiceSafeOf],
   );
 
   const updateStep = useCallback(

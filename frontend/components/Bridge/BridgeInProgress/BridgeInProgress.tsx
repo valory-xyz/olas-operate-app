@@ -281,7 +281,7 @@ export const BridgeInProgress = ({
 
   return (
     <Flex justify="center" className="pt-48">
-      <CardFlex $noBorder $onboarding bordered={false} className="p-8">
+      <CardFlex $noBorder $onboarding className="p-8">
         <Title level={3} className="mt-0">
           Bridge Crypto
         </Title>
