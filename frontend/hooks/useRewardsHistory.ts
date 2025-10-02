@@ -119,7 +119,7 @@ const useTransformCheckpoints = () => {
           if (serviceIdIndex !== -1) {
             const currentReward = checkpoint.rewards?.[serviceIdIndex];
             const isRewardFinite = isFinite(Number(currentReward));
-            reward = isRewardFinite ? currentReward ?? '0' : '0';
+            reward = isRewardFinite ? (currentReward ?? '0') : '0';
           }
 
           const blockTimestamp = Number(checkpoint.blockTimestamp);
@@ -130,7 +130,7 @@ const useTransformCheckpoints = () => {
           const epochStartTimeStamp =
             checkpoint.epoch === '0'
               ? blockTimestamp - epochLength
-              : checkpoints[index + 1]?.blockTimestamp ?? 0;
+              : (checkpoints[index + 1]?.blockTimestamp ?? 0);
 
           const stakingContractId = agent.getStakingProgramIdByAddress(
             chainId,
@@ -295,7 +295,11 @@ export const useServiceOnlyRewardsHistory = () => {
       .flat()
       .sort((a, b) => a.epochEndTimeStamp - b.epochEndTimeStamp)
       .forEach((checkpoint) => {
-        const { contractAddress, epoch } = checkpoint;
+        const {
+          contractAddress,
+          epoch,
+          epochStartTimeStamp: currentEpochStartTimeStamp,
+        } = checkpoint;
         const {
           contractAddress: previousContractAddress,
           epoch: previousEpoch,
@@ -341,11 +345,11 @@ export const useServiceOnlyRewardsHistory = () => {
            *    checkpoint = {epoch: 61, contractAddress: "0xfE1D36820546cE5F3A58405950dC2F5ccDf7975C", ...}
            */
           const missingEpochs = allContractCheckpoints?.[
-            contractAddress
+            previousContractAddress ?? contractAddress
           ]?.filter(
             ({ epochStartTimeStamp, epochEndTimeStamp }) =>
               Number(epochStartTimeStamp) > Number(previousEpochEndTimeStamp) &&
-              Number(epochEndTimeStamp) < Number(epochStartTimeStamp),
+              Number(epochEndTimeStamp) < Number(currentEpochStartTimeStamp),
           );
           filledCheckpoints.push(...(missingEpochs ?? []));
           filledCheckpoints.push(checkpoint);
