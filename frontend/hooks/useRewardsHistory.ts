@@ -295,7 +295,11 @@ export const useServiceOnlyRewardsHistory = () => {
       .flat()
       .sort((a, b) => a.epochEndTimeStamp - b.epochEndTimeStamp)
       .forEach((checkpoint) => {
-        const { contractAddress, epoch } = checkpoint;
+        const {
+          contractAddress,
+          epoch,
+          epochStartTimeStamp: currentEpochStartTimeStamp,
+        } = checkpoint;
         const {
           contractAddress: previousContractAddress,
           epoch: previousEpoch,
@@ -345,7 +349,7 @@ export const useServiceOnlyRewardsHistory = () => {
           ]?.filter(
             ({ epochStartTimeStamp, epochEndTimeStamp }) =>
               Number(epochStartTimeStamp) > Number(previousEpochEndTimeStamp) &&
-              Number(epochEndTimeStamp) < Number(epochStartTimeStamp),
+              Number(epochEndTimeStamp) < Number(currentEpochStartTimeStamp),
           );
           filledCheckpoints.push(...(missingEpochs ?? []));
           filledCheckpoints.push(checkpoint);
