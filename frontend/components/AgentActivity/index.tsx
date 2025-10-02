@@ -76,7 +76,6 @@ export const AgentActivityPage = () => {
     select: (data) => {
       if (!data || !('response' in data) || !data.response) return null;
 
-      // The latest activity should go at the top, so sort the rounds accordingly
       const rounds = [...(data.response?.rounds || [])].reverse();
       const roundsInfo = data.response?.rounds_info;
       return { rounds, roundsInfo };
@@ -84,7 +83,7 @@ export const AgentActivityPage = () => {
     enabled: isServiceRunning,
     refetchOnWindowFocus: false,
     refetchInterval: (query) => {
-      if (query.state.error) return false; // Stop refetching when there's an error
+      if (query.state.error) return false;
       return isOnline ? FIVE_SECONDS_INTERVAL : false;
     },
   });
