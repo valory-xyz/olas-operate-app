@@ -27,6 +27,7 @@ export const AgentActivityModal = ({
       onCancel={onClose}
       footer={null}
       closable
+      maskClosable
     >
       <Flex vertical gap={8}>
         <Text style={{ fontSize: 14 }}>Current action</Text>

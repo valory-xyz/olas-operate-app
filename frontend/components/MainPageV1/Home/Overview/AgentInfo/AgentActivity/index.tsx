@@ -41,6 +41,12 @@ export const AgentActivity = () => {
     setIsModalOpen(false);
   };
 
+  const healthcheckRounds = deploymentDetails?.healthcheck?.rounds || [];
+  const rounds = [...healthcheckRounds].reverse();
+  const roundsInfo = deploymentDetails?.healthcheck?.rounds_info || {};
+
+  const canOpenModal = Boolean(isServiceRunning && rounds.length);
+
   const activityInfo = useMemo<{
     status: AgentStatus;
     content: string | React.ReactNode;
@@ -59,10 +65,10 @@ export const AgentActivity = () => {
           content: <IdleContent />,
         };
       }
-      if (deploymentDetails?.healthcheck?.rounds) {
-        const currentRound = deploymentDetails.healthcheck.rounds[0];
+      if (rounds.length) {
+        const currentRound = rounds[0];
         const roundInfo =
-          deploymentDetails.healthcheck.rounds_info?.[currentRound]?.name ||
+          roundsInfo?.[currentRound]?.name ||
           currentRound;
 
         return {
@@ -99,39 +105,42 @@ export const AgentActivity = () => {
     return null;
 
   return (
-    <Container $status={activityInfo.status} onClick={showModal}>
-      <TopCorner $position="left" $status={activityInfo.status} />
-      <TopCorner $position="right" $status={activityInfo.status} />
+    <>
+      <Container
+        $status={activityInfo.status}
+        onClick={() => {
+          if (!canOpenModal) return;
+          showModal();
+        }}
+      >
+        <TopCorner $position="left" $status={activityInfo.status} />
+        <TopCorner $position="right" $status={activityInfo.status} />
+        <div style={{ width: '100%' }}>
+          <Text $status={activityInfo.status}>{activityInfo.content}</Text>
+        </div>
+      </Container>
       <AgentActivityModal
-        open={IsModalOpen}
+        open={IsModalOpen && canOpenModal}
         onClose={handleClose}
-        items={
-          deploymentDetails?.healthcheck?.rounds?.map((roundId, index) => {
-            const roundInfo =
-              deploymentDetails.healthcheck.rounds_info?.[roundId];
-            return {
-              key: roundId,
-              label: roundInfo?.name || `Round ${index + 1}`,
-              children: roundInfo?.description || 'No details provided.',
-            };
-          }) || []
-        }
+        items={rounds.map((roundId, index) => {
+          const info = roundsInfo?.[roundId];
+          return {
+            key: `${roundId}-${index}`,
+            label: info?.name || `Round ${index + 1}`,
+            children: info?.description || 'No details provided.',
+          };
+        })}
         currentActionName={(() => {
-          const currentRound = deploymentDetails?.healthcheck?.rounds?.[0];
-          return (
-            deploymentDetails?.healthcheck?.rounds_info?.[currentRound]?.name ||
-            currentRound
-          );
+          const currentRound = rounds[0];
+          if (!currentRound) return undefined;
+          return roundsInfo?.[currentRound]?.name || currentRound;
         })()}
         currentActionDescription={(() => {
-          const currentRound = deploymentDetails?.healthcheck?.rounds?.[0];
-          return deploymentDetails?.healthcheck?.rounds_info?.[currentRound]
-            ?.description;
+          const currentRound = rounds[0];
+          if (!currentRound) return undefined;
+          return roundsInfo?.[currentRound]?.description;
         })()}
       />
-      <div style={{ width: '100%' }}>
-        <Text $status={activityInfo.status}>{activityInfo.content}</Text>
-      </div>
-    </Container>
+    </>
   );
 };
