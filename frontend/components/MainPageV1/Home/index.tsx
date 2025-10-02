@@ -112,7 +112,9 @@ export const Home = () => {
   return (
     <Flex vertical gap={40} className="flex-auto">
       <Switcher value={view} onChange={handleChangeView} />
-      {view === 'overview' && <Overview />}
+      {view === 'overview' && (
+        <Overview openProfile={() => handleChangeView('profile')} />
+      )}
       {view === 'profile' && <Profile />}
       <UnlockChatUiAlert
         isOpen={isUnlockChatUiModalOpen}

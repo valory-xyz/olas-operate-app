@@ -40,6 +40,7 @@ export type AgentConfig = {
   /** Whether the agent has external funds available (eg. agent invests funds) */
   hasExternalFunds: boolean;
   category?: 'Prediction Markets' | 'DeFi';
+  defaultBehavior?: string;
 };
 
 export type AgentHealthCheckResponse = {

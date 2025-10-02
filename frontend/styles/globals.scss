@@ -231,7 +231,14 @@ textarea,
   }
 
   &--info {
-    color: #002C8C;
+    color: #0016B2;
+
+    background-color: #EBEDFF;
+    border-color: #DBE0FF;
+
+    .ant-alert-icon {
+      color: #4D63FF;
+    }
   }
 
   &--warning {
@@ -264,10 +271,16 @@ textarea,
   }
 
   &--centered {
+    padding: 10px 32px;
     justify-content: center;
 
     .ant-alert-content {
-      flex: none
+      flex: unset;
+    }
+
+    .ant-alert-close-icon {
+      position: absolute;
+      right: 16px;
     }
   }
 }

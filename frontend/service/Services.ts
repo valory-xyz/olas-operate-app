@@ -1,4 +1,5 @@
 import {
+  AgentPerformance,
   Deployment,
   MiddlewareServiceResponse,
   ServiceConfigId,
@@ -212,6 +213,22 @@ const withdrawBalance = async ({
     }),
   );
 
+/**
+ * To get the agent performance statistics of a service
+ */
+const getAgentPerformance = async ({
+  serviceConfigId,
+}: {
+  serviceConfigId: ServiceConfigId;
+}): Promise<AgentPerformance> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/agent_performance`, {
+    method: 'GET',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+  }).then((response) => {
+    if (response.ok) return response.json();
+    throw new Error('Failed to fetch agent performance');
+  });
+
 export const ServicesService = {
   getService,
   getServices,
@@ -222,4 +239,5 @@ export const ServicesService = {
   updateService,
   stopDeployment,
   withdrawBalance,
+  getAgentPerformance,
 };

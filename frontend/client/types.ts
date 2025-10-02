@@ -185,3 +185,17 @@ export type BalancesAndFundingRequirements = {
   is_refill_required: boolean;
   allow_start_agent: boolean;
 };
+
+type AgentPerformanceMetric = {
+  name: string;
+  is_primary: boolean;
+  value: string;
+  description?: string;
+};
+
+export type AgentPerformance = {
+  timestamp: number | null;
+  metrics: AgentPerformanceMetric[];
+  last_activity: null;
+  agent_behavior: string | null;
+};

@@ -57,6 +57,7 @@ export const AGENT_CONFIG: {
     hasExternalFunds: false,
     hasChatUI: true,
     category: 'Prediction Markets',
+    defaultBehavior: '',
   },
   [AgentMap.Optimus]: {
     isAgentEnabled: true,
@@ -78,6 +79,8 @@ export const AGENT_CONFIG: {
     hasExternalFunds: true,
     hasChatUI: true,
     category: 'DeFi',
+    defaultBehavior:
+      'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
   },
   [AgentMap.AgentsFun]: {
     isAgentEnabled: true,
@@ -96,6 +99,7 @@ export const AGENT_CONFIG: {
       'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
     hasExternalFunds: false,
     hasChatUI: false,
+    defaultBehavior: '',
   },
   [AgentMap.Modius]: {
     isAgentEnabled: true,
@@ -118,6 +122,8 @@ export const AGENT_CONFIG: {
     hasExternalFunds: true,
     hasChatUI: true,
     category: 'DeFi',
+    defaultBehavior:
+      'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
   },
 };
 
