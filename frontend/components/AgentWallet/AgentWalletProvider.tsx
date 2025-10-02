@@ -22,10 +22,11 @@ import {
   useUsdAmounts,
 } from '@/hooks';
 import { Nullable, ValueOf } from '@/types/Util';
+import { AvailableAsset } from '@/types/Wallet';
 import { generateName } from '@/utils/agentName';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
 
-import { AvailableAsset, STEPS, TransactionHistory } from './types';
+import { STEPS, TransactionHistory } from './types';
 
 const PearlWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;

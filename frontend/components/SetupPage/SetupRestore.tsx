@@ -23,7 +23,7 @@ export const SetupRestoreMain = () => {
 
   return (
     <CardFlex
-      noBorder
+      $noBorder
       title={
         <Flex justify="space-between" align="center">
           <Typography.Title className="m-0" level={4}>

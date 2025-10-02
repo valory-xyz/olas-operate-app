@@ -1,6 +1,7 @@
 import { Button } from 'antd';
 import { useCallback } from 'react';
 
+import { FIVE_SECONDS_INTERVAL } from '@/constants';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
@@ -24,9 +25,12 @@ export const AgentRunningButton = () => {
       console.error(error);
       showNotification?.('Error while stopping agent');
     } finally {
-      // Resume polling, will update to correct status regardless of success
-      setPaused(false);
-      overrideSelectedServiceStatus(null); // remove override
+      // Resume polling in services refetch interval,
+      // will update to correct status regardless of success
+      setTimeout(() => {
+        setPaused(false);
+        overrideSelectedServiceStatus(null); // remove override
+      }, FIVE_SECONDS_INTERVAL);
     }
   }, [
     overrideSelectedServiceStatus,
