@@ -12,10 +12,10 @@ import { useSetup } from '@/hooks/useSetup';
 
 const { Title } = Typography;
 
-export const AgentFormContainer = styled(Flex)`
+export const AgentFormContainer = styled(Flex)<{ $hasMinHeight?: boolean }>`
   background: ${COLOR.WHITE};
   flex: 1;
-  min-height: 100%;
+  min-height: ${({ $hasMinHeight }) => ($hasMinHeight ? '100%' : 'auto')};
 
   .setup-left-content {
     width: 492px;

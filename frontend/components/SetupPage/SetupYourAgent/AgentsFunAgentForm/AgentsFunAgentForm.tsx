@@ -10,7 +10,7 @@ import { onDummyServiceCreation } from '@/utils/service';
 import {
   AgentsFunAgentForm,
   AgentsFunFormValues,
-} from '../../AgentForms/AgentsFunAgentForm';
+} from '../../../AgentForms/AgentsFunAgentForm';
 
 const { Text } = Typography;
 
