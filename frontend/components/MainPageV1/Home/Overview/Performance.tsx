@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
-import { CardFlex } from '@/components/ui/CardFlex';
+import { CardFlex } from '@/components/ui';
 import {
   COLOR,
   FIVE_MINUTE_INTERVAL,
@@ -65,11 +65,9 @@ export const useAgentPerformance = () => {
     queryFn: async () => {
       if (!serviceConfigId) return null;
 
-      const agentPerformance = await ServicesService.getAgentPerformance({
+      return await ServicesService.getAgentPerformance({
         serviceConfigId,
       });
-
-      return agentPerformance;
     },
     enabled: !isNil(chainId) && !isNil(serviceConfigId),
     refetchInterval: FIVE_MINUTE_INTERVAL,
@@ -85,7 +83,6 @@ type PerformanceProps = {
  */
 export const Performance = ({ openProfile }: PerformanceProps) => {
   const { data: agentPerformance, isLoading } = useAgentPerformance();
-
   const { selectedService, selectedAgentConfig } = useServices();
 
   const selectedServiceStatus = selectedService?.deploymentStatus;
@@ -100,11 +97,8 @@ export const Performance = ({ openProfile }: PerformanceProps) => {
     );
   }, [agentPerformance?.metrics]);
 
-  const agentBehavior = useMemo(() => {
-    return (
-      agentPerformance?.agent_behavior || selectedAgentConfig.defaultBehavior
-    );
-  }, [agentPerformance?.agent_behavior, selectedAgentConfig.defaultBehavior]);
+  const agentBehavior =
+    agentPerformance?.agent_behavior || selectedAgentConfig.defaultBehavior;
 
   return (
     <Flex vertical>
