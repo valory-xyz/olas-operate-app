@@ -2,6 +2,7 @@ import { Flex } from 'antd';
 import styled from 'styled-components';
 
 import { AgentInfo } from './AgentInfo';
+import { Performance } from './Performance';
 import { Staking } from './Staking';
 import { Wallet } from './Wallet';
 
@@ -11,9 +12,14 @@ const Container = styled(Flex)`
   margin: 0 auto;
 `;
 
-export const Overview = () => (
+type OverviewProps = {
+  openProfile: () => void;
+};
+
+export const Overview = ({ openProfile }: OverviewProps) => (
   <Container vertical gap={40}>
     <AgentInfo />
+    <Performance openProfile={openProfile} />
     <Staking />
     <Wallet />
   </Container>

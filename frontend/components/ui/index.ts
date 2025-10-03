@@ -4,7 +4,6 @@ export * from './BackButton';
 export * from './CardFlex';
 export * from './CardSection';
 export * from './Collapse';
-export * from './CustomModal';
 export * from './Divider';
 export * from './FormFlex';
 export * from './FundingDescription';

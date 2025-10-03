@@ -21,7 +21,9 @@ export const Wallet = () => {
   return (
     <Flex vertical>
       <Flex justify="space-between" align="center">
-        <Title level={4}>Wallet</Title>
+        <Title level={5} className="mt-0 mb-12">
+          Wallet
+        </Title>
         <Button
           disabled={isMainOlasBalanceLoading}
           onClick={() => goto(Pages.AgentWallet)}
@@ -34,16 +36,16 @@ export const Wallet = () => {
       <CardFlex $noBorder>
         <Flex vertical gap={24}>
           <Flex flex={1}>
-            <Flex flex={1} vertical gap={4}>
-              <Text className="text-neutral-tertiary">Aggregated balance</Text>
+            <Flex flex={1} vertical gap={8}>
+              <Text className="text-neutral-secondary">Aggregated balance</Text>
               <Flex align="center" gap={8}>
                 {isNumber(aggregatedBalanceInUsdTODO)
                   ? `$${aggregatedBalanceInUsdTODO}`
                   : NA}
               </Flex>
             </Flex>
-            <Flex flex={1} vertical gap={4}>
-              <Text className="text-neutral-tertiary">Tokens</Text>
+            <Flex flex={1} vertical gap={8}>
+              <Text className="text-neutral-secondary">Tokens</Text>
               {NA}
             </Flex>
           </Flex>

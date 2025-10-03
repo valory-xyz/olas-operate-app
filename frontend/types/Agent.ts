@@ -40,6 +40,10 @@ export type AgentConfig = {
   /** Whether the agent has external funds available (eg. agent invests funds) */
   hasExternalFunds: boolean;
   category?: 'Prediction Markets' | 'DeFi';
+  /** Default agent behavior that can be configurable via chat UI
+   * Used for agent performance until latest value is provided by agent
+   */
+  defaultBehavior?: string;
 };
 
 export type AgentHealthCheckResponse = {

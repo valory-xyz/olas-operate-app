@@ -21,6 +21,7 @@ const EvictionAlert = () => (
   <CustomAlert
     message="The agent is evicted and cannot participate in staking until the eviction period ends."
     type="warning"
+    centered
     showIcon
   />
 );
@@ -29,6 +30,7 @@ const RunAgentAlert = () => (
   <CustomAlert
     message="Start the agent to join staking and unlock protocol rewards."
     type="info"
+    centered
     showIcon
   />
 );
@@ -74,7 +76,9 @@ export const Staking = () => {
   return (
     <Flex vertical>
       <Flex justify="space-between" align="center">
-        <Title level={4}>Staking</Title>
+        <Title level={5} className="mt-0 mb-12">
+          Staking
+        </Title>
         {!selectedAgentConfig?.isUnderConstruction && (
           <Button size="small" onClick={() => goto(Pages.AgentStaking)}>
             Manage Staking
@@ -86,8 +90,10 @@ export const Staking = () => {
         <Flex vertical gap={24}>
           {alert}
           <Flex flex={1}>
-            <Flex flex={1} vertical gap={4}>
-              <Text type="secondary">Current Epoch lifetime</Text>
+            <Flex flex={1} vertical gap={8}>
+              <Text className="text-neutral-secondary">
+                Current Epoch lifetime
+              </Text>
               <Flex align="center" gap={8}>
                 <Clock />
                 {currentEpochLifetime ? (
@@ -100,8 +106,8 @@ export const Staking = () => {
                 )}
               </Flex>
             </Flex>
-            <Flex flex={1} vertical gap={4}>
-              <Text type="secondary">Streak</Text>
+            <Flex flex={1} vertical gap={8}>
+              <Text className="text-neutral-secondary">Streak</Text>
               <Streak />
             </Flex>
           </Flex>

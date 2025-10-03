@@ -22,6 +22,8 @@ export const mainTheme: ThemeConfig = {
   components: {
     Alert: {
       fontSize: 16,
+      colorIcon: COLOR.TEXT_NEUTRAL_PRIMARY,
+      fontSizeIcon: 16,
     },
     Button: {
       contentFontSizeSM: 14,

@@ -34,6 +34,7 @@ function getAlertClassName(
     .join(' ');
 }
 
+// TODO: move to UI folder after Pearl V1
 export const CustomAlert = ({
   type,
   fullWidth,
