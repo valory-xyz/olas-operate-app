@@ -1,5 +1,7 @@
 import { Flex, Typography } from 'antd';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import styled from 'styled-components';
+import { useBoolean } from 'usehooks-ts';
 
 import { ChevronUpDown } from '@/components/custom-icons/ChevronUpDown';
 import { InfoTooltip } from '@/components/InfoTooltip';
@@ -9,10 +11,23 @@ import { useAgentActivity } from '@/hooks/useAgentActivity';
 import { useRewardContext } from '@/hooks/useRewardContext';
 
 import { AgentActivityModal } from './AgentActivityModal';
-import { Container, CurrentActionText, Text, TopCorner } from './styles';
+import { Container, Text, TopCorner } from './styles';
 import { AgentStatus } from './types';
 
 const { Paragraph } = Typography;
+
+export const RoundInfoContainer = styled.div`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 500px;
+`;
+
+const CurrentActionText = styled.span`
+  color: ${COLOR.PURPLE_2};
+  white-space: nowrap;
+  width: fit-content;
+`;
 
 const IdleContent = () => (
   <>
@@ -31,19 +46,23 @@ export const AgentActivity = () => {
   const { deploymentDetails, isServiceRunning, isServiceDeploying } =
     useAgentActivity();
   const { isEligibleForRewards } = useRewardContext();
-  const [IsModalOpen, setIsModalOpen] = useState(false);
+  const {
+    value: isModalOpen,
+    setTrue: showModal,
+    setFalse: handleClose,
+  } = useBoolean(false);
 
-  const showModal = () => {
-    setIsModalOpen(true);
-  };
+  const healthcheckRounds = useMemo(() => {
+    return deploymentDetails?.healthcheck?.rounds || [];
+  }, [deploymentDetails?.healthcheck?.rounds]);
 
-  const handleClose = () => {
-    setIsModalOpen(false);
-  };
+  const rounds = useMemo(() => {
+    return [...healthcheckRounds].reverse();
+  }, [healthcheckRounds]);
 
-  const healthcheckRounds = deploymentDetails?.healthcheck?.rounds || [];
-  const rounds = [...healthcheckRounds].reverse();
-  const roundsInfo = deploymentDetails?.healthcheck?.rounds_info || {};
+  const roundsInfo = useMemo(() => {
+    return deploymentDetails?.healthcheck?.rounds_info;
+  }, [deploymentDetails?.healthcheck?.rounds_info]);
 
   const canOpenModal = Boolean(isServiceRunning && rounds.length);
 
@@ -65,19 +84,17 @@ export const AgentActivity = () => {
           content: <IdleContent />,
         };
       }
-      if (rounds.length) {
+      if (!rounds.length) {
         const currentRound = rounds[0];
         const roundInfo = roundsInfo?.[currentRound]?.name || currentRound;
 
         return {
           status: 'running',
           content: (
-            <Flex justify="space-between" align="center">
-              <div>
-                <CurrentActionText>Current action:</CurrentActionText>
-                {roundInfo}
-              </div>
-              <ChevronUpDown />
+            <Flex justify="space-between" align="top" gap={6}>
+              <CurrentActionText>Current action:</CurrentActionText>
+              <RoundInfoContainer>{roundInfo}</RoundInfoContainer>
+              <ChevronUpDown className="ml-auto" />
             </Flex>
           ),
         };
@@ -93,10 +110,11 @@ export const AgentActivity = () => {
       content: 'Agent is not running',
     };
   }, [
-    deploymentDetails,
     isEligibleForRewards,
     isServiceDeploying,
     isServiceRunning,
+    rounds,
+    roundsInfo,
   ]);
 
   if (isServiceRunning || isServiceDeploying ? false : !isDeployable)
@@ -107,37 +125,21 @@ export const AgentActivity = () => {
       <Container
         $status={activityInfo.status}
         onClick={() => {
-          if (!canOpenModal) return;
+          // if (!canOpenModal) return;
           showModal();
         }}
       >
         <TopCorner $position="left" $status={activityInfo.status} />
         <TopCorner $position="right" $status={activityInfo.status} />
-        <div style={{ width: '100%' }}>
-          <Text $status={activityInfo.status}>{activityInfo.content}</Text>
-        </div>
+        <Text $status={activityInfo.status} className="activity-modal">
+          {activityInfo.content}
+        </Text>
       </Container>
       <AgentActivityModal
-        open={IsModalOpen && canOpenModal}
+        open={isModalOpen && canOpenModal}
         onClose={handleClose}
-        items={rounds.map((roundId, index) => {
-          const info = roundsInfo?.[roundId];
-          return {
-            key: `${roundId}-${index}`,
-            label: info?.name || `Round ${index + 1}`,
-            children: info?.description || 'No details provided.',
-          };
-        })}
-        currentActionName={(() => {
-          const currentRound = rounds[0];
-          if (!currentRound) return undefined;
-          return roundsInfo?.[currentRound]?.name || currentRound;
-        })()}
-        currentActionDescription={(() => {
-          const currentRound = rounds[0];
-          if (!currentRound) return undefined;
-          return roundsInfo?.[currentRound]?.description;
-        })()}
+        rounds={rounds}
+        roundsInfo={roundsInfo}
       />
     </>
   );

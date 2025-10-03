@@ -3,7 +3,6 @@ import { useEffect, useMemo } from 'react';
 import { AddFundsToMasterSafeThroughBridge } from '@/components/AddFundsThroughBridge/AddFundsToMasterSafeThroughBridge';
 import { LowOperatingBalanceBridgeFunds } from '@/components/AddFundsThroughBridge/LowOperatingBalanceBridgeFunds';
 import { LowSafeSignerBalanceBridgeFunds } from '@/components/AddFundsThroughBridge/LowSafeSignerBalanceBridgeFunds';
-import { AgentActivityPage } from '@/components/AgentActivity';
 import { Main } from '@/components/MainPageV1';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
 import { AddBackupWalletViaSafePage } from '@/components/Pages/AddBackupWalletViaSafePage';
@@ -37,8 +36,6 @@ export default function Home() {
         return <RewardsHistory />;
       case Pages.AddBackupWalletViaSafe:
         return <AddBackupWalletViaSafePage />;
-      case Pages.AgentActivity:
-        return <AgentActivityPage />;
 
       // bridge pages
       case Pages.AddFundsToMasterSafeThroughBridge:

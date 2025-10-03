@@ -1,10 +1,13 @@
-export const ChevronUpDown = () => (
+import { SVGProps } from 'react';
+
+export const ChevronUpDown = (props: SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="20"
     height="20"
     viewBox="0 0 20 20"
     fill="none"
+    {...props}
   >
     <path
       d="M13.5774 11.9106C13.9028 11.5852 14.4303 11.5852 14.7558 11.9106C15.0811 12.2361 15.0812 12.7636 14.7558 13.089L10.5891 17.2557C10.2637 17.581 9.73614 17.581 9.41071 17.2557L5.24404 13.089C4.91863 12.7636 4.91867 12.2361 5.24404 11.9106C5.56948 11.5852 6.09699 11.5852 6.42243 11.9106L9.9999 15.4881L13.5774 11.9106Z"

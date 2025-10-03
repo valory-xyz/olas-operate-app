@@ -116,7 +116,3 @@ export const Text = styled.span<{ $status: AgentStatus }>`
   z-index: 1;
   ${({ $status }) => getTextStylesByStatus($status)}
 `;
-
-export const CurrentActionText = styled.span`
-  color: ${COLOR.PURPLE_2};
-`;

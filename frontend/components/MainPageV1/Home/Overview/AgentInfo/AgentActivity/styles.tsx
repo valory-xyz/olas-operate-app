@@ -1,4 +1,3 @@
-import { Collapse, Flex } from 'antd';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
@@ -115,33 +114,8 @@ const getTextStylesByStatus = (status: AgentStatus) => {
 export const Text = styled.span<{ $status: AgentStatus }>`
   position: relative;
   z-index: 1;
+  &.activity-modal {
+    width: 100%;
+  }
   ${({ $status }) => getTextStylesByStatus($status)}
-`;
-
-export const CurrentActionText = styled.span`
-  color: ${COLOR.PURPLE_2};
-
-  &.in-modal {
-    color: ${COLOR.TEXT_NEUTRAL_SECONDARY};
-    font-size: 14px;
-  }
-`;
-
-export const CurrentActionContainer = styled(Flex)`
-  border-radius: 10px;
-  background: ${COLOR.BACKGROUND};
-  padding: 16px;
-`;
-
-export const ModalCollapseItem = styled(Collapse)`
-  background: none;
-  font-size: 14px;
-
-  .ant-collapse-header {
-    padding: 12px 0 !important;
-  }
-
-  .ant-collapse-item-active > .ant-collapse-header .ant-collapse-header-text {
-    font-weight: 500;
-  }
 `;
