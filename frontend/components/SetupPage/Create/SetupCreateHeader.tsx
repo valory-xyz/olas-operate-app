@@ -17,17 +17,19 @@ type SetupCreateHeaderProps = {
  * @deprecated Use `AgentHeader` instead.
  */
 export const SetupCreateHeader = ({ prev }: SetupCreateHeaderProps) => {
-  const { goto } = useSetup();
+  const { goto, prevState } = useSetup();
   const handleBack = useCallback(() => {
     if (!prev) return;
 
     isFunction(prev) ? prev() : goto(prev);
   }, [goto, prev]);
 
+  // If the user killed the app without adding the backup wallet and reopend the application
+  const showBackButton = prev && prevState !== SetupScreen.Welcome;
   return (
     <Row>
       <Col span={8}>
-        {prev && (
+        {showBackButton && (
           <Button
             onClick={handleBack}
             icon={<ArrowLeftOutlined />}
