@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMessageApi } from '@/context/MessageProvider';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
+import { useBackupSigner } from '@/hooks/useBackupSigner';
 import {
   useBalanceContext,
   useMasterBalances,
@@ -22,6 +23,139 @@ import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { FormFlex } from '../styled/FormFlex';
 
 const { Title } = Typography;
+
+type UseSetupNavigationProps = {
+  canNavigate: boolean;
+  setIsLoggingIn: (loading: boolean) => void;
+};
+
+const useSetupNavigation = ({
+  canNavigate,
+  setIsLoggingIn,
+}: UseSetupNavigationProps) => {
+  const { goto } = useSetup();
+  const { goto: gotoPage } = usePageState();
+  const { isOnline } = useOnlineStatusContext();
+  const {
+    selectedService,
+    selectedAgentConfig,
+    services,
+    isFetched: isServicesFetched,
+  } = useServices();
+  const {
+    masterSafes,
+    masterEoa,
+    isFetched: isWalletsFetched,
+  } = useMasterWalletContext();
+  const { isLoaded: isBalanceLoaded } = useBalanceContext();
+  const { masterWalletBalances } = useMasterBalances();
+  const backupSignerAddress = useBackupSigner();
+
+  const selectedServiceOrAgentChainId = selectedService?.home_chain
+    ? asEvmChainId(selectedService?.home_chain)
+    : selectedAgentConfig.evmHomeChainId;
+
+  const masterSafe = masterSafes?.find(
+    (safe) =>
+      selectedServiceOrAgentChainId &&
+      safe.evmChainId === selectedServiceOrAgentChainId,
+  );
+
+  const eoaBalanceEth = masterWalletBalances?.find(
+    (balance) =>
+      balance.walletAddress === masterEoa?.address &&
+      balance.evmChainId === selectedServiceOrAgentChainId,
+  )?.balance;
+
+  const isServiceCreatedForAgent = useMemo(() => {
+    if (!isServicesFetched) return false;
+    if (!services) return false;
+    if (!selectedService) return false;
+    if (!selectedAgentConfig) return false;
+
+    return services.some(
+      ({ home_chain }) =>
+        home_chain === asMiddlewareChain(selectedAgentConfig.evmHomeChainId),
+    );
+  }, [isServicesFetched, services, selectedService, selectedAgentConfig]);
+
+  const isApplicationReady = useMemo(() => {
+    if (
+      !isOnline ||
+      !canNavigate ||
+      !isServicesFetched ||
+      !isWalletsFetched ||
+      !isBalanceLoaded
+    )
+      return false;
+
+    return true;
+  }, [
+    canNavigate,
+    isBalanceLoaded,
+    isOnline,
+    isServicesFetched,
+    isWalletsFetched,
+  ]);
+
+  const isBackupWalletNotSet = useMemo(() => {
+    // If no services are created and backup wallet is not set as well.
+    return !services?.length && !backupSignerAddress;
+  }, [services?.length, backupSignerAddress]);
+
+  useEffect(() => {
+    if (!isApplicationReady) return;
+    setIsLoggingIn(false);
+
+    if (!selectedAgentConfig) return;
+
+    if (isBackupWalletNotSet) {
+      goto(SetupScreen.SetupBackupSigner);
+      return;
+    }
+
+    // If the agent is disabled then redirect to agent selection,
+    // if the disabled agent was previously selected.
+    if (!selectedAgentConfig.isAgentEnabled) {
+      goto(SetupScreen.AgentSelection);
+      return;
+    }
+
+    // If no service is created for the selected agent
+    if (!isServiceCreatedForAgent) {
+      window.console.log(
+        `No service created for chain ${selectedServiceOrAgentChainId}`,
+      );
+      goto(SetupScreen.AgentSelection);
+      return;
+    }
+
+    // If no balance is loaded, redirect to setup screen
+    if (!eoaBalanceEth) {
+      goto(SetupScreen.SetupEoaFundingIncomplete);
+      return;
+    }
+
+    // if master safe is NOT created, then go to create safe
+    if (!masterSafe?.address) {
+      goto(SetupScreen.SetupCreateSafe);
+      return;
+    }
+
+    gotoPage(Pages.Main);
+  }, [
+    isServiceCreatedForAgent,
+    eoaBalanceEth,
+    masterSafe?.address,
+    selectedServiceOrAgentChainId,
+    goto,
+    gotoPage,
+    selectedAgentConfig,
+    setIsLoggingIn,
+    isApplicationReady,
+    isBackupWalletNotSet,
+  ]);
+};
 
 enum MiddlewareAccountIsSetup {
   True,
@@ -71,42 +205,13 @@ const SetupWelcomeLogin = () => {
   const [form] = Form.useForm();
   const message = useMessageApi();
   const { goto } = useSetup();
-  const { isOnline } = useOnlineStatusContext();
-  const { goto: gotoPage, setUserLoggedIn } = usePageState();
+  const { setUserLoggedIn } = usePageState();
 
-  const {
-    selectedService,
-    selectedAgentConfig,
-    services,
-    isFetched: isServicesFetched,
-    selectedAgentType,
-  } = useServices();
-  const {
-    masterSafes,
-    masterEoa,
-    isFetched: isWalletsFetched,
-  } = useMasterWalletContext();
-  const { isLoaded: isBalanceLoaded, updateBalances } = useBalanceContext();
-  const { masterWalletBalances } = useMasterBalances();
-
-  const selectedServiceOrAgentChainId = selectedService?.home_chain
-    ? asEvmChainId(selectedService?.home_chain)
-    : selectedAgentConfig.evmHomeChainId;
-
-  const masterSafe = masterSafes?.find(
-    (safe) =>
-      selectedServiceOrAgentChainId &&
-      safe.evmChainId === selectedServiceOrAgentChainId,
-  );
-
-  const eoaBalanceEth = masterWalletBalances?.find(
-    (balance) =>
-      balance.walletAddress === masterEoa?.address &&
-      balance.evmChainId === selectedServiceOrAgentChainId,
-  )?.balance;
+  const { updateBalances } = useBalanceContext();
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [canNavigate, setCanNavigate] = useState(false);
+  useSetupNavigation({ canNavigate, setIsLoggingIn });
 
   const handleLogin = useCallback(
     async ({ password }: { password: string }) => {
@@ -124,76 +229,6 @@ const SetupWelcomeLogin = () => {
     },
     [updateBalances, setUserLoggedIn, message],
   );
-
-  const isServiceCreatedForAgent = useMemo(() => {
-    if (!isServicesFetched) return false;
-    if (!services) return false;
-    if (!selectedService) return false;
-    if (!selectedAgentConfig) return false;
-
-    return services.some(
-      ({ home_chain }) =>
-        home_chain === asMiddlewareChain(selectedAgentConfig.evmHomeChainId),
-    );
-  }, [isServicesFetched, services, selectedService, selectedAgentConfig]);
-
-  useEffect(() => {
-    // If not online, do not proceed
-    if (!isOnline) return;
-
-    if (!canNavigate) return;
-    if (!isServicesFetched) return;
-    if (!isWalletsFetched) return;
-    if (!isBalanceLoaded) return;
-
-    setIsLoggingIn(false);
-
-    if (!selectedAgentConfig) return;
-
-    // If the agent is disabled then redirect to agent selection,
-    // if the disabled agent was previously selected.
-    if (!selectedAgentConfig.isAgentEnabled) {
-      goto(SetupScreen.AgentSelection);
-      return;
-    }
-
-    // If no service is created for the selected agent
-    if (!isServiceCreatedForAgent) {
-      window.console.log(
-        `No service created for chain ${selectedServiceOrAgentChainId}`,
-      );
-      goto(SetupScreen.AgentSelection);
-      return;
-    }
-
-    // If no balance is loaded, redirect to setup screen
-    if (!eoaBalanceEth) {
-      goto(SetupScreen.SetupEoaFundingIncomplete);
-      return;
-    }
-
-    // if master safe is NOT created, then go to create safe
-    if (!masterSafe?.address) {
-      goto(SetupScreen.SetupCreateSafe);
-      return;
-    }
-
-    gotoPage(Pages.Main);
-  }, [
-    canNavigate,
-    isServicesFetched,
-    isWalletsFetched,
-    isBalanceLoaded,
-    isServiceCreatedForAgent,
-    eoaBalanceEth,
-    masterSafe?.address,
-    selectedServiceOrAgentChainId,
-    goto,
-    gotoPage,
-    selectedAgentConfig,
-    selectedAgentType,
-    isOnline,
-  ]);
 
   return (
     <FormFlex form={form} onFinish={handleLogin}>
