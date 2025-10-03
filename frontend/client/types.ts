@@ -15,11 +15,11 @@ export type ServiceConfigId = string;
 type AgentRelease = {
   is_aea: boolean;
   repository: {
-    owner: string,
-    name: string,
-    version: string,
-  }
-}
+    owner: string;
+    name: string;
+    version: string;
+  };
+};
 
 type ServiceKeys = {
   address: Address;
@@ -63,7 +63,19 @@ type EnvVariableAttributes = {
 };
 
 export type MiddlewareServiceResponse = {
+  /**
+   * Field to address agent's uniqueness, eg: optimus, trader, etc.
+   * It is unique per chain, but can have the same value if the same agent
+   * (with different config) is used across different chains. For eg: Optimus and Modius
+   * have the same service_public_id
+   */
   service_public_id: string;
+  /**
+   * Field to address config's uniqueness.
+   * The same agent can have different configs, and so this field will have different values.
+   * eg: Optimus and Modius are the same agents (as per the logic/code), but their configs would
+   * be different, hence they will have difference values of service_config_id
+   */
   service_config_id: string; // TODO: update with uuid once middleware integrated
   version: number;
   name: string;
