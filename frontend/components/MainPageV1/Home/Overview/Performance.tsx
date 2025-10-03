@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Button, Col, Flex, Row, Typography } from 'antd';
+import { Button, Col, Flex, Row, Spin, Typography } from 'antd';
 import { isNil } from 'lodash';
 import { useMemo } from 'react';
 import styled from 'styled-components';
@@ -84,7 +84,7 @@ type PerformanceProps = {
  * To display agent performance on the main page.
  */
 export const Performance = ({ openProfile }: PerformanceProps) => {
-  const { data: agentPerformance } = useAgentPerformance();
+  const { data: agentPerformance, isLoading } = useAgentPerformance();
 
   const { selectedService, selectedAgentConfig } = useServices();
 
@@ -114,7 +114,11 @@ export const Performance = ({ openProfile }: PerformanceProps) => {
 
       <CardFlex $noBorder>
         <Flex vertical gap={24}>
-          {sortedMetrics.length === 0 ? (
+          {isLoading ? (
+            <Flex justify="center" className="mt-24">
+              <Spin />
+            </Flex>
+          ) : sortedMetrics.length === 0 ? (
             <NoMetricsAlert />
           ) : (
             <>
