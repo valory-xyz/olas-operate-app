@@ -67,9 +67,7 @@ export const AgentActivity = () => {
       }
       if (rounds.length) {
         const currentRound = rounds[0];
-        const roundInfo =
-          roundsInfo?.[currentRound]?.name ||
-          currentRound;
+        const roundInfo = roundsInfo?.[currentRound]?.name || currentRound;
 
         return {
           status: 'running',
