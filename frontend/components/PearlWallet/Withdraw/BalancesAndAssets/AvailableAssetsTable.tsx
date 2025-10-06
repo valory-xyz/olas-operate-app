@@ -31,7 +31,7 @@ const columns: TableColumnsType<AvailableAsset> = [
     title: 'Amount',
     key: 'amount',
     render: (_: unknown, record: AvailableAsset) => (
-      <Text>{formatNumber(record.amount, 2)}</Text>
+      <Text>{formatNumber(record.amount, 4)}</Text>
     ),
     width: '50%',
   },

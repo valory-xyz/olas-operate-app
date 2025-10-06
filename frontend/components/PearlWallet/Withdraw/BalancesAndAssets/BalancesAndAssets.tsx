@@ -13,6 +13,17 @@ import { StakedAssetsTable } from './StakedAssetsTable';
 
 const { Text, Title } = Typography;
 
+const PearlWalletTitle = () => (
+  <Flex vertical gap={12}>
+    <Title level={3} className="m-0">
+      Pearl Wallet
+    </Title>
+    <Text type="secondary">
+      Manage your funds and power your agents for their on-chain activity.
+    </Text>
+  </Flex>
+);
+
 const AvailableAssets = () => (
   <Flex vertical gap={24}>
     <Flex vertical gap={12}>
@@ -61,15 +72,7 @@ export const BalancesAndAssets = ({
     <Flex vertical gap={32}>
       <CardFlex $noBorder>
         <Flex justify="space-between" align="end">
-          <Flex vertical gap={12}>
-            <Title level={3} className="m-0">
-              Pearl Wallet
-            </Title>
-            <Text type="secondary">
-              Manage your funds and power your agents for their on-chain
-              activity.
-            </Text>
-          </Flex>
+          <PearlWalletTitle />
           <Flex gap={8}>
             <Button onClick={onWithdraw}>Withdraw</Button>
             <Button onClick={onDeposit} type="primary">
