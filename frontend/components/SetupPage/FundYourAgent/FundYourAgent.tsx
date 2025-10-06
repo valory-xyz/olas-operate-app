@@ -1,21 +1,19 @@
 import { Button, Flex, Typography } from 'antd';
-import Paragraph from 'antd/es/typography/Paragraph';
 import styled from 'styled-components';
 
-import { BackButton } from '@/components/ui/BackButton';
-import { CardFlex } from '@/components/ui/CardFlex';
-import { CardTitle } from '@/components/ui/Typography';
-import { EvmChainId, EvmChainName } from '@/constants/chains';
-import { COLOR } from '@/constants/colors';
+import { BackButton, CardFlex, CardTitle } from '@/components/ui';
+import { COLOR, EvmChainId, EvmChainName } from '@/constants';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useFeatureFlag } from '@/hooks/useFeatureFlag';
-import { useOnRampContext } from '@/hooks/useOnRampContext';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
-import { useSetup } from '@/hooks/useSetup';
-import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
-import { useTotalNativeTokenRequired } from '@/hooks/useTotalNativeTokenRequired';
+import {
+  useFeatureFlag,
+  useOnRampContext,
+  usePageState,
+  useServices,
+  useSetup,
+  useTotalFiatFromNativeToken,
+  useTotalNativeTokenRequired,
+} from '@/hooks';
 
 import {
   type TokenRequirement,
@@ -23,7 +21,7 @@ import {
 } from './components/TokensRequirements';
 import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
 
-const { Text, Title } = Typography;
+const { Text, Title, Paragraph } = Typography;
 
 const FundYourAgentContainer = styled(Flex)`
   align-items: center;
@@ -44,12 +42,7 @@ const FundMethodCard = styled(CardFlex)`
 `;
 
 const CardDescription = ({ children }: { children: React.ReactNode }) => (
-  <Paragraph
-    type="secondary"
-    style={{
-      minHeight: '4.5rem',
-    }}
-  >
+  <Paragraph type="secondary" style={{ minHeight: '4.5rem' }}>
     {children}
   </Paragraph>
 );

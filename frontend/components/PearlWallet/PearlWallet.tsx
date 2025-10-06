@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 
 import { Deposit } from './Deposit/Deposit';
+import { SelectPaymentMethod } from './Deposit/SelectPaymentMethod';
 import { PearlWalletProvider, usePearlWallet } from './PearlWalletProvider';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
@@ -19,10 +20,13 @@ const PearlWalletContent = () => {
   const handleNext = useCallback(() => {
     switch (step) {
       case STEPS.PEARL_WALLET_SCREEN:
-        updateStep(STEPS.SELECT_AMOUNT);
+        updateStep(STEPS.SELECT_AMOUNT_TO_WITHDRAW);
         break;
-      case STEPS.SELECT_AMOUNT:
+      case STEPS.SELECT_AMOUNT_TO_WITHDRAW:
         updateStep(STEPS.ENTER_WITHDRAWAL_ADDRESS);
+        break;
+      case STEPS.DEPOSIT:
+        updateStep(STEPS.SELECT_PAYMENT_METHOD);
         break;
       default:
         break;
@@ -31,12 +35,15 @@ const PearlWalletContent = () => {
 
   const handleBack = useCallback(() => {
     switch (step) {
-      case STEPS.SELECT_AMOUNT:
+      case STEPS.SELECT_AMOUNT_TO_WITHDRAW:
       case STEPS.DEPOSIT:
         updateStep(STEPS.PEARL_WALLET_SCREEN);
         break;
       case STEPS.ENTER_WITHDRAWAL_ADDRESS:
-        updateStep(STEPS.SELECT_AMOUNT);
+        updateStep(STEPS.SELECT_AMOUNT_TO_WITHDRAW);
+        break;
+      case STEPS.SELECT_PAYMENT_METHOD:
+        updateStep(STEPS.DEPOSIT);
         break;
       default:
         break;
@@ -52,14 +59,16 @@ const PearlWalletContent = () => {
             onDeposit={() => updateStep(STEPS.DEPOSIT)}
           />
         );
-      case STEPS.SELECT_AMOUNT:
+      case STEPS.SELECT_AMOUNT_TO_WITHDRAW:
         return (
           <SelectAmountToWithdraw onBack={handleBack} onContinue={handleNext} />
         );
       case STEPS.ENTER_WITHDRAWAL_ADDRESS:
         return <EnterWithdrawalAddress onBack={handleBack} />;
       case STEPS.DEPOSIT:
-        return <Deposit onBack={handleBack} />;
+        return <Deposit onBack={handleBack} onContinue={handleNext} />;
+      case STEPS.SELECT_PAYMENT_METHOD:
+        return <SelectPaymentMethod onBack={handleBack} />;
       default:
         throw new Error('Invalid step');
     }

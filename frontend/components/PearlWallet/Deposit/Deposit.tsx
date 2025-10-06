@@ -44,7 +44,6 @@ const AgentWalletToPearlWallet = () => (
 
 const SelectChainToDeposit = () => {
   const { chains, walletChainId, onWalletChainChange } = usePearlWallet();
-
   return (
     <Select
       value={walletChainId}
@@ -69,18 +68,14 @@ const SelectChainToDeposit = () => {
   );
 };
 
-type FundAgentProps = { onBack: () => void };
+type DepositProps = {
+  onBack: () => void;
+  onContinue: () => void;
+};
 
-export const Deposit = ({ onBack }: FundAgentProps) => {
+export const Deposit = ({ onBack, onContinue }: DepositProps) => {
   const { onDepositAmountChange, amountsToDeposit, availableAssets } =
     usePearlWallet();
-
-  const onContinue = () => {
-    window.console.log(
-      'Continue to the next step with amounts:',
-      amountsToDeposit,
-    );
-  };
 
   return (
     <CardFlex $noBorder $padding="32px" style={cardStyles}>
