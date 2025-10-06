@@ -1,9 +1,15 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Flex, Select, Typography } from 'antd';
+import { Button, Flex, Select, Typography } from 'antd';
 import { kebabCase } from 'lodash';
 import Image from 'next/image';
 
-import { BackButton, CardFlex, Divider } from '@/components/ui';
+import {
+  BackButton,
+  CardFlex,
+  cardStyles,
+  Divider,
+  TokenAmountInput,
+} from '@/components/ui';
 
 import { usePearlWallet } from '../PearlWalletProvider';
 
@@ -36,13 +42,48 @@ const AgentWalletToPearlWallet = () => (
   </Flex>
 );
 
-type FundAgentProps = { onBack: () => void };
-
-export const Deposit = ({ onBack }: FundAgentProps) => {
+const SelectChainToDeposit = () => {
   const { chains, walletChainId, onWalletChainChange } = usePearlWallet();
 
   return (
-    <CardFlex $noBorder $padding="32px" className="w-full">
+    <Select
+      value={walletChainId}
+      onChange={(value) => onWalletChainChange(value, false)}
+      size="large"
+      style={{ maxWidth: 200 }}
+    >
+      {chains.map((chain) => (
+        <Select.Option key={chain.chainId} value={chain.chainId}>
+          <Flex align="center" gap={8}>
+            <Image
+              src={`/chains/${kebabCase(chain.chainName)}-chain.png`}
+              alt={chain.chainName}
+              width={20}
+              height={20}
+            />
+            {`${chain.chainName} Chain`}
+          </Flex>
+        </Select.Option>
+      ))}
+    </Select>
+  );
+};
+
+type FundAgentProps = { onBack: () => void };
+
+export const Deposit = ({ onBack }: FundAgentProps) => {
+  const { onDepositAmountChange, amountsToDeposit, availableAssets } =
+    usePearlWallet();
+
+  const onContinue = () => {
+    window.console.log(
+      'Continue to the next step with amounts:',
+      amountsToDeposit,
+    );
+  };
+
+  return (
+    <CardFlex $noBorder $padding="32px" style={cardStyles}>
       <Flex gap={32} vertical>
         <Flex gap={12} vertical>
           <BackButton onPrev={onBack} />
@@ -50,29 +91,35 @@ export const Deposit = ({ onBack }: FundAgentProps) => {
         </Flex>
         <AgentWalletToPearlWallet />
 
-        <Flex vertical>
-          <Select
-            value={walletChainId}
-            onChange={(value) => onWalletChainChange(value, false)}
-            size="large"
-            style={{ maxWidth: 200 }}
-          >
-            {chains.map((chain) => (
-              <Select.Option key={chain.chainId} value={chain.chainId}>
-                <Flex align="center" gap={8}>
-                  <Image
-                    src={`/chains/${kebabCase(chain.chainName)}-chain.png`}
-                    alt={chain.chainName}
-                    width={20}
-                    height={20}
-                  />
-                  {`${chain.chainName} Chain`}
-                </Flex>
-              </Select.Option>
+        <Flex vertical gap={16}>
+          <SelectChainToDeposit />
+          <Flex justify="space-between" align="center" vertical gap={16}>
+            {availableAssets.map(({ amount, symbol }) => (
+              <TokenAmountInput
+                key={symbol}
+                tokenSymbol={symbol}
+                value={amountsToDeposit?.[symbol] ?? 0}
+                totalAmount={amount}
+                onChange={(x) => onDepositAmountChange(symbol, x ?? 0)}
+                showQuickSelects={false}
+              />
             ))}
-          </Select>
+          </Flex>
         </Flex>
+
+        <Button onClick={onContinue} type="primary" size="large" block>
+          Continue
+        </Button>
       </Flex>
     </CardFlex>
   );
 };
+
+/**
+ * TODO:
+ * - what is the amount in each input?
+ * - Payment type selection page
+ * - Actual payment integration
+ * - Success page
+ * - Error handling
+ */

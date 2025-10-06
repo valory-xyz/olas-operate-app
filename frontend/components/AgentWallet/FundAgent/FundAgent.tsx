@@ -99,6 +99,7 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
                 key={symbol}
                 tokenSymbol={symbol}
                 value={amountsToFund?.[symbol] ?? 0}
+                maxAmount={amount}
                 totalAmount={amount}
                 onChange={(x) => onAmountChange(symbol, x ?? 0)}
               />

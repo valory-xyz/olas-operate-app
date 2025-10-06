@@ -49,6 +49,7 @@ export const SelectAmountToWithdraw = ({
               key={symbol}
               tokenSymbol={symbol}
               value={amountsToWithdraw?.[symbol] ?? 0}
+              maxAmount={amount}
               totalAmount={amount}
               onChange={(x) => onAmountChange(symbol, x ?? 0)}
             />
