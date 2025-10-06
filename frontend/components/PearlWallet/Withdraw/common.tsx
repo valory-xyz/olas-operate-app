@@ -1,7 +1,7 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
 
-import { Divider } from '@/components/ui/Divider';
+import { Divider } from '@/components/ui';
 
 const { Text } = Typography;
 

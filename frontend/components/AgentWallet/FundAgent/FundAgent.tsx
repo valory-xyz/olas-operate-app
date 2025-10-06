@@ -30,7 +30,7 @@ const FundAgentTitle = () => (
   </Flex>
 );
 
-const PearlWalletToExternalWallet = () => {
+const PearlWalletToAgentWallet = () => {
   const { agentName, agentImgSrc } = useAgentWallet();
   return (
     <Flex vertical style={{ margin: '0 -32px' }}>
@@ -91,7 +91,7 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
             <BackButton onPrev={onBack} />
             <FundAgentTitle />
           </Flex>
-          <PearlWalletToExternalWallet />
+          <PearlWalletToAgentWallet />
 
           <Flex justify="space-between" align="center" vertical gap={16}>
             {availableAssets.map(({ amount, symbol }) => (

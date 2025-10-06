@@ -1,14 +1,12 @@
 import { ArrowRightOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { Button, Divider, Flex, Image, Tooltip, Typography } from 'antd';
+import { Button, Flex, Image, Tooltip, Typography } from 'antd';
 import { kebabCase } from 'lodash';
 import styled from 'styled-components';
 
 import { AgentNft } from '@/components/AgentNft';
-import { BackButton } from '@/components/ui/BackButton';
-import { CardFlex } from '@/components/ui/CardFlex';
+import { BackButton, CardFlex, Divider } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { COLOR } from '@/constants/colors';
-import { TokenSymbolConfigMap } from '@/constants/token';
+import { COLOR, TokenSymbolConfigMap } from '@/constants';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { useAgentWallet } from '../AgentWalletProvider';
@@ -53,7 +51,7 @@ const WithdrawalAddressTitle = () => (
   </Flex>
 );
 
-const PearlWalletToExternalWallet = () => {
+const AgentWalletToPearlWallet = () => {
   const { agentName, agentImgSrc } = useAgentWallet();
   return (
     <Flex vertical style={{ margin: '0 -32px' }}>
@@ -160,7 +158,7 @@ export const ChainAndAmountOverview = ({
           <BackButton onPrev={onBack} />
           <WithdrawalAddressTitle />
         </Flex>
-        <PearlWalletToExternalWallet />
+        <AgentWalletToPearlWallet />
 
         <Flex vertical gap={32}>
           {chainDetails?.name && (
