@@ -20,8 +20,6 @@ export const useAvailableAgentAssets = () => {
     serviceSafeOlas,
   } = useServiceBalances(selectedService?.service_config_id);
 
-  // TODO: create a separate hook and reuse it in FundAgent and PearlWalletProvider
-  // OLAS token, Native Token, other ERC20 tokens
   const availableAssets: AvailableAsset[] = useMemo(() => {
     if (!evmHomeChainId) return [];
 
