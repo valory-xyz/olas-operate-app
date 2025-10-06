@@ -5,23 +5,22 @@ import { useMemo } from 'react';
 import { AddressLink } from '@/components/AddressLink';
 import { CardTitle } from '@/components/Card/CardTitle';
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
-import { CardFlex } from '@/components/ui/CardFlex';
+import { CardFlex } from '@/components/ui';
 import { getNativeTokenSymbol } from '@/config/tokens';
 import { TokenSymbol } from '@/enums/Token';
 import {
   useBalanceContext,
+  useFeatureFlag,
   useMasterBalances,
-} from '@/hooks/useBalanceContext';
-import { useFeatureFlag } from '@/hooks/useFeatureFlag';
-import { useServices } from '@/hooks/useServices';
-import { useMasterWalletContext } from '@/hooks/useWallet';
+  useMasterWalletContext,
+  useServices,
+} from '@/hooks';
 import { type Address } from '@/types/Address';
 import { Optional } from '@/types/Util';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
-import { balanceFormat } from '@/utils/numberFormatters';
+import { asEvmChainDetails, balanceFormat } from '@/utils';
 
-import { FeatureNotEnabled } from '../FeatureNotEnabled';
 import { GoToMainPageButton } from '../Pages/GoToMainPageButton';
+import { FeatureNotEnabled } from './FeatureNotEnabled';
 import { Container, infoBreakdownParentStyle } from './styles';
 import { SignerTitle } from './Titles';
 import { useYourWallet } from './useYourWallet';
