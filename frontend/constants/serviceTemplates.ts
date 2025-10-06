@@ -17,11 +17,11 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeihnwktiqopqvztnoohfs4bvdwvliaba32uzet2f6jkflycph3msie',
+  hash: 'bafybeihnzvqexxegm6auq7vcpb6prybd2xcz5glbvhos2lmmuazqt75nuq',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.27.2',
+  service_version: 'v0.26.3',
   agent_release: {
     is_aea: true,
     repository: {
@@ -133,12 +133,6 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       description: 'Gemini api key to allow the agent to use Gemini',
       value: '',
       provision_type: EnvProvisionType.USER,
-    },
-    GNOSIS_STAKING_SUBGRAPH_URL: {
-      name: "Gnosis staking subgraph URL",
-      description: "",
-      value: "https://gateway-arbitrum.network.thegraph.com/api/{SUBGRAPH_API_KEY}/subgraphs/id/F3iqL2iw5UTrP1qbb4S694pGEkBwzoxXp1TRikB2K4e",
-      provision_type: EnvProvisionType.COMPUTED
     },
   },
 } as const;
