@@ -25,9 +25,9 @@ export const Wallet = () => {
   const { isMainOlasBalanceLoading } = useSharedContext();
   const { goto } = usePageState();
   const availableAssets = useAvailableAgentAssets();
-  const availableAssetsExceptOlas = availableAssets
-    .filter(({ symbol }) => symbol !== TokenSymbolMap.OLAS)
-    .filter(({ amount }) => amount > 0);
+  const availableAssetsExceptOlas = availableAssets.filter(
+    ({ symbol, amount }) => symbol !== TokenSymbolMap.OLAS && amount > 0,
+  );
 
   return (
     <Flex vertical>
