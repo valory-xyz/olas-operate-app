@@ -40,7 +40,7 @@ export const useAvailableAgentAssets = () => {
         const balance = (() => {
           // balance for OLAS
           if (symbol === TokenSymbolMap.OLAS) {
-            return sum([serviceSafeOlas?.balance]);
+            return sum([serviceSafeOlas?.balance]) ?? 0;
           }
 
           // balance for native tokens
@@ -48,10 +48,12 @@ export const useAvailableAgentAssets = () => {
             const serviceSafeNativeBalance = serviceSafeNativeBalances?.find(
               (nativeBalance) => nativeBalance.symbol === symbol,
             )?.balance;
-            return sum([
-              serviceSafeNativeBalance,
-              serviceEoaNativeBalance?.balance,
-            ]);
+            return (
+              sum([
+                serviceSafeNativeBalance,
+                serviceEoaNativeBalance?.balance,
+              ]) ?? 0
+            );
           }
 
           // balance for other required tokens (eg. USDC)
