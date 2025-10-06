@@ -70,8 +70,8 @@ type ElectronApiContextProps = {
     close?: () => void;
     authSuccess?: (address: Address) => void;
   };
-  onRampTermsWindow?: {
-    show?: () => void;
+  termsAndConditionsWindow?: {
+    show?: (type: 'transak' | 'web3auth') => void;
     close?: () => void;
   };
   logEvent?: (message: string) => void;
@@ -117,7 +117,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     close: () => {},
     authSuccess: () => {},
   },
-  onRampTermsWindow: {
+  termsAndConditionsWindow: {
     show: () => {},
     close: () => {},
   },
@@ -187,9 +187,9 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           close: getElectronApiFunction('web3AuthWindow.close'),
           authSuccess: getElectronApiFunction('web3AuthWindow.authSuccess'),
         },
-        onRampTermsWindow: {
-          show: getElectronApiFunction('onRampTermsWindow.show'),
-          close: getElectronApiFunction('onRampTermsWindow.close'),
+        termsAndConditionsWindow: {
+          show: getElectronApiFunction('termsAndConditionsWindow.show'),
+          close: getElectronApiFunction('termsAndConditionsWindow.close'),
         },
         logEvent: getElectronApiFunction('logEvent'),
       }}

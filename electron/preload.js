@@ -27,8 +27,8 @@ const web3AuthWindow = {
 };
 
 /** IPC methods for terms window */
-const onRampTermsWindow = {
-  show: () => ipcRenderer.invoke('terms-window-show'),
+const termsAndConditionsWindow = {
+  show: (type) => ipcRenderer.invoke('terms-window-show', type),
   close: () => ipcRenderer.invoke('terms-window-close'),
 };
 
@@ -63,6 +63,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   agentActivityWindow,
   onRampWindow,
   web3AuthWindow,
-  onRampTermsWindow,
+  termsAndConditionsWindow,
   logEvent: (message) => ipcRenderer.invoke('log-event', message),
 });
