@@ -1,5 +1,5 @@
 import { HistoryOutlined } from '@ant-design/icons';
-import { Flex, Skeleton, Typography } from 'antd';
+import { Flex, Image, Skeleton, Typography } from 'antd';
 import { useState } from 'react';
 
 import { ContractSvg } from '@/components/custom-icons/Contract';
@@ -8,16 +8,12 @@ import { FireV1 } from '@/components/custom-icons/FireV1';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Segmented } from '@/components/ui/Segmented';
-import { EvmChainName } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
-import { TokenSymbolMap } from '@/constants/token';
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useServiceOnlyRewardsHistory } from '@/hooks/useRewardsHistory';
-import { useServices } from '@/hooks/useServices';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
-import { useUsdAmounts } from '@/hooks/useUsdAmounts';
 
 import { RewardsHistory } from './RewardsHistory';
 import { StakingContractDetails } from './StakingContractDetails';
@@ -26,26 +22,10 @@ const { Title, Text } = Typography;
 
 const StatsSkeleton = () => <Skeleton.Input active size="small" />;
 
-const useUsdRewards = () => {
-  const { selectedAgentConfig } = useServices();
-  const { evmHomeChainId } = selectedAgentConfig;
-  const chainName = EvmChainName[evmHomeChainId];
-  const { totalRewards } = useServiceOnlyRewardsHistory();
-
-  const { totalUsd } = useUsdAmounts(chainName, [
-    {
-      symbol: TokenSymbolMap.OLAS,
-      amount: totalRewards,
-    },
-  ]);
-
-  return totalUsd;
-};
-
 const StakingStats = () => {
   const { optimisticStreak, isStreakLoading } = useStakingDetails();
   const { isLoading: isTotalRewardsLoading } = useServiceOnlyRewardsHistory();
-  const totalRewardsInUsd = useUsdRewards();
+  const { totalRewards } = useServiceOnlyRewardsHistory();
 
   const fireIcon =
     optimisticStreak > 0 ? <FireV1 fill={COLOR.PURPLE} /> : <FireNoStreak />;
@@ -59,7 +39,15 @@ const StakingStats = () => {
             <StatsSkeleton />
           ) : (
             <Title level={5} className="mt-0 mb-0">
-              ${totalRewardsInUsd.toFixed(2)}
+              <Flex align="center" gap={8}>
+                <Image
+                  src={`/tokens/olas-icon.png`}
+                  alt="OLAS"
+                  width={20}
+                  className="flex"
+                />
+                {totalRewards.toFixed(2)}
+              </Flex>
             </Title>
           )}
         </Flex>

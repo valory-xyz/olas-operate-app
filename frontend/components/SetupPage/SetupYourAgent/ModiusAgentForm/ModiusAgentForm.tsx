@@ -202,7 +202,7 @@ export const ModiusAgentFormContent = ({
         >
           <Input />
         </Form.Item>
-        {isTenderlyStep && <div style={{ paddingBottom: 42 }} />}
+        {isTenderlyStep && <div style={{ paddingBottom: 16 }} />}
 
         {isCoinGeckoStep && <CoinGeckoApiKeySubHeader isSetupPage />}
         <Form.Item
@@ -214,7 +214,7 @@ export const ModiusAgentFormContent = ({
         >
           <Input.Password />
         </Form.Item>
-        {isCoinGeckoStep && <div style={{ paddingBottom: 42 }} />}
+        {isCoinGeckoStep && <div style={{ paddingBottom: 16 }} />}
 
         {isGeminiStep && <GeminiApiKeySubHeader name="Modius" isSetupPage />}
         <Form.Item
@@ -228,6 +228,7 @@ export const ModiusAgentFormContent = ({
         {geminiApiKeyValidationStatus === 'invalid' && (
           <InvalidGeminiApiCredentials />
         )}
+        {isGeminiStep && <div style={{ paddingBottom: 16 }} />}
 
         <Form.Item>
           <Button

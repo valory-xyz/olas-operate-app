@@ -11,7 +11,6 @@ const { Text } = Typography;
 
 type TokenAmountInputProps = {
   value: number;
-  totalAmountInUsd: number;
   totalAmount: number;
   onChange: (value: number | null) => void;
   tokenSymbol: TokenSymbol;
@@ -42,7 +41,6 @@ const Container = styled.div`
 `;
 
 export const TokenAmountInput = ({
-  totalAmountInUsd,
   totalAmount,
   value,
   onChange,
@@ -74,10 +72,6 @@ export const TokenAmountInput = ({
       align="center"
       style={{ padding: '10px 20px' }}
     >
-      <Text className="text-sm leading-normal text-neutral-tertiary">
-        {totalAmountInUsd ? `≈ $${formatNumber(totalAmountInUsd, 4)}` : null}
-      </Text>
-
       <Flex align="center" gap={24}>
         <Flex gap={8} align="center">
           {[10, 25, 50, 100].map((percentage) => (

@@ -202,7 +202,7 @@ const OptimusAgentFormContent = ({
         >
           <Input />
         </Form.Item>
-        {isTenderlyStep && <div style={{ paddingBottom: 42 }} />}
+        {isTenderlyStep && <div style={{ paddingBottom: 16 }} />}
 
         {isCoinGeckoStep && <CoinGeckoApiKeySubHeader isSetupPage />}
         <Form.Item
@@ -214,9 +214,9 @@ const OptimusAgentFormContent = ({
         >
           <Input.Password />
         </Form.Item>
-        {isCoinGeckoStep && <div style={{ paddingBottom: 42 }} />}
+        {isCoinGeckoStep && <div style={{ paddingBottom: 16 }} />}
 
-        {isGeminiStep && <GeminiApiKeySubHeader name="Modius" isSetupPage />}
+        {isGeminiStep && <GeminiApiKeySubHeader name="Optimus" isSetupPage />}
         <Form.Item
           name="geminiApiKey"
           label={<GeminiApiKeyLabel />}
@@ -228,6 +228,7 @@ const OptimusAgentFormContent = ({
         {geminiApiKeyValidationStatus === 'invalid' && (
           <InvalidGeminiApiCredentials />
         )}
+        {isGeminiStep && <div style={{ paddingBottom: 16 }} />}
 
         <Form.Item>
           <Button

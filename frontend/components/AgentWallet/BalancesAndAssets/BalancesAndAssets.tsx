@@ -1,17 +1,13 @@
 import { Button, Flex, Modal, Typography } from 'antd';
-import { isNumber } from 'lodash';
 import { useMemo, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
-import { NA } from '@/constants/symbols';
 import { Pages } from '@/enums/Pages';
 import { useActiveStakingContractDetails } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
-import { formatNumber } from '@/utils/numberFormatters';
 
-import { useAgentWallet } from '../AgentWalletProvider';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { TransactionHistoryTable } from './TransactionHistoryTable';
 
@@ -23,7 +19,7 @@ const EvictedAgentAlert = () => (
     type="warning"
     showIcon
     centered
-    className="mb-24"
+    className="mt-16"
   />
 );
 
@@ -32,7 +28,7 @@ const AgentWalletTitle = () => {
   return (
     <Flex vertical justify="space-between" gap={12}>
       <BackButton onPrev={() => goto(Pages.Main)} />
-      <Title level={4} className="m-0">
+      <Title level={3} className="m-0">
         Agent Wallet
       </Title>
     </Flex>
@@ -47,7 +43,6 @@ export const AggregatedBalanceAndOperations = ({
   onWithdraw,
   onFundAgent,
 }: AggregatedBalanceAndOperationsProps) => {
-  const { aggregatedBalance } = useAgentWallet();
   const { isAgentEvicted } = useActiveStakingContractDetails();
   const alert = useMemo(() => {
     if (!isAgentEvicted) return <EvictedAgentAlert />;
@@ -56,18 +51,8 @@ export const AggregatedBalanceAndOperations = ({
 
   return (
     <CardFlex $noBorder>
-      {alert}
-      <Flex justify="space-between" align="center">
-        <Flex vertical gap={8}>
-          <Text type="secondary" className="text-sm">
-            Aggregated balance
-          </Text>
-          <Title level={4} className="m-0">
-            {isNumber(aggregatedBalance)
-              ? `$${formatNumber(aggregatedBalance)}`
-              : NA}
-          </Title>
-        </Flex>
+      <Flex justify="space-between" align="end">
+        <AgentWalletTitle />
         <Flex gap={8}>
           <Button disabled={isAgentEvicted} onClick={onWithdraw}>
             Withdraw
@@ -77,6 +62,7 @@ export const AggregatedBalanceAndOperations = ({
           </Button>
         </Flex>
       </Flex>
+      {alert}
     </CardFlex>
   );
 };
@@ -162,7 +148,6 @@ export const BalancesAndAssets = ({
 
   return (
     <Flex vertical gap={32}>
-      <AgentWalletTitle />
       <AggregatedBalanceAndOperations
         onWithdraw={() => setWithdrawModalVisible(true)}
         onFundAgent={onFundAgent}
