@@ -79,7 +79,13 @@ const PearlWalletContent = () => {
 
 export const PearlWallet = () => (
   <PearlWalletProvider>
-    <Flex vertical style={{ width: MAIN_CONTENT_MAX_WIDTH, margin: '0 auto' }}>
+    <Flex
+      vertical
+      style={{
+        width: STEPS.SELECT_PAYMENT_METHOD ? undefined : MAIN_CONTENT_MAX_WIDTH,
+        margin: '0 auto',
+      }}
+    >
       <PearlWalletContent />
     </Flex>
   </PearlWalletProvider>

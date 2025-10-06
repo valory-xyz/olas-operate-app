@@ -1,4 +1,5 @@
 import { Button, Flex, Typography } from 'antd';
+import { ReactNode } from 'react';
 import styled from 'styled-components';
 
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
@@ -23,11 +24,6 @@ import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequ
 
 const { Text, Title, Paragraph } = Typography;
 
-const FundYourAgentContainer = styled(Flex)`
-  align-items: center;
-  flex-direction: column;
-`;
-
 const FundMethodCard = styled(CardFlex)`
   width: 370px;
   border-color: ${COLOR.WHITE};
@@ -41,7 +37,7 @@ const FundMethodCard = styled(CardFlex)`
   }
 `;
 
-const CardDescription = ({ children }: { children: React.ReactNode }) => (
+const CardDescription = ({ children }: { children: ReactNode }) => (
   <Paragraph type="secondary" style={{ minHeight: '4.5rem' }}>
     {children}
   </Paragraph>
@@ -170,10 +166,8 @@ export const FundYourAgent = () => {
     resetTokenRequirements,
   } = useGetRefillRequirementsWithMonthlyGas({
     selectedAgentConfig,
-    /**
-     * service creation for agents requiring setup is already handled
-     * at the time of agent form
-     */
+    // service creation for agents requiring setup is already handled
+    // at the time of agent form
     shouldCreateDummyService: !requiresSetup,
   });
   const [isBridgeOnboardingEnabled, isOnRampEnabled] = useFeatureFlag([
@@ -185,7 +179,7 @@ export const FundYourAgent = () => {
     isLoading || tokenRequirements.length === 0;
 
   return (
-    <FundYourAgentContainer>
+    <Flex align="center" vertical>
       <BackButton
         onPrev={() => {
           resetTokenRequirements();
@@ -218,6 +212,6 @@ export const FundYourAgent = () => {
           />
         )}
       </Flex>
-    </FundYourAgentContainer>
+    </Flex>
   );
 };
