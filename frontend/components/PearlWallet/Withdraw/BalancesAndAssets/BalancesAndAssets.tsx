@@ -1,13 +1,11 @@
 import { Button, Flex, Typography } from 'antd';
-import { isNumber, kebabCase } from 'lodash';
+import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useEffect } from 'react';
 
 import { AgentNft } from '@/components/AgentNft';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Segmented } from '@/components/ui/Segmented';
-import { NA } from '@/constants/symbols';
-import { formatNumber } from '@/utils/numberFormatters';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
@@ -16,12 +14,12 @@ import { StakedAssetsTable } from './StakedAssetsTable';
 const { Text, Title } = Typography;
 
 const PearlWalletTitle = () => (
-  <Flex vertical justify="space-between" gap={12}>
-    <Title level={4} className="m-0">
+  <Flex vertical gap={12}>
+    <Title level={3} className="m-0">
       Pearl Wallet
     </Title>
     <Text type="secondary">
-      Manage your funds and power your agents for their on-chain activity.{' '}
+      Manage your funds and power your agents for their on-chain activity.
     </Text>
   </Flex>
 );
@@ -62,13 +60,8 @@ export const BalancesAndAssets = ({
   onWithdraw,
   onDeposit,
 }: BalancesAndAssetsProps) => {
-  const {
-    aggregatedBalance,
-    chains,
-    walletChainId,
-    onWalletChainChange,
-    onReset,
-  } = usePearlWallet();
+  const { chains, walletChainId, onWalletChainChange, onReset } =
+    usePearlWallet();
 
   // reset the state when we enter the pearl wallet screen
   useEffect(() => {
@@ -77,20 +70,9 @@ export const BalancesAndAssets = ({
 
   return (
     <Flex vertical gap={32}>
-      <PearlWalletTitle />
-
       <CardFlex $noBorder>
-        <Flex justify="space-between" align="center">
-          <Flex vertical gap={8}>
-            <Text type="secondary" className="text-sm">
-              Aggregated balance
-            </Text>
-            <Title level={4} className="m-0">
-              {isNumber(aggregatedBalance)
-                ? `$${formatNumber(aggregatedBalance)}`
-                : NA}
-            </Title>
-          </Flex>
+        <Flex justify="space-between" align="end">
+          <PearlWalletTitle />
           <Flex gap={8}>
             <Button onClick={onWithdraw}>Withdraw</Button>
             <Button onClick={onDeposit} type="primary">

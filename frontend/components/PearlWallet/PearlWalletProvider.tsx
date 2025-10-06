@@ -1,4 +1,4 @@
-import { compact, sum } from 'lodash';
+import { compact } from 'lodash';
 import {
   createContext,
   ReactNode,
@@ -27,7 +27,6 @@ const PearlWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;
   updateStep: (newStep: ValueOf<typeof STEPS>) => void;
   isLoading: boolean;
-  aggregatedBalance: Nullable<number>;
   chains: WalletChain[];
   walletChainId: Nullable<EvmChainId>;
   onWalletChainChange?: (chainId: EvmChainId) => void;
@@ -40,7 +39,6 @@ const PearlWalletContext = createContext<{
   walletStep: STEPS.PEARL_WALLET_SCREEN,
   updateStep: () => {},
   isLoading: false,
-  aggregatedBalance: null,
   walletChainId: null,
   onWalletChainChange: () => {},
   chains: [],
@@ -102,10 +100,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     );
   }, [services]);
 
-  const aggregatedBalance = useMemo(() => {
-    return sum(availableAssets.map(({ valueInUsd }) => valueInUsd));
-  }, [availableAssets]);
-
   // staked OLAS
   const stakedAssets: StakedAsset[] = useMemo(
     () => [
@@ -157,7 +151,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         walletStep,
         updateStep,
         isLoading,
-        aggregatedBalance,
         walletChainId,
         onWalletChainChange,
         chains,

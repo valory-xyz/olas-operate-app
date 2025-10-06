@@ -94,13 +94,12 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
           <PearlWalletToExternalWallet />
 
           <Flex justify="space-between" align="center" vertical gap={16}>
-            {availableAssets.map(({ amount, valueInUsd, symbol }) => (
+            {availableAssets.map(({ amount, symbol }) => (
               <TokenAmountInput
                 key={symbol}
                 tokenSymbol={symbol}
                 value={amountsToFund?.[symbol] ?? 0}
                 totalAmount={amount}
-                totalAmountInUsd={valueInUsd}
                 onChange={(x) => onAmountChange(symbol, x ?? 0)}
               />
             ))}

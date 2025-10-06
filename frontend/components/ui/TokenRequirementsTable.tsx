@@ -11,6 +11,7 @@ import styled from 'styled-components';
 
 import { Table } from '@/components/ui/Table';
 import { COLOR } from '@/constants/colors';
+import { formatNumber } from '@/utils';
 
 const LOCALE = {
   emptyText: 'No token requirements',
@@ -74,7 +75,7 @@ const columns: TableColumnsType<TokenRowData> = [
         >
           {record.areFundsReceived
             ? 'No pending amount'
-            : `Pending ${record.pendingAmount}`}
+            : `Pending ${formatNumber(record.pendingAmount, 2)}`}
         </CustomTag>
       );
     },

@@ -13,7 +13,6 @@ export type AvailableAsset = {
   address?: string;
   symbol: TokenSymbol;
   amount: number;
-  valueInUsd: number;
 };
 
 export type StakedAsset = {

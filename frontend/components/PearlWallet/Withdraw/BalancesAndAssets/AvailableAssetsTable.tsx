@@ -25,7 +25,7 @@ const columns: TableColumnsType<AvailableAsset> = [
         <Text>{record.symbol}</Text>
       </Flex>
     ),
-    width: '30%',
+    width: '50%',
   },
   {
     title: 'Amount',
@@ -33,17 +33,7 @@ const columns: TableColumnsType<AvailableAsset> = [
     render: (_: unknown, record: AvailableAsset) => (
       <Text>{formatNumber(record.amount, 4)}</Text>
     ),
-    align: 'right',
-    width: '30%',
-  },
-  {
-    title: 'Value',
-    key: 'value',
-    render: (_: unknown, record: AvailableAsset) => (
-      <Text>${formatNumber(record.valueInUsd)}</Text>
-    ),
-    align: 'right',
-    width: '40%',
+    width: '50%',
   },
 ];
 
