@@ -29,11 +29,16 @@ const PearlWalletContext = createContext<{
   isLoading: boolean;
   chains: WalletChain[];
   walletChainId: Nullable<EvmChainId>;
-  onWalletChainChange?: (chainId: EvmChainId) => void;
+  onWalletChainChange: (
+    chainId: EvmChainId,
+    canNavigateOnReset?: boolean,
+  ) => void;
   availableAssets: AvailableAsset[];
   stakedAssets: StakedAsset[];
   amountsToWithdraw: Partial<Record<TokenSymbol, number>>;
   onAmountChange: (symbol: TokenSymbol, amount: number) => void;
+  amountsToDeposit: Partial<Record<TokenSymbol, number>>;
+  onDepositAmountChange: (symbol: TokenSymbol, amount: number) => void;
   onReset: () => void;
 }>({
   walletStep: STEPS.PEARL_WALLET_SCREEN,
@@ -46,6 +51,8 @@ const PearlWalletContext = createContext<{
   availableAssets: [],
   amountsToWithdraw: {},
   onAmountChange: () => {},
+  amountsToDeposit: {},
+  onDepositAmountChange: () => {},
   onReset: () => {},
 });
 
@@ -69,6 +76,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     selectedAgentConfig.evmHomeChainId,
   );
   const [amountsToWithdraw, setAmountsToWithdraw] = useState<
+    Partial<Record<TokenSymbol, number>>
+  >({});
+  const [amountsToDeposit, setAmountsToDeposit] = useState<
     Partial<Record<TokenSymbol, number>>
   >({});
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
@@ -126,15 +136,26 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     setAmountsToWithdraw((prev) => ({ ...prev, [symbol]: amount }));
   }, []);
 
-  const onReset = useCallback(() => {
-    setWalletStep(STEPS.PEARL_WALLET_SCREEN);
+  const onDepositAmountChange = useCallback(
+    (symbol: TokenSymbol, amount: number) => {
+      setAmountsToDeposit((prev) => ({ ...prev, [symbol]: amount }));
+    },
+    [],
+  );
+
+  const onReset = useCallback((canNavigateOnReset?: boolean) => {
     setAmountsToWithdraw({});
+    setAmountsToDeposit({});
+
+    if (canNavigateOnReset) {
+      setWalletStep(STEPS.PEARL_WALLET_SCREEN);
+    }
   }, []);
 
   const onWalletChainChange = useCallback(
-    (chainId: EvmChainId) => {
+    (chainId: EvmChainId, canNavigateOnReset?: boolean) => {
       setWalletChainId(chainId);
-      onReset();
+      onReset(canNavigateOnReset);
     },
     [onReset],
   );
@@ -148,16 +169,24 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PearlWalletContext.Provider
       value={{
+        isLoading,
         walletStep,
         updateStep,
-        isLoading,
+        availableAssets,
+        stakedAssets,
+
+        // for chain
         walletChainId,
         onWalletChainChange,
         chains,
-        availableAssets,
-        stakedAssets,
+
+        // for withdraw
         amountsToWithdraw,
         onAmountChange,
+
+        // for deposit
+        amountsToDeposit,
+        onDepositAmountChange,
         onReset,
       }}
     >

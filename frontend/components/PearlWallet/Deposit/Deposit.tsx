@@ -1,7 +1,11 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Flex, Typography } from 'antd';
+import { Flex, Select, Typography } from 'antd';
+import { kebabCase } from 'lodash';
+import Image from 'next/image';
 
 import { BackButton, CardFlex, Divider } from '@/components/ui';
+
+import { usePearlWallet } from '../PearlWalletProvider';
 
 const { Title, Text } = Typography;
 
@@ -35,6 +39,8 @@ const AgentWalletToPearlWallet = () => (
 type FundAgentProps = { onBack: () => void };
 
 export const Deposit = ({ onBack }: FundAgentProps) => {
+  const { chains, walletChainId, onWalletChainChange } = usePearlWallet();
+
   return (
     <CardFlex $noBorder $padding="32px" className="w-full">
       <Flex gap={32} vertical>
@@ -43,6 +49,29 @@ export const Deposit = ({ onBack }: FundAgentProps) => {
           <DepositTitle />
         </Flex>
         <AgentWalletToPearlWallet />
+
+        <Flex vertical>
+          <Select
+            value={walletChainId}
+            onChange={(value) => onWalletChainChange(value, false)}
+            size="large"
+            style={{ maxWidth: 200 }}
+          >
+            {chains.map((chain) => (
+              <Select.Option key={chain.chainId} value={chain.chainId}>
+                <Flex align="center" gap={8}>
+                  <Image
+                    src={`/chains/${kebabCase(chain.chainName)}-chain.png`}
+                    alt={chain.chainName}
+                    width={20}
+                    height={20}
+                  />
+                  {`${chain.chainName} Chain`}
+                </Flex>
+              </Select.Option>
+            ))}
+          </Select>
+        </Flex>
       </Flex>
     </CardFlex>
   );

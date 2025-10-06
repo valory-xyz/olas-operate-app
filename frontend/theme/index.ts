@@ -89,6 +89,11 @@ export const mainTheme: ThemeConfig = {
     Layout: {
       bodyBg: COLOR.BACKGROUND,
     },
+    Select: {
+      colorBgContainer: COLOR.BACKGROUND,
+      fontSizeLG: 16,
+      optionPadding: 8,
+    },
     Steps: {
       fontSize: 16,
       colorError: '#CF1322',
