@@ -132,7 +132,7 @@ const AssetsFromStakingContract = () => {
             width={20}
             className="flex"
           />
-          <Text>{formatNumber(stakingRewards.value, 4)} OLAS</Text>
+          <Text>{formatNumber(stakingRewards, 4)} OLAS</Text>
         </Flex>
 
         <AgentNft />

@@ -81,6 +81,7 @@ export const useCanMigrate = ({
     serviceStatus,
     isCurrentStakingProgram,
     isServiceStakedForMinimumDuration,
+    serviceNftTokenId,
   ]);
 
   return { buttonText, canMigrate };

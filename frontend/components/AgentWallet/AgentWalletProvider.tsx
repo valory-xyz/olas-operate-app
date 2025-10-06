@@ -32,7 +32,7 @@ const AgentWalletContext = createContext<{
   transactionHistory: TransactionHistory[];
   agentName: Nullable<string>;
   agentImgSrc: Nullable<string>;
-  stakingRewards: { value: number };
+  stakingRewards: number;
   availableAssets: AvailableAsset[];
   amountsToWithdraw: Partial<Record<TokenSymbol, number>>;
 }>({
@@ -43,7 +43,7 @@ const AgentWalletContext = createContext<{
   transactionHistory: [],
   agentName: null,
   agentImgSrc: null,
-  stakingRewards: { value: 0 },
+  stakingRewards: 0,
   availableAssets: [],
   amountsToWithdraw: {},
 });
@@ -88,7 +88,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
       availableRewardsForEpochEth,
     ]);
 
-    return { value: total };
+    return total;
   }, [accruedServiceStakingRewards, availableRewardsForEpochEth]);
 
   const updateStep = useCallback(
