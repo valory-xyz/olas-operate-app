@@ -6,7 +6,7 @@ import { assertRequired } from '@/types/Util';
 import { asEvmChainDetails, asMiddlewareChain } from '@/utils';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
-import { SelectPaymentMethodCard, YouWillPayContainer } from './common';
+import { SelectPaymentMethodCard, YouPayContainer } from './common';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -31,7 +31,7 @@ export const Transfer = ({ onSelect }: { onSelect: () => void }) => {
           <Paragraph className="m-0" type="secondary">
             You will pay
           </Paragraph>
-          <YouWillPayContainer vertical gap={12}>
+          <YouPayContainer vertical gap={12}>
             <Flex vertical gap={12}>
               {Object.entries(amountsToDeposit).map(([tokenSymbol, amount]) => (
                 <Flex key={tokenSymbol} gap={8} align="center">
@@ -52,7 +52,7 @@ export const Transfer = ({ onSelect }: { onSelect: () => void }) => {
             <Text className="text-sm text-neutral-tertiary" type="secondary">
               + transaction fees on {chainName}.
             </Text>
-          </YouWillPayContainer>
+          </YouPayContainer>
         </Flex>
 
         <Button

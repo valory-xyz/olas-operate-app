@@ -20,7 +20,7 @@ export const PaymentMethodCard = styled(CardFlex)`
   }
 `;
 
-export const YouWillPayContainer = styled(Flex)`
+export const YouPayContainer = styled(Flex)`
   background: ${COLOR.BACKGROUND};
   border-radius: 10px;
   padding: 12px 16px;

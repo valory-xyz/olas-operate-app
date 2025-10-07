@@ -22,7 +22,7 @@ const SelectPaymentMethodCard = styled(CardFlex)`
   }
 `;
 
-const YouWillPayContainer = styled(Flex)`
+const YouPayContainer = styled(Flex)`
   background: ${COLOR.BACKGROUND};
   border-radius: 10px;
   padding: 12px 16px;
@@ -42,11 +42,11 @@ const Bridge = () => (
         <Paragraph className="m-0" type="secondary">
           You will pay
         </Paragraph>
-        <YouWillPayContainer>
+        <YouPayContainer>
           <Text className="text-sm text-neutral-tertiary" type="secondary">
             + bridging fees on Ethereum.
           </Text>
-        </YouWillPayContainer>
+        </YouPayContainer>
       </Flex>
 
       <Button
