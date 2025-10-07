@@ -156,16 +156,20 @@ export type MiddlewareWalletResponse = {
   safe_nonce: number;
 };
 
+export type TokenBalanceRecord = {
+  [tokenAddress: Address]: number | string;
+};
+
 export type MasterSafeBalanceRecord = {
-  master_safe: { [tokenAddress: Address]: number | string };
+  master_safe: TokenBalanceRecord;
 };
 
 export type ServiceSafeBalanceRecord = {
-  service_safe: { [tokenAddress: Address]: number | string };
+  service_safe: TokenBalanceRecord;
 };
 
 export type AddressBalanceRecord = {
-  [address: Address]: { [tokenAddress: Address]: number | string };
+  [address: Address]: TokenBalanceRecord;
 };
 
 export type BalancesAndFundingRequirements = {
@@ -188,6 +192,12 @@ export type BalancesAndFundingRequirements = {
    */
   agent_funding_requests: Partial<{
     [chain in MiddlewareChain]: AddressBalanceRecord | ServiceSafeBalanceRecord;
+  }>;
+  protocol_asset_requirements: Partial<{
+    [chain in MiddlewareChain]: TokenBalanceRecord;
+  }>;
+  bonded_assets: Partial<{
+    [chain in MiddlewareChain]: TokenBalanceRecord;
   }>;
   is_refill_required: boolean;
   allow_start_agent: boolean;
