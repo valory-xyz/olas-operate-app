@@ -2,18 +2,20 @@ import { BalancesAndFundingRequirements } from '@/client';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL_V2 } from '@/constants/urls';
 
-/**
- * API call to get balances and refill requirements
- */
-const getBalancesAndRefillRequirements = async ({
-  serviceConfigId,
-  signal,
-}: {
+type GetBalancesAndFundingRequirementsParams = {
   serviceConfigId: string;
   signal: AbortSignal;
-}): Promise<BalancesAndFundingRequirements> => {
+};
+
+/**
+ * API call to get balances and funding requirements
+ */
+const getBalancesAndFundingRequirements = async ({
+  serviceConfigId,
+  signal,
+}: GetBalancesAndFundingRequirementsParams): Promise<BalancesAndFundingRequirements> => {
   return fetch(
-    `${BACKEND_URL_V2}/service/${serviceConfigId}/refill_requirements`,
+    `${BACKEND_URL_V2}/service/${serviceConfigId}/funding_requirements`,
     {
       method: 'GET',
       headers: { ...CONTENT_TYPE_JSON_UTF8 },
@@ -24,11 +26,11 @@ const getBalancesAndRefillRequirements = async ({
       return response.json();
     }
     throw new Error(
-      `Failed to fetch balances and refill requirements for ${serviceConfigId}`,
+      `Failed to fetch balances and funding requirements for ${serviceConfigId}`,
     );
   });
 };
 
 export const BalanceService = {
-  getBalancesAndRefillRequirements,
+  getBalancesAndFundingRequirements,
 };

@@ -17,11 +17,11 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeieaf7quf4m3qcqyjjql4p722tpqfdackqbipclp5ms444spexauv4',
+  hash: 'bafybeihnzvqexxegm6auq7vcpb6prybd2xcz5glbvhos2lmmuazqt75nuq',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.27.1',
+  service_version: 'v0.26.3',
   agent_release: {
     is_aea: true,
     repository: {
@@ -133,13 +133,6 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       description: 'Gemini api key to allow the agent to use Gemini',
       value: '',
       provision_type: EnvProvisionType.USER,
-    },
-    GNOSIS_STAKING_SUBGRAPH_URL: {
-      name: 'Gnosis staking subgraph URL',
-      description: '',
-      value:
-        'https://gateway-arbitrum.network.thegraph.com/api/{SUBGRAPH_API_KEY}/subgraphs/id/F3iqL2iw5UTrP1qbb4S694pGEkBwzoxXp1TRikB2K4e',
-      provision_type: EnvProvisionType.COMPUTED,
     },
   },
 } as const;
@@ -302,7 +295,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeigtbqigx6sqhg3ffnxnbpq6ieafdyk2gzjulv36dpmug4yy7w5zia',
+  hash: 'bafybeidhr2w4reoqvbkfa2vyzrme3l6gfoeyng4borgh3prveji2tjsyi4',
   service_version: 'v0.5.4',
   agent_release: {
     is_aea: true,

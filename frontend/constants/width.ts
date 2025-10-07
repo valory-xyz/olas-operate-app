@@ -1,4 +1,5 @@
 export const APP_WIDTH = 1320;
+export const IFRAME_WIDTH = 480;
 export const APP_HEIGHT = 796;
 
 export const SIDER_WIDTH = 256;

@@ -33,8 +33,8 @@ export const Container = styled.div<{
   padding: 12px;
   height: ${LINE_HEIGHT}px;
   overflow: hidden;
-  border-bottom-right-radius: 10px;
-  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 16px;
+  border-bottom-left-radius: 16px;
   ${({ $status }) => getContainerStylesByStatus($status)}
 `;
 

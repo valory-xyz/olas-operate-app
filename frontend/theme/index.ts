@@ -64,6 +64,9 @@ export const mainTheme: ThemeConfig = {
     },
     Menu: {
       activeBarBorderWidth: 0,
+      itemSelectedBg: COLOR.GRAY_1,
+      itemHoverBg: COLOR.GRAY_1,
+      itemSelectedColor: COLOR.TEXT_NEUTRAL_PRIMARY,
     },
     Tooltip: {
       fontSize: 16,

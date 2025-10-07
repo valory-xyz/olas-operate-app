@@ -45,7 +45,7 @@ export const AggregatedBalanceAndOperations = ({
 }: AggregatedBalanceAndOperationsProps) => {
   const { isAgentEvicted } = useActiveStakingContractDetails();
   const alert = useMemo(() => {
-    if (!isAgentEvicted) return <EvictedAgentAlert />;
+    if (isAgentEvicted) return <EvictedAgentAlert />;
     return null;
   }, [isAgentEvicted]);
 
