@@ -1,8 +1,6 @@
 import { Flex, Typography } from 'antd';
 
-import { BackButton } from '@/components/ui/BackButton';
-import { CardFlex } from '@/components/ui/CardFlex';
-import { FundingDescription } from '@/components/ui/FundingDescription';
+import { BackButton, CardFlex, FundingDescription } from '@/components/ui';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
 import { GetBridgeRequirementsParams } from '../types';
