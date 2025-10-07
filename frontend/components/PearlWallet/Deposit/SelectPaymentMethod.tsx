@@ -25,16 +25,6 @@ const YouWillPayContainer = styled(Flex)`
   padding: 12px 16px;
 `;
 
-const CardDescription = ({ children }: { children: React.ReactNode }) => (
-  <Paragraph
-    type="secondary"
-    className="text-center"
-    style={{ minHeight: '4.5rem' }}
-  >
-    {children}
-  </Paragraph>
-);
-
 const Transfer = () => (
   <PaymentMethodCard>
     <Flex vertical gap={32}>
@@ -71,13 +61,23 @@ const Transfer = () => (
 
 const Bridge = () => (
   <PaymentMethodCard>
-    <div className="fund-method-card-body">
-      <CardTitle>Bridge</CardTitle>
-      <CardDescription>
-        Bridge from Ethereum Mainnet. Slightly more expensive.
-      </CardDescription>
-      <div />
-    </div>
+    <Flex vertical gap={32}>
+      <Flex vertical gap={16}>
+        <CardTitle className="m-0">Bridge</CardTitle>
+        <Paragraph type="secondary" className="m-0 text-center">
+          Bridge from Ethereum Mainnet. Slightly more expensive.
+        </Paragraph>
+      </Flex>
+
+      <Button
+        // type="primary"
+        size="large"
+        // onClick={() => goto(SetupScreen.SetupOnRamp)}
+        // disabled={isLoading}
+      >
+        Transfer Crypto on Optimism
+      </Button>
+    </Flex>
   </PaymentMethodCard>
 );
 

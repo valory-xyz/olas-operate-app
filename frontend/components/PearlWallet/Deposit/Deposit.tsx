@@ -24,7 +24,7 @@ const DepositTitle = () => (
   </Flex>
 );
 
-const AgentWalletToPearlWallet = () => (
+const ExternalWalletToPearlWallet = () => (
   <Flex vertical style={{ margin: '0 -32px' }}>
     <Divider />
     <Flex gap={16} style={{ padding: '12px 32px' }} align="center">
@@ -84,7 +84,7 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
           <BackButton onPrev={onBack} />
           <DepositTitle />
         </Flex>
-        <AgentWalletToPearlWallet />
+        <ExternalWalletToPearlWallet />
 
         <Flex vertical gap={16}>
           <SelectChainToDeposit />
