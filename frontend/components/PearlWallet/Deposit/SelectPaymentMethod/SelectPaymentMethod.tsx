@@ -28,7 +28,7 @@ const YouPayContainer = styled(Flex)`
   padding: 12px 16px;
 `;
 
-const Bridge = () => (
+const Bridge = ({ onSelect }: { onSelect: () => void }) => (
   <SelectPaymentMethodCard>
     <Flex vertical gap={32}>
       <Flex vertical gap={16}>
@@ -49,12 +49,7 @@ const Bridge = () => (
         </YouPayContainer>
       </Flex>
 
-      <Button
-        // type="primary"
-        size="large"
-        // onClick={() => goto(SetupScreen.SetupOnRamp)}
-        // disabled={isLoading}
-      >
+      <Button onClick={onSelect} size="large">
         Bridge Crypto from Ethereum
       </Button>
     </Flex>

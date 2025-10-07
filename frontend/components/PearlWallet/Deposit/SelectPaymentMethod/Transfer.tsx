@@ -3,12 +3,12 @@ import { Button, Flex, Image, Typography } from 'antd';
 import { CardTitle } from '@/components/ui';
 import { TokenSymbol, TokenSymbolConfigMap } from '@/constants';
 import { assertRequired } from '@/types/Util';
-import { asEvmChainDetails, asMiddlewareChain } from '@/utils';
+import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { SelectPaymentMethodCard, YouPayContainer } from './common';
 
-const { Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 
 export const Transfer = ({ onSelect }: { onSelect: () => void }) => {
   const { walletChainId: chainId } = usePearlWallet();
@@ -43,7 +43,7 @@ export const Transfer = ({ onSelect }: { onSelect: () => void }) => {
                   />
                   <Flex gap={8} align="center">
                     <Text>
-                      {amount.toFixed(4)} {tokenSymbol}
+                      {formatNumber(amount, 4)} {tokenSymbol}
                     </Text>
                   </Flex>
                 </Flex>
@@ -55,12 +55,7 @@ export const Transfer = ({ onSelect }: { onSelect: () => void }) => {
           </YouPayContainer>
         </Flex>
 
-        <Button
-          onClick={onSelect}
-          // type="primary"
-          size="large"
-          // disabled={isLoading}
-        >
+        <Button onClick={onSelect} size="large">
           Transfer Crypto on {chainName}
         </Button>
       </Flex>
