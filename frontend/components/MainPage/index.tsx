@@ -2,7 +2,6 @@ import { Card, Flex } from 'antd';
 
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
-import { UpdateAvailableModal } from '../MainPageV1/Home/Overview/AgentInfo/UpdateAvailable/UpdateAvailableModal';
 import { MainHeader } from './header';
 import { AddFundsSection } from './sections/AddFundsSection';
 import { AlertSections } from './sections/AlertSections';
@@ -25,7 +24,6 @@ export const Main = () => {
       style={{ borderTopColor: 'transparent' }}
     >
       <Flex vertical>
-        <UpdateAvailableModal />
         <SwitchAgentSection />
         <MainHeader />
         <AlertSections />
