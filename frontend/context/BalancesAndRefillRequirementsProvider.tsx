@@ -28,6 +28,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   balances: Optional<AddressBalanceRecord>;
   refillRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
   totalRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
+  agentFundingRequests: Optional<AddressBalanceRecord>;
   canStartAgent: boolean;
   isRefillRequired: boolean;
   refetch: Nullable<
@@ -39,6 +40,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   balances: undefined,
   refillRequirements: undefined,
   totalRequirements: undefined,
+  agentFundingRequests: undefined,
   canStartAgent: false,
   isRefillRequired: false,
   refetch: null,
@@ -67,7 +69,7 @@ export const BalancesAndRefillRequirementsProvider = ({
   }, [isServiceRunning, configId]);
 
   const {
-    data: balancesAndRefillRequirements,
+    data: balancesAndFundingRequirements,
     isLoading: isBalancesAndFundingRequirementsLoading,
     refetch,
   } = useQuery<BalancesAndFundingRequirements>({
@@ -75,7 +77,7 @@ export const BalancesAndRefillRequirementsProvider = ({
       configId as string,
     ),
     queryFn: ({ signal }) =>
-      BalanceService.getBalancesAndRefillRequirements({
+      BalanceService.getBalancesAndFundingRequirements({
         serviceConfigId: configId!,
         signal,
       }),
@@ -85,39 +87,52 @@ export const BalancesAndRefillRequirementsProvider = ({
 
   const balances = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return;
-    if (!balancesAndRefillRequirements) return;
+    if (!balancesAndFundingRequirements) return;
 
-    return balancesAndRefillRequirements.balances[asMiddlewareChain(chainId)];
+    return balancesAndFundingRequirements.balances[asMiddlewareChain(chainId)];
   }, [
     isBalancesAndFundingRequirementsLoading,
     chainId,
-    balancesAndRefillRequirements,
+    balancesAndFundingRequirements,
   ]);
 
   const refillRequirements = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return;
-    if (!balancesAndRefillRequirements) return;
+    if (!balancesAndFundingRequirements) return;
 
-    return balancesAndRefillRequirements.refill_requirements[
+    return balancesAndFundingRequirements.refill_requirements[
       asMiddlewareChain(chainId)
     ];
   }, [
     isBalancesAndFundingRequirementsLoading,
     chainId,
-    balancesAndRefillRequirements,
+    balancesAndFundingRequirements,
   ]);
 
   const totalRequirements = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return;
-    if (!balancesAndRefillRequirements) return;
+    if (!balancesAndFundingRequirements) return;
 
-    return balancesAndRefillRequirements.total_requirements[
+    return balancesAndFundingRequirements.total_requirements[
       asMiddlewareChain(chainId)
     ];
   }, [
     isBalancesAndFundingRequirementsLoading,
     chainId,
-    balancesAndRefillRequirements,
+    balancesAndFundingRequirements,
+  ]);
+
+  const agentFundingRequests = useMemo(() => {
+    if (isBalancesAndFundingRequirementsLoading) return;
+    if (!balancesAndFundingRequirements) return;
+
+    return balancesAndFundingRequirements.agent_funding_requests[
+      asMiddlewareChain(chainId)
+    ];
+  }, [
+    isBalancesAndFundingRequirementsLoading,
+    chainId,
+    balancesAndFundingRequirements,
   ]);
 
   const resetQueryCache = useMemo(() => {
@@ -139,10 +154,11 @@ export const BalancesAndRefillRequirementsProvider = ({
         refillRequirements,
         balances,
         totalRequirements,
+        agentFundingRequests,
         canStartAgent:
-          balancesAndRefillRequirements?.allow_start_agent || false,
+          balancesAndFundingRequirements?.allow_start_agent || false,
         isRefillRequired:
-          balancesAndRefillRequirements?.is_refill_required || false,
+          balancesAndFundingRequirements?.is_refill_required || false,
         refetch: refetch || null,
         resetQueryCache,
       }}
