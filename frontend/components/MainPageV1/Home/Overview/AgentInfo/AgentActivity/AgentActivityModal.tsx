@@ -57,13 +57,13 @@ export const AgentActivityModal = ({
 
   const currentActionName = useMemo(() => {
     const currentRound = rounds[0];
-    if (!currentRound) return undefined;
+    if (!currentRound) return;
     return roundsInfo?.[currentRound]?.name || currentRound;
   }, [rounds, roundsInfo]);
 
   const currentActionDescription = useMemo(() => {
     const currentRound = rounds[0];
-    if (!currentRound) return undefined;
+    if (!currentRound) return;
     return roundsInfo?.[currentRound]?.description;
   }, [rounds, roundsInfo]);
   return (

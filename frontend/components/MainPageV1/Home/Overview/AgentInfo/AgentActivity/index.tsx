@@ -16,7 +16,7 @@ import { AgentStatus } from './types';
 
 const { Paragraph } = Typography;
 
-export const RoundInfoContainer = styled.div`
+const RoundInfoContainer = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -125,7 +125,7 @@ export const AgentActivity = () => {
       <Container
         $status={activityInfo.status}
         onClick={() => {
-          // if (!canOpenModal) return;
+          if (!canOpenModal) return;
           showModal();
         }}
       >
