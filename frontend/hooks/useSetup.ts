@@ -15,7 +15,7 @@ export const useSetup = () => {
 
   const goto = useCallback(
     (state: SetupScreen) => {
-      setSetupObject((prev) => ({ ...prev, prevState: prev.state, state }));
+      setSetupObject((prev) => ({ ...prev, state, prevState: prev.state }));
     },
     [setSetupObject],
   );

@@ -24,7 +24,7 @@ export const SetupCreateHeader = ({ prev }: SetupCreateHeaderProps) => {
     isFunction(prev) ? prev() : goto(prev);
   }, [goto, prev]);
 
-  // If the user killed the app before saving the backup wallet and reopend
+  // If the user killed the app without adding the backup wallet and reopend the application
   const showBackButton = prev && prevState !== SetupScreen.Welcome;
   return (
     <Row>

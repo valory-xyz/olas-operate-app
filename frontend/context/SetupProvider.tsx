@@ -9,6 +9,7 @@ import {
 import { SetupScreen } from '@/enums/SetupScreen';
 import { Address } from '@/types/Address';
 import { BackupWalletType } from '@/types/BackupWallet';
+import { Maybe } from '@/types/Util';
 
 type SetupObjectType = {
   state: SetupScreen;
@@ -18,6 +19,7 @@ type SetupObjectType = {
     address: Address;
     type: BackupWalletType;
   };
+  prevState: Maybe<SetupScreen>;
 };
 
 type SetupContextType = {
@@ -31,6 +33,7 @@ export const SetupContext = createContext<SetupContextType>({
     prevState: null,
     mnemonic: [],
     backupSigner: undefined,
+    prevState: null,
   },
   setSetupObject: () => {},
 });
@@ -41,6 +44,7 @@ export const SetupProvider = ({ children }: PropsWithChildren) => {
     prevState: null,
     mnemonic: [],
     backupSigner: undefined,
+    prevState: null,
   });
 
   return (
