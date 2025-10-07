@@ -134,6 +134,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.USER,
     },
+    GNOSIS_STAKING_SUBGRAPH_URL: {
+      name: 'Gnosis staking subgraph URL',
+      description: '',
+      value:
+        'https://gateway-arbitrum.network.thegraph.com/api/{SUBGRAPH_API_KEY}/subgraphs/id/F3iqL2iw5UTrP1qbb4S694pGEkBwzoxXp1TRikB2K4e',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
   },
 } as const;
 
@@ -295,8 +302,8 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeidhr2w4reoqvbkfa2vyzrme3l6gfoeyng4borgh3prveji2tjsyi4',
-  service_version: 'v0.5.4',
+  hash: 'bafybeihnwktiqopqvztnoohfs4bvdwvliaba32uzet2f6jkflycph3msie',
+  service_version: 'v0.5.8',
   agent_release: {
     is_aea: true,
     repository: {
