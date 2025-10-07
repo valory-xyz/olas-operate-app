@@ -24,6 +24,7 @@ const NoMetricsAlert = () => (
     type="info"
     centered
     showIcon
+    className="text-sm"
   />
 );
 
@@ -38,6 +39,7 @@ const MetricsCapturedTimestampAlert = ({
     centered
     showIcon
     closable
+    className="text-sm"
   />
 );
 
