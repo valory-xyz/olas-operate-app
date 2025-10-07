@@ -4,12 +4,12 @@ import { useCallback, useMemo } from 'react';
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 
 import { Deposit } from './Deposit/Deposit';
-import { SelectPaymentMethod } from './Deposit/SelectPaymentMethod';
+import { SelectPaymentMethod } from './Deposit/SelectPaymentMethod/SelectPaymentMethod';
 import { PearlWalletProvider, usePearlWallet } from './PearlWalletProvider';
+import { STEPS } from './types';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
 import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw';
-import { STEPS } from './Withdraw/types';
 
 /**
  * To display the Pearl Wallet page.

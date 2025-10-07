@@ -1,5 +1,5 @@
 import { Button, Flex, Select, Typography } from 'antd';
-import { kebabCase } from 'lodash';
+import { kebabCase, values } from 'lodash';
 import Image from 'next/image';
 
 import {
@@ -83,7 +83,13 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
           </Flex>
         </Flex>
 
-        <Button onClick={onContinue} type="primary" size="large" block>
+        <Button
+          disabled={values(amountsToDeposit).every((x) => x === 0)}
+          onClick={onContinue}
+          type="primary"
+          size="large"
+          block
+        >
           Continue
         </Button>
       </Flex>

@@ -21,7 +21,7 @@ import { Nullable, ValueOf } from '@/types/Util';
 import { AvailableAsset, StakedAsset } from '@/types/Wallet';
 import { generateName } from '@/utils/agentName';
 
-import { STEPS, WalletChain } from './Withdraw/types';
+import { STEPS, WalletChain } from './types';
 
 const PearlWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;
