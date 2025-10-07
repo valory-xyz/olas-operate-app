@@ -119,7 +119,7 @@ const useSetupNavigation = ({
     // If the agent is disabled then redirect to agent selection,
     // if the disabled agent was previously selected.
     if (!selectedAgentConfig.isAgentEnabled) {
-      goto(SetupScreen.AgentSelection);
+      goto(SetupScreen.AgentOnboarding);
       return;
     }
 
@@ -128,13 +128,13 @@ const useSetupNavigation = ({
       window.console.log(
         `No service created for chain ${selectedServiceOrAgentChainId}`,
       );
-      goto(SetupScreen.AgentSelection);
+      goto(SetupScreen.AgentOnboarding);
       return;
     }
 
     // If no balance is loaded, redirect to setup screen
     if (!eoaBalanceEth) {
-      goto(SetupScreen.SetupEoaFundingIncomplete);
+      goto(SetupScreen.FundYourAgent);
       return;
     }
 
