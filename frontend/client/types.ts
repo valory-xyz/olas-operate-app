@@ -160,6 +160,10 @@ export type MasterSafeBalanceRecord = {
   master_safe: { [tokenAddress: Address]: number | string };
 };
 
+export type ServiceSafeBalanceRecord = {
+  service_safe: { [tokenAddress: Address]: number | string };
+};
+
 export type AddressBalanceRecord = {
   [address: Address]: { [tokenAddress: Address]: number | string };
 };
@@ -183,7 +187,7 @@ export type BalancesAndFundingRequirements = {
    * @note this deals with agent's requirements post onboarding.
    */
   agent_funding_requests: Partial<{
-    [chain in MiddlewareChain]: AddressBalanceRecord;
+    [chain in MiddlewareChain]: AddressBalanceRecord | ServiceSafeBalanceRecord;
   }>;
   is_refill_required: boolean;
   allow_start_agent: boolean;
