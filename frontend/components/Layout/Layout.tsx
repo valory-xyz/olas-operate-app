@@ -1,5 +1,5 @@
-import { WifiOutlined } from '@ant-design/icons';
-import { message } from 'antd';
+import { Flex, message, Modal, Typography } from 'antd';
+import Image from 'next/image';
 import { PropsWithChildren, useEffect, useMemo } from 'react';
 import styled, { css } from 'styled-components';
 
@@ -13,6 +13,8 @@ import { usePageState } from '@/hooks/usePageState';
 import { useSetup } from '@/hooks/useSetup';
 
 import { NavBar } from './NavBar';
+
+const { Title } = Typography;
 
 const Container = styled.div<{ $blur: boolean }>`
   display: flex;
@@ -61,19 +63,12 @@ export const Layout = ({ children }: PropsWithChildren) => {
   const { state } = useSetup();
   const { pageState } = usePageState();
 
-  // all the app level notifications
+  // All the app-level notifications
   useSystemLevelNotifications();
 
   useEffect(() => {
     const onlineStatusMessageKey = 'online-status-message';
-    if (!isOnline) {
-      message.error({
-        content: 'Network connection is unstable',
-        duration: 0,
-        icon: <WifiOutlined />,
-        key: onlineStatusMessageKey,
-      });
-    } else {
+    if (isOnline) {
       message.destroy(onlineStatusMessageKey);
     }
   }, [isOnline]);
@@ -87,9 +82,43 @@ export const Layout = ({ children }: PropsWithChildren) => {
   }, [pageState, state]);
 
   return (
-    <Container $blur={!isOnline}>
-      <NavBar />
-      <Body $hasPadding={hasPadding}>{children}</Body>
-    </Container>
+    <>
+      {!isOnline && (
+        <Modal
+          open
+          footer={null}
+          closable={false}
+          width={450}
+          className="no-internet-modal"
+        >
+          <Flex
+            vertical
+            justify="center"
+            align="center"
+            className="text-center"
+          >
+            <Image
+              src="/not-online.png"
+              alt="No internet connection"
+              width={80}
+              height={80}
+              className="mb-12"
+            />
+            <Title level={5} className="mt-12">
+              No Internet Connection
+            </Title>
+            <div>
+              Check your Wi-Fi or Ethernet. Pearl will reconnect automatically
+              once the connection is stable.
+            </div>
+          </Flex>
+        </Modal>
+      )}
+
+      <Container $blur={!isOnline}>
+        <NavBar />
+        <Body $hasPadding={hasPadding}>{children}</Body>
+      </Container>
+    </>
   );
 };

@@ -290,6 +290,25 @@ textarea,
   }
 }
 
+.update-modal {
+  .ant-modal-content {
+    box-sizing: border-box;
+    padding: 24px;
+  }
+
+  .ant-modal-footer {
+    display: flex;
+    justify-content: space-between;
+  }
+}
+
+.no-internet-modal {
+  .ant-modal-content {
+    box-sizing: border-box;
+    padding: 32px;
+  }
+}
+
 .can-select-text {
   user-select: text !important;
 }
