@@ -6,6 +6,7 @@ export * from './CardSection';
 export * from './Collapse';
 export * from './Divider';
 export * from './FormFlex';
+export * from './FromToWallet';
 export * from './FundingDescription';
 export * from './FundsAreSafeMessage';
 export * from './Modal';

@@ -1,4 +1,3 @@
-import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Flex, Select, Typography } from 'antd';
 import { kebabCase } from 'lodash';
 import Image from 'next/image';
@@ -7,7 +6,7 @@ import {
   BackButton,
   CardFlex,
   cardStyles,
-  Divider,
+  FromToWallet,
   TokenAmountInput,
 } from '@/components/ui';
 
@@ -21,24 +20,6 @@ const DepositTitle = () => (
       Deposit to Pearl Wallet
     </Title>
     <Text>Enter the token amounts you want to deposit.</Text>
-  </Flex>
-);
-
-const ExternalWalletToPearlWallet = () => (
-  <Flex vertical style={{ margin: '0 -32px' }}>
-    <Divider />
-    <Flex gap={16} style={{ padding: '12px 32px' }} align="center">
-      <Flex gap={8} align="center">
-        <Text type="secondary">From</Text>{' '}
-        <Text className="font-weight-500">External Wallet</Text>
-      </Flex>
-      <ArrowRightOutlined style={{ fontSize: 12 }} />
-      <Text>
-        <Text type="secondary">To</Text>{' '}
-        <Text className="font-weight-500">Pearl Wallet</Text>
-      </Text>
-    </Flex>
-    <Divider />
   </Flex>
 );
 
@@ -84,7 +65,7 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
           <BackButton onPrev={onBack} />
           <DepositTitle />
         </Flex>
-        <ExternalWalletToPearlWallet />
+        <FromToWallet from="External Wallet" to="Pearl Wallet" />
 
         <Flex vertical gap={16}>
           <SelectChainToDeposit />

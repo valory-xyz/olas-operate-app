@@ -1,8 +1,17 @@
-import { Button, Flex, Typography } from 'antd';
+import { Button, Flex, Image, Typography } from 'antd';
 import { styled } from 'styled-components';
 
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
-import { COLOR } from '@/constants';
+import {
+  COLOR,
+  EvmChainId,
+  TokenSymbol,
+  TokenSymbolConfigMap,
+} from '@/constants';
+import { assertRequired } from '@/types/Util';
+import { asEvmChainDetails, asMiddlewareChain } from '@/utils';
+
+import { usePearlWallet } from '../PearlWalletProvider';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -13,10 +22,6 @@ const PaymentMethodCard = styled(CardFlex)`
   .ant-card-body {
     height: 100%;
   }
-
-  /* .fund-method-card-body {
-    flex: 1;
-  } */
 `;
 
 const YouWillPayContainer = styled(Flex)`
@@ -25,39 +30,61 @@ const YouWillPayContainer = styled(Flex)`
   padding: 12px 16px;
 `;
 
-const Transfer = () => (
-  <PaymentMethodCard>
-    <Flex vertical gap={32}>
-      <Flex vertical gap={16}>
-        <CardTitle className="m-0">Buy</CardTitle>
-        <Paragraph type="secondary" className="m-0 text-center">
-          Pay in fiat by using your credit or debit card — perfect for speed and
-          ease!
-        </Paragraph>
-      </Flex>
+const Transfer = ({ chainId }: { chainId: EvmChainId }) => {
+  const chainName = asEvmChainDetails(asMiddlewareChain(chainId)).displayName;
+  const { amountsToDeposit } = usePearlWallet();
 
-      <Flex vertical gap={8}>
-        <Paragraph className="m-0" type="secondary">
-          You will pay
-        </Paragraph>
-        <YouWillPayContainer>
-          <Text className="text-sm text-neutral-tertiary" type="secondary">
-            + transaction fees on Optimism.
-          </Text>
-        </YouWillPayContainer>
-      </Flex>
+  return (
+    <PaymentMethodCard>
+      <Flex vertical gap={32}>
+        <Flex vertical gap={16}>
+          <CardTitle className="m-0">Buy</CardTitle>
+          <Paragraph type="secondary" className="m-0 text-center">
+            Pay in fiat by using your credit or debit card — perfect for speed
+            and ease!
+          </Paragraph>
+        </Flex>
 
-      <Button
-        // type="primary"
-        size="large"
-        // onClick={() => goto(SetupScreen.SetupOnRamp)}
-        // disabled={isLoading}
-      >
-        Transfer Crypto on Optimism
-      </Button>
-    </Flex>
-  </PaymentMethodCard>
-);
+        <Flex vertical gap={8}>
+          <Paragraph className="m-0" type="secondary">
+            You will pay
+          </Paragraph>
+          <YouWillPayContainer vertical gap={12}>
+            <Flex vertical gap={12}>
+              {Object.entries(amountsToDeposit).map(([tokenSymbol, amount]) => (
+                <Flex key={tokenSymbol} gap={8} align="center">
+                  <Image
+                    src={TokenSymbolConfigMap[tokenSymbol as TokenSymbol].image}
+                    alt={tokenSymbol}
+                    width={20}
+                    className="flex"
+                  />
+                  <Flex gap={8} align="center">
+                    <Text>
+                      {amount.toFixed(4)} {tokenSymbol}
+                    </Text>
+                  </Flex>
+                </Flex>
+              ))}
+            </Flex>
+            <Text className="text-sm text-neutral-tertiary" type="secondary">
+              + transaction fees on {chainName}.
+            </Text>
+          </YouWillPayContainer>
+        </Flex>
+
+        <Button
+          // type="primary"
+          size="large"
+          // onClick={() => goto(SetupScreen.SetupOnRamp)}
+          // disabled={isLoading}
+        >
+          Transfer Crypto on {chainName}
+        </Button>
+      </Flex>
+    </PaymentMethodCard>
+  );
+};
 
 const Bridge = () => (
   <PaymentMethodCard>
@@ -69,28 +96,46 @@ const Bridge = () => (
         </Paragraph>
       </Flex>
 
+      <Flex vertical gap={8}>
+        <Paragraph className="m-0" type="secondary">
+          You will pay
+        </Paragraph>
+        <YouWillPayContainer>
+          <Text className="text-sm text-neutral-tertiary" type="secondary">
+            + bridging fees on Ethereum.
+          </Text>
+        </YouWillPayContainer>
+      </Flex>
+
       <Button
         // type="primary"
         size="large"
         // onClick={() => goto(SetupScreen.SetupOnRamp)}
         // disabled={isLoading}
       >
-        Transfer Crypto on Optimism
+        Bridge Crypto from Ethereum
       </Button>
     </Flex>
   </PaymentMethodCard>
 );
 
 export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
+  const { walletChainId } = usePearlWallet();
+
+  assertRequired(
+    walletChainId,
+    'Chain ID is required to select payment method',
+  );
+
   return (
-    <Flex vertical style={{ width: '100%' }} align="center">
+    <Flex vertical align="center" className="w-full px-16">
       <BackButton onPrev={onBack} />
       <Title level={4} className="mt-12 mb-32">
         Select Payment Method
       </Title>
 
       <Flex gap={24}>
-        <Transfer />
+        <Transfer chainId={walletChainId} />
         <Bridge />
       </Flex>
     </Flex>
