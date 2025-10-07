@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 import { WEB3AUTH_GATEWAY_URL } from '@/constants/urls';
-import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
+import { APP_HEIGHT, IFRAME_WIDTH } from '@/constants/width';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { Address } from '@/types/Address';
 
@@ -30,7 +30,7 @@ type Web3AuthEvent = {
 
 const Container = styled.div`
   position: relative;
-  width: ${APP_WIDTH}px;
+  width: ${IFRAME_WIDTH}px;
   height: calc(${APP_HEIGHT}px - 45px);
   overflow: hidden;
 `;
