@@ -1,13 +1,17 @@
 import { CopyOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Button, Flex, Image, TableColumnsType, Typography } from 'antd';
-import { entries } from 'lodash';
-import { useMemo } from 'react';
+import { entries, kebabCase } from 'lodash';
+import { useCallback, useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
+import { WalletOutlined } from '@/components/custom-icons';
 import { BackButton, CardFlex, Table } from '@/components/ui';
 import { TokenSymbol, TokenSymbolConfigMap } from '@/constants';
+import { useMessageApi } from '@/context/MessageProvider';
+import { useMasterWalletContext } from '@/hooks';
+import { Address } from '@/types/Address';
 import { AvailableAsset } from '@/types/Wallet';
-import { formatNumber } from '@/utils';
+import { copyToClipboard, formatNumber } from '@/utils';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { STEPS } from '../../types';
@@ -39,24 +43,52 @@ const ChainWarningAlert = ({ chainName }: { chainName: string }) => (
   />
 );
 
-const TransferDetails = ({ chainName }: { chainName: string }) => {
+type TransferDetailsProps = { chainName: string; address?: Address };
+const TransferDetails = ({ chainName, address }: TransferDetailsProps) => {
+  const message = useMessageApi();
+
+  const handleCopyAddress = useCallback(() => {
+    if (!address) return;
+    copyToClipboard(address).then(() => message.success('Address copied!'));
+  }, [address, message]);
+
   return (
     <YouPayContainer vertical gap={24}>
       <Flex vertical gap={8}>
         <Text className="text-sm text-neutral-tertiary">On</Text>
-        <Text>{chainName} Chain</Text>
+        <Flex gap={8} align="center">
+          <Image
+            src={`/chains/${kebabCase(chainName)}-chain.png`}
+            alt={chainName}
+            width={20}
+            height={20}
+            className="flex"
+          />
+          <Text>{chainName} Chain</Text>
+        </Flex>
       </Flex>
 
       <Flex vertical gap={8}>
         <Text className="text-sm text-neutral-tertiary">From</Text>
-        <Text>Your external wallet</Text>
+        <Flex gap={8} align="center">
+          <WalletOutlined width={20} height={20} />
+          <Text>Your external wallet</Text>
+          <InfoCircleOutlined className="text-neutral-tertiary" />
+        </Flex>
       </Flex>
 
       <Flex vertical gap={8}>
         <Text className="text-sm text-neutral-tertiary">To Pearl Wallet</Text>
-        <Text>{chainName} Chain</Text>
+        <Flex gap={8} align="center">
+          <WalletOutlined width={20} height={20} />
+          <Text>{address}</Text>
+        </Flex>
         <Flex>
-          <Button size="small" icon={<CopyOutlined />}>
+          <Button
+            onClick={handleCopyAddress}
+            size="small"
+            icon={<CopyOutlined />}
+          >
             Copy
           </Button>
         </Flex>
@@ -111,7 +143,14 @@ export const TransferCryptoOn = ({
   chainName,
   onBack,
 }: TransferCryptoOnProps) => {
-  const { amountsToDeposit, updateStep } = usePearlWallet();
+  const { amountsToDeposit, updateStep, walletChainId } = usePearlWallet();
+  const { masterSafes } = useMasterWalletContext();
+
+  const masterSafeAddress = useMemo(
+    () =>
+      masterSafes?.find((safe) => safe.evmChainId === walletChainId)?.address,
+    [masterSafes, walletChainId],
+  );
 
   const tokenAndDepositedAmounts = useMemo<AvailableAsset[]>(
     () =>
@@ -131,7 +170,7 @@ export const TransferCryptoOn = ({
         </Flex>
 
         <ChainWarningAlert chainName={chainName} />
-        <TransferDetails chainName={chainName} />
+        <TransferDetails chainName={chainName} address={masterSafeAddress} />
         <Table<AvailableAsset>
           dataSource={tokenAndDepositedAmounts}
           columns={columns}
