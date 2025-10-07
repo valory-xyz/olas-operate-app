@@ -1,16 +1,33 @@
-import { Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import { useMemo } from 'react';
+import styled from 'styled-components';
+import { useBoolean } from 'usehooks-ts';
 
+import { ChevronUpDown } from '@/components/custom-icons/ChevronUpDown';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { COLOR } from '@/constants/colors';
 import { useServiceDeployment } from '@/hooks';
 import { useAgentActivity } from '@/hooks/useAgentActivity';
 import { useRewardContext } from '@/hooks/useRewardContext';
 
-import { Container, CurrentActionText, Text, TopCorner } from './styles';
+import { AgentActivityModal } from './AgentActivityModal';
+import { Container, Text, TopCorner } from './styles';
 import { AgentStatus } from './types';
 
 const { Paragraph } = Typography;
+
+const RoundInfoContainer = styled.div`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 500px;
+`;
+
+const CurrentActionText = styled.span`
+  color: ${COLOR.PURPLE_2};
+  white-space: nowrap;
+  width: fit-content;
+`;
 
 const IdleContent = () => (
   <>
@@ -29,6 +46,25 @@ export const AgentActivity = () => {
   const { deploymentDetails, isServiceRunning, isServiceDeploying } =
     useAgentActivity();
   const { isEligibleForRewards } = useRewardContext();
+  const {
+    value: isModalOpen,
+    setTrue: showModal,
+    setFalse: handleClose,
+  } = useBoolean(false);
+
+  const healthcheckRounds = useMemo(() => {
+    return deploymentDetails?.healthcheck?.rounds || [];
+  }, [deploymentDetails?.healthcheck?.rounds]);
+
+  const rounds = useMemo(() => {
+    return [...healthcheckRounds].reverse();
+  }, [healthcheckRounds]);
+
+  const roundsInfo = useMemo(() => {
+    return deploymentDetails?.healthcheck?.rounds_info;
+  }, [deploymentDetails?.healthcheck?.rounds_info]);
+
+  const canOpenModal = Boolean(isServiceRunning && rounds.length);
 
   const activityInfo = useMemo<{
     status: AgentStatus;
@@ -48,18 +84,18 @@ export const AgentActivity = () => {
           content: <IdleContent />,
         };
       }
-      if (deploymentDetails?.healthcheck?.rounds) {
-        const currentRound = deploymentDetails.healthcheck.rounds[0];
-        const roundInfo =
-          deploymentDetails.healthcheck.rounds_info?.[currentRound]?.name ||
-          currentRound;
+      if (!rounds.length) {
+        const currentRound = rounds[0];
+        const roundInfo = roundsInfo?.[currentRound]?.name || currentRound;
 
         return {
           status: 'running',
           content: (
-            <>
-              <CurrentActionText>Current action:</CurrentActionText> {roundInfo}
-            </>
+            <Flex justify="space-between" align="top" gap={6}>
+              <CurrentActionText>Current action:</CurrentActionText>
+              <RoundInfoContainer>{roundInfo}</RoundInfoContainer>
+              <ChevronUpDown className="ml-auto" />
+            </Flex>
           ),
         };
       }
@@ -74,20 +110,37 @@ export const AgentActivity = () => {
       content: 'Agent is not running',
     };
   }, [
-    deploymentDetails,
     isEligibleForRewards,
     isServiceDeploying,
     isServiceRunning,
+    rounds,
+    roundsInfo,
   ]);
 
   if (isServiceRunning || isServiceDeploying ? false : !isDeployable)
     return null;
 
   return (
-    <Container $status={activityInfo.status}>
-      <TopCorner $position="left" $status={activityInfo.status} />
-      <TopCorner $position="right" $status={activityInfo.status} />
-      <Text $status={activityInfo.status}>{activityInfo.content}</Text>
-    </Container>
+    <>
+      <Container
+        $status={activityInfo.status}
+        onClick={() => {
+          if (!canOpenModal) return;
+          showModal();
+        }}
+      >
+        <TopCorner $position="left" $status={activityInfo.status} />
+        <TopCorner $position="right" $status={activityInfo.status} />
+        <Text $status={activityInfo.status} className="activity-modal">
+          {activityInfo.content}
+        </Text>
+      </Container>
+      <AgentActivityModal
+        open={isModalOpen && canOpenModal}
+        onClose={handleClose}
+        rounds={rounds}
+        roundsInfo={roundsInfo}
+      />
+    </>
   );
 };
