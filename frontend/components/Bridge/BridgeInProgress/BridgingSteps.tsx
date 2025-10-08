@@ -3,8 +3,7 @@ import { Typography } from 'antd';
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
-import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
-import { Steps } from '@/components/ui/Steps';
+import { FundsAreSafeMessage, Steps } from '@/components/ui';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { TokenSymbol } from '@/constants/token';
 import { BridgingStepStatus as Status } from '@/types/Bridge';

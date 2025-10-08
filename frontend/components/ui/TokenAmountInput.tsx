@@ -9,12 +9,17 @@ import { formatNumber } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
 
-type TokenAmountInputProps = {
-  value: number;
-  totalAmount: number;
-  onChange: (value: number | null) => void;
-  tokenSymbol: TokenSymbol;
-};
+const Container = styled.div`
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid ${COLOR.GRAY_4};
+  background-color: ${COLOR.BACKGROUND};
+  .input-wrapper {
+    padding: 16px 20px;
+    border-radius: 16px;
+    background-color: ${COLOR.WHITE};
+  }
+`;
 
 const TokenImage = ({ tokenSymbol }: { tokenSymbol: TokenSymbol }) => (
   <Flex gap={8} align="center">
@@ -28,23 +33,25 @@ const TokenImage = ({ tokenSymbol }: { tokenSymbol: TokenSymbol }) => (
   </Flex>
 );
 
-const Container = styled.div`
-  width: 100%;
-  border-radius: 16px;
-  border: 1px solid ${COLOR.GRAY_4};
-  background-color: ${COLOR.BACKGROUND};
-  .input-wrapper {
-    padding: 16px 20px;
-    border-radius: 16px;
-    background-color: ${COLOR.WHITE};
-  }
-`;
+type TokenAmountInputProps = {
+  value: number;
+  /** Maximum amount that can be entered */
+  maxAmount?: number;
+  /** Total amount available (for display only) */
+  totalAmount: number;
+  onChange: (value: number | null) => void;
+  tokenSymbol: TokenSymbol;
+  /** Whether to show quick select buttons (10%, 25%, 50%, 100%) */
+  showQuickSelects?: boolean;
+};
 
 export const TokenAmountInput = ({
-  totalAmount,
   value,
+  maxAmount,
+  totalAmount,
   onChange,
   tokenSymbol,
+  showQuickSelects = true,
 }: TokenAmountInputProps) => (
   <Container>
     <Flex
@@ -57,7 +64,7 @@ export const TokenAmountInput = ({
         onChange={onChange}
         value={value}
         min={0}
-        max={totalAmount}
+        max={maxAmount}
         variant="borderless"
         size="large"
         controls={false}
@@ -67,12 +74,19 @@ export const TokenAmountInput = ({
     </Flex>
 
     <Flex
-      className="token-value-and-helper"
+      className="token-value-and-helper w-full"
       justify="space-between"
       align="center"
       style={{ padding: '10px 20px' }}
     >
-      <Flex align="center" gap={24}>
+      <Flex gap={6} align="center">
+        <WalletOutlined width={20} height={20} />
+        <Text className="text-sm leading-normal text-neutral-tertiary">
+          {formatNumber(totalAmount, 4)}
+        </Text>
+      </Flex>
+
+      {showQuickSelects && (
         <Flex gap={8} align="center">
           {[10, 25, 50, 100].map((percentage) => (
             <Button
@@ -89,13 +103,7 @@ export const TokenAmountInput = ({
             </Button>
           ))}
         </Flex>
-        <Flex gap={6} align="center">
-          <WalletOutlined width={20} height={20} />
-          <Text className="text-sm leading-normal text-neutral-tertiary">
-            {formatNumber(totalAmount, 4)}
-          </Text>
-        </Flex>
-      </Flex>
+      )}
     </Flex>
   </Container>
 );

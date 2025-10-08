@@ -96,13 +96,7 @@ export const TokenRequirements = ({
       <RequirementsContainer gap={12}>
         {tokenRequirements.map(({ amount, symbol, iconSrc }) => (
           <Flex key={symbol} align="center" gap={8} style={{ width: '100%' }}>
-            <Image
-              src={iconSrc}
-              alt={symbol}
-              style={{
-                height: 20,
-              }}
-            />
+            <Image src={iconSrc} alt={symbol} style={{ height: 20 }} />
             <Text>
               {formatAmount(amount)} {symbol}
             </Text>

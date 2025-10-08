@@ -1,14 +1,26 @@
 import { Typography } from 'antd';
+import { CSSProperties, ReactNode } from 'react';
 
 const { Title } = Typography;
 
-export const CardTitle = ({ children }: { children: React.ReactNode }) => (
+type CardTitleProps = {
+  className?: string;
+  children: ReactNode;
+  align?: CSSProperties['textAlign'];
+};
+
+export const CardTitle = ({
+  className,
+  children,
+  align = 'center',
+}: CardTitleProps) => (
   <Title
     level={4}
+    className={className}
     style={{
+      textAlign: align,
       fontSize: 20,
       fontWeight: 500,
-      textAlign: 'center',
       marginTop: 20,
       marginBottom: 24,
     }}

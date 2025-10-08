@@ -71,7 +71,7 @@ export const BalancesAndAssets = ({
   return (
     <Flex vertical gap={32}>
       <CardFlex $noBorder>
-        <Flex justify="space-between" align="end">
+        <Flex justify="space-between" align="end" gap={40}>
           <PearlWalletTitle />
           <Flex gap={8}>
             <Button onClick={onWithdraw}>Withdraw</Button>
@@ -85,7 +85,7 @@ export const BalancesAndAssets = ({
       {walletChainId && chains.length >= 2 && (
         <Segmented
           value={walletChainId}
-          onChange={(chainId) => onWalletChainChange?.(chainId)}
+          onChange={(chainId) => onWalletChainChange(chainId)}
           options={chains.map((chain) => ({
             value: chain.chainId,
             label: (

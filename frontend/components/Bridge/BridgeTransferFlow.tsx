@@ -4,11 +4,9 @@ import React from 'react';
 import styled from 'styled-components';
 
 import { MiddlewareChain } from '@/client';
-import { COLOR } from '@/constants/colors';
-import { TokenSymbolConfigMap } from '@/constants/token';
+import { COLOR, TokenSymbolConfigMap } from '@/constants';
 import { CrossChainTransferDetails, TokenTransfer } from '@/types/Bridge';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
-import { formatUnitsToNumber } from '@/utils/numberFormatters';
+import { asEvmChainDetails, formatUnitsToNumber } from '@/utils';
 
 const { Text } = Typography;
 

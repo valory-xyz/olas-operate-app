@@ -16,23 +16,26 @@ import {
   TOKEN_CONFIG,
   TokenType,
 } from '@/config/tokens';
-import { AddressZero } from '@/constants/address';
-import { COLOR } from '@/constants/colors';
-import { TokenSymbolConfigMap } from '@/constants/token';
+import { AddressZero, COLOR, TokenSymbolConfigMap } from '@/constants';
 import { TokenSymbol } from '@/enums/Token';
-import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
-import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
-import { useServices } from '@/hooks/useServices';
-import { useMasterWalletContext } from '@/hooks/useWallet';
+import {
+  useBalanceAndRefillRequirementsContext,
+  useBridgeRefillRequirements,
+  useMasterWalletContext,
+  useServices,
+} from '@/hooks';
 import { Address } from '@/types/Address';
 import {
   BridgeRefillRequirementsRequest,
   CrossChainTransferDetails,
 } from '@/types/Bridge';
-import { areAddressesEqual } from '@/utils/address';
-import { delayInSeconds } from '@/utils/delay';
-import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
-import { formatUnitsToNumber } from '@/utils/numberFormatters';
+import {
+  areAddressesEqual,
+  asEvmChainDetails,
+  asEvmChainId,
+  delayInSeconds,
+  formatUnitsToNumber,
+} from '@/utils';
 
 type DepositTokenDetails = {
   address?: Address;

@@ -25,6 +25,12 @@ type GeneratedInput = {
  *
  * Example: If the chain is Gnosis, user can add OLAS and XDAI.
  * This function will return an array of objects with tokenAddress, symbol, and amount set to 0.
+ *
+ * @example
+ * [
+ *   { tokenAddress: '0x...', symbol: 'OLAS', amount: 0, decimals: 18 },
+ *   { tokenAddress: '0x...', symbol: 'XDAI', amount: 0, decimals: 18 },
+ * ]
  */
 export const useAddFundsInputs = ({
   requirements,

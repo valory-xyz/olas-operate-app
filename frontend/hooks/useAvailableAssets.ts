@@ -51,12 +51,13 @@ export const useAvailableAssets = (walletChainId: EvmChainId) => {
             symbol ===
             asEvmChainDetails(asMiddlewareChain(walletChainId)).symbol
           ) {
+            const masterSafeNativeBalance = sum(
+              getMasterSafeNativeBalanceOf(walletChainId)?.map(
+                ({ balance }) => balance,
+              ) ?? [],
+            );
             return sum([
-              sum(
-                getMasterSafeNativeBalanceOf(walletChainId)?.map(
-                  ({ balance }) => balance,
-                ) ?? [],
-              ),
+              masterSafeNativeBalance,
               getMasterEoaNativeBalanceOf(walletChainId),
             ]);
           }

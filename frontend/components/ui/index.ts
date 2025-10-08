@@ -21,3 +21,4 @@ export * from './TokenRequirementsTable';
 export * from './Tooltip';
 export * from './TransactionSteps';
 export * from './Typography';
+export * from './WalletTransferDirection';

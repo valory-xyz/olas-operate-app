@@ -1,11 +1,12 @@
 import { Button, Flex, Result, Typography } from 'antd';
 
-import { BridgeTransferFlow } from '@/components/Bridge/BridgeTransferFlow';
 import { GoToMainPageButton } from '@/components/Pages/GoToMainPageButton';
-import { CardFlex } from '@/components/ui/CardFlex';
+import { CardFlex } from '@/components/ui';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
+import { usePageState } from '@/hooks';
 import { CrossChainTransferDetails } from '@/types/Bridge';
+
+import { BridgeTransferFlow } from './BridgeTransferFlow';
 
 const { Title } = Typography;
 

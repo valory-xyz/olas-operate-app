@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { BridgeCompleted } from '@/components/Bridge/BridgeCompleted';
-import { BridgeInProgress } from '@/components/Bridge/BridgeInProgress/BridgeInProgress';
-import { BridgeOnEvm } from '@/components/Bridge/BridgeOnEvm/BridgeOnEvm';
+import { Pages } from '@/enums/Pages';
+import { usePageState } from '@/hooks';
+import { CrossChainTransferDetails } from '@/types/Bridge';
+import { Nullable } from '@/types/Util';
+
+import { BridgeCompleted } from './BridgeCompleted';
+import { BridgeInProgress } from './BridgeInProgress/BridgeInProgress';
+import { BridgeOnEvm } from './BridgeOnEvm/BridgeOnEvm';
 import {
   BridgeRetryOutcome,
   EnabledSteps,
   GetBridgeRequirementsParams,
-} from '@/components/Bridge/types';
-import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { CrossChainTransferDetails } from '@/types/Bridge';
-import { Nullable } from '@/types/Util';
+} from './types';
 
 const QUOTE_ID_ERROR = 'Quote ID is required for in progress state';
 const TRANSFER_AMOUNTS_ERROR =
@@ -30,8 +31,8 @@ type BridgeProps = {
 
 /**
  * Bridge component that handles the entire bridging flow.
- * It manages the state of the bridging process, including depositing, in progress, and completed states.
- * It also handles retry outcomes and updates the UI accordingly.
+ * - Manages the state of the bridging process, including depositing, in progress, and completed states.
+ * - Handles retry outcomes and updates the UI accordingly.
  */
 export const Bridge = ({
   showCompleteScreen,
