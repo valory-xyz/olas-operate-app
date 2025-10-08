@@ -1,3 +1,4 @@
+import { Flex } from 'antd';
 import { useCallback } from 'react';
 
 import { Bridge } from '@/components/Bridge/Bridge';
@@ -23,12 +24,14 @@ export const SetupBridgeOnboarding = () => {
   }, [gotoSetup, prevState]);
 
   return (
-    <Bridge
-      enabledStepsAfterBridging={['masterSafeCreationAndTransfer']}
-      bridgeFromDescription={BRIDGE_FROM_MESSAGE}
-      getBridgeRequirementsParams={getBridgeRequirementsParams}
-      onPrevBeforeBridging={handlePrevStep}
-      isOnboarding
-    />
+    <Flex className="pt-48">
+      <Bridge
+        enabledStepsAfterBridging={['masterSafeCreationAndTransfer']}
+        bridgeFromDescription={BRIDGE_FROM_MESSAGE}
+        getBridgeRequirementsParams={getBridgeRequirementsParams}
+        onPrevBeforeBridging={handlePrevStep}
+        isOnboarding
+      />
+    </Flex>
   );
 };

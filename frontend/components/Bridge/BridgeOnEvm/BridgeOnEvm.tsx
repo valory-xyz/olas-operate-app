@@ -32,7 +32,7 @@ export const BridgeOnEvm = ({
   updateQuoteId,
   updateCrossChainTransferDetails,
 }: BridgeOnEvmProps) => (
-  <Flex justify="center" className="pt-48">
+  <Flex justify="center">
     <CardFlex $noBorder $onboarding className="p-8">
       <BackButton onPrev={onPrev} />
       <Title level={3} className="mt-16">
