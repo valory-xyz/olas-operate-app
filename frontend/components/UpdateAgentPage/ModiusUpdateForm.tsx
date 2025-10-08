@@ -17,15 +17,21 @@ import {
 } from '../AgentForms/common/formUtils';
 import { InvalidGeminiApiCredentials } from '../AgentForms/common/InvalidGeminiApiCredentials';
 import {
+  CoinGeckoApiKeyDesc,
   CoinGeckoApiKeyLabel,
+  CoinGeckoApiKeySubHeader,
+  GeminiApiKeyDesc,
   GeminiApiKeyLabel,
+  GeminiApiKeySubHeader,
+  TenderlyAccessTokenDesc,
   TenderlyAccessTokenLabel,
   TenderlyAccountSlugLabel,
+  TenderlyApiKeySubHeader,
   TenderlyProjectSlugLabel,
 } from '../AgentForms/common/labels';
 import { useModiusFormValidate } from '../SetupPage/SetupYourAgent/ModiusAgentForm/useModiusFormValidate';
+import { RenderForm } from '../SetupPage/SetupYourAgent/useDisplayAgentForm';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
-import { UpdateAgentCard } from './UpdateAgentCard';
 
 type ModiusFormValues = {
   env_variables: {
@@ -42,11 +48,8 @@ type ModiusUpdateFormProps = {
 };
 
 const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
-  const {
-    isEditing,
-    form,
-    confirmUpdateModal: confirmModal,
-  } = useContext(UpdateAgentContext);
+  const { form, confirmUpdateModal: confirmModal } =
+    useContext(UpdateAgentContext);
 
   const {
     geminiApiKeyValidationStatus,
@@ -84,11 +87,12 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
     <Form<ModiusFormValues>
       form={form}
       layout="vertical"
-      disabled={!isEditing}
       onFinish={handleFinish}
       validateMessages={validateMessages}
       initialValues={{ ...initialFormValues }}
+      className="label-no-padding"
     >
+      <TenderlyApiKeySubHeader />
       <Form.Item
         label={<TenderlyAccessTokenLabel />}
         name={['env_variables', 'TENDERLY_ACCESS_KEY']}
@@ -115,7 +119,9 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       >
         <Input />
       </Form.Item>
+      <div style={{ paddingBottom: 42 }} />
 
+      <CoinGeckoApiKeySubHeader />
       <Form.Item
         label={<CoinGeckoApiKeyLabel />}
         name={['env_variables', 'COINGECKO_API_KEY']}
@@ -124,9 +130,11 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       >
         <Input.Password />
       </Form.Item>
+      <div style={{ paddingBottom: 42 }} />
 
+      <GeminiApiKeySubHeader name="Modius" />
       <Form.Item
-        label={<GeminiApiKeyLabel name="Modius" />}
+        label={<GeminiApiKeyLabel />}
         name={['env_variables', 'GENAI_API_KEY']}
         {...optionalFieldProps}
         rules={[{ validator: validateApiKey }]}
@@ -137,7 +145,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
         <InvalidGeminiApiCredentials />
       )}
 
-      <Form.Item hidden={!isEditing}>
+      <Form.Item>
         <Button size="large" type="primary" htmlType="submit" block>
           {submitButtonText}
         </Button>
@@ -146,10 +154,14 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
   );
 };
 
+type ModiusUpdatePageProps = {
+  renderForm: RenderForm;
+};
+
 /**
  * Form for updating Modius agent.
  */
-export const ModiusUpdatePage = () => {
+export const ModiusUpdatePage = ({ renderForm }: ModiusUpdatePageProps) => {
   const { goto } = usePageState();
   const { selectedService } = useServices();
   const { unsavedModal, form } = useContext(UpdateAgentContext);
@@ -195,9 +207,13 @@ export const ModiusUpdatePage = () => {
     }
   }, [initialValues, form, unsavedModal, goto]);
 
-  return (
-    <UpdateAgentCard onClickBack={handleBackClick}>
-      <ModiusUpdateForm initialFormValues={initialValues} />
-    </UpdateAgentCard>
+  return renderForm(
+    <ModiusUpdateForm initialFormValues={initialValues} />,
+    <>
+      <TenderlyAccessTokenDesc />
+      <CoinGeckoApiKeyDesc />
+      <GeminiApiKeyDesc />
+    </>,
+    { isUpdate: true, onBack: handleBackClick },
   );
 };

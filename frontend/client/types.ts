@@ -2,6 +2,7 @@ import { EnvProvision } from '@/constants/envVariables';
 import { AgentType } from '@/enums/Agent';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
+import { AgentHealthCheckResponse } from '@/types/Agent';
 
 import {
   MiddlewareChain,
@@ -15,11 +16,11 @@ export type ServiceConfigId = string;
 type AgentRelease = {
   is_aea: boolean;
   repository: {
-    owner: string,
-    name: string,
-    version: string,
-  }
-}
+    owner: string;
+    name: string;
+    version: string;
+  };
+};
 
 type ServiceKeys = {
   address: Address;
@@ -110,6 +111,10 @@ export type ServiceTemplate = {
   hash: string;
   description: string;
   image: string;
+  /**
+   * Used by the agent runner.
+   * Agent runner is the binary responsible for downloading each agent's dependencies.
+   */
   service_version: string;
   agent_release: AgentRelease;
   home_chain: SupportedMiddlewareChain;
@@ -125,17 +130,19 @@ type DeployedNodes = {
   tendermint: string[];
 };
 
+type AgentHealthCheck = {
+  env_var_status?: {
+    needs_update: boolean;
+    env_vars: {
+      [key: string]: string;
+    };
+  };
+} & AgentHealthCheckResponse;
+
 export type Deployment = {
   status: MiddlewareDeploymentStatus;
   nodes: DeployedNodes;
-  healthcheck: {
-    env_var_status?: {
-      needs_update: boolean;
-      env_vars: {
-        [key: string]: string;
-      };
-    };
-  };
+  healthcheck: AgentHealthCheck | Record<string, never>;
 };
 
 enum MiddlewareLedger {
@@ -153,12 +160,20 @@ export type MiddlewareWalletResponse = {
   safe_nonce: number;
 };
 
+export type TokenBalanceRecord = {
+  [tokenAddress: Address]: number | string;
+};
+
 export type MasterSafeBalanceRecord = {
-  master_safe: { [tokenAddress: Address]: number | string };
+  master_safe: TokenBalanceRecord;
+};
+
+export type ServiceSafeBalanceRecord = {
+  service_safe: TokenBalanceRecord;
 };
 
 export type AddressBalanceRecord = {
-  [address: Address]: { [tokenAddress: Address]: number | string };
+  [address: Address]: TokenBalanceRecord;
 };
 
 export type BalancesAndFundingRequirements = {
@@ -167,8 +182,7 @@ export type BalancesAndFundingRequirements = {
   }>;
   /**
    * User fund requirements
-   * @note this is the amount of funds required to be in the user's wallet.
-   * If it not present or is 0, the balance is sufficient.
+   * @note this is the amount of funds required during onboarding an agent.
    */
   refill_requirements: Partial<{
     [chain in MiddlewareChain]: AddressBalanceRecord | MasterSafeBalanceRecord;
@@ -176,9 +190,33 @@ export type BalancesAndFundingRequirements = {
   total_requirements: {
     [chain in MiddlewareChain]: AddressBalanceRecord | MasterSafeBalanceRecord;
   };
-  bonded_olas: {
-    [chain in MiddlewareChain]: number;
-  };
+  /**
+   * Agent funding requirements
+   * @note this deals with agent's requirements post onboarding.
+   */
+  agent_funding_requests: Partial<{
+    [chain in MiddlewareChain]: AddressBalanceRecord | ServiceSafeBalanceRecord;
+  }>;
+  protocol_asset_requirements: Partial<{
+    [chain in MiddlewareChain]: TokenBalanceRecord;
+  }>;
+  bonded_assets: Partial<{
+    [chain in MiddlewareChain]: TokenBalanceRecord;
+  }>;
   is_refill_required: boolean;
   allow_start_agent: boolean;
+};
+
+type AgentPerformanceMetric = {
+  name: string;
+  is_primary: boolean;
+  value: string;
+  description?: string;
+};
+
+export type AgentPerformance = {
+  timestamp: number | null;
+  metrics: AgentPerformanceMetric[];
+  last_activity: null;
+  agent_behavior: string | null;
 };

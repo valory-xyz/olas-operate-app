@@ -64,7 +64,7 @@ const Streak = () => {
       {optimisticStreak > 0 ? (
         <>
           <FireStreak /> {optimisticStreak} day streak
-          <Tooltip arrow={false} title={'Share streak on X'} placement="top">
+          <Tooltip arrow={false} title="Share streak on X" placement="top">
             <Button
               type="link"
               onClick={onStreakShare}

@@ -62,8 +62,11 @@ export const REACT_QUERY_KEYS = {
       serviceConfigId,
       stakingProgramId,
     ] as const,
-  REWARDS_HISTORY_KEY: (chainId: number, serviceId: number) =>
-    ['rewardsHistory', chainId, serviceId] as const,
+  REWARDS_HISTORY_KEY: (
+    chainId: number,
+    serviceId: number,
+    filterQueryByServiceId: boolean,
+  ) => ['rewardsHistory', chainId, serviceId, filterQueryByServiceId] as const,
 
   // multisigs
   MULTISIG_GET_OWNERS_KEY: (multisig: Safe) =>
@@ -78,13 +81,19 @@ export const REACT_QUERY_KEYS = {
   // agent activity
   AGENT_ACTIVITY: ['agentActivity'] as const,
 
+  // agent performance
+  AGENT_PERFORMANCE_KEY: (chainId: number, serviceConfigId: string) =>
+    ['agentPerformance', chainId, serviceConfigId] as const,
+
   // balances and funding requirements
   BALANCES_AND_REFILL_REQUIREMENTS_KEY: (serviceConfigId: string) =>
     ['balancesAndRefillRequirements', serviceConfigId] as const,
 
   // bridge
-  BRIDGE_REFILL_REQUIREMENTS_KEY: (params: BridgeRefillRequirementsRequest) =>
-    ['bridgeRefillRequirements', params] as const,
+  BRIDGE_REFILL_REQUIREMENTS_KEY: (
+    params: BridgeRefillRequirementsRequest,
+    type = 'default',
+  ) => ['bridgeRefillRequirements', params, type] as const,
   BRIDGE_REFILL_REQUIREMENTS_KEY_ON_DEMAND: (
     params: BridgeRefillRequirementsRequest,
   ) => ['useBridgeRefillRequirementsOnDemand', params] as const,

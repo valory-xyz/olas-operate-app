@@ -1,7 +1,7 @@
 import { Flex, Typography } from 'antd';
 import { useState } from 'react';
 
-import { CardFlex } from '@/components/styled/CardFlex';
+import { CardFlex } from '@/components/ui';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { BackupWalletType } from '@/types/BackupWallet';
 

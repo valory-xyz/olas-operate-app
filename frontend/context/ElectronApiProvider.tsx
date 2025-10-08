@@ -5,15 +5,6 @@ import { Address } from '@/types/Address';
 import { AgentHealthCheckResponse } from '@/types/Agent';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
 
-type ElectronApiAgentActivityWindow = {
-  init: () => Promise<void>;
-  goto: (url: string) => Promise<void>;
-  hide: () => void;
-  show: () => void;
-  close: () => void;
-  minimize: () => void;
-};
-
 type ElectronApiContextProps = {
   getAppVersion?: () => Promise<string>;
   setIsAppLoaded?: (isLoaded: boolean) => void;
@@ -43,7 +34,6 @@ type ElectronApiContextProps = {
     delete?: (key: string) => Promise<void>;
     clear?: () => Promise<void>;
   };
-  setAppHeight?: (height: unknown) => void;
   notifyAgentRunning?: () => void;
   showNotification?: (title: string, body?: string) => void;
   saveLogs?: (data: {
@@ -54,7 +44,6 @@ type ElectronApiContextProps = {
   healthCheck?: () => Promise<
     { response: AgentHealthCheckResponse | null } | { error: string }
   >;
-  agentActivityWindow?: Partial<ElectronApiAgentActivityWindow>;
   onRampWindow?: {
     show?: (amountToPay: number) => void;
     close?: () => void;
@@ -96,18 +85,9 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     delete: async () => {},
     clear: async () => {},
   },
-  setAppHeight: () => {},
   saveLogs: async () => ({ success: false }),
   openPath: () => {},
   healthCheck: async () => ({ response: null }),
-  agentActivityWindow: {
-    init: async () => {},
-    goto: async () => {},
-    hide: () => {},
-    show: () => {},
-    close: () => {},
-    minimize: () => {},
-  },
   onRampWindow: {
     show: () => {},
     transactionSuccess: () => {},
@@ -159,19 +139,10 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           delete: getElectronApiFunction('store.delete'),
           clear: getElectronApiFunction('store.clear'),
         },
-        setAppHeight: getElectronApiFunction('setAppHeight'),
         showNotification: getElectronApiFunction('showNotification'),
         saveLogs: getElectronApiFunction('saveLogs'),
         openPath: getElectronApiFunction('openPath'),
         healthCheck: getElectronApiFunction('healthCheck'),
-        agentActivityWindow: {
-          init: getElectronApiFunction('agentActivityWindow.init'),
-          goto: getElectronApiFunction('agentActivityWindow.goto'),
-          hide: getElectronApiFunction('agentActivityWindow.hide'),
-          show: getElectronApiFunction('agentActivityWindow.show'),
-          close: getElectronApiFunction('agentActivityWindow.close'),
-          minimize: getElectronApiFunction('agentActivityWindow.minimize'),
-        },
         onRampWindow: {
           show: getElectronApiFunction('onRampWindow.show'),
           close: getElectronApiFunction('onRampWindow.close'),

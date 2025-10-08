@@ -3,7 +3,7 @@ import { Button } from 'antd';
 import { ReactNode, useCallback, useContext } from 'react';
 
 import { CardTitle } from '../Card/CardTitle';
-import { CardFlex } from '../styled/CardFlex';
+import { CardFlex } from '../ui/CardFlex';
 import { UpdateAgentContext } from './context/UpdateAgentProvider';
 
 const EditButton = () => {
@@ -34,7 +34,7 @@ export const UpdateAgentCard = ({ onClickBack, children }: CardLayoutProps) => {
         />
       }
       extra={isEditing ? null : <EditButton />}
-      bordered={false}
+      $noBorder
     >
       {children}
     </CardFlex>

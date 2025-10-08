@@ -1,39 +1,34 @@
-import { Button, Flex, Popover, Typography } from 'antd';
+// TODO: remove this file
+import { Flex, Typography } from 'antd';
 import Image from 'next/image';
-import { useMemo } from 'react';
 
-import { CardSection } from '@/components/styled/CardSection';
-import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useService } from '@/hooks/useService';
+import { CardSection } from '@/components/ui/CardSection';
 import { useServices } from '@/hooks/useServices';
-import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 
 const { Text } = Typography;
 
 export const SwitchAgentSection = () => {
-  const { goto } = usePageState();
   const {
-    isLoading: isServicesLoading,
+    // isLoading: isServicesLoading,
     selectedAgentConfig,
     selectedAgentType,
-    selectedService,
+    // selectedService,
   } = useServices();
-  const { isServiceRunning } = useService(selectedService?.service_config_id);
-  const { isAllStakingContractDetailsRecordLoaded } =
-    useStakingContractContext();
+  // const { isServiceRunning } = useService(selectedService?.service_config_id);
+  // const { isAllStakingContractDetailsRecordLoaded } =
+  //   useStakingContractContext();
 
   // enable only if all conditions are met
-  const isSwitchAgentEnabled = useMemo(() => {
-    if (isServicesLoading) return false;
-    if (isServiceRunning) return false;
-    if (!isAllStakingContractDetailsRecordLoaded) return false;
-    return true;
-  }, [
-    isServicesLoading,
-    isServiceRunning,
-    isAllStakingContractDetailsRecordLoaded,
-  ]);
+  // const isSwitchAgentEnabled = useMemo(() => {
+  //   if (isServicesLoading) return false;
+  //   if (isServiceRunning) return false;
+  //   if (!isAllStakingContractDetailsRecordLoaded) return false;
+  //   return true;
+  // }, [
+  //   isServicesLoading,
+  //   isServiceRunning,
+  //   isAllStakingContractDetailsRecordLoaded,
+  // ]);
 
   return (
     <CardSection
@@ -53,7 +48,7 @@ export const SwitchAgentSection = () => {
         <Text>{selectedAgentConfig.displayName}</Text>
       </Flex>
 
-      {isSwitchAgentEnabled ? (
+      {/* {isSwitchAgentEnabled ? (
         <Button
           onClick={() => goto(Pages.SwitchAgent)}
           size="small"
@@ -71,7 +66,7 @@ export const SwitchAgentSection = () => {
             Switch agent
           </Button>
         </Popover>
-      )}
+      )} */}
     </CardSection>
   );
 };

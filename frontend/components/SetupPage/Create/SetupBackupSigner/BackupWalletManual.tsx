@@ -3,7 +3,7 @@ import { getAddress } from 'ethers/lib/utils';
 
 import { AppleIcon } from '@/components/custom-icons/AppleIcon';
 import { GoogleIcon } from '@/components/custom-icons/GoogleIcon';
-import { FormFlex } from '@/components/styled/FormFlex';
+import { FormFlex } from '@/components/ui';
 import { COLOR } from '@/constants/colors';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
@@ -43,11 +43,11 @@ export const BackupWalletManual = () => {
     }
 
     setBackupSigner({ address: checksummedAddress, type: 'manual' });
-    goto(SetupScreen.AgentSelection);
+    goto(SetupScreen.AgentOnboarding);
   };
 
   const handleWeb3AuthSetupFinish = () => {
-    goto(SetupScreen.AgentSelection);
+    goto(SetupScreen.AgentOnboarding);
   };
 
   const { openWeb3AuthModel } = useWeb3AuthBackupWallet({

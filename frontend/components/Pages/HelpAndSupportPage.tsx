@@ -1,9 +1,9 @@
-import { QuestionCircleOutlined } from '@ant-design/icons';
 import { Card, Flex, Typography } from 'antd';
-import { useEffect, useState } from 'react';
+import { compact } from 'lodash';
+import { useEffect, useMemo, useState } from 'react';
 import { useIsMounted } from 'usehooks-ts';
 
-import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { COLOR } from '@/constants/colors';
 import {
   FAQ_URL,
   GITHUB_API_RELEASES,
@@ -11,29 +11,21 @@ import {
   TERMS_AND_CONDITIONS_URL,
 } from '@/constants/urls';
 import { useElectronApi } from '@/hooks/useElectronApi';
-import { usePageState } from '@/hooks/usePageState';
 
-import { CardTitle } from '../Card/CardTitle';
+import { ArrowUpRightSvg } from '../custom-icons';
+import { ExternalLinkIcon } from '../custom-icons/ExternalLinkIcon';
 import { ExportLogsButton } from '../ExportLogsButton';
-import { CardSection } from '../styled/CardSection';
-import { GoToLoginPageButton } from './GoToLoginPageButton';
-import { GoToMainPageButton } from './GoToMainPageButton';
+import { CardSection, cardStyles } from '../ui';
 
 const { Title, Paragraph } = Typography;
 
-const SettingsTitle = () => (
-  <CardTitle
-    title={
-      <Flex gap={10}>
-        <QuestionCircleOutlined />
-        Help & support
-      </Flex>
-    }
-  />
-);
+type HelpItem = {
+  label: string;
+  href: string;
+  isExternal: boolean;
+};
 
 export const HelpAndSupport = () => {
-  const { isUserLoggedIn } = usePageState();
   const [latestTag, setLatestTag] = useState<string | null>(null);
   const { getAppVersion } = useElectronApi();
   const isMounted = useIsMounted();
@@ -54,53 +46,69 @@ export const HelpAndSupport = () => {
     getTag();
   }, [getAppVersion, isMounted]);
 
+  const helpItems: HelpItem[] = useMemo(
+    () =>
+      compact([
+        latestTag
+          ? {
+              label: 'Latest release notes',
+              href: `${GITHUB_API_RELEASES}/tag/v${latestTag}`,
+              isExternal: true,
+            }
+          : null,
+        {
+          label: 'Olas community Discord server',
+          href: SUPPORT_URL,
+          isExternal: true,
+        },
+        {
+          label: 'Frequently asked questions',
+          href: FAQ_URL,
+          isExternal: false,
+        },
+        {
+          label: 'Pearl Terms and Conditions',
+          href: TERMS_AND_CONDITIONS_URL,
+          isExternal: false,
+        },
+      ]),
+    [latestTag],
+  );
+
   return (
-    <Card
-      title={<SettingsTitle />}
-      bordered={false}
-      styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}
-      extra={isUserLoggedIn ? <GoToMainPageButton /> : <GoToLoginPageButton />}
-    >
-      <CardSection $borderBottom $padding="16px 24px 24px" vertical>
-        <Title level={5} className="m-0 mb-16 text-base">
-          Frequently asked questions
-        </Title>
-        <a target="_blank" href={FAQ_URL} className="mb-8">
-          Read FAQ {UNICODE_SYMBOLS.EXTERNAL_LINK}
-        </a>
-        {latestTag && (
-          <a
-            href={`${GITHUB_API_RELEASES}/tag/v${latestTag}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mb-8"
+    <Flex style={cardStyles} vertical gap={16}>
+      <Title level={3}>Help Center</Title>
+      <Card styles={{ body: { paddingTop: 8, paddingBottom: 8 } }}>
+        {helpItems.map(({ label, href, isExternal }, index) => (
+          <CardSection
+            key={index}
+            $borderBottom={index !== helpItems.length - 1}
+            $padding="16px"
+            vertical
           >
-            Release notes {UNICODE_SYMBOLS.EXTERNAL_LINK}
-          </a>
-        )}
-        <a target="_blank" href={TERMS_AND_CONDITIONS_URL}>
-          Terms and Conditions {UNICODE_SYMBOLS.EXTERNAL_LINK}
-        </a>
-      </CardSection>
+            <a href={href} target="_blank" rel="noopener noreferrer">
+              <Flex justify="space-between" align="center">
+                {label}
 
-      <CardSection $borderBottom $padding="16px 24px 24px" vertical>
-        <Title level={5} className="m-0 mb-8 text-base">
-          Ask for help
-        </Title>
-        <Paragraph type="secondary" className="mb-16 text-sm">
-          Get your questions answered by the community.
-        </Paragraph>
-        <a target="_blank" href={SUPPORT_URL}>
-          Olas community Discord server {UNICODE_SYMBOLS.EXTERNAL_LINK}
-        </a>
-      </CardSection>
+                {isExternal ? (
+                  <ExternalLinkIcon fill={COLOR.PURPLE} />
+                ) : (
+                  <ArrowUpRightSvg fill={COLOR.PURPLE} />
+                )}
+              </Flex>
+            </a>
+          </CardSection>
+        ))}
+      </Card>
 
-      <CardSection padding="16px 24px 24px" vertical align="start">
-        <Title level={5} className="m-0 mb-16 text-base ">
-          Export logs for troubleshooting
-        </Title>
-        <ExportLogsButton />
-      </CardSection>
-    </Card>
+      <Card styles={{ body: { padding: 16 } }}>
+        <Flex justify="space-between" align="center">
+          <Paragraph type="secondary" className="mb-0">
+            Export logs for troubleshooting
+          </Paragraph>
+          <ExportLogsButton />
+        </Flex>
+      </Card>
+    </Flex>
   );
 };

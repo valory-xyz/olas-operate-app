@@ -1,11 +1,11 @@
 {
   "author": "Valory AG",
   "dependencies": {
-    "@ant-design/cssinjs": "^1.18.4",
+    "@ant-design/cssinjs": "^1.24.0",
     "@ant-design/icons": "^5.3.0",
     "@fontsource/inter": "^5.0.17",
     "@tanstack/react-query": "^5.29.0",
-    "antd": "^5.14.0",
+    "antd": "^5.27.1",
     "axios": "^1.7.7",
     "ethers": "5.7.2",
     "ethers-multicall": "^0.2.3",
@@ -58,7 +58,8 @@
     "lint": "next lint",
     "test": "jest",
     "start": "next start",
-    "check": "yarn run lint && tsc --noEmit --incremental false"
+    "typecheck": "tsc --noEmit --skipLibCheck",
+    "quality-check": "yarn run lint && tsc --noEmit --skipLibCheck --incremental false"
   },
   "version": "0.1.0"
 }

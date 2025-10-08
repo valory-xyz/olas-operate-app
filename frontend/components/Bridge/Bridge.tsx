@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { BridgeCompleted } from '@/components/Bridge/BridgeCompleted';
-import { BridgeInProgress } from '@/components/Bridge/BridgeInProgress/BridgeInProgress';
-import { BridgeOnEvm } from '@/components/Bridge/BridgeOnEvm/BridgeOnEvm';
+import { Pages } from '@/enums/Pages';
+import { usePageState } from '@/hooks';
+import { CrossChainTransferDetails } from '@/types/Bridge';
+import { Nullable } from '@/types/Util';
+
+import { BridgeCompleted } from './BridgeCompleted';
+import { BridgeInProgress } from './BridgeInProgress/BridgeInProgress';
+import { BridgeOnEvm } from './BridgeOnEvm/BridgeOnEvm';
 import {
   BridgeRetryOutcome,
   EnabledSteps,
   GetBridgeRequirementsParams,
-} from '@/components/Bridge/types';
-import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { CrossChainTransferDetails } from '@/types/Bridge';
-import { Nullable } from '@/types/Util';
+} from './types';
 
 const QUOTE_ID_ERROR = 'Quote ID is required for in progress state';
 const TRANSFER_AMOUNTS_ERROR =
@@ -25,12 +26,13 @@ type BridgeProps = {
   getBridgeRequirementsParams: GetBridgeRequirementsParams;
   enabledStepsAfterBridging?: EnabledSteps;
   onPrevBeforeBridging: () => void;
+  isOnboarding?: boolean;
 };
 
 /**
  * Bridge component that handles the entire bridging flow.
- * It manages the state of the bridging process, including depositing, in progress, and completed states.
- * It also handles retry outcomes and updates the UI accordingly.
+ * - Manages the state of the bridging process, including depositing, in progress, and completed states.
+ * - Handles retry outcomes and updates the UI accordingly.
  */
 export const Bridge = ({
   showCompleteScreen,
@@ -38,6 +40,7 @@ export const Bridge = ({
   bridgeFromDescription,
   enabledStepsAfterBridging,
   onPrevBeforeBridging,
+  isOnboarding = false,
 }: BridgeProps) => {
   const { goto } = usePageState();
 
@@ -82,7 +85,7 @@ export const Bridge = ({
         setBridgeState('in_progress');
         break;
       case 'in_progress': {
-        if (showCompleteScreen) {
+        if (showCompleteScreen || isOnboarding) {
           setBridgeState('completed');
         } else {
           goto(Pages.Main);
@@ -95,10 +98,10 @@ export const Bridge = ({
       default:
         throw new Error('Invalid bridge state');
     }
-  }, [showCompleteScreen, bridgeState, goto]);
+  }, [bridgeState, goto, isOnboarding, showCompleteScreen]);
 
-  switch (bridgeState) {
-    case 'depositing':
+  switch (true) {
+    case bridgeState === 'depositing':
       return (
         <BridgeOnEvm
           bridgeFromDescription={bridgeFromDescription}
@@ -109,7 +112,12 @@ export const Bridge = ({
           onNext={handleNextStep}
         />
       );
-    case 'in_progress': {
+    /**
+     * In case of onboarding, instead of showing the `BridgeCompleted` component to the user,
+     * Show the Setup complete modal on top of the `BridgeInProgress` component
+     */
+    case bridgeState === 'in_progress':
+    case bridgeState === 'completed' && isOnboarding: {
       if (!quoteId) throw new Error(QUOTE_ID_ERROR);
       if (!transferAndReceivingDetails) throw new Error(TRANSFER_AMOUNTS_ERROR);
       return (
@@ -122,10 +130,12 @@ export const Bridge = ({
           }
           enabledStepsAfterBridging={enabledStepsAfterBridging}
           onNext={handleNextStep}
+          isBridgeCompleted={bridgeState === 'completed'}
+          isOnboarding={isOnboarding}
         />
       );
     }
-    case 'completed':
+    case bridgeState === 'completed':
       if (!transferAndReceivingDetails) throw new Error(TRANSFER_AMOUNTS_ERROR);
       if (!showCompleteScreen || !showCompleteScreen.completionMessage) {
         throw new Error('Completion message is required for completed state');

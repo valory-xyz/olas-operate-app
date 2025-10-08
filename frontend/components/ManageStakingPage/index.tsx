@@ -8,7 +8,7 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { CardTitle } from '../Card/CardTitle';
 import { GoToMainPageButton } from '../Pages/GoToMainPageButton';
-import { CardSection } from '../styled/CardSection';
+import { CardSection } from '../ui/CardSection';
 import { StakingContractSection } from './StakingContractSection';
 
 const { Text } = Typography;

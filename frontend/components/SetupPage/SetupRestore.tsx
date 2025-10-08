@@ -3,8 +3,8 @@ import { Button, Col, Flex, Form, Input, Row, Tooltip, Typography } from 'antd';
 import isEmpty from 'lodash/isEmpty';
 import { memo, useMemo, useState } from 'react';
 
-import { CardFlex } from '@/components/styled/CardFlex';
-import { CardSection } from '@/components/styled/CardSection';
+import { CardFlex } from '@/components/ui/CardFlex';
+import { CardSection } from '@/components/ui/CardSection';
 import { COMMUNITY_ASSISTANCE_URL } from '@/constants/urls';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
@@ -23,7 +23,7 @@ export const SetupRestoreMain = () => {
 
   return (
     <CardFlex
-      noBorder
+      $noBorder
       title={
         <Flex justify="space-between" align="center">
           <Typography.Title className="m-0" level={4}>

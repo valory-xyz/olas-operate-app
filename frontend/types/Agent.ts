@@ -6,20 +6,23 @@ import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
 
+type ServiceApi =
+  | typeof PredictTraderService
+  | typeof ModiusService
+  | typeof OptimismService
+  | typeof AgentsFunBaseService;
+
 export type AgentConfig = {
   name: string;
   evmHomeChainId: EvmChainId;
   middlewareHomeChainId: SupportedMiddlewareChain;
+  agentIds: number[];
   requiresAgentSafesOn: EvmChainId[];
   requiresMasterSafesOn: EvmChainId[];
   additionalRequirements?: Partial<
     Record<EvmChainId, Partial<Record<TokenSymbol, number>>>
   >;
-  serviceApi:
-    | typeof PredictTraderService
-    | typeof ModiusService
-    | typeof OptimismService
-    | typeof AgentsFunBaseService;
+  serviceApi: ServiceApi;
   displayName: string;
   description: string;
   /** Adds under construction tab above card */
@@ -33,8 +36,14 @@ export type AgentConfig = {
    * (e.g. Persona for agentsFun)
    */
   requiresSetup: boolean;
+  hasChatUI: boolean;
   /** Whether the agent has external funds available (eg. agent invests funds) */
   hasExternalFunds: boolean;
+  category?: 'Prediction Markets' | 'DeFi';
+  /** Default agent behavior that can be configurable via chat UI
+   * Used for agent performance until latest value is provided by agent
+   */
+  defaultBehavior?: string;
 };
 
 export type AgentHealthCheckResponse = {

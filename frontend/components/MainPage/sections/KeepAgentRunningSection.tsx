@@ -6,7 +6,7 @@ import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 
 import { CustomAlert } from '../../Alert';
-import { CardSection } from '../../styled/CardSection';
+import { CardSection } from '../../ui/CardSection';
 
 const { Text } = Typography;
 

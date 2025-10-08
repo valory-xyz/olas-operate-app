@@ -12,6 +12,7 @@ import { RewardsSection } from './sections/RewardsSection';
 import { StakingContractSection } from './sections/StakingContractUpdate';
 import { SwitchAgentSection } from './sections/SwitchAgentSection';
 
+// TODO: Remove this and all related components when Pearl V1 is released
 export const Main = () => {
   const isStakingContractSectionEnabled = useFeatureFlag(
     'staking-contract-section',

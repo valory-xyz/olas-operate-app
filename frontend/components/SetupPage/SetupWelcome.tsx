@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMessageApi } from '@/context/MessageProvider';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useBackupSigner } from '@/hooks/useBackupSigner';
+import { useBackupSigner } from '@/hooks';
 import {
   useBalanceContext,
   useMasterBalances,
@@ -20,9 +20,11 @@ import { AccountService } from '@/service/Account';
 import { getErrorMessage } from '@/utils/error';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 
-import { FormFlex } from '../styled/FormFlex';
+import { FormFlex } from '../ui/FormFlex';
+import { FormLabel } from '../ui/Typography';
+import { SetupWelcomeCreate } from './SetupWelcomeCreate';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 type UseSetupNavigationProps = {
   canNavigate: boolean;
@@ -117,7 +119,7 @@ const useSetupNavigation = ({
     // If the agent is disabled then redirect to agent selection,
     // if the disabled agent was previously selected.
     if (!selectedAgentConfig.isAgentEnabled) {
-      goto(SetupScreen.AgentSelection);
+      goto(SetupScreen.AgentOnboarding);
       return;
     }
 
@@ -126,13 +128,13 @@ const useSetupNavigation = ({
       window.console.log(
         `No service created for chain ${selectedServiceOrAgentChainId}`,
       );
-      goto(SetupScreen.AgentSelection);
+      goto(SetupScreen.AgentOnboarding);
       return;
     }
 
     // If no balance is loaded, redirect to setup screen
     if (!eoaBalanceEth) {
-      goto(SetupScreen.SetupEoaFundingIncomplete);
+      goto(SetupScreen.FundYourAgent);
       return;
     }
 
@@ -163,6 +165,16 @@ enum MiddlewareAccountIsSetup {
   Loading,
   Error,
 }
+
+const WelcomeBack = () => (
+  <Flex vertical align="center" gap={12} style={{ margin: '24px 0 40px 0' }}>
+    <Title level={3} className="m-0">
+      Welcome Back to Pearl
+    </Title>
+    <Text type="secondary">Sign in to your account to proceed.</Text>
+  </Flex>
+);
+
 const SetupLoader = () => (
   <Flex
     justify="center"
@@ -175,31 +187,9 @@ const SetupLoader = () => (
 
 const SetupError = () => (
   <Flex justify="center" style={{ margin: '32px 0', textAlign: 'center' }}>
-    <Typography.Text>
-      Unable to determine the account setup status, please try again.
-    </Typography.Text>
+    <Text>Unable to determine the account setup status, please try again.</Text>
   </Flex>
 );
-
-const SetupWelcomeCreate = () => {
-  const { goto } = useSetup();
-
-  return (
-    <Flex vertical gap={10}>
-      <Button
-        color="primary"
-        type="primary"
-        size="large"
-        onClick={() => goto(SetupScreen.SetupPassword)}
-      >
-        Create account
-      </Button>
-      <Button size="large" disabled>
-        Restore access
-      </Button>
-    </Flex>
-  );
-};
 
 const SetupWelcomeLogin = () => {
   const [form] = Form.useForm();
@@ -231,32 +221,40 @@ const SetupWelcomeLogin = () => {
   );
 
   return (
-    <FormFlex form={form} onFinish={handleLogin}>
-      <Form.Item
-        name="password"
-        rules={[{ required: true, message: 'Please input your Password!' }]}
-      >
-        <Input.Password size="large" placeholder="Password" />
-      </Form.Item>
-      <Flex vertical gap={10}>
-        <Button
-          htmlType="submit"
-          type="primary"
-          size="large"
-          loading={isLoggingIn}
+    <Flex vertical>
+      <WelcomeBack />
+
+      <FormFlex form={form} onFinish={handleLogin} layout="vertical">
+        <Form.Item
+          name="password"
+          label={<FormLabel>Enter password</FormLabel>}
+          rules={[{ required: true, message: 'Please input your Password.' }]}
+          required={false}
+          labelCol={{ style: { paddingBottom: 4 } }}
         >
-          Login
-        </Button>
-        <Button
-          type="link"
-          target="_blank"
-          size="small"
-          onClick={() => goto(SetupScreen.Restore)}
-        >
-          Forgot password? Restore access
-        </Button>
-      </Flex>
-    </FormFlex>
+          <Input.Password size="large" />
+        </Form.Item>
+
+        <Flex vertical gap={10}>
+          <Button
+            htmlType="submit"
+            type="primary"
+            size="large"
+            loading={isLoggingIn}
+          >
+            Continue
+          </Button>
+          <Button
+            type="link"
+            target="_blank"
+            size="small"
+            onClick={() => goto(SetupScreen.Restore)}
+          >
+            Forgot password? Restore access
+          </Button>
+        </Flex>
+      </FormFlex>
+    </Flex>
   );
 };
 
@@ -310,16 +308,16 @@ export const SetupWelcome = () => {
     }
   }, [isSetup]);
 
+  // TODO: think about the widths of card
   return (
     <Card bordered={false}>
       <Flex vertical align="center">
         <Image
           src={'/onboarding-robot.svg'}
           alt="Onboarding Robot"
-          width={80}
-          height={80}
+          width={64}
+          height={64}
         />
-        <Title>Pearl</Title>
       </Flex>
       {welcomeScreen}
     </Card>

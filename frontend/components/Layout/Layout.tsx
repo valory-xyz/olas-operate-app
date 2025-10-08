@@ -1,17 +1,25 @@
 import { WifiOutlined } from '@ant-design/icons';
 import { message } from 'antd';
-import { PropsWithChildren, useEffect } from 'react';
+import { PropsWithChildren, useEffect, useMemo } from 'react';
 import styled, { css } from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
-import { APP_HEIGHT } from '@/constants/width';
+import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
+import { Pages } from '@/enums/Pages';
+import { SetupScreen } from '@/enums/SetupScreen';
 import { useNotifyOnNewEpoch } from '@/hooks/useNotifyOnNewEpoch';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
+import { usePageState } from '@/hooks/usePageState';
+import { useSetup } from '@/hooks/useSetup';
 
-import { TopBar } from './TopBar';
+import { NavBar } from './NavBar';
 
 const Container = styled.div<{ $blur: boolean }>`
-  background-color: ${COLOR.WHITE};
+  display: flex;
+  flex-direction: column;
+  height: ${APP_HEIGHT}px;
+  width: ${APP_WIDTH}px;
+  background-color: ${COLOR.BACKGROUND};
   border-radius: 8px;
 
   ${(props) =>
@@ -34,10 +42,14 @@ const Container = styled.div<{ $blur: boolean }>`
     `}
 `;
 
-const Body = styled.div`
-  max-height: calc(${APP_HEIGHT}px - 45px);
-  padding-top: 45px;
+const layoutWithFullHeight: SetupScreen[] = [SetupScreen.SetupYourAgent];
+
+const Body = styled.div<{ $hasPadding?: boolean }>`
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
+  padding: ${(props) => (props.$hasPadding ? '48px 0' : undefined)};
+  height: ${APP_HEIGHT}px;
 `;
 
 const useSystemLevelNotifications = () => {
@@ -46,6 +58,8 @@ const useSystemLevelNotifications = () => {
 
 export const Layout = ({ children }: PropsWithChildren) => {
   const { isOnline } = useOnlineStatusContext();
+  const { state } = useSetup();
+  const { pageState } = usePageState();
 
   // all the app level notifications
   useSystemLevelNotifications();
@@ -64,10 +78,18 @@ export const Layout = ({ children }: PropsWithChildren) => {
     }
   }, [isOnline]);
 
+  const hasPadding = useMemo(() => {
+    if (pageState === Pages.Setup) {
+      return layoutWithFullHeight.includes(state) ? false : true;
+    }
+
+    return false;
+  }, [pageState, state]);
+
   return (
     <Container $blur={!isOnline}>
-      <TopBar />
-      <Body>{children}</Body>
+      <NavBar />
+      <Body $hasPadding={hasPadding}>{children}</Body>
     </Container>
   );
 };

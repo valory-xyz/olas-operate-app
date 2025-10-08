@@ -18,7 +18,7 @@ import { copyToClipboard } from '@/utils/copyToClipboard';
 import { delayInSeconds } from '@/utils/delay';
 import { truncateAddress } from '@/utils/truncate';
 
-import { CardSection } from '../../styled/CardSection';
+import { CardSection } from '../../ui/CardSection';
 
 const { Text } = Typography;
 

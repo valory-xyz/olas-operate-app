@@ -25,7 +25,7 @@ const createTermsAndConditionsWindow = async (baseUrl, type) => {
       fullscreenable: false,
       maximizable: false,
       closable: true,
-      width: 480,
+      width: 1320,
       height: 700,
       webPreferences: {
         nodeIntegration: false,

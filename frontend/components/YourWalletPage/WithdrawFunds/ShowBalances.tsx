@@ -47,7 +47,7 @@ const useShowBalances = () => {
   const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
     useBalanceContext();
   const {
-    masterEoaBalance,
+    masterEoaNativeBalance,
     masterSafeNativeBalance,
     masterSafeOlasBalance,
     masterSafeErc20Balances,
@@ -89,7 +89,7 @@ const useShowBalances = () => {
       if (symbol === asEvmChainDetails(middlewareChain).symbol) {
         const totalNativeBalance = sum([
           masterSafeNativeBalance,
-          masterEoaBalance,
+          masterEoaNativeBalance,
           serviceSafeNativeBalance?.balance,
           serviceEoaNativeBalance?.balance,
         ]);

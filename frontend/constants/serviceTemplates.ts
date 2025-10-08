@@ -21,13 +21,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.26.3',
+  service_version: 'v0.27.2-rc.1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v27.0.1',
+      version: 'v0.27.2-rc.1',
     },
   },
   home_chain: MiddlewareChain.GNOSIS,
@@ -295,14 +295,14 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeidhr2w4reoqvbkfa2vyzrme3l6gfoeyng4borgh3prveji2tjsyi4',
-  service_version: 'v0.5.4',
+  hash: 'bafybeifdgaxak7hn6bgx5wdwmonq7lu6bjv4w4x7jt5isywcdgqraaqupi',
+  service_version: 'v0.5.9-rc.1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.0.1051',
+      version: 'v0.5.9-rc.1',
     },
   },
 };

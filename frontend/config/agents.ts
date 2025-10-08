@@ -1,11 +1,12 @@
 import { formatUnits } from 'ethers/lib/utils';
+import { entries } from 'lodash';
 
 import { MiddlewareChain } from '@/client';
+import { AgentMap, AgentType } from '@/constants/agent';
 import {
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
 } from '@/constants/serviceTemplates';
-import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
@@ -41,26 +42,31 @@ const getOptimusUsdcConfig = () => {
 export const AGENT_CONFIG: {
   [key in AgentType]: AgentConfig;
 } = {
-  [AgentType.PredictTrader]: {
+  [AgentMap.PredictTrader]: {
     isAgentEnabled: true,
     requiresSetup: true,
     name: 'Predict Trader',
     evmHomeChainId: EvmChainId.Gnosis,
     middlewareHomeChainId: MiddlewareChain.GNOSIS,
+    agentIds: [14, 25],
     requiresAgentSafesOn: [EvmChainId.Gnosis],
     requiresMasterSafesOn: [EvmChainId.Gnosis],
     serviceApi: PredictTraderService,
     displayName: 'Prediction agent',
     description: 'Participates in prediction markets.',
     hasExternalFunds: false,
+    hasChatUI: true,
+    category: 'Prediction Markets',
+    defaultBehavior: '',
   },
-  [AgentType.Optimus]: {
+  [AgentMap.Optimus]: {
     isAgentEnabled: true,
     isComingSoon: false,
     requiresSetup: true,
     name: 'Optimus agent',
     evmHomeChainId: EvmChainId.Optimism,
     middlewareHomeChainId: MiddlewareChain.OPTIMISM,
+    agentIds: [40],
     requiresAgentSafesOn: [EvmChainId.Optimism],
     additionalRequirements: {
       [EvmChainId.Optimism]: { [TokenSymbol.USDC]: getOptimusUsdcConfig() },
@@ -71,8 +77,12 @@ export const AGENT_CONFIG: {
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Optimus network.',
     hasExternalFunds: true,
+    hasChatUI: true,
+    category: 'DeFi',
+    defaultBehavior:
+      'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
   },
-  [AgentType.AgentsFun]: {
+  [AgentMap.AgentsFun]: {
     isAgentEnabled: true,
     isUnderConstruction: true,
     isComingSoon: false,
@@ -80,6 +90,7 @@ export const AGENT_CONFIG: {
     name: 'Agents.fun agent',
     evmHomeChainId: EvmChainId.Base,
     middlewareHomeChainId: MiddlewareChain.BASE,
+    agentIds: [43],
     requiresAgentSafesOn: [EvmChainId.Base],
     requiresMasterSafesOn: [EvmChainId.Base],
     serviceApi: AgentsFunBaseService,
@@ -87,14 +98,17 @@ export const AGENT_CONFIG: {
     description:
       'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
     hasExternalFunds: false,
+    hasChatUI: false,
+    defaultBehavior: '',
   },
-  [AgentType.Modius]: {
+  [AgentMap.Modius]: {
     isAgentEnabled: true,
     isUnderConstruction: true,
     isComingSoon: false,
     requiresSetup: true,
     name: 'Modius agent',
     evmHomeChainId: EvmChainId.Mode,
+    agentIds: [40],
     middlewareHomeChainId: MiddlewareChain.MODE,
     requiresAgentSafesOn: [EvmChainId.Mode],
     additionalRequirements: {
@@ -106,5 +120,13 @@ export const AGENT_CONFIG: {
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
     hasExternalFunds: true,
+    hasChatUI: true,
+    category: 'DeFi',
+    defaultBehavior:
+      'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
   },
 };
+
+export const ACTIVE_AGENTS = entries(AGENT_CONFIG).filter(([, agentConfig]) => {
+  return !!agentConfig.isAgentEnabled;
+});

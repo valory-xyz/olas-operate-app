@@ -17,7 +17,7 @@ import { useStore } from '@/hooks/useStore';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
-import { CardSection } from '../../styled/CardSection';
+import { CardSection } from '../../ui/CardSection';
 
 const { Text } = Typography;
 

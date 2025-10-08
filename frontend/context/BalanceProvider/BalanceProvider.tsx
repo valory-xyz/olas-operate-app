@@ -11,8 +11,7 @@ import {
   useState,
 } from 'react';
 
-import { FIFTEEN_SECONDS_INTERVAL } from '@/constants/intervals';
-import { EvmChainId } from '@/enums/Chain';
+import { EvmChainId, FIFTEEN_SECONDS_INTERVAL } from '@/constants';
 import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
@@ -33,6 +32,9 @@ export const BalanceContext = createContext<{
   totalOlasBalance?: number;
   totalEthBalance?: number;
   totalStakedOlasBalance?: number;
+  /** Get total staked olas balance of a specific chain */
+  getTotalStakedOlasBalanceOf: (chainId: EvmChainId) => number;
+  /** @deprecated not used */
   lowBalances?: {
     serviceConfigId: string;
     chainId: EvmChainId;
@@ -40,12 +42,14 @@ export const BalanceContext = createContext<{
     balance: number;
     expectedBalance: number;
   }[];
+  /** @deprecated not used */
   isLowBalance?: boolean;
   isPaused: boolean;
 }>({
   isLoading: false,
   isLoaded: false,
   updateBalances: async () => {},
+  getTotalStakedOlasBalanceOf: () => 0,
   isPaused: false,
   setIsPaused: () => {},
 });
@@ -107,18 +111,25 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     [walletBalances],
   );
 
-  const totalStakedOlasBalance = useMemo(
-    () =>
-      stakedBalances
-        .filter(
-          ({ evmChainId }) => evmChainId === selectedAgentConfig.evmHomeChainId,
-        )
+  const getTotalStakedOlasBalanceOf = useCallback(
+    (chainId: EvmChainId) => {
+      return stakedBalances
+        .filter(({ evmChainId }) => evmChainId === chainId)
         .reduce(
           (acc, balance) =>
             sum([acc, balance.olasBondBalance, balance.olasDepositBalance]),
           0,
-        ),
-    [selectedAgentConfig.evmHomeChainId, stakedBalances],
+        );
+    },
+    [stakedBalances],
+  );
+
+  const totalStakedOlasBalance = useMemo(
+    () =>
+      selectedAgentConfig?.evmHomeChainId
+        ? getTotalStakedOlasBalanceOf(selectedAgentConfig.evmHomeChainId)
+        : undefined,
+    [selectedAgentConfig.evmHomeChainId, getTotalStakedOlasBalanceOf],
   );
 
   const updateBalances = useCallback(async () => {
@@ -135,6 +146,7 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
         totalOlasBalance,
         totalEthBalance,
         totalStakedOlasBalance,
+        getTotalStakedOlasBalanceOf,
         isPaused,
         setIsPaused,
         updateBalances,

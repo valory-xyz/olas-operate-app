@@ -2,9 +2,8 @@ import { Flex, Spin, Typography } from 'antd';
 import { useCallback } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
-import { CardFlex } from '@/components/styled/CardFlex';
-import { CardSection } from '@/components/styled/CardSection';
-import { AgentHeader } from '@/components/ui/AgentHeader';
+import { BackButton } from '@/components/ui/BackButton';
+import { CardFlex } from '@/components/ui/CardFlex';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useSetup } from '@/hooks/useSetup';
@@ -12,67 +11,58 @@ import { useSetup } from '@/hooks/useSetup';
 import { OnRampPaymentSteps } from './OnRampPaymentSteps/OnRampPaymentSteps';
 import { PayingReceivingTable } from './PayingReceivingTable/PayingReceivingTable';
 
-const { Title, Text } = Typography;
+const { Text, Title } = Typography;
 
 const Loader = () => (
-  <Flex justify="center" align="center" style={{ height: 120 }}>
+  <Flex
+    justify="center"
+    align="center"
+    className="mt-32"
+    style={{ height: 120 }}
+  >
     <Spin />
   </Flex>
 );
 
-const PayInFiatHeader = () => (
-  <Flex vertical gap={8}>
-    <Title level={3} className="m-0">
-      Pay in fiat
-    </Title>
-    <Text className="text-base text-lighter">
-      The amount you pay in fiat covers all funds required to create an account
-      and run your agent, including fees. No further funds will be needed.
-    </Text>
-  </Flex>
-);
-
 const KeepOpenAlert = () => (
-  <CardSection>
-    <CustomAlert
-      fullWidth
-      type="warning"
-      showIcon
-      message={
-        <Flex vertical gap={5}>
-          <Text className="text-sm">
-            Keep the app open until the process is complete.
-          </Text>
-        </Flex>
-      }
-    />
-  </CardSection>
+  <CustomAlert
+    type="warning"
+    showIcon
+    message="Keep the app open until the process is complete."
+  />
 );
 
 export const SetupOnRamp = () => {
-  const { goto: gotoSetup } = useSetup();
+  const { goto: gotoSetup, prevState } = useSetup();
   const { networkId } = useOnRampContext();
 
   const handlePrevStep = useCallback(() => {
-    gotoSetup(SetupScreen.SetupEoaFunding);
-  }, [gotoSetup]);
+    gotoSetup(prevState ?? SetupScreen.FundYourAgent);
+  }, [gotoSetup, prevState]);
 
   return (
-    <CardFlex $noBorder>
-      <AgentHeader onPrev={handlePrevStep} />
-      <CardSection vertical gap={24} className="m-0 pt-24">
-        <PayInFiatHeader />
+    <Flex justify="center" className="pt-48">
+      <CardFlex $noBorder $onboarding className="p-8">
+        <BackButton onPrev={handlePrevStep} />
+        <Title level={3} className="mt-16">
+          Buy Crypto with USD
+        </Title>
+        <Text type="secondary" className="mb-24">
+          Use your credit or debit card to buy crypto effortlessly - powered by
+          Transak.
+        </Text>
+
         <KeepOpenAlert />
 
         {networkId ? (
-          <Flex vertical gap={24}>
+          <Flex vertical gap={24} className="mt-32">
             <PayingReceivingTable onRampChainId={networkId} />
             <OnRampPaymentSteps onRampChainId={networkId} />
           </Flex>
         ) : (
           <Loader />
         )}
-      </CardSection>
-    </CardFlex>
+      </CardFlex>
+    </Flex>
   );
 };

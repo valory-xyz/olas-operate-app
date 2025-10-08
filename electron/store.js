@@ -2,6 +2,7 @@ const Store = require('electron-store');
 
 const defaultInitialAgentSettings = {
   isInitialFunded: false,
+  isProfileWarningDisplayed: false,
 };
 
 // Schema for validating store data
@@ -17,16 +18,19 @@ const schema = {
   agentEvictionAlertShown: { type: 'boolean', default: false },
 
   // Each agent has its own settings
-  trader: { type: 'object', default: defaultInitialAgentSettings },
+  trader: {
+    type: 'object',
+    default: defaultInitialAgentSettings,
+  },
   memeooorr: { type: 'object', default: defaultInitialAgentSettings },
   modius: {
     type: 'object',
-    default: {
-      ...defaultInitialAgentSettings,
-      isProfileWarningDisplayed: false,
-    },
+    default: defaultInitialAgentSettings,
   },
-  optimus: { type: 'object', default: defaultInitialAgentSettings },
+  optimus: {
+    type: 'object',
+    default: defaultInitialAgentSettings,
+  },
   lastProvidedBackupWallet: {
     type: 'object',
     default: { address: null, type: 'manual' },

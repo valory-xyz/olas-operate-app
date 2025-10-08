@@ -1,3 +1,4 @@
+// TODO: remove this file
 import { CopyOutlined } from '@ant-design/icons';
 import {
   Button,
@@ -15,8 +16,8 @@ import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
 import { SendFundAction } from '@/components/Bridge/types';
-import { CardFlex } from '@/components/styled/CardFlex';
-import { CardSection } from '@/components/styled/CardSection';
+import { CardFlex } from '@/components/ui/CardFlex';
+import { CardSection } from '@/components/ui/CardSection';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
@@ -166,8 +167,8 @@ const SetupEoaFundingForChain = ({
   chainName,
 }: SetupEoaFundingProps) => {
   return (
-    <CardFlex noBorder>
-      <SetupCreateHeader prev={SetupScreen.AgentSelection} />
+    <CardFlex $noBorder>
+      <SetupCreateHeader prev={SetupScreen.AgentOnboarding} />
       <Title level={3}>
         {`Deposit ${minRequiredBalance} ${currency} on ${chainName}`}
       </Title>
@@ -346,7 +347,7 @@ export const SetupEoaFunding = () => {
 
   return (
     <CardFlex $noBorder>
-      <SetupCreateHeader prev={SetupScreen.AgentSelection} />
+      <SetupCreateHeader prev={SetupScreen.AgentOnboarding} />
       <Title level={3} className="mb-8">
         Fund your agent
       </Title>
