@@ -1,14 +1,15 @@
-import { Button, Flex, Typography } from 'antd';
+import { Button, Flex, Image, Typography } from 'antd';
+import { entries } from 'lodash';
 import { useState } from 'react';
 import { styled } from 'styled-components';
 
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
-import { COLOR } from '@/constants';
+import { COLOR, TokenSymbol, TokenSymbolConfigMap } from '@/constants';
 import { assertRequired } from '@/types/Util';
-import { asEvmChainDetails, asMiddlewareChain } from '@/utils';
+import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
-import { Transfer } from './Transfer';
+import { BridgeCryptoOn } from './BridgeCryptoOn';
 import { TransferCryptoOn } from './TransferCryptoOn';
 
 const { Title, Text, Paragraph } = Typography;
@@ -28,7 +29,66 @@ const YouPayContainer = styled(Flex)`
   padding: 12px 16px;
 `;
 
-const Bridge = ({ onSelect }: { onSelect: () => void }) => (
+const ShowAmountsToDeposit = () => {
+  const { amountsToDeposit } = usePearlWallet();
+  return (
+    <Flex vertical gap={12}>
+      {entries(amountsToDeposit).map(([tokenSymbol, amount]) => (
+        <Flex key={tokenSymbol} gap={8} align="center">
+          <Image
+            src={TokenSymbolConfigMap[tokenSymbol as TokenSymbol].image}
+            alt={tokenSymbol}
+            width={20}
+            className="flex"
+          />
+          <Flex gap={8} align="center">
+            <Text>
+              {formatNumber(amount, 4)} {tokenSymbol}
+            </Text>
+          </Flex>
+        </Flex>
+      ))}
+    </Flex>
+  );
+};
+
+const TransferMethod = ({ onSelect }: { onSelect: () => void }) => {
+  const { walletChainId: chainId } = usePearlWallet();
+
+  assertRequired(chainId, 'Chain ID is required');
+  const chainName = asEvmChainDetails(asMiddlewareChain(chainId)).displayName;
+
+  return (
+    <SelectPaymentMethodCard>
+      <Flex vertical gap={32}>
+        <Flex vertical gap={16}>
+          <CardTitle className="m-0">Transfer</CardTitle>
+          <Paragraph type="secondary" className="m-0 text-center">
+            Send funds directly with lowest fees — ideal for crypto-savvy users.
+          </Paragraph>
+        </Flex>
+
+        <Flex vertical gap={8}>
+          <Paragraph className="m-0" type="secondary">
+            You will pay
+          </Paragraph>
+          <YouPayContainer vertical gap={12}>
+            <ShowAmountsToDeposit />
+            <Text className="text-sm text-neutral-tertiary" type="secondary">
+              + transaction fees on {chainName}.
+            </Text>
+          </YouPayContainer>
+        </Flex>
+
+        <Button onClick={onSelect} size="large">
+          Transfer Crypto on {chainName}
+        </Button>
+      </Flex>
+    </SelectPaymentMethodCard>
+  );
+};
+
+const BridgeMethod = ({ onSelect }: { onSelect: () => void }) => (
   <SelectPaymentMethodCard>
     <Flex vertical gap={32}>
       <Flex vertical gap={16}>
@@ -42,7 +102,8 @@ const Bridge = ({ onSelect }: { onSelect: () => void }) => (
         <Paragraph className="m-0" type="secondary">
           You will pay
         </Paragraph>
-        <YouPayContainer>
+        <YouPayContainer vertical gap={12}>
+          <ShowAmountsToDeposit />
           <Text className="text-sm text-neutral-tertiary" type="secondary">
             + bridging fees on Ethereum.
           </Text>
@@ -76,7 +137,7 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
   }
 
   if (paymentMethod === 'BRIDGE') {
-    return <Bridge />;
+    return <BridgeCryptoOn onBack={() => setPaymentMethod(null)} />;
   }
 
   return (
@@ -87,8 +148,8 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
       </Title>
 
       <Flex gap={24}>
-        <Transfer onSelect={() => setPaymentMethod('TRANSFER')} />
-        <Bridge onSelect={() => setPaymentMethod('BRIDGE')} />
+        <TransferMethod onSelect={() => setPaymentMethod('TRANSFER')} />
+        <BridgeMethod onSelect={() => setPaymentMethod('BRIDGE')} />
       </Flex>
     </Flex>
   );

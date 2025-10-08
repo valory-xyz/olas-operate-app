@@ -2,11 +2,12 @@ import { CopyOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Button, Flex, Image, TableColumnsType, Typography } from 'antd';
 import { entries, kebabCase } from 'lodash';
 import { useCallback, useMemo } from 'react';
+import { styled } from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
 import { WalletOutlined } from '@/components/custom-icons';
 import { BackButton, CardFlex, Table } from '@/components/ui';
-import { TokenSymbol, TokenSymbolConfigMap } from '@/constants';
+import { COLOR, TokenSymbol, TokenSymbolConfigMap } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
 import { useMasterWalletContext } from '@/hooks';
 import { Address } from '@/types/Address';
@@ -15,9 +16,14 @@ import { copyToClipboard, formatNumber } from '@/utils';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { STEPS } from '../../types';
-import { YouPayContainer } from './common';
 
 const { Title, Text, Paragraph } = Typography;
+
+export const YouPayContainer = styled(Flex)`
+  background: ${COLOR.BACKGROUND};
+  border-radius: 10px;
+  padding: 12px 16px;
+`;
 
 const TransferTitleAndDescription = ({ chainName }: { chainName: string }) => (
   <>

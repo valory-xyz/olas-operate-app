@@ -31,8 +31,8 @@ type BridgeProps = {
 
 /**
  * Bridge component that handles the entire bridging flow.
- * It manages the state of the bridging process, including depositing, in progress, and completed states.
- * It also handles retry outcomes and updates the UI accordingly.
+ * - Manages the state of the bridging process, including depositing, in progress, and completed states.
+ * - Handles retry outcomes and updates the UI accordingly.
  */
 export const Bridge = ({
   showCompleteScreen,
