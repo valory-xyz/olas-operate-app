@@ -1,6 +1,6 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Flex, Image, Typography } from 'antd';
-import { isNumber } from 'lodash';
+import { isNil, isNumber } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
@@ -125,9 +125,9 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
 
           <Flex justify="space-between" align="center" vertical gap={16}>
             {availableAssets.map(({ amount, symbol }) => {
-              const hasError = !!(
-                amountsToFund?.[symbol] && amountsToFund[symbol] > amount
-              );
+              const hasError =
+                !isNil(amountsToFund?.[symbol]) &&
+                amountsToFund[symbol] > amount;
 
               return (
                 <Flex key={symbol} gap={8} vertical className="w-full">
