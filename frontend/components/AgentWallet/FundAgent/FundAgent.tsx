@@ -1,6 +1,7 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Flex, Image, Typography } from 'antd';
-import { useCallback, useState } from 'react';
+import { isNumber } from 'lodash';
+import { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import {
@@ -99,6 +100,17 @@ const useFundAgent = () => {
 export const FundAgent = ({ onBack }: { onBack: () => void }) => {
   const { availableAssets, amountsToFund, onAmountChange } = useFundAgent();
 
+  // Check if the amounts are less than or equal to available balance
+  const isConfirmDisabled = useMemo(() => {
+    return Object.entries(amountsToFund).every(([symbol, amount]) => {
+      const asset = availableAssets.find(
+        (asset) => asset.symbol === (symbol as TokenSymbol),
+      );
+
+      return isNumber(amount) && asset && amount <= asset.amount;
+    });
+  }, [amountsToFund, availableAssets]);
+
   return (
     <Flex gap={16} vertical style={cardStyles}>
       <CardFlex $noBorder $padding="32px" className="w-full">
@@ -132,7 +144,10 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
         </Flex>
       </CardFlex>
 
-      <ConfirmTransfer fundsToTransfer={amountsToFund} />
+      <ConfirmTransfer
+        isConfirmDisabled={isConfirmDisabled}
+        fundsToTransfer={amountsToFund}
+      />
     </Flex>
   );
 };
