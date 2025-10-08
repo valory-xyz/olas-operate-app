@@ -125,8 +125,8 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
 
           <Flex justify="space-between" align="center" vertical gap={16}>
             {availableAssets.map(({ amount, symbol }) => {
-              const hasError = Boolean(
-                amountsToFund?.[symbol] && amountsToFund[symbol] > amount,
+              const hasError = !!(
+                amountsToFund?.[symbol] && amountsToFund[symbol] > amount
               );
 
               return (
