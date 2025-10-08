@@ -2,6 +2,7 @@ import { Divider, Flex, Typography } from 'antd';
 import { useRouter } from 'next/router';
 import styled from 'styled-components';
 
+import { CustomAlert } from '@/components/Alert';
 import {
   PEARL_LICENSE,
   PEARL_URL,
@@ -10,17 +11,22 @@ import {
   WEB3AUTH_TERMS_AND_CONDITIONS_URL,
   WEB3AUTH_URL,
 } from '@/constants/urls';
-import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
+import { APP_HEIGHT } from '@/constants/width';
 
 const { Title, Paragraph, Text } = Typography;
+
+const TERMS_WIDTH = 800;
 
 const TermsContainer = styled(Flex)`
   align-items: center;
   flex-direction: column;
   overflow-y: auto;
   height: calc(${APP_HEIGHT}px - 45px);
-  width: calc(${APP_WIDTH}px - 45px);
+  width: fit-content;
+  max-width: calc(${TERMS_WIDTH}px - 45px);
+  vertical-align: middle;
   margin: auto;
+  }
 `;
 
 const TransakTermsAndConditions = () => (
@@ -296,11 +302,66 @@ const Web3AuthTermsAndConditions = () => (
   </TermsContainer>
 );
 
+const PearlTermsAndConditions = () => (
+  <TermsContainer>
+    <Title level={4}>Pearl Terms And Conditions</Title>
+    <div>
+      <Paragraph>
+        <ul>
+          <li>
+            The Pearl Application (&quot;Application&quot;) is the desktop
+            application available for download on the{' '}
+            <a href="https://olas.network/" target="_blank">
+              Olas Site
+            </a>
+            , therefore is subject to the &quot;
+            <a href="https://olas.network/disclaimer" target="_blank">
+              Olas Disclaimer & Privacy Policy
+            </a>
+            &quot;.
+          </li>
+          <li>
+            Both the Application and brand &quot;Pearl&quot; or &quot;Olas
+            Pearl&quot; and associated Marks are part of Valory AG&apos;s
+            &quot;Offerings&quot;, thus are subject to the &quot;
+            <a href="https://www.valory.xyz/terms" target="_blank">
+              Valory Terms
+            </a>
+            &quot; and related definitions therein.
+          </li>
+          <li>
+            Together, the Valory Terms and the Olas Disclaimer are known as the
+            &quot;Conditions&quot;, and where there is doubt between the two
+            texts, the Valory Terms shall control.
+          </li>
+          <li>
+            The information on this page is simply for convenience and shall
+            never override the Conditions.
+          </li>
+          <li>
+            Please note that, per the Conditions, your use of this Site and
+            these Offerings triggers your acceptance of the Conditions,
+            including but not limited to the risks involved in the Offerings
+            including but not limited to such emerging technologies as
+            blockchain.
+          </li>
+        </ul>
+      </Paragraph>
+      <CustomAlert
+        type="warning"
+        showIcon
+        message="The code within this Application is provided without any warranties. It is important to note that the code has not been audited for potential security vulnerabilities."
+      />
+    </div>
+  </TermsContainer>
+);
+
 export default function TermsAndConditionsPage() {
   const router = useRouter();
   const { type } = router.query;
 
   if (type === 'transak') return <TransakTermsAndConditions />;
   if (type === 'web3auth') return <Web3AuthTermsAndConditions />;
+  if (type === 'pearl') return <PearlTermsAndConditions />;
   return null;
 }
