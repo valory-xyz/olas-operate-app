@@ -8,6 +8,7 @@ import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
 import { Pages } from '@/enums/Pages';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 
@@ -136,6 +137,8 @@ export const AddFundsThroughBridge = ({
 }: AddFundsThroughBridgeProps) => {
   const { isBalancesAndFundingRequirementsLoading, totalRequirements } =
     useBalanceAndRefillRequirementsContext();
+  const { selectedAgentConfig } = useServices();
+  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
 
   const [bridgeState, setBridgeState] = useState<
     BridgeRefillRequirementsRequest | undefined
@@ -205,6 +208,7 @@ export const AddFundsThroughBridge = ({
       return (
         <Bridge
           bridgeFromDescription="Bridging amount includes fees."
+          bridgeToChain={toMiddlewareChain}
           showCompleteScreen={showCompleteScreen}
           getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
           onPrevBeforeBridging={handlePrevStep}

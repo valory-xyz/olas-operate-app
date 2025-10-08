@@ -1,10 +1,10 @@
 import { Flex } from 'antd';
 import { useCallback } from 'react';
 
-import { Bridge } from '@/components/Bridge/Bridge';
-import { AllEvmChainIdMap } from '@/constants/chains';
+import { Bridge } from '@/components/Bridge';
+import { AllEvmChainIdMap } from '@/constants';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup } from '@/hooks/useSetup';
+import { useServices, useSetup } from '@/hooks';
 
 import { useGetBridgeRequirementsParams } from '../hooks/useGetBridgeRequirementsParams';
 
@@ -13,6 +13,8 @@ const BRIDGE_FROM_MESSAGE =
 
 export const SetupBridgeOnboarding = () => {
   const { goto: gotoSetup, prevState } = useSetup();
+  const { selectedAgentConfig } = useServices();
+  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
 
   // Bridging is supported only for Ethereum at the moment.
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
@@ -28,6 +30,7 @@ export const SetupBridgeOnboarding = () => {
       <Bridge
         enabledStepsAfterBridging={['masterSafeCreationAndTransfer']}
         bridgeFromDescription={BRIDGE_FROM_MESSAGE}
+        bridgeToChain={toMiddlewareChain}
         getBridgeRequirementsParams={getBridgeRequirementsParams}
         onPrevBeforeBridging={handlePrevStep}
         isOnboarding

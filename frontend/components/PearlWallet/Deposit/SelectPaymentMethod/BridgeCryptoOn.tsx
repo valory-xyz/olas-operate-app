@@ -1,13 +1,22 @@
+import { MiddlewareChain } from '@/client';
 import { Bridge } from '@/components/Bridge';
 
-// TODO: to be implemented
-export const BridgeCryptoOn = ({ onBack }: { onBack: () => void }) => {
+type BridgeCryptoOnProps = {
+  onBack: () => void;
+  bridgeToChain: MiddlewareChain;
+};
+
+export const BridgeCryptoOn = ({
+  onBack,
+  bridgeToChain,
+}: BridgeCryptoOnProps) => {
   return (
     <Bridge
-      showCompleteScreen={{ completionMessage: 'Bridge completed!' }}
-      onPrevBeforeBridging={onBack}
       bridgeFromDescription="Send the specified amounts from your external wallet to the Pearl Wallet address below. Pearl will automatically detect your transfer and bridge the funds for you."
+      bridgeToChain={bridgeToChain}
       getBridgeRequirementsParams={() => null}
+      onPrevBeforeBridging={onBack}
+      showCompleteScreen={{ completionMessage: 'Bridge completed!' }}
     />
   );
 };

@@ -10,6 +10,7 @@ import {
   TokenSymbol,
   TokenSymbolConfigMap,
 } from '@/constants';
+import { useFeatureFlag } from '@/hooks';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
@@ -114,6 +115,7 @@ const BridgeMethod = ({ onSelect }: { onSelect: () => void }) => (
 
 export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
   const { walletChainId: chainId } = usePearlWallet();
+  const [isBridgingEnabled] = useFeatureFlag(['bridge-onboarding']);
   const [paymentMethod, setPaymentMethod] = useState<
     'TRANSFER' | 'BRIDGE' | null
   >(null);
@@ -131,7 +133,12 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
   }
 
   if (paymentMethod === 'BRIDGE') {
-    return <BridgeCryptoOn onBack={onPaymentMethodBack} />;
+    return (
+      <BridgeCryptoOn
+        bridgeToChain={asMiddlewareChain(chainId)}
+        onBack={onPaymentMethodBack}
+      />
+    );
   }
 
   return (
@@ -146,7 +153,9 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
           chainId={chainId}
           onSelect={() => setPaymentMethod('TRANSFER')}
         />
-        <BridgeMethod onSelect={() => setPaymentMethod('BRIDGE')} />
+        {isBridgingEnabled && (
+          <BridgeMethod onSelect={() => setPaymentMethod('BRIDGE')} />
+        )}
       </Flex>
     </Flex>
   );

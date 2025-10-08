@@ -89,7 +89,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
   );
 };
 
-const Transfer = ({
+const TransferTokens = ({
   chainName,
   tokenRequirements,
   isBalancesAndFundingRequirementsLoading,
@@ -122,7 +122,7 @@ const Transfer = ({
   );
 };
 
-const Bridge = ({
+const BridgeTokens = ({
   chainName,
   tokenRequirements,
   isBalancesAndFundingRequirementsLoading,
@@ -197,13 +197,13 @@ export const FundYourAgent = () => {
         {isOnRampEnabled && onRampChainId && (
           <OnRamp onRampChainId={onRampChainId} />
         )}
-        <Transfer
+        <TransferTokens
           chainName={chainName}
           tokenRequirements={tokenRequirements}
           isBalancesAndFundingRequirementsLoading={areTokenRequirementsLoading}
         />
         {isBridgeOnboardingEnabled && (
-          <Bridge
+          <BridgeTokens
             chainName={chainName}
             tokenRequirements={tokenRequirements}
             isBalancesAndFundingRequirementsLoading={

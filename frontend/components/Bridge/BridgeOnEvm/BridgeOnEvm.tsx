@@ -1,5 +1,6 @@
 import { Flex, Typography } from 'antd';
 
+import { MiddlewareChain } from '@/client';
 import { BackButton, CardFlex, FundingDescription } from '@/components/ui';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
@@ -13,6 +14,7 @@ const FROM_CHAIN_IMAGE = '/chains/ethereum-chain.png';
 
 type BridgeOnEvmProps = {
   bridgeFromDescription?: string;
+  bridgeToChain: MiddlewareChain;
   onPrev: () => void;
   onNext: () => void;
   getBridgeRequirementsParams: GetBridgeRequirementsParams;
@@ -26,6 +28,7 @@ type BridgeOnEvmProps = {
  */
 export const BridgeOnEvm = ({
   bridgeFromDescription,
+  bridgeToChain,
   onPrev,
   onNext,
   getBridgeRequirementsParams,
@@ -50,6 +53,7 @@ export const BridgeOnEvm = ({
       />
 
       <DepositForBridging
+        bridgeToChain={bridgeToChain}
         getBridgeRequirementsParams={getBridgeRequirementsParams}
         updateQuoteId={updateQuoteId}
         updateCrossChainTransferDetails={updateCrossChainTransferDetails}

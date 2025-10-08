@@ -91,6 +91,7 @@ type DepositForBridgingProps = {
   updateQuoteId: (quoteId: string) => void;
   updateCrossChainTransferDetails: (details: CrossChainTransferDetails) => void;
   onNext: () => void;
+  bridgeToChain: MiddlewareChain;
 };
 
 const formatTokenAmount = ({
@@ -108,9 +109,9 @@ export const DepositForBridging = ({
   updateQuoteId,
   updateCrossChainTransferDetails,
   onNext,
+  bridgeToChain,
 }: DepositForBridgingProps) => {
-  const { isLoading: isServicesLoading, selectedAgentConfig } = useServices();
-  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
+  const { isLoading: isServicesLoading } = useServices();
   const { masterEoa } = useMasterWalletContext();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
@@ -266,11 +267,7 @@ export const DepositForBridging = ({
       const { totalRequiredInWei, pendingAmountInWei, decimals, isNative } =
         token;
       const formatToken = (valueInWei: bigint) =>
-        formatTokenAmount({
-          amountInWei: valueInWei,
-          decimals,
-          isNative,
-        });
+        formatTokenAmount({ amountInWei: valueInWei, decimals, isNative });
       return {
         totalAmount: formatToken(totalRequiredInWei),
         pendingAmount: formatToken(pendingAmountInWei),
@@ -301,7 +298,7 @@ export const DepositForBridging = ({
     updateQuoteId(bridgeFundingRequirements.id);
     updateCrossChainTransferDetails({
       fromChain: MiddlewareChain.ETHEREUM,
-      toChain: toMiddlewareChain,
+      toChain: bridgeToChain,
       eta: quoteEta,
       transfers: tokens.map((token) => {
         const toAmount = (() => {
@@ -311,7 +308,7 @@ export const DepositForBridging = ({
           // eg. if the token is USDC on Ethereum, it will be USDC on Base
           // but the address will be different.
           const chainTokenConfig =
-            TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)][token.symbol];
+            TOKEN_CONFIG[asEvmChainId(bridgeToChain)][token.symbol];
           const toTokenAddress =
             token.symbol === TokenSymbol.ETH
               ? token.address
@@ -331,7 +328,7 @@ export const DepositForBridging = ({
           fromSymbol: token.symbol,
           fromAmount: token.currentBalanceInWei.toString(),
           toSymbol: token.isNative
-            ? asEvmChainDetails(toMiddlewareChain).symbol
+            ? asEvmChainDetails(bridgeToChain).symbol
             : token.symbol,
           toAmount: toAmount.toString(),
           decimals: token.decimals,
@@ -352,7 +349,7 @@ export const DepositForBridging = ({
     isRequestingQuote,
     isBridgeRefillRequirementsFetching,
     isRequestingQuoteFailed,
-    toMiddlewareChain,
+    bridgeToChain,
     bridgeFundingRequirements,
     masterEoa,
     tokens,
