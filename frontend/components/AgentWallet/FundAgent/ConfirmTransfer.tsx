@@ -112,12 +112,12 @@ const useConfirmTransfer = () => {
 };
 
 type ConfirmTransferProps = {
-  isConfirmDisabled?: boolean;
+  isTransferDisabled?: boolean;
   fundsToTransfer: Record<string, number>;
 };
 
 export const ConfirmTransfer = ({
-  isConfirmDisabled,
+  isTransferDisabled,
   fundsToTransfer,
 }: ConfirmTransferProps) => {
   const { selectedAgentConfig, selectedService } = useServices();
@@ -172,8 +172,9 @@ export const ConfirmTransfer = ({
 
     // Check if all amounts are zero
     if (values(fundsToTransfer).every((x) => x === 0)) return false;
-    return isConfirmDisabled;
-  }, [fundsToTransfer, serviceSafe, isConfirmDisabled]);
+
+    return isTransferDisabled;
+  }, [fundsToTransfer, serviceSafe, isTransferDisabled]);
 
   return (
     <CardFlex $noBorder $padding="32px" className="w-full">

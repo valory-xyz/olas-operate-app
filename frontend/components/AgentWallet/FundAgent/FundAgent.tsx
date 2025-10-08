@@ -101,15 +101,17 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
   const { availableAssets, amountsToFund, onAmountChange } = useFundAgent();
 
   // Check if the amounts are less than or equal to available balance
-  const isConfirmDisabled = useMemo(() => {
-    return Object.entries(amountsToFund).every(([symbol, amount]) => {
-      const asset = availableAssets.find(
-        (asset) => asset.symbol === (symbol as TokenSymbol),
-      );
+  const isTransferDisabled = useMemo(
+    () =>
+      Object.entries(amountsToFund).every(([symbol, amount]) => {
+        const asset = availableAssets.find(
+          (asset) => asset.symbol === (symbol as TokenSymbol),
+        );
 
-      return isNumber(amount) && asset && amount <= asset.amount;
-    });
-  }, [amountsToFund, availableAssets]);
+        return isNumber(amount) && asset && amount <= asset.amount;
+      }),
+    [amountsToFund, availableAssets],
+  );
 
   return (
     <Flex gap={16} vertical style={cardStyles}>
@@ -128,7 +130,7 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
               );
 
               return (
-                <Flex key={symbol} className="w-full" gap={8} vertical>
+                <Flex key={symbol} gap={8} vertical className="w-full">
                   <TokenAmountInput
                     tokenSymbol={symbol}
                     value={amountsToFund?.[symbol] ?? 0}
@@ -145,7 +147,7 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
       </CardFlex>
 
       <ConfirmTransfer
-        isConfirmDisabled={isConfirmDisabled}
+        isTransferDisabled={isTransferDisabled}
         fundsToTransfer={amountsToFund}
       />
     </Flex>
