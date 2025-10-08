@@ -1,69 +1,84 @@
-import { useQuery } from '@tanstack/react-query';
 import { Button, Flex, Modal, Typography } from 'antd';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect } from 'react';
+import styled from 'styled-components';
+import { useToggle } from 'usehooks-ts';
 
-import { GITHUB_API_LATEST_RELEASE } from '@/constants/urls';
-import { useElectronApi } from '@/hooks/useElectronApi';
+import { DOWNLOAD_URL } from '@/constants/urls';
+import { useElectronApi, useUpdateStatus } from '@/hooks';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
-const DOWNLOAD_ON_OLAS_URL = 'https://olas.network/pearl#download';
+const UpdateModal = styled(Modal)`
+  .ant-modal-content {
+    box-sizing: border-box;
+    padding: 24px;
+  }
+
+  .ant-modal-footer {
+    display: flex;
+    justify-content: space-between;
+  }
+`;
+
+const ModalContent = () => (
+  <>
+    <Flex>
+      <Image
+        src="/pearl-with-gradient.png"
+        width={40}
+        height={40}
+        alt="Pearl"
+      />
+    </Flex>
+    <Title level={5} className="mt-12">
+      Update Available
+    </Title>
+    <Text className="mb-24">An updated version of Pearl just released.</Text>
+  </>
+);
 
 export const UpdateAvailableModal = () => {
-  const { getAppVersion, store } = useElectronApi();
+  const { store } = useElectronApi();
+  const [open, toggleOpen] = useToggle(false);
 
-  const [latestTag, setLatestTag] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
-
-  const { data: fetchedLatestTag } = useQuery<string | null>({
-    queryKey: ['latestReleaseTag'],
-    queryFn: async (): Promise<string | null> => {
-      const response = await fetch(GITHUB_API_LATEST_RELEASE);
-      if (!response.ok) return null;
-      const data = await response.json();
-      return data.tag_name ?? null;
-    },
-    refetchOnWindowFocus: false,
-  });
+  const { data, isFetched } = useUpdateStatus();
+  const latestTag = data?.latestTag;
 
   useEffect(() => {
-    const evaluate = async () => {
-      if (!fetchedLatestTag) return;
+    if (!isFetched || !latestTag || !data.isOutdated) return;
 
-      setLatestTag(fetchedLatestTag);
+    if (!store?.get) return;
 
-      if (store?.get) {
-        const dismissedFor = (await store.get(
-          'updateAvailableKnownVersion',
-        )) as string | undefined;
-        if (dismissedFor !== fetchedLatestTag) {
-          setOpen(true);
+    store
+      .get('updateAvailableKnownVersion')
+      .then((dismissedFor) => {
+        if (dismissedFor !== latestTag) {
+          toggleOpen();
         }
-      }
-    };
-
-    evaluate();
-  }, [getAppVersion, store, fetchedLatestTag]);
+      })
+      .catch((error) => {
+        console.error('Failed to check update availability:', error);
+      });
+  }, [isFetched, latestTag, data?.isOutdated, store, toggleOpen]);
 
   const onUpdateLater = useCallback(() => {
     if (latestTag && store?.set) {
       store.set('updateAvailableKnownVersion', latestTag);
     }
-    setOpen(false);
-  }, [latestTag, store]);
+    toggleOpen();
+  }, [latestTag, store, toggleOpen]);
 
   const onDownload = useCallback(() => {
-    window.open(DOWNLOAD_ON_OLAS_URL, '_blank');
-    setOpen(false);
-  }, []);
+    window.open(DOWNLOAD_URL, '_blank');
+    toggleOpen();
+  }, [toggleOpen]);
 
-  const shouldRender = useMemo(() => open, [open]);
-  if (!shouldRender) return null;
+  if (!open) return null;
 
   return (
-    <Modal
-      open={open}
+    <UpdateModal
+      open
       width={386}
       className="update-modal"
       onCancel={onUpdateLater}
@@ -81,18 +96,7 @@ export const UpdateAvailableModal = () => {
         </Button>,
       ]}
     >
-      <Flex>
-        <Image
-          src="/pearl-with-gradient.png"
-          width={40}
-          height={40}
-          alt="Pearl"
-        />
-      </Flex>
-      <Title level={5} className="mt-12">
-        Update Available
-      </Title>
-      <div className="mb-24">An updated version of Pearl just released.</div>
-    </Modal>
+      <ModalContent />
+    </UpdateModal>
   );
 };

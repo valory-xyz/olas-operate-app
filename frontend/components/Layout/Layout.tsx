@@ -14,7 +14,7 @@ import { useSetup } from '@/hooks/useSetup';
 
 import { NavBar } from './NavBar';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const Container = styled.div<{ $blur: boolean }>`
   display: flex;
@@ -42,6 +42,12 @@ const Container = styled.div<{ $blur: boolean }>`
         z-index: 1;
       }
     `}
+`;
+
+const NoInternetModal = styled(Modal)`
+  .ant-modal-content {
+    box-sizing: border-box;
+    padding: 32px;
 `;
 
 const layoutWithFullHeight: SetupScreen[] = [SetupScreen.SetupYourAgent];
@@ -84,35 +90,21 @@ export const Layout = ({ children }: PropsWithChildren) => {
   return (
     <>
       {!isOnline && (
-        <Modal
-          open
-          footer={null}
-          closable={false}
-          width={450}
-          className="no-internet-modal"
-        >
-          <Flex
-            vertical
-            justify="center"
-            align="center"
-            className="text-center"
-          >
+        <NoInternetModal open footer={null} closable={false} width={450}>
+          <Flex vertical justify="center" align="center">
             <Image
               src="/not-online.png"
               alt="No internet connection"
               width={80}
               height={80}
-              className="mb-12"
             />
-            <Title level={5} className="mt-12">
-              No Internet Connection
-            </Title>
-            <div>
+            <Title level={5}>No Internet Connection</Title>
+            <Text>
               Check your Wi-Fi or Ethernet. Pearl will reconnect automatically
               once the connection is stable.
-            </div>
+            </Text>
           </Flex>
-        </Modal>
+        </NoInternetModal>
       )}
 
       <Container $blur={!isOnline}>

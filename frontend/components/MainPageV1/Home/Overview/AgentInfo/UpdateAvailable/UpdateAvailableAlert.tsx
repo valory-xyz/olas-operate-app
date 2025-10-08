@@ -1,60 +1,23 @@
-import { useQuery } from '@tanstack/react-query';
-import { Flex } from 'antd';
-import useToken from 'antd/es/theme/useToken';
-import semver from 'semver';
+import { Flex, theme } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
 import { ArrowUpRightSvg } from '@/components/custom-icons/ArrowUpRight';
-import { FIVE_MINUTE_INTERVAL } from '@/constants/intervals';
-import { DOWNLOAD_URL, GITHUB_API_LATEST_RELEASE } from '@/constants/urls';
-import { useElectronApi } from '@/hooks/useElectronApi';
+import { DOWNLOAD_URL } from '@/constants';
+import { useUpdateStatus } from '@/hooks';
 
 import { UpdateAvailableModal } from './UpdateAvailableModal';
 
-enum SemverComparisonResult {
-  OUTDATED = -1,
-  EQUAL = 0,
-  UPDATED = 1,
-}
-
 export const UpdateAvailableAlert = () => {
-  const { getAppVersion } = useElectronApi();
-  const [, token] = useToken();
+  const { token } = theme.useToken();
 
-  const { data: isPearlOutdated, isFetched } = useQuery<boolean>({
-    queryKey: ['isPearlOutdated'],
-    queryFn: async (): Promise<boolean> => {
-      if (!getAppVersion) {
-        console.error('electronAPI.getAppVersion is not available in Window');
-        return false;
-      }
+  const { data, isFetched, isError, error } = useUpdateStatus();
 
-      const appVersion = await getAppVersion();
-      if (!appVersion) return false;
+  if (isError) {
+    console.error('Update check failed:', error);
+    return null;
+  }
 
-      const response = await fetch(GITHUB_API_LATEST_RELEASE);
-      if (!response.ok) return false;
-
-      const data = await response.json();
-      const latestTag = data.tag_name;
-      const latestVersion = semver.parse(latestTag);
-      const currentVersion = semver.parse(appVersion ?? '0.0.0');
-
-      if (!latestVersion || !currentVersion) {
-        return false;
-      }
-
-      const comparison: SemverComparisonResult = semver.compare(
-        appVersion,
-        latestVersion,
-      );
-
-      return comparison === SemverComparisonResult.OUTDATED;
-    },
-    refetchInterval: FIVE_MINUTE_INTERVAL,
-  });
-
-  if (!isFetched || !isPearlOutdated) {
+  if (!isFetched || !data?.isOutdated) {
     return null;
   }
 
