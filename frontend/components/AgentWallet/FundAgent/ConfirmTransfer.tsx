@@ -49,7 +49,7 @@ const TransferComplete = ({ onClose }: { onClose: () => void }) => (
         Transfer Complete!
       </Title>
       <Text className="text-neutral-tertiary">
-        Funds transferred to the Pearl wallet.
+        Funds transferred to the Agent wallet.
       </Text>
     </Flex>
 
@@ -112,10 +112,14 @@ const useConfirmTransfer = () => {
 };
 
 type ConfirmTransferProps = {
+  isTransferDisabled?: boolean;
   fundsToTransfer: Record<string, number>;
 };
 
-export const ConfirmTransfer = ({ fundsToTransfer }: ConfirmTransferProps) => {
+export const ConfirmTransfer = ({
+  isTransferDisabled,
+  fundsToTransfer,
+}: ConfirmTransferProps) => {
   const { selectedAgentConfig, selectedService } = useServices();
   const { serviceSafes } = useService(selectedService?.service_config_id);
   const { onFundAgent, isLoading, isSuccess, isError } = useConfirmTransfer();
@@ -165,8 +169,12 @@ export const ConfirmTransfer = ({ fundsToTransfer }: ConfirmTransferProps) => {
   const canConfirmTransfer = useMemo(() => {
     if (!serviceSafe) return false;
     if (isEmpty(fundsToTransfer)) return false;
-    return !values(fundsToTransfer).every((x) => x === 0);
-  }, [fundsToTransfer, serviceSafe]);
+
+    // Check if all amounts are zero
+    if (values(fundsToTransfer).every((x) => x === 0)) return false;
+
+    return isTransferDisabled;
+  }, [fundsToTransfer, serviceSafe, isTransferDisabled]);
 
   return (
     <CardFlex $noBorder $padding="32px" className="w-full">

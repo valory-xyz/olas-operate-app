@@ -1,6 +1,7 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Flex, Image, Typography } from 'antd';
-import { useCallback, useState } from 'react';
+import { Button, Flex, Image, Typography } from 'antd';
+import { isNil, isNumber } from 'lodash';
+import { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import {
@@ -11,7 +12,8 @@ import {
   TokenAmountInput,
 } from '@/components/ui';
 import { TokenSymbol } from '@/constants';
-import { useServices } from '@/hooks';
+import { Pages } from '@/enums';
+import { usePageState, useServices } from '@/hooks';
 import { useAvailableAssets } from '@/hooks/useAvailableAssets';
 
 import { useAgentWallet } from '../AgentWalletProvider';
@@ -54,6 +56,21 @@ const PearlWalletToAgentWallet = () => {
   );
 };
 
+const FundPearlWallet = () => {
+  const { goto } = usePageState();
+
+  return (
+    <Flex justify="space-between" align="center" className="w-full">
+      <Text type="danger" className="text-sm">
+        Not enough funds on Pearl Wallet balance.
+      </Text>
+      <Button size="small" onClick={() => goto(Pages.PearlWallet)}>
+        Fund Pearl Wallet
+      </Button>
+    </Flex>
+  );
+};
+
 const useFundAgent = () => {
   const { selectedAgentConfig } = useServices();
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
@@ -83,6 +100,19 @@ const useFundAgent = () => {
 export const FundAgent = ({ onBack }: { onBack: () => void }) => {
   const { availableAssets, amountsToFund, onAmountChange } = useFundAgent();
 
+  // Check if the amounts are less than or equal to available balance
+  const isTransferDisabled = useMemo(
+    () =>
+      Object.entries(amountsToFund).every(([symbol, amount]) => {
+        const asset = availableAssets.find(
+          (asset) => asset.symbol === (symbol as TokenSymbol),
+        );
+
+        return isNumber(amount) && asset && amount <= asset.amount;
+      }),
+    [amountsToFund, availableAssets],
+  );
+
   return (
     <Flex gap={16} vertical style={cardStyles}>
       <CardFlex $noBorder $padding="32px" className="w-full">
@@ -94,21 +124,32 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
           <PearlWalletToAgentWallet />
 
           <Flex justify="space-between" align="center" vertical gap={16}>
-            {availableAssets.map(({ amount, symbol }) => (
-              <TokenAmountInput
-                key={symbol}
-                tokenSymbol={symbol}
-                value={amountsToFund?.[symbol] ?? 0}
-                maxAmount={amount}
-                totalAmount={amount}
-                onChange={(x) => onAmountChange(symbol, x ?? 0)}
-              />
-            ))}
+            {availableAssets.map(({ amount, symbol }) => {
+              const hasError =
+                !isNil(amountsToFund?.[symbol]) &&
+                (amountsToFund[symbol] ?? 0) > amount;
+
+              return (
+                <Flex key={symbol} gap={8} vertical className="w-full">
+                  <TokenAmountInput
+                    tokenSymbol={symbol}
+                    value={amountsToFund?.[symbol] ?? 0}
+                    totalAmount={amount}
+                    onChange={(x) => onAmountChange(symbol, x ?? 0)}
+                    hasError={hasError}
+                  />
+                  {hasError && <FundPearlWallet />}
+                </Flex>
+              );
+            })}
           </Flex>
         </Flex>
       </CardFlex>
 
-      <ConfirmTransfer fundsToTransfer={amountsToFund} />
+      <ConfirmTransfer
+        isTransferDisabled={isTransferDisabled}
+        fundsToTransfer={amountsToFund}
+      />
     </Flex>
   );
 };

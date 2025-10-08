@@ -77,6 +77,7 @@ export const mainTheme: ThemeConfig = {
     Typography: {
       colorTextHeading: COLOR.TEXT_NEUTRAL_PRIMARY,
       colorTextDescription: COLOR.TEXT_NEUTRAL_SECONDARY,
+      colorError: COLOR.TEXT_COLOR.ERROR.DEFAULT,
     },
     Popover: {
       fontSize: 14,
