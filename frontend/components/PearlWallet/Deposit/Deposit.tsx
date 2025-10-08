@@ -96,12 +96,3 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
     </CardFlex>
   );
 };
-
-/**
- * TODO:
- * - what is the amount in each input?
- * - Payment type selection page
- * - Actual payment integration
- * - Success page
- * - Error handling
- */

@@ -4,29 +4,27 @@ import { useState } from 'react';
 import { styled } from 'styled-components';
 
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
-import { COLOR, TokenSymbol, TokenSymbolConfigMap } from '@/constants';
+import {
+  COLOR,
+  EvmChainId,
+  TokenSymbol,
+  TokenSymbolConfigMap,
+} from '@/constants';
 import { assertRequired } from '@/types/Util';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { BridgeCryptoOn } from './BridgeCryptoOn';
-import { TransferCryptoOn } from './TransferCryptoOn';
+import { TransferCryptoOn, YouPayContainer } from './TransferCryptoOn';
 
 const { Title, Text, Paragraph } = Typography;
 
 const SelectPaymentMethodCard = styled(CardFlex)`
   width: 360px;
   border-color: ${COLOR.WHITE};
-
   .ant-card-body {
     height: 100%;
   }
-`;
-
-const YouPayContainer = styled(Flex)`
-  background: ${COLOR.BACKGROUND};
-  border-radius: 10px;
-  padding: 12px 16px;
 `;
 
 const ShowAmountsToDeposit = () => {
@@ -52,10 +50,8 @@ const ShowAmountsToDeposit = () => {
   );
 };
 
-const TransferMethod = ({ onSelect }: { onSelect: () => void }) => {
-  const { walletChainId: chainId } = usePearlWallet();
-
-  assertRequired(chainId, 'Chain ID is required');
+type TransferMethodProps = { chainId: EvmChainId; onSelect: () => void };
+const TransferMethod = ({ chainId, onSelect }: TransferMethodProps) => {
   const chainName = asEvmChainDetails(asMiddlewareChain(chainId)).displayName;
 
   return (
@@ -119,13 +115,12 @@ const BridgeMethod = ({ onSelect }: { onSelect: () => void }) => (
 
 export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
   const { walletChainId: chainId } = usePearlWallet();
-  assertRequired(chainId, 'Chain ID is required.');
-
-  const chainName = asEvmChainDetails(asMiddlewareChain(chainId)).displayName;
-
   const [paymentMethod, setPaymentMethod] = useState<
     'TRANSFER' | 'BRIDGE' | null
   >(null);
+
+  assertRequired(chainId, 'Chain ID is required to transfer.');
+  const chainName = asEvmChainDetails(asMiddlewareChain(chainId)).displayName;
 
   if (paymentMethod === 'TRANSFER') {
     return (
@@ -148,7 +143,10 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
       </Title>
 
       <Flex gap={24}>
-        <TransferMethod onSelect={() => setPaymentMethod('TRANSFER')} />
+        <TransferMethod
+          chainId={chainId}
+          onSelect={() => setPaymentMethod('TRANSFER')}
+        />
         <BridgeMethod onSelect={() => setPaymentMethod('BRIDGE')} />
       </Flex>
     </Flex>

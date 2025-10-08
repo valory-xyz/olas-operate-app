@@ -49,6 +49,16 @@ const ChainWarningAlert = ({ chainName }: { chainName: string }) => (
   />
 );
 
+const DoesNotTrackIncomingTransfers = () => (
+  <Flex align="start" gap={8}>
+    <InfoCircleOutlined className="mt-4 text-neutral-tertiary" />
+    <Paragraph className="text-sm m-0 text-neutral-tertiary">
+      This screen doesn’t track incoming transfers. To verify, review the Pearl
+      Wallet balance or transaction history.
+    </Paragraph>
+  </Flex>
+);
+
 type TransferDetailsProps = { chainName: string; address?: Address };
 const TransferDetails = ({ chainName, address }: TransferDetailsProps) => {
   const message = useMessageApi();
@@ -102,16 +112,6 @@ const TransferDetails = ({ chainName, address }: TransferDetailsProps) => {
     </YouPayContainer>
   );
 };
-
-const DoesNotTrackIncomingTransfers = () => (
-  <Flex align="start" gap={8}>
-    <InfoCircleOutlined className="mt-4 text-neutral-tertiary" />
-    <Paragraph className="text-sm m-0 text-neutral-tertiary">
-      This screen doesn’t track incoming transfers. To verify, review the Pearl
-      Wallet balance or transaction history.
-    </Paragraph>
-  </Flex>
-);
 
 const columns: TableColumnsType<AvailableAsset> = [
   {
