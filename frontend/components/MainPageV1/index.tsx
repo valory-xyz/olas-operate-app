@@ -1,5 +1,5 @@
 import { Layout } from 'antd';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 
 import { AgentStaking } from '@/components/AgentStaking/AgentStaking';
@@ -8,6 +8,7 @@ import { SelectStaking } from '@/components/SelectStaking/SelectStaking';
 import { Settings } from '@/components/SettingsPage';
 import { UpdateAgentPage } from '@/components/UpdateAgentPage';
 import { Pages } from '@/enums/Pages';
+import { useServices } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
 
 import { AgentWallet } from '../AgentWallet';
@@ -28,6 +29,9 @@ const Content = styled(AntdContent)<{ $isSplitScreenPage?: boolean }>`
 
 export const Main = () => {
   const { pageState } = usePageState();
+  const { selectedAgentType } = useServices();
+
+  const contentContainerRef = useRef<HTMLDivElement>(null);
 
   const mainContent = useMemo(() => {
     switch (pageState) {
@@ -54,10 +58,17 @@ export const Main = () => {
 
   const isSplitScreenPage = pageState === Pages.UpdateAgentTemplate;
 
+  // Scroll to top when page or selected agent is changed
+  useEffect(() => {
+    contentContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [pageState, selectedAgentType]);
+
   return (
     <Layout>
       <Sidebar />
-      <Content $isSplitScreenPage={isSplitScreenPage}>{mainContent}</Content>
+      <Content $isSplitScreenPage={isSplitScreenPage} ref={contentContainerRef}>
+        {mainContent}
+      </Content>
     </Layout>
   );
 };

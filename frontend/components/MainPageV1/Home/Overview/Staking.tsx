@@ -17,12 +17,23 @@ import { useStakingDetails } from '@/hooks/useStakingDetails';
 const { Text, Title } = Typography;
 const { Countdown } = Statistic;
 
+const UnderConstructionAlert = () => (
+  <CustomAlert
+    message="The agent is under construction and cannot participate in staking until further notice."
+    type="warning"
+    centered
+    showIcon
+    className="text-sm"
+  />
+);
+
 const EvictionAlert = () => (
   <CustomAlert
     message="The agent is evicted and cannot participate in staking until the eviction period ends."
     type="warning"
     centered
     showIcon
+    className="text-sm"
   />
 );
 
@@ -32,6 +43,7 @@ const RunAgentAlert = () => (
     type="info"
     centered
     showIcon
+    className="text-sm"
   />
 );
 
@@ -67,11 +79,14 @@ export const Staking = () => {
   const { currentEpochLifetime } = useStakingDetails();
   const { selectedAgentConfig } = useServices();
 
+  const { isUnderConstruction } = selectedAgentConfig;
+
   const alert = useMemo(() => {
+    if (isUnderConstruction) return <UnderConstructionAlert />;
     if (isAgentEvicted) return <EvictionAlert />;
     if (!isServiceRunning) return <RunAgentAlert />;
     return null;
-  }, [isAgentEvicted, isServiceRunning]);
+  }, [isAgentEvicted, isServiceRunning, isUnderConstruction]);
 
   return (
     <Flex vertical>
