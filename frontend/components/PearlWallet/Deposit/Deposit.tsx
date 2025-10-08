@@ -6,8 +6,8 @@ import {
   BackButton,
   CardFlex,
   cardStyles,
-  FromToWallet,
   TokenAmountInput,
+  WalletTransferDirection,
 } from '@/components/ui';
 
 import { usePearlWallet } from '../PearlWalletProvider';
@@ -28,7 +28,9 @@ const SelectChainToDeposit = () => {
   return (
     <Select
       value={walletChainId}
-      onChange={(value) => onWalletChainChange(value, false)}
+      onChange={(value) =>
+        onWalletChainChange(value, { canNavigateOnReset: false })
+      }
       size="large"
       style={{ maxWidth: 200 }}
     >
@@ -65,7 +67,7 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
           <BackButton onPrev={onBack} />
           <DepositTitle />
         </Flex>
-        <FromToWallet from="External Wallet" to="Pearl Wallet" />
+        <WalletTransferDirection from="External Wallet" to="Pearl Wallet" />
 
         <Flex vertical gap={16}>
           <SelectChainToDeposit />
@@ -84,7 +86,7 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
         </Flex>
 
         <Button
-          disabled={values(amountsToDeposit).every((x) => x === 0)}
+          disabled={values(amountsToDeposit).every((i) => i === 0)}
           onClick={onContinue}
           type="primary"
           size="large"

@@ -8,19 +8,19 @@ import { Divider } from './Divider';
 
 const { Text } = Typography;
 
-type PearlWalletToAgentWalletProps = {
+type WalletTransferDirectionProps = {
   from: string;
   to: string;
   fromExtra?: Maybe<ReactNode>;
   toExtra?: Maybe<ReactNode>;
 };
 
-export const FromToWallet = ({
+export const WalletTransferDirection = ({
   from,
   to,
   fromExtra = null,
   toExtra = null,
-}: PearlWalletToAgentWalletProps) => (
+}: WalletTransferDirectionProps) => (
   <Flex vertical style={{ margin: '0 -32px' }}>
     <Divider className="m-0" />
     <Flex gap={16} style={{ padding: '12px 32px' }} align="center">

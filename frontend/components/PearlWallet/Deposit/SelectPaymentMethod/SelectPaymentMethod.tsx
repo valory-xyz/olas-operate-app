@@ -1,6 +1,6 @@
 import { Button, Flex, Image, Typography } from 'antd';
 import { entries } from 'lodash';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { styled } from 'styled-components';
 
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
@@ -10,7 +10,6 @@ import {
   TokenSymbol,
   TokenSymbolConfigMap,
 } from '@/constants';
-import { assertRequired } from '@/types/Util';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
@@ -119,20 +118,20 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
     'TRANSFER' | 'BRIDGE' | null
   >(null);
 
-  assertRequired(chainId, 'Chain ID is required to transfer.');
+  const onPaymentMethodBack = useCallback(() => setPaymentMethod(null), []);
+
+  if (!chainId) return null;
+
   const chainName = asEvmChainDetails(asMiddlewareChain(chainId)).displayName;
 
   if (paymentMethod === 'TRANSFER') {
     return (
-      <TransferCryptoOn
-        onBack={() => setPaymentMethod(null)}
-        chainName={chainName}
-      />
+      <TransferCryptoOn onBack={onPaymentMethodBack} chainName={chainName} />
     );
   }
 
   if (paymentMethod === 'BRIDGE') {
-    return <BridgeCryptoOn onBack={() => setPaymentMethod(null)} />;
+    return <BridgeCryptoOn onBack={onPaymentMethodBack} />;
   }
 
   return (

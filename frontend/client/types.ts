@@ -113,7 +113,7 @@ export type ServiceTemplate = {
   image: string;
   /**
    * Used by the agent runner.
-   * Agent runner: It is the binary responsible for downloading each agent's dependencies.
+   * Agent runner is the binary responsible for downloading each agent's dependencies.
    */
   service_version: string;
   agent_release: AgentRelease;

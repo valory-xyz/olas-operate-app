@@ -1,12 +1,12 @@
 import { Typography } from 'antd';
-import { ReactNode } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 
 const { Title } = Typography;
 
 type CardTitleProps = {
   className?: string;
   children: ReactNode;
-  align?: 'left' | 'center' | 'right';
+  align?: CSSProperties['textAlign'];
 };
 
 export const CardTitle = ({

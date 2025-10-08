@@ -31,7 +31,7 @@ const PearlWalletContext = createContext<{
   walletChainId: Nullable<EvmChainId>;
   onWalletChainChange: (
     chainId: EvmChainId,
-    canNavigateOnReset?: boolean,
+    options?: { canNavigateOnReset?: boolean },
   ) => void;
   availableAssets: AvailableAsset[];
   stakedAssets: StakedAsset[];
@@ -153,9 +153,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const onWalletChainChange = useCallback(
-    (chainId: EvmChainId, canNavigateOnReset?: boolean) => {
+    (chainId: EvmChainId, options?: { canNavigateOnReset?: boolean }) => {
       setWalletChainId(chainId);
-      onReset(canNavigateOnReset);
+      onReset(options?.canNavigateOnReset);
     },
     [onReset],
   );
