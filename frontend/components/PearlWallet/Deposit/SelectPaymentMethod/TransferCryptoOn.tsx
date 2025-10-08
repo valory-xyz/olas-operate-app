@@ -6,6 +6,7 @@ import { styled } from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
 import { WalletOutlined } from '@/components/custom-icons';
+import { InfoTooltip } from '@/components/InfoTooltip';
 import { BackButton, CardFlex, Table } from '@/components/ui';
 import { COLOR, TokenSymbol, TokenSymbolConfigMap } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
@@ -89,7 +90,11 @@ const TransferDetails = ({ chainName, address }: TransferDetailsProps) => {
         <Flex gap={8} align="center">
           <WalletOutlined width={20} height={20} />
           <Text>Your external wallet</Text>
-          <InfoCircleOutlined className="text-neutral-tertiary" />
+          <InfoTooltip placement="top">
+            <Paragraph className="text-sm m-0">
+              This is the wallet you use outside Pearl
+            </Paragraph>
+          </InfoTooltip>
         </Flex>
       </Flex>
 
