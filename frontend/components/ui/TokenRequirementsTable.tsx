@@ -75,7 +75,7 @@ const columns: TableColumnsType<TokenRowData> = [
         >
           {record.areFundsReceived
             ? 'No pending amount'
-            : `Pending ${formatNumber(record.pendingAmount, 2)}`}
+            : `Pending ${formatNumber(record.pendingAmount, 4)}`}
         </CustomTag>
       );
     },
