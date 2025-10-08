@@ -1,7 +1,7 @@
 import { IdcardTwoTone, SmileTwoTone } from '@ant-design/icons';
 import { Flex, message, Segmented } from 'antd';
 import get from 'lodash/get';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { COLOR } from '@/constants/colors';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
@@ -49,7 +49,6 @@ export const Home = () => {
 
   const [view, setView] = useState<View>('overview');
   const [isUnlockChatUiModalOpen, setIsUnlockChatUiModalOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleChangeView = useCallback(
     (nextView: View) => {
@@ -110,14 +109,8 @@ export const Home = () => {
     ],
   );
 
-  // Scroll to top when selected agent type changes
-  useEffect(() => {
-    const scrollableParent = containerRef.current?.parentElement;
-    scrollableParent?.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [selectedAgentType]);
-
   return (
-    <Flex ref={containerRef} vertical gap={40} className="flex-auto">
+    <Flex vertical gap={40} className="flex-auto">
       <Switcher value={view} onChange={handleChangeView} />
       {view === 'overview' && (
         <Overview openProfile={() => handleChangeView('profile')} />

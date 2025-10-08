@@ -15,11 +15,11 @@ const { Text, Title } = Typography;
 
 const EvictedAgentAlert = () => (
   <CustomAlert
-    message="Your agent has been evicted. Withdraw your funds before re-staking."
+    message="Withdrawals are temporarily unavailable during agent eviction."
     type="warning"
     showIcon
     centered
-    className="mt-16"
+    className="mt-16 text-sm"
   />
 );
 
@@ -43,18 +43,22 @@ export const AggregatedBalanceAndOperations = ({
   onWithdraw,
   onFundAgent,
 }: AggregatedBalanceAndOperationsProps) => {
-  const { isAgentEvicted } = useActiveStakingContractDetails();
+  const { isAgentEvicted, isEligibleForStaking } =
+    useActiveStakingContractDetails();
+
+  const isWithdrawDisabled = isAgentEvicted && !isEligibleForStaking;
+
   const alert = useMemo(() => {
-    if (isAgentEvicted) return <EvictedAgentAlert />;
+    if (isWithdrawDisabled) return <EvictedAgentAlert />;
     return null;
-  }, [isAgentEvicted]);
+  }, [isWithdrawDisabled]);
 
   return (
     <CardFlex $noBorder>
       <Flex justify="space-between" align="end">
         <AgentWalletTitle />
         <Flex gap={8}>
-          <Button disabled={isAgentEvicted} onClick={onWithdraw}>
+          <Button disabled={isWithdrawDisabled} onClick={onWithdraw}>
             Withdraw
           </Button>
           <Button type="primary" onClick={onFundAgent}>
