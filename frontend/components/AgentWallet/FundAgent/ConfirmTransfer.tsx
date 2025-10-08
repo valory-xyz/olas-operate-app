@@ -49,7 +49,7 @@ const TransferComplete = ({ onClose }: { onClose: () => void }) => (
         Transfer Complete!
       </Title>
       <Text className="text-neutral-tertiary">
-        Funds transferred to the Pearl wallet.
+        Funds transferred to the Agent wallet.
       </Text>
     </Flex>
 
