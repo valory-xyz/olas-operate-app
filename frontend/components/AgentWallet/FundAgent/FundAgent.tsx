@@ -1,5 +1,5 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Flex, Image, Typography } from 'antd';
+import { Button, Flex, Image, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
@@ -11,7 +11,8 @@ import {
   TokenAmountInput,
 } from '@/components/ui';
 import { TokenSymbol } from '@/constants';
-import { useServices } from '@/hooks';
+import { Pages } from '@/enums';
+import { usePageState, useServices } from '@/hooks';
 import { useAvailableAssets } from '@/hooks/useAvailableAssets';
 
 import { useAgentWallet } from '../AgentWalletProvider';
@@ -50,6 +51,21 @@ const PearlWalletToAgentWallet = () => {
         </Flex>
       </Flex>
       <Divider className="m-0" />
+    </Flex>
+  );
+};
+
+const FundPearlWallet = () => {
+  const { goto } = usePageState();
+
+  return (
+    <Flex justify="space-between" align="center" className="w-full">
+      <Text type="danger" className="text-sm">
+        Not enough funds on Pearl Wallet balance.
+      </Text>
+      <Button size="small" onClick={() => goto(Pages.PearlWallet)}>
+        Fund Pearl Wallet
+      </Button>
     </Flex>
   );
 };
@@ -94,16 +110,24 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
           <PearlWalletToAgentWallet />
 
           <Flex justify="space-between" align="center" vertical gap={16}>
-            {availableAssets.map(({ amount, symbol }) => (
-              <TokenAmountInput
-                key={symbol}
-                tokenSymbol={symbol}
-                value={amountsToFund?.[symbol] ?? 0}
-                maxAmount={amount}
-                totalAmount={amount}
-                onChange={(x) => onAmountChange(symbol, x ?? 0)}
-              />
-            ))}
+            {availableAssets.map(({ amount, symbol }) => {
+              const hasError = Boolean(
+                amountsToFund?.[symbol] && amountsToFund[symbol] > amount,
+              );
+
+              return (
+                <Flex key={symbol} className="w-full" gap={8} vertical>
+                  <TokenAmountInput
+                    tokenSymbol={symbol}
+                    value={amountsToFund?.[symbol] ?? 0}
+                    totalAmount={amount}
+                    onChange={(x) => onAmountChange(symbol, x ?? 0)}
+                    hasError={hasError}
+                  />
+                  {hasError && <FundPearlWallet />}
+                </Flex>
+              );
+            })}
           </Flex>
         </Flex>
       </CardFlex>

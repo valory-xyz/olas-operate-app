@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { Button, Flex, Modal, Typography } from 'antd';
-import { isEmpty, values } from 'lodash';
+import { isEmpty, isNumber, values } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
@@ -10,7 +10,12 @@ import {
 } from '@/components/custom-icons';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { TOKEN_CONFIG } from '@/config/tokens';
-import { AddressZero, SUPPORT_URL, UNICODE_SYMBOLS } from '@/constants';
+import {
+  AddressZero,
+  SUPPORT_URL,
+  TokenSymbol,
+  UNICODE_SYMBOLS,
+} from '@/constants';
 import { useService, useServices } from '@/hooks';
 import {
   type ChainFunds,
@@ -19,6 +24,8 @@ import {
 } from '@/service/Fund';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
+
+import { useAgentWallet } from '../AgentWalletProvider';
 
 const { Title, Text, Link } = Typography;
 
@@ -119,6 +126,7 @@ export const ConfirmTransfer = ({ fundsToTransfer }: ConfirmTransferProps) => {
   const { selectedAgentConfig, selectedService } = useServices();
   const { serviceSafes } = useService(selectedService?.service_config_id);
   const { onFundAgent, isLoading, isSuccess, isError } = useConfirmTransfer();
+  const { availableAssets } = useAgentWallet();
 
   const [isTransferStateModalVisible, setIsTransferStateModalVisible] =
     useState(false);
@@ -165,8 +173,18 @@ export const ConfirmTransfer = ({ fundsToTransfer }: ConfirmTransferProps) => {
   const canConfirmTransfer = useMemo(() => {
     if (!serviceSafe) return false;
     if (isEmpty(fundsToTransfer)) return false;
-    return !values(fundsToTransfer).every((x) => x === 0);
-  }, [fundsToTransfer, serviceSafe]);
+
+    if (values(fundsToTransfer).every((x) => x === 0)) return false;
+
+    // Check if the amounts are less than or equal to available balance
+    return Object.entries(fundsToTransfer).every(([symbol, amount]) => {
+      const asset = availableAssets.find(
+        (asset) => asset.symbol === (symbol as TokenSymbol),
+      );
+
+      return isNumber(amount) && asset && amount <= asset.amount;
+    });
+  }, [fundsToTransfer, serviceSafe, availableAssets]);
 
   return (
     <CardFlex $noBorder $padding="32px" className="w-full">

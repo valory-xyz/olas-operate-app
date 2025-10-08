@@ -9,10 +9,12 @@ import { formatNumber } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
 
-const Container = styled.div`
+const Container = styled.div<{ $hasError?: boolean }>`
   width: 100%;
   border-radius: 16px;
-  border: 1px solid ${COLOR.GRAY_4};
+  border: 1px solid
+    ${({ $hasError }) =>
+      $hasError ? COLOR.TEXT_COLOR.ERROR.DEFAULT : COLOR.GRAY_4};
   background-color: ${COLOR.BACKGROUND};
   .input-wrapper {
     padding: 16px 20px;
@@ -43,6 +45,8 @@ type TokenAmountInputProps = {
   tokenSymbol: TokenSymbol;
   /** Whether to show quick select buttons (10%, 25%, 50%, 100%) */
   showQuickSelects?: boolean;
+  /** Whether the input has an error */
+  hasError?: boolean;
 };
 
 export const TokenAmountInput = ({
@@ -52,8 +56,9 @@ export const TokenAmountInput = ({
   onChange,
   tokenSymbol,
   showQuickSelects = true,
+  hasError = false,
 }: TokenAmountInputProps) => (
-  <Container>
+  <Container $hasError={hasError}>
     <Flex
       className="input-wrapper"
       gap={12}
