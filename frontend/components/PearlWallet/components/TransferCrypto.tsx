@@ -62,6 +62,7 @@ const TransferDetails = ({ chainName, address }: TransferDetailsProps) => {
             alt={chainName}
             width={20}
             height={20}
+            preview={false}
             className="flex"
           />
           <Text>{chainName} Chain</Text>
@@ -142,6 +143,10 @@ type TransferCryptoOnProps = {
   requestedColumnText?: string;
 };
 
+/**
+ * To transfer crypto to the Pearl Wallet, display the address and required amounts.
+ * NOTE: This component does not handle the actual transfer success/failure.
+ */
 export const TransferCrypto = ({
   chainName,
   address,

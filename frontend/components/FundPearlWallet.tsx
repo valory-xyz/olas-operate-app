@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { TransferCrypto } from '@/components/PearlWallet';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { Pages } from '@/enums';
 import {
@@ -10,8 +11,6 @@ import {
 } from '@/hooks';
 import { AvailableAsset } from '@/types/Wallet';
 import { asEvmChainDetails, asMiddlewareChain } from '@/utils';
-
-import { TransferCrypto } from '../PearlWallet';
 
 export const FundPearlWallet = () => {
   const { goto } = usePageState();

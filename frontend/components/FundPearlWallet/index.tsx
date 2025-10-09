@@ -1,1 +1,0 @@
-export { FundPearlWallet } from './FundPearlWallet';
