@@ -1,6 +1,6 @@
 import { Button, Flex, Image, Typography } from 'antd';
 import { entries } from 'lodash';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { styled } from 'styled-components';
 
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
@@ -11,11 +11,14 @@ import {
   TokenSymbolConfigMap,
 } from '@/constants';
 import { useFeatureFlag } from '@/hooks';
+import { AvailableAsset } from '@/types/Wallet';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
+import { TransferCrypto } from '../../components/TransferCrypto';
 import { usePearlWallet } from '../../PearlWalletProvider';
+import { STEPS } from '../../types';
 import { BridgeCryptoOn } from './BridgeCryptoOn';
-import { TransferCryptoOn, YouPayContainer } from './TransferCryptoOn';
+import { YouPayContainer } from './TransferCryptoOn';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -114,21 +117,42 @@ const BridgeMethod = ({ onSelect }: { onSelect: () => void }) => (
 );
 
 export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
-  const { walletChainId: chainId, amountsToDeposit } = usePearlWallet();
+  const {
+    walletChainId: chainId,
+    amountsToDeposit,
+    masterSafeAddress,
+    updateStep,
+  } = usePearlWallet();
   const [isBridgingEnabled] = useFeatureFlag(['bridge-onboarding']);
   const [paymentMethod, setPaymentMethod] = useState<
     'TRANSFER' | 'BRIDGE' | null
   >(null);
 
+  const tokenAndDepositedAmounts = useMemo<AvailableAsset[]>(
+    () =>
+      entries(amountsToDeposit).map(([tokenSymbol, amount]) => ({
+        symbol: tokenSymbol as TokenSymbol,
+        amount,
+      })),
+    [amountsToDeposit],
+  );
+
   const onPaymentMethodBack = useCallback(() => setPaymentMethod(null), []);
 
+  // If no chain is selected, we cannot proceed.
   if (!chainId) return null;
 
   const chainName = asEvmChainDetails(asMiddlewareChain(chainId)).displayName;
 
   if (paymentMethod === 'TRANSFER') {
     return (
-      <TransferCryptoOn onBack={onPaymentMethodBack} chainName={chainName} />
+      <TransferCrypto
+        chainName={chainName}
+        address={masterSafeAddress}
+        tokensToDeposit={tokenAndDepositedAmounts}
+        onBack={onBack}
+        onBackToPearlWallet={() => updateStep(STEPS.PEARL_WALLET_SCREEN)}
+      />
     );
   }
 

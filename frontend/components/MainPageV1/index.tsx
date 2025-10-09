@@ -51,6 +51,8 @@ export const Main = () => {
         return <SelectStaking />;
       case Pages.ConfirmSwitch:
         return <ConfirmSwitch />;
+      case Pages.FundPearlWallet:
+        return <ConfirmSwitch />;
       default:
         return <Home />;
     }

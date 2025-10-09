@@ -6,7 +6,7 @@ import {
 } from '@/hooks';
 
 import { EvictedAlert } from './EvictedAlert';
-import { LowAgentBalanceAlert } from './LowBalance/LowAgentBalanceAlert';
+import { AgentLowBalanceAlert } from './LowBalance/AgentLowBalanceAlert';
 import { MasterEoaLowBalanceAlert } from './LowBalance/MasterEoaLowBalanceAlert';
 import { MasterSafeLowBalanceAlert } from './LowBalance/MasterSafeLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
@@ -45,7 +45,7 @@ export const AgentDisabledAlert = () => {
   // NOTE: Low-balance alerts, each component controls its own visibility.
   return (
     <>
-      <LowAgentBalanceAlert />
+      <AgentLowBalanceAlert />
       <MasterEoaLowBalanceAlert />
       <MasterSafeLowBalanceAlert />
     </>
