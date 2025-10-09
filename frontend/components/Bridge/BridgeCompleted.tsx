@@ -27,7 +27,7 @@ export const BridgeCompleted = ({
   const { goto } = usePageState();
 
   return (
-    <Flex justify="center" className="pt-48">
+    <Flex justify="center">
       <CardFlex $noBorder $onboarding className="p-8">
         <Flex justify="space-between" align="center">
           <Title level={3} className="mt-12">

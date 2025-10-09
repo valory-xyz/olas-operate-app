@@ -278,7 +278,7 @@ export const BridgeInProgress = ({
   }, [eta]);
 
   return (
-    <Flex justify="center" className="pt-48">
+    <Flex justify="center">
       <CardFlex $noBorder $onboarding className="p-8">
         <Title level={3} className="mt-0">
           Bridge Crypto
