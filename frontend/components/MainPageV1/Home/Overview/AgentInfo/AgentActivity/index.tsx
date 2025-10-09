@@ -84,7 +84,8 @@ export const AgentActivity = () => {
           content: <IdleContent />,
         };
       }
-      if (!rounds.length) {
+
+      if (rounds.length > 0) {
         const currentRound = rounds[0];
         const roundInfo = roundsInfo?.[currentRound]?.name || currentRound;
 
@@ -99,6 +100,7 @@ export const AgentActivity = () => {
           ),
         };
       }
+
       return {
         status: 'activity-not-ready',
         content: 'Agent is pending first activity',
@@ -131,7 +133,10 @@ export const AgentActivity = () => {
       >
         <TopCorner $position="left" $status={activityInfo.status} />
         <TopCorner $position="right" $status={activityInfo.status} />
-        <Text $status={activityInfo.status} className="activity-modal">
+        <Text
+          $status={activityInfo.status}
+          className="activity-modal text-center"
+        >
           {activityInfo.content}
         </Text>
       </Container>

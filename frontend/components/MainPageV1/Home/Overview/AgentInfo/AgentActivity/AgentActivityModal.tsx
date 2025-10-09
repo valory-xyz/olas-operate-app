@@ -45,11 +45,11 @@ export const AgentActivityModal = ({
   roundsInfo = {},
 }: AgentActivityModalProps) => {
   const items = useMemo<CollapseProps['items']>(() => {
-    return rounds.map((roundId, index) => {
+    return rounds.slice(1).map((roundId, index) => {
       const info = roundsInfo?.[roundId];
       return {
-        key: `${roundId}-${index}`,
-        label: info?.name || `Round ${index + 1}`,
+        key: `${roundId}-${index + 1}`,
+        label: info?.name || `Round ${index + 2}`,
         children: info?.description || 'No details provided.',
       };
     });
