@@ -74,7 +74,8 @@ const Streak = () => {
  */
 export const Staking = () => {
   const { goto } = usePageState();
-  const { isAgentEvicted } = useActiveStakingContractDetails();
+  const { isAgentEvicted, isEligibleForStaking } =
+    useActiveStakingContractDetails();
   const { isServiceRunning } = useAgentActivity();
   const { currentEpochLifetime } = useStakingDetails();
   const { selectedAgentConfig } = useServices();
@@ -83,10 +84,15 @@ export const Staking = () => {
 
   const alert = useMemo(() => {
     if (isUnderConstruction) return <UnderConstructionAlert />;
-    if (isAgentEvicted) return <EvictionAlert />;
+    if (isAgentEvicted && !isEligibleForStaking) return <EvictionAlert />;
     if (!isServiceRunning) return <RunAgentAlert />;
     return null;
-  }, [isAgentEvicted, isServiceRunning, isUnderConstruction]);
+  }, [
+    isAgentEvicted,
+    isEligibleForStaking,
+    isServiceRunning,
+    isUnderConstruction,
+  ]);
 
   return (
     <Flex vertical>
