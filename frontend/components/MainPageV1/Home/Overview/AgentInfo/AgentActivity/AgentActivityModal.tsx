@@ -45,15 +45,17 @@ export const AgentActivityModal = ({
   roundsInfo = {},
 }: AgentActivityModalProps) => {
   const items = useMemo<CollapseProps['items']>(() => {
-    return rounds.slice(1).map((roundId, index) => {
+    return rounds.map((roundId, index) => {
       const info = roundsInfo?.[roundId];
       return {
-        key: `${roundId}-${index + 1}`,
-        label: info?.name || `Round ${index + 2}`,
+        key: `${roundId}-${index}`,
+        label: info?.name || `Round ${index + 1}`,
         children: info?.description || 'No details provided.',
       };
     });
   }, [rounds, roundsInfo]);
+
+  const previousActions = items?.slice(1); // separates current and previous actions
 
   const currentActionName = useMemo(() => {
     const currentRound = rounds[0];
@@ -66,6 +68,7 @@ export const AgentActivityModal = ({
     if (!currentRound) return;
     return roundsInfo?.[currentRound]?.description;
   }, [rounds, roundsInfo]);
+
   return (
     <Modal
       title="Agent Activity"
@@ -85,7 +88,7 @@ export const AgentActivityModal = ({
         </CurrentActionContainer>
         <Divider />
         <Text strong>History</Text>
-        <ModalCollapseItem items={items} bordered={false} />
+        <ModalCollapseItem items={previousActions} bordered={false} />
       </Flex>
     </Modal>
   );

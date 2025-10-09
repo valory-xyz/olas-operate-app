@@ -131,10 +131,7 @@ export const AgentActivity = () => {
       >
         <TopCorner $position="left" $status={activityInfo.status} />
         <TopCorner $position="right" $status={activityInfo.status} />
-        <Text
-          $status={activityInfo.status}
-          className="activity-modal text-center"
-        >
+        <Text $status={activityInfo.status} className="w-full text-center">
           {activityInfo.content}
         </Text>
       </Container>
