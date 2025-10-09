@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { TokenSymbol } from '@/constants';
 import { AvailableAsset } from '@/types/Wallet';
 
-import { TransferCrypto } from '../../components/TransferCrypto';
+import { TransferCryptoFromExternalWallet } from '../../components/TransferCryptoFromExternalWallet';
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { STEPS } from '../../types';
 
@@ -29,7 +29,7 @@ export const TransferCryptoOn = ({
   );
 
   return (
-    <TransferCrypto
+    <TransferCryptoFromExternalWallet
       description={`Send the specified amounts from your external wallet to the Pearl Wallet address below. When you’re done, you can leave this screen — after the transfer confirms on ${chainName}, your Pearl Wallet balance updates automatically.`}
       chainName={chainName}
       address={masterSafeAddress}

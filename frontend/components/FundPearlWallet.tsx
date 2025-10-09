@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { TransferCrypto } from '@/components/PearlWallet';
+import { TransferCryptoFromExternalWallet } from '@/components/PearlWallet';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { Pages } from '@/enums';
 import {
@@ -19,18 +19,12 @@ export const FundPearlWallet = () => {
   const { masterEoa } = useMasterWalletContext();
 
   const homeChainId = selectedAgentConfig.evmHomeChainId;
-  const { nativeToken } = CHAIN_CONFIG[homeChainId];
+  const symbol = CHAIN_CONFIG[homeChainId].nativeToken.symbol;
 
   const tokenAndDepositedAmounts = useMemo<AvailableAsset[]>(() => {
     if (!masterEoaGasRequirement) return [];
-
-    return [
-      {
-        symbol: nativeToken.symbol,
-        amount: masterEoaGasRequirement,
-      },
-    ];
-  }, [masterEoaGasRequirement, nativeToken]);
+    return [{ symbol, amount: masterEoaGasRequirement }];
+  }, [masterEoaGasRequirement, symbol]);
 
   if (!masterEoa) return null;
 
@@ -39,7 +33,7 @@ export const FundPearlWallet = () => {
   ).displayName;
 
   return (
-    <TransferCrypto
+    <TransferCryptoFromExternalWallet
       description={`Send funds from your external wallet to the Pearl Wallet address below. When you’re done, you can leave this screen — after the transfer confirms on ${chainName}, your Pearl Wallet balance updates automatically.`}
       chainName={chainName}
       address={masterEoa.address}

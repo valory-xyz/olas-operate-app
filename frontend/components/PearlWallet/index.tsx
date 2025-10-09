@@ -1,2 +1,2 @@
-export { TransferCrypto } from './components/TransferCrypto';
+export { TransferCryptoFromExternalWallet } from './components/TransferCryptoFromExternalWallet';
 export { PearlWallet } from './PearlWallet';

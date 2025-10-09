@@ -13,7 +13,7 @@ import {
 import { useFeatureFlag } from '@/hooks';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
-import { YouPayContainer } from '../../components/TransferCrypto';
+import { YouPayContainer } from '../../components/TransferCryptoFromExternalWallet';
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { BridgeCryptoOn } from './BridgeCryptoOn';
 import { TransferCryptoOn } from './TransferCryptoOn';

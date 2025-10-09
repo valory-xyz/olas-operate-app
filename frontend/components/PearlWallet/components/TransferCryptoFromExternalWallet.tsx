@@ -147,7 +147,7 @@ type TransferCryptoOnProps = {
  * To transfer crypto to the Pearl Wallet, display the address and required amounts.
  * NOTE: This component does not handle the actual transfer success/failure.
  */
-export const TransferCrypto = ({
+export const TransferCryptoFromExternalWallet = ({
   chainName,
   address,
   tokensToDeposit,
