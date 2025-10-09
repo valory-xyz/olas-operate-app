@@ -30,6 +30,7 @@ export const TransferCryptoOn = ({
 
   return (
     <TransferCrypto
+      description={`Send the specified amounts from your external wallet to the Pearl Wallet address below. When you’re done, you can leave this screen — after the transfer confirms on ${chainName}, your Pearl Wallet balance updates automatically.`}
       chainName={chainName}
       address={masterSafeAddress}
       tokensToDeposit={tokenAndDepositedAmounts}

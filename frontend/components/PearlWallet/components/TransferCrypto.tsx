@@ -23,20 +23,6 @@ export const YouPayContainer = styled(Flex)`
   padding: 12px 16px;
 `;
 
-const TransferTitleAndDescription = ({ chainName }: { chainName: string }) => (
-  <>
-    <Title className="m-0" level={3}>
-      Transfer Crypto on {chainName}
-    </Title>
-    <Paragraph className="m-0 text-neutral-secondary">
-      Send the specified amounts from your external wallet to the Pearl Wallet
-      address below. When you’re done, you can leave this screen — after the
-      transfer confirms on {chainName}, your Pearl Wallet balance updates
-      automatically.
-    </Paragraph>
-  </>
-);
-
 const ChainWarningAlert = ({ chainName }: { chainName: string }) => (
   <CustomAlert
     message={`Only send on ${chainName} Chain — funds on other networks are unrecoverable.`}
@@ -149,10 +135,11 @@ type TransferCryptoOnProps = {
   chainName: string;
   address: Nullable<Address>;
   tokensToDeposit: AvailableAsset[];
-  /** Optional custom text for the "Requested Deposit Amount" column */
-  requestedColumnText?: string;
   onBack: () => void;
   onBackToPearlWallet: () => void;
+  description?: string;
+  /** Optional custom text for the "Requested Deposit Amount" column */
+  requestedColumnText?: string;
 };
 
 export const TransferCrypto = ({
@@ -161,19 +148,26 @@ export const TransferCrypto = ({
   tokensToDeposit,
   onBack,
   onBackToPearlWallet,
+  description,
+  requestedColumnText,
 }: TransferCryptoOnProps) => (
-  <CardFlex $noBorder $padding="32px" style={{ width: 624 }}>
+  <CardFlex $noBorder $padding="32px" style={{ width: 624, margin: '0 auto' }}>
     <Flex vertical gap={24}>
       <Flex vertical gap={16}>
         <BackButton onPrev={onBack} />
-        <TransferTitleAndDescription chainName={chainName} />
+        <Title className="m-0" level={3}>
+          Transfer Crypto on {chainName}
+        </Title>
+        <Paragraph className="m-0 text-neutral-secondary">
+          {description}
+        </Paragraph>
       </Flex>
 
       <ChainWarningAlert chainName={chainName} />
       {address && <TransferDetails chainName={chainName} address={address} />}
       <Table<AvailableAsset>
         dataSource={tokensToDeposit}
-        columns={getColumns()}
+        columns={getColumns(requestedColumnText)}
         rowKey={(record) => record.symbol}
         pagination={false}
         rowHoverable={false}

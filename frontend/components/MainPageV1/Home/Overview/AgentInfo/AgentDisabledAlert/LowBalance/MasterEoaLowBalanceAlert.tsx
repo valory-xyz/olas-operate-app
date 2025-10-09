@@ -2,13 +2,15 @@ import { Button, Flex, Typography } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { useMasterBalances, useServices } from '@/hooks';
+import { Pages } from '@/enums';
+import { useMasterBalances, usePageState, useServices } from '@/hooks';
 
 const { Text } = Typography;
 
 export const MasterEoaLowBalanceAlert = () => {
-  const { isMasterEoaLowOnGas, masterEoaGasRequirement } = useMasterBalances();
+  const { goto } = usePageState();
   const { selectedAgentConfig } = useServices();
+  const { isMasterEoaLowOnGas, masterEoaGasRequirement } = useMasterBalances();
 
   const homeChainId = selectedAgentConfig.evmHomeChainId;
   const { nativeToken } = CHAIN_CONFIG[homeChainId];
@@ -35,7 +37,9 @@ export const MasterEoaLowBalanceAlert = () => {
             </Text>
           </Flex>
 
-          <Button size="small">Fund Pearl Wallet</Button>
+          <Button onClick={() => goto(Pages.FundPearlWallet)} size="small">
+            Fund Pearl Wallet
+          </Button>
         </Flex>
       }
     />
