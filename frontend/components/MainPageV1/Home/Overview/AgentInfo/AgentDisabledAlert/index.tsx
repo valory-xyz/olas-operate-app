@@ -30,7 +30,7 @@ export const AgentDisabledAlert = () => {
   }
 
   // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
-  if (isInitialFunded === false && 1 + 1 === 0) return <UnfinishedSetupAlert />;
+  if (isInitialFunded === false) return <UnfinishedSetupAlert />;
 
   if (
     !isSelectedStakingContractDetailsLoading &&
