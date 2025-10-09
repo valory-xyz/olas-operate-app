@@ -10,7 +10,6 @@ import { InfoTooltip } from '@/components/InfoTooltip';
 import { BackButton, CardFlex, Table } from '@/components/ui';
 import { COLOR, TokenSymbol, TokenSymbolConfigMap } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
-import { useMasterWalletContext } from '@/hooks';
 import { Address } from '@/types/Address';
 import { AvailableAsset } from '@/types/Wallet';
 import { copyToClipboard, formatNumber } from '@/utils';
@@ -154,14 +153,7 @@ export const TransferCryptoOn = ({
   chainName,
   onBack,
 }: TransferCryptoOnProps) => {
-  const { amountsToDeposit, updateStep, walletChainId } = usePearlWallet();
-  const { masterSafes } = useMasterWalletContext();
-
-  const masterSafeAddress = useMemo(
-    () =>
-      masterSafes?.find((safe) => safe.evmChainId === walletChainId)?.address,
-    [masterSafes, walletChainId],
-  );
+  const { amountsToDeposit, updateStep, masterSafeAddress } = usePearlWallet();
 
   const tokenAndDepositedAmounts = useMemo<AvailableAsset[]>(
     () =>
@@ -181,7 +173,9 @@ export const TransferCryptoOn = ({
         </Flex>
 
         <ChainWarningAlert chainName={chainName} />
-        <TransferDetails chainName={chainName} address={masterSafeAddress} />
+        {masterSafeAddress && (
+          <TransferDetails chainName={chainName} address={masterSafeAddress} />
+        )}
         <Table<AvailableAsset>
           dataSource={tokenAndDepositedAmounts}
           columns={columns}

@@ -114,7 +114,7 @@ const BridgeMethod = ({ onSelect }: { onSelect: () => void }) => (
 );
 
 export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
-  const { walletChainId: chainId } = usePearlWallet();
+  const { walletChainId: chainId, amountsToDeposit } = usePearlWallet();
   const [isBridgingEnabled] = useFeatureFlag(['bridge-onboarding']);
   const [paymentMethod, setPaymentMethod] = useState<
     'TRANSFER' | 'BRIDGE' | null
@@ -135,6 +135,7 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
   if (paymentMethod === 'BRIDGE') {
     return (
       <BridgeCryptoOn
+        amountsToDeposit={amountsToDeposit}
         bridgeToChain={asMiddlewareChain(chainId)}
         onBack={onPaymentMethodBack}
       />

@@ -52,7 +52,10 @@ const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => (
 );
 
 type AddFundsInputProps = {
-  /** Default token amounts to display in the input fields */
+  /**
+   * Default token amounts to display in the input fields
+   * and user can modify them.
+   */
   defaultTokenAmounts?: DefaultTokenAmount[];
   /** Destination address to bridge funds to */
   destinationAddress?: Address;
