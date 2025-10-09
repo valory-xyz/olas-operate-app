@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { MiddlewareChain } from '@/client';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks';
 import { CrossChainTransferDetails } from '@/types/Bridge';
@@ -27,6 +28,7 @@ type BridgeProps = {
   enabledStepsAfterBridging?: EnabledSteps;
   onPrevBeforeBridging: () => void;
   isOnboarding?: boolean;
+  bridgeToChain: MiddlewareChain;
 };
 
 /**
@@ -41,6 +43,7 @@ export const Bridge = ({
   enabledStepsAfterBridging,
   onPrevBeforeBridging,
   isOnboarding = false,
+  bridgeToChain,
 }: BridgeProps) => {
   const { goto } = usePageState();
 
@@ -105,6 +108,7 @@ export const Bridge = ({
       return (
         <BridgeOnEvm
           bridgeFromDescription={bridgeFromDescription}
+          bridgeToChain={bridgeToChain}
           getBridgeRequirementsParams={getBridgeRequirementsParams}
           updateQuoteId={updateQuoteId}
           updateCrossChainTransferDetails={updateCrossChainTransferDetails}

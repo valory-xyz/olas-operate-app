@@ -14,20 +14,27 @@ import { AgentType } from '@/constants/agent';
 import { type EvmChainName } from '@/constants/chains';
 import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol } from '@/constants/token';
-import { useBalanceContext, useService, useServices } from '@/hooks';
+import {
+  useBalanceContext,
+  useMasterWalletContext,
+  useService,
+  useServices,
+} from '@/hooks';
 import { useAvailableAssets } from '@/hooks/useAvailableAssets';
+import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
 import { Nullable, ValueOf } from '@/types/Util';
 import { AvailableAsset, StakedAsset } from '@/types/Wallet';
 import { generateName } from '@/utils/agentName';
 
-import { STEPS, WalletChain } from './types';
+import { STEPS, TokenAmounts, WalletChain } from './types';
 
 const PearlWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;
   updateStep: (newStep: ValueOf<typeof STEPS>) => void;
   isLoading: boolean;
   chains: WalletChain[];
+  masterSafeAddress: Nullable<Address>;
   walletChainId: Nullable<EvmChainId>;
   onWalletChainChange: (
     chainId: EvmChainId,
@@ -35,9 +42,9 @@ const PearlWalletContext = createContext<{
   ) => void;
   availableAssets: AvailableAsset[];
   stakedAssets: StakedAsset[];
-  amountsToWithdraw: Partial<Record<TokenSymbol, number>>;
+  amountsToWithdraw: TokenAmounts;
   onAmountChange: (symbol: TokenSymbol, amount: number) => void;
-  amountsToDeposit: Partial<Record<TokenSymbol, number>>;
+  amountsToDeposit: TokenAmounts;
   onDepositAmountChange: (symbol: TokenSymbol, amount: number) => void;
   onReset: () => void;
 }>({
@@ -45,6 +52,7 @@ const PearlWalletContext = createContext<{
   updateStep: () => {},
   isLoading: false,
   walletChainId: null,
+  masterSafeAddress: null,
   onWalletChainChange: () => {},
   chains: [],
   stakedAssets: [],
@@ -68,6 +76,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   );
   const { isLoading: isBalanceLoading, getTotalStakedOlasBalanceOf } =
     useBalanceContext();
+  const { masterSafes } = useMasterWalletContext();
 
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
     STEPS.PEARL_WALLET_SCREEN,
@@ -75,12 +84,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const [walletChainId, setWalletChainId] = useState<EvmChainId>(
     selectedAgentConfig.evmHomeChainId,
   );
-  const [amountsToWithdraw, setAmountsToWithdraw] = useState<
-    Partial<Record<TokenSymbol, number>>
-  >({});
-  const [amountsToDeposit, setAmountsToDeposit] = useState<
-    Partial<Record<TokenSymbol, number>>
-  >({});
+  const [amountsToWithdraw, setAmountsToWithdraw] = useState<TokenAmounts>({});
+  const [amountsToDeposit, setAmountsToDeposit] = useState<TokenAmounts>({});
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
     useAvailableAssets(walletChainId);
 
@@ -160,6 +165,13 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [onReset],
   );
 
+  const masterSafeAddress = useMemo(
+    () =>
+      masterSafes?.find((safe) => safe.evmChainId === walletChainId)?.address ??
+      null,
+    [masterSafes, walletChainId],
+  );
+
   const isLoading =
     isServicesLoading ||
     !isLoaded ||
@@ -174,6 +186,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         updateStep,
         availableAssets,
         stakedAssets,
+        masterSafeAddress,
 
         // for chain
         walletChainId,
