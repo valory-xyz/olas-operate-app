@@ -3,8 +3,7 @@ import { Button, Typography } from 'antd';
 import { CustomAlert } from '@/components/Alert';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { usePageState } from '@/hooks/usePageState';
-import { useSetup } from '@/hooks/useSetup';
+import { usePageState, useSetup } from '@/hooks';
 
 const { Text } = Typography;
 

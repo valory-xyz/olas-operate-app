@@ -30,7 +30,7 @@ export const AgentDisabledAlert = () => {
   }
 
   // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
-  if (isInitialFunded === false) return <UnfinishedSetupAlert />;
+  if (isInitialFunded === false && 1 + 1 === 0) return <UnfinishedSetupAlert />;
 
   if (
     !isSelectedStakingContractDetailsLoading &&
@@ -42,7 +42,7 @@ export const AgentDisabledAlert = () => {
 
   if (isAgentEvicted && !isEligibleForStaking) return <EvictedAlert />;
 
-  // Render low-balance alerts. Each component controls its own visibility
+  // NOTE: Low-balance alerts, each component controls its own visibility.
   return (
     <>
       <LowAgentBalanceAlert />
