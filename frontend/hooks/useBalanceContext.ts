@@ -442,7 +442,8 @@ export const useMasterBalances = () => {
 
     // master eoa
     masterEoaNativeGasBalance: masterEoaNative?.balance,
-    isMasterEoaLowOnGas: requiresFund(masterEoaGasRequirementInWei),
+    isMasterEoaLowOnGas: true,
+    // isMasterEoaLowOnGas: requiresFund(masterEoaGasRequirementInWei),
     masterEoaGasRequirement,
     masterEoaBalances,
     masterEoaNativeBalance,
