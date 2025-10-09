@@ -6,7 +6,7 @@ import { useAgentFundingRequests, usePageState } from '@/hooks';
 
 const { Text } = Typography;
 
-export const LowAgentBalanceAlert = () => {
+export const AgentLowBalanceAlert = () => {
   const { isAgentBalanceLow, agentTokenRequirementsFormatted } =
     useAgentFundingRequests();
   const { goto } = usePageState();

@@ -2,12 +2,13 @@ import { Button, Typography } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
+import { usePageState } from '@/hooks';
 
 const { Text } = Typography;
 
 export const NoSlotsAvailableAlert = () => {
   const { goto } = usePageState();
+
   return (
     <CustomAlert
       showIcon

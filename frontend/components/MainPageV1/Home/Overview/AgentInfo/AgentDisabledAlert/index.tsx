@@ -6,8 +6,9 @@ import {
 } from '@/hooks';
 
 import { EvictedAlert } from './EvictedAlert';
-import { LowAgentBalanceAlert } from './LowAgentBalanceAlert';
-import { LowPearlBalanceAlert } from './LowPearlBalanceAlert';
+import { AgentLowBalanceAlert } from './LowBalance/AgentLowBalanceAlert';
+import { MasterEoaLowBalanceAlert } from './LowBalance/MasterEoaLowBalanceAlert';
+import { MasterSafeLowBalanceAlert } from './LowBalance/MasterSafeLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
 import { UnderConstructionAlert } from './UnderConstructionAlert';
 import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
@@ -41,11 +42,12 @@ export const AgentDisabledAlert = () => {
 
   if (isAgentEvicted && !isEligibleForStaking) return <EvictedAlert />;
 
-  // Render low-balance alerts. Each component controls its own visibility
+  // NOTE: Low-balance alerts, each component controls its own visibility.
   return (
     <>
-      <LowPearlBalanceAlert />
-      <LowAgentBalanceAlert />
+      <AgentLowBalanceAlert />
+      <MasterEoaLowBalanceAlert />
+      <MasterSafeLowBalanceAlert />
     </>
   );
 };

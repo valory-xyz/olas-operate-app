@@ -7,8 +7,8 @@ import {
   TokenAmountInput,
 } from '@/components/ui';
 
+import { PearlWalletToExternalWallet } from '../components/PearlWalletToExternalWallet';
 import { usePearlWallet } from '../PearlWalletProvider';
-import { PearlWalletToExternalWallet } from './common';
 
 const { Title } = Typography;
 

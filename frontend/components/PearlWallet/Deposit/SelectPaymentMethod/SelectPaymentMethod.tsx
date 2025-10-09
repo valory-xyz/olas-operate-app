@@ -13,9 +13,10 @@ import {
 import { useFeatureFlag } from '@/hooks';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
+import { YouPayContainer } from '../../components/TransferCryptoFromExternalWallet';
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { BridgeCryptoOn } from './BridgeCryptoOn';
-import { TransferCryptoOn, YouPayContainer } from './TransferCryptoOn';
+import { TransferCryptoOn } from './TransferCryptoOn';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -122,14 +123,13 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
 
   const onPaymentMethodBack = useCallback(() => setPaymentMethod(null), []);
 
+  // If no chain is selected, we cannot proceed.
   if (!chainId) return null;
 
   const chainName = asEvmChainDetails(asMiddlewareChain(chainId)).displayName;
 
   if (paymentMethod === 'TRANSFER') {
-    return (
-      <TransferCryptoOn onBack={onPaymentMethodBack} chainName={chainName} />
-    );
+    return <TransferCryptoOn chainName={chainName} onBack={onBack} />;
   }
 
   if (paymentMethod === 'BRIDGE') {

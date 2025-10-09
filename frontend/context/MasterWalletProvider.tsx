@@ -1,8 +1,15 @@
 import { QueryObserverBaseResult, useQuery } from '@tanstack/react-query';
 import { getAddress, isAddress } from 'ethers/lib/utils';
-import { createContext, PropsWithChildren, useContext, useMemo } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useCallback,
+  useContext,
+  useMemo,
+} from 'react';
 
 import { MiddlewareWalletResponse } from '@/client';
+import { EvmChainId } from '@/constants';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import {
@@ -21,6 +28,7 @@ type MasterWalletContext = {
   masterEoa?: MasterEoa;
   masterSafes?: MasterSafe[];
   masterWallets?: MasterWallet[];
+  getMasterSafeOf?: (chainId: EvmChainId) => MasterSafe | undefined;
 } & Partial<QueryObserverBaseResult<MasterWallet[]>>;
 
 export const MasterWalletContext = createContext<MasterWalletContext>({});
@@ -92,6 +100,13 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
     [masterWallets],
   );
 
+  /** Get the master safe for a specific chain ID */
+  const getMasterSafeOf = useCallback(
+    (chainId: EvmChainId) =>
+      masterSafes?.find((safe) => safe.evmChainId === chainId),
+    [masterSafes],
+  );
+
   return (
     <MasterWalletContext.Provider
       value={{
@@ -100,6 +115,7 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
         masterSafes,
         refetch,
         isFetched,
+        getMasterSafeOf,
       }}
     >
       {children}

@@ -21,6 +21,7 @@ export const Pages = {
   LowSafeSignerBalanceBridgeFunds: 'LowSafeSignerBalanceBridgeFunds',
   SelectStaking: 'SelectStaking',
   ConfirmSwitch: 'ConfirmSwitch',
+  FundPearlWallet: 'FundPearlWallet',
 } as const;
 
 export type Pages = (typeof Pages)[keyof typeof Pages];

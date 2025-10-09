@@ -9,8 +9,8 @@ import { COLOR } from '@/constants/colors';
 import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
 import { formatNumber } from '@/utils/numberFormatters';
 
+import { PearlWalletToExternalWallet } from '../../components/PearlWalletToExternalWallet';
 import { usePearlWallet } from '../../PearlWalletProvider';
-import { PearlWalletToExternalWallet } from '../common';
 
 const { Title, Text } = Typography;
 

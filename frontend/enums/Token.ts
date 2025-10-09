@@ -6,5 +6,6 @@ export enum TokenSymbol {
   OLAS = 'OLAS',
   USDC = 'USDC',
   XDAI = 'XDAI',
+  /** WXDAI: Token used for making bets in predict agent */
   WXDAI = 'WXDAI',
 }
