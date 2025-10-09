@@ -7,11 +7,11 @@ import {
 
 import { EvictedAlert } from './EvictedAlert';
 import { LowAgentBalanceAlert } from './LowBalance/LowAgentBalanceAlert';
-import { LowPearlBalanceAlert } from './LowBalance/LowPearlBalanceAlert';
 import { MasterEoaLowBalanceAlert } from './LowBalance/MasterEoaLowBalanceAlert';
+import { MasterSafeLowBalanceAlert } from './LowBalance/MasterSafeLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
 import { UnderConstructionAlert } from './UnderConstructionAlert';
-// import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
+import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
 
 export const AgentDisabledAlert = () => {
   const { selectedAgentConfig } = useServices();
@@ -30,7 +30,7 @@ export const AgentDisabledAlert = () => {
   }
 
   // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
-  // if (isInitialFunded === false) return <UnfinishedSetupAlert />;
+  if (isInitialFunded === false) return <UnfinishedSetupAlert />;
 
   if (
     !isSelectedStakingContractDetailsLoading &&
@@ -45,9 +45,9 @@ export const AgentDisabledAlert = () => {
   // Render low-balance alerts. Each component controls its own visibility
   return (
     <>
-      <LowPearlBalanceAlert />
       <LowAgentBalanceAlert />
       <MasterEoaLowBalanceAlert />
+      <MasterSafeLowBalanceAlert />
     </>
   );
 };
