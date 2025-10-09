@@ -9,7 +9,6 @@ import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import {
   useBalanceContext,
   useMasterBalances,
-  useServiceBalances,
 } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
@@ -42,19 +41,12 @@ const FineDot = styled(Dot)`
 
 const BalanceStatus = () => {
   const { isLoaded: isBalanceLoaded } = useBalanceContext();
-  const {
-    isFetched: isServicesLoaded,
-    selectedAgentType,
-    selectedService,
-  } = useServices();
+  const { isFetched: isServicesLoaded, selectedAgentType } = useServices();
 
   const { storeState } = useStore();
   const { showNotification } = useElectronApi();
 
   const { isMasterSafeLowOnNativeGas } = useMasterBalances();
-  const { isServiceSafeLowOnNativeGas } = useServiceBalances(
-    selectedService?.service_config_id,
-  );
 
   const [isLowBalanceNotificationShown, setIsLowBalanceNotificationShown] =
     useState(false);
@@ -64,10 +56,9 @@ const BalanceStatus = () => {
    */
   const isLowFunds = useMemo(() => {
     if (isNil(isMasterSafeLowOnNativeGas)) return false;
-    if (isNil(isServiceSafeLowOnNativeGas)) return false;
 
-    return isMasterSafeLowOnNativeGas && isServiceSafeLowOnNativeGas;
-  }, [isMasterSafeLowOnNativeGas, isServiceSafeLowOnNativeGas]);
+    return isMasterSafeLowOnNativeGas;
+  }, [isMasterSafeLowOnNativeGas]);
 
   // show notification if balance is too low
   useEffect(() => {

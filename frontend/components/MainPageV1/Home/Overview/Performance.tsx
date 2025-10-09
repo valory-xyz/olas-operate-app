@@ -61,7 +61,7 @@ export const useAgentPerformance = () => {
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.AGENT_PERFORMANCE_KEY(
-      asEvmChainId(chainId),
+      chainId ? asEvmChainId(chainId) : -1,
       serviceConfigId!,
     ),
     queryFn: async () => {

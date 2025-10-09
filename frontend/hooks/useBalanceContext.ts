@@ -119,12 +119,6 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
     [serviceSafeBalances, selectedAgentConfig],
   );
 
-  /**
-   * service safe native balance requirement
-   */
-  const serviceSafeNativeGasRequirementInWei =
-    useRefillRequirement(serviceSafeNative);
-
   const serviceSafeNativeBalances = useMemo(() => {
     if (!serviceSafeBalances) return null;
 
@@ -193,9 +187,6 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
     serviceSafeOlas,
     serviceEoaBalances,
     serviceSafeNative,
-    isServiceSafeLowOnNativeGas: requiresFund(
-      serviceSafeNativeGasRequirementInWei,
-    ),
     serviceSafeNativeBalances,
     serviceSafeErc20Balances,
     serviceEoaNativeBalance,

@@ -7,7 +7,7 @@ import { useMasterBalances } from '@/hooks/useBalanceContext';
 
 const { Text } = Typography;
 
-export const LowBalanceAlert = () => {
+export const LowPearlBalanceAlert = () => {
   const {
     isMasterEoaLowOnGas,
     masterEoaGasRequirement,

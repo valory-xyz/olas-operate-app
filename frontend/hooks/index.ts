@@ -1,4 +1,5 @@
 export * from './useAgentActivity';
+export * from './useAgentFundingRequests';
 export * from './useBackupSigner';
 export * from './useBalanceAndRefillRequirementsContext';
 export * from './useBalanceContext';
@@ -22,10 +23,7 @@ export * from './usePrevious';
 export * from './useRewardContext';
 export * from './useRewardsHistory';
 export * from './useService';
-export * from './useService';
 export * from './useServiceDeployment';
-export * from './useServiceDeployment';
-export * from './useServices';
 export * from './useServices';
 export * from './useSettings';
 export * from './useSetup';
