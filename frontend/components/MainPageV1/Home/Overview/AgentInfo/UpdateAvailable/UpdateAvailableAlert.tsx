@@ -3,14 +3,13 @@ import { Flex, theme } from 'antd';
 import { CustomAlert } from '@/components/Alert';
 import { ArrowUpRightSvg } from '@/components/custom-icons/ArrowUpRight';
 import { DOWNLOAD_URL } from '@/constants';
-import { useUpdateStatus } from '@/hooks';
 
 import { UpdateAvailableModal } from './UpdateAvailableModal';
+import { useAppStatus } from './useAppStatus';
 
 export const UpdateAvailableAlert = () => {
   const { token } = theme.useToken();
-
-  const { data, isFetched, isError, error } = useUpdateStatus();
+  const { data, isFetched, isError, error } = useAppStatus();
 
   if (isError) {
     console.error('Update check failed:', error);

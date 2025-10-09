@@ -1,4 +1,4 @@
-import { Flex, message, Modal, Typography } from 'antd';
+import { message } from 'antd';
 import Image from 'next/image';
 import { PropsWithChildren, useEffect, useMemo } from 'react';
 import styled, { css } from 'styled-components';
@@ -12,9 +12,8 @@ import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useSetup } from '@/hooks/useSetup';
 
+import { Modal } from '../ui';
 import { NavBar } from './NavBar';
-
-const { Title, Text } = Typography;
 
 const Container = styled.div<{ $blur: boolean }>`
   display: flex;
@@ -42,12 +41,6 @@ const Container = styled.div<{ $blur: boolean }>`
         z-index: 1;
       }
     `}
-`;
-
-const NoInternetModal = styled(Modal)`
-  .ant-modal-content {
-    box-sizing: border-box;
-    padding: 32px;
 `;
 
 const layoutWithFullHeight: SetupScreen[] = [SetupScreen.SetupYourAgent];
@@ -90,21 +83,24 @@ export const Layout = ({ children }: PropsWithChildren) => {
   return (
     <>
       {!isOnline && (
-        <NoInternetModal open footer={null} closable={false} width={450}>
-          <Flex vertical justify="center" align="center">
+        <Modal
+          open
+          footer={null}
+          closable={false}
+          width={450}
+          title={'No Internet Connection'}
+          description={
+            'Check your Wi-Fi or Ethernet. Pearl will reconnect automatically once the connection is stable.'
+          }
+          header={
             <Image
               src="/not-online.png"
               alt="No internet connection"
               width={80}
               height={80}
             />
-            <Title level={5}>No Internet Connection</Title>
-            <Text>
-              Check your Wi-Fi or Ethernet. Pearl will reconnect automatically
-              once the connection is stable.
-            </Text>
-          </Flex>
-        </NoInternetModal>
+          }
+        />
       )}
 
       <Container $blur={!isOnline}>

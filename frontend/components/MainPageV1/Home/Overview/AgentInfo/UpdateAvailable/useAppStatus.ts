@@ -6,8 +6,7 @@ import {
   GITHUB_API_LATEST_RELEASE,
   REACT_QUERY_KEYS,
 } from '@/constants';
-
-import { useElectronApi } from './useElectronApi';
+import { useElectronApi } from '@/hooks';
 
 export enum SemverComparisonResult {
   OUTDATED = -1,
@@ -15,17 +14,17 @@ export enum SemverComparisonResult {
   UPDATED = 1,
 }
 
-type UseUpdateStatusResult = {
+type useAppStatusResult = {
   isOutdated: boolean;
   latestTag: string | null;
 };
 
-export const useUpdateStatus = () => {
+export const useAppStatus = () => {
   const { getAppVersion } = useElectronApi();
 
-  return useQuery<UseUpdateStatusResult, Error>({
+  return useQuery<useAppStatusResult, Error>({
     queryKey: REACT_QUERY_KEYS.IS_PEARL_OUTDATED_KEY,
-    queryFn: async (): Promise<UseUpdateStatusResult> => {
+    queryFn: async (): Promise<useAppStatusResult> => {
       if (!getAppVersion) {
         throw new Error('getAppVersion is not available');
       }

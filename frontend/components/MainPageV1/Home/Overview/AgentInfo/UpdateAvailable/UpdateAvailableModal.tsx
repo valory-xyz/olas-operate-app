@@ -1,48 +1,19 @@
-import { Button, Flex, Modal, Typography } from 'antd';
+import { Button, Flex } from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect } from 'react';
-import styled from 'styled-components';
 import { useToggle } from 'usehooks-ts';
 
+import { Modal } from '@/components/ui';
 import { DOWNLOAD_URL } from '@/constants/urls';
-import { useElectronApi, useUpdateStatus } from '@/hooks';
+import { useElectronApi } from '@/hooks';
 
-const { Title, Text } = Typography;
-
-const UpdateModal = styled(Modal)`
-  .ant-modal-content {
-    box-sizing: border-box;
-    padding: 24px;
-  }
-
-  .ant-modal-footer {
-    display: flex;
-    justify-content: space-between;
-  }
-`;
-
-const ModalContent = () => (
-  <>
-    <Flex>
-      <Image
-        src="/pearl-with-gradient.png"
-        width={40}
-        height={40}
-        alt="Pearl"
-      />
-    </Flex>
-    <Title level={5} className="mt-12">
-      Update Available
-    </Title>
-    <Text className="mb-24">An updated version of Pearl just released.</Text>
-  </>
-);
+import { useAppStatus } from './useAppStatus';
 
 export const UpdateAvailableModal = () => {
   const { store } = useElectronApi();
   const [open, toggleOpen] = useToggle(false);
 
-  const { data, isFetched } = useUpdateStatus();
+  const { data, isFetched } = useAppStatus();
   const latestTag = data?.latestTag;
 
   useEffect(() => {
@@ -77,26 +48,37 @@ export const UpdateAvailableModal = () => {
   if (!open) return null;
 
   return (
-    <UpdateModal
+    <Modal
+      closable
       open
-      width={386}
-      className="update-modal"
+      width={400}
+      align="left"
       onCancel={onUpdateLater}
-      footer={[
-        <Button key="later" className="text-sm" onClick={onUpdateLater}>
-          Update Later
-        </Button>,
-        <Button
-          key="download"
-          className="text-sm"
-          type="primary"
-          onClick={onDownload}
-        >
-          Download on olas.network
-        </Button>,
-      ]}
-    >
-      <ModalContent />
-    </UpdateModal>
+      footer={
+        <Flex justify="space-between">
+          <Button key="later" className="text-sm" onClick={onUpdateLater}>
+            Update Later
+          </Button>
+          <Button
+            key="download"
+            className="text-sm"
+            type="primary"
+            onClick={onDownload}
+          >
+            Download on olas.network
+          </Button>
+        </Flex>
+      }
+      header={
+        <Image
+          src="/pearl-with-gradient.png"
+          width={40}
+          height={40}
+          alt="Pearl"
+        />
+      }
+      title={'Update Available'}
+      description={'An updated version of Pearl just released.'}
+    />
   );
 };
