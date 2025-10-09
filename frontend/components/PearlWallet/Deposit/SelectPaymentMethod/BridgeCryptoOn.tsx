@@ -2,8 +2,7 @@ import { entries } from 'lodash';
 import { useCallback } from 'react';
 
 import { MiddlewareChain } from '@/client';
-import { Bridge } from '@/components/Bridge';
-import { getFromToken, getTokenDecimal } from '@/components/Bridge/utils';
+import { Bridge, getFromToken, getTokenDecimal } from '@/components/Bridge';
 import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero, TokenSymbol } from '@/constants';
 import { useMasterWalletContext } from '@/hooks';
@@ -27,12 +26,12 @@ const fromChainConfig = ETHEREUM_TOKEN_CONFIG;
  * for the specified bridgeToChain.
  */
 const useGetBridgeRequirementsParams = (bridgeToChain: MiddlewareChain) => {
-  const { masterEoa } = useMasterWalletContext(); // CHECK ❓❓❓
-  const toChainConfig = TOKEN_CONFIG[asEvmChainId(bridgeToChain)];
   const { masterSafeAddress } = usePearlWallet();
+  const { masterEoa } = useMasterWalletContext();
+  const toChainConfig = TOKEN_CONFIG[asEvmChainId(bridgeToChain)];
 
   return useCallback(
-    (toTokenAddress: Address, amount: number): BridgeRequest => {
+    (toTokenAddress: Address, amount: number) => {
       if (!masterEoa) throw new Error('Master EOA is not available');
       if (!masterSafeAddress) throw new Error('Master Safe is not available');
 
@@ -55,16 +54,16 @@ const useGetBridgeRequirementsParams = (bridgeToChain: MiddlewareChain) => {
           token: toTokenAddress,
           amount: parseUnits(amount, tokenDecimal),
         },
-      };
+      } satisfies BridgeRequest;
     },
     [bridgeToChain, toChainConfig, masterEoa, masterSafeAddress],
   );
 };
 
 export const BridgeCryptoOn = ({
+  bridgeToChain,
   amountsToDeposit,
   onBack,
-  bridgeToChain,
 }: BridgeCryptoOnProps) => {
   const getBridgeRequirementsParams =
     useGetBridgeRequirementsParams(bridgeToChain);
