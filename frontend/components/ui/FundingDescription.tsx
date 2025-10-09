@@ -42,17 +42,19 @@ const MODAL_STYLE = {
   },
 };
 
+type ChainConfirmationMessageModalProps = {
+  chainName: string;
+  chainImage: string;
+  onClose: () => void;
+  isMainnet?: boolean;
+};
+
 const ChainConfirmationMessageModal = ({
   chainName,
   chainImage,
   onClose,
   isMainnet,
-}: {
-  chainName: string;
-  chainImage: string;
-  onClose: () => void;
-  isMainnet?: boolean;
-}) => {
+}: ChainConfirmationMessageModalProps) => {
   return (
     <Modal
       open
@@ -95,11 +97,10 @@ export const FundingDescription = ({
   chainName,
   chainImage,
   isMainnet = false,
-}: {
-  chainName: string;
-  chainImage: string;
-  isMainnet?: boolean;
-}) => {
+}: Pick<
+  ChainConfirmationMessageModalProps,
+  'chainName' | 'chainImage' | 'isMainnet'
+>) => {
   const { masterEoa } = useMasterWalletContext();
   const address = masterEoa?.address;
   const [
@@ -108,8 +109,9 @@ export const FundingDescription = ({
   ] = useState(false);
 
   const handleCopyAddress = useCallback(() => {
-    if (address)
+    if (address) {
       copyToClipboard(address).then(() => message.success('Address copied!'));
+    }
     setIsChainConfirmationMessageModalOpen(true);
   }, [address]);
 
@@ -123,9 +125,9 @@ export const FundingDescription = ({
             height={20}
             src={chainImage}
             alt={chainName}
-            style={{ display: 'flex' }}
+            className="flex"
           />
-          <Text className="text-neutral-primary" style={{ fontSize: 16 }}>
+          <Text className="text-neutral-primary">
             {chainName} {isMainnet ? 'Mainnet' : 'Chain'}
           </Text>
         </Flex>

@@ -80,26 +80,26 @@ const columns: TableColumnsType<TokenRowData> = [
       );
     },
   },
-];
+] as const;
+
+type TokenRequirementsTableProps = {
+  isLoading?: boolean;
+  tokensDataSource: TokenRowData[];
+  locale?: TableLocale;
+};
 
 export const TokenRequirementsTable = ({
   isLoading,
-  tableData,
+  tokensDataSource,
   locale = LOCALE,
-}: {
-  isLoading: boolean;
-  tableData: TokenRowData[];
-  locale?: TableLocale;
-}) => {
-  return (
-    <Table<TokenRowData>
-      dataSource={isLoading ? [] : tableData}
-      columns={columns}
-      loading={isLoading}
-      pagination={false}
-      locale={locale}
-      className="mt-32"
-      rowKey={(record) => record.symbol}
-    />
-  );
-};
+}: TokenRequirementsTableProps) => (
+  <Table<TokenRowData>
+    dataSource={isLoading ? [] : tokensDataSource}
+    columns={columns}
+    loading={isLoading}
+    pagination={false}
+    locale={locale}
+    className="mt-32"
+    rowKey={(record) => record.symbol}
+  />
+);

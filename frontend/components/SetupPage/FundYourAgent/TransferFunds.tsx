@@ -58,7 +58,7 @@ export const TransferFunds = () => {
   const chainName = EvmChainName[evmHomeChainId];
   const chainImage = ChainImageMap[evmHomeChainId];
 
-  const tableData = useMemo(() => {
+  const tokensDataSource = useMemo(() => {
     return (initialTokenRequirements ?? []).map((token) => {
       const { amount: totalAmount } = token;
       const { pendingAmount, funded: areFundsReceived } =
@@ -124,7 +124,10 @@ export const TransferFunds = () => {
 
         <FundingDescription chainName={chainName} chainImage={chainImage} />
 
-        <TokenRequirementsTable isLoading={isLoading} tableData={tableData} />
+        <TokenRequirementsTable
+          isLoading={isLoading}
+          tokensDataSource={tokensDataSource}
+        />
       </CardFlex>
 
       {isLoadingMasterSafeCreation && !showSetupFinishedModal && (

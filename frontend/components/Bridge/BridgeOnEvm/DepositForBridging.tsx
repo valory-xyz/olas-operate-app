@@ -262,7 +262,7 @@ export const DepositForBridging = ({
     });
   }, [bridgeFundingRequirements, masterEoa]);
 
-  const tableData = useMemo(() => {
+  const tokensDataSource = useMemo(() => {
     const mappedTokens = tokens.map((token) => {
       const { totalRequiredInWei, pendingAmountInWei, decimals, isNative } =
         token;
@@ -381,23 +381,26 @@ export const DepositForBridging = ({
       });
   }, [refetchBridgeRefillRequirements]);
 
+  if (isRequestingQuoteFailed) {
+    return (
+      <RootCard>
+        <QuoteRequestFailed onTryAgain={handleRetryAgain} />
+      </RootCard>
+    );
+  }
+
+  if (tokensDataSource.length === 0 && isRequestingQuote) {
+    return (
+      <RootCard>
+        <RequestingQuote />
+      </RootCard>
+    );
+  }
+
   return (
-    <>
-      {isRequestingQuote ? (
-        <RootCard>
-          <RequestingQuote />
-        </RootCard>
-      ) : isRequestingQuoteFailed ? (
-        <RootCard>
-          <QuoteRequestFailed onTryAgain={handleRetryAgain} />
-        </RootCard>
-      ) : (
-        <TokenRequirementsTable
-          isLoading={isRequestingQuote}
-          tableData={tableData}
-          locale={{ emptyText: 'No tokens to deposit!' }}
-        />
-      )}
-    </>
+    <TokenRequirementsTable
+      tokensDataSource={tokensDataSource}
+      locale={{ emptyText: 'No tokens to deposit!' }}
+    />
   );
 };
