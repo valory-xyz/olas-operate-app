@@ -4,7 +4,16 @@ import {
   SettingOutlined,
   WalletOutlined,
 } from '@ant-design/icons';
-import { Button, Flex, Layout, Menu, MenuProps, Spin, Typography } from 'antd';
+import {
+  Button,
+  Flex,
+  Layout,
+  Menu,
+  MenuProps,
+  Spin,
+  Tag,
+  Typography,
+} from 'antd';
 import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo } from 'react';
@@ -18,6 +27,7 @@ import { COLOR } from '@/constants/colors';
 import { ANTD_BREAKPOINTS, APP_HEIGHT, SIDER_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
+import { useMasterBalances } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
@@ -50,8 +60,28 @@ const ResponsiveButton = styled(Button)`
   }
 `;
 
+const PealWalletLabel = () => {
+  const { isMasterEoaLowOnGas, isMasterSafeLowOnNativeGas } =
+    useMasterBalances();
+
+  return (
+    <Flex>
+      <Text>Pearl Wallet</Text>
+      {(isMasterEoaLowOnGas || isMasterSafeLowOnNativeGas) && (
+        <Tag color="red" className="ml-8" bordered={false}>
+          Low
+        </Tag>
+      )}
+    </Flex>
+  );
+};
+
 const menuItems: MenuProps['items'] = [
-  { key: Pages.PearlWallet, icon: <WalletOutlined />, label: 'Pearl Wallet' },
+  {
+    key: Pages.PearlWallet,
+    icon: <WalletOutlined />,
+    label: <PealWalletLabel />,
+  },
   {
     key: Pages.HelpAndSupport,
     icon: <QuestionCircleOutlined />,
