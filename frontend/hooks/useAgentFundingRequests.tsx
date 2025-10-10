@@ -57,7 +57,11 @@ export const useAgentFundingRequests = () => {
   const { agentFundingRequests, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
 
-  // Merges amounts for the same token address by summing their BigInt values.
+  /**
+   * Merges amounts for the same token address by summing their BigInt values.
+   * @example
+   * // {"address1": {"token1": "1", "token2": "2"}, "address2": {"token1": "3"}} -> {"token1": "4", "token2": "2"}
+   * */
   const agentTokenRequirements = useMemo(() => {
     if (!agentFundingRequests) return null;
     return Object.values(agentFundingRequests).reduce(

@@ -74,7 +74,7 @@ export const AggregatedBalanceAndOperations = ({
         </Flex>
       </Flex>
       {withdrawDisabledAlert}
-      <AgentLowBalanceAlert onFundClick={onFundAgent} needSetInitialValues />
+      <AgentLowBalanceAlert onFund={onFundAgent} needInitialValues />
     </CardFlex>
   );
 };

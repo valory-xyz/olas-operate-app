@@ -48,7 +48,7 @@ export const AgentDisabledAlert = () => {
   // NOTE: Low-balance alerts, each component controls its own visibility.
   return (
     <>
-      <AgentLowBalanceAlert onFundClick={() => goto(Pages.AgentWallet)} />
+      <AgentLowBalanceAlert onFund={() => goto(Pages.AgentWallet)} />
       <MasterEoaLowBalanceAlert />
       <MasterSafeLowBalanceAlert />
     </>

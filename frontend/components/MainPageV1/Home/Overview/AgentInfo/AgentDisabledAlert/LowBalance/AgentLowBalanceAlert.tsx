@@ -1,19 +1,19 @@
 import { Button, Typography } from 'antd';
 
-import { useAgentWallet } from '@/components/AgentWallet/AgentWalletProvider';
+import { useAgentWallet } from '@/components/AgentWallet';
 import { CustomAlert } from '@/components/Alert';
 import { useAgentFundingRequests } from '@/hooks';
 
 const { Text } = Typography;
 
 type AgentLowBalanceAlertProps = {
-  onFundClick: () => void;
-  needSetInitialValues?: boolean;
+  onFund: () => void;
+  needInitialValues?: boolean;
 };
 
 export const AgentLowBalanceAlert = ({
-  onFundClick,
-  needSetInitialValues,
+  onFund,
+  needInitialValues,
 }: AgentLowBalanceAlertProps) => {
   const {
     isAgentBalanceLow,
@@ -24,10 +24,10 @@ export const AgentLowBalanceAlert = ({
   const { setFundInitialValues } = useAgentWallet();
 
   const handleFundClick = () => {
-    if (needSetInitialValues && agentTokenRequirements) {
+    if (needInitialValues && agentTokenRequirements) {
       setFundInitialValues(agentTokenRequirements);
     }
-    onFundClick();
+    onFund();
   };
 
   if (!isAgentBalanceLow) return null;

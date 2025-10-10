@@ -1,6 +1,6 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Flex, Image, Typography } from 'antd';
-import { isNil, isNumber } from 'lodash';
+import { entries, isNil, isNumber } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
@@ -12,11 +12,10 @@ import {
   TokenAmountInput,
 } from '@/components/ui';
 import { TOKEN_CONFIG } from '@/config/tokens';
-import { TokenSymbol } from '@/constants';
-import { AddressZero } from '@/constants/address';
+import { AddressZero, TokenSymbol } from '@/constants';
 import { Pages } from '@/enums';
-import { usePageState, useServices } from '@/hooks';
-import { useAvailableAssets } from '@/hooks/useAvailableAssets';
+import { useAvailableAssets, usePageState, useServices } from '@/hooks';
+import { TokenAmounts } from '@/types/Wallet';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { useAgentWallet } from '../AgentWalletProvider';
@@ -102,17 +101,15 @@ const useFundAgent = () => {
       {} as Record<string, { symbol: TokenSymbol; decimals: number }>,
     );
 
-    const initialAmountsToFund: Partial<Record<TokenSymbol, number>> = {};
+    const initialAmountsToFund: TokenAmounts = {};
 
-    Object.entries(fundInitialValues ?? {}).forEach(
-      ([tokenAddress, amountWei]) => {
-        const meta =
-          addressToTokenMeta[(tokenAddress || AddressZero).toLowerCase()];
-        if (!meta) return;
-        const parsed = formatUnitsToNumber(amountWei, meta.decimals, 4);
-        initialAmountsToFund[meta.symbol] = parsed;
-      },
-    );
+    entries(fundInitialValues).forEach(([tokenAddress, amountWei]) => {
+      const meta =
+        addressToTokenMeta[(tokenAddress || AddressZero).toLowerCase()];
+      if (!meta) return;
+      const parsed = formatUnitsToNumber(amountWei, meta.decimals, 4);
+      initialAmountsToFund[meta.symbol] = parsed;
+    });
 
     setAmountsToFund(initialAmountsToFund);
   }, [fundInitialValues, selectedAgentConfig.evmHomeChainId]);
