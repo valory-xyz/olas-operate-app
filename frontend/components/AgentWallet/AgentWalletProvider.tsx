@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 
+import { TokenBalanceRecord } from '@/client';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol } from '@/constants/token';
@@ -18,7 +19,7 @@ import {
   useServices,
 } from '@/hooks';
 import { useAvailableAgentAssets } from '@/hooks/useAvailableAgentAssets';
-import { Nullable, ValueOf } from '@/types/Util';
+import { Nullable, Optional, ValueOf } from '@/types/Util';
 import { AvailableAsset } from '@/types/Wallet';
 import { generateName } from '@/utils/agentName';
 
@@ -35,6 +36,8 @@ const AgentWalletContext = createContext<{
   stakingRewards: number;
   availableAssets: AvailableAsset[];
   amountsToWithdraw: Partial<Record<TokenSymbol, number>>;
+  fundInitialValues: Optional<TokenBalanceRecord>;
+  setFundInitialValues: (values: TokenBalanceRecord) => void;
 }>({
   walletStep: STEPS.AGENT_WALLET_SCREEN,
   updateStep: () => {},
@@ -46,6 +49,8 @@ const AgentWalletContext = createContext<{
   stakingRewards: 0,
   availableAssets: [],
   amountsToWithdraw: {},
+  fundInitialValues: {},
+  setFundInitialValues: () => {},
 });
 
 export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
@@ -61,6 +66,8 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
   const { availableRewardsForEpochEth, accruedServiceStakingRewards } =
     useRewardContext();
   const availableAssets = useAvailableAgentAssets();
+  const [fundInitialValues, setFundInitialValues] =
+    useState<TokenBalanceRecord>({});
 
   const { evmHomeChainId: walletChainId } = selectedAgentConfig;
 
@@ -110,6 +117,10 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
         agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
         stakingRewards,
         availableAssets,
+
+        // Initial values for funding agent wallet
+        fundInitialValues,
+        setFundInitialValues,
 
         // TODO: withdraw ticket
         amountsToWithdraw: {},
