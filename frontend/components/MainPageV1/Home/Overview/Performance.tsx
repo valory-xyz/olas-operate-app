@@ -15,6 +15,7 @@ import {
 } from '@/constants';
 import { useServices } from '@/hooks';
 import { ServicesService } from '@/service/Services';
+import { Optional } from '@/types/Util';
 import { asEvmChainId, getTimeAgo, sanitizeHtml } from '@/utils';
 
 const { Text, Title } = Typography;
@@ -84,7 +85,7 @@ type PerformanceProps = {
 type AgentMetricProps = {
   name: string;
   value: string | number;
-  description?: string | null;
+  description: Optional<string>;
 };
 
 const AgentMetric = ({ name, value, description }: AgentMetricProps) => (
