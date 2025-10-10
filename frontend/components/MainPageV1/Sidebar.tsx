@@ -24,8 +24,8 @@ import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { AgentConfig } from '@/types/Agent';
 
-import { UpdateAvailableModal } from './Home/Overview/UpdateAvailableModal';
 import { UpdateAvailableAlert } from './UpdateAvailableAlert/UpdateAvailableAlert';
+import { UpdateAvailableModal } from './UpdateAvailableAlert/UpdateAvailableModal';
 
 const { Sider } = Layout;
 const { Text } = Typography;
