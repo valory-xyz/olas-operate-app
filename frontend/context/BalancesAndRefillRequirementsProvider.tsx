@@ -103,7 +103,7 @@ export const BalancesAndRefillRequirementsProvider = ({
   const getRefillRequirementsOf = useCallback(
     <T extends AddressBalanceRecord | MasterSafeBalanceRecord>(
       chainId: EvmChainId,
-    ): T | undefined => {
+    ): Optional<T> => {
       if (isBalancesAndFundingRequirementsLoading) return;
       if (!balancesAndFundingRequirements) return;
 

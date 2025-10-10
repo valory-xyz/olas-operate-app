@@ -20,17 +20,23 @@ import {
 } from '@/constants';
 import { MasterSafe } from '@/enums';
 import {
+  useAvailableAssets,
   useBalanceAndRefillRequirementsContext,
   useBalanceContext,
   useMasterWalletContext,
   useService,
   useServices,
 } from '@/hooks';
-import { useAvailableAssets } from '@/hooks/useAvailableAssets';
-import { Address } from '@/types/Address';
-import { AgentConfig } from '@/types/Agent';
-import { Nullable, Optional, ValueOf } from '@/types/Util';
-import { AvailableAsset, StakedAsset, TokenAmounts } from '@/types/Wallet';
+import {
+  Address,
+  AgentConfig,
+  AvailableAsset,
+  Nullable,
+  Optional,
+  StakedAsset,
+  TokenAmounts,
+  ValueOf,
+} from '@/types';
 import { generateName } from '@/utils';
 
 import { STEPS, WalletChain } from './types';

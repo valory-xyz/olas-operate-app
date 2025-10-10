@@ -4,7 +4,7 @@ import { AddressBalanceRecord, TokenBalanceRecord } from '@/client';
 import { getNativeTokenSymbol, TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { AddressZero, EvmChainId, TokenSymbol } from '@/constants';
 import { Address } from '@/types/Address';
-import { Optional } from '@/types/Util';
+import { Nullable, Optional } from '@/types/Util';
 import { TokenAmounts } from '@/types/Wallet';
 import { areAddressesEqual, formatUnitsToNumber } from '@/utils';
 
@@ -44,7 +44,6 @@ const getInitialDepositValues = (
     (acc, [untypedAddress, amountInWei]) => {
       const tokenAddress = untypedAddress as Address;
 
-      // Handle ERC-20 tokens by matching address from chain config
       const tokenDetails = find(chainConfig, (config) =>
         areAddressesEqual(config.address ?? AddressZero, tokenAddress),
       );
@@ -85,7 +84,7 @@ const getInitialDepositValues = (
  */
 export const getInitialDepositForMasterSafe = (
   walletChainId: EvmChainId,
-  masterSafeAddress: Address | null,
+  masterSafeAddress: Nullable<Address>,
   getRefillRequirementsOf: (
     chainId: EvmChainId,
   ) => Optional<AddressBalanceRecord>,
@@ -93,11 +92,11 @@ export const getInitialDepositForMasterSafe = (
   if (!masterSafeAddress) return;
   if (!getRefillRequirementsOf) return;
 
-  // Get the native token symbol for the selected wallet chain
+  // Get the native token symbol for the current chain
   const nativeTokenSymbol = getNativeTokenSymbol(walletChainId);
   if (!nativeTokenSymbol) return;
 
-  // Get the refill requirements for the selected wallet chain
+  // Get the refill requirements for the current chain
   const refillRequirements = getRefillRequirementsOf(walletChainId);
   if (!refillRequirements) return;
 
