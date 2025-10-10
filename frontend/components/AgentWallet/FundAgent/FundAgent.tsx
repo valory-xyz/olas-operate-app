@@ -1,7 +1,7 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Flex, Image, Typography } from 'antd';
 import { isNil, isNumber } from 'lodash';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import {
@@ -11,10 +11,13 @@ import {
   Divider,
   TokenAmountInput,
 } from '@/components/ui';
+import { TOKEN_CONFIG } from '@/config/tokens';
 import { TokenSymbol } from '@/constants';
+import { AddressZero } from '@/constants/address';
 import { Pages } from '@/enums';
 import { usePageState, useServices } from '@/hooks';
 import { useAvailableAssets } from '@/hooks/useAvailableAssets';
+import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { useAgentWallet } from '../AgentWalletProvider';
 import { ConfirmTransfer } from './ConfirmTransfer';
@@ -75,6 +78,7 @@ const useFundAgent = () => {
   const { selectedAgentConfig } = useServices();
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
     useAvailableAssets(selectedAgentConfig.evmHomeChainId);
+  const { fundInitialValues, setFundInitialValues } = useAgentWallet();
 
   const [amountsToFund, setAmountsToFund] = useState<
     Partial<Record<TokenSymbol, number>>
@@ -84,9 +88,39 @@ const useFundAgent = () => {
     setAmountsToFund((prev) => ({ ...prev, [symbol]: amount }));
   }, []);
 
+  // Prefill inputs with initial values if provided
+  useEffect(() => {
+    // Convert address-indexed wei amounts into symbol-indexed decimal numbers
+    const chainTokenConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
+    const addressToTokenMeta = Object.entries(chainTokenConfig).reduce(
+      (acc, [symbol, config]) => {
+        const address = 'address' in config ? config.address : AddressZero;
+        const key = (address ?? AddressZero).toLowerCase();
+        acc[key] = { symbol: symbol as TokenSymbol, decimals: config.decimals };
+        return acc;
+      },
+      {} as Record<string, { symbol: TokenSymbol; decimals: number }>,
+    );
+
+    const initialAmountsToFund: Partial<Record<TokenSymbol, number>> = {};
+
+    Object.entries(fundInitialValues ?? {}).forEach(
+      ([tokenAddress, amountWei]) => {
+        const meta =
+          addressToTokenMeta[(tokenAddress || AddressZero).toLowerCase()];
+        if (!meta) return;
+        const parsed = formatUnitsToNumber(amountWei, meta.decimals, 4);
+        initialAmountsToFund[meta.symbol] = parsed;
+      },
+    );
+
+    setAmountsToFund(initialAmountsToFund);
+  }, [fundInitialValues, selectedAgentConfig.evmHomeChainId]);
+
   // Reset amounts on unmount
   useUnmount(() => {
     setAmountsToFund({});
+    setFundInitialValues({});
   });
 
   return {

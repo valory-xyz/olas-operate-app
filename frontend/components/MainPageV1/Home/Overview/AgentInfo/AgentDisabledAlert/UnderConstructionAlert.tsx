@@ -32,7 +32,7 @@ export const UnderConstructionAlert = () => {
       }
       action={
         canWithdraw && (
-          <Button onClick={() => goto(Pages.ManageWallet)} size="small">
+          <Button onClick={() => goto(Pages.PearlWallet)} size="small">
             Withdraw
           </Button>
         )

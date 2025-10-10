@@ -2,12 +2,17 @@ import { Button, Flex, Modal, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
+import { AgentLowBalanceAlert } from '@/components/MainPageV1/Home/Overview/AgentInfo/AgentDisabledAlert/LowBalance/AgentLowBalanceAlert';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Pages } from '@/enums/Pages';
-import { useActiveStakingContractDetails } from '@/hooks';
+import {
+  useActiveStakingContractDetails,
+  useAgentFundingRequests,
+} from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
 
+import { useAgentWallet } from '../AgentWalletProvider';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { TransactionHistoryTable } from './TransactionHistoryTable';
 
@@ -45,10 +50,12 @@ export const AggregatedBalanceAndOperations = ({
 }: AggregatedBalanceAndOperationsProps) => {
   const { isAgentEvicted, isEligibleForStaking } =
     useActiveStakingContractDetails();
+  const { setFundInitialValues } = useAgentWallet();
+  const { agentTokenRequirements } = useAgentFundingRequests();
 
   const isWithdrawDisabled = isAgentEvicted && !isEligibleForStaking;
 
-  const alert = useMemo(() => {
+  const withdrawDisabledAlert = useMemo(() => {
     if (isWithdrawDisabled) return <EvictedAgentAlert />;
     return null;
   }, [isWithdrawDisabled]);
@@ -66,7 +73,8 @@ export const AggregatedBalanceAndOperations = ({
           </Button>
         </Flex>
       </Flex>
-      {alert}
+      {withdrawDisabledAlert}
+      <AgentLowBalanceAlert onFundClick={onFundAgent} needSetInitialValues />
     </CardFlex>
   );
 };

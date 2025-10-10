@@ -1,6 +1,8 @@
+import { Pages } from '@/enums';
 import {
   useActiveStakingContractDetails,
   useNeedsFunds,
+  usePageState,
   useServices,
   useStakingProgram,
 } from '@/hooks';
@@ -24,6 +26,7 @@ export const AgentDisabledAlert = () => {
   } = useActiveStakingContractDetails();
   const { selectedStakingProgramId } = useStakingProgram();
   const { isInitialFunded } = useNeedsFunds(selectedStakingProgramId);
+  const { goto } = usePageState();
 
   if (selectedAgentConfig.isUnderConstruction) {
     return <UnderConstructionAlert />;
@@ -45,7 +48,7 @@ export const AgentDisabledAlert = () => {
   // NOTE: Low-balance alerts, each component controls its own visibility.
   return (
     <>
-      <AgentLowBalanceAlert />
+      <AgentLowBalanceAlert onFundClick={() => goto(Pages.AgentWallet)} />
       <MasterEoaLowBalanceAlert />
       <MasterSafeLowBalanceAlert />
     </>

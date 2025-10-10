@@ -1,15 +1,34 @@
 import { Button, Typography } from 'antd';
 
+import { useAgentWallet } from '@/components/AgentWallet/AgentWalletProvider';
 import { CustomAlert } from '@/components/Alert';
-import { Pages } from '@/enums';
-import { useAgentFundingRequests, usePageState } from '@/hooks';
+import { useAgentFundingRequests } from '@/hooks';
 
 const { Text } = Typography;
 
-export const AgentLowBalanceAlert = () => {
-  const { isAgentBalanceLow, agentTokenRequirementsFormatted } =
-    useAgentFundingRequests();
-  const { goto } = usePageState();
+type AgentLowBalanceAlertProps = {
+  onFundClick: () => void;
+  needSetInitialValues?: boolean;
+};
+
+export const AgentLowBalanceAlert = ({
+  onFundClick,
+  needSetInitialValues,
+}: AgentLowBalanceAlertProps) => {
+  const {
+    isAgentBalanceLow,
+    agentTokenRequirements,
+    agentTokenRequirementsFormatted,
+  } = useAgentFundingRequests();
+
+  const { setFundInitialValues } = useAgentWallet();
+
+  const handleFundClick = () => {
+    if (needSetInitialValues && agentTokenRequirements) {
+      setFundInitialValues(agentTokenRequirements);
+    }
+    onFundClick();
+  };
 
   if (!isAgentBalanceLow) return null;
 
@@ -31,11 +50,7 @@ export const AgentLowBalanceAlert = () => {
             perform on-chain activity and meet staking requirements.
           </Text>
           <br />
-          <Button
-            onClick={() => goto(Pages.AgentWallet)}
-            size="small"
-            className="mt-8"
-          >
+          <Button onClick={handleFundClick} size="small" className="mt-8">
             Fund Agent
           </Button>
         </>
