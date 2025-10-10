@@ -1,5 +1,6 @@
 import { TokenAmounts } from '@/types/Wallet';
-import { formatNumber } from '@/utils';
+
+import { formatNumber } from './numberFormatters';
 
 /**
  * To format token amounts into a human-readable string.

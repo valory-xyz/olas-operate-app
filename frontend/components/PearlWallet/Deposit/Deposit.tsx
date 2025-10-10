@@ -26,7 +26,7 @@ const DepositTitle = () => (
   </Flex>
 );
 
-const LowPearlWalletBalanceAlert = () => {
+const LowPearlWalletBalanceAlertForCurrentChain = () => {
   const { walletChainId, defaultRequirementDepositValues } = usePearlWallet();
 
   if (!walletChainId || isEmpty(defaultRequirementDepositValues)) return null;
@@ -101,7 +101,7 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
 
         <Flex vertical gap={16}>
           <SelectChainToDeposit />
-          <LowPearlWalletBalanceAlert />
+          <LowPearlWalletBalanceAlertForCurrentChain />
           <Flex justify="space-between" align="center" vertical gap={16}>
             {availableAssets.map(({ amount, symbol }) => (
               <TokenAmountInput

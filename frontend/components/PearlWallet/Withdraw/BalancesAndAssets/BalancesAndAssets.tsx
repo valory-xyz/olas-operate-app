@@ -4,11 +4,11 @@ import Image from 'next/image';
 import { useEffect } from 'react';
 
 import { AgentNft } from '@/components/AgentNft';
-import { CustomAlert } from '@/components/Alert';
 import { CardFlex, Segmented } from '@/components/ui';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
+import { LowPearlWalletBalanceAlert } from './LowPearlWalletBalanceAlert';
 import { StakedAssetsTable } from './StakedAssetsTable';
 
 const { Text, Title } = Typography;
@@ -51,20 +51,6 @@ const StakedAssets = () => (
   </Flex>
 );
 
-const LowPearlWalletBalance = () => (
-  <CustomAlert
-    type="error"
-    showIcon
-    message={
-      <>
-        Your Pearl Wallet balance is low. Please deposit more funds to ensure
-        your agents can operate smoothly.
-      </>
-    }
-    className="mt-24"
-  />
-);
-
 type BalancesAndAssetsProps = {
   onWithdraw: () => void;
   onDeposit: () => void;
@@ -95,7 +81,7 @@ export const BalancesAndAssets = ({
               </Button>
             </Flex>
           </Flex>
-          <LowPearlWalletBalance />
+          <LowPearlWalletBalanceAlert />
         </Flex>
       </CardFlex>
 
