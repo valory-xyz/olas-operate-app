@@ -15,8 +15,7 @@ import {
 } from '@/constants';
 import { useServices } from '@/hooks';
 import { ServicesService } from '@/service/Services';
-import { asEvmChainId, getTimeAgo } from '@/utils';
-import { sanitizeHtml } from '@/utils/sanitizeHtml';
+import { asEvmChainId, getTimeAgo, sanitizeHtml } from '@/utils';
 
 const { Text, Title } = Typography;
 
