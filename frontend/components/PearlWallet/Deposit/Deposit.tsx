@@ -2,6 +2,7 @@ import { Button, Flex, Select, Typography } from 'antd';
 import { kebabCase, values } from 'lodash';
 import Image from 'next/image';
 
+import { CustomAlert } from '@/components/Alert';
 import {
   BackButton,
   CardFlex,
@@ -21,6 +22,24 @@ const DepositTitle = () => (
     </Title>
     <Text>Enter the token amounts you want to deposit.</Text>
   </Flex>
+);
+
+const LowPearlWalletBalanceAlert = () => (
+  <CustomAlert
+    type="error"
+    showIcon
+    message={
+      <Flex vertical gap={4}>
+        <Text className="text-sm font-weight-500">
+          Low Pearl Wallet Balance on Optimism
+        </Text>
+        <Text className="text-sm">
+          To continue using Pearl without interruption, deposit 0.0005 ETH on
+          your Pearl Wallet.
+        </Text>
+      </Flex>
+    }
+  />
 );
 
 const SelectChainToDeposit = () => {
@@ -71,6 +90,7 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
 
         <Flex vertical gap={16}>
           <SelectChainToDeposit />
+          <LowPearlWalletBalanceAlert />
           <Flex justify="space-between" align="center" vertical gap={16}>
             {availableAssets.map(({ amount, symbol }) => (
               <TokenAmountInput

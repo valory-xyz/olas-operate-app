@@ -139,8 +139,8 @@ const PearlWalletContext = createContext<{
   amountsToDeposit: TokenAmounts;
   onDepositAmountChange: (symbol: TokenSymbol, amount: number) => void;
   onReset: () => void;
-  // fundInitialValues: Optional<TokenBalanceRecord>;
-  // setFundInitialValues: (values: TokenBalanceRecord) => void;
+  defaultDepositValues: Optional<TokenBalanceRecord>;
+  // setDefaultDepositValues: (values: TokenBalanceRecord) => void;
 }>({
   walletStep: STEPS.PEARL_WALLET_SCREEN,
   updateStep: () => {},
@@ -156,8 +156,8 @@ const PearlWalletContext = createContext<{
   amountsToDeposit: {},
   onDepositAmountChange: () => {},
   onReset: () => {},
-  // fundInitialValues: {},
-  // setFundInitialValues: () => {},
+  defaultDepositValues: {},
+  // setDefaultDepositValues: () => {},
 });
 
 export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
@@ -183,8 +183,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   );
   const [amountsToWithdraw, setAmountsToWithdraw] = useState<TokenAmounts>({});
   const [amountsToDeposit, setAmountsToDeposit] = useState<TokenAmounts>({});
-  // const [fundInitialValues, setFundInitialValues] =
-  //   useState<TokenBalanceRecord>({});
+  const [defaultDepositValues, setDefaultDepositValues] =
+    useState<TokenBalanceRecord>({});
 
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
     useAvailableAssets(walletChainId);
@@ -193,7 +193,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [masterSafes, walletChainId],
   );
 
-  // once getRefillRequirementsOf is available we can use set default values for amountsToDeposit
+  // Set initial deposit amounts if refill requirements is requested
   useEffect(() => {
     if (!masterSafeAddress) return;
     if (!getRefillRequirementsOf) return;
@@ -213,12 +213,14 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     );
     if (!masterSafeRefillRequirement) return;
 
-    const initialDepositValues = getInitialDepositValues(
+    const defaultDepositValues = getInitialDepositValues(
       walletChainId,
       masterSafeRefillRequirement,
       nativeTokenSymbol,
     );
-    setAmountsToDeposit(initialDepositValues);
+
+    setDefaultDepositValues(defaultDepositValues);
+    setAmountsToDeposit(defaultDepositValues);
   }, [getRefillRequirementsOf, walletChainId, masterSafeAddress]);
 
   const agent = ACTIVE_AGENTS.find(
@@ -265,6 +267,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const onReset = useCallback((canNavigateOnReset?: boolean) => {
     setAmountsToWithdraw({});
     setAmountsToDeposit({});
+    setDefaultDepositValues({});
 
     if (canNavigateOnReset) {
       setWalletStep(STEPS.PEARL_WALLET_SCREEN);
@@ -309,9 +312,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         onDepositAmountChange,
         onReset,
 
-        // // Initial values for funding agent wallet
-        // fundInitialValues,
-        // setFundInitialValues,
+        // Initial values for funding agent wallet
+        defaultDepositValues,
       }}
     >
       {children}
