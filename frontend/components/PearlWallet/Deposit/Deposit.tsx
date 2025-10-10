@@ -1,5 +1,5 @@
 import { Button, Flex, Select, Typography } from 'antd';
-import { kebabCase, values } from 'lodash';
+import { isEmpty, kebabCase, values } from 'lodash';
 import Image from 'next/image';
 
 import { CustomAlert } from '@/components/Alert';
@@ -10,7 +10,9 @@ import {
   TokenAmountInput,
   WalletTransferDirection,
 } from '@/components/ui';
+import { asEvmChainDetails, asMiddlewareChain } from '@/utils';
 
+import { formatTokenAmounts } from '../helpers';
 import { usePearlWallet } from '../PearlWalletProvider';
 
 const { Title, Text } = Typography;
@@ -24,23 +26,32 @@ const DepositTitle = () => (
   </Flex>
 );
 
-const LowPearlWalletBalanceAlert = () => (
-  <CustomAlert
-    type="error"
-    showIcon
-    message={
-      <Flex vertical gap={4}>
-        <Text className="text-sm font-weight-500">
-          Low Pearl Wallet Balance on Optimism
-        </Text>
-        <Text className="text-sm">
-          To continue using Pearl without interruption, deposit 0.0005 ETH on
-          your Pearl Wallet.
-        </Text>
-      </Flex>
-    }
-  />
-);
+const LowPearlWalletBalanceAlert = () => {
+  const { walletChainId, defaultRequirementDepositValues } = usePearlWallet();
+
+  if (!walletChainId || isEmpty(defaultRequirementDepositValues)) return null;
+
+  return (
+    <CustomAlert
+      type="error"
+      showIcon
+      message={
+        <Flex vertical gap={4}>
+          <Text className="text-sm font-weight-500">
+            Low Pearl Wallet Balance on{' '}
+            {asEvmChainDetails(asMiddlewareChain(walletChainId)).displayName}{' '}
+            Chain
+          </Text>
+          <Text className="text-sm">
+            To continue using Pearl without interruption, deposit{' '}
+            {formatTokenAmounts(defaultRequirementDepositValues)} on your Pearl
+            Wallet.
+          </Text>
+        </Flex>
+      }
+    />
+  );
+};
 
 const SelectChainToDeposit = () => {
   const { chains, walletChainId, onWalletChainChange } = usePearlWallet();

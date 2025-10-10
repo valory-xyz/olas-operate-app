@@ -139,8 +139,8 @@ const PearlWalletContext = createContext<{
   amountsToDeposit: TokenAmounts;
   onDepositAmountChange: (symbol: TokenSymbol, amount: number) => void;
   onReset: () => void;
-  defaultDepositValues: Optional<TokenBalanceRecord>;
-  // setDefaultDepositValues: (values: TokenBalanceRecord) => void;
+  /** Initial values for funding agent wallet based on refill requirements */
+  defaultRequirementDepositValues: Optional<TokenBalanceRecord>;
 }>({
   walletStep: STEPS.PEARL_WALLET_SCREEN,
   updateStep: () => {},
@@ -156,8 +156,7 @@ const PearlWalletContext = createContext<{
   amountsToDeposit: {},
   onDepositAmountChange: () => {},
   onReset: () => {},
-  defaultDepositValues: {},
-  // setDefaultDepositValues: () => {},
+  defaultRequirementDepositValues: {},
 });
 
 export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
@@ -183,7 +182,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   );
   const [amountsToWithdraw, setAmountsToWithdraw] = useState<TokenAmounts>({});
   const [amountsToDeposit, setAmountsToDeposit] = useState<TokenAmounts>({});
-  const [defaultDepositValues, setDefaultDepositValues] =
+  const [defaultRequirementDepositValues, setDefaultDepositValues] =
     useState<TokenBalanceRecord>({});
 
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
@@ -213,14 +212,14 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     );
     if (!masterSafeRefillRequirement) return;
 
-    const defaultDepositValues = getInitialDepositValues(
+    const defaultRequirementDepositValues = getInitialDepositValues(
       walletChainId,
       masterSafeRefillRequirement,
       nativeTokenSymbol,
     );
 
-    setDefaultDepositValues(defaultDepositValues);
-    setAmountsToDeposit(defaultDepositValues);
+    setDefaultDepositValues(defaultRequirementDepositValues);
+    setAmountsToDeposit(defaultRequirementDepositValues);
   }, [getRefillRequirementsOf, walletChainId, masterSafeAddress]);
 
   const agent = ACTIVE_AGENTS.find(
@@ -313,7 +312,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         onReset,
 
         // Initial values for funding agent wallet
-        defaultDepositValues,
+        defaultRequirementDepositValues,
       }}
     >
       {children}
