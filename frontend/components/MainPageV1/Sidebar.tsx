@@ -215,8 +215,10 @@ export const Sidebar = () => {
   );
 
   const selectedMenuKey = useMemo(() => {
-    if (pageState === Pages.Main) return [selectedAgentType];
-    return [pageState];
+    if (menuItems.find((item) => item?.key === pageState)) {
+      return [pageState];
+    }
+    return [selectedAgentType];
   }, [pageState, selectedAgentType]);
 
   return (
