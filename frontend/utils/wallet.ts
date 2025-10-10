@@ -6,7 +6,7 @@ import { formatNumber } from './numberFormatters';
  * To format token amounts into a human-readable string.
  * @example: { ETH: 0.5, DAI: 100 } => "0.5 ETH and 100 DAI"
  */
-export function formatTokenAmounts(tokenAmounts: TokenAmounts): string {
+export function tokenBalancesToSentence(tokenAmounts: TokenAmounts): string {
   const entries = Object.entries(tokenAmounts).filter(
     ([, value]) => value !== 0,
   );

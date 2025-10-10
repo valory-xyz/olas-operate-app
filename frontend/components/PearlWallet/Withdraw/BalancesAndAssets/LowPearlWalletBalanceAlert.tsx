@@ -6,7 +6,7 @@ import { useBalanceAndRefillRequirementsContext } from '@/hooks';
 import {
   asEvmChainDetails,
   asMiddlewareChain,
-  formatTokenAmounts,
+  tokenBalancesToSentence,
 } from '@/utils';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
@@ -34,8 +34,8 @@ export const LowPearlWalletBalanceAlert = () => {
           </Text>
           <Text className="text-sm">
             To continue using Pearl without interruption, deposit{' '}
-            {formatTokenAmounts(defaultRequirementDepositValues)} on your Pearl
-            Wallet.
+            {tokenBalancesToSentence(defaultRequirementDepositValues)} on your
+            Pearl Wallet.
           </Text>
         </Flex>
       }

@@ -10,9 +10,12 @@ import {
   TokenAmountInput,
   WalletTransferDirection,
 } from '@/components/ui';
-import { asEvmChainDetails, asMiddlewareChain } from '@/utils';
+import {
+  asEvmChainDetails,
+  asMiddlewareChain,
+  tokenBalancesToSentence,
+} from '@/utils';
 
-import { formatTokenAmounts } from '../helpers';
 import { usePearlWallet } from '../PearlWalletProvider';
 
 const { Title, Text } = Typography;
@@ -44,8 +47,8 @@ const LowPearlWalletBalanceAlertForCurrentChain = () => {
           </Text>
           <Text className="text-sm">
             To continue using Pearl without interruption, deposit{' '}
-            {formatTokenAmounts(defaultRequirementDepositValues)} on your Pearl
-            Wallet.
+            {tokenBalancesToSentence(defaultRequirementDepositValues)} on your
+            Pearl Wallet.
           </Text>
         </Flex>
       }

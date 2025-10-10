@@ -1,4 +1,4 @@
-import { compact, entries, find, findKey } from 'lodash';
+import { compact, findKey } from 'lodash';
 import {
   createContext,
   ReactNode,
@@ -16,8 +16,7 @@ import {
 } from '@/client';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { getNativeTokenSymbol, TOKEN_CONFIG, TokenType } from '@/config/tokens';
-import { AddressZero } from '@/constants';
+import { getNativeTokenSymbol } from '@/config/tokens';
 import { AgentType } from '@/constants/agent';
 import { type EvmChainName } from '@/constants/chains';
 import { EvmChainId } from '@/constants/chains';
@@ -35,12 +34,13 @@ import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
 import { Nullable, Optional, ValueOf } from '@/types/Util';
 import { AvailableAsset, StakedAsset, TokenAmounts } from '@/types/Wallet';
-import { areAddressesEqual, formatUnitsToNumber } from '@/utils';
+import { areAddressesEqual } from '@/utils';
 import { generateName } from '@/utils/agentName';
 
 import { STEPS, WalletChain } from './types';
+import { getInitialDepositValues } from './utils';
 
-const getAddressBalanceIgnoreCase = (
+const getAddressBalance = (
   data: AddressBalanceRecord,
   address: string,
 ): Optional<TokenBalanceRecord> => {
@@ -49,51 +49,6 @@ const getAddressBalanceIgnoreCase = (
   return matchedKey
     ? data[matchedKey as keyof AddressBalanceRecord]
     : undefined;
-};
-
-const getInitialDepositValues = (
-  chainId: EvmChainId,
-  masterSafeRefillRequirement: TokenBalanceRecord,
-  nativeTokenSymbol: TokenSymbol,
-) => {
-  const chainConfig = TOKEN_CONFIG[chainId];
-  return entries(masterSafeRefillRequirement).reduce(
-    (acc, [untypedAddress, amountInWei]) => {
-      const tokenAddress = untypedAddress as Address;
-
-      // Handle ERC-20 tokens by matching address from chain config
-      const tokenDetails = find(chainConfig, (config) =>
-        areAddressesEqual(config.address ?? AddressZero, tokenAddress),
-      );
-      if (!tokenDetails) return acc;
-
-      const amount = formatUnitsToNumber(
-        `${amountInWei}`,
-        tokenDetails.decimals,
-        6,
-      );
-      if (!amount) return acc;
-
-      // Handle native token (ETH, xDAI, etc.)
-      const isNativeToken = tokenDetails.tokenType === TokenType.NativeGas;
-      if (isNativeToken) {
-        acc[nativeTokenSymbol] = amount;
-        return acc;
-      }
-
-      // Handle ERC-20 tokens by matching address from chain config
-      const matchingTokenSymbol = findKey(chainConfig, (config) =>
-        areAddressesEqual(config.address, tokenAddress),
-      );
-
-      if (matchingTokenSymbol) {
-        acc[matchingTokenSymbol as TokenSymbol] = amount;
-      }
-
-      return acc;
-    },
-    {} as TokenAmounts,
-  );
 };
 
 const getMasterSafeAddress = (
@@ -206,7 +161,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     if (!refillRequirements) return;
 
     // Find the refill requirement for the master safe
-    const masterSafeRefillRequirement = getAddressBalanceIgnoreCase(
+    const masterSafeRefillRequirement = getAddressBalance(
       refillRequirements,
       masterSafeAddress,
     );
