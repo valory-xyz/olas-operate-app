@@ -61,9 +61,7 @@ export const useAvailableAssets = (
             );
             return sum([
               masterSafeNativeBalance,
-              includeMasterEoa
-                ? getMasterEoaNativeBalanceOf(walletChainId)
-                : undefined,
+              includeMasterEoa ? getMasterEoaNativeBalanceOf(walletChainId) : 0,
             ]);
           }
 
