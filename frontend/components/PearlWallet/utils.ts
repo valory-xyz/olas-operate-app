@@ -1,13 +1,23 @@
 import { entries, find, findKey } from 'lodash';
 
-import { TokenBalanceRecord } from '@/client';
+import { AddressBalanceRecord, TokenBalanceRecord } from '@/client';
 import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
-import { AddressZero } from '@/constants';
-import { EvmChainId } from '@/constants/chains';
-import { TokenSymbol } from '@/constants/token';
+import { AddressZero, EvmChainId, TokenSymbol } from '@/constants';
 import { Address } from '@/types/Address';
+import { Optional } from '@/types/Util';
 import { TokenAmounts } from '@/types/Wallet';
 import { areAddressesEqual, formatUnitsToNumber } from '@/utils';
+
+export const getAddressBalance = (
+  data: AddressBalanceRecord,
+  address: string,
+): Optional<TokenBalanceRecord> => {
+  const matchedKey = findKey(data, (_, key) => areAddressesEqual(key, address));
+
+  return matchedKey
+    ? data[matchedKey as keyof AddressBalanceRecord]
+    : undefined;
+};
 
 export const getInitialDepositValues = (
   chainId: EvmChainId,

@@ -1,4 +1,4 @@
-import { compact, findKey } from 'lodash';
+import { compact } from 'lodash';
 import {
   createContext,
   ReactNode,
@@ -9,18 +9,16 @@ import {
   useState,
 } from 'react';
 
-import {
-  AddressBalanceRecord,
-  MiddlewareServiceResponse,
-  TokenBalanceRecord,
-} from '@/client';
+import { MiddlewareServiceResponse, TokenBalanceRecord } from '@/client';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { getNativeTokenSymbol } from '@/config/tokens';
-import { AgentType } from '@/constants/agent';
-import { type EvmChainName } from '@/constants/chains';
-import { EvmChainId } from '@/constants/chains';
-import { TokenSymbol } from '@/constants/token';
+import {
+  AgentType,
+  EvmChainId,
+  type EvmChainName,
+  TokenSymbol,
+} from '@/constants';
 import { MasterSafe } from '@/enums';
 import {
   useBalanceAndRefillRequirementsContext,
@@ -34,22 +32,10 @@ import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
 import { Nullable, Optional, ValueOf } from '@/types/Util';
 import { AvailableAsset, StakedAsset, TokenAmounts } from '@/types/Wallet';
-import { areAddressesEqual } from '@/utils';
-import { generateName } from '@/utils/agentName';
+import { generateName } from '@/utils';
 
 import { STEPS, WalletChain } from './types';
-import { getInitialDepositValues } from './utils';
-
-const getAddressBalance = (
-  data: AddressBalanceRecord,
-  address: string,
-): Optional<TokenBalanceRecord> => {
-  const matchedKey = findKey(data, (_, key) => areAddressesEqual(key, address));
-
-  return matchedKey
-    ? data[matchedKey as keyof AddressBalanceRecord]
-    : undefined;
-};
+import { getAddressBalance, getInitialDepositValues } from './utils';
 
 const getMasterSafeAddress = (
   chainId: EvmChainId,
