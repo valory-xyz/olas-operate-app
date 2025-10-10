@@ -57,7 +57,8 @@ export const AGENT_CONFIG: {
     hasExternalFunds: false,
     hasChatUI: true,
     category: 'Prediction Markets',
-    defaultBehavior: '',
+    defaultBehavior:
+      'Adopting a conservative strategy with small, high-confidence bets.',
   },
   [AgentMap.Optimus]: {
     isAgentEnabled: true,
