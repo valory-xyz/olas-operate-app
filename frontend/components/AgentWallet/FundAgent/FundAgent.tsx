@@ -109,7 +109,7 @@ const useFundAgent = () => {
       const meta =
         addressToTokenMeta[(tokenAddress || AddressZero).toLowerCase()];
       if (!meta) return;
-      const parsed = formatUnitsToNumber(amountWei, meta.decimals, 4);
+      const parsed = formatUnitsToNumber(amountWei, meta.decimals, 6);
       initialAmountsToFund[meta.symbol] = parsed;
     });
 
