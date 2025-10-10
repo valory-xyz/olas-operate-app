@@ -16,7 +16,10 @@ import { useStakingRewardsOf } from './useStakingRewardsOf';
  * Hook to fetch available assets in the master safe and master eoa wallets
  * for a given chainId.
  */
-export const useAvailableAssets = (walletChainId: EvmChainId) => {
+export const useAvailableAssets = (
+  walletChainId: EvmChainId,
+  { includeMasterEoa = true } = {},
+) => {
   const { isLoading: isStakingRewardsLoading, data: stakingRewards } =
     useStakingRewardsOf(walletChainId);
   const {
@@ -58,7 +61,9 @@ export const useAvailableAssets = (walletChainId: EvmChainId) => {
             );
             return sum([
               masterSafeNativeBalance,
-              getMasterEoaNativeBalanceOf(walletChainId),
+              includeMasterEoa
+                ? getMasterEoaNativeBalanceOf(walletChainId)
+                : undefined,
             ]);
           }
 
@@ -76,6 +81,7 @@ export const useAvailableAssets = (walletChainId: EvmChainId) => {
     );
   }, [
     walletChainId,
+    includeMasterEoa,
     stakingRewards?.accruedServiceStakingRewards,
     getMasterSafeOlasBalanceOf,
     getMasterSafeNativeBalanceOf,

@@ -87,7 +87,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const [amountsToWithdraw, setAmountsToWithdraw] = useState<TokenAmounts>({});
   const [amountsToDeposit, setAmountsToDeposit] = useState<TokenAmounts>({});
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
-    useAvailableAssets(walletChainId);
+    useAvailableAssets(walletChainId, { includeMasterEoa: false });
 
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) => agentConfig.evmHomeChainId === walletChainId,
