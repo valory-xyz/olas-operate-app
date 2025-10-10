@@ -74,7 +74,9 @@ const FundPearlWallet = () => {
 const useFundAgent = () => {
   const { selectedAgentConfig } = useServices();
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
-    useAvailableAssets(selectedAgentConfig.evmHomeChainId);
+    useAvailableAssets(selectedAgentConfig.evmHomeChainId, {
+      includeMasterEoa: false,
+    });
 
   const [amountsToFund, setAmountsToFund] = useState<
     Partial<Record<TokenSymbol, number>>
