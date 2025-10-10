@@ -21,7 +21,7 @@ export const NoSlotsAvailableAlert = () => {
         </Text>
       }
       action={
-        <Button onClick={() => goto(Pages.ManageStaking)} size="small">
+        <Button onClick={() => goto(Pages.AgentStaking)} size="small">
           Manage Staking
         </Button>
       }

@@ -1,5 +1,4 @@
 import { EvmChainId, EvmChainName } from '@/constants/chains';
-import { TokenSymbol } from '@/constants/token';
 
 export type WalletChain = { chainId: EvmChainId; chainName: EvmChainName };
 
@@ -14,9 +13,3 @@ export const STEPS = {
   DEPOSIT: 'DEPOSIT',
   SELECT_PAYMENT_METHOD: 'SELECT_PAYMENT_METHOD',
 } as const;
-
-/**
- * @example
- * { symbol: 'OLAS', amount: 10 }
- */
-export type TokenAmounts = Partial<Record<TokenSymbol, number>>;
