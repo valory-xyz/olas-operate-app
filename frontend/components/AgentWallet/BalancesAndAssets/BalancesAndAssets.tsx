@@ -2,6 +2,7 @@ import { Button, Flex, Modal, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
+import { AgentLowBalanceAlert } from '@/components/MainPageV1/Home/Overview/AgentInfo/AgentDisabledAlert/LowBalance/AgentLowBalanceAlert';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Pages } from '@/enums/Pages';
@@ -48,7 +49,7 @@ export const AggregatedBalanceAndOperations = ({
 
   const isWithdrawDisabled = isAgentEvicted && !isEligibleForStaking;
 
-  const alert = useMemo(() => {
+  const withdrawDisabledAlert = useMemo(() => {
     if (isWithdrawDisabled) return <EvictedAgentAlert />;
     return null;
   }, [isWithdrawDisabled]);
@@ -66,7 +67,8 @@ export const AggregatedBalanceAndOperations = ({
           </Button>
         </Flex>
       </Flex>
-      {alert}
+      {withdrawDisabledAlert}
+      <AgentLowBalanceAlert onFund={onFundAgent} needInitialValues />
     </CardFlex>
   );
 };

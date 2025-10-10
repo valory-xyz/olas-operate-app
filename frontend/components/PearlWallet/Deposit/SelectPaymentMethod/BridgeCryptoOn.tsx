@@ -8,10 +8,10 @@ import { AddressZero, TokenSymbol } from '@/constants';
 import { useMasterWalletContext } from '@/hooks';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
+import { TokenAmounts } from '@/types/Wallet';
 import { asEvmChainId, parseUnits } from '@/utils';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
-import { TokenAmounts } from '../../types';
 
 type BridgeCryptoOnProps = {
   onBack: () => void;

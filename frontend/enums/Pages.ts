@@ -5,19 +5,24 @@ export const Pages = {
   AgentStaking: 'AgentStaking',
   Settings: 'Settings',
   HelpAndSupport: 'HelpAndSupport',
-  Receive: 'Receive',
-  Send: 'Send',
+  /** @deprecated use AgentStaking for V1 */
   ManageStaking: 'ManageStaking',
+  /** @deprecated use PearlWallet for V1 */
   ManageWallet: 'ManageWallet',
   PearlWallet: 'PearlWallet',
   PearlWalletDeposit: 'PearlWalletDeposit',
   AgentWallet: 'AgentWallet',
+  /** @deprecated remove after for V1 */
   RewardsHistory: 'RewardsHistory',
   AddBackupWalletViaSafe: 'AddBackupWalletViaSafe',
+  /** @deprecated remove after for V1 */
   AgentActivity: 'AgentActivity',
   UpdateAgentTemplate: 'UpdateAgentTemplate',
+  /** @deprecated remove after for V1  */
   AddFundsToMasterSafeThroughBridge: 'AddFundsToMasterSafeThroughBridge',
+  /** @deprecated remove after for V1  */
   LowOperatingBalanceBridgeFunds: 'LowOperatingBalanceBridgeFunds',
+  /** @deprecated remove after for V1  */
   LowSafeSignerBalanceBridgeFunds: 'LowSafeSignerBalanceBridgeFunds',
   SelectStaking: 'SelectStaking',
   ConfirmSwitch: 'ConfirmSwitch',
