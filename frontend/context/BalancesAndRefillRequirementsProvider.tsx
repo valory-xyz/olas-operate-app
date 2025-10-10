@@ -126,7 +126,7 @@ export const BalancesAndRefillRequirementsProvider = ({
     if (isBalancesAndFundingRequirementsLoading) return;
     if (!balancesAndFundingRequirements) return;
 
-    // Warning: if an agent requires funds on different chains, this will work incorrectly
+    // WARNING: If an agent requires funds on different chains, this will work incorrectly
     return balancesAndFundingRequirements.agent_funding_requests[
       asMiddlewareChain(chainId)
     ];
