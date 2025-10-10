@@ -2,6 +2,7 @@ import { Flex, theme } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
 import { ArrowUpRightSvg } from '@/components/custom-icons/ArrowUpRight';
+import { Download } from '@/components/custom-icons/Donwload';
 import { DOWNLOAD_URL } from '@/constants';
 
 import { UpdateAvailableModal } from './UpdateAvailableModal';
@@ -24,11 +25,11 @@ export const UpdateAvailableAlert = () => {
     <>
       <CustomAlert
         type="info"
-        showIcon
-        className="mt-16"
+        className="mt-auto"
         message={
-          <Flex align="center" justify="space-between" gap={2}>
-            <span>A new version of Pearl is available</span>
+          <Flex vertical gap={2}>
+            <Download className="mb-4" />
+            <span>Pearl Update Available</span>
             <a href={DOWNLOAD_URL} target="_blank">
               Download{' '}
               <ArrowUpRightSvg

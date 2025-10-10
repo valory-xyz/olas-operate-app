@@ -24,6 +24,8 @@ import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { AgentConfig } from '@/types/Agent';
 
+import { UpdateAvailableAlert } from './Home/Overview/AgentInfo/UpdateAvailable/UpdateAvailableAlert';
+
 const { Sider } = Layout;
 const { Text } = Typography;
 
@@ -218,11 +220,12 @@ export const Sidebar = () => {
             </ResponsiveButton>
           )}
 
+          <UpdateAvailableAlert />
+
           <Menu
             selectedKeys={selectedMenuKey}
             mode="inline"
             inlineIndent={12}
-            className="mt-auto"
             onClick={handleMenuClick}
             items={menuItems}
           />

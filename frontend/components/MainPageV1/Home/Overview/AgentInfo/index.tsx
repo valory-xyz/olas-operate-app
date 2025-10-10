@@ -14,7 +14,6 @@ import { generateName } from '@/utils/agentName';
 import { AgentActivity } from './AgentActivity';
 import { AgentDisabledAlert } from './AgentDisabledAlert';
 import { AgentRunButton } from './AgentRunButton';
-import { UpdateAvailableAlert } from './UpdateAvailable/UpdateAvailableAlert';
 
 const { Title } = Typography;
 
@@ -56,7 +55,6 @@ export const AgentInfo = () => {
           </Flex>
         </Flex>
         <AgentDisabledAlert />
-        <UpdateAvailableAlert />
         <AgentActivity />
       </AgentInfoContainer>
     </CardFlex>
