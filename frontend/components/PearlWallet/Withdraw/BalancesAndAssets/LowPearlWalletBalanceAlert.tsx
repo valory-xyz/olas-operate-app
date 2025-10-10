@@ -2,7 +2,6 @@ import { Flex, Typography } from 'antd';
 import { isEmpty } from 'lodash';
 
 import { CustomAlert } from '@/components/Alert';
-import { getNativeTokenSymbol } from '@/config/tokens';
 import { UNICODE_SYMBOLS } from '@/constants';
 import {
   useBalanceAndRefillRequirementsContext,
@@ -12,19 +11,17 @@ import { tokenBalancesToSentence } from '@/utils';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { WalletChain } from '../../types';
-import { getAddressBalance, getInitialDepositValues } from '../../utils';
+import { getInitialDepositForMasterSafe } from '../../utils';
 
 const { Text } = Typography;
 
 export const LowPearlWalletBalanceAlert = () => {
-  const { defaultRequirementDepositValues, chains } = usePearlWallet();
+  const { chains } = usePearlWallet();
   const { isRefillRequired, getRefillRequirementsOf } =
     useBalanceAndRefillRequirementsContext();
   const { getMasterSafeOf } = useMasterWalletContext();
 
   if (!isRefillRequired || !getRefillRequirementsOf) return null;
-
-  if (isEmpty(defaultRequirementDepositValues)) return null;
 
   return (
     <CustomAlert
@@ -44,24 +41,10 @@ export const LowPearlWalletBalanceAlert = () => {
               const masterSafe = getMasterSafeOf?.(chain.chainId)?.address;
               if (!masterSafe) return null;
 
-              // Get the native token symbol for the selected wallet chain
-              const nativeTokenSymbol = getNativeTokenSymbol(chain.chainId);
-              if (!nativeTokenSymbol) return;
-
-              // Get the refill requirements for the selected wallet chain
-              const refillRequirements = getRefillRequirementsOf(chain.chainId);
-
-              if (!refillRequirements) return;
-
-              const masterSafeRefillRequirement = getAddressBalance(
-                refillRequirements,
-                masterSafe,
-              );
-
-              const fundsRequired = getInitialDepositValues(
+              const fundsRequired = getInitialDepositForMasterSafe(
                 chain.chainId,
-                masterSafeRefillRequirement!,
-                nativeTokenSymbol,
+                masterSafe,
+                getRefillRequirementsOf,
               );
 
               if (isEmpty(fundsRequired)) return null;

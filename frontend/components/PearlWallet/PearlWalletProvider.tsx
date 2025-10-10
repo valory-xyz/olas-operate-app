@@ -12,7 +12,6 @@ import {
 import { MiddlewareServiceResponse, TokenBalanceRecord } from '@/client';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { getNativeTokenSymbol } from '@/config/tokens';
 import {
   AgentType,
   EvmChainId,
@@ -35,7 +34,7 @@ import { AvailableAsset, StakedAsset, TokenAmounts } from '@/types/Wallet';
 import { generateName } from '@/utils';
 
 import { STEPS, WalletChain } from './types';
-import { getAddressBalance, getInitialDepositValues } from './utils';
+import { getInitialDepositForMasterSafe } from './utils';
 
 const getMasterSafeAddress = (
   chainId: EvmChainId,
@@ -138,26 +137,13 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     if (!masterSafeAddress) return;
     if (!getRefillRequirementsOf) return;
 
-    // Get the native token symbol for the selected wallet chain
-    const nativeTokenSymbol = getNativeTokenSymbol(walletChainId);
-    if (!nativeTokenSymbol) return;
-
-    // Get the refill requirements for the selected wallet chain
-    const refillRequirements = getRefillRequirementsOf(walletChainId);
-    if (!refillRequirements) return;
-
-    // Find the refill requirement for the master safe
-    const masterSafeRefillRequirement = getAddressBalance(
-      refillRequirements,
-      masterSafeAddress,
-    );
-    if (!masterSafeRefillRequirement) return;
-
-    const defaultRequirementDepositValues = getInitialDepositValues(
+    const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
       walletChainId,
-      masterSafeRefillRequirement,
-      nativeTokenSymbol,
+      masterSafeAddress,
+      getRefillRequirementsOf,
     );
+
+    if (!defaultRequirementDepositValues) return;
 
     setDefaultDepositValues(defaultRequirementDepositValues);
     setAmountsToDeposit(defaultRequirementDepositValues);
