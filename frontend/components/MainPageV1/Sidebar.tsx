@@ -27,7 +27,10 @@ import { COLOR } from '@/constants/colors';
 import { ANTD_BREAKPOINTS, APP_HEIGHT, SIDER_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useMasterBalances } from '@/hooks';
+import {
+  useBalanceAndRefillRequirementsContext,
+  useMasterBalances,
+} from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
@@ -60,14 +63,14 @@ const ResponsiveButton = styled(Button)`
   }
 `;
 
-const PealWalletLabel = () => {
-  const { isMasterEoaLowOnGas, isMasterSafeLowOnNativeGas } =
-    useMasterBalances();
+const PearlWalletLabel = () => {
+  const { isMasterEoaLowOnGas } = useMasterBalances();
+  const { isRefillRequired } = useBalanceAndRefillRequirementsContext();
 
   return (
     <Flex>
       <Text>Pearl Wallet</Text>
-      {(isMasterEoaLowOnGas || isMasterSafeLowOnNativeGas) && (
+      {(isMasterEoaLowOnGas || isRefillRequired) && (
         <Tag color="red" className="ml-8" bordered={false}>
           Low
         </Tag>
@@ -80,7 +83,7 @@ const menuItems: MenuProps['items'] = [
   {
     key: Pages.PearlWallet,
     icon: <WalletOutlined />,
-    label: <PealWalletLabel />,
+    label: <PearlWalletLabel />,
   },
   {
     key: Pages.HelpAndSupport,
