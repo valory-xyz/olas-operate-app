@@ -7,7 +7,7 @@ import { Modal } from '@/components/ui';
 import { DOWNLOAD_URL } from '@/constants/urls';
 import { useElectronApi } from '@/hooks';
 
-import { useAppStatus } from './useAppStatus';
+import { useAppStatus } from '../../UpdateAvailableAlert/useAppStatus';
 
 export const UpdateAvailableModal = () => {
   const { store } = useElectronApi();

@@ -24,7 +24,8 @@ import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { AgentConfig } from '@/types/Agent';
 
-import { UpdateAvailableAlert } from './Home/Overview/AgentInfo/UpdateAvailable/UpdateAvailableAlert';
+import { UpdateAvailableModal } from './Home/Overview/UpdateAvailableModal';
+import { UpdateAvailableAlert } from './UpdateAvailableAlert/UpdateAvailableAlert';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -221,6 +222,7 @@ export const Sidebar = () => {
           )}
 
           <UpdateAvailableAlert />
+          <UpdateAvailableModal />
 
           <Menu
             selectedKeys={selectedMenuKey}

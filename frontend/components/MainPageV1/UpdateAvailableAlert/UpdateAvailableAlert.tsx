@@ -5,7 +5,6 @@ import { ArrowUpRightSvg } from '@/components/custom-icons/ArrowUpRight';
 import { Download } from '@/components/custom-icons/Donwload';
 import { DOWNLOAD_URL } from '@/constants';
 
-import { UpdateAvailableModal } from './UpdateAvailableModal';
 import { useAppStatus } from './useAppStatus';
 
 export const UpdateAvailableAlert = () => {
@@ -40,7 +39,6 @@ export const UpdateAvailableAlert = () => {
           </Flex>
         }
       />
-      <UpdateAvailableModal />
     </>
   );
 };
