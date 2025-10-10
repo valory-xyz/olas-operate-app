@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
+import { InfoTooltip } from '@/components/InfoTooltip';
 import { CardFlex } from '@/components/ui';
 import {
   COLOR,
@@ -15,6 +16,7 @@ import {
 import { useServices } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { asEvmChainId, getTimeAgo } from '@/utils';
+import { sanitizeHtml } from '@/utils/sanitizeHtml';
 
 const { Text, Title } = Typography;
 
@@ -80,6 +82,34 @@ type PerformanceProps = {
   openProfile: () => void;
 };
 
+type AgentMetricProps = {
+  name: string;
+  value: string | number;
+  description?: string | null;
+};
+
+const AgentMetric = ({ name, value, description }: AgentMetricProps) => (
+  <Flex vertical gap={8}>
+    <Text className="text-neutral-secondary">
+      {name}
+      {description && (
+        <InfoTooltip
+          className="ml-8"
+          styles={{ body: { maxWidth: 360, width: 'max-content' } }}
+          placement="top"
+        >
+          <span
+            dangerouslySetInnerHTML={{
+              __html: sanitizeHtml(description),
+            }}
+          />
+        </InfoTooltip>
+      )}
+    </Text>
+    <Text className="text-xl">{value}</Text>
+  </Flex>
+);
+
 /**
  * To display agent performance on the main page.
  */
@@ -126,20 +156,19 @@ export const Performance = ({ openProfile }: PerformanceProps) => {
               <Row gutter={[16, 16]}>
                 {sortedMetrics.map((metric) => (
                   <Col span={12} key={metric.name}>
-                    <Flex vertical gap={8}>
-                      <Text className="text-neutral-secondary">
-                        {metric.name}
-                      </Text>
-                      <Text className="text-xl">{metric.value}</Text>
-                    </Flex>
+                    <AgentMetric
+                      name={metric.name}
+                      value={metric.value}
+                      description={metric.description}
+                    />
                   </Col>
                 ))}
               </Row>
             </>
           )}
-          <Flex flex={1} vertical gap={8}>
-            <Text className="text-neutral-secondary">Agent behavior</Text>
-            {agentBehavior && (
+          {agentBehavior && (
+            <Flex flex={1} vertical gap={8}>
+              <Text className="text-neutral-secondary">Agent behavior</Text>
               <AgentBehaviorContainer>
                 <Text ellipsis title={agentBehavior}>
                   {agentBehavior}
@@ -154,8 +183,8 @@ export const Performance = ({ openProfile }: PerformanceProps) => {
                   </Button>
                 )}
               </AgentBehaviorContainer>
-            )}
-          </Flex>
+            </Flex>
+          )}
         </Flex>
       </CardFlex>
     </Flex>
