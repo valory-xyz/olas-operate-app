@@ -1,5 +1,5 @@
-import { WifiOutlined } from '@ant-design/icons';
 import { message } from 'antd';
+import Image from 'next/image';
 import { PropsWithChildren, useEffect, useMemo } from 'react';
 import styled, { css } from 'styled-components';
 
@@ -12,6 +12,7 @@ import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useSetup } from '@/hooks/useSetup';
 
+import { Modal } from '../ui';
 import { NavBar } from './NavBar';
 
 const Container = styled.div<{ $blur: boolean }>`
@@ -61,19 +62,12 @@ export const Layout = ({ children }: PropsWithChildren) => {
   const { state } = useSetup();
   const { pageState } = usePageState();
 
-  // all the app level notifications
+  // All the app-level notifications
   useSystemLevelNotifications();
 
   useEffect(() => {
     const onlineStatusMessageKey = 'online-status-message';
-    if (!isOnline) {
-      message.error({
-        content: 'Network connection is unstable',
-        duration: 0,
-        icon: <WifiOutlined />,
-        key: onlineStatusMessageKey,
-      });
-    } else {
+    if (isOnline) {
       message.destroy(onlineStatusMessageKey);
     }
   }, [isOnline]);
@@ -87,9 +81,32 @@ export const Layout = ({ children }: PropsWithChildren) => {
   }, [pageState, state]);
 
   return (
-    <Container $blur={!isOnline}>
-      <NavBar />
-      <Body $hasPadding={hasPadding}>{children}</Body>
-    </Container>
+    <>
+      {!isOnline && (
+        <Modal
+          open
+          footer={null}
+          closable={false}
+          width={450}
+          title={'No Internet Connection'}
+          description={
+            'Check your Wi-Fi or Ethernet. Pearl will reconnect automatically once the connection is stable.'
+          }
+          header={
+            <Image
+              src="/not-online.png"
+              alt="No internet connection"
+              width={80}
+              height={80}
+            />
+          }
+        />
+      )}
+
+      <Container $blur={!isOnline}>
+        <NavBar />
+        <Body $hasPadding={hasPadding}>{children}</Body>
+      </Container>
+    </>
   );
 };
