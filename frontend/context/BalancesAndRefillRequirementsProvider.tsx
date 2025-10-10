@@ -3,13 +3,14 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { createContext, PropsWithChildren, useMemo } from 'react';
+import { createContext, PropsWithChildren, useCallback, useMemo } from 'react';
 
 import {
   AddressBalanceRecord,
   BalancesAndFundingRequirements,
   MasterSafeBalanceRecord,
 } from '@/client';
+import { EvmChainId } from '@/constants';
 import {
   FIVE_SECONDS_INTERVAL,
   ONE_MINUTE_INTERVAL,
@@ -27,6 +28,9 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
   balances: Optional<AddressBalanceRecord>;
   refillRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
+  getRefillRequirementsOf: (
+    chainId: EvmChainId,
+  ) => Optional<AddressBalanceRecord>;
   totalRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
   agentFundingRequests: Optional<AddressBalanceRecord>;
   canStartAgent: boolean;
@@ -39,6 +43,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: false,
   balances: undefined,
   refillRequirements: undefined,
+  getRefillRequirementsOf: () => undefined,
   totalRequirements: undefined,
   agentFundingRequests: undefined,
   canStartAgent: false,
@@ -95,6 +100,18 @@ export const BalancesAndRefillRequirementsProvider = ({
     chainId,
     balancesAndFundingRequirements,
   ]);
+  const getRefillRequirementsOf = useCallback(
+    <T extends AddressBalanceRecord | MasterSafeBalanceRecord>(
+      chainId: EvmChainId,
+    ): T | undefined => {
+      if (isBalancesAndFundingRequirementsLoading) return;
+      if (!balancesAndFundingRequirements) return;
+
+      const chain = asMiddlewareChain(chainId);
+      return balancesAndFundingRequirements.refill_requirements[chain] as T;
+    },
+    [isBalancesAndFundingRequirementsLoading, balancesAndFundingRequirements],
+  );
 
   const refillRequirements = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return;
@@ -153,6 +170,7 @@ export const BalancesAndRefillRequirementsProvider = ({
       value={{
         isBalancesAndFundingRequirementsLoading,
         refillRequirements,
+        getRefillRequirementsOf,
         balances,
         totalRequirements,
         agentFundingRequests,
