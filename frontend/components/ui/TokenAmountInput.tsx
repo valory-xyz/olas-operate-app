@@ -96,9 +96,15 @@ export const TokenAmountInput = ({
           {[10, 25, 50, 100].map((percentage) => (
             <Button
               key={percentage}
-              onClick={() =>
-                onChange(Number(((totalAmount * percentage) / 100).toFixed(4)))
-              }
+              onClick={() => {
+                if (percentage === 100) {
+                  onChange(totalAmount);
+                } else {
+                  onChange(
+                    Number(((totalAmount * percentage) / 100).toFixed(4)),
+                  );
+                }
+              }}
               type="text"
               size="small"
               className="text-neutral-tertiary"
