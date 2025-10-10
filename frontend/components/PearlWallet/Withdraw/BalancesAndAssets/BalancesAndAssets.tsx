@@ -5,8 +5,7 @@ import { useEffect } from 'react';
 
 import { AgentNft } from '@/components/AgentNft';
 import { CustomAlert } from '@/components/Alert';
-import { CardFlex } from '@/components/ui/CardFlex';
-import { Segmented } from '@/components/ui/Segmented';
+import { CardFlex, Segmented } from '@/components/ui';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
