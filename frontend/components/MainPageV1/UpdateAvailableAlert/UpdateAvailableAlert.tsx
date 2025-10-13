@@ -2,7 +2,7 @@ import { Flex, theme } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
 import { ArrowUpRightSvg } from '@/components/custom-icons/ArrowUpRight';
-import { Download } from '@/components/custom-icons/Donwload';
+import { Download } from '@/components/custom-icons/Download';
 import { DOWNLOAD_URL } from '@/constants';
 
 import { useAppStatus } from './useAppStatus';
