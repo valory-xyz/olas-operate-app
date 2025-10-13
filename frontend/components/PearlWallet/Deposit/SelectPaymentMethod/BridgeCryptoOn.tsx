@@ -65,6 +65,7 @@ export const BridgeCryptoOn = ({
   amountsToDeposit,
   onBack,
 }: BridgeCryptoOnProps) => {
+  const { onReset } = usePearlWallet();
   const getBridgeRequirementsParams =
     useGetBridgeRequirementsParams(bridgeToChain);
 
@@ -100,7 +101,10 @@ export const BridgeCryptoOn = ({
       bridgeToChain={bridgeToChain}
       getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
       onPrevBeforeBridging={onBack}
-      showCompleteScreen={{ completionMessage: 'Bridge completed!' }}
+      showCompleteScreen={{
+        completionMessage: 'Bridge completed!',
+        onComplete: onReset,
+      }}
     />
   );
 };

@@ -23,7 +23,10 @@ type BridgeState = 'depositing' | 'in_progress' | 'completed';
 
 type BridgeProps = {
   bridgeFromDescription: string;
-  showCompleteScreen?: { completionMessage: string } | null;
+  showCompleteScreen?: {
+    completionMessage: string;
+    onComplete?: () => void;
+  } | null;
   getBridgeRequirementsParams: GetBridgeRequirementsParams;
   enabledStepsAfterBridging?: EnabledSteps;
   onPrevBeforeBridging: () => void;
@@ -148,6 +151,7 @@ export const Bridge = ({
         <BridgeCompleted
           {...transferAndReceivingDetails}
           completionMessage={showCompleteScreen.completionMessage}
+          onComplete={showCompleteScreen.onComplete}
         />
       );
     default:
