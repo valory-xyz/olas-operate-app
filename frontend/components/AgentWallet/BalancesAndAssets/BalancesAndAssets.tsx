@@ -14,7 +14,7 @@ import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { TransactionHistoryTable } from './TransactionHistoryTable';
 
 const { Text, Title } = Typography;
-const { Countdown } = Statistic;
+const { Timer } = Statistic;
 
 const EvictedAgentAlert = () => {
   const { evictionExpiresAt } = useActiveStakingContractDetails();
@@ -29,7 +29,8 @@ const EvictedAgentAlert = () => {
           <br />
           Your agent hasn&apos;t reached the minimum duration of staking.
           You&apos;ll be able to withdraw in{' '}
-          <Countdown
+          <Timer
+            type="countdown"
             value={evictionExpiresAt * 1000}
             format="HH [hours] mm [minutes] ss [seconds]"
             valueStyle={{
