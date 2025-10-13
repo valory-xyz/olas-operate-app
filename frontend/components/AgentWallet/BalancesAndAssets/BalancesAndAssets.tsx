@@ -1,29 +1,23 @@
-import { Button, Flex, Modal, Typography } from 'antd';
+import { Button, Flex, Modal, Statistic, Typography } from 'antd';
 import { useMemo, useState } from 'react';
-import { useInterval } from 'usehooks-ts';
 
 import { CustomAlert } from '@/components/Alert';
 import { AgentLowBalanceAlert } from '@/components/MainPageV1/Home/Overview/AgentInfo/AgentDisabledAlert/LowBalance/AgentLowBalanceAlert';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
+import { COLOR } from '@/constants';
 import { Pages } from '@/enums/Pages';
 import { useActiveStakingContractDetails } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
-import { formatCountdownDisplay } from '@/utils';
 
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { TransactionHistoryTable } from './TransactionHistoryTable';
 
 const { Text, Title } = Typography;
+const { Countdown } = Statistic;
 
 const EvictedAgentAlert = () => {
   const { evictionExpiresAt } = useActiveStakingContractDetails();
-  const [secondsRemaining, setSecondsRemaining] = useState<number>(0);
-
-  useInterval(() => {
-    const secondsRemaining = evictionExpiresAt - Math.floor(Date.now() / 1000);
-    setSecondsRemaining(secondsRemaining);
-  }, 1000);
 
   return (
     <CustomAlert
@@ -35,7 +29,14 @@ const EvictedAgentAlert = () => {
           <br />
           Your agent hasn&apos;t reached the minimum duration of staking.
           You&apos;ll be able to withdraw in{' '}
-          {formatCountdownDisplay(secondsRemaining)}.
+          <Countdown
+            value={evictionExpiresAt * 1000}
+            format="HH [hours] mm [minutes] ss [seconds]"
+            valueStyle={{
+              fontSize: 14,
+              color: COLOR.TEXT_COLOR.WARNING.DEFAULT,
+            }}
+          />
         </Text>
       }
       type="warning"
