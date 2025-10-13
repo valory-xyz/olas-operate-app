@@ -55,6 +55,8 @@ export const AgentActivityModal = ({
     });
   }, [rounds, roundsInfo]);
 
+  const previousActions = items?.slice(1); // separates current and previous actions
+
   const currentActionName = useMemo(() => {
     const currentRound = rounds[0];
     if (!currentRound) return;
@@ -66,6 +68,7 @@ export const AgentActivityModal = ({
     if (!currentRound) return;
     return roundsInfo?.[currentRound]?.description;
   }, [rounds, roundsInfo]);
+
   return (
     <Modal
       title="Agent Activity"
@@ -85,7 +88,7 @@ export const AgentActivityModal = ({
         </CurrentActionContainer>
         <Divider />
         <Text strong>History</Text>
-        <ModalCollapseItem items={items} bordered={false} />
+        <ModalCollapseItem items={previousActions} bordered={false} />
       </Flex>
     </Modal>
   );

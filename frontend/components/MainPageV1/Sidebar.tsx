@@ -36,6 +36,9 @@ import {
 } from '@/hooks';
 import { AgentConfig } from '@/types/Agent';
 
+import { UpdateAvailableAlert } from './UpdateAvailableAlert/UpdateAvailableAlert';
+import { UpdateAvailableModal } from './UpdateAvailableAlert/UpdateAvailableModal';
+
 const { Sider } = Layout;
 const { Text } = Typography;
 
@@ -252,11 +255,13 @@ export const Sidebar = () => {
             </ResponsiveButton>
           )}
 
+          <UpdateAvailableAlert />
+          <UpdateAvailableModal />
+
           <Menu
             selectedKeys={selectedMenuKey}
             mode="inline"
             inlineIndent={12}
-            className="mt-auto"
             onClick={handleMenuClick}
             items={menuItems}
           />
