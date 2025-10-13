@@ -18,8 +18,10 @@ import { NavBar } from './NavBar';
 const Container = styled.div<{ $blur: boolean }>`
   display: flex;
   flex-direction: column;
-  height: ${APP_HEIGHT}px;
-  width: ${APP_WIDTH}px;
+  height: 100vh;
+  width: 100vw;
+  max-width: ${APP_WIDTH}px;
+  max-height: ${APP_HEIGHT}px;
   background-color: ${COLOR.BACKGROUND};
   border-radius: 8px;
 
