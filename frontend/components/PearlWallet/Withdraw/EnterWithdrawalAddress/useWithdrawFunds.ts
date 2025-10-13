@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
 import { ChainTokenConfig, TOKEN_CONFIG, TokenType } from '@/config/tokens';
+import { TokenSymbol } from '@/constants';
 import { AddressZero } from '@/constants/address';
 import { SupportedMiddlewareChainMap } from '@/constants/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
@@ -74,7 +75,9 @@ const formatWithdrawAssets = (
   chainConfig: ChainTokenConfig,
 ) =>
   entries(amountsToWithdraw).reduce(
-    (acc, [symbol, amount]) => {
+    (acc, [untypedSymbol, amount]) => {
+      const symbol = untypedSymbol as TokenSymbol;
+
       if (amount <= 0) return acc;
       if (!chainConfig[symbol]) return acc;
 
