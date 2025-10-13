@@ -26,7 +26,7 @@ export const SetupBridgeOnboarding = () => {
   }, [gotoSetup, prevState]);
 
   return (
-    <Flex className="pt-48">
+    <Flex vertical className="pt-48">
       <Bridge
         enabledStepsAfterBridging={['masterSafeCreationAndTransfer']}
         bridgeFromDescription={BRIDGE_FROM_MESSAGE}
