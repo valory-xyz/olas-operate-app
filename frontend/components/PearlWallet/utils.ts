@@ -1,8 +1,8 @@
 import { entries, find, findKey } from 'lodash';
 
 import { AddressBalanceRecord, TokenBalanceRecord } from '@/client';
-import { getNativeTokenSymbol, TOKEN_CONFIG, TokenType } from '@/config/tokens';
-import { AddressZero, EvmChainId, TokenSymbol } from '@/constants';
+import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
+import { AddressZero, EvmChainId } from '@/constants';
 import { Address } from '@/types/Address';
 import { Maybe, Nullable, Optional } from '@/types/Util';
 import { TokenAmounts } from '@/types/Wallet';
@@ -37,7 +37,6 @@ const getAddressBalance = (
 const getInitialDepositValues = (
   chainId: EvmChainId,
   masterSafeRefillRequirement: TokenBalanceRecord,
-  nativeTokenSymbol: TokenSymbol,
 ) => {
   const chainConfig = TOKEN_CONFIG[chainId];
   return entries(masterSafeRefillRequirement).reduce(
@@ -59,7 +58,7 @@ const getInitialDepositValues = (
       // Handle native token (ETH, xDAI, etc.)
       const isNativeToken = tokenDetails.tokenType === TokenType.NativeGas;
       if (isNativeToken) {
-        acc[nativeTokenSymbol] = amount;
+        acc[tokenDetails.symbol] = amount;
         return acc;
       } else {
         // Handle ERC-20 tokens
@@ -83,10 +82,6 @@ export const getInitialDepositForMasterSafe = (
 ) => {
   if (!masterSafeAddress) return;
 
-  // Get the native token symbol for the current chain
-  const nativeTokenSymbol = getNativeTokenSymbol(walletChainId);
-  if (!nativeTokenSymbol) return;
-
   // Get the refill requirements for the current chain
   const refillRequirements = getRefillRequirementsOf(walletChainId);
   if (!refillRequirements) return;
@@ -98,9 +93,5 @@ export const getInitialDepositForMasterSafe = (
   );
   if (!masterSafeRefillRequirement) return;
 
-  return getInitialDepositValues(
-    walletChainId,
-    masterSafeRefillRequirement,
-    nativeTokenSymbol,
-  );
+  return getInitialDepositValues(walletChainId, masterSafeRefillRequirement);
 };
