@@ -23,6 +23,11 @@ const getModiusUsdcConfig = () => {
     MODIUS_SERVICE_TEMPLATE.configurations[MiddlewareChain.MODE]
       ?.fund_requirements;
   const modiusUsdcConfig = MODE_TOKEN_CONFIG[TokenSymbol.USDC];
+
+  if (!modiusUsdcConfig) {
+    throw new Error('Modius USDC config not found');
+  }
+
   const usdcSafeRequirement =
     modiusFundRequirements?.[modiusUsdcConfig.address as Address]?.safe || 0;
   return Number(formatUnits(usdcSafeRequirement, modiusUsdcConfig.decimals));
@@ -33,6 +38,11 @@ const getOptimusUsdcConfig = () => {
     OPTIMUS_SERVICE_TEMPLATE.configurations[MiddlewareChain.OPTIMISM]
       ?.fund_requirements;
   const optimusUsdcConfig = OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC];
+
+  if (!optimusUsdcConfig) {
+    throw new Error('Optimus USDC config not found');
+  }
+
   const usdcSafeRequirement =
     optimusFundRequirements?.[optimusUsdcConfig.address as Address]?.safe || 0;
 

@@ -10,7 +10,6 @@ import {
 import { EvictedAlert } from './EvictedAlert';
 import { AgentLowBalanceAlert } from './LowBalance/AgentLowBalanceAlert';
 import { MasterEoaLowBalanceAlert } from './LowBalance/MasterEoaLowBalanceAlert';
-import { MasterSafeLowBalanceAlert } from './LowBalance/MasterSafeLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
 import { UnderConstructionAlert } from './UnderConstructionAlert';
 import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
@@ -50,7 +49,6 @@ export const AgentDisabledAlert = () => {
     <>
       <AgentLowBalanceAlert onFund={() => goto(Pages.AgentWallet)} />
       <MasterEoaLowBalanceAlert />
-      <MasterSafeLowBalanceAlert />
     </>
   );
 };
