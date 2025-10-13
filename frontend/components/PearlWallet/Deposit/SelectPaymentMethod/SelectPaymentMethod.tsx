@@ -13,9 +13,10 @@ import {
 import { useFeatureFlag } from '@/hooks';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
+import { YouPayContainer } from '../../components/TransferCryptoFromExternalWallet';
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { BridgeCryptoOn } from './BridgeCryptoOn';
-import { TransferCryptoOn, YouPayContainer } from './TransferCryptoOn';
+import { TransferCryptoOn } from './TransferCryptoOn';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -31,21 +32,23 @@ const ShowAmountsToDeposit = () => {
   const { amountsToDeposit } = usePearlWallet();
   return (
     <Flex vertical gap={12}>
-      {entries(amountsToDeposit).map(([tokenSymbol, amount]) => (
-        <Flex key={tokenSymbol} gap={8} align="center">
-          <Image
-            src={TokenSymbolConfigMap[tokenSymbol as TokenSymbol].image}
-            alt={tokenSymbol}
-            width={20}
-            className="flex"
-          />
-          <Flex gap={8} align="center">
-            <Text>
-              {formatNumber(amount, 4)} {tokenSymbol}
-            </Text>
+      {entries(amountsToDeposit)
+        .filter(([, amount]) => Number(amount) > 0)
+        .map(([tokenSymbol, amount]) => (
+          <Flex key={tokenSymbol} gap={8} align="center">
+            <Image
+              src={TokenSymbolConfigMap[tokenSymbol as TokenSymbol].image}
+              alt={tokenSymbol}
+              width={20}
+              className="flex"
+            />
+            <Flex gap={8} align="center">
+              <Text>
+                {formatNumber(amount, 4)} {tokenSymbol}
+              </Text>
+            </Flex>
           </Flex>
-        </Flex>
-      ))}
+        ))}
     </Flex>
   );
 };
@@ -122,14 +125,13 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
 
   const onPaymentMethodBack = useCallback(() => setPaymentMethod(null), []);
 
+  // If no chain is selected, we cannot proceed.
   if (!chainId) return null;
 
   const chainName = asEvmChainDetails(asMiddlewareChain(chainId)).displayName;
 
   if (paymentMethod === 'TRANSFER') {
-    return (
-      <TransferCryptoOn onBack={onPaymentMethodBack} chainName={chainName} />
-    );
+    return <TransferCryptoOn chainName={chainName} onBack={onBack} />;
   }
 
   if (paymentMethod === 'BRIDGE') {

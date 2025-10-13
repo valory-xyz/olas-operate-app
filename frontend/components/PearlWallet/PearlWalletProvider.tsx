@@ -4,30 +4,72 @@ import {
   ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
 
+import { MiddlewareServiceResponse, TokenBalanceRecord } from '@/client';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { AgentType } from '@/constants/agent';
-import { type EvmChainName } from '@/constants/chains';
-import { EvmChainId } from '@/constants/chains';
-import { TokenSymbol } from '@/constants/token';
 import {
+  AgentType,
+  EvmChainId,
+  type EvmChainName,
+  TokenSymbol,
+} from '@/constants';
+import { MasterSafe } from '@/enums';
+import {
+  useAvailableAssets,
+  useBalanceAndRefillRequirementsContext,
   useBalanceContext,
   useMasterWalletContext,
   useService,
   useServices,
 } from '@/hooks';
-import { useAvailableAssets } from '@/hooks/useAvailableAssets';
-import { Address } from '@/types/Address';
-import { AgentConfig } from '@/types/Agent';
-import { Nullable, ValueOf } from '@/types/Util';
-import { AvailableAsset, StakedAsset } from '@/types/Wallet';
-import { generateName } from '@/utils/agentName';
+import {
+  Address,
+  AgentConfig,
+  AvailableAsset,
+  Nullable,
+  Optional,
+  StakedAsset,
+  TokenAmounts,
+  ValueOf,
+} from '@/types';
+import { generateName } from '@/utils';
 
-import { STEPS, TokenAmounts, WalletChain } from './types';
+import { STEPS, WalletChain } from './types';
+import { getInitialDepositForMasterSafe } from './utils';
+
+const getMasterSafeAddress = (
+  chainId: EvmChainId,
+  masterSafes?: MasterSafe[],
+) => masterSafes?.find((safe) => safe.evmChainId === chainId)?.address ?? null;
+
+/**
+ * Get the list of chains from the middleware services.
+ * @warning to add support for multiple agents on the same chain
+ */
+const getChainList = (services?: MiddlewareServiceResponse[]) => {
+  if (!services) return [];
+  return compact(
+    services.map((service) => {
+      const agent = ACTIVE_AGENTS.find(
+        ([, agentConfig]) =>
+          agentConfig.middlewareHomeChainId === service.home_chain,
+      );
+      if (!agent) return null;
+
+      const [, agentConfig] = agent as [AgentType, AgentConfig];
+      if (!agentConfig.evmHomeChainId) return null;
+
+      const chainId = agentConfig.evmHomeChainId;
+      const chainName = CHAIN_CONFIG[chainId].name as EvmChainName;
+      return { chainId, chainName };
+    }),
+  );
+};
 
 const PearlWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;
@@ -47,6 +89,8 @@ const PearlWalletContext = createContext<{
   amountsToDeposit: TokenAmounts;
   onDepositAmountChange: (symbol: TokenSymbol, amount: number) => void;
   onReset: () => void;
+  /** Initial values for funding agent wallet based on refill requirements */
+  defaultRequirementDepositValues: Optional<TokenBalanceRecord>;
 }>({
   walletStep: STEPS.PEARL_WALLET_SCREEN,
   updateStep: () => {},
@@ -62,6 +106,7 @@ const PearlWalletContext = createContext<{
   amountsToDeposit: {},
   onDepositAmountChange: () => {},
   onReset: () => {},
+  defaultRequirementDepositValues: {},
 });
 
 export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
@@ -76,6 +121,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   );
   const { isLoading: isBalanceLoading, getTotalStakedOlasBalanceOf } =
     useBalanceContext();
+  const { getRefillRequirementsOf } = useBalanceAndRefillRequirementsContext();
   const { masterSafes } = useMasterWalletContext();
 
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
@@ -86,8 +132,34 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   );
   const [amountsToWithdraw, setAmountsToWithdraw] = useState<TokenAmounts>({});
   const [amountsToDeposit, setAmountsToDeposit] = useState<TokenAmounts>({});
+  const [defaultRequirementDepositValues, setDefaultDepositValues] =
+    useState<TokenBalanceRecord>({});
+
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
-    useAvailableAssets(walletChainId);
+    useAvailableAssets(walletChainId, {
+      // For deposit, we only want to show assets in the safe.
+      includeMasterEoa: walletStep !== STEPS.DEPOSIT,
+    });
+  const masterSafeAddress = useMemo(
+    () => getMasterSafeAddress(walletChainId, masterSafes),
+    [masterSafes, walletChainId],
+  );
+
+  // Set initial deposit amounts if refill requirements is requested
+  useEffect(() => {
+    if (!masterSafeAddress) return;
+
+    const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
+      walletChainId,
+      masterSafeAddress,
+      getRefillRequirementsOf,
+    );
+
+    if (!defaultRequirementDepositValues) return;
+
+    setDefaultDepositValues(defaultRequirementDepositValues);
+    setAmountsToDeposit(defaultRequirementDepositValues);
+  }, [getRefillRequirementsOf, walletChainId, masterSafeAddress]);
 
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) => agentConfig.evmHomeChainId === walletChainId,
@@ -95,25 +167,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const agentType = agent ? agent[0] : null;
 
   // list of chains where the user has services
-  const chains = useMemo(() => {
-    if (!services) return [];
-    return compact(
-      services.map((service) => {
-        const agent = ACTIVE_AGENTS.find(
-          ([, agentConfig]) =>
-            agentConfig.middlewareHomeChainId === service.home_chain,
-        );
-        if (!agent) return null;
-
-        const [, agentConfig] = agent as [AgentType, AgentConfig];
-        if (!agentConfig.evmHomeChainId) return null;
-
-        const chainId = agentConfig.evmHomeChainId;
-        const chainName = CHAIN_CONFIG[chainId].name as EvmChainName;
-        return { chainId, chainName };
-      }),
-    );
-  }, [services]);
+  const chains = useMemo(() => getChainList(services), [services]);
 
   // staked OLAS
   const stakedAssets: StakedAsset[] = useMemo(
@@ -151,6 +205,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const onReset = useCallback((canNavigateOnReset?: boolean) => {
     setAmountsToWithdraw({});
     setAmountsToDeposit({});
+    setDefaultDepositValues({});
 
     if (canNavigateOnReset) {
       setWalletStep(STEPS.PEARL_WALLET_SCREEN);
@@ -163,13 +218,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       onReset(options?.canNavigateOnReset);
     },
     [onReset],
-  );
-
-  const masterSafeAddress = useMemo(
-    () =>
-      masterSafes?.find((safe) => safe.evmChainId === walletChainId)?.address ??
-      null,
-    [masterSafes, walletChainId],
   );
 
   const isLoading =
@@ -201,6 +249,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         amountsToDeposit,
         onDepositAmountChange,
         onReset,
+
+        // Initial values for funding agent wallet
+        defaultRequirementDepositValues,
       }}
     >
       {children}

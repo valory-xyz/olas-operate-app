@@ -8,10 +8,10 @@ import { AddressZero, TokenSymbol } from '@/constants';
 import { useMasterWalletContext } from '@/hooks';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
+import { TokenAmounts } from '@/types/Wallet';
 import { asEvmChainId, parseUnits } from '@/utils';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
-import { TokenAmounts } from '../../types';
 
 type BridgeCryptoOnProps = {
   onBack: () => void;
@@ -65,6 +65,7 @@ export const BridgeCryptoOn = ({
   amountsToDeposit,
   onBack,
 }: BridgeCryptoOnProps) => {
+  const { onReset } = usePearlWallet();
   const getBridgeRequirementsParams =
     useGetBridgeRequirementsParams(bridgeToChain);
 
@@ -100,7 +101,10 @@ export const BridgeCryptoOn = ({
       bridgeToChain={bridgeToChain}
       getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
       onPrevBeforeBridging={onBack}
-      showCompleteScreen={{ completionMessage: 'Bridge completed!' }}
+      showCompleteScreen={{
+        completionMessage: 'Bridge completed!',
+        onComplete: onReset,
+      }}
     />
   );
 };

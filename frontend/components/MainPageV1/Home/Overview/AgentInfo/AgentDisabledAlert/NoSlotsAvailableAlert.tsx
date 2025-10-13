@@ -2,12 +2,13 @@ import { Button, Typography } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
+import { usePageState } from '@/hooks';
 
 const { Text } = Typography;
 
 export const NoSlotsAvailableAlert = () => {
   const { goto } = usePageState();
+
   return (
     <CustomAlert
       showIcon
@@ -20,7 +21,7 @@ export const NoSlotsAvailableAlert = () => {
         </Text>
       }
       action={
-        <Button onClick={() => goto(Pages.ManageStaking)} size="small">
+        <Button onClick={() => goto(Pages.AgentStaking)} size="small">
           Manage Staking
         </Button>
       }

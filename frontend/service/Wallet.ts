@@ -25,7 +25,7 @@ const createEoa = async () =>
   });
 
 /**
- * @param initial_funds - Funds to be sent to master safe from master EOA
+ * Creates a new safe (master safe) on the specified chain with an optional backup owner.
  */
 const createSafe = async (
   chain: MiddlewareChain,

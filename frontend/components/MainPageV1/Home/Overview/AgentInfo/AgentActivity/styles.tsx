@@ -114,8 +114,6 @@ const getTextStylesByStatus = (status: AgentStatus) => {
 export const Text = styled.span<{ $status: AgentStatus }>`
   position: relative;
   z-index: 1;
-  &.activity-modal {
-    width: 100%;
   }
   ${({ $status }) => getTextStylesByStatus($status)}
 `;

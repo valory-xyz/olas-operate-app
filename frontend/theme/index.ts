@@ -38,6 +38,8 @@ export const mainTheme: ThemeConfig = {
       colorTextLightSolid: '#ffffff',
       colorTextDisabled: '#ffffff',
 
+      dangerColor: COLOR.TEXT_COLOR.ERROR.DEFAULT,
+
       // For "default" buttons
       colorText: '#000000',
       colorBorder: '#dfe6ec',
@@ -83,9 +85,10 @@ export const mainTheme: ThemeConfig = {
       fontSize: 14,
     },
     Tag: {
-      colorSuccess: COLOR.TEXT_COLOR.SUCCESS.DEFAULT,
       defaultBg: COLOR.GRAY_1,
+      colorSuccess: COLOR.TEXT_COLOR.SUCCESS.DEFAULT,
       colorSuccessBg: COLOR.BG.SUCCESS.DEFAULT,
+      borderRadius: 8,
     },
     List: {
       colorBorder: '#DFE5EE',

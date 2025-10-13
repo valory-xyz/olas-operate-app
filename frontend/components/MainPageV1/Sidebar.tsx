@@ -4,25 +4,39 @@ import {
   SettingOutlined,
   WalletOutlined,
 } from '@ant-design/icons';
-import { Button, Flex, Layout, Menu, MenuProps, Spin, Typography } from 'antd';
+import {
+  Button,
+  Flex,
+  Layout,
+  Menu,
+  MenuProps,
+  Spin,
+  Tag,
+  Typography,
+} from 'antd';
 import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { ACTIVE_AGENTS } from '@/config/agents';
+import { ACTIVE_AGENTS, AVAILABLE_FOR_ADDING_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { AgentType } from '@/constants/agent';
-import { EvmChainId } from '@/constants/chains';
+import { AgentType, EvmChainId } from '@/constants';
 import { COLOR } from '@/constants/colors';
 import { ANTD_BREAKPOINTS, APP_HEIGHT, SIDER_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
-import { useSetup } from '@/hooks/useSetup';
-import { useMasterWalletContext } from '@/hooks/useWallet';
+import {
+  useBalanceAndRefillRequirementsContext,
+  useMasterWalletContext,
+  usePageState,
+  useServices,
+  useSetup,
+} from '@/hooks';
 import { AgentConfig } from '@/types/Agent';
+
+import { UpdateAvailableAlert } from './UpdateAvailableAlert/UpdateAvailableAlert';
+import { UpdateAvailableModal } from './UpdateAvailableAlert/UpdateAvailableModal';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -50,8 +64,27 @@ const ResponsiveButton = styled(Button)`
   }
 `;
 
+const PearlWalletLabel = () => {
+  const { isRefillRequired } = useBalanceAndRefillRequirementsContext();
+
+  return (
+    <Flex>
+      <Text>Pearl Wallet</Text>
+      {isRefillRequired && (
+        <Tag color="red" className="ml-8" bordered={false}>
+          Low
+        </Tag>
+      )}
+    </Flex>
+  );
+};
+
 const menuItems: MenuProps['items'] = [
-  { key: Pages.PearlWallet, icon: <WalletOutlined />, label: 'Pearl Wallet' },
+  {
+    key: Pages.PearlWallet,
+    icon: <WalletOutlined />,
+    label: <PearlWalletLabel />,
+  },
   {
     key: Pages.HelpAndSupport,
     icon: <QuestionCircleOutlined />,
@@ -185,8 +218,10 @@ export const Sidebar = () => {
   );
 
   const selectedMenuKey = useMemo(() => {
-    if (pageState === Pages.Main) return [selectedAgentType];
-    return [pageState];
+    if (menuItems.find((item) => item?.key === pageState)) {
+      return [pageState];
+    }
+    return [selectedAgentType];
   }, [pageState, selectedAgentType]);
 
   return (
@@ -204,7 +239,7 @@ export const Sidebar = () => {
             />
           ) : null}
 
-          {myAgents.length < ACTIVE_AGENTS.length && (
+          {myAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length && (
             <ResponsiveButton
               size="large"
               className="self-center w-max"
@@ -218,11 +253,13 @@ export const Sidebar = () => {
             </ResponsiveButton>
           )}
 
+          <UpdateAvailableAlert />
+          <UpdateAvailableModal />
+
           <Menu
             selectedKeys={selectedMenuKey}
             mode="inline"
             inlineIndent={12}
-            className="mt-auto"
             onClick={handleMenuClick}
             items={menuItems}
           />

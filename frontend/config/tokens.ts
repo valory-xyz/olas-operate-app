@@ -19,6 +19,7 @@ export type Erc20TokenConfig = {
   symbol: TokenSymbol;
 };
 
+// TODO: add ZeroAddress for native tokens
 export type NativeTokenConfig = {
   address?: undefined;
   tokenType: TokenType.NativeGas;

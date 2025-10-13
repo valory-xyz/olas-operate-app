@@ -2,9 +2,7 @@ import { Button, Typography } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
 import { Pages } from '@/enums/Pages';
-import { useServices } from '@/hooks';
-import { usePageState } from '@/hooks/usePageState';
-import { useSharedContext } from '@/hooks/useSharedContext';
+import { usePageState, useServices, useSharedContext } from '@/hooks';
 
 const { Text } = Typography;
 
@@ -34,7 +32,7 @@ export const UnderConstructionAlert = () => {
       }
       action={
         canWithdraw && (
-          <Button onClick={() => goto(Pages.ManageWallet)} size="small">
+          <Button onClick={() => goto(Pages.PearlWallet)} size="small">
             Withdraw
           </Button>
         )
