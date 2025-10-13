@@ -1,5 +1,6 @@
 import { Button, Flex, Modal, Typography } from 'antd';
 import { useMemo, useState } from 'react';
+import { useInterval } from 'usehooks-ts';
 
 import { CustomAlert } from '@/components/Alert';
 import { AgentLowBalanceAlert } from '@/components/MainPageV1/Home/Overview/AgentInfo/AgentDisabledAlert/LowBalance/AgentLowBalanceAlert';
@@ -8,21 +9,42 @@ import { CardFlex } from '@/components/ui/CardFlex';
 import { Pages } from '@/enums/Pages';
 import { useActiveStakingContractDetails } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
+import { formatCountdownDisplay } from '@/utils';
 
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { TransactionHistoryTable } from './TransactionHistoryTable';
 
 const { Text, Title } = Typography;
 
-const EvictedAgentAlert = () => (
-  <CustomAlert
-    message="Withdrawals are temporarily unavailable during agent eviction."
-    type="warning"
-    showIcon
-    centered
-    className="mt-16 text-sm"
-  />
-);
+const EvictedAgentAlert = () => {
+  const { evictionExpiresAt } = useActiveStakingContractDetails();
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(0);
+
+  useInterval(() => {
+    const secondsRemaining = evictionExpiresAt - Math.floor(Date.now() / 1000);
+    setSecondsRemaining(secondsRemaining);
+  }, 1000);
+
+  return (
+    <CustomAlert
+      message={
+        <Text className="text-sm">
+          <span className="font-weight-600">
+            Withdrawals Temporarily Unavailable
+          </span>{' '}
+          <br />
+          Your agent hasn&apos;t reached the minimum duration of staking.
+          You&apos;ll be able to withdraw in{' '}
+          {formatCountdownDisplay(secondsRemaining)}.
+        </Text>
+      }
+      type="warning"
+      showIcon
+      centered
+      className="mt-16 text-sm"
+    />
+  );
+};
 
 const AgentWalletTitle = () => {
   const { goto } = usePageState();
