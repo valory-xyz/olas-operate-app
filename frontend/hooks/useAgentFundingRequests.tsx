@@ -1,4 +1,4 @@
-import { compact } from 'lodash';
+import { isEmpty } from 'lodash';
 import { useMemo } from 'react';
 
 import { TokenBalanceRecord } from '@/client';
@@ -6,8 +6,9 @@ import { getTokenDetails } from '@/components/Bridge/utils';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { EvmChainId } from '@/constants';
+import { TokenAmounts } from '@/types';
 import { Address } from '@/types/Address';
-import { formatUnitsToNumber } from '@/utils';
+import { formatUnitsToNumber, tokenBalancesToSentence } from '@/utils';
 
 import { useBalanceAndRefillRequirementsContext } from './useBalanceAndRefillRequirementsContext';
 import { useServices } from './useServices';
@@ -24,26 +25,25 @@ const getFormattedTokensList = (
   const chainConfig = TOKEN_CONFIG[evmHomeChainId];
   const chainName = CHAIN_CONFIG[evmHomeChainId].name;
 
-  const tokens = compact(
-    Object.entries(tokenRequirements).map(([untypedTokenAddress, amount]) => {
+  const tokens = Object.entries(tokenRequirements).reduce(
+    (acc, [untypedTokenAddress, amount]) => {
       const tokenAddress = untypedTokenAddress as Address;
       const tokenDetails = getTokenDetails(tokenAddress, chainConfig);
-      if (!tokenDetails) return null;
 
-      const parsedAmount = formatUnitsToNumber(amount, tokenDetails.decimals);
-      return `${parsedAmount} ${tokenDetails.symbol}`;
-    }),
+      if (!tokenDetails) return acc;
+
+      acc[tokenDetails.symbol] = formatUnitsToNumber(
+        amount,
+        tokenDetails.decimals,
+      );
+
+      return acc;
+    },
+    {} as TokenAmounts,
   );
 
-  if (tokens.length === 0) return null;
-
-  // Formats the list as a sentence: "A, B, and C on ChainName chain"
-  const tokenList =
-    tokens.length === 1
-      ? tokens[0]
-      : `${tokens.slice(0, -1).join(', ')} and ${tokens.at(-1)}`;
-
-  return `${tokenList} on ${chainName} chain`;
+  if (isEmpty(tokens)) return null;
+  return `${tokenBalancesToSentence(tokens)} on ${chainName} chain`;
 };
 
 /**

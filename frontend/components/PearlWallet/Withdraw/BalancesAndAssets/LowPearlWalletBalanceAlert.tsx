@@ -21,7 +21,7 @@ export const LowPearlWalletBalanceAlert = () => {
     useBalanceAndRefillRequirementsContext();
   const { getMasterSafeOf } = useMasterWalletContext();
 
-  if (!isRefillRequired || !getRefillRequirementsOf) return null;
+  if (!isRefillRequired) return null;
 
   return (
     <CustomAlert

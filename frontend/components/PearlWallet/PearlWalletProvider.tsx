@@ -47,6 +47,10 @@ const getMasterSafeAddress = (
   masterSafes?: MasterSafe[],
 ) => masterSafes?.find((safe) => safe.evmChainId === chainId)?.address ?? null;
 
+/**
+ * Get the list of chains from the middleware services.
+ * @warning to add support for multiple agents on the same chain
+ */
 const getChainList = (services?: MiddlewareServiceResponse[]) => {
   if (!services) return [];
   return compact(
@@ -141,7 +145,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   // Set initial deposit amounts if refill requirements is requested
   useEffect(() => {
     if (!masterSafeAddress) return;
-    if (!getRefillRequirementsOf) return;
 
     const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
       walletChainId,

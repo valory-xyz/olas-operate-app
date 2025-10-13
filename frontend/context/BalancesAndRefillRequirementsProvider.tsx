@@ -16,21 +16,20 @@ import {
   ONE_MINUTE_INTERVAL,
 } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { useMasterBalances } from '@/hooks';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { BalanceService } from '@/service/balances';
-import { Nullable, Optional } from '@/types/Util';
+import { Maybe, Nullable, Optional } from '@/types/Util';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
   balances: Optional<AddressBalanceRecord>;
   refillRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
-  getRefillRequirementsOf: (
-    chainId: EvmChainId,
-  ) => Optional<AddressBalanceRecord>;
+  getRefillRequirementsOf: (chainId: EvmChainId) => Maybe<AddressBalanceRecord>;
   totalRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
   agentFundingRequests: Optional<AddressBalanceRecord>;
   canStartAgent: boolean;
@@ -43,7 +42,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: false,
   balances: undefined,
   refillRequirements: undefined,
-  getRefillRequirementsOf: () => undefined,
+  getRefillRequirementsOf: () => null,
   totalRequirements: undefined,
   agentFundingRequests: undefined,
   canStartAgent: false,
@@ -55,10 +54,11 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
 export const BalancesAndRefillRequirementsProvider = ({
   children,
 }: PropsWithChildren) => {
-  const { isUserLoggedIn } = usePageState();
-  const { selectedService, selectedAgentConfig } = useServices();
-  const { isOnline } = useOnlineStatusContext();
   const queryClient = useQueryClient();
+  const { isOnline } = useOnlineStatusContext();
+  const { isUserLoggedIn } = usePageState();
+  const { isMasterEoaLowOnGas } = useMasterBalances();
+  const { selectedService, selectedAgentConfig } = useServices();
   const configId = selectedService?.service_config_id;
   const chainId = selectedAgentConfig.evmHomeChainId;
 
@@ -177,7 +177,9 @@ export const BalancesAndRefillRequirementsProvider = ({
         canStartAgent:
           balancesAndFundingRequirements?.allow_start_agent || false,
         isRefillRequired:
-          balancesAndFundingRequirements?.is_refill_required || false,
+          balancesAndFundingRequirements?.is_refill_required ||
+          isMasterEoaLowOnGas ||
+          false,
         refetch: refetch || null,
         resetQueryCache,
       }}

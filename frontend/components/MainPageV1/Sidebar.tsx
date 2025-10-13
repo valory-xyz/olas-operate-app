@@ -28,7 +28,6 @@ import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
   useBalanceAndRefillRequirementsContext,
-  useMasterBalances,
   useMasterWalletContext,
   usePageState,
   useServices,
@@ -66,13 +65,12 @@ const ResponsiveButton = styled(Button)`
 `;
 
 const PearlWalletLabel = () => {
-  const { isMasterEoaLowOnGas } = useMasterBalances();
   const { isRefillRequired } = useBalanceAndRefillRequirementsContext();
 
   return (
     <Flex>
       <Text>Pearl Wallet</Text>
-      {(isMasterEoaLowOnGas || isRefillRequired) && (
+      {isRefillRequired && (
         <Tag color="red" className="ml-8" bordered={false}>
           Low
         </Tag>
