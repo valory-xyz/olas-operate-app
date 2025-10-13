@@ -49,7 +49,7 @@ export const BridgeCompleted = ({
                 isBridgeCompleted
               />
               <Button
-                onClick={() => goto(Pages.ManageWallet)}
+                onClick={() => goto(Pages.PearlWallet)}
                 size="large"
                 className="self-center"
               >
