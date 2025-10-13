@@ -12,6 +12,7 @@ const { Title } = Typography;
 
 type BridgeCompletedProps = Omit<CrossChainTransferDetails, 'eta'> & {
   completionMessage?: string;
+  onComplete?: () => void;
 };
 
 /**
@@ -23,6 +24,7 @@ export const BridgeCompleted = ({
   toChain,
   transfers,
   completionMessage,
+  onComplete,
 }: BridgeCompletedProps) => {
   const { goto } = usePageState();
 
@@ -49,7 +51,7 @@ export const BridgeCompleted = ({
                 isBridgeCompleted
               />
               <Button
-                onClick={() => goto(Pages.PearlWallet)}
+                onClick={onComplete ?? (() => goto(Pages.PearlWallet))}
                 size="large"
                 className="self-center"
               >
