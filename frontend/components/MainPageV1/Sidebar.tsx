@@ -19,10 +19,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
-import {
-  ACTIVE_AGENTS,
-  ACTIVE_AGENTS_NOT_UNDER_CONSTRUCTION,
-} from '@/config/agents';
+import { ACTIVE_AGENTS, AVAILABLE_FOR_ADDING_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { AgentType } from '@/constants/agent';
 import { EvmChainId } from '@/constants/chains';
@@ -242,7 +239,7 @@ export const Sidebar = () => {
             />
           ) : null}
 
-          {myAgents.length < ACTIVE_AGENTS_NOT_UNDER_CONSTRUCTION.length && (
+          {myAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length && (
             <ResponsiveButton
               size="large"
               className="self-center w-max"
