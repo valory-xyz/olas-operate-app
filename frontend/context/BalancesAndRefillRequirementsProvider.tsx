@@ -3,6 +3,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { isEmpty } from 'lodash';
 import { createContext, PropsWithChildren, useCallback, useMemo } from 'react';
 
 import {
@@ -16,7 +17,7 @@ import {
   ONE_MINUTE_INTERVAL,
 } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
-import { useMasterBalances } from '@/hooks';
+import { useMasterBalances, useMasterWalletContext } from '@/hooks';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
@@ -57,6 +58,7 @@ export const BalancesAndRefillRequirementsProvider = ({
   const queryClient = useQueryClient();
   const { isOnline } = useOnlineStatusContext();
   const { isUserLoggedIn } = usePageState();
+  const { masterSafes } = useMasterWalletContext();
   const { isMasterEoaLowOnGas } = useMasterBalances();
   const { selectedService, selectedAgentConfig } = useServices();
   const configId = selectedService?.service_config_id;
@@ -165,6 +167,21 @@ export const BalancesAndRefillRequirementsProvider = ({
     };
   }, [queryClient, configId]);
 
+  const isRefillRequired = useMemo(() => {
+    // If master safes are empty, no service is set up, hence no refill is required.
+    if (isEmpty(masterSafes)) return false;
+
+    return (
+      balancesAndFundingRequirements?.is_refill_required ||
+      isMasterEoaLowOnGas ||
+      false
+    );
+  }, [
+    balancesAndFundingRequirements?.is_refill_required,
+    isMasterEoaLowOnGas,
+    masterSafes,
+  ]);
+
   return (
     <BalancesAndRefillRequirementsProviderContext.Provider
       value={{
@@ -176,10 +193,7 @@ export const BalancesAndRefillRequirementsProvider = ({
         agentFundingRequests,
         canStartAgent:
           balancesAndFundingRequirements?.allow_start_agent || false,
-        isRefillRequired:
-          balancesAndFundingRequirements?.is_refill_required ||
-          isMasterEoaLowOnGas ||
-          false,
+        isRefillRequired,
         refetch: refetch || null,
         resetQueryCache,
       }}
