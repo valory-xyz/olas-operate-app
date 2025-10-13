@@ -274,7 +274,7 @@ export const BridgeInProgress = ({
 
   const estimatedTimeInMinutes = useMemo(() => {
     const minutes = Math.floor((eta || 0) / 60);
-    return Math.max(0, minutes);
+    return Math.max(1, minutes);
   }, [eta]);
 
   return (

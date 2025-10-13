@@ -136,7 +136,10 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     useState<TokenBalanceRecord>({});
 
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
-    useAvailableAssets(walletChainId);
+    useAvailableAssets(walletChainId, {
+      // For deposit, we only want to show assets in the safe.
+      includeMasterEoa: walletStep !== STEPS.DEPOSIT,
+    });
   const masterSafeAddress = useMemo(
     () => getMasterSafeAddress(walletChainId, masterSafes),
     [masterSafes, walletChainId],
