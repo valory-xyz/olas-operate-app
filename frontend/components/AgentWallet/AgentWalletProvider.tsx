@@ -11,7 +11,6 @@ import {
 import { TokenBalanceRecord } from '@/client';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { EvmChainId } from '@/constants/chains';
-import { TokenSymbol } from '@/constants/token';
 import {
   useBalanceContext,
   useRewardContext,
@@ -35,7 +34,6 @@ const AgentWalletContext = createContext<{
   agentImgSrc: Nullable<string>;
   stakingRewards: number;
   availableAssets: AvailableAsset[];
-  amountsToWithdraw: Partial<Record<TokenSymbol, number>>;
   fundInitialValues: Optional<TokenBalanceRecord>;
   setFundInitialValues: (values: TokenBalanceRecord) => void;
 }>({
@@ -48,7 +46,6 @@ const AgentWalletContext = createContext<{
   agentImgSrc: null,
   stakingRewards: 0,
   availableAssets: [],
-  amountsToWithdraw: {},
   fundInitialValues: {},
   setFundInitialValues: () => {},
 });
@@ -121,9 +118,6 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
         // Initial values for funding agent wallet
         fundInitialValues,
         setFundInitialValues,
-
-        // TODO: withdraw ticket
-        amountsToWithdraw: {},
       }}
     >
       {children}

@@ -4,11 +4,11 @@ import Image from 'next/image';
 import { useEffect } from 'react';
 
 import { AgentNft } from '@/components/AgentNft';
-import { CardFlex } from '@/components/ui/CardFlex';
-import { Segmented } from '@/components/ui/Segmented';
+import { CardFlex, Segmented } from '@/components/ui';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
+import { LowPearlWalletBalanceAlert } from './LowPearlWalletBalanceAlert';
 import { StakedAssetsTable } from './StakedAssetsTable';
 
 const { Text, Title } = Typography;
@@ -71,14 +71,17 @@ export const BalancesAndAssets = ({
   return (
     <Flex vertical gap={32}>
       <CardFlex $noBorder>
-        <Flex justify="space-between" align="end" gap={40}>
-          <PearlWalletTitle />
-          <Flex gap={8}>
-            <Button onClick={onWithdraw}>Withdraw</Button>
-            <Button onClick={onDeposit} type="primary">
-              Deposit
-            </Button>
+        <Flex vertical>
+          <Flex justify="space-between" align="end" gap={40}>
+            <PearlWalletTitle />
+            <Flex gap={8}>
+              <Button onClick={onWithdraw}>Withdraw</Button>
+              <Button onClick={onDeposit} type="primary">
+                Deposit
+              </Button>
+            </Flex>
           </Flex>
+          <LowPearlWalletBalanceAlert />
         </Flex>
       </CardFlex>
 

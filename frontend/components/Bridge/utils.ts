@@ -1,5 +1,6 @@
 import { ChainTokenConfig } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
+import { TokenSymbol } from '@/enums';
 import { Address } from '@/types/Address';
 import { areAddressesEqual } from '@/utils/address';
 
@@ -16,7 +17,7 @@ export const getTokenDetails = (
       (configToken) => configToken.tokenType === 'native',
     );
     return {
-      symbol: nativeToken?.symbol ?? 'ETH',
+      symbol: (nativeToken?.symbol ?? 'ETH') as TokenSymbol,
       decimals: nativeToken?.decimals ?? 18,
     };
   }
