@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
+import { COLOR } from '@/constants';
 import {
   PEARL_LICENSE,
   PEARL_URL,
@@ -26,13 +27,13 @@ const TermsContainer = styled(Flex)`
   margin: auto;
   position: relative;
   z-index: 1;
-  background-color: #ffffff;
+  background-color: ${COLOR.WHITE};
   padding: 24px;
   border-radius: 8px;
 `;
 
 const TermsWrapper = styled.div`
-  background-color: #ffffff;
+  background-color: ${COLOR.WHITE};
   min-height: 100vh;
   width: 100vw;
   position: fixed;
