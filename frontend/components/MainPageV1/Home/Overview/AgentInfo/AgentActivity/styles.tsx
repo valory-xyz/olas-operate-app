@@ -38,52 +38,6 @@ export const Container = styled.div<{
   ${({ $status }) => getContainerStylesByStatus($status)}
 `;
 
-const getTopCornerStylesByStatus = (status: AgentStatus) => {
-  switch (status) {
-    case 'loading':
-    case 'activity-not-ready':
-      return `background: ${COLOR.PURPLE_LIGHT_2};`;
-    case 'running':
-      return `background: ${COLOR.PURPLE_LIGHT_3};`;
-    case 'idle':
-      return `background: ${COLOR.BG.SUCCESS.DEFAULT};`;
-    default:
-      return `background: ${COLOR.GRAY_4};`;
-  }
-};
-
-const getTopCornerStylesByPosition = (position: 'left' | 'right') =>
-  position === 'left'
-    ? `left: -${CARD_MARGIN - 1}px;`
-    : `right: -${CARD_MARGIN - 1}px;`;
-
-const getTopCornerAfterStylesByPosition = (position: 'left' | 'right') =>
-  position === 'left'
-    ? `left: 0; border-radius: 0 0 0 20px;`
-    : `right: 0; border-radius: 0 0 20px 0;`;
-
-export const TopCorner = styled.div<{
-  $position: 'left' | 'right';
-  $status: AgentStatus;
-}>`
-  position: absolute;
-  bottom: ${LINE_HEIGHT / 2}px;
-  height: ${CARD_MARGIN}px;
-  width: ${CARD_MARGIN}px;
-  ${({ $status }) => getTopCornerStylesByStatus($status)}
-  ${({ $position }) => getTopCornerStylesByPosition($position)}
-
-  &:after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    height: ${CARD_MARGIN}px;
-    width: ${CARD_MARGIN}px;
-    background: ${COLOR.WHITE};
-    ${({ $position }) => getTopCornerAfterStylesByPosition($position)}
-  }
-`;
-
 /**
  * Text styles
  */
@@ -114,6 +68,5 @@ const getTextStylesByStatus = (status: AgentStatus) => {
 export const Text = styled.span<{ $status: AgentStatus }>`
   position: relative;
   z-index: 1;
-  }
   ${({ $status }) => getTextStylesByStatus($status)}
 `;
