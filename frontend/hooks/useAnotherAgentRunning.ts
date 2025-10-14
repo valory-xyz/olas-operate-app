@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { FIVE_SECONDS_INTERVAL } from '@/constants';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { ServicesService } from '@/service/Services';
@@ -13,7 +14,7 @@ export const useAnotherAgentRunning = () => {
   const { data: allDeployments } = useQuery({
     queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
     queryFn: ({ signal }) => ServicesService.getAllServiceDeployments(signal),
-    refetchInterval: 5000,
+    refetchInterval: FIVE_SECONDS_INTERVAL,
   });
 
   const isAnotherAgentRunning = useMemo(() => {
@@ -27,7 +28,10 @@ export const useAnotherAgentRunning = () => {
 
     return otherServices.some((service) => {
       const deployment = allDeployments[service.service_config_id];
-      return deployment?.status === MiddlewareDeploymentStatusMap.DEPLOYED;
+      return (
+        deployment?.status === MiddlewareDeploymentStatusMap.DEPLOYING ||
+        deployment?.status === MiddlewareDeploymentStatusMap.STOPPING
+      );
     });
   }, [services, selectedService, allDeployments]);
 
