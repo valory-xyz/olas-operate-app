@@ -31,7 +31,7 @@ import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
 import { BalanceService } from '@/service/balances';
 import { Maybe, Nullable, Optional } from '@/types/Util';
-import { getExponentialInterval } from '@/utils';
+import { BACKOFF_STEPS, getExponentialInterval } from '@/utils';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
@@ -118,7 +118,10 @@ const useRequirementsFetchInterval = ({
 
     // Update backoff counter
     if (isServiceRunning && !isEligibleForRewards) {
-      refetchCountRef.current = Math.min(refetchCountRef.current + 1, 4);
+      refetchCountRef.current = Math.min(
+        refetchCountRef.current + 1,
+        BACKOFF_STEPS - 1,
+      );
     } else {
       refetchCountRef.current = 0;
     }
