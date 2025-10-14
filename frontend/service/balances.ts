@@ -1,8 +1,8 @@
+import { compact } from 'lodash';
+
 import { BalancesAndFundingRequirements } from '@/client';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL_V2 } from '@/constants/urls';
-
-// import mockResponse from './balances.json';
 
 type GetBalancesAndFundingRequirementsParams = {
   serviceConfigId: string;
@@ -10,16 +10,12 @@ type GetBalancesAndFundingRequirementsParams = {
 };
 
 /**
- * API call to get balances and funding requirements
+ * Fetch balances and funding requirements for a specific service config ID
  */
 const getBalancesAndFundingRequirements = async ({
   serviceConfigId,
   signal,
 }: GetBalancesAndFundingRequirementsParams): Promise<BalancesAndFundingRequirements> => {
-  // return Promise.resolve(
-  //   mockResponse as unknown as BalancesAndFundingRequirements,
-  // );
-
   return fetch(
     `${BACKEND_URL_V2}/service/${serviceConfigId}/funding_requirements`,
     {
@@ -37,7 +33,12 @@ const getBalancesAndFundingRequirements = async ({
   });
 };
 
-// In your BalanceService
+/**
+ * Fetch balances and funding requirements for multiple service config IDs in parallel
+ *
+ * @returns
+ * { [serviceConfigId]: BalancesAndFundingRequirements  }
+ */
 const getAllBalancesAndFundingRequirements = async ({
   serviceConfigIds,
   signal,
@@ -51,16 +52,13 @@ const getAllBalancesAndFundingRequirements = async ({
     ),
   );
 
-  const validEntries = results
-    .map((result, index) =>
+  const validEntries = compact(
+    results.map((result, index) =>
       result.status === 'fulfilled'
         ? ([serviceConfigIds[index], result.value] as const)
         : null,
-    )
-    .filter(
-      (entry): entry is readonly [string, BalancesAndFundingRequirements] =>
-        entry !== null,
-    );
+    ),
+  );
 
   return Object.fromEntries(validEntries);
 };

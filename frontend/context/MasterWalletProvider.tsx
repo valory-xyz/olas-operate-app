@@ -92,7 +92,6 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
     [masterWallets],
   );
 
-  // master safes of all chains
   const masterSafes = useMemo(
     () =>
       masterWallets?.filter(
