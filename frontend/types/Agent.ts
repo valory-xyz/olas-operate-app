@@ -44,6 +44,7 @@ export type AgentConfig = {
    * Used for agent performance until latest value is provided by agent
    */
   defaultBehavior?: string;
+  servicePublicId: string;
 };
 
 export type AgentHealthCheckResponse = {

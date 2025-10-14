@@ -54,8 +54,11 @@ const getFormattedTokensList = (
  */
 export const useAgentFundingRequests = () => {
   const { selectedAgentConfig } = useServices();
-  const { agentFundingRequests, isBalancesAndFundingRequirementsLoading } =
-    useBalanceAndRefillRequirementsContext();
+  const {
+    agentFundingRequests,
+    isBalancesAndFundingRequirementsLoading,
+    isAgentFundingRequestsStale,
+  } = useBalanceAndRefillRequirementsContext();
 
   /**
    * Merges amounts for the same token address by summing their BigInt values.
@@ -63,6 +66,7 @@ export const useAgentFundingRequests = () => {
    * */
   const agentTokenRequirements = useMemo(() => {
     if (!agentFundingRequests) return null;
+    if (isAgentFundingRequestsStale) return null;
     return Object.values(agentFundingRequests).reduce(
       (allBalanceRecords, balanceRecord) => {
         Object.entries(balanceRecord).forEach(
@@ -78,7 +82,7 @@ export const useAgentFundingRequests = () => {
       },
       {} as TokenBalanceRecord,
     );
-  }, [agentFundingRequests]);
+  }, [agentFundingRequests, isAgentFundingRequestsStale]);
 
   // Formatted string of the merged token requirements.
   const agentTokenRequirementsFormatted = useMemo(() => {

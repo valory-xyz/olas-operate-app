@@ -1,6 +1,7 @@
 export * from './abi';
 export * from './address';
 export * from './agentName';
+export * from './backoff';
 export * from './calculations';
 export * from './copyToClipboard';
 export * from './dateFormatter';

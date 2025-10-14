@@ -22,7 +22,7 @@ export const useStakingRewardsOf = (chainId: EvmChainId) => {
   );
 
   // Find an active agent for the given chainId.
-  // NOTE: the logic needs to be updated once multiple agent in single chain is supported
+  // TODO: the logic needs to be updated once multiple agent in single chain is supported
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) => agentConfig.evmHomeChainId === chainId,
   );

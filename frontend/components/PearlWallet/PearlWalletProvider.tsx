@@ -49,7 +49,6 @@ const getMasterSafeAddress = (
 
 /**
  * Get the list of chains from the middleware services.
- * @warning to add support for multiple agents on the same chain
  */
 const getChainList = (services?: MiddlewareServiceResponse[]) => {
   if (!services) return [];
@@ -57,6 +56,7 @@ const getChainList = (services?: MiddlewareServiceResponse[]) => {
     services.map((service) => {
       const agent = ACTIVE_AGENTS.find(
         ([, agentConfig]) =>
+          agentConfig.servicePublicId === service.service_public_id &&
           agentConfig.middlewareHomeChainId === service.home_chain,
       );
       if (!agent) return null;

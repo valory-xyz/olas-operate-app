@@ -6,10 +6,10 @@ import { ChainTokenConfig, TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { TokenSymbolConfigMap, TokenSymbolMap } from '@/constants/token';
+import { useServices } from '@/hooks';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
-import { AgentConfig } from '@/types/Agent';
 import { bigintMax } from '@/utils/calculations';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
@@ -58,11 +58,6 @@ const getTokensDetailsForFunding = (
     .filter(Boolean) as TokenRequirement[];
 
   return currentTokenRequirements.sort((a, b) => b.amount - a.amount);
-};
-
-type UseGetRefillRequirementsWithMonthlyGasProps = {
-  selectedAgentConfig: AgentConfig;
-  shouldCreateDummyService?: boolean;
 };
 
 type UseGetRefillRequirementsWithMonthlyGasReturn = {
@@ -114,10 +109,9 @@ type UseGetRefillRequirementsWithMonthlyGasReturn = {
  *   isLoading: false
  * }
  */
-export const useGetRefillRequirementsWithMonthlyGas = ({
-  selectedAgentConfig,
-  shouldCreateDummyService = false,
-}: UseGetRefillRequirementsWithMonthlyGasProps): UseGetRefillRequirementsWithMonthlyGasReturn => {
+export const useGetRefillRequirementsWithMonthlyGas = (
+  shouldCreateDummyService?: boolean,
+): UseGetRefillRequirementsWithMonthlyGasReturn => {
   const updateBeforeBridgingFunds = useBeforeBridgeFunds();
   const {
     totalRequirements,
@@ -128,6 +122,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     isBalancesAndFundingRequirementsLoading,
   } = useBalanceAndRefillRequirementsContext();
   const { masterEoa, masterSafes } = useMasterWalletContext();
+  const { selectedAgentConfig, selectedAgentType } = useServices();
 
   const [initialTokenRequirements, setInitialTokenRequirements] = useState<
     TokenRequirement[] | null
@@ -166,7 +161,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
       // monthly_gas_estimate
       const monthlyGasEstimate = BigInt(
         SERVICE_TEMPLATES.find(
-          (template) => template.home_chain === middlewareHomeChainId,
+          (template) => template.agentType === selectedAgentType,
         )?.configurations[middlewareHomeChainId]?.monthly_gas_estimate ?? 0,
       );
 
@@ -215,6 +210,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
       masterEoa,
       masterSafe,
       selectedAgentConfig,
+      selectedAgentType,
     ],
   );
 
