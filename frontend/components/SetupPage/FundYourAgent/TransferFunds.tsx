@@ -36,13 +36,9 @@ export const TransferFunds = () => {
   const { goto: gotoSetup } = useSetup();
 
   const { selectedAgentConfig } = useServices();
-  const { isFullyFunded, tokensFundingStatus } = useTokensFundingStatus({
-    selectedAgentConfig,
-  });
+  const { isFullyFunded, tokensFundingStatus } = useTokensFundingStatus();
   const { initialTokenRequirements, isLoading } =
-    useGetRefillRequirementsWithMonthlyGas({
-      selectedAgentConfig,
-    });
+    useGetRefillRequirementsWithMonthlyGas();
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,

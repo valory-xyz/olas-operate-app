@@ -167,6 +167,7 @@ export const Sidebar = () => {
     return services.reduce<AgentList>((result, service) => {
       const agent = ACTIVE_AGENTS.find(
         ([, agentConfig]) =>
+          agentConfig.servicePublicId === service.service_public_id &&
           agentConfig.middlewareHomeChainId === service.home_chain,
       );
       if (!agent) return result;
