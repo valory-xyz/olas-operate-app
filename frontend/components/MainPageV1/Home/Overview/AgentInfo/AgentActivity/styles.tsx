@@ -4,9 +4,6 @@ import { COLOR } from '@/constants/colors';
 
 import { AgentStatus } from './types';
 
-const LINE_HEIGHT = 46;
-const CARD_MARGIN = 24;
-
 /**
  * Container and corners styles
  */
@@ -25,16 +22,26 @@ const getContainerStylesByStatus = (status: AgentStatus) => {
   }
 };
 
+// This goes behind the agent info card.
+const NEGATIVE_MARGIN = 10;
+
 export const Container = styled.div<{
   $status: AgentStatus;
 }>`
   display: flex;
-  margin: ${CARD_MARGIN}px -${CARD_MARGIN - 1}px -${CARD_MARGIN - 1}px;
-  padding: 12px;
-  height: ${LINE_HEIGHT}px;
+  padding: calc(${NEGATIVE_MARGIN}px + 12px) 12px 12px 12px;
+  margin-top: -${NEGATIVE_MARGIN}px;
+  height: 56px;
   overflow: hidden;
   border-bottom-right-radius: 16px;
   border-bottom-left-radius: 16px;
+  border: 1px solid ${COLOR.WHITE};
+  box-shadow:
+    0 74px 21px 0 rgba(170, 193, 203, 0),
+    0 47px 19px 0 rgba(170, 193, 203, 0.01),
+    0 26px 16px 0 rgba(170, 193, 203, 0.05),
+    0 12px 12px 0 rgba(170, 193, 203, 0.09),
+    0 3px 6px 0 rgba(170, 193, 203, 0.1);
   ${({ $status }) => getContainerStylesByStatus($status)}
 `;
 
