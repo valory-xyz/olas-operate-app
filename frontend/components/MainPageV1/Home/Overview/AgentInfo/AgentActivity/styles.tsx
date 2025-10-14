@@ -4,9 +4,6 @@ import { COLOR } from '@/constants/colors';
 
 import { AgentStatus } from './types';
 
-const LINE_HEIGHT = 46;
-const CARD_MARGIN = 24;
-
 /**
  * Container and corners styles
  */
@@ -25,63 +22,27 @@ const getContainerStylesByStatus = (status: AgentStatus) => {
   }
 };
 
+// This goes behind the agent info card.
+const NEGATIVE_MARGIN = 10;
+
 export const Container = styled.div<{
   $status: AgentStatus;
 }>`
   display: flex;
-  margin: ${CARD_MARGIN}px -${CARD_MARGIN - 1}px -${CARD_MARGIN - 1}px;
-  padding: 12px;
-  height: ${LINE_HEIGHT}px;
+  padding: calc(${NEGATIVE_MARGIN}px + 12px) 12px 12px 12px;
+  margin-top: -${NEGATIVE_MARGIN}px;
+  height: 56px;
   overflow: hidden;
   border-bottom-right-radius: 16px;
   border-bottom-left-radius: 16px;
+  border: 1px solid ${COLOR.WHITE};
+  box-shadow:
+    0 74px 21px 0 rgba(170, 193, 203, 0),
+    0 47px 19px 0 rgba(170, 193, 203, 0.01),
+    0 26px 16px 0 rgba(170, 193, 203, 0.05),
+    0 12px 12px 0 rgba(170, 193, 203, 0.09),
+    0 3px 6px 0 rgba(170, 193, 203, 0.1);
   ${({ $status }) => getContainerStylesByStatus($status)}
-`;
-
-const getTopCornerStylesByStatus = (status: AgentStatus) => {
-  switch (status) {
-    case 'loading':
-    case 'activity-not-ready':
-      return `background: ${COLOR.PURPLE_LIGHT_2};`;
-    case 'running':
-      return `background: ${COLOR.PURPLE_LIGHT_3};`;
-    case 'idle':
-      return `background: ${COLOR.BG.SUCCESS.DEFAULT};`;
-    default:
-      return `background: ${COLOR.GRAY_4};`;
-  }
-};
-
-const getTopCornerStylesByPosition = (position: 'left' | 'right') =>
-  position === 'left'
-    ? `left: -${CARD_MARGIN - 1}px;`
-    : `right: -${CARD_MARGIN - 1}px;`;
-
-const getTopCornerAfterStylesByPosition = (position: 'left' | 'right') =>
-  position === 'left'
-    ? `left: 0; border-radius: 0 0 0 20px;`
-    : `right: 0; border-radius: 0 0 20px 0;`;
-
-export const TopCorner = styled.div<{
-  $position: 'left' | 'right';
-  $status: AgentStatus;
-}>`
-  position: absolute;
-  bottom: ${LINE_HEIGHT / 2}px;
-  height: ${CARD_MARGIN}px;
-  width: ${CARD_MARGIN}px;
-  ${({ $status }) => getTopCornerStylesByStatus($status)}
-  ${({ $position }) => getTopCornerStylesByPosition($position)}
-
-  &:after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    height: ${CARD_MARGIN}px;
-    width: ${CARD_MARGIN}px;
-    background: ${COLOR.WHITE};
-    ${({ $position }) => getTopCornerAfterStylesByPosition($position)}
-  }
 `;
 
 /**
@@ -114,6 +75,5 @@ const getTextStylesByStatus = (status: AgentStatus) => {
 export const Text = styled.span<{ $status: AgentStatus }>`
   position: relative;
   z-index: 1;
-  }
   ${({ $status }) => getTextStylesByStatus($status)}
 `;

@@ -11,7 +11,7 @@ import { useAgentActivity } from '@/hooks/useAgentActivity';
 import { useRewardContext } from '@/hooks/useRewardContext';
 
 import { AgentActivityModal } from './AgentActivityModal';
-import { Container, Text, TopCorner } from './styles';
+import { Container, Text } from './styles';
 import { AgentStatus } from './types';
 
 const { Paragraph } = Typography;
@@ -129,8 +129,6 @@ export const AgentActivity = () => {
           showModal();
         }}
       >
-        <TopCorner $position="left" $status={activityInfo.status} />
-        <TopCorner $position="right" $status={activityInfo.status} />
         <Text $status={activityInfo.status} className="w-full text-center">
           {activityInfo.content}
         </Text>

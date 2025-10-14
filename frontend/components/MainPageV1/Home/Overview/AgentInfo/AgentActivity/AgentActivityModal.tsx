@@ -22,6 +22,8 @@ type AgentActivityModalProps = {
 const ModalCollapseItem = styled(Collapse)`
   background: none;
   font-size: 14px;
+  max-height: 400px;
+  overflow-y: auto;
 
   .ant-collapse-header {
     padding: 12px 0 !important;
