@@ -149,14 +149,18 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!masterSafeAddress) return;
 
-    const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
-      walletChainId,
-      masterSafeAddress,
-      getRefillRequirementsOf,
-    );
+    setTimeout(() => {
+      const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
+        walletChainId,
+        masterSafeAddress,
+        getRefillRequirementsOf,
+      );
 
-    setDefaultDepositValues(defaultRequirementDepositValues ?? {});
-    setAmountsToDeposit(defaultRequirementDepositValues ?? {});
+      if (!defaultRequirementDepositValues) return;
+
+      setDefaultDepositValues(defaultRequirementDepositValues);
+      setAmountsToDeposit(defaultRequirementDepositValues);
+    }, 100);
   }, [getRefillRequirementsOf, walletChainId, masterSafeAddress]);
 
   const agent = ACTIVE_AGENTS.find(
@@ -202,6 +206,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
 
   const onReset = useCallback((canNavigateOnReset?: boolean) => {
     setAmountsToWithdraw({});
+    setAmountsToDeposit({});
+    setDefaultDepositValues({});
 
     if (canNavigateOnReset) {
       setWalletStep(STEPS.PEARL_WALLET_SCREEN);
