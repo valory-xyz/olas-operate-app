@@ -59,6 +59,7 @@ export const AGENT_CONFIG: {
     category: 'Prediction Markets',
     defaultBehavior:
       'Adopting a conservative strategy with small, high-confidence bets.',
+    servicePublicId: 'valory/trader_pearl:0.1.0',
   },
   [AgentMap.Optimus]: {
     isAgentEnabled: true,
@@ -82,6 +83,7 @@ export const AGENT_CONFIG: {
     category: 'DeFi',
     defaultBehavior:
       'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
+    servicePublicId: 'valory/optimus:0.1.0',
   },
   [AgentMap.AgentsFun]: {
     isAgentEnabled: true,
@@ -101,6 +103,7 @@ export const AGENT_CONFIG: {
     hasExternalFunds: false,
     hasChatUI: false,
     defaultBehavior: '',
+    servicePublicId: 'dvilela/memeooorr/0.1.0',
   },
   [AgentMap.Modius]: {
     isAgentEnabled: true,
@@ -125,6 +128,7 @@ export const AGENT_CONFIG: {
     category: 'DeFi',
     defaultBehavior:
       'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
+    servicePublicId: 'valory/optimus:0.1.0',
   },
 };
 
