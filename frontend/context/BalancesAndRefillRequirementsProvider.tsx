@@ -17,7 +17,7 @@ import {
   ONE_MINUTE_INTERVAL,
 } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
-import { useMasterBalances, useMasterWalletContext } from '@/hooks';
+import { useMasterWalletContext } from '@/hooks';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
@@ -34,7 +34,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   totalRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
   agentFundingRequests: Optional<AddressBalanceRecord>;
   canStartAgent: boolean;
-  isRefillRequired: boolean;
+  isPearlWalletRefillRequired: boolean;
   refetch: Nullable<
     () => Promise<QueryObserverResult<BalancesAndFundingRequirements, Error>>
   >;
@@ -47,7 +47,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   totalRequirements: undefined,
   agentFundingRequests: undefined,
   canStartAgent: false,
-  isRefillRequired: false,
+  isPearlWalletRefillRequired: false,
   refetch: null,
   resetQueryCache: null,
 });
@@ -59,7 +59,6 @@ export const BalancesAndRefillRequirementsProvider = ({
   const { isOnline } = useOnlineStatusContext();
   const { isUserLoggedIn } = usePageState();
   const { masterSafes } = useMasterWalletContext();
-  const { isMasterEoaLowOnGas } = useMasterBalances();
   const { selectedService, selectedAgentConfig } = useServices();
   const configId = selectedService?.service_config_id;
   const chainId = selectedAgentConfig.evmHomeChainId;
@@ -167,20 +166,12 @@ export const BalancesAndRefillRequirementsProvider = ({
     };
   }, [queryClient, configId]);
 
-  const isRefillRequired = useMemo(() => {
+  const isPearlWalletRefillRequired = useMemo(() => {
     // If master safes are empty, no service is set up, hence no refill is required.
     if (isEmpty(masterSafes)) return false;
 
-    return (
-      balancesAndFundingRequirements?.is_refill_required ||
-      isMasterEoaLowOnGas ||
-      false
-    );
-  }, [
-    balancesAndFundingRequirements?.is_refill_required,
-    isMasterEoaLowOnGas,
-    masterSafes,
-  ]);
+    return balancesAndFundingRequirements?.is_refill_required || false;
+  }, [balancesAndFundingRequirements?.is_refill_required, masterSafes]);
 
   return (
     <BalancesAndRefillRequirementsProviderContext.Provider
@@ -193,7 +184,7 @@ export const BalancesAndRefillRequirementsProvider = ({
         agentFundingRequests,
         canStartAgent:
           balancesAndFundingRequirements?.allow_start_agent || false,
-        isRefillRequired,
+        isPearlWalletRefillRequired,
         refetch: refetch || null,
         resetQueryCache,
       }}

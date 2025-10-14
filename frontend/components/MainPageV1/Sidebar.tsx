@@ -65,12 +65,13 @@ const ResponsiveButton = styled(Button)`
 `;
 
 const PearlWalletLabel = () => {
-  const { isRefillRequired } = useBalanceAndRefillRequirementsContext();
+  const { isPearlWalletRefillRequired } =
+    useBalanceAndRefillRequirementsContext();
 
   return (
     <Flex>
       <Text>Pearl Wallet</Text>
-      {isRefillRequired && (
+      {isPearlWalletRefillRequired && (
         <Tag color="red" className="ml-8" bordered={false}>
           Low
         </Tag>

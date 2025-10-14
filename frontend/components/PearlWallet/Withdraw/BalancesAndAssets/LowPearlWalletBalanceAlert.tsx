@@ -17,11 +17,11 @@ const { Text } = Typography;
 
 export const LowPearlWalletBalanceAlert = () => {
   const { chains } = usePearlWallet();
-  const { isRefillRequired, getRefillRequirementsOf } =
+  const { isPearlWalletRefillRequired, getRefillRequirementsOf } =
     useBalanceAndRefillRequirementsContext();
   const { getMasterSafeOf } = useMasterWalletContext();
 
-  if (!isRefillRequired) return null;
+  if (!isPearlWalletRefillRequired) return null;
 
   return (
     <CustomAlert
