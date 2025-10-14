@@ -167,6 +167,22 @@ const stopDeployment = async (
   });
 
 /**
+ * Gets deployment of all services
+ */
+
+const getAllServiceDeployments = async (
+  signal?: AbortSignal,
+): Promise<Record<ServiceConfigId, Deployment>> =>
+  fetch(`${BACKEND_URL_V2}/services/deployments`, {
+    method: 'GET',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    signal,
+  }).then((response) => {
+    if (response.ok) return response.json();
+    throw new Error('Failed to fetch all service deployments');
+  });
+
+/**
  * To get the deployment of a service
  */
 const getDeployment = async ({
@@ -233,6 +249,7 @@ export const ServicesService = {
   getService,
   getServices,
   getServicesValidationStatus,
+  getAllServiceDeployments,
   getDeployment,
   startService,
   createService,
