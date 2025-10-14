@@ -26,9 +26,10 @@ import { OnlineStatusContext } from './OnlineStatusProvider';
 
 type MasterWalletContext = {
   masterEoa?: MasterEoa;
-  /** Get the master safe for a specific chain ID */
+  /** master safes of all chains */
   masterSafes?: MasterSafe[];
   masterWallets?: MasterWallet[];
+  /** Get the master safe for a specific chain ID */
   getMasterSafeOf?: (chainId: EvmChainId) => MasterSafe | undefined;
 } & Partial<QueryObserverBaseResult<MasterWallet[]>>;
 
