@@ -192,7 +192,7 @@ export const BalancesAndRefillRequirementsProvider = ({
         signal,
       }),
     enabled: !!services?.length && isUserLoggedIn && isOnline,
-    refetchInterval: THIRTY_SECONDS_INTERVAL,
+    refetchInterval,
   });
 
   const balances = useMemo(() => {

@@ -149,19 +149,16 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!masterSafeAddress) return;
 
-    // Delay to ensure that we set the default values after resetting the amounts
-    setTimeout(() => {
-      const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
-        walletChainId,
-        masterSafeAddress,
-        getRefillRequirementsOf,
-      );
+    const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
+      walletChainId,
+      masterSafeAddress,
+      getRefillRequirementsOf,
+    );
 
-      if (!defaultRequirementDepositValues) return;
+    if (!defaultRequirementDepositValues) return;
 
-      setDefaultDepositValues(defaultRequirementDepositValues);
-      setAmountsToDeposit(defaultRequirementDepositValues);
-    }, 100);
+    setDefaultDepositValues(defaultRequirementDepositValues);
+    setAmountsToDeposit(defaultRequirementDepositValues);
   }, [getRefillRequirementsOf, walletChainId, masterSafeAddress]);
 
   const agent = ACTIVE_AGENTS.find(
