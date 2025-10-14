@@ -57,7 +57,7 @@ export const useAgentFundingRequests = () => {
   const {
     agentFundingRequests,
     isBalancesAndFundingRequirementsLoading,
-    isAgentFundingRequestsUnreliable,
+    isAgentFundingRequestsStale,
   } = useBalanceAndRefillRequirementsContext();
 
   /**
@@ -66,7 +66,7 @@ export const useAgentFundingRequests = () => {
    * */
   const agentTokenRequirements = useMemo(() => {
     if (!agentFundingRequests) return null;
-    if (isAgentFundingRequestsUnreliable) return null;
+    if (isAgentFundingRequestsStale) return null;
     return Object.values(agentFundingRequests).reduce(
       (allBalanceRecords, balanceRecord) => {
         Object.entries(balanceRecord).forEach(
@@ -82,7 +82,7 @@ export const useAgentFundingRequests = () => {
       },
       {} as TokenBalanceRecord,
     );
-  }, [agentFundingRequests, isAgentFundingRequestsUnreliable]);
+  }, [agentFundingRequests, isAgentFundingRequestsStale]);
 
   // Formatted string of the merged token requirements.
   const agentTokenRequirementsFormatted = useMemo(() => {

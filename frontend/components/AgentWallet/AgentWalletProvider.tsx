@@ -75,6 +75,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
 
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) =>
+      agentConfig.servicePublicId === selectedService?.service_public_id &&
       agentConfig.middlewareHomeChainId === selectedService?.home_chain,
   );
   const agentType = agent ? agent[0] : null;

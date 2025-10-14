@@ -65,12 +65,13 @@ const ResponsiveButton = styled(Button)`
 `;
 
 const PearlWalletLabel = () => {
-  const { isRefillRequired } = useBalanceAndRefillRequirementsContext();
+  const { isPearlWalletRefillRequired } =
+    useBalanceAndRefillRequirementsContext();
 
   return (
     <Flex>
       <Text>Pearl Wallet</Text>
-      {isRefillRequired && (
+      {isPearlWalletRefillRequired && (
         <Tag color="red" className="ml-8" bordered={false}>
           Low
         </Tag>
@@ -166,6 +167,7 @@ export const Sidebar = () => {
     return services.reduce<AgentList>((result, service) => {
       const agent = ACTIVE_AGENTS.find(
         ([, agentConfig]) =>
+          agentConfig.servicePublicId === service.service_public_id &&
           agentConfig.middlewareHomeChainId === service.home_chain,
       );
       if (!agent) return result;

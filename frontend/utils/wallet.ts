@@ -13,7 +13,7 @@ export function tokenBalancesToSentence(tokenAmounts: TokenAmounts): string {
   if (entries.length === 0) return '';
 
   const formatted = entries.map(
-    ([symbol, amount]) => `${formatNumber(amount)} ${symbol}`,
+    ([symbol, amount]) => `${formatNumber(amount, 4)} ${symbol}`,
   );
 
   if (formatted.length === 1) return formatted[0];
