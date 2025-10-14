@@ -79,6 +79,7 @@ export const useService = (serviceConfigId?: string) => {
     return service?.chain_configs?.[service?.home_chain]?.chain_data.token;
   }, [service?.chain_configs, service?.home_chain]);
 
+  // TODO: update this logic to support multiple agents per chain
   const getServiceWalletsOf = useCallback(
     (chainId: EvmChainId): AgentWallet[] => {
       const chainName = asMiddlewareChain(chainId);
