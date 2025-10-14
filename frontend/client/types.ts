@@ -64,6 +64,21 @@ type EnvVariableAttributes = {
 };
 
 export type MiddlewareServiceResponse = {
+  /**
+   * Addresses agent's uniqueness, eg: optimus, trader, etc.
+   * It is unique per chain, but can have the same value if the same agent
+   * (with different config) is used across different chains. For eg: Optimus and Modius
+   * have the same service_public_id.
+   * In order to define an agent uniqueneess, we should check for the combination of
+   * service_public_id and home_chain. As no two agents would have the same values for these fields.
+   */
+  service_public_id: string;
+  /**
+   * Addresses config's uniqueness.
+   * The same agent can have different configs, and so this field will have different values.
+   * eg: Optimus and Modius are the same agents (as per the logic/code), but their configs would
+   * be different, hence they will have difference values of service_config_id
+   */
   service_config_id: string; // TODO: update with uuid once middleware integrated
   version: number;
   name: string;
