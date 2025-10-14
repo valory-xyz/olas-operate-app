@@ -1,7 +1,8 @@
 import { Button, Flex, Select, Typography } from 'antd';
-import { kebabCase, values } from 'lodash';
+import { isEmpty, kebabCase, values } from 'lodash';
 import Image from 'next/image';
 
+import { CustomAlert } from '@/components/Alert';
 import {
   BackButton,
   CardFlex,
@@ -9,6 +10,11 @@ import {
   TokenAmountInput,
   WalletTransferDirection,
 } from '@/components/ui';
+import {
+  asEvmChainDetails,
+  asMiddlewareChain,
+  tokenBalancesToSentence,
+} from '@/utils';
 
 import { usePearlWallet } from '../PearlWalletProvider';
 
@@ -22,6 +28,33 @@ const DepositTitle = () => (
     <Text>Enter the token amounts you want to deposit.</Text>
   </Flex>
 );
+
+const LowPearlWalletBalanceAlertForCurrentChain = () => {
+  const { walletChainId, defaultRequirementDepositValues } = usePearlWallet();
+
+  if (!walletChainId || isEmpty(defaultRequirementDepositValues)) return null;
+
+  return (
+    <CustomAlert
+      type="error"
+      showIcon
+      message={
+        <Flex vertical gap={4}>
+          <Text className="text-sm font-weight-500">
+            Low Pearl Wallet Balance on{' '}
+            {asEvmChainDetails(asMiddlewareChain(walletChainId)).displayName}{' '}
+            Chain
+          </Text>
+          <Text className="text-sm">
+            To continue using Pearl without interruption, deposit{' '}
+            {tokenBalancesToSentence(defaultRequirementDepositValues)} on your
+            Pearl Wallet.
+          </Text>
+        </Flex>
+      }
+    />
+  );
+};
 
 const SelectChainToDeposit = () => {
   const { chains, walletChainId, onWalletChainChange } = usePearlWallet();
@@ -71,6 +104,7 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
 
         <Flex vertical gap={16}>
           <SelectChainToDeposit />
+          <LowPearlWalletBalanceAlertForCurrentChain />
           <Flex justify="space-between" align="center" vertical gap={16}>
             {availableAssets.map(({ amount, symbol }) => (
               <TokenAmountInput

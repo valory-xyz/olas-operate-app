@@ -77,16 +77,23 @@ const PearlWalletContent = () => {
   return content;
 };
 
-export const PearlWallet = () => (
-  <PearlWalletProvider>
-    <Flex
-      vertical
-      style={{
-        width: STEPS.SELECT_PAYMENT_METHOD ? undefined : MAIN_CONTENT_MAX_WIDTH,
-        margin: '0 auto',
-      }}
-    >
-      <PearlWalletContent />
-    </Flex>
-  </PearlWalletProvider>
-);
+export const PearlWallet = () => {
+  const { walletStep } = usePearlWallet();
+
+  return (
+    <PearlWalletProvider>
+      <Flex
+        vertical
+        style={{
+          width:
+            walletStep === STEPS.SELECT_PAYMENT_METHOD
+              ? undefined
+              : MAIN_CONTENT_MAX_WIDTH,
+          margin: '0 auto',
+        }}
+      >
+        <PearlWalletContent />
+      </Flex>
+    </PearlWalletProvider>
+  );
+};

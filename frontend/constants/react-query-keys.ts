@@ -107,4 +107,10 @@ export const REACT_QUERY_KEYS = {
     chain: SupportedMiddlewareChain,
     amount: number | string,
   ) => ['onRampQuote', chain, amount] as const,
+
+  // is outdated
+  IS_PEARL_OUTDATED_KEY: ['isPearlOutdated'] as const,
+
+  // latest release
+  LATEST_RELEASE_TAG_KEY: ['latestReleaseTag'] as const,
 } as const;

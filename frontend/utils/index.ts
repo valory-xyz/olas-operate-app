@@ -14,4 +14,5 @@ export * from './service';
 export * from './setupMulticall';
 export * from './time';
 export * from './truncate';
+export * from './wallet';
 export * from './x';
