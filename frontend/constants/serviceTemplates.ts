@@ -17,17 +17,17 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeihnzvqexxegm6auq7vcpb6prybd2xcz5glbvhos2lmmuazqt75nuq',
+  hash: 'bafybeicav6czopdtsenpfsozub5pqcnfdbhy7ys2komiu7x2vviutp2ice',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.26.3',
+  service_version: 'v0.27.2-rc.1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v27.0.1',
+      version: 'v0.27.2-rc.1',
     },
   },
   home_chain: MiddlewareChain.GNOSIS,
@@ -295,8 +295,8 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeidhr2w4reoqvbkfa2vyzrme3l6gfoeyng4borgh3prveji2tjsyi4',
-  service_version: 'v0.5.4',
+  hash: 'bafybeict3zgltetye44oq6zpvo5mjdkjszbnf6vne3q4z7z2yehwlw7zge',
+  service_version: 'v0.5.8',
   agent_release: {
     is_aea: true,
     repository: {
