@@ -19,7 +19,10 @@ import {
   MasterSafeBalanceRecord,
 } from '@/client';
 import { EvmChainId, MiddlewareDeploymentStatusMap } from '@/constants';
-import { SIXTY_MINUTE_INTERVAL } from '@/constants/intervals';
+import {
+  SIXTY_MINUTE_INTERVAL,
+  THIRTY_SECONDS_INTERVAL,
+} from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useMasterBalances, useMasterWalletContext } from '@/hooks';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
@@ -40,6 +43,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   agentFundingRequests: Optional<AddressBalanceRecord>;
   canStartAgent: boolean;
   isRefillRequired: boolean;
+  isAgentFundingRequestsUnreliable: boolean;
   refetch: Nullable<
     () => Promise<QueryObserverResult<BalancesAndFundingRequirements, Error>>
   >;
@@ -53,9 +57,81 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   agentFundingRequests: undefined,
   canStartAgent: false,
   isRefillRequired: false,
+  isAgentFundingRequestsUnreliable: false,
   refetch: null,
   resetQueryCache: () => {},
 });
+
+/**
+ * Determines polling interval for balances and funding requirements.
+ *
+ * Logic:
+ * - If funding data is unreliable (in progress or cooldown), poll every 30s.
+ * - If the service runs and is not yet eligible for rewards, use gradual backoff.
+ * - Otherwise, refresh once per hour.
+ *
+ * Returns:
+ * - refetchInterval: ms or disabled
+ * - updateRefetchCounter: callback to update internal backoff and reliability flags
+ */
+const useRequirementsFetchInterval = ({
+  configId,
+  isServiceRunning,
+  isEligibleForRewards,
+}: {
+  configId: Optional<string>;
+  isServiceRunning: boolean;
+  isEligibleForRewards: Optional<boolean>;
+}) => {
+  // Exponential backoff for active agent
+  const refetchCountRef = useRef(0);
+
+  // Whether we should refetch requirements more frequently
+  // because they are stale
+  const isAgentFundingRequestsUnreliableRef = useRef(false);
+
+  // Reset refetch count when service stops running
+  useEffect(() => {
+    if (!isServiceRunning) {
+      refetchCountRef.current = 0;
+    }
+  }, [isServiceRunning]);
+
+  const refetchInterval = useMemo<number | false>(() => {
+    if (!configId) return false;
+
+    if (isAgentFundingRequestsUnreliableRef.current) {
+      return THIRTY_SECONDS_INTERVAL;
+    }
+
+    if (isServiceRunning && !isEligibleForRewards) {
+      return getExponentialInterval(refetchCountRef.current);
+    }
+
+    return SIXTY_MINUTE_INTERVAL;
+  }, [isServiceRunning, isEligibleForRewards, configId]);
+
+  const updateRefetchCounter = (data: BalancesAndFundingRequirements) => {
+    // Update data unreliable ref
+    if (
+      data.agent_funding_in_progress ||
+      data.agent_funding_requests_cooldown
+    ) {
+      isAgentFundingRequestsUnreliableRef.current = true;
+    } else {
+      isAgentFundingRequestsUnreliableRef.current = false;
+    }
+
+    // Update backoff counter
+    if (isServiceRunning && !isEligibleForRewards) {
+      refetchCountRef.current = Math.min(refetchCountRef.current + 1, 4);
+    } else {
+      refetchCountRef.current = 0;
+    }
+  };
+
+  return { refetchInterval, updateRefetchCounter };
+};
 
 export const BalancesAndRefillRequirementsProvider = ({
   children,
@@ -74,25 +150,12 @@ export const BalancesAndRefillRequirementsProvider = ({
     selectedService?.deploymentStatus ===
     MiddlewareDeploymentStatusMap.DEPLOYED;
 
-  // Exponential backoff for active agent
-  const refetchCountRef = useRef(0);
-
-  // Reset refetch count when service stops running
-  useEffect(() => {
-    if (!isServiceRunning) {
-      refetchCountRef.current = 0;
-    }
-  }, [isServiceRunning]);
-
-  const refetchInterval = useMemo(() => {
-    if (!configId) return false;
-
-    if (isServiceRunning && !isEligibleForRewards) {
-      return getExponentialInterval(refetchCountRef.current);
-    }
-
-    return SIXTY_MINUTE_INTERVAL;
-  }, [isServiceRunning, isEligibleForRewards, configId]);
+  const { refetchInterval, updateRefetchCounter } =
+    useRequirementsFetchInterval({
+      configId,
+      isServiceRunning,
+      isEligibleForRewards,
+    });
 
   const {
     data: balancesAndFundingRequirements,
@@ -108,12 +171,8 @@ export const BalancesAndRefillRequirementsProvider = ({
         signal,
       });
 
-      // Update backoff counter
-      if (isServiceRunning && !isEligibleForRewards) {
-        refetchCountRef.current = Math.min(refetchCountRef.current + 1, 4);
-      } else {
-        refetchCountRef.current = 0;
-      }
+      updateRefetchCounter(data);
+
       return data;
     },
     enabled: !!configId && isUserLoggedIn && isOnline,
@@ -218,6 +277,10 @@ export const BalancesAndRefillRequirementsProvider = ({
         canStartAgent:
           balancesAndFundingRequirements?.allow_start_agent || false,
         isRefillRequired,
+        isAgentFundingRequestsUnreliable:
+          balancesAndFundingRequirements?.agent_funding_in_progress ||
+          balancesAndFundingRequirements?.agent_funding_requests_cooldown ||
+          false,
         refetch: refetch || null,
         resetQueryCache,
       }}
