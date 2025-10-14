@@ -63,7 +63,7 @@ export const UpdateAvailableAlert = () => {
       showIcon
       message={
         <Flex align="center" justify="space-between" gap={2}>
-          <span>Pearl v1 is available for download!</span>
+          <span>A new version of Pearl is available</span>
           <a href={DOWNLOAD_URL} target="_blank">
             Download{' '}
             <ArrowUpRightSvg
