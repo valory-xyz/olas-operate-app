@@ -173,7 +173,7 @@ const stopDeployment = async (
 const getAllServiceDeployments = async (
   signal?: AbortSignal,
 ): Promise<Record<ServiceConfigId, Deployment>> =>
-  fetch(`${BACKEND_URL_V2}/services/deployments`, {
+  fetch(`${BACKEND_URL_V2}/services/deployment`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     signal,
