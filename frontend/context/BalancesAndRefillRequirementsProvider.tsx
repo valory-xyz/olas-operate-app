@@ -70,7 +70,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
  * - If the service runs and is not yet eligible for rewards, use gradual backoff.
  * - Otherwise, refresh once per hour.
  *
- * Returns:
+ * @returns
  * - refetchInterval: ms or disabled
  * - updateRefetchCounter: callback to update internal backoff and reliability flags
  */
@@ -88,7 +88,7 @@ const useRequirementsFetchInterval = ({
 
   // Whether we should refetch requirements more frequently
   // because they are stale
-  const isAgentFundingRequestsUnreliableRef = useRef(false);
+  const isAgentFundingRequestsStaleRef = useRef(false);
 
   // Reset refetch count when service stops running
   useEffect(() => {
@@ -100,7 +100,7 @@ const useRequirementsFetchInterval = ({
   const refetchInterval = useMemo<number | false>(() => {
     if (!configId) return false;
 
-    if (isAgentFundingRequestsUnreliableRef.current) {
+    if (isAgentFundingRequestsStaleRef.current) {
       return THIRTY_SECONDS_INTERVAL;
     }
 
@@ -112,15 +112,9 @@ const useRequirementsFetchInterval = ({
   }, [isServiceRunning, isEligibleForRewards, configId]);
 
   const updateRefetchCounter = (data: BalancesAndFundingRequirements) => {
-    // Update data unreliable ref
-    if (
-      data.agent_funding_in_progress ||
-      data.agent_funding_requests_cooldown
-    ) {
-      isAgentFundingRequestsUnreliableRef.current = true;
-    } else {
-      isAgentFundingRequestsUnreliableRef.current = false;
-    }
+    // Update data stale ref
+    isAgentFundingRequestsStaleRef.current =
+      data.agent_funding_in_progress || data.agent_funding_requests_cooldown;
 
     // Update backoff counter
     if (isServiceRunning && !isEligibleForRewards) {
