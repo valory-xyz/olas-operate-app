@@ -4,26 +4,31 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { isEmpty } from 'lodash';
-import { createContext, PropsWithChildren, useCallback, useMemo } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 
 import {
   AddressBalanceRecord,
   BalancesAndFundingRequirements,
   MasterSafeBalanceRecord,
 } from '@/client';
-import { EvmChainId } from '@/constants';
-import {
-  FIVE_SECONDS_INTERVAL,
-  ONE_MINUTE_INTERVAL,
-} from '@/constants/intervals';
+import { EvmChainId, MiddlewareDeploymentStatusMap } from '@/constants';
+import { SIXTY_MINUTE_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useMasterBalances, useMasterWalletContext } from '@/hooks';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
-import { useService } from '@/hooks/useService';
+import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
 import { BalanceService } from '@/service/balances';
 import { Maybe, Nullable, Optional } from '@/types/Util';
+import { getExponentialInterval } from '@/utils';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
@@ -38,7 +43,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   refetch: Nullable<
     () => Promise<QueryObserverResult<BalancesAndFundingRequirements, Error>>
   >;
-  resetQueryCache: Nullable<() => Promise<void>>;
+  resetQueryCache: () => void;
 }>({
   isBalancesAndFundingRequirementsLoading: false,
   balances: undefined,
@@ -49,7 +54,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   canStartAgent: false,
   isRefillRequired: false,
   refetch: null,
-  resetQueryCache: null,
+  resetQueryCache: () => {},
 });
 
 export const BalancesAndRefillRequirementsProvider = ({
@@ -61,19 +66,33 @@ export const BalancesAndRefillRequirementsProvider = ({
   const { masterSafes } = useMasterWalletContext();
   const { isMasterEoaLowOnGas } = useMasterBalances();
   const { selectedService, selectedAgentConfig } = useServices();
+  const { isEligibleForRewards } = useRewardContext();
   const configId = selectedService?.service_config_id;
   const chainId = selectedAgentConfig.evmHomeChainId;
 
-  const { isServiceRunning } = useService(configId);
+  const isServiceRunning =
+    selectedService?.deploymentStatus ===
+    MiddlewareDeploymentStatusMap.DEPLOYED;
+
+  // Exponential backoff for active agent
+  const refetchCountRef = useRef(0);
+
+  // Reset refetch count when service stops running
+  useEffect(() => {
+    if (!isServiceRunning) {
+      refetchCountRef.current = 0;
+    }
+  }, [isServiceRunning]);
 
   const refetchInterval = useMemo(() => {
     if (!configId) return false;
 
-    // If the service is running, we can afford to check balances less frequently
-    if (isServiceRunning) return ONE_MINUTE_INTERVAL;
+    if (isServiceRunning && !isEligibleForRewards) {
+      return getExponentialInterval(refetchCountRef.current);
+    }
 
-    return FIVE_SECONDS_INTERVAL;
-  }, [isServiceRunning, configId]);
+    return SIXTY_MINUTE_INTERVAL;
+  }, [isServiceRunning, isEligibleForRewards, configId]);
 
   const {
     data: balancesAndFundingRequirements,
@@ -83,11 +102,20 @@ export const BalancesAndRefillRequirementsProvider = ({
     queryKey: REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(
       configId as string,
     ),
-    queryFn: ({ signal }) =>
-      BalanceService.getBalancesAndFundingRequirements({
+    queryFn: async ({ signal }) => {
+      const data = await BalanceService.getBalancesAndFundingRequirements({
         serviceConfigId: configId!,
         signal,
-      }),
+      });
+
+      // Update backoff counter
+      if (isServiceRunning && !isEligibleForRewards) {
+        refetchCountRef.current = Math.min(refetchCountRef.current + 1, 4);
+      } else {
+        refetchCountRef.current = 0;
+      }
+      return data;
+    },
     enabled: !!configId && isUserLoggedIn && isOnline,
     refetchInterval,
   });
@@ -155,16 +183,12 @@ export const BalancesAndRefillRequirementsProvider = ({
     balancesAndFundingRequirements,
   ]);
 
-  const resetQueryCache = useMemo(() => {
-    if (!configId) return null;
+  const resetQueryCache = useCallback(() => {
+    if (!configId) return;
 
-    return async () => {
-      // Invalidate the query
-      await queryClient.removeQueries({
-        queryKey:
-          REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(configId),
-      });
-    };
+    queryClient.removeQueries({
+      queryKey: REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(configId),
+    });
   }, [queryClient, configId]);
 
   const isRefillRequired = useMemo(() => {
