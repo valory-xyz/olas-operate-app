@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { MiddlewareDeploymentStatusMap, REACT_QUERY_KEYS } from '@/constants';
 import { ServicesService } from '@/service/Services';
 
 import { useServices } from './useServices';
