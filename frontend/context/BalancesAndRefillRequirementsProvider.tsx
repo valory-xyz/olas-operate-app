@@ -3,7 +3,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { isEmpty } from 'lodash';
+import { isEmpty, map } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -153,7 +153,7 @@ export const BalancesAndRefillRequirementsProvider = ({
   const {
     data: balancesAndFundingRequirements,
     isLoading: isBalancesAndFundingRequirementsLoading,
-    refetch,
+    refetch: refetchBalancesAndFundingRequirements,
   } = useQuery<BalancesAndFundingRequirements>({
     queryKey: REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(
       configId as string,
@@ -180,6 +180,7 @@ export const BalancesAndRefillRequirementsProvider = ({
   const {
     data: balancesAndFundingRequirementsForAllServices,
     isLoading: isBalancesAndFundingRequirementsLoadingForAllServices,
+    refetch: refetchBalancesAndFundingRequirementsForAllServices,
   } = useQuery({
     queryKey:
       REACT_QUERY_KEYS.ALL_BALANCES_AND_REFILL_REQUIREMENTS_KEY(
@@ -192,11 +193,6 @@ export const BalancesAndRefillRequirementsProvider = ({
       }),
     enabled: !!services?.length && isUserLoggedIn && isOnline,
     refetchInterval: THIRTY_SECONDS_INTERVAL,
-  });
-
-  console.log({
-    balancesAndFundingRequirementsForAllServices,
-    isBalancesAndFundingRequirementsLoadingForAllServices,
   });
 
   const balances = useMemo(() => {
@@ -223,8 +219,6 @@ export const BalancesAndRefillRequirementsProvider = ({
       )?.service_config_id;
       if (!serviceIdOfService) return;
 
-      // console.log({ chain, serviceIdOfService });
-
       const currentServiceBalancesAndFundingRequirements: Optional<BalancesAndFundingRequirements> =
         balancesAndFundingRequirementsForAllServices?.[serviceIdOfService];
       if (!currentServiceBalancesAndFundingRequirements) return;
@@ -232,7 +226,6 @@ export const BalancesAndRefillRequirementsProvider = ({
       const result = currentServiceBalancesAndFundingRequirements
         .refill_requirements[chain] as Optional<T>;
       return result;
-      // console.log(result);
     },
     [
       isBalancesAndFundingRequirementsLoadingForAllServices,
@@ -292,9 +285,23 @@ export const BalancesAndRefillRequirementsProvider = ({
   const isPearlWalletRefillRequired = useMemo(() => {
     // If master safes are empty, no service is set up, hence no refill is required.
     if (isEmpty(masterSafes)) return false;
+    if (isEmpty(balancesAndFundingRequirementsForAllServices)) return false;
 
-    return balancesAndFundingRequirements?.is_refill_required || false;
-  }, [balancesAndFundingRequirements?.is_refill_required, masterSafes]);
+    return map(
+      balancesAndFundingRequirementsForAllServices,
+      (b) => b.is_refill_required,
+    ).some((x) => !!x);
+  }, [balancesAndFundingRequirementsForAllServices, masterSafes]);
+
+  const refetch = useCallback(async () => {
+    return Promise.all([
+      refetchBalancesAndFundingRequirements(),
+      refetchBalancesAndFundingRequirementsForAllServices(),
+    ]).then(([result]) => result);
+  }, [
+    refetchBalancesAndFundingRequirements,
+    refetchBalancesAndFundingRequirementsForAllServices,
+  ]);
 
   return (
     <BalancesAndRefillRequirementsProviderContext.Provider

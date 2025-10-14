@@ -80,8 +80,6 @@ export const getInitialDepositForMasterSafe = (
   const refillRequirements = getRefillRequirementsOf(walletChainId);
   if (!refillRequirements) return;
 
-  console.log({ walletChainId, refillRequirements });
-
   // Find the refill requirement for the master safe
   const masterSafeRefillRequirement = getAddressBalance(
     refillRequirements,
