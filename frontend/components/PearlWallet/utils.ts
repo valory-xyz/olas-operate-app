@@ -44,7 +44,7 @@ const getInitialDepositValues = (
       const tokenAddress = untypedAddress as Address;
 
       const tokenDetails = find(chainConfig, (config) =>
-        areAddressesEqual(config.address ?? AddressZero, tokenAddress),
+        areAddressesEqual(config?.address ?? AddressZero, tokenAddress),
       );
       if (!tokenDetails) return acc;
 

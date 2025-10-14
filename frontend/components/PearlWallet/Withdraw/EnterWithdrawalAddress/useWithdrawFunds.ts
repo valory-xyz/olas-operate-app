@@ -45,11 +45,11 @@ type WithdrawalRequest = {
  *   "transfer_txs": {
  *     "gnosis": {
  *       // List of successful txs from Master Safe and/or Master EOA
- *       "0x0000000000000000000000000000000000000000": ["0x...", "0x..."], 
+ *       "0x0000000000000000000000000000000000000000": ["0x...", "0x..."],
  *       "0x...": ["0x...", "0x..."]
  *     }
  *   }
-}
+ * }
  */
 type WithdrawalResponse = {
   message: string;
@@ -81,7 +81,10 @@ const formatWithdrawAssets = (
       if (amount <= 0) return acc;
       if (!chainConfig[symbol]) return acc;
 
-      const { tokenType, address, decimals } = chainConfig[symbol];
+      const tokenConfig = chainConfig[symbol];
+      if (!tokenConfig) return acc;
+
+      const { tokenType, address, decimals } = tokenConfig;
       const tokenAddress =
         tokenType === TokenType.NativeGas ? AddressZero : address;
 

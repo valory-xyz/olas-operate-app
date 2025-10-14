@@ -149,11 +149,11 @@ export const ConfirmTransfer = ({
     Object.entries(fundsToTransfer).forEach(([untypedSymbol, amount]) => {
       const symbol = untypedSymbol as TokenSymbol;
       if (amount > 0 && chainTokenConfig[symbol]) {
-        const { address: tokenAddress, decimals } = chainTokenConfig[symbol];
-        tokenAmountsByAddress[tokenAddress ?? AddressZero] = parseUnits(
-          amount,
-          decimals,
-        );
+        const tokenConfig = chainTokenConfig[symbol];
+        if (!tokenConfig) return;
+
+        const { address: tokenAddress = AddressZero, decimals } = tokenConfig;
+        tokenAmountsByAddress[tokenAddress] = parseUnits(amount, decimals);
       }
     });
 
