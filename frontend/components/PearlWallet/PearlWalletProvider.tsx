@@ -155,10 +155,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       getRefillRequirementsOf,
     );
 
-    if (!defaultRequirementDepositValues) return;
-
-    setDefaultDepositValues(defaultRequirementDepositValues);
-    setAmountsToDeposit(defaultRequirementDepositValues);
+    setDefaultDepositValues(defaultRequirementDepositValues ?? {});
+    setAmountsToDeposit(defaultRequirementDepositValues ?? {});
   }, [getRefillRequirementsOf, walletChainId, masterSafeAddress]);
 
   const agent = ACTIVE_AGENTS.find(
@@ -204,8 +202,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
 
   const onReset = useCallback((canNavigateOnReset?: boolean) => {
     setAmountsToWithdraw({});
-    setAmountsToDeposit({});
-    setDefaultDepositValues({});
 
     if (canNavigateOnReset) {
       setWalletStep(STEPS.PEARL_WALLET_SCREEN);
@@ -214,8 +210,10 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
 
   const onWalletChainChange = useCallback(
     (chainId: EvmChainId, options?: { canNavigateOnReset?: boolean }) => {
-      setWalletChainId(chainId);
       onReset(options?.canNavigateOnReset);
+
+      // slight delay to allow reset to propagate before changing chain
+      setTimeout(() => setWalletChainId(chainId), 100);
     },
     [onReset],
   );
