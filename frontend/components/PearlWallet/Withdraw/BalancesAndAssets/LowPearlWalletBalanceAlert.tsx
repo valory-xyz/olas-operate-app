@@ -47,6 +47,7 @@ export const LowPearlWalletBalanceAlert = () => {
                 masterSafe,
                 getRefillRequirementsOf,
               );
+              console.log({ chainId, masterSafe, fundsRequired });
 
               if (isEmpty(fundsRequired)) return null;
 

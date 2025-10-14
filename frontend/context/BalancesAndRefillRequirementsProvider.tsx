@@ -134,7 +134,7 @@ export const BalancesAndRefillRequirementsProvider = ({
   const { isOnline } = useOnlineStatusContext();
   const { isUserLoggedIn } = usePageState();
   const { masterSafes } = useMasterWalletContext();
-  const { selectedService, selectedAgentConfig } = useServices();
+  const { services, selectedService, selectedAgentConfig } = useServices();
   const { isEligibleForRewards } = useRewardContext();
   const configId = selectedService?.service_config_id;
   const chainId = selectedAgentConfig.evmHomeChainId;
@@ -172,6 +172,33 @@ export const BalancesAndRefillRequirementsProvider = ({
     refetchInterval,
   });
 
+  const serviceConfigIds = useMemo(
+    () => services?.map((s) => s.service_config_id) ?? [],
+    [services],
+  );
+
+  const {
+    data: balancesAndFundingRequirementsForAllServices,
+    isLoading: isBalancesAndFundingRequirementsLoadingForAllServices,
+  } = useQuery({
+    queryKey:
+      REACT_QUERY_KEYS.ALL_BALANCES_AND_REFILL_REQUIREMENTS_KEY(
+        serviceConfigIds,
+      ),
+    queryFn: ({ signal }) =>
+      BalanceService.getAllBalancesAndFundingRequirements({
+        serviceConfigIds,
+        signal,
+      }),
+    enabled: !!services?.length && isUserLoggedIn && isOnline,
+    refetchInterval: THIRTY_SECONDS_INTERVAL,
+  });
+
+  console.log({
+    balancesAndFundingRequirementsForAllServices,
+    isBalancesAndFundingRequirementsLoadingForAllServices,
+  });
+
   const balances = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return;
     if (!balancesAndFundingRequirements) return;
@@ -182,17 +209,36 @@ export const BalancesAndRefillRequirementsProvider = ({
     chainId,
     balancesAndFundingRequirements,
   ]);
+
   const getRefillRequirementsOf = useCallback(
     <T extends AddressBalanceRecord | MasterSafeBalanceRecord>(
       chainId: EvmChainId,
     ): Optional<T> => {
-      if (isBalancesAndFundingRequirementsLoading) return;
-      if (!balancesAndFundingRequirements) return;
+      if (isBalancesAndFundingRequirementsLoadingForAllServices) return;
+      if (!balancesAndFundingRequirementsForAllServices) return;
 
       const chain = asMiddlewareChain(chainId);
-      return balancesAndFundingRequirements.refill_requirements[chain] as T;
+      const serviceIdOfService = services?.find(
+        (s) => s.home_chain === chain,
+      )?.service_config_id;
+      if (!serviceIdOfService) return;
+
+      // console.log({ chain, serviceIdOfService });
+
+      const currentServiceBalancesAndFundingRequirements: Optional<BalancesAndFundingRequirements> =
+        balancesAndFundingRequirementsForAllServices?.[serviceIdOfService];
+      if (!currentServiceBalancesAndFundingRequirements) return;
+
+      const result = currentServiceBalancesAndFundingRequirements
+        .refill_requirements[chain] as Optional<T>;
+      return result;
+      // console.log(result);
     },
-    [isBalancesAndFundingRequirementsLoading, balancesAndFundingRequirements],
+    [
+      isBalancesAndFundingRequirementsLoadingForAllServices,
+      balancesAndFundingRequirementsForAllServices,
+      services,
+    ],
   );
 
   const refillRequirements = useMemo(() => {
