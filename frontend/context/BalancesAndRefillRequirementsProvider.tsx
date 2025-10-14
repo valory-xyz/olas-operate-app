@@ -287,6 +287,7 @@ export const BalancesAndRefillRequirementsProvider = ({
     if (isEmpty(masterSafes)) return false;
     if (isEmpty(balancesAndFundingRequirementsForAllServices)) return false;
 
+    // Check if any service requires a refill on any chain
     return map(
       balancesAndFundingRequirementsForAllServices,
       (b) => b.is_refill_required,

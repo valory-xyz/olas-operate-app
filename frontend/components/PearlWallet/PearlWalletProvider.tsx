@@ -149,6 +149,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!masterSafeAddress) return;
 
+    // Delay to ensure that we set the default values after resetting the amounts
     setTimeout(() => {
       const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
         walletChainId,
