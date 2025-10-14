@@ -38,11 +38,12 @@ export const LowPearlWalletBalanceAlert = () => {
           </Text>
           <Flex vertical gap={2} className="ml-8">
             {chains.map((chain: WalletChain) => {
-              const masterSafe = getMasterSafeOf?.(chain.chainId)?.address;
+              const chainId = chain.chainId;
+              const masterSafe = getMasterSafeOf?.(chainId)?.address;
               if (!masterSafe) return null;
 
               const fundsRequired = getInitialDepositForMasterSafe(
-                chain.chainId,
+                chainId,
                 masterSafe,
                 getRefillRequirementsOf,
               );
@@ -50,7 +51,7 @@ export const LowPearlWalletBalanceAlert = () => {
               if (isEmpty(fundsRequired)) return null;
 
               return (
-                <Flex key={chain.chainId} gap={6}>
+                <Flex key={chainId} gap={6}>
                   <Text className="text-sm">{UNICODE_SYMBOLS.BULLET}</Text>
                   <Text className="text-sm">
                     {tokenBalancesToSentence(fundsRequired)}
