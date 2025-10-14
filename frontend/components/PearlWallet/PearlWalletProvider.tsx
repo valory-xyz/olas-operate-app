@@ -217,9 +217,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const onWalletChainChange = useCallback(
     (chainId: EvmChainId, options?: { canNavigateOnReset?: boolean }) => {
       onReset(options?.canNavigateOnReset);
-
-      // slight delay to allow reset to propagate before changing chain
-      setTimeout(() => setWalletChainId(chainId), 100);
+      setWalletChainId(chainId);
     },
     [onReset],
   );

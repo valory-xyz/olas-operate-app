@@ -26,6 +26,7 @@ import { OnlineStatusContext } from './OnlineStatusProvider';
 
 type MasterWalletContext = {
   masterEoa?: MasterEoa;
+  /** Get the master safe for a specific chain ID */
   masterSafes?: MasterSafe[];
   masterWallets?: MasterWallet[];
   getMasterSafeOf?: (chainId: EvmChainId) => MasterSafe | undefined;
@@ -101,7 +102,6 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
     [masterWallets],
   );
 
-  /** Get the master safe for a specific chain ID */
   const getMasterSafeOf = useCallback(
     (chainId: EvmChainId) =>
       masterSafes?.find((safe) => safe.evmChainId === chainId),
