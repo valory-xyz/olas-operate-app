@@ -219,6 +219,16 @@ export type BalancesAndFundingRequirements = {
     [chain in MiddlewareChain]: TokenBalanceRecord;
   }>;
   is_refill_required: boolean;
+  /**
+   * Whether a funding transaction is currently in progress.
+   * @note When `true`, `agent_funding_requests` may be temporarily stale until the agent syncs updated balances.
+   */
+  agent_funding_in_progress: boolean;
+  /**
+   * Whether the system is in a cooldown window after a funding action.
+   * @note When `true`, new funding requests are suppressed and `agent_funding_requests` will be empty until the cooldown ends.
+   */
+  agent_funding_requests_cooldown: boolean;
   allow_start_agent: boolean;
 };
 

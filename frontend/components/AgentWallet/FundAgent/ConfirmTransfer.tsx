@@ -11,7 +11,11 @@ import {
 import { CardFlex } from '@/components/ui/CardFlex';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero, SUPPORT_URL, UNICODE_SYMBOLS } from '@/constants';
-import { useService, useServices } from '@/hooks';
+import {
+  useBalanceAndRefillRequirementsContext,
+  useService,
+  useServices,
+} from '@/hooks';
 import {
   type ChainFunds,
   FundService,
@@ -88,12 +92,17 @@ const TransferFailed = ({ onTryAgain }: { onTryAgain: () => void }) => (
 
 const useConfirmTransfer = () => {
   const { selectedService } = useServices();
+  const { refetch } = useBalanceAndRefillRequirementsContext();
   const { isPending, isSuccess, isError, mutateAsync } = useMutation({
     mutationFn: async (funds: ChainFunds) => {
       if (!selectedService) throw new Error('No service selected');
 
       const serviceConfigId = selectedService.service_config_id;
       await FundService.fundAgent({ funds, serviceConfigId });
+    },
+    onSuccess: () => {
+      // Refetch funding requirements because balances are changed
+      refetch?.();
     },
   });
 
