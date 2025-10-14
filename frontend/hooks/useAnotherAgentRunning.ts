@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { MiddlewareDeploymentStatusMap, REACT_QUERY_KEYS } from '@/constants';
+import {
+  FIVE_SECONDS_INTERVAL,
+  MiddlewareDeploymentStatusMap,
+  REACT_QUERY_KEYS,
+} from '@/constants';
 import { ServicesService } from '@/service/Services';
 
 import { useServices } from './useServices';
@@ -19,17 +23,17 @@ export const useAnotherAgentRunning = () => {
     if (!services || !selectedService || !allDeployments) return false;
 
     // Get all other services (excluding the currently selected one)
-    const otherServices = services.filter(
-      (service) =>
-        service.service_config_id !== selectedService.service_config_id,
-    );
-
-    return otherServices.some((service) => {
+    return services.some(service => {
+      if (service.service_config_id === selectedService.service_config_id) return false;
+    
       const deployment = allDeployments[service.service_config_id];
-      return (
-        deployment?.status === MiddlewareDeploymentStatusMap.DEPLOYING ||
-        deployment?.status === MiddlewareDeploymentStatusMap.STOPPING
-      );
+      const serviceStatus = deployment?.status;
+      
+      return [
+        MiddlewareDeploymentStatusMap.DEPLOYED,
+        MiddlewareDeploymentStatusMap.DEPLOYING,
+        MiddlewareDeploymentStatusMap.STOPPING,
+      ].some((status) => status === serviceStatus);
     });
   }, [services, selectedService, allDeployments]);
 
