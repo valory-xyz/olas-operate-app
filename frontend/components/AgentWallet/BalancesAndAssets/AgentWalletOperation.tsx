@@ -1,15 +1,20 @@
-import { Button, Flex, Statistic, Typography } from 'antd';
+import { Button, Flex, Tooltip, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { AgentLowBalanceAlert } from '@/components/MainPageV1/Home/Overview/AgentInfo/AgentDisabledAlert/LowBalance/AgentLowBalanceAlert';
 import { BackButton, CardFlex } from '@/components/ui';
-import { COLOR } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { useActiveStakingContractDetails, usePageState } from '@/hooks';
+import {
+  useActiveStakingContractDetails,
+  useFeatureFlag,
+  usePageState,
+  useService,
+  useServices,
+  useStakingContractCountdown,
+} from '@/hooks';
 
 const { Text, Title } = Typography;
-const { Timer } = Statistic;
 
 const AgentWalletTitle = () => {
   const { goto } = usePageState();
@@ -23,35 +28,28 @@ const AgentWalletTitle = () => {
   );
 };
 
-const EvictedAgentAlert = ({ expiresAt }: { expiresAt: number }) => {
-  return (
-    <CustomAlert
-      message={
-        <Text className="text-sm">
-          <span className="font-weight-600">
-            Withdrawals Temporarily Unavailable
-          </span>{' '}
-          <br />
-          Your agent hasn&apos;t reached the minimum duration of staking.
-          You&apos;ll be able to withdraw in{' '}
-          <Timer
-            type="countdown"
-            value={expiresAt * 1000}
-            format="HH [hours] mm [minutes] ss [seconds]"
-            valueStyle={{
-              fontSize: 14,
-              color: COLOR.TEXT_COLOR.WARNING.DEFAULT,
-            }}
-          />
-        </Text>
-      }
-      type="warning"
-      showIcon
-      centered
-      className="mt-16 text-sm"
-    />
-  );
+type MinimumDurationOfStakingAlertProps = {
+  countdown: string;
 };
+const MinimumDurationOfStakingAlert = ({
+  countdown,
+}: MinimumDurationOfStakingAlertProps) => (
+  <CustomAlert
+    message={
+      <Text className="text-sm">
+        <span className="font-weight-600">
+          Withdrawals Temporarily Unavailable
+        </span>{' '}
+        <br />
+        Your agent hasn&apos;t reached the minimum duration of staking.
+        You&apos;ll be able to withdraw in {countdown}
+      </Text>
+    }
+    type="warning"
+    showIcon
+    className="mt-16 text-sm"
+  />
+);
 
 type AgentWalletOperationProps = {
   onWithdraw: () => void;
@@ -62,32 +60,54 @@ export const AgentWalletOperation = ({
   onWithdraw,
   onFundAgent,
 }: AgentWalletOperationProps) => {
-  const { isAgentEvicted, isEligibleForStaking, evictionExpiresAt } =
+  const isWithdrawFundsEnabled = useFeatureFlag('withdraw-funds');
+  const { selectedService } = useServices();
+  const { service } = useService(selectedService?.service_config_id);
+  const { isServiceStakedForMinimumDuration, selectedStakingContractDetails } =
     useActiveStakingContractDetails();
+  const { countdownDisplay } = useStakingContractCountdown(
+    selectedStakingContractDetails,
+  );
 
-  const isWithdrawDisabled = isAgentEvicted && !isEligibleForStaking;
+  const isWithdrawDisabled =
+    !isWithdrawFundsEnabled || !service || !isServiceStakedForMinimumDuration;
 
   const withdrawDisabledAlert = useMemo(() => {
-    if (isWithdrawDisabled)
-      return <EvictedAgentAlert expiresAt={evictionExpiresAt} />;
+    if (!isWithdrawFundsEnabled) return null;
+    if (isWithdrawDisabled) {
+      return <MinimumDurationOfStakingAlert countdown={countdownDisplay} />;
+    }
     return null;
-  }, [isWithdrawDisabled, evictionExpiresAt]);
+  }, [isWithdrawDisabled, isWithdrawFundsEnabled, countdownDisplay]);
 
   return (
     <CardFlex $noBorder>
       <Flex justify="space-between" align="end">
         <AgentWalletTitle />
         <Flex gap={8}>
-          <Button disabled={isWithdrawDisabled} onClick={onWithdraw}>
-            Withdraw
-          </Button>
+          {isWithdrawFundsEnabled ? (
+            <Button disabled={isWithdrawDisabled} onClick={onWithdraw}>
+              Withdraw
+            </Button>
+          ) : (
+            <Tooltip title="Available soon!">
+              <Button disabled>Withdraw</Button>
+            </Tooltip>
+          )}
+
           <Button type="primary" onClick={onFundAgent}>
             Fund Agent
           </Button>
         </Flex>
       </Flex>
+
       {withdrawDisabledAlert}
       <AgentLowBalanceAlert onFund={onFundAgent} needInitialValues />
     </CardFlex>
   );
 };
+
+/**
+ * - fix the "minimum-staking-duration" logic in the staking contract details hook
+ * - hide alert and "Low" if not completed the onboarding
+ */
