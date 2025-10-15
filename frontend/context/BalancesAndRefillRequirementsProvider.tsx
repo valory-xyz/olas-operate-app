@@ -227,6 +227,8 @@ export const BalancesAndRefillRequirementsProvider = ({
     balancesAndFundingRequirements,
   ]);
 
+  // TODO: works only for single services per chain
+  // Needs to be updated if multi-service per chain is allowed
   const getRefillRequirementsOf = useCallback(
     <T extends AddressBalanceRecord | MasterSafeBalanceRecord>(
       chainId: EvmChainId,
