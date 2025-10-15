@@ -1,4 +1,4 @@
-import { SettingOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
 import Image from 'next/image';
 import styled from 'styled-components';
@@ -47,10 +47,16 @@ export const AgentInfo = () => {
                 <Title level={5} className="m-0">
                   {generateName(serviceSafe?.address ?? AddressZero)}
                 </Title>
-                <Button
-                  onClick={() => goto(Pages.UpdateAgentTemplate)}
-                  icon={<SettingOutlined />}
-                />
+                <Flex gap={12}>
+                  <Button
+                    onClick={() => goto(Pages.UpdateAgentTemplate)}
+                    icon={<InfoCircleOutlined />}
+                  />
+                  <Button
+                    onClick={() => goto(Pages.UpdateAgentTemplate)}
+                    icon={<SettingOutlined />}
+                  />
+                </Flex>
               </Flex>
               <AgentRunButton />
             </Flex>

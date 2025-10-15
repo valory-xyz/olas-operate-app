@@ -4,8 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import { ReactNode } from 'react';
 
-import { UnderConstruction } from '@/components/MainPage/sections/AlertSections/UnderConstruction';
-import { useServices } from '@/hooks/useServices';
+import { UnderConstruction } from '@/components/Alerts';
+import { useServices } from '@/hooks';
 
 import { AnimatedContent } from './AnimatedContent';
 
