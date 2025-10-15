@@ -60,7 +60,7 @@ export const AgentWalletOperation = ({
   onWithdraw,
   onFundAgent,
 }: AgentWalletOperationProps) => {
-  const isWithdrawFundsEnabled = useFeatureFlag('withdraw-funds');
+  const isWithdrawFeatureEnabled = useFeatureFlag('withdraw-funds');
   const { selectedService } = useServices();
   const { service } = useService(selectedService?.service_config_id);
   const { isServiceStakedForMinimumDuration, selectedStakingContractDetails } =
@@ -70,22 +70,26 @@ export const AgentWalletOperation = ({
   );
 
   const isWithdrawDisabled =
-    !isWithdrawFundsEnabled || !service || !isServiceStakedForMinimumDuration;
+    !isWithdrawFeatureEnabled || !service || !isServiceStakedForMinimumDuration;
 
   const withdrawDisabledAlert = useMemo(() => {
-    if (!isWithdrawFundsEnabled) return null;
-    if (isWithdrawDisabled) {
+    if (!isWithdrawFeatureEnabled) return null;
+    if (!isServiceStakedForMinimumDuration) {
       return <MinimumDurationOfStakingAlert countdown={countdownDisplay} />;
     }
     return null;
-  }, [isWithdrawDisabled, isWithdrawFundsEnabled, countdownDisplay]);
+  }, [
+    isWithdrawFeatureEnabled,
+    countdownDisplay,
+    isServiceStakedForMinimumDuration,
+  ]);
 
   return (
     <CardFlex $noBorder>
       <Flex justify="space-between" align="end">
         <AgentWalletTitle />
         <Flex gap={8}>
-          {isWithdrawFundsEnabled ? (
+          {isWithdrawFeatureEnabled ? (
             <Button disabled={isWithdrawDisabled} onClick={onWithdraw}>
               Withdraw
             </Button>

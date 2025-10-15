@@ -8,7 +8,7 @@ import { BackButton, CardFlex, Divider } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR, TokenSymbolConfigMap } from '@/constants';
 import { useBalanceContext } from '@/hooks';
-import { formatNumber } from '@/utils/numberFormatters';
+import { formatNumber } from '@/utils';
 
 import { useAgentWallet } from '../AgentWalletProvider';
 
