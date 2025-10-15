@@ -1,15 +1,16 @@
 import { InfoCircleOutlined, SettingOutlined } from '@ant-design/icons';
-import { Button, Flex, Typography } from 'antd';
+import { Button, Flex, Modal, Typography } from 'antd';
 import Image from 'next/image';
+import { useState } from 'react';
 import styled from 'styled-components';
 
-import { CardFlex } from '@/components/ui/CardFlex';
+import { AgentIntroduction } from '@/components/AgentIntroduction';
+import { CardFlex } from '@/components/ui';
 import { useYourWallet } from '@/components/YourWalletPage/useYourWallet';
 import { AddressZero } from '@/constants/address';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
-import { generateName } from '@/utils/agentName';
+import { usePageState, useServices } from '@/hooks';
+import { generateName } from '@/utils';
 
 import { AgentActivity } from './AgentActivity';
 import { AgentDisabledAlert } from './AgentDisabledAlert';
@@ -20,6 +21,29 @@ const { Title } = Typography;
 const AgentInfoContainer = styled.div`
   position: relative;
 `;
+
+const AboutAgent = () => {
+  const { selectedAgentType } = useServices();
+  const [isAboutAgentModalOpen, setIsAboutAgentModalOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        onClick={() => setIsAboutAgentModalOpen(true)}
+        icon={<InfoCircleOutlined />}
+      />
+
+      <Modal
+        title="About Agent"
+        open={isAboutAgentModalOpen}
+        onCancel={() => setIsAboutAgentModalOpen(false)}
+        footer={null}
+      >
+        <AgentIntroduction agentType={selectedAgentType} skipFirst />
+      </Modal>
+    </>
+  );
+};
 
 export const AgentInfo = () => {
   const { selectedAgentType } = useServices();
@@ -48,10 +72,7 @@ export const AgentInfo = () => {
                   {generateName(serviceSafe?.address ?? AddressZero)}
                 </Title>
                 <Flex gap={12}>
-                  <Button
-                    onClick={() => goto(Pages.UpdateAgentTemplate)}
-                    icon={<InfoCircleOutlined />}
-                  />
+                  <AboutAgent />
                   <Button
                     onClick={() => goto(Pages.UpdateAgentTemplate)}
                     icon={<SettingOutlined />}

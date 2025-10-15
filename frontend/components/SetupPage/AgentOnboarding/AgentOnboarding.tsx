@@ -165,7 +165,7 @@ export const AgentOnboarding = () => {
 
       <Flex className="agent-selection-right-content">
         <AgentIntroduction
-          selectedAgent={selectedAgent}
+          agentType={selectedAgent}
           renderFundingRequirements={(desc) =>
             selectedAgent ? (
               <FundingRequirementStep agentType={selectedAgent} desc={desc} />

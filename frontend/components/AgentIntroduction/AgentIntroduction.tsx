@@ -30,7 +30,7 @@ const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
 };
 
 type AgentIntroductionProps = {
-  selectedAgent?: AgentType;
+  agentType?: AgentType;
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderAgentSelection?: () => ReactNode;
   skipFirst?: boolean;
@@ -40,19 +40,19 @@ type AgentIntroductionProps = {
  * Display the onboarding of the selected agent.
  */
 export const AgentIntroduction = ({
-  selectedAgent,
+  agentType,
   renderFundingRequirements,
   renderAgentSelection,
-  skipFirst,
+  skipFirst = false,
 }: AgentIntroductionProps) => {
   const [onboardingStep, setOnboardingStep] = useState(0);
 
   // Reset onboarding step when selected agent changes
   useEffect(() => {
     setOnboardingStep(0);
-  }, [selectedAgent]);
+  }, [agentType]);
 
-  const steps = (selectedAgent ? onboardingStepsMap[selectedAgent] : []).slice(
+  const steps = (agentType ? onboardingStepsMap[agentType] : []).slice(
     skipFirst ? 1 : 0,
   );
 
