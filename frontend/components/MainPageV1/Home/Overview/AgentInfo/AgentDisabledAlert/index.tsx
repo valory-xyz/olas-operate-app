@@ -1,12 +1,14 @@
 import { Pages } from '@/enums';
 import {
   useActiveStakingContractDetails,
+  useAnotherAgentRunning,
   useNeedsFunds,
   usePageState,
   useServices,
   useStakingProgram,
 } from '@/hooks';
 
+import { AgentRunningAlert } from './AgentRunningAlert';
 import { EvictedAlert } from './EvictedAlert';
 import { AgentLowBalanceAlert } from './LowBalance/AgentLowBalanceAlert';
 import { MasterEoaLowBalanceAlert } from './LowBalance/MasterEoaLowBalanceAlert';
@@ -27,9 +29,14 @@ export const AgentDisabledAlert = () => {
   const { selectedStakingProgramId } = useStakingProgram();
   const { isInitialFunded } = useNeedsFunds(selectedStakingProgramId);
   const { goto } = usePageState();
+  const isAnotherAgentRunning = useAnotherAgentRunning();
 
   if (selectedAgentConfig.isUnderConstruction) {
     return <UnderConstructionAlert />;
+  }
+
+  if (isAnotherAgentRunning) {
+    return <AgentRunningAlert />;
   }
 
   // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.

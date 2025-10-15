@@ -10,6 +10,7 @@ export const REACT_QUERY_KEYS = {
   SERVICES_VALIDATION_STATUS_KEY: ['servicesValidationStatus'] as const,
   SERVICE_DEPLOYMENT_STATUS_KEY: (serviceConfigId: Maybe<string>) =>
     ['serviceStatus', serviceConfigId ?? ''] as const,
+  ALL_SERVICE_DEPLOYMENTS_KEY: ['allServiceDeployments'] as const,
 
   // staking programs
   STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY: (

@@ -29,6 +29,8 @@ import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 import { updateServiceIfNeeded } from '@/utils/service';
 
+import { useAnotherAgentRunning } from './useAnotherAgentRunning';
+
 /**
  * hook to handle service deployment and starting the service
  */
@@ -48,6 +50,7 @@ export const useServiceDeployment = () => {
     overrideSelectedServiceStatus,
   } = useServices();
   const serviceId = selectedService?.service_config_id;
+  const isAnotherAgentRunning = useAnotherAgentRunning();
 
   const { canStartAgent, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
@@ -94,6 +97,9 @@ export const useServiceDeployment = () => {
 
     // If service is under construction, return false
     if (selectedAgentConfig.isUnderConstruction) return false;
+
+    // If another agent is running, return false;
+    if (isAnotherAgentRunning) return false;
 
     // If staking contract is deprecated, return false
     if (selectedStakingProgramMeta?.deprecated) return false;
