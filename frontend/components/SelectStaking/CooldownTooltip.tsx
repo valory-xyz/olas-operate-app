@@ -1,12 +1,20 @@
 import { Flex, Statistic, Tooltip, Typography } from 'antd';
 import { isNil } from 'lodash';
 import { type CSSProperties, useMemo } from 'react';
+import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 
 const { Text, Paragraph } = Typography;
-const { Countdown } = Statistic;
+const { Timer: AntdTimer } = Statistic;
+
+const Timer = styled(AntdTimer)`
+  &.ant-statistic,
+  .ant-statistic-content {
+    display: inline;
+  }
+`;
 
 const overlayStyle: CSSProperties = {
   maxWidth: 368,
@@ -70,15 +78,17 @@ const CooldownPeriodContent = () => {
         <Paragraph className="mb-4 text-sm" strong>
           When can I switch the staking contract?
         </Paragraph>
-        <Flex align="center" gap={4}>
-          <Text className="text-sm">You&apos;ll be able to switch in </Text>
-          <Countdown
+        <Text className="text-sm">
+          You&apos;ll be able to switch in{' '}
+          <Timer
+            type="countdown"
             value={timeUntilMigration}
             valueStyle={{
               fontSize: 14,
             }}
+            format={'D[d] HH[h] mm[m] ss[s.]'}
           />
-        </Flex>
+        </Text>
       </div>
     </Flex>
   );

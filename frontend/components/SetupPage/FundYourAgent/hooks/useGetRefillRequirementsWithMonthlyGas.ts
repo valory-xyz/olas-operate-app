@@ -60,6 +60,10 @@ const getTokensDetailsForFunding = (
   return currentTokenRequirements.sort((a, b) => b.amount - a.amount);
 };
 
+type UseGetRefillRequirementsWithMonthlyGasProps = {
+  shouldCreateDummyService?: boolean;
+};
+
 type UseGetRefillRequirementsWithMonthlyGasReturn = {
   /**
    * Total token requirements, doesn't consider the eoa balances. This is what we show on the
@@ -109,9 +113,9 @@ type UseGetRefillRequirementsWithMonthlyGasReturn = {
  *   isLoading: false
  * }
  */
-export const useGetRefillRequirementsWithMonthlyGas = (
-  shouldCreateDummyService?: boolean,
-): UseGetRefillRequirementsWithMonthlyGasReturn => {
+export const useGetRefillRequirementsWithMonthlyGas = ({
+  shouldCreateDummyService = false,
+}: UseGetRefillRequirementsWithMonthlyGasProps = {}): UseGetRefillRequirementsWithMonthlyGasReturn => {
   const updateBeforeBridgingFunds = useBeforeBridgeFunds();
   const {
     totalRequirements,
@@ -124,6 +128,7 @@ export const useGetRefillRequirementsWithMonthlyGas = (
   const { masterEoa, masterSafes } = useMasterWalletContext();
   const { selectedAgentConfig, selectedAgentType } = useServices();
 
+  const [isDummyServiceCreated, setIsDummyServiceCreated] = useState(false);
   const [initialTokenRequirements, setInitialTokenRequirements] = useState<
     TokenRequirement[] | null
   >(null);
@@ -218,11 +223,17 @@ export const useGetRefillRequirementsWithMonthlyGas = (
     const createDummyService = async () => {
       await updateBeforeBridgingFunds();
       await refetch?.();
+      setIsDummyServiceCreated(true);
     };
-    if (shouldCreateDummyService) {
+    if (shouldCreateDummyService && !isDummyServiceCreated) {
       createDummyService();
     }
-  }, [updateBeforeBridgingFunds, refetch, shouldCreateDummyService]);
+  }, [
+    updateBeforeBridgingFunds,
+    refetch,
+    shouldCreateDummyService,
+    isDummyServiceCreated,
+  ]);
 
   const currentTokenRequirements = useMemo(() => {
     return getRequirementsPerToken(refillRequirements);

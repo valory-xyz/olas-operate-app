@@ -32,6 +32,7 @@ export * from './useSetup';
 export * from './useSharedContext';
 export * from './useStakingContractCountdown';
 export * from './useStakingContractDetails';
+export * from './useStakingContracts';
 export * from './useStakingDetails';
 export * from './useStakingProgram';
 export * from './useStore';

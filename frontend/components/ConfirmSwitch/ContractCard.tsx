@@ -7,11 +7,12 @@ import { StakingProgramId } from '@/enums/StakingProgram';
 
 const { Text } = Typography;
 
+const MARGIN_TOP = 12;
+
 const CardHeader = styled(Flex)<{ $isCurrentStakingProgram: boolean }>`
   width: 342px;
-  height: calc(40px + 10px); // 10px to compensate for the relative positioning.
-  position: relative;
-  top: 10px;
+  height: calc(40px + ${MARGIN_TOP}px);
+  margin-bottom: -${MARGIN_TOP}px;
   border-radius: 20px 20px 0 0;
   border: 1px solid ${COLOR.WHITE};
   background-color: ${({ $isCurrentStakingProgram }) =>
