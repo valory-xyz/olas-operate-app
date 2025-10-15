@@ -1,6 +1,7 @@
 import { Flex, Tag, Typography } from 'antd';
 import Image from 'next/image';
 
+import { AnimatedContent } from '@/components/AgentIntroduction';
 import { AGENT_CONFIG } from '@/config/agents';
 import {
   AgentType,
@@ -11,8 +12,6 @@ import {
 } from '@/constants';
 import { useFundingRequirements } from '@/hooks';
 import { asEvmChainDetails } from '@/utils';
-
-import { AnimatedContent } from './AnimatedContent';
 
 const { Text, Title } = Typography;
 

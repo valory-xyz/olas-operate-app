@@ -1,3 +1,4 @@
+import { Flex, Typography } from 'antd';
 import { ReactNode, useCallback, useState } from 'react';
 import styled from 'styled-components';
 
@@ -11,6 +12,8 @@ import {
   PREDICTION_ONBOARDING_STEPS,
 } from './constants';
 import { IntroductionStep, OnboardingStep } from './IntroductionStep';
+
+const { Text } = Typography;
 
 const Dot = styled.div<{ color?: string }>`
   width: 6px;
@@ -27,7 +30,7 @@ const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
 };
 
 type AgentIntroductionProps = {
-  selectedAgent: AgentType;
+  selectedAgent?: AgentType;
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderAgentSelection?: () => ReactNode;
   skipFirst?: boolean;
@@ -57,6 +60,14 @@ export const AgentIntroduction = ({
     if (onboardingStep === 0) return;
     setOnboardingStep(onboardingStep - 1);
   }, [onboardingStep]);
+
+  if (steps.length === 0) {
+    return (
+      <Flex align="center" justify="center" className="w-full">
+        <Text>Select an agent.</Text>
+      </Flex>
+    );
+  }
 
   return (
     <IntroductionStep
