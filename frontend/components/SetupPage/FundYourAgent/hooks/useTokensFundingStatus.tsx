@@ -28,7 +28,9 @@ export const useTokensFundingStatus = () => {
   const { getMasterEoaBalancesOf } = useMasterBalances();
   const { selectedAgentConfig } = useServices();
   const { totalTokenRequirements: tokenRequirements } =
-    useGetRefillRequirementsWithMonthlyGas();
+    useGetRefillRequirementsWithMonthlyGas({
+      shouldCreateDummyService: false,
+    });
   const [hasBeenFullyFunded, setHasBeenFullyFunded] = useState(false);
   const currentChain = selectedAgentConfig.evmHomeChainId;
 

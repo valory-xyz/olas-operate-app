@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { message } from 'antd';
 
 import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { AddressZero } from '@/constants';
@@ -79,6 +80,7 @@ export const useMasterSafeCreationAndTransfer = (
     },
     onError: (error) => {
       console.error(error);
+      message.error('Failed to create master safe.');
     },
   });
 };

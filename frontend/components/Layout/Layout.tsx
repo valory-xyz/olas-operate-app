@@ -22,7 +22,7 @@ const Container = styled.div<{ $blur: boolean }>`
   width: 100vw;
   max-width: ${APP_WIDTH}px;
   max-height: ${APP_HEIGHT}px;
-  background-color: ${COLOR.BACKGROUND};
+  background-color: ${COLOR.GRAY_1};
   border-radius: 8px;
 
   ${(props) =>

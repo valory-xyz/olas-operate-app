@@ -24,10 +24,18 @@ const CircularIconContainer = styled(Flex)`
 
 export const ConfirmSwitch = () => {
   const { goto } = usePageState();
-  const { activeStakingProgramId, stakingProgramIdToMigrateTo } =
-    useStakingProgram();
+  const {
+    activeStakingProgramId,
+    stakingProgramIdToMigrateTo,
+    isActiveStakingProgramLoaded,
+    defaultStakingProgramId,
+  } = useStakingProgram();
+  // Fallback if there are no active staking program.
+  const currentStakingProgramId = isActiveStakingProgramLoaded
+    ? activeStakingProgramId || defaultStakingProgramId
+    : null;
 
-  if (!activeStakingProgramId || !stakingProgramIdToMigrateTo) return null;
+  if (!currentStakingProgramId || !stakingProgramIdToMigrateTo) return null;
 
   return (
     <Flex
@@ -46,7 +54,7 @@ export const ConfirmSwitch = () => {
 
       <Flex gap={12} className="mt-32" align="center">
         <ContractCard
-          stakingProgramId={activeStakingProgramId}
+          stakingProgramId={currentStakingProgramId}
           isCurrentStakingProgram={true}
         />
         <CircularIconContainer align="center" justify="center">

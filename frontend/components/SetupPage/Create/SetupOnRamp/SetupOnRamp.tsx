@@ -41,7 +41,7 @@ export const SetupOnRamp = () => {
   }, [gotoSetup, prevState]);
 
   return (
-    <Flex justify="center" className="pt-48">
+    <Flex justify="center" className="pt-36">
       <CardFlex $noBorder $onboarding className="p-8">
         <BackButton onPrev={handlePrevStep} />
         <Title level={3} className="mt-16">

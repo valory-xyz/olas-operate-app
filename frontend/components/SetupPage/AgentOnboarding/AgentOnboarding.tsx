@@ -28,7 +28,7 @@ const { Text, Title } = Typography;
 
 const Container = styled(Flex)`
   width: 840px;
-  margin: 48px auto 0 auto;
+  margin: 36px auto 0 auto;
   border-radius: 8px;
   background-color: ${COLOR.WHITE};
   .agent-selection-left-content {
@@ -54,6 +54,7 @@ const AgentSelectionContainer = styled(Flex)<{ active?: boolean }>`
   cursor: pointer;
   background-color: ${({ active }) => (active ? COLOR.GRAY_1 : COLOR.WHITE)};
   border-bottom: 1px solid ${COLOR.GRAY_4};
+  border-left: 1px solid ${COLOR.WHITE};
   &:hover {
     background-color: ${COLOR.GRAY_1};
   }

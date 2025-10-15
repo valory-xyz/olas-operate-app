@@ -38,7 +38,9 @@ export const TransferFunds = () => {
   const { selectedAgentConfig } = useServices();
   const { isFullyFunded, tokensFundingStatus } = useTokensFundingStatus();
   const { initialTokenRequirements, isLoading } =
-    useGetRefillRequirementsWithMonthlyGas();
+    useGetRefillRequirementsWithMonthlyGas({
+      shouldCreateDummyService: false,
+    });
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
@@ -100,7 +102,7 @@ export const TransferFunds = () => {
   });
 
   return (
-    <Flex justify="center" className="pt-48">
+    <Flex justify="center" className="pt-36">
       <CardFlex $noBorder $onboarding className="p-8">
         <BackButton onPrev={() => gotoSetup(SetupScreen.FundYourAgent)} />
         <Title level={3} className="mt-16">

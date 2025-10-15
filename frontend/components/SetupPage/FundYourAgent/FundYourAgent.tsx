@@ -165,7 +165,9 @@ export const FundYourAgent = () => {
     isLoading,
     resetTokenRequirements,
     // Service creation for agents requiring setup is already handled at the time of agentForm
-  } = useGetRefillRequirementsWithMonthlyGas(!requiresSetup);
+  } = useGetRefillRequirementsWithMonthlyGas({
+    shouldCreateDummyService: !requiresSetup,
+  });
   const [isBridgeOnboardingEnabled, isOnRampEnabled] = useFeatureFlag([
     'bridge-onboarding',
     'on-ramp',

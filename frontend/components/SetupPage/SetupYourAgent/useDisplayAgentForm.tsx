@@ -26,7 +26,7 @@ export const AgentFormContainer = styled(Flex)<{ $hasMinHeight?: boolean }>`
     width: 336px;
     padding: 64px 32px;
     box-sizing: content-box;
-    background: ${COLOR.BACKGROUND};
+    background: ${COLOR.GRAY_1};
     .ant-typography {
       font-size: 14px !important;
     }
