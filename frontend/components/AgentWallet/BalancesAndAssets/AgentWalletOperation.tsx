@@ -42,7 +42,7 @@ const MinimumDurationOfStakingAlert = ({
         </span>{' '}
         <br />
         Your agent hasn&apos;t reached the minimum duration of staking.
-        You&apos;ll be able to withdraw in {countdown}
+        You&apos;ll be able to withdraw in {countdown}.
       </Text>
     }
     type="warning"
