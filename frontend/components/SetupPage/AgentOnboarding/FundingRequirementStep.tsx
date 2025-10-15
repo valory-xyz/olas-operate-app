@@ -2,15 +2,15 @@ import { Flex, Tag, Typography } from 'antd';
 import Image from 'next/image';
 
 import { AGENT_CONFIG } from '@/config/agents';
-import { AgentType } from '@/constants/agent';
-import { COLOR } from '@/constants/colors';
 import {
+  AgentType,
+  COLOR,
   TokenSymbol,
   TokenSymbolConfigMap,
   TokenSymbolMap,
-} from '@/constants/token';
-import { useFundingRequirements } from '@/hooks/useFundingRequirements';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
+} from '@/constants';
+import { useFundingRequirements } from '@/hooks';
+import { asEvmChainDetails } from '@/utils';
 
 import { AnimatedContent } from './AnimatedContent';
 
@@ -107,11 +107,7 @@ const MinimumFundingRequirements = ({
 
   const allTokens = Object.entries(tokens[evmHomeChainId] || {})
     .map(([token, amount]) => {
-      const icon = (() => {
-        if (token === 'XDAI') return '/tokens/wxdai-icon.png';
-        return TokenSymbolConfigMap[token as TokenSymbol]?.image as string;
-      })();
-
+      const icon = TokenSymbolConfigMap[token as TokenSymbol]?.image as string;
       return { token, amount, icon };
     })
     // filter out OLAS as it's shown in staking requirements above.
