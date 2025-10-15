@@ -21,6 +21,7 @@ import {
   useService,
   useServices,
 } from '@/hooks';
+import { useAgentFundingRequests } from '@/hooks/useAgentFundingRequests';
 import {
   type ChainFunds,
   FundService,
@@ -135,8 +136,11 @@ export const ConfirmTransfer = ({
   fundsToTransfer,
 }: ConfirmTransferProps) => {
   const { selectedAgentConfig, selectedService } = useServices();
-  const { serviceSafes } = useService(selectedService?.service_config_id);
+  const { serviceSafes, serviceEoa } = useService(
+    selectedService?.service_config_id,
+  );
   const { onFundAgent, isLoading, isSuccess, isError } = useConfirmTransfer();
+  const { eoaTokenRequirements } = useAgentFundingRequests();
 
   const [isTransferStateModalVisible, setIsTransferStateModalVisible] =
     useState(false);
@@ -169,15 +173,53 @@ export const ConfirmTransfer = ({
       }
     });
 
+    // Build agent funds fulfilling EOA requirements first, send remainder to Safe
+    const eoaAddress = serviceEoa?.address;
+    const agentFunds: Record<string, TokenAmountMap> = {};
+
+    Object.entries(tokenAmountsByAddress).forEach(([tokenAddress, amount]) => {
+      const requiredForEoa = BigInt(
+        (eoaTokenRequirements?.[
+          tokenAddress as keyof typeof eoaTokenRequirements
+        ] as string) || '0',
+      );
+
+      const amountBigInt = BigInt(amount);
+      const allocateToEoa = eoaAddress
+        ? amountBigInt < requiredForEoa
+          ? amountBigInt
+          : requiredForEoa
+        : BigInt(0);
+
+      if (allocateToEoa > BigInt(0) && eoaAddress) {
+        agentFunds[eoaAddress] = agentFunds[eoaAddress] || {};
+        agentFunds[eoaAddress][tokenAddress as keyof TokenAmountMap] =
+          allocateToEoa.toString();
+      }
+
+      const remaining = amountBigInt - allocateToEoa;
+      if (remaining > BigInt(0)) {
+        const safeAddress = serviceSafe.address;
+        agentFunds[safeAddress] = agentFunds[safeAddress] || {};
+        agentFunds[safeAddress][tokenAddress as keyof TokenAmountMap] =
+          remaining.toString();
+      }
+    });
+
     const fundsTo: ChainFunds = {
-      [middlewareHomeChainId]: {
-        [serviceSafe.address]: tokenAmountsByAddress,
-      },
+      [middlewareHomeChainId]: agentFunds,
     };
 
     setIsTransferStateModalVisible(true);
     onFundAgent(fundsTo);
-  }, [onFundAgent, fundsToTransfer, middlewareHomeChainId, serviceSafe]);
+  }, [
+    onFundAgent,
+    fundsToTransfer,
+    middlewareHomeChainId,
+    serviceSafe,
+    serviceEoa?.address,
+    eoaTokenRequirements,
+  ]);
 
   const handleClose = useCallback(
     () => setIsTransferStateModalVisible(false),

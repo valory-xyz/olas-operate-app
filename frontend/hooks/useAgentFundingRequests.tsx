@@ -11,6 +11,7 @@ import { Address } from '@/types/Address';
 import { formatUnitsToNumber, tokenBalancesToSentence } from '@/utils';
 
 import { useBalanceAndRefillRequirementsContext } from './useBalanceAndRefillRequirementsContext';
+import { useService } from './useService';
 import { useServices } from './useServices';
 
 /**
@@ -53,7 +54,8 @@ const getFormattedTokensList = (
  * @returns An object containing the loading state, raw/merged requirements, and a formatted string.
  */
 export const useAgentFundingRequests = () => {
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedService } = useServices();
+  const { serviceEoa } = useService(selectedService?.service_config_id);
   const {
     agentFundingRequests,
     isBalancesAndFundingRequirementsLoading,
@@ -101,12 +103,23 @@ export const useAgentFundingRequests = () => {
     );
   }, [agentTokenRequirements]);
 
+  // Split requirements for Agent EOA wallet
+  const eoaTokenRequirements = useMemo(() => {
+    if (!agentFundingRequests) return null;
+    if (isAgentFundingRequestsStale) return null;
+    const eoaAddress = serviceEoa?.address;
+    if (!eoaAddress) return null;
+    return agentFundingRequests[eoaAddress] || null;
+  }, [agentFundingRequests, isAgentFundingRequestsStale, serviceEoa?.address]);
+
   return {
     isLoading: isBalancesAndFundingRequirementsLoading,
     /** All requirements, organized by wallet then by token address: {[walletAddress]: {[tokenAddress]: amount}} */
     agentFundingRequests,
     /** Consolidated requirements per token address: {[tokenAddress]: totalAmount} */
     agentTokenRequirements,
+    /** Requirements for service EOA address only: {[tokenAddress]: amount} */
+    eoaTokenRequirements,
     /** Formatted token requirements: "10 XDAI, 15 USDC and 100 OLAS" */
     agentTokenRequirementsFormatted,
     /** True if any required token amount is above zero, indicating a funding need. */
