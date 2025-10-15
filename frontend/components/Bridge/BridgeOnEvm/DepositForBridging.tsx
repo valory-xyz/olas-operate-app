@@ -312,7 +312,7 @@ export const DepositForBridging = ({
           const toTokenAddress =
             token.symbol === TokenSymbol.ETH
               ? token.address
-              : chainTokenConfig.address;
+              : chainTokenConfig?.address;
 
           if (!toTokenAddress) return BigInt(0);
 

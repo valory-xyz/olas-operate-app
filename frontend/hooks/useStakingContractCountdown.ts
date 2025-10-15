@@ -9,13 +9,11 @@ import {
 import { Maybe } from '@/types/Util';
 import { formatCountdownDisplay } from '@/utils/time';
 
-export const useStakingContractCountdown = ({
-  currentStakingContractInfo,
-}: {
+export const useStakingContractCountdown = (
   currentStakingContractInfo: Maybe<
     Partial<StakingContractDetails & ServiceStakingDetails>
-  >;
-}) => {
+  >,
+) => {
   const [secondsUntilReady, setSecondsUntilMigration] = useState<number>();
 
   useInterval(() => {
@@ -50,5 +48,5 @@ export const useStakingContractCountdown = ({
     ? 'Loading...'
     : formatCountdownDisplay(secondsUntilReady);
 
-  return countdownDisplay;
+  return { countdownDisplay, secondsUntilReady };
 };

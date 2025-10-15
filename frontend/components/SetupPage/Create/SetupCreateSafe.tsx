@@ -1,3 +1,4 @@
+// TODO: to be removed post v1 release
 import { Card, message, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';

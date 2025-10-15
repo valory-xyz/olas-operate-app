@@ -43,7 +43,14 @@ export const useMasterSafeCreationAndTransfer = (
           // Hence, the response contains the transfer status as well.
           masterSafeTransferStatus: 'FINISHED',
           transfers: tokenSymbols.map((symbol) => {
-            const { tokenType, address } = chainTokenConfig[symbol];
+            const tokenDetails = chainTokenConfig[symbol];
+            if (!tokenDetails) {
+              throw new Error(
+                `Token config not found for symbol: ${symbol} on chain: ${chain}`,
+              );
+            }
+
+            const { tokenType, address } = tokenDetails;
             const tokenAddress =
               tokenType === TokenType.NativeGas ? AddressZero : address;
             const transferTxn = response.transfer_txs[tokenAddress];

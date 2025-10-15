@@ -1,7 +1,7 @@
 import { entries, find, findKey } from 'lodash';
 
 import { AddressBalanceRecord, TokenBalanceRecord } from '@/client';
-import { TOKEN_CONFIG } from '@/config/tokens';
+import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { AddressZero, EvmChainId } from '@/constants';
 import { Address } from '@/types/Address';
 import { Maybe, Nullable, Optional } from '@/types/Util';
@@ -43,9 +43,11 @@ const getInitialDepositValues = (
     (acc, [untypedAddress, amountInWei]) => {
       const tokenAddress = untypedAddress as Address;
 
-      const tokenDetails = find(chainConfig, (config) =>
-        areAddressesEqual(config.address ?? AddressZero, tokenAddress),
-      );
+      const tokenDetails = find(chainConfig, (config) => {
+        const isNative = config?.tokenType === TokenType.NativeGas;
+        const address = isNative ? AddressZero : config?.address;
+        return areAddressesEqual(address, tokenAddress);
+      });
       if (!tokenDetails) return acc;
 
       const amount = formatUnitsToNumber(
@@ -83,6 +85,7 @@ export const getInitialDepositForMasterSafe = (
     refillRequirements,
     masterSafeAddress,
   );
+
   if (!masterSafeRefillRequirement) return;
 
   return getInitialDepositValues(walletChainId, masterSafeRefillRequirement);

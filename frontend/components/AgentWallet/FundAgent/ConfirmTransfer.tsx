@@ -10,7 +10,12 @@ import {
 } from '@/components/custom-icons';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { TOKEN_CONFIG } from '@/config/tokens';
-import { AddressZero, SUPPORT_URL, UNICODE_SYMBOLS } from '@/constants';
+import {
+  AddressZero,
+  SUPPORT_URL,
+  TokenSymbol,
+  UNICODE_SYMBOLS,
+} from '@/constants';
 import {
   useBalanceAndRefillRequirementsContext,
   useService,
@@ -150,9 +155,13 @@ export const ConfirmTransfer = ({
     const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(middlewareHomeChainId)];
     const tokenAmountsByAddress: TokenAmountMap = {};
 
-    Object.entries(fundsToTransfer).forEach(([symbol, amount]) => {
-      if (amount > 0) {
-        const { address: tokenAddress, decimals } = chainTokenConfig[symbol];
+    Object.entries(fundsToTransfer).forEach(([untypedSymbol, amount]) => {
+      const symbol = untypedSymbol as TokenSymbol;
+      if (amount > 0 && chainTokenConfig[symbol]) {
+        const tokenConfig = chainTokenConfig[symbol];
+        if (!tokenConfig) return;
+
+        const { address: tokenAddress, decimals } = tokenConfig;
         tokenAmountsByAddress[tokenAddress ?? AddressZero] = parseUnits(
           amount,
           decimals,

@@ -3,8 +3,8 @@
  * - add new chains to the CHAIN_CONFIGS object
  */
 import { MiddlewareChain as MiddlewareChainId } from '@/client';
+import { TokenSymbol } from '@/enums';
 import { EvmChainId } from '@/enums/Chain';
-import { TokenSymbol } from '@/enums/Token';
 
 import { TOKEN_CONFIG, TokenConfig } from './tokens';
 
@@ -29,7 +29,7 @@ export type ChainConfig = {
 const GNOSIS_CHAIN_CONFIG: ChainConfig = {
   evmChainId: EvmChainId.Gnosis,
   name: 'Gnosis',
-  nativeToken: TOKEN_CONFIG[EvmChainId.Gnosis][TokenSymbol.XDAI],
+  nativeToken: TOKEN_CONFIG[EvmChainId.Gnosis][TokenSymbol.XDAI] as TokenConfig,
   middlewareChain: MiddlewareChainId.GNOSIS,
   rpc: process.env.GNOSIS_RPC as HttpUrl,
   safeCreationThreshold: 1.5,
@@ -39,7 +39,7 @@ const GNOSIS_CHAIN_CONFIG: ChainConfig = {
 const BASE_CHAIN_CONFIG: ChainConfig = {
   evmChainId: EvmChainId.Base,
   name: 'Base',
-  nativeToken: TOKEN_CONFIG[EvmChainId.Base][TokenSymbol.ETH],
+  nativeToken: TOKEN_CONFIG[EvmChainId.Base][TokenSymbol.ETH] as TokenConfig,
   middlewareChain: MiddlewareChainId.BASE,
   rpc: process.env.BASE_RPC as HttpUrl,
   safeCreationThreshold: 0.005,
@@ -49,7 +49,7 @@ const BASE_CHAIN_CONFIG: ChainConfig = {
 const MODE_CHAIN_CONFIG: ChainConfig = {
   evmChainId: EvmChainId.Mode,
   name: 'Mode',
-  nativeToken: TOKEN_CONFIG[EvmChainId.Mode][TokenSymbol.ETH],
+  nativeToken: TOKEN_CONFIG[EvmChainId.Mode][TokenSymbol.ETH] as TokenConfig,
   middlewareChain: MiddlewareChainId.MODE,
   rpc: process.env.MODE_RPC as HttpUrl,
   safeCreationThreshold: 0.0005,
@@ -59,7 +59,9 @@ const MODE_CHAIN_CONFIG: ChainConfig = {
 const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
   evmChainId: EvmChainId.Optimism,
   name: 'Optimism',
-  nativeToken: TOKEN_CONFIG[EvmChainId.Optimism][TokenSymbol.ETH],
+  nativeToken: TOKEN_CONFIG[EvmChainId.Optimism][
+    TokenSymbol.ETH
+  ] as TokenConfig,
   middlewareChain: MiddlewareChainId.OPTIMISM,
   rpc: process.env.OPTIMISM_RPC as HttpUrl,
   safeCreationThreshold: 0.005,

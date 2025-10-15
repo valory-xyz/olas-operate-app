@@ -1,16 +1,17 @@
+import { AgentLowBalanceAlert } from '@/components/Alerts';
 import { Pages } from '@/enums';
 import {
   useActiveStakingContractDetails,
+  useAnotherAgentRunning,
   useNeedsFunds,
   usePageState,
   useServices,
   useStakingProgram,
 } from '@/hooks';
 
+import { AgentRunningAlert } from './AgentRunningAlert';
 import { EvictedAlert } from './EvictedAlert';
-import { AgentLowBalanceAlert } from './LowBalance/AgentLowBalanceAlert';
-import { MasterEoaLowBalanceAlert } from './LowBalance/MasterEoaLowBalanceAlert';
-import { MasterSafeLowBalanceAlert } from './LowBalance/MasterSafeLowBalanceAlert';
+import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
 import { UnderConstructionAlert } from './UnderConstructionAlert';
 import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
@@ -27,9 +28,14 @@ export const AgentDisabledAlert = () => {
   const { selectedStakingProgramId } = useStakingProgram();
   const { isInitialFunded } = useNeedsFunds(selectedStakingProgramId);
   const { goto } = usePageState();
+  const isAnotherAgentRunning = useAnotherAgentRunning();
 
   if (selectedAgentConfig.isUnderConstruction) {
     return <UnderConstructionAlert />;
+  }
+
+  if (isAnotherAgentRunning) {
+    return <AgentRunningAlert />;
   }
 
   // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
@@ -50,7 +56,6 @@ export const AgentDisabledAlert = () => {
     <>
       <AgentLowBalanceAlert onFund={() => goto(Pages.AgentWallet)} />
       <MasterEoaLowBalanceAlert />
-      <MasterSafeLowBalanceAlert />
     </>
   );
 };

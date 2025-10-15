@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
 import { ChainTokenConfig, TOKEN_CONFIG, TokenType } from '@/config/tokens';
+import { TokenSymbol } from '@/constants';
 import { AddressZero } from '@/constants/address';
 import { SupportedMiddlewareChainMap } from '@/constants/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
@@ -44,11 +45,11 @@ type WithdrawalRequest = {
  *   "transfer_txs": {
  *     "gnosis": {
  *       // List of successful txs from Master Safe and/or Master EOA
- *       "0x0000000000000000000000000000000000000000": ["0x...", "0x..."], 
+ *       "0x0000000000000000000000000000000000000000": ["0x...", "0x..."],
  *       "0x...": ["0x...", "0x..."]
  *     }
  *   }
-}
+ * }
  */
 type WithdrawalResponse = {
   message: string;
@@ -74,11 +75,16 @@ const formatWithdrawAssets = (
   chainConfig: ChainTokenConfig,
 ) =>
   entries(amountsToWithdraw).reduce(
-    (acc, [symbol, amount]) => {
+    (acc, [untypedSymbol, amount]) => {
+      const symbol = untypedSymbol as TokenSymbol;
+
       if (amount <= 0) return acc;
       if (!chainConfig[symbol]) return acc;
 
-      const { tokenType, address, decimals } = chainConfig[symbol];
+      const tokenConfig = chainConfig[symbol];
+      if (!tokenConfig) return acc;
+
+      const { tokenType, address, decimals } = tokenConfig;
       const tokenAddress =
         tokenType === TokenType.NativeGas ? AddressZero : address;
 

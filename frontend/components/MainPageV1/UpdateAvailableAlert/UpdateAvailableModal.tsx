@@ -77,8 +77,8 @@ export const UpdateAvailableModal = () => {
           alt="Pearl"
         />
       }
-      title={'Update Available'}
-      description={'An updated version of Pearl just released.'}
+      title="Update Available"
+      description="An updated version of Pearl just released."
     />
   );
 };

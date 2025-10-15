@@ -2,7 +2,6 @@ import { Flex, Typography } from 'antd';
 
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { SupportedMiddlewareChain } from '@/constants/chains';
-import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 
 import { AddressLink } from '../AddressLink';
@@ -53,22 +52,6 @@ export const OlasTitle = () => (
         Agent rewards accumulate in the staking contract. The agent is designed
         to claim rewards periodically. Withdrawal of claimed rewards isn&apos;t
         available yet.
-      </Paragraph>
-    </InfoTooltip>
-  </Flex>
-);
-
-export const NativeTokenTitle = ({ symbol }: { symbol: TokenSymbol }) => (
-  <Flex align="center">
-    <Title level={5} className="m-0 text-sm">
-      {symbol}
-    </Title>
-    &nbsp;
-    <InfoTooltip>
-      {/* TODO: address multi-agent tooltip, specific to agent config */}
-      <Paragraph className="text-sm m-0">
-        {symbol} is used by the agent to engage in prediction markets. This
-        amount will fluctuate based on your agent&apos;s performance.
       </Paragraph>
     </InfoTooltip>
   </Flex>

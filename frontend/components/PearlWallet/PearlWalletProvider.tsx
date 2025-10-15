@@ -214,8 +214,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
 
   const onWalletChainChange = useCallback(
     (chainId: EvmChainId, options?: { canNavigateOnReset?: boolean }) => {
-      setWalletChainId(chainId);
       onReset(options?.canNavigateOnReset);
+      setWalletChainId(chainId);
     },
     [onReset],
   );

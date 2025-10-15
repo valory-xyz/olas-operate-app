@@ -81,6 +81,12 @@ export const BridgeCryptoOn = ({
 
       const bridgeParams = toDeposit.map(([tokenSymbol, amount]) => {
         const token = TOKEN_CONFIG[asEvmChainId(bridgeToChain)][tokenSymbol];
+        if (!token) {
+          throw new Error(
+            `Token ${tokenSymbol} is not supported on ${bridgeToChain}`,
+          );
+        }
+
         return getBridgeRequirementsParams(
           token.address ?? AddressZero,
           amount,

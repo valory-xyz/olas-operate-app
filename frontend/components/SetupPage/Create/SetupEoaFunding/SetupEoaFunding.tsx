@@ -1,4 +1,4 @@
-// TODO: remove this file
+// TODO: to be removed post v1 release
 import { CopyOutlined } from '@ant-design/icons';
 import {
   Button,
