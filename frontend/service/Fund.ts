@@ -12,7 +12,7 @@ export type TokenAmountMap = {
 
 export type ChainFunds = Partial<{
   [chain in SupportedMiddlewareChain]: {
-    [safeAddress: Address]: TokenAmountMap;
+    [address: Address]: TokenAmountMap;
   };
 }>;
 

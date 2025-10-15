@@ -1,8 +1,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { Button, Flex, Modal, Typography } from 'antd';
-import { isEmpty, values } from 'lodash';
+import { isEmpty, set, values } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
+import { TokenBalanceRecord } from '@/client';
 import {
   LoadingOutlined,
   SuccessOutlined,
@@ -12,11 +13,13 @@ import { CardFlex } from '@/components/ui/CardFlex';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import {
   AddressZero,
+  MiddlewareChain,
   SUPPORT_URL,
   TokenSymbol,
   UNICODE_SYMBOLS,
 } from '@/constants';
 import {
+  useAgentFundingRequests,
   useBalanceAndRefillRequirementsContext,
   useService,
   useServices,
@@ -26,6 +29,8 @@ import {
   FundService,
   type TokenAmountMap,
 } from '@/service/Fund';
+import { Address } from '@/types';
+import { bigintMin } from '@/utils';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
 
@@ -130,13 +135,86 @@ type ConfirmTransferProps = {
   fundsToTransfer: Record<string, number>;
 };
 
+/**
+ * Prepares ChainFunds for a funding request.
+ *
+ * Converts user-entered amounts into keyed by token address amounts, allocating funds
+ * to the service EOA first to cover its requirements, and sending any remainder to safe.
+ */
+const prepareAgentFundsForTransfer = ({
+  fundsToTransfer,
+  middlewareHomeChainId,
+  serviceSafe,
+  serviceEoa,
+  eoaTokenRequirements,
+}: {
+  fundsToTransfer: Record<string, number>;
+  middlewareHomeChainId: MiddlewareChain;
+  serviceSafe: { address: Address };
+  serviceEoa: { address: Address };
+  eoaTokenRequirements?: TokenBalanceRecord | null;
+}): ChainFunds => {
+  const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(middlewareHomeChainId)];
+  const tokenAmountsByAddress: TokenAmountMap = {};
+
+  Object.entries(fundsToTransfer).forEach(([untypedSymbol, amount]) => {
+    const symbol = untypedSymbol as TokenSymbol;
+    if (amount > 0 && chainTokenConfig[symbol]) {
+      const tokenConfig = chainTokenConfig[symbol];
+      if (!tokenConfig) return;
+
+      const { address: tokenAddress, decimals } = tokenConfig;
+      tokenAmountsByAddress[tokenAddress ?? AddressZero] = parseUnits(
+        amount,
+        decimals,
+      );
+    }
+  });
+
+  // Build agent funds fulfilling EOA requirements first, send remainder to Safe
+  const eoaAddress = serviceEoa.address;
+  const agentFunds: Record<Address, TokenAmountMap> = {};
+
+  Object.entries(tokenAmountsByAddress).forEach(([tokenAddress, amount]) => {
+    const requiredForEoa = BigInt(
+      (eoaTokenRequirements?.[tokenAddress as Address] as string) || '0',
+    );
+
+    const amountBigInt = BigInt(amount);
+    const allocateToEoa = bigintMin(amountBigInt, requiredForEoa);
+
+    if (allocateToEoa > 0n) {
+      set(
+        agentFunds,
+        `${eoaAddress}.${tokenAddress}`,
+        allocateToEoa.toString(),
+      );
+    }
+
+    const remaining = amountBigInt - allocateToEoa;
+    if (remaining > 0n) {
+      const safeAddress = serviceSafe.address;
+      set(agentFunds, [safeAddress, tokenAddress], remaining.toString());
+    }
+  });
+
+  const fundsTo: ChainFunds = {
+    [middlewareHomeChainId]: agentFunds,
+  };
+
+  return fundsTo;
+};
+
 export const ConfirmTransfer = ({
   isTransferDisabled,
   fundsToTransfer,
 }: ConfirmTransferProps) => {
   const { selectedAgentConfig, selectedService } = useServices();
-  const { serviceSafes } = useService(selectedService?.service_config_id);
+  const { serviceSafes, serviceEoa } = useService(
+    selectedService?.service_config_id,
+  );
   const { onFundAgent, isLoading, isSuccess, isError } = useConfirmTransfer();
+  const { eoaTokenRequirements } = useAgentFundingRequests();
 
   const [isTransferStateModalVisible, setIsTransferStateModalVisible] =
     useState(false);
@@ -148,36 +226,28 @@ export const ConfirmTransfer = ({
   );
 
   const handleConfirmTransfer = useCallback(() => {
-    if (!serviceSafe) {
-      throw new Error('Service Safe is not available.'); // Agent safe
+    if (!serviceSafe || !serviceEoa) {
+      throw new Error('Agents wallets are not available.');
     }
 
-    const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(middlewareHomeChainId)];
-    const tokenAmountsByAddress: TokenAmountMap = {};
-
-    Object.entries(fundsToTransfer).forEach(([untypedSymbol, amount]) => {
-      const symbol = untypedSymbol as TokenSymbol;
-      if (amount > 0 && chainTokenConfig[symbol]) {
-        const tokenConfig = chainTokenConfig[symbol];
-        if (!tokenConfig) return;
-
-        const { address: tokenAddress, decimals } = tokenConfig;
-        tokenAmountsByAddress[tokenAddress ?? AddressZero] = parseUnits(
-          amount,
-          decimals,
-        );
-      }
+    const fundsTo = prepareAgentFundsForTransfer({
+      fundsToTransfer,
+      middlewareHomeChainId,
+      serviceSafe,
+      serviceEoa,
+      eoaTokenRequirements,
     });
-
-    const fundsTo: ChainFunds = {
-      [middlewareHomeChainId]: {
-        [serviceSafe.address]: tokenAmountsByAddress,
-      },
-    };
 
     setIsTransferStateModalVisible(true);
     onFundAgent(fundsTo);
-  }, [onFundAgent, fundsToTransfer, middlewareHomeChainId, serviceSafe]);
+  }, [
+    onFundAgent,
+    fundsToTransfer,
+    middlewareHomeChainId,
+    serviceSafe,
+    serviceEoa,
+    eoaTokenRequirements,
+  ]);
 
   const handleClose = useCallback(
     () => setIsTransferStateModalVisible(false),
