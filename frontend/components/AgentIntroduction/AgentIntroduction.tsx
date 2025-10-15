@@ -11,7 +11,11 @@ import {
   OPTIMUS_ONBOARDING_STEPS,
   PREDICTION_ONBOARDING_STEPS,
 } from './constants';
-import { IntroductionStep, OnboardingStep } from './IntroductionStep';
+import {
+  IntroductionStep,
+  IntroductionStepStyles,
+  OnboardingStep,
+} from './IntroductionStep';
 
 const { Text } = Typography;
 
@@ -34,6 +38,8 @@ type AgentIntroductionProps = {
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderAgentSelection?: () => ReactNode;
   skipFirst?: boolean;
+} & {
+  styles: IntroductionStepStyles;
 };
 
 /**
@@ -44,6 +50,7 @@ export const AgentIntroduction = ({
   renderFundingRequirements,
   renderAgentSelection,
   skipFirst = false,
+  styles,
 }: AgentIntroductionProps) => {
   const [onboardingStep, setOnboardingStep] = useState(0);
 
@@ -92,6 +99,7 @@ export const AgentIntroduction = ({
         ))
       }
       renderAgentSelection={renderAgentSelection}
+      styles={styles}
     />
   );
 };

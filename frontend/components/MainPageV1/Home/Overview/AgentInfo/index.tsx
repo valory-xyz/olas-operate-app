@@ -32,15 +32,22 @@ const AboutAgent = () => {
         onClick={() => setIsAboutAgentModalOpen(true)}
         icon={<InfoCircleOutlined />}
       />
-
-      <Modal
-        title="About Agent"
-        open={isAboutAgentModalOpen}
-        onCancel={() => setIsAboutAgentModalOpen(false)}
-        footer={null}
-      >
-        <AgentIntroduction agentType={selectedAgentType} skipFirst />
-      </Modal>
+      {isAboutAgentModalOpen && (
+        <Modal
+          open
+          onCancel={() => setIsAboutAgentModalOpen(false)}
+          title="About Agent"
+          footer={null}
+          width={460}
+          style={{ top: 40 }}
+        >
+          <AgentIntroduction
+            agentType={selectedAgentType}
+            skipFirst
+            styles={{ imageHeight: 360, descPadding: '0px' }}
+          />
+        </Modal>
+      )}
     </>
   );
 };

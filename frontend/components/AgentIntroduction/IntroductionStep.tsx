@@ -18,8 +18,16 @@ export type OnboardingStep = {
   helper?: string;
 };
 
-type AnimatedImageProps = { imgSrc: string; alt: string };
-const AnimatedImage = ({ imgSrc, alt }: AnimatedImageProps) => (
+export type IntroductionStepStyles = {
+  imageHeight?: number;
+  descPadding?: string;
+};
+
+type AnimatedImageProps = { imgSrc: string; alt: string } & Pick<
+  IntroductionStepStyles,
+  'imageHeight'
+>;
+const AnimatedImage = ({ imgSrc, alt, imageHeight }: AnimatedImageProps) => (
   <AnimatePresence mode="wait">
     <motion.div
       key={imgSrc}
@@ -39,7 +47,7 @@ const AnimatedImage = ({ imgSrc, alt }: AnimatedImageProps) => (
         width={0}
         height={0}
         sizes="100vw"
-        style={{ width: '100%', height: 'auto', minHeight: 416 }}
+        style={{ width: '100%', height: 'auto', minHeight: imageHeight ?? 416 }}
       />
     </motion.div>
   </AnimatePresence>
@@ -69,6 +77,7 @@ type IntroductionProps = OnboardingStep & {
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderDot?: () => ReactNode;
   renderAgentSelection?: () => ReactNode;
+  styles: IntroductionStepStyles;
 };
 
 /**
@@ -79,11 +88,12 @@ export const IntroductionStep = ({
   desc,
   imgSrc,
   helper,
-  renderFundingRequirements,
-  renderDot,
   onPrev,
   onNext,
+  renderDot,
+  renderFundingRequirements,
   renderAgentSelection,
+  styles: { imageHeight, descPadding } = {},
 }: IntroductionProps) => {
   const { selectedAgentConfig } = useServices();
   const isFundingDetailsStep = !title && !imgSrc;
@@ -93,14 +103,23 @@ export const IntroductionStep = ({
       {isFundingDetailsStep ? (
         renderFundingRequirements?.(desc)
       ) : (
-        <AnimatedImage imgSrc={`/${imgSrc}.png`} alt={title ?? ''} />
+        <AnimatedImage
+          imgSrc={`/${imgSrc}.png`}
+          alt={title ?? ''}
+          imageHeight={imageHeight}
+        />
       )}
 
       <div style={{ padding: '12px 0px 20px 0px' }}>
         <Flex vertical gap={24}>
           {isFundingDetailsStep ? null : (
             <>
-              <div style={{ padding: '0px 20px', overflow: 'hidden' }}>
+              <div
+                style={{
+                  padding: descPadding ?? '0px 20px',
+                  overflow: 'hidden',
+                }}
+              >
                 <Content title={title} desc={desc} helper={helper} />
               </div>
               {selectedAgentConfig.isUnderConstruction && <UnderConstruction />}
