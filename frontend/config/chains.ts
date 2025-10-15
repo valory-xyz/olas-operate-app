@@ -29,7 +29,7 @@ export type ChainConfig = {
 const GNOSIS_CHAIN_CONFIG: ChainConfig = {
   evmChainId: EvmChainId.Gnosis,
   name: 'Gnosis',
-  nativeToken: TOKEN_CONFIG[EvmChainId.Gnosis][TokenSymbol.ETH] as TokenConfig,
+  nativeToken: TOKEN_CONFIG[EvmChainId.Gnosis][TokenSymbol.XDAI] as TokenConfig,
   middlewareChain: MiddlewareChainId.GNOSIS,
   rpc: process.env.GNOSIS_RPC as HttpUrl,
   safeCreationThreshold: 1.5,
