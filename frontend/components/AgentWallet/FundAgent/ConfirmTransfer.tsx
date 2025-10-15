@@ -161,8 +161,11 @@ export const ConfirmTransfer = ({
         const tokenConfig = chainTokenConfig[symbol];
         if (!tokenConfig) return;
 
-        const { address: tokenAddress = AddressZero, decimals } = tokenConfig;
-        tokenAmountsByAddress[tokenAddress] = parseUnits(amount, decimals);
+        const { address: tokenAddress, decimals } = tokenConfig;
+        tokenAmountsByAddress[tokenAddress ?? AddressZero] = parseUnits(
+          amount,
+          decimals,
+        );
       }
     });
 
