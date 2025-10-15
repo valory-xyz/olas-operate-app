@@ -1,101 +1,15 @@
-import { Button, Flex, Modal, Statistic, Typography } from 'antd';
-import { useMemo, useState } from 'react';
+import { Button, Flex, Modal, Typography } from 'antd';
+import { useState } from 'react';
 
-import { CustomAlert } from '@/components/Alert';
-import { AgentLowBalanceAlert } from '@/components/MainPageV1/Home/Overview/AgentInfo/AgentDisabledAlert/LowBalance/AgentLowBalanceAlert';
-import { BackButton } from '@/components/ui/BackButton';
-import { CardFlex } from '@/components/ui/CardFlex';
-import { COLOR } from '@/constants';
+import { CardFlex } from '@/components/ui';
 import { Pages } from '@/enums/Pages';
-import { useActiveStakingContractDetails } from '@/hooks';
-import { usePageState } from '@/hooks/usePageState';
+import { usePageState } from '@/hooks';
 
+import { AgentWalletOperation } from './AgentWalletOperation';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { TransactionHistoryTable } from './TransactionHistoryTable';
 
 const { Text, Title } = Typography;
-const { Timer } = Statistic;
-
-const EvictedAgentAlert = () => {
-  const { evictionExpiresAt } = useActiveStakingContractDetails();
-
-  return (
-    <CustomAlert
-      message={
-        <Text className="text-sm">
-          <span className="font-weight-600">
-            Withdrawals Temporarily Unavailable
-          </span>{' '}
-          <br />
-          Your agent hasn&apos;t reached the minimum duration of staking.
-          You&apos;ll be able to withdraw in{' '}
-          <Timer
-            type="countdown"
-            value={evictionExpiresAt * 1000}
-            format="HH [hours] mm [minutes] ss [seconds]"
-            valueStyle={{
-              fontSize: 14,
-              color: COLOR.TEXT_COLOR.WARNING.DEFAULT,
-            }}
-          />
-        </Text>
-      }
-      type="warning"
-      showIcon
-      centered
-      className="mt-16 text-sm"
-    />
-  );
-};
-
-const AgentWalletTitle = () => {
-  const { goto } = usePageState();
-  return (
-    <Flex vertical justify="space-between" gap={12}>
-      <BackButton onPrev={() => goto(Pages.Main)} />
-      <Title level={3} className="m-0">
-        Agent Wallet
-      </Title>
-    </Flex>
-  );
-};
-
-type AggregatedBalanceAndOperationsProps = {
-  onWithdraw: () => void;
-  onFundAgent: () => void;
-};
-export const AggregatedBalanceAndOperations = ({
-  onWithdraw,
-  onFundAgent,
-}: AggregatedBalanceAndOperationsProps) => {
-  const { isAgentEvicted, isEligibleForStaking } =
-    useActiveStakingContractDetails();
-
-  const isWithdrawDisabled = isAgentEvicted && !isEligibleForStaking;
-
-  const withdrawDisabledAlert = useMemo(() => {
-    if (isWithdrawDisabled) return <EvictedAgentAlert />;
-    return null;
-  }, [isWithdrawDisabled]);
-
-  return (
-    <CardFlex $noBorder>
-      <Flex justify="space-between" align="end">
-        <AgentWalletTitle />
-        <Flex gap={8}>
-          <Button disabled={isWithdrawDisabled} onClick={onWithdraw}>
-            Withdraw
-          </Button>
-          <Button type="primary" onClick={onFundAgent}>
-            Fund Agent
-          </Button>
-        </Flex>
-      </Flex>
-      {withdrawDisabledAlert}
-      <AgentLowBalanceAlert onFund={onFundAgent} needInitialValues />
-    </CardFlex>
-  );
-};
 
 const AvailableAssets = () => (
   <Flex vertical gap={24}>
@@ -178,7 +92,7 @@ export const BalancesAndAssets = ({
 
   return (
     <Flex vertical gap={32}>
-      <AggregatedBalanceAndOperations
+      <AgentWalletOperation
         onWithdraw={() => setWithdrawModalVisible(true)}
         onFundAgent={onFundAgent}
       />

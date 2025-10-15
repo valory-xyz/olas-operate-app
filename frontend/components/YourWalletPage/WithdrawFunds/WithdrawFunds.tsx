@@ -41,9 +41,9 @@ export const WithdrawFunds = () => {
   );
   const { isServiceStakedForMinimumDuration, selectedStakingContractDetails } =
     useActiveStakingContractDetails();
-  const countdownDisplay = useStakingContractCountdown({
-    currentStakingContractInfo: selectedStakingContractDetails,
-  });
+  const { countdownDisplay } = useStakingContractCountdown(
+    selectedStakingContractDetails,
+  );
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isWithdrawalLoading, setIsWithdrawalLoading] = useState(false);

@@ -1,5 +1,5 @@
 import { ArrowRightOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { Button, Flex, Image, Tooltip, Typography } from 'antd';
+import { Button, Flex, Image, Skeleton, Tooltip, Typography } from 'antd';
 import { kebabCase } from 'lodash';
 import styled from 'styled-components';
 
@@ -7,7 +7,8 @@ import { AgentNft } from '@/components/AgentNft';
 import { BackButton, CardFlex, Divider } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR, TokenSymbolConfigMap } from '@/constants';
-import { formatNumber } from '@/utils/numberFormatters';
+import { useBalanceContext } from '@/hooks';
+import { formatNumber } from '@/utils';
 
 import { useAgentWallet } from '../AgentWalletProvider';
 
@@ -117,7 +118,8 @@ const AssetsFromAgentWallet = () => {
 };
 
 const AssetsFromStakingContract = () => {
-  const { stakingRewards } = useAgentWallet();
+  const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
+    useBalanceContext();
 
   return (
     <Flex vertical gap={8}>
@@ -130,7 +132,11 @@ const AssetsFromStakingContract = () => {
             width={20}
             className="flex"
           />
-          <Text>{formatNumber(stakingRewards, 4)} OLAS</Text>
+          {isBalanceLoading ? (
+            <Skeleton.Input active size="small" style={{ width: 80 }} />
+          ) : (
+            <Text>{formatNumber(totalStakedOlasBalance, 4)} OLAS</Text>
+          )}
         </Flex>
 
         <AgentNft />
