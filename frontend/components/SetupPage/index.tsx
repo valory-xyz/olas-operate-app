@@ -77,34 +77,35 @@ export const Setup = () => {
         return <SetupSeedPhrase />;
       case SetupScreen.SetupBackupSigner:
         return <SetupBackupSigner />;
+      case SetupScreen.AgentOnboarding:
+        return <AgentOnboarding />;
+      case SetupScreen.SetupYourAgent:
+        return <SetupYourAgent />;
       case SetupScreen.FundYourAgent:
         return <FundYourAgent />;
       case SetupScreen.TransferFunds:
         return <TransferFunds />;
-      case SetupScreen.SetupEoaFunding:
-        return <SetupEoaFunding />;
-      case SetupScreen.SetupEoaFundingIncomplete:
-        return <SetupEoaFunding />;
-      case SetupScreen.SetupCreateSafe:
-        return <SetupCreateSafe />;
-      case SetupScreen.AgentSelection:
-        return <AgentSelection showSelected={false} />;
-      case SetupScreen.AgentOnboarding:
-        return <AgentOnboarding />;
-      case SetupScreen.EarlyAccessOnly:
-        return <EarlyAccessOnly />;
-      case SetupScreen.SetupYourAgent:
-        return <SetupYourAgent />;
-
-      // Bridge account
       case SetupScreen.SetupBridgeOnboardingScreen:
         return <SetupBridgeOnboarding />;
-
-      // On Ramp
       case SetupScreen.SetupOnRamp:
         return <SetupOnRamp />;
+      case SetupScreen.EarlyAccessOnly:
+        return <EarlyAccessOnly />;
 
-      // Restore account
+      // TODO: to be removed post v1 release
+      case SetupScreen.SetupEoaFunding:
+        return <SetupEoaFunding />;
+      // TODO: to be removed post v1 release
+      case SetupScreen.SetupEoaFundingIncomplete:
+        return <SetupEoaFunding />;
+      // TODO: to be removed post v1 release
+      case SetupScreen.SetupCreateSafe:
+        return <SetupCreateSafe />;
+      // TODO: to be removed post v1 release
+      case SetupScreen.AgentSelection:
+        return <AgentSelection showSelected={false} />;
+
+      // Restore account, screens to be re-implemented as per v1
       case SetupScreen.Restore:
         return <SetupRestoreMain />;
       case SetupScreen.RestoreViaSeed:

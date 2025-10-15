@@ -127,6 +127,7 @@ export const useServiceDeployment = () => {
     hasEnoughServiceSlots,
     isAgentEvicted,
     isAgentsFunFieldUpdateRequired,
+    isAnotherAgentRunning,
     isEligibleForStaking,
     isInitialFunded,
     isLoading,

@@ -44,11 +44,7 @@ const useSetupNavigation = ({
     services,
     isFetched: isServicesFetched,
   } = useServices();
-  const {
-    masterSafes,
-    masterEoa,
-    isFetched: isWalletsFetched,
-  } = useMasterWalletContext();
+  const { masterEoa, isFetched: isWalletsFetched } = useMasterWalletContext();
   const { isLoaded: isBalanceLoaded } = useBalanceContext();
   const { masterWalletBalances } = useMasterBalances();
   const backupSignerAddress = useBackupSigner();
@@ -56,12 +52,6 @@ const useSetupNavigation = ({
   const selectedServiceOrAgentChainId = selectedService?.home_chain
     ? asEvmChainId(selectedService?.home_chain)
     : selectedAgentConfig.evmHomeChainId;
-
-  const masterSafe = masterSafes?.find(
-    (safe) =>
-      selectedServiceOrAgentChainId &&
-      safe.evmChainId === selectedServiceOrAgentChainId,
-  );
 
   const eoaBalanceEth = masterWalletBalances?.find(
     (balance) =>
@@ -139,17 +129,10 @@ const useSetupNavigation = ({
       return;
     }
 
-    // if master safe is NOT created, then go to create safe
-    if (!masterSafe?.address) {
-      goto(SetupScreen.SetupCreateSafe);
-      return;
-    }
-
     gotoPage(Pages.Main);
   }, [
     isServiceCreatedForAgent,
     eoaBalanceEth,
-    masterSafe?.address,
     selectedServiceOrAgentChainId,
     goto,
     gotoPage,
