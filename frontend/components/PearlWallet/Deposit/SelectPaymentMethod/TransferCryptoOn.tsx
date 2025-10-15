@@ -2,11 +2,12 @@ import { entries } from 'lodash';
 import { useMemo } from 'react';
 
 import { TokenSymbol } from '@/constants';
+import { Pages } from '@/enums/Pages';
+import { usePageState } from '@/hooks/usePageState';
 import { AvailableAsset } from '@/types/Wallet';
 
 import { TransferCryptoFromExternalWallet } from '../../components/TransferCryptoFromExternalWallet';
 import { usePearlWallet } from '../../PearlWalletProvider';
-import { STEPS } from '../../types';
 
 type TransferCryptoOnProps = {
   chainName: string;
@@ -17,7 +18,8 @@ export const TransferCryptoOn = ({
   chainName,
   onBack,
 }: TransferCryptoOnProps) => {
-  const { amountsToDeposit, updateStep, masterSafeAddress } = usePearlWallet();
+  const { amountsToDeposit, masterSafeAddress } = usePearlWallet();
+  const { goto } = usePageState();
 
   const tokenAndDepositedAmounts = useMemo<AvailableAsset[]>(
     () =>
@@ -35,7 +37,7 @@ export const TransferCryptoOn = ({
       address={masterSafeAddress}
       tokensToDeposit={tokenAndDepositedAmounts}
       onBack={onBack}
-      onBackToPearlWallet={() => updateStep(STEPS.PEARL_WALLET_SCREEN)}
+      onBackToPearlWallet={() => goto(Pages.PearlWallet)}
     />
   );
 };

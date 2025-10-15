@@ -2,6 +2,8 @@ import { Button, Flex, Typography } from 'antd';
 
 import { CustomAlert } from '@/components/Alert';
 import { getNativeTokenSymbol } from '@/config/tokens';
+import { Pages } from '@/enums';
+import { usePageState } from '@/hooks';
 import { useServices } from '@/hooks/useServices';
 import { balanceFormat } from '@/utils/numberFormatters';
 
@@ -21,6 +23,8 @@ export const InsufficientBalanceAlert = ({
   reason,
 }: InsufficientBalanceAlertProps) => {
   const { selectedAgentConfig } = useServices();
+  const { goto } = usePageState();
+
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
   const tokenSymbol = getNativeTokenSymbol(homeChainId);
 
@@ -39,8 +43,7 @@ export const InsufficientBalanceAlert = ({
         <Flex justify="space-between">
           <Text className="text-sm">{messageText}</Text>
 
-          {/* TODO: add button action */}
-          <Button size="small">
+          <Button size="small" onClick={() => goto(Pages.PearlWalletDeposit)}>
             Deposit {insufficientOlasBalance ? 'OLAS' : tokenSymbol}
           </Button>
         </Flex>

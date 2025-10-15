@@ -37,6 +37,10 @@ export const Main = () => {
   const mainContent = useMemo(() => {
     switch (pageState) {
       case Pages.PearlWallet:
+      case Pages.PearlWalletDeposit:
+      case Pages.PearlWalletWithdraw:
+      case Pages.PearlWalletEnterWithdrawalAddress:
+      case Pages.PearlWalletSelectPaymentMethod:
         return <PearlWallet />;
       case Pages.AgentWallet:
         return <AgentWallet />;
