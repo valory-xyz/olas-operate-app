@@ -1,5 +1,5 @@
 import { Flex, Typography } from 'antd';
-import { ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { AgentType } from '@/constants/agent';
@@ -46,6 +46,11 @@ export const AgentIntroduction = ({
   skipFirst,
 }: AgentIntroductionProps) => {
   const [onboardingStep, setOnboardingStep] = useState(0);
+
+  // Reset onboarding step when selected agent changes
+  useEffect(() => {
+    setOnboardingStep(0);
+  }, [selectedAgent]);
 
   const steps = (selectedAgent ? onboardingStepsMap[selectedAgent] : []).slice(
     skipFirst ? 1 : 0,
