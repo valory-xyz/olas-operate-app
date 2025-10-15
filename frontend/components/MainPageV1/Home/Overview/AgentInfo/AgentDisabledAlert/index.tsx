@@ -1,3 +1,4 @@
+import { AgentLowBalanceAlert } from '@/components/Alerts';
 import { Pages } from '@/enums';
 import {
   useActiveStakingContractDetails,
@@ -10,8 +11,7 @@ import {
 
 import { AgentRunningAlert } from './AgentRunningAlert';
 import { EvictedAlert } from './EvictedAlert';
-import { AgentLowBalanceAlert } from './LowBalance/AgentLowBalanceAlert';
-import { MasterEoaLowBalanceAlert } from './LowBalance/MasterEoaLowBalanceAlert';
+import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
 import { UnderConstructionAlert } from './UnderConstructionAlert';
 import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';

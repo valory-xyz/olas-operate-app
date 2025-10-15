@@ -2,7 +2,7 @@ import { Button, Flex, Tooltip, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
-import { AgentLowBalanceAlert } from '@/components/MainPageV1/Home/Overview/AgentInfo/AgentDisabledAlert/LowBalance/AgentLowBalanceAlert';
+import { AgentLowBalanceAlert } from '@/components/Alerts';
 import { BackButton, CardFlex } from '@/components/ui';
 import { Pages } from '@/enums/Pages';
 import {
@@ -106,8 +106,3 @@ export const AgentWalletOperation = ({
     </CardFlex>
   );
 };
-
-/**
- * - fix the "minimum-staking-duration" logic in the staking contract details hook
- * - hide alert and "Low" if not completed the onboarding
- */
