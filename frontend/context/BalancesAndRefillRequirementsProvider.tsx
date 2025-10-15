@@ -3,7 +3,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { isEmpty } from 'lodash';
+import { isEmpty, map, values } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -18,6 +18,7 @@ import {
   BalancesAndFundingRequirements,
   MasterSafeBalanceRecord,
 } from '@/client';
+import { AGENT_CONFIG } from '@/config/agents';
 import { EvmChainId, MiddlewareDeploymentStatusMap } from '@/constants';
 import {
   SIXTY_MINUTE_INTERVAL,
@@ -31,8 +32,12 @@ import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
 import { BalanceService } from '@/service/balances';
 import { Maybe, Nullable, Optional } from '@/types/Util';
-import { BACKOFF_STEPS, getExponentialInterval } from '@/utils';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import {
+  asEvmChainId,
+  asMiddlewareChain,
+  BACKOFF_STEPS,
+  getExponentialInterval,
+} from '@/utils';
 
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
@@ -137,7 +142,7 @@ export const BalancesAndRefillRequirementsProvider = ({
   const { isOnline } = useOnlineStatusContext();
   const { isUserLoggedIn } = usePageState();
   const { masterSafes } = useMasterWalletContext();
-  const { selectedService, selectedAgentConfig } = useServices();
+  const { services, selectedService, selectedAgentConfig } = useServices();
   const { isEligibleForRewards } = useRewardContext();
   const configId = selectedService?.service_config_id;
   const chainId = selectedAgentConfig.evmHomeChainId;
@@ -156,7 +161,7 @@ export const BalancesAndRefillRequirementsProvider = ({
   const {
     data: balancesAndFundingRequirements,
     isLoading: isBalancesAndFundingRequirementsLoading,
-    refetch,
+    refetch: refetchBalancesAndFundingRequirements,
   } = useQuery<BalancesAndFundingRequirements>({
     queryKey: REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(
       configId as string,
@@ -175,6 +180,42 @@ export const BalancesAndRefillRequirementsProvider = ({
     refetchInterval,
   });
 
+  // Service config IDs for all non-under-construction agents
+  const serviceConfigIds = useMemo(
+    () =>
+      services
+        ?.filter((x) => {
+          const currentAgent = values(AGENT_CONFIG).find(
+            (c) =>
+              c.servicePublicId === x.service_public_id &&
+              c.evmHomeChainId === asEvmChainId(x.home_chain),
+          );
+          return (
+            !currentAgent?.isUnderConstruction && !!currentAgent?.isAgentEnabled
+          );
+        })
+        .map((s) => s.service_config_id) ?? [],
+    [services],
+  );
+
+  const {
+    data: balancesAndFundingRequirementsForAllServices,
+    isLoading: isBalancesAndFundingRequirementsLoadingForAllServices,
+    refetch: refetchBalancesAndFundingRequirementsForAllServices,
+  } = useQuery({
+    queryKey:
+      REACT_QUERY_KEYS.ALL_BALANCES_AND_REFILL_REQUIREMENTS_KEY(
+        serviceConfigIds,
+      ),
+    queryFn: ({ signal }) =>
+      BalanceService.getAllBalancesAndFundingRequirements({
+        serviceConfigIds,
+        signal,
+      }),
+    enabled: !!services?.length && isUserLoggedIn && isOnline,
+    refetchInterval,
+  });
+
   const balances = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return;
     if (!balancesAndFundingRequirements) return;
@@ -185,17 +226,35 @@ export const BalancesAndRefillRequirementsProvider = ({
     chainId,
     balancesAndFundingRequirements,
   ]);
+
+  // TODO: works only for single services per chain
+  // Needs to be updated if multi-service per chain is allowed
   const getRefillRequirementsOf = useCallback(
     <T extends AddressBalanceRecord | MasterSafeBalanceRecord>(
       chainId: EvmChainId,
     ): Optional<T> => {
-      if (isBalancesAndFundingRequirementsLoading) return;
-      if (!balancesAndFundingRequirements) return;
+      if (isBalancesAndFundingRequirementsLoadingForAllServices) return;
+      if (!balancesAndFundingRequirementsForAllServices) return;
 
       const chain = asMiddlewareChain(chainId);
-      return balancesAndFundingRequirements.refill_requirements[chain] as T;
+      const serviceIdOfService = services?.find(
+        (s) => s.home_chain === chain,
+      )?.service_config_id;
+      if (!serviceIdOfService) return;
+
+      const currentServiceBalancesAndFundingRequirements: Optional<BalancesAndFundingRequirements> =
+        balancesAndFundingRequirementsForAllServices?.[serviceIdOfService];
+      if (!currentServiceBalancesAndFundingRequirements) return;
+
+      const result = currentServiceBalancesAndFundingRequirements
+        .refill_requirements[chain] as Optional<T>;
+      return result;
     },
-    [isBalancesAndFundingRequirementsLoading, balancesAndFundingRequirements],
+    [
+      isBalancesAndFundingRequirementsLoadingForAllServices,
+      balancesAndFundingRequirementsForAllServices,
+      services,
+    ],
   );
 
   const refillRequirements = useMemo(() => {
@@ -249,9 +308,24 @@ export const BalancesAndRefillRequirementsProvider = ({
   const isPearlWalletRefillRequired = useMemo(() => {
     // If master safes are empty, no service is set up, hence no refill is required.
     if (isEmpty(masterSafes)) return false;
+    if (isEmpty(balancesAndFundingRequirementsForAllServices)) return false;
 
-    return balancesAndFundingRequirements?.is_refill_required || false;
-  }, [balancesAndFundingRequirements?.is_refill_required, masterSafes]);
+    // Check if any service requires a refill on any chain
+    return map(
+      balancesAndFundingRequirementsForAllServices,
+      (b) => b.is_refill_required,
+    ).some((x) => !!x);
+  }, [balancesAndFundingRequirementsForAllServices, masterSafes]);
+
+  const refetch = useCallback(async () => {
+    return Promise.all([
+      refetchBalancesAndFundingRequirements(),
+      refetchBalancesAndFundingRequirementsForAllServices(),
+    ]).then(([result]) => result);
+  }, [
+    refetchBalancesAndFundingRequirements,
+    refetchBalancesAndFundingRequirementsForAllServices,
+  ]);
 
   return (
     <BalancesAndRefillRequirementsProviderContext.Provider
