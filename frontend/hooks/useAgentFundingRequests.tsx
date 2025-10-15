@@ -69,6 +69,7 @@ export const useAgentFundingRequests = () => {
   const agentTokenRequirements = useMemo(() => {
     if (!agentFundingRequests) return null;
     if (isAgentFundingRequestsStale) return null;
+
     return Object.values(agentFundingRequests).reduce(
       (allBalanceRecords, balanceRecord) => {
         Object.entries(balanceRecord).forEach(
@@ -107,8 +108,10 @@ export const useAgentFundingRequests = () => {
   const eoaTokenRequirements = useMemo(() => {
     if (!agentFundingRequests) return null;
     if (isAgentFundingRequestsStale) return null;
+
     const eoaAddress = serviceEoa?.address;
     if (!eoaAddress) return null;
+
     return agentFundingRequests[eoaAddress] || null;
   }, [agentFundingRequests, isAgentFundingRequestsStale, serviceEoa?.address]);
 
