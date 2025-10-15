@@ -1,5 +1,7 @@
 import { FIVE_MINUTE_INTERVAL, THIRTY_SECONDS_INTERVAL } from '@/constants';
 
+export const BACKOFF_STEPS = 5;
+
 /**
  * Returns an exponentially increasing interval in milliseconds, clamped by max.
  *
@@ -15,10 +17,10 @@ export const getExponentialInterval = (
   intervals: { minMs: number; maxMs: number; steps: number } = {
     minMs: THIRTY_SECONDS_INTERVAL,
     maxMs: FIVE_MINUTE_INTERVAL,
-    steps: 5,
+    steps: BACKOFF_STEPS,
   },
 ): number => {
-  const { minMs, maxMs, steps = 5 } = intervals;
+  const { minMs, maxMs, steps = BACKOFF_STEPS } = intervals;
 
   // compute exponentially growing interval
   const factor = Math.pow(maxMs / minMs, 1 / (steps - 1));

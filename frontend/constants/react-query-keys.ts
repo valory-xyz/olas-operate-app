@@ -90,7 +90,7 @@ export const REACT_QUERY_KEYS = {
     ['balancesAndRefillRequirements', serviceConfigId] as const,
 
   ALL_BALANCES_AND_REFILL_REQUIREMENTS_KEY: (servicesConfigId: string[]) =>
-    ['allBalancesAndRefillRequirements', ...servicesConfigId] as const,
+    ['allChainBalancesAndRefillRequirements', ...servicesConfigId] as const,
 
   // bridge
   BRIDGE_REFILL_REQUIREMENTS_KEY: (
