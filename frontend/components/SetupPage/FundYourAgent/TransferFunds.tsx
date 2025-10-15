@@ -38,9 +38,7 @@ export const TransferFunds = () => {
   const { selectedAgentConfig } = useServices();
   const { isFullyFunded, tokensFundingStatus } = useTokensFundingStatus();
   const { initialTokenRequirements, isLoading } =
-    useGetRefillRequirementsWithMonthlyGas({
-      shouldCreateDummyService: false,
-    });
+    useGetRefillRequirementsWithMonthlyGas();
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,

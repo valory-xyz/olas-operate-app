@@ -115,7 +115,7 @@ type UseGetRefillRequirementsWithMonthlyGasReturn = {
  */
 export const useGetRefillRequirementsWithMonthlyGas = ({
   shouldCreateDummyService = false,
-}: UseGetRefillRequirementsWithMonthlyGasProps): UseGetRefillRequirementsWithMonthlyGasReturn => {
+}: UseGetRefillRequirementsWithMonthlyGasProps = {}): UseGetRefillRequirementsWithMonthlyGasReturn => {
   const updateBeforeBridgingFunds = useBeforeBridgeFunds();
   const {
     totalRequirements,
