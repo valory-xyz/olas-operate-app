@@ -14,7 +14,13 @@ export const InfoTooltip = ({
   children: React.ReactNode;
   iconStyles?: React.CSSProperties;
 } & TooltipProps) => (
-  <Tooltip arrow={false} title={children} placement={placement} {...rest}>
+  <Tooltip
+    arrow={false}
+    title={children}
+    placement={placement}
+    overlayInnerStyle={{ fontSize: 14 }}
+    {...rest}
+  >
     <InfoCircleOutlined style={{ ...DEFAULT_ICON_STYLES, ...iconStyles }} />
   </Tooltip>
 );

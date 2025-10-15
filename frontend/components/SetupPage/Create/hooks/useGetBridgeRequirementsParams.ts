@@ -85,11 +85,12 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
       return bridgeRequests;
     },
     [
-      masterEoa,
-      refillRequirements,
-      toMiddlewareChain,
       isBalancesAndFundingRequirementsLoading,
+      refillRequirements,
+      masterEoa?.address,
+      toMiddlewareChain,
       transferDirection,
+      selectedAgentType,
     ],
   );
 };

@@ -3,6 +3,7 @@ import { Button, Flex, Typography } from 'antd';
 import Image from 'next/image';
 import styled from 'styled-components';
 
+import { Tooltip } from '@/components/ui';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { useYourWallet } from '@/components/YourWalletPage/useYourWallet';
 import { AddressZero } from '@/constants/address';
@@ -46,10 +47,12 @@ export const AgentInfo = () => {
               <Title level={5} className="m-0">
                 {generateName(serviceSafe?.address ?? AddressZero)}
               </Title>
-              <Button
-                onClick={() => goto(Pages.UpdateAgentTemplate)}
-                icon={<SettingOutlined />}
-              />
+              <Tooltip title="Agent settings">
+                <Button
+                  onClick={() => goto(Pages.UpdateAgentTemplate)}
+                  icon={<SettingOutlined />}
+                />
+              </Tooltip>
             </Flex>
             <AgentRunButton />
           </Flex>

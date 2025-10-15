@@ -6,7 +6,7 @@ import styled from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
 import { InfoTooltip } from '@/components/InfoTooltip';
-import { CardFlex } from '@/components/ui';
+import { CardFlex, Tooltip } from '@/components/ui';
 import {
   COLOR,
   FIVE_MINUTE_INTERVAL,
@@ -44,6 +44,9 @@ const MetricsCapturedTimestampAlert = ({
     className="text-sm"
   />
 );
+
+const AGENT_BEHAVIOR_TEXT =
+  'Conservative volatile exposure across DEXs and lending markets with advanced functionality enabled.';
 
 const AgentBehaviorContainer = styled.div`
   display: flex;
@@ -169,20 +172,25 @@ export const Performance = ({ openProfile }: PerformanceProps) => {
           {agentBehavior && (
             <Flex flex={1} vertical gap={8}>
               <Text className="text-neutral-secondary">Agent behavior</Text>
-              <AgentBehaviorContainer>
-                <Text ellipsis title={agentBehavior}>
-                  {agentBehavior}
-                </Text>
-                {isAgentRunning ? (
-                  <Button size="small" onClick={openProfile}>
-                    Update
-                  </Button>
-                ) : (
-                  <Button size="small" disabled>
-                    Start Agent to Update
-                  </Button>
-                )}
-              </AgentBehaviorContainer>
+              <Tooltip
+                title={AGENT_BEHAVIOR_TEXT}
+                styles={{ body: { width: 400 } }}
+              >
+                <AgentBehaviorContainer>
+                  <Text ellipsis title={agentBehavior}>
+                    {agentBehavior}
+                  </Text>
+                  {isAgentRunning ? (
+                    <Button size="small" onClick={openProfile}>
+                      Update
+                    </Button>
+                  ) : (
+                    <Button size="small" disabled>
+                      Start Agent to Update
+                    </Button>
+                  )}
+                </AgentBehaviorContainer>
+              </Tooltip>
             </Flex>
           )}
         </Flex>
