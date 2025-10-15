@@ -6,7 +6,7 @@ import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 export const useStakingContracts = () => {
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedAgentType } = useServices();
   const { evmHomeChainId } = selectedAgentConfig;
   const {
     activeStakingProgramId,
@@ -36,6 +36,15 @@ export const useStakingContracts = () => {
           if (STAKING_PROGRAMS[evmHomeChainId][stakingProgramId].deprecated)
             return acc;
 
+          // if the program is not supported by the agent type, ignore it
+          if (
+            !STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
+              stakingProgramId
+            ].agentsSupported.includes(selectedAgentType)
+          ) {
+            return acc;
+          }
+
           // Otherwise, append to the end
           return [...acc, stakingProgramId];
         },
@@ -46,6 +55,8 @@ export const useStakingContracts = () => {
       isActiveStakingProgramLoaded,
       currentStakingProgramId,
       evmHomeChainId,
+      selectedAgentConfig.evmHomeChainId,
+      selectedAgentType,
     ],
   );
 

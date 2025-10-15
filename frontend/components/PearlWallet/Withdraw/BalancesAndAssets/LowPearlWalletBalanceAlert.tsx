@@ -17,11 +17,11 @@ const { Text } = Typography;
 
 export const LowPearlWalletBalanceAlert = () => {
   const { chains } = usePearlWallet();
-  const { isRefillRequired, getRefillRequirementsOf } =
+  const { isPearlWalletRefillRequired, getRefillRequirementsOf } =
     useBalanceAndRefillRequirementsContext();
   const { getMasterSafeOf } = useMasterWalletContext();
 
-  if (!isRefillRequired) return null;
+  if (!isPearlWalletRefillRequired) return null;
 
   return (
     <CustomAlert
@@ -38,19 +38,19 @@ export const LowPearlWalletBalanceAlert = () => {
           </Text>
           <Flex vertical gap={2} className="ml-8">
             {chains.map((chain: WalletChain) => {
-              const masterSafe = getMasterSafeOf?.(chain.chainId)?.address;
+              const chainId = chain.chainId;
+              const masterSafe = getMasterSafeOf?.(chainId)?.address;
               if (!masterSafe) return null;
 
               const fundsRequired = getInitialDepositForMasterSafe(
-                chain.chainId,
+                chainId,
                 masterSafe,
                 getRefillRequirementsOf,
               );
-
               if (isEmpty(fundsRequired)) return null;
 
               return (
-                <Flex key={chain.chainId} gap={6}>
+                <Flex key={chainId} gap={6}>
                   <Text className="text-sm">{UNICODE_SYMBOLS.BULLET}</Text>
                   <Text className="text-sm">
                     {tokenBalancesToSentence(fundsRequired)}

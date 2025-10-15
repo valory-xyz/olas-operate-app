@@ -79,6 +79,7 @@ export const useService = (serviceConfigId?: string) => {
     return service?.chain_configs?.[service?.home_chain]?.chain_data.token;
   }, [service?.chain_configs, service?.home_chain]);
 
+  // TODO: update this logic to support multiple agents per chain
   const getServiceWalletsOf = useCallback(
     (chainId: EvmChainId): AgentWallet[] => {
       const chainName = asMiddlewareChain(chainId);
@@ -197,6 +198,10 @@ export const useService = (serviceConfigId?: string) => {
       getServicesSafesOf(chainId)?.find((safe) => safe.evmChainId === chainId),
     [getServicesSafesOf],
   );
+
+  // TODO: revise these statuses after Pearl v1, we often need isServiceRunning
+  // without isServiceTransitioning, and sometimes we check deploymentStatus
+  // manually, while could use one of these
 
   /** @note deployment is transitioning from stopped to deployed (and vice versa) */
   const isServiceTransitioning = deploymentStatus

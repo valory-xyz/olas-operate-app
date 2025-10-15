@@ -232,6 +232,9 @@ export const useServiceDeployment = () => {
     overrideSelectedServiceStatus(MiddlewareDeploymentStatusMap.DEPLOYING);
 
     try {
+      // TODO: with Pearl V1 new onboarding it seems to be impossible to have such case
+      // where master safe is not created - the running button should be blocked if not funded.
+      // Consider removing this
       await createSafeIfNeeded({
         masterSafes,
         masterSafesOwners,

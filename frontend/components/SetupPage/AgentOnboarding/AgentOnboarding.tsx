@@ -100,7 +100,9 @@ const SelectYourAgentList = ({
 
     const isNotInServices = ([, agentConfig]: [string, AgentConfig]) =>
       !services?.some(
-        ({ home_chain }) => home_chain === agentConfig.middlewareHomeChainId,
+        ({ service_public_id, home_chain }) =>
+          service_public_id === agentConfig.servicePublicId &&
+          home_chain === agentConfig.middlewareHomeChainId,
       );
 
     return ACTIVE_AGENTS.filter(isActive).filter(isNotInServices);

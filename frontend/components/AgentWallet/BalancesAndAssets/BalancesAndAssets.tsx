@@ -1,10 +1,11 @@
-import { Button, Flex, Modal, Typography } from 'antd';
+import { Button, Flex, Modal, Statistic, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { AgentLowBalanceAlert } from '@/components/MainPageV1/Home/Overview/AgentInfo/AgentDisabledAlert/LowBalance/AgentLowBalanceAlert';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
+import { COLOR } from '@/constants';
 import { Pages } from '@/enums/Pages';
 import { useActiveStakingContractDetails } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
@@ -13,16 +14,39 @@ import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { TransactionHistoryTable } from './TransactionHistoryTable';
 
 const { Text, Title } = Typography;
+const { Timer } = Statistic;
 
-const EvictedAgentAlert = () => (
-  <CustomAlert
-    message="Withdrawals are temporarily unavailable during agent eviction."
-    type="warning"
-    showIcon
-    centered
-    className="mt-16 text-sm"
-  />
-);
+const EvictedAgentAlert = () => {
+  const { evictionExpiresAt } = useActiveStakingContractDetails();
+
+  return (
+    <CustomAlert
+      message={
+        <Text className="text-sm">
+          <span className="font-weight-600">
+            Withdrawals Temporarily Unavailable
+          </span>{' '}
+          <br />
+          Your agent hasn&apos;t reached the minimum duration of staking.
+          You&apos;ll be able to withdraw in{' '}
+          <Timer
+            type="countdown"
+            value={evictionExpiresAt * 1000}
+            format="HH [hours] mm [minutes] ss [seconds]"
+            valueStyle={{
+              fontSize: 14,
+              color: COLOR.TEXT_COLOR.WARNING.DEFAULT,
+            }}
+          />
+        </Text>
+      }
+      type="warning"
+      showIcon
+      centered
+      className="mt-16 text-sm"
+    />
+  );
+};
 
 const AgentWalletTitle = () => {
   const { goto } = usePageState();

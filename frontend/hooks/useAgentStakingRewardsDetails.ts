@@ -23,9 +23,11 @@ export const useAgentStakingRewardsDetails = (
   agentConfig: AgentConfig,
 ) => {
   const { isOnline } = useContext(OnlineStatusContext);
-  const { services } = useServices();
+  const { services, selectedAgentConfig } = useServices();
   const service = services?.find(
-    (s) => s.home_chain === asMiddlewareChain(chainId),
+    (s) =>
+      s.service_public_id === selectedAgentConfig.servicePublicId &&
+      s.home_chain === asMiddlewareChain(chainId),
   );
 
   const serviceConfigId = service?.service_config_id;

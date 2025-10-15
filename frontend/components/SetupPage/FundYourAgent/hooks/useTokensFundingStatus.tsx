@@ -1,13 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { useServices } from '@/hooks';
 import { useMasterBalances } from '@/hooks/useBalanceContext';
-import { AgentConfig } from '@/types/Agent';
 
 import { useGetRefillRequirementsWithMonthlyGas } from './useGetRefillRequirementsWithMonthlyGas';
-
-type UseTokensFundingStatusProps = {
-  selectedAgentConfig: AgentConfig;
-};
 
 /**
  * Hook to get the funding status of the tokens required for the agent onboarding.
@@ -28,14 +24,11 @@ type UseTokensFundingStatusProps = {
  *  }
  * }
  */
-export const useTokensFundingStatus = ({
-  selectedAgentConfig,
-}: UseTokensFundingStatusProps) => {
+export const useTokensFundingStatus = () => {
   const { getMasterEoaBalancesOf } = useMasterBalances();
+  const { selectedAgentConfig } = useServices();
   const { totalTokenRequirements: tokenRequirements } =
-    useGetRefillRequirementsWithMonthlyGas({
-      selectedAgentConfig,
-    });
+    useGetRefillRequirementsWithMonthlyGas();
   const [hasBeenFullyFunded, setHasBeenFullyFunded] = useState(false);
   const currentChain = selectedAgentConfig.evmHomeChainId;
 

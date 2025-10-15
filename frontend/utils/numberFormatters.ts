@@ -28,7 +28,6 @@ export const formatNumber = (
   if (amount === undefined) return '--';
   return Intl.NumberFormat('en-US', {
     maximumFractionDigits: decimals,
-    minimumFractionDigits: decimals,
   }).format(amount);
 };
 

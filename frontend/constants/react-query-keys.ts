@@ -10,6 +10,7 @@ export const REACT_QUERY_KEYS = {
   SERVICES_VALIDATION_STATUS_KEY: ['servicesValidationStatus'] as const,
   SERVICE_DEPLOYMENT_STATUS_KEY: (serviceConfigId: Maybe<string>) =>
     ['serviceStatus', serviceConfigId ?? ''] as const,
+  ALL_SERVICE_DEPLOYMENTS_KEY: ['allServiceDeployments'] as const,
 
   // staking programs
   STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY: (
@@ -88,6 +89,9 @@ export const REACT_QUERY_KEYS = {
   // balances and funding requirements
   BALANCES_AND_REFILL_REQUIREMENTS_KEY: (serviceConfigId: string) =>
     ['balancesAndRefillRequirements', serviceConfigId] as const,
+
+  ALL_BALANCES_AND_REFILL_REQUIREMENTS_KEY: (servicesConfigId: string[]) =>
+    ['allChainBalancesAndRefillRequirements', ...servicesConfigId] as const,
 
   // bridge
   BRIDGE_REFILL_REQUIREMENTS_KEY: (

@@ -1,5 +1,6 @@
 export * from './useAgentActivity';
 export * from './useAgentFundingRequests';
+export * from './useAnotherAgentRunning';
 export * from './useAvailableAssets';
 export * from './useBackupSigner';
 export * from './useBalanceAndRefillRequirementsContext';
