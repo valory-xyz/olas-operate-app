@@ -6,6 +6,7 @@ import { COLOR } from '@/constants/colors';
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
+import { useStakingContracts } from '@/hooks/useStakingContracts';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { BackButton } from '../ui/BackButton';
@@ -24,16 +25,8 @@ const CircularIconContainer = styled(Flex)`
 
 export const ConfirmSwitch = () => {
   const { goto } = usePageState();
-  const {
-    activeStakingProgramId,
-    stakingProgramIdToMigrateTo,
-    isActiveStakingProgramLoaded,
-    defaultStakingProgramId,
-  } = useStakingProgram();
-  // Fallback if there are no active staking program.
-  const currentStakingProgramId = isActiveStakingProgramLoaded
-    ? activeStakingProgramId || defaultStakingProgramId
-    : null;
+  const { stakingProgramIdToMigrateTo } = useStakingProgram();
+  const { currentStakingProgramId } = useStakingContracts();
 
   if (!currentStakingProgramId || !stakingProgramIdToMigrateTo) return null;
 
