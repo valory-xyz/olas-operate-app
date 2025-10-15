@@ -3,7 +3,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { isEmpty, map } from 'lodash';
+import { isEmpty, map, values } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -18,6 +18,7 @@ import {
   BalancesAndFundingRequirements,
   MasterSafeBalanceRecord,
 } from '@/client';
+import { AGENT_CONFIG } from '@/config/agents';
 import { EvmChainId, MiddlewareDeploymentStatusMap } from '@/constants';
 import {
   SIXTY_MINUTE_INTERVAL,
@@ -32,7 +33,7 @@ import { useServices } from '@/hooks/useServices';
 import { BalanceService } from '@/service/balances';
 import { Maybe, Nullable, Optional } from '@/types/Util';
 import { getExponentialInterval } from '@/utils';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
@@ -172,8 +173,21 @@ export const BalancesAndRefillRequirementsProvider = ({
     refetchInterval,
   });
 
+  // Service config IDs for all non-under-construction agents
   const serviceConfigIds = useMemo(
-    () => services?.map((s) => s.service_config_id) ?? [],
+    () =>
+      services
+        ?.filter((x) => {
+          const currentAgent = values(AGENT_CONFIG).find(
+            (c) =>
+              c.servicePublicId === x.service_public_id &&
+              c.evmHomeChainId === asEvmChainId(x.home_chain),
+          );
+          return (
+            !currentAgent?.isUnderConstruction && !!currentAgent?.isAgentEnabled
+          );
+        })
+        .map((s) => s.service_config_id) ?? [],
     [services],
   );
 
