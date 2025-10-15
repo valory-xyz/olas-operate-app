@@ -3,8 +3,7 @@ import { Button, Flex, Typography } from 'antd';
 import Image from 'next/image';
 import styled from 'styled-components';
 
-import { Tooltip } from '@/components/ui';
-import { CardFlex } from '@/components/ui/CardFlex';
+import { CardFlex, Tooltip } from '@/components/ui';
 import { useYourWallet } from '@/components/YourWalletPage/useYourWallet';
 import { AddressZero } from '@/constants/address';
 import { Pages } from '@/enums/Pages';

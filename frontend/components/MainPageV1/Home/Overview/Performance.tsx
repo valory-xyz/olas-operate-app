@@ -45,9 +45,6 @@ const MetricsCapturedTimestampAlert = ({
   />
 );
 
-const AGENT_BEHAVIOR_TEXT =
-  'Conservative volatile exposure across DEXs and lending markets with advanced functionality enabled.';
-
 const AgentBehaviorContainer = styled.div`
   display: flex;
   gap: 12px;
@@ -172,10 +169,7 @@ export const Performance = ({ openProfile }: PerformanceProps) => {
           {agentBehavior && (
             <Flex flex={1} vertical gap={8}>
               <Text className="text-neutral-secondary">Agent behavior</Text>
-              <Tooltip
-                title={AGENT_BEHAVIOR_TEXT}
-                styles={{ body: { width: 400 } }}
-              >
+              <Tooltip title={agentBehavior} styles={{ body: { width: 400 } }}>
                 <AgentBehaviorContainer>
                   <Text ellipsis title={agentBehavior}>
                     {agentBehavior}
