@@ -44,8 +44,8 @@ const getInitialDepositValues = (
       const tokenAddress = untypedAddress as Address;
 
       const tokenDetails = find(chainConfig, (config) => {
-        const isNative = config.tokenType === TokenType.NativeGas;
-        const address = isNative ? AddressZero : config.address;
+        const isNative = config?.tokenType === TokenType.NativeGas;
+        const address = isNative ? AddressZero : config?.address;
         return areAddressesEqual(address, tokenAddress);
       });
       if (!tokenDetails) return acc;

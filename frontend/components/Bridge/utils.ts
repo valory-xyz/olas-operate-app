@@ -55,5 +55,5 @@ export const getFromToken = (
     );
   }
 
-  return fromChainConfig[tokenSymbol].address as Address;
+  return fromChainConfig[tokenSymbol]?.address as Address;
 };
