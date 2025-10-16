@@ -10,6 +10,7 @@ import { UpdateAgentPage } from '@/components/UpdateAgentPage';
 import { Pages } from '@/enums/Pages';
 import { useServices } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
+import { isPearlWalletPage } from '@/utils';
 
 import { AgentWallet } from '../AgentWallet';
 import { ConfirmSwitch } from '../ConfirmSwitch/ConfirmSwitch';
@@ -35,13 +36,11 @@ export const Main = () => {
   const contentContainerRef = useRef<HTMLDivElement>(null);
 
   const mainContent = useMemo(() => {
+    if (isPearlWalletPage(pageState)) {
+      return <PearlWallet />;
+    }
+
     switch (pageState) {
-      case Pages.PearlWallet:
-      case Pages.PearlWalletDeposit:
-      case Pages.PearlWalletWithdraw:
-      case Pages.PearlWalletEnterWithdrawalAddress:
-      case Pages.PearlWalletSelectPaymentMethod:
-        return <PearlWallet />;
       case Pages.AgentWallet:
         return <AgentWallet />;
       case Pages.Settings:

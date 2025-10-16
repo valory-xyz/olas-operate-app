@@ -10,6 +10,7 @@ export * from './error';
 export * from './lodashExtensions';
 export * from './middlewareHelpers';
 export * from './numberFormatters';
+export * from './pages';
 export * from './sanitizeHtml';
 export * from './service';
 export * from './setupMulticall';
