@@ -295,8 +295,8 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeict3zgltetye44oq6zpvo5mjdkjszbnf6vne3q4z7z2yehwlw7zge',
-  service_version: 'v0.5.8',
+  hash: 'bafybeig5kexwm523r3bxpk4z2lm3fkqi2drhb3jrn2g7rvoslrdn5pab5m',
+  service_version: 'v0.5.9',
   agent_release: {
     is_aea: true,
     repository: {

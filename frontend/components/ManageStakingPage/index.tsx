@@ -48,7 +48,7 @@ const WhatAreStakingContractsSection = () => {
 };
 
 export const ManageStakingPage = () => {
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedAgentType } = useServices();
   const {
     activeStakingProgramId,
     isActiveStakingProgramLoaded,
@@ -83,16 +83,26 @@ export const ManageStakingPage = () => {
             return acc;
           }
 
+          // if the program is not supported by the agent type, ignore it
+          if (
+            !STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
+              stakingProgramId
+            ].agentsSupported.includes(selectedAgentType)
+          ) {
+            return acc;
+          }
+
           // otherwise, append to the end
           return [...acc, stakingProgramId];
         },
         [],
       ),
     [
-      isActiveStakingProgramLoaded,
-      selectedAgentConfig.evmHomeChainId,
-      currentStakingProgramId,
       stakingProgramIdsAvailable,
+      isActiveStakingProgramLoaded,
+      currentStakingProgramId,
+      selectedAgentConfig.evmHomeChainId,
+      selectedAgentType,
     ],
   );
 

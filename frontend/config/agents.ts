@@ -53,6 +53,7 @@ export const AGENT_CONFIG: {
     displayName: 'Prediction agent',
     description: 'Participates in prediction markets.',
     hasExternalFunds: false,
+    servicePublicId: 'valory/trader_pearl:0.1.0',
   },
   [AgentType.Optimus]: {
     isAgentEnabled: true,
@@ -71,6 +72,7 @@ export const AGENT_CONFIG: {
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Optimus network.',
     hasExternalFunds: true,
+    servicePublicId: 'valory/optimus:0.1.0',
   },
   [AgentType.AgentsFun]: {
     isAgentEnabled: true,
@@ -87,6 +89,7 @@ export const AGENT_CONFIG: {
     description:
       'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
     hasExternalFunds: false,
+    servicePublicId: 'dvilela/memeooorr/0.1.0',
   },
   [AgentType.Modius]: {
     isAgentEnabled: true,
@@ -106,5 +109,6 @@ export const AGENT_CONFIG: {
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
     hasExternalFunds: true,
+    servicePublicId: 'valory/optimus:0.1.0',
   },
 };
