@@ -71,7 +71,7 @@ export const mainTheme: ThemeConfig = {
       itemSelectedColor: COLOR.TEXT_NEUTRAL_PRIMARY,
     },
     Tooltip: {
-      fontSize: 16,
+      fontSize: 14,
       colorText: 'black',
       colorTextLightSolid: 'black',
       colorBgSpotlight: 'white',
