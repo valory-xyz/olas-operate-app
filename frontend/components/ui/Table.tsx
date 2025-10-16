@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
 
-export const TableWrapper = styled.div<{ $noBorder?: boolean }>`
+const TableWrapper = styled.div<{ $noBorder?: boolean }>`
   .ant-table-container {
     border-bottom-left-radius: ${({ $noBorder }) =>
       $noBorder ? undefined : '8px'};
