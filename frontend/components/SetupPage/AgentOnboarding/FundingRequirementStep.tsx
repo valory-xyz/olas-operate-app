@@ -1,7 +1,7 @@
 import { Flex, Tag, Typography } from 'antd';
 import Image from 'next/image';
 
-import { AnimatedContent } from '@/components/AgentIntroduction';
+import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
 import { AGENT_CONFIG } from '@/config/agents';
 import {
   AgentType,
@@ -155,7 +155,7 @@ export const FundingRequirementStep = ({
   const { name, displayName } = asEvmChainDetails(middlewareHomeChainId);
 
   return (
-    <AnimatedContent>
+    <IntroductionAnimatedContainer>
       <Flex vertical gap={24} style={{ padding: 20, marginBottom: 48 }}>
         <Header
           agentType={agentType}
@@ -167,6 +167,6 @@ export const FundingRequirementStep = ({
         <MinimumStakingRequirements agentType={agentType} />
         <MinimumFundingRequirements agentType={agentType} />
       </Flex>
-    </AnimatedContent>
+    </IntroductionAnimatedContainer>
   );
 };

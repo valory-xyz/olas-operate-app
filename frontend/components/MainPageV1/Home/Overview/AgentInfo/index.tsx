@@ -43,7 +43,6 @@ const AboutAgent = () => {
         >
           <AgentIntroduction
             agentType={selectedAgentType}
-            skipFirst
             styles={{ imageHeight: 360, descPadding: '0px' }}
           />
         </Modal>

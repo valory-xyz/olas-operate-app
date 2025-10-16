@@ -7,7 +7,7 @@ import { ReactNode } from 'react';
 import { UnderConstruction } from '@/components/Alerts';
 import { useServices } from '@/hooks';
 
-import { AnimatedContent } from './AnimatedContent';
+import { IntroductionAnimatedContainer } from './IntroductionAnimatedContainer';
 
 const { Title, Text } = Typography;
 
@@ -54,7 +54,7 @@ const AnimatedImage = ({ imgSrc, alt, imageHeight }: AnimatedImageProps) => (
 );
 
 const Content = ({ title, desc, helper }: OnboardingStep) => (
-  <AnimatedContent>
+  <IntroductionAnimatedContainer>
     <Flex vertical gap={8}>
       {title && (
         <Title level={5} className="m-0">
@@ -68,7 +68,7 @@ const Content = ({ title, desc, helper }: OnboardingStep) => (
         </Text>
       )}
     </Flex>
-  </AnimatedContent>
+  </IntroductionAnimatedContainer>
 );
 
 type IntroductionProps = OnboardingStep & {
@@ -77,7 +77,7 @@ type IntroductionProps = OnboardingStep & {
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderDot?: () => ReactNode;
   renderAgentSelection?: () => ReactNode;
-  styles: IntroductionStepStyles;
+  styles?: IntroductionStepStyles;
 };
 
 /**

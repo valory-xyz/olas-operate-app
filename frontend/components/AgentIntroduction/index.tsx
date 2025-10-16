@@ -1,2 +1,2 @@
 export { AgentIntroduction } from './AgentIntroduction';
-export { AnimatedContent } from './AnimatedContent';
+export { IntroductionAnimatedContainer } from './IntroductionAnimatedContainer';

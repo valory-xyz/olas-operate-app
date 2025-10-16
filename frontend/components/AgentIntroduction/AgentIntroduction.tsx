@@ -37,30 +37,28 @@ type AgentIntroductionProps = {
   agentType?: AgentType;
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderAgentSelection?: () => ReactNode;
-  skipFirst?: boolean;
 } & {
-  styles: IntroductionStepStyles;
+  styles?: IntroductionStepStyles;
 };
 
 /**
- * Display the onboarding of the selected agent.
+ * Display the about (introduction) of an agent.
  */
 export const AgentIntroduction = ({
   agentType,
   renderFundingRequirements,
   renderAgentSelection,
-  skipFirst = false,
   styles,
 }: AgentIntroductionProps) => {
   const [onboardingStep, setOnboardingStep] = useState(0);
 
   // Reset onboarding step when selected agent changes
-  useEffect(() => {
-    setOnboardingStep(0);
-  }, [agentType]);
+  useEffect(() => setOnboardingStep(0), [agentType]);
 
+  // Skip the first step if renderFundingRequirements is provided
+  // as first step is funding requirements details and description.
   const steps = (agentType ? onboardingStepsMap[agentType] : []).slice(
-    skipFirst ? 1 : 0,
+    renderFundingRequirements ? 0 : 1,
   );
 
   const onNextStep = useCallback(() => {
