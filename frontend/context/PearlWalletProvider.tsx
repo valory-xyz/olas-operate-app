@@ -124,13 +124,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     useBalanceContext();
   const { getRefillRequirementsOf } = useBalanceAndRefillRequirementsContext();
   const { masterSafes } = useMasterWalletContext();
-  const {
-    pageState,
-    previousPageState,
-    navigationParams,
-    resetNavigationParams,
-    goto,
-  } = usePageState();
+  const { pageState } = usePageState();
 
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
     STEPS.PEARL_WALLET_SCREEN,
@@ -146,7 +140,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
     useAvailableAssets(walletChainId, {
       // For deposit, we only want to show assets in the safe.
-      includeMasterEoa: pageState !== Pages.PearlWalletDeposit,
+      includeMasterEoa:
+        walletStep !== STEPS.DEPOSIT ||
+        pageState !== Pages.DepositOlasForStaking,
     });
   const masterSafeAddress = useMemo(
     () => getMasterSafeAddress(walletChainId, masterSafes),
@@ -168,29 +164,6 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     setDefaultDepositValues(defaultRequirementDepositValues);
     setAmountsToDeposit(defaultRequirementDepositValues);
   }, [getRefillRequirementsOf, walletChainId, masterSafeAddress]);
-
-  useEffect(() => {
-    if (
-      pageState !== Pages.PearlWalletDeposit ||
-      previousPageState !== Pages.ConfirmSwitch ||
-      !navigationParams?.[Pages.PearlWalletDeposit]
-    )
-      return;
-
-    const { requiredOlasBalance } = navigationParams[
-      Pages.PearlWalletDeposit
-    ] as { requiredOlasBalance: number };
-
-    // Autofill OLAS required amount if user is coming from Confirm Switch page.
-    setAmountsToDeposit({ OLAS: requiredOlasBalance ?? 0 });
-    resetNavigationParams();
-  }, [
-    pageState,
-    previousPageState,
-    navigationParams,
-    resetNavigationParams,
-    setAmountsToDeposit,
-  ]);
 
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) => agentConfig.evmHomeChainId === walletChainId,

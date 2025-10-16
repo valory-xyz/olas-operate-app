@@ -3,7 +3,7 @@ import { Button, Flex, Typography } from 'antd';
 import { CustomAlert } from '@/components/Alert';
 import { Pages } from '@/enums';
 import { usePageState } from '@/hooks';
-import { formatNumber } from '@/utils/numberFormatters';
+import { formatNumber } from '@/utils';
 
 const { Text } = Typography;
 

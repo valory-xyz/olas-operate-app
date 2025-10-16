@@ -1,7 +1,7 @@
 import { Button, Flex, Select, Typography } from 'antd';
 import { isEmpty, kebabCase, values } from 'lodash';
 import Image from 'next/image';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import {
@@ -12,14 +12,12 @@ import {
   WalletTransferDirection,
 } from '@/components/ui';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
-import { TokenAmounts, ValueOf } from '@/types';
+import { TokenAmounts } from '@/types';
 import {
   asEvmChainDetails,
   asMiddlewareChain,
   tokenBalancesToSentence,
 } from '@/utils';
-
-import { SelectPaymentMethod } from './SelectPaymentMethod/SelectPaymentMethod';
 
 const { Title, Text } = Typography;
 
@@ -89,19 +87,15 @@ const SelectChainToDeposit = () => {
 
 type DepositScreenProps = {
   onBack: () => void;
+  onContinue: () => void;
   overrideAmountsToDeposit?: TokenAmounts;
-  updateStep: (newStep: ValueOf<typeof DEPOSIT_STEPS>) => void;
 };
 
-const DepositScreen = ({
+export const DepositScreen = ({
   onBack,
+  onContinue,
   overrideAmountsToDeposit,
-  updateStep,
 }: DepositScreenProps) => {
-  const handleContinue = useCallback(() => {
-    updateStep(DEPOSIT_STEPS.SELECT_PAYMENT_METHOD);
-  }, [updateStep]);
-
   const {
     onDepositAmountChange,
     amountsToDeposit: amountsToDepositFromPearlWallet,
@@ -141,7 +135,7 @@ const DepositScreen = ({
 
         <Button
           disabled={values(amountsToDeposit).every((i) => i === 0)}
-          onClick={handleContinue}
+          onClick={onContinue}
           type="primary"
           size="large"
           block
@@ -151,44 +145,4 @@ const DepositScreen = ({
       </Flex>
     </CardFlex>
   );
-};
-
-const DEPOSIT_STEPS = {
-  DEPOSIT: 'DEPOSIT',
-  SELECT_PAYMENT_METHOD: 'SELECT_PAYMENT_METHOD',
-} as const;
-
-type DepositProps = {
-  onBack: () => void;
-  overrideAmountsToDeposit?: TokenAmounts;
-};
-
-export const Deposit = ({ onBack, overrideAmountsToDeposit }: DepositProps) => {
-  const [step, setStep] = useState<ValueOf<typeof DEPOSIT_STEPS>>(
-    DEPOSIT_STEPS.DEPOSIT,
-  );
-
-  const updateStep = useCallback(
-    (newStep: ValueOf<typeof DEPOSIT_STEPS>) => {
-      setStep(newStep);
-    },
-    [setStep],
-  );
-
-  switch (step) {
-    case DEPOSIT_STEPS.DEPOSIT:
-      return (
-        <DepositScreen
-          onBack={onBack}
-          updateStep={updateStep}
-          overrideAmountsToDeposit={overrideAmountsToDeposit}
-        />
-      );
-    case DEPOSIT_STEPS.SELECT_PAYMENT_METHOD:
-      return (
-        <SelectPaymentMethod onBack={() => setStep(DEPOSIT_STEPS.DEPOSIT)} />
-      );
-    default:
-      throw new Error('Invalid step');
-  }
 };

@@ -3,11 +3,8 @@ import { useCallback, useMemo } from 'react';
 
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
-import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
 
-import { Deposit } from '../PearlDeposit/Deposit';
-import { SelectPaymentMethod } from '../PearlDeposit/SelectPaymentMethod/SelectPaymentMethod';
+import { PearlDeposit } from '../PearlDeposit';
 import { STEPS } from './types';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
@@ -41,9 +38,6 @@ const PearlWalletContent = () => {
       case STEPS.ENTER_WITHDRAWAL_ADDRESS:
         updateStep(STEPS.SELECT_AMOUNT_TO_WITHDRAW);
         break;
-      case STEPS.SELECT_PAYMENT_METHOD:
-        updateStep(STEPS.DEPOSIT);
-        break;
       default:
         break;
     }
@@ -65,9 +59,7 @@ const PearlWalletContent = () => {
       case STEPS.ENTER_WITHDRAWAL_ADDRESS:
         return <EnterWithdrawalAddress onBack={handleBack} />;
       case STEPS.DEPOSIT:
-        return <Deposit onBack={handleBack} />;
-      case STEPS.SELECT_PAYMENT_METHOD:
-        return <SelectPaymentMethod onBack={handleBack} />;
+        return <PearlDeposit onBack={handleBack} />;
       default:
         throw new Error('Invalid page');
     }
@@ -77,16 +69,13 @@ const PearlWalletContent = () => {
 };
 
 export const PearlWallet = () => {
-  const { pageState } = usePageState();
+  const { walletStep: step } = usePearlWallet();
 
   return (
     <Flex
       vertical
       style={{
-        width:
-          pageState === Pages.PearlWalletSelectPaymentMethod
-            ? undefined
-            : MAIN_CONTENT_MAX_WIDTH,
+        width: step === STEPS.DEPOSIT ? undefined : MAIN_CONTENT_MAX_WIDTH,
         margin: '0 auto',
       }}
     >

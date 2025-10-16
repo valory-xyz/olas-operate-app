@@ -11,5 +11,4 @@ export const STEPS = {
 
   // deposit flow
   DEPOSIT: 'DEPOSIT',
-  SELECT_PAYMENT_METHOD: 'SELECT_PAYMENT_METHOD',
 } as const;
