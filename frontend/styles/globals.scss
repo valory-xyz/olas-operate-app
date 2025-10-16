@@ -306,6 +306,10 @@ textarea,
   flex: auto;
 }
 
+.flex-none {
+  flex: none;
+}
+
 .justify-center {
   justify-content: center;
 }
@@ -485,6 +489,10 @@ textarea,
 
 .pt-32 {
   padding-top: 32px !important;
+}
+
+.pt-36 {
+  padding-top: 36px !important;
 }
 
 .pt-48 {

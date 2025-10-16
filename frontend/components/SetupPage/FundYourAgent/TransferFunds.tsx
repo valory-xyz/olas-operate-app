@@ -100,7 +100,7 @@ export const TransferFunds = () => {
   });
 
   return (
-    <Flex justify="center" className="pt-48">
+    <Flex justify="center" className="pt-36">
       <CardFlex $noBorder $onboarding className="p-8">
         <BackButton onPrev={() => gotoSetup(SetupScreen.FundYourAgent)} />
         <Title level={3} className="mt-16">

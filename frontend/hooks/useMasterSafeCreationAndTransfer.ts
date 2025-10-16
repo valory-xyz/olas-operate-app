@@ -4,6 +4,7 @@ import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { AddressZero } from '@/constants';
 import { TokenSymbol } from '@/constants/token';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
+import { useMessageApi } from '@/context/MessageProvider';
 import { useBackupSigner } from '@/hooks/useBackupSigner';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
@@ -23,6 +24,7 @@ export const useMasterSafeCreationAndTransfer = (
   const backupSignerAddress = useBackupSigner();
   const { selectedAgentType, selectedAgentConfig } = useServices();
   const { refetch } = useBalanceAndRefillRequirementsContext();
+  const message = useMessageApi();
 
   const chain = selectedAgentConfig.middlewareHomeChainId;
   const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(chain)];
@@ -79,6 +81,7 @@ export const useMasterSafeCreationAndTransfer = (
     },
     onError: (error) => {
       console.error(error);
+      message.error('Failed to create master safe.');
     },
   });
 };

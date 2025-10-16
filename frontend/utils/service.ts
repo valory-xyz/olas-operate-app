@@ -119,6 +119,8 @@ export const onDummyServiceCreation = async (
     deploy: true,
     stakingProgramId,
   });
+  // Fetch the service list when a new service is created, prevents race condition
+  await ServicesService.getServices();
 };
 
 /**

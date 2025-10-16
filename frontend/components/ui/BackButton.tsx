@@ -11,8 +11,6 @@ type AgentHeaderV1Props = {
 const Button = styled(AntdButton)`
   font-size: 16px;
   color: ${COLOR.TEXT_NEUTRAL_TERTIARY} !important;
-  display: flex;
-  align-items: center;
 `;
 
 /**
@@ -23,13 +21,11 @@ export const BackButton = ({ onPrev }: AgentHeaderV1Props) => (
     {onPrev && (
       <Button
         onClick={() => onPrev()}
-        icon={<LeftOutlined className="text-xs" />}
         type="text"
-        className="text-light"
         size="small"
         style={{ paddingLeft: 4 }}
       >
-        Back
+        <LeftOutlined className="text-xs" /> Back
       </Button>
     )}
   </Flex>

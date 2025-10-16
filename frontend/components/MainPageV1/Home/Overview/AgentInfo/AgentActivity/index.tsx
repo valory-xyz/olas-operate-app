@@ -20,7 +20,6 @@ const RoundInfoContainer = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 500px;
 `;
 
 const CurrentActionText = styled.span`
@@ -94,7 +93,7 @@ export const AgentActivity = () => {
             <Flex justify="space-between" align="top" gap={6}>
               <CurrentActionText>Current action:</CurrentActionText>
               <RoundInfoContainer>{roundInfo}</RoundInfoContainer>
-              <ChevronUpDown className="ml-auto" />
+              <ChevronUpDown className="ml-auto flex-none" />
             </Flex>
           ),
         };

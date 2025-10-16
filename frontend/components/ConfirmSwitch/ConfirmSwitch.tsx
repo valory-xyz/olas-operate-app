@@ -6,6 +6,7 @@ import { COLOR } from '@/constants/colors';
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
+import { useStakingContracts } from '@/hooks/useStakingContracts';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { BackButton } from '../ui/BackButton';
@@ -24,10 +25,10 @@ const CircularIconContainer = styled(Flex)`
 
 export const ConfirmSwitch = () => {
   const { goto } = usePageState();
-  const { activeStakingProgramId, stakingProgramIdToMigrateTo } =
-    useStakingProgram();
+  const { stakingProgramIdToMigrateTo } = useStakingProgram();
+  const { currentStakingProgramId } = useStakingContracts();
 
-  if (!activeStakingProgramId || !stakingProgramIdToMigrateTo) return null;
+  if (!currentStakingProgramId || !stakingProgramIdToMigrateTo) return null;
 
   return (
     <Flex
@@ -46,7 +47,7 @@ export const ConfirmSwitch = () => {
 
       <Flex gap={12} className="mt-32" align="center">
         <ContractCard
-          stakingProgramId={activeStakingProgramId}
+          stakingProgramId={currentStakingProgramId}
           isCurrentStakingProgram={true}
         />
         <CircularIconContainer align="center" justify="center">
