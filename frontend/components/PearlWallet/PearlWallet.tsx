@@ -16,7 +16,7 @@ import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw';
  * To display the Pearl Wallet page.
  */
 const PearlWalletContent = () => {
-  const { pageState, goto } = usePageState();
+  const { pageState, previousPageState, goto } = usePageState();
 
   const handleNext = useCallback(() => {
     switch (pageState) {
@@ -37,8 +37,15 @@ const PearlWalletContent = () => {
   const handleBack = useCallback(() => {
     switch (pageState) {
       case Pages.PearlWalletWithdraw:
-      case Pages.PearlWalletDeposit:
         goto(Pages.PearlWallet);
+        break;
+      case Pages.PearlWalletDeposit:
+        goto(
+          // If user landed from "Deposit OLAS" on Confirm Switch page
+          previousPageState === Pages.ConfirmSwitch
+            ? Pages.ConfirmSwitch
+            : Pages.PearlWallet,
+        );
         break;
       case Pages.PearlWalletEnterWithdrawalAddress:
         goto(Pages.PearlWalletWithdraw);
@@ -49,7 +56,7 @@ const PearlWalletContent = () => {
       default:
         break;
     }
-  }, [goto, pageState]);
+  }, [goto, pageState, previousPageState]);
 
   const content = useMemo(() => {
     switch (pageState) {

@@ -10,10 +10,13 @@ import { useTimeout } from 'usehooks-ts';
 
 import { ONE_MINUTE_INTERVAL } from '@/constants/intervals';
 import { Pages } from '@/enums/Pages';
+import { Maybe } from '@/types';
 
 type PageStateContextType = {
   pageState: Pages;
+  previousPageState: Maybe<Pages>;
   setPageState: Dispatch<SetStateAction<Pages>>;
+  setPreviousPageState: Dispatch<SetStateAction<Maybe<Pages>>>;
   isPageLoadedAndOneMinutePassed: boolean;
   isUserLoggedIn: boolean;
   setUserLoggedIn: () => void;
@@ -22,7 +25,9 @@ type PageStateContextType = {
 
 export const PageStateContext = createContext<PageStateContextType>({
   pageState: Pages.Setup,
+  previousPageState: null,
   setPageState: () => {},
+  setPreviousPageState: () => {},
   isPageLoadedAndOneMinutePassed: false,
   isUserLoggedIn: false,
   setUserLoggedIn: () => {},
@@ -31,6 +36,8 @@ export const PageStateContext = createContext<PageStateContextType>({
 
 export const PageStateProvider = ({ children }: PropsWithChildren) => {
   const [pageState, setPageState] = useState<Pages>(Pages.Setup);
+  const [previousPageState, setPreviousPageState] =
+    useState<Maybe<Pages>>(null);
   const [isPageLoadedAndOneMinutePassed, setIsPageLoadedAndOneMinutePassed] =
     useState(false);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
@@ -64,6 +71,8 @@ export const PageStateProvider = ({ children }: PropsWithChildren) => {
         // Page state
         pageState,
         setPageState,
+        previousPageState,
+        setPreviousPageState,
         isPageLoadedAndOneMinutePassed,
       }}
     >

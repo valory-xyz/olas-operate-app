@@ -10,8 +10,6 @@ import {
   TokenAmountInput,
   WalletTransferDirection,
 } from '@/components/ui';
-import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
 import {
   asEvmChainDetails,
   asMiddlewareChain,
@@ -91,16 +89,15 @@ type DepositProps = {
   onContinue: () => void;
 };
 
-export const Deposit = ({ onContinue }: DepositProps) => {
+export const Deposit = ({ onBack, onContinue }: DepositProps) => {
   const { onDepositAmountChange, amountsToDeposit, availableAssets } =
     usePearlWallet();
-  const { goto } = usePageState();
 
   return (
     <CardFlex $noBorder $padding="32px" style={cardStyles}>
       <Flex gap={32} vertical>
         <Flex gap={12} vertical>
-          <BackButton onPrev={() => goto(Pages.PearlWallet)} />
+          <BackButton onPrev={onBack} />
           <DepositTitle />
         </Flex>
         <WalletTransferDirection from="External Wallet" to="Pearl Wallet" />

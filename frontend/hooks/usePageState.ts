@@ -8,7 +8,13 @@ export const usePageState = () => {
 
   const goto = useCallback(
     (state: Pages) => {
-      pageState.setPageState(state);
+      const {
+        pageState: currentPageState,
+        setPageState,
+        setPreviousPageState,
+      } = pageState;
+      setPreviousPageState(currentPageState);
+      setPageState(state);
     },
     [pageState],
   );
