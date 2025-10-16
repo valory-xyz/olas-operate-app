@@ -5,16 +5,16 @@ import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { Pages } from '@/enums';
 import { usePageState } from '@/hooks';
 
-import { useShouldAllowSwitch } from './hooks/useShouldAllowSwitch';
+import { useShouldAllowStakingContractSwitch } from './hooks/useShouldAllowStakingContractSwitch';
 
 export const DepositOlasForStaking = () => {
   const { goto } = usePageState();
-  const { olasRequiredToMigrate } = useShouldAllowSwitch();
-  const { manuallySetAmountsToDeposit } = usePearlWallet();
+  const { olasRequiredToMigrate } = useShouldAllowStakingContractSwitch();
+  const { updateAmountsToDeposit } = usePearlWallet();
 
   useEffect(() => {
-    manuallySetAmountsToDeposit({ OLAS: olasRequiredToMigrate });
-  }, [olasRequiredToMigrate, manuallySetAmountsToDeposit]);
+    updateAmountsToDeposit({ OLAS: olasRequiredToMigrate });
+  }, [olasRequiredToMigrate, updateAmountsToDeposit]);
 
   return <PearlDeposit onBack={() => goto(Pages.ConfirmSwitch)} />;
 };

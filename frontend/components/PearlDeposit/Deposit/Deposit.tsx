@@ -83,12 +83,12 @@ const SelectChainToDeposit = () => {
   );
 };
 
-type DepositScreenProps = {
+type DepositProps = {
   onBack: () => void;
   onContinue: () => void;
 };
 
-export const DepositScreen = ({ onBack, onContinue }: DepositScreenProps) => {
+export const Deposit = ({ onBack, onContinue }: DepositProps) => {
   const { onDepositAmountChange, amountsToDeposit, availableAssets } =
     usePearlWallet();
 

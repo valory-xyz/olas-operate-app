@@ -1,7 +1,7 @@
 import { entries } from 'lodash';
 import { useMemo } from 'react';
 
-import { TransferCryptoFromExternalWallet } from '@/components/PearlWallet/components/TransferCryptoFromExternalWallet';
+import { TransferCryptoFromExternalWallet } from '@/components/PearlWallet';
 import { TokenSymbol } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { Pages } from '@/enums/Pages';

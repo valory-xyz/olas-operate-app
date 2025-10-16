@@ -5,7 +5,7 @@ import { CardFlex } from '@/components/ui/CardFlex';
 import { EvmChainName } from '@/constants/chains';
 import { useServices } from '@/hooks/useServices';
 
-import { useShouldAllowSwitch } from '../hooks/useShouldAllowSwitch';
+import { useShouldAllowStakingContractSwitch } from '../hooks/useShouldAllowStakingContractSwitch';
 import { ConfirmSwitchButton } from './ConfirmSwitchButton';
 import { InsufficientBalanceAlert } from './InsufficientBalanceAlert';
 
@@ -16,7 +16,7 @@ export const ConfirmSwitchSection = () => {
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[homeChainId];
   const { shouldAllowSwitch, olasRequiredToMigrate, totalOlas } =
-    useShouldAllowSwitch();
+    useShouldAllowStakingContractSwitch();
 
   return (
     <>

@@ -89,7 +89,7 @@ const PearlWalletContext = createContext<{
   onAmountChange: (symbol: TokenSymbol, amount: number) => void;
   amountsToDeposit: TokenAmounts;
   onDepositAmountChange: (symbol: TokenSymbol, amount: number) => void;
-  manuallySetAmountsToDeposit: (amounts: TokenAmounts) => void;
+  updateAmountsToDeposit: (amounts: TokenAmounts) => void;
   onReset: () => void;
   /** Initial values for funding agent wallet based on refill requirements */
   defaultRequirementDepositValues: Optional<TokenBalanceRecord>;
@@ -107,7 +107,7 @@ const PearlWalletContext = createContext<{
   onAmountChange: () => {},
   amountsToDeposit: {},
   onDepositAmountChange: () => {},
-  manuallySetAmountsToDeposit: () => {},
+  updateAmountsToDeposit: () => {},
   onReset: () => {},
   defaultRequirementDepositValues: {},
 });
@@ -208,7 +208,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [],
   );
 
-  const manuallySetAmountsToDeposit = useCallback(
+  const updateAmountsToDeposit = useCallback(
     (amounts: TokenAmounts) => {
       setAmountsToDeposit(amounts);
     },
@@ -261,7 +261,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         // for deposit
         amountsToDeposit,
         onDepositAmountChange,
-        manuallySetAmountsToDeposit,
+        updateAmountsToDeposit,
         onReset,
 
         // Initial values for funding agent wallet

@@ -9,7 +9,6 @@ import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { SelectStaking } from '@/components/SelectStaking/SelectStaking';
 import { Settings } from '@/components/SettingsPage';
 import { UpdateAgentPage } from '@/components/UpdateAgentPage';
-import { PearlWalletProvider } from '@/context/PearlWalletProvider';
 import { Pages } from '@/enums/Pages';
 import { useServices } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
@@ -71,16 +70,11 @@ export const Main = () => {
   }, [pageState, selectedAgentType]);
 
   return (
-    <PearlWalletProvider>
-      <Layout>
-        <Sidebar />
-        <Content
-          $isSplitScreenPage={isSplitScreenPage}
-          ref={contentContainerRef}
-        >
-          {mainContent}
-        </Content>
-      </Layout>
-    </PearlWalletProvider>
+    <Layout>
+      <Sidebar />
+      <Content $isSplitScreenPage={isSplitScreenPage} ref={contentContainerRef}>
+        {mainContent}
+      </Content>
+    </Layout>
   );
 };

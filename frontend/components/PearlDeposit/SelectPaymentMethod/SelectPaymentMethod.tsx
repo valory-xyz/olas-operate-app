@@ -3,7 +3,7 @@ import { entries } from 'lodash';
 import { useCallback, useState } from 'react';
 import { styled } from 'styled-components';
 
-import { YouPayContainer } from '@/components/PearlWallet/components/TransferCryptoFromExternalWallet';
+import { YouPayContainer } from '@/components/PearlWallet';
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
 import {
   COLOR,

@@ -2,34 +2,36 @@ import { useState } from 'react';
 
 import { ValueOf } from '@/types';
 
-import { DepositScreen } from './Deposit/Deposit';
+import { Deposit } from './Deposit/Deposit';
 import { SelectPaymentMethod } from './SelectPaymentMethod/SelectPaymentMethod';
 
-const DEPOSIT_STEPS = {
+const PEARL_DEPOSIT_STEPS = {
   DEPOSIT: 'DEPOSIT',
   SELECT_PAYMENT_METHOD: 'SELECT_PAYMENT_METHOD',
 } as const;
 
-type DepositProps = {
+type PearlDepositProps = {
   onBack: () => void;
 };
 
-export const PearlDeposit = ({ onBack }: DepositProps) => {
-  const [step, setStep] = useState<ValueOf<typeof DEPOSIT_STEPS>>(
-    DEPOSIT_STEPS.DEPOSIT,
+export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
+  const [step, setStep] = useState<ValueOf<typeof PEARL_DEPOSIT_STEPS>>(
+    PEARL_DEPOSIT_STEPS.DEPOSIT,
   );
 
   switch (step) {
-    case DEPOSIT_STEPS.DEPOSIT:
+    case PEARL_DEPOSIT_STEPS.DEPOSIT:
       return (
-        <DepositScreen
+        <Deposit
           onBack={onBack}
-          onContinue={() => setStep(DEPOSIT_STEPS.SELECT_PAYMENT_METHOD)}
+          onContinue={() => setStep(PEARL_DEPOSIT_STEPS.SELECT_PAYMENT_METHOD)}
         />
       );
-    case DEPOSIT_STEPS.SELECT_PAYMENT_METHOD:
+    case PEARL_DEPOSIT_STEPS.SELECT_PAYMENT_METHOD:
       return (
-        <SelectPaymentMethod onBack={() => setStep(DEPOSIT_STEPS.DEPOSIT)} />
+        <SelectPaymentMethod
+          onBack={() => setStep(PEARL_DEPOSIT_STEPS.DEPOSIT)}
+        />
       );
     default:
       throw new Error('Invalid step');

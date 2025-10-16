@@ -12,7 +12,7 @@ import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { isValidServiceId } from '@/utils/service';
 
-export const useShouldAllowSwitch = () => {
+export const useShouldAllowStakingContractSwitch = () => {
   const { isLoaded: isBalanceLoaded, totalStakedOlasBalance } =
     useBalanceContext();
   const { masterSafeBalances } = useMasterBalances();

@@ -15,6 +15,7 @@ import { ModalProvider } from '@/context/ModalProvider';
 import { OnlineStatusProvider } from '@/context/OnlineStatusProvider';
 import { OnRampProvider } from '@/context/OnRampProvider';
 import { PageStateProvider } from '@/context/PageStateProvider';
+import { PearlWalletProvider } from '@/context/PearlWalletProvider';
 import { RewardProvider } from '@/context/RewardProvider';
 import { ServicesProvider } from '@/context/ServicesProvider';
 import { SettingsProvider } from '@/context/SettingsProvider';
@@ -54,13 +55,15 @@ export default function App({ Component, pageProps }: AppProps) {
                                     <ModalProvider>
                                       <SharedProvider>
                                         <OnRampProvider>
-                                          {isMounted ? (
-                                            <SystemNotificationTriggers>
-                                              <Layout>
-                                                <Component {...pageProps} />
-                                              </Layout>
-                                            </SystemNotificationTriggers>
-                                          ) : null}
+                                          <PearlWalletProvider>
+                                            {isMounted ? (
+                                              <SystemNotificationTriggers>
+                                                <Layout>
+                                                  <Component {...pageProps} />
+                                                </Layout>
+                                              </SystemNotificationTriggers>
+                                            ) : null}
+                                          </PearlWalletProvider>
                                         </OnRampProvider>
                                       </SharedProvider>
                                     </ModalProvider>
