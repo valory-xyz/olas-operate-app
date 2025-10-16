@@ -21,13 +21,13 @@ const TableWrapper = styled.div<{ $noBorder?: boolean }>`
       &:first-child {
         border-top-left-radius: 8px;
         border-bottom-left-radius: ${({ $noBorder }) =>
-          $noBorder ? '8px' : '0'};
+          $noBorder ? '8px' : '0px'};
       }
 
       &:last-child {
         border-top-right-radius: 8px;
         border-bottom-right-radius: ${({ $noBorder }) =>
-          $noBorder ? '8px' : '0'};
+          $noBorder ? '8px' : '0px'};
       }
 
       &:before {
@@ -44,6 +44,7 @@ const TableWrapper = styled.div<{ $noBorder?: boolean }>`
     .ant-table-row:last-child {
       .ant-table-cell {
         border-bottom: ${({ $noBorder }) => ($noBorder ? 'none' : undefined)};
+
         &:first-child {
           border-bottom-left-radius: ${({ $noBorder }) =>
             $noBorder ? undefined : '8px'};
