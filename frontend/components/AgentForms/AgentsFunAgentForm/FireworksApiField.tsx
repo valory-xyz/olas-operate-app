@@ -27,7 +27,7 @@ const Ol = styled.ol`
 const UnhingedModeLabel = () => (
   <UnhingedModeLabelContainer>
     Unhinged mode&nbsp;
-    <InfoTooltip overlayInnerStyle={{ width: 360 }} placement="top">
+    <InfoTooltip size="medium" placement="top">
       <Flex vertical gap={8}>
         <Text>
           Unhinged mode enables your agent to generate posts on X with Dobby LLM
@@ -43,7 +43,7 @@ const UnhingedModeLabel = () => (
 const FireworksApiLabel = () => (
   <div>
     Fireworks API (Unhinged Dobby LLM)&nbsp;
-    <InfoTooltip overlayInnerStyle={{ width: 360 }}>
+    <InfoTooltip size="medium">
       <Flex vertical gap={8}>
         <Text>
           Dobby LLM requires a Fireworks AI API key (paid) to activate Unhinged
