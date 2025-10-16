@@ -28,7 +28,7 @@ const KeepOpenAlert = () => (
   <CustomAlert
     type="warning"
     showIcon
-    message="Keep the app open until the process is complete."
+    message="Keep the app open until the process is complete. It may take a few minutes."
   />
 );
 
