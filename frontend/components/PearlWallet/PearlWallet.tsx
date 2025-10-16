@@ -1,5 +1,6 @@
 import { Flex } from 'antd';
 import { useCallback, useMemo } from 'react';
+import { useUnmount } from 'usehooks-ts';
 
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
@@ -69,7 +70,11 @@ const PearlWalletContent = () => {
 };
 
 export const PearlWallet = () => {
-  const { walletStep: step } = usePearlWallet();
+  const { walletStep: step, updateStep } = usePearlWallet();
+
+  useUnmount(() => {
+    updateStep(STEPS.PEARL_WALLET_SCREEN);
+  });
 
   return (
     <Flex
