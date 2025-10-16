@@ -1,5 +1,5 @@
-import { Flex, Spin, Typography } from 'antd';
-import { useCallback } from 'react';
+import { Button, Flex, Modal, Spin, Typography } from 'antd';
+import { useCallback, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { BackButton } from '@/components/ui/BackButton';
@@ -32,18 +32,62 @@ const KeepOpenAlert = () => (
   />
 );
 
-export const SetupOnRamp = () => {
+const OnBack = () => {
   const { goto: gotoSetup, prevState } = useSetup();
-  const { networkId } = useOnRampContext();
+  const [isDoNotLeavePageModalOpen, setIsDoNotLeavePageModalOpen] =
+    useState(false);
 
-  const handlePrevStep = useCallback(() => {
+  const handleBackClick = useCallback(() => {
+    setIsDoNotLeavePageModalOpen(true);
+  }, []);
+
+  const handleLeavePage = useCallback(() => {
+    setIsDoNotLeavePageModalOpen(false);
     gotoSetup(prevState ?? SetupScreen.FundYourAgent);
   }, [gotoSetup, prevState]);
+
+  const handleStayOnPage = useCallback(() => {
+    setIsDoNotLeavePageModalOpen(false);
+  }, []);
+
+  return (
+    <>
+      <BackButton onPrev={handleBackClick} />
+
+      {isDoNotLeavePageModalOpen && (
+        <Modal
+          title="Do Not Leave This Page After Payment"
+          onCancel={handleStayOnPage}
+          footer={[
+            <Button key="leave" onClick={handleLeavePage}>
+              Leave page
+            </Button>,
+            <Button key="stay" type="primary" onClick={handleStayOnPage}>
+              Stay on this page
+            </Button>,
+          ]}
+          open
+          width={635}
+          centered
+          closable
+          styles={{ content: { padding: 32 } }}
+        >
+          If your credit/debit card payment has been successfully initiated, do
+          not leave this page until the process is complete. Funds may take up
+          to 10 minutes to be available.
+        </Modal>
+      )}
+    </>
+  );
+};
+
+export const SetupOnRamp = () => {
+  const { networkId } = useOnRampContext();
 
   return (
     <Flex justify="center" className="pt-36">
       <CardFlex $noBorder $onboarding className="p-8">
-        <BackButton onPrev={handlePrevStep} />
+        <OnBack />
         <Title level={3} className="mt-16">
           Buy Crypto with USD
         </Title>
