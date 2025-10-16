@@ -1,7 +1,6 @@
 import { Button, Flex, Select, Typography } from 'antd';
 import { isEmpty, kebabCase, values } from 'lodash';
 import Image from 'next/image';
-import { useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import {
@@ -12,7 +11,6 @@ import {
   WalletTransferDirection,
 } from '@/components/ui';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
-import { TokenAmounts } from '@/types';
 import {
   asEvmChainDetails,
   asMiddlewareChain,
@@ -88,24 +86,11 @@ const SelectChainToDeposit = () => {
 type DepositScreenProps = {
   onBack: () => void;
   onContinue: () => void;
-  overrideAmountsToDeposit?: TokenAmounts;
 };
 
-export const DepositScreen = ({
-  onBack,
-  onContinue,
-  overrideAmountsToDeposit,
-}: DepositScreenProps) => {
-  const {
-    onDepositAmountChange,
-    amountsToDeposit: amountsToDepositFromPearlWallet,
-    availableAssets,
-  } = usePearlWallet();
-
-  const amountsToDeposit = useMemo(
-    () => overrideAmountsToDeposit ?? amountsToDepositFromPearlWallet,
-    [overrideAmountsToDeposit, amountsToDepositFromPearlWallet],
-  );
+export const DepositScreen = ({ onBack, onContinue }: DepositScreenProps) => {
+  const { onDepositAmountChange, amountsToDeposit, availableAssets } =
+    usePearlWallet();
 
   return (
     <CardFlex $noBorder $padding="32px" style={cardStyles}>

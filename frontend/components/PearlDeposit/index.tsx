@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { TokenAmounts, ValueOf } from '@/types';
+import { ValueOf } from '@/types';
 
 import { DepositScreen } from './Deposit/Deposit';
 import { SelectPaymentMethod } from './SelectPaymentMethod/SelectPaymentMethod';
@@ -12,13 +12,9 @@ const DEPOSIT_STEPS = {
 
 type DepositProps = {
   onBack: () => void;
-  overrideAmountsToDeposit?: TokenAmounts;
 };
 
-export const PearlDeposit = ({
-  onBack,
-  overrideAmountsToDeposit,
-}: DepositProps) => {
+export const PearlDeposit = ({ onBack }: DepositProps) => {
   const [step, setStep] = useState<ValueOf<typeof DEPOSIT_STEPS>>(
     DEPOSIT_STEPS.DEPOSIT,
   );
@@ -29,7 +25,6 @@ export const PearlDeposit = ({
         <DepositScreen
           onBack={onBack}
           onContinue={() => setStep(DEPOSIT_STEPS.SELECT_PAYMENT_METHOD)}
-          overrideAmountsToDeposit={overrideAmountsToDeposit}
         />
       );
     case DEPOSIT_STEPS.SELECT_PAYMENT_METHOD:
