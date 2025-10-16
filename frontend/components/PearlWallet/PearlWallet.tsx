@@ -71,7 +71,7 @@ const PearlWalletContent = () => {
       case Pages.PearlWalletSelectPaymentMethod:
         return <SelectPaymentMethod onBack={handleBack} />;
       default:
-        throw new Error('Invalid step');
+        throw new Error('Invalid page');
     }
   }, [pageState, handleNext, handleBack, goto]);
 
