@@ -7,7 +7,6 @@ import { usePageState } from '@/hooks';
 
 import { AgentWalletOperation } from './AgentWalletOperation';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
-import { TransactionHistoryTable } from './TransactionHistoryTable';
 
 const { Text, Title } = Typography;
 
@@ -24,18 +23,18 @@ const AvailableAssets = () => (
   </Flex>
 );
 
-const TransactionHistory = () => (
-  <Flex vertical gap={24}>
-    <Flex vertical gap={12}>
-      <Title level={5} className="m-0 text-lg">
-        Transaction History
-      </Title>
-      <CardFlex $noBorder>
-        <TransactionHistoryTable />
-      </CardFlex>
-    </Flex>
-  </Flex>
-);
+// const TransactionHistory = () => (
+//   <Flex vertical gap={24}>
+//     <Flex vertical gap={12}>
+//       <Title level={5} className="m-0 text-lg">
+//         Transaction History
+//       </Title>
+//       <CardFlex $noBorder>
+//         <TransactionHistoryTable />
+//       </CardFlex>
+//     </Flex>
+//   </Flex>
+// );
 
 type SomeFundsMaybeLockedModalProps = {
   onNext: () => void;
@@ -97,7 +96,7 @@ export const BalancesAndAssets = ({
         onFundAgent={onFundAgent}
       />
       <AvailableAssets />
-      <TransactionHistory />
+      {/* <TransactionHistory /> */}
 
       {isWithdrawModalVisible && (
         <SomeFundsMaybeLockedModal
