@@ -257,6 +257,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
         dataSource={ethToTokenDataSource}
         pagination={false}
         bordered
+        $noBorder={false}
       />
     </TableWrapper>
   );

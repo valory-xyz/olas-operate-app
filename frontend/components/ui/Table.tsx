@@ -3,11 +3,16 @@ import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
 
-export const TableWrapper = styled.div`
+const TableWrapper = styled.div<{ $noBorder?: boolean }>`
+  .ant-table-container {
+    border-bottom-left-radius: ${({ $noBorder }) =>
+      $noBorder ? undefined : '8px'};
+  }
+
   .ant-table-thead {
     .ant-table-cell {
       padding: 10px 16px;
-      border-bottom: none;
+      border-bottom: ${({ $noBorder }) => ($noBorder ? 'none' : undefined)};
       font-weight: 400;
       font-size: 14px;
       color: ${COLOR.TEXT_NEUTRAL_TERTIARY};
@@ -15,12 +20,14 @@ export const TableWrapper = styled.div`
 
       &:first-child {
         border-top-left-radius: 8px;
-        border-bottom-left-radius: 8px;
+        border-bottom-left-radius: ${({ $noBorder }) =>
+          $noBorder ? '8px' : '0px'};
       }
 
       &:last-child {
         border-top-right-radius: 8px;
-        border-bottom-right-radius: 8px;
+        border-bottom-right-radius: ${({ $noBorder }) =>
+          $noBorder ? '8px' : '0px'};
       }
 
       &:before {
@@ -36,20 +43,37 @@ export const TableWrapper = styled.div`
     }
     .ant-table-row:last-child {
       .ant-table-cell {
-        border-bottom: none;
+        border-bottom: ${({ $noBorder }) => ($noBorder ? 'none' : undefined)};
+
+        &:first-child {
+          border-bottom-left-radius: ${({ $noBorder }) =>
+            $noBorder ? undefined : '8px'};
+        }
+
+        &:last-child {
+          border-bottom-right-radius: ${({ $noBorder }) =>
+            $noBorder ? undefined : '8px'};
+        }
       }
     }
     .ant-table-placeholder {
       .ant-table-cell {
-        border-bottom: none;
+        border-bottom: ${({ $noBorder }) => ($noBorder ? 'none' : undefined)};
       }
     }
   }
 `;
 
-export function Table<T extends Record<string, unknown>>(props: TableProps<T>) {
+type CustomTableProps<T> = TableProps<T> & {
+  $noBorder?: boolean;
+};
+
+export function Table<T extends Record<string, unknown>>({
+  $noBorder = true,
+  ...props
+}: CustomTableProps<T>) {
   return (
-    <TableWrapper>
+    <TableWrapper $noBorder={$noBorder}>
       <AntdTable<T> {...props} />
     </TableWrapper>
   );
