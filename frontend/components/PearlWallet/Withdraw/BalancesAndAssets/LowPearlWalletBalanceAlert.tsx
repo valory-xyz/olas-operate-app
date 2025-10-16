@@ -3,13 +3,13 @@ import { isEmpty } from 'lodash';
 
 import { CustomAlert } from '@/components/Alert';
 import { UNICODE_SYMBOLS } from '@/constants';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 import {
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,
 } from '@/hooks';
 import { tokenBalancesToSentence } from '@/utils';
 
-import { usePearlWallet } from '../../PearlWalletProvider';
 import { WalletChain } from '../../types';
 import { getInitialDepositForMasterSafe } from '../../utils';
 

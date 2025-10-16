@@ -34,7 +34,6 @@ import {
   useSetup,
 } from '@/hooks';
 import { AgentConfig } from '@/types/Agent';
-import { isPearlWalletPage } from '@/utils';
 
 import { UpdateAvailableAlert } from './UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from './UpdateAvailableAlert/UpdateAvailableModal';
@@ -221,15 +220,9 @@ export const Sidebar = () => {
   );
 
   const selectedMenuKey = useMemo(() => {
-    // Check if current page is a Pearl Wallet page
-    if (isPearlWalletPage(pageState)) {
-      return [Pages.PearlWallet];
-    }
-    // Check if current page matches any other menu item
     if (menuItems.find((item) => item?.key === pageState)) {
       return [pageState];
     }
-    // Default to selected agent
     return [selectedAgentType];
   }, [pageState, selectedAgentType]);
 

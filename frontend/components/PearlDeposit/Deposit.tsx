@@ -1,6 +1,7 @@
 import { Button, Flex, Select, Typography } from 'antd';
 import { isEmpty, kebabCase, values } from 'lodash';
 import Image from 'next/image';
+import { useCallback, useMemo, useState } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import {
@@ -10,13 +11,15 @@ import {
   TokenAmountInput,
   WalletTransferDirection,
 } from '@/components/ui';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
+import { TokenAmounts, ValueOf } from '@/types';
 import {
   asEvmChainDetails,
   asMiddlewareChain,
   tokenBalancesToSentence,
 } from '@/utils';
 
-import { usePearlWallet } from '../PearlWalletProvider';
+import { SelectPaymentMethod } from './SelectPaymentMethod/SelectPaymentMethod';
 
 const { Title, Text } = Typography;
 
@@ -84,14 +87,31 @@ const SelectChainToDeposit = () => {
   );
 };
 
-type DepositProps = {
+type DepositScreenProps = {
   onBack: () => void;
-  onContinue: () => void;
+  overrideAmountsToDeposit?: TokenAmounts;
+  updateStep: (newStep: ValueOf<typeof DEPOSIT_STEPS>) => void;
 };
 
-export const Deposit = ({ onBack, onContinue }: DepositProps) => {
-  const { onDepositAmountChange, amountsToDeposit, availableAssets } =
-    usePearlWallet();
+const DepositScreen = ({
+  onBack,
+  overrideAmountsToDeposit,
+  updateStep,
+}: DepositScreenProps) => {
+  const handleContinue = useCallback(() => {
+    updateStep(DEPOSIT_STEPS.SELECT_PAYMENT_METHOD);
+  }, [updateStep]);
+
+  const {
+    onDepositAmountChange,
+    amountsToDeposit: amountsToDepositFromPearlWallet,
+    availableAssets,
+  } = usePearlWallet();
+
+  const amountsToDeposit = useMemo(
+    () => overrideAmountsToDeposit ?? amountsToDepositFromPearlWallet,
+    [overrideAmountsToDeposit, amountsToDepositFromPearlWallet],
+  );
 
   return (
     <CardFlex $noBorder $padding="32px" style={cardStyles}>
@@ -121,7 +141,7 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
 
         <Button
           disabled={values(amountsToDeposit).every((i) => i === 0)}
-          onClick={onContinue}
+          onClick={handleContinue}
           type="primary"
           size="large"
           block
@@ -131,4 +151,44 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
       </Flex>
     </CardFlex>
   );
+};
+
+const DEPOSIT_STEPS = {
+  DEPOSIT: 'DEPOSIT',
+  SELECT_PAYMENT_METHOD: 'SELECT_PAYMENT_METHOD',
+} as const;
+
+type DepositProps = {
+  onBack: () => void;
+  overrideAmountsToDeposit?: TokenAmounts;
+};
+
+export const Deposit = ({ onBack, overrideAmountsToDeposit }: DepositProps) => {
+  const [step, setStep] = useState<ValueOf<typeof DEPOSIT_STEPS>>(
+    DEPOSIT_STEPS.DEPOSIT,
+  );
+
+  const updateStep = useCallback(
+    (newStep: ValueOf<typeof DEPOSIT_STEPS>) => {
+      setStep(newStep);
+    },
+    [setStep],
+  );
+
+  switch (step) {
+    case DEPOSIT_STEPS.DEPOSIT:
+      return (
+        <DepositScreen
+          onBack={onBack}
+          updateStep={updateStep}
+          overrideAmountsToDeposit={overrideAmountsToDeposit}
+        />
+      );
+    case DEPOSIT_STEPS.SELECT_PAYMENT_METHOD:
+      return (
+        <SelectPaymentMethod onBack={() => setStep(DEPOSIT_STEPS.DEPOSIT)} />
+      );
+    default:
+      throw new Error('Invalid step');
+  }
 };

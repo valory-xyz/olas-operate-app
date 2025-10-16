@@ -5,8 +5,8 @@ import { CardFlex } from '@/components/ui/CardFlex';
 import { EvmChainName } from '@/constants/chains';
 import { useServices } from '@/hooks/useServices';
 
+import { useShouldAllowSwitch } from '../hooks/useShouldAllowSwitch';
 import { ConfirmSwitchButton } from './ConfirmSwitchButton';
-import { useShouldAllowSwitch } from './hooks/useShouldAllowSwitch';
 import { InsufficientBalanceAlert } from './InsufficientBalanceAlert';
 
 const { Text, Title } = Typography;

@@ -8,9 +8,9 @@ import { AgentNft } from '@/components/AgentNft';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { CardFlex, Segmented } from '@/components/ui';
 import { COLOR } from '@/constants';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useMasterWalletContext, useServices } from '@/hooks';
 
-import { usePearlWallet } from '../../PearlWalletProvider';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { LowPearlWalletBalanceAlert } from './LowPearlWalletBalanceAlert';
 import { StakedAssetsTable } from './StakedAssetsTable';

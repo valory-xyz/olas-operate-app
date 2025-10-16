@@ -10,8 +10,8 @@ import { useStakingContracts } from '@/hooks/useStakingContracts';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 import { BackButton } from '../ui/BackButton';
-import { ConfirmSwitchSection } from './ConfirmSwitchSection';
-import { ContractCard } from './ContractCard';
+import { ConfirmSwitchSection } from './components/ConfirmSwitchSection';
+import { ContractCard } from './components/ContractCard';
 
 const { Title, Text } = Typography;
 

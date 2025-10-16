@@ -11,8 +11,8 @@ import { CardFlex, cardStyles } from '@/components/ui';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SUPPORT_URL } from '@/constants/urls';
 import { useMessageApi } from '@/context/MessageProvider';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 
-import { usePearlWallet } from '../../PearlWalletProvider';
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { EnterPasswordBeforeWithdrawal } from './EnterPasswordBeforeWithdrawal';
 import { useWithdrawFunds } from './useWithdrawFunds';

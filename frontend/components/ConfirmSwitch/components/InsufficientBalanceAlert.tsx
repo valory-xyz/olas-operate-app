@@ -1,5 +1,4 @@
 import { Button, Flex, Typography } from 'antd';
-import { useCallback } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
 import { Pages } from '@/enums';
@@ -19,15 +18,6 @@ export const InsufficientBalanceAlert = ({
 }: InsufficientBalanceAlertProps) => {
   const { goto } = usePageState();
 
-  const handleDeposit = useCallback(() => {
-    goto(
-      Pages.PearlWalletDeposit,
-      requiredOlasBalance
-        ? { [Pages.PearlWalletDeposit]: { requiredOlasBalance } }
-        : undefined,
-    );
-  }, [goto, requiredOlasBalance]);
-
   return (
     <CustomAlert
       type="warning"
@@ -40,7 +30,10 @@ export const InsufficientBalanceAlert = ({
             on {chainName} Chain to continue.
           </Text>
 
-          <Button size="small" onClick={handleDeposit}>
+          <Button
+            size="small"
+            onClick={() => goto(Pages.DepositOlasForStaking)}
+          >
             Deposit OLAS
           </Button>
         </Flex>

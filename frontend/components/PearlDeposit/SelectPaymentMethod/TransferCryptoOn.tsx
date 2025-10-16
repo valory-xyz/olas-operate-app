@@ -1,13 +1,12 @@
 import { entries } from 'lodash';
 import { useMemo } from 'react';
 
+import { TransferCryptoFromExternalWallet } from '@/components/PearlWallet/components/TransferCryptoFromExternalWallet';
 import { TokenSymbol } from '@/constants';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { AvailableAsset } from '@/types/Wallet';
-
-import { TransferCryptoFromExternalWallet } from '../../components/TransferCryptoFromExternalWallet';
-import { usePearlWallet } from '../../PearlWalletProvider';
 
 type TransferCryptoOnProps = {
   chainName: string;

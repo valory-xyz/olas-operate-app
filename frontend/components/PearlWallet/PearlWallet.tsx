@@ -2,12 +2,13 @@ import { Flex } from 'antd';
 import { useCallback, useMemo } from 'react';
 
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 
-import { Deposit } from './Deposit/Deposit';
-import { SelectPaymentMethod } from './Deposit/SelectPaymentMethod/SelectPaymentMethod';
-import { PearlWalletProvider } from './PearlWalletProvider';
+import { Deposit } from '../PearlDeposit/Deposit';
+import { SelectPaymentMethod } from '../PearlDeposit/SelectPaymentMethod/SelectPaymentMethod';
+import { STEPS } from './types';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
 import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw';
@@ -16,71 +17,61 @@ import { SelectAmountToWithdraw } from './Withdraw/SelectAmountToWithdraw';
  * To display the Pearl Wallet page.
  */
 const PearlWalletContent = () => {
-  const { pageState, previousPageState, goto } = usePageState();
+  const { walletStep: step, updateStep } = usePearlWallet();
 
   const handleNext = useCallback(() => {
-    switch (pageState) {
-      case Pages.PearlWallet:
-        goto(Pages.PearlWalletWithdraw);
+    switch (step) {
+      case STEPS.PEARL_WALLET_SCREEN:
+        updateStep(STEPS.SELECT_AMOUNT_TO_WITHDRAW);
         break;
-      case Pages.PearlWalletWithdraw:
-        goto(Pages.PearlWalletEnterWithdrawalAddress);
-        break;
-      case Pages.PearlWalletDeposit:
-        goto(Pages.PearlWalletSelectPaymentMethod);
+      case STEPS.SELECT_AMOUNT_TO_WITHDRAW:
+        updateStep(STEPS.ENTER_WITHDRAWAL_ADDRESS);
         break;
       default:
         break;
     }
-  }, [goto, pageState]);
+  }, [step, updateStep]);
 
   const handleBack = useCallback(() => {
-    switch (pageState) {
-      case Pages.PearlWalletWithdraw:
-        goto(Pages.PearlWallet);
+    switch (step) {
+      case STEPS.SELECT_AMOUNT_TO_WITHDRAW:
+      case STEPS.DEPOSIT:
+        updateStep(STEPS.PEARL_WALLET_SCREEN);
         break;
-      case Pages.PearlWalletDeposit:
-        goto(
-          // If user landed from "Deposit OLAS" on Confirm Switch page
-          previousPageState === Pages.ConfirmSwitch
-            ? Pages.ConfirmSwitch
-            : Pages.PearlWallet,
-        );
+      case STEPS.ENTER_WITHDRAWAL_ADDRESS:
+        updateStep(STEPS.SELECT_AMOUNT_TO_WITHDRAW);
         break;
-      case Pages.PearlWalletEnterWithdrawalAddress:
-        goto(Pages.PearlWalletWithdraw);
-        break;
-      case Pages.PearlWalletSelectPaymentMethod:
-        goto(Pages.PearlWalletDeposit);
+      case STEPS.SELECT_PAYMENT_METHOD:
+        updateStep(STEPS.DEPOSIT);
         break;
       default:
         break;
     }
-  }, [goto, pageState, previousPageState]);
+  }, [step, updateStep]);
 
   const content = useMemo(() => {
-    switch (pageState) {
-      case Pages.PearlWallet:
+    switch (step) {
+      case STEPS.PEARL_WALLET_SCREEN:
         return (
           <BalancesAndAssets
             onWithdraw={handleNext}
-            onDeposit={() => goto(Pages.PearlWalletDeposit)}
+            onDeposit={() => updateStep(STEPS.DEPOSIT)}
           />
         );
-      case Pages.PearlWalletWithdraw:
+      case STEPS.SELECT_AMOUNT_TO_WITHDRAW:
         return (
           <SelectAmountToWithdraw onBack={handleBack} onContinue={handleNext} />
         );
-      case Pages.PearlWalletEnterWithdrawalAddress:
+      case STEPS.ENTER_WITHDRAWAL_ADDRESS:
         return <EnterWithdrawalAddress onBack={handleBack} />;
-      case Pages.PearlWalletDeposit:
-        return <Deposit onBack={handleBack} onContinue={handleNext} />;
-      case Pages.PearlWalletSelectPaymentMethod:
+      case STEPS.DEPOSIT:
+        return <Deposit onBack={handleBack} />;
+      case STEPS.SELECT_PAYMENT_METHOD:
         return <SelectPaymentMethod onBack={handleBack} />;
       default:
         throw new Error('Invalid page');
     }
-  }, [pageState, handleNext, handleBack, goto]);
+  }, [step, handleNext, handleBack, updateStep]);
 
   return content;
 };
@@ -89,19 +80,17 @@ export const PearlWallet = () => {
   const { pageState } = usePageState();
 
   return (
-    <PearlWalletProvider>
-      <Flex
-        vertical
-        style={{
-          width:
-            pageState === Pages.PearlWalletSelectPaymentMethod
-              ? undefined
-              : MAIN_CONTENT_MAX_WIDTH,
-          margin: '0 auto',
-        }}
-      >
-        <PearlWalletContent />
-      </Flex>
-    </PearlWalletProvider>
+    <Flex
+      vertical
+      style={{
+        width:
+          pageState === Pages.PearlWalletSelectPaymentMethod
+            ? undefined
+            : MAIN_CONTENT_MAX_WIDTH,
+        margin: '0 auto',
+      }}
+    >
+      <PearlWalletContent />
+    </Flex>
   );
 };

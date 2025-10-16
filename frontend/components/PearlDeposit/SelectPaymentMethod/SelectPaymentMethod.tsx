@@ -3,6 +3,7 @@ import { entries } from 'lodash';
 import { useCallback, useState } from 'react';
 import { styled } from 'styled-components';
 
+import { YouPayContainer } from '@/components/PearlWallet/components/TransferCryptoFromExternalWallet';
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
 import {
   COLOR,
@@ -10,11 +11,10 @@ import {
   TokenSymbol,
   TokenSymbolConfigMap,
 } from '@/constants';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useFeatureFlag } from '@/hooks';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
-import { YouPayContainer } from '../../components/TransferCryptoFromExternalWallet';
-import { usePearlWallet } from '../../PearlWalletProvider';
 import { BridgeCryptoOn } from './BridgeCryptoOn';
 import { TransferCryptoOn } from './TransferCryptoOn';
 
