@@ -18,14 +18,11 @@ export const ConfirmSwitchSection = () => {
   const { shouldAllowSwitch, olasRequiredToMigrate, totalOlas } =
     useShouldAllowSwitch();
 
-  const { allowSwitch, reason } = shouldAllowSwitch;
-
   return (
     <>
       <CardFlex $noBorder className="mt-24">
-        {!allowSwitch && (
+        {!shouldAllowSwitch && (
           <InsufficientBalanceAlert
-            reason={reason}
             requiredOlasBalance={olasRequiredToMigrate}
             chainName={chainName}
           />
@@ -44,7 +41,7 @@ export const ConfirmSwitchSection = () => {
               <Title level={5} className="my-0">
                 {totalOlas.toFixed(2)} OLAS
               </Title>
-              {allowSwitch && (
+              {shouldAllowSwitch && (
                 <Tag
                   icon={<CheckSquareFilled />}
                   color="success"
@@ -55,7 +52,7 @@ export const ConfirmSwitchSection = () => {
               )}
             </Flex>
           </Flex>
-          <ConfirmSwitchButton allowSwitch={allowSwitch} />
+          <ConfirmSwitchButton allowSwitch={shouldAllowSwitch} />
         </Flex>
       </CardFlex>
 

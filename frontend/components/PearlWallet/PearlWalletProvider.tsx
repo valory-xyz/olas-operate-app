@@ -119,7 +119,13 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     useBalanceContext();
   const { getRefillRequirementsOf } = useBalanceAndRefillRequirementsContext();
   const { masterSafes } = useMasterWalletContext();
-  const { pageState, goto } = usePageState();
+  const {
+    pageState,
+    previousPageState,
+    navigationParams,
+    resetNavigationParams,
+    goto,
+  } = usePageState();
 
   const [walletChainId, setWalletChainId] = useState<EvmChainId>(
     selectedAgentConfig.evmHomeChainId,
@@ -154,6 +160,29 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     setDefaultDepositValues(defaultRequirementDepositValues);
     setAmountsToDeposit(defaultRequirementDepositValues);
   }, [getRefillRequirementsOf, walletChainId, masterSafeAddress]);
+
+  useEffect(() => {
+    if (
+      pageState !== Pages.PearlWalletDeposit ||
+      previousPageState !== Pages.ConfirmSwitch ||
+      !navigationParams?.[Pages.PearlWalletDeposit]
+    )
+      return;
+
+    const { requiredOlasBalance } = navigationParams[
+      Pages.PearlWalletDeposit
+    ] as { requiredOlasBalance: number };
+
+    // Autofill OLAS required amount if user is coming from Confirm Switch page.
+    setAmountsToDeposit({ OLAS: requiredOlasBalance ?? 0 });
+    resetNavigationParams();
+  }, [
+    pageState,
+    previousPageState,
+    navigationParams,
+    resetNavigationParams,
+    setAmountsToDeposit,
+  ]);
 
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) => agentConfig.evmHomeChainId === walletChainId,
