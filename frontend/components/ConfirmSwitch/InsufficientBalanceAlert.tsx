@@ -36,9 +36,8 @@ export const InsufficientBalanceAlert = ({
       message={
         <Flex justify="space-between">
           <Text className="text-sm">
-            Insufficient balance. Add ${formatNumber(requiredOlasBalance)} OLAS
-            on ${chainName}
-            Chain to continue.
+            Insufficient balance. Add {formatNumber(requiredOlasBalance)} OLAS
+            on {chainName} Chain to continue.
           </Text>
 
           <Button size="small" onClick={handleDeposit}>
