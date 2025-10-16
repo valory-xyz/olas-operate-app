@@ -8,7 +8,7 @@ type OnboardingStep = {
 /**
  * An animated container for onboarding steps.
  */
-export const AnimatedContent = ({ children }: OnboardingStep) => (
+export const IntroductionAnimatedContainer = ({ children }: OnboardingStep) => (
   <AnimatePresence mode="wait">
     <motion.div
       initial={{ opacity: 0, x: 5 }}

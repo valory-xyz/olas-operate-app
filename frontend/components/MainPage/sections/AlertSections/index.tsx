@@ -1,12 +1,12 @@
-import { CardSection } from '@/components/ui/CardSection';
-import { useFeatureFlag } from '@/hooks/useFeatureFlag';
+import { UnderConstruction } from '@/components/Alerts';
+import { CardSection } from '@/components/ui';
+import { useFeatureFlag } from '@/hooks';
 
 import { AddBackupWalletAlert } from './AddBackupWalletAlert';
 import { AvoidSuspensionAlert } from './AvoidSuspensionAlert';
 import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { LowFunds } from './LowFunds/LowFunds';
 import { NoAvailableSlotsOnTheContract } from './NoAvailableSlotsOnTheContract';
-import { UnderConstruction } from './UnderConstruction';
 import { UpdateAgentConfiguration } from './UpdateAgentConfiguration';
 import { UpdateAvailableAlert } from './UpdateAvailableAlert';
 import { WhatsNewAlert } from './WhatsNewAlert';
