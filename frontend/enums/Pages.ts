@@ -10,7 +10,6 @@ export const Pages = {
   /** @deprecated use PearlWallet for V1 */
   ManageWallet: 'ManageWallet',
   PearlWallet: 'PearlWallet',
-  PearlWalletDeposit: 'PearlWalletDeposit',
   AgentWallet: 'AgentWallet',
   /** @deprecated remove after for V1 */
   RewardsHistory: 'RewardsHistory',
@@ -26,6 +25,7 @@ export const Pages = {
   LowSafeSignerBalanceBridgeFunds: 'LowSafeSignerBalanceBridgeFunds',
   SelectStaking: 'SelectStaking',
   ConfirmSwitch: 'ConfirmSwitch',
+  DepositOlasForStaking: 'DepositOlasForStaking',
   FundPearlWallet: 'FundPearlWallet',
 } as const;
 

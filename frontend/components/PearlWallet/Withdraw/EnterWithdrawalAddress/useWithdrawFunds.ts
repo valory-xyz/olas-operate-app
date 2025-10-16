@@ -12,11 +12,10 @@ import {
   BACKEND_URL,
   EXPLORER_URL_BY_MIDDLEWARE_CHAIN,
 } from '@/constants/urls';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { Address, TxnHash } from '@/types/Address';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
-
-import { usePearlWallet } from '../../PearlWalletProvider';
 
 /**
  * {

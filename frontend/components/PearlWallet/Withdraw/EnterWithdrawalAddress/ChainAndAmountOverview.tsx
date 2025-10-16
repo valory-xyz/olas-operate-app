@@ -7,10 +7,10 @@ import { CardFlex } from '@/components/ui/CardFlex';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR } from '@/constants/colors';
 import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { formatNumber } from '@/utils/numberFormatters';
 
 import { PearlWalletToExternalWallet } from '../../components/PearlWalletToExternalWallet';
-import { usePearlWallet } from '../../PearlWalletProvider';
 
 const { Title, Text } = Typography;
 

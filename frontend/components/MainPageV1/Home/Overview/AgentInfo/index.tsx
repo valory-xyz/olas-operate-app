@@ -57,41 +57,43 @@ export const AgentInfo = () => {
   const { serviceSafe } = useYourWallet();
 
   return (
-    <CardFlex $noBorder>
-      <AgentInfoContainer>
-        <Flex justify="start" align="center" gap={24}>
-          <Image
-            src={`/agent-${selectedAgentType}-icon.png`}
-            width={88}
-            height={88}
-            alt={selectedAgentType}
-          />
-          <Flex className="w-full" vertical align="flex-start">
-            <Flex
-              gap={12}
-              justify="space-between"
-              align="center"
-              className="mb-16 w-full"
-            >
-              <Title level={5} className="m-0">
-                {generateName(serviceSafe?.address ?? AddressZero)}
-              </Title>
-              <Flex gap={12} align="center">
-                <AboutAgent />
-                <Tooltip title="Agent settings">
-                  <Button
-                    onClick={() => goto(Pages.UpdateAgentTemplate)}
-                    icon={<SettingOutlined />}
-                  />
-                </Tooltip>
+    <Flex vertical>
+      <CardFlex $noBorder>
+        <AgentInfoContainer>
+          <Flex justify="start" align="center" gap={24}>
+            <Image
+              src={`/agent-${selectedAgentType}-icon.png`}
+              width={88}
+              height={88}
+              alt={selectedAgentType}
+            />
+            <Flex className="w-full" vertical align="flex-start">
+              <Flex
+                gap={12}
+                justify="space-between"
+                align="center"
+                className="mb-16 w-full"
+              >
+                <Title level={5} className="m-0">
+                  {generateName(serviceSafe?.address ?? AddressZero)}
+                </Title>
+                <Flex gap={12} align="center">
+                  <AboutAgent />
+                  <Tooltip title="Agent settings">
+                    <Button
+                      onClick={() => goto(Pages.UpdateAgentTemplate)}
+                      icon={<SettingOutlined />}
+                    />
+                  </Tooltip>
+                </Flex>
               </Flex>
+              <AgentRunButton />
             </Flex>
-            <AgentRunButton />
           </Flex>
-        </Flex>
-        <AgentDisabledAlert />
-        <AgentActivity />
-      </AgentInfoContainer>
-    </CardFlex>
+          <AgentDisabledAlert />
+        </AgentInfoContainer>
+      </CardFlex>
+      <AgentActivity />
+    </Flex>
   );
 };

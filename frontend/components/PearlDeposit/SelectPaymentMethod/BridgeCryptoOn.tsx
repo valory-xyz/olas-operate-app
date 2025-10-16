@@ -5,13 +5,12 @@ import { MiddlewareChain } from '@/client';
 import { Bridge, getFromToken, getTokenDecimal } from '@/components/Bridge';
 import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero, TokenSymbol } from '@/constants';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useMasterWalletContext } from '@/hooks';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { TokenAmounts } from '@/types/Wallet';
 import { asEvmChainId, parseUnits } from '@/utils';
-
-import { usePearlWallet } from '../../PearlWalletProvider';
 
 type BridgeCryptoOnProps = {
   onBack: () => void;

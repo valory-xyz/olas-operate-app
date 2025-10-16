@@ -6,9 +6,9 @@ import {
   cardStyles,
   TokenAmountInput,
 } from '@/components/ui';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 
 import { PearlWalletToExternalWallet } from '../components/PearlWalletToExternalWallet';
-import { usePearlWallet } from '../PearlWalletProvider';
 
 const { Title } = Typography;
 

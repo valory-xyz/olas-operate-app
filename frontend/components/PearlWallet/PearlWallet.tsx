@@ -1,11 +1,11 @@
 import { Flex } from 'antd';
 import { useCallback, useMemo } from 'react';
+import { useUnmount } from 'usehooks-ts';
 
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 
-import { Deposit } from './Deposit/Deposit';
-import { SelectPaymentMethod } from './Deposit/SelectPaymentMethod/SelectPaymentMethod';
-import { PearlWalletProvider, usePearlWallet } from './PearlWalletProvider';
+import { PearlDeposit } from '../PearlDeposit';
 import { STEPS } from './types';
 import { BalancesAndAssets } from './Withdraw/BalancesAndAssets/BalancesAndAssets';
 import { EnterWithdrawalAddress } from './Withdraw/EnterWithdrawalAddress/EnterWithdrawalAddress';
@@ -25,9 +25,6 @@ const PearlWalletContent = () => {
       case STEPS.SELECT_AMOUNT_TO_WITHDRAW:
         updateStep(STEPS.ENTER_WITHDRAWAL_ADDRESS);
         break;
-      case STEPS.DEPOSIT:
-        updateStep(STEPS.SELECT_PAYMENT_METHOD);
-        break;
       default:
         break;
     }
@@ -41,9 +38,6 @@ const PearlWalletContent = () => {
         break;
       case STEPS.ENTER_WITHDRAWAL_ADDRESS:
         updateStep(STEPS.SELECT_AMOUNT_TO_WITHDRAW);
-        break;
-      case STEPS.SELECT_PAYMENT_METHOD:
-        updateStep(STEPS.DEPOSIT);
         break;
       default:
         break;
@@ -66,34 +60,31 @@ const PearlWalletContent = () => {
       case STEPS.ENTER_WITHDRAWAL_ADDRESS:
         return <EnterWithdrawalAddress onBack={handleBack} />;
       case STEPS.DEPOSIT:
-        return <Deposit onBack={handleBack} onContinue={handleNext} />;
-      case STEPS.SELECT_PAYMENT_METHOD:
-        return <SelectPaymentMethod onBack={handleBack} />;
+        return <PearlDeposit onBack={handleBack} />;
       default:
-        throw new Error('Invalid step');
+        throw new Error('Invalid page');
     }
-  }, [step, handleBack, handleNext, updateStep]);
+  }, [step, handleNext, handleBack, updateStep]);
 
   return content;
 };
 
 export const PearlWallet = () => {
-  const { walletStep } = usePearlWallet();
+  const { walletStep: step, updateStep } = usePearlWallet();
+
+  useUnmount(() => {
+    updateStep(STEPS.PEARL_WALLET_SCREEN);
+  });
 
   return (
-    <PearlWalletProvider>
-      <Flex
-        vertical
-        style={{
-          width:
-            walletStep === STEPS.SELECT_PAYMENT_METHOD
-              ? undefined
-              : MAIN_CONTENT_MAX_WIDTH,
-          margin: '0 auto',
-        }}
-      >
-        <PearlWalletContent />
-      </Flex>
-    </PearlWalletProvider>
+    <Flex
+      vertical
+      style={{
+        width: step === STEPS.DEPOSIT ? undefined : MAIN_CONTENT_MAX_WIDTH,
+        margin: '0 auto',
+      }}
+    >
+      <PearlWalletContent />
+    </Flex>
   );
 };

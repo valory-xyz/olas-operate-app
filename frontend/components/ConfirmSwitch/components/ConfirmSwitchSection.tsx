@@ -5,8 +5,8 @@ import { CardFlex } from '@/components/ui/CardFlex';
 import { EvmChainName } from '@/constants/chains';
 import { useServices } from '@/hooks/useServices';
 
+import { useShouldAllowStakingContractSwitch } from '../hooks/useShouldAllowStakingContractSwitch';
 import { ConfirmSwitchButton } from './ConfirmSwitchButton';
-import { useShouldAllowSwitch } from './hooks/useShouldAllowSwitch';
 import { InsufficientBalanceAlert } from './InsufficientBalanceAlert';
 
 const { Text, Title } = Typography;
@@ -16,16 +16,13 @@ export const ConfirmSwitchSection = () => {
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[homeChainId];
   const { shouldAllowSwitch, olasRequiredToMigrate, totalOlas } =
-    useShouldAllowSwitch();
-
-  const { allowSwitch, reason } = shouldAllowSwitch;
+    useShouldAllowStakingContractSwitch();
 
   return (
     <>
       <CardFlex $noBorder className="mt-24">
-        {!allowSwitch && (
+        {!shouldAllowSwitch && (
           <InsufficientBalanceAlert
-            reason={reason}
             requiredOlasBalance={olasRequiredToMigrate}
             chainName={chainName}
           />
@@ -44,7 +41,7 @@ export const ConfirmSwitchSection = () => {
               <Title level={5} className="my-0">
                 {totalOlas.toFixed(2)} OLAS
               </Title>
-              {allowSwitch && (
+              {shouldAllowSwitch && (
                 <Tag
                   icon={<CheckSquareFilled />}
                   color="success"
@@ -55,7 +52,7 @@ export const ConfirmSwitchSection = () => {
               )}
             </Flex>
           </Flex>
-          <ConfirmSwitchButton allowSwitch={allowSwitch} />
+          <ConfirmSwitchButton allowSwitch={shouldAllowSwitch} />
         </Flex>
       </CardFlex>
 

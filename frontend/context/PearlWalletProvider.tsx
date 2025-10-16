@@ -18,12 +18,13 @@ import {
   type EvmChainName,
   TokenSymbol,
 } from '@/constants';
-import { MasterSafe } from '@/enums';
+import { MasterSafe, Pages } from '@/enums';
 import {
   useAvailableAssets,
   useBalanceAndRefillRequirementsContext,
   useBalanceContext,
   useMasterWalletContext,
+  usePageState,
   useService,
   useServices,
 } from '@/hooks';
@@ -39,8 +40,8 @@ import {
 } from '@/types';
 import { generateName } from '@/utils';
 
-import { STEPS, WalletChain } from './types';
-import { getInitialDepositForMasterSafe } from './utils';
+import { STEPS, WalletChain } from '../components/PearlWallet/types';
+import { getInitialDepositForMasterSafe } from '../components/PearlWallet/utils';
 
 const getMasterSafeAddress = (
   chainId: EvmChainId,
@@ -88,6 +89,7 @@ const PearlWalletContext = createContext<{
   onAmountChange: (symbol: TokenSymbol, amount: number) => void;
   amountsToDeposit: TokenAmounts;
   onDepositAmountChange: (symbol: TokenSymbol, amount: number) => void;
+  updateAmountsToDeposit: (amounts: TokenAmounts) => void;
   onReset: () => void;
   /** Initial values for funding agent wallet based on refill requirements */
   defaultRequirementDepositValues: Optional<TokenBalanceRecord>;
@@ -105,6 +107,7 @@ const PearlWalletContext = createContext<{
   onAmountChange: () => {},
   amountsToDeposit: {},
   onDepositAmountChange: () => {},
+  updateAmountsToDeposit: () => {},
   onReset: () => {},
   defaultRequirementDepositValues: {},
 });
@@ -123,6 +126,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     useBalanceContext();
   const { getRefillRequirementsOf } = useBalanceAndRefillRequirementsContext();
   const { masterSafes } = useMasterWalletContext();
+  const { pageState } = usePageState();
 
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
     STEPS.PEARL_WALLET_SCREEN,
@@ -138,7 +142,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
     useAvailableAssets(walletChainId, {
       // For deposit, we only want to show assets in the safe.
-      includeMasterEoa: walletStep !== STEPS.DEPOSIT,
+      includeMasterEoa:
+        walletStep !== STEPS.DEPOSIT ||
+        pageState !== Pages.DepositOlasForStaking,
     });
   const masterSafeAddress = useMemo(
     () => getMasterSafeAddress(walletChainId, masterSafes),
@@ -202,6 +208,13 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [],
   );
 
+  const updateAmountsToDeposit = useCallback(
+    (amounts: TokenAmounts) => {
+      setAmountsToDeposit(amounts);
+    },
+    [setAmountsToDeposit],
+  );
+
   const onReset = useCallback((canNavigateOnReset?: boolean) => {
     setAmountsToWithdraw({});
     setAmountsToDeposit({});
@@ -229,9 +242,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PearlWalletContext.Provider
       value={{
-        isLoading,
         walletStep,
         updateStep,
+        isLoading,
         availableAssets,
         stakedAssets,
         masterSafeAddress,
@@ -248,6 +261,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         // for deposit
         amountsToDeposit,
         onDepositAmountChange,
+        updateAmountsToDeposit,
         onReset,
 
         // Initial values for funding agent wallet

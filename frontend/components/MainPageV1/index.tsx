@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 
 import { AgentStaking } from '@/components/AgentStaking/AgentStaking';
+import { ConfirmSwitch } from '@/components/ConfirmSwitch/ConfirmSwitch';
+import { DepositOlasForStaking } from '@/components/ConfirmSwitch/DepositOlasForStaking';
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { SelectStaking } from '@/components/SelectStaking/SelectStaking';
 import { Settings } from '@/components/SettingsPage';
@@ -12,7 +14,6 @@ import { useServices } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
 
 import { AgentWallet } from '../AgentWallet';
-import { ConfirmSwitch } from '../ConfirmSwitch/ConfirmSwitch';
 import { FundPearlWallet } from '../FundPearlWallet';
 import { PearlWallet } from '../PearlWallet';
 import { Home } from './Home';
@@ -52,6 +53,8 @@ export const Main = () => {
         return <SelectStaking />;
       case Pages.ConfirmSwitch:
         return <ConfirmSwitch />;
+      case Pages.DepositOlasForStaking:
+        return <DepositOlasForStaking />;
       case Pages.FundPearlWallet:
         return <FundPearlWallet />;
       default:

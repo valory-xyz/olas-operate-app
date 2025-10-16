@@ -10,13 +10,12 @@ import {
   TokenAmountInput,
   WalletTransferDirection,
 } from '@/components/ui';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 import {
   asEvmChainDetails,
   asMiddlewareChain,
   tokenBalancesToSentence,
 } from '@/utils';
-
-import { usePearlWallet } from '../PearlWalletProvider';
 
 const { Title, Text } = Typography;
 
