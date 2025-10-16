@@ -3,8 +3,12 @@ import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useEffect } from 'react';
 
+import { AddressLink } from '@/components/AddressLink';
 import { AgentNft } from '@/components/AgentNft';
+import { InfoTooltip } from '@/components/InfoTooltip';
 import { CardFlex, Segmented } from '@/components/ui';
+import { COLOR } from '@/constants';
+import { useMasterWalletContext, useServices } from '@/hooks';
 
 import { usePearlWallet } from '../../PearlWalletProvider';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
@@ -12,6 +16,84 @@ import { LowPearlWalletBalanceAlert } from './LowPearlWalletBalanceAlert';
 import { StakedAssetsTable } from './StakedAssetsTable';
 
 const { Text, Title } = Typography;
+
+const AvailableAssetsTooltip = () => {
+  const { masterEoa, getMasterSafeOf } = useMasterWalletContext();
+  const { selectedAgentConfig } = useServices();
+  const masterSafe = getMasterSafeOf
+    ? getMasterSafeOf(selectedAgentConfig.evmHomeChainId)
+    : undefined;
+
+  return (
+    <InfoTooltip
+      size="medium"
+      styles={{ body: { padding: 16 } }}
+      iconStyles={{ color: COLOR.TEXT_NEUTRAL_PRIMARY }}
+    >
+      <div className="mb-16">
+        Shows your spendable balance on the selected chain — your deposits plusS
+        available staking rewards earned by agents on this chain.
+      </div>
+      <div className="mb-20">
+        Pearl Wallet consists of two parts:
+        <ol>
+          <li>
+            <Text className="text-sm" strong>
+              Pearl Safe
+            </Text>{' '}
+            — smart-contract wallet that holds funds.
+          </li>
+          <li>
+            <Text className="text-sm" strong>
+              Pearl Signer
+            </Text>{' '}
+            — authorizes Safe transactions and keeps a small gas balance.
+          </li>
+        </ol>
+      </div>
+      <Flex className="mb-12" justify="space-between">
+        <Text className="text-sm" strong>
+          Pearl Safe Address:
+        </Text>
+        {masterSafe ? (
+          <AddressLink
+            address={masterSafe?.address}
+            middlewareChain={selectedAgentConfig.middlewareHomeChainId}
+          />
+        ) : (
+          <Text className="text-sm" type="secondary">
+            No Pearl Safe
+          </Text>
+        )}
+      </Flex>
+      <Flex justify="space-between">
+        <Text className="text-sm" strong>
+          Pearl Signer Address:
+        </Text>
+        {masterEoa ? (
+          <AddressLink
+            address={masterEoa?.address}
+            middlewareChain={selectedAgentConfig.middlewareHomeChainId}
+          />
+        ) : (
+          <Text className="text-sm" type="secondary">
+            No Pearl Signer
+          </Text>
+        )}
+      </Flex>
+    </InfoTooltip>
+  );
+};
+
+const StakedAssetsTooltip = () => (
+  <InfoTooltip
+    size="medium"
+    styles={{ body: { padding: 12 } }}
+    iconStyles={{ color: COLOR.TEXT_NEUTRAL_PRIMARY }}
+  >
+    Shows which agents on this chain have assets staked
+  </InfoTooltip>
+);
 
 const PearlWalletTitle = () => (
   <Flex vertical gap={12}>
@@ -28,7 +110,7 @@ const AvailableAssets = () => (
   <Flex vertical gap={24}>
     <Flex vertical gap={12}>
       <Title level={5} className="m-0 text-lg">
-        Available Assets
+        Available Assets <AvailableAssetsTooltip />
       </Title>
       <CardFlex $noBorder>
         <AvailableAssetsTable />
@@ -41,7 +123,7 @@ const StakedAssets = () => (
   <Flex vertical gap={24}>
     <Flex vertical gap={12}>
       <Title level={5} className="m-0 text-lg">
-        Staked Assets
+        Staked Assets <StakedAssetsTooltip />
       </Title>
       <CardFlex $noBorder>
         <StakedAssetsTable />
