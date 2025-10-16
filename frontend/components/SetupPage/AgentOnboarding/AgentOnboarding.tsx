@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
+import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { AgentType } from '@/constants/agent';
 import { COLOR } from '@/constants/colors';
@@ -15,14 +16,7 @@ import { useSetup } from '@/hooks/useSetup';
 import { AgentConfig } from '@/types/Agent';
 import { Optional } from '@/types/Util';
 
-import {
-  AGENTS_FUN_ONBOARDING_STEPS,
-  MODIUS_ONBOARDING_STEPS,
-  OPTIMUS_ONBOARDING_STEPS,
-  PREDICTION_ONBOARDING_STEPS,
-} from './constants';
 import { FundingRequirementStep } from './FundingRequirementStep';
-import { IntroductionStep, OnboardingStep } from './IntroductionStep';
 
 const { Text, Title } = Typography;
 
@@ -40,13 +34,6 @@ const Container = styled(Flex)`
     min-height: 600px;
     overflow: hidden;
   }
-`;
-
-const Dot = styled.div<{ color?: string }>`
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: ${({ color }) => color || COLOR.GRAY_3};
 `;
 
 const AgentSelectionContainer = styled(Flex)<{ active?: boolean }>`
@@ -131,13 +118,6 @@ const SelectYourAgentList = ({
   ));
 };
 
-const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
-  trader: PREDICTION_ONBOARDING_STEPS,
-  memeooorr: AGENTS_FUN_ONBOARDING_STEPS,
-  modius: MODIUS_ONBOARDING_STEPS,
-  optimus: OPTIMUS_ONBOARDING_STEPS,
-};
-
 /**
  * Display the onboarding of the selected agent.
  */
@@ -145,19 +125,6 @@ export const AgentOnboarding = () => {
   const { goto } = useSetup();
   const { updateAgentType } = useServices();
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
-  const [onboardingStep, setOnboardingStep] = useState(0);
-
-  const steps = selectedAgent ? onboardingStepsMap[selectedAgent] : [];
-
-  const onNextStep = useCallback(() => {
-    if (onboardingStep === steps.length - 1) return;
-    setOnboardingStep(onboardingStep + 1);
-  }, [onboardingStep, steps.length]);
-
-  const onPreviousStep = useCallback(() => {
-    if (onboardingStep === 0) return;
-    setOnboardingStep(onboardingStep - 1);
-  }, [onboardingStep]);
 
   const handleAgentSelect = useCallback(() => {
     if (!selectedAgent) return;
@@ -182,7 +149,6 @@ export const AgentOnboarding = () => {
     (agentType: AgentType) => {
       updateAgentType(agentType);
       setSelectedAgent(agentType);
-      setOnboardingStep(0);
     },
     [updateAgentType],
   );
@@ -198,36 +164,24 @@ export const AgentOnboarding = () => {
       </Flex>
 
       <Flex className="agent-selection-right-content">
-        {steps.length === 0 ? (
-          <Flex align="center" justify="center" className="w-full">
-            <Text>Select an agent.</Text>
-          </Flex>
-        ) : (
-          <IntroductionStep
-            title={steps[onboardingStep].title}
-            desc={steps[onboardingStep].desc}
-            imgSrc={steps[onboardingStep].imgSrc}
-            helper={steps[onboardingStep].helper}
-            renderFundingRequirements={(desc) =>
-              selectedAgent ? (
-                <FundingRequirementStep agentType={selectedAgent} desc={desc} />
-              ) : null
-            }
-            onPrev={onboardingStep === 0 ? undefined : onPreviousStep}
-            onNext={
-              onboardingStep === steps.length - 1 ? undefined : onNextStep
-            }
-            renderDot={() =>
-              steps.map((_, index) => (
-                <Dot
-                  key={index}
-                  color={index === onboardingStep ? COLOR.PURPLE : COLOR.GRAY_3}
-                />
-              ))
-            }
-            onAgentSelect={handleAgentSelect}
-          />
-        )}
+        <AgentIntroduction
+          agentType={selectedAgent}
+          renderFundingRequirements={(desc) =>
+            selectedAgent ? (
+              <FundingRequirementStep agentType={selectedAgent} desc={desc} />
+            ) : null
+          }
+          renderAgentSelection={() => (
+            <Button
+              type="primary"
+              block
+              size="large"
+              onClick={handleAgentSelect}
+            >
+              Select Agent
+            </Button>
+          )}
+        />
       </Flex>
     </Container>
   );

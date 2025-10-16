@@ -4,10 +4,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import { ReactNode } from 'react';
 
-import { UnderConstruction } from '@/components/MainPage/sections/AlertSections/UnderConstruction';
-import { useServices } from '@/hooks/useServices';
+import { UnderConstruction } from '@/components/Alerts';
+import { useServices } from '@/hooks';
 
-import { AnimatedContent } from './AnimatedContent';
+import { IntroductionAnimatedContainer } from './IntroductionAnimatedContainer';
 
 const { Title, Text } = Typography;
 
@@ -18,8 +18,16 @@ export type OnboardingStep = {
   helper?: string;
 };
 
-type AnimatedImageProps = { imgSrc: string; alt: string };
-const AnimatedImage = ({ imgSrc, alt }: AnimatedImageProps) => (
+export type IntroductionStepStyles = {
+  imageHeight?: number;
+  descPadding?: string;
+};
+
+type AnimatedImageProps = { imgSrc: string; alt: string } & Pick<
+  IntroductionStepStyles,
+  'imageHeight'
+>;
+const AnimatedImage = ({ imgSrc, alt, imageHeight }: AnimatedImageProps) => (
   <AnimatePresence mode="wait">
     <motion.div
       key={imgSrc}
@@ -39,14 +47,14 @@ const AnimatedImage = ({ imgSrc, alt }: AnimatedImageProps) => (
         width={0}
         height={0}
         sizes="100vw"
-        style={{ width: '100%', height: 'auto', minHeight: 416 }}
+        style={{ width: '100%', height: 'auto', minHeight: imageHeight ?? 416 }}
       />
     </motion.div>
   </AnimatePresence>
 );
 
 const Content = ({ title, desc, helper }: OnboardingStep) => (
-  <AnimatedContent>
+  <IntroductionAnimatedContainer>
     <Flex vertical gap={8}>
       {title && (
         <Title level={5} className="m-0">
@@ -60,7 +68,7 @@ const Content = ({ title, desc, helper }: OnboardingStep) => (
         </Text>
       )}
     </Flex>
-  </AnimatedContent>
+  </IntroductionAnimatedContainer>
 );
 
 type IntroductionProps = OnboardingStep & {
@@ -68,7 +76,8 @@ type IntroductionProps = OnboardingStep & {
   onNext: (() => void) | undefined;
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderDot?: () => ReactNode;
-  onAgentSelect: () => void;
+  renderAgentSelection?: () => ReactNode;
+  styles?: IntroductionStepStyles;
 };
 
 /**
@@ -79,11 +88,12 @@ export const IntroductionStep = ({
   desc,
   imgSrc,
   helper,
-  renderFundingRequirements,
-  renderDot,
-  onAgentSelect,
   onPrev,
   onNext,
+  renderDot,
+  renderFundingRequirements,
+  renderAgentSelection,
+  styles: { imageHeight, descPadding } = {},
 }: IntroductionProps) => {
   const { selectedAgentConfig } = useServices();
   const isFundingDetailsStep = !title && !imgSrc;
@@ -93,14 +103,23 @@ export const IntroductionStep = ({
       {isFundingDetailsStep ? (
         renderFundingRequirements?.(desc)
       ) : (
-        <AnimatedImage imgSrc={`/${imgSrc}.png`} alt={title ?? ''} />
+        <AnimatedImage
+          imgSrc={`/${imgSrc}.png`}
+          alt={title ?? ''}
+          imageHeight={imageHeight}
+        />
       )}
 
       <div style={{ padding: '12px 0px 20px 0px' }}>
         <Flex vertical gap={24}>
           {isFundingDetailsStep ? null : (
             <>
-              <div style={{ padding: '0px 20px', overflow: 'hidden' }}>
+              <div
+                style={{
+                  padding: descPadding ?? '0px 20px',
+                  overflow: 'hidden',
+                }}
+              >
                 <Content title={title} desc={desc} helper={helper} />
               </div>
               {selectedAgentConfig.isUnderConstruction && <UnderConstruction />}
@@ -131,9 +150,7 @@ export const IntroductionStep = ({
               />
             </Flex>
 
-            <Button type="primary" block size="large" onClick={onAgentSelect}>
-              Select Agent
-            </Button>
+            {renderAgentSelection ? renderAgentSelection() : null}
           </Flex>
         </Flex>
       </div>

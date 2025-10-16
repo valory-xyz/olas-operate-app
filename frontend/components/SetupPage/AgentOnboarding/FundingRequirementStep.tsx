@@ -1,18 +1,17 @@
 import { Flex, Tag, Typography } from 'antd';
 import Image from 'next/image';
 
+import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
 import { AGENT_CONFIG } from '@/config/agents';
-import { AgentType } from '@/constants/agent';
-import { COLOR } from '@/constants/colors';
 import {
+  AgentType,
+  COLOR,
   TokenSymbol,
   TokenSymbolConfigMap,
   TokenSymbolMap,
-} from '@/constants/token';
-import { useFundingRequirements } from '@/hooks/useFundingRequirements';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
-
-import { AnimatedContent } from './AnimatedContent';
+} from '@/constants';
+import { useFundingRequirements } from '@/hooks';
+import { asEvmChainDetails } from '@/utils';
 
 const { Text, Title } = Typography;
 
@@ -107,11 +106,7 @@ const MinimumFundingRequirements = ({
 
   const allTokens = Object.entries(tokens[evmHomeChainId] || {})
     .map(([token, amount]) => {
-      const icon = (() => {
-        if (token === 'XDAI') return '/tokens/wxdai-icon.png';
-        return TokenSymbolConfigMap[token as TokenSymbol]?.image as string;
-      })();
-
+      const icon = TokenSymbolConfigMap[token as TokenSymbol]?.image as string;
       return { token, amount, icon };
     })
     // filter out OLAS as it's shown in staking requirements above.
@@ -160,7 +155,7 @@ export const FundingRequirementStep = ({
   const { name, displayName } = asEvmChainDetails(middlewareHomeChainId);
 
   return (
-    <AnimatedContent>
+    <IntroductionAnimatedContainer>
       <Flex vertical gap={24} style={{ padding: 20, marginBottom: 48 }}>
         <Header
           agentType={agentType}
@@ -172,6 +167,6 @@ export const FundingRequirementStep = ({
         <MinimumStakingRequirements agentType={agentType} />
         <MinimumFundingRequirements agentType={agentType} />
       </Flex>
-    </AnimatedContent>
+    </IntroductionAnimatedContainer>
   );
 };
