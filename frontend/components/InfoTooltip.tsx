@@ -27,7 +27,6 @@ export const InfoTooltip = ({
       title={children}
       placement={placement}
       overlayInnerStyle={{
-        fontSize: 14,
         width: bodyWidth,
         ...overlayInnerStyle,
       }}
