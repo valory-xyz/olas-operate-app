@@ -167,7 +167,7 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
             {availableAssets.map(({ amount, symbol }) => {
               const hasError =
                 !isNil(amountsToFund?.[symbol]) &&
-                (amountsToFund[symbol] ?? 0).amount > amount;
+                (amountsToFund[symbol]?.amount ?? 0) > amount;
 
               return (
                 <Flex key={symbol} gap={8} vertical className="w-full">
