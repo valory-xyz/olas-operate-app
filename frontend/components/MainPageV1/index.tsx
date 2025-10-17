@@ -1,5 +1,5 @@
 import { Layout } from 'antd';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { AgentStaking } from '@/components/AgentStaking/AgentStaking';
@@ -10,13 +10,13 @@ import { SelectStaking } from '@/components/SelectStaking/SelectStaking';
 import { Settings } from '@/components/SettingsPage';
 import { UpdateAgentPage } from '@/components/UpdateAgentPage';
 import { Pages } from '@/enums/Pages';
-import { useServices } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
 
 import { AgentWallet } from '../AgentWallet';
 import { FundPearlWallet } from '../FundPearlWallet';
 import { PearlWallet } from '../PearlWallet';
 import { Home } from './Home';
+import { useScrollPage } from './hooks/useScroll';
 import { useSetupTrayIcon } from './hooks/useSetupTrayIcon';
 import { Sidebar } from './Sidebar';
 
@@ -39,15 +39,8 @@ const usePageInitialization = () => {
 
 export const Main = () => {
   const { pageState } = usePageState();
-  const { selectedAgentType } = useServices();
-  const contentContainerRef = useRef<HTMLDivElement>(null);
-
+  const contentContainerRef = useScrollPage();
   usePageInitialization();
-
-  // Scroll to top when page or selected agent is changed
-  useEffect(() => {
-    contentContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [pageState, selectedAgentType]);
 
   const mainContent = useMemo(() => {
     switch (pageState) {
