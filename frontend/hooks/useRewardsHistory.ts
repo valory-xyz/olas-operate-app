@@ -103,6 +103,9 @@ const useTransformCheckpoints = () => {
       serviceId: number,
       checkpoints: CheckpointResponse[],
       timestampToIgnore?: null | number,
+      {
+        canCheckpointsHaveMissingEpochs,
+      }: { canCheckpointsHaveMissingEpochs?: boolean } = {},
     ) => {
       if (!checkpoints || checkpoints.length === 0) return [];
       if (!serviceId) return [];
@@ -125,10 +128,17 @@ const useTransformCheckpoints = () => {
           const blockTimestamp = Number(checkpoint.blockTimestamp);
           const epochLength = Number(checkpoint.epochLength);
 
-          // If the epoch is 0, it means it's the first epoch else,
-          // the start time of the epoch is the end time of the previous epoch
+          /**
+           * If:
+           *   1. The epoch is 0, it means it's the first epoch
+           *   2. The checkpoint list can have missing epochs
+           * Else:
+           *   The start time of the epoch is the end time of the previous epoch
+           *
+           * TODO: Add start/end time in the subgraph
+           */
           const epochStartTimeStamp =
-            checkpoint.epoch === '0'
+            checkpoint.epoch === '0' || canCheckpointsHaveMissingEpochs
               ? blockTimestamp - epochLength
               : (checkpoints[index + 1]?.blockTimestamp ?? 0);
 
@@ -233,6 +243,7 @@ const useContractCheckpoints = (
           serviceId,
           checkpoints,
           null,
+          { canCheckpointsHaveMissingEpochs: !!filterQueryByServiceId },
         );
 
         return { ...acc, [stakingContractAddress]: transformedCheckpoints };
