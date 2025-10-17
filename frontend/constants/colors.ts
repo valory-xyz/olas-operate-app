@@ -61,4 +61,10 @@ export const COLOR = {
       DEFAULT: '#E2CAF6',
     },
   },
+  ICON_COLOR: {
+    SUCCESS: '#9E9E00',
+    DANGER: '#FF4D5B',
+    ORANGE: '#FF8F1F',
+    YELLOW: '#FFB636',
+  },
 };

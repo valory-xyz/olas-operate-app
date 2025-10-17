@@ -1,10 +1,12 @@
+import { COLOR } from '@/constants';
+
 export const FireV1 = ({ isActive }: { isActive?: boolean }) => {
-  let fillColor = '#617084';
+  let fillColor = COLOR.TEXT_NEUTRAL_TERTIARY;
   let subColor = undefined;
 
   if (isActive) {
-    fillColor = '#FF8F1F';
-    subColor = '#FFB636';
+    fillColor = COLOR.ICON_COLOR.ORANGE;
+    subColor = COLOR.ICON_COLOR.YELLOW;
   }
 
   return (

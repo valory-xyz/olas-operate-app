@@ -7,10 +7,9 @@ import { FireV1 } from '@/components/custom-icons/FireV1';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { NA } from '@/constants/symbols';
 import { Pages } from '@/enums/Pages';
-import { useServices } from '@/hooks';
+import { useRewardContext, useServices } from '@/hooks';
 import { useAgentActivity } from '@/hooks/useAgentActivity';
 import { usePageState } from '@/hooks/usePageState';
-import { useRewardContext } from '@/hooks/useRewardContext';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
 
@@ -76,6 +75,10 @@ const Streak = () => {
 /**
  * To display current epoch lifetime, streak, and relevant alerts.
  */
+
+const DANGER_HOURS = 3;
+const SUCCESS_HOURS = 12;
+
 export const Staking = () => {
   const { goto } = usePageState();
   const { isAgentEvicted, isEligibleForStaking } =
@@ -86,14 +89,14 @@ export const Staking = () => {
 
   const { isUnderConstruction } = selectedAgentConfig;
 
-  const getClockColor = (): 'red' | 'green' | undefined => {
-    if (!currentEpochLifetime) return undefined;
+  const getClockColor = (): 'danger' | 'success' | undefined => {
+    if (!currentEpochLifetime) return;
 
     const hoursLeft = (currentEpochLifetime - Date.now()) / (1000 * 60 * 60);
 
-    if (hoursLeft < 3) return 'red';
-    if (hoursLeft < 12) return 'green';
-    return undefined;
+    if (hoursLeft < DANGER_HOURS) return 'danger';
+    if (hoursLeft < SUCCESS_HOURS) return 'success';
+    return;
   };
 
   const alert = useMemo(() => {
