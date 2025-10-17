@@ -1,7 +1,7 @@
 import { IdcardTwoTone, SmileTwoTone } from '@ant-design/icons';
 import { Flex, message, Segmented } from 'antd';
 import get from 'lodash/get';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { COLOR } from '@/constants/colors';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
@@ -49,6 +49,9 @@ export const Home = () => {
 
   const [view, setView] = useState<View>('overview');
   const [isUnlockChatUiModalOpen, setIsUnlockChatUiModalOpen] = useState(false);
+
+  // Reset view to overview when switching between agents
+  useEffect(() => setView('overview'), [selectedAgentType]);
 
   const handleChangeView = useCallback(
     (nextView: View) => {
