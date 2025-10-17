@@ -109,7 +109,18 @@ export const getCrossChainWalletBalances = async (
                 symbol: tokenSymbol,
                 isNative: true,
                 balance: Number(formatUnits(balance)),
+                balanceString: formatUnits(balance),
               });
+
+              if (providerEvmChainId === 100)
+                console.log('Native balance for wallet:', {
+                  symbol: tokenSymbol,
+                  address,
+                  balance,
+                  balanceInStr: balance.toString(),
+                  formatted: formatUnits(balance),
+                  formattedWithNumber: Number(formatUnits(balance)),
+                });
             }
           });
         }
@@ -139,8 +150,9 @@ export const getCrossChainWalletBalances = async (
               isNative: false,
               isWrappedToken,
               balance: Number(formatUnits(erc20Balances[index], decimals)),
+              balanceString: formatUnits(erc20Balances[index], decimals),
             }),
-          ) as WalletBalance[];
+          ) satisfies WalletBalance[];
 
           balanceResults.push(...erc20Results);
         }
@@ -157,7 +169,7 @@ export const getCrossChainWalletBalances = async (
  * Get the staked balances for all services.
  * ie, the bond and deposit balances for all services on all chains.
  */
-export const getCrossChainStakedBalances = async (
+const getCrossChainStakedBalances = async (
   services: MiddlewareServiceResponse[],
   masterSafeAddresses: MasterSafe[],
 ): Promise<CrossChainStakedBalances> => {

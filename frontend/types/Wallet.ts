@@ -14,7 +14,9 @@ export type SafeCreationResponse = {
 export type AvailableAsset = {
   address?: string;
   symbol: TokenSymbol;
+  /** @deprecated Use `amountString` instead for accurate representation */
   amount: number;
+  amountString?: string;
 };
 
 export type StakedAsset = {

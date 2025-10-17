@@ -1,4 +1,4 @@
-import { find, get, groupBy, isEmpty, isNil } from 'lodash';
+import { compact, find, get, groupBy, isEmpty, isNil } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
@@ -9,7 +9,7 @@ import { BalanceContext } from '@/context/BalanceProvider/BalanceProvider';
 import { WalletBalance } from '@/types/Balance';
 import { Maybe, Optional } from '@/types/Util';
 import { areAddressesEqual } from '@/utils/address';
-import { formatUnitsToNumber } from '@/utils/numberFormatters';
+import { formatUnitsToNumber, sumNumbers } from '@/utils/numberFormatters';
 
 import { useBalanceAndRefillRequirementsContext } from './useBalanceAndRefillRequirementsContext';
 import { useService } from './useService';
@@ -307,25 +307,51 @@ export const useMasterBalances = () => {
       .reduce((acc, { balance }) => acc + balance, 0);
   }, [masterEoa, masterWalletBalances, selectedAgentConfig.evmHomeChainId]);
 
-  /**
-   * Function to get the master EOA balance of a specific chain
-   */
-  const getMasterEoaNativeBalanceOf = useCallback(
-    (chainId: EvmChainId) => {
+  /** Internal implementation for getting master EOA native balance */
+  const _getMasterEoaNativeBalanceOfCalc = useCallback(
+    (chainId: EvmChainId, returnType: 'string' | 'number') => {
       if (!chainId) return;
       if (isNil(masterEoa)) return;
       if (isNil(masterWalletBalances)) return;
 
-      return masterWalletBalances
-        .filter(
-          ({ walletAddress, isNative, evmChainId }) =>
-            isNative &&
-            chainId === evmChainId &&
-            areAddressesEqual(walletAddress, masterEoa.address),
-        )
-        .reduce((acc, { balance }) => acc + balance, 0);
+      const balances = masterWalletBalances.filter(
+        ({ walletAddress, isNative, evmChainId }) =>
+          isNative &&
+          chainId === evmChainId &&
+          areAddressesEqual(walletAddress, masterEoa.address),
+      );
+
+      if (returnType === 'string') {
+        return sumNumbers(
+          compact(balances.map(({ balanceString }) => balanceString)),
+        );
+      }
+
+      return balances.reduce((acc, { balance }) => acc + balance, 0);
     },
     [masterEoa, masterWalletBalances],
+  );
+
+  /** Get the master EOA native balance as a number */
+  const getMasterEoaNativeBalanceOf = useCallback(
+    (chainId: EvmChainId) => {
+      return _getMasterEoaNativeBalanceOfCalc(
+        chainId,
+        'number',
+      ) as Optional<number>;
+    },
+    [_getMasterEoaNativeBalanceOfCalc],
+  );
+
+  /** Get the master EOA native balance as a string */
+  const getMasterEoaNativeBalanceOfInStr = useCallback(
+    (chainId: EvmChainId) => {
+      return _getMasterEoaNativeBalanceOfCalc(
+        chainId,
+        'string',
+      ) as Optional<string>;
+    },
+    [_getMasterEoaNativeBalanceOfCalc],
   );
 
   const getMasterEoaBalancesOf = useCallback(
@@ -441,6 +467,7 @@ export const useMasterBalances = () => {
     masterEoaBalances,
     masterEoaNativeBalance,
     getMasterEoaNativeBalanceOf,
+    getMasterEoaNativeBalanceOfInStr,
     getMasterEoaBalancesOf,
   };
 };

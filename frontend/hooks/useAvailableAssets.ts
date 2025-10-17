@@ -1,4 +1,4 @@
-import { sum } from 'lodash';
+import { compact, sum } from 'lodash';
 import { useMemo } from 'react';
 
 import { TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
@@ -6,6 +6,7 @@ import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import { useMasterBalances } from '@/hooks';
 import { AvailableAsset } from '@/types/Wallet';
+import { sumNumbers } from '@/utils';
 import {
   asEvmChainDetails,
   asMiddlewareChain,
@@ -28,6 +29,7 @@ export const useAvailableAssets = (
     getMasterSafeOlasBalanceOf,
     getMasterSafeErc20Balances,
     getMasterEoaNativeBalanceOf,
+    getMasterEoaNativeBalanceOfInStr,
   } = useMasterBalances();
 
   // OLAS token, Native Token, other ERC20 tokens
@@ -42,6 +44,7 @@ export const useAvailableAssets = (
 
         const balance = (() => {
           // balance for OLAS
+
           if (symbol === TokenSymbolMap.OLAS) {
             return sum([
               getMasterSafeOlasBalanceOf(walletChainId),
@@ -59,6 +62,29 @@ export const useAvailableAssets = (
                 ({ balance }) => balance,
               ) ?? [],
             );
+            const masterSafeNativeBalanceInStr = compact(
+              getMasterSafeNativeBalanceOf(walletChainId)?.map(
+                ({ balanceString }) => balanceString,
+              ) ?? [],
+            );
+
+            console.log('XDAI balance from onChain: ', {
+              a: masterSafeNativeBalance,
+              b: getMasterEoaNativeBalanceOf(walletChainId),
+              sum: sum([
+                masterSafeNativeBalance,
+                includeMasterEoa
+                  ? getMasterEoaNativeBalanceOf(walletChainId)
+                  : 0,
+              ]),
+              mySum: sumNumbers([
+                ...masterSafeNativeBalanceInStr,
+                includeMasterEoa
+                  ? (getMasterEoaNativeBalanceOfInStr(walletChainId) ?? '0')
+                  : '0',
+              ]),
+            });
+
             return sum([
               masterSafeNativeBalance,
               includeMasterEoa ? getMasterEoaNativeBalanceOf(walletChainId) : 0,
@@ -85,6 +111,7 @@ export const useAvailableAssets = (
     getMasterSafeNativeBalanceOf,
     getMasterEoaNativeBalanceOf,
     getMasterSafeErc20Balances,
+    getMasterEoaNativeBalanceOfInStr,
   ]);
 
   return {

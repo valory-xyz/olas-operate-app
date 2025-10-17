@@ -139,6 +139,9 @@ export const useWithdrawFunds = () => {
       const chainConfig = TOKEN_CONFIG[walletChainId];
       const assets = formatWithdrawAssets(amountsToWithdraw, chainConfig);
 
+      console.log({ amountsToWithdraw, assets });
+      return;
+
       const request = {
         password,
         to: withdrawAddress as Address,
