@@ -2,8 +2,9 @@ import { Button, Flex, Modal, Typography } from 'antd';
 import { useState } from 'react';
 
 import { CardFlex } from '@/components/ui';
+import { AgentMap } from '@/constants/agent';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks';
+import { usePageState, useServices } from '@/hooks';
 
 import { AgentWalletOperation } from './AgentWalletOperation';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
@@ -88,11 +89,20 @@ export const BalancesAndAssets = ({
   onLockedFundsWithdrawn,
 }: BalancesAndAssetsProps) => {
   const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
+  const { selectedAgentType } = useServices();
+
+  const handleWithdraw = () => {
+    if (selectedAgentType === AgentMap.PredictTrader) {
+      onLockedFundsWithdrawn();
+    } else {
+      setWithdrawModalVisible(true);
+    }
+  };
 
   return (
     <Flex vertical gap={32}>
       <AgentWalletOperation
-        onWithdraw={() => setWithdrawModalVisible(true)}
+        onWithdraw={handleWithdraw}
         onFundAgent={onFundAgent}
       />
       <AvailableAssets />
