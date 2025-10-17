@@ -234,7 +234,7 @@ const SetupWelcomeLogin = () => {
             size="small"
             onClick={() => goto(SetupScreen.Restore)}
           >
-            Forgot password? Restore access
+            Forgot password?
           </Button>
         </Flex>
       </FormFlex>

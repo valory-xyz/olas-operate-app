@@ -88,7 +88,7 @@ textarea,
     0 1px 3px 0 rgba(170, 193, 203, 0.10);
 }
 
-// button redesigns
+/* === Start: button redesigns === */
 .ant-btn-primary {
   background: linear-gradient(0deg,
       rgba(0, 0, 0, 0.1) 0%,
@@ -117,7 +117,7 @@ textarea,
     0 0 0 2px rgba(255, 255, 255, 0.06) inset;
 }
 
-.ant-btn-primary:focus,
+.ant-btn-primary:focus-visible,
 .ant-btn-primary:active {
   background: linear-gradient(180deg,
       rgba(0, 0, 0, 0.3) 0%,
@@ -157,15 +157,15 @@ textarea,
   transition: background 0.2s ease, box-shadow 0.1s ease;
 }
 
-.ant-btn-default:hover {
+.ant-btn-default:not(:disabled):not(.ant-btn-disabled):hover {
   border: 1px transparent;
   color: #000000 !important;
   background: #EDF2F7;
   box-shadow: 0 -1px 0 0 #D1D9E6 inset, 0 0 0 1px #DFE6EC inset, 0 0 0 2px rgba(255, 255, 255, 0.50) inset;
 }
 
-.ant-btn-default:focus,
-.ant-btn-default:active {
+.ant-btn-default:not(:disabled):not(.ant-btn-disabled):focus-visible,
+.ant-btn-default:not(:disabled):not(.ant-btn-disabled):active {
   background: #dfe6ec !important;
   box-shadow:
     0 -1px 0 0 rgba(0, 0, 0, 0.1) inset,
@@ -186,20 +186,22 @@ textarea,
     0 0 6px 2px #edf2f7 inset;
 }
 
-.ant-btn-link:hover {
-  background: rgba(0, 0, 0, 0.07) !important;
+.ant-btn-link {
+  color: #7E22CE !important;
 }
 
-.ant-btn-link:focus,
+.ant-btn-link:hover,
+.ant-btn-link:focus-visible,
 .ant-btn-link:active {
-  background: rgba(0, 0, 0, 0.15) !important;
-  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.10) inset, 0 1.25px 0.5px 1px rgba(0, 0, 0, 0.10) inset;
+  color: #36075F !important;
 }
 
-.ant-btn-link:disabled {
+.ant-btn-link:disabled,
+.ant-btn-text:disabled {
   opacity: 0.4;
   color: #000000 !important;
 }
+/* === End: button redesigns === */
 
 .balance {
   font-family: 'Inter';
