@@ -2,8 +2,7 @@ import { Button, Flex, Skeleton, Statistic, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
-import { Clock } from '@/components/custom-icons/Clock';
-import { FireNoStreak } from '@/components/custom-icons/FireNoStreak';
+import { Clock } from '@/components/custom-icons';
 import { FireV1 } from '@/components/custom-icons/FireV1';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { NA } from '@/constants/symbols';
@@ -11,6 +10,7 @@ import { Pages } from '@/enums/Pages';
 import { useServices } from '@/hooks';
 import { useAgentActivity } from '@/hooks/useAgentActivity';
 import { usePageState } from '@/hooks/usePageState';
+import { useRewardContext } from '@/hooks/useRewardContext';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
 
@@ -48,20 +48,24 @@ const RunAgentAlert = () => (
 );
 
 const Streak = () => {
-  const { isStreakLoading, isStreakError, optimisticStreak, fireColor } =
+  const { isStreakLoading, isStreakError, optimisticStreak } =
     useStakingDetails();
+  const { isEligibleForRewards } = useRewardContext();
 
   if (isStreakLoading) return <Skeleton.Input active size="small" />;
   if (isStreakError) return NA;
+
+  const isFlameActive = optimisticStreak > 0 && isEligibleForRewards;
+
   return (
     <Flex gap={6} align="center">
       {optimisticStreak === 0 ? (
         <>
-          <FireNoStreak /> No streak
+          <FireV1 /> No streak
         </>
       ) : (
         <>
-          <FireV1 fill={fireColor} />
+          <FireV1 isActive={isFlameActive} />
           {optimisticStreak}
         </>
       )}
@@ -81,6 +85,16 @@ export const Staking = () => {
   const { selectedAgentConfig } = useServices();
 
   const { isUnderConstruction } = selectedAgentConfig;
+
+  const getClockColor = (): 'red' | 'green' | undefined => {
+    if (!currentEpochLifetime) return undefined;
+
+    const hoursLeft = (currentEpochLifetime - Date.now()) / (1000 * 60 * 60);
+
+    if (hoursLeft < 3) return 'red';
+    if (hoursLeft < 12) return 'green';
+    return undefined;
+  };
 
   const alert = useMemo(() => {
     if (isUnderConstruction) return <UnderConstructionAlert />;
@@ -112,16 +126,16 @@ export const Staking = () => {
           {alert}
           <Flex flex={1}>
             <Flex flex={1} vertical gap={8}>
-              <Text className="text-neutral-secondary">
-                Current Epoch lifetime
-              </Text>
+              <Text className="text-neutral-secondary">Epoch lifetime</Text>
               <Flex align="center" gap={8}>
-                <Clock />
                 {currentEpochLifetime ? (
-                  <Countdown
-                    value={currentEpochLifetime}
-                    valueStyle={{ fontSize: 16 }}
-                  />
+                  <>
+                    <Clock color={getClockColor()} />
+                    <Countdown
+                      value={currentEpochLifetime}
+                      valueStyle={{ fontSize: 16 }}
+                    />
+                  </>
                 ) : (
                   <Text>Soon</Text>
                 )}
