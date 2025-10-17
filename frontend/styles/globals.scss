@@ -117,7 +117,7 @@ textarea,
     0 0 0 2px rgba(255, 255, 255, 0.06) inset;
 }
 
-.ant-btn-primary:focus,
+.ant-btn-primary:focus-visible,
 .ant-btn-primary:active {
   background: linear-gradient(180deg,
       rgba(0, 0, 0, 0.3) 0%,
@@ -164,7 +164,7 @@ textarea,
   box-shadow: 0 -1px 0 0 #D1D9E6 inset, 0 0 0 1px #DFE6EC inset, 0 0 0 2px rgba(255, 255, 255, 0.50) inset;
 }
 
-.ant-btn-default:focus,
+.ant-btn-default:focus-visible,
 .ant-btn-default:active {
   background: #dfe6ec !important;
   box-shadow:
@@ -186,14 +186,14 @@ textarea,
     0 0 6px 2px #edf2f7 inset;
 }
 
-.ant-btn-link:hover {
-  background: rgba(0, 0, 0, 0.07) !important;
+.ant-btn-link {
+  color: #7E22CE !important;
 }
 
-.ant-btn-link:focus,
+.ant-btn-link:hover
+.ant-btn-link:focus-visible,
 .ant-btn-link:active {
-  background: rgba(0, 0, 0, 0.15) !important;
-  box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.10) inset, 0 1.25px 0.5px 1px rgba(0, 0, 0, 0.10) inset;
+  color: #AF6FE7 !important;
 }
 
 .ant-btn-link:disabled {
