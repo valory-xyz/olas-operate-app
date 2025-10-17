@@ -89,14 +89,18 @@ export const BalancesAndAssets = ({
   onLockedFundsWithdrawn,
 }: BalancesAndAssetsProps) => {
   const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
-  const { selectedAgentType } = useServices();
+  const { selectedAgentType, selectedAgentConfig } = useServices();
 
   const handleWithdraw = () => {
-    if (selectedAgentType === AgentMap.PredictTrader) {
-      onLockedFundsWithdrawn();
-    } else {
+    const isPredictTrader = selectedAgentType === AgentMap.PredictTrader;
+    const hasExternalFunds = selectedAgentConfig?.hasExternalFunds;
+
+    if (!isPredictTrader || hasExternalFunds) {
       setWithdrawModalVisible(true);
+      return;
     }
+
+    onLockedFundsWithdrawn();
   };
 
   return (
