@@ -89,19 +89,15 @@ const formatWithdrawAssets = (
       const tokenAddress =
         tokenType === TokenType.NativeGas ? AddressZero : address;
 
-      if (tokenAddress) {
-        const withdrawableAmount = (() => {
-          if (withdrawAll) {
-            const asset = availableAssets.find(
-              (asset) => asset.symbol === symbol,
-            );
-            return asset?.amountString;
-          }
-          return parseUnits(amount, decimals);
-        })();
+      if (!tokenAddress) return acc;
 
-        acc[tokenAddress] = withdrawableAmount || '0';
-      }
+      const withdrawableAmount = (() => {
+        if (!withdrawAll) return amount;
+        const asset = availableAssets.find((asset) => asset.symbol === symbol);
+        return asset?.amountString ?? '0';
+      })();
+
+      acc[tokenAddress] = parseUnits(withdrawableAmount, decimals) || '0';
       return acc;
     },
     {} as { [token: Address]: string },

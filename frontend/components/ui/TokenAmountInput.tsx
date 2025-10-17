@@ -1,5 +1,5 @@
 import { Button, Flex, Image, Typography } from 'antd';
-import { isNil } from 'lodash';
+import { floor, isNil } from 'lodash';
 import styled from 'styled-components';
 
 import { WalletOutlined } from '@/components/custom-icons';
@@ -9,6 +9,8 @@ import { formatNumber } from '@/utils';
 import { NumberInput } from './NumberInput';
 
 const { Text } = Typography;
+
+const DECIMAL_PLACES = 6;
 
 const Container = styled.div<{ $hasError?: boolean }>`
   width: 100%;
@@ -65,24 +67,15 @@ export const TokenAmountInput = ({
       return;
     }
 
-    // Limit to 6 decimal places
-    const limited = Number(newValue.toFixed(6));
+    const decimalPart = String(newValue).split('.')[1];
+    if (decimalPart && decimalPart.length >= DECIMAL_PLACES) {
+      return;
+    }
+
+    // Limit decimal places
+    const limited = floor(newValue, DECIMAL_PLACES);
     onChange(limited, { withdrawAll: false });
   };
-
-  // const parser = (value: string | undefined) => {
-  //   if (!value) return 0;
-  //   // Remove any non-numeric characters except decimal point
-  //   const cleaned = value.replace(/[^\d.]/g, '');
-  //   // Limit to 6 decimal places
-  //   const parts = cleaned.split('.');
-  //   let result = cleaned;
-  //   if (parts.length > 1) {
-  //     result = `${parts[0]}.${parts[1].slice(0, 6)}`;
-  //   }
-  //   const parsed = Number(result);
-  //   return isNaN(parsed) ? 0 : parsed;
-  // };
 
   return (
     <Container $hasError={hasError}>
@@ -101,10 +94,6 @@ export const TokenAmountInput = ({
           size="large"
           controls={false}
           style={{ flex: 1 }}
-          // stringMode
-          // precision={6}
-          // step={0.000001}
-          // parser={parser}
         />
         <TokenImage tokenSymbol={tokenSymbol} />
       </Flex>
@@ -118,7 +107,7 @@ export const TokenAmountInput = ({
         <Flex gap={6} align="center">
           <WalletOutlined width={20} height={20} />
           <Text className="text-sm leading-normal text-neutral-tertiary">
-            {formatNumber(totalAmount, 4, 'floor')}
+            {formatNumber(totalAmount, 6, 'floor')}
           </Text>
         </Flex>
 
@@ -128,14 +117,11 @@ export const TokenAmountInput = ({
               <Button
                 key={percentage}
                 onClick={() => {
-                  if (percentage === 100) {
-                    onChange(totalAmount, { withdrawAll: true });
-                  } else {
-                    onChange(
-                      Number(((totalAmount * percentage) / 100).toFixed(6)),
-                      { withdrawAll: false },
-                    );
-                  }
+                  const ceiledAmount = floor(
+                    Number((totalAmount * percentage) / 100),
+                    DECIMAL_PLACES,
+                  );
+                  onChange(ceiledAmount, { withdrawAll: percentage === 100 });
                 }}
                 type="text"
                 size="small"

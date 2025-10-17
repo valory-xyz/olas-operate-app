@@ -15,8 +15,6 @@ export type WalletBalance = {
    * Number(3.750000070429620336) = 3.7500000704296204
    * */
   balanceString?: string;
-  /** Unformatted balance (raw value as BigNumberish) */
-  balanceUnformatted?: number;
   isWrappedToken?: boolean;
 };
 

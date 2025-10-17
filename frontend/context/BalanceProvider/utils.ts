@@ -111,16 +111,6 @@ export const getCrossChainWalletBalances = async (
                 balance: Number(formatUnits(balance)),
                 balanceString: formatUnits(balance),
               });
-
-              if (providerEvmChainId === 100)
-                console.log('Native balance for wallet:', {
-                  symbol: tokenSymbol,
-                  address,
-                  balance,
-                  balanceInStr: balance.toString(),
-                  formatted: formatUnits(balance),
-                  formattedWithNumber: Number(formatUnits(balance)),
-                });
             }
           });
         }

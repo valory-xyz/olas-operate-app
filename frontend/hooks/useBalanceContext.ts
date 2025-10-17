@@ -2,14 +2,16 @@ import { compact, find, get, groupBy, isEmpty, isNil } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
-import { AddressZero } from '@/constants/address';
-import { EvmChainId } from '@/constants/chains';
-import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
+import {
+  AddressZero,
+  EvmChainId,
+  TokenSymbol,
+  TokenSymbolMap,
+} from '@/constants';
 import { BalanceContext } from '@/context/BalanceProvider/BalanceProvider';
 import { WalletBalance } from '@/types/Balance';
 import { Maybe, Optional } from '@/types/Util';
-import { areAddressesEqual } from '@/utils/address';
-import { formatUnitsToNumber, sumNumbers } from '@/utils/numberFormatters';
+import { areAddressesEqual, formatUnitsToNumber, sumNumbers } from '@/utils';
 
 import { useBalanceAndRefillRequirementsContext } from './useBalanceAndRefillRequirementsContext';
 import { useService } from './useService';

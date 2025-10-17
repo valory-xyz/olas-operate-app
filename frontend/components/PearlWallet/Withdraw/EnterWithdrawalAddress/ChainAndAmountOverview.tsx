@@ -31,7 +31,9 @@ const WithdrawalAddressTitle = () => (
 export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
   const { walletChainId, amountsToWithdraw } = usePearlWallet();
 
-  const amounts = entries(amountsToWithdraw).filter(([, amount]) => amount > 0);
+  const amounts = entries(amountsToWithdraw).filter(
+    ([, { amount }]) => amount > 0,
+  );
   const chainDetails = walletChainId ? CHAIN_CONFIG[walletChainId] : null;
 
   return (
@@ -63,7 +65,7 @@ export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
           <Flex vertical gap={8}>
             <Text className="text-neutral-tertiary">You will receive</Text>
             <OverviewContainer vertical gap={12}>
-              {amounts.map(([untypedSymbol, amount]) => {
+              {amounts.map(([untypedSymbol, { amount }]) => {
                 const symbol = untypedSymbol as TokenSymbol;
 
                 return (

@@ -62,13 +62,14 @@ export const useAvailableAssets = (
               getMasterSafeNativeBalanceOf(walletChainId)?.map(
                 ({ balanceString }) => balanceString,
               ) ?? [];
+            const masterEoaNativeBalanceInStr = includeMasterEoa
+              ? getMasterEoaNativeBalanceOfInStr(walletChainId)
+              : '0';
 
             return sumNumbers(
               compact([
                 ...masterSafeNativeBalanceInStr,
-                includeMasterEoa
-                  ? getMasterEoaNativeBalanceOfInStr(walletChainId)
-                  : '0',
+                masterEoaNativeBalanceInStr,
               ]),
             );
           }
