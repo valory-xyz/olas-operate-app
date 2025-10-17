@@ -377,13 +377,44 @@ export const useMasterBalances = () => {
     )
     .reduce((acc, balance) => acc + balance.balance, 0);
 
-  const getMasterSafeOlasBalanceOf = (chainId: EvmChainId) =>
-    masterWalletBalances
-      ?.filter(
-        ({ symbol, evmChainId }) =>
-          symbol === TokenSymbolMap.OLAS && evmChainId === chainId,
-      )
-      .reduce((acc, balance) => acc + balance.balance, 0);
+  const _getMasterSafeOlasBalanceOfCalc = useCallback(
+    (chainId: EvmChainId, type: 'string' | 'number') => {
+      const balances = compact(
+        masterWalletBalances?.filter(
+          ({ symbol, evmChainId }) =>
+            symbol === TokenSymbolMap.OLAS && evmChainId === chainId,
+        ),
+      );
+
+      if (type === 'string') {
+        return sumNumbers(
+          compact(balances.map(({ balanceString }) => balanceString)),
+        );
+      }
+      return balances.reduce((acc, balance) => acc + balance.balance, 0);
+    },
+    [masterWalletBalances],
+  );
+
+  const getMasterSafeOlasBalanceOf = useCallback(
+    (chainId: EvmChainId) => {
+      return _getMasterSafeOlasBalanceOfCalc(
+        chainId,
+        'number',
+      ) as Optional<number>;
+    },
+    [_getMasterSafeOlasBalanceOfCalc],
+  );
+
+  const getMasterSafeOlasBalanceOfInStr = useCallback(
+    (chainId: EvmChainId) => {
+      return _getMasterSafeOlasBalanceOfCalc(
+        chainId,
+        'string',
+      ) as Optional<string>;
+    },
+    [_getMasterSafeOlasBalanceOfCalc],
+  );
 
   const masterSafe = useMemo(() => {
     return masterSafes?.find(({ evmChainId }) => evmChainId === evmHomeChainId);
@@ -410,36 +441,61 @@ export const useMasterBalances = () => {
     [getMasterSafeNativeBalanceOf, evmHomeChainId],
   );
 
-  const getMasterSafeErc20Balances = useCallback(
-    (chainId: EvmChainId) => {
+  const getMasterSafeErc20BalancesCalc = useCallback(
+    (chainId: EvmChainId, type: 'string' | 'number') => {
       if (isNil(masterSafe?.address)) return;
       if (isNil(masterSafeBalances)) return;
 
-      return masterSafeBalances
-        .filter(({ walletAddress, evmChainId, symbol, isNative }) => {
+      const balances = masterSafeBalances.filter(
+        ({ walletAddress, evmChainId, symbol, isNative }) => {
           return (
             evmChainId === chainId &&
             !isNative &&
             symbol !== TokenSymbolMap.OLAS &&
             walletAddress === masterSafe.address
           );
-        })
-        .reduce<Record<TokenSymbol, number>>(
-          (acc, { balance, symbol }) => {
-            if (!acc[symbol]) acc[symbol] = 0;
-            acc[symbol] += balance;
+        },
+      );
 
-            return acc;
-          },
-          {} as Record<TokenSymbol, number>,
+      if (type === 'string') {
+        return sumNumbers(
+          compact(balances.map(({ balanceString }) => balanceString)),
         );
+      }
+      return balances.reduce<Record<TokenSymbol, number>>(
+        (acc, { balance, symbol }) => {
+          if (!acc[symbol]) acc[symbol] = 0;
+          acc[symbol] += balance;
+
+          return acc;
+        },
+        {} as Record<TokenSymbol, number>,
+      );
     },
     [masterSafe?.address, masterSafeBalances],
   );
 
+  const getMasterSafeErc20Balances = useCallback(
+    (chainId: EvmChainId) => {
+      return getMasterSafeErc20BalancesCalc(chainId, 'number') as Optional<
+        Record<TokenSymbol, number>
+      >;
+    },
+    [getMasterSafeErc20BalancesCalc],
+  );
+
+  const getMasterSafeErc20BalancesInStr = useCallback(
+    (chainId: EvmChainId) => {
+      return getMasterSafeErc20BalancesCalc(chainId, 'string') as Optional<
+        Record<TokenSymbol, string>
+      >;
+    },
+    [getMasterSafeErc20BalancesCalc],
+  );
+
   const masterSafeErc20Balances = useMemo(
-    () => getMasterSafeErc20Balances(evmHomeChainId),
-    [getMasterSafeErc20Balances, evmHomeChainId],
+    () => getMasterSafeErc20BalancesCalc(evmHomeChainId, 'number'),
+    [getMasterSafeErc20BalancesCalc, evmHomeChainId],
   );
 
   return {
@@ -457,8 +513,10 @@ export const useMasterBalances = () => {
     masterSafeNativeGasBalance: masterSafeNative?.balance,
     masterSafeOlasBalance,
     getMasterSafeOlasBalanceOf,
+    getMasterSafeOlasBalanceOfInStr,
     masterSafeErc20Balances,
     getMasterSafeErc20Balances,
+    getMasterSafeErc20BalancesInStr,
 
     // master eoa
     masterEoaNativeGasBalance: masterEoaNative?.balance,
