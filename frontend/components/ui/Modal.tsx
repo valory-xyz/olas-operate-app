@@ -10,7 +10,6 @@ const { Title, Text } = Typography;
 const MODAL_STYLES: AntdModalProps['styles'] = {
   content: {
     minHeight: '264px',
-    padding: '32px',
     borderRadius: '12px',
     display: 'flex',
     flexDirection: 'column',
@@ -44,13 +43,20 @@ export const Modal = ({
     width = 400;
   }
 
+  const padding = size === 'small' ? 24 : 32;
+
   return (
     <AntdModal
       open
       centered
       footer={null}
       width={width}
-      styles={MODAL_STYLES}
+      styles={{
+        content: {
+          ...MODAL_STYLES.content,
+          padding: `${padding}px`,
+        },
+      }}
       closable={false}
       {...props}
     >
