@@ -8,7 +8,7 @@ import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import { BalanceContext } from '@/context/BalanceProvider/BalanceProvider';
 import { WalletBalance } from '@/types/Balance';
 import { Maybe, Optional } from '@/types/Util';
-import { areAddressesEqual, formatUnitsToNumber, sumNumbers } from '@/utils';
+import { areAddressesEqual, formatUnitsToNumber, sumBigNumbers } from '@/utils';
 
 import { useBalanceAndRefillRequirementsContext } from './useBalanceAndRefillRequirementsContext';
 import { useService } from './useService';
@@ -320,7 +320,7 @@ export const useMasterBalances = () => {
       );
 
       if (returnType === 'string') {
-        return sumNumbers(
+        return sumBigNumbers(
           compact(balances.map(({ balanceString }) => balanceString)),
         );
       }
@@ -385,23 +385,13 @@ export const useMasterBalances = () => {
       );
 
       if (type === 'string') {
-        return sumNumbers(
+        return sumBigNumbers(
           compact(balances.map(({ balanceString }) => balanceString)),
         );
       }
       return balances.reduce((acc, balance) => acc + balance.balance, 0);
     },
     [masterWalletBalances],
-  );
-
-  const getMasterSafeOlasBalanceOf = useCallback(
-    (chainId: EvmChainId) => {
-      return _getMasterSafeOlasBalanceOfCalc(
-        chainId,
-        'number',
-      ) as Optional<number>;
-    },
-    [_getMasterSafeOlasBalanceOfCalc],
   );
 
   const getMasterSafeOlasBalanceOfInStr = useCallback(
@@ -456,7 +446,7 @@ export const useMasterBalances = () => {
       );
 
       if (type === 'string') {
-        return sumNumbers(
+        return sumBigNumbers(
           compact(balances.map(({ balanceString }) => balanceString)),
         );
       }
@@ -471,15 +461,6 @@ export const useMasterBalances = () => {
       );
     },
     [masterSafe?.address, masterSafeBalances],
-  );
-
-  const getMasterSafeErc20Balances = useCallback(
-    (chainId: EvmChainId) => {
-      return getMasterSafeErc20BalancesCalc(chainId, 'number') as Optional<
-        Record<TokenSymbol, number>
-      >;
-    },
-    [getMasterSafeErc20BalancesCalc],
   );
 
   const getMasterSafeErc20BalancesInStr = useCallback(
@@ -508,12 +489,9 @@ export const useMasterBalances = () => {
     masterSafeNativeGasRequirement,
     masterSafeNativeBalance,
     getMasterSafeNativeBalanceOf,
-    masterSafeNativeGasBalance: masterSafeNative?.balance,
     masterSafeOlasBalance,
-    getMasterSafeOlasBalanceOf,
     getMasterSafeOlasBalanceOfInStr,
     masterSafeErc20Balances,
-    getMasterSafeErc20Balances,
     getMasterSafeErc20BalancesInStr,
 
     // master eoa

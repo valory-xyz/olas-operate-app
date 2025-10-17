@@ -91,6 +91,8 @@ const formatWithdrawAssets = (
 
       if (!tokenAddress) return acc;
 
+      // Determine the amount to withdraw
+      // if withdrawAll is true, use the full available amount
       const withdrawableAmount = (() => {
         if (!withdrawAll) return amount;
         const asset = availableAssets.find((asset) => asset.symbol === symbol);

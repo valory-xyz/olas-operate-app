@@ -28,7 +28,10 @@ export function bigintMin(...args: bigint[]): bigint {
  *
  * @returns The total as a string, formatted with the given decimals
  */
-export const sumNumbers = (values: string[], decimals: number = 18): string => {
+export const sumBigNumbers = (
+  values: string[],
+  decimals: number = 18,
+): string => {
   const total = values.reduce((acc, val) => {
     return acc.add(ethers.utils.parseUnits(val, decimals));
   }, ethers.BigNumber.from(0));

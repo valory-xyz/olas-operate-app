@@ -1,5 +1,6 @@
 import { Button, Flex, Image, Typography } from 'antd';
 import { floor, isNil } from 'lodash';
+import { useCallback } from 'react';
 import styled from 'styled-components';
 
 import { WalletOutlined } from '@/components/custom-icons';
@@ -61,21 +62,24 @@ export const TokenAmountInput = ({
   showQuickSelects = true,
   hasError = false,
 }: TokenAmountInputProps) => {
-  const handleChange = (newValue: number | null) => {
-    if (isNil(newValue)) {
-      onChange(null, { withdrawAll: false });
-      return;
-    }
+  const handleChange = useCallback(
+    (newValue: number | null) => {
+      if (isNil(newValue)) {
+        onChange(null, { withdrawAll: false });
+        return;
+      }
 
-    const decimalPart = String(newValue).split('.')[1];
-    if (decimalPart && decimalPart.length > DECIMAL_PLACES) {
-      return;
-    }
+      const decimalPart = String(newValue).split('.')[1];
+      if (decimalPart && decimalPart.length > DECIMAL_PLACES) {
+        return;
+      }
 
-    // Limit decimal places
-    const limited = floor(newValue, DECIMAL_PLACES);
-    onChange(limited, { withdrawAll: false });
-  };
+      // Limit decimal places
+      const limited = floor(newValue, DECIMAL_PLACES);
+      onChange(limited, { withdrawAll: false });
+    },
+    [onChange],
+  );
 
   return (
     <Container $hasError={hasError}>
@@ -117,6 +121,8 @@ export const TokenAmountInput = ({
               <Button
                 key={percentage}
                 onClick={() => {
+                  // Calculate the amount based on the percentage
+                  // and ceil to the allowed decimal places.
                   const ceiledAmount = floor(
                     Number((totalAmount * percentage) / 100),
                     DECIMAL_PLACES,

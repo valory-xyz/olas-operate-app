@@ -6,7 +6,7 @@ import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import { useMasterBalances } from '@/hooks';
 import { AvailableAsset } from '@/types/Wallet';
-import { sumNumbers } from '@/utils';
+import { sumBigNumbers } from '@/utils';
 import {
   asEvmChainDetails,
   asMiddlewareChain,
@@ -45,7 +45,7 @@ export const useAvailableAssets = (
           // balance for OLAS
 
           if (symbol === TokenSymbolMap.OLAS) {
-            return sumNumbers(
+            return sumBigNumbers(
               compact([
                 getMasterSafeOlasBalanceOfInStr(walletChainId),
                 String(stakingRewards?.accruedServiceStakingRewards || 0),
@@ -66,7 +66,7 @@ export const useAvailableAssets = (
               ? getMasterEoaNativeBalanceOfInStr(walletChainId)
               : '0';
 
-            return sumNumbers(
+            return sumBigNumbers(
               compact([
                 ...masterSafeNativeBalanceInStr,
                 masterEoaNativeBalanceInStr,
