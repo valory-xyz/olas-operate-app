@@ -68,7 +68,7 @@ export const TokenAmountInput = ({
     }
 
     const decimalPart = String(newValue).split('.')[1];
-    if (decimalPart && decimalPart.length >= DECIMAL_PLACES) {
+    if (decimalPart && decimalPart.length > DECIMAL_PLACES) {
       return;
     }
 
