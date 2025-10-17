@@ -3,10 +3,10 @@ import { isNil } from 'lodash';
 import styled from 'styled-components';
 
 import { WalletOutlined } from '@/components/custom-icons';
-import { NumberInput } from '@/components/ui/NumberInput';
-import { COLOR } from '@/constants/colors';
-import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
-import { formatNumber } from '@/utils/numberFormatters';
+import { COLOR, TokenSymbol, TokenSymbolConfigMap } from '@/constants';
+import { formatNumber } from '@/utils';
+
+import { NumberInput } from './NumberInput';
 
 const { Text } = Typography;
 
@@ -42,7 +42,7 @@ type TokenAmountInputProps = {
   maxAmount?: number;
   /** Total amount available (for display only) */
   totalAmount: number;
-  onChange: (value: number | null) => void;
+  onChange: (value: number | null, options: { withdrawAll?: boolean }) => void;
   tokenSymbol: TokenSymbol;
   /** Whether to show quick select buttons (10%, 25%, 50%, 100%) */
   showQuickSelects?: boolean;
@@ -61,13 +61,13 @@ export const TokenAmountInput = ({
 }: TokenAmountInputProps) => {
   const handleChange = (newValue: number | null) => {
     if (isNil(newValue)) {
-      onChange(null);
+      onChange(null, { withdrawAll: false });
       return;
     }
 
     // Limit to 6 decimal places
     const limited = Number(newValue.toFixed(6));
-    onChange(limited);
+    onChange(limited, { withdrawAll: false });
   };
 
   // const parser = (value: string | undefined) => {
@@ -129,10 +129,11 @@ export const TokenAmountInput = ({
                 key={percentage}
                 onClick={() => {
                   if (percentage === 100) {
-                    onChange(totalAmount);
+                    onChange(totalAmount, { withdrawAll: true });
                   } else {
                     onChange(
                       Number(((totalAmount * percentage) / 100).toFixed(6)),
+                      { withdrawAll: false },
                     );
                   }
                 }}

@@ -29,6 +29,7 @@ export type StakedAsset = {
 
 export type TokenAmountDetails = {
   amount: number;
+  withdrawAll?: boolean;
 };
 
 /**

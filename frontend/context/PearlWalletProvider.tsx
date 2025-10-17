@@ -202,15 +202,15 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const onAmountChange = useCallback(
-    (symbol: TokenSymbol, tokenDetails: TokenAmountDetails) => {
-      setAmountsToWithdraw((prev) => ({ ...prev, [symbol]: tokenDetails }));
+    (symbol: TokenSymbol, details: TokenAmountDetails) => {
+      setAmountsToWithdraw((prev) => ({ ...prev, [symbol]: details }));
     },
     [],
   );
 
   const onDepositAmountChange = useCallback(
-    (symbol: TokenSymbol, tokenDetails: TokenAmountDetails) => {
-      setAmountsToDeposit((prev) => ({ ...prev, [symbol]: tokenDetails }));
+    (symbol: TokenSymbol, details: TokenAmountDetails) => {
+      setAmountsToDeposit((prev) => ({ ...prev, [symbol]: details }));
     },
     [],
   );
