@@ -31,7 +31,7 @@ const Content = styled(AntdContent)<{ $isSplitScreenPage?: boolean }>`
 `;
 
 /**
- * Hook to initialize page-level settings, electron window listeners, etc.
+ * Top-level hook to initialize page-level settings, electron window listeners, etc.
  */
 const usePageInitialization = () => {
   useSetupTrayIcon();

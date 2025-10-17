@@ -19,8 +19,6 @@ const useSetupTrayIcon = () => {
   const { deploymentStatus } = useService(selectedService?.service_config_id);
   const { setTrayIcon } = useElectronApi();
 
-  console.log({ isLowBalance, deploymentStatus });
-
   useEffect(() => {
     if (isLowBalance) {
       setTrayIcon?.('low-gas');

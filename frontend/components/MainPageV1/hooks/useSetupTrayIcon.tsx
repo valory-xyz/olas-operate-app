@@ -1,18 +1,18 @@
 import { useEffect } from 'react';
 
 import { MiddlewareDeploymentStatus } from '@/client';
-import { useBalanceContext } from '@/hooks/useBalanceContext';
-import { useElectronApi } from '@/hooks/useElectronApi';
-import { useService } from '@/hooks/useService';
-import { useServices } from '@/hooks/useServices';
+import {
+  useBalanceContext,
+  useElectronApi,
+  useService,
+  useServices,
+} from '@/hooks';
 
 export const useSetupTrayIcon = () => {
   const { isLowBalance } = useBalanceContext();
   const { selectedService } = useServices();
   const { deploymentStatus } = useService(selectedService?.service_config_id);
   const { setTrayIcon } = useElectronApi();
-
-  console.log({ isLowBalance, deploymentStatus });
 
   useEffect(() => {
     if (isLowBalance) {
