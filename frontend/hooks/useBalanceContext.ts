@@ -345,20 +345,17 @@ export const useMasterBalances = () => {
 
   const masterSafeOlasBalance = masterWalletBalances
     ?.filter(
-      (walletBalance) =>
-        walletBalance.symbol === TokenSymbolMap.OLAS &&
-        selectedAgentConfig.requiresMasterSafesOn.includes(
-          walletBalance.evmChainId,
-        ),
+      ({ symbol, evmChainId }) =>
+        symbol === TokenSymbolMap.OLAS &&
+        selectedAgentConfig.requiresMasterSafesOn.includes(evmChainId),
     )
     .reduce((acc, balance) => acc + balance.balance, 0);
 
   const getMasterSafeOlasBalanceOf = (chainId: EvmChainId) =>
     masterWalletBalances
       ?.filter(
-        (walletBalance) =>
-          walletBalance.symbol === TokenSymbolMap.OLAS &&
-          walletBalance.evmChainId === chainId,
+        ({ symbol, evmChainId }) =>
+          symbol === TokenSymbolMap.OLAS && evmChainId === chainId,
       )
       .reduce((acc, balance) => acc + balance.balance, 0);
 
@@ -393,17 +390,14 @@ export const useMasterBalances = () => {
       if (isNil(masterSafeBalances)) return;
 
       return masterSafeBalances
-        .filter(
-          ({ walletAddress, evmChainId, symbol, isNative, isWrappedToken }) => {
-            return (
-              evmChainId === chainId &&
-              !isNative &&
-              !isWrappedToken &&
-              symbol !== TokenSymbolMap.OLAS &&
-              walletAddress === masterSafe.address
-            );
-          },
-        )
+        .filter(({ walletAddress, evmChainId, symbol, isNative }) => {
+          return (
+            evmChainId === chainId &&
+            !isNative &&
+            symbol !== TokenSymbolMap.OLAS &&
+            walletAddress === masterSafe.address
+          );
+        })
         .reduce<Record<TokenSymbol, number>>(
           (acc, { balance, symbol }) => {
             if (!acc[symbol]) acc[symbol] = 0;

@@ -65,7 +65,7 @@ export const useAvailableAssets = (
             ]);
           }
 
-          // balance for other required tokens (eg. USDC)
+          // balance for other required tokens (eg. USDC, wrapped tokens, etc)
           return getMasterSafeErc20Balances(walletChainId)?.[symbol] ?? 0;
         })();
 
