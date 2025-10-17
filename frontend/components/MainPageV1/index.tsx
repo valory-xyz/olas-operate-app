@@ -17,6 +17,7 @@ import { AgentWallet } from '../AgentWallet';
 import { FundPearlWallet } from '../FundPearlWallet';
 import { PearlWallet } from '../PearlWallet';
 import { Home } from './Home';
+import { useSetupTrayIcon } from './hooks/useSetupTrayIcon';
 import { Sidebar } from './Sidebar';
 
 const { Content: AntdContent } = Layout;
@@ -29,11 +30,24 @@ const Content = styled(AntdContent)<{ $isSplitScreenPage?: boolean }>`
   ${(props) => (props.$isSplitScreenPage ? `` : `padding: 40px 0px;`)}
 `;
 
+/**
+ * Hook to initialize page-level settings, electron window listeners, etc.
+ */
+const usePageInitialization = () => {
+  useSetupTrayIcon();
+};
+
 export const Main = () => {
   const { pageState } = usePageState();
   const { selectedAgentType } = useServices();
-
   const contentContainerRef = useRef<HTMLDivElement>(null);
+
+  usePageInitialization();
+
+  // Scroll to top when page or selected agent is changed
+  useEffect(() => {
+    contentContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [pageState, selectedAgentType]);
 
   const mainContent = useMemo(() => {
     switch (pageState) {
@@ -63,11 +77,6 @@ export const Main = () => {
   }, [pageState]);
 
   const isSplitScreenPage = pageState === Pages.UpdateAgentTemplate;
-
-  // Scroll to top when page or selected agent is changed
-  useEffect(() => {
-    contentContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [pageState, selectedAgentType]);
 
   return (
     <Layout>
