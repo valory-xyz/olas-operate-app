@@ -22,37 +22,27 @@ type ModalProps = {
   header?: React.ReactNode | null;
   title: string;
   description: string;
-  width?: number;
+  size?: 'small' | 'medium';
   action?: React.ReactNode;
-  align?: 'center' | 'left' | 'right';
 };
 
 export const Modal = ({
   header = null,
   title,
   description,
-  width = 452,
+  size = 'medium',
   action = null,
-  align = 'center',
   ...props
 }: ModalProps & AntdModalProps) => {
-  const flexAlignMap: Record<
-    'center' | 'left' | 'right',
-    'center' | 'flex-start' | 'flex-end'
-  > = {
-    center: 'center',
-    left: 'flex-start',
-    right: 'flex-end',
-  };
+  let flexAlign = 'center';
+  let textAlignClass = 'text-center';
+  let width = 450;
 
-  const textAlignClassMap: Record<'center' | 'left' | 'right', string> = {
-    center: 'text-center',
-    left: 'text-left',
-    right: 'text-right',
-  };
-
-  const flexAlign = flexAlignMap[align];
-  const textAlignClass = textAlignClassMap[align];
+  if (size === 'small') {
+    flexAlign = 'flex-start';
+    textAlignClass = 'text-left';
+    width = 400;
+  }
 
   return (
     <AntdModal

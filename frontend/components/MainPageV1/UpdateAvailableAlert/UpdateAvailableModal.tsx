@@ -51,8 +51,7 @@ export const UpdateAvailableModal = () => {
     <Modal
       closable
       open
-      width={400}
-      align="left"
+      size="small"
       onCancel={onUpdateLater}
       footer={
         <Flex justify="space-between">

@@ -89,7 +89,6 @@ export const Layout = ({ children }: PropsWithChildren) => {
           open
           footer={null}
           closable={false}
-          width={450}
           title={'No Internet Connection'}
           description={
             'Check your Wi-Fi or Ethernet. Pearl will reconnect automatically once the connection is stable.'
