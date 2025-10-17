@@ -16,7 +16,7 @@ import { AgentWallet } from '../AgentWallet';
 import { FundPearlWallet } from '../FundPearlWallet';
 import { PearlWallet } from '../PearlWallet';
 import { Home } from './Home';
-import { useScrollPage } from './hooks/useScroll';
+import { useScrollPage } from './hooks/useScrollPage';
 import { useSetupTrayIcon } from './hooks/useSetupTrayIcon';
 import { Sidebar } from './Sidebar';
 
