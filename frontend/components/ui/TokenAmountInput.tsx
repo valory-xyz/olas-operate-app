@@ -1,4 +1,5 @@
 import { Button, Flex, Image, Typography } from 'antd';
+import { isNil } from 'lodash';
 import styled from 'styled-components';
 
 import { WalletOutlined } from '@/components/custom-icons';
@@ -57,64 +58,95 @@ export const TokenAmountInput = ({
   tokenSymbol,
   showQuickSelects = true,
   hasError = false,
-}: TokenAmountInputProps) => (
-  <Container $hasError={hasError}>
-    <Flex
-      className="input-wrapper"
-      gap={12}
-      align="center"
-      justify="space-between"
-    >
-      <NumberInput
-        onChange={onChange}
-        value={value}
-        min={0}
-        max={maxAmount}
-        variant="borderless"
-        size="large"
-        controls={false}
-        style={{ flex: 1 }}
-      />
-      <TokenImage tokenSymbol={tokenSymbol} />
-    </Flex>
+}: TokenAmountInputProps) => {
+  const handleChange = (newValue: number | null) => {
+    if (isNil(newValue)) {
+      onChange(null);
+      return;
+    }
 
-    <Flex
-      className="token-value-and-helper w-full"
-      justify="space-between"
-      align="center"
-      style={{ padding: '10px 20px' }}
-    >
-      <Flex gap={6} align="center">
-        <WalletOutlined width={20} height={20} />
-        <Text className="text-sm leading-normal text-neutral-tertiary">
-          {formatNumber(totalAmount, 4)}
-        </Text>
+    // Limit to 6 decimal places
+    const limited = Number(newValue.toFixed(6));
+    onChange(limited);
+  };
+
+  // const parser = (value: string | undefined) => {
+  //   if (!value) return 0;
+  //   // Remove any non-numeric characters except decimal point
+  //   const cleaned = value.replace(/[^\d.]/g, '');
+  //   // Limit to 6 decimal places
+  //   const parts = cleaned.split('.');
+  //   let result = cleaned;
+  //   if (parts.length > 1) {
+  //     result = `${parts[0]}.${parts[1].slice(0, 6)}`;
+  //   }
+  //   const parsed = Number(result);
+  //   return isNaN(parsed) ? 0 : parsed;
+  // };
+
+  return (
+    <Container $hasError={hasError}>
+      <Flex
+        className="input-wrapper"
+        gap={12}
+        align="center"
+        justify="space-between"
+      >
+        <NumberInput
+          onChange={handleChange}
+          value={value}
+          min={0}
+          max={maxAmount}
+          variant="borderless"
+          size="large"
+          controls={false}
+          style={{ flex: 1 }}
+          // stringMode
+          // precision={6}
+          // step={0.000001}
+          // parser={parser}
+        />
+        <TokenImage tokenSymbol={tokenSymbol} />
       </Flex>
 
-      {showQuickSelects && (
-        <Flex gap={8} align="center">
-          {[10, 25, 50, 100].map((percentage) => (
-            <Button
-              key={percentage}
-              onClick={() => {
-                if (percentage === 100) {
-                  onChange(totalAmount);
-                } else {
-                  onChange(
-                    Number(((totalAmount * percentage) / 100).toFixed(4)),
-                  );
-                }
-              }}
-              type="text"
-              size="small"
-              className="text-neutral-tertiary"
-              style={{ padding: '0 4px' }}
-            >
-              {percentage}%
-            </Button>
-          ))}
+      <Flex
+        className="token-value-and-helper w-full"
+        justify="space-between"
+        align="center"
+        style={{ padding: '10px 20px' }}
+      >
+        <Flex gap={6} align="center">
+          <WalletOutlined width={20} height={20} />
+          <Text className="text-sm leading-normal text-neutral-tertiary">
+            {formatNumber(totalAmount, 4, 'floor')}
+          </Text>
         </Flex>
-      )}
-    </Flex>
-  </Container>
-);
+
+        {showQuickSelects && (
+          <Flex gap={8} align="center">
+            {[10, 25, 50, 100].map((percentage) => (
+              <Button
+                key={percentage}
+                onClick={() => {
+                  if (percentage === 100) {
+                    onChange(totalAmount);
+                  } else {
+                    onChange(
+                      Number(((totalAmount * percentage) / 100).toFixed(6)),
+                    );
+                  }
+                }}
+                type="text"
+                size="small"
+                className="text-neutral-tertiary"
+                style={{ padding: '0 4px' }}
+              >
+                {percentage}%
+              </Button>
+            ))}
+          </Flex>
+        )}
+      </Flex>
+    </Container>
+  );
+};

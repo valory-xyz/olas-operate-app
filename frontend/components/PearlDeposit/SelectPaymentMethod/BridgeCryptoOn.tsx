@@ -9,7 +9,7 @@ import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useMasterWalletContext } from '@/hooks';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
-import { TokenAmounts } from '@/types/Wallet';
+import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
 import { asEvmChainId, parseUnits } from '@/utils';
 
 type BridgeCryptoOnProps = {
@@ -71,14 +71,14 @@ export const BridgeCryptoOn = ({
   const handleGetBridgeRequirementsParams = useCallback(
     (forceUpdate?: boolean): BridgeRefillRequirementsRequest => {
       const toDeposit = entries(amountsToDeposit).filter(
-        ([, amount]) => amount && amount > 0,
-      ) as [TokenSymbol, number][];
+        ([, { amount }]) => amount && amount > 0,
+      ) as [TokenSymbol, TokenAmountDetails][];
 
       if (toDeposit.length === 0) {
         throw new Error('No amounts to deposit');
       }
 
-      const bridgeParams = toDeposit.map(([tokenSymbol, amount]) => {
+      const bridgeParams = toDeposit.map(([tokenSymbol, { amount }]) => {
         const token = TOKEN_CONFIG[asEvmChainId(bridgeToChain)][tokenSymbol];
         if (!token) {
           throw new Error(

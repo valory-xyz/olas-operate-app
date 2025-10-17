@@ -4,7 +4,7 @@ import { Table } from '@/components/ui/Table';
 import { TokenSymbolConfigMap } from '@/constants/token';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { AvailableAsset } from '@/types/Wallet';
-import { formatNumber } from '@/utils/numberFormatters';
+import { formatString } from '@/utils/numberFormatters';
 
 const { Text } = Typography;
 
@@ -30,7 +30,7 @@ const columns: TableColumnsType<AvailableAsset> = [
     title: 'Amount',
     key: 'amount',
     render: (_: unknown, record: AvailableAsset) => (
-      <Text>{formatNumber(record.amount, 4)}</Text>
+      <Text>{formatString(record.amountString, 4)}</Text>
     ),
     width: '50%',
   },

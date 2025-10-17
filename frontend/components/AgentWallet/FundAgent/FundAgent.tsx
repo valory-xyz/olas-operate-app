@@ -15,7 +15,7 @@ import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero, TokenSymbol } from '@/constants';
 import { Pages } from '@/enums';
 import { useAvailableAssets, usePageState, useServices } from '@/hooks';
-import { TokenAmounts } from '@/types/Wallet';
+import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { useAgentWallet } from '../AgentWalletProvider';
@@ -81,13 +81,17 @@ const useFundAgent = () => {
     });
   const { fundInitialValues, setFundInitialValues } = useAgentWallet();
 
-  const [amountsToFund, setAmountsToFund] = useState<
-    Partial<Record<TokenSymbol, number>>
-  >({});
+  const [amountsToFund, setAmountsToFund] = useState<TokenAmounts>({});
 
-  const onAmountChange = useCallback((symbol: TokenSymbol, amount: number) => {
-    setAmountsToFund((prev) => ({ ...prev, [symbol]: amount }));
-  }, []);
+  const onAmountChange = useCallback(
+    (symbol: TokenSymbol, details: TokenAmountDetails) => {
+      setAmountsToFund((prev) => ({
+        ...prev,
+        [symbol]: { ...details },
+      }));
+    },
+    [],
+  );
 
   // Prefill inputs with initial values if provided
   useEffect(() => {
@@ -110,7 +114,10 @@ const useFundAgent = () => {
         addressToTokenMeta[(tokenAddress || AddressZero).toLowerCase()];
       if (!meta) return;
       const parsed = formatUnitsToNumber(amountWei, meta.decimals, 6);
-      initialAmountsToFund[meta.symbol] = parsed;
+      initialAmountsToFund[meta.symbol] = {
+        ...initialAmountsToFund[meta.symbol],
+        amount: parsed,
+      };
     });
 
     setAmountsToFund(initialAmountsToFund);
@@ -160,15 +167,15 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
             {availableAssets.map(({ amount, symbol }) => {
               const hasError =
                 !isNil(amountsToFund?.[symbol]) &&
-                (amountsToFund[symbol] ?? 0) > amount;
+                (amountsToFund[symbol] ?? 0).amount > amount;
 
               return (
                 <Flex key={symbol} gap={8} vertical className="w-full">
                   <TokenAmountInput
                     tokenSymbol={symbol}
-                    value={amountsToFund?.[symbol] ?? 0}
+                    value={amountsToFund?.[symbol]?.amount ?? 0}
                     totalAmount={amount}
-                    onChange={(x) => onAmountChange(symbol, x ?? 0)}
+                    onChange={(x) => onAmountChange(symbol, { amount: x ?? 0 })}
                     hasError={hasError}
                   />
                   {hasError && <FundPearlWallet />}

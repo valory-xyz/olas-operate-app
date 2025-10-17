@@ -33,10 +33,10 @@ const getFormattedTokensList = (
 
       if (!tokenDetails) return acc;
 
-      acc[tokenDetails.symbol] = formatUnitsToNumber(
-        amount,
-        tokenDetails.decimals,
-      );
+      acc[tokenDetails.symbol] = {
+        ...acc[tokenDetails.symbol],
+        amount: formatUnitsToNumber(amount, tokenDetails.decimals),
+      };
 
       return acc;
     },

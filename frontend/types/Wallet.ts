@@ -27,8 +27,12 @@ export type StakedAsset = {
   value?: number;
 };
 
+export type TokenAmountDetails = {
+  amount: number;
+};
+
 /**
  * @example
  * { symbol: 'OLAS', amount: 10 }
  */
-export type TokenAmounts = Partial<Record<TokenSymbol, number>>;
+export type TokenAmounts = Partial<Record<TokenSymbol, TokenAmountDetails>>;
