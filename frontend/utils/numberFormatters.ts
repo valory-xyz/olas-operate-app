@@ -43,20 +43,6 @@ export const formatNumber = (
 };
 
 /**
- * Displays balance in a human readable format from string input
- * @example formatString('1234.5678', 2) => '1,234.57'
- */
-export const formatString = (
-  amount: string | undefined,
-  decimals = 2,
-): string => {
-  if (amount === undefined) return '--';
-  const num = parseFloat(amount);
-  if (isNaN(num)) return '--';
-  return formatNumber(num, decimals);
-};
-
-/**
  * Formats larger numbers into small numbers
  * @note **divides** the input by 10^decimals
  * @example `formatUnits('1000000000000000000', 18)` => '1.0'

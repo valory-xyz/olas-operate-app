@@ -1,10 +1,10 @@
 import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
 
-import { Table } from '@/components/ui/Table';
-import { TokenSymbolConfigMap } from '@/constants/token';
+import { Table } from '@/components/ui';
+import { TokenSymbolConfigMap } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { AvailableAsset } from '@/types/Wallet';
-import { formatString } from '@/utils/numberFormatters';
+import { formatNumber } from '@/utils';
 
 const { Text } = Typography;
 
@@ -30,7 +30,7 @@ const columns: TableColumnsType<AvailableAsset> = [
     title: 'Amount',
     key: 'amount',
     render: (_: unknown, record: AvailableAsset) => (
-      <Text>{formatString(record.amountString, 4)}</Text>
+      <Text>{formatNumber(record.amount, 4)}</Text>
     ),
     width: '50%',
   },
