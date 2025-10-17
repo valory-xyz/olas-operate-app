@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { CardFlex } from '@/components/ui';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks';
+import { usePageState, useServices } from '@/hooks';
 
 import { AgentWalletOperation } from './AgentWalletOperation';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
@@ -88,11 +88,23 @@ export const BalancesAndAssets = ({
   onLockedFundsWithdrawn,
 }: BalancesAndAssetsProps) => {
   const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
+  const { selectedAgentConfig } = useServices();
+
+  const handleWithdraw = () => {
+    const hasExternalFunds = selectedAgentConfig?.hasExternalFunds;
+
+    if (hasExternalFunds) {
+      setWithdrawModalVisible(true);
+      return;
+    }
+
+    onLockedFundsWithdrawn();
+  };
 
   return (
     <Flex vertical gap={32}>
       <AgentWalletOperation
-        onWithdraw={() => setWithdrawModalVisible(true)}
+        onWithdraw={handleWithdraw}
         onFundAgent={onFundAgent}
       />
       <AvailableAssets />
