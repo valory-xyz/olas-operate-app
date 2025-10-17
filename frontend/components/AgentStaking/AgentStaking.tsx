@@ -28,7 +28,7 @@ const StakingStats = () => {
   const { totalRewards } = useServiceOnlyRewardsHistory();
 
   const fireIcon =
-    optimisticStreak > 0 ? <FireV1 fill={COLOR.PURPLE} /> : <FireNoStreak />;
+    optimisticStreak > 0 ? <FireV1 isActive /> : <FireNoStreak />;
 
   return (
     <CardFlex $noBorder $newStyles>

@@ -31,7 +31,7 @@ const AvailableAssetsTooltip = () => {
       iconStyles={{ color: COLOR.TEXT_NEUTRAL_PRIMARY }}
     >
       <div className="mb-16">
-        Shows your spendable balance on the selected chain — your deposits plusS
+        Shows your spendable balance on the selected chain — your deposits plus
         available staking rewards earned by agents on this chain.
       </div>
       <div className="mb-20">
