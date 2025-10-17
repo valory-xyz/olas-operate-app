@@ -2,7 +2,6 @@ import { Button, Flex, Modal, Typography } from 'antd';
 import { useState } from 'react';
 
 import { CardFlex } from '@/components/ui';
-import { AgentMap } from '@/constants/agent';
 import { Pages } from '@/enums/Pages';
 import { usePageState, useServices } from '@/hooks';
 
@@ -89,13 +88,12 @@ export const BalancesAndAssets = ({
   onLockedFundsWithdrawn,
 }: BalancesAndAssetsProps) => {
   const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
-  const { selectedAgentType, selectedAgentConfig } = useServices();
+  const { selectedAgentConfig } = useServices();
 
   const handleWithdraw = () => {
-    const isPredictTrader = selectedAgentType === AgentMap.PredictTrader;
     const hasExternalFunds = selectedAgentConfig?.hasExternalFunds;
 
-    if (!isPredictTrader || hasExternalFunds) {
+    if (hasExternalFunds) {
       setWithdrawModalVisible(true);
       return;
     }
