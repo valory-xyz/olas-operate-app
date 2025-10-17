@@ -151,10 +151,9 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
   const serviceSafeErc20Balances = useMemo(
     () =>
       serviceSafeBalances?.filter(
-        ({ isNative, symbol, evmChainId, isWrappedToken }) =>
+        ({ isNative, symbol, evmChainId }) =>
           !isNative &&
           symbol !== TokenSymbolMap.OLAS &&
-          !isWrappedToken &&
           evmChainId === evmHomeChainId,
       ),
     [serviceSafeBalances, evmHomeChainId],
