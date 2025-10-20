@@ -12,7 +12,7 @@ import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL_V2 } from '@/constants/urls';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
-import { DeepPartial } from '@/types/Util';
+import { DeepPartial, Nullable } from '@/types/Util';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 /**
@@ -214,17 +214,20 @@ const withdrawBalance = async ({
 }: {
   withdrawAddress: Address;
   serviceConfigId: ServiceConfigId;
-}): Promise<{ error: string | null }> =>
+}): Promise<{ error: Nullable<string> }> =>
   new Promise((resolve, reject) =>
-    fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/onchain/withdraw`, {
-      method: 'POST',
-      body: JSON.stringify({ withdrawal_address: withdrawAddress }),
-      headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    }).then((response) => {
+    fetch(
+      `${BACKEND_URL_V2}/service/${serviceConfigId}/terminate_and_withdraw`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ withdrawal_address: withdrawAddress }),
+        headers: { ...CONTENT_TYPE_JSON_UTF8 },
+      },
+    ).then((response) => {
       if (response.ok) {
         resolve(response.json());
       } else {
-        reject('Failed to withdraw balance');
+        reject('Failed to withdraw balance.');
       }
     }),
   );
