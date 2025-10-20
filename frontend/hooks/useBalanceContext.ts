@@ -389,7 +389,7 @@ export const useMasterBalances = () => {
           compact(balances.map(({ balanceString }) => balanceString)),
         );
       }
-      return balances.reduce((acc, balance) => acc + balance.balance, 0);
+      return balances.reduce((acc, { balance }) => acc + balance, 0);
     },
     [masterWalletBalances],
   );
@@ -446,15 +446,20 @@ export const useMasterBalances = () => {
       );
 
       if (type === 'string') {
-        return sumBigNumbers(
-          compact(balances.map(({ balanceString }) => balanceString)),
+        return balances.reduce<Record<TokenSymbol, string>>(
+          (acc, { balanceString, symbol }) => {
+            if (!acc[symbol]) acc[symbol] = '0';
+            acc[symbol] = sumBigNumbers([acc[symbol], balanceString ?? '0']);
+            return acc;
+          },
+          {} as Record<TokenSymbol, string>,
         );
       }
+
       return balances.reduce<Record<TokenSymbol, number>>(
         (acc, { balance, symbol }) => {
           if (!acc[symbol]) acc[symbol] = 0;
           acc[symbol] += balance;
-
           return acc;
         },
         {} as Record<TokenSymbol, number>,
