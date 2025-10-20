@@ -30,7 +30,7 @@ export const useWithdrawFunds = () => {
         throw new Error('Service config ID not found');
       }
 
-      await ServicesService.withdrawBalanceV1({
+      await ServicesService.withdrawBalance({
         withdrawAddress: masterSafeAddress,
         serviceConfigId: selectedService.service_config_id,
       });
