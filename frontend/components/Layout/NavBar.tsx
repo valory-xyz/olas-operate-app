@@ -36,7 +36,7 @@ const TrafficLights = styled.div`
   -webkit-app-region: no-drag;
 `;
 
-const TopBarContainer = styled.div`
+export const TopBarContainer = styled.div`
   position: fixed;
   top: 0;
   left: 0;
@@ -46,6 +46,7 @@ const TopBarContainer = styled.div`
   height: ${TOP_BAR_HEIGHT}px;
   display: flex;
   align-items: center;
+  border: 1px solid red;
   -webkit-app-region: drag;
 `;
 
@@ -88,6 +89,7 @@ export const NavBar = () => {
       onRampWindow?.close?.();
       return;
     }
+
     if (isTerms) {
       termsAndConditionsWindow?.close?.();
       return;

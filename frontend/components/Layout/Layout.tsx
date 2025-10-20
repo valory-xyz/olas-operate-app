@@ -55,7 +55,7 @@ const Body = styled.div<{ $hasPadding?: boolean }>`
   height: ${APP_HEIGHT}px;
 `;
 
-const useSystemLevelNotifications = () => {
+const useRegisterSystemLevelNotifications = () => {
   useNotifyOnNewEpoch();
 };
 
@@ -64,8 +64,8 @@ export const Layout = ({ children }: PropsWithChildren) => {
   const { state } = useSetup();
   const { pageState } = usePageState();
 
-  // All the app-level notifications
-  useSystemLevelNotifications();
+  // Register all the app-level notifications
+  useRegisterSystemLevelNotifications();
 
   useEffect(() => {
     const onlineStatusMessageKey = 'online-status-message';
@@ -90,7 +90,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
           footer={null}
           closable={false}
           width={450}
-          title={'No Internet Connection'}
+          title="No Internet Connection"
           description={
             'Check your Wi-Fi or Ethernet. Pearl will reconnect automatically once the connection is stable.'
           }
