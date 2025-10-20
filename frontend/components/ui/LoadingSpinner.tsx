@@ -14,15 +14,15 @@ const Spinner = styled.span`
   animation: ${spin} 1s linear infinite;
 `;
 
-type LoadingProps = {
+type LoadingSpinnerProps = {
   size?: number;
   color?: string;
 };
 
-export const Loading = ({
+export const LoadingSpinner = ({
   size = 20,
   color = COLOR.TEXT_NEUTRAL_TERTIARY,
-}: LoadingProps) => (
+}: LoadingSpinnerProps) => (
   <Spinner>
     <TbLoader2 size={size} color={color} />
   </Spinner>

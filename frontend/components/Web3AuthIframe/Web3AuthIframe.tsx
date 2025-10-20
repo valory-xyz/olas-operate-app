@@ -7,7 +7,7 @@ import { APP_HEIGHT, IFRAME_WIDTH } from '@/constants/width';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { Address } from '@/types/Address';
 
-import { Loading } from '../custom-icons';
+import { LoadingSpinner } from '../ui';
 
 type AUTH_SUCCESS_EVENT_DATA = {
   event_id: 'WEB3AUTH_AUTH_SUCCESS';
@@ -108,7 +108,7 @@ export const Web3AuthIframe = () => {
       />
       {isLoading && (
         <SpinnerOverlay>
-          <Spin size="large" indicator={<Loading />} />
+          <Spin size="large" indicator={<LoadingSpinner />} />
         </SpinnerOverlay>
       )}
     </Container>

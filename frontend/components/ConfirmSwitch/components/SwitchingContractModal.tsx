@@ -1,13 +1,11 @@
 import { Button, Spin } from 'antd';
 
-import { LoadingOutlined } from '@/components/custom-icons';
-import { SuccessOutlined } from '@/components/custom-icons/SuccessOutlined';
-import { Modal } from '@/components/ui/Modal';
+import { LoadingOutlined, SuccessOutlined } from '@/components/custom-icons';
+import { Modal } from '@/components/ui';
 import { useYourWallet } from '@/components/YourWalletPage/useYourWallet';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
+import { usePageState, useServices } from '@/hooks';
 import { generateName } from '@/utils/agentName';
 
 const ModalHeader = ({ isLoading }: { isLoading: boolean }) =>

@@ -6,7 +6,7 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { BridgingStepStatus } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
 
-import { Loading } from '../custom-icons';
+import { LoadingSpinner } from './LoadingSpinner';
 import { Steps } from './Steps';
 
 const { Text } = Typography;
@@ -66,7 +66,7 @@ export const TransactionSteps: FC<TransactionStepsProps> = ({ steps }) => (
           {subStep.failed}
         </SubStepContainer>
       )),
-      icon: status === 'process' ? <Loading /> : undefined,
+      icon: status === 'process' ? <LoadingSpinner /> : undefined,
     }))}
     size="small"
     direction="vertical"

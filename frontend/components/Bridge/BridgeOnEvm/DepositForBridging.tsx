@@ -5,8 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { MiddlewareChain } from '@/client';
-import { Loading } from '@/components/custom-icons';
-import { ERROR_ICON_STYLE } from '@/components/ui';
+import { ERROR_ICON_STYLE, LoadingSpinner } from '@/components/ui';
 import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
 import {
   ETHEREUM_TOKEN_CONFIG,
@@ -59,7 +58,7 @@ const RootCard = styled(Flex)`
 
 const RequestingQuote = () => (
   <Flex gap={8} align="senter" className="p-16">
-    <Spin indicator={<Loading />} />
+    <Spin indicator={<LoadingSpinner />} />
     <Text>Requesting quote...</Text>
   </Flex>
 );
