@@ -57,7 +57,7 @@ const getInitialDepositValues = (
       );
       if (!amount) return acc;
 
-      acc[tokenDetails.symbol] = amount;
+      acc[tokenDetails.symbol] = { ...acc[tokenDetails.symbol], amount };
 
       return acc;
     },
