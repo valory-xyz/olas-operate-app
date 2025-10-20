@@ -9,7 +9,9 @@ import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { SelectStaking } from '@/components/SelectStaking/SelectStaking';
 import { Settings } from '@/components/SettingsPage';
 import { UpdateAgentPage } from '@/components/UpdateAgentPage';
+import { SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants';
 import { Pages } from '@/enums/Pages';
+import { useNotifyOnNewEpoch } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
 
 import { AgentWallet } from '../AgentWallet';
@@ -22,12 +24,31 @@ import { Sidebar } from './Sidebar';
 
 const { Content: AntdContent } = Layout;
 
+const DraggableTopBar = styled.div<{ $isSplitScreenPage?: boolean }>`
+  z-index: 1;
+  flex-shrink: 0;
+  width: 100%;
+  height: ${TOP_BAR_HEIGHT}px;
+  -webkit-app-region: drag;
+  background-color: red;
+  ${(props) =>
+    props.$isSplitScreenPage
+      ? `
+        position: fixed;
+        top: 0;
+        left: ${SIDER_WIDTH}px;
+        right: 0;
+      `
+      : ``}
+`;
+
 const Content = styled(AntdContent)<{ $isSplitScreenPage?: boolean }>`
   display: flex;
   flex-direction: column;
   margin: 0 auto;
   overflow: auto;
-  ${(props) => (props.$isSplitScreenPage ? `` : `padding: 40px 0px;`)}
+  padding-bottom: 40px;
+  ${(props) => (props.$isSplitScreenPage ? `` : `padding-bottom: 40px;`)}
 `;
 
 /**
@@ -35,6 +56,7 @@ const Content = styled(AntdContent)<{ $isSplitScreenPage?: boolean }>`
  */
 const usePageInitialization = () => {
   useSetupTrayIcon();
+  useNotifyOnNewEpoch();
 };
 
 export const Main = () => {
@@ -75,6 +97,7 @@ export const Main = () => {
     <Layout>
       <Sidebar />
       <Content $isSplitScreenPage={isSplitScreenPage} ref={contentContainerRef}>
+        <DraggableTopBar />
         {mainContent}
       </Content>
     </Layout>

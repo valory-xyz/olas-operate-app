@@ -7,7 +7,6 @@ import { COLOR } from '@/constants/colors';
 import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useNotifyOnNewEpoch } from '@/hooks/useNotifyOnNewEpoch';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useSetup } from '@/hooks/useSetup';
@@ -55,17 +54,10 @@ const Body = styled.div<{ $hasPadding?: boolean }>`
   height: ${APP_HEIGHT}px;
 `;
 
-const useRegisterSystemLevelNotifications = () => {
-  useNotifyOnNewEpoch();
-};
-
 export const Layout = ({ children }: PropsWithChildren) => {
   const { isOnline } = useOnlineStatusContext();
   const { state } = useSetup();
   const { pageState } = usePageState();
-
-  // Register all the app-level notifications
-  useRegisterSystemLevelNotifications();
 
   useEffect(() => {
     const onlineStatusMessageKey = 'online-status-message';

@@ -46,7 +46,7 @@ export const TopBarContainer = styled.div`
   height: ${TOP_BAR_HEIGHT}px;
   display: flex;
   align-items: center;
-  border: 1px solid red;
+  background-color: red;
   -webkit-app-region: drag;
 `;
 
