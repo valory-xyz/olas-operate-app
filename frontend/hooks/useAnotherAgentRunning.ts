@@ -16,7 +16,9 @@ export const useAnotherAgentRunning = () => {
   const { data: allDeployments } = useQuery({
     queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
     queryFn: ({ signal }) => ServicesService.getAllServiceDeployments(signal),
-    refetchInterval: FIVE_SECONDS_INTERVAL,
+    refetchInterval: (query) => {
+      return query?.state?.status === 'success' ? FIVE_SECONDS_INTERVAL : false;
+    },
   });
 
   const isAnotherAgentRunning = useMemo(() => {

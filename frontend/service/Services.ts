@@ -203,8 +203,6 @@ const getDeployment = async ({
 /**
  * Withdraws the balance of a service
  *
- * @param withdrawAddress Address
- * @param serviceTemplate ServiceTemplate
  * @returns Promise<Service>
  */
 const withdrawBalance = async ({
