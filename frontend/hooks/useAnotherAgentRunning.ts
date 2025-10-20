@@ -16,19 +16,23 @@ export const useAnotherAgentRunning = () => {
   const { data: allDeployments } = useQuery({
     queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
     queryFn: ({ signal }) => ServicesService.getAllServiceDeployments(signal),
-    refetchInterval: FIVE_SECONDS_INTERVAL,
+    refetchInterval: (query) => {
+      return query?.state?.status === 'success' ? FIVE_SECONDS_INTERVAL : false;
+    },
   });
 
   const isAnotherAgentRunning = useMemo(() => {
     if (!services || !selectedService || !allDeployments) return false;
 
     // Get all other services (excluding the currently selected one)
-    return services.some(service => {
-      if (service.service_config_id === selectedService.service_config_id) return false;
-    
+    return services.some((service) => {
+      if (service.service_config_id === selectedService.service_config_id) {
+        return false;
+      }
+
       const deployment = allDeployments[service.service_config_id];
       const serviceStatus = deployment?.status;
-      
+
       return [
         MiddlewareDeploymentStatusMap.DEPLOYED,
         MiddlewareDeploymentStatusMap.DEPLOYING,

@@ -2,7 +2,6 @@ import { get } from 'lodash';
 import { createContext, PropsWithChildren } from 'react';
 
 import { Address } from '@/types/Address';
-import { AgentHealthCheckResponse } from '@/types/Agent';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
 
 type ElectronApiContextProps = {
@@ -41,9 +40,6 @@ type ElectronApiContextProps = {
     debugData?: Record<string, unknown>;
   }) => Promise<{ success: true; dirPath: string } | { success?: false }>;
   openPath?: (filePath: string) => void;
-  healthCheck?: () => Promise<
-    { response: AgentHealthCheckResponse | null } | { error: string }
-  >;
   onRampWindow?: {
     show?: (amountToPay: number) => void;
     close?: () => void;
@@ -87,7 +83,6 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   },
   saveLogs: async () => ({ success: false }),
   openPath: () => {},
-  healthCheck: async () => ({ response: null }),
   onRampWindow: {
     show: () => {},
     transactionSuccess: () => {},
@@ -142,7 +137,6 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         showNotification: getElectronApiFunction('showNotification'),
         saveLogs: getElectronApiFunction('saveLogs'),
         openPath: getElectronApiFunction('openPath'),
-        healthCheck: getElectronApiFunction('healthCheck'),
         onRampWindow: {
           show: getElectronApiFunction('onRampWindow.show'),
           close: getElectronApiFunction('onRampWindow.close'),

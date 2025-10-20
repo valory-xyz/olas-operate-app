@@ -169,7 +169,6 @@ const stopDeployment = async (
 /**
  * Gets deployment of all services
  */
-
 const getAllServiceDeployments = async (
   signal?: AbortSignal,
 ): Promise<Record<ServiceConfigId, Deployment>> =>
@@ -203,10 +202,6 @@ const getDeployment = async ({
 
 /**
  * Withdraws the balance of a service
- *
- * @param withdrawAddress Address
- * @param serviceTemplate ServiceTemplate
- * @returns Promise<Service>
  */
 const withdrawBalance = async ({
   withdrawAddress,
