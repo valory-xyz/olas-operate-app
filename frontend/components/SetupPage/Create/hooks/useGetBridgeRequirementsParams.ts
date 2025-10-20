@@ -90,6 +90,7 @@ const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
       toMiddlewareChain,
       isBalancesAndFundingRequirementsLoading,
       transferDirection,
+      selectedAgentType,
     ],
   );
 };

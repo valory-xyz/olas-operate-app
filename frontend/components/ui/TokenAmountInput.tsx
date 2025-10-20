@@ -1,13 +1,17 @@
 import { Button, Flex, Image, Typography } from 'antd';
+import { floor, isNil } from 'lodash';
+import { useCallback } from 'react';
 import { TbWallet } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { NumberInput } from '@/components/ui/NumberInput';
-import { COLOR } from '@/constants/colors';
-import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
-import { formatNumber } from '@/utils/numberFormatters';
+import { COLOR, TokenSymbol, TokenSymbolConfigMap } from '@/constants';
+import { formatNumber } from '@/utils';
+
+import { NumberInput } from './NumberInput';
 
 const { Text } = Typography;
+
+const DECIMAL_PLACES = 6;
 
 const Container = styled.div<{ $hasError?: boolean }>`
   width: 100%;
@@ -41,7 +45,7 @@ type TokenAmountInputProps = {
   maxAmount?: number;
   /** Total amount available (for display only) */
   totalAmount: number;
-  onChange: (value: number | null) => void;
+  onChange: (value: number | null, options: { withdrawAll?: boolean }) => void;
   tokenSymbol: TokenSymbol;
   /** Whether to show quick select buttons (10%, 25%, 50%, 100%) */
   showQuickSelects?: boolean;
@@ -57,64 +61,86 @@ export const TokenAmountInput = ({
   tokenSymbol,
   showQuickSelects = true,
   hasError = false,
-}: TokenAmountInputProps) => (
-  <Container $hasError={hasError}>
-    <Flex
-      className="input-wrapper"
-      gap={12}
-      align="center"
-      justify="space-between"
-    >
-      <NumberInput
-        onChange={onChange}
-        value={value}
-        min={0}
-        max={maxAmount}
-        variant="borderless"
-        size="large"
-        controls={false}
-        style={{ flex: 1 }}
-      />
-      <TokenImage tokenSymbol={tokenSymbol} />
-    </Flex>
+}: TokenAmountInputProps) => {
+  const handleChange = useCallback(
+    (newValue: number | null) => {
+      if (isNil(newValue)) {
+        onChange(null, { withdrawAll: false });
+        return;
+      }
 
-    <Flex
-      className="token-value-and-helper w-full"
-      justify="space-between"
-      align="center"
-      style={{ padding: '10px 20px' }}
-    >
-      <Flex gap={6} align="center">
-        <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
-        <Text className="text-sm leading-normal text-neutral-tertiary">
-          {formatNumber(totalAmount, 4)}
-        </Text>
+      // Prevent more than allowed decimal places, in this case 6 decimal places
+      const decimalPart = String(newValue).split('.')[1];
+      if (decimalPart && decimalPart.length > DECIMAL_PLACES) {
+        return;
+      }
+
+      // Limit decimal places
+      const limited = floor(newValue, DECIMAL_PLACES);
+      onChange(limited, { withdrawAll: false });
+    },
+    [onChange],
+  );
+
+  return (
+    <Container $hasError={hasError}>
+      <Flex
+        className="input-wrapper"
+        gap={12}
+        align="center"
+        justify="space-between"
+      >
+        <NumberInput
+          onChange={handleChange}
+          value={value}
+          min={0}
+          max={maxAmount}
+          variant="borderless"
+          size="large"
+          controls={false}
+          style={{ flex: 1 }}
+        />
+        <TokenImage tokenSymbol={tokenSymbol} />
       </Flex>
 
-      {showQuickSelects && (
-        <Flex gap={8} align="center">
-          {[10, 25, 50, 100].map((percentage) => (
-            <Button
-              key={percentage}
-              onClick={() => {
-                if (percentage === 100) {
-                  onChange(totalAmount);
-                } else {
-                  onChange(
-                    Number(((totalAmount * percentage) / 100).toFixed(4)),
-                  );
-                }
-              }}
-              type="text"
-              size="small"
-              className="text-neutral-tertiary"
-              style={{ padding: '0 4px' }}
-            >
-              {percentage}%
-            </Button>
-          ))}
+      <Flex
+        className="token-value-and-helper w-full"
+        justify="space-between"
+        align="center"
+        style={{ padding: '10px 20px' }}
+      >
+        <Flex gap={6} align="center">
+          <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+          <Text className="text-sm leading-normal text-neutral-tertiary">
+            {formatNumber(totalAmount, DECIMAL_PLACES, 'floor')}
+          </Text>
         </Flex>
-      )}
-    </Flex>
-  </Container>
-);
+
+        {showQuickSelects && (
+          <Flex gap={8} align="center">
+            {[10, 25, 50, 100].map((percentage) => (
+              <Button
+                key={percentage}
+                onClick={() => {
+                  // Calculate the amount based on the percentage
+                  // and ceil to the allowed decimal places.
+                  const ceiledAmount = floor(
+                    Number((totalAmount * percentage) / 100),
+                    DECIMAL_PLACES,
+                  );
+                  onChange(ceiledAmount, { withdrawAll: percentage === 100 });
+                }}
+                type="text"
+                size="small"
+                className="text-neutral-tertiary"
+                style={{ padding: '0 4px' }}
+              >
+                {percentage}%
+              </Button>
+            ))}
+          </Flex>
+        )}
+      </Flex>
+    </Container>
+  );
+};

@@ -57,7 +57,10 @@ export const AgentActivityModal = ({
     });
   }, [rounds, roundsInfo]);
 
-  const previousActions = items?.slice(1); // separates current and previous actions
+  // separates current and previous actions
+  // item[0] is the current action
+  // item[1...] are the previous actions
+  const previousActions = items?.slice(1);
 
   const currentActionName = useMemo(() => {
     const currentRound = rounds[0];

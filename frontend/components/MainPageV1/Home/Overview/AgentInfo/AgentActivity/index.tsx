@@ -1,14 +1,16 @@
 import { Flex, Typography } from 'antd';
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { LuChevronsUpDown } from 'react-icons/lu';
 import styled from 'styled-components';
 import { useBoolean } from 'usehooks-ts';
 
 import { InfoTooltip } from '@/components/InfoTooltip';
-import { COLOR } from '@/constants/colors';
-import { useServiceDeployment } from '@/hooks';
-import { useAgentActivity } from '@/hooks/useAgentActivity';
-import { useRewardContext } from '@/hooks/useRewardContext';
+import { COLOR } from '@/constants';
+import {
+  useAgentActivity,
+  useRewardContext,
+  useServiceDeployment,
+} from '@/hooks';
 
 import { AgentActivityModal } from './AgentActivityModal';
 import { Container, Text } from './styles';
@@ -51,42 +53,32 @@ export const AgentActivity = () => {
     setFalse: handleClose,
   } = useBoolean(false);
 
-  const healthcheckRounds = useMemo(() => {
-    return deploymentDetails?.healthcheck?.rounds || [];
-  }, [deploymentDetails?.healthcheck?.rounds]);
-
   const rounds = useMemo(() => {
-    return [...healthcheckRounds].reverse();
-  }, [healthcheckRounds]);
+    return (deploymentDetails?.healthcheck?.rounds || []).reverse();
+  }, [deploymentDetails?.healthcheck?.rounds]);
 
   const roundsInfo = useMemo(() => {
     return deploymentDetails?.healthcheck?.rounds_info;
   }, [deploymentDetails?.healthcheck?.rounds_info]);
 
-  const canOpenModal = Boolean(isServiceRunning && rounds.length);
+  const canOpenModal = isServiceRunning && !!rounds.length;
 
   const activityInfo = useMemo<{
     status: AgentStatus;
-    content: string | React.ReactNode;
+    content: string | ReactNode;
   }>(() => {
     if (isServiceDeploying) {
-      return {
-        status: 'loading',
-        content: 'Agent is loading',
-      };
+      return { status: 'loading', content: 'Agent is loading' };
     }
 
     if (isServiceRunning) {
       if (isEligibleForRewards) {
-        return {
-          status: 'idle',
-          content: <IdleContent />,
-        };
+        return { status: 'idle', content: <IdleContent /> };
       }
+
       if (rounds.length > 0) {
         const currentRound = rounds[0];
         const roundInfo = roundsInfo?.[currentRound]?.name || currentRound;
-
         return {
           status: 'running',
           content: (
@@ -98,16 +90,14 @@ export const AgentActivity = () => {
           ),
         };
       }
+
       return {
         status: 'activity-not-ready',
         content: 'Agent is pending first activity',
       };
     }
 
-    return {
-      status: 'idle',
-      content: <IdleContent />,
-    };
+    return { status: 'not-running', content: 'Agent is not running' };
   }, [
     isEligibleForRewards,
     isServiceDeploying,
@@ -116,8 +106,9 @@ export const AgentActivity = () => {
     roundsInfo,
   ]);
 
-  if (isServiceRunning || isServiceDeploying ? false : !isDeployable)
+  if (isServiceRunning || isServiceDeploying ? false : !isDeployable) {
     return null;
+  }
 
   return (
     <>

@@ -150,7 +150,9 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         signal,
       }),
     enabled: isOnline && !!selectedServiceConfigId,
-    refetchInterval: FIVE_SECONDS_INTERVAL,
+    refetchInterval: (query) => {
+      return query?.state?.status === 'success' ? FIVE_SECONDS_INTERVAL : false;
+    },
   });
 
   const [selectedServiceStatusOverride, setSelectedServiceStatusOverride] =

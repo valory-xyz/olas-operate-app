@@ -6,9 +6,12 @@ import { FireV1 } from '@/components/custom-icons';
 import { BackButton, CardFlex, Segmented } from '@/components/ui';
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useServiceOnlyRewardsHistory } from '@/hooks/useRewardsHistory';
-import { useStakingDetails } from '@/hooks/useStakingDetails';
+import {
+  usePageState,
+  useRewardContext,
+  useServiceOnlyRewardsHistory,
+  useStakingDetails,
+} from '@/hooks';
 
 import { RewardsHistory } from './RewardsHistory';
 import { StakingContractDetails } from './StakingContractDetails';
@@ -19,10 +22,11 @@ const StatsSkeleton = () => <Skeleton.Input active size="small" />;
 
 const StakingStats = () => {
   const { optimisticStreak, isStreakLoading } = useStakingDetails();
+  const { isEligibleForRewards } = useRewardContext();
   const { isLoading: isTotalRewardsLoading } = useServiceOnlyRewardsHistory();
   const { totalRewards } = useServiceOnlyRewardsHistory();
 
-  const fireIcon = <FireV1 isActive={optimisticStreak > 0} />;
+  const isFlameActive = optimisticStreak > 0 && isEligibleForRewards;
 
   return (
     <CardFlex $noBorder $newStyles>
@@ -52,9 +56,9 @@ const StakingStats = () => {
           {isStreakLoading ? (
             <StatsSkeleton />
           ) : (
-            <Flex align="center" gap={8}>
-              {fireIcon}
-              <Title level={5} className="mt-0 mb-0">
+            <Flex>
+              <FireV1 isActive={isFlameActive} />
+              <Title level={5} className="mt-0 mb-0 ml-8">
                 {optimisticStreak}
               </Title>
             </Flex>
