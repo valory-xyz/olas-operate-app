@@ -22,7 +22,7 @@ export const TransferCryptoOn = ({
 
   const tokenAndDepositedAmounts = useMemo<AvailableAsset[]>(
     () =>
-      entries(amountsToDeposit).map(([tokenSymbol, amount]) => ({
+      entries(amountsToDeposit).map(([tokenSymbol, { amount }]) => ({
         symbol: tokenSymbol as TokenSymbol,
         amount,
       })),

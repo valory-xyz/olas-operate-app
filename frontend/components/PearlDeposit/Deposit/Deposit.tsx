@@ -109,9 +109,11 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
               <TokenAmountInput
                 key={symbol}
                 tokenSymbol={symbol}
-                value={amountsToDeposit?.[symbol] ?? 0}
+                value={amountsToDeposit?.[symbol]?.amount ?? 0}
                 totalAmount={amount}
-                onChange={(x) => onDepositAmountChange(symbol, x ?? 0)}
+                onChange={(x) =>
+                  onDepositAmountChange(symbol, { amount: x ?? 0 })
+                }
                 showQuickSelects={false}
               />
             ))}
@@ -119,7 +121,7 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
         </Flex>
 
         <Button
-          disabled={values(amountsToDeposit).every((i) => i === 0)}
+          disabled={values(amountsToDeposit).every((i) => i.amount === 0)}
           onClick={onContinue}
           type="primary"
           size="large"

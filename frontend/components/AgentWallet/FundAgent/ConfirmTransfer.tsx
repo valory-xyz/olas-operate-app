@@ -29,7 +29,7 @@ import {
   FundService,
   type TokenAmountMap,
 } from '@/service/Fund';
-import { Address } from '@/types';
+import { Address, TokenAmounts } from '@/types';
 import { bigintMin } from '@/utils';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
@@ -132,7 +132,7 @@ const useConfirmTransfer = () => {
 
 type ConfirmTransferProps = {
   isTransferDisabled?: boolean;
-  fundsToTransfer: Record<string, number>;
+  fundsToTransfer: TokenAmounts;
 };
 
 /**
@@ -148,7 +148,7 @@ const prepareAgentFundsForTransfer = ({
   serviceEoa,
   eoaTokenRequirements,
 }: {
-  fundsToTransfer: Record<string, number>;
+  fundsToTransfer: TokenAmounts;
   middlewareHomeChainId: MiddlewareChain;
   serviceSafe: { address: Address };
   serviceEoa: { address: Address };
@@ -157,7 +157,7 @@ const prepareAgentFundsForTransfer = ({
   const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(middlewareHomeChainId)];
   const tokenAmountsByAddress: TokenAmountMap = {};
 
-  Object.entries(fundsToTransfer).forEach(([untypedSymbol, amount]) => {
+  Object.entries(fundsToTransfer).forEach(([untypedSymbol, { amount }]) => {
     const symbol = untypedSymbol as TokenSymbol;
     if (amount > 0 && chainTokenConfig[symbol]) {
       const tokenConfig = chainTokenConfig[symbol];
@@ -259,7 +259,7 @@ export const ConfirmTransfer = ({
     if (isEmpty(fundsToTransfer)) return false;
 
     // Check if all amounts are zero
-    if (values(fundsToTransfer).every((x) => x === 0)) return false;
+    if (values(fundsToTransfer).every((x) => x.amount === 0)) return false;
 
     return isTransferDisabled;
   }, [fundsToTransfer, serviceSafe, isTransferDisabled]);

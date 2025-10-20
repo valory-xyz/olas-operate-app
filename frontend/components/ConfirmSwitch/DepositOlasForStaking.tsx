@@ -13,7 +13,7 @@ export const DepositOlasForStaking = () => {
   const { updateAmountsToDeposit } = usePearlWallet();
 
   useEffect(() => {
-    updateAmountsToDeposit({ OLAS: olasRequiredToMigrate });
+    updateAmountsToDeposit({ OLAS: { amount: olasRequiredToMigrate } });
   }, [olasRequiredToMigrate, updateAmountsToDeposit]);
 
   return <PearlDeposit onBack={() => goto(Pages.ConfirmSwitch)} />;

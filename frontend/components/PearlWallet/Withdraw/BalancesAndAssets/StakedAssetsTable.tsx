@@ -1,8 +1,7 @@
 import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
 
-import { Table } from '@/components/ui/Table';
-import { NA } from '@/constants/symbols';
-import { TokenSymbolConfigMap } from '@/constants/token';
+import { Table } from '@/components/ui';
+import { NA, TokenSymbolConfigMap } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { StakedAsset } from '@/types/Wallet';
 

@@ -79,11 +79,7 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
         throw new Error('Invalid state, should not be enabled');
       }
 
-      return getCrossChainBalances({
-        services,
-        masterWallets,
-        serviceWallets,
-      });
+      return getCrossChainBalances({ services, masterWallets, serviceWallets });
     },
     enabled: isOnline && !!masterWallets?.length && !!services,
     refetchInterval,
