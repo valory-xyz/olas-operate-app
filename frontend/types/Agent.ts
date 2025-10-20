@@ -48,11 +48,12 @@ export type AgentConfig = {
 };
 
 export type AgentHealthCheckResponse = {
-  seconds_since_last_transition: number;
+  agent_health: Record<string, unknown>;
+  is_healthy: boolean;
   is_tm_healthy: boolean;
+  is_transitioning_fast: boolean;
   period: number;
   reset_pause_duration: number;
-  is_transitioning_fast: boolean;
   rounds: string[];
   rounds_info?: Record<
     string,
@@ -62,4 +63,5 @@ export type AgentHealthCheckResponse = {
       transitions: Record<string, string>;
     }
   >;
+  seconds_since_last_transition: number;
 };

@@ -145,19 +145,10 @@ type DeployedNodes = {
   tendermint: string[];
 };
 
-type AgentHealthCheck = {
-  env_var_status?: {
-    needs_update: boolean;
-    env_vars: {
-      [key: string]: string;
-    };
-  };
-} & AgentHealthCheckResponse;
-
 export type Deployment = {
   status: MiddlewareDeploymentStatus;
   nodes: DeployedNodes;
-  healthcheck: AgentHealthCheck | Record<string, never>;
+  healthcheck: AgentHealthCheckResponse;
 };
 
 enum MiddlewareLedger {

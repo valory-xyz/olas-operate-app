@@ -169,7 +169,6 @@ const stopDeployment = async (
 /**
  * Gets deployment of all services
  */
-
 const getAllServiceDeployments = async (
   signal?: AbortSignal,
 ): Promise<Record<ServiceConfigId, Deployment>> =>
