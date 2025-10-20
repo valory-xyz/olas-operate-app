@@ -2,7 +2,6 @@ import { EnvProvision } from '@/constants/envVariables';
 import { AgentType } from '@/enums/Agent';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
-import { AgentHealthCheckResponse } from '@/types/Agent';
 
 import {
   MiddlewareChain,
@@ -143,6 +142,25 @@ export type ServiceTemplate = {
 type DeployedNodes = {
   agent: string[];
   tendermint: string[];
+};
+
+type AgentHealthCheckResponse = {
+  agent_health: Record<string, unknown>;
+  is_healthy: boolean;
+  is_tm_healthy: boolean;
+  is_transitioning_fast: boolean;
+  period: number;
+  reset_pause_duration: number;
+  rounds: string[];
+  rounds_info?: Record<
+    string,
+    {
+      name: string;
+      description: string;
+      transitions: Record<string, string>;
+    }
+  >;
+  seconds_since_last_transition: number;
 };
 
 export type Deployment = {

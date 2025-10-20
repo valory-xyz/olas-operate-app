@@ -46,22 +46,3 @@ export type AgentConfig = {
   defaultBehavior?: string;
   servicePublicId: string;
 };
-
-export type AgentHealthCheckResponse = {
-  agent_health: Record<string, unknown>;
-  is_healthy: boolean;
-  is_tm_healthy: boolean;
-  is_transitioning_fast: boolean;
-  period: number;
-  reset_pause_duration: number;
-  rounds: string[];
-  rounds_info?: Record<
-    string,
-    {
-      name: string;
-      description: string;
-      transitions: Record<string, string>;
-    }
-  >;
-  seconds_since_last_transition: number;
-};
