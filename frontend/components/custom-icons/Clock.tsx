@@ -1,40 +1,34 @@
+import { TbClock } from 'react-icons/tb';
+import styled from 'styled-components';
+
 import { COLOR } from '@/constants';
 
 type ClockProps = {
-  color?: 'danger' | 'success';
+  color?: 'danger' | 'warning';
 };
 
-const colorMap: Record<'danger' | 'success', string> = {
+const colorMap: Record<'danger' | 'warning', string> = {
   danger: COLOR.ICON_COLOR.DANGER,
-  success: COLOR.ICON_COLOR.SUCCESS,
+  warning: COLOR.ICON_COLOR.WARNING,
 };
+
+const IconWrapper = styled.div<{ color: string }>`
+  display: flex;
+  padding: 3px;
+  border-radius: 6px;
+  background-color: color-mix(
+    in srgb,
+    ${({ color }) => color},
+    transparent 90%
+  );
+`;
 
 export const Clock = ({ color }: ClockProps) => {
   const fillColor = color ? colorMap[color] : COLOR.TEXT_NEUTRAL_TERTIARY;
 
   return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        opacity="0.1"
-        d="M1 7C1 3.68629 3.68629 1 7 1H17C20.3137 1 23 3.68629 23 7V17C23 20.3137 20.3137 23 17 23H7C3.68629 23 1 20.3137 1 17V7Z"
-        fill={fillColor}
-      />
-      <path
-        d="M12 8.0001C12.3682 8.0001 12.6664 8.29831 12.6664 8.6665V11.7235L14.4711 13.5282C14.7315 13.7886 14.7315 14.2108 14.4711 14.4712C14.2108 14.7314 13.7892 14.7314 13.5289 14.4712L11.5289 12.4712C11.404 12.3462 11.3337 12.1768 11.3336 12.0001V8.6665C11.3336 8.29831 11.6318 8.0001 12 8.0001Z"
-        fill={fillColor}
-      />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M12 5.33447C13.7681 5.33447 15.4638 6.03657 16.7141 7.28682C17.9643 8.53706 18.6664 10.2328 18.6664 12.0009C18.6664 12.8764 18.4944 13.7436 18.1594 14.5524C17.8244 15.3612 17.3331 16.0959 16.7141 16.7149C16.0951 17.3339 15.3603 17.8252 14.5516 18.1603C13.7428 18.4953 12.8755 18.6673 12 18.6673C11.1245 18.6673 10.2573 18.4953 9.44846 18.1603C8.63971 17.8252 7.90496 17.3339 7.28596 16.7149C6.66696 16.0959 6.17568 15.3612 5.84065 14.5524C5.50562 13.7436 5.33362 12.8764 5.33362 12.0009C5.33362 10.2328 6.03572 8.53706 7.28596 7.28682C8.5362 6.03657 10.2319 5.33447 12 5.33447ZM12 6.66729C10.5855 6.66729 9.22913 7.22959 8.22893 8.22979C7.22874 9.22998 6.66643 10.5864 6.66643 12.0009C6.66643 12.7012 6.80474 13.3945 7.07268 14.0415C7.34071 14.6886 7.73369 15.2767 8.22893 15.772C8.72418 16.2672 9.31233 16.6602 9.9594 16.9282C10.6064 17.1962 11.2997 17.3345 12 17.3345C12.7003 17.3345 13.3937 17.1962 14.0407 16.9282C14.6877 16.6602 15.2759 16.2672 15.7711 15.772C16.2664 15.2767 16.6593 14.6886 16.9274 14.0415C17.1953 13.3945 17.3336 12.7012 17.3336 12.0009C17.3336 10.5864 16.7713 9.22998 15.7711 8.22979C14.7709 7.22959 13.4145 6.66729 12 6.66729Z"
-        fill={fillColor}
-      />
-    </svg>
+    <IconWrapper color={fillColor}>
+      <TbClock size={18} color={fillColor} />
+    </IconWrapper>
   );
 };

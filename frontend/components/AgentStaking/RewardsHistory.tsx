@@ -169,12 +169,14 @@ const CheckpointRow = ({ checkpoint }: { checkpoint: Checkpoint }) => {
         <Text className="text-sm">{stakingProgramMeta.name}</Text>
       </Col>
       <Col span={4} className="leading-20">
-        <Text className="text-sm text-neutral-tertiary">
-          Epoch {checkpoint.epoch}{' '}
+        <Flex align="center" gap={4}>
+          <Text className="text-sm text-neutral-tertiary">
+            Epoch {checkpoint.epoch}
+          </Text>
           <InfoTooltip placement="top">
             <EpochDurationPopup checkpoint={checkpoint} />
           </InfoTooltip>
-        </Text>
+        </Flex>
       </Col>
       <Col span={10} className="justify-items-end">
         <EarnedRewardsColumn

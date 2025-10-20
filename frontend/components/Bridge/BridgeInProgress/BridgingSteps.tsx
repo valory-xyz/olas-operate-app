@@ -1,8 +1,8 @@
-import { LoadingOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
+import { Loading } from '@/components/custom-icons';
 import { FundsAreSafeMessage, Steps } from '@/components/ui';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { TokenSymbol } from '@/constants/token';
@@ -194,7 +194,7 @@ export const BridgingSteps = ({
               )}
             </SubStepRow>
           )),
-          icon: status === 'process' ? <LoadingOutlined /> : undefined,
+          icon: status === 'process' ? <Loading /> : undefined,
         };
       })}
     />

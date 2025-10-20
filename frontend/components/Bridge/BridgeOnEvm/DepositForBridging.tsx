@@ -1,15 +1,12 @@
-import {
-  CloseCircleOutlined,
-  LoadingOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons';
+import { CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Button, Flex, message, Spin, Typography } from 'antd';
 import { sortBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { MiddlewareChain } from '@/client';
-import { ERROR_ICON_STYLE, LIGHT_ICON_STYLE } from '@/components/ui';
+import { Loading } from '@/components/custom-icons';
+import { ERROR_ICON_STYLE } from '@/components/ui';
 import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
 import {
   ETHEREUM_TOKEN_CONFIG,
@@ -61,8 +58,8 @@ const RootCard = styled(Flex)`
 `;
 
 const RequestingQuote = () => (
-  <Flex gap={8} className="p-16">
-    <Spin indicator={<LoadingOutlined spin style={LIGHT_ICON_STYLE} />} />
+  <Flex gap={8} align="senter" className="p-16">
+    <Spin indicator={<Loading />} />
     <Text>Requesting quote...</Text>
   </Flex>
 );

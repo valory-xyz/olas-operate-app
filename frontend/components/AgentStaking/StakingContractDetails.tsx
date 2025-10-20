@@ -1,9 +1,7 @@
 import { Button, Flex, Statistic, Typography } from 'antd';
+import { TbLock, TbSparkles, TbSquareRoundedPercentage } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { LockSvg } from '@/components/custom-icons/Lock';
-import { PercentageOutlined } from '@/components/custom-icons/Percentage';
-import { SparklesSvg } from '@/components/custom-icons/Sparkles';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Divider } from '@/components/ui/Divider';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -97,13 +95,13 @@ export const StakingContractDetails = () => {
       <CardFlex $noBorder $padding="32px 0 0" $newStyles>
         <Flex justify="space-between" gap={24} flex={1} className="px-24 pb-32">
           <ContractDetailsSection
-            icon={<PercentageOutlined />}
+            icon={<TbSquareRoundedPercentage size={24} color={COLOR.PRIMARY} />}
             title="Annual Percentage Yield"
             value={apy ? `${apy}%` : NA}
           />
 
           <ContractDetailsSection
-            icon={<SparklesSvg />}
+            icon={<TbSparkles size={24} color={COLOR.PRIMARY} />}
             title="Staking rewards per epoch"
             value={
               rewardsPerWorkPeriod
@@ -113,7 +111,7 @@ export const StakingContractDetails = () => {
           />
 
           <ContractDetailsSection
-            icon={<LockSvg />}
+            icon={<TbLock size={24} color={COLOR.PRIMARY} />}
             title="Staking deposits"
             value={olasStakeRequired ? `${olasStakeRequired} OLAS` : NA}
           />

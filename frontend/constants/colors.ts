@@ -13,6 +13,7 @@ export const COLOR = {
   BLUE: '#1677FF',
   ORANGE: '#FAAD14',
   WHITE: '#ffffff',
+  BLACK: '#000000',
   BORDER_GRAY: '#DFE5EE',
   BROWN: '#873800',
   TEXT: '#1f2229',
@@ -62,8 +63,9 @@ export const COLOR = {
     },
   },
   ICON_COLOR: {
-    SUCCESS: '#9E9E00',
+    WARNING: '#9E9E00',
     DANGER: '#FF4D5B',
+    INFO: '#4D63FF',
     ORANGE: '#FF8F1F',
     YELLOW: '#FFB636',
   },

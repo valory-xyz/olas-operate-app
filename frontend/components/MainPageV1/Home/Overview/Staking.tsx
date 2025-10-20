@@ -2,8 +2,7 @@ import { Button, Flex, Skeleton, Statistic, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { CustomAlert } from '@/components/Alert';
-import { Clock } from '@/components/custom-icons';
-import { FireV1 } from '@/components/custom-icons/FireV1';
+import { Clock, FireV1 } from '@/components/custom-icons';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { NA } from '@/constants/symbols';
 import { Pages } from '@/enums/Pages';
@@ -77,7 +76,7 @@ const Streak = () => {
  */
 
 const DANGER_HOURS = 3;
-const SUCCESS_HOURS = 12;
+const WARNING_HOURS = 12;
 
 export const Staking = () => {
   const { goto } = usePageState();
@@ -89,13 +88,13 @@ export const Staking = () => {
 
   const { isUnderConstruction } = selectedAgentConfig;
 
-  const getClockColor = (): 'danger' | 'success' | undefined => {
+  const getClockColor = (): 'danger' | 'warning' | undefined => {
     if (!currentEpochLifetime) return;
 
     const hoursLeft = (currentEpochLifetime - Date.now()) / (1000 * 60 * 60);
 
     if (hoursLeft < DANGER_HOURS) return 'danger';
-    if (hoursLeft < SUCCESS_HOURS) return 'success';
+    if (hoursLeft < WARNING_HOURS) return 'warning';
     return;
   };
 

@@ -1,6 +1,6 @@
-import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Spin } from 'antd';
 
+import { LoadingOutlined } from '@/components/custom-icons';
 import { SuccessOutlined } from '@/components/custom-icons/SuccessOutlined';
 import { Modal } from '@/components/ui/Modal';
 import { useYourWallet } from '@/components/YourWalletPage/useYourWallet';
@@ -12,7 +12,7 @@ import { generateName } from '@/utils/agentName';
 
 const ModalHeader = ({ isLoading }: { isLoading: boolean }) =>
   isLoading ? (
-    <Spin indicator={<LoadingOutlined spin />} size="large" />
+    <Spin indicator={<LoadingOutlined />} size="large" />
   ) : (
     <SuccessOutlined />
   );

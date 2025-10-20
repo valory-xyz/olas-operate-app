@@ -10,9 +10,9 @@ import {
 import { cloneDeep } from 'lodash';
 import Image from 'next/image';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { TbCreditCardFilled } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { CreditCardSvg } from '@/components/custom-icons/CreditCard';
 import { Table } from '@/components/ui/Table';
 import { EvmChainId } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
@@ -62,7 +62,7 @@ const getColumns = (
   {
     title: (
       <Flex align="center" gap={8}>
-        <CreditCardSvg />
+        <TbCreditCardFilled size={20} />
         <Text className="text-sm">Credit or Debit Card</Text>
       </Flex>
     ),

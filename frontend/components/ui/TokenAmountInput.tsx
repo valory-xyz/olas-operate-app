@@ -1,7 +1,7 @@
 import { Button, Flex, Image, Typography } from 'antd';
+import { TbWallet } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { WalletOutlined } from '@/components/custom-icons';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { COLOR } from '@/constants/colors';
 import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
@@ -85,7 +85,7 @@ export const TokenAmountInput = ({
       style={{ padding: '10px 20px' }}
     >
       <Flex gap={6} align="center">
-        <WalletOutlined width={20} height={20} />
+        <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
         <Text className="text-sm leading-normal text-neutral-tertiary">
           {formatNumber(totalAmount, 4)}
         </Text>

@@ -8,16 +8,15 @@ import {
 } from 'antd';
 import Image from 'next/image';
 import { useCallback, useState } from 'react';
+import { TbCopy, TbWallet } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { CopySvg } from '@/components/custom-icons/Copy';
-import { WalletIFilled } from '@/components/custom-icons/WalletIFilled';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { COLOR } from '@/constants/colors';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 const FundingDescriptionContainer = styled(Flex)`
   background-color: ${COLOR.BACKGROUND};
@@ -25,12 +24,6 @@ const FundingDescriptionContainer = styled(Flex)`
   border-radius: 10px;
   margin-top: 32px;
 `;
-
-const TOOLTIP_STYLE = {
-  width: 'max-content',
-  borderRadius: 10,
-  padding: '8px 12px',
-};
 
 const MODAL_STYLE = {
   content: {
@@ -84,12 +77,10 @@ const ChainConfirmationMessageModal = ({
 };
 
 const ExternalWalletTooltip = () => (
-  <InfoTooltip
-    placement="top"
-    overlayInnerStyle={TOOLTIP_STYLE}
-    iconStyles={{ color: COLOR.TEXT_NEUTRAL_PRIMARY }}
-  >
-    <Text className="text-sm">This is the wallet you use outside Pearl</Text>
+  <InfoTooltip placement="top" iconColor={COLOR.BLACK}>
+    <Paragraph className="text-sm m-0">
+      This is the wallet you use outside Pearl
+    </Paragraph>
   </InfoTooltip>
 );
 
@@ -136,7 +127,7 @@ export const FundingDescription = ({
       <Flex vertical gap={8}>
         <Text className="text-neutral-tertiary">From</Text>
         <Flex align="center" gap={8}>
-          <WalletIFilled />
+          <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
           <Text>Your external wallet</Text>
           <ExternalWalletTooltip />
         </Flex>
@@ -145,7 +136,7 @@ export const FundingDescription = ({
       <Flex vertical gap={8}>
         <Text className="text-neutral-tertiary">To Pearl Wallet</Text>
         <Flex align="center" gap={8}>
-          <WalletIFilled />
+          <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
           <Text>{address}</Text>
         </Flex>
       </Flex>
@@ -159,12 +150,8 @@ export const FundingDescription = ({
         />
       )}
       <Flex style={{ marginTop: -8 }}>
-        <Button
-          size="small"
-          style={{ display: 'flex', alignItems: 'center', gap: 4 }}
-          onClick={handleCopyAddress}
-        >
-          <CopySvg /> Copy
+        <Button size="small" icon={<TbCopy />} onClick={handleCopyAddress}>
+          Copy
         </Button>
       </Flex>
     </FundingDescriptionContainer>

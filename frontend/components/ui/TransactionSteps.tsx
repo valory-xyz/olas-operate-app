@@ -1,4 +1,3 @@
-import { LoadingOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { FC, ReactNode } from 'react';
 import styled from 'styled-components';
@@ -7,6 +6,7 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { BridgingStepStatus } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
 
+import { Loading } from '../custom-icons';
 import { Steps } from './Steps';
 
 const { Text } = Typography;
@@ -66,7 +66,7 @@ export const TransactionSteps: FC<TransactionStepsProps> = ({ steps }) => (
           {subStep.failed}
         </SubStepContainer>
       )),
-      icon: status === 'process' ? <LoadingOutlined /> : undefined,
+      icon: status === 'process' ? <Loading /> : undefined,
     }))}
     size="small"
     direction="vertical"

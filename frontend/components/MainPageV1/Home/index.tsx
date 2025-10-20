@@ -1,9 +1,10 @@
-import { IdcardTwoTone, SmileTwoTone } from '@ant-design/icons';
-import { Flex, message, Segmented } from 'antd';
+import { Flex, message } from 'antd';
 import get from 'lodash/get';
 import { useCallback, useEffect, useState } from 'react';
+import { RiRobot3Line } from 'react-icons/ri';
+import { TbId } from 'react-icons/tb';
 
-import { COLOR } from '@/constants/colors';
+import { Segmented } from '@/components/ui';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
@@ -21,20 +22,21 @@ type SwitcherProps = {
 
 const Switcher = ({ value, onChange }: SwitcherProps) => {
   return (
-    <Segmented
+    <Segmented<View>
       value={value}
       onChange={onChange}
-      className="mx-auto"
       size="large"
+      className="mx-auto"
+      activeIconColored
       options={[
         {
           value: 'overview',
-          icon: <IdcardTwoTone twoToneColor={COLOR.PURPLE} />,
+          icon: <TbId fontSize={16} />,
           label: 'Overview',
         },
         {
           value: 'profile',
-          icon: <SmileTwoTone twoToneColor={COLOR.PURPLE} />,
+          icon: <RiRobot3Line fontSize={16} />,
           label: 'Profile',
         },
       ]}

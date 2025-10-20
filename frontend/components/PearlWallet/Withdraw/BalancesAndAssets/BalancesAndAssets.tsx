@@ -28,7 +28,8 @@ const AvailableAssetsTooltip = () => {
     <InfoTooltip
       size="medium"
       styles={{ body: { padding: 16 } }}
-      iconStyles={{ color: COLOR.TEXT_NEUTRAL_PRIMARY }}
+      iconSize={18}
+      iconColor={COLOR.BLACK}
     >
       <div className="mb-16">
         Shows your spendable balance on the selected chain — your deposits plus
@@ -89,7 +90,8 @@ const StakedAssetsTooltip = () => (
   <InfoTooltip
     size="medium"
     styles={{ body: { padding: 12 } }}
-    iconStyles={{ color: COLOR.TEXT_NEUTRAL_PRIMARY }}
+    iconSize={18}
+    iconColor={COLOR.BLACK}
   >
     Shows which agents on this chain have assets staked
   </InfoTooltip>
@@ -107,29 +109,31 @@ const PearlWalletTitle = () => (
 );
 
 const AvailableAssets = () => (
-  <Flex vertical gap={24}>
-    <Flex vertical gap={12}>
+  <Flex vertical gap={12}>
+    <Flex align="center" gap={8}>
       <Title level={5} className="m-0 text-lg">
-        Available Assets <AvailableAssetsTooltip />
+        Available Assets
       </Title>
-      <CardFlex $noBorder>
-        <AvailableAssetsTable />
-      </CardFlex>
+      <AvailableAssetsTooltip />
     </Flex>
+    <CardFlex $noBorder>
+      <AvailableAssetsTable />
+    </CardFlex>
   </Flex>
 );
 
 const StakedAssets = () => (
-  <Flex vertical gap={24}>
-    <Flex vertical gap={12}>
+  <Flex vertical gap={12}>
+    <Flex align="center" gap={8}>
       <Title level={5} className="m-0 text-lg">
-        Staked Assets <StakedAssetsTooltip />
+        Staked Assets
       </Title>
-      <CardFlex $noBorder>
-        <StakedAssetsTable />
-        <AgentNft />
-      </CardFlex>
+      <StakedAssetsTooltip />
     </Flex>
+    <CardFlex $noBorder>
+      <StakedAssetsTable />
+      <AgentNft />
+    </CardFlex>
   </Flex>
 );
 
