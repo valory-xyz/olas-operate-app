@@ -35,6 +35,7 @@ const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
 
 type AgentIntroductionProps = {
   agentType?: AgentType;
+  showUnderConstruction?: boolean;
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderAgentSelection?: () => ReactNode;
 } & {
@@ -48,6 +49,7 @@ export const AgentIntroduction = ({
   agentType,
   renderFundingRequirements,
   renderAgentSelection,
+  showUnderConstruction,
   styles,
 }: AgentIntroductionProps) => {
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -97,6 +99,7 @@ export const AgentIntroduction = ({
         ))
       }
       renderAgentSelection={renderAgentSelection}
+      showUnderConstruction={showUnderConstruction}
       styles={styles}
     />
   );

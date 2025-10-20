@@ -77,6 +77,7 @@ type IntroductionProps = OnboardingStep & {
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderDot?: () => ReactNode;
   renderAgentSelection?: () => ReactNode;
+  showUnderConstruction?: boolean;
   styles?: IntroductionStepStyles;
 };
 
@@ -93,6 +94,7 @@ export const IntroductionStep = ({
   renderDot,
   renderFundingRequirements,
   renderAgentSelection,
+  showUnderConstruction = true,
   styles: { imageHeight, descPadding } = {},
 }: IntroductionProps) => {
   const { selectedAgentConfig } = useServices();
@@ -122,7 +124,10 @@ export const IntroductionStep = ({
               >
                 <Content title={title} desc={desc} helper={helper} />
               </div>
-              {selectedAgentConfig.isUnderConstruction && <UnderConstruction />}
+              {showUnderConstruction &&
+                selectedAgentConfig.isUnderConstruction && (
+                  <UnderConstruction />
+                )}
             </>
           )}
 

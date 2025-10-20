@@ -43,6 +43,7 @@ const AboutAgent = () => {
         >
           <AgentIntroduction
             agentType={selectedAgentType}
+            showUnderConstruction={false}
             styles={{ imageHeight: 360, descPadding: '0px' }}
           />
         </Modal>
