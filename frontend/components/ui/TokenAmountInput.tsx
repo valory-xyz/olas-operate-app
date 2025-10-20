@@ -69,6 +69,7 @@ export const TokenAmountInput = ({
         return;
       }
 
+      // Prevent more than allowed decimal places, in this case 6 decimal places
       const decimalPart = String(newValue).split('.')[1];
       if (decimalPart && decimalPart.length > DECIMAL_PLACES) {
         return;
@@ -111,7 +112,7 @@ export const TokenAmountInput = ({
         <Flex gap={6} align="center">
           <WalletOutlined width={20} height={20} />
           <Text className="text-sm leading-normal text-neutral-tertiary">
-            {formatNumber(totalAmount, 6, 'floor')}
+            {formatNumber(totalAmount, DECIMAL_PLACES, 'floor')}
           </Text>
         </Flex>
 
