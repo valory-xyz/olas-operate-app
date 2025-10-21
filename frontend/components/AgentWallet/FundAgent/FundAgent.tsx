@@ -146,16 +146,11 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
     if (entries.length === 0) return false;
 
     // Check if all entered amounts are less than or equal to available balance
-    return entries.every(([symbol, amountDetails]) => {
+    return entries.every(([symbol, { amount }]) => {
       const asset = availableAssets.find(
         (asset) => asset.symbol === (symbol as TokenSymbol),
       );
-
-      return (
-        isNumber(amountDetails.amount) &&
-        asset &&
-        amountDetails.amount <= asset.amount
-      );
+      return isNumber(amount) && asset && amount <= asset.amount;
     });
   }, [amountsToFund, availableAssets]);
 
