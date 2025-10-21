@@ -121,7 +121,7 @@ const SelectYourAgentList = ({
  */
 export const AgentOnboarding = () => {
   const { goto } = useSetup();
-  const { updateAgentType, selectedAgentConfig } = useServices();
+  const { updateAgentType } = useServices();
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
 
   const handleAgentSelect = useCallback(() => {
@@ -179,9 +179,7 @@ export const AgentOnboarding = () => {
               Select Agent
             </Button>
           )}
-          renderUnderConstruction={() =>
-            selectedAgentConfig.isUnderConstruction && <UnderConstruction />
-          }
+          renderUnderConstruction={() => <UnderConstruction />}
         />
       </Flex>
     </Container>
