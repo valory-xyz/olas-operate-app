@@ -1,4 +1,4 @@
-import { Layout } from 'antd';
+import { Layout as MainLayout } from 'antd';
 import { useMemo } from 'react';
 import styled from 'styled-components';
 
@@ -21,7 +21,7 @@ import { useScrollPage } from './hooks/useScrollPage';
 import { useSetupTrayIcon } from './hooks/useSetupTrayIcon';
 import { Sidebar } from './Sidebar';
 
-const { Content: AntdContent } = Layout;
+const { Content: MainContent } = MainLayout;
 
 const MainDraggableTopBar = styled.div<{ $isSplitScreenPage?: boolean }>`
   z-index: 1;
@@ -40,7 +40,7 @@ const MainDraggableTopBar = styled.div<{ $isSplitScreenPage?: boolean }>`
       : ``}
 `;
 
-const Content = styled(AntdContent)<{ $isSplitScreenPage?: boolean }>`
+const Content = styled(MainContent)<{ $isSplitScreenPage?: boolean }>`
   display: flex;
   flex-direction: column;
   margin: 0 auto;
@@ -91,12 +91,12 @@ export const Main = () => {
   const isSplitScreenPage = pageState === Pages.UpdateAgentTemplate;
 
   return (
-    <Layout>
+    <MainLayout>
       <Sidebar />
       <Content $isSplitScreenPage={isSplitScreenPage} ref={contentContainerRef}>
         <MainDraggableTopBar $isSplitScreenPage={isSplitScreenPage} />
         {mainContent}
       </Content>
-    </Layout>
+    </MainLayout>
   );
 };

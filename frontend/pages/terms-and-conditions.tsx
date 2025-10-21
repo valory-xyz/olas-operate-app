@@ -17,6 +17,7 @@ import { APP_HEIGHT, TERMS_WIDTH } from '@/constants/width';
 const { Title, Paragraph, Text } = Typography;
 
 const TermsContainer = styled(Flex)`
+  gap: 32px;
   align-items: center;
   flex-direction: column;
   overflow-y: auto;
@@ -46,7 +47,9 @@ const TransakTermsAndConditions = () => (
   <>
     <TermsWrapper />
     <TermsContainer>
-      <Title level={4}>Third-Party Onramp Disclaimer and Terms</Title>
+      <Title level={4} className="m-0">
+        Third-Party Onramp Disclaimer and Terms
+      </Title>
       <div>
         <Paragraph>
           By using the onramp services accessible via this interface, you
@@ -135,7 +138,7 @@ const Web3AuthTermsAndConditions = () => (
   <>
     <TermsWrapper />
     <TermsContainer>
-      <Title level={4}>
+      <Title level={4} className="m-0">
         Terms & Conditions for Web3Auth Wallet Creation in Pearl
       </Title>
       <div>
@@ -332,7 +335,9 @@ const PearlTermsAndConditions = () => (
   <>
     <TermsWrapper />
     <TermsContainer>
-      <Title level={4}>Pearl Terms And Conditions</Title>
+      <Title level={4} className="m-0">
+        Pearl Terms And Conditions
+      </Title>
       <div>
         <Paragraph>
           <ul>

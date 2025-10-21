@@ -3,16 +3,19 @@ import Image from 'next/image';
 import { PropsWithChildren, useEffect, useMemo } from 'react';
 import styled, { css } from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
-import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
+import {
+  APP_HEIGHT,
+  APP_WIDTH,
+  COLOR,
+  SIDER_WIDTH,
+  TOP_BAR_HEIGHT,
+} from '@/constants';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
-import { usePageState } from '@/hooks/usePageState';
-import { useSetup } from '@/hooks/useSetup';
+import { useOnlineStatusContext, usePageState, useSetup } from '@/hooks';
 
 import { Modal } from '../ui';
-import { NavBar } from './NavBar';
+import { WindowControls } from './WindowControls';
 
 const Container = styled.div<{ $blur: boolean }>`
   display: flex;
@@ -42,6 +45,19 @@ const Container = styled.div<{ $blur: boolean }>`
         z-index: 1;
       }
     `}
+`;
+
+const DraggableNavBar = styled.div<{ $isFullWidth: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  width: ${(props) => (props.$isFullWidth ? '100%' : `${SIDER_WIDTH}px`)};
+  height: ${TOP_BAR_HEIGHT}px;
+  display: flex;
+  align-items: center;
+  -webkit-app-region: drag;
 `;
 
 const layoutWithFullHeight: SetupScreen[] = [SetupScreen.SetupYourAgent];
@@ -98,7 +114,9 @@ export const Layout = ({ children }: PropsWithChildren) => {
       )}
 
       <Container $blur={!isOnline}>
-        <NavBar />
+        <DraggableNavBar $isFullWidth={pageState === Pages.Setup}>
+          <WindowControls />
+        </DraggableNavBar>
         <Body $hasPadding={hasPadding}>{children}</Body>
       </Container>
     </>

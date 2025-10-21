@@ -2,9 +2,6 @@ import { useRouter } from 'next/router';
 import { useCallback } from 'react';
 import styled from 'styled-components';
 
-import { SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants/width';
-import { Pages } from '@/enums';
-import { usePageState } from '@/hooks';
 import { useElectronApi } from '@/hooks/useElectronApi';
 
 const TrafficLightIcon = styled.div`
@@ -26,7 +23,7 @@ const DisabledLight = styled(TrafficLightIcon)`
   background-color: #ddd;
 `;
 
-const TrafficLights = styled.div`
+const WindowControlsContainer = styled.div`
   display: flex;
   gap: 8px;
   align-items: center;
@@ -34,23 +31,8 @@ const TrafficLights = styled.div`
   -webkit-app-region: no-drag;
 `;
 
-const SiderDraggableTopBar = styled.div<{ $isFullWidth: boolean }>`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1;
-  width: ${(props) => (props.$isFullWidth ? '100%' : `${SIDER_WIDTH}px`)};
-  height: ${TOP_BAR_HEIGHT}px;
-  display: flex;
-  align-items: center;
-  -webkit-app-region: drag;
-`;
-
-export const NavBar = () => {
+export const WindowControls = () => {
   const router = useRouter();
-  const { pageState } = usePageState();
-
   const {
     closeApp,
     minimizeApp,
@@ -92,16 +74,14 @@ export const NavBar = () => {
   ]);
 
   return (
-    <SiderDraggableTopBar $isFullWidth={pageState === Pages.Setup}>
-      <TrafficLights>
-        <RedLight onClick={handleClose} />
-        {isNotMain ? (
-          <DisabledLight />
-        ) : (
-          <YellowLight onClick={() => minimizeApp?.()} />
-        )}
+    <WindowControlsContainer>
+      <RedLight onClick={handleClose} />
+      {isNotMain ? (
         <DisabledLight />
-      </TrafficLights>
-    </SiderDraggableTopBar>
+      ) : (
+        <YellowLight onClick={() => minimizeApp?.()} />
+      )}
+      <DisabledLight />
+    </WindowControlsContainer>
   );
 };
