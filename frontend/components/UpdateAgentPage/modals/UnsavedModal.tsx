@@ -13,6 +13,7 @@ export const UnsavedModal = () => {
       onOk={unsavedModal.confirm}
       onCancel={unsavedModal.cancel}
       okText="Discard changes"
+      centered
     >
       You have unsaved changes. Are you sure you want to leave this page?
     </Modal>

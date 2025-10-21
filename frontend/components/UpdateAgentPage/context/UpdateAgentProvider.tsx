@@ -1,4 +1,4 @@
-import { Form, FormInstance } from 'antd';
+import { Form, FormInstance, Modal } from 'antd';
 import { noop } from 'lodash';
 import {
   createContext,
@@ -6,6 +6,7 @@ import {
   PropsWithChildren,
   SetStateAction,
   useCallback,
+  useContext,
   useState,
 } from 'react';
 
@@ -23,7 +24,6 @@ import { useConfirmUpdateModal } from '../hooks/useConfirmModal';
 import { defaultModalProps, ModalProps } from '../hooks/useModal';
 import { useUnsavedModal } from '../hooks/useUnsavedModal';
 import { ConfirmUpdateModal } from '../modals/ConfirmUpdateModal';
-import { UnsavedModal } from '../modals/UnsavedModal';
 
 export const UpdateAgentContext = createContext<{
   isEditing: boolean;
@@ -38,8 +38,25 @@ export const UpdateAgentContext = createContext<{
   confirmUpdateModal: defaultModalProps,
 });
 
+const UnsavedModal = () => {
+  const { unsavedModal } = useContext(UpdateAgentContext);
+
+  return (
+    <Modal
+      title="Unsaved changes"
+      open={unsavedModal.open}
+      onOk={unsavedModal.confirm}
+      onCancel={unsavedModal.cancel}
+      okText="Discard changes"
+      centered
+    >
+      You have unsaved changes. Are you sure you want to leave this page?
+    </Modal>
+  );
+};
+
 export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
-  const [form] = Form.useForm<DeepPartial<ServiceTemplate>>(); // TODO: wrong type, fix it
+  const [form] = Form.useForm<DeepPartial<ServiceTemplate>>();
   const {
     refetch: refetchServices,
     selectedService,
