@@ -5,6 +5,7 @@ import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
 import { SetupScreen } from '@/enums/SetupScreen';
+import { useElectronApi } from '@/hooks';
 import { useSetup } from '@/hooks/useSetup';
 
 const { Title: AntTitle, Text } = Typography;
@@ -50,6 +51,7 @@ const OwnYourAgents = () => (
 export const SetupWelcomeCreate = () => {
   const { goto } = useSetup();
   const [isFormValid, setIsFormValid] = useState(false);
+  const { termsAndConditionsWindow } = useElectronApi();
 
   return (
     <Flex vertical gap={24} style={{ marginTop: 24 }}>
@@ -60,11 +62,7 @@ export const SetupWelcomeCreate = () => {
 
       <Checkbox onChange={(e) => setIsFormValid(e.target.checked)}>
         I agree to the Pearl&nbsp;
-        <a
-          href="https://olas.network/pearl-terms"
-          target="_blank"
-          rel="noreferrer"
-        >
+        <a onClick={() => termsAndConditionsWindow?.show?.('pearl')}>
           Terms & Conditions
         </a>
       </Checkbox>
