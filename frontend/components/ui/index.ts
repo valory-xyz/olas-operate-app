@@ -1,4 +1,3 @@
-export * from './AgentHeader';
 export * from './AgentSetupCompleteModal';
 export * from './BackButton';
 export * from './CardFlex';
