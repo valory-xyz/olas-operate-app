@@ -5,6 +5,7 @@ import { useState } from 'react';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
+import { UnderConstruction } from '@/components/Alerts';
 import { CardFlex, Tooltip } from '@/components/ui';
 import { useYourWallet } from '@/components/YourWalletPage/useYourWallet';
 import { AddressZero } from '@/constants/address';
@@ -43,7 +44,7 @@ const AboutAgent = () => {
         >
           <AgentIntroduction
             agentType={selectedAgentType}
-            showUnderConstruction={false}
+            renderUnderConstruction={() => <UnderConstruction />}
             styles={{ imageHeight: 360, descPadding: '0px' }}
           />
         </Modal>
