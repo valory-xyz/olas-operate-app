@@ -150,7 +150,9 @@ const SettingsMain = () => {
               </Flex>
             </Flex>
 
-            {!masterSafeBackupAddress && <YourFundsAtRiskAlert />}
+            {ownersIsFetched && !masterSafeBackupAddress && (
+              <YourFundsAtRiskAlert />
+            )}
           </CardSection>
         )}
       </Card>

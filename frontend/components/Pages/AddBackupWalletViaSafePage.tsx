@@ -7,6 +7,7 @@ import { DISCORD_TICKET_URL } from '@/constants/urls';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 
+import { cardStyles } from '../ui';
 import { GoToMainPageButton } from './GoToMainPageButton';
 
 const { Text } = Typography;
@@ -38,6 +39,7 @@ export const AddBackupWalletViaSafePage = () => {
   return (
     <Card
       title={<CardTitle title="Add backup wallet via Safe" />}
+      style={cardStyles}
       bordered={false}
       extra={<GoToMainPageButton />}
     >
