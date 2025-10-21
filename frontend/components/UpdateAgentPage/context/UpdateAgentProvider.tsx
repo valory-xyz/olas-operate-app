@@ -7,15 +7,14 @@ import {
   SetStateAction,
   useCallback,
   useContext,
+  useMemo,
   useState,
 } from 'react';
 
 import { ServiceTemplate } from '@/client';
-import { AgentMap } from '@/constants';
-import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
+import { AgentMap, SERVICE_TEMPLATES } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
+import { usePageState, useService, useServices } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { DeepPartial } from '@/types/Util';
 
@@ -23,7 +22,6 @@ import { AgentsFunFormValues } from '../../AgentForms/AgentsFunAgentForm';
 import { useConfirmUpdateModal } from '../hooks/useConfirmModal';
 import { defaultModalProps, ModalProps } from '../hooks/useModal';
 import { useUnsavedModal } from '../hooks/useUnsavedModal';
-import { ConfirmUpdateModal } from '../modals/ConfirmUpdateModal';
 
 export const UpdateAgentContext = createContext<{
   isEditing: boolean;
@@ -38,6 +36,37 @@ export const UpdateAgentContext = createContext<{
   confirmUpdateModal: defaultModalProps,
 });
 
+const ConfirmUpdateModal = ({ isLoading }: { isLoading: boolean }) => {
+  const { isServiceRunning } = useService();
+  const { confirmUpdateModal } = useContext(UpdateAgentContext);
+
+  const btnText = useMemo(() => {
+    if (isServiceRunning) {
+      return isLoading
+        ? 'Saving and restarting agent...'
+        : 'Save and restart agent';
+    }
+
+    return isLoading ? 'Saving...' : 'Save';
+  }, [isServiceRunning, isLoading]);
+
+  return (
+    <Modal
+      title="Confirm changes"
+      open={confirmUpdateModal.open}
+      onOk={confirmUpdateModal.confirm}
+      okButtonProps={{ loading: isLoading }}
+      onCancel={confirmUpdateModal.cancel}
+      okText={btnText}
+      closable={!isLoading}
+      width={400}
+      centered
+    >
+      These changes will only take effect when you restart the agent.
+    </Modal>
+  );
+};
+
 const UnsavedModal = () => {
   const { unsavedModal } = useContext(UpdateAgentContext);
 
@@ -49,6 +78,7 @@ const UnsavedModal = () => {
       onCancel={unsavedModal.cancel}
       okText="Discard changes"
       centered
+      width={400}
     >
       You have unsaved changes. Are you sure you want to leave this page?
     </Modal>
