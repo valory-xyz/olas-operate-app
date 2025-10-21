@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import { AgentInfo } from './AgentInfo';
 import { Performance } from './Performance';
-import { Staking } from './Staking';
+import { Staking } from './Staking/Staking';
 import { Wallet } from './Wallet';
 
 const Container = styled(Flex)`

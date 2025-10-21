@@ -1,14 +1,16 @@
 import { Flex, Typography } from 'antd';
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
+import { LuChevronsUpDown } from 'react-icons/lu';
 import styled from 'styled-components';
 import { useBoolean } from 'usehooks-ts';
 
-import { ChevronUpDown } from '@/components/custom-icons/ChevronUpDown';
 import { InfoTooltip } from '@/components/InfoTooltip';
-import { COLOR } from '@/constants/colors';
-import { useServiceDeployment } from '@/hooks';
-import { useAgentActivity } from '@/hooks/useAgentActivity';
-import { useRewardContext } from '@/hooks/useRewardContext';
+import { COLOR } from '@/constants';
+import {
+  useAgentActivity,
+  useRewardContext,
+  useServiceDeployment,
+} from '@/hooks';
 
 import { AgentActivityModal } from './AgentActivityModal';
 import { Container, Text } from './styles';
@@ -29,15 +31,15 @@ const CurrentActionText = styled.span`
 `;
 
 const IdleContent = () => (
-  <>
+  <Flex align="center" justify="center" gap={4}>
     Agent has earned staking rewards and is in standby mode for the next epoch{' '}
-    <InfoTooltip iconStyles={{ color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT }}>
+    <InfoTooltip iconColor={COLOR.TEXT_COLOR.SUCCESS.DEFAULT}>
       <Paragraph className="text-sm m-0">
         The agent is inactive during standby. If you keep it running, it will
         resume activity automatically at the start of the next epoch.
       </Paragraph>
     </InfoTooltip>
-  </>
+  </Flex>
 );
 
 export const AgentActivity = () => {
@@ -51,63 +53,51 @@ export const AgentActivity = () => {
     setFalse: handleClose,
   } = useBoolean(false);
 
-  const healthcheckRounds = useMemo(() => {
-    return deploymentDetails?.healthcheck?.rounds || [];
-  }, [deploymentDetails?.healthcheck?.rounds]);
-
   const rounds = useMemo(() => {
-    return [...healthcheckRounds].reverse();
-  }, [healthcheckRounds]);
+    return (deploymentDetails?.healthcheck?.rounds || []).reverse();
+  }, [deploymentDetails?.healthcheck?.rounds]);
 
   const roundsInfo = useMemo(() => {
     return deploymentDetails?.healthcheck?.rounds_info;
   }, [deploymentDetails?.healthcheck?.rounds_info]);
 
-  const canOpenModal = Boolean(isServiceRunning && rounds.length);
+  const canOpenModal = isServiceRunning && !!rounds.length;
 
   const activityInfo = useMemo<{
     status: AgentStatus;
-    content: string | React.ReactNode;
+    content: string | ReactNode;
   }>(() => {
     if (isServiceDeploying) {
-      return {
-        status: 'loading',
-        content: 'Agent is loading',
-      };
+      return { status: 'loading', content: 'Agent is loading' };
     }
 
     if (isServiceRunning) {
       if (isEligibleForRewards) {
-        return {
-          status: 'idle',
-          content: <IdleContent />,
-        };
+        return { status: 'idle', content: <IdleContent /> };
       }
+
       if (rounds.length > 0) {
         const currentRound = rounds[0];
         const roundInfo = roundsInfo?.[currentRound]?.name || currentRound;
-
         return {
           status: 'running',
           content: (
             <Flex justify="space-between" align="top" gap={6}>
               <CurrentActionText>Current action:</CurrentActionText>
               <RoundInfoContainer>{roundInfo}</RoundInfoContainer>
-              <ChevronUpDown className="ml-auto flex-none" />
+              <LuChevronsUpDown fontSize={20} className="ml-auto flex-none" />
             </Flex>
           ),
         };
       }
+
       return {
         status: 'activity-not-ready',
         content: 'Agent is pending first activity',
       };
     }
 
-    return {
-      status: 'not-running',
-      content: 'Agent is not running',
-    };
+    return { status: 'not-running', content: 'Agent is not running' };
   }, [
     isEligibleForRewards,
     isServiceDeploying,
@@ -116,8 +106,9 @@ export const AgentActivity = () => {
     roundsInfo,
   ]);
 
-  if (isServiceRunning || isServiceDeploying ? false : !isDeployable)
+  if (isServiceRunning || isServiceDeploying ? false : !isDeployable) {
     return null;
+  }
 
   return (
     <>

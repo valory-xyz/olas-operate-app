@@ -90,11 +90,10 @@ type AgentMetricProps = {
 
 const AgentMetric = ({ name, value, description }: AgentMetricProps) => (
   <Flex vertical gap={8}>
-    <Text className="text-neutral-secondary">
-      {name}
+    <Flex align="center" gap={8}>
+      <Text className="text-neutral-secondary">{name}</Text>
       {description && (
         <InfoTooltip
-          className="ml-8"
           styles={{ body: { maxWidth: 360, width: 'max-content' } }}
           placement="top"
         >
@@ -105,7 +104,7 @@ const AgentMetric = ({ name, value, description }: AgentMetricProps) => (
           />
         </InfoTooltip>
       )}
-    </Text>
+    </Flex>
     <Text className="text-xl">{value}</Text>
   </Flex>
 );

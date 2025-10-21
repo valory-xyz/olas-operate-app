@@ -35,6 +35,7 @@ import {
   Nullable,
   Optional,
   StakedAsset,
+  TokenAmountDetails,
   TokenAmounts,
   ValueOf,
 } from '@/types';
@@ -86,9 +87,12 @@ const PearlWalletContext = createContext<{
   availableAssets: AvailableAsset[];
   stakedAssets: StakedAsset[];
   amountsToWithdraw: TokenAmounts;
-  onAmountChange: (symbol: TokenSymbol, amount: number) => void;
+  onAmountChange: (symbol: TokenSymbol, details: TokenAmountDetails) => void;
   amountsToDeposit: TokenAmounts;
-  onDepositAmountChange: (symbol: TokenSymbol, amount: number) => void;
+  onDepositAmountChange: (
+    symbol: TokenSymbol,
+    details: TokenAmountDetails,
+  ) => void;
   updateAmountsToDeposit: (amounts: TokenAmounts) => void;
   onReset: () => void;
   /** Initial values for funding agent wallet based on refill requirements */
@@ -197,13 +201,16 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [setWalletStep],
   );
 
-  const onAmountChange = useCallback((symbol: TokenSymbol, amount: number) => {
-    setAmountsToWithdraw((prev) => ({ ...prev, [symbol]: amount }));
-  }, []);
+  const onAmountChange = useCallback(
+    (symbol: TokenSymbol, details: TokenAmountDetails) => {
+      setAmountsToWithdraw((prev) => ({ ...prev, [symbol]: details }));
+    },
+    [],
+  );
 
   const onDepositAmountChange = useCallback(
-    (symbol: TokenSymbol, amount: number) => {
-      setAmountsToDeposit((prev) => ({ ...prev, [symbol]: amount }));
+    (symbol: TokenSymbol, details: TokenAmountDetails) => {
+      setAmountsToDeposit((prev) => ({ ...prev, [symbol]: details }));
     },
     [],
   );

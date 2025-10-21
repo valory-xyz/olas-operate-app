@@ -25,7 +25,7 @@ export const SelectAmountToWithdraw = ({
     usePearlWallet();
 
   const isContinueDisabled = availableAssets.every(({ symbol, amount }) => {
-    const amountToWithdraw = amountsToWithdraw?.[symbol] ?? 0;
+    const amountToWithdraw = amountsToWithdraw?.[symbol]?.amount ?? 0;
     return amountToWithdraw <= 0 || amountToWithdraw > amount;
   });
 
@@ -48,10 +48,12 @@ export const SelectAmountToWithdraw = ({
             <TokenAmountInput
               key={symbol}
               tokenSymbol={symbol}
-              value={amountsToWithdraw?.[symbol] ?? 0}
+              value={amountsToWithdraw?.[symbol]?.amount ?? 0}
               maxAmount={amount}
               totalAmount={amount}
-              onChange={(x) => onAmountChange(symbol, x ?? 0)}
+              onChange={(inputValue, details) =>
+                onAmountChange(symbol, { amount: inputValue ?? 0, ...details })
+              }
             />
           ))}
         </Flex>

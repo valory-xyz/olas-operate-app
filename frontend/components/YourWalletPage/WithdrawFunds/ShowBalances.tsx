@@ -100,7 +100,10 @@ const useShowBalances = () => {
       const serviceSafeErc20Balance = serviceSafeErc20Balances?.find(
         (b) => b.symbol === symbol,
       );
-      const masterSafeErc20Balance = masterSafeErc20Balances?.[symbol] ?? 0;
+      const masterSafeErc20Balance =
+        masterSafeErc20Balances && typeof masterSafeErc20Balances === 'object'
+          ? (masterSafeErc20Balances[symbol] ?? 0)
+          : 0;
       const totalBalance = sum([
         masterSafeErc20Balance,
         serviceSafeErc20Balance?.balance,

@@ -1,19 +1,17 @@
-import { HistoryOutlined } from '@ant-design/icons';
 import { Flex, Image, Skeleton, Typography } from 'antd';
 import { useState } from 'react';
+import { TbFileText, TbHistory } from 'react-icons/tb';
 
-import { ContractSvg } from '@/components/custom-icons/Contract';
-import { FireNoStreak } from '@/components/custom-icons/FireNoStreak';
-import { FireV1 } from '@/components/custom-icons/FireV1';
-import { BackButton } from '@/components/ui/BackButton';
-import { CardFlex } from '@/components/ui/CardFlex';
-import { Segmented } from '@/components/ui/Segmented';
-import { COLOR } from '@/constants/colors';
-import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
+import { FireV1 } from '@/components/custom-icons';
+import { BackButton, CardFlex, Segmented } from '@/components/ui';
+import { MAIN_CONTENT_MAX_WIDTH } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useServiceOnlyRewardsHistory } from '@/hooks/useRewardsHistory';
-import { useStakingDetails } from '@/hooks/useStakingDetails';
+import {
+  usePageState,
+  useRewardContext,
+  useServiceOnlyRewardsHistory,
+  useStakingDetails,
+} from '@/hooks';
 
 import { RewardsHistory } from './RewardsHistory';
 import { StakingContractDetails } from './StakingContractDetails';
@@ -24,11 +22,11 @@ const StatsSkeleton = () => <Skeleton.Input active size="small" />;
 
 const StakingStats = () => {
   const { optimisticStreak, isStreakLoading } = useStakingDetails();
+  const { isEligibleForRewards } = useRewardContext();
   const { isLoading: isTotalRewardsLoading } = useServiceOnlyRewardsHistory();
   const { totalRewards } = useServiceOnlyRewardsHistory();
 
-  const fireIcon =
-    optimisticStreak > 0 ? <FireV1 isActive /> : <FireNoStreak />;
+  const isFlameActive = optimisticStreak > 0 && isEligibleForRewards;
 
   return (
     <CardFlex $noBorder $newStyles>
@@ -59,7 +57,7 @@ const StakingStats = () => {
             <StatsSkeleton />
           ) : (
             <Flex>
-              {fireIcon}
+              <FireV1 isActive={isFlameActive} />
               <Title level={5} className="mt-0 mb-0 ml-8">
                 {optimisticStreak}
               </Title>
@@ -78,31 +76,6 @@ type SelectionTabsProps = {
   setCurrentTab: (value: SelectionTabValue) => void;
 };
 
-type SelectionTabProps = {
-  label: string;
-  value: string;
-  isSelected: boolean;
-};
-
-const SelectionTab = ({ label, value, isSelected }: SelectionTabProps) => {
-  const textColor = isSelected
-    ? COLOR.TEXT_NEUTRAL_PRIMARY
-    : COLOR.TEXT_NEUTRAL_TERTIARY;
-  const textClass = isSelected
-    ? 'text-neutral-primary'
-    : 'text-neutral-tertiary';
-  return (
-    <Flex align="center" gap={8}>
-      {value === 'StakingContract' ? (
-        <ContractSvg fill={textColor} stroke={textColor} />
-      ) : (
-        <HistoryOutlined color={textColor} />
-      )}
-      <Text className={textClass}>{label}</Text>
-    </Flex>
-  );
-};
-
 const SelectionTabs = ({ currentTab, setCurrentTab }: SelectionTabsProps) => (
   <Flex className="mt-32 mb-32">
     <Segmented<SelectionTabValue>
@@ -110,23 +83,13 @@ const SelectionTabs = ({ currentTab, setCurrentTab }: SelectionTabsProps) => (
       onChange={(value) => setCurrentTab(value)}
       options={[
         {
-          label: (
-            <SelectionTab
-              label="Staking Contract"
-              value="StakingContract"
-              isSelected={currentTab === 'StakingContract'}
-            />
-          ),
+          label: 'Staking Contract',
+          icon: <TbFileText size={18} />,
           value: 'StakingContract',
         },
         {
-          label: (
-            <SelectionTab
-              label="Rewards History"
-              value="RewardsHistory"
-              isSelected={currentTab === 'RewardsHistory'}
-            />
-          ),
+          icon: <TbHistory size={18} />,
+          label: 'Rewards History',
           value: 'RewardsHistory',
         },
       ]}

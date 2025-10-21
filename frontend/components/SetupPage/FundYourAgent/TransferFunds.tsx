@@ -1,9 +1,9 @@
-import { LoadingOutlined } from '@ant-design/icons';
 import { Flex, Spin, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { CustomAlert } from '@/components/Alert';
+import { LoadingOutlined } from '@/components/custom-icons';
 import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
 import { BackButton } from '@/components/ui/BackButton';
 import { CardFlex } from '@/components/ui/CardFlex';
@@ -25,7 +25,7 @@ const { Text, Title } = Typography;
 
 const FinishingSetupModal = () => (
   <Modal
-    header={<Spin indicator={<LoadingOutlined spin />} size="large" />}
+    header={<Spin indicator={<LoadingOutlined />} size="large" />}
     title="Finishing Setup"
     description="It usually takes a few minutes. Please keep the app open until the
 process is complete."

@@ -1,10 +1,12 @@
 import { Flex, Tag, Typography } from 'antd';
+import {
+  TbFileText,
+  TbLock,
+  TbSparkles,
+  TbSquareRoundedPercentage,
+} from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { ContractSvg } from '@/components/custom-icons/Contract';
-import { LockSvg } from '@/components/custom-icons/Lock';
-import { PercentageOutlined } from '@/components/custom-icons/Percentage';
-import { SparklesSvg } from '@/components/custom-icons/Sparkles';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Divider } from '@/components/ui/Divider';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
@@ -33,6 +35,7 @@ const ContractCard = styled(CardFlex)<{ $isConfirmSwitchPage?: boolean }>`
 const ContractTag = styled(Tag)`
   display: flex;
   align-items: center;
+  gap: 6px;
   padding: 4px 8px;
   width: max-content;
   border-radius: 8px;
@@ -60,14 +63,17 @@ export const StakingContract = ({
     <ContractCard $noBodyPadding $isConfirmSwitchPage={isConfirmSwitchPage}>
       <Flex gap={24} vertical className="px-24 py-24">
         <ContractTag>
-          <ContractSvg width={16} height={16} className="mr-6" />
-          <Text className="text-sm text-neutral-tertiary">
+          <TbFileText size={16} color={COLOR.TEXT_NEUTRAL_SECONDARY} />
+          <Text className="text-sm text-neutral-secondary">
             {stakingProgramMeta.name}
           </Text>
         </ContractTag>
 
         <Flex align="center" gap={6}>
-          <PercentageOutlined width={20} fill={COLOR.TEXT_NEUTRAL_TERTIARY} />{' '}
+          <TbSquareRoundedPercentage
+            size={20}
+            color={COLOR.TEXT_NEUTRAL_TERTIARY}
+          />
           <Title level={3} className="m-0">
             {contractDetails?.apy}%
           </Title>
@@ -81,7 +87,7 @@ export const StakingContract = ({
 
       <Flex vertical gap={12} className="px-24 pt-24">
         <Flex align="center" gap={10}>
-          <SparklesSvg width={20} fill={COLOR.TEXT_NEUTRAL_TERTIARY} />{' '}
+          <TbSparkles size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
           <Text type="secondary">
             ~{contractDetails?.rewardsPerWorkPeriod?.toFixed(2)} OLAS - rewards
             per epoch
@@ -89,7 +95,7 @@ export const StakingContract = ({
         </Flex>
 
         <Flex align="center" gap={10}>
-          <LockSvg width={20} fill={COLOR.TEXT_NEUTRAL_TERTIARY} />{' '}
+          <TbLock size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
           <Text type="secondary">
             {contractDetails?.olasStakeRequired} OLAS - staking deposit
           </Text>

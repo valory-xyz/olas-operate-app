@@ -1,7 +1,6 @@
 import { Button, Flex, Typography } from 'antd';
+import { RiAppleFill, RiGoogleFill } from 'react-icons/ri';
 
-import { AppleIcon } from '@/components/custom-icons/AppleIcon';
-import { GoogleIcon } from '@/components/custom-icons/GoogleIcon';
 import { COLOR } from '@/constants/colors';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -21,19 +20,9 @@ const Web3AuthCaption = () => {
   return (
     <Text type="secondary" className="text-sm mt-16">
       Set Up with&nbsp;
-      <GoogleIcon
-        fill={COLOR.GRAY_2}
-        height={14}
-        width={14}
-        viewBox="0 0 14 15"
-      />
+      <RiGoogleFill fill={COLOR.GRAY_2} />
       &nbsp;/&nbsp;
-      <AppleIcon
-        fill={COLOR.GRAY_2}
-        height={15}
-        width={15}
-        viewBox="0 0 15 16"
-      />
+      <RiAppleFill fill={COLOR.GRAY_2} />
       &nbsp; authentication service is provided by Web3Auth. For details on how
       your data is handled during authentication, please refer to the&nbsp;
       <a onClick={() => termsAndConditionsWindow?.show?.('web3auth')}>
@@ -62,9 +51,9 @@ export const BackupWalletWeb3Auth = ({
       <Button type="primary" size="large" onClick={openWeb3AuthModel}>
         <Flex justify="center" align="center">
           Set Up with&nbsp;
-          <GoogleIcon fill={COLOR.WHITE} />
+          <RiGoogleFill fill={COLOR.WHITE} />
           &nbsp;/&nbsp;
-          <AppleIcon fill={COLOR.WHITE} />
+          <RiAppleFill fill={COLOR.WHITE} />
         </Flex>
       </Button>
       <Button size="large" onClick={onSetUpManuallyClick}>
