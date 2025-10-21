@@ -36,11 +36,11 @@ export const FundsAreSafeMessage = ({
 
     <Text className="text-sm text-lighter">
       Don&apos;t worry, your funds remain safe. Try again or ask for help in the
+      <br />
+      <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">
+        Olas community Discord server {UNICODE_SYMBOLS.EXTERNAL_LINK}
+      </a>
     </Text>
-
-    <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">
-      Olas community Discord server {UNICODE_SYMBOLS.EXTERNAL_LINK}
-    </a>
 
     {showRestartMessage && (
       <Text className="text-sm text-lighter">

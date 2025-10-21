@@ -57,7 +57,7 @@ export const ExportLogsButton = ({ size }: ExportLogsButtonProps) => {
       size={size || 'middle'}
       type="default"
     >
-      <TbShare2 size={20} />
+      <TbShare2 size={size === 'small' ? 16 : 20} />
       Export logs
     </Button>
   );
