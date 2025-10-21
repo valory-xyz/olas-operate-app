@@ -5,14 +5,12 @@ import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
+import { UnderConstruction } from '@/components/Alerts';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
-import { AgentType } from '@/constants/agent';
-import { COLOR } from '@/constants/colors';
+import { AgentType, COLOR } from '@/constants';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
-import { useSetup } from '@/hooks/useSetup';
+import { usePageState, useServices, useSetup } from '@/hooks';
 import { AgentConfig } from '@/types/Agent';
 import { Optional } from '@/types/Util';
 
@@ -181,6 +179,7 @@ export const AgentOnboarding = () => {
               Select Agent
             </Button>
           )}
+          renderUnderConstruction={() => <UnderConstruction />}
         />
       </Flex>
     </Container>

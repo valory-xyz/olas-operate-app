@@ -1,4 +1,4 @@
-import { Layout } from 'antd';
+import { Layout as MainLayout } from 'antd';
 import { useMemo } from 'react';
 import styled from 'styled-components';
 
@@ -9,8 +9,9 @@ import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { SelectStaking } from '@/components/SelectStaking/SelectStaking';
 import { Settings } from '@/components/SettingsPage';
 import { UpdateAgentPage } from '@/components/UpdateAgentPage';
+import { SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
+import { useNotifyOnNewEpoch, usePageState } from '@/hooks';
 
 import { AgentWallet } from '../AgentWallet';
 import { FundPearlWallet } from '../FundPearlWallet';
@@ -20,14 +21,31 @@ import { useScrollPage } from './hooks/useScrollPage';
 import { useSetupTrayIcon } from './hooks/useSetupTrayIcon';
 import { Sidebar } from './Sidebar';
 
-const { Content: AntdContent } = Layout;
+const { Content: MainContent } = MainLayout;
 
-const Content = styled(AntdContent)<{ $isSplitScreenPage?: boolean }>`
+const MainDraggableTopBar = styled.div<{ $isSplitScreenPage?: boolean }>`
+  z-index: 1;
+  flex-shrink: 0;
+  width: 100%;
+  height: ${TOP_BAR_HEIGHT}px;
+  -webkit-app-region: drag;
+  ${(props) =>
+    props.$isSplitScreenPage
+      ? `
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: ${SIDER_WIDTH}px;
+      `
+      : ``}
+`;
+
+const Content = styled(MainContent)<{ $isSplitScreenPage?: boolean }>`
   display: flex;
   flex-direction: column;
   margin: 0 auto;
   overflow: auto;
-  ${(props) => (props.$isSplitScreenPage ? `` : `padding: 40px 0px;`)}
+  ${(props) => (props.$isSplitScreenPage ? `` : `padding-bottom: 40px;`)}
 `;
 
 /**
@@ -35,6 +53,7 @@ const Content = styled(AntdContent)<{ $isSplitScreenPage?: boolean }>`
  */
 const usePageInitialization = () => {
   useSetupTrayIcon();
+  useNotifyOnNewEpoch();
 };
 
 export const Main = () => {
@@ -72,11 +91,12 @@ export const Main = () => {
   const isSplitScreenPage = pageState === Pages.UpdateAgentTemplate;
 
   return (
-    <Layout>
+    <MainLayout>
       <Sidebar />
       <Content $isSplitScreenPage={isSplitScreenPage} ref={contentContainerRef}>
+        <MainDraggableTopBar $isSplitScreenPage={isSplitScreenPage} />
         {mainContent}
       </Content>
-    </Layout>
+    </MainLayout>
   );
 };
