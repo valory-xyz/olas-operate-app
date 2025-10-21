@@ -7,10 +7,32 @@ import {
 
 const { Title, Text } = Typography;
 
+const modalStylesMap: Record<
+  'small' | 'medium',
+  {
+    width: number;
+    padding: number;
+    flexAlign: 'center' | 'flex-start';
+    textAlignClass: string;
+  }
+> = {
+  small: {
+    width: 400,
+    padding: 24,
+    flexAlign: 'flex-start',
+    textAlignClass: 'text-left',
+  },
+  medium: {
+    width: 450,
+    padding: 32,
+    flexAlign: 'center',
+    textAlignClass: 'text-center',
+  },
+} as const;
+
 const MODAL_STYLES: AntdModalProps['styles'] = {
   content: {
     minHeight: '264px',
-    padding: '32px',
     borderRadius: '12px',
     display: 'flex',
     flexDirection: 'column',
@@ -22,54 +44,41 @@ type ModalProps = {
   header?: React.ReactNode | null;
   title: string;
   description: string;
-  width?: number;
+  size?: 'small' | 'medium';
   action?: React.ReactNode;
-  align?: 'center' | 'left' | 'right';
 };
 
 export const Modal = ({
   header = null,
   title,
   description,
-  width = 452,
+  size = 'medium',
   action = null,
-  align = 'center',
   ...props
 }: ModalProps & AntdModalProps) => {
-  const flexAlignMap: Record<
-    'center' | 'left' | 'right',
-    'center' | 'flex-start' | 'flex-end'
-  > = {
-    center: 'center',
-    left: 'flex-start',
-    right: 'flex-end',
-  };
-
-  const textAlignClassMap: Record<'center' | 'left' | 'right', string> = {
-    center: 'text-center',
-    left: 'text-left',
-    right: 'text-right',
-  };
-
-  const flexAlign = flexAlignMap[align];
-  const textAlignClass = textAlignClassMap[align];
+  const sizeStyles = modalStylesMap[size];
 
   return (
     <AntdModal
       open
       centered
       footer={null}
-      width={width}
-      styles={MODAL_STYLES}
+      width={sizeStyles.width}
+      styles={{
+        content: {
+          ...MODAL_STYLES.content,
+          padding: `${sizeStyles.padding}px`,
+        },
+      }}
       closable={false}
       {...props}
     >
-      <Flex vertical align={flexAlign} style={{ width: '100%' }}>
+      <Flex vertical align={sizeStyles.flexAlign} style={{ width: '100%' }}>
         {header}
-        <Title level={5} className={`mt-24 mb-12 ${textAlignClass}`}>
+        <Title level={5} className={`mt-24 mb-12 ${sizeStyles.textAlignClass}`}>
           {title}
         </Title>
-        <Text type="secondary" className={textAlignClass}>
+        <Text type="secondary" className={sizeStyles.textAlignClass}>
           {description}
         </Text>
         {action}
