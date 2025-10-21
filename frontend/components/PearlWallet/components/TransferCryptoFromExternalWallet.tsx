@@ -1,11 +1,11 @@
-import { CopyOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Button, Flex, Image, TableColumnsType, Typography } from 'antd';
 import { kebabCase } from 'lodash';
 import { useCallback } from 'react';
+import { LuInfo } from 'react-icons/lu';
+import { TbCopy, TbWallet } from 'react-icons/tb';
 import { styled } from 'styled-components';
 
 import { CustomAlert } from '@/components/Alert';
-import { WalletOutlined } from '@/components/custom-icons';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { BackButton, CardFlex, Table } from '@/components/ui';
 import { COLOR, TokenSymbolConfigMap } from '@/constants';
@@ -35,7 +35,7 @@ const ChainWarningAlert = ({ chainName }: { chainName: string }) => (
 
 const DoesNotTrackIncomingTransfers = () => (
   <Flex align="start" gap={8}>
-    <InfoCircleOutlined className="mt-4 text-neutral-tertiary" />
+    <LuInfo size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
     <Paragraph className="text-sm m-0 text-neutral-tertiary">
       This screen doesn’t track incoming transfers. To verify, review the Pearl
       Wallet balance or transaction history.
@@ -72,9 +72,9 @@ const TransferDetails = ({ chainName, address }: TransferDetailsProps) => {
       <Flex vertical gap={8}>
         <Text className="text-sm text-neutral-tertiary">From</Text>
         <Flex gap={8} align="center">
-          <WalletOutlined width={20} height={20} />
+          <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
           <Text>Your external wallet</Text>
-          <InfoTooltip placement="top">
+          <InfoTooltip placement="top" iconColor={COLOR.BLACK}>
             <Paragraph className="text-sm m-0">
               This is the wallet you use outside Pearl
             </Paragraph>
@@ -85,15 +85,11 @@ const TransferDetails = ({ chainName, address }: TransferDetailsProps) => {
       <Flex vertical gap={8}>
         <Text className="text-sm text-neutral-tertiary">To Pearl Wallet</Text>
         <Flex gap={8} align="center">
-          <WalletOutlined width={20} height={20} />
+          <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
           <Text>{address}</Text>
         </Flex>
         <Flex>
-          <Button
-            onClick={handleCopyAddress}
-            size="small"
-            icon={<CopyOutlined />}
-          >
+          <Button onClick={handleCopyAddress} size="small" icon={<TbCopy />}>
             Copy
           </Button>
         </Flex>

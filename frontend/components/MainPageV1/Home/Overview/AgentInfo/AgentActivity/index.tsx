@@ -1,9 +1,9 @@
 import { Flex, Typography } from 'antd';
 import { ReactNode, useMemo } from 'react';
+import { LuChevronsUpDown } from 'react-icons/lu';
 import styled from 'styled-components';
 import { useBoolean } from 'usehooks-ts';
 
-import { ChevronUpDown } from '@/components/custom-icons/ChevronUpDown';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { COLOR } from '@/constants';
 import {
@@ -31,15 +31,15 @@ const CurrentActionText = styled.span`
 `;
 
 const IdleContent = () => (
-  <>
+  <Flex align="center" justify="center" gap={4}>
     Agent has earned staking rewards and is in standby mode for the next epoch{' '}
-    <InfoTooltip iconStyles={{ color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT }}>
+    <InfoTooltip iconColor={COLOR.TEXT_COLOR.SUCCESS.DEFAULT}>
       <Paragraph className="text-sm m-0">
         The agent is inactive during standby. If you keep it running, it will
         resume activity automatically at the start of the next epoch.
       </Paragraph>
     </InfoTooltip>
-  </>
+  </Flex>
 );
 
 export const AgentActivity = () => {
@@ -85,7 +85,7 @@ export const AgentActivity = () => {
             <Flex justify="space-between" align="top" gap={6}>
               <CurrentActionText>Current action:</CurrentActionText>
               <RoundInfoContainer>{roundInfo}</RoundInfoContainer>
-              <ChevronUpDown className="ml-auto flex-none" />
+              <LuChevronsUpDown fontSize={20} className="ml-auto flex-none" />
             </Flex>
           ),
         };

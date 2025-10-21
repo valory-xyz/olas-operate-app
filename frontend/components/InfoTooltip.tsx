@@ -1,21 +1,23 @@
-import { InfoCircleOutlined } from '@ant-design/icons';
 import Tooltip, { TooltipProps } from 'antd/es/tooltip';
 import React from 'react';
+import { LuInfo } from 'react-icons/lu';
 
 import { COLOR } from '@/constants/colors';
 
-const DEFAULT_ICON_STYLES = { color: COLOR.TEXT_LIGHT, cursor: 'pointer' };
+const DEFAULT_ICON_STYLES = { cursor: 'pointer' };
 
 export const InfoTooltip = ({
   placement = 'topLeft',
   children,
   size = 'small',
-  iconStyles = DEFAULT_ICON_STYLES,
+  iconSize = 16,
+  iconColor = COLOR.TEXT_NEUTRAL_TERTIARY,
   overlayInnerStyle,
   ...rest
 }: {
   children: React.ReactNode;
-  iconStyles?: React.CSSProperties;
+  iconSize?: number;
+  iconColor?: string;
   size?: 'small' | 'medium';
   placement?: TooltipProps['placement'];
 } & TooltipProps) => {
@@ -32,7 +34,7 @@ export const InfoTooltip = ({
       }}
       {...rest}
     >
-      <InfoCircleOutlined style={{ ...DEFAULT_ICON_STYLES, ...iconStyles }} />
+      <LuInfo size={iconSize} color={iconColor} style={DEFAULT_ICON_STYLES} />
     </Tooltip>
   );
 };

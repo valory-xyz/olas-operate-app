@@ -3,8 +3,6 @@ import { Button, Flex, Skeleton, Tooltip, Typography } from 'antd';
 import { useCallback } from 'react';
 import styled from 'styled-components';
 
-import { FireNoStreak } from '@/components/custom-icons/FireNoStreak';
-import { FireStreak } from '@/components/custom-icons/FireStreak';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
 import { PEARL_URL } from '@/constants/urls';
@@ -63,7 +61,7 @@ const Streak = () => {
     <Flex gap={6} align="center">
       {optimisticStreak > 0 ? (
         <>
-          <FireStreak /> {optimisticStreak} day streak
+          {optimisticStreak} day streak
           <Tooltip arrow={false} title="Share streak on X" placement="top">
             <Button
               type="link"
@@ -77,9 +75,7 @@ const Streak = () => {
           </Tooltip>
         </>
       ) : (
-        <>
-          <FireNoStreak /> No streak
-        </>
+        <>No streak</>
       )}
     </Flex>
   );

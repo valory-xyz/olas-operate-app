@@ -1,14 +1,13 @@
 import { Card, Flex, Typography } from 'antd';
 import { compact } from 'lodash';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { FiArrowUpRight, FiExternalLink } from 'react-icons/fi';
 import { useIsMounted } from 'usehooks-ts';
 
 import { COLOR } from '@/constants/colors';
 import { FAQ_URL, GITHUB_API_RELEASES, SUPPORT_URL } from '@/constants/urls';
 import { useElectronApi } from '@/hooks/useElectronApi';
 
-import { ArrowUpRightSvg } from '../custom-icons';
-import { ExternalLinkIcon } from '../custom-icons/ExternalLinkIcon';
 import { ExportLogsButton } from '../ExportLogsButton';
 import { CardSection, cardStyles } from '../ui';
 
@@ -90,9 +89,9 @@ export const HelpAndSupport = () => {
                 <Flex justify="space-between" align="center">
                   {label}
                   {isExternal ? (
-                    <ExternalLinkIcon fill={COLOR.PURPLE} />
+                    <FiExternalLink color={COLOR.PURPLE} fontSize={20} />
                   ) : (
-                    <ArrowUpRightSvg fill={COLOR.PURPLE} />
+                    <FiArrowUpRight color={COLOR.PURPLE} fontSize={20} />
                   )}
                 </Flex>
               </a>
