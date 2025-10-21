@@ -5,7 +5,6 @@ import { LowOperatingBalanceBridgeFunds } from '@/components/AddFundsThroughBrid
 import { LowSafeSignerBalanceBridgeFunds } from '@/components/AddFundsThroughBridge/LowSafeSignerBalanceBridgeFunds';
 import { Main } from '@/components/MainPageV1';
 import { ManageStakingPage } from '@/components/ManageStakingPage';
-import { AddBackupWalletViaSafePage } from '@/components/Pages/AddBackupWalletViaSafePage';
 import { RewardsHistory } from '@/components/RewardsHistory/RewardsHistory';
 import { Setup } from '@/components/SetupPage';
 import { YourWalletPage } from '@/components/YourWalletPage';
@@ -34,8 +33,6 @@ export default function Home() {
         return <YourWalletPage />;
       case Pages.RewardsHistory:
         return <RewardsHistory />;
-      case Pages.AddBackupWalletViaSafe:
-        return <AddBackupWalletViaSafePage />;
 
       // bridge pages
       case Pages.AddFundsToMasterSafeThroughBridge:
