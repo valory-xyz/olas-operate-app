@@ -7,6 +7,29 @@ import {
 
 const { Title, Text } = Typography;
 
+const modalStylesMap: Record<
+  'small' | 'medium',
+  {
+    width: number;
+    padding: number;
+    flexAlign: 'center' | 'flex-start';
+    textAlignClass: string;
+  }
+> = {
+  small: {
+    width: 400,
+    padding: 24,
+    flexAlign: 'flex-start',
+    textAlignClass: 'text-left',
+  },
+  medium: {
+    width: 450,
+    padding: 32,
+    flexAlign: 'center',
+    textAlignClass: 'text-center',
+  },
+} as const;
+
 const MODAL_STYLES: AntdModalProps['styles'] = {
   content: {
     minHeight: '264px',
@@ -33,39 +56,29 @@ export const Modal = ({
   action = null,
   ...props
 }: ModalProps & AntdModalProps) => {
-  let flexAlign = 'center';
-  let textAlignClass = 'text-center';
-  let width = 450;
-
-  if (size === 'small') {
-    flexAlign = 'flex-start';
-    textAlignClass = 'text-left';
-    width = 400;
-  }
-
-  const padding = size === 'small' ? 24 : 32;
+  const sizeStyles = modalStylesMap[size];
 
   return (
     <AntdModal
       open
       centered
       footer={null}
-      width={width}
+      width={sizeStyles.width}
       styles={{
         content: {
           ...MODAL_STYLES.content,
-          padding: `${padding}px`,
+          padding: `${sizeStyles.padding}px`,
         },
       }}
       closable={false}
       {...props}
     >
-      <Flex vertical align={flexAlign} style={{ width: '100%' }}>
+      <Flex vertical align={sizeStyles.flexAlign} style={{ width: '100%' }}>
         {header}
-        <Title level={5} className={`mt-24 mb-12 ${textAlignClass}`}>
+        <Title level={5} className={`mt-24 mb-12 ${sizeStyles.textAlignClass}`}>
           {title}
         </Title>
-        <Text type="secondary" className={textAlignClass}>
+        <Text type="secondary" className={sizeStyles.textAlignClass}>
           {description}
         </Text>
         {action}
