@@ -35,17 +35,12 @@ export const FundsAreSafeMessage = ({
     </Flex>
 
     <Text className="text-sm text-lighter">
-      Don&apos;t worry, your funds remain safe. You can access them by importing
-      your Pearl seed phrase into a compatible wallet, like MetaMask or
-      Coinbase.
+      Don&apos;t worry, your funds remain safe. Try again or ask for help in the
     </Text>
 
-    <Text className="text-sm text-lighter">
-      Ask for help in{' '}
-      <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">
-        the Olas community Discord server {UNICODE_SYMBOLS.EXTERNAL_LINK}
-      </a>
-    </Text>
+    <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">
+      Olas community Discord server {UNICODE_SYMBOLS.EXTERNAL_LINK}
+    </a>
 
     {showRestartMessage && (
       <Text className="text-sm text-lighter">

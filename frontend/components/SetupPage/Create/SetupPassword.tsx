@@ -55,7 +55,7 @@ export const PasswordStrength = ({ score }: { score: number }) => {
 };
 
 export const SetupPassword = () => {
-  const { goto, setMnemonic } = useSetup();
+  const { goto } = useSetup();
   const { setUserLoggedIn } = usePageState();
   const [form] = Form.useForm<{ password: string; terms: boolean }>();
   const message = useMessageApi();
@@ -81,10 +81,9 @@ export const SetupPassword = () => {
     AccountService.createAccount(password)
       .then(() => AccountService.loginAccount(password))
       .then(() => WalletService.createEoa())
-      .then(({ mnemonic }: { mnemonic: string[] }) => {
-        setMnemonic(mnemonic);
-        goto(SetupScreen.SetupSeedPhrase);
+      .then(() => {
         setUserLoggedIn();
+        goto(SetupScreen.SetupBackupSigner);
       })
       .catch((e: unknown) => {
         message.error(getErrorMessage(e));

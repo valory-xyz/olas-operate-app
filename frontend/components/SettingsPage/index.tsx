@@ -35,7 +35,7 @@ const YourFundsAtRiskAlert = () => {
             <span className="font-weight-600">Your funds are at risk!</span>
             <span>
               Add a backup wallet to allow you to retrieve funds if you lose
-              your password and seed phrase.
+              your password.
             </span>
             <Text
               className="pointer hover-underline text-primary"
