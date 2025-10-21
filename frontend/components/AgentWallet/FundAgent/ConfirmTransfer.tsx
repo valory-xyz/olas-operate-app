@@ -131,7 +131,7 @@ const useConfirmTransfer = () => {
 };
 
 type ConfirmTransferProps = {
-  isTransferDisabled?: boolean;
+  canTransfer?: boolean;
   fundsToTransfer: TokenAmounts;
 };
 
@@ -206,7 +206,7 @@ const prepareAgentFundsForTransfer = ({
 };
 
 export const ConfirmTransfer = ({
-  isTransferDisabled,
+  canTransfer,
   fundsToTransfer,
 }: ConfirmTransferProps) => {
   const { selectedAgentConfig, selectedService } = useServices();
@@ -261,8 +261,8 @@ export const ConfirmTransfer = ({
     // Check if all amounts are zero
     if (values(fundsToTransfer).every((x) => x.amount === 0)) return false;
 
-    return isTransferDisabled;
-  }, [fundsToTransfer, serviceSafe, isTransferDisabled]);
+    return canTransfer;
+  }, [fundsToTransfer, serviceSafe, canTransfer]);
 
   return (
     <CardFlex $noBorder $padding="32px" className="w-full">
