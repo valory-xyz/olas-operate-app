@@ -34,7 +34,7 @@ const TrafficLights = styled.div`
   -webkit-app-region: no-drag;
 `;
 
-const TopBarContainer = styled.div<{ $isFullWidth: boolean }>`
+const SiderDraggableTopBar = styled.div<{ $isFullWidth: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
@@ -44,7 +44,6 @@ const TopBarContainer = styled.div<{ $isFullWidth: boolean }>`
   height: ${TOP_BAR_HEIGHT}px;
   display: flex;
   align-items: center;
-  background-color: red;
   -webkit-app-region: drag;
 `;
 
@@ -93,7 +92,7 @@ export const NavBar = () => {
   ]);
 
   return (
-    <TopBarContainer $isFullWidth={pageState === Pages.Setup}>
+    <SiderDraggableTopBar $isFullWidth={pageState === Pages.Setup}>
       <TrafficLights>
         <RedLight onClick={handleClose} />
         {isNotMain ? (
@@ -103,6 +102,6 @@ export const NavBar = () => {
         )}
         <DisabledLight />
       </TrafficLights>
-    </TopBarContainer>
+    </SiderDraggableTopBar>
   );
 };

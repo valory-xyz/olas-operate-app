@@ -23,7 +23,7 @@ import { Sidebar } from './Sidebar';
 
 const { Content: AntdContent } = Layout;
 
-const DraggableTopBar = styled.div<{ $isSplitScreenPage?: boolean }>`
+const MainDraggableTopBar = styled.div<{ $isSplitScreenPage?: boolean }>`
   z-index: 1;
   flex-shrink: 0;
   width: 100%;
@@ -94,7 +94,7 @@ export const Main = () => {
     <Layout>
       <Sidebar />
       <Content $isSplitScreenPage={isSplitScreenPage} ref={contentContainerRef}>
-        <DraggableTopBar $isSplitScreenPage={isSplitScreenPage} />
+        <MainDraggableTopBar $isSplitScreenPage={isSplitScreenPage} />
         {mainContent}
       </Content>
     </Layout>
