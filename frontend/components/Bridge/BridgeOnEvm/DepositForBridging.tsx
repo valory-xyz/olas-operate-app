@@ -57,7 +57,7 @@ const RootCard = styled(Flex)`
 `;
 
 const RequestingQuote = () => (
-  <Flex gap={8} align="senter" className="p-16">
+  <Flex gap={8} align="center" className="p-16">
     <Spin indicator={<LoadingSpinner />} />
     <Text>Requesting quote...</Text>
   </Flex>
