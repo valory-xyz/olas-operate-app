@@ -1,17 +1,18 @@
 import { Card, Flex, Skeleton, Typography } from 'antd';
-import Title from 'antd/es/typography/Title';
 import { isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 
 import { Pages } from '@/enums/Pages';
 import { SettingsScreen } from '@/enums/SettingsScreen';
-import { useFeatureFlag } from '@/hooks/useFeatureFlag';
-import { useMultisig } from '@/hooks/useMultisig';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
-import { useSettings } from '@/hooks/useSettings';
-import { useMasterWalletContext } from '@/hooks/useWallet';
+import {
+  useFeatureFlag,
+  useMasterWalletContext,
+  useMultisig,
+  usePageState,
+  useServices,
+  useSettings,
+} from '@/hooks';
 import { Address } from '@/types/Address';
 import { Optional } from '@/types/Util';
 
@@ -19,27 +20,40 @@ import { AddressLink } from '../AddressLink';
 import { CustomAlert } from '../Alert';
 import { CardSection, cardStyles } from '../ui';
 
-const { Text, Paragraph } = Typography;
+const { Text, Paragraph, Title } = Typography;
 
-export const Settings = () => {
-  const { screen } = useSettings();
-  const settingsScreen = useMemo(() => {
-    switch (screen) {
-      case SettingsScreen.Main:
-        return <SettingsMain />;
-      default:
-        return null;
-    }
-  }, [screen]);
-
-  return settingsScreen;
+const YourFundsAtRiskAlert = () => {
+  const { goto } = usePageState();
+  return (
+    <CardSection style={{ marginTop: 12 }}>
+      <CustomAlert
+        type="warning"
+        fullWidth
+        showIcon
+        message={
+          <Flex vertical gap={5}>
+            <span className="font-weight-600">Your funds are at risk!</span>
+            <span>
+              Add a backup wallet to allow you to retrieve funds if you lose
+              your password and seed phrase.
+            </span>
+            <Text
+              className="pointer hover-underline text-primary"
+              onClick={() => goto(Pages.AddBackupWalletViaSafe)}
+            >
+              See instructions
+            </Text>
+          </Flex>
+        }
+      />
+    </CardSection>
+  );
 };
 
 const SettingsMain = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
   const { selectedAgentConfig } = useServices();
   const { masterEoa, masterSafes } = useMasterWalletContext();
-  const { goto } = usePageState();
 
   const masterSafe = masterSafes?.find(
     ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
@@ -52,7 +66,8 @@ const SettingsMain = () => {
     if (!masterEoa) return;
     if (isNil(owners) || isEmpty(owners)) return [];
 
-    // TODO: handle edge cases where there are multiple owners due to middleware failure, or user interaction via safe.global
+    // TODO: handle edge cases where there are multiple owners due to middleware failure,
+    // or user interaction via safe.global
     return owners.filter(
       (owner) => owner.toLowerCase() !== masterEoa.address.toLowerCase(),
     );
@@ -84,8 +99,10 @@ const SettingsMain = () => {
   const hideWallet = !isBackupViaSafeEnabled && !masterSafeBackupAddress;
 
   return (
-    <Flex style={cardStyles} vertical gap={16}>
-      <Title level={3}>Settings</Title>
+    <Flex style={cardStyles} vertical gap={32}>
+      <Title level={3} className="m-0">
+        Settings
+      </Title>
       <Card styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}>
         <CardSection
           $padding="24px"
@@ -132,35 +149,25 @@ const SettingsMain = () => {
                 {walletBackup}
               </Flex>
             </Flex>
-            {!masterSafeBackupAddress && (
-              <CardSection style={{ marginTop: 12 }}>
-                <CustomAlert
-                  type="warning"
-                  fullWidth
-                  showIcon
-                  message={
-                    <Flex vertical gap={5}>
-                      <span className="font-weight-600">
-                        Your funds are at risk!
-                      </span>
-                      <span>
-                        Add a backup wallet to allow you to retrieve funds if
-                        you lose your password and seed phrase.
-                      </span>
-                      <Text
-                        className="pointer hover-underline text-primary"
-                        onClick={() => goto(Pages.AddBackupWalletViaSafe)}
-                      >
-                        See instructions
-                      </Text>
-                    </Flex>
-                  }
-                />
-              </CardSection>
-            )}
+
+            {!masterSafeBackupAddress && <YourFundsAtRiskAlert />}
           </CardSection>
         )}
       </Card>
     </Flex>
   );
+};
+
+export const Settings = () => {
+  const { screen } = useSettings();
+  const settingsScreen = useMemo(() => {
+    switch (screen) {
+      case SettingsScreen.Main:
+        return <SettingsMain />;
+      default:
+        return null;
+    }
+  }, [screen]);
+
+  return settingsScreen;
 };

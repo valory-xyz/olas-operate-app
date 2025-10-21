@@ -29,7 +29,6 @@ const DraggableTopBar = styled.div<{ $isSplitScreenPage?: boolean }>`
   width: 100%;
   height: ${TOP_BAR_HEIGHT}px;
   -webkit-app-region: drag;
-  background-color: red;
   ${(props) =>
     props.$isSplitScreenPage
       ? `
@@ -46,7 +45,6 @@ const Content = styled(AntdContent)<{ $isSplitScreenPage?: boolean }>`
   flex-direction: column;
   margin: 0 auto;
   overflow: auto;
-  padding-bottom: 40px;
   ${(props) => (props.$isSplitScreenPage ? `` : `padding-bottom: 40px;`)}
 `;
 
@@ -96,7 +94,7 @@ export const Main = () => {
     <Layout>
       <Sidebar />
       <Content $isSplitScreenPage={isSplitScreenPage} ref={contentContainerRef}>
-        <DraggableTopBar />
+        <DraggableTopBar $isSplitScreenPage={isSplitScreenPage} />
         {mainContent}
       </Content>
     </Layout>

@@ -75,8 +75,10 @@ export const HelpAndSupport = () => {
   );
 
   return (
-    <Flex style={cardStyles} vertical gap={16}>
-      <Title level={3}>Help Center</Title>
+    <Flex style={cardStyles} vertical gap={32}>
+      <Title level={3} className="m-0">
+        Help Center
+      </Title>
       <Card styles={{ body: { paddingTop: 8, paddingBottom: 8 } }}>
         {helpItems.map(({ label, href, action, isExternal }, index) => (
           <CardSection
