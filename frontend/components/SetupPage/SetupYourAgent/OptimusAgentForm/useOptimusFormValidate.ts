@@ -6,9 +6,6 @@ import {
 } from '../../../AgentForms/common/validations';
 
 export type OptimusFieldValues = {
-  tenderlyAccessToken: string;
-  tenderlyAccountSlug: string;
-  tenderlyProjectSlug: string;
   coinGeckoApiKey: string;
   geminiApiKey?: string;
 };

@@ -12,7 +12,6 @@ import {
   requiredRules,
   validateApiKey,
   validateMessages,
-  validateSlug,
 } from '../../AgentForms/common/formUtils';
 import { InvalidGeminiApiCredentials } from '../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
@@ -22,11 +21,6 @@ import {
   GeminiApiKeyDesc,
   GeminiApiKeyLabel,
   GeminiApiKeySubHeader,
-  TenderlyAccessTokenDesc,
-  TenderlyAccessTokenLabel,
-  TenderlyAccountSlugLabel,
-  TenderlyApiKeySubHeader,
-  TenderlyProjectSlugLabel,
 } from '../../AgentForms/common/labels';
 import { useModiusFormValidate } from '../../SetupPage/SetupYourAgent/ModiusAgentForm/useModiusFormValidate';
 import { RenderForm } from '../../SetupPage/SetupYourAgent/useDisplayAgentForm';
@@ -34,9 +28,6 @@ import { UpdateAgentContext } from '../context/UpdateAgentProvider';
 
 type ModiusFormValues = {
   env_variables: {
-    TENDERLY_ACCESS_KEY: string;
-    TENDERLY_ACCOUNT_SLUG: string;
-    TENDERLY_PROJECT_SLUG: string;
     COINGECKO_API_KEY: string;
     GENAI_API_KEY: string;
   };
@@ -62,9 +53,6 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       try {
         const envVariables = values.env_variables;
         const userInputs = {
-          tenderlyAccessToken: envVariables.TENDERLY_ACCESS_KEY,
-          tenderlyAccountSlug: envVariables.TENDERLY_ACCOUNT_SLUG,
-          tenderlyProjectSlug: envVariables.TENDERLY_PROJECT_SLUG,
           coinGeckoApiKey: envVariables.COINGECKO_API_KEY,
           geminiApiKey: envVariables.GENAI_API_KEY,
         };
@@ -91,35 +79,6 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       initialValues={{ ...initialFormValues }}
       className="label-no-padding"
     >
-      <TenderlyApiKeySubHeader />
-      <Form.Item
-        label={<TenderlyAccessTokenLabel />}
-        name={['env_variables', 'TENDERLY_ACCESS_KEY']}
-        {...requiredFieldProps}
-        rules={[...requiredRules, { validator: validateApiKey }]}
-      >
-        <Input.Password />
-      </Form.Item>
-
-      <Form.Item
-        label={<TenderlyAccountSlugLabel />}
-        name={['env_variables', 'TENDERLY_ACCOUNT_SLUG']}
-        {...requiredFieldProps}
-        rules={[...requiredRules, { validator: validateSlug }]}
-      >
-        <Input />
-      </Form.Item>
-
-      <Form.Item
-        label={<TenderlyProjectSlugLabel />}
-        name={['env_variables', 'TENDERLY_PROJECT_SLUG']}
-        {...requiredFieldProps}
-        rules={[...requiredRules, { validator: validateSlug }]}
-      >
-        <Input />
-      </Form.Item>
-      <div style={{ paddingBottom: 42 }} />
-
       <CoinGeckoApiKeySubHeader />
       <Form.Item
         label={<CoinGeckoApiKeyLabel />}
@@ -172,13 +131,7 @@ export const ModiusUpdatePage = ({ renderForm }: ModiusUpdatePageProps) => {
 
     return envEntries.reduce(
       (acc, [key, { value }]) => {
-        if (key === 'TENDERLY_ACCESS_KEY') {
-          acc.env_variables.TENDERLY_ACCESS_KEY = value;
-        } else if (key === 'TENDERLY_ACCOUNT_SLUG') {
-          acc.env_variables.TENDERLY_ACCOUNT_SLUG = value;
-        } else if (key === 'TENDERLY_PROJECT_SLUG') {
-          acc.env_variables.TENDERLY_PROJECT_SLUG = value;
-        } else if (key === 'COINGECKO_API_KEY') {
+        if (key === 'COINGECKO_API_KEY') {
           acc.env_variables.COINGECKO_API_KEY = value;
         } else if (key === 'GENAI_API_KEY') {
           acc.env_variables.GENAI_API_KEY = value;
@@ -209,7 +162,6 @@ export const ModiusUpdatePage = ({ renderForm }: ModiusUpdatePageProps) => {
   return renderForm(
     <ModiusUpdateForm initialFormValues={initialValues} />,
     <>
-      <TenderlyAccessTokenDesc />
       <CoinGeckoApiKeyDesc />
       <GeminiApiKeyDesc />
     </>,
