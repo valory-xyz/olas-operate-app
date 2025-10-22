@@ -1,4 +1,4 @@
-import { Form, FormInstance, Modal } from 'antd';
+import { Button, Flex, Form, FormInstance, Modal as AntdModal } from 'antd';
 import { noop } from 'lodash';
 import {
   createContext,
@@ -12,6 +12,7 @@ import {
 } from 'react';
 
 import { ServiceTemplate } from '@/client';
+import { Modal } from '@/components/ui';
 import { AgentMap, SERVICE_TEMPLATES } from '@/constants';
 import { Pages } from '@/enums/Pages';
 import { usePageState, useService, useServices } from '@/hooks';
@@ -52,7 +53,7 @@ const ConfirmUpdateModal = ({ isLoading }: { isLoading: boolean }) => {
   }, [isServiceRunning, isLoading]);
 
   return (
-    <Modal
+    <AntdModal
       title="Confirm changes"
       open={open}
       onOk={confirm}
@@ -64,7 +65,7 @@ const ConfirmUpdateModal = ({ isLoading }: { isLoading: boolean }) => {
       centered
     >
       These changes will only take effect when you restart the agent.
-    </Modal>
+    </AntdModal>
   );
 };
 
@@ -75,15 +76,21 @@ const UnsavedModal = () => {
   return (
     <Modal
       title="Unsaved changes"
-      open={open}
-      onOk={confirm}
-      onCancel={cancel}
       okText="Discard changes"
+      description="You have unsaved changes. Are you sure you want to leave this page?"
+      footer={
+        <Flex justify="flex-end" gap={12}>
+          <Button onClick={cancel}>Cancel</Button>
+          <Button type="primary" onClick={confirm}>
+            Discard changes
+          </Button>
+        </Flex>
+      }
+      open={open}
+      size="small"
       centered
-      width={400}
-    >
-      You have unsaved changes. Are you sure you want to leave this page?
-    </Modal>
+      closable
+    />
   );
 };
 
