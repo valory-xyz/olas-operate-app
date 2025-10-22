@@ -33,7 +33,7 @@ type Quote = {
   notes: string[];
 };
 
-const transakPriceUrl = `${ON_RAMP_GATEWAY_URL}price-quote/`;
+const transakPriceUrl = `${ON_RAMP_GATEWAY_URL}price-quote`;
 
 const fetchTransakQuote = async (
   network: SupportedMiddlewareChain,

@@ -91,7 +91,7 @@ export const SWAP_URL_BY_EVM_CHAIN: Record<EvmChainId, Url> = {
 };
 
 // on-ramp
-export const ON_RAMP_GATEWAY_URL = `https://on-ramp.${process.env.NODE_ENV === 'production' ? '' : 'staging.'}autonolas.tech/`;
+export const ON_RAMP_GATEWAY_URL = `https://proxy.transak.${process.env.NODE_ENV === 'production' ? '' : 'staging.'}autonolas.tech/`;
 
 // pearl-api url
 export const PEARL_API_URL = 'https://pearl-api.olas.network';
