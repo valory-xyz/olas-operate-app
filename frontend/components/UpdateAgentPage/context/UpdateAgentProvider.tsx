@@ -1,4 +1,4 @@
-import { Button, Flex, Form, FormInstance, Modal as AntdModal } from 'antd';
+import { Button, Flex, Form, FormInstance } from 'antd';
 import { noop } from 'lodash';
 import {
   createContext,
@@ -53,19 +53,24 @@ const ConfirmUpdateModal = ({ isLoading }: { isLoading: boolean }) => {
   }, [isServiceRunning, isLoading]);
 
   return (
-    <AntdModal
+    <Modal
       title="Confirm changes"
-      open={open}
-      onOk={confirm}
+      description="These changes will only take effect when you restart the agent."
       okButtonProps={{ loading: isLoading }}
       onCancel={cancel}
       okText={btnText}
       closable={!isLoading}
-      width={400}
-      centered
-    >
-      These changes will only take effect when you restart the agent.
-    </AntdModal>
+      footer={
+        <Flex justify="flex-end" gap={12}>
+          <Button onClick={cancel}>Cancel</Button>
+          <Button type="primary" onClick={confirm}>
+            Confirm and Continue
+          </Button>
+        </Flex>
+      }
+      open={open}
+      size="small"
+    />
   );
 };
 
@@ -78,6 +83,7 @@ const UnsavedModal = () => {
       title="Unsaved changes"
       okText="Discard changes"
       description="You have unsaved changes. Are you sure you want to leave this page?"
+      onCancel={cancel}
       footer={
         <Flex justify="flex-end" gap={12}>
           <Button onClick={cancel}>Cancel</Button>
@@ -88,7 +94,6 @@ const UnsavedModal = () => {
       }
       open={open}
       size="small"
-      centered
       closable
     />
   );
