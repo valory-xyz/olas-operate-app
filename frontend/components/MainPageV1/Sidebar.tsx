@@ -1,10 +1,4 @@
 import {
-  PlusOutlined,
-  QuestionCircleOutlined,
-  SettingOutlined,
-  WalletOutlined,
-} from '@ant-design/icons';
-import {
   Button,
   Flex,
   Layout,
@@ -17,6 +11,12 @@ import {
 import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo } from 'react';
+import {
+  TbHelpSquareRounded,
+  TbPlus,
+  TbSettings,
+  TbWallet,
+} from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { ACTIVE_AGENTS, AVAILABLE_FOR_ADDING_AGENTS } from '@/config/agents';
@@ -83,15 +83,15 @@ const PearlWalletLabel = () => {
 const menuItems: MenuProps['items'] = [
   {
     key: Pages.PearlWallet,
-    icon: <WalletOutlined />,
+    icon: <TbWallet size={20} />,
     label: <PearlWalletLabel />,
   },
   {
     key: Pages.HelpAndSupport,
-    icon: <QuestionCircleOutlined />,
+    icon: <TbHelpSquareRounded size={20} />,
     label: 'Help Center',
   },
-  { key: Pages.Settings, icon: <SettingOutlined />, label: 'Settings' },
+  { key: Pages.Settings, icon: <TbSettings size={20} />, label: 'Settings' },
 ];
 
 const MyAgentsHeader = () => (
@@ -249,7 +249,7 @@ export const Sidebar = () => {
                 gotoPage(Pages.Setup);
                 gotoSetup(SetupScreen.AgentOnboarding);
               }}
-              icon={<PlusOutlined />}
+              icon={<TbPlus size={20} />}
             >
               Add New Agent
             </ResponsiveButton>

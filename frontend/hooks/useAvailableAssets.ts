@@ -1,4 +1,4 @@
-import { sum } from 'lodash';
+import { compact } from 'lodash';
 import { useMemo } from 'react';
 
 import { TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
@@ -6,6 +6,7 @@ import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import { useMasterBalances } from '@/hooks';
 import { AvailableAsset } from '@/types/Wallet';
+import { sumBigNumbers } from '@/utils';
 import {
   asEvmChainDetails,
   asMiddlewareChain,
@@ -25,9 +26,9 @@ export const useAvailableAssets = (
   const {
     isLoaded,
     getMasterSafeNativeBalanceOf,
-    getMasterSafeOlasBalanceOf,
-    getMasterSafeErc20Balances,
-    getMasterEoaNativeBalanceOf,
+    getMasterSafeErc20BalancesInStr,
+    getMasterEoaNativeBalanceOfInStr,
+    getMasterSafeOlasBalanceOfInStr,
   } = useMasterBalances();
 
   // OLAS token, Native Token, other ERC20 tokens
@@ -42,11 +43,14 @@ export const useAvailableAssets = (
 
         const balance = (() => {
           // balance for OLAS
+
           if (symbol === TokenSymbolMap.OLAS) {
-            return sum([
-              getMasterSafeOlasBalanceOf(walletChainId),
-              stakingRewards?.accruedServiceStakingRewards,
-            ]);
+            return sumBigNumbers(
+              compact([
+                getMasterSafeOlasBalanceOfInStr(walletChainId),
+                String(stakingRewards?.accruedServiceStakingRewards || 0),
+              ]),
+            );
           }
 
           // balance for native tokens
@@ -54,25 +58,33 @@ export const useAvailableAssets = (
             symbol ===
             asEvmChainDetails(asMiddlewareChain(walletChainId)).symbol
           ) {
-            const masterSafeNativeBalance = sum(
+            const masterSafeNativeBalanceInStr =
               getMasterSafeNativeBalanceOf(walletChainId)?.map(
-                ({ balance }) => balance,
-              ) ?? [],
+                ({ balanceString }) => balanceString,
+              ) ?? [];
+            const masterEoaNativeBalanceInStr = includeMasterEoa
+              ? getMasterEoaNativeBalanceOfInStr(walletChainId)
+              : '0';
+
+            return sumBigNumbers(
+              compact([
+                ...masterSafeNativeBalanceInStr,
+                masterEoaNativeBalanceInStr,
+              ]),
             );
-            return sum([
-              masterSafeNativeBalance,
-              includeMasterEoa ? getMasterEoaNativeBalanceOf(walletChainId) : 0,
-            ]);
           }
 
           // balance for other required tokens (eg. USDC, wrapped tokens, etc)
-          return getMasterSafeErc20Balances(walletChainId)?.[symbol] ?? 0;
+          return (
+            getMasterSafeErc20BalancesInStr(walletChainId)?.[symbol] ?? '0'
+          );
         })();
 
         const asset: AvailableAsset = {
           address,
           symbol,
-          amount: balance,
+          amount: Number(balance),
+          amountString: balance,
         };
         return asset;
       },
@@ -81,10 +93,10 @@ export const useAvailableAssets = (
     walletChainId,
     includeMasterEoa,
     stakingRewards?.accruedServiceStakingRewards,
-    getMasterSafeOlasBalanceOf,
     getMasterSafeNativeBalanceOf,
-    getMasterEoaNativeBalanceOf,
-    getMasterSafeErc20Balances,
+    getMasterSafeErc20BalancesInStr,
+    getMasterEoaNativeBalanceOfInStr,
+    getMasterSafeOlasBalanceOfInStr,
   ]);
 
   return {

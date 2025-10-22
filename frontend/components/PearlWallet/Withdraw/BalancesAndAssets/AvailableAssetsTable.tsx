@@ -1,10 +1,10 @@
 import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
 
-import { Table } from '@/components/ui/Table';
-import { TokenSymbolConfigMap } from '@/constants/token';
+import { Table } from '@/components/ui';
+import { TokenSymbolConfigMap } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { AvailableAsset } from '@/types/Wallet';
-import { formatNumber } from '@/utils/numberFormatters';
+import { formatNumber } from '@/utils';
 
 const { Text } = Typography;
 

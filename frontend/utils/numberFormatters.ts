@@ -19,16 +19,27 @@ export const balanceFormat = (
 
 /**
  * Displays balance in a human readable format
- * e.g. 1234.578 => 1,234.58
+ * @example 1234.578 => 1,234.58
  */
 export const formatNumber = (
   amount: number | undefined,
   decimals = 2,
+  round: 'ceil' | 'floor' = 'ceil',
 ): string => {
   if (amount === undefined) return '--';
+
+  // Round the amount to the specified number of decimals
+  const factor = 10 ** decimals;
+  const rounded =
+    round === 'ceil'
+      ? Math.ceil(amount * factor) / factor
+      : Math.floor(amount * factor) / factor;
+
+  // Format the number with commas and the specified decimals
   return Intl.NumberFormat('en-US', {
     maximumFractionDigits: decimals,
-  }).format(amount);
+    minimumFractionDigits: decimals,
+  }).format(rounded);
 };
 
 /**

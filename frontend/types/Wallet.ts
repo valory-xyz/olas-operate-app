@@ -14,7 +14,9 @@ export type SafeCreationResponse = {
 export type AvailableAsset = {
   address?: string;
   symbol: TokenSymbol;
+  /** @deprecated Use `amountString` instead for accurate representation */
   amount: number;
+  amountString?: string;
 };
 
 export type StakedAsset = {
@@ -25,8 +27,13 @@ export type StakedAsset = {
   value?: number;
 };
 
+export type TokenAmountDetails = {
+  amount: number;
+  withdrawAll?: boolean;
+};
+
 /**
  * @example
  * { symbol: 'OLAS', amount: 10 }
  */
-export type TokenAmounts = Partial<Record<TokenSymbol, number>>;
+export type TokenAmounts = Partial<Record<TokenSymbol, TokenAmountDetails>>;

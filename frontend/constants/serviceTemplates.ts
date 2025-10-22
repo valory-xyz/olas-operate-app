@@ -295,7 +295,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeidvtzcaz4vxh7vpyybznwngohjxykwqbk4zaeuosdbrjsppvx627e',
+  hash: 'bafybeieonldo4o3bgobawx6y4njqbyo5wgk7lzdxijth46kbetyzipnor4',
   service_version: 'v0.5.9-rc.1',
   agent_release: {
     is_aea: true,
@@ -346,24 +346,6 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
-    },
-    TENDERLY_ACCESS_KEY: {
-      name: 'Tenderly access key',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.USER,
-    },
-    TENDERLY_ACCOUNT_SLUG: {
-      name: 'Tenderly account slug',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.USER,
-    },
-    TENDERLY_PROJECT_SLUG: {
-      name: 'Tenderly project slug',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.USER,
     },
     STAKING_TOKEN_CONTRACT_ADDRESS: {
       name: 'Staking token contract address',
@@ -527,24 +509,6 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
-    },
-    TENDERLY_ACCESS_KEY: {
-      name: 'Tenderly access key',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.USER,
-    },
-    TENDERLY_ACCOUNT_SLUG: {
-      name: 'Tenderly account slug',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.USER,
-    },
-    TENDERLY_PROJECT_SLUG: {
-      name: 'Tenderly project slug',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.USER,
     },
     STAKING_TOKEN_CONTRACT_ADDRESS: {
       name: 'Staking token contract address',

@@ -1,3 +1,4 @@
+// TODO: to be removed post v1 release
 import { ConfigProvider, Flex, Skeleton, ThemeConfig, Typography } from 'antd';
 import { isNil } from 'lodash';
 import { useMemo } from 'react';

@@ -93,6 +93,7 @@ export const AgentInfo = () => {
           <AgentDisabledAlert />
         </AgentInfoContainer>
       </CardFlex>
+
       <AgentActivity />
     </Flex>
   );

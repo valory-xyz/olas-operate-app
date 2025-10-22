@@ -370,6 +370,20 @@ export const useServiceOnlyRewardsHistory = () => {
         previousCheckpoint = checkpoint;
       });
 
+    const lastCheckpoint = filledCheckpoints.at(-1);
+
+    /**
+     * Fill missing epochs after the last "earned" checkpoint, for eg:
+     * Last earned epoch is 301, and the current epoch is 305, this fills in data from 302-305 epochs .
+     */
+    if (lastCheckpoint) {
+      const { contractAddress, epoch } = lastCheckpoint;
+      const missingEpochs = allContractCheckpoints[contractAddress]?.filter(
+        ({ epoch: checkpointEpoch }) => Number(checkpointEpoch) > Number(epoch),
+      );
+      filledCheckpoints.push(...(missingEpochs ?? []));
+    }
+
     return filledCheckpoints.sort(
       (a, b) => b.epochEndTimeStamp - a.epochEndTimeStamp,
     );

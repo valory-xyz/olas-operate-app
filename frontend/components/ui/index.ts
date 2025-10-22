@@ -1,4 +1,3 @@
-export * from './AgentHeader';
 export * from './AgentSetupCompleteModal';
 export * from './BackButton';
 export * from './CardFlex';
@@ -8,6 +7,7 @@ export * from './Divider';
 export * from './FormFlex';
 export * from './FundingDescription';
 export * from './FundsAreSafeMessage';
+export * from './LoadingSpinner';
 export * from './Modal';
 export * from './NumberInput';
 export * from './Progress';

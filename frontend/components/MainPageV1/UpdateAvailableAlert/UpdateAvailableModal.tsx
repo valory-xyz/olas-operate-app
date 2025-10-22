@@ -51,11 +51,10 @@ export const UpdateAvailableModal = () => {
     <Modal
       closable
       open
-      width={400}
-      align="left"
+      size="small"
       onCancel={onUpdateLater}
       footer={
-        <Flex justify="space-between">
+        <Flex gap={12} justify="flex-end">
           <Button key="later" className="text-sm" onClick={onUpdateLater}>
             Update Later
           </Button>

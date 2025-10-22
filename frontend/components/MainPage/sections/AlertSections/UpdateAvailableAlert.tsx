@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { Flex } from 'antd';
-import useToken from 'antd/es/theme/useToken';
+import { FiArrowUpRight } from 'react-icons/fi';
 import semver from 'semver';
 
 import { CustomAlert } from '@/components/Alert';
-import { ArrowUpRightSvg } from '@/components/custom-icons/ArrowUpRight';
 import { FIVE_MINUTE_INTERVAL } from '@/constants/intervals';
 import { DOWNLOAD_URL, GITHUB_API_LATEST_RELEASE } from '@/constants/urls';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -17,7 +16,6 @@ enum SemverComparisonResult {
 
 export const UpdateAvailableAlert = () => {
   const { getAppVersion } = useElectronApi();
-  const [, token] = useToken();
 
   const { data: isPearlOutdated, isFetched } = useQuery<boolean>({
     queryKey: ['isPearlOutdated'],
@@ -65,11 +63,7 @@ export const UpdateAvailableAlert = () => {
         <Flex align="center" justify="space-between" gap={2}>
           <span>A new version of Pearl is available</span>
           <a href={DOWNLOAD_URL} target="_blank">
-            Download{' '}
-            <ArrowUpRightSvg
-              fill={token.colorPrimary}
-              style={{ marginBottom: -2 }}
-            />
+            Download <FiArrowUpRight />
           </a>
         </Flex>
       }

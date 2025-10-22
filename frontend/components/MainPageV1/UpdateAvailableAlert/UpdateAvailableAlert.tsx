@@ -1,14 +1,13 @@
-import { Flex, theme } from 'antd';
+import { Flex } from 'antd';
+import { FiArrowUpRight } from 'react-icons/fi';
+import { TbDownload } from 'react-icons/tb';
 
 import { CustomAlert } from '@/components/Alert';
-import { ArrowUpRightSvg } from '@/components/custom-icons/ArrowUpRight';
-import { Download } from '@/components/custom-icons/Download';
-import { DOWNLOAD_URL } from '@/constants';
+import { COLOR, DOWNLOAD_URL } from '@/constants';
 
 import { useAppStatus } from './useAppStatus';
 
 export const UpdateAvailableAlert = () => {
-  const { token } = theme.useToken();
   const { data, isFetched, isError, error } = useAppStatus();
 
   if (isError) {
@@ -21,24 +20,23 @@ export const UpdateAvailableAlert = () => {
   }
 
   return (
-    <>
-      <CustomAlert
-        type="info"
-        className="mt-auto"
-        message={
-          <Flex vertical gap={2}>
-            <Download className="mb-4" />
-            <span>Pearl Update Available</span>
-            <a href={DOWNLOAD_URL} target="_blank">
-              Download{' '}
-              <ArrowUpRightSvg
-                fill={token.colorPrimary}
-                style={{ marginBottom: -2 }}
-              />
-            </a>
-          </Flex>
-        }
-      />
-    </>
+    <CustomAlert
+      type="info"
+      className="mt-auto"
+      message={
+        <Flex vertical gap={2}>
+          <TbDownload
+            fontSize={20}
+            className="mb-4"
+            color={COLOR.ICON_COLOR.INFO}
+          />
+          <span>Pearl Update Available</span>
+          <a href={DOWNLOAD_URL} target="_blank">
+            Download{' '}
+            <FiArrowUpRight fontSize={20} style={{ marginBottom: -4 }} />
+          </a>
+        </Flex>
+      }
+    />
   );
 };

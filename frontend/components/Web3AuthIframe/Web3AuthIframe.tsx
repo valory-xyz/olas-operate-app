@@ -1,4 +1,3 @@
-import { LoadingOutlined } from '@ant-design/icons';
 import { Spin } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
@@ -8,7 +7,7 @@ import { APP_HEIGHT, IFRAME_WIDTH } from '@/constants/width';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { Address } from '@/types/Address';
 
-import { LIGHT_ICON_STYLE } from '../ui/styles/iconStyles';
+import { LoadingSpinner } from '../ui';
 
 type AUTH_SUCCESS_EVENT_DATA = {
   event_id: 'WEB3AUTH_AUTH_SUCCESS';
@@ -109,10 +108,7 @@ export const Web3AuthIframe = () => {
       />
       {isLoading && (
         <SpinnerOverlay>
-          <Spin
-            size="large"
-            indicator={<LoadingOutlined spin style={LIGHT_ICON_STYLE} />}
-          />
+          <Spin size="large" indicator={<LoadingSpinner />} />
         </SpinnerOverlay>
       )}
     </Container>

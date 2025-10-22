@@ -1,4 +1,4 @@
-import { find, get, groupBy, isEmpty, isNil } from 'lodash';
+import { compact, find, get, groupBy, isEmpty, isNil } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
@@ -8,8 +8,7 @@ import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import { BalanceContext } from '@/context/BalanceProvider/BalanceProvider';
 import { WalletBalance } from '@/types/Balance';
 import { Maybe, Optional } from '@/types/Util';
-import { areAddressesEqual } from '@/utils/address';
-import { formatUnitsToNumber } from '@/utils/numberFormatters';
+import { areAddressesEqual, formatUnitsToNumber, sumBigNumbers } from '@/utils';
 
 import { useBalanceAndRefillRequirementsContext } from './useBalanceAndRefillRequirementsContext';
 import { useService } from './useService';
@@ -152,10 +151,9 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
   const serviceSafeErc20Balances = useMemo(
     () =>
       serviceSafeBalances?.filter(
-        ({ isNative, symbol, evmChainId, isWrappedToken }) =>
+        ({ isNative, symbol, evmChainId }) =>
           !isNative &&
           symbol !== TokenSymbolMap.OLAS &&
-          !isWrappedToken &&
           evmChainId === evmHomeChainId,
       ),
     [serviceSafeBalances, evmHomeChainId],
@@ -307,25 +305,51 @@ export const useMasterBalances = () => {
       .reduce((acc, { balance }) => acc + balance, 0);
   }, [masterEoa, masterWalletBalances, selectedAgentConfig.evmHomeChainId]);
 
-  /**
-   * Function to get the master EOA balance of a specific chain
-   */
-  const getMasterEoaNativeBalanceOf = useCallback(
-    (chainId: EvmChainId) => {
+  /** Internal implementation for getting master EOA native balance */
+  const _getMasterEoaNativeBalanceOfCalc = useCallback(
+    (chainId: EvmChainId, returnType: 'string' | 'number') => {
       if (!chainId) return;
       if (isNil(masterEoa)) return;
       if (isNil(masterWalletBalances)) return;
 
-      return masterWalletBalances
-        .filter(
-          ({ walletAddress, isNative, evmChainId }) =>
-            isNative &&
-            chainId === evmChainId &&
-            areAddressesEqual(walletAddress, masterEoa.address),
-        )
-        .reduce((acc, { balance }) => acc + balance, 0);
+      const balances = masterWalletBalances.filter(
+        ({ walletAddress, isNative, evmChainId }) =>
+          isNative &&
+          chainId === evmChainId &&
+          areAddressesEqual(walletAddress, masterEoa.address),
+      );
+
+      if (returnType === 'string') {
+        return sumBigNumbers(
+          compact(balances.map(({ balanceString }) => balanceString)),
+        );
+      }
+
+      return balances.reduce((acc, { balance }) => acc + balance, 0);
     },
     [masterEoa, masterWalletBalances],
+  );
+
+  /** Get the master EOA native balance as a number */
+  const getMasterEoaNativeBalanceOf = useCallback(
+    (chainId: EvmChainId) => {
+      return _getMasterEoaNativeBalanceOfCalc(
+        chainId,
+        'number',
+      ) as Optional<number>;
+    },
+    [_getMasterEoaNativeBalanceOfCalc],
+  );
+
+  /** Get the master EOA native balance as a string */
+  const getMasterEoaNativeBalanceOfInStr = useCallback(
+    (chainId: EvmChainId) => {
+      return _getMasterEoaNativeBalanceOfCalc(
+        chainId,
+        'string',
+      ) as Optional<string>;
+    },
+    [_getMasterEoaNativeBalanceOfCalc],
   );
 
   const getMasterEoaBalancesOf = useCallback(
@@ -351,13 +375,34 @@ export const useMasterBalances = () => {
     )
     .reduce((acc, balance) => acc + balance.balance, 0);
 
-  const getMasterSafeOlasBalanceOf = (chainId: EvmChainId) =>
-    masterWalletBalances
-      ?.filter(
-        ({ symbol, evmChainId }) =>
-          symbol === TokenSymbolMap.OLAS && evmChainId === chainId,
-      )
-      .reduce((acc, balance) => acc + balance.balance, 0);
+  const _getMasterSafeOlasBalanceOfCalc = useCallback(
+    (chainId: EvmChainId, type: 'string' | 'number') => {
+      const balances = compact(
+        masterWalletBalances?.filter(
+          ({ symbol, evmChainId }) =>
+            symbol === TokenSymbolMap.OLAS && evmChainId === chainId,
+        ),
+      );
+
+      if (type === 'string') {
+        return sumBigNumbers(
+          compact(balances.map(({ balanceString }) => balanceString)),
+        );
+      }
+      return balances.reduce((acc, { balance }) => acc + balance, 0);
+    },
+    [masterWalletBalances],
+  );
+
+  const getMasterSafeOlasBalanceOfInStr = useCallback(
+    (chainId: EvmChainId) => {
+      return _getMasterSafeOlasBalanceOfCalc(
+        chainId,
+        'string',
+      ) as Optional<string>;
+    },
+    [_getMasterSafeOlasBalanceOfCalc],
+  );
 
   const masterSafe = useMemo(() => {
     return masterSafes?.find(({ evmChainId }) => evmChainId === evmHomeChainId);
@@ -384,36 +429,58 @@ export const useMasterBalances = () => {
     [getMasterSafeNativeBalanceOf, evmHomeChainId],
   );
 
-  const getMasterSafeErc20Balances = useCallback(
-    (chainId: EvmChainId) => {
+  const getMasterSafeErc20BalancesCalc = useCallback(
+    (chainId: EvmChainId, type: 'string' | 'number') => {
       if (isNil(masterSafe?.address)) return;
       if (isNil(masterSafeBalances)) return;
 
-      return masterSafeBalances
-        .filter(({ walletAddress, evmChainId, symbol, isNative }) => {
+      const balances = masterSafeBalances.filter(
+        ({ walletAddress, evmChainId, symbol, isNative }) => {
           return (
             evmChainId === chainId &&
             !isNative &&
             symbol !== TokenSymbolMap.OLAS &&
             walletAddress === masterSafe.address
           );
-        })
-        .reduce<Record<TokenSymbol, number>>(
-          (acc, { balance, symbol }) => {
+        },
+      );
+
+      const initialAcc =
+        type === 'string'
+          ? ({} as Record<TokenSymbol, string>)
+          : ({} as Record<TokenSymbol, number>);
+
+      return balances.reduce(
+        (untypedAcc, { balanceString, balance, symbol }) => {
+          if (type === 'string') {
+            const acc = untypedAcc as Record<TokenSymbol, string>;
+            if (!acc[symbol]) acc[symbol] = '0';
+            acc[symbol] = sumBigNumbers([acc[symbol], balanceString ?? '0']);
+          } else {
+            const acc = untypedAcc as Record<TokenSymbol, number>;
             if (!acc[symbol]) acc[symbol] = 0;
             acc[symbol] += balance;
-
-            return acc;
-          },
-          {} as Record<TokenSymbol, number>,
-        );
+          }
+          return untypedAcc;
+        },
+        initialAcc,
+      );
     },
     [masterSafe?.address, masterSafeBalances],
   );
 
+  const getMasterSafeErc20BalancesInStr = useCallback(
+    (chainId: EvmChainId) => {
+      return getMasterSafeErc20BalancesCalc(chainId, 'string') as Optional<
+        Record<TokenSymbol, string>
+      >;
+    },
+    [getMasterSafeErc20BalancesCalc],
+  );
+
   const masterSafeErc20Balances = useMemo(
-    () => getMasterSafeErc20Balances(evmHomeChainId),
-    [getMasterSafeErc20Balances, evmHomeChainId],
+    () => getMasterSafeErc20BalancesCalc(evmHomeChainId, 'number'),
+    [getMasterSafeErc20BalancesCalc, evmHomeChainId],
   );
 
   return {
@@ -428,11 +495,10 @@ export const useMasterBalances = () => {
     masterSafeNativeGasRequirement,
     masterSafeNativeBalance,
     getMasterSafeNativeBalanceOf,
-    masterSafeNativeGasBalance: masterSafeNative?.balance,
     masterSafeOlasBalance,
-    getMasterSafeOlasBalanceOf,
+    getMasterSafeOlasBalanceOfInStr,
     masterSafeErc20Balances,
-    getMasterSafeErc20Balances,
+    getMasterSafeErc20BalancesInStr,
 
     // master eoa
     masterEoaNativeGasBalance: masterEoaNative?.balance,
@@ -441,6 +507,7 @@ export const useMasterBalances = () => {
     masterEoaBalances,
     masterEoaNativeBalance,
     getMasterEoaNativeBalanceOf,
+    getMasterEoaNativeBalanceOfInStr,
     getMasterEoaBalancesOf,
   };
 };

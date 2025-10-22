@@ -1,17 +1,15 @@
-import { theme, Typography } from 'antd';
+import { Typography } from 'antd';
 import { useEffect, useState } from 'react';
+import { FiArrowUpRight } from 'react-icons/fi';
 import semver from 'semver';
 
 import { CustomAlert } from '@/components/Alert';
-import { ArrowUpRightSvg } from '@/components/custom-icons/ArrowUpRight';
 import { useElectronApi } from '@/hooks/useElectronApi';
 
 const { Text } = Typography;
-const { useToken } = theme;
 
 export const WhatsNewAlert = () => {
   const { getAppVersion, store } = useElectronApi();
-  const { token } = useToken();
   const [shouldShowAlert, setShouldShowAlert] = useState(false);
   const [currentVersion, setCurrentVersion] = useState<string | null>(null);
 
@@ -60,11 +58,7 @@ export const WhatsNewAlert = () => {
             target="_blank"
             rel="noopener noreferrer"
           >
-            what&apos;s new in Pearl{' '}
-            <ArrowUpRightSvg
-              fill={token.colorPrimary}
-              style={{ marginBottom: -2 }}
-            />
+            what&apos;s new in Pearl <FiArrowUpRight />
           </a>{' '}
           <Text>and discover specific agent updates.</Text>
         </>

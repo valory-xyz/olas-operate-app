@@ -37,6 +37,7 @@ type AgentIntroductionProps = {
   agentType?: AgentType;
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderAgentSelection?: () => ReactNode;
+  renderUnderConstruction?: () => ReactNode;
 } & {
   styles?: IntroductionStepStyles;
 };
@@ -48,6 +49,7 @@ export const AgentIntroduction = ({
   agentType,
   renderFundingRequirements,
   renderAgentSelection,
+  renderUnderConstruction,
   styles,
 }: AgentIntroductionProps) => {
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -97,6 +99,7 @@ export const AgentIntroduction = ({
         ))
       }
       renderAgentSelection={renderAgentSelection}
+      renderUnderConstruction={renderUnderConstruction}
       styles={styles}
     />
   );

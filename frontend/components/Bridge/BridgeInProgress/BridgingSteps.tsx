@@ -1,9 +1,8 @@
-import { LoadingOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
-import { FundsAreSafeMessage, Steps } from '@/components/ui';
+import { FundsAreSafeMessage, LoadingSpinner, Steps } from '@/components/ui';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { TokenSymbol } from '@/constants/token';
 import { BridgingStepStatus as Status } from '@/types/Bridge';
@@ -194,7 +193,7 @@ export const BridgingSteps = ({
               )}
             </SubStepRow>
           )),
-          icon: status === 'process' ? <LoadingOutlined /> : undefined,
+          icon: status === 'process' ? <LoadingSpinner /> : undefined,
         };
       })}
     />

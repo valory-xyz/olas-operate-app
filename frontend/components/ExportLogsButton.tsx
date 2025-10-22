@@ -1,10 +1,9 @@
 import { Button, ButtonProps, message } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
+import { TbShare2 } from 'react-icons/tb';
 
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useLogs } from '@/hooks/useLogs';
-
-import { Export } from './custom-icons/Export';
 
 const LogsSavedMessage = ({ onClick }: { onClick: () => void }) => (
   <span>
@@ -58,7 +57,7 @@ export const ExportLogsButton = ({ size }: ExportLogsButtonProps) => {
       size={size || 'middle'}
       type="default"
     >
-      <Export />
+      <TbShare2 size={20} />
       Export logs
     </Button>
   );

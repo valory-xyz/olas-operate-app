@@ -4,9 +4,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import { ReactNode } from 'react';
 
-import { UnderConstruction } from '@/components/Alerts';
-import { useServices } from '@/hooks';
-
 import { IntroductionAnimatedContainer } from './IntroductionAnimatedContainer';
 
 const { Title, Text } = Typography;
@@ -77,6 +74,7 @@ type IntroductionProps = OnboardingStep & {
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderDot?: () => ReactNode;
   renderAgentSelection?: () => ReactNode;
+  renderUnderConstruction?: () => ReactNode;
   styles?: IntroductionStepStyles;
 };
 
@@ -93,9 +91,9 @@ export const IntroductionStep = ({
   renderDot,
   renderFundingRequirements,
   renderAgentSelection,
+  renderUnderConstruction,
   styles: { imageHeight, descPadding } = {},
 }: IntroductionProps) => {
-  const { selectedAgentConfig } = useServices();
   const isFundingDetailsStep = !title && !imgSrc;
 
   return (
@@ -122,7 +120,7 @@ export const IntroductionStep = ({
               >
                 <Content title={title} desc={desc} helper={helper} />
               </div>
-              {selectedAgentConfig.isUnderConstruction && <UnderConstruction />}
+              {renderUnderConstruction?.()}
             </>
           )}
 

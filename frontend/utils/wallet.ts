@@ -8,12 +8,12 @@ import { formatNumber } from './numberFormatters';
  */
 export function tokenBalancesToSentence(tokenAmounts: TokenAmounts): string {
   const entries = Object.entries(tokenAmounts).filter(
-    ([, value]) => value !== 0,
+    ([, { amount: value }]) => value !== 0,
   );
   if (entries.length === 0) return '';
 
   const formatted = entries.map(
-    ([symbol, amount]) => `${formatNumber(amount, 4)} ${symbol}`,
+    ([symbol, { amount }]) => `${formatNumber(amount, 4)} ${symbol}`,
   );
 
   if (formatted.length === 1) return formatted[0];

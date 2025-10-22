@@ -13,6 +13,7 @@ import {
   EXPLORER_URL_BY_MIDDLEWARE_CHAIN,
 } from '@/constants/urls';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
+import { AvailableAsset, TokenAmounts } from '@/types';
 import { Address, TxnHash } from '@/types/Address';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
@@ -70,11 +71,12 @@ type WithdrawalResponse = {
  * }
  */
 const formatWithdrawAssets = (
-  amountsToWithdraw: { [symbol: string]: number },
+  amountsToWithdraw: TokenAmounts,
+  availableAssets: AvailableAsset[],
   chainConfig: ChainTokenConfig,
 ) =>
   entries(amountsToWithdraw).reduce(
-    (acc, [untypedSymbol, amount]) => {
+    (acc, [untypedSymbol, { amount, withdrawAll }]) => {
       const symbol = untypedSymbol as TokenSymbol;
 
       if (amount <= 0) return acc;
@@ -87,9 +89,17 @@ const formatWithdrawAssets = (
       const tokenAddress =
         tokenType === TokenType.NativeGas ? AddressZero : address;
 
-      if (tokenAddress) {
-        acc[tokenAddress] = parseUnits(amount, decimals);
-      }
+      if (!tokenAddress) return acc;
+
+      // Determine the amount to withdraw
+      // if withdrawAll is true, use the full available amount
+      const withdrawableAmount = (() => {
+        if (!withdrawAll) return amount;
+        const asset = availableAssets.find((asset) => asset.symbol === symbol);
+        return asset?.amountString ?? '0';
+      })();
+
+      acc[tokenAddress] = parseUnits(withdrawableAmount, decimals) || '0';
       return acc;
     },
     {} as { [token: Address]: string },
@@ -120,7 +130,8 @@ const withdrawFunds = async (
  * Hook to handle withdrawal of funds
  */
 export const useWithdrawFunds = () => {
-  const { walletChainId, amountsToWithdraw } = usePearlWallet();
+  const { walletChainId, amountsToWithdraw, availableAssets } =
+    usePearlWallet();
 
   const { isPending, isSuccess, isError, data, mutateAsync } = useMutation<
     WithdrawalResponse,
@@ -137,7 +148,11 @@ export const useWithdrawFunds = () => {
 
       const { middlewareChain } = CHAIN_CONFIG[walletChainId];
       const chainConfig = TOKEN_CONFIG[walletChainId];
-      const assets = formatWithdrawAssets(amountsToWithdraw, chainConfig);
+      const assets = formatWithdrawAssets(
+        amountsToWithdraw,
+        availableAssets,
+        chainConfig,
+      );
 
       const request = {
         password,
@@ -152,7 +167,7 @@ export const useWithdrawFunds = () => {
         console.error(error);
       }
     },
-    [walletChainId, amountsToWithdraw, mutateAsync],
+    [walletChainId, amountsToWithdraw, mutateAsync, availableAssets],
   );
 
   const txnHashes = useMemo(() => {
