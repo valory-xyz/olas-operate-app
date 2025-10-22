@@ -39,6 +39,7 @@ export const UpdateAgentContext = createContext<{
 const ConfirmUpdateModal = ({ isLoading }: { isLoading: boolean }) => {
   const { isServiceRunning } = useService();
   const { confirmUpdateModal } = useContext(UpdateAgentContext);
+  const { open, confirm, cancel } = confirmUpdateModal;
 
   const btnText = useMemo(() => {
     if (isServiceRunning) {
@@ -53,10 +54,10 @@ const ConfirmUpdateModal = ({ isLoading }: { isLoading: boolean }) => {
   return (
     <Modal
       title="Confirm changes"
-      open={confirmUpdateModal.open}
-      onOk={confirmUpdateModal.confirm}
+      open={open}
+      onOk={confirm}
       okButtonProps={{ loading: isLoading }}
-      onCancel={confirmUpdateModal.cancel}
+      onCancel={cancel}
       okText={btnText}
       closable={!isLoading}
       width={400}
@@ -69,13 +70,14 @@ const ConfirmUpdateModal = ({ isLoading }: { isLoading: boolean }) => {
 
 const UnsavedModal = () => {
   const { unsavedModal } = useContext(UpdateAgentContext);
+  const { open, confirm, cancel } = unsavedModal;
 
   return (
     <Modal
       title="Unsaved changes"
-      open={unsavedModal.open}
-      onOk={unsavedModal.confirm}
-      onCancel={unsavedModal.cancel}
+      open={open}
+      onOk={confirm}
+      onCancel={cancel}
       okText="Discard changes"
       centered
       width={400}
