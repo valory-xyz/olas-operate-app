@@ -62,7 +62,7 @@ export const GeminiApiKeyLabel = () => (
 );
 
 export const CoinGeckoApiKeyDesc = () => (
-  <Flex vertical gap={4} style={{ marginBottom: 100 }}>
+  <Flex vertical gap={4} style={{ marginBottom: 160 }}>
     <Text>
       To create your <Text strong>CoinGecko API key</Text>:
     </Text>
