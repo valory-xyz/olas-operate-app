@@ -83,7 +83,7 @@ const MinimumStakingRequirements = ({
           <Image
             src="/tokens/olas-icon.png"
             alt="OLAS token for staking"
-            width={18}
+            width={20}
             height={20}
           />
           <Text className="leading-normal">

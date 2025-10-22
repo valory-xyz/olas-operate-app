@@ -1,5 +1,6 @@
-import { Button, Flex, Image, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { entries } from 'lodash';
+import Image from 'next/image';
 import { useCallback, useState } from 'react';
 import { styled } from 'styled-components';
 
@@ -40,7 +41,7 @@ const ShowAmountsToDeposit = () => {
               src={TokenSymbolConfigMap[tokenSymbol as TokenSymbol].image}
               alt={tokenSymbol}
               width={20}
-              className="flex"
+              height={20}
             />
             <Flex gap={8} align="center">
               <Text>

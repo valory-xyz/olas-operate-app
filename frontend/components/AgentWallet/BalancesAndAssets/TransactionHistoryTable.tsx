@@ -1,4 +1,5 @@
-import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
+import { Flex, TableColumnsType, Typography } from 'antd';
+import Image from 'next/image';
 
 import { Table } from '@/components/ui/Table';
 import { TokenSymbolConfigMap } from '@/constants/token';
@@ -15,11 +16,11 @@ const columns: TableColumnsType<TransactionHistory> = [
     key: 'transactionType',
     render: (_: unknown, record: TransactionHistory) => (
       <Flex align="center" gap={8}>
-        <AntdImage
-          width={20}
+        <Image
           src={TokenSymbolConfigMap[record.symbol].image}
           alt={record.symbol}
-          style={{ display: 'flex' }}
+          width={20}
+          height={20}
         />
         <Text>{record.symbol}</Text>
       </Flex>

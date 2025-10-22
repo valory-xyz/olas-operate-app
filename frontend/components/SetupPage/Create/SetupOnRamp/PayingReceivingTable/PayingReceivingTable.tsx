@@ -1,12 +1,5 @@
 import { CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons';
-import {
-  Button,
-  Flex,
-  Image as AntdImage,
-  Skeleton,
-  type TableProps,
-  Typography,
-} from 'antd';
+import { Button, Flex, Skeleton, type TableProps, Typography } from 'antd';
 import { cloneDeep } from 'lodash';
 import Image from 'next/image';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
@@ -124,15 +117,16 @@ const ViewReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
       </Flex>
     ) : (
       receivingTokens.map((token, index) => {
-        const iconSrc =
-          TokenSymbolConfigMap[token.symbol as TokenSymbol]?.image;
+        const icon = TokenSymbolConfigMap[token.symbol as TokenSymbol];
+        if (!icon?.image || !token.symbol) return;
+
         return (
           <Flex key={index} align="center" gap={8}>
-            <AntdImage
-              src={iconSrc}
+            <Image
+              src={icon?.image}
               alt={token.symbol}
               width={20}
-              className="flex"
+              height={20}
             />
             <Text>{`${token?.amount} ${token?.symbol}`}</Text>
           </Flex>

@@ -1,12 +1,7 @@
 import { CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import {
-  Flex,
-  Image as AntdImage,
-  TableColumnsType,
-  Tag,
-  Typography,
-} from 'antd';
+import { Flex, TableColumnsType, Tag, Typography } from 'antd';
 import { type TableLocale } from 'antd/es/table/interface';
+import Image from 'next/image';
 import styled from 'styled-components';
 
 import { Table } from '@/components/ui/Table';
@@ -43,11 +38,11 @@ const columns: TableColumnsType<TokenRowData> = [
     width: '25%',
     render: (_: unknown, record: TokenRowData) => (
       <Flex align="center" gap={8}>
-        <AntdImage
-          width={20}
+        <Image
           src={record.iconSrc}
           alt={record.symbol}
-          style={{ display: 'flex' }}
+          width={20}
+          height={20}
         />
         <Text>{record.symbol}</Text>
       </Flex>

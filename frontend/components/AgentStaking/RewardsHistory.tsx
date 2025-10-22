@@ -1,5 +1,6 @@
 import { ApiOutlined, HistoryOutlined } from '@ant-design/icons';
-import { Button, Col, Flex, Image, Row, Spin, Typography } from 'antd';
+import { Button, Col, Flex, Row, Spin, Typography } from 'antd';
+import Image from 'next/image';
 import { CSSProperties, useMemo } from 'react';
 import styled from 'styled-components';
 
@@ -18,8 +19,11 @@ import {
   useServiceOnlyRewardsHistory,
   useServices,
 } from '@/hooks';
-import { balanceFormat } from '@/utils/numberFormatters';
-import { formatToMonthYear, formatToShortDateTime } from '@/utils/time';
+import {
+  balanceFormat,
+  formatToMonthYear,
+  formatToShortDateTime,
+} from '@/utils';
 
 const { Text, Title } = Typography;
 
@@ -82,12 +86,7 @@ const EarnedRewardsColumn = ({
   className?: string;
 }) => (
   <Flex align="center" gap={8}>
-    <Image
-      src="/tokens/olas-icon.png"
-      alt="OLAS"
-      height={20}
-      className="flex"
-    />
+    <Image src="/tokens/olas-icon.png" alt="OLAS" height={20} width={20} />
     <Text
       className={`${className} ${hasRewards ? 'text-success-default' : 'text-neutral-primary'}`}
     >

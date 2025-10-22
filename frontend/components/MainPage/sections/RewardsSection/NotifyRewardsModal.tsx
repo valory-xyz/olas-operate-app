@@ -98,9 +98,9 @@ export const NotifyRewardsModal = () => {
             Share on
             <Image
               src="/twitter.svg"
+              alt="Share on twitter"
               width={24}
               height={24}
-              alt="Share on twitter"
             />
           </Flex>
         </Button>,
@@ -111,9 +111,9 @@ export const NotifyRewardsModal = () => {
       <Flex align="center" justify="center">
         <Image
           src="/splash-robot-head.png"
+          alt="OLAS logo"
           width={100}
           height={100}
-          alt="OLAS logo"
         />
       </Flex>
 
