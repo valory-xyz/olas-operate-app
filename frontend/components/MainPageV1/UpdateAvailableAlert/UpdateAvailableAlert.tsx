@@ -20,25 +20,23 @@ export const UpdateAvailableAlert = () => {
   }
 
   return (
-    <>
-      <CustomAlert
-        type="info"
-        className="mt-auto"
-        message={
-          <Flex vertical gap={2}>
-            <TbDownload
-              fontSize={20}
-              className="mb-4"
-              color={COLOR.ICON_COLOR.INFO}
-            />
-            <span>Pearl Update Available</span>
-            <a href={DOWNLOAD_URL} target="_blank">
-              Download{' '}
-              <FiArrowUpRight fontSize={20} style={{ marginBottom: -4 }} />
-            </a>
-          </Flex>
-        }
-      />
-    </>
+    <CustomAlert
+      type="info"
+      className="mt-auto"
+      message={
+        <Flex vertical gap={2}>
+          <TbDownload
+            fontSize={20}
+            className="mb-4"
+            color={COLOR.ICON_COLOR.INFO}
+          />
+          <span>Pearl Update Available</span>
+          <a href={DOWNLOAD_URL} target="_blank">
+            Download{' '}
+            <FiArrowUpRight fontSize={20} style={{ marginBottom: -4 }} />
+          </a>
+        </Flex>
+      }
+    />
   );
 };

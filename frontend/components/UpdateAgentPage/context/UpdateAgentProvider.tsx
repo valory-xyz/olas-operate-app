@@ -1,4 +1,4 @@
-import { Form, FormInstance } from 'antd';
+import { Button, Flex, Form, FormInstance } from 'antd';
 import { noop } from 'lodash';
 import {
   createContext,
@@ -6,15 +6,16 @@ import {
   PropsWithChildren,
   SetStateAction,
   useCallback,
+  useContext,
+  useMemo,
   useState,
 } from 'react';
 
 import { ServiceTemplate } from '@/client';
-import { AgentMap } from '@/constants';
-import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
+import { Modal } from '@/components/ui';
+import { AgentMap, SERVICE_TEMPLATES } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
+import { usePageState, useService, useServices } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { DeepPartial } from '@/types/Util';
 
@@ -22,8 +23,6 @@ import { AgentsFunFormValues } from '../../AgentForms/AgentsFunAgentForm';
 import { useConfirmUpdateModal } from '../hooks/useConfirmModal';
 import { defaultModalProps, ModalProps } from '../hooks/useModal';
 import { useUnsavedModal } from '../hooks/useUnsavedModal';
-import { ConfirmUpdateModal } from '../modals/ConfirmUpdateModal';
-import { UnsavedModal } from '../modals/UnsavedModal';
 
 export const UpdateAgentContext = createContext<{
   isEditing: boolean;
@@ -38,8 +37,70 @@ export const UpdateAgentContext = createContext<{
   confirmUpdateModal: defaultModalProps,
 });
 
+const ConfirmUpdateModal = ({ isLoading }: { isLoading: boolean }) => {
+  const { isServiceRunning } = useService();
+  const { confirmUpdateModal } = useContext(UpdateAgentContext);
+  const { open, confirm, cancel } = confirmUpdateModal;
+
+  const btnText = useMemo(() => {
+    if (isServiceRunning) {
+      return isLoading
+        ? 'Saving and restarting agent...'
+        : 'Save and restart agent';
+    }
+
+    return isLoading ? 'Saving...' : 'Save';
+  }, [isServiceRunning, isLoading]);
+
+  return (
+    <Modal
+      title="Confirm changes"
+      description="These changes will only take effect when you restart the agent."
+      okButtonProps={{ loading: isLoading }}
+      onCancel={cancel}
+      okText={btnText}
+      closable={!isLoading}
+      footer={
+        <Flex justify="flex-end" gap={12}>
+          <Button onClick={cancel}>Cancel</Button>
+          <Button type="primary" onClick={confirm}>
+            Confirm and Continue
+          </Button>
+        </Flex>
+      }
+      open={open}
+      size="small"
+    />
+  );
+};
+
+const UnsavedModal = () => {
+  const { unsavedModal } = useContext(UpdateAgentContext);
+  const { open, confirm, cancel } = unsavedModal;
+
+  return (
+    <Modal
+      title="Unsaved changes"
+      okText="Discard changes"
+      description="You have unsaved changes. Are you sure you want to leave this page?"
+      onCancel={cancel}
+      footer={
+        <Flex justify="flex-end" gap={12}>
+          <Button onClick={cancel}>Cancel</Button>
+          <Button type="primary" onClick={confirm}>
+            Discard changes
+          </Button>
+        </Flex>
+      }
+      open={open}
+      size="small"
+      closable
+    />
+  );
+};
+
 export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
-  const [form] = Form.useForm<DeepPartial<ServiceTemplate>>(); // TODO: wrong type, fix it
+  const [form] = Form.useForm<DeepPartial<ServiceTemplate>>();
   const {
     refetch: refetchServices,
     selectedService,

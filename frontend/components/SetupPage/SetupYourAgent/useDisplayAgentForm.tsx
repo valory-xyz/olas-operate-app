@@ -3,7 +3,7 @@ import { Flex, Typography } from 'antd';
 import React, { ReactNode, useCallback } from 'react';
 import styled from 'styled-components';
 
-import { AgentHeader } from '@/components/ui/AgentHeader';
+import { BackButton } from '@/components/ui';
 import { COLOR } from '@/constants/colors';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -61,9 +61,8 @@ export const useDisplayAgentForm = () => {
       return (
         <>
           <Flex vertical className="setup-left-content">
-            <AgentHeader
+            <BackButton
               onPrev={onBack ? onBack : () => goto(SetupScreen.AgentOnboarding)}
-              hideLogo
             />
             <Title level={3} style={{ margin: '16px 0 24px 0' }}>
               {isUpdate ? 'Agent Settings' : 'Configure Your Agent'}
@@ -71,7 +70,7 @@ export const useDisplayAgentForm = () => {
             {form}
           </Flex>
 
-          <Flex vertical gap={24} className="setup-right-content">
+          <Flex vertical gap={30} className="setup-right-content">
             <InfoCircleOutlined
               style={{ fontSize: 24, color: COLOR.TEXT_LIGHT }}
             />

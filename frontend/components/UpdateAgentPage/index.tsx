@@ -5,11 +5,11 @@ import {
   AgentFormContainer,
   useDisplayAgentForm,
 } from '../SetupPage/SetupYourAgent/useDisplayAgentForm';
-import { AgentsFunUpdateSetup } from './AgentsFunUpdateSetup';
+import { AgentsFunUpdateSetup } from './components/AgentsFunUpdateSetup';
+import { ModiusUpdatePage } from './components/ModiusUpdateForm';
+import { OptimusUpdatePage } from './components/OptimusUpdateForm';
+import { PredictUpdatePage } from './components/PredictUpdateForm';
 import { UpdateAgentProvider } from './context/UpdateAgentProvider';
-import { ModiusUpdatePage } from './ModiusUpdateForm';
-import { OptimusUpdatePage } from './OptimusUpdateForm';
-import { PredictUpdatePage } from './PredictUpdateForm';
 
 export const UpdateAgentPage = () => {
   const { selectedAgentType } = useServices();
