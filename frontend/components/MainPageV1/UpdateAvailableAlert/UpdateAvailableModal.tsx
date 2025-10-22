@@ -11,7 +11,7 @@ import { useAppStatus } from './useAppStatus';
 
 export const UpdateAvailableModal = () => {
   const { store } = useElectronApi();
-  const [open, toggleOpen] = useToggle(false);
+  const [open, toggleOpen] = useToggle(true);
 
   const { data, isFetched } = useAppStatus();
   const latestTag = data?.latestTag;
@@ -54,7 +54,7 @@ export const UpdateAvailableModal = () => {
       size="small"
       onCancel={onUpdateLater}
       footer={
-        <Flex justify="space-between">
+        <Flex gap={12} justify="flex-end">
           <Button key="later" className="text-sm" onClick={onUpdateLater}>
             Update Later
           </Button>

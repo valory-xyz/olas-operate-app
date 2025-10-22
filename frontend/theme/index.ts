@@ -70,31 +70,17 @@ export const mainTheme: ThemeConfig = {
       itemHoverBg: COLOR.GRAY_1,
       itemSelectedColor: COLOR.TEXT_NEUTRAL_PRIMARY,
     },
-    Tooltip: {
-      fontSize: 14,
-      colorText: 'black',
-      colorTextLightSolid: 'black',
-      colorBgSpotlight: 'white',
-    },
-    Typography: {
-      colorTextHeading: COLOR.TEXT_NEUTRAL_PRIMARY,
-      colorTextDescription: COLOR.TEXT_NEUTRAL_SECONDARY,
-      colorError: COLOR.TEXT_COLOR.ERROR.DEFAULT,
-    },
-    Popover: {
-      fontSize: 14,
-    },
-    Tag: {
-      defaultBg: COLOR.GRAY_1,
-      colorSuccess: COLOR.TEXT_COLOR.SUCCESS.DEFAULT,
-      colorSuccessBg: COLOR.BG.SUCCESS.DEFAULT,
-      borderRadius: 8,
-    },
     List: {
       colorBorder: '#DFE5EE',
     },
     Layout: {
       bodyBg: COLOR.BACKGROUND,
+    },
+    Popover: {
+      fontSize: 14,
+    },
+    Result: {
+      iconFontSize: 48,
     },
     Select: {
       colorBgContainer: COLOR.BACKGROUND,
@@ -114,14 +100,28 @@ export const mainTheme: ThemeConfig = {
       controlPaddingHorizontal: 16,
       fontSizeLG: 16,
     },
-    Result: {
-      iconFontSize: 48,
-    },
     Table: {
       padding: 12,
       headerColor: '#1F2229',
       headerBg: '#F2F4F9',
       borderColor: '#DFE5EE',
+    },
+    Tag: {
+      defaultBg: COLOR.GRAY_1,
+      colorSuccess: COLOR.TEXT_COLOR.SUCCESS.DEFAULT,
+      colorSuccessBg: COLOR.BG.SUCCESS.DEFAULT,
+      borderRadius: 8,
+    },
+    Tooltip: {
+      fontSize: 14,
+      colorText: 'black',
+      colorTextLightSolid: 'black',
+      colorBgSpotlight: 'white',
+    },
+    Typography: {
+      colorTextHeading: COLOR.TEXT_NEUTRAL_PRIMARY,
+      colorTextDescription: COLOR.TEXT_NEUTRAL_SECONDARY,
+      colorError: COLOR.TEXT_COLOR.ERROR.DEFAULT,
     },
   },
 };
