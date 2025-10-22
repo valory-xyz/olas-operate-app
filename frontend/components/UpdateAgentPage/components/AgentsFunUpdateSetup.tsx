@@ -2,17 +2,16 @@ import { isEqual, omit, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
+import { usePageState, useServices } from '@/hooks';
 import { Nullable } from '@/types/Util';
-import { getXUsername } from '@/utils/x';
+import { getXUsername } from '@/utils';
 
 import {
   AgentsFunAgentForm,
   AgentsFunFormValues,
-} from '../AgentForms/AgentsFunAgentForm';
-import { UpdateAgentContext } from './context/UpdateAgentProvider';
-import { UpdateAgentCard } from './UpdateAgentCard';
+} from '../../AgentForms/AgentsFunAgentForm';
+import { UpdateAgentContext } from '../context/UpdateAgentProvider';
+import { UpdateAgentCard } from '../UpdateAgentCard';
 
 export const AgentsFunUpdateSetup = () => {
   const { goto } = usePageState();

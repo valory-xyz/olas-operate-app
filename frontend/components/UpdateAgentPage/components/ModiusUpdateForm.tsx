@@ -3,8 +3,7 @@ import { get, isEqual, isUndefined, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
+import { usePageState, useServices } from '@/hooks';
 import { Nullable } from '@/types/Util';
 
 import {
@@ -14,8 +13,8 @@ import {
   validateApiKey,
   validateMessages,
   validateSlug,
-} from '../AgentForms/common/formUtils';
-import { InvalidGeminiApiCredentials } from '../AgentForms/common/InvalidGeminiApiCredentials';
+} from '../../AgentForms/common/formUtils';
+import { InvalidGeminiApiCredentials } from '../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   CoinGeckoApiKeyDesc,
   CoinGeckoApiKeyLabel,
@@ -28,10 +27,10 @@ import {
   TenderlyAccountSlugLabel,
   TenderlyApiKeySubHeader,
   TenderlyProjectSlugLabel,
-} from '../AgentForms/common/labels';
-import { useModiusFormValidate } from '../SetupPage/SetupYourAgent/ModiusAgentForm/useModiusFormValidate';
-import { RenderForm } from '../SetupPage/SetupYourAgent/useDisplayAgentForm';
-import { UpdateAgentContext } from './context/UpdateAgentProvider';
+} from '../../AgentForms/common/labels';
+import { useModiusFormValidate } from '../../SetupPage/SetupYourAgent/ModiusAgentForm/useModiusFormValidate';
+import { RenderForm } from '../../SetupPage/SetupYourAgent/useDisplayAgentForm';
+import { UpdateAgentContext } from '../context/UpdateAgentProvider';
 
 type ModiusFormValues = {
   env_variables: {

@@ -3,24 +3,23 @@ import { get, isEqual, isUndefined, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
+import { usePageState, useServices } from '@/hooks';
 import { Nullable } from '@/types/Util';
 
 import {
   optionalFieldProps,
   validateApiKey,
   validateMessages,
-} from '../AgentForms/common/formUtils';
-import { InvalidGeminiApiCredentials } from '../AgentForms/common/InvalidGeminiApiCredentials';
+} from '../../AgentForms/common/formUtils';
+import { InvalidGeminiApiCredentials } from '../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
   GeminiApiKeyDesc,
   GeminiApiKeyLabel,
   GeminiApiKeySubHeader,
-} from '../AgentForms/common/labels';
-import { usePredictFormValidate } from '../SetupPage/SetupYourAgent/PredictAgentForm/usePredictFormValidate';
-import { RenderForm } from '../SetupPage/SetupYourAgent/useDisplayAgentForm';
-import { UpdateAgentContext } from './context/UpdateAgentProvider';
+} from '../../AgentForms/common/labels';
+import { usePredictFormValidate } from '../../SetupPage/SetupYourAgent/PredictAgentForm/usePredictFormValidate';
+import { RenderForm } from '../../SetupPage/SetupYourAgent/useDisplayAgentForm';
+import { UpdateAgentContext } from '../context/UpdateAgentProvider';
 
 type PredictFormValues = {
   env_variables: {
