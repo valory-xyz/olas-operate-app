@@ -1,5 +1,6 @@
-import { Button, Flex, Image, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { floor, isNil } from 'lodash';
+import Image from 'next/image';
 import { useCallback } from 'react';
 import { TbWallet } from 'react-icons/tb';
 import styled from 'styled-components';
@@ -33,7 +34,7 @@ const TokenImage = ({ tokenSymbol }: { tokenSymbol: TokenSymbol }) => (
       src={TokenSymbolConfigMap[tokenSymbol].image}
       alt={tokenSymbol}
       width={20}
-      className="flex"
+      height={20}
     />
     <Text className="text-lg">{tokenSymbol}</Text>
   </Flex>
