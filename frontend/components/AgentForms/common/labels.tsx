@@ -6,27 +6,9 @@ import {
   COINGECKO_DEMO_API_KEY,
   COINGECKO_URL,
   GEMINI_API_URL,
-  TENDERLY_URL,
 } from '@/constants/urls';
 
 const { Text, Title } = Typography;
-
-export const TenderlyApiKeySubHeader = ({
-  isSetupPage = false,
-}: {
-  isSetupPage?: boolean;
-}) => (
-  <Flex gap={8} vertical className="mb-32">
-    <Title level={5} className="m-0">
-      {isSetupPage ? 'Step 1. ' : ''}
-      Tenderly
-    </Title>
-    <Text type="secondary">
-      Your agent needs access to a Tenderly project for simulating bridge and
-      swap routes for on-chain transactions.
-    </Text>
-  </Flex>
-);
 
 export const CoinGeckoApiKeySubHeader = ({
   isSetupPage = false,
@@ -35,7 +17,7 @@ export const CoinGeckoApiKeySubHeader = ({
 }) => (
   <Flex gap={8} vertical className="mb-32">
     <Title level={5} className="m-0">
-      {isSetupPage ? 'Step 2. ' : ''}
+      {isSetupPage ? 'Step 1. ' : ''}
       CoinGecko
     </Title>
     <Text type="secondary">
@@ -56,7 +38,7 @@ export const GeminiApiKeySubHeader = ({
 }) => (
   <Flex gap={8} vertical className="mb-32">
     <Title level={5} className="m-0">
-      {isSetupPage ? 'Step 3. ' : ''}
+      {isSetupPage ? 'Step 2. ' : ''}
       Gemini API key
     </Title>
     <Text type="secondary">
@@ -64,18 +46,6 @@ export const GeminiApiKeySubHeader = ({
       through {name} profile.
     </Text>
   </Flex>
-);
-
-export const TenderlyAccessTokenLabel = () => (
-  <FormLabel>Tenderly access token</FormLabel>
-);
-
-export const TenderlyAccountSlugLabel = () => (
-  <FormLabel>Tenderly account slug</FormLabel>
-);
-
-export const TenderlyProjectSlugLabel = () => (
-  <FormLabel>Tenderly project slug</FormLabel>
 );
 
 export const CoinGeckoApiKeyLabel = () => (
@@ -87,44 +57,6 @@ export const GeminiApiKeyLabel = () => (
     <FormLabel>Gemini API key</FormLabel>
     <Text type="secondary" className="text-sm">
       – optional
-    </Text>
-  </Flex>
-);
-
-export const TenderlyAccessTokenDesc = () => (
-  <Flex vertical gap={24} style={{ marginBottom: 68 }}>
-    <Flex vertical gap={6}>
-      <Text>
-        <Text strong>The Tenderly access</Text> token allows your agent to
-        interact with Tenderly’s simulation tools, helping it analyze and
-        optimize bridge and swap routes.
-      </Text>
-      <Text>To locate your personal access token:</Text>
-      <Text>
-        <ol className="m-0">
-          <li>
-            Connect to{' '}
-            <a href={TENDERLY_URL} target="_blank" rel="noreferrer">
-              Tenderly {UNICODE_SYMBOLS.EXTERNAL_LINK}
-            </a>{' '}
-            and click on your profile photo.
-          </li>
-          <li>
-            Go to <Text strong>Account Settings → Access Tokens.</Text>
-          </li>
-        </ol>
-      </Text>
-    </Flex>
-    <Text>
-      <Text strong>The account slug</Text> is a unique identifier for your
-      Tenderly account that represents your username. You can find your account
-      slug in your <Text strong>Tenderly project settings.</Text>
-    </Text>
-    <Text>
-      <Text strong>The project slug</Text> is a unique identifier for each
-      project in Tenderly. It’s automatically generated from your project’s
-      name. You can find the project slug in your{' '}
-      <Text strong>Tenderly project settings.</Text>
     </Text>
   </Flex>
 );

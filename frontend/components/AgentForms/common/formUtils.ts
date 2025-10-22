@@ -33,7 +33,6 @@ export const emailValidateMessages = {
 } as const;
 
 export const BABYDEGEN_FORM_STEP = {
-  tenderly: 'tenderly',
   coingecko: 'coingecko',
   gemini: 'gemini',
 } as const;

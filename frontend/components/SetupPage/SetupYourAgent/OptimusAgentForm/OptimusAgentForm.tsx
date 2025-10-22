@@ -17,7 +17,6 @@ import {
   requiredRules,
   validateApiKey,
   validateMessages,
-  validateSlug,
 } from '../../../AgentForms/common/formUtils';
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
@@ -27,11 +26,6 @@ import {
   GeminiApiKeyDesc,
   GeminiApiKeyLabel,
   GeminiApiKeySubHeader,
-  TenderlyAccessTokenDesc,
-  TenderlyAccessTokenLabel,
-  TenderlyAccountSlugLabel,
-  TenderlyApiKeySubHeader,
-  TenderlyProjectSlugLabel,
 } from '../../../AgentForms/common/labels';
 import { RenderForm } from '../useDisplayAgentForm';
 import {
@@ -62,27 +56,19 @@ const OptimusAgentFormContent = ({
     validateForm,
   } = useOptimusFormValidate('Finish Agent Configuration');
 
-  const isTenderlyStep = currentStep === BABYDEGEN_FORM_STEP.tenderly;
   const isCoinGeckoStep = currentStep === BABYDEGEN_FORM_STEP.coingecko;
   const isGeminiStep = currentStep === BABYDEGEN_FORM_STEP.gemini;
 
   const handleContinue = useCallback(async () => {
     try {
-      if (isTenderlyStep) {
-        await form.validateFields([
-          'tenderlyAccessToken',
-          'tenderlyAccountSlug',
-          'tenderlyProjectSlug',
-        ]);
-        updateNextStep();
-      } else if (isCoinGeckoStep) {
+      if (isCoinGeckoStep) {
         await form.validateFields(['coinGeckoApiKey']);
         updateNextStep();
       }
     } catch (error) {
       console.error('Error in handleContinue:', error);
     }
-  }, [form, isTenderlyStep, isCoinGeckoStep, updateNextStep]);
+  }, [form, isCoinGeckoStep, updateNextStep]);
 
   const onFinish = useCallback(
     async (values: OptimusFieldValues) => {
@@ -101,18 +87,6 @@ const OptimusAgentFormContent = ({
           ...serviceTemplate,
           env_variables: {
             ...serviceTemplate.env_variables,
-            TENDERLY_ACCESS_KEY: {
-              ...serviceTemplate.env_variables.TENDERLY_ACCESS_KEY,
-              value: values.tenderlyAccessToken,
-            },
-            TENDERLY_ACCOUNT_SLUG: {
-              ...serviceTemplate.env_variables.TENDERLY_ACCOUNT_SLUG,
-              value: values.tenderlyAccountSlug,
-            },
-            TENDERLY_PROJECT_SLUG: {
-              ...serviceTemplate.env_variables.TENDERLY_PROJECT_SLUG,
-              value: values.tenderlyProjectSlug,
-            },
             COINGECKO_API_KEY: {
               ...serviceTemplate.env_variables.COINGECKO_API_KEY,
               value: values.coinGeckoApiKey,
@@ -172,38 +146,6 @@ const OptimusAgentFormContent = ({
         className="label-no-padding"
         requiredMark={RequiredMark}
       >
-        {isTenderlyStep && <TenderlyApiKeySubHeader isSetupPage />}
-        <Form.Item
-          label={<TenderlyAccessTokenLabel />}
-          name="tenderlyAccessToken"
-          {...requiredFieldProps}
-          hidden={!isTenderlyStep}
-          rules={[...requiredRules, { validator: validateApiKey }]}
-        >
-          <Input.Password />
-        </Form.Item>
-
-        <Form.Item
-          label={<TenderlyAccountSlugLabel />}
-          name="tenderlyAccountSlug"
-          {...requiredFieldProps}
-          hidden={!isTenderlyStep}
-          rules={[...requiredRules, { validator: validateSlug }]}
-        >
-          <Input />
-        </Form.Item>
-
-        <Form.Item
-          label={<TenderlyProjectSlugLabel />}
-          name="tenderlyProjectSlug"
-          {...requiredFieldProps}
-          hidden={!isTenderlyStep}
-          rules={[...requiredRules, { validator: validateSlug }]}
-        >
-          <Input />
-        </Form.Item>
-        {isTenderlyStep && <div style={{ paddingBottom: 16 }} />}
-
         {isCoinGeckoStep && <CoinGeckoApiKeySubHeader isSetupPage />}
         <Form.Item
           label={<CoinGeckoApiKeyLabel />}
@@ -254,21 +196,17 @@ export const OptimusAgentForm = ({
   renderForm: RenderForm;
 }) => {
   const [currentStep, setCurrentStep] = useState<BabyDegenFormStep>(
-    BABYDEGEN_FORM_STEP.tenderly,
+    BABYDEGEN_FORM_STEP.coingecko,
   );
 
   const updateNextStep = useCallback(() => {
     if (currentStep === BABYDEGEN_FORM_STEP.coingecko) {
       setCurrentStep('gemini');
-    } else if (currentStep === BABYDEGEN_FORM_STEP.tenderly) {
-      setCurrentStep('coingecko');
     }
   }, [currentStep]);
 
   const handleBack = useCallback(() => {
-    if (currentStep === BABYDEGEN_FORM_STEP.coingecko) {
-      setCurrentStep('tenderly');
-    } else if (currentStep === BABYDEGEN_FORM_STEP.gemini) {
+    if (currentStep === BABYDEGEN_FORM_STEP.gemini) {
       setCurrentStep('coingecko');
     }
   }, [currentStep]);
@@ -280,15 +218,12 @@ export const OptimusAgentForm = ({
       updateNextStep={updateNextStep}
     />,
     <>
-      {currentStep === BABYDEGEN_FORM_STEP.tenderly && (
-        <TenderlyAccessTokenDesc />
-      )}
       {currentStep === BABYDEGEN_FORM_STEP.coingecko && <CoinGeckoApiKeyDesc />}
       {currentStep === BABYDEGEN_FORM_STEP.gemini && <GeminiApiKeyDesc />}
     </>,
     {
       onBack:
-        currentStep === BABYDEGEN_FORM_STEP.tenderly ? undefined : handleBack,
+        currentStep === BABYDEGEN_FORM_STEP.coingecko ? undefined : handleBack,
     },
   );
 };
