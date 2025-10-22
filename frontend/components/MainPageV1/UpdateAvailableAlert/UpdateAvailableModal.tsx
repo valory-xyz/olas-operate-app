@@ -11,7 +11,7 @@ import { useAppStatus } from './useAppStatus';
 
 export const UpdateAvailableModal = () => {
   const { store } = useElectronApi();
-  const [open, toggleOpen] = useToggle(true);
+  const [open, toggleOpen] = useToggle(false);
 
   const { data, isFetched } = useAppStatus();
   const latestTag = data?.latestTag;
