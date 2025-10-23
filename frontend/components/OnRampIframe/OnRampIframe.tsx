@@ -30,9 +30,8 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
   const ref = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    const transakIframe = ref.current?.contentWindow;
-
     const handleMessage = (event: MessageEvent) => {
+      const transakIframe = ref.current?.contentWindow;
       if (event.source !== transakIframe) return;
 
       const eventDetails = event as unknown as TransakEvent;
