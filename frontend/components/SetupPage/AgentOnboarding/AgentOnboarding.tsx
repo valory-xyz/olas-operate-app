@@ -20,7 +20,7 @@ const { Text, Title } = Typography;
 
 const Container = styled(Flex)`
   width: 840px;
-  margin: 36px auto 0 auto;
+  margin: 16px auto 0 auto;
   border-radius: 8px;
   background-color: ${COLOR.WHITE};
   .agent-selection-left-content {

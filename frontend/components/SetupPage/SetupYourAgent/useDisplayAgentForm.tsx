@@ -70,9 +70,9 @@ export const useDisplayAgentForm = () => {
             {form}
           </Flex>
 
-          <Flex vertical gap={30} className="setup-right-content">
+          <Flex vertical gap={24} className="setup-right-content">
             <InfoCircleOutlined
-              style={{ fontSize: 24, color: COLOR.TEXT_LIGHT }}
+              style={{ fontSize: 22, color: COLOR.TEXT_LIGHT }}
             />
             {desc}
           </Flex>
