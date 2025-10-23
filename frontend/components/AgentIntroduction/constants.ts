@@ -60,7 +60,7 @@ export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
 
 export const OPTIMUS_ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    desc: 'An autonomous AI agent that streamlines your DeFi experience by intelligently managing your assets across the Superchain.',
+    desc: 'An autonomous AI agent that is designed to streamline your DeFi experience by intelligently managing your assets across the Superchain.',
   },
   {
     title: 'Your AI portfolio manager',
