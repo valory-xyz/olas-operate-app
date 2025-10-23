@@ -130,9 +130,9 @@ const AgentListMenu = ({
       icon: (
         <Image
           src={`/agent-${agent.agentType}-icon.png`}
+          alt={agent.name}
           width={32}
           height={32}
-          alt={agent.name}
         />
       ),
       label: (
@@ -140,9 +140,9 @@ const AgentListMenu = ({
           {agent.name}{' '}
           <Image
             src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
+            alt={`${agent.chainName} logo`}
             width={14}
             height={14}
-            alt={`${agent.chainName} logo`}
           />
         </Flex>
       ),

@@ -1,4 +1,5 @@
-import { Button, Flex, Image, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
+import Image from 'next/image';
 import styled from 'styled-components';
 
 import { CardFlex } from '@/components/ui/CardFlex';
@@ -55,9 +56,9 @@ export const Wallet = () => {
                       <TokenWrapper key={symbol} gap={6} align="center">
                         <Image
                           src={TokenSymbolConfigMap[symbol].image}
-                          alt={symbol}
+                          alt={`${symbol} icon`}
                           width={20}
-                          className="flex"
+                          height={20}
                         />
                         <Text>{symbol}</Text>
                       </TokenWrapper>

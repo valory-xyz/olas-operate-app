@@ -1,20 +1,13 @@
-import {
-  Button,
-  Flex,
-  Image as AntdImage,
-  message,
-  Modal,
-  Typography,
-} from 'antd';
+import { Button, Flex, message, Modal, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useState } from 'react';
 import { TbCopy, TbWallet } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { InfoTooltip } from '@/components/InfoTooltip';
-import { COLOR } from '@/constants/colors';
-import { useMasterWalletContext } from '@/hooks/useWallet';
-import { copyToClipboard } from '@/utils/copyToClipboard';
+import { COLOR } from '@/constants';
+import { useMasterWalletContext } from '@/hooks';
+import { copyToClipboard } from '@/utils';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -111,13 +104,7 @@ export const FundingDescription = ({
       <Flex vertical gap={8}>
         <Text className="text-neutral-tertiary">On</Text>
         <Flex align="center" gap={8}>
-          <AntdImage
-            width={20}
-            height={20}
-            src={chainImage}
-            alt={chainName}
-            className="flex"
-          />
+          <Image width={20} height={20} src={chainImage} alt={chainName} />
           <Text className="text-neutral-primary">
             {chainName} {isMainnet ? 'Mainnet' : 'Chain'}
           </Text>

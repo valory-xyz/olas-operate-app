@@ -1,9 +1,10 @@
 import { CheckSquareFilled } from '@ant-design/icons';
-import { Flex, Image, Tag, Typography } from 'antd';
+import { Flex, Tag, Typography } from 'antd';
+import Image from 'next/image';
 
-import { CardFlex } from '@/components/ui/CardFlex';
-import { EvmChainName } from '@/constants/chains';
-import { useServices } from '@/hooks/useServices';
+import { CardFlex } from '@/components/ui';
+import { EvmChainName } from '@/constants';
+import { useServices } from '@/hooks';
 
 import { useShouldAllowStakingContractSwitch } from '../hooks/useShouldAllowStakingContractSwitch';
 import { ConfirmSwitchButton } from './ConfirmSwitchButton';
@@ -33,10 +34,10 @@ export const ConfirmSwitchSection = () => {
             <Text type="secondary">Your OLAS balance</Text>
             <Flex gap={8} align="center">
               <Image
-                src={'/tokens/olas-icon.png'}
+                src="/tokens/olas-icon.png"
                 alt="OLAS"
                 width={20}
-                className="flex"
+                height={20}
               />
               <Title level={5} className="my-0">
                 {totalOlas.toFixed(2)} OLAS

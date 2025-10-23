@@ -1,5 +1,6 @@
-import { Button, Flex, Image, TableColumnsType, Typography } from 'antd';
+import { Button, Flex, TableColumnsType, Typography } from 'antd';
 import { kebabCase } from 'lodash';
+import Image from 'next/image';
 import { useCallback } from 'react';
 import { LuInfo } from 'react-icons/lu';
 import { TbCopy, TbWallet } from 'react-icons/tb';
@@ -62,8 +63,6 @@ const TransferDetails = ({ chainName, address }: TransferDetailsProps) => {
             alt={chainName}
             width={20}
             height={20}
-            preview={false}
-            className="flex"
           />
           <Text>{chainName} Chain</Text>
         </Flex>
@@ -111,7 +110,7 @@ const getColumns = (
             src={TokenSymbolConfigMap[record.symbol].image}
             alt={record.symbol}
             width={20}
-            className="flex"
+            height={20}
           />
           <Text>{record.symbol}</Text>
         </Flex>
