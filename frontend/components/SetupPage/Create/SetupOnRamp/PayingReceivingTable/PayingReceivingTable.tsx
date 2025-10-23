@@ -118,17 +118,12 @@ const ViewReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
     ) : (
       receivingTokens.map((token, index) => {
         const icon = TokenSymbolConfigMap[token.symbol as TokenSymbol];
-        if (!icon?.image || !token.symbol) return;
+        if (!icon?.image || !token.symbol) return null;
 
         return (
           <Flex key={index} align="center" gap={8}>
-            <Image
-              src={icon?.image}
-              alt={token.symbol}
-              width={20}
-              height={20}
-            />
-            <Text>{`${token?.amount} ${token?.symbol}`}</Text>
+            <Image src={icon.image} alt={token.symbol} width={20} height={20} />
+            <Text>{`${token?.amount} ${token.symbol}`}</Text>
           </Flex>
         );
       })
