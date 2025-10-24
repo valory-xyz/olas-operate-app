@@ -44,12 +44,7 @@ const CheckpointGraphResponseSchema = z.object({
 const CheckpointsGraphResponseSchema = z.array(CheckpointGraphResponseSchema);
 type CheckpointResponse = z.infer<typeof CheckpointGraphResponseSchema>;
 
-const fetchRewardsQuery = (
-  chainId: EvmChainId,
-  serviceId: Maybe<number>,
-  contractAddress?: Maybe<string>,
-  first: number = 1000,
-) => {
+const fetchRewardsQuery = (chainId: EvmChainId, serviceId: Maybe<number>) => {
   const supportedStakingContracts = Object.values(
     STAKING_PROGRAM_ADDRESS[chainId],
   ).map((address) => `"${address}"`);
@@ -59,9 +54,9 @@ const fetchRewardsQuery = (
     checkpoints(
       orderBy: epoch
       orderDirection: desc
-      first: ${first}
+      first: 1000
       where: {
-        contractAddress_in: [${contractAddress ? `"${contractAddress}"` : supportedStakingContracts}]
+        contractAddress_in: [${supportedStakingContracts}]
         ${serviceId ? `serviceIds_contains: ["${serviceId}"]` : ''}
       }
     ) {
@@ -255,30 +250,6 @@ const useContractCheckpoints = (
       }, {});
     },
     enabled: !!serviceId,
-    refetchInterval: ONE_DAY_IN_MS,
-    refetchOnWindowFocus: false,
-  });
-};
-
-// Fetch agent's active contract checkpoints, only fetching 10 as of now to not add more load.
-export const useCurrentContractCheckpoints = (
-  chainId: EvmChainId,
-  contractAddress: string,
-) => {
-  return useQuery({
-    queryKey: REACT_QUERY_KEYS.CURRENT_CONTRACT_CHECKPOINTS_KEY(
-      chainId,
-      contractAddress,
-    ),
-    queryFn: async (): Promise<CheckpointResponse[]> => {
-      const checkpointsResponse = await request<CheckpointsResponse>(
-        REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId],
-        fetchRewardsQuery(chainId, null, contractAddress, 10),
-      );
-
-      return checkpointsResponse.checkpoints;
-    },
-    enabled: !!contractAddress && !!chainId,
     refetchInterval: ONE_DAY_IN_MS,
     refetchOnWindowFocus: false,
   });

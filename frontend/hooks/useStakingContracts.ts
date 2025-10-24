@@ -1,9 +1,6 @@
 import { useMemo } from 'react';
 
-import {
-  STAKING_PROGRAM_ADDRESS,
-  STAKING_PROGRAMS,
-} from '@/config/stakingPrograms';
+import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
@@ -20,11 +17,6 @@ export const useStakingContracts = () => {
   const currentStakingProgramId = isActiveStakingProgramLoaded
     ? activeStakingProgramId || defaultStakingProgramId
     : null;
-
-  const currentStakingProgramAddress = useMemo(() => {
-    if (!currentStakingProgramId) return null;
-    return STAKING_PROGRAM_ADDRESS[evmHomeChainId][currentStakingProgramId];
-  }, [currentStakingProgramId, evmHomeChainId]);
 
   const availableStakingProgramIds = Object.keys(
     STAKING_PROGRAMS[evmHomeChainId],
@@ -68,9 +60,5 @@ export const useStakingContracts = () => {
     ],
   );
 
-  return {
-    currentStakingProgramId,
-    currentStakingProgramAddress,
-    orderedStakingProgramIds,
-  };
+  return { currentStakingProgramId, orderedStakingProgramIds };
 };
