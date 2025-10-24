@@ -3,7 +3,6 @@ export const SetupScreen = {
   Loading: 'Loading',
   Welcome: 'Welcome',
   SetupPassword: 'SetupPassword',
-  SetupSeedPhrase: 'SetupSeedPhrase',
   SetupBackupSigner: 'SetupBackupSigner',
   AgentOnboarding: 'AgentOnboarding',
   SetupYourAgent: 'SetupYourAgent',
@@ -36,7 +35,6 @@ export const SetupScreen = {
 
   // Restore account, screens to be re-implemented as per v1
   Restore: 'Restore',
-  RestoreViaSeed: 'RestoreViaSeed',
   RestoreSetPassword: 'RestoreSetPassword',
   RestoreViaBackup: 'RestoreViaBackup',
 } as const;
