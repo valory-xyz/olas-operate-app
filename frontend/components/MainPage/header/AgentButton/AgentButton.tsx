@@ -26,7 +26,7 @@ export const AgentButton = () => {
     isLoading: isServicesLoading,
     isSelectedServiceDeploymentStatusLoading,
     selectedService,
-    selectedServiceStatusOverride,
+    serviceStatusOverrides,
   } = useServices();
   const { selectedStakingProgramId } = useStakingProgram();
 
@@ -36,8 +36,11 @@ export const AgentButton = () => {
     isSelectedStakingContractDetailsLoading,
   } = useActiveStakingContractDetails();
 
+  // TODO: ignore, to be removed with Pearl v1
   const selectedServiceStatus =
-    selectedServiceStatusOverride ?? selectedService?.deploymentStatus;
+    (selectedService
+      ? serviceStatusOverrides?.[selectedService.service_config_id]
+      : null) ?? selectedService?.deploymentStatus;
 
   const button = useMemo(() => {
     if (
