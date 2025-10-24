@@ -5,18 +5,27 @@ import { ONE_DAY_IN_S } from '@/utils/time';
 
 import { useBalanceContext } from './useBalanceContext';
 import { useRewardContext } from './useRewardContext';
-import { useRewardsHistory } from './useRewardsHistory';
+import {
+  useCurrentContractCheckpoints,
+  useRewardsHistory,
+} from './useRewardsHistory';
+import { useServices } from './useServices';
+import { useStakingContracts } from './useStakingContracts';
 
 export const useStakingDetails = () => {
+  const { selectedAgentConfig } = useServices();
+  const { currentStakingProgramAddress } = useStakingContracts();
   const { isLoading: isBalanceLoading } = useBalanceContext();
   const { isEligibleForRewards } = useRewardContext();
   const {
     latestRewardStreak: streak,
     isLoading: isRewardsHistoryLoading,
     isError,
-    contractCheckpoints,
-    recentStakingContractAddress,
   } = useRewardsHistory();
+  const { data: currentContractCheckpoints } = useCurrentContractCheckpoints(
+    selectedAgentConfig.evmHomeChainId,
+    currentStakingProgramAddress?.toLowerCase() ?? '',
+  );
 
   // Graph does not account for the current day,
   // so we need to add 1 to the streak, if the user is eligible for rewards
@@ -24,15 +33,12 @@ export const useStakingDetails = () => {
 
   // Calculate the time remaining in the current epoch
   const currentEpochLifetime = useMemo(() => {
-    if (!contractCheckpoints || isEmpty(contractCheckpoints)) return;
-    if (!recentStakingContractAddress) return;
+    if (!currentContractCheckpoints || isEmpty(currentContractCheckpoints))
+      return;
 
-    const checkpoints = contractCheckpoints[recentStakingContractAddress];
-    if (checkpoints.length === 0) return;
-
-    const currentEpoch = checkpoints[0];
-    return (currentEpoch.epochEndTimeStamp + ONE_DAY_IN_S) * 1000;
-  }, [contractCheckpoints, recentStakingContractAddress]);
+    const currentEpoch = currentContractCheckpoints[0];
+    return (Number(currentEpoch.blockTimestamp) + ONE_DAY_IN_S) * 1000;
+  }, [currentContractCheckpoints]);
 
   // If rewards history is loading for the first time
   // or balances are not fetched yet - show loading state

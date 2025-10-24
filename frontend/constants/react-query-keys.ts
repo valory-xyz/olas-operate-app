@@ -68,6 +68,10 @@ export const REACT_QUERY_KEYS = {
     serviceId: number,
     filterQueryByServiceId: boolean,
   ) => ['rewardsHistory', chainId, serviceId, filterQueryByServiceId] as const,
+  CURRENT_CONTRACT_CHECKPOINTS_KEY: (
+    chainId: number,
+    contractAddress: string,
+  ) => ['currentContractCheckpoints', chainId, contractAddress] as const,
 
   // multisigs
   MULTISIG_GET_OWNERS_KEY: (multisig: Safe) =>
