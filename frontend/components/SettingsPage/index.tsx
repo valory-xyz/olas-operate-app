@@ -1,7 +1,8 @@
-import { Card, Flex, Skeleton, Typography } from 'antd';
+import { Button, Card, Flex, Skeleton, Typography } from 'antd';
 import { isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
+import { useBoolean } from 'usehooks-ts';
 
 import { Pages } from '@/enums/Pages';
 import { SettingsScreen } from '@/enums/SettingsScreen';
@@ -19,6 +20,7 @@ import { Optional } from '@/types/Util';
 import { AddressLink } from '../AddressLink';
 import { CustomAlert } from '../Alert';
 import { CardSection, cardStyles } from '../ui';
+import { SettingsDrawer } from './SettingsDrawer';
 
 const { Text, Paragraph, Title } = Typography;
 
@@ -54,6 +56,11 @@ const SettingsMain = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
   const { selectedAgentConfig } = useServices();
   const { masterEoa, masterSafes } = useMasterWalletContext();
+  const {
+    value: isDrawerOpen,
+    setTrue: openDrawer,
+    setFalse: closeDrawer,
+  } = useBoolean(false);
 
   const masterSafe = masterSafes?.find(
     ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
@@ -155,7 +162,29 @@ const SettingsMain = () => {
             )}
           </CardSection>
         )}
+        <CardSection $padding="24px">
+          <Flex gap={16}>
+            <Image
+              src="/default-icon.png"
+              alt="default"
+              width={36}
+              height={36}
+            />
+            <Flex vertical>
+              <Text strong className="my-6">
+                Default Settings
+              </Text>
+              <Text type="secondary" className="text-sm mb-16">
+                Predefined system values, for reference only.
+              </Text>
+              <Button className="w-max text-sm" onClick={openDrawer}>
+                View Default Settings
+              </Button>
+            </Flex>
+          </Flex>
+        </CardSection>
       </Card>
+      <SettingsDrawer isDrawerOpen={isDrawerOpen} onClose={closeDrawer} />
     </Flex>
   );
 };
