@@ -222,9 +222,9 @@ const SetupEoaFundingForChainV2 = ({
       <Flex gap={8} align="center">
         <Image
           src={`/chains/${kebabCase(chainName)}-chain.png`}
+          alt={`${chainName} logo`}
           width={20}
           height={20}
-          alt="chain logo"
         />
         <Text>{chainName}</Text>
       </Flex>

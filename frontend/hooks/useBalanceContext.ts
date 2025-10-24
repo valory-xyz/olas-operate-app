@@ -1,4 +1,4 @@
-import { compact, find, get, groupBy, isEmpty, isNil } from 'lodash';
+import { compact, get, isEmpty, isNil } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
@@ -120,31 +120,9 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
 
   const serviceSafeNativeBalances = useMemo(() => {
     if (!serviceSafeBalances) return null;
-
-    const nativeBalances = serviceSafeBalances.filter(
-      ({ evmChainId }) => evmChainId === evmHomeChainId,
+    return serviceSafeBalances.filter(
+      ({ evmChainId, isNative }) => evmChainId === evmHomeChainId && isNative,
     );
-
-    /**
-     * Native balances with wrapped token balances
-     * @example { xDai: 100, Wrapped xDai: 50 } => { xDai: 150 }
-     */
-    const groupedNativeBalances = Object.entries(
-      groupBy(nativeBalances, 'walletAddress'),
-    ).map(([address, items]) => {
-      const nativeTokenBalance = find(items, { isNative: true })?.balance || 0;
-      const wrappedBalance =
-        find(items, { isWrappedToken: true })?.balance || 0;
-      const totalBalance = nativeTokenBalance + wrappedBalance;
-
-      return {
-        ...items[0],
-        walletAddress: address,
-        balance: totalBalance,
-      } as WalletBalance;
-    });
-
-    return groupedNativeBalances;
   }, [serviceSafeBalances, evmHomeChainId]);
 
   /** service safe native balances for current chain */

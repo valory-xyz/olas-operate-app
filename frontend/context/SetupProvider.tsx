@@ -14,7 +14,6 @@ import { Maybe } from '@/types/Util';
 type SetupObjectType = {
   state: SetupScreen;
   prevState: Maybe<SetupScreen>;
-  mnemonic: string[];
   backupSigner?: {
     address: Address;
     type: BackupWalletType;
@@ -30,7 +29,6 @@ export const SetupContext = createContext<SetupContextType>({
   setupObject: {
     state: SetupScreen.Welcome,
     prevState: null,
-    mnemonic: [],
     backupSigner: undefined,
   },
   setSetupObject: () => {},
@@ -40,7 +38,6 @@ export const SetupProvider = ({ children }: PropsWithChildren) => {
   const [setupObject, setSetupObject] = useState<SetupObjectType>({
     state: SetupScreen.Welcome,
     prevState: null,
-    mnemonic: [],
     backupSigner: undefined,
   });
 

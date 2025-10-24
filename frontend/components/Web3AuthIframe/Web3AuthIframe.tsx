@@ -61,9 +61,8 @@ export const Web3AuthIframe = () => {
   const ref = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    const web3authIframe = ref.current?.contentWindow;
-
     const handleMessage = (event: MessageEvent) => {
+      const web3authIframe = ref.current?.contentWindow;
       if (event.source !== web3authIframe) return;
 
       const eventDetails = event as unknown as Web3AuthEvent;

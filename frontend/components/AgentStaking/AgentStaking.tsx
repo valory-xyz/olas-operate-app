@@ -1,4 +1,5 @@
-import { Flex, Image, Skeleton, Typography } from 'antd';
+import { Flex, Skeleton, Typography } from 'antd';
+import Image from 'next/image';
 import { useState } from 'react';
 import { TbFileText, TbHistory } from 'react-icons/tb';
 
@@ -42,7 +43,7 @@ const StakingStats = () => {
                   src={`/tokens/olas-icon.png`}
                   alt="OLAS"
                   width={20}
-                  className="flex"
+                  height={20}
                 />
                 {totalRewards.toFixed(2)}
               </Flex>

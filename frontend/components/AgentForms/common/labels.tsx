@@ -2,11 +2,7 @@ import { Flex, Typography } from 'antd';
 
 import { FormLabel } from '@/components/ui/Typography';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import {
-  COINGECKO_DEMO_API_KEY,
-  COINGECKO_URL,
-  GEMINI_API_URL,
-} from '@/constants/urls';
+import { COINGECKO_DEMO_API_KEY, GEMINI_API_URL } from '@/constants/urls';
 
 const { Text, Title } = Typography;
 
@@ -55,42 +51,15 @@ export const CoinGeckoApiKeyLabel = () => (
 export const GeminiApiKeyLabel = () => (
   <Flex align="center" gap={6}>
     <FormLabel>Gemini API key</FormLabel>
-    <Text type="secondary" className="text-sm">
-      – optional
-    </Text>
+    <Text className="text-neutral-tertiary text-sm pb-4">– optional</Text>
   </Flex>
 );
 
 export const CoinGeckoApiKeyDesc = () => (
-  <Flex vertical gap={4} style={{ marginBottom: 160 }}>
-    <Text>
-      To create your <Text strong>CoinGecko API key</Text>:
-    </Text>
-
-    <Text>
-      <ol className="m-0">
-        <li>
-          <Text>
-            Log in to your{' '}
-            <a target="_blank" href={COINGECKO_URL}>
-              CoinGecko account&nbsp;
-              {UNICODE_SYMBOLS.EXTERNAL_LINK}
-            </a>
-            .
-          </Text>
-        </li>
-        <li>
-          <Text>Go to Developer Dashboard.</Text>
-        </li>
-        <li>
-          <Text>Find your key under the My API Keys section.</Text>
-        </li>
-      </ol>
-    </Text>
-
+  <Flex vertical gap={4} style={{ marginBottom: 252 }}>
     <Text>
       <a target="_blank" href={COINGECKO_DEMO_API_KEY}>
-        Learn how to create a demo API key&nbsp;
+        Learn how to get a free CoinGecko API key&nbsp;
         {UNICODE_SYMBOLS.EXTERNAL_LINK}
       </a>
     </Text>
@@ -100,9 +69,9 @@ export const CoinGeckoApiKeyDesc = () => (
 export const GeminiApiKeyDesc = () => (
   <Flex vertical>
     <Text>
-      You can generate <Text strong>Gemini API key</Text> for free on{' '}
+      You can generate Gemini API Key for free on{' '}
       <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
-        Google AI Studio
+        Google AI Studio&nbsp;{UNICODE_SYMBOLS.EXTERNAL_LINK}
       </a>
       .
     </Text>

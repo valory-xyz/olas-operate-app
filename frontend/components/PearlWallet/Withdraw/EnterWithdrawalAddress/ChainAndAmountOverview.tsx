@@ -1,14 +1,13 @@
-import { Flex, Image, Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import { entries, kebabCase } from 'lodash';
+import Image from 'next/image';
 import styled from 'styled-components';
 
-import { BackButton } from '@/components/ui/BackButton';
-import { CardFlex } from '@/components/ui/CardFlex';
+import { BackButton, CardFlex } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { COLOR } from '@/constants/colors';
-import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
+import { COLOR, TokenSymbol, TokenSymbolConfigMap } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
-import { formatNumber } from '@/utils/numberFormatters';
+import { formatNumber } from '@/utils';
 
 import { PearlWalletToExternalWallet } from '../../components/PearlWalletToExternalWallet';
 
@@ -52,10 +51,9 @@ export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
               <OverviewContainer gap={8} align="center">
                 <Image
                   src={`/chains/${kebabCase(chainDetails.name)}-chain.png`}
-                  width={20}
-                  preview={false}
                   alt={`${chainDetails.name} logo`}
-                  className="flex"
+                  width={20}
+                  height={20}
                 />
                 {chainDetails.name}
               </OverviewContainer>
@@ -72,9 +70,9 @@ export const ChainAndAmountOverview = ({ onBack }: { onBack: () => void }) => {
                   <Flex key={symbol} gap={8} align="center">
                     <Image
                       src={TokenSymbolConfigMap[symbol as TokenSymbol].image}
-                      alt={symbol}
+                      alt={`${symbol} logo`}
                       width={20}
-                      className="flex"
+                      height={20}
                     />
                     <Text>{formatNumber(amount, 4)}</Text>
                     <Text>{symbol}</Text>

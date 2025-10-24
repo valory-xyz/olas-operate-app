@@ -1,5 +1,6 @@
 import { Flex, Tag, Typography } from 'antd';
 import Image from 'next/image';
+import { TbCreditCardFilled } from 'react-icons/tb';
 
 import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
 import { AGENT_CONFIG } from '@/config/agents';
@@ -39,7 +40,7 @@ const Header = ({ agentType, agentName, category, desc }: HeaderProps) => (
 
       {category && <Tag bordered={false}>{category}</Tag>}
     </Flex>
-    <Text>{desc}</Text>
+    <Text className="text-neutral-secondary">{desc}</Text>
   </Flex>
 );
 
@@ -52,7 +53,7 @@ const OperatingChain = ({
   chainDisplayName,
 }: OperatingChainProps) => (
   <Flex vertical gap={8}>
-    <Text type="secondary">Operating chain</Text>
+    <Text className="text-neutral-tertiary">Operating chain</Text>
     <Text className="text-tag">
       <Image
         src={`/chains/${chainName}-chain.png`}
@@ -77,13 +78,13 @@ const MinimumStakingRequirements = ({
 
   return (
     <Flex vertical gap={8}>
-      <Text type="secondary">Minimum staking requirement</Text>
+      <Text className="text-neutral-tertiary">Minimum staking requirement</Text>
       <Flex vertical className="text-tag">
         <Flex gap={8} align="flex-start">
           <Image
             src="/tokens/olas-icon.png"
             alt="OLAS token for staking"
-            width={18}
+            width={20}
             height={20}
           />
           <Text className="leading-normal">
@@ -115,7 +116,9 @@ const MinimumFundingRequirements = ({
   if (allTokens.length === 0) {
     return (
       <Flex vertical gap={8}>
-        <Text type="secondary">Minimum funding requirement</Text>
+        <Text className="text-neutral-tertiary">
+          Minimum funding requirement
+        </Text>
         <Text className="text-tag">No funding required</Text>
       </Flex>
     );
@@ -123,7 +126,7 @@ const MinimumFundingRequirements = ({
 
   return (
     <Flex vertical gap={8}>
-      <Text type="secondary">Minimum funding requirement</Text>
+      <Text className="text-neutral-tertiary">Minimum funding requirement</Text>
       <Flex vertical className="text-tag" gap={12}>
         {allTokens.map(({ token, amount, icon }) => (
           <Flex key={token} gap={8} align="flex-start">
@@ -137,6 +140,15 @@ const MinimumFundingRequirements = ({
     </Flex>
   );
 };
+
+const YouCanCoverAllRequirements = () => (
+  <Flex gap={8} align="center">
+    <TbCreditCardFilled size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+    <Text className="text-neutral-tertiary text-sm">
+      You can cover all requirements instantly with your card.
+    </Text>
+  </Flex>
+);
 
 type FundingRequirementStepProps = {
   agentType: AgentType;
@@ -156,7 +168,7 @@ export const FundingRequirementStep = ({
 
   return (
     <IntroductionAnimatedContainer>
-      <Flex vertical gap={24} style={{ padding: 20, marginBottom: 48 }}>
+      <Flex vertical gap={24} style={{ padding: 20, marginBottom: 12 }}>
         <Header
           agentType={agentType}
           agentName={agentName}
@@ -166,6 +178,7 @@ export const FundingRequirementStep = ({
         <OperatingChain chainName={name} chainDisplayName={displayName} />
         <MinimumStakingRequirements agentType={agentType} />
         <MinimumFundingRequirements agentType={agentType} />
+        <YouCanCoverAllRequirements />
       </Flex>
     </IntroductionAnimatedContainer>
   );

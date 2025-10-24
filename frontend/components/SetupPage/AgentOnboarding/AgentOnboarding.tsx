@@ -1,11 +1,12 @@
-import { LeftOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
+import { isEmpty } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { UnderConstruction } from '@/components/Alerts';
+import { BackButton } from '@/components/ui';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
 import { Pages } from '@/enums/Pages';
@@ -20,7 +21,7 @@ const { Text, Title } = Typography;
 
 const Container = styled(Flex)`
   width: 840px;
-  margin: 36px auto 0 auto;
+  margin: 16px auto 0 auto;
   border-radius: 8px;
   background-color: ${COLOR.WHITE};
   .agent-selection-left-content {
@@ -45,7 +46,7 @@ const AgentSelectionContainer = styled(Flex)<{ active?: boolean }>`
   }
 `;
 
-const SelectYourAgent = () => {
+const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
   const { goto } = usePageState();
   return (
     <Flex
@@ -54,14 +55,7 @@ const SelectYourAgent = () => {
       className="p-24"
       style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}
     >
-      <Button
-        onClick={() => goto(Pages.Main)}
-        icon={<LeftOutlined />}
-        type="default"
-        style={{ alignSelf: 'self-start' }}
-      >
-        Back
-      </Button>
+      {canGoBack && <BackButton onPrev={() => goto(Pages.Main)} />}
       <Title level={3} className="m-0">
         Select your agent
       </Title>
@@ -121,7 +115,7 @@ const SelectYourAgentList = ({
  */
 export const AgentOnboarding = () => {
   const { goto } = useSetup();
-  const { updateAgentType } = useServices();
+  const { updateAgentType, services } = useServices();
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
 
   const handleAgentSelect = useCallback(() => {
@@ -154,7 +148,7 @@ export const AgentOnboarding = () => {
   return (
     <Container>
       <Flex vertical className="agent-selection-left-content">
-        <SelectYourAgent />
+        <SelectYourAgent canGoBack={!isEmpty(services)} />
         <SelectYourAgentList
           onSelectYourAgent={handleSelectYourAgent}
           selectedAgent={selectedAgent}

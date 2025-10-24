@@ -9,5 +9,5 @@ const Text = styled(AntDText)`
 `;
 
 export const FormLabel = ({ children }: { children: ReactNode }) => (
-  <Text className="text-light text-sm">{children}</Text>
+  <Text className="text-neutral-secondary text-sm">{children}</Text>
 );

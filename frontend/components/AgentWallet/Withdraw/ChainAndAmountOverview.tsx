@@ -1,6 +1,7 @@
 import { ArrowRightOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { Button, Flex, Image, Skeleton, Tooltip, Typography } from 'antd';
+import { Button, Flex, Skeleton, Tooltip, Typography } from 'antd';
 import { kebabCase } from 'lodash';
+import Image from 'next/image';
 import styled from 'styled-components';
 
 import { AgentNft } from '@/components/AgentNft';
@@ -61,7 +62,7 @@ const AgentWalletToPearlWallet = () => {
         <Flex gap={8} align="center">
           <Text type="secondary">From</Text>{' '}
           {agentName && agentImgSrc && (
-            <Image src={agentImgSrc} width={28} height={28} alt={agentName} />
+            <Image src={agentImgSrc} alt={agentName} width={28} height={28} />
           )}
           <Text className="font-weight-500">{agentName}</Text>
         </Flex>
@@ -82,10 +83,9 @@ const DestinationChain = ({ chainName }: { chainName: string }) => (
     <OverviewContainer gap={8} align="center">
       <Image
         src={`/chains/${kebabCase(chainName)}-chain.png`}
-        width={20}
-        preview={false}
         alt={`${chainName} logo`}
-        className="flex"
+        width={20}
+        height={20}
       />
       {chainName}
     </OverviewContainer>
@@ -106,7 +106,7 @@ const AssetsFromAgentWallet = () => {
               src={TokenSymbolConfigMap[asset.symbol].image}
               alt={asset.symbol}
               width={20}
-              className="flex"
+              height={20}
             />
             <Text>{formatNumber(asset.amount, 4)}</Text>
             <Text>{asset.symbol}</Text>
@@ -130,7 +130,7 @@ const AssetsFromStakingContract = () => {
             src={`/tokens/olas-icon.png`}
             alt="OLAS rewards"
             width={20}
-            className="flex"
+            height={20}
           />
           {isBalanceLoading ? (
             <Skeleton.Input active size="small" style={{ width: 80 }} />

@@ -11,7 +11,7 @@ export type TokenSymbol = keyof typeof TokenSymbolMap;
 
 export const TokenSymbolConfigMap: Record<TokenSymbol, { image: string }> = {
   [TokenSymbolMap.ETH]: { image: '/chains/ethereum-chain.png' },
-  [TokenSymbolMap.XDAI]: { image: '/tokens/wxdai-icon.png' },
+  [TokenSymbolMap.XDAI]: { image: '/tokens/xdai-icon.png' },
   [TokenSymbolMap.OLAS]: { image: '/tokens/olas-icon.png' },
   [TokenSymbolMap.USDC]: { image: '/tokens/usdc-icon.png' },
   [TokenSymbolMap.WXDAI]: { image: '/tokens/wxdai-icon.png' },

@@ -15,7 +15,6 @@ import { SetupCreateSafe } from './Create/SetupCreateSafe';
 import { SetupEoaFunding } from './Create/SetupEoaFunding/SetupEoaFunding';
 import { SetupOnRamp } from './Create/SetupOnRamp/SetupOnRamp';
 import { SetupPassword } from './Create/SetupPassword';
-import { SetupSeedPhrase } from './Create/SetupSeedPhrase';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
 import { FundYourAgent } from './FundYourAgent/FundYourAgent';
 import { TransferFunds } from './FundYourAgent/TransferFunds';
@@ -23,7 +22,6 @@ import {
   SetupRestoreMain,
   SetupRestoreSetPassword,
   SetupRestoreViaBackup,
-  SetupRestoreViaSeed,
 } from './SetupRestore';
 import { SetupWelcome } from './SetupWelcome';
 import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
@@ -73,8 +71,6 @@ export const Setup = () => {
       // Create account
       case SetupScreen.SetupPassword:
         return <SetupPassword />;
-      case SetupScreen.SetupSeedPhrase:
-        return <SetupSeedPhrase />;
       case SetupScreen.SetupBackupSigner:
         return <SetupBackupSigner />;
       case SetupScreen.AgentOnboarding:
@@ -108,8 +104,6 @@ export const Setup = () => {
       // Restore account, screens to be re-implemented as per v1
       case SetupScreen.Restore:
         return <SetupRestoreMain />;
-      case SetupScreen.RestoreViaSeed:
-        return <SetupRestoreViaSeed />;
       case SetupScreen.RestoreSetPassword:
         return <SetupRestoreSetPassword />;
       case SetupScreen.RestoreViaBackup:

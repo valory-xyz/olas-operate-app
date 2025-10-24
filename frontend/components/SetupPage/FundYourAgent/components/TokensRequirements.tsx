@@ -1,8 +1,9 @@
-import { Flex, Image, Skeleton, Typography } from 'antd';
+import { Flex, Skeleton, Typography } from 'antd';
+import Image from 'next/image';
 import styled from 'styled-components';
 
-import { SendFundAction } from '@/components/Bridge/types';
-import { COLOR } from '@/constants/colors';
+import { SendFundAction } from '@/components/Bridge';
+import { COLOR } from '@/constants';
 
 const { Text } = Typography;
 
@@ -85,8 +86,9 @@ export const TokenRequirements = ({
 }: TokenRequirementsProps) => {
   if (isLoading) return <RequirementsSkeleton />;
 
-  if (fundType === 'onRamp')
+  if (fundType === 'onRamp') {
     return <RequirementsForOnRamp fiatAmount={fiatAmount?.toFixed(2) ?? '0'} />;
+  }
 
   if (!tokenRequirements?.length) return null;
 
@@ -96,7 +98,7 @@ export const TokenRequirements = ({
       <RequirementsContainer gap={12}>
         {tokenRequirements.map(({ amount, symbol, iconSrc }) => (
           <Flex key={symbol} align="center" gap={8} style={{ width: '100%' }}>
-            <Image src={iconSrc} alt={symbol} style={{ height: 20 }} />
+            <Image src={iconSrc} alt={symbol} height={20} width={20} />
             <Text>
               {formatAmount(amount)} {symbol}
             </Text>

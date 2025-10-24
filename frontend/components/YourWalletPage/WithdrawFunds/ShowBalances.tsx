@@ -1,7 +1,6 @@
 import { Button, Card, Flex, Spin, Typography } from 'antd';
 import { kebabCase, sum } from 'lodash';
 import Image from 'next/image';
-import React from 'react';
 
 import { InfoBreakdownList } from '@/components/InfoBreakdown';
 import { TOKEN_CONFIG } from '@/config/tokens';

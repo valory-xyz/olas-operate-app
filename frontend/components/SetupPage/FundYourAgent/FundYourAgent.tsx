@@ -155,6 +155,9 @@ const BridgeTokens = ({
   );
 };
 
+/**
+ * Fund your agent by buying crypto via on-ramp or transferring/bridging tokens.
+ */
 export const FundYourAgent = () => {
   const { selectedAgentConfig } = useServices();
   const { goto } = usePageState();

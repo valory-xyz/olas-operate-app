@@ -1,6 +1,6 @@
 import { CheckCircleOutlined } from '@ant-design/icons';
 import { Button, Checkbox, Flex, Typography } from 'antd';
-import { useState } from 'react';
+import { MouseEvent, useCallback, useState } from 'react';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
@@ -32,17 +32,18 @@ const ownYourAgentsList = [
   'You are self-custodying your agents, they are yours and yours only.',
   "You are self-custodying your funds, you're in control.",
   'You take responsibility, these are your agents and you take care of them.',
-];
+] as const;
 
 const OwnYourAgents = () => (
   <OwnYourAgentCard vertical gap={16}>
     <Title level={4} className="text-center">
       Own your AI agents
     </Title>
+    <Text className="text-light text-sm">Pearl is designed so that:</Text>
     {ownYourAgentsList.map((item, index) => (
       <Flex key={index} align="stretch" justify="start">
         <CheckedCircle />
-        <Text className="text-light">{item}</Text>
+        <Text className="text-light text-sm">{item}</Text>
       </Flex>
     ))}
   </OwnYourAgentCard>
@@ -53,18 +54,24 @@ export const SetupWelcomeCreate = () => {
   const [isFormValid, setIsFormValid] = useState(false);
   const { termsAndConditionsWindow } = useElectronApi();
 
+  const onTermsClick = useCallback(
+    (e: MouseEvent) => {
+      e.preventDefault();
+      termsAndConditionsWindow?.show?.('pearl');
+    },
+    [termsAndConditionsWindow],
+  );
+
   return (
     <Flex vertical gap={24} style={{ marginTop: 24 }}>
       <Title level={4} className="text-center">
-        Hi, let&apos;s create your Pearl account
+        Hi, let&apos;s get you set up!
       </Title>
       <OwnYourAgents />
 
       <Checkbox onChange={(e) => setIsFormValid(e.target.checked)}>
         I agree to the Pearl&nbsp;
-        <a onClick={() => termsAndConditionsWindow?.show?.('pearl')}>
-          Terms & Conditions
-        </a>
+        <a onClick={onTermsClick}>Terms & Conditions</a>
       </Checkbox>
 
       <Flex vertical gap={16}>
