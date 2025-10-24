@@ -1,3 +1,5 @@
+// TODO: move to utils/validations.ts
+
 export type ValidationStatus = 'valid' | 'invalid' | 'unknown';
 
 /**
