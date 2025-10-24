@@ -3,12 +3,16 @@ const fs = require('fs');
 const os = require('os');
 const sudo = require('sudo-prompt');
 const process = require('process');
-const axios = require('axios');
 const { spawnSync } = require('child_process');
 const { logger } = require('./logger');
 const { execSync } = require('child_process');
 const { paths } = require('./constants');
 const homedir = os.homedir();
+
+// stream pipeline helpers for efficient streaming to file
+const { pipeline } = require('stream');
+const { promisify } = require('util');
+const streamPipeline = promisify(pipeline);
 
 const path = require('path');
 const { app } = require('electron');
@@ -129,21 +133,26 @@ function isTendermintInstalledWindows() {
 }
 
 async function downloadFile(url, dest) {
-  const writer = fs.createWriteStream(dest);
   try {
-    const response = await axios({
-      url,
-      method: 'GET',
-      responseType: 'stream',
-    });
-    response.data.pipe(writer);
-    return new Promise((resolve, reject) => {
-      writer.on('finish', resolve);
-      writer.on('error', reject);
-    });
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch ${url}: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    // stream the response body directly to disk
+    await streamPipeline(response.body, fs.createWriteStream(dest));
+    return true;
   } catch (err) {
-    fs.unlink(dest, () => {}); // Delete the file if there is an error
+    // Delete partially-written file if present
+    try {
+      await fs.promises.unlink(dest);
+    } catch (_e) {
+      // ignore unlink errors
+    }
     console.error('Error downloading the file:', err.message);
+    throw err;
   }
 }
 
