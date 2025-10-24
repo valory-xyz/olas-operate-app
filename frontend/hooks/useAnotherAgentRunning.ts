@@ -11,7 +11,7 @@ import { ServicesService } from '@/service/Services';
 import { useServices } from './useServices';
 
 export const useAnotherAgentRunning = () => {
-  const { services, selectedService } = useServices();
+  const { services, selectedService, serviceStatusOverrides } = useServices();
 
   const { data: allDeployments } = useQuery({
     queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
@@ -33,13 +33,20 @@ export const useAnotherAgentRunning = () => {
       const deployment = allDeployments[service.service_config_id];
       const serviceStatus = deployment?.status;
 
+      // Check if either the backend status or the override status
+      // indicates an active or in-progress. Overrides might represent
+      // the intended status while the real one is transitioning.
       return [
         MiddlewareDeploymentStatusMap.DEPLOYED,
         MiddlewareDeploymentStatusMap.DEPLOYING,
         MiddlewareDeploymentStatusMap.STOPPING,
-      ].some((status) => status === serviceStatus);
+      ].some(
+        (status) =>
+          status === serviceStatus ||
+          status === serviceStatusOverrides?.[service.service_config_id],
+      );
     });
-  }, [services, selectedService, allDeployments]);
+  }, [services, selectedService, allDeployments, serviceStatusOverrides]);
 
   return isAnotherAgentRunning;
 };
