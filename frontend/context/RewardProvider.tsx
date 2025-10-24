@@ -15,12 +15,15 @@ import { useAgentStakingRewardsDetails } from '@/hooks/useAgentStakingRewardsDet
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
+import { StakingRewardsInfo } from '@/types/Autonolas';
+import { Nullable } from '@/types/Util';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 import { StakingProgramContext } from './StakingProgramProvider';
 
 export const RewardContext = createContext<{
   isAvailableRewardsForEpochLoading?: boolean;
+  stakingRewardsDetails?: Nullable<StakingRewardsInfo>;
   accruedServiceStakingRewards?: number;
   availableRewardsForEpoch?: bigint;
   availableRewardsForEpochEth?: number;
@@ -31,6 +34,7 @@ export const RewardContext = createContext<{
   isStakingRewardsDetailsLoading?: boolean;
 }>({
   isAvailableRewardsForEpochLoading: false,
+  stakingRewardsDetails: null,
   updateRewards: async () => {},
 });
 
@@ -135,6 +139,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
         // staking rewards details
         isStakingRewardsDetailsLoading,
         accruedServiceStakingRewards,
+        stakingRewardsDetails,
 
         // available rewards for the current epoch
         isAvailableRewardsForEpochLoading,

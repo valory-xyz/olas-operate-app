@@ -126,6 +126,7 @@ export abstract class AgentsFunService extends StakedAgentService {
         ethers.utils.formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
+      tsCheckpoint,
     } as StakingRewardsInfo;
   };
 

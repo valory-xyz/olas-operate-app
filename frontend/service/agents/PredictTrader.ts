@@ -108,6 +108,7 @@ export abstract class PredictTraderService extends StakedAgentService {
         ethers.utils.formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
+      tsCheckpoint,
     } as StakingRewardsInfo;
   };
 
