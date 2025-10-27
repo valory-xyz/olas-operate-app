@@ -1,6 +1,6 @@
 import { QueryObserverBaseResult, useQuery } from '@tanstack/react-query';
 import { message, MessageArgsProps } from 'antd';
-import { noop } from 'lodash';
+import { noop, values } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -20,6 +20,7 @@ import { AGENT_CONFIG } from '@/config/agents';
 import {
   AgentMap,
   AgentType,
+  EvmChainId,
   FIFTEEN_SECONDS_INTERVAL,
   FIVE_SECONDS_INTERVAL,
   MESSAGE_WIDTH,
@@ -64,6 +65,7 @@ type ServicesResponse = Pick<
 
 type ServicesContextType = {
   services?: MiddlewareServiceResponse[];
+  allServiceConfigIds: { configId: string; chainId: EvmChainId }[];
   serviceWallets?: AgentWallet[];
   selectedService?: Service;
   serviceStatusOverrides?: Record<string, Maybe<MiddlewareDeploymentStatus>>;
@@ -89,6 +91,7 @@ export const ServicesContext = createContext<ServicesContextType>({
   deploymentDetails: undefined,
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
+  allServiceConfigIds: [],
 });
 
 /**
@@ -300,6 +303,28 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     [selectedServiceConfigId],
   );
 
+  /**
+   * Service config IDs for all non-under-construction agents
+   */
+  const allServiceConfigIds = useMemo(() => {
+    if (!services) return [];
+    return services
+      .filter((x) => {
+        const currentAgent = values(AGENT_CONFIG).find(
+          (c) =>
+            c.servicePublicId === x.service_public_id &&
+            c.evmHomeChainId === asEvmChainId(x.home_chain),
+        );
+        return (
+          !currentAgent?.isUnderConstruction && !!currentAgent?.isAgentEnabled
+        );
+      })
+      .map((s) => ({
+        configId: s.service_config_id,
+        chainId: asEvmChainId(s.home_chain),
+      }));
+  }, [services]);
+
   return (
     <ServicesContext.Provider
       value={{
@@ -308,6 +333,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         isFetched: !isServicesLoading,
         isLoading: isServicesLoading,
         refetch,
+        allServiceConfigIds,
 
         // pause
         paused,

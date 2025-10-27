@@ -154,8 +154,6 @@ export const Sidebar = () => {
   const { goto: gotoSetup } = useSetup();
   const { pageState, goto: gotoPage } = usePageState();
 
-  // TODO: in order for predict to display correctly,
-  // we need to create a dummy service before going to main page
   const { services, isLoading, selectedAgentType, updateAgentType } =
     useServices();
 

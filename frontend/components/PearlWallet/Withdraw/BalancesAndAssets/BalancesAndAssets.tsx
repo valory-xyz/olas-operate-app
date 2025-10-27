@@ -122,20 +122,31 @@ const AvailableAssets = () => (
   </Flex>
 );
 
-const StakedAssets = () => (
-  <Flex vertical gap={12}>
-    <Flex align="center" gap={8}>
-      <Title level={5} className="m-0 text-lg">
-        Staked Assets
-      </Title>
-      <StakedAssetsTooltip />
+const StakedAssets = () => {
+  const { allServiceConfigIds } = useServices();
+  const { walletChainId } = usePearlWallet();
+
+  const configIds = allServiceConfigIds.filter(
+    ({ chainId }) => chainId === walletChainId,
+  );
+
+  return (
+    <Flex vertical gap={12}>
+      <Flex align="center" gap={8}>
+        <Title level={5} className="m-0 text-lg">
+          Staked Assets
+        </Title>
+        <StakedAssetsTooltip />
+      </Flex>
+      <CardFlex $noBorder>
+        <StakedAssetsTable />
+        {configIds.map(({ configId, chainId }) => (
+          <AgentNft key={configId} configId={configId} chainId={chainId} />
+        ))}
+      </CardFlex>
     </Flex>
-    <CardFlex $noBorder>
-      <StakedAssetsTable />
-      <AgentNft />
-    </CardFlex>
-  </Flex>
-);
+  );
+};
 
 type BalancesAndAssetsProps = {
   onWithdraw: () => void;

@@ -3,7 +3,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { isEmpty, map, values } from 'lodash';
+import { isEmpty, map } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -18,7 +18,6 @@ import {
   BalancesAndFundingRequirements,
   MasterSafeBalanceRecord,
 } from '@/client';
-import { AGENT_CONFIG } from '@/config/agents';
 import { EvmChainId, MiddlewareDeploymentStatusMap } from '@/constants';
 import {
   SIXTY_MINUTE_INTERVAL,
@@ -33,7 +32,6 @@ import { useServices } from '@/hooks/useServices';
 import { BalanceService } from '@/service/balances';
 import { Maybe, Nullable, Optional } from '@/types/Util';
 import {
-  asEvmChainId,
   asMiddlewareChain,
   BACKOFF_STEPS,
   getExponentialInterval,
@@ -142,7 +140,12 @@ export const BalancesAndRefillRequirementsProvider = ({
   const { isOnline } = useOnlineStatusContext();
   const { isUserLoggedIn } = usePageState();
   const { masterSafes } = useMasterWalletContext();
-  const { services, selectedService, selectedAgentConfig } = useServices();
+  const {
+    services,
+    selectedService,
+    selectedAgentConfig,
+    allServiceConfigIds,
+  } = useServices();
   const { isEligibleForRewards } = useRewardContext();
   const configId = selectedService?.service_config_id;
   const chainId = selectedAgentConfig.evmHomeChainId;
@@ -180,22 +183,9 @@ export const BalancesAndRefillRequirementsProvider = ({
     refetchInterval,
   });
 
-  // Service config IDs for all non-under-construction agents
   const serviceConfigIds = useMemo(
-    () =>
-      services
-        ?.filter((x) => {
-          const currentAgent = values(AGENT_CONFIG).find(
-            (c) =>
-              c.servicePublicId === x.service_public_id &&
-              c.evmHomeChainId === asEvmChainId(x.home_chain),
-          );
-          return (
-            !currentAgent?.isUnderConstruction && !!currentAgent?.isAgentEnabled
-          );
-        })
-        .map((s) => s.service_config_id) ?? [],
-    [services],
+    () => allServiceConfigIds.map(({ configId }) => configId),
+    [allServiceConfigIds],
   );
 
   const {
