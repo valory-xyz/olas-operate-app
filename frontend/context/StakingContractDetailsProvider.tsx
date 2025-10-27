@@ -68,11 +68,6 @@ const useAllStakingContractDetails = () => {
     {} as Record<string, Partial<StakingContractDetails>>,
   );
 
-  console.log(
-    'dallStakingContractDetailsRecord',
-    allStakingContractDetailsRecord,
-  );
-
   // TODO: some are failing, not sure why.
   const isAllStakingContractDetailsLoaded = queryResults.some(
     (query) => query.isSuccess,
