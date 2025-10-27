@@ -288,6 +288,18 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     setSelectedServiceConfigId(currentService.service_config_id);
   }, [selectedServiceConfigId, services, selectedAgentConfig]);
 
+  const overrideSelectedServiceStatus = useCallback(
+    (status: Maybe<MiddlewareDeploymentStatus>) => {
+      if (selectedServiceConfigId) {
+        setServiceStatusOverrides((prev) => ({
+          ...prev,
+          [selectedServiceConfigId]: status,
+        }));
+      }
+    },
+    [selectedServiceConfigId],
+  );
+
   return (
     <ServicesContext.Provider
       value={{
@@ -312,16 +324,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         deploymentDetails,
         serviceStatusOverrides,
         updateAgentType,
-        overrideSelectedServiceStatus: (
-          status: Maybe<MiddlewareDeploymentStatus>,
-        ) => {
-          if (selectedServiceConfigId) {
-            setServiceStatusOverrides((prev) => ({
-              ...prev,
-              [selectedServiceConfigId]: status,
-            }));
-          }
-        },
+        overrideSelectedServiceStatus,
       }}
     >
       {children}
