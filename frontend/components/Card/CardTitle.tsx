@@ -9,6 +9,9 @@ type CardTitleProps = {
   backButtonCallback?: () => void;
 };
 
+/**
+ * @deprecated Use CardTitle from ui/Typography/CardTitle instead
+ */
 export const CardTitle = ({ title, backButtonCallback }: CardTitleProps) => (
   <Flex justify="start" align="center" gap={12}>
     {isFunction(backButtonCallback) && (
