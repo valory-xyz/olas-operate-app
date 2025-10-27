@@ -2,24 +2,46 @@ import { Button, Flex, Modal, Typography } from 'antd';
 import { useState } from 'react';
 
 import { CardFlex } from '@/components/ui';
+import { WalletsTooltip } from '@/components/ui/WalletsTooltip';
 import { Pages } from '@/enums/Pages';
-import { usePageState, useServices } from '@/hooks';
+import { usePageState, useService, useServices } from '@/hooks';
 
 import { AgentWalletOperation } from './AgentWalletOperation';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 
 const { Text, Title } = Typography;
 
+const AvailableAssetsTooltip = () => {
+  const { selectedService } = useServices();
+  const { serviceEoa, getServiceSafeOf } = useService(
+    selectedService?.service_config_id,
+  );
+  const { selectedAgentConfig } = useServices();
+  const serviceSafe = getServiceSafeOf
+    ? getServiceSafeOf(selectedAgentConfig.evmHomeChainId)
+    : undefined;
+
+  return (
+    <WalletsTooltip
+      type="agent"
+      eoaAddress={serviceEoa?.address}
+      safeAddress={serviceSafe?.address}
+      middlewareHomeChainId={selectedAgentConfig.middlewareHomeChainId}
+    />
+  );
+};
+
 const AvailableAssets = () => (
-  <Flex vertical gap={24}>
-    <Flex vertical gap={12}>
+  <Flex vertical gap={12}>
+    <Flex align="center" gap={8}>
       <Title level={5} className="m-0 text-lg">
         Available Assets
       </Title>
-      <CardFlex $noBorder>
-        <AvailableAssetsTable />
-      </CardFlex>
+      <AvailableAssetsTooltip />
     </Flex>
+    <CardFlex $noBorder>
+      <AvailableAssetsTable />
+    </CardFlex>
   </Flex>
 );
 
