@@ -144,7 +144,7 @@ export const BalancesAndRefillRequirementsProvider = ({
     services,
     selectedService,
     selectedAgentConfig,
-    allServiceConfigIds,
+    availableServiceConfigIds,
   } = useServices();
   const { isEligibleForRewards } = useRewardContext();
   const configId = selectedService?.service_config_id;
@@ -184,8 +184,8 @@ export const BalancesAndRefillRequirementsProvider = ({
   });
 
   const serviceConfigIds = useMemo(
-    () => allServiceConfigIds.map(({ configId }) => configId),
-    [allServiceConfigIds],
+    () => availableServiceConfigIds.map(({ configId }) => configId),
+    [availableServiceConfigIds],
   );
 
   const {

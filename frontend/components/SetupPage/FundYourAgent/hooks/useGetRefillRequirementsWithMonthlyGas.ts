@@ -230,12 +230,24 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
   ]);
 
   /**
+   * Reset the token requirements and query cache manually so the user
+   * doesn't see stale values / values from other agents.
+   */
+  const resetTokenRequirements = useCallback(
+    (resetCache = true) => {
+      setTotalTokenRequirements(null);
+      setInitialTokenRequirements(null);
+      if (resetCache) resetQueryCache?.();
+    },
+    [resetQueryCache],
+  );
+
+  /**
    * @important Reset the token requirements when the selected agent type changes.
    */
   useEffect(() => {
-    setTotalTokenRequirements(null);
-    setInitialTokenRequirements(null);
-  }, [selectedAgentType]);
+    resetTokenRequirements(false);
+  }, [selectedAgentType, resetTokenRequirements]);
 
   const currentTokenRequirements = useMemo(() => {
     return getRequirementsPerToken(refillRequirements);
@@ -254,16 +266,6 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
       setTotalTokenRequirements(getRequirementsPerToken(totalRequirements));
     }
   }, [totalRequirements, getRequirementsPerToken, totalTokenRequirements]);
-
-  /**
-   * Reset the token requirements and query cache manually so the user
-   * doesn't see stale values / values from other agents.
-   */
-  const resetTokenRequirements = () => {
-    setTotalTokenRequirements(null);
-    setInitialTokenRequirements(null);
-    resetQueryCache?.();
-  };
 
   return {
     isLoading:

@@ -65,7 +65,7 @@ type ServicesResponse = Pick<
 
 type ServicesContextType = {
   services?: MiddlewareServiceResponse[];
-  allServiceConfigIds: { configId: string; chainId: EvmChainId }[];
+  availableServiceConfigIds: { configId: string; chainId: EvmChainId }[];
   serviceWallets?: AgentWallet[];
   selectedService?: Service;
   serviceStatusOverrides?: Record<string, Maybe<MiddlewareDeploymentStatus>>;
@@ -91,7 +91,7 @@ export const ServicesContext = createContext<ServicesContextType>({
   deploymentDetails: undefined,
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
-  allServiceConfigIds: [],
+  availableServiceConfigIds: [],
 });
 
 /**
@@ -306,22 +306,22 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   /**
    * Service config IDs for all non-under-construction agents
    */
-  const allServiceConfigIds = useMemo(() => {
+  const availableServiceConfigIds = useMemo(() => {
     if (!services) return [];
     return services
-      .filter((x) => {
+      .filter(({ service_public_id, home_chain }) => {
         const currentAgent = values(AGENT_CONFIG).find(
-          (c) =>
-            c.servicePublicId === x.service_public_id &&
-            c.evmHomeChainId === asEvmChainId(x.home_chain),
+          ({ servicePublicId, evmHomeChainId }) =>
+            servicePublicId === service_public_id &&
+            evmHomeChainId === asEvmChainId(home_chain),
         );
         return (
           !currentAgent?.isUnderConstruction && !!currentAgent?.isAgentEnabled
         );
       })
-      .map((s) => ({
-        configId: s.service_config_id,
-        chainId: asEvmChainId(s.home_chain),
+      .map(({ service_config_id, home_chain }) => ({
+        configId: service_config_id,
+        chainId: asEvmChainId(home_chain),
       }));
   }, [services]);
 
@@ -333,7 +333,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         isFetched: !isServicesLoading,
         isLoading: isServicesLoading,
         refetch,
-        allServiceConfigIds,
+        availableServiceConfigIds,
 
         // pause
         paused,

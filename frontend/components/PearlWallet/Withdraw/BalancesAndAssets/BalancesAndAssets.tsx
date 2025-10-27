@@ -123,10 +123,10 @@ const AvailableAssets = () => (
 );
 
 const StakedAssets = () => {
-  const { allServiceConfigIds } = useServices();
+  const { availableServiceConfigIds } = useServices();
   const { walletChainId } = usePearlWallet();
 
-  const configIds = allServiceConfigIds.filter(
+  const configIds = availableServiceConfigIds.filter(
     ({ chainId }) => chainId === walletChainId,
   );
 
