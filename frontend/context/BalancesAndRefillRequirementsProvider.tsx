@@ -167,6 +167,7 @@ export const BalancesAndRefillRequirementsProvider = ({
     refetch: refetchBalancesAndFundingRequirements,
   } = useQuery<BalancesAndFundingRequirements>({
     queryKey: REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(
+      // chainId,
       configId as string,
     ),
     queryFn: async ({ signal }) => {
@@ -202,7 +203,7 @@ export const BalancesAndRefillRequirementsProvider = ({
         serviceConfigIds,
         signal,
       }),
-    enabled: !!services?.length && isUserLoggedIn && isOnline,
+    enabled: !!serviceConfigIds.length && isUserLoggedIn && isOnline,
     refetchInterval,
   });
 
@@ -269,15 +270,24 @@ export const BalancesAndRefillRequirementsProvider = ({
     ];
   }, [
     isBalancesAndFundingRequirementsLoading,
-    chainId,
     balancesAndFundingRequirements,
+    chainId,
   ]);
+
+  console.log({
+    chainId,
+    totalRequirementsClone: totalRequirements
+      ? JSON.parse(JSON.stringify(totalRequirements))
+      : null,
+  });
 
   const agentFundingRequests = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return;
     if (!balancesAndFundingRequirements) return;
 
-    // WARNING: If an agent requires funds on different chains, this will work incorrectly
+    /**
+     * @warning If an agent requires funds on different chains, this will work incorrectly
+     */
     return balancesAndFundingRequirements.agent_funding_requests[
       asMiddlewareChain(chainId)
     ];
@@ -291,9 +301,16 @@ export const BalancesAndRefillRequirementsProvider = ({
     if (!configId) return;
 
     queryClient.removeQueries({
-      queryKey: REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(configId),
+      queryKey: REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(
+        // chainId,
+        configId,
+      ),
     });
-  }, [queryClient, configId]);
+  }, [
+    queryClient,
+    //  chainId,
+    configId,
+  ]);
 
   const isPearlWalletRefillRequired = useMemo(() => {
     // If master safes are empty, no service is set up, hence no refill is required.

@@ -159,25 +159,28 @@ const BridgeTokens = ({
  * Fund your agent by buying crypto via on-ramp or transferring/bridging tokens.
  */
 export const FundYourAgent = () => {
-  const { selectedAgentConfig } = useServices();
+  const [isBridgeOnboardingEnabled, isOnRampEnabled] = useFeatureFlag([
+    'bridge-onboarding',
+    'on-ramp',
+  ]);
   const { goto } = usePageState();
+  const { selectedAgentConfig } = useServices();
   const { evmHomeChainId, requiresSetup } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const {
     totalTokenRequirements: tokenRequirements,
     isLoading,
     resetTokenRequirements,
-    // Service creation for agents requiring setup is already handled at the time of agentForm
   } = useGetRefillRequirementsWithMonthlyGas({
+    // Service creation for agents requiring setup is already handled at the time of agentForm
     shouldCreateDummyService: !requiresSetup,
   });
-  const [isBridgeOnboardingEnabled, isOnRampEnabled] = useFeatureFlag([
-    'bridge-onboarding',
-    'on-ramp',
-  ]);
+
   const { networkId: onRampChainId } = useOnRampContext();
   const areTokenRequirementsLoading =
     isLoading || tokenRequirements.length === 0;
+
+  console.log('FundYourAgent', JSON.parse(JSON.stringify(tokenRequirements)));
 
   return (
     <Flex align="center" vertical>

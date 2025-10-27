@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/client';
@@ -76,12 +77,6 @@ type UseGetRefillRequirementsWithMonthlyGasReturn = {
    * initial funding requirements.
    */
   initialTokenRequirements: TokenRequirement[];
-  /**
-   * Current token requirements, used to get the token requirements at any moment
-   * @warning Shouldn't be used ideally, as it can be unreliable in the case of
-   * native tokens as monthly_gas is not accounted in the BE.
-   */
-  currentTokenRequirements: TokenRequirement[];
   isLoading: boolean;
   resetTokenRequirements: () => void;
 };
@@ -109,7 +104,6 @@ type UseGetRefillRequirementsWithMonthlyGasReturn = {
  *     }
  *   ],
  *   initialTokenRequirements: [...],
- *   currentTokenRequirements: [...],
  *   isLoading: false
  * }
  */
@@ -125,7 +119,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     resetQueryCache,
     isBalancesAndFundingRequirementsLoading,
   } = useBalanceAndRefillRequirementsContext();
-  const { masterEoa, masterSafes } = useMasterWalletContext();
+  const { masterEoa, getMasterSafeOf } = useMasterWalletContext();
   const { selectedAgentConfig, selectedAgentType } = useServices();
 
   const [isDummyServiceCreated, setIsDummyServiceCreated] = useState(false);
@@ -136,11 +130,10 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     TokenRequirement[] | null
   >(null);
 
-  const masterSafe = useMemo(() => {
-    return (masterSafes || []).find(
-      ({ evmChainId }) => evmChainId === selectedAgentConfig.evmHomeChainId,
-    );
-  }, [masterSafes, selectedAgentConfig.evmHomeChainId]);
+  const masterSafe = useMemo(
+    () => getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId),
+    [getMasterSafeOf, selectedAgentConfig.evmHomeChainId],
+  );
 
   const getRequirementsPerToken = useCallback(
     (
@@ -177,8 +170,9 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
         ? BigInt(balances?.[masterSafe.address]?.[AddressZero] ?? 0n)
         : 0n;
 
-      const requirementsPerToken = {} as { [tokenAddress: Address]: string };
+      const requirementsPerToken: { [tokenAddress: Address]: string } = {};
 
+      // console.log(masterSafeRequirements);
       Object.entries(masterSafeRequirements)?.forEach(
         ([tokenAddress, amount]) => {
           if (tokenAddress === AddressZero) {
@@ -225,6 +219,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
       await refetch?.();
       setIsDummyServiceCreated(true);
     };
+
     if (shouldCreateDummyService && !isDummyServiceCreated) {
       createDummyService();
     }
@@ -246,12 +241,15 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     }
   }, [currentTokenRequirements, initialTokenRequirements]);
 
-  // Get the total token requirements, using "totalRequirements" from BE, instead of "refillRequirements"
+  // Reset the token requirements when the selected agent type changes
   useEffect(() => {
-    if (
-      totalTokenRequirements === null ||
-      totalTokenRequirements.length === 0
-    ) {
+    setTotalTokenRequirements(null);
+    setInitialTokenRequirements(null);
+  }, [selectedAgentType]);
+
+  // Get the total token requirements
+  useEffect(() => {
+    if (isEmpty(totalTokenRequirements)) {
       setTotalTokenRequirements(getRequirementsPerToken(totalRequirements));
     }
   }, [totalRequirements, getRequirementsPerToken, totalTokenRequirements]);
@@ -267,12 +265,11 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
   };
 
   return {
-    totalTokenRequirements: totalTokenRequirements || [],
-    currentTokenRequirements,
-    initialTokenRequirements:
-      initialTokenRequirements ?? currentTokenRequirements,
     isLoading:
       isBalancesAndFundingRequirementsLoading || !totalTokenRequirements,
+    initialTokenRequirements:
+      initialTokenRequirements ?? currentTokenRequirements,
+    totalTokenRequirements: totalTokenRequirements || [],
     resetTokenRequirements,
   };
 };
