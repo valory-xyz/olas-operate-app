@@ -172,7 +172,6 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
 
       const requirementsPerToken: { [tokenAddress: Address]: string } = {};
 
-      // console.log(masterSafeRequirements);
       Object.entries(masterSafeRequirements)?.forEach(
         ([tokenAddress, amount]) => {
           if (tokenAddress === AddressZero) {
@@ -230,6 +229,14 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     isDummyServiceCreated,
   ]);
 
+  /**
+   * @important Reset the token requirements when the selected agent type changes.
+   */
+  useEffect(() => {
+    setTotalTokenRequirements(null);
+    setInitialTokenRequirements(null);
+  }, [selectedAgentType]);
+
   const currentTokenRequirements = useMemo(() => {
     return getRequirementsPerToken(refillRequirements);
   }, [getRequirementsPerToken, refillRequirements]);
@@ -240,12 +247,6 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
       setInitialTokenRequirements(currentTokenRequirements);
     }
   }, [currentTokenRequirements, initialTokenRequirements]);
-
-  // Reset the token requirements when the selected agent type changes
-  useEffect(() => {
-    setTotalTokenRequirements(null);
-    setInitialTokenRequirements(null);
-  }, [selectedAgentType]);
 
   // Get the total token requirements
   useEffect(() => {

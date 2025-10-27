@@ -180,8 +180,6 @@ export const FundYourAgent = () => {
   const areTokenRequirementsLoading =
     isLoading || tokenRequirements.length === 0;
 
-  console.log('FundYourAgent', JSON.parse(JSON.stringify(tokenRequirements)));
-
   return (
     <Flex align="center" vertical>
       <BackButton

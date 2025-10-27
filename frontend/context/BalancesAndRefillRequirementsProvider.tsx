@@ -167,7 +167,6 @@ export const BalancesAndRefillRequirementsProvider = ({
     refetch: refetchBalancesAndFundingRequirements,
   } = useQuery<BalancesAndFundingRequirements>({
     queryKey: REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(
-      // chainId,
       configId as string,
     ),
     queryFn: async ({ signal }) => {
@@ -274,13 +273,6 @@ export const BalancesAndRefillRequirementsProvider = ({
     chainId,
   ]);
 
-  console.log({
-    chainId,
-    totalRequirementsClone: totalRequirements
-      ? JSON.parse(JSON.stringify(totalRequirements))
-      : null,
-  });
-
   const agentFundingRequests = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return;
     if (!balancesAndFundingRequirements) return;
@@ -301,16 +293,9 @@ export const BalancesAndRefillRequirementsProvider = ({
     if (!configId) return;
 
     queryClient.removeQueries({
-      queryKey: REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(
-        // chainId,
-        configId,
-      ),
+      queryKey: REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY(configId),
     });
-  }, [
-    queryClient,
-    //  chainId,
-    configId,
-  ]);
+  }, [queryClient, configId]);
 
   const isPearlWalletRefillRequired = useMemo(() => {
     // If master safes are empty, no service is set up, hence no refill is required.

@@ -2,12 +2,13 @@ import { Flex } from 'antd';
 
 import { NftFilled } from '@/components/custom-icons';
 import { OLAS_CONTRACTS } from '@/config/olasContracts';
-import { EvmChainId } from '@/constants';
-import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
+import {
+  BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN,
+  EvmChainId,
+  UNICODE_SYMBOLS,
+} from '@/constants';
 import { ContractType } from '@/enums/Contract';
-import { useService } from '@/hooks/useService';
-import { useServices } from '@/hooks/useServices';
+import { useService, useServices } from '@/hooks';
 import { asMiddlewareChain } from '@/utils';
 
 const useAgentNft = (configId?: string, chainId?: EvmChainId) => {
