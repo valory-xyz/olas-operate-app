@@ -8,8 +8,10 @@ import { ReactNode } from 'react';
 
 const { Title, Text } = Typography;
 
+type ModalSize = 'small' | 'medium' | 'large';
+
 const modalStylesMap: Record<
-  'small' | 'medium',
+  ModalSize,
   {
     width: number;
     padding: number;
@@ -29,6 +31,12 @@ const modalStylesMap: Record<
     flexAlign: 'center',
     textAlignClass: 'text-center',
   },
+  large: {
+    width: 640,
+    padding: 32,
+    flexAlign: 'flex-start',
+    textAlignClass: 'text-left',
+  },
 } as const;
 
 const MODAL_STYLES: AntdModalProps['styles'] = {
@@ -42,22 +50,25 @@ const MODAL_STYLES: AntdModalProps['styles'] = {
 
 type ModalProps = {
   header?: ReactNode | null;
-  title: string;
-  description: string;
-  size?: 'small' | 'medium';
+  title?: string | null;
+  description?: string | null;
+  size?: ModalSize;
   action?: ReactNode;
+  hasCustomContent?: boolean;
 };
 
 export const Modal = ({
   header = null,
-  title,
-  description,
+  title = null,
+  description = null,
   size = 'medium',
   action = null,
   closable = false,
+  hasCustomContent = false,
   ...props
 }: ModalProps & AntdModalProps) => {
   const sizeStyles = modalStylesMap[size];
+  const { children, ...restProps } = props;
 
   return (
     <AntdModal
@@ -74,21 +85,25 @@ export const Modal = ({
         footer: { marginTop: 24 },
       }}
       closable={closable}
-      {...props}
+      {...restProps}
     >
-      <Flex vertical align={sizeStyles.flexAlign} style={{ width: '100%' }}>
-        {header}
-        <Title
-          level={5}
-          className={`${header ? 'mt-24' : 'mt-0'} mb-12 ${sizeStyles.textAlignClass}`}
-        >
-          {title}
-        </Title>
-        <Text type="secondary" className={sizeStyles.textAlignClass}>
-          {description}
-        </Text>
-        {action}
-      </Flex>
+      {hasCustomContent ? (
+        children
+      ) : (
+        <Flex vertical align={sizeStyles.flexAlign} style={{ width: '100%' }}>
+          {header}
+          <Title
+            level={5}
+            className={`${header ? 'mt-24' : 'mt-0'} mb-12 ${sizeStyles.textAlignClass}`}
+          >
+            {title}
+          </Title>
+          <Text type="secondary" className={sizeStyles.textAlignClass}>
+            {description}
+          </Text>
+          {action}
+        </Flex>
+      )}
     </AntdModal>
   );
 };

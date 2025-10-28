@@ -833,10 +833,7 @@ function sanitizeLogs({
   return sanitizedLogsFilePath;
 }
 
-/**
- * Exports logs by creating a zip file containing sanitized logs and other relevant data.
- */
-ipcMain.handle('save-logs', async (_, data) => {
+function prepareLogsForDebug(data) {
   const cliLogFiles = fs
     .readdirSync(paths.dotOperateDirectory)
     .filter((file) => file.startsWith('cli') && file.endsWith('.log'));
@@ -972,6 +969,25 @@ ipcMain.handle('save-logs', async (_, data) => {
     zip.addLocalFile(filePath);
   });
 
+  return zip;
+}
+
+function removeTemporaryLogFiles() {
+  // Remove temporary files
+  if (fs.existsSync(paths.osPearlTempDir)) {
+    fs.rmSync(paths.osPearlTempDir, {
+      recursive: true,
+      force: true,
+    });
+  }
+}
+
+/**
+ * Exports logs by creating a zip file containing sanitized logs and other relevant data.
+ */
+ipcMain.handle('save-logs', async (_, data) => {
+  const zip = prepareLogsForDebug(data);
+
   // Show save dialog
   const { filePath } = await dialog.showSaveDialog({
     title: 'Save Logs',
@@ -992,15 +1008,96 @@ ipcMain.handle('save-logs', async (_, data) => {
   } else {
     result = { success: false };
   }
-
-  // Remove temporary files
-  if (fs.existsSync(paths.osPearlTempDir)) {
-    fs.rmSync(paths.osPearlTempDir, {
-      recursive: true,
-      force: true,
-    });
-  }
+  removeTemporaryLogFiles();
   return result;
+});
+
+ipcMain.handle('save-logs-for-support', async (_, data) => {
+  const zip = prepareLogsForDebug(data);
+  const zendeskLogsDir = path.join(__dirname, 'zendesk-logs');
+
+  // Ensure the directory exists
+  if (!fs.existsSync(zendeskLogsDir)) {
+    fs.mkdirSync(zendeskLogsDir, { recursive: true });
+  }
+
+  // Generate filename with timestamp
+  const timestamp = new Date(Date.now())
+    .toISOString()
+    .replaceAll(':', '-')
+    .replaceAll('.', '-');
+  const fileName = `pearl_logs_${timestamp}-${app.getVersion()}.zip`;
+  const filePath = path.join(zendeskLogsDir, fileName);
+
+  // Write the zip file
+  zip.writeZip(filePath);
+  return { success: true, filePath, fileName };
+});
+
+/**
+ * Clean up Zendesk logs after ticket submission
+ */
+ipcMain.handle('cleanup-zendesk-logs', async () => {
+  try {
+    const zendeskLogsDir = path.join(__dirname, 'zendesk-logs');
+
+    if (fs.existsSync(zendeskLogsDir)) {
+      // Remove all files in the zendesk-logs directory
+      const files = fs.readdirSync(zendeskLogsDir);
+      files.forEach((file) => {
+        const filePath = path.join(zendeskLogsDir, file);
+        try {
+          fs.unlinkSync(filePath);
+          logger.electron(`Cleaned up Zendesk log file: ${file}`);
+        } catch (error) {
+          logger.electron(
+            `Failed to delete Zendesk log file ${file}: ${error.message}`,
+          );
+        }
+      });
+
+      // Remove the directory if it's empty
+      try {
+        fs.rmdirSync(zendeskLogsDir);
+        logger.electron('Cleaned up Zendesk logs directory');
+      } catch (error) {
+        // Directory might not be empty, that's okay
+        logger.electron(
+          `Could not remove Zendesk logs directory: ${error.message}`,
+        );
+      }
+    }
+
+    return { success: true };
+  } catch (error) {
+    logger.electron(`Error cleaning up Zendesk logs: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+});
+
+/**
+ * Read file content
+ */
+ipcMain.handle('read-file', async (_, filePath) => {
+  try {
+    if (!fs.existsSync(filePath)) {
+      return { success: false, error: 'File does not exist' };
+    }
+
+    const fileContent = fs.readFileSync(filePath);
+    const fileName = path.basename(filePath);
+    const base64Content = fileContent.toString('base64');
+
+    return {
+      success: true,
+      fileName,
+      fileContent: `data:application/octet-stream;base64,${base64Content}`,
+      mimeType: 'application/zip',
+    };
+  } catch (error) {
+    logger.electron(`Error reading file: ${error.message}`);
+    return { success: false, error: error.message };
+  }
 });
 
 /**
