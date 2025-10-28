@@ -102,7 +102,7 @@ export const AgentWalletOperation = ({
             </Tooltip>
           )}
 
-          <Tooltip title={!serviceEoa ? 'Run agent to enable' : null}>
+          <Tooltip title={serviceEoa ? null : 'Run agent to enable'}>
             <Button type="primary" onClick={onFundAgent} disabled={!serviceEoa}>
               Fund Agent
             </Button>

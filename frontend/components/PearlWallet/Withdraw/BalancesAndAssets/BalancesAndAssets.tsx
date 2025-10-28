@@ -169,7 +169,7 @@ export const BalancesAndAssets = ({
               <Button onClick={onWithdraw}>Withdraw</Button>
               <Tooltip
                 title={
-                  !masterSafeAddress ? 'Complete agent setup to enable' : null
+                  masterSafeAddress ? null : 'Complete agent setup to enable'
                 }
               >
                 <Button

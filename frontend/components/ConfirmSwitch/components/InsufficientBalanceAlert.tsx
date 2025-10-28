@@ -34,7 +34,7 @@ export const InsufficientBalanceAlert = ({
           </Text>
 
           <Tooltip
-            title={!masterSafeAddress ? 'Complete agent setup to enable' : null}
+            title={masterSafeAddress ? null : 'Complete agent setup to enable'}
           >
             <Button
               size="small"
