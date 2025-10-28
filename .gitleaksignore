@@ -9,3 +9,5 @@ af77e930289cbc87987567bff0efc25936484df2:backend/controller.py:generic-api-key:3
 109e5e452b22cade347872b3a6c7dfb8822131d8:frontend/components/SetupPage/Create/SetupOnRamp/PayingReceivingTable/useTotalFiatFromNativeToken.ts:generic-api-key:8
 109e5e452b22cade347872b3a6c7dfb8822131d8:frontend/components/OnRampWidget/OnRampWidget.tsx:generic-api-key:13
 6f85db13b048497b7dd735d65017fbd4d714424b:frontend/components/OnRampWidget/OnRampWidget.tsx:generic-api-key:12
+c6c3f9c18019fce5346bbab76fa505595e7327a3:TEST_ZENDESK.md:generic-api-key:13
+c6c3f9c18019fce5346bbab76fa505595e7327a3:TEST_ZENDESK.md:generic-api-key:71
