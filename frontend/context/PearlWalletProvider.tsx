@@ -132,7 +132,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     useBalanceContext();
   const { getRefillRequirementsOf } = useBalanceAndRefillRequirementsContext();
   const { masterSafes } = useMasterWalletContext();
-  const { pageState } = usePageState();
+  const { pageState, goto } = usePageState();
 
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
     STEPS.PEARL_WALLET_SCREEN,
@@ -243,8 +243,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const gotoPearlWallet = useCallback(() => {
+    goto(Pages.PearlWallet);
     updateStep(STEPS.PEARL_WALLET_SCREEN);
-  }, [updateStep]);
+  }, [updateStep, goto]);
 
   const isLoading =
     isServicesLoading ||
