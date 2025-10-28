@@ -17,6 +17,7 @@ export const StakingRewardsInfoSchema = z.object({
   availableRewardsForEpoch: z.number(),
   accruedServiceStakingRewards: z.number(),
   minimumStakedAmount: z.number(),
+  tsCheckpoint: zodBigNumber.transform((val) => parseInt(val._hex, 16)),
 });
 
 export type StakingRewardsInfo = z.infer<typeof StakingRewardsInfoSchema>;

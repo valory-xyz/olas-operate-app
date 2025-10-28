@@ -112,6 +112,7 @@ export abstract class OptimismService extends StakedAgentService {
         ethers.utils.formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
+      tsCheckpoint,
     } satisfies StakingRewardsInfo;
   };
 

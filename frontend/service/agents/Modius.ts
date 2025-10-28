@@ -106,6 +106,7 @@ export abstract class ModiusService extends StakedAgentService {
         ethers.utils.formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
+      tsCheckpoint,
     } as StakingRewardsInfo;
   };
 
