@@ -3,57 +3,31 @@ import { isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 
-import { Pages } from '@/enums/Pages';
-import { SettingsScreen } from '@/enums/SettingsScreen';
+import { NA } from '@/constants';
+import { SettingsScreen } from '@/enums';
 import {
   useFeatureFlag,
   useMasterWalletContext,
   useMultisig,
-  usePageState,
   useServices,
   useSettings,
 } from '@/hooks';
-import { Address } from '@/types/Address';
-import { Optional } from '@/types/Util';
+import { Address, Optional } from '@/types';
 
 import { AddressLink } from '../AddressLink';
-import { CustomAlert } from '../Alert';
 import { CardSection, cardStyles } from '../ui';
+import { YourFundsAtRiskAlert } from './YourFundsAtRiskAlert';
 
 const { Text, Paragraph, Title } = Typography;
-
-const YourFundsAtRiskAlert = () => {
-  const { goto } = usePageState();
-  return (
-    <CardSection style={{ marginTop: 12 }}>
-      <CustomAlert
-        type="warning"
-        fullWidth
-        showIcon
-        message={
-          <Flex vertical gap={5}>
-            <span className="font-weight-600">Your funds are at risk!</span>
-            <span>
-              Add a backup wallet to allow you to retrieve funds if you lose
-              your password.
-            </span>
-            <Text
-              className="pointer hover-underline text-primary"
-              onClick={() => goto(Pages.AddBackupWalletViaSafe)}
-            >
-              See instructions
-            </Text>
-          </Flex>
-        }
-      />
-    </CardSection>
-  );
-};
 
 const SettingsMain = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
   const { selectedAgentConfig } = useServices();
-  const { masterEoa, masterSafes } = useMasterWalletContext();
+  const {
+    masterEoa,
+    masterSafes,
+    isLoading: isWalletsLoading,
+  } = useMasterWalletContext();
 
   const masterSafe = masterSafes?.find(
     ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
@@ -80,9 +54,13 @@ const SettingsMain = () => {
   }, [masterSafeBackupAddresses]);
 
   const walletBackup = useMemo(() => {
+    if (!isWalletsLoading && !masterSafe) {
+      return <Text type="secondary">{NA}</Text>;
+    }
     if (!ownersIsFetched) return <Skeleton.Input />;
-    if (!masterSafeBackupAddress)
+    if (!masterSafeBackupAddress) {
       return <Text type="secondary">No backup wallet added.</Text>;
+    }
 
     return (
       <AddressLink
@@ -91,6 +69,8 @@ const SettingsMain = () => {
       />
     );
   }, [
+    isWalletsLoading,
+    masterSafe,
     masterSafeBackupAddress,
     ownersIsFetched,
     selectedAgentConfig.middlewareHomeChainId,

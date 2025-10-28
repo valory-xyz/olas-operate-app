@@ -43,7 +43,7 @@ const MODAL_STYLES: AntdModalProps['styles'] = {
 type ModalProps = {
   header?: ReactNode | null;
   title: string;
-  description: string;
+  description: string | ReactNode;
   size?: 'small' | 'medium';
   action?: ReactNode;
 };

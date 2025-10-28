@@ -5,7 +5,6 @@ import styled from 'styled-components';
 import { AgentStaking } from '@/components/AgentStaking/AgentStaking';
 import { ConfirmSwitch } from '@/components/ConfirmSwitch/ConfirmSwitch';
 import { DepositOlasForStaking } from '@/components/ConfirmSwitch/DepositOlasForStaking';
-import { AddBackupWalletViaSafePage } from '@/components/Pages/AddBackupWalletViaSafePage';
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { SelectStaking } from '@/components/SelectStaking/SelectStaking';
 import { Settings } from '@/components/SettingsPage';
@@ -84,8 +83,6 @@ export const Main = () => {
         return <DepositOlasForStaking />;
       case Pages.FundPearlWallet:
         return <FundPearlWallet />;
-      case Pages.AddBackupWalletViaSafe:
-        return <AddBackupWalletViaSafePage />;
       default:
         return <Home />;
     }

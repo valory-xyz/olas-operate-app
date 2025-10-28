@@ -13,7 +13,6 @@ export const Pages = {
   AgentWallet: 'AgentWallet',
   /** @deprecated remove after for V1 */
   RewardsHistory: 'RewardsHistory',
-  AddBackupWalletViaSafe: 'AddBackupWalletViaSafe',
   /** @deprecated remove after for V1 */
   AgentActivity: 'AgentActivity',
   UpdateAgentTemplate: 'UpdateAgentTemplate',
