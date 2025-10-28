@@ -6,7 +6,6 @@ import { COLOR } from '@/constants/colors';
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
-import { AgentSelection } from '../AgentSelection';
 import { CardFlex } from '../ui/CardFlex';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
@@ -97,9 +96,6 @@ export const Setup = () => {
       // TODO: to be removed post v1 release
       case SetupScreen.SetupCreateSafe:
         return <SetupCreateSafe />;
-      // TODO: to be removed post v1 release
-      case SetupScreen.AgentSelection:
-        return <AgentSelection showSelected={false} />;
 
       // Restore account, screens to be re-implemented as per v1
       case SetupScreen.Restore:
