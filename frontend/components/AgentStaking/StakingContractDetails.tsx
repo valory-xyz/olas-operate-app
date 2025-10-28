@@ -2,16 +2,16 @@ import { Button, Flex, Statistic, Typography } from 'antd';
 import { TbLock, TbSparkles, TbSquareRoundedPercentage } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { CardFlex } from '@/components/ui/CardFlex';
-import { Divider } from '@/components/ui/Divider';
-import { Tooltip } from '@/components/ui/Tooltip';
-import { COLOR } from '@/constants/colors';
-import { NA } from '@/constants/symbols';
-import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useStakingContractDetails } from '@/hooks/useStakingContractDetails';
-import { useStakingDetails } from '@/hooks/useStakingDetails';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { Divider, Tooltip } from '@/components/ui';
+import { CardFlex } from '@/components/ui/';
+import { COLOR, NA } from '@/constants';
+import { Pages } from '@/enums';
+import {
+  usePageState,
+  useStakingContractDetails,
+  useStakingDetails,
+  useStakingProgram,
+} from '@/hooks';
 import { secondsToHours } from '@/utils';
 
 import { InfoTooltip } from '../InfoTooltip';
