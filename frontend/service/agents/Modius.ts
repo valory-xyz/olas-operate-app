@@ -248,6 +248,7 @@ export abstract class ModiusService extends StakedAgentService {
       olasStakeRequired,
       rewardsPerWorkPeriod,
       epochCounter: epochCounter.toNumber(),
+      livenessPeriod: livenessPeriod.toNumber(),
     };
   };
 }

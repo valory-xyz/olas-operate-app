@@ -278,6 +278,7 @@ export abstract class AgentsFunService extends StakedAgentService {
       olasStakeRequired,
       rewardsPerWorkPeriod,
       epochCounter: epochCounter.toNumber(),
+      livenessPeriod: livenessPeriod.toNumber(),
     };
   };
 }

@@ -45,6 +45,8 @@ export type StakingContractDetails = {
   rewardsPerWorkPeriod: number;
   /** current epoch */
   epochCounter: number;
+  /** epoch length in seconds */
+  livenessPeriod: number;
 };
 
 export type ServiceStakingDetails = {

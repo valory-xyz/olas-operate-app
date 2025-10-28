@@ -3,10 +3,10 @@ import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useEffect } from 'react';
 
-import { AddressLink } from '@/components/AddressLink';
 import { AgentNft } from '@/components/AgentNft';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { CardFlex, Segmented } from '@/components/ui';
+import { WalletsTooltip } from '@/components/ui/WalletsTooltip';
 import { COLOR } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useMasterWalletContext, useServices } from '@/hooks';
@@ -25,64 +25,12 @@ const AvailableAssetsTooltip = () => {
     : undefined;
 
   return (
-    <InfoTooltip
-      size="medium"
-      styles={{ body: { padding: 16 } }}
-      iconSize={18}
-      iconColor={COLOR.BLACK}
-    >
-      <div className="mb-16">
-        Shows your spendable balance on the selected chain — your deposits plus
-        available staking rewards earned by agents on this chain.
-      </div>
-      <div className="mb-20">
-        Pearl Wallet consists of two parts:
-        <ol>
-          <li>
-            <Text className="text-sm" strong>
-              Pearl Safe
-            </Text>{' '}
-            — smart-contract wallet that holds funds.
-          </li>
-          <li>
-            <Text className="text-sm" strong>
-              Pearl Signer
-            </Text>{' '}
-            — authorizes Safe transactions and keeps a small gas balance.
-          </li>
-        </ol>
-      </div>
-      <Flex className="mb-12" justify="space-between">
-        <Text className="text-sm" strong>
-          Pearl Safe Address:
-        </Text>
-        {masterSafe ? (
-          <AddressLink
-            address={masterSafe?.address}
-            middlewareChain={selectedAgentConfig.middlewareHomeChainId}
-          />
-        ) : (
-          <Text className="text-sm" type="secondary">
-            No Pearl Safe
-          </Text>
-        )}
-      </Flex>
-      <Flex justify="space-between">
-        <Text className="text-sm" strong>
-          Pearl Signer Address:
-        </Text>
-        {masterEoa ? (
-          <AddressLink
-            address={masterEoa?.address}
-            middlewareChain={selectedAgentConfig.middlewareHomeChainId}
-          />
-        ) : (
-          <Text className="text-sm" type="secondary">
-            No Pearl Signer
-          </Text>
-        )}
-      </Flex>
-    </InfoTooltip>
+    <WalletsTooltip
+      type="pearl"
+      eoaAddress={masterEoa?.address}
+      safeAddress={masterSafe?.address}
+      middlewareHomeChainId={selectedAgentConfig.middlewareHomeChainId}
+    />
   );
 };
 
