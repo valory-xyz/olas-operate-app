@@ -2,8 +2,7 @@ import { Button, Flex, Statistic, Typography } from 'antd';
 import { TbLock, TbSparkles, TbSquareRoundedPercentage } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { Divider, Tooltip } from '@/components/ui';
-import { CardFlex } from '@/components/ui/';
+import { CardFlex, Divider, Tooltip } from '@/components/ui';
 import { COLOR, NA } from '@/constants';
 import { Pages } from '@/enums';
 import {
