@@ -70,9 +70,9 @@ export const Staking = () => {
   ]);
 
   return (
-    <Flex vertical>
+    <Flex vertical gap={12}>
       <Flex justify="space-between" align="center">
-        <Title level={5} className="mt-0 mb-12">
+        <Title level={5} className="m-0">
           Staking
         </Title>
         {!selectedAgentConfig?.isUnderConstruction && (

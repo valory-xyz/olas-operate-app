@@ -4,8 +4,6 @@ import { useMemo } from 'react';
 import { TransferCryptoFromExternalWallet } from '@/components/PearlWallet';
 import { TokenSymbol } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
-import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
 import { AvailableAsset } from '@/types/Wallet';
 
 type TransferCryptoOnProps = {
@@ -17,8 +15,8 @@ export const TransferCryptoOn = ({
   chainName,
   onBack,
 }: TransferCryptoOnProps) => {
-  const { amountsToDeposit, masterSafeAddress } = usePearlWallet();
-  const { goto } = usePageState();
+  const { amountsToDeposit, masterSafeAddress, gotoPearlWallet } =
+    usePearlWallet();
 
   const tokenAndDepositedAmounts = useMemo<AvailableAsset[]>(
     () =>
@@ -36,7 +34,7 @@ export const TransferCryptoOn = ({
       address={masterSafeAddress}
       tokensToDeposit={tokenAndDepositedAmounts}
       onBack={onBack}
-      onBackToPearlWallet={() => goto(Pages.PearlWallet)}
+      onBackToPearlWallet={gotoPearlWallet}
     />
   );
 };

@@ -76,6 +76,7 @@ const getChainList = (services?: MiddlewareServiceResponse[]) => {
 const PearlWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;
   updateStep: (newStep: ValueOf<typeof STEPS>) => void;
+  gotoPearlWallet: () => void;
   isLoading: boolean;
   chains: WalletChain[];
   masterSafeAddress: Nullable<Address>;
@@ -100,6 +101,7 @@ const PearlWalletContext = createContext<{
 }>({
   walletStep: STEPS.PEARL_WALLET_SCREEN,
   updateStep: () => {},
+  gotoPearlWallet: () => {},
   isLoading: false,
   walletChainId: null,
   masterSafeAddress: null,
@@ -130,7 +132,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     useBalanceContext();
   const { getRefillRequirementsOf } = useBalanceAndRefillRequirementsContext();
   const { masterSafes } = useMasterWalletContext();
-  const { pageState } = usePageState();
+  const { pageState, goto } = usePageState();
 
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
     STEPS.PEARL_WALLET_SCREEN,
@@ -240,6 +242,11 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [onReset],
   );
 
+  const gotoPearlWallet = useCallback(() => {
+    goto(Pages.PearlWallet);
+    updateStep(STEPS.PEARL_WALLET_SCREEN);
+  }, [updateStep, goto]);
+
   const isLoading =
     isServicesLoading ||
     !isLoaded ||
@@ -251,6 +258,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       value={{
         walletStep,
         updateStep,
+        gotoPearlWallet,
+
         isLoading,
         availableAssets,
         stakedAssets,
