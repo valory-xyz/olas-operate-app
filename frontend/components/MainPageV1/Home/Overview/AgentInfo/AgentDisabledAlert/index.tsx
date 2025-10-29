@@ -1,4 +1,4 @@
-import { AgentLowBalanceAlert } from '@/components/Alerts';
+import { AgentLowBalanceAlert } from '@/components/ui/alerts';
 import { Pages } from '@/enums';
 import {
   useActiveStakingContractDetails,

@@ -2,7 +2,7 @@ import { LeftOutlined } from '@ant-design/icons';
 import { Button as AntdButton, Flex } from 'antd';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
+import { COLOR } from '@/constants';
 
 type AgentHeaderV1Props = {
   onPrev?: () => void;

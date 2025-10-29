@@ -4,5 +4,6 @@
  * Import all global alerts (used in more than one page) here and export them for use throughout the application.
  */
 
-export * from './AgentLowBalanceAlert';
-export * from './UnderConstruction';
+export { AgentLowBalanceAlert } from './AgentLowBalanceAlert';
+export { Alert } from './Alert';
+export { UnderConstruction } from './UnderConstruction';

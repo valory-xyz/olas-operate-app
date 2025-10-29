@@ -1,7 +1,7 @@
 import { Button } from 'antd';
 
-import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
+import { Pages } from '@/enums';
+import { usePageState } from '@/hooks';
 
 import { SuccessOutlined } from '../custom-icons';
 import { Modal } from './Modal';

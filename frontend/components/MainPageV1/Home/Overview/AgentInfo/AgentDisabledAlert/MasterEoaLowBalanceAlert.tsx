@@ -1,6 +1,6 @@
 import { Button, Flex, Typography } from 'antd';
 
-import { CustomAlert } from '@/components/Alert';
+import { Alert } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { Pages } from '@/enums';
 import { useMasterBalances, usePageState, useServices } from '@/hooks';
@@ -18,7 +18,7 @@ export const MasterEoaLowBalanceAlert = () => {
   if (!isMasterEoaLowOnGas) return null;
 
   return (
-    <CustomAlert
+    <Alert
       showIcon
       className="mt-16"
       type="error"

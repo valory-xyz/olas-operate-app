@@ -1,7 +1,8 @@
 import { Button, Typography } from 'antd';
 
+// TODO: move to shared hooks
 import { useAgentWallet } from '@/components/AgentWallet';
-import { CustomAlert } from '@/components/Alert';
+import { Alert } from '@/components/ui';
 import { useAgentFundingRequests } from '@/hooks';
 
 const { Text } = Typography;
@@ -33,7 +34,7 @@ export const AgentLowBalanceAlert = ({
   if (!isAgentBalanceLow) return null;
 
   return (
-    <CustomAlert
+    <Alert
       showIcon
       className="mt-16"
       type="error"

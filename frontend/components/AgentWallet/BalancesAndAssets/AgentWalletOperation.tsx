@@ -1,9 +1,13 @@
-import { Button, Flex, Tooltip, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { useMemo } from 'react';
 
-import { CustomAlert } from '@/components/Alert';
-import { AgentLowBalanceAlert } from '@/components/Alerts';
-import { BackButton, CardFlex } from '@/components/ui';
+import {
+  AgentLowBalanceAlert,
+  Alert,
+  BackButton,
+  CardFlex,
+  Tooltip,
+} from '@/components/ui';
 import { Pages } from '@/enums/Pages';
 import {
   useActiveStakingContractDetails,
@@ -34,7 +38,7 @@ type MinimumDurationOfStakingAlertProps = {
 const MinimumDurationOfStakingAlert = ({
   countdown,
 }: MinimumDurationOfStakingAlertProps) => (
-  <CustomAlert
+  <Alert
     message={
       <Text className="text-sm">
         <span className="font-weight-600">

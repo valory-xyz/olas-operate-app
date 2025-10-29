@@ -5,15 +5,12 @@ import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
-import { UnderConstruction } from '@/components/Alerts';
-import { BackButton } from '@/components/ui';
+import { BackButton, UnderConstruction } from '@/components/ui';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
-import { Pages } from '@/enums/Pages';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { Pages, SetupScreen } from '@/enums';
 import { usePageState, useServices, useSetup } from '@/hooks';
-import { AgentConfig } from '@/types/Agent';
-import { Optional } from '@/types/Util';
+import { AgentConfig, Optional } from '@/types';
 
 import { FundingRequirementStep } from './FundingRequirementStep';
 

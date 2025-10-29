@@ -2,10 +2,9 @@ import { Button, Spin } from 'antd';
 
 import { LoadingOutlined, SuccessOutlined } from '@/components/custom-icons';
 import { Modal } from '@/components/ui';
-import { useYourWallet } from '@/components/YourWalletPage/useYourWallet';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { Pages } from '@/enums/Pages';
-import { usePageState, useServices } from '@/hooks';
+import { usePageState, useService, useServices } from '@/hooks';
 import { generateName } from '@/utils/agentName';
 
 const ModalHeader = ({ isLoading }: { isLoading: boolean }) =>
@@ -25,8 +24,12 @@ export const SwitchingContractModal = ({
   stakingProgramIdToMigrateTo,
 }: SwitchingContractModalProps) => {
   const { goto } = usePageState();
-  const { selectedAgentConfig } = useServices();
-  const { serviceSafe } = useYourWallet();
+  const { selectedAgentConfig, selectedService } = useServices();
+  const { getServiceSafeOf } = useService(selectedService?.service_config_id);
+  const serviceSafe = getServiceSafeOf
+    ? getServiceSafeOf(selectedAgentConfig.evmHomeChainId)
+    : undefined;
+
   const agentName = serviceSafe?.address
     ? generateName(serviceSafe?.address)
     : '-';

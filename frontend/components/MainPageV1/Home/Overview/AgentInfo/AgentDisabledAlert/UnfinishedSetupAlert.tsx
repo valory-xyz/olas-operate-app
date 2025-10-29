@@ -1,8 +1,7 @@
 import { Button, Typography } from 'antd';
 
-import { CustomAlert } from '@/components/Alert';
-import { Pages } from '@/enums/Pages';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { Alert } from '@/components/ui';
+import { Pages, SetupScreen } from '@/enums';
 import { usePageState, useSetup } from '@/hooks';
 
 const { Text } = Typography;
@@ -17,7 +16,7 @@ export const UnfinishedSetupAlert = () => {
   };
 
   return (
-    <CustomAlert
+    <Alert
       showIcon
       className="mt-16"
       type="error"

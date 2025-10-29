@@ -1,7 +1,6 @@
 import { Button, Flex, Typography } from 'antd';
 
-import { CustomAlert } from '@/components/Alert';
-import { Tooltip } from '@/components/ui';
+import { Alert, Tooltip } from '@/components/ui';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { Pages } from '@/enums';
 import { usePageState } from '@/hooks';
@@ -22,7 +21,7 @@ export const InsufficientBalanceAlert = ({
   const { masterSafeAddress } = usePearlWallet();
 
   return (
-    <CustomAlert
+    <Alert
       type="warning"
       showIcon
       className="mb-24"

@@ -1,6 +1,6 @@
 import { Button, Typography } from 'antd';
 
-import { CustomAlert } from '@/components/Alert';
+import { Alert } from '@/components/ui';
 import { Pages } from '@/enums/Pages';
 import { usePageState, useServices, useSharedContext } from '@/hooks';
 
@@ -15,7 +15,7 @@ export const UnderConstructionAlert = () => {
   const canWithdraw = mainOlasBalance !== 0;
 
   return (
-    <CustomAlert
+    <Alert
       type="warning"
       className="mt-16"
       centered={!canWithdraw}
