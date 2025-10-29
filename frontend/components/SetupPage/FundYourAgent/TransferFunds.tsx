@@ -27,8 +27,7 @@ const FinishingSetupModal = () => (
   <Modal
     header={<Spin indicator={<LoadingOutlined />} size="large" />}
     title="Finishing Setup"
-    description="It usually takes a few minutes. Please keep the app open until the
-process is complete."
+    description="It usually takes a few minutes. Please keep the app open until the process is complete."
   />
 );
 

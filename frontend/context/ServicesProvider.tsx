@@ -1,6 +1,6 @@
 import { QueryObserverBaseResult, useQuery } from '@tanstack/react-query';
 import { message, MessageArgsProps } from 'antd';
-import { noop } from 'lodash';
+import { noop, values } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -20,6 +20,7 @@ import { AGENT_CONFIG } from '@/config/agents';
 import {
   AgentMap,
   AgentType,
+  EvmChainId,
   FIFTEEN_SECONDS_INTERVAL,
   FIVE_SECONDS_INTERVAL,
   MESSAGE_WIDTH,
@@ -64,6 +65,7 @@ type ServicesResponse = Pick<
 
 type ServicesContextType = {
   services?: MiddlewareServiceResponse[];
+  availableServiceConfigIds: { configId: string; chainId: EvmChainId }[];
   serviceWallets?: AgentWallet[];
   selectedService?: Service;
   serviceStatusOverrides?: Record<string, Maybe<MiddlewareDeploymentStatus>>;
@@ -89,6 +91,7 @@ export const ServicesContext = createContext<ServicesContextType>({
   deploymentDetails: undefined,
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
+  availableServiceConfigIds: [],
 });
 
 /**
@@ -288,6 +291,40 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     setSelectedServiceConfigId(currentService.service_config_id);
   }, [selectedServiceConfigId, services, selectedAgentConfig]);
 
+  const overrideSelectedServiceStatus = useCallback(
+    (status: Maybe<MiddlewareDeploymentStatus>) => {
+      if (selectedServiceConfigId) {
+        setServiceStatusOverrides((prev) => ({
+          ...prev,
+          [selectedServiceConfigId]: status,
+        }));
+      }
+    },
+    [selectedServiceConfigId],
+  );
+
+  /**
+   * Service config IDs for all non-under-construction agents
+   */
+  const availableServiceConfigIds = useMemo(() => {
+    if (!services) return [];
+    return services
+      .filter(({ service_public_id, home_chain }) => {
+        const currentAgent = values(AGENT_CONFIG).find(
+          ({ servicePublicId, evmHomeChainId }) =>
+            servicePublicId === service_public_id &&
+            evmHomeChainId === asEvmChainId(home_chain),
+        );
+        return (
+          !currentAgent?.isUnderConstruction && !!currentAgent?.isAgentEnabled
+        );
+      })
+      .map(({ service_config_id, home_chain }) => ({
+        configId: service_config_id,
+        chainId: asEvmChainId(home_chain),
+      }));
+  }, [services]);
+
   return (
     <ServicesContext.Provider
       value={{
@@ -296,6 +333,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         isFetched: !isServicesLoading,
         isLoading: isServicesLoading,
         refetch,
+        availableServiceConfigIds,
 
         // pause
         paused,
@@ -312,16 +350,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         deploymentDetails,
         serviceStatusOverrides,
         updateAgentType,
-        overrideSelectedServiceStatus: (
-          status: Maybe<MiddlewareDeploymentStatus>,
-        ) => {
-          if (selectedServiceConfigId) {
-            setServiceStatusOverrides((prev) => ({
-              ...prev,
-              [selectedServiceConfigId]: status,
-            }));
-          }
-        },
+        overrideSelectedServiceStatus,
       }}
     >
       {children}

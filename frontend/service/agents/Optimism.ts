@@ -112,6 +112,7 @@ export abstract class OptimismService extends StakedAgentService {
         ethers.utils.formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
+      tsCheckpoint,
     } satisfies StakingRewardsInfo;
   };
 
@@ -244,6 +245,7 @@ export abstract class OptimismService extends StakedAgentService {
       olasStakeRequired,
       rewardsPerWorkPeriod,
       epochCounter: epochCounter.toNumber(),
+      livenessPeriod: livenessPeriod.toNumber(),
     };
   };
 }

@@ -2,19 +2,21 @@ import { Button, Flex, Statistic, Typography } from 'antd';
 import { TbLock, TbSparkles, TbSquareRoundedPercentage } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { CardFlex } from '@/components/ui/CardFlex';
-import { Divider } from '@/components/ui/Divider';
-import { Tooltip } from '@/components/ui/Tooltip';
-import { COLOR } from '@/constants/colors';
-import { NA } from '@/constants/symbols';
-import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useStakingContractDetails } from '@/hooks/useStakingContractDetails';
-import { useStakingDetails } from '@/hooks/useStakingDetails';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { CardFlex, Divider, Tooltip } from '@/components/ui';
+import { COLOR, NA } from '@/constants';
+import { Pages } from '@/enums';
+import {
+  usePageState,
+  useStakingContractDetails,
+  useStakingDetails,
+  useStakingProgram,
+} from '@/hooks';
+import { secondsToHours } from '@/utils';
+
+import { InfoTooltip } from '../InfoTooltip';
 
 const { Title, Text } = Typography;
-const { Countdown } = Statistic;
+const { Timer } = Statistic;
 
 const IconWrapper = styled(Flex)`
   width: 48px;
@@ -76,17 +78,30 @@ export const StakingContractDetails = () => {
   const { stakingContractInfo } = useStakingContractDetails(
     currentStakingProgramId,
   );
-  const { epochCounter, olasStakeRequired, apy, rewardsPerWorkPeriod } =
-    stakingContractInfo || {};
+  const {
+    epochCounter,
+    olasStakeRequired,
+    apy,
+    rewardsPerWorkPeriod,
+    livenessPeriod,
+  } = stakingContractInfo || {};
   const { currentEpochLifetime } = useStakingDetails();
 
   if (!stakingContractInfo || !selectedStakingProgramMeta) return null;
   return (
     <Flex vertical gap={12}>
       <Flex justify="space-between" align="center">
-        <Title level={5} className="m-0">
-          {selectedStakingProgramMeta?.name}
-        </Title>
+        <Flex align="center" gap={8}>
+          <Title level={5} className="m-0">
+            {selectedStakingProgramMeta?.name}
+          </Title>
+          <InfoTooltip iconColor={COLOR.BLACK} iconSize={18}>
+            This is the staking contract your agent is currently joined to. The
+            contract sets the rules for earning staking rewards — required
+            behavior, reward rate, and required staking deposit. An agent can
+            participate in only one contract at a time.
+          </InfoTooltip>
+        </Flex>
         <Button size="small" onClick={() => goto(Pages.SelectStaking)}>
           Switch Staking Contract
         </Button>
@@ -122,10 +137,17 @@ export const StakingContractDetails = () => {
         {currentEpochLifetime && (
           <Flex align="center" justify="center" gap={4} className="mt-16 mb-16">
             <Text type="secondary">Current Epoch {epochCounter} ends in </Text>
-            <Countdown
+            <Timer
+              type="countdown"
               value={currentEpochLifetime}
               valueStyle={COUNTDOWN_VALUE_STYLE}
             />
+            <InfoTooltip>
+              An epoch is the contract&apos;s reward cycle, roughly{' '}
+              {livenessPeriod ? secondsToHours(livenessPeriod) : `${NA}`}. Your
+              agent must meet the staking criteria within this cycle to earn
+              rewards; otherwise, it starts over in the next epoch.
+            </InfoTooltip>
           </Flex>
         )}
       </CardFlex>
