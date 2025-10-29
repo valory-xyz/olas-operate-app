@@ -3,6 +3,7 @@ import { Pages } from '@/enums';
 import {
   useActiveStakingContractDetails,
   useAnotherAgentRunning,
+  useMasterWalletContext,
   useNeedsFunds,
   usePageState,
   useServices,
@@ -11,6 +12,7 @@ import {
 
 import { AgentRunningAlert } from './AgentRunningAlert';
 import { EvictedAlert } from './EvictedAlert';
+import { FundYourAgentAfterWithdrawal } from './FundYourAgentAfterWithdrawal';
 import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
 import { UnderConstructionAlert } from './UnderConstructionAlert';
@@ -18,6 +20,12 @@ import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
 
 export const AgentDisabledAlert = () => {
   const { selectedAgentConfig } = useServices();
+  const { getMasterSafeOf } = useMasterWalletContext();
+
+  const isMasterSafeCreated = !!getMasterSafeOf?.(
+    selectedAgentConfig.evmHomeChainId,
+  )?.address;
+
   const {
     isSelectedStakingContractDetailsLoading,
     isAgentEvicted,
@@ -39,7 +47,17 @@ export const AgentDisabledAlert = () => {
   }
 
   // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
-  if (isInitialFunded === false) return <UnfinishedSetupAlert />;
+  if (isInitialFunded === false) {
+    // If master safe is created and initial funding is false => funds were withdrawn after setup.
+    if (isMasterSafeCreated) {
+      return <FundYourAgentAfterWithdrawal />;
+    }
+
+    // If master safe is not created yet => setup was not finished.
+    else {
+      return <UnfinishedSetupAlert />;
+    }
+  }
 
   if (
     !isSelectedStakingContractDetailsLoading &&
