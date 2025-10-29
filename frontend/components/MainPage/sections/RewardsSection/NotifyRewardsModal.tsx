@@ -2,6 +2,7 @@ import { Button, Flex, Modal, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { ConfettiAnimation } from '@/components/ui/animations';
 import { NA } from '@/constants/symbols';
 import { PEARL_URL } from '@/constants/urls';
 import { useMainOlasBalance } from '@/context/SharedProvider/useMainOlasBalance';
@@ -9,8 +10,6 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useStore } from '@/hooks/useStore';
 import { balanceFormat } from '@/utils/numberFormatters';
-
-import { ConfettiAnimation } from '../../../Confetti/ConfettiAnimation';
 
 const { Text, Title } = Typography;
 
