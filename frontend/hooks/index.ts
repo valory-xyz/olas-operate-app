@@ -38,4 +38,5 @@ export * from './useStakingProgram';
 export * from './useStore';
 export * from './useTotalFiatFromNativeToken';
 export * from './useTotalNativeTokenRequired';
+export * from './useValidatePassword';
 export * from './useWallet';
