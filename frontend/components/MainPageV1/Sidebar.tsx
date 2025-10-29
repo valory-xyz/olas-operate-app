@@ -244,7 +244,7 @@ export const Sidebar = () => {
             {myAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length && (
               <ResponsiveButton
                 size="large"
-                className="self-center w-max"
+                className="flex mx-auto"
                 onClick={() => {
                   gotoPage(Pages.Setup);
                   gotoSetup(SetupScreen.AgentOnboarding);
