@@ -52,6 +52,8 @@ export const Home = () => {
   const [view, setView] = useState<View>('overview');
   const [isUnlockChatUiModalOpen, setIsUnlockChatUiModalOpen] = useState(false);
 
+  const isX402Enabled = selectedAgentConfig.isX402Enabled;
+
   // Reset view to overview when switching between agents
   useEffect(() => setView('overview'), [selectedAgentType]);
 
@@ -78,19 +80,20 @@ export const Home = () => {
       }
 
       const requiresChatUI = selectedAgentConfig.hasChatUI;
-      const profileWarningDismissed = get(
-        storeState,
-        `${selectedAgentType}.isProfileWarningDisplayed`,
-      );
-      const geminiApiKey = selectedService?.env_variables?.GENAI_API_KEY?.value;
 
-      if (requiresChatUI) {
+      if (requiresChatUI && !isX402Enabled) {
+        const profileWarningDismissed = get(
+          storeState,
+          `${selectedAgentType}.isProfileWarningDisplayed`,
+        );
         // If user already skipped the warning → go straight to profile
         if (profileWarningDismissed) {
           setView('profile');
           return;
         }
 
+        const geminiApiKey =
+          selectedService?.env_variables?.GENAI_API_KEY?.value;
         // Chat UI requires Gemini key → show modal if missing
         if (!geminiApiKey) {
           setIsUnlockChatUiModalOpen(true);
@@ -106,6 +109,7 @@ export const Home = () => {
       setView('profile');
     },
     [
+      isX402Enabled,
       selectedAgentConfig.hasChatUI,
       selectedAgentType,
       selectedService?.deploymentStatus,

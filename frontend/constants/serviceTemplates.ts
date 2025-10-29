@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 
 import { MiddlewareChain, ServiceTemplate } from '@/client';
+import { AGENT_CONFIG } from '@/config/agents';
 import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from '@/config/tokens';
 import { EnvProvisionMap as EnvProvisionType } from '@/constants/envVariables';
 import { AgentType } from '@/enums/Agent';
@@ -134,6 +135,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.USER,
     },
+    USE_X402: {
+      name: 'Gemini API Key',
+      description: 'Gemini api key to allow the agent to use Gemini',
+      value: AGENT_CONFIG.trader.isX402Enabled.toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
 
@@ -261,6 +268,12 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
+    },
+    USE_X402: {
+      name: 'Gemini API Key',
+      description: 'Gemini api key to allow the agent to use Gemini',
+      value: AGENT_CONFIG.memeooorr.isX402Enabled.toString(),
+      provision_type: EnvProvisionType.FIXED,
     },
   },
 } as const;
@@ -463,6 +476,12 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '0x5b5F79BB667A25400a8f91F0c18D080abCfD430f',
       provision_type: EnvProvisionType.FIXED,
     },
+    USE_X402: {
+      name: 'Gemini API Key',
+      description: 'Gemini api key to allow the agent to use Gemini',
+      value: AGENT_CONFIG.modius.isX402Enabled.toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
   ...BABYDEGEN_COMMON_TEMPLATE,
 } as const;
@@ -588,6 +607,12 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
+    },
+    USE_X402: {
+      name: 'Gemini API Key',
+      description: 'Gemini api key to allow the agent to use Gemini',
+      value: AGENT_CONFIG.optimus.isX402Enabled.toString(),
+      provision_type: EnvProvisionType.FIXED,
     },
   },
   ...BABYDEGEN_COMMON_TEMPLATE,
