@@ -10,17 +10,18 @@ import {
   UploadFile,
 } from 'antd';
 import { UploadChangeParam } from 'antd/es/upload';
+import { delay } from 'lodash';
 import { useState } from 'react';
 import { TbX } from 'react-icons/tb';
 import styled, { css } from 'styled-components';
-import { useUnmount } from 'usehooks-ts';
 
 import { FormLabel, Modal, RequiredMark } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { useElectronApi, useLogs } from '@/hooks';
 import { ZendeskService } from '@/service/Zendesk';
 
-import { FileUpload } from './FileUpload';
+import { SuccessOutlined } from '../custom-icons';
+import { FileUploadWithList } from './FileUpload';
 
 const { Text, Title } = Typography;
 
@@ -114,58 +115,125 @@ export const SupportModal = ({
   open: boolean;
   onClose: () => void;
 }) => {
-  const [form] = Form.useForm<SupportModalFormValues>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [_uploadedFiles, setUploadedFiles] = useState<UploadFile[]>([]);
-  const { saveLogsForSupport, readFile, cleanupZendeskLogs } = useElectronApi();
+  const [uploadedFiles, setUploadedFiles] = useState<UploadFile[]>([]);
+  const [ticketId, setTicketId] = useState<number | null>(null);
+
   const logs = useLogs();
+  const [form] = Form.useForm<SupportModalFormValues>();
+  const { saveLogsForSupport, readFile, cleanupZendeskLogs } = useElectronApi();
 
-  const uploadLogs = async () => {
-    if (!logs || !saveLogsForSupport || !readFile) return;
+  const formatAttachments = async (): Promise<
+    Array<{
+      fileName: string;
+      fileContent: string;
+      mimeType: string;
+    }>
+  > => {
+    if (uploadedFiles.length === 0) return [];
 
-    try {
-      // Save logs and get file path
-      const result = await saveLogsForSupport(logs);
-      if (!result.success) {
-        throw new Error('Failed to save logs');
-      }
+    const filePromises = uploadedFiles.map(
+      (
+        file,
+      ): Promise<{
+        fileName: string;
+        fileContent: string;
+        mimeType: string;
+      } | null> => {
+        const fileObj = file.originFileObj;
+        if (!fileObj) return Promise.resolve(null);
 
-      const { filePath } = result;
-      const fileResult = await readFile(filePath);
-      if (!fileResult.success) {
-        throw new Error(fileResult.error || 'Failed to read file');
-      }
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              resolve({
+                fileName: file.name,
+                fileContent: reader.result as string,
+                mimeType: file.type || 'application/octet-stream',
+              });
+            } catch (error) {
+              reject(new Error(`Failed to process file ${file.name}`));
+            }
+          };
+          reader.onerror = () => {
+            reject(new Error(`Failed to read file ${file.name}`));
+          };
+          reader.readAsDataURL(fileObj);
+        });
+      },
+    );
 
-      const uploadResult = await ZendeskService.uploadFile(fileResult);
-      if (!uploadResult.success) {
-        throw new Error(uploadResult.error || 'Failed to upload file');
-      }
+    return Promise.all(filePromises).then(
+      (results) =>
+        results.filter(Boolean) as {
+          fileName: string;
+          fileContent: string;
+          mimeType: string;
+        }[],
+    );
+  };
 
-      return uploadResult.token;
-    } catch (error) {
-      console.error('Error preparing files for upload:', error);
-      throw error;
+  const loadLogsFile = async (): Promise<{
+    fileName: string;
+    fileContent: string;
+    mimeType: string;
+  } | null> => {
+    if (!logs || !saveLogsForSupport || !readFile) return null;
+
+    const result = await saveLogsForSupport(logs);
+    if (!result.success) {
+      throw new Error('Failed to save logs');
     }
+
+    const fileResult = await readFile(result.filePath);
+    if (!fileResult.success) {
+      throw new Error(fileResult.error || 'Failed to read file');
+    }
+
+    return fileResult;
+  };
+
+  const uploadFiles = async (shouldIncludeLogs: boolean): Promise<string[]> => {
+    const [attachments, logsFile] = await Promise.all([
+      formatAttachments(),
+      shouldIncludeLogs
+        ? loadLogsFile().catch(() => null)
+        : Promise.resolve(null),
+    ]);
+
+    const allFiles = [...attachments, ...(logsFile ? [logsFile] : [])];
+
+    return Promise.all(
+      allFiles.map(async (file) => {
+        const result = await ZendeskService.uploadFile(file);
+        if (!result.success) {
+          throw new Error(result.error || `Failed to upload ${file.fileName}`);
+        }
+        return result.token;
+      }),
+    );
   };
 
   const handleSubmit = async (values: SupportModalFormValues) => {
     setIsSubmitting(true);
     try {
       const { email, subject, description, shouldShareLogs } = values;
-      const logsUploadToken = shouldShareLogs ? await uploadLogs() : undefined;
+
+      const uploadTokens = await uploadFiles(shouldShareLogs);
       const createTicketResult = await ZendeskService.createTicket({
         email,
         subject,
         description,
-        uploadTokens: logsUploadToken ? [logsUploadToken] : [],
+        uploadTokens,
       });
+
       if (!createTicketResult.success) {
         throw new Error(createTicketResult.error || 'Failed to create ticket');
       }
+
       await cleanupZendeskLogs?.();
-      form.resetFields();
-      setUploadedFiles([]);
-      onClose();
+      setTicketId(createTicketResult.ticketId);
     } catch (error) {
       message.error('Failed to submit support request. Please try again.');
     } finally {
@@ -173,19 +241,46 @@ export const SupportModal = ({
     }
   };
 
+  const resetFormFields = () => {
+    form.resetFields();
+    setUploadedFiles([]);
+  };
+
   const handleFileChange = (info: UploadChangeParam<UploadFile>) => {
     setUploadedFiles(info.fileList);
   };
 
-  useUnmount(() => {
-    form.resetFields();
-    setUploadedFiles([]);
-  });
+  const handleClose = () => {
+    resetFormFields();
+    onClose();
+
+    if (ticketId) {
+      // Delay to ensure that we don't switch to the main modal while closing.
+      delay(() => setTicketId(null), 250);
+    }
+  };
+
+  if (ticketId) {
+    return (
+      <Modal
+        open={open}
+        onCancel={handleClose}
+        header={<SuccessOutlined />}
+        title="Request Submitted!"
+        description={`Your request ID is #${ticketId}. Keep an eye on your inbox for the response from the support team.`}
+        action={
+          <Button type="primary" onClick={handleClose} block className="mt-32">
+            Close
+          </Button>
+        }
+      />
+    );
+  }
 
   return (
     <Modal
       open={open}
-      onCancel={onClose}
+      onCancel={handleClose}
       size="large"
       hasCustomContent
       styles={{
@@ -238,7 +333,10 @@ export const SupportModal = ({
           label={<FormLabel>Attachments (optional)</FormLabel>}
           name="attachments"
         >
-          <FileUpload onChange={handleFileChange} />
+          <FileUploadWithList
+            onChange={handleFileChange}
+            uploadedFiles={uploadedFiles}
+          />
         </Form.Item>
 
         <Form.Item
@@ -253,7 +351,7 @@ export const SupportModal = ({
 
         <Form.Item className="mb-0">
           <Flex justify="end" gap={12}>
-            <Button onClick={onClose} disabled={isSubmitting}>
+            <Button onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button type="primary" htmlType="submit" loading={isSubmitting}>
