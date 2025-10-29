@@ -170,6 +170,8 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
 };
 
 // TODO: move to a separate file
+// TODO: refactor so the separation of balances for selectedAgent
+// and all wallets across chains is clearer
 /**
  * Balances relevant to the master wallets, eoa, and safes
  * @note master wallets are *shared* wallets across all services
@@ -186,7 +188,7 @@ export const useMasterBalances = () => {
       walletBalances?.filter(({ walletAddress }) =>
         masterSafes?.find(
           ({ address: masterSafeAddress, evmChainId }) =>
-            walletAddress === masterSafeAddress &&
+            areAddressesEqual(walletAddress, masterSafeAddress) &&
             selectedAgentConfig.requiresAgentSafesOn.includes(evmChainId),
         ),
       ),
@@ -203,10 +205,25 @@ export const useMasterBalances = () => {
 
   /**
    * Unstaked balances across master safes and eoas
+   * Only contains wallets related to the selected agent's home chain id
    */
   const masterWalletBalances = useMemo<Optional<WalletBalance[]>>(() => {
     return [...(masterSafeBalances || []), ...(masterEoaBalances || [])];
   }, [masterEoaBalances, masterSafeBalances]);
+
+  /**
+   * Unstaked balances across all master safes and eoas
+   */
+  const allMasterWalletBalances = useMemo<Optional<WalletBalance[]>>(() => {
+    return (
+      walletBalances?.filter(
+        ({ walletAddress }) =>
+          masterSafes?.find(({ address: masterSafeAddress }) =>
+            areAddressesEqual(walletAddress, masterSafeAddress),
+          ) || areAddressesEqual(walletAddress, masterEoa?.address),
+      ) ?? []
+    );
+  }, [masterSafes, walletBalances, masterEoa]);
 
   const homeChainNativeToken = useMemo(() => {
     if (!selectedAgentConfig?.evmHomeChainId) return;
@@ -288,9 +305,9 @@ export const useMasterBalances = () => {
     (chainId: EvmChainId, returnType: 'string' | 'number') => {
       if (!chainId) return;
       if (isNil(masterEoa)) return;
-      if (isNil(masterWalletBalances)) return;
+      if (isNil(allMasterWalletBalances)) return;
 
-      const balances = masterWalletBalances.filter(
+      const balances = allMasterWalletBalances.filter(
         ({ walletAddress, isNative, evmChainId }) =>
           isNative &&
           chainId === evmChainId &&
@@ -305,7 +322,7 @@ export const useMasterBalances = () => {
 
       return balances.reduce((acc, { balance }) => acc + balance, 0);
     },
-    [masterEoa, masterWalletBalances],
+    [masterEoa, allMasterWalletBalances],
   );
 
   /** Get the master EOA native balance as a number */
@@ -330,21 +347,23 @@ export const useMasterBalances = () => {
     [_getMasterEoaNativeBalanceOfCalc],
   );
 
+  /** Get the master EOA balances as WalletBalance[] */
   const getMasterEoaBalancesOf = useCallback(
     (chainId: EvmChainId) => {
       if (!chainId) return [];
       if (isNil(masterEoa)) return [];
-      if (isNil(masterWalletBalances)) return [];
+      if (isNil(allMasterWalletBalances)) return [];
 
-      return masterWalletBalances.filter(
+      return allMasterWalletBalances.filter(
         ({ walletAddress, evmChainId }) =>
           chainId === evmChainId &&
           areAddressesEqual(walletAddress, masterEoa.address),
       );
     },
-    [masterEoa, masterWalletBalances],
+    [masterEoa, allMasterWalletBalances],
   );
 
+  /** Get the master Safe OLAS balance of a currently selected agent */
   const masterSafeOlasBalance = masterWalletBalances
     ?.filter(
       ({ symbol, evmChainId }) =>
@@ -353,12 +372,22 @@ export const useMasterBalances = () => {
     )
     .reduce((acc, balance) => acc + balance.balance, 0);
 
+  /** Internal implementation for getting master Safe OLAS balance */
   const _getMasterSafeOlasBalanceOfCalc = useCallback(
     (chainId: EvmChainId, type: 'string' | 'number') => {
+      const masterSafeForProvidedChain = masterSafes?.find(
+        (wallet) => wallet.evmChainId === chainId,
+      );
+
+      if (isNil(masterSafeForProvidedChain?.address)) return;
+      if (isNil(allMasterWalletBalances)) return;
+
       const balances = compact(
-        masterWalletBalances?.filter(
-          ({ symbol, evmChainId }) =>
-            symbol === TokenSymbolMap.OLAS && evmChainId === chainId,
+        allMasterWalletBalances?.filter(
+          ({ walletAddress, symbol, evmChainId }) =>
+            symbol === TokenSymbolMap.OLAS &&
+            evmChainId === chainId &&
+            walletAddress === masterSafeForProvidedChain.address,
         ),
       );
 
@@ -369,9 +398,10 @@ export const useMasterBalances = () => {
       }
       return balances.reduce((acc, { balance }) => acc + balance, 0);
     },
-    [masterWalletBalances],
+    [allMasterWalletBalances, masterSafes],
   );
 
+  /** Get the master Safe OLAS balance as a string */
   const getMasterSafeOlasBalanceOfInStr = useCallback(
     (chainId: EvmChainId) => {
       return _getMasterSafeOlasBalanceOfCalc(
@@ -382,24 +412,25 @@ export const useMasterBalances = () => {
     [_getMasterSafeOlasBalanceOfCalc],
   );
 
-  const masterSafe = useMemo(() => {
-    return masterSafes?.find(({ evmChainId }) => evmChainId === evmHomeChainId);
-  }, [masterSafes, evmHomeChainId]);
-
+  /** Get the master Safe balances as WalletBalance[] */
   const getMasterSafeNativeBalanceOf = useCallback(
     (chainId: EvmChainId) => {
-      if (isNil(masterSafe?.address)) return;
-      if (isNil(masterSafeBalances)) return;
+      const masterSafeForProvidedChain = masterSafes?.find(
+        (wallet) => wallet.evmChainId === chainId,
+      );
 
-      return masterSafeBalances.filter(
+      if (isNil(masterSafeForProvidedChain?.address)) return;
+      if (isNil(allMasterWalletBalances)) return;
+
+      return allMasterWalletBalances.filter(
         ({ walletAddress, evmChainId, isNative, isWrappedToken }) =>
           evmChainId === chainId &&
           isNative &&
           !isWrappedToken &&
-          walletAddress === masterSafe.address,
+          walletAddress === masterSafeForProvidedChain.address,
       );
     },
-    [masterSafe?.address, masterSafeBalances],
+    [masterSafes, allMasterWalletBalances],
   );
 
   const masterSafeNativeBalance = useMemo(
@@ -409,16 +440,20 @@ export const useMasterBalances = () => {
 
   const getMasterSafeErc20BalancesCalc = useCallback(
     (chainId: EvmChainId, type: 'string' | 'number') => {
-      if (isNil(masterSafe?.address)) return;
-      if (isNil(masterSafeBalances)) return;
+      const masterSafeForProvidedChain = masterSafes?.find(
+        (wallet) => wallet.evmChainId === chainId,
+      );
 
-      const balances = masterSafeBalances.filter(
+      if (isNil(masterSafeForProvidedChain?.address)) return;
+      if (isNil(allMasterWalletBalances)) return;
+
+      const balances = allMasterWalletBalances.filter(
         ({ walletAddress, evmChainId, symbol, isNative }) => {
           return (
             evmChainId === chainId &&
             !isNative &&
             symbol !== TokenSymbolMap.OLAS &&
-            walletAddress === masterSafe.address
+            walletAddress === masterSafeForProvidedChain.address
           );
         },
       );
@@ -444,7 +479,7 @@ export const useMasterBalances = () => {
         initialAcc,
       );
     },
-    [masterSafe?.address, masterSafeBalances],
+    [masterSafes, allMasterWalletBalances],
   );
 
   const getMasterSafeErc20BalancesInStr = useCallback(
