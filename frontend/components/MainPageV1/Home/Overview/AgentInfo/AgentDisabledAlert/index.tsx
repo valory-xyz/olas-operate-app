@@ -59,3 +59,21 @@ export const AgentDisabledAlert = () => {
     </>
   );
 };
+
+/**
+ * - set the initiallyFunded to "false" in store as soon as the agent funds is withdrawn.
+ *   ===> low balance alert will not be shown anyway so no issues there.
+ *
+ *  - check if the master safe is created and then then the initially funding is false
+ *     ==> means setup was completed and the withdraw was made, HENCE onboarding should be shown
+ *  - on "Fund your agent" click, navigate to the "Fund your agent" (ONBOARDING) page.
+ *  question: where should the user fund? master SAFE or master EOA? (chances are master safe)
+ *
+ *  - On reaching "Fund your agent" page, we should NOT create master safe.
+ *    - So, have to check if the master safe exists, if yes, then skip that step and go to funding requirements directly.
+ *  - NOW once funding is completed, set the initiallyFunded to "true" in store.
+ *
+ *
+ * WHAT ARE THE CONSEQUENCES IF .operate folder is navigated to different machine?
+ *.
+ */
