@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { Modal } from '@/components/ui';
 import { useLogs } from '@/hooks';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { ZendeskService } from '@/service/Zendesk';
 
 import { FileUpload } from './FileUpload';
 
@@ -47,24 +48,12 @@ export const SupportModal = ({
         throw new Error(fileResult.error || 'Failed to read file');
       }
 
-      const { fileName, fileContent, mimeType } = fileResult;
+      const uploadResult = await ZendeskService.uploadFile(fileResult);
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || 'Failed to upload file');
+      }
 
-      const requestBody = {
-        fileName,
-        fileData: fileContent,
-        contentType: mimeType,
-      };
-
-      const uploadResult = await fetch(
-        'http://localhost:4200/api/zendesk/upload-file',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
-        },
-      );
+      return uploadResult.token;
     } catch (error) {
       console.error('Error preparing files for upload:', error);
       throw error;
@@ -78,13 +67,17 @@ export const SupportModal = ({
   }) => {
     setIsSubmitting(true);
     try {
-      const {
-        email: _email,
-        subject: _subject,
-        description: _description,
-      } = values;
-
-      message.success('Support request submitted successfully!');
+      const { email, subject, description } = values;
+      const logsUploadToken = await uploadLogs();
+      const createTicketResult = await ZendeskService.createTicket({
+        email,
+        subject,
+        description,
+        uploadTokens: logsUploadToken ? [logsUploadToken] : undefined,
+      });
+      if (!createTicketResult.success) {
+        throw new Error(createTicketResult.error || 'Failed to create ticket');
+      }
       form.resetFields();
       setUploadedFiles([]);
       onClose();
