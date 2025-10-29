@@ -22,7 +22,7 @@ export const UpdateAvailableAlert = () => {
   return (
     <CustomAlert
       type="info"
-      className="mt-auto mb-16"
+      className="mt-auto mb-16 text-sm"
       message={
         <Flex vertical gap={2}>
           <TbDownload

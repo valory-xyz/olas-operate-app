@@ -191,6 +191,7 @@ textarea,
   opacity: 0.4;
   color: #000000 !important;
 }
+
 /* === End: button redesigns === */
 
 .balance {
@@ -661,6 +662,10 @@ ul.alert-list {
 
 .w-max {
   width: max-content !important;
+}
+
+.w-fit {
+  width: fit-content !important;
 }
 
 .max-width-200 {

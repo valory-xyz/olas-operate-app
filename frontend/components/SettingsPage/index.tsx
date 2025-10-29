@@ -1,7 +1,8 @@
-import { Card, Flex, Skeleton, Typography } from 'antd';
+import { Button, Card, Flex, Skeleton, Typography } from 'antd';
 import { isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
+import { useBoolean } from 'usehooks-ts';
 
 import { Pages } from '@/enums/Pages';
 import { SettingsScreen } from '@/enums/SettingsScreen';
@@ -19,6 +20,7 @@ import { Optional } from '@/types/Util';
 import { AddressLink } from '../AddressLink';
 import { CustomAlert } from '../Alert';
 import { CardSection, cardStyles } from '../ui';
+import { RecoveryModal } from './RecoveryModal';
 
 const { Text, Paragraph, Title } = Typography;
 
@@ -54,6 +56,11 @@ const SettingsMain = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
   const { selectedAgentConfig } = useServices();
   const { masterEoa, masterSafes } = useMasterWalletContext();
+  const {
+    value: isRecoveryModalOpen,
+    setTrue: showRecoveryModal,
+    setFalse: handleClose,
+  } = useBoolean(false);
 
   const masterSafe = masterSafes?.find(
     ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
@@ -100,6 +107,7 @@ const SettingsMain = () => {
 
   return (
     <Flex style={cardStyles} vertical gap={32}>
+      <RecoveryModal open={isRecoveryModalOpen} onClose={handleClose} />
       <Title level={3} className="m-0">
         Settings
       </Title>
@@ -144,7 +152,7 @@ const SettingsMain = () => {
               />
               <Flex vertical gap={6}>
                 <div className="my-6">
-                  <Text strong>Backup wallet</Text>
+                  <Text strong>Backup Wallet</Text>
                 </div>
                 {walletBackup}
               </Flex>
@@ -155,6 +163,40 @@ const SettingsMain = () => {
             )}
           </CardSection>
         )}
+
+        {
+          <CardSection $padding="24px" vertical gap={8}>
+            <Flex gap={16}>
+              <Image
+                src="/wallet-icon.png"
+                alt="wallet"
+                width={36}
+                height={36}
+                className="mb-auto"
+              />
+              <Flex vertical gap={16} className="text-sm">
+                <Text strong>Secret Recovery Phrase</Text>
+                <span>
+                  Back up your Secret Recovery Phrase so you never lose access
+                  to your Pearl account.
+                </span>
+                <CustomAlert
+                  showIcon
+                  type="warning"
+                  message="Secret Recovery Phrase not backed up."
+                  className="text-sm"
+                />
+                <Button
+                  type="default"
+                  className="w-fit"
+                  onClick={() => showRecoveryModal()}
+                >
+                  Reveal Recovery Phrase
+                </Button>
+              </Flex>
+            </Flex>
+          </CardSection>
+        }
       </Card>
     </Flex>
   );
