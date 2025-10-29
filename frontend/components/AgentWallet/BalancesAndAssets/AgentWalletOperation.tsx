@@ -62,7 +62,9 @@ export const AgentWalletOperation = ({
 }: AgentWalletOperationProps) => {
   const isWithdrawFeatureEnabled = useFeatureFlag('withdraw-funds');
   const { selectedService } = useServices();
-  const { service } = useService(selectedService?.service_config_id);
+  const { service, serviceEoa } = useService(
+    selectedService?.service_config_id,
+  );
   const { isServiceStakedForMinimumDuration, selectedStakingContractDetails } =
     useActiveStakingContractDetails();
   const { countdownDisplay } = useStakingContractCountdown(
@@ -74,6 +76,7 @@ export const AgentWalletOperation = ({
 
   const withdrawDisabledAlert = useMemo(() => {
     if (!isWithdrawFeatureEnabled) return null;
+    if (!countdownDisplay) return null;
     if (!isServiceStakedForMinimumDuration) {
       return <MinimumDurationOfStakingAlert countdown={countdownDisplay} />;
     }
@@ -99,9 +102,11 @@ export const AgentWalletOperation = ({
             </Tooltip>
           )}
 
-          <Button type="primary" onClick={onFundAgent}>
-            Fund Agent
-          </Button>
+          <Tooltip title={serviceEoa ? null : 'Run agent to enable'}>
+            <Button type="primary" onClick={onFundAgent} disabled={!serviceEoa}>
+              Fund Agent
+            </Button>
+          </Tooltip>
         </Flex>
       </Flex>
 

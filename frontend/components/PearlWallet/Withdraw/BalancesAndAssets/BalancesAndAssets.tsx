@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 
 import { AgentNft } from '@/components/AgentNft';
 import { InfoTooltip } from '@/components/InfoTooltip';
-import { CardFlex, Segmented } from '@/components/ui';
+import { CardFlex, Segmented, Tooltip } from '@/components/ui';
 import { WalletsTooltip } from '@/components/ui/WalletsTooltip';
 import { COLOR } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
@@ -105,8 +105,13 @@ export const BalancesAndAssets = ({
   onWithdraw,
   onDeposit,
 }: BalancesAndAssetsProps) => {
-  const { chains, walletChainId, onWalletChainChange, onReset } =
-    usePearlWallet();
+  const {
+    chains,
+    walletChainId,
+    onWalletChainChange,
+    onReset,
+    masterSafeAddress,
+  } = usePearlWallet();
 
   // reset the state when we enter the pearl wallet screen
   useEffect(() => {
@@ -121,9 +126,19 @@ export const BalancesAndAssets = ({
             <PearlWalletTitle />
             <Flex gap={8}>
               <Button onClick={onWithdraw}>Withdraw</Button>
-              <Button onClick={onDeposit} type="primary">
-                Deposit
-              </Button>
+              <Tooltip
+                title={
+                  masterSafeAddress ? null : 'Complete agent setup to enable'
+                }
+              >
+                <Button
+                  onClick={onDeposit}
+                  type="primary"
+                  disabled={!masterSafeAddress}
+                >
+                  Deposit
+                </Button>
+              </Tooltip>
             </Flex>
           </Flex>
           <LowPearlWalletBalanceAlert />
