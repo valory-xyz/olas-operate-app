@@ -3,7 +3,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { entries, isEmpty } from 'lodash';
+import { isEmpty, map } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -18,18 +18,13 @@ import {
   BalancesAndFundingRequirements,
   MasterSafeBalanceRecord,
 } from '@/client';
-import { ACTIVE_AGENTS } from '@/config/agents';
-import {
-  AgentType,
-  EvmChainId,
-  MiddlewareDeploymentStatusMap,
-} from '@/constants';
+import { EvmChainId, MiddlewareDeploymentStatusMap } from '@/constants';
 import {
   SIXTY_MINUTE_INTERVAL,
   THIRTY_SECONDS_INTERVAL,
 } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
-import { useMasterWalletContext, useStore } from '@/hooks';
+import { useMasterWalletContext } from '@/hooks';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useRewardContext } from '@/hooks/useRewardContext';
@@ -142,7 +137,6 @@ export const BalancesAndRefillRequirementsProvider = ({
   children,
 }: PropsWithChildren) => {
   const queryClient = useQueryClient();
-  const { storeState } = useStore();
   const { isOnline } = useOnlineStatusContext();
   const { isUserLoggedIn } = usePageState();
   const { masterSafes } = useMasterWalletContext();
@@ -215,6 +209,7 @@ export const BalancesAndRefillRequirementsProvider = ({
   const balances = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return;
     if (!balancesAndFundingRequirements) return;
+
     return balancesAndFundingRequirements.balances[asMiddlewareChain(chainId)];
   }, [
     isBalancesAndFundingRequirementsLoading,
@@ -282,7 +277,9 @@ export const BalancesAndRefillRequirementsProvider = ({
     if (isBalancesAndFundingRequirementsLoading) return;
     if (!balancesAndFundingRequirements) return;
 
-    /** @warning If an agent requires funds on different chains, this will work incorrectly */
+    /**
+     * @warning If an agent requires funds on different chains, this will work incorrectly
+     */
     return balancesAndFundingRequirements.agent_funding_requests[
       asMiddlewareChain(chainId)
     ];
@@ -301,41 +298,16 @@ export const BalancesAndRefillRequirementsProvider = ({
   }, [queryClient, configId]);
 
   const isPearlWalletRefillRequired = useMemo(() => {
-    // If master safes are empty, no agent is set up, hence no refill is required.
+    // If master safes are empty, no service is set up, hence no refill is required.
     if (isEmpty(masterSafes)) return false;
-    if (isEmpty(services)) return false;
     if (isEmpty(balancesAndFundingRequirementsForAllServices)) return false;
 
-    // Check if any agent requires a refill on any chain
-    return entries(balancesAndFundingRequirementsForAllServices)
-      .map(([serviceConfigId, data]) => {
-        const currentService = services?.find(
-          (service) => service.service_config_id === serviceConfigId,
-        );
-        if (!currentService) return false;
-
-        const agentConfig = ACTIVE_AGENTS.find(
-          ([, agentConfig]) =>
-            agentConfig.servicePublicId === currentService?.service_public_id &&
-            agentConfig.middlewareHomeChainId === currentService?.home_chain,
-        );
-        if (!agentConfig) return false;
-
-        const agentType = agentConfig[0] as AgentType;
-
-        // Check if initial funding is done for this agent
-        // and only then consider refill requirement
-        return (
-          data.is_refill_required && !!storeState?.[agentType]?.isInitialFunded
-        );
-      })
-      .some((isRefillRequired) => isRefillRequired);
-  }, [
-    balancesAndFundingRequirementsForAllServices,
-    masterSafes,
-    storeState,
-    services,
-  ]);
+    // Check if any service requires a refill on any chain
+    return map(
+      balancesAndFundingRequirementsForAllServices,
+      (b) => b.is_refill_required,
+    ).some((x) => !!x);
+  }, [balancesAndFundingRequirementsForAllServices, masterSafes]);
 
   const refetch = useCallback(async () => {
     return Promise.all([
