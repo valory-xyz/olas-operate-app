@@ -258,9 +258,9 @@ export const Sidebar = () => {
           </div>
 
           <div>
+            <BackupSeedPhraseAlert />
             <UpdateAvailableAlert />
             <UpdateAvailableModal />
-            <BackupSeedPhraseAlert />
 
             <Menu
               selectedKeys={selectedMenuKey}
