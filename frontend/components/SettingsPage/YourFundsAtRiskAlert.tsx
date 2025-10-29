@@ -14,6 +14,9 @@ import { Modal } from '../ui';
 
 const { Text } = Typography;
 
+/**
+ * update as needed; check https://app.safe.global/new-safe/create for prefixes
+ */
 const safeChainPrefix = {
   [AllEvmChainIdMap.Ethereum]: 'eth',
   [EvmChainIdMap.Base]: 'base',
