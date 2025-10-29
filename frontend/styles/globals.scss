@@ -286,6 +286,34 @@ textarea,
   user-select: text !important;
 }
 
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.fixed {
+  position: fixed;
+}
+
+.sticky {
+  position: sticky;
+}
+
+.z-1 {
+  z-index: 1;
+}
+
+.top-24 {
+  top: 24px;
+}
+
+.right-24 {
+  right: 24px;
+}
+
 .justify-start {
   justify-content: flex-start;
 }

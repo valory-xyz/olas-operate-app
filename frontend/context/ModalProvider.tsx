@@ -23,7 +23,7 @@ export const ModalContext = createContext<{
 
 export const ModalProvider = ({ children }: PropsWithChildren) => {
   const [migrationModalOpen, setMigrationModalOpen] = useState(false);
-  const [supportModalOpen, setSupportModalOpen] = useState(true);
+  const [supportModalOpen, setSupportModalOpen] = useState(false);
 
   const closeMigrationModal = () => {
     setMigrationModalOpen(false);

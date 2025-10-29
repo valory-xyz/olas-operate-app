@@ -25,6 +25,7 @@ import {
 } from './SetupRestore';
 import { SetupWelcome } from './SetupWelcome';
 import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
+import { SupportButton } from './Supportbutton';
 
 const { Title } = Typography;
 
@@ -114,8 +115,18 @@ export const Setup = () => {
   }, [setupObject.state]);
 
   if (screenWithoutCards.includes(setupObject.state)) {
-    return setupScreen;
+    return (
+      <>
+        <SupportButton />
+        {setupScreen}
+      </>
+    );
   }
 
-  return <SetupCard>{setupScreen}</SetupCard>;
+  return (
+    <>
+      <SupportButton />
+      <SetupCard>{setupScreen}</SetupCard>
+    </>
+  );
 };
