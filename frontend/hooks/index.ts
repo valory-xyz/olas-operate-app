@@ -22,6 +22,7 @@ export * from './useOnRampContext';
 export * from './usePageState';
 export * from './usePause';
 export * from './usePrevious';
+export * from './useRecoveryPhraseBackup';
 export * from './useRewardContext';
 export * from './useRewardsHistory';
 export * from './useService';

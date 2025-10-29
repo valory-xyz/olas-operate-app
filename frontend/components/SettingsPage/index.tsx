@@ -11,6 +11,7 @@ import {
   useMasterWalletContext,
   useMultisig,
   usePageState,
+  useRecoveryPhraseBackup,
   useServices,
   useSettings,
 } from '@/hooks';
@@ -56,6 +57,7 @@ const SettingsMain = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
   const { selectedAgentConfig } = useServices();
   const { masterEoa, masterSafes } = useMasterWalletContext();
+  const { isBackedUp: isRecoveryPhraseBackedUp } = useRecoveryPhraseBackup();
   const {
     value: isRecoveryModalOpen,
     setTrue: showRecoveryModal,
@@ -180,12 +182,14 @@ const SettingsMain = () => {
                   Back up your Secret Recovery Phrase so you never lose access
                   to your Pearl account.
                 </span>
-                <CustomAlert
-                  showIcon
-                  type="warning"
-                  message="Secret Recovery Phrase not backed up."
-                  className="text-sm"
-                />
+                {!isRecoveryPhraseBackedUp && (
+                  <CustomAlert
+                    showIcon
+                    type="warning"
+                    message="Secret Recovery Phrase not backed up."
+                    className="text-sm"
+                  />
+                )}
                 <Button
                   type="default"
                   className="w-fit"

@@ -2,12 +2,17 @@ import { Button, Flex } from 'antd';
 import { FaShieldAlt } from 'react-icons/fa';
 
 import { Pages } from '@/enums';
-import { usePageState } from '@/hooks';
+import { usePageState, useRecoveryPhraseBackup } from '@/hooks';
 
 import { CustomAlert } from '../Alert';
 
 export const BackupSeedPhraseAlert = () => {
   const { goto: gotoPage } = usePageState();
+  const { isBackedUp } = useRecoveryPhraseBackup();
+
+  if (isBackedUp) {
+    return null;
+  }
 
   return (
     <CustomAlert

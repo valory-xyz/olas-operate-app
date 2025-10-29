@@ -4,7 +4,7 @@ import { TbCopy, TbCopyCheck } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { BACKEND_URL, COLOR, CONTENT_TYPE_JSON_UTF8 } from '@/constants';
-import { useValidatePassword } from '@/hooks';
+import { useRecoveryPhraseBackup, useValidatePassword } from '@/hooks';
 import { copyToClipboard } from '@/utils';
 
 import { Modal } from '../ui';
@@ -137,6 +137,7 @@ export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
   const [isCopied, setIsCopied] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const { isLoading, validatePassword } = useValidatePassword();
+  const { markAsBackedUp } = useRecoveryPhraseBackup();
 
   // Reset state when modal closes
   useEffect(() => {
@@ -187,6 +188,7 @@ export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
     await copyToClipboard(recoveryPhrase.join(' '));
     message.success('Recovery phrase copied!');
     setIsCopied(true);
+    markAsBackedUp();
 
     setTimeout(() => {
       setIsCopied(false);
