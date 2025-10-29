@@ -136,8 +136,9 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.USER,
     },
     USE_X402: {
-      name: 'Gemini API Key',
-      description: 'Gemini api key to allow the agent to use Gemini',
+      name: 'Use x402',
+      description:
+        'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: AGENT_CONFIG.trader.isX402Enabled.toString(),
       provision_type: EnvProvisionType.FIXED,
     },
@@ -270,8 +271,9 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       provision_type: EnvProvisionType.COMPUTED,
     },
     USE_X402: {
-      name: 'Gemini API Key',
-      description: 'Gemini api key to allow the agent to use Gemini',
+      name: 'Use x402',
+      description:
+        'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: AGENT_CONFIG.memeooorr.isX402Enabled.toString(),
       provision_type: EnvProvisionType.FIXED,
     },
@@ -477,8 +479,9 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
     USE_X402: {
-      name: 'Gemini API Key',
-      description: 'Gemini api key to allow the agent to use Gemini',
+      name: 'Use x402',
+      description:
+        'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: AGENT_CONFIG.modius.isX402Enabled.toString(),
       provision_type: EnvProvisionType.FIXED,
     },
@@ -609,8 +612,9 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.COMPUTED,
     },
     USE_X402: {
-      name: 'Gemini API Key',
-      description: 'Gemini api key to allow the agent to use Gemini',
+      name: 'Use x402',
+      description:
+        'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: AGENT_CONFIG.optimus.isX402Enabled.toString(),
       provision_type: EnvProvisionType.FIXED,
     },
