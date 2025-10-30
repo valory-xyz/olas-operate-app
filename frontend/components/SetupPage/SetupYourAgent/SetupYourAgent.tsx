@@ -15,11 +15,19 @@ import { AgentFormContainer, useDisplayAgentForm } from './useDisplayAgentForm';
 const { Text } = Typography;
 
 export const SetupYourAgent = () => {
-  const { selectedAgentType } = useServices();
+  const { selectedAgentType, selectedAgentConfig } = useServices();
   const serviceTemplate = SERVICE_TEMPLATES.find(
     (template) => template.agentType === selectedAgentType,
   );
   const displayForm = useDisplayAgentForm();
+
+  const { isX402Enabled } = selectedAgentConfig;
+
+  if (isX402Enabled) {
+    throw new Error(
+      'Setting up agent feature is not supported for the selected agent.',
+    );
+  }
 
   if (!serviceTemplate) {
     return (

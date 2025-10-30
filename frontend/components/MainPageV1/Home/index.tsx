@@ -52,7 +52,7 @@ export const Home = () => {
   const [view, setView] = useState<View>('overview');
   const [isUnlockChatUiModalOpen, setIsUnlockChatUiModalOpen] = useState(false);
 
-  const isX402Enabled = selectedAgentConfig.isX402Enabled;
+  const { isX402Enabled } = selectedAgentConfig;
 
   // Reset view to overview when switching between agents
   useEffect(() => setView('overview'), [selectedAgentType]);

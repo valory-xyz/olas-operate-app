@@ -56,7 +56,7 @@ export const AgentInfo = () => {
   const { goto } = usePageState();
   const { serviceSafe } = useYourWallet();
 
-  const isX402Enabled = selectedAgentConfig.isX402Enabled;
+  const { isX402Enabled } = selectedAgentConfig;
 
   return (
     <Flex vertical>
