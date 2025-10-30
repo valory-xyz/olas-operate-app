@@ -24,6 +24,7 @@ import { SharedProvider } from '@/context/SharedProvider/SharedProvider';
 import { StakingContractDetailsProvider } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
+import { SupportModalProvider } from '@/context/SupportModalProvider';
 import { SystemNotificationTriggers } from '@/context/SystemNotificationTriggers';
 import { mainTheme } from '@/theme';
 
@@ -56,13 +57,15 @@ export default function App({ Component, pageProps }: AppProps) {
                                       <SharedProvider>
                                         <OnRampProvider>
                                           <PearlWalletProvider>
-                                            {isMounted ? (
-                                              <SystemNotificationTriggers>
-                                                <Layout>
-                                                  <Component {...pageProps} />
-                                                </Layout>
-                                              </SystemNotificationTriggers>
-                                            ) : null}
+                                            <SupportModalProvider>
+                                              {isMounted ? (
+                                                <SystemNotificationTriggers>
+                                                  <Layout>
+                                                    <Component {...pageProps} />
+                                                  </Layout>
+                                                </SystemNotificationTriggers>
+                                              ) : null}
+                                            </SupportModalProvider>
                                           </PearlWalletProvider>
                                         </OnRampProvider>
                                       </SharedProvider>

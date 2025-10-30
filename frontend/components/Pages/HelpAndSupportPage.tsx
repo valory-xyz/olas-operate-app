@@ -6,8 +6,7 @@ import { useIsMounted } from 'usehooks-ts';
 
 import { COLOR } from '@/constants/colors';
 import { FAQ_URL, GITHUB_API_RELEASES, SUPPORT_URL } from '@/constants/urls';
-import { useElectronApi } from '@/hooks/useElectronApi';
-import { useModals } from '@/hooks/useModals';
+import { useElectronApi, useSupportModal } from '@/hooks';
 
 import { ExportLogsButton } from '../ExportLogsButton';
 import { FeedbackModal } from '../FeedbackModal/FeedbackModal';
@@ -26,7 +25,7 @@ export const HelpAndSupport = () => {
   const [latestTag, setLatestTag] = useState<string | null>(null);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
-  const { setSupportModalOpen } = useModals();
+  const { setSupportModalOpen } = useSupportModal();
   const { getAppVersion, termsAndConditionsWindow } = useElectronApi();
   const isMounted = useIsMounted();
 

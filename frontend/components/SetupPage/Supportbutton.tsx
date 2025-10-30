@@ -3,7 +3,7 @@ import { TbHelpSquareRounded } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { Tooltip } from '@/components/ui';
-import { useModals } from '@/hooks';
+import { useSupportModal } from '@/hooks';
 
 const SupportButtonContainer = styled.div`
   position: absolute;
@@ -12,7 +12,7 @@ const SupportButtonContainer = styled.div`
 `;
 
 export const SupportButton = () => {
-  const { setSupportModalOpen } = useModals();
+  const { setSupportModalOpen } = useSupportModal();
 
   const openSupportModal = () => {
     setSupportModalOpen(true);
