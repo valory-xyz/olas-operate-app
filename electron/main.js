@@ -982,6 +982,14 @@ function removeTemporaryLogFiles() {
   }
 }
 
+function getPearlLogsFileName() {
+  const timestamp = new Date(Date.now())
+    .toISOString()
+    .replaceAll(':', '-')
+    .replaceAll('.', '-');
+  return `pearl_logs_${timestamp}-${app.getVersion()}.zip`;
+}
+
 /**
  * Exports logs by creating a zip file containing sanitized logs and other relevant data.
  */
@@ -991,12 +999,7 @@ ipcMain.handle('save-logs', async (_, data) => {
   // Show save dialog
   const { filePath } = await dialog.showSaveDialog({
     title: 'Save Logs',
-    defaultPath: path.join(
-      os.homedir(),
-      `pearl_logs_${new Date(Date.now())
-        .toISOString()
-        .replaceAll(':', '-')}-${app.getVersion()}.zip`,
-    ),
+    defaultPath: path.join(os.homedir(), getPearlLogsFileName()),
     filters: [{ name: 'Zip Files', extensions: ['zip'] }],
   });
 
@@ -1022,11 +1025,7 @@ ipcMain.handle('save-logs-for-support', async (_, data) => {
   }
 
   // Generate filename with timestamp
-  const timestamp = new Date(Date.now())
-    .toISOString()
-    .replaceAll(':', '-')
-    .replaceAll('.', '-');
-  const fileName = `pearl_logs_${timestamp}-${app.getVersion()}.zip`;
+  const fileName = getPearlLogsFileName();
   const filePath = path.join(zendeskLogsDir, fileName);
 
   // Write the zip file

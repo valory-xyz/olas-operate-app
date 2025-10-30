@@ -44,3 +44,10 @@ export const formatAttachments = async (
     (results) => results.filter(Boolean) as FileDetails[],
   );
 };
+
+export const formatFileSize = (bytes?: number): string => {
+  if (!bytes) return 'Unknown size';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+};

@@ -4,6 +4,8 @@ import { TbCloudUpload, TbPaperclip } from 'react-icons/tb';
 
 import { COLOR } from '@/constants/colors';
 
+import { formatFileSize } from './utils';
+
 const { Text } = Typography;
 
 const DRAGGAR_STYLES: React.CSSProperties = {
@@ -12,22 +14,14 @@ const DRAGGAR_STYLES: React.CSSProperties = {
   border: `1px dashed ${COLOR.GRAY_3}`,
 };
 
-const formatFileSize = (bytes?: number): string => {
-  if (!bytes) return 'Unknown size';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-};
-
 const FileUpload = ({
   onChange,
-  multiple = true,
   accept,
 }: Omit<FileUploadWithListProps, 'uploadedFiles'>) => {
   return (
     <Upload.Dragger
       name="files"
-      multiple={multiple}
+      multiple
       accept={accept}
       beforeUpload={() => false}
       showUploadList={false}
@@ -40,7 +34,7 @@ const FileUpload = ({
           Upload screenshots of the issue
         </Text>
         <Text className="text-neutral-tertiary text-xs">
-          Max 5 files, 10MB each.
+          Max 5 files, 50MB each.
         </Text>
       </Flex>
     </Upload.Dragger>
@@ -78,13 +72,12 @@ type FileUploadWithListProps = {
 
 export const FileUploadWithList = ({
   onChange,
-  multiple = true,
   accept,
   uploadedFiles = [],
 }: FileUploadWithListProps) => {
   return (
     <Flex vertical gap={12}>
-      <FileUpload onChange={onChange} multiple={multiple} accept={accept} />
+      <FileUpload onChange={onChange} accept={accept} />
       <UploadedFilesList uploadedFiles={uploadedFiles} />
     </Flex>
   );

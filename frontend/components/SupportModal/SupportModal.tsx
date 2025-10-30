@@ -39,6 +39,8 @@ const VALIDATION_RULES: { [key: string]: Rule[] } = {
   DESCRIPTION: [{ required: true, message: 'Please describe your issue!' }],
 };
 
+const SUPPORT_TAGS = ['pearl', 'support'];
+
 const MODAL_CONTENT_STYLES: React.CSSProperties = {
   maxHeight: 640,
   overflowY: 'auto',
@@ -128,22 +130,22 @@ export const SupportModal = ({
   ): Promise<string[]> => {
     const [attachments, logsFile] = await Promise.all([
       formatAttachments(uploadedFiles),
-      shouldIncludeLogs
-        ? loadLogsFile().catch(() => null)
-        : Promise.resolve(null),
+      shouldIncludeLogs ? loadLogsFile() : Promise.resolve(null),
     ]);
+    const files = [...attachments, ...(logsFile ? [logsFile] : [])];
 
-    const allFiles = [...attachments, ...(logsFile ? [logsFile] : [])];
-
-    return Promise.all(
-      allFiles.map(async (file) => {
+    const uploadTokens = await Promise.all(
+      files.map(async (file) => {
         const result = await ZendeskService.uploadFile(file);
         if (!result.success) {
-          throw new Error(result.error || `Failed to upload ${file.fileName}`);
+          message.error(`Failed to upload ${file.fileName}`);
+          return null;
         }
         return result.token;
       }),
     );
+
+    return uploadTokens.filter((token): token is string => token !== null);
   };
 
   const handleSubmit = async (values: SupportModalFormValues) => {
@@ -157,18 +159,18 @@ export const SupportModal = ({
         subject,
         description,
         uploadTokens,
-        tags: ['pearl', 'support'],
+        tags: SUPPORT_TAGS,
       });
 
       if (!createTicketResult.success) {
-        throw new Error(createTicketResult.error || 'Failed to create ticket');
+        throw new Error(createTicketResult.error);
       }
 
-      await cleanupZendeskLogs?.();
       setTicketId(createTicketResult.ticketId);
     } catch (error) {
       message.error('Failed to submit support request. Please try again.');
     } finally {
+      await cleanupZendeskLogs?.();
       setIsSubmitting(false);
     }
   };
@@ -184,6 +186,7 @@ export const SupportModal = ({
 
   const handleClose = () => {
     resetFormFields();
+    setIsSubmitting(false);
     onClose();
 
     if (ticketId) {
@@ -214,6 +217,7 @@ export const SupportModal = ({
       open={open}
       onCancel={handleClose}
       size="large"
+      destroyOnHidden
       hasCustomContent
       styles={{
         content: MODAL_CONTENT_STYLES,

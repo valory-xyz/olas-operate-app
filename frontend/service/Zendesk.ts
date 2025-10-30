@@ -1,5 +1,4 @@
-// TODO: point to prod url.
-const ZENDESK_API_URL = 'http://localhost:4200/api/zendesk';
+import { ZENDESK_API_URL } from '@/constants';
 
 type UploadFileParams = {
   fileName: string;
@@ -23,7 +22,6 @@ type ZendeskUploadFileResponse = {
   };
 };
 
-// TODO: try catch to be used wisely. Currently using at both places
 const uploadFile = async (
   file: UploadFileParams,
 ): Promise<UploadFileResponse> => {

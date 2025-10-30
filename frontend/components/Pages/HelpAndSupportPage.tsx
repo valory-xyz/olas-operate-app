@@ -22,17 +22,11 @@ type HelpItem = {
   isExternal?: boolean;
 };
 
-const ContactSupportButton = () => {
-  const { setSupportModalOpen } = useModals();
-  return (
-    <Button onClick={() => setSupportModalOpen(true)}>Contact support</Button>
-  );
-};
-
 export const HelpAndSupport = () => {
   const [latestTag, setLatestTag] = useState<string | null>(null);
-  const [feedbackModalOpen, setFeedbackModalOpen] = useState(true);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
+  const { setSupportModalOpen } = useModals();
   const { getAppVersion, termsAndConditionsWindow } = useElectronApi();
   const isMounted = useIsMounted();
 
@@ -125,7 +119,9 @@ export const HelpAndSupport = () => {
             Ask for help or export logs for troubleshooting
           </Paragraph>
           <Flex gap={8}>
-            <ContactSupportButton />
+            <Button onClick={() => setSupportModalOpen(true)}>
+              Contact support
+            </Button>
             <ExportLogsButton />
           </Flex>
         </Flex>

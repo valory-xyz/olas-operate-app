@@ -30,6 +30,12 @@ const VALIDATION_RULES: { [key: string]: Rule[] } = {
   FEEDBACK: [{ required: true, message: 'Please describe your feedback!' }],
 };
 
+const getFeedbackTags = (rating: number) => [
+  'pearl',
+  'feedback',
+  `rating:${rating}`,
+];
+
 const MODAL_CONTENT_STYLES: React.CSSProperties = {
   padding: 32,
 };
@@ -90,15 +96,16 @@ export const FeedbackModal = ({
         subject: 'Pearl Feedback',
         description: feedback,
         rating: rating.toString(),
-        tags: ['pearl', 'feedback', `rating:${rating}`],
+        tags: getFeedbackTags(rating),
       });
 
       if (!createTicketResult.success) {
-        message.error('Failed to submit feedback. Please try again.');
-        return;
+        throw new Error(createTicketResult.error);
       }
 
       message.success('Feedback submitted successfully!');
+    } catch (error) {
+      message.error('Failed to submit feedback. Please try again.');
     } finally {
       setIsSubmitting(false);
       handleClose();
