@@ -1,8 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 import React from 'react';
 
-import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { SUPPORT_URL } from '@/constants/urls';
+import { SUPPORT_URL, UNICODE_SYMBOLS } from '@/constants';
 
 import { ExportLogsButton } from '../ExportLogsButton';
 

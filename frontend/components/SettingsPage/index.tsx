@@ -3,6 +3,7 @@ import { isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 
+import { AddressLink, CardSection, cardStyles } from '@/components/ui';
 import { NA } from '@/constants';
 import { SettingsScreen } from '@/enums';
 import {
@@ -14,8 +15,6 @@ import {
 } from '@/hooks';
 import { Address, Optional } from '@/types';
 
-import { AddressLink } from '../AddressLink';
-import { CardSection, cardStyles } from '../ui';
 import { YourFundsAtRiskAlert } from './YourFundsAtRiskAlert';
 
 const { Text, Paragraph, Title } = Typography;

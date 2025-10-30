@@ -1,6 +1,6 @@
 import { Typography } from 'antd';
 
-import { CustomAlert } from '@/components/Alert';
+import { Alert } from '@/components/ui';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 import { formatToShortDateTime } from '@/utils/time';
 
@@ -10,7 +10,7 @@ export const EvictedAlert = () => {
   const { evictionExpiresAt } = useActiveStakingContractDetails();
 
   return (
-    <CustomAlert
+    <Alert
       showIcon
       className="mt-16"
       type="warning"

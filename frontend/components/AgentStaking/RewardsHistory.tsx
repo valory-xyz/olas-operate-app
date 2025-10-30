@@ -4,8 +4,7 @@ import Image from 'next/image';
 import { CSSProperties, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { InfoTooltip } from '@/components/InfoTooltip';
-import { CardFlex, Collapse } from '@/components/ui';
+import { CardFlex, Collapse, InfoTooltip } from '@/components/ui';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import {
   COLOR,

@@ -96,7 +96,7 @@ const menuItems: MenuProps['items'] = [
 
 const MyAgentsHeader = () => (
   <>
-    <Flex justify="center" className="mt-24">
+    <Flex justify="center" className="mt-24 mb-16">
       <Image src="/happy-robot.svg" alt="Happy Robot" width={40} height={40} />
     </Flex>
     <Text className="font-weight-600">My Agents</Text>
@@ -125,6 +125,7 @@ const AgentListMenu = ({
     mode="inline"
     inlineIndent={4}
     onClick={onAgentSelect}
+    className="mt-16"
     items={myAgents.map((agent) => ({
       key: agent.agentType,
       icon: (
@@ -154,8 +155,6 @@ export const Sidebar = () => {
   const { goto: gotoSetup } = useSetup();
   const { pageState, goto: gotoPage } = usePageState();
 
-  // TODO: in order for predict to display correctly,
-  // we need to create a dummy service before going to main page
   const { services, isLoading, selectedAgentType, updateAgentType } =
     useServices();
 
@@ -229,42 +228,46 @@ export const Sidebar = () => {
   return (
     <SiderContainer>
       <Sider breakpoint={SIDEBAR_BREAKPOINT} theme="light" width={SIDER_WIDTH}>
-        <Flex vertical gap={16} flex={1} className="p-16">
-          <MyAgentsHeader />
-          {isLoading || isMasterWalletLoading ? (
-            <Spin />
-          ) : myAgents.length > 0 ? (
-            <AgentListMenu
-              myAgents={myAgents}
-              selectedMenuKeys={selectedMenuKey}
-              onAgentSelect={handleAgentSelect}
+        <Flex vertical flex={1} className="p-16" justify="space-between">
+          <div>
+            <MyAgentsHeader />
+            {isLoading || isMasterWalletLoading ? (
+              <Spin />
+            ) : myAgents.length > 0 ? (
+              <AgentListMenu
+                myAgents={myAgents}
+                selectedMenuKeys={selectedMenuKey}
+                onAgentSelect={handleAgentSelect}
+              />
+            ) : null}
+
+            {myAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length && (
+              <ResponsiveButton
+                size="large"
+                className="self-center w-max"
+                onClick={() => {
+                  gotoPage(Pages.Setup);
+                  gotoSetup(SetupScreen.AgentOnboarding);
+                }}
+                icon={<TbPlus size={20} />}
+              >
+                Add New Agent
+              </ResponsiveButton>
+            )}
+          </div>
+
+          <div>
+            <UpdateAvailableAlert />
+            <UpdateAvailableModal />
+
+            <Menu
+              selectedKeys={selectedMenuKey}
+              mode="inline"
+              inlineIndent={12}
+              onClick={handleMenuClick}
+              items={menuItems}
             />
-          ) : null}
-
-          {myAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length && (
-            <ResponsiveButton
-              size="large"
-              className="self-center w-max"
-              onClick={() => {
-                gotoPage(Pages.Setup);
-                gotoSetup(SetupScreen.AgentOnboarding);
-              }}
-              icon={<TbPlus size={20} />}
-            >
-              Add New Agent
-            </ResponsiveButton>
-          )}
-
-          <UpdateAvailableAlert />
-          <UpdateAvailableModal />
-
-          <Menu
-            selectedKeys={selectedMenuKey}
-            mode="inline"
-            inlineIndent={12}
-            onClick={handleMenuClick}
-            items={menuItems}
-          />
+          </div>
         </Flex>
       </Sider>
     </SiderContainer>

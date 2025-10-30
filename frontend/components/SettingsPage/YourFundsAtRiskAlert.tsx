@@ -2,15 +2,13 @@ import { Button, Flex, Skeleton, Typography } from 'antd';
 import { TbExternalLink } from 'react-icons/tb';
 import { useToggle } from 'usehooks-ts';
 
+import { Alert, Modal } from '@/components/ui';
 import {
   AllEvmChainIdMap,
   DISCORD_TICKET_URL,
   EvmChainIdMap,
 } from '@/constants';
 import { useMasterWalletContext, useServices } from '@/hooks';
-
-import { CustomAlert } from '../Alert';
-import { Modal } from '../ui';
 
 const { Text } = Typography;
 
@@ -97,7 +95,7 @@ export const YourFundsAtRiskAlert = () => {
 
   return (
     <>
-      <CustomAlert
+      <Alert
         type="warning"
         className="mt-16"
         showIcon
