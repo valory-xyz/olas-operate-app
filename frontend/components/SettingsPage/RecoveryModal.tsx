@@ -2,6 +2,7 @@ import { Alert, Button, Flex, Form, Input, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 import { TbCopy, TbCopyCheck } from 'react-icons/tb';
 import styled from 'styled-components';
+import { useUnmount } from 'usehooks-ts';
 
 import { COLOR } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
@@ -25,24 +26,28 @@ const initialDescription =
 const recoveryPhraseDescription =
   "Store it in a safe place that only you can access and won't forget.";
 
-const RecoveryPhraseStep = ({ phrase }: { phrase: string[] }) => {
+type RecoveryPhraseStepProps = {
+  phrase: string[];
+  isCopied: boolean;
+  onCopy: (isCopied: boolean) => void;
+};
+const RecoveryPhraseStep = ({
+  phrase,
+  isCopied,
+  onCopy,
+}: RecoveryPhraseStepProps) => {
   const message = useMessageApi();
-  const { markAsBackedUp } = useRecoveryPhraseBackup();
-  const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
     try {
       await copyToClipboard(phrase.join(' '));
       message.success('Recovery phrase copied!');
-      setIsCopied(true);
-      markAsBackedUp();
-
-      setTimeout(() => setIsCopied(false), 2000);
+      onCopy(true);
     } catch (e) {
       message.error('Failed to copy recovery phrase.');
       console.error(e);
     }
-  }, [phrase, message, markAsBackedUp]);
+  }, [phrase, message, onCopy]);
 
   return (
     <Flex vertical gap={12} className="mt-12">
@@ -78,9 +83,12 @@ type RecoveryModalProps = {
 export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
   const [form] = Form.useForm();
   const message = useMessageApi();
-  const [step, setStep] = useState<ValueOf<typeof STEP>>('password');
-  const [recoveryPhrase, setRecoveryPhrase] = useState<string[]>([]);
   const { isLoading, isError, validatePassword } = useValidatePassword();
+  const { markAsBackedUp } = useRecoveryPhraseBackup();
+
+  const [recoveryPhrase, setRecoveryPhrase] = useState<string[]>([]);
+  const [step, setStep] = useState<ValueOf<typeof STEP>>('password');
+  const [isCopied, setIsCopied] = useState(false);
 
   const handleReveal = useCallback(
     async (values: { password: string }) => {
@@ -100,6 +108,18 @@ export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
     },
     [validatePassword, message, setRecoveryPhrase, setStep],
   );
+
+  const onCopy = useCallback((copied: boolean) => {
+    setIsCopied(copied);
+  }, []);
+
+  // Mark recovery phrase as backed up on unmount if it was copied to clipboard
+  // and the recovery phrase exists.
+  useUnmount(() => {
+    if (recoveryPhrase && isCopied) {
+      markAsBackedUp();
+    }
+  });
 
   return (
     <Modal
@@ -155,7 +175,11 @@ export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
             </Form>
           </>
         ) : (
-          <RecoveryPhraseStep phrase={recoveryPhrase} />
+          <RecoveryPhraseStep
+            phrase={recoveryPhrase}
+            isCopied={isCopied}
+            onCopy={onCopy}
+          />
         )
       }
       size="small"
