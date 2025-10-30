@@ -6,12 +6,12 @@ import { useUnmount } from 'usehooks-ts';
 
 import { COLOR } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
-import { useRecoveryPhraseBackup, useValidatePassword } from '@/hooks';
-import { WalletService } from '@/service/Wallet';
+import { useRecoveryPhraseBackup } from '@/hooks';
 import { ValueOf } from '@/types';
 import { copyToClipboard } from '@/utils';
 
 import { Modal } from '../ui';
+import { useRecoverySeedPhrase } from './useRecoverySeedPhrase';
 
 const { Paragraph } = Typography;
 
@@ -70,7 +70,7 @@ const RecoveryPhraseStep = ({
   );
 };
 
-const STEP = {
+const STEPS = {
   PASSWORD: 'password',
   RECOVERY_PHRASE: 'recoveryPhrase',
 } as const;
@@ -82,31 +82,25 @@ type RecoveryModalProps = {
 
 export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
   const [form] = Form.useForm();
-  const message = useMessageApi();
-  const { isLoading, isError, validatePassword } = useValidatePassword();
+  const { isLoading, getRecoverySeedPhrase, errorMessage } =
+    useRecoverySeedPhrase();
   const { markAsBackedUp } = useRecoveryPhraseBackup();
 
   const [recoveryPhrase, setRecoveryPhrase] = useState<string[]>([]);
-  const [step, setStep] = useState<ValueOf<typeof STEP>>('password');
+  const [step, setStep] = useState<ValueOf<typeof STEPS>>('password');
   const [isCopied, setIsCopied] = useState(false);
 
   const handleReveal = useCallback(
     async (values: { password: string }) => {
       try {
-        const result = await validatePassword(values.password);
-        if (!result) return;
-
-        const data = await WalletService.getRecoverySeedPhrase(values.password);
+        const data = await getRecoverySeedPhrase(values.password);
         setRecoveryPhrase(data.mnemonic);
-        setStep(STEP.RECOVERY_PHRASE);
-      } catch (e) {
-        message.error(
-          'Failed to retrieve recovery phrase. Please try again later.',
-        );
+        setStep(STEPS.RECOVERY_PHRASE);
+      } catch (e: unknown) {
         console.error(e);
       }
     },
-    [validatePassword, message, setRecoveryPhrase, setStep],
+    [setRecoveryPhrase, setStep, getRecoverySeedPhrase],
   );
 
   const onCopy = useCallback((copied: boolean) => {
@@ -130,17 +124,17 @@ export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
         step === 'password' ? initialDescription : recoveryPhraseDescription
       }
       action={
-        step === STEP.PASSWORD ? (
+        step === STEPS.PASSWORD ? (
           <>
             <Paragraph className="mt-8 mb-0 text-neutral-secondary">
               Enter your Pearl password to continue.
             </Paragraph>
-            {isError && (
+            {errorMessage && (
               <Alert
-                message="Incorrect password. Please try again."
+                message={errorMessage}
                 type="error"
                 showIcon
-                className="mt-12"
+                className="mt-12 w-full"
               />
             )}
             <Form

@@ -1,26 +1,34 @@
 import { useMutation } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { WalletService } from '@/service/Wallet';
 import { getErrorMessage } from '@/utils';
 
 export const useRecoverySeedPhrase = () => {
-  const { isPending, isSuccess, isError, mutateAsync } = useMutation({
+  const { isPending, isSuccess, isError, error, mutateAsync } = useMutation({
     mutationFn: async (password: string) =>
       await WalletService.getRecoverySeedPhrase(password),
   });
 
   const getRecoverySeedPhrase = useCallback(
     async (password: string) => {
-      try {
-        return await mutateAsync(password);
-      } catch (e) {
-        console.error(getErrorMessage(e));
-        return false;
-      }
+      return await mutateAsync(password);
     },
     [mutateAsync],
   );
 
-  return { isLoading: isPending, isSuccess, isError, getRecoverySeedPhrase };
+  const errorMessage = useMemo(() => {
+    if (!isError) return null;
+    const defaultMessage =
+      'Failed to retrieve recovery phrase. Please try again later.';
+    return getErrorMessage(error, defaultMessage);
+  }, [isError, error]);
+
+  return {
+    isLoading: isPending,
+    isSuccess,
+    isError,
+    getRecoverySeedPhrase,
+    errorMessage,
+  };
 };

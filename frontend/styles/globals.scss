@@ -255,6 +255,16 @@ textarea,
     color: #F00014;
   }
 
+  &--success {
+    border-color: #DEF8E7;
+    background-color: #DEF8E7;
+    color: #176932;
+
+    .ant-alert-icon {
+      color: #28B858;
+    }
+  }
+
   .ant-typography {
     color: inherit;
   }

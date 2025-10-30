@@ -52,7 +52,7 @@ const YourFundsAtRiskAlert = () => {
 };
 
 const SecretRecoveryPhraseSetting = () => {
-  const { isBackedUp: isRecoveryPhraseBackedUp } = useRecoveryPhraseBackup();
+  const { isBackedUp } = useRecoveryPhraseBackup();
   const {
     value: isRecoveryModalOpen,
     setTrue: showRecoveryModal,
@@ -75,14 +75,16 @@ const SecretRecoveryPhraseSetting = () => {
                 Back up your Secret Recovery Phrase so you never lose access to
                 your Pearl account.
               </Text>
-              {!isRecoveryPhraseBackedUp && (
-                <Alert
-                  showIcon
-                  type="warning"
-                  message="Secret Recovery Phrase not backed up."
-                  className="text-sm"
-                />
-              )}
+              <Alert
+                showIcon
+                type={isBackedUp ? 'success' : 'warning'}
+                message={
+                  isBackedUp
+                    ? 'Secret Recovery Phrase backed up.'
+                    : 'Secret Recovery Phrase not backed up.'
+                }
+                className="text-sm"
+              />
               <Button
                 type="default"
                 className="w-fit"

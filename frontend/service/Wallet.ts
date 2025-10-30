@@ -2,6 +2,7 @@ import { MiddlewareChain, MiddlewareWalletResponse } from '@/client';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL } from '@/constants/urls';
 import { SafeCreationResponse } from '@/types/Wallet';
+import { parseApiError } from '@/utils';
 
 /**
  * Returns a list of available wallets
@@ -58,26 +59,16 @@ const updateSafeBackupOwner = async (
  */
 const getRecoverySeedPhrase = async (
   password: string,
-): Promise<{ mnemonic: string[] } | { error: string }> => {
+): Promise<{ mnemonic: string[] }> => {
   const response = await fetch(`${BACKEND_URL}/wallet/mnemonic`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify({ ledger_type: 'ethereum', password }),
   });
 
-  if (response.ok) {
-    return (await response.json()) as { mnemonic: string[] };
-  }
-
-  try {
-    const data = (await response.json()) as { error: string };
-    return data;
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      return { error: e.message };
-    }
-    return { error: 'Unknown error' };
-  }
+  return response.ok
+    ? response.json()
+    : parseApiError(response, 'Failed to login');
 };
 
 export const WalletService = {
