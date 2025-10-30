@@ -1,10 +1,12 @@
-import { Button, Flex } from 'antd';
-import { FaShieldAlt } from 'react-icons/fa';
+import { Button, Flex, Typography } from 'antd';
+import { TbShieldHalfFilled } from 'react-icons/tb';
 
 import { Pages } from '@/enums';
 import { usePageState, useRecoveryPhraseBackup } from '@/hooks';
 
-import { CustomAlert } from '../Alert';
+import { Alert } from '../ui';
+
+const { Text } = Typography;
 
 export const BackupSeedPhraseAlert = () => {
   const { goto: gotoPage } = usePageState();
@@ -15,13 +17,15 @@ export const BackupSeedPhraseAlert = () => {
   }
 
   return (
-    <CustomAlert
+    <Alert
       type="warning"
-      className="mt-auto mb-16 text-sm"
+      className="mt-auto mb-16"
       message={
         <Flex vertical gap={10}>
-          <FaShieldAlt />
-          <span>Back up your Secret Recovery Phrase to never lose access.</span>
+          <TbShieldHalfFilled fontSize={20} />
+          <Text className="text-sm">
+            Back up your Secret Recovery Phrase to never lose access.
+          </Text>
           <Button
             type="default"
             size="small"

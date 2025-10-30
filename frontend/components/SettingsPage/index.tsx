@@ -2,9 +2,11 @@ import { Button, Card, Flex, Skeleton, Typography } from 'antd';
 import { isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
+import { TbShieldHalfFilled } from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
 import { AddressLink, Alert, CardSection, cardStyles } from '@/components/ui';
+import { COLOR } from '@/constants';
 import { Pages, SettingsScreen } from '@/enums';
 import {
   useFeatureFlag,
@@ -49,16 +51,58 @@ const YourFundsAtRiskAlert = () => {
   );
 };
 
-const SettingsMain = () => {
-  const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
-  const { selectedAgentConfig } = useServices();
-  const { masterEoa, masterSafes } = useMasterWalletContext();
+const SecretRecoveryPhraseSetting = () => {
   const { isBackedUp: isRecoveryPhraseBackedUp } = useRecoveryPhraseBackup();
   const {
     value: isRecoveryModalOpen,
     setTrue: showRecoveryModal,
     setFalse: handleClose,
   } = useBoolean(false);
+
+  return (
+    <>
+      <CardSection $padding="24px" vertical gap={8}>
+        <Flex gap={16}>
+          <TbShieldHalfFilled
+            fontSize={30}
+            color={COLOR.TEXT_NEUTRAL_TERTIARY}
+            className="-mt-4"
+          />
+          <Flex vertical gap={12}>
+            <Text strong>Secret Recovery Phrase</Text>
+            <Flex vertical gap={16}>
+              <Text className="text-sm text-neutral-secondary">
+                Back up your Secret Recovery Phrase so you never lose access to
+                your Pearl account.
+              </Text>
+              {!isRecoveryPhraseBackedUp && (
+                <Alert
+                  showIcon
+                  type="warning"
+                  message="Secret Recovery Phrase not backed up."
+                  className="text-sm"
+                />
+              )}
+              <Button
+                type="default"
+                className="w-fit"
+                onClick={() => showRecoveryModal()}
+              >
+                Reveal Recovery Phrase
+              </Button>
+            </Flex>
+          </Flex>
+        </Flex>
+      </CardSection>
+      <RecoveryModal open={isRecoveryModalOpen} onClose={handleClose} />
+    </>
+  );
+};
+
+const SettingsMain = () => {
+  const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
+  const { selectedAgentConfig } = useServices();
+  const { masterEoa, masterSafes } = useMasterWalletContext();
 
   const masterSafe = masterSafes?.find(
     ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
@@ -105,7 +149,6 @@ const SettingsMain = () => {
 
   return (
     <Flex style={cardStyles} vertical gap={32}>
-      <RecoveryModal open={isRecoveryModalOpen} onClose={handleClose} />
       <Title level={3} className="m-0">
         Settings
       </Title>
@@ -135,11 +178,7 @@ const SettingsMain = () => {
         </CardSection>
 
         {hideWallet ? null : (
-          <CardSection
-            $padding="24px"
-            $borderBottom={!!masterSafeBackupAddress}
-            vertical
-          >
+          <CardSection $padding="24px" $borderBottom vertical>
             <Flex gap={16}>
               <Image
                 src="/wallet-icon.png"
@@ -162,41 +201,7 @@ const SettingsMain = () => {
           </CardSection>
         )}
 
-        {
-          <CardSection $padding="24px" vertical gap={8}>
-            <Flex gap={16}>
-              <Image
-                src="/wallet-icon.png"
-                alt="wallet"
-                width={36}
-                height={36}
-                className="mb-auto"
-              />
-              <Flex vertical gap={16} className="text-sm">
-                <Text strong>Secret Recovery Phrase</Text>
-                <span>
-                  Back up your Secret Recovery Phrase so you never lose access
-                  to your Pearl account.
-                </span>
-                {!isRecoveryPhraseBackedUp && (
-                  <Alert
-                    showIcon
-                    type="warning"
-                    message="Secret Recovery Phrase not backed up."
-                    className="text-sm"
-                  />
-                )}
-                <Button
-                  type="default"
-                  className="w-fit"
-                  onClick={() => showRecoveryModal()}
-                >
-                  Reveal Recovery Phrase
-                </Button>
-              </Flex>
-            </Flex>
-          </CardSection>
-        }
+        <SecretRecoveryPhraseSetting />
       </Card>
     </Flex>
   );

@@ -67,7 +67,7 @@ const RecoveryPhraseStep = ({
   onCopy,
 }: RecoveryPhraseStepProps) => {
   return (
-    <Flex vertical gap={12} className="mt-12 ">
+    <Flex vertical gap={12} className="mt-12">
       <Flex wrap gap={10}>
         {recoveryPhrase.map((word: string, index: number) => (
           <RecoveryWordContainer key={`recovery-word-${index}`}>
@@ -82,34 +82,6 @@ const RecoveryPhraseStep = ({
         className="w-full text-sm mt-12"
       >
         {isCopied ? 'Copied' : 'Copy to Clipboard'}
-      </Button>
-    </Flex>
-  );
-};
-
-type PasswordFooterProps = {
-  isValid: boolean;
-  isLoading: boolean;
-  onCancel: () => void;
-  onReveal: () => void;
-};
-
-const PasswordFooter = ({
-  isValid,
-  isLoading,
-  onCancel,
-  onReveal,
-}: PasswordFooterProps) => {
-  return (
-    <Flex justify="flex-end" gap={12} className="w-full">
-      <Button onClick={onCancel}>Cancel</Button>
-      <Button
-        type="primary"
-        disabled={!isValid || isLoading}
-        loading={isLoading}
-        onClick={onReveal}
-      >
-        Reveal Recovery Phrase
       </Button>
     </Flex>
   );
@@ -135,7 +107,6 @@ export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
   const [password, setPassword] = useState('');
   const [recoveryPhrase, setRecoveryPhrase] = useState<string[]>([]);
   const [isCopied, setIsCopied] = useState(false);
-  const [isValid, setIsValid] = useState(false);
   const { isLoading, validatePassword } = useValidatePassword();
   const { markAsBackedUp } = useRecoveryPhraseBackup();
 
@@ -146,30 +117,14 @@ export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
       setPassword('');
       setRecoveryPhrase([]);
       setIsCopied(false);
-      setIsValid(false);
     }
   }, [open]);
 
-  useEffect(() => {
-    if (!password || step !== 'password') {
-      setIsValid(false);
-      return;
-    }
-
-    const validate = async () => {
-      const result = await validatePassword(password);
-      setIsValid(result);
-    };
-
-    const timeoutId = setTimeout(validate, 500);
-    return () => clearTimeout(timeoutId);
-  }, [password, step, validatePassword]);
-
   const handleReveal = async () => {
-    const result = await validatePassword(password);
-    if (!result) return;
-
     try {
+      const result = await validatePassword(password);
+      if (!result) return;
+
       const data = await getRecoverySeedPhrase(password);
       const mnemonic = data.mnemonic || '';
       if (mnemonic) {
@@ -227,12 +182,17 @@ export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
       }
       footer={
         step === 'password' ? (
-          <PasswordFooter
-            isValid={isValid}
-            isLoading={isLoading}
-            onCancel={onClose}
-            onReveal={handleReveal}
-          />
+          <Flex justify="flex-end" gap={12} className="w-full">
+            <Button onClick={onClose}>Cancel</Button>
+            <Button
+              type="primary"
+              disabled={!password || password.length === 0}
+              loading={isLoading}
+              onClick={handleReveal}
+            >
+              Reveal Recovery Phrase
+            </Button>
+          </Flex>
         ) : null
       }
     />
