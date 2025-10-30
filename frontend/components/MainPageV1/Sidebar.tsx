@@ -64,6 +64,19 @@ const ResponsiveButton = styled(Button)`
   }
 `;
 
+const AgentMenuLoading = () => (
+  <Flex vertical gap={8}>
+    <Skeleton.Input active block />
+    <Skeleton.Input active block />
+  </Flex>
+);
+
+const MyAgentsHeader = () => (
+  <Flex justify="center" className="mt-24 mb-16">
+    <Image src="/happy-robot.svg" alt="Happy Robot" width={40} height={40} />
+  </Flex>
+);
+
 const PearlWalletLabel = () => {
   const { isPearlWalletRefillRequired } =
     useBalanceAndRefillRequirementsContext();
@@ -93,19 +106,6 @@ const menuItems: MenuProps['items'] = [
   },
   { key: Pages.Settings, icon: <TbSettings size={20} />, label: 'Settings' },
 ];
-
-const AgentMenuLoading = () => (
-  <Flex vertical gap={8}>
-    <Skeleton.Input active block />
-    <Skeleton.Input active block />
-  </Flex>
-);
-
-const MyAgentsHeader = () => (
-  <Flex justify="center" className="mt-24 mb-16">
-    <Image src="/happy-robot.svg" alt="Happy Robot" width={40} height={40} />
-  </Flex>
-);
 
 type AgentList = {
   name: string;
@@ -237,7 +237,7 @@ export const Sidebar = () => {
 
             <Flex vertical gap={16}>
               <Text className="font-weight-600">My Agents</Text>
-              {isLoading || isMasterWalletLoading || 1 + 1 === 2 ? (
+              {isLoading || isMasterWalletLoading ? (
                 <AgentMenuLoading />
               ) : myAgents.length > 0 ? (
                 <AgentListMenu
@@ -247,8 +247,7 @@ export const Sidebar = () => {
                 />
               ) : null}
 
-              {(myAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length ||
-                1 + 1 === 2) && (
+              {myAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length && (
                 <ResponsiveButton
                   size="large"
                   className="flex mx-auto"
