@@ -4,7 +4,7 @@ import {
   Layout,
   Menu,
   MenuProps,
-  Spin,
+  Skeleton,
   Tag,
   Typography,
 } from 'antd';
@@ -94,13 +94,17 @@ const menuItems: MenuProps['items'] = [
   { key: Pages.Settings, icon: <TbSettings size={20} />, label: 'Settings' },
 ];
 
+const AgentMenuLoading = () => (
+  <Flex vertical gap={8}>
+    <Skeleton.Input active block />
+    <Skeleton.Input active block />
+  </Flex>
+);
+
 const MyAgentsHeader = () => (
-  <>
-    <Flex justify="center" className="mt-24 mb-16">
-      <Image src="/happy-robot.svg" alt="Happy Robot" width={40} height={40} />
-    </Flex>
-    <Text className="font-weight-600">My Agents</Text>
-  </>
+  <Flex justify="center" className="mt-24 mb-16">
+    <Image src="/happy-robot.svg" alt="Happy Robot" width={40} height={40} />
+  </Flex>
 );
 
 type AgentList = {
@@ -125,7 +129,6 @@ const AgentListMenu = ({
     mode="inline"
     inlineIndent={4}
     onClick={onAgentSelect}
-    className="mt-16"
     items={myAgents.map((agent) => ({
       key: agent.agentType,
       icon: (
@@ -231,29 +234,34 @@ export const Sidebar = () => {
         <Flex vertical flex={1} className="p-16" justify="space-between">
           <div>
             <MyAgentsHeader />
-            {isLoading || isMasterWalletLoading ? (
-              <Spin />
-            ) : myAgents.length > 0 ? (
-              <AgentListMenu
-                myAgents={myAgents}
-                selectedMenuKeys={selectedMenuKey}
-                onAgentSelect={handleAgentSelect}
-              />
-            ) : null}
 
-            {myAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length && (
-              <ResponsiveButton
-                size="large"
-                className="flex mx-auto"
-                onClick={() => {
-                  gotoPage(Pages.Setup);
-                  gotoSetup(SetupScreen.AgentOnboarding);
-                }}
-                icon={<TbPlus size={20} />}
-              >
-                Add New Agent
-              </ResponsiveButton>
-            )}
+            <Flex vertical gap={16}>
+              <Text className="font-weight-600">My Agents</Text>
+              {isLoading || isMasterWalletLoading || 1 + 1 === 2 ? (
+                <AgentMenuLoading />
+              ) : myAgents.length > 0 ? (
+                <AgentListMenu
+                  myAgents={myAgents}
+                  selectedMenuKeys={selectedMenuKey}
+                  onAgentSelect={handleAgentSelect}
+                />
+              ) : null}
+
+              {(myAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length ||
+                1 + 1 === 2) && (
+                <ResponsiveButton
+                  size="large"
+                  className="flex mx-auto"
+                  onClick={() => {
+                    gotoPage(Pages.Setup);
+                    gotoSetup(SetupScreen.AgentOnboarding);
+                  }}
+                  icon={<TbPlus size={20} />}
+                >
+                  Add New Agent
+                </ResponsiveButton>
+              )}
+            </Flex>
           </div>
 
           <div>
