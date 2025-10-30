@@ -12,9 +12,7 @@ export const BackupSeedPhraseAlert = () => {
   const { goto: gotoPage } = usePageState();
   const { isBackedUp } = useRecoveryPhraseBackup();
 
-  if (isBackedUp) {
-    return null;
-  }
+  if (isBackedUp) return null;
 
   return (
     <Alert

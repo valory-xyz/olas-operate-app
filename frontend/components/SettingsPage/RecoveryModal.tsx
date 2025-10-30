@@ -25,32 +25,29 @@ const initialDescription =
 const recoveryPhraseDescription =
   "Store it in a safe place that only you can access and won't forget.";
 
-type RecoveryPhraseStepProps = { recoveryPhrase: string[] };
-const RecoveryPhraseStep = ({ recoveryPhrase }: RecoveryPhraseStepProps) => {
+const RecoveryPhraseStep = ({ phrase }: { phrase: string[] }) => {
   const message = useMessageApi();
   const { markAsBackedUp } = useRecoveryPhraseBackup();
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
     try {
-      await copyToClipboard(recoveryPhrase.join(' '));
+      await copyToClipboard(phrase.join(' '));
       message.success('Recovery phrase copied!');
       setIsCopied(true);
       markAsBackedUp();
 
-      setTimeout(() => {
-        setIsCopied(false);
-      }, 2000);
+      setTimeout(() => setIsCopied(false), 2000);
     } catch (e) {
       message.error('Failed to copy recovery phrase.');
       console.error(e);
     }
-  }, [recoveryPhrase, message, markAsBackedUp]);
+  }, [phrase, message, markAsBackedUp]);
 
   return (
     <Flex vertical gap={12} className="mt-12">
       <Flex wrap gap={10}>
-        {recoveryPhrase.map((word: string, index: number) => (
+        {phrase.map((word: string, index: number) => (
           <RecoveryWordContainer key={`recovery-word-${index}`}>
             {word}
           </RecoveryWordContainer>
@@ -158,7 +155,7 @@ export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
             </Form>
           </>
         ) : (
-          <RecoveryPhraseStep recoveryPhrase={recoveryPhrase} />
+          <RecoveryPhraseStep phrase={recoveryPhrase} />
         )
       }
       size="small"
