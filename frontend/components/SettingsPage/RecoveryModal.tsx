@@ -1,9 +1,10 @@
-import { Button, Flex, Input, message, Typography } from 'antd';
-import { useEffect, useState } from 'react';
+import { Button, Flex, Input, Typography } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
 import { TbCopy, TbCopyCheck } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { BACKEND_URL, COLOR, CONTENT_TYPE_JSON_UTF8 } from '@/constants';
+import { useMessageApi } from '@/context/MessageProvider';
 import { useRecoveryPhraseBackup, useValidatePassword } from '@/hooks';
 import { copyToClipboard } from '@/utils';
 
@@ -17,17 +18,16 @@ const RecoveryWordContainer = styled.div`
   border-radius: 8px;
 `;
 
-type RecoveryModalProps = {
-  open: boolean;
-  onClose: () => void;
-};
+const initialDescription =
+  'The Secret Recovery Phrase provides full access to your Pearl wallet and agent funds.';
+const recoveryPhraseDescription =
+  "Store it in a safe place that only you can access and won't forget.";
 
 type PasswordStepProps = {
   password: string;
   setPassword: (value: string) => void;
   isValidating: boolean;
 };
-
 const PasswordStep = ({
   password,
   setPassword,
@@ -60,7 +60,6 @@ type RecoveryPhraseStepProps = {
   isCopied: boolean;
   onCopy: () => void;
 };
-
 const RecoveryPhraseStep = ({
   recoveryPhrase,
   isCopied,
@@ -102,7 +101,13 @@ const getRecoverySeedPhrase = async (password: string) =>
 
 type ModalStep = 'password' | 'recoveryPhrase';
 
+type RecoveryModalProps = {
+  open: boolean;
+  onClose: () => void;
+};
+
 export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
+  const message = useMessageApi();
   const [step, setStep] = useState<ModalStep>('password');
   const [password, setPassword] = useState('');
   const [recoveryPhrase, setRecoveryPhrase] = useState<string[]>([]);
@@ -120,7 +125,7 @@ export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
     }
   }, [open]);
 
-  const handleReveal = async () => {
+  const handleReveal = useCallback(async () => {
     try {
       const result = await validatePassword(password);
       if (!result) return;
@@ -128,32 +133,38 @@ export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
       const data = await getRecoverySeedPhrase(password);
       const mnemonic = data.mnemonic || '';
       if (mnemonic) {
-        setRecoveryPhrase(mnemonic);
+        // mnemonic may be returned as a string or array; normalize to string[]
+        const words = Array.isArray(mnemonic)
+          ? mnemonic
+          : String(mnemonic).split(/\s+/).filter(Boolean);
+        setRecoveryPhrase(words);
         setStep('recoveryPhrase');
       } else {
         throw new Error('Recovery phrase not found in response');
       }
     } catch (e) {
-      alert('Failed to retrieve recovery phrase. Please try again later.');
+      message.error(
+        'Failed to retrieve recovery phrase. Please try again later.',
+      );
       console.error(e);
     }
-  };
+  }, [password, validatePassword, message, setRecoveryPhrase, setStep]);
 
-  const handleCopy = async () => {
-    await copyToClipboard(recoveryPhrase.join(' '));
-    message.success('Recovery phrase copied!');
-    setIsCopied(true);
-    markAsBackedUp();
+  const handleCopy = useCallback(async () => {
+    try {
+      await copyToClipboard(recoveryPhrase.join(' '));
+      message.success('Recovery phrase copied!');
+      setIsCopied(true);
+      markAsBackedUp();
 
-    setTimeout(() => {
-      setIsCopied(false);
-    }, 2000);
-  };
-
-  const initialDescription =
-    'The Secret Recovery Phrase provides full access to your Pearl wallet and agent funds.';
-  const recoveryPhraseDescription =
-    "Store it in a safe place that only you can access and won't forget.";
+      setTimeout(() => {
+        setIsCopied(false);
+      }, 2000);
+    } catch (e) {
+      message.error('Failed to copy recovery phrase.');
+      console.error(e);
+    }
+  }, [recoveryPhrase, message, markAsBackedUp]);
 
   return (
     <Modal
