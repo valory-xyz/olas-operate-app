@@ -1,10 +1,12 @@
 import { ReactNode } from 'react';
 
-import { SupportedMiddlewareChain } from '@/constants/chains';
-import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
-import { Address } from '@/types/Address';
-import { truncateAddress } from '@/utils/truncate';
+import {
+  EXPLORER_URL_BY_MIDDLEWARE_CHAIN,
+  SupportedMiddlewareChain,
+  UNICODE_SYMBOLS,
+} from '@/constants';
+import { Address } from '@/types';
+import { truncateAddress } from '@/utils';
 
 type AddressLinkProps = {
   address: Address;

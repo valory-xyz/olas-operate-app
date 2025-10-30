@@ -1,9 +1,10 @@
 import { Flex, Typography } from 'antd';
 
-import { AddressLink } from '@/components/AddressLink';
-import { InfoTooltip } from '@/components/InfoTooltip';
 import { COLOR, SupportedMiddlewareChain } from '@/constants';
 import { Address, Optional } from '@/types';
+
+import { AddressLink } from '../AddressLink';
+import { InfoTooltip } from './InfoTooltip';
 
 const { Text } = Typography;
 

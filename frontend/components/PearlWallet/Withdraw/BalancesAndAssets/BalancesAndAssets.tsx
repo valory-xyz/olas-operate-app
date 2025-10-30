@@ -4,9 +4,13 @@ import Image from 'next/image';
 import { useEffect } from 'react';
 
 import { AgentNft } from '@/components/AgentNft';
-import { InfoTooltip } from '@/components/InfoTooltip';
-import { CardFlex, Segmented, Tooltip } from '@/components/ui';
-import { WalletsTooltip } from '@/components/ui/WalletsTooltip';
+import {
+  CardFlex,
+  InfoTooltip,
+  Segmented,
+  Tooltip,
+  WalletsTooltip,
+} from '@/components/ui';
 import { COLOR } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useMasterWalletContext, useServices } from '@/hooks';

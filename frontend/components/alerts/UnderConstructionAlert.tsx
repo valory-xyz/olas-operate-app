@@ -1,6 +1,6 @@
 import { Button, Flex, Typography } from 'antd';
 
-import { CustomAlert } from '@/components/Alert';
+import { Alert } from '@/components/ui';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
@@ -8,7 +8,7 @@ import { useSharedContext } from '@/hooks/useSharedContext';
 
 const { Text } = Typography;
 
-export const UnderConstruction = ({ showMoreInfo = false }) => {
+export const UnderConstructionAlert = ({ showMoreInfo = false }) => {
   const { selectedAgentConfig } = useServices();
   const { goto } = usePageState();
   const { mainOlasBalance } = useSharedContext();
@@ -18,7 +18,7 @@ export const UnderConstruction = ({ showMoreInfo = false }) => {
   if (!selectedAgentConfig.isUnderConstruction) return null;
 
   return (
-    <CustomAlert
+    <Alert
       type="warning"
       fullWidth
       showIcon
@@ -35,7 +35,7 @@ export const UnderConstruction = ({ showMoreInfo = false }) => {
             {showMoreInfo && (mainOlasBalance !== 0 || hasExternalFunds) && (
               <div className="w-fit">
                 <Button
-                  onClick={() => goto(Pages.ManageWallet)}
+                  onClick={() => goto(Pages.AgentWallet)}
                   size="small"
                   className="text-sm mt-8"
                 >

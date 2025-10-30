@@ -2,21 +2,24 @@ import { Flex, Spin, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { CustomAlert } from '@/components/Alert';
 import { LoadingOutlined } from '@/components/custom-icons';
-import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
-import { BackButton } from '@/components/ui/BackButton';
-import { CardFlex } from '@/components/ui/CardFlex';
-import { FundingDescription } from '@/components/ui/FundingDescription';
-import { Modal } from '@/components/ui/Modal';
-import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
-import { ChainImageMap, EvmChainName } from '@/constants/chains';
-import { TokenSymbol } from '@/constants/token';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
-import { useServices } from '@/hooks/useServices';
-import { useSetup } from '@/hooks/useSetup';
-import { delayInSeconds } from '@/utils/delay';
+import {
+  AgentSetupCompleteModal,
+  Alert,
+  BackButton,
+  CardFlex,
+  FundingDescription,
+  Modal,
+  TokenRequirementsTable,
+} from '@/components/ui';
+import { ChainImageMap, EvmChainName, TokenSymbol } from '@/constants';
+import { SetupScreen } from '@/enums';
+import {
+  useMasterSafeCreationAndTransfer,
+  useServices,
+  useSetup,
+} from '@/hooks';
+import { delayInSeconds } from '@/utils';
 
 import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
 import { useTokensFundingStatus } from './hooks/useTokensFundingStatus';
@@ -110,7 +113,7 @@ export const TransferFunds = () => {
           Wallet address below. Pearl will automatically detect your transfer.
         </Text>
 
-        <CustomAlert
+        <Alert
           showIcon
           type="warning"
           className="mt-24"

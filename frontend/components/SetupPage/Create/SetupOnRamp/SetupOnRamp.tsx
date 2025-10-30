@@ -1,12 +1,9 @@
 import { Button, Flex, Modal, Spin, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 
-import { CustomAlert } from '@/components/Alert';
-import { BackButton } from '@/components/ui/BackButton';
-import { CardFlex } from '@/components/ui/CardFlex';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useOnRampContext } from '@/hooks/useOnRampContext';
-import { useSetup } from '@/hooks/useSetup';
+import { Alert, BackButton, CardFlex } from '@/components/ui';
+import { SetupScreen } from '@/enums';
+import { useOnRampContext, useSetup } from '@/hooks';
 
 import { OnRampPaymentSteps } from './OnRampPaymentSteps/OnRampPaymentSteps';
 import { PayingReceivingTable } from './PayingReceivingTable/PayingReceivingTable';
@@ -25,7 +22,7 @@ const Loader = () => (
 );
 
 const KeepOpenAlert = () => (
-  <CustomAlert
+  <Alert
     type="warning"
     showIcon
     message="Keep the app open until the process is complete. It may take a few minutes."

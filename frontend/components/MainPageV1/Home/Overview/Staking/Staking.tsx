@@ -1,13 +1,14 @@
 import { Button, Flex, Typography } from 'antd';
 import { useMemo } from 'react';
 
-import { CustomAlert } from '@/components/Alert';
-import { CardFlex } from '@/components/ui/CardFlex';
-import { Pages } from '@/enums/Pages';
-import { useServices } from '@/hooks';
-import { useAgentActivity } from '@/hooks/useAgentActivity';
-import { usePageState } from '@/hooks/usePageState';
-import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
+import { Alert, CardFlex } from '@/components/ui';
+import { Pages } from '@/enums';
+import {
+  useActiveStakingContractDetails,
+  useAgentActivity,
+  usePageState,
+  useServices,
+} from '@/hooks';
 
 import { EpochClock } from './EpochClock';
 import { Streak } from './Streak';
@@ -15,7 +16,7 @@ import { Streak } from './Streak';
 const { Text, Title } = Typography;
 
 const UnderConstructionAlert = () => (
-  <CustomAlert
+  <Alert
     message="The agent is under construction and cannot participate in staking until further notice."
     type="warning"
     centered
@@ -25,7 +26,7 @@ const UnderConstructionAlert = () => (
 );
 
 const EvictionAlert = () => (
-  <CustomAlert
+  <Alert
     message="The agent is evicted and cannot participate in staking until the eviction period ends."
     type="warning"
     centered
@@ -35,7 +36,7 @@ const EvictionAlert = () => (
 );
 
 const RunAgentAlert = () => (
-  <CustomAlert
+  <Alert
     message="Start the agent to join staking and unlock protocol rewards."
     type="info"
     centered

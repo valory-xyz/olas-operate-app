@@ -1,4 +1,7 @@
-import { AgentLowBalanceAlert } from '@/components/Alerts';
+import {
+  AgentLowBalanceAlert,
+  UnderConstructionAlert,
+} from '@/components/alerts';
 import { Pages } from '@/enums';
 import {
   useActiveStakingContractDetails,
@@ -13,7 +16,6 @@ import { AgentRunningAlert } from './AgentRunningAlert';
 import { EvictedAlert } from './EvictedAlert';
 import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
-import { UnderConstructionAlert } from './UnderConstructionAlert';
 import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
 
 export const AgentDisabledAlert = () => {
@@ -31,7 +33,7 @@ export const AgentDisabledAlert = () => {
   const isAnotherAgentRunning = useAnotherAgentRunning();
 
   if (selectedAgentConfig.isUnderConstruction) {
-    return <UnderConstructionAlert />;
+    return <UnderConstructionAlert showMoreInfo />;
   }
 
   if (isAnotherAgentRunning) {

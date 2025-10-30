@@ -1,5 +1,5 @@
 import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
-import { Alert as AlertAntd, AlertProps } from 'antd';
+import { Alert as AlertAntd, AlertProps as AntdAlertProps } from 'antd';
 
 type AlertType = 'primary' | 'info' | 'warning' | 'error';
 
@@ -10,12 +10,12 @@ const icons = {
   error: <WarningOutlined />,
 };
 
-type CustomAlertProps = {
+type AlertProps = {
   type: AlertType;
   fullWidth?: boolean;
   centered?: boolean;
   className?: string;
-} & Omit<AlertProps, 'type'>;
+} & Omit<AntdAlertProps, 'type'>;
 
 function getAlertClassName(
   type: string,
@@ -34,14 +34,13 @@ function getAlertClassName(
     .join(' ');
 }
 
-// TODO: move to UI folder after Pearl V1
-export const CustomAlert = ({
+export const Alert = ({
   type,
   fullWidth,
   centered,
   className,
   ...rest
-}: CustomAlertProps) => (
+}: AlertProps) => (
   <AlertAntd
     type={type === 'primary' ? undefined : type}
     className={getAlertClassName(type, fullWidth, centered, className)}

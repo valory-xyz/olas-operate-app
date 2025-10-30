@@ -4,8 +4,8 @@ import { type TableLocale } from 'antd/es/table/interface';
 import Image from 'next/image';
 import styled from 'styled-components';
 
-import { Table } from '@/components/ui/Table';
-import { COLOR } from '@/constants/colors';
+import { Table } from '@/components/ui';
+import { COLOR } from '@/constants';
 import { formatNumber } from '@/utils';
 
 const LOCALE = {

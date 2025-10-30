@@ -1,7 +1,7 @@
 import { Flex, FlexProps } from 'antd';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
+import { COLOR } from '@/constants';
 
 type CardSectionProps = FlexProps & {
   /** @deprecated Use $borderTop instead */
