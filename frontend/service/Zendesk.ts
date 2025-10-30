@@ -51,10 +51,12 @@ const uploadFile = async (
 };
 
 type CreateTicketParams = {
-  email: string;
+  email?: string;
   subject: string;
   description: string;
   uploadTokens?: string[];
+  tags?: string[];
+  rating?: string;
 };
 
 type ZendeskCreateTicketResponse = {

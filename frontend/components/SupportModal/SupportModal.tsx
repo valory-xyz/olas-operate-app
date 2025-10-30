@@ -4,26 +4,40 @@ import {
   Flex,
   Form as AntdForm,
   type FormProps,
-  Input as AntdInput,
   message,
   Typography,
   UploadFile,
 } from 'antd';
+import type { Rule } from 'antd/es/form';
 import { UploadChangeParam } from 'antd/es/upload';
 import { delay } from 'lodash';
 import { useState } from 'react';
 import { TbX } from 'react-icons/tb';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
-import { FormLabel, Modal, RequiredMark } from '@/components/ui';
-import { COLOR } from '@/constants';
+import {
+  FormLabel,
+  Input,
+  Modal,
+  RequiredMark,
+  TextArea,
+} from '@/components/ui';
 import { useElectronApi, useLogs } from '@/hooks';
 import { ZendeskService } from '@/service/Zendesk';
 
 import { SuccessOutlined } from '../custom-icons';
 import { FileUploadWithList } from './FileUpload';
+import { FileDetails, formatAttachments } from './utils';
 
 const { Text, Title } = Typography;
+
+const VALIDATION_RULES: { [key: string]: Rule[] } = {
+  EMAIL: [
+    { required: true, type: 'email', message: 'Please enter a valid email!' },
+  ],
+  SUBJECT: [{ required: true, message: 'Please enter a subject!' }],
+  DESCRIPTION: [{ required: true, message: 'Please describe your issue!' }],
+};
 
 const MODAL_CONTENT_STYLES: React.CSSProperties = {
   maxHeight: 640,
@@ -35,41 +49,9 @@ const Form = styled(AntdForm)<FormProps<SupportModalFormValues>>`
   .ant-form-item-label {
     padding-bottom: 0;
   }
-
-  .ant-checkbox-wrapper {
-    height: max-content;
-  }
 `;
 
-const inputStyles = css`
-  background-color: ${COLOR.BACKGROUND};
-  border-color: ${COLOR.GRAY_4};
-
-  &:active,
-  &:hover,
-  &.ant-input-outlined:focus-within,
-  &.ant-input-status-error {
-    background-color: ${COLOR.BACKGROUND} !important;
-  }
-
-  &:hover {
-    border-color: ${COLOR.PURPLE_LIGHT};
-  }
-
-  &:focus {
-    border-color: ${COLOR.PRIMARY};
-  }
-`;
-
-const Input = styled(AntdInput)`
-  ${inputStyles}
-`;
-
-const TextArea = styled(AntdInput.TextArea)`
-  ${inputStyles}
-`;
-
-const SupportModalHeader = ({ onClose }: { onClose: () => void }) => (
+const ModalHeader = ({ onClose }: { onClose: () => void }) => (
   <Flex vertical gap={8}>
     <Flex justify="space-between" align="center">
       <Title level={5} className="mt-0 mb-0">
@@ -123,80 +105,29 @@ export const SupportModal = ({
   const [form] = Form.useForm<SupportModalFormValues>();
   const { saveLogsForSupport, readFile, cleanupZendeskLogs } = useElectronApi();
 
-  const formatAttachments = async (): Promise<
-    Array<{
-      fileName: string;
-      fileContent: string;
-      mimeType: string;
-    }>
-  > => {
-    if (uploadedFiles.length === 0) return [];
-
-    const filePromises = uploadedFiles.map(
-      (
-        file,
-      ): Promise<{
-        fileName: string;
-        fileContent: string;
-        mimeType: string;
-      } | null> => {
-        const fileObj = file.originFileObj;
-        if (!fileObj) return Promise.resolve(null);
-
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            try {
-              resolve({
-                fileName: file.name,
-                fileContent: reader.result as string,
-                mimeType: file.type || 'application/octet-stream',
-              });
-            } catch (error) {
-              reject(new Error(`Failed to process file ${file.name}`));
-            }
-          };
-          reader.onerror = () => {
-            reject(new Error(`Failed to read file ${file.name}`));
-          };
-          reader.readAsDataURL(fileObj);
-        });
-      },
-    );
-
-    return Promise.all(filePromises).then(
-      (results) =>
-        results.filter(Boolean) as {
-          fileName: string;
-          fileContent: string;
-          mimeType: string;
-        }[],
-    );
-  };
-
-  const loadLogsFile = async (): Promise<{
-    fileName: string;
-    fileContent: string;
-    mimeType: string;
-  } | null> => {
+  const loadLogsFile = async (): Promise<FileDetails | null> => {
     if (!logs || !saveLogsForSupport || !readFile) return null;
 
     const result = await saveLogsForSupport(logs);
     if (!result.success) {
-      throw new Error('Failed to save logs');
+      message.error('Failed to save logs');
+      return null;
     }
 
     const fileResult = await readFile(result.filePath);
     if (!fileResult.success) {
-      throw new Error(fileResult.error || 'Failed to read file');
+      message.error(fileResult.error || 'Failed to save logs');
+      return null;
     }
 
     return fileResult;
   };
 
-  const uploadFiles = async (shouldIncludeLogs: boolean): Promise<string[]> => {
+  const uploadFilesToZendesk = async (
+    shouldIncludeLogs: boolean,
+  ): Promise<string[]> => {
     const [attachments, logsFile] = await Promise.all([
-      formatAttachments(),
+      formatAttachments(uploadedFiles),
       shouldIncludeLogs
         ? loadLogsFile().catch(() => null)
         : Promise.resolve(null),
@@ -220,12 +151,13 @@ export const SupportModal = ({
     try {
       const { email, subject, description, shouldShareLogs } = values;
 
-      const uploadTokens = await uploadFiles(shouldShareLogs);
+      const uploadTokens = await uploadFilesToZendesk(shouldShareLogs);
       const createTicketResult = await ZendeskService.createTicket({
         email,
         subject,
         description,
         uploadTokens,
+        tags: ['pearl', 'support'],
       });
 
       if (!createTicketResult.success) {
@@ -287,7 +219,7 @@ export const SupportModal = ({
         content: MODAL_CONTENT_STYLES,
       }}
     >
-      <SupportModalHeader onClose={onClose} />
+      <ModalHeader onClose={handleClose} />
 
       <Form
         form={form}
@@ -299,10 +231,7 @@ export const SupportModal = ({
         <Form.Item
           label={<FormLabel>Your email</FormLabel>}
           name="email"
-          rules={[
-            { required: true, message: 'Please enter your email!' },
-            { type: 'email', message: 'Please enter a valid email!' },
-          ]}
+          rules={VALIDATION_RULES.EMAIL}
         >
           <Input />
         </Form.Item>
@@ -310,7 +239,7 @@ export const SupportModal = ({
         <Form.Item
           label={<FormLabel>Subject</FormLabel>}
           name="subject"
-          rules={[{ required: true, message: 'Please enter a subject' }]}
+          rules={VALIDATION_RULES.SUBJECT}
         >
           <Input />
         </Form.Item>
@@ -318,8 +247,8 @@ export const SupportModal = ({
         <Form.Item
           label={<FormLabel>Describe the issue in detail</FormLabel>}
           name="description"
-          rules={[{ required: true, message: 'Please describe your issue' }]}
-          validateTrigger={['onChange', 'onBlur']}
+          rules={VALIDATION_RULES.DESCRIPTION}
+          validateTrigger={['onChange']}
           extra={
             <Text type="secondary" className="text-sm mt-4">
               If possible, outline the steps to reproduce your issue.
