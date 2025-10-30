@@ -26,9 +26,7 @@ export const SwitchingContractModal = ({
   const { goto } = usePageState();
   const { selectedAgentConfig, selectedService } = useServices();
   const { getServiceSafeOf } = useService(selectedService?.service_config_id);
-  const serviceSafe = getServiceSafeOf
-    ? getServiceSafeOf(selectedAgentConfig.evmHomeChainId)
-    : undefined;
+  const serviceSafe = getServiceSafeOf?.(selectedAgentConfig.evmHomeChainId);
 
   const agentName = serviceSafe?.address
     ? generateName(serviceSafe?.address)

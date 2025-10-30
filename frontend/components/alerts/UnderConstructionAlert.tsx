@@ -8,7 +8,7 @@ import { useSharedContext } from '@/hooks/useSharedContext';
 
 const { Text } = Typography;
 
-export const UnderConstruction = ({ showMoreInfo = false }) => {
+export const UnderConstructionAlert = ({ showMoreInfo = false }) => {
   const { selectedAgentConfig } = useServices();
   const { goto } = usePageState();
   const { mainOlasBalance } = useSharedContext();

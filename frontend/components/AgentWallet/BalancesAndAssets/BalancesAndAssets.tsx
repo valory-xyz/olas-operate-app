@@ -15,9 +15,7 @@ const AvailableAssetsTooltip = () => {
   const { serviceEoa, getServiceSafeOf } = useService(
     selectedService?.service_config_id,
   );
-  const serviceSafe = getServiceSafeOf
-    ? getServiceSafeOf(selectedAgentConfig.evmHomeChainId)
-    : undefined;
+  const serviceSafe = getServiceSafeOf?.(selectedAgentConfig.evmHomeChainId);
 
   return (
     <WalletsTooltip

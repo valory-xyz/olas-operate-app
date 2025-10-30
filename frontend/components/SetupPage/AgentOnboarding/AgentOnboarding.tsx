@@ -5,7 +5,8 @@ import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
-import { BackButton, UnderConstruction } from '@/components/ui';
+import { UnderConstructionAlert } from '@/components/alerts';
+import { BackButton } from '@/components/ui';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
 import { Pages, SetupScreen } from '@/enums';
@@ -170,7 +171,7 @@ export const AgentOnboarding = () => {
               Select Agent
             </Button>
           )}
-          renderUnderConstruction={() => <UnderConstruction />}
+          renderUnderConstruction={() => <UnderConstructionAlert />}
         />
       </Flex>
     </Container>
