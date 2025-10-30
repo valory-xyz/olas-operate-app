@@ -94,7 +94,8 @@ const SecretRecoveryPhraseSetting = () => {
           </Flex>
         </Flex>
       </CardSection>
-      <RecoveryModal open={isRecoveryModalOpen} onClose={handleClose} />
+
+      {isRecoveryModalOpen && <RecoveryModal open onClose={handleClose} />}
     </>
   );
 };
