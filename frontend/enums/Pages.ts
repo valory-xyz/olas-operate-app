@@ -7,7 +7,6 @@ export const Pages = {
   HelpAndSupport: 'HelpAndSupport',
   PearlWallet: 'PearlWallet',
   AgentWallet: 'AgentWallet',
-  AddBackupWalletViaSafe: 'AddBackupWalletViaSafe',
   UpdateAgentTemplate: 'UpdateAgentTemplate',
   SelectStaking: 'SelectStaking',
   ConfirmSwitch: 'ConfirmSwitch',

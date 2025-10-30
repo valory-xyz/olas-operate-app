@@ -6,13 +6,12 @@ import { TbShieldHalfFilled } from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
 import { AddressLink, Alert, CardSection, cardStyles } from '@/components/ui';
-import { COLOR } from '@/constants';
-import { Pages, SettingsScreen } from '@/enums';
+import { COLOR, NA } from '@/constants';
+import { SettingsScreen } from '@/enums';
 import {
   useFeatureFlag,
   useMasterWalletContext,
   useMultisig,
-  usePageState,
   useRecoveryPhraseBackup,
   useServices,
   useSettings,
@@ -20,36 +19,9 @@ import {
 import { Address, Optional } from '@/types';
 
 import { RecoveryModal } from './RecoveryModal';
+import { YourFundsAtRiskAlert } from './YourFundsAtRiskAlert';
 
 const { Text, Paragraph, Title } = Typography;
-
-const YourFundsAtRiskAlert = () => {
-  const { goto } = usePageState();
-  return (
-    <CardSection style={{ marginTop: 12 }}>
-      <Alert
-        type="warning"
-        fullWidth
-        showIcon
-        message={
-          <Flex vertical gap={5}>
-            <span className="font-weight-600">Your funds are at risk!</span>
-            <span>
-              Add a backup wallet to allow you to retrieve funds if you lose
-              your password.
-            </span>
-            <Text
-              className="pointer hover-underline text-primary"
-              onClick={() => goto(Pages.AddBackupWalletViaSafe)}
-            >
-              See instructions
-            </Text>
-          </Flex>
-        }
-      />
-    </CardSection>
-  );
-};
 
 const SecretRecoveryPhraseSetting = () => {
   const { isBackedUp } = useRecoveryPhraseBackup();
@@ -105,7 +77,11 @@ const SecretRecoveryPhraseSetting = () => {
 const SettingsMain = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
   const { selectedAgentConfig } = useServices();
-  const { masterEoa, masterSafes } = useMasterWalletContext();
+  const {
+    masterEoa,
+    masterSafes,
+    isLoading: isWalletsLoading,
+  } = useMasterWalletContext();
 
   const masterSafe = masterSafes?.find(
     ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
@@ -132,9 +108,13 @@ const SettingsMain = () => {
   }, [masterSafeBackupAddresses]);
 
   const walletBackup = useMemo(() => {
+    if (!isWalletsLoading && !masterSafe) {
+      return <Text type="secondary">{NA}</Text>;
+    }
     if (!ownersIsFetched) return <Skeleton.Input />;
-    if (!masterSafeBackupAddress)
+    if (!masterSafeBackupAddress) {
       return <Text type="secondary">No backup wallet added.</Text>;
+    }
 
     return (
       <AddressLink
@@ -143,6 +123,8 @@ const SettingsMain = () => {
       />
     );
   }, [
+    isWalletsLoading,
+    masterSafe,
     masterSafeBackupAddress,
     ownersIsFetched,
     selectedAgentConfig.middlewareHomeChainId,
