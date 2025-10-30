@@ -2,6 +2,7 @@ import { MiddlewareChain, MiddlewareWalletResponse } from '@/client';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL } from '@/constants/urls';
 import { SafeCreationResponse } from '@/types/Wallet';
+import { parseApiError } from '@/utils';
 
 /**
  * Returns a list of available wallets
@@ -53,9 +54,27 @@ const updateSafeBackupOwner = async (
     throw new Error('Failed to add backup owner');
   });
 
+/**
+ * API call to get recovery seed phrase
+ */
+const getRecoverySeedPhrase = async (
+  password: string,
+): Promise<{ mnemonic: string[] }> => {
+  const response = await fetch(`${BACKEND_URL}/wallet/mnemonic`, {
+    method: 'POST',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    body: JSON.stringify({ ledger_type: 'ethereum', password }),
+  });
+
+  return response.ok
+    ? response.json()
+    : parseApiError(response, 'Failed to login');
+};
+
 export const WalletService = {
   getWallets,
   createEoa,
   createSafe,
   updateSafeBackupOwner,
+  getRecoverySeedPhrase,
 };
