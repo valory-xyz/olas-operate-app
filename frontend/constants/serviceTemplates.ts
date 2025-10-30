@@ -1,13 +1,12 @@
 import { ethers } from 'ethers';
 
 import { MiddlewareChain, ServiceTemplate } from '@/client';
-import { AGENT_CONFIG } from '@/config/agents';
 import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from '@/config/tokens';
-import { EnvProvisionMap as EnvProvisionType } from '@/constants/envVariables';
-import { AgentType } from '@/enums/Agent';
-import { STAKING_PROGRAM_IDS } from '@/enums/StakingProgram';
-import { TokenSymbol } from '@/enums/Token';
-import { parseEther, parseUnits } from '@/utils/numberFormatters';
+import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
+import { AgentType, STAKING_PROGRAM_IDS, TokenSymbol } from '@/enums';
+import { parseEther, parseUnits } from '@/utils';
+
+import { X402_ENABLED_FLAGS } from './x402';
 
 /**
  * Prefix for KPI description in service templates.
@@ -139,7 +138,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Use x402',
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
-      value: AGENT_CONFIG.trader.isX402Enabled.toString(),
+      value: X402_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -274,7 +273,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       name: 'Use x402',
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
-      value: AGENT_CONFIG.memeooorr.isX402Enabled.toString(),
+      value: X402_ENABLED_FLAGS[AgentMap.AgentsFun].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -482,7 +481,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Use x402',
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
-      value: AGENT_CONFIG.modius.isX402Enabled.toString(),
+      value: X402_ENABLED_FLAGS[AgentMap.Modius].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -615,7 +614,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Use x402',
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
-      value: AGENT_CONFIG.optimus.isX402Enabled.toString(),
+      value: X402_ENABLED_FLAGS[AgentMap.Optimus].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
   },
