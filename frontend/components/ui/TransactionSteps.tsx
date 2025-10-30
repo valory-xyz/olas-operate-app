@@ -2,9 +2,8 @@ import { Typography } from 'antd';
 import { FC, ReactNode } from 'react';
 import styled from 'styled-components';
 
-import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { BridgingStepStatus } from '@/types/Bridge';
-import { Nullable } from '@/types/Util';
+import { UNICODE_SYMBOLS } from '@/constants';
+import { BridgingStepStatus, Nullable } from '@/types';
 
 import { LoadingSpinner } from './LoadingSpinner';
 import { Steps } from './Steps';

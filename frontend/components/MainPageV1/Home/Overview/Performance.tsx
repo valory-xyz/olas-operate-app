@@ -4,9 +4,7 @@ import { isNil } from 'lodash';
 import { useMemo } from 'react';
 import styled from 'styled-components';
 
-import { CustomAlert } from '@/components/Alert';
-import { InfoTooltip } from '@/components/InfoTooltip';
-import { CardFlex, Tooltip } from '@/components/ui';
+import { Alert, CardFlex, InfoTooltip, Tooltip } from '@/components/ui';
 import {
   COLOR,
   FIVE_MINUTE_INTERVAL,
@@ -21,7 +19,7 @@ import { asEvmChainId, getTimeAgo, sanitizeHtml } from '@/utils';
 const { Text, Title } = Typography;
 
 const NoMetricsAlert = () => (
-  <CustomAlert
+  <Alert
     message="Additional performance metrics appear with the first measurable result."
     type="info"
     centered
@@ -35,7 +33,7 @@ const MetricsCapturedTimestampAlert = ({
 }: {
   timestamp: number;
 }) => (
-  <CustomAlert
+  <Alert
     message={`Data captured ${getTimeAgo(timestamp)}. Start the agent to see real-time performance.`}
     type="info"
     centered

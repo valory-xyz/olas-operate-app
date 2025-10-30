@@ -1,10 +1,9 @@
 import { Typography } from 'antd';
 import React from 'react';
 
-import { CustomAlert } from '@/components/Alert';
-import { AgentMap } from '@/constants/agent';
-import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { useServices } from '@/hooks/useServices';
+import { Alert } from '@/components/ui';
+import { AgentMap, SERVICE_TEMPLATES } from '@/constants';
+import { useServices } from '@/hooks';
 
 import { AgentsFunAgentSetup } from './AgentsFunAgentForm/AgentsFunAgentForm';
 import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
@@ -31,7 +30,7 @@ export const SetupYourAgent = () => {
 
   if (!serviceTemplate) {
     return (
-      <CustomAlert
+      <Alert
         type="error"
         showIcon
         message={<Text>Please select an agent type first!</Text>}

@@ -6,10 +6,9 @@ import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { CardFlex, Tooltip } from '@/components/ui';
-import { useYourWallet } from '@/components/YourWalletPage/useYourWallet';
 import { AddressZero } from '@/constants/address';
 import { Pages } from '@/enums/Pages';
-import { usePageState, useServices } from '@/hooks';
+import { usePageState, useService, useServices } from '@/hooks';
 import { generateName } from '@/utils';
 
 import { AgentActivity } from './AgentActivity';
@@ -52,9 +51,12 @@ const AboutAgent = () => {
 };
 
 export const AgentInfo = () => {
-  const { selectedAgentType, selectedAgentConfig } = useServices();
+  const { selectedAgentType, selectedService, selectedAgentConfig } =
+    useServices();
   const { goto } = usePageState();
-  const { serviceSafe } = useYourWallet();
+
+  const { getServiceSafeOf } = useService(selectedService?.service_config_id);
+  const serviceSafe = getServiceSafeOf?.(selectedAgentConfig.evmHomeChainId);
 
   const { isX402Enabled } = selectedAgentConfig;
 

@@ -2,8 +2,8 @@ import { Button, Flex, Select, Typography } from 'antd';
 import { isEmpty, kebabCase, values } from 'lodash';
 import Image from 'next/image';
 
-import { CustomAlert } from '@/components/Alert';
 import {
+  Alert,
   BackButton,
   CardFlex,
   cardStyles,
@@ -35,7 +35,7 @@ const LowPearlWalletBalanceAlertForCurrentChain = () => {
   if (!walletChainId || isEmpty(defaultRequirementDepositValues)) return null;
 
   return (
-    <CustomAlert
+    <Alert
       type="error"
       showIcon
       message={
