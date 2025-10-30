@@ -13,7 +13,6 @@ export * from './useFeatureFlag';
 export * from './useFundingRequirements';
 export * from './useLogs';
 export * from './useMasterSafeCreationAndTransfer';
-export * from './useModals';
 export * from './useMultisig';
 export * from './useNeedsFunds';
 export * from './useNotifyOnNewEpoch';

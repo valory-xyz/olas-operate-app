@@ -1,8 +1,8 @@
 import { Segmented as AntdSegmented, SegmentedProps } from 'antd';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
-import { ValueOf } from '@/types/Util';
+import { COLOR } from '@/constants';
+import { ValueOf } from '@/types';
 
 const SegmentedWrapper = styled.div<{ $activeIconColored?: boolean }>`
   .ant-segmented {

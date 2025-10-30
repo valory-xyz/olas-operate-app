@@ -2,12 +2,13 @@ import { Button, Flex, Select, Typography } from 'antd';
 import { isEmpty, kebabCase, values } from 'lodash';
 import Image from 'next/image';
 
-import { CustomAlert } from '@/components/Alert';
 import {
+  Alert,
   BackButton,
   CardFlex,
   cardStyles,
   TokenAmountInput,
+  Tooltip,
   WalletTransferDirection,
 } from '@/components/ui';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
@@ -34,7 +35,7 @@ const LowPearlWalletBalanceAlertForCurrentChain = () => {
   if (!walletChainId || isEmpty(defaultRequirementDepositValues)) return null;
 
   return (
-    <CustomAlert
+    <Alert
       type="error"
       showIcon
       message={
@@ -89,8 +90,12 @@ type DepositProps = {
 };
 
 export const Deposit = ({ onBack, onContinue }: DepositProps) => {
-  const { onDepositAmountChange, amountsToDeposit, availableAssets } =
-    usePearlWallet();
+  const {
+    onDepositAmountChange,
+    amountsToDeposit,
+    availableAssets,
+    masterSafeAddress,
+  } = usePearlWallet();
 
   return (
     <CardFlex $noBorder $padding="32px" style={cardStyles}>
@@ -120,15 +125,22 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
           </Flex>
         </Flex>
 
-        <Button
-          disabled={values(amountsToDeposit).every((i) => i.amount === 0)}
-          onClick={onContinue}
-          type="primary"
-          size="large"
-          block
+        <Tooltip
+          title={masterSafeAddress ? null : 'Complete agent setup to enable'}
         >
-          Continue
-        </Button>
+          <Button
+            disabled={
+              values(amountsToDeposit).every((i) => i.amount === 0) ||
+              !masterSafeAddress
+            }
+            onClick={onContinue}
+            type="primary"
+            size="large"
+            block
+          >
+            Continue
+          </Button>
+        </Tooltip>
       </Flex>
     </CardFlex>
   );

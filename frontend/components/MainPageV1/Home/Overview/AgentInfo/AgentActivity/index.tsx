@@ -4,7 +4,7 @@ import { LuChevronsUpDown } from 'react-icons/lu';
 import styled from 'styled-components';
 import { useBoolean } from 'usehooks-ts';
 
-import { InfoTooltip } from '@/components/InfoTooltip';
+import { InfoTooltip } from '@/components/ui';
 import { COLOR } from '@/constants';
 import {
   useAgentActivity,

@@ -1,7 +1,7 @@
 import { Steps as AntdSteps } from 'antd';
 import { styled } from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
+import { COLOR } from '@/constants';
 
 export const Steps = styled(AntdSteps)`
   .ant-steps-item-title {

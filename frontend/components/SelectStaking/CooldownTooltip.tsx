@@ -1,10 +1,11 @@
-import { Flex, Statistic, Tooltip, Typography } from 'antd';
+import { Flex, Statistic, Typography } from 'antd';
 import { isNil } from 'lodash';
 import { type CSSProperties, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
-import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
+import { Tooltip } from '@/components/ui';
+import { COLOR } from '@/constants';
+import { useActiveStakingContractDetails } from '@/hooks';
 
 const { Text, Paragraph } = Typography;
 const { Timer: AntdTimer } = Statistic;

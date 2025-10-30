@@ -2,17 +2,18 @@ import { Divider, Flex, Typography } from 'antd';
 import { useRouter } from 'next/router';
 import styled from 'styled-components';
 
-import { CustomAlert } from '@/components/Alert';
-import { COLOR } from '@/constants';
+import { Alert } from '@/components/ui';
 import {
+  APP_HEIGHT,
+  COLOR,
   PEARL_LICENSE,
   PEARL_URL,
   SAFE_URL,
   TERMS_AND_CONDITIONS_URL,
+  TERMS_WIDTH,
   WEB3AUTH_TERMS_AND_CONDITIONS_URL,
   WEB3AUTH_URL,
-} from '@/constants/urls';
-import { APP_HEIGHT, TERMS_WIDTH } from '@/constants/width';
+} from '@/constants';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -380,7 +381,7 @@ const PearlTermsAndConditions = () => (
             </li>
           </ul>
         </Paragraph>
-        <CustomAlert
+        <Alert
           type="warning"
           showIcon
           message="The code within this Application is provided without any warranties. It is important to note that the code has not been audited for potential security vulnerabilities."

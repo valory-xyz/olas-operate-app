@@ -2,7 +2,7 @@ import { Button, Flex, Statistic, Typography } from 'antd';
 import { TbLock, TbSparkles, TbSquareRoundedPercentage } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { CardFlex, Divider, Tooltip } from '@/components/ui';
+import { CardFlex, Divider, InfoTooltip, Tooltip } from '@/components/ui';
 import { COLOR, NA } from '@/constants';
 import { Pages } from '@/enums';
 import {
@@ -12,8 +12,6 @@ import {
   useStakingProgram,
 } from '@/hooks';
 import { secondsToHours } from '@/utils';
-
-import { InfoTooltip } from '../InfoTooltip';
 
 const { Title, Text } = Typography;
 const { Timer } = Statistic;

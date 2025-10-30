@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { TbFileText, TbHistory } from 'react-icons/tb';
 
 import { FireV1 } from '@/components/custom-icons';
-import { BackButton, CardFlex, Segmented } from '@/components/ui';
+import { BackButton, CardFlex, InfoTooltip, Segmented } from '@/components/ui';
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants';
 import { Pages } from '@/enums/Pages';
 import {
@@ -14,7 +14,6 @@ import {
   useStakingDetails,
 } from '@/hooks';
 
-import { InfoTooltip } from '../InfoTooltip';
 import { RewardsHistory } from './RewardsHistory';
 import { StakingContractDetails } from './StakingContractDetails';
 

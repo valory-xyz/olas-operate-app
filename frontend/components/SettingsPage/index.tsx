@@ -4,8 +4,8 @@ import Image from 'next/image';
 import { useMemo } from 'react';
 import { useBoolean } from 'usehooks-ts';
 
-import { Pages } from '@/enums/Pages';
-import { SettingsScreen } from '@/enums/SettingsScreen';
+import { AddressLink, Alert, CardSection, cardStyles } from '@/components/ui';
+import { Pages, SettingsScreen } from '@/enums';
 import {
   useFeatureFlag,
   useMasterWalletContext,
@@ -15,12 +15,8 @@ import {
   useServices,
   useSettings,
 } from '@/hooks';
-import { Address } from '@/types/Address';
-import { Optional } from '@/types/Util';
+import { Address, Optional } from '@/types';
 
-import { AddressLink } from '../AddressLink';
-import { CustomAlert } from '../Alert';
-import { CardSection, cardStyles } from '../ui';
 import { RecoveryModal } from './RecoveryModal';
 
 const { Text, Paragraph, Title } = Typography;
@@ -29,7 +25,7 @@ const YourFundsAtRiskAlert = () => {
   const { goto } = usePageState();
   return (
     <CardSection style={{ marginTop: 12 }}>
-      <CustomAlert
+      <Alert
         type="warning"
         fullWidth
         showIcon
@@ -183,7 +179,7 @@ const SettingsMain = () => {
                   to your Pearl account.
                 </span>
                 {!isRecoveryPhraseBackedUp && (
-                  <CustomAlert
+                  <Alert
                     showIcon
                     type="warning"
                     message="Secret Recovery Phrase not backed up."

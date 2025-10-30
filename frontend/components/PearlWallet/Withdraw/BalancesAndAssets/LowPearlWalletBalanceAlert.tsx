@@ -1,7 +1,7 @@
 import { Flex, Typography } from 'antd';
 import { isEmpty } from 'lodash';
 
-import { CustomAlert } from '@/components/Alert';
+import { Alert } from '@/components/ui';
 import { UNICODE_SYMBOLS } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import {
@@ -24,7 +24,7 @@ export const LowPearlWalletBalanceAlert = () => {
   if (!isPearlWalletRefillRequired) return null;
 
   return (
-    <CustomAlert
+    <Alert
       type="error"
       showIcon
       message={

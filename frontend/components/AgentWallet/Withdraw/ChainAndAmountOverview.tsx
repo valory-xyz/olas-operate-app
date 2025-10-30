@@ -1,11 +1,11 @@
 import { ArrowRightOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { Button, Flex, Skeleton, Tooltip, Typography } from 'antd';
+import { Button, Flex, Skeleton, Typography } from 'antd';
 import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import styled from 'styled-components';
 
 import { AgentNft } from '@/components/AgentNft';
-import { BackButton, CardFlex, Divider } from '@/components/ui';
+import { BackButton, CardFlex, Divider, Tooltip } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR, TokenSymbolConfigMap } from '@/constants';
 import { useBalanceContext } from '@/hooks';
