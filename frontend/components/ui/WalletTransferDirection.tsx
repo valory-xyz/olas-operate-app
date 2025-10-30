@@ -2,7 +2,7 @@ import { ArrowRightOutlined } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
 import { isValidElement, ReactNode } from 'react';
 
-import { Maybe } from '@/types/Util';
+import { Maybe } from '@/types';
 
 import { Divider } from './Divider';
 

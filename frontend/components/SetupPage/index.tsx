@@ -6,13 +6,10 @@ import { COLOR } from '@/constants/colors';
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
-import { AgentSelection } from '../AgentSelection';
 import { CardFlex } from '../ui/CardFlex';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
 import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding/SetupBridgeOnboarding';
-import { SetupCreateSafe } from './Create/SetupCreateSafe';
-import { SetupEoaFunding } from './Create/SetupEoaFunding/SetupEoaFunding';
 import { SetupOnRamp } from './Create/SetupOnRamp/SetupOnRamp';
 import { SetupPassword } from './Create/SetupPassword';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
@@ -88,19 +85,6 @@ export const Setup = () => {
         return <SetupOnRamp />;
       case SetupScreen.EarlyAccessOnly:
         return <EarlyAccessOnly />;
-
-      // TODO: to be removed post v1 release
-      case SetupScreen.SetupEoaFunding:
-        return <SetupEoaFunding />;
-      // TODO: to be removed post v1 release
-      case SetupScreen.SetupEoaFundingIncomplete:
-        return <SetupEoaFunding />;
-      // TODO: to be removed post v1 release
-      case SetupScreen.SetupCreateSafe:
-        return <SetupCreateSafe />;
-      // TODO: to be removed post v1 release
-      case SetupScreen.AgentSelection:
-        return <AgentSelection showSelected={false} />;
 
       // Restore account, screens to be re-implemented as per v1
       case SetupScreen.Restore:

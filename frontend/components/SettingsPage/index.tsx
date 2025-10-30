@@ -3,8 +3,8 @@ import { isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 
-import { Pages } from '@/enums/Pages';
-import { SettingsScreen } from '@/enums/SettingsScreen';
+import { AddressLink, Alert, CardSection, cardStyles } from '@/components/ui';
+import { Pages, SettingsScreen } from '@/enums';
 import {
   useFeatureFlag,
   useMasterWalletContext,
@@ -13,12 +13,7 @@ import {
   useServices,
   useSettings,
 } from '@/hooks';
-import { Address } from '@/types/Address';
-import { Optional } from '@/types/Util';
-
-import { AddressLink } from '../AddressLink';
-import { CustomAlert } from '../Alert';
-import { CardSection, cardStyles } from '../ui';
+import { Address, Optional } from '@/types';
 
 const { Text, Paragraph, Title } = Typography;
 
@@ -26,7 +21,7 @@ const YourFundsAtRiskAlert = () => {
   const { goto } = usePageState();
   return (
     <CardSection style={{ marginTop: 12 }}>
-      <CustomAlert
+      <Alert
         type="warning"
         fullWidth
         showIcon

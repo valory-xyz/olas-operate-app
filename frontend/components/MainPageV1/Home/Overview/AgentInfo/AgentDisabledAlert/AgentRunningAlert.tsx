@@ -1,12 +1,12 @@
 import { Typography } from 'antd';
 
-import { CustomAlert } from '@/components/Alert';
+import { Alert } from '@/components/ui';
 
 const { Text } = Typography;
 
 export const AgentRunningAlert = () => {
   return (
-    <CustomAlert
+    <Alert
       showIcon
       centered
       className="mt-16"

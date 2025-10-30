@@ -1,4 +1,6 @@
+export * from './AddressLink';
 export * from './AgentSetupCompleteModal';
+export * from './Alert';
 export * from './BackButton';
 export * from './CardFlex';
 export * from './CardSection';
@@ -19,7 +21,7 @@ export * from './styles';
 export * from './Table';
 export * from './TokenAmountInput';
 export * from './TokenRequirementsTable';
-export * from './Tooltip';
+export * from './tooltips';
 export * from './TransactionSteps';
 export * from './Typography';
 export * from './WalletTransferDirection';

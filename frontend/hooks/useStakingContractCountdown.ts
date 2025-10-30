@@ -45,7 +45,7 @@ export const useStakingContractCountdown = (
   }, 1000);
 
   const countdownDisplay = isNil(secondsUntilReady)
-    ? 'Loading...'
+    ? ''
     : formatCountdownDisplay(secondsUntilReady);
 
   return { countdownDisplay, secondsUntilReady };
