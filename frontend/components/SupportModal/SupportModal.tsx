@@ -136,6 +136,10 @@ export const SupportModal = ({
     }
   };
 
+  const handleRemoveFile = (uid: string) => {
+    setUploadedFiles((prev) => prev.filter((file) => file.uid !== uid));
+  };
+
   if (ticketId) {
     return (
       <Modal
@@ -215,6 +219,7 @@ export const SupportModal = ({
               <FileUploadWithList
                 onChange={handleFileChange}
                 uploadedFiles={uploadedFiles}
+                onRemoveFile={handleRemoveFile}
               />
             </Form.Item>
 
