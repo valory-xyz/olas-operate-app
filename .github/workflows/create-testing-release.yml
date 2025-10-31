@@ -1,0 +1,126 @@
+name: Create Testing Release
+
+# Manual workflow trigger for development/feature releases
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to create release from'
+        required: true
+        type: string
+        default: 'main'
+      action:
+        description: 'Release action'
+        required: true
+        type: choice
+        options:
+          - new
+          - override
+        default: 'new'
+
+jobs:
+  create-testing-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+          fetch-depth: 0  # Fetch all history for tags
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Get latest RC tag
+        id: get-latest-rc
+        run: |
+          # Fetch all tags
+          git fetch --tags
+          
+          # Get the latest RC tag (format: v0.2.0-rcXXX)
+          LATEST_RC_TAG=$(git tag -l "v0.2.0-rc*" | sort -V | tail -1)
+          
+          if [ -z "$LATEST_RC_TAG" ]; then
+            echo "No existing RC tags found, starting from rc1"
+            LATEST_RC_NUMBER=0
+          else
+            # Extract RC number from tag (e.g., v0.2.0-rc390 -> 390)
+            LATEST_RC_NUMBER=$(echo "$LATEST_RC_TAG" | sed -E 's/v0\.2\.0-rc([0-9]+).*/\1/')
+          fi
+          
+          echo "latest_rc_tag=$LATEST_RC_TAG" >> $GITHUB_OUTPUT
+          echo "latest_rc_number=$LATEST_RC_NUMBER" >> $GITHUB_OUTPUT
+          echo "Latest RC tag: $LATEST_RC_TAG"
+          echo "Latest RC number: $LATEST_RC_NUMBER"
+
+      - name: Calculate new version
+        id: calculate-version
+        run: |
+          LATEST_RC_NUMBER=${{ steps.get-latest-rc.outputs.latest_rc_number }}
+          ACTION="${{ inputs.action }}"
+          
+          if [ "$ACTION" = "new" ]; then
+            NEW_RC_NUMBER=$((LATEST_RC_NUMBER + 1))
+          else
+            NEW_RC_NUMBER=$LATEST_RC_NUMBER
+          fi
+          
+          NEW_VERSION="0.2.0-rc$NEW_RC_NUMBER"
+          NEW_TAG="v$NEW_VERSION"
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "new_rc_number=$NEW_RC_NUMBER" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+          echo "New tag: $NEW_TAG"
+
+      - name: Run release script
+        env:
+          RC_VALUE: ${{ steps.calculate-version.outputs.new_rc_number }}
+        run: |
+          chmod +x scripts/release.sh
+          ./scripts/release.sh
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.calculate-version.outputs.new_version }}
+          release_name: "Testing Release v${{ steps.calculate-version.outputs.new_version }}"
+          body: |
+            ## Testing Release v${{ steps.calculate-version.outputs.new_version }}
+            
+            **Branch:** `${{ inputs.branch }}`  
+            **Action:** ${{ inputs.action }}  
+            **Created:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+            
+            This is a testing release created from the `${{ inputs.branch }}` branch.
+            
+            ### What's included:
+            - Latest changes from `${{ inputs.branch }}` branch
+            - Version: `${{ steps.calculate-version.outputs.new_version }}`
+            
+            ### Next steps:
+            The release build process has been triggered automatically.
+            You can monitor the build progress in the Actions tab.
+          draft: false
+          prerelease: true
+
+      - name: Summary
+        run: |
+          echo "## 🎉 Testing Release Created Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ steps.calculate-version.outputs.new_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Action:** \`${{ inputs.action }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The release build process has been triggered automatically." >> $GITHUB_STEP_SUMMARY
+          echo "You can monitor the progress in the [Actions tab](https://github.com/${{ github.repository }}/actions)." >> $GITHUB_STEP_SUMMARY
