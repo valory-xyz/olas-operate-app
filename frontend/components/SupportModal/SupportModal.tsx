@@ -24,7 +24,7 @@ import { SuccessOutlined } from '../custom-icons';
 import { FileUploadWithList } from './FileUpload';
 import { useUploadSupportFiles } from './useUploadSupportFiles';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const VALIDATION_RULES: { [key: string]: Rule[] } = {
   EMAIL: [
