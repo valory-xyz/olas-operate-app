@@ -60,7 +60,7 @@ const uploadFile = async (
   }
 };
 
-export type SupportTIcketTag =
+export type SupportTicketTag =
   | 'pearl'
   | 'support'
   | 'feedback'
@@ -71,7 +71,7 @@ type CreateTicketParams = {
   subject: string;
   description: string;
   uploadTokens?: string[];
-  tags?: SupportTIcketTag[];
+  tags?: SupportTicketTag[];
   rating?: string;
 };
 

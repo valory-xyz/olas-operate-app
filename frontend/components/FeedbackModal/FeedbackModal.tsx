@@ -15,7 +15,7 @@ import { useBoolean } from 'usehooks-ts';
 
 import { FormLabel, Modal, RequiredMark } from '@/components/ui';
 import { COLOR } from '@/constants';
-import { SupportService, type SupportTIcketTag } from '@/service/Support';
+import { SupportService, type SupportTicketTag } from '@/service/Support';
 
 const { Title } = Typography;
 
@@ -25,7 +25,7 @@ const VALIDATION_RULES: { [key: string]: Rule[] } = {
   FEEDBACK: [{ required: true, message: 'Please describe your feedback!' }],
 } as const;
 
-const getFeedbackTags = (rating: number): SupportTIcketTag[] => [
+const getFeedbackTags = (rating: number): SupportTicketTag[] => [
   'pearl',
   'feedback',
   `rating:${rating}`,

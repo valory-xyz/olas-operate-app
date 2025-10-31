@@ -14,15 +14,22 @@ const DRAGGER_STYLES: React.CSSProperties = {
   border: `1px dashed ${COLOR.GRAY_3}`,
 };
 
+const ACCEPTED_UPLOAD_ACCEPT = [
+  'image/*',
+  'video/*',
+  '.zip',
+  'application/zip',
+  'application/x-zip-compressed',
+].join(',');
+
 const FileUpload = ({
   onChange,
-  accept,
 }: Omit<FileUploadWithListProps, 'uploadedFiles'>) => {
   return (
     <Upload.Dragger
       name="files"
       multiple
-      accept={accept}
+      accept={ACCEPTED_UPLOAD_ACCEPT}
       beforeUpload={() => false}
       showUploadList={false}
       onChange={onChange}
@@ -66,18 +73,16 @@ const UploadedFilesList = ({
 type FileUploadWithListProps = {
   onChange?: (info: UploadChangeParam<UploadFile>) => void;
   multiple?: boolean;
-  accept?: string;
   uploadedFiles?: UploadFile[];
 };
 
 export const FileUploadWithList = ({
   onChange,
-  accept,
   uploadedFiles = [],
 }: FileUploadWithListProps) => {
   return (
     <Flex vertical gap={12}>
-      <FileUpload onChange={onChange} accept={accept} />
+      <FileUpload onChange={onChange} />
       <UploadedFilesList uploadedFiles={uploadedFiles} />
     </Flex>
   );

@@ -1,4 +1,5 @@
-import { createContext, PropsWithChildren, useContext, useState } from 'react';
+import { createContext, PropsWithChildren, useContext } from 'react';
+import { useToggle } from 'usehooks-ts';
 
 import { SupportModal } from '@/components/SupportModal/SupportModal';
 
@@ -11,15 +12,7 @@ export const SupportModalContext = createContext<{
 });
 
 export const SupportModalProvider = ({ children }: PropsWithChildren) => {
-  const [supportModalOpen, setSupportModalOpen] = useState(false);
-
-  const closeSupportModal = () => {
-    setSupportModalOpen(false);
-  };
-
-  const toggleSupportModal = () => {
-    setSupportModalOpen(!supportModalOpen);
-  };
+  const [supportModalOpen, toggleSupportModal] = useToggle(false);
 
   return (
     <SupportModalContext.Provider
@@ -28,10 +21,7 @@ export const SupportModalProvider = ({ children }: PropsWithChildren) => {
         toggleSupportModal,
       }}
     >
-      <SupportModal
-        open={supportModalOpen}
-        onClose={() => closeSupportModal()}
-      />
+      <SupportModal open={supportModalOpen} onClose={toggleSupportModal} />
       {children}
     </SupportModalContext.Provider>
   );

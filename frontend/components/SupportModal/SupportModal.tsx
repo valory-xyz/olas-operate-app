@@ -11,19 +11,18 @@ import {
 } from 'antd';
 import type { Rule } from 'antd/es/form';
 import { UploadChangeParam } from 'antd/es/upload';
-import { delay, isNil } from 'lodash';
+import { delay } from 'lodash';
 import { useCallback, useState } from 'react';
 import { TbX } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { FormLabel, Modal, RequiredMark } from '@/components/ui';
-import { useElectronApi, useLogs } from '@/hooks';
+import { useElectronApi } from '@/hooks';
 import { SupportService } from '@/service/Support';
-import { Nullable } from '@/types';
 
 import { SuccessOutlined } from '../custom-icons';
 import { FileUploadWithList } from './FileUpload';
-import { FileDetails, formatAttachments } from './utils';
+import { useUploadSupportFiles } from './useUploadSupportFiles';
 
 const { Text, Title } = Typography;
 
@@ -48,26 +47,6 @@ const Form = styled(AntdForm)<FormProps<SupportModalFormValues>>`
     padding-bottom: 0;
   }
 `;
-
-const ModalHeader = ({ onClose }: { onClose: () => void }) => (
-  <Flex vertical gap={8}>
-    <Flex justify="space-between" align="center">
-      <Title level={5} className="mt-0 mb-0">
-        Contact Support
-      </Title>
-      <Button
-        type="text"
-        size="small"
-        icon={<TbX size={16} />}
-        onClick={onClose}
-      />
-    </Flex>
-    <Text type="secondary" className="text-sm">
-      Fill out the form below and the support team will get back to you via
-      email. The team usually responds within 2 business days.
-    </Text>
-  </Flex>
-);
 
 const CheckboxLabel = () => (
   <Flex vertical gap={4} className="ml-4">
@@ -99,66 +78,9 @@ export const SupportModal = ({
   const [uploadedFiles, setUploadedFiles] = useState<UploadFile[]>([]);
   const [ticketId, setTicketId] = useState<number | null>(null);
 
-  const logs = useLogs();
   const [form] = Form.useForm<SupportModalFormValues>();
-  const { saveLogsForSupport, readFile, cleanupSupportLogs } = useElectronApi();
-
-  const loadLogsFile = useCallback(async (): Promise<Nullable<FileDetails>> => {
-    if (!logs || !saveLogsForSupport || !readFile) return null;
-
-    const result = await saveLogsForSupport(logs);
-    if (!result.success) {
-      message.error('Failed to save logs');
-      return null;
-    }
-
-    const fileResult = await readFile(result.filePath);
-    if (!fileResult.success) {
-      message.error(fileResult.error || 'Failed to save logs');
-      return null;
-    }
-
-    return fileResult;
-  }, [logs, saveLogsForSupport, readFile]);
-
-  const uploadFile = useCallback(
-    async (file: FileDetails): Promise<string | null> => {
-      try {
-        const result = await SupportService.uploadFile(file);
-        if (!result.success) {
-          throw new Error(result.error);
-        }
-        return result.token;
-      } catch (error) {
-        message.error(
-          error instanceof Error
-            ? error.message
-            : `Failed to upload file ${file.fileName}. Please try again.`,
-        );
-        return null;
-      }
-    },
-    [],
-  );
-
-  const uploadFiles = useCallback(
-    async (shouldIncludeLogs: boolean): Promise<string[]> => {
-      const [attachments, logsFile] = await Promise.all([
-        formatAttachments(uploadedFiles),
-        shouldIncludeLogs ? loadLogsFile() : Promise.resolve(null),
-      ]);
-      const files = [...attachments, ...(logsFile ? [logsFile] : [])];
-
-      const uploadTokens = await Promise.all(
-        files.map(async (file) => {
-          return await uploadFile(file);
-        }),
-      );
-
-      return uploadTokens.filter((token): token is string => !isNil(token));
-    },
-    [uploadedFiles, loadLogsFile, uploadFile],
-  );
+  const { cleanupSupportLogs } = useElectronApi();
+  const { uploadFiles } = useUploadSupportFiles();
 
   const handleSubmit = useCallback(
     async (values: SupportModalFormValues) => {
@@ -166,7 +88,7 @@ export const SupportModal = ({
       try {
         const { email, subject, description, shouldShareLogs } = values;
 
-        const uploadTokens = await uploadFiles(shouldShareLogs);
+        const uploadTokens = await uploadFiles(uploadedFiles, shouldShareLogs);
         const createTicketResult = await SupportService.createTicket({
           email,
           subject,
@@ -191,7 +113,7 @@ export const SupportModal = ({
         setIsSubmitting(false);
       }
     },
-    [uploadFiles, cleanupSupportLogs],
+    [uploadFiles, uploadedFiles, cleanupSupportLogs],
   );
 
   const resetFormFields = () => {
@@ -240,9 +162,15 @@ export const SupportModal = ({
       styles={{
         content: MODAL_CONTENT_STYLES,
       }}
+      closable
+      closeIcon={<TbX size={16} />}
+      title="Contact Support"
       action={
         <>
-          <ModalHeader onClose={handleClose} />
+          <Text type="secondary" className="text-sm mt--4">
+            Fill out the form below and the support team will get back to you
+            via email. The team usually responds within 2 business days.
+          </Text>
 
           <Form
             form={form}
