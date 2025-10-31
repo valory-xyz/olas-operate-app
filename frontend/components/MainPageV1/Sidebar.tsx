@@ -21,9 +21,14 @@ import styled from 'styled-components';
 
 import { ACTIVE_AGENTS, AVAILABLE_FOR_ADDING_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { AgentType, EvmChainId } from '@/constants';
-import { COLOR } from '@/constants/colors';
-import { ANTD_BREAKPOINTS, APP_HEIGHT, SIDER_WIDTH } from '@/constants/width';
+import {
+  AgentType,
+  ANTD_BREAKPOINTS,
+  APP_HEIGHT,
+  COLOR,
+  EvmChainId,
+  SIDER_WIDTH,
+} from '@/constants';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {

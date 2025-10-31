@@ -2,12 +2,9 @@ import { ArrowRightOutlined } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
-import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
+import { COLOR, MAIN_CONTENT_MAX_WIDTH } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useStakingContracts } from '@/hooks/useStakingContracts';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { usePageState, useStakingContracts, useStakingProgram } from '@/hooks';
 
 import { BackButton } from '../ui/BackButton';
 import { ConfirmSwitchSection } from './components/ConfirmSwitchSection';

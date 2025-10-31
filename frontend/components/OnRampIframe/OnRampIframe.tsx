@@ -1,11 +1,12 @@
 import { Flex, Spin } from 'antd';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
-import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
-import { useElectronApi } from '@/hooks/useElectronApi';
-import { useOnRampContext } from '@/hooks/useOnRampContext';
-import { useMasterWalletContext } from '@/hooks/useWallet';
+import { APP_HEIGHT, APP_WIDTH, ON_RAMP_GATEWAY_URL } from '@/constants';
+import {
+  useElectronApi,
+  useMasterWalletContext,
+  useOnRampContext,
+} from '@/hooks';
 import { delayInSeconds } from '@/utils/delay';
 
 type TransakEvent = {
