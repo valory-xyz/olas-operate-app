@@ -169,21 +169,6 @@ export type Deployment = {
   healthcheck: AgentHealthCheckResponse;
 };
 
-enum MiddlewareLedger {
-  ETHEREUM = 0,
-  SOLANA = 1,
-}
-
-export type MiddlewareWalletResponse = {
-  address: Address;
-  safe_chains: MiddlewareChain[];
-  ledger_type: MiddlewareLedger;
-  safes: {
-    [middlewareChainId in (typeof MiddlewareChain)[keyof typeof MiddlewareChain]]: Address;
-  };
-  safe_nonce: number;
-};
-
 export type TokenBalanceRecord = {
   [tokenAddress: Address]: number | string;
 };
@@ -239,18 +224,4 @@ export type BalancesAndFundingRequirements = {
    */
   agent_funding_requests_cooldown: boolean;
   allow_start_agent: boolean;
-};
-
-type AgentPerformanceMetric = {
-  name: string;
-  is_primary: boolean;
-  value: string;
-  description?: string;
-};
-
-export type AgentPerformance = {
-  timestamp: number | null;
-  metrics: AgentPerformanceMetric[];
-  last_activity: null;
-  agent_behavior: string | null;
 };

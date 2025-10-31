@@ -1,18 +1,20 @@
-import { MiddlewareChain, MiddlewareWalletResponse } from '@/client';
+import { MiddlewareChain } from '@/client';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL } from '@/constants/urls';
-import { SafeCreationResponse } from '@/types/Wallet';
+import { MiddlewareWalletResponse, SafeCreationResponse } from '@/types/Wallet';
 
 /**
  * Returns a list of available wallets
  */
-const getWallets = async (signal: AbortSignal) =>
+const getWallets = async (
+  signal: AbortSignal,
+): Promise<MiddlewareWalletResponse[]> =>
   fetch(`${BACKEND_URL}/wallet`, {
     signal,
   }).then((res) => {
     if (res.ok) return res.json();
     throw new Error('Failed to fetch wallets');
-  }) as Promise<MiddlewareWalletResponse[]>;
+  });
 
 const createEoa = async () =>
   fetch(`${BACKEND_URL}/wallet`, {

@@ -8,7 +8,6 @@ import {
   useMemo,
 } from 'react';
 
-import { MiddlewareWalletResponse } from '@/client';
 import { EvmChainId } from '@/constants';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
@@ -20,6 +19,7 @@ import {
   WalletType,
 } from '@/enums/Wallet';
 import { WalletService } from '@/service/Wallet';
+import { MiddlewareWalletResponse } from '@/types';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
