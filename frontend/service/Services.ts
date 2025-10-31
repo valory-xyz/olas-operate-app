@@ -1,5 +1,4 @@
 import {
-  AgentPerformance,
   Deployment,
   MiddlewareServiceResponse,
   ServiceConfigId,
@@ -11,6 +10,7 @@ import { CHAIN_CONFIG } from '@/config/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL_V2 } from '@/constants/urls';
 import { StakingProgramId } from '@/enums/StakingProgram';
+import { AgentPerformance } from '@/types';
 import { Address } from '@/types/Address';
 import { DeepPartial, Nullable } from '@/types/Util';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
