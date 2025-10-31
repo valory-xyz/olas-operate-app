@@ -2575,6 +2575,7 @@ halo = "==0.0.31"
 hexbytes = "==0.3.1"
 ipfshttpclient = "==0.8.0a2"
 jsonschema = "==4.3.3"
+multiaddr = "==0.0.9"
 multidict = "==6.0.5"
 open-aea-cli-ipfs = "==1.65.0"
 open-aea-ledger-cosmos = "==1.65.0"
@@ -2593,8 +2594,8 @@ web3 = "6.20.4"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "8c365c752ce9ca426bdde751f1d457d7ec1563eb"
-resolved_reference = "8c365c752ce9ca426bdde751f1d457d7ec1563eb"
+reference = "8dc408cf3691785c0f9ed47893efba7b5422a745"
+resolved_reference = "8dc408cf3691785c0f9ed47893efba7b5422a745"
 
 [[package]]
 name = "open-aea"
@@ -4454,4 +4455,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "4cedf8f70b8588d36e1896fc9d2dc1264e838a140ee5c2dbc57504b9bb1d8098"
+content-hash = "d3f49dfe6bd5019aacfb08778b00a043a018be387b46e41edb240e1b768290f8"
