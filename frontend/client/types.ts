@@ -1,13 +1,9 @@
-import { EnvProvision } from '@/constants/envVariables';
+import { EnvProvision, MiddlewareDeploymentStatus } from '@/constants';
 import { AgentType } from '@/enums/Agent';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
-import {
-  MiddlewareChain,
-  MiddlewareDeploymentStatus,
-  SupportedMiddlewareChain,
-} from './enums';
+import { MiddlewareChain, SupportedMiddlewareChain } from './enums';
 
 export type ServiceHash = string;
 export type ServiceConfigId = string;
