@@ -22,7 +22,7 @@ import {
 } from './SetupRestore';
 import { SetupWelcome } from './SetupWelcome';
 import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
-import { SupportButton } from './Supportbutton';
+import { SupportButton } from './SupportButton';
 
 const { Title } = Typography;
 
