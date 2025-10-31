@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
-import { useMasterWalletContext, useServices } from '@/hooks';
+import { useElectronApi, useMasterWalletContext, useServices } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 
 /**
@@ -9,7 +9,9 @@ import { ServicesService } from '@/service/Services';
  * to the master safe.
  */
 export const useWithdrawFunds = () => {
-  const { selectedAgentConfig, selectedService } = useServices();
+  const electronApi = useElectronApi();
+  const { selectedAgentConfig, selectedService, selectedAgentType } =
+    useServices();
   const { masterSafes } = useMasterWalletContext();
 
   const evmHomeChainId = selectedAgentConfig?.evmHomeChainId;
@@ -34,6 +36,10 @@ export const useWithdrawFunds = () => {
         withdrawAddress: masterSafeAddress,
         serviceConfigId: selectedService.service_config_id,
       });
+    },
+    onSuccess: () => {
+      // Update the store to indicate that the agent is no longer initially funded
+      electronApi.store?.set?.(`${selectedAgentType}.isInitialFunded`, false);
     },
   });
 

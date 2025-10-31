@@ -74,7 +74,6 @@ export const useMasterSafeCreationAndTransfer = (
     onSuccess: () => {
       // Since the master safe is created and the transfer is completed,
       // we can update the store to indicate that the agent is initially funded.
-      // TODO: logic to be moved to BE in the future.
       electronApi.store?.set?.(`${selectedAgentType}.isInitialFunded`, true);
       // Refetch funding requirements because balances are changed
       refetch?.();
