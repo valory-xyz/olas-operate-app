@@ -11,11 +11,6 @@ import {
   useState,
 } from 'react';
 
-import {
-  Deployment,
-  MiddlewareServiceResponse,
-  ServiceValidationResponse,
-} from '@/client';
 import { AGENT_CONFIG } from '@/config/agents';
 import {
   AgentMap,
@@ -44,7 +39,16 @@ import {
   useStore,
 } from '@/hooks';
 import { ServicesService } from '@/service/Services';
-import { AgentConfig, Maybe, Nullable, Optional, Service } from '@/types';
+import {
+  AgentConfig,
+  Deployment,
+  Maybe,
+  MiddlewareServiceResponse,
+  Nullable,
+  Optional,
+  Service,
+  ServiceValidationResponse,
+} from '@/types';
 import { asEvmChainId, isNilOrEmpty } from '@/utils';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';

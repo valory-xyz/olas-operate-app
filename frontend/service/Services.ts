@@ -1,19 +1,20 @@
-import {
-  Deployment,
-  MiddlewareServiceResponse,
-  ServiceConfigId,
-  ServiceTemplate,
-  ServiceValidationResponse,
-  SupportedMiddlewareChain,
-} from '@/client';
+import { SupportedMiddlewareChain } from '@/client';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL_V2 } from '@/constants/urls';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { AgentPerformance } from '@/types';
-import { Address } from '@/types/Address';
-import { DeepPartial, Nullable } from '@/types/Util';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import {
+  Address,
+  AgentPerformance,
+  DeepPartial,
+  Deployment,
+  MiddlewareServiceResponse,
+  Nullable,
+  ServiceConfigId,
+  ServiceTemplate,
+  ServiceValidationResponse,
+} from '@/types';
+import { asEvmChainId } from '@/utils';
 
 /**
  * Get a single service from the backend
