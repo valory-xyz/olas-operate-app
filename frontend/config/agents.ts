@@ -1,7 +1,7 @@
 import { formatUnits } from 'ethers/lib/utils';
 import { entries } from 'lodash';
 
-import { MiddlewareChain } from '@/client';
+import { MiddlewareChainMap } from '@/constants';
 import { AgentMap, AgentType } from '@/constants/agent';
 import {
   MODIUS_SERVICE_TEMPLATE,
@@ -20,7 +20,7 @@ import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from './tokens';
 
 const getModiusUsdcConfig = () => {
   const modiusFundRequirements =
-    MODIUS_SERVICE_TEMPLATE.configurations[MiddlewareChain.MODE]
+    MODIUS_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.MODE]
       ?.fund_requirements;
   const modiusUsdcConfig = MODE_TOKEN_CONFIG[TokenSymbol.USDC];
 
@@ -35,7 +35,7 @@ const getModiusUsdcConfig = () => {
 
 const getOptimusUsdcConfig = () => {
   const optimusFundRequirements =
-    OPTIMUS_SERVICE_TEMPLATE.configurations[MiddlewareChain.OPTIMISM]
+    OPTIMUS_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.OPTIMISM]
       ?.fund_requirements;
   const optimusUsdcConfig = OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC];
 
@@ -57,7 +57,7 @@ export const AGENT_CONFIG: {
     requiresSetup: true,
     name: 'Predict Trader',
     evmHomeChainId: EvmChainId.Gnosis,
-    middlewareHomeChainId: MiddlewareChain.GNOSIS,
+    middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
     agentIds: [14, 25],
     requiresAgentSafesOn: [EvmChainId.Gnosis],
     requiresMasterSafesOn: [EvmChainId.Gnosis],
@@ -77,7 +77,7 @@ export const AGENT_CONFIG: {
     requiresSetup: true,
     name: 'Optimus agent',
     evmHomeChainId: EvmChainId.Optimism,
-    middlewareHomeChainId: MiddlewareChain.OPTIMISM,
+    middlewareHomeChainId: MiddlewareChainMap.OPTIMISM,
     agentIds: [40],
     requiresAgentSafesOn: [EvmChainId.Optimism],
     additionalRequirements: {
@@ -102,7 +102,7 @@ export const AGENT_CONFIG: {
     requiresSetup: true,
     name: 'Agents.fun agent',
     evmHomeChainId: EvmChainId.Base,
-    middlewareHomeChainId: MiddlewareChain.BASE,
+    middlewareHomeChainId: MiddlewareChainMap.BASE,
     agentIds: [43],
     requiresAgentSafesOn: [EvmChainId.Base],
     requiresMasterSafesOn: [EvmChainId.Base],
@@ -123,7 +123,7 @@ export const AGENT_CONFIG: {
     name: 'Modius agent',
     evmHomeChainId: EvmChainId.Mode,
     agentIds: [40],
-    middlewareHomeChainId: MiddlewareChain.MODE,
+    middlewareHomeChainId: MiddlewareChainMap.MODE,
     requiresAgentSafesOn: [EvmChainId.Mode],
     additionalRequirements: {
       [EvmChainId.Mode]: { [TokenSymbol.USDC]: getModiusUsdcConfig() },

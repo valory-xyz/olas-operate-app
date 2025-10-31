@@ -1,5 +1,7 @@
-import { SupportedMiddlewareChain } from '@/client';
-import { MiddlewareDeploymentStatus } from '@/constants';
+import {
+  MiddlewareDeploymentStatus,
+  SupportedMiddlewareChain,
+} from '@/constants';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';

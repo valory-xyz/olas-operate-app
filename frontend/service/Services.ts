@@ -1,7 +1,9 @@
-import { SupportedMiddlewareChain } from '@/client';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
-import { BACKEND_URL_V2 } from '@/constants/urls';
+import {
+  BACKEND_URL_V2,
+  CONTENT_TYPE_JSON_UTF8,
+  SupportedMiddlewareChain,
+} from '@/constants';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import {
   Address,

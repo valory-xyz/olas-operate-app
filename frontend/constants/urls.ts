@@ -1,5 +1,6 @@
-import { MiddlewareChain, SupportedMiddlewareChain } from '@/client';
 import { EvmChainId } from '@/enums/Chain';
+
+import { MiddlewareChainMap, SupportedMiddlewareChain } from './chains';
 
 type Url = `http${'s' | ''}://${string}`;
 
@@ -58,20 +59,20 @@ export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   SupportedMiddlewareChain,
   Url
 > = {
-  [MiddlewareChain.GNOSIS]: GNOSIS_EXPLORER_URL,
-  [MiddlewareChain.BASE]: BASE_EXPLORER_URL,
-  [MiddlewareChain.MODE]: MODE_EXPLORER_URL,
-  [MiddlewareChain.OPTIMISM]: OPTIMISM_EXPLORER_URL,
+  [MiddlewareChainMap.GNOSIS]: GNOSIS_EXPLORER_URL,
+  [MiddlewareChainMap.BASE]: BASE_EXPLORER_URL,
+  [MiddlewareChainMap.MODE]: MODE_EXPLORER_URL,
+  [MiddlewareChainMap.OPTIMISM]: OPTIMISM_EXPLORER_URL,
 };
 
 export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
   SupportedMiddlewareChain,
   Url
 > = {
-  [MiddlewareChain.GNOSIS]: 'https://gnosis.blockscout.com',
-  [MiddlewareChain.BASE]: 'https://base.blockscout.com',
-  [MiddlewareChain.MODE]: 'https://explorer.mode.network',
-  [MiddlewareChain.OPTIMISM]: 'https://optimism.blockscout.com',
+  [MiddlewareChainMap.GNOSIS]: 'https://gnosis.blockscout.com',
+  [MiddlewareChainMap.BASE]: 'https://base.blockscout.com',
+  [MiddlewareChainMap.MODE]: 'https://explorer.mode.network',
+  [MiddlewareChainMap.OPTIMISM]: 'https://optimism.blockscout.com',
 };
 
 // swap URLs

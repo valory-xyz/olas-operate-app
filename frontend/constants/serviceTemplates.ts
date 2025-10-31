@@ -1,6 +1,5 @@
 import { ethers } from 'ethers';
 
-import { MiddlewareChain } from '@/client';
 import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from '@/config/tokens';
 import { EnvProvisionMap as EnvProvisionType } from '@/constants/envVariables';
 import { AgentType } from '@/enums/Agent';
@@ -8,6 +7,8 @@ import { STAKING_PROGRAM_IDS } from '@/enums/StakingProgram';
 import { TokenSymbol } from '@/enums/Token';
 import { ServiceTemplate } from '@/types';
 import { parseEther, parseUnits } from '@/utils/numberFormatters';
+
+import { MiddlewareChainMap } from './chains';
 
 /**
  * Prefix for KPI description in service templates.
@@ -31,9 +32,9 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       version: 'v0.27.2-1-rc.1',
     },
   },
-  home_chain: MiddlewareChain.GNOSIS,
+  home_chain: MiddlewareChainMap.GNOSIS,
   configurations: {
-    [MiddlewareChain.GNOSIS]: {
+    [MiddlewareChainMap.GNOSIS]: {
       staking_program_id: STAKING_PROGRAM_IDS.PearlBeta, // default, may be overwritten
       nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
       rpc: 'http://localhost:8545', // overwritten
@@ -272,9 +273,9 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
 const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.AgentsFun,
   name: 'Agents.Fun',
-  home_chain: MiddlewareChain.BASE,
+  home_chain: MiddlewareChainMap.BASE,
   configurations: {
-    [MiddlewareChain.BASE]: {
+    [MiddlewareChainMap.BASE]: {
       staking_program_id: STAKING_PROGRAM_IDS.AgentsFun1, // default, may be overwritten
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: 'http://localhost:8545', // overwritten
@@ -314,9 +315,9 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} Optimus`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  home_chain: MiddlewareChain.MODE,
+  home_chain: MiddlewareChainMap.MODE,
   configurations: {
-    [MiddlewareChain.MODE]: {
+    [MiddlewareChainMap.MODE]: {
       staking_program_id: STAKING_PROGRAM_IDS.ModiusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
@@ -474,9 +475,9 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} Optimus service deployment on Optimism network`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  home_chain: MiddlewareChain.OPTIMISM,
+  home_chain: MiddlewareChainMap.OPTIMISM,
   configurations: {
-    [MiddlewareChain.OPTIMISM]: {
+    [MiddlewareChainMap.OPTIMISM]: {
       staking_program_id: STAKING_PROGRAM_IDS.OptimusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten

@@ -1,4 +1,4 @@
-import { MiddlewareChain } from '@/client';
+import { MiddlewareChain } from '@/constants';
 import { TokenSymbol } from '@/constants/token';
 
 import { Address } from './Address';

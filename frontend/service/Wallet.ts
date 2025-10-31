@@ -1,5 +1,8 @@
-import { MiddlewareChain } from '@/client';
-import { BACKEND_URL, CONTENT_TYPE_JSON_UTF8 } from '@/constants';
+import {
+  BACKEND_URL,
+  CONTENT_TYPE_JSON_UTF8,
+  MiddlewareChain,
+} from '@/constants';
 import { MiddlewareWalletResponse, SafeCreationResponse } from '@/types';
 
 /**
