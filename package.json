@@ -83,7 +83,7 @@
     "start:frontend": "cd frontend && yarn start",
     "test:frontend": "cd frontend && yarn test"
   },
-  "version": "0.2.0-rc383",
+  "version": "0.2.0-rc407",
   "engine": {
     "node": "20.18.1",
     "yarn": ">=1.22.0",
