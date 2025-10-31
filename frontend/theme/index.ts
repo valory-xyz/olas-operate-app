@@ -63,6 +63,9 @@ export const mainTheme: ThemeConfig = {
       fontSize: 16,
       colorTextDisabled: '#334155',
       paddingBlock: 8,
+      colorBgContainer: COLOR.BACKGROUND,
+      colorBorder: COLOR.GRAY_4,
+      hoverBorderColor: COLOR.GRAY_3,
     },
     Menu: {
       activeBarBorderWidth: 0,

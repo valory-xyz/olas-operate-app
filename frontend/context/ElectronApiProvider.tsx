@@ -39,6 +39,22 @@ type ElectronApiContextProps = {
     store?: ElectronStore;
     debugData?: Record<string, unknown>;
   }) => Promise<{ success: true; dirPath: string } | { success?: false }>;
+  saveLogsForSupport?: (data: {
+    store?: ElectronStore;
+    debugData?: Record<string, unknown>;
+  }) => Promise<
+    { success: true; filePath: string; fileName: string } | { success?: false }
+  >;
+  cleanupSupportLogs?: () => Promise<void>;
+  readFile?: (filePath: string) => Promise<
+    | {
+        success: true;
+        fileName: string;
+        fileContent: string;
+        mimeType: string;
+      }
+    | { success?: false; error?: string }
+  >;
   openPath?: (filePath: string) => void;
   onRampWindow?: {
     show?: (amountToPay: number) => void;
@@ -82,6 +98,9 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     clear: async () => {},
   },
   saveLogs: async () => ({ success: false }),
+  saveLogsForSupport: async () => ({ success: false }),
+  cleanupSupportLogs: async () => {},
+  readFile: async () => ({ success: false }),
   openPath: () => {},
   onRampWindow: {
     show: () => {},
@@ -136,6 +155,9 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         showNotification: getElectronApiFunction('showNotification'),
         saveLogs: getElectronApiFunction('saveLogs'),
+        saveLogsForSupport: getElectronApiFunction('saveLogsForSupport'),
+        cleanupSupportLogs: getElectronApiFunction('cleanupSupportLogs'),
+        readFile: getElectronApiFunction('readFile'),
         openPath: getElectronApiFunction('openPath'),
         onRampWindow: {
           show: getElectronApiFunction('onRampWindow.show'),
