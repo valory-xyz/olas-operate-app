@@ -4,6 +4,7 @@ import {
   Flex,
   Form as AntdForm,
   type FormProps,
+  Input,
   message,
   Typography,
   UploadFile,
@@ -15,13 +16,7 @@ import { useCallback, useState } from 'react';
 import { TbX } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import {
-  FormLabel,
-  Input,
-  Modal,
-  RequiredMark,
-  TextArea,
-} from '@/components/ui';
+import { FormLabel, Modal, RequiredMark } from '@/components/ui';
 import { useElectronApi, useLogs } from '@/hooks';
 import { SupportService } from '@/service/Support';
 import { Nullable } from '@/types';
@@ -242,81 +237,82 @@ export const SupportModal = ({
       onCancel={handleClose}
       size="large"
       destroyOnHidden
-      hasCustomContent
       styles={{
         content: MODAL_CONTENT_STYLES,
       }}
-    >
-      <ModalHeader onClose={handleClose} />
+      action={
+        <>
+          <ModalHeader onClose={handleClose} />
 
-      <Form
-        form={form}
-        onFinish={handleSubmit}
-        layout="vertical"
-        className="mt-16"
-        requiredMark={RequiredMark}
-      >
-        <Form.Item
-          label={<FormLabel>Your email</FormLabel>}
-          name="email"
-          rules={VALIDATION_RULES.EMAIL}
-        >
-          <Input />
-        </Form.Item>
+          <Form
+            form={form}
+            onFinish={handleSubmit}
+            layout="vertical"
+            className="mt-16 w-full"
+            requiredMark={RequiredMark}
+          >
+            <Form.Item
+              label={<FormLabel>Your email</FormLabel>}
+              name="email"
+              rules={VALIDATION_RULES.EMAIL}
+            >
+              <Input />
+            </Form.Item>
 
-        <Form.Item
-          label={<FormLabel>Subject</FormLabel>}
-          name="subject"
-          rules={VALIDATION_RULES.SUBJECT}
-        >
-          <Input />
-        </Form.Item>
+            <Form.Item
+              label={<FormLabel>Subject</FormLabel>}
+              name="subject"
+              rules={VALIDATION_RULES.SUBJECT}
+            >
+              <Input />
+            </Form.Item>
 
-        <Form.Item
-          label={<FormLabel>Describe the issue in detail</FormLabel>}
-          name="description"
-          rules={VALIDATION_RULES.DESCRIPTION}
-          validateTrigger={['onChange']}
-          extra={
-            <Text type="secondary" className="text-sm mt-4">
-              If possible, outline the steps to reproduce your issue.
-            </Text>
-          }
-        >
-          <TextArea rows={4} />
-        </Form.Item>
+            <Form.Item
+              label={<FormLabel>Describe the issue in detail</FormLabel>}
+              name="description"
+              rules={VALIDATION_RULES.DESCRIPTION}
+              extra={
+                <Text type="secondary" className="text-sm mt-4">
+                  If possible, outline the steps to reproduce your issue.
+                </Text>
+              }
+            >
+              <Input.TextArea rows={4} />
+            </Form.Item>
 
-        <Form.Item
-          label={<FormLabel>Attachments (optional)</FormLabel>}
-          name="attachments"
-        >
-          <FileUploadWithList
-            onChange={handleFileChange}
-            uploadedFiles={uploadedFiles}
-          />
-        </Form.Item>
+            <Form.Item
+              label={<FormLabel>Attachments (optional)</FormLabel>}
+              name="attachments"
+            >
+              <FileUploadWithList
+                onChange={handleFileChange}
+                uploadedFiles={uploadedFiles}
+              />
+            </Form.Item>
 
-        <Form.Item
-          name="shouldShareLogs"
-          valuePropName="checked"
-          initialValue={true}
-        >
-          <Checkbox>
-            <CheckboxLabel />
-          </Checkbox>
-        </Form.Item>
+            <Form.Item
+              name="shouldShareLogs"
+              valuePropName="checked"
+              initialValue={true}
+            >
+              <Checkbox>
+                <CheckboxLabel />
+              </Checkbox>
+            </Form.Item>
 
-        <Form.Item className="mb-0">
-          <Flex justify="end" gap={12}>
-            <Button onClick={handleClose} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button type="primary" htmlType="submit" loading={isSubmitting}>
-              Submit Issue
-            </Button>
-          </Flex>
-        </Form.Item>
-      </Form>
-    </Modal>
+            <Form.Item className="mb-0">
+              <Flex justify="end" gap={12}>
+                <Button onClick={handleClose} disabled={isSubmitting}>
+                  Cancel
+                </Button>
+                <Button type="primary" htmlType="submit" loading={isSubmitting}>
+                  Submit Issue
+                </Button>
+              </Flex>
+            </Form.Item>
+          </Form>
+        </>
+      }
+    />
   );
 };

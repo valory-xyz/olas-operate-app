@@ -3,6 +3,7 @@ import {
   Flex,
   Form as AntdForm,
   FormProps,
+  Input,
   message,
   Rate as AntdRate,
   Typography,
@@ -12,13 +13,7 @@ import { TbX } from 'react-icons/tb';
 import styled from 'styled-components';
 import { useBoolean } from 'usehooks-ts';
 
-import {
-  FormLabel,
-  Input,
-  Modal,
-  RequiredMark,
-  TextArea,
-} from '@/components/ui';
+import { FormLabel, Modal, RequiredMark } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { SupportService, type SupportTIcketTag } from '@/service/Support';
 
@@ -58,7 +53,7 @@ const Rate = styled(AntdRate)`
 `;
 
 const ModalHeader = ({ onClose }: { onClose: () => void }) => (
-  <Flex justify="space-between" align="center" className="mb-24">
+  <Flex justify="space-between" align="center" className="mb-24 w-full">
     <Title level={5} className="m-0">
       Share Feedback
     </Title>
@@ -125,54 +120,57 @@ export const FeedbackModal = ({ open, onClose }: FeedbackModalProps) => {
     <Modal
       open={open}
       onCancel={handleClose}
-      hasCustomContent
       styles={{
         content: MODAL_CONTENT_STYLES,
       }}
-    >
-      <ModalHeader onClose={handleClose} />
+      action={
+        <>
+          <ModalHeader onClose={handleClose} />
 
-      <Form
-        form={form}
-        onFinish={handleSubmit}
-        layout="vertical"
-        requiredMark={RequiredMark}
-      >
-        <Form.Item
-          name="email"
-          label={<FormLabel>Your email - optional</FormLabel>}
-          rules={VALIDATION_RULES.EMAIL}
-        >
-          <Input />
-        </Form.Item>
+          <Form
+            form={form}
+            onFinish={handleSubmit}
+            layout="vertical"
+            className="w-full"
+            requiredMark={RequiredMark}
+          >
+            <Form.Item
+              name="email"
+              label={<FormLabel>Your email - optional</FormLabel>}
+              rules={VALIDATION_RULES.EMAIL}
+            >
+              <Input />
+            </Form.Item>
 
-        <Form.Item
-          name="rating"
-          label={<FormLabel>Rate your experience with Pearl</FormLabel>}
-          rules={VALIDATION_RULES.RATING}
-        >
-          <Rate allowHalf={false} allowClear={false} />
-        </Form.Item>
+            <Form.Item
+              name="rating"
+              label={<FormLabel>Rate your experience with Pearl</FormLabel>}
+              rules={VALIDATION_RULES.RATING}
+            >
+              <Rate allowHalf={false} allowClear={false} />
+            </Form.Item>
 
-        <Form.Item
-          name="feedback"
-          label={<FormLabel>Describe your feedback</FormLabel>}
-          rules={VALIDATION_RULES.FEEDBACK}
-        >
-          <TextArea rows={4} />
-        </Form.Item>
+            <Form.Item
+              name="feedback"
+              label={<FormLabel>Describe your feedback</FormLabel>}
+              rules={VALIDATION_RULES.FEEDBACK}
+            >
+              <Input.TextArea rows={4} />
+            </Form.Item>
 
-        <Form.Item className="mb-0">
-          <Flex justify="end" gap={12}>
-            <Button onClick={handleClose} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button type="primary" htmlType="submit" loading={isSubmitting}>
-              Submit Issue
-            </Button>
-          </Flex>
-        </Form.Item>
-      </Form>
-    </Modal>
+            <Form.Item className="mb-0">
+              <Flex justify="end" gap={12}>
+                <Button onClick={handleClose} disabled={isSubmitting}>
+                  Cancel
+                </Button>
+                <Button type="primary" htmlType="submit" loading={isSubmitting}>
+                  Submit Issue
+                </Button>
+              </Flex>
+            </Form.Item>
+          </Form>
+        </>
+      }
+    />
   );
 };

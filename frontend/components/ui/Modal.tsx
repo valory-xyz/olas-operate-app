@@ -54,7 +54,6 @@ type ModalProps = {
   description?: string;
   size?: ModalSize;
   action?: ReactNode;
-  hasCustomContent?: boolean;
 };
 
 export const Modal = ({
@@ -64,11 +63,9 @@ export const Modal = ({
   size = 'medium',
   action = null,
   closable = false,
-  hasCustomContent = false,
   ...props
 }: ModalProps & AntdModalProps) => {
   const sizeStyles = modalStylesMap[size];
-  const { children, ...restProps } = props;
 
   return (
     <AntdModal
@@ -85,25 +82,23 @@ export const Modal = ({
         footer: { marginTop: 24 },
       }}
       closable={closable}
-      {...restProps}
+      {...props}
     >
-      {hasCustomContent ? (
-        children
-      ) : (
-        <Flex vertical align={sizeStyles.flexAlign} style={{ width: '100%' }}>
-          {header}
+      <Flex vertical align={sizeStyles.flexAlign} style={{ width: '100%' }}>
+        {header}
+        {title && (
           <Title
             level={5}
             className={`${header ? 'mt-24' : 'mt-0'} mb-12 ${sizeStyles.textAlignClass}`}
           >
             {title}
           </Title>
-          <Text type="secondary" className={sizeStyles.textAlignClass}>
-            {description}
-          </Text>
-          {action}
-        </Flex>
-      )}
+        )}
+        <Text type="secondary" className={sizeStyles.textAlignClass}>
+          {description}
+        </Text>
+        {action}
+      </Flex>
     </AntdModal>
   );
 };

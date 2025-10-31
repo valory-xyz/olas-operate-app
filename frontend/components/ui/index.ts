@@ -9,7 +9,6 @@ export * from './Divider';
 export * from './FormFlex';
 export * from './FundingDescription';
 export * from './FundsAreSafeMessage';
-export * from './Input';
 export * from './LoadingSpinner';
 export * from './Modal';
 export * from './NumberInput';
