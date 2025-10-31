@@ -2,8 +2,7 @@ import { Spin } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
-import { WEB3AUTH_GATEWAY_URL } from '@/constants/urls';
-import { APP_HEIGHT, IFRAME_WIDTH } from '@/constants/width';
+import { APP_HEIGHT, IFRAME_WIDTH, WEB3AUTH_GATEWAY_URL } from '@/constants';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { Address } from '@/types/Address';
 
