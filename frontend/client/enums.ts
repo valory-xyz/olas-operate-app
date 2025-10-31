@@ -33,16 +33,3 @@ const MIDDLEWARE_CHAINS = {
  * @deprecated Use `SupportedMiddlewareChain` from '@/constants/chains'.
  */
 export type SupportedMiddlewareChain = ValueOf<typeof MIDDLEWARE_CHAINS>;
-
-/**
- * @deprecated Use `MiddlewareDeploymentStatusMap` from '@/constants/deployment'.
- */
-export enum MiddlewareDeploymentStatus {
-  CREATED = 0,
-  BUILT = 1,
-  DEPLOYING = 2,
-  DEPLOYED = 3,
-  STOPPING = 4,
-  STOPPED = 5,
-  DELETED = 6,
-}
