@@ -117,7 +117,7 @@ export const AGENT_CONFIG: {
     hasExternalFunds: false,
     hasChatUI: false,
     defaultBehavior: '',
-    servicePublicId: 'dvilela/memeooorr/0.1.0',
+    servicePublicId: 'dvilela/memeooorr:0.1.0',
   },
   [AgentMap.Modius]: {
     isAgentEnabled: true,
