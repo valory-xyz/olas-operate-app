@@ -1,7 +1,7 @@
 import { Flex } from 'antd';
 import { useCallback, useMemo } from 'react';
 
-import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
+import { MAIN_CONTENT_MAX_WIDTH } from '@/constants';
 
 import { AgentWalletProvider, useAgentWallet } from './AgentWalletProvider';
 import { BalancesAndAssets } from './BalancesAndAssets/BalancesAndAssets';

@@ -5,7 +5,7 @@ import {
   AgentFormContainer,
   useDisplayAgentForm,
 } from '../SetupPage/SetupYourAgent/useDisplayAgentForm';
-import { AgentsFunUpdateSetup } from './components/AgentsFunUpdateSetup';
+import { AgentsFunUpdateForm } from './components/AgentsFunUpdateForm';
 import { ModiusUpdatePage } from './components/ModiusUpdateForm';
 import { OptimusUpdatePage } from './components/OptimusUpdateForm';
 import { PredictUpdatePage } from './components/PredictUpdateForm';
@@ -21,7 +21,9 @@ export const UpdateAgentPage = () => {
         {selectedAgentType === AgentMap.PredictTrader && (
           <PredictUpdatePage renderForm={displayForm} />
         )}
-        {selectedAgentType === AgentMap.AgentsFun && <AgentsFunUpdateSetup />}
+        {selectedAgentType === AgentMap.AgentsFun && (
+          <AgentsFunUpdateForm renderForm={displayForm} />
+        )}
         {selectedAgentType === AgentMap.Modius && (
           <ModiusUpdatePage renderForm={displayForm} />
         )}

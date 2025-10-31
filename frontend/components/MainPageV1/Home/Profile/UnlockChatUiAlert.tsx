@@ -1,12 +1,9 @@
 import { Button, Checkbox, Flex, Modal } from 'antd';
 import { useCallback, useState } from 'react';
 
-import { GEMINI_API_URL } from '@/constants/urls';
-import { MODAL_WIDTH } from '@/constants/width';
+import { GEMINI_API_URL, MODAL_WIDTH } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { useElectronApi } from '@/hooks/useElectronApi';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
+import { useElectronApi, usePageState, useServices } from '@/hooks';
 
 type UnlockChatUiAlertProps = {
   isOpen: boolean;
