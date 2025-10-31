@@ -72,6 +72,7 @@ export const mainTheme: ThemeConfig = {
       itemSelectedBg: COLOR.GRAY_1,
       itemHoverBg: COLOR.GRAY_1,
       itemSelectedColor: COLOR.TEXT_NEUTRAL_PRIMARY,
+      itemMarginInline: 0,
     },
     List: {
       colorBorder: '#DFE5EE',
