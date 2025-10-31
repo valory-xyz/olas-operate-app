@@ -8,7 +8,7 @@ import { formatFileSize } from './utils';
 
 const { Text } = Typography;
 
-const DRAGGAR_STYLES: React.CSSProperties = {
+const DRAGGER_STYLES: React.CSSProperties = {
   backgroundColor: COLOR.BACKGROUND,
   padding: 8,
   border: `1px dashed ${COLOR.GRAY_3}`,
@@ -26,7 +26,7 @@ const FileUpload = ({
       beforeUpload={() => false}
       showUploadList={false}
       onChange={onChange}
-      style={DRAGGAR_STYLES}
+      style={DRAGGER_STYLES}
     >
       <Flex vertical gap={8} align="center" justify="center">
         <TbCloudUpload size={32} color={COLOR.PRIMARY} />

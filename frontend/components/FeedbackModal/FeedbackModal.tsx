@@ -8,9 +8,9 @@ import {
   Typography,
 } from 'antd';
 import { Rule } from 'antd/es/form';
-import { useState } from 'react';
 import { TbX } from 'react-icons/tb';
 import styled from 'styled-components';
+import { useBoolean } from 'usehooks-ts';
 
 import {
   FormLabel,
@@ -20,7 +20,7 @@ import {
   TextArea,
 } from '@/components/ui';
 import { COLOR } from '@/constants';
-import { ZendeskService } from '@/service/Zendesk';
+import { SupportService, type SupportTIcketTag } from '@/service/Support';
 
 const { Title } = Typography;
 
@@ -28,9 +28,9 @@ const VALIDATION_RULES: { [key: string]: Rule[] } = {
   EMAIL: [{ type: 'email', message: 'Please enter a valid email!' }],
   RATING: [{ required: true, message: 'Please rate your experience!' }],
   FEEDBACK: [{ required: true, message: 'Please describe your feedback!' }],
-};
+} as const;
 
-const getFeedbackTags = (rating: number) => [
+const getFeedbackTags = (rating: number): SupportTIcketTag[] => [
   'pearl',
   'feedback',
   `rating:${rating}`,
@@ -77,21 +77,24 @@ type FeedbackModalFormValues = {
   feedback: string;
 };
 
-export const FeedbackModal = ({
-  open,
-  onClose,
-}: {
+type FeedbackModalProps = {
   open: boolean;
   onClose: () => void;
-}) => {
+};
+
+export const FeedbackModal = ({ open, onClose }: FeedbackModalProps) => {
   const [form] = Form.useForm<FeedbackModalFormValues>();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    value: isSubmitting,
+    setTrue: setIsSubmitting,
+    setFalse: setIsSubmittingFalse,
+  } = useBoolean(false);
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
+    setIsSubmitting();
     try {
       const { email, rating, feedback } = form.getFieldsValue();
-      const createTicketResult = await ZendeskService.createTicket({
+      const createTicketResult = await SupportService.createTicket({
         email: email === '' ? undefined : email,
         subject: 'Pearl Feedback',
         description: feedback,
@@ -107,14 +110,14 @@ export const FeedbackModal = ({
     } catch (error) {
       message.error('Failed to submit feedback. Please try again.');
     } finally {
-      setIsSubmitting(false);
+      setIsSubmittingFalse();
       handleClose();
     }
   };
 
   const handleClose = () => {
     form.resetFields();
-    setIsSubmitting(false);
+    setIsSubmittingFalse();
     onClose();
   };
 

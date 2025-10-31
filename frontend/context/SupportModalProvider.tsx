@@ -1,19 +1,13 @@
-import {
-  createContext,
-  Dispatch,
-  PropsWithChildren,
-  SetStateAction,
-  useState,
-} from 'react';
+import { createContext, PropsWithChildren, useContext, useState } from 'react';
 
 import { SupportModal } from '@/components/SupportModal/SupportModal';
 
 export const SupportModalContext = createContext<{
   supportModalOpen: boolean;
-  setSupportModalOpen: Dispatch<SetStateAction<boolean>>;
+  toggleSupportModal: () => void;
 }>({
   supportModalOpen: false,
-  setSupportModalOpen: () => {},
+  toggleSupportModal: () => {},
 });
 
 export const SupportModalProvider = ({ children }: PropsWithChildren) => {
@@ -23,11 +17,15 @@ export const SupportModalProvider = ({ children }: PropsWithChildren) => {
     setSupportModalOpen(false);
   };
 
+  const toggleSupportModal = () => {
+    setSupportModalOpen(!supportModalOpen);
+  };
+
   return (
     <SupportModalContext.Provider
       value={{
         supportModalOpen,
-        setSupportModalOpen,
+        toggleSupportModal,
       }}
     >
       <SupportModal
@@ -37,4 +35,14 @@ export const SupportModalProvider = ({ children }: PropsWithChildren) => {
       {children}
     </SupportModalContext.Provider>
   );
+};
+
+export const useSupportModal = () => {
+  const { supportModalOpen, toggleSupportModal } =
+    useContext(SupportModalContext);
+
+  return {
+    supportModalOpen,
+    toggleSupportModal,
+  };
 };

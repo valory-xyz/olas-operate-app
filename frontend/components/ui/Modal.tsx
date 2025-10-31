@@ -49,9 +49,9 @@ const MODAL_STYLES: AntdModalProps['styles'] = {
 };
 
 type ModalProps = {
-  header?: ReactNode | null;
-  title?: string | null;
-  description?: string | null;
+  header?: ReactNode;
+  title?: string;
+  description?: string;
   size?: ModalSize;
   action?: ReactNode;
   hasCustomContent?: boolean;
@@ -59,8 +59,8 @@ type ModalProps = {
 
 export const Modal = ({
   header = null,
-  title = null,
-  description = null,
+  title,
+  description,
   size = 'medium',
   action = null,
   closable = false,

@@ -45,7 +45,7 @@ type ElectronApiContextProps = {
   }) => Promise<
     { success: true; filePath: string; fileName: string } | { success?: false }
   >;
-  cleanupZendeskLogs?: () => Promise<void>;
+  cleanupSupportLogs?: () => Promise<void>;
   readFile?: (filePath: string) => Promise<
     | {
         success: true;
@@ -99,7 +99,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   },
   saveLogs: async () => ({ success: false }),
   saveLogsForSupport: async () => ({ success: false }),
-  cleanupZendeskLogs: async () => {},
+  cleanupSupportLogs: async () => {},
   readFile: async () => ({ success: false }),
   openPath: () => {},
   onRampWindow: {
@@ -156,7 +156,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         showNotification: getElectronApiFunction('showNotification'),
         saveLogs: getElectronApiFunction('saveLogs'),
         saveLogsForSupport: getElectronApiFunction('saveLogsForSupport'),
-        cleanupZendeskLogs: getElectronApiFunction('cleanupZendeskLogs'),
+        cleanupSupportLogs: getElectronApiFunction('cleanupSupportLogs'),
         readFile: getElectronApiFunction('readFile'),
         openPath: getElectronApiFunction('openPath'),
         onRampWindow: {

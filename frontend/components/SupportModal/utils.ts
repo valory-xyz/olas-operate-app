@@ -1,4 +1,5 @@
 import type { UploadFile } from 'antd';
+import { compact } from 'lodash';
 
 export type FileDetails = {
   fileName: string;
@@ -40,9 +41,7 @@ export const formatAttachments = async (
     });
   });
 
-  return Promise.all(filePromises).then(
-    (results) => results.filter(Boolean) as FileDetails[],
-  );
+  return compact(await Promise.all(filePromises));
 };
 
 export const formatFileSize = (bytes?: number): string => {

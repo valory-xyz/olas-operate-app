@@ -2,11 +2,12 @@ import { Button, Card, Flex, Typography } from 'antd';
 import { compact } from 'lodash';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { FiArrowUpRight, FiExternalLink } from 'react-icons/fi';
-import { useIsMounted } from 'usehooks-ts';
+import { useBoolean, useIsMounted } from 'usehooks-ts';
 
 import { COLOR } from '@/constants/colors';
 import { FAQ_URL, GITHUB_API_RELEASES, SUPPORT_URL } from '@/constants/urls';
-import { useElectronApi, useSupportModal } from '@/hooks';
+import { useSupportModal } from '@/context/SupportModalProvider';
+import { useElectronApi } from '@/hooks';
 
 import { ExportLogsButton } from '../ExportLogsButton';
 import { FeedbackModal } from '../FeedbackModal/FeedbackModal';
@@ -23,9 +24,13 @@ type HelpItem = {
 
 export const HelpAndSupport = () => {
   const [latestTag, setLatestTag] = useState<string | null>(null);
-  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const {
+    value: feedbackModalOpen,
+    setTrue: setFeedbackModalOpen,
+    setFalse: setFeedbackModalOpenFalse,
+  } = useBoolean();
 
-  const { setSupportModalOpen } = useSupportModal();
+  const { toggleSupportModal } = useSupportModal();
   const { getAppVersion, termsAndConditionsWindow } = useElectronApi();
   const isMounted = useIsMounted();
 
@@ -46,7 +51,7 @@ export const HelpAndSupport = () => {
   }, [getAppVersion, isMounted]);
 
   const closeFeedbackModal = () => {
-    setFeedbackModalOpen(false);
+    setFeedbackModalOpenFalse();
   };
 
   const helpItems: HelpItem[] = useMemo(
@@ -118,7 +123,7 @@ export const HelpAndSupport = () => {
             Ask for help or export logs for troubleshooting
           </Paragraph>
           <Flex gap={8}>
-            <Button onClick={() => setSupportModalOpen(true)}>
+            <Button onClick={() => toggleSupportModal()}>
               Contact support
             </Button>
             <ExportLogsButton />
@@ -131,7 +136,7 @@ export const HelpAndSupport = () => {
           <Paragraph type="secondary" className="mb-0 text-sm">
             Tell us what you think about Pearl
           </Paragraph>
-          <Button type="primary" onClick={() => setFeedbackModalOpen(true)}>
+          <Button type="primary" onClick={() => setFeedbackModalOpen()}>
             Share Feedback
           </Button>
         </Flex>

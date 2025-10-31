@@ -10,8 +10,8 @@ import {
 } from 'antd';
 import type { Rule } from 'antd/es/form';
 import { UploadChangeParam } from 'antd/es/upload';
-import { delay } from 'lodash';
-import { useState } from 'react';
+import { delay, isNil } from 'lodash';
+import { useCallback, useState } from 'react';
 import { TbX } from 'react-icons/tb';
 import styled from 'styled-components';
 
@@ -23,7 +23,8 @@ import {
   TextArea,
 } from '@/components/ui';
 import { useElectronApi, useLogs } from '@/hooks';
-import { ZendeskService } from '@/service/Zendesk';
+import { SupportService } from '@/service/Support';
+import { Nullable } from '@/types';
 
 import { SuccessOutlined } from '../custom-icons';
 import { FileUploadWithList } from './FileUpload';
@@ -37,9 +38,9 @@ const VALIDATION_RULES: { [key: string]: Rule[] } = {
   ],
   SUBJECT: [{ required: true, message: 'Please enter a subject!' }],
   DESCRIPTION: [{ required: true, message: 'Please describe your issue!' }],
-};
+} as const;
 
-const SUPPORT_TAGS = ['pearl', 'support'];
+const SUPPORT_TAGS = ['pearl', 'support'] as const;
 
 const MODAL_CONTENT_STYLES: React.CSSProperties = {
   maxHeight: 640,
@@ -68,7 +69,7 @@ const ModalHeader = ({ onClose }: { onClose: () => void }) => (
     </Flex>
     <Text type="secondary" className="text-sm">
       Fill out the form below and the support team will get back to you via
-      email. The team usually responses within 2 business days.
+      email. The team usually responds within 2 business days.
     </Text>
   </Flex>
 );
@@ -105,9 +106,9 @@ export const SupportModal = ({
 
   const logs = useLogs();
   const [form] = Form.useForm<SupportModalFormValues>();
-  const { saveLogsForSupport, readFile, cleanupZendeskLogs } = useElectronApi();
+  const { saveLogsForSupport, readFile, cleanupSupportLogs } = useElectronApi();
 
-  const loadLogsFile = async (): Promise<FileDetails | null> => {
+  const loadLogsFile = useCallback(async (): Promise<Nullable<FileDetails>> => {
     if (!logs || !saveLogsForSupport || !readFile) return null;
 
     const result = await saveLogsForSupport(logs);
@@ -123,57 +124,80 @@ export const SupportModal = ({
     }
 
     return fileResult;
-  };
+  }, [logs, saveLogsForSupport, readFile]);
 
-  const uploadFilesToZendesk = async (
-    shouldIncludeLogs: boolean,
-  ): Promise<string[]> => {
-    const [attachments, logsFile] = await Promise.all([
-      formatAttachments(uploadedFiles),
-      shouldIncludeLogs ? loadLogsFile() : Promise.resolve(null),
-    ]);
-    const files = [...attachments, ...(logsFile ? [logsFile] : [])];
-
-    const uploadTokens = await Promise.all(
-      files.map(async (file) => {
-        const result = await ZendeskService.uploadFile(file);
+  const uploadFile = useCallback(
+    async (file: FileDetails): Promise<string | null> => {
+      try {
+        const result = await SupportService.uploadFile(file);
         if (!result.success) {
-          message.error(`Failed to upload ${file.fileName}`);
-          return null;
+          throw new Error(result.error);
         }
         return result.token;
-      }),
-    );
-
-    return uploadTokens.filter((token): token is string => token !== null);
-  };
-
-  const handleSubmit = async (values: SupportModalFormValues) => {
-    setIsSubmitting(true);
-    try {
-      const { email, subject, description, shouldShareLogs } = values;
-
-      const uploadTokens = await uploadFilesToZendesk(shouldShareLogs);
-      const createTicketResult = await ZendeskService.createTicket({
-        email,
-        subject,
-        description,
-        uploadTokens,
-        tags: SUPPORT_TAGS,
-      });
-
-      if (!createTicketResult.success) {
-        throw new Error(createTicketResult.error);
+      } catch (error) {
+        message.error(
+          error instanceof Error
+            ? error.message
+            : `Failed to upload file ${file.fileName}. Please try again.`,
+        );
+        return null;
       }
+    },
+    [],
+  );
 
-      setTicketId(createTicketResult.ticketId);
-    } catch (error) {
-      message.error('Failed to submit support request. Please try again.');
-    } finally {
-      await cleanupZendeskLogs?.();
-      setIsSubmitting(false);
-    }
-  };
+  const uploadFiles = useCallback(
+    async (shouldIncludeLogs: boolean): Promise<string[]> => {
+      const [attachments, logsFile] = await Promise.all([
+        formatAttachments(uploadedFiles),
+        shouldIncludeLogs ? loadLogsFile() : Promise.resolve(null),
+      ]);
+      const files = [...attachments, ...(logsFile ? [logsFile] : [])];
+
+      const uploadTokens = await Promise.all(
+        files.map(async (file) => {
+          return await uploadFile(file);
+        }),
+      );
+
+      return uploadTokens.filter((token): token is string => !isNil(token));
+    },
+    [uploadedFiles, loadLogsFile, uploadFile],
+  );
+
+  const handleSubmit = useCallback(
+    async (values: SupportModalFormValues) => {
+      setIsSubmitting(true);
+      try {
+        const { email, subject, description, shouldShareLogs } = values;
+
+        const uploadTokens = await uploadFiles(shouldShareLogs);
+        const createTicketResult = await SupportService.createTicket({
+          email,
+          subject,
+          description,
+          uploadTokens,
+          tags: [...SUPPORT_TAGS],
+        });
+
+        if (!createTicketResult.success) {
+          throw new Error(createTicketResult.error);
+        }
+
+        setTicketId(createTicketResult.ticketId);
+      } catch (error) {
+        message.error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to submit support request. Please try again.',
+        );
+      } finally {
+        await cleanupSupportLogs?.();
+        setIsSubmitting(false);
+      }
+    },
+    [uploadFiles, cleanupSupportLogs],
+  );
 
   const resetFormFields = () => {
     form.resetFields();

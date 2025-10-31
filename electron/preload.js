@@ -48,7 +48,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveLogs: (data) => ipcRenderer.invoke('save-logs', data),
   saveLogsForSupport: (data) =>
     ipcRenderer.invoke('save-logs-for-support', data),
-  cleanupZendeskLogs: () => ipcRenderer.invoke('cleanup-zendesk-logs'),
+  cleanupSupportLogs: () => ipcRenderer.invoke('cleanup-support-logs'),
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
   openPath: (filePath) => ipcRenderer.send('open-path', filePath),
   getAppVersion: () => ipcRenderer.invoke('app-version'),
