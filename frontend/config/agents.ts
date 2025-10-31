@@ -7,6 +7,7 @@ import {
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
 } from '@/constants/serviceTemplates';
+import { X402_ENABLED_FLAGS } from '@/constants/x402';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
@@ -55,6 +56,7 @@ export const AGENT_CONFIG: {
   [AgentMap.PredictTrader]: {
     isAgentEnabled: true,
     requiresSetup: true,
+    isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PredictTrader],
     name: 'Predict Trader',
     evmHomeChainId: EvmChainId.Gnosis,
     middlewareHomeChainId: MiddlewareChain.GNOSIS,
@@ -75,6 +77,7 @@ export const AGENT_CONFIG: {
     isAgentEnabled: true,
     isComingSoon: false,
     requiresSetup: true,
+    isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Optimus],
     name: 'Optimus agent',
     evmHomeChainId: EvmChainId.Optimism,
     middlewareHomeChainId: MiddlewareChain.OPTIMISM,
@@ -100,6 +103,7 @@ export const AGENT_CONFIG: {
     isUnderConstruction: true,
     isComingSoon: false,
     requiresSetup: true,
+    isX402Enabled: X402_ENABLED_FLAGS[AgentMap.AgentsFun],
     name: 'Agents.fun agent',
     evmHomeChainId: EvmChainId.Base,
     middlewareHomeChainId: MiddlewareChain.BASE,
@@ -120,6 +124,7 @@ export const AGENT_CONFIG: {
     isUnderConstruction: true,
     isComingSoon: false,
     requiresSetup: true,
+    isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Modius],
     name: 'Modius agent',
     evmHomeChainId: EvmChainId.Mode,
     agentIds: [40],
