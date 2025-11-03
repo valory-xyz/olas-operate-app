@@ -1,5 +1,5 @@
 import Tooltip, { TooltipProps } from 'antd/es/tooltip';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { LuInfo } from 'react-icons/lu';
 
 import { COLOR } from '@/constants/colors';
