@@ -41,7 +41,7 @@ export const SwitchingContractModal = ({
     : 'Contract Switched Successfully!';
   const description = isSwitchingContract
     ? 'Your agent is switching contracts. It usually takes up to 5 min. Please keep the app open until the process is complete.'
-    : `Your ${selectedAgentConfig.displayName} ${agentName} is now staked on ${stakingProgramMeta?.name} staking contract.`;
+    : `Your ${selectedAgentConfig.displayName} agent ${agentName} is now staked on ${stakingProgramMeta?.name} staking contract.`;
 
   return (
     <Modal
