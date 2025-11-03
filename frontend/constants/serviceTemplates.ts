@@ -134,6 +134,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.USER,
     },
+    FUND_REQUIREMENTS: {
+      name: 'Fund requirements',
+      description: 'Fund requirements for agent and safe',
+      value: '{"gnosis":{"agent":{"0x0000000000000000000000000000000000000000":{"topup":350000000000000000,"threshold":210000000000000000}},"safe":{"0x0000000000000000000000000000000000000000":{"topup":5000000000000000000,"threshold":1000000000000000000},"0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d":{"topup":0,"threshold":0}}}}',
+      provision_type: EnvProvisionType.FIXED,
+    },
     USE_X402: {
       name: 'Use x402',
       description:
