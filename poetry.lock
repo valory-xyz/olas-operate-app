@@ -1726,17 +1726,17 @@ websockets = ["websockets (>=10,<12)"]
 
 [[package]]
 name = "graphql-core"
-version = "3.2.6"
+version = "3.2.7"
 description = "GraphQL implementation for Python, a port of GraphQL.js, the JavaScript reference implementation for GraphQL."
 optional = false
-python-versions = "<4,>=3.6"
+python-versions = "<4,>=3.7"
 files = [
-    {file = "graphql_core-3.2.6-py3-none-any.whl", hash = "sha256:78b016718c161a6fb20a7d97bbf107f331cd1afe53e45566c59f776ed7f0b45f"},
-    {file = "graphql_core-3.2.6.tar.gz", hash = "sha256:c08eec22f9e40f0bd61d805907e3b3b1b9a320bc606e23dc145eebca07c8fbab"},
+    {file = "graphql_core-3.2.7-py3-none-any.whl", hash = "sha256:17fc8f3ca4a42913d8e24d9ac9f08deddf0a0b2483076575757f6c412ead2ec0"},
+    {file = "graphql_core-3.2.7.tar.gz", hash = "sha256:27b6904bdd3b43f2a0556dad5d579bdfdeab1f38e8e8788e555bdcb586a6f62c"},
 ]
 
 [package.dependencies]
-typing-extensions = {version = ">=4,<5", markers = "python_version < \"3.10\""}
+typing-extensions = {version = ">=4.7,<5", markers = "python_version < \"3.10\""}
 
 [[package]]
 name = "grpcio"
@@ -2594,8 +2594,8 @@ web3 = "6.20.4"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "60f954893751e35f8cabf6e0c854ebc25f4451ec"
-resolved_reference = "60f954893751e35f8cabf6e0c854ebc25f4451ec"
+reference = "2053921d05921e7045197a39248a8acb815e15df"
+resolved_reference = "2053921d05921e7045197a39248a8acb815e15df"
 
 [[package]]
 name = "open-aea"
@@ -4455,4 +4455,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "f366c489b9647654c9d43c4138565cb732ea728033ea884194e5020b8f138925"
+content-hash = "802c422f6bd121df56fb8aaffb44c71a480ef8f60d58397678980f5da64eecb0"
