@@ -51,10 +51,10 @@ const UnderConstructionAlert = () => (
     message={
       <Flex justify="space-between" gap={4} vertical>
         <Text className="text-sm font-weight-500">Agent Under Development</Text>
-        <div className="text-sm">
+        <Text className="text-sm">
           The agent is unavailable due to technical issues for an unspecified
           time.
-        </div>
+        </Text>
       </Flex>
     }
   />

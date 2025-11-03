@@ -1,20 +1,51 @@
 import { Button, Flex, Typography } from 'antd';
+import { useMemo } from 'react';
 
 import { Alert } from '@/components/ui';
-import { MiddlewareDeploymentStatusMap } from '@/constants';
 import { Pages } from '@/enums/Pages';
+import { useServiceBalances } from '@/hooks';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 
 const { Text } = Typography;
 
 export const UnderConstructionAlert = () => {
-  const { selectedService } = useServices();
-  const selectedServiceStatus = selectedService?.deploymentStatus;
   const { goto } = usePageState();
+  const { selectedService } = useServices();
+  const {
+    serviceSafeNativeBalances,
+    serviceSafeErc20Balances,
+    serviceEoaNativeBalance,
+    serviceSafeOlas,
+  } = useServiceBalances(selectedService?.service_config_id);
 
-  const isWithdrawn =
-    selectedServiceStatus === MiddlewareDeploymentStatusMap.DELETED;
+  const isWithdrawn = useMemo(() => {
+    if (
+      !serviceSafeErc20Balances ||
+      !serviceSafeNativeBalances ||
+      !serviceEoaNativeBalance ||
+      !serviceSafeOlas
+    )
+      return false;
+
+    const allNativeSafeZero = serviceSafeNativeBalances.every(
+      (b) => b.balanceString === '0',
+    );
+    const allErc20SafeZero = serviceSafeErc20Balances.every(
+      (b) => b.balanceString === '0',
+    );
+    const eoaNativeZero = serviceEoaNativeBalance.balanceString === '0';
+    const safeOlasZero = serviceSafeOlas.balanceString === '0';
+
+    return (
+      allNativeSafeZero && allErc20SafeZero && eoaNativeZero && safeOlasZero
+    );
+  }, [
+    serviceSafeNativeBalances,
+    serviceSafeErc20Balances,
+    serviceEoaNativeBalance,
+    serviceSafeOlas,
+  ]);
 
   return (
     <Alert
