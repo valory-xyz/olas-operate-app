@@ -61,7 +61,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
     );
-  const isLoading = isNativeTokenLoading || isFiatLoading || !fiatAmount;
+  const isLoading = isNativeTokenLoading || isFiatLoading;
 
   return (
     <FundMethodCard>
@@ -74,6 +74,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
         <TokenRequirements
           fiatAmount={fiatAmount ?? 0}
           isLoading={isLoading}
+          hasError={hasNativeTokenError}
           fundType="onRamp"
         />
       </div>
@@ -81,7 +82,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
         type="primary"
         size="large"
         onClick={() => goto(SetupScreen.SetupOnRamp)}
-        disabled={isLoading}
+        disabled={isLoading || hasNativeTokenError}
       >
         Buy Crypto with USD
       </Button>
