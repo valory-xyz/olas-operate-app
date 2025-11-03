@@ -34,8 +34,6 @@ const createTermsAndConditionsWindow = async (hash) => {
       return { action: 'deny' };
     });
 
-    console.log('hash', hash);
-
     const termsUrl = `https://olas.network/pearl-terms?hideLayout=true${hash ? `#${hash}` : ''}`;
     logger.electron(`Terms URL: ${termsUrl}`);
     termsAndConditionsWindow.loadURL(termsUrl).then(() => {
