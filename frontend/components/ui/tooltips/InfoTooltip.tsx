@@ -1,5 +1,5 @@
 import Tooltip, { TooltipProps } from 'antd/es/tooltip';
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { LuInfo } from 'react-icons/lu';
 
 import { COLOR } from '@/constants/colors';
@@ -15,7 +15,7 @@ export const InfoTooltip = ({
   overlayInnerStyle,
   ...rest
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   iconSize?: number;
   iconColor?: string;
   size?: 'small' | 'medium';
@@ -28,10 +28,7 @@ export const InfoTooltip = ({
       arrow={false}
       title={children}
       placement={placement}
-      overlayInnerStyle={{
-        width: bodyWidth,
-        ...overlayInnerStyle,
-      }}
+      overlayInnerStyle={{ width: bodyWidth, ...overlayInnerStyle }}
       {...rest}
     >
       <LuInfo size={iconSize} color={iconColor} style={DEFAULT_ICON_STYLES} />

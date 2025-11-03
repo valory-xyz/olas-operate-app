@@ -1,6 +1,7 @@
 import { Tooltip as AntdTooltip, TooltipProps } from 'antd';
+import { CSSProperties } from 'styled-components';
 
-const overlayInnerStyle: React.CSSProperties = {
+const overlayInnerStyle: CSSProperties = {
   padding: '12px 16px',
   borderRadius: 16,
   boxShadow:
