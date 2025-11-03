@@ -154,7 +154,6 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         termsAndConditionsWindow: {
           show: getElectronApiFunction('termsAndConditionsWindow.show'),
-          close: getElectronApiFunction('termsAndConditionsWindow.close'),
         },
         logEvent: getElectronApiFunction('logEvent'),
       }}
