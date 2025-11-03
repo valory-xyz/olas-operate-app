@@ -74,6 +74,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
         <TokenRequirements
           fiatAmount={fiatAmount ?? 0}
           isLoading={isLoading}
+          hasError={hasNativeTokenError}
           fundType="onRamp"
         />
       </div>
