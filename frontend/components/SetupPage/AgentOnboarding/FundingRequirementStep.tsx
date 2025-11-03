@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { TbCreditCardFilled } from 'react-icons/tb';
 
 import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
-import { UnderConstructionAlert } from '@/components/alerts';
+import { Alert } from '@/components/ui';
 import { AGENT_CONFIG } from '@/config/agents';
 import {
   AgentType,
@@ -16,6 +16,24 @@ import { useFundingRequirements } from '@/hooks';
 import { asEvmChainDetails } from '@/utils';
 
 const { Text, Title } = Typography;
+
+const UnderConstructionAlert = () => (
+  <Alert
+    type="warning"
+    fullWidth={false}
+    showIcon
+    className="rounded-12"
+    message={
+      <Flex justify="space-between" gap={4} vertical>
+        <Text className="text-sm font-weight-500">Agent Under Development</Text>
+        <Text className="text-sm">
+          The agent is unavailable due to technical issues for an unspecified
+          time.
+        </Text>
+      </Flex>
+    }
+  />
+);
 
 type HeaderProps = {
   agentType: AgentType;
@@ -179,7 +197,7 @@ export const FundingRequirementStep = ({
         />
         {isUnderConstruction ? (
           <div style={{ marginBottom: 300 }}>
-            <UnderConstructionAlert fullWidth={false} className="rounded-12" />
+            <UnderConstructionAlert />
           </div>
         ) : (
           <>
