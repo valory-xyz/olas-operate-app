@@ -82,7 +82,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
         type="primary"
         size="large"
         onClick={() => goto(SetupScreen.SetupOnRamp)}
-        disabled={isLoading}
+        disabled={isLoading || hasNativeTokenError}
       >
         Buy Crypto with USD
       </Button>
