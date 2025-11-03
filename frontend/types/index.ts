@@ -10,7 +10,7 @@ export * from './Epoch';
 export * from './Funding';
 export * from './Records';
 export * from './Service';
-export * from './StakingProgram';
+// export * from './StakingProgram'; // TODO: enabled after moving StakingProgram from enum
 export * from './TransactionInfo';
 export * from './Util';
 export * from './Wallet';
