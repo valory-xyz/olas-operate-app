@@ -1,7 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 import { useMemo } from 'react';
 
-import { AgentLowBalanceAlert } from '@/components/alerts';
+import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
 import { Alert, BackButton, CardFlex, Tooltip } from '@/components/ui';
 import { Pages } from '@/enums/Pages';
 import {

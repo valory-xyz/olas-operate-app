@@ -5,8 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
-import { UnderConstructionAlert } from '@/components/alerts';
-import { BackButton } from '@/components/ui';
+import { Alert, BackButton } from '@/components/ui';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
 import { Pages, SetupScreen } from '@/enums';
@@ -43,6 +42,23 @@ const AgentSelectionContainer = styled(Flex)<{ active?: boolean }>`
     background-color: ${COLOR.GRAY_1};
   }
 `;
+
+const UnderConstructionAlert = () => (
+  <Alert
+    type="warning"
+    fullWidth
+    showIcon
+    message={
+      <Flex justify="space-between" gap={4} vertical>
+        <Text className="text-sm font-weight-500">Agent Under Development</Text>
+        <Text className="text-sm">
+          The agent is unavailable due to technical issues for an unspecified
+          time.
+        </Text>
+      </Flex>
+    }
+  />
+);
 
 const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
   const { goto } = usePageState();
