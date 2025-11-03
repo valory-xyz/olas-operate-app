@@ -9,10 +9,10 @@ import {
   Address,
   AgentPerformance,
   DeepPartial,
-  Deployment,
   MiddlewareServiceResponse,
   Nullable,
   ServiceConfigId,
+  ServiceDeployment,
   ServiceTemplate,
   ServiceValidationResponse,
 } from '@/types';
@@ -158,7 +158,7 @@ const startService = async (
 
 const stopDeployment = async (
   serviceConfigId: string,
-): Promise<Pick<Deployment, 'status' | 'nodes'>> =>
+): Promise<Pick<ServiceDeployment, 'status' | 'nodes'>> =>
   fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/deployment/stop`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
@@ -174,7 +174,7 @@ const stopDeployment = async (
  */
 const getAllServiceDeployments = async (
   signal?: AbortSignal,
-): Promise<Record<ServiceConfigId, Deployment>> =>
+): Promise<Record<ServiceConfigId, ServiceDeployment>> =>
   fetch(`${BACKEND_URL_V2}/services/deployment`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
@@ -193,7 +193,7 @@ const getDeployment = async ({
 }: {
   serviceConfigId: ServiceConfigId;
   signal: AbortSignal;
-}): Promise<Deployment> =>
+}): Promise<ServiceDeployment> =>
   fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/deployment`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },

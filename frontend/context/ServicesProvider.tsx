@@ -41,12 +41,12 @@ import {
 import { ServicesService } from '@/service/Services';
 import {
   AgentConfig,
-  Deployment,
   Maybe,
   MiddlewareServiceResponse,
   Nullable,
   Optional,
   Service,
+  ServiceDeployment,
   ServiceValidationResponse,
 } from '@/types';
 import { asEvmChainId, isNilOrEmpty } from '@/utils';
@@ -76,7 +76,7 @@ type ServicesContextType = {
   isSelectedServiceDeploymentStatusLoading: boolean;
   selectedAgentConfig: AgentConfig;
   selectedAgentType: AgentType;
-  deploymentDetails: Deployment | undefined;
+  deploymentDetails: ServiceDeployment | undefined;
   updateAgentType: (agentType: AgentType) => void;
   overrideSelectedServiceStatus: (
     status?: Maybe<MiddlewareDeploymentStatus>,

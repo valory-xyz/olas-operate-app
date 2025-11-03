@@ -88,7 +88,7 @@ type AgentHealthCheckResponse = {
   seconds_since_last_transition: number;
 };
 
-export type Deployment = {
+export type ServiceDeployment = {
   status: MiddlewareDeploymentStatus;
   nodes: DeployedNodes;
   healthcheck: AgentHealthCheckResponse;
