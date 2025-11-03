@@ -27,6 +27,12 @@ const OwnYourAgentCard = styled(Flex)`
   border-radius: 8px;
 `;
 
+const CustomCheckbox = styled(Checkbox)`
+  .ant-checkbox {
+    align-self: start;
+  }
+`;
+
 const ownYourAgentsList = [
   'This is open-source software, you can inspect it all.',
   'You are self-custodying your agents, they are yours and yours only.',
@@ -57,7 +63,7 @@ export const SetupWelcomeCreate = () => {
   const onTermsClick = useCallback(
     (e: MouseEvent) => {
       e.preventDefault();
-      termsAndConditionsWindow?.show?.('pearl');
+      termsAndConditionsWindow?.show?.();
     },
     [termsAndConditionsWindow],
   );
@@ -69,10 +75,16 @@ export const SetupWelcomeCreate = () => {
       </Title>
       <OwnYourAgents />
 
-      <Checkbox onChange={(e) => setIsFormValid(e.target.checked)}>
-        I agree to the Pearl&nbsp;
-        <a onClick={onTermsClick}>Terms & Conditions</a>
-      </Checkbox>
+      <CustomCheckbox
+        onChange={(e) => setIsFormValid(e.target.checked)}
+        className="text-xs text-neutral-tertiary"
+      >
+        By downloading, installing, or using the Pearl Application, I
+        acknowledge and agree to be bound by the{' '}
+        <a onClick={onTermsClick}>Pearl Terms</a>, including the related terms
+        and privacy policies of Valory, Web3Auth, Transak and the Olas Site.{' '}
+        {''}
+      </CustomCheckbox>
 
       <Flex vertical gap={16}>
         <Button
