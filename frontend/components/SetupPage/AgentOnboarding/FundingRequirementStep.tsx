@@ -13,7 +13,7 @@ import {
   TokenSymbolMap,
 } from '@/constants';
 import { useFundingRequirements } from '@/hooks';
-import { asEvmChainDetails, formatNumber } from '@/utils';
+import { asEvmChainDetails } from '@/utils';
 
 const { Text, Title } = Typography;
 
@@ -133,7 +133,7 @@ const MinimumFundingRequirements = ({
           <Flex key={token} gap={8} align="flex-start">
             <Image src={icon} alt={`${token} token`} width={20} height={20} />
             <Text className="leading-normal">
-              {formatNumber(amount, 4)} {token}
+              {amount} {token}
             </Text>
           </Flex>
         ))}
