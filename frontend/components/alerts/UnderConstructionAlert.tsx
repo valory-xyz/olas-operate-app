@@ -8,7 +8,17 @@ import { useSharedContext } from '@/hooks/useSharedContext';
 
 const { Text } = Typography;
 
-export const UnderConstructionAlert = ({ showMoreInfo = false }) => {
+type UnderConstructionAlertProps = {
+  showMoreInfo?: boolean;
+  fullWidth?: boolean;
+  className?: string;
+};
+
+export const UnderConstructionAlert = ({
+  showMoreInfo = false,
+  fullWidth = true,
+  className,
+}: UnderConstructionAlertProps) => {
   const { selectedAgentConfig } = useServices();
   const { goto } = usePageState();
   const { mainOlasBalance } = useSharedContext();
@@ -20,7 +30,8 @@ export const UnderConstructionAlert = ({ showMoreInfo = false }) => {
   return (
     <Alert
       type="warning"
-      fullWidth
+      fullWidth={fullWidth}
+      className={className}
       showIcon
       message={
         <Flex justify="space-between" gap={4} vertical>

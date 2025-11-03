@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { TbCreditCardFilled } from 'react-icons/tb';
 
 import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
+import { UnderConstructionAlert } from '@/components/alerts';
 import { AGENT_CONFIG } from '@/config/agents';
 import {
   AgentType,
@@ -12,7 +13,7 @@ import {
   TokenSymbolMap,
 } from '@/constants';
 import { useFundingRequirements } from '@/hooks';
-import { asEvmChainDetails } from '@/utils';
+import { asEvmChainDetails, formatNumber } from '@/utils';
 
 const { Text, Title } = Typography;
 
@@ -132,7 +133,7 @@ const MinimumFundingRequirements = ({
           <Flex key={token} gap={8} align="flex-start">
             <Image src={icon} alt={`${token} token`} width={20} height={20} />
             <Text className="leading-normal">
-              {amount} {token}
+              {formatNumber(amount, 4)} {token}
             </Text>
           </Flex>
         ))}
@@ -163,6 +164,7 @@ export const FundingRequirementStep = ({
     displayName: agentName,
     middlewareHomeChainId,
     category,
+    isUnderConstruction,
   } = AGENT_CONFIG[agentType];
   const { name, displayName } = asEvmChainDetails(middlewareHomeChainId);
 
@@ -175,10 +177,18 @@ export const FundingRequirementStep = ({
           category={category}
           desc={desc}
         />
-        <OperatingChain chainName={name} chainDisplayName={displayName} />
-        <MinimumStakingRequirements agentType={agentType} />
-        <MinimumFundingRequirements agentType={agentType} />
-        <YouCanCoverAllRequirements />
+        {isUnderConstruction ? (
+          <div style={{ marginBottom: 300 }}>
+            <UnderConstructionAlert fullWidth={false} className="rounded-12" />
+          </div>
+        ) : (
+          <>
+            <OperatingChain chainName={name} chainDisplayName={displayName} />
+            <MinimumStakingRequirements agentType={agentType} />
+            <MinimumFundingRequirements agentType={agentType} />
+            <YouCanCoverAllRequirements />
+          </>
+        )}
       </Flex>
     </IntroductionAnimatedContainer>
   );

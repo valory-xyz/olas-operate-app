@@ -23,6 +23,9 @@ export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
 
 export const AGENTS_FUN_ONBOARDING_STEPS: OnboardingStep[] = [
   {
+    desc: 'An autonomous AI agent that acts as your influencer on X, creating content, engaging with audiences, and continuously refining its persona.',
+  },
+  {
     title: 'Your personal AI influencer',
     desc: 'Create a custom persona, and your agent will post autonomously on X, crafting engaging content to match the character you design',
     imgSrc: 'setup-agent-agents.fun-1',
@@ -45,7 +48,6 @@ export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
   {
     desc: 'An autonomous AI agent designed to streamline your DeFi experience by intelligently managing your assets across the Superchain.',
   },
-
   {
     title: 'Your AI portfolio manager',
     desc: 'Modius collects real-time market data from CoinGecko and autonomously manages your investments using Balancer, Sturdy and Velodrome — delivering hands-free portfolio growth. Requires ETH and USDC on Mode as initial investments.',

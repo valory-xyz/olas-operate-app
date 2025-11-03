@@ -543,6 +543,11 @@ textarea,
   margin-right: auto !important;
 }
 
+.mx-20 {
+  margin-left: 20px !important;
+  margin-right: 20px !important;
+}
+
 .mr-4 {
   margin-right: 4px !important;
 }
@@ -554,6 +559,10 @@ textarea,
 // radius
 .rounded-8 {
   border-radius: 8px
+}
+
+.rounded-12 {
+  border-radius: 12px
 }
 
 // font size
