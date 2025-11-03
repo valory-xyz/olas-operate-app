@@ -102,7 +102,7 @@ const SelectYourAgentList = ({
         style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
       />
       <Flex>
-        <Text>{`${agentConfig.displayName} agent`}</Text>
+        <Text>{agentConfig.displayName}</Text>
       </Flex>
     </AgentSelectionContainer>
   ));
