@@ -1,6 +1,9 @@
-import { StakingProgramStatus } from '@/enums/StakingProgramStatus';
-
 import { Address } from './Address';
+
+enum StakingProgramStatus {
+  Active = 'current',
+  Default = 'default',
+}
 
 export type StakingProgram = {
   name: string;
