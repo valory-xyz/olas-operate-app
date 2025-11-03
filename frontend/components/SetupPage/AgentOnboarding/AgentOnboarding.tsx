@@ -96,13 +96,13 @@ const SelectYourAgentList = ({
     >
       <Image
         src={`/agent-${agentType}-icon.png`}
-        alt={agentConfig.displayName}
+        alt={`${agentConfig.displayName} icon`}
         width={36}
         height={36}
         style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
       />
       <Flex>
-        <Text>{agentConfig.displayName}</Text>
+        <Text>{`${agentConfig.displayName} agent`}</Text>
       </Flex>
     </AgentSelectionContainer>
   ));

@@ -181,9 +181,15 @@ export const Sidebar = () => {
 
       const [agentType, agentConfig] = agent as [AgentType, AgentConfig];
       if (!agentConfig.evmHomeChainId) return result;
+
       const chainId = agentConfig.evmHomeChainId;
       const chainName = CHAIN_CONFIG[chainId].name;
-      result.push({ name: agentConfig.name, agentType, chainName, chainId });
+      result.push({
+        name: agentConfig.displayName,
+        agentType,
+        chainName,
+        chainId,
+      });
       return result;
     }, []);
   }, [services]);
