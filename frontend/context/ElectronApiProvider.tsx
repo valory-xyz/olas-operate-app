@@ -56,7 +56,7 @@ type ElectronApiContextProps = {
     authSuccess?: (address: Address) => void;
   };
   termsAndConditionsWindow?: {
-    show?: (type: 'transak' | 'web3auth' | 'pearl') => void;
+    show?: (hash?: string) => void;
     close?: () => void;
   };
   logEvent?: (message: string) => void;
