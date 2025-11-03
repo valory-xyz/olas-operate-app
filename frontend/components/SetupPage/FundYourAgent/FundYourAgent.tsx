@@ -61,7 +61,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
     );
-  const isLoading = isNativeTokenLoading || isFiatLoading || !fiatAmount;
+  const isLoading = isNativeTokenLoading || isFiatLoading;
 
   return (
     <FundMethodCard>

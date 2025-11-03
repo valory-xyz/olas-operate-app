@@ -111,8 +111,8 @@ export const TokenRequirements = ({
   hasError,
   fundType,
 }: TokenRequirementsProps) => {
-  if (hasError) return <RequirementsError />;
   if (isLoading) return <RequirementsSkeleton />;
+  if (hasError) return <RequirementsError />;
 
   if (fundType === 'onRamp') {
     return <RequirementsForOnRamp fiatAmount={fiatAmount?.toFixed(2) ?? '0'} />;
