@@ -2,10 +2,10 @@ import { Button, Flex, Typography } from 'antd';
 import { isEmpty } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
+import { LuConstruction } from 'react-icons/lu';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
-import { UnderConstructionAlert } from '@/components/alerts';
 import { BackButton } from '@/components/ui';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
@@ -44,6 +44,13 @@ const AgentSelectionContainer = styled(Flex)<{ active?: boolean }>`
   }
 `;
 
+const UnderConstructionIcon = styled(LuConstruction)`
+  padding: 6px;
+  border-radius: 8px;
+  color: ${COLOR.TEXT_COLOR.WARNING.DEFAULT};
+  background-color: ${COLOR.BG.WARNING.DEFAULT};
+`;
+
 const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
   const { goto } = usePageState();
   return (
@@ -73,9 +80,6 @@ const SelectYourAgentList = ({
 }: SelectYourAgentListProps) => {
   const { services } = useServices();
   const agents = useMemo(() => {
-    const isActive = ([, agentConfig]: [string, AgentConfig]) =>
-      !agentConfig.isUnderConstruction;
-
     const isNotInServices = ([, agentConfig]: [string, AgentConfig]) =>
       !services?.some(
         ({ service_public_id, home_chain }) =>
@@ -83,7 +87,7 @@ const SelectYourAgentList = ({
           home_chain === agentConfig.middlewareHomeChainId,
       );
 
-    return ACTIVE_AGENTS.filter(isActive).filter(isNotInServices);
+    return ACTIVE_AGENTS.filter(isNotInServices);
   }, [services]);
 
   return agents.map(([agentType, agentConfig]) => (
@@ -96,14 +100,13 @@ const SelectYourAgentList = ({
     >
       <Image
         src={`/agent-${agentType}-icon.png`}
-        alt={agentConfig.displayName}
+        alt={`${agentConfig.displayName} icon`}
         width={36}
         height={36}
         style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
       />
-      <Flex>
-        <Text>{agentConfig.displayName}</Text>
-      </Flex>
+      <Text>{agentConfig.displayName}</Text>
+      {agentConfig.isUnderConstruction && <UnderConstructionIcon />}
     </AgentSelectionContainer>
   ));
 };
@@ -143,6 +146,10 @@ export const AgentOnboarding = () => {
     [updateAgentType],
   );
 
+  const canSelectAgent = selectedAgent
+    ? !AGENT_CONFIG[selectedAgent].isUnderConstruction
+    : false;
+
   return (
     <Container>
       <Flex vertical className="agent-selection-left-content">
@@ -161,17 +168,20 @@ export const AgentOnboarding = () => {
               <FundingRequirementStep agentType={selectedAgent} desc={desc} />
             ) : null
           }
-          renderAgentSelection={() => (
-            <Button
-              type="primary"
-              block
-              size="large"
-              onClick={handleAgentSelect}
-            >
-              Select Agent
-            </Button>
-          )}
-          renderUnderConstruction={() => <UnderConstructionAlert />}
+          renderAgentSelection={
+            canSelectAgent
+              ? () => (
+                  <Button
+                    onClick={handleAgentSelect}
+                    type="primary"
+                    block
+                    size="large"
+                  >
+                    Select Agent
+                  </Button>
+                )
+              : undefined
+          }
         />
       </Flex>
     </Container>
