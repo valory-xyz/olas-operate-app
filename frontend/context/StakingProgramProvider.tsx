@@ -1,17 +1,9 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { isNil } from 'lodash';
-import {
-  createContext,
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import { createContext, PropsWithChildren, useEffect, useState } from 'react';
 
 import { DEFAULT_STAKING_PROGRAM_IDS } from '@/config/stakingPrograms';
-import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { StakingProgramId } from '@/enums/StakingProgram';
+import { useActiveStakingProgramId } from '@/hooks/useActiveStakingProgramId';
 import { useServices } from '@/hooks/useServices';
 import { Maybe, Nullable } from '@/types/Util';
 
@@ -21,67 +13,17 @@ export const StakingProgramContext = createContext<{
   defaultStakingProgramId?: Maybe<StakingProgramId>;
   selectedStakingProgramId: Nullable<StakingProgramId>;
   setDefaultStakingProgramId: (stakingProgramId: StakingProgramId) => void;
+  stakingProgramIdToMigrateTo: Nullable<StakingProgramId>;
+  setStakingProgramIdToMigrateTo: (
+    stakingProgramId: Nullable<StakingProgramId>,
+  ) => void;
 }>({
   isActiveStakingProgramLoaded: false,
   selectedStakingProgramId: null,
   setDefaultStakingProgramId: () => {},
+  stakingProgramIdToMigrateTo: null,
+  setStakingProgramIdToMigrateTo: () => {},
 });
-
-/**
- * hook to get the active staking program id
- */
-const useGetActiveStakingProgramId = (serviceNftTokenId: Maybe<number>) => {
-  const queryClient = useQueryClient();
-  const { selectedAgentConfig, isFetched: isServicesLoaded } = useServices();
-
-  const { serviceApi, evmHomeChainId } = selectedAgentConfig;
-
-  const response = useQuery({
-    queryKey: REACT_QUERY_KEYS.STAKING_PROGRAM_KEY(
-      evmHomeChainId,
-      serviceNftTokenId!,
-    ),
-    queryFn: async () => {
-      if (!serviceNftTokenId) return null;
-      if (!Number(serviceNftTokenId)) return null;
-
-      const currentStakingProgramId =
-        await serviceApi.getCurrentStakingProgramByServiceId(
-          serviceNftTokenId,
-          evmHomeChainId,
-        );
-
-      return (
-        currentStakingProgramId ||
-        DEFAULT_STAKING_PROGRAM_IDS[selectedAgentConfig.evmHomeChainId]
-      );
-    },
-    enabled: !isNil(evmHomeChainId) && isServicesLoaded && !!serviceNftTokenId,
-    refetchInterval: FIVE_SECONDS_INTERVAL,
-  });
-
-  const setActiveStakingProgramId = useCallback(
-    (stakingProgramId: Nullable<StakingProgramId>) => {
-      if (!serviceNftTokenId)
-        throw new Error(
-          'serviceNftTokenId is required to set the active staking program id',
-        );
-      if (!stakingProgramId)
-        throw new Error(
-          'stakingProgramId is required to set the active staking program id',
-        );
-
-      // update the active staking program id in the cache
-      queryClient.setQueryData(
-        REACT_QUERY_KEYS.STAKING_PROGRAM_KEY(evmHomeChainId, serviceNftTokenId),
-        stakingProgramId,
-      );
-    },
-    [queryClient, evmHomeChainId, serviceNftTokenId],
-  );
-
-  return { ...response, setActiveStakingProgramId };
-};
 
 /**
  * context provider responsible for determining the current active staking program based on the service.
@@ -99,6 +41,9 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     DEFAULT_STAKING_PROGRAM_IDS[selectedAgentConfig.evmHomeChainId],
   );
 
+  const [stakingProgramIdToMigrateTo, setStakingProgramIdToMigrateTo] =
+    useState<Nullable<StakingProgramId>>(null);
+
   useEffect(() => {
     setDefaultStakingProgramId(
       DEFAULT_STAKING_PROGRAM_IDS[selectedAgentConfig.evmHomeChainId],
@@ -110,8 +55,10 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     : selectedService.chain_configs?.[selectedService?.home_chain]?.chain_data
         ?.token;
 
-  const { isLoading, data: activeStakingProgramId } =
-    useGetActiveStakingProgramId(serviceNftTokenId);
+  const { isLoading, data: activeStakingProgramId } = useActiveStakingProgramId(
+    serviceNftTokenId,
+    selectedAgentConfig,
+  );
 
   const selectedStakingProgramId = isLoading
     ? null
@@ -125,6 +72,8 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
         defaultStakingProgramId,
         selectedStakingProgramId,
         setDefaultStakingProgramId,
+        stakingProgramIdToMigrateTo,
+        setStakingProgramIdToMigrateTo,
       }}
     >
       {children}

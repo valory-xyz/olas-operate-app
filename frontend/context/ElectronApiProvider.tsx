@@ -2,17 +2,7 @@ import { get } from 'lodash';
 import { createContext, PropsWithChildren } from 'react';
 
 import { Address } from '@/types/Address';
-import { AgentHealthCheckResponse } from '@/types/Agent';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
-
-type ElectronApiAgentActivityWindow = {
-  init: () => Promise<void>;
-  goto: (url: string) => Promise<void>;
-  hide: () => void;
-  show: () => void;
-  close: () => void;
-  minimize: () => void;
-};
 
 type ElectronApiContextProps = {
   getAppVersion?: () => Promise<string>;
@@ -43,7 +33,6 @@ type ElectronApiContextProps = {
     delete?: (key: string) => Promise<void>;
     clear?: () => Promise<void>;
   };
-  setAppHeight?: (height: unknown) => void;
   notifyAgentRunning?: () => void;
   showNotification?: (title: string, body?: string) => void;
   saveLogs?: (data: {
@@ -51,10 +40,6 @@ type ElectronApiContextProps = {
     debugData?: Record<string, unknown>;
   }) => Promise<{ success: true; dirPath: string } | { success?: false }>;
   openPath?: (filePath: string) => void;
-  healthCheck?: () => Promise<
-    { response: AgentHealthCheckResponse | null } | { error: string }
-  >;
-  agentActivityWindow?: Partial<ElectronApiAgentActivityWindow>;
   onRampWindow?: {
     show?: (amountToPay: number) => void;
     close?: () => void;
@@ -71,7 +56,7 @@ type ElectronApiContextProps = {
     authSuccess?: (address: Address) => void;
   };
   termsAndConditionsWindow?: {
-    show?: (type: 'transak' | 'web3auth') => void;
+    show?: (hash?: string) => void;
     close?: () => void;
   };
   logEvent?: (message: string) => void;
@@ -96,18 +81,8 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     delete: async () => {},
     clear: async () => {},
   },
-  setAppHeight: () => {},
   saveLogs: async () => ({ success: false }),
   openPath: () => {},
-  healthCheck: async () => ({ response: null }),
-  agentActivityWindow: {
-    init: async () => {},
-    goto: async () => {},
-    hide: () => {},
-    show: () => {},
-    close: () => {},
-    minimize: () => {},
-  },
   onRampWindow: {
     show: () => {},
     transactionSuccess: () => {},
@@ -159,19 +134,9 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           delete: getElectronApiFunction('store.delete'),
           clear: getElectronApiFunction('store.clear'),
         },
-        setAppHeight: getElectronApiFunction('setAppHeight'),
         showNotification: getElectronApiFunction('showNotification'),
         saveLogs: getElectronApiFunction('saveLogs'),
         openPath: getElectronApiFunction('openPath'),
-        healthCheck: getElectronApiFunction('healthCheck'),
-        agentActivityWindow: {
-          init: getElectronApiFunction('agentActivityWindow.init'),
-          goto: getElectronApiFunction('agentActivityWindow.goto'),
-          hide: getElectronApiFunction('agentActivityWindow.hide'),
-          show: getElectronApiFunction('agentActivityWindow.show'),
-          close: getElectronApiFunction('agentActivityWindow.close'),
-          minimize: getElectronApiFunction('agentActivityWindow.minimize'),
-        },
         onRampWindow: {
           show: getElectronApiFunction('onRampWindow.show'),
           close: getElectronApiFunction('onRampWindow.close'),

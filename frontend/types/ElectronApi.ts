@@ -5,6 +5,7 @@ import { Nullable } from './Util';
 
 type AgentSettings = {
   isInitialFunded: boolean;
+  isProfileWarningDisplayed: boolean;
 };
 
 export type ElectronStore = {
@@ -21,12 +22,8 @@ export type ElectronStore = {
   // Each agent has its own settings
   [AgentType.PredictTrader]?: AgentSettings;
   [AgentType.AgentsFun]?: AgentSettings;
-  [AgentType.Modius]?: AgentSettings & {
-    isProfileWarningDisplayed: boolean;
-  };
-  [AgentType.Optimus]?: AgentSettings & {
-    isProfileWarningDisplayed: boolean;
-  };
+  [AgentType.Modius]?: AgentSettings;
+  [AgentType.Optimus]?: AgentSettings;
   lastProvidedBackupWallet?: {
     address: Nullable<string>;
     type: BackupWalletType;

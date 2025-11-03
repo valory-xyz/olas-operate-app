@@ -27,6 +27,7 @@
     "simple-import-sort/exports": "error",
     "unused-imports/no-unused-imports": "error",
     "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": ["warn", { "varsIgnorePattern": "^_" }],
     "no-console": [
       "error",
       {

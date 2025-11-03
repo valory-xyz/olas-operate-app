@@ -7,7 +7,7 @@ import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 
-import { CardFlex } from '../styled/CardFlex';
+import { CardFlex } from '../ui/CardFlex';
 
 const { Title, Paragraph } = Typography;
 
@@ -15,13 +15,13 @@ export const EarlyAccessOnly = () => {
   const { goto } = useSetup();
 
   const onGoBack = useCallback(() => {
-    goto(SetupScreen.AgentSelection);
+    goto(SetupScreen.AgentOnboarding);
   }, [goto]);
 
   return (
     <CardFlex
-      gap={20}
-      noBorder
+      $gap={20}
+      $noBorder
       styles={{ body: { padding: '24px 48px', alignItems: 'center' } }}
     >
       <IdcardOutlined style={{ fontSize: '48px', color: COLOR.TEXT_LIGHT }} />

@@ -10,6 +10,7 @@ export const REACT_QUERY_KEYS = {
   SERVICES_VALIDATION_STATUS_KEY: ['servicesValidationStatus'] as const,
   SERVICE_DEPLOYMENT_STATUS_KEY: (serviceConfigId: Maybe<string>) =>
     ['serviceStatus', serviceConfigId ?? ''] as const,
+  ALL_SERVICE_DEPLOYMENTS_KEY: ['allServiceDeployments'] as const,
 
   // staking programs
   STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY: (
@@ -62,8 +63,11 @@ export const REACT_QUERY_KEYS = {
       serviceConfigId,
       stakingProgramId,
     ] as const,
-  REWARDS_HISTORY_KEY: (chainId: number, serviceId: number) =>
-    ['rewardsHistory', chainId, serviceId] as const,
+  REWARDS_HISTORY_KEY: (
+    chainId: number,
+    serviceId: number,
+    filterQueryByServiceId: boolean,
+  ) => ['rewardsHistory', chainId, serviceId, filterQueryByServiceId] as const,
 
   // multisigs
   MULTISIG_GET_OWNERS_KEY: (multisig: Safe) =>
@@ -78,13 +82,22 @@ export const REACT_QUERY_KEYS = {
   // agent activity
   AGENT_ACTIVITY: ['agentActivity'] as const,
 
+  // agent performance
+  AGENT_PERFORMANCE_KEY: (chainId: number, serviceConfigId: string) =>
+    ['agentPerformance', chainId, serviceConfigId] as const,
+
   // balances and funding requirements
   BALANCES_AND_REFILL_REQUIREMENTS_KEY: (serviceConfigId: string) =>
     ['balancesAndRefillRequirements', serviceConfigId] as const,
 
+  ALL_BALANCES_AND_REFILL_REQUIREMENTS_KEY: (servicesConfigId: string[]) =>
+    ['allChainBalancesAndRefillRequirements', ...servicesConfigId] as const,
+
   // bridge
-  BRIDGE_REFILL_REQUIREMENTS_KEY: (params: BridgeRefillRequirementsRequest) =>
-    ['bridgeRefillRequirements', params] as const,
+  BRIDGE_REFILL_REQUIREMENTS_KEY: (
+    params: BridgeRefillRequirementsRequest,
+    type = 'default',
+  ) => ['bridgeRefillRequirements', params, type] as const,
   BRIDGE_REFILL_REQUIREMENTS_KEY_ON_DEMAND: (
     params: BridgeRefillRequirementsRequest,
   ) => ['useBridgeRefillRequirementsOnDemand', params] as const,
@@ -97,4 +110,10 @@ export const REACT_QUERY_KEYS = {
     chain: SupportedMiddlewareChain,
     amount: number | string,
   ) => ['onRampQuote', chain, amount] as const,
+
+  // is outdated
+  IS_PEARL_OUTDATED_KEY: ['isPearlOutdated'] as const,
+
+  // latest release
+  LATEST_RELEASE_TAG_KEY: ['latestReleaseTag'] as const,
 } as const;

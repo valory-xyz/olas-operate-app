@@ -1,21 +1,72 @@
 export const COLOR = {
+  BACKGROUND: '#F4F7FA',
   PRIMARY: '#7E22CE',
   RED: '#EA3324',
   GREEN_2: '#00F422',
-  PURPLE: '#722ed1',
+  PURPLE: '#7E22CE',
+  PURPLE_2: '#AF6FE7',
   PURPLE_DARK: '#36075F',
   PURPLE_LIGHT: '#EFCFFF',
-  PURPLE_LIGHT_2: '#FAF0FF',
+  PURPLE_LIGHT_2: '#EBEDFF',
+  PURPLE_LIGHT_3: '#F5EDFC',
+  PURPLE_LIGHT_4: '#ECDCF9',
   BLUE: '#1677FF',
   ORANGE: '#FAAD14',
   WHITE: '#ffffff',
+  BLACK: '#000000',
   BORDER_GRAY: '#DFE5EE',
   BROWN: '#873800',
   TEXT: '#1f2229',
   TEXT_LIGHT: '#606F85',
+  TEXT_INFO: '#0016B2',
   NEUTRAL_4: '#A3AEBB',
-  GRAY_1: '#f2f4f9',
+  GRAY_1: '#EDF2F7',
   GRAY_2: '#4D596A',
-  SUCCESS: '#52C41A',
+  GRAY_3: '#DFE6EC',
+  GRAY_4: '#EAEDF1',
+  SUCCESS: '#28B858',
   WARNING: '#FA8C16',
+  TEXT_NEUTRAL_PRIMARY: '#000000',
+  TEXT_NEUTRAL_SECONDARY: '#363F49',
+  TEXT_NEUTRAL_TERTIARY: '#617084',
+  TEXT_COLOR: {
+    SUCCESS: {
+      DEFAULT: '#176932',
+    },
+    WARNING: {
+      DEFAULT: '#676709',
+    },
+    ERROR: {
+      DEFAULT: '#F00014',
+    },
+  },
+  BG: {
+    SUCCESS: {
+      DEFAULT: '#DEF8E7',
+    },
+    WARNING: {
+      DEFAULT: '#FCFCE3',
+    },
+    ERROR: {
+      DEFAULT: '#FFEBEC',
+    },
+  },
+  BORDER_COLOR: {
+    WARNING: {
+      DEFAULT: '#ECEC93',
+    },
+    ERROR: {
+      DEFAULT: '#FFD6DA',
+    },
+    HOVER: {
+      DEFAULT: '#E2CAF6',
+    },
+  },
+  ICON_COLOR: {
+    WARNING: '#9E9E00',
+    DANGER: '#FF4D5B',
+    INFO: '#4D63FF',
+    ORANGE: '#FF8F1F',
+    YELLOW: '#FFB636',
+  },
 };

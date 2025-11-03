@@ -1,4 +1,4 @@
-import { Button, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { useCallback, useMemo } from 'react';
 
 import { TransactionStep } from '@/components/ui/TransactionSteps';
@@ -10,10 +10,16 @@ import { delayInSeconds } from '@/utils/delay';
 const { Text } = Typography;
 
 const OnRampAgreement = ({ onClick }: { onClick?: () => void }) => (
-  <Text className="text-sm text-lighter">
-    By proceeding, you agree to the service&apos;s&nbsp;
-    <a onClick={onClick}>Terms & Conditions</a>.
-  </Text>
+  <Flex vertical gap={8}>
+    <Text className="text-sm text-neutral-tertiary">
+      Once your card payment has been successfully initiated, funds may take up
+      to 10 minutes to be available.
+    </Text>
+    <Text className="text-sm text-neutral-tertiary">
+      By proceeding, you agree to the service&apos;s&nbsp;
+      <a onClick={onClick}>Terms & Conditions</a>.
+    </Text>
+  </Flex>
 );
 
 export const useBuyCryptoStep = () => {
@@ -39,7 +45,7 @@ export const useBuyCryptoStep = () => {
   const cannotBuyCrypto = !masterEoa?.address || !usdAmountToPay;
 
   const openTerms = useCallback(async () => {
-    termsAndConditionsWindow?.show?.('transak');
+    termsAndConditionsWindow?.show?.('transak-terms');
   }, [termsAndConditionsWindow]);
 
   const buyCryptoStep = useMemo<TransactionStep>(() => {

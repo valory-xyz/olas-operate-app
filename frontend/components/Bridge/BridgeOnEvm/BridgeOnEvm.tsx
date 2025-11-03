@@ -1,9 +1,7 @@
 import { Flex, Typography } from 'antd';
 
-import { CustomAlert } from '@/components/Alert';
-import { CardFlex } from '@/components/styled/CardFlex';
-import { CardSection } from '@/components/styled/CardSection';
-import { AgentHeader } from '@/components/ui/AgentHeader';
+import { MiddlewareChain } from '@/client';
+import { BackButton, CardFlex, FundingDescription } from '@/components/ui';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
 import { GetBridgeRequirementsParams } from '../types';
@@ -12,27 +10,11 @@ import { DepositForBridging } from './DepositForBridging';
 const { Text, Title } = Typography;
 
 const FROM_CHAIN_NAME = 'Ethereum';
-
-const OnlySendFundsOnEthereumAlert = () => (
-  <CardSection>
-    <CustomAlert
-      fullWidth
-      type="warning"
-      showIcon
-      message={
-        <Flex vertical gap={5}>
-          <Text strong>Only send funds on Ethereum!</Text>
-          <Text>
-            Full amount of funds is required to initiate the bridging.
-          </Text>
-        </Flex>
-      }
-    />
-  </CardSection>
-);
+const FROM_CHAIN_IMAGE = '/chains/ethereum-chain.png';
 
 type BridgeOnEvmProps = {
   bridgeFromDescription?: string;
+  bridgeToChain: MiddlewareChain;
   onPrev: () => void;
   onNext: () => void;
   getBridgeRequirementsParams: GetBridgeRequirementsParams;
@@ -46,32 +28,37 @@ type BridgeOnEvmProps = {
  */
 export const BridgeOnEvm = ({
   bridgeFromDescription,
+  bridgeToChain,
   onPrev,
   onNext,
   getBridgeRequirementsParams,
   updateQuoteId,
   updateCrossChainTransferDetails,
 }: BridgeOnEvmProps) => (
-  <CardFlex $noBorder>
-    <AgentHeader onPrev={onPrev} />
+  <Flex justify="center">
+    <CardFlex $noBorder $onboarding className="p-8">
+      <BackButton onPrev={onPrev} />
+      <Title level={3} className="mt-16">
+        Bridge Crypto from {FROM_CHAIN_NAME}
+      </Title>
+      <Title level={5} className="mt-12 mb-8">
+        Step 1. Send Funds
+      </Title>
+      <Text className="text-base text-lighter">{bridgeFromDescription}</Text>
 
-    <CardSection vertical gap={24} className="m-0 pt-24">
-      <Flex vertical gap={8}>
-        <Title level={3} className="m-0">
-          Bridge from {FROM_CHAIN_NAME}
-        </Title>
-        <Text className="text-base text-lighter">{bridgeFromDescription}</Text>
-      </Flex>
-
-      <OnlySendFundsOnEthereumAlert />
+      <FundingDescription
+        chainName={FROM_CHAIN_NAME}
+        chainImage={FROM_CHAIN_IMAGE}
+        isMainnet
+      />
 
       <DepositForBridging
-        chainName={FROM_CHAIN_NAME}
+        bridgeToChain={bridgeToChain}
         getBridgeRequirementsParams={getBridgeRequirementsParams}
         updateQuoteId={updateQuoteId}
         updateCrossChainTransferDetails={updateCrossChainTransferDetails}
         onNext={onNext}
       />
-    </CardSection>
-  </CardFlex>
+    </CardFlex>
+  </Flex>
 );

@@ -8,11 +8,12 @@ import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
 import { Pages } from '@/enums/Pages';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { usePageState } from '@/hooks/usePageState';
+import { useServices } from '@/hooks/useServices';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 
 import { Bridge } from '../Bridge/Bridge';
-import { CardFlex } from '../styled/CardFlex';
+import { CardFlex } from '../ui/CardFlex';
 import { NumberInput } from '../ui/NumberInput';
 import { DefaultTokenAmount } from './types';
 import { useAddFundsInputs } from './useAddFundsInputs';
@@ -51,7 +52,10 @@ const InputAddOn = ({ symbol }: { symbol: TokenSymbol }) => (
 );
 
 type AddFundsInputProps = {
-  /** Default token amounts to display in the input fields */
+  /**
+   * Default token amounts to display in the input fields
+   * and user can modify them.
+   */
   defaultTokenAmounts?: DefaultTokenAmount[];
   /** Destination address to bridge funds to */
   destinationAddress?: Address;
@@ -136,6 +140,8 @@ export const AddFundsThroughBridge = ({
 }: AddFundsThroughBridgeProps) => {
   const { isBalancesAndFundingRequirementsLoading, totalRequirements } =
     useBalanceAndRefillRequirementsContext();
+  const { selectedAgentConfig } = useServices();
+  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
 
   const [bridgeState, setBridgeState] = useState<
     BridgeRefillRequirementsRequest | undefined
@@ -205,6 +211,7 @@ export const AddFundsThroughBridge = ({
       return (
         <Bridge
           bridgeFromDescription="Bridging amount includes fees."
+          bridgeToChain={toMiddlewareChain}
           showCompleteScreen={showCompleteScreen}
           getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
           onPrevBeforeBridging={handlePrevStep}

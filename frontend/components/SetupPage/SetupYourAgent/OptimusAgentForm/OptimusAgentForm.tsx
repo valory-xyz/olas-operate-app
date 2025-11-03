@@ -1,67 +1,74 @@
-import { Button, Divider, Form, Input, message, Typography } from 'antd';
+import { Button, Form, Input, message } from 'antd';
 import React, { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { ServiceTemplate } from '@/client';
-import { COINGECKO_URL, TENDERLY_URL } from '@/constants/urls';
+import { RequiredMark } from '@/components/ui/RequiredMark';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { onDummyServiceCreation } from '@/utils/service';
 
 import {
+  BABYDEGEN_FORM_STEP,
+  BabyDegenFormStep,
   optionalFieldProps,
   requiredFieldProps,
   requiredRules,
   validateApiKey,
   validateMessages,
-  validateSlug,
 } from '../../../AgentForms/common/formUtils';
 import { InvalidGeminiApiCredentials } from '../../../AgentForms/common/InvalidGeminiApiCredentials';
 import {
+  CoinGeckoApiKeyDesc,
   CoinGeckoApiKeyLabel,
+  CoinGeckoApiKeySubHeader,
+  GeminiApiKeyDesc,
   GeminiApiKeyLabel,
-  TenderlyAccessTokenLabel,
-  TenderlyAccountSlugLabel,
-  TenderlyProjectSlugLabel,
+  GeminiApiKeySubHeader,
 } from '../../../AgentForms/common/labels';
+import { RenderForm } from '../useDisplayAgentForm';
 import {
   OptimusFieldValues,
   useOptimusFormValidate,
 } from './useOptimusFormValidate';
 
-const { Text } = Typography;
+type OptimusAgentFormContentProps = {
+  serviceTemplate: ServiceTemplate;
+  currentStep: BabyDegenFormStep;
+  updateNextStep: () => void;
+};
 
-const SetupHeader = () => (
-  <Text>
-    Set up your agent with access to a{' '}
-    <a target="_blank" href={TENDERLY_URL}>
-      Tenderly
-    </a>{' '}
-    project for simulating bridge and swap routes, and swap routes and provide a{' '}
-    <a target="_blank" href={COINGECKO_URL}>
-      CoinGecko API key
-    </a>{' '}
-    as a price source.
-  </Text>
-);
-
-type OptimusAgentFormProps = { serviceTemplate: ServiceTemplate };
-
-export const OptimusAgentForm = ({
+const OptimusAgentFormContent = ({
   serviceTemplate,
-}: OptimusAgentFormProps) => {
+  currentStep,
+  updateNextStep,
+}: OptimusAgentFormContentProps) => {
+  const [form] = Form.useForm<OptimusFieldValues>();
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
 
-  const [form] = Form.useForm<OptimusFieldValues>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     geminiApiKeyValidationStatus,
     submitButtonText,
     updateSubmitButtonText,
     validateForm,
-  } = useOptimusFormValidate();
+  } = useOptimusFormValidate('Finish Agent Configuration');
+
+  const isCoinGeckoStep = currentStep === BABYDEGEN_FORM_STEP.coingecko;
+  const isGeminiStep = currentStep === BABYDEGEN_FORM_STEP.gemini;
+
+  const handleContinue = useCallback(async () => {
+    try {
+      if (isCoinGeckoStep) {
+        await form.validateFields(['coinGeckoApiKey']);
+        updateNextStep();
+      }
+    } catch (error) {
+      console.error('Error in handleContinue:', error);
+    }
+  }, [form, isCoinGeckoStep, updateNextStep]);
 
   const onFinish = useCallback(
     async (values: OptimusFieldValues) => {
@@ -80,18 +87,6 @@ export const OptimusAgentForm = ({
           ...serviceTemplate,
           env_variables: {
             ...serviceTemplate.env_variables,
-            TENDERLY_ACCESS_KEY: {
-              ...serviceTemplate.env_variables.TENDERLY_ACCESS_KEY,
-              value: values.tenderlyAccessToken,
-            },
-            TENDERLY_ACCOUNT_SLUG: {
-              ...serviceTemplate.env_variables.TENDERLY_ACCOUNT_SLUG,
-              value: values.tenderlyAccountSlug,
-            },
-            TENDERLY_PROJECT_SLUG: {
-              ...serviceTemplate.env_variables.TENDERLY_PROJECT_SLUG,
-              value: values.tenderlyProjectSlug,
-            },
             COINGECKO_API_KEY: {
               ...serviceTemplate.env_variables.COINGECKO_API_KEY,
               value: values.coinGeckoApiKey,
@@ -111,7 +106,7 @@ export const OptimusAgentForm = ({
         message.success('Agent setup complete');
 
         // move to next page
-        goto(SetupScreen.SetupEoaFunding);
+        goto(SetupScreen.FundYourAgent);
       } catch (error) {
         message.error('Something went wrong. Please try again.');
         console.error(error);
@@ -135,13 +130,12 @@ export const OptimusAgentForm = ({
     updateSubmitButtonText('Continue');
   });
 
+  // Disable the submit button if the form is submitting OR
+  // if the defaultStakingProgramId is not available
   const canSubmitForm = isSubmitting || !defaultStakingProgramId;
 
   return (
     <>
-      <SetupHeader />
-      <Divider style={{ margin: '8px 0' }} />
-
       <Form<OptimusFieldValues>
         form={form}
         name="setup-your-agent"
@@ -149,67 +143,87 @@ export const OptimusAgentForm = ({
         onFinish={onFinish}
         validateMessages={validateMessages}
         disabled={canSubmitForm}
+        className="label-no-padding"
+        requiredMark={RequiredMark}
       >
+        {isCoinGeckoStep && <CoinGeckoApiKeySubHeader isSetupPage />}
         <Form.Item
-          name="tenderlyAccessToken"
-          label={<TenderlyAccessTokenLabel />}
-          {...requiredFieldProps}
-          rules={[...requiredRules, { validator: validateApiKey }]}
-        >
-          <Input.Password />
-        </Form.Item>
-
-        <Form.Item
-          name="tenderlyAccountSlug"
-          label={<TenderlyAccountSlugLabel />}
-          {...requiredFieldProps}
-          rules={[...requiredRules, { validator: validateSlug }]}
-        >
-          <Input />
-        </Form.Item>
-
-        <Form.Item
-          name="tenderlyProjectSlug"
-          label={<TenderlyProjectSlugLabel />}
-          {...requiredFieldProps}
-          rules={[...requiredRules, { validator: validateSlug }]}
-        >
-          <Input />
-        </Form.Item>
-
-        <Form.Item
-          name="coinGeckoApiKey"
           label={<CoinGeckoApiKeyLabel />}
+          name="coinGeckoApiKey"
           {...requiredFieldProps}
+          hidden={!isCoinGeckoStep}
           rules={[...requiredRules, { validator: validateApiKey }]}
         >
           <Input.Password />
         </Form.Item>
+        {isCoinGeckoStep && <div style={{ paddingBottom: 16 }} />}
 
+        {isGeminiStep && <GeminiApiKeySubHeader name="Optimus" isSetupPage />}
         <Form.Item
           name="geminiApiKey"
-          label={<GeminiApiKeyLabel name="Optimus" />}
+          label={<GeminiApiKeyLabel />}
           {...optionalFieldProps}
+          hidden={!isGeminiStep}
         >
           <Input.Password />
         </Form.Item>
         {geminiApiKeyValidationStatus === 'invalid' && (
           <InvalidGeminiApiCredentials />
         )}
+        {isGeminiStep && <div style={{ paddingBottom: 16 }} />}
 
         <Form.Item>
           <Button
-            type="primary"
-            htmlType="submit"
-            size="large"
-            block
             loading={isSubmitting}
             disabled={canSubmitForm}
+            onClick={isGeminiStep ? form.submit : handleContinue}
+            type="primary"
+            size="large"
+            block
           >
-            {submitButtonText}
+            {isGeminiStep ? submitButtonText : 'Continue'}
           </Button>
         </Form.Item>
       </Form>
     </>
+  );
+};
+
+export const OptimusAgentForm = ({
+  serviceTemplate,
+  renderForm,
+}: Pick<OptimusAgentFormContentProps, 'serviceTemplate'> & {
+  renderForm: RenderForm;
+}) => {
+  const [currentStep, setCurrentStep] = useState<BabyDegenFormStep>(
+    BABYDEGEN_FORM_STEP.coingecko,
+  );
+
+  const updateNextStep = useCallback(() => {
+    if (currentStep === BABYDEGEN_FORM_STEP.coingecko) {
+      setCurrentStep('gemini');
+    }
+  }, [currentStep]);
+
+  const handleBack = useCallback(() => {
+    if (currentStep === BABYDEGEN_FORM_STEP.gemini) {
+      setCurrentStep('coingecko');
+    }
+  }, [currentStep]);
+
+  return renderForm(
+    <OptimusAgentFormContent
+      serviceTemplate={serviceTemplate}
+      currentStep={currentStep}
+      updateNextStep={updateNextStep}
+    />,
+    <>
+      {currentStep === BABYDEGEN_FORM_STEP.coingecko && <CoinGeckoApiKeyDesc />}
+      {currentStep === BABYDEGEN_FORM_STEP.gemini && <GeminiApiKeyDesc />}
+    </>,
+    {
+      onBack:
+        currentStep === BABYDEGEN_FORM_STEP.coingecko ? undefined : handleBack,
+    },
   );
 };

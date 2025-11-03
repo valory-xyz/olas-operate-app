@@ -17,14 +17,10 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
   EvmChainId,
   Url
 > = {
-  [EvmChainId.Gnosis]:
-    'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/F3iqL2iw5UTrP1qbb4S694pGEkBwzoxXp1TRikB2K4e',
-  [EvmChainId.Base]:
-    'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/9etc5Ht8eQGghXrkbWJk2yMzNypCFTL46m1iLXqE2rnq',
-  [EvmChainId.Mode]:
-    'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/Fe6oYUKbSGP7a16NowseTU82MVG9D2xWbBUCz4MPB4d4',
-  [EvmChainId.Optimism]:
-    'https://gateway.thegraph.com/api/5c035877a4af18d178c96afe55ed41ae/subgraphs/id/2fe1izA4aVvBHVwbPzP1BqxLkoR9ebygWM9iHXwLCnPE',
+  [EvmChainId.Gnosis]: 'https://staking-gnosis.subgraph.autonolas.tech',
+  [EvmChainId.Base]: 'https://staking-base.subgraph.autonolas.tech',
+  [EvmChainId.Mode]: 'https://staking-mode.subgraph.autonolas.tech',
+  [EvmChainId.Optimism]: 'https://staking-optimism.subgraph.autonolas.tech',
 };
 
 // discord
@@ -42,7 +38,6 @@ export const GITHUB_API_RELEASES: Url =
   'https://github.com/valory-xyz/olas-operate-app/releases';
 
 // others
-export const TENDERLY_URL: string = 'https://tenderly.co';
 export const COINGECKO_URL: string = 'https://www.coingecko.com';
 export const COINGECKO_DEMO_API_KEY: string =
   'https://support.coingecko.com/hc/en-us/articles/21880397454233-User-Guide-How-to-sign-up-for-CoinGecko-Demo-API-and-generate-an-API-key';
@@ -96,7 +91,7 @@ export const SWAP_URL_BY_EVM_CHAIN: Record<EvmChainId, Url> = {
 };
 
 // on-ramp
-export const ON_RAMP_GATEWAY_URL = `https://on-ramp.${process.env.NODE_ENV === 'production' ? '' : 'staging.'}autonolas.tech/`;
+export const ON_RAMP_GATEWAY_URL = `https://proxy.transak.${process.env.NODE_ENV === 'production' ? '' : 'staging.'}autonolas.tech/`;
 
 // pearl-api url
 export const PEARL_API_URL = 'https://pearl-api.olas.network';

@@ -1,9 +1,8 @@
 import { Button, Flex, Form, FormItemProps, Input, Typography } from 'antd';
 import { getAddress } from 'ethers/lib/utils';
+import { RiAppleFill, RiGoogleFill } from 'react-icons/ri';
 
-import { AppleIcon } from '@/components/custom-icons/AppleIcon';
-import { GoogleIcon } from '@/components/custom-icons/GoogleIcon';
-import { FormFlex } from '@/components/styled/FormFlex';
+import { FormFlex } from '@/components/ui';
 import { COLOR } from '@/constants/colors';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
@@ -43,11 +42,11 @@ export const BackupWalletManual = () => {
     }
 
     setBackupSigner({ address: checksummedAddress, type: 'manual' });
-    goto(SetupScreen.AgentSelection);
+    goto(SetupScreen.AgentOnboarding);
   };
 
   const handleWeb3AuthSetupFinish = () => {
-    goto(SetupScreen.AgentSelection);
+    goto(SetupScreen.AgentOnboarding);
   };
 
   const { openWeb3AuthModel } = useWeb3AuthBackupWallet({
@@ -72,9 +71,9 @@ export const BackupWalletManual = () => {
       <Button type="link" size="large" onClick={openWeb3AuthModel}>
         <Flex justify="center" align="center">
           Set Up Wallet with&nbsp;
-          <GoogleIcon fill={COLOR.PRIMARY} />
+          <RiGoogleFill fill={COLOR.PRIMARY} />
           &nbsp;/&nbsp;
-          <AppleIcon fill={COLOR.PRIMARY} />
+          <RiAppleFill fill={COLOR.PRIMARY} />
         </Flex>
       </Button>
 
