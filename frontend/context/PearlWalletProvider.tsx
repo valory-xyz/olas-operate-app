@@ -138,6 +138,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
     STEPS.PEARL_WALLET_SCREEN,
   );
+
   const [walletChainId, setWalletChainId] = useState<EvmChainId>(
     selectedAgentConfig.evmHomeChainId,
   );
@@ -145,6 +146,11 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const [amountsToDeposit, setAmountsToDeposit] = useState<TokenAmounts>({});
   const [defaultRequirementDepositValues, setDefaultDepositValues] =
     useState<TokenBalanceRecord>({});
+
+  // Update chain id when switching between agents
+  useEffect(() => {
+    setWalletChainId(selectedAgentConfig.evmHomeChainId);
+  }, [selectedAgentConfig.evmHomeChainId]);
 
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
     useAvailableAssets(walletChainId, {

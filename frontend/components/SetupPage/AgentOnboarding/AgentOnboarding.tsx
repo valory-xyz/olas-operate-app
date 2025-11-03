@@ -128,7 +128,7 @@ export const AgentOnboarding = () => {
 
     // if the selected type requires setting up an agent,
     // should be redirected to setup screen.
-    if (currentAgentConfig.requiresSetup) {
+    if (currentAgentConfig.requiresSetup && !currentAgentConfig.isX402Enabled) {
       goto(SetupScreen.SetupYourAgent);
     } else {
       goto(SetupScreen.FundYourAgent);

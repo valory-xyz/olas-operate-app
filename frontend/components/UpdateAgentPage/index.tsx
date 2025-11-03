@@ -12,8 +12,16 @@ import { PredictUpdatePage } from './components/PredictUpdateForm';
 import { UpdateAgentProvider } from './context/UpdateAgentProvider';
 
 export const UpdateAgentPage = () => {
-  const { selectedAgentType } = useServices();
+  const { selectedAgentType, selectedAgentConfig } = useServices();
   const displayForm = useDisplayAgentForm();
+
+  const { isX402Enabled } = selectedAgentConfig;
+
+  if (isX402Enabled) {
+    throw new Error(
+      'Updating agent feature is not supported for the selected agent.',
+    );
+  }
 
   return (
     <AgentFormContainer>

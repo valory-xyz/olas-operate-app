@@ -39,6 +39,11 @@ export type AgentConfig = {
    * (e.g. Persona for agentsFun)
    */
   requiresSetup: boolean;
+  /**
+   * Enables feature of agents paying for api keys usage
+   * instead of asking users to manually provide them
+   **/
+  isX402Enabled: boolean;
   hasChatUI: boolean;
   /** Whether the agent has external funds available (eg. agent invests funds) */
   hasExternalFunds: boolean;
