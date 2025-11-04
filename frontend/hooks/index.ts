@@ -1,6 +1,9 @@
+export * from './useActiveStakingProgramId';
 export * from './useAgentActivity';
 export * from './useAgentFundingRequests';
+export * from './useAgentStakingRewardsDetails';
 export * from './useAnotherAgentRunning';
+export * from './useAvailableAgentAssets';
 export * from './useAvailableAssets';
 export * from './useBackupSigner';
 export * from './useBalanceAndRefillRequirementsContext';
@@ -20,7 +23,6 @@ export * from './useOnlineStatus';
 export * from './useOnRampContext';
 export * from './usePageState';
 export * from './usePause';
-export * from './usePrevious';
 export * from './useRecoveryPhraseBackup';
 export * from './useRewardContext';
 export * from './useRewardsHistory';

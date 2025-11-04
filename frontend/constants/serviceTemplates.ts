@@ -2,11 +2,11 @@ import { ethers } from 'ethers';
 
 import { MiddlewareChain, ServiceTemplate } from '@/client';
 import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from '@/config/tokens';
-import { EnvProvisionMap as EnvProvisionType } from '@/constants/envVariables';
-import { AgentType } from '@/enums/Agent';
-import { STAKING_PROGRAM_IDS } from '@/enums/StakingProgram';
-import { TokenSymbol } from '@/enums/Token';
-import { parseEther, parseUnits } from '@/utils/numberFormatters';
+import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
+import { AgentType, STAKING_PROGRAM_IDS, TokenSymbol } from '@/enums';
+import { parseEther, parseUnits } from '@/utils';
+
+import { X402_ENABLED_FLAGS } from './x402';
 
 /**
  * Prefix for KPI description in service templates.
@@ -17,17 +17,17 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeidpn7457phbws6fssnf5gzxpeldnbt7b6dawpncfg4ol3bkgkivuy',
+  hash: 'bafybeietacqzmgg66komkz2aqn7ocq6a6zpyqmqbkxilrqolyzupmahsy4',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.27.2-1-rc.1',
+  service_version: 'v0.27.2-1-rc.2',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.27.2-1-rc.1',
+      version: 'v0.27.2-1-rc.2',
     },
   },
   home_chain: MiddlewareChain.GNOSIS,
@@ -133,6 +133,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       description: 'Gemini api key to allow the agent to use Gemini',
       value: '',
       provision_type: EnvProvisionType.USER,
+    },
+    USE_X402: {
+      name: 'Use x402',
+      description:
+        'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
+      value: X402_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
+      provision_type: EnvProvisionType.FIXED,
     },
   },
 } as const;
@@ -262,6 +269,13 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
+    USE_X402: {
+      name: 'Use x402',
+      description:
+        'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
+      value: X402_ENABLED_FLAGS[AgentMap.AgentsFun].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
 
@@ -295,14 +309,14 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeifyyspmfhnepn4fw7o5uamptsxbkeimapknzts53t52cf7pcakz64',
-  service_version: 'v0.5.9-rc.1',
+  hash: 'bafybeibgtlnjnryle6ewtwqmgzs3rizlfjixkayn64n6jyxawv4x43l4he',
+  service_version: 'v0.6.0-rc.1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.5.9-rc.1',
+      version: 'v0.6.0-rc.1',
     },
   },
 };
@@ -463,6 +477,13 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '0x5b5F79BB667A25400a8f91F0c18D080abCfD430f',
       provision_type: EnvProvisionType.FIXED,
     },
+    USE_X402: {
+      name: 'Use x402',
+      description:
+        'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
+      value: X402_ENABLED_FLAGS[AgentMap.Modius].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
   ...BABYDEGEN_COMMON_TEMPLATE,
 } as const;
@@ -588,6 +609,13 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
+    },
+    USE_X402: {
+      name: 'Use x402',
+      description:
+        'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
+      value: X402_ENABLED_FLAGS[AgentMap.Optimus].toString(),
+      provision_type: EnvProvisionType.FIXED,
     },
   },
   ...BABYDEGEN_COMMON_TEMPLATE,

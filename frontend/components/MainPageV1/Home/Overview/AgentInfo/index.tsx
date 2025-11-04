@@ -58,6 +58,8 @@ export const AgentInfo = () => {
   const { getServiceSafeOf } = useService(selectedService?.service_config_id);
   const serviceSafe = getServiceSafeOf?.(selectedAgentConfig.evmHomeChainId);
 
+  const { isX402Enabled } = selectedAgentConfig;
+
   return (
     <Flex vertical>
       <CardFlex $noBorder>
@@ -81,12 +83,14 @@ export const AgentInfo = () => {
                 </Title>
                 <Flex gap={12} align="center">
                   <AboutAgent />
-                  <Tooltip title="Agent settings">
-                    <Button
-                      onClick={() => goto(Pages.UpdateAgentTemplate)}
-                      icon={<SettingOutlined />}
-                    />
-                  </Tooltip>
+                  {isX402Enabled ? null : (
+                    <Tooltip title="Agent settings">
+                      <Button
+                        onClick={() => goto(Pages.UpdateAgentTemplate)}
+                        icon={<SettingOutlined />}
+                      />
+                    </Tooltip>
+                  )}
                 </Flex>
               </Flex>
               <AgentRunButton />

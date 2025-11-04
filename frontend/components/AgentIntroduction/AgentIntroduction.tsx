@@ -37,7 +37,6 @@ type AgentIntroductionProps = {
   agentType?: AgentType;
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderAgentSelection?: () => ReactNode;
-  renderUnderConstruction?: () => ReactNode;
 } & {
   styles?: IntroductionStepStyles;
 };
@@ -49,7 +48,6 @@ export const AgentIntroduction = ({
   agentType,
   renderFundingRequirements,
   renderAgentSelection,
-  renderUnderConstruction,
   styles,
 }: AgentIntroductionProps) => {
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -83,10 +81,10 @@ export const AgentIntroduction = ({
 
   return (
     <IntroductionStep
-      title={steps[onboardingStep].title}
-      desc={steps[onboardingStep].desc}
-      imgSrc={steps[onboardingStep].imgSrc}
-      helper={steps[onboardingStep].helper}
+      title={steps[onboardingStep]?.title}
+      desc={steps[onboardingStep]?.desc}
+      imgSrc={steps[onboardingStep]?.imgSrc}
+      helper={steps[onboardingStep]?.helper}
       renderFundingRequirements={renderFundingRequirements}
       onPrev={onboardingStep === 0 ? undefined : onPreviousStep}
       onNext={onboardingStep === steps.length - 1 ? undefined : onNextStep}
@@ -99,7 +97,6 @@ export const AgentIntroduction = ({
         ))
       }
       renderAgentSelection={renderAgentSelection}
-      renderUnderConstruction={renderUnderConstruction}
       styles={styles}
     />
   );

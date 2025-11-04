@@ -6,6 +6,7 @@ import type { AppProps } from 'next/app';
 import { useEffect, useState } from 'react';
 
 import { Layout } from '@/components/Layout';
+import { mainTheme } from '@/constants';
 import { BalanceProvider } from '@/context/BalanceProvider/BalanceProvider';
 import { BalancesAndRefillRequirementsProvider } from '@/context/BalancesAndRefillRequirementsProvider/BalancesAndRefillRequirementsProvider';
 import { ElectronApiProvider } from '@/context/ElectronApiProvider';
@@ -24,7 +25,6 @@ import { StakingContractDetailsProvider } from '@/context/StakingContractDetails
 import { StakingProgramProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
 import { SystemNotificationTriggers } from '@/context/SystemNotificationTriggers';
-import { mainTheme } from '@/theme';
 
 const queryClient = new QueryClient();
 

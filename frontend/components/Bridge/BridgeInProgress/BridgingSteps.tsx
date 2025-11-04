@@ -87,7 +87,7 @@ const generateMasterSafeCreationStep = (
   })();
 
   return {
-    title: 'Create Master Safe',
+    title: 'Create Pearl Wallet',
     status,
     computedSubSteps: subSteps.map(({ txnLink }) => {
       return { description, txnLink, isFailed };
@@ -100,7 +100,7 @@ const generateMasterSafeTransferStep = (
   subSteps: StepEvent[],
 ): Step => {
   return {
-    title: 'Transfer funds to the Master Safe',
+    title: 'Transfer funds to the Pearl Wallet',
     status,
     computedSubSteps: subSteps.map(({ symbol, status, txnLink }) => {
       const isFailed = status === 'error';
