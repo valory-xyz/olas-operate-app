@@ -141,6 +141,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: X402_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
+    GENAI_X402_SERVER_BASE_URL: {
+      name: 'Gemini x402 server base URL',
+      description: 'The base URL for the Gemini x402 server',
+      value: 'https://x402.olas.staging.autonolas.tech/v1/gemini/gnosis/v1beta',
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
 
@@ -615,6 +621,18 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: X402_ENABLED_FLAGS[AgentMap.Optimus].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
+    GENAI_X402_SERVER_BASE_URL: {
+      name: 'Gemini x402 server base URL',
+      description: 'The base URL for the Gemini x402 server',
+      value: 'https://x402.olas.staging.autonolas.tech/v1/gemini/optimism/v1beta',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    COINGECKO_X402_SERVER_BASE_URL: {
+      name: 'Coingecko x402 server base URL',
+      description: 'The base URL for the Coingecko x402 server',
+      value: 'https://x402.olas.staging.autonolas.tech/v1/coingecko/{chain}',
       provision_type: EnvProvisionType.FIXED,
     },
   },
