@@ -64,7 +64,7 @@ export const AGENT_CONFIG: {
     requiresAgentSafesOn: [EvmChainId.Gnosis],
     requiresMasterSafesOn: [EvmChainId.Gnosis],
     serviceApi: PredictTraderService,
-    displayName: 'Predict Trader',
+    displayName: 'Prediction Trader',
     description: 'Participates in prediction markets.',
     hasExternalFunds: false,
     hasChatUI: true,
