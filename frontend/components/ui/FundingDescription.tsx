@@ -1,12 +1,21 @@
-import { Button, Flex, message, Modal, Typography } from 'antd';
+import {
+  Button,
+  Flex,
+  message,
+  Modal,
+  ModalProps,
+  QRCode,
+  Typography,
+} from 'antd';
 import Image from 'next/image';
 import { useCallback, useState } from 'react';
-import { TbCopy, TbWallet } from 'react-icons/tb';
+import { TbCopy, TbQrcode, TbWallet } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { InfoTooltip } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { useMasterWalletContext } from '@/hooks';
+import { Address } from '@/types';
 import { copyToClipboard } from '@/utils';
 
 const { Title, Text, Paragraph } = Typography;
@@ -18,15 +27,10 @@ const FundingDescriptionContainer = styled(Flex)`
   margin-top: 32px;
 `;
 
-const MODAL_STYLE = {
-  content: {
-    padding: 24,
-    borderRadius: 24,
-  },
-  mask: {
-    backgroundColor: 'rgba(0, 0, 0, 0)',
-  },
-};
+const MODAL_STYLE: ModalProps['styles'] = {
+  content: { padding: 24, borderRadius: 24 },
+  mask: { backgroundColor: 'rgba(0, 0, 0, 0)' },
+} as const;
 
 type ChainConfirmationMessageModalProps = {
   chainName: string;
@@ -69,6 +73,58 @@ const ChainConfirmationMessageModal = ({
   );
 };
 
+type ScanQrCodeProps = { chainName: string; address: Address };
+const ScanQrCode = ({ chainName, address }: ScanQrCodeProps) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleCopyAddress = useCallback(() => {
+    copyToClipboard(address).then(() => message.success('Address copied!'));
+  }, [address]);
+
+  return (
+    <>
+      <Button
+        onClick={() => setIsModalOpen(true)}
+        size="small"
+        icon={<TbQrcode />}
+      >
+        Show QR Code
+      </Button>
+
+      <Modal
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        title="Scan QR Code"
+        footer={null}
+        centered
+        width={440}
+        styles={MODAL_STYLE}
+      >
+        <Flex vertical gap={32} align="center" className="mt-32">
+          <QRCode value={address} />
+          <Flex vertical gap={24} align="center">
+            <Flex vertical gap={8} align="center">
+              <Title className="text-lg" style={{ margin: 0 }}>
+                Pearl - {chainName} Address
+              </Title>
+              <Text className="text-neutral-secondary text-center">
+                Use this address to send funds from your external wallet on
+                Gnosis Chain.
+              </Text>
+            </Flex>
+            <Text className="text-neutral-secondary text-center">
+              {address}
+            </Text>
+            <Button onClick={handleCopyAddress} icon={<TbCopy />}>
+              Copy Address
+            </Button>
+          </Flex>
+        </Flex>
+      </Modal>
+    </>
+  );
+};
+
 const ExternalWalletTooltip = () => (
   <InfoTooltip placement="top" iconColor={COLOR.BLACK}>
     <Paragraph className="text-sm m-0">
@@ -77,14 +133,20 @@ const ExternalWalletTooltip = () => (
   </InfoTooltip>
 );
 
+type FundingDescriptionProps = Pick<
+  ChainConfirmationMessageModalProps,
+  'chainName' | 'chainImage' | 'isMainnet'
+>;
+
+/**
+ * Displays the funding details including chain info, external wallet info,
+ * and Pearl Wallet address with copy functionality.
+ */
 export const FundingDescription = ({
   chainName,
   chainImage,
   isMainnet = false,
-}: Pick<
-  ChainConfirmationMessageModalProps,
-  'chainName' | 'chainImage' | 'isMainnet'
->) => {
+}: FundingDescriptionProps) => {
   const { masterEoa } = useMasterWalletContext();
   const address = masterEoa?.address;
   const [
@@ -136,10 +198,11 @@ export const FundingDescription = ({
           onClose={() => setIsChainConfirmationMessageModalOpen(false)}
         />
       )}
-      <Flex style={{ marginTop: -8 }}>
+      <Flex gap={8} style={{ marginTop: -8 }}>
         <Button size="small" icon={<TbCopy />} onClick={handleCopyAddress}>
           Copy
         </Button>
+        {address && <ScanQrCode chainName={chainName} address={address} />}
       </Flex>
     </FundingDescriptionContainer>
   );
