@@ -64,7 +64,7 @@ export const AGENT_CONFIG: {
     requiresAgentSafesOn: [EvmChainId.Gnosis],
     requiresMasterSafesOn: [EvmChainId.Gnosis],
     serviceApi: PredictTraderService,
-    displayName: 'Prediction',
+    displayName: 'Predict Trader',
     description: 'Participates in prediction markets.',
     hasExternalFunds: false,
     hasChatUI: true,
@@ -111,7 +111,7 @@ export const AGENT_CONFIG: {
     requiresAgentSafesOn: [EvmChainId.Base],
     requiresMasterSafesOn: [EvmChainId.Base],
     serviceApi: AgentsFunBaseService,
-    displayName: 'Agents.fun - Base',
+    displayName: 'Agents.fun',
     description:
       'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
     hasExternalFunds: false,
