@@ -10,9 +10,9 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { CustomAlert } from '@/components/Alert';
-import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { useSharedContext } from '@/hooks/useSharedContext';
+import { Alert } from '@/components/ui';
+import { UNICODE_SYMBOLS } from '@/constants';
+import { useSharedContext } from '@/hooks';
 
 import { commonFieldProps, emailValidateMessages } from '../common/formUtils';
 import { InvalidGeminiApiCredentials } from '../common/InvalidGeminiApiCredentials';
@@ -44,7 +44,7 @@ const XAccountApiTokens = ({
       {UNICODE_SYMBOLS.EXTERNAL_LINK}.
     </Text>
     {showTokensRequiredMessage && (
-      <CustomAlert
+      <Alert
         type="error"
         showIcon
         className="mb-16"

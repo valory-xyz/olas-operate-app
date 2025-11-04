@@ -32,6 +32,13 @@ export const emailValidateMessages = {
   types: { email: 'Enter a valid email' },
 } as const;
 
+export const BABYDEGEN_FORM_STEP = {
+  coingecko: 'coingecko',
+  gemini: 'gemini',
+} as const;
+
+export type BabyDegenFormStep = keyof typeof BABYDEGEN_FORM_STEP;
+
 /**
  * form validator for API key.
  */

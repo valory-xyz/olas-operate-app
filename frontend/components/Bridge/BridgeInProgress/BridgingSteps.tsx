@@ -1,9 +1,8 @@
-import { LoadingOutlined } from '@ant-design/icons';
-import { Steps, Typography } from 'antd';
+import { Typography } from 'antd';
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
-import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
+import { FundsAreSafeMessage, LoadingSpinner, Steps } from '@/components/ui';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { TokenSymbol } from '@/constants/token';
 import { BridgingStepStatus as Status } from '@/types/Bridge';
@@ -88,7 +87,7 @@ const generateMasterSafeCreationStep = (
   })();
 
   return {
-    title: 'Create Master Safe',
+    title: 'Create Pearl Wallet',
     status,
     computedSubSteps: subSteps.map(({ txnLink }) => {
       return { description, txnLink, isFailed };
@@ -101,7 +100,7 @@ const generateMasterSafeTransferStep = (
   subSteps: StepEvent[],
 ): Step => {
   return {
-    title: 'Transfer funds to the Master Safe',
+    title: 'Transfer funds to the Pearl Wallet',
     status,
     computedSubSteps: subSteps.map(({ symbol, status, txnLink }) => {
       const isFailed = status === 'error';
@@ -176,6 +175,7 @@ export const BridgingSteps = ({
     <Steps
       size="small"
       direction="vertical"
+      className="mt-32"
       items={steps.map(({ status, title, computedSubSteps }) => {
         return {
           status,
@@ -193,7 +193,7 @@ export const BridgingSteps = ({
               )}
             </SubStepRow>
           )),
-          icon: status === 'process' ? <LoadingOutlined /> : undefined,
+          icon: status === 'process' ? <LoadingSpinner /> : undefined,
         };
       })}
     />

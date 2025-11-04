@@ -1,7 +1,6 @@
 require('dotenv').config();
 
 const {
-  checkUrl,
   configureSessionCertificates,
   loadLocalCertificate,
   stringifyJson,
@@ -16,7 +15,6 @@ const {
 
 const {
   handleTermsAndConditionsWindowShow,
-  handleTermsAndConditionsWindowClose,
 } = require('./windows/termsAndConditions');
 
 // Load the self-signed certificate for localhost HTTPS requests
@@ -73,8 +71,6 @@ if (isDev) {
       .catch((e) =>
         console.log('An error occurred on loading extensions: ', e),
       );
-
-    createAgentActivityWindow();
   });
 }
 
@@ -143,9 +139,6 @@ const backendUrl = () =>
 let mainWindow = null;
 /** @type {Electron.BrowserWindow | null} */
 let splashWindow = null;
-/** @type {Electron.BrowserWindow | null} */
-let agentWindow = null;
-const getAgentWindow = () => agentWindow;
 /** @type {Electron.BrowserWindow | null} */
 let onRampWindow = null;
 const getOnRampWindow = () => onRampWindow;
@@ -308,7 +301,8 @@ async function beforeQuit(event) {
   app.quit();
 }
 
-const APP_WIDTH = 480;
+const APP_WIDTH = 1320;
+const APP_HEIGHT = 796;
 
 /**
  * Creates the splash window
@@ -317,7 +311,7 @@ const createSplashWindow = () => {
   /** @type {Electron.BrowserWindow} */
   splashWindow = new BrowserWindow({
     width: APP_WIDTH,
-    height: APP_WIDTH,
+    height: APP_HEIGHT,
     resizable: false,
     show: true,
     title: 'Pearl',
@@ -330,13 +324,11 @@ const createSplashWindow = () => {
   splashWindow.loadURL('file://' + __dirname + '/resources/app-loading.html');
 };
 
-const HEIGHT = 700;
 /**
  * Creates the main window
  */
 const createMainWindow = async () => {
   if (mainWindow) return;
-  const width = APP_WIDTH;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
     resizable: false,
@@ -345,8 +337,9 @@ const createMainWindow = async () => {
     transparent: true,
     fullscreenable: false,
     maximizable: false,
-    width,
-    maxHeight: HEIGHT,
+    width: APP_WIDTH,
+    maxWidth: APP_WIDTH,
+    height: APP_HEIGHT,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -372,10 +365,6 @@ const createMainWindow = async () => {
     }
   });
 
-  ipcMain.on('set-height', (_event, height) => {
-    mainWindow?.setSize(width, height);
-  });
-
   ipcMain.on('show-notification', (_event, title, description) => {
     showNotification(title, description || undefined);
   });
@@ -390,26 +379,6 @@ const createMainWindow = async () => {
 
   ipcMain.handle('app-version', () => app.getVersion());
 
-  // Get the agent's current state
-  ipcMain.handle('health-check', async (_event) => {
-    try {
-      const response = await fetch('http://127.0.0.1:8716/healthcheck', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch health check');
-      }
-
-      const data = await response.json();
-      return { response: data };
-    } catch (error) {
-      console.error('Health check error:', error);
-      return { error: error.message };
-    }
-  });
-
   mainWindow.webContents.on('did-fail-load', () => {
     mainWindow.webContents.reloadIgnoringCache();
   });
@@ -423,7 +392,7 @@ const createMainWindow = async () => {
     // if (url.includes('web3auth')) return { action: 'allow' };
 
     // open url in a browser and prevent default
-    require('electron').shell.openExternal(url);
+    shell.openExternal(url);
     return { action: 'deny' };
   });
 
@@ -443,43 +412,6 @@ const createMainWindow = async () => {
   }
 
   await mainWindow.loadURL(nextUrl());
-};
-
-/**Create the agent specific window */
-/** @type {()=>Promise<BrowserWindow|undefined>} */
-const createAgentActivityWindow = async () => {
-  if (!getAgentWindow() || getActiveWindow()?.isDestroyed) {
-    agentWindow = new BrowserWindow({
-      title: 'Agent activity window',
-      frame: true,
-      maxHeight: 900,
-      maxWidth: 1200,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        preload: path.join(__dirname, 'preload.js'),
-      },
-      show: false,
-      paintWhenInitiallyHidden: true,
-      // parent: mainWindow,
-      autoHideMenuBar: true,
-    });
-  } else {
-    logger.electron('Agent activity window already exists');
-  }
-
-  agentWindow.webContents.setWindowOpenHandler(({ url }) => {
-    // open url in a browser and prevent default
-    shell.openExternal(url);
-    return { action: 'deny' };
-  });
-
-  agentWindow.on('close', function (event) {
-    event.preventDefault();
-    agentWindow?.hide();
-  });
-
-  return agentWindow;
 };
 
 // Create SSL certificate for the backend
@@ -632,13 +564,6 @@ async function launchDaemon() {
       { env: Env },
     );
     operateDaemonPid = operateDaemon.pid;
-    // fs.appendFileSync(
-    //   `${paths.OperateDirectory}/operate.pip`,
-    //   `${operateDaemon.pid}`,
-    //   {
-    //     encoding: 'utf-8',
-    //   },
-    // );
 
     operateDaemon.stderr.on('data', (data) => {
       if (data.toString().includes('Uvicorn running on')) {
@@ -1078,71 +1003,6 @@ ipcMain.handle('save-logs', async (_, data) => {
 });
 
 /**
- * Agent UI window handlers
- */
-ipcMain.handle('agent-activity-window-goto', async (_event, url) => {
-  logger.electron(`agent-activity-window-goto: ${url}`);
-
-  let agentWindow = getAgentWindow();
-  if (!agentWindow || agentWindow.isDestroyed()) {
-    agentWindow = await createAgentActivityWindow();
-  }
-  if (!agentWindow) {
-    logger.electron('Failed to create agent window');
-    return;
-  }
-
-  await agentWindow.loadURL(`file://${__dirname}/resources/agent-loading.html`);
-  logger.electron('Showing loading screen');
-
-  const checkAndLoadUrl = async () => {
-    logger.electron(`Starting URL check: ${url}`);
-
-    try {
-      if (await checkUrl(url)) {
-        await agentWindow.loadURL(url);
-        logger.electron(`Successfully loaded: ${url}`);
-        return true;
-      }
-    } catch (error) {
-      logger.electron(`Error checking URL: ${error.message}`);
-    }
-    return false;
-  };
-
-  if (await checkAndLoadUrl()) return;
-
-  const interval = setInterval(async () => {
-    if (await checkAndLoadUrl()) {
-      clearInterval(interval);
-    } else {
-      logger.electron(`Valid URL not available yet, retrying in 5s...`);
-    }
-  }, 5000);
-});
-
-ipcMain.handle('agent-activity-window-hide', () => {
-  logger.electron('agent-activity-window-hide');
-  if (!getAgentWindow() || getAgentWindow().isDestroyed()) return; // already destroyed
-  getAgentWindow()?.hide();
-});
-
-ipcMain.handle('agent-activity-window-show', () => {
-  logger.electron('agent-activity-window-show');
-  if (!getAgentWindow() || getAgentWindow().isDestroyed()) {
-    createAgentActivityWindow()?.then((aaw) => aaw.show());
-  } else {
-    getAgentWindow()?.show();
-  }
-});
-
-ipcMain.handle('agent-activity-window-minimize', () => {
-  logger.electron('agent-activity-window-minimize');
-  if (!getAgentWindow() || getAgentWindow().isDestroyed()) return; // nothing to minimize
-  getAgentWindow()?.then((aaw) => aaw.minimize());
-});
-
-/**
  * Logs an event message to the logger.
  */
 ipcMain.handle('log-event', (_event, message) => {
@@ -1211,7 +1071,6 @@ ipcMain.handle('web3auth-address-received', (_event, address) =>
 /**
  * Terms window handlers
  */
-ipcMain.handle('terms-window-show', (_event, type) =>
-  handleTermsAndConditionsWindowShow(nextUrl(), type),
+ipcMain.handle('terms-window-show', (_event, hash) =>
+  handleTermsAndConditionsWindowShow(hash),
 );
-ipcMain.handle('terms-window-close', handleTermsAndConditionsWindowClose);

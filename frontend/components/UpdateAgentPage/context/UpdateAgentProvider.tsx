@@ -1,4 +1,4 @@
-import { Form, FormInstance } from 'antd';
+import { Button, Flex, Form, FormInstance } from 'antd';
 import { noop } from 'lodash';
 import {
   createContext,
@@ -6,16 +6,16 @@ import {
   PropsWithChildren,
   SetStateAction,
   useCallback,
+  useContext,
+  useMemo,
   useState,
 } from 'react';
 
 import { ServiceTemplate } from '@/client';
-import { PredictFormValues } from '@/components/AgentForms/PredictForm';
-import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { AgentType } from '@/enums/Agent';
+import { Modal } from '@/components/ui';
+import { AgentMap, SERVICE_TEMPLATES } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
+import { usePageState, useService, useServices } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { DeepPartial } from '@/types/Util';
 
@@ -23,8 +23,6 @@ import { AgentsFunFormValues } from '../../AgentForms/AgentsFunAgentForm';
 import { useConfirmUpdateModal } from '../hooks/useConfirmModal';
 import { defaultModalProps, ModalProps } from '../hooks/useModal';
 import { useUnsavedModal } from '../hooks/useUnsavedModal';
-import { ConfirmUpdateModal } from '../modals/ConfirmUpdateModal';
-import { UnsavedModal } from '../modals/UnsavedModal';
 
 export const UpdateAgentContext = createContext<{
   isEditing: boolean;
@@ -39,8 +37,70 @@ export const UpdateAgentContext = createContext<{
   confirmUpdateModal: defaultModalProps,
 });
 
+const ConfirmUpdateModal = ({ isLoading }: { isLoading: boolean }) => {
+  const { isServiceRunning } = useService();
+  const { confirmUpdateModal } = useContext(UpdateAgentContext);
+  const { open, confirm, cancel } = confirmUpdateModal;
+
+  const btnText = useMemo(() => {
+    if (isServiceRunning) {
+      return isLoading
+        ? 'Saving and restarting agent...'
+        : 'Save and restart agent';
+    }
+
+    return isLoading ? 'Saving...' : 'Save';
+  }, [isServiceRunning, isLoading]);
+
+  return (
+    <Modal
+      title="Confirm changes"
+      description="These changes will only take effect when you restart the agent."
+      okButtonProps={{ loading: isLoading }}
+      onCancel={cancel}
+      okText={btnText}
+      closable={!isLoading}
+      footer={
+        <Flex justify="flex-end" gap={12}>
+          <Button onClick={cancel}>Cancel</Button>
+          <Button type="primary" onClick={confirm}>
+            Confirm and Continue
+          </Button>
+        </Flex>
+      }
+      open={open}
+      size="small"
+    />
+  );
+};
+
+const UnsavedModal = () => {
+  const { unsavedModal } = useContext(UpdateAgentContext);
+  const { open, confirm, cancel } = unsavedModal;
+
+  return (
+    <Modal
+      title="Unsaved changes"
+      okText="Discard changes"
+      description="You have unsaved changes. Are you sure you want to leave this page?"
+      onCancel={cancel}
+      footer={
+        <Flex justify="flex-end" gap={12}>
+          <Button onClick={cancel}>Cancel</Button>
+          <Button type="primary" onClick={confirm}>
+            Discard changes
+          </Button>
+        </Flex>
+      }
+      open={open}
+      size="small"
+      closable
+    />
+  );
+};
+
 export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
-  const [form] = Form.useForm<DeepPartial<ServiceTemplate>>(); // TODO: wrong type, fix it
+  const [form] = Form.useForm<DeepPartial<ServiceTemplate>>();
   const {
     refetch: refetchServices,
     selectedService,
@@ -63,7 +123,7 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
     );
 
     const envVariables = (() => {
-      if (selectedAgentType === AgentType.AgentsFun) {
+      if (selectedAgentType === AgentMap.AgentsFun) {
         const agentsFunFormValues = formValues as AgentsFunFormValues;
         return {
           PERSONA: agentsFunFormValues.personaDescription,
@@ -78,17 +138,12 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
           TWEEPY_ACCESS_TOKEN: agentsFunFormValues.xAccessToken,
           TWEEPY_ACCESS_TOKEN_SECRET: agentsFunFormValues.xAccessTokenSecret,
         };
-      } else if (selectedAgentType === AgentType.PredictTrader) {
-        const predictFormValues = formValues as PredictFormValues;
-        return {
-          GENAI_API_KEY: predictFormValues.geminiApiKey || '',
-        };
       }
       return formValues.env_variables;
     })() as ServiceTemplate['env_variables'];
 
     const formValuesWithoutEnv = (() => {
-      if (selectedAgentType === AgentType.AgentsFun) {
+      if (selectedAgentType === AgentMap.AgentsFun) {
         const agentsFunFormValues = formValues as AgentsFunFormValues;
         return { description: `Agents.Fun @${agentsFunFormValues.xUsername}` };
       }

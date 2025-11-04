@@ -19,6 +19,7 @@ export type Erc20TokenConfig = {
   symbol: TokenSymbol;
 };
 
+// TODO: add ZeroAddress for native tokens
 export type NativeTokenConfig = {
   address?: undefined;
   tokenType: TokenType.NativeGas;
@@ -38,9 +39,7 @@ export type TokenConfig =
   | NativeTokenConfig
   | WrappedTokenConfig;
 
-export type ChainTokenConfig = {
-  [tokenSymbol: string]: TokenConfig; // TODO: tokenSymbol should be TokenSymbol
-};
+export type ChainTokenConfig = Partial<Record<TokenSymbol, TokenConfig>>;
 
 export const ETHEREUM_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbol.ETH]: {

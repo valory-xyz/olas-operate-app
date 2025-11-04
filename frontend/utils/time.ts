@@ -39,6 +39,15 @@ export const formatToMonthDay = (timeInMs: number) => {
   });
 };
 
+export const formatToMonthYear = (timeInMs: number) => {
+  if (!isNumber(timeInMs)) return '--';
+  return new Date(timeInMs).toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+};
+
 /**
  * @returns formatted time in the format of 'HH:MM AM/PM'
  * @example 1626825600 => '12:00 PM'
@@ -96,4 +105,13 @@ export const formatCountdownDisplay = (totalSeconds: number) => {
   const minutesInWords = `${formattedMinutes} minute${minutes !== 1 ? 's' : ''}`;
   const secondsInWords = `${formattedSeconds} second${seconds !== 1 ? 's' : ''}`;
   return `${daysInWords} ${hoursInWords} ${minutesInWords} ${secondsInWords}`.trim();
+};
+
+/**
+ * @returns hours from seconds
+ * @example 86400 => '24 hours'
+ */
+export const secondsToHours = (seconds: number) => {
+  const hours = Math.floor(seconds / 3600);
+  return `${hours} hour${hours !== 1 ? 's' : ''}`;
 };

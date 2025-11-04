@@ -1,50 +1,33 @@
-import { Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { CustomAlert } from '@/components/Alert';
+import { AgentSetupCompleteModal, Alert, CardFlex } from '@/components/ui';
+import { Pages } from '@/enums';
 import {
-  BridgingSteps,
-  StepEvent,
-} from '@/components/Bridge/BridgeInProgress/BridgingSteps';
-import { EstimatedCompletionTime } from '@/components/Bridge/BridgeInProgress/EstimatedCompletionTime';
-import { BridgeTransferFlow } from '@/components/Bridge/BridgeTransferFlow';
-import { CardFlex } from '@/components/styled/CardFlex';
-import { AgentHeader } from '@/components/ui/AgentHeader';
-import { Pages } from '@/enums/Pages';
-import { useBridgingSteps } from '@/hooks/useBridgingSteps';
-import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
-import { usePageState } from '@/hooks/usePageState';
-import { BridgingStepStatus, CrossChainTransferDetails } from '@/types/Bridge';
-import { Nullable } from '@/types/Util';
+  useBridgingSteps,
+  useMasterSafeCreationAndTransfer,
+  usePageState,
+} from '@/hooks';
+import {
+  BridgingStepStatus,
+  CrossChainTransferDetails,
+  Nullable,
+} from '@/types';
 
+import { BridgeTransferFlow } from '../BridgeTransferFlow';
 import { BridgeRetryOutcome, EnabledSteps } from '../types';
+import { BridgingSteps, StepEvent } from './BridgingSteps';
 import { useRetryBridge } from './useRetryBridge';
 
 const { Text, Title } = Typography;
 
 const KeepAppOpenAlert = () => (
-  <CustomAlert
+  <Alert
     type="warning"
-    fullWidth
     showIcon
-    message={
-      <Text className="text-sm">
-        Keep the app open until bridging is complete.
-      </Text>
-    }
+    message="Keep the app open until the process is complete."
+    className="mb-32"
   />
-);
-
-const Header = () => (
-  <>
-    <CardFlex $noBorder $gap={20} $padding="0 24px">
-      <AgentHeader />
-      <Title level={3} className="m-0">
-        Bridging in progress
-      </Title>
-    </CardFlex>
-    <KeepAppOpenAlert />
-  </>
 );
 
 type BridgeInProgressProps = {
@@ -53,6 +36,8 @@ type BridgeInProgressProps = {
   onBridgeRetryOutcome: (outcome: Nullable<BridgeRetryOutcome>) => void;
   enabledStepsAfterBridging?: EnabledSteps;
   onNext: () => void;
+  isBridgeCompleted?: boolean;
+  isOnboarding?: boolean;
 } & CrossChainTransferDetails;
 
 /**
@@ -62,12 +47,14 @@ export const BridgeInProgress = ({
   quoteId,
   fromChain,
   toChain,
-  eta,
   transfers,
   bridgeRetryOutcome,
   onBridgeRetryOutcome,
   enabledStepsAfterBridging = [],
   onNext,
+  isBridgeCompleted = false,
+  eta,
+  isOnboarding,
 }: BridgeInProgressProps) => {
   const { goto } = usePageState();
   const symbols = transfers.map((transfer) => transfer.toSymbol);
@@ -145,6 +132,21 @@ export const BridgeInProgress = ({
     if (!isSafeCreated) return;
     if (!isTransferCompleted) return;
 
+    /**
+     * If all the steps are finished for onboarding and bridgeStatus is changed to `completed`,
+     * don't redirect automatically, let the user manually redirect via `AgentSetupCompleteModal`
+     */
+    if (isOnboarding && isBridgeCompleted) return;
+
+    /**
+     * Do not redirect in case of onboarding, instead show the `AgentSetupCompleteModal`
+     * modal on the same page
+     */
+    if (isOnboarding) {
+      onNext();
+      return;
+    }
+
     // wait for 3 seconds before redirecting to main page.
     const timeoutId = setTimeout(() => goto(Pages.Main), 3000);
     return () => clearTimeout(timeoutId);
@@ -159,6 +161,8 @@ export const BridgeInProgress = ({
     isTransferCompleted,
     goto,
     onNext,
+    isOnboarding,
+    isBridgeCompleted,
   ]);
 
   const onBridgeFailRetry = useCallback(() => {
@@ -270,16 +274,34 @@ export const BridgeInProgress = ({
     createMasterSafe,
   ]);
 
+  const estimatedTimeInMinutes = useMemo(() => {
+    const minutes = Math.floor((eta || 0) / 60);
+    return Math.max(1, minutes);
+  }, [eta]);
+
   return (
-    <>
-      <Header />
-      <CardFlex $noBorder $gap={16} $padding="0 24px">
-        {eta && <EstimatedCompletionTime timeInSeconds={eta} />}
+    <Flex justify="center">
+      <CardFlex $noBorder $onboarding className="p-8">
+        <Title level={3} className="mt-0">
+          Bridge Crypto
+        </Title>
+        <Title level={5} className="mt-12 mb-8">
+          Step 2. Bridging In Progress
+        </Title>
+        <Text type="secondary" className="mb-24">
+          Funds have been received, and the bridging process has been started.
+          Estimated time: ~{estimatedTimeInMinutes} minutes.
+        </Text>
+
+        <KeepAppOpenAlert />
+
         <BridgeTransferFlow
           fromChain={fromChain}
           toChain={toChain}
           transfers={transfers}
+          isBridgeCompleted={isBridgeCompleted}
         />
+
         {!!bridgeDetails && (
           <BridgingSteps
             chainName={toChain}
@@ -289,6 +311,8 @@ export const BridgeInProgress = ({
           />
         )}
       </CardFlex>
-    </>
+
+      {isBridgeCompleted && <AgentSetupCompleteModal />}
+    </Flex>
   );
 };

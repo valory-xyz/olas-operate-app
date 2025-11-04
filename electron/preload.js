@@ -1,15 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron/renderer');
 
-/** IPC methods for controlling agent activity window */
-const agentActivityWindow = {
-  init: () => ipcRenderer.invoke('agent-activity-window-init'),
-  goto: (url) => ipcRenderer.invoke('agent-activity-window-goto', url),
-  hide: () => ipcRenderer.invoke('agent-activity-window-hide'),
-  show: () => ipcRenderer.invoke('agent-activity-window-show'),
-  close: () => ipcRenderer.invoke('agent-activity-window-close'),
-  minimize: () => ipcRenderer.invoke('agent-activity-window-minimize'),
-};
-
 /** IPC methods for transak window */
 const onRampWindow = {
   show: (amountToPay) => ipcRenderer.invoke('onramp-window-show', amountToPay),
@@ -28,8 +18,7 @@ const web3AuthWindow = {
 
 /** IPC methods for terms window */
 const termsAndConditionsWindow = {
-  show: (type) => ipcRenderer.invoke('terms-window-show', type),
-  close: () => ipcRenderer.invoke('terms-window-close'),
+  show: (hash) => ipcRenderer.invoke('terms-window-show', hash),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -53,14 +42,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     delete: (key) => ipcRenderer.invoke('store-delete', key),
     clear: () => ipcRenderer.invoke('store-clear'),
   },
-  setAppHeight: (height) => ipcRenderer.send('set-height', height),
   showNotification: (title, description) =>
     ipcRenderer.send('show-notification', title, description),
   saveLogs: (data) => ipcRenderer.invoke('save-logs', data),
   openPath: (filePath) => ipcRenderer.send('open-path', filePath),
   getAppVersion: () => ipcRenderer.invoke('app-version'),
-  healthCheck: () => ipcRenderer.invoke('health-check'),
-  agentActivityWindow,
   onRampWindow,
   web3AuthWindow,
   termsAndConditionsWindow,

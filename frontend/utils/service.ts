@@ -1,4 +1,4 @@
-import { isEmpty, isEqual, isNil } from 'lodash';
+import { isEmpty, isEqual } from 'lodash';
 
 import { ServiceTemplate } from '@/client';
 import { EnvProvisionMap } from '@/constants/envVariables';
@@ -119,6 +119,8 @@ export const onDummyServiceCreation = async (
     deploy: true,
     stakingProgramId,
   });
+  // Fetch the service list when a new service is created, prevents race condition
+  await ServicesService.getServices();
 };
 
 /**
@@ -126,8 +128,6 @@ export const onDummyServiceCreation = async (
  */
 export const isValidServiceId = (
   token: number | null | undefined | -1,
-): boolean => {
-  if (isNil(token)) return false;
-  if (token === -1) return false;
-  return !!token;
+): token is number => {
+  return typeof token === 'number' && token !== -1 && token !== 0;
 };

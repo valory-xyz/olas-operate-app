@@ -1,70 +1,141 @@
-import { SettingOutlined } from '@ant-design/icons';
 import { Card, Flex, Skeleton, Typography } from 'antd';
 import { isEmpty, isNil } from 'lodash';
+import Image from 'next/image';
 import { useMemo } from 'react';
 
-import { Pages } from '@/enums/Pages';
-import { SettingsScreen } from '@/enums/SettingsScreen';
-import { useFeatureFlag } from '@/hooks/useFeatureFlag';
-import { useMultisig } from '@/hooks/useMultisig';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
-import { useSettings } from '@/hooks/useSettings';
-import { useMasterWalletContext } from '@/hooks/useWallet';
-import { Address } from '@/types/Address';
-import { Optional } from '@/types/Util';
+import { AddressLink, CardSection, cardStyles } from '@/components/ui';
+import { NA } from '@/constants';
+import { SettingsScreen } from '@/enums';
+import {
+  useFeatureFlag,
+  useMasterWalletContext,
+  useMultisig,
+  useServices,
+  useSettings,
+} from '@/hooks';
+import { Address, Optional } from '@/types';
 
-import { AddressLink } from '../AddressLink';
-import { CustomAlert } from '../Alert';
-import { CardTitle } from '../Card/CardTitle';
-import { GoToLoginPageButton } from '../Pages/GoToLoginPageButton';
-import { GoToMainPageButton } from '../Pages/GoToMainPageButton';
-import { CardSection } from '../styled/CardSection';
-import { DebugInfoSection } from './DebugInfoSection';
+import { YourFundsAtRiskAlert } from './YourFundsAtRiskAlert';
 
-const { Text, Paragraph } = Typography;
+const { Text, Paragraph, Title } = Typography;
 
-const SettingsTitle = () => (
-  <CardTitle
-    title={
-      <Flex gap={10}>
-        <SettingOutlined />
-        Settings
-      </Flex>
+const SettingsMain = () => {
+  const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
+  const { selectedAgentConfig } = useServices();
+  const {
+    masterEoa,
+    masterSafes,
+    isLoading: isWalletsLoading,
+  } = useMasterWalletContext();
+
+  const masterSafe = masterSafes?.find(
+    ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
+  );
+
+  const { owners, ownersIsFetched } = useMultisig(masterSafe);
+
+  const masterSafeBackupAddresses = useMemo<Optional<Address[]>>(() => {
+    if (!ownersIsFetched) return;
+    if (!masterEoa) return;
+    if (isNil(owners) || isEmpty(owners)) return [];
+
+    // TODO: handle edge cases where there are multiple owners due to middleware failure,
+    // or user interaction via safe.global
+    return owners.filter(
+      (owner) => owner.toLowerCase() !== masterEoa.address.toLowerCase(),
+    );
+  }, [ownersIsFetched, owners, masterEoa]);
+
+  const masterSafeBackupAddress = useMemo<Optional<Address>>(() => {
+    if (isNil(masterSafeBackupAddresses)) return;
+
+    return masterSafeBackupAddresses[0];
+  }, [masterSafeBackupAddresses]);
+
+  const walletBackup = useMemo(() => {
+    if (!isWalletsLoading && !masterSafe) {
+      return <Text type="secondary">{NA}</Text>;
     }
-  />
-);
+    if (!ownersIsFetched) return <Skeleton.Input />;
+    if (!masterSafeBackupAddress) {
+      return <Text type="secondary">No backup wallet added.</Text>;
+    }
 
-const NoBackupWallet = () => {
-  const { goto } = usePageState();
+    return (
+      <AddressLink
+        address={masterSafeBackupAddress}
+        middlewareChain={selectedAgentConfig.middlewareHomeChainId}
+      />
+    );
+  }, [
+    isWalletsLoading,
+    masterSafe,
+    masterSafeBackupAddress,
+    ownersIsFetched,
+    selectedAgentConfig.middlewareHomeChainId,
+  ]);
+
+  const hideWallet = !isBackupViaSafeEnabled && !masterSafeBackupAddress;
 
   return (
-    <>
-      <Text type="secondary">No backup wallet added.</Text>
+    <Flex style={cardStyles} vertical gap={32}>
+      <Title level={3} className="m-0">
+        Settings
+      </Title>
+      <Card styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}>
+        <CardSection
+          $padding="24px"
+          $borderBottom={!hideWallet}
+          align="center"
+          gap={16}
+        >
+          <Image
+            src="/password-icon.png"
+            alt="password"
+            width={36}
+            height={36}
+            className="mb-auto"
+          />
+          <Flex vertical gap={6}>
+            <div className="my-6">
+              <Paragraph strong className="mb-0">
+                Password
+              </Paragraph>
+            </div>
 
-      <CardSection style={{ marginTop: 12 }}>
-        <CustomAlert
-          type="warning"
-          fullWidth
-          showIcon
-          message={
-            <Flex vertical gap={5}>
-              <span className="font-weight-600">Your funds are at risk!</span>
-              <span>
-                Add a backup wallet to allow you to retrieve funds if you lose
-                your password and seed phrase.
-              </span>
-              <Text
-                className="pointer hover-underline text-primary"
-                onClick={() => goto(Pages.AddBackupWalletViaSafe)}
-              >
-                See instructions
-              </Text>
+            <Text style={{ lineHeight: 1 }}>••••••••••••••••••••</Text>
+          </Flex>
+        </CardSection>
+
+        {hideWallet ? null : (
+          <CardSection
+            $padding="24px"
+            $borderBottom={!!masterSafeBackupAddress}
+            vertical
+          >
+            <Flex gap={16}>
+              <Image
+                src="/wallet-icon.png"
+                alt="wallet"
+                width={36}
+                height={36}
+                className="mb-auto"
+              />
+              <Flex vertical gap={6}>
+                <div className="my-6">
+                  <Text strong>Backup wallet</Text>
+                </div>
+                {walletBackup}
+              </Flex>
             </Flex>
-          }
-        />
-      </CardSection>
-    </>
+
+            {ownersIsFetched && !masterSafeBackupAddress && (
+              <YourFundsAtRiskAlert />
+            )}
+          </CardSection>
+        )}
+      </Card>
+    </Flex>
   );
 };
 
@@ -80,91 +151,4 @@ export const Settings = () => {
   }, [screen]);
 
   return settingsScreen;
-};
-
-const SettingsMain = () => {
-  const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
-  const { isUserLoggedIn } = usePageState();
-  const { selectedAgentConfig } = useServices();
-  const { masterEoa, masterSafes } = useMasterWalletContext();
-
-  const masterSafe = masterSafes?.find(
-    ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
-  );
-
-  const { owners, ownersIsFetched } = useMultisig(masterSafe);
-
-  const masterSafeBackupAddresses = useMemo<Optional<Address[]>>(() => {
-    if (!ownersIsFetched) return;
-    if (!masterEoa) return;
-    if (isNil(owners) || isEmpty(owners)) return [];
-
-    // TODO: handle edge cases where there are multiple owners due to middleware failure, or user interaction via safe.global
-    return owners.filter(
-      (owner) => owner.toLowerCase() !== masterEoa.address.toLowerCase(),
-    );
-  }, [ownersIsFetched, owners, masterEoa]);
-
-  const masterSafeBackupAddress = useMemo<Optional<Address>>(() => {
-    if (isNil(masterSafeBackupAddresses)) return;
-
-    return masterSafeBackupAddresses[0];
-  }, [masterSafeBackupAddresses]);
-
-  const walletBackup = useMemo(() => {
-    if (!ownersIsFetched) return <Skeleton.Input />;
-    if (!masterSafeBackupAddress) return <NoBackupWallet />;
-
-    return (
-      <AddressLink
-        address={masterSafeBackupAddress}
-        middlewareChain={selectedAgentConfig.middlewareHomeChainId}
-      />
-    );
-  }, [
-    masterSafeBackupAddress,
-    ownersIsFetched,
-    selectedAgentConfig.middlewareHomeChainId,
-  ]);
-
-  return (
-    <Card
-      title={<SettingsTitle />}
-      bordered={false}
-      styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}
-      extra={isUserLoggedIn ? <GoToMainPageButton /> : <GoToLoginPageButton />}
-    >
-      {/* Password */}
-      <CardSection
-        $padding="24px"
-        $borderBottom={true}
-        justify="space-between"
-        align="center"
-      >
-        <Flex vertical>
-          <Paragraph strong>Password</Paragraph>
-          <Text style={{ lineHeight: 1 }}>********</Text>
-        </Flex>
-      </CardSection>
-
-      {/* Wallet backup 
-        If there's no backup address and adding it
-        via safe is disabled - hide the section
-      */}
-      {!isBackupViaSafeEnabled && !masterSafeBackupAddress ? null : (
-        <CardSection
-          $padding="24px"
-          $borderBottom={masterSafeBackupAddress ? true : false}
-          vertical
-          gap={8}
-        >
-          <Text strong>Backup wallet</Text>
-          {walletBackup}
-        </CardSection>
-      )}
-
-      {/* Debug info */}
-      <DebugInfoSection />
-    </Card>
-  );
 };

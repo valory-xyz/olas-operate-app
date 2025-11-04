@@ -1,5 +1,6 @@
 import { Button, ButtonProps, message } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
+import { TbShare2 } from 'react-icons/tb';
 
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useLogs } from '@/hooks/useLogs';
@@ -53,10 +54,10 @@ export const ExportLogsButton = ({ size }: ExportLogsButtonProps) => {
     <Button
       loading={isLoading || canSaveLogs}
       onClick={onSaveLogs}
-      size={size || 'large'}
-      type="primary"
-      ghost
+      size={size || 'middle'}
+      type="default"
     >
+      <TbShare2 size={size === 'small' ? 16 : 20} />
       Export logs
     </Button>
   );

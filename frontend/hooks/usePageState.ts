@@ -12,6 +12,5 @@ export const usePageState = () => {
     },
     [pageState],
   );
-
   return { goto, ...pageState };
 };

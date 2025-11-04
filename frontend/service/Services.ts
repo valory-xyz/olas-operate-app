@@ -1,4 +1,5 @@
 import {
+  AgentPerformance,
   Deployment,
   MiddlewareServiceResponse,
   ServiceConfigId,
@@ -11,7 +12,7 @@ import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL_V2 } from '@/constants/urls';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
-import { DeepPartial } from '@/types/Util';
+import { DeepPartial, Nullable } from '@/types/Util';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 /**
@@ -166,6 +167,21 @@ const stopDeployment = async (
   });
 
 /**
+ * Gets deployment of all services
+ */
+const getAllServiceDeployments = async (
+  signal?: AbortSignal,
+): Promise<Record<ServiceConfigId, Deployment>> =>
+  fetch(`${BACKEND_URL_V2}/services/deployment`, {
+    method: 'GET',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    signal,
+  }).then((response) => {
+    if (response.ok) return response.json();
+    throw new Error('Failed to fetch all service deployments');
+  });
+
+/**
  * To get the deployment of a service
  */
 const getDeployment = async ({
@@ -186,10 +202,6 @@ const getDeployment = async ({
 
 /**
  * Withdraws the balance of a service
- *
- * @param withdrawAddress Address
- * @param serviceTemplate ServiceTemplate
- * @returns Promise<Service>
  */
 const withdrawBalance = async ({
   withdrawAddress,
@@ -197,29 +209,50 @@ const withdrawBalance = async ({
 }: {
   withdrawAddress: Address;
   serviceConfigId: ServiceConfigId;
-}): Promise<{ error: string | null }> =>
+}): Promise<{ error: Nullable<string> }> =>
   new Promise((resolve, reject) =>
-    fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/onchain/withdraw`, {
-      method: 'POST',
-      body: JSON.stringify({ withdrawal_address: withdrawAddress }),
-      headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    }).then((response) => {
+    fetch(
+      `${BACKEND_URL_V2}/service/${serviceConfigId}/terminate_and_withdraw`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ withdrawal_address: withdrawAddress }),
+        headers: { ...CONTENT_TYPE_JSON_UTF8 },
+      },
+    ).then((response) => {
       if (response.ok) {
         resolve(response.json());
       } else {
-        reject('Failed to withdraw balance');
+        reject('Failed to withdraw balance.');
       }
     }),
   );
+
+/**
+ * To get the agent performance statistics of a service
+ */
+const getAgentPerformance = async ({
+  serviceConfigId,
+}: {
+  serviceConfigId: ServiceConfigId;
+}): Promise<AgentPerformance> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/agent_performance`, {
+    method: 'GET',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+  }).then((response) => {
+    if (response.ok) return response.json();
+    throw new Error('Failed to fetch agent performance');
+  });
 
 export const ServicesService = {
   getService,
   getServices,
   getServicesValidationStatus,
+  getAllServiceDeployments,
   getDeployment,
   startService,
   createService,
   updateService,
   stopDeployment,
   withdrawBalance,
+  getAgentPerformance,
 };

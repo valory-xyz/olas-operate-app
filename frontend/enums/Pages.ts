@@ -2,20 +2,16 @@
 export const Pages = {
   Setup: 'Setup',
   Main: 'Main',
+  AgentStaking: 'AgentStaking',
   Settings: 'Settings',
   HelpAndSupport: 'HelpAndSupport',
-  Receive: 'Receive',
-  Send: 'Send',
-  ManageStaking: 'ManageStaking',
-  ManageWallet: 'ManageWallet',
-  RewardsHistory: 'RewardsHistory',
-  AddBackupWalletViaSafe: 'AddBackupWalletViaSafe',
-  SwitchAgent: 'SwitchAgent',
-  AgentActivity: 'AgentActivity',
+  PearlWallet: 'PearlWallet',
+  AgentWallet: 'AgentWallet',
   UpdateAgentTemplate: 'UpdateAgentTemplate',
-  AddFundsToMasterSafeThroughBridge: 'AddFundsToMasterSafeThroughBridge',
-  LowOperatingBalanceBridgeFunds: 'LowOperatingBalanceBridgeFunds',
-  LowSafeSignerBalanceBridgeFunds: 'LowSafeSignerBalanceBridgeFunds',
+  SelectStaking: 'SelectStaking',
+  ConfirmSwitch: 'ConfirmSwitch',
+  DepositOlasForStaking: 'DepositOlasForStaking',
+  FundPearlWallet: 'FundPearlWallet',
 } as const;
 
 export type Pages = (typeof Pages)[keyof typeof Pages];

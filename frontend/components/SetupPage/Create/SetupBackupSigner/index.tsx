@@ -1,8 +1,7 @@
 import { Flex, Typography } from 'antd';
 import { useState } from 'react';
 
-import { CardFlex } from '@/components/styled/CardFlex';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { CardFlex } from '@/components/ui';
 import { BackupWalletType } from '@/types/BackupWallet';
 
 import { SetupCreateHeader } from '../SetupCreateHeader';
@@ -17,7 +16,7 @@ export const SetupBackupSigner = () => {
 
   return (
     <CardFlex $noBorder>
-      <SetupCreateHeader prev={SetupScreen.SetupSeedPhrase} />
+      <SetupCreateHeader />
       <Title level={3}>Set backup wallet</Title>
       <Flex vertical gap={16}>
         <Text className="mb-16">
