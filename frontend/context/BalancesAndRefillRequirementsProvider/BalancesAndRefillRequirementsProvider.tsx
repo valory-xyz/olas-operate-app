@@ -13,21 +13,14 @@ import {
   useRef,
 } from 'react';
 
-import {
-  AddressBalanceRecord,
-  BalancesAndFundingRequirements,
-  MasterSafeBalanceRecord,
-} from '@/client';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import {
   AgentType,
   EvmChainId,
   MiddlewareDeploymentStatusMap,
-} from '@/constants';
-import {
   SIXTY_MINUTE_INTERVAL,
   THIRTY_SECONDS_INTERVAL,
-} from '@/constants/intervals';
+} from '@/constants';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useMasterWalletContext, useStore } from '@/hooks';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
@@ -35,6 +28,11 @@ import { usePageState } from '@/hooks/usePageState';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
 import { BalanceService } from '@/service/balances';
+import {
+  AddressBalanceRecord,
+  BalancesAndFundingRequirements,
+  MasterSafeBalanceRecord,
+} from '@/types';
 import { Maybe, Nullable, Optional } from '@/types/Util';
 import {
   asMiddlewareChain,

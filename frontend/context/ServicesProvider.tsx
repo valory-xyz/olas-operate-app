@@ -11,11 +11,6 @@ import {
   useState,
 } from 'react';
 
-import {
-  Deployment,
-  MiddlewareServiceResponse,
-  ServiceValidationResponse,
-} from '@/client';
 import { AGENT_CONFIG } from '@/config/agents';
 import {
   AgentMap,
@@ -44,7 +39,16 @@ import {
   useStore,
 } from '@/hooks';
 import { ServicesService } from '@/service/Services';
-import { AgentConfig, Maybe, Nullable, Optional, Service } from '@/types';
+import {
+  AgentConfig,
+  Maybe,
+  MiddlewareServiceResponse,
+  Nullable,
+  Optional,
+  Service,
+  ServiceDeployment,
+  ServiceValidationResponse,
+} from '@/types';
 import { asEvmChainId, isNilOrEmpty } from '@/utils';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
@@ -72,7 +76,7 @@ type ServicesContextType = {
   isSelectedServiceDeploymentStatusLoading: boolean;
   selectedAgentConfig: AgentConfig;
   selectedAgentType: AgentType;
-  deploymentDetails: Deployment | undefined;
+  deploymentDetails: ServiceDeployment | undefined;
   updateAgentType: (agentType: AgentType) => void;
   overrideSelectedServiceStatus: (
     status?: Maybe<MiddlewareDeploymentStatus>,
