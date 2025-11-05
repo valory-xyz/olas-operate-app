@@ -3,7 +3,6 @@ import { Button, Flex, Modal, Typography } from 'antd';
 import { isEmpty, set, values } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
-import { TokenBalanceRecord } from '@/client';
 import {
   LoadingOutlined,
   SuccessOutlined,
@@ -29,7 +28,7 @@ import {
   FundService,
   type TokenAmountMap,
 } from '@/service/Fund';
-import { Address, TokenAmounts } from '@/types';
+import { Address, TokenAmounts, TokenBalanceRecord } from '@/types';
 import { bigintMin } from '@/utils';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';

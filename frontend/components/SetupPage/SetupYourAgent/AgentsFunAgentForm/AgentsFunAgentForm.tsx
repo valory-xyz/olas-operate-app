@@ -1,10 +1,10 @@
 import { Divider, message, Typography } from 'antd';
 import React, { ReactNode, useCallback } from 'react';
 
-import { ServiceTemplate } from '@/client';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils/service';
 
 import {

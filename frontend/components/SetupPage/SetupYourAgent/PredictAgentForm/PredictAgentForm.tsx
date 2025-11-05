@@ -2,7 +2,6 @@ import { Button, Form, Input, message } from 'antd';
 import { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { ServiceTemplate } from '@/client';
 import {
   optionalFieldProps,
   validateMessages,
@@ -16,6 +15,7 @@ import {
 import { RequiredMark } from '@/components/ui';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup, useStakingProgram } from '@/hooks';
+import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils';
 
 import { RenderForm } from '../useDisplayAgentForm';

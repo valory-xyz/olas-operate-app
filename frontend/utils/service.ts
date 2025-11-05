@@ -1,6 +1,5 @@
 import { isEmpty, isEqual } from 'lodash';
 
-import { ServiceTemplate } from '@/client';
 import { AGENT_CONFIG } from '@/config/agents';
 import { SupportedMiddlewareChain } from '@/constants';
 import { EnvProvisionMap } from '@/constants/envVariables';
@@ -11,9 +10,7 @@ import {
 import { AgentType } from '@/enums/Agent';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { ServicesService } from '@/service/Services';
-import { Address } from '@/types/Address';
-import { Service } from '@/types/Service';
-import { DeepPartial } from '@/types/Util';
+import { Address, DeepPartial, Service, ServiceTemplate } from '@/types';
 
 export const updateServiceIfNeeded = async (
   service: Service,

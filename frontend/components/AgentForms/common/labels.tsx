@@ -2,7 +2,7 @@ import { Flex, Typography } from 'antd';
 
 import { FormLabel } from '@/components/ui/Typography';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { COINGECKO_DEMO_API_KEY, GEMINI_API_URL } from '@/constants/urls';
+import { COINGECKO_DEMO_API_URL, GEMINI_API_URL } from '@/constants/urls';
 
 const { Text, Title } = Typography;
 
@@ -58,7 +58,7 @@ export const GeminiApiKeyLabel = () => (
 export const CoinGeckoApiKeyDesc = () => (
   <Flex vertical gap={4} style={{ marginBottom: 252 }}>
     <Text>
-      <a target="_blank" href={COINGECKO_DEMO_API_KEY}>
+      <a target="_blank" href={COINGECKO_DEMO_API_URL}>
         Learn how to get a free CoinGecko API key&nbsp;
         {UNICODE_SYMBOLS.EXTERNAL_LINK}
       </a>

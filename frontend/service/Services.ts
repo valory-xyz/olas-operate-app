@@ -1,19 +1,22 @@
+import { CHAIN_CONFIG } from '@/config/chains';
 import {
+  BACKEND_URL_V2,
+  CONTENT_TYPE_JSON_UTF8,
+  SupportedMiddlewareChain,
+} from '@/constants';
+import { StakingProgramId } from '@/enums/StakingProgram';
+import {
+  Address,
   AgentPerformance,
-  Deployment,
+  DeepPartial,
   MiddlewareServiceResponse,
+  Nullable,
   ServiceConfigId,
+  ServiceDeployment,
   ServiceTemplate,
   ServiceValidationResponse,
-  SupportedMiddlewareChain,
-} from '@/client';
-import { CHAIN_CONFIG } from '@/config/chains';
-import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
-import { BACKEND_URL_V2 } from '@/constants/urls';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
-import { DeepPartial, Nullable } from '@/types/Util';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+} from '@/types';
+import { asEvmChainId } from '@/utils';
 
 /**
  * Get a single service from the backend
@@ -155,7 +158,7 @@ const startService = async (
 
 const stopDeployment = async (
   serviceConfigId: string,
-): Promise<Pick<Deployment, 'status' | 'nodes'>> =>
+): Promise<Pick<ServiceDeployment, 'status' | 'nodes'>> =>
   fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/deployment/stop`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
@@ -171,7 +174,7 @@ const stopDeployment = async (
  */
 const getAllServiceDeployments = async (
   signal?: AbortSignal,
-): Promise<Record<ServiceConfigId, Deployment>> =>
+): Promise<Record<ServiceConfigId, ServiceDeployment>> =>
   fetch(`${BACKEND_URL_V2}/services/deployment`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
@@ -190,7 +193,7 @@ const getDeployment = async ({
 }: {
   serviceConfigId: ServiceConfigId;
   signal: AbortSignal;
-}): Promise<Deployment> =>
+}): Promise<ServiceDeployment> =>
   fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/deployment`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
