@@ -151,9 +151,7 @@ export const FundingDescription = ({
   ] = useState(false);
 
   const handleCopyAddress = useCallback(() => {
-    if (address) {
-      copyToClipboard(address).then(() => message.success('Address copied!'));
-    }
+    copyToClipboard(address).then(() => message.success('Address copied!'));
     setIsChainConfirmationMessageModalOpen(true);
   }, [address]);
 
@@ -191,7 +189,7 @@ export const FundingDescription = ({
           <Button size="small" icon={<TbCopy />} onClick={handleCopyAddress}>
             Copy
           </Button>
-          {address && <ScanQrCode chainName={chainName} address={address} />}
+          <ScanQrCode chainName={chainName} address={address} />
         </Flex>
       </FundingDescriptionContainer>
 
