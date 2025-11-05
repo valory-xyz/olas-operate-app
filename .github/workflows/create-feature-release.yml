@@ -45,8 +45,8 @@ jobs:
       - name: Get latest RC tag
         id: get-latest-rc
         run: |
-          # Fetch all tags
-          git fetch --tags
+          # Fetch all tags (ignore errors from tag clobbering)
+          git fetch --tags || true
           
           # Get the latest RC tag (format: vX.Y.Z-rcXXX)
           LATEST_RC_TAG=$(git tag -l "*-rc*" | sort -V | tail -1)
