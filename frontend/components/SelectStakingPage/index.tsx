@@ -21,8 +21,7 @@ const StakingContractsWrapper = styled.div`
 `;
 
 type SelectStakingProps = {
-  // select means select during onboarding; switch is for migrating
-  mode: 'select' | 'switch';
+  mode: 'onboard' | 'migrate';
 };
 
 export const SelectStaking = ({ mode }: SelectStakingProps) => {

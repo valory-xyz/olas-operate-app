@@ -6,7 +6,7 @@ import { AgentStaking } from '@/components/AgentStaking/AgentStaking';
 import { ConfirmSwitch } from '@/components/ConfirmSwitch/ConfirmSwitch';
 import { DepositOlasForStaking } from '@/components/ConfirmSwitch/DepositOlasForStaking';
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
-import { SelectStaking } from '@/components/SelectStaking/SelectStaking';
+import { SelectStakingPage } from '@/components/SelectStakingPage';
 import { Settings } from '@/components/SettingsPage';
 import { UpdateAgentPage } from '@/components/UpdateAgentPage';
 import { SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants';
@@ -76,7 +76,7 @@ export const Main = () => {
       case Pages.AgentStaking:
         return <AgentStaking />;
       case Pages.SelectStaking:
-        return <SelectStaking mode="switch" />;
+        return <SelectStakingPage mode="migrate" />;
       case Pages.ConfirmSwitch:
         return <ConfirmSwitch />;
       case Pages.DepositOlasForStaking:
