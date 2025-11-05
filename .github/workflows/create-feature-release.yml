@@ -72,9 +72,7 @@ jobs:
             LATEST_RC_NUMBER="0"
           fi
 
-          echo "latest_rc_tag=$LATEST_RC_TAG" | tee -a $GITHUB_OUTPUT
           echo "latest_rc_number=$LATEST_RC_NUMBER" | tee -a $GITHUB_OUTPUT
-          echo "base_version=$BASE_VERSION" | tee -a $GITHUB_OUTPUT
 
       - name: Calculate new version
         id: calculate-version
