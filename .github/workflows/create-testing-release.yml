@@ -1,6 +1,5 @@
-name: Create Testing Release
+name: Create Feature Release
 
-# Manual workflow trigger for development/feature releases
 on:
   workflow_dispatch:
     inputs:
