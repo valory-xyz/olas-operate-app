@@ -1,39 +1,28 @@
-name: Create Feature Release
+name: Production Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to create release from'
-        required: true
-        type: string
-      action:
-        description: 'Action'
-        required: true
-        type: choice
-        options:
-          - new
-          - override
-        default: 'new'
+  push:
+    branches:
+      - "release/*"
+
+permissions:
+  contents: write
 
 jobs:
-  create-feature-release:
+  production-release:
+    # Avoid looping on our own commits
+    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch }}
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-            node-version: '20'
+          node-version: '20'
 
       - name: Configure Git
         run: |
@@ -54,6 +43,11 @@ jobs:
           if [[ "$LATEST_RC_TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-rc([0-9]+) ]]; then
             BASE_VERSION="${BASH_REMATCH[1]}"
             LATEST_RC_NUMBER="${BASH_REMATCH[2]}"
+          else
+            # If no RC tag exists yet, infer from package.json version
+            BASE_VERSION=$(node -p "require('./package.json').version.split('-rc')[0]")
+            LATEST_RC_NUMBER=$(node -p "(require('./package.json').version.match(/-rc(\\d+)/)||['',0])[1]")
+            LATEST_RC_NUMBER=${LATEST_RC_NUMBER:-0}
           fi
           
           echo "latest_rc_tag=$LATEST_RC_TAG" | tee -a $GITHUB_OUTPUT
@@ -63,23 +57,11 @@ jobs:
       - name: Calculate new version
         id: calculate-version
         run: |
-          ACTION="${{ inputs.action }}"
-          
-          if [ "$ACTION" = "new" ]; then
-            # For "new" action, increment from the latest RC tag
-            LATEST_RC_NUMBER=${{ steps.get-latest-rc.outputs.latest_rc_number }}
-            BASE_VERSION="${{ steps.get-latest-rc.outputs.base_version }}"
-            NEW_RC_NUMBER=$((LATEST_RC_NUMBER + 1))
-            NEW_VERSION="$BASE_VERSION-rc$NEW_RC_NUMBER"
-            NEW_TAG="v$NEW_VERSION"
-          else
-            # For "override" action, use the latest tag as-is
-            LATEST_TAG="${{ steps.get-latest-rc.outputs.latest_rc_tag }}"
-            NEW_VERSION="${LATEST_TAG#v}"
-            NEW_TAG="$LATEST_TAG"
-            NEW_RC_NUMBER=${{ steps.get-latest-rc.outputs.latest_rc_number }}
-          fi
-          
+          LATEST_RC_NUMBER=${{ steps.get-latest-rc.outputs.latest_rc_number }}
+          BASE_VERSION="${{ steps.get-latest-rc.outputs.base_version }}"
+          NEW_RC_NUMBER=$((LATEST_RC_NUMBER + 1))
+          NEW_VERSION="$BASE_VERSION-rc$NEW_RC_NUMBER"
+          NEW_TAG="v$NEW_VERSION-signed"
           echo "new_version=$NEW_VERSION" | tee -a $GITHUB_OUTPUT
           echo "new_tag=$NEW_TAG" | tee -a $GITHUB_OUTPUT
           echo "new_rc_number=$NEW_RC_NUMBER" | tee -a $GITHUB_OUTPUT
@@ -109,32 +91,24 @@ jobs:
       - name: Commit and push version update
         run: |
           git add package.json pyproject.toml
-          # Check if there are changes to commit
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore: bump version to ${{ steps.calculate-version.outputs.new_version }}"
-            git push origin ${{ inputs.branch }}
+            # Add skip marker to avoid loop on this workflow
+            git commit -m "chore: bump version to ${{ steps.calculate-version.outputs.new_version }} [skip release]"
+            git push origin ${GITHUB_REF_NAME}
           fi
 
-      - name: Create and push tag
+      - name: Create and push signed tag
         run: |
           TAG_NAME="${{ steps.calculate-version.outputs.new_tag }}"
-          # Delete tag locally if it exists
-          git tag -d "$TAG_NAME" 2>/dev/null || true
-          # Delete tag remotely if it exists
-          git push origin --delete "$TAG_NAME" 2>/dev/null || true
-          # Create and push the new tag
-          git tag -a "$TAG_NAME" -m "Feature Release $TAG_NAME"
+          git tag -a "$TAG_NAME" -m "Production Release $TAG_NAME"
           git push origin "$TAG_NAME"
           echo "Created and pushed tag: $TAG_NAME"
 
       - name: Summary
         run: |
-          echo "## 🎉 Feature Release Created Successfully!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** \`${{ steps.calculate-version.outputs.new_tag }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** \`${{ inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Action:** \`${{ inputs.action }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Production RC tagged" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ steps.calculate-version.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** \`${{ steps.calculate-version.outputs.new_tag }}\`" >> $GITHUB_STEP_SUMMARY
 
