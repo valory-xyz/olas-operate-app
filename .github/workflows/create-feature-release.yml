@@ -7,7 +7,6 @@ on:
         description: 'Branch to create release from'
         required: true
         type: string
-        default: 'main'
       action:
         description: 'Action'
         required: true
@@ -22,7 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
     
     steps:
       - name: Checkout repository
@@ -158,13 +156,10 @@ jobs:
 
       - name: Summary
         run: |
-          echo "## 🎉 Testing Release Created Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎉 Feature Release Created Successfully!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** \`${{ steps.calculate-version.outputs.new_tag }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** \`${{ inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Action:** \`${{ inputs.action }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Updated package.json with new version" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Committed and pushed version update to \`${{ inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Created and pushed tag \`${{ steps.calculate-version.outputs.new_tag }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+
