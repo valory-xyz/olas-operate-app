@@ -16,6 +16,9 @@ on:
           - new
           - override
         default: 'new'
+  push:
+    branches:
+      - '**'  # Trigger on push to all branches (temporary)
 
 jobs:
   create-feature-release:
