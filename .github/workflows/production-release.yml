@@ -1,0 +1,114 @@
+name: Production Release
+
+on:
+  push:
+    branches:
+      - "release/*"
+
+permissions:
+  contents: write
+
+jobs:
+  production-release:
+    # Avoid looping on our own commits
+    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Get latest RC tag
+        id: get-latest-rc
+        run: |
+          # Fetch all tags (ignore errors from tag clobbering)
+          git fetch --tags || true
+          
+          # Get the latest RC tag (format: vX.Y.Z-rcXXX)
+          LATEST_RC_TAG=$(git tag -l "*-rc*" | sort -V | tail -1)
+          
+          # Extract base version and RC number from tag (e.g., v0.2.0-rc390 -> 0.2.0, 390)
+          # Pattern matches: vX.Y.Z-rcN or vX.Y.Z-rcN-suffix
+          if [[ "$LATEST_RC_TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-rc([0-9]+) ]]; then
+            BASE_VERSION="${BASH_REMATCH[1]}"
+            LATEST_RC_NUMBER="${BASH_REMATCH[2]}"
+          else
+            # If no RC tag exists yet, infer from package.json version
+            BASE_VERSION=$(node -p "require('./package.json').version.split('-rc')[0]")
+            LATEST_RC_NUMBER=$(node -p "(require('./package.json').version.match(/-rc(\\d+)/)||['',0])[1]")
+            LATEST_RC_NUMBER=${LATEST_RC_NUMBER:-0}
+          fi
+          
+          echo "latest_rc_tag=$LATEST_RC_TAG" | tee -a $GITHUB_OUTPUT
+          echo "latest_rc_number=$LATEST_RC_NUMBER" | tee -a $GITHUB_OUTPUT
+          echo "base_version=$BASE_VERSION" | tee -a $GITHUB_OUTPUT
+
+      - name: Calculate new version
+        id: calculate-version
+        run: |
+          LATEST_RC_NUMBER=${{ steps.get-latest-rc.outputs.latest_rc_number }}
+          BASE_VERSION="${{ steps.get-latest-rc.outputs.base_version }}"
+          NEW_RC_NUMBER=$((LATEST_RC_NUMBER + 1))
+          NEW_VERSION="$BASE_VERSION-rc$NEW_RC_NUMBER"
+          NEW_TAG="v$NEW_VERSION-signed"
+          echo "new_version=$NEW_VERSION" | tee -a $GITHUB_OUTPUT
+          echo "new_tag=$NEW_TAG" | tee -a $GITHUB_OUTPUT
+          echo "new_rc_number=$NEW_RC_NUMBER" | tee -a $GITHUB_OUTPUT
+
+      - name: Update package.json version
+        run: |
+          NEW_VERSION="${{ steps.calculate-version.outputs.new_version }}"
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+            npm version "$NEW_VERSION" --no-git-tag-version
+            echo "Updated package.json version from $CURRENT_VERSION to $NEW_VERSION"
+          else
+            echo "package.json version is already $NEW_VERSION, skipping update"
+          fi
+
+      - name: Update pyproject.toml version
+        run: |
+          NEW_VERSION="${{ steps.calculate-version.outputs.new_version }}"
+          CURRENT_VERSION=$(grep -E '^version = ' pyproject.toml | sed -E 's/^version = "(.+)"/\1/')
+          if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+            sed -i -E "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
+            echo "Updated pyproject.toml version from $CURRENT_VERSION to $NEW_VERSION"
+          else
+            echo "pyproject.toml version is already $NEW_VERSION, skipping update"
+          fi
+
+      - name: Commit and push version update
+        run: |
+          git add package.json pyproject.toml
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            # Add skip marker to avoid loop on this workflow
+            git commit -m "chore: bump version to ${{ steps.calculate-version.outputs.new_version }} [skip release]"
+            git push origin ${GITHUB_REF_NAME}
+          fi
+
+      - name: Create and push signed tag
+        run: |
+          TAG_NAME="${{ steps.calculate-version.outputs.new_tag }}"
+          git tag -a "$TAG_NAME" -m "Production Release $TAG_NAME"
+          git push origin "$TAG_NAME"
+          echo "Created and pushed tag: $TAG_NAME"
+
+      - name: Summary
+        run: |
+          echo "## 🚀 Production RC tagged" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ steps.calculate-version.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** \`${{ steps.calculate-version.outputs.new_tag }}\`" >> $GITHUB_STEP_SUMMARY
+
