@@ -67,23 +67,24 @@ jobs:
 
       - name: Get version from package.json
         id: get-package-version
-        if: inputs.action == 'override'
         run: |
           # Read version from package.json
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           
-          # Extract base version and RC number from package.json version
-          if [[ "$PACKAGE_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-rc([0-9]+) ]]; then
-            PKG_BASE_VERSION="${BASH_REMATCH[1]}"
-            PKG_RC_NUMBER="${BASH_REMATCH[2]}"
+          # Extract base version and RC number from package.json version (only needed for override action)
+          if [[ "${{ inputs.action }}" == "override" ]]; then
+            if [[ "$PACKAGE_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-rc([0-9]+) ]]; then
+              PKG_BASE_VERSION="${BASH_REMATCH[1]}"
+              PKG_RC_NUMBER="${BASH_REMATCH[2]}"
+            fi
+            echo "package_base_version=$PKG_BASE_VERSION" >> $GITHUB_OUTPUT
+            echo "package_rc_number=$PKG_RC_NUMBER" >> $GITHUB_OUTPUT
+            echo "Package.json base version: $PKG_BASE_VERSION"
+            echo "Package.json RC number: $PKG_RC_NUMBER"
           fi
           
           echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
-          echo "package_base_version=$PKG_BASE_VERSION" >> $GITHUB_OUTPUT
-          echo "package_rc_number=$PKG_RC_NUMBER" >> $GITHUB_OUTPUT
           echo "Package.json version: $PACKAGE_VERSION"
-          echo "Package.json base version: $PKG_BASE_VERSION"
-          echo "Package.json RC number: $PKG_RC_NUMBER"
 
       - name: Calculate new version
         id: calculate-version
@@ -113,13 +114,24 @@ jobs:
       - name: Update package.json version
         run: |
           NEW_VERSION="${{ steps.calculate-version.outputs.new_version }}"
-          npm version "$NEW_VERSION" --no-git-tag-version
-          echo "Updated package.json version to $NEW_VERSION"
+          CURRENT_VERSION="${{ steps.get-package-version.outputs.package_version }}"
+          if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+            npm version "$NEW_VERSION" --no-git-tag-version
+            echo "Updated package.json version from $CURRENT_VERSION to $NEW_VERSION"
+          else
+            echo "package.json version is already $NEW_VERSION, skipping update"
+          fi
 
       - name: Update pyproject.toml version
         run: |
-          sed -i -E "s/^version = \".*\"/version = \"${{ steps.calculate-version.outputs.new_version }}\"/" pyproject.toml
-          echo "Updated pyproject.toml version to ${{ steps.calculate-version.outputs.new_version }}"
+          NEW_VERSION="${{ steps.calculate-version.outputs.new_version }}"
+          CURRENT_VERSION=$(grep -E '^version = ' pyproject.toml | sed -E 's/^version = "(.+)"/\1/')
+          if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+            sed -i -E "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
+            echo "Updated pyproject.toml version from $CURRENT_VERSION to $NEW_VERSION"
+          else
+            echo "pyproject.toml version is already $NEW_VERSION, skipping update"
+          fi
 
       - name: Commit and push version update
         run: |
