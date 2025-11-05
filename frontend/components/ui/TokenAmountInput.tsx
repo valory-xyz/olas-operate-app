@@ -1,14 +1,15 @@
 import { Button, Flex, Typography } from 'antd';
 import { floor, isNil } from 'lodash';
 import Image from 'next/image';
-import { useCallback } from 'react';
-import { TbWallet } from 'react-icons/tb';
+import { ReactNode, useCallback } from 'react';
+import { TbInfoCircle, TbWallet } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { COLOR, TokenSymbol, TokenSymbolConfigMap } from '@/constants';
 import { formatNumber } from '@/utils';
 
 import { NumberInput } from './NumberInput';
+import { Tooltip } from './tooltips';
 
 const { Text } = Typography;
 
@@ -52,6 +53,8 @@ type TokenAmountInputProps = {
   showQuickSelects?: boolean;
   /** Whether the input has an error */
   hasError?: boolean;
+  /** Tooltip info */
+  tooltipInfo?: ReactNode;
 };
 
 export const TokenAmountInput = ({
@@ -62,6 +65,7 @@ export const TokenAmountInput = ({
   tokenSymbol,
   showQuickSelects = true,
   hasError = false,
+  tooltipInfo,
 }: TokenAmountInputProps) => {
   const handleChange = useCallback(
     (newValue: number | null) => {
@@ -115,6 +119,11 @@ export const TokenAmountInput = ({
           <Text className="text-sm leading-normal text-neutral-tertiary">
             {formatNumber(totalAmount, DECIMAL_PLACES, 'floor')}
           </Text>
+          {tooltipInfo && (
+            <Tooltip title={tooltipInfo} styles={{ body: { width: 340 } }}>
+              <TbInfoCircle size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+            </Tooltip>
+          )}
         </Flex>
 
         {showQuickSelects && (

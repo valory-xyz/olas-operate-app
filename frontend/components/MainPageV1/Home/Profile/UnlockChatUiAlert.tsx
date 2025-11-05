@@ -20,8 +20,6 @@ export const UnlockChatUiAlert = ({
   const { selectedAgentType, selectedAgentConfig } = useServices();
   const { goto } = usePageState();
 
-  selectedAgentConfig.displayName;
-
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const handleDoNotShowAgain = useCallback(
@@ -55,8 +53,8 @@ export const UnlockChatUiAlert = ({
       <Flex vertical gap={20}>
         <div>
           To unlock the full functionality of {selectedAgentConfig.displayName}{' '}
-          profile, a Gemini API key is required. You can get a free Gemini API
-          key through the{' '}
+          agent profile, a Gemini API key is required. You can get a free Gemini
+          API key through the{' '}
           <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
             Google AI Studio
           </a>

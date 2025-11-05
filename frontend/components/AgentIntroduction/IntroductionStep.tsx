@@ -74,7 +74,6 @@ type IntroductionProps = OnboardingStep & {
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderDot?: () => ReactNode;
   renderAgentSelection?: () => ReactNode;
-  renderUnderConstruction?: () => ReactNode;
   styles?: IntroductionStepStyles;
 };
 
@@ -91,7 +90,6 @@ export const IntroductionStep = ({
   renderDot,
   renderFundingRequirements,
   renderAgentSelection,
-  renderUnderConstruction,
   styles: { imageHeight, descPadding } = {},
 }: IntroductionProps) => {
   const isFundingDetailsStep = !title && !imgSrc;
@@ -120,7 +118,6 @@ export const IntroductionStep = ({
               >
                 <Content title={title} desc={desc} helper={helper} />
               </div>
-              {renderUnderConstruction?.()}
             </>
           )}
 

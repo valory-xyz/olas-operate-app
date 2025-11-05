@@ -64,7 +64,7 @@ export const HelpAndSupport = () => {
         {
           label: 'Pearl Terms and Conditions',
           action: (
-            <a onClick={() => termsAndConditionsWindow?.show?.('pearl')}>
+            <a onClick={() => termsAndConditionsWindow?.show?.()}>
               Terms and Conditions
             </a>
           ),

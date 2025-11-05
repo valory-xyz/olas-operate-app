@@ -1,4 +1,5 @@
 import { Button, Flex, Statistic, Typography } from 'antd';
+import { ReactNode } from 'react';
 import { TbLock, TbSparkles, TbSquareRoundedPercentage } from 'react-icons/tb';
 import styled from 'styled-components';
 
@@ -41,15 +42,16 @@ const COUNTDOWN_VALUE_STYLE = {
   color: COLOR.TEXT_NEUTRAL_SECONDARY,
 };
 
+type ContractDetailsSectionProps = {
+  icon: ReactNode;
+  title: string;
+  value: string;
+};
 const ContractDetailsSection = ({
   icon,
   title,
   value,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  value: string;
-}) => (
+}: ContractDetailsSectionProps) => (
   <Tooltip title={title} trigger="hover">
     <ContractDetailWrapper justify="center" align="center" vertical flex={1}>
       <IconWrapper justify="center" align="center">
