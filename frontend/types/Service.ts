@@ -28,14 +28,14 @@ type AgentRelease = {
   };
 };
 
-type EnvVariableAttributes = {
+type EnvVariable = {
   name: string;
   description: string;
   value: string;
   provision_type: EnvProvision;
 };
 
-type ServiceKeys = {
+type ServiceKey = {
   address: Address;
   private_key: string;
   ledger: MiddlewareChain;
@@ -44,6 +44,14 @@ type ServiceKeys = {
 type LedgerConfig = {
   rpc: string;
   chain: MiddlewareChain;
+};
+
+type FundRequirements = {
+  // zero address means native currency
+  [tokenAddress: Address]: {
+    agent: number;
+    safe: number;
+  };
 };
 
 type ChainData = {
@@ -55,12 +63,7 @@ type ChainData = {
   user_params: {
     agent_id: number;
     cost_of_bond: number;
-    fund_requirements: {
-      [tokenAddress: string]: {
-        agent: number;
-        safe: number;
-      };
-    };
+    fund_requirements: FundRequirements;
     nft: string;
     staking_program_id: StakingProgramId;
     threshold: number;
@@ -76,13 +79,7 @@ type ConfigurationTemplate = {
   agent_id: number;
   cost_of_bond: number;
   monthly_gas_estimate: number;
-  fund_requirements: {
-    // zero address means native currency
-    [tokenAddress: Address]: {
-      agent: number;
-      safe: number;
-    };
-  };
+  fund_requirements: FundRequirements;
 };
 
 export type ServiceTemplate = {
@@ -101,7 +98,7 @@ export type ServiceTemplate = {
   configurations: Partial<
     Record<SupportedMiddlewareChain, ConfigurationTemplate>
   >;
-  env_variables: { [key: string]: EnvVariableAttributes };
+  env_variables: { [key: string]: EnvVariable };
   deploy?: boolean;
 };
 
@@ -131,7 +128,7 @@ export type MiddlewareServiceResponse = {
   };
   agent_release: AgentRelease;
   home_chain: SupportedMiddlewareChain;
-  keys: ServiceKeys[];
+  keys: ServiceKey[];
   service_path?: string;
   chain_configs: {
     [middlewareChain: string]: {
@@ -139,5 +136,5 @@ export type MiddlewareServiceResponse = {
       chain_data: ChainData;
     };
   };
-  env_variables: { [key: string]: EnvVariableAttributes };
+  env_variables: { [key: string]: EnvVariable };
 };

@@ -74,7 +74,16 @@ type DeployedNodes = {
   tendermint: string[];
 };
 
-type AgentHealthCheckResponse = {
+type RoundsInfo = Record<
+  string,
+  {
+    name: string;
+    description: string;
+    transitions: Record<string, string>;
+  }
+>;
+
+type AgentHealthCheck = {
   agent_health: Record<string, unknown>;
   is_healthy: boolean;
   is_tm_healthy: boolean;
@@ -82,19 +91,12 @@ type AgentHealthCheckResponse = {
   period: number;
   reset_pause_duration: number;
   rounds: string[];
-  rounds_info?: Record<
-    string,
-    {
-      name: string;
-      description: string;
-      transitions: Record<string, string>;
-    }
-  >;
+  rounds_info?: RoundsInfo;
   seconds_since_last_transition: number;
 };
 
 export type ServiceDeployment = {
   status: MiddlewareDeploymentStatus;
   nodes: DeployedNodes;
-  healthcheck: AgentHealthCheckResponse;
+  healthcheck: AgentHealthCheck;
 };
