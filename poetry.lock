@@ -1178,13 +1178,13 @@ cython = ["cython"]
 
 [[package]]
 name = "deepdiff"
-version = "8.6.0"
+version = "8.6.1"
 description = "Deep Difference and Search of any Python object/data. Recreate objects by adding adding deltas to each other."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "deepdiff-8.6.0-py3-none-any.whl", hash = "sha256:db80677a434ac1f84147fd1598e93f1beb06d467e107af45fcf77cf8a681169f"},
-    {file = "deepdiff-8.6.0.tar.gz", hash = "sha256:6197216c2d777c3106a9989055c230e25848e599b26dcbcdc66226bd8d7fe901"},
+    {file = "deepdiff-8.6.1-py3-none-any.whl", hash = "sha256:ee8708a7f7d37fb273a541fa24ad010ed484192cd0c4ffc0fa0ed5e2d4b9e78b"},
+    {file = "deepdiff-8.6.1.tar.gz", hash = "sha256:ec56d7a769ca80891b5200ec7bd41eec300ced91ebcc7797b41eb2b3f3ff643a"},
 ]
 
 [package.dependencies]
@@ -2411,7 +2411,7 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.10.15"
+version = "0.11.0"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.9"
@@ -2423,7 +2423,7 @@ aiohttp = "3.9.5"
 argon2-cffi = "==23.1.0"
 clea = "==0.1.0rc4"
 cytoolz = "==0.12.3"
-deepdiff = "^8.0.1"
+deepdiff = "^8.6.1"
 docker = "6.1.2"
 eth-abi = "==4.0.0"
 eth-account = "==0.8.0"
@@ -2439,6 +2439,7 @@ halo = "==0.0.31"
 hexbytes = "==0.3.1"
 ipfshttpclient = "==0.8.0a2"
 jsonschema = "==4.3.3"
+multiaddr = "==0.0.9"
 multidict = "==6.0.5"
 open-aea-cli-ipfs = "==1.65.0"
 open-aea-ledger-cosmos = "==1.65.0"
@@ -2447,6 +2448,7 @@ open-aea-ledger-ethereum-flashbots = "==1.65.0"
 open-autonomy = "^0.20.2"
 psutil = "^5.9.8"
 pyinstaller = "^6.8.0"
+requests-mock = "^1.12.1"
 requests-toolbelt = "1.0.0"
 starlette = "0.37.2"
 twikit = "==2.2.0"
@@ -2456,8 +2458,8 @@ web3 = "6.20.4"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "d9781874ff895d1b854773c7c34fa827b4318ce4"
-resolved_reference = "d9781874ff895d1b854773c7c34fa827b4318ce4"
+reference = "8104199f95c5ca0057479924a56aea2492dfd63e"
+resolved_reference = "8104199f95c5ca0057479924a56aea2492dfd63e"
 
 [[package]]
 name = "open-aea"
@@ -3523,6 +3525,23 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "requests-mock"
+version = "1.12.1"
+description = "Mock out responses from the requests package"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "requests-mock-1.12.1.tar.gz", hash = "sha256:e9e12e333b525156e82a3c852f22016b9158220d2f47454de9cae8a77d371401"},
+    {file = "requests_mock-1.12.1-py2.py3-none-any.whl", hash = "sha256:b1e37054004cdd5e56c84454cc7df12b25f90f382159087f4b6915aaeef39563"},
+]
+
+[package.dependencies]
+requests = ">=2.22,<3"
+
+[package.extras]
+fixture = ["fixtures"]
+
+[[package]]
 name = "requests-toolbelt"
 version = "1.0.0"
 description = "A utility belt for advanced users of python-requests"
@@ -4195,4 +4214,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "a77b269109f6f9e203fc3f8c5fc93189774e8e7eee215739f488e62652a21dcc"
+content-hash = "b4c2fb2c339162d6cef430362d09a7680055989a638a97ccc5bdad5454cd567b"
