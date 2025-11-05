@@ -26,6 +26,9 @@ type SwitchStakingButtonProps = {
   stakingProgramId: StakingProgramId;
 };
 
+/**
+ * Button for switch to another staking program
+ */
 export const SwitchStakingButton = ({
   isCurrentStakingProgram,
   stakingProgramId,

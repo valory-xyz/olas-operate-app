@@ -76,7 +76,7 @@ export const Main = () => {
       case Pages.AgentStaking:
         return <AgentStaking />;
       case Pages.SelectStaking:
-        return <SelectStaking />;
+        return <SelectStaking mode="switch" />;
       case Pages.ConfirmSwitch:
         return <ConfirmSwitch />;
       case Pages.DepositOlasForStaking:

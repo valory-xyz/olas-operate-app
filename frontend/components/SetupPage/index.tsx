@@ -6,6 +6,7 @@ import { COLOR } from '@/constants/colors';
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
+import { SelectStaking } from '../SelectStaking/SelectStaking';
 import { CardFlex } from '../ui/CardFlex';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
@@ -55,6 +56,7 @@ const screenWithoutCards: SetupScreen[] = [
   SetupScreen.TransferFunds,
   SetupScreen.SetupBridgeOnboardingScreen,
   SetupScreen.SetupOnRamp,
+  SetupScreen.SelectStaking,
 ];
 
 export const Setup = () => {
@@ -74,6 +76,8 @@ export const Setup = () => {
         return <AgentOnboarding />;
       case SetupScreen.SetupYourAgent:
         return <SetupYourAgent />;
+      case SetupScreen.SelectStaking:
+        return <SelectStaking mode="select" />;
       case SetupScreen.FundYourAgent:
         return <FundYourAgent />;
       case SetupScreen.TransferFunds:

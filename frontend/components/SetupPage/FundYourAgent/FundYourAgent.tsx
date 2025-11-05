@@ -9,7 +9,6 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import {
   useFeatureFlag,
   useOnRampContext,
-  usePageState,
   useServices,
   useSetup,
   useTotalFiatFromNativeToken,
@@ -164,7 +163,7 @@ export const FundYourAgent = () => {
     'bridge-onboarding',
     'on-ramp',
   ]);
-  const { goto } = usePageState();
+  const { goto } = useSetup();
   const { selectedAgentConfig } = useServices();
   const { evmHomeChainId, requiresSetup, isX402Enabled } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
@@ -187,7 +186,7 @@ export const FundYourAgent = () => {
       <BackButton
         onPrev={() => {
           resetTokenRequirements();
-          goto(Pages.Main);
+          goto(Pages.SelectStaking);
         }}
       />
       <Title level={3} className="mt-12">

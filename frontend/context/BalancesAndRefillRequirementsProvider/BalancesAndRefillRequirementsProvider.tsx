@@ -35,7 +35,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
 import { BalanceService } from '@/service/balances';
-import { Maybe, Nullable, Optional } from '@/types/Util';
+import { Maybe, Optional } from '@/types/Util';
 import {
   asMiddlewareChain,
   BACKOFF_STEPS,
@@ -52,8 +52,8 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   canStartAgent: boolean;
   isAgentFundingRequestsStale: boolean;
   isPearlWalletRefillRequired: boolean;
-  refetch: Nullable<
-    () => Promise<QueryObserverResult<BalancesAndFundingRequirements, Error>>
+  refetch: () => Promise<
+    QueryObserverResult<BalancesAndFundingRequirements, Error>
   >;
   resetQueryCache: () => void;
 }>({
@@ -66,7 +66,10 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   canStartAgent: false,
   isAgentFundingRequestsStale: false,
   isPearlWalletRefillRequired: false,
-  refetch: null,
+  refetch: () =>
+    Promise.resolve(
+      {} as QueryObserverResult<BalancesAndFundingRequirements, Error>,
+    ),
   resetQueryCache: () => {},
 });
 
@@ -363,7 +366,7 @@ export const BalancesAndRefillRequirementsProvider = ({
           balancesAndFundingRequirements?.agent_funding_requests_cooldown ||
           false,
         isPearlWalletRefillRequired,
-        refetch: refetch || null,
+        refetch,
         resetQueryCache,
       }}
     >

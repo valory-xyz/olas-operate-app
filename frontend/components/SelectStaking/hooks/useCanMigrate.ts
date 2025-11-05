@@ -18,7 +18,7 @@ type UseCanMigrateProps = {
 export enum MigrateButtonText {
   AgentInCooldownPeriod = 'Agent in cooldown period',
   NoSlotsAvailable = 'No slots available',
-  SwitchStakingContract = 'Switch Staking Contract',
+  SelectContract = 'Select Contract',
   CurrentContract = 'Current Contract',
   CurrentlyRunning = 'Agent is currently running',
 }
@@ -71,7 +71,7 @@ export const useCanMigrate = ({
         };
       default:
         return {
-          buttonText: MigrateButtonText.SwitchStakingContract,
+          buttonText: MigrateButtonText.SelectContract,
           canMigrate: true,
         };
     }

@@ -2,11 +2,14 @@ import { Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants';
-import { Pages } from '@/enums/Pages';
+import { Pages } from '@/enums';
 import { usePageState, useStakingContracts } from '@/hooks';
 
+import { StakingContractCard } from '../StakingContractCard';
 import { BackButton } from '../ui/BackButton';
-import { StakingContract } from './StakingContractCard';
+import { SelectStakingButton } from './SelectStakingButton';
+import { SlotsLeft } from './SlotsLeft';
+import { SwitchStakingButton } from './SwitchStakingButton';
 
 const { Title } = Typography;
 
@@ -17,10 +20,16 @@ const StakingContractsWrapper = styled.div`
   gap: 24px;
 `;
 
-export const SelectStaking = () => {
-  const { goto } = usePageState();
+type SelectStakingProps = {
+  // select means select during onboarding; switch is for migrating
+  mode: 'select' | 'switch';
+};
+
+export const SelectStaking = ({ mode }: SelectStakingProps) => {
   const { orderedStakingProgramIds, currentStakingProgramId } =
     useStakingContracts();
+
+  const { goto: gotoPage } = usePageState();
 
   return (
     <Flex vertical justify="center" className="w-full">
@@ -29,7 +38,7 @@ export const SelectStaking = () => {
         className="mx-auto"
         style={{ width: MAIN_CONTENT_MAX_WIDTH }}
       >
-        <BackButton onPrev={() => goto(Pages.Main)} />
+        <BackButton onPrev={() => gotoPage(Pages.Main)} />
         <Title level={3} className="mt-12 mb-32">
           Select Staking Contract
         </Title>
@@ -37,12 +46,30 @@ export const SelectStaking = () => {
 
       <StakingContractsWrapper>
         {orderedStakingProgramIds.map((stakingProgramId) => (
-          <StakingContract
+          <StakingContractCard
             key={stakingProgramId}
             stakingProgramId={stakingProgramId}
-            isCurrentStakingProgram={
-              stakingProgramId === currentStakingProgramId
-            }
+            renderAction={(contractDetails) => {
+              const isCurrentStakingProgram =
+                stakingProgramId === currentStakingProgramId;
+              return (
+                <>
+                  <SlotsLeft
+                    contractDetails={contractDetails}
+                    isCurrentStakingProgram={isCurrentStakingProgram}
+                  />
+                  {mode === 'switch' && (
+                    <SwitchStakingButton
+                      isCurrentStakingProgram={isCurrentStakingProgram}
+                      stakingProgramId={stakingProgramId}
+                    />
+                  )}
+                  {mode === 'select' && (
+                    <SelectStakingButton stakingProgramId={stakingProgramId} />
+                  )}
+                </>
+              );
+            }}
           />
         ))}
       </StakingContractsWrapper>
