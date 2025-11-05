@@ -2,45 +2,49 @@ name: Yarn Lock Check
 
 on:
   pull_request:
-    branches: [ main, develop ]
   push:
-    branches: [ main, develop ]
 
 jobs:
   check-yarn-lock:
     runs-on: ubuntu-latest
-    name: Check yarn.lock files exist
-    
+    name: Verify yarn.lock files
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      - name: Check root yarn.lock exists
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - name: Ensure root yarn.lock exists and is valid
         run: |
           if [ ! -f "yarn.lock" ]; then
-            echo "❌ Error: yarn.lock file is missing in the root directory"
-            echo "Please run 'yarn install' to generate the yarn.lock file"
+            echo "Error: Missing root yarn.lock."
+            echo "Run 'yarn install' and commit the generated lockfile."
             exit 1
           fi
-          echo "✅ Root yarn.lock file exists"
-          
-      - name: Check frontend yarn.lock exists
+
+          if [ ! -s "yarn.lock" ]; then
+            echo "Error: Root yarn.lock exists but is empty."
+            exit 1
+          fi
+
+          yarn install --immutable
+
+      - name: Ensure frontend yarn.lock exists and is valid
         run: |
           if [ ! -f "frontend/yarn.lock" ]; then
-            echo "❌ Error: yarn.lock file is missing in the frontend directory"
-            echo "Please run 'cd frontend && yarn install' to generate the yarn.lock file"
+            echo "Error: Missing frontend/yarn.lock."
+            echo "Run 'cd frontend && yarn install' and commit the generated lockfile."
             exit 1
           fi
-          echo "✅ Frontend yarn.lock file exists"
-          
-      - name: Verify yarn.lock files are not empty
-        run: |
-          if [ ! -s "yarn.lock" ]; then
-            echo "❌ Error: Root yarn.lock file exists but is empty"
-            exit 1
-          fi
+
           if [ ! -s "frontend/yarn.lock" ]; then
-            echo "❌ Error: Frontend yarn.lock file exists but is empty"
+            echo "Error: frontend/yarn.lock exists but is empty."
             exit 1
           fi
-          echo "✅ All yarn.lock files are present and non-empty"
+
+          cd frontend
+          yarn install --immutable
