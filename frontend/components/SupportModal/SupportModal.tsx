@@ -24,7 +24,12 @@ import { SuccessOutlined } from '../custom-icons';
 import { FileUploadWithList } from './FileUpload';
 import { useUploadSupportFiles } from './useUploadSupportFiles';
 
-const { Text } = Typography;
+const { Text: AntdText } = Typography;
+
+const Text = styled(AntdText)`
+  margin-top: -4px;
+  margin-bottom: 4px;
+`;
 
 const VALIDATION_RULES: { [key: string]: Rule[] } = {
   EMAIL: [
@@ -171,7 +176,7 @@ export const SupportModal = ({
       title="Contact Support"
       action={
         <>
-          <Text type="secondary" className="text-sm mt--4">
+          <Text type="secondary" className="text-sm">
             Fill out the form below and the support team will get back to you
             via email. The team usually responds within 2 business days.
           </Text>
