@@ -29,25 +29,30 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
+      - name: Extract version info from package.json
+        id: pkg-version
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          BASE_VERSION=$(echo "$PACKAGE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          echo "base_version=$BASE_VERSION" | tee -a $GITHUB_OUTPUT
+
       - name: Get latest RC tag
         id: get-latest-rc
         run: |
           # Fetch all tags (ignore errors from tag clobbering)
           git fetch --tags || true
           
-          # Get the latest RC tag (format: vX.Y.Z-rcXXX)
-          LATEST_RC_TAG=$(git tag -l "*-rc*" | sort -V | tail -1)
-          
-          # Extract base version and RC number from tag (e.g., v0.2.0-rc390 -> 0.2.0, 390)
-          # Pattern matches: vX.Y.Z-rcN or vX.Y.Z-rcN-suffix
-          if [[ "$LATEST_RC_TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-rc([0-9]+) ]]; then
-            BASE_VERSION="${BASH_REMATCH[1]}"
-            LATEST_RC_NUMBER="${BASH_REMATCH[2]}"
+          # Use base version derived from package.json step
+          BASE_VERSION="${{ steps.pkg-version.outputs.base_version }}"
+
+          # Get the latest RC tag for this base version (format: vX.Y.Z-rcN)
+          LATEST_RC_TAG=$(git tag -l "v${BASE_VERSION}-rc*" | sort -V | tail -1)
+
+          # Extract RC number if a matching tag exists; otherwise default to 0
+          if [[ "$LATEST_RC_TAG" =~ ^v${BASE_VERSION}-rc([0-9]+)$ ]]; then
+            LATEST_RC_NUMBER="${BASH_REMATCH[1]}"
           else
-            # If no RC tag exists yet, infer from package.json version
-            BASE_VERSION=$(node -p "require('./package.json').version.split('-rc')[0]")
-            LATEST_RC_NUMBER=$(node -p "(require('./package.json').version.match(/-rc(\\d+)/)||['',0])[1]")
-            LATEST_RC_NUMBER=${LATEST_RC_NUMBER:-0}
+            LATEST_RC_NUMBER="0"
           fi
           
           echo "latest_rc_tag=$LATEST_RC_TAG" | tee -a $GITHUB_OUTPUT
@@ -58,7 +63,7 @@ jobs:
         id: calculate-version
         run: |
           LATEST_RC_NUMBER=${{ steps.get-latest-rc.outputs.latest_rc_number }}
-          BASE_VERSION="${{ steps.get-latest-rc.outputs.base_version }}"
+          BASE_VERSION="${{ steps.pkg-version.outputs.base_version }}"
           NEW_RC_NUMBER=$((LATEST_RC_NUMBER + 1))
           NEW_VERSION="$BASE_VERSION-rc$NEW_RC_NUMBER"
           NEW_TAG="v$NEW_VERSION-signed"
