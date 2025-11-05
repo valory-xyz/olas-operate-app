@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { useServices } from '@/hooks';
-import { useMasterBalances } from '@/hooks/useBalanceContext';
+import { useMasterBalances, useServices } from '@/hooks';
 
 import { useGetRefillRequirementsWithMonthlyGas } from './useGetRefillRequirementsWithMonthlyGas';
 

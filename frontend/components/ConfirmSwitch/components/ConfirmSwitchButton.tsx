@@ -2,14 +2,18 @@ import { Button, message } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { SupportedMiddlewareChain } from '@/constants/chains';
-import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
-import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
+import {
+  MiddlewareDeploymentStatusMap,
+  SERVICE_TEMPLATES,
+  SupportedMiddlewareChain,
+} from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks';
-import { useBalanceContext } from '@/hooks/useBalanceContext';
-import { useServices } from '@/hooks/useServices';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
+import {
+  useBalanceContext,
+  usePageState,
+  useServices,
+  useStakingProgram,
+} from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { ServiceTemplate } from '@/types';
 import { DeepPartial } from '@/types/Util';

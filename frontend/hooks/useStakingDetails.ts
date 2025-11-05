@@ -17,8 +17,6 @@ export const useStakingDetails = () => {
     latestRewardStreak: streak,
     isLoading: isRewardsHistoryLoading,
     isError,
-    contractCheckpoints,
-    recentStakingContractAddress,
   } = useRewardsHistory();
 
   // Graph does not account for the current day,
