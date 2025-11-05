@@ -14,6 +14,7 @@ export const EvmChainName = {
   [EvmChainIdMap.Mode]: 'Mode',
   [EvmChainIdMap.Optimism]: 'Optimism',
 } as const;
+export type EvmChainName = ValueOf<typeof EvmChainName>;
 
 export const AllEvmChainIdMap = {
   Ethereum: 1,
@@ -43,7 +44,7 @@ export const MiddlewareChainMap = {
 } as const;
 export type MiddlewareChain = ValueOf<typeof MiddlewareChainMap>;
 
-const SupportedMiddlewareChainMap = {
+export const SupportedMiddlewareChainMap = {
   gnosis: MiddlewareChainMap.GNOSIS,
   optimism: MiddlewareChainMap.OPTIMISM,
   base: MiddlewareChainMap.BASE,
@@ -63,3 +64,12 @@ export const onRampChainMap: Record<SupportedMiddlewareChain, EvmChainId> = {
   [SupportedMiddlewareChainMap.base]: EvmChainIdMap.Base,
   [SupportedMiddlewareChainMap.mode]: EvmChainIdMap.Optimism,
 };
+
+export const ChainImageMap = {
+  [EvmChainIdMap.Gnosis]: '/chains/gnosis-chain.png',
+  [EvmChainIdMap.Base]: '/chains/base-chain.png',
+  [EvmChainIdMap.Mode]: '/chains/mode-chain.png',
+  [EvmChainIdMap.Optimism]: '/chains/optimism-chain.png',
+} as const;
+
+export type ChainImage = ValueOf<typeof ChainImageMap>;

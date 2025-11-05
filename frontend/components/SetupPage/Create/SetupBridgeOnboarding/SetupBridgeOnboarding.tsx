@@ -1,17 +1,20 @@
+import { Flex } from 'antd';
 import { useCallback } from 'react';
 
-import { Bridge } from '@/components/Bridge/Bridge';
-import { AllEvmChainIdMap } from '@/constants/chains';
+import { Bridge } from '@/components/Bridge';
+import { AllEvmChainIdMap } from '@/constants';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup } from '@/hooks/useSetup';
+import { useServices, useSetup } from '@/hooks';
 
 import { useGetBridgeRequirementsParams } from '../hooks/useGetBridgeRequirementsParams';
 
 const BRIDGE_FROM_MESSAGE =
-  'The bridged amount covers all funds required to create your account and run your agent, including fees. No further funds will be needed.';
+  'Send the specified amounts from your external wallet to the Pearl Wallet address below. Pearl will automatically detect your transfer and bridge the funds for you.';
 
 export const SetupBridgeOnboarding = () => {
-  const { goto: gotoSetup } = useSetup();
+  const { goto: gotoSetup, prevState } = useSetup();
+  const { selectedAgentConfig } = useServices();
+  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
 
   // Bridging is supported only for Ethereum at the moment.
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
@@ -19,15 +22,19 @@ export const SetupBridgeOnboarding = () => {
   );
 
   const handlePrevStep = useCallback(() => {
-    gotoSetup(SetupScreen.SetupEoaFunding);
-  }, [gotoSetup]);
+    gotoSetup(prevState ?? SetupScreen.FundYourAgent);
+  }, [gotoSetup, prevState]);
 
   return (
-    <Bridge
-      enabledStepsAfterBridging={['masterSafeCreationAndTransfer']}
-      bridgeFromDescription={BRIDGE_FROM_MESSAGE}
-      getBridgeRequirementsParams={getBridgeRequirementsParams}
-      onPrevBeforeBridging={handlePrevStep}
-    />
+    <Flex vertical className="pt-36">
+      <Bridge
+        enabledStepsAfterBridging={['masterSafeCreationAndTransfer']}
+        bridgeFromDescription={BRIDGE_FROM_MESSAGE}
+        bridgeToChain={toMiddlewareChain}
+        getBridgeRequirementsParams={getBridgeRequirementsParams}
+        onPrevBeforeBridging={handlePrevStep}
+        isOnboarding
+      />
+    </Flex>
   );
 };

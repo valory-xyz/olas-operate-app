@@ -20,13 +20,6 @@ export const useSetup = () => {
     [setSetupObject],
   );
 
-  const setMnemonic = useCallback(
-    (mnemonic: string[]) => {
-      setSetupObject((prev) => Object.assign(prev, { mnemonic }));
-    },
-    [setSetupObject],
-  );
-
   const setBackupSigner = useCallback(
     ({ address, type }: { address: Address; type: BackupWalletType }) => {
       store?.set?.('lastProvidedBackupWallet', { address, type });
@@ -54,7 +47,6 @@ export const useSetup = () => {
 
   return {
     ...setupObject,
-    setMnemonic,
     setBackupSigner,
     goto,
   };

@@ -13,12 +13,11 @@ import { Maybe } from '@/types/Util';
 
 type SetupObjectType = {
   state: SetupScreen;
-  mnemonic: string[];
+  prevState: Maybe<SetupScreen>;
   backupSigner?: {
     address: Address;
     type: BackupWalletType;
   };
-  prevState: Maybe<SetupScreen>;
 };
 
 type SetupContextType = {
@@ -29,9 +28,8 @@ type SetupContextType = {
 export const SetupContext = createContext<SetupContextType>({
   setupObject: {
     state: SetupScreen.Welcome,
-    mnemonic: [],
-    backupSigner: undefined,
     prevState: null,
+    backupSigner: undefined,
   },
   setSetupObject: () => {},
 });
@@ -39,9 +37,8 @@ export const SetupContext = createContext<SetupContextType>({
 export const SetupProvider = ({ children }: PropsWithChildren) => {
   const [setupObject, setSetupObject] = useState<SetupObjectType>({
     state: SetupScreen.Welcome,
-    mnemonic: [],
-    backupSigner: undefined,
     prevState: null,
+    backupSigner: undefined,
   });
 
   return (

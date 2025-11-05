@@ -3,12 +3,13 @@ import { getAddress, isAddress } from 'ethers/lib/utils';
 import {
   createContext,
   PropsWithChildren,
+  useCallback,
   useContext,
   useMemo,
-  useState,
 } from 'react';
 
 import { MiddlewareWalletResponse } from '@/client';
+import { EvmChainId } from '@/constants';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import {
@@ -18,7 +19,6 @@ import {
   WalletOwnerType,
   WalletType,
 } from '@/enums/Wallet';
-import { UsePause } from '@/hooks/usePause';
 import { WalletService } from '@/service/Wallet';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
@@ -26,16 +26,14 @@ import { OnlineStatusContext } from './OnlineStatusProvider';
 
 type MasterWalletContext = {
   masterEoa?: MasterEoa;
+  /** master safes of all chains */
   masterSafes?: MasterSafe[];
   masterWallets?: MasterWallet[];
-} & Partial<QueryObserverBaseResult<MasterWallet[]>> &
-  UsePause;
+  /** Get the master safe for a specific chain ID */
+  getMasterSafeOf?: (chainId: EvmChainId) => MasterSafe | undefined;
+} & Partial<QueryObserverBaseResult<MasterWallet[]>>;
 
-export const MasterWalletContext = createContext<MasterWalletContext>({
-  paused: false,
-  setPaused: () => {},
-  togglePaused: () => {},
-});
+export const MasterWalletContext = createContext<MasterWalletContext>({});
 
 const transformMiddlewareWalletResponse = (
   data: MiddlewareWalletResponse[],
@@ -69,8 +67,6 @@ const transformMiddlewareWalletResponse = (
 export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
 
-  const [paused, setPaused] = useState(false);
-
   const {
     data: masterWallets,
     refetch,
@@ -78,7 +74,7 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.WALLETS_KEY,
     queryFn: ({ signal }) => WalletService.getWallets(signal),
-    refetchInterval: isOnline && !paused ? FIVE_SECONDS_INTERVAL : false,
+    refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
     select: (data) =>
       transformMiddlewareWalletResponse(data).filter(
         (wallet) =>
@@ -106,17 +102,21 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
     [masterWallets],
   );
 
+  const getMasterSafeOf = useCallback(
+    (chainId: EvmChainId) =>
+      masterSafes?.find((safe) => safe.evmChainId === chainId),
+    [masterSafes],
+  );
+
   return (
     <MasterWalletContext.Provider
       value={{
         masterWallets,
         masterEoa,
         masterSafes,
-        setPaused,
-        paused,
-        togglePaused: () => setPaused((prev) => !prev),
         refetch,
         isFetched,
+        getMasterSafeOf,
       }}
     >
       {children}

@@ -1,7 +1,7 @@
 import { Typography } from 'antd';
 import { CSSProperties } from 'react';
 
-import { CustomAlert } from '@/components/Alert';
+import { Alert } from '@/components/ui';
 
 const { Text } = Typography;
 
@@ -12,7 +12,7 @@ type InvalidGeminiApiCredentialsProps = {
 export const InvalidGeminiApiCredentials = ({
   style,
 }: InvalidGeminiApiCredentialsProps) => (
-  <CustomAlert
+  <Alert
     type="error"
     showIcon
     message={<Text>API key is invalid</Text>}

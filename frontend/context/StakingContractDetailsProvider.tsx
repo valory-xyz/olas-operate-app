@@ -1,6 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Maybe } from 'graphql/jsutils/Maybe';
-import { isNil } from 'lodash';
 import {
   createContext,
   Dispatch,
@@ -21,6 +20,7 @@ import {
   ServiceStakingDetails,
   StakingContractDetails,
 } from '@/types/Autonolas';
+import { isValidServiceId } from '@/utils/service';
 
 import { StakingProgramContext } from './StakingProgramProvider';
 
@@ -100,7 +100,7 @@ const useStakingContractDetailsByStakingProgram = ({
     queryFn: async () => {
       /**
        * Request staking contract details
-       * if service is present, request it's info and states on the staking contract
+       * if service is present, request its info and states on the staking contract
        */
       const promises: Promise<
         StakingContractDetails | ServiceStakingDetails | undefined
@@ -108,10 +108,10 @@ const useStakingContractDetailsByStakingProgram = ({
         serviceApi.getStakingContractDetails(stakingProgramId!, evmHomeChainId),
       ];
 
-      if (!isNil(serviceNftTokenId)) {
+      if (isValidServiceId(serviceNftTokenId!)) {
         promises.push(
           serviceApi.getServiceStakingDetails(
-            serviceNftTokenId,
+            serviceNftTokenId!,
             stakingProgramId!,
             evmHomeChainId,
           ),
@@ -130,7 +130,7 @@ const useStakingContractDetailsByStakingProgram = ({
         };
       });
     },
-    enabled: !isPaused && !!stakingProgramId && serviceNftTokenId !== -1,
+    enabled: !isPaused && !!stakingProgramId,
     refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : false,
     refetchOnWindowFocus: false,
   });

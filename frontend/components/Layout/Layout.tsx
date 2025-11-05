@@ -1,17 +1,30 @@
-import { WifiOutlined } from '@ant-design/icons';
 import { message } from 'antd';
-import { PropsWithChildren, useEffect } from 'react';
+import Image from 'next/image';
+import { PropsWithChildren, useEffect, useMemo } from 'react';
 import styled, { css } from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
-import { APP_HEIGHT } from '@/constants/width';
-import { useNotifyOnNewEpoch } from '@/hooks/useNotifyOnNewEpoch';
-import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
+import {
+  APP_HEIGHT,
+  APP_WIDTH,
+  COLOR,
+  SIDER_WIDTH,
+  TOP_BAR_HEIGHT,
+} from '@/constants';
+import { Pages } from '@/enums/Pages';
+import { SetupScreen } from '@/enums/SetupScreen';
+import { useOnlineStatusContext, usePageState, useSetup } from '@/hooks';
 
-import { TopBar } from './TopBar';
+import { Modal } from '../ui';
+import { WindowControls } from './WindowControls';
 
 const Container = styled.div<{ $blur: boolean }>`
-  background-color: ${COLOR.WHITE};
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  max-width: ${APP_WIDTH}px;
+  max-height: ${APP_HEIGHT}px;
+  background-color: ${COLOR.GRAY_1};
   border-radius: 8px;
 
   ${(props) =>
@@ -34,40 +47,77 @@ const Container = styled.div<{ $blur: boolean }>`
     `}
 `;
 
-const Body = styled.div`
-  max-height: calc(${APP_HEIGHT}px - 45px);
-  padding-top: 45px;
-  overflow-y: auto;
+const DraggableNavBar = styled.div<{ $isFullWidth: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  width: ${(props) => (props.$isFullWidth ? '100%' : `${SIDER_WIDTH}px`)};
+  height: ${TOP_BAR_HEIGHT}px;
+  display: flex;
+  align-items: center;
+  -webkit-app-region: drag;
 `;
 
-const useSystemLevelNotifications = () => {
-  useNotifyOnNewEpoch();
-};
+const layoutWithFullHeight: SetupScreen[] = [SetupScreen.SetupYourAgent];
+
+const Body = styled.div<{ $hasPadding?: boolean }>`
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: ${(props) => (props.$hasPadding ? '48px 0' : undefined)};
+  height: ${APP_HEIGHT}px;
+`;
 
 export const Layout = ({ children }: PropsWithChildren) => {
   const { isOnline } = useOnlineStatusContext();
-
-  // all the app level notifications
-  useSystemLevelNotifications();
+  const { state } = useSetup();
+  const { pageState } = usePageState();
 
   useEffect(() => {
     const onlineStatusMessageKey = 'online-status-message';
-    if (!isOnline) {
-      message.error({
-        content: 'Network connection is unstable',
-        duration: 0,
-        icon: <WifiOutlined />,
-        key: onlineStatusMessageKey,
-      });
-    } else {
+    if (isOnline) {
       message.destroy(onlineStatusMessageKey);
     }
   }, [isOnline]);
 
+  const hasPadding = useMemo(() => {
+    if (pageState === Pages.Setup) {
+      return layoutWithFullHeight.includes(state) ? false : true;
+    }
+
+    return false;
+  }, [pageState, state]);
+
   return (
-    <Container $blur={!isOnline}>
-      <TopBar />
-      <Body>{children}</Body>
-    </Container>
+    <>
+      {!isOnline && (
+        <Modal
+          open
+          footer={null}
+          closable={false}
+          title={'No Internet Connection'}
+          description={
+            'Check your Wi-Fi or Ethernet. Pearl will reconnect automatically once the connection is stable.'
+          }
+          header={
+            <Image
+              src="/not-online.png"
+              alt="No internet connection"
+              width={80}
+              height={80}
+            />
+          }
+        />
+      )}
+
+      <Container $blur={!isOnline}>
+        <DraggableNavBar $isFullWidth={pageState === Pages.Setup}>
+          <WindowControls />
+        </DraggableNavBar>
+        <Body $hasPadding={hasPadding}>{children}</Body>
+      </Container>
+    </>
   );
 };

@@ -1,11 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
+import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
 import { TransactionSteps } from '@/components/ui/TransactionSteps';
 import { EvmChainId } from '@/constants/chains';
-import { Pages } from '@/enums/Pages';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
-import { usePageState } from '@/hooks/usePageState';
-import { delayInSeconds } from '@/utils/delay';
 
 import { useBuyCryptoStep } from './useBuyCryptoStep';
 import { useCreateAndTransferFundsToMasterSafeSteps } from './useCreateAndTransferFundsToMasterSafeSteps';
@@ -25,7 +23,6 @@ type OnRampPaymentStepsProps = {
 export const OnRampPaymentSteps = ({
   onRampChainId,
 }: OnRampPaymentStepsProps) => {
-  const { goto } = usePageState();
   const { isOnRampingStepCompleted, isSwappingFundsStepCompleted } =
     useOnRampContext();
 
@@ -45,28 +42,30 @@ export const OnRampPaymentSteps = ({
     tokensToBeTransferred,
   );
 
-  // Navigate to the main page after all steps are completed
+  // Check if all steps are completed to show the setup complete modal
+  const [isSetupCompleted, setIsSetupCompleted] = useState(false);
   useEffect(() => {
     if (!isOnRampingStepCompleted) return;
     if (!isSwappingFundsStepCompleted) return;
     if (!isMasterSafeCreatedAndFundsTransferred) return;
 
-    // Delay to ensure the UI updates before navigating
-    delayInSeconds(1).then(() => goto(Pages.Main));
+    setIsSetupCompleted(true);
   }, [
     isOnRampingStepCompleted,
     isMasterSafeCreatedAndFundsTransferred,
     isSwappingFundsStepCompleted,
-    goto,
   ]);
 
   return (
-    <TransactionSteps
-      steps={[
-        buyCryptoStep,
-        swapStep,
-        ...createAndTransferFundsToMasterSafeSteps,
-      ]}
-    />
+    <>
+      <TransactionSteps
+        steps={[
+          buyCryptoStep,
+          swapStep,
+          ...createAndTransferFundsToMasterSafeSteps,
+        ]}
+      />
+      {isSetupCompleted && <AgentSetupCompleteModal />}
+    </>
   );
 };

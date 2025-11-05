@@ -5,17 +5,17 @@ import { ConfigProvider } from 'antd';
 import type { AppProps } from 'next/app';
 import { useEffect, useState } from 'react';
 
-import { Layout } from '@/components/Layout/Layout';
-import { AgentUiProvider } from '@/context/AgentUiProvider';
+import { Layout } from '@/components/Layout';
+import { mainTheme } from '@/constants';
 import { BalanceProvider } from '@/context/BalanceProvider/BalanceProvider';
-import { BalancesAndRefillRequirementsProvider } from '@/context/BalancesAndRefillRequirementsProvider';
+import { BalancesAndRefillRequirementsProvider } from '@/context/BalancesAndRefillRequirementsProvider/BalancesAndRefillRequirementsProvider';
 import { ElectronApiProvider } from '@/context/ElectronApiProvider';
 import { MasterWalletProvider } from '@/context/MasterWalletProvider';
 import { MessageProvider } from '@/context/MessageProvider';
-import { ModalProvider } from '@/context/ModalProvider';
 import { OnlineStatusProvider } from '@/context/OnlineStatusProvider';
 import { OnRampProvider } from '@/context/OnRampProvider';
 import { PageStateProvider } from '@/context/PageStateProvider';
+import { PearlWalletProvider } from '@/context/PearlWalletProvider';
 import { RewardProvider } from '@/context/RewardProvider';
 import { ServicesProvider } from '@/context/ServicesProvider';
 import { SettingsProvider } from '@/context/SettingsProvider';
@@ -25,7 +25,6 @@ import { StakingContractDetailsProvider } from '@/context/StakingContractDetails
 import { StakingProgramProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
 import { SystemNotificationTriggers } from '@/context/SystemNotificationTriggers';
-import { mainTheme } from '@/theme';
 
 const queryClient = new QueryClient();
 
@@ -52,21 +51,19 @@ export default function App({ Component, pageProps }: AppProps) {
                               <SettingsProvider>
                                 <ConfigProvider theme={mainTheme}>
                                   <MessageProvider>
-                                    <ModalProvider>
-                                      <SharedProvider>
-                                        <OnRampProvider>
+                                    <SharedProvider>
+                                      <OnRampProvider>
+                                        <PearlWalletProvider>
                                           {isMounted ? (
                                             <SystemNotificationTriggers>
-                                              <AgentUiProvider>
-                                                <Layout>
-                                                  <Component {...pageProps} />
-                                                </Layout>
-                                              </AgentUiProvider>
+                                              <Layout>
+                                                <Component {...pageProps} />
+                                              </Layout>
                                             </SystemNotificationTriggers>
                                           ) : null}
-                                        </OnRampProvider>
-                                      </SharedProvider>
-                                    </ModalProvider>
+                                        </PearlWalletProvider>
+                                      </OnRampProvider>
+                                    </SharedProvider>
                                   </MessageProvider>
                                 </ConfigProvider>
                               </SettingsProvider>

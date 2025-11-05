@@ -11,7 +11,7 @@ const getTermsAndConditionsWindow = () => termsAndConditionsWindow;
  * Create the terms window for displaying terms iframe
  */
 /** @type {()=>Promise<BrowserWindow|undefined>} */
-const createTermsAndConditionsWindow = async (baseUrl, type) => {
+const createTermsAndConditionsWindow = async (hash) => {
   if (
     !getTermsAndConditionsWindow() ||
     getTermsAndConditionsWindow().isDestroyed
@@ -20,18 +20,12 @@ const createTermsAndConditionsWindow = async (baseUrl, type) => {
       title: 'Terms & Conditions',
       resizable: false,
       draggable: true,
-      frame: false,
-      transparent: true,
+      frame: true,
       fullscreenable: false,
       maximizable: false,
       closable: true,
-      width: 480,
+      width: 800,
       height: 700,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        preload: path.join(__dirname, '../preload.js'),
-      },
     });
 
     termsAndConditionsWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -40,7 +34,7 @@ const createTermsAndConditionsWindow = async (baseUrl, type) => {
       return { action: 'deny' };
     });
 
-    const termsUrl = `${baseUrl}/terms-and-conditions?type=${type}`;
+    const termsUrl = `https://olas.network/pearl-terms?hideLayout=true${hash ? `#${hash}` : ''}`;
     logger.electron(`Terms URL: ${termsUrl}`);
     termsAndConditionsWindow.loadURL(termsUrl).then(() => {
       logger.electron(
@@ -59,31 +53,18 @@ const createTermsAndConditionsWindow = async (baseUrl, type) => {
   return termsAndConditionsWindow;
 };
 
-const handleTermsAndConditionsWindowShow = (baseUrl, type) => {
+const handleTermsAndConditionsWindowShow = (hash) => {
   logger.electron('terms-window-show');
   if (
     !getTermsAndConditionsWindow() ||
     getTermsAndConditionsWindow().isDestroyed()
   ) {
-    createTermsAndConditionsWindow(baseUrl, type)?.then((window) =>
-      window.show(),
-    );
+    createTermsAndConditionsWindow(hash)?.then((window) => window.show());
   } else {
     getTermsAndConditionsWindow()?.show();
   }
 };
 
-const handleTermsAndConditionsWindowClose = () => {
-  logger.electron('terms-window-close');
-  if (
-    !getTermsAndConditionsWindow() ||
-    getTermsAndConditionsWindow().isDestroyed()
-  )
-    return;
-  getTermsAndConditionsWindow()?.destroy();
-};
-
 module.exports = {
   handleTermsAndConditionsWindowShow,
-  handleTermsAndConditionsWindowClose,
 };

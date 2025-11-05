@@ -70,7 +70,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { ipcRenderer, onRampWindow } = useElectronApi();
   const { pageState } = usePageState();
   const { selectedAgentConfig } = useServices();
-  const { getMasterEoaBalanceOf } = useMasterBalances();
+  const { getMasterEoaNativeBalanceOf } = useMasterBalances();
 
   // State to track the amount of ETH to pay for on-ramping and the USD equivalent
   const [ethAmountToPay, setEthAmountToPay] = useState<Nullable<number>>(null);
@@ -129,7 +129,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     if (isOnRampingStepCompleted) return;
 
     // Get the master EOA balance of the network to on-ramp
-    const balance = getMasterEoaBalanceOf(networkId);
+    const balance = getMasterEoaNativeBalanceOf(networkId);
     if (!balance) return;
 
     // If the master EOA balance is greater than or equal to 90% of the ETH amount to pay,
@@ -145,7 +145,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   }, [
     ethAmountToPay,
     networkId,
-    getMasterEoaBalanceOf,
+    getMasterEoaNativeBalanceOf,
     updateIsBuyCryptoBtnLoading,
     onRampWindow,
     isOnRampingStepCompleted,

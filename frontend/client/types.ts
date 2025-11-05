@@ -68,7 +68,7 @@ export type MiddlewareServiceResponse = {
    * It is unique per chain, but can have the same value if the same agent
    * (with different config) is used across different chains. For eg: Optimus and Modius
    * have the same service_public_id.
-   * In order to define an agent uniqueneess, we should check for the combination of
+   * In order to define an agent uniqueness, we should check for the combination of
    * service_public_id and home_chain. As no two agents would have the same values for these fields.
    */
   service_public_id: string;
@@ -78,7 +78,7 @@ export type MiddlewareServiceResponse = {
    * eg: Optimus and Modius are the same agents (as per the logic/code), but their configs would
    * be different, hence they will have difference values of service_config_id
    */
-  service_config_id: string; // TODO: update with uuid once middleware integrated
+  service_config_id: string;
   version: number;
   name: string;
   description: string;
@@ -125,6 +125,10 @@ export type ServiceTemplate = {
   hash: string;
   description: string;
   image: string;
+  /**
+   * Used by the agent runner.
+   * Agent runner is the binary responsible for downloading each agent's dependencies.
+   */
   service_version: string;
   agent_release: AgentRelease;
   home_chain: SupportedMiddlewareChain;
@@ -140,17 +144,29 @@ type DeployedNodes = {
   tendermint: string[];
 };
 
+type AgentHealthCheckResponse = {
+  agent_health: Record<string, unknown>;
+  is_healthy: boolean;
+  is_tm_healthy: boolean;
+  is_transitioning_fast: boolean;
+  period: number;
+  reset_pause_duration: number;
+  rounds: string[];
+  rounds_info?: Record<
+    string,
+    {
+      name: string;
+      description: string;
+      transitions: Record<string, string>;
+    }
+  >;
+  seconds_since_last_transition: number;
+};
+
 export type Deployment = {
   status: MiddlewareDeploymentStatus;
   nodes: DeployedNodes;
-  healthcheck: {
-    env_var_status?: {
-      needs_update: boolean;
-      env_vars: {
-        [key: string]: string;
-      };
-    };
-  };
+  healthcheck: AgentHealthCheckResponse;
 };
 
 enum MiddlewareLedger {
@@ -168,12 +184,20 @@ export type MiddlewareWalletResponse = {
   safe_nonce: number;
 };
 
+export type TokenBalanceRecord = {
+  [tokenAddress: Address]: number | string;
+};
+
 export type MasterSafeBalanceRecord = {
-  master_safe: { [tokenAddress: Address]: number | string };
+  master_safe: TokenBalanceRecord;
+};
+
+export type ServiceSafeBalanceRecord = {
+  service_safe: TokenBalanceRecord;
 };
 
 export type AddressBalanceRecord = {
-  [address: Address]: { [tokenAddress: Address]: number | string };
+  [address: Address]: TokenBalanceRecord;
 };
 
 export type BalancesAndFundingRequirements = {
@@ -182,8 +206,7 @@ export type BalancesAndFundingRequirements = {
   }>;
   /**
    * User fund requirements
-   * @note this is the amount of funds required to be in the user's wallet.
-   * If it not present or is 0, the balance is sufficient.
+   * @note this is the amount of funds required during onboarding an agent.
    */
   refill_requirements: Partial<{
     [chain in MiddlewareChain]: AddressBalanceRecord | MasterSafeBalanceRecord;
@@ -191,9 +214,43 @@ export type BalancesAndFundingRequirements = {
   total_requirements: {
     [chain in MiddlewareChain]: AddressBalanceRecord | MasterSafeBalanceRecord;
   };
-  bonded_olas: {
-    [chain in MiddlewareChain]: number;
-  };
+  /**
+   * Agent funding requirements
+   * @note this deals with agent's requirements post onboarding.
+   */
+  agent_funding_requests: Partial<{
+    [chain in MiddlewareChain]: AddressBalanceRecord | ServiceSafeBalanceRecord;
+  }>;
+  protocol_asset_requirements: Partial<{
+    [chain in MiddlewareChain]: TokenBalanceRecord;
+  }>;
+  bonded_assets: Partial<{
+    [chain in MiddlewareChain]: TokenBalanceRecord;
+  }>;
   is_refill_required: boolean;
+  /**
+   * Whether a funding transaction is currently in progress.
+   * @note When `true`, `agent_funding_requests` may be temporarily stale until the agent syncs updated balances.
+   */
+  agent_funding_in_progress: boolean;
+  /**
+   * Whether the system is in a cooldown window after a funding action.
+   * @note When `true`, new funding requests are suppressed and `agent_funding_requests` will be empty until the cooldown ends.
+   */
+  agent_funding_requests_cooldown: boolean;
   allow_start_agent: boolean;
+};
+
+type AgentPerformanceMetric = {
+  name: string;
+  is_primary: boolean;
+  value: string;
+  description?: string;
+};
+
+export type AgentPerformance = {
+  timestamp: number | null;
+  metrics: AgentPerformanceMetric[];
+  last_activity: null;
+  agent_behavior: string | null;
 };

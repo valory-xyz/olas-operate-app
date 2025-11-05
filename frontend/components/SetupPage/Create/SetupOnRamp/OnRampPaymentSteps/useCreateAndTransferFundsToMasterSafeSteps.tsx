@@ -6,8 +6,8 @@ import { TokenSymbol } from '@/constants/token';
 import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
 
 const EMPTY_STATE: TransactionStep[] = [
-  { status: 'wait', title: 'Create Master Safe' },
-  { status: 'wait', title: 'Transfer funds to the Master Safe' },
+  { status: 'wait', title: 'Create Pearl Wallet' },
+  { status: 'wait', title: 'Transfer funds to the Pearl Wallet' },
 ];
 
 /**
@@ -60,7 +60,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 
     return {
       status: currentMasterSafeCreationStatus,
-      title: 'Create Master Safe',
+      title: 'Create Pearl Wallet',
       subSteps: [
         {
           description,
@@ -105,7 +105,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 
     return {
       status: currentMasterSafeCreationStatus,
-      title: 'Transfer funds to the Master Safe',
+      title: 'Transfer funds to the Pearl Wallet',
       subSteps: masterSafeDetails?.transfers.map(
         ({ status, symbol, txnLink }) => {
           const description = (() => {

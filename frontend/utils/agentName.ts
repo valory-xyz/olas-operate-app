@@ -1,3 +1,5 @@
+import { NA } from '@/constants/symbols';
+
 const phoneticSyllables = [
   'ba',
   'bi',
@@ -234,7 +236,9 @@ const generatePhoneticName = (
     .toLowerCase();
 };
 
-const generateName = (address: string): string => {
+const generateName = (address?: string): string => {
+  if (!address) return NA;
+
   const firstName = generatePhoneticName(address, 2, 2);
   const lastNamePrefix = generatePhoneticName(address, 18, 2);
   const lastNameNumber = parseInt(address.slice(-4), 16) % 100;

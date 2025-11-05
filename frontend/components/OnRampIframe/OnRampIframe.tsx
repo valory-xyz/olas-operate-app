@@ -1,11 +1,12 @@
 import { Flex, Spin } from 'antd';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
-import { APP_HEIGHT, APP_WIDTH } from '@/constants/width';
-import { useElectronApi } from '@/hooks/useElectronApi';
-import { useOnRampContext } from '@/hooks/useOnRampContext';
-import { useMasterWalletContext } from '@/hooks/useWallet';
+import { APP_HEIGHT, APP_WIDTH, ON_RAMP_GATEWAY_URL } from '@/constants';
+import {
+  useElectronApi,
+  useMasterWalletContext,
+  useOnRampContext,
+} from '@/hooks';
 import { delayInSeconds } from '@/utils/delay';
 
 type TransakEvent = {
@@ -30,9 +31,8 @@ export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
   const ref = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    const transakIframe = ref.current?.contentWindow;
-
     const handleMessage = (event: MessageEvent) => {
+      const transakIframe = ref.current?.contentWindow;
       if (event.source !== transakIframe) return;
 
       const eventDetails = event as unknown as TransakEvent;
