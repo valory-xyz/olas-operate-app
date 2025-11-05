@@ -63,26 +63,7 @@ jobs:
           echo "Latest RC number: $LATEST_RC_NUMBER"
           echo "Base version: $BASE_VERSION"
 
-      - name: Get version from package.json
-        id: get-package-version
-        run: |
-          # Read version from package.json
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          
-          # Extract base version and RC number from package.json version (only needed for override action)
-          if [[ "${{ inputs.action }}" == "override" ]]; then
-            if [[ "$PACKAGE_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-rc([0-9]+) ]]; then
-              PKG_BASE_VERSION="${BASH_REMATCH[1]}"
-              PKG_RC_NUMBER="${BASH_REMATCH[2]}"
-            fi
-            echo "package_base_version=$PKG_BASE_VERSION" >> $GITHUB_OUTPUT
-            echo "package_rc_number=$PKG_RC_NUMBER" >> $GITHUB_OUTPUT
-            echo "Package.json base version: $PKG_BASE_VERSION"
-            echo "Package.json RC number: $PKG_RC_NUMBER"
-          fi
-          
-          echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
-          echo "Package.json version: $PACKAGE_VERSION"
+      
 
       - name: Calculate new version
         id: calculate-version
@@ -94,14 +75,15 @@ jobs:
             LATEST_RC_NUMBER=${{ steps.get-latest-rc.outputs.latest_rc_number }}
             BASE_VERSION="${{ steps.get-latest-rc.outputs.base_version }}"
             NEW_RC_NUMBER=$((LATEST_RC_NUMBER + 1))
+            NEW_VERSION="$BASE_VERSION-rc$NEW_RC_NUMBER"
+            NEW_TAG="v$NEW_VERSION"
           else
-            # For "override" action, reuse the same RC number from package.json
-            NEW_RC_NUMBER=${{ steps.get-package-version.outputs.package_rc_number }}
-            BASE_VERSION="${{ steps.get-package-version.outputs.package_base_version }}"
+            # For "override" action, use the latest tag as-is
+            LATEST_TAG="${{ steps.get-latest-rc.outputs.latest_rc_tag }}"
+            NEW_VERSION="${LATEST_TAG#v}"
+            NEW_TAG="$LATEST_TAG"
+            NEW_RC_NUMBER=${{ steps.get-latest-rc.outputs.latest_rc_number }}
           fi
-          
-          NEW_VERSION="$BASE_VERSION-rc$NEW_RC_NUMBER"
-          NEW_TAG="v$NEW_VERSION"
           
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
@@ -112,7 +94,7 @@ jobs:
       - name: Update package.json version
         run: |
           NEW_VERSION="${{ steps.calculate-version.outputs.new_version }}"
-          CURRENT_VERSION="${{ steps.get-package-version.outputs.package_version }}"
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
           if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
             npm version "$NEW_VERSION" --no-git-tag-version
             echo "Updated package.json version from $CURRENT_VERSION to $NEW_VERSION"
