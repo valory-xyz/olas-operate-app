@@ -76,7 +76,9 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
   const serviceSafeBalances = useMemo<Optional<WalletBalance[]>>(
     () =>
       walletBalances?.filter((balance) =>
-        serviceSafes.find(({ address }) => balance.walletAddress === address),
+        serviceSafes.find(({ address }) =>
+          areAddressesEqual(balance.walletAddress, address),
+        ),
       ),
     [serviceSafes, walletBalances],
   );
@@ -86,8 +88,8 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
    */
   const serviceEoaBalances = useMemo<Optional<WalletBalance[]>>(
     () =>
-      walletBalances?.filter(
-        (balance) => balance.walletAddress === serviceEoa?.address,
+      walletBalances?.filter((balance) =>
+        areAddressesEqual(balance.walletAddress, serviceEoa?.address),
       ),
     [serviceEoa?.address, walletBalances],
   );
@@ -215,14 +217,18 @@ export const useMasterBalances = () => {
    * Unstaked balances across all master safes and eoas
    */
   const allMasterWalletBalances = useMemo<Optional<WalletBalance[]>>(() => {
-    return (
-      walletBalances?.filter(
-        ({ walletAddress }) =>
-          masterSafes?.find(({ address: masterSafeAddress }) =>
-            areAddressesEqual(walletAddress, masterSafeAddress),
-          ) || areAddressesEqual(walletAddress, masterEoa?.address),
-      ) ?? []
-    );
+    if (!walletBalances || !masterSafes) return [];
+
+    return walletBalances.filter(({ walletAddress }) => {
+      const isFromMasterSafe = masterSafes.some(({ address }) =>
+        areAddressesEqual(walletAddress, address),
+      );
+      const isFromMasterEoa = areAddressesEqual(
+        walletAddress,
+        masterEoa?.address,
+      );
+      return isFromMasterSafe || isFromMasterEoa;
+    });
   }, [masterSafes, walletBalances, masterEoa]);
 
   const homeChainNativeToken = useMemo(() => {
@@ -387,7 +393,10 @@ export const useMasterBalances = () => {
           ({ walletAddress, symbol, evmChainId }) =>
             symbol === TokenSymbolMap.OLAS &&
             evmChainId === chainId &&
-            walletAddress === masterSafeForProvidedChain.address,
+            areAddressesEqual(
+              walletAddress,
+              masterSafeForProvidedChain.address,
+            ),
         ),
       );
 
@@ -427,7 +436,7 @@ export const useMasterBalances = () => {
           evmChainId === chainId &&
           isNative &&
           !isWrappedToken &&
-          walletAddress === masterSafeForProvidedChain.address,
+          areAddressesEqual(walletAddress, masterSafeForProvidedChain.address),
       );
     },
     [masterSafes, allMasterWalletBalances],
@@ -453,7 +462,7 @@ export const useMasterBalances = () => {
             evmChainId === chainId &&
             !isNative &&
             symbol !== TokenSymbolMap.OLAS &&
-            walletAddress === masterSafeForProvidedChain.address
+            areAddressesEqual(walletAddress, masterSafeForProvidedChain.address)
           );
         },
       );
