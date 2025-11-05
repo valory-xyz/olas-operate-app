@@ -1,24 +1,32 @@
 import { isAddress } from 'ethers/lib/utils';
 import { useCallback } from 'react';
 
-import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/client';
 import { getFromToken } from '@/components/Bridge/utils';
 import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
-import { AddressZero } from '@/constants/address';
 import {
+  AddressZero,
   AllEvmChainId,
   AllEvmChainIdMap,
   EvmChainId,
-} from '@/constants/chains';
-import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
-import { useServices } from '@/hooks/useServices';
-import { useMasterWalletContext } from '@/hooks/useWallet';
-import { Address } from '@/types/Address';
-import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
-import { areAddressesEqual } from '@/utils/address';
-import { bigintMax } from '@/utils/calculations';
-import { asAllMiddlewareChain, asEvmChainId } from '@/utils/middlewareHelpers';
+  SERVICE_TEMPLATES,
+} from '@/constants';
+import {
+  useBalanceAndRefillRequirementsContext,
+  useMasterWalletContext,
+  useServices,
+} from '@/hooks';
+import {
+  Address,
+  AddressBalanceRecord,
+  BridgeRefillRequirementsRequest,
+  MasterSafeBalanceRecord,
+} from '@/types';
+import {
+  areAddressesEqual,
+  asAllMiddlewareChain,
+  asEvmChainId,
+  bigintMax,
+} from '@/utils';
 
 type TransferDirection = 'to' | 'from';
 

@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Button, Flex, Input, Typography } from 'antd';
 import { useCallback } from 'react';
 
-import { CustomAlert } from '@/components/Alert';
+import { Alert } from '@/components/ui';
 import { AccountService } from '@/service/Account';
 import { getErrorMessage } from '@/utils/error';
 
@@ -66,7 +66,7 @@ export const EnterPasswordBeforeWithdrawal = ({
   return (
     <Flex vertical gap={24}>
       {isError && (
-        <CustomAlert
+        <Alert
           message="Incorrect password. Please try again."
           type="error"
           showIcon

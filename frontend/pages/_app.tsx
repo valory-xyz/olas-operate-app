@@ -6,12 +6,12 @@ import type { AppProps } from 'next/app';
 import { useEffect, useState } from 'react';
 
 import { Layout } from '@/components/Layout';
+import { mainTheme } from '@/constants';
 import { BalanceProvider } from '@/context/BalanceProvider/BalanceProvider';
-import { BalancesAndRefillRequirementsProvider } from '@/context/BalancesAndRefillRequirementsProvider';
+import { BalancesAndRefillRequirementsProvider } from '@/context/BalancesAndRefillRequirementsProvider/BalancesAndRefillRequirementsProvider';
 import { ElectronApiProvider } from '@/context/ElectronApiProvider';
 import { MasterWalletProvider } from '@/context/MasterWalletProvider';
 import { MessageProvider } from '@/context/MessageProvider';
-import { ModalProvider } from '@/context/ModalProvider';
 import { OnlineStatusProvider } from '@/context/OnlineStatusProvider';
 import { OnRampProvider } from '@/context/OnRampProvider';
 import { PageStateProvider } from '@/context/PageStateProvider';
@@ -25,7 +25,6 @@ import { StakingContractDetailsProvider } from '@/context/StakingContractDetails
 import { StakingProgramProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
 import { SystemNotificationTriggers } from '@/context/SystemNotificationTriggers';
-import { mainTheme } from '@/theme';
 
 const queryClient = new QueryClient();
 
@@ -52,21 +51,19 @@ export default function App({ Component, pageProps }: AppProps) {
                               <SettingsProvider>
                                 <ConfigProvider theme={mainTheme}>
                                   <MessageProvider>
-                                    <ModalProvider>
-                                      <SharedProvider>
-                                        <OnRampProvider>
-                                          <PearlWalletProvider>
-                                            {isMounted ? (
-                                              <SystemNotificationTriggers>
-                                                <Layout>
-                                                  <Component {...pageProps} />
-                                                </Layout>
-                                              </SystemNotificationTriggers>
-                                            ) : null}
-                                          </PearlWalletProvider>
-                                        </OnRampProvider>
-                                      </SharedProvider>
-                                    </ModalProvider>
+                                    <SharedProvider>
+                                      <OnRampProvider>
+                                        <PearlWalletProvider>
+                                          {isMounted ? (
+                                            <SystemNotificationTriggers>
+                                              <Layout>
+                                                <Component {...pageProps} />
+                                              </Layout>
+                                            </SystemNotificationTriggers>
+                                          ) : null}
+                                        </PearlWalletProvider>
+                                      </OnRampProvider>
+                                    </SharedProvider>
                                   </MessageProvider>
                                 </ConfigProvider>
                               </SettingsProvider>

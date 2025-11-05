@@ -4,7 +4,7 @@ import {
   Layout,
   Menu,
   MenuProps,
-  Spin,
+  Skeleton,
   Tag,
   Typography,
 } from 'antd';
@@ -21,9 +21,14 @@ import styled from 'styled-components';
 
 import { ACTIVE_AGENTS, AVAILABLE_FOR_ADDING_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { AgentType, EvmChainId } from '@/constants';
-import { COLOR } from '@/constants/colors';
-import { ANTD_BREAKPOINTS, APP_HEIGHT, SIDER_WIDTH } from '@/constants/width';
+import {
+  AgentType,
+  ANTD_BREAKPOINTS,
+  APP_HEIGHT,
+  COLOR,
+  EvmChainId,
+  SIDER_WIDTH,
+} from '@/constants';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
@@ -64,6 +69,19 @@ const ResponsiveButton = styled(Button)`
   }
 `;
 
+const AgentMenuLoading = () => (
+  <Flex vertical gap={8}>
+    <Skeleton.Input active block />
+    <Skeleton.Input active block />
+  </Flex>
+);
+
+const MyAgentsHeader = () => (
+  <Flex justify="center" className="mt-24 mb-16">
+    <Image src="/happy-robot.svg" alt="Happy Robot" width={40} height={40} />
+  </Flex>
+);
+
 const PearlWalletLabel = () => {
   const { isPearlWalletRefillRequired } =
     useBalanceAndRefillRequirementsContext();
@@ -93,15 +111,6 @@ const menuItems: MenuProps['items'] = [
   },
   { key: Pages.Settings, icon: <TbSettings size={20} />, label: 'Settings' },
 ];
-
-const MyAgentsHeader = () => (
-  <>
-    <Flex justify="center" className="mt-24">
-      <Image src="/happy-robot.svg" alt="Happy Robot" width={40} height={40} />
-    </Flex>
-    <Text className="font-weight-600">My Agents</Text>
-  </>
-);
 
 type AgentList = {
   name: string;
@@ -154,8 +163,6 @@ export const Sidebar = () => {
   const { goto: gotoSetup } = useSetup();
   const { pageState, goto: gotoPage } = usePageState();
 
-  // TODO: in order for predict to display correctly,
-  // we need to create a dummy service before going to main page
   const { services, isLoading, selectedAgentType, updateAgentType } =
     useServices();
 
@@ -174,9 +181,15 @@ export const Sidebar = () => {
 
       const [agentType, agentConfig] = agent as [AgentType, AgentConfig];
       if (!agentConfig.evmHomeChainId) return result;
+
       const chainId = agentConfig.evmHomeChainId;
       const chainName = CHAIN_CONFIG[chainId].name;
-      result.push({ name: agentConfig.name, agentType, chainName, chainId });
+      result.push({
+        name: agentConfig.displayName,
+        agentType,
+        chainName,
+        chainId,
+      });
       return result;
     }, []);
   }, [services]);
@@ -229,42 +242,50 @@ export const Sidebar = () => {
   return (
     <SiderContainer>
       <Sider breakpoint={SIDEBAR_BREAKPOINT} theme="light" width={SIDER_WIDTH}>
-        <Flex vertical gap={16} flex={1} className="p-16">
-          <MyAgentsHeader />
-          {isLoading || isMasterWalletLoading ? (
-            <Spin />
-          ) : myAgents.length > 0 ? (
-            <AgentListMenu
-              myAgents={myAgents}
-              selectedMenuKeys={selectedMenuKey}
-              onAgentSelect={handleAgentSelect}
+        <Flex vertical flex={1} className="p-16" justify="space-between">
+          <div>
+            <MyAgentsHeader />
+
+            <Flex vertical gap={16}>
+              <Text className="font-weight-600">My Agents</Text>
+              {isLoading || isMasterWalletLoading ? (
+                <AgentMenuLoading />
+              ) : myAgents.length > 0 ? (
+                <AgentListMenu
+                  myAgents={myAgents}
+                  selectedMenuKeys={selectedMenuKey}
+                  onAgentSelect={handleAgentSelect}
+                />
+              ) : null}
+
+              {myAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length && (
+                <ResponsiveButton
+                  size="large"
+                  className="flex mx-auto"
+                  onClick={() => {
+                    gotoPage(Pages.Setup);
+                    gotoSetup(SetupScreen.AgentOnboarding);
+                  }}
+                  icon={<TbPlus size={20} />}
+                >
+                  Add New Agent
+                </ResponsiveButton>
+              )}
+            </Flex>
+          </div>
+
+          <div>
+            <UpdateAvailableAlert />
+            <UpdateAvailableModal />
+
+            <Menu
+              selectedKeys={selectedMenuKey}
+              mode="inline"
+              inlineIndent={12}
+              onClick={handleMenuClick}
+              items={menuItems}
             />
-          ) : null}
-
-          {myAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length && (
-            <ResponsiveButton
-              size="large"
-              className="self-center w-max"
-              onClick={() => {
-                gotoPage(Pages.Setup);
-                gotoSetup(SetupScreen.AgentOnboarding);
-              }}
-              icon={<TbPlus size={20} />}
-            >
-              Add New Agent
-            </ResponsiveButton>
-          )}
-
-          <UpdateAvailableAlert />
-          <UpdateAvailableModal />
-
-          <Menu
-            selectedKeys={selectedMenuKey}
-            mode="inline"
-            inlineIndent={12}
-            onClick={handleMenuClick}
-            items={menuItems}
-          />
+          </div>
         </Flex>
       </Sider>
     </SiderContainer>

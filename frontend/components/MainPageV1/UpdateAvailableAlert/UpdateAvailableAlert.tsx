@@ -2,7 +2,7 @@ import { Flex } from 'antd';
 import { FiArrowUpRight } from 'react-icons/fi';
 import { TbDownload } from 'react-icons/tb';
 
-import { CustomAlert } from '@/components/Alert';
+import { Alert } from '@/components/ui';
 import { COLOR, DOWNLOAD_URL } from '@/constants';
 
 import { useAppStatus } from './useAppStatus';
@@ -20,9 +20,9 @@ export const UpdateAvailableAlert = () => {
   }
 
   return (
-    <CustomAlert
+    <Alert
       type="info"
-      className="mt-auto"
+      className="mt-auto mb-16"
       message={
         <Flex vertical gap={2}>
           <TbDownload

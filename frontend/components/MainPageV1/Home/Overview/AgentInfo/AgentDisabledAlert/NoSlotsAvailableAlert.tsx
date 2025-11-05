@@ -1,6 +1,6 @@
 import { Button, Typography } from 'antd';
 
-import { CustomAlert } from '@/components/Alert';
+import { Alert } from '@/components/ui';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks';
 
@@ -10,7 +10,7 @@ export const NoSlotsAvailableAlert = () => {
   const { goto } = usePageState();
 
   return (
-    <CustomAlert
+    <Alert
       showIcon
       className="mt-16"
       type="error"

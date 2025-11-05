@@ -45,7 +45,7 @@ export const useBuyCryptoStep = () => {
   const cannotBuyCrypto = !masterEoa?.address || !usdAmountToPay;
 
   const openTerms = useCallback(async () => {
-    termsAndConditionsWindow?.show?.('transak');
+    termsAndConditionsWindow?.show?.('transak-terms');
   }, [termsAndConditionsWindow]);
 
   const buyCryptoStep = useMemo<TransactionStep>(() => {

@@ -2,12 +2,14 @@ import { Button, Flex, Typography } from 'antd';
 import Image from 'next/image';
 import styled from 'styled-components';
 
-import { CardFlex } from '@/components/ui/CardFlex';
+import { CardFlex } from '@/components/ui';
 import { COLOR, NA, TokenSymbolConfigMap, TokenSymbolMap } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { useSharedContext } from '@/hooks';
-import { useAvailableAgentAssets } from '@/hooks/useAvailableAgentAssets';
-import { usePageState } from '@/hooks/usePageState';
+import {
+  useAvailableAgentAssets,
+  usePageState,
+  useSharedContext,
+} from '@/hooks';
 
 const { Text, Title } = Typography;
 
@@ -31,9 +33,9 @@ export const Wallet = () => {
   );
 
   return (
-    <Flex vertical>
+    <Flex vertical gap={12}>
       <Flex justify="space-between" align="center">
-        <Title level={5} className="mt-0 mb-12">
+        <Title level={5} className="m-0">
           Wallet
         </Title>
         <Button

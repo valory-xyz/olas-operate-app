@@ -6,10 +6,9 @@ import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { CardFlex, Tooltip } from '@/components/ui';
-import { useYourWallet } from '@/components/YourWalletPage/useYourWallet';
 import { AddressZero } from '@/constants/address';
 import { Pages } from '@/enums/Pages';
-import { usePageState, useServices } from '@/hooks';
+import { usePageState, useService, useServices } from '@/hooks';
 import { generateName } from '@/utils';
 
 import { AgentActivity } from './AgentActivity';
@@ -52,9 +51,14 @@ const AboutAgent = () => {
 };
 
 export const AgentInfo = () => {
-  const { selectedAgentType } = useServices();
+  const { selectedAgentType, selectedService, selectedAgentConfig } =
+    useServices();
   const { goto } = usePageState();
-  const { serviceSafe } = useYourWallet();
+
+  const { getServiceSafeOf } = useService(selectedService?.service_config_id);
+  const serviceSafe = getServiceSafeOf?.(selectedAgentConfig.evmHomeChainId);
+
+  const { isX402Enabled } = selectedAgentConfig;
 
   return (
     <Flex vertical>
@@ -79,12 +83,14 @@ export const AgentInfo = () => {
                 </Title>
                 <Flex gap={12} align="center">
                   <AboutAgent />
-                  <Tooltip title="Agent settings">
-                    <Button
-                      onClick={() => goto(Pages.UpdateAgentTemplate)}
-                      icon={<SettingOutlined />}
-                    />
-                  </Tooltip>
+                  {isX402Enabled ? null : (
+                    <Tooltip title="Agent settings">
+                      <Button
+                        onClick={() => goto(Pages.UpdateAgentTemplate)}
+                        icon={<SettingOutlined />}
+                      />
+                    </Tooltip>
+                  )}
                 </Flex>
               </Flex>
               <AgentRunButton />

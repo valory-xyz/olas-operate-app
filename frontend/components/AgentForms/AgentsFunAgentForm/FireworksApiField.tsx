@@ -2,7 +2,7 @@ import { Flex, Form, Input, Switch, Typography } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
 
-import { InfoTooltip } from '@/components/InfoTooltip';
+import { InfoTooltip } from '@/components/ui';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 
 import { commonFieldProps } from '../common/formUtils';

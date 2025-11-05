@@ -1,9 +1,8 @@
-import { Button, Flex, Tooltip, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { useMemo } from 'react';
 
-import { CustomAlert } from '@/components/Alert';
-import { AgentLowBalanceAlert } from '@/components/Alerts';
-import { BackButton, CardFlex } from '@/components/ui';
+import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
+import { Alert, BackButton, CardFlex, Tooltip } from '@/components/ui';
 import { Pages } from '@/enums/Pages';
 import {
   useActiveStakingContractDetails,
@@ -34,7 +33,7 @@ type MinimumDurationOfStakingAlertProps = {
 const MinimumDurationOfStakingAlert = ({
   countdown,
 }: MinimumDurationOfStakingAlertProps) => (
-  <CustomAlert
+  <Alert
     message={
       <Text className="text-sm">
         <span className="font-weight-600">
@@ -62,7 +61,9 @@ export const AgentWalletOperation = ({
 }: AgentWalletOperationProps) => {
   const isWithdrawFeatureEnabled = useFeatureFlag('withdraw-funds');
   const { selectedService } = useServices();
-  const { service } = useService(selectedService?.service_config_id);
+  const { service, serviceEoa } = useService(
+    selectedService?.service_config_id,
+  );
   const { isServiceStakedForMinimumDuration, selectedStakingContractDetails } =
     useActiveStakingContractDetails();
   const { countdownDisplay } = useStakingContractCountdown(
@@ -74,6 +75,7 @@ export const AgentWalletOperation = ({
 
   const withdrawDisabledAlert = useMemo(() => {
     if (!isWithdrawFeatureEnabled) return null;
+    if (!countdownDisplay) return null;
     if (!isServiceStakedForMinimumDuration) {
       return <MinimumDurationOfStakingAlert countdown={countdownDisplay} />;
     }
@@ -99,9 +101,11 @@ export const AgentWalletOperation = ({
             </Tooltip>
           )}
 
-          <Button type="primary" onClick={onFundAgent}>
-            Fund Agent
-          </Button>
+          <Tooltip title={serviceEoa ? null : 'Run agent to enable'}>
+            <Button type="primary" onClick={onFundAgent} disabled={!serviceEoa}>
+              Fund Agent
+            </Button>
+          </Tooltip>
         </Flex>
       </Flex>
 
