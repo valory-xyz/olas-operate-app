@@ -4,7 +4,6 @@ import styled from 'styled-components';
 
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
 import { COLOR, EvmChainId, EvmChainName } from '@/constants';
-import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
   useFeatureFlag,
@@ -186,7 +185,7 @@ export const FundYourAgent = () => {
       <BackButton
         onPrev={() => {
           resetTokenRequirements();
-          goto(Pages.SelectStaking);
+          goto(SetupScreen.SelectStaking);
         }}
       />
       <Title level={3} className="mt-12">
