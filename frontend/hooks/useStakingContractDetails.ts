@@ -1,5 +1,5 @@
 import { isNil } from 'lodash';
-import { useContext, useMemo } from 'react';
+import { useContext } from 'react';
 
 import { StakingContractDetailsContext } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
@@ -55,7 +55,7 @@ export const useActiveStakingContractDetails = () => {
    * - That is, user should not be able to run/start your agent if this condition is met.
    *
    */
-  const isServiceStakedForMinimumDuration = useMemo(() => {
+  const isServiceStakedForMinimumDuration = (() => {
     if (isNil(serviceStakingStartTime) || isNil(minimumStakingDuration)) {
       return false;
     }
@@ -64,7 +64,7 @@ export const useActiveStakingContractDetails = () => {
       Math.round(Date.now() / 1000) - serviceStakingStartTime >=
       minimumStakingDuration
     );
-  }, [serviceStakingStartTime, minimumStakingDuration]);
+  })();
 
   // Eviction expire time in seconds
   const evictionExpiresAt =
