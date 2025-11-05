@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch }}
-          fetch-depth: 0 # In order to fetch all tags
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node
@@ -56,14 +56,9 @@ jobs:
             LATEST_RC_NUMBER="${BASH_REMATCH[2]}"
           fi
           
-          echo "latest_rc_tag=$LATEST_RC_TAG" >> $GITHUB_OUTPUT
-          echo "latest_rc_number=$LATEST_RC_NUMBER" >> $GITHUB_OUTPUT
-          echo "base_version=$BASE_VERSION" >> $GITHUB_OUTPUT
-          echo "Latest RC tag: $LATEST_RC_TAG"
-          echo "Latest RC number: $LATEST_RC_NUMBER"
-          echo "Base version: $BASE_VERSION"
-
-      
+          echo "latest_rc_tag=$LATEST_RC_TAG" | tee -a $GITHUB_OUTPUT
+          echo "latest_rc_number=$LATEST_RC_NUMBER" | tee -a $GITHUB_OUTPUT
+          echo "base_version=$BASE_VERSION" | tee -a $GITHUB_OUTPUT
 
       - name: Calculate new version
         id: calculate-version
@@ -85,11 +80,9 @@ jobs:
             NEW_RC_NUMBER=${{ steps.get-latest-rc.outputs.latest_rc_number }}
           fi
           
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
-          echo "new_rc_number=$NEW_RC_NUMBER" >> $GITHUB_OUTPUT
-          echo "New version: $NEW_VERSION"
-          echo "New tag: $NEW_TAG"
+          echo "new_version=$NEW_VERSION" | tee -a $GITHUB_OUTPUT
+          echo "new_tag=$NEW_TAG" | tee -a $GITHUB_OUTPUT
+          echo "new_rc_number=$NEW_RC_NUMBER" | tee -a $GITHUB_OUTPUT
 
       - name: Update package.json version
         run: |
