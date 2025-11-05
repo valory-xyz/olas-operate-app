@@ -24,7 +24,7 @@ type SelectStakingProps = {
   mode: 'onboard' | 'migrate';
 };
 
-export const SelectStaking = ({ mode }: SelectStakingProps) => {
+export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
   const { orderedStakingProgramIds, currentStakingProgramId } =
     useStakingContracts();
 
@@ -57,13 +57,13 @@ export const SelectStaking = ({ mode }: SelectStakingProps) => {
                     contractDetails={contractDetails}
                     isCurrentStakingProgram={isCurrentStakingProgram}
                   />
-                  {mode === 'switch' && (
+                  {mode === 'migrate' && (
                     <SwitchStakingButton
                       isCurrentStakingProgram={isCurrentStakingProgram}
                       stakingProgramId={stakingProgramId}
                     />
                   )}
-                  {mode === 'select' && (
+                  {mode === 'onboard' && (
                     <SelectStakingButton stakingProgramId={stakingProgramId} />
                   )}
                 </>
