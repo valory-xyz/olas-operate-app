@@ -6,14 +6,16 @@ import { LuInfo } from 'react-icons/lu';
 import { TbCopy, TbWallet } from 'react-icons/tb';
 import { styled } from 'styled-components';
 
-import { CustomAlert } from '@/components/Alert';
-import { InfoTooltip } from '@/components/InfoTooltip';
-import { BackButton, CardFlex, Table } from '@/components/ui';
+import {
+  Alert,
+  BackButton,
+  CardFlex,
+  InfoTooltip,
+  Table,
+} from '@/components/ui';
 import { COLOR, TokenSymbolConfigMap } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
-import { Address } from '@/types/Address';
-import { Nullable } from '@/types/Util';
-import { AvailableAsset } from '@/types/Wallet';
+import { Address, AvailableAsset, Nullable } from '@/types';
 import { copyToClipboard, formatNumber } from '@/utils';
 
 const { Title, Text, Paragraph } = Typography;
@@ -25,7 +27,7 @@ export const YouPayContainer = styled(Flex)`
 `;
 
 const ChainWarningAlert = ({ chainName }: { chainName: string }) => (
-  <CustomAlert
+  <Alert
     message={`Only send on ${chainName} Chain — funds on other networks are unrecoverable.`}
     type="warning"
     showIcon

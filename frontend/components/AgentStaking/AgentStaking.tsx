@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { TbFileText, TbHistory } from 'react-icons/tb';
 
 import { FireV1 } from '@/components/custom-icons';
-import { BackButton, CardFlex, Segmented } from '@/components/ui';
+import { BackButton, CardFlex, InfoTooltip, Segmented } from '@/components/ui';
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants';
 import { Pages } from '@/enums/Pages';
 import {
@@ -33,7 +33,12 @@ const StakingStats = () => {
     <CardFlex $noBorder $newStyles>
       <Flex gap={56}>
         <Flex vertical gap={8} flex={1}>
-          <Text type="secondary">Total rewards earned</Text>
+          <Flex align="center" gap={8}>
+            <Text type="secondary">Total rewards earned </Text>
+            <InfoTooltip>
+              Total staking rewards your agent has earned since setup.
+            </InfoTooltip>
+          </Flex>
           {isTotalRewardsLoading ? (
             <StatsSkeleton />
           ) : (
@@ -52,17 +57,23 @@ const StakingStats = () => {
         </Flex>
 
         <Flex vertical gap={8} flex={1}>
-          <Text type="secondary">Current streak</Text>
+          <Flex align="center" gap={8}>
+            <Text type="secondary">Current streak</Text>
+            <InfoTooltip>
+              Streak shows how many consecutive epochs your agent has earned
+              rewards.
+            </InfoTooltip>
+          </Flex>
 
           {isStreakLoading ? (
             <StatsSkeleton />
           ) : (
-            <Flex>
-              <FireV1 isActive={isFlameActive} />
-              <Title level={5} className="mt-0 mb-0 ml-8">
+            <Title level={5} className="mt-0 mb-0">
+              <Flex align="center" gap={8}>
+                <FireV1 isActive={isFlameActive} />
                 {optimisticStreak}
-              </Title>
-            </Flex>
+              </Flex>
+            </Title>
           )}
         </Flex>
       </Flex>

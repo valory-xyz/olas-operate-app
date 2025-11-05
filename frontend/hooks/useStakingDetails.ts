@@ -1,4 +1,3 @@
-import { isEmpty } from 'lodash';
 import { useMemo } from 'react';
 
 import { ONE_DAY_IN_S } from '@/utils/time';
@@ -9,7 +8,11 @@ import { useRewardsHistory } from './useRewardsHistory';
 
 export const useStakingDetails = () => {
   const { isLoading: isBalanceLoading } = useBalanceContext();
-  const { isEligibleForRewards } = useRewardContext();
+  const {
+    isEligibleForRewards,
+    stakingRewardsDetails,
+    isStakingRewardsDetailsLoading,
+  } = useRewardContext();
   const {
     latestRewardStreak: streak,
     isLoading: isRewardsHistoryLoading,
@@ -24,15 +27,16 @@ export const useStakingDetails = () => {
 
   // Calculate the time remaining in the current epoch
   const currentEpochLifetime = useMemo(() => {
-    if (!contractCheckpoints || isEmpty(contractCheckpoints)) return;
-    if (!recentStakingContractAddress) return;
+    const lastEpochEndTime = stakingRewardsDetails?.tsCheckpoint;
+    if (
+      !stakingRewardsDetails ||
+      isStakingRewardsDetailsLoading ||
+      !lastEpochEndTime
+    )
+      return;
 
-    const checkpoints = contractCheckpoints[recentStakingContractAddress];
-    if (checkpoints.length === 0) return;
-
-    const currentEpoch = checkpoints[0];
-    return (currentEpoch.epochEndTimeStamp + ONE_DAY_IN_S) * 1000;
-  }, [contractCheckpoints, recentStakingContractAddress]);
+    return (lastEpochEndTime + ONE_DAY_IN_S) * 1000;
+  }, [stakingRewardsDetails, isStakingRewardsDetailsLoading]);
 
   // If rewards history is loading for the first time
   // or balances are not fetched yet - show loading state

@@ -1,10 +1,9 @@
 import { Typography } from 'antd';
 import React from 'react';
 
-import { CustomAlert } from '@/components/Alert';
-import { AgentMap } from '@/constants/agent';
-import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { useServices } from '@/hooks/useServices';
+import { Alert } from '@/components/ui';
+import { AgentMap, SERVICE_TEMPLATES } from '@/constants';
+import { useServices } from '@/hooks';
 
 import { AgentsFunAgentSetup } from './AgentsFunAgentForm/AgentsFunAgentForm';
 import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
@@ -15,15 +14,23 @@ import { AgentFormContainer, useDisplayAgentForm } from './useDisplayAgentForm';
 const { Text } = Typography;
 
 export const SetupYourAgent = () => {
-  const { selectedAgentType } = useServices();
+  const { selectedAgentType, selectedAgentConfig } = useServices();
   const serviceTemplate = SERVICE_TEMPLATES.find(
     (template) => template.agentType === selectedAgentType,
   );
   const displayForm = useDisplayAgentForm();
 
+  const { isX402Enabled } = selectedAgentConfig;
+
+  if (isX402Enabled) {
+    throw new Error(
+      'Setting up agent feature is not supported for the selected agent.',
+    );
+  }
+
   if (!serviceTemplate) {
     return (
-      <CustomAlert
+      <Alert
         type="error"
         showIcon
         message={<Text>Please select an agent type first!</Text>}

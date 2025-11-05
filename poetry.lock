@@ -1726,17 +1726,17 @@ websockets = ["websockets (>=10,<12)"]
 
 [[package]]
 name = "graphql-core"
-version = "3.2.6"
+version = "3.2.7"
 description = "GraphQL implementation for Python, a port of GraphQL.js, the JavaScript reference implementation for GraphQL."
 optional = false
-python-versions = "<4,>=3.6"
+python-versions = "<4,>=3.7"
 files = [
-    {file = "graphql_core-3.2.6-py3-none-any.whl", hash = "sha256:78b016718c161a6fb20a7d97bbf107f331cd1afe53e45566c59f776ed7f0b45f"},
-    {file = "graphql_core-3.2.6.tar.gz", hash = "sha256:c08eec22f9e40f0bd61d805907e3b3b1b9a320bc606e23dc145eebca07c8fbab"},
+    {file = "graphql_core-3.2.7-py3-none-any.whl", hash = "sha256:17fc8f3ca4a42913d8e24d9ac9f08deddf0a0b2483076575757f6c412ead2ec0"},
+    {file = "graphql_core-3.2.7.tar.gz", hash = "sha256:27b6904bdd3b43f2a0556dad5d579bdfdeab1f38e8e8788e555bdcb586a6f62c"},
 ]
 
 [package.dependencies]
-typing-extensions = {version = ">=4,<5", markers = "python_version < \"3.10\""}
+typing-extensions = {version = ">=4.7,<5", markers = "python_version < \"3.10\""}
 
 [[package]]
 name = "grpcio"
@@ -2547,54 +2547,51 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.10.20"
+version = "0.11.0"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.9"
-files = []
-develop = false
+files = [
+    {file = "olas_operate_middleware-0.11.0-py3-none-any.whl", hash = "sha256:ae01d9bb7b58c0039176cfbe5f73ea499f918e0728634c7c9ea5f8dbeb4057ea"},
+    {file = "olas_operate_middleware-0.11.0.tar.gz", hash = "sha256:09469116e885e3b563d4d08b82aa20193e8cc7fef15531ad088b513d04ea6738"},
+]
 
 [package.dependencies]
 aiohttp = "3.9.5"
-argon2-cffi = "==23.1.0"
-clea = "==0.1.0rc4"
-cytoolz = "==0.12.3"
-deepdiff = "^8.6.1"
+argon2-cffi = "23.1.0"
+clea = "0.1.0rc4"
+cytoolz = "0.12.3"
+deepdiff = ">=8.6.1,<9.0.0"
 docker = "6.1.2"
-eth-abi = "==4.0.0"
-eth-account = "==0.8.0"
-eth-hash = "==0.7.0"
-eth-keyfile = "==0.6.1"
-eth-keys = "==0.4.0"
-eth-rlp = "==0.3.0"
-eth-typing = "==3.5.2"
-eth-utils = "==2.2.0"
+eth-abi = "4.0.0"
+eth-account = "0.8.0"
+eth-hash = "0.7.0"
+eth-keyfile = "0.6.1"
+eth-keys = "0.4.0"
+eth-rlp = "0.3.0"
+eth-typing = "3.5.2"
+eth-utils = "2.2.0"
 fastapi = "0.110.3"
-frozenlist = "==1.4.1"
-halo = "==0.0.31"
-hexbytes = "==0.3.1"
-ipfshttpclient = "==0.8.0a2"
-jsonschema = "==4.3.3"
-multidict = "==6.0.5"
-open-aea-cli-ipfs = "==1.65.0"
-open-aea-ledger-cosmos = "==1.65.0"
-open-aea-ledger-ethereum = "==1.65.0"
-open-aea-ledger-ethereum-flashbots = "==1.65.0"
-open-autonomy = "^0.20.2"
-psutil = "^5.9.8"
-pyinstaller = "^6.8.0"
-requests-mock = "^1.12.1"
+frozenlist = "1.4.1"
+halo = "0.0.31"
+hexbytes = "0.3.1"
+ipfshttpclient = "0.8.0a2"
+jsonschema = "4.3.3"
+multiaddr = "0.0.9"
+multidict = "6.0.5"
+open-aea-cli-ipfs = "1.65.0"
+open-aea-ledger-cosmos = "1.65.0"
+open-aea-ledger-ethereum = "1.65.0"
+open-aea-ledger-ethereum-flashbots = "1.65.0"
+open-autonomy = ">=0.20.2,<0.21.0"
+psutil = ">=5.9.8,<6.0.0"
+pyinstaller = ">=6.8.0,<7.0.0"
+requests-mock = ">=1.12.1,<2.0.0"
 requests-toolbelt = "1.0.0"
 starlette = "0.37.2"
-twikit = "==2.2.0"
-uvicorn = "==0.27.0"
+twikit = "2.2.0"
+uvicorn = "0.27.0"
 web3 = "6.20.4"
-
-[package.source]
-type = "git"
-url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "8c365c752ce9ca426bdde751f1d457d7ec1563eb"
-resolved_reference = "8c365c752ce9ca426bdde751f1d457d7ec1563eb"
 
 [[package]]
 name = "open-aea"
@@ -4454,4 +4451,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "4cedf8f70b8588d36e1896fc9d2dc1264e838a140ee5c2dbc57504b9bb1d8098"
+content-hash = "de00217882b82f22025b2da9c8cf0bd389034cbc99bac3c7bcf40131f102f85e"

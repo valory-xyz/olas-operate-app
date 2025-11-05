@@ -2,8 +2,8 @@ import { Button, Flex, Select, Typography } from 'antd';
 import { isEmpty, kebabCase, values } from 'lodash';
 import Image from 'next/image';
 
-import { CustomAlert } from '@/components/Alert';
 import {
+  Alert,
   BackButton,
   CardFlex,
   cardStyles,
@@ -20,6 +20,18 @@ import {
 
 const { Title, Text } = Typography;
 
+const DepositInputInfo = () => (
+  <Flex vertical gap={4}>
+    <Text className="text-sm">Why it’s different from your Pearl Wallet</Text>
+    <Text className="text-sm text-neutral-secondary">
+      This number shows only the amount you can use to fund agents.
+    </Text>
+    <Text className="text-sm text-neutral-secondary">
+      The Pearl Wallet balance also includes funds reserved to pay for gas fees.
+    </Text>
+  </Flex>
+);
+
 const DepositTitle = () => (
   <Flex vertical justify="space-between" gap={12}>
     <Title level={4} className="m-0">
@@ -35,7 +47,7 @@ const LowPearlWalletBalanceAlertForCurrentChain = () => {
   if (!walletChainId || isEmpty(defaultRequirementDepositValues)) return null;
 
   return (
-    <CustomAlert
+    <Alert
       type="error"
       showIcon
       message={
@@ -120,6 +132,7 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
                   onDepositAmountChange(symbol, { amount: x ?? 0 })
                 }
                 showQuickSelects={false}
+                tooltipInfo={<DepositInputInfo />}
               />
             ))}
           </Flex>

@@ -1,10 +1,9 @@
 import { Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
-import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
+import { MAIN_CONTENT_MAX_WIDTH } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
-import { useStakingContracts } from '@/hooks/useStakingContracts';
+import { usePageState, useStakingContracts } from '@/hooks';
 
 import { BackButton } from '../ui/BackButton';
 import { StakingContract } from './StakingContractCard';

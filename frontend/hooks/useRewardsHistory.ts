@@ -52,7 +52,7 @@ const fetchRewardsQuery = (chainId: EvmChainId, serviceId: Maybe<number>) => {
   return gql`
   {
     checkpoints(
-      orderBy: epoch
+      orderBy: blockTimestamp
       orderDirection: desc
       first: 1000
       where: {

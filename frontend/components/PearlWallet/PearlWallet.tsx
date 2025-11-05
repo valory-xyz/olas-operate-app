@@ -2,7 +2,7 @@ import { Flex } from 'antd';
 import { useCallback, useMemo } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { MAIN_CONTENT_MAX_WIDTH } from '@/constants/width';
+import { MAIN_CONTENT_MAX_WIDTH } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 
 import { PearlDeposit } from '../PearlDeposit';

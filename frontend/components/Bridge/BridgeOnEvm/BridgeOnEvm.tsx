@@ -1,7 +1,7 @@
 import { Flex, Typography } from 'antd';
 
-import { MiddlewareChain } from '@/client';
 import { BackButton, CardFlex, FundingDescription } from '@/components/ui';
+import { MiddlewareChain } from '@/constants';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
 import { GetBridgeRequirementsParams } from '../types';

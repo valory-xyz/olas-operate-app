@@ -1,7 +1,7 @@
 import { Divider as AntdDivider } from 'antd';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
+import { COLOR } from '@/constants';
 
 export const Divider = styled(AntdDivider)`
   margin: 0;

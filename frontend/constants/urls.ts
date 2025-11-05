@@ -1,5 +1,6 @@
-import { MiddlewareChain, SupportedMiddlewareChain } from '@/client';
 import { EvmChainId } from '@/enums/Chain';
+
+import { MiddlewareChainMap, SupportedMiddlewareChain } from './chains';
 
 type Url = `http${'s' | ''}://${string}`;
 
@@ -39,7 +40,7 @@ export const GITHUB_API_RELEASES: Url =
 
 // others
 export const COINGECKO_URL: string = 'https://www.coingecko.com';
-export const COINGECKO_DEMO_API_KEY: string =
+export const COINGECKO_DEMO_API_URL: string =
   'https://support.coingecko.com/hc/en-us/articles/21880397454233-User-Guide-How-to-sign-up-for-CoinGecko-Demo-API-and-generate-an-API-key';
 export const GEMINI_API_URL: string = 'https://aistudio.google.com/app/apikey';
 export const WEB3AUTH_URL: Url = 'https://web3auth.io';
@@ -58,20 +59,20 @@ export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   SupportedMiddlewareChain,
   Url
 > = {
-  [MiddlewareChain.GNOSIS]: GNOSIS_EXPLORER_URL,
-  [MiddlewareChain.BASE]: BASE_EXPLORER_URL,
-  [MiddlewareChain.MODE]: MODE_EXPLORER_URL,
-  [MiddlewareChain.OPTIMISM]: OPTIMISM_EXPLORER_URL,
+  [MiddlewareChainMap.GNOSIS]: GNOSIS_EXPLORER_URL,
+  [MiddlewareChainMap.BASE]: BASE_EXPLORER_URL,
+  [MiddlewareChainMap.MODE]: MODE_EXPLORER_URL,
+  [MiddlewareChainMap.OPTIMISM]: OPTIMISM_EXPLORER_URL,
 };
 
 export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
   SupportedMiddlewareChain,
   Url
 > = {
-  [MiddlewareChain.GNOSIS]: 'https://gnosis.blockscout.com',
-  [MiddlewareChain.BASE]: 'https://base.blockscout.com',
-  [MiddlewareChain.MODE]: 'https://explorer.mode.network',
-  [MiddlewareChain.OPTIMISM]: 'https://optimism.blockscout.com',
+  [MiddlewareChainMap.GNOSIS]: 'https://gnosis.blockscout.com',
+  [MiddlewareChainMap.BASE]: 'https://base.blockscout.com',
+  [MiddlewareChainMap.MODE]: 'https://explorer.mode.network',
+  [MiddlewareChainMap.OPTIMISM]: 'https://optimism.blockscout.com',
 };
 
 // swap URLs
