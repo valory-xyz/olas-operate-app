@@ -48,9 +48,10 @@ jobs:
           # Get the latest RC tag for this base version (format: vX.Y.Z-rcN)
           LATEST_RC_TAG=$(git tag -l "v${BASE_VERSION}-rc*" | sort -V | tail -1)
 
-          # Extract RC number if a matching tag exists; accept optional suffix like -signed
-          if [[ "$LATEST_RC_TAG" =~ ^v${BASE_VERSION}-rc([0-9]+)(-.+)?$ ]]; then
-            LATEST_RC_NUMBER="${BASH_REMATCH[1]}"
+          # Extract RC number; accept optional suffix like -signed using sed for reliability
+          RC_EXTRACT=$(echo -n "$LATEST_RC_TAG" | sed -nE "s/^v${BASE_VERSION}-rc([0-9]+)(-.+)?$/\\1/p")
+          if [ -n "$RC_EXTRACT" ]; then
+            LATEST_RC_NUMBER="$RC_EXTRACT"
           else
             LATEST_RC_NUMBER="0"
           fi
