@@ -6,7 +6,7 @@ import { COLOR } from '@/constants/colors';
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
-import { SelectStaking } from '../SelectStaking/SelectStaking';
+import { SelectStakingPage } from '../SelectStakingPage';
 import { CardFlex } from '../ui/CardFlex';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
@@ -77,7 +77,7 @@ export const Setup = () => {
       case SetupScreen.SetupYourAgent:
         return <SetupYourAgent />;
       case SetupScreen.SelectStaking:
-        return <SelectStaking mode="select" />;
+        return <SelectStakingPage mode="onboard" />;
       case SetupScreen.FundYourAgent:
         return <FundYourAgent />;
       case SetupScreen.TransferFunds:
