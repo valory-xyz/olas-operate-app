@@ -15,7 +15,6 @@ const {
 
 const {
   handleTermsAndConditionsWindowShow,
-  handleTermsAndConditionsWindowClose,
 } = require('./windows/termsAndConditions');
 
 // Load the self-signed certificate for localhost HTTPS requests
@@ -867,7 +866,6 @@ ipcMain.handle('web3auth-address-received', (_event, address) =>
 /**
  * Terms window handlers
  */
-ipcMain.handle('terms-window-show', (_event, type) =>
-  handleTermsAndConditionsWindowShow(nextUrl(), type),
+ipcMain.handle('terms-window-show', (_event, hash) =>
+  handleTermsAndConditionsWindowShow(hash),
 );
-ipcMain.handle('terms-window-close', handleTermsAndConditionsWindowClose);

@@ -25,7 +25,7 @@ const Web3AuthCaption = () => {
       <RiAppleFill fill={COLOR.GRAY_2} />
       &nbsp; authentication service is provided by Web3Auth. For details on how
       your data is handled during authentication, please refer to the&nbsp;
-      <a onClick={() => termsAndConditionsWindow?.show?.('pearl')}>
+      <a onClick={() => termsAndConditionsWindow?.show?.('web3auth-terms')}>
         Terms and Conditions
       </a>
       .

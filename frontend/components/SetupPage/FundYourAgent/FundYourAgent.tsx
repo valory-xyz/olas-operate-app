@@ -61,7 +61,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
     );
-  const isLoading = isNativeTokenLoading || isFiatLoading || !fiatAmount;
+  const isLoading = isNativeTokenLoading || isFiatLoading;
 
   return (
     <FundMethodCard>
@@ -74,6 +74,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
         <TokenRequirements
           fiatAmount={fiatAmount ?? 0}
           isLoading={isLoading}
+          hasError={hasNativeTokenError}
           fundType="onRamp"
         />
       </div>
@@ -81,7 +82,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
         type="primary"
         size="large"
         onClick={() => goto(SetupScreen.SetupOnRamp)}
-        disabled={isLoading}
+        disabled={isLoading || hasNativeTokenError}
       >
         Buy Crypto with USD
       </Button>
@@ -165,15 +166,16 @@ export const FundYourAgent = () => {
   ]);
   const { goto } = usePageState();
   const { selectedAgentConfig } = useServices();
-  const { evmHomeChainId, requiresSetup } = selectedAgentConfig;
+  const { evmHomeChainId, requiresSetup, isX402Enabled } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const {
     totalTokenRequirements: tokenRequirements,
     isLoading,
     resetTokenRequirements,
   } = useGetRefillRequirementsWithMonthlyGas({
-    // Service creation for agents requiring setup is already handled at the time of agentForm
-    shouldCreateDummyService: !requiresSetup,
+    // In case x402 feature is turned off, service creation for agents
+    // requiring setup is already handled at the time of agentForm
+    shouldCreateDummyService: requiresSetup && !isX402Enabled ? false : true,
   });
 
   const { networkId: onRampChainId } = useOnRampContext();

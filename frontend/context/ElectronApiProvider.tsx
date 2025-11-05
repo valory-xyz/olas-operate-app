@@ -72,7 +72,7 @@ type ElectronApiContextProps = {
     authSuccess?: (address: Address) => void;
   };
   termsAndConditionsWindow?: {
-    show?: (type: 'transak' | 'web3auth' | 'pearl') => void;
+    show?: (hash?: string) => void;
     close?: () => void;
   };
   logEvent?: (message: string) => void;
@@ -176,7 +176,6 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         termsAndConditionsWindow: {
           show: getElectronApiFunction('termsAndConditionsWindow.show'),
-          close: getElectronApiFunction('termsAndConditionsWindow.close'),
         },
         logEvent: getElectronApiFunction('logEvent'),
       }}

@@ -18,8 +18,7 @@ const web3AuthWindow = {
 
 /** IPC methods for terms window */
 const termsAndConditionsWindow = {
-  show: (type) => ipcRenderer.invoke('terms-window-show', type),
-  close: () => ipcRenderer.invoke('terms-window-close'),
+  show: (hash) => ipcRenderer.invoke('terms-window-show', hash),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', {

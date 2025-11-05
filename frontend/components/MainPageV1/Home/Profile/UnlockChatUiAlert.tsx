@@ -1,12 +1,9 @@
 import { Button, Checkbox, Flex, Modal } from 'antd';
 import { useCallback, useState } from 'react';
 
-import { GEMINI_API_URL } from '@/constants/urls';
-import { MODAL_WIDTH } from '@/constants/width';
+import { GEMINI_API_URL, MODAL_WIDTH } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { useElectronApi } from '@/hooks/useElectronApi';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
+import { useElectronApi, usePageState, useServices } from '@/hooks';
 
 type UnlockChatUiAlertProps = {
   isOpen: boolean;
@@ -22,8 +19,6 @@ export const UnlockChatUiAlert = ({
   const electronApi = useElectronApi();
   const { selectedAgentType, selectedAgentConfig } = useServices();
   const { goto } = usePageState();
-
-  selectedAgentConfig.displayName;
 
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
@@ -58,8 +53,8 @@ export const UnlockChatUiAlert = ({
       <Flex vertical gap={20}>
         <div>
           To unlock the full functionality of {selectedAgentConfig.displayName}{' '}
-          profile, a Gemini API key is required. You can get a free Gemini API
-          key through the{' '}
+          agent profile, a Gemini API key is required. You can get a free Gemini
+          API key through the{' '}
           <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
             Google AI Studio
           </a>

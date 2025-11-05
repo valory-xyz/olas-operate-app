@@ -1,6 +1,7 @@
 import { isEqual, omit, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
+import { RenderForm } from '@/components/SetupPage/SetupYourAgent/useDisplayAgentForm';
 import { Pages } from '@/enums/Pages';
 import { usePageState, useServices } from '@/hooks';
 import { Nullable } from '@/types/Util';
@@ -11,9 +12,17 @@ import {
   AgentsFunFormValues,
 } from '../../AgentForms/AgentsFunAgentForm';
 import { UpdateAgentContext } from '../context/UpdateAgentProvider';
-import { UpdateAgentCard } from '../UpdateAgentCard';
 
-export const AgentsFunUpdateSetup = () => {
+type AgentsFunUpdateFormProps = {
+  renderForm: RenderForm;
+};
+
+/**
+ * @note AgentsFun is under construction and this component is not usable yet.
+ */
+export const AgentsFunUpdateForm = ({
+  renderForm,
+}: AgentsFunUpdateFormProps) => {
   const { goto } = usePageState();
   const { selectedService } = useServices();
   const {
@@ -75,15 +84,15 @@ export const AgentsFunUpdateSetup = () => {
 
   if (!initialValues) return null;
 
-  return (
-    <UpdateAgentCard onClickBack={handleClickBack}>
-      <AgentsFunAgentForm
-        form={form}
-        isFormEnabled={isEditing}
-        initialValues={initialValues}
-        agentFormType={isEditing ? 'update' : 'view'}
-        onSubmit={onSubmit}
-      />
-    </UpdateAgentCard>
+  return renderForm(
+    <AgentsFunAgentForm
+      form={form}
+      isFormEnabled={isEditing}
+      initialValues={initialValues}
+      agentFormType={isEditing ? 'update' : 'view'}
+      onSubmit={onSubmit}
+    />,
+    <></>,
+    { isUpdate: true, onBack: handleClickBack },
   );
 };
