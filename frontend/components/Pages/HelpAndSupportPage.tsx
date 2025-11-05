@@ -2,7 +2,7 @@ import { Button, Card, Flex, Typography } from 'antd';
 import { compact } from 'lodash';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { FiArrowUpRight, FiExternalLink } from 'react-icons/fi';
-import { useBoolean, useIsMounted } from 'usehooks-ts';
+import { useIsMounted } from 'usehooks-ts';
 
 import { COLOR } from '@/constants/colors';
 import { FAQ_URL, GITHUB_API_RELEASES, SUPPORT_URL } from '@/constants/urls';
@@ -10,7 +10,6 @@ import { useSupportModal } from '@/context/SupportModalProvider';
 import { useElectronApi } from '@/hooks';
 
 import { ExportLogsButton } from '../ExportLogsButton';
-import { FeedbackModal } from '../FeedbackModal/FeedbackModal';
 import { CardSection, cardStyles } from '../ui';
 
 const { Title, Paragraph } = Typography;
@@ -24,11 +23,6 @@ type HelpItem = {
 
 export const HelpAndSupport = () => {
   const [latestTag, setLatestTag] = useState<string | null>(null);
-  const {
-    value: feedbackModalOpen,
-    setTrue: setFeedbackModalOpen,
-    setFalse: setFeedbackModalOpenFalse,
-  } = useBoolean();
 
   const { toggleSupportModal } = useSupportModal();
   const { getAppVersion, termsAndConditionsWindow } = useElectronApi();
@@ -49,10 +43,6 @@ export const HelpAndSupport = () => {
 
     getTag();
   }, [getAppVersion, isMounted]);
-
-  const closeFeedbackModal = () => {
-    setFeedbackModalOpenFalse();
-  };
 
   const helpItems: HelpItem[] = useMemo(
     () =>
@@ -130,19 +120,6 @@ export const HelpAndSupport = () => {
           </Flex>
         </Flex>
       </Card>
-
-      <Card styles={{ body: { padding: 16 } }}>
-        <Flex justify="space-between" align="center">
-          <Paragraph type="secondary" className="mb-0 text-sm">
-            Tell us what you think about Pearl
-          </Paragraph>
-          <Button type="primary" onClick={() => setFeedbackModalOpen()}>
-            Share Feedback
-          </Button>
-        </Flex>
-      </Card>
-
-      <FeedbackModal open={feedbackModalOpen} onClose={closeFeedbackModal} />
     </Flex>
   );
 };
