@@ -1,11 +1,12 @@
 import { ethers } from 'ethers';
 
-import { MiddlewareChain, ServiceTemplate } from '@/client';
 import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from '@/config/tokens';
 import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
 import { AgentType, STAKING_PROGRAM_IDS, TokenSymbol } from '@/enums';
+import { ServiceTemplate } from '@/types';
 import { parseEther, parseUnits } from '@/utils';
 
+import { MiddlewareChainMap } from './chains';
 import { X402_ENABLED_FLAGS } from './x402';
 
 /**
@@ -30,9 +31,9 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       version: 'v0.27.2-1-rc.2',
     },
   },
-  home_chain: MiddlewareChain.GNOSIS,
+  home_chain: MiddlewareChainMap.GNOSIS,
   configurations: {
-    [MiddlewareChain.GNOSIS]: {
+    [MiddlewareChainMap.GNOSIS]: {
       staking_program_id: STAKING_PROGRAM_IDS.PearlBeta, // default, may be overwritten
       nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
       rpc: 'http://localhost:8545', // overwritten
@@ -125,7 +126,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Irrelevant tools',
       description: '',
       value:
-        '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot"]',
+        '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot","resolve-market-reasoning-gpt-4.1"]',
       provision_type: EnvProvisionType.FIXED,
     },
     GENAI_API_KEY: {
@@ -285,9 +286,9 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
 const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.AgentsFun,
   name: 'Agents.Fun',
-  home_chain: MiddlewareChain.BASE,
+  home_chain: MiddlewareChainMap.BASE,
   configurations: {
-    [MiddlewareChain.BASE]: {
+    [MiddlewareChainMap.BASE]: {
       staking_program_id: STAKING_PROGRAM_IDS.AgentsFun1, // default, may be overwritten
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: 'http://localhost:8545', // overwritten
@@ -327,9 +328,9 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} Optimus`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  home_chain: MiddlewareChain.MODE,
+  home_chain: MiddlewareChainMap.MODE,
   configurations: {
-    [MiddlewareChain.MODE]: {
+    [MiddlewareChainMap.MODE]: {
       staking_program_id: STAKING_PROGRAM_IDS.ModiusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
@@ -494,9 +495,9 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} Optimus service deployment on Optimism network`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  home_chain: MiddlewareChain.OPTIMISM,
+  home_chain: MiddlewareChainMap.OPTIMISM,
   configurations: {
-    [MiddlewareChain.OPTIMISM]: {
+    [MiddlewareChainMap.OPTIMISM]: {
       staking_program_id: STAKING_PROGRAM_IDS.OptimusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten

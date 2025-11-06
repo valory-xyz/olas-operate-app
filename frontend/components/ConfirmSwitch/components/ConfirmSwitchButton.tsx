@@ -2,7 +2,6 @@ import { Button, message } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { ServiceTemplate } from '@/client/types';
 import { SupportedMiddlewareChain } from '@/constants/chains';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
@@ -12,6 +11,7 @@ import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useServices } from '@/hooks/useServices';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { ServicesService } from '@/service/Services';
+import { ServiceTemplate } from '@/types';
 import { DeepPartial } from '@/types/Util';
 
 import { SwitchingContractModal } from './SwitchingContractModal';
