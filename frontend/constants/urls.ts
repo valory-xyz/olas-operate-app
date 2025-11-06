@@ -100,4 +100,5 @@ export const PEARL_API_URL = 'https://pearl-api.olas.network';
 export const WEB3AUTH_GATEWAY_URL = `${PEARL_API_URL}/web3auth/login`;
 
 // TODO: point to prod url.
-export const SUPPORT_API_URL = 'http://localhost:4200/api/zendesk';
+export const SUPPORT_API_URL =
+  'https://pearl-api-git-rajat-ft-zendesk-proxy-apis-autonolas.vercel.app/api/zendesk';
