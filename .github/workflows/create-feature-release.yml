@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      new_tag: ${{ steps.calculate-version.outputs.new_tag }}
 
     steps:
       - name: Checkout repository
@@ -150,3 +152,12 @@ jobs:
           echo "**Branch:** \`${{ inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Action:** \`${{ inputs.action }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+
+  run-release:
+    needs: create-feature-release
+    uses: ./.github/workflows/release.yml
+    permissions:
+      contents: read
+    with:
+      tag: ${{ needs.create-feature-release.outputs.new_tag }}
