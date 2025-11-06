@@ -19,6 +19,7 @@ import styled from 'styled-components';
 import { FormLabel, Modal, RequiredMark } from '@/components/ui';
 import { useElectronApi } from '@/hooks';
 import { SupportService } from '@/service/Support';
+import { getErrorMessage } from '@/utils';
 
 import { SuccessOutlined } from '../custom-icons';
 import { FileUploadWithList } from './FileUpload';
@@ -109,9 +110,10 @@ export const SupportModal = ({
         setTicketId(createTicketResult.ticketId);
       } catch (error) {
         message.error(
-          error instanceof Error
-            ? error.message
-            : 'Failed to submit support request. Please try again.',
+          getErrorMessage(
+            error,
+            'Failed to submit support request. Please try again.',
+          ),
         );
       } finally {
         await cleanupSupportLogs?.();

@@ -1,4 +1,5 @@
 import { SUPPORT_API_URL } from '@/constants';
+import { parseApiError } from '@/utils';
 
 type UploadFileParams = {
   fileName: string;
@@ -43,9 +44,7 @@ const uploadFile = async (
     });
 
     if (!response.ok) {
-      const error = await response?.json();
-      const { error: errorMessage } = error || {};
-      throw new Error(errorMessage || UPLOAD_FILE_ERROR);
+      await parseApiError(response, UPLOAD_FILE_ERROR);
     }
 
     const data: SupportUploadFileResponse = await response.json();
@@ -99,9 +98,7 @@ const createTicket = async (
     });
 
     if (!response.ok) {
-      const error = await response?.json();
-      const { error: errorMessage } = error || {};
-      throw new Error(errorMessage || TICKET_CREATION_ERROR);
+      await parseApiError(response, TICKET_CREATION_ERROR);
     }
 
     const data: SupportCreateTicketResponse = await response.json();

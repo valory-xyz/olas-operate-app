@@ -26,8 +26,11 @@ export const parseApiError = async (
 /**
  * Gets a user-friendly error message from an error object.
  */
-export const getErrorMessage = (e: unknown): string => {
-  const message = e instanceof Error ? e.message : 'Something went wrong';
+export const getErrorMessage = (
+  e: unknown,
+  defaultMessage = 'Something went wrong',
+): string => {
+  const message = e instanceof Error ? e.message : defaultMessage;
   console.error(e);
   return message;
 };
