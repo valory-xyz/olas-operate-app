@@ -161,3 +161,11 @@ jobs:
       contents: read
     with:
       tag: ${{ needs.create-feature-release.outputs.new_tag }}
+
+  run-release-win:
+    needs: create-feature-release
+    uses: ./.github/workflows/release_win.yml
+    permissions:
+      contents: read
+    with:
+      tag: ${{ needs.create-feature-release.outputs.new_tag }}

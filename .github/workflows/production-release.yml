@@ -127,3 +127,11 @@ jobs:
       contents: read
     with:
       tag: ${{ needs.production-release.outputs.new_tag }}
+
+  run-release-win:
+    needs: production-release
+    uses: ./.github/workflows/release_win.yml
+    permissions:
+      contents: read
+    with:
+      tag: ${{ needs.production-release.outputs.new_tag }}
