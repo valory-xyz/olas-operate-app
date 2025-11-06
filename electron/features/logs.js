@@ -190,7 +190,7 @@ ipcMain.handle('save-logs', async (_, data) => {
 
 ipcMain.handle('save-logs-for-support', async (_, data) => {
   const zip = prepareLogsForDebug(data);
-  const supportLogsDir = path.join(__dirname, 'support-logs');
+  const supportLogsDir = path.join(paths.osPearlTempDir, 'support-logs');
 
   // Ensure the directory exists
   if (!fs.existsSync(supportLogsDir)) {
@@ -211,7 +211,7 @@ ipcMain.handle('save-logs-for-support', async (_, data) => {
  */
 ipcMain.handle('cleanup-support-logs', async () => {
   try {
-    const supportLogsDir = path.join(__dirname, 'support-logs');
+    const supportLogsDir = path.join(paths.osPearlTempDir, 'support-logs');
 
     if (fs.existsSync(supportLogsDir)) {
       // Remove all files in the support-logs directory
