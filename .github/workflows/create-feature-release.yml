@@ -57,7 +57,7 @@ jobs:
       - name: Get latest RC tag
         id: get-latest-rc
         run: |
-          # Fetch all tags (ignore errors from tag clobbering)
+          # Fetch all tags
           git fetch --tags || true
 
           BASE_VERSION="${{ steps.pkg-version.outputs.base_version }}"
@@ -87,7 +87,7 @@ jobs:
             NEW_VERSION="$BASE_VERSION-rc$NEW_RC_NUMBER"
             NEW_TAG="v$NEW_VERSION"
           else
-            # For "override" action, derive version and RC from package.json
+            # For "override" action, use the same RC as package.json
             NEW_RC_NUMBER="${{ steps.pkg-version.outputs.rc_number }}"
             NEW_VERSION="${{ steps.pkg-version.outputs.package_version }}"
             NEW_TAG="v$NEW_VERSION"
@@ -150,4 +150,3 @@ jobs:
           echo "**Branch:** \`${{ inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Action:** \`${{ inputs.action }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
