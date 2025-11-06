@@ -123,6 +123,8 @@ jobs:
   run-release:
     needs: production-release
     uses: ./.github/workflows/release.yml
+    permissions:
+      contents: read
     with:
       tag: ${{ needs.production-release.outputs.new_tag }}
 

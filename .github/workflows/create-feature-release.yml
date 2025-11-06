@@ -157,5 +157,7 @@ jobs:
   run-release:
     needs: create-feature-release
     uses: ./.github/workflows/release.yml
+    permissions:
+      contents: read
     with:
       tag: ${{ needs.create-feature-release.outputs.new_tag }}
