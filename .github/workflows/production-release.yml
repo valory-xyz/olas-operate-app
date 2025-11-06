@@ -13,6 +13,8 @@ jobs:
     # Avoid looping on commits created by the action itself.
     if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
     runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.calculate-version.outputs.new_tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -116,4 +118,11 @@ jobs:
           echo "## 🚀 Production RC tagged" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** \`${{ steps.calculate-version.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Tag:** \`${{ steps.calculate-version.outputs.new_tag }}\`" >> $GITHUB_STEP_SUMMARY
+
+
+  run-release:
+    needs: production-release
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.production-release.outputs.new_tag }}
 

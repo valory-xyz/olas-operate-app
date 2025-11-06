@@ -1,54 +1,17 @@
 name: Release
 
-# Triggered when tag creation workflows complete
+# Reusable workflow; triggered only via workflow_call
 on:
-  workflow_run:
-    workflows: ["Create Feature Release", "Production Release"]
-    types:
-      - completed
-    branches:
-      - "**"
+  workflow_call:
+    inputs:
+      tag:
+        description: "Tag name to build (e.g., v1.2.3-rc1)"
+        required: true
+        type: string
 
 jobs:
-  determine-tag:
-    # Runs when workflow_run is successful
-    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
-    outputs:
-      tag_name: ${{ steps.tag.outputs.tag_name }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Determine release tag
-        id: tag
-        run: |
-          # Fetch all tags
-          git fetch --tags || true
-          
-          # Get the commit for the workflow run
-          COMMIT_SHA="${{ github.event.workflow_run.head_sha }}"
-          
-          # Find all tags that point to this commit
-          TAGS_ON_COMMIT=$(git tag --points-at "$COMMIT_SHA" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+' || true)
-          
-          if [ -z "$TAGS_ON_COMMIT" ]; then
-            echo "Error: No tag matching pattern v*.*.* found on commit $COMMIT_SHA"
-            exit 1
-          fi
-          
-          # If multiple tags, use the most recent one
-          TAG_NAME=$(echo "$TAGS_ON_COMMIT" | sort -V | tail -1)
-          
-          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
-          echo "Using tag: $TAG_NAME (on commit $COMMIT_SHA)"
-
   # PyInstaller job for both x64 and arm64 binaries
   build-macos-pyinstaller:
-    # Only run if workflow_run completed successfully
-    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
-    needs: determine-tag
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -57,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.determine-tag.outputs.tag_name }}
+          ref: ${{ inputs.tag }}
           fetch-depth: 0
 
       # Set up Python with setup-python action and add it to PATH
@@ -122,9 +85,7 @@ jobs:
 
   # Jobs for production, running separately for x64 and arm64
   build-release:
-    # Only run if workflow_run completed successfully
-    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
-    needs: [determine-tag, build-macos-pyinstaller]
+    needs: [build-macos-pyinstaller]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -134,7 +95,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.determine-tag.outputs.tag_name }}
+          ref: ${{ inputs.tag }}
           fetch-depth: 0
 
       - uses: actions/setup-python@v5
