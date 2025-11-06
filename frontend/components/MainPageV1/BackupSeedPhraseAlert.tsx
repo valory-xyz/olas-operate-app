@@ -2,7 +2,11 @@ import { Button, Flex, Typography } from 'antd';
 import { TbShieldHalfFilled } from 'react-icons/tb';
 
 import { Pages } from '@/enums';
-import { usePageState, useRecoveryPhraseBackup } from '@/hooks';
+import {
+  useMnemonicExists,
+  usePageState,
+  useRecoveryPhraseBackup,
+} from '@/hooks';
 
 import { Alert } from '../ui';
 
@@ -11,8 +15,10 @@ const { Text } = Typography;
 export const BackupSeedPhraseAlert = () => {
   const { goto: gotoPage } = usePageState();
   const { isBackedUp } = useRecoveryPhraseBackup();
+  const { mnemonicExists } = useMnemonicExists();
 
-  if (isBackedUp) return null;
+  // Don't show alert if mnemonic doesn't exist or if already backed up
+  if (!mnemonicExists || isBackedUp) return null;
 
   return (
     <Alert

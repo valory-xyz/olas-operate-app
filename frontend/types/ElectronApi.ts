@@ -19,6 +19,7 @@ export type ElectronStore = {
   firstRewardNotificationShown?: boolean;
   agentEvictionAlertShown?: boolean;
   recoveryPhraseBackedUp?: boolean;
+  mnemonicDoesNotExist?: boolean;
 
   // Each agent has its own settings
   [AgentType.PredictTrader]?: AgentSettings;

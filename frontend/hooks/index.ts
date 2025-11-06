@@ -16,6 +16,7 @@ export * from './useFeatureFlag';
 export * from './useFundingRequirements';
 export * from './useLogs';
 export * from './useMasterSafeCreationAndTransfer';
+export * from './useMnemonicExists';
 export * from './useMultisig';
 export * from './useNeedsFunds';
 export * from './useNotifyOnNewEpoch';

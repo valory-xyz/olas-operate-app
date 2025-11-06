@@ -11,6 +11,7 @@ import { SettingsScreen } from '@/enums';
 import {
   useFeatureFlag,
   useMasterWalletContext,
+  useMnemonicExists,
   useMultisig,
   useRecoveryPhraseBackup,
   useServices,
@@ -25,11 +26,15 @@ const { Text, Paragraph, Title } = Typography;
 
 const SecretRecoveryPhraseSetting = () => {
   const { isBackedUp } = useRecoveryPhraseBackup();
+  const { mnemonicExists } = useMnemonicExists();
   const {
     value: isRecoveryModalOpen,
     setTrue: showRecoveryModal,
     setFalse: handleClose,
   } = useBoolean(false);
+
+  // Don't show Secret Recovery Phrase section if mnemonic doesn't exist
+  if (!mnemonicExists) return null;
 
   return (
     <>
