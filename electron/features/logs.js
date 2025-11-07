@@ -42,8 +42,7 @@ function readLogFileTail(filePath, maxBytes) {
 
 function sanitizeLogFile({ logFileName, filePath, isForSupport, sizeLimit }) {
   if (isForSupport && sizeLimit) {
-    const maxSizeBytes = sizeLimit.ONE_MB || sizeLimit.FIVE_HUNDRED_KB;
-    const logContent = readLogFileTail(filePath, maxSizeBytes);
+    const logContent = readLogFileTail(filePath, sizeLimit);
     sanitizeLogs({ name: logFileName, data: logContent });
   } else {
     sanitizeLogs({ name: logFileName, filePath });
@@ -69,7 +68,7 @@ function prepareLogsForDebug(data, forSupport = false) {
         logFileName: latestFile.file,
         filePath: latestFile.filePath,
         isForSupport: forSupport,
-        sizeLimit: { ONE_MB: FILE_SIZE_LIMITS.THREE_MB },
+        sizeLimit: FILE_SIZE_LIMITS.THREE_MB,
       });
     } else {
       // For regular logs, include all CLI log files
@@ -84,13 +83,13 @@ function prepareLogsForDebug(data, forSupport = false) {
     logFileName: 'next.log',
     filePath: paths.nextLogFile,
     isForSupport: forSupport,
-    sizeLimit: { FIVE_HUNDRED_KB: FILE_SIZE_LIMITS.FIVE_HUNDRED_KB },
+    sizeLimit: FILE_SIZE_LIMITS.FIVE_HUNDRED_KB,
   });
   sanitizeLogFile({
     logFileName: 'electron.log',
     filePath: paths.electronLogFile,
     isForSupport: forSupport,
-    sizeLimit: { ONE_MB: FILE_SIZE_LIMITS.ONE_MB },
+    sizeLimit: FILE_SIZE_LIMITS.ONE_MB,
   });
 
   // OS info
@@ -156,7 +155,7 @@ function prepareLogsForDebug(data, forSupport = false) {
         logFileName: 'agent_runner.log',
         filePath: paths.agentRunnerLogFile,
         isForSupport: forSupport,
-        sizeLimit: { ONE_MB: FILE_SIZE_LIMITS.THREE_MB },
+        sizeLimit: FILE_SIZE_LIMITS.THREE_MB,
       });
     }
   } catch (e) {
@@ -183,7 +182,7 @@ function prepareLogsForDebug(data, forSupport = false) {
             logFileName: `${serviceDirName}_agent.log`,
             filePath: agentLogFilePath,
             isForSupport: forSupport,
-            sizeLimit: { ONE_MB: FILE_SIZE_LIMITS.ONE_MB },
+            sizeLimit: FILE_SIZE_LIMITS.ONE_MB,
           });
         }
       } catch (e) {
