@@ -16,6 +16,7 @@ import { ChainImageMap, EvmChainName, TokenSymbol } from '@/constants';
 import { SetupScreen } from '@/enums';
 import {
   useMasterSafeCreationAndTransfer,
+  useMasterWalletContext,
   useServices,
   useSetup,
 } from '@/hooks';
@@ -36,7 +37,7 @@ const FinishingSetupModal = () => (
 
 export const TransferFunds = () => {
   const { goto: gotoSetup } = useSetup();
-
+  const { masterEoa } = useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
   const { isFullyFunded, tokensFundingStatus } = useTokensFundingStatus();
   const { initialTokenRequirements, isLoading } =
@@ -55,6 +56,7 @@ export const TransferFunds = () => {
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const chainImage = ChainImageMap[evmHomeChainId];
+  const masterEoaAddress = masterEoa?.address;
 
   const tokensDataSource = useMemo(() => {
     return (initialTokenRequirements ?? []).map((token) => {
@@ -120,7 +122,14 @@ export const TransferFunds = () => {
           message={`Only send on ${chainName} Chain — funds on other networks are unrecoverable.`}
         />
 
-        <FundingDescription chainName={chainName} chainImage={chainImage} />
+        {masterEoaAddress && (
+          <FundingDescription
+            address={masterEoaAddress}
+            chainName={chainName}
+            chainImage={chainImage}
+            style={{ marginTop: 32 }}
+          />
+        )}
 
         <TokenRequirementsTable
           isLoading={isLoading}
