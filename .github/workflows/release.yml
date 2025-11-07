@@ -94,6 +94,10 @@ jobs:
         id: setup-python
         with:
           python-version: "3.10"
+
+      - name: Add Python to PATH
+        run: |
+          echo "${{ steps.setup-python.outputs.python-path }}" >> $GITHUB_PATH
       
       - uses: actions/setup-node@v4
         with:
