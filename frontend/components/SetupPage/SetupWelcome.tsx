@@ -177,12 +177,14 @@ const SetupError = () => (
   </Flex>
 );
 
+const ErrorMessages = ['does not exist', 'file does not exist', 'not exist'];
+
 const SetupWelcomeLogin = () => {
   const [form] = Form.useForm();
   const message = useMessageApi();
   const { goto } = useSetup();
   const { setUserLoggedIn } = usePageState();
-  const { setMnemonicDoesNotExist } = useMnemonicExists();
+  const { setMnemonicExists } = useMnemonicExists();
 
   const { updateBalances } = useBalanceContext();
 
@@ -198,16 +200,14 @@ const SetupWelcomeLogin = () => {
 
         try {
           await WalletService.getRecoverySeedPhrase(password);
-          setMnemonicDoesNotExist(false);
+          setMnemonicExists(true);
         } catch (e: unknown) {
           const errorMsg = getErrorMessage(e, '').toLowerCase();
           if (
             errorMsg.includes('mnemonic') &&
-            (errorMsg.includes('does not exist') ||
-              errorMsg.includes('file does not exist') ||
-              errorMsg.includes('not exist'))
+            ErrorMessages.some((message) => errorMsg.includes(message))
           ) {
-            setMnemonicDoesNotExist(true);
+            setMnemonicExists(false);
           }
         }
 
@@ -220,7 +220,7 @@ const SetupWelcomeLogin = () => {
         setIsLoggingIn(false);
       }
     },
-    [updateBalances, setUserLoggedIn, message, setMnemonicDoesNotExist],
+    [updateBalances, setUserLoggedIn, message, setMnemonicExists],
   );
 
   return (

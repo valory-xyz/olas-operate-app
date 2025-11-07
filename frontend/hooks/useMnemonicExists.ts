@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { useElectronApi } from './useElectronApi';
 import { useStore } from './useStore';
@@ -7,7 +7,7 @@ import { useStore } from './useStore';
  * Hook to check if mnemonic exists for the user.
  *
  * This hook stores the state in the electron store when we detect
- * that the mnemonic doesn't exist
+ * whether the mnemonic exists or not.
  *
  * @returns Object with mnemonicExists (boolean | undefined) and setMnemonicExists function
  */
@@ -15,25 +15,17 @@ export const useMnemonicExists = () => {
   const { store } = useElectronApi();
   const { storeState } = useStore();
 
-  const mnemonicDoesNotExist = storeState?.mnemonicDoesNotExist;
+  const mnemonicExists = storeState?.mnemonicExists;
 
-  const mnemonicExists = useMemo(() => {
-    if (mnemonicDoesNotExist === true) {
-      return false;
-    }
-
-    return true;
-  }, [mnemonicDoesNotExist]);
-
-  const setMnemonicDoesNotExist = useCallback(
-    (doesNotExist: boolean) => {
-      store?.set?.('mnemonicDoesNotExist', doesNotExist);
+  const setMnemonicExists = useCallback(
+    (exists: boolean) => {
+      store?.set?.('mnemonicExists', exists);
     },
     [store],
   );
 
   return {
     mnemonicExists,
-    setMnemonicDoesNotExist,
+    setMnemonicExists,
   };
 };

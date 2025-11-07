@@ -115,6 +115,57 @@ export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
     }
   });
 
+  const StepsAction =
+    step === STEPS.PASSWORD ? (
+      <>
+        <Paragraph className="mt-8 mb-0 text-neutral-secondary">
+          Enter your Pearl password to continue.
+        </Paragraph>
+        {errorMessage && (
+          <Alert
+            message={errorMessage}
+            type="error"
+            showIcon
+            className="mt-12 w-full"
+          />
+        )}
+        <Form
+          form={form}
+          onFinish={handleReveal}
+          layout="vertical"
+          className="w-full mt-12"
+        >
+          <Form.Item
+            label="Password"
+            name="password"
+            rules={[{ required: true, message: 'Please enter your password' }]}
+          >
+            <Input.Password disabled={isLoading} />
+          </Form.Item>
+
+          <Flex justify="flex-end" gap={12} className="w-full">
+            <Button onClick={onClose}>Cancel</Button>
+            <Form.Item className="mb-0">
+              <Button
+                type="primary"
+                htmlType="submit"
+                className="w-full"
+                loading={isLoading}
+              >
+                Reveal Recovery Phrase
+              </Button>
+            </Form.Item>
+          </Flex>
+        </Form>
+      </>
+    ) : (
+      <RecoveryPhraseStep
+        phrase={recoveryPhrase}
+        isCopied={isCopied}
+        onCopy={onCopy}
+      />
+    );
+
   return (
     <Modal
       open={open}
@@ -123,59 +174,7 @@ export const RecoveryModal = ({ open, onClose }: RecoveryModalProps) => {
       description={
         step === 'password' ? initialDescription : recoveryPhraseDescription
       }
-      action={
-        step === STEPS.PASSWORD ? (
-          <>
-            <Paragraph className="mt-8 mb-0 text-neutral-secondary">
-              Enter your Pearl password to continue.
-            </Paragraph>
-            {errorMessage && (
-              <Alert
-                message={errorMessage}
-                type="error"
-                showIcon
-                className="mt-12 w-full"
-              />
-            )}
-            <Form
-              form={form}
-              onFinish={handleReveal}
-              layout="vertical"
-              className="w-full mt-12"
-            >
-              <Form.Item
-                label="Password"
-                name="password"
-                rules={[
-                  { required: true, message: 'Please enter your password' },
-                ]}
-              >
-                <Input.Password disabled={isLoading} />
-              </Form.Item>
-
-              <Flex justify="flex-end" gap={12} className="w-full">
-                <Button onClick={onClose}>Cancel</Button>
-                <Form.Item className="mb-0">
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    className="w-full"
-                    loading={isLoading}
-                  >
-                    Reveal Recovery Phrase
-                  </Button>
-                </Form.Item>
-              </Flex>
-            </Form>
-          </>
-        ) : (
-          <RecoveryPhraseStep
-            phrase={recoveryPhrase}
-            isCopied={isCopied}
-            onCopy={onCopy}
-          />
-        )
-      }
+      action={StepsAction}
       size="small"
       destroyOnHidden
       closable
