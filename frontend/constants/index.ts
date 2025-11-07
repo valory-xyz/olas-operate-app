@@ -9,7 +9,6 @@ export * from './headers';
 export * from './intervals';
 export * from './providers';
 export * from './react-query-keys';
-export * from './serviceTemplates';
 export * from './symbols';
 export * from './theme';
 export * from './token';
