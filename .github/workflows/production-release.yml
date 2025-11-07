@@ -9,129 +9,26 @@ permissions:
   contents: write
 
 jobs:
-  production-release:
+  calculate-version:
     # Avoid looping on commits created by the action itself.
     if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
-    runs-on: ubuntu-latest
-    outputs:
-      new_tag: ${{ steps.calculate-version.outputs.new_tag }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Configure Git
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-      - name: Extract version info from package.json
-        id: pkg-version
-        run: |
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          BASE_VERSION=$(echo "$PACKAGE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-          echo "base_version=$BASE_VERSION" | tee -a $GITHUB_OUTPUT
-
-      - name: Get latest RC tag
-        id: get-latest-rc
-        run: |
-          # Fetch all tags
-          git fetch --tags || true
-          
-          # Use base version derived from package.json step
-          BASE_VERSION="${{ steps.pkg-version.outputs.base_version }}"
-
-          # Get the latest RC tag for this base version (format: vX.Y.Z-rcN)
-          LATEST_RC_TAG=$(git tag -l "v${BASE_VERSION}-rc*" | sort -V | tail -1)
-
-          # Extract RC number if a matching tag exists; accept optional suffix like -signed
-          if [[ "$LATEST_RC_TAG" =~ ^v${BASE_VERSION}-rc([0-9]+)(-.+)?$ ]]; then
-            LATEST_RC_NUMBER="${BASH_REMATCH[1]}"
-          else
-            LATEST_RC_NUMBER="0"
-          fi
-          
-          echo "latest_rc_tag=$LATEST_RC_TAG" | tee -a $GITHUB_OUTPUT
-          echo "latest_rc_number=$LATEST_RC_NUMBER" | tee -a $GITHUB_OUTPUT
-          echo "base_version=$BASE_VERSION" | tee -a $GITHUB_OUTPUT
-
-      - name: Calculate new version
-        id: calculate-version
-        run: |
-          LATEST_RC_NUMBER=${{ steps.get-latest-rc.outputs.latest_rc_number }}
-          BASE_VERSION="${{ steps.pkg-version.outputs.base_version }}"
-          NEW_RC_NUMBER=$((LATEST_RC_NUMBER + 1))
-          NEW_VERSION="$BASE_VERSION-rc$NEW_RC_NUMBER"
-          NEW_TAG="v$NEW_VERSION-signed"
-          echo "new_version=$NEW_VERSION" | tee -a $GITHUB_OUTPUT
-          echo "new_tag=$NEW_TAG" | tee -a $GITHUB_OUTPUT
-          echo "new_rc_number=$NEW_RC_NUMBER" | tee -a $GITHUB_OUTPUT
-
-      - name: Update package.json version
-        run: |
-          NEW_VERSION="${{ steps.calculate-version.outputs.new_version }}"
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
-            npm version "$NEW_VERSION" --no-git-tag-version
-            echo "Updated package.json version from $CURRENT_VERSION to $NEW_VERSION"
-          else
-            echo "package.json version is already $NEW_VERSION, skipping update"
-          fi
-
-      - name: Update pyproject.toml version
-        run: |
-          NEW_VERSION="${{ steps.calculate-version.outputs.new_version }}"
-          CURRENT_VERSION=$(grep -E '^version = ' pyproject.toml | sed -E 's/^version = "(.+)"/\1/')
-          if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
-            sed -i -E "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
-            echo "Updated pyproject.toml version from $CURRENT_VERSION to $NEW_VERSION"
-          else
-            echo "pyproject.toml version is already $NEW_VERSION, skipping update"
-          fi
-
-      - name: Commit and push version update
-        run: |
-          git add package.json pyproject.toml
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            # Add skip marker to avoid loop on this workflow
-            git commit -m "chore: bump version to ${{ steps.calculate-version.outputs.new_version }} [skip release]"
-            git push origin ${GITHUB_REF_NAME}
-          fi
-
-      - name: Create and push signed tag
-        run: |
-          TAG_NAME="${{ steps.calculate-version.outputs.new_tag }}"
-          git tag -a "$TAG_NAME" -m "Production Release $TAG_NAME"
-          git push origin "$TAG_NAME"
-          echo "Created and pushed tag: $TAG_NAME"
-
-      - name: Summary
-        run: |
-          echo "## 🚀 Production RC tagged" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** \`${{ steps.calculate-version.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Tag:** \`${{ steps.calculate-version.outputs.new_tag }}\`" >> $GITHUB_STEP_SUMMARY
-
+    uses: ./.github/workflows/create-release-tag.yml
+    with:
+      version_strategy: production
+    secrets: inherit
 
   run-release:
-    needs: production-release
+    needs: calculate-version
+    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
     uses: ./.github/workflows/release.yml
-    permissions:
-      contents: read
     with:
-      tag: ${{ needs.production-release.outputs.new_tag }}
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
 
   run-release-win:
-    needs: production-release
+    needs: calculate-version
+    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
     uses: ./.github/workflows/release_win.yml
-    permissions:
-      contents: read
     with:
-      tag: ${{ needs.production-release.outputs.new_tag }}
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
