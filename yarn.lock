@@ -3827,7 +3827,7 @@ ethers-multicall@^0.2.3:
   dependencies:
     ethers "^5.0.0"
 
-ethers@5.8, ethers@^5.0.0, ethers@^5.7.1:
+ethers@5.8.0, ethers@^5.0.0, ethers@^5.7.1:
   version "5.8.0"
   resolved "https://registry.npmjs.org/ethers/-/ethers-5.8.0.tgz#97858dc4d4c74afce83ea7562fe9493cedb4d377"
   integrity sha512-DUq+7fHrCg1aPDFCHx6UIPb3nmt2XMpM7Y/g2gLhsl3lIBqeAfOJIl1qEvRf2uq3BiKxmh6Fh5pfp2ieyek7Kg==
