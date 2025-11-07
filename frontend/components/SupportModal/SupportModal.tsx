@@ -170,6 +170,7 @@ export const SupportModal = ({
       onCancel={handleClose}
       size="large"
       destroyOnHidden
+      maskClosable={false}
       styles={{
         content: MODAL_CONTENT_STYLES,
       }}

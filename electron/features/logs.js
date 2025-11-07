@@ -8,20 +8,90 @@ const { logger } = require('../logger');
 const { paths } = require('../constants');
 const { sanitizeLogs } = require('../utils/sanitizers');
 
-function prepareLogsForDebug(data) {
+const FILE_SIZE_LIMITS = {
+  FIVE_HUNDRED_KB: 500 * 1024,
+  ONE_MB: 1024 * 1024,
+  THREE_MB: 3 * 1024 * 1024,
+};
+
+/**
+ * Reads the tail (last N bytes) of a log file to reduce size.
+ * Keeps the most recent log entries which are usually most relevant for debugging
+ */
+function readLogFileTail(filePath, maxBytes) {
+  try {
+    const stats = fs.statSync(filePath);
+    if (stats.size <= maxBytes) {
+      return fs.readFileSync(filePath, 'utf-8');
+    }
+
+    // Reads only the last maxBytes of the file.
+    const fileDescriptor = fs.openSync(filePath, 'r');
+    const buffer = Buffer.alloc(maxBytes);
+    fs.readSync(fileDescriptor, buffer, 0, maxBytes, stats.size - maxBytes);
+    fs.closeSync(fileDescriptor);
+
+    const content = buffer.toString('utf-8');
+    return `[File truncated - original size: ${(stats.size / 1024 / 1024).toFixed(2)}MB, showing last ${(maxBytes / 1024 / 1024).toFixed(2)}MB]\n${content}`;
+  } catch (e) {
+    logger.electron(`Error reading log file tail ${filePath}: ${e.message}`);
+    // Fallback to reading whole file.
+    return fs.readFileSync(filePath, 'utf-8');
+  }
+}
+
+function sanitizeLogFile({ logFileName, filePath, isForSupport, sizeLimit }) {
+  if (isForSupport && sizeLimit) {
+    const maxSizeBytes = sizeLimit.ONE_MB || sizeLimit.FIVE_HUNDRED_KB;
+    const logContent = readLogFileTail(filePath, maxSizeBytes);
+    sanitizeLogs({ name: logFileName, data: logContent });
+  } else {
+    sanitizeLogs({ name: logFileName, filePath });
+  }
+}
+
+function prepareLogsForDebug(data, forSupport = false) {
   const cliLogFiles = fs
     .readdirSync(paths.dotOperateDirectory)
     .filter((file) => file.startsWith('cli') && file.endsWith('.log'));
 
   if (cliLogFiles.length >= 1) {
-    cliLogFiles.forEach((file) => {
-      const filePath = path.join(paths.dotOperateDirectory, file);
-      sanitizeLogs({ name: file, filePath });
-    });
+    if (forSupport) {
+      // For support logs, only include the latest CLI log file
+      const filesWithStats = cliLogFiles.map((file) => {
+        const filePath = path.join(paths.dotOperateDirectory, file);
+        const stats = fs.statSync(filePath);
+        return { file, filePath, mtime: stats.mtime };
+      });
+
+      const latestFile = filesWithStats.sort((a, b) => b.mtime - a.mtime)[0];
+      sanitizeLogFile({
+        logFileName: latestFile.file,
+        filePath: latestFile.filePath,
+        isForSupport: forSupport,
+        sizeLimit: { ONE_MB: FILE_SIZE_LIMITS.THREE_MB },
+      });
+    } else {
+      // For regular logs, include all CLI log files
+      cliLogFiles.forEach((file) => {
+        const filePath = path.join(paths.dotOperateDirectory, file);
+        sanitizeLogs({ name: file, filePath });
+      });
+    }
   }
 
-  sanitizeLogs({ name: 'next.log', filePath: paths.nextLogFile });
-  sanitizeLogs({ name: 'electron.log', filePath: paths.electronLogFile });
+  sanitizeLogFile({
+    logFileName: 'next.log',
+    filePath: paths.nextLogFile,
+    isForSupport: forSupport,
+    sizeLimit: { FIVE_HUNDRED_KB: FILE_SIZE_LIMITS.FIVE_HUNDRED_KB },
+  });
+  sanitizeLogFile({
+    logFileName: 'electron.log',
+    filePath: paths.electronLogFile,
+    isForSupport: forSupport,
+    sizeLimit: { ONE_MB: FILE_SIZE_LIMITS.ONE_MB },
+  });
 
   // OS info
   const osInfo = `
@@ -82,9 +152,11 @@ function prepareLogsForDebug(data) {
   // agent_runner.log wraps agent runner process even before agent started, so can check issues with executable start
   try {
     if (fs.existsSync(paths.agentRunnerLogFile)) {
-      sanitizeLogs({
-        name: 'agent_runner.log',
+      sanitizeLogFile({
+        logFileName: 'agent_runner.log',
         filePath: paths.agentRunnerLogFile,
+        isForSupport: forSupport,
+        sizeLimit: { ONE_MB: FILE_SIZE_LIMITS.THREE_MB },
       });
     }
   } catch (e) {
@@ -98,7 +170,7 @@ function prepareLogsForDebug(data) {
       if (!fs.existsSync(servicePath)) return;
       if (!fs.statSync(servicePath).isDirectory()) return;
 
-      // Most recent log
+      // Most recent agent log
       try {
         const agentLogFilePath = path.join(
           servicePath,
@@ -107,26 +179,30 @@ function prepareLogsForDebug(data) {
           'log.txt',
         );
         if (fs.existsSync(agentLogFilePath)) {
-          sanitizeLogs({
-            name: `${serviceDirName}_agent.log`,
+          sanitizeLogFile({
+            logFileName: `${serviceDirName}_agent.log`,
             filePath: agentLogFilePath,
+            isForSupport: forSupport,
+            sizeLimit: { ONE_MB: FILE_SIZE_LIMITS.ONE_MB },
           });
         }
       } catch (e) {
         logger.electron(e);
       }
 
-      // Previous log
-      try {
-        const prevAgentLogFilePath = path.join(servicePath, 'prev_log.txt');
-        if (fs.existsSync(prevAgentLogFilePath)) {
-          sanitizeLogs({
-            name: `${serviceDirName}_prev_agent.log`,
-            filePath: prevAgentLogFilePath,
-          });
+      // Previous log (skip for support logs)
+      if (!forSupport) {
+        try {
+          const prevAgentLogFilePath = path.join(servicePath, 'prev_log.txt');
+          if (fs.existsSync(prevAgentLogFilePath)) {
+            sanitizeLogs({
+              name: `${serviceDirName}_prev_agent.log`,
+              filePath: prevAgentLogFilePath,
+            });
+          }
+        } catch (e) {
+          logger.electron(e);
         }
-      } catch (e) {
-        logger.electron(e);
       }
     });
   } catch (e) {
@@ -189,7 +265,7 @@ ipcMain.handle('save-logs', async (_, data) => {
 });
 
 ipcMain.handle('save-logs-for-support', async (_, data) => {
-  const zip = prepareLogsForDebug(data);
+  const zip = prepareLogsForDebug(data, true);
   const supportLogsDir = path.join(paths.osPearlTempDir, 'support-logs');
 
   // Ensure the directory exists
@@ -212,6 +288,8 @@ ipcMain.handle('save-logs-for-support', async (_, data) => {
 ipcMain.handle('cleanup-support-logs', async () => {
   try {
     const supportLogsDir = path.join(paths.osPearlTempDir, 'support-logs');
+
+    removeTemporaryLogFiles();
 
     if (fs.existsSync(supportLogsDir)) {
       // Remove all files in the support-logs directory
