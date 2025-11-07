@@ -18,6 +18,8 @@ export type ElectronStore = {
   firstStakingRewardAchieved?: boolean;
   firstRewardNotificationShown?: boolean;
   agentEvictionAlertShown?: boolean;
+  recoveryPhraseBackedUp?: boolean;
+  mnemonicExists?: boolean;
 
   // Each agent has its own settings
   [AgentType.PredictTrader]?: AgentSettings;

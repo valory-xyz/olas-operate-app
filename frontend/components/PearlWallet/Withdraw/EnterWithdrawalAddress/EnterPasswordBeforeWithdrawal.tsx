@@ -1,10 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
 import { Button, Flex, Input, Typography } from 'antd';
 import { useCallback } from 'react';
 
 import { Alert } from '@/components/ui';
-import { AccountService } from '@/service/Account';
-import { getErrorMessage } from '@/utils/error';
+import { useValidatePassword } from '@/hooks';
 
 const { Text } = Typography;
 
@@ -16,28 +14,6 @@ const PasswordLabel = () => (
     </Text>
   </Text>
 );
-
-const useValidatePassword = () => {
-  const { isPending, isSuccess, isError, mutateAsync } = useMutation({
-    mutationFn: async (password: string) =>
-      await AccountService.loginAccount(password),
-  });
-
-  const validatePassword = useCallback(
-    async (password: string) => {
-      try {
-        await mutateAsync(password);
-        return true;
-      } catch (e) {
-        console.error(getErrorMessage(e));
-        return false;
-      }
-    },
-    [mutateAsync],
-  );
-
-  return { isLoading: isPending, isSuccess, isError, validatePassword };
-};
 
 type EnterPasswordBeforeWithdrawalProps = {
   password: string;

@@ -11,12 +11,14 @@ import {
   useMasterBalances,
 } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useMnemonicExists } from '@/hooks/useMnemonicExists';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { AccountService } from '@/service/Account';
+import { WalletService } from '@/service/Wallet';
 import { getErrorMessage } from '@/utils/error';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
@@ -175,11 +177,14 @@ const SetupError = () => (
   </Flex>
 );
 
+const ErrorMessages = ['does not exist', 'file does not exist', 'not exist'];
+
 const SetupWelcomeLogin = () => {
   const [form] = Form.useForm();
   const message = useMessageApi();
   const { goto } = useSetup();
   const { setUserLoggedIn } = usePageState();
+  const { setMnemonicExists } = useMnemonicExists();
 
   const { updateBalances } = useBalanceContext();
 
@@ -192,6 +197,20 @@ const SetupWelcomeLogin = () => {
       setIsLoggingIn(true);
       try {
         await AccountService.loginAccount(password);
+
+        try {
+          await WalletService.getRecoverySeedPhrase(password);
+          setMnemonicExists(true);
+        } catch (e: unknown) {
+          const errorMsg = getErrorMessage(e, '').toLowerCase();
+          if (
+            errorMsg.includes('mnemonic') &&
+            ErrorMessages.some((message) => errorMsg.includes(message))
+          ) {
+            setMnemonicExists(false);
+          }
+        }
+
         await updateBalances();
         setCanNavigate(true);
         setUserLoggedIn();
@@ -201,7 +220,7 @@ const SetupWelcomeLogin = () => {
         setIsLoggingIn(false);
       }
     },
-    [updateBalances, setUserLoggedIn, message],
+    [updateBalances, setUserLoggedIn, message, setMnemonicExists],
   );
 
   return (
