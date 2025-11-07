@@ -45,7 +45,7 @@ const FileUpload = ({ onChange, fileList }: FileUploadProps) => {
           Upload screenshots of the issue
         </Text>
         <Text className="text-neutral-tertiary text-xs">
-          Max 5 files, 50MB each.
+          Max 5 files, 4.5MB each.
         </Text>
       </Flex>
     </Upload.Dragger>
