@@ -3,10 +3,8 @@ import { Button as AntdButton, Flex } from 'antd';
 import { useEffect } from 'react';
 import styled from 'styled-components';
 
-import { Pages } from '@/enums/Pages';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { usePageState } from '@/hooks/usePageState';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { Pages, StakingProgramId } from '@/enums';
+import { usePageState, useStakingProgram } from '@/hooks';
 
 import { CooldownContentTooltip } from './CooldownTooltip';
 import { MigrateButtonText, useCanMigrate } from './hooks/useCanMigrate';
@@ -26,6 +24,9 @@ type SwitchStakingButtonProps = {
   stakingProgramId: StakingProgramId;
 };
 
+/**
+ * Button for switch to another staking program
+ */
 export const SwitchStakingButton = ({
   isCurrentStakingProgram,
   stakingProgramId,

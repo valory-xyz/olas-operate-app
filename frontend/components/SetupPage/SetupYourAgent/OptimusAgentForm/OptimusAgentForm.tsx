@@ -106,7 +106,7 @@ const OptimusAgentFormContent = ({
         message.success('Agent setup complete');
 
         // move to next page
-        goto(SetupScreen.FundYourAgent);
+        goto(SetupScreen.SelectStaking);
       } catch (error) {
         message.error('Something went wrong. Please try again.');
         console.error(error);

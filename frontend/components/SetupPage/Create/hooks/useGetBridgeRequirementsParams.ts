@@ -8,8 +8,8 @@ import {
   AllEvmChainId,
   AllEvmChainIdMap,
   EvmChainId,
-  SERVICE_TEMPLATES,
 } from '@/constants';
+import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import {
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,

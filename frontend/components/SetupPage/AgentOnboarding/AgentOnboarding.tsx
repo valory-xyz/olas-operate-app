@@ -134,7 +134,7 @@ export const AgentOnboarding = () => {
     if (currentAgentConfig.requiresSetup && !currentAgentConfig.isX402Enabled) {
       goto(SetupScreen.SetupYourAgent);
     } else {
-      goto(SetupScreen.FundYourAgent);
+      goto(SetupScreen.SelectStaking);
     }
   }, [goto, selectedAgent]);
 

@@ -2,17 +2,18 @@ import { Button, message } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { SupportedMiddlewareChain } from '@/constants/chains';
-import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
+import { MiddlewareDeploymentStatusMap } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks';
-import { useBalanceContext } from '@/hooks/useBalanceContext';
-import { useServices } from '@/hooks/useServices';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { Pages } from '@/enums';
+import {
+  useBalanceContext,
+  usePageState,
+  useServices,
+  useStakingProgram,
+} from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { ServiceTemplate } from '@/types';
-import { DeepPartial } from '@/types/Util';
+import { updateServiceStakingContract } from '@/utils';
 
 import { SwitchingContractModal } from './SwitchingContractModal';
 
@@ -79,24 +80,14 @@ export const ConfirmSwitchButton = ({
 
       if (selectedService) {
         // update service
-        await ServicesService.updateService({
-          serviceConfigId,
-          partialServiceTemplate: {
-            configurations: {
-              ...Object.entries(serviceTemplate.configurations).reduce(
-                (acc, [middlewareChain]) => {
-                  acc[middlewareChain as SupportedMiddlewareChain] = {
-                    staking_program_id: stakingProgramIdToMigrateTo,
-                  } as (typeof serviceTemplate.configurations)[SupportedMiddlewareChain];
-                  return acc;
-                },
-                {} as DeepPartial<typeof serviceTemplate.configurations>,
-              ),
-            },
-          },
-        });
+        await updateServiceStakingContract(
+          selectedService,
+          stakingProgramIdToMigrateTo,
+        );
       } else {
         // create service if it doesn't exist
+        // TODO: with the current onboarding flow this is not possible
+        // Consider removing this to avoid confusion
         const serviceConfigParams = {
           stakingProgramId: stakingProgramIdToMigrateTo!,
           serviceTemplate,

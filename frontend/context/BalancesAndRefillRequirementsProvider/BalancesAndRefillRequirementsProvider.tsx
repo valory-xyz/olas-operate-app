@@ -32,8 +32,9 @@ import {
   AddressBalanceRecord,
   BalancesAndFundingRequirements,
   MasterSafeBalanceRecord,
+  Maybe,
+  Optional,
 } from '@/types';
-import { Maybe, Nullable, Optional } from '@/types/Util';
 import {
   asMiddlewareChain,
   BACKOFF_STEPS,
@@ -50,8 +51,8 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   canStartAgent: boolean;
   isAgentFundingRequestsStale: boolean;
   isPearlWalletRefillRequired: boolean;
-  refetch: Nullable<
-    () => Promise<QueryObserverResult<BalancesAndFundingRequirements, Error>>
+  refetch: () => Promise<
+    QueryObserverResult<BalancesAndFundingRequirements, Error>
   >;
   resetQueryCache: () => void;
 }>({
@@ -64,7 +65,10 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   canStartAgent: false,
   isAgentFundingRequestsStale: false,
   isPearlWalletRefillRequired: false,
-  refetch: null,
+  refetch: () =>
+    Promise.resolve(
+      {} as QueryObserverResult<BalancesAndFundingRequirements, Error>,
+    ),
   resetQueryCache: () => {},
 });
 
@@ -361,7 +365,7 @@ export const BalancesAndRefillRequirementsProvider = ({
           balancesAndFundingRequirements?.agent_funding_requests_cooldown ||
           false,
         isPearlWalletRefillRequired,
-        refetch: refetch || null,
+        refetch,
         resetQueryCache,
       }}
     >

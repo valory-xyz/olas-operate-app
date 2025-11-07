@@ -111,7 +111,7 @@ const useConfirmTransfer = () => {
     },
     onSuccess: () => {
       // Refetch funding requirements because balances are changed
-      refetch?.();
+      refetch();
     },
   });
 
