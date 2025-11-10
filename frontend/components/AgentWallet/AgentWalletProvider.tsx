@@ -62,7 +62,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
   const { isLoading: isBalanceLoading } = useBalanceContext();
   const { availableRewardsForEpochEth, accruedServiceStakingRewards } =
     useRewardContext();
-  const availableAssets = useAvailableAgentAssets();
+  const { availableAssets } = useAvailableAgentAssets();
   const [fundInitialValues, setFundInitialValues] =
     useState<TokenBalanceRecord>({});
 
