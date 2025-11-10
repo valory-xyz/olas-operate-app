@@ -1,10 +1,9 @@
-import { ServiceConfigId } from '@/client';
 import {
   BACKEND_URL_V2,
   CONTENT_TYPE_JSON_UTF8,
   SupportedMiddlewareChain,
 } from '@/constants';
-import { Address } from '@/types/Address';
+import { Address, ServiceConfigId } from '@/types';
 
 export type TokenAmountMap = {
   [address: Address]: string; // amount (in wei/units)

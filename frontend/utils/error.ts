@@ -28,9 +28,9 @@ export const parseApiError = async (
  */
 export const getErrorMessage = (
   e: unknown,
-  defaultMessage = 'Something went wrong',
+  fallbackMessage = 'Something went wrong',
 ): string => {
-  const message = e instanceof Error ? e.message : defaultMessage;
+  const message = e instanceof Error ? e.message : fallbackMessage;
   console.error(e);
   return message;
 };

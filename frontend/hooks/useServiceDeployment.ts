@@ -12,7 +12,6 @@ import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRef
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { MultisigOwners, useMultisigs } from '@/hooks/useMultisig';
-import { useNeedsFunds } from '@/hooks/useNeedsFunds';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
@@ -76,10 +75,6 @@ export const useServiceDeployment = () => {
 
   const { masterSafesOwners } = useMultisigs(masterSafes);
 
-  const { isInitialFunded, needsInitialFunding } = useNeedsFunds(
-    selectedStakingProgramId,
-  );
-
   const isLoading = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return true;
     if (isServicesLoading || isServiceRunning) return true;
@@ -111,11 +106,6 @@ export const useServiceDeployment = () => {
     // If was evicted and can't re-stake - return false
     if (isAgentEvicted && !isEligibleForStaking) return false;
 
-    // if there's no service created, check if initially funded
-    // TODO: should create dummy service instead (for trader)
-    // and rely on canStartAgent
-    if (!selectedService && isInitialFunded) return !needsInitialFunding;
-
     // agent specific checks
     // If the agentsFun field update is not completed, can't start the agent
     if (isAgentsFunFieldUpdateRequired) return false;
@@ -129,12 +119,9 @@ export const useServiceDeployment = () => {
     isAgentsFunFieldUpdateRequired,
     isAnotherAgentRunning,
     isEligibleForStaking,
-    isInitialFunded,
     isLoading,
     isServiceStaked,
-    needsInitialFunding,
     selectedAgentConfig.isUnderConstruction,
-    selectedService,
     selectedStakingProgramMeta?.deprecated,
   ]);
 
