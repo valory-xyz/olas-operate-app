@@ -40,7 +40,7 @@ const SecretRecoveryPhraseSetting = () => {
       <CardSection $padding="24px" vertical gap={8}>
         <Flex gap={16}>
           <Image
-            src="/wallet-icon.png"
+            src="/shield-icon.png"
             alt="wallet"
             width={36}
             height={36}
