@@ -112,7 +112,6 @@ export const useServiceDeployment = () => {
     if (isAgentEvicted && !isEligibleForStaking) return false;
 
     // if there's no service created, check if initially funded
-    // TODO: should create dummy service instead (for trader)
     // and rely on canStartAgent
     if (!selectedService && isInitialFunded) return !needsInitialFunding;
 
