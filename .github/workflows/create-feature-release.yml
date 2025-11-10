@@ -20,7 +20,7 @@ on:
 
 jobs:
   calculate-version:
-    uses: ./.github/workflows/create-release-tag.yml
+    uses: ./.github/workflows/calculate-and-update-version.yml
     with:
       branch: ${{ inputs.branch }}
       version_strategy: ${{ inputs.action == 'new' && 'increment' || 'override' }}

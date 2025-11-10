@@ -15,16 +15,16 @@ on:
     outputs:
       new_tag:
         description: 'The newly calculated tag name'
-        value: ${{ jobs.create-release-tag.outputs.new_tag }}
+        value: ${{ jobs.calculate-and-update-version.outputs.new_tag }}
       new_version:
         description: 'The newly calculated version'
-        value: ${{ jobs.create-release-tag.outputs.new_version }}
+        value: ${{ jobs.calculate-and-update-version.outputs.new_version }}
 
 permissions:
   contents: write
 
 jobs:
-  create-release-tag:
+  calculate-and-update-version:
     runs-on: ubuntu-latest
     outputs:
       new_tag: ${{ steps.calculate-version.outputs.new_tag }}
