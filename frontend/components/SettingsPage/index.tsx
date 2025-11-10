@@ -2,11 +2,10 @@ import { Button, Card, Flex, Skeleton, Typography } from 'antd';
 import { isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
-import { TbShieldHalfFilled } from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
 import { AddressLink, Alert, CardSection, cardStyles } from '@/components/ui';
-import { COLOR, NA } from '@/constants';
+import { NA } from '@/constants';
 import { SettingsScreen } from '@/enums';
 import {
   useFeatureFlag,
@@ -40,10 +39,12 @@ const SecretRecoveryPhraseSetting = () => {
     <>
       <CardSection $padding="24px" vertical gap={8}>
         <Flex gap={16}>
-          <TbShieldHalfFilled
-            fontSize={30}
-            color={COLOR.TEXT_NEUTRAL_TERTIARY}
-            className="-mt-4"
+          <Image
+            src="/wallet-icon.png"
+            alt="wallet"
+            width={36}
+            height={36}
+            className="mb-auto"
           />
           <Flex vertical gap={12}>
             <Text strong>Secret Recovery Phrase</Text>
