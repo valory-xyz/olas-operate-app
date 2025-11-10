@@ -1,0 +1,52 @@
+# push to release/* branch
+#        │
+#        ▼
+# calculate-version  (create next prod version)
+#        │
+#        ├─► run-release      (Mac/Linux)
+#        │       uses release.yml
+#        │       gets tag = new_tag
+#        │
+#        └─► run-release-win  (Windows)
+#                uses release_win.yml
+#                gets tag = new_tag
+
+name: Production Release
+
+on:
+  push:
+    branches:
+      - "release/*"
+
+permissions:
+  contents: write
+
+# Prevent multiple release builds running at the same time for the same branch
+concurrency:
+  group: production-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  calculate-version:
+    # Avoid looping on commits created by the action itself.
+    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
+    uses: ./.github/workflows/calculate-and-update-version.yml
+    with:
+      version_strategy: production
+    secrets: inherit
+
+  run-release:
+    needs: calculate-version
+    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
+
+  run-release-win:
+    needs: calculate-version
+    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
+    uses: ./.github/workflows/release_win.yml
+    with:
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit

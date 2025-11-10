@@ -1,0 +1,41 @@
+name: Create Feature Release
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to create release from'
+        required: true
+        type: string
+      action:
+        description: 'Action'
+        required: true
+        type: choice
+        options:
+          - new
+          - override
+        default: 'new'
+
+jobs:
+  calculate-version:
+    uses: ./.github/workflows/calculate-and-update-version.yml
+    with:
+      branch: ${{ inputs.branch }}
+      version_strategy: ${{ inputs.action == 'new' && 'increment' || 'override' }}
+    secrets: inherit
+
+  run-release:
+    needs: calculate-version
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
+
+  run-release-win:
+    needs: calculate-version
+    uses: ./.github/workflows/release_win.yml
+    with:
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
