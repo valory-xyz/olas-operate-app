@@ -50,13 +50,30 @@ jobs:
       - name: Extract version info from package.json
         id: pkg-version
         run: |
+          # Read the "version" field from package.json using Node.
+          # Example output: "1.2.3-rc4" or "1.2.3"
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
+
+          # Extract only the base semantic version (major.minor.patch).
+          # Example: 1.2.3-rc5 → 1.2.3
           BASE_VERSION=$(echo "$PACKAGE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+    
+          # ✅ VALIDATION — Fail the workflow if the base version is empty or invalid.
+          if [[ ! "$BASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ ERROR: Failed to extract a valid base version from package.json."
+            echo "The version found was: '$PACKAGE_VERSION'"
+            echo "Expected formats: 'x.y.z' or 'x.y.z-rcN'"
+            exit 1
+          fi
+
+          # Detect RC number (if any)
           if [[ "$PACKAGE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-rc([0-9]+)$ ]]; then
             PKG_RC_NUMBER="${BASH_REMATCH[1]}"
           else
             PKG_RC_NUMBER="0"
           fi
+
+          # Output extracted values for later steps
           echo "package_version=$PACKAGE_VERSION" | tee -a $GITHUB_OUTPUT
           echo "base_version=$BASE_VERSION" | tee -a $GITHUB_OUTPUT
           echo "rc_number=$PKG_RC_NUMBER" | tee -a $GITHUB_OUTPUT
@@ -76,9 +93,10 @@ jobs:
           if [[ "$LATEST_RC_TAG" =~ ^v${BASE_VERSION}-rc([0-9]+)(-.+)?$ ]]; then
             LATEST_RC_NUMBER="${BASH_REMATCH[1]}"
           else
+            echo "No RC tags found for base version $BASE_VERSION. Using RC=0."
             LATEST_RC_NUMBER="0"
           fi
-          
+
           echo "latest_rc_tag=$LATEST_RC_TAG" | tee -a $GITHUB_OUTPUT
           echo "latest_rc_number=$LATEST_RC_NUMBER" | tee -a $GITHUB_OUTPUT
           echo "base_version=$BASE_VERSION" | tee -a $GITHUB_OUTPUT
@@ -104,23 +122,24 @@ jobs:
           
           if [ "$STRATEGY" = "production" ]; then
             # Production: always increment from latest RC
-            LATEST_RC_NUMBER=${{ steps.get-latest-rc.outputs.latest_rc_number }}
+            LATEST_RC_NUMBER="${{ steps.get-latest-rc.outputs.latest_rc_number }}"
             NEW_RC_NUMBER=$((LATEST_RC_NUMBER + 1))
             NEW_VERSION="$BASE_VERSION-rc$NEW_RC_NUMBER"
             NEW_TAG="v$NEW_VERSION$TAG_SUFFIX"
-          elif [ "$STRATEGY" = "increment" ]; then
-            # Increment: increment from latest RC
+          elif [ "$STRATEGY" = "override" ]; then
+            # Override: use the same RC/version as package.json (dangerous)
+            NEW_RC_NUMBER="${{ steps.pkg-version.outputs.rc_number }}"
+            NEW_VERSION="${{ steps.pkg-version.outputs.package_version }}"
+            NEW_TAG="v$NEW_VERSION$TAG_SUFFIX"
+          else
+            # Default behavior: increment
+            # This is MUCH safer than falling into override mode accidentally
             LATEST_RC_NUMBER="${{ steps.get-latest-rc.outputs.latest_rc_number }}"
             NEW_RC_NUMBER=$(( LATEST_RC_NUMBER + 1 ))
             NEW_VERSION="$BASE_VERSION-rc$NEW_RC_NUMBER"
             NEW_TAG="v$NEW_VERSION$TAG_SUFFIX"
-          else
-            # Override: use the same RC as package.json
-            NEW_RC_NUMBER="${{ steps.pkg-version.outputs.rc_number }}"
-            NEW_VERSION="${{ steps.pkg-version.outputs.package_version }}"
-            NEW_TAG="v$NEW_VERSION$TAG_SUFFIX"
           fi
-          
+
           echo "new_version=$NEW_VERSION" | tee -a $GITHUB_OUTPUT
           echo "new_tag=$NEW_TAG" | tee -a $GITHUB_OUTPUT
           echo "new_rc_number=$NEW_RC_NUMBER" | tee -a $GITHUB_OUTPUT
@@ -154,7 +173,7 @@ jobs:
         run: |
           git add package.json pyproject.toml
           if git diff --staged --quiet; then
-            echo "No changes to commit"
+            echo "No version file changes detected — skipping commit."
           else
             COMMIT_MSG="chore: bump version to ${{ steps.calculate-version.outputs.new_version }}"
             COMMIT_SUFFIX="${{ steps.calculate-version.outputs.commit_suffix }}"
@@ -177,10 +196,14 @@ jobs:
           TAG_NAME="${{ steps.calculate-version.outputs.new_tag }}"
           TAG_MESSAGE_PREFIX="${{ steps.calculate-version.outputs.tag_message_prefix }}"
           DELETE_EXISTING_TAG="${{ steps.calculate-version.outputs.delete_existing_tag }}"
+
+          echo "🔧 Tag name: $TAG_NAME"
+          echo "🔧 Delete existing tag: $DELETE_EXISTING_TAG"
+          echo "🔧 Tag message prefix: $TAG_MESSAGE_PREFIX"
           
           # Validate tag name is not empty
           if [ -z "$TAG_NAME" ]; then
-            echo "Error: TAG_NAME is empty. Cannot create tag."
+            echo "ERROR: TAG_NAME is empty. Cannot create tag."
             exit 1
           fi
           
@@ -194,5 +217,4 @@ jobs:
           # Create and push the new tag
           git tag -a "$TAG_NAME" -m "$TAG_MESSAGE_PREFIX $TAG_NAME"
           git push origin "$TAG_NAME"
-          echo "Created and pushed tag: $TAG_NAME"
-
+          echo "Successfully created and pushed tag: $TAG_NAME"

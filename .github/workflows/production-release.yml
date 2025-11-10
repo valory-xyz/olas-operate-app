@@ -1,3 +1,16 @@
+# push to release/* branch
+#        │
+#        ▼
+# calculate-version  (create next prod version)
+#        │
+#        ├─► run-release      (Mac/Linux)
+#        │       uses release.yml
+#        │       gets tag = new_tag
+#        │
+#        └─► run-release-win  (Windows)
+#                uses release_win.yml
+#                gets tag = new_tag
+
 name: Production Release
 
 on:
@@ -7,6 +20,11 @@ on:
 
 permissions:
   contents: write
+
+# Prevent multiple release builds running at the same time for the same branch
+concurrency:
+  group: production-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   calculate-version:
