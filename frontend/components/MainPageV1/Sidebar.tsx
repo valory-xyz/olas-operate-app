@@ -40,6 +40,7 @@ import {
 } from '@/hooks';
 import { AgentConfig } from '@/types/Agent';
 
+import { BackupSeedPhraseAlert } from './BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from './UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from './UpdateAvailableAlert/UpdateAvailableModal';
 
@@ -275,6 +276,7 @@ export const Sidebar = () => {
           </div>
 
           <div>
+            <BackupSeedPhraseAlert />
             <UpdateAvailableAlert />
             <UpdateAvailableModal />
 

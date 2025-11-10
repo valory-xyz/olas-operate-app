@@ -7,7 +7,7 @@ import { FormLabel } from '@/components/ui/Typography';
 import { COLOR } from '@/constants/colors';
 import { useMessageApi } from '@/context/MessageProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { usePageState } from '@/hooks/usePageState';
+import { useMnemonicExists, usePageState } from '@/hooks';
 import { useSetup } from '@/hooks/useSetup';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
@@ -57,6 +57,7 @@ export const PasswordStrength = ({ score }: { score: number }) => {
 export const SetupPassword = () => {
   const { goto } = useSetup();
   const { setUserLoggedIn } = usePageState();
+  const { setMnemonicExists } = useMnemonicExists();
   const [form] = Form.useForm<{ password: string; terms: boolean }>();
   const message = useMessageApi();
   const [isLoading, setIsLoading] = useState(false);
@@ -82,6 +83,8 @@ export const SetupPassword = () => {
       .then(() => AccountService.loginAccount(password))
       .then(() => WalletService.createEoa())
       .then(() => {
+        // Mnemonic is always created for new accounts
+        setMnemonicExists(true);
         setUserLoggedIn();
         goto(SetupScreen.SetupBackupSigner);
       })

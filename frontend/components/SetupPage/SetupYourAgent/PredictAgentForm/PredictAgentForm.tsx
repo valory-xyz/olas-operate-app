@@ -79,7 +79,7 @@ export const PredictAgentFormContent = ({
         message.success('Agent setup complete');
 
         // move to next page
-        goto(SetupScreen.FundYourAgent);
+        goto(SetupScreen.SelectStaking);
       } finally {
         updateSubmitButtonText('Continue');
         setIsSubmitting(false);
