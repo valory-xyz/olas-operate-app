@@ -1,11 +1,12 @@
 import { Button, Card, Flex, Skeleton, Typography } from 'antd';
 import { isEmpty, isNil } from 'lodash';
-import Image from 'next/image';
 import { useMemo } from 'react';
+import { TbShieldHalfFilled, TbShieldLock, TbWallet } from 'react-icons/tb';
+import styled from 'styled-components';
 import { useBoolean } from 'usehooks-ts';
 
 import { AddressLink, Alert, CardSection, cardStyles } from '@/components/ui';
-import { NA } from '@/constants';
+import { COLOR, NA } from '@/constants';
 import { SettingsScreen } from '@/enums';
 import {
   useFeatureFlag,
@@ -23,6 +24,17 @@ import { YourFundsAtRiskAlert } from './YourFundsAtRiskAlert';
 
 const { Text, Paragraph, Title } = Typography;
 
+const IconContainer = styled.div`
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid ${COLOR.BORDER_GRAY};
+  border-radius: 8px;
+  background-image: url('/icon-bg.svg');
+`;
+
 const SecretRecoveryPhraseSetting = () => {
   const { isBackedUp } = useRecoveryPhraseBackup();
   const { mnemonicExists } = useMnemonicExists();
@@ -39,13 +51,13 @@ const SecretRecoveryPhraseSetting = () => {
     <>
       <CardSection $padding="24px" vertical gap={8}>
         <Flex gap={16}>
-          <Image
-            src="/shield-icon.png"
-            alt="wallet"
-            width={36}
-            height={36}
-            className="mb-auto"
-          />
+          <IconContainer>
+            <TbShieldHalfFilled
+              size={20}
+              fontSize={30}
+              color={COLOR.TEXT_NEUTRAL_TERTIARY}
+            />
+          </IconContainer>
           <Flex vertical gap={12}>
             <Text strong>Secret Recovery Phrase</Text>
             <Flex vertical gap={16}>
@@ -150,13 +162,13 @@ const SettingsMain = () => {
           align="center"
           gap={16}
         >
-          <Image
-            src="/password-icon.png"
-            alt="password"
-            width={36}
-            height={36}
-            className="mb-auto"
-          />
+          <IconContainer>
+            <TbShieldLock
+              size={20}
+              fontSize={30}
+              color={COLOR.TEXT_NEUTRAL_TERTIARY}
+            />
+          </IconContainer>
           <Flex vertical gap={6}>
             <div className="my-6">
               <Paragraph strong className="mb-0">
@@ -171,13 +183,13 @@ const SettingsMain = () => {
         {hideWallet ? null : (
           <CardSection $padding="24px" $borderBottom vertical>
             <Flex gap={16}>
-              <Image
-                src="/wallet-icon.png"
-                alt="wallet"
-                width={36}
-                height={36}
-                className="mb-auto"
-              />
+              <IconContainer>
+                <TbWallet
+                  size={20}
+                  fontSize={30}
+                  color={COLOR.TEXT_NEUTRAL_TERTIARY}
+                />
+              </IconContainer>
               <Flex vertical gap={6}>
                 <div className="my-6">
                   <Text strong>Backup Wallet</Text>
