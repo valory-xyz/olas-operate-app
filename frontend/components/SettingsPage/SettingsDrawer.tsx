@@ -3,10 +3,15 @@ import { Button, Drawer, Flex, Typography } from 'antd';
 import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
+import { TbArrowsSplit2 } from 'react-icons/tb';
 
-import { AddressLink, Table } from '@/components/ui';
+import { AddressLink, IconContainer, Table } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { SupportedMiddlewareChain, TokenSymbolConfigMap } from '@/constants';
+import {
+  COLOR,
+  SupportedMiddlewareChain,
+  TokenSymbolConfigMap,
+} from '@/constants';
 import { useMasterWalletContext, useServices } from '@/hooks';
 import { formatUnits } from '@/utils';
 
@@ -170,13 +175,13 @@ export const SettingsDrawer = ({
       width={520}
       extra={<Button type="text" icon={<CloseOutlined />} onClick={onClose} />}
     >
-      <Image
-        src="/arrow-split-icon.png"
-        alt="auto-funding"
-        width={36}
-        height={36}
-        className="mb-12"
-      />
+      <IconContainer>
+        <TbArrowsSplit2
+          size={20}
+          fontSize={30}
+          color={COLOR.TEXT_NEUTRAL_TERTIARY}
+        />
+      </IconContainer>
       <Flex gap={26} vertical>
         <SettingsDescription />
         <Flex gap={16} vertical>

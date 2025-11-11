@@ -1,11 +1,21 @@
 import { Button, Card, Flex, Skeleton, Typography } from 'antd';
 import { isEmpty, isNil } from 'lodash';
 import { useMemo } from 'react';
-import { TbShieldHalfFilled, TbShieldLock, TbWallet } from 'react-icons/tb';
-import styled from 'styled-components';
+import {
+  TbFileText,
+  TbShieldHalfFilled,
+  TbShieldLock,
+  TbWallet,
+} from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
-import { AddressLink, Alert, CardSection, cardStyles } from '@/components/ui';
+import {
+  AddressLink,
+  Alert,
+  CardSection,
+  cardStyles,
+  IconContainer,
+} from '@/components/ui';
 import { COLOR, NA } from '@/constants';
 import { SettingsScreen } from '@/enums';
 import {
@@ -25,17 +35,6 @@ import { YourFundsAtRiskAlert } from './YourFundsAtRiskAlert';
 
 const { Text, Paragraph, Title } = Typography;
 
-const IconContainer = styled.div`
-  min-width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid ${COLOR.BORDER_GRAY};
-  border-radius: 8px;
-  background-image: url('/icon-bg.svg');
-`;
-
 const SecretRecoveryPhraseSetting = () => {
   const { isBackedUp } = useRecoveryPhraseBackup();
   const { mnemonicExists } = useMnemonicExists();
@@ -53,11 +52,7 @@ const SecretRecoveryPhraseSetting = () => {
       <CardSection $padding="24px" $borderTop vertical gap={8}>
         <Flex gap={16}>
           <IconContainer>
-            <TbShieldHalfFilled
-              size={20}
-              fontSize={30}
-              color={COLOR.TEXT_NEUTRAL_TERTIARY}
-            />
+            <TbShieldHalfFilled size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
           </IconContainer>
           <Flex vertical gap={12}>
             <Text strong>Secret Recovery Phrase</Text>
@@ -77,8 +72,7 @@ const SecretRecoveryPhraseSetting = () => {
                 className="text-sm"
               />
               <Button
-                type="default"
-                className="w-fit"
+                className="w-fit text-sm"
                 onClick={() => showRecoveryModal()}
               >
                 Reveal Recovery Phrase
@@ -169,11 +163,7 @@ const SettingsMain = () => {
           gap={16}
         >
           <IconContainer>
-            <TbShieldLock
-              size={20}
-              fontSize={30}
-              color={COLOR.TEXT_NEUTRAL_TERTIARY}
-            />
+            <TbShieldLock size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
           </IconContainer>
           <Flex vertical gap={6}>
             <div className="my-6">
@@ -190,11 +180,7 @@ const SettingsMain = () => {
           <CardSection $padding="24px" $borderBottom vertical>
             <Flex gap={16}>
               <IconContainer>
-                <TbWallet
-                  size={20}
-                  fontSize={30}
-                  color={COLOR.TEXT_NEUTRAL_TERTIARY}
-                />
+                <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
               </IconContainer>
               <Flex vertical gap={6}>
                 <div className="my-6">
@@ -211,12 +197,9 @@ const SettingsMain = () => {
         )}
         <CardSection $padding="24px">
           <Flex gap={16}>
-            <Image
-              src="/default-icon.png"
-              alt="default"
-              width={36}
-              height={36}
-            />
+            <IconContainer>
+              <TbFileText size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+            </IconContainer>
             <Flex vertical>
               <Text strong className="my-6">
                 Default Settings
