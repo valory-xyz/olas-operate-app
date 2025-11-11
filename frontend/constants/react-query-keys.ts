@@ -116,4 +116,7 @@ export const REACT_QUERY_KEYS = {
 
   // latest release
   LATEST_RELEASE_TAG_KEY: ['latestReleaseTag'] as const,
+
+  // settings drawer
+  SETTING_DRAWER_QUERY_KEY: ['settingsDrawer'] as const,
 } as const;

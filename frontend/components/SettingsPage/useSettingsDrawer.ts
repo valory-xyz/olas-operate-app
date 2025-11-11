@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { REACT_QUERY_KEYS } from '@/constants';
 import { SettingsService } from '@/service/Settings';
 
 export const useSettingsDrawer = () => {
   return useQuery({
-    queryKey: ['settings-drawer'],
+    queryKey: [REACT_QUERY_KEYS.SETTING_DRAWER_QUERY_KEY],
     queryFn: ({ signal }) => SettingsService.getSettings(signal),
-    staleTime: 5 * 60 * 1000,
+    staleTime: Infinity,
     retry: 3,
   });
 };

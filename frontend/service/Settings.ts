@@ -1,16 +1,23 @@
+import { SupportedMiddlewareChain } from '@/constants';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
 import { BACKEND_URL } from '@/constants/urls';
+import { Address } from '@/types';
 
-export interface EoaTopups {
-  [chainName: string]: {
-    [address: string]: number;
+type EoaTopups = {
+  [chainName in SupportedMiddlewareChain]: {
+    [address: Address]: number;
   };
-}
-
-export interface SettingsResponse {
+};
+type EoaThresholds = {
+  [chainName in SupportedMiddlewareChain]: {
+    [address: Address]: number;
+  };
+};
+type SettingsResponse = {
   version: number;
   eoa_topups: EoaTopups;
-}
+  eoa_thresholds: EoaThresholds;
+};
 
 /**
  * Fetches settings from the backend

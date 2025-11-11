@@ -4,28 +4,29 @@ import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 
+import { AddressLink, Table } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { TokenSymbolConfigMap } from '@/constants';
+import { SupportedMiddlewareChain, TokenSymbolConfigMap } from '@/constants';
 import { useMasterWalletContext, useServices } from '@/hooks';
-import { useSettingsDrawer } from '@/hooks/useSettingsDrawer';
-import { formatUnits } from '@/utils/numberFormatters';
+import { formatUnits } from '@/utils';
 
-import { AddressLink, Table } from '../ui';
+import { useSettingsDrawer } from './useSettingsDrawer';
 
 const { Text } = Typography;
 
-interface SettingsDrawerProps {
+type SettingsDrawerProps = {
   isDrawerOpen: boolean;
   onClose: () => void;
-}
+};
 
-interface TableData extends Record<string, unknown> {
+type TableData = {
   key: string;
   chain: string;
+  middlewareChain: SupportedMiddlewareChain;
   threshold: string;
   topUpAmount: string;
   tokenSymbol: string;
-}
+};
 
 const SettingsDrawerTitle = (
   <Flex vertical gap={8}>
@@ -38,6 +39,82 @@ const SettingsDrawerTitle = (
   </Flex>
 );
 
+const SettingsDescription = () => (
+  <Flex vertical gap={6}>
+    <Text strong>Auto-Funding – Pearl Wallet</Text>
+    <Text className="text-sm">
+      Pearl uses a separate wallet to sign transactions for the Pearl wallet.
+      When balances on the signer wallet fall below the threshold, Pearl refills
+      with the top-up amount from Pearl wallet. This way, your Pearl always
+      stays operational without your action required.
+    </Text>
+  </Flex>
+);
+
+const columns = [
+  {
+    title: 'Chain',
+    key: 'chain',
+    dataIndex: 'middlewareChain',
+    render: (chain: SupportedMiddlewareChain, record: TableData) => (
+      <Flex align="center" gap={8}>
+        <Image
+          src={`/chains/${kebabCase(chain)}-chain.png`}
+          alt={chain}
+          width={20}
+          height={20}
+          className="flex"
+        />
+        <Text>{record.chain}</Text>
+      </Flex>
+    ),
+    width: '33%',
+  },
+  {
+    title: 'Threshold',
+    key: 'threshold',
+    dataIndex: 'threshold',
+    render: (threshold: string, record: TableData) => (
+      <Flex align="center" gap={8}>
+        <Image
+          src={
+            TokenSymbolConfigMap[
+              record.tokenSymbol as keyof typeof TokenSymbolConfigMap
+            ].image
+          }
+          alt={record.tokenSymbol}
+          width={20}
+          height={20}
+          className="flex"
+        />
+        <Text>{threshold}</Text>
+      </Flex>
+    ),
+    width: '33%',
+  },
+  {
+    title: 'Top-up Amount',
+    key: 'topUpAmount',
+    dataIndex: 'topUpAmount',
+    render: (topUpAmount: string, record: TableData) => (
+      <Flex align="center" gap={8}>
+        <Image
+          src={
+            TokenSymbolConfigMap[
+              record.tokenSymbol as keyof typeof TokenSymbolConfigMap
+            ].image
+          }
+          alt={record.tokenSymbol}
+          width={20}
+          height={20}
+        />
+        <Text>{topUpAmount}</Text>
+      </Flex>
+    ),
+    width: '34%',
+  },
+];
+
 export const SettingsDrawer = ({
   isDrawerOpen,
   onClose,
@@ -45,9 +122,7 @@ export const SettingsDrawer = ({
   const { masterEoa, getMasterSafeOf } = useMasterWalletContext();
   const { selectedAgentConfig, services } = useServices();
   const { data: settings, isLoading } = useSettingsDrawer();
-  const masterSafe = getMasterSafeOf
-    ? getMasterSafeOf(selectedAgentConfig.evmHomeChainId)
-    : undefined;
+  const masterSafe = getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId);
 
   const tableData = useMemo<TableData[]>(() => {
     if (!settings?.eoa_topups || !services) return [];
@@ -62,86 +137,28 @@ export const SettingsDrawer = ({
         return activeChains.has(String(chainConfig.middlewareChain));
       })
       .map((chainConfig) => {
-        const chainName = chainConfig.name.toLowerCase();
-        const eoaTopups = settings.eoa_topups[chainName];
+        const middlewareChain =
+          chainConfig.middlewareChain as SupportedMiddlewareChain;
+        const eoaTopups = settings.eoa_topups[middlewareChain];
         const fundingRequirement = eoaTopups
-          ? Object.values(eoaTopups)[0] || 0
+          ? (Object.values(eoaTopups)[0] as number) || 0
           : 0;
 
-        // TODO: Replace calculation with threshold value from BE once endpoint is ready
-        const refundingThreshold = fundingRequirement * 0.5;
+        const eoaThresholds = settings.eoa_thresholds?.[middlewareChain];
+        const refundingThreshold = eoaThresholds
+          ? (Object.values(eoaThresholds)[0] as number) || 0
+          : fundingRequirement * 0.5;
 
         return {
           key: String(chainConfig.evmChainId),
           chain: chainConfig.name,
+          middlewareChain,
           threshold: `${formatUnits(String(refundingThreshold), 18)} ${chainConfig.nativeToken.symbol}`,
           topUpAmount: `${formatUnits(String(fundingRequirement), 18)} ${chainConfig.nativeToken.symbol}`,
           tokenSymbol: chainConfig.nativeToken.symbol,
         };
       });
   }, [settings, services]);
-
-  const columns = [
-    {
-      title: 'Chain',
-      key: 'chain',
-      render: (_: unknown, record: TableData) => (
-        <Flex align="center" gap={8}>
-          <Image
-            src={`/chains/${kebabCase(record.chain)}-chain.png`}
-            alt={record.chain}
-            width={20}
-            height={20}
-            className="flex"
-          />
-          <Text>{record.chain}</Text>
-        </Flex>
-      ),
-      width: '33%',
-    },
-    {
-      title: 'Threshold',
-      key: 'threshold',
-      render: (_: unknown, record: TableData) => (
-        <Flex align="center" gap={8}>
-          <Image
-            src={
-              TokenSymbolConfigMap[
-                record.tokenSymbol as keyof typeof TokenSymbolConfigMap
-              ].image
-            }
-            alt={record.tokenSymbol}
-            width={20}
-            height={20}
-            className="flex"
-          />
-          <Text>{record.threshold}</Text>
-        </Flex>
-      ),
-      width: '33%',
-    },
-    {
-      title: 'Top-up Amount',
-      key: 'topUpAmount',
-      render: (_: unknown, record: TableData) => (
-        <Flex align="center" gap={8}>
-          <Image
-            src={
-              TokenSymbolConfigMap[
-                record.tokenSymbol as keyof typeof TokenSymbolConfigMap
-              ].image
-            }
-            alt={record.tokenSymbol}
-            width={20}
-            height={20}
-            className="flex"
-          />
-          <Text>{record.topUpAmount}</Text>
-        </Flex>
-      ),
-      width: '34%',
-    },
-  ];
 
   return (
     <Drawer
@@ -161,22 +178,14 @@ export const SettingsDrawer = ({
         className="mb-12"
       />
       <Flex gap={26} vertical>
-        <Flex vertical gap={6}>
-          <Text strong>Auto-Funding – Pearl Wallet</Text>
-          <Text className="text-sm">
-            Pearl uses a separate wallet to sign transactions for the Pearl
-            wallet. When balances on the signer wallet fall below the threshold,
-            Pearl refills with the top-up amount from Pearl wallet. This way,
-            your Pearl always stays operational without your action required.
-          </Text>
-        </Flex>
+        <SettingsDescription />
         <Flex gap={16} vertical>
           <Flex vertical gap={4}>
             <Text className="text-xs">Pearl Wallet Address</Text>
-            {masterSafe ? (
+            {masterSafe?.address ? (
               <AddressLink
                 truncate={false}
-                address={masterSafe?.address}
+                address={masterSafe.address}
                 middlewareChain={selectedAgentConfig.middlewareHomeChainId}
               />
             ) : (
