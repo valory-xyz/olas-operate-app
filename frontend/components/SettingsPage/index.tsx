@@ -39,7 +39,7 @@ const SecretRecoveryPhraseSetting = () => {
 
   return (
     <>
-      <CardSection $padding="24px" vertical gap={8}>
+      <CardSection $padding="24px" $borderTop vertical gap={8}>
         <Flex gap={16}>
           <TbShieldHalfFilled
             fontSize={30}

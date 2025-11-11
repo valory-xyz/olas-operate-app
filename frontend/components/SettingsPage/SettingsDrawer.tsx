@@ -10,8 +10,7 @@ import { useMasterWalletContext, useServices } from '@/hooks';
 import { useSettingsDrawer } from '@/hooks/useSettingsDrawer';
 import { formatUnits } from '@/utils/numberFormatters';
 
-import { AddressLink } from '../AddressLink';
-import { Table } from '../ui';
+import { AddressLink, Table } from '../ui';
 
 const { Text } = Typography;
 
