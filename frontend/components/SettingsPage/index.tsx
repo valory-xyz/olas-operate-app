@@ -1,6 +1,6 @@
 import { Button, Card, Flex, Skeleton, Typography } from 'antd';
 import { isEmpty, isNil } from 'lodash';
-import { useMemo } from 'react';
+import { MouseEventHandler, useMemo } from 'react';
 import {
   TbFileText,
   TbShieldHalfFilled,
@@ -34,6 +34,31 @@ import { SettingsDrawer } from './SettingsDrawer';
 import { YourFundsAtRiskAlert } from './YourFundsAtRiskAlert';
 
 const { Text, Paragraph, Title } = Typography;
+
+const DefaultSettingsSection = ({
+  openDrawer,
+}: {
+  openDrawer: MouseEventHandler<HTMLElement>;
+}) => (
+  <CardSection $padding="24px">
+    <Flex gap={16}>
+      <IconContainer>
+        <TbFileText size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+      </IconContainer>
+      <Flex vertical>
+        <Text strong className="my-6">
+          Default Settings
+        </Text>
+        <Text type="secondary" className="text-sm mb-16">
+          Predefined system values, for reference only.
+        </Text>
+        <Button className="w-max text-sm" onClick={openDrawer}>
+          View Default Settings
+        </Button>
+      </Flex>
+    </Flex>
+  </CardSection>
+);
 
 const SecretRecoveryPhraseSetting = () => {
   const { isBackedUp } = useRecoveryPhraseBackup();
@@ -195,25 +220,8 @@ const SettingsMain = () => {
             )}
           </CardSection>
         )}
-        <CardSection $padding="24px">
-          <Flex gap={16}>
-            <IconContainer>
-              <TbFileText size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
-            </IconContainer>
-            <Flex vertical>
-              <Text strong className="my-6">
-                Default Settings
-              </Text>
-              <Text type="secondary" className="text-sm mb-16">
-                Predefined system values, for reference only.
-              </Text>
-              <Button className="w-max text-sm" onClick={openDrawer}>
-                View Default Settings
-              </Button>
-            </Flex>
-          </Flex>
-        </CardSection>
 
+        <DefaultSettingsSection openDrawer={openDrawer} />
         <SecretRecoveryPhraseSetting />
       </Card>
       <SettingsDrawer isDrawerOpen={isDrawerOpen} onClose={closeDrawer} />
