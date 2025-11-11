@@ -1,28 +1,28 @@
-import { Button, Card, Flex, Form, Input, Spin, Typography } from 'antd';
-import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button, Card, Flex, Form, Input, Spin, Typography } from "antd";
+import Image from "next/image";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useMessageApi } from '@/context/MessageProvider';
-import { Pages } from '@/enums/Pages';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useBackupSigner } from '@/hooks';
+import { useMessageApi } from "@/context/MessageProvider";
+import { Pages } from "@/enums/Pages";
+import { SetupScreen } from "@/enums/SetupScreen";
+import { useBackupSigner } from "@/hooks";
 import {
   useBalanceContext,
   useMasterBalances,
-} from '@/hooks/useBalanceContext';
-import { useElectronApi } from '@/hooks/useElectronApi';
-import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
-import { useSetup } from '@/hooks/useSetup';
-import { useMasterWalletContext } from '@/hooks/useWallet';
-import { AccountService } from '@/service/Account';
-import { getErrorMessage } from '@/utils/error';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+} from "@/hooks/useBalanceContext";
+import { useElectronApi } from "@/hooks/useElectronApi";
+import { useOnlineStatusContext } from "@/hooks/useOnlineStatus";
+import { usePageState } from "@/hooks/usePageState";
+import { useServices } from "@/hooks/useServices";
+import { useSetup } from "@/hooks/useSetup";
+import { useMasterWalletContext } from "@/hooks/useWallet";
+import { AccountService } from "@/service/Account";
+import { getErrorMessage } from "@/utils/error";
+import { asEvmChainId } from "@/utils/middlewareHelpers";
 
-import { FormFlex } from '../ui/FormFlex';
-import { FormLabel } from '../ui/Typography';
-import { SetupWelcomeCreate } from './SetupWelcomeCreate';
+import { FormFlex } from "../ui/FormFlex";
+import { FormLabel } from "../ui/Typography";
+import { SetupWelcomeCreate } from "./SetupWelcomeCreate";
 
 const { Title, Text } = Typography;
 
@@ -56,7 +56,7 @@ const useSetupNavigation = ({
   const eoaBalanceEth = masterWalletBalances?.find(
     (balance) =>
       balance.walletAddress === masterEoa?.address &&
-      balance.evmChainId === selectedServiceOrAgentChainId,
+      balance.evmChainId === selectedServiceOrAgentChainId
   )?.balance;
 
   const isServiceCreatedForAgent = useMemo(() => {
@@ -68,7 +68,7 @@ const useSetupNavigation = ({
     return services.some(
       ({ service_public_id, home_chain }) =>
         service_public_id === selectedAgentConfig.servicePublicId &&
-        home_chain === selectedAgentConfig.middlewareHomeChainId,
+        home_chain === selectedAgentConfig.middlewareHomeChainId
     );
   }, [isServicesFetched, services, selectedService, selectedAgentConfig]);
 
@@ -117,7 +117,7 @@ const useSetupNavigation = ({
     // If no service is created for the selected agent
     if (!isServiceCreatedForAgent) {
       window.console.log(
-        `No service created for chain ${selectedServiceOrAgentChainId}`,
+        `No service created for chain ${selectedServiceOrAgentChainId}`
       );
       goto(SetupScreen.AgentOnboarding);
       return;
@@ -151,7 +151,7 @@ enum MiddlewareAccountIsSetup {
 }
 
 const WelcomeBack = () => (
-  <Flex vertical align="center" gap={12} style={{ margin: '24px 0 40px 0' }}>
+  <Flex vertical align="center" gap={12} style={{ margin: "24px 0 40px 0" }}>
     <Title level={3} className="m-0">
       Welcome Back to Pearl
     </Title>
@@ -170,7 +170,7 @@ const SetupLoader = () => (
 );
 
 const SetupError = () => (
-  <Flex justify="center" style={{ margin: '32px 0', textAlign: 'center' }}>
+  <Flex justify="center" style={{ margin: "32px 0", textAlign: "center" }}>
     <Text>Unable to determine the account setup status, please try again.</Text>
   </Flex>
 );
@@ -201,7 +201,7 @@ const SetupWelcomeLogin = () => {
         setIsLoggingIn(false);
       }
     },
-    [updateBalances, setUserLoggedIn, message],
+    [updateBalances, setUserLoggedIn, message]
   );
 
   return (
@@ -212,7 +212,7 @@ const SetupWelcomeLogin = () => {
         <Form.Item
           name="password"
           label={<FormLabel>Enter password</FormLabel>}
-          rules={[{ required: true, message: 'Please input your Password.' }]}
+          rules={[{ required: true, message: "Please input your Password." }]}
           required={false}
           labelCol={{ style: { paddingBottom: 4 } }}
         >
@@ -294,10 +294,10 @@ export const SetupWelcome = () => {
 
   // TODO: think about the widths of card
   return (
-    <Card bordered={false}>
+    <Card variant="borderless">
       <Flex vertical align="center">
         <Image
-          src={'/onboarding-robot.svg'}
+          src={"/onboarding-robot.svg"}
           alt="Onboarding Robot"
           width={64}
           height={64}
