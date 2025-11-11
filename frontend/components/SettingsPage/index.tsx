@@ -2,60 +2,92 @@ import { Button, Card, Flex, Skeleton, Typography } from 'antd';
 import { isEmpty, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
+import { TbShieldHalfFilled } from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
-import { Pages } from '@/enums/Pages';
-import { SettingsScreen } from '@/enums/SettingsScreen';
+import { AddressLink, Alert, CardSection, cardStyles } from '@/components/ui';
+import { COLOR, NA } from '@/constants';
+import { SettingsScreen } from '@/enums';
 import {
   useFeatureFlag,
   useMasterWalletContext,
+  useMnemonicExists,
   useMultisig,
-  usePageState,
+  useRecoveryPhraseBackup,
   useServices,
   useSettings,
 } from '@/hooks';
-import { Address } from '@/types/Address';
-import { Optional } from '@/types/Util';
+import { Address, Optional } from '@/types';
 
-import { AddressLink } from '../AddressLink';
-import { CustomAlert } from '../Alert';
-import { CardSection, cardStyles } from '../ui';
+import { RecoveryModal } from './RecoveryModal';
 import { SettingsDrawer } from './SettingsDrawer';
+import { YourFundsAtRiskAlert } from './YourFundsAtRiskAlert';
 
 const { Text, Paragraph, Title } = Typography;
 
-const YourFundsAtRiskAlert = () => {
-  const { goto } = usePageState();
+const SecretRecoveryPhraseSetting = () => {
+  const { isBackedUp } = useRecoveryPhraseBackup();
+  const { mnemonicExists } = useMnemonicExists();
+  const {
+    value: isRecoveryModalOpen,
+    setTrue: showRecoveryModal,
+    setFalse: handleClose,
+  } = useBoolean(false);
+
+  // Don't show Secret Recovery Phrase section if mnemonic doesn't exist
+  if (!mnemonicExists) return null;
+
   return (
-    <CardSection style={{ marginTop: 12 }}>
-      <CustomAlert
-        type="warning"
-        fullWidth
-        showIcon
-        message={
-          <Flex vertical gap={5}>
-            <span className="font-weight-600">Your funds are at risk!</span>
-            <span>
-              Add a backup wallet to allow you to retrieve funds if you lose
-              your password and seed phrase.
-            </span>
-            <Text
-              className="pointer hover-underline text-primary"
-              onClick={() => goto(Pages.AddBackupWalletViaSafe)}
-            >
-              See instructions
-            </Text>
+    <>
+      <CardSection $padding="24px" vertical gap={8}>
+        <Flex gap={16}>
+          <TbShieldHalfFilled
+            fontSize={30}
+            color={COLOR.TEXT_NEUTRAL_TERTIARY}
+            className="-mt-4"
+          />
+          <Flex vertical gap={12}>
+            <Text strong>Secret Recovery Phrase</Text>
+            <Flex vertical gap={16}>
+              <Text className="text-sm text-neutral-secondary">
+                Back up your Secret Recovery Phrase so you never lose access to
+                your Pearl account.
+              </Text>
+              <Alert
+                showIcon
+                type={isBackedUp ? 'success' : 'warning'}
+                message={
+                  isBackedUp
+                    ? 'Secret Recovery Phrase backed up.'
+                    : 'Secret Recovery Phrase not backed up.'
+                }
+                className="text-sm"
+              />
+              <Button
+                type="default"
+                className="w-fit"
+                onClick={() => showRecoveryModal()}
+              >
+                Reveal Recovery Phrase
+              </Button>
+            </Flex>
           </Flex>
-        }
-      />
-    </CardSection>
+        </Flex>
+      </CardSection>
+
+      {isRecoveryModalOpen && <RecoveryModal open onClose={handleClose} />}
+    </>
   );
 };
 
 const SettingsMain = () => {
   const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
   const { selectedAgentConfig } = useServices();
-  const { masterEoa, masterSafes } = useMasterWalletContext();
+  const {
+    masterEoa,
+    masterSafes,
+    isLoading: isWalletsLoading,
+  } = useMasterWalletContext();
   const {
     value: isDrawerOpen,
     setTrue: openDrawer,
@@ -87,9 +119,13 @@ const SettingsMain = () => {
   }, [masterSafeBackupAddresses]);
 
   const walletBackup = useMemo(() => {
+    if (!isWalletsLoading && !masterSafe) {
+      return <Text type="secondary">{NA}</Text>;
+    }
     if (!ownersIsFetched) return <Skeleton.Input />;
-    if (!masterSafeBackupAddress)
+    if (!masterSafeBackupAddress) {
       return <Text type="secondary">No backup wallet added.</Text>;
+    }
 
     return (
       <AddressLink
@@ -98,6 +134,8 @@ const SettingsMain = () => {
       />
     );
   }, [
+    isWalletsLoading,
+    masterSafe,
     masterSafeBackupAddress,
     ownersIsFetched,
     selectedAgentConfig.middlewareHomeChainId,
@@ -136,11 +174,7 @@ const SettingsMain = () => {
         </CardSection>
 
         {hideWallet ? null : (
-          <CardSection
-            $padding="24px"
-            $borderBottom={!!masterSafeBackupAddress}
-            vertical
-          >
+          <CardSection $padding="24px" $borderBottom vertical>
             <Flex gap={16}>
               <Image
                 src="/wallet-icon.png"
@@ -151,7 +185,7 @@ const SettingsMain = () => {
               />
               <Flex vertical gap={6}>
                 <div className="my-6">
-                  <Text strong>Backup wallet</Text>
+                  <Text strong>Backup Wallet</Text>
                 </div>
                 {walletBackup}
               </Flex>
@@ -183,6 +217,8 @@ const SettingsMain = () => {
             </Flex>
           </Flex>
         </CardSection>
+
+        <SecretRecoveryPhraseSetting />
       </Card>
       <SettingsDrawer isDrawerOpen={isDrawerOpen} onClose={closeDrawer} />
     </Flex>

@@ -1,41 +1,68 @@
-import { Button, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
+import { useMemo } from 'react';
 
-import { CustomAlert } from '@/components/Alert';
-import { Pages } from '@/enums/Pages';
-import { usePageState, useServices, useSharedContext } from '@/hooks';
+import { Alert } from '@/components/ui';
+import { Pages } from '@/enums';
+import { usePageState, useServiceBalances, useServices } from '@/hooks';
 
 const { Text } = Typography;
 
 export const UnderConstructionAlert = () => {
-  const { selectedAgentConfig } = useServices();
   const { goto } = usePageState();
-  const { mainOlasBalance } = useSharedContext();
+  const { selectedService } = useServices();
+  const {
+    serviceSafeNativeBalances,
+    serviceSafeErc20Balances,
+    serviceEoaNativeBalance,
+    serviceSafeOlas,
+  } = useServiceBalances(selectedService?.service_config_id);
 
-  const hasExternalFunds = selectedAgentConfig.hasExternalFunds;
-  const canWithdraw = mainOlasBalance !== 0;
+  const isWithdrawn = useMemo(() => {
+    if (
+      !serviceSafeErc20Balances ||
+      !serviceSafeNativeBalances ||
+      !serviceEoaNativeBalance ||
+      !serviceSafeOlas
+    )
+      return false;
+
+    const allNativeSafeZero = serviceSafeNativeBalances.every(
+      (b) => b.balanceString === '0',
+    );
+    const allErc20SafeZero = serviceSafeErc20Balances.every(
+      (b) => b.balanceString === '0',
+    );
+    const eoaNativeZero = serviceEoaNativeBalance.balanceString === '0';
+    const safeOlasZero = serviceSafeOlas.balanceString === '0';
+
+    return (
+      allNativeSafeZero && allErc20SafeZero && eoaNativeZero && safeOlasZero
+    );
+  }, [
+    serviceSafeNativeBalances,
+    serviceSafeErc20Balances,
+    serviceEoaNativeBalance,
+    serviceSafeOlas,
+  ]);
 
   return (
-    <CustomAlert
+    <Alert
       type="warning"
-      className="mt-16"
-      centered={!canWithdraw}
       showIcon
+      className="mt-16"
       message={
-        <Text className="text-sm">
-          The agent is temporarily disabled due to technical issues until
-          further notice.{' '}
-          {canWithdraw &&
-            (hasExternalFunds
-              ? 'You can start your agent to withdraw its funds at any time.'
-              : `You can withdraw your funds anytime.`)}
-        </Text>
-      }
-      action={
-        canWithdraw && (
-          <Button onClick={() => goto(Pages.PearlWallet)} size="small">
-            Withdraw
-          </Button>
-        )
+        <Flex align="center" gap={4}>
+          <Text className="text-sm">
+            The agent is temporarily disabled due to technical issues until
+            further notice.
+            {isWithdrawn ? null : ' You can withdraw your funds anytime.'}
+          </Text>
+          {isWithdrawn ? null : (
+            <Button onClick={() => goto(Pages.AgentWallet)} size="small">
+              Withdraw
+            </Button>
+          )}
+        </Flex>
       }
     />
   );

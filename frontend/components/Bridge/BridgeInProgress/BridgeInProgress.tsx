@@ -1,16 +1,18 @@
 import { Flex, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { CustomAlert } from '@/components/Alert';
-import { AgentSetupCompleteModal, CardFlex } from '@/components/ui';
-import { Pages } from '@/enums/Pages';
+import { AgentSetupCompleteModal, Alert, CardFlex } from '@/components/ui';
+import { Pages } from '@/enums';
 import {
   useBridgingSteps,
   useMasterSafeCreationAndTransfer,
   usePageState,
 } from '@/hooks';
-import { BridgingStepStatus, CrossChainTransferDetails } from '@/types/Bridge';
-import { Nullable } from '@/types/Util';
+import {
+  BridgingStepStatus,
+  CrossChainTransferDetails,
+  Nullable,
+} from '@/types';
 
 import { BridgeTransferFlow } from '../BridgeTransferFlow';
 import { BridgeRetryOutcome, EnabledSteps } from '../types';
@@ -20,7 +22,7 @@ import { useRetryBridge } from './useRetryBridge';
 const { Text, Title } = Typography;
 
 const KeepAppOpenAlert = () => (
-  <CustomAlert
+  <Alert
     type="warning"
     showIcon
     message="Keep the app open until the process is complete."

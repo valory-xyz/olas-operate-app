@@ -1,12 +1,13 @@
 import { ethers } from 'ethers';
 
-import { MiddlewareChain, ServiceTemplate } from '@/client';
 import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from '@/config/tokens';
-import { EnvProvisionMap as EnvProvisionType } from '@/constants/envVariables';
-import { AgentType } from '@/enums/Agent';
-import { STAKING_PROGRAM_IDS } from '@/enums/StakingProgram';
-import { TokenSymbol } from '@/enums/Token';
-import { parseEther, parseUnits } from '@/utils/numberFormatters';
+import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
+import { AgentType, STAKING_PROGRAM_IDS, TokenSymbol } from '@/enums';
+import { ServiceTemplate } from '@/types';
+import { parseEther, parseUnits } from '@/utils';
+
+import { MiddlewareChainMap } from './chains';
+import { X402_ENABLED_FLAGS } from './x402';
 
 /**
  * Prefix for KPI description in service templates.
@@ -17,22 +18,22 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeicav6czopdtsenpfsozub5pqcnfdbhy7ys2komiu7x2vviutp2ice',
+  hash: 'bafybeietacqzmgg66komkz2aqn7ocq6a6zpyqmqbkxilrqolyzupmahsy4',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.27.2-rc.1',
+  service_version: 'v0.27.2-1-rc.2',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.27.2-rc.1',
+      version: 'v0.27.2-1-rc.2',
     },
   },
-  home_chain: MiddlewareChain.GNOSIS,
+  home_chain: MiddlewareChainMap.GNOSIS,
   configurations: {
-    [MiddlewareChain.GNOSIS]: {
+    [MiddlewareChainMap.GNOSIS]: {
       staking_program_id: STAKING_PROGRAM_IDS.PearlBeta, // default, may be overwritten
       nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
       rpc: 'http://localhost:8545', // overwritten
@@ -125,7 +126,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Irrelevant tools',
       description: '',
       value:
-        '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot"]',
+        '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot","resolve-market-reasoning-gpt-4.1"]',
       provision_type: EnvProvisionType.FIXED,
     },
     GENAI_API_KEY: {
@@ -133,6 +134,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       description: 'Gemini api key to allow the agent to use Gemini',
       value: '',
       provision_type: EnvProvisionType.USER,
+    },
+    USE_X402: {
+      name: 'Use x402',
+      description:
+        'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
+      value: X402_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
+      provision_type: EnvProvisionType.FIXED,
     },
   },
 } as const;
@@ -262,6 +270,13 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
+    USE_X402: {
+      name: 'Use x402',
+      description:
+        'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
+      value: X402_ENABLED_FLAGS[AgentMap.AgentsFun].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
 
@@ -271,9 +286,9 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
 const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.AgentsFun,
   name: 'Agents.Fun',
-  home_chain: MiddlewareChain.BASE,
+  home_chain: MiddlewareChainMap.BASE,
   configurations: {
-    [MiddlewareChain.BASE]: {
+    [MiddlewareChainMap.BASE]: {
       staking_program_id: STAKING_PROGRAM_IDS.AgentsFun1, // default, may be overwritten
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: 'http://localhost:8545', // overwritten
@@ -295,14 +310,14 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeieonldo4o3bgobawx6y4njqbyo5wgk7lzdxijth46kbetyzipnor4',
-  service_version: 'v0.5.9-rc.1',
+  hash: 'bafybeibgtlnjnryle6ewtwqmgzs3rizlfjixkayn64n6jyxawv4x43l4he',
+  service_version: 'v0.6.0-rc.1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.5.9-rc.1',
+      version: 'v0.6.0-rc.1',
     },
   },
 };
@@ -313,9 +328,9 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} Optimus`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  home_chain: MiddlewareChain.MODE,
+  home_chain: MiddlewareChainMap.MODE,
   configurations: {
-    [MiddlewareChain.MODE]: {
+    [MiddlewareChainMap.MODE]: {
       staking_program_id: STAKING_PROGRAM_IDS.ModiusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
@@ -463,6 +478,13 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '0x5b5F79BB667A25400a8f91F0c18D080abCfD430f',
       provision_type: EnvProvisionType.FIXED,
     },
+    USE_X402: {
+      name: 'Use x402',
+      description:
+        'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
+      value: X402_ENABLED_FLAGS[AgentMap.Modius].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
   ...BABYDEGEN_COMMON_TEMPLATE,
 } as const;
@@ -473,9 +495,9 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} Optimus service deployment on Optimism network`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  home_chain: MiddlewareChain.OPTIMISM,
+  home_chain: MiddlewareChainMap.OPTIMISM,
   configurations: {
-    [MiddlewareChain.OPTIMISM]: {
+    [MiddlewareChainMap.OPTIMISM]: {
       staking_program_id: STAKING_PROGRAM_IDS.OptimusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
@@ -588,6 +610,13 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
+    },
+    USE_X402: {
+      name: 'Use x402',
+      description:
+        'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
+      value: X402_ENABLED_FLAGS[AgentMap.Optimus].toString(),
+      provision_type: EnvProvisionType.FIXED,
     },
   },
   ...BABYDEGEN_COMMON_TEMPLATE,

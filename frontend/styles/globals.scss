@@ -191,6 +191,7 @@ textarea,
   opacity: 0.4;
   color: #000000 !important;
 }
+
 /* === End: button redesigns === */
 
 .balance {
@@ -252,6 +253,16 @@ textarea,
     border-color: #FFD6DA;
     background-color: #FFEBEC;
     color: #F00014;
+  }
+
+  &--success {
+    border-color: #DEF8E7;
+    background-color: #DEF8E7;
+    color: #176932;
+
+    .ant-alert-icon {
+      color: #28B858;
+    }
   }
 
   .ant-typography {
@@ -344,6 +355,10 @@ textarea,
 
 .mt-4 {
   margin-top: 4px !important;
+}
+
+.-mt-4 {
+  margin-top: -4px !important;
 }
 
 .mt-12 {
@@ -556,6 +571,10 @@ textarea,
   border-radius: 8px
 }
 
+.rounded-12 {
+  border-radius: 12px
+}
+
 // font size
 .text-xl {
   font-size: 20px;
@@ -661,6 +680,10 @@ ul.alert-list {
 
 .w-max {
   width: max-content !important;
+}
+
+.w-fit {
+  width: fit-content !important;
 }
 
 .max-width-200 {

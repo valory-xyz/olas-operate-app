@@ -7,18 +7,16 @@ import {
   useState,
 } from 'react';
 
-import { EvmChainId, onRampChainMap } from '@/constants/chains';
-import { Pages } from '@/enums/Pages';
-import { useMasterBalances } from '@/hooks/useBalanceContext';
-import { useElectronApi } from '@/hooks/useElectronApi';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
-import { Nullable } from '@/types/Util';
-import { delayInSeconds } from '@/utils/delay';
+import { EvmChainId, onRampChainMap } from '@/constants';
+import { Pages } from '@/enums';
 import {
-  asEvmChainDetails,
-  asMiddlewareChain,
-} from '@/utils/middlewareHelpers';
+  useElectronApi,
+  useMasterBalances,
+  usePageState,
+  useServices,
+} from '@/hooks';
+import { Nullable } from '@/types';
+import { asEvmChainDetails, asMiddlewareChain, delayInSeconds } from '@/utils';
 
 const ETH_RECEIVED_THRESHOLD = 0.9;
 

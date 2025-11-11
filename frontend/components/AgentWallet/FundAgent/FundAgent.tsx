@@ -1,6 +1,7 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Flex, Image, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { entries, isNil, isNumber } from 'lodash';
+import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
@@ -16,7 +17,7 @@ import { AddressZero, TokenSymbol } from '@/constants';
 import { Pages } from '@/enums';
 import { useAvailableAssets, usePageState, useServices } from '@/hooks';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
-import { formatUnitsToNumber } from '@/utils/numberFormatters';
+import { formatUnitsToNumber } from '@/utils';
 
 import { useAgentWallet } from '../AgentWalletProvider';
 import { ConfirmTransfer } from './ConfirmTransfer';
@@ -48,7 +49,7 @@ const PearlWalletToAgentWallet = () => {
         <Flex gap={8} align="center">
           <Text type="secondary">To</Text>{' '}
           {agentName && agentImgSrc && (
-            <Image src={agentImgSrc} width={28} height={28} alt={agentName} />
+            <Image src={agentImgSrc} alt={agentName} width={28} height={28} />
           )}
           <Text className="font-weight-500">{agentName}</Text>
         </Flex>

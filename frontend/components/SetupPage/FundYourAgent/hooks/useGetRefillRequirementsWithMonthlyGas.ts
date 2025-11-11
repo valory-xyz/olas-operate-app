@@ -1,6 +1,6 @@
+import { isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/client';
 import { getTokenDetails } from '@/components/Bridge/utils';
 import { ChainTokenConfig, TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
@@ -9,12 +9,13 @@ import { TokenSymbolConfigMap, TokenSymbolMap } from '@/constants/token';
 import { useServices } from '@/hooks';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/types';
 import { Address } from '@/types/Address';
 import { bigintMax } from '@/utils/calculations';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
-import { useBeforeBridgeFunds } from '../../Create/SetupEoaFunding/useBeforeBridgeFunds';
 import { TokenRequirement } from '../components/TokensRequirements';
+import { useBeforeBridgeFunds } from './useBeforeBridgeFunds';
 
 const ICON_OVERRIDES: Record<string, string> = {
   [TokenSymbolMap['XDAI']]: '/tokens/wxdai-icon.png',
@@ -34,7 +35,7 @@ const getTokenMeta = (tokenAddress: Address, chainConfig: ChainTokenConfig) => {
 };
 
 const getTokensDetailsForFunding = (
-  requirementsPerToken: { [tokenAddress: Address]: string },
+  requirementsPerToken: { [tokenAddress: Address]: bigint },
   chainConfig: ChainTokenConfig,
 ) => {
   const currentTokenRequirements: TokenRequirement[] = Object.entries(
@@ -76,12 +77,6 @@ type UseGetRefillRequirementsWithMonthlyGasReturn = {
    * initial funding requirements.
    */
   initialTokenRequirements: TokenRequirement[];
-  /**
-   * Current token requirements, used to get the token requirements at any moment
-   * @warning Shouldn't be used ideally, as it can be unreliable in the case of
-   * native tokens as monthly_gas is not accounted in the BE.
-   */
-  currentTokenRequirements: TokenRequirement[];
   isLoading: boolean;
   resetTokenRequirements: () => void;
 };
@@ -109,7 +104,6 @@ type UseGetRefillRequirementsWithMonthlyGasReturn = {
  *     }
  *   ],
  *   initialTokenRequirements: [...],
- *   currentTokenRequirements: [...],
  *   isLoading: false
  * }
  */
@@ -125,7 +119,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     resetQueryCache,
     isBalancesAndFundingRequirementsLoading,
   } = useBalanceAndRefillRequirementsContext();
-  const { masterEoa, masterSafes } = useMasterWalletContext();
+  const { masterEoa, getMasterSafeOf } = useMasterWalletContext();
   const { selectedAgentConfig, selectedAgentType } = useServices();
 
   const [isDummyServiceCreated, setIsDummyServiceCreated] = useState(false);
@@ -136,11 +130,10 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     TokenRequirement[] | null
   >(null);
 
-  const masterSafe = useMemo(() => {
-    return (masterSafes || []).find(
-      ({ evmChainId }) => evmChainId === selectedAgentConfig.evmHomeChainId,
-    );
-  }, [masterSafes, selectedAgentConfig.evmHomeChainId]);
+  const masterSafe = useMemo(
+    () => getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId),
+    [getMasterSafeOf, selectedAgentConfig.evmHomeChainId],
+  );
 
   const getRequirementsPerToken = useCallback(
     (
@@ -177,7 +170,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
         ? BigInt(balances?.[masterSafe.address]?.[AddressZero] ?? 0n)
         : 0n;
 
-      const requirementsPerToken = {} as { [tokenAddress: Address]: string };
+      const requirementsPerToken: { [tokenAddress: Address]: bigint } = {};
 
       Object.entries(masterSafeRequirements)?.forEach(
         ([tokenAddress, amount]) => {
@@ -199,10 +192,9 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
               bigintMax(masterSafeRequirementAmount, amountNeededForGas) +
               BigInt(masterEoaRequirementAmount ?? 0);
 
-            requirementsPerToken[tokenAddress as Address] =
-              nativeTotalRequired.toString();
+            requirementsPerToken[tokenAddress as Address] = nativeTotalRequired;
           } else {
-            requirementsPerToken[tokenAddress as Address] = amount.toString();
+            requirementsPerToken[tokenAddress as Address] = BigInt(amount);
           }
         },
       );
@@ -222,9 +214,10 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
   useEffect(() => {
     const createDummyService = async () => {
       await updateBeforeBridgingFunds();
-      await refetch?.();
+      await refetch();
       setIsDummyServiceCreated(true);
     };
+
     if (shouldCreateDummyService && !isDummyServiceCreated) {
       createDummyService();
     }
@@ -234,6 +227,26 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     shouldCreateDummyService,
     isDummyServiceCreated,
   ]);
+
+  /**
+   * Reset the token requirements and query cache manually so the user
+   * doesn't see stale values / values from other agents.
+   */
+  const resetTokenRequirements = useCallback(
+    (resetCache = true) => {
+      setTotalTokenRequirements(null);
+      setInitialTokenRequirements(null);
+      if (resetCache) resetQueryCache?.();
+    },
+    [resetQueryCache],
+  );
+
+  /**
+   * @important Reset the token requirements when the selected agent type changes.
+   */
+  useEffect(() => {
+    resetTokenRequirements(false);
+  }, [selectedAgentType, resetTokenRequirements]);
 
   const currentTokenRequirements = useMemo(() => {
     return getRequirementsPerToken(refillRequirements);
@@ -246,33 +259,19 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
     }
   }, [currentTokenRequirements, initialTokenRequirements]);
 
-  // Get the total token requirements, using "totalRequirements" from BE, instead of "refillRequirements"
+  // Get the total token requirements
   useEffect(() => {
-    if (
-      totalTokenRequirements === null ||
-      totalTokenRequirements.length === 0
-    ) {
+    if (isEmpty(totalTokenRequirements)) {
       setTotalTokenRequirements(getRequirementsPerToken(totalRequirements));
     }
   }, [totalRequirements, getRequirementsPerToken, totalTokenRequirements]);
 
-  /**
-   * Reset the token requirements and query cache manually so the user
-   * doesn't see stale values / values from other agents.
-   */
-  const resetTokenRequirements = () => {
-    setTotalTokenRequirements(null);
-    setInitialTokenRequirements(null);
-    resetQueryCache?.();
-  };
-
   return {
-    totalTokenRequirements: totalTokenRequirements || [],
-    currentTokenRequirements,
-    initialTokenRequirements:
-      initialTokenRequirements ?? currentTokenRequirements,
     isLoading:
       isBalancesAndFundingRequirementsLoading || !totalTokenRequirements,
+    initialTokenRequirements:
+      initialTokenRequirements ?? currentTokenRequirements,
+    totalTokenRequirements: totalTokenRequirements || [],
     resetTokenRequirements,
   };
 };

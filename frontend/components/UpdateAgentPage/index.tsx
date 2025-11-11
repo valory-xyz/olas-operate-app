@@ -5,15 +5,23 @@ import {
   AgentFormContainer,
   useDisplayAgentForm,
 } from '../SetupPage/SetupYourAgent/useDisplayAgentForm';
-import { AgentsFunUpdateSetup } from './components/AgentsFunUpdateSetup';
+import { AgentsFunUpdateForm } from './components/AgentsFunUpdateForm';
 import { ModiusUpdatePage } from './components/ModiusUpdateForm';
 import { OptimusUpdatePage } from './components/OptimusUpdateForm';
 import { PredictUpdatePage } from './components/PredictUpdateForm';
 import { UpdateAgentProvider } from './context/UpdateAgentProvider';
 
 export const UpdateAgentPage = () => {
-  const { selectedAgentType } = useServices();
+  const { selectedAgentType, selectedAgentConfig } = useServices();
   const displayForm = useDisplayAgentForm();
+
+  const { isX402Enabled } = selectedAgentConfig;
+
+  if (isX402Enabled) {
+    throw new Error(
+      'Updating agent feature is not supported for the selected agent.',
+    );
+  }
 
   return (
     <AgentFormContainer>
@@ -21,7 +29,9 @@ export const UpdateAgentPage = () => {
         {selectedAgentType === AgentMap.PredictTrader && (
           <PredictUpdatePage renderForm={displayForm} />
         )}
-        {selectedAgentType === AgentMap.AgentsFun && <AgentsFunUpdateSetup />}
+        {selectedAgentType === AgentMap.AgentsFun && (
+          <AgentsFunUpdateForm renderForm={displayForm} />
+        )}
         {selectedAgentType === AgentMap.Modius && (
           <ModiusUpdatePage renderForm={displayForm} />
         )}

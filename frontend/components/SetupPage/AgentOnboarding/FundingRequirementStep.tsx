@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { TbCreditCardFilled } from 'react-icons/tb';
 
 import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
+import { Alert } from '@/components/ui';
 import { AGENT_CONFIG } from '@/config/agents';
 import {
   AgentType,
@@ -15,6 +16,24 @@ import { useFundingRequirements } from '@/hooks';
 import { asEvmChainDetails } from '@/utils';
 
 const { Text, Title } = Typography;
+
+const UnderConstructionAlert = () => (
+  <Alert
+    type="warning"
+    fullWidth={false}
+    showIcon
+    className="rounded-12"
+    message={
+      <Flex justify="space-between" gap={4} vertical>
+        <Text className="text-sm font-weight-500">Agent Under Development</Text>
+        <Text className="text-sm">
+          The agent is unavailable due to technical issues for an unspecified
+          time.
+        </Text>
+      </Flex>
+    }
+  />
+);
 
 type HeaderProps = {
   agentType: AgentType;
@@ -84,7 +103,7 @@ const MinimumStakingRequirements = ({
           <Image
             src="/tokens/olas-icon.png"
             alt="OLAS token for staking"
-            width={18}
+            width={20}
             height={20}
           />
           <Text className="leading-normal">
@@ -163,6 +182,7 @@ export const FundingRequirementStep = ({
     displayName: agentName,
     middlewareHomeChainId,
     category,
+    isUnderConstruction,
   } = AGENT_CONFIG[agentType];
   const { name, displayName } = asEvmChainDetails(middlewareHomeChainId);
 
@@ -175,10 +195,18 @@ export const FundingRequirementStep = ({
           category={category}
           desc={desc}
         />
-        <OperatingChain chainName={name} chainDisplayName={displayName} />
-        <MinimumStakingRequirements agentType={agentType} />
-        <MinimumFundingRequirements agentType={agentType} />
-        <YouCanCoverAllRequirements />
+        {isUnderConstruction ? (
+          <div style={{ marginBottom: 300 }}>
+            <UnderConstructionAlert />
+          </div>
+        ) : (
+          <>
+            <OperatingChain chainName={name} chainDisplayName={displayName} />
+            <MinimumStakingRequirements agentType={agentType} />
+            <MinimumFundingRequirements agentType={agentType} />
+            <YouCanCoverAllRequirements />
+          </>
+        )}
       </Flex>
     </IntroductionAnimatedContainer>
   );

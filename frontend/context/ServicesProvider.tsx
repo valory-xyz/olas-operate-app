@@ -1,6 +1,6 @@
 import { QueryObserverBaseResult, useQuery } from '@tanstack/react-query';
 import { message, MessageArgsProps } from 'antd';
-import { noop } from 'lodash';
+import { noop, values } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -11,39 +11,45 @@ import {
   useState,
 } from 'react';
 
-import {
-  Deployment,
-  MiddlewareChain,
-  MiddlewareDeploymentStatus,
-  MiddlewareServiceResponse,
-  ServiceValidationResponse,
-} from '@/client';
 import { AGENT_CONFIG } from '@/config/agents';
-import { AgentMap, AgentType } from '@/constants/agent';
 import {
+  AgentMap,
+  AgentType,
+  EvmChainId,
   FIFTEEN_SECONDS_INTERVAL,
   FIVE_SECONDS_INTERVAL,
-} from '@/constants/intervals';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
-import { MESSAGE_WIDTH } from '@/constants/width';
-import { Pages } from '@/enums/Pages';
+  MESSAGE_WIDTH,
+  MiddlewareChain,
+  MiddlewareDeploymentStatus,
+  REACT_QUERY_KEYS,
+} from '@/constants';
 import {
   AgentEoa,
   AgentSafe,
   AgentWallet,
+  Pages,
   WalletOwnerType,
   WalletType,
-} from '@/enums/Wallet';
-import { useElectronApi } from '@/hooks/useElectronApi';
-import { usePageState } from '@/hooks/usePageState';
-import { UsePause, usePause } from '@/hooks/usePause';
-import { useStore } from '@/hooks/useStore';
+} from '@/enums';
+import {
+  useElectronApi,
+  usePageState,
+  UsePause,
+  usePause,
+  useStore,
+} from '@/hooks';
 import { ServicesService } from '@/service/Services';
-import { AgentConfig } from '@/types/Agent';
-import { Service } from '@/types/Service';
-import { Maybe, Nullable, Optional } from '@/types/Util';
-import { isNilOrEmpty } from '@/utils/lodashExtensions';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import {
+  AgentConfig,
+  Maybe,
+  MiddlewareServiceResponse,
+  Nullable,
+  Optional,
+  Service,
+  ServiceDeployment,
+  ServiceValidationResponse,
+} from '@/types';
+import { asEvmChainId, isNilOrEmpty } from '@/utils';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 
@@ -63,13 +69,14 @@ type ServicesResponse = Pick<
 
 type ServicesContextType = {
   services?: MiddlewareServiceResponse[];
+  availableServiceConfigIds: { configId: string; chainId: EvmChainId }[];
   serviceWallets?: AgentWallet[];
   selectedService?: Service;
-  selectedServiceStatusOverride?: Maybe<MiddlewareDeploymentStatus>;
+  serviceStatusOverrides?: Record<string, Maybe<MiddlewareDeploymentStatus>>;
   isSelectedServiceDeploymentStatusLoading: boolean;
   selectedAgentConfig: AgentConfig;
   selectedAgentType: AgentType;
-  deploymentDetails: Deployment | undefined;
+  deploymentDetails: ServiceDeployment | undefined;
   updateAgentType: (agentType: AgentType) => void;
   overrideSelectedServiceStatus: (
     status?: Maybe<MiddlewareDeploymentStatus>,
@@ -88,6 +95,7 @@ export const ServicesContext = createContext<ServicesContextType>({
   deploymentDetails: undefined,
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
+  availableServiceConfigIds: [],
 });
 
 /**
@@ -155,8 +163,12 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     },
   });
 
-  const [selectedServiceStatusOverride, setSelectedServiceStatusOverride] =
-    useState<Maybe<MiddlewareDeploymentStatus>>();
+  // Stores temporary overrides for service statuses to avoid UI glitches.
+  // Right after updating the status on the backend, initial queries
+  // might return outdated or incorrect value
+  const [serviceStatusOverrides, setServiceStatusOverrides] = useState<
+    Record<string, Maybe<MiddlewareDeploymentStatus>>
+  >({});
 
   const selectedService = useMemo<Service | undefined>(() => {
     if (!services) return;
@@ -191,13 +203,10 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     return {
       ...selectedService,
       deploymentStatus:
-        selectedServiceStatusOverride ?? deploymentDetails?.status,
+        serviceStatusOverrides[selectedService.service_config_id] ??
+        deploymentDetails?.status,
     };
-  }, [
-    selectedService,
-    deploymentDetails?.status,
-    selectedServiceStatusOverride,
-  ]);
+  }, [selectedService, deploymentDetails?.status, serviceStatusOverrides]);
 
   const selectedAgentConfig = useMemo(() => {
     const config: Maybe<AgentConfig> = AGENT_CONFIG[selectedAgentType];
@@ -286,6 +295,40 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     setSelectedServiceConfigId(currentService.service_config_id);
   }, [selectedServiceConfigId, services, selectedAgentConfig]);
 
+  const overrideSelectedServiceStatus = useCallback(
+    (status: Maybe<MiddlewareDeploymentStatus>) => {
+      if (selectedServiceConfigId) {
+        setServiceStatusOverrides((prev) => ({
+          ...prev,
+          [selectedServiceConfigId]: status,
+        }));
+      }
+    },
+    [selectedServiceConfigId],
+  );
+
+  /**
+   * Service config IDs for all non-under-construction agents
+   */
+  const availableServiceConfigIds = useMemo(() => {
+    if (!services) return [];
+    return services
+      .filter(({ service_public_id, home_chain }) => {
+        const currentAgent = values(AGENT_CONFIG).find(
+          ({ servicePublicId, evmHomeChainId }) =>
+            servicePublicId === service_public_id &&
+            evmHomeChainId === asEvmChainId(home_chain),
+        );
+        return (
+          !currentAgent?.isUnderConstruction && !!currentAgent?.isAgentEnabled
+        );
+      })
+      .map(({ service_config_id, home_chain }) => ({
+        configId: service_config_id,
+        chainId: asEvmChainId(home_chain),
+      }));
+  }, [services]);
+
   return (
     <ServicesContext.Provider
       value={{
@@ -294,6 +337,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         isFetched: !isServicesLoading,
         isLoading: isServicesLoading,
         refetch,
+        availableServiceConfigIds,
 
         // pause
         paused,
@@ -302,19 +346,15 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
         // selected service info
         selectedService: selectedServiceWithStatus,
-        selectedServiceStatusOverride,
         isSelectedServiceDeploymentStatusLoading,
         selectedAgentConfig,
         selectedAgentType,
 
         // others
         deploymentDetails,
+        serviceStatusOverrides,
         updateAgentType,
-        overrideSelectedServiceStatus: (
-          status: Maybe<MiddlewareDeploymentStatus>,
-        ) => {
-          setSelectedServiceStatusOverride(status);
-        },
+        overrideSelectedServiceStatus,
       }}
     >
       {children}

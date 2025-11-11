@@ -1,12 +1,11 @@
-import { Button, Flex, Image, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
+import Image from 'next/image';
 import styled from 'styled-components';
 
-import { CardFlex } from '@/components/ui/CardFlex';
+import { CardFlex } from '@/components/ui';
 import { COLOR, NA, TokenSymbolConfigMap, TokenSymbolMap } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { useSharedContext } from '@/hooks';
-import { useAvailableAgentAssets } from '@/hooks/useAvailableAgentAssets';
-import { usePageState } from '@/hooks/usePageState';
+import { useAvailableAgentAssets, usePageState } from '@/hooks';
 
 const { Text, Title } = Typography;
 
@@ -22,21 +21,20 @@ const TokenWrapper = styled(Flex)`
  * To display wallet overview on the main page.
  */
 export const Wallet = () => {
-  const { isMainOlasBalanceLoading } = useSharedContext();
   const { goto } = usePageState();
-  const availableAssets = useAvailableAgentAssets();
+  const { availableAssets, isLoading } = useAvailableAgentAssets();
   const availableAssetsExceptOlas = availableAssets.filter(
     ({ symbol, amount }) => symbol !== TokenSymbolMap.OLAS && amount > 0,
   );
 
   return (
-    <Flex vertical>
+    <Flex vertical gap={12}>
       <Flex justify="space-between" align="center">
-        <Title level={5} className="mt-0 mb-12">
+        <Title level={5} className="m-0">
           Wallet
         </Title>
         <Button
-          disabled={isMainOlasBalanceLoading}
+          disabled={isLoading}
           onClick={() => goto(Pages.AgentWallet)}
           size="small"
         >
@@ -55,9 +53,9 @@ export const Wallet = () => {
                       <TokenWrapper key={symbol} gap={6} align="center">
                         <Image
                           src={TokenSymbolConfigMap[symbol].image}
-                          alt={symbol}
+                          alt={`${symbol} icon`}
                           width={20}
-                          className="flex"
+                          height={20}
                         />
                         <Text>{symbol}</Text>
                       </TokenWrapper>

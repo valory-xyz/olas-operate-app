@@ -4,12 +4,10 @@ import styled from 'styled-components';
 
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
 import { COLOR, EvmChainId, EvmChainName } from '@/constants';
-import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
   useFeatureFlag,
   useOnRampContext,
-  usePageState,
   useServices,
   useSetup,
   useTotalFiatFromNativeToken,
@@ -61,7 +59,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
     );
-  const isLoading = isNativeTokenLoading || isFiatLoading || !fiatAmount;
+  const isLoading = isNativeTokenLoading || isFiatLoading;
 
   return (
     <FundMethodCard>
@@ -74,6 +72,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
         <TokenRequirements
           fiatAmount={fiatAmount ?? 0}
           isLoading={isLoading}
+          hasError={hasNativeTokenError}
           fundType="onRamp"
         />
       </div>
@@ -81,7 +80,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
         type="primary"
         size="large"
         onClick={() => goto(SetupScreen.SetupOnRamp)}
-        disabled={isLoading}
+        disabled={isLoading || hasNativeTokenError}
       >
         Buy Crypto with USD
       </Button>
@@ -155,23 +154,28 @@ const BridgeTokens = ({
   );
 };
 
+/**
+ * Fund your agent by buying crypto via on-ramp or transferring/bridging tokens.
+ */
 export const FundYourAgent = () => {
+  const [isBridgeOnboardingEnabled, isOnRampEnabled] = useFeatureFlag([
+    'bridge-onboarding',
+    'on-ramp',
+  ]);
+  const { goto } = useSetup();
   const { selectedAgentConfig } = useServices();
-  const { goto } = usePageState();
-  const { evmHomeChainId, requiresSetup } = selectedAgentConfig;
+  const { evmHomeChainId, requiresSetup, isX402Enabled } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const {
     totalTokenRequirements: tokenRequirements,
     isLoading,
     resetTokenRequirements,
-    // Service creation for agents requiring setup is already handled at the time of agentForm
   } = useGetRefillRequirementsWithMonthlyGas({
-    shouldCreateDummyService: !requiresSetup,
+    // In case x402 feature is turned off, service creation for agents
+    // requiring setup is already handled at the time of agentForm
+    shouldCreateDummyService: requiresSetup && !isX402Enabled ? false : true,
   });
-  const [isBridgeOnboardingEnabled, isOnRampEnabled] = useFeatureFlag([
-    'bridge-onboarding',
-    'on-ramp',
-  ]);
+
   const { networkId: onRampChainId } = useOnRampContext();
   const areTokenRequirementsLoading =
     isLoading || tokenRequirements.length === 0;
@@ -181,7 +185,7 @@ export const FundYourAgent = () => {
       <BackButton
         onPrev={() => {
           resetTokenRequirements();
-          goto(Pages.Main);
+          goto(SetupScreen.SelectStaking);
         }}
       />
       <Title level={3} className="mt-12">

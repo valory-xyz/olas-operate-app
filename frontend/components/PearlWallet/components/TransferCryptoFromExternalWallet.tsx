@@ -1,19 +1,19 @@
-import { Button, Flex, Image, TableColumnsType, Typography } from 'antd';
+import { Button, Flex, TableColumnsType, Typography } from 'antd';
 import { kebabCase } from 'lodash';
-import { useCallback } from 'react';
+import Image from 'next/image';
 import { LuInfo } from 'react-icons/lu';
-import { TbCopy, TbWallet } from 'react-icons/tb';
 import { styled } from 'styled-components';
 
-import { CustomAlert } from '@/components/Alert';
-import { InfoTooltip } from '@/components/InfoTooltip';
-import { BackButton, CardFlex, Table } from '@/components/ui';
+import {
+  Alert,
+  BackButton,
+  CardFlex,
+  FundingDescription,
+  Table,
+} from '@/components/ui';
 import { COLOR, TokenSymbolConfigMap } from '@/constants';
-import { useMessageApi } from '@/context/MessageProvider';
-import { Address } from '@/types/Address';
-import { Nullable } from '@/types/Util';
-import { AvailableAsset } from '@/types/Wallet';
-import { copyToClipboard, formatNumber } from '@/utils';
+import { Address, AvailableAsset, Nullable } from '@/types';
+import { formatNumber } from '@/utils';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -24,7 +24,7 @@ export const YouPayContainer = styled(Flex)`
 `;
 
 const ChainWarningAlert = ({ chainName }: { chainName: string }) => (
-  <CustomAlert
+  <Alert
     message={`Only send on ${chainName} Chain — funds on other networks are unrecoverable.`}
     type="warning"
     showIcon
@@ -43,61 +43,6 @@ const DoesNotTrackIncomingTransfers = () => (
   </Flex>
 );
 
-type TransferDetailsProps = { chainName: string; address?: Address };
-const TransferDetails = ({ chainName, address }: TransferDetailsProps) => {
-  const message = useMessageApi();
-
-  const handleCopyAddress = useCallback(() => {
-    if (!address) return;
-    copyToClipboard(address).then(() => message.success('Address copied!'));
-  }, [address, message]);
-
-  return (
-    <YouPayContainer vertical gap={24}>
-      <Flex vertical gap={8}>
-        <Text className="text-sm text-neutral-tertiary">On</Text>
-        <Flex gap={8} align="center">
-          <Image
-            src={`/chains/${kebabCase(chainName)}-chain.png`}
-            alt={chainName}
-            width={20}
-            height={20}
-            preview={false}
-            className="flex"
-          />
-          <Text>{chainName} Chain</Text>
-        </Flex>
-      </Flex>
-
-      <Flex vertical gap={8}>
-        <Text className="text-sm text-neutral-tertiary">From</Text>
-        <Flex gap={8} align="center">
-          <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
-          <Text>Your external wallet</Text>
-          <InfoTooltip placement="top" iconColor={COLOR.BLACK}>
-            <Paragraph className="text-sm m-0">
-              This is the wallet you use outside Pearl
-            </Paragraph>
-          </InfoTooltip>
-        </Flex>
-      </Flex>
-
-      <Flex vertical gap={8}>
-        <Text className="text-sm text-neutral-tertiary">To Pearl Wallet</Text>
-        <Flex gap={8} align="center">
-          <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
-          <Text>{address}</Text>
-        </Flex>
-        <Flex>
-          <Button onClick={handleCopyAddress} size="small" icon={<TbCopy />}>
-            Copy
-          </Button>
-        </Flex>
-      </Flex>
-    </YouPayContainer>
-  );
-};
-
 const getColumns = (
   requestedColumnText = 'Requested Deposit Amount',
 ): TableColumnsType<AvailableAsset> =>
@@ -111,7 +56,7 @@ const getColumns = (
             src={TokenSymbolConfigMap[record.symbol].image}
             alt={record.symbol}
             width={20}
-            className="flex"
+            height={20}
           />
           <Text>{record.symbol}</Text>
         </Flex>
@@ -165,7 +110,13 @@ export const TransferCryptoFromExternalWallet = ({
       </Flex>
 
       <ChainWarningAlert chainName={chainName} />
-      {address && <TransferDetails chainName={chainName} address={address} />}
+      {address && (
+        <FundingDescription
+          address={address}
+          chainName={chainName}
+          chainImage={`/chains/${kebabCase(chainName)}-chain.png`}
+        />
+      )}
       <Table<AvailableAsset>
         dataSource={tokensToDeposit}
         columns={getColumns(requestedColumnText)}

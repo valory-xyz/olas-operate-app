@@ -9,7 +9,6 @@ import {
   useState,
 } from 'react';
 
-import { MiddlewareServiceResponse, TokenBalanceRecord } from '@/client';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
 import {
@@ -32,11 +31,13 @@ import {
   Address,
   AgentConfig,
   AvailableAsset,
+  MiddlewareServiceResponse,
   Nullable,
   Optional,
   StakedAsset,
   TokenAmountDetails,
   TokenAmounts,
+  TokenBalanceRecord,
   ValueOf,
 } from '@/types';
 import { generateName } from '@/utils';
@@ -76,6 +77,7 @@ const getChainList = (services?: MiddlewareServiceResponse[]) => {
 const PearlWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;
   updateStep: (newStep: ValueOf<typeof STEPS>) => void;
+  gotoPearlWallet: () => void;
   isLoading: boolean;
   chains: WalletChain[];
   masterSafeAddress: Nullable<Address>;
@@ -100,6 +102,7 @@ const PearlWalletContext = createContext<{
 }>({
   walletStep: STEPS.PEARL_WALLET_SCREEN,
   updateStep: () => {},
+  gotoPearlWallet: () => {},
   isLoading: false,
   walletChainId: null,
   masterSafeAddress: null,
@@ -130,11 +133,12 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     useBalanceContext();
   const { getRefillRequirementsOf } = useBalanceAndRefillRequirementsContext();
   const { masterSafes } = useMasterWalletContext();
-  const { pageState } = usePageState();
+  const { pageState, goto } = usePageState();
 
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
     STEPS.PEARL_WALLET_SCREEN,
   );
+
   const [walletChainId, setWalletChainId] = useState<EvmChainId>(
     selectedAgentConfig.evmHomeChainId,
   );
@@ -142,6 +146,11 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const [amountsToDeposit, setAmountsToDeposit] = useState<TokenAmounts>({});
   const [defaultRequirementDepositValues, setDefaultDepositValues] =
     useState<TokenBalanceRecord>({});
+
+  // Update chain id when switching between agents
+  useEffect(() => {
+    setWalletChainId(selectedAgentConfig.evmHomeChainId);
+  }, [selectedAgentConfig.evmHomeChainId]);
 
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
     useAvailableAssets(walletChainId, {
@@ -240,6 +249,11 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [onReset],
   );
 
+  const gotoPearlWallet = useCallback(() => {
+    goto(Pages.PearlWallet);
+    updateStep(STEPS.PEARL_WALLET_SCREEN);
+  }, [updateStep, goto]);
+
   const isLoading =
     isServicesLoading ||
     !isLoaded ||
@@ -251,6 +265,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       value={{
         walletStep,
         updateStep,
+        gotoPearlWallet,
+
         isLoading,
         availableAssets,
         stakedAssets,

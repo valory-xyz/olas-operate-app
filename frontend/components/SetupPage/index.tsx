@@ -6,16 +6,13 @@ import { COLOR } from '@/constants/colors';
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
-import { AgentSelection } from '../AgentSelection';
+import { SelectStakingPage } from '../SelectStakingPage';
 import { CardFlex } from '../ui/CardFlex';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
 import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding/SetupBridgeOnboarding';
-import { SetupCreateSafe } from './Create/SetupCreateSafe';
-import { SetupEoaFunding } from './Create/SetupEoaFunding/SetupEoaFunding';
 import { SetupOnRamp } from './Create/SetupOnRamp/SetupOnRamp';
 import { SetupPassword } from './Create/SetupPassword';
-import { SetupSeedPhrase } from './Create/SetupSeedPhrase';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
 import { FundYourAgent } from './FundYourAgent/FundYourAgent';
 import { TransferFunds } from './FundYourAgent/TransferFunds';
@@ -23,7 +20,6 @@ import {
   SetupRestoreMain,
   SetupRestoreSetPassword,
   SetupRestoreViaBackup,
-  SetupRestoreViaSeed,
 } from './SetupRestore';
 import { SetupWelcome } from './SetupWelcome';
 import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
@@ -60,6 +56,7 @@ const screenWithoutCards: SetupScreen[] = [
   SetupScreen.TransferFunds,
   SetupScreen.SetupBridgeOnboardingScreen,
   SetupScreen.SetupOnRamp,
+  SetupScreen.SelectStaking,
 ];
 
 export const Setup = () => {
@@ -73,14 +70,14 @@ export const Setup = () => {
       // Create account
       case SetupScreen.SetupPassword:
         return <SetupPassword />;
-      case SetupScreen.SetupSeedPhrase:
-        return <SetupSeedPhrase />;
       case SetupScreen.SetupBackupSigner:
         return <SetupBackupSigner />;
       case SetupScreen.AgentOnboarding:
         return <AgentOnboarding />;
       case SetupScreen.SetupYourAgent:
         return <SetupYourAgent />;
+      case SetupScreen.SelectStaking:
+        return <SelectStakingPage mode="onboard" />;
       case SetupScreen.FundYourAgent:
         return <FundYourAgent />;
       case SetupScreen.TransferFunds:
@@ -92,24 +89,9 @@ export const Setup = () => {
       case SetupScreen.EarlyAccessOnly:
         return <EarlyAccessOnly />;
 
-      // TODO: to be removed post v1 release
-      case SetupScreen.SetupEoaFunding:
-        return <SetupEoaFunding />;
-      // TODO: to be removed post v1 release
-      case SetupScreen.SetupEoaFundingIncomplete:
-        return <SetupEoaFunding />;
-      // TODO: to be removed post v1 release
-      case SetupScreen.SetupCreateSafe:
-        return <SetupCreateSafe />;
-      // TODO: to be removed post v1 release
-      case SetupScreen.AgentSelection:
-        return <AgentSelection showSelected={false} />;
-
       // Restore account, screens to be re-implemented as per v1
       case SetupScreen.Restore:
         return <SetupRestoreMain />;
-      case SetupScreen.RestoreViaSeed:
-        return <SetupRestoreViaSeed />;
       case SetupScreen.RestoreSetPassword:
         return <SetupRestoreSetPassword />;
       case SetupScreen.RestoreViaBackup:

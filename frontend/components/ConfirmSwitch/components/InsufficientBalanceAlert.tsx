@@ -1,6 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 
-import { CustomAlert } from '@/components/Alert';
+import { Alert, Tooltip } from '@/components/ui';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { Pages } from '@/enums';
 import { usePageState } from '@/hooks';
 import { formatNumber } from '@/utils';
@@ -17,9 +18,10 @@ export const InsufficientBalanceAlert = ({
   chainName,
 }: InsufficientBalanceAlertProps) => {
   const { goto } = usePageState();
+  const { masterSafeAddress } = usePearlWallet();
 
   return (
-    <CustomAlert
+    <Alert
       type="warning"
       showIcon
       className="mb-24"
@@ -30,12 +32,17 @@ export const InsufficientBalanceAlert = ({
             on {chainName} Chain to continue.
           </Text>
 
-          <Button
-            size="small"
-            onClick={() => goto(Pages.DepositOlasForStaking)}
+          <Tooltip
+            title={masterSafeAddress ? null : 'Complete agent setup to enable'}
           >
-            Deposit OLAS
-          </Button>
+            <Button
+              size="small"
+              disabled={!masterSafeAddress}
+              onClick={() => goto(Pages.DepositOlasForStaking)}
+            >
+              Deposit OLAS
+            </Button>
+          </Tooltip>
         </Flex>
       }
     />

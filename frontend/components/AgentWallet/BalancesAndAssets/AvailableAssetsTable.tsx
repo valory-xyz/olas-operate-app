@@ -1,9 +1,10 @@
-import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
+import { Flex, TableColumnsType, Typography } from 'antd';
+import Image from 'next/image';
 
-import { Table } from '@/components/ui/Table';
-import { TokenSymbolConfigMap } from '@/constants/token';
+import { Table } from '@/components/ui';
+import { TokenSymbolConfigMap } from '@/constants';
 import { AvailableAsset } from '@/types/Wallet';
-import { formatNumber } from '@/utils/numberFormatters';
+import { formatNumber } from '@/utils';
 
 import { useAgentWallet } from '../AgentWalletProvider';
 
@@ -15,12 +16,11 @@ const columns: TableColumnsType<AvailableAsset> = [
     key: 'token',
     render: (_: unknown, record: AvailableAsset) => (
       <Flex align="center" gap={8}>
-        <AntdImage
-          width={20}
+        <Image
           src={TokenSymbolConfigMap[record.symbol].image}
           alt={record.symbol}
-          preview={false}
-          className="flex"
+          width={20}
+          height={20}
         />
         <Text>{record.symbol}</Text>
       </Flex>

@@ -1,7 +1,7 @@
 import { Table as AntdTable, TableProps } from 'antd';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
+import { COLOR } from '@/constants';
 
 const TableWrapper = styled.div<{ $noBorder?: boolean }>`
   .ant-table-container {

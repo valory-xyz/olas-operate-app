@@ -1,10 +1,10 @@
-import { Flex, Image, List as AntdList, Typography } from 'antd';
+import { Flex, List as AntdList, Typography } from 'antd';
 import { kebabCase } from 'lodash';
+import Image from 'next/image';
 import React from 'react';
 import styled from 'styled-components';
 
-import { MiddlewareChain } from '@/client';
-import { COLOR, TokenSymbolConfigMap } from '@/constants';
+import { COLOR, MiddlewareChain, TokenSymbolConfigMap } from '@/constants';
 import { CrossChainTransferDetails, TokenTransfer } from '@/types/Bridge';
 import { asEvmChainDetails, formatUnitsToNumber } from '@/utils';
 
@@ -23,19 +23,20 @@ const List = styled(AntdList<TokenTransfer>)`
   }
 `;
 
-const TransferChain = ({ chainName }: { chainName: MiddlewareChain }) => (
-  <Flex gap={8} align="center" flex={1}>
-    <Image
-      src={`/chains/${kebabCase(asEvmChainDetails(chainName).name)}-chain.png`}
-      width={20}
-      alt="chain logo"
-      style={{ display: 'flex' }}
-    />
-    <Text className="text-sm">
-      {asEvmChainDetails(chainName).displayName} Chain
-    </Text>
-  </Flex>
-);
+const TransferChain = ({ chainName }: { chainName: MiddlewareChain }) => {
+  const { name, displayName } = asEvmChainDetails(chainName);
+  return (
+    <Flex gap={8} align="center" flex={1}>
+      <Image
+        src={`/chains/${kebabCase(name)}-chain.png`}
+        alt={`${displayName} Chain`}
+        width={20}
+        height={20}
+      />
+      <Text className="text-sm">{displayName} Chain</Text>
+    </Flex>
+  );
+};
 
 const TransferringAndReceivingRow = ({
   isBridgeCompleted,
@@ -68,23 +69,13 @@ const TransferRow = ({ transfer }: { transfer: TokenTransfer }) => {
     <List.Item>
       <Flex justify="space-between" className="w-full">
         <Flex flex={1} align="center" gap={8}>
-          <Image
-            src={fromIconSrc}
-            alt={fromSymbol}
-            width={20}
-            style={{ display: 'flex' }}
-          />
+          <Image src={fromIconSrc} alt={fromSymbol} width={20} height={20} />
           <Text>
             {formatUnitsToNumber(fromAmount, decimals, 5)} {fromSymbol}
           </Text>
         </Flex>
         <Flex flex={1} align="center" gap={8}>
-          <Image
-            src={toIconSrc}
-            alt={toSymbol}
-            width={20}
-            style={{ display: 'flex' }}
-          />
+          <Image src={toIconSrc} alt={toSymbol} width={20} height={20} />
           <Text>
             {formatUnitsToNumber(toAmount, decimals, 5)} {toSymbol}
           </Text>

@@ -1,9 +1,12 @@
 name: Release for Windows
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  workflow_call:
+    inputs:
+      tag:
+        description: "Tag name to build (e.g., v1.2.3-rc1)"
+        required: true
+        type: string
 
 jobs:
   build-windows:
@@ -23,7 +26,10 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
 
       # Set up Python with setup-python action and add it to PATH
       - uses: actions/setup-python@v5
@@ -104,15 +110,17 @@ jobs:
       - name: Set variables 
         id: variables 
         run: | 
-          echo "::set-output name=version::${GITHUB_REF#refs/tags/v}" 
+          VERSION='${{ inputs.tag }}'
+          VERSION_NO_V=${VERSION#v}
+          echo "version=$VERSION_NO_V" >> $GITHUB_OUTPUT 
           echo "SM_HOST=${{ secrets.SM_HOST }}" >> "$GITHUB_ENV" 
           echo "SM_API_KEY=${{ secrets.SM_API_KEY }}" >> "$GITHUB_ENV" 
 
-          if [[ -n $(echo -n "${{ github.ref_name }}"|egrep "\-(ga|ea|release|signed)$") ]]; then
-            echo "${{ github.ref_name }} is a release tag! enable signature support"
+          if [[ -n $(echo -n "${{ inputs.tag }}"|egrep "\-(ga|ea|release|signed)$") ]]; then
+            echo "${{ inputs.tag }} is a release tag! enable signature support"
             echo "SM_KEY_PAIR_ALIAS=${{ secrets.SM_KEY_PAIR_ALIAS }}" >> "$GITHUB_ENV" 
           else
-            echo "${{ github.ref_name }} is a NOT release tag! disable signature support"
+            echo "${{ inputs.tag }} is a NOT release tag! disable signature support"
           fi
           
           echo "SM_CLIENT_CERT_FILE=D:\\Certificate_pkcs12.p12" >> "$GITHUB_ENV" 

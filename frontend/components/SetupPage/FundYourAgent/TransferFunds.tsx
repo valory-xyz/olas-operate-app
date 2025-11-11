@@ -2,21 +2,25 @@ import { Flex, Spin, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { CustomAlert } from '@/components/Alert';
 import { LoadingOutlined } from '@/components/custom-icons';
-import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
-import { BackButton } from '@/components/ui/BackButton';
-import { CardFlex } from '@/components/ui/CardFlex';
-import { FundingDescription } from '@/components/ui/FundingDescription';
-import { Modal } from '@/components/ui/Modal';
-import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
-import { ChainImageMap, EvmChainName } from '@/constants/chains';
-import { TokenSymbol } from '@/constants/token';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
-import { useServices } from '@/hooks/useServices';
-import { useSetup } from '@/hooks/useSetup';
-import { delayInSeconds } from '@/utils/delay';
+import {
+  AgentSetupCompleteModal,
+  Alert,
+  BackButton,
+  CardFlex,
+  FundingDescription,
+  Modal,
+  TokenRequirementsTable,
+} from '@/components/ui';
+import { ChainImageMap, EvmChainName, TokenSymbol } from '@/constants';
+import { SetupScreen } from '@/enums';
+import {
+  useMasterSafeCreationAndTransfer,
+  useMasterWalletContext,
+  useServices,
+  useSetup,
+} from '@/hooks';
+import { delayInSeconds } from '@/utils';
 
 import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
 import { useTokensFundingStatus } from './hooks/useTokensFundingStatus';
@@ -27,14 +31,13 @@ const FinishingSetupModal = () => (
   <Modal
     header={<Spin indicator={<LoadingOutlined />} size="large" />}
     title="Finishing Setup"
-    description="It usually takes a few minutes. Please keep the app open until the
-process is complete."
+    description="It usually takes a few minutes. Please keep the app open until the process is complete."
   />
 );
 
 export const TransferFunds = () => {
   const { goto: gotoSetup } = useSetup();
-
+  const { masterEoa } = useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
   const { isFullyFunded, tokensFundingStatus } = useTokensFundingStatus();
   const { initialTokenRequirements, isLoading } =
@@ -53,6 +56,7 @@ export const TransferFunds = () => {
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const chainImage = ChainImageMap[evmHomeChainId];
+  const masterEoaAddress = masterEoa?.address;
 
   const tokensDataSource = useMemo(() => {
     return (initialTokenRequirements ?? []).map((token) => {
@@ -111,14 +115,21 @@ export const TransferFunds = () => {
           Wallet address below. Pearl will automatically detect your transfer.
         </Text>
 
-        <CustomAlert
+        <Alert
           showIcon
           type="warning"
           className="mt-24"
           message={`Only send on ${chainName} Chain — funds on other networks are unrecoverable.`}
         />
 
-        <FundingDescription chainName={chainName} chainImage={chainImage} />
+        {masterEoaAddress && (
+          <FundingDescription
+            address={masterEoaAddress}
+            chainName={chainName}
+            chainImage={chainImage}
+            style={{ marginTop: 32 }}
+          />
+        )}
 
         <TokenRequirementsTable
           isLoading={isLoading}

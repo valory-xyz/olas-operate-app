@@ -2,11 +2,11 @@ import { Button, Form, Input, message } from 'antd';
 import React, { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { ServiceTemplate } from '@/client';
 import { RequiredMark } from '@/components/ui/RequiredMark';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils/service';
 
 import {
@@ -106,7 +106,7 @@ const OptimusAgentFormContent = ({
         message.success('Agent setup complete');
 
         // move to next page
-        goto(SetupScreen.FundYourAgent);
+        goto(SetupScreen.SelectStaking);
       } catch (error) {
         message.error('Something went wrong. Please try again.');
         console.error(error);

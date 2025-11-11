@@ -1,4 +1,5 @@
-import { Flex, Image as AntdImage, TableColumnsType, Typography } from 'antd';
+import { Flex, TableColumnsType, Typography } from 'antd';
+import Image from 'next/image';
 
 import { Table } from '@/components/ui';
 import { NA, TokenSymbolConfigMap } from '@/constants';
@@ -14,11 +15,11 @@ const columns: TableColumnsType<StakedAsset> = [
     render: (_: unknown, record: StakedAsset) => (
       <Flex align="center" gap={8}>
         {record.agentImgSrc && (
-          <AntdImage
-            width={28}
+          <Image
             src={record.agentImgSrc}
             alt={record.symbol}
-            style={{ display: 'flex' }}
+            width={28}
+            height={28}
           />
         )}
         <Text>{record.agentName || NA}</Text>
@@ -31,11 +32,11 @@ const columns: TableColumnsType<StakedAsset> = [
     key: 'token',
     render: (_: unknown, record: StakedAsset) => (
       <Flex align="center" gap={8}>
-        <AntdImage
-          width={20}
+        <Image
           src={TokenSymbolConfigMap[record.symbol].image}
           alt={record.symbol}
-          style={{ display: 'flex' }}
+          width={20}
+          height={20}
         />
         <Text>{record.symbol}</Text>
       </Flex>
