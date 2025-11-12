@@ -10,8 +10,10 @@ import { CHAIN_CONFIG } from '@/config/chains';
 import {
   COLOR,
   SupportedMiddlewareChain,
+  TokenSymbol,
   TokenSymbolConfigMap,
 } from '@/constants';
+import { AddressZero } from '@/constants/address';
 import { useMasterWalletContext, useServices } from '@/hooks';
 import { formatUnits } from '@/utils';
 
@@ -30,7 +32,7 @@ type TableData = {
   middlewareChain: SupportedMiddlewareChain;
   threshold: string;
   topUpAmount: string;
-  tokenSymbol: string;
+  tokenSymbol: TokenSymbol;
 };
 
 const SettingsDrawerTitle = (
@@ -82,11 +84,7 @@ const columns = [
     render: (threshold: string, record: TableData) => (
       <Flex align="center" gap={8}>
         <Image
-          src={
-            TokenSymbolConfigMap[
-              record.tokenSymbol as keyof typeof TokenSymbolConfigMap
-            ].image
-          }
+          src={TokenSymbolConfigMap[record.tokenSymbol].image}
           alt={record.tokenSymbol}
           width={20}
           height={20}
@@ -104,11 +102,7 @@ const columns = [
     render: (topUpAmount: string, record: TableData) => (
       <Flex align="center" gap={8}>
         <Image
-          src={
-            TokenSymbolConfigMap[
-              record.tokenSymbol as keyof typeof TokenSymbolConfigMap
-            ].image
-          }
+          src={TokenSymbolConfigMap[record.tokenSymbol].image}
           alt={record.tokenSymbol}
           width={20}
           height={20}
@@ -139,20 +133,24 @@ export const SettingsDrawer = ({
     return Object.values(CHAIN_CONFIG)
       .filter((chainConfig) => {
         // Only show chains that have active services
-        return activeChains.has(String(chainConfig.middlewareChain));
+        return activeChains.has(
+          chainConfig.middlewareChain as SupportedMiddlewareChain,
+        );
       })
       .map((chainConfig) => {
         const middlewareChain =
           chainConfig.middlewareChain as SupportedMiddlewareChain;
         const eoaTopups = settings.eoa_topups[middlewareChain];
-        const fundingRequirement = eoaTopups
-          ? (Object.values(eoaTopups)[0] as number) || 0
-          : 0;
+        const address = chainConfig.nativeToken.address ?? AddressZero;
+
+        const fundingRequirement =
+          eoaTopups && address ? eoaTopups[address] || 0 : 0;
 
         const eoaThresholds = settings.eoa_thresholds?.[middlewareChain];
-        const refundingThreshold = eoaThresholds
-          ? (Object.values(eoaThresholds)[0] as number) || 0
-          : fundingRequirement * 0.5;
+        const refundingThreshold =
+          eoaThresholds && address
+            ? eoaThresholds[address] || 0
+            : fundingRequirement * 0.5;
 
         return {
           key: String(chainConfig.evmChainId),

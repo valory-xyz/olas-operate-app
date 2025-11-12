@@ -1,6 +1,6 @@
 import { Button, Card, Flex, Skeleton, Typography } from 'antd';
 import { isEmpty, isNil } from 'lodash';
-import { MouseEventHandler, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   TbFileText,
   TbShieldHalfFilled,
@@ -35,11 +35,7 @@ import { YourFundsAtRiskAlert } from './YourFundsAtRiskAlert';
 
 const { Text, Paragraph, Title } = Typography;
 
-const DefaultSettingsSection = ({
-  openDrawer,
-}: {
-  openDrawer: MouseEventHandler<HTMLElement>;
-}) => (
+const DefaultSettingsSection = ({ openDrawer }: { openDrawer: () => void }) => (
   <CardSection $padding="24px">
     <Flex gap={16}>
       <IconContainer>
