@@ -35,6 +35,18 @@ const FundAgentTitle = () => (
   </Flex>
 );
 
+const DepositInputInfo = () => (
+  <Flex vertical gap={4}>
+    <Text className="text-sm">Why it’s different from your Pearl Wallet</Text>
+    <Text className="text-sm text-neutral-secondary">
+      This number shows only the amount you can use to fund agents.
+    </Text>
+    <Text className="text-sm text-neutral-secondary">
+      The Pearl Wallet balance also includes funds reserved to pay for gas fees.
+    </Text>
+  </Flex>
+);
+
 const PearlWalletToAgentWallet = () => {
   const { agentName, agentImgSrc } = useAgentWallet();
   return (
@@ -179,6 +191,7 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
                     totalAmount={amount}
                     onChange={(x) => onAmountChange(symbol, { amount: x ?? 0 })}
                     hasError={hasError}
+                    tooltipInfo={<DepositInputInfo />}
                   />
                   {hasError && <FundPearlWallet />}
                 </Flex>

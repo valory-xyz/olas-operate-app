@@ -5,7 +5,7 @@ const {
   loadLocalCertificate,
   stringifyJson,
   secureFetch,
-} = require('./utils');
+} = require('./utils/certificate');
 
 const {
   handleWeb3AuthWindowShow,
