@@ -116,4 +116,7 @@ export const REACT_QUERY_KEYS = {
 
   // latest release
   LATEST_RELEASE_TAG_KEY: ['latestReleaseTag'] as const,
+
+  // recovery
+  EXTENDED_WALLET_KEY: () => ['extendedWallet'] as const,
 } as const;

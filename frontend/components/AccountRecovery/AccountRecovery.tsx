@@ -8,6 +8,7 @@ import { SetupScreen } from '@/enums';
 import { useSetup, useStore } from '@/hooks';
 
 import { BackButton, CardFlex, CardTitle } from '../ui';
+import { AccountRecoveryProvider } from './AccountRecoveryProvider';
 import { RecoveryNotAvailable } from './components/RecoveryNotAvailable';
 
 const { Text, Title, Paragraph } = Typography;
@@ -119,14 +120,15 @@ const SelectRecoveryMethod = () => {
 
 export const AccountRecovery = () => {
   const isRecoveryAvailable = false; // Placeholder for actual recovery availability logic
-
-  if (!isRecoveryAvailable) {
-    return <RecoveryNotAvailable />;
-  }
+  const hasAllBackupWallets = true; // Placeholder for actual backup wallets check
 
   return (
-    <>
-      <SelectRecoveryMethod />
-    </>
+    <AccountRecoveryProvider>
+      {isRecoveryAvailable ? (
+        <SelectRecoveryMethod />
+      ) : (
+        <RecoveryNotAvailable hasAllBackupWallets={hasAllBackupWallets} />
+      )}
+    </AccountRecoveryProvider>
   );
 };

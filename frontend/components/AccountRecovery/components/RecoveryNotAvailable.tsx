@@ -31,7 +31,13 @@ const RecoveryNotAvailableCard = styled(CardFlex)`
   }
 `;
 
-export const RecoveryNotAvailable = () => {
+type RecoveryNotAvailableProps = {
+  hasAllBackupWallets?: boolean;
+};
+
+export const RecoveryNotAvailable = ({
+  hasAllBackupWallets,
+}: RecoveryNotAvailableProps) => {
   const { goto } = useSetup();
 
   return (
@@ -44,8 +50,10 @@ export const RecoveryNotAvailable = () => {
           <Flex vertical gap={16}>
             <CardTitle className="m-0">Recovery Not Available</CardTitle>
             <Paragraph className="text-neutral-secondary text-center mb-32">
-              This account has multiple Pearl Wallets. The backup wallet is
-              different across the Pearl Wallets.
+              This account has multiple Pearl Wallets.{' '}
+              {hasAllBackupWallets
+                ? 'The backup wallet is different across the Pearl Wallets.'
+                : 'The backup wallet is not set up for at least one Pearl Wallet.'}
             </Paragraph>
           </Flex>
         </Flex>
