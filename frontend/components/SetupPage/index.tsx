@@ -6,6 +6,10 @@ import { COLOR } from '@/constants/colors';
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
+import {
+  SetupRestoreMain,
+  SetupRestoreViaBackup,
+} from '../AccountRecovery/SetupRestore';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { CardFlex } from '../ui/CardFlex';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
@@ -16,11 +20,6 @@ import { SetupPassword } from './Create/SetupPassword';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
 import { FundYourAgent } from './FundYourAgent/FundYourAgent';
 import { TransferFunds } from './FundYourAgent/TransferFunds';
-import {
-  SetupRestoreMain,
-  SetupRestoreSetPassword,
-  SetupRestoreViaBackup,
-} from './SetupRestore';
 import { SetupWelcome } from './SetupWelcome';
 import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
 
@@ -92,8 +91,6 @@ export const Setup = () => {
       // Restore account, screens to be re-implemented as per v1
       case SetupScreen.Restore:
         return <SetupRestoreMain />;
-      case SetupScreen.RestoreSetPassword:
-        return <SetupRestoreSetPassword />;
       case SetupScreen.RestoreViaBackup:
         return <SetupRestoreViaBackup />;
       default:

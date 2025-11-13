@@ -12,10 +12,7 @@ export const SetupScreen = {
   SetupBridgeOnboardingScreen: 'SetupBridgeOnboardingScreen',
   SetupOnRamp: 'SetupOnRamp',
   EarlyAccessOnly: 'EarlyAccessOnly',
-
-  // Restore account, screens to be re-implemented as per v1
   Restore: 'Restore',
-  RestoreSetPassword: 'RestoreSetPassword',
   RestoreViaBackup: 'RestoreViaBackup',
 } as const;
 
