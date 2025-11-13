@@ -229,7 +229,7 @@ const SetupWelcomeLogin = () => {
             type="link"
             target="_blank"
             size="small"
-            onClick={() => goto(SetupScreen.Restore)}
+            onClick={() => goto(SetupScreen.AccountRecovery)}
           >
             Forgot password?
           </Button>
@@ -291,7 +291,7 @@ export const SetupWelcome = () => {
 
   // TODO: think about the widths of card
   return (
-    <Card bordered={false}>
+    <Card variant="borderless">
       <Flex vertical align="center">
         <Image
           src={'/onboarding-robot.svg'}

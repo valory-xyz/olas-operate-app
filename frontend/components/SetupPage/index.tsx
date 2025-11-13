@@ -6,10 +6,8 @@ import { COLOR } from '@/constants/colors';
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
-import {
-  SetupRestoreMain,
-  SetupRestoreViaBackup,
-} from '../AccountRecovery/SetupRestore';
+import { AccountRecovery } from '../AccountRecovery';
+import { SetupRestoreViaBackup } from '../AccountRecovery/SetupRestore';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { CardFlex } from '../ui/CardFlex';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
@@ -48,7 +46,7 @@ const SetupCard = styled.div`
     0 3px 6px 0 rgba(170, 193, 203, 0.1);
 `;
 
-const screenWithoutCards: SetupScreen[] = [
+const SCREEN_WITHOUT_CARDS: SetupScreen[] = [
   SetupScreen.AgentOnboarding,
   SetupScreen.SetupYourAgent,
   SetupScreen.FundYourAgent,
@@ -56,6 +54,7 @@ const screenWithoutCards: SetupScreen[] = [
   SetupScreen.SetupBridgeOnboardingScreen,
   SetupScreen.SetupOnRamp,
   SetupScreen.SelectStaking,
+  SetupScreen.AccountRecovery,
 ];
 
 export const Setup = () => {
@@ -65,8 +64,6 @@ export const Setup = () => {
     switch (setupObject.state) {
       case SetupScreen.Welcome:
         return <SetupWelcome />;
-
-      // Create account
       case SetupScreen.SetupPassword:
         return <SetupPassword />;
       case SetupScreen.SetupBackupSigner:
@@ -87,10 +84,8 @@ export const Setup = () => {
         return <SetupOnRamp />;
       case SetupScreen.EarlyAccessOnly:
         return <EarlyAccessOnly />;
-
-      // Restore account, screens to be re-implemented as per v1
-      case SetupScreen.Restore:
-        return <SetupRestoreMain />;
+      case SetupScreen.AccountRecovery:
+        return <AccountRecovery />;
       case SetupScreen.RestoreViaBackup:
         return <SetupRestoreViaBackup />;
       default:
@@ -98,7 +93,7 @@ export const Setup = () => {
     }
   }, [setupObject.state]);
 
-  if (screenWithoutCards.includes(setupObject.state)) {
+  if (SCREEN_WITHOUT_CARDS.includes(setupObject.state)) {
     return setupScreen;
   }
 

@@ -12,7 +12,7 @@ export const SetupScreen = {
   SetupBridgeOnboardingScreen: 'SetupBridgeOnboardingScreen',
   SetupOnRamp: 'SetupOnRamp',
   EarlyAccessOnly: 'EarlyAccessOnly',
-  Restore: 'Restore',
+  AccountRecovery: 'AccountRecovery',
   RestoreViaBackup: 'RestoreViaBackup',
 } as const;
 
