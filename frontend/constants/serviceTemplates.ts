@@ -50,6 +50,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     },
   },
   env_variables: {
+    SAFE_CONTRACT_ADDRESSES: {
+      name: 'Safe contract addresses',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
     GNOSIS_LEDGER_RPC: {
       name: 'Gnosis ledger RPC',
       description: '',
