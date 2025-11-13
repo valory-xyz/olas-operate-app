@@ -7,7 +7,6 @@ import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
 import { AccountRecovery } from '../AccountRecovery';
-import { SetupRestoreViaBackup } from '../AccountRecovery/SetupRestore';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { CardFlex } from '../ui/CardFlex';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
@@ -86,8 +85,6 @@ export const Setup = () => {
         return <EarlyAccessOnly />;
       case SetupScreen.AccountRecovery:
         return <AccountRecovery />;
-      case SetupScreen.RestoreViaBackup:
-        return <SetupRestoreViaBackup />;
       default:
         return <UnexpectedError />;
     }

@@ -5,9 +5,10 @@ import { styled } from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
 import { SetupScreen } from '@/enums';
-import { useSetup } from '@/hooks';
+import { useSetup, useStore } from '@/hooks';
 
 import { BackButton, CardFlex, CardTitle } from '../ui';
+import { RecoveryNotAvailable } from './components/RecoveryNotAvailable';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -23,21 +24,21 @@ const IconContainer = styled.div`
   background-image: url('/icon-bg.svg');
 `;
 
-const RecoveryMethodCard = styled(CardFlex)`
-  width: 370px;
+const RecoveryMethodCard = styled(CardFlex)<{ width?: number }>`
+  width: ${({ width }) => (width ? `${width}px` : '412px')};
   border-color: ${COLOR.WHITE};
-
   .ant-card-body {
     height: 100%;
   }
-
   .recovery-method-card-body {
     flex: 1;
   }
 `;
 
 const RecoveryViaBackupWallet = () => {
+  const { storeState } = useStore();
   const { goto } = useSetup();
+  const walletType = storeState?.lastProvidedBackupWallet?.type;
 
   return (
     <RecoveryMethodCard>
@@ -46,18 +47,23 @@ const RecoveryViaBackupWallet = () => {
       </IconContainer>
       <div className="recovery-method-card-body">
         <CardTitle className="mb-8 text-lg">Via Backup Wallet</CardTitle>
-        <Text className="text-neutral-secondary"></Text>
         <Paragraph className="text-neutral-secondary text-center mb-32">
           Use the backup wallet you’ve set up during Pearl sign up.
         </Paragraph>
-        <Button
-          onClick={() => goto(SetupScreen.SetupOnRamp)}
-          type="primary"
-          size="large"
-          block
-        >
-          Recover with Backup Wallet
-        </Button>
+        {walletType === 'web3auth' ? (
+          <Button
+            onClick={() => goto(SetupScreen.SetupOnRamp)}
+            type="primary"
+            size="large"
+            block
+          >
+            Recover with Backup Wallet
+          </Button>
+        ) : (
+          <Paragraph className="text-neutral-tertiary text-center text-sm mb-0">
+            Recovery with a Backup Wallet coming soon.
+          </Paragraph>
+        )}
       </div>
     </RecoveryMethodCard>
   );
@@ -73,7 +79,6 @@ const RecoveryViaSecretRecoveryPhrase = () => {
         <CardTitle className="mb-8 text-lg">
           Via Secret Recovery Phrase
         </CardTitle>
-        <Text className="text-neutral-secondary"></Text>
         <Paragraph className="text-neutral-secondary text-center mb-32">
           Enter the secret recovery phrase you should’ve backed up to a safe
           place.
@@ -86,7 +91,7 @@ const RecoveryViaSecretRecoveryPhrase = () => {
   );
 };
 
-export const AccountRecovery = () => {
+const SelectRecoveryMethod = () => {
   const { goto } = useSetup();
 
   return (
@@ -109,5 +114,19 @@ export const AccountRecovery = () => {
         <RecoveryViaSecretRecoveryPhrase />
       </Flex>
     </Flex>
+  );
+};
+
+export const AccountRecovery = () => {
+  const isRecoveryAvailable = false; // Placeholder for actual recovery availability logic
+
+  if (!isRecoveryAvailable) {
+    return <RecoveryNotAvailable />;
+  }
+
+  return (
+    <>
+      <SelectRecoveryMethod />
+    </>
   );
 };
