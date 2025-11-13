@@ -526,13 +526,13 @@ files = [
 
 [[package]]
 name = "certifi"
-version = "2025.10.5"
+version = "2025.11.12"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "certifi-2025.10.5-py3-none-any.whl", hash = "sha256:0f212c2744a9bb6de0c56639a6f68afe01ecd92d91f14ae897c4fe7bbeeef0de"},
-    {file = "certifi-2025.10.5.tar.gz", hash = "sha256:47c09d31ccf2acf0be3f701ea53595ee7e0b8fa08801c6624be771df09ae7b43"},
+    {file = "certifi-2025.11.12-py3-none-any.whl", hash = "sha256:97de8790030bbd5c2d96b7ec782fc2f7820ef8dba6db909ccf95449f2d062d4b"},
+    {file = "certifi-2025.11.12.tar.gz", hash = "sha256:d8ab5478f2ecd78af242878415affce761ca6bc54a22a27e026d7c25357c3316"},
 ]
 
 [[package]]
@@ -2594,8 +2594,8 @@ web3 = "6.20.4"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "bdac2ec5410ef140b470c001143c9907560f2947"
-resolved_reference = "bdac2ec5410ef140b470c001143c9907560f2947"
+reference = "37f16417422e9978abac8c7e7c0c246a08fa4d56"
+resolved_reference = "37f16417422e9978abac8c7e7c0c246a08fa4d56"
 
 [[package]]
 name = "open-aea"
@@ -4455,4 +4455,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "052f0b1fdf1b796cc4c962485684114bbc043a370651fbf849b1cb4cff351d79"
+content-hash = "36f8c874bf661ca35e309a716f56adb1d92de6ca372deb648403746f280167be"
