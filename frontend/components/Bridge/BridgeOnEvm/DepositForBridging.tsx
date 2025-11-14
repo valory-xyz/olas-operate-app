@@ -4,7 +4,6 @@ import { sortBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
-import { MiddlewareChain } from '@/client';
 import { ERROR_ICON_STYLE, LoadingSpinner } from '@/components/ui';
 import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
 import {
@@ -12,7 +11,13 @@ import {
   TOKEN_CONFIG,
   TokenType,
 } from '@/config/tokens';
-import { AddressZero, COLOR, TokenSymbolConfigMap } from '@/constants';
+import {
+  AddressZero,
+  COLOR,
+  MiddlewareChain,
+  MiddlewareChainMap,
+  TokenSymbolConfigMap,
+} from '@/constants';
 import { TokenSymbol } from '@/enums/Token';
 import {
   useBalanceAndRefillRequirementsContext,
@@ -207,7 +212,7 @@ export const DepositForBridging = ({
     if (!bridgeFundingRequirements) return [];
     if (!masterEoa) return [];
 
-    const fromMiddlewareChain = MiddlewareChain.ETHEREUM;
+    const fromMiddlewareChain = MiddlewareChainMap.ETHEREUM;
 
     const bridgeTotalRequirements =
       bridgeFundingRequirements.bridge_total_requirements[
@@ -293,7 +298,7 @@ export const DepositForBridging = ({
     if (!areAllFundsReceived) return;
     updateQuoteId(bridgeFundingRequirements.id);
     updateCrossChainTransferDetails({
-      fromChain: MiddlewareChain.ETHEREUM,
+      fromChain: MiddlewareChainMap.ETHEREUM,
       toChain: bridgeToChain,
       eta: quoteEta,
       transfers: tokens.map((token) => {

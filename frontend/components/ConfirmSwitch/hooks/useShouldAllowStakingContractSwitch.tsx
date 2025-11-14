@@ -1,21 +1,20 @@
-import { isEmpty, isNil } from 'lodash';
+import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { TokenSymbolMap } from '@/constants/token';
+import { TokenSymbolMap } from '@/constants';
 import {
   useBalanceContext,
   useMasterBalances,
-} from '@/hooks/useBalanceContext';
-import { useServices } from '@/hooks/useServices';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
-import { isValidServiceId } from '@/utils/service';
+  useServices,
+  useStakingProgram,
+} from '@/hooks';
+import { asMiddlewareChain, isValidServiceId } from '@/utils';
 
 export const useShouldAllowStakingContractSwitch = () => {
   const { isLoaded: isBalanceLoaded, totalStakedOlasBalance } =
     useBalanceContext();
-  const { masterSafeBalances } = useMasterBalances();
+  const { getMasterSafeOlasBalanceOfInStr } = useMasterBalances();
   const { stakingProgramIdToMigrateTo } = useStakingProgram();
   const {
     selectedAgentConfig,
@@ -33,16 +32,8 @@ export const useShouldAllowStakingContractSwitch = () => {
 
   const safeOlasBalance = useMemo(() => {
     if (!isBalanceLoaded) return 0;
-    if (isNil(masterSafeBalances) || isEmpty(masterSafeBalances)) return 0;
-    return masterSafeBalances.reduce(
-      (acc, { evmChainId: chainId, symbol, balance }) => {
-        if (chainId === homeChainId && symbol === TokenSymbolMap.OLAS)
-          return acc + balance;
-        return acc;
-      },
-      0,
-    );
-  }, [homeChainId, isBalanceLoaded, masterSafeBalances]);
+    return Number(getMasterSafeOlasBalanceOfInStr(homeChainId));
+  }, [homeChainId, isBalanceLoaded, getMasterSafeOlasBalanceOfInStr]);
 
   const totalOlas = safeOlasBalance + (totalStakedOlasBalance || 0);
   const hasEnoughOlasToMigrate = totalOlas >= minimumOlasRequiredToMigrate;

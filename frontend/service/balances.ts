@@ -1,8 +1,7 @@
 import { compact } from 'lodash';
 
-import { BalancesAndFundingRequirements } from '@/client';
-import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
-import { BACKEND_URL_V2 } from '@/constants/urls';
+import { BACKEND_URL_V2, CONTENT_TYPE_JSON_UTF8 } from '@/constants';
+import { BalancesAndFundingRequirements } from '@/types';
 
 type GetBalancesAndFundingRequirementsParams = {
   serviceConfigId: string;

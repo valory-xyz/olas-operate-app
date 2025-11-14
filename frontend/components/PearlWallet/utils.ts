@@ -1,11 +1,16 @@
 import { entries, find, findKey } from 'lodash';
 
-import { AddressBalanceRecord, TokenBalanceRecord } from '@/client';
 import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { AddressZero, EvmChainId } from '@/constants';
-import { Address } from '@/types/Address';
-import { Maybe, Nullable, Optional } from '@/types/Util';
-import { TokenAmounts } from '@/types/Wallet';
+import {
+  Address,
+  AddressBalanceRecord,
+  Maybe,
+  Nullable,
+  Optional,
+  TokenAmounts,
+  TokenBalanceRecord,
+} from '@/types';
 import { areAddressesEqual, formatUnitsToNumber } from '@/utils';
 
 const getAddressBalance = (

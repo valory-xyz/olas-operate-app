@@ -1,4 +1,3 @@
-import { MiddlewareChain } from '@/client';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import {
@@ -6,6 +5,9 @@ import {
   AllEvmChainIdMap,
   EvmChainId,
   EvmChainIdMap,
+  MiddlewareChain,
+  MiddlewareChainMap,
+  SupportedMiddlewareChain,
 } from '@/constants/chains';
 import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
@@ -19,15 +21,17 @@ import { areAddressesEqual } from './address';
  * @throws Error
  * @example asEvmChainId('ethereum') => 1
  */
-export const asEvmChainId = (chain?: MiddlewareChain | string): EvmChainId => {
+export const asEvmChainId = (
+  chain?: SupportedMiddlewareChain | string,
+): EvmChainId => {
   switch (chain) {
-    case MiddlewareChain.GNOSIS:
+    case MiddlewareChainMap.GNOSIS:
       return EvmChainIdMap.Gnosis;
-    case MiddlewareChain.BASE:
+    case MiddlewareChainMap.BASE:
       return EvmChainIdMap.Base;
-    case MiddlewareChain.MODE:
+    case MiddlewareChainMap.MODE:
       return EvmChainIdMap.Mode;
-    case MiddlewareChain.OPTIMISM:
+    case MiddlewareChainMap.OPTIMISM:
       return EvmChainIdMap.Optimism;
   }
   throw new Error(`Invalid middleware chain enum: ${chain}`);
@@ -42,35 +46,35 @@ export const asEvmChainDetails = (
   chainId: AllEvmChainId;
 } => {
   switch (chain) {
-    case MiddlewareChain.ETHEREUM:
+    case MiddlewareChainMap.ETHEREUM:
       return {
         name: 'ethereum',
         displayName: 'Ethereum',
         symbol: TokenSymbol.ETH,
         chainId: AllEvmChainIdMap.Ethereum,
       };
-    case MiddlewareChain.GNOSIS:
+    case MiddlewareChainMap.GNOSIS:
       return {
         name: 'gnosis',
         displayName: 'Gnosis',
         symbol: TokenSymbol.XDAI,
         chainId: AllEvmChainIdMap.Gnosis,
       };
-    case MiddlewareChain.BASE:
+    case MiddlewareChainMap.BASE:
       return {
         name: 'base',
         displayName: 'Base',
         symbol: TokenSymbol.ETH,
         chainId: AllEvmChainIdMap.Base,
       };
-    case MiddlewareChain.MODE:
+    case MiddlewareChainMap.MODE:
       return {
         name: 'mode',
         displayName: 'Mode',
         symbol: TokenSymbol.ETH,
         chainId: AllEvmChainIdMap.Mode,
       };
-    case MiddlewareChain.OPTIMISM:
+    case MiddlewareChainMap.OPTIMISM:
       return {
         name: 'optimism',
         displayName: 'Optimism',
@@ -88,20 +92,20 @@ export const asEvmChainDetails = (
 export const asMiddlewareChain = (chainId?: EvmChainId | AllEvmChainId) => {
   switch (chainId) {
     case EvmChainIdMap.Gnosis:
-      return MiddlewareChain.GNOSIS;
+      return MiddlewareChainMap.GNOSIS;
     case EvmChainIdMap.Base:
-      return MiddlewareChain.BASE;
+      return MiddlewareChainMap.BASE;
     case EvmChainIdMap.Mode:
-      return MiddlewareChain.MODE;
+      return MiddlewareChainMap.MODE;
     case EvmChainIdMap.Optimism:
-      return MiddlewareChain.OPTIMISM;
+      return MiddlewareChainMap.OPTIMISM;
   }
   throw new Error(`Invalid chain id: ${chainId}`);
 };
 
 export const asAllMiddlewareChain = (chainId?: AllEvmChainId) => {
   if (AllEvmChainIdMap.Ethereum === chainId) {
-    return MiddlewareChain.ETHEREUM;
+    return MiddlewareChainMap.ETHEREUM;
   }
   return asMiddlewareChain(chainId);
 };

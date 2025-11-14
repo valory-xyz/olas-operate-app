@@ -8,7 +8,6 @@ import {
   useState,
 } from 'react';
 
-import { TokenBalanceRecord } from '@/client';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { EvmChainId } from '@/constants/chains';
 import {
@@ -18,6 +17,7 @@ import {
   useService,
   useServices,
 } from '@/hooks';
+import { TokenBalanceRecord } from '@/types';
 import { Nullable, Optional, ValueOf } from '@/types/Util';
 import { AvailableAsset } from '@/types/Wallet';
 import { generateName } from '@/utils/agentName';
@@ -62,7 +62,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
   const { isLoading: isBalanceLoading } = useBalanceContext();
   const { availableRewardsForEpochEth, accruedServiceStakingRewards } =
     useRewardContext();
-  const availableAssets = useAvailableAgentAssets();
+  const { availableAssets } = useAvailableAgentAssets();
   const [fundInitialValues, setFundInitialValues] =
     useState<TokenBalanceRecord>({});
 

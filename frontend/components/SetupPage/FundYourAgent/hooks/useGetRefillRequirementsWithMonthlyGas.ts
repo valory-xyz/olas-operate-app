@@ -1,7 +1,6 @@
 import { isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/client';
 import { getTokenDetails } from '@/components/Bridge/utils';
 import { ChainTokenConfig, TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
@@ -10,6 +9,7 @@ import { TokenSymbolConfigMap, TokenSymbolMap } from '@/constants/token';
 import { useServices } from '@/hooks';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/types';
 import { Address } from '@/types/Address';
 import { bigintMax } from '@/utils/calculations';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
@@ -35,7 +35,7 @@ const getTokenMeta = (tokenAddress: Address, chainConfig: ChainTokenConfig) => {
 };
 
 const getTokensDetailsForFunding = (
-  requirementsPerToken: { [tokenAddress: Address]: string },
+  requirementsPerToken: { [tokenAddress: Address]: bigint },
   chainConfig: ChainTokenConfig,
 ) => {
   const currentTokenRequirements: TokenRequirement[] = Object.entries(
@@ -170,7 +170,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
         ? BigInt(balances?.[masterSafe.address]?.[AddressZero] ?? 0n)
         : 0n;
 
-      const requirementsPerToken: { [tokenAddress: Address]: string } = {};
+      const requirementsPerToken: { [tokenAddress: Address]: bigint } = {};
 
       Object.entries(masterSafeRequirements)?.forEach(
         ([tokenAddress, amount]) => {
@@ -192,10 +192,9 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
               bigintMax(masterSafeRequirementAmount, amountNeededForGas) +
               BigInt(masterEoaRequirementAmount ?? 0);
 
-            requirementsPerToken[tokenAddress as Address] =
-              nativeTotalRequired.toString();
+            requirementsPerToken[tokenAddress as Address] = nativeTotalRequired;
           } else {
-            requirementsPerToken[tokenAddress as Address] = amount.toString();
+            requirementsPerToken[tokenAddress as Address] = BigInt(amount);
           }
         },
       );
@@ -215,7 +214,7 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
   useEffect(() => {
     const createDummyService = async () => {
       await updateBeforeBridgingFunds();
-      await refetch?.();
+      await refetch();
       setIsDummyServiceCreated(true);
     };
 

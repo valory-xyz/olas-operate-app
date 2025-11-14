@@ -2,7 +2,7 @@
  * Chain configurations
  * - add new chains to the CHAIN_CONFIGS object
  */
-import { MiddlewareChain as MiddlewareChainId } from '@/client';
+import { MiddlewareChain, MiddlewareChainMap } from '@/constants';
 import { TokenSymbol } from '@/enums';
 import { EvmChainId } from '@/enums/Chain';
 
@@ -14,7 +14,7 @@ export type ChainConfig = {
   name: string;
   nativeToken: TokenConfig;
   evmChainId: EvmChainId;
-  middlewareChain: MiddlewareChainId;
+  middlewareChain: MiddlewareChain;
   rpc: HttpUrl;
   color: `#${string}`;
   // TODO: the values are hardcoded, should be fetched from the backend
@@ -30,7 +30,7 @@ const GNOSIS_CHAIN_CONFIG: ChainConfig = {
   evmChainId: EvmChainId.Gnosis,
   name: 'Gnosis',
   nativeToken: TOKEN_CONFIG[EvmChainId.Gnosis][TokenSymbol.XDAI] as TokenConfig,
-  middlewareChain: MiddlewareChainId.GNOSIS,
+  middlewareChain: MiddlewareChainMap.GNOSIS,
   rpc: process.env.GNOSIS_RPC as HttpUrl,
   safeCreationThreshold: 1.5,
   color: '#04795B0F',
@@ -40,7 +40,7 @@ const BASE_CHAIN_CONFIG: ChainConfig = {
   evmChainId: EvmChainId.Base,
   name: 'Base',
   nativeToken: TOKEN_CONFIG[EvmChainId.Base][TokenSymbol.ETH] as TokenConfig,
-  middlewareChain: MiddlewareChainId.BASE,
+  middlewareChain: MiddlewareChainMap.BASE,
   rpc: process.env.BASE_RPC as HttpUrl,
   safeCreationThreshold: 0.005,
   color: '#0052FF12',
@@ -50,7 +50,7 @@ const MODE_CHAIN_CONFIG: ChainConfig = {
   evmChainId: EvmChainId.Mode,
   name: 'Mode',
   nativeToken: TOKEN_CONFIG[EvmChainId.Mode][TokenSymbol.ETH] as TokenConfig,
-  middlewareChain: MiddlewareChainId.MODE,
+  middlewareChain: MiddlewareChainMap.MODE,
   rpc: process.env.MODE_RPC as HttpUrl,
   safeCreationThreshold: 0.0005,
   color: '#DFFE0029',
@@ -62,7 +62,7 @@ const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
   nativeToken: TOKEN_CONFIG[EvmChainId.Optimism][
     TokenSymbol.ETH
   ] as TokenConfig,
-  middlewareChain: MiddlewareChainId.OPTIMISM,
+  middlewareChain: MiddlewareChainMap.OPTIMISM,
   rpc: process.env.OPTIMISM_RPC as HttpUrl,
   safeCreationThreshold: 0.005,
   color: '#FF042012',

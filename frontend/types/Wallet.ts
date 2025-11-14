@@ -1,4 +1,4 @@
-import { TokenSymbol } from '@/constants';
+import { MiddlewareChain, TokenSymbol } from '@/constants';
 
 import { Address } from './Address';
 import { AddressTxnRecord } from './Records';
@@ -37,3 +37,18 @@ export type TokenAmountDetails = {
  * { symbol: 'OLAS', amount: 10 }
  */
 export type TokenAmounts = Partial<Record<TokenSymbol, TokenAmountDetails>>;
+
+enum MiddlewareLedger {
+  ETHEREUM = 0,
+  SOLANA = 1,
+}
+
+export type MiddlewareWalletResponse = {
+  address: Address;
+  safe_chains: MiddlewareChain[];
+  ledger_type: MiddlewareLedger;
+  safes: {
+    [middlewareChainId in MiddlewareChain]: Address;
+  };
+  safe_nonce: number;
+};

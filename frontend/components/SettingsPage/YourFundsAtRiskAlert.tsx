@@ -5,7 +5,7 @@ import { useToggle } from 'usehooks-ts';
 import { Alert, Modal } from '@/components/ui';
 import {
   AllEvmChainIdMap,
-  DISCORD_TICKET_URL,
+  COMMUNITY_ASSISTANCE_URL,
   EvmChainIdMap,
 } from '@/constants';
 import { useMasterWalletContext, useServices } from '@/hooks';
@@ -73,7 +73,7 @@ const AddBackupWalletAlert = ({
               <a
                 target="_blank"
                 className="flex align-center"
-                href={DISCORD_TICKET_URL}
+                href={COMMUNITY_ASSISTANCE_URL}
               >
                 Get community assistance via Discord{' '}
                 <TbExternalLink className="ml-4" />

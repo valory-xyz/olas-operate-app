@@ -9,7 +9,6 @@ import {
   useState,
 } from 'react';
 
-import { MiddlewareServiceResponse, TokenBalanceRecord } from '@/client';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
 import {
@@ -32,11 +31,13 @@ import {
   Address,
   AgentConfig,
   AvailableAsset,
+  MiddlewareServiceResponse,
   Nullable,
   Optional,
   StakedAsset,
   TokenAmountDetails,
   TokenAmounts,
+  TokenBalanceRecord,
   ValueOf,
 } from '@/types';
 import { generateName } from '@/utils';

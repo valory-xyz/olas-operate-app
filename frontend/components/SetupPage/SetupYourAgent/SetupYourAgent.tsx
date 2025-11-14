@@ -2,7 +2,8 @@ import { Typography } from 'antd';
 import React from 'react';
 
 import { Alert } from '@/components/ui';
-import { AgentMap, SERVICE_TEMPLATES } from '@/constants';
+import { AgentMap } from '@/constants';
+import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { useServices } from '@/hooks';
 
 import { AgentsFunAgentSetup } from './AgentsFunAgentForm/AgentsFunAgentForm';

@@ -1,24 +1,24 @@
 import { Button, Card, Flex, Form, Input, Spin, Typography } from 'antd';
+import { isNil } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useMessageApi } from '@/context/MessageProvider';
-import { Pages } from '@/enums/Pages';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useBackupSigner } from '@/hooks';
+import { Pages, SetupScreen } from '@/enums';
 import {
+  useBackupSigner,
   useBalanceContext,
+  useElectronApi,
   useMasterBalances,
-} from '@/hooks/useBalanceContext';
-import { useElectronApi } from '@/hooks/useElectronApi';
-import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
-import { useSetup } from '@/hooks/useSetup';
-import { useMasterWalletContext } from '@/hooks/useWallet';
+  useMnemonicExists,
+  useOnlineStatusContext,
+  usePageState,
+  useServices,
+  useSetup,
+} from '@/hooks';
 import { AccountService } from '@/service/Account';
-import { getErrorMessage } from '@/utils/error';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import { WalletService } from '@/service/Wallet';
+import { asEvmChainId, getErrorMessage } from '@/utils';
 
 import { FormFlex } from '../ui/FormFlex';
 import { FormLabel } from '../ui/Typography';
@@ -44,20 +44,12 @@ const useSetupNavigation = ({
     services,
     isFetched: isServicesFetched,
   } = useServices();
-  const { masterEoa, isFetched: isWalletsFetched } = useMasterWalletContext();
-  const { isLoaded: isBalanceLoaded } = useBalanceContext();
-  const { masterWalletBalances } = useMasterBalances();
+  const { getMasterEoaNativeBalanceOf, isLoaded } = useMasterBalances();
   const backupSignerAddress = useBackupSigner();
 
   const selectedServiceOrAgentChainId = selectedService?.home_chain
     ? asEvmChainId(selectedService?.home_chain)
     : selectedAgentConfig.evmHomeChainId;
-
-  const eoaBalanceEth = masterWalletBalances?.find(
-    (balance) =>
-      balance.walletAddress === masterEoa?.address &&
-      balance.evmChainId === selectedServiceOrAgentChainId,
-  )?.balance;
 
   const isServiceCreatedForAgent = useMemo(() => {
     if (!isServicesFetched) return false;
@@ -73,23 +65,11 @@ const useSetupNavigation = ({
   }, [isServicesFetched, services, selectedService, selectedAgentConfig]);
 
   const isApplicationReady = useMemo(() => {
-    if (
-      !isOnline ||
-      !canNavigate ||
-      !isServicesFetched ||
-      !isWalletsFetched ||
-      !isBalanceLoaded
-    )
+    if (!isOnline || !canNavigate || !isServicesFetched || !isLoaded)
       return false;
 
     return true;
-  }, [
-    canNavigate,
-    isBalanceLoaded,
-    isOnline,
-    isServicesFetched,
-    isWalletsFetched,
-  ]);
+  }, [canNavigate, isLoaded, isOnline, isServicesFetched]);
 
   const isBackupWalletNotSet = useMemo(() => {
     // If no services are created and backup wallet is not set as well.
@@ -124,22 +104,22 @@ const useSetupNavigation = ({
     }
 
     // If no balance is loaded, redirect to setup screen
-    if (!eoaBalanceEth) {
+    if (isNil(getMasterEoaNativeBalanceOf(selectedServiceOrAgentChainId))) {
       goto(SetupScreen.FundYourAgent);
       return;
     }
 
     gotoPage(Pages.Main);
   }, [
-    isServiceCreatedForAgent,
-    eoaBalanceEth,
-    selectedServiceOrAgentChainId,
+    getMasterEoaNativeBalanceOf,
     goto,
     gotoPage,
-    selectedAgentConfig,
-    setIsLoggingIn,
     isApplicationReady,
     isBackupWalletNotSet,
+    isServiceCreatedForAgent,
+    selectedAgentConfig,
+    selectedServiceOrAgentChainId,
+    setIsLoggingIn,
   ]);
 };
 
@@ -175,11 +155,14 @@ const SetupError = () => (
   </Flex>
 );
 
+const ErrorMessages = ['does not exist', 'file does not exist', 'not exist'];
+
 const SetupWelcomeLogin = () => {
   const [form] = Form.useForm();
   const message = useMessageApi();
   const { goto } = useSetup();
   const { setUserLoggedIn } = usePageState();
+  const { setMnemonicExists } = useMnemonicExists();
 
   const { updateBalances } = useBalanceContext();
 
@@ -192,6 +175,20 @@ const SetupWelcomeLogin = () => {
       setIsLoggingIn(true);
       try {
         await AccountService.loginAccount(password);
+
+        try {
+          await WalletService.getRecoverySeedPhrase(password);
+          setMnemonicExists(true);
+        } catch (e: unknown) {
+          const errorMsg = getErrorMessage(e, '').toLowerCase();
+          if (
+            errorMsg.includes('mnemonic') &&
+            ErrorMessages.some((message) => errorMsg.includes(message))
+          ) {
+            setMnemonicExists(false);
+          }
+        }
+
         await updateBalances();
         setCanNavigate(true);
         setUserLoggedIn();
@@ -201,7 +198,7 @@ const SetupWelcomeLogin = () => {
         setIsLoggingIn(false);
       }
     },
-    [updateBalances, setUserLoggedIn, message],
+    [updateBalances, setUserLoggedIn, message, setMnemonicExists],
   );
 
   return (

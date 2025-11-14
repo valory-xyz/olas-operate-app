@@ -1,4 +1,7 @@
-import { SupportedMiddlewareChain } from '@/client';
+import {
+  MiddlewareDeploymentStatus,
+  SupportedMiddlewareChain,
+} from '@/constants';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
@@ -50,4 +53,50 @@ export type AgentConfig = {
    */
   defaultBehavior?: string;
   servicePublicId: string;
+};
+
+type AgentPerformanceMetric = {
+  name: string;
+  is_primary: boolean;
+  value: string;
+  description?: string;
+};
+
+export type AgentPerformance = {
+  timestamp: number | null;
+  metrics: AgentPerformanceMetric[];
+  last_activity: null;
+  agent_behavior: string | null;
+};
+
+type DeployedNodes = {
+  agent: string[];
+  tendermint: string[];
+};
+
+type RoundsInfo = Record<
+  string,
+  {
+    name: string;
+    description: string;
+    transitions: Record<string, string>;
+  }
+>;
+
+type AgentHealthCheck = {
+  agent_health: Record<string, unknown>;
+  is_healthy: boolean;
+  is_tm_healthy: boolean;
+  is_transitioning_fast: boolean;
+  period: number;
+  reset_pause_duration: number;
+  rounds: string[];
+  rounds_info?: RoundsInfo;
+  seconds_since_last_transition: number;
+};
+
+export type ServiceDeployment = {
+  status: MiddlewareDeploymentStatus;
+  nodes: DeployedNodes;
+  healthcheck: AgentHealthCheck;
 };

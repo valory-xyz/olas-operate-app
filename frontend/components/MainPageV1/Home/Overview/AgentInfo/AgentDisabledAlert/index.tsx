@@ -3,10 +3,9 @@ import { Pages } from '@/enums';
 import {
   useActiveStakingContractDetails,
   useAnotherAgentRunning,
-  useNeedsFunds,
+  useIsInitiallyFunded,
   usePageState,
   useServices,
-  useStakingProgram,
 } from '@/hooks';
 
 import { AgentRunningAlert } from './AgentRunningAlert';
@@ -25,8 +24,7 @@ export const AgentDisabledAlert = () => {
     hasEnoughServiceSlots,
     isServiceStaked,
   } = useActiveStakingContractDetails();
-  const { selectedStakingProgramId } = useStakingProgram();
-  const { isInitialFunded } = useNeedsFunds(selectedStakingProgramId);
+  const { isInitialFunded } = useIsInitiallyFunded();
   const { goto } = usePageState();
   const isAnotherAgentRunning = useAnotherAgentRunning();
 

@@ -1,4 +1,4 @@
-import { MiddlewareServiceResponse, ServiceTemplate } from '@/client';
+import { MiddlewareServiceResponse, ServiceTemplate } from '@/types';
 
 /**
  * Get the X username from the service description.

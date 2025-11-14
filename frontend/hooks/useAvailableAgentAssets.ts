@@ -3,10 +3,10 @@ import { useMemo } from 'react';
 
 import { TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
 import { TokenSymbol, TokenSymbolMap } from '@/constants';
-import { AvailableAsset } from '@/types/Wallet';
+import { AvailableAsset } from '@/types';
 import { asEvmChainDetails } from '@/utils';
 
-import { useServiceBalances } from './useBalanceContext';
+import { useServiceBalances } from './useServiceBalances';
 import { useServices } from './useServices';
 
 export const useAvailableAgentAssets = () => {
@@ -18,6 +18,7 @@ export const useAvailableAgentAssets = () => {
     serviceSafeErc20Balances,
     serviceEoaNativeBalance,
     serviceSafeOlas,
+    isLoading,
   } = useServiceBalances(selectedService?.service_config_id);
 
   const availableAssets: AvailableAsset[] = useMemo(() => {
@@ -77,5 +78,5 @@ export const useAvailableAgentAssets = () => {
     serviceSafeOlas?.balance,
   ]);
 
-  return availableAssets;
+  return { availableAssets, isLoading };
 };

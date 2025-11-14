@@ -1,13 +1,11 @@
 import { isEmpty } from 'lodash';
 import { useMemo } from 'react';
 
-import { TokenBalanceRecord } from '@/client';
 import { getTokenDetails } from '@/components/Bridge/utils';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { EvmChainId } from '@/constants';
-import { TokenAmounts } from '@/types';
-import { Address } from '@/types/Address';
+import { Address, TokenAmounts, TokenBalanceRecord } from '@/types';
 import { formatUnitsToNumber, tokenBalancesToSentence } from '@/utils';
 
 import { useBalanceAndRefillRequirementsContext } from './useBalanceAndRefillRequirementsContext';

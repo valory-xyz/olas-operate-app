@@ -1,13 +1,18 @@
-import { InfoCircleOutlined, WarningOutlined } from '@ant-design/icons';
+import {
+  CheckCircleOutlined,
+  InfoCircleOutlined,
+  WarningOutlined,
+} from '@ant-design/icons';
 import { Alert as AlertAntd, AlertProps as AntdAlertProps } from 'antd';
 
-type AlertType = 'primary' | 'info' | 'warning' | 'error';
+type AlertType = 'primary' | 'info' | 'warning' | 'error' | 'success';
 
 const icons = {
   primary: <InfoCircleOutlined />,
   info: <InfoCircleOutlined />,
   warning: <WarningOutlined />,
   error: <WarningOutlined />,
+  success: <CheckCircleOutlined />,
 };
 
 type AlertProps = {

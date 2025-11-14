@@ -1,14 +1,15 @@
 import { uniq } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
-import { AddressBalanceRecord } from '@/client';
-import { AddressZero } from '@/constants/address';
-import { TokenSymbol } from '@/constants/token';
-import { useServices } from '@/hooks/useServices';
-import { Address } from '@/types/Address';
-import { BridgeRequest } from '@/types/Bridge';
-import { typedKeys } from '@/types/Util';
-import { getTokenDetailsFromAddress } from '@/utils/middlewareHelpers';
+import { AddressZero, TokenSymbol } from '@/constants';
+import { useServices } from '@/hooks';
+import {
+  Address,
+  AddressBalanceRecord,
+  BridgeRequest,
+  typedKeys,
+} from '@/types';
+import { getTokenDetailsFromAddress } from '@/utils';
 
 import { DefaultTokenAmount } from './types';
 import { useAddFundsGetBridgeRequirementsParams } from './useAddFundsGetBridgeRequirementsParams';

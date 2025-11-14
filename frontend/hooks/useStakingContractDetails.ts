@@ -3,8 +3,7 @@ import { useContext } from 'react';
 
 import { StakingContractDetailsContext } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { StakingState } from '@/types/Autonolas';
-import { Maybe } from '@/types/Util';
+import { Maybe, StakingState } from '@/types';
 
 export const useStakingContractContext = () =>
   useContext(StakingContractDetailsContext);
@@ -56,11 +55,16 @@ export const useActiveStakingContractDetails = () => {
    * - That is, user should not be able to run/start your agent if this condition is met.
    *
    */
-  const isServiceStakedForMinimumDuration =
-    !isNil(serviceStakingStartTime) &&
-    !isNil(minimumStakingDuration) &&
-    Math.round(Date.now() / 1000) - serviceStakingStartTime >=
-      minimumStakingDuration;
+  const isServiceStakedForMinimumDuration = (() => {
+    if (isNil(serviceStakingStartTime) || isNil(minimumStakingDuration)) {
+      return false;
+    }
+
+    return (
+      Math.round(Date.now() / 1000) - serviceStakingStartTime >=
+      minimumStakingDuration
+    );
+  })();
 
   // Eviction expire time in seconds
   const evictionExpiresAt =

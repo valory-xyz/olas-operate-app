@@ -1,10 +1,14 @@
 import { entries } from 'lodash';
 import { useCallback } from 'react';
 
-import { MiddlewareChain } from '@/client';
 import { Bridge, getFromToken, getTokenDecimal } from '@/components/Bridge';
 import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
-import { AddressZero, TokenSymbol } from '@/constants';
+import {
+  AddressZero,
+  MiddlewareChain,
+  MiddlewareChainMap,
+  TokenSymbol,
+} from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useMasterWalletContext } from '@/hooks';
 import { Address } from '@/types/Address';
@@ -43,7 +47,7 @@ const useGetBridgeRequirementsParams = (bridgeToChain: MiddlewareChain) => {
 
       return {
         from: {
-          chain: MiddlewareChain.ETHEREUM,
+          chain: MiddlewareChainMap.ETHEREUM,
           address: masterEoa.address,
           token: fromToken,
         },

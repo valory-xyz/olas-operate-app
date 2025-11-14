@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
-import { MiddlewareChain } from '@/client';
 import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
+import { MiddlewareChainMap } from '@/constants';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
@@ -41,7 +41,7 @@ export const useAddFundsGetBridgeRequirementsParams = (
 
       return {
         from: {
-          chain: MiddlewareChain.ETHEREUM,
+          chain: MiddlewareChainMap.ETHEREUM,
           address: masterEoa.address,
           token: fromToken,
         },

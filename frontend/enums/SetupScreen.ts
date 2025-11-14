@@ -6,6 +6,7 @@ export const SetupScreen = {
   SetupBackupSigner: 'SetupBackupSigner',
   AgentOnboarding: 'AgentOnboarding',
   SetupYourAgent: 'SetupYourAgent',
+  SelectStaking: 'SelectStaking',
   FundYourAgent: 'FundYourAgent',
   TransferFunds: 'TransferFunds',
   SetupBridgeOnboardingScreen: 'SetupBridgeOnboardingScreen',

@@ -2,10 +2,8 @@ import { Button, Flex, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { Alert } from '@/components/ui';
-import { Pages } from '@/enums/Pages';
-import { useServiceBalances } from '@/hooks';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
+import { Pages } from '@/enums';
+import { usePageState, useServiceBalances, useServices } from '@/hooks';
 
 const { Text } = Typography;
 

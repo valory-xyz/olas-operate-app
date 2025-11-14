@@ -15,8 +15,6 @@ export const useRetryBridge = () => {
 
   return useCallback(
     async (onRetryOutcome: (e: Nullable<BridgeRetryOutcome>) => void) => {
-      if (!refetch) return;
-
       const { data } = await refetch();
       if (!data) return;
 

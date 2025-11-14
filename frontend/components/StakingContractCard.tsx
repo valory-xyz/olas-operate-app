@@ -14,18 +14,16 @@ import { COLOR } from '@/constants/colors';
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { useServices } from '@/hooks/useServices';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
-
-import { SlotsLeft } from './SlotsLeft';
-import { SwitchStakingButton } from './SwitchStakingButton';
+import { StakingContractDetails } from '@/types';
 
 const { Text, Title } = Typography;
 
-const ContractCard = styled(CardFlex)<{ $isConfirmSwitchPage?: boolean }>`
+const ContractCard = styled(CardFlex)<{ $isView?: boolean }>`
   width: 360px;
   border-color: ${COLOR.WHITE};
 
   ${(props) =>
-    props.$isConfirmSwitchPage &&
+    props.$isView &&
     `
     width: 342px;
     padding-bottom: 24px;
@@ -42,17 +40,17 @@ const ContractTag = styled(Tag)`
   border-color: ${COLOR.GRAY_1};
 `;
 
-type StakingContractProps = {
+type StakingContractCardProps = {
   stakingProgramId: StakingProgramId;
-  isCurrentStakingProgram: boolean;
-  isConfirmSwitchPage?: boolean;
+  renderAction?: (
+    contractDetails: Partial<StakingContractDetails> | undefined,
+  ) => React.ReactNode;
 };
 
-export const StakingContract = ({
+export const StakingContractCard = ({
   stakingProgramId,
-  isCurrentStakingProgram,
-  isConfirmSwitchPage = false,
-}: StakingContractProps) => {
+  renderAction,
+}: StakingContractCardProps) => {
   const { selectedAgentConfig } = useServices();
   const stakingProgramMeta =
     STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][stakingProgramId];
@@ -60,7 +58,7 @@ export const StakingContract = ({
   const contractDetails = allStakingContractDetailsRecord?.[stakingProgramId];
 
   return (
-    <ContractCard $noBodyPadding $isConfirmSwitchPage={isConfirmSwitchPage}>
+    <ContractCard $noBodyPadding $isView={!renderAction}>
       <Flex gap={24} vertical className="px-24 py-24">
         <ContractTag>
           <TbFileText size={16} color={COLOR.TEXT_NEUTRAL_SECONDARY} />
@@ -102,18 +100,7 @@ export const StakingContract = ({
         </Flex>
       </Flex>
 
-      {!isConfirmSwitchPage && (
-        <>
-          <SlotsLeft
-            contractDetails={contractDetails}
-            isCurrentStakingProgram={isCurrentStakingProgram}
-          />
-          <SwitchStakingButton
-            isCurrentStakingProgram={isCurrentStakingProgram}
-            stakingProgramId={stakingProgramId}
-          />
-        </>
-      )}
+      {renderAction?.(contractDetails)}
     </ContractCard>
   );
 };

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { MiddlewareDeploymentStatus } from '@/client';
+import { MiddlewareDeploymentStatusMap } from '@/constants';
 import {
   useBalanceAndRefillRequirementsContext,
   useElectronApi,
@@ -20,11 +20,11 @@ export const useSetupTrayIcon = () => {
 
     if (isPearlWalletRefillRequired) {
       setTrayIcon('low-gas');
-    } else if (deploymentStatus === MiddlewareDeploymentStatus.DEPLOYED) {
+    } else if (deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYED) {
       setTrayIcon('running');
-    } else if (deploymentStatus === MiddlewareDeploymentStatus.STOPPED) {
+    } else if (deploymentStatus === MiddlewareDeploymentStatusMap.STOPPED) {
       setTrayIcon('paused');
-    } else if (deploymentStatus === MiddlewareDeploymentStatus.BUILT) {
+    } else if (deploymentStatus === MiddlewareDeploymentStatusMap.BUILT) {
       setTrayIcon('logged-out');
     }
   }, [isPearlWalletRefillRequired, deploymentStatus, setTrayIcon]);

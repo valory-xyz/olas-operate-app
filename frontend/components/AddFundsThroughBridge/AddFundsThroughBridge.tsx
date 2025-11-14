@@ -3,14 +3,19 @@ import { Button, Flex, Spin, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
 
-import { AddressBalanceRecord } from '@/client';
-import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
+import { TokenSymbol, TokenSymbolConfigMap } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
-import { usePageState } from '@/hooks/usePageState';
-import { useServices } from '@/hooks/useServices';
-import { Address } from '@/types/Address';
-import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
+import {
+  useBalanceAndRefillRequirementsContext,
+  usePageState,
+  useServices,
+} from '@/hooks';
+import {
+  Address,
+  AddressBalanceRecord,
+  BridgeRefillRequirementsRequest,
+  BridgeRequest,
+} from '@/types';
 
 import { Bridge } from '../Bridge/Bridge';
 import { CardFlex } from '../ui/CardFlex';

@@ -4,9 +4,9 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 import { isNil } from 'lodash';
 
 import { ERC20_BALANCE_OF_STRING_FRAGMENT } from '@/abis/erc20';
-import { MiddlewareChain, MiddlewareServiceResponse } from '@/client';
 import { providers } from '@/config/providers';
 import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
+import { type MiddlewareChain } from '@/constants';
 import { EvmChainId } from '@/enums/Chain';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
 import {
@@ -17,6 +17,7 @@ import {
   WalletType,
 } from '@/enums/Wallet';
 import { StakedAgentService } from '@/service/agents/shared-services/StakedAgentService';
+import { MiddlewareServiceResponse } from '@/types';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { formatUnits } from '@/utils/numberFormatters';

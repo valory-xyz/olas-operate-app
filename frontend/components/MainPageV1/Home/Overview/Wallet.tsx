@@ -5,11 +5,7 @@ import styled from 'styled-components';
 import { CardFlex } from '@/components/ui';
 import { COLOR, NA, TokenSymbolConfigMap, TokenSymbolMap } from '@/constants';
 import { Pages } from '@/enums/Pages';
-import {
-  useAvailableAgentAssets,
-  usePageState,
-  useSharedContext,
-} from '@/hooks';
+import { useAvailableAgentAssets, usePageState } from '@/hooks';
 
 const { Text, Title } = Typography;
 
@@ -25,9 +21,8 @@ const TokenWrapper = styled(Flex)`
  * To display wallet overview on the main page.
  */
 export const Wallet = () => {
-  const { isMainOlasBalanceLoading } = useSharedContext();
   const { goto } = usePageState();
-  const availableAssets = useAvailableAgentAssets();
+  const { availableAssets, isLoading } = useAvailableAgentAssets();
   const availableAssetsExceptOlas = availableAssets.filter(
     ({ symbol, amount }) => symbol !== TokenSymbolMap.OLAS && amount > 0,
   );
@@ -39,7 +34,7 @@ export const Wallet = () => {
           Wallet
         </Title>
         <Button
-          disabled={isMainOlasBalanceLoading}
+          disabled={isLoading}
           onClick={() => goto(Pages.AgentWallet)}
           size="small"
         >

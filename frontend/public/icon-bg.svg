@@ -1,0 +1,14 @@
+<svg width="424" height="146" viewBox="0 0 424 146" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<rect width="424" height="146" fill="url(#pattern0_17743_120424)" fill-opacity="0.2"/>
+<defs>
+<pattern id="pattern0_17743_120424" patternUnits="userSpaceOnUse" patternTransform="matrix(15.6 0 0 7.8 210 72.5)" preserveAspectRatio="none" viewBox="0 0 15.6 7.8" width="1" height="1">
+<use xlink:href="#pattern0_17743_120424_inner" transform="translate(-15.6 0)"/>
+<g id="pattern0_17743_120424_inner">
+<g opacity="0.5">
+<rect x="4" y="1" width="4" height="1" transform="rotate(-180 4 1)" fill="#617084"/>
+</g>
+</g>
+<use xlink:href="#pattern0_17743_120424_inner" transform="translate(-7.8 3.9)"/>
+<use xlink:href="#pattern0_17743_120424_inner" transform="translate(7.8 3.9)"/>
+</pattern></defs>
+</svg>

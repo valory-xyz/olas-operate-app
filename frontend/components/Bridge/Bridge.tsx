@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { MiddlewareChain } from '@/client';
+import { MiddlewareChain } from '@/constants';
 import { Pages } from '@/enums/Pages';
 import { usePageState } from '@/hooks';
 import { CrossChainTransferDetails } from '@/types/Bridge';

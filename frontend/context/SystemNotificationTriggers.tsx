@@ -1,6 +1,6 @@
 import { PropsWithChildren, useCallback, useEffect, useRef } from 'react';
 
-import { MiddlewareDeploymentStatus } from '@/client';
+import { MiddlewareDeploymentStatusMap } from '@/constants';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
@@ -23,7 +23,8 @@ export const SystemNotificationTriggers = ({ children }: PropsWithChildren) => {
 
     // ignore if agent is not running
     if (
-      selectedService?.deploymentStatus !== MiddlewareDeploymentStatus.DEPLOYED
+      selectedService?.deploymentStatus !==
+      MiddlewareDeploymentStatusMap.DEPLOYED
     )
       return;
     // ignore if eligibility is not yet defined

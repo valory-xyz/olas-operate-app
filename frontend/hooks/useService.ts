@@ -1,7 +1,10 @@
 import { useCallback, useMemo } from 'react';
 
-import { MiddlewareDeploymentStatus } from '@/client';
-import { EvmChainId } from '@/constants';
+import {
+  EvmChainId,
+  type MiddlewareDeploymentStatus,
+  MiddlewareDeploymentStatusMap,
+} from '@/constants';
 import {
   AgentEoa,
   AgentSafe,
@@ -15,24 +18,6 @@ import { Nullable, Optional } from '@/types/Util';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { useServices } from './useServices';
-
-/** @note statuses where middleware deployment is moving from stopped to deployed, or vice versa, used for loading fallbacks */
-const MiddlewareTransitioningStatuses = [
-  MiddlewareDeploymentStatus.DEPLOYING,
-  MiddlewareDeploymentStatus.STOPPING,
-];
-
-/** @note statuses where middleware deployment is running */
-const MiddlewareRunningStatuses = [
-  MiddlewareDeploymentStatus.DEPLOYED,
-  ...MiddlewareTransitioningStatuses,
-];
-
-/** @note statuses where middleware is in the process of building/creating a new deployment */
-const MiddlewareBuildingStatuses = [
-  MiddlewareDeploymentStatus.BUILT,
-  MiddlewareDeploymentStatus.CREATED,
-];
 
 type ServiceChainIdAddressRecord = {
   [evmChainId in EvmChainId]?: {
@@ -203,20 +188,24 @@ export const useService = (serviceConfigId?: string) => {
   // without isServiceTransitioning, and sometimes we check deploymentStatus
   // manually, while could use one of these
 
-  /** @note deployment is transitioning from stopped to deployed (and vice versa) */
-  const isServiceTransitioning = deploymentStatus
-    ? MiddlewareTransitioningStatuses.includes(deploymentStatus)
-    : false;
+  /**
+   * @note statuses where middleware deployment is moving from stopped to
+   * deployed, or vice versa, used for loading fallbacks
+   */
+  const isServiceTransitioning =
+    deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYING ||
+    deploymentStatus === MiddlewareDeploymentStatusMap.STOPPING;
 
   /** @note deployment is running, or transitioning, both assume the deployment is active */
-  const isServiceRunning = deploymentStatus
-    ? MiddlewareRunningStatuses.includes(deploymentStatus)
-    : false;
+  const isServiceRunning =
+    deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYING ||
+    deploymentStatus === MiddlewareDeploymentStatusMap.STOPPING ||
+    deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYED;
 
-  /** @note new deployment being created/built */
-  const isServiceBuilding = deploymentStatus
-    ? MiddlewareBuildingStatuses.includes(deploymentStatus)
-    : false;
+  /** @note statuses where middleware is in the process of building/creating a new deployment */
+  const isServiceBuilding =
+    deploymentStatus === MiddlewareDeploymentStatusMap.BUILT ||
+    deploymentStatus === MiddlewareDeploymentStatusMap.CREATED;
 
   return {
     isLoaded,

@@ -13,21 +13,14 @@ import {
   useRef,
 } from 'react';
 
-import {
-  AddressBalanceRecord,
-  BalancesAndFundingRequirements,
-  MasterSafeBalanceRecord,
-} from '@/client';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import {
   AgentType,
   EvmChainId,
   MiddlewareDeploymentStatusMap,
-} from '@/constants';
-import {
   SIXTY_MINUTE_INTERVAL,
   THIRTY_SECONDS_INTERVAL,
-} from '@/constants/intervals';
+} from '@/constants';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useMasterWalletContext, useStore } from '@/hooks';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
@@ -35,7 +28,13 @@ import { usePageState } from '@/hooks/usePageState';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
 import { BalanceService } from '@/service/balances';
-import { Maybe, Nullable, Optional } from '@/types/Util';
+import {
+  AddressBalanceRecord,
+  BalancesAndFundingRequirements,
+  MasterSafeBalanceRecord,
+  Maybe,
+  Optional,
+} from '@/types';
 import {
   asMiddlewareChain,
   BACKOFF_STEPS,
@@ -52,8 +51,8 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   canStartAgent: boolean;
   isAgentFundingRequestsStale: boolean;
   isPearlWalletRefillRequired: boolean;
-  refetch: Nullable<
-    () => Promise<QueryObserverResult<BalancesAndFundingRequirements, Error>>
+  refetch: () => Promise<
+    QueryObserverResult<BalancesAndFundingRequirements, Error>
   >;
   resetQueryCache: () => void;
 }>({
@@ -66,7 +65,10 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   canStartAgent: false,
   isAgentFundingRequestsStale: false,
   isPearlWalletRefillRequired: false,
-  refetch: null,
+  refetch: () =>
+    Promise.resolve(
+      {} as QueryObserverResult<BalancesAndFundingRequirements, Error>,
+    ),
   resetQueryCache: () => {},
 });
 
@@ -363,7 +365,7 @@ export const BalancesAndRefillRequirementsProvider = ({
           balancesAndFundingRequirements?.agent_funding_requests_cooldown ||
           false,
         isPearlWalletRefillRequired,
-        refetch: refetch || null,
+        refetch,
         resetQueryCache,
       }}
     >

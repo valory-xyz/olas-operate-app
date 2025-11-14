@@ -6,6 +6,5 @@ export * from './ServiceRegistryL2ServiceState';
 export * from './SettingsScreen';
 export * from './SetupScreen';
 export * from './StakingProgram';
-export * from './StakingProgramStatus';
 export * from './Token';
 export * from './Wallet';

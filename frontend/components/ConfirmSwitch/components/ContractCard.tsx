@@ -1,7 +1,7 @@
 import { Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
-import { StakingContract } from '@/components/SelectStaking/StakingContractCard';
+import { StakingContractCard } from '@/components/StakingContractCard';
 import { COLOR } from '@/constants/colors';
 import { StakingProgramId } from '@/enums/StakingProgram';
 
@@ -42,11 +42,7 @@ export const ContractCard = ({
           {isCurrentStakingProgram ? 'Current Contract' : 'New Contract'}
         </Text>
       </CardHeader>
-      <StakingContract
-        stakingProgramId={stakingProgramId}
-        isCurrentStakingProgram={isCurrentStakingProgram}
-        isConfirmSwitchPage={true}
-      />
+      <StakingContractCard stakingProgramId={stakingProgramId} />
     </Flex>
   );
 };

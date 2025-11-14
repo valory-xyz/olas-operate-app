@@ -1,11 +1,12 @@
 import { Typography } from 'antd';
-import { useContext, useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
+import { SelectStakingPage } from '../SelectStakingPage';
 import { CardFlex } from '../ui/CardFlex';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
@@ -22,6 +23,7 @@ import {
 } from './SetupRestore';
 import { SetupWelcome } from './SetupWelcome';
 import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
+import { SupportButton } from './SupportButton';
 
 const { Title } = Typography;
 
@@ -55,6 +57,7 @@ const screenWithoutCards: SetupScreen[] = [
   SetupScreen.TransferFunds,
   SetupScreen.SetupBridgeOnboardingScreen,
   SetupScreen.SetupOnRamp,
+  SetupScreen.SelectStaking,
 ];
 
 export const Setup = () => {
@@ -74,6 +77,8 @@ export const Setup = () => {
         return <AgentOnboarding />;
       case SetupScreen.SetupYourAgent:
         return <SetupYourAgent />;
+      case SetupScreen.SelectStaking:
+        return <SelectStakingPage mode="onboard" />;
       case SetupScreen.FundYourAgent:
         return <FundYourAgent />;
       case SetupScreen.TransferFunds:
@@ -97,9 +102,15 @@ export const Setup = () => {
     }
   }, [setupObject.state]);
 
+  let Wrapper: React.ElementType = SetupCard;
   if (screenWithoutCards.includes(setupObject.state)) {
-    return setupScreen;
+    Wrapper = React.Fragment;
   }
 
-  return <SetupCard>{setupScreen}</SetupCard>;
+  return (
+    <Wrapper>
+      <SupportButton />
+      {setupScreen}
+    </Wrapper>
+  );
 };
