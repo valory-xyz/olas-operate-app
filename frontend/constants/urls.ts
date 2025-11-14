@@ -99,3 +99,6 @@ export const PEARL_API_URL = 'https://pearl-api.olas.network';
 
 // web3auth
 export const WEB3AUTH_GATEWAY_URL = `${PEARL_API_URL}/web3auth/login`;
+
+// support API
+export const SUPPORT_API_URL = `${PEARL_API_URL}/api/zendesk`;

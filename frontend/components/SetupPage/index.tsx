@@ -1,5 +1,5 @@
 import { Typography } from 'antd';
-import { useContext, useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
@@ -23,6 +23,7 @@ import {
 } from './SetupRestore';
 import { SetupWelcome } from './SetupWelcome';
 import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
+import { SupportButton } from './SupportButton';
 
 const { Title } = Typography;
 
@@ -101,9 +102,15 @@ export const Setup = () => {
     }
   }, [setupObject.state]);
 
+  let Wrapper: React.ElementType = SetupCard;
   if (screenWithoutCards.includes(setupObject.state)) {
-    return setupScreen;
+    Wrapper = React.Fragment;
   }
 
-  return <SetupCard>{setupScreen}</SetupCard>;
+  return (
+    <Wrapper>
+      <SupportButton />
+      {setupScreen}
+    </Wrapper>
+  );
 };

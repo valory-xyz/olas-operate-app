@@ -1,9 +1,9 @@
 const http = require('http');
 const https = require('https');
-const { logger } = require('./logger');
+const { logger } = require('../logger');
 const fs = require('fs');
 const path = require('path');
-const { paths } = require('./constants');
+const { paths } = require('../constants');
 const { session } = require('electron');
 const tls = require('tls');
 const { Agent, request } = require('undici');
