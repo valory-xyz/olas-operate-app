@@ -23,7 +23,7 @@ export const AccountRecoveryProvider = ({
     enabled: isOnline,
     refetchInterval: FIFTEEN_SECONDS_INTERVAL,
   });
-  console.log({ data, isLoading });
+  // console.log({ data, isLoading });
 
   return (
     <AccountRecoveryContext.Provider value={{ example: null }}>
