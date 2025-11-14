@@ -8,8 +8,10 @@ import { ReactNode } from 'react';
 
 const { Title, Text } = Typography;
 
+type ModalSize = 'small' | 'medium' | 'large';
+
 const modalStylesMap: Record<
-  'small' | 'medium',
+  ModalSize,
   {
     width: number;
     padding: number;
@@ -29,6 +31,12 @@ const modalStylesMap: Record<
     flexAlign: 'center',
     textAlignClass: 'text-center',
   },
+  large: {
+    width: 640,
+    padding: 32,
+    flexAlign: 'flex-start',
+    textAlignClass: 'text-left',
+  },
 } as const;
 
 const MODAL_STYLES: AntdModalProps['styles'] = {
@@ -41,10 +49,10 @@ const MODAL_STYLES: AntdModalProps['styles'] = {
 };
 
 type ModalProps = {
-  header?: ReactNode | null;
-  title: string;
-  description: string | ReactNode;
-  size?: 'small' | 'medium';
+  header?: ReactNode;
+  title?: string;
+  description?: ReactNode;
+  size?: ModalSize;
   action?: ReactNode;
 };
 
@@ -78,12 +86,14 @@ export const Modal = ({
     >
       <Flex vertical align={sizeStyles.flexAlign} style={{ width: '100%' }}>
         {header}
-        <Title
-          level={5}
-          className={`${header ? 'mt-24' : 'mt-0'} mb-12 ${sizeStyles.textAlignClass}`}
-        >
-          {title}
-        </Title>
+        {title && (
+          <Title
+            level={5}
+            className={`${header ? 'mt-24' : 'mt-0'} mb-12 ${sizeStyles.textAlignClass}`}
+          >
+            {title}
+          </Title>
+        )}
         <Text type="secondary" className={sizeStyles.textAlignClass}>
           {description}
         </Text>

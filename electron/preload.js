@@ -45,6 +45,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showNotification: (title, description) =>
     ipcRenderer.send('show-notification', title, description),
   saveLogs: (data) => ipcRenderer.invoke('save-logs', data),
+  saveLogsForSupport: (data) =>
+    ipcRenderer.invoke('save-logs-for-support', data),
+  cleanupSupportLogs: () => ipcRenderer.invoke('cleanup-support-logs'),
+  readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
   openPath: (filePath) => ipcRenderer.send('open-path', filePath),
   getAppVersion: () => ipcRenderer.invoke('app-version'),
   onRampWindow,
