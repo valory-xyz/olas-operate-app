@@ -5,7 +5,6 @@ import {
   Form as AntdForm,
   type FormProps,
   Input,
-  message,
   Typography,
   UploadFile,
 } from 'antd';
@@ -13,15 +12,16 @@ import type { Rule } from 'antd/es/form';
 import { UploadChangeParam } from 'antd/es/upload';
 import { delay } from 'lodash';
 import { useCallback, useState } from 'react';
+import { FiExternalLink } from 'react-icons/fi';
 import { TbX } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { FormLabel, Modal, RequiredMark } from '@/components/ui';
+import { COLOR, SUPPORT_URL } from '@/constants';
 import { useElectronApi } from '@/hooks';
 import { SupportService } from '@/service/Support';
-import { getErrorMessage } from '@/utils';
 
-import { SuccessOutlined } from '../custom-icons';
+import { SuccessOutlined, WarningOutlined } from '../custom-icons';
 import { FileUploadWithList } from './FileUpload';
 import { useUploadSupportFiles } from './useUploadSupportFiles';
 
@@ -83,9 +83,10 @@ export const SupportModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadFile[]>([]);
   const [ticketId, setTicketId] = useState<number | null>(null);
+  const [isError, setIsError] = useState<boolean>(false);
 
   const [form] = Form.useForm<SupportModalFormValues>();
-  const { cleanupSupportLogs } = useElectronApi();
+  const { cleanupSupportLogs, termsAndConditionsWindow } = useElectronApi();
   const { uploadFiles } = useUploadSupportFiles();
 
   const handleSubmit = useCallback(
@@ -109,12 +110,7 @@ export const SupportModal = ({
 
         setTicketId(createTicketResult.ticketId);
       } catch (error) {
-        message.error(
-          getErrorMessage(
-            error,
-            'Failed to submit support request. Please try again.',
-          ),
-        );
+        setIsError(true);
       } finally {
         await cleanupSupportLogs?.();
         setIsSubmitting(false);
@@ -164,6 +160,37 @@ export const SupportModal = ({
     );
   }
 
+  if (isError) {
+    return (
+      <Modal
+        open={open}
+        onCancel={() => {
+          handleClose();
+          setIsError(false);
+        }}
+        header={<WarningOutlined />}
+        closable
+        title="Request Submission Failed"
+        description="Please try the Valory support team again. Alternatively, you can contact the Olas DAO in their Discord."
+        action={
+          <a
+            href={SUPPORT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex align-center mt-32"
+          >
+            Visit the Olas DAO&apos;s Discord Server{' '}
+            <FiExternalLink
+              color={COLOR.PURPLE}
+              fontSize={20}
+              className="ml-4"
+            />
+          </a>
+        }
+      />
+    );
+  }
+
   return (
     <Modal
       open={open}
@@ -180,8 +207,8 @@ export const SupportModal = ({
       action={
         <>
           <Text type="secondary" className="text-sm">
-            Fill out the form below and the support team will get back to you
-            via email. The team usually responds within 2 business days.
+            Fill out the form below and the Valory support team will get back to
+            you via email. The team usually responds within 2 business days.
           </Text>
 
           <Form
@@ -241,7 +268,17 @@ export const SupportModal = ({
               </Checkbox>
             </Form.Item>
 
-            <Form.Item className="mb-0">
+            <Text className="text-xs text-neutral-tertiary">
+              By clicking “Submit Issue”, you agree to share all the information
+              submitted in this form, so the support team can review your issue
+              and respond. For more details, check the{' '}
+              <a onClick={() => termsAndConditionsWindow?.show?.()}>
+                Pearl Terms
+              </a>
+              .
+            </Text>
+
+            <Form.Item className="mb-0 mt-24">
               <Flex justify="end" gap={12}>
                 <Button onClick={handleClose} disabled={isSubmitting}>
                   Cancel

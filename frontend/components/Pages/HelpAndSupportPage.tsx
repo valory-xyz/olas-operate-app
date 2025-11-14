@@ -1,6 +1,6 @@
 import { Button, Card, Flex, Typography } from 'antd';
 import { compact } from 'lodash';
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FiArrowUpRight, FiExternalLink } from 'react-icons/fi';
 import { useIsMounted } from 'usehooks-ts';
 
@@ -17,7 +17,7 @@ const { Title, Paragraph } = Typography;
 type HelpItem = {
   label: string;
   href?: string;
-  action?: ReactNode;
+  onClick?: () => void;
   isExternal?: boolean;
 };
 
@@ -55,7 +55,7 @@ export const HelpAndSupport = () => {
             }
           : null,
         {
-          label: 'Olas community Discord server',
+          label: `Olas DAO's Discord server`,
           href: SUPPORT_URL,
           isExternal: true,
         },
@@ -65,12 +65,8 @@ export const HelpAndSupport = () => {
           isExternal: false,
         },
         {
-          label: 'Pearl Terms and Conditions',
-          action: (
-            <a onClick={() => termsAndConditionsWindow?.show?.()}>
-              Terms and Conditions
-            </a>
-          ),
+          label: 'Pearl Terms',
+          onClick: () => termsAndConditionsWindow?.show?.(),
         },
       ]),
     [latestTag, termsAndConditionsWindow],
@@ -82,15 +78,20 @@ export const HelpAndSupport = () => {
         Help Center
       </Title>
       <Card styles={{ body: { paddingTop: 8, paddingBottom: 8 } }}>
-        {helpItems.map(({ label, href, action, isExternal }, index) => (
+        {helpItems.map(({ label, href, onClick, isExternal }, index) => (
           <CardSection
             key={index}
             $borderBottom={index !== helpItems.length - 1}
             $padding="16px"
             vertical
           >
-            {href ? (
-              <a href={href} target="_blank" rel="noopener noreferrer">
+            {href || onClick ? (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onClick}
+              >
                 <Flex justify="space-between" align="center">
                   {label}
                   {isExternal ? (
@@ -100,8 +101,6 @@ export const HelpAndSupport = () => {
                   )}
                 </Flex>
               </a>
-            ) : action ? (
-              action
             ) : null}
           </CardSection>
         ))}
