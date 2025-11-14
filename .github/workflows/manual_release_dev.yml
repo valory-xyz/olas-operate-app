@@ -1,13 +1,12 @@
+# GitHub Actions workflow for building and releasing macOS binaries (MANUAL TRIGGER ONLY)
+
 name: Release
 
-# Triggered only via workflow_call
+# Triggered on pushing a tag
 on:
-  workflow_call:
-    inputs:
-      tag:
-        description: "Tag name to build (e.g., v1.2.3-rc1)"
-        required: true
-        type: string
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
   # PyInstaller job for both x64 and arm64 binaries
@@ -18,10 +17,7 @@ jobs:
         os: [macos-14, macos-14-large]
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.tag }}
-          fetch-depth: 0
+      - uses: actions/checkout@v3
 
       # Set up Python with setup-python action and add it to PATH
       - uses: actions/setup-python@v5
@@ -85,27 +81,21 @@ jobs:
 
   # Jobs for production, running separately for x64 and arm64
   build-release:
-    needs: [build-macos-pyinstaller]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         env: [production]
         os: [macos-14, macos-14-large]
 
+    needs: build-macos-pyinstaller
+
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.tag }}
-          fetch-depth: 0
+      - uses: actions/checkout@v3
 
       - uses: actions/setup-python@v5
         id: setup-python
         with:
           python-version: "3.10"
-
-      - name: Add Python to PATH
-        run: |
-          echo "${{ steps.setup-python.outputs.python-path }}" >> $GITHUB_PATH
       
       - uses: actions/setup-node@v4
         with:
