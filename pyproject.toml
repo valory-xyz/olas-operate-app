@@ -10,7 +10,7 @@ include = []
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
-olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "37f16417422e9978abac8c7e7c0c246a08fa4d56" }
+olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "33218d256af3f5044e8485cef62a0457e78b2090" }
 
 [build-system]
 requires = ["poetry-core"]
