@@ -171,7 +171,7 @@ export const SupportModal = ({
         header={<WarningOutlined />}
         closable
         title="Request Submission Failed"
-        description="Please try the Valory support team again. Alternatively, you can contact the Olas DAO in their Discord."
+        description="Please try contacting the Valory support team again. Alternatively, you can contact the Olas DAO in their Discord."
         action={
           <a
             href={SUPPORT_URL}
