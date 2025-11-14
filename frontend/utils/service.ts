@@ -30,6 +30,11 @@ export const updateServiceIfNeeded = async (
     partialServiceTemplate.hash = serviceTemplate.hash;
   }
 
+  // Check if the agent release is different
+  if (service.agent_release !== serviceTemplate.agent_release) {
+    partialServiceTemplate.agent_release = serviceTemplate.agent_release;
+  }
+
   // Temporary: check if the service has incorrect name
   if (
     serviceTemplate.agentType === AgentType.AgentsFun &&
