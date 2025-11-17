@@ -3,7 +3,7 @@ import { ExtendedWallet } from '@/types/Recovery';
 
 import extendedWalletResponse from './Recovery.json';
 
-const isDebug = true;
+const isDebug = false;
 const fakeExtendedWalletResponse = Promise.resolve(
   extendedWalletResponse as ExtendedWallet[],
 );
@@ -13,17 +13,17 @@ const fakeExtendedWalletResponse = Promise.resolve(
  */
 const getExtendedWallet = async (
   signal?: AbortSignal,
-): Promise<ExtendedWallet[]> =>
-  isDebug
-    ? fakeExtendedWalletResponse
-    : fetch(`${BACKEND_URL}/extended/wallet`, {
-      method: 'GET',
-      headers: { ...CONTENT_TYPE_JSON_UTF8 },
-      signal,
-    }).then((res) => {
-      if (res.ok) return res.json();
-      throw new Error('Failed to fetch extended wallet');
-    });
+): Promise<ExtendedWallet[]> => {
+  if (isDebug) return fakeExtendedWalletResponse;
+  return fetch(`${BACKEND_URL}/extended/wallet`, {
+    method: 'GET',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    signal,
+  }).then((res) => {
+    if (res.ok) return res.json();
+    throw new Error('Failed to fetch extended wallet');
+  });
+};
 
 export const RecoveryService = {
   getExtendedWallet,

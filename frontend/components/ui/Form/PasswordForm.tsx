@@ -1,8 +1,8 @@
 import { Button, Flex, Form, FormInstance, Input, Typography } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import zxcvbn from 'zxcvbn';
 
-import { BackButton, FormLabel } from '@/components/ui';
+import { Alert, BackButton, FormLabel } from '@/components/ui';
 import { COLOR } from '@/constants';
 
 import { CardFlex } from '../CardFlex';
@@ -25,19 +25,20 @@ const colors = [
   COLOR.PURPLE,
 ] as const;
 
-const SetupPasswordTitle = () => (
-  <Flex vertical gap={12} style={{ marginBottom: 24 }}>
+const SetupPasswordTitle = ({ title }: { title: string }) => (
+  <Flex vertical gap={12}>
     <Title level={3} className="m-0">
-      Set Password
+      {title}
     </Title>
-    <Text type="secondary">
-      Your password must be at least 8 characters long. Use a mix of letters,
-      numbers, and symbols.
+    <Text className="text-neutral-secondary">
+      Your password must be at least 8 characters long.
+      <br />
+      Use a mix of letters, numbers, and symbols.
     </Text>
   </Flex>
 );
 
-export const PasswordStrength = ({ score }: { score: number }) => {
+const PasswordStrength = ({ score }: { score: number }) => {
   return (
     <Text style={{ color: COLOR.GRAY_2 }}>
       Password strength:{' '}
@@ -48,43 +49,39 @@ export const PasswordStrength = ({ score }: { score: number }) => {
 
 type PasswordFormValues = {
   form: FormInstance;
-  onFinish?: (values: { password: string }) => void;
-  isLoading?: boolean;
+  onFinish: (values: { password: string }) => void;
+  isSubmitting: boolean;
   onBack: () => void;
+  isPasswordValid: boolean;
+  title?: string;
+  info?: string;
 };
 
 export const PasswordForm = ({
+  isPasswordValid,
   form,
   onFinish,
-  isLoading,
+  isSubmitting,
   onBack,
+  title = 'Set Password',
+  info,
 }: PasswordFormValues) => {
   const password = Form.useWatch('password', form);
 
-  const [isPasswordValid, setIsPasswordValid] = useState(false);
-
-  useEffect(() => {
-    if (password !== undefined) {
-      form
-        .validateFields(['password'])
-        .then(() => setIsPasswordValid(true))
-        .catch(() => setIsPasswordValid(false));
-    } else {
-      setIsPasswordValid(false);
-    }
-  }, [password, form]);
-
   return (
-    <CardFlex $gap={10} styles={{ body: { padding: '12px 24px' } }} $noBorder>
+    <CardFlex $gap={16} styles={{ body: { padding: '24px 32px' } }} $noBorder>
       <BackButton onPrev={onBack} />
-      <SetupPasswordTitle />
+      <SetupPasswordTitle title={title} />
+
+      {info && (
+        <Alert type="info" message={info} showIcon className="text-sm" />
+      )}
 
       <Form
-        name="createEoa"
+        name="createPassword"
         form={form}
-        layout="vertical"
         onFinish={onFinish}
-        requiredMark={false}
+        layout="vertical"
       >
         <Form.Item
           name="password"
@@ -95,7 +92,7 @@ export const PasswordForm = ({
             ) : null
           }
           rules={[
-            { required: true, message: 'Please input a Password!' },
+            { required: true, message: 'Please input a Password.' },
             {
               validator: (_, value) => {
                 if (!value) return Promise.resolve();
@@ -112,7 +109,7 @@ export const PasswordForm = ({
           required={false}
           labelCol={{ style: { paddingBottom: 4 } }}
         >
-          <Input.Password size="large" placeholder="Password" maxLength={64} />
+          <Input.Password size="large" maxLength={64} />
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 0 }}>
@@ -121,7 +118,7 @@ export const PasswordForm = ({
             type="primary"
             htmlType="submit"
             disabled={!isPasswordValid || password?.length < 8}
-            loading={isLoading}
+            loading={isSubmitting}
             className="mt-24"
             style={{ width: '100%' }}
           >

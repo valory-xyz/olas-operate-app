@@ -1,4 +1,5 @@
 import { Flex, Skeleton, Typography } from 'antd';
+import { useMemo } from 'react';
 
 import { SetupScreen } from '@/enums';
 import { useSetup } from '@/hooks';
@@ -8,9 +9,11 @@ import {
   AccountRecoveryProvider,
   useAccountRecoveryContext,
 } from './AccountRecoveryProvider';
+import { CreateNewPassword } from './components/CreateNewPassword';
 import { RecoveryNotAvailable } from './components/RecoveryNotAvailable';
 import { RecoveryViaBackupWallet } from './components/RecoveryViaBackupWallet';
 import { RecoveryViaSecretRecoveryPhrase } from './components/RecoveryViaSecretRecoveryPhrase';
+import { RECOVERY_STEPS } from './constants';
 import { RecoveryMethodCard } from './styles';
 
 const { Text, Title } = Typography;
@@ -50,15 +53,29 @@ const SelectRecoveryMethod = () => {
 };
 
 const AccountRecoveryInner = () => {
-  const { isLoading, isRecoveryAvailable, hasBackupWallets } =
+  const { isLoading, isRecoveryAvailable, hasBackupWallets, currentStep } =
     useAccountRecoveryContext();
+  const currentView = useMemo(() => {
+    switch (currentStep) {
+      case RECOVERY_STEPS.SelectRecoveryMethod:
+        return <SelectRecoveryMethod />;
+      case RECOVERY_STEPS.CreateNewPassword:
+        return <CreateNewPassword />;
+      case RECOVERY_STEPS.FundYourBackupWallet:
+        return <div>To be implemented</div>;
+      case RECOVERY_STEPS.ApproveWithBackupWallet:
+        return <div>To be implemented</div>;
+      default:
+        return <SelectRecoveryMethod />;
+    }
+  }, [currentStep]);
 
   return (
     <AccountRecoveryProvider>
       {isLoading ? (
         <Loader />
       ) : isRecoveryAvailable ? (
-        <SelectRecoveryMethod />
+        currentView
       ) : (
         <RecoveryNotAvailable hasBackupWallets={hasBackupWallets} />
       )}

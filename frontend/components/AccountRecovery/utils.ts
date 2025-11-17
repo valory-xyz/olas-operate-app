@@ -26,7 +26,6 @@ export const getBackupWalletStatus = (
       owners: safe.backup_owners ?? [],
     });
   }
-  console.log(backupList);
 
   const hasBackupWalletsAcrossEveryChain = backupList.every(
     (item) => item.owners.length > 0,
@@ -42,11 +41,6 @@ export const getBackupWalletStatus = (
       return A.every((v, i) => v === B[i]);
     }),
   );
-
-  console.log({
-    hasBackupWalletsAcrossEveryChain,
-    areAllBackupOwnersSame,
-  });
 
   return {
     backupList,

@@ -14,14 +14,8 @@ import { SetupScreen } from '@/enums';
 import { useMasterWalletContext, useSetup } from '@/hooks';
 import { RecoveryService } from '@/service/Recovery';
 
+import { RECOVERY_STEPS } from './constants';
 import { getBackupWalletStatus } from './utils';
-
-const RECOVERY_STEPS = {
-  SelectRecoveryMethod: 'SelectRecoveryMethod',
-  CreateNewPassword: 'CreateNewPassword',
-  FundYourBackupWallet: 'FundYourBackupWallet',
-  ApproveWithBackupWallet: 'ApproveWithBackupWallet',
-} as const;
 
 type RecoverySteps = keyof typeof RECOVERY_STEPS;
 
@@ -35,12 +29,15 @@ const AccountRecoveryContext = createContext<{
   currentStep: RecoverySteps;
   /** Callback to proceed to the next step in recovery */
   onNext: () => void;
+  /** Callback to go back to the previous step in recovery */
+  onPrev: () => void;
 }>({
   isLoading: true,
   currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
   isRecoveryAvailable: false,
   hasBackupWallets: false,
   onNext: () => {},
+  onPrev: () => {},
 });
 
 export const AccountRecoveryProvider = ({
@@ -49,7 +46,7 @@ export const AccountRecoveryProvider = ({
   children: ReactNode;
 }) => {
   const [currentStep, setCurrentStep] = useState<RecoverySteps>(
-    RECOVERY_STEPS.SelectRecoveryMethod,
+    RECOVERY_STEPS.CreateNewPassword,
   );
   const { isOnline } = useContext(OnlineStatusContext);
   const { goto } = useSetup();
@@ -63,7 +60,6 @@ export const AccountRecoveryProvider = ({
       refetchInterval: FIFTEEN_SECONDS_INTERVAL,
       select: (data) => data[0],
     });
-  // console.log({ data, isLoading });
 
   const isLoading = isMasterWalletLoading || isExtendedWalletLoading;
 
@@ -93,6 +89,22 @@ export const AccountRecoveryProvider = ({
     }
   }, [currentStep, goto]);
 
+  const onPrev = useCallback(() => {
+    switch (currentStep) {
+      case RECOVERY_STEPS.CreateNewPassword:
+        setCurrentStep(RECOVERY_STEPS.SelectRecoveryMethod);
+        break;
+      case RECOVERY_STEPS.FundYourBackupWallet:
+        setCurrentStep(RECOVERY_STEPS.CreateNewPassword);
+        break;
+      case RECOVERY_STEPS.ApproveWithBackupWallet:
+        setCurrentStep(RECOVERY_STEPS.FundYourBackupWallet);
+        break;
+      default:
+        break;
+    }
+  }, [currentStep]);
+
   const isRecoveryAvailable =
     backupWalletDetails?.areAllBackupOwnersSame &&
     backupWalletDetails?.hasBackupWalletsAcrossEveryChain;
@@ -106,6 +118,7 @@ export const AccountRecoveryProvider = ({
           !!backupWalletDetails?.hasBackupWalletsAcrossEveryChain,
         currentStep,
         onNext,
+        onPrev,
       }}
     >
       {children}
