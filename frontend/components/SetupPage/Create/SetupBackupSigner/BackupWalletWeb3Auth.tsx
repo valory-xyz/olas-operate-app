@@ -1,12 +1,12 @@
 import { Button, Flex, Typography } from 'antd';
+import { useCallback } from 'react';
 import { RiAppleFill, RiGoogleFill } from 'react-icons/ri';
 
 import { COLOR } from '@/constants/colors';
 import { SetupScreen } from '@/enums/SetupScreen';
+import { useWeb3AuthBackupWallet } from '@/hooks';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useSetup } from '@/hooks/useSetup';
-
-import { useWeb3AuthBackupWallet } from '../hooks/useWeb3AuthBackupWallet';
 
 const { Text } = Typography;
 
@@ -38,9 +38,9 @@ export const BackupWalletWeb3Auth = ({
 }: BackupWalletWeb3AuthProps) => {
   const { goto } = useSetup();
 
-  const handleWeb3AuthSetupFinish = () => {
+  const handleWeb3AuthSetupFinish = useCallback(() => {
     goto(SetupScreen.AgentOnboarding);
-  };
+  }, [goto]);
 
   const { openWeb3AuthModel } = useWeb3AuthBackupWallet({
     onFinish: handleWeb3AuthSetupFinish,

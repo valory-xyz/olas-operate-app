@@ -6,6 +6,7 @@ export * from './CardFlex';
 export * from './CardSection';
 export * from './Collapse';
 export * from './Divider';
+export * from './Form';
 export * from './FormFlex';
 export * from './FundingDescription';
 export * from './FundsAreSafeMessage';

@@ -45,3 +45,4 @@ export * from './useTotalFiatFromNativeToken';
 export * from './useTotalNativeTokenRequired';
 export * from './useValidatePassword';
 export * from './useWallet';
+export * from './useWeb3AuthBackupWallet';

@@ -3,12 +3,10 @@ import { getAddress } from 'ethers/lib/utils';
 import { RiAppleFill, RiGoogleFill } from 'react-icons/ri';
 
 import { FormFlex } from '@/components/ui';
-import { COLOR } from '@/constants/colors';
+import { COLOR } from '@/constants';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup } from '@/hooks/useSetup';
-import { Address } from '@/types/Address';
-
-import { useWeb3AuthBackupWallet } from '../hooks/useWeb3AuthBackupWallet';
+import { useSetup, useWeb3AuthBackupWallet } from '@/hooks';
+import { Address } from '@/types';
 
 const { Text } = Typography;
 

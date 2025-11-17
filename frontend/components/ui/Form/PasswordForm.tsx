@@ -1,17 +1,11 @@
-import { Button, Flex, Form, Input, Typography } from 'antd';
+import { Button, Flex, Form, FormInstance, Input, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import zxcvbn from 'zxcvbn';
 
 import { BackButton, FormLabel } from '@/components/ui';
 import { COLOR } from '@/constants';
-import { useMessageApi } from '@/context/MessageProvider';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useMnemonicExists, usePageState, useSetup } from '@/hooks';
-import { AccountService } from '@/service/Account';
-import { WalletService } from '@/service/Wallet';
-import { getErrorMessage } from '@/utils';
 
-import { CardFlex } from '../../ui/CardFlex';
+import { CardFlex } from '../CardFlex';
 
 const { Title, Text } = Typography;
 
@@ -21,7 +15,7 @@ const strength = [
   'Moderate',
   'Strong',
   'Very strong! Nice job!',
-];
+] as const;
 
 const colors = [
   COLOR.RED,
@@ -29,7 +23,7 @@ const colors = [
   COLOR.SUCCESS,
   COLOR.SUCCESS,
   COLOR.PURPLE,
-];
+] as const;
 
 const SetupPasswordTitle = () => (
   <Flex vertical gap={12} style={{ marginBottom: 24 }}>
@@ -52,14 +46,21 @@ export const PasswordStrength = ({ score }: { score: number }) => {
   );
 };
 
-export const SetupPassword = () => {
-  const { goto } = useSetup();
-  const { setUserLoggedIn } = usePageState();
-  const { setMnemonicExists } = useMnemonicExists();
-  const [form] = Form.useForm<{ password: string; terms: boolean }>();
-  const message = useMessageApi();
-  const [isLoading, setIsLoading] = useState(false);
+type PasswordFormValues = {
+  form: FormInstance;
+  onFinish?: (values: { password: string }) => void;
+  isLoading?: boolean;
+  onBack: () => void;
+};
+
+export const PasswordForm = ({
+  form,
+  onFinish,
+  isLoading,
+  onBack,
+}: PasswordFormValues) => {
   const password = Form.useWatch('password', form);
+
   const [isPasswordValid, setIsPasswordValid] = useState(false);
 
   useEffect(() => {
@@ -73,35 +74,16 @@ export const SetupPassword = () => {
     }
   }, [password, form]);
 
-  const handleCreateEoa = async ({ password }: { password: string }) => {
-    if (!isPasswordValid || password.length < 8) return;
-
-    setIsLoading(true);
-    AccountService.createAccount(password)
-      .then(() => AccountService.loginAccount(password))
-      .then(() => WalletService.createEoa())
-      .then(() => {
-        // Mnemonic is always created for new accounts
-        setMnemonicExists(true);
-        setUserLoggedIn();
-        goto(SetupScreen.SetupBackupSigner);
-      })
-      .catch((e: unknown) => {
-        message.error(getErrorMessage(e));
-      })
-      .finally(() => setIsLoading(false));
-  };
-
   return (
     <CardFlex $gap={10} styles={{ body: { padding: '12px 24px' } }} $noBorder>
-      <BackButton onPrev={() => goto(SetupScreen.Welcome)} />
+      <BackButton onPrev={onBack} />
       <SetupPasswordTitle />
 
       <Form
         name="createEoa"
         form={form}
         layout="vertical"
-        onFinish={handleCreateEoa}
+        onFinish={onFinish}
         requiredMark={false}
       >
         <Form.Item

@@ -8,7 +8,7 @@ import { Address } from '@/types/Address';
 export const useWeb3AuthBackupWallet = ({
   onFinish,
 }: {
-  onFinish: () => void;
+  onFinish: (backupWallet: Address) => void;
 }) => {
   const { ipcRenderer, web3AuthWindow } = useElectronApi();
   const { setBackupSigner } = useSetup();
@@ -28,7 +28,7 @@ export const useWeb3AuthBackupWallet = ({
         isAddressReceived.current = true;
         web3AuthWindow?.close?.();
         setBackupSigner({ address: backupWallet, type: 'web3auth' });
-        onFinish();
+        onFinish(backupWallet);
         message.success('Backup wallet successfully set');
       }
     };
