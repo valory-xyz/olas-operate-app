@@ -11,13 +11,13 @@ import {
   useState,
 } from 'react';
 
-import { ServiceTemplate } from '@/client';
 import { Modal } from '@/components/ui';
-import { AgentMap, SERVICE_TEMPLATES } from '@/constants';
+import { AgentMap } from '@/constants';
+import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { Pages } from '@/enums/Pages';
 import { usePageState, useService, useServices } from '@/hooks';
 import { ServicesService } from '@/service/Services';
-import { DeepPartial } from '@/types/Util';
+import { DeepPartial, ServiceTemplate } from '@/types';
 
 import { AgentsFunFormValues } from '../../AgentForms/AgentsFunAgentForm';
 import { useConfirmUpdateModal } from '../hooks/useConfirmModal';

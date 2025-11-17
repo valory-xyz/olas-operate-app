@@ -9,14 +9,8 @@ import {
 
 import { AgentType } from '@/enums/Agent';
 import { useServices } from '@/hooks/useServices';
-import { Optional } from '@/types/Util';
-
-import { useMainOlasBalance } from './useMainOlasBalance';
 
 export const SharedContext = createContext<{
-  // main olas balance
-  isMainOlasBalanceLoading: boolean;
-  mainOlasBalance: Optional<number>;
   hasMainOlasBalanceAnimatedOnLoad: boolean;
   setMainOlasBalanceAnimated: (value: boolean) => void;
 
@@ -25,8 +19,6 @@ export const SharedContext = createContext<{
 
   // others
 }>({
-  isMainOlasBalanceLoading: true,
-  mainOlasBalance: undefined,
   hasMainOlasBalanceAnimatedOnLoad: false,
   setMainOlasBalanceAnimated: () => {},
 
@@ -46,7 +38,6 @@ export const SharedContext = createContext<{
 export const SharedProvider = ({ children }: PropsWithChildren) => {
   // state to track the main OLAS balance animation state & mount state
   const hasAnimatedRef = useRef(false);
-  const mainOlasBalanceDetails = useMainOlasBalance();
   const setMainOlasBalanceAnimated = useCallback((value: boolean) => {
     hasAnimatedRef.current = value;
   }, []);
@@ -80,7 +71,6 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   return (
     <SharedContext.Provider
       value={{
-        ...mainOlasBalanceDetails,
         hasMainOlasBalanceAnimatedOnLoad: hasAnimatedRef.current,
         setMainOlasBalanceAnimated,
 

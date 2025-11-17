@@ -38,8 +38,9 @@ import {
   useServices,
   useSetup,
 } from '@/hooks';
-import { AgentConfig } from '@/types/Agent';
+import { AgentConfig } from '@/types';
 
+import { BackupSeedPhraseAlert } from './BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from './UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from './UpdateAvailableAlert/UpdateAvailableModal';
 
@@ -239,6 +240,16 @@ export const Sidebar = () => {
     return [selectedAgentType];
   }, [pageState, selectedAgentType]);
 
+  const canAddNewAgents = useMemo(() => {
+    const availableAgents = myAgents.filter((agent) => {
+      return AVAILABLE_FOR_ADDING_AGENTS.some(
+        ([agentType]) => agentType === agent.agentType,
+      );
+    });
+
+    return availableAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length;
+  }, [myAgents]);
+
   return (
     <SiderContainer>
       <Sider breakpoint={SIDEBAR_BREAKPOINT} theme="light" width={SIDER_WIDTH}>
@@ -258,7 +269,7 @@ export const Sidebar = () => {
                 />
               ) : null}
 
-              {myAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length && (
+              {canAddNewAgents && (
                 <ResponsiveButton
                   size="large"
                   className="flex mx-auto"
@@ -275,6 +286,7 @@ export const Sidebar = () => {
           </div>
 
           <div>
+            <BackupSeedPhraseAlert />
             <UpdateAvailableAlert />
             <UpdateAvailableModal />
 

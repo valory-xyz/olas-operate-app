@@ -1,7 +1,8 @@
 import { Flex, Typography } from 'antd';
 
-import { MiddlewareChain } from '@/client';
 import { BackButton, CardFlex, FundingDescription } from '@/components/ui';
+import { MiddlewareChain } from '@/constants';
+import { useMasterWalletContext } from '@/hooks';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 
 import { GetBridgeRequirementsParams } from '../types';
@@ -34,31 +35,40 @@ export const BridgeOnEvm = ({
   getBridgeRequirementsParams,
   updateQuoteId,
   updateCrossChainTransferDetails,
-}: BridgeOnEvmProps) => (
-  <Flex justify="center">
-    <CardFlex $noBorder $onboarding className="p-8">
-      <BackButton onPrev={onPrev} />
-      <Title level={3} className="mt-16">
-        Bridge Crypto from {FROM_CHAIN_NAME}
-      </Title>
-      <Title level={5} className="mt-12 mb-8">
-        Step 1. Send Funds
-      </Title>
-      <Text className="text-base text-lighter">{bridgeFromDescription}</Text>
+}: BridgeOnEvmProps) => {
+  const { masterEoa } = useMasterWalletContext();
+  const address = masterEoa?.address;
 
-      <FundingDescription
-        chainName={FROM_CHAIN_NAME}
-        chainImage={FROM_CHAIN_IMAGE}
-        isMainnet
-      />
+  return (
+    <Flex justify="center">
+      <CardFlex $noBorder $onboarding className="p-8">
+        <BackButton onPrev={onPrev} />
+        <Title level={3} className="mt-16">
+          Bridge Crypto from {FROM_CHAIN_NAME}
+        </Title>
+        <Title level={5} className="mt-12 mb-8">
+          Step 1. Send Funds
+        </Title>
+        <Text className="text-base text-lighter">{bridgeFromDescription}</Text>
 
-      <DepositForBridging
-        bridgeToChain={bridgeToChain}
-        getBridgeRequirementsParams={getBridgeRequirementsParams}
-        updateQuoteId={updateQuoteId}
-        updateCrossChainTransferDetails={updateCrossChainTransferDetails}
-        onNext={onNext}
-      />
-    </CardFlex>
-  </Flex>
-);
+        {address && (
+          <FundingDescription
+            address={address}
+            chainName={FROM_CHAIN_NAME}
+            chainImage={FROM_CHAIN_IMAGE}
+            isMainnet
+            style={{ marginTop: 32 }}
+          />
+        )}
+
+        <DepositForBridging
+          bridgeToChain={bridgeToChain}
+          getBridgeRequirementsParams={getBridgeRequirementsParams}
+          updateQuoteId={updateQuoteId}
+          updateCrossChainTransferDetails={updateCrossChainTransferDetails}
+          onNext={onNext}
+        />
+      </CardFlex>
+    </Flex>
+  );
+};
