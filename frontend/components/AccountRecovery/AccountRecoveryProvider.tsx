@@ -10,8 +10,14 @@ import { getBackupWalletStatus } from './utils';
 
 const AccountRecoveryContext = createContext<{
   isLoading: boolean;
+  /** Indicates if account recovery is available based on backup wallet */
+  isRecoveryAvailable: boolean;
+  /** Indicates if there are backup wallets across every chain */
+  hasBackupWallets: boolean;
 }>({
   isLoading: true,
+  isRecoveryAvailable: false,
+  hasBackupWallets: false,
 });
 
 export const AccountRecoveryProvider = ({
@@ -33,19 +39,28 @@ export const AccountRecoveryProvider = ({
   const { masterSafes, isLoading: isMasterWalletLoading } =
     useMasterWalletContext();
 
-  console.log({ masterSafes, extendedWallets });
-
   const isLoading = isMasterWalletLoading || isExtendedWalletLoading;
 
-  const details = useMemo(() => {
+  const backupWalletDetails = useMemo(() => {
     if (isLoading) return;
     if (!extendedWallets?.safes) return;
     if (!masterSafes) return;
-    getBackupWalletStatus(extendedWallets.safes, masterSafes);
+    return getBackupWalletStatus(extendedWallets.safes, masterSafes);
   }, [masterSafes, extendedWallets, isLoading]);
 
+  const isRecoveryAvailable =
+    backupWalletDetails?.areAllBackupOwnersSame &&
+    backupWalletDetails?.hasBackupWalletsAcrossEveryChain;
+
   return (
-    <AccountRecoveryContext.Provider value={{ isLoading }}>
+    <AccountRecoveryContext.Provider
+      value={{
+        isLoading,
+        isRecoveryAvailable: !!isRecoveryAvailable,
+        hasBackupWallets:
+          !!backupWalletDetails?.hasBackupWalletsAcrossEveryChain,
+      }}
+    >
       {children}
     </AccountRecoveryContext.Provider>
   );

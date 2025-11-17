@@ -4,6 +4,10 @@ import { ExtendedWallet } from '@/types/Recovery';
 import extendedWalletResponse from './Recovery.json';
 
 const isDebug = true;
+const fakeExtendedWalletResponse = Promise.resolve(
+  extendedWalletResponse as ExtendedWallet[],
+);
+
 /**
  * Extended wallet information including safes and additional metadata.
  */
@@ -11,7 +15,7 @@ const getExtendedWallet = async (
   signal?: AbortSignal,
 ): Promise<ExtendedWallet[]> =>
   isDebug
-    ? Promise.resolve(extendedWalletResponse as ExtendedWallet[])
+    ? fakeExtendedWalletResponse
     : fetch(`${BACKEND_URL}/extended/wallet`, {
       method: 'GET',
       headers: { ...CONTENT_TYPE_JSON_UTF8 },

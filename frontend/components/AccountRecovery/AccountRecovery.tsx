@@ -1,4 +1,4 @@
-import { Button, Flex, Typography } from 'antd';
+import { Button, Flex, Skeleton, Typography } from 'antd';
 import { LuRectangleEllipsis } from 'react-icons/lu';
 import { TbWallet } from 'react-icons/tb';
 import { styled } from 'styled-components';
@@ -8,7 +8,10 @@ import { SetupScreen } from '@/enums';
 import { useSetup, useStore } from '@/hooks';
 
 import { BackButton, CardFlex, CardTitle } from '../ui';
-import { AccountRecoveryProvider } from './AccountRecoveryProvider';
+import {
+  AccountRecoveryProvider,
+  useAccountRecoveryContext,
+} from './AccountRecoveryProvider';
 import { RecoveryNotAvailable } from './components/RecoveryNotAvailable';
 
 const { Text, Title, Paragraph } = Typography;
@@ -35,6 +38,14 @@ const RecoveryMethodCard = styled(CardFlex)<{ width?: number }>`
     flex: 1;
   }
 `;
+
+const Loader = () => (
+  <Flex align="center" justify="center" className="h-full">
+    <RecoveryMethodCard>
+      <Skeleton active paragraph={{ rows: 4 }} />
+    </RecoveryMethodCard>
+  </Flex>
+);
 
 const RecoveryViaBackupWallet = () => {
   const { storeState } = useStore();
@@ -118,19 +129,25 @@ const SelectRecoveryMethod = () => {
   );
 };
 
-export const AccountRecovery = () => {
-  const isRecoveryAvailable = false; // Placeholder for actual recovery availability logic
-  const hasBackupWalletsAcrossEveryChain = true; // Placeholder for actual backup wallets check
+const AccountRecoveryInner = () => {
+  const { isLoading, isRecoveryAvailable, hasBackupWallets } =
+    useAccountRecoveryContext();
 
   return (
     <AccountRecoveryProvider>
-      {isRecoveryAvailable ? (
+      {isLoading ? (
+        <Loader />
+      ) : isRecoveryAvailable ? (
         <SelectRecoveryMethod />
       ) : (
-        <RecoveryNotAvailable
-          hasBackupWallets={hasBackupWalletsAcrossEveryChain}
-        />
+        <RecoveryNotAvailable hasBackupWallets={hasBackupWallets} />
       )}
     </AccountRecoveryProvider>
   );
 };
+
+export const AccountRecovery = () => (
+  <AccountRecoveryProvider>
+    <AccountRecoveryInner />
+  </AccountRecoveryProvider>
+);
