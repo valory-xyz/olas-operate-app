@@ -15,6 +15,11 @@ function artifactName() {
 
 const main = async () => {
   console.log('Building...');
+  console.log('Environment check:');
+  console.log('  GITHUB_REF:', process.env.GITHUB_REF);
+  console.log('  GITHUB_REF_TYPE:', process.env.GITHUB_REF_TYPE);
+  console.log('  GITHUB_REF_NAME:', process.env.GITHUB_REF_NAME);
+  console.log('  NODE_ENV:', process.env.NODE_ENV);
 
   /** @type import {CliOptions} from "electron-builder" */
   await build({

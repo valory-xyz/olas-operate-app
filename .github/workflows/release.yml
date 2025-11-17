@@ -236,4 +236,7 @@ jobs:
           echo "ETHEREUM_RPC=https://rpc-gate.autonolas.tech/ethereum-rpc/" >> .env
           echo "MODE_RPC=https://mainnet.mode.network" >> .env
           echo "CELO_RPC=https://forno.celo.org" >> .env
+          export GITHUB_REF="${GITHUB_REF}"
+          export GITHUB_REF_TYPE="${GITHUB_REF_TYPE}"
+          export GITHUB_REF_NAME="${GITHUB_REF_NAME}"
           node build.js
