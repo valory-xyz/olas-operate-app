@@ -1,23 +1,25 @@
-import { Address } from './Address';
+import { SupportedMiddlewareChain } from '@/constants';
 
-export type ChainName = 'gnosis' | 'base' | 'mode' | 'optimism';
+import { Address } from './Address';
 
 export type TokenBalance = Record<Address, number>;
 
-export type SafeChainData = {
-  [safeAddress: Address]: {
-    backup_owners: Address[];
-    balances: TokenBalance;
-  };
+export type BackupOwnerSafe = {
+  backup_owners: Address[];
+  balances: TokenBalance;
 };
 
-export type ExtendedWalletResponse = {
+export type SafeChainData = {
+  [safeAddress: Address]: BackupOwnerSafe;
+};
+
+export type ExtendedWallet = {
   address: string;
-  safes: Record<ChainName, SafeChainData>;
-  safe_chains: ChainName[];
+  safes: Record<SupportedMiddlewareChain, SafeChainData>;
+  safe_chains: SupportedMiddlewareChain[];
   ledger_type: string;
   safe_nonce: string | number;
-  balances: Record<ChainName, Record<Address, TokenBalance>>;
+  balances: Record<SupportedMiddlewareChain, Record<Address, TokenBalance>>;
   extended_json: boolean;
   consistent_safe_address: boolean;
   consistent_backup_owner: boolean;

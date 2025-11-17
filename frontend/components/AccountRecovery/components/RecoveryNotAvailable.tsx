@@ -32,11 +32,11 @@ const RecoveryNotAvailableCard = styled(CardFlex)`
 `;
 
 type RecoveryNotAvailableProps = {
-  hasAllBackupWallets?: boolean;
+  hasBackupWallets?: boolean;
 };
 
 export const RecoveryNotAvailable = ({
-  hasAllBackupWallets,
+  hasBackupWallets,
 }: RecoveryNotAvailableProps) => {
   const { goto } = useSetup();
 
@@ -51,7 +51,7 @@ export const RecoveryNotAvailable = ({
             <CardTitle className="m-0">Recovery Not Available</CardTitle>
             <Paragraph className="text-neutral-secondary text-center mb-32">
               This account has multiple Pearl Wallets.{' '}
-              {hasAllBackupWallets
+              {hasBackupWallets
                 ? 'The backup wallet is different across the Pearl Wallets.'
                 : 'The backup wallet is not set up for at least one Pearl Wallet.'}
             </Paragraph>

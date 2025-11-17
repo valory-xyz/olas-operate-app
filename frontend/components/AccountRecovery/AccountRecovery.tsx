@@ -120,14 +120,16 @@ const SelectRecoveryMethod = () => {
 
 export const AccountRecovery = () => {
   const isRecoveryAvailable = false; // Placeholder for actual recovery availability logic
-  const hasAllBackupWallets = true; // Placeholder for actual backup wallets check
+  const hasBackupWalletsAcrossEveryChain = true; // Placeholder for actual backup wallets check
 
   return (
     <AccountRecoveryProvider>
       {isRecoveryAvailable ? (
         <SelectRecoveryMethod />
       ) : (
-        <RecoveryNotAvailable hasAllBackupWallets={hasAllBackupWallets} />
+        <RecoveryNotAvailable
+          hasBackupWallets={hasBackupWalletsAcrossEveryChain}
+        />
       )}
     </AccountRecoveryProvider>
   );
