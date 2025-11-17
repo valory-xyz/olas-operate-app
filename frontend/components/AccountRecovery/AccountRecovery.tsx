@@ -9,7 +9,9 @@ import {
   AccountRecoveryProvider,
   useAccountRecoveryContext,
 } from './AccountRecoveryProvider';
+import { ApproveWithBackupWallet } from './components/ApproveWithBackupWallet';
 import { CreateNewPassword } from './components/CreateNewPassword';
+import { FundYourBackupWallet } from './components/FundYourBackupWallet';
 import { RecoveryNotAvailable } from './components/RecoveryNotAvailable';
 import { RecoveryViaBackupWallet } from './components/RecoveryViaBackupWallet';
 import { RecoveryViaSecretRecoveryPhrase } from './components/RecoveryViaSecretRecoveryPhrase';
@@ -55,6 +57,7 @@ const SelectRecoveryMethod = () => {
 const AccountRecoveryInner = () => {
   const { isLoading, isRecoveryAvailable, hasBackupWallets, currentStep } =
     useAccountRecoveryContext();
+
   const currentView = useMemo(() => {
     switch (currentStep) {
       case RECOVERY_STEPS.SelectRecoveryMethod:
@@ -62,24 +65,20 @@ const AccountRecoveryInner = () => {
       case RECOVERY_STEPS.CreateNewPassword:
         return <CreateNewPassword />;
       case RECOVERY_STEPS.FundYourBackupWallet:
-        return <div>To be implemented</div>;
+        return <FundYourBackupWallet />;
       case RECOVERY_STEPS.ApproveWithBackupWallet:
-        return <div>To be implemented</div>;
+        return <ApproveWithBackupWallet />;
       default:
         return <SelectRecoveryMethod />;
     }
   }, [currentStep]);
 
-  return (
-    <AccountRecoveryProvider>
-      {isLoading ? (
-        <Loader />
-      ) : isRecoveryAvailable ? (
-        currentView
-      ) : (
-        <RecoveryNotAvailable hasBackupWallets={hasBackupWallets} />
-      )}
-    </AccountRecoveryProvider>
+  return isLoading ? (
+    <Loader />
+  ) : isRecoveryAvailable ? (
+    currentView
+  ) : (
+    <RecoveryNotAvailable hasBackupWallets={hasBackupWallets} />
   );
 };
 
