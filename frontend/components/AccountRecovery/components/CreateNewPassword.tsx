@@ -14,7 +14,7 @@ const PasswordContainer = styled(Flex)`
 `;
 
 export const CreateNewPassword = () => {
-  const { onPrev } = useAccountRecoveryContext();
+  const { onPrev, onNext } = useAccountRecoveryContext();
   const [form] = Form.useForm<{ password: string }>();
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const password = Form.useWatch('password', form);
@@ -30,9 +30,13 @@ export const CreateNewPassword = () => {
     }
   }, [password, form]);
 
-  const handleFinish = useCallback((values: { password: string }) => {
-    window.console.log(values); // MAKE AN API TO "/prepare"
-  }, []);
+  const handleFinish = useCallback(
+    (values: { password: string }) => {
+      window.console.log(values); // MAKE AN API TO "/prepare"
+      onNext();
+    },
+    [onNext],
+  );
 
   return (
     <PasswordContainer align="center" justify="center" className="w-full">

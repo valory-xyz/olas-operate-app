@@ -30,9 +30,25 @@ export const RecoveryViaBackupWallet = () => {
           Use the backup wallet you’ve set up during Pearl sign up.
         </Paragraph>
         {walletType === 'web3auth' ? (
-          <Button onClick={openWeb3AuthModel} type="primary" size="large" block>
-            Recover with Backup Wallet
-          </Button>
+          <>
+            <Button
+              onClick={onNext}
+              type="primary"
+              size="large"
+              block
+              className="mb-16"
+            >
+              Next - To be removed
+            </Button>
+            <Button
+              onClick={openWeb3AuthModel}
+              type="primary"
+              size="large"
+              block
+            >
+              Recover with Backup Wallet
+            </Button>
+          </>
         ) : (
           <Paragraph className="text-neutral-tertiary text-center text-sm mb-0">
             Recovery with a Backup Wallet coming soon.
