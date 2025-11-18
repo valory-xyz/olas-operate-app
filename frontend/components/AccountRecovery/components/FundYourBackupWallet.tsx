@@ -2,7 +2,13 @@ import { Button, Flex, Typography } from 'antd';
 import { useCallback } from 'react';
 import styled from 'styled-components';
 
-import { BackButton, CardFlex, CopyAddress } from '@/components/ui';
+import {
+  BackButton,
+  CardFlex,
+  CopyAddress,
+  TokenRequirementsRow,
+  TokenRequirementsTable,
+} from '@/components/ui';
 import { COLOR } from '@/constants';
 
 import { useAccountRecoveryContext } from '../AccountRecoveryProvider';
@@ -35,6 +41,17 @@ export const FundYourBackupWallet = () => {
     onNext();
   }, [onNext]);
 
+  const dummyTokensData = [
+    {
+      symbol: 'XDAI',
+      totalAmount: 0.05,
+      pendingAmount: 0.05,
+      iconSrc: '/tokens/xdai-icon.png',
+      areFundsReceived: false,
+      chainName: 'gnosis',
+    },
+  ] satisfies TokenRequirementsRow[];
+
   return (
     <Flex align="center" justify="center" className="w-full mt-40">
       <CardFlex
@@ -61,7 +78,11 @@ export const FundYourBackupWallet = () => {
           </Flex>
         )}
 
-        <Flex>Table</Flex>
+        <TokenRequirementsTable
+          showChainColumn={true}
+          tokensDataSource={dummyTokensData}
+          isLoading={false}
+        />
         <Flex justify="center" className="w-full">
           <Button type="primary" onClick={handleContinue} size="large">
             Continue
