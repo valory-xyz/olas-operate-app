@@ -16,9 +16,8 @@ import {
 } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { ServicesService } from '@/service/Services';
-import { DeepPartial } from '@/types/Util';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
-import { isValidServiceId } from '@/utils/service';
+import { isValidServiceId, updateServiceIfNeeded } from '@/utils/service';
 
 import { CountdownUntilMigration } from './CountdownUntilMigration';
 import { CantMigrateReason, useMigrate } from './useMigrate';
@@ -135,24 +134,11 @@ export const MigrateButton = ({
             goto(Pages.Main);
 
             if (selectedService) {
-              // update service
-              await ServicesService.updateService({
-                serviceConfigId,
-                partialServiceTemplate: {
-                  configurations: {
-                    ...Object.entries(serviceTemplate.configurations).reduce(
-                      (acc, [middlewareChain]) => {
-                        // @ts-expect-error TODO: to be fixed
-                        acc[middlewareChain] = {
-                          staking_program_id: stakingProgramIdToMigrateTo,
-                        };
-                        return acc;
-                      },
-                      {} as DeepPartial<typeof serviceTemplate.configurations>,
-                    ),
-                  },
-                },
-              });
+              await updateServiceIfNeeded(
+                selectedService!,
+                selectedAgentType,
+                stakingProgramIdToMigrateTo,
+              );
             } else {
               // create service if it doesn't exist
               const serviceConfigParams = {

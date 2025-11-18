@@ -16,6 +16,7 @@ import { DeepPartial } from '@/types/Util';
 export const updateServiceIfNeeded = async (
   service: Service,
   agentType: AgentType,
+  stakingContract?: StakingProgramId,
 ): Promise<void> => {
   const partialServiceTemplate: DeepPartial<ServiceTemplate> = {};
 
@@ -103,6 +104,15 @@ export const updateServiceIfNeeded = async (
   }
 
   if (isEmpty(partialServiceTemplate)) return;
+
+  if (stakingContract) {
+    partialServiceTemplate.configurations = {
+      ...partialServiceTemplate.configurations,
+      [serviceHomeChain]: {
+        staking_program_id: stakingContract,
+      },
+    };
+  }
 
   await ServicesService.updateService({
     serviceConfigId: service.service_config_id,
