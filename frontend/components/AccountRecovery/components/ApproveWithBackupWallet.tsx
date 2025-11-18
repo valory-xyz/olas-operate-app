@@ -48,8 +48,9 @@ const AccountRecoveredComplete = () => {
 
 export const ApproveWithBackupWallet = () => {
   // Set to true when "/complete" is reached
-  const [isAccountRecovered, setIsAccountRecovered] = useState(true);
-  const isLoading = true; // Replace with actual loading state
+  const [isAccountRecovered, setIsAccountRecovered] = useState(false);
+  // Replace with actual loading state
+  const isLoading = true;
 
   return (
     <Flex align="center" justify="center" className="w-full mt-40">
