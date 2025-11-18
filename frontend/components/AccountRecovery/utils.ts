@@ -43,7 +43,7 @@ export const getBackupWalletStatus = (
   );
 
   return {
-    backupList,
+    backupAddress: backupList[0]?.owners?.[0],
     hasBackupWalletsAcrossEveryChain,
     areAllBackupOwnersSame,
   };

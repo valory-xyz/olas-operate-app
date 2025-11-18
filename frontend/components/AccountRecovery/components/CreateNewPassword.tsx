@@ -7,7 +7,6 @@ import { PasswordForm } from '@/components/ui';
 import { useAccountRecoveryContext } from '../AccountRecoveryProvider';
 
 const PasswordContainer = styled(Flex)`
-  margin-top: 40px;
   .ant-card {
     width: 480px;
   }
@@ -39,7 +38,7 @@ export const CreateNewPassword = () => {
   );
 
   return (
-    <PasswordContainer align="center" justify="center" className="w-full">
+    <PasswordContainer align="center" justify="center" className="w-full mt-40">
       <PasswordForm
         form={form}
         isPasswordValid={isPasswordValid}

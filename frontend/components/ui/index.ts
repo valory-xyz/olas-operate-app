@@ -5,6 +5,7 @@ export * from './BackButton';
 export * from './CardFlex';
 export * from './CardSection';
 export * from './Collapse';
+export * from './CopyAddress';
 export * from './Divider';
 export * from './Form';
 export * from './FormFlex';

@@ -13,6 +13,7 @@ import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { SetupScreen } from '@/enums';
 import { useMasterWalletContext, useSetup } from '@/hooks';
 import { RecoveryService } from '@/service/Recovery';
+import { Address } from '@/types';
 
 import { RECOVERY_STEPS } from './constants';
 import { getBackupWalletStatus } from './utils';
@@ -27,6 +28,8 @@ const AccountRecoveryContext = createContext<{
   hasBackupWallets: boolean;
   /** Current step in the account recovery flow */
   currentStep: RecoverySteps;
+  /** Address of the backup wallet used for recovery */
+  backupWalletAddress?: Address;
   /** Callback to proceed to the next step in recovery */
   onNext: () => void;
   /** Callback to go back to the previous step in recovery */
@@ -105,17 +108,23 @@ export const AccountRecoveryProvider = ({
     }
   }, [currentStep]);
 
-  const isRecoveryAvailable =
+  const isRecoveryAvailable = !!(
     backupWalletDetails?.areAllBackupOwnersSame &&
-    backupWalletDetails?.hasBackupWalletsAcrossEveryChain;
+    backupWalletDetails?.hasBackupWalletsAcrossEveryChain
+  );
+
+  const hasBackupWallets =
+    !!backupWalletDetails?.hasBackupWalletsAcrossEveryChain;
 
   return (
     <AccountRecoveryContext.Provider
       value={{
         isLoading,
-        isRecoveryAvailable: !!isRecoveryAvailable,
-        hasBackupWallets:
-          !!backupWalletDetails?.hasBackupWalletsAcrossEveryChain,
+        isRecoveryAvailable,
+        hasBackupWallets,
+        backupWalletAddress: isRecoveryAvailable
+          ? (backupWalletDetails?.backupAddress as Address)
+          : undefined,
         currentStep,
         onNext,
         onPrev,
