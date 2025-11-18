@@ -195,7 +195,7 @@ jobs:
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
           OPTIMISM_RPC: https://rpc-gate.autonolas.tech/optimism-rpc/
           BASE_RPC: https://rpc-gate.autonolas.tech/base-rpc/
-          GNOSIS_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
+          GNOSIS_RPC: https://virtual.gnosis.eu.rpc.tenderly.co/979f31d0-9742-4df6-b675-43595c03d806/
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
           MODE_RPC: https://mainnet.mode.network
           CELO_RPC: https://forno.celo.org
@@ -216,14 +216,14 @@ jobs:
           ELECTRON_BUILDER_DOWNLOAD_TIMEOUT: 120000
           OPTIMISM_RPC: https://rpc-gate.autonolas.tech/optimism-rpc/
           BASE_RPC: https://rpc-gate.autonolas.tech/base-rpc/
-          GNOSIS_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
+          GNOSIS_RPC: https://virtual.gnosis.eu.rpc.tenderly.co/979f31d0-9742-4df6-b675-43595c03d806/
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
           MODE_RPC: https://mainnet.mode.network
           CELO_RPC: https://forno.celo.org
         run: |
           echo "OPTIMISM_RPC=https://rpc-gate.autonolas.tech/optimism-rpc/" >> .env
           echo "BASE_RPC=https://rpc-gate.autonolas.tech/base-rpc/" >> .env
-          echo "GNOSIS_RPC=https://rpc-gate.autonolas.tech/gnosis-rpc/" >> .env
+          echo "GNOSIS_RPC=https://virtual.gnosis.eu.rpc.tenderly.co/979f31d0-9742-4df6-b675-43595c03d806/" >> .env
           echo "ETHEREUM_RPC=https://rpc-gate.autonolas.tech/ethereum-rpc/" >> .env
           echo "MODE_RPC=https://mainnet.mode.network" >> .env
           echo "CELO_RPC=https://forno.celo.org" >> .env
