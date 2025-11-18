@@ -2,8 +2,8 @@ import { Button, Flex, Typography } from 'antd';
 import { TbWallet } from 'react-icons/tb';
 import { styled } from 'styled-components';
 
-import { COMMUNITY_ASSISTANCE_URL } from '@/constants';
 import { COLOR } from '@/constants/colors';
+import { useSupportModal } from '@/context/SupportModalProvider';
 import { SetupScreen } from '@/enums';
 import { useSetup } from '@/hooks';
 
@@ -39,6 +39,7 @@ export const RecoveryNotAvailable = ({
   hasBackupWallets,
 }: RecoveryNotAvailableProps) => {
   const { goto } = useSetup();
+  const { toggleSupportModal } = useSupportModal();
 
   return (
     <Flex align="center" justify="center" vertical className="h-full">
@@ -58,23 +59,19 @@ export const RecoveryNotAvailable = ({
           </Flex>
         </Flex>
 
-        <Button
-          onClick={() => goto(SetupScreen.Welcome)}
-          type="primary"
-          size="large"
-          block
-          className="mb-16"
-        >
-          Back to Login
-        </Button>
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href={COMMUNITY_ASSISTANCE_URL}
-          className="text-center"
-        >
-          Get community assistance via a Discord ticket ↗
-        </a>
+        <Flex vertical gap={16}>
+          <Button
+            onClick={() => goto(SetupScreen.Welcome)}
+            type="primary"
+            size="large"
+            block
+          >
+            Back to Login
+          </Button>
+          <Button onClick={toggleSupportModal} size="large" block>
+            Back to Login
+          </Button>
+        </Flex>
       </RecoveryNotAvailableCard>
     </Flex>
   );
