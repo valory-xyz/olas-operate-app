@@ -1,16 +1,13 @@
-import { isEqual, omit, omitBy } from 'lodash';
+import { isEqual, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
+import { AgentsFunFormValues } from '@/components/SetupPage/SetupYourAgent/AgentsFunAgentForm/types';
 import { RenderForm } from '@/components/SetupPage/SetupYourAgent/useDisplayAgentForm';
 import { Pages } from '@/enums/Pages';
 import { usePageState, useServices } from '@/hooks';
 import { Nullable } from '@/types/Util';
 import { getXUsername } from '@/utils';
 
-import {
-  AgentsFunAgentForm,
-  AgentsFunFormValues,
-} from '../../AgentForms/AgentsFunAgentForm';
 import { UpdateAgentContext } from '../context/UpdateAgentProvider';
 
 type AgentsFunUpdateFormProps = {
@@ -39,11 +36,6 @@ export const AgentsFunUpdateForm = ({
     const values = envEntries.reduce((acc, [key, { value }]) => {
       if (key === 'PERSONA') {
         acc.personaDescription = value;
-      } else if (key === 'GENAI_API_KEY') {
-        acc.geminiApiKey = value;
-      } else if (key === 'FIREWORKS_API_KEY') {
-        acc.fireworksApiKey = value;
-        acc.fireworksApiEnabled = !!value;
       } else if (key === 'TWEEPY_CONSUMER_API_KEY') {
         acc.xConsumerApiKey = value;
       } else if (key === 'TWEEPY_CONSUMER_API_KEY_SECRET') {
@@ -66,10 +58,7 @@ export const AgentsFunUpdateForm = ({
       form?.getFieldsValue(),
       (value) => value === undefined || value === '',
     );
-    const currentValues = initialValues?.fireworksApiKey
-      ? initialValues
-      : omit(initialValues, ['fireworksApiKey']);
-    const hasUnsavedChanges = !isEqual(unsavedFields, currentValues);
+    const hasUnsavedChanges = !isEqual(unsavedFields, initialValues);
 
     if (hasUnsavedChanges) {
       unsavedModal.openModal();

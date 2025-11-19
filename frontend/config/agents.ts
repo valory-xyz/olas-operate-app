@@ -100,7 +100,7 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.AgentsFun]: {
     isAgentEnabled: true,
-    isUnderConstruction: true,
+    isUnderConstruction: false,
     isComingSoon: false,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.AgentsFun],
