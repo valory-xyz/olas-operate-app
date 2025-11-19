@@ -1,9 +1,11 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Button, Flex, Modal, Typography } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { LoadingOutlined, SuccessOutlined } from '@/components/custom-icons';
 import { Alert } from '@/components/ui';
 import { CardFlex } from '@/components/ui/CardFlex';
+import { REACT_QUERY_KEYS } from '@/constants';
 import { SetupScreen } from '@/enums';
 import { useSetup } from '@/hooks';
 
@@ -47,10 +49,20 @@ const AccountRecoveredComplete = () => {
 };
 
 export const ApproveWithBackupWallet = () => {
+  const queryClient = useQueryClient();
   // Set to true when "/complete" is reached
   const [isAccountRecovered, setIsAccountRecovered] = useState(false);
   // Replace with actual loading state
   const isLoading = true;
+
+  // Invalidate recovery status query to refetch updated status
+  useEffect(() => {
+    if (!isAccountRecovered) return;
+
+    queryClient.invalidateQueries({
+      queryKey: [REACT_QUERY_KEYS.RECOVERY_STATUS_KEY],
+    });
+  }, [isAccountRecovered, queryClient]);
 
   return (
     <Flex align="center" justify="center" className="w-full mt-40">

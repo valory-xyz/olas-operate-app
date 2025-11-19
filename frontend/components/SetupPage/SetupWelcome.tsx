@@ -15,6 +15,7 @@ import {
   usePageState,
   useServices,
   useSetup,
+  useSharedContext,
 } from '@/hooks';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
@@ -128,6 +129,7 @@ enum MiddlewareAccountIsSetup {
   False,
   Loading,
   Error,
+  CannotLogin,
 }
 
 const WelcomeBack = () => (
@@ -152,6 +154,15 @@ const SetupLoader = () => (
 const SetupError = () => (
   <Flex justify="center" style={{ margin: '32px 0', textAlign: 'center' }}>
     <Text>Unable to determine the account setup status, please try again.</Text>
+  </Flex>
+);
+
+const RecoveryProcessInProgress = () => (
+  <Flex justify="center" style={{ margin: '32px 0', textAlign: 'center' }}>
+    <Text>
+      Account recovery was in progress but could not be completed. Please open a
+      support ticket.
+    </Text>
   </Flex>
 );
 
@@ -244,10 +255,34 @@ const SetupWelcomeLogin = () => {
  */
 export const SetupWelcome = () => {
   const electronApi = useElectronApi();
+  const { isAccountRecoveryStatusLoading, isInMiddleOfAccountRecoverySwap } =
+    useSharedContext();
   const [isSetup, setIsSetup] = useState<MiddlewareAccountIsSetup | null>(null);
+  const [hasCheckedAccount, setHasCheckedAccount] = useState(false);
 
   useEffect(() => {
-    if (isSetup !== null) return;
+    // Wait for account recovery status to load
+    if (isAccountRecoveryStatusLoading) {
+      setIsSetup(MiddlewareAccountIsSetup.Loading);
+      return;
+    }
+
+    // If already checked or determined the setup state, don't check again
+    if (
+      hasCheckedAccount ||
+      (isSetup !== null && isSetup !== MiddlewareAccountIsSetup.Loading)
+    ) {
+      return;
+    }
+
+    if (isInMiddleOfAccountRecoverySwap) {
+      setIsSetup(MiddlewareAccountIsSetup.CannotLogin);
+      setHasCheckedAccount(true);
+      return;
+    }
+
+    // Mark as checked and set loading state before making API call
+    setHasCheckedAccount(true);
     setIsSetup(MiddlewareAccountIsSetup.Loading);
 
     AccountService.getAccount()
@@ -272,7 +307,13 @@ export const SetupWelcome = () => {
         console.error(e);
         setIsSetup(MiddlewareAccountIsSetup.Error);
       });
-  }, [electronApi.store, isSetup]);
+  }, [
+    electronApi.store,
+    isSetup,
+    hasCheckedAccount,
+    isAccountRecoveryStatusLoading,
+    isInMiddleOfAccountRecoverySwap,
+  ]);
 
   const welcomeScreen = useMemo(() => {
     switch (isSetup) {
@@ -282,6 +323,8 @@ export const SetupWelcome = () => {
         return <SetupWelcomeCreate />;
       case MiddlewareAccountIsSetup.Loading:
         return <SetupLoader />;
+      case MiddlewareAccountIsSetup.CannotLogin:
+        return <RecoveryProcessInProgress />;
       case MiddlewareAccountIsSetup.Error:
         return <SetupError />;
       default:
@@ -289,13 +332,12 @@ export const SetupWelcome = () => {
     }
   }, [isSetup]);
 
-  // TODO: think about the widths of card
   return (
     <Card variant="borderless">
       <Flex vertical align="center">
         <Image
-          src={'/onboarding-robot.svg'}
-          alt="Onboarding Robot"
+          src="/onboarding-robot.svg"
+          alt="Onboarding Pearl"
           width={64}
           height={64}
         />

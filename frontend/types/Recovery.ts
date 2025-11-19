@@ -2,6 +2,17 @@ import { SupportedMiddlewareChain } from '@/constants';
 
 import { Address } from './Address';
 
+export type RecoveryStatus = {
+  prepared: boolean;
+  bundle_id: string;
+  /**
+   * This means there is a recovery bundle with swaps.
+   * The user must finish completing the process and login to application should be blocked until completed
+   * */
+  has_swaps: boolean;
+  has_pending_swaps: boolean;
+};
+
 export type TokenBalance = Record<Address, number>;
 
 export type BackupOwnerSafe = {

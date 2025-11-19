@@ -9,7 +9,7 @@ import {
 } from 'react';
 
 import { FIFTEEN_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
-import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
+import { useOnlineStatus } from '@/context/OnlineStatusProvider';
 import { SetupScreen } from '@/enums';
 import { useMasterWalletContext, useSetup } from '@/hooks';
 import { RecoveryService } from '@/service/Recovery';
@@ -51,7 +51,7 @@ export const AccountRecoveryProvider = ({
   const [currentStep, setCurrentStep] = useState<RecoverySteps>(
     RECOVERY_STEPS.CreateNewPassword,
   );
-  const { isOnline } = useContext(OnlineStatusContext);
+  const { isOnline } = useOnlineStatus();
   const { goto } = useSetup();
   const { masterSafes, isLoading: isMasterWalletLoading } =
     useMasterWalletContext();

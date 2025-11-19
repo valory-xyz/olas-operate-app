@@ -119,4 +119,5 @@ export const REACT_QUERY_KEYS = {
 
   // recovery
   EXTENDED_WALLET_KEY: () => ['extendedWallet'] as const,
+  RECOVERY_STATUS_KEY: () => ['recoveryStatus'] as const,
 } as const;
