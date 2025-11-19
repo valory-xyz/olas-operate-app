@@ -219,6 +219,7 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}
+          RELEASE_TAG: ${{ inputs.tag }}
           NODE_ENV: ${{ matrix.env }}
           ARCH: ${{ env.OS_ARCH }}
           ELECTRON_BUILDER_CACHE: ~/.cache/electron-builder
@@ -237,4 +238,6 @@ jobs:
           echo "ETHEREUM_RPC=https://rpc-gate.autonolas.tech/ethereum-rpc/" >> .env
           echo "MODE_RPC=https://mainnet.mode.network" >> .env
           echo "CELO_RPC=https://forno.celo.org" >> .env
+          export GITHUB_REF_TYPE="tag"
+          export GITHUB_REF_NAME="${RELEASE_TAG}"
           node build.js
