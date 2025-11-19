@@ -47,14 +47,23 @@ export const getBackupWalletStatus = (
     (item) => item.owners.length > 0,
   );
 
-  const areAllBackupOwnersSame = backupList.every((outer, _, arr) =>
-    arr.every((inner) => {
-      const a = outer.owners;
-      const b = inner.owners;
-      if (a.length !== b.length) return false;
-      const A = a.map((s) => s.toLowerCase()).sort();
-      const B = b.map((s) => s.toLowerCase()).sort();
-      return A.every((v, i) => v === B[i]);
+  const areAllBackupOwnersSame = backupList.every((currentItem) =>
+    backupList.every((compareItem) => {
+      const currentOwners = currentItem.owners;
+      const compareOwners = compareItem.owners;
+
+      if (currentOwners.length !== compareOwners.length) return false;
+
+      const normalizedCurrentOwners = currentOwners
+        .map((address) => address.toLowerCase())
+        .sort();
+      const normalizedCompareOwners = compareOwners
+        .map((address) => address.toLowerCase())
+        .sort();
+
+      return normalizedCurrentOwners.every(
+        (address, index) => address === normalizedCompareOwners[index],
+      );
     }),
   );
 

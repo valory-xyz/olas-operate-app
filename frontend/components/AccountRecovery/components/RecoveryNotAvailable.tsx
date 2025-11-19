@@ -2,7 +2,7 @@ import { Button, Flex, Typography } from 'antd';
 import { TbWallet } from 'react-icons/tb';
 import { styled } from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
+import { COLOR } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { SetupScreen } from '@/enums';
 import { useSetup } from '@/hooks';

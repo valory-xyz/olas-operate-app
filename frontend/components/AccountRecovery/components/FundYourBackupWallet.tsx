@@ -1,5 +1,4 @@
 import { Button, Flex, Typography } from 'antd';
-import { useCallback } from 'react';
 import styled from 'styled-components';
 
 import {
@@ -41,11 +40,6 @@ export const FundYourBackupWallet = () => {
     recoveryFundingList,
   } = useAccountRecoveryContext();
 
-  const handleContinue = useCallback(() => {
-    // Additional logic before continuing can be added here
-    onNext();
-  }, [onNext]);
-
   const isBackOwnerFunded = recoveryFundingList.every(
     (token) => token.areFundsReceived,
   );
@@ -85,7 +79,7 @@ export const FundYourBackupWallet = () => {
           <Button
             disabled={!isBackOwnerFunded || isRecoveryFundingListLoading}
             type="primary"
-            onClick={handleContinue}
+            onClick={isBackOwnerFunded ? onNext : undefined}
             size="large"
           >
             Continue
