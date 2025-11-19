@@ -18,7 +18,7 @@ const PasswordContainer = styled(Flex)`
 
 export const CreateNewPassword = () => {
   const message = useMessageApi();
-  const { onPrev, onNext, updateNewPasswordMasterEoaAddress } =
+  const { onPrev, onNext, updateNewMasterEoaAddress } =
     useAccountRecoveryContext();
   const [form] = Form.useForm<{ password: string }>();
   const [isPasswordValid, setIsPasswordValid] = useState(false);
@@ -45,18 +45,13 @@ export const CreateNewPassword = () => {
       try {
         const { wallets } = await prepareRecoveryProcess(values.password);
         const newMasterEoaAddress = wallets[0].new_wallet.address;
-        updateNewPasswordMasterEoaAddress(newMasterEoaAddress);
+        updateNewMasterEoaAddress(newMasterEoaAddress);
         onNext();
       } catch (error) {
         message.error(getErrorMessage(error));
       }
     },
-    [
-      onNext,
-      prepareRecoveryProcess,
-      updateNewPasswordMasterEoaAddress,
-      message,
-    ],
+    [onNext, prepareRecoveryProcess, updateNewMasterEoaAddress, message],
   );
 
   return (

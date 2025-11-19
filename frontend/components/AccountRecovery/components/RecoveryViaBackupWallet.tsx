@@ -4,9 +4,9 @@ import { TbWallet } from 'react-icons/tb';
 import { COLOR } from '@/constants';
 import { useStore, useWeb3AuthBackupWallet } from '@/hooks';
 
-import { CardTitle } from '../../ui';
+import { CardTitle, IconContainer } from '../../ui';
 import { useAccountRecoveryContext } from '../AccountRecoveryProvider';
-import { IconContainer, RecoveryMethodCard } from '../styles';
+import { RecoveryMethodCard } from '../styles';
 
 const { Paragraph } = Typography;
 

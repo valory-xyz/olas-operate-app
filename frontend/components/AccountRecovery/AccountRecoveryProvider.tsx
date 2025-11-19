@@ -77,7 +77,7 @@ const AccountRecoveryContext = createContext<{
   /** Address of the backup wallet used for recovery */
   backupWalletAddress?: Address;
   newMasterEoaAddress?: Address;
-  updateNewPasswordMasterEoaAddress: (address: Address) => void;
+  updateNewMasterEoaAddress: (address: Address) => void;
   isRecoveryFundingListLoading: boolean;
   recoveryFundingList: TokenRequirementsRow[];
   /** Callback to proceed to the next step in recovery */
@@ -89,7 +89,7 @@ const AccountRecoveryContext = createContext<{
   currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
   isRecoveryAvailable: false,
   hasBackupWallets: false,
-  updateNewPasswordMasterEoaAddress: () => {},
+  updateNewMasterEoaAddress: () => {},
   isRecoveryFundingListLoading: false,
   recoveryFundingList: [],
   onNext: () => {},
@@ -106,7 +106,7 @@ export const AccountRecoveryProvider = ({
     useMasterWalletContext();
 
   const [currentStep, setCurrentStep] = useState<RecoverySteps>(
-    RECOVERY_STEPS.CreateNewPassword,
+    RECOVERY_STEPS.SelectRecoveryMethod,
   );
   const [newMasterEoaAddress, setNewMasterEoaAddress] = useState<Address>();
   const { onNext, onPrev } = useRecoveryNavigation(
@@ -136,7 +136,6 @@ export const AccountRecoveryProvider = ({
     queryFn: async ({ signal }) =>
       await RecoveryService.getRecoveryFundingRequirements(signal),
     enabled: canFetchRecoveryFundingRequirements && isOnline,
-
     // Only refetch when in funding or approval steps
     refetchInterval: canFetchRecoveryFundingRequirements
       ? FIFTEEN_SECONDS_INTERVAL
@@ -152,6 +151,10 @@ export const AccountRecoveryProvider = ({
     return getBackupWalletStatus(extendedWallets.safes, masterSafes);
   }, [masterSafes, extendedWallets, isLoading]);
 
+  const updateNewMasterEoaAddress = useCallback((address: Address) => {
+    setNewMasterEoaAddress(address);
+  }, []);
+
   const isRecoveryAvailable = !!(
     backupWalletDetails?.areAllBackupOwnersSame &&
     backupWalletDetails?.hasBackupWalletsAcrossEveryChain
@@ -159,10 +162,6 @@ export const AccountRecoveryProvider = ({
 
   const hasBackupWallets =
     !!backupWalletDetails?.hasBackupWalletsAcrossEveryChain;
-
-  const updateNewPasswordMasterEoaAddress = useCallback((address: Address) => {
-    setNewMasterEoaAddress(address);
-  }, []);
 
   const recoveryFundingList = useMemo(() => {
     if (!recoveryFundingRequirements) return [];
@@ -182,7 +181,7 @@ export const AccountRecoveryProvider = ({
         newMasterEoaAddress,
         isRecoveryFundingListLoading: isRecoveryFundingRequirementsLoading,
         recoveryFundingList,
-        updateNewPasswordMasterEoaAddress,
+        updateNewMasterEoaAddress,
         onNext,
         onPrev,
       }}

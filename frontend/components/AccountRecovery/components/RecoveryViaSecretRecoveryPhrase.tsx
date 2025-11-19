@@ -3,8 +3,8 @@ import { LuRectangleEllipsis } from 'react-icons/lu';
 
 import { COLOR } from '@/constants/colors';
 
-import { CardTitle } from '../../ui';
-import { IconContainer, RecoveryMethodCard } from '../styles';
+import { CardTitle, IconContainer } from '../../ui';
+import { RecoveryMethodCard } from '../styles';
 
 const { Paragraph } = Typography;
 

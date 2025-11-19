@@ -50,10 +50,8 @@ const AccountRecoveredComplete = () => {
 
 export const ApproveWithBackupWallet = () => {
   const queryClient = useQueryClient();
-  // Set to true when "/complete" is reached
-  const [isAccountRecovered, setIsAccountRecovered] = useState(false);
-  // Replace with actual loading state
-  const isLoading = true;
+  const [isAccountRecovered, setIsAccountRecovered] = useState(false); // Set to true when "/complete" is reached
+  const isLoading = true; // Replace with actual loading state
 
   // Invalidate recovery status query to refetch updated status
   useEffect(() => {
@@ -103,13 +101,7 @@ export const ApproveWithBackupWallet = () => {
         )}
       </CardFlex>
 
-      <Modal
-        open={isAccountRecovered}
-        footer={null}
-        onCancel={() => {}}
-        closable={false}
-        centered
-      >
+      <Modal open={isAccountRecovered} footer={null} closable={false} centered>
         <AccountRecoveredComplete />
       </Modal>
     </Flex>

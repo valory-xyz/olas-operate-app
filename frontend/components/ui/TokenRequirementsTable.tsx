@@ -85,6 +85,7 @@ const getColumns = (
     },
   ];
 
+  // Optionally add the Chain column at the start
   if (showChainColumn) {
     baseColumns.unshift({
       title: 'Chain',

@@ -11,6 +11,7 @@ export * from './Form';
 export * from './FormFlex';
 export * from './FundingDescription';
 export * from './FundsAreSafeMessage';
+export * from './IconContainer';
 export * from './LoadingSpinner';
 export * from './Modal';
 export * from './NumberInput';

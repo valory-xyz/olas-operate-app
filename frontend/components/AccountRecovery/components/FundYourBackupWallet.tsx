@@ -71,15 +71,15 @@ export const FundYourBackupWallet = () => {
         )}
 
         <TokenRequirementsTable
-          showChainColumn={true}
-          tokensDataSource={recoveryFundingList}
           isLoading={isRecoveryFundingListLoading}
+          tokensDataSource={recoveryFundingList}
+          showChainColumn={true}
         />
         <Flex justify="center" className="w-full">
           <Button
             disabled={!isBackOwnerFunded || isRecoveryFundingListLoading}
-            type="primary"
             onClick={isBackOwnerFunded ? onNext : undefined}
+            type="primary"
             size="large"
           >
             Continue

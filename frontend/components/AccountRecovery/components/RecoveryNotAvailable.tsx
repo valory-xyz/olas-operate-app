@@ -7,21 +7,9 @@ import { useSupportModal } from '@/context/SupportModalProvider';
 import { SetupScreen } from '@/enums';
 import { useSetup } from '@/hooks';
 
-import { CardFlex, CardTitle } from '../../ui';
+import { CardFlex, CardTitle, IconContainer } from '../../ui';
 
 const { Paragraph } = Typography;
-
-const IconContainer = styled.div`
-  min-width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  align-self: center;
-  justify-content: center;
-  border: 1px solid ${COLOR.GRAY_3};
-  border-radius: 8px;
-  background-image: url('/icon-bg.svg');
-`;
 
 const RecoveryNotAvailableCard = styled(CardFlex)`
   width: 512px;
@@ -45,7 +33,7 @@ export const RecoveryNotAvailable = ({
     <Flex align="center" justify="center" vertical className="h-full">
       <RecoveryNotAvailableCard $padding="32px">
         <Flex vertical gap={32}>
-          <IconContainer>
+          <IconContainer $size={48}>
             <TbWallet size={20} fontSize={30} color={COLOR.PRIMARY} />
           </IconContainer>
           <Flex vertical gap={16}>
@@ -69,7 +57,7 @@ export const RecoveryNotAvailable = ({
             Back to Login
           </Button>
           <Button onClick={toggleSupportModal} size="large" block>
-            Back to Login
+            Contact Support
           </Button>
         </Flex>
       </RecoveryNotAvailableCard>
