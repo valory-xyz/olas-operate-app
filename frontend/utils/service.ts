@@ -107,6 +107,7 @@ export const updateServiceIfNeeded = async (
     partialServiceTemplate.configurations = {
       ...partialServiceTemplate.configurations,
       [serviceHomeChain]: {
+        ...partialServiceTemplate.configurations?.[serviceHomeChain],
         staking_program_id: updatedStakingProgramId,
       },
     };
