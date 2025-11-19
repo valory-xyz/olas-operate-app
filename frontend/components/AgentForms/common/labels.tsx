@@ -126,11 +126,17 @@ export const PersonaDescriptionSubHeader = ({
   </Flex>
 );
 
-export const PersonaDescriptionExtra = () => (
+export const PersonaDescriptionExtra = ({
+  isUpdatePage = false,
+}: {
+  isUpdatePage?: boolean;
+}) => (
   <Flex gap={6} align="center" className="mt-4 mb-8">
-    <LuInfo size={16} />
+    <LuInfo size={16} style={{ flexShrink: 0 }} />
     <Text className="text-sm">
-      You can update the persona description later if you want.
+      {isUpdatePage
+        ? 'You can update the persona description by writing to the agent in the chat. Just start the agent and visit the Agent Profile page.'
+        : 'You can update the persona description later if you want.'}
     </Text>
   </Flex>
 );
@@ -152,7 +158,7 @@ export const XAccountApiTokensSubHeader = ({
 );
 
 export const PersonaDescriptionDesc = () => (
-  <Flex vertical gap={24}>
+  <Flex vertical gap={24} style={{ marginBottom: 56 }}>
     <Text strong>How to describe your agent persona</Text>
 
     <Text>
