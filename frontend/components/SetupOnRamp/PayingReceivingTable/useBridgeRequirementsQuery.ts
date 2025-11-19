@@ -4,10 +4,10 @@ import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
+import { useGetBridgeRequirementsParams } from '@/hooks/useGetBridgeRequirementsParams';
 import { delayInSeconds } from '@/utils/delay';
 
-import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
-import { useBridgeRequirementsUtils } from '../hooks/useBridgeRequirementsUtils';
+import { useBridgeRequirementsUtils } from '../../../hooks/useBridgeRequirementsUtils';
 
 type UseBridgeRequirementsQueryParams = {
   onRampChainId: EvmChainId;
@@ -50,7 +50,6 @@ export const useBridgeRequirementsQuery = ({
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
     onRampChainId,
     AddressZero,
-    'to',
   );
 
   const bridgeParams = useMemo(() => {

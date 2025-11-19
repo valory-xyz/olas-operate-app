@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
+import { useBridgeRequirementsQuery } from '@/components/SetupOnRamp/PayingReceivingTable/useBridgeRequirementsQuery';
 import { AddressZero } from '@/constants/address';
 import { EvmChainId, onRampChainMap } from '@/constants/chains';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
@@ -7,8 +8,6 @@ import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
-
-import { useBridgeRequirementsQuery } from '../components/SetupPage/Create/SetupOnRamp/PayingReceivingTable/useBridgeRequirementsQuery';
 
 /**
  * Hook to fetch the bridge refill requirements for the on-ramp process and

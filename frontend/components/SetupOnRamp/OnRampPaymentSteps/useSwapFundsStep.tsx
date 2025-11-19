@@ -10,6 +10,7 @@ import { TokenSymbol } from '@/constants/token';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirementsOnDemand } from '@/hooks/useBridgeRefillRequirementsOnDemand';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
+import { useGetBridgeRequirementsParams } from '@/hooks/useGetBridgeRequirementsParams';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import {
   BridgeRefillRequirementsResponse,
@@ -17,8 +18,7 @@ import {
 } from '@/types/Bridge';
 import { delayInSeconds } from '@/utils/delay';
 
-import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
-import { useBridgeRequirementsUtils } from '../hooks/useBridgeRequirementsUtils';
+import { useBridgeRequirementsUtils } from '../../../hooks/useBridgeRequirementsUtils';
 
 const { Text } = Typography;
 
@@ -49,7 +49,6 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
     onRampChainId,
     AddressZero,
-    'to',
   );
 
   const bridgeParams = useMemo(() => {

@@ -74,7 +74,11 @@ const formatAmount = (amount: number): string => {
   return amount.toFixed(4).replace(/\.?0+$/, '');
 };
 
-const RequirementsForOnRamp = ({ fiatAmount }: { fiatAmount: string }) => (
+export const RequirementsForOnRamp = ({
+  fiatAmount,
+}: {
+  fiatAmount: string;
+}) => (
   <div>
     <Text className="text-neutral-tertiary">You will pay</Text>
     <RequirementsContainer gap={12}>
