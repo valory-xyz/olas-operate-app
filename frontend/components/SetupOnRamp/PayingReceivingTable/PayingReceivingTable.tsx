@@ -221,9 +221,34 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
             )}
           </>
         ),
-        receiving: tokensRequired ? (
-          <ViewReceivingTokens receivingTokens={tokensRequired} />
-        ) : null,
+        receiving: (() => {
+          if (!tokensRequired && ethAmountToPay) {
+            p;
+            const chainDetails = asEvmChainDetails(
+              selectedAgentConfig.middlewareHomeChainId,
+            );
+            const nativeTokenSymbol = chainDetails.symbol as TokenSymbol;
+            const icon = TokenSymbolConfigMap[nativeTokenSymbol];
+            return (
+              <Flex vertical justify="center" gap={16}>
+                {icon?.image && (
+                  <Flex align="center" gap={8}>
+                    <Image
+                      src={icon.image}
+                      alt={nativeTokenSymbol}
+                      width={20}
+                      height={20}
+                    />
+                    <Text>{`${ethAmountToPay} ${nativeTokenSymbol}`}</Text>
+                  </Flex>
+                )}
+              </Flex>
+            );
+          }
+          return tokensRequired ? (
+            <ViewReceivingTokens receivingTokens={tokensRequired} />
+          ) : null;
+        })(),
       },
     ],
     [
@@ -234,6 +259,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
       tokensRequired,
       onRetry,
       isReceivingAmountLoading,
+      selectedAgentConfig.middlewareHomeChainId,
     ],
   );
 

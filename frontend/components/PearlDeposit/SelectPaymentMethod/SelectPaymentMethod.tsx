@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { styled } from 'styled-components';
 
 import { YouPayContainer } from '@/components/PearlWallet';
+import { RequirementsForOnRamp } from '@/components/SetupPage/FundYourAgent/components/TokensRequirements';
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
 import {
   COLOR,
@@ -40,16 +41,19 @@ const ShowAmountsToDeposit = ({
   isOnRamping = false,
   onRampChainId,
   onLoadingChange,
+  onFiatAmountChange,
 }: {
   isOnRamping?: boolean;
   onRampChainId?: EvmChainId;
   onLoadingChange?: (isLoading: boolean) => void;
+  onFiatAmountChange?: (amount: number | null) => void;
 }) => {
   const { amountsToDeposit, walletChainId } = usePearlWallet();
-  const { updateUsdAmountToPay } = useOnRampContext();
+  const { updateUsdAmountToPay, updateEthAmountToPay } = useOnRampContext();
   const chainId = onRampChainId || walletChainId;
 
   // Calculate total native token from amountsToDeposit
+  // Note: Transak only buys native token (ETH).
   const totalNativeToken = useMemo(() => {
     if (!chainId || !amountsToDeposit) return 0;
 
@@ -66,26 +70,39 @@ const ShowAmountsToDeposit = ({
       isOnRamping && totalNativeToken > 0 ? totalNativeToken : undefined,
     );
 
-  // Store USD amount in OnRampContext for Transak (calculated silently, not displayed)
-  // Transak will handle the actual conversion and display
   useEffect(() => {
     if (!isOnRamping) return;
 
     if (isFiatLoading) {
       updateUsdAmountToPay(null);
-    } else if (fiatAmount) {
-      updateUsdAmountToPay(fiatAmount);
+      updateEthAmountToPay(null);
+    } else {
+      if (fiatAmount) {
+        updateUsdAmountToPay(fiatAmount);
+      }
+      if (totalNativeToken > 0) {
+        updateEthAmountToPay(totalNativeToken);
+      }
     }
-  }, [isOnRamping, isFiatLoading, fiatAmount, updateUsdAmountToPay]);
+  }, [
+    isOnRamping,
+    isFiatLoading,
+    fiatAmount,
+    totalNativeToken,
+    updateUsdAmountToPay,
+    updateEthAmountToPay,
+  ]);
 
-  // Notify parent of loading state
+  // Notify parent of loading state and fiat amount
   useEffect(() => {
     if (onLoadingChange) {
       onLoadingChange(isFiatLoading);
     }
-  }, [isFiatLoading, onLoadingChange]);
+    if (onFiatAmountChange) {
+      onFiatAmountChange(fiatAmount || null);
+    }
+  }, [isFiatLoading, fiatAmount, onLoadingChange, onFiatAmountChange]);
 
-  // Always show native token amounts - Transak will handle USD conversion
   return (
     <Flex vertical gap={12}>
       {entries(amountsToDeposit)
@@ -116,8 +133,47 @@ const OnRampMethod = ({
   onRampChainId: EvmChainId;
   onSelect: () => void;
 }) => {
-  const { amountsToDeposit } = usePearlWallet();
-  const [isFiatLoading, setIsFiatLoading] = useState(false);
+  const { amountsToDeposit, walletChainId } = usePearlWallet();
+  const { updateUsdAmountToPay, updateEthAmountToPay } = useOnRampContext();
+  const chainId = onRampChainId || walletChainId;
+
+  // Calculate total native token from amountsToDeposit
+  const totalNativeToken = useMemo(() => {
+    if (!chainId || !amountsToDeposit) return 0;
+
+    const chainDetails = asEvmChainDetails(asMiddlewareChain(chainId));
+    const nativeTokenSymbol = chainDetails.symbol as TokenSymbol;
+
+    const nativeTokenAmount = amountsToDeposit[nativeTokenSymbol]?.amount || 0;
+    return nativeTokenAmount;
+  }, [chainId, amountsToDeposit]);
+
+  // Convert native token to USD using Transak quote
+  const { isLoading: isFiatLoading, data: fiatAmount } =
+    useTotalFiatFromNativeToken(
+      totalNativeToken > 0 ? totalNativeToken : undefined,
+    );
+
+  // Store USD and ETH amounts in OnRampContext for SetupOnRamp
+  useEffect(() => {
+    if (isFiatLoading) {
+      updateUsdAmountToPay(null);
+      updateEthAmountToPay(null);
+    } else {
+      if (fiatAmount) {
+        updateUsdAmountToPay(fiatAmount);
+      }
+      if (totalNativeToken > 0) {
+        updateEthAmountToPay(totalNativeToken);
+      }
+    }
+  }, [
+    isFiatLoading,
+    fiatAmount,
+    totalNativeToken,
+    updateUsdAmountToPay,
+    updateEthAmountToPay,
+  ]);
 
   // Check if there are any amounts to deposit
   const hasAmountsToDeposit = useMemo(() => {
@@ -136,16 +192,15 @@ const OnRampMethod = ({
         </Flex>
 
         <Flex vertical>
-          <ShowAmountsToDeposit
-            isOnRamping={true}
-            onRampChainId={onRampChainId}
-            onLoadingChange={setIsFiatLoading}
+          <RequirementsForOnRamp
+            fiatAmount={fiatAmount ? fiatAmount.toFixed(2) : '0'}
           />
           <Button
             type="primary"
             size="large"
             onClick={onSelect}
             disabled={!hasAmountsToDeposit || isFiatLoading}
+            title="On-ramp deposits only support native token (ETH) on Optimism"
           >
             Buy Crypto with USD
           </Button>
@@ -224,6 +279,7 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
   const { goto: gotoSetup } = useSetup();
   const { goto: gotoPage } = usePageState();
   const { walletChainId: chainId, amountsToDeposit } = usePearlWallet();
+  const { setIsFromDepositFlow } = useOnRampContext();
   const [isBridgingEnabled] = useFeatureFlag(['bridge-onboarding']);
   const [paymentMethod, setPaymentMethod] = useState<
     'BUY' | 'TRANSFER' | 'BRIDGE' | null
@@ -237,6 +293,7 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
   const chainName = asEvmChainDetails(asMiddlewareChain(chainId)).displayName;
 
   if (paymentMethod === 'BUY') {
+    setIsFromDepositFlow(true);
     gotoPage(Pages.Setup);
     gotoSetup(SetupScreen.SetupOnRamp);
   }

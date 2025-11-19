@@ -33,6 +33,9 @@ export const OnRampContext = createContext<{
   isBuyCryptoBtnLoading: boolean;
   updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
 
+  isFromDepositFlow: boolean;
+  setIsFromDepositFlow: (isFromDeposit: boolean) => void;
+
   // on-ramping step
   isOnRampingTransactionSuccessful: boolean;
   isTransactionSuccessfulButFundsNotReceived: boolean;
@@ -53,6 +56,9 @@ export const OnRampContext = createContext<{
   updateUsdAmountToPay: () => {},
   isBuyCryptoBtnLoading: false,
   updateIsBuyCryptoBtnLoading: () => {},
+
+  isFromDepositFlow: false,
+  setIsFromDepositFlow: () => {},
 
   // on-ramping step
   isOnRampingTransactionSuccessful: false,
@@ -90,6 +96,9 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // State to track if the swapping step is completed
   const [isSwappingFundsStepCompleted, setIsSwappingStepCompleted] =
     useState(false);
+
+  // State to track if we came from deposit flow (Pearl Wallet)
+  const [isFromDepositFlow, setIsFromDepositFlow] = useState(false);
 
   const updateIsBuyCryptoBtnLoading = useCallback((loading: boolean) => {
     setIsBuyCryptoBtnLoading(loading);
@@ -199,6 +208,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsOnRampingTransactionSuccessful(false);
     setHasFundsReceivedAfterOnRamp(false);
     setIsSwappingStepCompleted(false);
+    setIsFromDepositFlow(false);
   }, []);
 
   // Reset the on-ramp state when navigating to the main page
@@ -237,6 +247,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
         /** Function to reset the on-ramp state */
         resetOnRampState,
+
+        /** Navigation source tracking */
+        isFromDepositFlow,
+        setIsFromDepositFlow,
       }}
     >
       {children}
