@@ -1,8 +1,12 @@
+import { useMutation } from '@tanstack/react-query';
 import { Flex, Form } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { PasswordForm } from '@/components/ui';
+import { useMessageApi } from '@/context/MessageProvider';
+import { RecoveryService } from '@/service/Recovery';
+import { getErrorMessage } from '@/utils';
 
 import { useAccountRecoveryContext } from '../AccountRecoveryProvider';
 
@@ -13,10 +17,17 @@ const PasswordContainer = styled(Flex)`
 `;
 
 export const CreateNewPassword = () => {
-  const { onPrev, onNext } = useAccountRecoveryContext();
+  const message = useMessageApi();
+  const { onPrev, onNext, updateNewPasswordMasterEoaAddress } =
+    useAccountRecoveryContext();
   const [form] = Form.useForm<{ password: string }>();
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const password = Form.useWatch('password', form);
+
+  const { isPending, mutateAsync: prepareRecoveryProcess } = useMutation({
+    mutationFn: async (password: string) =>
+      await RecoveryService.prepareRecovery(password),
+  });
 
   useEffect(() => {
     if (password) {
@@ -30,23 +41,35 @@ export const CreateNewPassword = () => {
   }, [password, form]);
 
   const handleFinish = useCallback(
-    (values: { password: string }) => {
-      window.console.log(values); // MAKE AN API TO "/prepare"
-      onNext();
+    async (values: { password: string }) => {
+      try {
+        const { wallets } = await prepareRecoveryProcess(values.password);
+        const newMasterEoaAddress = wallets[0].new_wallet.address;
+        updateNewPasswordMasterEoaAddress(newMasterEoaAddress);
+        onNext();
+      } catch (error) {
+        message.error(getErrorMessage(error));
+      }
     },
-    [onNext],
+    [
+      onNext,
+      prepareRecoveryProcess,
+      updateNewPasswordMasterEoaAddress,
+      message,
+    ],
   );
 
   return (
     <PasswordContainer align="center" justify="center" className="w-full mt-40">
       <PasswordForm
         form={form}
+        isSubmitting={isPending}
         isPasswordValid={isPasswordValid}
         onFinish={handleFinish}
         onBack={onPrev}
-        isSubmitting={false}
         title="Set New Password"
         info="You will use this password to sign in to your Pearl account after the recovery process."
+        label="Enter new password"
       />
     </PasswordContainer>
   );

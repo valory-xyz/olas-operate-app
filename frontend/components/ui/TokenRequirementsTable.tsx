@@ -103,8 +103,8 @@ const getColumns = (
             <Image
               src={chainImageSrc}
               alt={chainDisplayName || 'Chain'}
-              width={14}
-              height={14}
+              width={20}
+              height={20}
             />
             <Text>{chainDisplayName}</Text>
           </Flex>

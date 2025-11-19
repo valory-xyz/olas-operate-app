@@ -87,7 +87,7 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
     data: isInMiddleOfAccountRecoverySwap,
     isLoading: isAccountRecoveryStatusLoading,
   } = useQuery({
-    queryKey: REACT_QUERY_KEYS.RECOVERY_STATUS_KEY(),
+    queryKey: REACT_QUERY_KEYS.RECOVERY_STATUS_KEY,
     queryFn: ({ signal }) => RecoveryService.getRecoveryStatus(signal),
     enabled: isOnline,
     select: (data) => !!data.has_swaps,

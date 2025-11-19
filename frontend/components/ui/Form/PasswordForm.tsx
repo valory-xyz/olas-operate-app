@@ -55,6 +55,7 @@ type PasswordFormValues = {
   isPasswordValid: boolean;
   title?: string;
   info?: string;
+  label?: string;
 };
 
 export const PasswordForm = ({
@@ -65,6 +66,7 @@ export const PasswordForm = ({
   onBack,
   title = 'Set Password',
   info,
+  label = 'Enter password',
 }: PasswordFormValues) => {
   const password = Form.useWatch('password', form);
 
@@ -85,7 +87,7 @@ export const PasswordForm = ({
       >
         <Form.Item
           name="password"
-          label={<FormLabel>Enter password</FormLabel>}
+          label={<FormLabel>{label}</FormLabel>}
           help={
             password && password.length > 0 && isPasswordValid ? (
               <PasswordStrength score={zxcvbn(password).score} />

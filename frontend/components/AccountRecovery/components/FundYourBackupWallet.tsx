@@ -6,7 +6,6 @@ import {
   BackButton,
   CardFlex,
   CopyAddress,
-  TokenRequirementsRow,
   TokenRequirementsTable,
 } from '@/components/ui';
 import { COLOR } from '@/constants';
@@ -34,23 +33,22 @@ const AddressContainer = styled(Flex)`
 `;
 
 export const FundYourBackupWallet = () => {
-  const { onPrev, onNext, backupWalletAddress } = useAccountRecoveryContext();
+  const {
+    onPrev,
+    onNext,
+    isRecoveryFundingListLoading,
+    backupWalletAddress,
+    recoveryFundingList,
+  } = useAccountRecoveryContext();
 
   const handleContinue = useCallback(() => {
     // Additional logic before continuing can be added here
     onNext();
   }, [onNext]);
 
-  const dummyTokensData = [
-    {
-      symbol: 'XDAI',
-      totalAmount: 0.05,
-      pendingAmount: 0.05,
-      iconSrc: '/tokens/xdai-icon.png',
-      areFundsReceived: false,
-      chainName: 'gnosis',
-    },
-  ] satisfies TokenRequirementsRow[];
+  const isBackOwnerFunded = recoveryFundingList.every(
+    (token) => token.areFundsReceived,
+  );
 
   return (
     <Flex align="center" justify="center" className="w-full mt-40">
@@ -80,11 +78,16 @@ export const FundYourBackupWallet = () => {
 
         <TokenRequirementsTable
           showChainColumn={true}
-          tokensDataSource={dummyTokensData}
-          isLoading={false}
+          tokensDataSource={recoveryFundingList}
+          isLoading={isRecoveryFundingListLoading}
         />
         <Flex justify="center" className="w-full">
-          <Button type="primary" onClick={handleContinue} size="large">
+          <Button
+            disabled={!isBackOwnerFunded || isRecoveryFundingListLoading}
+            type="primary"
+            onClick={handleContinue}
+            size="large"
+          >
             Continue
           </Button>
         </Flex>

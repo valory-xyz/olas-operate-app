@@ -36,3 +36,47 @@ export type ExtendedWallet = {
   consistent_backup_owner: boolean;
   consistent_backup_owner_count: boolean;
 };
+
+type RecoveryWallet = {
+  address: Address;
+  safes: Record<SupportedMiddlewareChain, Address>;
+  safe_chains: SupportedMiddlewareChain[];
+  ledger_type: 'ethereum';
+  safe_nonce: number;
+};
+
+export type RecoveryPrepareProcess = {
+  /** bundle id */
+  id: string;
+  wallets: {
+    // old master EOA
+    current_wallet: RecoveryWallet;
+    // new master EOA
+    new_wallet: RecoveryWallet;
+    new_mnemonic: string[];
+  }[];
+};
+
+/** tokenAddress → amount */
+type TokenBalanceMap = Record<Address, number>;
+
+/**
+ * @example
+ * {
+ *   "gnosis": {
+ *     "0xSafeAddress": { "0xTokenAddress": 123n }
+ *   }
+ * }
+ */
+export type ChainAddressTokenBalances = Record<
+  SupportedMiddlewareChain,
+  Record<Address, TokenBalanceMap>
+>;
+
+export type RecoveryFundingRequirements = {
+  balances: ChainAddressTokenBalances;
+  total_requirements: ChainAddressTokenBalances;
+  refill_requirements: ChainAddressTokenBalances;
+  is_refill_required: boolean;
+  pending_backup_owner_swaps: Record<SupportedMiddlewareChain, Address[]>;
+};

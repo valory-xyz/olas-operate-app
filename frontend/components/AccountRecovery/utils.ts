@@ -1,10 +1,26 @@
-import { EvmChainId, SupportedMiddlewareChain } from '@/constants';
+import { CHAIN_CONFIG } from '@/config/chains';
+import { TOKEN_CONFIG } from '@/config/tokens';
+import {
+  AddressZero,
+  ChainImageMap,
+  EvmChainId,
+  SupportedMiddlewareChain,
+} from '@/constants';
 import { Address } from '@/types';
-import { ExtendedWallet } from '@/types/Recovery';
-import { asMiddlewareChain } from '@/utils';
+import { ExtendedWallet, RecoveryFundingRequirements } from '@/types/Recovery';
+import {
+  areAddressesEqual,
+  asEvmChainId,
+  asMiddlewareChain,
+  formatUnitsToNumber,
+} from '@/utils';
+
+import { TokenRequirementsRow } from '../ui';
 
 /**
- *
+ * Gets the backup wallet status by comparing backup owners across all safes.
+ * - If all backup owners are the same across chains, recovery can proceed.
+ * - If any chain is missing backup owners, recovery cannot proceed.
  */
 export const getBackupWalletStatus = (
   safes: ExtendedWallet['safes'],
@@ -47,4 +63,64 @@ export const getBackupWalletStatus = (
     hasBackupWalletsAcrossEveryChain,
     areAllBackupOwnersSame,
   };
+};
+
+/**
+ * Parses the recovery funding requirements into a list of token requirement rows
+ */
+export const parseRecoveryFundingRequirements = (
+  fundingRequirements: RecoveryFundingRequirements,
+): TokenRequirementsRow[] => {
+  const rows: TokenRequirementsRow[] = [];
+  const { refill_requirements, total_requirements } = fundingRequirements;
+
+  for (const [chainName, backupOwnerAddresses] of Object.entries(
+    refill_requirements,
+  )) {
+    const chain = chainName as SupportedMiddlewareChain;
+    const evmChainId = asEvmChainId(chain);
+
+    // Iterate through each address of the backup owner
+    for (const [safeAddress, tokenBalances] of Object.entries(
+      backupOwnerAddresses,
+    )) {
+      // Iterate through each token that needs refilling
+      for (const [untypedTokenAddress, refillAmount] of Object.entries(
+        tokenBalances,
+      )) {
+        const tokenAddress = untypedTokenAddress as Address;
+        const totalAmount =
+          total_requirements[chain]?.[safeAddress as Address]?.[tokenAddress] ??
+          0;
+
+        const tokenConfig = (() => {
+          const config = Object.values(TOKEN_CONFIG[evmChainId]).find((token) =>
+            areAddressesEqual(token?.address, tokenAddress),
+          );
+          if (!config && tokenAddress === AddressZero) {
+            return CHAIN_CONFIG[evmChainId].nativeToken;
+          }
+          return config;
+        })();
+
+        if (!tokenConfig) continue;
+
+        const { decimals, symbol } = tokenConfig;
+        rows.push({
+          symbol,
+          totalAmount: Number(
+            formatUnitsToNumber(String(totalAmount ?? 0), decimals),
+          ),
+          pendingAmount: Number(
+            formatUnitsToNumber(String(refillAmount), decimals),
+          ),
+          iconSrc: ChainImageMap[evmChainId],
+          areFundsReceived: refillAmount === 0,
+          chainName: chain,
+        });
+      }
+    }
+  }
+
+  return rows;
 };

@@ -15,10 +15,56 @@ import { useMasterWalletContext, useSetup } from '@/hooks';
 import { RecoveryService } from '@/service/Recovery';
 import { Address } from '@/types';
 
-import { RECOVERY_STEPS } from './constants';
-import { getBackupWalletStatus } from './utils';
+import { TokenRequirementsRow } from '../ui';
+import { RECOVERY_STEPS, RecoverySteps } from './constants';
+import {
+  getBackupWalletStatus,
+  parseRecoveryFundingRequirements,
+} from './utils';
 
-type RecoverySteps = keyof typeof RECOVERY_STEPS;
+const useRecoveryNavigation = (
+  currentStep: RecoverySteps,
+  updateCurrentStep: (state: RecoverySteps) => void,
+) => {
+  const { goto } = useSetup();
+
+  const onNext = useCallback(() => {
+    switch (currentStep) {
+      case RECOVERY_STEPS.SelectRecoveryMethod:
+        updateCurrentStep(RECOVERY_STEPS.CreateNewPassword);
+        break;
+      case RECOVERY_STEPS.CreateNewPassword:
+        updateCurrentStep(RECOVERY_STEPS.FundYourBackupWallet);
+        break;
+      case RECOVERY_STEPS.FundYourBackupWallet:
+        updateCurrentStep(RECOVERY_STEPS.ApproveWithBackupWallet);
+        break;
+      case RECOVERY_STEPS.ApproveWithBackupWallet:
+        goto(SetupScreen.Welcome);
+        break;
+      default:
+        break;
+    }
+  }, [updateCurrentStep, goto, currentStep]);
+
+  const onPrev = useCallback(() => {
+    switch (currentStep) {
+      case RECOVERY_STEPS.CreateNewPassword:
+        updateCurrentStep(RECOVERY_STEPS.SelectRecoveryMethod);
+        break;
+      case RECOVERY_STEPS.FundYourBackupWallet:
+        updateCurrentStep(RECOVERY_STEPS.CreateNewPassword);
+        break;
+      case RECOVERY_STEPS.ApproveWithBackupWallet:
+        updateCurrentStep(RECOVERY_STEPS.FundYourBackupWallet);
+        break;
+      default:
+        break;
+    }
+  }, [currentStep, updateCurrentStep]);
+
+  return { onNext, onPrev };
+};
 
 const AccountRecoveryContext = createContext<{
   isLoading: boolean;
@@ -30,6 +76,10 @@ const AccountRecoveryContext = createContext<{
   currentStep: RecoverySteps;
   /** Address of the backup wallet used for recovery */
   backupWalletAddress?: Address;
+  newMasterEoaAddress?: Address;
+  updateNewPasswordMasterEoaAddress: (address: Address) => void;
+  isRecoveryFundingListLoading: boolean;
+  recoveryFundingList: TokenRequirementsRow[];
   /** Callback to proceed to the next step in recovery */
   onNext: () => void;
   /** Callback to go back to the previous step in recovery */
@@ -39,6 +89,9 @@ const AccountRecoveryContext = createContext<{
   currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
   isRecoveryAvailable: false,
   hasBackupWallets: false,
+  updateNewPasswordMasterEoaAddress: () => {},
+  isRecoveryFundingListLoading: false,
+  recoveryFundingList: [],
   onNext: () => {},
   onPrev: () => {},
 });
@@ -48,21 +101,47 @@ export const AccountRecoveryProvider = ({
 }: {
   children: ReactNode;
 }) => {
+  const { isOnline } = useOnlineStatus();
+  const { masterSafes, isLoading: isMasterWalletLoading } =
+    useMasterWalletContext();
+
   const [currentStep, setCurrentStep] = useState<RecoverySteps>(
     RECOVERY_STEPS.CreateNewPassword,
   );
-  const { isOnline } = useOnlineStatus();
-  const { goto } = useSetup();
-  const { masterSafes, isLoading: isMasterWalletLoading } =
-    useMasterWalletContext();
+  const [newMasterEoaAddress, setNewMasterEoaAddress] = useState<Address>();
+  const { onNext, onPrev } = useRecoveryNavigation(
+    currentStep,
+    useCallback((step: RecoverySteps) => setCurrentStep(step), []),
+  );
+
   const { data: extendedWallets, isLoading: isExtendedWalletLoading } =
     useQuery({
-      queryKey: REACT_QUERY_KEYS.EXTENDED_WALLET_KEY(),
-      queryFn: ({ signal }) => RecoveryService.getExtendedWallet(signal),
+      queryKey: REACT_QUERY_KEYS.EXTENDED_WALLET_KEY,
+      queryFn: async ({ signal }) =>
+        await RecoveryService.getExtendedWallet(signal),
       enabled: isOnline,
       refetchInterval: FIFTEEN_SECONDS_INTERVAL,
       select: (data) => data[0],
     });
+
+  const canFetchRecoveryFundingRequirements =
+    currentStep === RECOVERY_STEPS.FundYourBackupWallet ||
+    currentStep === RECOVERY_STEPS.ApproveWithBackupWallet;
+
+  const {
+    data: recoveryFundingRequirements,
+    isLoading: isRecoveryFundingRequirementsLoading,
+  } = useQuery({
+    queryKey: REACT_QUERY_KEYS.RECOVERY_FUNDING_REQUIREMENTS_KEY,
+    queryFn: async ({ signal }) =>
+      await RecoveryService.getRecoveryFundingRequirements(signal),
+    enabled: canFetchRecoveryFundingRequirements && isOnline,
+
+    // Only refetch when in funding or approval steps
+    refetchInterval: canFetchRecoveryFundingRequirements
+      ? FIFTEEN_SECONDS_INTERVAL
+      : false,
+  });
 
   const isLoading = isMasterWalletLoading || isExtendedWalletLoading;
 
@@ -73,41 +152,6 @@ export const AccountRecoveryProvider = ({
     return getBackupWalletStatus(extendedWallets.safes, masterSafes);
   }, [masterSafes, extendedWallets, isLoading]);
 
-  const onNext = useCallback(() => {
-    switch (currentStep) {
-      case RECOVERY_STEPS.SelectRecoveryMethod:
-        setCurrentStep(RECOVERY_STEPS.CreateNewPassword);
-        break;
-      case RECOVERY_STEPS.CreateNewPassword:
-        setCurrentStep(RECOVERY_STEPS.FundYourBackupWallet);
-        break;
-      case RECOVERY_STEPS.FundYourBackupWallet:
-        setCurrentStep(RECOVERY_STEPS.ApproveWithBackupWallet);
-        break;
-      case RECOVERY_STEPS.ApproveWithBackupWallet:
-        goto(SetupScreen.Welcome);
-        break;
-      default:
-        break;
-    }
-  }, [currentStep, goto]);
-
-  const onPrev = useCallback(() => {
-    switch (currentStep) {
-      case RECOVERY_STEPS.CreateNewPassword:
-        setCurrentStep(RECOVERY_STEPS.SelectRecoveryMethod);
-        break;
-      case RECOVERY_STEPS.FundYourBackupWallet:
-        setCurrentStep(RECOVERY_STEPS.CreateNewPassword);
-        break;
-      case RECOVERY_STEPS.ApproveWithBackupWallet:
-        setCurrentStep(RECOVERY_STEPS.FundYourBackupWallet);
-        break;
-      default:
-        break;
-    }
-  }, [currentStep]);
-
   const isRecoveryAvailable = !!(
     backupWalletDetails?.areAllBackupOwnersSame &&
     backupWalletDetails?.hasBackupWalletsAcrossEveryChain
@@ -116,16 +160,29 @@ export const AccountRecoveryProvider = ({
   const hasBackupWallets =
     !!backupWalletDetails?.hasBackupWalletsAcrossEveryChain;
 
+  const updateNewPasswordMasterEoaAddress = useCallback((address: Address) => {
+    setNewMasterEoaAddress(address);
+  }, []);
+
+  const recoveryFundingList = useMemo(() => {
+    if (!recoveryFundingRequirements) return [];
+    return parseRecoveryFundingRequirements(recoveryFundingRequirements);
+  }, [recoveryFundingRequirements]);
+
   return (
     <AccountRecoveryContext.Provider
       value={{
         isLoading,
         isRecoveryAvailable,
         hasBackupWallets,
+        currentStep,
         backupWalletAddress: isRecoveryAvailable
           ? (backupWalletDetails?.backupAddress as Address)
           : undefined,
-        currentStep,
+        newMasterEoaAddress,
+        isRecoveryFundingListLoading: isRecoveryFundingRequirementsLoading,
+        recoveryFundingList,
+        updateNewPasswordMasterEoaAddress,
         onNext,
         onPrev,
       }}
