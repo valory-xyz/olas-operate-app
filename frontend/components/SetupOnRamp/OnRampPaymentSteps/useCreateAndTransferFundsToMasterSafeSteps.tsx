@@ -184,6 +184,14 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     };
   }
 
+  // If safe already exists, mark as completed and return empty steps (deposit flow)
+  if (existingMasterSafe) {
+    return {
+      isMasterSafeCreatedAndFundsTransferred: true,
+      steps: [],
+    };
+  }
+
   return {
     isMasterSafeCreatedAndFundsTransferred,
     steps: [masterSafeCreationStep, masterSafeTransferFundStep],

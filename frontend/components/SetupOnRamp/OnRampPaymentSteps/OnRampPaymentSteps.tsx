@@ -23,8 +23,11 @@ type OnRampPaymentStepsProps = {
 export const OnRampPaymentSteps = ({
   onRampChainId,
 }: OnRampPaymentStepsProps) => {
-  const { isOnRampingStepCompleted, isSwappingFundsStepCompleted } =
-    useOnRampContext();
+  const {
+    isOnRampingStepCompleted,
+    isSwappingFundsStepCompleted,
+    isFromDepositFlow,
+  } = useOnRampContext();
 
   // step 1: Buy crypto
   const buyCryptoStep = useBuyCryptoStep();
@@ -33,7 +36,7 @@ export const OnRampPaymentSteps = ({
   const { tokensToBeTransferred, step: swapStep } =
     useSwapFundsStep(onRampChainId);
 
-  // step 3 & 4: Create Master Safe and transfer funds
+  // step 3 & 4: Create Master Safe and transfer funds (for setup flow)
   const {
     isMasterSafeCreatedAndFundsTransferred,
     steps: createAndTransferFundsToMasterSafeSteps,
@@ -42,15 +45,21 @@ export const OnRampPaymentSteps = ({
     tokensToBeTransferred,
   );
 
-  // Check if all steps are completed to show the setup complete modal
+  // For deposit flow: skip create/transfer steps since Pearl Wallet already exists
+  const steps = isFromDepositFlow
+    ? [buyCryptoStep, swapStep]
+    : [buyCryptoStep, swapStep, ...createAndTransferFundsToMasterSafeSteps];
+
   const [isSetupCompleted, setIsSetupCompleted] = useState(false);
   useEffect(() => {
+    if (isFromDepositFlow) return;
     if (!isOnRampingStepCompleted) return;
     if (!isSwappingFundsStepCompleted) return;
     if (!isMasterSafeCreatedAndFundsTransferred) return;
 
     setIsSetupCompleted(true);
   }, [
+    isFromDepositFlow,
     isOnRampingStepCompleted,
     isMasterSafeCreatedAndFundsTransferred,
     isSwappingFundsStepCompleted,
@@ -58,13 +67,7 @@ export const OnRampPaymentSteps = ({
 
   return (
     <>
-      <TransactionSteps
-        steps={[
-          buyCryptoStep,
-          swapStep,
-          ...createAndTransferFundsToMasterSafeSteps,
-        ]}
-      />
+      <TransactionSteps steps={steps} />
       {isSetupCompleted && <AgentSetupCompleteModal />}
     </>
   );
