@@ -237,12 +237,15 @@ export const AgentsFunAgentFormContent = ({
   );
 };
 
+type AgentsFunAgentSetupProps = {
+  serviceTemplate: ServiceTemplate;
+  renderForm: RenderForm;
+};
+
 export const AgentsFunAgentSetup = ({
   serviceTemplate,
   renderForm,
-}: AgentsFunAgentFormContentProps & {
-  renderForm: RenderForm;
-}) => {
+}: AgentsFunAgentSetupProps) => {
   const [currentStep, setCurrentStep] = useState<AgentsFunFormStep>(
     AGENTS_FUN_FORM_STEP.persona,
   );
