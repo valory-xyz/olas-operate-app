@@ -4,9 +4,10 @@ import { RiAppleFill, RiGoogleFill } from 'react-icons/ri';
 
 import { COLOR } from '@/constants/colors';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useWeb3AuthBackupWallet } from '@/hooks';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useSetup } from '@/hooks/useSetup';
+
+import { useWeb3AuthBackupWallet } from './useWeb3AuthBackupWallet';
 
 const { Text } = Typography;
 

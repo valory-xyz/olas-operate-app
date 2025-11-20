@@ -14,6 +14,12 @@ const {
 } = require('./windows/web3auth');
 
 const {
+  handleWeb3AuthSwapOwnerWindowShow,
+  handleWeb3AuthSwapOwnerSuccessLogin,
+  handleWeb3AuthWindowSwapOwnerClose,
+} = require('./windows/web3authSwapOwner');
+
+const {
   handleTermsAndConditionsWindowShow,
 } = require('./windows/termsAndConditions');
 
@@ -861,6 +867,20 @@ ipcMain.handle('web3auth-window-show', () =>
 ipcMain.handle('web3auth-window-close', handleWeb3AuthWindowClose);
 ipcMain.handle('web3auth-address-received', (_event, address) =>
   handleWeb3AuthSuccessLogin(mainWindow, address),
+);
+
+/**
+ * Web3Auth swap owner window handlers
+ */
+ipcMain.handle('web3auth-swap-owner-window-show', () =>
+  handleWeb3AuthSwapOwnerWindowShow(nextUrl()),
+);
+ipcMain.handle(
+  'web3auth-swap-owner-window-close',
+  handleWeb3AuthWindowSwapOwnerClose,
+);
+ipcMain.handle('web3auth-swap-owner-result', (_event, result) =>
+  handleWeb3AuthSwapOwnerSuccessLogin(mainWindow, result),
 );
 
 /**

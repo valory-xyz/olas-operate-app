@@ -5,8 +5,10 @@ import { RiAppleFill, RiGoogleFill } from 'react-icons/ri';
 import { FormFlex } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup, useWeb3AuthBackupWallet } from '@/hooks';
+import { useSetup } from '@/hooks';
 import { Address } from '@/types';
+
+import { useWeb3AuthBackupWallet } from './useWeb3AuthBackupWallet';
 
 const { Text } = Typography;
 

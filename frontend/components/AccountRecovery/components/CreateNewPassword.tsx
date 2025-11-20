@@ -45,7 +45,8 @@ export const CreateNewPassword = () => {
       try {
         const { wallets } = await prepareRecoveryProcess(values.password);
         const newMasterEoaAddress = wallets[0].new_wallet.address;
-        updateNewMasterEoaAddress(newMasterEoaAddress);
+        const oldMasterEoaAddress = wallets[0].current_wallet.address;
+        updateNewMasterEoaAddress(newMasterEoaAddress, oldMasterEoaAddress);
         onNext();
       } catch (error) {
         message.error(getErrorMessage(error));

@@ -16,6 +16,14 @@ const web3AuthWindow = {
     ipcRenderer.invoke('web3auth-address-received', address),
 };
 
+/** IPC methods for web3auth swap owner window */
+const web3AuthSwapOwnerWindow = {
+  show: () => ipcRenderer.invoke('web3auth-swap-owner-window-show'),
+  close: () => ipcRenderer.invoke('web3auth-swap-owner-window-close'),
+  swapResult: (result) =>
+    ipcRenderer.invoke('web3auth-swap-owner-result', result),
+};
+
 /** IPC methods for terms window */
 const termsAndConditionsWindow = {
   show: (hash) => ipcRenderer.invoke('terms-window-show', hash),
@@ -53,6 +61,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('app-version'),
   onRampWindow,
   web3AuthWindow,
+  web3AuthSwapOwnerWindow,
   termsAndConditionsWindow,
   logEvent: (message) => ipcRenderer.invoke('log-event', message),
 });

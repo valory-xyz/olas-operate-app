@@ -1,0 +1,94 @@
+const { BrowserWindow } = require('electron');
+const path = require('path');
+
+const { logger } = require('../logger');
+
+/** @type {Electron.BrowserWindow | null} */
+let web3AuthSwapOwnerWindow = null;
+const getWeb3AuthOwnerSwapWindow = () => web3AuthSwapOwnerWindow;
+
+/**
+ * Create the web3auth window for displaying web3auth modal for swapping owner
+ */
+/** @type {()=>Promise<BrowserWindow|undefined>} */
+const createWeb3AuthSwapOwnerWindow = async (baseUrl) => {
+  if (
+    !getWeb3AuthOwnerSwapWindow() ||
+    getWeb3AuthOwnerSwapWindow().isDestroyed
+  ) {
+    web3AuthSwapOwnerWindow = new BrowserWindow({
+      title: 'Web3Auth Swap Owner',
+      resizable: false,
+      draggable: true,
+      frame: false,
+      transparent: true,
+      fullscreenable: false,
+      maximizable: false,
+      closable: false,
+      width: 480,
+      height: 700,
+      media: true,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, '../preload.js'),
+      },
+    });
+
+    const web3AuthUrl = `${baseUrl}/web3auth-swap-owner`;
+
+    web3AuthSwapOwnerWindow.loadURL(web3AuthUrl).then(() => {
+      logger.electron(
+        `Open Web3Auth Swap Owner window: ${web3AuthSwapOwnerWindow.url}`,
+      );
+    });
+  } else {
+    logger.electron('Web3Auth Swap Owner window already exists');
+  }
+
+  web3AuthSwapOwnerWindow.on('close', function (event) {
+    event.preventDefault();
+    web3AuthSwapOwnerWindow?.destroy();
+  });
+
+  return web3AuthSwapOwnerWindow;
+};
+
+const handleWeb3AuthSwapOwnerWindowShow = (baseUrl) => {
+  logger.electron('web3auth-swap-owner-window-show');
+
+  if (
+    !getWeb3AuthOwnerSwapWindow() ||
+    getWeb3AuthOwnerSwapWindow().isDestroyed()
+  ) {
+    createWeb3AuthSwapOwnerWindow(baseUrl)?.then((window) => window.show());
+  } else {
+    getWeb3AuthOwnerSwapWindow()?.show();
+  }
+};
+
+const handleWeb3AuthWindowSwapOwnerClose = () => {
+  logger.electron('web3auth-swap-owner-window-close');
+
+  // already destroyed or not created
+  if (
+    !getWeb3AuthOwnerSwapWindow() ||
+    getWeb3AuthOwnerSwapWindow().isDestroyed()
+  )
+    return;
+
+  getWeb3AuthOwnerSwapWindow()?.destroy();
+};
+
+const handleWeb3AuthSwapOwnerSuccessLogin = (mainWindow, address) => {
+  if (!address) return;
+
+  logger.electron(`web3auth-swap-owner-result: ${address}`);
+  mainWindow.webContents.send('web3auth-swap-owner-result', address);
+};
+
+module.exports = {
+  handleWeb3AuthSwapOwnerWindowShow,
+  handleWeb3AuthWindowSwapOwnerClose,
+  handleWeb3AuthSwapOwnerSuccessLogin,
+};

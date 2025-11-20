@@ -27,6 +27,7 @@ export type SafeChainData = {
 export type ExtendedWallet = {
   address: string;
   safes: Record<SupportedMiddlewareChain, SafeChainData>;
+  /** List of chains where the wallet has safes */
   safe_chains: SupportedMiddlewareChain[];
   ledger_type: string;
   safe_nonce: string | number;
@@ -79,4 +80,12 @@ export type RecoveryFundingRequirements = {
   refill_requirements: ChainAddressTokenBalances;
   is_refill_required: boolean;
   pending_backup_owner_swaps: Record<SupportedMiddlewareChain, Address[]>;
+};
+
+export type SwapOwnerTransactionResult = {
+  success: boolean;
+  txHash?: string;
+  error?: string;
+  chainId?: number;
+  safeAddress?: string;
 };

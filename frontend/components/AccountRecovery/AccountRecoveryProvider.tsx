@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { keys } from 'lodash';
 import {
   createContext,
   ReactNode,
@@ -8,7 +9,11 @@ import {
   useState,
 } from 'react';
 
-import { FIFTEEN_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
+import {
+  FIFTEEN_SECONDS_INTERVAL,
+  REACT_QUERY_KEYS,
+  SupportedMiddlewareChain,
+} from '@/constants';
 import { useOnlineStatus } from '@/context/OnlineStatusProvider';
 import { SetupScreen } from '@/enums';
 import { useMasterWalletContext, useSetup } from '@/hooks';
@@ -21,6 +26,15 @@ import {
   getBackupWalletStatus,
   parseRecoveryFundingRequirements,
 } from './utils';
+
+type SwapSafeTransaction = {
+  chain: SupportedMiddlewareChain;
+  signerAddress: Address;
+  safeAddress: Address;
+  oldMasterEoaAddress: Address;
+  newMasterEoaAddress: Address;
+  status?: 'completed' | 'pending' | 'failed';
+};
 
 const useRecoveryNavigation = (
   currentStep: RecoverySteps,
@@ -77,9 +91,16 @@ const AccountRecoveryContext = createContext<{
   /** Address of the backup wallet used for recovery */
   backupWalletAddress?: Address;
   newMasterEoaAddress?: Address;
-  updateNewMasterEoaAddress: (address: Address) => void;
+  updateNewMasterEoaAddress: (newAddress: Address, oldAddress: Address) => void;
+
+  // Step: Fund Your Backup Wallet
   isRecoveryFundingListLoading: boolean;
   recoveryFundingList: TokenRequirementsRow[];
+
+  // Step: Approve with Backup Wallet
+  /** Total safe swaps required for recovery */
+  safeSwapTransactions: SwapSafeTransaction[];
+
   /** Callback to proceed to the next step in recovery */
   onNext: () => void;
   /** Callback to go back to the previous step in recovery */
@@ -92,6 +113,7 @@ const AccountRecoveryContext = createContext<{
   updateNewMasterEoaAddress: () => {},
   isRecoveryFundingListLoading: false,
   recoveryFundingList: [],
+  safeSwapTransactions: [],
   onNext: () => {},
   onPrev: () => {},
 });
@@ -109,6 +131,7 @@ export const AccountRecoveryProvider = ({
     RECOVERY_STEPS.SelectRecoveryMethod,
   );
   const [newMasterEoaAddress, setNewMasterEoaAddress] = useState<Address>();
+  const [oldMasterEoaAddress, setOldMasterEoaAddress] = useState<Address>();
   const { onNext, onPrev } = useRecoveryNavigation(
     currentStep,
     useCallback((step: RecoverySteps) => setCurrentStep(step), []),
@@ -151,22 +174,65 @@ export const AccountRecoveryProvider = ({
     return getBackupWalletStatus(extendedWallets.safes, masterSafes);
   }, [masterSafes, extendedWallets, isLoading]);
 
-  const updateNewMasterEoaAddress = useCallback((address: Address) => {
-    setNewMasterEoaAddress(address);
-  }, []);
-
-  const isRecoveryAvailable = !!(
-    backupWalletDetails?.areAllBackupOwnersSame &&
-    backupWalletDetails?.hasBackupWalletsAcrossEveryChain
+  const updateNewMasterEoaAddress = useCallback(
+    (newAddress: Address, oldAddress: Address) => {
+      setNewMasterEoaAddress(newAddress);
+      setOldMasterEoaAddress(oldAddress);
+    },
+    [],
   );
-
-  const hasBackupWallets =
-    !!backupWalletDetails?.hasBackupWalletsAcrossEveryChain;
 
   const recoveryFundingList = useMemo(() => {
     if (!recoveryFundingRequirements) return [];
     return parseRecoveryFundingRequirements(recoveryFundingRequirements);
   }, [recoveryFundingRequirements]);
+
+  const isRecoveryAvailable = !!(
+    backupWalletDetails?.areAllBackupOwnersSame &&
+    backupWalletDetails?.hasBackupWalletsAcrossEveryChain
+  );
+  const hasBackupWallets =
+    !!backupWalletDetails?.hasBackupWalletsAcrossEveryChain;
+  const backupWalletAddress = isRecoveryAvailable
+    ? (backupWalletDetails?.backupAddress as Address)
+    : undefined;
+
+  const safeSwapTransactions: SwapSafeTransaction[] = useMemo(() => {
+    if (!extendedWallets?.safe_chains) return [];
+    if (!backupWalletAddress) return [];
+    if (!oldMasterEoaAddress) return [];
+    if (!newMasterEoaAddress) return [];
+    if (!recoveryFundingRequirements) return [];
+
+    return extendedWallets.safe_chains.map(
+      (chain: SupportedMiddlewareChain) => {
+        // generally only one safe is present per chain.
+        const safeAddress = keys(
+          recoveryFundingRequirements?.total_requirements[chain],
+        )[0];
+
+        if (!safeAddress) {
+          throw new Error(
+            `No safe address found for chain ${chain} in recovery funding requirements`,
+          );
+        }
+
+        return {
+          chain,
+          signerAddress: backupWalletAddress,
+          safeAddress: safeAddress as Address,
+          oldMasterEoaAddress,
+          newMasterEoaAddress,
+        };
+      },
+    );
+  }, [
+    extendedWallets?.safe_chains,
+    backupWalletAddress,
+    oldMasterEoaAddress,
+    newMasterEoaAddress,
+    recoveryFundingRequirements,
+  ]);
 
   return (
     <AccountRecoveryContext.Provider
@@ -181,6 +247,7 @@ export const AccountRecoveryProvider = ({
         newMasterEoaAddress,
         isRecoveryFundingListLoading: isRecoveryFundingRequirementsLoading,
         recoveryFundingList,
+        safeSwapTransactions,
         updateNewMasterEoaAddress,
         onNext,
         onPrev,

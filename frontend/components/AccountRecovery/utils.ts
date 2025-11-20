@@ -133,3 +133,29 @@ export const parseRecoveryFundingRequirements = (
 
   return rows;
 };
+
+/**
+ * Checks if all backup owner swaps have been completed across all chains.
+ * A swap is considered pending if there are any safe addresses with incomplete swaps.
+ */
+export const checkNewMasterEoaSwapStatus = (
+  pendingBackupOwnerSwaps: RecoveryFundingRequirements['pending_backup_owner_swaps'],
+) => {
+  const chainsWithPendingSwaps: SupportedMiddlewareChain[] = [];
+
+  for (const [chainName, safesWithPendingSwaps] of Object.entries(
+    pendingBackupOwnerSwaps,
+  )) {
+    const chain = chainName as SupportedMiddlewareChain;
+
+    // If this chain has any safes with pending swaps, add it to the list
+    if (safesWithPendingSwaps.length > 0) {
+      chainsWithPendingSwaps.push(chain);
+    }
+  }
+
+  return {
+    areAllSwapsCompleted: chainsWithPendingSwaps.length === 0,
+    chainsWithPendingSwaps,
+  };
+};
