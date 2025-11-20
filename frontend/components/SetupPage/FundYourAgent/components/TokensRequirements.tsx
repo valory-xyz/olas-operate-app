@@ -82,7 +82,7 @@ export const RequirementsForOnRamp = ({
   <div>
     <Text className="text-neutral-tertiary">You will pay</Text>
     <RequirementsContainer gap={12}>
-      <Text>~${fiatAmount}</Text>
+      <Text>~${Number(fiatAmount).toLocaleString('en-US')}</Text>
       <Text className="text-neutral-tertiary" style={{ fontSize: 14 }}>
         The service is provided by{' '}
         <a

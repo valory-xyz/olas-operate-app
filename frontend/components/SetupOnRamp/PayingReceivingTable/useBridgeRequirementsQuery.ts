@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
@@ -86,6 +86,19 @@ export const useBridgeRequirementsQuery = ({
     queryKeySuffix,
   );
 
+  // Serialize bridgeParams to detect actual value changes
+  const bridgeParamsSerialized = useMemo(() => {
+    if (!bridgeParamsExceptNativeToken) return null;
+    return JSON.stringify(
+      bridgeParamsExceptNativeToken.bridge_requests.map((req) => ({
+        from: req.from,
+        to: { ...req.to, amount: req.to.amount.toString() },
+      })),
+    );
+  }, [bridgeParamsExceptNativeToken]);
+
+  const prevBridgeParamsSerializedRef = useRef<string | null>(null);
+
   // fetch bridge refill requirements manually on mount
   useEffect(() => {
     if (!isBridgeRefillRequirementsApiLoading) return;
@@ -97,6 +110,28 @@ export const useBridgeRequirementsQuery = ({
     isBridgeRefillRequirementsApiLoading,
     refetchBridgeRefillRequirements,
     setIsBridgeRefillRequirementsApiLoading,
+  ]);
+
+  // Force refetch when bridgeParams change
+  useEffect(() => {
+    if (!bridgeParamsSerialized) return;
+    if (isBridgeRefillRequirementsApiLoading) return;
+    if (isManuallyRefetching) return;
+    if (prevBridgeParamsSerializedRef.current === bridgeParamsSerialized)
+      return;
+
+    prevBridgeParamsSerializedRef.current = bridgeParamsSerialized;
+
+    const timeoutId = setTimeout(() => {
+      refetchBridgeRefillRequirements();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    bridgeParamsSerialized,
+    refetchBridgeRefillRequirements,
+    isBridgeRefillRequirementsApiLoading,
+    isManuallyRefetching,
   ]);
 
   const isLoading =
