@@ -11,6 +11,7 @@ import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRef
 import { useBridgeRefillRequirementsOnDemand } from '@/hooks/useBridgeRefillRequirementsOnDemand';
 import { useBridgingSteps } from '@/hooks/useBridgingSteps';
 import { useGetBridgeRequirementsParams } from '@/hooks/useGetBridgeRequirementsParams';
+import { useGetBridgeRequirementsParamsFromDeposit } from '@/hooks/useGetBridgeRequirementsParamsFromDeposit';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import {
   BridgeRefillRequirementsResponse,
@@ -28,7 +29,7 @@ const { Text } = Typography;
 const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   const [bridgeFundingRequirements, setBridgeFundingRequirements] =
     useState<BridgeRefillRequirementsResponse | null>(null);
-  const { isOnRampingStepCompleted } = useOnRampContext();
+  const { isOnRampingStepCompleted, isFromDepositFlow } = useOnRampContext();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
   const {
@@ -46,10 +47,17 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   ] = useState(true);
   const [isManuallyRefetching, setIsManuallyRefetching] = useState(false);
 
-  const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
+  // Use deposit-specific bridge requirements if coming from deposit flow
+  const getBridgeRequirementsParamsFromDeposit =
+    useGetBridgeRequirementsParamsFromDeposit(onRampChainId);
+  const defaultGetBridgeRequirementsParams = useGetBridgeRequirementsParams(
     onRampChainId,
     AddressZero,
   );
+
+  const getBridgeRequirementsParams = isFromDepositFlow
+    ? getBridgeRequirementsParamsFromDeposit
+    : defaultGetBridgeRequirementsParams;
 
   const bridgeParams = useMemo(() => {
     if (!getBridgeRequirementsParams) return null;
@@ -216,6 +224,12 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
   // If the swap step is already completed, we do not swap funds again
   useEffect(() => {
     if (isSwappingFundsStepCompleted) return;
+
+    if (isOnRampingStepCompleted && tokensToBeBridged.length === 0) {
+      updateIsSwappingStepCompleted(true);
+      return;
+    }
+
     if (isBridgingCompleted) {
       updateIsSwappingStepCompleted(true);
     }
@@ -227,6 +241,8 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     isSwappingFundsStepCompleted,
     bridgeStatus,
     updateIsSwappingStepCompleted,
+    isOnRampingStepCompleted,
+    tokensToBeBridged.length,
   ]);
 
   const bridgeStepStatus = useMemo(() => {

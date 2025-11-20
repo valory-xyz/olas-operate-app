@@ -6,6 +6,7 @@ import { EvmChainId, onRampChainMap } from '@/constants/chains';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
@@ -20,6 +21,9 @@ import { formatUnitsToNumber } from '@/utils/numberFormatters';
 export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,
   queryKey: 'preview' | 'onboarding' = 'onboarding',
+  customGetBridgeRequirementsParams?: (
+    isForceUpdate?: boolean,
+  ) => BridgeRefillRequirementsRequest | null,
 ) => {
   const { updateEthAmountToPay, isOnRampingTransactionSuccessful } =
     useOnRampContext();
@@ -38,6 +42,7 @@ export const useTotalNativeTokenRequired = (
     enabled: !isOnRampingTransactionSuccessful,
     stopPollingCondition: isOnRampingTransactionSuccessful,
     queryKeySuffix: queryKey,
+    customGetBridgeRequirementsParams,
   });
 
   /**

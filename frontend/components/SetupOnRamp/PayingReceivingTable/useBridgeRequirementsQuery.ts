@@ -5,6 +5,7 @@ import { EvmChainId } from '@/constants/chains';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
 import { useGetBridgeRequirementsParams } from '@/hooks/useGetBridgeRequirementsParams';
+import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { delayInSeconds } from '@/utils/delay';
 
 import { useBridgeRequirementsUtils } from '../../../hooks/useBridgeRequirementsUtils';
@@ -14,6 +15,9 @@ type UseBridgeRequirementsQueryParams = {
   enabled: boolean;
   stopPollingCondition: boolean;
   queryKeySuffix?: string;
+  customGetBridgeRequirementsParams?: (
+    isForceUpdate?: boolean,
+  ) => BridgeRefillRequirementsRequest | null;
 };
 
 /**
@@ -25,6 +29,7 @@ export const useBridgeRequirementsQuery = ({
   enabled = true,
   stopPollingCondition,
   queryKeySuffix,
+  customGetBridgeRequirementsParams,
 }: UseBridgeRequirementsQueryParams) => {
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
@@ -47,15 +52,24 @@ export const useBridgeRequirementsQuery = ({
   ] = useState(enabled);
   const [isManuallyRefetching, setIsManuallyRefetching] = useState(false);
 
-  const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
+  // Use custom bridge requirements params if provided (deposit flow),
+  // otherwise use the default from refillRequirements (setup flow)
+  const defaultGetBridgeRequirementsParams = useGetBridgeRequirementsParams(
     onRampChainId,
     AddressZero,
   );
 
   const bridgeParams = useMemo(() => {
-    if (!getBridgeRequirementsParams) return null;
-    return getBridgeRequirementsParams(isForceUpdate);
-  }, [isForceUpdate, getBridgeRequirementsParams]);
+    if (customGetBridgeRequirementsParams) {
+      return customGetBridgeRequirementsParams(isForceUpdate);
+    }
+    if (!defaultGetBridgeRequirementsParams) return null;
+    return defaultGetBridgeRequirementsParams(isForceUpdate);
+  }, [
+    isForceUpdate,
+    customGetBridgeRequirementsParams,
+    defaultGetBridgeRequirementsParams,
+  ]);
 
   const bridgeParamsExceptNativeToken =
     getBridgeParamsExceptNativeToken(bridgeParams);

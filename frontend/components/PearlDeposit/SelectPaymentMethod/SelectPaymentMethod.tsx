@@ -6,7 +6,7 @@ import { styled } from 'styled-components';
 
 import { YouPayContainer } from '@/components/PearlWallet';
 import { RequirementsForOnRamp } from '@/components/SetupPage/FundYourAgent/components/TokensRequirements';
-import { BackButton, CardFlex, CardTitle } from '@/components/ui';
+import { Alert, BackButton, CardFlex, CardTitle } from '@/components/ui';
 import {
   COLOR,
   EvmChainId,
@@ -22,6 +22,8 @@ import {
   useSetup,
   useTotalFiatFromNativeToken,
 } from '@/hooks';
+import { useGetBridgeRequirementsParamsFromDeposit } from '@/hooks/useGetBridgeRequirementsParamsFromDeposit';
+import { useTotalNativeTokenRequired } from '@/hooks/useTotalNativeTokenRequired';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
 import { BridgeCryptoOn } from './BridgeCryptoOn';
@@ -137,38 +139,44 @@ const OnRampMethod = ({
   const { updateUsdAmountToPay, updateEthAmountToPay } = useOnRampContext();
   const chainId = onRampChainId || walletChainId;
 
-  // Calculate total native token from amountsToDeposit
-  const totalNativeToken = useMemo(() => {
-    if (!chainId || !amountsToDeposit) return 0;
+  // Get bridge requirements from amountsToDeposit for deposit flow
+  const getBridgeRequirementsParamsFromDeposit =
+    useGetBridgeRequirementsParamsFromDeposit(chainId);
 
-    const chainDetails = asEvmChainDetails(asMiddlewareChain(chainId));
-    const nativeTokenSymbol = chainDetails.symbol as TokenSymbol;
-
-    const nativeTokenAmount = amountsToDeposit[nativeTokenSymbol]?.amount || 0;
-    return nativeTokenAmount;
-  }, [chainId, amountsToDeposit]);
+  // Calculate total native token (ETH) needed to swap to all requested tokens
+  const {
+    isLoading: isNativeTokenLoading,
+    hasError: hasNativeTokenError,
+    totalNativeToken,
+  } = useTotalNativeTokenRequired(
+    chainId,
+    'preview',
+    getBridgeRequirementsParamsFromDeposit,
+  );
 
   // Convert native token to USD using Transak quote
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(
-      totalNativeToken > 0 ? totalNativeToken : undefined,
+      totalNativeToken ? totalNativeToken : undefined,
     );
+
+  const isLoading = isNativeTokenLoading || isFiatLoading;
 
   // Store USD and ETH amounts in OnRampContext for SetupOnRamp
   useEffect(() => {
-    if (isFiatLoading) {
+    if (isLoading) {
       updateUsdAmountToPay(null);
       updateEthAmountToPay(null);
     } else {
       if (fiatAmount) {
         updateUsdAmountToPay(fiatAmount);
       }
-      if (totalNativeToken > 0) {
+      if (totalNativeToken) {
         updateEthAmountToPay(totalNativeToken);
       }
     }
   }, [
-    isFiatLoading,
+    isLoading,
     fiatAmount,
     totalNativeToken,
     updateUsdAmountToPay,
@@ -182,7 +190,7 @@ const OnRampMethod = ({
 
   return (
     <SelectPaymentMethodCard>
-      <Flex vertical gap={32}>
+      <Flex vertical gap={32} style={{ height: '100%' }}>
         <Flex vertical gap={16}>
           <CardTitle className="m-0">Buy</CardTitle>
           <Paragraph type="secondary" className="m-0 text-center">
@@ -191,19 +199,32 @@ const OnRampMethod = ({
           </Paragraph>
         </Flex>
 
-        <Flex vertical>
+        <Flex vertical style={{ height: '100%' }}>
           <RequirementsForOnRamp
             fiatAmount={fiatAmount ? fiatAmount.toFixed(2) : '0'}
           />
-          <Button
-            type="primary"
-            size="large"
-            onClick={onSelect}
-            disabled={!hasAmountsToDeposit || isFiatLoading}
-            title="On-ramp deposits only support native token (ETH) on Optimism"
-          >
-            Buy Crypto with USD
-          </Button>
+
+          <Flex vertical className="mt-auto">
+            {fiatAmount && fiatAmount < 5 ? (
+              <Alert
+                message="The minimum value of crypto to buy with your credit card is $5."
+                type="info"
+                showIcon
+                className="text-sm"
+              />
+            ) : (
+              <Button
+                type="primary"
+                size="large"
+                onClick={onSelect}
+                disabled={
+                  !hasAmountsToDeposit || isLoading || hasNativeTokenError
+                }
+              >
+                Buy Crypto with USD
+              </Button>
+            )}
+          </Flex>
         </Flex>
       </Flex>
     </SelectPaymentMethodCard>
@@ -280,7 +301,10 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
   const { goto: gotoPage } = usePageState();
   const { walletChainId: chainId, amountsToDeposit } = usePearlWallet();
   const { setIsFromDepositFlow } = useOnRampContext();
-  const [isBridgingEnabled] = useFeatureFlag(['bridge-onboarding']);
+  const [isBridgingEnabled, isOnRampingEnabled] = useFeatureFlag([
+    'bridge-onboarding',
+    'on-ramp-add-funds',
+  ]);
   const [paymentMethod, setPaymentMethod] = useState<
     'BUY' | 'TRANSFER' | 'BRIDGE' | null
   >(null);
@@ -320,10 +344,12 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
       </Title>
 
       <Flex gap={24}>
-        <OnRampMethod
-          onRampChainId={chainId}
-          onSelect={() => setPaymentMethod('BUY')}
-        />
+        {isOnRampingEnabled && (
+          <OnRampMethod
+            onRampChainId={chainId}
+            onSelect={() => setPaymentMethod('BUY')}
+          />
+        )}
         <TransferMethod
           chainId={chainId}
           onSelect={() => setPaymentMethod('TRANSFER')}
