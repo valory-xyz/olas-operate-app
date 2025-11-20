@@ -188,43 +188,51 @@ const OnRampMethod = ({
     return values(amountsToDeposit).some(({ amount }) => Number(amount) > 0);
   }, [amountsToDeposit]);
 
+  const isFiatAmountTooLow = useMemo(() => {
+    if (isLoading) return false;
+    if (!fiatAmount && hasAmountsToDeposit) return true;
+    if (fiatAmount && fiatAmount < 5) return true;
+    return false;
+  }, [fiatAmount, hasAmountsToDeposit, isLoading]);
+
   return (
     <SelectPaymentMethodCard>
-      <Flex vertical gap={32} style={{ height: '100%' }}>
+      <Flex vertical style={{ height: '100%' }}>
         <Flex vertical gap={16}>
           <CardTitle className="m-0">Buy</CardTitle>
           <Paragraph type="secondary" className="m-0 text-center">
             Pay in fiat by using your credit or debit card — perfect for speed
             and ease!
           </Paragraph>
-        </Flex>
 
-        <Flex vertical style={{ height: '100%' }}>
           <RequirementsForOnRamp
             fiatAmount={fiatAmount ? fiatAmount.toFixed(2) : '0'}
           />
+        </Flex>
 
-          <Flex vertical className="mt-auto">
-            {fiatAmount && fiatAmount < 5 ? (
-              <Alert
-                message="The minimum value of crypto to buy with your credit card is $5."
-                type="info"
-                showIcon
-                className="text-sm"
-              />
-            ) : (
-              <Button
-                type="primary"
-                size="large"
-                onClick={onSelect}
-                disabled={
-                  !hasAmountsToDeposit || isLoading || hasNativeTokenError
-                }
-              >
-                Buy Crypto with USD
-              </Button>
-            )}
-          </Flex>
+        <Flex vertical className="mt-auto">
+          {isFiatAmountTooLow ? (
+            <Alert
+              message="The minimum value of crypto to buy with your credit card is $5."
+              type="info"
+              showIcon
+              className="text-sm"
+            />
+          ) : (
+            <Button
+              type="primary"
+              size="large"
+              onClick={onSelect}
+              disabled={
+                !hasAmountsToDeposit ||
+                isLoading ||
+                hasNativeTokenError ||
+                !!isFiatAmountTooLow
+              }
+            >
+              Buy Crypto with USD
+            </Button>
+          )}
         </Flex>
       </Flex>
     </SelectPaymentMethodCard>
@@ -237,29 +245,31 @@ const TransferMethod = ({ chainId, onSelect }: TransferMethodProps) => {
 
   return (
     <SelectPaymentMethodCard>
-      <Flex vertical gap={32}>
+      <Flex vertical gap={32} style={{ height: '100%' }}>
         <Flex vertical gap={16}>
           <CardTitle className="m-0">Transfer</CardTitle>
           <Paragraph type="secondary" className="m-0 text-center">
             Send funds directly with lowest fees — ideal for crypto-savvy users.
           </Paragraph>
+
+          <Flex vertical gap={12}>
+            <Paragraph className="text-neutral-tertiary m-0" type="secondary">
+              You will pay
+            </Paragraph>
+            <YouPayContainer vertical gap={12}>
+              <ShowAmountsToDeposit />
+              <Text className="text-sm text-neutral-tertiary" type="secondary">
+                + transaction fees on {chainName}.
+              </Text>
+            </YouPayContainer>
+          </Flex>
         </Flex>
 
-        <Flex vertical gap={12}>
-          <Paragraph className="text-neutral-tertiary m-0" type="secondary">
-            You will pay
-          </Paragraph>
-          <YouPayContainer vertical gap={12}>
-            <ShowAmountsToDeposit />
-            <Text className="text-sm text-neutral-tertiary" type="secondary">
-              + transaction fees on {chainName}.
-            </Text>
-          </YouPayContainer>
+        <Flex vertical className="mt-auto">
+          <Button onClick={onSelect} size="large">
+            Transfer Crypto on {chainName}
+          </Button>
         </Flex>
-
-        <Button onClick={onSelect} size="large">
-          Transfer Crypto on {chainName}
-        </Button>
       </Flex>
     </SelectPaymentMethodCard>
   );
@@ -267,15 +277,17 @@ const TransferMethod = ({ chainId, onSelect }: TransferMethodProps) => {
 
 const BridgeMethod = ({ onSelect }: { onSelect: () => void }) => (
   <SelectPaymentMethodCard>
-    <Flex vertical style={{ height: '100%' }}>
+    <Flex vertical gap={32} style={{ height: '100%' }}>
       <Flex vertical gap={16}>
         <CardTitle className="m-0">Bridge</CardTitle>
-        <Paragraph type="secondary" className="m-0 text-center">
+        <Paragraph
+          type="secondary"
+          className="m-0 text-center"
+          style={{ height: '72px' }}
+        >
           Bridge from Ethereum Mainnet. Slightly more expensive.
         </Paragraph>
-      </Flex>
 
-      <Flex vertical gap={32} className="mt-auto">
         <Flex vertical gap={12}>
           <Paragraph className="text-neutral-tertiary m-0" type="secondary">
             You will pay
@@ -287,7 +299,9 @@ const BridgeMethod = ({ onSelect }: { onSelect: () => void }) => (
             </Text>
           </YouPayContainer>
         </Flex>
+      </Flex>
 
+      <Flex vertical className="mt-auto">
         <Button onClick={onSelect} size="large">
           Bridge Crypto from Ethereum
         </Button>
