@@ -73,7 +73,13 @@ type ElectronApiContextProps = {
     authSuccess?: (address: Address) => void;
   };
   web3AuthSwapOwnerWindow?: {
-    show?: () => void;
+    show?: (params: {
+      safeAddress: string;
+      oldOwnerAddress: string;
+      newOwnerAddress: string;
+      backupOwnerAddress: string;
+      chainId: number;
+    }) => void;
     close?: () => void;
     swapResult?: (result: SwapOwnerTransactionResult) => void;
   };

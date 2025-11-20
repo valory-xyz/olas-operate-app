@@ -26,10 +26,9 @@ export const useWeb3AuthSwapOwner = ({
     (params: SwapOwnerParams) => {
       if (!web3AuthSwapOwnerWindow?.show) return;
       isResultReceived.current = false;
-      ipcRenderer?.send?.('web3auth-swap-owner-params', params);
-      web3AuthSwapOwnerWindow?.show();
+      web3AuthSwapOwnerWindow?.show(params);
     },
-    [web3AuthSwapOwnerWindow, ipcRenderer],
+    [web3AuthSwapOwnerWindow],
   );
 
   useEffect(() => {

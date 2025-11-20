@@ -255,7 +255,7 @@ const SetupWelcomeLogin = () => {
  */
 export const SetupWelcome = () => {
   const electronApi = useElectronApi();
-  const { isAccountRecoveryStatusLoading, isInMiddleOfAccountRecoverySwap } =
+  const { isAccountRecoveryStatusLoading, hasActiveRecoverySwap } =
     useSharedContext();
   const [isSetup, setIsSetup] = useState<MiddlewareAccountIsSetup | null>(null);
   const [hasCheckedAccount, setHasCheckedAccount] = useState(false);
@@ -275,7 +275,7 @@ export const SetupWelcome = () => {
       return;
     }
 
-    if (isInMiddleOfAccountRecoverySwap) {
+    if (hasActiveRecoverySwap) {
       setIsSetup(MiddlewareAccountIsSetup.CannotLogin);
       setHasCheckedAccount(true);
       return;
@@ -312,7 +312,7 @@ export const SetupWelcome = () => {
     isSetup,
     hasCheckedAccount,
     isAccountRecoveryStatusLoading,
-    isInMiddleOfAccountRecoverySwap,
+    hasActiveRecoverySwap,
   ]);
 
   const welcomeScreen = useMemo(() => {

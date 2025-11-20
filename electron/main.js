@@ -15,7 +15,7 @@ const {
 
 const {
   handleWeb3AuthSwapOwnerWindowShow,
-  handleWeb3AuthSwapOwnerSuccessLogin,
+  handleWeb3AuthSwapOwnerSuccess,
   handleWeb3AuthWindowSwapOwnerClose,
 } = require('./windows/web3authSwapOwner');
 
@@ -880,7 +880,7 @@ ipcMain.handle(
   handleWeb3AuthWindowSwapOwnerClose,
 );
 ipcMain.handle('web3auth-swap-owner-result', (_event, result) =>
-  handleWeb3AuthSwapOwnerSuccessLogin(mainWindow, result),
+  handleWeb3AuthSwapOwnerSuccess(mainWindow, result),
 );
 
 /**

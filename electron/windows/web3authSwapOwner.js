@@ -40,9 +40,11 @@ const createWeb3AuthSwapOwnerWindow = async (baseUrl, params) => {
     const queryParams = new URLSearchParams(params).toString();
     const web3AuthUrl = `${baseUrl}/web3auth-swap-owner?${queryParams}`;
 
+    logger.electron(`Web3Auth Swap Owner URL: ${web3AuthUrl}`);
     web3AuthSwapOwnerWindow.loadURL(web3AuthUrl).then(() => {
       logger.electron(
-        `Open Web3Auth Swap Owner window: ${web3AuthSwapOwnerWindow.url}`,
+        // `Open Web3Auth Swap Owner window: ${web3AuthSwapOwnerWindow.url}`,
+        `Open Web3Auth Swap Owner window: ${web3AuthSwapOwnerWindow.webContents.getURL()}`,
       );
     });
   } else {
@@ -58,6 +60,7 @@ const createWeb3AuthSwapOwnerWindow = async (baseUrl, params) => {
 };
 
 const handleWeb3AuthSwapOwnerWindowShow = (baseUrl, params) => {
+  console.log('web3auth-swap-owner-window-show', params);
   logger.electron('web3auth-swap-owner-window-show');
 
   if (
@@ -68,6 +71,11 @@ const handleWeb3AuthSwapOwnerWindowShow = (baseUrl, params) => {
       window.show(),
     );
   } else {
+    // If window exists, reload it with new params
+    const queryParams = new URLSearchParams(params).toString();
+    const web3AuthUrl = `${baseUrl}/web3auth-swap-owner?${queryParams}`;
+    logger.electron(`Reloading Web3Auth Swap Owner URL: ${web3AuthUrl}`);
+    getWeb3AuthOwnerSwapWindow()?.loadURL(web3AuthUrl);
     getWeb3AuthOwnerSwapWindow()?.show();
   }
 };
@@ -79,13 +87,14 @@ const handleWeb3AuthWindowSwapOwnerClose = () => {
   if (
     !getWeb3AuthOwnerSwapWindow() ||
     getWeb3AuthOwnerSwapWindow().isDestroyed()
-  )
+  ) {
     return;
+  }
 
   getWeb3AuthOwnerSwapWindow()?.destroy();
 };
 
-const handleWeb3AuthSwapOwnerSuccessLogin = (mainWindow, address) => {
+const handleWeb3AuthSwapOwnerSuccess = (mainWindow, address) => {
   if (!address) return;
 
   logger.electron(`web3auth-swap-owner-result: ${address}`);
@@ -95,5 +104,5 @@ const handleWeb3AuthSwapOwnerSuccessLogin = (mainWindow, address) => {
 module.exports = {
   handleWeb3AuthSwapOwnerWindowShow,
   handleWeb3AuthWindowSwapOwnerClose,
-  handleWeb3AuthSwapOwnerSuccessLogin,
+  handleWeb3AuthSwapOwnerSuccess,
 };

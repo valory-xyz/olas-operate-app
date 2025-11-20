@@ -24,7 +24,7 @@ export const SharedContext = createContext<{
 
   // recovery
   isAccountRecoveryStatusLoading?: boolean;
-  isInMiddleOfAccountRecoverySwap?: boolean;
+  hasActiveRecoverySwap?: boolean;
 
   // others
 }>({
@@ -36,7 +36,7 @@ export const SharedContext = createContext<{
 
   // recovery
   isAccountRecoveryStatusLoading: true,
-  isInMiddleOfAccountRecoverySwap: false,
+  hasActiveRecoverySwap: false,
 
   // others
 });
@@ -84,7 +84,7 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   }, [selectedAgentType, selectedService]);
 
   const {
-    data: isInMiddleOfAccountRecoverySwap,
+    data: hasActiveRecoverySwap,
     isLoading: isAccountRecoveryStatusLoading,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.RECOVERY_STATUS_KEY,
@@ -104,7 +104,7 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
 
         // recovery
         isAccountRecoveryStatusLoading,
-        isInMiddleOfAccountRecoverySwap,
+        hasActiveRecoverySwap,
 
         // others
       }}

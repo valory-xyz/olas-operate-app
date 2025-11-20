@@ -17,7 +17,7 @@ import {
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { useAccountRecoveryContext } from '../AccountRecoveryProvider';
-import { useWeb3AuthSwapOwner } from '../hooks/useWeb3AuthBackupWallet';
+import { useWeb3AuthSwapOwner } from '../hooks/useWeb3AuthSwapOwner';
 
 const { Title, Text } = Typography;
 

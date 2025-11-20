@@ -5,6 +5,12 @@ import { Address } from '@/types';
 
 export default function Web3AuthSwapOwner() {
   const router = useRouter();
+
+  console.log('Web3AuthSwapOwner page loaded');
+  console.log('Router ready:', router.isReady);
+  console.log('Router query:', router.query);
+  console.log('Full router:', router);
+
   const {
     safeAddress,
     oldOwnerAddress,
@@ -12,6 +18,14 @@ export default function Web3AuthSwapOwner() {
     backupOwnerAddress,
     chainId,
   } = router.query;
+
+  console.log('Extracted params:', {
+    safeAddress,
+    oldOwnerAddress,
+    newOwnerAddress,
+    backupOwnerAddress,
+    chainId,
+  });
 
   // Wait for router to be ready and all required params to be available
   if (
