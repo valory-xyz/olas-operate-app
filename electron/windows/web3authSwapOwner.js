@@ -9,9 +9,11 @@ const getWeb3AuthOwnerSwapWindow = () => web3AuthSwapOwnerWindow;
 
 /**
  * Create the web3auth window for displaying web3auth modal for swapping owner
+ * @param {string} baseUrl - Base URL for the window
+ * @param {object} params - Transaction parameters
  */
-/** @type {()=>Promise<BrowserWindow|undefined>} */
-const createWeb3AuthSwapOwnerWindow = async (baseUrl) => {
+/** @type {(baseUrl: string, params: {safeAddress: string, oldOwnerAddress: string, newOwnerAddress: string, backupOwnerAddress: string, chainId: number})=>Promise<BrowserWindow|undefined>} */
+const createWeb3AuthSwapOwnerWindow = async (baseUrl, params) => {
   if (
     !getWeb3AuthOwnerSwapWindow() ||
     getWeb3AuthOwnerSwapWindow().isDestroyed
@@ -35,7 +37,8 @@ const createWeb3AuthSwapOwnerWindow = async (baseUrl) => {
       },
     });
 
-    const web3AuthUrl = `${baseUrl}/web3auth-swap-owner`;
+    const queryParams = new URLSearchParams(params).toString();
+    const web3AuthUrl = `${baseUrl}/web3auth-swap-owner?${queryParams}`;
 
     web3AuthSwapOwnerWindow.loadURL(web3AuthUrl).then(() => {
       logger.electron(
@@ -54,14 +57,16 @@ const createWeb3AuthSwapOwnerWindow = async (baseUrl) => {
   return web3AuthSwapOwnerWindow;
 };
 
-const handleWeb3AuthSwapOwnerWindowShow = (baseUrl) => {
+const handleWeb3AuthSwapOwnerWindowShow = (baseUrl, params) => {
   logger.electron('web3auth-swap-owner-window-show');
 
   if (
     !getWeb3AuthOwnerSwapWindow() ||
     getWeb3AuthOwnerSwapWindow().isDestroyed()
   ) {
-    createWeb3AuthSwapOwnerWindow(baseUrl)?.then((window) => window.show());
+    createWeb3AuthSwapOwnerWindow(baseUrl, params)?.then((window) =>
+      window.show(),
+    );
   } else {
     getWeb3AuthOwnerSwapWindow()?.show();
   }

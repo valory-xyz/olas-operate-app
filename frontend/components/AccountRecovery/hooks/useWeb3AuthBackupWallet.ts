@@ -1,8 +1,17 @@
 import { message } from 'antd';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { useElectronApi } from '@/hooks';
+import { Address } from '@/types';
 import { SwapOwnerTransactionResult } from '@/types/Recovery';
+
+type SwapOwnerParams = {
+  safeAddress: Address;
+  oldOwnerAddress: Address;
+  newOwnerAddress: Address;
+  backupOwnerAddress: Address;
+  chainId: number;
+};
 
 export const useWeb3AuthSwapOwner = ({
   onFinish,
@@ -13,10 +22,15 @@ export const useWeb3AuthSwapOwner = ({
 
   const isResultReceived = useRef(false);
 
-  const openWeb3AuthSwapOwnerModel = () => {
-    if (!web3AuthSwapOwnerWindow?.show) return;
-    web3AuthSwapOwnerWindow?.show();
-  };
+  const openWeb3AuthSwapOwnerModel = useCallback(
+    (params: SwapOwnerParams) => {
+      if (!web3AuthSwapOwnerWindow?.show) return;
+      isResultReceived.current = false;
+      ipcRenderer?.send?.('web3auth-swap-owner-params', params);
+      web3AuthSwapOwnerWindow?.show();
+    },
+    [web3AuthSwapOwnerWindow, ipcRenderer],
+  );
 
   useEffect(() => {
     const handleSaveWeb3AuthAddress = (data: unknown) => {

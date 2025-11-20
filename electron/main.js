@@ -872,8 +872,8 @@ ipcMain.handle('web3auth-address-received', (_event, address) =>
 /**
  * Web3Auth swap owner window handlers
  */
-ipcMain.handle('web3auth-swap-owner-window-show', () =>
-  handleWeb3AuthSwapOwnerWindowShow(nextUrl()),
+ipcMain.handle('web3auth-swap-owner-window-show', (_, params) =>
+  handleWeb3AuthSwapOwnerWindowShow(nextUrl(), params),
 );
 ipcMain.handle(
   'web3auth-swap-owner-window-close',

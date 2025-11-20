@@ -89,3 +89,12 @@ export type SwapOwnerTransactionResult = {
   chainId?: number;
   safeAddress?: string;
 };
+
+export type SwapSafeTransaction = {
+  chain: SupportedMiddlewareChain;
+  signerAddress: Address;
+  safeAddress: Address;
+  oldMasterEoaAddress: Address;
+  newMasterEoaAddress: Address;
+  status?: 'completed' | 'pending' | 'failed';
+};

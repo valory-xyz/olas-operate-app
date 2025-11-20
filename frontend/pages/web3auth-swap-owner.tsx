@@ -1,5 +1,37 @@
-import { Web3AuthSwapOwnerIframe } from '@/components/Web3AuthIframe/Web3AuthSwapOwnerIframe';
+import { useRouter } from 'next/router';
 
-export default function Web3Auth() {
-  return <Web3AuthSwapOwnerIframe />;
+import { Web3AuthSwapOwnerIframe } from '@/components/Web3AuthIframe/Web3AuthSwapOwnerIframe';
+import { Address } from '@/types';
+
+export default function Web3AuthSwapOwner() {
+  const router = useRouter();
+  const {
+    safeAddress,
+    oldOwnerAddress,
+    newOwnerAddress,
+    backupOwnerAddress,
+    chainId,
+  } = router.query;
+
+  // Wait for router to be ready and all required params to be available
+  if (
+    !router.isReady ||
+    !safeAddress ||
+    !oldOwnerAddress ||
+    !newOwnerAddress ||
+    !backupOwnerAddress ||
+    !chainId
+  ) {
+    return null;
+  }
+
+  return (
+    <Web3AuthSwapOwnerIframe
+      safeAddress={safeAddress as Address}
+      oldOwnerAddress={oldOwnerAddress as Address}
+      newOwnerAddress={newOwnerAddress as Address}
+      backupOwnerAddress={backupOwnerAddress as Address}
+      chainId={Number(chainId)}
+    />
+  );
 }

@@ -18,7 +18,8 @@ const web3AuthWindow = {
 
 /** IPC methods for web3auth swap owner window */
 const web3AuthSwapOwnerWindow = {
-  show: () => ipcRenderer.invoke('web3auth-swap-owner-window-show'),
+  show: (params) =>
+    ipcRenderer.invoke('web3auth-swap-owner-window-show', params),
   close: () => ipcRenderer.invoke('web3auth-swap-owner-window-close'),
   swapResult: (result) =>
     ipcRenderer.invoke('web3auth-swap-owner-result', result),

@@ -3,10 +3,19 @@ import { useEffect, useRef, useState } from 'react';
 
 import { WEB3AUTH_SWAP_OWNER_URL } from '@/constants';
 import { useElectronApi } from '@/hooks';
+import { Address } from '@/types';
 import { SwapOwnerTransactionResult } from '@/types/Recovery';
 
 import { LoadingSpinner } from '../ui';
 import { Iframe, IframeContainer, SpinnerOverlay } from './styles';
+
+type Web3AuthSwapOwnerIframeProps = {
+  safeAddress: Address;
+  oldOwnerAddress: Address;
+  newOwnerAddress: Address;
+  backupOwnerAddress: Address;
+  chainId: number;
+};
 
 enum Events {
   WEB3AUTH_SWAP_OWNER_MODAL_INITIALIZED = 'WEB3AUTH_SWAP_OWNER_MODAL_INITIALIZED',
@@ -35,11 +44,19 @@ type Web3AuthEvent = {
     | Web3AuthSwapOwnerModalClosed;
 };
 
-export const Web3AuthSwapOwnerIframe = () => {
+export const Web3AuthSwapOwnerIframe = ({
+  safeAddress,
+  oldOwnerAddress,
+  newOwnerAddress,
+  backupOwnerAddress,
+  chainId,
+}: Web3AuthSwapOwnerIframeProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const { web3AuthSwapOwnerWindow, logEvent } = useElectronApi();
 
   const ref = useRef<HTMLIFrameElement>(null);
+
+  const iframeUrl = `${WEB3AUTH_SWAP_OWNER_URL}?safeAddress=${safeAddress}&oldOwnerAddress=${oldOwnerAddress}&newOwnerAddress=${newOwnerAddress}&backupOwnerAddress=${backupOwnerAddress}&chainId=${chainId}`;
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -85,7 +102,7 @@ export const Web3AuthSwapOwnerIframe = () => {
   return (
     <IframeContainer>
       <Iframe
-        src={WEB3AUTH_SWAP_OWNER_URL}
+        src={iframeUrl}
         ref={ref}
         id="web3auth-swap-owner-iframe"
         style={{ width: '100%', height: '100%', border: 'none' }}

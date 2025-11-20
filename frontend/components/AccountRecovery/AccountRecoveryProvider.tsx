@@ -19,6 +19,7 @@ import { SetupScreen } from '@/enums';
 import { useMasterWalletContext, useSetup } from '@/hooks';
 import { RecoveryService } from '@/service/Recovery';
 import { Address } from '@/types';
+import { SwapSafeTransaction } from '@/types/Recovery';
 
 import { TokenRequirementsRow } from '../ui';
 import { RECOVERY_STEPS, RecoverySteps } from './constants';
@@ -26,15 +27,6 @@ import {
   getBackupWalletStatus,
   parseRecoveryFundingRequirements,
 } from './utils';
-
-type SwapSafeTransaction = {
-  chain: SupportedMiddlewareChain;
-  signerAddress: Address;
-  safeAddress: Address;
-  oldMasterEoaAddress: Address;
-  newMasterEoaAddress: Address;
-  status?: 'completed' | 'pending' | 'failed';
-};
 
 const useRecoveryNavigation = (
   currentStep: RecoverySteps,

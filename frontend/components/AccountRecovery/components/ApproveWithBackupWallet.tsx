@@ -10,7 +10,11 @@ import { SetupScreen } from '@/enums';
 import { useSetup } from '@/hooks';
 import { RecoveryService } from '@/service/Recovery';
 import { Nullable } from '@/types';
-import { SwapOwnerTransactionResult } from '@/types/Recovery';
+import {
+  SwapOwnerTransactionResult,
+  SwapSafeTransaction,
+} from '@/types/Recovery';
+import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { useAccountRecoveryContext } from '../AccountRecoveryProvider';
 import { useWeb3AuthSwapOwner } from '../hooks/useWeb3AuthBackupWallet';
@@ -99,6 +103,14 @@ const useCounts = (
       hasPendingTransactions: pendingCount > 0,
     };
   }, [localTransactions]);
+
+const getParsedTransaction = (transaction: SwapSafeTransaction) => ({
+  safeAddress: transaction.safeAddress,
+  oldOwnerAddress: transaction.oldMasterEoaAddress,
+  newOwnerAddress: transaction.newMasterEoaAddress,
+  backupOwnerAddress: transaction.signerAddress,
+  chainId: asEvmChainId(transaction.chain),
+});
 
 /**
  * Invalidate relevant queries after transaction completion,
@@ -191,33 +203,43 @@ export const ApproveWithBackupWallet = () => {
   /** Open modal for current or failed transaction */
   const handleOpenWallet = () => {
     // If no current transaction, find first pending
-    if (currentTxnIndex === null) {
+    let txIndex = currentTxnIndex;
+    if (txIndex === null) {
       const firstPendingIndex = localTransactions.findIndex(
         ({ status }) => status === 'pending',
       );
       if (firstPendingIndex !== -1) {
+        txIndex = firstPendingIndex;
         setCurrentTxnIndex(firstPendingIndex);
-        openWeb3AuthSwapOwnerModel();
+      } else {
+        return;
       }
-    } else {
-      openWeb3AuthSwapOwnerModel();
     }
+
+    const transaction = safeSwapTransactions[txIndex];
+    if (!transaction) return;
+
+    openWeb3AuthSwapOwnerModel(getParsedTransaction(transaction));
   };
 
   const handleRetry = () => {
     const firstFailedIndex = localTransactions.findIndex(
       (tx) => tx.status === 'failed',
     );
-    if (firstFailedIndex !== -1) {
-      setCurrentTxnIndex(firstFailedIndex);
-      // Reset the failed transaction to pending
-      setLocalTransactions((prev) =>
-        prev.map((tx, idx) =>
-          idx === firstFailedIndex ? { ...tx, status: 'pending' } : tx,
-        ),
-      );
-      openWeb3AuthSwapOwnerModel();
-    }
+    if (firstFailedIndex === -1) return;
+
+    setCurrentTxnIndex(firstFailedIndex);
+    // Reset the failed transaction to pending
+    setLocalTransactions((prev) =>
+      prev.map((tx, idx) =>
+        idx === firstFailedIndex ? { ...tx, status: 'pending' } : tx,
+      ),
+    );
+
+    const transaction = safeSwapTransactions[firstFailedIndex];
+    if (!transaction) return;
+
+    openWeb3AuthSwapOwnerModel(getParsedTransaction(transaction));
   };
 
   // Automatically complete recovery when all transactions are done
