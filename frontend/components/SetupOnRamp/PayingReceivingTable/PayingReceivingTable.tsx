@@ -144,7 +144,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     isFromDepositFlow,
   } = useOnRampContext();
   const getBridgeRequirementsParamsFromDeposit =
-    useGetBridgeRequirementsParamsFromDeposit(onRampChainId);
+    useGetBridgeRequirementsParamsFromDeposit();
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,

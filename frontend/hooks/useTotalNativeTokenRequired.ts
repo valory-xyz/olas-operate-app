@@ -20,7 +20,7 @@ import { formatUnitsToNumber } from '@/utils/numberFormatters';
  */
 export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,
-  queryKey: 'preview' | 'onboarding' = 'onboarding',
+  queryKey: 'preview' | 'onboarding' | string = 'onboarding',
   customGetBridgeRequirementsParams?: (
     isForceUpdate?: boolean,
   ) => BridgeRefillRequirementsRequest | null,
@@ -62,6 +62,7 @@ export const useTotalNativeTokenRequired = (
     const toOnRampNetworkName = asMiddlewareChain(
       onRampChainMap[fromChainName],
     );
+    const onRampNetworkName = asMiddlewareChain(onRampChainId);
 
     /**
      * Calculate native token amount needed from direct requirements (not from bridging)
@@ -81,19 +82,53 @@ export const useTotalNativeTokenRequired = (
     const nativeTokenFromBridgeParams =
       fromChainName === toOnRampNetworkName ? nativeTokenAmount : 0;
 
-    // Remaining token from the bridge quote.
-    // e.g, For optimus, OLAS and USDC are bridged to ETH
-    const bridgeRefillRequirements =
-      bridgeFundingRequirements.bridge_refill_requirements[toOnRampNetworkName];
-    const nativeTokenFromBridgeQuote =
-      bridgeRefillRequirements?.[masterEoa.address]?.[AddressZero];
+    // For cross-chain bridging, check the source chain of bridge requests
+    // For deposit flow, bridge requests are from on-ramp chain (Base) to wallet chain (Gnosis)
+    // Use the on-ramp chain directly (where ETH will be purchased via Transak)
+    const sourceChainName =
+      bridgeParams.bridge_requests.length > 0
+        ? bridgeParams.bridge_requests[0].from.chain
+        : onRampNetworkName;
 
-    if (!nativeTokenFromBridgeQuote) return;
+    // Look for native token requirement on the on-ramp chain (where ETH will be purchased)
+    const chainToCheck =
+      sourceChainName || onRampNetworkName || toOnRampNetworkName;
+
+    // Remaining token from the bridge quote.
+    const bridgeRefillRequirements =
+      bridgeFundingRequirements.bridge_refill_requirements[chainToCheck];
+    const bridgeRefillRecord = bridgeRefillRequirements as
+      | Record<string, Record<string, string | number>>
+      | undefined;
+    const nativeTokenFromBridgeQuote =
+      bridgeRefillRecord?.[masterEoa.address]?.[AddressZero] ||
+      bridgeRefillRecord?.['master_safe']?.[AddressZero];
+
+    let finalNativeTokenAmount = nativeTokenFromBridgeQuote;
+    if (!finalNativeTokenAmount) {
+      const bridgeTotalRequirements =
+        bridgeFundingRequirements.bridge_total_requirements[chainToCheck];
+      const bridgeTotalRecord = bridgeTotalRequirements as
+        | Record<string, Record<string, string | number>>
+        | undefined;
+      const nativeTokenFromTotalRequirements =
+        bridgeTotalRecord?.[masterEoa.address]?.[AddressZero] ||
+        bridgeTotalRecord?.['master_safe']?.[AddressZero];
+
+      if (nativeTokenFromTotalRequirements) {
+        finalNativeTokenAmount = nativeTokenFromTotalRequirements;
+      }
+    }
+
+    if (!finalNativeTokenAmount) {
+      if (bridgeParams.bridge_requests.length > 0) return;
+      return 0;
+    }
 
     // e.g, For optimus, addition of (ETH required) + (OLAS and USDC bridged to ETH).
+    // For PredictTrader, this is ETH on Base needed to bridge to tokens on Gnosis.
     const totalNativeTokenRequired =
-      BigInt(nativeTokenFromBridgeQuote) +
-      BigInt(nativeTokenFromBridgeParams || 0);
+      BigInt(finalNativeTokenAmount) + BigInt(nativeTokenFromBridgeParams || 0);
 
     return totalNativeTokenRequired
       ? formatUnitsToNumber(totalNativeTokenRequired, 18)
@@ -103,6 +138,7 @@ export const useTotalNativeTokenRequired = (
     bridgeFundingRequirements,
     masterEoa?.address,
     selectedAgentConfig.evmHomeChainId,
+    onRampChainId,
   ]);
 
   // Update the ETH amount to pay in the on-ramp context

@@ -13,6 +13,7 @@ import {
   TokenSymbol,
   TokenSymbolConfigMap,
 } from '@/constants';
+import { onRampChainMap } from '@/constants/chains';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { Pages, SetupScreen } from '@/enums';
 import {
@@ -128,20 +129,33 @@ const ShowAmountsToDeposit = ({
   );
 };
 
-const OnRampMethod = ({
-  onRampChainId,
-  onSelect,
-}: {
-  onRampChainId: EvmChainId;
-  onSelect: () => void;
-}) => {
+const OnRampMethod = ({ onSelect }: { onSelect: () => void }) => {
   const { amountsToDeposit, walletChainId } = usePearlWallet();
-  const { updateUsdAmountToPay, updateEthAmountToPay } = useOnRampContext();
-  const chainId = onRampChainId || walletChainId;
+  const { updateUsdAmountToPay, updateEthAmountToPay, networkId } =
+    useOnRampContext();
+  // Use networkId from context (on-ramp chain, e.g., Base)
+  // This is the chain where Transak will purchase ETH
+  // Fallback to deriving from walletChainId if networkId is not available
+  const actualOnRampChainId = useMemo(() => {
+    if (networkId) return networkId;
+    if (!walletChainId) return null;
+    const middlewareChain = asMiddlewareChain(walletChainId);
+    return onRampChainMap[middlewareChain];
+  }, [networkId, walletChainId]);
 
   // Get bridge requirements from amountsToDeposit for deposit flow
   const getBridgeRequirementsParamsFromDeposit =
-    useGetBridgeRequirementsParamsFromDeposit(chainId);
+    useGetBridgeRequirementsParamsFromDeposit();
+
+  // Create a unique query key suffix based on amounts to ensure React Query sees changes
+  const amountsHash = useMemo(() => {
+    const amounts = entries(amountsToDeposit)
+      .filter(([, { amount }]) => Number(amount) > 0)
+      .map(([symbol, { amount }]) => `${symbol}:${amount}`)
+      .sort()
+      .join('|');
+    return amounts ? `deposit-${amounts}` : 'deposit-empty';
+  }, [amountsToDeposit]);
 
   // Calculate total native token (ETH) needed to swap to all requested tokens
   const {
@@ -149,12 +163,11 @@ const OnRampMethod = ({
     hasError: hasNativeTokenError,
     totalNativeToken,
   } = useTotalNativeTokenRequired(
-    chainId,
-    'preview',
+    actualOnRampChainId ?? (0 as EvmChainId), // Fallback to 0 if null (shouldn't happen)
+    amountsHash,
     getBridgeRequirementsParamsFromDeposit,
   );
 
-  // Convert native token to USD using Transak quote
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(
       totalNativeToken ? totalNativeToken : undefined,
@@ -162,7 +175,6 @@ const OnRampMethod = ({
 
   const isLoading = isNativeTokenLoading || isFiatLoading;
 
-  // Store USD and ETH amounts in OnRampContext for SetupOnRamp
   useEffect(() => {
     if (isLoading) {
       updateUsdAmountToPay(null);
@@ -359,10 +371,7 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
 
       <Flex gap={24}>
         {isOnRampingEnabled && (
-          <OnRampMethod
-            onRampChainId={chainId}
-            onSelect={() => setPaymentMethod('BUY')}
-          />
+          <OnRampMethod onSelect={() => setPaymentMethod('BUY')} />
         )}
         <TransferMethod
           chainId={chainId}

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 
 import { TEN_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
@@ -15,11 +15,16 @@ export const useBridgeRefillRequirements = (
 ) => {
   const { isOnline } = useContext(OnlineStatusContext);
 
+  // Create a stable query key that includes the suffix
+  // This ensures different amounts result in different queries
+  const queryKey = useMemo(
+    () =>
+      REACT_QUERY_KEYS.BRIDGE_REFILL_REQUIREMENTS_KEY(params!, queryKeySuffix),
+    [params, queryKeySuffix],
+  );
+
   return useQuery({
-    queryKey: REACT_QUERY_KEYS.BRIDGE_REFILL_REQUIREMENTS_KEY(
-      params!,
-      queryKeySuffix,
-    ),
+    queryKey,
     queryFn: async ({ signal }) => {
       if (!params) {
         window.console.warn(
