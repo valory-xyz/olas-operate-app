@@ -216,35 +216,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    GENAI_API_KEY: {
-      name: 'Gemini api key',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.USER,
-    },
-    FIREWORKS_API_KEY: {
-      name: 'Fireworks AI api key',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.USER,
-    },
     PERSONA: {
       name: 'Persona description',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
-    },
-    FEEDBACK_PERIOD_HOURS: {
-      name: 'Feedback period',
-      description: '',
-      value: '1',
-      provision_type: EnvProvisionType.FIXED,
-    },
-    MIN_FEEDBACK_REPLIES: {
-      name: 'Minimum feedback replies',
-      description: '',
-      value: '10',
-      provision_type: EnvProvisionType.FIXED,
     },
     RESET_PAUSE_DURATION: {
       name: 'Reset pause duration',
