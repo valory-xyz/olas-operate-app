@@ -49,7 +49,7 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
 
   // Use deposit-specific bridge requirements if coming from deposit flow
   const getBridgeRequirementsParamsFromDeposit =
-    useGetBridgeRequirementsParamsFromDeposit(onRampChainId);
+    useGetBridgeRequirementsParamsFromDeposit();
   const defaultGetBridgeRequirementsParams = useGetBridgeRequirementsParams(
     onRampChainId,
     AddressZero,
