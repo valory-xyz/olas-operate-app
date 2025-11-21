@@ -2,8 +2,8 @@ import { Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
 import { StakingContractCard } from '@/components/StakingContractCard';
-import { COLOR } from '@/constants/colors';
-import { StakingProgramId } from '@/enums/StakingProgram';
+import { COLOR } from '@/constants';
+import { StakingProgramId } from '@/types';
 
 const { Text } = Typography;
 

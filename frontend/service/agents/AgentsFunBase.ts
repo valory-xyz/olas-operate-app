@@ -1,11 +1,11 @@
 import { EvmChainId } from '@/enums/Chain';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
 import {
   ServiceStakingDetails,
   StakingContractDetails,
+  StakingProgramId,
   StakingRewardsInfo,
-} from '@/types/Autonolas';
+} from '@/types';
+import { Address } from '@/types/Address';
 
 import { AgentsFunService } from './shared-services/AgentsFun';
 

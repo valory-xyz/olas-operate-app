@@ -6,9 +6,14 @@ import {
   SERVICE_TEMPLATES,
 } from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
-import { StakingProgramId } from '@/enums/StakingProgram';
 import { ServicesService } from '@/service/Services';
-import { Address, DeepPartial, Service, ServiceTemplate } from '@/types';
+import {
+  Address,
+  DeepPartial,
+  Service,
+  ServiceTemplate,
+  StakingProgramId,
+} from '@/types';
 
 export const updateServiceIfNeeded = async (
   service: Service,

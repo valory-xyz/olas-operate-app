@@ -5,12 +5,13 @@ export * from './Autonolas';
 export * from './BackupWallet';
 export * from './Balance';
 export * from './Bridge';
+export * from './Contract';
 export * from './ElectronApi';
 export * from './Epoch';
 export * from './Funding';
 export * from './Records';
 export * from './Service';
-// export * from './StakingProgram'; // TODO: to enable after moving StakingProgram from enum
+export * from './StakingProgram';
 export * from './TransactionInfo';
 export * from './Util';
 export * from './Wallet';

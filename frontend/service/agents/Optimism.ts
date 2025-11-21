@@ -7,15 +7,13 @@ import { PROVIDERS } from '@/constants/providers';
 import { EvmChainId } from '@/enums/Chain';
 import {
   OptimismStakingProgramId,
-  StakingProgramId,
-} from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
-import {
   ServiceStakingDetails,
   StakingContractDetails,
+  StakingProgramId,
   StakingRewardsInfo,
-} from '@/types/Autonolas';
-import { isValidServiceId } from '@/utils/service';
+} from '@/types';
+import { Address } from '@/types/Address';
+import { isValidServiceId } from '@/utils';
 
 import {
   ONE_YEAR,
