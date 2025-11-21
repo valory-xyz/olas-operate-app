@@ -12,7 +12,12 @@ const getWeb3AuthOwnerSwapWindow = () => web3AuthSwapOwnerWindow;
  * @param {string} baseUrl - Base URL for the window
  * @param {object} params - Transaction parameters
  */
-/** @type {(baseUrl: string, params: {safeAddress: string, oldOwnerAddress: string, newOwnerAddress: string, backupOwnerAddress: string, chainId: number})=>Promise<BrowserWindow|undefined>} */
+/**
+ * Creates the Web3Auth Swap Owner window.
+ * @param {string} baseUrl - Base URL for the window.
+ * @param {{safeAddress: string, oldOwnerAddress: string, newOwnerAddress: string, backupOwnerAddress: string, chainId: number}} params - Transaction parameters.
+ * @returns {Promise<Electron.BrowserWindow|undefined>} The created BrowserWindow instance or undefined.
+ */
 const createWeb3AuthSwapOwnerWindow = async (baseUrl, params) => {
   if (
     !getWeb3AuthOwnerSwapWindow() ||
@@ -79,9 +84,6 @@ const handleWeb3AuthSwapOwnerWindowShow = (baseUrl, params) => {
   }
 };
 
-// Close request handler invoked via ipcMain.handle('web3auth-swap-owner-window-close')
-// Broadcasts single canonical lifecycle event: 'web3auth-swap-owner-window-closed'.
-// Past tense naming communicates completion after destruction.
 const handleWeb3AuthWindowSwapOwnerClose = () => {
   logger.electron('web3auth-swap-owner-window-close');
 
@@ -94,6 +96,7 @@ const handleWeb3AuthWindowSwapOwnerClose = () => {
 
   getWeb3AuthOwnerSwapWindow()?.destroy();
 
+  // Notify all windows that the swap owner window has been closed
   BrowserWindow.getAllWindows().forEach((win) => {
     logger.electron(`web3auth-swap-owner-window-closed to ${win.id}`);
     win.webContents.send('web3auth-swap-owner-window-closed');

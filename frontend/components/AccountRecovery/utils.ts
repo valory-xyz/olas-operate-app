@@ -89,11 +89,9 @@ export const parseRecoveryFundingRequirements = (
     const chain = chainName as SupportedMiddlewareChain;
     const evmChainId = asEvmChainId(chain);
 
-    // Iterate through each address of the backup owner
     for (const [safeAddress, tokenBalances] of Object.entries(
       backupOwnerAddresses,
     )) {
-      // Iterate through each token that needs refilling
       for (const [untypedTokenAddress, refillAmount] of Object.entries(
         tokenBalances,
       )) {
@@ -116,6 +114,7 @@ export const parseRecoveryFundingRequirements = (
 
         const { decimals, symbol } = tokenConfig;
         rows.push({
+          chainName: chain,
           symbol,
           totalAmount: Number(
             formatUnitsToNumber(String(totalAmount ?? 0), decimals),
@@ -125,7 +124,6 @@ export const parseRecoveryFundingRequirements = (
           ),
           iconSrc: ChainImageMap[evmChainId],
           areFundsReceived: refillAmount === 0,
-          chainName: chain,
         });
       }
     }

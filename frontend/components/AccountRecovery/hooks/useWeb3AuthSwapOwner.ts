@@ -4,9 +4,6 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useElectronApi } from '@/hooks';
 import { SwapOwnerParams, SwapOwnerTransactionResult } from '@/types/Recovery';
 
-// IPC channel map distinguishing request vs lifecycle events.
-// RESULT: transaction completion payload from swap owner operation.
-// WINDOW_CLOSED: canonical lifecycle broadcast after the window has been destroyed.
 const WEB3AUTH = {
   RESULT: 'web3auth-swap-owner-result',
   WINDOW_CLOSED: 'web3auth-swap-owner-window-closed',
@@ -65,7 +62,6 @@ export const useWeb3AuthSwapOwner = ({
   // Listen for window closed event
   useEffect(() => {
     const handleWindowClosed = () => {
-      console.log('web3auth-swap-owner-window-closed event received ?????? ');
       if (isResultReceived.current) return;
 
       isResultReceived.current = true;
@@ -75,7 +71,6 @@ export const useWeb3AuthSwapOwner = ({
     ipcRenderer?.on?.(WEB3AUTH.WINDOW_CLOSED, handleWindowClosed);
     return () => {
       ipcRenderer?.removeListener?.(WEB3AUTH.WINDOW_CLOSED, handleWindowClosed);
-      // no compatibility listener removal needed (dropped)
     };
   }, [ipcRenderer, onClose]);
 

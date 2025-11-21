@@ -82,28 +82,26 @@ const AccountRecoveredCompleteModal = () => {
 };
 
 const useCounts = (
-  localTransactions: Array<{ status: 'pending' | 'completed' | 'failed' }>,
-) =>
-  useMemo(() => {
-    const completedCount = localTransactions.filter(
-      (tx) => tx.status === 'completed',
-    ).length;
-    const failedCount = localTransactions.filter(
-      (tx) => tx.status === 'failed',
-    ).length;
-    const pendingCount = localTransactions.filter(
-      (tx) => tx.status === 'pending',
-    ).length;
+  localTransactions: Array<{ status: SwapSafeTransaction['status'] }>,
+) => {
+  const getCount = useCallback(
+    (type: SwapSafeTransaction['status']) =>
+      localTransactions.filter((tx) => tx.status === type).length,
+    [localTransactions],
+  );
+
+  return useMemo(() => {
     return {
-      completedTransactionsCount: completedCount,
-      failedTransactionsCount: failedCount,
-      hasFailedTransactions: failedCount > 0,
+      completedTransactionsCount: getCount('completed'),
+      failedTransactionsCount: getCount('failed'),
+      hasFailedTransactions: getCount('failed') > 0,
       areTransactionsCompleted:
-        completedCount === localTransactions.length &&
+        getCount('completed') === localTransactions.length &&
         localTransactions.length > 0,
-      hasPendingTransactions: pendingCount > 0,
+      hasPendingTransactions: getCount('pending') > 0,
     };
-  }, [localTransactions]);
+  }, [localTransactions, getCount]);
+};
 
 const getParsedTransaction = (transaction: SwapSafeTransaction) => ({
   safeAddress: transaction.safeAddress,
@@ -132,18 +130,12 @@ const useInvalidateQueries = () => {
 export const ApproveWithBackupWallet = () => {
   const invalidateQueries = useInvalidateQueries();
   const { safeSwapTransactions } = useAccountRecoveryContext();
-  // Track the index of the current transaction being processed
   const [currentTxnIndex, setCurrentTxnIndex] =
     useState<Nullable<number>>(null);
   const currentTxnIndexRef = useRef<Nullable<number>>(null);
-  useEffect(() => {
-    currentTxnIndexRef.current = currentTxnIndex;
-  }, [currentTxnIndex]);
-  const setCurrentTxnIndexSafe = useCallback((idx: Nullable<number>) => {
-    currentTxnIndexRef.current = idx;
-    setCurrentTxnIndex(idx);
-  }, []);
   const [isAccountRecovered, setIsAccountRecovered] = useState(false);
+  const [isButtonLoading, setIsButtonLoading] = useState(false);
+
   // Local state to track transaction statuses - only updates when length changes
   const [localTransactions, setLocalTransactions] = useState<
     Array<{
@@ -153,15 +145,22 @@ export const ApproveWithBackupWallet = () => {
     }>
   >([]);
 
+  // Keep ref in sync with state
+  useEffect(() => {
+    currentTxnIndexRef.current = currentTxnIndex;
+  }, [currentTxnIndex]);
+
+  const setCurrentTxnIndexSafe = useCallback((idx: Nullable<number>) => {
+    currentTxnIndexRef.current = idx;
+    setCurrentTxnIndex(idx);
+  }, []);
+
   const {
     completedTransactionsCount,
-    failedTransactionsCount,
     hasFailedTransactions,
     areTransactionsCompleted,
     hasPendingTransactions,
   } = useCounts(localTransactions);
-
-  // Debug log removed
 
   const { isPending: isCompletingRecovery, mutateAsync: completeRecovery } =
     useMutation({
@@ -179,34 +178,32 @@ export const ApproveWithBackupWallet = () => {
       safeSwapTransactions.map((_, index) => ({ index, status: 'pending' })),
     );
   }, [safeSwapTransactions]);
-  // Button loading state
-  const [isButtonLoading, setIsButtonLoading] = useState(false);
+
+  const handleClose = useCallback(() => setIsButtonLoading(false), []);
 
   /** Handle transaction result from Web3Auth modal */
   const handleTransactionResult = useCallback(
     (result: SwapOwnerTransactionResult) => {
-      // Debug log removed
       setIsButtonLoading(false);
+
       const activeIndex = currentTxnIndexRef.current;
       if (activeIndex === null) return;
+
       setLocalTransactions((prev) => {
         const updated = prev.map((tx, idx) => {
           if (idx !== activeIndex) return tx;
-          return {
-            ...tx,
-            status: result.success
-              ? ('completed' as const)
-              : ('failed' as const),
-            error: result.success ? undefined : result.error,
-          };
+          const status: SwapSafeTransaction['status'] = result.success
+            ? 'completed'
+            : 'failed';
+          const error = result.success ? undefined : result.error;
+          return { ...tx, status, error };
         });
+
         if (result.success) {
-          const nextPendingIndex = updated.findIndex(
+          const nextPendingIdx = updated.findIndex(
             (tx, idx) => idx > activeIndex && tx.status === 'pending',
           );
-          setCurrentTxnIndexSafe(
-            nextPendingIndex === -1 ? null : nextPendingIndex,
-          );
+          setCurrentTxnIndexSafe(nextPendingIdx === -1 ? null : nextPendingIdx);
           invalidateQueries();
         }
         return updated;
@@ -214,11 +211,6 @@ export const ApproveWithBackupWallet = () => {
     },
     [invalidateQueries, setCurrentTxnIndexSafe],
   );
-
-  const handleClose = useCallback(() => {
-    console.log('Web3Auth modal closed');
-    setIsButtonLoading(false);
-  }, []);
 
   const { openWeb3AuthSwapOwnerModel } = useWeb3AuthSwapOwner({
     onFinish: handleTransactionResult,
@@ -235,7 +227,6 @@ export const ApproveWithBackupWallet = () => {
       const firstPendingIndex = localTransactions.findIndex(
         ({ status }) => status === 'pending',
       );
-      console.log('First pending index:', firstPendingIndex);
       if (firstPendingIndex !== -1) {
         txIndex = firstPendingIndex;
         setCurrentTxnIndexSafe(firstPendingIndex);
@@ -259,8 +250,6 @@ export const ApproveWithBackupWallet = () => {
     openWeb3AuthSwapOwnerModel,
     setCurrentTxnIndexSafe,
   ]);
-
-  console.log('Current Txn Index:', currentTxnIndex);
 
   const handleRetry = useCallback(() => {
     setIsButtonLoading(true);
@@ -320,28 +309,11 @@ export const ApproveWithBackupWallet = () => {
             <Text className="text-neutral-tertiary">
               {`${completedTransactionsCount} transactions out of ${localTransactions.length}`}
             </Text>
-            {failedTransactionsCount > 0 && (
-              <Text type="danger" style={{ marginTop: 8 }}>
-                {`${failedTransactionsCount} transaction${failedTransactionsCount > 1 ? 's' : ''} failed`}
-              </Text>
-            )}
           </Flex>
         )}
 
         <Flex align="center" justify="center" gap={12} className="w-full mt-32">
-          {!hasFailedTransactions && (
-            <Button
-              onClick={handleOpenWallet}
-              type="primary"
-              size="large"
-              disabled={!hasPendingTransactions}
-              loading={isButtonLoading}
-            >
-              {currentTxnIndex === null ? 'Start Approval' : 'Open Wallet'}
-            </Button>
-          )}
-
-          {hasFailedTransactions && (
+          {hasFailedTransactions ? (
             <Button
               loading={isButtonLoading}
               onClick={handleRetry}
@@ -351,6 +323,16 @@ export const ApproveWithBackupWallet = () => {
               icon={<ReloadOutlined />}
             >
               Retry Failed
+            </Button>
+          ) : (
+            <Button
+              onClick={handleOpenWallet}
+              type="primary"
+              size="large"
+              disabled={!hasPendingTransactions}
+              loading={isButtonLoading}
+            >
+              {currentTxnIndex === null ? 'Start Approval' : 'Open Wallet'}
             </Button>
           )}
         </Flex>

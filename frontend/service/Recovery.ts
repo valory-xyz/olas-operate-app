@@ -37,7 +37,7 @@ const getExtendedWallet = async (
   });
 
 /**
- * Extended wallet information including safes and additional metadata.
+ * Fetches the recovery funding requirements for each chain.
  */
 const getRecoveryFundingRequirements = async (
   signal?: AbortSignal,

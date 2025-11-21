@@ -13,14 +13,14 @@ export type RecoveryStatus = {
   has_pending_swaps: boolean;
 };
 
-export type TokenBalance = Record<Address, number>;
+type TokenBalance = Record<Address, number>;
 
-export type BackupOwnerSafe = {
+type BackupOwnerSafe = {
   backup_owners: Address[];
   balances: TokenBalance;
 };
 
-export type SafeChainData = {
+type SafeChainData = {
   [safeAddress: Address]: BackupOwnerSafe;
 };
 

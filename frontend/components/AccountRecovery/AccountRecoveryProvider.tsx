@@ -82,7 +82,9 @@ const AccountRecoveryContext = createContext<{
   currentStep: RecoverySteps;
   /** Address of the backup wallet used for recovery */
   backupWalletAddress?: Address;
+  /** New master EOA address set during recovery */
   newMasterEoaAddress?: Address;
+  /** Updates the new master EOA address during recovery */
   updateNewMasterEoaAddress: (newAddress: Address, oldAddress: Address) => void;
 
   // Step: Fund Your Backup Wallet
@@ -151,7 +153,6 @@ export const AccountRecoveryProvider = ({
     queryFn: async ({ signal }) =>
       await RecoveryService.getRecoveryFundingRequirements(signal),
     enabled: canFetchRecoveryFundingRequirements && isOnline,
-    // Only refetch when in funding or approval steps
     refetchInterval: canFetchRecoveryFundingRequirements
       ? FIFTEEN_SECONDS_INTERVAL
       : false,
@@ -159,6 +160,7 @@ export const AccountRecoveryProvider = ({
 
   const isLoading = isMasterWalletLoading || isExtendedWalletLoading;
 
+  // Determine backup wallet details for recovery
   const backupWalletDetails = useMemo(() => {
     if (isLoading) return;
     if (!extendedWallets?.safes) return;
@@ -189,6 +191,7 @@ export const AccountRecoveryProvider = ({
     ? (backupWalletDetails?.backupAddress as Address)
     : undefined;
 
+  // Prepare safe swap transactions for recovery approval step
   const safeSwapTransactions: SwapSafeTransaction[] = useMemo(() => {
     if (!extendedWallets?.safe_chains) return [];
     if (!backupWalletAddress) return [];
