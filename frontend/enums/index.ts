@@ -1,6 +1,5 @@
 export * from './Agent';
 export * from './Chain';
-export * from './Contract';
 export * from './Pages';
 export * from './ServiceRegistryL2ServiceState';
 export * from './SettingsScreen';
