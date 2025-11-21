@@ -174,6 +174,12 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
     },
   },
   env_variables: {
+    SAFE_CONTRACT_ADDRESSES: {
+      name: 'Safe contract addresses',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
       description: '',
