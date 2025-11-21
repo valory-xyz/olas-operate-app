@@ -7,6 +7,6 @@ export const X402_ENABLED_FLAGS: {
 } = {
   [AgentMap.PredictTrader]: true,
   [AgentMap.Optimus]: true,
-  [AgentMap.AgentsFun]: false,
+  [AgentMap.AgentsFun]: true,
   [AgentMap.Modius]: true,
 };

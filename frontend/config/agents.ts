@@ -115,7 +115,7 @@ export const AGENT_CONFIG: {
     description:
       'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
     hasExternalFunds: false,
-    hasChatUI: false,
+    hasChatUI: true,
     defaultBehavior: '',
     servicePublicId: 'dvilela/memeooorr:0.1.0',
   },
