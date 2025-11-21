@@ -68,6 +68,7 @@ export const AGENT_CONFIG: {
     description: 'Participates in prediction markets.',
     hasExternalFunds: false,
     hasChatUI: true,
+    doesChatUIRequireApiKey: true,
     category: 'Prediction Markets',
     defaultBehavior:
       'Adopting a conservative strategy with small, high-confidence bets.',
@@ -93,6 +94,7 @@ export const AGENT_CONFIG: {
       'Invests crypto assets on your behalf and grows your portfolio on Optimus network.',
     hasExternalFunds: true,
     hasChatUI: true,
+    doesChatUIRequireApiKey: true,
     category: 'DeFi',
     defaultBehavior:
       'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
@@ -100,7 +102,7 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.AgentsFun]: {
     isAgentEnabled: true,
-    isUnderConstruction: true,
+    isUnderConstruction: false,
     isComingSoon: false,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.AgentsFun],
@@ -115,7 +117,8 @@ export const AGENT_CONFIG: {
     description:
       'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
     hasExternalFunds: false,
-    hasChatUI: false,
+    hasChatUI: true,
+    doesChatUIRequireApiKey: false,
     defaultBehavior: '',
     servicePublicId: 'dvilela/memeooorr:0.1.0',
   },
@@ -140,6 +143,7 @@ export const AGENT_CONFIG: {
       'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
     hasExternalFunds: true,
     hasChatUI: true,
+    doesChatUIRequireApiKey: true,
     category: 'DeFi',
     defaultBehavior:
       'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
