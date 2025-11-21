@@ -5,8 +5,7 @@ import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { BASE_STAKING_PROGRAMS } from '@/config/stakingPrograms/base';
 import { PROVIDERS } from '@/constants/providers';
 import { EvmChainId } from '@/enums/Chain';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
+import { Address, StakingProgramId } from '@/types';
 import {
   ServiceStakingDetails,
   StakingContractDetails,

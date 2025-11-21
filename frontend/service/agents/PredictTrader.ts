@@ -4,13 +4,13 @@ import { formatEther } from 'ethers/lib/utils';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { PROVIDERS } from '@/constants/providers';
 import { EvmChainId } from '@/enums/Chain';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
 import {
   ServiceStakingDetails,
   StakingContractDetails,
+  StakingProgramId,
   StakingRewardsInfo,
-} from '@/types/Autonolas';
+} from '@/types';
+import { Address } from '@/types/Address';
 
 import {
   ONE_YEAR,

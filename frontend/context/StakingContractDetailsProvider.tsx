@@ -12,15 +12,13 @@ import {
 
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { useService } from '@/hooks/useService';
-import { useServices } from '@/hooks/useServices';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { useService, useServices, useStakingProgram } from '@/hooks';
 import {
   ServiceStakingDetails,
   StakingContractDetails,
-} from '@/types/Autonolas';
-import { isValidServiceId } from '@/utils/service';
+  StakingProgramId,
+} from '@/types';
+import { isValidServiceId } from '@/utils';
 
 import { StakingProgramContext } from './StakingProgramProvider';
 

@@ -18,10 +18,13 @@ import {
 import { PROVIDERS } from '@/constants/providers';
 import { EvmChainId } from '@/enums/Chain';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
-import { ContractTypeMap } from '@/types/Contract';
-import { Maybe, Nullable } from '@/types/Util';
+import {
+  Address,
+  ContractTypeMap,
+  Maybe,
+  Nullable,
+  StakingProgramId,
+} from '@/types';
 
 export const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 

@@ -2,8 +2,7 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
-import { STAKING_PROGRAM_IDS, StakingProgramId } from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
+import { Address, STAKING_PROGRAM_IDS, StakingProgramId } from '@/types';
 
 import { MechType } from '../mechs';
 import {

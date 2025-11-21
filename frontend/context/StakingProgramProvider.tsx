@@ -2,10 +2,8 @@ import { isNil } from 'lodash';
 import { createContext, PropsWithChildren, useEffect, useState } from 'react';
 
 import { DEFAULT_STAKING_PROGRAM_IDS } from '@/config/stakingPrograms';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { useActiveStakingProgramId } from '@/hooks/useActiveStakingProgramId';
-import { useServices } from '@/hooks/useServices';
-import { Maybe, Nullable } from '@/types/Util';
+import { useActiveStakingProgramId, useServices } from '@/hooks';
+import { Maybe, Nullable, StakingProgramId } from '@/types';
 
 export const StakingProgramContext = createContext<{
   isActiveStakingProgramLoaded: boolean;

@@ -5,7 +5,7 @@ import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { MODE_STAKING_PROGRAMS } from '@/config/stakingPrograms/mode';
 import { PROVIDERS } from '@/constants/providers';
 import { EvmChainId } from '@/enums/Chain';
-import { ModeStakingProgramId, StakingProgramId } from '@/enums/StakingProgram';
+import { ModeStakingProgramId, StakingProgramId } from '@/types';
 import { Address } from '@/types/Address';
 import {
   ServiceStakingDetails,
@@ -76,7 +76,7 @@ export abstract class ModiusService extends StakedAgentService {
     const requiredRequests =
       (Math.ceil(Math.max(livenessPeriod, nowInSeconds - tsCheckpoint)) *
         livenessRatio) /
-        1e18 +
+      1e18 +
       REQUESTS_SAFETY_MARGIN;
 
     const eligibleRequests = isServiceStaked

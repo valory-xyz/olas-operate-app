@@ -4,7 +4,6 @@ import {
   CONTENT_TYPE_JSON_UTF8,
   SupportedMiddlewareChain,
 } from '@/constants';
-import { StakingProgramId } from '@/enums/StakingProgram';
 import {
   Address,
   AgentPerformance,
@@ -15,6 +14,7 @@ import {
   ServiceDeployment,
   ServiceTemplate,
   ServiceValidationResponse,
+  StakingProgramId,
 } from '@/types';
 import { asEvmChainId } from '@/utils';
 
