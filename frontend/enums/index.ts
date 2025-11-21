@@ -2,7 +2,6 @@ export * from './Agent';
 export * from './Chain';
 export * from './Pages';
 export * from './ServiceRegistryL2ServiceState';
-export * from './SettingsScreen';
 export * from './SetupScreen';
 export * from './StakingProgram';
 export * from './Token';
