@@ -3,19 +3,12 @@ import { useEffect, useRef, useState } from 'react';
 
 import { WEB3AUTH_SWAP_OWNER_URL } from '@/constants';
 import { useElectronApi } from '@/hooks';
-import { Address } from '@/types';
-import { SwapOwnerTransactionResult } from '@/types/Recovery';
+import { SwapOwnerParams, SwapOwnerTransactionResult } from '@/types/Recovery';
 
 import { LoadingSpinner } from '../ui';
 import { Iframe, IframeContainer, SpinnerOverlay } from './styles';
 
-type Web3AuthSwapOwnerIframeProps = {
-  safeAddress: Address;
-  oldOwnerAddress: Address;
-  newOwnerAddress: Address;
-  backupOwnerAddress: Address;
-  chainId: number;
-};
+type Web3AuthSwapOwnerIframeProps = SwapOwnerParams;
 
 enum Events {
   WEB3AUTH_SWAP_OWNER_MODAL_INITIALIZED = 'WEB3AUTH_SWAP_OWNER_MODAL_INITIALIZED',
@@ -29,8 +22,7 @@ type Web3AuthSwapOwnerModalInitialized = {
 
 type Web3AuthSwapOwnerResult = {
   event_id: Events.WEB3AUTH_SWAP_OWNER_RESULT;
-  result: SwapOwnerTransactionResult;
-};
+} & SwapOwnerTransactionResult;
 
 type Web3AuthSwapOwnerModalClosed = {
   event_id: Events.WEB3AUTH_SWAP_OWNER_MODAL_CLOSED;
@@ -67,9 +59,11 @@ export const Web3AuthSwapOwnerIframe = ({
       if (!eventDetails.data) return;
       if (!eventDetails.data.event_id) return;
 
+      console.log('IFRAME: Received web3auth event:', eventDetails.data);
+
       // To get all the events and log them
       logEvent?.(
-        `Web3auth event: ${JSON.stringify(eventDetails.data.event_id)}`,
+        `Web3auth event from iframe: ${JSON.stringify(eventDetails.data.event_id)}`,
       );
 
       // Handle modal initialize
@@ -84,12 +78,17 @@ export const Web3AuthSwapOwnerIframe = ({
       if (
         eventDetails.data.event_id === Events.WEB3AUTH_SWAP_OWNER_MODAL_CLOSED
       ) {
+        console.log('IFRAME: CLOSE');
         web3AuthSwapOwnerWindow?.close?.();
       }
 
       // Handle success auth
       if (eventDetails.data.event_id === Events.WEB3AUTH_SWAP_OWNER_RESULT) {
-        const result = eventDetails.data.result;
+        console.log(
+          'IFRAME: Received web3auth-swap-owner-result:',
+          eventDetails.data,
+        );
+        const result = eventDetails.data;
         if (!result) return;
         web3AuthSwapOwnerWindow?.swapResult?.(result);
       }

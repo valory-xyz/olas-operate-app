@@ -90,6 +90,14 @@ export type SwapOwnerTransactionResult = {
   safeAddress?: string;
 };
 
+export type SwapOwnerParams = {
+  safeAddress: Address;
+  oldOwnerAddress: Address;
+  newOwnerAddress: Address;
+  backupOwnerAddress: Address;
+  chainId: number;
+};
+
 export type SwapSafeTransaction = {
   chain: SupportedMiddlewareChain;
   signerAddress: Address;

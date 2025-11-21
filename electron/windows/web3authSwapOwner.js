@@ -43,7 +43,6 @@ const createWeb3AuthSwapOwnerWindow = async (baseUrl, params) => {
     logger.electron(`Web3Auth Swap Owner URL: ${web3AuthUrl}`);
     web3AuthSwapOwnerWindow.loadURL(web3AuthUrl).then(() => {
       logger.electron(
-        // `Open Web3Auth Swap Owner window: ${web3AuthSwapOwnerWindow.url}`,
         `Open Web3Auth Swap Owner window: ${web3AuthSwapOwnerWindow.webContents.getURL()}`,
       );
     });
@@ -80,10 +79,12 @@ const handleWeb3AuthSwapOwnerWindowShow = (baseUrl, params) => {
   }
 };
 
+// Close request handler invoked via ipcMain.handle('web3auth-swap-owner-window-close')
+// Broadcasts single canonical lifecycle event: 'web3auth-swap-owner-window-closed'.
+// Past tense naming communicates completion after destruction.
 const handleWeb3AuthWindowSwapOwnerClose = () => {
   logger.electron('web3auth-swap-owner-window-close');
 
-  // already destroyed or not created
   if (
     !getWeb3AuthOwnerSwapWindow() ||
     getWeb3AuthOwnerSwapWindow().isDestroyed()
@@ -92,13 +93,18 @@ const handleWeb3AuthWindowSwapOwnerClose = () => {
   }
 
   getWeb3AuthOwnerSwapWindow()?.destroy();
+
+  BrowserWindow.getAllWindows().forEach((win) => {
+    logger.electron(`web3auth-swap-owner-window-closed to ${win.id}`);
+    win.webContents.send('web3auth-swap-owner-window-closed');
+  });
 };
 
-const handleWeb3AuthSwapOwnerSuccess = (mainWindow, address) => {
-  if (!address) return;
+const handleWeb3AuthSwapOwnerSuccess = (mainWindow, result) => {
+  if (!result) return;
 
-  logger.electron(`web3auth-swap-owner-result: ${address}`);
-  mainWindow.webContents.send('web3auth-swap-owner-result', address);
+  logger.electron(`web3auth-swap-owner-result: ${result}`);
+  mainWindow.webContents.send('web3auth-swap-owner-result', result);
 };
 
 module.exports = {
