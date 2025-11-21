@@ -1,9 +1,11 @@
 import { Button, Flex, Modal, Spin, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 
+import { STEPS } from '@/components/PearlWallet/types';
 import { Alert, BackButton, CardFlex } from '@/components/ui';
-import { SetupScreen } from '@/enums';
-import { useOnRampContext, useSetup } from '@/hooks';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
+import { Pages, SetupScreen } from '@/enums';
+import { useOnRampContext, usePageState, useSetup } from '@/hooks';
 
 import { OnRampPaymentSteps } from './OnRampPaymentSteps/OnRampPaymentSteps';
 import { PayingReceivingTable } from './PayingReceivingTable/PayingReceivingTable';
@@ -31,6 +33,8 @@ const KeepOpenAlert = () => (
 
 const OnBack = () => {
   const { goto: gotoSetup, prevState } = useSetup();
+  const { goto: gotoPage } = usePageState();
+  const { isFromDepositFlow, setIsFromDepositFlow } = useOnRampContext();
   const [isDoNotLeavePageModalOpen, setIsDoNotLeavePageModalOpen] =
     useState(false);
 
@@ -38,10 +42,26 @@ const OnBack = () => {
     setIsDoNotLeavePageModalOpen(true);
   }, []);
 
+  const { updateStep } = usePearlWallet();
+
   const handleLeavePage = useCallback(() => {
     setIsDoNotLeavePageModalOpen(false);
-    gotoSetup(prevState ?? SetupScreen.FundYourAgent);
-  }, [gotoSetup, prevState]);
+
+    if (isFromDepositFlow) {
+      setIsFromDepositFlow(false);
+      gotoPage(Pages.PearlWallet);
+      updateStep(STEPS.DEPOSIT);
+    } else {
+      gotoSetup(prevState ?? SetupScreen.FundYourAgent);
+    }
+  }, [
+    gotoSetup,
+    gotoPage,
+    prevState,
+    isFromDepositFlow,
+    setIsFromDepositFlow,
+    updateStep,
+  ]);
 
   const handleStayOnPage = useCallback(() => {
     setIsDoNotLeavePageModalOpen(false);

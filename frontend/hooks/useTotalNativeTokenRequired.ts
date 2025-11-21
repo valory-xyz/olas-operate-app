@@ -1,14 +1,14 @@
 import { useEffect, useMemo } from 'react';
 
+import { useBridgeRequirementsQuery } from '@/components/SetupOnRamp/PayingReceivingTable/useBridgeRequirementsQuery';
 import { AddressZero } from '@/constants/address';
 import { EvmChainId, onRampChainMap } from '@/constants/chains';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
+import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
-
-import { useBridgeRequirementsQuery } from '../components/SetupPage/Create/SetupOnRamp/PayingReceivingTable/useBridgeRequirementsQuery';
 
 /**
  * Hook to fetch the bridge refill requirements for the on-ramp process and
@@ -21,6 +21,9 @@ import { useBridgeRequirementsQuery } from '../components/SetupPage/Create/Setup
 export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,
   queryKey: 'preview' | 'onboarding' = 'onboarding',
+  customGetBridgeRequirementsParams?: (
+    isForceUpdate?: boolean,
+  ) => BridgeRefillRequirementsRequest | null,
 ) => {
   const { updateEthAmountToPay, isOnRampingTransactionSuccessful } =
     useOnRampContext();
@@ -39,6 +42,7 @@ export const useTotalNativeTokenRequired = (
     enabled: !isOnRampingTransactionSuccessful,
     stopPollingCondition: isOnRampingTransactionSuccessful,
     queryKeySuffix: queryKey,
+    customGetBridgeRequirementsParams,
   });
 
   /**

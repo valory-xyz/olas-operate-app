@@ -6,7 +6,7 @@ import { AllEvmChainIdMap } from '@/constants';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useServices, useSetup } from '@/hooks';
 
-import { useGetBridgeRequirementsParams } from '../hooks/useGetBridgeRequirementsParams';
+import { useGetBridgeRequirementsParams } from '../../../../hooks/useGetBridgeRequirementsParams';
 
 const BRIDGE_FROM_MESSAGE =
   'Send the specified amounts from your external wallet to the Pearl Wallet address below. Pearl will automatically detect your transfer and bridge the funds for you.';

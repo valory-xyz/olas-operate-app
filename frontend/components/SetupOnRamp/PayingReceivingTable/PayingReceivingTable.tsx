@@ -11,6 +11,7 @@ import { EvmChainId } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
 import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
+import { useGetBridgeRequirementsParamsFromDeposit } from '@/hooks/useGetBridgeRequirementsParamsFromDeposit';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
@@ -140,14 +141,21 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     usdAmountToPay,
     ethAmountToPay,
     updateUsdAmountToPay,
+    isFromDepositFlow,
   } = useOnRampContext();
+  const getBridgeRequirementsParamsFromDeposit =
+    useGetBridgeRequirementsParamsFromDeposit(onRampChainId);
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
     totalNativeToken,
     receivingTokens,
     onRetry,
-  } = useTotalNativeTokenRequired(onRampChainId, 'preview');
+  } = useTotalNativeTokenRequired(
+    onRampChainId,
+    isFromDepositFlow ? 'preview' : 'onboarding',
+    isFromDepositFlow ? getBridgeRequirementsParamsFromDeposit : undefined,
+  );
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
@@ -221,9 +229,14 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
             )}
           </>
         ),
-        receiving: tokensRequired ? (
-          <ViewReceivingTokens receivingTokens={tokensRequired} />
-        ) : null,
+        receiving: (() => {
+          // For deposit flow: show all tokens from bridge requirements (receivingTokens)
+          // For setup flow: show tokensRequired
+          const tokensToDisplay = tokensRequired || receivingTokens;
+          return tokensToDisplay && tokensToDisplay.length > 0 ? (
+            <ViewReceivingTokens receivingTokens={tokensToDisplay} />
+          ) : null;
+        })(),
       },
     ],
     [
@@ -232,6 +245,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
       ethAmountToPay,
       usdAmountToPay,
       tokensRequired,
+      receivingTokens,
       onRetry,
       isReceivingAmountLoading,
     ],
