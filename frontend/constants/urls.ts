@@ -27,8 +27,6 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
 // discord
 export const SUPPORT_URL: Url =
   'https://discord.com/channels/899649805582737479/1244588374736502847';
-export const DISCORD_TICKET_URL: Url =
-  'https://discord.com/channels/899649805582737479/1245674435160178712/1263815577240076308';
 export const COMMUNITY_ASSISTANCE_URL: Url =
   'https://discord.com/channels/899649805582737479/1335000001797034044';
 
