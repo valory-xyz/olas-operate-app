@@ -13,7 +13,7 @@ import {
 } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { ServiceTemplate } from '@/types';
-import { updateServiceStakingContract } from '@/utils';
+import { updateServiceIfNeeded } from '@/utils';
 
 import { SwitchingContractModal } from './SwitchingContractModal';
 
@@ -80,8 +80,9 @@ export const ConfirmSwitchButton = ({
 
       if (selectedService) {
         // update service
-        await updateServiceStakingContract(
+        await updateServiceIfNeeded(
           selectedService,
+          selectedAgentType,
           stakingProgramIdToMigrateTo,
         );
       } else {
