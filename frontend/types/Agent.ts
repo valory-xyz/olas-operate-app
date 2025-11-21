@@ -45,6 +45,10 @@ export type AgentConfig = {
    **/
   isX402Enabled: boolean;
   hasChatUI: boolean;
+  /**
+   * Whether the chat UI requires an API key (either via x402 or agent form)
+   */
+  doesChatUIRequireApiKey: boolean;
   /** Whether the agent has external funds available (eg. agent invests funds) */
   hasExternalFunds: boolean;
   category?: 'Prediction Markets' | 'DeFi';
