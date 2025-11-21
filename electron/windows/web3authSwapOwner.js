@@ -64,9 +64,7 @@ const createWeb3AuthSwapOwnerWindow = async (baseUrl, params) => {
 };
 
 const handleWeb3AuthSwapOwnerWindowShow = (baseUrl, params) => {
-  console.log('web3auth-swap-owner-window-show', params);
   logger.electron('web3auth-swap-owner-window-show');
-
   if (
     !getWeb3AuthOwnerSwapWindow() ||
     getWeb3AuthOwnerSwapWindow().isDestroyed()
