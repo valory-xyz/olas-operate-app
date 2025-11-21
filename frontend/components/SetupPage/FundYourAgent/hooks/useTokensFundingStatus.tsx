@@ -31,16 +31,38 @@ export const useTokensFundingStatus = () => {
   const [hasBeenFullyFunded, setHasBeenFullyFunded] = useState(false);
   const currentChain = selectedAgentConfig.evmHomeChainId;
 
-  const requiredTokens = tokenRequirements?.map((token) => token.symbol);
+  const [requiredTokens, setRequiredTokens] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (tokenRequirements && tokenRequirements.length > 0) {
+      const tokens = tokenRequirements.map((token) => token.symbol);
+      setRequiredTokens(tokens);
+    }
+  }, [tokenRequirements]);
+
   const eoaBalances = useMemo(
     () =>
       getMasterEoaBalancesOf(currentChain).filter((balance) =>
-        requiredTokens?.includes(balance.symbol),
+        requiredTokens.includes(balance.symbol),
       ),
     [getMasterEoaBalancesOf, currentChain, requiredTokens],
   );
 
   const fundingStatus = useMemo(() => {
+    if (hasBeenFullyFunded) {
+      return {
+        isFullyFunded: true,
+        tokensFundingStatus: requiredTokens
+          ? Object.fromEntries(
+              requiredTokens.map((token) => [
+                token,
+                { funded: true, pendingAmount: 0 },
+              ]),
+            )
+          : {},
+      };
+    }
+
     if (!tokenRequirements || tokenRequirements.length === 0 || !eoaBalances) {
       return {
         isFullyFunded: false,
@@ -79,7 +101,7 @@ export const useTokensFundingStatus = () => {
       isFullyFunded,
       tokensFundingStatus,
     };
-  }, [eoaBalances, tokenRequirements]);
+  }, [eoaBalances, tokenRequirements, hasBeenFullyFunded, requiredTokens]);
 
   /**
    * Once the funds have been received completely, don't recalculate the statuses,
@@ -90,19 +112,6 @@ export const useTokensFundingStatus = () => {
       setHasBeenFullyFunded(true);
     }
   }, [fundingStatus.isFullyFunded, hasBeenFullyFunded]);
-
-  if (hasBeenFullyFunded)
-    return {
-      isFullyFunded: true,
-      tokensFundingStatus: requiredTokens
-        ? Object.fromEntries(
-            requiredTokens.map((token) => [
-              token,
-              { funded: true, pendingAmount: 0 },
-            ]),
-          )
-        : {},
-    };
 
   return fundingStatus;
 };
