@@ -17,7 +17,7 @@ const RequirementsContainer = styled(Flex)`
 `;
 
 const RequirementsSkeleton = () => (
-  <div style={{ marginTop: 16 }}>
+  <div>
     <Text className="text-neutral-tertiary">You will pay</Text>
     <RequirementsContainer gap={12}>
       {[1, 2, 3].map((index) => (
@@ -76,27 +76,35 @@ const formatAmount = (amount: number): string => {
 
 export const RequirementsForOnRamp = ({
   fiatAmount,
+  isLoading,
 }: {
   fiatAmount: string;
-}) => (
-  <div>
-    <Text className="text-neutral-tertiary">You will pay</Text>
-    <RequirementsContainer gap={12}>
-      <Text>~${fiatAmount}</Text>
-      <Text className="text-neutral-tertiary" style={{ fontSize: 14 }}>
-        The service is provided by{' '}
-        <a
-          href="https://transak.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Transak
-        </a>
-        .
-      </Text>
-    </RequirementsContainer>
-  </div>
-);
+  isLoading?: boolean;
+}) => {
+  if (isLoading) {
+    return <RequirementsSkeleton />;
+  }
+
+  return (
+    <div>
+      <Text className="text-neutral-tertiary">You will pay</Text>
+      <RequirementsContainer gap={12}>
+        <Text>~${fiatAmount}</Text>
+        <Text className="text-neutral-tertiary" style={{ fontSize: 14 }}>
+          The service is provided by{' '}
+          <a
+            href="https://transak.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Transak
+          </a>
+          .
+        </Text>
+      </RequirementsContainer>
+    </div>
+  );
+};
 
 type TokenRequirementsProps = {
   tokenRequirements?: TokenRequirement[];
@@ -119,7 +127,12 @@ export const TokenRequirements = ({
   if (hasError) return <RequirementsError />;
 
   if (fundType === 'onRamp') {
-    return <RequirementsForOnRamp fiatAmount={fiatAmount?.toFixed(2) ?? '0'} />;
+    return (
+      <RequirementsForOnRamp
+        fiatAmount={fiatAmount?.toFixed(2) ?? '0'}
+        isLoading={isLoading}
+      />
+    );
   }
 
   if (!tokenRequirements?.length) return null;

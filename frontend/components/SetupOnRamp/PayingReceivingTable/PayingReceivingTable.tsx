@@ -7,10 +7,11 @@ import { TbCreditCardFilled } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { Table } from '@/components/ui/Table';
-import { EvmChainId } from '@/constants/chains';
+import { EvmChainId, EvmChainIdMap } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
 import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useGetBridgeRequirementsParamsFromDeposit } from '@/hooks/useGetBridgeRequirementsParamsFromDeposit';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
@@ -138,13 +139,25 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const {
     isOnRampingStepCompleted,
     isTransactionSuccessfulButFundsNotReceived,
+    updateUsdAmountToPay,
+    isDepositFlow,
     usdAmountToPay,
     ethAmountToPay,
-    updateUsdAmountToPay,
-    isFromDepositFlow,
   } = useOnRampContext();
+  const { walletChainId } = usePearlWallet();
+
+  // Deposit flow: use Base as on-ramp chain, walletChainId as destination
+  // Onboarding flow: use provided onRampChainId
+  const effectiveOnRampChainId = isDepositFlow
+    ? EvmChainIdMap.Base
+    : onRampChainId;
+  const destinationChainId = isDepositFlow ? walletChainId : undefined;
+
   const getBridgeRequirementsParamsFromDeposit =
-    useGetBridgeRequirementsParamsFromDeposit(onRampChainId);
+    useGetBridgeRequirementsParamsFromDeposit(
+      effectiveOnRampChainId,
+      destinationChainId || undefined,
+    );
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
@@ -152,13 +165,14 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     receivingTokens,
     onRetry,
   } = useTotalNativeTokenRequired(
-    onRampChainId,
-    isFromDepositFlow ? 'preview' : 'onboarding',
-    isFromDepositFlow ? getBridgeRequirementsParamsFromDeposit : undefined,
+    effectiveOnRampChainId,
+    isDepositFlow ? 'preview' : 'onboarding',
+    isDepositFlow ? getBridgeRequirementsParamsFromDeposit : undefined,
   );
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
+      destinationChainId || undefined,
     );
 
   // State to hold the tokensRequired to be displayed in the receiving column
@@ -183,7 +197,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     if (isOnRampingStepCompleted) return;
     if (isTransactionSuccessfulButFundsNotReceived) return;
 
-    if (isReceivingAmountLoading || hasNativeTokenError) {
+    if (hasNativeTokenError) {
       updateUsdAmountToPay(null);
     } else if (fiatAmount) {
       updateUsdAmountToPay(fiatAmount);
@@ -191,7 +205,6 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   }, [
     isTransactionSuccessfulButFundsNotReceived,
     isOnRampingStepCompleted,
-    isReceivingAmountLoading,
     hasNativeTokenError,
     fiatAmount,
     updateUsdAmountToPay,
@@ -230,9 +243,9 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
           </>
         ),
         receiving: (() => {
-          // For deposit flow: show all tokens from bridge requirements (receivingTokens)
-          // For setup flow: show tokensRequired
-          const tokensToDisplay = tokensRequired || receivingTokens;
+          const tokensToDisplay = isDepositFlow
+            ? receivingTokens
+            : tokensRequired;
           return tokensToDisplay && tokensToDisplay.length > 0 ? (
             <ViewReceivingTokens receivingTokens={tokensToDisplay} />
           ) : null;
@@ -240,14 +253,15 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
       },
     ],
     [
-      isNativeTokenLoading,
       hasNativeTokenError,
-      ethAmountToPay,
-      usdAmountToPay,
-      tokensRequired,
-      receivingTokens,
+      isNativeTokenLoading,
       onRetry,
       isReceivingAmountLoading,
+      usdAmountToPay,
+      ethAmountToPay,
+      isDepositFlow,
+      receivingTokens,
+      tokensRequired,
     ],
   );
 

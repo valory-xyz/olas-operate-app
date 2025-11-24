@@ -32,9 +32,9 @@ const KeepOpenAlert = () => (
 );
 
 const OnBack = () => {
-  const { goto: gotoSetup, prevState } = useSetup();
+  const { goto: gotoSetup } = useSetup();
   const { goto: gotoPage } = usePageState();
-  const { isFromDepositFlow, setIsFromDepositFlow } = useOnRampContext();
+  const { isDepositFlow, setIsDepositFlow } = useOnRampContext();
   const [isDoNotLeavePageModalOpen, setIsDoNotLeavePageModalOpen] =
     useState(false);
 
@@ -47,21 +47,15 @@ const OnBack = () => {
   const handleLeavePage = useCallback(() => {
     setIsDoNotLeavePageModalOpen(false);
 
-    if (isFromDepositFlow) {
-      setIsFromDepositFlow(false);
+    if (isDepositFlow) {
+      setIsDepositFlow(false);
       gotoPage(Pages.PearlWallet);
       updateStep(STEPS.DEPOSIT);
     } else {
-      gotoSetup(prevState ?? SetupScreen.FundYourAgent);
+      gotoPage(Pages.Setup);
+      gotoSetup(SetupScreen.FundYourAgent);
     }
-  }, [
-    gotoSetup,
-    gotoPage,
-    prevState,
-    isFromDepositFlow,
-    setIsFromDepositFlow,
-    updateStep,
-  ]);
+  }, [gotoSetup, gotoPage, isDepositFlow, setIsDepositFlow, updateStep]);
 
   const handleStayOnPage = useCallback(() => {
     setIsDoNotLeavePageModalOpen(false);
@@ -98,7 +92,7 @@ const OnBack = () => {
   );
 };
 
-export const SetupOnRamp = () => {
+export const OnRamp = () => {
   const { networkId } = useOnRampContext();
 
   return (

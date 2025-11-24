@@ -12,6 +12,7 @@ export const Pages = {
   ConfirmSwitch: 'ConfirmSwitch',
   DepositOlasForStaking: 'DepositOlasForStaking',
   FundPearlWallet: 'FundPearlWallet',
+  OnRamp: 'OnRamp',
 } as const;
 
 export type Pages = (typeof Pages)[keyof typeof Pages];

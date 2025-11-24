@@ -8,7 +8,7 @@ import { useGetBridgeRequirementsParams } from '@/hooks/useGetBridgeRequirements
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { delayInSeconds } from '@/utils/delay';
 
-import { useBridgeRequirementsUtils } from '../../../hooks/useBridgeRequirementsUtils';
+import { useBridgeRequirementsUtils } from './useBridgeRequirementsUtils';
 
 type UseBridgeRequirementsQueryParams = {
   onRampChainId: EvmChainId;

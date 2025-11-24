@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react';
 
-import { EvmChainId, onRampChainMap } from '@/constants';
+import { EvmChainId, EvmChainIdMap, onRampChainMap } from '@/constants';
 import { Pages } from '@/enums';
 import {
   useElectronApi,
@@ -33,8 +33,8 @@ export const OnRampContext = createContext<{
   isBuyCryptoBtnLoading: boolean;
   updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
 
-  isFromDepositFlow: boolean;
-  setIsFromDepositFlow: (isFromDeposit: boolean) => void;
+  isDepositFlow: boolean;
+  setIsDepositFlow: (isFromDeposit: boolean) => void;
 
   // on-ramping step
   isOnRampingTransactionSuccessful: boolean;
@@ -57,8 +57,8 @@ export const OnRampContext = createContext<{
   isBuyCryptoBtnLoading: false,
   updateIsBuyCryptoBtnLoading: () => {},
 
-  isFromDepositFlow: false,
-  setIsFromDepositFlow: () => {},
+  isDepositFlow: false,
+  setIsDepositFlow: () => {},
 
   // on-ramping step
   isOnRampingTransactionSuccessful: false,
@@ -97,8 +97,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const [isSwappingFundsStepCompleted, setIsSwappingStepCompleted] =
     useState(false);
 
-  // State to track if we came from deposit flow (Pearl Wallet)
-  const [isFromDepositFlow, setIsFromDepositFlow] = useState(false);
+  const [isDepositFlow, setIsDepositFlow] = useState(false);
 
   const updateIsBuyCryptoBtnLoading = useCallback((loading: boolean) => {
     setIsBuyCryptoBtnLoading(loading);
@@ -118,8 +117,20 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
 
   // Get the network id, name, and crypto currency code based on the selected agent's home chain
-  // This is used to determine the network and currency to on-ramp to.
   const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
+    // For deposit flow, always use Base
+    if (isDepositFlow) {
+      const chainDetails = asEvmChainDetails(
+        asMiddlewareChain(EvmChainIdMap.Base),
+      );
+      return {
+        networkId: EvmChainIdMap.Base,
+        networkName: chainDetails.name,
+        cryptoCurrencyCode: chainDetails.symbol,
+      };
+    }
+
+    // For onboarding flow, use agent's home chain
     const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
     const networkId = onRampChainMap[fromChainName];
     const chainDetails = asEvmChainDetails(asMiddlewareChain(networkId));
@@ -128,7 +139,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
       networkName: chainDetails.name,
       cryptoCurrencyCode: chainDetails.symbol,
     };
-  }, [selectedAgentConfig]);
+  }, [selectedAgentConfig, isDepositFlow]);
 
   // check if the user has received funds after on-ramping to the master EOA
   useEffect(() => {
@@ -208,7 +219,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsOnRampingTransactionSuccessful(false);
     setHasFundsReceivedAfterOnRamp(false);
     setIsSwappingStepCompleted(false);
-    setIsFromDepositFlow(false);
+    setIsDepositFlow(false);
   }, []);
 
   // Reset the on-ramp state when navigating to the main page
@@ -249,8 +260,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
         resetOnRampState,
 
         /** Navigation source tracking */
-        isFromDepositFlow,
-        setIsFromDepositFlow,
+        isDepositFlow,
+        setIsDepositFlow,
       }}
     >
       {children}

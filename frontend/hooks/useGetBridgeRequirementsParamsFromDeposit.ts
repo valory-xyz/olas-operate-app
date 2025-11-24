@@ -1,5 +1,5 @@
 import { entries } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { getTokenDecimal } from '@/components/Bridge/utils';
 import { TOKEN_CONFIG } from '@/config/tokens';
@@ -14,28 +14,27 @@ import { asMiddlewareChain, parseUnits } from '@/utils';
  * Hook to get bridge requirements parameters from amountsToDeposit for on-ramp deposit flow.
  * This converts user-specified deposit amounts into bridge requirements that can be used
  * to swap ETH (purchased via Transak) back to the required tokens (USDC, OLAS, etc.).
+ *
+ * @param onRampChainId - The chain where ETH will be purchased (via Transak)
+ * @param walletChainId - The chain where tokens will be deposited (for token lookups)
  */
 export const useGetBridgeRequirementsParamsFromDeposit = (
   onRampChainId: EvmChainId,
+  walletChainId?: EvmChainId,
 ) => {
-  const { amountsToDeposit, masterSafeAddress, walletChainId } =
-    usePearlWallet();
+  const { amountsToDeposit, masterSafeAddress, walletChainId: defaultWalletChainId } = usePearlWallet();
   const { masterEoa } = useMasterWalletContext();
-  const chainId = onRampChainId || walletChainId;
-
-  const chainConfig = useMemo(() => {
-    if (!chainId) return null;
-    return TOKEN_CONFIG[chainId];
-  }, [chainId]);
-
-  const middlewareChain = useMemo(() => {
-    if (!chainId) return null;
-    return asMiddlewareChain(chainId);
-  }, [chainId]);
+  
+  // Use walletChainId for token lookups (where tokens will be deposited)
+  // Use onRampChainId for the bridge from chain (where ETH will be purchased)
+  const tokenLookupChainId = walletChainId || defaultWalletChainId || onRampChainId;
+  const chainConfig = TOKEN_CONFIG[tokenLookupChainId];
+  const fromMiddlewareChain = asMiddlewareChain(onRampChainId);
+  const toMiddlewareChain = asMiddlewareChain(tokenLookupChainId);
 
   return useCallback(
     (isForceUpdate = false): BridgeRefillRequirementsRequest | null => {
-      if (!amountsToDeposit || !chainConfig || !middlewareChain) return null;
+      if (!amountsToDeposit) return null;
       if (!masterEoa?.address || !masterSafeAddress) return null;
 
       const toDeposit = entries(amountsToDeposit).filter(
@@ -49,7 +48,7 @@ export const useGetBridgeRequirementsParamsFromDeposit = (
           const token = chainConfig[tokenSymbol];
           if (!token) {
             throw new Error(
-              `Token ${tokenSymbol} is not supported on chain ${chainId}`,
+              `Token ${tokenSymbol} is not supported on chain ${tokenLookupChainId}`,
             );
           }
 
@@ -59,12 +58,12 @@ export const useGetBridgeRequirementsParamsFromDeposit = (
 
           return {
             from: {
-              chain: middlewareChain,
+              chain: fromMiddlewareChain,
               address: masterEoa.address,
               token: fromToken,
             },
             to: {
-              chain: middlewareChain,
+              chain: toMiddlewareChain,
               address: masterSafeAddress,
               token: toTokenAddress,
               amount: parseUnits(amount, tokenDecimal),
@@ -81,10 +80,13 @@ export const useGetBridgeRequirementsParamsFromDeposit = (
     [
       amountsToDeposit,
       chainConfig,
-      middlewareChain,
+      fromMiddlewareChain,
+      toMiddlewareChain,
       masterEoa?.address,
       masterSafeAddress,
-      chainId,
+      tokenLookupChainId,
+      onRampChainId,
+      defaultWalletChainId,
     ],
   );
 };

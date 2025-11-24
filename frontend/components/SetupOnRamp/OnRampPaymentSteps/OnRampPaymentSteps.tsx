@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
 import { TransactionSteps } from '@/components/ui/TransactionSteps';
 import { EvmChainId } from '@/constants/chains';
-import { useOnRampContext } from '@/hooks/useOnRampContext';
+import { useMasterWalletContext, useOnRampContext } from '@/hooks';
 
 import { useBuyCryptoStep } from './useBuyCryptoStep';
 import { useCreateAndTransferFundsToMasterSafeSteps } from './useCreateAndTransferFundsToMasterSafeSteps';
@@ -17,17 +17,22 @@ type OnRampPaymentStepsProps = {
  * Steps for the OnRamp payment process.
  * 1. Buy crypto
  * 2. Swap funds
- * 3. Create Master Safe
+ * 3. Create Master Safe (if it doesn't exist)
  * 4. Transfer funds to the Master Safe
  */
 export const OnRampPaymentSteps = ({
   onRampChainId,
 }: OnRampPaymentStepsProps) => {
-  const {
-    isOnRampingStepCompleted,
-    isSwappingFundsStepCompleted,
-    isFromDepositFlow,
-  } = useOnRampContext();
+  const { isOnRampingStepCompleted, isSwappingFundsStepCompleted } =
+    useOnRampContext();
+  const { getMasterSafeOf } = useMasterWalletContext();
+
+  const existingMasterSafe = useMemo(
+    () => getMasterSafeOf?.(onRampChainId),
+    [getMasterSafeOf, onRampChainId],
+  );
+
+  const masterSafeExists = !!existingMasterSafe;
 
   // step 1: Buy crypto
   const buyCryptoStep = useBuyCryptoStep();
@@ -36,7 +41,7 @@ export const OnRampPaymentSteps = ({
   const { tokensToBeTransferred, step: swapStep } =
     useSwapFundsStep(onRampChainId);
 
-  // step 3 & 4: Create Master Safe and transfer funds (for setup flow)
+  // step 3 & 4: Create Master Safe and transfer funds
   const {
     isMasterSafeCreatedAndFundsTransferred,
     steps: createAndTransferFundsToMasterSafeSteps,
@@ -45,21 +50,21 @@ export const OnRampPaymentSteps = ({
     tokensToBeTransferred,
   );
 
-  // For deposit flow: skip create/transfer steps since Pearl Wallet already exists
-  const steps = isFromDepositFlow
+  // If masterSafe exists, skip create/transfer steps
+  const steps = masterSafeExists
     ? [buyCryptoStep, swapStep]
     : [buyCryptoStep, swapStep, ...createAndTransferFundsToMasterSafeSteps];
 
   const [isSetupCompleted, setIsSetupCompleted] = useState(false);
   useEffect(() => {
-    if (isFromDepositFlow) return;
+    if (masterSafeExists) return;
     if (!isOnRampingStepCompleted) return;
     if (!isSwappingFundsStepCompleted) return;
     if (!isMasterSafeCreatedAndFundsTransferred) return;
 
     setIsSetupCompleted(true);
   }, [
-    isFromDepositFlow,
+    masterSafeExists,
     isOnRampingStepCompleted,
     isMasterSafeCreatedAndFundsTransferred,
     isSwappingFundsStepCompleted,

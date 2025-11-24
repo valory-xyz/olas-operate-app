@@ -45,7 +45,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
     // Don't create if safe already exists or was just created
-    if (existingMasterSafe || masterSafeDetails?.isSafeCreated) return;
+    if (isSafeCreated) return;
 
     createMasterSafe();
   }, [
@@ -55,6 +55,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     existingMasterSafe,
     masterSafeDetails,
     createMasterSafe,
+    isSafeCreated,
   ]);
 
   // Step for creating the Master Safe
@@ -184,7 +185,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     };
   }
 
-  // If safe already exists, mark as completed and return empty steps (deposit flow)
+  // If safe already exists, mark as completed and return empty steps
   if (existingMasterSafe) {
     return {
       isMasterSafeCreatedAndFundsTransferred: true,

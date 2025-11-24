@@ -1,13 +1,15 @@
 import { Button, Flex, Typography } from 'antd';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import styled from 'styled-components';
 
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
 import { COLOR, EvmChainId, EvmChainName } from '@/constants';
+import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
   useFeatureFlag,
   useOnRampContext,
+  usePageState,
   useServices,
   useSetup,
   useTotalFiatFromNativeToken,
@@ -48,7 +50,9 @@ type FundMethodCardProps = {
 };
 
 const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
-  const { goto } = useSetup();
+  const { goto: gotoPage } = usePageState();
+  const { updateUsdAmountToPay, updateEthAmountToPay, setIsDepositFlow } =
+    useOnRampContext();
 
   const {
     isLoading: isNativeTokenLoading,
@@ -60,6 +64,33 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
       hasNativeTokenError ? undefined : totalNativeToken,
     );
   const isLoading = isNativeTokenLoading || isFiatLoading;
+
+  useEffect(() => {
+    if (isLoading) {
+      updateUsdAmountToPay(null);
+      updateEthAmountToPay(null);
+      return;
+    }
+
+    if (fiatAmount) {
+      updateUsdAmountToPay(fiatAmount);
+    }
+
+    if (totalNativeToken) {
+      updateEthAmountToPay(totalNativeToken);
+    }
+  }, [
+    isLoading,
+    fiatAmount,
+    totalNativeToken,
+    updateUsdAmountToPay,
+    updateEthAmountToPay,
+  ]);
+
+  const handleBuyClick = () => {
+    setIsDepositFlow(false);
+    gotoPage(Pages.OnRamp);
+  };
 
   return (
     <FundMethodCard>
@@ -79,7 +110,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
       <Button
         type="primary"
         size="large"
-        onClick={() => goto(SetupScreen.SetupOnRamp)}
+        onClick={handleBuyClick}
         disabled={isLoading || hasNativeTokenError}
       >
         Buy Crypto with USD

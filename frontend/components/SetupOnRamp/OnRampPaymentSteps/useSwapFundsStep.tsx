@@ -7,12 +7,14 @@ import { TransactionStep } from '@/components/ui/TransactionSteps';
 import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
 import { TokenSymbol } from '@/constants/token';
-import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
-import { useBridgeRefillRequirementsOnDemand } from '@/hooks/useBridgeRefillRequirementsOnDemand';
-import { useBridgingSteps } from '@/hooks/useBridgingSteps';
-import { useGetBridgeRequirementsParams } from '@/hooks/useGetBridgeRequirementsParams';
-import { useGetBridgeRequirementsParamsFromDeposit } from '@/hooks/useGetBridgeRequirementsParamsFromDeposit';
-import { useOnRampContext } from '@/hooks/useOnRampContext';
+import {
+  useBalanceAndRefillRequirementsContext,
+  useBridgeRefillRequirementsOnDemand,
+  useBridgingSteps,
+  useGetBridgeRequirementsParams,
+  useGetBridgeRequirementsParamsFromDeposit,
+  useOnRampContext,
+} from '@/hooks';
 import {
   BridgeRefillRequirementsResponse,
   BridgeStatuses,
@@ -29,7 +31,7 @@ const { Text } = Typography;
 const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   const [bridgeFundingRequirements, setBridgeFundingRequirements] =
     useState<BridgeRefillRequirementsResponse | null>(null);
-  const { isOnRampingStepCompleted, isFromDepositFlow } = useOnRampContext();
+  const { isOnRampingStepCompleted, isDepositFlow } = useOnRampContext();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
   const {
@@ -55,7 +57,7 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
     AddressZero,
   );
 
-  const getBridgeRequirementsParams = isFromDepositFlow
+  const getBridgeRequirementsParams = isDepositFlow
     ? getBridgeRequirementsParamsFromDeposit
     : defaultGetBridgeRequirementsParams;
 

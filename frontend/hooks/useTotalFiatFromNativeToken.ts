@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { onRampChainMap, SupportedMiddlewareChain } from '@/constants/chains';
+import {
+  EvmChainId,
+  onRampChainMap,
+  SupportedMiddlewareChain,
+} from '@/constants/chains';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
 import { useServices } from '@/hooks/useServices';
@@ -67,10 +71,27 @@ const fetchTransakQuote = async (
   return response.json();
 };
 
-export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
+export const useTotalFiatFromNativeToken = (
+  nativeTokenAmount?: number,
+  destinationChainId?: EvmChainId,
+) => {
   const { selectedAgentConfig } = useServices();
-  const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-  const networkName = asMiddlewareChain(onRampChainMap[fromChainName]);
+
+  // Network for Transak quote:
+  // DestinationChainId used for deposit flow
+  // Agent's home chain for onboarding flow
+  let networkName: SupportedMiddlewareChain;
+
+  if (destinationChainId) {
+    // Deposit flow: destinationChainId is wallet chain
+    const destinationChainName = asMiddlewareChain(destinationChainId);
+    const onRampChainId = onRampChainMap[destinationChainName];
+    networkName = asMiddlewareChain(onRampChainId);
+  } else {
+    // Onboarding flow: determine on-ramp chain from agent's home chain
+    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
+    networkName = asMiddlewareChain(onRampChainMap[fromChainName]);
+  }
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(

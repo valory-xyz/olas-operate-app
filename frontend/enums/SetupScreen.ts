@@ -10,7 +10,7 @@ export const SetupScreen = {
   FundYourAgent: 'FundYourAgent',
   TransferFunds: 'TransferFunds',
   SetupBridgeOnboardingScreen: 'SetupBridgeOnboardingScreen',
-  SetupOnRamp: 'SetupOnRamp',
+  OnRamp: 'OnRamp',
   EarlyAccessOnly: 'EarlyAccessOnly',
 
   // Restore account, screens to be re-implemented as per v1

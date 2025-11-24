@@ -7,7 +7,6 @@ import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
 import { SelectStakingPage } from '../SelectStakingPage';
-import { SetupOnRamp } from '../SetupOnRamp/SetupOnRamp';
 import { CardFlex } from '../ui/CardFlex';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
@@ -56,7 +55,6 @@ const screenWithoutCards: SetupScreen[] = [
   SetupScreen.FundYourAgent,
   SetupScreen.TransferFunds,
   SetupScreen.SetupBridgeOnboardingScreen,
-  SetupScreen.SetupOnRamp,
   SetupScreen.SelectStaking,
 ];
 
@@ -85,8 +83,6 @@ export const Setup = () => {
         return <TransferFunds />;
       case SetupScreen.SetupBridgeOnboardingScreen:
         return <SetupBridgeOnboarding />;
-      case SetupScreen.SetupOnRamp:
-        return <SetupOnRamp />;
       case SetupScreen.EarlyAccessOnly:
         return <EarlyAccessOnly />;
 
