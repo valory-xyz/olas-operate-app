@@ -119,7 +119,7 @@ export const AGENT_CONFIG: {
     hasExternalFunds: false,
     hasChatUI: true,
     doesChatUIRequireApiKey: false,
-    defaultBehavior: '',
+    defaultBehavior: 'Autonomously posts to X based on the provided persona.',
     servicePublicId: 'dvilela/memeooorr:0.1.0',
   },
   [AgentMap.Modius]: {
