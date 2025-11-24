@@ -285,8 +285,8 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
       monthly_gas_estimate: +parseEther(0.03),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.00625),
-          safe: +parseEther(0.0125),
+          agent: +parseEther(0.0003257),
+          safe: +parseEther(0.0016285),
         },
       },
     },
