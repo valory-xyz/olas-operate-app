@@ -40,9 +40,9 @@ import {
 } from '@/hooks';
 import { AgentConfig } from '@/types';
 
-import { BackupSeedPhraseAlert } from './BackupSeedPhraseAlert';
-import { UpdateAvailableAlert } from './UpdateAvailableAlert/UpdateAvailableAlert';
-import { UpdateAvailableModal } from './UpdateAvailableAlert/UpdateAvailableModal';
+import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
+import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
+import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
 
 const { Sider } = Layout;
 const { Text } = Typography;
