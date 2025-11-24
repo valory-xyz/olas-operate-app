@@ -20,14 +20,21 @@ type TokenFundingStatus = {
  * @example
  * {
  *  isFullyFunded: false,
+ *  isLoading: false,
  *  tokensFundingStatus: {
  *    OLAS: {
- *      funded: false,
+ *      symbol: 'OLAS',
+ *      iconSrc: '...',
+ *      totalAmount: 100,
  *      pendingAmount: 100,
+ *      areFundsReceived: false,
  *    },
  *    XDAI: {
- *      funded: true,
+ *      symbol: 'XDAI',
+ *      iconSrc: '...',
+ *      totalAmount: 11.5,
  *      pendingAmount: 0,
+ *      areFundsReceived: true,
  *    },
  *  }
  * }
