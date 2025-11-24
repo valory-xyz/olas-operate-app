@@ -4,10 +4,10 @@ import {
   SupportedMiddlewareChain,
 } from '@/constants';
 import { EnvProvision } from '@/constants/envVariables';
-import { StakingProgramId } from '@/enums';
 import { AgentType } from '@/enums/Agent';
 
 import { Address } from './Address';
+import { StakingProgramId } from './StakingProgram';
 
 export type ServiceConfigId = string;
 

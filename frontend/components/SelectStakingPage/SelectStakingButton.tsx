@@ -1,13 +1,14 @@
 import { Button, Flex, message } from 'antd';
 import { useBoolean } from 'usehooks-ts';
 
-import { SetupScreen, StakingProgramId } from '@/enums';
+import { SetupScreen } from '@/enums';
 import {
   useBalanceAndRefillRequirementsContext,
   useServices,
   useSetup,
   useStakingProgram,
 } from '@/hooks';
+import { StakingProgramId } from '@/types';
 import { updateServiceIfNeeded } from '@/utils';
 
 import { useCanMigrate } from './hooks/useCanMigrate';

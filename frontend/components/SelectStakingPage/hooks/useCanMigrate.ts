@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 
 import { MiddlewareDeploymentStatusMap } from '@/constants';
-import { StakingProgramId } from '@/enums';
 import {
   useActiveStakingContractDetails,
   useService,
   useServices,
   useStakingContractContext,
 } from '@/hooks';
+import { StakingProgramId } from '@/types';
 import { isValidServiceId } from '@/utils';
 
 type UseCanMigrateProps = {
