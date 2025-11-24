@@ -52,11 +52,7 @@ export const useTokensFundingStatus = () => {
   const [requiredTokens, setRequiredTokens] = useState<TokenRequirement[]>([]);
 
   useEffect(() => {
-    if (
-      tokenRequirements &&
-      tokenRequirements.length > 0 &&
-      requiredTokens.length === 0
-    ) {
+    if (tokenRequirements?.length > 0 && requiredTokens.length === 0) {
       setRequiredTokens(tokenRequirements);
     }
   }, [requiredTokens.length, tokenRequirements]);

@@ -62,11 +62,7 @@ const AgentsFunUpdateFormContent = ({
     useContext(UpdateAgentContext);
 
   const handleFinish = useCallback(async () => {
-    try {
-      confirmModal.openModal();
-    } catch (error) {
-      console.error('Error validating form:', error);
-    }
+    confirmModal.openModal();
   }, [confirmModal]);
 
   return (
@@ -153,6 +149,7 @@ type AgentsFunUpdateFormProps = {
   renderForm: RenderForm;
 };
 
+type AgentsFunEnvVariableKey = (typeof agentsFunEnvKeys)[number];
 /**
  * Form for updating Agents.Fun agent.
  */
@@ -172,11 +169,8 @@ export const AgentsFunUpdateForm = ({
       xUsername: getXUsername(selectedService) || '',
       env_variables: envEntries.reduce(
         (acc, [key, { value }]) => {
-          if (
-            agentsFunEnvKeys.includes(key as (typeof agentsFunEnvKeys)[number])
-          ) {
-            acc[key as keyof AgentsFunUpdateFormValues['env_variables']] =
-              value;
+          if (agentsFunEnvKeys.includes(key as AgentsFunEnvVariableKey)) {
+            acc[key as AgentsFunEnvVariableKey] = value;
           }
           return acc;
         },

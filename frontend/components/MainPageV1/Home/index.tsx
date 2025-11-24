@@ -79,10 +79,10 @@ export const Home = () => {
         return;
       }
 
-      const doesChatUIRequireApiKey =
-        selectedAgentConfig.doesChatUIRequireApiKey;
+      const doesChatUiRequireApiKey =
+        selectedAgentConfig.doesChatUiRequireApiKey;
 
-      if (doesChatUIRequireApiKey && !isX402Enabled) {
+      if (doesChatUiRequireApiKey && !isX402Enabled) {
         const profileWarningDismissed = get(
           storeState,
           `${selectedAgentType}.isProfileWarningDisplayed`,
@@ -111,7 +111,7 @@ export const Home = () => {
     },
     [
       isX402Enabled,
-      selectedAgentConfig.doesChatUIRequireApiKey,
+      selectedAgentConfig.doesChatUiRequireApiKey,
       selectedAgentType,
       selectedService?.deploymentStatus,
       selectedService?.env_variables?.GENAI_API_KEY?.value,

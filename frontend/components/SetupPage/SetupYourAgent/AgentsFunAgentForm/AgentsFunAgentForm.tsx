@@ -1,6 +1,5 @@
 import { Button, Form, Input, message } from 'antd';
 import React, { useCallback, useState } from 'react';
-import { useUnmount } from 'usehooks-ts';
 
 import {
   AGENTS_FUN_FORM_STEP,
@@ -62,7 +61,7 @@ export const AgentsFunAgentFormContent = ({
         setSubmitButtonText('Finish Agent Configuration');
       }
     } catch (error) {
-      console.error('Error in handleContinue:', error);
+      console.error('Error in validation:', error);
     }
   }, [form, isPersonaStep, updateNextStep]);
 
@@ -124,11 +123,6 @@ export const AgentsFunAgentFormContent = ({
     },
     [defaultStakingProgramId, serviceTemplate, goto],
   );
-
-  // Clean up
-  useUnmount(async () => {
-    setIsSubmitting(false);
-  });
 
   return (
     <>
@@ -261,6 +255,7 @@ export const AgentsFunAgentSetup = ({
       setCurrentStep(AGENTS_FUN_FORM_STEP.persona);
     }
   }, [currentStep]);
+
   return renderForm(
     <AgentsFunAgentFormContent
       serviceTemplate={serviceTemplate}
