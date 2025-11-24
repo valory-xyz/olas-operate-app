@@ -14,9 +14,9 @@ import { useNotifyOnNewEpoch, usePageState } from '@/hooks';
 
 import { AgentWallet } from '../AgentWallet';
 import { FundPearlWallet } from '../FundPearlWallet';
+import { OnRamp } from '../OnRamp/OnRamp';
 import { PearlWallet } from '../PearlWallet';
 import { SelectStakingPage } from '../SelectStakingPage';
-import { OnRamp } from '../SetupOnRamp/OnRamp';
 import { Home } from './Home';
 import { useScrollPage } from './hooks/useScrollPage';
 import { useSetupTrayIcon } from './hooks/useSetupTrayIcon';
