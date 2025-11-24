@@ -262,7 +262,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       name: 'Use x402',
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
-      value: X402_ENABLED_FLAGS[AgentMap.AgentsFun].toString(),
+      value: 'true',
       provision_type: EnvProvisionType.FIXED,
     },
   },
