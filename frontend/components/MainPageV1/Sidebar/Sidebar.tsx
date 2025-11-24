@@ -27,6 +27,7 @@ import {
   APP_HEIGHT,
   COLOR,
   EvmChainId,
+  MiddlewareDeploymentStatusMap,
   SIDER_WIDTH,
 } from '@/constants';
 import { Pages } from '@/enums/Pages';
@@ -43,6 +44,7 @@ import { AgentConfig } from '@/types';
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
+import { AgentRunningAnimation } from './AgentRunningAnimation';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -129,36 +131,47 @@ const AgentListMenu = ({
   myAgents,
   selectedMenuKeys,
   onAgentSelect,
-}: AgentListMenuProps) => (
-  <Menu
-    selectedKeys={selectedMenuKeys}
-    mode="inline"
-    inlineIndent={4}
-    onClick={onAgentSelect}
-    items={myAgents.map((agent) => ({
-      key: agent.agentType,
-      icon: (
-        <Image
-          src={`/agent-${agent.agentType}-icon.png`}
-          alt={agent.name}
-          width={32}
-          height={32}
-        />
-      ),
-      label: (
-        <Flex justify="space-between" align="center">
-          {agent.name}{' '}
+}: AgentListMenuProps) => {
+  const { selectedService } = useServices();
+  const isAgentRunning =
+    selectedService?.deploymentStatus ===
+      MiddlewareDeploymentStatusMap.DEPLOYED || true;
+
+  return (
+    <Menu
+      selectedKeys={selectedMenuKeys}
+      mode="inline"
+      inlineIndent={4}
+      onClick={onAgentSelect}
+      items={myAgents.map((agent) => ({
+        key: agent.agentType,
+        icon: (
           <Image
-            src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
-            alt={`${agent.chainName} logo`}
-            width={14}
-            height={14}
+            src={`/agent-${agent.agentType}-icon.png`}
+            alt={agent.name}
+            width={32}
+            height={32}
           />
-        </Flex>
-      ),
-    }))}
-  />
-);
+        ),
+        label: (
+          <Flex justify="space-between" align="center">
+            {agent.name}{' '}
+            {isAgentRunning ? (
+              <AgentRunningAnimation />
+            ) : (
+              <Image
+                src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
+                alt={`${agent.chainName} logo`}
+                width={14}
+                height={14}
+              />
+            )}
+          </Flex>
+        ),
+      }))}
+    />
+  );
+};
 
 export const Sidebar = () => {
   const { goto: gotoSetup } = useSetup();
