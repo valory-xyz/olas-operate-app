@@ -160,17 +160,17 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   | 'service_version'
   | 'agent_release'
 > = {
-  hash: 'bafybeiardecju3sygh7hwuywka2bgjinbr7vrzob4mpdrookyfsbdmoq2m',
+  hash: 'bafybeigbx5dfgw3uzdffsfrhqqp2dk7lbtyj34qwiwtiv2sci7utfywl2i',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
-  service_version: 'v0.8.0-alpha3',
+  service_version: 'v2.0.0-rc5',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'meme-ooorr',
-      version: 'v0.0.1001',
+      version: 'v2.0.0-rc5',
     },
   },
   env_variables: {
