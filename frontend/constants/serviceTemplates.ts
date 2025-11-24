@@ -262,6 +262,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       name: 'Use x402',
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
+      // x402 is always enabled for this agent, the agent wouldn't work without it.
       value: 'true',
       provision_type: EnvProvisionType.FIXED,
     },
