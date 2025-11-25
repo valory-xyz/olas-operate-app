@@ -71,7 +71,7 @@ export const PasswordForm = ({
   const password = Form.useWatch('password', form);
 
   return (
-    <CardFlex $gap={16} styles={{ body: { padding: '24px 32px' } }} $noBorder>
+    <CardFlex $gap={16} $padding="24px 32px" $noBorder>
       <BackButton onPrev={onBack} />
       <SetupPasswordTitle title={title} />
 

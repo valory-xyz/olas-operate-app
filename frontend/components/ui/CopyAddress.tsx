@@ -98,7 +98,8 @@ const ScanQrCode = ({ chainName, address }: ScanQrCodeProps) => {
                   Pearl - {chainName} Address
                 </Title>
                 <Text className="text-neutral-secondary text-center">
-                  {`Use this address to send funds from your external wallet on ${chainName} Chain.`}
+                  Use this address to send funds from your external wallet on{' '}
+                  {chainName} Chain.
                 </Text>
               </Flex>
             )}

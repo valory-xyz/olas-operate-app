@@ -1,14 +1,12 @@
 import { ReloadOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button, Flex, Modal, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { LoadingOutlined, SuccessOutlined } from '@/components/custom-icons';
+import { LoadingOutlined } from '@/components/custom-icons';
 import { Alert } from '@/components/ui';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
-import { SetupScreen } from '@/enums';
-import { useSetup } from '@/hooks';
 import { RecoveryService } from '@/service/Recovery';
 import { Nullable } from '@/types';
 import {
@@ -18,8 +16,9 @@ import {
 } from '@/types/Recovery';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
-import { useAccountRecoveryContext } from '../AccountRecoveryProvider';
-import { useWeb3AuthSwapOwner } from '../hooks/useWeb3AuthSwapOwner';
+import { useAccountRecoveryContext } from '../../AccountRecoveryProvider';
+import { useWeb3AuthSwapOwner } from '../../hooks/useWeb3AuthSwapOwner';
+import { AccountRecoveredCompleteModal } from './AccountRecoveredCompleteModal';
 
 const { Title, Text } = Typography;
 
@@ -42,45 +41,6 @@ const ApproveWalletDescription = () => (
     />
   </>
 );
-
-const AccountRecoveredCompleteModal = () => {
-  const { goto } = useSetup();
-
-  return (
-    <Modal open footer={null} closable={false} centered>
-      <Flex gap={32} vertical align="center" style={{ padding: '24px 20px' }}>
-        <Flex align="center" justify="center">
-          <SuccessOutlined />
-        </Flex>
-
-        <Flex
-          gap={12}
-          vertical
-          align="center"
-          justify="center"
-          className="text-center"
-          style={{ maxWidth: 320 }}
-        >
-          <Title level={4} className="m-0">
-            Pearl Account Recovered!
-          </Title>
-          <Text className="text-neutral-tertiary">
-            You can now access your Pearl account with the new password.
-          </Text>
-        </Flex>
-
-        <Button
-          onClick={() => goto(SetupScreen.Welcome)}
-          type="primary"
-          block
-          size="large"
-        >
-          Back to Login
-        </Button>
-      </Flex>
-    </Modal>
-  );
-};
 
 const useCounts = (
   localTransactions: Array<{ status: SwapSafeTransaction['status'] }>,

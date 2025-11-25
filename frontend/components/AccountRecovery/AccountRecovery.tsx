@@ -9,7 +9,7 @@ import {
   AccountRecoveryProvider,
   useAccountRecoveryContext,
 } from './AccountRecoveryProvider';
-import { ApproveWithBackupWallet } from './components/ApproveWithBackupWallet';
+import { ApproveWithBackupWallet } from './components/ApproveWithBackupWallet/ApproveWithBackupWallet';
 import { CreateNewPassword } from './components/CreateNewPassword';
 import { FundYourBackupWallet } from './components/FundYourBackupWallet';
 import { RecoveryNotAvailable } from './components/RecoveryNotAvailable';
