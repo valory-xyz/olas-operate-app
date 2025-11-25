@@ -43,36 +43,34 @@ type Months = Array<{
   totalMonthlyRewards: number;
 }>;
 
+/** Get current epoch details ie, in-progress epoch with accrued rewards */
 const useCurrentEpochDetails = (lastCheckpoint?: Checkpoint) => {
   const { stakingRewardsDetails } = useRewardContext();
 
   return useMemo(() => {
-    if (!stakingRewardsDetails) return;
-    if (!lastCheckpoint) return;
+    if (!stakingRewardsDetails || !lastCheckpoint) return;
 
-    const lastEpochEnd =
-      stakingRewardsDetails.tsCheckpoint >= lastCheckpoint.epochEndTimeStamp;
-    if (!lastEpochEnd) return;
-
-    const { epochLength: epochLengthStr, epoch } = lastCheckpoint;
+    const { epochLength, epochEndTimeStamp, epoch } = lastCheckpoint;
     const { tsCheckpoint, isEligibleForRewards, accruedServiceStakingRewards } =
       stakingRewardsDetails;
-    const epochLength = Number(epochLengthStr);
+
+    const lastEpochEnd = tsCheckpoint >= epochEndTimeStamp;
+    if (!lastEpochEnd) return;
 
     return {
       ...lastCheckpoint,
-      blockTimestamp: `${tsCheckpoint + epochLength}`,
+      blockTimestamp: `${tsCheckpoint + Number(epochLength)}`,
       earned: isEligibleForRewards,
       reward: isEligibleForRewards ? Number(accruedServiceStakingRewards) : 0,
       epoch: `${Number(epoch) + 1}`,
       epochStartTimeStamp: tsCheckpoint,
-      epochEndTimeStamp: tsCheckpoint + epochLength,
+      epochEndTimeStamp: tsCheckpoint + Number(epochLength),
       transactionHash: '', // no tx hash for in-progress epoch
     } satisfies Checkpoint;
   }, [stakingRewardsDetails, lastCheckpoint]);
 };
 
-/** hook to get checkpoints grouped by months */
+/** Get checkpoints grouped by months */
 const useCheckoutPointsByMonths = () => {
   const { allCheckpoints = [], isFetched } = useServiceOnlyRewardsHistory();
   const currentEpochDetails = useCurrentEpochDetails(allCheckpoints[0]);
@@ -80,8 +78,6 @@ const useCheckoutPointsByMonths = () => {
   const checkpointsByMonths = useMemo(() => {
     if (!isFetched) return [];
 
-    // Create a working list of checkpoints and optionally add a synthetic
-    // checkpoint representing the currently running epoch (with accrued rewards)
     const combinedCheckpoints: Checkpoint[] = currentEpochDetails
       ? [currentEpochDetails, ...allCheckpoints]
       : [...allCheckpoints];
