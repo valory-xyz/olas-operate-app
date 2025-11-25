@@ -39,6 +39,10 @@ export const formatToMonthDay = (timeInMs: number) => {
   });
 };
 
+/**
+ * @returns formatted date in the format of 'Month YYYY'
+ * @example 1626825600 => 'July 2021'
+ */
 export const formatToMonthYear = (timeInMs: number) => {
   if (!isNumber(timeInMs)) return '--';
   return new Date(timeInMs).toLocaleDateString('en-US', {

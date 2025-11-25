@@ -43,70 +43,48 @@ type Months = Array<{
   totalMonthlyRewards: number;
 }>;
 
+const useCurrentEpochDetails = (lastCheckpoint?: Checkpoint) => {
+  const { stakingRewardsDetails } = useRewardContext();
+
+  return useMemo(() => {
+    if (!stakingRewardsDetails) return;
+    if (!lastCheckpoint) return;
+
+    const lastEpochEnd =
+      stakingRewardsDetails.tsCheckpoint >= lastCheckpoint.epochEndTimeStamp;
+    if (!lastEpochEnd) return;
+
+    const { epochLength: epochLengthStr, epoch } = lastCheckpoint;
+    const { tsCheckpoint, isEligibleForRewards, accruedServiceStakingRewards } =
+      stakingRewardsDetails;
+    const epochLength = Number(epochLengthStr);
+
+    return {
+      ...lastCheckpoint,
+      blockTimestamp: `${tsCheckpoint + epochLength}`,
+      earned: isEligibleForRewards,
+      reward: isEligibleForRewards ? Number(accruedServiceStakingRewards) : 0,
+      epoch: `${Number(epoch) + 1}`,
+      epochStartTimeStamp: tsCheckpoint,
+      epochEndTimeStamp: tsCheckpoint + epochLength,
+      transactionHash: '', // no tx hash for in-progress epoch
+    } satisfies Checkpoint;
+  }, [stakingRewardsDetails, lastCheckpoint]);
+};
+
 /** hook to get checkpoints grouped by months */
 const useCheckoutPointsByMonths = () => {
   const { allCheckpoints = [], isFetched } = useServiceOnlyRewardsHistory();
-  const { stakingRewardsDetails } = useRewardContext();
+  const currentEpochDetails = useCurrentEpochDetails(allCheckpoints[0]);
 
   const checkpointsByMonths = useMemo(() => {
     if (!isFetched) return [];
 
     // Create a working list of checkpoints and optionally add a synthetic
     // checkpoint representing the currently running epoch (with accrued rewards)
-    const combinedCheckpoints: Checkpoint[] = [...allCheckpoints];
-
-    try {
-      const isEligible = !!stakingRewardsDetails?.isEligibleForRewards;
-      const accrued = stakingRewardsDetails?.accruedServiceStakingRewards ?? 0;
-      const lastEpochEnd = stakingRewardsDetails?.tsCheckpoint; // seconds
-
-      if (lastEpochEnd && (isEligible || accrued > 0)) {
-        // parse livenessPeriod (BigNumber-like) to seconds when available
-        const livenessPeriodObj = stakingRewardsDetails?.livenessPeriod as
-          | { _hex?: string }
-          | undefined;
-        const livenessHex = livenessPeriodObj?._hex;
-        const epochLength = livenessHex
-          ? parseInt(livenessHex, 16)
-          : 24 * 60 * 60; // fallback to 1 day
-
-        const epochStartTimeStamp = Number(lastEpochEnd);
-        const epochEndTimeStamp = Number(lastEpochEnd) + Number(epochLength);
-
-        // try to infer a contract/epoch context from the most recent checkpoint
-        const recent = allCheckpoints[0] ?? allCheckpoints.at(-1);
-        const inferredContractName = recent?.contractName ?? null;
-        const inferredContractAddress = recent?.contractAddress ?? '';
-        const inferredEpoch = recent
-          ? String(Number(recent.epoch) + 1)
-          : String(Date.now());
-
-        const synthetic: Checkpoint = {
-          epoch: inferredEpoch,
-          rewards: [],
-          serviceIds: [],
-          blockTimestamp: String(epochEndTimeStamp),
-          transactionHash: '',
-          epochLength: String(epochLength),
-          contractAddress: inferredContractAddress,
-          contractName: inferredContractName,
-          epochEndTimeStamp,
-          epochStartTimeStamp,
-          reward: Number(accrued),
-          earned: Boolean(isEligible),
-        } as Checkpoint;
-
-        // Avoid duplicating if an equivalent epoch already exists
-        const exists = allCheckpoints.some(
-          (c) => c.epochEndTimeStamp === synthetic.epochEndTimeStamp,
-        );
-        if (!exists) combinedCheckpoints.unshift(synthetic);
-      }
-    } catch (e) {
-      // safe-guard: if parsing fails, just ignore synthetic checkpoint
-      // eslint-disable-next-line no-console
-      console.warn('Could not build synthetic current epoch checkpoint', e);
-    }
+    const combinedCheckpoints: Checkpoint[] = currentEpochDetails
+      ? [currentEpochDetails, ...allCheckpoints]
+      : [...allCheckpoints];
 
     if (!combinedCheckpoints.length) return [];
 
@@ -132,7 +110,7 @@ const useCheckoutPointsByMonths = () => {
       (a, b) =>
         b.checkpoints[0].epochEndTimeStamp - a.checkpoints[0].epochEndTimeStamp,
     );
-  }, [allCheckpoints, isFetched, stakingRewardsDetails]);
+  }, [allCheckpoints, isFetched, currentEpochDetails]);
 
   return checkpointsByMonths;
 };

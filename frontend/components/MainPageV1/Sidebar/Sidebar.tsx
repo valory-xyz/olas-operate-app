@@ -135,7 +135,7 @@ const AgentListMenu = ({
   const { selectedService } = useServices();
   const isAgentRunning =
     selectedService?.deploymentStatus ===
-      MiddlewareDeploymentStatusMap.DEPLOYED || true;
+    MiddlewareDeploymentStatusMap.DEPLOYED;
 
   return (
     <Menu
