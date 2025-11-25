@@ -1,4 +1,10 @@
-import { createContext, PropsWithChildren, useEffect, useState } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 const initialState = { isOnline: false };
 
@@ -30,4 +36,14 @@ export const OnlineStatusProvider = ({ children }: PropsWithChildren) => {
       {children}
     </OnlineStatusContext.Provider>
   );
+};
+
+export const useOnlineStatus = () => {
+  const context = useContext(OnlineStatusContext);
+  if (context === undefined) {
+    throw new Error(
+      'useOnlineStatus must be used within an OnlineStatusProvider',
+    );
+  }
+  return context;
 };
