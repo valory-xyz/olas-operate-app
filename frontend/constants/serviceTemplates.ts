@@ -283,7 +283,7 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 43,
       cost_of_bond: +parseEther(50),
-      monthly_gas_estimate: +parseEther(0.03),
+      monthly_gas_estimate: +parseEther(0.0035),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: +parseEther(0.0003257),
