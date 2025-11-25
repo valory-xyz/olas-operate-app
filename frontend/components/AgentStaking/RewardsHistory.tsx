@@ -71,7 +71,7 @@ const useCurrentEpochDetails = (lastCheckpoint?: Checkpoint) => {
 };
 
 /** Get checkpoints grouped by months */
-const useCheckoutPointsByMonths = () => {
+const useCheckpointsByMonths = () => {
   const { allCheckpoints = [], isFetched } = useServiceOnlyRewardsHistory();
   const currentEpochDetails = useCurrentEpochDetails(allCheckpoints[0]);
 
@@ -253,7 +253,7 @@ const NoRewards = () => (
 
 export const RewardsHistory = () => {
   const { isError, isFetched, refetch } = useRewardsHistory();
-  const checkpointsByMonths = useCheckoutPointsByMonths();
+  const checkpointsByMonths = useCheckpointsByMonths();
 
   if (!isFetched) return <LoadingHistory />;
   if (!checkpointsByMonths.length) return <NoRewards />;
