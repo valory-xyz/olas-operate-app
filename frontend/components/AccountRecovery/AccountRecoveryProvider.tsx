@@ -77,9 +77,10 @@ const AccountRecoveryContext = createContext<{
   /** Indicates if account recovery is available based on backup wallet */
   isRecoveryAvailable: boolean;
   /** Indicates if there are backup wallets across every chain */
-  hasBackupWallets: boolean;
+  hasBackupWalletsAcrossEveryChain: boolean;
+  /** Indicates if all backup owners are the same across chains */
+  areAllBackupOwnersSame: boolean;
   /** Current step in the account recovery flow */
-  currentStep: RecoverySteps;
   /** Address of the backup wallet used for recovery */
   backupWalletAddress?: Address;
   /** New master EOA address set during recovery */
@@ -95,15 +96,16 @@ const AccountRecoveryContext = createContext<{
   /** Total safe swaps required for recovery */
   safeSwapTransactions: SwapSafeTransaction[];
 
-  /** Callback to proceed to the next step in recovery */
+  // Navigation
+  currentStep: RecoverySteps;
   onNext: () => void;
-  /** Callback to go back to the previous step in recovery */
   onPrev: () => void;
 }>({
   isLoading: true,
   currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
   isRecoveryAvailable: false,
-  hasBackupWallets: false,
+  hasBackupWalletsAcrossEveryChain: false,
+  areAllBackupOwnersSame: false,
   updateNewMasterEoaAddress: () => {},
   isRecoveryFundingListLoading: false,
   recoveryFundingList: [],
@@ -185,8 +187,7 @@ export const AccountRecoveryProvider = ({
     backupWalletDetails?.areAllBackupOwnersSame &&
     backupWalletDetails?.hasBackupWalletsAcrossEveryChain
   );
-  const hasBackupWallets =
-    !!backupWalletDetails?.hasBackupWalletsAcrossEveryChain;
+
   const backupWalletAddress = isRecoveryAvailable
     ? (backupWalletDetails?.backupAddress as Address)
     : undefined;
@@ -234,7 +235,9 @@ export const AccountRecoveryProvider = ({
       value={{
         isLoading,
         isRecoveryAvailable,
-        hasBackupWallets,
+        areAllBackupOwnersSame: !!backupWalletDetails?.areAllBackupOwnersSame,
+        hasBackupWalletsAcrossEveryChain:
+          !!backupWalletDetails?.hasBackupWalletsAcrossEveryChain,
         currentStep,
         backupWalletAddress: isRecoveryAvailable
           ? (backupWalletDetails?.backupAddress as Address)

@@ -83,6 +83,7 @@ export const useWeb3AuthSwapOwner = ({
       if (isResultReceived.current) return;
 
       isResultReceived.current = true;
+      web3AuthSwapOwnerWindow?.close?.();
       onClose();
     };
 
@@ -90,7 +91,7 @@ export const useWeb3AuthSwapOwner = ({
     return () => {
       ipcRenderer?.removeListener?.(WEB3AUTH.WINDOW_CLOSED, handleWindowClosed);
     };
-  }, [ipcRenderer, onClose]);
+  }, [ipcRenderer, onClose, web3AuthSwapOwnerWindow]);
 
   return { openWeb3AuthSwapOwnerModel };
 };

@@ -9,11 +9,6 @@ let web3AuthSwapOwnerWindow = null;
 const getWeb3AuthOwnerSwapWindow = () => web3AuthSwapOwnerWindow;
 
 /**
- * Create the web3auth window for displaying web3auth modal for swapping owner
- * @param {string} baseUrl - Base URL for the window
- * @param {object} params - Transaction parameters
- */
-/**
  * Creates the Web3Auth Swap Owner window.
  * @param {string} baseUrl - Base URL for the window.
  * @param {{safeAddress: string, oldOwnerAddress: string, newOwnerAddress: string, backupOwnerAddress: string, chainId: number}} params - Transaction parameters.
@@ -22,7 +17,7 @@ const getWeb3AuthOwnerSwapWindow = () => web3AuthSwapOwnerWindow;
 const createWeb3AuthSwapOwnerWindow = async (baseUrl, params) => {
   if (
     !getWeb3AuthOwnerSwapWindow() ||
-    getWeb3AuthOwnerSwapWindow().isDestroyed
+    getWeb3AuthOwnerSwapWindow().isDestroyed()
   ) {
     web3AuthSwapOwnerWindow = new BrowserWindow({
       title: 'Web3Auth Swap Owner',
@@ -46,10 +41,9 @@ const createWeb3AuthSwapOwnerWindow = async (baseUrl, params) => {
     const queryParams = new URLSearchParams(params).toString();
     const web3AuthUrl = `${baseUrl}/web3auth-swap-owner?${queryParams}`;
 
-    logger.electron(`Web3Auth Swap Owner URL: ${web3AuthUrl}`);
     web3AuthSwapOwnerWindow.loadURL(web3AuthUrl).then(() => {
       logger.electron(
-        `Open Web3Auth Swap Owner window: ${web3AuthSwapOwnerWindow.webContents.getURL()}`,
+        `Open Web3Auth Swap Owner window: ${web3AuthSwapOwnerWindow.url}`,
       );
     });
   } else {

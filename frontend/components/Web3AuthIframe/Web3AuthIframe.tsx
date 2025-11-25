@@ -1,5 +1,5 @@
 import { Spin } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { WEB3AUTH_LOGIN_URL } from '@/constants';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -32,8 +32,8 @@ export const Web3AuthIframe = () => {
 
   const ref = useRef<HTMLIFrameElement>(null);
 
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
+  const handleEventListener = useCallback(
+    (event: MessageEvent) => {
       const web3authIframe = ref.current?.contentWindow;
       if (event.source !== web3authIframe) return;
 
@@ -62,11 +62,14 @@ export const Web3AuthIframe = () => {
         if (!backupWallet) return;
         web3AuthWindow?.authSuccess?.(backupWallet);
       }
-    };
+    },
+    [logEvent, web3AuthWindow],
+  );
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [logEvent, web3AuthWindow]);
+  useEffect(() => {
+    window.addEventListener('message', handleEventListener);
+    return () => window.removeEventListener('message', handleEventListener);
+  }, [logEvent, web3AuthWindow, handleEventListener]);
 
   return (
     <IframeContainer>

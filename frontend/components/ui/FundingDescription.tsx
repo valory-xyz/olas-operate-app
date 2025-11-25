@@ -1,5 +1,6 @@
-import { Flex, Typography } from 'antd';
+import { Button, Flex, Modal, ModalProps, Typography } from 'antd';
 import Image from 'next/image';
+import { useState } from 'react';
 import { TbWallet } from 'react-icons/tb';
 import styled, { CSSProperties } from 'styled-components';
 
@@ -9,7 +10,7 @@ import { Address } from '@/types';
 
 import { CopyAddress } from './CopyAddress';
 
-const { Text, Paragraph } = Typography;
+const { Text, Paragraph, Title } = Typography;
 
 const FundingDescriptionContainer = styled(Flex)`
   background-color: ${COLOR.BACKGROUND};
@@ -24,6 +25,48 @@ const ExternalWalletTooltip = () => (
     </Paragraph>
   </InfoTooltip>
 );
+
+const MODAL_STYLE: ModalProps['styles'] = {
+  content: { padding: 24, borderRadius: 24 },
+} as const;
+
+type ChainConfirmationMessageModalProps = {
+  chainName: string;
+  chainImage: string;
+  onClose: () => void;
+};
+
+const ChainConfirmationMessageModal = ({
+  chainName,
+  chainImage,
+  onClose,
+}: ChainConfirmationMessageModalProps) => {
+  return (
+    <Modal
+      open
+      onCancel={onClose}
+      footer={null}
+      closable={false}
+      centered
+      width={440}
+      styles={MODAL_STYLE}
+    >
+      <Flex vertical gap={24} align="center">
+        <Image width={60} height={60} src={chainImage} alt={chainName} />
+        <Title level={4} style={{ margin: 0 }}>
+          Send funds on {chainName}
+        </Title>
+        <Text type="secondary" className="text-center">
+          Sending funds on any other network will result in permanent loss. Make
+          sure you&apos;re sending on {chainName} before proceeding.
+        </Text>
+        <Button type="primary" onClick={onClose} block>
+          I Understand
+        </Button>
+      </Flex>
+    </Modal>
+  );
+};
 
 type FundingDescriptionProps = {
   chainName: string;
@@ -45,6 +88,11 @@ export const FundingDescription = ({
   address,
   style,
 }: FundingDescriptionProps) => {
+  const [
+    isChainConfirmationMessageModalOpen,
+    setIsChainConfirmationMessageModalOpen,
+  ] = useState(false);
+
   return (
     <FundingDescriptionContainer vertical gap={24} style={style}>
       <Flex vertical gap={8}>
@@ -67,12 +115,19 @@ export const FundingDescription = ({
       </Flex>
 
       <CopyAddress
-        chainName={chainName}
-        chainImage={chainImage}
-        isMainnet={isMainnet}
+        chainName={`${chainName} ${isMainnet ? 'Mainnet' : 'Chain'}`}
         address={address}
         to="To Pearl Wallet"
+        onCopied={() => setIsChainConfirmationMessageModalOpen(true)}
       />
+
+      {isChainConfirmationMessageModalOpen && chainName && chainImage && (
+        <ChainConfirmationMessageModal
+          chainName={chainName}
+          chainImage={chainImage}
+          onClose={() => setIsChainConfirmationMessageModalOpen(false)}
+        />
+      )}
     </FundingDescriptionContainer>
   );
 };

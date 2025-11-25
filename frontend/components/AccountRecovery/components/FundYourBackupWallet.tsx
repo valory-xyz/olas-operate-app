@@ -62,10 +62,7 @@ export const FundYourBackupWallet = () => {
               Your backup wallet address
             </Text>
             <AddressContainer vertical gap={20}>
-              <CopyAddress
-                address={backupWalletAddress}
-                showChainConfirmation={false}
-              />
+              <CopyAddress address={backupWalletAddress} />
             </AddressContainer>
           </Flex>
         )}

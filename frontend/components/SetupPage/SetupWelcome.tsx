@@ -129,7 +129,7 @@ enum MiddlewareAccountIsSetup {
   False,
   Loading,
   Error,
-  CannotLogin,
+  RecoveryNotComplete,
 }
 
 const WelcomeBack = () => (
@@ -276,7 +276,7 @@ export const SetupWelcome = () => {
     }
 
     if (hasActiveRecoverySwap) {
-      setIsSetup(MiddlewareAccountIsSetup.CannotLogin);
+      setIsSetup(MiddlewareAccountIsSetup.RecoveryNotComplete);
       setHasCheckedAccount(true);
       return;
     }
@@ -323,7 +323,7 @@ export const SetupWelcome = () => {
         return <SetupWelcomeCreate />;
       case MiddlewareAccountIsSetup.Loading:
         return <SetupLoader />;
-      case MiddlewareAccountIsSetup.CannotLogin:
+      case MiddlewareAccountIsSetup.RecoveryNotComplete:
         return <RecoveryProcessInProgress />;
       case MiddlewareAccountIsSetup.Error:
         return <SetupError />;

@@ -55,7 +55,7 @@ const SelectRecoveryMethod = () => {
 };
 
 const AccountRecoveryInner = () => {
-  const { isLoading, isRecoveryAvailable, hasBackupWallets, currentStep } =
+  const { isLoading, isRecoveryAvailable, currentStep } =
     useAccountRecoveryContext();
 
   const currentView = useMemo(() => {
@@ -73,13 +73,9 @@ const AccountRecoveryInner = () => {
     }
   }, [currentStep]);
 
-  return isLoading ? (
-    <Loader />
-  ) : isRecoveryAvailable ? (
-    currentView
-  ) : (
-    <RecoveryNotAvailable hasBackupWallets={hasBackupWallets} />
-  );
+  if (isLoading) return <Loader />;
+  if (!isRecoveryAvailable) return <RecoveryNotAvailable />;
+  return currentView;
 };
 
 export const AccountRecovery = () => (

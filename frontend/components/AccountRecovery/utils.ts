@@ -54,12 +54,10 @@ export const getBackupWalletStatus = (
 
       if (currentOwners.length !== compareOwners.length) return false;
 
-      const normalizedCurrentOwners = currentOwners
-        .map((address) => address.toLowerCase())
-        .sort();
-      const normalizedCompareOwners = compareOwners
-        .map((address) => address.toLowerCase())
-        .sort();
+      const normalizeOwners = (owners: string[]) =>
+        owners.map((address) => address.toLowerCase()).sort();
+      const normalizedCurrentOwners = normalizeOwners(currentOwners);
+      const normalizedCompareOwners = normalizeOwners(compareOwners);
 
       return normalizedCurrentOwners.every(
         (address, index) => address === normalizedCompareOwners[index],

@@ -83,14 +83,14 @@ export type RecoveryFundingRequirements = {
 };
 
 export type SwapOwnerTransactionSuccess = {
-  success: boolean;
+  success: true;
   txHash: string;
   chainId: number;
   safeAddress: string;
 };
 
 export type SwapOwnerTransactionFailure = {
-  success: boolean;
+  success: false;
   error: string;
   chainId: number;
   safeAddress: string;

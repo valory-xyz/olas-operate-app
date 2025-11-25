@@ -15,7 +15,7 @@ const getWeb3AuthWindow = () => web3AuthWindow;
  */
 /** @type {()=>Promise<BrowserWindow|undefined>} */
 const createWeb3AuthWindow = async (baseUrl) => {
-  if (!getWeb3AuthWindow() || getWeb3AuthWindow().isDestroyed) {
+  if (!getWeb3AuthWindow() || getWeb3AuthWindow().isDestroyed()) {
     web3AuthWindow = new BrowserWindow({
       title: 'Web3Auth',
       resizable: false,

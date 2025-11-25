@@ -873,7 +873,7 @@ ipcMain.handle('web3auth-address-received', (_event, address) =>
 /**
  * Web3Auth swap owner window handlers
  */
-ipcMain.handle('web3auth-swap-owner-window-show', (_, params) =>
+ipcMain.handle('web3auth-swap-owner-window-show', (_event, params) =>
   handleWeb3AuthSwapOwnerWindowShow(nextUrl(), params),
 );
 ipcMain.handle(

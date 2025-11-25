@@ -7,7 +7,6 @@ import {
   QRCode,
   Typography,
 } from 'antd';
-import Image from 'next/image';
 import { useCallback, useState } from 'react';
 import { TbCopy, TbQrcode, TbWallet } from 'react-icons/tb';
 
@@ -20,47 +19,6 @@ const { Title, Text } = Typography;
 const MODAL_STYLE: ModalProps['styles'] = {
   content: { padding: 24, borderRadius: 24 },
 } as const;
-
-type ChainConfirmationMessageModalProps = {
-  chainName: string;
-  chainImage: string;
-  onClose: () => void;
-  isMainnet?: boolean;
-};
-
-const ChainConfirmationMessageModal = ({
-  chainName,
-  chainImage,
-  onClose,
-  isMainnet,
-}: ChainConfirmationMessageModalProps) => {
-  return (
-    <Modal
-      open
-      onCancel={onClose}
-      footer={null}
-      closable={false}
-      centered
-      width={440}
-      styles={MODAL_STYLE}
-    >
-      <Flex vertical gap={24} align="center">
-        <Image width={60} height={60} src={chainImage} alt={chainName} />
-        <Title level={4} style={{ margin: 0 }}>
-          Send funds on {chainName} {isMainnet ? 'Mainnet' : 'Chain'}
-        </Title>
-        <Text type="secondary" className="text-center">
-          Sending funds on any other network will result in permanent loss. Make
-          sure you&apos;re sending on {chainName}{' '}
-          {isMainnet ? 'Mainnet' : 'Chain'} before proceeding.
-        </Text>
-        <Button type="primary" onClick={onClose} block>
-          I Understand
-        </Button>
-      </Flex>
-    </Modal>
-  );
-};
 
 type ScanQrCodeProps = { chainName?: string; address: Address };
 const ScanQrCode = ({ chainName, address }: ScanQrCodeProps) => {
@@ -118,11 +76,9 @@ const ScanQrCode = ({ chainName, address }: ScanQrCodeProps) => {
 
 type CopyAddressProps = {
   chainName?: string;
-  chainImage?: string;
-  isMainnet?: boolean;
   address: Address;
   to?: string;
-  showChainConfirmation?: boolean;
+  onCopied?: () => void;
 };
 
 /**
@@ -131,23 +87,16 @@ type CopyAddressProps = {
  */
 export const CopyAddress = ({
   chainName,
-  chainImage,
-  isMainnet = false,
   address,
-  showChainConfirmation = true,
   to,
+  onCopied,
 }: CopyAddressProps) => {
-  const [
-    isChainConfirmationMessageModalOpen,
-    setIsChainConfirmationMessageModalOpen,
-  ] = useState(false);
-
   const handleCopyAddress = useCallback(() => {
     copyToClipboard(address).then(() => message.success('Address copied!'));
-    if (showChainConfirmation) {
-      setIsChainConfirmationMessageModalOpen(true);
+    if (onCopied) {
+      onCopied();
     }
-  }, [address, showChainConfirmation]);
+  }, [address, onCopied]);
 
   return (
     <>
@@ -165,15 +114,6 @@ export const CopyAddress = ({
         </Button>
         <ScanQrCode chainName={chainName} address={address} />
       </Flex>
-
-      {isChainConfirmationMessageModalOpen && chainName && chainImage && (
-        <ChainConfirmationMessageModal
-          chainName={chainName}
-          chainImage={chainImage}
-          isMainnet={isMainnet}
-          onClose={() => setIsChainConfirmationMessageModalOpen(false)}
-        />
-      )}
     </>
   );
 };

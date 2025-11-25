@@ -7,6 +7,7 @@ import { LoadingOutlined } from '@/components/custom-icons';
 import { Alert } from '@/components/ui';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { useMessageApi } from '@/context/MessageProvider';
 import { RecoveryService } from '@/service/Recovery';
 import { Nullable } from '@/types';
 import {
@@ -42,7 +43,7 @@ const ApproveWalletDescription = () => (
   </>
 );
 
-const useCounts = (
+const useTxnsCount = (
   localTransactions: Array<{ status: SwapSafeTransaction['status'] }>,
 ) => {
   const getCount = useCallback(
@@ -80,10 +81,10 @@ const useInvalidateQueries = () => {
   const queryClient = useQueryClient();
   return useCallback(() => {
     queryClient.invalidateQueries({
-      queryKey: [
-        REACT_QUERY_KEYS.RECOVERY_STATUS_KEY,
-        REACT_QUERY_KEYS.RECOVERY_FUNDING_REQUIREMENTS_KEY,
-      ],
+      queryKey: REACT_QUERY_KEYS.RECOVERY_STATUS_KEY,
+    });
+    queryClient.invalidateQueries({
+      queryKey: REACT_QUERY_KEYS.RECOVERY_FUNDING_REQUIREMENTS_KEY,
     });
   }, [queryClient]);
 };
@@ -98,6 +99,7 @@ type LocalTransaction = {
 };
 
 export const ApproveWithBackupWallet = () => {
+  const message = useMessageApi();
   const invalidateQueries = useInvalidateQueries();
   const { safeSwapTransactions } = useAccountRecoveryContext();
   // track current transaction by stable id instead of array index
@@ -126,12 +128,11 @@ export const ApproveWithBackupWallet = () => {
     hasFailedTransactions,
     areTransactionsCompleted,
     hasPendingTransactions,
-  } = useCounts(localTransactions);
+  } = useTxnsCount(localTransactions);
 
-  const { isPending: isCompletingRecovery, mutateAsync: completeRecovery } =
-    useMutation({
-      mutationFn: async () => await RecoveryService.completeRecovery(),
-    });
+  const { mutateAsync: completeRecovery } = useMutation({
+    mutationFn: async () => await RecoveryService.completeRecovery(),
+  });
 
   // Initialize local transactions when safeSwapTransactions length changes
   const transactionsLengthRef = useRef(0);
@@ -169,8 +170,7 @@ export const ApproveWithBackupWallet = () => {
           const status: SwapSafeTransaction['status'] = result.success
             ? 'completed'
             : 'failed';
-          const error =
-            !result.success && 'error' in result ? result.error : undefined;
+          const error = 'error' in result ? result.error : undefined;
           return { ...tx, status, error };
         });
 
@@ -267,8 +267,13 @@ export const ApproveWithBackupWallet = () => {
   // Automatically complete recovery when all transactions are done
   useEffect(() => {
     if (!areTransactionsCompleted) return;
-    completeRecovery().then(() => setIsAccountRecovered(true));
-  }, [areTransactionsCompleted, completeRecovery]);
+    completeRecovery()
+      .then(() => setIsAccountRecovered(true))
+      .catch((error) => {
+        message.error('Failed to complete recovery. Please try again.');
+        console.error('Recovery completion error:', error);
+      });
+  }, [areTransactionsCompleted, completeRecovery, message]);
 
   return (
     <Flex align="center" justify="center" className="w-full mt-40">
@@ -278,7 +283,7 @@ export const ApproveWithBackupWallet = () => {
         style={{ width: 784 }}
       >
         <ApproveWalletDescription />
-        {(!isAccountRecovered || isCompletingRecovery) && (
+        {!isAccountRecovered && (
           <Flex
             vertical
             align="center"

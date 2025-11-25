@@ -8,6 +8,7 @@ import { SetupScreen } from '@/enums';
 import { useSetup } from '@/hooks';
 
 import { CardFlex, CardTitle, IconContainer } from '../../ui';
+import { useAccountRecoveryContext } from '../AccountRecoveryProvider';
 
 const { Paragraph } = Typography;
 
@@ -19,15 +20,11 @@ const RecoveryNotAvailableCard = styled(CardFlex)`
   }
 `;
 
-type RecoveryNotAvailableProps = {
-  hasBackupWallets?: boolean;
-};
-
-export const RecoveryNotAvailable = ({
-  hasBackupWallets,
-}: RecoveryNotAvailableProps) => {
+export const RecoveryNotAvailable = () => {
   const { goto } = useSetup();
   const { toggleSupportModal } = useSupportModal();
+  const { areAllBackupOwnersSame, hasBackupWalletsAcrossEveryChain } =
+    useAccountRecoveryContext();
 
   return (
     <Flex align="center" justify="center" vertical className="h-full">
@@ -40,9 +37,10 @@ export const RecoveryNotAvailable = ({
             <CardTitle className="m-0">Recovery Not Available</CardTitle>
             <Paragraph className="text-neutral-secondary text-center mb-32">
               This account has multiple Pearl Wallets.{' '}
-              {hasBackupWallets
-                ? 'The backup wallet is different across the Pearl Wallets.'
-                : 'The backup wallet is not set up for at least one Pearl Wallet.'}
+              {!hasBackupWalletsAcrossEveryChain &&
+                'The backup wallet is not set up for at least one Pearl Wallet.'}
+              {!areAllBackupOwnersSame &&
+                'The backup wallet is different across the Pearl Wallets.'}
             </Paragraph>
           </Flex>
         </Flex>
