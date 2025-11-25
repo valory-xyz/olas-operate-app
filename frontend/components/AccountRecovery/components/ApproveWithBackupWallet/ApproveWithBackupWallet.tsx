@@ -88,32 +88,37 @@ const useInvalidateQueries = () => {
   }, [queryClient]);
 };
 
+const makeTxnId = (txn: SwapSafeTransaction) =>
+  `${txn.chain}-${txn.safeAddress}-${txn.newMasterEoaAddress}`;
+
+type LocalTransaction = {
+  id: string;
+  status: 'pending' | 'completed' | 'failed';
+  error?: string;
+};
+
 export const ApproveWithBackupWallet = () => {
   const invalidateQueries = useInvalidateQueries();
   const { safeSwapTransactions } = useAccountRecoveryContext();
-  const [currentTxnIndex, setCurrentTxnIndex] =
-    useState<Nullable<number>>(null);
-  const currentTxnIndexRef = useRef<Nullable<number>>(null);
+  // track current transaction by stable id instead of array index
+  const [currentTxnId, setCurrentTxnId] = useState<Nullable<string>>(null);
+  const currentTxnIdRef = useRef<Nullable<string>>(null);
   const [isAccountRecovered, setIsAccountRecovered] = useState(false);
   const [isButtonLoading, setIsButtonLoading] = useState(false);
 
-  // Local state to track transaction statuses - only updates when length changes
+  // Local state to track transaction statuses by id
   const [localTransactions, setLocalTransactions] = useState<
-    Array<{
-      index: number;
-      status: 'pending' | 'completed' | 'failed';
-      error?: string;
-    }>
+    Array<LocalTransaction>
   >([]);
 
   // Keep ref in sync with state
   useEffect(() => {
-    currentTxnIndexRef.current = currentTxnIndex;
-  }, [currentTxnIndex]);
+    currentTxnIdRef.current = currentTxnId;
+  }, [currentTxnId]);
 
-  const setCurrentTxnIndexSafe = useCallback((idx: Nullable<number>) => {
-    currentTxnIndexRef.current = idx;
-    setCurrentTxnIndex(idx);
+  const setCurrentTxnIdSafe = useCallback((id: Nullable<string>) => {
+    currentTxnIdRef.current = id;
+    setCurrentTxnId(id);
   }, []);
 
   const {
@@ -130,14 +135,22 @@ export const ApproveWithBackupWallet = () => {
 
   // Initialize local transactions when safeSwapTransactions length changes
   const transactionsLengthRef = useRef(0);
+
   useEffect(() => {
     if (safeSwapTransactions.length === 0) return;
     if (safeSwapTransactions.length === transactionsLengthRef.current) return;
 
     transactionsLengthRef.current = safeSwapTransactions.length;
-    setLocalTransactions(
-      safeSwapTransactions.map((_, index) => ({ index, status: 'pending' })),
-    );
+    setLocalTransactions((prev) => {
+      const prevById = new Map(prev.map((p) => [p.id, p]));
+      return safeSwapTransactions.map((tx) => {
+        const id = makeTxnId(tx);
+        const existing = prevById.get(id);
+        return existing
+          ? { ...existing }
+          : { id, status: tx.status ?? 'pending' };
+      });
+    });
   }, [safeSwapTransactions]);
 
   const handleClose = useCallback(() => setIsButtonLoading(false), []);
@@ -147,12 +160,12 @@ export const ApproveWithBackupWallet = () => {
     (result: SwapOwnerTransactionSuccess | SwapOwnerTransactionFailure) => {
       setIsButtonLoading(false);
 
-      const activeIndex = currentTxnIndexRef.current;
-      if (activeIndex === null) return;
+      const activeId = currentTxnIdRef.current;
+      if (!activeId) return;
 
       setLocalTransactions((prev) => {
-        const updated = prev.map((tx, idx) => {
-          if (idx !== activeIndex) return tx;
+        const updated = prev.map((tx) => {
+          if (tx.id !== activeId) return tx;
           const status: SwapSafeTransaction['status'] = result.success
             ? 'completed'
             : 'failed';
@@ -162,16 +175,17 @@ export const ApproveWithBackupWallet = () => {
         });
 
         if (result.success) {
-          const nextPendingIdx = updated.findIndex(
-            (tx, idx) => idx > activeIndex && tx.status === 'pending',
-          );
-          setCurrentTxnIndexSafe(nextPendingIdx === -1 ? null : nextPendingIdx);
+          const currentIdx = updated.findIndex((t) => t.id === activeId);
+          const nextPending = updated
+            .slice(currentIdx + 1)
+            .find((t) => t.status === 'pending');
+          setCurrentTxnIdSafe(nextPending ? nextPending.id : null);
           invalidateQueries();
         }
         return updated;
       });
     },
-    [invalidateQueries, setCurrentTxnIndexSafe],
+    [invalidateQueries, setCurrentTxnIdSafe],
   );
 
   const { openWeb3AuthSwapOwnerModel } = useWeb3AuthSwapOwner({
@@ -183,66 +197,71 @@ export const ApproveWithBackupWallet = () => {
   const handleOpenWallet = useCallback(() => {
     setIsButtonLoading(true);
 
-    // If no current transaction, find first pending
-    let txIndex = currentTxnIndex;
-    if (txIndex === null) {
-      const firstPendingIndex = localTransactions.findIndex(
+    // Determine transaction id to open
+    let txId = currentTxnId;
+    if (!txId) {
+      const firstPending = localTransactions.find(
         ({ status }) => status === 'pending',
       );
-      if (firstPendingIndex !== -1) {
-        txIndex = firstPendingIndex;
-        setCurrentTxnIndexSafe(firstPendingIndex);
+      if (firstPending) {
+        txId = firstPending.id;
+        setCurrentTxnIdSafe(firstPending.id);
       } else {
         setIsButtonLoading(false);
         return;
       }
     }
 
-    const transaction = safeSwapTransactions[txIndex];
-    if (!transaction) {
+    const txIndex = safeSwapTransactions.findIndex(
+      (t) => makeTxnId(t) === txId,
+    );
+    if (txIndex === -1) {
       setIsButtonLoading(false);
       return;
     }
 
+    const transaction = safeSwapTransactions[txIndex];
     openWeb3AuthSwapOwnerModel(getParsedTransaction(transaction));
   }, [
-    currentTxnIndex,
+    currentTxnId,
     localTransactions,
     safeSwapTransactions,
     openWeb3AuthSwapOwnerModel,
-    setCurrentTxnIndexSafe,
+    setCurrentTxnIdSafe,
   ]);
 
   const handleRetry = useCallback(() => {
     setIsButtonLoading(true);
-    const firstFailedIndex = localTransactions.findIndex(
-      (tx) => tx.status === 'failed',
-    );
-    if (firstFailedIndex === -1) {
+    const firstFailed = localTransactions.find((tx) => tx.status === 'failed');
+    if (!firstFailed) {
       setIsButtonLoading(false);
       return;
     }
 
-    setCurrentTxnIndexSafe(firstFailedIndex);
+    setCurrentTxnIdSafe(firstFailed.id);
     // Reset the failed transaction to pending
     setLocalTransactions((prev) =>
-      prev.map((tx, idx) =>
-        idx === firstFailedIndex ? { ...tx, status: 'pending' } : tx,
+      prev.map((tx) =>
+        tx.id === firstFailed.id ? { ...tx, status: 'pending' } : tx,
       ),
     );
 
-    const transaction = safeSwapTransactions[firstFailedIndex];
-    if (!transaction) {
+    const txIndex = safeSwapTransactions.findIndex(
+      (t) => makeTxnId(t) === firstFailed.id,
+    );
+    if (txIndex === -1) {
       setIsButtonLoading(false);
       return;
     }
 
-    openWeb3AuthSwapOwnerModel(getParsedTransaction(transaction));
+    openWeb3AuthSwapOwnerModel(
+      getParsedTransaction(safeSwapTransactions[txIndex]),
+    );
   }, [
     localTransactions,
     safeSwapTransactions,
     openWeb3AuthSwapOwnerModel,
-    setCurrentTxnIndexSafe,
+    setCurrentTxnIdSafe,
   ]);
 
   // Automatically complete recovery when all transactions are done
@@ -294,7 +313,7 @@ export const ApproveWithBackupWallet = () => {
               disabled={!hasPendingTransactions}
               loading={isButtonLoading}
             >
-              {currentTxnIndex === null ? 'Start Approval' : 'Open Wallet'}
+              {currentTxnId === null ? 'Start Approval' : 'Open Wallet'}
             </Button>
           )}
         </Flex>

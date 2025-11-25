@@ -1,3 +1,4 @@
+import { Alert } from 'antd';
 import { useRouter } from 'next/router';
 
 import { Web3AuthSwapOwnerIframe } from '@/components/Web3AuthIframe/Web3AuthSwapOwnerIframe';
@@ -23,7 +24,10 @@ export default function Web3AuthSwapOwner() {
     !backupOwnerAddress ||
     !chainId
   ) {
-    return null;
+    console.error('Missing required parameters for Web3AuthSwapOwner');
+    return (
+      <Alert message="Invalid recovery parameters" type="error" showIcon />
+    );
   }
 
   return (
