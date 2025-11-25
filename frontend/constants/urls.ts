@@ -94,8 +94,6 @@ export const ON_RAMP_GATEWAY_URL = `https://proxy.transak.${process.env.NODE_ENV
 
 // pearl-api url
 export const PEARL_API_URL = 'https://pearl-api.olas.network';
-// export const PEARL_API_URL =
-// 'https://pearl-api-git-mohandas-ope-755-fe-full-account-7cca84-autonolas.vercel.app';
 
 // web3auth
 const WEB3AUTH_GATEWAY_URL = `${PEARL_API_URL}/web3auth`;

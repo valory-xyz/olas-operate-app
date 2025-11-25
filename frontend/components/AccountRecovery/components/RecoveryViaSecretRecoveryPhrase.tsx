@@ -22,7 +22,10 @@ export const RecoveryViaSecretRecoveryPhrase = () => {
           Enter the secret recovery phrase you should’ve backed up to a safe
           place.
         </Paragraph>
-        <Paragraph className="text-neutral-tertiary text-center text-sm mb-0">
+        <Paragraph
+          className="text-neutral-tertiary text-center text-sm mb-0 flex align-center"
+          style={{ height: 40 }}
+        >
           Recovery with a Secret Recovery Phrase coming soon.
         </Paragraph>
       </div>
