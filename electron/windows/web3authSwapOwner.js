@@ -106,12 +106,20 @@ const handleWeb3AuthWindowSwapOwnerClose = () => {
 const handleWeb3AuthSwapOwnerSuccess = (mainWindow, result) => {
   if (!result) return;
 
-  logger.electron(`web3auth-swap-owner-result: ${result}`);
-  mainWindow.webContents.send('web3auth-swap-owner-result', result);
+  logger.electron(`web3auth-swap-owner-success: ${result}`);
+  mainWindow.webContents.send('web3auth-swap-owner-success', result);
+};
+
+const handleWeb3AuthSwapOwnerFailure = (mainWindow, result) => {
+  if (!result) return;
+
+  logger.electron(`web3auth-swap-owner-failure: ${result}`);
+  mainWindow.webContents.send('web3auth-swap-owner-failure', result);
 };
 
 module.exports = {
   handleWeb3AuthSwapOwnerWindowShow,
   handleWeb3AuthWindowSwapOwnerClose,
   handleWeb3AuthSwapOwnerSuccess,
+  handleWeb3AuthSwapOwnerFailure,
 };

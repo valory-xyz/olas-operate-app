@@ -2,15 +2,22 @@ import { message } from 'antd';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { useElectronApi } from '@/hooks';
-import { SwapOwnerParams, SwapOwnerTransactionResult } from '@/types/Recovery';
+import {
+  SwapOwnerParams,
+  SwapOwnerTransactionFailure,
+  SwapOwnerTransactionSuccess,
+} from '@/types/Recovery';
 
 const WEB3AUTH = {
-  RESULT: 'web3auth-swap-owner-result',
+  SUCCESS: 'web3auth-swap-owner-success',
+  FAILURE: 'web3auth-swap-owner-failure',
   WINDOW_CLOSED: 'web3auth-swap-owner-window-closed',
 };
 
 type UseWeb3AuthSwapOwner = {
-  onFinish: (result: SwapOwnerTransactionResult) => void;
+  onFinish: (
+    result: SwapOwnerTransactionSuccess | SwapOwnerTransactionFailure,
+  ) => void;
   onClose: () => void;
 };
 
@@ -33,28 +40,39 @@ export const useWeb3AuthSwapOwner = ({
 
   // Listen for transaction result from web3auth swap owner window
   useEffect(() => {
-    const handleWeb3AuthSwapOwnerResult = (data: unknown) => {
+    const handleWeb3AuthSwapOwnerSuccess = (data: unknown) => {
       if (isResultReceived.current) return;
 
-      const result = data as SwapOwnerTransactionResult;
+      const result = data as SwapOwnerTransactionSuccess;
       if (!result) return;
 
       isResultReceived.current = true;
       onFinish(result);
-      if (result.success) {
-        web3AuthSwapOwnerWindow?.close?.();
-        message.success('Transaction completed successfully');
-      } else {
-        // do not close the window on failure to see the error details.
-        message.error('Transaction failed');
-      }
+      web3AuthSwapOwnerWindow?.close?.();
+      message.success('Transaction completed successfully');
     };
 
-    ipcRenderer?.on?.(WEB3AUTH.RESULT, handleWeb3AuthSwapOwnerResult);
+    const handleWeb3AuthSwapOwnerFailure = (data: unknown) => {
+      if (isResultReceived.current) return;
+
+      const result = data as SwapOwnerTransactionFailure;
+      if (!result) return;
+
+      isResultReceived.current = true;
+      onFinish(result);
+      message.error('Transaction failed');
+    };
+
+    ipcRenderer?.on?.(WEB3AUTH.SUCCESS, handleWeb3AuthSwapOwnerSuccess);
+    ipcRenderer?.on?.(WEB3AUTH.FAILURE, handleWeb3AuthSwapOwnerFailure);
     return () => {
       ipcRenderer?.removeListener?.(
-        WEB3AUTH.RESULT,
-        handleWeb3AuthSwapOwnerResult,
+        WEB3AUTH.SUCCESS,
+        handleWeb3AuthSwapOwnerSuccess,
+      );
+      ipcRenderer?.removeListener?.(
+        WEB3AUTH.FAILURE,
+        handleWeb3AuthSwapOwnerFailure,
       );
     };
   }, [ipcRenderer, onFinish, web3AuthSwapOwnerWindow]);

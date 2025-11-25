@@ -3,7 +3,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { WEB3AUTH_SWAP_OWNER_URL } from '@/constants';
 import { useElectronApi } from '@/hooks';
-import { SwapOwnerParams, SwapOwnerTransactionResult } from '@/types/Recovery';
+import {
+  SwapOwnerParams,
+  SwapOwnerTransactionFailure,
+  SwapOwnerTransactionSuccess,
+} from '@/types/Recovery';
 
 import { LoadingSpinner } from '../ui';
 import { Iframe, IframeContainer, SpinnerOverlay } from './styles';
@@ -12,7 +16,8 @@ type Web3AuthSwapOwnerIframeProps = SwapOwnerParams;
 
 enum Events {
   WEB3AUTH_SWAP_OWNER_MODAL_INITIALIZED = 'WEB3AUTH_SWAP_OWNER_MODAL_INITIALIZED',
-  WEB3AUTH_SWAP_OWNER_RESULT = 'WEB3AUTH_SWAP_OWNER_RESULT',
+  WEB3AUTH_SWAP_OWNER_SUCCESS = 'WEB3AUTH_SWAP_OWNER_SUCCESS',
+  WEB3AUTH_SWAP_OWNER_FAILURE = 'WEB3AUTH_SWAP_OWNER_FAILURE',
   WEB3AUTH_SWAP_OWNER_MODAL_CLOSED = 'WEB3AUTH_SWAP_OWNER_MODAL_CLOSED',
 }
 
@@ -20,9 +25,13 @@ type Web3AuthSwapOwnerModalInitialized = {
   event_id: Events.WEB3AUTH_SWAP_OWNER_MODAL_INITIALIZED;
 };
 
-type Web3AuthSwapOwnerResult = {
-  event_id: Events.WEB3AUTH_SWAP_OWNER_RESULT;
-} & SwapOwnerTransactionResult;
+type Web3AuthSwapOwnerSuccess = {
+  event_id: Events.WEB3AUTH_SWAP_OWNER_SUCCESS;
+} & SwapOwnerTransactionSuccess;
+
+type Web3AuthSwapOwnerFailure = {
+  event_id: Events.WEB3AUTH_SWAP_OWNER_FAILURE;
+} & SwapOwnerTransactionFailure;
 
 type Web3AuthSwapOwnerModalClosed = {
   event_id: Events.WEB3AUTH_SWAP_OWNER_MODAL_CLOSED;
@@ -32,7 +41,8 @@ type Web3AuthEvent = {
   event: string;
   data:
     | Web3AuthSwapOwnerModalInitialized
-    | Web3AuthSwapOwnerResult
+    | Web3AuthSwapOwnerSuccess
+    | Web3AuthSwapOwnerFailure
     | Web3AuthSwapOwnerModalClosed;
 };
 
@@ -97,10 +107,16 @@ export const Web3AuthSwapOwnerIframe = ({
         web3AuthSwapOwnerWindow?.close?.();
       }
 
-      if (eventDetails.data.event_id === Events.WEB3AUTH_SWAP_OWNER_RESULT) {
+      if (eventDetails.data.event_id === Events.WEB3AUTH_SWAP_OWNER_SUCCESS) {
         const result = eventDetails.data;
         if (!result) return;
-        web3AuthSwapOwnerWindow?.swapResult?.(result);
+        web3AuthSwapOwnerWindow?.swapSuccess?.(result);
+      }
+
+      if (eventDetails.data.event_id === Events.WEB3AUTH_SWAP_OWNER_FAILURE) {
+        const result = eventDetails.data;
+        if (!result) return;
+        web3AuthSwapOwnerWindow?.swapFailure?.(result);
       }
     };
 

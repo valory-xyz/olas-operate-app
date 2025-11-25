@@ -3,7 +3,10 @@ import { createContext, PropsWithChildren } from 'react';
 
 import { Address } from '@/types/Address';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
-import { SwapOwnerTransactionResult } from '@/types/Recovery';
+import {
+  SwapOwnerTransactionFailure,
+  SwapOwnerTransactionSuccess,
+} from '@/types/Recovery';
 
 type ElectronApiContextProps = {
   getAppVersion?: () => Promise<string>;
@@ -81,7 +84,8 @@ type ElectronApiContextProps = {
       chainId: number;
     }) => void;
     close?: () => void;
-    swapResult?: (result: SwapOwnerTransactionResult) => void;
+    swapSuccess?: (result: SwapOwnerTransactionSuccess) => void;
+    swapFailure?: (result: SwapOwnerTransactionFailure) => void;
   };
   termsAndConditionsWindow?: {
     show?: (hash?: string) => void;
@@ -126,7 +130,8 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   web3AuthSwapOwnerWindow: {
     show: () => {},
     close: () => {},
-    swapResult: () => {},
+    swapSuccess: () => {},
+    swapFailure: () => {},
   },
   termsAndConditionsWindow: {
     show: () => {},
@@ -194,8 +199,11 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         web3AuthSwapOwnerWindow: {
           show: getElectronApiFunction('web3AuthSwapOwnerWindow.show'),
           close: getElectronApiFunction('web3AuthSwapOwnerWindow.close'),
-          swapResult: getElectronApiFunction(
-            'web3AuthSwapOwnerWindow.swapResult',
+          swapSuccess: getElectronApiFunction(
+            'web3AuthSwapOwnerWindow.swapSuccess',
+          ),
+          swapFailure: getElectronApiFunction(
+            'web3AuthSwapOwnerWindow.swapFailure',
           ),
         },
         termsAndConditionsWindow: {

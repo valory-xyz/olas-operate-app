@@ -82,12 +82,18 @@ export type RecoveryFundingRequirements = {
   pending_backup_owner_swaps: Record<SupportedMiddlewareChain, Address[]>;
 };
 
-export type SwapOwnerTransactionResult = {
+export type SwapOwnerTransactionSuccess = {
   success: boolean;
-  txHash?: string;
-  error?: string;
-  chainId?: number;
-  safeAddress?: string;
+  txHash: string;
+  chainId: number;
+  safeAddress: string;
+};
+
+export type SwapOwnerTransactionFailure = {
+  success: boolean;
+  error: string;
+  chainId: number;
+  safeAddress: string;
 };
 
 export type SwapOwnerParams = {

@@ -12,7 +12,8 @@ import { useSetup } from '@/hooks';
 import { RecoveryService } from '@/service/Recovery';
 import { Nullable } from '@/types';
 import {
-  SwapOwnerTransactionResult,
+  SwapOwnerTransactionFailure,
+  SwapOwnerTransactionSuccess,
   SwapSafeTransaction,
 } from '@/types/Recovery';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
@@ -183,7 +184,7 @@ export const ApproveWithBackupWallet = () => {
 
   /** Handle transaction result from Web3Auth modal */
   const handleTransactionResult = useCallback(
-    (result: SwapOwnerTransactionResult) => {
+    (result: SwapOwnerTransactionSuccess | SwapOwnerTransactionFailure) => {
       setIsButtonLoading(false);
 
       const activeIndex = currentTxnIndexRef.current;
@@ -195,7 +196,8 @@ export const ApproveWithBackupWallet = () => {
           const status: SwapSafeTransaction['status'] = result.success
             ? 'completed'
             : 'failed';
-          const error = result.success ? undefined : result.error;
+          const error =
+            !result.success && 'error' in result ? result.error : undefined;
           return { ...tx, status, error };
         });
 
