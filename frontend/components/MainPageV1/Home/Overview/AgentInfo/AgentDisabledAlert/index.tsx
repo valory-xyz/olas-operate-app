@@ -26,7 +26,7 @@ export const AgentDisabledAlert = () => {
   } = useActiveStakingContractDetails();
   const { isInitialFunded } = useIsInitiallyFunded();
   const { goto } = usePageState();
-  const isAnotherAgentRunning = useAnotherAgentRunning();
+  const { isAnotherAgentRunning } = useAnotherAgentRunning();
 
   if (selectedAgentConfig.isUnderConstruction) {
     return <UnderConstructionAlert />;

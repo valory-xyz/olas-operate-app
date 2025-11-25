@@ -49,7 +49,7 @@ export const useServiceDeployment = () => {
     overrideSelectedServiceStatus,
   } = useServices();
   const serviceId = selectedService?.service_config_id;
-  const isAnotherAgentRunning = useAnotherAgentRunning();
+  const { isAnotherAgentRunning } = useAnotherAgentRunning();
 
   const { canStartAgent, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();

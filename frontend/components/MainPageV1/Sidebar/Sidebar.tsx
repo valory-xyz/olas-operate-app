@@ -27,12 +27,12 @@ import {
   APP_HEIGHT,
   COLOR,
   EvmChainId,
-  MiddlewareDeploymentStatusMap,
   SIDER_WIDTH,
 } from '@/constants';
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
+  useAnotherAgentRunning,
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,
   usePageState,
@@ -132,10 +132,7 @@ const AgentListMenu = ({
   selectedMenuKeys,
   onAgentSelect,
 }: AgentListMenuProps) => {
-  const { selectedService } = useServices();
-  const isAgentRunning =
-    selectedService?.deploymentStatus ===
-    MiddlewareDeploymentStatusMap.DEPLOYED;
+  const { runningAgentType } = useAnotherAgentRunning();
 
   return (
     <Menu
@@ -156,7 +153,7 @@ const AgentListMenu = ({
         label: (
           <Flex justify="space-between" align="center">
             {agent.name}{' '}
-            {isAgentRunning ? (
+            {runningAgentType === agent.agentType ? (
               <AgentRunningAnimation />
             ) : (
               <Image
