@@ -31,7 +31,7 @@ export const RecoveryViaBackupWallet = () => {
           </Button>
         ) : (
           <Paragraph
-            className="text-neutral-tertiary text-center text-sm mb-0 flex align-center"
+            className="flex align-center text-neutral-tertiary text-sm mb-0 justify-center"
             style={{ height: 40 }}
           >
             Recovery with a Backup Wallet coming soon.

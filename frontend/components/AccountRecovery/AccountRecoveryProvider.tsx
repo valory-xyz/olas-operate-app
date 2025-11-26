@@ -202,10 +202,7 @@ export const AccountRecoveryProvider = ({
 
     return extendedWallets.safe_chains.map(
       (chain: SupportedMiddlewareChain) => {
-        // generally only one safe is present per chain.
-        const safeAddress = keys(
-          recoveryFundingRequirements?.total_requirements[chain],
-        )[0];
+        const safeAddress = keys(extendedWallets.safes[chain])[0];
 
         if (!safeAddress) {
           throw new Error(
@@ -224,6 +221,7 @@ export const AccountRecoveryProvider = ({
     );
   }, [
     extendedWallets?.safe_chains,
+    extendedWallets?.safes,
     backupWalletAddress,
     oldMasterEoaAddress,
     newMasterEoaAddress,

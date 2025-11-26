@@ -104,6 +104,7 @@ export const ApproveWithBackupWallet = () => {
   const { safeSwapTransactions } = useAccountRecoveryContext();
   // track current transaction by stable id instead of array index
   const [currentTxnId, setCurrentTxnId] = useState<Nullable<string>>(null);
+  // Ref to keep track of current transaction id in callbacks
   const currentTxnIdRef = useRef<Nullable<string>>(null);
   const [isAccountRecovered, setIsAccountRecovered] = useState(false);
   const [isButtonLoading, setIsButtonLoading] = useState(false);
