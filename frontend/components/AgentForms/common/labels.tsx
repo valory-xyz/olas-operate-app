@@ -126,17 +126,11 @@ export const PersonaDescriptionSubHeader = ({
   </Flex>
 );
 
-export const PersonaDescriptionExtra = ({
-  isUpdatePage = false,
-}: {
-  isUpdatePage?: boolean;
-}) => (
+export const PersonaDescriptionExtra = () => (
   <Flex gap={6} align="center" className="mt-4 mb-8">
     <LuInfo size={16} style={{ flexShrink: 0 }} />
     <Text className="text-sm">
-      {isUpdatePage
-        ? 'You can update the persona description by writing to the agent in the chat. Just start the agent and visit the Agent Profile page.'
-        : 'You can update the persona description later if you want.'}
+      You can update the persona description later if you want.
     </Text>
   </Flex>
 );

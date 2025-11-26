@@ -3,15 +3,10 @@ import { isEqual, isUndefined, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import {
-  commonFieldProps,
   requiredFieldProps,
   validateMessages,
 } from '@/components/AgentForms/common/formUtils';
 import {
-  PersonaDescriptionDesc,
-  PersonaDescriptionExtra,
-  PersonaDescriptionLabel,
-  PersonaDescriptionSubHeader,
   XAccountAccessTokenLabel,
   XAccountAccessTokenSecretLabel,
   XAccountApiTokensDesc,
@@ -33,7 +28,6 @@ import { UpdateAgentContext } from '../context/UpdateAgentProvider';
 type AgentsFunUpdateFormValues = {
   xUsername: string;
   env_variables: {
-    PERSONA: string;
     TWEEPY_CONSUMER_API_KEY: string;
     TWEEPY_CONSUMER_API_KEY_SECRET: string;
     TWEEPY_BEARER_TOKEN: string;
@@ -43,7 +37,6 @@ type AgentsFunUpdateFormValues = {
 };
 
 const agentsFunEnvKeys = [
-  'PERSONA',
   'TWEEPY_CONSUMER_API_KEY',
   'TWEEPY_CONSUMER_API_KEY_SECRET',
   'TWEEPY_BEARER_TOKEN',
@@ -75,18 +68,6 @@ const AgentsFunUpdateFormContent = ({
       className="label-no-padding"
       requiredMark={RequiredMark}
     >
-      <PersonaDescriptionSubHeader />
-      <Form.Item
-        label={<PersonaDescriptionLabel />}
-        name={['env_variables', 'PERSONA']}
-        {...commonFieldProps}
-        validateFirst
-        extra={<PersonaDescriptionExtra isUpdatePage />}
-      >
-        <Input.TextArea size="small" rows={4} />
-      </Form.Item>
-      <div style={{ paddingBottom: 42 }} />
-
       <XAccountApiTokensSubHeader />
       <Form.Item
         label={<XAccountUsernameLabel />}
@@ -200,10 +181,7 @@ export const AgentsFunUpdateForm = ({
 
   return renderForm(
     <AgentsFunUpdateFormContent initialFormValues={initialValues} />,
-    <>
-      <PersonaDescriptionDesc />
-      <XAccountApiTokensDesc />
-    </>,
+    <XAccountApiTokensDesc />,
     { isUpdate: true, onBack: handleBackClick },
   );
 };
