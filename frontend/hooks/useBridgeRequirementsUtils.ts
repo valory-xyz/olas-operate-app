@@ -13,12 +13,13 @@ import { formatUnitsToNumber } from '@/utils/numberFormatters';
 export const useBridgeRequirementsUtils = (onRampChainId: EvmChainId) => {
   const { selectedAgentConfig } = useServices();
 
-  // eg, for Optimus, the receiving tokens are ETH, USDC, OLAS with amounts.
   const getReceivingTokens = useCallback(
     (bridgeParams: BridgeRefillRequirementsRequest | null) => {
       if (!bridgeParams) return [];
+      if (bridgeParams.bridge_requests.length === 0) return [];
 
-      const toChainId = asEvmChainId(selectedAgentConfig.middlewareHomeChainId);
+      const destinationChain = bridgeParams.bridge_requests[0].to.chain;
+      const toChainId = asEvmChainId(destinationChain);
       const toChainConfig = TOKEN_CONFIG[toChainId];
 
       return bridgeParams.bridge_requests.map((request) => {
@@ -30,7 +31,7 @@ export const useBridgeRequirementsUtils = (onRampChainId: EvmChainId) => {
         };
       });
     },
-    [selectedAgentConfig.middlewareHomeChainId],
+    [],
   );
 
   // Cannot bridge the token if the onRampChainId is the same as the middleware home chain.

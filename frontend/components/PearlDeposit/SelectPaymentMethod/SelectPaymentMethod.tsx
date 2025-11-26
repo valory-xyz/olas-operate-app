@@ -70,7 +70,6 @@ const OnRampMethod = ({
     useGetBridgeRequirementsParamsFromDeposit(onRampChainId, walletChainId);
 
   // Calculate total native token (ETH) needed to swap to all requested tokens
-  // Use onRampChainId (same as PayingReceivingTable)
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
@@ -117,7 +116,6 @@ const OnRampMethod = ({
     updateEthAmountToPay,
   ]);
 
-  // Check if there are any amounts to deposit
   const hasAmountsToDeposit = useMemo(() => {
     return values(amountsToDeposit).some(({ amount }) => Number(amount) > 0);
   }, [amountsToDeposit]);
@@ -128,6 +126,8 @@ const OnRampMethod = ({
     if (fiatAmount && fiatAmount < THRESHOLD_AMOUNT) return true;
     return false;
   }, [fiatAmount, hasAmountsToDeposit, isLoading]);
+
+  const shouldShowSkeleton = isLoading || (hasAmountsToDeposit && !fiatAmount);
 
   return (
     <SelectPaymentMethodCard>
@@ -141,7 +141,7 @@ const OnRampMethod = ({
 
           <RequirementsForOnRamp
             fiatAmount={fiatAmount ? fiatAmount.toFixed(2) : '0'}
-            isLoading={isLoading}
+            isLoading={shouldShowSkeleton}
           />
         </Flex>
 
@@ -256,16 +256,13 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
 
   const onPaymentMethodBack = useCallback(() => setPaymentMethod(null), []);
 
-  // If no chain is selected, we cannot proceed.
   if (!chainId) return null;
 
   const chainName = asEvmChainDetails(asMiddlewareChain(chainId)).displayName;
 
-  // TODO: enable chains based on feature flag
+  // For when users pick different chains in Deposit.tsx
   const isBuyDisabled =
-    chainId === EvmChainIdMap.Base ||
-    chainId === EvmChainIdMap.Mode ||
-    chainId === EvmChainIdMap.Gnosis;
+    chainId === EvmChainIdMap.Base || chainId === EvmChainIdMap.Mode;
 
   const shouldShowBuy = isOnRampingEnabled && !isBuyDisabled;
 

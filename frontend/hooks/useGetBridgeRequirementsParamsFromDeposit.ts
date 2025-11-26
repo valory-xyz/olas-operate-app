@@ -22,12 +22,17 @@ export const useGetBridgeRequirementsParamsFromDeposit = (
   onRampChainId: EvmChainId,
   walletChainId?: EvmChainId,
 ) => {
-  const { amountsToDeposit, masterSafeAddress, walletChainId: defaultWalletChainId } = usePearlWallet();
+  const {
+    amountsToDeposit,
+    masterSafeAddress,
+    walletChainId: defaultWalletChainId,
+  } = usePearlWallet();
   const { masterEoa } = useMasterWalletContext();
-  
+
   // Use walletChainId for token lookups (where tokens will be deposited)
   // Use onRampChainId for the bridge from chain (where ETH will be purchased)
-  const tokenLookupChainId = walletChainId || defaultWalletChainId || onRampChainId;
+  const tokenLookupChainId =
+    walletChainId || defaultWalletChainId || onRampChainId;
   const chainConfig = TOKEN_CONFIG[tokenLookupChainId];
   const fromMiddlewareChain = asMiddlewareChain(onRampChainId);
   const toMiddlewareChain = asMiddlewareChain(tokenLookupChainId);
@@ -85,8 +90,6 @@ export const useGetBridgeRequirementsParamsFromDeposit = (
       masterEoa?.address,
       masterSafeAddress,
       tokenLookupChainId,
-      onRampChainId,
-      defaultWalletChainId,
     ],
   );
 };

@@ -18,7 +18,10 @@ import { useServices } from '@/hooks/useServices';
 import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
 import { useTotalNativeTokenRequired } from '@/hooks/useTotalNativeTokenRequired';
 import { ReceivingTokens } from '@/types/Bridge';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
+import {
+  asEvmChainDetails,
+  asMiddlewareChain,
+} from '@/utils/middlewareHelpers';
 
 const { Text } = Typography;
 
@@ -265,7 +268,13 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     ],
   );
 
-  const toChain = asEvmChainDetails(selectedAgentConfig.middlewareHomeChainId);
+  // For deposit flow, use walletChainId; for setup flow, use agent's home chain
+  const toChain = useMemo(() => {
+    if (isDepositFlow && walletChainId) {
+      return asEvmChainDetails(asMiddlewareChain(walletChainId));
+    }
+    return asEvmChainDetails(selectedAgentConfig.middlewareHomeChainId);
+  }, [isDepositFlow, walletChainId, selectedAgentConfig.middlewareHomeChainId]);
 
   return (
     <TableWrapper>
