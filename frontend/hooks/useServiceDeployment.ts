@@ -28,7 +28,7 @@ import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 import { updateServiceIfNeeded } from '@/utils/service';
 
-import { useAnotherAgentRunning } from './useAnotherAgentRunning';
+import { useAgentRunning } from './useAgentRunning';
 
 /**
  * hook to handle service deployment and starting the service
@@ -49,7 +49,7 @@ export const useServiceDeployment = () => {
     overrideSelectedServiceStatus,
   } = useServices();
   const serviceId = selectedService?.service_config_id;
-  const { isAnotherAgentRunning } = useAnotherAgentRunning();
+  const { isAnotherAgentRunning } = useAgentRunning();
 
   const { canStartAgent, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();

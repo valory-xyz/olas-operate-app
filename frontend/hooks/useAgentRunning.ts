@@ -11,7 +11,7 @@ import { ServicesService } from '@/service/Services';
 
 import { useServices } from './useServices';
 
-export const useAnotherAgentRunning = () => {
+export const useAgentRunning = () => {
   const { services, selectedService, serviceStatusOverrides } = useServices();
 
   const { data: allDeployments } = useQuery({

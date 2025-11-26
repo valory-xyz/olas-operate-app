@@ -32,7 +32,7 @@ import {
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
-  useAnotherAgentRunning,
+  useAgentRunning,
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,
   usePageState,
@@ -132,7 +132,7 @@ const AgentListMenu = ({
   selectedMenuKeys,
   onAgentSelect,
 }: AgentListMenuProps) => {
-  const { runningAgentType } = useAnotherAgentRunning();
+  const { runningAgentType } = useAgentRunning();
 
   return (
     <Menu
