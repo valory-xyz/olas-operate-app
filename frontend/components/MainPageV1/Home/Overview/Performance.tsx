@@ -34,7 +34,7 @@ const MetricsCapturedTimestampAlert = ({
   timestamp: number;
 }) => (
   <Alert
-    message={`Data captured ${getTimeAgo(timestamp)}. Start the agent to see real-time performance.`}
+    message={`Data captured ${getTimeAgo(timestamp)}.`}
     type="info"
     centered
     showIcon

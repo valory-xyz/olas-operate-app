@@ -1,14 +1,15 @@
 import { Button, Flex, message } from 'antd';
 import { useBoolean } from 'usehooks-ts';
 
-import { SetupScreen, StakingProgramId } from '@/enums';
+import { StakingProgramId } from '@/constants';
+import { SetupScreen } from '@/enums';
 import {
   useBalanceAndRefillRequirementsContext,
   useServices,
   useSetup,
   useStakingProgram,
 } from '@/hooks';
-import { updateServiceStakingContract } from '@/utils';
+import { updateServiceIfNeeded } from '@/utils';
 
 import { useCanMigrate } from './hooks/useCanMigrate';
 
@@ -33,7 +34,7 @@ export const SelectStakingButton = ({
     isCurrentStakingProgram: false,
   });
 
-  const { selectedService } = useServices();
+  const { selectedService, selectedAgentType } = useServices();
   const { refetch } = useBalanceAndRefillRequirementsContext();
   const { setDefaultStakingProgramId } = useStakingProgram();
 
@@ -43,7 +44,11 @@ export const SelectStakingButton = ({
       try {
         // If service already exists, need to update the selected contract in it
         // for proper fund requirements calculation
-        await updateServiceStakingContract(selectedService, stakingProgramId);
+        await updateServiceIfNeeded(
+          selectedService,
+          selectedAgentType,
+          stakingProgramId,
+        );
         await refetch();
       } catch (error) {
         console.error(error);

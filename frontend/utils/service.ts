@@ -1,20 +1,19 @@
 import { isEmpty, isEqual } from 'lodash';
 
-import { AGENT_CONFIG } from '@/config/agents';
-import { SupportedMiddlewareChain } from '@/constants';
+import { StakingProgramId } from '@/constants';
 import { EnvProvisionMap } from '@/constants/envVariables';
 import {
   KPI_DESC_PREFIX,
   SERVICE_TEMPLATES,
 } from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
-import { StakingProgramId } from '@/enums/StakingProgram';
 import { ServicesService } from '@/service/Services';
 import { Address, DeepPartial, Service, ServiceTemplate } from '@/types';
 
 export const updateServiceIfNeeded = async (
   service: Service,
   agentType: AgentType,
+  updatedStakingProgramId?: StakingProgramId,
 ): Promise<void> => {
   const partialServiceTemplate: DeepPartial<ServiceTemplate> = {};
 
@@ -103,51 +102,20 @@ export const updateServiceIfNeeded = async (
 
   if (isEmpty(partialServiceTemplate)) return;
 
+  // If staking program is updated
+  if (updatedStakingProgramId) {
+    partialServiceTemplate.configurations = {
+      ...partialServiceTemplate.configurations,
+      [serviceHomeChain]: {
+        ...partialServiceTemplate.configurations?.[serviceHomeChain],
+        staking_program_id: updatedStakingProgramId,
+      },
+    };
+  }
+
   await ServicesService.updateService({
     serviceConfigId: service.service_config_id,
     partialServiceTemplate,
-  });
-};
-
-export const updateServiceStakingContract = async (
-  service: Service,
-  stakingProgramId: StakingProgramId,
-): Promise<void> => {
-  const serviceConfigId = service.service_config_id;
-  const serviceAgentConfig = Object.entries(AGENT_CONFIG).find(
-    ([_, config]) => config.servicePublicId === service.service_public_id,
-  );
-
-  if (!serviceAgentConfig) {
-    throw new Error(
-      `Agent config not found for provided service: ${service.service_public_id}`,
-    );
-  }
-
-  const agentType = serviceAgentConfig[0];
-  const serviceTemplate = SERVICE_TEMPLATES.find(
-    (template) => template.agentType === agentType,
-  );
-
-  if (!serviceTemplate) {
-    throw new Error(`Service template not found for ${agentType}`);
-  }
-
-  await ServicesService.updateService({
-    serviceConfigId,
-    partialServiceTemplate: {
-      configurations: {
-        ...Object.entries(serviceTemplate.configurations).reduce(
-          (acc, [middlewareChain]) => {
-            acc[middlewareChain as SupportedMiddlewareChain] = {
-              staking_program_id: stakingProgramId,
-            } as (typeof serviceTemplate.configurations)[SupportedMiddlewareChain];
-            return acc;
-          },
-          {} as DeepPartial<typeof serviceTemplate.configurations>,
-        ),
-      },
-    },
   });
 };
 

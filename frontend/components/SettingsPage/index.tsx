@@ -7,7 +7,7 @@ import { useBoolean } from 'usehooks-ts';
 
 import { AddressLink, Alert, CardSection, cardStyles } from '@/components/ui';
 import { COLOR, NA } from '@/constants';
-import { SettingsScreen } from '@/enums';
+import { SettingsScreenMap } from '@/constants/screen';
 import {
   useFeatureFlag,
   useMasterWalletContext,
@@ -214,7 +214,7 @@ export const Settings = () => {
   const { screen } = useSettings();
   const settingsScreen = useMemo(() => {
     switch (screen) {
-      case SettingsScreen.Main:
+      case SettingsScreenMap.Main:
         return <SettingsMain />;
       default:
         return null;
