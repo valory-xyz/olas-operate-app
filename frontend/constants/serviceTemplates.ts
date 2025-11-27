@@ -16,7 +16,7 @@ import { X402_ENABLED_FLAGS } from './x402';
 export const KPI_DESC_PREFIX = '[Pearl service]';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
+  agentType: AgentType.PredictTrader,
   name: 'Trader Agent', // should be unique across all services and not be updated
   hash: 'bafybeiemvi77itu5ut7ybtrf7pwuzqemj4xfw2amgy4ipmvky52jmzrg54',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,

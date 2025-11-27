@@ -29,7 +29,6 @@ type ChainTokenSymbol = {
  */
 const getNativeInitialGasRequirement = (
   config: ConfigurationTemplate,
-  evmChainId: EvmChainId,
 ): bigint => {
   const fundRequirements = config?.fund_requirements;
 
@@ -85,10 +84,7 @@ export const useInitialFundingRequirements = (agentType: AgentType) => {
         const nativeTokenSymbol = getNativeTokenSymbol(evmChainId);
         const nativeTokenConfig =
           NATIVE_TOKEN_CONFIG[evmChainId]?.[nativeTokenSymbol];
-        const monthlyGasEstimate = getNativeInitialGasRequirement(
-          config,
-          evmChainId,
-        );
+        const monthlyGasEstimate = getNativeInitialGasRequirement(config);
         const agentDeploymentGas = BigInt(AGENT_DEPLOYMENT_GAS_REQUIREMENT_WEI);
         const totalNativeAmount = formatUnitsToNumber(
           monthlyGasEstimate + safeCreationThreshold + agentDeploymentGas,

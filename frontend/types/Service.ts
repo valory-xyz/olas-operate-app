@@ -78,7 +78,7 @@ export type ConfigurationTemplate = {
   rpc?: string; // added on deployment
   agent_id: number;
   cost_of_bond: number;
-  fund_requirements: FundRequirements;
+  fund_requirements: FundRequirements; // provided by agent teams, used by BE to send initial funds
 };
 
 export type ServiceTemplate = {
