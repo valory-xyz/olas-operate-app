@@ -1,12 +1,12 @@
 import { isEmpty, isEqual } from 'lodash';
 
+import { StakingProgramId } from '@/constants';
 import { EnvProvisionMap } from '@/constants/envVariables';
 import {
   KPI_DESC_PREFIX,
   SERVICE_TEMPLATES,
 } from '@/constants/serviceTemplates';
 import { AgentType } from '@/enums/Agent';
-import { StakingProgramId } from '@/enums/StakingProgram';
 import { ServicesService } from '@/service/Services';
 import { Address, DeepPartial, Service, ServiceTemplate } from '@/types';
 

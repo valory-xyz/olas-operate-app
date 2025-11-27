@@ -1,8 +1,12 @@
 import { ethers } from 'ethers';
 
 import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from '@/config/tokens';
-import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
-import { AgentType, STAKING_PROGRAM_IDS, TokenSymbol } from '@/enums';
+import {
+  AgentMap,
+  EnvProvisionMap as EnvProvisionType,
+  STAKING_PROGRAM_IDS,
+} from '@/constants';
+import { AgentType, TokenSymbol } from '@/enums';
 import { ServiceTemplate } from '@/types';
 import { parseEther, parseUnits } from '@/utils';
 
