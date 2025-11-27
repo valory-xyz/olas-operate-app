@@ -14,12 +14,12 @@ exports.default = async function (context) {
     await Promise.all(
       troublesome_files.map((file) => {
         log(`Deleting ${file}`);
-        return fs.rm(file);
+        return fs.rm(file, { force: true }); // force: true won't throw if file doesn't exist
       }),
     );
     log('Cleaned up LICENSE files\n\n');
-    return context;
   } catch (e) {
     log(`afterPack issue: `, e);
   }
+  return context; // Always return context, even if cleanup fails
 };

@@ -38,10 +38,11 @@ const publishOptions = {
   provider: 'github',
   owner: 'valory-xyz',
   repo: 'olas-operate-app',
-  releaseType: 'release', // Changed from 'draft' - auto-update requires published releases
+  releaseType: 'draft', // Create as draft to allow manual publishing
   token: process.env.GH_TOKEN,
   private: false,
   // Note: latest-mac.yml is auto-generated when 'zip' target is included in mac build config
+  // IMPORTANT: Automatic updates only work for published releases, not drafts
 };
 
 module.exports = {
