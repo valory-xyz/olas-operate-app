@@ -2,17 +2,16 @@ import { useQuery } from '@tanstack/react-query';
 import { isNil } from 'lodash';
 import { useContext } from 'react';
 
-import { EvmChainId } from '@/constants';
-import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import {
+  EvmChainId,
+  FIVE_SECONDS_INTERVAL,
+  REACT_QUERY_KEYS,
+  StakingProgramId,
+} from '@/constants';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
-import { useServices } from '@/hooks/useServices';
-import { StakingProgramId } from '@/types';
-import { AgentConfig } from '@/types/Agent';
-import { StakingRewardsInfoSchema } from '@/types/Autonolas';
-import { Nullable } from '@/types/Util';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
-import { isValidServiceId } from '@/utils/service';
+import { useServices } from '@/hooks';
+import { AgentConfig, Nullable, StakingRewardsInfoSchema } from '@/types';
+import { asMiddlewareChain, isValidServiceId } from '@/utils';
 
 /**
  * Hook to fetch staking rewards details of a service on a given chain.

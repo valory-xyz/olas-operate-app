@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { useServices } from '@/hooks/useServices';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
-import { StakingProgramId } from '@/types';
+import { StakingProgramId } from '@/constants';
+import { useServices, useStakingProgram } from '@/hooks';
 
 export const useStakingContracts = () => {
   const { selectedAgentConfig, selectedAgentType } = useServices();

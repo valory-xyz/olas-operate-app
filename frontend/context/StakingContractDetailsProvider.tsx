@@ -10,14 +10,13 @@ import {
   useState,
 } from 'react';
 
-import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
-import { useService, useServices, useStakingProgram } from '@/hooks';
 import {
-  ServiceStakingDetails,
-  StakingContractDetails,
+  FIVE_SECONDS_INTERVAL,
+  REACT_QUERY_KEYS,
   StakingProgramId,
-} from '@/types';
+} from '@/constants';
+import { useService, useServices, useStakingProgram } from '@/hooks';
+import { ServiceStakingDetails, StakingContractDetails } from '@/types';
 import { isValidServiceId } from '@/utils';
 
 import { StakingProgramContext } from './StakingProgramProvider';

@@ -10,10 +10,10 @@ import styled from 'styled-components';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Divider } from '@/components/ui/Divider';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { COLOR } from '@/constants';
+import { COLOR, StakingProgramId } from '@/constants';
 import { useServices } from '@/hooks';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
-import { StakingContractDetails, StakingProgramId } from '@/types';
+import { StakingContractDetails } from '@/types';
 
 const { Text, Title } = Typography;
 

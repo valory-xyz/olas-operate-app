@@ -15,10 +15,10 @@ import {
   STAKING_PROGRAM_ADDRESS,
   STAKING_PROGRAMS,
 } from '@/config/stakingPrograms';
-import { CONTRACT_TYPE, PROVIDERS } from '@/constants';
+import { CONTRACT_TYPE, PROVIDERS, StakingProgramId } from '@/constants';
 import { EvmChainId } from '@/enums/Chain';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
-import { Address, Maybe, Nullable, StakingProgramId } from '@/types';
+import { Address, Maybe, Nullable } from '@/types';
 
 export const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 

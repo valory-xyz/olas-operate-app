@@ -2,15 +2,14 @@ import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { PROVIDERS } from '@/constants/providers';
+import { PROVIDERS, StakingProgramId } from '@/constants';
 import { EvmChainId } from '@/enums/Chain';
 import {
+  Address,
   ServiceStakingDetails,
   StakingContractDetails,
-  StakingProgramId,
   StakingRewardsInfo,
 } from '@/types';
-import { Address } from '@/types/Address';
 
 import {
   ONE_YEAR,

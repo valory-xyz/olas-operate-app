@@ -10,7 +10,6 @@ export * from './Epoch';
 export * from './Funding';
 export * from './Records';
 export * from './Service';
-export * from './stakingPrograms';
 export * from './TransactionInfo';
 export * from './Util';
 export * from './Wallet';
