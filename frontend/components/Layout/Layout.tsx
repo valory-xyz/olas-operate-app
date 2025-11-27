@@ -15,6 +15,7 @@ import { SetupScreen } from '@/enums/SetupScreen';
 import { useOnlineStatusContext, usePageState, useSetup } from '@/hooks';
 
 import { Modal } from '../ui';
+import { UpdateNotification } from '../UpdateNotification';
 import { WindowControls } from './WindowControls';
 
 const useScrollToTop = () => {
@@ -106,6 +107,9 @@ export const Layout = ({ children }: PropsWithChildren) => {
 
   return (
     <>
+      {/* Update notification modal */}
+      <UpdateNotification />
+
       {!isOnline && (
         <Modal
           open

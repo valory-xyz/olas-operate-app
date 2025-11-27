@@ -45,6 +45,12 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
+const {
+  setUpdateWindow,
+  checkForUpdates,
+  downloadUpdate,
+  quitAndInstall,
+} = require('./update');
 
 const { pki } = require('node-forge');
 
@@ -379,6 +385,52 @@ const createMainWindow = async () => {
   });
 
   ipcMain.handle('app-version', () => app.getVersion());
+
+  // Auto-update IPC handlers
+  ipcMain.handle('check-for-updates', async () => {
+    try {
+      logger.electron('Manual update check triggered');
+      return await checkForUpdates();
+    } catch (error) {
+      logger.electron('Error checking for updates:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('download-update', async () => {
+    try {
+      logger.electron('Update download triggered');
+      return await downloadUpdate();
+    } catch (error) {
+      logger.electron('Error downloading update:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('quit-and-install', () => {
+    logger.electron('Quit and install triggered');
+    quitAndInstall();
+  });
+
+  // Set the main window for update notifications
+  setUpdateWindow(mainWindow);
+
+  // Check for updates when app starts (after 3 seconds to let the app initialize)
+  setTimeout(() => {
+    checkForUpdates().catch((err) => {
+      logger.electron('Initial update check failed:', err);
+    });
+  }, 3000);
+
+  // Check for updates periodically (every 4 hours)
+  setInterval(
+    () => {
+      checkForUpdates().catch((err) => {
+        logger.electron('Periodic update check failed:', err);
+      });
+    },
+    4 * 60 * 60 * 1000,
+  );
 
   mainWindow.webContents.on('did-fail-load', () => {
     mainWindow.webContents.reloadIgnoringCache();

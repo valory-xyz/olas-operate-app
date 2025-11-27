@@ -49,6 +49,10 @@ const main = async () => {
             target: 'dmg',
             arch: [process.env.ARCH], // ARCH env is set during release CI
           },
+          {
+            target: 'zip',
+            arch: [process.env.ARCH], // Required for auto-update (generates latest-mac.yml)
+          },
         ],
         publish: publishOptions,
         category: 'public.app-category.utilities',
@@ -58,6 +62,8 @@ const main = async () => {
         entitlements: 'electron/entitlements.mac.plist',
         entitlementsInherit: 'electron/entitlements.mac.plist',
       },
+      // Enable afterPack hook for cleanup
+      afterPack: './electron/afterPack.js',
     },
   });
 };

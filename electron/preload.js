@@ -51,6 +51,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
   openPath: (filePath) => ipcRenderer.send('open-path', filePath),
   getAppVersion: () => ipcRenderer.invoke('app-version'),
+  // Auto-update methods
+  updates: {
+    checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+    downloadUpdate: () => ipcRenderer.invoke('download-update'),
+    quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
+    onUpdateAvailable: (callback) =>
+      ipcRenderer.on('update-available', (event, ...args) => callback(...args)),
+    onUpdateDownloaded: (callback) =>
+      ipcRenderer.on('update-downloaded', (event, ...args) => callback(...args)),
+    onDownloadProgress: (callback) =>
+      ipcRenderer.on('download-progress', (event, ...args) => callback(...args)),
+    onUpdateError: (callback) =>
+      ipcRenderer.on('update-error', (event, ...args) => callback(...args)),
+    removeUpdateListener: (channel, callback) =>
+      ipcRenderer.removeListener(channel, callback),
+  },
   onRampWindow,
   web3AuthWindow,
   termsAndConditionsWindow,

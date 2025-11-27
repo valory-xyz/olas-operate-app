@@ -29,11 +29,20 @@ const main = async () => {
       },
       nsis: {
         oneClick: false,
+        allowToChangeInstallationDirectory: true,
+        createDesktopShortcut: true,
+        createStartMenuShortcut: true,
       },
       win: {
         publish: publishOptions,
         icon: 'electron/assets/icons/splash-robot-head-dock.png',
         signtoolOptions: { sign: "./customSign.js", },
+        target: [
+          {
+            target: 'nsis',
+            arch: ['x64'],
+          },
+        ],
       },
       extraResources: [
         {
@@ -46,7 +55,6 @@ const main = async () => {
           to: '.env'
         },
       ],
-
     },
   });
 };
