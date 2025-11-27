@@ -166,7 +166,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const getBridgeRequirementsParamsFromDeposit =
     useGetBridgeRequirementsParamsFromDeposit(
       effectiveOnRampChainId,
-      destinationChainId,
+      destinationChainId || undefined,
     );
   const {
     isLoading: isNativeTokenLoading,
