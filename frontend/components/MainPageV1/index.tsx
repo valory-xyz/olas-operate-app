@@ -17,6 +17,7 @@ import { FundPearlWallet } from '../FundPearlWallet';
 import { PearlWallet } from '../PearlWallet';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { Home } from './Home';
+import { useNotifyOnAgentRewards } from './hooks/useNotifyOnAgentRewards';
 import { useNotifyOnNewEpoch } from './hooks/useNotifyOnNewEpoch';
 import { useScrollPage } from './hooks/useScrollPage';
 import { useSetupTrayIcon } from './hooks/useSetupTrayIcon';
@@ -55,6 +56,7 @@ const Content = styled(MainContent)<{ $isSplitScreenPage?: boolean }>`
 const usePageInitialization = () => {
   useSetupTrayIcon();
   useNotifyOnNewEpoch();
+  useNotifyOnAgentRewards();
 };
 
 export const Main = () => {

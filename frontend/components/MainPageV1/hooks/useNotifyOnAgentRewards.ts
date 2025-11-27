@@ -1,16 +1,14 @@
-import { PropsWithChildren, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { MiddlewareDeploymentStatusMap } from '@/constants';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
 
-const Notifications = {
-  AgentEarned:
-    "Your agent earned its rewards! It's now idle and will resume working next epoch.",
-};
+const REWARD_MESSAGE =
+  "Your agent earned its rewards! It's now idle and will resume working next epoch.";
 
-export const SystemNotificationTriggers = ({ children }: PropsWithChildren) => {
+export const useNotifyOnAgentRewards = () => {
   const electronApi = useElectronApi();
   const { selectedService } = useServices();
   const { isEligibleForRewards } = useRewardContext();
@@ -37,12 +35,10 @@ export const SystemNotificationTriggers = ({ children }: PropsWithChildren) => {
       isEligibleForRewards === true &&
       prevIsEligibleForRewards.current !== true
     ) {
-      electronApi.showNotification(Notifications.AgentEarned);
+      electronApi.showNotification(REWARD_MESSAGE);
     }
 
     // Always update ref to track current state
     prevIsEligibleForRewards.current = isEligibleForRewards;
   }, [electronApi, isEligibleForRewards, selectedService?.deploymentStatus]);
-
-  return children;
 };
