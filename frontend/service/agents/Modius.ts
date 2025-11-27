@@ -75,7 +75,7 @@ export abstract class ModiusService extends StakedAgentService {
     const requiredRequests =
       (Math.ceil(Math.max(livenessPeriod, nowInSeconds - tsCheckpoint)) *
         livenessRatio) /
-      1e18 +
+        1e18 +
       REQUESTS_SAFETY_MARGIN;
 
     const eligibleRequests = isServiceStaked

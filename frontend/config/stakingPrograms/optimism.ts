@@ -1,14 +1,14 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
+import {
+  OPTIMISM_STAKING_PROGRAM_IDS,
+  OptimismStakingProgramId,
+} from '@/constants';
 import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
-import {
-  Address,
-  OPTIMISM_STAKING_PROGRAM_IDS,
-  OptimismStakingProgramId,
-} from '@/types';
+import { Address } from '@/types';
 
 import { OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { StakingProgramConfig } from '.';
@@ -35,11 +35,11 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     stakingRequirements: { [TokenSymbol.OLAS]: 100 },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-      OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2
       ],
     contract: new MulticallContract(
       OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-      OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
@@ -53,11 +53,11 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-      OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3
       ],
     contract: new MulticallContract(
       OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-      OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
@@ -71,11 +71,11 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-      OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4
       ],
     contract: new MulticallContract(
       OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-      OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
