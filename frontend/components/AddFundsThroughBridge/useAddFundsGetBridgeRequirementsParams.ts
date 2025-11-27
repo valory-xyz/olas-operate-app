@@ -6,10 +6,9 @@ import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
 import { BridgeRequest } from '@/types/Bridge';
+import { getFromToken, getTokenDecimal } from '@/utils';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
-
-import { getFromToken, getTokenDecimal } from '../Bridge/utils';
 
 const fromChainConfig = ETHEREUM_TOKEN_CONFIG;
 

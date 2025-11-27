@@ -1,7 +1,7 @@
 import { entries } from 'lodash';
 import { useCallback } from 'react';
 
-import { Bridge, getFromToken, getTokenDecimal } from '@/components/Bridge';
+import { Bridge } from '@/components/Bridge';
 import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
 import {
   AddressZero,
@@ -14,7 +14,12 @@ import { useMasterWalletContext } from '@/hooks';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
-import { asEvmChainId, parseUnits } from '@/utils';
+import {
+  asEvmChainId,
+  getFromToken,
+  getTokenDecimal,
+  parseUnits,
+} from '@/utils';
 
 type BridgeCryptoOnProps = {
   onBack: () => void;

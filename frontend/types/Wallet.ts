@@ -38,6 +38,12 @@ export type TokenAmountDetails = {
  */
 export type TokenAmounts = Partial<Record<TokenSymbol, TokenAmountDetails>>;
 
+export type TokenRequirement = {
+  amount: number;
+  symbol: string;
+  iconSrc: string;
+};
+
 enum MiddlewareLedger {
   ETHEREUM = 0,
   SOLANA = 1,
