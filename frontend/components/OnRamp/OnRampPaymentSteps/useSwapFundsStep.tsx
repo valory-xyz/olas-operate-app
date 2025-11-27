@@ -28,10 +28,14 @@ const { Text } = Typography;
 /**
  * Hook to calculate the bridge requirements for the swapping process after on-ramp,
  */
-const useBridgeRequirements = (onRampChainId: EvmChainId) => {
+const useBridgeRequirements = (
+  onRampChainId: EvmChainId,
+  mode: 'onboard' | 'deposit',
+) => {
   const [bridgeFundingRequirements, setBridgeFundingRequirements] =
     useState<BridgeRefillRequirementsResponse | null>(null);
-  const { isOnRampingStepCompleted, isDepositFlow } = useOnRampContext();
+  const { isOnRampingStepCompleted } = useOnRampContext();
+  const isDepositFlow = mode === 'deposit';
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
   const {
@@ -194,7 +198,10 @@ const getQuoteFailedErrorState = (onRetry: () => void): SwapFundsStep => ({
 /**
  * Hook to manage the swap funds step in the on-ramping process.
  */
-export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
+export const useSwapFundsStep = (
+  onRampChainId: EvmChainId,
+  mode: 'onboard' | 'deposit',
+) => {
   const {
     isOnRampingStepCompleted,
     isSwappingFundsStepCompleted,
@@ -207,7 +214,7 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     receivingTokens,
     tokensToBeBridged,
     onRetry,
-  } = useBridgeRequirements(onRampChainId);
+  } = useBridgeRequirements(onRampChainId, mode);
 
   // State to hold the steps for the swap funds process
   const [swapFundsSteps, setSwapFundsSteps] = useState<BridgeStatuses>();

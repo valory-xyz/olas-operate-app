@@ -139,18 +139,25 @@ const ViewReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
   </Flex>
 );
 
-type PaymentTableProps = { onRampChainId: EvmChainId };
-export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
+type PaymentTableProps = {
+  onRampChainId: EvmChainId;
+  mode: 'onboard' | 'deposit';
+};
+export const PayingReceivingTable = ({
+  onRampChainId,
+  mode,
+}: PaymentTableProps) => {
   const { selectedAgentConfig } = useServices();
   const {
     isOnRampingStepCompleted,
     isTransactionSuccessfulButFundsNotReceived,
     updateUsdAmountToPay,
-    isDepositFlow,
     usdAmountToPay,
     ethAmountToPay,
   } = useOnRampContext();
   const { walletChainId } = usePearlWallet();
+
+  const isDepositFlow = mode === 'deposit';
 
   // Deposit flow: determine on-ramp chain from wallet chain using onRampChainMap
   // Onboarding flow: use provided onRampChainId

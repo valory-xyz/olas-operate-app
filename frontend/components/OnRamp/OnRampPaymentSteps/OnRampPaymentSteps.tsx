@@ -11,6 +11,7 @@ import { useSwapFundsStep } from './useSwapFundsStep';
 
 type OnRampPaymentStepsProps = {
   onRampChainId: EvmChainId;
+  mode: 'onboard' | 'deposit';
 };
 
 /**
@@ -22,6 +23,7 @@ type OnRampPaymentStepsProps = {
  */
 export const OnRampPaymentSteps = ({
   onRampChainId,
+  mode,
 }: OnRampPaymentStepsProps) => {
   const { isOnRampingStepCompleted, isSwappingFundsStepCompleted } =
     useOnRampContext();
@@ -38,8 +40,10 @@ export const OnRampPaymentSteps = ({
   const buyCryptoStep = useBuyCryptoStep();
 
   // step 2: Swap funds
-  const { tokensToBeTransferred, step: swapStep } =
-    useSwapFundsStep(onRampChainId);
+  const { tokensToBeTransferred, step: swapStep } = useSwapFundsStep(
+    onRampChainId,
+    mode,
+  );
 
   // step 3 & 4: Create Master Safe and transfer funds
   const {

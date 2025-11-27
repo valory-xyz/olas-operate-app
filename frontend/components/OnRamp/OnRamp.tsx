@@ -1,11 +1,13 @@
 import { Button, Flex, Modal, Spin, Typography } from 'antd';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { STEPS } from '@/components/PearlWallet/types';
 import { Alert, BackButton, CardFlex } from '@/components/ui';
+import { EvmChainId, onRampChainMap } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { Pages, SetupScreen } from '@/enums';
-import { useOnRampContext, usePageState, useSetup } from '@/hooks';
+import { usePageState, useServices, useSetup } from '@/hooks';
+import { asMiddlewareChain } from '@/utils';
 
 import { OnRampPaymentSteps } from './OnRampPaymentSteps/OnRampPaymentSteps';
 import { PayingReceivingTable } from './PayingReceivingTable/PayingReceivingTable';
@@ -31,10 +33,13 @@ const KeepOpenAlert = () => (
   />
 );
 
-const OnBack = () => {
+type OnBackProps = {
+  mode: 'onboard' | 'deposit';
+};
+
+const OnBack = ({ mode }: OnBackProps) => {
   const { goto: gotoSetup } = useSetup();
   const { goto: gotoPage } = usePageState();
-  const { isDepositFlow, setIsDepositFlow } = useOnRampContext();
   const [isDoNotLeavePageModalOpen, setIsDoNotLeavePageModalOpen] =
     useState(false);
 
@@ -47,15 +52,14 @@ const OnBack = () => {
   const handleLeavePage = useCallback(() => {
     setIsDoNotLeavePageModalOpen(false);
 
-    if (isDepositFlow) {
-      setIsDepositFlow(false);
+    if (mode === 'deposit') {
       gotoPage(Pages.PearlWallet);
       updateStep(STEPS.DEPOSIT);
     } else {
       gotoPage(Pages.Setup);
       gotoSetup(SetupScreen.FundYourAgent);
     }
-  }, [gotoSetup, gotoPage, isDepositFlow, setIsDepositFlow, updateStep]);
+  }, [gotoSetup, gotoPage, mode, updateStep]);
 
   const handleStayOnPage = useCallback(() => {
     setIsDoNotLeavePageModalOpen(false);
@@ -92,13 +96,33 @@ const OnBack = () => {
   );
 };
 
-export const OnRamp = () => {
-  const { networkId } = useOnRampContext();
+type OnRampProps = {
+  mode: 'onboard' | 'deposit';
+};
+
+export const OnRamp = ({ mode }: OnRampProps) => {
+  const { selectedAgentConfig } = useServices();
+  const { walletChainId } = usePearlWallet();
+
+  // Compute networkId based on mode
+  const networkId = useMemo<EvmChainId | null>(() => {
+    if (mode === 'deposit' && walletChainId) {
+      const destinationChainName = asMiddlewareChain(walletChainId);
+      return onRampChainMap[destinationChainName];
+    }
+    if (mode === 'onboard') {
+      const fromChainName = asMiddlewareChain(
+        selectedAgentConfig.evmHomeChainId,
+      );
+      return onRampChainMap[fromChainName];
+    }
+    return null;
+  }, [mode, walletChainId, selectedAgentConfig.evmHomeChainId]);
 
   return (
     <Flex justify="center" className="pt-36">
       <CardFlex $noBorder $onboarding className="p-8">
-        <OnBack />
+        <OnBack mode={mode} />
         <Title level={3} className="mt-16">
           Buy Crypto with USD
         </Title>
@@ -111,8 +135,8 @@ export const OnRamp = () => {
 
         {networkId ? (
           <Flex vertical gap={24} className="mt-32">
-            <PayingReceivingTable onRampChainId={networkId} />
-            <OnRampPaymentSteps onRampChainId={networkId} />
+            <PayingReceivingTable onRampChainId={networkId} mode={mode} />
+            <OnRampPaymentSteps onRampChainId={networkId} mode={mode} />
           </Flex>
         ) : (
           <Loader />

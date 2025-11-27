@@ -85,7 +85,7 @@ export const Main = () => {
       case Pages.FundPearlWallet:
         return <FundPearlWallet />;
       case Pages.OnRamp:
-        return <OnRamp />;
+        return <OnRamp mode="deposit" />;
       default:
         return <Home />;
     }
