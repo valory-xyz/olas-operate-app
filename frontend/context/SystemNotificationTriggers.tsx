@@ -25,12 +25,16 @@ export const SystemNotificationTriggers = ({ children }: PropsWithChildren) => {
     if (
       selectedService?.deploymentStatus !==
       MiddlewareDeploymentStatusMap.DEPLOYED
-    )
+    ) {
       return;
+    }
+
     // ignore if eligibility is not yet defined
     if (isEligibleForRewards === undefined) return;
+
     // ignore if agent was previously eligible and is still eligible
     if (prevIsEligibleForRewards.current && isEligibleForRewards) return;
+
     // ignore if eligibility has not changed
     if (prevIsEligibleForRewards.current === isEligibleForRewards) return;
 
@@ -45,6 +49,7 @@ export const SystemNotificationTriggers = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     if (!electronApi.showNotification) return;
+
     // Show notification when agent earns rewards
     handleAgentEarned();
   }, [electronApi, handleAgentEarned, isEligibleForRewards]);
