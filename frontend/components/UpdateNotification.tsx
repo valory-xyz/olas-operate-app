@@ -41,7 +41,6 @@ export const UpdateNotification: React.FC = () => {
 
     // Listen for update available
     const handleUpdateAvailable = (info: UpdateInfo) => {
-      console.log('Update available:', info);
       setUpdateState((prev) => ({
         ...prev,
         available: true,
@@ -58,7 +57,6 @@ export const UpdateNotification: React.FC = () => {
 
     // Listen for download progress
     const handleDownloadProgress = (progress: ProgressInfo) => {
-      console.log('Download progress:', progress);
       setUpdateState((prev) => ({
         ...prev,
         progress,
@@ -67,7 +65,6 @@ export const UpdateNotification: React.FC = () => {
 
     // Listen for update downloaded
     const handleUpdateDownloaded = (info: UpdateInfo) => {
-      console.log('Update downloaded:', info);
       setUpdateState((prev) => ({
         ...prev,
         downloading: false,
