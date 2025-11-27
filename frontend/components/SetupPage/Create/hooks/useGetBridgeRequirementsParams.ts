@@ -39,7 +39,11 @@ const useCombineNativeTokenRequirements = (
   transferDirection: TransferDirection,
 ) => {
   const { selectedAgentConfig } = useServices();
-  const { masterEoa, getMasterSafeOf } = useMasterWalletContext();
+  const {
+    masterEoa,
+    getMasterSafeOf,
+    isFetched: isMasterWalletsFetched,
+  } = useMasterWalletContext();
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
 
@@ -50,9 +54,13 @@ const useCombineNativeTokenRequirements = (
 
   return useCallback(
     (bridgeRequests: BridgeRefillRequirementsRequest['bridge_requests']) => {
-      if (isBalancesAndFundingRequirementsLoading) return;
-      if (!refillRequirements) return;
-      if (!masterEoa?.address) return;
+      if (
+        isBalancesAndFundingRequirementsLoading ||
+        !refillRequirements ||
+        !masterEoa?.address ||
+        !isMasterWalletsFetched
+      )
+        return;
 
       const nativeTokenIndex = bridgeRequests.findIndex((req) =>
         areAddressesEqual(req[transferDirection].token, AddressZero),
@@ -86,10 +94,11 @@ const useCombineNativeTokenRequirements = (
       return bridgeRequests;
     },
     [
-      masterEoa,
-      masterSafe,
-      refillRequirements,
       isBalancesAndFundingRequirementsLoading,
+      refillRequirements,
+      masterEoa,
+      isMasterWalletsFetched,
+      masterSafe,
       transferDirection,
     ],
   );

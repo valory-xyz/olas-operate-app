@@ -165,7 +165,11 @@ export const useGetRefillRequirements = ({
     resetQueryCache,
     isBalancesAndFundingRequirementsLoading,
   } = useBalanceAndRefillRequirementsContext();
-  const { masterEoa, getMasterSafeOf } = useMasterWalletContext();
+  const {
+    masterEoa,
+    getMasterSafeOf,
+    isFetched: isMasterWalletsFetched,
+  } = useMasterWalletContext();
   const { selectedAgentConfig, selectedAgentType } = useServices();
 
   const [isDummyServiceCreated, setIsDummyServiceCreated] = useState(false);
@@ -185,8 +189,13 @@ export const useGetRefillRequirements = ({
     (
       requirements: AddressBalanceRecord | MasterSafeBalanceRecord | undefined,
     ) => {
-      if (!masterEoa || isBalancesAndFundingRequirementsLoading) return [];
-      if (!requirements) return [];
+      if (
+        isBalancesAndFundingRequirementsLoading ||
+        !requirements ||
+        !masterEoa ||
+        !isMasterWalletsFetched
+      )
+        return [];
 
       const masterSafeRequirements = masterSafe
         ? (requirements as AddressBalanceRecord)?.[masterSafe.address]
@@ -227,6 +236,7 @@ export const useGetRefillRequirements = ({
     },
     [
       isBalancesAndFundingRequirementsLoading,
+      isMasterWalletsFetched,
       masterEoa,
       masterSafe,
       selectedAgentConfig,
