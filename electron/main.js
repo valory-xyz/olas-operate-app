@@ -345,9 +345,6 @@ const createMainWindow = async () => {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
-      // Disable background throttling to allow React to re-render
-      // and trigger notifications even when window is hidden/unfocused
-      backgroundThrottling: false,
     },
   });
 

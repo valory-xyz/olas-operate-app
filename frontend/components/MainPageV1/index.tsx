@@ -51,7 +51,8 @@ const Content = styled(MainContent)<{ $isSplitScreenPage?: boolean }>`
 `;
 
 /**
- * Top-level hook to initialize page-level settings, electron window listeners, etc.
+ * Top-level hook to initialize page-level settings, electron window listeners,
+ * notifications etc.
  */
 const usePageInitialization = () => {
   useSetupTrayIcon();
