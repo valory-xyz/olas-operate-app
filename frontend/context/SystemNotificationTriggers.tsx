@@ -1,5 +1,4 @@
-import { PropsWithChildren, useCallback, useEffect, useRef } from 'react';
-import { useInterval } from 'usehooks-ts';
+import { PropsWithChildren, useEffect, useRef } from 'react';
 
 import { MiddlewareDeploymentStatusMap } from '@/constants';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -19,7 +18,7 @@ export const SystemNotificationTriggers = ({ children }: PropsWithChildren) => {
   const prevIsEligibleForRewards = useRef<boolean>();
 
   // Notify the user when the agent earns rewards
-  const handleAgentEarned = useCallback(() => {
+  useEffect(() => {
     if (!electronApi.showNotification) return;
 
     // ignore if agent is not running
@@ -44,18 +43,6 @@ export const SystemNotificationTriggers = ({ children }: PropsWithChildren) => {
     // Always update ref to track current state
     prevIsEligibleForRewards.current = isEligibleForRewards;
   }, [electronApi, isEligibleForRewards, selectedService?.deploymentStatus]);
-
-  useEffect(() => {
-    if (!electronApi.showNotification) return;
-
-    // Show notification when agent earns rewards
-    handleAgentEarned();
-  }, [electronApi, handleAgentEarned, isEligibleForRewards]);
-
-  useInterval(() => {
-    if (!electronApi.showNotification) return;
-    // electronApi.showNotification('Interval check running');
-  }, 10000); // check every 15 seconds
 
   return children;
 };
