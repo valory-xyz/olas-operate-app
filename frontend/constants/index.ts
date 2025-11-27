@@ -2,6 +2,7 @@ export * from './address';
 export * from './agent';
 export * from './chains';
 export * from './colors';
+export * from './contracts';
 export * from './deployment';
 export * from './env';
 export * from './envVariables';

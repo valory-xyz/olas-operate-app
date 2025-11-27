@@ -2,8 +2,8 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { SERVICE_REGISTRY_L2_ABI } from '@/abis/serviceRegistryL2';
 import { SERVICE_REGISTRY_TOKEN_UTILITY_ABI } from '@/abis/serviceRegistryTokenUtility';
+import { ContractTypeMap } from '@/constants';
 import { EvmChainId } from '@/enums/Chain';
-import { ContractTypeMap } from '@/types/Contract';
 
 type ContractsByType = {
   [contractType: string]: MulticallContract;

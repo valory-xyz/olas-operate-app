@@ -5,7 +5,6 @@ export * from './Autonolas';
 export * from './BackupWallet';
 export * from './Balance';
 export * from './Bridge';
-export * from './Contract';
 export * from './ElectronApi';
 export * from './Epoch';
 export * from './Funding';

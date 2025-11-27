@@ -4,11 +4,11 @@ import { NftFilled } from '@/components/custom-icons';
 import { OLAS_CONTRACTS } from '@/config/olasContracts';
 import {
   BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN,
+  ContractTypeMap,
   EvmChainId,
   UNICODE_SYMBOLS,
 } from '@/constants';
 import { useService, useServices } from '@/hooks';
-import { ContractTypeMap } from '@/types/Contract';
 import { asMiddlewareChain } from '@/utils';
 
 const useAgentNft = (configId?: string, chainId?: EvmChainId) => {
