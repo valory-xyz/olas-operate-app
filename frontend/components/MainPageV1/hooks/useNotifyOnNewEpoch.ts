@@ -8,6 +8,7 @@ import {
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
+import { Nullable } from '@/types';
 
 const START_YOUR_AGENT_MESSAGE =
   'Start your agent to avoid missing rewards and getting evicted.';
@@ -40,51 +41,74 @@ export const useNotifyOnNewEpoch = () => {
   } = useActiveStakingContractDetails();
   const epoch = activeStakingContractDetails?.epochCounter;
 
-  const [epochStatusNotification, setEpochStatusNotification] =
-    useState<EpochStatusNotification | null>(null);
+  const [currentEpoch, setCurrentEpoch] = useState<Nullable<number>>(null);
+
+  console.log('[useNotifyOnNewEpoch] render', {
+    currentEpoch,
+  });
 
   useEffect(() => {
-    if (!showNotification) return;
+    if (!showNotification) {
+      console.log('[useNotifyOnNewEpoch] return 1');
+      return;
+    }
 
     // if agent config is under construction
-    if (selectedAgentConfig.isUnderConstruction) return;
+    if (selectedAgentConfig.isUnderConstruction) {
+      console.log('[useNotifyOnNewEpoch] return 2');
+      return;
+    }
 
     // if initial funding is not done
-    if (isInitialFunded === false) return;
+    // if (isInitialFunded === false) {
+    //   console.log('[useNotifyOnNewEpoch] return 3');
+    //   return;
+    // }
 
     // if active staking contract info is still loading
-    if (isSelectedStakingContractDetailsLoading) return;
+    if (isSelectedStakingContractDetailsLoading) {
+      console.log('[useNotifyOnNewEpoch] return 4');
+      return;
+    }
 
     if (
       !isSelectedStakingContractDetailsLoading &&
       isServiceStaked === false &&
       hasEnoughServiceSlots === false
     ) {
+      console.log('[useNotifyOnNewEpoch] return 5');
       return;
     }
 
     // if agent is evicted or not eligible for staking, no need to notify
-    if (isAgentEvicted && !isEligibleForStaking) return;
+    if (isAgentEvicted && !isEligibleForStaking) {
+      console.log('[useNotifyOnNewEpoch] return 6');
+      return;
+    }
 
     // if agent is running, no need to show notification
-    if (isServiceRunning) return;
+    if (isServiceRunning) {
+      console.log('[useNotifyOnNewEpoch] return 7');
+      return;
+    }
 
     // if current epoch has already earned rewards
-    if (isEligibleForRewards === true) return;
+    if (isEligibleForRewards === true) {
+      console.log('[useNotifyOnNewEpoch] return 8');
+      return;
+    }
 
     // latest epoch is not loaded yet
-    if (!epoch) return;
-
-    // first time, just load the epoch status
-    if (!epochStatusNotification) {
-      setEpochStatusNotification({ lastEpoch: epoch, isNotified: false });
+    if (!epoch) {
+      console.log('[useNotifyOnNewEpoch] return 9');
       return;
     }
 
     // if latest epoch is not the last known epoch, notify once and update
-    if (epochStatusNotification.lastEpoch !== epoch) {
+    if (currentEpoch !== epoch) {
       showNotification(START_YOUR_AGENT_MESSAGE);
-      setEpochStatusNotification({ lastEpoch: epoch, isNotified: true });
+      setCurrentEpoch(epoch);
+      console.log('[useNotifyOnNewEpoch] return 11');
       return;
     }
   }, [
@@ -92,7 +116,7 @@ export const useNotifyOnNewEpoch = () => {
     isServiceRunning,
     isAgentEvicted,
     isEligibleForStaking,
-    epochStatusNotification,
+    currentEpoch,
     epoch,
     selectedAgentConfig.isUnderConstruction,
     isInitialFunded,
