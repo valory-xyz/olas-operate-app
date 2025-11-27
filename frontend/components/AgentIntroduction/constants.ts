@@ -43,7 +43,7 @@ export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     title: 'Your AI portfolio manager',
-    desc: 'Modius collects real-time market data from CoinGecko and autonomously manages your investments using Balancer, Sturdy and Velodrome — delivering hands-free portfolio growth. Requires ETH and USDC on Mode as initial investments.',
+    desc: 'Modius collects real-time market data from CoinGecko and autonomously manages your investments using Balancer, Sturdy and Velodrome. Requires ETH and USDC on Mode as initial investments.',
     imgSrc: 'setup-agent-modius-1',
   },
   {
@@ -59,7 +59,7 @@ export const OPTIMUS_ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     title: 'Your AI portfolio manager',
-    desc: 'Optimus collects real-time market data from CoinGecko and autonomously manages your investments using Balancer, Sturdy and Uniswap — delivering hands-free portfolio growth. Requires ETH and USDC on Optimism as initial investments.',
+    desc: 'Optimus collects real-time market data from CoinGecko and autonomously manages your investments using Balancer, Sturdy and Uniswap. Requires ETH and USDC on Optimism as initial investments.',
     imgSrc: 'setup-agent-optimus-1',
   },
   {
