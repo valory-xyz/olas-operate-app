@@ -29,7 +29,7 @@ export const ContractDeprecatedAlert = () => {
             Switch to one of the available contracts to start your agent.
           </Text>
           <Button size="small" onClick={handleSwitchContract}>
-            Complete Setup
+            Change Staking Contract
           </Button>
         </>
       }
