@@ -7,7 +7,7 @@ import { EnvProvision } from '@/constants/envVariables';
 import { AgentType } from '@/enums/Agent';
 
 import { Address } from './Address';
-import { StakingProgramId } from './StakingProgram';
+import { StakingProgramId } from './stakingPrograms';
 
 export type ServiceConfigId = string;
 
