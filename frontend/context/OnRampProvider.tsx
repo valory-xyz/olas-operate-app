@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react';
 
-import { EvmChainId, EvmChainIdMap, onRampChainMap } from '@/constants';
+import { EvmChainId, onRampChainMap } from '@/constants';
 import { Pages } from '@/enums';
 import {
   useElectronApi,
@@ -121,10 +121,13 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     // For deposit flow, always use Base
     if (isDepositFlow) {
       const chainDetails = asEvmChainDetails(
-        asMiddlewareChain(EvmChainIdMap.Base),
+        asMiddlewareChain(
+          onRampChainMap[asMiddlewareChain(selectedAgentConfig.evmHomeChainId)],
+        ),
       );
       return {
-        networkId: EvmChainIdMap.Base,
+        networkId:
+          onRampChainMap[asMiddlewareChain(selectedAgentConfig.evmHomeChainId)],
         networkName: chainDetails.name,
         cryptoCurrencyCode: chainDetails.symbol,
       };

@@ -77,21 +77,21 @@ export const useTotalFiatFromNativeToken = (
 ) => {
   const { selectedAgentConfig } = useServices();
 
-  // Network for Transak quote:
-  // DestinationChainId used for deposit flow
-  // Agent's home chain for onboarding flow
-  let networkName: SupportedMiddlewareChain;
+  // Compute the correct middleware chain deterministically.
+  // Using an IIFE + const avoids accidental mutation and keeps the
+  // "deposit vs onboarding" logic self-contained and predictable.
+  const networkName: SupportedMiddlewareChain = (() => {
+    // Deposit flow: use the wallet's chain to determine the on-ramp chain.
+    if (destinationChainId) {
+      const destinationChainName = asMiddlewareChain(destinationChainId);
+      const onRampChainId = onRampChainMap[destinationChainName];
+      return asMiddlewareChain(onRampChainId);
+    }
 
-  if (destinationChainId) {
-    // Deposit flow: destinationChainId is wallet chain
-    const destinationChainName = asMiddlewareChain(destinationChainId);
-    const onRampChainId = onRampChainMap[destinationChainName];
-    networkName = asMiddlewareChain(onRampChainId);
-  } else {
-    // Onboarding flow: determine on-ramp chain from agent's home chain
+    // Onboarding flow: fallback to the agent's home chain to derive on-ramp.
     const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-    networkName = asMiddlewareChain(onRampChainMap[fromChainName]);
-  }
+    return asMiddlewareChain(onRampChainMap[fromChainName]);
+  })();
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(

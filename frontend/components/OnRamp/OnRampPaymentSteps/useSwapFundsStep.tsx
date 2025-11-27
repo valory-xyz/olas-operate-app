@@ -227,6 +227,7 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
   useEffect(() => {
     if (isSwappingFundsStepCompleted) return;
 
+    // For cases where we on-ramp native tokens directly to chain, we don't need bridging
     if (isOnRampingStepCompleted && tokensToBeBridged.length === 0) {
       updateIsSwappingStepCompleted(true);
       return;

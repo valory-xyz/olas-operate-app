@@ -7,7 +7,7 @@ import { YouPayContainer } from '@/components/PearlWallet';
 import { RequirementsForOnRamp } from '@/components/SetupPage/FundYourAgent/components/TokensRequirements';
 import { Alert, BackButton, CardFlex, CardTitle } from '@/components/ui';
 import { getNativeTokenSymbol } from '@/config/tokens';
-import { COLOR, EvmChainId, EvmChainIdMap } from '@/constants';
+import { COLOR, EvmChainId, EvmChainIdMap, onRampChainMap } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { Pages } from '@/enums';
 import {
@@ -46,10 +46,9 @@ const OnRampMethod = ({
   const { amountsToDeposit } = usePearlWallet();
   const { updateUsdAmountToPay, updateEthAmountToPay } = useOnRampContext();
   // Base as source chain for on-ramp
-  const onRampChainId = EvmChainIdMap.Base;
-  const chainId = walletChainId;
+  const onRampChainId = onRampChainMap[asMiddlewareChain(walletChainId)];
 
-  const nativeTokenSymbol = getNativeTokenSymbol(chainId);
+  const nativeTokenSymbol = getNativeTokenSymbol(walletChainId);
   const isOnlyNativeToken = useMemo(() => {
     const depositEntries = entries(amountsToDeposit).filter(
       ([, { amount }]) => amount && Number(amount) > 0,
@@ -59,10 +58,9 @@ const OnRampMethod = ({
     );
   }, [amountsToDeposit, nativeTokenSymbol]);
 
-  const directNativeTokenAmount = useMemo(() => {
-    if (!isOnlyNativeToken) return undefined;
-    return amountsToDeposit[nativeTokenSymbol]?.amount;
-  }, [isOnlyNativeToken, amountsToDeposit, nativeTokenSymbol]);
+  const directNativeTokenAmount = isOnlyNativeToken
+    ? amountsToDeposit[nativeTokenSymbol]?.amount
+    : undefined;
 
   // Get bridge requirements from amountsToDeposit for deposit flow
   // walletChainId as destination where tokens are deposited
@@ -127,7 +125,8 @@ const OnRampMethod = ({
     return false;
   }, [fiatAmount, hasAmountsToDeposit, isLoading]);
 
-  const shouldShowSkeleton = isLoading || (hasAmountsToDeposit && !fiatAmount);
+  const isRequirementsLoading =
+    isLoading || (hasAmountsToDeposit && !fiatAmount);
 
   return (
     <SelectPaymentMethodCard>
@@ -141,14 +140,14 @@ const OnRampMethod = ({
 
           <RequirementsForOnRamp
             fiatAmount={fiatAmount ? fiatAmount.toFixed(2) : '0'}
-            isLoading={shouldShowSkeleton}
+            isLoading={isRequirementsLoading}
           />
         </Flex>
 
         <Flex vertical className="mt-auto">
           {isFiatAmountTooLow ? (
             <Alert
-              message="The minimum value of crypto to buy with your credit card is $5."
+              message={`The minimum value of crypto to buy with your credit card is ${THRESHOLD_AMOUNT}.`}
               type="info"
               showIcon
               className="text-sm"

@@ -13,6 +13,7 @@ import { formatUnitsToNumber } from '@/utils/numberFormatters';
 export const useBridgeRequirementsUtils = (onRampChainId: EvmChainId) => {
   const { selectedAgentConfig } = useServices();
 
+  // eg, for Optimus, the receiving tokens are ETH, USDC, OLAS with amounts.
   const getReceivingTokens = useCallback(
     (bridgeParams: BridgeRefillRequirementsRequest | null) => {
       if (!bridgeParams) return [];

@@ -25,7 +25,7 @@ import { asMiddlewareChain, formatUnitsToNumber } from '@/utils';
  */
 export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,
-  queryKey: 'preview' | 'onboarding' = 'onboarding',
+  queryKey: 'preview' | 'onboarding' | 'depositing',
   customGetBridgeRequirementsParams?: (
     isForceUpdate?: boolean,
   ) => BridgeRefillRequirementsRequest | null,
@@ -50,6 +50,32 @@ export const useTotalNativeTokenRequired = (
     customGetBridgeRequirementsParams,
   });
 
+  // Determine destination chain and on-ramp network based on flow type
+  const { destinationChainName, toOnRampNetworkName } = useMemo(() => {
+    const firstBridgeRequest = bridgeParams?.bridge_requests[0];
+
+    // Deposit flow: derive on-ramp chain from the bridge request
+    if (firstBridgeRequest && customGetBridgeRequirementsParams) {
+      return {
+        destinationChainName: firstBridgeRequest.to.chain as MiddlewareChain,
+        toOnRampNetworkName: firstBridgeRequest.from.chain as MiddlewareChain,
+      };
+    }
+
+    // Onboarding flow: fallback to agent's home chain → determine on-ramp
+    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
+    return {
+      destinationChainName: fromChainName,
+      toOnRampNetworkName: asMiddlewareChain(
+        onRampChainMap[fromChainName],
+      ) as MiddlewareChain,
+    };
+  }, [
+    bridgeParams?.bridge_requests,
+    customGetBridgeRequirementsParams,
+    selectedAgentConfig.evmHomeChainId,
+  ]);
+
   /**
    * Calculates the total native token required for the bridge.
    *
@@ -62,25 +88,6 @@ export const useTotalNativeTokenRequired = (
     if (!bridgeParams) return;
     if (!bridgeFundingRequirements) return;
     if (!masterEoa?.address) return;
-
-    // Deposit flow: on-ramp chain from bridge request from.chain
-    // Onboarding flow: use agent home chain
-    const firstBridgeRequest = bridgeParams.bridge_requests[0];
-    let toOnRampNetworkName: MiddlewareChain;
-    let destinationChainName: MiddlewareChain | undefined;
-
-    if (firstBridgeRequest && customGetBridgeRequirementsParams) {
-      destinationChainName = firstBridgeRequest.to.chain as MiddlewareChain;
-      toOnRampNetworkName = firstBridgeRequest.from.chain as MiddlewareChain;
-    } else {
-      const fromChainName = asMiddlewareChain(
-        selectedAgentConfig.evmHomeChainId,
-      );
-      destinationChainName = fromChainName;
-      toOnRampNetworkName = asMiddlewareChain(
-        onRampChainMap[fromChainName],
-      ) as MiddlewareChain;
-    }
 
     /**
      * Calculate native token amount needed from direct requirements (not from bridging)
@@ -108,23 +115,29 @@ export const useTotalNativeTokenRequired = (
 
     // Remaining token from the bridge quote.
     // e.g, For optimus, OLAS and USDC are bridged to ETH
-    let bridgeRefillRequirements =
-      bridgeFundingRequirements.bridge_refill_requirements[toOnRampNetworkName];
-    let nativeTokenFromBridgeQuote =
-      bridgeRefillRequirements?.[masterEoa.address]?.[AddressZero];
-
-    if (
-      !nativeTokenFromBridgeQuote &&
-      customGetBridgeRequirementsParams &&
-      destinationChainName
-    ) {
-      bridgeRefillRequirements =
+    const { nativeTokenFromBridgeQuote } = (() => {
+      let bridgeRefillRequirements =
         bridgeFundingRequirements.bridge_refill_requirements[
-          destinationChainName
+          toOnRampNetworkName
         ];
-      nativeTokenFromBridgeQuote =
+      let nativeTokenFromBridgeQuote =
         bridgeRefillRequirements?.[masterEoa.address]?.[AddressZero];
-    }
+
+      if (
+        !nativeTokenFromBridgeQuote &&
+        customGetBridgeRequirementsParams &&
+        destinationChainName
+      ) {
+        bridgeRefillRequirements =
+          bridgeFundingRequirements.bridge_refill_requirements[
+            destinationChainName
+          ];
+        nativeTokenFromBridgeQuote =
+          bridgeRefillRequirements?.[masterEoa.address]?.[AddressZero];
+      }
+
+      return { nativeTokenFromBridgeQuote };
+    })();
 
     if (!nativeTokenFromBridgeQuote) return;
 
@@ -140,7 +153,8 @@ export const useTotalNativeTokenRequired = (
     bridgeParams,
     bridgeFundingRequirements,
     masterEoa?.address,
-    selectedAgentConfig.evmHomeChainId,
+    destinationChainName,
+    toOnRampNetworkName,
     customGetBridgeRequirementsParams,
     onRampChainId,
   ]);

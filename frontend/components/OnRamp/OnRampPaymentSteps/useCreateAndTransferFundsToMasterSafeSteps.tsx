@@ -44,7 +44,6 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     if (!isSwapCompleted) return;
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
-    // Don't create if safe already exists or was just created
     if (isSafeCreated) return;
 
     createMasterSafe();

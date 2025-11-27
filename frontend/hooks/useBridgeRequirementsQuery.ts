@@ -63,8 +63,10 @@ export const useBridgeRequirementsQuery = ({
     if (customGetBridgeRequirementsParams) {
       return customGetBridgeRequirementsParams(isForceUpdate);
     }
-    if (!defaultGetBridgeRequirementsParams) return null;
-    return defaultGetBridgeRequirementsParams(isForceUpdate);
+    if (defaultGetBridgeRequirementsParams) {
+      return defaultGetBridgeRequirementsParams(isForceUpdate);
+    }
+    return null;
   }, [
     isForceUpdate,
     customGetBridgeRequirementsParams,

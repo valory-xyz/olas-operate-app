@@ -31,8 +31,15 @@ export const useGetBridgeRequirementsParamsFromDeposit = (
 
   // Use walletChainId for token lookups (where tokens will be deposited)
   // Use onRampChainId for the bridge from chain (where ETH will be purchased)
-  const tokenLookupChainId =
-    walletChainId || defaultWalletChainId || onRampChainId;
+  const tokenLookupChainId = (() => {
+    if (walletChainId) {
+      return walletChainId;
+    }
+    if (defaultWalletChainId) {
+      return defaultWalletChainId;
+    }
+    return onRampChainId;
+  })();
   const chainConfig = TOKEN_CONFIG[tokenLookupChainId];
   const fromMiddlewareChain = asMiddlewareChain(onRampChainId);
   const toMiddlewareChain = asMiddlewareChain(tokenLookupChainId);

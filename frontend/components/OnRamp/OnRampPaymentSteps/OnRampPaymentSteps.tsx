@@ -57,7 +57,7 @@ export const OnRampPaymentSteps = ({
 
   const [isSetupCompleted, setIsSetupCompleted] = useState(false);
   useEffect(() => {
-    if (masterSafeExists) return;
+    if (!masterSafeExists) return;
     if (!isOnRampingStepCompleted) return;
     if (!isSwappingFundsStepCompleted) return;
     if (!isMasterSafeCreatedAndFundsTransferred) return;
