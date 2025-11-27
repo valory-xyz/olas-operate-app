@@ -160,7 +160,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   | 'service_version'
   | 'agent_release'
 > = {
-  hash: 'bafybeieefbf4xfnd5exs5cyapl7sesbkll7tfxe5rynvxsjphlmdutpleq',
+  hash: 'bafybeicz3v5fssqp6yfxpxew32utlrrc2tpo6ibnfjtn47uyl7hideaqxy',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
