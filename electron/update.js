@@ -1,6 +1,6 @@
 const { updateFeedOptions } = require('./constants');
 const { autoUpdater } = require('electron-updater');
-const logger = require('./logger');
+const { logger } = require('./logger');
 
 const updateOptions = {
   ...updateFeedOptions,

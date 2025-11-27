@@ -285,6 +285,7 @@ export const Sidebar = () => {
             </Flex>
           </div>
 
+          <h1>I am José Mourinho - old one!!!</h1>
           <div>
             <BackupSeedPhraseAlert />
             <UpdateAvailableAlert />

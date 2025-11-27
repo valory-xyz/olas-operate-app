@@ -108,7 +108,6 @@ export const Layout = ({ children }: PropsWithChildren) => {
   return (
     <>
       {/* Update notification modal */}
-      <UpdateNotification />
 
       {!isOnline && (
         <Modal
@@ -136,6 +135,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
         </DraggableNavBar>
         <Body $hasPadding={hasPadding} ref={bodyRef}>
           {children}
+          <UpdateNotification />
         </Body>
       </Container>
     </>

@@ -253,11 +253,7 @@ export const UpdateNotification: React.FC = () => {
       {updateDownloadedModal}
 
       {/* Optional: Button to manually check for updates */}
-      <Button
-        onClick={handleCheckForUpdates}
-        loading={updateState.checking}
-        style={{ display: 'none' }} // Hide or show based on your UI needs
-      >
+      <Button onClick={handleCheckForUpdates} loading={updateState.checking}>
         Check for Updates
       </Button>
     </>

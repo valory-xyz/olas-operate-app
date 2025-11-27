@@ -93,7 +93,7 @@ export const Main = () => {
   return (
     <MainLayout>
       <Sidebar />
-      <h1>I am José Mourinho - new one!!!</h1>
+      {/* <h1>I am José Mourinho - new one!!!</h1> */}
       <Content $isSplitScreenPage={isSplitScreenPage} ref={contentContainerRef}>
         <MainDraggableTopBar $isSplitScreenPage={isSplitScreenPage} />
         {mainContent}
