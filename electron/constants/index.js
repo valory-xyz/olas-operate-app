@@ -36,7 +36,7 @@ const paths = {
 // Publish options
 const publishOptions = {
   provider: 'github',
-  owner: 'valory-xyz',
+  owner: 'rajat2502',
   repo: 'olas-operate-app',
   releaseType: 'draft', // Create as draft to allow manual publishing
   token: process.env.GH_TOKEN,
