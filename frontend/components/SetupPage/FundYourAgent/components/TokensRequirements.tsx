@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { SendFundAction } from '@/components/Bridge';
 import { Alert } from '@/components/ui';
 import { COLOR } from '@/constants';
+import { TokenRequirement } from '@/types';
 
 const { Text } = Typography;
 
@@ -60,12 +61,6 @@ const RequirementsError = () => (
     </Text>
   </Flex>
 );
-
-export type TokenRequirement = {
-  amount: number;
-  symbol: string;
-  iconSrc: string;
-};
 
 const formatAmount = (amount: number): string => {
   if (Number.isInteger(amount)) {

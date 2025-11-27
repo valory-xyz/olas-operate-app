@@ -15,6 +15,7 @@ import {
 import { ChainImageMap, EvmChainName, TokenSymbol } from '@/constants';
 import { SetupScreen } from '@/enums';
 import {
+  useGetRefillRequirements,
   useMasterSafeCreationAndTransfer,
   useMasterWalletContext,
   useServices,
@@ -22,7 +23,6 @@ import {
 } from '@/hooks';
 import { delayInSeconds } from '@/utils';
 
-import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
 import { useTokensFundingStatus } from './hooks/useTokensFundingStatus';
 
 const { Text, Title } = Typography;
@@ -40,8 +40,7 @@ export const TransferFunds = () => {
   const { masterEoa } = useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
   const { isFullyFunded, tokensFundingStatus } = useTokensFundingStatus();
-  const { initialTokenRequirements, isLoading } =
-    useGetRefillRequirementsWithMonthlyGas();
+  const { initialTokenRequirements, isLoading } = useGetRefillRequirements();
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,

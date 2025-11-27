@@ -40,11 +40,10 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       agent_id: 14,
       // TODO: pull fund requirements from staking program config
       cost_of_bond: +parseEther(0.001),
-      monthly_gas_estimate: +parseEther(10),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: +parseEther(2),
-          safe: +parseEther(5),
+          safe: +parseEther(8),
         },
       },
     },
@@ -300,7 +299,6 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 43,
       cost_of_bond: +parseEther(50),
-      monthly_gas_estimate: +parseEther(0.03),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: +parseEther(0.00625),
@@ -342,10 +340,9 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
       cost_of_bond: +parseEther(20),
-      monthly_gas_estimate: +parseEther(0.011), // TODO: should be 0.0055, temp fix to avoid low balance alerts until the refund is fixed in the middleware
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0005),
+          agent: +parseEther(0.0002),
           safe: 0,
         },
         [MODE_TOKEN_CONFIG[TokenSymbol.USDC]?.address as string]: {
@@ -509,10 +506,9 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
       cost_of_bond: +parseEther(20),
-      monthly_gas_estimate: +parseEther(0.011),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0007),
+          agent: +parseEther(0.0002),
           safe: 0,
         },
         [OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC]?.address as string]: {

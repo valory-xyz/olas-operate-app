@@ -1,21 +1,67 @@
 import { isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { getTokenDetails } from '@/components/Bridge/utils';
 import { ChainTokenConfig, TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
+import { MASTER_SAFE_REFILL_PLACEHOLDER } from '@/constants/defaults';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { TokenSymbolConfigMap, TokenSymbolMap } from '@/constants/token';
 import { useServices } from '@/hooks';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { useMasterWalletContext } from '@/hooks/useWallet';
-import { AddressBalanceRecord, MasterSafeBalanceRecord } from '@/types';
+import {
+  AddressBalanceRecord,
+  MasterSafeBalanceRecord,
+  TokenRequirement,
+} from '@/types';
 import { Address } from '@/types/Address';
-import { bigintMax } from '@/utils/calculations';
+import { getTokenDetails } from '@/utils';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
+import { onDummyServiceCreation } from '@/utils/service';
 
-import { TokenRequirement } from '../components/TokensRequirements';
-import { useBeforeBridgeFunds } from './useBeforeBridgeFunds';
+/**
+ * Hook to run actions before bridging funds screen.
+ * For predict agent, it creates a dummy service & then navigates to the bridge onboarding.
+ */
+const useBeforeBridgeFunds = () => {
+  const { defaultStakingProgramId } = useStakingProgram();
+  const {
+    selectedAgentType,
+    selectedService,
+    refetch: refetchServices,
+  } = useServices();
+
+  const serviceTemplate = SERVICE_TEMPLATES.find(
+    (template) => template.agentType === selectedAgentType,
+  );
+
+  return useCallback(async () => {
+    // If a service is already selected, do not create a service
+    if (selectedService) return;
+
+    if (!defaultStakingProgramId) {
+      throw new Error('Default staking program ID unavailable');
+    }
+
+    if (!serviceTemplate) {
+      throw new Error('Service template unavailable');
+    }
+
+    await onDummyServiceCreation(defaultStakingProgramId, serviceTemplate);
+
+    // fetch services again to update the state after service creation
+    await refetchServices?.();
+
+    // For other agents, just navigate to bridge onboarding as
+    // service creation is already handled in the agent setup.
+  }, [
+    defaultStakingProgramId,
+    serviceTemplate,
+    selectedService,
+    refetchServices,
+  ]);
+};
 
 const ICON_OVERRIDES: Record<string, string> = {
   [TokenSymbolMap['XDAI']]: '/tokens/wxdai-icon.png',
@@ -61,11 +107,11 @@ const getTokensDetailsForFunding = (
   return currentTokenRequirements.sort((a, b) => b.amount - a.amount);
 };
 
-type UseGetRefillRequirementsWithMonthlyGasProps = {
+type UseGetRefillRequirementsProps = {
   shouldCreateDummyService?: boolean;
 };
 
-type UseGetRefillRequirementsWithMonthlyGasReturn = {
+type UseGetRefillRequirementsReturn = {
   /**
    * Total token requirements, doesn't consider the eoa balances. This is what we show on the
    * funding cards (fund your agent screen)
@@ -83,12 +129,13 @@ type UseGetRefillRequirementsWithMonthlyGasReturn = {
 
 /**
  *
- * @warning A HOOK THAT SHOULD NEVER EXIST.
- * TODO: This hook is used because BE doesn't support monthly_gas_estimate in the refill requirements yet.
- * Remove the hook once it's supported.
+ * Hook to get the refill requirements for the selectedAgent.
  *
- * Hook to get the refill requirements for the selectedAgent — considers the monthly_gas_estimate
- * in order to evaluate the requirements.
+ * Computes actual refill/funding amounts based on refill/total
+ * requirements from BE taking into account current balances on agent's chain
+ *
+ * Creates dummy service if needed
+ *
  * @example
  * {
  *   totalTokenRequirements: [
@@ -107,14 +154,13 @@ type UseGetRefillRequirementsWithMonthlyGasReturn = {
  *   isLoading: false
  * }
  */
-export const useGetRefillRequirementsWithMonthlyGas = ({
+export const useGetRefillRequirements = ({
   shouldCreateDummyService = false,
-}: UseGetRefillRequirementsWithMonthlyGasProps = {}): UseGetRefillRequirementsWithMonthlyGasReturn => {
+}: UseGetRefillRequirementsProps = {}): UseGetRefillRequirementsReturn => {
   const updateBeforeBridgingFunds = useBeforeBridgeFunds();
   const {
     totalRequirements,
     refillRequirements,
-    balances,
     refetch,
     resetQueryCache,
     isBalancesAndFundingRequirementsLoading,
@@ -144,52 +190,30 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
 
       const masterSafeRequirements = masterSafe
         ? (requirements as AddressBalanceRecord)?.[masterSafe.address]
-        : (requirements as MasterSafeBalanceRecord)?.['master_safe'];
+        : (requirements as MasterSafeBalanceRecord)?.[
+            MASTER_SAFE_REFILL_PLACEHOLDER
+          ];
 
       if (!masterSafeRequirements) return [];
 
-      const { evmHomeChainId, middlewareHomeChainId } = selectedAgentConfig;
+      const { evmHomeChainId } = selectedAgentConfig;
       const chainConfig = TOKEN_CONFIG[evmHomeChainId];
 
-      // refill_requirements_masterEOA
+      // Refill requirements for masterEOA
       const masterEoaRequirementAmount = (requirements as AddressBalanceRecord)[
         masterEoa.address
       ]?.[AddressZero];
-
-      // monthly_gas_estimate
-      const monthlyGasEstimate = BigInt(
-        SERVICE_TEMPLATES.find(
-          (template) => template.agentType === selectedAgentType,
-        )?.configurations[middlewareHomeChainId]?.monthly_gas_estimate ?? 0,
-      );
-
-      /**
-       * If master_safe for the chainID exists, get funds from there.
-       */
-      const nativeTokenBalanceInMasterSafe = masterSafe
-        ? BigInt(balances?.[masterSafe.address]?.[AddressZero] ?? 0n)
-        : 0n;
 
       const requirementsPerToken: { [tokenAddress: Address]: bigint } = {};
 
       Object.entries(masterSafeRequirements)?.forEach(
         ([tokenAddress, amount]) => {
           if (tokenAddress === AddressZero) {
-            /**
-             * No funds needed for master_safe, if it already exists
-             */
-            const masterSafeRequirementAmount = masterSafe
-              ? 0n
-              : BigInt(amount);
-            const gasDeficit =
-              monthlyGasEstimate - nativeTokenBalanceInMasterSafe;
-            const amountNeededForGas = bigintMax(0n, gasDeficit);
-            /**
-             * If monthly gas estimate is greater than master_safe requirements, then consider that
-             * else, check the native tokens required to meet the gas requirements
-             */
+            // Refill requirements for masterSafe
+            const masterSafeRequirementAmount = BigInt(amount);
+            // Calculate the total native token requirement for gas (master safe + master EOA)
             const nativeTotalRequired =
-              bigintMax(masterSafeRequirementAmount, amountNeededForGas) +
+              masterSafeRequirementAmount +
               BigInt(masterEoaRequirementAmount ?? 0);
 
             requirementsPerToken[tokenAddress as Address] = nativeTotalRequired;
@@ -202,12 +226,10 @@ export const useGetRefillRequirementsWithMonthlyGas = ({
       return getTokensDetailsForFunding(requirementsPerToken, chainConfig);
     },
     [
-      balances,
       isBalancesAndFundingRequirementsLoading,
       masterEoa,
       masterSafe,
       selectedAgentConfig,
-      selectedAgentType,
     ],
   );
 

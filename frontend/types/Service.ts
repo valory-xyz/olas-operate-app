@@ -72,13 +72,12 @@ type ChainData = {
   };
 };
 
-type ConfigurationTemplate = {
+export type ConfigurationTemplate = {
   staking_program_id?: StakingProgramId; // added on deployment
   nft: string;
   rpc?: string; // added on deployment
   agent_id: number;
   cost_of_bond: number;
-  monthly_gas_estimate: number;
   fund_requirements: FundRequirements;
 };
 
