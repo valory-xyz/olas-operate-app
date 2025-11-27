@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 
+import { useActiveStakingContractDetails, useService } from '@/hooks';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
-
-import { useService } from './useService';
-import { useActiveStakingContractDetails } from './useStakingContractDetails';
 
 type EpochStatusNotification = {
   lastEpoch: number;
