@@ -18,6 +18,8 @@ import { Address } from '@/types/Address';
 import { formatUnitsToNumber } from '@/utils';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
+import { useMasterWalletContext } from './useWallet';
+
 type ChainTokenSymbol = {
   [chainId in EvmChainId]: {
     [tokenSymbol: string]: number;
@@ -69,15 +71,26 @@ export const useInitialFundingRequirements = (agentType: AgentType) => {
   const { additionalRequirements, evmHomeChainId } = AGENT_CONFIG[agentType];
   const stakingProgramId = DEFAULT_STAKING_PROGRAM_IDS[evmHomeChainId];
 
-  return useMemo<ChainTokenSymbol>(() => {
-    if (isNil(serviceTemplate)) return {} as ChainTokenSymbol;
+  const { getMasterSafeOf, isFetched: isMasterWalletsFetched } =
+    useMasterWalletContext();
 
+  return useMemo<ChainTokenSymbol>(() => {
     const results = {} as ChainTokenSymbol;
+
+    if (isNil(serviceTemplate) || isNil(getMasterSafeOf)) return results;
+    if (!isMasterWalletsFetched) return results;
 
     Object.entries(serviceTemplate.configurations).forEach(
       ([middlewareChain, config]) => {
         const evmChainId = asEvmChainId(middlewareChain);
-        const { safeCreationThreshold } = CHAIN_CONFIG[evmChainId];
+        const masterSafe = getMasterSafeOf(evmChainId);
+        const { safeCreationThreshold: defaultSafeCreationThreshold } =
+          CHAIN_CONFIG[evmChainId];
+        // If Master safe exists, no need to count it in total requirements
+        const safeCreationThreshold = isNil(masterSafe)
+          ? defaultSafeCreationThreshold
+          : 0n;
+
         if (!stakingProgramId) return;
 
         // Total native token requirement = initial gas estimate + safe creation threshold
