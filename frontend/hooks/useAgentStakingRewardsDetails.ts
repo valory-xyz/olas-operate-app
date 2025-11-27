@@ -77,6 +77,7 @@ export const useAgentStakingRewardsDetails = (
       !!multisig &&
       isValidServiceId(serviceNftTokenId),
     refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
+    refetchIntervalInBackground: true,
     refetchOnWindowFocus: false,
   });
 };
