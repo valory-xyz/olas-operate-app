@@ -132,7 +132,6 @@ const useStakingContractDetailsByStakingProgram = ({
     },
     enabled: !isPaused && !!stakingProgramId,
     refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : false,
-    refetchOnWindowFocus: false,
   });
 };
 

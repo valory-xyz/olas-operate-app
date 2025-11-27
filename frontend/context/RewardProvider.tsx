@@ -68,8 +68,6 @@ const useAvailableRewardsForEpoch = () => {
     },
     enabled: !!isOnline && !!selectedStakingProgramId && !!serviceConfigId,
     refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
-    refetchIntervalInBackground: true,
-    refetchOnWindowFocus: false,
   });
 };
 
