@@ -27,7 +27,7 @@ const getRecoveryStatus = async (
 const getExtendedWallet = async (
   signal?: AbortSignal,
 ): Promise<ExtendedWallet[]> =>
-  fetch(`${BACKEND_URL}/extended/wallet`, {
+  fetch(`${BACKEND_URL}/wallet/extended`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     signal,
