@@ -8,6 +8,9 @@ import { useServices } from '@/hooks/useServices';
 const REWARD_MESSAGE =
   "Your agent earned its rewards! It's now idle and will resume working next epoch.";
 
+/**
+ * Hook to notify the user when the agent earns rewards and is idle.
+ */
 export const useNotifyOnAgentRewards = () => {
   const electronApi = useElectronApi();
   const { selectedService } = useServices();
