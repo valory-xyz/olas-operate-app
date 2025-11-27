@@ -107,7 +107,7 @@ export abstract class AgentsFunService extends StakedAgentService {
 
     const availableRewardsForEpoch = Math.max(
       rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
-      rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+      rewardsPerSecond * (nowInSeconds - tsCheckpoint), // in case of late checkpoint
     );
 
     // Minimum staked amount is double the minimum staking deposit

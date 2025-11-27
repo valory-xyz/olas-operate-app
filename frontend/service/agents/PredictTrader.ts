@@ -135,7 +135,7 @@ export abstract class PredictTraderService extends StakedAgentService {
     return BigInt(
       Math.max(
         rewardsPerSecond * livenessPeriod, // expected rewards
-        rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+        rewardsPerSecond * (nowInSeconds - tsCheckpoint), // in case of late checkpoint
       ),
     );
   };
