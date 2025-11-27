@@ -4,7 +4,7 @@ import { NftFilled } from '@/components/custom-icons';
 import { OLAS_CONTRACTS } from '@/config/olasContracts';
 import {
   BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN,
-  ContractTypeMap,
+  CONTRACT_TYPE,
   EvmChainId,
   UNICODE_SYMBOLS,
 } from '@/constants';
@@ -21,7 +21,7 @@ const useAgentNft = (configId?: string, chainId?: EvmChainId) => {
   const blockscoutUrl =
     BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN[asMiddlewareChain(evmHomeChainId)];
   const serviceRegistryL2ContractAddress =
-    OLAS_CONTRACTS[evmHomeChainId][ContractTypeMap.ServiceRegistryL2].address;
+    OLAS_CONTRACTS[evmHomeChainId][CONTRACT_TYPE.ServiceRegistryL2].address;
 
   return `${blockscoutUrl}/token/${serviceRegistryL2ContractAddress}/instance/${serviceNftTokenId}`;
 };

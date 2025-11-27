@@ -1,4 +1,4 @@
-export const ContractTypeMap = {
+export const CONTRACT_TYPE = {
   Multicall3: 'multicall3',
   ServiceRegistryL2: 'serviceRegistryL2',
   ServiceRegistryTokenUtility: 'serviceRegistryTokenUtility',
@@ -15,4 +15,4 @@ export const ContractTypeMap = {
   // UniswapV3Lp: 'uniswapV3Lp',
 } as const;
 
-export type ContractType = keyof typeof ContractTypeMap;
+export type ContractType = keyof typeof CONTRACT_TYPE;
