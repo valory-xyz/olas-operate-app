@@ -33,16 +33,24 @@ const paths = {
   agentRunnerLogFile: path.join(dotOperateDirectory, 'agent_runner.log'),
 };
 
-// Publish options
+// Publish options (for electron-builder during build/release)
 const publishOptions = {
   provider: 'github',
-  owner: 'rajat2502',
+  owner: 'valory-xyz',
   repo: 'olas-operate-app',
   releaseType: 'draft', // Create as draft to allow manual publishing
   token: process.env.GH_TOKEN,
   private: false,
   // Note: latest-mac.yml is auto-generated when 'zip' target is included in mac build config
   // IMPORTANT: Automatic updates only work for published releases, not drafts
+};
+
+// Update feed options (for electron-updater to check for updates at runtime)
+const updateFeedOptions = {
+  provider: 'github',
+  owner: 'rajat2502',
+  repo: 'olas-operate-app',
+  private: false,
 };
 
 module.exports = {
@@ -54,5 +62,6 @@ module.exports = {
   isProd,
   isDev,
   publishOptions,
+  updateFeedOptions,
   paths,
 };

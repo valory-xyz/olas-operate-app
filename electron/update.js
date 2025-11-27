@@ -1,9 +1,9 @@
-const { publishOptions } = require('./constants');
+const { updateFeedOptions } = require('./constants');
 const { autoUpdater } = require('electron-updater');
 const logger = require('./logger');
 
 const updateOptions = {
-  ...publishOptions,
+  ...updateFeedOptions,
   // token is not required as repo is public
   token: undefined,
   channels: ['latest', 'beta', 'alpha'],
