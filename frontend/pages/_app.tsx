@@ -26,7 +26,14 @@ import { StakingProgramProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
 import { SupportModalProvider } from '@/context/SupportModalProvider';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Run polling even when window is hidden/minimized
+      refetchIntervalInBackground: true,
+    },
+  },
+});
 
 export default function App({ Component, pageProps }: AppProps) {
   const [isMounted, setIsMounted] = useState(false);
