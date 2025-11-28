@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { MiddlewareChain } from '@/constants';
-import { Pages } from '@/enums/Pages';
+import { MiddlewareChain, Pages } from '@/constants';
 import { usePageState } from '@/hooks';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';

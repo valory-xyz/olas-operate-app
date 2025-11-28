@@ -27,9 +27,9 @@ import {
   APP_HEIGHT,
   COLOR,
   EvmChainId,
+  Pages,
   SIDER_WIDTH,
 } from '@/constants';
-import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
   useAgentRunning,

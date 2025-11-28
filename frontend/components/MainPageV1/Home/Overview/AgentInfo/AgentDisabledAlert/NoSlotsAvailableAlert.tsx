@@ -1,7 +1,7 @@
 import { Button, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
-import { Pages } from '@/enums/Pages';
+import { Pages } from '@/constants';
 import { usePageState } from '@/hooks';
 
 const { Text } = Typography;

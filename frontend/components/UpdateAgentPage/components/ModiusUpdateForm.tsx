@@ -3,7 +3,7 @@ import { get, isEqual, isUndefined, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import { RequiredMark } from '@/components/ui';
-import { Pages } from '@/enums/Pages';
+import { Pages } from '@/constants';
 import { usePageState, useServices } from '@/hooks';
 import { Nullable } from '@/types/Util';
 

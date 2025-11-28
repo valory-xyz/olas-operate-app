@@ -6,8 +6,7 @@ import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { CardFlex, Tooltip } from '@/components/ui';
-import { AddressZero } from '@/constants/address';
-import { Pages } from '@/enums/Pages';
+import { AddressZero, Pages } from '@/constants';
 import { usePageState, useService, useServices } from '@/hooks';
 import { generateName } from '@/utils';
 

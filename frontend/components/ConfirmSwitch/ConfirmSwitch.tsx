@@ -2,8 +2,7 @@ import { ArrowRightOutlined } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
-import { COLOR, MAIN_CONTENT_MAX_WIDTH } from '@/constants';
-import { Pages } from '@/enums/Pages';
+import { COLOR, MAIN_CONTENT_MAX_WIDTH, Pages } from '@/constants';
 import { usePageState, useStakingContracts, useStakingProgram } from '@/hooks';
 
 import { BackButton } from '../ui/BackButton';

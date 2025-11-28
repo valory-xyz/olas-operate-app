@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
 import { Alert, BackButton, CardFlex, Tooltip } from '@/components/ui';
-import { Pages } from '@/enums/Pages';
+import { Pages } from '@/constants';
 import {
   useActiveStakingContractDetails,
   useFeatureFlag,

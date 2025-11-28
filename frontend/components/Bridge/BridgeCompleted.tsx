@@ -2,7 +2,7 @@ import { Button, Flex, Result, Typography } from 'antd';
 
 import { GoToMainPageButton } from '@/components/Pages/GoToMainPageButton';
 import { CardFlex } from '@/components/ui';
-import { Pages } from '@/enums/Pages';
+import { Pages } from '@/constants';
 import { usePageState } from '@/hooks';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 

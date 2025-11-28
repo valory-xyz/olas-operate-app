@@ -5,8 +5,7 @@ import { TbFileText, TbHistory } from 'react-icons/tb';
 
 import { FireV1 } from '@/components/custom-icons';
 import { BackButton, CardFlex, InfoTooltip, Segmented } from '@/components/ui';
-import { MAIN_CONTENT_MAX_WIDTH } from '@/constants';
-import { Pages } from '@/enums/Pages';
+import { MAIN_CONTENT_MAX_WIDTH, Pages } from '@/constants';
 import {
   usePageState,
   useRewardContext,

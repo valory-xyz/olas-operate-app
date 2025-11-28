@@ -18,7 +18,7 @@ import {
 } from '@/components/AgentForms/common/labels';
 import { RenderForm } from '@/components/SetupPage/SetupYourAgent/useDisplayAgentForm';
 import { RequiredMark } from '@/components/ui';
-import { Pages } from '@/enums/Pages';
+import { Pages } from '@/constants';
 import { usePageState, useServices } from '@/hooks';
 import { Nullable } from '@/types/Util';
 import { getXUsername } from '@/utils';

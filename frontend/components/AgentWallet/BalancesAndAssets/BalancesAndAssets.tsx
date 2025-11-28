@@ -2,7 +2,7 @@ import { Button, Flex, Modal, Typography } from 'antd';
 import { useState } from 'react';
 
 import { CardFlex, WalletsTooltip } from '@/components/ui';
-import { Pages } from '@/enums/Pages';
+import { Pages } from '@/constants';
 import { usePageState, useService, useServices } from '@/hooks';
 
 import { AgentWalletOperation } from './AgentWalletOperation';

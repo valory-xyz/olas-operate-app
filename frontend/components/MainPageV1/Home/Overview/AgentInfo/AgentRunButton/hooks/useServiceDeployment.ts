@@ -4,9 +4,9 @@ import { useCallback, useMemo } from 'react';
 
 import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { Pages } from '@/constants';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { Pages } from '@/enums/Pages';
 import { MasterEoa, MasterSafe } from '@/enums/Wallet';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBalanceContext } from '@/hooks/useBalanceContext';

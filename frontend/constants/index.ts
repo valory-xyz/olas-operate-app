@@ -8,6 +8,7 @@ export * from './env';
 export * from './envVariables';
 export * from './headers';
 export * from './intervals';
+export * from './page';
 export * from './providers';
 export * from './react-query-keys';
 export * from './stakingProgram';

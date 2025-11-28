@@ -7,10 +7,10 @@ import {
   APP_HEIGHT,
   APP_WIDTH,
   COLOR,
+  Pages,
   SIDER_WIDTH,
   TOP_BAR_HEIGHT,
 } from '@/constants';
-import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import { useOnlineStatusContext, usePageState, useSetup } from '@/hooks';
 

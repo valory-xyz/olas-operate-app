@@ -8,8 +8,8 @@ import {
 } from 'react';
 import { useTimeout } from 'usehooks-ts';
 
+import { Pages } from '@/constants';
 import { ONE_MINUTE_INTERVAL } from '@/constants/intervals';
-import { Pages } from '@/enums/Pages';
 
 type PageStateContextType = {
   pageState: Pages;

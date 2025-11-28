@@ -8,8 +8,7 @@ import { DepositOlasForStaking } from '@/components/ConfirmSwitch/DepositOlasFor
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { Settings } from '@/components/SettingsPage';
 import { UpdateAgentPage } from '@/components/UpdateAgentPage';
-import { SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants';
-import { Pages } from '@/enums/Pages';
+import { Pages, SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants';
 import { useNotifyOnNewEpoch, usePageState } from '@/hooks';
 
 import { AgentWallet } from '../AgentWallet';

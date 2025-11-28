@@ -7,10 +7,8 @@ import {
   WarningOutlined,
 } from '@/components/custom-icons';
 import { cardStyles } from '@/components/ui';
-import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { SUPPORT_URL } from '@/constants/urls';
-import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
+import { Pages, SUPPORT_URL, UNICODE_SYMBOLS } from '@/constants';
+import { usePageState } from '@/hooks';
 
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { useWithdrawFunds } from './useWithdrawFunds';
