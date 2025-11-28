@@ -13,8 +13,7 @@ import {
   TokenAmountInput,
 } from '@/components/ui';
 import { TOKEN_CONFIG } from '@/config/tokens';
-import { AddressZero, TokenSymbol } from '@/constants';
-import { Pages } from '@/enums';
+import { AddressZero, Pages, TokenSymbol } from '@/constants';
 import { useAvailableAssets, usePageState, useServices } from '@/hooks';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
 import { formatUnitsToNumber } from '@/utils';

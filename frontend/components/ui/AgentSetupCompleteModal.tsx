@@ -1,6 +1,6 @@
 import { Button } from 'antd';
 
-import { Pages } from '@/enums';
+import { Pages } from '@/constants';
 import { usePageState } from '@/hooks';
 
 import { SuccessOutlined } from '../custom-icons';

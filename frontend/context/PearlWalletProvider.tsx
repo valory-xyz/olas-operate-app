@@ -15,9 +15,10 @@ import {
   AgentType,
   EvmChainId,
   type EvmChainName,
+  Pages,
   TokenSymbol,
 } from '@/constants';
-import { MasterSafe, Pages } from '@/enums';
+import { MasterSafe } from '@/enums';
 import {
   useAvailableAssets,
   useBalanceAndRefillRequirementsContext,

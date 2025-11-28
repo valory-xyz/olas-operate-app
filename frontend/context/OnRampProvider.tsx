@@ -7,8 +7,7 @@ import {
   useState,
 } from 'react';
 
-import { EvmChainId, onRampChainMap } from '@/constants';
-import { Pages } from '@/enums';
+import { EvmChainId, onRampChainMap, Pages } from '@/constants';
 import {
   useElectronApi,
   useMasterBalances,

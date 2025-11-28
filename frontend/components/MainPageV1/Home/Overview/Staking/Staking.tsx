@@ -2,7 +2,7 @@ import { Button, Flex, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { Alert, CardFlex } from '@/components/ui';
-import { Pages } from '@/enums';
+import { Pages } from '@/constants';
 import {
   useActiveStakingContractDetails,
   useAgentActivity,

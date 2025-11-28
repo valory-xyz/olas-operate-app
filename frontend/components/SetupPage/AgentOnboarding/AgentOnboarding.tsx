@@ -8,8 +8,8 @@ import styled from 'styled-components';
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { BackButton } from '@/components/ui';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
-import { AgentType, COLOR } from '@/constants';
-import { Pages, SetupScreen } from '@/enums';
+import { AgentType, COLOR, Pages } from '@/constants';
+import { SetupScreen } from '@/enums';
 import { usePageState, useServices, useSetup } from '@/hooks';
 import { AgentConfig, Optional } from '@/types';
 

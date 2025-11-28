@@ -2,7 +2,7 @@ import { Flex, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AgentSetupCompleteModal, Alert, CardFlex } from '@/components/ui';
-import { Pages } from '@/enums';
+import { Pages } from '@/constants';
 import {
   useBridgingSteps,
   useMasterSafeCreationAndTransfer,

@@ -1,7 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 import { TbShieldHalfFilled } from 'react-icons/tb';
 
-import { Pages } from '@/enums';
+import { Pages } from '@/constants';
 import {
   useMnemonicExists,
   usePageState,

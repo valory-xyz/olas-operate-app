@@ -21,13 +21,13 @@ import {
   MESSAGE_WIDTH,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
+  Pages,
   REACT_QUERY_KEYS,
 } from '@/constants';
 import {
   AgentEoa,
   AgentSafe,
   AgentWallet,
-  Pages,
   WalletOwnerType,
   WalletType,
 } from '@/enums';

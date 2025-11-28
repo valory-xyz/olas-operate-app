@@ -2,9 +2,8 @@ import { Button, message } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { MiddlewareDeploymentStatusMap } from '@/constants';
+import { MiddlewareDeploymentStatusMap, Pages } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { Pages } from '@/enums';
 import {
   useBalanceContext,
   usePageState,

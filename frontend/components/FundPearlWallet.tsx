@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { TransferCryptoFromExternalWallet } from '@/components/PearlWallet';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { Pages } from '@/enums';
+import { Pages } from '@/constants';
 import {
   useMasterBalances,
   useMasterWalletContext,

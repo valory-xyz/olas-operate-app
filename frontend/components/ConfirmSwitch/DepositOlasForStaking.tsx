@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 
 import { PearlDeposit } from '@/components/PearlDeposit';
+import { Pages } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
-import { Pages } from '@/enums';
 import { usePageState } from '@/hooks';
 
 import { useShouldAllowStakingContractSwitch } from './hooks/useShouldAllowStakingContractSwitch';

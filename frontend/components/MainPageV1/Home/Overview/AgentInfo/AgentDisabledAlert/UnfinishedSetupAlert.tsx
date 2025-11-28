@@ -1,7 +1,8 @@
 import { Button, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
-import { Pages, SetupScreen } from '@/enums';
+import { Pages } from '@/constants';
+import { SetupScreen } from '@/enums';
 import { usePageState, useSetup } from '@/hooks';
 
 const { Text } = Typography;

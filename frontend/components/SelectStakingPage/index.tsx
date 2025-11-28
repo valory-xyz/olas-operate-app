@@ -1,8 +1,7 @@
 import { Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
-import { MAIN_CONTENT_MAX_WIDTH } from '@/constants';
-import { Pages } from '@/enums';
+import { MAIN_CONTENT_MAX_WIDTH, Pages } from '@/constants';
 import { usePageState, useServices, useStakingContracts } from '@/hooks';
 
 import { StakingContractCard } from '../StakingContractCard';

@@ -4,8 +4,7 @@ import { TbLock, TbSparkles, TbSquareRoundedPercentage } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { CardFlex, Divider, InfoTooltip, Tooltip } from '@/components/ui';
-import { COLOR, NA } from '@/constants';
-import { Pages } from '@/enums';
+import { COLOR, NA, Pages } from '@/constants';
 import {
   usePageState,
   useStakingContractDetails,

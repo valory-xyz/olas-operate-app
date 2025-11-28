@@ -1,5 +1,5 @@
 import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
-import { Pages } from '@/enums';
+import { Pages } from '@/constants';
 import {
   useActiveStakingContractDetails,
   useAgentRunning,

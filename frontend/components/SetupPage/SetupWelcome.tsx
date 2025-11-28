@@ -3,8 +3,9 @@ import { isNil } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { Pages } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
-import { Pages, SetupScreen } from '@/enums';
+import { SetupScreen } from '@/enums';
 import {
   useBackupSigner,
   useBalanceContext,

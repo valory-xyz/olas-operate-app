@@ -1,8 +1,8 @@
 import { Button, Flex, Typography } from 'antd';
 
 import { Alert, Tooltip } from '@/components/ui';
+import { Pages } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
-import { Pages } from '@/enums';
 import { usePageState } from '@/hooks';
 import { formatNumber } from '@/utils';
 
