@@ -18,4 +18,4 @@ export * from './symbols';
 export * from './theme';
 export * from './token';
 export * from './urls';
-export * from './walletsss';
+export * from './wallet';
