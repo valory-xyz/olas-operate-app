@@ -35,8 +35,12 @@ export const AgentDisabledAlert = () => {
     return <UnderConstructionAlert />;
   }
 
-  if (selectedStakingProgramMeta?.deprecated) {
-    return <ContractDeprecatedAlert />;
+  if (selectedStakingProgramMeta && selectedStakingProgramMeta.deprecated) {
+    return (
+      <ContractDeprecatedAlert
+        stakingProgramName={selectedStakingProgramMeta.name}
+      />
+    );
   }
 
   if (isAnotherAgentRunning) {
