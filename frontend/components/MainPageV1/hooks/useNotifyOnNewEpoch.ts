@@ -13,6 +13,11 @@ import { Nullable } from '@/types';
 const START_YOUR_AGENT_MESSAGE =
   'Start your agent to avoid missing rewards and getting evicted.';
 
+type EpochStatusNotification = {
+  lastEpoch: number;
+  isNotified: boolean;
+};
+
 /**
  * Hook to notify the user when a new epoch is started
  * and agent is not running.
@@ -36,10 +41,14 @@ export const useNotifyOnNewEpoch = () => {
   } = useActiveStakingContractDetails();
   const epoch = activeStakingContractDetails?.epochCounter;
 
-  const [currentEpoch, setCurrentEpoch] = useState<Nullable<number>>(null);
+  const [epochStatusNotification, setEpochStatusNotification] =
+    useState<Nullable<EpochStatusNotification>>(null);
 
   useEffect(() => {
     if (!showNotification) return;
+
+    // if active staking contract info is still loading
+    if (isSelectedStakingContractDetailsLoading) return;
 
     // if agent config is under construction
     if (selectedAgentConfig.isUnderConstruction) return;
@@ -47,18 +56,11 @@ export const useNotifyOnNewEpoch = () => {
     // if initial funding is not done
     if (isInitialFunded === false) return;
 
-    // if active staking contract info is still loading
-    if (isSelectedStakingContractDetailsLoading) return;
-
-    if (
-      !isSelectedStakingContractDetailsLoading &&
-      isServiceStaked === false &&
-      hasEnoughServiceSlots === false
-    ) {
+    if (isServiceStaked === false && hasEnoughServiceSlots === false) {
       return;
     }
 
-    // if agent is evicted or not eligible for staking, no need to notify
+    // if agent is evicted and not eligible for staking, no need to notify
     if (isAgentEvicted && !isEligibleForStaking) return;
 
     // if agent is running, no need to show notification
@@ -70,23 +72,37 @@ export const useNotifyOnNewEpoch = () => {
     // latest epoch is not loaded yet
     if (!epoch) return;
 
+    // if latest epoch is not the last known epoch
+    if (
+      epochStatusNotification?.lastEpoch !== epoch &&
+      epochStatusNotification?.isNotified
+    ) {
+      setEpochStatusNotification({ lastEpoch: epoch, isNotified: false });
+    }
+
+    // no notification should have valid initialization
+    if (!epochStatusNotification) return;
+
+    // already notified for this epoch
+    if (epochStatusNotification.isNotified) return;
+
     // if latest epoch is not the last known epoch, notify once and update
-    if (currentEpoch !== epoch) {
+    if (epochStatusNotification.lastEpoch !== epoch) {
       showNotification(START_YOUR_AGENT_MESSAGE);
-      setCurrentEpoch(epoch);
+      setEpochStatusNotification({ lastEpoch: epoch, isNotified: true });
     }
   }, [
     isSelectedStakingContractDetailsLoading,
     isServiceRunning,
     isAgentEvicted,
     isEligibleForStaking,
-    currentEpoch,
-    epoch,
-    selectedAgentConfig.isUnderConstruction,
+    isServiceStaked,
+    isEligibleForRewards,
     isInitialFunded,
     hasEnoughServiceSlots,
-    isServiceStaked,
+    epochStatusNotification,
+    epoch,
+    selectedAgentConfig.isUnderConstruction,
     showNotification,
-    isEligibleForRewards,
   ]);
 };
