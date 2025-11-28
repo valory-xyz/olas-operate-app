@@ -25,9 +25,8 @@ type EpochStatusNotification = {
  * Should also match the behavior of AgentDisabledAlert.
  */
 export const useNotifyOnNewEpoch = () => {
-  const { selectedAgentConfig } = useServices();
   const { showNotification } = useElectronApi();
-  const { selectedService } = useServices();
+  const { selectedAgentConfig, selectedService } = useServices();
   const { isEligibleForRewards } = useRewardContext();
   const { isInitialFunded } = useIsInitiallyFunded();
   const { isServiceRunning } = useService(selectedService?.service_config_id);
