@@ -3,8 +3,8 @@ import { Button, Typography } from 'antd';
 import { useCallback } from 'react';
 
 import { COLOR } from '@/constants/colors';
+import { SetupScreen } from '@/constants/setupScreens';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { SetupScreen } from '@/enums/SetupScreen';
 import { useSetup } from '@/hooks/useSetup';
 
 import { CardFlex } from '../ui/CardFlex';

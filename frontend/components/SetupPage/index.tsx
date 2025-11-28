@@ -3,8 +3,8 @@ import React, { useContext, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
+import { SetupScreen } from '@/constants/setupScreens';
 import { SetupContext } from '@/context/SetupProvider';
-import { SetupScreen } from '@/enums/SetupScreen';
 
 import { SelectStakingPage } from '../SelectStakingPage';
 import { CardFlex } from '../ui/CardFlex';

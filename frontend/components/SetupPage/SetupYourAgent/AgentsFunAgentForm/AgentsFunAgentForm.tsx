@@ -23,7 +23,7 @@ import {
 } from '@/components/AgentForms/common/labels';
 import { AgentsFunFormValues } from '@/components/SetupPage/SetupYourAgent/AgentsFunAgentForm/types';
 import { RequiredMark } from '@/components/ui';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { SetupScreen } from '@/constants/setupScreens';
 import { useSetup } from '@/hooks/useSetup';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { ServiceTemplate } from '@/types';

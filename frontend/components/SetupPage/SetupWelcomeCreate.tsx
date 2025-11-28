@@ -4,7 +4,7 @@ import { MouseEvent, useCallback, useState } from 'react';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants/colors';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { SetupScreen } from '@/constants/setupScreens';
 import { useElectronApi } from '@/hooks';
 import { useSetup } from '@/hooks/useSetup';
 

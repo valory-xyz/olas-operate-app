@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
 import { COLOR, EvmChainId, EvmChainName } from '@/constants';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { SetupScreen } from '@/constants/setupScreens';
 import {
   useFeatureFlag,
   useOnRampContext,

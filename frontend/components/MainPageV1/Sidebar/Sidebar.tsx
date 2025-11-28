@@ -30,7 +30,7 @@ import {
   Pages,
   SIDER_WIDTH,
 } from '@/constants';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { SetupScreen } from '@/constants/setupScreens';
 import {
   useAgentRunning,
   useBalanceAndRefillRequirementsContext,

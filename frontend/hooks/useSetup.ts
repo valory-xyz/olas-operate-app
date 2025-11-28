@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect } from 'react';
 
 import { SetupContext } from '@/context/SetupProvider';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { SetupScreen } from '@/constants/setupScreens';
 import { Address } from '@/types/Address';
 import { BackupWalletType } from '@/types/BackupWallet';
 

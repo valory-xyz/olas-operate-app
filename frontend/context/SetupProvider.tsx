@@ -6,7 +6,7 @@ import {
   useState,
 } from 'react';
 
-import { SetupScreen } from '@/enums/SetupScreen';
+import { SetupScreen } from '@/constants/setupScreens';
 import { Address } from '@/types/Address';
 import { BackupWalletType } from '@/types/BackupWallet';
 import { Maybe } from '@/types/Util';

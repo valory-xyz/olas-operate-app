@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { RequiredMark } from '@/components/ui/RequiredMark';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { SetupScreen } from '@/constants/setupScreens';
 import { useSetup, useStakingProgram } from '@/hooks';
 import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils';

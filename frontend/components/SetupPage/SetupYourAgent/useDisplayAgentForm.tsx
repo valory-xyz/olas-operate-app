@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import { BackButton } from '@/components/ui';
 import { COLOR } from '@/constants/colors';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { SetupScreen } from '@/constants/setupScreens';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 

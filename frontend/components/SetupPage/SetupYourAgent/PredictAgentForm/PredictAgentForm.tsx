@@ -13,7 +13,7 @@ import {
   GeminiApiKeySubHeader,
 } from '@/components/AgentForms/common/labels';
 import { RequiredMark } from '@/components/ui';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { SetupScreen } from '@/constants/setupScreens';
 import { useSetup, useStakingProgram } from '@/hooks';
 import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils';

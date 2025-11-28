@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import { Bridge } from '@/components/Bridge';
 import { AllEvmChainIdMap } from '@/constants';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { SetupScreen } from '@/constants/setupScreens';
 import { useServices, useSetup } from '@/hooks';
 
 import { useGetBridgeRequirementsParams } from '../hooks/useGetBridgeRequirementsParams';

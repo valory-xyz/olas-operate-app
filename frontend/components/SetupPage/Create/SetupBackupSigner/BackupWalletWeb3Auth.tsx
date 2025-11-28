@@ -2,7 +2,7 @@ import { Button, Flex, Typography } from 'antd';
 import { RiAppleFill, RiGoogleFill } from 'react-icons/ri';
 
 import { COLOR } from '@/constants/colors';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { SetupScreen } from '@/constants/setupScreens';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useSetup } from '@/hooks/useSetup';
 
