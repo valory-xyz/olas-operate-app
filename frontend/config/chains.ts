@@ -7,8 +7,8 @@ import {
   EvmChainIdMap,
   MiddlewareChain,
   MiddlewareChainMap,
-  TokenSymbolMap,
-} from '@/constants';
+} from '@/constants/chains';
+import { TokenSymbolMap } from '@/constants/token';
 
 import { TOKEN_CONFIG, TokenConfig } from './tokens';
 

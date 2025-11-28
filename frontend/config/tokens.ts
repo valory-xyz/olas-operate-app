@@ -1,9 +1,5 @@
-import {
-  EvmChainId,
-  EvmChainIdMap,
-  TokenSymbol,
-  TokenSymbolMap,
-} from '@/constants';
+import { EvmChainId, EvmChainIdMap } from '@/constants/chains';
+import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import { Address } from '@/types/Address';
 
 export enum TokenType {
