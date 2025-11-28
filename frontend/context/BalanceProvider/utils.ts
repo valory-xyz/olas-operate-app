@@ -8,16 +8,13 @@ import { providers } from '@/config/providers';
 import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { EvmChainId, type MiddlewareChain } from '@/constants';
 import {
-  SERVICE_REGISTRY_L2_SERVICE_STATE,
-  ServiceRegistryL2ServiceState,
-} from '@/constants';
-import {
   AgentWallet,
   MasterSafe,
   MasterWallet,
-  Wallet,
-  WalletType,
-} from '@/enums/Wallet';
+  SERVICE_REGISTRY_L2_SERVICE_STATE,
+  ServiceRegistryL2ServiceState,
+  WALLET_TYPE,
+} from '@/constants';
 import { StakedAgentService } from '@/service/agents/shared-services/StakedAgentService';
 import { MiddlewareServiceResponse } from '@/types';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
@@ -56,7 +53,7 @@ const correctBondDepositByServiceState = ({
 };
 
 export const getCrossChainWalletBalances = async (
-  wallets: Wallet[],
+  wallets: (MasterWallet | AgentWallet)[],
 ): Promise<WalletBalance[]> => {
   const balanceResults: WalletBalance[] = [];
 
@@ -66,8 +63,8 @@ export const getCrossChainWalletBalances = async (
       const tokensOnChain = TOKEN_CONFIG[providerEvmChainId];
 
       const connectedWallets = wallets.filter((wallet) => {
-        const isEoa = wallet.type === WalletType.EOA;
-        const isSafe = wallet.type === WalletType.Safe;
+        const isEoa = wallet.type === WALLET_TYPE.EOA;
+        const isSafe = wallet.type === WALLET_TYPE.Safe;
         const isOnActiveChain =
           isEoa || (isSafe && wallet.evmChainId === providerEvmChainId);
 
@@ -240,7 +237,7 @@ export const getCrossChainBalances = async ({
 }) => {
   const masterSafes = masterWallets.filter(
     (masterWallet): masterWallet is MasterSafe =>
-      masterWallet.type === WalletType.Safe,
+      masterWallet.type === WALLET_TYPE.Safe,
   );
 
   const [walletBalancesResult, stakedBalancesResult] = await Promise.allSettled(

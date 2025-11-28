@@ -13,8 +13,11 @@ import {
 
 import { AGENT_CONFIG } from '@/config/agents';
 import {
+  AgentEoa,
   AgentMap,
+  AgentSafe,
   AgentType,
+  AgentWallet,
   EvmChainId,
   FIFTEEN_SECONDS_INTERVAL,
   FIVE_SECONDS_INTERVAL,
@@ -23,14 +26,9 @@ import {
   MiddlewareDeploymentStatus,
   PAGES,
   REACT_QUERY_KEYS,
+  WALLET_OWNER,
+  WALLET_TYPE,
 } from '@/constants';
-import {
-  AgentEoa,
-  AgentSafe,
-  AgentWallet,
-  WalletOwnerType,
-  WalletType,
-} from '@/enums';
 import {
   useElectronApi,
   usePageState,
@@ -241,8 +239,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
                     (instance: string) =>
                       ({
                         address: instance,
-                        type: WalletType.EOA,
-                        owner: WalletOwnerType.Agent,
+                        type: WALLET_TYPE.EOA,
+                        owner: WALLET_OWNER.Agent,
                       }) as AgentEoa,
                   ),
                 );
@@ -251,8 +249,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
               if (multisig) {
                 acc.push({
                   address: multisig,
-                  type: WalletType.Safe,
-                  owner: WalletOwnerType.Agent,
+                  type: WALLET_TYPE.Safe,
+                  owner: WALLET_OWNER.Agent,
                   evmChainId: asEvmChainId(middlewareChain),
                 } as AgentSafe);
               }

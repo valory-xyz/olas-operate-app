@@ -1,4 +1,4 @@
-import { Safe } from '@/enums/Wallet';
+import { Safe } from '@/constants';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { Maybe } from '@/types/Util';
 
