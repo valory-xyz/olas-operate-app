@@ -15,13 +15,10 @@ import {
   STAKING_PROGRAM_ADDRESS,
   STAKING_PROGRAMS,
 } from '@/config/stakingPrograms';
-import { PROVIDERS } from '@/constants/providers';
+import { CONTRACT_TYPE, PROVIDERS, StakingProgramId } from '@/constants';
 import { EvmChainId } from '@/enums/Chain';
-import { ContractType } from '@/enums/Contract';
 import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
-import { Maybe, Nullable } from '@/types/Util';
+import { Address, Maybe, Nullable } from '@/types';
 
 export const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 
@@ -127,10 +124,10 @@ export abstract class StakedAgentService {
 
     const { multicallProvider } = PROVIDERS[chainId];
 
+    const tokenUtility = CONTRACT_TYPE.ServiceRegistryTokenUtility;
     const {
-      [ContractType.ServiceRegistryTokenUtility]:
-        serviceRegistryTokenUtilityContract,
-      [ContractType.ServiceRegistryL2]: serviceRegistryL2Contract,
+      [tokenUtility]: serviceRegistryTokenUtilityContract,
+      [CONTRACT_TYPE.ServiceRegistryL2]: serviceRegistryL2Contract,
     } = OLAS_CONTRACTS[chainId];
 
     const contractCalls = [

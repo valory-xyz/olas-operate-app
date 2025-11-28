@@ -2,9 +2,9 @@ import { CHAIN_CONFIG } from '@/config/chains';
 import {
   BACKEND_URL_V2,
   CONTENT_TYPE_JSON_UTF8,
+  StakingProgramId,
   SupportedMiddlewareChain,
 } from '@/constants';
-import { StakingProgramId } from '@/enums/StakingProgram';
 import {
   Address,
   AgentPerformance,

@@ -19,7 +19,7 @@ import { SelectStakingPage } from '../SelectStakingPage';
 import { Home } from './Home';
 import { useScrollPage } from './hooks/useScrollPage';
 import { useSetupTrayIcon } from './hooks/useSetupTrayIcon';
-import { Sidebar } from './Sidebar';
+import { Sidebar } from './Sidebar/Sidebar';
 
 const { Content: MainContent } = MainLayout;
 

@@ -50,7 +50,10 @@ export const useFundingRequirements = (agentType: AgentType) => {
         const gasEstimate = config.monthly_gas_estimate;
         const monthlyGasEstimate = Number(formatUnits(`${gasEstimate}`, 18));
         const nativeTokenSymbol = getNativeTokenSymbol(evmChainId);
-        const totalNativeAmount = monthlyGasEstimate + safeCreationThreshold;
+        // Round to 6 decimal places to avoid floating-point precision issues
+        const totalNativeAmount = Number(
+          (monthlyGasEstimate + safeCreationThreshold).toFixed(6),
+        );
 
         // OLAS staking requirements
         const minimumStakedAmountRequired =

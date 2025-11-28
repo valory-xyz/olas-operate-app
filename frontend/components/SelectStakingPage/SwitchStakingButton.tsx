@@ -3,7 +3,8 @@ import { Button as AntdButton, Flex } from 'antd';
 import { useEffect } from 'react';
 import styled from 'styled-components';
 
-import { Pages, StakingProgramId } from '@/enums';
+import { StakingProgramId } from '@/constants';
+import { Pages } from '@/enums';
 import { usePageState, useStakingProgram } from '@/hooks';
 
 import { CooldownContentTooltip } from './CooldownTooltip';

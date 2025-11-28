@@ -1,8 +1,12 @@
 import { ethers } from 'ethers';
 
 import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from '@/config/tokens';
-import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
-import { AgentType, STAKING_PROGRAM_IDS, TokenSymbol } from '@/enums';
+import {
+  AgentMap,
+  EnvProvisionMap as EnvProvisionType,
+  STAKING_PROGRAM_IDS,
+} from '@/constants';
+import { AgentType, TokenSymbol } from '@/enums';
 import { ServiceTemplate } from '@/types';
 import { parseEther, parseUnits } from '@/utils';
 
@@ -160,20 +164,26 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   | 'service_version'
   | 'agent_release'
 > = {
-  hash: 'bafybeiardecju3sygh7hwuywka2bgjinbr7vrzob4mpdrookyfsbdmoq2m',
+  hash: 'bafybeihdy6s4qtyhm245ystr5o3srhgjviiczr4pcj57avbwnv4nmy6phy',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
-  service_version: 'v0.8.0-alpha3',
+  service_version: 'v2.0.0',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'meme-ooorr',
-      version: 'v0.0.1001',
+      version: 'v2.0.0',
     },
   },
   env_variables: {
+    SAFE_CONTRACT_ADDRESSES: {
+      name: 'Safe contract addresses',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
       description: '',
@@ -216,35 +226,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    GENAI_API_KEY: {
-      name: 'Gemini api key',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.USER,
-    },
-    FIREWORKS_API_KEY: {
-      name: 'Fireworks AI api key',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.USER,
-    },
     PERSONA: {
       name: 'Persona description',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
-    },
-    FEEDBACK_PERIOD_HOURS: {
-      name: 'Feedback period',
-      description: '',
-      value: '1',
-      provision_type: EnvProvisionType.FIXED,
-    },
-    MIN_FEEDBACK_REPLIES: {
-      name: 'Minimum feedback replies',
-      description: '',
-      value: '10',
-      provision_type: EnvProvisionType.FIXED,
     },
     RESET_PAUSE_DURATION: {
       name: 'Reset pause duration',
@@ -280,7 +266,8 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       name: 'Use x402',
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
-      value: X402_ENABLED_FLAGS[AgentMap.AgentsFun].toString(),
+      // x402 is always enabled for this agent, the agent wouldn't work without it.
+      value: 'true',
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -300,11 +287,11 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 43,
       cost_of_bond: +parseEther(50),
-      monthly_gas_estimate: +parseEther(0.03),
+      monthly_gas_estimate: +parseEther(0.0035),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.00625),
-          safe: +parseEther(0.0125),
+          agent: +parseEther(0.0003257),
+          safe: +parseEther(0.0016285),
         },
       },
     },
@@ -316,7 +303,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeidaw4jtgwxy6cqrn7j6cqgvi74mxge2p2gxkiyjoiowx37fy536mi',
+  hash: 'bafybeif6dqiqvdrzeqooja5v6nj7meuwpfygakr3jda3n7w6atovcgogvm',
   service_version: 'v0.6.0-rc.1',
   agent_release: {
     is_aea: true,

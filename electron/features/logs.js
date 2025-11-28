@@ -162,6 +162,20 @@ function prepareLogsForDebug(data, forSupport = false) {
     logger.electron(e);
   }
 
+    // tm.log wraps tendermint logs
+  try {
+    if (fs.existsSync(paths.agentRunnerLogFile)) {
+      sanitizeLogFile({
+        logFileName: 'tm.log',
+        filePath: paths.tmLogFile,
+        isForSupport: forSupport,
+        sizeLimit: FILE_SIZE_LIMITS.THREE_MB,
+      });
+    }
+  } catch (e) {
+    logger.electron(e);
+  }
+
   // Agent logs
   try {
     fs.readdirSync(paths.servicesDir).forEach((serviceDirName) => {

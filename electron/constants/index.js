@@ -31,6 +31,7 @@ const paths = {
   osPearlTempDir: path.join(os.tmpdir(), 'pearl'),
   bridgeDirectory: path.join(dotOperateDirectory, 'bridge'),
   agentRunnerLogFile: path.join(dotOperateDirectory, 'agent_runner.log'),
+  tmLogFile: path.join(dotOperateDirectory, 'tm.log'),
 };
 
 // Publish options

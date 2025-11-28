@@ -1,5 +1,5 @@
 import { Flex, Spin, Typography } from 'antd';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { LoadingOutlined } from '@/components/custom-icons';
@@ -22,7 +22,6 @@ import {
 } from '@/hooks';
 import { delayInSeconds } from '@/utils';
 
-import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
 import { useTokensFundingStatus } from './hooks/useTokensFundingStatus';
 
 const { Text, Title } = Typography;
@@ -39,9 +38,8 @@ export const TransferFunds = () => {
   const { goto: gotoSetup } = useSetup();
   const { masterEoa } = useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
-  const { isFullyFunded, tokensFundingStatus } = useTokensFundingStatus();
-  const { initialTokenRequirements, isLoading } =
-    useGetRefillRequirementsWithMonthlyGas();
+  const { isFullyFunded, tokensFundingStatus, isLoading } =
+    useTokensFundingStatus();
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
@@ -57,20 +55,6 @@ export const TransferFunds = () => {
   const chainName = EvmChainName[evmHomeChainId];
   const chainImage = ChainImageMap[evmHomeChainId];
   const masterEoaAddress = masterEoa?.address;
-
-  const tokensDataSource = useMemo(() => {
-    return (initialTokenRequirements ?? []).map((token) => {
-      const { amount: totalAmount } = token;
-      const { pendingAmount, funded: areFundsReceived } =
-        tokensFundingStatus?.[token.symbol] ?? {};
-      return {
-        ...token,
-        totalAmount,
-        pendingAmount,
-        areFundsReceived,
-      };
-    });
-  }, [initialTokenRequirements, tokensFundingStatus]);
 
   const handleFunded = useCallback(async () => {
     if (masterSafeDetails?.isSafeCreated) return;
@@ -133,7 +117,7 @@ export const TransferFunds = () => {
 
         <TokenRequirementsTable
           isLoading={isLoading}
-          tokensDataSource={tokensDataSource}
+          tokensDataSource={Object.values(tokensFundingStatus)}
         />
       </CardFlex>
 

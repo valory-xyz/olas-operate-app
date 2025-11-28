@@ -26,8 +26,23 @@ function sanitizeLogs({
 
   const logs = filePath ? fs.readFileSync(filePath, 'utf-8') : data;
 
-  const usernameRegex = /\/(Users|home)\/([^/]+)/g;
-  const sanitizedData = logs.replace(usernameRegex, '/$1/*****');
+  // Sanitize Unix-style paths: /Users/username or /home/username
+  const unixUsernameRegex = /\/(Users|home)\/([^/\\]+)/g;
+  let sanitizedData = logs.replace(unixUsernameRegex, '/$1/*******');
+
+  // Sanitize Windows-style paths (JSON strings)
+  const windowsEscapedRegex = /([A-Za-z]:)\\\\Users\\\\([^\\\\]+)/g;
+  sanitizedData = sanitizedData.replace(
+    windowsEscapedRegex,
+    '$1\\\\Users\\\\*******',
+  );
+
+  // Windows single backslashes: C:\Users\username
+  const windowsBackslashRegex = /([A-Za-z]:)\\Users\\([^\\]+)/g;
+  sanitizedData = sanitizedData.replace(
+    windowsBackslashRegex,
+    '$1\\Users\\*******',
+  );
   const sanitizedLogsFilePath = path.join(destPath, name);
 
   if (!fs.existsSync(destPath)) {
