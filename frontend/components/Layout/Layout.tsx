@@ -7,7 +7,7 @@ import {
   APP_HEIGHT,
   APP_WIDTH,
   COLOR,
-  Pages,
+  PAGES,
   SetupScreen,
   SIDER_WIDTH,
   TOP_BAR_HEIGHT,
@@ -97,7 +97,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
   }, [isOnline]);
 
   const hasPadding = useMemo(() => {
-    if (pageState === Pages.Setup) {
+    if (pageState === PAGES.Setup) {
       return layoutWithFullHeight.includes(state) ? false : true;
     }
 
@@ -127,7 +127,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
       )}
 
       <Container $blur={!isOnline}>
-        <DraggableNavBar $isFullWidth={pageState === Pages.Setup}>
+        <DraggableNavBar $isFullWidth={pageState === PAGES.Setup}>
           <WindowControls />
         </DraggableNavBar>
         <Body $hasPadding={hasPadding} ref={bodyRef}>

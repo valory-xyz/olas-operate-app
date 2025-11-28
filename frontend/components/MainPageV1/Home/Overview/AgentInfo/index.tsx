@@ -6,7 +6,7 @@ import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { CardFlex, Tooltip } from '@/components/ui';
-import { AddressZero, Pages } from '@/constants';
+import { AddressZero, PAGES } from '@/constants';
 import { usePageState, useService, useServices } from '@/hooks';
 import { generateName } from '@/utils';
 
@@ -85,7 +85,7 @@ export const AgentInfo = () => {
                   {isX402Enabled ? null : (
                     <Tooltip title="Agent settings">
                       <Button
-                        onClick={() => goto(Pages.UpdateAgentTemplate)}
+                        onClick={() => goto(PAGES.UpdateAgentTemplate)}
                         icon={<SettingOutlined />}
                       />
                     </Tooltip>

@@ -1,6 +1,6 @@
 import { Button } from 'antd';
 
-import { Pages } from '@/constants';
+import { PAGES } from '@/constants';
 import { usePageState } from '@/hooks';
 
 import { SuccessOutlined } from '../custom-icons';
@@ -19,7 +19,7 @@ export const AgentSetupCompleteModal = () => {
           size="large"
           block
           className="mt-32"
-          onClick={() => goto(Pages.Main)}
+          onClick={() => goto(PAGES.Main)}
         >
           View Agent
         </Button>

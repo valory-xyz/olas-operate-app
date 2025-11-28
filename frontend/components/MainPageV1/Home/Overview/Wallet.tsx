@@ -6,7 +6,7 @@ import { CardFlex } from '@/components/ui';
 import {
   COLOR,
   NA,
-  Pages,
+  PAGES,
   TokenSymbolConfigMap,
   TokenSymbolMap,
 } from '@/constants';
@@ -40,7 +40,7 @@ export const Wallet = () => {
         </Title>
         <Button
           disabled={isLoading}
-          onClick={() => goto(Pages.AgentWallet)}
+          onClick={() => goto(PAGES.AgentWallet)}
           size="small"
         >
           Manage Wallet

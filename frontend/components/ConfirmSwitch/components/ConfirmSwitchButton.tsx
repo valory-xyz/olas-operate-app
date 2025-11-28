@@ -2,7 +2,7 @@ import { Button, message } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { MiddlewareDeploymentStatusMap, Pages } from '@/constants';
+import { MiddlewareDeploymentStatusMap, PAGES } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import {
   useBalanceContext,
@@ -100,7 +100,7 @@ export const ConfirmSwitchButton = ({
       await ServicesService.startService(serviceConfigId);
       setContractSwitchStatus('COMPLETED');
       message.success('Contract switched successfully.');
-      goto(Pages.Main);
+      goto(PAGES.Main);
     } catch (error) {
       console.error(error);
       message.error('An error occurred while switching contract.');

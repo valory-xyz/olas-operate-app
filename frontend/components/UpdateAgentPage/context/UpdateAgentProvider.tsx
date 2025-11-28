@@ -12,7 +12,7 @@ import {
 } from 'react';
 
 import { Modal } from '@/components/ui';
-import { AgentMap, Pages } from '@/constants';
+import { AgentMap, PAGES } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { usePageState, useService, useServices } from '@/hooks';
 import { ServicesService } from '@/service/Services';
@@ -166,7 +166,7 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
   }, [form, selectedAgentType, selectedService, refetchServices]);
 
   const confirmUnsavedCallback = useCallback(async () => {
-    goto(Pages.Main);
+    goto(PAGES.Main);
   }, [goto]);
 
   const confirmUpdateModal = useConfirmUpdateModal({

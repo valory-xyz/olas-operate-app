@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { MiddlewareChain, Pages } from '@/constants';
+import { MiddlewareChain, PAGES } from '@/constants';
 import { usePageState } from '@/hooks';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
@@ -93,12 +93,12 @@ export const Bridge = ({
         if (showCompleteScreen || isOnboarding) {
           setBridgeState('completed');
         } else {
-          goto(Pages.Main);
+          goto(PAGES.Main);
         }
         break;
       }
       case 'completed':
-        goto(Pages.Main);
+        goto(PAGES.Main);
         break;
       default:
         throw new Error('Invalid bridge state');

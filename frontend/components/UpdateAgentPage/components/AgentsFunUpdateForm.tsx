@@ -18,7 +18,7 @@ import {
 } from '@/components/AgentForms/common/labels';
 import { RenderForm } from '@/components/SetupPage/SetupYourAgent/useDisplayAgentForm';
 import { RequiredMark } from '@/components/ui';
-import { Pages } from '@/constants';
+import { PAGES } from '@/constants';
 import { usePageState, useServices } from '@/hooks';
 import { Nullable } from '@/types/Util';
 import { getXUsername } from '@/utils';
@@ -175,7 +175,7 @@ export const AgentsFunUpdateForm = ({
     if (hasUnsavedChanges) {
       unsavedModal.openModal();
     } else {
-      goto(Pages.Main);
+      goto(PAGES.Main);
     }
   }, [initialValues, form, unsavedModal, goto]);
 

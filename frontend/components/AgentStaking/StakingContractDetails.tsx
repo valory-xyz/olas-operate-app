@@ -4,7 +4,7 @@ import { TbLock, TbSparkles, TbSquareRoundedPercentage } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { CardFlex, Divider, InfoTooltip, Tooltip } from '@/components/ui';
-import { COLOR, NA, Pages } from '@/constants';
+import { COLOR, NA, PAGES } from '@/constants';
 import {
   usePageState,
   useStakingContractDetails,
@@ -101,7 +101,7 @@ export const StakingContractDetails = () => {
             participate in only one contract at a time.
           </InfoTooltip>
         </Flex>
-        <Button size="small" onClick={() => goto(Pages.SelectStaking)}>
+        <Button size="small" onClick={() => goto(PAGES.SelectStaking)}>
           Switch Staking Contract
         </Button>
       </Flex>

@@ -5,7 +5,7 @@ import { TbFileText, TbHistory } from 'react-icons/tb';
 
 import { FireV1 } from '@/components/custom-icons';
 import { BackButton, CardFlex, InfoTooltip, Segmented } from '@/components/ui';
-import { MAIN_CONTENT_MAX_WIDTH, Pages } from '@/constants';
+import { MAIN_CONTENT_MAX_WIDTH, PAGES } from '@/constants';
 import {
   usePageState,
   useRewardContext,
@@ -115,7 +115,7 @@ export const AgentStaking = () => {
 
   return (
     <Flex vertical style={{ width: MAIN_CONTENT_MAX_WIDTH, margin: '0 auto' }}>
-      <BackButton onPrev={() => goto(Pages.Main)} />
+      <BackButton onPrev={() => goto(PAGES.Main)} />
       <Title level={3} className="mt-12 mb-32">
         Agent Staking
       </Title>

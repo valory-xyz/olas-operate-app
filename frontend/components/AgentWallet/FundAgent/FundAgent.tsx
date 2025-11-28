@@ -13,7 +13,7 @@ import {
   TokenAmountInput,
 } from '@/components/ui';
 import { TOKEN_CONFIG } from '@/config/tokens';
-import { AddressZero, Pages, TokenSymbol } from '@/constants';
+import { AddressZero, PAGES, TokenSymbol } from '@/constants';
 import { useAvailableAssets, usePageState, useServices } from '@/hooks';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
 import { formatUnitsToNumber } from '@/utils';
@@ -78,7 +78,7 @@ const FundPearlWallet = () => {
       <Text type="danger" className="text-sm">
         Not enough funds on Pearl Wallet balance.
       </Text>
-      <Button size="small" onClick={() => goto(Pages.PearlWallet)}>
+      <Button size="small" onClick={() => goto(PAGES.PearlWallet)}>
         Fund Pearl Wallet
       </Button>
     </Flex>

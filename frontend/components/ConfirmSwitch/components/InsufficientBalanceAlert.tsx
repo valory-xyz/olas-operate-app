@@ -1,7 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 
 import { Alert, Tooltip } from '@/components/ui';
-import { Pages } from '@/constants';
+import { PAGES } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { usePageState } from '@/hooks';
 import { formatNumber } from '@/utils';
@@ -38,7 +38,7 @@ export const InsufficientBalanceAlert = ({
             <Button
               size="small"
               disabled={!masterSafeAddress}
-              onClick={() => goto(Pages.DepositOlasForStaking)}
+              onClick={() => goto(PAGES.DepositOlasForStaking)}
             >
               Deposit OLAS
             </Button>

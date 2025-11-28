@@ -3,7 +3,7 @@ import { isNil } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Pages, SetupScreen } from '@/constants';
+import { PAGES, SetupScreen } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
 import {
   useBackupSigner,
@@ -109,7 +109,7 @@ const useSetupNavigation = ({
       return;
     }
 
-    gotoPage(Pages.Main);
+    gotoPage(PAGES.Main);
   }, [
     getMasterEoaNativeBalanceOf,
     goto,

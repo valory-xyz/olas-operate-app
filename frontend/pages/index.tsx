@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 
 import { Main } from '@/components/MainPageV1';
 import { Setup } from '@/components/SetupPage';
-import { Pages } from '@/constants';
+import { PAGES } from '@/constants';
 import { useElectronApi, usePageState } from '@/hooks';
 
 export default function Home() {
@@ -16,9 +16,9 @@ export default function Home() {
 
   const page = useMemo(() => {
     switch (pageState) {
-      case Pages.Setup:
+      case PAGES.Setup:
         return <Setup />;
-      case Pages.Main:
+      case PAGES.Main:
         return <Main />;
 
       default:

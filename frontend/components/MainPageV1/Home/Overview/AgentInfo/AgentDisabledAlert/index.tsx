@@ -1,5 +1,5 @@
 import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
-import { Pages } from '@/constants';
+import { PAGES } from '@/constants';
 import {
   useActiveStakingContractDetails,
   useAgentRunning,
@@ -52,7 +52,7 @@ export const AgentDisabledAlert = () => {
   // NOTE: Low-balance alerts, each component controls its own visibility.
   return (
     <>
-      <AgentLowBalanceAlert onFund={() => goto(Pages.AgentWallet)} />
+      <AgentLowBalanceAlert onFund={() => goto(PAGES.AgentWallet)} />
       <MasterEoaLowBalanceAlert />
     </>
   );
