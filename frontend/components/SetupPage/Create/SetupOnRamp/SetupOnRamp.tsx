@@ -2,7 +2,7 @@ import { Button, Flex, Modal, Spin, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 
 import { Alert, BackButton, CardFlex } from '@/components/ui';
-import { SetupScreen } from '@/constants';
+import { SETUP_SCREEN } from '@/constants';
 import { useOnRampContext, useSetup } from '@/hooks';
 
 import { OnRampPaymentSteps } from './OnRampPaymentSteps/OnRampPaymentSteps';
@@ -40,7 +40,7 @@ const OnBack = () => {
 
   const handleLeavePage = useCallback(() => {
     setIsDoNotLeavePageModalOpen(false);
-    gotoSetup(prevState ?? SetupScreen.FundYourAgent);
+    gotoSetup(prevState ?? SETUP_SCREEN.FundYourAgent);
   }, [gotoSetup, prevState]);
 
   const handleStayOnPage = useCallback(() => {

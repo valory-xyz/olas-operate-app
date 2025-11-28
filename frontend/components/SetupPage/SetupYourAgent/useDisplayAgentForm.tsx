@@ -4,7 +4,7 @@ import React, { ReactNode, useCallback } from 'react';
 import styled from 'styled-components';
 
 import { BackButton } from '@/components/ui';
-import { SetupScreen } from '@/constants';
+import { SETUP_SCREEN } from '@/constants';
 import { COLOR } from '@/constants/colors';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { useServices, useSetup } from '@/hooks';
@@ -61,7 +61,9 @@ export const useDisplayAgentForm = () => {
         <>
           <Flex vertical className="setup-left-content">
             <BackButton
-              onPrev={onBack ? onBack : () => goto(SetupScreen.AgentOnboarding)}
+              onPrev={
+                onBack ? onBack : () => goto(SETUP_SCREEN.AgentOnboarding)
+              }
             />
             <Title level={3} style={{ margin: '16px 0 24px 0' }}>
               {isUpdate

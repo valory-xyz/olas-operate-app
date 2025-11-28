@@ -8,6 +8,7 @@ import {
   APP_WIDTH,
   COLOR,
   PAGES,
+  SETUP_SCREEN,
   SetupScreen,
   SIDER_WIDTH,
   TOP_BAR_HEIGHT,
@@ -22,7 +23,7 @@ const useScrollToTop = () => {
   const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (setupState === SetupScreen.SelectStaking) {
+    if (setupState === SETUP_SCREEN.SelectStaking) {
       bodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [bodyRef, setupState]);
@@ -73,7 +74,7 @@ const DraggableNavBar = styled.div<{ $isFullWidth: boolean }>`
   -webkit-app-region: drag;
 `;
 
-const layoutWithFullHeight: SetupScreen[] = [SetupScreen.SetupYourAgent];
+const layoutWithFullHeight: SetupScreen[] = [SETUP_SCREEN.SetupYourAgent];
 
 const Body = styled.div<{ $hasPadding?: boolean }>`
   display: flex;

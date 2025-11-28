@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 import React, { useContext, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { COLOR, SetupScreen } from '@/constants';
+import { COLOR, SETUP_SCREEN, SetupScreen } from '@/constants';
 import { SetupContext } from '@/context/SetupProvider';
 
 import { SelectStakingPage } from '../SelectStakingPage';
@@ -50,13 +50,13 @@ const SetupCard = styled.div`
 `;
 
 const screenWithoutCards: SetupScreen[] = [
-  SetupScreen.AgentOnboarding,
-  SetupScreen.SetupYourAgent,
-  SetupScreen.FundYourAgent,
-  SetupScreen.TransferFunds,
-  SetupScreen.SetupBridgeOnboardingScreen,
-  SetupScreen.SetupOnRamp,
-  SetupScreen.SelectStaking,
+  SETUP_SCREEN.AgentOnboarding,
+  SETUP_SCREEN.SetupYourAgent,
+  SETUP_SCREEN.FundYourAgent,
+  SETUP_SCREEN.TransferFunds,
+  SETUP_SCREEN.SetupBridgeOnboardingScreen,
+  SETUP_SCREEN.SetupOnRamp,
+  SETUP_SCREEN.SelectStaking,
 ];
 
 export const Setup = () => {
@@ -64,37 +64,37 @@ export const Setup = () => {
 
   const setupScreen = useMemo(() => {
     switch (setupObject.state) {
-      case SetupScreen.Welcome:
+      case SETUP_SCREEN.Welcome:
         return <SetupWelcome />;
 
       // Create account
-      case SetupScreen.SetupPassword:
+      case SETUP_SCREEN.SetupPassword:
         return <SetupPassword />;
-      case SetupScreen.SetupBackupSigner:
+      case SETUP_SCREEN.SetupBackupSigner:
         return <SetupBackupSigner />;
-      case SetupScreen.AgentOnboarding:
+      case SETUP_SCREEN.AgentOnboarding:
         return <AgentOnboarding />;
-      case SetupScreen.SetupYourAgent:
+      case SETUP_SCREEN.SetupYourAgent:
         return <SetupYourAgent />;
-      case SetupScreen.SelectStaking:
+      case SETUP_SCREEN.SelectStaking:
         return <SelectStakingPage mode="onboard" />;
-      case SetupScreen.FundYourAgent:
+      case SETUP_SCREEN.FundYourAgent:
         return <FundYourAgent />;
-      case SetupScreen.TransferFunds:
+      case SETUP_SCREEN.TransferFunds:
         return <TransferFunds />;
-      case SetupScreen.SetupBridgeOnboardingScreen:
+      case SETUP_SCREEN.SetupBridgeOnboardingScreen:
         return <SetupBridgeOnboarding />;
-      case SetupScreen.SetupOnRamp:
+      case SETUP_SCREEN.SetupOnRamp:
         return <SetupOnRamp />;
-      case SetupScreen.EarlyAccessOnly:
+      case SETUP_SCREEN.EarlyAccessOnly:
         return <EarlyAccessOnly />;
 
       // Restore account, screens to be re-implemented as per v1
-      case SetupScreen.Restore:
+      case SETUP_SCREEN.Restore:
         return <SetupRestoreMain />;
-      case SetupScreen.RestoreSetPassword:
+      case SETUP_SCREEN.RestoreSetPassword:
         return <SetupRestoreSetPassword />;
-      case SetupScreen.RestoreViaBackup:
+      case SETUP_SCREEN.RestoreViaBackup:
         return <SetupRestoreViaBackup />;
       default:
         return <UnexpectedError />;

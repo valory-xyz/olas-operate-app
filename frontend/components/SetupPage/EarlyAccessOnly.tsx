@@ -2,7 +2,7 @@ import { IdcardOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
 import { useCallback } from 'react';
 
-import { COLOR, SetupScreen, UNICODE_SYMBOLS } from '@/constants';
+import { COLOR, SETUP_SCREEN, UNICODE_SYMBOLS } from '@/constants';
 import { useSetup } from '@/hooks/useSetup';
 
 import { CardFlex } from '../ui/CardFlex';
@@ -13,7 +13,7 @@ export const EarlyAccessOnly = () => {
   const { goto } = useSetup();
 
   const onGoBack = useCallback(() => {
-    goto(SetupScreen.AgentOnboarding);
+    goto(SETUP_SCREEN.AgentOnboarding);
   }, [goto]);
 
   return (

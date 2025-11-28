@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { RequiredMark } from '@/components/ui/RequiredMark';
-import { SetupScreen } from '@/constants';
+import { SETUP_SCREEN } from '@/constants';
 import { useSetup, useStakingProgram } from '@/hooks';
 import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils/service';
@@ -105,7 +105,7 @@ const OptimusAgentFormContent = ({
         message.success('Agent setup complete');
 
         // move to next page
-        goto(SetupScreen.SelectStaking);
+        goto(SETUP_SCREEN.SelectStaking);
       } catch (error) {
         message.error('Something went wrong. Please try again.');
         console.error(error);

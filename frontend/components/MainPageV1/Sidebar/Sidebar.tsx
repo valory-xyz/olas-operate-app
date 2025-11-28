@@ -29,7 +29,7 @@ import {
   EvmChainId,
   PAGES,
   Pages,
-  SetupScreen,
+  SETUP_SCREEN,
   SIDER_WIDTH,
 } from '@/constants';
 import {
@@ -233,7 +233,7 @@ export const Sidebar = () => {
 
       // TODO: make back button on funding screen properly sending back to main
       // if was redirected from here
-      gotoSetup(SetupScreen.FundYourAgent);
+      gotoSetup(SETUP_SCREEN.FundYourAgent);
     }
   };
 
@@ -286,7 +286,7 @@ export const Sidebar = () => {
                   className="flex mx-auto"
                   onClick={() => {
                     gotoPage(PAGES.Setup);
-                    gotoSetup(SetupScreen.AgentOnboarding);
+                    gotoSetup(SETUP_SCREEN.AgentOnboarding);
                   }}
                   icon={<TbPlus size={20} />}
                 >

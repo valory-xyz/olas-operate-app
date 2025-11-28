@@ -6,7 +6,7 @@ import {
   useState,
 } from 'react';
 
-import { SetupScreen } from '@/constants';
+import { SETUP_SCREEN, SetupScreen } from '@/constants';
 import { Address, BackupWalletType, Maybe } from '@/types';
 
 type SetupObjectType = {
@@ -25,7 +25,7 @@ type SetupContextType = {
 
 export const SetupContext = createContext<SetupContextType>({
   setupObject: {
-    state: SetupScreen.Welcome,
+    state: SETUP_SCREEN.Welcome,
     prevState: null,
     backupSigner: undefined,
   },
@@ -34,7 +34,7 @@ export const SetupContext = createContext<SetupContextType>({
 
 export const SetupProvider = ({ children }: PropsWithChildren) => {
   const [setupObject, setSetupObject] = useState<SetupObjectType>({
-    state: SetupScreen.Welcome,
+    state: SETUP_SCREEN.Welcome,
     prevState: null,
     backupSigner: undefined,
   });

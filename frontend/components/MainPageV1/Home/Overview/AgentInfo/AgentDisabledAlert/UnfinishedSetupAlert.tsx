@@ -1,7 +1,7 @@
 import { Button, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
-import { PAGES, SetupScreen } from '@/constants';
+import { PAGES, SETUP_SCREEN } from '@/constants';
 import { usePageState, useSetup } from '@/hooks';
 
 const { Text } = Typography;
@@ -11,7 +11,7 @@ export const UnfinishedSetupAlert = () => {
   const { goto: gotoSetup } = useSetup();
 
   const handleCompleteSetup = () => {
-    gotoSetup(SetupScreen.FundYourAgent);
+    gotoSetup(SETUP_SCREEN.FundYourAgent);
     goto(PAGES.Setup);
   };
 

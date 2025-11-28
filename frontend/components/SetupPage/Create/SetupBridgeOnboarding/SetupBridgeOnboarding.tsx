@@ -2,7 +2,7 @@ import { Flex } from 'antd';
 import { useCallback } from 'react';
 
 import { Bridge } from '@/components/Bridge';
-import { AllEvmChainIdMap, SetupScreen } from '@/constants';
+import { AllEvmChainIdMap, SETUP_SCREEN } from '@/constants';
 import { useServices, useSetup } from '@/hooks';
 
 import { useGetBridgeRequirementsParams } from '../hooks/useGetBridgeRequirementsParams';
@@ -21,7 +21,7 @@ export const SetupBridgeOnboarding = () => {
   );
 
   const handlePrevStep = useCallback(() => {
-    gotoSetup(prevState ?? SetupScreen.FundYourAgent);
+    gotoSetup(prevState ?? SETUP_SCREEN.FundYourAgent);
   }, [gotoSetup, prevState]);
 
   return (

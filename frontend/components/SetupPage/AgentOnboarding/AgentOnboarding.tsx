@@ -8,7 +8,7 @@ import styled from 'styled-components';
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { BackButton } from '@/components/ui';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
-import { AgentType, COLOR, PAGES, SetupScreen } from '@/constants';
+import { AgentType, COLOR, PAGES, SETUP_SCREEN } from '@/constants';
 import { usePageState, useServices, useSetup } from '@/hooks';
 import { AgentConfig, Optional } from '@/types';
 
@@ -124,16 +124,16 @@ export const AgentOnboarding = () => {
 
     // if agent is "coming soon" should be redirected to EARLY ACCESS PAGE
     if (currentAgentConfig.isComingSoon) {
-      goto(SetupScreen.EarlyAccessOnly);
+      goto(SETUP_SCREEN.EarlyAccessOnly);
       return;
     }
 
     // if the selected type requires setting up an agent,
     // should be redirected to setup screen.
     if (currentAgentConfig.requiresSetup && !currentAgentConfig.isX402Enabled) {
-      goto(SetupScreen.SetupYourAgent);
+      goto(SETUP_SCREEN.SetupYourAgent);
     } else {
-      goto(SetupScreen.SelectStaking);
+      goto(SETUP_SCREEN.SelectStaking);
     }
   }, [goto, selectedAgent]);
 

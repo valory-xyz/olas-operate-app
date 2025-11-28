@@ -23,7 +23,7 @@ import {
 } from '@/components/AgentForms/common/labels';
 import { AgentsFunFormValues } from '@/components/SetupPage/SetupYourAgent/AgentsFunAgentForm/types';
 import { RequiredMark } from '@/components/ui';
-import { SetupScreen } from '@/constants';
+import { SETUP_SCREEN } from '@/constants';
 import { useSetup, useStakingProgram } from '@/hooks';
 import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils/service';
@@ -111,7 +111,7 @@ export const AgentsFunAgentFormContent = ({
         message.success('Agent setup complete');
 
         // move to next page
-        goto(SetupScreen.SelectStaking);
+        goto(SETUP_SCREEN.SelectStaking);
       } catch (error) {
         message.error('Something went wrong. Please try again.');
         console.error(error);

@@ -4,13 +4,13 @@ import { memo, useState } from 'react';
 
 import { CardFlex } from '@/components/ui/CardFlex';
 import { CardSection } from '@/components/ui/CardSection';
-import { COMMUNITY_ASSISTANCE_URL, SetupScreen } from '@/constants';
+import { COMMUNITY_ASSISTANCE_URL, SETUP_SCREEN } from '@/constants';
 import { useSetup } from '@/hooks/useSetup';
 
 const ExitButton = memo(function ExitButton() {
   const { goto } = useSetup();
   return (
-    <Button size="large" onClick={() => goto(SetupScreen.Welcome)}>
+    <Button size="large" onClick={() => goto(SETUP_SCREEN.Welcome)}>
       <CloseOutlined />
     </Button>
   );
@@ -41,7 +41,7 @@ export const SetupRestoreMain = () => {
         <Button
           size="large"
           className="mt-16"
-          onClick={() => goto(SetupScreen.RestoreViaBackup)}
+          onClick={() => goto(SETUP_SCREEN.RestoreViaBackup)}
         >
           Restore funds via backup wallet
         </Button>
@@ -80,7 +80,7 @@ export const SetupRestoreSetPassword = () => {
           <Button
             size="large"
             type="primary"
-            onClick={() => goto(SetupScreen.Welcome)}
+            onClick={() => goto(SETUP_SCREEN.Welcome)}
           >
             Set password
           </Button>

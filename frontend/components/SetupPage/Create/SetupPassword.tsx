@@ -4,7 +4,7 @@ import zxcvbn from 'zxcvbn';
 
 import { BackButton } from '@/components/ui/BackButton';
 import { FormLabel } from '@/components/ui/Typography';
-import { COLOR, SetupScreen } from '@/constants';
+import { COLOR, SETUP_SCREEN } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
 import { useMnemonicExists, usePageState, useSetup } from '@/hooks';
 import { AccountService } from '@/service/Account';
@@ -84,7 +84,7 @@ export const SetupPassword = () => {
         // Mnemonic is always created for new accounts
         setMnemonicExists(true);
         setUserLoggedIn();
-        goto(SetupScreen.SetupBackupSigner);
+        goto(SETUP_SCREEN.SetupBackupSigner);
       })
       .catch((e: unknown) => {
         message.error(getErrorMessage(e));
@@ -94,7 +94,7 @@ export const SetupPassword = () => {
 
   return (
     <CardFlex $gap={10} styles={{ body: { padding: '12px 24px' } }} $noBorder>
-      <BackButton onPrev={() => goto(SetupScreen.Welcome)} />
+      <BackButton onPrev={() => goto(SETUP_SCREEN.Welcome)} />
       <SetupPasswordTitle />
 
       <Form
