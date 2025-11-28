@@ -76,7 +76,6 @@ type ElectronApiContextProps = {
     close?: () => void;
   };
   logEvent?: (message: string) => void;
-  isInBackground?: boolean;
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -117,7 +116,6 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     close: () => {},
   },
   logEvent: () => {},
-  isInBackground: false,
 });
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {

@@ -79,9 +79,6 @@ export const useRefetchInterval = (
     [windowState],
   );
 
-  /**
-   * Memoize the final returned interval to avoid re-renders.
-   */
   return useMemo(() => {
     // Case 1 — function-style refetch interval
     if (typeof interval === 'function') {
