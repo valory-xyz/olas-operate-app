@@ -2,7 +2,7 @@ import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
 import { Pages } from '@/enums';
 import {
   useActiveStakingContractDetails,
-  useAnotherAgentRunning,
+  useAgentRunning,
   useIsInitiallyFunded,
   usePageState,
   useServices,
@@ -26,7 +26,7 @@ export const AgentDisabledAlert = () => {
   } = useActiveStakingContractDetails();
   const { isInitialFunded } = useIsInitiallyFunded();
   const { goto } = usePageState();
-  const isAnotherAgentRunning = useAnotherAgentRunning();
+  const { isAnotherAgentRunning } = useAgentRunning();
 
   if (selectedAgentConfig.isUnderConstruction) {
     return <UnderConstructionAlert />;
