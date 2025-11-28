@@ -11,11 +11,8 @@ import { MECH_ACTIVITY_CHECKER_ABI } from '@/abis/mechActivityChecker';
 import { MEME_ACTIVITY_CHECKER_ABI } from '@/abis/memeActivityChecker';
 import { REQUESTER_ACTIVITY_CHECKER_ABI } from '@/abis/requesterActivityChecker';
 import { STAKING_ACTIVITY_CHECKER_ABI } from '@/abis/stakingActivityChecker';
-import {
-  OptimismStakingProgramId,
-  STAKING_PROGRAM_IDS,
-} from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
+import { OptimismStakingProgramId, STAKING_PROGRAM_IDS } from '@/constants';
+import { Address } from '@/types';
 
 export const getMechActivityCheckerContract = (
   address: Address,
@@ -69,6 +66,22 @@ export const GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace]:
     getRequesterActivityCheckerContract(
       '0x7Ec96996Cd146B91779f01419db42E67463817a0',
+    ),
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1]:
+    getRequesterActivityCheckerContract(
+      '0x95b37c45BADAf4668c18d00501948196761736b1',
+    ),
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace2]:
+    getRequesterActivityCheckerContract(
+      '0x95b37c45BADAf4668c18d00501948196761736b1',
+    ),
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3]:
+    getRequesterActivityCheckerContract(
+      '0xd1185503F457c6234FAAf34436f9AB18948AA71B',
+    ),
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4]:
+    getRequesterActivityCheckerContract(
+      '0xd1185503F457c6234FAAf34436f9AB18948AA71B',
     ),
 } as const;
 

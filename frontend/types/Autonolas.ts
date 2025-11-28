@@ -15,6 +15,7 @@ export const StakingRewardsInfoSchema = z.object({
   rewardsPerSecond: zodBigNumber,
   isEligibleForRewards: z.boolean(),
   availableRewardsForEpoch: z.number(),
+  /* current epoch rewards */
   accruedServiceStakingRewards: z.number(),
   minimumStakedAmount: z.number(),
   tsCheckpoint: zodBigNumber.transform((val) => parseInt(val._hex, 16)),

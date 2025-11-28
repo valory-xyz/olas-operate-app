@@ -1,17 +1,17 @@
 import { createContext, PropsWithChildren, useState } from 'react';
 
-import { SettingsScreen } from '@/enums/SettingsScreen';
+import { SettingsScreen, SettingsScreenMap } from '@/constants/screen';
 
 export const SettingsContext = createContext<{
   screen: SettingsScreen;
   goto: (screen: SettingsScreen) => void;
 }>({
-  screen: SettingsScreen.Main,
+  screen: SettingsScreenMap.Main,
   goto: () => {},
 });
 
 export const SettingsProvider = ({ children }: PropsWithChildren) => {
-  const [screen, setScreen] = useState<SettingsScreen>(SettingsScreen.Main);
+  const [screen, setScreen] = useState<SettingsScreen>(SettingsScreenMap.Main);
 
   const goto = (screen: SettingsScreen) => setScreen(screen);
 

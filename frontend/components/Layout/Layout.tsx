@@ -1,6 +1,6 @@
 import { message } from 'antd';
 import Image from 'next/image';
-import { PropsWithChildren, useEffect, useMemo } from 'react';
+import { PropsWithChildren, useEffect, useMemo, useRef } from 'react';
 import styled, { css } from 'styled-components';
 
 import {
@@ -16,6 +16,19 @@ import { useOnlineStatusContext, usePageState, useSetup } from '@/hooks';
 
 import { Modal } from '../ui';
 import { WindowControls } from './WindowControls';
+
+const useScrollToTop = () => {
+  const { state: setupState } = useSetup();
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (setupState === SetupScreen.SelectStaking) {
+      bodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [bodyRef, setupState]);
+
+  return bodyRef;
+};
 
 const Container = styled.div<{ $blur: boolean }>`
   display: flex;
@@ -74,6 +87,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
   const { isOnline } = useOnlineStatusContext();
   const { state } = useSetup();
   const { pageState } = usePageState();
+  const bodyRef = useScrollToTop();
 
   useEffect(() => {
     const onlineStatusMessageKey = 'online-status-message';
@@ -116,7 +130,9 @@ export const Layout = ({ children }: PropsWithChildren) => {
         <DraggableNavBar $isFullWidth={pageState === Pages.Setup}>
           <WindowControls />
         </DraggableNavBar>
-        <Body $hasPadding={hasPadding}>{children}</Body>
+        <Body $hasPadding={hasPadding} ref={bodyRef}>
+          {children}
+        </Body>
       </Container>
     </>
   );

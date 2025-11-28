@@ -1,7 +1,8 @@
 import { Button, Flex, message } from 'antd';
 import { useBoolean } from 'usehooks-ts';
 
-import { SetupScreen, StakingProgramId } from '@/enums';
+import { StakingProgramId } from '@/constants';
+import { SetupScreen } from '@/enums';
 import {
   useBalanceAndRefillRequirementsContext,
   useServices,

@@ -3,19 +3,19 @@ import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { OPTIMISM_STAKING_PROGRAMS } from '@/config/stakingPrograms/optimism';
-import { PROVIDERS } from '@/constants/providers';
-import { EvmChainId } from '@/enums/Chain';
 import {
   OptimismStakingProgramId,
+  PROVIDERS,
   StakingProgramId,
-} from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
+} from '@/constants';
+import { EvmChainId } from '@/enums/Chain';
 import {
+  Address,
   ServiceStakingDetails,
   StakingContractDetails,
   StakingRewardsInfo,
-} from '@/types/Autonolas';
-import { isValidServiceId } from '@/utils/service';
+} from '@/types';
+import { isValidServiceId } from '@/utils';
 
 import {
   ONE_YEAR,

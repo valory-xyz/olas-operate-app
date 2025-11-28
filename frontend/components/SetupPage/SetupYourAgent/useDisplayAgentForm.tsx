@@ -44,7 +44,7 @@ export type RenderForm = (
 
 export const useDisplayAgentForm = () => {
   const { goto } = useSetup();
-  const { selectedAgentType } = useServices();
+  const { selectedAgentType, selectedAgentConfig } = useServices();
   const serviceTemplate = SERVICE_TEMPLATES.find(
     (template) => template.agentType === selectedAgentType,
   );
@@ -65,7 +65,9 @@ export const useDisplayAgentForm = () => {
               onPrev={onBack ? onBack : () => goto(SetupScreen.AgentOnboarding)}
             />
             <Title level={3} style={{ margin: '16px 0 24px 0' }}>
-              {isUpdate ? 'Agent Settings' : 'Configure Your Agent'}
+              {isUpdate
+                ? 'Agent Settings'
+                : `Configure Your ${selectedAgentConfig?.displayName} Agent`}
             </Title>
             {form}
           </Flex>
@@ -79,7 +81,7 @@ export const useDisplayAgentForm = () => {
         </>
       );
     },
-    [serviceTemplate, goto],
+    [serviceTemplate, selectedAgentConfig?.displayName, goto],
   );
 
   return displayForm;

@@ -1,10 +1,10 @@
 import {
   MiddlewareChain,
   MiddlewareDeploymentStatus,
+  StakingProgramId,
   SupportedMiddlewareChain,
 } from '@/constants';
 import { EnvProvision } from '@/constants/envVariables';
-import { StakingProgramId } from '@/enums';
 import { AgentType } from '@/enums/Agent';
 
 import { Address } from './Address';
