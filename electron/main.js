@@ -402,14 +402,6 @@ const createMainWindow = async () => {
     mainWindow.hide();
   });
 
-  mainWindow.on('blur', () => {
-    mainWindow.webContents.send('window-blur');
-  });
-
-  mainWindow.on('focus', () => {
-    mainWindow.webContents.send('window-focus');
-  });
-
   try {
     logger.electron('Setting up store IPC');
     setupStoreIpc(ipcMain, mainWindow);

@@ -55,6 +55,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
   web3AuthWindow,
   termsAndConditionsWindow,
   logEvent: (message) => ipcRenderer.invoke('log-event', message),
-  onWindowBlur: (callback) => ipcRenderer.on('window-blur', callback),
-  onWindowFocus: (callback) => ipcRenderer.on('window-focus', callback),
 });
