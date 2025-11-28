@@ -26,9 +26,9 @@ type EpochStatusNotification = {
  */
 export const useNotifyOnNewEpoch = () => {
   const { showNotification } = useElectronApi();
-  const { selectedAgentConfig, selectedService } = useServices();
   const { isEligibleForRewards } = useRewardContext();
   const { isInitialFunded } = useIsInitiallyFunded();
+  const { selectedAgentConfig, selectedService } = useServices();
   const { isServiceRunning } = useService(selectedService?.service_config_id);
   const {
     selectedStakingContractDetails: activeStakingContractDetails,
