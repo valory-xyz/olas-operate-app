@@ -40,5 +40,6 @@ export const useActiveStakingProgramId = (
       isServicesLoaded &&
       isValidServiceId(serviceNftTokenId),
     refetchInterval: FIVE_SECONDS_INTERVAL,
+    refetchIntervalInBackground: true,
   });
 };
