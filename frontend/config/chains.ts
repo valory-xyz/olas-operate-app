@@ -3,11 +3,12 @@
  * - add new chains to the CHAIN_CONFIGS object
  */
 import {
+  EvmChainId,
+  EvmChainIdMap,
   MiddlewareChain,
   MiddlewareChainMap,
   TokenSymbolMap,
 } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
 
 import { TOKEN_CONFIG, TokenConfig } from './tokens';
 
@@ -30,9 +31,9 @@ export type ChainConfig = {
 };
 
 const GNOSIS_CHAIN_CONFIG: ChainConfig = {
-  evmChainId: EvmChainId.Gnosis,
+  evmChainId: EvmChainIdMap.Gnosis,
   name: 'Gnosis',
-  nativeToken: TOKEN_CONFIG[EvmChainId.Gnosis][
+  nativeToken: TOKEN_CONFIG[EvmChainIdMap.Gnosis][
     TokenSymbolMap.XDAI
   ] as TokenConfig,
   middlewareChain: MiddlewareChainMap.GNOSIS,
@@ -42,9 +43,11 @@ const GNOSIS_CHAIN_CONFIG: ChainConfig = {
 } as const;
 
 const BASE_CHAIN_CONFIG: ChainConfig = {
-  evmChainId: EvmChainId.Base,
+  evmChainId: EvmChainIdMap.Base,
   name: 'Base',
-  nativeToken: TOKEN_CONFIG[EvmChainId.Base][TokenSymbolMap.ETH] as TokenConfig,
+  nativeToken: TOKEN_CONFIG[EvmChainIdMap.Base][
+    TokenSymbolMap.ETH
+  ] as TokenConfig,
   middlewareChain: MiddlewareChainMap.BASE,
   rpc: process.env.BASE_RPC as HttpUrl,
   safeCreationThreshold: 0.005,
@@ -52,9 +55,11 @@ const BASE_CHAIN_CONFIG: ChainConfig = {
 } as const;
 
 const MODE_CHAIN_CONFIG: ChainConfig = {
-  evmChainId: EvmChainId.Mode,
+  evmChainId: EvmChainIdMap.Mode,
   name: 'Mode',
-  nativeToken: TOKEN_CONFIG[EvmChainId.Mode][TokenSymbolMap.ETH] as TokenConfig,
+  nativeToken: TOKEN_CONFIG[EvmChainIdMap.Mode][
+    TokenSymbolMap.ETH
+  ] as TokenConfig,
   middlewareChain: MiddlewareChainMap.MODE,
   rpc: process.env.MODE_RPC as HttpUrl,
   safeCreationThreshold: 0.0005,
@@ -62,9 +67,9 @@ const MODE_CHAIN_CONFIG: ChainConfig = {
 } as const;
 
 const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
-  evmChainId: EvmChainId.Optimism,
+  evmChainId: EvmChainIdMap.Optimism,
   name: 'Optimism',
-  nativeToken: TOKEN_CONFIG[EvmChainId.Optimism][
+  nativeToken: TOKEN_CONFIG[EvmChainIdMap.Optimism][
     TokenSymbolMap.ETH
   ] as TokenConfig,
   middlewareChain: MiddlewareChainMap.OPTIMISM,
@@ -76,8 +81,8 @@ const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
 export const CHAIN_CONFIG: {
   [evmChainId in EvmChainId]: ChainConfig;
 } = {
-  [EvmChainId.Base]: BASE_CHAIN_CONFIG,
-  [EvmChainId.Gnosis]: GNOSIS_CHAIN_CONFIG,
-  [EvmChainId.Mode]: MODE_CHAIN_CONFIG,
-  [EvmChainId.Optimism]: OPTIMISM_CHAIN_CONFIG,
+  [EvmChainIdMap.Base]: BASE_CHAIN_CONFIG,
+  [EvmChainIdMap.Gnosis]: GNOSIS_CHAIN_CONFIG,
+  [EvmChainIdMap.Mode]: MODE_CHAIN_CONFIG,
+  [EvmChainIdMap.Optimism]: OPTIMISM_CHAIN_CONFIG,
 } as const;

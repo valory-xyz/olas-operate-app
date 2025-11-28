@@ -3,8 +3,12 @@ import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { BASE_STAKING_PROGRAMS } from '@/config/stakingPrograms/base';
-import { PROVIDERS, StakingProgramId } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
+import {
+  EvmChainId,
+  EvmChainIdMap,
+  PROVIDERS,
+  StakingProgramId,
+} from '@/constants';
 import {
   Address,
   ServiceStakingDetails,
@@ -201,7 +205,7 @@ export abstract class AgentsFunService extends StakedAgentService {
     const { multicallProvider } = PROVIDERS[chainId];
 
     const getStakingTokenConfig = () => {
-      if (chainId === EvmChainId.Base)
+      if (chainId === EvmChainIdMap.Base)
         return BASE_STAKING_PROGRAMS[stakingProgramId];
       return null;
     };

@@ -1,8 +1,12 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
-import { AgentMap, STAKING_PROGRAM_IDS, TokenSymbolMap } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
+import {
+  AgentMap,
+  EvmChainIdMap,
+  STAKING_PROGRAM_IDS,
+  TokenSymbolMap,
+} from '@/constants';
 import { Address } from '@/types';
 
 import { MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
@@ -25,7 +29,7 @@ export const MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
 export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
   // modius alpha
   [STAKING_PROGRAM_IDS.ModiusAlpha]: {
-    chainId: EvmChainId.Mode,
+    chainId: EvmChainIdMap.Mode,
     name: 'Modius Alpha',
     agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
@@ -39,7 +43,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.ModiusAlpha2]: {
-    chainId: EvmChainId.Mode,
+    chainId: EvmChainIdMap.Mode,
     name: 'Modius Alpha II',
     agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
@@ -55,7 +59,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.ModiusAlpha3]: {
-    chainId: EvmChainId.Mode,
+    chainId: EvmChainIdMap.Mode,
     name: 'Modius Alpha III',
     agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
@@ -71,7 +75,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.ModiusAlpha4]: {
-    chainId: EvmChainId.Mode,
+    chainId: EvmChainIdMap.Mode,
     name: 'Modius Alpha IV',
     agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
@@ -88,7 +92,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
   },
   // optimus alpha
   [STAKING_PROGRAM_IDS.OptimusAlpha]: {
-    chainId: EvmChainId.Mode,
+    chainId: EvmChainIdMap.Mode,
     name: 'Optimus Alpha',
     agentsSupported: [AgentMap.Modius],
     stakingRequirements: {

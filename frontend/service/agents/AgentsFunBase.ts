@@ -1,5 +1,4 @@
-import { StakingProgramId } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
+import { EvmChainId, EvmChainIdMap, StakingProgramId } from '@/constants';
 import {
   Address,
   ServiceStakingDetails,
@@ -14,7 +13,7 @@ export abstract class AgentsFunBaseService extends AgentsFunService {
     agentMultisigAddress,
     serviceId,
     stakingProgramId,
-    chainId = EvmChainId.Base,
+    chainId = EvmChainIdMap.Base,
   }: {
     agentMultisigAddress: Address;
     serviceId: number;
@@ -31,7 +30,7 @@ export abstract class AgentsFunBaseService extends AgentsFunService {
 
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Base,
+    chainId: EvmChainId = EvmChainIdMap.Base,
   ): Promise<bigint | undefined> => {
     return await AgentsFunService.getAvailableRewardsForEpoch(
       stakingProgramId,
@@ -42,7 +41,7 @@ export abstract class AgentsFunBaseService extends AgentsFunService {
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Base,
+    chainId: EvmChainId = EvmChainIdMap.Base,
   ): Promise<ServiceStakingDetails> => {
     return await AgentsFunService.getServiceStakingDetails(
       serviceNftTokenId,
@@ -53,7 +52,7 @@ export abstract class AgentsFunBaseService extends AgentsFunService {
 
   static getStakingContractDetails = async (
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Base,
+    chainId: EvmChainId = EvmChainIdMap.Base,
   ): Promise<StakingContractDetails | undefined> => {
     return await AgentsFunService.getStakingContractDetails(
       stakingProgramId,

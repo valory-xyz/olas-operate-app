@@ -17,11 +17,11 @@ import {
 } from '@/config/stakingPrograms';
 import {
   CONTRACT_TYPE,
+  EvmChainId,
   PROVIDERS,
   ServiceRegistryL2ServiceState,
   StakingProgramId,
 } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
 import { Address, Maybe, Nullable } from '@/types';
 
 export const ONE_YEAR = 1 * 24 * 60 * 60 * 365;

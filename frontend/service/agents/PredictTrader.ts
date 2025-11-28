@@ -2,8 +2,12 @@ import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { PROVIDERS, StakingProgramId } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
+import {
+  EvmChainId,
+  EvmChainIdMap,
+  PROVIDERS,
+  StakingProgramId,
+} from '@/constants';
 import {
   Address,
   ServiceStakingDetails,
@@ -23,7 +27,7 @@ export abstract class PredictTraderService extends StakedAgentService {
     agentMultisigAddress,
     serviceId,
     stakingProgramId,
-    chainId = EvmChainId.Gnosis,
+    chainId = EvmChainIdMap.Gnosis,
   }: {
     agentMultisigAddress: Address;
     serviceId: number;
@@ -113,7 +117,7 @@ export abstract class PredictTraderService extends StakedAgentService {
 
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Gnosis,
+    chainId: EvmChainId = EvmChainIdMap.Gnosis,
   ): Promise<bigint | undefined> => {
     const stakingTokenProxy =
       STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
@@ -146,7 +150,7 @@ export abstract class PredictTraderService extends StakedAgentService {
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Gnosis,
+    chainId: EvmChainId = EvmChainIdMap.Gnosis,
   ): Promise<ServiceStakingDetails> => {
     const { multicallProvider } = PROVIDERS[chainId];
 

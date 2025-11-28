@@ -1,5 +1,9 @@
-import { TokenSymbol, TokenSymbolMap } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
+import {
+  EvmChainId,
+  EvmChainIdMap,
+  TokenSymbol,
+  TokenSymbolMap,
+} from '@/constants';
 import { Address } from '@/types/Address';
 
 export enum TokenType {
@@ -147,14 +151,14 @@ export const OPTIMISM_TOKEN_CONFIG: ChainTokenConfig = {
 
 /**
  * TODO:
- * 1. combine EvmChainId and AllEvmChainId into one thing to avoid confusion
+ * 1. combine EvmChainIdMap and AllEvmChainId into one thing to avoid confusion
  * 2. include ethereum config into this and make it so balances are not requested for it
  */
 export const TOKEN_CONFIG: Record<EvmChainId, ChainTokenConfig> = {
-  [EvmChainId.Gnosis]: GNOSIS_TOKEN_CONFIG,
-  [EvmChainId.Base]: BASE_TOKEN_CONFIG,
-  [EvmChainId.Mode]: MODE_TOKEN_CONFIG,
-  [EvmChainId.Optimism]: OPTIMISM_TOKEN_CONFIG,
+  [EvmChainIdMap.Gnosis]: GNOSIS_TOKEN_CONFIG,
+  [EvmChainIdMap.Base]: BASE_TOKEN_CONFIG,
+  [EvmChainIdMap.Mode]: MODE_TOKEN_CONFIG,
+  [EvmChainIdMap.Optimism]: OPTIMISM_TOKEN_CONFIG,
 } as const;
 
 type ChainErc20TokenConfig = {

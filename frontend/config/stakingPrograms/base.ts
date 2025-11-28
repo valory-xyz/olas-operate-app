@@ -1,8 +1,12 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
-import { AgentMap, STAKING_PROGRAM_IDS, TokenSymbolMap } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
+import {
+  AgentMap,
+  EvmChainIdMap,
+  STAKING_PROGRAM_IDS,
+  TokenSymbolMap,
+} from '@/constants';
 import { Address } from '@/types';
 
 import { BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
@@ -30,7 +34,7 @@ export const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
 export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.MemeBaseAlpha2]: {
     deprecated: true,
-    chainId: EvmChainId.Base,
+    chainId: EvmChainIdMap.Base,
     name: 'MemeBase Alpha II',
     agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
@@ -49,7 +53,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.MemeBaseBeta]: {
     deprecated: true,
-    chainId: EvmChainId.Base,
+    chainId: EvmChainIdMap.Base,
     name: 'MemeBase Beta I',
     agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
@@ -66,7 +70,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.MemeBaseBeta2]: {
     deprecated: true,
-    chainId: EvmChainId.Base,
+    chainId: EvmChainIdMap.Base,
     name: 'MemeBase Beta II',
     agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
@@ -85,7 +89,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.MemeBaseBeta3]: {
     deprecated: true,
-    chainId: EvmChainId.Base,
+    chainId: EvmChainIdMap.Base,
     name: 'MemeBase Beta III',
     agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
@@ -103,14 +107,14 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.AgentsFun1]: {
-    chainId: EvmChainId.Base,
+    chainId: EvmChainIdMap.Base,
     name: 'Agents.fun 1',
     agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 100,
     },
     mechType: MechType.Marketplace,
-    mech: MECHS[EvmChainId.Base][MechType.Marketplace].contract,
+    mech: MECHS[EvmChainIdMap.Base][MechType.Marketplace].contract,
     activityChecker:
       BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.AgentsFun1],
     contract: new MulticallContract(
@@ -119,14 +123,14 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.AgentsFun2]: {
-    chainId: EvmChainId.Base,
+    chainId: EvmChainIdMap.Base,
     name: 'Agents.fun 2',
     agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 1000,
     },
     mechType: MechType.Marketplace,
-    mech: MECHS[EvmChainId.Base][MechType.Marketplace].contract,
+    mech: MECHS[EvmChainIdMap.Base][MechType.Marketplace].contract,
     activityChecker:
       BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.AgentsFun2],
     contract: new MulticallContract(
@@ -135,14 +139,14 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.AgentsFun3]: {
-    chainId: EvmChainId.Base,
+    chainId: EvmChainIdMap.Base,
     name: 'Agents.fun 3',
     agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 5000,
     },
     mechType: MechType.Marketplace,
-    mech: MECHS[EvmChainId.Base][MechType.Marketplace].contract,
+    mech: MECHS[EvmChainIdMap.Base][MechType.Marketplace].contract,
     activityChecker:
       BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.AgentsFun3],
     contract: new MulticallContract(

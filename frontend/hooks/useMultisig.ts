@@ -6,11 +6,11 @@ import { useMemo } from 'react';
 
 import { GNOSIS_SAFE_ABI } from '@/abis/gnosisSafe';
 import {
+  EvmChainId,
   FIVE_SECONDS_INTERVAL,
   PROVIDERS,
   REACT_QUERY_KEYS,
 } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
 import { Safe } from '@/enums/Wallet';
 import { Address } from '@/types/Address';
 import { extractFunctionsFromAbi } from '@/utils/abi';
