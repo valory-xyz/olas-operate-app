@@ -7,8 +7,11 @@ import { ERC20_BALANCE_OF_STRING_FRAGMENT } from '@/abis/erc20';
 import { providers } from '@/config/providers';
 import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { type MiddlewareChain } from '@/constants';
+import {
+  SERVICE_REGISTRY_L2_SERVICE_STATE,
+  ServiceRegistryL2ServiceState,
+} from '@/constants';
 import { EvmChainId } from '@/enums/Chain';
-import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
 import {
   AgentWallet,
   MasterSafe,
@@ -37,15 +40,15 @@ const correctBondDepositByServiceState = ({
   serviceState: ServiceRegistryL2ServiceState;
 }) => {
   switch (serviceState) {
-    case ServiceRegistryL2ServiceState.NonExistent:
-    case ServiceRegistryL2ServiceState.PreRegistration:
+    case SERVICE_REGISTRY_L2_SERVICE_STATE.NonExistent:
+    case SERVICE_REGISTRY_L2_SERVICE_STATE.PreRegistration:
       return { olasBondBalance: 0, olasDepositBalance: 0 };
-    case ServiceRegistryL2ServiceState.ActiveRegistration:
+    case SERVICE_REGISTRY_L2_SERVICE_STATE.ActiveRegistration:
       return { olasBondBalance: 0, olasDepositBalance };
-    case ServiceRegistryL2ServiceState.FinishedRegistration:
-    case ServiceRegistryL2ServiceState.Deployed:
+    case SERVICE_REGISTRY_L2_SERVICE_STATE.FinishedRegistration:
+    case SERVICE_REGISTRY_L2_SERVICE_STATE.Deployed:
       return { olasBondBalance, olasDepositBalance };
-    case ServiceRegistryL2ServiceState.TerminatedBonded:
+    case SERVICE_REGISTRY_L2_SERVICE_STATE.TerminatedBonded:
       return { olasBondBalance, olasDepositBalance: 0 };
     default:
       console.error('Invalid service state');
