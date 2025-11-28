@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { WalletType } from '@/constants';
+import { WALLET_TYPE } from '@/constants';
 import { Address } from '@/types/Address';
 import { Service } from '@/types/Service';
 
@@ -31,7 +31,7 @@ const useAddressesLogs = () => {
           .filter((owner): owner is Address => owner !== masterEoa.address)
           .map((address) => ({
             address,
-            type: WalletType.EOA,
+            type: WALLET_TYPE.EOA,
             safeAddress,
             evmChainId,
           }));

@@ -26,8 +26,8 @@ import {
   MiddlewareDeploymentStatus,
   PAGES,
   REACT_QUERY_KEYS,
-  WalletOwnerType,
-  WalletType,
+  WALLET_OWNER,
+  WALLET_TYPE,
 } from '@/constants';
 import {
   useElectronApi,
@@ -239,8 +239,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
                     (instance: string) =>
                       ({
                         address: instance,
-                        type: WalletType.EOA,
-                        owner: WalletOwnerType.Agent,
+                        type: WALLET_TYPE.EOA,
+                        owner: WALLET_OWNER.Agent,
                       }) as AgentEoa,
                   ),
                 );
@@ -249,8 +249,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
               if (multisig) {
                 acc.push({
                   address: multisig,
-                  type: WalletType.Safe,
-                  owner: WalletOwnerType.Agent,
+                  type: WALLET_TYPE.Safe,
+                  owner: WALLET_OWNER.Agent,
                   evmChainId: asEvmChainId(middlewareChain),
                 } as AgentSafe);
               }
