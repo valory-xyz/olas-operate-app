@@ -11,11 +11,8 @@ import { MECH_ACTIVITY_CHECKER_ABI } from '@/abis/mechActivityChecker';
 import { MEME_ACTIVITY_CHECKER_ABI } from '@/abis/memeActivityChecker';
 import { REQUESTER_ACTIVITY_CHECKER_ABI } from '@/abis/requesterActivityChecker';
 import { STAKING_ACTIVITY_CHECKER_ABI } from '@/abis/stakingActivityChecker';
-import {
-  OptimismStakingProgramId,
-  STAKING_PROGRAM_IDS,
-} from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
+import { OptimismStakingProgramId, STAKING_PROGRAM_IDS } from '@/constants';
+import { Address } from '@/types';
 
 export const getMechActivityCheckerContract = (
   address: Address,
