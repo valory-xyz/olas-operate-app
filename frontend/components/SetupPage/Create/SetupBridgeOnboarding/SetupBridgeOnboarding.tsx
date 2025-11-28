@@ -2,8 +2,7 @@ import { Flex } from 'antd';
 import { useCallback } from 'react';
 
 import { Bridge } from '@/components/Bridge';
-import { AllEvmChainIdMap } from '@/constants';
-import { SetupScreen } from '@/constants/setupScreens';
+import { AllEvmChainIdMap, SetupScreen } from '@/constants';
 import { useServices, useSetup } from '@/hooks';
 
 import { useGetBridgeRequirementsParams } from '../hooks/useGetBridgeRequirementsParams';

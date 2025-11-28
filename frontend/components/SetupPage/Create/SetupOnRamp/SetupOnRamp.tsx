@@ -2,7 +2,7 @@ import { Button, Flex, Modal, Spin, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 
 import { Alert, BackButton, CardFlex } from '@/components/ui';
-import { SetupScreen } from '@/enums';
+import { SetupScreen } from '@/constants';
 import { useOnRampContext, useSetup } from '@/hooks';
 
 import { OnRampPaymentSteps } from './OnRampPaymentSteps/OnRampPaymentSteps';

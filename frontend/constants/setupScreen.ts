@@ -1,4 +1,3 @@
-// TODO: move to constants
 export const SetupScreen = {
   Loading: 'Loading',
   Welcome: 'Welcome',

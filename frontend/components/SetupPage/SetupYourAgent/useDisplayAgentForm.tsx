@@ -4,11 +4,10 @@ import React, { ReactNode, useCallback } from 'react';
 import styled from 'styled-components';
 
 import { BackButton } from '@/components/ui';
+import { SetupScreen } from '@/constants';
 import { COLOR } from '@/constants/colors';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { SetupScreen } from '@/constants/setupScreens';
-import { useServices } from '@/hooks/useServices';
-import { useSetup } from '@/hooks/useSetup';
+import { useServices, useSetup } from '@/hooks';
 
 const { Title } = Typography;
 

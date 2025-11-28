@@ -4,7 +4,7 @@ import { isFunction } from 'lodash';
 import Image from 'next/image';
 import { useCallback } from 'react';
 
-import { SetupScreen } from '@/constants/setupScreens';
+import { SetupScreen } from '@/constants';
 import { useSetup } from '@/hooks/useSetup';
 
 type SetupCreateHeaderProps = {

@@ -2,8 +2,7 @@ import { Typography } from 'antd';
 import React, { useContext, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
-import { SetupScreen } from '@/constants/setupScreens';
+import { COLOR, SetupScreen } from '@/constants';
 import { SetupContext } from '@/context/SetupProvider';
 
 import { SelectStakingPage } from '../SelectStakingPage';

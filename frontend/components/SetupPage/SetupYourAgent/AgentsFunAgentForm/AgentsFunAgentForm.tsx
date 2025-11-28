@@ -23,9 +23,8 @@ import {
 } from '@/components/AgentForms/common/labels';
 import { AgentsFunFormValues } from '@/components/SetupPage/SetupYourAgent/AgentsFunAgentForm/types';
 import { RequiredMark } from '@/components/ui';
-import { SetupScreen } from '@/constants/setupScreens';
-import { useSetup } from '@/hooks/useSetup';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { SetupScreen } from '@/constants';
+import { useSetup, useStakingProgram } from '@/hooks';
 import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils/service';
 

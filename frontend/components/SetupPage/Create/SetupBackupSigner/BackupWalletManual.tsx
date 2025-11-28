@@ -3,8 +3,7 @@ import { getAddress } from 'ethers/lib/utils';
 import { RiAppleFill, RiGoogleFill } from 'react-icons/ri';
 
 import { FormFlex } from '@/components/ui';
-import { COLOR } from '@/constants/colors';
-import { SetupScreen } from '@/constants/setupScreens';
+import { COLOR, SetupScreen } from '@/constants';
 import { useSetup } from '@/hooks/useSetup';
 import { Address } from '@/types/Address';
 

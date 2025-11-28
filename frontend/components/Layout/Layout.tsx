@@ -8,10 +8,10 @@ import {
   APP_WIDTH,
   COLOR,
   Pages,
+  SetupScreen,
   SIDER_WIDTH,
   TOP_BAR_HEIGHT,
 } from '@/constants';
-import { SetupScreen } from '@/constants/setupScreens';
 import { useOnlineStatusContext, usePageState, useSetup } from '@/hooks';
 
 import { Modal } from '../ui';

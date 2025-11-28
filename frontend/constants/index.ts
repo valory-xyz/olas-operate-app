@@ -12,7 +12,7 @@ export * from './pages';
 export * from './providers';
 export * from './reactQueryKeys';
 export * from './serviceRegistryL2ServiceState';
-export * from './setupScreens';
+export * from './setupScreen';
 export * from './stakingProgram';
 export * from './symbols';
 export * from './theme';

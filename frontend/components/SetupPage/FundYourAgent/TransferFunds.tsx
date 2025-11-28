@@ -12,8 +12,12 @@ import {
   Modal,
   TokenRequirementsTable,
 } from '@/components/ui';
-import { ChainImageMap, EvmChainName, TokenSymbol } from '@/constants';
-import { SetupScreen } from '@/enums';
+import {
+  ChainImageMap,
+  EvmChainName,
+  SetupScreen,
+  TokenSymbol,
+} from '@/constants';
 import {
   useMasterSafeCreationAndTransfer,
   useMasterWalletContext,

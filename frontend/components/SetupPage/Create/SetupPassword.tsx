@@ -4,11 +4,9 @@ import zxcvbn from 'zxcvbn';
 
 import { BackButton } from '@/components/ui/BackButton';
 import { FormLabel } from '@/components/ui/Typography';
-import { COLOR } from '@/constants/colors';
-import { SetupScreen } from '@/constants/setupScreens';
+import { COLOR, SetupScreen } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
-import { useMnemonicExists, usePageState } from '@/hooks';
-import { useSetup } from '@/hooks/useSetup';
+import { useMnemonicExists, usePageState, useSetup } from '@/hooks';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
 import { getErrorMessage } from '@/utils/error';

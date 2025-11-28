@@ -3,8 +3,7 @@ import { ReactNode } from 'react';
 import styled from 'styled-components';
 
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
-import { COLOR, EvmChainId, EvmChainName } from '@/constants';
-import { SetupScreen } from '@/constants/setupScreens';
+import { COLOR, EvmChainId, EvmChainName, SetupScreen } from '@/constants';
 import {
   useFeatureFlag,
   useOnRampContext,
