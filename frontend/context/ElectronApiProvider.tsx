@@ -1,5 +1,5 @@
 import { get } from 'lodash';
-import { createContext, PropsWithChildren } from 'react';
+import { createContext, PropsWithChildren, useEffect, useState } from 'react';
 
 import { Address } from '@/types/Address';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
@@ -76,6 +76,9 @@ type ElectronApiContextProps = {
     close?: () => void;
   };
   logEvent?: (message: string) => void;
+  isInBackground?: boolean;
+  onWindowBlur?: (callback: () => void) => void;
+  onWindowFocus?: (callback: () => void) => void;
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -116,9 +119,27 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     close: () => {},
   },
   logEvent: () => {},
+  isInBackground: false,
+  onWindowBlur: () => {},
+  onWindowFocus: () => {},
 });
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
+  const [isInBackground, setIsInBackground] = useState(false);
+
+  // Listen to window blur and focus events from main process
+  useEffect(() => {
+    const onWindowBlur = get(window, 'electronAPI.onWindowBlur') as
+      | ((callback: () => void) => void)
+      | undefined;
+    const onWindowFocus = get(window, 'electronAPI.onWindowFocus') as
+      | ((callback: () => void) => void)
+      | undefined;
+
+    onWindowBlur?.(() => setIsInBackground(true));
+    onWindowFocus?.(() => setIsInBackground(false));
+  }, []);
+
   const getElectronApiFunction = (functionNameInWindow: string) => {
     if (typeof window === 'undefined') return;
 
@@ -131,6 +152,11 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
 
     return fn;
   };
+
+  console.log(
+    'ElectronApiProvider rendered with isInBackground:',
+    isInBackground,
+  );
 
   return (
     <ElectronApiContext.Provider
@@ -178,6 +204,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           show: getElectronApiFunction('termsAndConditionsWindow.show'),
         },
         logEvent: getElectronApiFunction('logEvent'),
+        isInBackground,
       }}
     >
       {children}
