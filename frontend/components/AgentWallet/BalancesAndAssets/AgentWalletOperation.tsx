@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
 import { Alert, BackButton, CardFlex, Tooltip } from '@/components/ui';
-import { Pages } from '@/enums/Pages';
+import { PAGES } from '@/constants';
 import {
   useActiveStakingContractDetails,
   useFeatureFlag,
@@ -19,7 +19,7 @@ const AgentWalletTitle = () => {
   const { goto } = usePageState();
   return (
     <Flex vertical justify="space-between" gap={12}>
-      <BackButton onPrev={() => goto(Pages.Main)} />
+      <BackButton onPrev={() => goto(PAGES.Main)} />
       <Title level={3} className="m-0">
         Agent Wallet
       </Title>

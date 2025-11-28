@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { onRampChainMap, SupportedMiddlewareChain } from '@/constants/chains';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import {
+  onRampChainMap,
+  REACT_QUERY_KEYS,
+  SupportedMiddlewareChain,
+} from '@/constants';
 import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
 import { useServices } from '@/hooks/useServices';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';

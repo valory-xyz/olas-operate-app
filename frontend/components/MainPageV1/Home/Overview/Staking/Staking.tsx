@@ -2,7 +2,7 @@ import { Button, Flex, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { Alert, CardFlex } from '@/components/ui';
-import { Pages } from '@/enums';
+import { PAGES } from '@/constants';
 import {
   useActiveStakingContractDetails,
   useAgentActivity,
@@ -77,7 +77,7 @@ export const Staking = () => {
           Staking
         </Title>
         {!selectedAgentConfig?.isUnderConstruction && (
-          <Button size="small" onClick={() => goto(Pages.AgentStaking)}>
+          <Button size="small" onClick={() => goto(PAGES.AgentStaking)}>
             Manage Staking
           </Button>
         )}

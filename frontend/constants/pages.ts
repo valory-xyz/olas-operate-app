@@ -1,5 +1,4 @@
-// TODO: move to constants
-export const Pages = {
+export const PAGES = {
   Setup: 'Setup',
   Main: 'Main',
   AgentStaking: 'AgentStaking',
@@ -14,4 +13,4 @@ export const Pages = {
   FundPearlWallet: 'FundPearlWallet',
 } as const;
 
-export type Pages = (typeof Pages)[keyof typeof Pages];
+export type Pages = (typeof PAGES)[keyof typeof PAGES];

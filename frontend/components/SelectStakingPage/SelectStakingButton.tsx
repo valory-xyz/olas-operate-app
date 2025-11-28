@@ -1,8 +1,7 @@
 import { Button, Flex, message } from 'antd';
 import { useBoolean } from 'usehooks-ts';
 
-import { StakingProgramId } from '@/constants';
-import { SetupScreen } from '@/enums';
+import { SETUP_SCREEN, StakingProgramId } from '@/constants';
 import {
   useBalanceAndRefillRequirementsContext,
   useServices,
@@ -60,7 +59,7 @@ export const SelectStakingButton = ({
     }
 
     setDefaultStakingProgramId(stakingProgramId);
-    goto(SetupScreen.FundYourAgent);
+    goto(SETUP_SCREEN.FundYourAgent);
   };
 
   return (

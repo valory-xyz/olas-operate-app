@@ -3,8 +3,13 @@ import Image from 'next/image';
 import styled from 'styled-components';
 
 import { CardFlex } from '@/components/ui';
-import { COLOR, NA, TokenSymbolConfigMap, TokenSymbolMap } from '@/constants';
-import { Pages } from '@/enums/Pages';
+import {
+  COLOR,
+  NA,
+  PAGES,
+  TokenSymbolConfigMap,
+  TokenSymbolMap,
+} from '@/constants';
 import { useAvailableAgentAssets, usePageState } from '@/hooks';
 
 const { Text, Title } = Typography;
@@ -35,7 +40,7 @@ export const Wallet = () => {
         </Title>
         <Button
           disabled={isLoading}
-          onClick={() => goto(Pages.AgentWallet)}
+          onClick={() => goto(PAGES.AgentWallet)}
           size="small"
         >
           Manage Wallet

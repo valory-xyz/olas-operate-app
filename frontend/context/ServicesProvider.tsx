@@ -21,13 +21,13 @@ import {
   MESSAGE_WIDTH,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
+  PAGES,
   REACT_QUERY_KEYS,
 } from '@/constants';
 import {
   AgentEoa,
   AgentSafe,
   AgentWallet,
-  Pages,
   WalletOwnerType,
   WalletType,
 } from '@/enums';
@@ -183,7 +183,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (isServicesValidationStatusLoading) return;
     if (!servicesValidationStatus) return;
-    if (pageState !== Pages.Main) return;
+    if (pageState !== PAGES.Main) return;
     if (isInvalidMessageShown) return;
 
     const isValid = Object.values(servicesValidationStatus).every((x) => !!x);

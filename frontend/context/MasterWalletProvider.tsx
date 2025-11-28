@@ -8,9 +8,11 @@ import {
   useMemo,
 } from 'react';
 
-import { EvmChainId } from '@/constants';
-import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import {
+  EvmChainId,
+  FIVE_SECONDS_INTERVAL,
+  REACT_QUERY_KEYS,
+} from '@/constants';
 import {
   MasterEoa,
   MasterSafe,

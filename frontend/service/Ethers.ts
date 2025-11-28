@@ -1,8 +1,8 @@
 import { providers, utils } from 'ethers';
 import { Contract as MulticallContract } from 'ethers-multicall';
 
+import { EvmChainId } from '@/constants';
 import { PROVIDERS } from '@/constants/providers';
-import { EvmChainId } from '@/enums/Chain';
 import { Address } from '@/types/Address';
 import { TransactionInfo } from '@/types/TransactionInfo';
 

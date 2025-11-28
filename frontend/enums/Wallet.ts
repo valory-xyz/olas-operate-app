@@ -1,6 +1,5 @@
+import { EvmChainId } from '@/constants';
 import { Address } from '@/types/Address';
-
-import { EvmChainId } from './Chain';
 
 export enum WalletType {
   Safe = 'multisig',

@@ -11,8 +11,11 @@ import {
   useState,
 } from 'react';
 
-import { EvmChainId, FIFTEEN_SECONDS_INTERVAL } from '@/constants';
-import { TokenSymbol } from '@/enums/Token';
+import {
+  EvmChainId,
+  FIFTEEN_SECONDS_INTERVAL,
+  TokenSymbolMap,
+} from '@/constants';
 import { Address } from '@/types/Address';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
 
@@ -101,7 +104,7 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     () =>
       walletBalances.reduce(
         (acc, { symbol, balance }) =>
-          symbol === TokenSymbol.OLAS ? acc + balance : acc,
+          symbol === TokenSymbolMap.OLAS ? acc + balance : acc,
         0,
       ),
     [walletBalances],
