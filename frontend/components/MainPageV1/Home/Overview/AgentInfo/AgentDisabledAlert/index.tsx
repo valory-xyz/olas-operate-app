@@ -2,7 +2,7 @@ import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
 import { Pages } from '@/enums';
 import {
   useActiveStakingContractDetails,
-  useAnotherAgentRunning,
+  useAgentRunning,
   useIsInitiallyFunded,
   usePageState,
   useServices,

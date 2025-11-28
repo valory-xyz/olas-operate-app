@@ -14,6 +14,7 @@ import {
 } from '@/constants';
 import {
   Checkpoint,
+  useRewardContext,
   useRewardsHistory,
   useServiceOnlyRewardsHistory,
   useServices,
@@ -42,14 +43,49 @@ type Months = Array<{
   totalMonthlyRewards: number;
 }>;
 
-const useCheckoutPointsByMonths = () => {
-  // Show checkpoints across all contracts
+/** Get current epoch details ie, in-progress epoch with accrued rewards */
+const useCurrentEpochDetails = (lastCheckpoint?: Checkpoint) => {
+  const { stakingRewardsDetails, optimisticRewardsEarnedForEpoch } =
+    useRewardContext();
+
+  return useMemo(() => {
+    if (!stakingRewardsDetails || !lastCheckpoint) return;
+
+    const { epochLength, epochEndTimeStamp, epoch } = lastCheckpoint;
+    const { tsCheckpoint, isEligibleForRewards } = stakingRewardsDetails;
+
+    const lastEpochEnd = tsCheckpoint >= epochEndTimeStamp;
+    if (!lastEpochEnd) return;
+
+    return {
+      ...lastCheckpoint,
+      blockTimestamp: `${tsCheckpoint + Number(epochLength)}`,
+      earned: isEligibleForRewards,
+      reward: isEligibleForRewards ? optimisticRewardsEarnedForEpoch || 0 : 0,
+      epoch: `${Number(epoch) + 1}`,
+      epochStartTimeStamp: tsCheckpoint,
+      epochEndTimeStamp: tsCheckpoint + Number(epochLength),
+      transactionHash: '', // no tx hash for in-progress epoch
+    } satisfies Checkpoint;
+  }, [stakingRewardsDetails, lastCheckpoint, optimisticRewardsEarnedForEpoch]);
+};
+
+/** Get checkpoints grouped by months */
+const useCheckpointsByMonths = () => {
   const { allCheckpoints = [], isFetched } = useServiceOnlyRewardsHistory();
+  const currentEpochDetails = useCurrentEpochDetails(allCheckpoints[0]);
 
   const checkpointsByMonths = useMemo(() => {
-    if (!allCheckpoints.length || !isFetched) return [];
+    if (!isFetched) return [];
+
+    const combinedCheckpoints: Checkpoint[] = currentEpochDetails
+      ? [currentEpochDetails, ...allCheckpoints]
+      : [...allCheckpoints];
+
+    if (!combinedCheckpoints.length) return [];
+
     const months: Months = [];
-    allCheckpoints.forEach((checkpoint) => {
+    combinedCheckpoints.forEach((checkpoint) => {
       const epochEndTimeInMs = checkpoint.epochEndTimeStamp * 1000;
       const monthYear = formatToMonthYear(epochEndTimeInMs);
 
@@ -70,7 +106,7 @@ const useCheckoutPointsByMonths = () => {
       (a, b) =>
         b.checkpoints[0].epochEndTimeStamp - a.checkpoints[0].epochEndTimeStamp,
     );
-  }, [allCheckpoints, isFetched]);
+  }, [allCheckpoints, isFetched, currentEpochDetails]);
 
   return checkpointsByMonths;
 };
@@ -217,7 +253,7 @@ const NoRewards = () => (
 
 export const RewardsHistory = () => {
   const { isError, isFetched, refetch } = useRewardsHistory();
-  const checkpointsByMonths = useCheckoutPointsByMonths();
+  const checkpointsByMonths = useCheckpointsByMonths();
 
   if (!isFetched) return <LoadingHistory />;
   if (!checkpointsByMonths.length) return <NoRewards />;
