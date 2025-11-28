@@ -14,6 +14,7 @@ import { useNotifyOnNewEpoch, usePageState } from '@/hooks';
 
 import { AgentWallet } from '../AgentWallet';
 import { FundPearlWallet } from '../FundPearlWallet';
+import { OnRamp } from '../OnRamp/OnRamp';
 import { PearlWallet } from '../PearlWallet';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { Home } from './Home';
@@ -83,6 +84,8 @@ export const Main = () => {
         return <DepositOlasForStaking />;
       case Pages.FundPearlWallet:
         return <FundPearlWallet />;
+      case Pages.OnRamp:
+        return <OnRamp mode="deposit" />;
       default:
         return <Home />;
     }

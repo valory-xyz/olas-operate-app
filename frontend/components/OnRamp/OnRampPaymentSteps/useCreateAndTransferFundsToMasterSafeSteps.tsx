@@ -3,7 +3,11 @@ import { useEffect, useMemo } from 'react';
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
 import { TransactionStep } from '@/components/ui/TransactionSteps';
 import { TokenSymbol } from '@/constants/token';
-import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
+import {
+  useMasterSafeCreationAndTransfer,
+  useMasterWalletContext,
+  useServices,
+} from '@/hooks';
 
 const EMPTY_STATE: TransactionStep[] = [
   { status: 'wait', title: 'Create Pearl Wallet' },
@@ -17,6 +21,8 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   isSwapCompleted: boolean,
   tokensToBeTransferred: TokenSymbol[],
 ) => {
+  const { selectedAgentConfig } = useServices();
+  const { getMasterSafeOf } = useMasterWalletContext();
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
@@ -24,22 +30,31 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     mutateAsync: createMasterSafe,
   } = useMasterSafeCreationAndTransfer(tokensToBeTransferred);
 
-  const isSafeCreated = masterSafeDetails?.isSafeCreated;
+  // Check if master safe already exists
+  const existingMasterSafe = useMemo(
+    () => getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId),
+    [getMasterSafeOf, selectedAgentConfig.evmHomeChainId],
+  );
+
+  const isSafeCreated =
+    masterSafeDetails?.isSafeCreated || !!existingMasterSafe;
 
   // Check if the swap is completed and tokens are available for transfer
   useEffect(() => {
     if (!isSwapCompleted) return;
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
-    if (masterSafeDetails?.isSafeCreated) return;
+    if (isSafeCreated) return;
 
     createMasterSafe();
   }, [
     isSwapCompleted,
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
+    existingMasterSafe,
     masterSafeDetails,
     createMasterSafe,
+    isSafeCreated,
   ]);
 
   // Step for creating the Master Safe
@@ -166,6 +181,14 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     return {
       isMasterSafeCreatedAndFundsTransferred: false,
       steps: EMPTY_STATE,
+    };
+  }
+
+  // If safe already exists, mark as completed and return empty steps
+  if (existingMasterSafe) {
+    return {
+      isMasterSafeCreatedAndFundsTransferred: true,
+      steps: [],
     };
   }
 

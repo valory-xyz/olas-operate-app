@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { onRampChainMap, SupportedMiddlewareChain } from '@/constants/chains';
+import {
+  EvmChainId,
+  onRampChainMap,
+  SupportedMiddlewareChain,
+} from '@/constants/chains';
 import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
 import { useServices } from '@/hooks/useServices';
@@ -67,10 +71,27 @@ const fetchTransakQuote = async (
   return response.json();
 };
 
-export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
+export const useTotalFiatFromNativeToken = (
+  nativeTokenAmount?: number,
+  destinationChainId?: EvmChainId,
+) => {
   const { selectedAgentConfig } = useServices();
-  const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-  const networkName = asMiddlewareChain(onRampChainMap[fromChainName]);
+
+  // Compute the correct middleware chain deterministically.
+  // Using an IIFE + const avoids accidental mutation and keeps the
+  // "deposit vs onboarding" logic self-contained and predictable.
+  const networkName: SupportedMiddlewareChain = (() => {
+    // Deposit flow: use the wallet's chain to determine the on-ramp chain.
+    if (destinationChainId) {
+      const destinationChainName = asMiddlewareChain(destinationChainId);
+      const onRampChainId = onRampChainMap[destinationChainName];
+      return asMiddlewareChain(onRampChainId);
+    }
+
+    // Onboarding flow: fallback to the agent's home chain to derive on-ramp.
+    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
+    return asMiddlewareChain(onRampChainMap[fromChainName]);
+  })();
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(

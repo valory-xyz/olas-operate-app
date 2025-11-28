@@ -7,16 +7,24 @@ import { TbCreditCardFilled } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { Table } from '@/components/ui/Table';
-import { EvmChainId } from '@/constants/chains';
-import { COLOR } from '@/constants/colors';
-import { NA } from '@/constants/symbols';
-import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
-import { useOnRampContext } from '@/hooks/useOnRampContext';
-import { useServices } from '@/hooks/useServices';
-import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
-import { useTotalNativeTokenRequired } from '@/hooks/useTotalNativeTokenRequired';
+import {
+  COLOR,
+  EvmChainId,
+  NA,
+  onRampChainMap,
+  TokenSymbol,
+  TokenSymbolConfigMap,
+} from '@/constants';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
+import {
+  useGetBridgeRequirementsParamsFromDeposit,
+  useOnRampContext,
+  useServices,
+  useTotalFiatFromNativeToken,
+  useTotalNativeTokenRequired,
+} from '@/hooks';
 import { ReceivingTokens } from '@/types/Bridge';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
+import { asEvmChainDetails, asMiddlewareChain, isNonEmpty } from '@/utils';
 
 const { Text } = Typography;
 
@@ -131,26 +139,57 @@ const ViewReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
   </Flex>
 );
 
-type PaymentTableProps = { onRampChainId: EvmChainId };
-export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
+type PaymentTableProps = {
+  onRampChainId: EvmChainId;
+  mode: 'onboard' | 'deposit';
+};
+export const PayingReceivingTable = ({
+  onRampChainId,
+  mode,
+}: PaymentTableProps) => {
   const { selectedAgentConfig } = useServices();
   const {
     isOnRampingStepCompleted,
     isTransactionSuccessfulButFundsNotReceived,
+    updateUsdAmountToPay,
     usdAmountToPay,
     ethAmountToPay,
-    updateUsdAmountToPay,
   } = useOnRampContext();
+  const { walletChainId } = usePearlWallet();
+
+  const isDepositFlow = mode === 'deposit';
+
+  // Deposit flow: determine on-ramp chain from wallet chain using onRampChainMap
+  // Onboarding flow: use provided onRampChainId
+  const effectiveOnRampChainId = useMemo(() => {
+    if (isDepositFlow && walletChainId) {
+      const destinationChainName = asMiddlewareChain(walletChainId);
+      return onRampChainMap[destinationChainName];
+    }
+    return onRampChainId;
+  }, [isDepositFlow, walletChainId, onRampChainId]);
+  const destinationChainId = isDepositFlow ? walletChainId : undefined;
+
+  const getBridgeRequirementsParamsFromDeposit =
+    useGetBridgeRequirementsParamsFromDeposit(
+      effectiveOnRampChainId,
+      destinationChainId || undefined,
+    );
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
     totalNativeToken,
     receivingTokens,
     onRetry,
-  } = useTotalNativeTokenRequired(onRampChainId, 'preview');
+  } = useTotalNativeTokenRequired(
+    effectiveOnRampChainId,
+    isDepositFlow ? 'depositing' : 'onboarding',
+    isDepositFlow ? getBridgeRequirementsParamsFromDeposit : undefined,
+  );
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
+      destinationChainId || undefined,
     );
 
   // State to hold the tokensRequired to be displayed in the receiving column
@@ -175,7 +214,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     if (isOnRampingStepCompleted) return;
     if (isTransactionSuccessfulButFundsNotReceived) return;
 
-    if (isReceivingAmountLoading || hasNativeTokenError) {
+    if (hasNativeTokenError) {
       updateUsdAmountToPay(null);
     } else if (fiatAmount) {
       updateUsdAmountToPay(fiatAmount);
@@ -183,11 +222,15 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   }, [
     isTransactionSuccessfulButFundsNotReceived,
     isOnRampingStepCompleted,
-    isReceivingAmountLoading,
     hasNativeTokenError,
     fiatAmount,
     updateUsdAmountToPay,
   ]);
+
+  const tokensToDisplay = useMemo(
+    () => (isDepositFlow ? receivingTokens : tokensRequired),
+    [isDepositFlow, receivingTokens, tokensRequired],
+  );
 
   const ethToTokenDataSource = useMemo<PaymentTableDataType[]>(
     () => [
@@ -221,23 +264,33 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
             )}
           </>
         ),
-        receiving: tokensRequired ? (
-          <ViewReceivingTokens receivingTokens={tokensRequired} />
+        receiving: isNonEmpty(tokensToDisplay) ? (
+          <ViewReceivingTokens receivingTokens={tokensToDisplay} />
         ) : null,
       },
     ],
     [
-      isNativeTokenLoading,
       hasNativeTokenError,
-      ethAmountToPay,
-      usdAmountToPay,
-      tokensRequired,
+      isNativeTokenLoading,
       onRetry,
       isReceivingAmountLoading,
+      usdAmountToPay,
+      ethAmountToPay,
+      tokensToDisplay,
     ],
   );
 
-  const toChain = asEvmChainDetails(selectedAgentConfig.middlewareHomeChainId);
+  // For deposit flow, use walletChainId; for setup flow, use agent's home chain
+  const toChain = useMemo(() => {
+    if (isDepositFlow && walletChainId) {
+      return asEvmChainDetails(asMiddlewareChain(walletChainId));
+    }
+    return asEvmChainDetails(
+      isDepositFlow && walletChainId
+        ? asMiddlewareChain(walletChainId)
+        : selectedAgentConfig.middlewareHomeChainId,
+    );
+  }, [isDepositFlow, walletChainId, selectedAgentConfig.middlewareHomeChainId]);
 
   return (
     <TableWrapper>

@@ -2,6 +2,7 @@ import { Button, Flex, Typography } from 'antd';
 import { ReactNode } from 'react';
 import styled from 'styled-components';
 
+import { OnRampMethodCard } from '@/components/OnRamp/OnRampMethodCard';
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
 import { COLOR, EvmChainId, EvmChainName } from '@/constants';
 import { SetupScreen } from '@/enums/SetupScreen';
@@ -10,8 +11,6 @@ import {
   useOnRampContext,
   useServices,
   useSetup,
-  useTotalFiatFromNativeToken,
-  useTotalNativeTokenRequired,
 } from '@/hooks';
 
 import {
@@ -50,41 +49,17 @@ type FundMethodCardProps = {
 const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
   const { goto } = useSetup();
 
-  const {
-    isLoading: isNativeTokenLoading,
-    hasError: hasNativeTokenError,
-    totalNativeToken,
-  } = useTotalNativeTokenRequired(onRampChainId, 'onboarding');
-  const { isLoading: isFiatLoading, data: fiatAmount } =
-    useTotalFiatFromNativeToken(
-      hasNativeTokenError ? undefined : totalNativeToken,
-    );
-  const isLoading = isNativeTokenLoading || isFiatLoading;
+  const handleBuyClick = () => {
+    goto(SetupScreen.OnRamp);
+  };
 
   return (
-    <FundMethodCard>
-      <div className="fund-method-card-body">
-        <CardTitle>Buy</CardTitle>
-        <CardDescription>
-          Pay in fiat by using your credit or debit card — perfect for speed and
-          ease!
-        </CardDescription>
-        <TokenRequirements
-          fiatAmount={fiatAmount ?? 0}
-          isLoading={isLoading}
-          hasError={hasNativeTokenError}
-          fundType="onRamp"
-        />
-      </div>
-      <Button
-        type="primary"
-        size="large"
-        onClick={() => goto(SetupScreen.SetupOnRamp)}
-        disabled={isLoading || hasNativeTokenError}
-      >
-        Buy Crypto with USD
-      </Button>
-    </FundMethodCard>
+    <OnRampMethodCard
+      onRampChainId={onRampChainId}
+      queryKey="onboarding"
+      onSelect={handleBuyClick}
+      width={370}
+    />
   );
 };
 

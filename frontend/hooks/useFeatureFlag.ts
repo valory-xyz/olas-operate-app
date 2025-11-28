@@ -17,6 +17,7 @@ const FeatureFlagsSchema = z.enum([
   'bridge-onboarding', // Enables the bridge funds flow during setup
   'bridge-add-funds', // Enables the bridge funds flow in low-balance alerts when agents require a refill
   'on-ramp', // Enables the fiat on-ramp (buy crypto) flow/screens
+  'on-ramp-add-funds', // Enables the fiat on-ramp (buy crypto) flow for Pearl Wallet deposits
 ]);
 type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
 
@@ -43,6 +44,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-onboarding': true,
     'bridge-add-funds': true,
     'on-ramp': true,
+    'on-ramp-add-funds': true,
   },
   [AgentType.AgentsFun]: {
     'manage-wallet': true,
@@ -55,7 +57,8 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'agent-settings': true,
     'bridge-onboarding': true,
     'bridge-add-funds': false,
-    'on-ramp': true,
+    'on-ramp': false,
+    'on-ramp-add-funds': false,
   },
   [AgentType.Modius]: {
     'manage-wallet': true,
@@ -69,6 +72,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-onboarding': true,
     'bridge-add-funds': true,
     'on-ramp': true,
+    'on-ramp-add-funds': false,
   },
   [AgentType.Optimus]: {
     'manage-wallet': true,
@@ -82,6 +86,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-onboarding': true,
     'bridge-add-funds': true,
     'on-ramp': true,
+    'on-ramp-add-funds': true,
   },
 });
 

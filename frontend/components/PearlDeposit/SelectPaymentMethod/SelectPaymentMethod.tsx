@@ -1,56 +1,48 @@
 import { Button, Flex, Typography } from 'antd';
-import { entries } from 'lodash';
-import Image from 'next/image';
 import { useCallback, useState } from 'react';
 import { styled } from 'styled-components';
 
+import { OnRampMethodCard } from '@/components/OnRamp/OnRampMethodCard';
 import { YouPayContainer } from '@/components/PearlWallet';
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
-import {
-  COLOR,
-  EvmChainId,
-  TokenSymbol,
-  TokenSymbolConfigMap,
-} from '@/constants';
+import { COLOR, EvmChainId, EvmChainIdMap, onRampChainMap } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
-import { useFeatureFlag } from '@/hooks';
-import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
+import { Pages } from '@/enums';
+import { useFeatureFlag, usePageState } from '@/hooks';
+import { asEvmChainDetails, asMiddlewareChain } from '@/utils';
 
 import { BridgeCryptoOn } from './BridgeCryptoOn';
+import { ShowAmountsToDeposit } from './ShowAmountsToDeposit';
 import { TransferCryptoOn } from './TransferCryptoOn';
 
 const { Title, Text, Paragraph } = Typography;
 
 const SelectPaymentMethodCard = styled(CardFlex)`
-  width: 360px;
+  width: 320px;
   border-color: ${COLOR.WHITE};
   .ant-card-body {
     height: 100%;
   }
 `;
 
-const ShowAmountsToDeposit = () => {
-  const { amountsToDeposit } = usePearlWallet();
+const OnRampMethod = ({
+  walletChainId,
+  onSelect,
+}: {
+  walletChainId: EvmChainId;
+  onSelect: () => void;
+}) => {
+  const onRampChainId = onRampChainMap[asMiddlewareChain(walletChainId)];
+
   return (
-    <Flex vertical gap={12}>
-      {entries(amountsToDeposit)
-        .filter(([, { amount }]) => Number(amount) > 0)
-        .map(([tokenSymbol, { amount }]) => (
-          <Flex key={tokenSymbol} gap={8} align="center">
-            <Image
-              src={TokenSymbolConfigMap[tokenSymbol as TokenSymbol].image}
-              alt={tokenSymbol}
-              width={20}
-              height={20}
-            />
-            <Flex gap={8} align="center">
-              <Text>
-                {formatNumber(amount, 4)} {tokenSymbol}
-              </Text>
-            </Flex>
-          </Flex>
-        ))}
-    </Flex>
+    <OnRampMethodCard
+      onRampChainId={onRampChainId}
+      queryKey="preview"
+      onSelect={onSelect}
+      walletChainId={walletChainId}
+      showThresholdValidation
+      width={320}
+    />
   );
 };
 
@@ -60,29 +52,31 @@ const TransferMethod = ({ chainId, onSelect }: TransferMethodProps) => {
 
   return (
     <SelectPaymentMethodCard>
-      <Flex vertical gap={32}>
+      <Flex vertical gap={32} style={{ height: '100%' }}>
         <Flex vertical gap={16}>
           <CardTitle className="m-0">Transfer</CardTitle>
           <Paragraph type="secondary" className="m-0 text-center">
             Send funds directly with lowest fees — ideal for crypto-savvy users.
           </Paragraph>
+
+          <Flex vertical gap={12}>
+            <Paragraph className="text-neutral-tertiary m-0" type="secondary">
+              You will pay
+            </Paragraph>
+            <YouPayContainer vertical gap={12}>
+              <ShowAmountsToDeposit />
+              <Text className="text-sm text-neutral-tertiary" type="secondary">
+                + transaction fees on {chainName}.
+              </Text>
+            </YouPayContainer>
+          </Flex>
         </Flex>
 
-        <Flex vertical gap={8}>
-          <Paragraph className="m-0" type="secondary">
-            You will pay
-          </Paragraph>
-          <YouPayContainer vertical gap={12}>
-            <ShowAmountsToDeposit />
-            <Text className="text-sm text-neutral-tertiary" type="secondary">
-              + transaction fees on {chainName}.
-            </Text>
-          </YouPayContainer>
+        <Flex vertical className="mt-auto">
+          <Button onClick={onSelect} size="large">
+            Transfer Crypto on {chainName}
+          </Button>
         </Flex>
-
-        <Button onClick={onSelect} size="large">
-          Transfer Crypto on {chainName}
-        </Button>
       </Flex>
     </SelectPaymentMethodCard>
   );
@@ -90,46 +84,66 @@ const TransferMethod = ({ chainId, onSelect }: TransferMethodProps) => {
 
 const BridgeMethod = ({ onSelect }: { onSelect: () => void }) => (
   <SelectPaymentMethodCard>
-    <Flex vertical gap={32}>
+    <Flex vertical gap={32} style={{ height: '100%' }}>
       <Flex vertical gap={16}>
         <CardTitle className="m-0">Bridge</CardTitle>
-        <Paragraph type="secondary" className="m-0 text-center">
+        <Paragraph
+          type="secondary"
+          className="m-0 text-center"
+          style={{ height: '72px' }}
+        >
           Bridge from Ethereum Mainnet. Slightly more expensive.
         </Paragraph>
+
+        <Flex vertical gap={12}>
+          <Paragraph className="text-neutral-tertiary m-0" type="secondary">
+            You will pay
+          </Paragraph>
+          <YouPayContainer vertical gap={12}>
+            <ShowAmountsToDeposit />
+            <Text className="text-sm text-neutral-tertiary" type="secondary">
+              + bridging fees on Ethereum.
+            </Text>
+          </YouPayContainer>
+        </Flex>
       </Flex>
 
-      <Flex vertical gap={8}>
-        <Paragraph className="m-0" type="secondary">
-          You will pay
-        </Paragraph>
-        <YouPayContainer vertical gap={12}>
-          <ShowAmountsToDeposit />
-          <Text className="text-sm text-neutral-tertiary" type="secondary">
-            + bridging fees on Ethereum.
-          </Text>
-        </YouPayContainer>
+      <Flex vertical className="mt-auto">
+        <Button onClick={onSelect} size="large">
+          Bridge Crypto from Ethereum
+        </Button>
       </Flex>
-
-      <Button onClick={onSelect} size="large">
-        Bridge Crypto from Ethereum
-      </Button>
     </Flex>
   </SelectPaymentMethodCard>
 );
 
 export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
+  const { goto: gotoPage } = usePageState();
   const { walletChainId: chainId, amountsToDeposit } = usePearlWallet();
-  const [isBridgingEnabled] = useFeatureFlag(['bridge-onboarding']);
+  const [isBridgingEnabled, isOnRampingEnabled] = useFeatureFlag([
+    'bridge-onboarding',
+    'on-ramp-add-funds',
+  ]);
   const [paymentMethod, setPaymentMethod] = useState<
-    'TRANSFER' | 'BRIDGE' | null
+    'BUY' | 'TRANSFER' | 'BRIDGE' | null
   >(null);
 
   const onPaymentMethodBack = useCallback(() => setPaymentMethod(null), []);
 
-  // If no chain is selected, we cannot proceed.
   if (!chainId) return null;
 
   const chainName = asEvmChainDetails(asMiddlewareChain(chainId)).displayName;
+
+  // For when users pick different chains in Deposit.tsx
+  const isBuyDisabled =
+    chainId === EvmChainIdMap.Base || chainId === EvmChainIdMap.Mode;
+
+  const shouldShowBuy = isOnRampingEnabled && !isBuyDisabled;
+
+  if (paymentMethod === 'BUY') {
+    gotoPage(Pages.OnRamp);
+    return;
+  }
 
   if (paymentMethod === 'TRANSFER') {
     return <TransferCryptoOn chainName={chainName} onBack={onBack} />;
@@ -153,6 +167,12 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
       </Title>
 
       <Flex gap={24}>
+        {shouldShowBuy && (
+          <OnRampMethod
+            walletChainId={chainId}
+            onSelect={() => setPaymentMethod('BUY')}
+          />
+        )}
         <TransferMethod
           chainId={chainId}
           onSelect={() => setPaymentMethod('TRANSFER')}

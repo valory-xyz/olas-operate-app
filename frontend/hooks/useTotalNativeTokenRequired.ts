@@ -1,14 +1,19 @@
 import { useEffect, useMemo } from 'react';
 
-import { AddressZero } from '@/constants/address';
-import { EvmChainId, onRampChainMap } from '@/constants/chains';
-import { useOnRampContext } from '@/hooks/useOnRampContext';
-import { useServices } from '@/hooks/useServices';
-import { useMasterWalletContext } from '@/hooks/useWallet';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
-import { formatUnitsToNumber } from '@/utils/numberFormatters';
-
-import { useBridgeRequirementsQuery } from '../components/SetupPage/Create/SetupOnRamp/PayingReceivingTable/useBridgeRequirementsQuery';
+import {
+  AddressZero,
+  EvmChainId,
+  MiddlewareChain,
+  onRampChainMap,
+} from '@/constants';
+import {
+  useBridgeRequirementsQuery,
+  useMasterWalletContext,
+  useOnRampContext,
+  useServices,
+} from '@/hooks';
+import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
+import { asMiddlewareChain, formatUnitsToNumber } from '@/utils';
 
 /**
  * Hook to fetch the bridge refill requirements for the on-ramp process and
@@ -20,7 +25,10 @@ import { useBridgeRequirementsQuery } from '../components/SetupPage/Create/Setup
  */
 export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,
-  queryKey: 'preview' | 'onboarding' = 'onboarding',
+  queryKey: 'preview' | 'onboarding' | 'depositing',
+  customGetBridgeRequirementsParams?: (
+    isForceUpdate?: boolean,
+  ) => BridgeRefillRequirementsRequest | null,
 ) => {
   const { updateEthAmountToPay, isOnRampingTransactionSuccessful } =
     useOnRampContext();
@@ -39,7 +47,34 @@ export const useTotalNativeTokenRequired = (
     enabled: !isOnRampingTransactionSuccessful,
     stopPollingCondition: isOnRampingTransactionSuccessful,
     queryKeySuffix: queryKey,
+    customGetBridgeRequirementsParams,
   });
+
+  // Determine destination chain and on-ramp network based on flow type
+  const { destinationChainName, toOnRampNetworkName } = useMemo(() => {
+    const firstBridgeRequest = bridgeParams?.bridge_requests[0];
+
+    // Deposit flow: derive on-ramp chain from the bridge request
+    if (firstBridgeRequest && customGetBridgeRequirementsParams) {
+      return {
+        destinationChainName: firstBridgeRequest.to.chain as MiddlewareChain,
+        toOnRampNetworkName: firstBridgeRequest.from.chain as MiddlewareChain,
+      };
+    }
+
+    // Onboarding flow: fallback to agent's home chain → determine on-ramp
+    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
+    return {
+      destinationChainName: fromChainName,
+      toOnRampNetworkName: asMiddlewareChain(
+        onRampChainMap[fromChainName],
+      ) as MiddlewareChain,
+    };
+  }, [
+    bridgeParams?.bridge_requests,
+    customGetBridgeRequirementsParams,
+    selectedAgentConfig.evmHomeChainId,
+  ]);
 
   /**
    * Calculates the total native token required for the bridge.
@@ -53,11 +88,6 @@ export const useTotalNativeTokenRequired = (
     if (!bridgeParams) return;
     if (!bridgeFundingRequirements) return;
     if (!masterEoa?.address) return;
-
-    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-    const toOnRampNetworkName = asMiddlewareChain(
-      onRampChainMap[fromChainName],
-    );
 
     /**
      * Calculate native token amount needed from direct requirements (not from bridging)
@@ -74,15 +104,40 @@ export const useTotalNativeTokenRequired = (
     const nativeTokenAmount = bridgeParams.bridge_requests.find(
       (request) => request.to.token === AddressZero,
     )?.to.amount;
-    const nativeTokenFromBridgeParams =
-      fromChainName === toOnRampNetworkName ? nativeTokenAmount : 0;
+
+    const doesOnRampChainMatchDestination =
+      destinationChainName &&
+      asMiddlewareChain(onRampChainId) === destinationChainName;
+
+    const nativeTokenFromBridgeParams = doesOnRampChainMatchDestination
+      ? nativeTokenAmount
+      : 0;
 
     // Remaining token from the bridge quote.
     // e.g, For optimus, OLAS and USDC are bridged to ETH
-    const bridgeRefillRequirements =
-      bridgeFundingRequirements.bridge_refill_requirements[toOnRampNetworkName];
-    const nativeTokenFromBridgeQuote =
-      bridgeRefillRequirements?.[masterEoa.address]?.[AddressZero];
+    const { nativeTokenFromBridgeQuote } = (() => {
+      let bridgeRefillRequirements =
+        bridgeFundingRequirements.bridge_refill_requirements[
+          toOnRampNetworkName
+        ];
+      let nativeTokenFromBridgeQuote =
+        bridgeRefillRequirements?.[masterEoa.address]?.[AddressZero];
+
+      if (
+        !nativeTokenFromBridgeQuote &&
+        customGetBridgeRequirementsParams &&
+        destinationChainName
+      ) {
+        bridgeRefillRequirements =
+          bridgeFundingRequirements.bridge_refill_requirements[
+            destinationChainName
+          ];
+        nativeTokenFromBridgeQuote =
+          bridgeRefillRequirements?.[masterEoa.address]?.[AddressZero];
+      }
+
+      return { nativeTokenFromBridgeQuote };
+    })();
 
     if (!nativeTokenFromBridgeQuote) return;
 
@@ -98,7 +153,10 @@ export const useTotalNativeTokenRequired = (
     bridgeParams,
     bridgeFundingRequirements,
     masterEoa?.address,
-    selectedAgentConfig.evmHomeChainId,
+    destinationChainName,
+    toOnRampNetworkName,
+    customGetBridgeRequirementsParams,
+    onRampChainId,
   ]);
 
   // Update the ETH amount to pay in the on-ramp context

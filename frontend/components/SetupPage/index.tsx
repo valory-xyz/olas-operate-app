@@ -6,12 +6,12 @@ import { COLOR } from '@/constants/colors';
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
+import { OnRamp } from '../OnRamp/OnRamp';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { CardFlex } from '../ui/CardFlex';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
 import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding/SetupBridgeOnboarding';
-import { SetupOnRamp } from './Create/SetupOnRamp/SetupOnRamp';
 import { SetupPassword } from './Create/SetupPassword';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
 import { FundYourAgent } from './FundYourAgent/FundYourAgent';
@@ -56,8 +56,8 @@ const screenWithoutCards: SetupScreen[] = [
   SetupScreen.FundYourAgent,
   SetupScreen.TransferFunds,
   SetupScreen.SetupBridgeOnboardingScreen,
-  SetupScreen.SetupOnRamp,
   SetupScreen.SelectStaking,
+  SetupScreen.OnRamp,
 ];
 
 export const Setup = () => {
@@ -85,8 +85,8 @@ export const Setup = () => {
         return <TransferFunds />;
       case SetupScreen.SetupBridgeOnboardingScreen:
         return <SetupBridgeOnboarding />;
-      case SetupScreen.SetupOnRamp:
-        return <SetupOnRamp />;
+      case SetupScreen.OnRamp:
+        return <OnRamp mode="onboard" />;
       case SetupScreen.EarlyAccessOnly:
         return <EarlyAccessOnly />;
 

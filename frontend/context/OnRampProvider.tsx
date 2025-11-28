@@ -109,8 +109,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
 
   // Get the network id, name, and crypto currency code based on the selected agent's home chain
-  // This is used to determine the network and currency to on-ramp to.
   const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
+    // For onboarding flow, use agent's home chain
     const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
     const networkId = onRampChainMap[fromChainName];
     const chainDetails = asEvmChainDetails(asMiddlewareChain(networkId));
