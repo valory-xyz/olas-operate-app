@@ -13,8 +13,11 @@ import {
 
 import { AGENT_CONFIG } from '@/config/agents';
 import {
+  AgentEoa,
   AgentMap,
+  AgentSafe,
   AgentType,
+  AgentWallet,
   EvmChainId,
   FIFTEEN_SECONDS_INTERVAL,
   FIVE_SECONDS_INTERVAL,
@@ -23,14 +26,9 @@ import {
   MiddlewareDeploymentStatus,
   PAGES,
   REACT_QUERY_KEYS,
-} from '@/constants';
-import {
-  AgentEoa,
-  AgentSafe,
-  AgentWallet,
   WalletOwnerType,
   WalletType,
-} from '@/enums';
+} from '@/constants';
 import {
   useElectronApi,
   usePageState,

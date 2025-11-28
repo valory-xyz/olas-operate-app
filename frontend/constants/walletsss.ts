@@ -11,7 +11,7 @@ export enum WalletOwnerType {
 }
 
 // types of wallet
-export type Eoa = {
+type Eoa = {
   address: Address;
   type: WalletType.EOA;
 };

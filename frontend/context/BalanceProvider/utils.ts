@@ -8,16 +8,14 @@ import { providers } from '@/config/providers';
 import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { EvmChainId, type MiddlewareChain } from '@/constants';
 import {
-  SERVICE_REGISTRY_L2_SERVICE_STATE,
-  ServiceRegistryL2ServiceState,
-} from '@/constants';
-import {
   AgentWallet,
   MasterSafe,
   MasterWallet,
+  SERVICE_REGISTRY_L2_SERVICE_STATE,
+  ServiceRegistryL2ServiceState,
   Wallet,
   WalletType,
-} from '@/enums/Wallet';
+} from '@/constants';
 import { StakedAgentService } from '@/service/agents/shared-services/StakedAgentService';
 import { MiddlewareServiceResponse } from '@/types';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';

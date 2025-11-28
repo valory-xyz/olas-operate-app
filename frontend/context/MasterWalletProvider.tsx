@@ -11,15 +11,13 @@ import {
 import {
   EvmChainId,
   FIVE_SECONDS_INTERVAL,
-  REACT_QUERY_KEYS,
-} from '@/constants';
-import {
   MasterEoa,
   MasterSafe,
   MasterWallet,
+  REACT_QUERY_KEYS,
   WalletOwnerType,
   WalletType,
-} from '@/enums/Wallet';
+} from '@/constants';
 import { WalletService } from '@/service/Wallet';
 import { MiddlewareWalletResponse } from '@/types';
 import { asEvmChainId } from '@/utils/middlewareHelpers';

@@ -11,7 +11,7 @@ import {
   AgentWallet,
   WalletOwnerType,
   WalletType,
-} from '@/enums/Wallet';
+} from '@/constants';
 import { Address } from '@/types/Address';
 import { Service } from '@/types/Service';
 import { Nullable, Optional } from '@/types/Util';
