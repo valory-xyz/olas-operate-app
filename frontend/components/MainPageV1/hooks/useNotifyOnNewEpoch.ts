@@ -72,21 +72,7 @@ export const useNotifyOnNewEpoch = () => {
     if (!epoch) return;
 
     // if latest epoch is not the last known epoch
-    if (
-      epochStatusNotification?.lastEpoch !== epoch &&
-      epochStatusNotification?.isNotified
-    ) {
-      setEpochStatusNotification({ lastEpoch: epoch, isNotified: false });
-    }
-
-    // no notification should have valid initialization
-    if (!epochStatusNotification) return;
-
-    // already notified for this epoch
-    if (epochStatusNotification.isNotified) return;
-
-    // if latest epoch is not the last known epoch, notify once and update
-    if (epochStatusNotification.lastEpoch !== epoch) {
+    if (epochStatusNotification?.lastEpoch !== epoch) {
       showNotification(START_YOUR_AGENT_MESSAGE);
       setEpochStatusNotification({ lastEpoch: epoch, isNotified: true });
     }
