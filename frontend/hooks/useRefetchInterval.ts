@@ -1,20 +1,25 @@
-import { Query } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-
-import { FIVE_MINUTE_INTERVAL, THIRTY_SECONDS_INTERVAL } from '@/constants';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 /**
- * focused: user is actively interacting with the app
- * visible: app is visible but not focused (e.g. user has another window in front)
- * hidden: app is minimized or not visible
+ * Window visibility bucket:
+ *
+ * - "focused": user is actively interacting with the UI
+ * - "visible": window is visible but not focused (e.g., behind another window)
+ * - "hidden": minimized or completely not visible to the user
+ *
+ * Used to scale refetch intervals smartly.
  */
 type WindowState = 'focused' | 'visible' | 'hidden';
 
+/**
+ * Detects the current window visibility/focus state.
+ * Works in Electron, Browser, and hybrid environments.
+ */
 const useWindowVisibility = (): WindowState => {
   const [state, setState] = useState<WindowState>('focused');
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
+    const updateState = () => {
       if (document.hidden) {
         setState('hidden');
       } else {
@@ -22,27 +27,18 @@ const useWindowVisibility = (): WindowState => {
       }
     };
 
-    const handleFocus = () => {
-      setState('focused');
-    };
+    const handleFocus = () => setState('focused');
+    const handleBlur = () => !document.hidden && setState('visible');
 
-    // When blurred, it might still be visible (e.g. clicking on another window on same screen)
-    // or it might be hidden. document.hidden is the source of truth for hidden.
-    const handleBlur = () => {
-      if (!document.hidden) {
-        setState('visible');
-      }
-    };
+    // Initial state
+    updateState();
 
-    // Initial check
-    handleVisibilityChange();
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('visibilitychange', updateState);
     window.addEventListener('focus', handleFocus);
     window.addEventListener('blur', handleBlur);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('visibilitychange', updateState);
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('blur', handleBlur);
     };
@@ -51,47 +47,56 @@ const useWindowVisibility = (): WindowState => {
   return state;
 };
 
-type Interval = number | false | undefined;
+/**
+ * Multipliers for scaling refetch frequency based on visibility state.
+ */
+const INTERVAL_MULTIPLIERS = {
+  focused: 1, // normal rate
+  visible: 3, // slower when window is visible but not focused
+  hidden: 10, // very slow when fully hidden (minimized)
+} as const;
 
-type RefetchInterval = Interval | ((query: Query) => Interval);
+type AdaptiveInterval =
+  | number
+  | false
+  | undefined
+  | ((...args: unknown[]) => number | false | undefined);
 
 /**
- * Hook to adjust refetch interval based on window visibility state.
- *
- * - When window is focused, use the provided interval.
- * - When window is visible but not focused, use at least 30s interval.
- * - When window is hidden, use at least 5 minute interval.
- *
- * This helps to reduce unnecessary network requests when the user is not actively
- * interacting with the app.
+ * Smart refetch-interval hook used with React Query.
+ * Prevents unnecessary API calls when the user isn't actively interacting.
  */
-export const useRefetchInterval = (interval: RefetchInterval) => {
+export function useRefetchInterval(
+  interval: AdaptiveInterval,
+): AdaptiveInterval {
   const windowState = useWindowVisibility();
-  console.log('Window state:', windowState);
 
-  const adjustInterval = (originalInterval: number) => {
-    switch (windowState) {
-      case 'focused':
-        return originalInterval;
-      case 'visible':
-        return Math.max(originalInterval, THIRTY_SECONDS_INTERVAL);
-      case 'hidden':
-        return Math.max(originalInterval, FIVE_MINUTE_INTERVAL);
-      default:
-        return originalInterval;
+  const adjustInterval = useCallback(
+    (value: number) => {
+      const multiplier = INTERVAL_MULTIPLIERS[windowState];
+      return value * multiplier;
+    },
+    [windowState],
+  );
+
+  /**
+   * Memoize the final returned interval to avoid re-renders.
+   */
+  return useMemo(() => {
+    // Case 1 — function-style refetch interval
+    if (typeof interval === 'function') {
+      return (query: unknown) => {
+        const result = interval(query);
+        return typeof result === 'number' ? adjustInterval(result) : result;
+      };
     }
-  };
 
-  if (typeof interval === 'function') {
-    return (query: Query) => {
-      const result = interval(query);
-      return typeof result === 'number' ? adjustInterval(result) : result;
-    };
-  }
+    // Case 2 — numeric static interval
+    if (typeof interval === 'number') {
+      return adjustInterval(interval);
+    }
 
-  if (typeof interval === 'number') {
-    return adjustInterval(interval);
-  }
-
-  return interval;
-};
+    // Case 3 — false / undefined
+    return interval;
+  }, [interval, adjustInterval]);
+}

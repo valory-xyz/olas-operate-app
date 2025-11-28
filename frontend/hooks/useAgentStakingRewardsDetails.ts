@@ -41,10 +41,6 @@ export const useAgentStakingRewardsDetails = (
   const multisig = chainDetails?.multisig;
   const serviceNftTokenId = chainDetails?.token;
 
-  // console.log('Fetching staking rewards details for:', {
-  //   refetchInterval,
-  // });
-
   return useQuery({
     queryKey: REACT_QUERY_KEYS.REWARDS_KEY(
       chainId,
@@ -83,6 +79,7 @@ export const useAgentStakingRewardsDetails = (
       !!stakingProgramId &&
       !!multisig &&
       isValidServiceId(serviceNftTokenId),
-    refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
+    refetchInterval: isOnline ? refetchInterval : false,
+    refetchIntervalInBackground: true,
   });
 };
