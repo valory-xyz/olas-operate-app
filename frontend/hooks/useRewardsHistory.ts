@@ -7,8 +7,8 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { z } from 'zod';
 
 import { STAKING_PROGRAM_ADDRESS } from '@/config/stakingPrograms';
+import { REACT_QUERY_KEYS } from '@/constants';
 import { EvmChainId } from '@/constants/chains';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
 import { Address } from '@/types/Address';
 import { Nullable } from '@/types/Util';

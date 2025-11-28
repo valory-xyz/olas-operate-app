@@ -18,10 +18,10 @@ import {
   AgentType,
   EvmChainId,
   MiddlewareDeploymentStatusMap,
+  REACT_QUERY_KEYS,
   SIXTY_MINUTE_INTERVAL,
   THIRTY_SECONDS_INTERVAL,
 } from '@/constants';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { useMasterWalletContext, useStore } from '@/hooks';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
