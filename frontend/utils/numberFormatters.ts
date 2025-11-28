@@ -30,10 +30,15 @@ export const formatNumber = (
 
   // Round the amount to the specified number of decimals
   const factor = 10 ** decimals;
+  const adjustedAmount = amount * factor;
+
+  // Extra precision to avoid floating point exception
+  const amountWithPrecision = parseFloat(adjustedAmount.toFixed(12));
+
   const rounded =
     round === 'ceil'
-      ? Math.ceil(amount * factor) / factor
-      : Math.floor(amount * factor) / factor;
+      ? Math.ceil(amountWithPrecision) / factor
+      : Math.floor(amountWithPrecision) / factor;
 
   // Format the number with commas and the specified decimals
   return Intl.NumberFormat('en-US', {

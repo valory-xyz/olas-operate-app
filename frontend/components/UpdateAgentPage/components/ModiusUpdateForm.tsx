@@ -2,6 +2,7 @@ import { Button, Form, Input } from 'antd';
 import { get, isEqual, isUndefined, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
+import { RequiredMark } from '@/components/ui';
 import { Pages } from '@/enums/Pages';
 import { usePageState, useServices } from '@/hooks';
 import { Nullable } from '@/types/Util';
@@ -78,6 +79,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       validateMessages={validateMessages}
       initialValues={{ ...initialFormValues }}
       className="label-no-padding"
+      requiredMark={RequiredMark}
     >
       <CoinGeckoApiKeySubHeader />
       <Form.Item

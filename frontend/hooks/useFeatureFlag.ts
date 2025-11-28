@@ -55,7 +55,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'agent-settings': true,
     'bridge-onboarding': true,
     'bridge-add-funds': false,
-    'on-ramp': false,
+    'on-ramp': true,
   },
   [AgentType.Modius]: {
     'manage-wallet': true,
