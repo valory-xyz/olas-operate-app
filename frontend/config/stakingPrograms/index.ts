@@ -1,7 +1,6 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
-import { STAKING_PROGRAM_IDS, StakingProgramId } from '@/constants';
-import { AgentType } from '@/enums/Agent';
+import { AgentType, STAKING_PROGRAM_IDS, StakingProgramId } from '@/constants';
 import { EvmChainId } from '@/enums/Chain';
 import { Address } from '@/types';
 

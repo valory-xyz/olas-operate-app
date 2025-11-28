@@ -1,8 +1,7 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
-import { STAKING_PROGRAM_IDS, TokenSymbolMap } from '@/constants';
-import { AgentType } from '@/enums/Agent';
+import { AgentMap, STAKING_PROGRAM_IDS, TokenSymbolMap } from '@/constants';
 import { EvmChainId } from '@/enums/Chain';
 import { Address } from '@/types';
 
@@ -28,7 +27,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.ModiusAlpha]: {
     chainId: EvmChainId.Mode,
     name: 'Modius Alpha',
-    agentsSupported: [AgentType.Modius],
+    agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 40,
     },
@@ -42,7 +41,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.ModiusAlpha2]: {
     chainId: EvmChainId.Mode,
     name: 'Modius Alpha II',
-    agentsSupported: [AgentType.Modius],
+    agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 100,
     },
@@ -58,7 +57,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.ModiusAlpha3]: {
     chainId: EvmChainId.Mode,
     name: 'Modius Alpha III',
-    agentsSupported: [AgentType.Modius],
+    agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 1000,
     },
@@ -74,7 +73,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.ModiusAlpha4]: {
     chainId: EvmChainId.Mode,
     name: 'Modius Alpha IV',
-    agentsSupported: [AgentType.Modius],
+    agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 5000,
     },
@@ -91,7 +90,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.OptimusAlpha]: {
     chainId: EvmChainId.Mode,
     name: 'Optimus Alpha',
-    agentsSupported: [AgentType.Modius],
+    agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 40,
     },

@@ -7,7 +7,6 @@ import {
   STAKING_PROGRAM_IDS,
   TokenSymbolMap,
 } from '@/constants';
-import { AgentType } from '@/enums';
 import { ServiceTemplate } from '@/types';
 import { parseEther, parseUnits } from '@/utils';
 
@@ -21,7 +20,7 @@ import { X402_ENABLED_FLAGS } from './x402';
 export const KPI_DESC_PREFIX = '[Pearl service]';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
+  agentType: AgentMap.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
   hash: 'bafybeiemvi77itu5ut7ybtrf7pwuzqemj4xfw2amgy4ipmvky52jmzrg54',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
@@ -278,7 +277,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
  * Agents.fun Base template
  */
 const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.AgentsFun,
+  agentType: AgentMap.AgentsFun,
   name: 'Agents.Fun',
   home_chain: MiddlewareChainMap.BASE,
   configurations: {
@@ -317,7 +316,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
 };
 
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.Modius,
+  agentType: AgentMap.Modius,
   name: 'Optimus',
   description: `${KPI_DESC_PREFIX} Optimus`,
   image:
@@ -487,7 +486,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.Optimus,
+  agentType: AgentMap.Optimus,
   name: 'Optimus - Optimism',
   description: `${KPI_DESC_PREFIX} Optimus service deployment on Optimism network`,
   image:

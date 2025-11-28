@@ -1,8 +1,7 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
-import { STAKING_PROGRAM_IDS, TokenSymbolMap } from '@/constants';
-import { AgentType } from '@/enums/Agent';
+import { AgentMap, STAKING_PROGRAM_IDS, TokenSymbolMap } from '@/constants';
 import { EvmChainId } from '@/enums/Chain';
 import { Address } from '@/types';
 
@@ -33,7 +32,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     deprecated: true,
     chainId: EvmChainId.Base,
     name: 'MemeBase Alpha II',
-    agentsSupported: [AgentType.AgentsFun],
+    agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 100,
     },
@@ -52,7 +51,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     deprecated: true,
     chainId: EvmChainId.Base,
     name: 'MemeBase Beta I',
-    agentsSupported: [AgentType.AgentsFun],
+    agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 100,
     },
@@ -69,7 +68,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     deprecated: true,
     chainId: EvmChainId.Base,
     name: 'MemeBase Beta II',
-    agentsSupported: [AgentType.AgentsFun],
+    agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 1000,
     },
@@ -88,7 +87,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     deprecated: true,
     chainId: EvmChainId.Base,
     name: 'MemeBase Beta III',
-    agentsSupported: [AgentType.AgentsFun],
+    agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 5000,
     },
@@ -106,7 +105,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.AgentsFun1]: {
     chainId: EvmChainId.Base,
     name: 'Agents.fun 1',
-    agentsSupported: [AgentType.AgentsFun],
+    agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 100,
     },
@@ -122,7 +121,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.AgentsFun2]: {
     chainId: EvmChainId.Base,
     name: 'Agents.fun 2',
-    agentsSupported: [AgentType.AgentsFun],
+    agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 1000,
     },
@@ -138,7 +137,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.AgentsFun3]: {
     chainId: EvmChainId.Base,
     name: 'Agents.fun 3',
-    agentsSupported: [AgentType.AgentsFun],
+    agentsSupported: [AgentMap.AgentsFun],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 5000,
     },

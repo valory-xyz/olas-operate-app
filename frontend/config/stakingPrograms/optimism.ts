@@ -2,11 +2,11 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
 import {
+  AgentMap,
   OPTIMISM_STAKING_PROGRAM_IDS,
   OptimismStakingProgramId,
   TokenSymbolMap,
 } from '@/constants';
-import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
 import { Address } from '@/types';
 
@@ -31,7 +31,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2]: {
     chainId: EvmChainId.Optimism,
     name: 'Optimus Alpha II',
-    agentsSupported: [AgentType.Optimus],
+    agentsSupported: [AgentMap.Optimus],
     stakingRequirements: { [TokenSymbolMap.OLAS]: 100 },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
@@ -47,7 +47,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3]: {
     chainId: EvmChainId.Optimism,
     name: 'Optimus Alpha III',
-    agentsSupported: [AgentType.Optimus],
+    agentsSupported: [AgentMap.Optimus],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 1000,
     },
@@ -65,7 +65,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4]: {
     chainId: EvmChainId.Optimism,
     name: 'Optimus Alpha IV',
-    agentsSupported: [AgentType.Optimus],
+    agentsSupported: [AgentMap.Optimus],
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 5000,
     },
