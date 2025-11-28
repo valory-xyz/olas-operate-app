@@ -44,6 +44,5 @@ export const useBridgeRefillRequirements = (
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnReconnect: 'always',
-    refetchIntervalInBackground: true,
   });
 };

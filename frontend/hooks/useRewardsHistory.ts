@@ -251,7 +251,6 @@ const useContractCheckpoints = (
     },
     enabled: !!serviceId,
     refetchInterval: ONE_DAY_IN_MS,
-    refetchOnWindowFocus: false,
   });
 };
 
