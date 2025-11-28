@@ -2551,10 +2551,8 @@ version = "0.13.0"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.9"
-files = [
-    {file = "olas_operate_middleware-0.13.0-py3-none-any.whl", hash = "sha256:6901f22f4f3b1edbb99abc13701d10e7f59eaf0928d5f4a322a238aeef318ef9"},
-    {file = "olas_operate_middleware-0.13.0.tar.gz", hash = "sha256:5e1973c4f8563e4c47878c5f5c7c7f800bb902a39ab543125bce405a037d0502"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 aiohttp = "3.9.5"
@@ -2596,8 +2594,8 @@ web3 = "6.20.4"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "d5affcf8c9696d73d883a1ad2dbab3ce0cc5d286"
-resolved_reference = "d5affcf8c9696d73d883a1ad2dbab3ce0cc5d286"
+reference = "cd863fd1193777068d33308eecc1e2455c56a6e8"
+resolved_reference = "cd863fd1193777068d33308eecc1e2455c56a6e8"
 
 [[package]]
 name = "open-aea"
@@ -4457,4 +4455,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "f0060157cdb5cb437eda760dd0cd333bcd1a032a0f9609e7d9c32fce9dbf4495"
+content-hash = "9b3fb344ea08f5c25a856636ed396314cfc173aea6042b8c353748c914fa2972"
