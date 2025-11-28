@@ -28,7 +28,13 @@ const useWindowVisibility = (): WindowState => {
     };
 
     const handleFocus = () => setState('focused');
-    const handleBlur = () => !document.hidden && setState('visible');
+    const handleBlur = () => {
+      if (document.hidden) {
+        setState('hidden');
+      } else {
+        setState('visible');
+      }
+    };
 
     // Initial state
     updateState();
