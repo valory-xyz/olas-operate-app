@@ -1,10 +1,9 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
-import { STAKING_PROGRAM_IDS } from '@/constants';
+import { STAKING_PROGRAM_IDS, TokenSymbolMap } from '@/constants';
 import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
-import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types';
 
 import { MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
@@ -31,7 +30,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     name: 'Modius Alpha',
     agentsSupported: [AgentType.Modius],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 40,
+      [TokenSymbolMap.OLAS]: 40,
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.ModiusAlpha],
@@ -45,7 +44,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     name: 'Modius Alpha II',
     agentsSupported: [AgentType.Modius],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 100,
+      [TokenSymbolMap.OLAS]: 100,
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.ModiusAlpha2],
@@ -61,7 +60,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     name: 'Modius Alpha III',
     agentsSupported: [AgentType.Modius],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 1000,
+      [TokenSymbolMap.OLAS]: 1000,
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.ModiusAlpha3],
@@ -77,7 +76,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     name: 'Modius Alpha IV',
     agentsSupported: [AgentType.Modius],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 5000,
+      [TokenSymbolMap.OLAS]: 5000,
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.ModiusAlpha4],
@@ -94,7 +93,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     name: 'Optimus Alpha',
     agentsSupported: [AgentType.Modius],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 40,
+      [TokenSymbolMap.OLAS]: 40,
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.OptimusAlpha],

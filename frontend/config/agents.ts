@@ -1,7 +1,7 @@
 import { formatUnits } from 'ethers/lib/utils';
 import { entries } from 'lodash';
 
-import { MiddlewareChainMap } from '@/constants';
+import { MiddlewareChainMap, TokenSymbolMap } from '@/constants';
 import { AgentMap, AgentType } from '@/constants/agent';
 import {
   MODIUS_SERVICE_TEMPLATE,
@@ -9,7 +9,6 @@ import {
 } from '@/constants/serviceTemplates';
 import { X402_ENABLED_FLAGS } from '@/constants/x402';
 import { EvmChainId } from '@/enums/Chain';
-import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
@@ -23,7 +22,7 @@ const getModiusUsdcConfig = () => {
   const modiusFundRequirements =
     MODIUS_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.MODE]
       ?.fund_requirements;
-  const modiusUsdcConfig = MODE_TOKEN_CONFIG[TokenSymbol.USDC];
+  const modiusUsdcConfig = MODE_TOKEN_CONFIG[TokenSymbolMap.USDC];
 
   if (!modiusUsdcConfig) {
     throw new Error('Modius USDC config not found');
@@ -38,7 +37,7 @@ const getOptimusUsdcConfig = () => {
   const optimusFundRequirements =
     OPTIMUS_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.OPTIMISM]
       ?.fund_requirements;
-  const optimusUsdcConfig = OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC];
+  const optimusUsdcConfig = OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC];
 
   if (!optimusUsdcConfig) {
     throw new Error('Optimus USDC config not found');
@@ -85,7 +84,7 @@ export const AGENT_CONFIG: {
     agentIds: [40],
     requiresAgentSafesOn: [EvmChainId.Optimism],
     additionalRequirements: {
-      [EvmChainId.Optimism]: { [TokenSymbol.USDC]: getOptimusUsdcConfig() },
+      [EvmChainId.Optimism]: { [TokenSymbolMap.USDC]: getOptimusUsdcConfig() },
     },
     requiresMasterSafesOn: [EvmChainId.Optimism],
     serviceApi: OptimismService,
@@ -134,7 +133,7 @@ export const AGENT_CONFIG: {
     middlewareHomeChainId: MiddlewareChainMap.MODE,
     requiresAgentSafesOn: [EvmChainId.Mode],
     additionalRequirements: {
-      [EvmChainId.Mode]: { [TokenSymbol.USDC]: getModiusUsdcConfig() },
+      [EvmChainId.Mode]: { [TokenSymbolMap.USDC]: getModiusUsdcConfig() },
     },
     requiresMasterSafesOn: [EvmChainId.Mode],
     serviceApi: ModiusService,

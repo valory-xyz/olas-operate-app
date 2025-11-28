@@ -16,9 +16,10 @@ import {
   COLOR,
   MiddlewareChain,
   MiddlewareChainMap,
+  TokenSymbol,
   TokenSymbolConfigMap,
+  TokenSymbolMap,
 } from '@/constants';
-import { TokenSymbol } from '@/enums/Token';
 import {
   useBalanceAndRefillRequirementsContext,
   useBridgeRefillRequirements,
@@ -311,7 +312,7 @@ export const DepositForBridging = ({
           const chainTokenConfig =
             TOKEN_CONFIG[asEvmChainId(bridgeToChain)][token.symbol];
           const toTokenAddress =
-            token.symbol === TokenSymbol.ETH
+            token.symbol === TokenSymbolMap.ETH
               ? token.address
               : chainTokenConfig?.address;
 

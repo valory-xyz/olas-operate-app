@@ -5,8 +5,9 @@ import {
   AgentMap,
   EnvProvisionMap as EnvProvisionType,
   STAKING_PROGRAM_IDS,
+  TokenSymbolMap,
 } from '@/constants';
-import { AgentType, TokenSymbol } from '@/enums';
+import { AgentType } from '@/enums';
 import { ServiceTemplate } from '@/types';
 import { parseEther, parseUnits } from '@/utils';
 
@@ -335,9 +336,12 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
           agent: +parseEther(0.0005),
           safe: 0,
         },
-        [MODE_TOKEN_CONFIG[TokenSymbol.USDC]?.address as string]: {
+        [MODE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
           agent: 0,
-          safe: +parseUnits(16, MODE_TOKEN_CONFIG[TokenSymbol.USDC]?.decimals),
+          safe: +parseUnits(
+            16,
+            MODE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
+          ),
         },
       },
     },
@@ -502,11 +506,11 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
           agent: +parseEther(0.0007),
           safe: 0,
         },
-        [OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC]?.address as string]: {
+        [OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
           agent: 0,
           safe: +parseUnits(
             16,
-            OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC]?.decimals,
+            OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
           ),
         },
       },

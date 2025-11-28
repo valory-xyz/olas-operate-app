@@ -1,8 +1,7 @@
 import { ChainTokenConfig } from '@/config/tokens';
-import { AddressZero } from '@/constants/address';
-import { TokenSymbol } from '@/enums';
+import { AddressZero, TokenSymbol } from '@/constants';
 import { Address } from '@/types/Address';
-import { areAddressesEqual } from '@/utils/address';
+import { areAddressesEqual } from '@/utils';
 
 /**
  * Get the token details from the token address.

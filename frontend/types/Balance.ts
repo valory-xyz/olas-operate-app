@@ -1,5 +1,5 @@
+import { TokenSymbol } from '@/constants';
 import { EvmChainId } from '@/enums/Chain';
-import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 
 export type WalletBalance = {

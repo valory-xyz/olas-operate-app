@@ -4,10 +4,10 @@ import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
 import {
   OPTIMISM_STAKING_PROGRAM_IDS,
   OptimismStakingProgramId,
+  TokenSymbolMap,
 } from '@/constants';
 import { AgentType } from '@/enums/Agent';
 import { EvmChainId } from '@/enums/Chain';
-import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types';
 
 import { OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
@@ -32,7 +32,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     chainId: EvmChainId.Optimism,
     name: 'Optimus Alpha II',
     agentsSupported: [AgentType.Optimus],
-    stakingRequirements: { [TokenSymbol.OLAS]: 100 },
+    stakingRequirements: { [TokenSymbolMap.OLAS]: 100 },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2
@@ -49,7 +49,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     name: 'Optimus Alpha III',
     agentsSupported: [AgentType.Optimus],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 1000,
+      [TokenSymbolMap.OLAS]: 1000,
     },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
@@ -67,7 +67,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     name: 'Optimus Alpha IV',
     agentsSupported: [AgentType.Optimus],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 5000,
+      [TokenSymbolMap.OLAS]: 5000,
     },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
