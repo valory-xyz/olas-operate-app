@@ -32,7 +32,6 @@ import {
 import { Pages } from '@/enums/Pages';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
-  useAgentRunning,
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,
   usePageState,
@@ -44,7 +43,6 @@ import { AgentConfig } from '@/types';
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
-import { AgentRunningAnimation } from './AgentRunningAnimation';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -132,8 +130,6 @@ const AgentListMenu = ({
   selectedMenuKeys,
   onAgentSelect,
 }: AgentListMenuProps) => {
-  const { runningAgentType } = useAgentRunning();
-
   return (
     <Menu
       selectedKeys={selectedMenuKeys}
@@ -153,16 +149,12 @@ const AgentListMenu = ({
         label: (
           <Flex justify="space-between" align="center">
             {agent.name}{' '}
-            {runningAgentType === agent.agentType ? (
-              <AgentRunningAnimation />
-            ) : (
-              <Image
-                src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
-                alt={`${agent.chainName} logo`}
-                width={14}
-                height={14}
-              />
-            )}
+            <Image
+              src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
+              alt={`${agent.chainName} logo`}
+              width={14}
+              height={14}
+            />
           </Flex>
         ),
       }))}
