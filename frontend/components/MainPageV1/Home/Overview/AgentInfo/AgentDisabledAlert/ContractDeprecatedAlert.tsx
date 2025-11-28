@@ -2,13 +2,16 @@ import { Button, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
 import { Pages } from '@/enums';
-import { usePageState, useStakingProgram } from '@/hooks';
+import { usePageState } from '@/hooks';
 
 const { Text } = Typography;
 
-export const ContractDeprecatedAlert = () => {
+export const ContractDeprecatedAlert = ({
+  stakingProgramName,
+}: {
+  stakingProgramName: string;
+}) => {
   const { goto } = usePageState();
-  const { selectedStakingProgramMeta } = useStakingProgram();
 
   const handleSwitchContract = () => {
     goto(Pages.SelectStaking);
@@ -22,8 +25,7 @@ export const ContractDeprecatedAlert = () => {
       message={
         <>
           <Text className="text-sm font-weight-500">
-            {selectedStakingProgramMeta?.name || 'Staking'} contract is
-            deprecated
+            {stakingProgramName} contract is deprecated
           </Text>
           <Text className="text-sm flex mt-4 mb-8">
             Switch to one of the available contracts to start your agent.
