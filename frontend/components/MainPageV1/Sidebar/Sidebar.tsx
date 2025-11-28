@@ -28,9 +28,9 @@ import {
   COLOR,
   EvmChainId,
   Pages,
+  SetupScreen,
   SIDER_WIDTH,
 } from '@/constants';
-import { SetupScreen } from '@/constants/setupScreen';
 import {
   useAgentRunning,
   useBalanceAndRefillRequirementsContext,

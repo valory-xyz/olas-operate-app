@@ -2,9 +2,7 @@ import { IdcardOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
 import { useCallback } from 'react';
 
-import { COLOR } from '@/constants/colors';
-import { SetupScreen } from '@/constants/setupScreen';
-import { UNICODE_SYMBOLS } from '@/constants/symbols';
+import { COLOR, SetupScreen, UNICODE_SYMBOLS } from '@/constants';
 import { useSetup } from '@/hooks/useSetup';
 
 import { CardFlex } from '../ui/CardFlex';

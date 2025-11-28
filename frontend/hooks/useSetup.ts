@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect } from 'react';
 
-import { SetupScreen } from '@/constants/setupScreen';
+import { SetupScreen } from '@/constants';
 import { SetupContext } from '@/context/SetupProvider';
 import { Address } from '@/types/Address';
 import { BackupWalletType } from '@/types/BackupWallet';
