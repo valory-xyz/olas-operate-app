@@ -1,4 +1,3 @@
-import { compact } from 'lodash';
 import {
   createContext,
   ReactNode,
@@ -51,27 +50,34 @@ const getMasterSafeAddress = (
 ) => masterSafes?.find((safe) => safe.evmChainId === chainId)?.address ?? null;
 
 /**
- * Get the list of chains from the middleware services.
+ * Get the unique list of chains from the middleware services.
  */
 const getChainList = (services?: MiddlewareServiceResponse[]) => {
   if (!services) return [];
-  return compact(
-    services.map((service) => {
-      const agent = ACTIVE_AGENTS.find(
-        ([, agentConfig]) =>
-          agentConfig.servicePublicId === service.service_public_id &&
-          agentConfig.middlewareHomeChainId === service.home_chain,
-      );
-      if (!agent) return null;
+  const chainMap = new Map<
+    EvmChainId,
+    { chainId: EvmChainId; chainName: EvmChainName }
+  >();
 
-      const [, agentConfig] = agent as [AgentType, AgentConfig];
-      if (!agentConfig.evmHomeChainId) return null;
+  services.forEach((service) => {
+    const agent = ACTIVE_AGENTS.find(
+      ([, agentConfig]) =>
+        agentConfig.servicePublicId === service.service_public_id &&
+        agentConfig.middlewareHomeChainId === service.home_chain,
+    );
+    if (!agent) return;
 
-      const chainId = agentConfig.evmHomeChainId;
+    const [, agentConfig] = agent as [AgentType, AgentConfig];
+    if (!agentConfig.evmHomeChainId) return;
+
+    const chainId = agentConfig.evmHomeChainId;
+    if (!chainMap.has(chainId)) {
       const chainName = CHAIN_CONFIG[chainId].name as EvmChainName;
-      return { chainId, chainName };
-    }),
-  );
+      chainMap.set(chainId, { chainId, chainName });
+    }
+  });
+
+  return Array.from(chainMap.values());
 };
 
 const PearlWalletContext = createContext<{
@@ -185,7 +191,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   );
   const agentType = agent ? agent[0] : null;
 
-  // list of chains where the user has services
+  // list of unique chains where the user has services
   const chains = useMemo(() => getChainList(services), [services]);
 
   // staked OLAS

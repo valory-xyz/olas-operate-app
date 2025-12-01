@@ -105,6 +105,18 @@ const useCombineNativeTokenRequirements = (
 };
 
 /**
+ *
+ * @deprecated This workaround shouldn't exist.
+ * BE sends numbers in requirements which for large numbers breaks FE (should be bigNumbers)
+ * Until they send strings, use this to quickly fix the issue
+ */
+const numberToPlainString = (possiblyBrokenBigNumber: string | number) => {
+  return possiblyBrokenBigNumber.toLocaleString('fullwide', {
+    useGrouping: false,
+  });
+};
+
+/**
  * @returns A function that returns the bridge refill requirements parameters
  * based on the current refill requirements OR null if requirements are not available/loading.
  */
@@ -130,8 +142,9 @@ export const useGetBridgeRequirementsParams = (
       ? ETHEREUM_TOKEN_CONFIG
       : TOKEN_CONFIG[fromChainId as EvmChainId];
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
-  const fromAddress = masterEoa?.address;
-  const toAddress = masterEoa?.address;
+  const fromAddress =
+    getMasterSafeOf?.(fromChainId as EvmChainId)?.address ?? masterEoa?.address;
+  const toAddress = masterSafe?.address ?? masterEoa?.address;
 
   return useCallback(
     (isForceUpdate = false) => {
@@ -194,7 +207,7 @@ export const useGetBridgeRequirementsParams = (
                 chain: toChain,
                 address: toAddress,
                 token: toToken,
-                amount: `${amount}`,
+                amount: numberToPlainString(amount),
               },
             });
           }

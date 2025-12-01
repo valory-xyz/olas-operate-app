@@ -18,18 +18,19 @@ const fromChainConfig = ETHEREUM_TOKEN_CONFIG;
 export const useAddFundsGetBridgeRequirementsParams = (
   destinationAddress?: Address,
 ) => {
-  const { masterEoa, masterSafes } = useMasterWalletContext();
+  const {
+    masterEoa,
+    getMasterSafeOf,
+    isFetched: isMasterWalletFetched,
+  } = useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const toChainConfig = TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)];
-  const masterSafe = masterSafes?.find(
-    ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
-  );
 
   return useCallback(
     (tokenAddress: Address, amount: number): BridgeRequest => {
       if (!masterEoa) throw new Error('Master EOA is not available');
-      if (!masterSafe) throw new Error('Master Safe is not available');
+      if (!isMasterWalletFetched) throw new Error('Master Safe not loaded');
 
       const fromToken = getFromToken(
         tokenAddress,
@@ -38,25 +39,36 @@ export const useAddFundsGetBridgeRequirementsParams = (
       );
       const tokenDecimal = getTokenDecimal(tokenAddress, toChainConfig);
 
+      const fromChain = MiddlewareChainMap.ETHEREUM;
+      const masterSafeOnFromChain = getMasterSafeOf?.(asEvmChainId(fromChain));
+
+      const masterSafeOnToChain = getMasterSafeOf?.(
+        selectedAgentConfig.evmHomeChainId,
+      );
+
+      if (!masterSafeOnToChain) throw new Error('Master Safe is not available');
+
       return {
         from: {
-          chain: MiddlewareChainMap.ETHEREUM,
-          address: masterEoa.address,
+          chain: fromChain,
+          address: masterSafeOnFromChain?.address ?? masterEoa.address,
           token: fromToken,
         },
         to: {
           chain: toMiddlewareChain,
-          address: destinationAddress ?? masterSafe.address,
+          address: destinationAddress ?? masterSafeOnToChain.address,
           token: tokenAddress,
           amount: parseUnits(amount, tokenDecimal),
         },
       };
     },
     [
-      toMiddlewareChain,
-      toChainConfig,
       masterEoa,
-      masterSafe,
+      isMasterWalletFetched,
+      toChainConfig,
+      getMasterSafeOf,
+      selectedAgentConfig.evmHomeChainId,
+      toMiddlewareChain,
       destinationAddress,
     ],
   );

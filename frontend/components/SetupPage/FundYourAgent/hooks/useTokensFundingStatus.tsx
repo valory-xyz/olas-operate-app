@@ -1,3 +1,4 @@
+import isEmpty from 'lodash/isEmpty';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -26,7 +27,8 @@ import {
  * }
  */
 export const useTokensFundingStatus = () => {
-  const { getMasterEoaBalancesOf } = useMasterBalances();
+  const { getMasterEoaBalancesOf, getMasterSafeBalancesOf, isLoaded } =
+    useMasterBalances();
   const { selectedAgentConfig } = useServices();
   const { totalTokenRequirements: tokenRequirements } =
     useGetRefillRequirements();
@@ -34,16 +36,29 @@ export const useTokensFundingStatus = () => {
   const currentChain = selectedAgentConfig.evmHomeChainId;
 
   const requiredTokens = tokenRequirements?.map((token) => token.symbol);
-  const eoaBalances = useMemo(
-    () =>
-      getMasterEoaBalancesOf(currentChain).filter((balance) =>
-        requiredTokens?.includes(balance.symbol),
-      ),
-    [getMasterEoaBalancesOf, currentChain, requiredTokens],
-  );
+  const walletBalances = useMemo(() => {
+    if (!isLoaded) return [];
+
+    // Try to get balances from master safe if it exists
+    // otherwise use master eoa
+    let existingWalletBalances = getMasterSafeBalancesOf(currentChain);
+    if (existingWalletBalances.length === 0) {
+      existingWalletBalances = getMasterEoaBalancesOf(currentChain);
+    }
+
+    return existingWalletBalances.filter((balance) =>
+      requiredTokens?.includes(balance.symbol),
+    );
+  }, [
+    isLoaded,
+    getMasterSafeBalancesOf,
+    currentChain,
+    getMasterEoaBalancesOf,
+    requiredTokens,
+  ]);
 
   const fundingStatus = useMemo(() => {
-    if (!tokenRequirements || tokenRequirements.length === 0 || !eoaBalances) {
+    if (isEmpty(tokenRequirements) || !walletBalances) {
       return {
         isFullyFunded: false,
         tokensFundingStatus: {},
@@ -57,11 +72,11 @@ export const useTokensFundingStatus = () => {
     > = {};
 
     tokenRequirements.forEach((requirement) => {
-      const eoa = eoaBalances.find(
+      const wallet = walletBalances.find(
         (balance) => balance.symbol === requirement.symbol,
       );
 
-      if (eoa && eoa.balance >= requirement.amount) {
+      if (wallet && wallet.balance >= requirement.amount) {
         tokensFundingStatus[requirement.symbol] = {
           funded: true,
           pendingAmount: 0,
@@ -69,7 +84,7 @@ export const useTokensFundingStatus = () => {
       } else {
         tokensFundingStatus[requirement.symbol] = {
           funded: false,
-          pendingAmount: requirement.amount - (eoa?.balance ?? 0),
+          pendingAmount: requirement.amount - (wallet?.balance ?? 0),
         };
       }
     });
@@ -81,7 +96,7 @@ export const useTokensFundingStatus = () => {
       isFullyFunded,
       tokensFundingStatus,
     };
-  }, [eoaBalances, tokenRequirements]);
+  }, [tokenRequirements, walletBalances]);
 
   /**
    * Once the funds have been received completely, don't recalculate the statuses,

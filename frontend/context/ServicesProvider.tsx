@@ -69,7 +69,11 @@ type ServicesResponse = Pick<
 
 type ServicesContextType = {
   services?: MiddlewareServiceResponse[];
-  availableServiceConfigIds: { configId: string; chainId: EvmChainId }[];
+  availableServiceConfigIds: {
+    configId: string;
+    chainId: EvmChainId;
+    tokenId: Optional<number>;
+  }[];
   serviceWallets?: AgentWallet[];
   selectedService?: Service;
   serviceStatusOverrides?: Record<string, Maybe<MiddlewareDeploymentStatus>>;
@@ -323,8 +327,9 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
           !currentAgent?.isUnderConstruction && !!currentAgent?.isAgentEnabled
         );
       })
-      .map(({ service_config_id, home_chain }) => ({
+      .map(({ service_config_id, home_chain, chain_configs }) => ({
         configId: service_config_id,
+        tokenId: chain_configs[home_chain].chain_data.token,
         chainId: asEvmChainId(home_chain),
       }));
   }, [services]);

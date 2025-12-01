@@ -170,6 +170,23 @@ export const useMasterBalances = () => {
     [allMasterWalletBalances, masterSafes],
   );
 
+  /** Get the master Safe balances as WalletBalance[] */
+  const getMasterSafeBalancesOf = useCallback(
+    (chainId: EvmChainId) => {
+      const masterSafeForProvidedChain = masterSafes?.find(
+        (wallet) => wallet.evmChainId === chainId,
+      );
+      if (isNil(masterSafeForProvidedChain)) return [];
+      if (isNil(allMasterWalletBalances)) return [];
+      return allMasterWalletBalances.filter(
+        ({ walletAddress, evmChainId }) =>
+          chainId === evmChainId &&
+          areAddressesEqual(walletAddress, masterSafeForProvidedChain.address),
+      );
+    },
+    [masterSafes, allMasterWalletBalances],
+  );
+
   /** Get the master Safe OLAS balance as a string */
   const getMasterSafeOlasBalanceOfInStr = useCallback(
     (chainId: EvmChainId) => {
@@ -256,6 +273,7 @@ export const useMasterBalances = () => {
     getMasterSafeNativeBalanceOf,
     getMasterSafeOlasBalanceOfInStr,
     getMasterSafeErc20BalancesInStr,
+    getMasterSafeBalancesOf,
 
     // master eoa
     isMasterEoaLowOnGas: requiresFund(masterEoaGasRequirementInWei),
