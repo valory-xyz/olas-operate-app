@@ -19,6 +19,7 @@ import {
 } from '@/hooks';
 import { Address, Optional } from '@/types';
 
+import { OnRampPaymentSteps } from '../SetupPage/Create/SetupOnRamp/OnRampPaymentSteps/OnRampPaymentSteps';
 import { RecoveryModal } from './RecoveryModal';
 import { YourFundsAtRiskAlert } from './YourFundsAtRiskAlert';
 
@@ -179,6 +180,8 @@ const SettingsMain = () => {
             <Text style={{ lineHeight: 1 }}>••••••••••••••••••••</Text>
           </Flex>
         </CardSection>
+
+        <OnRampPaymentSteps onRampChainId={100} />
 
         {hideWallet ? null : (
           <CardSection $padding="24px" $borderBottom vertical>
