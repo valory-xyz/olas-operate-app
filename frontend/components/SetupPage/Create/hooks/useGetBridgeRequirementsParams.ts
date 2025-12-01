@@ -110,7 +110,7 @@ const useCombineNativeTokenRequirements = (
  * BE sends numbers in requirements which for large numbers breaks FE (should be bigNumbers)
  * Until they send strings, use this to quickly fix the issue
  */
-const numToPlainString = (possiblyBrokenBigNumber: string | number) => {
+const numberToPlainString = (possiblyBrokenBigNumber: string | number) => {
   return possiblyBrokenBigNumber.toLocaleString('fullwide', {
     useGrouping: false,
   });
@@ -207,7 +207,7 @@ export const useGetBridgeRequirementsParams = (
                 chain: toChain,
                 address: toAddress,
                 token: toToken,
-                amount: numToPlainString(amount),
+                amount: numberToPlainString(amount),
               },
             });
           }

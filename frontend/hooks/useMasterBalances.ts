@@ -170,7 +170,7 @@ export const useMasterBalances = () => {
     [allMasterWalletBalances, masterSafes],
   );
 
-  /** Get the master EOA balances as WalletBalance[] */
+  /** Get the master Safe balances as WalletBalance[] */
   const getMasterSafeBalancesOf = useCallback(
     (chainId: EvmChainId) => {
       const masterSafeForProvidedChain = masterSafes?.find(

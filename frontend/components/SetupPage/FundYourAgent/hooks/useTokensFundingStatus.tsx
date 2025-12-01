@@ -1,3 +1,4 @@
+import isEmpty from 'lodash/isEmpty';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -57,11 +58,7 @@ export const useTokensFundingStatus = () => {
   ]);
 
   const fundingStatus = useMemo(() => {
-    if (
-      !tokenRequirements ||
-      tokenRequirements.length === 0 ||
-      !walletBalances
-    ) {
+    if (isEmpty(tokenRequirements) || !walletBalances) {
       return {
         isFullyFunded: false,
         tokensFundingStatus: {},
@@ -75,11 +72,11 @@ export const useTokensFundingStatus = () => {
     > = {};
 
     tokenRequirements.forEach((requirement) => {
-      const walletBalance = walletBalances.find(
+      const wallet = walletBalances.find(
         (balance) => balance.symbol === requirement.symbol,
       );
 
-      if (walletBalance && walletBalance.balance >= requirement.amount) {
+      if (wallet && wallet.balance >= requirement.amount) {
         tokensFundingStatus[requirement.symbol] = {
           funded: true,
           pendingAmount: 0,
@@ -87,7 +84,7 @@ export const useTokensFundingStatus = () => {
       } else {
         tokensFundingStatus[requirement.symbol] = {
           funded: false,
-          pendingAmount: requirement.amount - (walletBalance?.balance ?? 0),
+          pendingAmount: requirement.amount - (wallet?.balance ?? 0),
         };
       }
     });
