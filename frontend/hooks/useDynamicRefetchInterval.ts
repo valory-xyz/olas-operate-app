@@ -72,7 +72,7 @@ type AdaptiveInterval =
  * Smart refetch-interval hook used with React Query.
  * Prevents unnecessary API calls when the user isn't actively interacting.
  */
-export const useRefetchInterval = (
+export const useDynamicRefetchInterval = (
   interval: AdaptiveInterval,
 ): AdaptiveInterval => {
   const windowState = useWindowVisibility();

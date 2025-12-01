@@ -12,8 +12,12 @@ import {
 
 import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
 import { StakingProgramId } from '@/enums/StakingProgram';
-import { useService, useServices, useStakingProgram } from '@/hooks';
-import { useRefetchInterval } from '@/hooks/useRefetchInterval';
+import {
+  useDynamicRefetchInterval,
+  useService,
+  useServices,
+  useStakingProgram,
+} from '@/hooks';
 import { ServiceStakingDetails, StakingContractDetails } from '@/types';
 import { isValidServiceId } from '@/utils';
 
@@ -84,7 +88,7 @@ const useStakingContractDetailsByStakingProgram = ({
   isPaused?: boolean;
 }) => {
   const { selectedAgentConfig } = useServices();
-  const refetchInterval = useRefetchInterval(FIVE_SECONDS_INTERVAL);
+  const refetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
   const { serviceApi, evmHomeChainId } = selectedAgentConfig;
 
   return useQuery({

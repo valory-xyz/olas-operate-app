@@ -14,7 +14,7 @@ import { Nullable } from '@/types/Util';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { isValidServiceId } from '@/utils/service';
 
-import { useRefetchInterval } from './useRefetchInterval';
+import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
 
 /**
  * Hook to fetch staking rewards details of a service on a given chain.
@@ -24,7 +24,7 @@ export const useAgentStakingRewardsDetails = (
   stakingProgramId: Nullable<StakingProgramId>,
   agentConfig: AgentConfig,
 ) => {
-  const refetchInterval = useRefetchInterval(FIVE_SECONDS_INTERVAL);
+  const refetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
   const { isOnline } = useContext(OnlineStatusContext);
   const { services, selectedAgentConfig } = useServices();
   const service = services?.find(

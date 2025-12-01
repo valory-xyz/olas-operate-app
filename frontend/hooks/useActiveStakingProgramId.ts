@@ -8,7 +8,7 @@ import { AgentConfig } from '@/types/Agent';
 import { Maybe } from '@/types/Util';
 import { isValidServiceId } from '@/utils';
 
-import { useRefetchInterval } from './useRefetchInterval';
+import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
 
 /**
  * Hook to get the active staking program id.
@@ -20,7 +20,7 @@ export const useActiveStakingProgramId = (
 ) => {
   const { isFetched: isServicesLoaded } = useServices();
   const { serviceApi, evmHomeChainId } = agentConfig;
-  const refetchInterval = useRefetchInterval(FIVE_SECONDS_INTERVAL);
+  const refetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.STAKING_PROGRAM_KEY(

@@ -38,7 +38,7 @@ import {
   usePause,
   useStore,
 } from '@/hooks';
-import { useRefetchInterval } from '@/hooks/useRefetchInterval';
+import { useDynamicRefetchInterval } from '@/hooks/useDynamicRefetchInterval';
 import { ServicesService } from '@/service/Services';
 import {
   AgentConfig,
@@ -108,7 +108,9 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const { paused, setPaused, togglePaused } = usePause();
   const { storeState } = useStore();
   const { pageState } = usePageState();
-  const serviceRefetchInterval = useRefetchInterval(FIVE_SECONDS_INTERVAL);
+  const serviceRefetchInterval = useDynamicRefetchInterval(
+    FIVE_SECONDS_INTERVAL,
+  );
 
   // state to track the services ids message shown
   // so that it is not shown again for the same service
