@@ -10,8 +10,8 @@ import {
   FIVE_SECONDS_INTERVAL,
   PROVIDERS,
   REACT_QUERY_KEYS,
+  Safe,
 } from '@/constants';
-import { Safe } from '@/enums/Wallet';
 import { Address } from '@/types/Address';
 import { extractFunctionsFromAbi } from '@/utils/abi';
 
