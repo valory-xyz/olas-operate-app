@@ -11,6 +11,7 @@ export * from './useBalanceContext';
 export * from './useBridgeRefillRequirements';
 export * from './useBridgeRefillRequirementsOnDemand';
 export * from './useBridgingSteps';
+export * from './useDynamicRefetchInterval';
 export * from './useElectronApi';
 export * from './useFeatureFlag';
 export * from './useFundingRequirements';
