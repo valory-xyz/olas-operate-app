@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react';
 
-import { AgentType } from '@/enums/Agent';
+import { AgentMap } from '@/constants';
 import { useServices } from '@/hooks/useServices';
 
 export const SharedContext = createContext<{
@@ -51,7 +51,7 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   // agent configurations to run the latest version of the agent.
   useEffect(() => {
     if (!selectedAgentType) return;
-    if (selectedAgentType !== AgentType.AgentsFun) {
+    if (selectedAgentType !== AgentMap.AgentsFun) {
       setIsAgentsFunFieldUpdateRequired(false);
       return;
     }

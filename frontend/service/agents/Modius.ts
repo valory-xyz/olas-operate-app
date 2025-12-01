@@ -3,8 +3,13 @@ import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { MODE_STAKING_PROGRAMS } from '@/config/stakingPrograms/mode';
-import { ModeStakingProgramId, PROVIDERS, StakingProgramId } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
+import {
+  EvmChainId,
+  EvmChainIdMap,
+  ModeStakingProgramId,
+  PROVIDERS,
+  StakingProgramId,
+} from '@/constants';
 import {
   Address,
   ServiceStakingDetails,
@@ -24,7 +29,7 @@ export abstract class ModiusService extends StakedAgentService {
     agentMultisigAddress,
     serviceId,
     stakingProgramId,
-    chainId = EvmChainId.Mode,
+    chainId = EvmChainIdMap.Mode,
   }: {
     agentMultisigAddress: Address;
     serviceId: number;
@@ -111,7 +116,7 @@ export abstract class ModiusService extends StakedAgentService {
 
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Mode,
+    chainId: EvmChainId = EvmChainIdMap.Mode,
   ): Promise<bigint | undefined> => {
     const stakingTokenProxy =
       STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
@@ -143,7 +148,7 @@ export abstract class ModiusService extends StakedAgentService {
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Mode,
+    chainId: EvmChainId = EvmChainIdMap.Mode,
   ): Promise<ServiceStakingDetails> => {
     const { multicallProvider } = PROVIDERS[chainId];
 

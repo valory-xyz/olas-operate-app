@@ -4,11 +4,12 @@ import { formatEther } from 'ethers/lib/utils';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { OPTIMISM_STAKING_PROGRAMS } from '@/config/stakingPrograms/optimism';
 import {
+  EvmChainId,
+  EvmChainIdMap,
   OptimismStakingProgramId,
   PROVIDERS,
   StakingProgramId,
 } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
 import {
   Address,
   ServiceStakingDetails,
@@ -31,7 +32,7 @@ export abstract class OptimismService extends StakedAgentService {
     agentMultisigAddress,
     serviceId,
     stakingProgramId,
-    chainId = EvmChainId.Optimism,
+    chainId = EvmChainIdMap.Optimism,
   }: {
     agentMultisigAddress: Address;
     serviceId: number;
@@ -118,7 +119,7 @@ export abstract class OptimismService extends StakedAgentService {
 
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Optimism,
+    chainId: EvmChainId = EvmChainIdMap.Optimism,
   ): Promise<bigint | undefined> => {
     const stakingTokenProxy =
       STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
@@ -146,7 +147,7 @@ export abstract class OptimismService extends StakedAgentService {
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Optimism,
+    chainId: EvmChainId = EvmChainIdMap.Optimism,
   ): Promise<ServiceStakingDetails> => {
     const { multicallProvider } = PROVIDERS[chainId];
 

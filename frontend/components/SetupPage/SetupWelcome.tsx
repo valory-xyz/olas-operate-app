@@ -3,8 +3,8 @@ import { isNil } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { PAGES, SETUP_SCREEN } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
-import { Pages, SetupScreen } from '@/enums';
 import {
   useBackupSigner,
   useBalanceContext,
@@ -83,14 +83,14 @@ const useSetupNavigation = ({
     if (!selectedAgentConfig) return;
 
     if (isBackupWalletNotSet) {
-      goto(SetupScreen.SetupBackupSigner);
+      goto(SETUP_SCREEN.SetupBackupSigner);
       return;
     }
 
     // If the agent is disabled then redirect to agent selection,
     // if the disabled agent was previously selected.
     if (!selectedAgentConfig.isAgentEnabled) {
-      goto(SetupScreen.AgentOnboarding);
+      goto(SETUP_SCREEN.AgentOnboarding);
       return;
     }
 
@@ -99,17 +99,17 @@ const useSetupNavigation = ({
       window.console.log(
         `No service created for chain ${selectedServiceOrAgentChainId}`,
       );
-      goto(SetupScreen.AgentOnboarding);
+      goto(SETUP_SCREEN.AgentOnboarding);
       return;
     }
 
     // If no balance is loaded, redirect to setup screen
     if (isNil(getMasterEoaNativeBalanceOf(selectedServiceOrAgentChainId))) {
-      goto(SetupScreen.FundYourAgent);
+      goto(SETUP_SCREEN.FundYourAgent);
       return;
     }
 
-    gotoPage(Pages.Main);
+    gotoPage(PAGES.Main);
   }, [
     getMasterEoaNativeBalanceOf,
     goto,
@@ -229,7 +229,7 @@ const SetupWelcomeLogin = () => {
             type="link"
             target="_blank"
             size="small"
-            onClick={() => goto(SetupScreen.Restore)}
+            onClick={() => goto(SETUP_SCREEN.Restore)}
           >
             Forgot password?
           </Button>

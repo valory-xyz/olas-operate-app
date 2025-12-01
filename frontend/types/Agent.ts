@@ -1,9 +1,9 @@
 import {
+  EvmChainId,
   MiddlewareDeploymentStatus,
   SupportedMiddlewareChain,
+  TokenSymbol,
 } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
-import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';

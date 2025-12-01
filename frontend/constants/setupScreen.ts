@@ -1,5 +1,4 @@
-// TODO: move to constants
-export const SetupScreen = {
+export const SETUP_SCREEN = {
   Loading: 'Loading',
   Welcome: 'Welcome',
   SetupPassword: 'SetupPassword',
@@ -19,4 +18,4 @@ export const SetupScreen = {
   RestoreViaBackup: 'RestoreViaBackup',
 } as const;
 
-export type SetupScreen = (typeof SetupScreen)[keyof typeof SetupScreen];
+export type SetupScreen = (typeof SETUP_SCREEN)[keyof typeof SETUP_SCREEN];

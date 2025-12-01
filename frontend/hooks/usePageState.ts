@@ -1,7 +1,7 @@
 import { useCallback, useContext } from 'react';
 
+import { Pages } from '@/constants';
 import { PageStateContext } from '@/context/PageStateProvider';
-import { Pages } from '@/enums/Pages';
 
 export const usePageState = () => {
   const pageState = useContext(PageStateContext);

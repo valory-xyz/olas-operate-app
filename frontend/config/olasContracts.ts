@@ -2,8 +2,7 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { SERVICE_REGISTRY_L2_ABI } from '@/abis/serviceRegistryL2';
 import { SERVICE_REGISTRY_TOKEN_UTILITY_ABI } from '@/abis/serviceRegistryTokenUtility';
-import { CONTRACT_TYPE } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
+import { CONTRACT_TYPE, EvmChainId, EvmChainIdMap } from '@/constants';
 
 type ContractsByType = {
   [contractType: string]: MulticallContract;
@@ -56,8 +55,8 @@ const OPTIMISM_OLAS_CONTRACTS: ContractsByType = {
 export const OLAS_CONTRACTS: {
   [evmHomeChainId in EvmChainId]: ContractsByType;
 } = {
-  [EvmChainId.Gnosis]: GNOSIS_OLAS_CONTRACTS,
-  [EvmChainId.Base]: BASE_OLAS_CONTRACTS,
-  [EvmChainId.Mode]: MODE_OLAS_CONTRACTS,
-  [EvmChainId.Optimism]: OPTIMISM_OLAS_CONTRACTS,
+  [EvmChainIdMap.Gnosis]: GNOSIS_OLAS_CONTRACTS,
+  [EvmChainIdMap.Base]: BASE_OLAS_CONTRACTS,
+  [EvmChainIdMap.Mode]: MODE_OLAS_CONTRACTS,
+  [EvmChainIdMap.Optimism]: OPTIMISM_OLAS_CONTRACTS,
 };

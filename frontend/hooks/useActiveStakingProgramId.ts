@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { isNil } from 'lodash';
 
-import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
 import { useServices } from '@/hooks/useServices';
 import { AgentConfig } from '@/types/Agent';
 import { Maybe } from '@/types/Util';

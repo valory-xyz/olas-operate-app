@@ -2,7 +2,7 @@ import { Button, Flex, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { Alert } from '@/components/ui';
-import { Pages } from '@/enums';
+import { PAGES } from '@/constants';
 import { usePageState, useServiceBalances, useServices } from '@/hooks';
 
 const { Text } = Typography;
@@ -58,7 +58,7 @@ export const UnderConstructionAlert = () => {
             {isWithdrawn ? null : ' You can withdraw your funds anytime.'}
           </Text>
           {isWithdrawn ? null : (
-            <Button onClick={() => goto(Pages.AgentWallet)} size="small">
+            <Button onClick={() => goto(PAGES.AgentWallet)} size="small">
               Withdraw
             </Button>
           )}

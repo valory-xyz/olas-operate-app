@@ -12,8 +12,12 @@ import {
   Modal,
   TokenRequirementsTable,
 } from '@/components/ui';
-import { ChainImageMap, EvmChainName, TokenSymbol } from '@/constants';
-import { SetupScreen } from '@/enums';
+import {
+  ChainImageMap,
+  EvmChainName,
+  SETUP_SCREEN,
+  TokenSymbol,
+} from '@/constants';
 import {
   useMasterSafeCreationAndTransfer,
   useMasterWalletContext,
@@ -90,7 +94,7 @@ export const TransferFunds = () => {
   return (
     <Flex justify="center" className="pt-36">
       <CardFlex $noBorder $onboarding className="p-8">
-        <BackButton onPrev={() => gotoSetup(SetupScreen.FundYourAgent)} />
+        <BackButton onPrev={() => gotoSetup(SETUP_SCREEN.FundYourAgent)} />
         <Title level={3} className="mt-16">
           Transfer Crypto on {chainName}
         </Title>

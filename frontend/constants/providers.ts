@@ -1,10 +1,10 @@
 import { ethers } from 'ethers';
 import { Provider as MulticallProvider } from 'ethers-multicall';
 
-import { EvmChainId } from '@/enums/Chain';
 import { setupMulticallAddresses } from '@/utils/setupMulticall';
 
 import { CHAIN_CONFIG } from '../config/chains';
+import { EvmChainId } from './chains';
 
 type Providers = {
   [evmChainId in EvmChainId]: {

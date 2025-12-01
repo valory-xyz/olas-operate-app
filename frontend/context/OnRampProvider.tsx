@@ -7,8 +7,7 @@ import {
   useState,
 } from 'react';
 
-import { EvmChainId, onRampChainMap } from '@/constants';
-import { Pages } from '@/enums';
+import { EvmChainId, onRampChainMap, PAGES } from '@/constants';
 import {
   useElectronApi,
   useMasterBalances,
@@ -203,7 +202,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
   // Reset the on-ramp state when navigating to the main page
   useEffect(() => {
-    if (pageState === Pages.Main) {
+    if (pageState === PAGES.Main) {
       const timer = setTimeout(() => resetOnRampState(), 1000);
       return () => clearTimeout(timer);
     }

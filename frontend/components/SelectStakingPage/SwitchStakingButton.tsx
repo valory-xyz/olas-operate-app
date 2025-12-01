@@ -3,8 +3,7 @@ import { Button as AntdButton, Flex } from 'antd';
 import { useEffect } from 'react';
 import styled from 'styled-components';
 
-import { StakingProgramId } from '@/constants';
-import { Pages } from '@/enums';
+import { PAGES, StakingProgramId } from '@/constants';
 import { usePageState, useStakingProgram } from '@/hooks';
 
 import { CooldownContentTooltip } from './CooldownTooltip';
@@ -44,7 +43,7 @@ export const SwitchStakingButton = ({
 
   const handleMigrate = () => {
     setStakingProgramIdToMigrateTo(stakingProgramId);
-    goto(Pages.ConfirmSwitch);
+    goto(PAGES.ConfirmSwitch);
   };
 
   // Reset the staking program id to null when component mounts.
