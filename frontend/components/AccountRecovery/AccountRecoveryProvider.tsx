@@ -28,6 +28,13 @@ import {
   parseRecoveryFundingRequirements,
 } from './utils';
 
+type UpdateAddressParams = {
+  newMasterEoaAddress: Address;
+  oldMasterEoaAddress: Address;
+  safeAddress: Address;
+  signerAddress: Address;
+};
+
 const useRecoveryNavigation = (
   currentStep: RecoverySteps,
   updateCurrentStep: (state: RecoverySteps) => void,
@@ -86,7 +93,7 @@ const AccountRecoveryContext = createContext<{
   /** New master EOA address set during recovery */
   newMasterEoaAddress?: Address;
   /** Updates the new master EOA address during recovery */
-  updateNewMasterEoaAddress: (newAddress: Address, oldAddress: Address) => void;
+  updateNewMasterEoaAddress: (params: UpdateAddressParams) => void;
 
   // Step: Fund Your Backup Wallet
   isRecoveryFundingListLoading: boolean;
@@ -128,6 +135,8 @@ export const AccountRecoveryProvider = ({
   );
   const [newMasterEoaAddress, setNewMasterEoaAddress] = useState<Address>();
   const [oldMasterEoaAddress, setOldMasterEoaAddress] = useState<Address>();
+  const [safeAddress, setSafeAddress] = useState<Address>();
+  const [signerAddress, setSignerAddress] = useState<Address>();
   const { onNext, onPrev } = useRecoveryNavigation(
     currentStep,
     useCallback((step: RecoverySteps) => setCurrentStep(step), []),
@@ -171,9 +180,16 @@ export const AccountRecoveryProvider = ({
   }, [masterSafes, extendedWallets, isLoading]);
 
   const updateNewMasterEoaAddress = useCallback(
-    (newAddress: Address, oldAddress: Address) => {
-      setNewMasterEoaAddress(newAddress);
-      setOldMasterEoaAddress(oldAddress);
+    ({
+      newMasterEoaAddress,
+      oldMasterEoaAddress,
+      safeAddress,
+      signerAddress,
+    }: UpdateAddressParams) => {
+      setNewMasterEoaAddress(newMasterEoaAddress);
+      setOldMasterEoaAddress(oldMasterEoaAddress);
+      setSafeAddress(safeAddress);
+      setSignerAddress(signerAddress);
     },
     [],
   );

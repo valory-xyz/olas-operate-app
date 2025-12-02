@@ -11,6 +11,8 @@ export type RecoveryStatus = {
    * */
   has_swaps: boolean;
   has_pending_swaps: boolean;
+  hasBackupWalletsAcrossEveryChain: boolean;
+  areAllBackupOwnersSame: boolean;
 };
 
 type TokenBalance = Record<Address, number>;
