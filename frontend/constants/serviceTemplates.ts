@@ -373,18 +373,6 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
 			value: '',
 			provision_type: EnvProvisionType.USER,
 		},
-		PRIVY_TOKEN: {
-			name: 'Privy token',
-			description: '',
-			value: '',
-			provision_type: EnvProvisionType.USER,
-		},
-		TELEGRAM_BOT_TOKEN: {
-			name: 'Telegram bot token',
-			description: '',
-			value: '',
-			provision_type: EnvProvisionType.USER,
-		},
 		WEBSOCKET_URL: {
 			name: 'Websocket URL',
 			description: 'Endpoint for Pett.ai websocket communication',
