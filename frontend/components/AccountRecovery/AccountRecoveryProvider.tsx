@@ -133,19 +133,22 @@ export const AccountRecoveryProvider = ({
     useCallback((step: RecoverySteps) => setCurrentStep(step), []),
   );
 
+  const canFetchRecoveryFundingRequirements =
+    currentStep === RECOVERY_STEPS.FundYourBackupWallet ||
+    currentStep === RECOVERY_STEPS.ApproveWithBackupWallet;
+
   const { data: extendedWallets, isLoading: isExtendedWalletLoading } =
     useQuery({
       queryKey: REACT_QUERY_KEYS.EXTENDED_WALLET_KEY,
       queryFn: async ({ signal }) =>
         await RecoveryService.getExtendedWallet(signal),
-      enabled: isOnline,
-      refetchInterval: FIFTEEN_SECONDS_INTERVAL,
+      enabled: !canFetchRecoveryFundingRequirements && isOnline,
       select: (data) => data[0],
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+      staleTime: Infinity,
     });
-
-  const canFetchRecoveryFundingRequirements =
-    currentStep === RECOVERY_STEPS.FundYourBackupWallet ||
-    currentStep === RECOVERY_STEPS.ApproveWithBackupWallet;
 
   const {
     data: recoveryFundingRequirements,
