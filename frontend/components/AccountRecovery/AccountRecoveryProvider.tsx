@@ -201,7 +201,6 @@ export const AccountRecoveryProvider = ({
     if (!backupWalletAddress) return [];
     if (!oldMasterEoaAddress) return [];
     if (!newMasterEoaAddress) return [];
-    if (!recoveryFundingRequirements) return [];
 
     return extendedWallets.safe_chains.map(
       (chain: SupportedMiddlewareChain) => {
@@ -228,7 +227,6 @@ export const AccountRecoveryProvider = ({
     backupWalletAddress,
     oldMasterEoaAddress,
     newMasterEoaAddress,
-    recoveryFundingRequirements,
   ]);
 
   return (
