@@ -83,6 +83,7 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
     setIsAgentsFunFieldUpdateRequired(!areFieldsUpdated);
   }, [selectedAgentType, selectedService]);
 
+  // fetch only if online and just once on mount
   const {
     data: hasActiveRecoverySwap,
     isLoading: isAccountRecoveryStatusLoading,
@@ -91,6 +92,10 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
     queryFn: ({ signal }) => RecoveryService.getRecoveryStatus(signal),
     enabled: isOnline,
     select: (data) => !!data.has_swaps,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    staleTime: Infinity,
   });
 
   return (

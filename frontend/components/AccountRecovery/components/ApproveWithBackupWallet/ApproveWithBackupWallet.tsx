@@ -79,14 +79,20 @@ const getParsedTransaction = (transaction: SwapSafeTransaction) => ({
  */
 const useInvalidateQueries = () => {
   const queryClient = useQueryClient();
-  return useCallback(async () => {
-    await queryClient.invalidateQueries({
-      queryKey: REACT_QUERY_KEYS.RECOVERY_STATUS_KEY,
-    });
-    await queryClient.invalidateQueries({
-      queryKey: REACT_QUERY_KEYS.RECOVERY_FUNDING_REQUIREMENTS_KEY,
-    });
-  }, [queryClient]);
+  return useCallback(
+    async (refetchStatus = false) => {
+      if (refetchStatus) {
+        await queryClient.invalidateQueries({
+          queryKey: REACT_QUERY_KEYS.RECOVERY_STATUS_KEY,
+        });
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: REACT_QUERY_KEYS.RECOVERY_FUNDING_REQUIREMENTS_KEY,
+      });
+    },
+    [queryClient],
+  );
 };
 
 const makeTxnId = (txn: SwapSafeTransaction) =>
@@ -274,7 +280,7 @@ export const ApproveWithBackupWallet = () => {
   useEffect(() => {
     if (!areTransactionsCompleted) return;
     completeRecovery()
-      .then(() => invalidateQueries())
+      .then(() => invalidateQueries(true))
       .then(() => setIsAccountRecovered(true))
       .catch((error) => {
         message.error('Failed to complete recovery. Please try again.');
