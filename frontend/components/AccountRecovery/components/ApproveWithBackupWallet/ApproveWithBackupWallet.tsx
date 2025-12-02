@@ -79,11 +79,11 @@ const getParsedTransaction = (transaction: SwapSafeTransaction) => ({
  */
 const useInvalidateQueries = () => {
   const queryClient = useQueryClient();
-  return useCallback(() => {
-    queryClient.invalidateQueries({
+  return useCallback(async () => {
+    await queryClient.invalidateQueries({
       queryKey: REACT_QUERY_KEYS.RECOVERY_STATUS_KEY,
     });
-    queryClient.invalidateQueries({
+    await queryClient.invalidateQueries({
       queryKey: REACT_QUERY_KEYS.RECOVERY_FUNDING_REQUIREMENTS_KEY,
     });
   }, [queryClient]);
@@ -159,32 +159,37 @@ export const ApproveWithBackupWallet = () => {
 
   /** Handle transaction result from Web3Auth modal */
   const handleTransactionResult = useCallback(
-    (result: SwapOwnerTransactionSuccess | SwapOwnerTransactionFailure) => {
+    async (
+      result: SwapOwnerTransactionSuccess | SwapOwnerTransactionFailure,
+    ) => {
       setIsButtonLoading(false);
 
       const activeId = currentTxnIdRef.current;
       if (!activeId) return;
 
-      setLocalTransactions((prev) => {
-        const updated = prev.map((tx) => {
-          if (tx.id !== activeId) return tx;
-          const status: SwapSafeTransaction['status'] = result.success
-            ? 'completed'
-            : 'failed';
-          const error = 'error' in result ? result.error : undefined;
-          return { ...tx, status, error };
+      const updated = await new Promise<LocalTransaction[]>((resolve) => {
+        setLocalTransactions((prev) => {
+          const updated = prev.map((tx) => {
+            if (tx.id !== activeId) return tx;
+            const status: SwapSafeTransaction['status'] = result.success
+              ? 'completed'
+              : 'failed';
+            const error = 'error' in result ? result.error : undefined;
+            return { ...tx, status, error };
+          });
+          resolve(updated);
+          return updated;
         });
-
-        if (result.success) {
-          const currentIdx = updated.findIndex((t) => t.id === activeId);
-          const nextPending = updated
-            .slice(currentIdx + 1)
-            .find((t) => t.status === 'pending');
-          setCurrentTxnIdSafe(nextPending ? nextPending.id : null);
-          invalidateQueries();
-        }
-        return updated;
       });
+
+      if (result.success) {
+        const currentIdx = updated.findIndex((t) => t.id === activeId);
+        const nextPending = updated
+          .slice(currentIdx + 1)
+          .find((t) => t.status === 'pending');
+        setCurrentTxnIdSafe(nextPending ? nextPending.id : null);
+        await invalidateQueries();
+      }
     },
     [invalidateQueries, setCurrentTxnIdSafe],
   );
@@ -269,12 +274,13 @@ export const ApproveWithBackupWallet = () => {
   useEffect(() => {
     if (!areTransactionsCompleted) return;
     completeRecovery()
+      .then(() => invalidateQueries())
       .then(() => setIsAccountRecovered(true))
       .catch((error) => {
         message.error('Failed to complete recovery. Please try again.');
         console.error('Recovery completion error:', error);
       });
-  }, [areTransactionsCompleted, completeRecovery, message]);
+  }, [areTransactionsCompleted, completeRecovery, invalidateQueries, message]);
 
   return (
     <Flex align="center" justify="center" className="w-full mt-40">
