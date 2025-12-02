@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { keys } from 'lodash';
+import { isEmpty, keys } from 'lodash';
 import {
   createContext,
   ReactNode,
@@ -182,7 +182,7 @@ export const AccountRecoveryProvider = ({
   );
 
   const recoveryFundingList = useMemo(() => {
-    if (!recoveryFundingRequirements) return [];
+    if (isEmpty(recoveryFundingRequirements)) return [];
     return parseRecoveryFundingRequirements(recoveryFundingRequirements);
   }, [recoveryFundingRequirements]);
 
