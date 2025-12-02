@@ -35,6 +35,13 @@ export const AgentDisabledAlert = () => {
     return <UnderConstructionAlert />;
   }
 
+  if (isAnotherAgentRunning) {
+    return <AgentRunningAlert />;
+  }
+
+  // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
+  if (isInitialFunded === false) return <UnfinishedSetupAlert />;
+
   if (selectedStakingProgramMeta && selectedStakingProgramMeta.deprecated) {
     return (
       <ContractDeprecatedAlert
@@ -42,13 +49,6 @@ export const AgentDisabledAlert = () => {
       />
     );
   }
-
-  if (isAnotherAgentRunning) {
-    return <AgentRunningAlert />;
-  }
-
-  // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
-  if (isInitialFunded === false) return <UnfinishedSetupAlert />;
 
   if (
     !isSelectedStakingContractDetailsLoading &&
