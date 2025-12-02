@@ -35,6 +35,22 @@ winston.addColors(customLevels.colors);
 
 const TEN_MEGABYTES = 10 * 1024 * 1024;
 
+const istTimestamp = winston.format.timestamp({
+  format: () =>
+    new Date()
+      .toLocaleString('en-GB', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      })
+      .replace(',', ''),
+});
+
 const logger = winston.createLogger({
   levels: customLevels.levels,
   transports: [
@@ -67,7 +83,7 @@ const logger = winston.createLogger({
       maxsize: TEN_MEGABYTES,
     }),
   ],
-  format: combine(timestamp(), logFormat),
+  format: combine(istTimestamp, logFormat),
 });
 
 module.exports = { logger };
