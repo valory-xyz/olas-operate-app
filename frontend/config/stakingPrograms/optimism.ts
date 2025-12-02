@@ -1,14 +1,14 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
-import { AgentType } from '@/enums/Agent';
-import { EvmChainId } from '@/enums/Chain';
 import {
   OPTIMISM_STAKING_PROGRAM_IDS,
   OptimismStakingProgramId,
-} from '@/enums/StakingProgram';
+} from '@/constants';
+import { AgentType } from '@/enums/Agent';
+import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
-import { Address } from '@/types/Address';
+import { Address } from '@/types';
 
 import { OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { StakingProgramConfig } from '.';
