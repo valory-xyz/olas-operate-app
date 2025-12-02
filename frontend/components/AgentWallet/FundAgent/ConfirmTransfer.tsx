@@ -86,7 +86,7 @@ const TransferFailed = ({ onTryAgain }: { onTryAgain: () => void }) => {
         </Title>
         <Text className="text-neutral-tertiary">
           Something went wrong with your transfer. Please try again or contact
-          the Valory support.
+          Valory support.
         </Text>
       </Flex>
 

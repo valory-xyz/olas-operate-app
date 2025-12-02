@@ -81,7 +81,7 @@ const WithdrawalFailed = ({ onTryAgain }: WithdrawalFailedProps) => {
         </Title>
         <Text className="text-neutral-tertiary">
           Something went wrong with your withdrawal. Please try again or contact
-          the Valory support.
+          Valory support.
         </Text>
       </Flex>
 
