@@ -35,18 +35,34 @@ winston.addColors(customLevels.colors);
 
 const TEN_MEGABYTES = 10 * 1024 * 1024;
 
+const istTimestamp = winston.format.timestamp({
+  format: () =>
+    new Date()
+      .toLocaleString('en-GB', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      })
+      .replace(',', ''),
+});
+
 const logger = winston.createLogger({
   levels: customLevels.levels,
   transports: [
     new winston.transports.Console({
       level: 'electron',
-      format: combine(winston.format.colorize(), timestamp(), logFormat),
+      format: combine(winston.format.colorize(), istTimestamp, logFormat),
     }),
     new winston.transports.File({
       filename: 'cli.log',
       dirname: paths.dotOperateDirectory,
       level: 'cli',
-      format: combine(levelFilter('cli'), timestamp(), logFormat),
+      format: combine(levelFilter('cli'), istTimestamp, logFormat),
       maxsize: TEN_MEGABYTES,
       maxFiles: 5,
     }),
@@ -54,7 +70,7 @@ const logger = winston.createLogger({
       filename: 'electron.log',
       dirname: paths.dotOperateDirectory,
       level: 'electron',
-      format: combine(levelFilter('electron'), timestamp(), logFormat),
+      format: combine(levelFilter('electron'), istTimestamp, logFormat),
       maxFiles: 1,
       maxsize: TEN_MEGABYTES,
     }),
@@ -62,12 +78,12 @@ const logger = winston.createLogger({
       filename: 'next.log',
       dirname: paths.dotOperateDirectory,
       level: 'next',
-      format: combine(levelFilter('next'), timestamp(), logFormat),
+      format: combine(levelFilter('next'), istTimestamp, logFormat),
       maxFiles: 1,
       maxsize: TEN_MEGABYTES,
     }),
   ],
-  format: combine(timestamp(), logFormat),
+  format: combine(istTimestamp, logFormat),
 });
 
 module.exports = { logger };

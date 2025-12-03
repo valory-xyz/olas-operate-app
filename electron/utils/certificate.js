@@ -15,6 +15,7 @@ const stringifyJson = (e) =>
  * Load the self-signed certificate for localhost HTTPS requests
  */
 const loadLocalCertificate = () => {
+  logger.electron('Loading local certificate for TLS');
   try {
     const certPath = path.join(paths.dotOperateDirectory, 'ssl', 'cert.pem');
     if (fs.existsSync(certPath)) {

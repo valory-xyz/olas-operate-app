@@ -54,6 +54,9 @@ const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
 
 const { pki } = require('node-forge');
+const { electron } = require('process');
+
+logger.electron(`=========== Starting Pearl Electron App ==========`);
 
 // Register IPC handlers for logs
 require('./features/logs');
@@ -75,9 +78,9 @@ if (isDev) {
       loadExtensionOptions: { allowFileAccess: true },
       forceDownload: false,
     })
-      .then(([react]) => console.log(`Added Extensions: ${react.name}`))
+      .then(([react]) => logger.electron(`Added Extensions: ${react.name}`))
       .catch((e) =>
-        console.log('An error occurred on loading extensions: ', e),
+        logger.electron(`An error occurred on loading extensions: ${e}`),
       );
   });
 }
@@ -235,7 +238,7 @@ async function stopBackend() {
 async function beforeQuit(event) {
   if (typeof event.preventDefault === 'function' && !appRealClose) {
     event.preventDefault();
-    logger.electron('onquit event.preventDefault');
+    logger.electron('App before-quit event triggered');
   }
 
   if (isBeforeQuitting) return;
@@ -290,6 +293,7 @@ async function beforeQuit(event) {
 
     // attempt to kill the dev next app process via pid
     try {
+      logger.electron('Killing devNextApp server kill process');
       devNextAppPid && (await killProcesses(devNextAppPid));
     } catch (e) {
       logger.electron(
@@ -300,6 +304,7 @@ async function beforeQuit(event) {
 
   if (nextApp) {
     // attempt graceful close of prod next app
+    logger.electron('Closing prod NextApp gracefully');
     await nextApp.close().catch((e) => {
       logger.electron(`Couldn't close NextApp gracefully: ${stringifyJson(e)}`);
     });
@@ -396,7 +401,7 @@ const createMainWindow = async () => {
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    // // web3auth links should be open in Pearl for redirect to work
+    // web3auth links should be open in Pearl for redirect to work
     // if (url.includes('web3auth')) return { action: 'allow' };
 
     // open url in a browser and prevent default
@@ -415,10 +420,12 @@ const createMainWindow = async () => {
   } catch (e) {
     logger.electron(`Store IPC failed: ${stringifyJson(e)}`);
   }
+
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
 
+  logger.electron('Loading main window URL');
   await mainWindow.loadURL(nextUrl());
 };
 
@@ -480,10 +487,7 @@ function createAndLoadSslCertificate() {
       `SSL certificate created successfully at ${keyPath} and ${certPath}`,
     );
 
-    return {
-      keyPath,
-      certPath,
-    };
+    return { keyPath, certPath };
   } catch (error) {
     logger.electron('Failed to create SSL certificate:', error.message);
     throw error;
@@ -555,8 +559,12 @@ const createOnRampWindow = async (amountToPay) => {
 };
 
 async function launchDaemon() {
+  logger.electron('Launching Operate Daemon');
+
   const check = new Promise(function (resolve, _reject) {
     const { keyPath, certPath } = createAndLoadSslCertificate();
+
+    logger.electron('Launching operate daemon process');
     operateDaemon = spawn(
       path.join(
         process.resourcesPath,
@@ -573,26 +581,37 @@ async function launchDaemon() {
     );
     operateDaemonPid = operateDaemon.pid;
 
+    logger.electron(`Operate daemon PID: ${operateDaemonPid}`);
     operateDaemon.stderr.on('data', (data) => {
+      logger.electron(`Operate daemon stderr 1: ${data.toString().trim()}`);
       if (data.toString().includes('Uvicorn running on')) {
         resolve({ running: true, error: null });
       }
-      if (
-        data.toString().includes('error while attempting to bind on address')
-      ) {
+
+      const isPortInUse = data
+        .toString()
+        .includes('error while attempting to bind on address');
+      if (isPortInUse) {
         resolve({ running: false, error: 'Port already in use' });
       }
+
+      logger.electron(`Operate daemon stderr 2: ${data.toString().trim()}`);
       logger.cli(data.toString().trim());
     });
+
     operateDaemon.stdout.on('data', (data) => {
+      logger.electron(`Operate daemon stdout: ${data.toString().trim()}`);
       logger.cli(data.toString().trim());
     });
   });
 
+  logger.electron('Operate daemon waiting for startup check result');
   return await check;
 }
 
 async function launchDaemonDev() {
+  logger.electron('Launching Operate Daemon in Development Mode');
+
   const { keyPath, certPath } = createAndLoadSslCertificate();
   const check = new Promise(function (resolve, _reject) {
     operateDaemon = spawn('poetry', [
@@ -605,28 +624,38 @@ async function launchDaemonDev() {
       `--ssl-certfile=${certPath}`,
     ]);
     operateDaemonPid = operateDaemon.pid;
+
+    logger.electron(`Operate daemon PID: ${operateDaemonPid}`);
     operateDaemon.stderr.on('data', (data) => {
       if (data.toString().includes('Uvicorn running on')) {
         resolve({ running: true, error: null });
       }
-      if (
-        data.toString().includes('error while attempting to bind on address')
-      ) {
+      const isPortInUse = data
+        .toString()
+        .includes('error while attempting to bind on address');
+      if (isPortInUse) {
         resolve({ running: false, error: 'Port already in use' });
       }
+
+      logger.electron(`Operate daemon stderr: ${data.toString().trim()}`);
       logger.cli(data.toString().trim());
     });
+
     operateDaemon.stdout.on('data', (data) => {
+      logger.electron(`Operate daemon stdout: ${data.toString().trim()}`);
       logger.cli(data.toString().trim());
     });
   });
+
+  logger.electron(
+    'Operate daemon waiting for startup check result in dev mode',
+  );
   return await check;
 }
 
 async function launchNextApp() {
-  logger.electron('Launching Next App');
+  logger.electron('Launching and Preparing Next App');
 
-  logger.electron('Preparing Next App');
   await nextApp.prepare();
 
   logger.electron('Getting Next App Handler');
@@ -639,11 +668,14 @@ async function launchNextApp() {
 
   logger.electron('Listening on Next App Server');
   server.listen(appConfig.ports.prod.next, () => {
+    logger.electron(`Next server running on ${nextUrl()}`);
     logger.next(`> Next server running on ${nextUrl()}`);
   });
 }
 
 async function launchNextAppDev() {
+  logger.electron('Launching Next App in Development Mode');
+
   await new Promise(function (resolve, _reject) {
     process.env.NEXT_PUBLIC_BACKEND_PORT = appConfig.ports.dev.operate; // must set next env var to connect to backend
     devNextApp = spawn(
@@ -661,6 +693,7 @@ async function launchNextAppDev() {
     devNextAppPid = devNextApp.pid;
     devNextApp.stdout.on('data', (data) => {
       logger.next(data.toString().trim());
+      logger.electron(`Next app stdout: ${data.toString().trim()}`);
       resolve();
     });
   });
@@ -672,6 +705,7 @@ ipcMain.on('check', async function (event, _argument) {
     handleAppSettings();
     event.sender.send('response', 'Checking installation');
 
+    logger.electron('Checking installation');
     if (platform === 'darwin') {
       await setupDarwin(event.sender);
     } else if (platform === 'win32') {
@@ -679,15 +713,18 @@ ipcMain.on('check', async function (event, _argument) {
     } else {
       await setupUbuntu(event.sender);
     }
+    logger.electron('Installation check complete');
 
     // Free up backend port if already occupied
     await stopBackend();
+    logger.electron('Backend port freed if it was occupied');
 
     if (isDev) {
       event.sender.send(
         'response',
         'Starting Pearl Daemon In Development Mode',
       );
+      logger.electron('Starting Pearl Daemon In Development Mode');
 
       const daemonDevPortAvailable = await isPortAvailable(
         appConfig.ports.dev.operate,
@@ -698,11 +735,16 @@ ipcMain.on('check', async function (event, _argument) {
           ...PORT_RANGE,
         });
       }
+      logger.electron(
+        `Operate daemon port set to ${appConfig.ports.dev.operate}`,
+      );
+
       await launchDaemonDev();
       event.sender.send(
         'response',
         'Starting Frontend Server In Development Mode',
       );
+      logger.electron(`Launching Daemon completed successfully`);
 
       const frontendDevPortAvailable = await isPortAvailable(
         appConfig.ports.dev.next,
@@ -714,10 +756,12 @@ ipcMain.on('check', async function (event, _argument) {
           excludePorts: [appConfig.ports.dev.operate],
         });
       }
+      logger.electron(`Next app port set to ${appConfig.ports.dev.next}`);
       await launchNextAppDev();
     } else {
       event.sender.send('response', 'Starting Pearl Daemon');
       await launchDaemon();
+      logger.electron('Daemon launched successfully');
 
       event.sender.send('response', 'Starting Frontend Server');
       const frontendPortAvailable = await isPortAvailable(
@@ -729,12 +773,14 @@ ipcMain.on('check', async function (event, _argument) {
           excludePorts: [appConfig.ports.prod.operate],
         });
       }
+      logger.electron(`Next app port set to ${appConfig.ports.prod.next}`);
       await launchNextApp();
     }
 
     event.sender.send('response', 'Launching App');
     createMainWindow();
     tray = new PearlTray(getActiveWindow);
+    logger.electron('Main window created and tray initialized');
   } catch (e) {
     logger.electron(e);
     new Notification({ title: 'Error', body: e }).show();
