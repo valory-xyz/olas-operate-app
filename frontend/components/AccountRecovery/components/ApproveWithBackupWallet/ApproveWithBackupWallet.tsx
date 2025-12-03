@@ -15,6 +15,7 @@ import {
   SwapOwnerTransactionSuccess,
   SwapSafeTransaction,
 } from '@/types/Recovery';
+import { delayInSeconds } from '@/utils';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { useAccountRecoveryContext } from '../../AccountRecoveryProvider';
@@ -194,6 +195,7 @@ export const ApproveWithBackupWallet = () => {
           .slice(currentIdx + 1)
           .find((t) => t.status === 'pending');
         setCurrentTxnIdSafe(nextPending ? nextPending.id : null);
+        await delayInSeconds(5);
         await invalidateQueries();
       }
     },
@@ -279,7 +281,9 @@ export const ApproveWithBackupWallet = () => {
   // Automatically complete recovery when all transactions are done
   useEffect(() => {
     if (!areTransactionsCompleted) return;
-    completeRecovery()
+
+    delayInSeconds(15)
+      .then(() => completeRecovery())
       .then(() => invalidateQueries(true))
       .then(() => setIsAccountRecovered(true))
       .catch((error) => {
