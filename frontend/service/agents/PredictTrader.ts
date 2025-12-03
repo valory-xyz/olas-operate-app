@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
+import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { PROVIDERS, StakingProgramId } from '@/constants';
 import { EvmChainId } from '@/enums/Chain';
@@ -48,8 +49,9 @@ export abstract class PredictTraderService extends StakedAgentService {
     const provider = PROVIDERS[chainId].multicallProvider;
 
     const contractCalls = [
-      // TODO: for new mech MM there's no such function, need to use mapRequestCounts instead
-      mechContract.getRequestsCount(agentMultisigAddress),
+      stakingProgramConfig.mechType === MechType.MarketplaceV2
+        ? mechContract.mapRequestCounts(agentMultisigAddress)
+        : mechContract.getRequestsCount(agentMultisigAddress),
       stakingTokenProxyContract.getServiceInfo(serviceId),
       stakingTokenProxyContract.livenessPeriod(),
       activityChecker.livenessRatio(),
