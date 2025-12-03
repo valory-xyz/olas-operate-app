@@ -100,8 +100,6 @@ export const updateServiceIfNeeded = async (
     partialServiceTemplate.agent_release = serviceTemplate.agent_release;
   }
 
-  if (isEmpty(partialServiceTemplate)) return;
-
   // If staking program is updated
   if (updatedStakingProgramId) {
     partialServiceTemplate.configurations = {
@@ -112,6 +110,8 @@ export const updateServiceIfNeeded = async (
       },
     };
   }
+
+  if (isEmpty(partialServiceTemplate)) return;
 
   await ServicesService.updateService({
     serviceConfigId: service.service_config_id,

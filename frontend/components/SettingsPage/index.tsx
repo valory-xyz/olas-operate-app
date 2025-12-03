@@ -2,10 +2,15 @@ import { Button, Card, Flex, Skeleton, Typography } from 'antd';
 import { isEmpty, isNil } from 'lodash';
 import { useMemo } from 'react';
 import { TbShieldHalfFilled, TbShieldLock, TbWallet } from 'react-icons/tb';
-import styled from 'styled-components';
 import { useBoolean } from 'usehooks-ts';
 
-import { AddressLink, Alert, CardSection, cardStyles } from '@/components/ui';
+import {
+  AddressLink,
+  Alert,
+  CardSection,
+  cardStyles,
+  IconContainer,
+} from '@/components/ui';
 import { COLOR, NA } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
 import {
@@ -24,17 +29,6 @@ import { YourFundsAtRiskAlert } from './YourFundsAtRiskAlert';
 
 const { Text, Paragraph, Title } = Typography;
 
-const IconContainer = styled.div`
-  min-width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid ${COLOR.BORDER_GRAY};
-  border-radius: 8px;
-  background-image: url('/icon-bg.svg');
-`;
-
 const SecretRecoveryPhraseSetting = () => {
   const { isBackedUp } = useRecoveryPhraseBackup();
   const { mnemonicExists } = useMnemonicExists();
@@ -51,7 +45,7 @@ const SecretRecoveryPhraseSetting = () => {
     <>
       <CardSection $padding="24px" vertical gap={8}>
         <Flex gap={16}>
-          <IconContainer>
+          <IconContainer $borderWidth={2}>
             <TbShieldHalfFilled
               size={20}
               fontSize={30}
