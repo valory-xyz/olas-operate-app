@@ -200,8 +200,8 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       [TokenSymbol.OLAS]: 5000,
     },
-    mechType: MechType.Marketplace,
-    mech: MECHS[EvmChainId.Gnosis][MechType.Marketplace].contract,
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainId.Gnosis][MechType.MarketplaceV2].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1
@@ -220,7 +220,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       [TokenSymbol.OLAS]: 5000,
     },
-    mechType: MechType.Marketplace,
+    mechType: MechType.MarketplaceV2,
     mech: MECHS[EvmChainId.Gnosis][MechType.Marketplace].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
@@ -240,8 +240,8 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       [TokenSymbol.OLAS]: 40,
     },
-    mechType: MechType.Marketplace,
-    mech: MECHS[EvmChainId.Gnosis][MechType.Marketplace].contract,
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainId.Gnosis][MechType.MarketplaceV2].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3
@@ -260,8 +260,8 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       [TokenSymbol.OLAS]: 100,
     },
-    mechType: MechType.Marketplace,
-    mech: MECHS[EvmChainId.Gnosis][MechType.Marketplace].contract,
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainId.Gnosis][MechType.MarketplaceV2].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4
