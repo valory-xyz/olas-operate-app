@@ -56,13 +56,13 @@ const logger = winston.createLogger({
   transports: [
     new winston.transports.Console({
       level: 'electron',
-      format: combine(winston.format.colorize(), timestamp(), logFormat),
+      format: combine(winston.format.colorize(), istTimestamp, logFormat),
     }),
     new winston.transports.File({
       filename: 'cli.log',
       dirname: paths.dotOperateDirectory,
       level: 'cli',
-      format: combine(levelFilter('cli'), timestamp(), logFormat),
+      format: combine(levelFilter('cli'), istTimestamp, logFormat),
       maxsize: TEN_MEGABYTES,
       maxFiles: 5,
     }),
@@ -70,7 +70,7 @@ const logger = winston.createLogger({
       filename: 'electron.log',
       dirname: paths.dotOperateDirectory,
       level: 'electron',
-      format: combine(levelFilter('electron'), timestamp(), logFormat),
+      format: combine(levelFilter('electron'), istTimestamp, logFormat),
       maxFiles: 1,
       maxsize: TEN_MEGABYTES,
     }),
@@ -78,7 +78,7 @@ const logger = winston.createLogger({
       filename: 'next.log',
       dirname: paths.dotOperateDirectory,
       level: 'next',
-      format: combine(levelFilter('next'), timestamp(), logFormat),
+      format: combine(levelFilter('next'), istTimestamp, logFormat),
       maxFiles: 1,
       maxsize: TEN_MEGABYTES,
     }),

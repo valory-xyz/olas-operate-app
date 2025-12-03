@@ -49,6 +49,8 @@ const { PearlTray } = require('./components/PearlTray');
 const { pki } = require('node-forge');
 const { electron } = require('process');
 
+logger.electron(`=========== Starting Pearl Electron App ==========`);
+
 // Register IPC handlers for logs
 require('./features/logs');
 
