@@ -292,6 +292,11 @@ export const ApproveWithBackupWallet = () => {
       });
   }, [areTransactionsCompleted, completeRecovery, invalidateQueries, message]);
 
+  const btnText = useMemo(() => {
+    if (areTransactionsCompleted) return 'Recovering...';
+    return currentTxnId === null ? 'Start Approval' : 'Open Wallet';
+  }, [areTransactionsCompleted, currentTxnId]);
+
   return (
     <Flex align="center" justify="center" className="w-full mt-40">
       <CardFlex
@@ -335,7 +340,7 @@ export const ApproveWithBackupWallet = () => {
               disabled={!hasPendingTransactions}
               loading={isButtonLoading}
             >
-              {currentTxnId === null ? 'Start Approval' : 'Open Wallet'}
+              {btnText}
             </Button>
           )}
         </Flex>
