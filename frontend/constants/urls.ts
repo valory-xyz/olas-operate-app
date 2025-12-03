@@ -41,6 +41,9 @@ export const COINGECKO_URL: string = 'https://www.coingecko.com';
 export const COINGECKO_DEMO_API_URL: string =
   'https://support.coingecko.com/hc/en-us/articles/21880397454233-User-Guide-How-to-sign-up-for-CoinGecko-Demo-API-and-generate-an-API-key';
 export const GEMINI_API_URL: string = 'https://aistudio.google.com/app/apikey';
+export const X_ACCOUNT_API_TOKENS_GUIDE_URL: Url =
+  'https://github.com/dvilelaf/meme-ooorr/blob/main/docs/twitter_dev_account.md';
+
 export const WEB3AUTH_URL: Url = 'https://web3auth.io';
 export const WEB3AUTH_TERMS_AND_CONDITIONS_URL: Url = `${WEB3AUTH_URL}/docs/legal/terms-and-conditions`;
 export const SAFE_URL: Url = 'https://safe.global/';

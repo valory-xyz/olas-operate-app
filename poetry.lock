@@ -2550,8 +2550,10 @@ version = "0.13.1"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.9"
-files = []
-develop = false
+files = [
+    {file = "olas_operate_middleware-0.13.1-py3-none-any.whl", hash = "sha256:e213e7895f651e687f00f665d041fa7a6256bd133d4e37b07c9d11f4dc11ca7d"},
+    {file = "olas_operate_middleware-0.13.1.tar.gz", hash = "sha256:1747bc309285da678cc41effbf2baebdc22ccc3d765eeda91765c5aab43d1b6f"},
+]
 
 [package.dependencies]
 aiohttp = "3.9.5"

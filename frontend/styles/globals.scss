@@ -77,6 +77,11 @@ textarea,
   font-size: 14px;
 }
 
+.ant-input-textarea-show-count > textarea,
+textarea.ant-input {
+  padding: 8px !important;
+}
+
 
 /* === Start: button redesigns === */
 .ant-btn-primary {
