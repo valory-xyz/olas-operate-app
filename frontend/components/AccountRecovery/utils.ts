@@ -1,3 +1,5 @@
+import { entries } from 'lodash';
+
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import {
@@ -81,16 +83,14 @@ export const parseRecoveryFundingRequirements = (
   const rows: TokenRequirementsRow[] = [];
   const { refill_requirements, total_requirements } = fundingRequirements;
 
-  for (const [chainName, backupOwnerAddresses] of Object.entries(
+  for (const [chainName, backupOwnerAddresses] of entries(
     refill_requirements,
   )) {
     const chain = chainName as SupportedMiddlewareChain;
     const evmChainId = asEvmChainId(chain);
 
-    for (const [safeAddress, tokenBalances] of Object.entries(
-      backupOwnerAddresses,
-    )) {
-      for (const [untypedTokenAddress, refillAmount] of Object.entries(
+    for (const [safeAddress, tokenBalances] of entries(backupOwnerAddresses)) {
+      for (const [untypedTokenAddress, refillAmount] of entries(
         tokenBalances,
       )) {
         const tokenAddress = untypedTokenAddress as Address;
