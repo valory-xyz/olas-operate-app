@@ -548,8 +548,12 @@ const createOnRampWindow = async (amountToPay) => {
 };
 
 async function launchDaemon() {
+  logger.electron('Launching Operate Daemon');
+
   const check = new Promise(function (resolve, _reject) {
     const { keyPath, certPath } = createAndLoadSslCertificate();
+
+    logger.electron('Launching operate daemon process');
     operateDaemon = spawn(
       path.join(
         process.resourcesPath,
@@ -566,18 +570,25 @@ async function launchDaemon() {
     );
     operateDaemonPid = operateDaemon.pid;
 
+    logger.electron(`Operate daemon PID: ${operateDaemonPid}`);
     operateDaemon.stderr.on('data', (data) => {
       if (data.toString().includes('Uvicorn running on')) {
         resolve({ running: true, error: null });
       }
-      if (
-        data.toString().includes('error while attempting to bind on address')
-      ) {
+
+      const isPortInUse = data
+        .toString()
+        .includes('error while attempting to bind on address');
+      if (isPortInUse) {
         resolve({ running: false, error: 'Port already in use' });
       }
+
+      logger.electron(`Operate daemon stderr: ${data.toString().trim()}`);
       logger.cli(data.toString().trim());
     });
+
     operateDaemon.stdout.on('data', (data) => {
+      logger.electron(`Operate daemon stdout: ${data.toString().trim()}`);
       logger.cli(data.toString().trim());
     });
   });
@@ -586,6 +597,8 @@ async function launchDaemon() {
 }
 
 async function launchDaemonDev() {
+  logger.electron('Launching Operate Daemon in Development Mode');
+
   const { keyPath, certPath } = createAndLoadSslCertificate();
   const check = new Promise(function (resolve, _reject) {
     operateDaemon = spawn('poetry', [
@@ -598,21 +611,29 @@ async function launchDaemonDev() {
       `--ssl-certfile=${certPath}`,
     ]);
     operateDaemonPid = operateDaemon.pid;
+
+    logger.electron(`Operate daemon PID: ${operateDaemonPid}`);
     operateDaemon.stderr.on('data', (data) => {
       if (data.toString().includes('Uvicorn running on')) {
         resolve({ running: true, error: null });
       }
-      if (
-        data.toString().includes('error while attempting to bind on address')
-      ) {
+      const isPortInUse = data
+        .toString()
+        .includes('error while attempting to bind on address');
+      if (isPortInUse) {
         resolve({ running: false, error: 'Port already in use' });
       }
+
+      logger.electron(`Operate daemon stderr: ${data.toString().trim()}`);
       logger.cli(data.toString().trim());
     });
+
     operateDaemon.stdout.on('data', (data) => {
+      logger.electron(`Operate daemon stdout: ${data.toString().trim()}`);
       logger.cli(data.toString().trim());
     });
   });
+
   return await check;
 }
 
@@ -637,6 +658,8 @@ async function launchNextApp() {
 }
 
 async function launchNextAppDev() {
+  logger.electron('Launching Next App in Development Mode');
+
   await new Promise(function (resolve, _reject) {
     process.env.NEXT_PUBLIC_BACKEND_PORT = appConfig.ports.dev.operate; // must set next env var to connect to backend
     devNextApp = spawn(
@@ -691,11 +714,16 @@ ipcMain.on('check', async function (event, _argument) {
           ...PORT_RANGE,
         });
       }
+      logger.electron(
+        `Operate daemon port set to ${appConfig.ports.dev.operate}`,
+      );
+
       await launchDaemonDev();
       event.sender.send(
         'response',
         'Starting Frontend Server In Development Mode',
       );
+      logger.electron(`Launching Daemon completed successfully`);
 
       const frontendDevPortAvailable = await isPortAvailable(
         appConfig.ports.dev.next,
@@ -707,10 +735,12 @@ ipcMain.on('check', async function (event, _argument) {
           excludePorts: [appConfig.ports.dev.operate],
         });
       }
+      logger.electron(`Next app port set to ${appConfig.ports.dev.next}`);
       await launchNextAppDev();
     } else {
       event.sender.send('response', 'Starting Pearl Daemon');
       await launchDaemon();
+      logger.electron('Daemon launched successfully');
 
       event.sender.send('response', 'Starting Frontend Server');
       const frontendPortAvailable = await isPortAvailable(
@@ -722,6 +752,7 @@ ipcMain.on('check', async function (event, _argument) {
           excludePorts: [appConfig.ports.prod.operate],
         });
       }
+      logger.electron(`Next app port set to ${appConfig.ports.prod.next}`);
       await launchNextApp();
     }
 
