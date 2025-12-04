@@ -148,6 +148,20 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: X402_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
+    PRIORITY_MECH_ADDRESS: {
+      name: 'Priority Mech contract address',
+      description:
+        'This mech will be used at priority when using mech marketplace.',
+      value: '0x1cAe83A8a68993954ed28E4DE23341f6e672d9dC',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    PRIORITY_MECH_SERVICE_ID: {
+      name: 'Priority Mech service ID',
+      description:
+        'This mech of this service will be used at priority when using mech marketplace.',
+      value: '2469',
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
 
