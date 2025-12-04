@@ -728,11 +728,11 @@ ipcMain.on('check', async function (event, _argument) {
           ...PORT_RANGE,
         });
       }
-      logger.electron(
-        `Operate daemon port set to ${appConfig.ports.dev.operate}`,
-      );
 
+      logger.electron('Starting Pearl Daemon in Dev Mode');
       await launchDaemonDev();
+      logger.electron('Completed Pearl Daemon in Dev Mode');
+
       event.sender.send(
         'response',
         'Starting Frontend Server In Development Mode',
@@ -749,18 +749,22 @@ ipcMain.on('check', async function (event, _argument) {
           excludePorts: [appConfig.ports.dev.operate],
         });
       }
-      logger.electron(`Next app port set to ${appConfig.ports.dev.next}`);
+      logger.electron('Starting Frontend Server in Dev Mode...');
       await launchNextAppDev();
     } else {
+      logger.electron('Starting Pearl Daemon');
       event.sender.send('response', 'Starting Pearl Daemon');
+      logger.electron('Starting Pearl Daemon...');
       await launchDaemon();
       logger.electron('Daemon launched successfully');
 
+      logger.electron('Starting Frontend Server');
       event.sender.send('response', 'Starting Frontend Server');
       const frontendPortAvailable = await isPortAvailable(
         appConfig.ports.prod.next,
       );
       if (!frontendPortAvailable) {
+        logger.electron('Finding Available Port');
         appConfig.ports.prod.next = await findAvailablePort({
           ...PORT_RANGE,
           excludePorts: [appConfig.ports.prod.operate],
