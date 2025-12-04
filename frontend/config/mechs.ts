@@ -10,6 +10,7 @@ import { extractFunctionsFromAbi } from '@/utils/abi';
 export enum MechType {
   Agent = 'mech-agent',
   Marketplace = 'mech-marketplace',
+  MarketplaceV2 = 'mech-marketplace-2v',
 }
 
 type Mechs = {
@@ -41,6 +42,15 @@ export const MECHS: Mechs = {
       contract: new MulticallContract(
         '0x4554fE75c1f5576c1d7F765B2A036c199Adae329',
         MECH_MARKETPLACE_ABI.filter(
+          (abi) => (abi as JsonFragment).type === 'function',
+        ) as JsonFragment[],
+      ),
+    },
+    [MechType.MarketplaceV2]: {
+      name: 'Mech Marketplace V2',
+      contract: new MulticallContract(
+        '0x735FAAb1c4Ec41128c367AFb5c3baC73509f70bB',
+        MECH_MARKETPLACE_V2_ABI.filter(
           (abi) => (abi as JsonFragment).type === 'function',
         ) as JsonFragment[],
       ),
