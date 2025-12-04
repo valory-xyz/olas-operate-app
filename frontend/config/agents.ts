@@ -145,6 +145,9 @@ export const AGENT_CONFIG: {
       'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
     servicePublicId: 'valory/optimus:0.1.0',
   },
+  [AgentMap.PettAiAgent]: {
+     // TODO: From @Edu add config for Pett.ai agent (was not mentioned in the agent integration checklist but something is needed here)
+  },
 };
 
 export const ACTIVE_AGENTS = entries(AGENT_CONFIG).filter(([, agentConfig]) => {

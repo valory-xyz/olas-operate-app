@@ -83,6 +83,19 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-add-funds': true,
     'on-ramp': true,
   },
+  [AgentType.PettAiAgent]: {
+    'manage-wallet': false,
+    'withdraw-funds': false,
+    'last-transactions': false,
+    'rewards-streak': false,
+    'staking-contract-section': false,
+    'agent-activity': true,
+    'backup-via-safe': false,
+    'agent-settings': false,
+    'bridge-onboarding': false,
+    'bridge-add-funds': false,
+    'on-ramp': false,
+  },
 });
 
 type FeatureFlagReturn<T extends FeatureFlags | FeatureFlags[]> =

@@ -326,6 +326,91 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   },
 };
 
+export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
+	agentType: AgentType.PettAiAgent,
+	name: 'pett_agent',
+	hash: 'bafybeifnnx27q6n4nbimarb3rj5gqor6z2ma6aj4skxcx3cjtjwbbnc4ga',
+	description: 'Pett.ai autonomous agent service for virtual pet management.',
+	image: 'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
+	service_version: 'v0.1.0',
+	agent_release: {
+		is_aea: true,
+		repository: {
+			owner: 'pettaidev',
+			name: 'pett_agent',
+			version: 'v0.1.0',
+		},
+	},
+	home_chain: MiddlewareChainMap.BASE,
+	configurations: {
+		[MiddlewareChainMap.BASE]: {
+			staking_program_id: STAKING_PROGRAM_IDS.PettAiAgent,
+			nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+			rpc: 'http://localhost:8545', // overwritten
+			agent_id: 82,
+			cost_of_bond: +parseEther(0.00008),
+			monthly_gas_estimate: +parseEther(0.00008),
+			fund_requirements: {
+				[ethers.constants.AddressZero]: {
+					agent: +parseEther(0.00008),
+					safe: 0,
+				},
+			},
+		},
+	},
+	env_variables: {
+		BASE_LEDGER_RPC: {
+			name: 'Base ledger RPC',
+			description: '',
+			value: '',
+			provision_type: EnvProvisionType.COMPUTED,
+		},
+		OPENAI_API_KEY: {
+			name: 'OpenAI API key',
+			description: 'OpenAI API key for the pett.ai agent',
+			value: '',
+			provision_type: EnvProvisionType.USER,
+		},
+		WEBSOCKET_URL: {
+			name: 'Websocket URL',
+			description: 'Endpoint for Pett.ai websocket communication',
+			value: 'wss://ws.pett.ai',
+			provision_type: EnvProvisionType.FIXED,
+		},
+		STORE_PATH: {
+			name: 'Store path',
+			description: '',
+			value: '',
+			provision_type: EnvProvisionType.COMPUTED,
+		},
+		STAKING_TOKEN_CONTRACT_ADDRESS: {
+			name: 'Staking token contract address',
+			description: '',
+			value: '',
+			provision_type: EnvProvisionType.COMPUTED,
+		},
+		ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+			name: 'Staking activity checker contract address',
+			description: '',
+			value: '',
+			provision_type: EnvProvisionType.COMPUTED,
+		},
+		SAFE_CONTRACT_ADDRESSES: {
+			name: 'Config safe contract addresses',
+			description: '',
+			value: '',
+			provision_type: EnvProvisionType.COMPUTED,
+		},
+		USE_X402: {
+			name: 'Use x402',
+			description: 'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
+			value: X402_ENABLED_FLAGS[AgentMap.PettAiAgent].toString(),
+			provision_type: EnvProvisionType.FIXED,
+		},
+	},
+} as const;
+
+
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.Modius,
   name: 'Optimus',
@@ -629,6 +714,7 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
   AGENTS_FUN_BASE_TEMPLATE,
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
+  PETT_AI_SERVICE_TEMPLATE,
 ] as const;
 
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;
