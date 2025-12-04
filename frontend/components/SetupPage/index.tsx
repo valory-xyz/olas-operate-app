@@ -6,6 +6,7 @@ import { COLOR } from '@/constants/colors';
 import { SetupContext } from '@/context/SetupProvider';
 import { SetupScreen } from '@/enums/SetupScreen';
 
+import { AccountRecovery } from '../AccountRecovery';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { CardFlex } from '../ui/CardFlex';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
@@ -16,11 +17,6 @@ import { SetupPassword } from './Create/SetupPassword';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
 import { FundYourAgent } from './FundYourAgent/FundYourAgent';
 import { TransferFunds } from './FundYourAgent/TransferFunds';
-import {
-  SetupRestoreMain,
-  SetupRestoreSetPassword,
-  SetupRestoreViaBackup,
-} from './SetupRestore';
 import { SetupWelcome } from './SetupWelcome';
 import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
 import { SupportButton } from './SupportButton';
@@ -50,7 +46,7 @@ const SetupCard = styled.div`
     0 3px 6px 0 rgba(170, 193, 203, 0.1);
 `;
 
-const screenWithoutCards: SetupScreen[] = [
+const SCREEN_WITHOUT_CARDS: SetupScreen[] = [
   SetupScreen.AgentOnboarding,
   SetupScreen.SetupYourAgent,
   SetupScreen.FundYourAgent,
@@ -58,6 +54,7 @@ const screenWithoutCards: SetupScreen[] = [
   SetupScreen.SetupBridgeOnboardingScreen,
   SetupScreen.SetupOnRamp,
   SetupScreen.SelectStaking,
+  SetupScreen.AccountRecovery,
 ];
 
 export const Setup = () => {
@@ -67,8 +64,6 @@ export const Setup = () => {
     switch (setupObject.state) {
       case SetupScreen.Welcome:
         return <SetupWelcome />;
-
-      // Create account
       case SetupScreen.SetupPassword:
         return <SetupPassword />;
       case SetupScreen.SetupBackupSigner:
@@ -89,21 +84,15 @@ export const Setup = () => {
         return <SetupOnRamp />;
       case SetupScreen.EarlyAccessOnly:
         return <EarlyAccessOnly />;
-
-      // Restore account, screens to be re-implemented as per v1
-      case SetupScreen.Restore:
-        return <SetupRestoreMain />;
-      case SetupScreen.RestoreSetPassword:
-        return <SetupRestoreSetPassword />;
-      case SetupScreen.RestoreViaBackup:
-        return <SetupRestoreViaBackup />;
+      case SetupScreen.AccountRecovery:
+        return <AccountRecovery />;
       default:
         return <UnexpectedError />;
     }
   }, [setupObject.state]);
 
   let Wrapper: React.ElementType = SetupCard;
-  if (screenWithoutCards.includes(setupObject.state)) {
+  if (SCREEN_WITHOUT_CARDS.includes(setupObject.state)) {
     Wrapper = React.Fragment;
   }
 

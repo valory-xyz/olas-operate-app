@@ -26,6 +26,7 @@ import {
   asAllMiddlewareChain,
   asEvmChainId,
   bigintMax,
+  numberToPlainString,
 } from '@/utils';
 
 type TransferDirection = 'to' | 'from';
@@ -185,7 +186,7 @@ export const useGetBridgeRequirementsParams = (
                 chain: toChain,
                 address: toAddress,
                 token: toToken,
-                amount: `${amount}`,
+                amount: numberToPlainString(amount),
               },
             });
           }

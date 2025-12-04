@@ -95,3 +95,20 @@ export const parseUnits = (
 export const parseEther = (ether: BigNumberish): string => {
   return ethers.utils.parseEther(`${ether}`).toString();
 };
+
+/**
+ *
+ * @deprecated This workaround shouldn't exist.
+ * BE sends numbers in requirements which for large numbers breaks FE (should be bigNumbers)
+ * Until they send strings, use this to quickly fix the issue
+ */
+export const numberToPlainString = (
+  possiblyBrokenBigNumber: string | number,
+) => {
+  if (typeof possiblyBrokenBigNumber === 'number') {
+    return possiblyBrokenBigNumber.toLocaleString('fullwide', {
+      useGrouping: false,
+    });
+  }
+  return possiblyBrokenBigNumber;
+};
