@@ -146,8 +146,6 @@ export const useTokensFundingStatus = () => {
     };
   }, [hasBeenFullyFunded, requiredTokens, tokenRequirements, walletBalances]);
 
-  console.log('fundingStatus', fundingStatus);
-
   /**
    * Once the funds have been received completely, don't recalculate the statuses,
    * as the EOA balance might change if the funds are transferred to the newly created master_safe
