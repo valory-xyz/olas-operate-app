@@ -1,6 +1,6 @@
 import { Flex, Spin, Typography } from 'antd';
 import { isNil } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { LoadingOutlined } from '@/components/custom-icons';
@@ -16,7 +16,6 @@ import {
 import { ChainImageMap, EvmChainName, TokenSymbol } from '@/constants';
 import { SetupScreen } from '@/enums';
 import {
-  useGetRefillRequirements,
   useMasterSafeCreationAndTransfer,
   useMasterWalletContext,
   useServices,
@@ -44,8 +43,8 @@ export const TransferFunds = () => {
     isFetched: isMasterWalletFetched,
   } = useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
-  const { isFullyFunded, tokensFundingStatus } = useTokensFundingStatus();
-  const { initialTokenRequirements, isLoading } = useGetRefillRequirements();
+  const { isFullyFunded, tokensFundingStatus, isLoading } =
+    useTokensFundingStatus();
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
@@ -68,20 +67,6 @@ export const TransferFunds = () => {
   const destinationAddress = isMasterWalletFetched
     ? getMasterSafeOf?.(evmHomeChainId)?.address || masterEoa?.address
     : null;
-
-  const tokensDataSource = useMemo(() => {
-    return (initialTokenRequirements ?? []).map((token) => {
-      const { amount: totalAmount } = token;
-      const { pendingAmount, funded: areFundsReceived } =
-        tokensFundingStatus?.[token.symbol] ?? {};
-      return {
-        ...token,
-        totalAmount,
-        pendingAmount,
-        areFundsReceived,
-      };
-    });
-  }, [initialTokenRequirements, tokensFundingStatus]);
 
   const handleFunded = useCallback(async () => {
     if (!isMasterWalletFetched) return;
@@ -148,7 +133,8 @@ export const TransferFunds = () => {
 
         <TokenRequirementsTable
           isLoading={isLoading}
-          tokensDataSource={tokensDataSource}
+          tokensDataSource={Object.values(tokensFundingStatus)}
+          className="mt-32"
         />
       </CardFlex>
 

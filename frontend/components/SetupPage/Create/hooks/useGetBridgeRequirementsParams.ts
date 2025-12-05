@@ -25,6 +25,7 @@ import {
   asAllMiddlewareChain,
   asEvmChainId,
   getFromToken,
+  numberToPlainString,
 } from '@/utils';
 
 type TransferDirection = 'to' | 'from';
@@ -102,18 +103,6 @@ const useCombineNativeTokenRequirements = (
       transferDirection,
     ],
   );
-};
-
-/**
- *
- * @deprecated This workaround shouldn't exist.
- * BE sends numbers in requirements which for large numbers breaks FE (should be bigNumbers)
- * Until they send strings, use this to quickly fix the issue
- */
-const numberToPlainString = (possiblyBrokenBigNumber: string | number) => {
-  return possiblyBrokenBigNumber.toLocaleString('fullwide', {
-    useGrouping: false,
-  });
 };
 
 /**
