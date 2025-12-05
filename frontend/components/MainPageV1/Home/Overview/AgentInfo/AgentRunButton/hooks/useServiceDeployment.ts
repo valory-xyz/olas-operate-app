@@ -92,6 +92,7 @@ export const useServiceDeployment = () => {
     // If service is under construction, return false
     if (selectedAgentConfig.isUnderConstruction) return false;
 
+    // TODO: Enable it so users don’t get stuck with the 3-day cooling period and not able to run it.
     // If staking contract is deprecated, return false
     // if (selectedStakingProgramMeta?.deprecated) return false;
 
