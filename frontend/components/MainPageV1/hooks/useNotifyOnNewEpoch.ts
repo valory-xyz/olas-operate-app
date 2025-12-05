@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import {
   useActiveStakingContractDetails,
+  useBalanceAndRefillRequirementsContext,
   useIsInitiallyFunded,
   useService,
 } from '@/hooks';
@@ -30,6 +31,8 @@ export const useNotifyOnNewEpoch = () => {
   const { isInitialFunded } = useIsInitiallyFunded();
   const { selectedAgentConfig, selectedService } = useServices();
   const { isServiceRunning } = useService(selectedService?.service_config_id);
+  const { canStartAgent, isBalancesAndFundingRequirementsLoading } =
+    useBalanceAndRefillRequirementsContext();
   const {
     selectedStakingContractDetails: activeStakingContractDetails,
     isSelectedStakingContractDetailsLoading,
@@ -55,6 +58,7 @@ export const useNotifyOnNewEpoch = () => {
     // if initial funding is not done
     if (isInitialFunded === false) return;
 
+    // if service is not staked and has no available slots
     if (isServiceStaked === false && hasEnoughServiceSlots === false) {
       return;
     }
@@ -67,6 +71,9 @@ export const useNotifyOnNewEpoch = () => {
 
     // if current epoch has already earned rewards
     if (isEligibleForRewards === true) return;
+
+    // If does not have enough balance or funding requirements to start agent
+    if (isBalancesAndFundingRequirementsLoading || !canStartAgent) return;
 
     // latest epoch is not loaded yet
     if (!epoch) return;
@@ -88,6 +95,8 @@ export const useNotifyOnNewEpoch = () => {
     epochStatusNotification,
     epoch,
     selectedAgentConfig.isUnderConstruction,
+    canStartAgent,
+    isBalancesAndFundingRequirementsLoading,
     showNotification,
   ]);
 };
