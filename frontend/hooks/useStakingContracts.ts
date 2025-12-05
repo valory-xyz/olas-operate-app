@@ -29,8 +29,8 @@ export const useStakingContracts = () => {
           if (!isActiveStakingProgramLoaded) return acc;
 
           // If the program is deprecated, ignore it
-          if (STAKING_PROGRAMS[evmHomeChainId][stakingProgramId].deprecated)
-            return acc;
+          // if (STAKING_PROGRAMS[evmHomeChainId][stakingProgramId].deprecated)
+          // return acc;
 
           // Put the active staking program at the top
           if (stakingProgramId === currentStakingProgramId)
@@ -54,7 +54,7 @@ export const useStakingContracts = () => {
       availableStakingProgramIds,
       isActiveStakingProgramLoaded,
       currentStakingProgramId,
-      evmHomeChainId,
+      // evmHomeChainId,
       selectedAgentConfig.evmHomeChainId,
       selectedAgentType,
     ],

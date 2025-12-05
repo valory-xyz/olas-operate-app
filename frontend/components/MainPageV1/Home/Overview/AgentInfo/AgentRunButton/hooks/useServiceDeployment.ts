@@ -61,8 +61,10 @@ export const useServiceDeployment = () => {
     setIsPaused: setIsStakingContractInfoPollingPaused,
     refetchSelectedStakingContractDetails: refetchActiveStakingContractDetails,
   } = useStakingContractContext();
-  const { selectedStakingProgramId, selectedStakingProgramMeta } =
-    useStakingProgram();
+  const {
+    selectedStakingProgramId,
+    // selectedStakingProgramMeta
+  } = useStakingProgram();
   const {
     isEligibleForStaking,
     isAgentEvicted,
@@ -91,7 +93,7 @@ export const useServiceDeployment = () => {
     if (selectedAgentConfig.isUnderConstruction) return false;
 
     // If staking contract is deprecated, return false
-    if (selectedStakingProgramMeta?.deprecated) return false;
+    // if (selectedStakingProgramMeta?.deprecated) return false;
 
     // If not enough service slots, and service is not staked, return false
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
@@ -115,7 +117,7 @@ export const useServiceDeployment = () => {
     isLoading,
     isServiceStaked,
     selectedAgentConfig.isUnderConstruction,
-    selectedStakingProgramMeta?.deprecated,
+    // selectedStakingProgramMeta?.deprecated,
   ]);
 
   const pauseAllPolling = useCallback(() => {
