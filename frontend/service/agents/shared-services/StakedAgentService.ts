@@ -12,8 +12,8 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { OLAS_CONTRACTS } from '@/config/olasContracts';
 import {
-  STAKING_PROGRAM_ADDRESS,
   STAKING_PROGRAMS,
+  StakingProgramConfig,
 } from '@/config/stakingPrograms';
 import { PROVIDERS } from '@/constants/providers';
 import { EvmChainId } from '@/enums/Chain';
@@ -22,6 +22,7 @@ import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceS
 import { StakingProgramId } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 import { Maybe, Nullable } from '@/types/Util';
+import { areAddressesEqual } from '@/utils';
 
 export const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 
@@ -172,10 +173,13 @@ export abstract class StakedAgentService {
     chainId: EvmChainId,
     contractAddress: Address,
   ): Nullable<StakingProgramId> => {
-    const addresses = STAKING_PROGRAM_ADDRESS[chainId];
-    const entries = Object.entries(addresses) as [StakingProgramId, Address][];
-    const foundEntry = entries.find(
-      ([, address]) => address.toLowerCase() === contractAddress.toLowerCase(),
+    const stakingPrograms = STAKING_PROGRAMS[chainId];
+    const entries = Object.entries(stakingPrograms) as [
+      StakingProgramId,
+      StakingProgramConfig,
+    ][];
+    const foundEntry = entries.find(([, config]) =>
+      areAddressesEqual(config.address, contractAddress),
     );
     return foundEntry ? foundEntry[0] : null;
   };

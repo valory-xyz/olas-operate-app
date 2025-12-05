@@ -127,10 +127,10 @@ export const Home = () => {
       setView('profile');
     },
     [
+      isAgentRunning,
       isX402Enabled,
       selectedAgentConfig.doesChatUiRequireApiKey,
       selectedAgentType,
-      selectedService?.deploymentStatus,
       selectedService?.env_variables?.GENAI_API_KEY?.value,
       storeState,
     ],
