@@ -607,11 +607,90 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   ...BABYDEGEN_COMMON_TEMPLATE,
 } as const;
 
+export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
+  agentType: AgentType.PettAi,
+  name: 'pett_agent',
+  hash: 'bafybeifnnx27q6n4nbimarb3rj5gqor6z2ma6aj4skxcx3cjtjwbbnc4ga',
+  description: 'Pett.ai autonomous agent service for virtual pet management.',
+  image:
+    'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
+  service_version: 'v0.1.0',
+  agent_release: {
+    is_aea: false,
+    repository: {
+      owner: 'valory-xyz',
+      name: 'pettai-agent',
+      version: 'v0.0.3',
+    },
+  },
+  home_chain: MiddlewareChainMap.BASE,
+  configurations: {
+    [MiddlewareChainMap.BASE]: {
+      staking_program_id: STAKING_PROGRAM_IDS.PettAiAgent,
+      nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+      rpc: 'http://localhost:8545', // overwritten
+      agent_id: 80,
+      cost_of_bond: +parseEther(0.00008),
+      fund_requirements: {
+        [ethers.constants.AddressZero]: {
+          agent: +parseEther(0.00008),
+          safe: 0,
+        },
+      },
+    },
+  },
+  env_variables: {
+    BASE_LEDGER_RPC: {
+      name: 'Base ledger RPC',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    OPENAI_API_KEY: {
+      name: 'OpenAI API key',
+      description: 'OpenAI API key for the pett.ai agent',
+      value: '',
+      provision_type: EnvProvisionType.USER,
+    },
+    WEBSOCKET_URL: {
+      name: 'Websocket URL',
+      description: 'Endpoint for Pett.ai websocket communication',
+      value: 'wss://ws.pett.ai',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    STORE_PATH: {
+      name: 'Store path',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    STAKING_CONTRACT_ADDRESS: {
+      name: 'Staking contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      name: 'Staking activity checker contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    SAFE_CONTRACT_ADDRESSES: {
+      name: 'Config safe contract addresses',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+  },
+} as const;
+
 export const SERVICE_TEMPLATES: ServiceTemplate[] = [
   PREDICT_SERVICE_TEMPLATE,
   AGENTS_FUN_BASE_TEMPLATE,
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
+  PETT_AI_SERVICE_TEMPLATE,
 ] as const;
 
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;

@@ -70,6 +70,7 @@ export const AgentInfo = () => {
               width={88}
               height={88}
               alt={selectedAgentType}
+              className="rounded-12"
             />
             <Flex className="w-full" vertical align="flex-start">
               <Flex

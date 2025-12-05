@@ -87,7 +87,11 @@ const SelectYourAgentList = ({
           home_chain === agentConfig.middlewareHomeChainId,
       );
 
-    return ACTIVE_AGENTS.filter(isNotInServices);
+    return (
+      ACTIVE_AGENTS.filter(isNotInServices)
+        // put all under construction in the end
+        .sort(([_, aConfig]) => (aConfig.isUnderConstruction ? 1 : -1))
+    );
   }, [services]);
 
   return agents.map(([agentType, agentConfig]) => (

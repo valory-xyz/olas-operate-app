@@ -31,6 +31,10 @@ const schema = {
     type: 'object',
     default: defaultInitialAgentSettings,
   },
+  pett_ai: {
+    type: 'object',
+    default: defaultInitialAgentSettings,
+  },
   lastProvidedBackupWallet: {
     type: 'object',
     default: { address: null, type: 'manual' },

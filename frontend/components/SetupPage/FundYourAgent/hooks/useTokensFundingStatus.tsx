@@ -102,7 +102,7 @@ export const useTokensFundingStatus = () => {
       };
     }
 
-    if (isEmpty(tokenRequirements) || !walletBalances) {
+    if (isEmpty(tokenRequirements) || isEmpty(walletBalances)) {
       return {
         isFullyFunded: false,
         tokensFundingStatus: {},

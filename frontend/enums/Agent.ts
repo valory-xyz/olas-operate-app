@@ -8,6 +8,7 @@ export const AgentType = {
   AgentsFun: 'memeooorr',
   Modius: 'modius',
   Optimus: 'optimus',
+  PettAi: 'pett_ai',
 } as const;
 
 /**

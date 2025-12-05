@@ -28,6 +28,16 @@ const NoMetricsAlert = () => (
   />
 );
 
+const RequiresProfileOpenAlert = ({ message }: { message: string }) => (
+  <Alert
+    message={message}
+    type="warning"
+    centered
+    showIcon
+    className="text-sm"
+  />
+);
+
 const MetricsCapturedTimestampAlert = ({
   timestamp,
 }: {
@@ -78,6 +88,7 @@ export const useAgentPerformance = () => {
 
 type PerformanceProps = {
   openProfile: () => void;
+  hasVisitedProfile?: boolean;
 };
 
 type AgentMetricProps = {
@@ -110,7 +121,10 @@ const AgentMetric = ({ name, value, description }: AgentMetricProps) => (
 /**
  * To display agent performance on the main page.
  */
-export const Performance = ({ openProfile }: PerformanceProps) => {
+export const Performance = ({
+  openProfile,
+  hasVisitedProfile = false,
+}: PerformanceProps) => {
   const { data: agentPerformance, isLoading } = useAgentPerformance();
   const { selectedService, selectedAgentConfig } = useServices();
 
@@ -141,6 +155,12 @@ export const Performance = ({ openProfile }: PerformanceProps) => {
             <Flex justify="center" className="mt-24">
               <Spin />
             </Flex>
+          ) : isAgentRunning &&
+            !hasVisitedProfile &&
+            selectedAgentConfig.requiresProfileOpen ? (
+            <RequiresProfileOpenAlert
+              message={selectedAgentConfig.requiresProfileOpenMessage}
+            />
           ) : sortedMetrics.length === 0 ? (
             <NoMetricsAlert />
           ) : (

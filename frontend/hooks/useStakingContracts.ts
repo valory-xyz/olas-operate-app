@@ -21,7 +21,6 @@ export const useStakingContracts = () => {
   const availableStakingProgramIds = Object.keys(
     STAKING_PROGRAMS[evmHomeChainId],
   ).map((stakingProgramIdKey) => stakingProgramIdKey as StakingProgramId);
-
   const orderedStakingProgramIds = useMemo(
     () =>
       availableStakingProgramIds.reduce(

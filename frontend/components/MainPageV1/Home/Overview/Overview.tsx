@@ -14,12 +14,16 @@ const Container = styled(Flex)`
 
 type OverviewProps = {
   openProfile: () => void;
+  hasVisitedProfile?: boolean;
 };
 
-export const Overview = ({ openProfile }: OverviewProps) => (
+export const Overview = ({ openProfile, hasVisitedProfile }: OverviewProps) => (
   <Container vertical gap={40}>
     <AgentInfo />
-    <Performance openProfile={openProfile} />
+    <Performance
+      openProfile={openProfile}
+      hasVisitedProfile={hasVisitedProfile}
+    />
     <Staking />
     <Wallet />
   </Container>

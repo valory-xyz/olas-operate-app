@@ -2,7 +2,6 @@ import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
-import { DEFAULT_STAKING_PROGRAM_IDS } from '@/config/stakingPrograms';
 import { AgentType, EvmChainId } from '@/constants';
 import { AgentConfig } from '@/types/Agent';
 import { assertRequired, Maybe } from '@/types/Util';
@@ -46,10 +45,9 @@ export const useStakingRewardsOf = (chainId: EvmChainId) => {
   );
 
   const selectedStakingProgramId = useMemo(() => {
-    const defaultStakingProgramId =
-      DEFAULT_STAKING_PROGRAM_IDS[agentConfig.evmHomeChainId];
+    const defaultStakingProgramId = agentConfig.defaultStakingProgramId;
     return isLoading ? null : activeStakingProgramId || defaultStakingProgramId;
-  }, [agentConfig.evmHomeChainId, isLoading, activeStakingProgramId]);
+  }, [agentConfig.defaultStakingProgramId, isLoading, activeStakingProgramId]);
 
   return useAgentStakingRewardsDetails(
     chainId,
