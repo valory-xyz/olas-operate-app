@@ -9,5 +9,5 @@ export const X402_ENABLED_FLAGS: {
   [AgentMap.Optimus]: true,
   [AgentMap.AgentsFun]: false,
   [AgentMap.Modius]: true,
-  [AgentMap.PettAiAgent]: false,
+  [AgentMap.PettAi]: false,
 };

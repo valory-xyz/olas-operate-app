@@ -45,6 +45,10 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlAlpha],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlAlpha
+      ],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PearlAlpha
@@ -63,6 +67,8 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlBeta],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.PearlBeta],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.PearlBeta],
       STAKING_TOKEN_PROXY_ABI,
@@ -79,6 +85,10 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlBeta2],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBeta2
+      ],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PearlBeta2
@@ -97,6 +107,10 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlBeta3],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBeta3
+      ],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PearlBeta3
@@ -115,6 +129,10 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlBeta4],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBeta4
+      ],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PearlBeta4
@@ -133,6 +151,10 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlBeta5],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBeta5
+      ],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PearlBeta5
@@ -151,6 +173,10 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     mech: MECHS[EvmChainId.Gnosis][MechType.Marketplace].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlBeta6],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBeta6
+      ],
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PearlBeta6
@@ -169,6 +195,10 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     mech: MECHS[EvmChainId.Gnosis][MechType.Marketplace].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace
       ],
     contract: new MulticallContract(

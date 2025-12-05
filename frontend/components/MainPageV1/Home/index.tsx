@@ -50,12 +50,32 @@ export const Home = () => {
     useServices();
 
   const [view, setView] = useState<View>('overview');
+  const [hasVisitedProfile, setHasVisitedProfile] = useState(false);
   const [isUnlockChatUiModalOpen, setIsUnlockChatUiModalOpen] = useState(false);
 
   const { isX402Enabled } = selectedAgentConfig;
+  const isAgentRunning =
+    selectedService?.deploymentStatus !==
+    MiddlewareDeploymentStatusMap.DEPLOYED;
 
   // Reset view to overview when switching between agents
-  useEffect(() => setView('overview'), [selectedAgentType]);
+  useEffect(() => {
+    setView('overview');
+  }, [selectedAgentType]);
+
+  // Track when user visits profile
+  useEffect(() => {
+    if (view === 'profile') {
+      setHasVisitedProfile(true);
+    }
+  }, [view]);
+
+  // Reset if profile was visited after agent run
+  useEffect(() => {
+    if (!isAgentRunning) {
+      setHasVisitedProfile(false);
+    }
+  }, [isAgentRunning]);
 
   const handleChangeView = useCallback(
     (nextView: View) => {
@@ -66,10 +86,7 @@ export const Home = () => {
       }
 
       // Ensure agent is running before opening profile
-      if (
-        selectedService?.deploymentStatus !==
-        MiddlewareDeploymentStatusMap.DEPLOYED
-      ) {
+      if (isAgentRunning) {
         message.open({
           type: 'error',
           content:
@@ -122,7 +139,10 @@ export const Home = () => {
     <Flex vertical gap={40} className="flex-auto">
       <Switcher value={view} onChange={handleChangeView} />
       {view === 'overview' && (
-        <Overview openProfile={() => handleChangeView('profile')} />
+        <Overview
+          openProfile={() => handleChangeView('profile')}
+          hasVisitedProfile={hasVisitedProfile}
+        />
       )}
       {view === 'profile' && <Profile />}
       <UnlockChatUiAlert

@@ -2,7 +2,11 @@ import { Flex, Typography } from 'antd';
 
 import { FormLabel } from '@/components/ui/Typography';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { COINGECKO_DEMO_API_URL, GEMINI_API_URL } from '@/constants/urls';
+import {
+  COINGECKO_DEMO_API_URL,
+  GEMINI_API_URL,
+  OPEN_AI_API_URL,
+} from '@/constants/urls';
 
 const { Text, Title } = Typography;
 
@@ -44,6 +48,18 @@ export const GeminiApiKeySubHeader = ({
   </Flex>
 );
 
+export const OpenAiApiKeySubHeader = () => (
+  <Flex gap={8} vertical className="mb-32">
+    <Title level={5} className="m-0">
+      OpenAI API key
+    </Title>
+    <Text type="secondary">
+      The OpenAI API key allows your agent to choose the best next action to
+      care for your pet.
+    </Text>
+  </Flex>
+);
+
 export const CoinGeckoApiKeyLabel = () => (
   <FormLabel>CoinGecko API key</FormLabel>
 );
@@ -52,6 +68,12 @@ export const GeminiApiKeyLabel = () => (
   <Flex align="center" gap={6}>
     <FormLabel>Gemini API key</FormLabel>
     <Text className="text-neutral-tertiary text-sm pb-4">– optional</Text>
+  </Flex>
+);
+
+export const OpenAiApiKeyLabel = () => (
+  <Flex align="center" gap={6}>
+    <FormLabel>OpenAI API key</FormLabel>
   </Flex>
 );
 
@@ -72,6 +94,19 @@ export const GeminiApiKeyDesc = () => (
       You can generate Gemini API Key for free on{' '}
       <a target="_blank" rel="noopener noreferrer" href={GEMINI_API_URL}>
         Google AI Studio&nbsp;{UNICODE_SYMBOLS.EXTERNAL_LINK}
+      </a>
+      .
+    </Text>
+  </Flex>
+);
+
+export const OpenAiApiKeyDesc = () => (
+  <Flex vertical>
+    <Text>
+      Please provide with your Open AI Api Key. If you do not own one, follow
+      instructions to get it for free{' '}
+      <a target="_blank" rel="noopener noreferrer" href={OPEN_AI_API_URL}>
+        here&nbsp;{UNICODE_SYMBOLS.EXTERNAL_LINK}
       </a>
       .
     </Text>

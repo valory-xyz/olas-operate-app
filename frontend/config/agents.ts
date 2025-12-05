@@ -8,11 +8,13 @@ import {
   OPTIMUS_SERVICE_TEMPLATE,
 } from '@/constants/serviceTemplates';
 import { X402_ENABLED_FLAGS } from '@/constants/x402';
+import { STAKING_PROGRAM_IDS } from '@/enums';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
+import { PettAiService } from '@/service/agents/PettAi';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
 import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
@@ -61,8 +63,7 @@ export const AGENT_CONFIG: {
     evmHomeChainId: EvmChainId.Gnosis,
     middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
     agentIds: [14, 25],
-    requiresAgentSafesOn: [EvmChainId.Gnosis],
-    requiresMasterSafesOn: [EvmChainId.Gnosis],
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.PearlBeta,
     serviceApi: PredictTraderService,
     displayName: 'Prediction Trader',
     description: 'Participates in prediction markets.',
@@ -82,11 +83,10 @@ export const AGENT_CONFIG: {
     evmHomeChainId: EvmChainId.Optimism,
     middlewareHomeChainId: MiddlewareChainMap.OPTIMISM,
     agentIds: [40],
-    requiresAgentSafesOn: [EvmChainId.Optimism],
     additionalRequirements: {
       [EvmChainId.Optimism]: { [TokenSymbol.USDC]: getOptimusUsdcConfig() },
     },
-    requiresMasterSafesOn: [EvmChainId.Optimism],
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.OptimusAlpha2,
     serviceApi: OptimismService,
     displayName: 'Optimus',
     description:
@@ -108,8 +108,7 @@ export const AGENT_CONFIG: {
     evmHomeChainId: EvmChainId.Base,
     middlewareHomeChainId: MiddlewareChainMap.BASE,
     agentIds: [43],
-    requiresAgentSafesOn: [EvmChainId.Base],
-    requiresMasterSafesOn: [EvmChainId.Base],
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.MemeBaseAlpha2,
     serviceApi: AgentsFunBaseService,
     displayName: 'Agents.fun',
     description:
@@ -129,11 +128,10 @@ export const AGENT_CONFIG: {
     evmHomeChainId: EvmChainId.Mode,
     agentIds: [40],
     middlewareHomeChainId: MiddlewareChainMap.MODE,
-    requiresAgentSafesOn: [EvmChainId.Mode],
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.ModiusAlpha,
     additionalRequirements: {
       [EvmChainId.Mode]: { [TokenSymbol.USDC]: getModiusUsdcConfig() },
     },
-    requiresMasterSafesOn: [EvmChainId.Mode],
     serviceApi: ModiusService,
     displayName: 'Modius',
     description:
@@ -145,8 +143,28 @@ export const AGENT_CONFIG: {
       'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
     servicePublicId: 'valory/optimus:0.1.0',
   },
-  [AgentMap.PettAiAgent]: {
-     // TODO: From @Edu add config for Pett.ai agent (was not mentioned in the agent integration checklist but something is needed here)
+  [AgentMap.PettAi]: {
+    isAgentEnabled: true,
+    isUnderConstruction: false,
+    isComingSoon: false,
+    requiresSetup: true,
+    isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PettAi],
+    name: 'Pett.ai',
+    evmHomeChainId: EvmChainId.Base,
+    agentIds: [80],
+    middlewareHomeChainId: MiddlewareChainMap.BASE,
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.PettAiAgent,
+    serviceApi: PettAiService,
+    displayName: 'PettBro by Pett.ai',
+    description: 'Pett.ai autonomous agent service for virtual pet management.',
+    hasExternalFunds: false,
+    hasChatUI: false,
+    defaultBehavior:
+      'Make sure to login to your favourite pet through the Agent Profile to enable autonomous pet sitting actions!',
+    servicePublicId: 'pettaidev/pett_agent:0.1.0',
+    requiresProfileOpen: true,
+    requiresProfileOpenMessage:
+      'Make sure to connect your digital pet to the agent in Agent Profile.',
   },
 };
 

@@ -83,7 +83,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-add-funds': true,
     'on-ramp': true,
   },
-  [AgentType.PettAiAgent]: {
+  [AgentType.PettAi]: {
     'manage-wallet': false,
     'withdraw-funds': false,
     'last-transactions': false,

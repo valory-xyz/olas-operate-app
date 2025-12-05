@@ -2,6 +2,7 @@ import {
   MiddlewareDeploymentStatus,
   SupportedMiddlewareChain,
 } from '@/constants';
+import { StakingProgramId } from '@/enums';
 import { EvmChainId } from '@/enums/Chain';
 import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
@@ -15,13 +16,21 @@ type ServiceApi =
   | typeof OptimismService
   | typeof AgentsFunBaseService;
 
+type RequiresProfileOpen =
+  | {
+      /** Whether the agent requires opening profile first before showing performance metrics */
+      requiresProfileOpen: true;
+      /** Custom message to show when agent requires to open profile after run */
+      requiresProfileOpenMessage: string;
+    }
+  | { requiresProfileOpen?: never; requiresProfileOpenMessage?: never };
+
 export type AgentConfig = {
   name: string;
   evmHomeChainId: EvmChainId;
   middlewareHomeChainId: SupportedMiddlewareChain;
   agentIds: number[];
-  requiresAgentSafesOn: EvmChainId[];
-  requiresMasterSafesOn: EvmChainId[];
+  defaultStakingProgramId: StakingProgramId;
   additionalRequirements?: Partial<
     Record<EvmChainId, Partial<Record<TokenSymbol, number>>>
   >;
@@ -53,7 +62,7 @@ export type AgentConfig = {
    */
   defaultBehavior?: string;
   servicePublicId: string;
-};
+} & RequiresProfileOpen;
 
 type AgentPerformanceMetric = {
   name: string;

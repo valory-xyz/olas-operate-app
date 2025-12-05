@@ -9,6 +9,7 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { MECH_ACTIVITY_CHECKER_ABI } from '@/abis/mechActivityChecker';
 import { MEME_ACTIVITY_CHECKER_ABI } from '@/abis/memeActivityChecker';
+import { PET_ACTIVITY_CHECKER_ABI } from '@/abis/petActivityChecker';
 import { REQUESTER_ACTIVITY_CHECKER_ABI } from '@/abis/requesterActivityChecker';
 import { STAKING_ACTIVITY_CHECKER_ABI } from '@/abis/stakingActivityChecker';
 import {
@@ -17,28 +18,32 @@ import {
 } from '@/enums/StakingProgram';
 import { Address } from '@/types/Address';
 
-export const getMechActivityCheckerContract = (
+const getMechActivityCheckerContract = (
   address: Address,
 ): MulticallContract => {
   return new MulticallContract(address, MECH_ACTIVITY_CHECKER_ABI);
 };
 
-export const getRequesterActivityCheckerContract = (
+const getRequesterActivityCheckerContract = (
   address: Address,
 ): MulticallContract => {
   return new MulticallContract(address, REQUESTER_ACTIVITY_CHECKER_ABI);
 };
 
-export const getStakingActivityCheckerContract = (
+const getStakingActivityCheckerContract = (
   address: Address,
 ): MulticallContract => {
   return new MulticallContract(address, STAKING_ACTIVITY_CHECKER_ABI);
 };
 
-export const getMemeActivityCheckerContract = (
+const getMemeActivityCheckerContract = (
   address: Address,
 ): MulticallContract => {
   return new MulticallContract(address, MEME_ACTIVITY_CHECKER_ABI);
+};
+
+const getPetActivityCheckerContract = (address: Address): MulticallContract => {
+  return new MulticallContract(address, PET_ACTIVITY_CHECKER_ABI);
 };
 
 export const GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
@@ -97,7 +102,7 @@ export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.AgentsFun3]: getRequesterActivityCheckerContract(
     '0xF0814A105c1b684922Fce8C3b80d7B6Ff1e399F9',
   ),
-  [STAKING_PROGRAM_IDS.PettAiAgent]: getRequesterActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.PettAiAgent]: getPetActivityCheckerContract(
     '0x7aD8E6032849Edd8bF742E459722Ee8B10e2cCFc',
   ),
 } as const;

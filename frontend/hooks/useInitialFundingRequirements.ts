@@ -4,10 +4,7 @@ import { useMemo } from 'react';
 
 import { AGENT_CONFIG } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
-import {
-  DEFAULT_STAKING_PROGRAM_IDS,
-  STAKING_PROGRAMS,
-} from '@/config/stakingPrograms';
+import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { getNativeTokenSymbol, NATIVE_TOKEN_CONFIG } from '@/config/tokens';
 import { AgentType } from '@/constants/agent';
 import { EvmChainId } from '@/constants/chains';
@@ -65,11 +62,12 @@ const AGENT_DEPLOYMENT_GAS_REQUIREMENT_WEI = 2;
  * { 100 : { XDAI: 11.5, OLAS: 40 }}
  */
 export const useInitialFundingRequirements = (agentType: AgentType) => {
+  const agentConfig = AGENT_CONFIG[agentType];
   const serviceTemplate = SERVICE_TEMPLATES.find(
     (template) => template.agentType === agentType,
   );
-  const { additionalRequirements, evmHomeChainId } = AGENT_CONFIG[agentType];
-  const stakingProgramId = DEFAULT_STAKING_PROGRAM_IDS[evmHomeChainId];
+  const { additionalRequirements } = AGENT_CONFIG[agentType];
+  const stakingProgramId = agentConfig.defaultStakingProgramId;
 
   const { getMasterSafeOf, isFetched: isMasterWalletsFetched } =
     useMasterWalletContext();
@@ -121,5 +119,11 @@ export const useInitialFundingRequirements = (agentType: AgentType) => {
     );
 
     return results;
-  }, [serviceTemplate, stakingProgramId, additionalRequirements]);
+  }, [
+    serviceTemplate,
+    getMasterSafeOf,
+    isMasterWalletsFetched,
+    stakingProgramId,
+    additionalRequirements,
+  ]);
 };
