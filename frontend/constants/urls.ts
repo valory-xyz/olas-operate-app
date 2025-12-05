@@ -99,7 +99,9 @@ export const ON_RAMP_GATEWAY_URL = `https://proxy.transak.${process.env.NODE_ENV
 export const PEARL_API_URL = 'https://pearl-api.olas.network';
 
 // web3auth
-export const WEB3AUTH_GATEWAY_URL = `${PEARL_API_URL}/web3auth/login`;
+const WEB3AUTH_GATEWAY_URL = `${PEARL_API_URL}/web3auth`;
+export const WEB3AUTH_LOGIN_URL = `${WEB3AUTH_GATEWAY_URL}/login`;
+export const WEB3AUTH_SWAP_OWNER_URL = `${WEB3AUTH_GATEWAY_URL}/swap-owner-session`;
 
 // support API
 export const SUPPORT_API_URL = `${PEARL_API_URL}/api/zendesk`;

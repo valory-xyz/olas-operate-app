@@ -36,10 +36,7 @@ export const useSetup = () => {
     if (walletAddress && walletType) {
       setSetupObject((prev) =>
         Object.assign(prev, {
-          backupSigner: {
-            address: walletAddress,
-            type: walletType,
-          },
+          backupSigner: { address: walletAddress, type: walletType },
         }),
       );
     }
