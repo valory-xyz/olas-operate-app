@@ -11,7 +11,11 @@ import {
   TokenAmounts,
   TokenBalanceRecord,
 } from '@/types';
-import { areAddressesEqual, formatUnitsToNumber } from '@/utils';
+import {
+  areAddressesEqual,
+  formatUnitsToNumber,
+  numberToPlainString,
+} from '@/utils';
 
 const getAddressBalance = (
   data: AddressBalanceRecord,
@@ -56,7 +60,7 @@ const getInitialDepositValues = (
       if (!tokenDetails) return acc;
 
       const amount = formatUnitsToNumber(
-        `${amountInWei}`,
+        numberToPlainString(amountInWei),
         tokenDetails.decimals,
         6,
       );

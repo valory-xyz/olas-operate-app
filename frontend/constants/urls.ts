@@ -43,6 +43,9 @@ export const COINGECKO_DEMO_API_URL: string =
 export const GEMINI_API_URL: string = 'https://aistudio.google.com/app/apikey';
 export const OPEN_AI_API_URL: string =
   'https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key';
+export const X_ACCOUNT_API_TOKENS_GUIDE_URL: Url =
+  'https://github.com/dvilelaf/meme-ooorr/blob/main/docs/twitter_dev_account.md';
+
 export const WEB3AUTH_URL: Url = 'https://web3auth.io';
 export const WEB3AUTH_TERMS_AND_CONDITIONS_URL: Url = `${WEB3AUTH_URL}/docs/legal/terms-and-conditions`;
 export const SAFE_URL: Url = 'https://safe.global/';
@@ -98,7 +101,9 @@ export const ON_RAMP_GATEWAY_URL = `https://proxy.transak.${process.env.NODE_ENV
 export const PEARL_API_URL = 'https://pearl-api.olas.network';
 
 // web3auth
-export const WEB3AUTH_GATEWAY_URL = `${PEARL_API_URL}/web3auth/login`;
+const WEB3AUTH_GATEWAY_URL = `${PEARL_API_URL}/web3auth`;
+export const WEB3AUTH_LOGIN_URL = `${WEB3AUTH_GATEWAY_URL}/login`;
+export const WEB3AUTH_SWAP_OWNER_URL = `${WEB3AUTH_GATEWAY_URL}/swap-owner-session`;
 
 // support API
 export const SUPPORT_API_URL = `${PEARL_API_URL}/api/zendesk`;
