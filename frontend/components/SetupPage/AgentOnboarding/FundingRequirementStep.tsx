@@ -12,7 +12,7 @@ import {
   TokenSymbolConfigMap,
   TokenSymbolMap,
 } from '@/constants';
-import { useFundingRequirements } from '@/hooks';
+import { useInitialFundingRequirements } from '@/hooks';
 import { asEvmChainDetails } from '@/utils';
 
 const { Text, Title } = Typography;
@@ -92,7 +92,7 @@ const MinimumStakingRequirements = ({
   agentType,
 }: MinimumStakingRequirementsProps) => {
   const { evmHomeChainId } = AGENT_CONFIG[agentType];
-  const tokens = useFundingRequirements(agentType);
+  const tokens = useInitialFundingRequirements(agentType);
   const olasAmount = tokens?.[evmHomeChainId]?.[TokenSymbolMap.OLAS] || 0;
 
   return (
@@ -122,7 +122,7 @@ const MinimumFundingRequirements = ({
   agentType,
 }: MinimumFundingRequirementsProps) => {
   const { evmHomeChainId } = AGENT_CONFIG[agentType];
-  const tokens = useFundingRequirements(agentType);
+  const tokens = useInitialFundingRequirements(agentType);
 
   const allTokens = Object.entries(tokens[evmHomeChainId] || {})
     .map(([token, amount]) => {

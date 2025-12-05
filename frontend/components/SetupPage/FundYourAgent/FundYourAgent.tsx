@@ -7,18 +7,16 @@ import { COLOR, EvmChainId, EvmChainName } from '@/constants';
 import { SetupScreen } from '@/enums/SetupScreen';
 import {
   useFeatureFlag,
+  useGetRefillRequirements,
   useOnRampContext,
   useServices,
   useSetup,
   useTotalFiatFromNativeToken,
   useTotalNativeTokenRequired,
 } from '@/hooks';
+import { TokenRequirement } from '@/types';
 
-import {
-  type TokenRequirement,
-  TokenRequirements,
-} from './components/TokensRequirements';
-import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
+import { TokenRequirements } from './components/TokensRequirements';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -170,7 +168,7 @@ export const FundYourAgent = () => {
     totalTokenRequirements: tokenRequirements,
     isLoading,
     resetTokenRequirements,
-  } = useGetRefillRequirementsWithMonthlyGas({
+  } = useGetRefillRequirements({
     // In case x402 feature is turned off, service creation for agents
     // requiring setup is already handled at the time of agentForm
     shouldCreateDummyService: requiresSetup && !isX402Enabled ? false : true,

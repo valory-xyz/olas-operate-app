@@ -1,7 +1,7 @@
 import { entries } from 'lodash';
 import { useCallback } from 'react';
 
-import { Bridge, getFromToken, getTokenDecimal } from '@/components/Bridge';
+import { Bridge } from '@/components/Bridge';
 import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
 import {
   AddressZero,
@@ -14,7 +14,12 @@ import { useMasterWalletContext } from '@/hooks';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
-import { asEvmChainId, parseUnits } from '@/utils';
+import {
+  asEvmChainId,
+  getFromToken,
+  getTokenDecimal,
+  parseUnits,
+} from '@/utils';
 
 type BridgeCryptoOnProps = {
   onBack: () => void;
@@ -29,14 +34,26 @@ const fromChainConfig = ETHEREUM_TOKEN_CONFIG;
  * for the specified bridgeToChain.
  */
 const useGetBridgeRequirementsParams = (bridgeToChain: MiddlewareChain) => {
-  const { masterSafeAddress } = usePearlWallet();
-  const { masterEoa } = useMasterWalletContext();
+  const {
+    masterEoa,
+    getMasterSafeOf,
+    isFetched: isMasterWalletFetched,
+  } = useMasterWalletContext();
   const toChainConfig = TOKEN_CONFIG[asEvmChainId(bridgeToChain)];
 
   return useCallback(
     (toTokenAddress: Address, amount: number) => {
       if (!masterEoa) throw new Error('Master EOA is not available');
-      if (!masterSafeAddress) throw new Error('Master Safe is not available');
+      if (!isMasterWalletFetched) throw new Error('Master Safe not loaded');
+
+      const fromChain = MiddlewareChainMap.ETHEREUM;
+      const masterSafeOnFromChain = getMasterSafeOf?.(asEvmChainId(fromChain));
+
+      const masterSafeOnToChain = getMasterSafeOf?.(
+        asEvmChainId(bridgeToChain),
+      );
+
+      if (!masterSafeOnToChain) throw new Error('Master Safe is not available');
 
       const fromToken = getFromToken(
         toTokenAddress,
@@ -48,18 +65,24 @@ const useGetBridgeRequirementsParams = (bridgeToChain: MiddlewareChain) => {
       return {
         from: {
           chain: MiddlewareChainMap.ETHEREUM,
-          address: masterEoa.address,
+          address: masterSafeOnFromChain?.address ?? masterEoa.address,
           token: fromToken,
         },
         to: {
           chain: bridgeToChain,
-          address: masterSafeAddress,
+          address: masterSafeOnToChain.address,
           token: toTokenAddress,
           amount: parseUnits(amount, tokenDecimal),
         },
       } satisfies BridgeRequest;
     },
-    [bridgeToChain, toChainConfig, masterEoa, masterSafeAddress],
+    [
+      masterEoa,
+      isMasterWalletFetched,
+      getMasterSafeOf,
+      bridgeToChain,
+      toChainConfig,
+    ],
   );
 };
 

@@ -1,4 +1,9 @@
+import { ChainTokenConfig } from '@/config/tokens';
+import { AddressZero } from '@/constants/address';
+import { TokenSymbol } from '@/enums';
+import { Address } from '@/types/Address';
 import { TokenAmounts } from '@/types/Wallet';
+import { areAddressesEqual } from '@/utils/address';
 
 import { formatNumber } from './numberFormatters';
 
@@ -20,3 +25,57 @@ export function tokenBalancesToSentence(tokenAmounts: TokenAmounts): string {
   if (formatted.length === 2) return formatted.join(' and ');
   return `${formatted.slice(0, -1).join(', ')} and ${formatted.at(-1)}`;
 }
+
+/**
+ * Get the token details from the token address.
+ * Example: if tokenAddress is USDC, it will return the USDC details from the chainConfig.
+ */
+export const getTokenDetails = (
+  tokenAddress: string,
+  chainConfig: ChainTokenConfig,
+) => {
+  if (areAddressesEqual(tokenAddress, AddressZero)) {
+    const nativeToken = Object.values(chainConfig).find(
+      (configToken) => configToken.tokenType === 'native',
+    );
+    return {
+      symbol: (nativeToken?.symbol ?? 'ETH') as TokenSymbol,
+      decimals: nativeToken?.decimals ?? 18,
+    };
+  }
+
+  return Object.values(chainConfig).find((configToken) =>
+    areAddressesEqual(configToken.address, tokenAddress),
+  );
+};
+
+const getTokenSymbol = (tokenAddress: string, chainConfig: ChainTokenConfig) =>
+  getTokenDetails(tokenAddress, chainConfig)?.symbol;
+
+export const getTokenDecimal = (
+  tokenAddress: string,
+  chainConfig: ChainTokenConfig,
+) => getTokenDetails(tokenAddress, chainConfig)?.decimals;
+
+/**
+ * Helper to get source token address.
+ *
+ * Example, if tokenAddress is USDC on the destination chain,
+ * it will return the USDC address on the fromChain (Ethereum).
+ */
+export const getFromToken = (
+  tokenAddress: string,
+  fromChainConfig: ChainTokenConfig,
+  toChainConfig: ChainTokenConfig,
+): Address => {
+  if (areAddressesEqual(tokenAddress, AddressZero)) return AddressZero;
+
+  const tokenSymbol = getTokenSymbol(tokenAddress, toChainConfig);
+  if (!tokenSymbol || !fromChainConfig[tokenSymbol]?.address) {
+    throw new Error(
+      `Failed to get source token for the destination token: ${tokenAddress}`,
+    );
+  }
+
+  return fromChainConfig[tokenSymbol]?.address as Address;
+};

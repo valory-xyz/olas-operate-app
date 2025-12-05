@@ -14,6 +14,7 @@ import {
 import { COLOR } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useMasterWalletContext, useServices } from '@/hooks';
+import { isValidServiceId } from '@/utils';
 
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { LowPearlWalletBalanceAlert } from './LowPearlWalletBalanceAlert';
@@ -79,7 +80,8 @@ const StakedAssets = () => {
   const { walletChainId } = usePearlWallet();
 
   const configIds = availableServiceConfigIds.filter(
-    ({ chainId }) => chainId === walletChainId,
+    ({ tokenId, chainId }) =>
+      chainId === walletChainId && isValidServiceId(tokenId),
   );
 
   return (

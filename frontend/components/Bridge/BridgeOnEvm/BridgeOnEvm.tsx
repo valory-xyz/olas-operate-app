@@ -37,6 +37,7 @@ export const BridgeOnEvm = ({
   updateCrossChainTransferDetails,
 }: BridgeOnEvmProps) => {
   const { masterEoa } = useMasterWalletContext();
+  // TODO check if master safe exists once we support agents on To Chain
   const address = masterEoa?.address;
 
   return (
