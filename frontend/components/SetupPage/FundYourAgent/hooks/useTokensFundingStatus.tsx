@@ -102,7 +102,7 @@ export const useTokensFundingStatus = () => {
       };
     }
 
-    if (isEmpty(tokenRequirements) || !walletBalances) {
+    if (isEmpty(tokenRequirements) || isEmpty(walletBalances)) {
       return {
         isFullyFunded: false,
         tokensFundingStatus: {},
@@ -145,6 +145,8 @@ export const useTokensFundingStatus = () => {
       tokensFundingStatus,
     };
   }, [hasBeenFullyFunded, requiredTokens, tokenRequirements, walletBalances]);
+
+  console.log('fundingStatus', fundingStatus);
 
   /**
    * Once the funds have been received completely, don't recalculate the statuses,

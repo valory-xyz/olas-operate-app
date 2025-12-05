@@ -53,7 +53,6 @@ export type AgentConfig = {
    * instead of asking users to manually provide them
    **/
   isX402Enabled: boolean;
-  hasChatUI: boolean;
   /**
    * Whether the chat UI requires an API key (either via x402 or agent form)
    */

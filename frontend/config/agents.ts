@@ -68,7 +68,6 @@ export const AGENT_CONFIG: {
     displayName: 'Prediction Trader',
     description: 'Participates in prediction markets.',
     hasExternalFunds: false,
-    hasChatUI: true,
     doesChatUiRequireApiKey: true,
     category: 'Prediction Markets',
     defaultBehavior:
@@ -93,7 +92,6 @@ export const AGENT_CONFIG: {
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Optimus network.',
     hasExternalFunds: true,
-    hasChatUI: true,
     doesChatUiRequireApiKey: true,
     category: 'DeFi',
     defaultBehavior:
@@ -116,7 +114,6 @@ export const AGENT_CONFIG: {
     description:
       'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
     hasExternalFunds: false,
-    hasChatUI: true,
     doesChatUiRequireApiKey: false,
     defaultBehavior: 'Autonomously posts to X based on the provided persona.',
     servicePublicId: 'dvilela/memeooorr:0.1.0',
@@ -140,7 +137,6 @@ export const AGENT_CONFIG: {
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
     hasExternalFunds: true,
-    hasChatUI: true,
     doesChatUiRequireApiKey: true,
     category: 'DeFi',
     defaultBehavior:
@@ -162,7 +158,7 @@ export const AGENT_CONFIG: {
     displayName: 'PettBro by Pett.ai',
     description: 'Pett.ai autonomous agent service for virtual pet management.',
     hasExternalFunds: false,
-    hasChatUI: false,
+    doesChatUiRequireApiKey: false,
     defaultBehavior:
       'Make sure to login to your favourite pet through the Agent Profile to enable autonomous pet sitting actions!',
     servicePublicId: 'pettaidev/pett_agent:0.1.0',
