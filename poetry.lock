@@ -192,23 +192,22 @@ files = [
 
 [[package]]
 name = "anyio"
-version = "4.11.0"
+version = "4.12.0"
 description = "High-level concurrency and networking framework on top of asyncio or Trio"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "anyio-4.11.0-py3-none-any.whl", hash = "sha256:0287e96f4d26d4149305414d4e3bc32f0dcd0862365a4bddea19d7a1ec38c4fc"},
-    {file = "anyio-4.11.0.tar.gz", hash = "sha256:82a8d0b81e318cc5ce71a5f1f8b5c4e63619620b63141ef8c995fa0db95a57c4"},
+    {file = "anyio-4.12.0-py3-none-any.whl", hash = "sha256:dad2376a628f98eeca4881fc56cd06affd18f659b17a747d3ff0307ced94b1bb"},
+    {file = "anyio-4.12.0.tar.gz", hash = "sha256:73c693b567b0c55130c104d0b43a9baf3aa6a31fc6110116509f27bf75e21ec0"},
 ]
 
 [package.dependencies]
 exceptiongroup = {version = ">=1.0.2", markers = "python_version < \"3.11\""}
 idna = ">=2.8"
-sniffio = ">=1.1"
 typing_extensions = {version = ">=4.5", markers = "python_version < \"3.13\""}
 
 [package.extras]
-trio = ["trio (>=0.31.0)"]
+trio = ["trio (>=0.31.0)", "trio (>=0.32.0)"]
 
 [[package]]
 name = "argon2-cffi"
@@ -2168,7 +2167,7 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.12.3"
+version = "0.13.2"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.10"
@@ -2197,8 +2196,8 @@ uvicorn = "==0.27.0"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware"
-reference = "3e662b0c8403ac230dcc45f85612e03f9fa2fc58"
-resolved_reference = "3e662b0c8403ac230dcc45f85612e03f9fa2fc58"
+reference = "3b0b89f62986d596b31234f16ce6d3b4213cacdb"
+resolved_reference = "3b0b89f62986d596b31234f16ce6d3b4213cacdb"
 
 [[package]]
 name = "open-aea"
@@ -3367,17 +3366,6 @@ files = [
 ]
 
 [[package]]
-name = "sniffio"
-version = "1.3.1"
-description = "Sniff out which async library your code is running under"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2"},
-    {file = "sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc"},
-]
-
-[[package]]
 name = "spinners"
 version = "0.0.24"
 description = "Spinners for terminals"
@@ -3891,4 +3879,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "d8639fde88622485bf595695d44a81ca024889f78f7848f8b3948e35f82d76a1"
+content-hash = "a0b55e3313ed68af280927b61ff063f791f5f246f0fa80d9235df1644f3ce769"

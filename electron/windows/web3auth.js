@@ -4,6 +4,7 @@ const { BrowserWindow } = require('electron');
 const path = require('path');
 
 const { logger } = require('../logger');
+const { WIDTH, HEIGHT } = require('../constants/size');
 
 /** @type {Electron.BrowserWindow | null} */
 let web3AuthWindow = null;
@@ -14,7 +15,7 @@ const getWeb3AuthWindow = () => web3AuthWindow;
  */
 /** @type {()=>Promise<BrowserWindow|undefined>} */
 const createWeb3AuthWindow = async (baseUrl) => {
-  if (!getWeb3AuthWindow() || getWeb3AuthWindow().isDestroyed) {
+  if (!getWeb3AuthWindow() || getWeb3AuthWindow().isDestroyed()) {
     web3AuthWindow = new BrowserWindow({
       title: 'Web3Auth',
       resizable: false,
@@ -24,8 +25,8 @@ const createWeb3AuthWindow = async (baseUrl) => {
       fullscreenable: false,
       maximizable: false,
       closable: false,
-      width: 480,
-      height: 700,
+      width: WIDTH,
+      height: HEIGHT,
       media: true,
       webPreferences: {
         nodeIntegration: false,
