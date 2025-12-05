@@ -64,10 +64,7 @@ export const useServiceDeployment = () => {
     setIsPaused: setIsStakingContractInfoPollingPaused,
     refetchSelectedStakingContractDetails: refetchActiveStakingContractDetails,
   } = useStakingContractContext();
-  const {
-    selectedStakingProgramId,
-    // selectedStakingProgramMeta
-  } = useStakingProgram();
+  const { selectedStakingProgramId } = useStakingProgram();
   const {
     isEligibleForStaking,
     isAgentEvicted,
@@ -98,10 +95,6 @@ export const useServiceDeployment = () => {
     // If another agent is running, return false;
     if (isAnotherAgentRunning) return false;
 
-    // TODO: Enable it so users don’t get stuck with the 3-day cooling period and not able to run it.
-    // If staking contract is deprecated, return false
-    // if (selectedStakingProgramMeta?.deprecated) return false;
-
     // If not enough service slots, and service is not staked, return false
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
     if (hasSlot && !isServiceStaked) return false;
@@ -125,7 +118,6 @@ export const useServiceDeployment = () => {
     isLoading,
     isServiceStaked,
     selectedAgentConfig.isUnderConstruction,
-    // selectedStakingProgramMeta?.deprecated,
   ]);
 
   const pauseAllPolling = useCallback(() => {
