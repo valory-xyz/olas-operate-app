@@ -54,9 +54,9 @@ export const useStakingContracts = () => {
       availableStakingProgramIds,
       isActiveStakingProgramLoaded,
       currentStakingProgramId,
-      evmHomeChainId,
       selectedAgentConfig.evmHomeChainId,
       selectedAgentType,
+      evmHomeChainId,
     ],
   );
 
