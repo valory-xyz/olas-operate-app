@@ -65,7 +65,7 @@ export const ModiusAgentFormContent = ({
         updateNextStep();
       }
     } catch (error) {
-      console.error('Error in handleContinue:', error);
+      console.error('Error in validation:', error);
     }
   }, [form, isCoinGeckoStep, updateNextStep]);
 
