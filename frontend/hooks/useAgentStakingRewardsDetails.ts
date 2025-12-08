@@ -13,6 +13,8 @@ import { useServices } from '@/hooks';
 import { AgentConfig, Nullable, StakingRewardsInfoSchema } from '@/types';
 import { asMiddlewareChain, isValidServiceId } from '@/utils';
 
+import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
+
 /**
  * Hook to fetch staking rewards details of a service on a given chain.
  */
@@ -21,6 +23,7 @@ export const useAgentStakingRewardsDetails = (
   stakingProgramId: Nullable<StakingProgramId>,
   agentConfig: AgentConfig,
 ) => {
+  const refetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
   const { isOnline } = useContext(OnlineStatusContext);
   const { services, selectedAgentConfig } = useServices();
   const service = services?.find(
@@ -75,7 +78,7 @@ export const useAgentStakingRewardsDetails = (
       !!stakingProgramId &&
       !!multisig &&
       isValidServiceId(serviceNftTokenId),
-    refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
-    refetchOnWindowFocus: false,
+    refetchInterval: isOnline ? refetchInterval : false,
+    refetchIntervalInBackground: true,
   });
 };

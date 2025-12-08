@@ -38,7 +38,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChainMap.GNOSIS,
   configurations: {
     [MiddlewareChainMap.GNOSIS]: {
-      staking_program_id: STAKING_PROGRAM_IDS.PearlBeta, // default, may be overwritten
+      staking_program_id: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1, // default, may be overwritten
       nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 14,

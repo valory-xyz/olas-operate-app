@@ -15,7 +15,12 @@ import {
   REACT_QUERY_KEYS,
   StakingProgramId,
 } from '@/constants';
-import { useService, useServices, useStakingProgram } from '@/hooks';
+import {
+  useDynamicRefetchInterval,
+  useService,
+  useServices,
+  useStakingProgram,
+} from '@/hooks';
 import { ServiceStakingDetails, StakingContractDetails } from '@/types';
 import { isValidServiceId } from '@/utils';
 
@@ -86,6 +91,7 @@ const useStakingContractDetailsByStakingProgram = ({
   isPaused?: boolean;
 }) => {
   const { selectedAgentConfig } = useServices();
+  const refetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
   const { serviceApi, evmHomeChainId } = selectedAgentConfig;
 
   return useQuery({
@@ -128,8 +134,8 @@ const useStakingContractDetailsByStakingProgram = ({
       });
     },
     enabled: !isPaused && !!stakingProgramId,
-    refetchInterval: !isPaused ? FIVE_SECONDS_INTERVAL : false,
-    refetchOnWindowFocus: false,
+    refetchInterval: isPaused ? false : refetchInterval,
+    refetchIntervalInBackground: !isPaused,
   });
 };
 

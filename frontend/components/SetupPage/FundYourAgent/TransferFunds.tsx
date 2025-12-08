@@ -122,6 +122,7 @@ export const TransferFunds = () => {
         <TokenRequirementsTable
           isLoading={isLoading}
           tokensDataSource={Object.values(tokensFundingStatus)}
+          className="mt-32"
         />
       </CardFlex>
 

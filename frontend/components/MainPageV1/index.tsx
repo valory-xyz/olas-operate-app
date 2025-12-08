@@ -9,13 +9,15 @@ import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { Settings } from '@/components/SettingsPage';
 import { UpdateAgentPage } from '@/components/UpdateAgentPage';
 import { PAGES, SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants';
-import { useNotifyOnNewEpoch, usePageState } from '@/hooks';
+import { usePageState } from '@/hooks';
 
 import { AgentWallet } from '../AgentWallet';
 import { FundPearlWallet } from '../FundPearlWallet';
 import { PearlWallet } from '../PearlWallet';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { Home } from './Home';
+import { useNotifyOnAgentRewards } from './hooks/useNotifyOnAgentRewards';
+import { useNotifyOnNewEpoch } from './hooks/useNotifyOnNewEpoch';
 import { useScrollPage } from './hooks/useScrollPage';
 import { useSetupTrayIcon } from './hooks/useSetupTrayIcon';
 import { Sidebar } from './Sidebar/Sidebar';
@@ -48,11 +50,13 @@ const Content = styled(MainContent)<{ $isSplitScreenPage?: boolean }>`
 `;
 
 /**
- * Top-level hook to initialize page-level settings, electron window listeners, etc.
+ * Top-level hook to initialize page-level settings, electron window listeners,
+ * notifications etc.
  */
 const usePageInitialization = () => {
   useSetupTrayIcon();
   useNotifyOnNewEpoch();
+  useNotifyOnAgentRewards();
 };
 
 export const Main = () => {

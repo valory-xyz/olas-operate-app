@@ -6,7 +6,7 @@ import { COLOR } from '@/constants/colors';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useSetup } from '@/hooks/useSetup';
 
-import { useWeb3AuthBackupWallet } from '../hooks/useWeb3AuthBackupWallet';
+import { useWeb3AuthBackupWallet } from './useWeb3AuthBackupWallet';
 
 const { Text } = Typography;
 

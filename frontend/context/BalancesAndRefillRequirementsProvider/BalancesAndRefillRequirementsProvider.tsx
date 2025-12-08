@@ -22,7 +22,11 @@ import {
   SIXTY_MINUTE_INTERVAL,
   THIRTY_SECONDS_INTERVAL,
 } from '@/constants';
-import { useMasterWalletContext, useStore } from '@/hooks';
+import {
+  useDynamicRefetchInterval,
+  useMasterWalletContext,
+  useStore,
+} from '@/hooks';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useRewardContext } from '@/hooks/useRewardContext';
@@ -162,12 +166,13 @@ export const BalancesAndRefillRequirementsProvider = ({
     selectedService?.deploymentStatus ===
     MiddlewareDeploymentStatusMap.DEPLOYED;
 
-  const { refetchInterval, updateRefetchCounter } =
+  const { refetchInterval: backoffRefetchInterval, updateRefetchCounter } =
     useRequirementsFetchInterval({
       configId,
       isServiceRunning,
       isEligibleForRewards,
     });
+  const refetchInterval = useDynamicRefetchInterval(backoffRefetchInterval);
 
   const {
     data: balancesAndFundingRequirements,
@@ -184,7 +189,6 @@ export const BalancesAndRefillRequirementsProvider = ({
       });
 
       updateRefetchCounter(data);
-
       return data;
     },
     enabled: !!configId && isUserLoggedIn && isOnline,

@@ -36,6 +36,7 @@ import {
   usePause,
   useStore,
 } from '@/hooks';
+import { useDynamicRefetchInterval } from '@/hooks/useDynamicRefetchInterval';
 import { ServicesService } from '@/service/Services';
 import {
   AgentConfig,
@@ -102,9 +103,12 @@ export const ServicesContext = createContext<ServicesContextType>({
 export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
   const { store } = useElectronApi();
+  const { paused, setPaused, togglePaused } = usePause();
   const { storeState } = useStore();
   const { pageState } = usePageState();
-  const { paused, setPaused, togglePaused } = usePause();
+  const serviceRefetchInterval = useDynamicRefetchInterval(
+    FIVE_SECONDS_INTERVAL,
+  );
 
   // state to track the services ids message shown
   // so that it is not shown again for the same service
@@ -129,7 +133,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     queryKey: REACT_QUERY_KEYS.SERVICES_KEY,
     queryFn: ({ signal }) => ServicesService.getServices(signal),
     enabled: isOnline && !paused,
-    refetchInterval: FIVE_SECONDS_INTERVAL,
+    refetchInterval: serviceRefetchInterval,
+    refetchIntervalInBackground: true,
   });
 
   const {

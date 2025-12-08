@@ -7,7 +7,7 @@ import { COLOR, SETUP_SCREEN } from '@/constants';
 import { useSetup } from '@/hooks/useSetup';
 import { Address } from '@/types/Address';
 
-import { useWeb3AuthBackupWallet } from '../hooks/useWeb3AuthBackupWallet';
+import { useWeb3AuthBackupWallet } from './useWeb3AuthBackupWallet';
 
 const { Text } = Typography;
 
