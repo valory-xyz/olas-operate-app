@@ -402,6 +402,7 @@ export const DepositForBridging = ({
     <TokenRequirementsTable
       tokensDataSource={tokensDataSource}
       locale={{ emptyText: 'No tokens to deposit!' }}
+      className="mt-32"
     />
   );
 };
