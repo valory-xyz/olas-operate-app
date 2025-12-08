@@ -30,10 +30,15 @@ export const formatNumber = (
 
   // Round the amount to the specified number of decimals
   const factor = 10 ** decimals;
+  const adjustedAmount = amount * factor;
+
+  // Extra precision to avoid floating point exception
+  const amountWithPrecision = parseFloat(adjustedAmount.toFixed(12));
+
   const rounded =
     round === 'ceil'
-      ? Math.ceil(amount * factor) / factor
-      : Math.floor(amount * factor) / factor;
+      ? Math.ceil(amountWithPrecision) / factor
+      : Math.floor(amountWithPrecision) / factor;
 
   // Format the number with commas and the specified decimals
   return Intl.NumberFormat('en-US', {
@@ -89,4 +94,21 @@ export const parseUnits = (
  */
 export const parseEther = (ether: BigNumberish): string => {
   return ethers.utils.parseEther(`${ether}`).toString();
+};
+
+/**
+ *
+ * @deprecated This workaround shouldn't exist.
+ * BE sends numbers in requirements which for large numbers breaks FE (should be bigNumbers)
+ * Until they send strings, use this to quickly fix the issue
+ */
+export const numberToPlainString = (
+  possiblyBrokenBigNumber: string | number,
+) => {
+  if (typeof possiblyBrokenBigNumber === 'number') {
+    return possiblyBrokenBigNumber.toLocaleString('fullwide', {
+      useGrouping: false,
+    });
+  }
+  return possiblyBrokenBigNumber;
 };

@@ -3,6 +3,10 @@ import { createContext, PropsWithChildren } from 'react';
 
 import { Address } from '@/types/Address';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
+import {
+  SwapOwnerTransactionFailure,
+  SwapOwnerTransactionSuccess,
+} from '@/types/Recovery';
 
 type ElectronApiContextProps = {
   getAppVersion?: () => Promise<string>;
@@ -71,6 +75,18 @@ type ElectronApiContextProps = {
     close?: () => void;
     authSuccess?: (address: Address) => void;
   };
+  web3AuthSwapOwnerWindow?: {
+    show?: (params: {
+      safeAddress: string;
+      oldOwnerAddress: string;
+      newOwnerAddress: string;
+      backupOwnerAddress: string;
+      chainId: number;
+    }) => void;
+    close?: () => void;
+    swapSuccess?: (result: SwapOwnerTransactionSuccess) => void;
+    swapFailure?: (result: SwapOwnerTransactionFailure) => void;
+  };
   termsAndConditionsWindow?: {
     show?: (hash?: string) => void;
     close?: () => void;
@@ -110,6 +126,12 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     show: () => {},
     close: () => {},
     authSuccess: () => {},
+  },
+  web3AuthSwapOwnerWindow: {
+    show: () => {},
+    close: () => {},
+    swapSuccess: () => {},
+    swapFailure: () => {},
   },
   termsAndConditionsWindow: {
     show: () => {},
@@ -173,6 +195,16 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           show: getElectronApiFunction('web3AuthWindow.show'),
           close: getElectronApiFunction('web3AuthWindow.close'),
           authSuccess: getElectronApiFunction('web3AuthWindow.authSuccess'),
+        },
+        web3AuthSwapOwnerWindow: {
+          show: getElectronApiFunction('web3AuthSwapOwnerWindow.show'),
+          close: getElectronApiFunction('web3AuthSwapOwnerWindow.close'),
+          swapSuccess: getElectronApiFunction(
+            'web3AuthSwapOwnerWindow.swapSuccess',
+          ),
+          swapFailure: getElectronApiFunction(
+            'web3AuthSwapOwnerWindow.swapFailure',
+          ),
         },
         termsAndConditionsWindow: {
           show: getElectronApiFunction('termsAndConditionsWindow.show'),
