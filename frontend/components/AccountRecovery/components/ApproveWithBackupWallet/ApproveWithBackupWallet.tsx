@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LoadingOutlined } from '@/components/custom-icons';
 import { Alert } from '@/components/ui';
 import { CardFlex } from '@/components/ui/CardFlex';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { REACT_QUERY_KEYS } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
 import { RecoveryService } from '@/service/Recovery';
 import { Nullable } from '@/types';
