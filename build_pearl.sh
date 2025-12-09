@@ -39,9 +39,8 @@ poetry run pyinstaller \
     --hidden-import aea_ledger_cosmos \
     --hidden-import aea_ledger_ethereum_flashbots \
     operate/pearl.py \
-    --add-binary ${BIN_DIR}/aea_bin_x64:. \
-    --add-binary ${BIN_DIR}/aea_bin_arm64:. \
-    --onefile \
+    --onedir \
     --distpath $BIN_DIR \
     --name pearl_$(uname -m)
 
+mv $BIN_DIR/pearl_$(uname -m) $BIN_DIR/middleware

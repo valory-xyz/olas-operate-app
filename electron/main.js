@@ -116,11 +116,11 @@ const platform = os.platform();
 
 const binaryPaths = {
   darwin: {
-    arm64: 'bins/pearl_arm64',
-    x64: 'bins/pearl_x64',
+    arm64: 'bins/middleware/pearl_arm64',
+    x64: 'bins/middleware/pearl_x64',
   },
   win32: {
-    x64: 'bins/pearl_win.exe',
+    x64: 'bins/middleware/pearl_win.exe',
   },
 };
 
