@@ -45,7 +45,8 @@ leak_report
 
 *.dist
 *.build
-/electron/bins/
+/electron/bins/middleware/
+/electron/bins/tendermint_*/
 
 # logs
 *.log
