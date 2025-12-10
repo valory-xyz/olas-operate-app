@@ -65,12 +65,8 @@ const useAllStakingContractDetails = () => {
          * Condition applies to individual queries,
          * only refetch if data for that query hasn't been fetched yet
          */
-        if (query.state.data) {
-          return false;
-        }
-        return typeof refetchInterval === 'function'
-          ? refetchInterval(query)
-          : refetchInterval;
+        if (query.state.status === 'success') return false;
+        return refetchInterval;
       },
       refetchIntervalInBackground: true,
     })),

@@ -164,13 +164,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       }),
     enabled: isOnline && !!selectedServiceConfigId,
     refetchInterval: (query) => {
-      if (query.state.status === 'success') {
-        return typeof serviceRefetchInterval === 'function'
-          ? serviceRefetchInterval(query)
-          : serviceRefetchInterval;
-      }
-
-      return false;
+      if (query.state.status !== 'success') return false;
+      return serviceRefetchInterval;
     },
     refetchIntervalInBackground: true,
   });
