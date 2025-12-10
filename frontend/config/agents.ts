@@ -162,8 +162,8 @@ export const AGENT_CONFIG: {
     defaultBehavior:
       'Make sure to login to your favourite pet through the Agent Profile to enable autonomous pet sitting actions!',
     servicePublicId: 'pettaidev/pett_agent:0.1.0',
-    requiresProfileOpen: true,
-    requiresProfileOpenMessage:
+    needsOpenProfileEachAgentRun: true,
+    needsOpenProfileEachAgentRunMessage:
       'Make sure to connect your digital pet to the agent in Agent Profile.',
   },
 };

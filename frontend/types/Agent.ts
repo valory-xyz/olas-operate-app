@@ -16,14 +16,17 @@ type ServiceApi =
   | typeof OptimismService
   | typeof AgentsFunBaseService;
 
-type RequiresProfileOpen =
+type needsOpenProfileEachAgentRun =
   | {
       /** Whether the agent requires opening profile first before showing performance metrics */
-      requiresProfileOpen: true;
+      needsOpenProfileEachAgentRun: true;
       /** Custom message to show when agent requires to open profile after run */
-      requiresProfileOpenMessage: string;
+      needsOpenProfileEachAgentRunMessage: string;
     }
-  | { requiresProfileOpen?: never; requiresProfileOpenMessage?: never };
+  | {
+      needsOpenProfileEachAgentRun?: undefined;
+      needsOpenProfileEachAgentRunMessage?: never;
+    };
 
 export type AgentConfig = {
   name: string;
@@ -65,7 +68,7 @@ export type AgentConfig = {
    */
   defaultBehavior?: string;
   servicePublicId: string;
-} & RequiresProfileOpen;
+} & needsOpenProfileEachAgentRun;
 
 type AgentPerformanceMetric = {
   name: string;

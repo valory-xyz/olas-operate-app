@@ -31,7 +31,7 @@ type PettAiAgentFormProps = {
 const DEFAULT_SUBMIT_BUTTON_TEXT = 'Continue';
 
 /**
- * Form for setting up a PettAi agent (To setup and update the agent).
+ * Form for setting up a PettAi agent (To setup the agent).
  */
 export const PettAiAgentFormContent = ({
   serviceTemplate,

@@ -5,13 +5,8 @@ import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { Alert, CardFlex, InfoTooltip, Tooltip } from '@/components/ui';
-import {
-  COLOR,
-  FIVE_MINUTE_INTERVAL,
-  MiddlewareDeploymentStatusMap,
-  REACT_QUERY_KEYS,
-} from '@/constants';
-import { useServices } from '@/hooks';
+import { COLOR, FIVE_MINUTE_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
+import { useService, useServices } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { Optional } from '@/types/Util';
 import { asEvmChainId, getTimeAgo, sanitizeHtml } from '@/utils';
@@ -28,7 +23,11 @@ const NoMetricsAlert = () => (
   />
 );
 
-const RequiresProfileOpenAlert = ({ message }: { message: string }) => (
+const needsOpenProfileEachAgentRunAlert = ({
+  message,
+}: {
+  message: string;
+}) => (
   <Alert
     message={message}
     type="warning"
@@ -127,10 +126,7 @@ export const Performance = ({
 }: PerformanceProps) => {
   const { data: agentPerformance, isLoading } = useAgentPerformance();
   const { selectedService, selectedAgentConfig } = useServices();
-
-  const selectedServiceStatus = selectedService?.deploymentStatus;
-  const isAgentRunning =
-    selectedServiceStatus === MiddlewareDeploymentStatusMap.DEPLOYED;
+  const { isServiceActive } = useService(selectedService?.service_config_id);
 
   const sortedMetrics = useMemo(() => {
     if (!agentPerformance?.metrics) return [];
@@ -142,6 +138,11 @@ export const Performance = ({
 
   const agentBehavior =
     agentPerformance?.agent_behavior || selectedAgentConfig.defaultBehavior;
+
+  const shouldShowOpenProfileAlert =
+    isServiceActive &&
+    !hasVisitedProfile &&
+    selectedAgentConfig.needsOpenProfileEachAgentRun;
 
   return (
     <Flex vertical>
@@ -155,17 +156,15 @@ export const Performance = ({
             <Flex justify="center" className="mt-24">
               <Spin />
             </Flex>
-          ) : isAgentRunning &&
-            !hasVisitedProfile &&
-            selectedAgentConfig.requiresProfileOpen ? (
-            <RequiresProfileOpenAlert
-              message={selectedAgentConfig.requiresProfileOpenMessage}
+          ) : shouldShowOpenProfileAlert ? (
+            <needsOpenProfileEachAgentRunAlert
+              message={selectedAgentConfig.needsOpenProfileEachAgentRunMessage}
             />
           ) : sortedMetrics.length === 0 ? (
             <NoMetricsAlert />
           ) : (
             <>
-              {!isAgentRunning && agentPerformance?.timestamp && (
+              {!isServiceActive && agentPerformance?.timestamp && (
                 <MetricsCapturedTimestampAlert
                   timestamp={agentPerformance.timestamp}
                 />
@@ -191,7 +190,7 @@ export const Performance = ({
                   <Text ellipsis title={agentBehavior}>
                     {agentBehavior}
                   </Text>
-                  {isAgentRunning ? (
+                  {isServiceActive ? (
                     <Button size="small" onClick={openProfile}>
                       Update
                     </Button>

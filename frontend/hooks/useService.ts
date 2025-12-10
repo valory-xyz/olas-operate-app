@@ -202,6 +202,10 @@ export const useService = (serviceConfigId?: string) => {
     deploymentStatus === MiddlewareDeploymentStatusMap.STOPPING ||
     deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYED;
 
+  /** @note deployment is running and agent is active */
+  const isServiceActive =
+    deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYED;
+
   /** @note statuses where middleware is in the process of building/creating a new deployment */
   const isServiceBuilding =
     deploymentStatus === MiddlewareDeploymentStatusMap.BUILT ||
@@ -221,6 +225,7 @@ export const useService = (serviceConfigId?: string) => {
 
     // service status
     isServiceRunning,
+    isServiceActive,
     isServiceBuilding,
     serviceNftTokenId,
   };

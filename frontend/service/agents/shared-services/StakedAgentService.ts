@@ -9,6 +9,7 @@
  */
 import { ethers } from 'ethers';
 import { Contract as MulticallContract } from 'ethers-multicall';
+import { entries } from 'lodash';
 
 import { OLAS_CONTRACTS } from '@/config/olasContracts';
 import {
@@ -174,13 +175,11 @@ export abstract class StakedAgentService {
     contractAddress: Address,
   ): Nullable<StakingProgramId> => {
     const stakingPrograms = STAKING_PROGRAMS[chainId];
-    const entries = Object.entries(stakingPrograms) as [
-      StakingProgramId,
-      StakingProgramConfig,
-    ][];
-    const foundEntry = entries.find(([, config]) =>
+
+    const foundEntry = entries(stakingPrograms).find(([, config]) =>
       areAddressesEqual(config.address, contractAddress),
-    );
+    ) as [StakingProgramId, StakingProgramConfig] | undefined;
+
     return foundEntry ? foundEntry[0] : null;
   };
 }

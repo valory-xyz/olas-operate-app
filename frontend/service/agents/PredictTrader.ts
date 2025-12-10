@@ -36,7 +36,6 @@ export abstract class PredictTraderService extends StakedAgentService {
     if (!serviceId) return;
 
     const stakingProgramConfig = STAKING_PROGRAMS[chainId][stakingProgramId];
-
     if (!stakingProgramConfig) throw new Error('Staking program not found');
 
     const {
@@ -96,7 +95,7 @@ export abstract class PredictTraderService extends StakedAgentService {
     // Minimum staked amount is double the minimum staking deposit
     // (all the bonds must be the same as deposit)
     const minimumStakedAmount =
-      parseFloat(ethers.utils.formatEther(`${minStakingDeposit}`)) * 2;
+      parseFloat(formatEther(`${minStakingDeposit}`)) * 2;
 
     return {
       // mechRequestCount,
@@ -107,7 +106,7 @@ export abstract class PredictTraderService extends StakedAgentService {
       isEligibleForRewards,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(
-        ethers.utils.formatEther(`${accruedStakingReward}`),
+        formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
       tsCheckpoint,
@@ -246,9 +245,7 @@ export abstract class PredictTraderService extends StakedAgentService {
       maxNumServices,
       serviceIds,
       minimumStakingDuration: minStakingDurationInBN.toNumber(),
-      minStakingDeposit: parseFloat(
-        ethers.utils.formatEther(minStakingDeposit),
-      ),
+      minStakingDeposit: parseFloat(formatEther(minStakingDeposit)),
       apy,
       olasStakeRequired,
       rewardsPerWorkPeriod,

@@ -5,7 +5,7 @@ import { RiRobot3Line } from 'react-icons/ri';
 import { TbId } from 'react-icons/tb';
 
 import { Segmented } from '@/components/ui';
-import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
+import { useService } from '@/hooks';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 
@@ -48,34 +48,27 @@ export const Home = () => {
   const { storeState } = useStore();
   const { selectedAgentType, selectedService, selectedAgentConfig } =
     useServices();
+  const { isServiceActive } = useService(selectedService?.service_config_id);
 
   const [view, setView] = useState<View>('overview');
   const [hasVisitedProfile, setHasVisitedProfile] = useState(false);
   const [isUnlockChatUiModalOpen, setIsUnlockChatUiModalOpen] = useState(false);
 
   const { isX402Enabled } = selectedAgentConfig;
-  const isAgentRunning =
-    selectedService?.deploymentStatus !==
-    MiddlewareDeploymentStatusMap.DEPLOYED;
 
   // Reset view to overview when switching between agents
-  useEffect(() => {
-    setView('overview');
-  }, [selectedAgentType]);
+  useEffect(() => setView('overview'), [selectedAgentType]);
 
-  // Track when user visits profile
   useEffect(() => {
+    // Track when user visits profile
     if (view === 'profile') {
       setHasVisitedProfile(true);
     }
-  }, [view]);
-
-  // Reset if profile was visited after agent run
-  useEffect(() => {
-    if (!isAgentRunning) {
+    // Reset if profile was visited after agent run
+    if (!isServiceActive) {
       setHasVisitedProfile(false);
     }
-  }, [isAgentRunning]);
+  }, [view, isServiceActive]);
 
   const handleChangeView = useCallback(
     (nextView: View) => {
@@ -86,7 +79,7 @@ export const Home = () => {
       }
 
       // Ensure agent is running before opening profile
-      if (isAgentRunning) {
+      if (isServiceActive) {
         message.open({
           type: 'error',
           content:
@@ -127,7 +120,7 @@ export const Home = () => {
       setView('profile');
     },
     [
-      isAgentRunning,
+      isServiceActive,
       isX402Enabled,
       selectedAgentConfig.doesChatUiRequireApiKey,
       selectedAgentType,
