@@ -164,8 +164,15 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       }),
     enabled: isOnline && !!selectedServiceConfigId,
     refetchInterval: (query) => {
-      return query?.state?.status === 'success' ? FIVE_SECONDS_INTERVAL : false;
+      if (query.state.status === 'success') {
+        return typeof serviceRefetchInterval === 'function'
+          ? serviceRefetchInterval(query)
+          : serviceRefetchInterval;
+      }
+
+      return false;
     },
+    refetchIntervalInBackground: true,
   });
 
   // Stores temporary overrides for service statuses to avoid UI glitches.
