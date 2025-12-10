@@ -23,11 +23,7 @@ const NoMetricsAlert = () => (
   />
 );
 
-const needsOpenProfileEachAgentRunAlert = ({
-  message,
-}: {
-  message: string;
-}) => (
+const RequiresProfileOpenAlert = ({ message }: { message: string }) => (
   <Alert
     message={message}
     type="warning"
@@ -157,7 +153,7 @@ export const Performance = ({
               <Spin />
             </Flex>
           ) : shouldShowOpenProfileAlert ? (
-            <needsOpenProfileEachAgentRunAlert
+            <RequiresProfileOpenAlert
               message={selectedAgentConfig.needsOpenProfileEachAgentRunMessage}
             />
           ) : sortedMetrics.length === 0 ? (
