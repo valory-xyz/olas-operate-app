@@ -38,7 +38,12 @@ export const Profile = () => {
   }
   return (
     <Container>
-      <Iframe src="http://localhost:8716" id="agent-ui" />
+      <Iframe
+        src="http://localhost:8716"
+        id="agent-ui"
+        allow="popups"
+        sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+      />
     </Container>
   );
 };
