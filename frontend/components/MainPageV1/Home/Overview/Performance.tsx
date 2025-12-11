@@ -23,11 +23,22 @@ const NoMetricsAlert = () => (
   />
 );
 
-const RequiresProfileOpenAlert = ({ message }: { message: string }) => (
+type RequiresProfileOpenAlertProps = {
+  title: string;
+  message: string;
+};
+const RequiresProfileOpenAlert = ({
+  title,
+  message,
+}: RequiresProfileOpenAlertProps) => (
   <Alert
-    message={message}
+    message={
+      <Text className="text-sm">
+        <div className="font-weight-500 mb-4">{title}</div>
+        {message}
+      </Text>
+    }
     type="warning"
-    centered
     showIcon
     className="text-sm"
   />
@@ -50,6 +61,7 @@ const MetricsCapturedTimestampAlert = ({
 
 const AgentBehaviorContainer = styled.div`
   display: flex;
+  justify-content: space-between;
   gap: 12px;
   padding: 16px;
   background-color: ${COLOR.GRAY_1};
@@ -154,7 +166,12 @@ export const Performance = ({
             </Flex>
           ) : shouldShowOpenProfileAlert ? (
             <RequiresProfileOpenAlert
-              message={selectedAgentConfig.needsOpenProfileEachAgentRunMessage}
+              title={
+                selectedAgentConfig.needsOpenProfileEachAgentRunAlert.title
+              }
+              message={
+                selectedAgentConfig.needsOpenProfileEachAgentRunAlert.message
+              }
             />
           ) : sortedMetrics.length === 0 ? (
             <NoMetricsAlert />
@@ -188,12 +205,16 @@ export const Performance = ({
                   </Text>
                   {isServiceActive ? (
                     <Button size="small" onClick={openProfile}>
-                      Update
+                      {selectedAgentConfig.needsOpenProfileEachAgentRun
+                        ? 'Connect'
+                        : 'Update'}
                     </Button>
                   ) : (
-                    <Button size="small" disabled>
-                      Start Agent to Update
-                    </Button>
+                    !selectedAgentConfig.needsOpenProfileEachAgentRun && (
+                      <Button size="small" disabled>
+                        Start Agent to Update
+                      </Button>
+                    )
                   )}
                 </AgentBehaviorContainer>
               </Tooltip>

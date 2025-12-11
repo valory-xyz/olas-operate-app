@@ -1,4 +1,5 @@
 import { Flex, Typography } from 'antd';
+import { isNil } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AgentSetupCompleteModal, Alert, CardFlex } from '@/components/ui';
@@ -6,6 +7,7 @@ import { Pages } from '@/enums';
 import {
   useBridgingSteps,
   useMasterSafeCreationAndTransfer,
+  useMasterWalletContext,
   usePageState,
 } from '@/hooks';
 import {
@@ -13,6 +15,7 @@ import {
   CrossChainTransferDetails,
   Nullable,
 } from '@/types';
+import { asEvmChainId } from '@/utils';
 
 import { BridgeTransferFlow } from '../BridgeTransferFlow';
 import { BridgeRetryOutcome, EnabledSteps } from '../types';
@@ -71,11 +74,17 @@ export const BridgeInProgress = ({
     mutateAsync: createMasterSafe,
   } = useMasterSafeCreationAndTransfer(symbols);
 
+  const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
+    useMasterWalletContext();
+
   const canCreateMasterSafeAndTransfer = enabledStepsAfterBridging.includes(
     'masterSafeCreationAndTransfer',
   );
 
-  const isSafeCreated = masterSafeDetails?.isSafeCreated;
+  const isSafeCreated = isMasterWalletFetched
+    ? !isNil(getMasterSafeOf?.(asEvmChainId(fromChain))) ||
+      masterSafeDetails?.isSafeCreated
+    : false;
   const isTransferCompleted =
     masterSafeDetails?.masterSafeTransferStatus === 'FINISHED';
 
@@ -95,7 +104,8 @@ export const BridgeInProgress = ({
     // if master safe creation is in progress or if it has failed, do not create master safe.
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
-    if (masterSafeDetails?.isSafeCreated) return;
+    if (isMasterWalletFetched) return;
+    if (isSafeCreated) return;
 
     createMasterSafe();
   }, [
@@ -109,6 +119,8 @@ export const BridgeInProgress = ({
     masterSafeDetails,
     isErrorMasterSafeCreation,
     createMasterSafe,
+    isSafeCreated,
+    isMasterWalletFetched,
   ]);
 
   // Redirect to main page if all 3 steps are completed

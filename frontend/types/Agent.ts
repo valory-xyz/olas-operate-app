@@ -21,11 +21,14 @@ type needsOpenProfileEachAgentRun =
       /** Whether the agent requires opening profile first before showing performance metrics */
       needsOpenProfileEachAgentRun: true;
       /** Custom message to show when agent requires to open profile after run */
-      needsOpenProfileEachAgentRunMessage: string;
+      needsOpenProfileEachAgentRunAlert: {
+        title: string;
+        message: string;
+      };
     }
   | {
       needsOpenProfileEachAgentRun?: undefined;
-      needsOpenProfileEachAgentRunMessage?: never;
+      needsOpenProfileEachAgentRunAlert?: never;
     };
 
 export type AgentConfig = {

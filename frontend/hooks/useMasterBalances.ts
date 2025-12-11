@@ -198,6 +198,7 @@ export const useMasterBalances = () => {
     [_getMasterSafeOlasBalanceOfCalc],
   );
 
+  // TODO: why this returns an array if there can be only 1 wallet per chain with native balance?
   /** Get the master Safe native balances for a chain */
   const getMasterSafeNativeBalanceOf = useCallback(
     (chainId: EvmChainId) => {

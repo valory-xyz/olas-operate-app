@@ -162,6 +162,7 @@ export const useGetBridgeRequirementsParams = (
           tokensWithRequirements,
         )) {
           if (!isAddress(tokenAddress)) continue;
+          if (BigInt(amount) === 0n) continue;
 
           const fromToken =
             defaultFromToken ||

@@ -184,10 +184,6 @@ export const useService = (serviceConfigId?: string) => {
     [getServicesSafesOf],
   );
 
-  // TODO: revise these statuses after Pearl v1, we often need isServiceRunning
-  // without isServiceTransitioning, and sometimes we check deploymentStatus
-  // manually, while could use one of these
-
   /**
    * @note statuses where middleware deployment is moving from stopped to
    * deployed, or vice versa, used for loading fallbacks

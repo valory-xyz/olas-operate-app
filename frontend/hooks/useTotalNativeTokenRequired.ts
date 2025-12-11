@@ -25,7 +25,11 @@ export const useTotalNativeTokenRequired = (
   const { updateEthAmountToPay, isOnRampingTransactionSuccessful } =
     useOnRampContext();
   const { selectedAgentConfig } = useServices();
-  const { masterEoa } = useMasterWalletContext();
+  const {
+    masterEoa,
+    getMasterSafeOf,
+    isFetched: isMasterWalletFetched,
+  } = useMasterWalletContext();
 
   const {
     isLoading,
@@ -53,11 +57,16 @@ export const useTotalNativeTokenRequired = (
     if (!bridgeParams) return;
     if (!bridgeFundingRequirements) return;
     if (!masterEoa?.address) return;
+    if (!isMasterWalletFetched) return;
 
     const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
     const toOnRampNetworkName = asMiddlewareChain(
       onRampChainMap[fromChainName],
     );
+
+    const destinationAddress =
+      getMasterSafeOf?.(onRampChainMap[fromChainName])?.address ||
+      masterEoa.address;
 
     /**
      * Calculate native token amount needed from direct requirements (not from bridging)
@@ -82,7 +91,7 @@ export const useTotalNativeTokenRequired = (
     const bridgeRefillRequirements =
       bridgeFundingRequirements.bridge_refill_requirements[toOnRampNetworkName];
     const nativeTokenFromBridgeQuote =
-      bridgeRefillRequirements?.[masterEoa.address]?.[AddressZero];
+      bridgeRefillRequirements?.[destinationAddress]?.[AddressZero];
 
     if (!nativeTokenFromBridgeQuote) return;
 
@@ -97,8 +106,10 @@ export const useTotalNativeTokenRequired = (
   }, [
     bridgeParams,
     bridgeFundingRequirements,
-    masterEoa?.address,
+    masterEoa,
+    isMasterWalletFetched,
     selectedAgentConfig.evmHomeChainId,
+    getMasterSafeOf,
   ]);
 
   // Update the ETH amount to pay in the on-ramp context

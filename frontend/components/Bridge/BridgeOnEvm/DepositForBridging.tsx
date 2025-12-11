@@ -112,12 +112,9 @@ export const DepositForBridging = ({
   onNext,
   bridgeToChain,
 }: DepositForBridgingProps) => {
-  const { isLoading: isServicesLoading, selectedAgentConfig } = useServices();
-  const {
-    masterEoa,
-    getMasterSafeOf,
-    isFetched: isMasterWalletFetched,
-  } = useMasterWalletContext();
+  const { isLoading: isServicesLoading } = useServices();
+  const { masterEoa, isFetched: isMasterWalletFetched } =
+    useMasterWalletContext();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
 
@@ -219,9 +216,8 @@ export const DepositForBridging = ({
 
     const fromMiddlewareChain = MiddlewareChainMap.ETHEREUM;
 
-    const destinationAddress =
-      getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId)?.address ||
-      masterEoa.address;
+    // TODO: check if master safe exists once we support agents on From Chain
+    const destinationAddress = masterEoa.address;
 
     const bridgeTotalRequirements =
       bridgeFundingRequirements.bridge_total_requirements[
@@ -270,13 +266,7 @@ export const DepositForBridging = ({
         isNative: token.tokenType === TokenType.NativeGas,
       } satisfies DepositTokenDetails;
     });
-  }, [
-    bridgeFundingRequirements,
-    getMasterSafeOf,
-    isMasterWalletFetched,
-    masterEoa,
-    selectedAgentConfig.evmHomeChainId,
-  ]);
+  }, [bridgeFundingRequirements, isMasterWalletFetched, masterEoa]);
 
   const tokensDataSource = useMemo(() => {
     const mappedTokens = tokens.map((token) => {

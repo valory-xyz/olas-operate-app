@@ -12,6 +12,7 @@ import { Pages } from '@/enums';
 import {
   useElectronApi,
   useMasterBalances,
+  useMasterWalletContext,
   usePageState,
   useServices,
 } from '@/hooks';
@@ -68,7 +69,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { ipcRenderer, onRampWindow } = useElectronApi();
   const { pageState } = usePageState();
   const { selectedAgentConfig } = useServices();
-  const { getMasterEoaNativeBalanceOf } = useMasterBalances();
+  const { getMasterEoaNativeBalanceOf, getMasterSafeNativeBalanceOf } =
+    useMasterBalances();
+  const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
+    useMasterWalletContext();
 
   // State to track the amount of ETH to pay for on-ramping and the USD equivalent
   const [ethAmountToPay, setEthAmountToPay] = useState<Nullable<number>>(null);
@@ -125,12 +129,18 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (!ethAmountToPay) return;
     if (isOnRampingStepCompleted) return;
+    if (!isMasterWalletFetched) return;
 
-    // Get the master EOA balance of the network to on-ramp
-    const balance = getMasterEoaNativeBalanceOf(networkId);
+    // Get the master safe (in case it exists) or master EOA balance of the network to on-ramp
+    const hasMasterSafe = getMasterSafeOf?.(networkId);
+    const balance = hasMasterSafe
+      ? Number(
+          getMasterSafeNativeBalanceOf(networkId)?.[0].balanceString ?? '0',
+        )
+      : getMasterEoaNativeBalanceOf(networkId);
     if (!balance) return;
 
-    // If the master EOA balance is greater than or equal to 90% of the ETH amount to pay,
+    // If the balance is greater than or equal to 90% of the ETH amount to pay,
     // considering that the user has received the funds after on-ramping.
     if (balance >= ethAmountToPay * ETH_RECEIVED_THRESHOLD) {
       updateIsBuyCryptoBtnLoading(false);
@@ -147,6 +157,9 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     updateIsBuyCryptoBtnLoading,
     onRampWindow,
     isOnRampingStepCompleted,
+    isMasterWalletFetched,
+    getMasterSafeOf,
+    getMasterSafeNativeBalanceOf,
   ]);
 
   // Function to set the ETH amount to pay for on-ramping
