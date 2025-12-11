@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 
 import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
-import { TransactionSteps } from '@/components/ui/TransactionSteps';
+import {
+  TransactionStep,
+  TransactionSteps,
+} from '@/components/ui/TransactionSteps';
 import { EvmChainId } from '@/constants/chains';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 
@@ -62,7 +65,7 @@ export const OnRampPaymentSteps = ({
         steps={[
           buyCryptoStep,
           swapStep,
-          ...createAndTransferFundsToMasterSafeSteps,
+          ...(createAndTransferFundsToMasterSafeSteps as TransactionStep[]),
         ]}
       />
       {isSetupCompleted && <AgentSetupCompleteModal />}
