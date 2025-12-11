@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { Query, useQueries, useQuery } from '@tanstack/react-query';
 import { Maybe } from 'graphql/jsutils/Maybe';
 import {
   createContext,
@@ -14,6 +14,7 @@ import {
   FIVE_SECONDS_INTERVAL,
   REACT_QUERY_KEYS,
   StakingProgramId,
+  THIRTY_SECONDS_INTERVAL,
 } from '@/constants';
 import {
   useDynamicRefetchInterval,
@@ -21,7 +22,11 @@ import {
   useServices,
   useStakingProgram,
 } from '@/hooks';
-import { ServiceStakingDetails, StakingContractDetails } from '@/types';
+import {
+  Optional,
+  ServiceStakingDetails,
+  StakingContractDetails,
+} from '@/types';
 import { isValidServiceId } from '@/utils';
 
 import { StakingProgramContext } from './StakingProgramProvider';
@@ -32,6 +37,8 @@ import { StakingProgramContext } from './StakingProgramProvider';
 const useAllStakingContractDetails = () => {
   const { allStakingProgramIds } = useStakingProgram();
   const { selectedAgentConfig } = useServices();
+  const refetchInterval = useDynamicRefetchInterval(THIRTY_SECONDS_INTERVAL);
+
   const { serviceApi, evmHomeChainId } = selectedAgentConfig;
 
   const queryResults = useQueries({
@@ -51,6 +58,17 @@ const useAllStakingContractDetails = () => {
           error,
         );
       },
+      refetchInterval: (
+        query: Query<Optional<StakingContractDetails>, Error>,
+      ) => {
+        /**
+         * Condition applies to individual queries,
+         * only refetch if data for that query hasn't been fetched yet
+         */
+        if (query.state.status === 'success') return false;
+        return refetchInterval;
+      },
+      refetchIntervalInBackground: true,
     })),
   });
 
