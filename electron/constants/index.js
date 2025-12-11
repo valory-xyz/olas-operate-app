@@ -44,6 +44,9 @@ const publishOptions = {
   publishAutoUpdate: false,
 };
 
+// URLs allowed to open as pop-ups from the agent UI
+const popupAllowedUrls = ['http://localhost:8716/privy-login'];
+
 module.exports = {
   PORT_RANGE,
   ERROR_ADDRESS_IN_USE,
@@ -54,4 +57,5 @@ module.exports = {
   isDev,
   publishOptions,
   paths,
+  popupAllowedUrls,
 };

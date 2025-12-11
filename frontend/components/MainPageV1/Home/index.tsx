@@ -79,7 +79,7 @@ export const Home = () => {
       }
 
       // Ensure agent is running before opening profile
-      if (isServiceActive) {
+      if (!isServiceActive) {
         message.open({
           type: 'error',
           content:
