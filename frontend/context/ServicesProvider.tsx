@@ -13,24 +13,22 @@ import {
 
 import { AGENT_CONFIG } from '@/config/agents';
 import {
+  AgentEoa,
   AgentMap,
+  AgentSafe,
   AgentType,
+  AgentWallet,
   EvmChainId,
   FIFTEEN_SECONDS_INTERVAL,
   FIVE_SECONDS_INTERVAL,
   MESSAGE_WIDTH,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
+  PAGES,
   REACT_QUERY_KEYS,
+  WALLET_OWNER,
+  WALLET_TYPE,
 } from '@/constants';
-import {
-  AgentEoa,
-  AgentSafe,
-  AgentWallet,
-  Pages,
-  WalletOwnerType,
-  WalletType,
-} from '@/enums';
 import {
   useElectronApi,
   usePageState,
@@ -190,7 +188,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (isServicesValidationStatusLoading) return;
     if (!servicesValidationStatus) return;
-    if (pageState !== Pages.Main) return;
+    if (pageState !== PAGES.Main) return;
     if (isInvalidMessageShown) return;
 
     const isValid = Object.values(servicesValidationStatus).every((x) => !!x);
@@ -248,8 +246,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
                     (instance: string) =>
                       ({
                         address: instance,
-                        type: WalletType.EOA,
-                        owner: WalletOwnerType.Agent,
+                        type: WALLET_TYPE.EOA,
+                        owner: WALLET_OWNER.Agent,
                       }) as AgentEoa,
                   ),
                 );
@@ -258,8 +256,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
               if (multisig) {
                 acc.push({
                   address: multisig,
-                  type: WalletType.Safe,
-                  owner: WalletOwnerType.Agent,
+                  type: WALLET_TYPE.Safe,
+                  owner: WALLET_OWNER.Agent,
                   evmChainId: asEvmChainId(middlewareChain),
                 } as AgentSafe);
               }

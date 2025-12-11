@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
 
-import { Eoa, WalletType } from '@/enums/Wallet';
+import { WALLET_TYPE } from '@/constants';
 import { Address } from '@/types/Address';
 import { Service } from '@/types/Service';
-import { Optional } from '@/types/Util';
 
 import { useBalanceContext } from './useBalanceContext';
 import { useMultisigs } from './useMultisig';
@@ -21,7 +20,7 @@ const useAddressesLogs = () => {
   const { masterSafesOwners, masterSafesOwnersIsFetched } =
     useMultisigs(masterSafes);
 
-  const backupEoas = useMemo<Optional<Eoa[]>>(() => {
+  const backupEoas = useMemo(() => {
     if (!masterEoa) return;
     if (!masterSafesOwners) return;
 
@@ -30,9 +29,9 @@ const useAddressesLogs = () => {
         const { owners, safeAddress, evmChainId } = masterSafeOwners;
         return owners
           .filter((owner): owner is Address => owner !== masterEoa.address)
-          .map<Eoa>((address) => ({
+          .map((address) => ({
             address,
-            type: WalletType.EOA,
+            type: WALLET_TYPE.EOA,
             safeAddress,
             evmChainId,
           }));

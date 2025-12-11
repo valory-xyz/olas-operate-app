@@ -2,9 +2,8 @@ import { Button, Flex, Typography } from 'antd';
 import { TbWallet } from 'react-icons/tb';
 import { styled } from 'styled-components';
 
-import { COLOR } from '@/constants';
+import { COLOR, SETUP_SCREEN } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
-import { SetupScreen } from '@/enums';
 import { useSetup } from '@/hooks';
 
 import { CardFlex, CardTitle, IconContainer } from '../../ui';
@@ -47,7 +46,7 @@ export const RecoveryNotAvailable = () => {
 
         <Flex vertical gap={16}>
           <Button
-            onClick={() => goto(SetupScreen.Welcome)}
+            onClick={() => goto(SETUP_SCREEN.Welcome)}
             type="primary"
             size="large"
             block

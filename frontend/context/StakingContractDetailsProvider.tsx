@@ -13,9 +13,9 @@ import {
 import {
   FIVE_SECONDS_INTERVAL,
   REACT_QUERY_KEYS,
+  StakingProgramId,
   THIRTY_SECONDS_INTERVAL,
 } from '@/constants';
-import { StakingProgramId } from '@/enums/StakingProgram';
 import {
   useDynamicRefetchInterval,
   useService,

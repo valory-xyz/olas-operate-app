@@ -1,15 +1,13 @@
 import { formatUnits } from 'ethers/lib/utils';
 import { entries } from 'lodash';
 
-import { MiddlewareChainMap } from '@/constants';
+import { EvmChainIdMap, MiddlewareChainMap, TokenSymbolMap } from '@/constants';
 import { AgentMap, AgentType } from '@/constants/agent';
 import {
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
 } from '@/constants/serviceTemplates';
 import { X402_ENABLED_FLAGS } from '@/constants/x402';
-import { EvmChainId } from '@/enums/Chain';
-import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
@@ -23,7 +21,7 @@ const getModiusUsdcConfig = () => {
   const modiusFundRequirements =
     MODIUS_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.MODE]
       ?.fund_requirements;
-  const modiusUsdcConfig = MODE_TOKEN_CONFIG[TokenSymbol.USDC];
+  const modiusUsdcConfig = MODE_TOKEN_CONFIG[TokenSymbolMap.USDC];
 
   if (!modiusUsdcConfig) {
     throw new Error('Modius USDC config not found');
@@ -38,7 +36,7 @@ const getOptimusUsdcConfig = () => {
   const optimusFundRequirements =
     OPTIMUS_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.OPTIMISM]
       ?.fund_requirements;
-  const optimusUsdcConfig = OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC];
+  const optimusUsdcConfig = OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC];
 
   if (!optimusUsdcConfig) {
     throw new Error('Optimus USDC config not found');
@@ -58,11 +56,11 @@ export const AGENT_CONFIG: {
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PredictTrader],
     name: 'Predict Trader',
-    evmHomeChainId: EvmChainId.Gnosis,
+    evmHomeChainId: EvmChainIdMap.Gnosis,
     middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
     agentIds: [14, 25],
-    requiresAgentSafesOn: [EvmChainId.Gnosis],
-    requiresMasterSafesOn: [EvmChainId.Gnosis],
+    requiresAgentSafesOn: [EvmChainIdMap.Gnosis],
+    requiresMasterSafesOn: [EvmChainIdMap.Gnosis],
     serviceApi: PredictTraderService,
     displayName: 'Prediction Trader',
     description: 'Participates in prediction markets.',
@@ -80,14 +78,16 @@ export const AGENT_CONFIG: {
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Optimus],
     name: 'Optimus agent',
-    evmHomeChainId: EvmChainId.Optimism,
+    evmHomeChainId: EvmChainIdMap.Optimism,
     middlewareHomeChainId: MiddlewareChainMap.OPTIMISM,
     agentIds: [40],
-    requiresAgentSafesOn: [EvmChainId.Optimism],
+    requiresAgentSafesOn: [EvmChainIdMap.Optimism],
     additionalRequirements: {
-      [EvmChainId.Optimism]: { [TokenSymbol.USDC]: getOptimusUsdcConfig() },
+      [EvmChainIdMap.Optimism]: {
+        [TokenSymbolMap.USDC]: getOptimusUsdcConfig(),
+      },
     },
-    requiresMasterSafesOn: [EvmChainId.Optimism],
+    requiresMasterSafesOn: [EvmChainIdMap.Optimism],
     serviceApi: OptimismService,
     displayName: 'Optimus',
     description:
@@ -107,11 +107,11 @@ export const AGENT_CONFIG: {
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.AgentsFun],
     name: 'Agents.fun',
-    evmHomeChainId: EvmChainId.Base,
+    evmHomeChainId: EvmChainIdMap.Base,
     middlewareHomeChainId: MiddlewareChainMap.BASE,
     agentIds: [43],
-    requiresAgentSafesOn: [EvmChainId.Base],
-    requiresMasterSafesOn: [EvmChainId.Base],
+    requiresAgentSafesOn: [EvmChainIdMap.Base],
+    requiresMasterSafesOn: [EvmChainIdMap.Base],
     serviceApi: AgentsFunBaseService,
     displayName: 'Agents.fun',
     description:
@@ -129,14 +129,14 @@ export const AGENT_CONFIG: {
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Modius],
     name: 'Modius agent',
-    evmHomeChainId: EvmChainId.Mode,
+    evmHomeChainId: EvmChainIdMap.Mode,
     agentIds: [40],
     middlewareHomeChainId: MiddlewareChainMap.MODE,
-    requiresAgentSafesOn: [EvmChainId.Mode],
+    requiresAgentSafesOn: [EvmChainIdMap.Mode],
     additionalRequirements: {
-      [EvmChainId.Mode]: { [TokenSymbol.USDC]: getModiusUsdcConfig() },
+      [EvmChainIdMap.Mode]: { [TokenSymbolMap.USDC]: getModiusUsdcConfig() },
     },
-    requiresMasterSafesOn: [EvmChainId.Mode],
+    requiresMasterSafesOn: [EvmChainIdMap.Mode],
     serviceApi: ModiusService,
     displayName: 'Modius',
     description:

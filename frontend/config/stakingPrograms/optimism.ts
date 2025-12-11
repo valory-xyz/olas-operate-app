@@ -1,14 +1,14 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
-import { AgentType } from '@/enums/Agent';
-import { EvmChainId } from '@/enums/Chain';
 import {
+  AgentMap,
+  EvmChainIdMap,
   OPTIMISM_STAKING_PROGRAM_IDS,
   OptimismStakingProgramId,
-} from '@/enums/StakingProgram';
-import { TokenSymbol } from '@/enums/Token';
-import { Address } from '@/types/Address';
+  TokenSymbolMap,
+} from '@/constants';
+import { Address } from '@/types';
 
 import { OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { StakingProgramConfig } from '.';
@@ -29,10 +29,10 @@ export const OPTIMISM_STAKING_PROGRAMS: {
   [stakingProgramId in OptimismStakingProgramId]: StakingProgramConfig;
 } = {
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2]: {
-    chainId: EvmChainId.Optimism,
+    chainId: EvmChainIdMap.Optimism,
     name: 'Optimus Alpha II',
-    agentsSupported: [AgentType.Optimus],
-    stakingRequirements: { [TokenSymbol.OLAS]: 100 },
+    agentsSupported: [AgentMap.Optimus],
+    stakingRequirements: { [TokenSymbolMap.OLAS]: 100 },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2
@@ -45,11 +45,11 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     ),
   },
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3]: {
-    chainId: EvmChainId.Optimism,
+    chainId: EvmChainIdMap.Optimism,
     name: 'Optimus Alpha III',
-    agentsSupported: [AgentType.Optimus],
+    agentsSupported: [AgentMap.Optimus],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 1000,
+      [TokenSymbolMap.OLAS]: 1000,
     },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
@@ -63,11 +63,11 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     ),
   },
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4]: {
-    chainId: EvmChainId.Optimism,
+    chainId: EvmChainIdMap.Optimism,
     name: 'Optimus Alpha IV',
-    agentsSupported: [AgentType.Optimus],
+    agentsSupported: [AgentMap.Optimus],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 5000,
+      [TokenSymbolMap.OLAS]: 5000,
     },
     activityChecker:
       OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[

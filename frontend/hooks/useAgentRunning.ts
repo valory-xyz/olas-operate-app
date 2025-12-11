@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { ACTIVE_AGENTS } from '@/config/agents';
 import {
   FIVE_SECONDS_INTERVAL,
   MiddlewareDeploymentStatusMap,
@@ -10,7 +11,7 @@ import { ServicesService } from '@/service/Services';
 
 import { useServices } from './useServices';
 
-export const useAnotherAgentRunning = () => {
+export const useAgentRunning = () => {
   const { services, selectedService, serviceStatusOverrides } = useServices();
 
   const { data: allDeployments } = useQuery({
@@ -48,5 +49,29 @@ export const useAnotherAgentRunning = () => {
     });
   }, [services, selectedService, allDeployments, serviceStatusOverrides]);
 
-  return isAnotherAgentRunning;
+  /**
+   * Determine which agent type is currently running (deployed).
+   */
+  const runningAgentType = useMemo(() => {
+    if (!selectedService || !allDeployments || !services) return null;
+
+    for (const service of services) {
+      const status = allDeployments[service.service_config_id]?.status;
+      if (status !== MiddlewareDeploymentStatusMap.DEPLOYED) continue;
+
+      const agentEntry = ACTIVE_AGENTS.find(
+        ([, agentConfig]) =>
+          agentConfig.servicePublicId === service.service_public_id &&
+          agentConfig.middlewareHomeChainId === service.home_chain,
+      );
+
+      if (agentEntry) {
+        return agentEntry[0]; // AgentType
+      }
+    }
+
+    return null;
+  }, [selectedService, allDeployments, services]);
+
+  return { isAnotherAgentRunning, runningAgentType };
 };

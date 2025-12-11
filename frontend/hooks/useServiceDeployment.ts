@@ -4,10 +4,9 @@ import { useCallback, useMemo } from 'react';
 
 import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { MasterEoa, MasterSafe, PAGES } from '@/constants';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { Pages } from '@/enums/Pages';
-import { MasterEoa, MasterSafe } from '@/enums/Wallet';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -28,7 +27,7 @@ import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 import { updateServiceIfNeeded } from '@/utils/service';
 
-import { useAnotherAgentRunning } from './useAnotherAgentRunning';
+import { useAgentRunning } from './useAgentRunning';
 
 /**
  * hook to handle service deployment and starting the service
@@ -49,7 +48,7 @@ export const useServiceDeployment = () => {
     overrideSelectedServiceStatus,
   } = useServices();
   const serviceId = selectedService?.service_config_id;
-  const isAnotherAgentRunning = useAnotherAgentRunning();
+  const { isAnotherAgentRunning } = useAgentRunning();
 
   const { canStartAgent, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
@@ -226,7 +225,7 @@ export const useServiceDeployment = () => {
         masterSafesOwners,
         masterEoa,
         selectedAgentConfig,
-        gotoSettings: () => gotoPage(Pages.Settings),
+        gotoSettings: () => gotoPage(PAGES.Settings),
       });
       await deployAndStartService();
     } catch (error) {

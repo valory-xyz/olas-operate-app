@@ -1,7 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 import { TbShieldHalfFilled } from 'react-icons/tb';
 
-import { Pages } from '@/enums';
+import { PAGES } from '@/constants';
 import {
   useMnemonicExists,
   usePageState,
@@ -34,7 +34,7 @@ export const BackupSeedPhraseAlert = () => {
             type="default"
             size="small"
             className="w-fit"
-            onClick={() => gotoPage(Pages.Settings)}
+            onClick={() => gotoPage(PAGES.Settings)}
           >
             Back Up Recovery Phrase
           </Button>

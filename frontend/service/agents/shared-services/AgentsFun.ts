@@ -3,15 +3,18 @@ import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { BASE_STAKING_PROGRAMS } from '@/config/stakingPrograms/base';
-import { PROVIDERS } from '@/constants/providers';
-import { EvmChainId } from '@/enums/Chain';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
 import {
+  EvmChainId,
+  EvmChainIdMap,
+  PROVIDERS,
+  StakingProgramId,
+} from '@/constants';
+import {
+  Address,
   ServiceStakingDetails,
   StakingContractDetails,
   StakingRewardsInfo,
-} from '@/types/Autonolas';
+} from '@/types';
 
 import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
 
@@ -107,7 +110,7 @@ export abstract class AgentsFunService extends StakedAgentService {
 
     const availableRewardsForEpoch = Math.max(
       rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
-      rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+      rewardsPerSecond * (nowInSeconds - tsCheckpoint), // in case of late checkpoint
     );
 
     // Minimum staked amount is double the minimum staking deposit
@@ -202,7 +205,7 @@ export abstract class AgentsFunService extends StakedAgentService {
     const { multicallProvider } = PROVIDERS[chainId];
 
     const getStakingTokenConfig = () => {
-      if (chainId === EvmChainId.Base)
+      if (chainId === EvmChainIdMap.Base)
         return BASE_STAKING_PROGRAMS[stakingProgramId];
       return null;
     };

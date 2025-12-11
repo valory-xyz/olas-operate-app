@@ -8,8 +8,7 @@ import {
   useState,
 } from 'react';
 
-import { REACT_QUERY_KEYS } from '@/constants';
-import { AgentType } from '@/enums/Agent';
+import { AgentMap, REACT_QUERY_KEYS } from '@/constants';
 import { useServices } from '@/hooks/useServices';
 import { RecoveryService } from '@/service/Recovery';
 
@@ -66,7 +65,7 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   // agent configurations to run the latest version of the agent.
   useEffect(() => {
     if (!selectedAgentType) return;
-    if (selectedAgentType !== AgentType.AgentsFun) {
+    if (selectedAgentType !== AgentMap.AgentsFun) {
       setIsAgentsFunFieldUpdateRequired(false);
       return;
     }

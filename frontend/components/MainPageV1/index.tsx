@@ -8,8 +8,7 @@ import { DepositOlasForStaking } from '@/components/ConfirmSwitch/DepositOlasFor
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { Settings } from '@/components/SettingsPage';
 import { UpdateAgentPage } from '@/components/UpdateAgentPage';
-import { SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants';
-import { Pages } from '@/enums/Pages';
+import { PAGES, SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants';
 import { usePageState } from '@/hooks';
 
 import { AgentWallet } from '../AgentWallet';
@@ -21,7 +20,7 @@ import { useNotifyOnAgentRewards } from './hooks/useNotifyOnAgentRewards';
 import { useNotifyOnNewEpoch } from './hooks/useNotifyOnNewEpoch';
 import { useScrollPage } from './hooks/useScrollPage';
 import { useSetupTrayIcon } from './hooks/useSetupTrayIcon';
-import { Sidebar } from './Sidebar';
+import { Sidebar } from './Sidebar/Sidebar';
 
 const { Content: MainContent } = MainLayout;
 
@@ -67,32 +66,32 @@ export const Main = () => {
 
   const mainContent = useMemo(() => {
     switch (pageState) {
-      case Pages.PearlWallet:
+      case PAGES.PearlWallet:
         return <PearlWallet />;
-      case Pages.AgentWallet:
+      case PAGES.AgentWallet:
         return <AgentWallet />;
-      case Pages.Settings:
+      case PAGES.Settings:
         return <Settings />;
-      case Pages.HelpAndSupport:
+      case PAGES.HelpAndSupport:
         return <HelpAndSupport />;
-      case Pages.UpdateAgentTemplate:
+      case PAGES.UpdateAgentTemplate:
         return <UpdateAgentPage />;
-      case Pages.AgentStaking:
+      case PAGES.AgentStaking:
         return <AgentStaking />;
-      case Pages.SelectStaking:
+      case PAGES.SelectStaking:
         return <SelectStakingPage mode="migrate" />;
-      case Pages.ConfirmSwitch:
+      case PAGES.ConfirmSwitch:
         return <ConfirmSwitch />;
-      case Pages.DepositOlasForStaking:
+      case PAGES.DepositOlasForStaking:
         return <DepositOlasForStaking />;
-      case Pages.FundPearlWallet:
+      case PAGES.FundPearlWallet:
         return <FundPearlWallet />;
       default:
         return <Home />;
     }
   }, [pageState]);
 
-  const isSplitScreenPage = pageState === Pages.UpdateAgentTemplate;
+  const isSplitScreenPage = pageState === PAGES.UpdateAgentTemplate;
 
   return (
     <MainLayout>

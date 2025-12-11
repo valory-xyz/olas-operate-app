@@ -1,7 +1,7 @@
 import { Button, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
-import { Pages } from '@/enums';
+import { PAGES } from '@/constants';
 import { usePageState } from '@/hooks';
 
 const { Text } = Typography;
@@ -14,7 +14,7 @@ export const ContractDeprecatedAlert = ({
   const { goto } = usePageState();
 
   const handleSwitchContract = () => {
-    goto(Pages.SelectStaking);
+    goto(PAGES.SelectStaking);
   };
 
   return (
