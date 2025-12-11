@@ -194,6 +194,8 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 
   return {
     isMasterSafeCreatedAndFundsTransferred,
-    steps: [masterSafeCreationStep, masterSafeTransferFundStep].filter(Boolean),
+    steps: [masterSafeCreationStep, masterSafeTransferFundStep].filter(
+      Boolean,
+    ) as TransactionStep[],
   };
 };
