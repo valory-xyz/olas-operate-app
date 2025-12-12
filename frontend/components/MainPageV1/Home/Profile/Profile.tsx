@@ -1,7 +1,6 @@
 import { Flex, Spin, Typography } from 'antd';
 import styled from 'styled-components';
 
-import { AgentMap } from '@/constants';
 import { useServices } from '@/hooks';
 
 const { Text } = Typography;
@@ -22,13 +21,7 @@ const Iframe = styled.iframe`
 `;
 
 export const Profile = () => {
-  const { deploymentDetails, selectedAgentType } = useServices();
-
-  // TODO: temp, remove once they fix proxy
-  const url =
-    selectedAgentType === AgentMap.PettAi
-      ? 'http://localhost:8716'
-      : 'http://127.0.0.1:8716';
+  const { deploymentDetails } = useServices();
 
   // If agent healthcheck is not accessible yet, show loader
   if (Object.keys(deploymentDetails?.healthcheck || {}).length === 0) {
@@ -45,7 +38,7 @@ export const Profile = () => {
   }
   return (
     <Container>
-      <Iframe src={url} id="agent-ui" allow="popups" />
+      <Iframe src="http://127.0.0.1:8716" id="agent-ui" allow="popups" />
     </Container>
   );
 };
