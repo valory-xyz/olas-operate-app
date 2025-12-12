@@ -620,7 +620,7 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
     repository: {
       owner: 'valory-xyz',
       name: 'pettai-agent',
-      version: 'v0.0.12',
+      version: 'v0.0.13',
     },
   },
   home_chain: MiddlewareChainMap.BASE,
