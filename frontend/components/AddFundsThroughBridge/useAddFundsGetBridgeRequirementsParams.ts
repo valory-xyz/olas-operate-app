@@ -40,8 +40,6 @@ export const useAddFundsGetBridgeRequirementsParams = (
       const tokenDecimal = getTokenDecimal(tokenAddress, toChainConfig);
 
       const fromChain = MiddlewareChainMap.ETHEREUM;
-      const masterSafeOnFromChain = getMasterSafeOf?.(asEvmChainId(fromChain));
-
       const masterSafeOnToChain = getMasterSafeOf?.(
         selectedAgentConfig.evmHomeChainId,
       );
@@ -51,7 +49,8 @@ export const useAddFundsGetBridgeRequirementsParams = (
       return {
         from: {
           chain: fromChain,
-          address: masterSafeOnFromChain?.address ?? masterEoa.address,
+          // TODO: check if master safe exists once we support agents on From Chain
+          address: masterEoa.address,
           token: fromToken,
         },
         to: {
