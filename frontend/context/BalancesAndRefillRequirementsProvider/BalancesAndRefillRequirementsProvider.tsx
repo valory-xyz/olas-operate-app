@@ -49,6 +49,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   totalRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
   agentFundingRequests: Optional<AddressBalanceRecord>;
   canStartAgent: boolean;
+  isRefillRequired: boolean;
   isAgentFundingRequestsStale: boolean;
   isPearlWalletRefillRequired: boolean;
   refetch: () => Promise<
@@ -63,6 +64,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   totalRequirements: undefined,
   agentFundingRequests: undefined,
   canStartAgent: false,
+  isRefillRequired: true,
   isAgentFundingRequestsStale: false,
   isPearlWalletRefillRequired: false,
   refetch: () =>
@@ -360,6 +362,8 @@ export const BalancesAndRefillRequirementsProvider = ({
         agentFundingRequests,
         canStartAgent:
           balancesAndFundingRequirements?.allow_start_agent || false,
+        isRefillRequired:
+          balancesAndFundingRequirements?.is_refill_required || true,
         isAgentFundingRequestsStale:
           balancesAndFundingRequirements?.agent_funding_in_progress ||
           balancesAndFundingRequirements?.agent_funding_requests_cooldown ||

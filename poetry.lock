@@ -155,7 +155,7 @@ idna = ">=2.8"
 typing_extensions = {version = ">=4.5", markers = "python_version < \"3.13\""}
 
 [package.extras]
-trio = ["trio (>=0.31.0)", "trio (>=0.32.0)"]
+trio = ["trio (>=0.31.0) ; python_version < \"3.10\"", "trio (>=0.32.0) ; python_version >= \"3.10\""]
 
 [[package]]
 name = "argon2-cffi"
@@ -2671,8 +2671,8 @@ web3 = "6.20.4"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "14a06200cc08b89b59090567007f507ffaf3029b"
-resolved_reference = "14a06200cc08b89b59090567007f507ffaf3029b"
+reference = "e59c7c3aad3203232d138cc425d34191e269e502"
+resolved_reference = "e59c7c3aad3203232d138cc425d34191e269e502"
 
 [[package]]
 name = "open-aea"
@@ -3952,18 +3952,6 @@ files = [
 ]
 
 [[package]]
-name = "sniffio"
-version = "1.3.1"
-description = "Sniff out which async library your code is running under"
-optional = false
-python-versions = ">=3.7"
-groups = ["main"]
-files = [
-    {file = "sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2"},
-    {file = "sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc"},
-]
-
-[[package]]
 name = "socksio"
 version = "1.0.0"
 description = "Sans-I/O implementation of SOCKS4, SOCKS4A, and SOCKS5."
@@ -4608,4 +4596,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "88cf75669f6b59c7e52d355d3f4e522ec4d183d5938eb21483be72a5d8d8c533"
+content-hash = "c8ca9e5fcc1fb3da257c56ad075c1064506d483a0c21351393c54f2aa87bd089"

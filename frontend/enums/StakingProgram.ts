@@ -23,7 +23,8 @@ const BASE_STAKING_PROGRAM_IDS = {
   AgentsFun1: 'agents_fun_1',
   AgentsFun2: 'agents_fun_2',
   AgentsFun3: 'agents_fun_3',
-  PettAiAgent: 'pett_ai_agent',
+  PettAiAgent: 'pett_ai_agent_1',
+  PettAiAgent2: 'pett_ai_agent_2',
 } as const;
 
 const MODE_STAKING_PROGRAM_IDS = {

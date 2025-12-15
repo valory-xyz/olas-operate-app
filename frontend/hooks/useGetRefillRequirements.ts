@@ -4,11 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChainTokenConfig, TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { MASTER_SAFE_REFILL_PLACEHOLDER } from '@/constants/defaults';
-import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { TokenSymbolConfigMap, TokenSymbolMap } from '@/constants/token';
 import { useServices } from '@/hooks';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import {
   AddressBalanceRecord,
@@ -18,50 +16,6 @@ import {
 import { Address } from '@/types/Address';
 import { getTokenDetails } from '@/utils';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
-import { onDummyServiceCreation } from '@/utils/service';
-
-/**
- * Hook to run actions before bridging funds screen.
- * For predict agent, it creates a dummy service & then navigates to the bridge onboarding.
- */
-const useBeforeBridgeFunds = () => {
-  const { defaultStakingProgramId } = useStakingProgram();
-  const {
-    selectedAgentType,
-    selectedService,
-    refetch: refetchServices,
-  } = useServices();
-
-  const serviceTemplate = SERVICE_TEMPLATES.find(
-    (template) => template.agentType === selectedAgentType,
-  );
-
-  return useCallback(async () => {
-    // If a service is already selected, do not create a service
-    if (selectedService) return;
-
-    if (!defaultStakingProgramId) {
-      throw new Error('Default staking program ID unavailable');
-    }
-
-    if (!serviceTemplate) {
-      throw new Error('Service template unavailable');
-    }
-
-    await onDummyServiceCreation(defaultStakingProgramId, serviceTemplate);
-
-    // fetch services again to update the state after service creation
-    await refetchServices?.();
-
-    // For other agents, just navigate to bridge onboarding as
-    // service creation is already handled in the agent setup.
-  }, [
-    defaultStakingProgramId,
-    serviceTemplate,
-    selectedService,
-    refetchServices,
-  ]);
-};
 
 const ICON_OVERRIDES: Record<string, string> = {
   [TokenSymbolMap['XDAI']]: '/tokens/wxdai-icon.png',
@@ -107,10 +61,6 @@ const getTokensDetailsForFunding = (
   return currentTokenRequirements.sort((a, b) => b.amount - a.amount);
 };
 
-type UseGetRefillRequirementsProps = {
-  shouldCreateDummyService?: boolean;
-};
-
 type UseGetRefillRequirementsReturn = {
   /**
    * Total token requirements, doesn't consider the eoa balances. This is what we show on the
@@ -154,14 +104,10 @@ type UseGetRefillRequirementsReturn = {
  *   isLoading: false
  * }
  */
-export const useGetRefillRequirements = ({
-  shouldCreateDummyService = false,
-}: UseGetRefillRequirementsProps = {}): UseGetRefillRequirementsReturn => {
-  const updateBeforeBridgingFunds = useBeforeBridgeFunds();
+export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
   const {
     totalRequirements,
     refillRequirements,
-    refetch,
     resetQueryCache,
     isBalancesAndFundingRequirementsLoading,
   } = useBalanceAndRefillRequirementsContext();
@@ -172,7 +118,6 @@ export const useGetRefillRequirements = ({
   } = useMasterWalletContext();
   const { selectedAgentConfig, selectedAgentType } = useServices();
 
-  const [isDummyServiceCreated, setIsDummyServiceCreated] = useState(false);
   const [initialTokenRequirements, setInitialTokenRequirements] = useState<
     TokenRequirement[] | null
   >(null);
@@ -242,23 +187,6 @@ export const useGetRefillRequirements = ({
       selectedAgentConfig,
     ],
   );
-
-  useEffect(() => {
-    const createDummyService = async () => {
-      await updateBeforeBridgingFunds();
-      await refetch();
-      setIsDummyServiceCreated(true);
-    };
-
-    if (shouldCreateDummyService && !isDummyServiceCreated) {
-      createDummyService();
-    }
-  }, [
-    updateBeforeBridgingFunds,
-    refetch,
-    shouldCreateDummyService,
-    isDummyServiceCreated,
-  ]);
 
   /**
    * Reset the token requirements and query cache manually so the user

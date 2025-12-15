@@ -37,6 +37,13 @@ export const asEvmChainId = (
   throw new Error(`Invalid middleware chain enum: ${chain}`);
 };
 
+export const asAllEvmChainId = (chainId?: MiddlewareChain) => {
+  if (MiddlewareChainMap.ETHEREUM === chainId) {
+    return AllEvmChainIdMap.Ethereum;
+  }
+  return asEvmChainId(chainId);
+};
+
 export const asEvmChainDetails = (
   chain?: MiddlewareChain | string,
 ): {

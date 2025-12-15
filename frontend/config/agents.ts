@@ -159,13 +159,14 @@ export const AGENT_CONFIG: {
     description: 'Pett.ai autonomous agent service for virtual pet management.',
     hasExternalFunds: false,
     doesChatUiRequireApiKey: false,
-    defaultBehavior: 'Helps your pet grow! Make sure you are logged in.',
+    defaultBehavior:
+      'Your agent nurtures your pet! Make sure you’re logged in to keep your pet safe.',
     servicePublicId: 'pettaidev/pett_agent:0.1.0',
     needsOpenProfileEachAgentRun: true,
     needsOpenProfileEachAgentRunAlert: {
-      title: 'Log in to get your agent working',
+      title: 'Log in to get your agent operating',
       message:
-        'Go to the Profile tab and sign in to your Pett account to enable PettBro.',
+        'To operate, the agent must be linked to a pet. Link one in the Profile tab or press Connect below.',
     },
   },
 };

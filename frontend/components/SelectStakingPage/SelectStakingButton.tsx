@@ -1,14 +1,17 @@
 import { Button, Flex, message } from 'antd';
 import { useBoolean } from 'usehooks-ts';
 
-import { SetupScreen, StakingProgramId } from '@/enums';
+import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
+import { Pages, SetupScreen, StakingProgramId } from '@/enums';
 import {
   useBalanceAndRefillRequirementsContext,
+  useIsInitiallyFunded,
+  usePageState,
   useServices,
   useSetup,
   useStakingProgram,
 } from '@/hooks';
-import { updateServiceIfNeeded } from '@/utils';
+import { onDummyServiceCreation, updateServiceIfNeeded } from '@/utils';
 
 import { useCanMigrate } from './hooks/useCanMigrate';
 
@@ -27,39 +30,83 @@ export const SelectStakingButton = ({
     setTrue: startLoading,
     setFalse: stopLoading,
   } = useBoolean(false);
-  const { goto } = useSetup();
+
+  const { goto: gotoSetup } = useSetup();
+  const { goto: gotoPage } = usePageState();
+
   const { buttonText, canMigrate } = useCanMigrate({
     stakingProgramId,
     isCurrentStakingProgram: false,
   });
 
-  const { selectedService, selectedAgentType } = useServices();
-  const { refetch } = useBalanceAndRefillRequirementsContext();
+  const {
+    selectedService,
+    selectedAgentType,
+    isLoading: isServicesLoading,
+    refetch: refetchServices,
+  } = useServices();
+  const { refetch: refetchRequirements } =
+    useBalanceAndRefillRequirementsContext();
   const { setDefaultStakingProgramId } = useStakingProgram();
 
+  const { setIsInitiallyFunded } = useIsInitiallyFunded();
+
   const handleSelect = async () => {
+    startLoading();
+
+    // If service already exists, need to update the selected contract in it
+    // for proper fund requirements calculation
     if (selectedService) {
-      startLoading();
       try {
-        // If service already exists, need to update the selected contract in it
-        // for proper fund requirements calculation
         await updateServiceIfNeeded(
           selectedService,
           selectedAgentType,
           stakingProgramId,
         );
-        await refetch();
       } catch (error) {
         console.error(error);
         message.error('An error occurred while updating the staking contract.');
+        stopLoading();
         return;
-      } finally {
+      }
+    } else {
+      // Otherwise need to create dummy service
+      const serviceTemplate = SERVICE_TEMPLATES.find(
+        (template) => template.agentType === selectedAgentType,
+      );
+
+      if (!serviceTemplate) {
+        throw new Error('Service template unavailable');
+      }
+
+      try {
+        await onDummyServiceCreation(stakingProgramId, serviceTemplate);
+      } catch (error) {
+        console.error(error);
+        message.error('An error occurred while updating the staking contract.');
         stopLoading();
       }
+
+      // fetch services again to update the state after service creation
+      await refetchServices?.();
     }
 
+    // refetch refill requirements to check if the agent requires funding
+    const result = await refetchRequirements();
+    const isRefillRequired = result.data?.is_refill_required;
+    const allowStartAgent = result.data?.allow_start_agent;
+
+    // Update state in the end so the order change is not noticeable
     setDefaultStakingProgramId(stakingProgramId);
-    goto(SetupScreen.FundYourAgent);
+
+    // If has sufficient funds to run selected agent, navigate to main
+    if (isRefillRequired === false && allowStartAgent === true) {
+      setIsInitiallyFunded();
+      gotoPage(Pages.Main);
+    } else {
+      // Otherwise navigate to funding page
+      gotoSetup(SetupScreen.FundYourAgent);
+    }
   };
 
   return (
@@ -69,7 +116,7 @@ export const SelectStakingButton = ({
         type="primary"
         onClick={handleSelect}
         block
-        disabled={!canMigrate}
+        disabled={!canMigrate || isServicesLoading}
         loading={isLoading}
       >
         {buttonText}

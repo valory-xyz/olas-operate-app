@@ -15,7 +15,7 @@ import {
   CrossChainTransferDetails,
   Nullable,
 } from '@/types';
-import { asEvmChainId } from '@/utils';
+import { asAllEvmChainId } from '@/utils';
 
 import { BridgeTransferFlow } from '../BridgeTransferFlow';
 import { BridgeRetryOutcome, EnabledSteps } from '../types';
@@ -82,7 +82,7 @@ export const BridgeInProgress = ({
   );
 
   const isSafeCreated = isMasterWalletFetched
-    ? !isNil(getMasterSafeOf?.(asEvmChainId(fromChain))) ||
+    ? !isNil(getMasterSafeOf?.(asAllEvmChainId(fromChain))) ||
       masterSafeDetails?.isSafeCreated
     : false;
   const isTransferCompleted =

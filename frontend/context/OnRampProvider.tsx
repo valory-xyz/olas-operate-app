@@ -135,7 +135,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     const hasMasterSafe = getMasterSafeOf?.(networkId);
     const balance = hasMasterSafe
       ? Number(
-          getMasterSafeNativeBalanceOf(networkId)?.[0].balanceString ?? '0',
+          getMasterSafeNativeBalanceOf(networkId)?.[0]?.balanceString ?? '0',
         )
       : getMasterEoaNativeBalanceOf(networkId);
     if (!balance) return;

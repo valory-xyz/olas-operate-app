@@ -29,6 +29,8 @@ export const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
       '0x4D4233EBF0473Ca8f34d105A6256A2389176F0Ce',
     [STAKING_PROGRAM_IDS.PettAiAgent]:
       '0x31183503be52391844594b4B587F0e764eB3956E',
+    [STAKING_PROGRAM_IDS.PettAiAgent2]:
+      '0xEA15F76D7316B09b3f89613e32d3B780619d61e2',
   };
 
 export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
@@ -189,6 +191,26 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.PettAiAgent],
     contract: new MulticallContract(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.PettAiAgent],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+  },
+  [STAKING_PROGRAM_IDS.PettAiAgent2]: {
+    chainId: EvmChainId.Base,
+    name: 'Pett.AI Agent Staking Contract 2',
+    agentsSupported: [AgentType.PettAi],
+    stakingRequirements: {
+      [TokenSymbol.OLAS]: 40,
+    },
+    activityChecker:
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PettAiAgent2],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PettAiAgent2
+      ],
+    contract: new MulticallContract(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PettAiAgent2
+      ],
       STAKING_TOKEN_PROXY_ABI,
     ),
   },
