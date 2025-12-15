@@ -162,17 +162,13 @@ export const FundYourAgent = () => {
   ]);
   const { goto } = useSetup();
   const { selectedAgentConfig } = useServices();
-  const { evmHomeChainId, requiresSetup, isX402Enabled } = selectedAgentConfig;
+  const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const {
     totalTokenRequirements: tokenRequirements,
     isLoading,
     resetTokenRequirements,
-  } = useGetRefillRequirements({
-    // In case x402 feature is turned off, service creation for agents
-    // requiring setup is already handled at the time of agentForm
-    shouldCreateDummyService: requiresSetup && !isX402Enabled ? false : true,
-  });
+  } = useGetRefillRequirements();
 
   const { networkId: onRampChainId } = useOnRampContext();
   const areTokenRequirementsLoading =
