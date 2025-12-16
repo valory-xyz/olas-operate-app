@@ -60,6 +60,15 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isAgentFundingRequestsStale: boolean;
   isPearlWalletRefillRequired: boolean;
   refetch: () => Promise<
+    [
+      QueryObserverResult<BalancesAndFundingRequirements, Error>,
+      QueryObserverResult<
+        Record<string, BalancesAndFundingRequirements>,
+        Error
+      >,
+    ]
+  >;
+  refetchForSelectedAgent: () => Promise<
     QueryObserverResult<BalancesAndFundingRequirements, Error>
   >;
   resetQueryCache: () => void;
@@ -75,6 +84,14 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isAgentFundingRequestsStale: false,
   isPearlWalletRefillRequired: false,
   refetch: () =>
+    Promise.resolve([
+      {} as QueryObserverResult<BalancesAndFundingRequirements, Error>,
+      {} as QueryObserverResult<
+        Record<string, BalancesAndFundingRequirements>,
+        Error
+      >,
+    ]),
+  refetchForSelectedAgent: () =>
     Promise.resolve(
       {} as QueryObserverResult<BalancesAndFundingRequirements, Error>,
     ),
@@ -346,7 +363,7 @@ export const BalancesAndRefillRequirementsProvider = ({
     return Promise.all([
       refetchBalancesAndFundingRequirements(),
       refetchBalancesAndFundingRequirementsForAllServices(),
-    ]).then(([result]) => result);
+    ]);
   }, [
     refetchBalancesAndFundingRequirements,
     refetchBalancesAndFundingRequirementsForAllServices,
@@ -371,6 +388,7 @@ export const BalancesAndRefillRequirementsProvider = ({
           false,
         isPearlWalletRefillRequired,
         refetch,
+        refetchForSelectedAgent: refetchBalancesAndFundingRequirements,
         resetQueryCache,
       }}
     >
