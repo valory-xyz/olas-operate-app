@@ -45,7 +45,10 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
   balances: Optional<AddressBalanceRecord>;
   refillRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
-  getRefillRequirementsOf: (chainId: EvmChainId) => Maybe<AddressBalanceRecord>;
+  getRefillRequirementsOf: (
+    chainId: EvmChainId,
+    serviceConfigId?: string,
+  ) => Maybe<AddressBalanceRecord>;
   totalRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
   agentFundingRequests: Optional<AddressBalanceRecord>;
   canStartAgent: boolean;
@@ -213,7 +216,7 @@ export const BalancesAndRefillRequirementsProvider = ({
         signal,
       }),
     enabled: !!serviceConfigIds.length && isUserLoggedIn && isOnline,
-    refetchInterval,
+    refetchInterval: 5000,
   });
 
   const balances = useMemo(() => {
@@ -226,23 +229,18 @@ export const BalancesAndRefillRequirementsProvider = ({
     balancesAndFundingRequirements,
   ]);
 
-  // TODO: works only for single services per chain
-  // Needs to be updated if multi-service per chain is allowed
   const getRefillRequirementsOf = useCallback(
     <T extends AddressBalanceRecord | MasterSafeBalanceRecord>(
       chainId: EvmChainId,
+      serviceConfigId?: string,
     ): Optional<T> => {
+      if (!serviceConfigId) return;
       if (isBalancesAndFundingRequirementsLoadingForAllServices) return;
       if (!balancesAndFundingRequirementsForAllServices) return;
 
       const chain = asMiddlewareChain(chainId);
-      const serviceIdOfService = services?.find(
-        (s) => s.home_chain === chain,
-      )?.service_config_id;
-      if (!serviceIdOfService) return;
-
       const currentServiceBalancesAndFundingRequirements: Optional<BalancesAndFundingRequirements> =
-        balancesAndFundingRequirementsForAllServices?.[serviceIdOfService];
+        balancesAndFundingRequirementsForAllServices?.[serviceConfigId];
       if (!currentServiceBalancesAndFundingRequirements) return;
 
       const result = currentServiceBalancesAndFundingRequirements
@@ -252,7 +250,6 @@ export const BalancesAndRefillRequirementsProvider = ({
     [
       isBalancesAndFundingRequirementsLoadingForAllServices,
       balancesAndFundingRequirementsForAllServices,
-      services,
     ],
   );
 

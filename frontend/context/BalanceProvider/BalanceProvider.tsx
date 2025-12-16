@@ -15,6 +15,7 @@ import { EvmChainId, FIFTEEN_SECONDS_INTERVAL } from '@/constants';
 import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
+import { areAddressesEqual } from '@/utils';
 
 import { MasterWalletContext } from '../MasterWalletProvider';
 import { OnlineStatusContext } from '../OnlineStatusProvider';
@@ -34,6 +35,8 @@ export const BalanceContext = createContext<{
   totalStakedOlasBalance?: number;
   /** Get total staked olas balance of a specific chain */
   getTotalStakedOlasBalanceOf: (chainId: EvmChainId) => number;
+  /** Get staked olas balance of a specific agent wallet address */
+  getStakedOlasBalanceOf: (walletAddress: Address) => number;
   /** @deprecated not used */
   lowBalances?: {
     serviceConfigId: string;
@@ -50,6 +53,7 @@ export const BalanceContext = createContext<{
   isLoaded: false,
   updateBalances: async () => {},
   getTotalStakedOlasBalanceOf: () => 0,
+  getStakedOlasBalanceOf: () => 0,
   isPaused: false,
   setIsPaused: () => {},
 });
@@ -128,6 +132,23 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     [selectedAgentConfig.evmHomeChainId, getTotalStakedOlasBalanceOf],
   );
 
+  const getStakedOlasBalanceOf = useCallback(
+    (walletAddress: Address) => {
+      if (!walletAddress) return 0;
+
+      const balances = stakedBalances.filter(
+        ({ walletAddress: stakedWalletAddress }) =>
+          areAddressesEqual(walletAddress, stakedWalletAddress),
+      );
+      return balances.reduce(
+        (acc, balance) =>
+          acc + balance.olasBondBalance + balance.olasDepositBalance,
+        0,
+      );
+    },
+    [stakedBalances],
+  );
+
   const updateBalances = useCallback(async () => {
     await refetch();
   }, [refetch]);
@@ -143,6 +164,7 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
         totalEthBalance,
         totalStakedOlasBalance,
         getTotalStakedOlasBalanceOf,
+        getStakedOlasBalanceOf,
         isPaused,
         setIsPaused,
         updateBalances,

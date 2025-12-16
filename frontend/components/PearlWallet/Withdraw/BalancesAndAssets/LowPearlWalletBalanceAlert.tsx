@@ -7,6 +7,7 @@ import { usePearlWallet } from '@/context/PearlWalletProvider';
 import {
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,
+  useServices,
 } from '@/hooks';
 import { tokenBalancesToSentence } from '@/utils';
 
@@ -20,6 +21,7 @@ export const LowPearlWalletBalanceAlert = () => {
   const { isPearlWalletRefillRequired, getRefillRequirementsOf } =
     useBalanceAndRefillRequirementsContext();
   const { getMasterSafeOf } = useMasterWalletContext();
+  const { getServiceConfigIdsOf } = useServices();
 
   if (!isPearlWalletRefillRequired) return null;
 
@@ -42,9 +44,11 @@ export const LowPearlWalletBalanceAlert = () => {
               const masterSafe = getMasterSafeOf?.(chainId)?.address;
               if (!masterSafe) return null;
 
+              const serviceConfigIds = getServiceConfigIdsOf(chainId);
               const fundsRequired = getInitialDepositForMasterSafe(
                 chainId,
                 masterSafe,
+                serviceConfigIds,
                 getRefillRequirementsOf,
               );
               if (isEmpty(fundsRequired)) return null;

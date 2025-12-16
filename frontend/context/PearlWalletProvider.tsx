@@ -131,11 +131,13 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     selectedAgentConfig,
     selectedService,
     services,
+    availableServiceConfigIds,
+    getServiceConfigIdsOf,
   } = useServices();
-  const { isLoaded, getServiceSafeOf } = useService(
+  const { isLoaded, getServiceSafeOf, getAgentTypeOf } = useService(
     selectedService?.service_config_id,
   );
-  const { isLoading: isBalanceLoading, getTotalStakedOlasBalanceOf } =
+  const { isLoading: isBalanceLoading, getStakedOlasBalanceOf } =
     useBalanceContext();
   const { getRefillRequirementsOf } = useBalanceAndRefillRequirementsContext();
   const { masterSafes } = useMasterWalletContext();
@@ -177,6 +179,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
       walletChainId,
       masterSafeAddress,
+      getServiceConfigIdsOf(walletChainId),
       getRefillRequirementsOf,
     );
 
@@ -184,30 +187,40 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
 
     setDefaultDepositValues(defaultRequirementDepositValues);
     setAmountsToDeposit(defaultRequirementDepositValues);
-  }, [getRefillRequirementsOf, walletChainId, masterSafeAddress]);
-
-  const agent = ACTIVE_AGENTS.find(
-    ([, agentConfig]) => agentConfig.evmHomeChainId === walletChainId,
-  );
-  const agentType = agent ? agent[0] : null;
+  }, [
+    getRefillRequirementsOf,
+    walletChainId,
+    masterSafeAddress,
+    getServiceConfigIdsOf,
+  ]);
 
   // list of unique chains where the user has services
   const chains = useMemo(() => getChainList(services), [services]);
 
   // staked OLAS
-  const stakedAssets: StakedAsset[] = useMemo(
-    () => [
-      {
-        agentName: walletChainId
-          ? generateName(getServiceSafeOf(walletChainId)?.address)
-          : 'Agent',
+  const stakedAssets: StakedAsset[] = useMemo(() => {
+    const configIds = availableServiceConfigIds.filter(
+      ({ chainId }) => chainId === walletChainId,
+    );
+
+    return configIds.map(({ configId }) => {
+      const agentSafe = getServiceSafeOf?.(walletChainId, configId)?.address;
+      const agentName = generateName(agentSafe) ?? 'Agent';
+      const agentType = getAgentTypeOf(walletChainId, configId);
+      return {
+        agentName,
         agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
         symbol: 'OLAS',
-        amount: getTotalStakedOlasBalanceOf(walletChainId) ?? 0,
-      },
-    ],
-    [walletChainId, agentType, getTotalStakedOlasBalanceOf, getServiceSafeOf],
-  );
+        amount: getStakedOlasBalanceOf(agentSafe!) ?? 0,
+      };
+    });
+  }, [
+    availableServiceConfigIds,
+    walletChainId,
+    getServiceSafeOf,
+    getAgentTypeOf,
+    getStakedOlasBalanceOf,
+  ]);
 
   const updateStep = useCallback(
     (newStep: ValueOf<typeof STEPS>) => {

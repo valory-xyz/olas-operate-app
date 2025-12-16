@@ -74,6 +74,7 @@ type ServicesContextType = {
     chainId: EvmChainId;
     tokenId: Optional<number>;
   }[];
+  getServiceConfigIdsOf: (chainId: EvmChainId) => string[];
   serviceWallets?: AgentWallet[];
   selectedService?: Service;
   serviceStatusOverrides?: Record<string, Maybe<MiddlewareDeploymentStatus>>;
@@ -100,6 +101,7 @@ export const ServicesContext = createContext<ServicesContextType>({
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
   availableServiceConfigIds: [],
+  getServiceConfigIdsOf: () => [],
 });
 
 /**
@@ -334,6 +336,14 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       }));
   }, [services]);
 
+  const getServiceConfigIdsOf = useCallback(
+    (chainId: EvmChainId) =>
+      availableServiceConfigIds
+        .filter(({ chainId: serviceChainId }) => chainId === serviceChainId)
+        .map(({ configId }) => configId),
+    [availableServiceConfigIds],
+  );
+
   return (
     <ServicesContext.Provider
       value={{
@@ -343,6 +353,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         isLoading: isServicesLoading,
         refetch,
         availableServiceConfigIds,
+        getServiceConfigIdsOf,
 
         // pause
         paused,
