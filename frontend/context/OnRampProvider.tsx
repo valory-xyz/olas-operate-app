@@ -128,6 +128,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // check if the user has received funds after on-ramping to the master EOA
   useEffect(() => {
     if (!ethAmountToPay) return;
+    if (!usdAmountToPay) return;
     if (isOnRampingStepCompleted) return;
     if (!isMasterWalletFetched) return;
 
@@ -160,6 +161,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     isMasterWalletFetched,
     getMasterSafeOf,
     getMasterSafeNativeBalanceOf,
+    usdAmountToPay,
   ]);
 
   // Function to set the ETH amount to pay for on-ramping

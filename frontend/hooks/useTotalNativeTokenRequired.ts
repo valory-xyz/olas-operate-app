@@ -59,13 +59,15 @@ export const useTotalNativeTokenRequired = (
     if (!masterEoa?.address) return;
     if (!isMasterWalletFetched) return;
 
-    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-    const toOnRampNetworkName = asMiddlewareChain(
-      onRampChainMap[fromChainName],
+    // "TO" chain, where we will bridge on-ramped funds to
+    const agentChainName = asMiddlewareChain(
+      selectedAgentConfig.evmHomeChainId,
     );
+    // "FROM" chain for bridging, the chain we will on-ramp funds to
+    const onRampNetworkName = asMiddlewareChain(onRampChainMap[agentChainName]);
 
     const destinationAddress =
-      getMasterSafeOf?.(onRampChainMap[fromChainName])?.address ||
+      getMasterSafeOf?.(onRampChainMap[agentChainName])?.address ||
       masterEoa.address;
 
     /**
@@ -84,12 +86,12 @@ export const useTotalNativeTokenRequired = (
       (request) => request.to.token === AddressZero,
     )?.to.amount;
     const nativeTokenFromBridgeParams =
-      fromChainName === toOnRampNetworkName ? nativeTokenAmount : 0;
+      agentChainName === onRampNetworkName ? nativeTokenAmount : 0;
 
     // Remaining token from the bridge quote.
     // e.g, For optimus, OLAS and USDC are bridged to ETH
     const bridgeRefillRequirements =
-      bridgeFundingRequirements.bridge_refill_requirements[toOnRampNetworkName];
+      bridgeFundingRequirements.bridge_refill_requirements[onRampNetworkName];
     const nativeTokenFromBridgeQuote =
       bridgeRefillRequirements?.[destinationAddress]?.[AddressZero];
 
