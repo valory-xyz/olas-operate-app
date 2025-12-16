@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
 import { TransactionStep } from '@/components/ui/TransactionSteps';
-import { TokenSymbol } from '@/constants/token';
+import { TokenSymbol } from '@/config/tokens';
 import { useMasterWalletContext, useServices } from '@/hooks';
 import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
 import { Nullable } from '@/types';

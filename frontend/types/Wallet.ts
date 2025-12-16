@@ -1,4 +1,5 @@
-import { EvmChainId, MiddlewareChain, TokenSymbol } from '@/constants';
+import { TokenSymbol } from '@/config/tokens';
+import { EvmChainId, MiddlewareChain } from '@/constants';
 
 import { Address } from './Address';
 import { AddressTxnRecord } from './Records';

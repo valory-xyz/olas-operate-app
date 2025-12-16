@@ -3,7 +3,7 @@ import { isNil } from 'lodash';
 import { useContext, useMemo } from 'react';
 
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
-import { AgentType, EvmChainId } from '@/constants';
+import { AgentType, EvmChainId, FIVE_SECONDS_INTERVAL } from '@/constants';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { assertRequired } from '@/types/Util';
 import { sumBigNumbers } from '@/utils/calculations';
@@ -11,12 +11,14 @@ import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { createActiveStakingProgramIdQuery } from './useActiveStakingProgramId';
 import { createStakingRewardsQuery } from './useAgentStakingRewardsDetails';
+import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
 import { useServices } from './useServices';
 
 /**
  * Hook to fetch staking rewards details of a service on a given chain.
  */
 export const useStakingRewardsOf = (chainId: EvmChainId) => {
+  const refetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
   const { isOnline } = useContext(OnlineStatusContext);
   const {
     services,
@@ -66,6 +68,7 @@ export const useStakingRewardsOf = (chainId: EvmChainId) => {
           serviceNftTokenId: serviceDetails.serviceNftTokenId,
           serviceApi: serviceDetails.agentConfig.serviceApi,
           isServicesLoaded,
+          refetchInterval,
         });
       }) ?? [],
   });
@@ -101,6 +104,7 @@ export const useStakingRewardsOf = (chainId: EvmChainId) => {
         isOnline,
         serviceConfigId: serviceDetail.serviceConfigId,
         multisig: serviceDetail.multisig,
+        refetchInterval,
       });
     }),
   });

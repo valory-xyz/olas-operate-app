@@ -7,8 +7,8 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { z } from 'zod';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { REACT_QUERY_KEYS } from '@/constants';
 import { EvmChainId } from '@/constants/chains';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
 import { Address } from '@/types/Address';
 import { Nullable } from '@/types/Util';
@@ -251,7 +251,6 @@ const useContractCheckpoints = (
     },
     enabled: !!serviceId,
     refetchInterval: ONE_DAY_IN_MS,
-    refetchOnWindowFocus: false,
   });
 };
 
@@ -292,7 +291,7 @@ export const useServiceOnlyRewardsHistory = () => {
   }, [contractCheckpointsWithServiceId]);
 
   /**
-   * Sorts the checkpoints as per the epoch timestampss, uses `allContractCheckpoints` to
+   * Sorts the checkpoints as per the epoch timestamps, uses `allContractCheckpoints` to
    * fills in the missing epochs (where the service didn't earn any rewards).
    */
   const epochSortedCheckpoints = useMemo<Checkpoint[]>(() => {
@@ -395,6 +394,7 @@ export const useServiceOnlyRewardsHistory = () => {
     isFetched,
     refetch,
     totalRewards,
+    /** checkpoints across all contracts */
     allCheckpoints: epochSortedCheckpoints,
   };
 };

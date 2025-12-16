@@ -1,8 +1,8 @@
 import { Button, Flex, message } from 'antd';
 import { useBoolean } from 'usehooks-ts';
 
+import { PAGES, SETUP_SCREEN, StakingProgramId } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { Pages, SetupScreen, StakingProgramId } from '@/enums';
 import {
   useBalanceAndRefillRequirementsContext,
   useIsInitiallyFunded,
@@ -102,10 +102,10 @@ export const SelectStakingButton = ({
     // If has sufficient funds to run selected agent, navigate to main
     if (isRefillRequired === false && allowStartAgent === true) {
       setIsInitiallyFunded();
-      gotoPage(Pages.Main);
+      gotoPage(PAGES.Main);
     } else {
       // Otherwise navigate to funding page
-      gotoSetup(SetupScreen.FundYourAgent);
+      gotoSetup(SETUP_SCREEN.FundYourAgent);
     }
   };
 

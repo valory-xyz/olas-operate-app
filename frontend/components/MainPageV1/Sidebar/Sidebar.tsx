@@ -27,10 +27,11 @@ import {
   APP_HEIGHT,
   COLOR,
   EvmChainId,
+  PAGES,
+  Pages,
+  SETUP_SCREEN,
   SIDER_WIDTH,
 } from '@/constants';
-import { Pages } from '@/enums/Pages';
-import { SetupScreen } from '@/enums/SetupScreen';
 import {
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,
@@ -40,9 +41,9 @@ import {
 } from '@/hooks';
 import { AgentConfig } from '@/types';
 
-import { BackupSeedPhraseAlert } from './BackupSeedPhraseAlert';
-import { UpdateAvailableAlert } from './UpdateAvailableAlert/UpdateAvailableAlert';
-import { UpdateAvailableModal } from './UpdateAvailableAlert/UpdateAvailableModal';
+import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
+import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
+import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -101,16 +102,16 @@ const PearlWalletLabel = () => {
 
 const menuItems: MenuProps['items'] = [
   {
-    key: Pages.PearlWallet,
+    key: PAGES.PearlWallet,
     icon: <TbWallet size={20} />,
     label: <PearlWalletLabel />,
   },
   {
-    key: Pages.HelpAndSupport,
+    key: PAGES.HelpAndSupport,
     icon: <TbHelpSquareRounded size={20} />,
     label: 'Help Center',
   },
-  { key: Pages.Settings, icon: <TbSettings size={20} />, label: 'Settings' },
+  { key: PAGES.Settings, icon: <TbSettings size={20} />, label: 'Settings' },
 ];
 
 type AgentList = {
@@ -216,13 +217,13 @@ export const Sidebar = () => {
     );
 
     if (isSafeCreated) {
-      gotoPage(Pages.Main);
+      gotoPage(PAGES.Main);
     } else {
-      gotoPage(Pages.Setup);
+      gotoPage(PAGES.Setup);
 
       // TODO: make back button on funding screen properly sending back to main
       // if was redirected from here
-      gotoSetup(SetupScreen.FundYourAgent);
+      gotoSetup(SETUP_SCREEN.FundYourAgent);
     }
   };
 
@@ -274,8 +275,8 @@ export const Sidebar = () => {
                   size="large"
                   className="flex mx-auto"
                   onClick={() => {
-                    gotoPage(Pages.Setup);
-                    gotoSetup(SetupScreen.AgentOnboarding);
+                    gotoPage(PAGES.Setup);
+                    gotoSetup(SETUP_SCREEN.AgentOnboarding);
                   }}
                   icon={<TbPlus size={20} />}
                 >

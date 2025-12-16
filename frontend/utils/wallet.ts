@@ -1,6 +1,5 @@
-import { ChainTokenConfig } from '@/config/tokens';
+import { ChainTokenConfig, TokenSymbol } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
-import { TokenSymbol } from '@/enums';
 import { Address } from '@/types/Address';
 import { TokenAmounts } from '@/types/Wallet';
 import { areAddressesEqual } from '@/utils/address';

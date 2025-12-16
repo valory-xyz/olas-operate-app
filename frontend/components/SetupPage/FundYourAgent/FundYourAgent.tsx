@@ -3,8 +3,7 @@ import { ReactNode } from 'react';
 import styled from 'styled-components';
 
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
-import { COLOR, EvmChainId, EvmChainName } from '@/constants';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { COLOR, EvmChainId, EvmChainName, SETUP_SCREEN } from '@/constants';
 import {
   useFeatureFlag,
   useGetRefillRequirements,
@@ -77,7 +76,7 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
       <Button
         type="primary"
         size="large"
-        onClick={() => goto(SetupScreen.SetupOnRamp)}
+        onClick={() => goto(SETUP_SCREEN.SetupOnRamp)}
         disabled={isLoading || hasNativeTokenError}
       >
         Buy Crypto with USD
@@ -110,7 +109,7 @@ const TransferTokens = ({
       </div>
       <Button
         size="large"
-        onClick={() => goto(SetupScreen.TransferFunds)}
+        onClick={() => goto(SETUP_SCREEN.TransferFunds)}
         disabled={isBalancesAndFundingRequirementsLoading}
       >
         Transfer Crypto on {chainName}
@@ -143,7 +142,7 @@ const BridgeTokens = ({
       </div>
       <Button
         size="large"
-        onClick={() => goto(SetupScreen.SetupBridgeOnboardingScreen)}
+        onClick={() => goto(SETUP_SCREEN.SetupBridgeOnboardingScreen)}
         disabled={isBalancesAndFundingRequirementsLoading}
       >
         Bridge Crypto from Ethereum
@@ -179,7 +178,7 @@ export const FundYourAgent = () => {
       <BackButton
         onPrev={() => {
           resetTokenRequirements();
-          goto(SetupScreen.SelectStaking);
+          goto(SETUP_SCREEN.SelectStaking);
         }}
       />
       <Title level={3} className="mt-12">

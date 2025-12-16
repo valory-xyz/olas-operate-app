@@ -2,19 +2,24 @@ import { useQuery } from '@tanstack/react-query';
 import { isNil } from 'lodash';
 
 import { AGENT_CONFIG } from '@/config/agents';
-import { EvmChainId } from '@/constants/chains';
-import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import {
+  EvmChainId,
+  FIVE_SECONDS_INTERVAL,
+  REACT_QUERY_KEYS,
+} from '@/constants';
 import { useServices } from '@/hooks/useServices';
 import { AgentConfig } from '@/types/Agent';
 import { Maybe } from '@/types/Util';
 import { isValidServiceId } from '@/utils';
+
+import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
 
 type CreateActiveStakingProgramIdQueryParams = {
   evmHomeChainId: EvmChainId;
   serviceNftTokenId: Maybe<number>;
   serviceApi: (typeof AGENT_CONFIG)[keyof typeof AGENT_CONFIG]['serviceApi'];
   isServicesLoaded: Maybe<boolean>;
+  refetchInterval: number;
 };
 
 export const createActiveStakingProgramIdQuery = ({
@@ -22,6 +27,7 @@ export const createActiveStakingProgramIdQuery = ({
   serviceNftTokenId,
   serviceApi,
   isServicesLoaded,
+  refetchInterval,
 }: CreateActiveStakingProgramIdQueryParams) => {
   return {
     queryKey: REACT_QUERY_KEYS.STAKING_PROGRAM_KEY(
@@ -43,7 +49,7 @@ export const createActiveStakingProgramIdQuery = ({
       !isNil(evmHomeChainId) &&
       !!isServicesLoaded &&
       isValidServiceId(serviceNftTokenId),
-    refetchInterval: FIVE_SECONDS_INTERVAL,
+    refetchInterval,
   };
 };
 
@@ -57,6 +63,7 @@ export const useActiveStakingProgramId = (
 ) => {
   const { isFetched: isServicesLoaded } = useServices();
   const { serviceApi, evmHomeChainId } = agentConfig;
+  const refetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
 
   return useQuery(
     createActiveStakingProgramIdQuery({
@@ -64,6 +71,7 @@ export const useActiveStakingProgramId = (
       serviceNftTokenId,
       serviceApi,
       isServicesLoaded,
+      refetchInterval,
     }),
   );
 };

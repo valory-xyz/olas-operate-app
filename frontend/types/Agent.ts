@@ -1,10 +1,10 @@
+import { TokenSymbol } from '@/config/tokens';
 import {
+  EvmChainId,
   MiddlewareDeploymentStatus,
+  StakingProgramId,
   SupportedMiddlewareChain,
 } from '@/constants';
-import { StakingProgramId } from '@/enums';
-import { EvmChainId } from '@/enums/Chain';
-import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';

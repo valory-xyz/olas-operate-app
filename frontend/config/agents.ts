@@ -1,16 +1,17 @@
 import { formatUnits } from 'ethers/lib/utils';
 import { entries } from 'lodash';
 
-import { MiddlewareChainMap } from '@/constants';
+import {
+  EvmChainIdMap,
+  MiddlewareChainMap,
+  STAKING_PROGRAM_IDS,
+} from '@/constants';
 import { AgentMap, AgentType } from '@/constants/agent';
 import {
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
 } from '@/constants/serviceTemplates';
 import { X402_ENABLED_FLAGS } from '@/constants/x402';
-import { STAKING_PROGRAM_IDS } from '@/enums';
-import { EvmChainId } from '@/enums/Chain';
-import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
@@ -19,13 +20,17 @@ import { PredictTraderService } from '@/service/agents/PredictTrader';
 import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
 
-import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from './tokens';
+import {
+  MODE_TOKEN_CONFIG,
+  OPTIMISM_TOKEN_CONFIG,
+  TokenSymbolMap,
+} from './tokens';
 
 const getModiusUsdcConfig = () => {
   const modiusFundRequirements =
     MODIUS_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.MODE]
       ?.fund_requirements;
-  const modiusUsdcConfig = MODE_TOKEN_CONFIG[TokenSymbol.USDC];
+  const modiusUsdcConfig = MODE_TOKEN_CONFIG[TokenSymbolMap.USDC];
 
   if (!modiusUsdcConfig) {
     throw new Error('Modius USDC config not found');
@@ -40,7 +45,7 @@ const getOptimusUsdcConfig = () => {
   const optimusFundRequirements =
     OPTIMUS_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.OPTIMISM]
       ?.fund_requirements;
-  const optimusUsdcConfig = OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC];
+  const optimusUsdcConfig = OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC];
 
   if (!optimusUsdcConfig) {
     throw new Error('Optimus USDC config not found');
@@ -60,7 +65,7 @@ export const AGENT_CONFIG: {
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PredictTrader],
     name: 'Predict Trader',
-    evmHomeChainId: EvmChainId.Gnosis,
+    evmHomeChainId: EvmChainIdMap.Gnosis,
     middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
     agentIds: [14, 25],
     defaultStakingProgramId: STAKING_PROGRAM_IDS.PearlBeta,
@@ -80,11 +85,13 @@ export const AGENT_CONFIG: {
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Optimus],
     name: 'Optimus agent',
-    evmHomeChainId: EvmChainId.Optimism,
+    evmHomeChainId: EvmChainIdMap.Optimism,
     middlewareHomeChainId: MiddlewareChainMap.OPTIMISM,
     agentIds: [40],
     additionalRequirements: {
-      [EvmChainId.Optimism]: { [TokenSymbol.USDC]: getOptimusUsdcConfig() },
+      [EvmChainIdMap.Optimism]: {
+        [TokenSymbolMap.USDC]: getOptimusUsdcConfig(),
+      },
     },
     defaultStakingProgramId: STAKING_PROGRAM_IDS.OptimusAlpha2,
     serviceApi: OptimismService,
@@ -105,7 +112,7 @@ export const AGENT_CONFIG: {
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.AgentsFun],
     name: 'Agents.fun',
-    evmHomeChainId: EvmChainId.Base,
+    evmHomeChainId: EvmChainIdMap.Base,
     middlewareHomeChainId: MiddlewareChainMap.BASE,
     agentIds: [43],
     defaultStakingProgramId: STAKING_PROGRAM_IDS.AgentsFun1,
@@ -125,12 +132,12 @@ export const AGENT_CONFIG: {
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Modius],
     name: 'Modius agent',
-    evmHomeChainId: EvmChainId.Mode,
+    evmHomeChainId: EvmChainIdMap.Mode,
     agentIds: [40],
     middlewareHomeChainId: MiddlewareChainMap.MODE,
     defaultStakingProgramId: STAKING_PROGRAM_IDS.ModiusAlpha,
     additionalRequirements: {
-      [EvmChainId.Mode]: { [TokenSymbol.USDC]: getModiusUsdcConfig() },
+      [EvmChainIdMap.Mode]: { [TokenSymbolMap.USDC]: getModiusUsdcConfig() },
     },
     serviceApi: ModiusService,
     displayName: 'Modius',
@@ -150,7 +157,7 @@ export const AGENT_CONFIG: {
     requiresSetup: false,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PettAi],
     name: 'Pett.ai',
-    evmHomeChainId: EvmChainId.Base,
+    evmHomeChainId: EvmChainIdMap.Base,
     agentIds: [80],
     middlewareHomeChainId: MiddlewareChainMap.BASE,
     defaultStakingProgramId: STAKING_PROGRAM_IDS.PettAiAgent,

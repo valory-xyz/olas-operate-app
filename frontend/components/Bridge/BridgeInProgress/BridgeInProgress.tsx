@@ -3,7 +3,7 @@ import { isNil } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AgentSetupCompleteModal, Alert, CardFlex } from '@/components/ui';
-import { Pages } from '@/enums';
+import { PAGES } from '@/constants';
 import {
   useBridgingSteps,
   useMasterSafeCreationAndTransfer,
@@ -160,7 +160,7 @@ export const BridgeInProgress = ({
     }
 
     // wait for 3 seconds before redirecting to main page.
-    const timeoutId = setTimeout(() => goto(Pages.Main), 3000);
+    const timeoutId = setTimeout(() => goto(PAGES.Main), 3000);
     return () => clearTimeout(timeoutId);
   }, [
     canCreateMasterSafeAndTransfer,

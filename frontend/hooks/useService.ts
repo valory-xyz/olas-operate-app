@@ -11,9 +11,9 @@ import {
   AgentEoa,
   AgentSafe,
   AgentWallet,
-  WalletOwnerType,
-  WalletType,
-} from '@/enums/Wallet';
+  WALLET_OWNER,
+  WALLET_TYPE,
+} from '@/constants';
 import { Address } from '@/types/Address';
 import { Service } from '@/types/Service';
 import { Nullable, Optional } from '@/types/Util';
@@ -35,8 +35,8 @@ const getAgentEoas = (addresses?: Address[]) => {
     (address) =>
       ({
         address,
-        owner: WalletOwnerType.Agent,
-        type: WalletType.EOA,
+        owner: WALLET_OWNER.Agent,
+        type: WALLET_TYPE.EOA,
       }) satisfies AgentEoa,
   );
 };
@@ -83,8 +83,8 @@ export const useService = (serviceConfigId?: string) => {
 
       const agentSafe = {
         address: chainConfig.chain_data.multisig as Address,
-        owner: WalletOwnerType.Agent,
-        type: WalletType.Safe,
+        owner: WALLET_OWNER.Agent,
+        type: WALLET_TYPE.Safe,
         evmChainId: chainId,
       } satisfies AgentSafe;
 
@@ -171,8 +171,8 @@ export const useService = (serviceConfigId?: string) => {
       getServiceWalletsOf(chainId, configId).filter(
         (wallet): wallet is AgentSafe =>
           getAgentAddressesOf(chainId, configId).includes(wallet.address) &&
-          wallet.owner === WalletOwnerType.Agent &&
-          wallet.type === WalletType.Safe,
+          wallet.owner === WALLET_OWNER.Agent &&
+          wallet.type === WALLET_TYPE.Safe,
       ),
     [getServiceWalletsOf, getAgentAddressesOf],
   );
@@ -182,8 +182,8 @@ export const useService = (serviceConfigId?: string) => {
     return serviceWallets.filter(
       (wallet): wallet is AgentSafe =>
         agentAddresses.includes(wallet.address) &&
-        wallet.owner === WalletOwnerType.Agent &&
-        wallet.type === WalletType.Safe,
+        wallet.owner === WALLET_OWNER.Agent &&
+        wallet.type === WALLET_TYPE.Safe,
     );
   }, [agentAddresses, serviceWallets]);
 
@@ -192,8 +192,8 @@ export const useService = (serviceConfigId?: string) => {
     return serviceWallets.find(
       (wallet): wallet is AgentEoa =>
         agentAddresses.includes(wallet.address) &&
-        wallet.owner === WalletOwnerType.Agent &&
-        wallet.type === WalletType.EOA,
+        wallet.owner === WALLET_OWNER.Agent &&
+        wallet.type === WALLET_TYPE.EOA,
     );
   }, [agentAddresses, serviceWallets]);
 

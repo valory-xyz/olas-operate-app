@@ -1,6 +1,9 @@
-import { EvmChainId } from '@/enums/Chain';
-
-import { MiddlewareChainMap, SupportedMiddlewareChain } from './chains';
+import {
+  EvmChainId,
+  EvmChainIdMap,
+  MiddlewareChainMap,
+  SupportedMiddlewareChain,
+} from './chains';
 
 type Url = `http${'s' | ''}://${string}`;
 
@@ -18,10 +21,10 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
   EvmChainId,
   Url
 > = {
-  [EvmChainId.Gnosis]: 'https://staking-gnosis.subgraph.autonolas.tech',
-  [EvmChainId.Base]: 'https://staking-base.subgraph.autonolas.tech',
-  [EvmChainId.Mode]: 'https://staking-mode.subgraph.autonolas.tech',
-  [EvmChainId.Optimism]: 'https://staking-optimism.subgraph.autonolas.tech',
+  [EvmChainIdMap.Gnosis]: 'https://staking-gnosis.subgraph.autonolas.tech',
+  [EvmChainIdMap.Base]: 'https://staking-base.subgraph.autonolas.tech',
+  [EvmChainIdMap.Mode]: 'https://staking-mode.subgraph.autonolas.tech',
+  [EvmChainIdMap.Optimism]: 'https://staking-optimism.subgraph.autonolas.tech',
 };
 
 // discord
@@ -88,10 +91,10 @@ const SWAP_OPTIMISM_URL: Url =
   'https://balancer.fi/pools/optimism/v2/0x5bb3e58887264b667f915130fd04bbb56116c27800020000000000000000012a';
 
 export const SWAP_URL_BY_EVM_CHAIN: Record<EvmChainId, Url> = {
-  [EvmChainId.Gnosis]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
-  [EvmChainId.Base]: SWAP_BASE_URL,
-  [EvmChainId.Mode]: SWAP_MODE_URL,
-  [EvmChainId.Optimism]: SWAP_OPTIMISM_URL,
+  [EvmChainIdMap.Gnosis]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
+  [EvmChainIdMap.Base]: SWAP_BASE_URL,
+  [EvmChainIdMap.Mode]: SWAP_MODE_URL,
+  [EvmChainIdMap.Optimism]: SWAP_OPTIMISM_URL,
 };
 
 // on-ramp

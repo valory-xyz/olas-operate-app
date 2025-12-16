@@ -1,4 +1,4 @@
-import { AgentType } from '@/enums/Agent';
+import { AgentMap, AgentType } from '@/constants';
 
 import { BackupWalletType } from './BackupWallet';
 import { Nullable } from './Util';
@@ -22,11 +22,11 @@ export type ElectronStore = {
   mnemonicExists?: boolean;
 
   // Each agent has its own settings
-  [AgentType.PredictTrader]?: AgentSettings;
-  [AgentType.AgentsFun]?: AgentSettings;
-  [AgentType.Modius]?: AgentSettings;
-  [AgentType.Optimus]?: AgentSettings;
-  [AgentType.PettAi]?: AgentSettings;
+  [AgentMap.PredictTrader]?: AgentSettings;
+  [AgentMap.AgentsFun]?: AgentSettings;
+  [AgentMap.Modius]?: AgentSettings;
+  [AgentMap.Optimus]?: AgentSettings;
+  [AgentMap.PettAi]?: AgentSettings;
   lastProvidedBackupWallet?: {
     address: Nullable<string>;
     type: BackupWalletType;

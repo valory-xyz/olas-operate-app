@@ -4,7 +4,8 @@ import { useMemo } from 'react';
 
 import { AgentNft } from '@/components/AgentNft';
 import { Table } from '@/components/ui';
-import { NA, TokenSymbolConfigMap } from '@/constants';
+import { TokenSymbolConfigMap } from '@/config/tokens';
+import { NA } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { StakedAsset } from '@/types/Wallet';
 

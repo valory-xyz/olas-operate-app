@@ -3,10 +3,8 @@ import { Button, Checkbox, Flex, Typography } from 'antd';
 import { MouseEvent, useCallback, useState } from 'react';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useElectronApi } from '@/hooks';
-import { useSetup } from '@/hooks/useSetup';
+import { COLOR, SETUP_SCREEN } from '@/constants';
+import { useElectronApi, useSetup } from '@/hooks';
 
 const { Title: AntTitle, Text } = Typography;
 
@@ -92,7 +90,7 @@ export const SetupWelcomeCreate = () => {
           type="primary"
           size="large"
           disabled={!isFormValid}
-          onClick={() => goto(SetupScreen.SetupPassword)}
+          onClick={() => goto(SETUP_SCREEN.SetupPassword)}
         >
           Create account
         </Button>

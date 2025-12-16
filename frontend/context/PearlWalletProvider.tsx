@@ -10,13 +10,14 @@ import {
 
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
+import { TokenSymbol } from '@/config/tokens';
 import {
   AgentType,
   EvmChainId,
   type EvmChainName,
-  TokenSymbol,
+  MasterSafe,
+  PAGES,
 } from '@/constants';
-import { MasterSafe, Pages } from '@/enums';
 import {
   useAvailableAssets,
   useBalanceAndRefillRequirementsContext,
@@ -165,7 +166,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       // For deposit, we only want to show assets in the safe.
       includeMasterEoa:
         walletStep !== STEPS.DEPOSIT ||
-        pageState !== Pages.DepositOlasForStaking,
+        pageState !== PAGES.DepositOlasForStaking,
     });
   const masterSafeAddress = useMemo(
     () => getMasterSafeAddress(walletChainId, masterSafes),
@@ -271,7 +272,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const gotoPearlWallet = useCallback(() => {
-    goto(Pages.PearlWallet);
+    goto(PAGES.PearlWallet);
     updateStep(STEPS.PEARL_WALLET_SCREEN);
   }, [updateStep, goto]);
 

@@ -1,12 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 
-import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
+import { TOKEN_CONFIG, TokenSymbol, TokenType } from '@/config/tokens';
 import { AddressZero } from '@/constants';
-import { TokenSymbol } from '@/constants/token';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { useMessageApi } from '@/context/MessageProvider';
 import { useBackupSigner } from '@/hooks/useBackupSigner';
-import { useElectronApi } from '@/hooks/useElectronApi';
 import { useServices } from '@/hooks/useServices';
 import { WalletService } from '@/service/Wallet';
 import { BridgingStepStatus } from '@/types/Bridge';
@@ -20,9 +18,8 @@ import { useBalanceAndRefillRequirementsContext } from '.';
 export const useMasterSafeCreationAndTransfer = (
   tokenSymbols: TokenSymbol[],
 ) => {
-  const electronApi = useElectronApi();
   const backupSignerAddress = useBackupSigner();
-  const { selectedAgentType, selectedAgentConfig } = useServices();
+  const { selectedAgentConfig } = useServices();
   const { refetch } = useBalanceAndRefillRequirementsContext();
   const message = useMessageApi();
 

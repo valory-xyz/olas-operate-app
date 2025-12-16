@@ -2,13 +2,12 @@ import { entries } from 'lodash';
 import { useCallback } from 'react';
 
 import { Bridge } from '@/components/Bridge';
-import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
 import {
-  AddressZero,
-  MiddlewareChain,
-  MiddlewareChainMap,
+  ETHEREUM_TOKEN_CONFIG,
+  TOKEN_CONFIG,
   TokenSymbol,
-} from '@/constants';
+} from '@/config/tokens';
+import { AddressZero, MiddlewareChain, MiddlewareChainMap } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useMasterWalletContext } from '@/hooks';
 import { Address } from '@/types/Address';

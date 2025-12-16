@@ -5,11 +5,14 @@ import { useMemo } from 'react';
 import { AGENT_CONFIG } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { getNativeTokenSymbol, NATIVE_TOKEN_CONFIG } from '@/config/tokens';
+import {
+  getNativeTokenSymbol,
+  NATIVE_TOKEN_CONFIG,
+  TokenSymbolMap,
+} from '@/config/tokens';
 import { AgentType } from '@/constants/agent';
 import { EvmChainId } from '@/constants/chains';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { TokenSymbolMap } from '@/constants/token';
 import { ConfigurationTemplate } from '@/types';
 import { Address } from '@/types/Address';
 import { formatUnitsToNumber } from '@/utils';

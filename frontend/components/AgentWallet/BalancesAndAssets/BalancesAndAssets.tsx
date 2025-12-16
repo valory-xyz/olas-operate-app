@@ -2,7 +2,7 @@ import { Button, Flex, Modal, Typography } from 'antd';
 import { useState } from 'react';
 
 import { CardFlex, WalletsTooltip } from '@/components/ui';
-import { Pages } from '@/enums/Pages';
+import { PAGES } from '@/constants';
 import { usePageState, useService, useServices } from '@/hooks';
 
 import { AgentWalletOperation } from './AgentWalletOperation';
@@ -90,7 +90,7 @@ const SomeFundsMaybeLockedModal = ({
       <Flex gap={8}>
         <Button onClick={onCancel}>Cancel</Button>
         <Button onClick={onNext}>I’ve Withdrawn Locked Funds</Button>
-        <Button onClick={() => goto(Pages.Main)} type="primary">
+        <Button onClick={() => goto(PAGES.Main)} type="primary">
           Withdraw Locked Funds
         </Button>
       </Flex>

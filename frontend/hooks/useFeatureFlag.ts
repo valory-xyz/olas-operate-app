@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { AgentType } from '@/enums/Agent';
+import { AgentMap } from '@/constants';
 import { assertRequired } from '@/types/Util';
 
 import { useServices } from './useServices';
@@ -16,7 +16,7 @@ const FeatureFlagsSchema = z.enum([
 type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
 
 const FeaturesConfigSchema = z.record(
-  z.nativeEnum(AgentType),
+  z.nativeEnum(AgentMap),
   z.record(FeatureFlagsSchema, z.boolean()),
 );
 
@@ -26,7 +26,7 @@ const FeaturesConfigSchema = z.record(
  * if false - the feature is disabled
  */
 const FEATURES_CONFIG = FeaturesConfigSchema.parse({
-  [AgentType.PredictTrader]: {
+  [AgentMap.PredictTrader]: {
     'withdraw-funds': true,
     'staking-contract-section': true,
     'backup-via-safe': true,
@@ -34,7 +34,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-add-funds': true,
     'on-ramp': true,
   },
-  [AgentType.AgentsFun]: {
+  [AgentMap.AgentsFun]: {
     'withdraw-funds': true,
     'staking-contract-section': true,
     'backup-via-safe': true,
@@ -42,7 +42,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-add-funds': false,
     'on-ramp': true,
   },
-  [AgentType.Modius]: {
+  [AgentMap.Modius]: {
     'withdraw-funds': true,
     'staking-contract-section': true,
     'backup-via-safe': false, // temporarily hidden until mode is available on safe https://app.safe.global/new-safe/create
@@ -50,7 +50,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-add-funds': true,
     'on-ramp': true,
   },
-  [AgentType.Optimus]: {
+  [AgentMap.Optimus]: {
     'withdraw-funds': true,
     'staking-contract-section': true,
     'backup-via-safe': true,
@@ -58,7 +58,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-add-funds': true,
     'on-ramp': true,
   },
-  [AgentType.PettAi]: {
+  [AgentMap.PettAi]: {
     'withdraw-funds': true,
     'staking-contract-section': false,
     'backup-via-safe': true,

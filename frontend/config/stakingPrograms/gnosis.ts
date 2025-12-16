@@ -1,14 +1,12 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
-import { AgentType } from '@/enums/Agent';
-import { EvmChainId } from '@/enums/Chain';
-import { STAKING_PROGRAM_IDS } from '@/enums/StakingProgram';
-import { TokenSymbol } from '@/enums/Token';
-import { Address } from '@/types/Address';
+import { AgentMap, EvmChainIdMap, STAKING_PROGRAM_IDS } from '@/constants';
+import { Address } from '@/types';
 
 import { GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { MECHS, MechType } from '../mechs';
+import { TokenSymbolMap } from '../tokens';
 import { StakingProgramMap } from '.';
 
 export const GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
@@ -44,13 +42,13 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.PearlAlpha]: {
     deprecated: true,
     name: 'Pearl Alpha',
-    chainId: EvmChainId.Gnosis,
-    agentsSupported: [AgentType.PredictTrader],
+    chainId: EvmChainIdMap.Gnosis,
+    agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 20,
+      [TokenSymbolMap.OLAS]: 20,
     },
     mechType: MechType.Agent,
-    mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.Agent].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlAlpha],
     address:
@@ -66,14 +64,14 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.PearlBeta]: {
     deprecated: true,
-    chainId: EvmChainId.Gnosis,
+    chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta',
-    agentsSupported: [AgentType.PredictTrader],
+    agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 40,
+      [TokenSymbolMap.OLAS]: 40,
     },
     mechType: MechType.Agent,
-    mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.Agent].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlBeta],
     address:
@@ -85,14 +83,14 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.PearlBeta2]: {
     deprecated: true,
-    chainId: EvmChainId.Gnosis,
+    chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta 2',
-    agentsSupported: [AgentType.PredictTrader],
+    agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 100,
+      [TokenSymbolMap.OLAS]: 100,
     },
     mechType: MechType.Agent,
-    mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.Agent].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlBeta2],
     address:
@@ -108,14 +106,14 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.PearlBeta3]: {
     deprecated: true,
-    chainId: EvmChainId.Gnosis,
+    chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta 3',
-    agentsSupported: [AgentType.PredictTrader],
+    agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 100,
+      [TokenSymbolMap.OLAS]: 100,
     },
     mechType: MechType.Agent,
-    mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.Agent].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlBeta3],
     address:
@@ -131,14 +129,14 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.PearlBeta4]: {
     deprecated: true,
-    chainId: EvmChainId.Gnosis,
+    chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta 4',
-    agentsSupported: [AgentType.PredictTrader],
+    agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 100,
+      [TokenSymbolMap.OLAS]: 100,
     },
     mechType: MechType.Agent,
-    mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.Agent].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlBeta4],
     address:
@@ -154,14 +152,14 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.PearlBeta5]: {
     deprecated: true,
-    chainId: EvmChainId.Gnosis,
+    chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta 5',
-    agentsSupported: [AgentType.PredictTrader],
+    agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 10,
+      [TokenSymbolMap.OLAS]: 10,
     },
     mechType: MechType.Agent,
-    mech: MECHS[EvmChainId.Gnosis][MechType.Agent].contract,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.Agent].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlBeta5],
     address:
@@ -177,14 +175,14 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.PearlBeta6]: {
     deprecated: true,
-    chainId: EvmChainId.Gnosis,
+    chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta 6',
-    agentsSupported: [AgentType.PredictTrader],
+    agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 5000,
+      [TokenSymbolMap.OLAS]: 5000,
     },
     mechType: MechType.Agent,
-    mech: MECHS[EvmChainId.Gnosis][MechType.Marketplace].contract,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.Marketplace].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PearlBeta6],
     address:
@@ -200,14 +198,14 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace]: {
     deprecated: true,
-    chainId: EvmChainId.Gnosis,
+    chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace',
-    agentsSupported: [AgentType.PredictTrader],
+    agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 40,
+      [TokenSymbolMap.OLAS]: 40,
     },
     mechType: MechType.Marketplace,
-    mech: MECHS[EvmChainId.Gnosis][MechType.Marketplace].contract,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.Marketplace].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace
@@ -224,14 +222,14 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1]: {
-    chainId: EvmChainId.Gnosis,
+    chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace',
-    agentsSupported: [AgentType.PredictTrader],
+    agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 5000,
+      [TokenSymbolMap.OLAS]: 5000,
     },
     mechType: MechType.MarketplaceV2,
-    mech: MECHS[EvmChainId.Gnosis][MechType.MarketplaceV2].contract,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1
@@ -248,14 +246,14 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace2]: {
-    chainId: EvmChainId.Gnosis,
+    chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace II',
-    agentsSupported: [AgentType.PredictTrader],
+    agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 5000,
+      [TokenSymbolMap.OLAS]: 5000,
     },
     mechType: MechType.MarketplaceV2,
-    mech: MECHS[EvmChainId.Gnosis][MechType.Marketplace].contract,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.Marketplace].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace2
@@ -272,14 +270,14 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3]: {
-    chainId: EvmChainId.Gnosis,
+    chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace III',
-    agentsSupported: [AgentType.PredictTrader],
+    agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 40,
+      [TokenSymbolMap.OLAS]: 40,
     },
     mechType: MechType.MarketplaceV2,
-    mech: MECHS[EvmChainId.Gnosis][MechType.MarketplaceV2].contract,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3
@@ -296,14 +294,14 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4]: {
-    chainId: EvmChainId.Gnosis,
+    chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace IV',
-    agentsSupported: [AgentType.PredictTrader],
+    agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 100,
+      [TokenSymbolMap.OLAS]: 100,
     },
     mechType: MechType.MarketplaceV2,
-    mech: MECHS[EvmChainId.Gnosis][MechType.MarketplaceV2].contract,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4

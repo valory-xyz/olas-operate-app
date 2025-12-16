@@ -9,6 +9,9 @@ import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
 import {
   ETHEREUM_TOKEN_CONFIG,
   TOKEN_CONFIG,
+  TokenSymbol,
+  TokenSymbolConfigMap,
+  TokenSymbolMap,
   TokenType,
 } from '@/config/tokens';
 import {
@@ -16,9 +19,7 @@ import {
   COLOR,
   MiddlewareChain,
   MiddlewareChainMap,
-  TokenSymbolConfigMap,
 } from '@/constants';
-import { TokenSymbol } from '@/enums/Token';
 import {
   useBalanceAndRefillRequirementsContext,
   useBridgeRefillRequirements,
@@ -317,7 +318,7 @@ export const DepositForBridging = ({
           const chainTokenConfig =
             TOKEN_CONFIG[asEvmChainId(bridgeToChain)][token.symbol];
           const toTokenAddress =
-            token.symbol === TokenSymbol.ETH
+            token.symbol === TokenSymbolMap.ETH
               ? token.address
               : chainTokenConfig?.address;
 

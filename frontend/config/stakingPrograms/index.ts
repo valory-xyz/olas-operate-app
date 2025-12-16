@@ -1,8 +1,7 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
-import { AgentType } from '@/enums/Agent';
-import { EvmChainId } from '@/enums/Chain';
-import { Address } from '@/types/Address';
+import { AgentType, EvmChainId, EvmChainIdMap } from '@/constants';
+import { Address } from '@/types';
 
 import { MechType } from '../mechs';
 import { BASE_STAKING_PROGRAMS } from './base';
@@ -35,8 +34,8 @@ export type StakingProgramMap = {
 export const STAKING_PROGRAMS: {
   [chainId in EvmChainId]: StakingProgramMap;
 } = {
-  [EvmChainId.Gnosis]: GNOSIS_STAKING_PROGRAMS,
-  [EvmChainId.Base]: BASE_STAKING_PROGRAMS,
-  [EvmChainId.Mode]: MODE_STAKING_PROGRAMS,
-  [EvmChainId.Optimism]: OPTIMISM_STAKING_PROGRAMS,
+  [EvmChainIdMap.Gnosis]: GNOSIS_STAKING_PROGRAMS,
+  [EvmChainIdMap.Base]: BASE_STAKING_PROGRAMS,
+  [EvmChainIdMap.Mode]: MODE_STAKING_PROGRAMS,
+  [EvmChainIdMap.Optimism]: OPTIMISM_STAKING_PROGRAMS,
 };

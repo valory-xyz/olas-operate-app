@@ -3,15 +3,18 @@ import { formatEther } from 'ethers/lib/utils';
 
 import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { PROVIDERS } from '@/constants/providers';
-import { EvmChainId } from '@/enums/Chain';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
 import {
+  EvmChainId,
+  EvmChainIdMap,
+  PROVIDERS,
+  StakingProgramId,
+} from '@/constants';
+import {
+  Address,
   ServiceStakingDetails,
   StakingContractDetails,
   StakingRewardsInfo,
-} from '@/types/Autonolas';
+} from '@/types';
 
 import {
   ONE_YEAR,
@@ -25,7 +28,7 @@ export abstract class PredictTraderService extends StakedAgentService {
     agentMultisigAddress,
     serviceId,
     stakingProgramId,
-    chainId = EvmChainId.Gnosis,
+    chainId = EvmChainIdMap.Gnosis,
   }: {
     agentMultisigAddress: Address;
     serviceId: number;
@@ -115,7 +118,7 @@ export abstract class PredictTraderService extends StakedAgentService {
 
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Gnosis,
+    chainId: EvmChainId = EvmChainIdMap.Gnosis,
   ): Promise<bigint | undefined> => {
     const stakingTokenProxy =
       STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
@@ -136,7 +139,7 @@ export abstract class PredictTraderService extends StakedAgentService {
     return BigInt(
       Math.max(
         rewardsPerSecond * livenessPeriod, // expected rewards
-        rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+        rewardsPerSecond * (nowInSeconds - tsCheckpoint), // in case of late checkpoint
       ),
     );
   };
@@ -148,7 +151,7 @@ export abstract class PredictTraderService extends StakedAgentService {
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Gnosis,
+    chainId: EvmChainId = EvmChainIdMap.Gnosis,
   ): Promise<ServiceStakingDetails> => {
     const { multicallProvider } = PROVIDERS[chainId];
 

@@ -6,12 +6,11 @@ import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
 import { Alert } from '@/components/ui';
 import { AGENT_CONFIG } from '@/config/agents';
 import {
-  AgentType,
-  COLOR,
   TokenSymbol,
   TokenSymbolConfigMap,
   TokenSymbolMap,
-} from '@/constants';
+} from '@/config/tokens';
+import { AgentType, COLOR } from '@/constants';
 import { useInitialFundingRequirements } from '@/hooks';
 import { asEvmChainDetails } from '@/utils';
 

@@ -1,7 +1,7 @@
 import { Button, Flex, Modal, Typography } from 'antd';
 
 import { SuccessOutlined } from '@/components/custom-icons';
-import { SetupScreen } from '@/enums';
+import { SETUP_SCREEN } from '@/constants';
 import { useSetup } from '@/hooks';
 
 const { Title, Text } = Typography;
@@ -33,7 +33,7 @@ export const AccountRecoveredCompleteModal = () => {
         </Flex>
 
         <Button
-          onClick={() => goto(SetupScreen.Welcome)}
+          onClick={() => goto(SETUP_SCREEN.Welcome)}
           type="primary"
           block
           size="large"

@@ -1,12 +1,17 @@
 import { ethers } from 'ethers';
 
-import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from '@/config/tokens';
-import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
-import { AgentType, STAKING_PROGRAM_IDS, TokenSymbol } from '@/enums';
 import { ServiceTemplate } from '@/types';
 import { parseEther, parseUnits } from '@/utils';
 
+import {
+  MODE_TOKEN_CONFIG,
+  OPTIMISM_TOKEN_CONFIG,
+  TokenSymbolMap,
+} from '../config/tokens';
+import { AgentMap } from './agent';
 import { MiddlewareChainMap } from './chains';
+import { EnvProvisionMap as EnvProvisionType } from './envVariables';
+import { STAKING_PROGRAM_IDS } from './stakingProgram';
 import { X402_ENABLED_FLAGS } from './x402';
 
 /**
@@ -16,7 +21,7 @@ import { X402_ENABLED_FLAGS } from './x402';
 export const KPI_DESC_PREFIX = '[Pearl service]';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.PredictTrader,
+  agentType: AgentMap.PredictTrader,
   name: 'Trader Agent', // should be unique across all services and not be updated
   hash: 'bafybeiemvi77itu5ut7ybtrf7pwuzqemj4xfw2amgy4ipmvky52jmzrg54',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
@@ -272,7 +277,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
  * Agents.fun Base template
  */
 const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.AgentsFun,
+  agentType: AgentMap.AgentsFun,
   name: 'Agents.Fun',
   home_chain: MiddlewareChainMap.BASE,
   configurations: {
@@ -310,7 +315,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
 };
 
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.Modius,
+  agentType: AgentMap.Modius,
   name: 'Optimus',
   description: `${KPI_DESC_PREFIX} Optimus`,
   image:
@@ -328,9 +333,12 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
           agent: +parseEther(0.0002),
           safe: 0,
         },
-        [MODE_TOKEN_CONFIG[TokenSymbol.USDC]?.address as string]: {
+        [MODE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
           agent: 0,
-          safe: +parseUnits(16, MODE_TOKEN_CONFIG[TokenSymbol.USDC]?.decimals),
+          safe: +parseUnits(
+            16,
+            MODE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
+          ),
         },
       },
     },
@@ -476,7 +484,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.Optimus,
+  agentType: AgentMap.Optimus,
   name: 'Optimus - Optimism',
   description: `${KPI_DESC_PREFIX} Optimus service deployment on Optimism network`,
   image:
@@ -494,11 +502,11 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
           agent: +parseEther(0.0002),
           safe: 0,
         },
-        [OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC]?.address as string]: {
+        [OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
           agent: 0,
           safe: +parseUnits(
             16,
-            OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC]?.decimals,
+            OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
           ),
         },
       },
@@ -608,7 +616,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.PettAi,
+  agentType: AgentMap.PettAi,
   name: 'pett_agent',
   hash: 'bafybeiabumpvdgnqecm4prum2njeslcf2ibcvc2y6m7ldv2evgmef6opam',
   description: 'Pett.ai autonomous agent service for virtual pet management.',

@@ -13,7 +13,7 @@ import {
   GeminiApiKeySubHeader,
 } from '@/components/AgentForms/common/labels';
 import { RequiredMark } from '@/components/ui';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { SETUP_SCREEN } from '@/constants';
 import { useSetup, useStakingProgram } from '@/hooks';
 import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils';
@@ -79,7 +79,7 @@ export const PredictAgentFormContent = ({
         message.success('Agent setup complete');
 
         // move to next page
-        goto(SetupScreen.SelectStaking);
+        goto(SETUP_SCREEN.SelectStaking);
       } finally {
         updateSubmitButtonText('Continue');
         setIsSubmitting(false);

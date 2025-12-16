@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 
-import { MiddlewareDeploymentStatusMap } from '@/constants';
-import { StakingProgramId } from '@/enums';
+import { MiddlewareDeploymentStatusMap, StakingProgramId } from '@/constants';
 import {
   useActiveStakingContractDetails,
   useService,

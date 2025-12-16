@@ -1,9 +1,13 @@
 import { compact } from 'lodash';
 import { useMemo } from 'react';
 
-import { TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
+import {
+  TOKEN_CONFIG,
+  TokenConfig,
+  TokenSymbol,
+  TokenSymbolMap,
+} from '@/config/tokens';
 import { EvmChainId } from '@/constants/chains';
-import { TokenSymbol, TokenSymbolMap } from '@/constants/token';
 import { useMasterBalances } from '@/hooks';
 import { AvailableAsset } from '@/types/Wallet';
 import { sumBigNumbers } from '@/utils';

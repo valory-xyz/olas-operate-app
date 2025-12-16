@@ -1,12 +1,8 @@
 import { compact, isNil } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import {
-  AddressZero,
-  EvmChainId,
-  TokenSymbol,
-  TokenSymbolMap,
-} from '@/constants';
+import { TokenSymbol, TokenSymbolMap } from '@/config/tokens';
+import { AddressZero, EvmChainId } from '@/constants';
 import {
   useBalanceAndRefillRequirementsContext,
   useBalanceContext,

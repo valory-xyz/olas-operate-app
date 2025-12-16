@@ -1,10 +1,15 @@
 import { isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { ChainTokenConfig, TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
+import {
+  ChainTokenConfig,
+  TOKEN_CONFIG,
+  TokenConfig,
+  TokenSymbolConfigMap,
+  TokenSymbolMap,
+} from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { MASTER_SAFE_REFILL_PLACEHOLDER } from '@/constants/defaults';
-import { TokenSymbolConfigMap, TokenSymbolMap } from '@/constants/token';
 import { useServices } from '@/hooks';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
