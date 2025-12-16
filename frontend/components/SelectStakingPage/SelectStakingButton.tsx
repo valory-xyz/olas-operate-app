@@ -93,13 +93,14 @@ export const SelectStakingButton = ({
 
     // refetch refill requirements to check if the agent requires funding
     const result = await refetchRequirements();
+    const isRefillRequired = result.data?.is_refill_required;
     const allowStartAgent = result.data?.allow_start_agent;
 
     // Update state in the end so the order change is not noticeable
     setDefaultStakingProgramId(stakingProgramId);
 
     // If has sufficient funds to run selected agent, navigate to main
-    if (allowStartAgent === true) {
+    if (isRefillRequired === false && allowStartAgent === true) {
       setIsInitiallyFunded();
       gotoPage(PAGES.Main);
     } else {
