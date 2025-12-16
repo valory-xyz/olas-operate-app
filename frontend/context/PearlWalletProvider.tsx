@@ -203,11 +203,13 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       ({ chainId }) => chainId === walletChainId,
     );
 
-    return configIds.map(({ configId }) => {
+    return configIds.map(({ configId, chainId }) => {
       const agentSafe = getServiceSafeOf?.(walletChainId, configId)?.address;
       const agentName = generateName(agentSafe) ?? 'Agent';
       const agentType = getAgentTypeOf(walletChainId, configId);
       return {
+        chainId,
+        configId,
         agentName,
         agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
         symbol: 'OLAS',

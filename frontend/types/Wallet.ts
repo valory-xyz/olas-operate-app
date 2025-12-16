@@ -1,4 +1,4 @@
-import { MiddlewareChain, TokenSymbol } from '@/constants';
+import { EvmChainId, MiddlewareChain, TokenSymbol } from '@/constants';
 
 import { Address } from './Address';
 import { AddressTxnRecord } from './Records';
@@ -25,6 +25,8 @@ export type StakedAsset = {
   symbol: TokenSymbol;
   amount: number;
   value?: number;
+  configId: string;
+  chainId: EvmChainId;
 };
 
 export type TokenAmountDetails = {

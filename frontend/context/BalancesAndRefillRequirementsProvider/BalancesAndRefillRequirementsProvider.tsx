@@ -216,7 +216,7 @@ export const BalancesAndRefillRequirementsProvider = ({
         signal,
       }),
     enabled: !!serviceConfigIds.length && isUserLoggedIn && isOnline,
-    refetchInterval: 5000,
+    refetchInterval,
   });
 
   const balances = useMemo(() => {
