@@ -104,7 +104,7 @@ export const BridgeInProgress = ({
     // if master safe creation is in progress or if it has failed, do not create master safe.
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
-    if (isMasterWalletFetched) return;
+    if (!isMasterWalletFetched) return;
     if (isSafeCreated) return;
 
     createMasterSafe();
