@@ -135,7 +135,7 @@ export const useAddFundsInputs = ({
   const inputsToDisplay = useMemo(
     () =>
       Object.entries(inputs).map(([symbol, amount]) => ({
-        symbol,
+        symbol: symbol as TokenSymbol,
         amount: amount ?? 0,
       })),
     [inputs],
