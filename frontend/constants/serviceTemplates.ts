@@ -1,16 +1,15 @@
 import { ethers } from 'ethers';
 
-import { ServiceTemplate } from '@/types';
-import { parseEther, parseUnits } from '@/utils';
-
 import {
   MODE_TOKEN_CONFIG,
   OPTIMISM_TOKEN_CONFIG,
   TokenSymbolMap,
-} from '../config/tokens';
-import { AgentMap } from './agent';
+} from '@/config/tokens';
+import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
+import { ServiceTemplate } from '@/types';
+import { parseEther, parseUnits } from '@/utils';
+
 import { MiddlewareChainMap } from './chains';
-import { EnvProvisionMap as EnvProvisionType } from './envVariables';
 import { STAKING_PROGRAM_IDS } from './stakingProgram';
 import { X402_ENABLED_FLAGS } from './x402';
 
