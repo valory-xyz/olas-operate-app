@@ -50,13 +50,18 @@ export const OnRampPaymentSteps = ({
   useEffect(() => {
     if (!isOnRampingStepCompleted) return;
     if (!isSwappingFundsStepCompleted) return;
-    if (!isMasterSafeCreatedAndFundsTransferred) return;
+    if (
+      createAndTransferFundsToMasterSafeSteps.length > 0 &&
+      !isMasterSafeCreatedAndFundsTransferred
+    )
+      return;
 
     setIsSetupCompleted(true);
   }, [
     isOnRampingStepCompleted,
     isMasterSafeCreatedAndFundsTransferred,
     isSwappingFundsStepCompleted,
+    createAndTransferFundsToMasterSafeSteps.length,
   ]);
 
   return (

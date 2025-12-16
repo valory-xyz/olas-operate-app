@@ -22,8 +22,11 @@ export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,
   queryKey: 'preview' | 'onboarding' = 'onboarding',
 ) => {
-  const { updateEthAmountToPay, isOnRampingTransactionSuccessful } =
-    useOnRampContext();
+  const {
+    updateEthAmountToPay,
+    updateEthTotalAmountRequired,
+    isOnRampingTransactionSuccessful,
+  } = useOnRampContext();
   const { selectedAgentConfig } = useServices();
   const {
     masterEoa,
@@ -53,7 +56,7 @@ export const useTotalNativeTokenRequired = (
    * - USDC_in_ETH = 100 OLAS bridged to ETH
    * Total native token required = 0.01 ETH + OLAS_in_ETH + USDC_in_ETH
    */
-  const totalNativeToken = useMemo(() => {
+  const totalNativeTokens = useMemo(() => {
     if (!bridgeParams) return;
     if (!bridgeFundingRequirements) return;
     if (!masterEoa?.address) return;
@@ -81,6 +84,10 @@ export const useTotalNativeTokenRequired = (
      *   - We need 0.01 ETH for agent operation.
      *   - Since on-ramping is already on Optimism, this ETH will be directly funded.
      *   - We add this to our total required amount (separate from bridge calculations)
+     *
+     * Warning: with this logic we will actually request more funds to onramp, as this
+     * value is eventually written to the onramp provider as the one we need to request from user
+     * TODO: check and confirm with engineers if that's intended (currently it's removed from the request)
      */
     const nativeTokenAmount = bridgeParams.bridge_requests.find(
       (request) => request.to.token === AddressZero,
@@ -92,19 +99,29 @@ export const useTotalNativeTokenRequired = (
     // e.g, For optimus, OLAS and USDC are bridged to ETH
     const bridgeRefillRequirements =
       bridgeFundingRequirements.bridge_refill_requirements[onRampNetworkName];
-    const nativeTokenFromBridgeQuote =
+    const nativeBridgeRefillRequirements =
       bridgeRefillRequirements?.[destinationAddress]?.[AddressZero];
+    // Existing balance of native token on the source chain will be also used for bridging
+    const bridgeBalance = bridgeFundingRequirements.balances[onRampNetworkName];
+    const nativeBalance = bridgeBalance?.[destinationAddress]?.[AddressZero];
 
-    if (!nativeTokenFromBridgeQuote) return;
+    if (!nativeBridgeRefillRequirements) return;
 
-    // e.g, For optimus, addition of (ETH required) + (OLAS and USDC bridged to ETH).
+    const totalNativeTokenToPay = BigInt(nativeBridgeRefillRequirements);
+    // e.g, For optimus, addition of (ETH required) + (OLAS and USDC bridged to ETH)
+    // + existing balance in case we already have another agent on this chain
     const totalNativeTokenRequired =
-      BigInt(nativeTokenFromBridgeQuote) +
-      BigInt(nativeTokenFromBridgeParams || 0);
+      BigInt(nativeBridgeRefillRequirements) + BigInt(nativeBalance || 0);
+    BigInt(nativeTokenFromBridgeParams || 0);
 
-    return totalNativeTokenRequired
-      ? formatUnitsToNumber(totalNativeTokenRequired, 18)
-      : 0;
+    return {
+      totalNativeTokenToPay: totalNativeTokenToPay
+        ? formatUnitsToNumber(totalNativeTokenToPay, 18)
+        : 0,
+      totalNativeTokenRequired: totalNativeTokenRequired
+        ? formatUnitsToNumber(totalNativeTokenRequired, 18)
+        : 0,
+    };
   }, [
     bridgeParams,
     bridgeFundingRequirements,
@@ -116,20 +133,22 @@ export const useTotalNativeTokenRequired = (
 
   // Update the ETH amount to pay in the on-ramp context
   useEffect(() => {
-    if (!totalNativeToken) return;
+    if (!totalNativeTokens) return;
     if (isOnRampingTransactionSuccessful) return;
 
-    updateEthAmountToPay(totalNativeToken);
+    updateEthAmountToPay(totalNativeTokens.totalNativeTokenToPay);
+    updateEthTotalAmountRequired(totalNativeTokens.totalNativeTokenRequired);
   }, [
-    totalNativeToken,
     isOnRampingTransactionSuccessful,
     updateEthAmountToPay,
+    totalNativeTokens,
+    updateEthTotalAmountRequired,
   ]);
 
   return {
     isLoading,
     hasError,
-    totalNativeToken,
+    totalNativeToken: totalNativeTokens?.totalNativeTokenToPay ?? 0,
     receivingTokens,
     onRetry,
   };
