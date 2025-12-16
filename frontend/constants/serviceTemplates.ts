@@ -610,7 +610,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
 export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentType.PettAi,
   name: 'pett_agent',
-  hash: 'bafybeifnnx27q6n4nbimarb3rj5gqor6z2ma6aj4skxcx3cjtjwbbnc4ga',
+  hash: 'bafybeiabumpvdgnqecm4prum2njeslcf2ibcvc2y6m7ldv2evgmef6opam',
   description: 'Pett.ai autonomous agent service for virtual pet management.',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
@@ -620,7 +620,7 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
     repository: {
       owner: 'valory-xyz',
       name: 'pettai-agent',
-      version: 'v0.0.17',
+      version: 'v0.0.18',
     },
   },
   home_chain: MiddlewareChainMap.BASE,
@@ -645,12 +645,6 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
-    },
-    OPENAI_API_KEY: {
-      name: 'OpenAI API key',
-      description: 'OpenAI API key for the pett.ai agent',
-      value: '',
-      provision_type: EnvProvisionType.USER,
     },
     WEBSOCKET_URL: {
       name: 'Websocket URL',

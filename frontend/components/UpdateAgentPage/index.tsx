@@ -8,7 +8,6 @@ import {
 import { AgentsFunUpdateForm } from './components/AgentsFunUpdateForm';
 import { ModiusUpdatePage } from './components/ModiusUpdateForm';
 import { OptimusUpdatePage } from './components/OptimusUpdateForm';
-import { PettAiUpdatePage } from './components/PettAiUpdateForm';
 import { PredictUpdatePage } from './components/PredictUpdateForm';
 import { UpdateAgentProvider } from './context/UpdateAgentProvider';
 
@@ -38,9 +37,6 @@ export const UpdateAgentPage = () => {
         )}
         {selectedAgentType === AgentMap.Optimus && (
           <OptimusUpdatePage renderForm={displayForm} />
-        )}
-        {selectedAgentType === AgentMap.PettAi && (
-          <PettAiUpdatePage renderForm={displayForm} />
         )}
       </UpdateAgentProvider>
     </AgentFormContainer>

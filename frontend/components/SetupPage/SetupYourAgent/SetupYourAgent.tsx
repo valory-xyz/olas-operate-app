@@ -9,7 +9,6 @@ import { useServices } from '@/hooks';
 import { AgentsFunAgentSetup } from './AgentsFunAgentForm/AgentsFunAgentForm';
 import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
 import { OptimusAgentForm } from './OptimusAgentForm/OptimusAgentForm';
-import { PettAiAgentSetup } from './PettAiAgentForm/PettAiAgentForm';
 import { PredictAgentSetup } from './PredictAgentForm/PredictAgentForm';
 import { AgentFormContainer, useDisplayAgentForm } from './useDisplayAgentForm';
 
@@ -63,12 +62,6 @@ export const SetupYourAgent = () => {
       )}
       {selectedAgentType === AgentMap.AgentsFun && (
         <AgentsFunAgentSetup
-          serviceTemplate={serviceTemplate}
-          renderForm={displayForm}
-        />
-      )}
-      {selectedAgentType === AgentMap.PettAi && (
-        <PettAiAgentSetup
           serviceTemplate={serviceTemplate}
           renderForm={displayForm}
         />

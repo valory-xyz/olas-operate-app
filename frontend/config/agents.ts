@@ -147,7 +147,7 @@ export const AGENT_CONFIG: {
     isAgentEnabled: true,
     isUnderConstruction: false,
     isComingSoon: false,
-    requiresSetup: true,
+    requiresSetup: false,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PettAi],
     name: 'Pett.ai',
     evmHomeChainId: EvmChainId.Base,
