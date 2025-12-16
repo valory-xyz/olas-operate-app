@@ -75,8 +75,8 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     MECH_MARKETPLACE_CONFIG: {
       name: 'Mech marketplace configuration',
       description: '',
-      value: '',
-      provision_type: EnvProvisionType.COMPUTED,
+      value: '{"mech_marketplace_address":"0x735FAAb1c4Ec41128c367AFb5c3baC73509f70bB","priority_mech_address":"0x1cAe83A8a68993954ed28E4DE23341f6e672d9dC","response_timeout":300}',
+      provision_type: EnvProvisionType.FIXED,
     },
     MECH_ACTIVITY_CHECKER_CONTRACT: {
       name: 'Mech activity checker contract',
@@ -87,8 +87,8 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     MECH_CONTRACT_ADDRESS: {
       name: 'Mech contract address',
       description: '',
-      value: '',
-      provision_type: EnvProvisionType.COMPUTED,
+      value: '0x1cAe83A8a68993954ed28E4DE23341f6e672d9dC',
+      provision_type: EnvProvisionType.FIXED,
     },
     MECH_REQUEST_PRICE: {
       name: 'Mech request price',
@@ -99,8 +99,8 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     USE_MECH_MARKETPLACE: {
       name: 'Use Mech marketplace',
       description: '',
-      value: '',
-      provision_type: EnvProvisionType.COMPUTED,
+      value: 'true',
+      provision_type: EnvProvisionType.FIXED,
     },
     TOOLS_ACCURACY_HASH: {
       name: 'Tools accuracy hash',
