@@ -84,10 +84,6 @@ export const useTotalNativeTokenRequired = (
      *   - We need 0.01 ETH for agent operation.
      *   - Since on-ramping is already on Optimism, this ETH will be directly funded.
      *   - We add this to our total required amount (separate from bridge calculations)
-     *
-     * Warning: with this logic we will actually request more funds to onramp, as this
-     * value is eventually written to the onramp provider as the one we need to request from user
-     * TODO: check and confirm with engineers if that's intended (currently it's removed from the request)
      */
     const nativeTokenAmount = bridgeParams.bridge_requests.find(
       (request) => request.to.token === AddressZero,
@@ -107,12 +103,15 @@ export const useTotalNativeTokenRequired = (
 
     if (!nativeBridgeRefillRequirements) return;
 
-    const totalNativeTokenToPay = BigInt(nativeBridgeRefillRequirements);
     // e.g, For optimus, addition of (ETH required) + (OLAS and USDC bridged to ETH)
     // + existing balance in case we already have another agent on this chain
+    const totalNativeTokenToPay =
+      BigInt(nativeBridgeRefillRequirements) +
+      BigInt(nativeTokenFromBridgeParams || 0);
+    // All the above + existing balance in case we already have another agent on this chain
+    // and some native tokens are there
     const totalNativeTokenRequired =
-      BigInt(nativeBridgeRefillRequirements) + BigInt(nativeBalance || 0);
-    BigInt(nativeTokenFromBridgeParams || 0);
+      totalNativeTokenToPay + BigInt(nativeBalance || 0);
 
     return {
       totalNativeTokenToPay: totalNativeTokenToPay
