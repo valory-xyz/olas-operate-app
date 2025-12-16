@@ -84,14 +84,16 @@ export const AgentInfo = () => {
                 </Title>
                 <Flex gap={12} align="center">
                   <AboutAgent />
-                  {isX402Enabled ? null : (
-                    <Tooltip title="Agent settings">
-                      <Button
-                        onClick={() => goto(Pages.UpdateAgentTemplate)}
-                        icon={<SettingOutlined />}
-                      />
-                    </Tooltip>
-                  )}
+                  {isX402Enabled
+                    ? null
+                    : selectedAgentConfig.requiresSetup && (
+                        <Tooltip title="Agent settings">
+                          <Button
+                            onClick={() => goto(Pages.UpdateAgentTemplate)}
+                            icon={<SettingOutlined />}
+                          />
+                        </Tooltip>
+                      )}
                 </Flex>
               </Flex>
               <AgentRunButton />
