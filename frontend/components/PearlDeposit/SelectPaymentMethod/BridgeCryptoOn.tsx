@@ -14,6 +14,7 @@ import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
 import {
+  asAllEvmChainId,
   asEvmChainId,
   getFromToken,
   getTokenDecimal,
@@ -46,7 +47,9 @@ const useGetBridgeRequirementsParams = (bridgeToChain: MiddlewareChain) => {
       if (!isMasterWalletFetched) throw new Error('Master Safe not loaded');
 
       const fromChain = MiddlewareChainMap.ETHEREUM;
-      const masterSafeOnFromChain = getMasterSafeOf?.(asEvmChainId(fromChain));
+      const masterSafeOnFromChain = getMasterSafeOf?.(
+        asAllEvmChainId(fromChain),
+      );
 
       const masterSafeOnToChain = getMasterSafeOf?.(
         asEvmChainId(bridgeToChain),

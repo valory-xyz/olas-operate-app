@@ -88,6 +88,7 @@ export const SelectStakingButton = ({
       }
 
       // fetch services again to update the state after service creation
+      // and to have correct state in the selectedService if we get back to this page
       await refetchServices?.();
     }
 

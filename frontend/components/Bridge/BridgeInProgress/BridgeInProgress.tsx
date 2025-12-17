@@ -81,10 +81,14 @@ export const BridgeInProgress = ({
     'masterSafeCreationAndTransfer',
   );
 
-  const isSafeCreated = isMasterWalletFetched
-    ? !isNil(getMasterSafeOf?.(asAllEvmChainId(fromChain))) ||
-      masterSafeDetails?.isSafeCreated
+  const hasMasterSafe = isMasterWalletFetched
+    ? !isNil(getMasterSafeOf?.(asAllEvmChainId(toChain)))
     : false;
+
+  const isSafeCreated = isMasterWalletFetched
+    ? hasMasterSafe || masterSafeDetails?.isSafeCreated
+    : false;
+
   const isTransferCompleted =
     masterSafeDetails?.masterSafeTransferStatus === 'FINISHED';
 
@@ -96,34 +100,36 @@ export const BridgeInProgress = ({
     // if refill is required, do not create master safe.
     if (bridgeRetryOutcome === 'NEED_REFILL') return;
 
-    // if bridging is in progress or if it has failed, do not create master safe.
+    // if bridging is in progress or if it has failed, do not proceed
     if (isBridging) return;
     if (isBridgingFailed) return;
     if (!isBridgingCompleted) return;
 
+    // If master safe already exists, do not create it
+    if (!isMasterWalletFetched) return;
+    if (hasMasterSafe) return;
+
     // if master safe creation is in progress or if it has failed, do not create master safe.
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
-    if (!isMasterWalletFetched) return;
-    if (isSafeCreated) return;
+    if (masterSafeDetails?.isSafeCreated) return;
 
     createMasterSafe();
   }, [
-    canCreateMasterSafeAndTransfer,
-    enabledStepsAfterBridging,
     bridgeRetryOutcome,
-    isBridgingCompleted,
-    isBridging,
-    isBridgingFailed,
-    isLoadingMasterSafeCreation,
-    masterSafeDetails,
-    isErrorMasterSafeCreation,
+    canCreateMasterSafeAndTransfer,
     createMasterSafe,
-    isSafeCreated,
+    hasMasterSafe,
+    isBridging,
+    isBridgingCompleted,
+    isBridgingFailed,
+    isErrorMasterSafeCreation,
+    isLoadingMasterSafeCreation,
     isMasterWalletFetched,
+    masterSafeDetails?.isSafeCreated,
   ]);
 
-  // Redirect to main page if all 3 steps are completed
+  // Redirect to main page if all required steps are completed
   useEffect(() => {
     // if retry outcome is not null, do not redirect.
     if (bridgeRetryOutcome === 'NEED_REFILL') return;
@@ -133,8 +139,17 @@ export const BridgeInProgress = ({
     if (isBridgingFailed) return;
     if (!isBridgingCompleted) return;
 
+    if (!isMasterWalletFetched) return;
+
+    // If has master safe already exists, we can move to the next stage
+    if (hasMasterSafe && isOnboarding && !isBridgeCompleted) {
+      onNext();
+      return;
+    }
+
     // if master safe creation is not enabled, do not redirect
-    if (!canCreateMasterSafeAndTransfer) {
+    // Only applicable for depositing, not onboarding
+    if (!canCreateMasterSafeAndTransfer && !isOnboarding) {
       onNext();
       return;
     }
@@ -175,6 +190,8 @@ export const BridgeInProgress = ({
     onNext,
     isOnboarding,
     isBridgeCompleted,
+    hasMasterSafe,
+    isMasterWalletFetched,
   ]);
 
   const onBridgeFailRetry = useCallback(() => {
