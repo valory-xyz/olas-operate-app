@@ -1,6 +1,9 @@
-import { EvmChainId } from '@/enums/Chain';
-
-import { MiddlewareChainMap, SupportedMiddlewareChain } from './chains';
+import {
+  EvmChainId,
+  EvmChainIdMap,
+  MiddlewareChainMap,
+  SupportedMiddlewareChain,
+} from './chains';
 
 type Url = `http${'s' | ''}://${string}`;
 
@@ -18,10 +21,10 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
   EvmChainId,
   Url
 > = {
-  [EvmChainId.Gnosis]: 'https://staking-gnosis.subgraph.autonolas.tech',
-  [EvmChainId.Base]: 'https://staking-base.subgraph.autonolas.tech',
-  [EvmChainId.Mode]: 'https://staking-mode.subgraph.autonolas.tech',
-  [EvmChainId.Optimism]: 'https://staking-optimism.subgraph.autonolas.tech',
+  [EvmChainIdMap.Gnosis]: 'https://staking-gnosis.subgraph.autonolas.tech',
+  [EvmChainIdMap.Base]: 'https://staking-base.subgraph.autonolas.tech',
+  [EvmChainIdMap.Mode]: 'https://staking-mode.subgraph.autonolas.tech',
+  [EvmChainIdMap.Optimism]: 'https://staking-optimism.subgraph.autonolas.tech',
 };
 
 // discord
@@ -41,6 +44,9 @@ export const COINGECKO_URL: string = 'https://www.coingecko.com';
 export const COINGECKO_DEMO_API_URL: string =
   'https://support.coingecko.com/hc/en-us/articles/21880397454233-User-Guide-How-to-sign-up-for-CoinGecko-Demo-API-and-generate-an-API-key';
 export const GEMINI_API_URL: string = 'https://aistudio.google.com/app/apikey';
+export const X_ACCOUNT_API_TOKENS_GUIDE_URL: Url =
+  'https://github.com/dvilelaf/meme-ooorr/blob/main/docs/twitter_dev_account.md';
+
 export const WEB3AUTH_URL: Url = 'https://web3auth.io';
 export const WEB3AUTH_TERMS_AND_CONDITIONS_URL: Url = `${WEB3AUTH_URL}/docs/legal/terms-and-conditions`;
 export const SAFE_URL: Url = 'https://safe.global/';
@@ -83,10 +89,10 @@ const SWAP_OPTIMISM_URL: Url =
   'https://balancer.fi/pools/optimism/v2/0x5bb3e58887264b667f915130fd04bbb56116c27800020000000000000000012a';
 
 export const SWAP_URL_BY_EVM_CHAIN: Record<EvmChainId, Url> = {
-  [EvmChainId.Gnosis]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
-  [EvmChainId.Base]: SWAP_BASE_URL,
-  [EvmChainId.Mode]: SWAP_MODE_URL,
-  [EvmChainId.Optimism]: SWAP_OPTIMISM_URL,
+  [EvmChainIdMap.Gnosis]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
+  [EvmChainIdMap.Base]: SWAP_BASE_URL,
+  [EvmChainIdMap.Mode]: SWAP_MODE_URL,
+  [EvmChainIdMap.Optimism]: SWAP_OPTIMISM_URL,
 };
 
 // on-ramp
@@ -96,7 +102,9 @@ export const ON_RAMP_GATEWAY_URL = `https://proxy.transak.${process.env.NODE_ENV
 export const PEARL_API_URL = 'https://pearl-api.olas.network';
 
 // web3auth
-export const WEB3AUTH_GATEWAY_URL = `${PEARL_API_URL}/web3auth/login`;
+const WEB3AUTH_GATEWAY_URL = `${PEARL_API_URL}/web3auth`;
+export const WEB3AUTH_LOGIN_URL = `${WEB3AUTH_GATEWAY_URL}/login`;
+export const WEB3AUTH_SWAP_OWNER_URL = `${WEB3AUTH_GATEWAY_URL}/swap-owner-session`;
 
 // support API
 export const SUPPORT_API_URL = `${PEARL_API_URL}/api/zendesk`;

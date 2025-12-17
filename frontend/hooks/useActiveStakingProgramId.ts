@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { isNil } from 'lodash';
 
-import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
 import { useServices } from '@/hooks/useServices';
 import { AgentConfig } from '@/types/Agent';
 import { Maybe } from '@/types/Util';
 import { isValidServiceId } from '@/utils';
+
+import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
 
 /**
  * Hook to get the active staking program id.
@@ -18,6 +19,7 @@ export const useActiveStakingProgramId = (
 ) => {
   const { isFetched: isServicesLoaded } = useServices();
   const { serviceApi, evmHomeChainId } = agentConfig;
+  const refetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.STAKING_PROGRAM_KEY(
@@ -39,6 +41,7 @@ export const useActiveStakingProgramId = (
       !isNil(evmHomeChainId) &&
       isServicesLoaded &&
       isValidServiceId(serviceNftTokenId),
-    refetchInterval: FIVE_SECONDS_INTERVAL,
+    refetchInterval,
+    refetchIntervalInBackground: true,
   });
 };

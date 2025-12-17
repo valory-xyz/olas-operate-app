@@ -1,21 +1,35 @@
 import { message } from 'antd';
 import Image from 'next/image';
-import { PropsWithChildren, useEffect, useMemo } from 'react';
+import { PropsWithChildren, useEffect, useMemo, useRef } from 'react';
 import styled, { css } from 'styled-components';
 
 import {
   APP_HEIGHT,
   APP_WIDTH,
   COLOR,
+  PAGES,
+  SETUP_SCREEN,
+  SetupScreen,
   SIDER_WIDTH,
   TOP_BAR_HEIGHT,
 } from '@/constants';
-import { Pages } from '@/enums/Pages';
-import { SetupScreen } from '@/enums/SetupScreen';
 import { useOnlineStatusContext, usePageState, useSetup } from '@/hooks';
 
 import { Modal } from '../ui';
 import { WindowControls } from './WindowControls';
+
+const useScrollToTop = () => {
+  const { state: setupState } = useSetup();
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (setupState === SETUP_SCREEN.SelectStaking) {
+      bodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [bodyRef, setupState]);
+
+  return bodyRef;
+};
 
 const Container = styled.div<{ $blur: boolean }>`
   display: flex;
@@ -60,7 +74,7 @@ const DraggableNavBar = styled.div<{ $isFullWidth: boolean }>`
   -webkit-app-region: drag;
 `;
 
-const layoutWithFullHeight: SetupScreen[] = [SetupScreen.SetupYourAgent];
+const layoutWithFullHeight: SetupScreen[] = [SETUP_SCREEN.SetupYourAgent];
 
 const Body = styled.div<{ $hasPadding?: boolean }>`
   display: flex;
@@ -74,6 +88,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
   const { isOnline } = useOnlineStatusContext();
   const { state } = useSetup();
   const { pageState } = usePageState();
+  const bodyRef = useScrollToTop();
 
   useEffect(() => {
     const onlineStatusMessageKey = 'online-status-message';
@@ -83,7 +98,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
   }, [isOnline]);
 
   const hasPadding = useMemo(() => {
-    if (pageState === Pages.Setup) {
+    if (pageState === PAGES.Setup) {
       return layoutWithFullHeight.includes(state) ? false : true;
     }
 
@@ -113,10 +128,12 @@ export const Layout = ({ children }: PropsWithChildren) => {
       )}
 
       <Container $blur={!isOnline}>
-        <DraggableNavBar $isFullWidth={pageState === Pages.Setup}>
+        <DraggableNavBar $isFullWidth={pageState === PAGES.Setup}>
           <WindowControls />
         </DraggableNavBar>
-        <Body $hasPadding={hasPadding}>{children}</Body>
+        <Body $hasPadding={hasPadding} ref={bodyRef}>
+          {children}
+        </Body>
       </Container>
     </>
   );

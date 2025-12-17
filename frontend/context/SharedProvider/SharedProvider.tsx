@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import {
   createContext,
   PropsWithChildren,
@@ -7,8 +8,11 @@ import {
   useState,
 } from 'react';
 
-import { AgentType } from '@/enums/Agent';
+import { AgentMap, REACT_QUERY_KEYS } from '@/constants';
 import { useServices } from '@/hooks/useServices';
+import { RecoveryService } from '@/service/Recovery';
+
+import { useOnlineStatus } from '../OnlineStatusProvider';
 
 export const SharedContext = createContext<{
   hasMainOlasBalanceAnimatedOnLoad: boolean;
@@ -17,6 +21,10 @@ export const SharedContext = createContext<{
   // agent specific checks
   isAgentsFunFieldUpdateRequired: boolean;
 
+  // recovery
+  isAccountRecoveryStatusLoading?: boolean;
+  hasActiveRecoverySwap?: boolean;
+
   // others
 }>({
   hasMainOlasBalanceAnimatedOnLoad: false,
@@ -24,6 +32,10 @@ export const SharedContext = createContext<{
 
   // agent specific checks
   isAgentsFunFieldUpdateRequired: false,
+
+  // recovery
+  isAccountRecoveryStatusLoading: true,
+  hasActiveRecoverySwap: false,
 
   // others
 });
@@ -36,6 +48,8 @@ export const SharedContext = createContext<{
  * - Track the healthcheck alert shown to the user (so that they are not shown again).
  */
 export const SharedProvider = ({ children }: PropsWithChildren) => {
+  const { isOnline } = useOnlineStatus();
+
   // state to track the main OLAS balance animation state & mount state
   const hasAnimatedRef = useRef(false);
   const setMainOlasBalanceAnimated = useCallback((value: boolean) => {
@@ -51,7 +65,7 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   // agent configurations to run the latest version of the agent.
   useEffect(() => {
     if (!selectedAgentType) return;
-    if (selectedAgentType !== AgentType.AgentsFun) {
+    if (selectedAgentType !== AgentMap.AgentsFun) {
       setIsAgentsFunFieldUpdateRequired(false);
       return;
     }
@@ -68,6 +82,21 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
     setIsAgentsFunFieldUpdateRequired(!areFieldsUpdated);
   }, [selectedAgentType, selectedService]);
 
+  // fetch only if online and just once on mount
+  const {
+    data: hasActiveRecoverySwap,
+    isLoading: isAccountRecoveryStatusLoading,
+  } = useQuery({
+    queryKey: REACT_QUERY_KEYS.RECOVERY_STATUS_KEY,
+    queryFn: ({ signal }) => RecoveryService.getRecoveryStatus(signal),
+    enabled: isOnline,
+    select: (data) => !!data.has_swaps,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    staleTime: Infinity,
+  });
+
   return (
     <SharedContext.Provider
       value={{
@@ -76,6 +105,10 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
 
         // agent specific checks
         isAgentsFunFieldUpdateRequired,
+
+        // recovery
+        isAccountRecoveryStatusLoading,
+        hasActiveRecoverySwap,
 
         // others
       }}

@@ -12,14 +12,12 @@ import {
 } from 'react';
 
 import { Modal } from '@/components/ui';
-import { AgentMap } from '@/constants';
+import { AgentMap, PAGES } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { Pages } from '@/enums/Pages';
 import { usePageState, useService, useServices } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { DeepPartial, ServiceTemplate } from '@/types';
 
-import { AgentsFunFormValues } from '../../AgentForms/AgentsFunAgentForm';
 import { useConfirmUpdateModal } from '../hooks/useConfirmModal';
 import { defaultModalProps, ModalProps } from '../hooks/useModal';
 import { useUnsavedModal } from '../hooks/useUnsavedModal';
@@ -122,30 +120,15 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
         name === selectedService.name || agentType === selectedAgentType,
     );
 
-    const envVariables = (() => {
-      if (selectedAgentType === AgentMap.AgentsFun) {
-        const agentsFunFormValues = formValues as AgentsFunFormValues;
-        return {
-          PERSONA: agentsFunFormValues.personaDescription,
-          GENAI_API_KEY: agentsFunFormValues.geminiApiKey || '',
-          FIREWORKS_API_KEY: agentsFunFormValues.fireworksApiEnabled
-            ? agentsFunFormValues.fireworksApiKey
-            : '',
-          TWEEPY_CONSUMER_API_KEY: agentsFunFormValues.xConsumerApiKey,
-          TWEEPY_CONSUMER_API_KEY_SECRET:
-            agentsFunFormValues.xConsumerApiSecret,
-          TWEEPY_BEARER_TOKEN: agentsFunFormValues.xBearerToken,
-          TWEEPY_ACCESS_TOKEN: agentsFunFormValues.xAccessToken,
-          TWEEPY_ACCESS_TOKEN_SECRET: agentsFunFormValues.xAccessTokenSecret,
-        };
-      }
-      return formValues.env_variables;
-    })() as ServiceTemplate['env_variables'];
+    const envVariables =
+      formValues.env_variables as ServiceTemplate['env_variables'];
 
     const formValuesWithoutEnv = (() => {
       if (selectedAgentType === AgentMap.AgentsFun) {
-        const agentsFunFormValues = formValues as AgentsFunFormValues;
-        return { description: `Agents.Fun @${agentsFunFormValues.xUsername}` };
+        const agentsFunValues = formValues as DeepPartial<ServiceTemplate> & {
+          xUsername: string;
+        };
+        return { description: `Agents.Fun @${agentsFunValues.xUsername}` };
       }
       return formValues;
     })();
@@ -183,7 +166,7 @@ export const UpdateAgentProvider = ({ children }: PropsWithChildren) => {
   }, [form, selectedAgentType, selectedService, refetchServices]);
 
   const confirmUnsavedCallback = useCallback(async () => {
-    goto(Pages.Main);
+    goto(PAGES.Main);
   }, [goto]);
 
   const confirmUpdateModal = useConfirmUpdateModal({

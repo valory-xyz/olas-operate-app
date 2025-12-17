@@ -1,12 +1,11 @@
 import { isEmpty, isEqual } from 'lodash';
 
+import { AgentMap, AgentType, StakingProgramId } from '@/constants';
 import { EnvProvisionMap } from '@/constants/envVariables';
 import {
   KPI_DESC_PREFIX,
   SERVICE_TEMPLATES,
 } from '@/constants/serviceTemplates';
-import { AgentType } from '@/enums/Agent';
-import { StakingProgramId } from '@/enums/StakingProgram';
 import { ServicesService } from '@/service/Services';
 import { Address, DeepPartial, Service, ServiceTemplate } from '@/types';
 
@@ -31,7 +30,7 @@ export const updateServiceIfNeeded = async (
 
   // Temporary: check if the service has incorrect name
   if (
-    serviceTemplate.agentType === AgentType.AgentsFun &&
+    serviceTemplate.agentType === AgentMap.AgentsFun &&
     service.name !== serviceTemplate.name
   ) {
     partialServiceTemplate.name = serviceTemplate.name;
@@ -100,8 +99,6 @@ export const updateServiceIfNeeded = async (
     partialServiceTemplate.agent_release = serviceTemplate.agent_release;
   }
 
-  if (isEmpty(partialServiceTemplate)) return;
-
   // If staking program is updated
   if (updatedStakingProgramId) {
     partialServiceTemplate.configurations = {
@@ -112,6 +109,8 @@ export const updateServiceIfNeeded = async (
       },
     };
   }
+
+  if (isEmpty(partialServiceTemplate)) return;
 
   await ServicesService.updateService({
     serviceConfigId: service.service_config_id,

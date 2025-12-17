@@ -4,22 +4,23 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 import { AGENT_MECH_ABI } from '@/abis/agentMech';
 import { MECH_MARKETPLACE_ABI } from '@/abis/mechMarketplace';
 import { MECH_MARKETPLACE_V2_ABI } from '@/abis/mechMarketplaceV2';
-import { EvmChainId } from '@/enums/Chain';
+import { EvmChainIdMap } from '@/constants';
 import { extractFunctionsFromAbi } from '@/utils/abi';
 
 export enum MechType {
   Agent = 'mech-agent',
   Marketplace = 'mech-marketplace',
+  MarketplaceV2 = 'mech-marketplace-2v',
 }
 
 type Mechs = {
-  [EvmChainId.Gnosis]: {
+  [EvmChainIdMap.Gnosis]: {
     [mechType: string]: {
       name: string;
       contract: MulticallContract;
     };
   };
-  [EvmChainId.Base]: {
+  [EvmChainIdMap.Base]: {
     [mechType: string]: {
       name: string;
       contract: MulticallContract;
@@ -28,7 +29,7 @@ type Mechs = {
 };
 
 export const MECHS: Mechs = {
-  [EvmChainId.Gnosis]: {
+  [EvmChainIdMap.Gnosis]: {
     [MechType.Agent]: {
       name: 'Agent Mech',
       contract: new MulticallContract(
@@ -45,8 +46,17 @@ export const MECHS: Mechs = {
         ) as JsonFragment[],
       ),
     },
+    [MechType.MarketplaceV2]: {
+      name: 'Mech Marketplace V2',
+      contract: new MulticallContract(
+        '0x735FAAb1c4Ec41128c367AFb5c3baC73509f70bB',
+        MECH_MARKETPLACE_V2_ABI.filter(
+          (abi) => (abi as JsonFragment).type === 'function',
+        ) as JsonFragment[],
+      ),
+    },
   },
-  [EvmChainId.Base]: {
+  [EvmChainIdMap.Base]: {
     [MechType.Marketplace]: {
       name: 'Mech Marketplace',
       contract: new MulticallContract(

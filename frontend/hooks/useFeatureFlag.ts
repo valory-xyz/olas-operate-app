@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { AgentType } from '@/enums/Agent';
+import { AgentMap } from '@/constants';
 import { assertRequired } from '@/types/Util';
 
 import { useServices } from './useServices';
@@ -21,7 +21,7 @@ const FeatureFlagsSchema = z.enum([
 type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
 
 const FeaturesConfigSchema = z.record(
-  z.nativeEnum(AgentType),
+  z.nativeEnum(AgentMap),
   z.record(FeatureFlagsSchema, z.boolean()),
 );
 
@@ -31,7 +31,7 @@ const FeaturesConfigSchema = z.record(
  * if false - the feature is disabled
  */
 const FEATURES_CONFIG = FeaturesConfigSchema.parse({
-  [AgentType.PredictTrader]: {
+  [AgentMap.PredictTrader]: {
     'manage-wallet': true,
     'withdraw-funds': true,
     'last-transactions': true,
@@ -44,7 +44,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-add-funds': true,
     'on-ramp': true,
   },
-  [AgentType.AgentsFun]: {
+  [AgentMap.AgentsFun]: {
     'manage-wallet': true,
     'withdraw-funds': true,
     'last-transactions': true,
@@ -55,9 +55,9 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'agent-settings': true,
     'bridge-onboarding': true,
     'bridge-add-funds': false,
-    'on-ramp': false,
+    'on-ramp': true,
   },
-  [AgentType.Modius]: {
+  [AgentMap.Modius]: {
     'manage-wallet': true,
     'withdraw-funds': true,
     'last-transactions': true,
@@ -70,7 +70,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-add-funds': true,
     'on-ramp': true,
   },
-  [AgentType.Optimus]: {
+  [AgentMap.Optimus]: {
     'manage-wallet': true,
     'withdraw-funds': true,
     'last-transactions': true,

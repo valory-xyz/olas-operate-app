@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { useServices } from '@/hooks/useServices';
-import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { StakingProgramId } from '@/constants';
+import { useServices, useStakingProgram } from '@/hooks';
 
 export const useStakingContracts = () => {
   const { selectedAgentConfig, selectedAgentType } = useServices();
@@ -28,13 +27,13 @@ export const useStakingContracts = () => {
         (acc: StakingProgramId[], stakingProgramId: StakingProgramId) => {
           if (!isActiveStakingProgramLoaded) return acc;
 
-          // Put the active staking program at the top
-          if (stakingProgramId === currentStakingProgramId)
-            return [stakingProgramId, ...acc];
-
           // If the program is deprecated, ignore it
           if (STAKING_PROGRAMS[evmHomeChainId][stakingProgramId].deprecated)
             return acc;
+
+          // Put the active staking program at the top
+          if (stakingProgramId === currentStakingProgramId)
+            return [stakingProgramId, ...acc];
 
           // if the program is not supported by the agent type, ignore it
           if (
@@ -54,9 +53,9 @@ export const useStakingContracts = () => {
       availableStakingProgramIds,
       isActiveStakingProgramLoaded,
       currentStakingProgramId,
-      evmHomeChainId,
       selectedAgentConfig.evmHomeChainId,
       selectedAgentType,
+      evmHomeChainId,
     ],
   );
 

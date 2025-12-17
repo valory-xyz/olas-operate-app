@@ -1,8 +1,12 @@
 import { ethers } from 'ethers';
 
 import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from '@/config/tokens';
-import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
-import { AgentType, STAKING_PROGRAM_IDS, TokenSymbol } from '@/enums';
+import {
+  AgentMap,
+  EnvProvisionMap as EnvProvisionType,
+  STAKING_PROGRAM_IDS,
+  TokenSymbolMap,
+} from '@/constants';
 import { ServiceTemplate } from '@/types';
 import { parseEther, parseUnits } from '@/utils';
 
@@ -16,7 +20,7 @@ import { X402_ENABLED_FLAGS } from './x402';
 export const KPI_DESC_PREFIX = '[Pearl service]';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.PredictTrader, // TODO: remove if causes errors on middleware
+  agentType: AgentMap.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
   hash: 'bafybeihrleggi4w3zj46dqjzphr5olpqy3krpngxjp6bzzid6nnliffwaq',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
@@ -34,7 +38,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChainMap.GNOSIS,
   configurations: {
     [MiddlewareChainMap.GNOSIS]: {
-      staking_program_id: STAKING_PROGRAM_IDS.PearlBeta, // default, may be overwritten
+      staking_program_id: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1, // default, may be overwritten
       nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 14,
@@ -160,20 +164,26 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   | 'service_version'
   | 'agent_release'
 > = {
-  hash: 'bafybeiardecju3sygh7hwuywka2bgjinbr7vrzob4mpdrookyfsbdmoq2m',
+  hash: 'bafybeien6f3yzrn4e4vqoqsrddfwvr3i7ys7rft3h4ysp3il6qlhwm4hgq',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
-  service_version: 'v0.8.0-alpha3',
+  service_version: 'v2.0.1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'meme-ooorr',
-      version: 'v0.0.1001',
+      version: 'v2.0.1',
     },
   },
   env_variables: {
+    SAFE_CONTRACT_ADDRESSES: {
+      name: 'Safe contract addresses',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
       description: '',
@@ -216,35 +226,11 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       value: '',
       provision_type: EnvProvisionType.USER,
     },
-    GENAI_API_KEY: {
-      name: 'Gemini api key',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.USER,
-    },
-    FIREWORKS_API_KEY: {
-      name: 'Fireworks AI api key',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.USER,
-    },
     PERSONA: {
       name: 'Persona description',
       description: '',
       value: '',
       provision_type: EnvProvisionType.USER,
-    },
-    FEEDBACK_PERIOD_HOURS: {
-      name: 'Feedback period',
-      description: '',
-      value: '1',
-      provision_type: EnvProvisionType.FIXED,
-    },
-    MIN_FEEDBACK_REPLIES: {
-      name: 'Minimum feedback replies',
-      description: '',
-      value: '10',
-      provision_type: EnvProvisionType.FIXED,
     },
     RESET_PAUSE_DURATION: {
       name: 'Reset pause duration',
@@ -280,7 +266,8 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
       name: 'Use x402',
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
-      value: X402_ENABLED_FLAGS[AgentMap.AgentsFun].toString(),
+      // x402 is always enabled for this agent, the agent wouldn't work without it.
+      value: 'true',
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -290,7 +277,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
  * Agents.fun Base template
  */
 const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.AgentsFun,
+  agentType: AgentMap.AgentsFun,
   name: 'Agents.Fun',
   home_chain: MiddlewareChainMap.BASE,
   configurations: {
@@ -300,11 +287,11 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 43,
       cost_of_bond: +parseEther(50),
-      monthly_gas_estimate: +parseEther(0.03),
+      monthly_gas_estimate: +parseEther(0.0035),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.00625),
-          safe: +parseEther(0.0125),
+          agent: +parseEther(0.0003257),
+          safe: +parseEther(0.0016285),
         },
       },
     },
@@ -316,7 +303,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeif6dqiqvdrzeqooja5v6nj7meuwpfygakr3jda3n7w6atovcgogvm',
+  hash: 'bafybeidkdnfrueiivrdzrqo67np3w4gsubu5vb6lqxabsx3ulozvj7jtmq',
   service_version: 'v0.6.0-rc.1',
   agent_release: {
     is_aea: true,
@@ -329,7 +316,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
 };
 
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.Modius,
+  agentType: AgentMap.Modius,
   name: 'Optimus',
   description: `${KPI_DESC_PREFIX} Optimus`,
   image:
@@ -348,9 +335,12 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
           agent: +parseEther(0.0005),
           safe: 0,
         },
-        [MODE_TOKEN_CONFIG[TokenSymbol.USDC]?.address as string]: {
+        [MODE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
           agent: 0,
-          safe: +parseUnits(16, MODE_TOKEN_CONFIG[TokenSymbol.USDC]?.decimals),
+          safe: +parseUnits(
+            16,
+            MODE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
+          ),
         },
       },
     },
@@ -496,7 +486,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentType.Optimus,
+  agentType: AgentMap.Optimus,
   name: 'Optimus - Optimism',
   description: `${KPI_DESC_PREFIX} Optimus service deployment on Optimism network`,
   image:
@@ -515,11 +505,11 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
           agent: +parseEther(0.0007),
           safe: 0,
         },
-        [OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC]?.address as string]: {
+        [OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
           agent: 0,
           safe: +parseUnits(
             16,
-            OPTIMISM_TOKEN_CONFIG[TokenSymbol.USDC]?.decimals,
+            OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
           ),
         },
       },

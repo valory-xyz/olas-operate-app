@@ -1,9 +1,13 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
-import { AgentType } from '@/enums/Agent';
-import { EvmChainId } from '@/enums/Chain';
-import { STAKING_PROGRAM_IDS, StakingProgramId } from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
+import {
+  AgentType,
+  EvmChainId,
+  EvmChainIdMap,
+  STAKING_PROGRAM_IDS,
+  StakingProgramId,
+} from '@/constants';
+import { Address } from '@/types';
 
 import { MechType } from '../mechs';
 import {
@@ -47,26 +51,26 @@ export type StakingProgramMap = {
 export const STAKING_PROGRAMS: {
   [chainId in EvmChainId]: StakingProgramMap;
 } = {
-  [EvmChainId.Gnosis]: GNOSIS_STAKING_PROGRAMS,
-  [EvmChainId.Base]: BASE_STAKING_PROGRAMS,
-  [EvmChainId.Mode]: MODE_STAKING_PROGRAMS,
-  [EvmChainId.Optimism]: OPTIMISM_STAKING_PROGRAMS,
+  [EvmChainIdMap.Gnosis]: GNOSIS_STAKING_PROGRAMS,
+  [EvmChainIdMap.Base]: BASE_STAKING_PROGRAMS,
+  [EvmChainIdMap.Mode]: MODE_STAKING_PROGRAMS,
+  [EvmChainIdMap.Optimism]: OPTIMISM_STAKING_PROGRAMS,
 };
 
 export const STAKING_PROGRAM_ADDRESS: {
   [chainId in EvmChainId]: Record<string, Address>;
 } = {
-  [EvmChainId.Gnosis]: GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
-  [EvmChainId.Base]: BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
-  [EvmChainId.Mode]: MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
-  [EvmChainId.Optimism]: OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
+  [EvmChainIdMap.Gnosis]: GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
+  [EvmChainIdMap.Base]: BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
+  [EvmChainIdMap.Mode]: MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
+  [EvmChainIdMap.Optimism]: OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES,
 };
 
 export const DEFAULT_STAKING_PROGRAM_IDS: {
   [chainId in EvmChainId]: StakingProgramId;
 } = {
-  [EvmChainId.Gnosis]: STAKING_PROGRAM_IDS.PearlBeta,
-  [EvmChainId.Base]: STAKING_PROGRAM_IDS.MemeBaseAlpha2,
-  [EvmChainId.Mode]: STAKING_PROGRAM_IDS.ModiusAlpha,
-  [EvmChainId.Optimism]: STAKING_PROGRAM_IDS.OptimusAlpha2,
+  [EvmChainIdMap.Gnosis]: STAKING_PROGRAM_IDS.PearlBeta,
+  [EvmChainIdMap.Base]: STAKING_PROGRAM_IDS.AgentsFun1,
+  [EvmChainIdMap.Mode]: STAKING_PROGRAM_IDS.ModiusAlpha,
+  [EvmChainIdMap.Optimism]: STAKING_PROGRAM_IDS.OptimusAlpha2,
 };

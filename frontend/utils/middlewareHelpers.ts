@@ -1,4 +1,5 @@
 import { TOKEN_CONFIG } from '@/config/tokens';
+import { TokenSymbol, TokenSymbolMap } from '@/constants';
 import { AddressZero } from '@/constants/address';
 import {
   AllEvmChainId,
@@ -9,7 +10,6 @@ import {
   MiddlewareChainMap,
   SupportedMiddlewareChain,
 } from '@/constants/chains';
-import { TokenSymbol } from '@/enums/Token';
 import { Address } from '@/types/Address';
 
 import { areAddressesEqual } from './address';
@@ -50,35 +50,35 @@ export const asEvmChainDetails = (
       return {
         name: 'ethereum',
         displayName: 'Ethereum',
-        symbol: TokenSymbol.ETH,
+        symbol: TokenSymbolMap.ETH,
         chainId: AllEvmChainIdMap.Ethereum,
       };
     case MiddlewareChainMap.GNOSIS:
       return {
         name: 'gnosis',
         displayName: 'Gnosis',
-        symbol: TokenSymbol.XDAI,
+        symbol: TokenSymbolMap.XDAI,
         chainId: AllEvmChainIdMap.Gnosis,
       };
     case MiddlewareChainMap.BASE:
       return {
         name: 'base',
         displayName: 'Base',
-        symbol: TokenSymbol.ETH,
+        symbol: TokenSymbolMap.ETH,
         chainId: AllEvmChainIdMap.Base,
       };
     case MiddlewareChainMap.MODE:
       return {
         name: 'mode',
         displayName: 'Mode',
-        symbol: TokenSymbol.ETH,
+        symbol: TokenSymbolMap.ETH,
         chainId: AllEvmChainIdMap.Mode,
       };
     case MiddlewareChainMap.OPTIMISM:
       return {
         name: 'optimism',
         displayName: 'Optimism',
-        symbol: TokenSymbol.ETH,
+        symbol: TokenSymbolMap.ETH,
         chainId: AllEvmChainIdMap.Optimism,
       };
   }
