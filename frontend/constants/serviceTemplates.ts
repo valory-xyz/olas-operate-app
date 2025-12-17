@@ -627,7 +627,7 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
     repository: {
       owner: 'valory-xyz',
       name: 'pettai-agent',
-      version: 'v0.0.23',
+      version: 'v0.0.24',
     },
   },
   home_chain: MiddlewareChainMap.BASE,
@@ -637,7 +637,7 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 80,
-      cost_of_bond: +parseEther(0.00008),
+      cost_of_bond: +parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: +parseEther(0.00008),
