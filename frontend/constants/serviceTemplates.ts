@@ -627,7 +627,7 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
     repository: {
       owner: 'valory-xyz',
       name: 'pettai-agent',
-      version: 'v0.0.24',
+      version: 'v0.0.25',
     },
   },
   home_chain: MiddlewareChainMap.BASE,
@@ -662,7 +662,7 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
     STORE_PATH: {
       name: 'Store path',
       description: '',
-      value: '',
+      value: 'persistent_data/',
       provision_type: EnvProvisionType.COMPUTED,
     },
     STAKING_CONTRACT_ADDRESS: {
