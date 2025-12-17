@@ -164,17 +164,17 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   | 'service_version'
   | 'agent_release'
 > = {
-  hash: 'bafybeihdy6s4qtyhm245ystr5o3srhgjviiczr4pcj57avbwnv4nmy6phy',
+  hash: 'bafybeien6f3yzrn4e4vqoqsrddfwvr3i7ys7rft3h4ysp3il6qlhwm4hgq',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
-  service_version: 'v2.0.0',
+  service_version: 'v2.0.1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'meme-ooorr',
-      version: 'v2.0.0',
+      version: 'v2.0.1',
     },
   },
   env_variables: {
@@ -303,7 +303,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeidrbt56g6lflu5n6tqwyt6vyydprlj4bqqducepijcpnwivfm6y64',
+  hash: 'bafybeieisqmvuomqxr6dkcicxnht3befgrqfhuxwweuotyw4ldvmrcffre',
   service_version: 'v0.6.0-rc.1',
   agent_release: {
     is_aea: true,
