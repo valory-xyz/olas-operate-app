@@ -15,7 +15,6 @@ endef
 ./dist/tendermint_win: ./electron/bins/ ./operate/
 	pwd
 	poetry install --no-root && poetry run pyinstaller operate/tendermint.py --onefile --name tendermint_win
-	cp dist/tendermint_win.exe dist/tendermint_bin.exe
 	ls -l dist
 
 
@@ -35,7 +34,7 @@ build: ./dist/pearl_win ./electron/bins/tendermint.exe
 	rm -rf ./electron/bins/middleware
 	cp -r dist/pearl_win ./electron/bins/middleware
 	cp ./electron/bins/tendermint.exe ./electron/bins/middleware/tendermint.exe
-	cp dist/tendermint_bin.exe ./electron/bins/middleware/tendermint_bin.exe
+	cp dist/tendermint_win.exe ./electron/bins/middleware/tendermint_win.exe
 	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} yarn build:frontend
 	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} GH_TOKEN=${GH_TOKEN} GITHUB_REF_TYPE=${GITHUB_REF_TYPE} GITHUB_REF_NAME=${GITHUB_REF_NAME} node build-win.js
 
@@ -46,6 +45,6 @@ build-tenderly:  ./dist/pearl_win ./electron/bins/tendermint.exe
 	rm -rf ./electron/bins/middleware
 	cp -r dist/pearl_win ./electron/bins/middleware
 	cp ./electron/bins/tendermint.exe ./electron/bins/middleware/tendermint.exe
-	cp dist/tendermint_bin.exe ./electron/bins/middleware/tendermint_bin.exe
+	cp dist/tendermint_win.exe ./electron/bins/middleware/tendermint_win.exe
 	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} yarn build:frontend
 	GH_TOKEN=${GH_TOKEN} node build-win-tenderly.js
