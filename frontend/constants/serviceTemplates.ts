@@ -22,7 +22,7 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PredictTrader, // TODO: remove if causes errors on middleware
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeiexo6mdilw2i2nwxj66fmw5wkpai75r5el7k2igpzaxlv4qff4zqe',
+  hash: 'bafybeibtgpjpsali37sv36knulqntcquearmgsuwflnehsm4lyysg3fwp4',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
@@ -303,7 +303,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeif6dqiqvdrzeqooja5v6nj7meuwpfygakr3jda3n7w6atovcgogvm',
+  hash: 'bafybeidrbt56g6lflu5n6tqwyt6vyydprlj4bqqducepijcpnwivfm6y64',
   service_version: 'v0.6.0-rc.1',
   agent_release: {
     is_aea: true,
