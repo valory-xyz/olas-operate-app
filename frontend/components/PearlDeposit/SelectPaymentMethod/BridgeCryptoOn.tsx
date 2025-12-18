@@ -1,7 +1,11 @@
+import { Button } from 'antd';
 import { entries } from 'lodash';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { useUnmount } from 'usehooks-ts';
 
 import { Bridge } from '@/components/Bridge';
+import { SuccessOutlined } from '@/components/custom-icons';
+import { Modal } from '@/components/ui';
 import {
   ETHEREUM_TOKEN_CONFIG,
   TOKEN_CONFIG,
@@ -9,7 +13,7 @@ import {
 } from '@/config/tokens';
 import { AddressZero, MiddlewareChain, MiddlewareChainMap } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
-import { useMasterWalletContext } from '@/hooks';
+import { useMasterWalletContext, usePageState } from '@/hooks';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
@@ -94,6 +98,10 @@ export const BridgeCryptoOn = ({
   onBack,
 }: BridgeCryptoOnProps) => {
   const { onReset } = usePearlWallet();
+  const { goto } = usePageState();
+  const [showBridgingCompleteModal, setShowBridgingCompleteModal] =
+    useState(false);
+
   const getBridgeRequirementsParams =
     useGetBridgeRequirementsParams(bridgeToChain);
 
@@ -129,15 +137,45 @@ export const BridgeCryptoOn = ({
     [amountsToDeposit, bridgeToChain, getBridgeRequirementsParams],
   );
 
+  const handleBridgingCompleted = useCallback(() => {
+    setShowBridgingCompleteModal(true);
+  }, [setShowBridgingCompleteModal]);
+
+  const handleSeeWalletBalance = useCallback(() => {
+    setShowBridgingCompleteModal(false);
+    onReset(true);
+  }, [onReset]);
+
+  useUnmount(() => {
+    setShowBridgingCompleteModal(false);
+  });
+
   return (
-    <Bridge
-      bridgeToChain={bridgeToChain}
-      getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
-      onPrevBeforeBridging={onBack}
-      showCompleteScreen={{
-        completionMessage: 'Bridge completed!',
-        onComplete: onReset,
-      }}
-    />
+    <>
+      <Bridge
+        bridgeToChain={bridgeToChain}
+        getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
+        onPrevBeforeBridging={onBack}
+        onBridgingCompleted={handleBridgingCompleted}
+      />
+      {showBridgingCompleteModal && (
+        <Modal
+          header={<SuccessOutlined />}
+          title="Bridge Completed!"
+          description="Your funds have been bridged successfully."
+          action={
+            <Button
+              type="primary"
+              size="large"
+              block
+              className="mt-32"
+              onClick={handleSeeWalletBalance}
+            >
+              See wallet balance
+            </Button>
+          }
+        />
+      )}
+    </>
   );
 };

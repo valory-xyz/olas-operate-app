@@ -2,8 +2,7 @@ import { Flex, Typography } from 'antd';
 import { isNil } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { AgentSetupCompleteModal, Alert, CardFlex } from '@/components/ui';
-import { PAGES } from '@/constants';
+import { Alert, CardFlex } from '@/components/ui';
 import {
   useBridgingSteps,
   useMasterSafeCreationAndTransfer,
@@ -159,24 +158,8 @@ export const BridgeInProgress = ({
     if (!isSafeCreated) return;
     if (!isTransferCompleted) return;
 
-    /**
-     * If all the steps are finished for onboarding and bridgeStatus is changed to `completed`,
-     * don't redirect automatically, let the user manually redirect via `AgentSetupCompleteModal`
-     */
-    if (isOnboarding && isBridgeCompleted) return;
-
-    /**
-     * Do not redirect in case of onboarding, instead show the `AgentSetupCompleteModal`
-     * modal on the same page
-     */
-    if (isOnboarding) {
-      onNext();
-      return;
-    }
-
-    // wait for 3 seconds before redirecting to main page.
-    const timeoutId = setTimeout(() => goto(PAGES.Main), 3000);
-    return () => clearTimeout(timeoutId);
+    if (isBridgeCompleted) return;
+    onNext();
   }, [
     canCreateMasterSafeAndTransfer,
     bridgeRetryOutcome,
@@ -340,8 +323,6 @@ export const BridgeInProgress = ({
           />
         )}
       </CardFlex>
-
-      {isBridgeCompleted && <AgentSetupCompleteModal />}
     </Flex>
   );
 };

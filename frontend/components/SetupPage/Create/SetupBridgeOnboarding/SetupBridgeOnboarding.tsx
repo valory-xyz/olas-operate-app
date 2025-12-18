@@ -1,14 +1,17 @@
 import { Flex } from 'antd';
 import { isNil } from 'lodash';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Bridge } from '@/components/Bridge';
+import { AgentSetupCompleteModal } from '@/components/ui';
 import { AllEvmChainIdMap, SETUP_SCREEN } from '@/constants';
 import { useMasterWalletContext, useServices, useSetup } from '@/hooks';
 
 import { useGetBridgeRequirementsParams } from '../hooks/useGetBridgeRequirementsParams';
 
 export const SetupBridgeOnboarding = () => {
+  const [isBridgeCompleted, setIsBridgeCompleted] = useState(false);
+
   const { goto: gotoSetup, prevState } = useSetup();
   const { selectedAgentConfig } = useServices();
   const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
@@ -28,6 +31,10 @@ export const SetupBridgeOnboarding = () => {
     ? !isNil(getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId))
     : false;
 
+  const handleBridgingCompleted = useCallback(() => {
+    setIsBridgeCompleted(true);
+  }, [setIsBridgeCompleted]);
+
   return (
     <Flex vertical className="pt-36">
       <Bridge
@@ -37,8 +44,10 @@ export const SetupBridgeOnboarding = () => {
         bridgeToChain={toMiddlewareChain}
         getBridgeRequirementsParams={getBridgeRequirementsParams}
         onPrevBeforeBridging={handlePrevStep}
+        onBridgingCompleted={handleBridgingCompleted}
         isOnboarding
       />
+      {isBridgeCompleted && <AgentSetupCompleteModal />}
     </Flex>
   );
 };

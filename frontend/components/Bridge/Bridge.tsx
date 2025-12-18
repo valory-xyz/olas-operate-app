@@ -20,15 +20,12 @@ const TRANSFER_AMOUNTS_ERROR =
 type BridgeState = 'depositing' | 'in_progress' | 'completed';
 
 type BridgeProps = {
-  showCompleteScreen?: {
-    completionMessage: string;
-    onComplete?: () => void;
-  } | null;
   getBridgeRequirementsParams: GetBridgeRequirementsParams;
   enabledStepsAfterBridging?: EnabledSteps;
   onPrevBeforeBridging: () => void;
   isOnboarding?: boolean;
   bridgeToChain: MiddlewareChain;
+  onBridgingCompleted?: () => void;
 };
 
 /**
@@ -37,12 +34,12 @@ type BridgeProps = {
  * - Handles retry outcomes and updates the UI accordingly.
  */
 export const Bridge = ({
-  showCompleteScreen,
   getBridgeRequirementsParams,
   enabledStepsAfterBridging,
   onPrevBeforeBridging,
   isOnboarding = false,
   bridgeToChain,
+  onBridgingCompleted,
 }: BridgeProps) => {
   const { goto } = usePageState();
 
@@ -70,6 +67,12 @@ export const Bridge = ({
     }
   }, [bridgeRetryOutcome]);
 
+  useEffect(() => {
+    if (bridgeState === 'completed') {
+      onBridgingCompleted?.();
+    }
+  }, [bridgeState, onBridgingCompleted]);
+
   const updateQuoteId = useCallback(
     (quoteId: string) => setQuoteId(quoteId),
     [setQuoteId],
@@ -87,11 +90,7 @@ export const Bridge = ({
         setBridgeState('in_progress');
         break;
       case 'in_progress': {
-        if (showCompleteScreen || isOnboarding) {
-          setBridgeState('completed');
-        } else {
-          goto(PAGES.Main);
-        }
+        setBridgeState('completed');
         break;
       }
       case 'completed':
@@ -100,7 +99,7 @@ export const Bridge = ({
       default:
         throw new Error('Invalid bridge state');
     }
-  }, [bridgeState, goto, isOnboarding, showCompleteScreen]);
+  }, [bridgeState, goto]);
 
   switch (true) {
     case bridgeState === 'depositing':
@@ -114,6 +113,11 @@ export const Bridge = ({
           onNext={handleNextStep}
         />
       );
+    /**
+     * Shows the same component for in_progress and completed states,
+     * The parent component should take care of handling the logic post completion
+     * eg: For showing completion modal, etc.
+     */
     case bridgeState === 'in_progress':
     case bridgeState === 'completed': {
       if (!quoteId) throw new Error(QUOTE_ID_ERROR);
