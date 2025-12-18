@@ -20,11 +20,16 @@ const TRANSFER_AMOUNTS_ERROR =
 type BridgeState = 'depositing' | 'in_progress' | 'completed';
 
 type BridgeProps = {
-  getBridgeRequirementsParams: GetBridgeRequirementsParams;
-  enabledStepsAfterBridging?: EnabledSteps;
-  onPrevBeforeBridging: () => void;
   isOnboarding?: boolean;
   bridgeToChain: MiddlewareChain;
+  enabledStepsAfterBridging?: EnabledSteps;
+  /**
+   * Function to get the bridge requirements params. We are passing the function
+   * instead of just the params so that the params can be requested again, in case
+   * another refill is required (In case of failures or quote changes)
+   */
+  getBridgeRequirementsParams: GetBridgeRequirementsParams;
+  onPrevBeforeBridging: () => void;
   onBridgingCompleted?: () => void;
 };
 
@@ -34,11 +39,11 @@ type BridgeProps = {
  * - Handles retry outcomes and updates the UI accordingly.
  */
 export const Bridge = ({
-  getBridgeRequirementsParams,
-  enabledStepsAfterBridging,
-  onPrevBeforeBridging,
   isOnboarding = false,
   bridgeToChain,
+  enabledStepsAfterBridging,
+  getBridgeRequirementsParams,
+  onPrevBeforeBridging,
   onBridgingCompleted,
 }: BridgeProps) => {
   const { goto } = usePageState();
@@ -50,7 +55,7 @@ export const Bridge = ({
   const [bridgeRetryOutcome, setBridgeRetryOutcome] =
     useState<Nullable<BridgeRetryOutcome>>(null);
 
-  // If retry outcome is set, we need to update the bridge state
+  // If retry outcome is set, we need to update the bridge states
   useEffect(() => {
     if (!bridgeRetryOutcome) return;
 

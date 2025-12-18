@@ -157,7 +157,10 @@ export const DepositForBridging = ({
     canPollForBridgeRefillRequirements,
   );
 
-  // fetch bridge refill requirements manually on mount
+  /**
+   * fetch bridge refill requirements manually on mount, this is to ensure
+   * that stale values aren't shown - in case a user visits the bridging page again
+   */
   useEffect(() => {
     if (!isBridgeRefillRequirementsApiLoading) return;
 
@@ -217,7 +220,12 @@ export const DepositForBridging = ({
     setCanPollForBridgeRefillRequirements(false);
   }, [isRequestingQuoteFailed]);
 
-  // List of tokens that need to be deposited
+  /**
+   * List of tokens that need to be deposited
+   *
+   * Potential bug: doesn't return an empty array in case the quote is still being requested,
+   * this can result in showing stale values as per the expired quotes.
+   */
   const tokens = useMemo(() => {
     if (!bridgeFundingRequirements) return [];
     if (!masterEoa) return [];

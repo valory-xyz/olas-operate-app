@@ -16,20 +16,18 @@ export const SetupBridgeOnboarding = () => {
   const { selectedAgentConfig } = useServices();
   const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
     useMasterWalletContext();
-  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
-
-  // Bridging is supported only for Ethereum at the moment.
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
     AllEvmChainIdMap.Ethereum,
   );
 
-  const handlePrevStep = useCallback(() => {
-    gotoSetup(prevState ?? SETUP_SCREEN.FundYourAgent);
-  }, [gotoSetup, prevState]);
-
+  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const hasMasterSafe = isMasterWalletFetched
     ? !isNil(getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId))
     : false;
+
+  const handlePrevStep = useCallback(() => {
+    gotoSetup(prevState ?? SETUP_SCREEN.FundYourAgent);
+  }, [gotoSetup, prevState]);
 
   const handleBridgingCompleted = useCallback(() => {
     setIsBridgeCompleted(true);

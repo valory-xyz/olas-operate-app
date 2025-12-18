@@ -128,7 +128,7 @@ export const BridgeInProgress = ({
     masterSafeDetails?.isSafeCreated,
   ]);
 
-  // Redirect to main page if all required steps are completed
+  // Update "bridgeState" to "completed" if all the steps are completed
   useEffect(() => {
     // if retry outcome is not null, do not redirect.
     if (bridgeRetryOutcome === 'NEED_REFILL') return;
