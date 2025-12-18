@@ -3,8 +3,8 @@ import { Contract as MulticallContract, ContractCall } from 'ethers-multicall';
 
 import { ERC20_BALANCE_OF_STRING_FRAGMENT } from '@/abis/erc20';
 import { Erc20TokenConfig } from '@/config/tokens';
+import { EvmChainId } from '@/constants';
 import { PROVIDERS } from '@/constants/providers';
-import { EvmChainId } from '@/enums/Chain';
 import { Address } from '@/types/Address';
 import { AddressNumberRecord } from '@/types/Records';
 

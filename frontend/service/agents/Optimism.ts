@@ -3,19 +3,20 @@ import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { OPTIMISM_STAKING_PROGRAMS } from '@/config/stakingPrograms/optimism';
-import { PROVIDERS } from '@/constants/providers';
-import { EvmChainId } from '@/enums/Chain';
 import {
+  EvmChainId,
+  EvmChainIdMap,
   OptimismStakingProgramId,
+  PROVIDERS,
   StakingProgramId,
-} from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
+} from '@/constants';
 import {
+  Address,
   ServiceStakingDetails,
   StakingContractDetails,
   StakingRewardsInfo,
-} from '@/types/Autonolas';
-import { isValidServiceId } from '@/utils/service';
+} from '@/types';
+import { isValidServiceId } from '@/utils';
 
 import {
   ONE_YEAR,
@@ -31,7 +32,7 @@ export abstract class OptimismService extends StakedAgentService {
     agentMultisigAddress,
     serviceId,
     stakingProgramId,
-    chainId = EvmChainId.Optimism,
+    chainId = EvmChainIdMap.Optimism,
   }: {
     agentMultisigAddress: Address;
     serviceId: number;
@@ -99,7 +100,7 @@ export abstract class OptimismService extends StakedAgentService {
 
     // Minimum amount that must be staked (double the minimum deposit)
     const minimumStakedAmount =
-      parseFloat(ethers.utils.formatEther(`${minStakingDeposit}`)) * 2;
+      parseFloat(formatEther(`${minStakingDeposit}`)) * 2;
 
     return {
       serviceInfo,
@@ -109,7 +110,7 @@ export abstract class OptimismService extends StakedAgentService {
       isEligibleForRewards,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(
-        ethers.utils.formatEther(`${accruedStakingReward}`),
+        formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
       tsCheckpoint,
@@ -118,7 +119,7 @@ export abstract class OptimismService extends StakedAgentService {
 
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Optimism,
+    chainId: EvmChainId = EvmChainIdMap.Optimism,
   ): Promise<bigint | undefined> => {
     const stakingTokenProxy =
       STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
@@ -146,7 +147,7 @@ export abstract class OptimismService extends StakedAgentService {
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Optimism,
+    chainId: EvmChainId = EvmChainIdMap.Optimism,
   ): Promise<ServiceStakingDetails> => {
     const { multicallProvider } = PROVIDERS[chainId];
 

@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useContext } from 'react';
 
-import { TEN_SECONDS_INTERVAL } from '@/constants/intervals';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { REACT_QUERY_KEYS, TEN_SECONDS_INTERVAL } from '@/constants';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { BridgeService } from '@/service/Bridge';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
@@ -44,6 +43,5 @@ export const useBridgeRefillRequirements = (
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnReconnect: 'always',
-    refetchIntervalInBackground: true,
   });
 };

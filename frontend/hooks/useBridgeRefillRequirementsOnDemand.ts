@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { REACT_QUERY_KEYS } from '@/constants';
 import { BridgeService } from '@/service/Bridge';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 

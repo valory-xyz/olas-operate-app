@@ -3,7 +3,7 @@ import { Button, Spin } from 'antd';
 import { LoadingOutlined, SuccessOutlined } from '@/components/custom-icons';
 import { Modal } from '@/components/ui';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { Pages } from '@/enums/Pages';
+import { PAGES } from '@/constants';
 import { usePageState, useService, useServices } from '@/hooks';
 import { generateName } from '@/utils/agentName';
 
@@ -26,7 +26,10 @@ export const SwitchingContractModal = ({
   const { goto } = usePageState();
   const { selectedAgentConfig, selectedService } = useServices();
   const { getServiceSafeOf } = useService(selectedService?.service_config_id);
-  const serviceSafe = getServiceSafeOf?.(selectedAgentConfig.evmHomeChainId);
+  const serviceSafe = getServiceSafeOf?.(
+    selectedAgentConfig.evmHomeChainId,
+    selectedService?.service_config_id,
+  );
 
   const agentName = serviceSafe?.address
     ? generateName(serviceSafe?.address)
@@ -53,7 +56,7 @@ export const SwitchingContractModal = ({
           <Button
             type="primary"
             block
-            onClick={() => goto(Pages.Main)}
+            onClick={() => goto(PAGES.Main)}
             className="mt-32"
           >
             View Agent

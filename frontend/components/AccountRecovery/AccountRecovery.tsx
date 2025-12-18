@@ -1,7 +1,7 @@
 import { Flex, Skeleton, Typography } from 'antd';
 import { useMemo } from 'react';
 
-import { SetupScreen } from '@/enums';
+import { SETUP_SCREEN } from '@/constants';
 import { useSetup } from '@/hooks';
 
 import { BackButton } from '../ui';
@@ -35,7 +35,7 @@ const SelectRecoveryMethod = () => {
     <Flex align="center" vertical>
       <BackButton
         onPrev={() => {
-          goto(SetupScreen.Welcome);
+          goto(SETUP_SCREEN.Welcome);
         }}
       />
       <Title level={3} className="mt-12">

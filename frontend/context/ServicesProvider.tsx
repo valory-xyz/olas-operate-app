@@ -13,24 +13,22 @@ import {
 
 import { AGENT_CONFIG } from '@/config/agents';
 import {
+  AgentEoa,
   AgentMap,
+  AgentSafe,
   AgentType,
+  AgentWallet,
   EvmChainId,
   FIFTEEN_SECONDS_INTERVAL,
   FIVE_SECONDS_INTERVAL,
   MESSAGE_WIDTH,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
+  PAGES,
   REACT_QUERY_KEYS,
+  WALLET_OWNER,
+  WALLET_TYPE,
 } from '@/constants';
-import {
-  AgentEoa,
-  AgentSafe,
-  AgentWallet,
-  Pages,
-  WalletOwnerType,
-  WalletType,
-} from '@/enums';
 import {
   useElectronApi,
   usePageState,
@@ -38,6 +36,7 @@ import {
   usePause,
   useStore,
 } from '@/hooks';
+import { useDynamicRefetchInterval } from '@/hooks/useDynamicRefetchInterval';
 import { ServicesService } from '@/service/Services';
 import {
   AgentConfig,
@@ -69,7 +68,12 @@ type ServicesResponse = Pick<
 
 type ServicesContextType = {
   services?: MiddlewareServiceResponse[];
-  availableServiceConfigIds: { configId: string; chainId: EvmChainId }[];
+  availableServiceConfigIds: {
+    configId: string;
+    chainId: EvmChainId;
+    tokenId: Optional<number>;
+  }[];
+  getServiceConfigIdsOf: (chainId: EvmChainId) => string[];
   serviceWallets?: AgentWallet[];
   selectedService?: Service;
   serviceStatusOverrides?: Record<string, Maybe<MiddlewareDeploymentStatus>>;
@@ -96,6 +100,7 @@ export const ServicesContext = createContext<ServicesContextType>({
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
   availableServiceConfigIds: [],
+  getServiceConfigIdsOf: () => [],
 });
 
 /**
@@ -104,9 +109,12 @@ export const ServicesContext = createContext<ServicesContextType>({
 export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
   const { store } = useElectronApi();
+  const { paused, setPaused, togglePaused } = usePause();
   const { storeState } = useStore();
   const { pageState } = usePageState();
-  const { paused, setPaused, togglePaused } = usePause();
+  const serviceRefetchInterval = useDynamicRefetchInterval(
+    FIVE_SECONDS_INTERVAL,
+  );
 
   // state to track the services ids message shown
   // so that it is not shown again for the same service
@@ -131,7 +139,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     queryKey: REACT_QUERY_KEYS.SERVICES_KEY,
     queryFn: ({ signal }) => ServicesService.getServices(signal),
     enabled: isOnline && !paused,
-    refetchInterval: FIVE_SECONDS_INTERVAL,
+    refetchInterval: serviceRefetchInterval,
+    refetchIntervalInBackground: true,
   });
 
   const {
@@ -159,8 +168,10 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       }),
     enabled: isOnline && !!selectedServiceConfigId,
     refetchInterval: (query) => {
-      return query?.state?.status === 'success' ? FIVE_SECONDS_INTERVAL : false;
+      if (query.state.status !== 'success') return false;
+      return serviceRefetchInterval;
     },
+    refetchIntervalInBackground: true,
   });
 
   // Stores temporary overrides for service statuses to avoid UI glitches.
@@ -183,7 +194,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (isServicesValidationStatusLoading) return;
     if (!servicesValidationStatus) return;
-    if (pageState !== Pages.Main) return;
+    if (pageState !== PAGES.Main) return;
     if (isInvalidMessageShown) return;
 
     const isValid = Object.values(servicesValidationStatus).every((x) => !!x);
@@ -241,8 +252,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
                     (instance: string) =>
                       ({
                         address: instance,
-                        type: WalletType.EOA,
-                        owner: WalletOwnerType.Agent,
+                        type: WALLET_TYPE.EOA,
+                        owner: WALLET_OWNER.Agent,
                       }) as AgentEoa,
                   ),
                 );
@@ -251,8 +262,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
               if (multisig) {
                 acc.push({
                   address: multisig,
-                  type: WalletType.Safe,
-                  owner: WalletOwnerType.Agent,
+                  type: WALLET_TYPE.Safe,
+                  owner: WALLET_OWNER.Agent,
                   evmChainId: asEvmChainId(middlewareChain),
                 } as AgentSafe);
               }
@@ -323,11 +334,20 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
           !currentAgent?.isUnderConstruction && !!currentAgent?.isAgentEnabled
         );
       })
-      .map(({ service_config_id, home_chain }) => ({
+      .map(({ service_config_id, home_chain, chain_configs }) => ({
         configId: service_config_id,
+        tokenId: chain_configs[home_chain].chain_data.token,
         chainId: asEvmChainId(home_chain),
       }));
   }, [services]);
+
+  const getServiceConfigIdsOf = useCallback(
+    (chainId: EvmChainId) =>
+      availableServiceConfigIds
+        .filter(({ chainId: serviceChainId }) => chainId === serviceChainId)
+        .map(({ configId }) => configId),
+    [availableServiceConfigIds],
+  );
 
   return (
     <ServicesContext.Provider
@@ -338,6 +358,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         isLoading: isServicesLoading,
         refetch,
         availableServiceConfigIds,
+        getServiceConfigIdsOf,
 
         // pause
         paused,

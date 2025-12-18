@@ -1,4 +1,4 @@
-import { TokenSymbol } from '@/enums/Token';
+import { TokenSymbol } from '@/config/tokens';
 
 export type DefaultTokenAmount = {
   symbol: TokenSymbol;

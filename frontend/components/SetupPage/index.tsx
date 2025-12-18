@@ -2,9 +2,8 @@ import { Typography } from 'antd';
 import React, { useContext, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
+import { COLOR, SETUP_SCREEN, SetupScreen } from '@/constants';
 import { SetupContext } from '@/context/SetupProvider';
-import { SetupScreen } from '@/enums/SetupScreen';
 
 import { AccountRecovery } from '../AccountRecovery';
 import { SelectStakingPage } from '../SelectStakingPage';
@@ -47,14 +46,14 @@ const SetupCard = styled.div`
 `;
 
 const SCREEN_WITHOUT_CARDS: SetupScreen[] = [
-  SetupScreen.AgentOnboarding,
-  SetupScreen.SetupYourAgent,
-  SetupScreen.FundYourAgent,
-  SetupScreen.TransferFunds,
-  SetupScreen.SetupBridgeOnboardingScreen,
-  SetupScreen.SetupOnRamp,
-  SetupScreen.SelectStaking,
-  SetupScreen.AccountRecovery,
+  SETUP_SCREEN.AgentOnboarding,
+  SETUP_SCREEN.SetupYourAgent,
+  SETUP_SCREEN.FundYourAgent,
+  SETUP_SCREEN.TransferFunds,
+  SETUP_SCREEN.SetupBridgeOnboardingScreen,
+  SETUP_SCREEN.SetupOnRamp,
+  SETUP_SCREEN.SelectStaking,
+  SETUP_SCREEN.AccountRecovery,
 ];
 
 export const Setup = () => {
@@ -62,29 +61,29 @@ export const Setup = () => {
 
   const setupScreen = useMemo(() => {
     switch (setupObject.state) {
-      case SetupScreen.Welcome:
+      case SETUP_SCREEN.Welcome:
         return <SetupWelcome />;
-      case SetupScreen.SetupPassword:
+      case SETUP_SCREEN.SetupPassword:
         return <SetupPassword />;
-      case SetupScreen.SetupBackupSigner:
+      case SETUP_SCREEN.SetupBackupSigner:
         return <SetupBackupSigner />;
-      case SetupScreen.AgentOnboarding:
+      case SETUP_SCREEN.AgentOnboarding:
         return <AgentOnboarding />;
-      case SetupScreen.SetupYourAgent:
+      case SETUP_SCREEN.SetupYourAgent:
         return <SetupYourAgent />;
-      case SetupScreen.SelectStaking:
+      case SETUP_SCREEN.SelectStaking:
         return <SelectStakingPage mode="onboard" />;
-      case SetupScreen.FundYourAgent:
+      case SETUP_SCREEN.FundYourAgent:
         return <FundYourAgent />;
-      case SetupScreen.TransferFunds:
+      case SETUP_SCREEN.TransferFunds:
         return <TransferFunds />;
-      case SetupScreen.SetupBridgeOnboardingScreen:
+      case SETUP_SCREEN.SetupBridgeOnboardingScreen:
         return <SetupBridgeOnboarding />;
-      case SetupScreen.SetupOnRamp:
+      case SETUP_SCREEN.SetupOnRamp:
         return <SetupOnRamp />;
-      case SetupScreen.EarlyAccessOnly:
+      case SETUP_SCREEN.EarlyAccessOnly:
         return <EarlyAccessOnly />;
-      case SetupScreen.AccountRecovery:
+      case SETUP_SCREEN.AccountRecovery:
         return <AccountRecovery />;
       default:
         return <UnexpectedError />;

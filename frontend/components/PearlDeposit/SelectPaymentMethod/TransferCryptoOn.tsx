@@ -2,7 +2,7 @@ import { entries } from 'lodash';
 import { useMemo } from 'react';
 
 import { TransferCryptoFromExternalWallet } from '@/components/PearlWallet';
-import { TokenSymbol } from '@/constants';
+import { TokenSymbol } from '@/config/tokens';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { AvailableAsset } from '@/types/Wallet';
 
