@@ -4,7 +4,8 @@ import Image from 'next/image';
 import React from 'react';
 import styled from 'styled-components';
 
-import { COLOR, MiddlewareChain, TokenSymbolConfigMap } from '@/constants';
+import { TokenSymbolConfigMap } from '@/config/tokens';
+import { COLOR, MiddlewareChain } from '@/constants';
 import { CrossChainTransferDetails, TokenTransfer } from '@/types/Bridge';
 import { asEvmChainDetails, formatUnitsToNumber } from '@/utils';
 

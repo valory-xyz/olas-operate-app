@@ -1,4 +1,5 @@
-import { EvmChainId, TokenSymbol } from '@/constants';
+import { TokenSymbol } from '@/config/tokens';
+import { EvmChainId } from '@/constants';
 import { Address } from '@/types/Address';
 
 export type WalletBalance = {

@@ -10,11 +10,12 @@ type Url = `http${'s' | ''}://${string}`;
 export const BACKEND_URL: Url = `https://localhost:${process.env.NODE_ENV === 'production' ? 8765 : 8000}/api`;
 export const BACKEND_URL_V2: Url = `https://localhost:${process.env.NODE_ENV === 'production' ? 8765 : 8000}/api/v2`;
 
-// olas.network
-export const PEARL_URL: Url = 'https://olas.network/pearl';
-export const FAQ_URL: Url = 'https://olas.network/pearl#faq';
+// pearl site
+export const PEARL_URL: Url = 'https://www.pearl.you';
+export const FAQ_URL: Url = `${PEARL_URL}#FAQ`;
+export const DOWNLOAD_URL: Url = `${PEARL_URL}#update`;
+// to be moved to pearl site
 export const TERMS_AND_CONDITIONS_URL: Url = 'https://olas.network/pearl-terms';
-export const DOWNLOAD_URL: Url = 'https://olas.network/pearl#update';
 
 // thegraph
 export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
@@ -44,6 +45,8 @@ export const COINGECKO_URL: string = 'https://www.coingecko.com';
 export const COINGECKO_DEMO_API_URL: string =
   'https://support.coingecko.com/hc/en-us/articles/21880397454233-User-Guide-How-to-sign-up-for-CoinGecko-Demo-API-and-generate-an-API-key';
 export const GEMINI_API_URL: string = 'https://aistudio.google.com/app/apikey';
+export const OPEN_AI_API_URL: string =
+  'https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key';
 export const X_ACCOUNT_API_TOKENS_GUIDE_URL: Url =
   'https://github.com/dvilelaf/meme-ooorr/blob/main/docs/twitter_dev_account.md';
 

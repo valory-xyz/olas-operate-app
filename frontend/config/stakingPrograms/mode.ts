@@ -1,15 +1,11 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
-import {
-  AgentMap,
-  EvmChainIdMap,
-  STAKING_PROGRAM_IDS,
-  TokenSymbolMap,
-} from '@/constants';
+import { AgentMap, EvmChainIdMap, STAKING_PROGRAM_IDS } from '@/constants';
 import { Address } from '@/types';
 
 import { MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
+import { TokenSymbolMap } from '../tokens';
 import { StakingProgramMap } from '.';
 
 export const MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
@@ -37,6 +33,8 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.ModiusAlpha],
+    address:
+      MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.ModiusAlpha],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.ModiusAlpha],
       STAKING_TOKEN_PROXY_ABI,
@@ -51,6 +49,10 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.ModiusAlpha2],
+    address:
+      MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.ModiusAlpha2
+      ],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.ModiusAlpha2
@@ -67,6 +69,10 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.ModiusAlpha3],
+    address:
+      MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.ModiusAlpha3
+      ],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.ModiusAlpha3
@@ -83,6 +89,10 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.ModiusAlpha4],
+    address:
+      MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.ModiusAlpha4
+      ],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.ModiusAlpha4
@@ -100,6 +110,10 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.OptimusAlpha],
+    address:
+      MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OptimusAlpha
+      ],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.OptimusAlpha

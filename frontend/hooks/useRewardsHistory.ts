@@ -6,7 +6,7 @@ import { groupBy, isEmpty, isNil } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 import { z } from 'zod';
 
-import { STAKING_PROGRAM_ADDRESS } from '@/config/stakingPrograms';
+import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { REACT_QUERY_KEYS } from '@/constants';
 import { EvmChainId } from '@/constants/chains';
 import { REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
@@ -46,8 +46,8 @@ type CheckpointResponse = z.infer<typeof CheckpointGraphResponseSchema>;
 
 const fetchRewardsQuery = (chainId: EvmChainId, serviceId: Maybe<number>) => {
   const supportedStakingContracts = Object.values(
-    STAKING_PROGRAM_ADDRESS[chainId],
-  ).map((address) => `"${address}"`);
+    STAKING_PROGRAMS[chainId],
+  ).map((program) => `"${program.address}"`);
 
   return gql`
   {

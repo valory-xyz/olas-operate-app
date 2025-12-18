@@ -24,7 +24,7 @@ import {
 import { AgentsFunFormValues } from '@/components/SetupPage/SetupYourAgent/AgentsFunAgentForm/types';
 import { RequiredMark } from '@/components/ui';
 import { SETUP_SCREEN } from '@/constants';
-import { useSetup, useStakingProgram } from '@/hooks';
+import { useServices, useSetup, useStakingProgram } from '@/hooks';
 import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils/service';
 
@@ -46,6 +46,8 @@ export const AgentsFunAgentFormContent = ({
   const [submitButtonText, setSubmitButtonText] = useState('Continue');
 
   const { defaultStakingProgramId } = useStakingProgram();
+  const { refetch: refetchServices } = useServices();
+
   const [form] = Form.useForm<AgentsFunFormValues>();
 
   const isPersonaStep = currentStep === AGENTS_FUN_FORM_STEP.persona;
@@ -108,6 +110,9 @@ export const AgentsFunAgentFormContent = ({
           overriddenServiceConfig,
         );
 
+        // fetch services to update the state after service creation
+        await refetchServices?.();
+
         message.success('Agent setup complete');
 
         // move to next page
@@ -120,7 +125,7 @@ export const AgentsFunAgentFormContent = ({
         setSubmitButtonText('Continue');
       }
     },
-    [defaultStakingProgramId, serviceTemplate, goto],
+    [defaultStakingProgramId, serviceTemplate, refetchServices, goto],
   );
 
   return (
