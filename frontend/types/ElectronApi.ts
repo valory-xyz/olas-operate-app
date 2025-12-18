@@ -26,6 +26,7 @@ export type ElectronStore = {
   [AgentMap.AgentsFun]?: AgentSettings;
   [AgentMap.Modius]?: AgentSettings;
   [AgentMap.Optimus]?: AgentSettings;
+  [AgentMap.PettAi]?: AgentSettings;
   lastProvidedBackupWallet?: {
     address: Nullable<string>;
     type: BackupWalletType;

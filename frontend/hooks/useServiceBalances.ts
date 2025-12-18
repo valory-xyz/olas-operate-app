@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { TokenSymbolMap } from '@/constants';
+import { TokenSymbolMap } from '@/config/tokens';
 import { Optional, WalletBalance } from '@/types';
 import { areAddressesEqual } from '@/utils';
 

@@ -1,5 +1,4 @@
-import { TOKEN_CONFIG } from '@/config/tokens';
-import { TokenSymbol, TokenSymbolMap } from '@/constants';
+import { TOKEN_CONFIG, TokenSymbol, TokenSymbolMap } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import {
   AllEvmChainId,
@@ -35,6 +34,13 @@ export const asEvmChainId = (
       return EvmChainIdMap.Optimism;
   }
   throw new Error(`Invalid middleware chain enum: ${chain}`);
+};
+
+export const asAllEvmChainId = (chainId?: MiddlewareChain) => {
+  if (MiddlewareChainMap.ETHEREUM === chainId) {
+    return AllEvmChainIdMap.Ethereum;
+  }
+  return asEvmChainId(chainId);
 };
 
 export const asEvmChainDetails = (

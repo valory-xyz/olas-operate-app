@@ -1,16 +1,16 @@
 import { ethers } from 'ethers';
 
-import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from '@/config/tokens';
 import {
-  AgentMap,
-  EnvProvisionMap as EnvProvisionType,
-  STAKING_PROGRAM_IDS,
+  MODE_TOKEN_CONFIG,
+  OPTIMISM_TOKEN_CONFIG,
   TokenSymbolMap,
-} from '@/constants';
+} from '@/config/tokens';
+import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
 import { ServiceTemplate } from '@/types';
 import { parseEther, parseUnits } from '@/utils';
 
 import { MiddlewareChainMap } from './chains';
+import { STAKING_PROGRAM_IDS } from './stakingProgram';
 import { X402_ENABLED_FLAGS } from './x402';
 
 /**
@@ -20,7 +20,7 @@ import { X402_ENABLED_FLAGS } from './x402';
 export const KPI_DESC_PREFIX = '[Pearl service]';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  agentType: AgentMap.PredictTrader, // TODO: remove if causes errors on middleware
+  agentType: AgentMap.PredictTrader,
   name: 'Trader Agent', // should be unique across all services and not be updated
   hash: 'bafybeiemvi77itu5ut7ybtrf7pwuzqemj4xfw2amgy4ipmvky52jmzrg54',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
@@ -44,11 +44,10 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       agent_id: 14,
       // TODO: pull fund requirements from staking program config
       cost_of_bond: +parseEther(0.001),
-      monthly_gas_estimate: +parseEther(10),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: +parseEther(2),
-          safe: +parseEther(5),
+          safe: +parseEther(8),
         },
       },
     },
@@ -287,7 +286,6 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 43,
       cost_of_bond: +parseEther(50),
-      monthly_gas_estimate: +parseEther(0.0035),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: +parseEther(0.0003257),
@@ -329,10 +327,9 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
       cost_of_bond: +parseEther(20),
-      monthly_gas_estimate: +parseEther(0.011), // TODO: should be 0.0055, temp fix to avoid low balance alerts until the refund is fixed in the middleware
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0005),
+          agent: +parseEther(0.0002),
           safe: 0,
         },
         [MODE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
@@ -499,10 +496,9 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
       cost_of_bond: +parseEther(20),
-      monthly_gas_estimate: +parseEther(0.011),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0007),
+          agent: +parseEther(0.0002),
           safe: 0,
         },
         [OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
@@ -618,11 +614,84 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   ...BABYDEGEN_COMMON_TEMPLATE,
 } as const;
 
+export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
+  agentType: AgentMap.PettAi,
+  name: 'pett_agent',
+  hash: 'bafybeiabumpvdgnqecm4prum2njeslcf2ibcvc2y6m7ldv2evgmef6opam',
+  description: 'Pett.ai autonomous agent service for virtual pet management.',
+  image:
+    'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
+  service_version: 'v0.1.0',
+  agent_release: {
+    is_aea: false,
+    repository: {
+      owner: 'valory-xyz',
+      name: 'pettai-agent',
+      version: 'v0.1.0',
+    },
+  },
+  home_chain: MiddlewareChainMap.BASE,
+  configurations: {
+    [MiddlewareChainMap.BASE]: {
+      staking_program_id: STAKING_PROGRAM_IDS.PettAiAgent,
+      nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
+      rpc: 'http://localhost:8545', // overwritten
+      agent_id: 80,
+      cost_of_bond: +parseEther(20),
+      fund_requirements: {
+        [ethers.constants.AddressZero]: {
+          agent: +parseEther(0.00008),
+          safe: 0,
+        },
+      },
+    },
+  },
+  env_variables: {
+    BASE_LEDGER_RPC: {
+      name: 'Base ledger RPC',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    WEBSOCKET_URL: {
+      name: 'Websocket URL',
+      description: 'Endpoint for Pett.ai websocket communication',
+      value: 'wss://ws.pett.ai',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    STORE_PATH: {
+      name: 'Store path',
+      description: '',
+      value: 'persistent_data/',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    STAKING_CONTRACT_ADDRESS: {
+      name: 'Staking contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      name: 'Staking activity checker contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    SAFE_CONTRACT_ADDRESSES: {
+      name: 'Config safe contract addresses',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+  },
+} as const;
+
 export const SERVICE_TEMPLATES: ServiceTemplate[] = [
   PREDICT_SERVICE_TEMPLATE,
   AGENTS_FUN_BASE_TEMPLATE,
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
+  PETT_AI_SERVICE_TEMPLATE,
 ] as const;
 
 export const getServiceTemplates = (): ServiceTemplate[] => SERVICE_TEMPLATES;

@@ -1,7 +1,11 @@
 import { formatUnits } from 'ethers/lib/utils';
 import { entries } from 'lodash';
 
-import { EvmChainIdMap, MiddlewareChainMap, TokenSymbolMap } from '@/constants';
+import {
+  EvmChainIdMap,
+  MiddlewareChainMap,
+  STAKING_PROGRAM_IDS,
+} from '@/constants';
 import { AgentMap, AgentType } from '@/constants/agent';
 import {
   MODIUS_SERVICE_TEMPLATE,
@@ -11,11 +15,16 @@ import { X402_ENABLED_FLAGS } from '@/constants/x402';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
+import { PettAiService } from '@/service/agents/PettAi';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
 import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
 
-import { MODE_TOKEN_CONFIG, OPTIMISM_TOKEN_CONFIG } from './tokens';
+import {
+  MODE_TOKEN_CONFIG,
+  OPTIMISM_TOKEN_CONFIG,
+  TokenSymbolMap,
+} from './tokens';
 
 const getModiusUsdcConfig = () => {
   const modiusFundRequirements =
@@ -59,13 +68,11 @@ export const AGENT_CONFIG: {
     evmHomeChainId: EvmChainIdMap.Gnosis,
     middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
     agentIds: [14, 25],
-    requiresAgentSafesOn: [EvmChainIdMap.Gnosis],
-    requiresMasterSafesOn: [EvmChainIdMap.Gnosis],
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.PearlBeta,
     serviceApi: PredictTraderService,
     displayName: 'Prediction Trader',
     description: 'Participates in prediction markets.',
     hasExternalFunds: false,
-    hasChatUI: true,
     doesChatUiRequireApiKey: true,
     category: 'Prediction Markets',
     defaultBehavior:
@@ -81,19 +88,17 @@ export const AGENT_CONFIG: {
     evmHomeChainId: EvmChainIdMap.Optimism,
     middlewareHomeChainId: MiddlewareChainMap.OPTIMISM,
     agentIds: [40],
-    requiresAgentSafesOn: [EvmChainIdMap.Optimism],
     additionalRequirements: {
       [EvmChainIdMap.Optimism]: {
         [TokenSymbolMap.USDC]: getOptimusUsdcConfig(),
       },
     },
-    requiresMasterSafesOn: [EvmChainIdMap.Optimism],
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.OptimusAlpha2,
     serviceApi: OptimismService,
     displayName: 'Optimus',
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Optimus network.',
     hasExternalFunds: true,
-    hasChatUI: true,
     doesChatUiRequireApiKey: true,
     category: 'DeFi',
     defaultBehavior:
@@ -110,14 +115,12 @@ export const AGENT_CONFIG: {
     evmHomeChainId: EvmChainIdMap.Base,
     middlewareHomeChainId: MiddlewareChainMap.BASE,
     agentIds: [43],
-    requiresAgentSafesOn: [EvmChainIdMap.Base],
-    requiresMasterSafesOn: [EvmChainIdMap.Base],
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.AgentsFun1,
     serviceApi: AgentsFunBaseService,
     displayName: 'Agents.fun',
     description:
       'Autonomously posts to Twitter, creates and trades memecoins, and interacts with other agents. Agent is operating on Base chain.',
     hasExternalFunds: false,
-    hasChatUI: true,
     doesChatUiRequireApiKey: false,
     defaultBehavior: 'Autonomously posts to X based on the provided persona.',
     servicePublicId: 'dvilela/memeooorr:0.1.0',
@@ -132,22 +135,46 @@ export const AGENT_CONFIG: {
     evmHomeChainId: EvmChainIdMap.Mode,
     agentIds: [40],
     middlewareHomeChainId: MiddlewareChainMap.MODE,
-    requiresAgentSafesOn: [EvmChainIdMap.Mode],
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.ModiusAlpha,
     additionalRequirements: {
       [EvmChainIdMap.Mode]: { [TokenSymbolMap.USDC]: getModiusUsdcConfig() },
     },
-    requiresMasterSafesOn: [EvmChainIdMap.Mode],
     serviceApi: ModiusService,
     displayName: 'Modius',
     description:
       'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
     hasExternalFunds: true,
-    hasChatUI: true,
     doesChatUiRequireApiKey: true,
     category: 'DeFi',
     defaultBehavior:
       'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
     servicePublicId: 'valory/optimus:0.1.0',
+  },
+  [AgentMap.PettAi]: {
+    isAgentEnabled: true,
+    isUnderConstruction: false,
+    isComingSoon: false,
+    requiresSetup: false,
+    isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PettAi],
+    name: 'Pett.ai',
+    evmHomeChainId: EvmChainIdMap.Base,
+    agentIds: [80],
+    middlewareHomeChainId: MiddlewareChainMap.BASE,
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.PettAiAgent,
+    serviceApi: PettAiService,
+    displayName: 'PettBro by Pett.ai',
+    description: 'Pett.ai autonomous agent service for virtual pet management.',
+    hasExternalFunds: false,
+    doesChatUiRequireApiKey: false,
+    defaultBehavior:
+      'Your agent nurtures your pet! Make sure you’re logged in to keep your pet safe.',
+    servicePublicId: 'pettaidev/pett_agent:0.1.0',
+    needsOpenProfileEachAgentRun: true,
+    needsOpenProfileEachAgentRunAlert: {
+      title: 'Log in to get your agent operating',
+      message:
+        'To operate, the agent must be linked to a pet. Link one in the Profile tab or press Connect below.',
+    },
   },
 };
 

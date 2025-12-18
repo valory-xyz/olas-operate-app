@@ -12,8 +12,8 @@ import {
   Divider,
   TokenAmountInput,
 } from '@/components/ui';
-import { TOKEN_CONFIG } from '@/config/tokens';
-import { AddressZero, PAGES, TokenSymbol } from '@/constants';
+import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
+import { AddressZero, PAGES } from '@/constants';
 import { useAvailableAssets, usePageState, useServices } from '@/hooks';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
 import { formatUnitsToNumber } from '@/utils';

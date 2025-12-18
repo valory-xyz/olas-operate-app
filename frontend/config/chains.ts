@@ -2,13 +2,14 @@
  * Chain configurations
  * - add new chains to the CHAIN_CONFIGS object
  */
+import { TokenSymbolMap } from '@/config/tokens';
 import {
   EvmChainId,
   EvmChainIdMap,
   MiddlewareChain,
   MiddlewareChainMap,
 } from '@/constants/chains';
-import { TokenSymbolMap } from '@/constants/token';
+import { parseEther } from '@/utils';
 
 import { TOKEN_CONFIG, TokenConfig } from './tokens';
 
@@ -23,11 +24,11 @@ export type ChainConfig = {
   color: `#${string}`;
   // TODO: the values are hardcoded, should be fetched from the backend
   /**
-   * Least amount of native token required to create a Safe.
+   * Least amount of native token required to create a Safe in wei
    * @example for gnosis chain, 1.5 XDAI is required to create a Safe.
    * For new chains, ask middleware team for the value.
    */
-  safeCreationThreshold: number;
+  safeCreationThreshold: bigint;
 };
 
 const GNOSIS_CHAIN_CONFIG: ChainConfig = {
@@ -38,7 +39,7 @@ const GNOSIS_CHAIN_CONFIG: ChainConfig = {
   ] as TokenConfig,
   middlewareChain: MiddlewareChainMap.GNOSIS,
   rpc: process.env.GNOSIS_RPC as HttpUrl,
-  safeCreationThreshold: 1.5,
+  safeCreationThreshold: BigInt(parseEther(1.5)),
   color: '#04795B0F',
 } as const;
 
@@ -50,7 +51,7 @@ const BASE_CHAIN_CONFIG: ChainConfig = {
   ] as TokenConfig,
   middlewareChain: MiddlewareChainMap.BASE,
   rpc: process.env.BASE_RPC as HttpUrl,
-  safeCreationThreshold: 0.005,
+  safeCreationThreshold: BigInt(parseEther(0.005)),
   color: '#0052FF12',
 } as const;
 
@@ -62,7 +63,7 @@ const MODE_CHAIN_CONFIG: ChainConfig = {
   ] as TokenConfig,
   middlewareChain: MiddlewareChainMap.MODE,
   rpc: process.env.MODE_RPC as HttpUrl,
-  safeCreationThreshold: 0.0005,
+  safeCreationThreshold: BigInt(parseEther(0.0005)),
   color: '#DFFE0029',
 } as const;
 
@@ -74,7 +75,7 @@ const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
   ] as TokenConfig,
   middlewareChain: MiddlewareChainMap.OPTIMISM,
   rpc: process.env.OPTIMISM_RPC as HttpUrl,
-  safeCreationThreshold: 0.005,
+  safeCreationThreshold: BigInt(parseEther(0.005)),
   color: '#FF042012',
 } as const;
 

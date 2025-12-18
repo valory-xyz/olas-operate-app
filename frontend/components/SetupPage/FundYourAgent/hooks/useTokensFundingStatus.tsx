@@ -1,9 +1,12 @@
+import { isEmpty } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useMasterBalances, useServices } from '@/hooks';
-
-import { TokenRequirement } from '../components/TokensRequirements';
-import { useGetRefillRequirementsWithMonthlyGas } from './useGetRefillRequirementsWithMonthlyGas';
+import {
+  useGetRefillRequirements,
+  useMasterBalances,
+  useServices,
+} from '@/hooks';
+import { TokenRequirement } from '@/types';
 
 type TokenFundingStatus = {
   symbol: string;
@@ -40,30 +43,43 @@ type TokenFundingStatus = {
  * }
  */
 export const useTokensFundingStatus = () => {
-  const { getMasterEoaBalancesOf } = useMasterBalances();
+  const { getMasterEoaBalancesOf, getMasterSafeBalancesOf, isLoaded } =
+    useMasterBalances();
   const { selectedAgentConfig } = useServices();
   const {
     totalTokenRequirements: tokenRequirements,
     isLoading: isLoadingTotalTokenRequirements,
-  } = useGetRefillRequirementsWithMonthlyGas();
+  } = useGetRefillRequirements();
   const [hasBeenFullyFunded, setHasBeenFullyFunded] = useState(false);
   const currentChain = selectedAgentConfig.evmHomeChainId;
 
   const [requiredTokens, setRequiredTokens] = useState<TokenRequirement[]>([]);
-
   useEffect(() => {
     if (tokenRequirements?.length > 0 && requiredTokens.length === 0) {
       setRequiredTokens(tokenRequirements);
     }
   }, [requiredTokens.length, tokenRequirements]);
 
-  const eoaBalances = useMemo(
-    () =>
-      getMasterEoaBalancesOf(currentChain).filter((balance) =>
-        requiredTokens.some((token) => token.symbol === balance.symbol),
-      ),
-    [getMasterEoaBalancesOf, currentChain, requiredTokens],
-  );
+  const walletBalances = useMemo(() => {
+    if (!isLoaded) return [];
+
+    // Try to get balances from master safe if it exists
+    // otherwise use master eoa
+    let existingWalletBalances = getMasterSafeBalancesOf(currentChain);
+    if (existingWalletBalances.length === 0) {
+      existingWalletBalances = getMasterEoaBalancesOf(currentChain);
+    }
+
+    return existingWalletBalances.filter((balance) =>
+      requiredTokens.some((token) => token.symbol === balance.symbol),
+    );
+  }, [
+    isLoaded,
+    getMasterSafeBalancesOf,
+    currentChain,
+    getMasterEoaBalancesOf,
+    requiredTokens,
+  ]);
 
   const fundingStatus = useMemo(() => {
     if (hasBeenFullyFunded) {
@@ -86,7 +102,7 @@ export const useTokensFundingStatus = () => {
       };
     }
 
-    if (!requiredTokens || requiredTokens.length === 0 || !eoaBalances) {
+    if (isEmpty(tokenRequirements) || isEmpty(walletBalances)) {
       return {
         isFullyFunded: false,
         tokensFundingStatus: {},
@@ -97,12 +113,12 @@ export const useTokensFundingStatus = () => {
     const tokensFundingStatus: Record<string, TokenFundingStatus> = {};
 
     requiredTokens.forEach((requirement) => {
-      const eoa = eoaBalances.find(
+      const wallet = walletBalances.find(
         (balance) => balance.symbol === requirement.symbol,
       );
       const { symbol, iconSrc, amount } = requirement;
 
-      if (eoa && eoa.balance >= amount) {
+      if (wallet && wallet.balance >= amount) {
         tokensFundingStatus[symbol] = {
           symbol,
           iconSrc,
@@ -116,7 +132,7 @@ export const useTokensFundingStatus = () => {
           iconSrc,
           totalAmount: amount,
           areFundsReceived: false,
-          pendingAmount: amount - (eoa?.balance ?? 0),
+          pendingAmount: amount - (wallet?.balance ?? 0),
         };
       }
     });
@@ -128,7 +144,7 @@ export const useTokensFundingStatus = () => {
       isFullyFunded,
       tokensFundingStatus,
     };
-  }, [eoaBalances, hasBeenFullyFunded, requiredTokens]);
+  }, [hasBeenFullyFunded, requiredTokens, tokenRequirements, walletBalances]);
 
   /**
    * Once the funds have been received completely, don't recalculate the statuses,

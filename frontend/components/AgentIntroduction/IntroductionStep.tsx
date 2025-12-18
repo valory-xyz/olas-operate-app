@@ -8,16 +8,17 @@ import { IntroductionAnimatedContainer } from './IntroductionAnimatedContainer';
 
 const { Title, Text } = Typography;
 
+export type IntroductionStepStyles = {
+  imageHeight?: number;
+  descPadding?: string;
+};
+
 export type OnboardingStep = {
   title?: string;
   desc: string;
   imgSrc?: string;
   helper?: string;
-};
-
-export type IntroductionStepStyles = {
-  imageHeight?: number;
-  descPadding?: string;
+  styles?: IntroductionStepStyles;
 };
 
 type AnimatedImageProps = { imgSrc: string; alt: string } & Pick<

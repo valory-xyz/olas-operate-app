@@ -6,12 +6,8 @@ import { styled } from 'styled-components';
 
 import { YouPayContainer } from '@/components/PearlWallet';
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
-import {
-  COLOR,
-  EvmChainId,
-  TokenSymbol,
-  TokenSymbolConfigMap,
-} from '@/constants';
+import { TokenSymbol, TokenSymbolConfigMap } from '@/config/tokens';
+import { COLOR, EvmChainId } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useFeatureFlag } from '@/hooks';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';

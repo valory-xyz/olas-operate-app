@@ -9,12 +9,13 @@ import {
   PROVIDERS,
   StakingProgramId,
 } from '@/constants';
+import { Address } from '@/types';
 import {
-  Address,
   ServiceStakingDetails,
   StakingContractDetails,
   StakingRewardsInfo,
-} from '@/types';
+} from '@/types/Autonolas';
+import { isValidServiceId } from '@/utils';
 
 import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
 
@@ -36,7 +37,7 @@ export abstract class AgentsFunService extends StakedAgentService {
 
     if (!agentMultisigAddress) return;
     if (!serviceId) return;
-    if (serviceId === -1) return;
+    if (!isValidServiceId(serviceId)) return;
 
     const stakingProgramConfig = STAKING_PROGRAMS[chainId][stakingProgramId];
     if (!stakingProgramConfig) throw new Error('Staking program not found');
@@ -116,7 +117,7 @@ export abstract class AgentsFunService extends StakedAgentService {
     // Minimum staked amount is double the minimum staking deposit
     // (all the bonds must be the same as deposit)
     const minimumStakedAmount =
-      parseFloat(ethers.utils.formatEther(`${minStakingDeposit}`)) * 2;
+      parseFloat(formatEther(`${minStakingDeposit}`)) * 2;
 
     return {
       serviceInfo,
@@ -126,7 +127,7 @@ export abstract class AgentsFunService extends StakedAgentService {
       isEligibleForRewards,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(
-        ethers.utils.formatEther(`${accruedStakingReward}`),
+        formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
       tsCheckpoint,
@@ -274,9 +275,7 @@ export abstract class AgentsFunService extends StakedAgentService {
       maxNumServices,
       serviceIds,
       minimumStakingDuration: minStakingDurationInBN.toNumber(),
-      minStakingDeposit: parseFloat(
-        ethers.utils.formatEther(minStakingDeposit),
-      ),
+      minStakingDeposit: parseFloat(formatEther(minStakingDeposit)),
       apy,
       olasStakeRequired,
       rewardsPerWorkPeriod,

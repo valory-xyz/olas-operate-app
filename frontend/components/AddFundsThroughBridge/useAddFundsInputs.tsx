@@ -1,7 +1,8 @@
 import { uniq } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
-import { AddressZero, TokenSymbol } from '@/constants';
+import { TokenSymbol } from '@/config/tokens';
+import { AddressZero } from '@/constants';
 import { useServices } from '@/hooks';
 import {
   Address,

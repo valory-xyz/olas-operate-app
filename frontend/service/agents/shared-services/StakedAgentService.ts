@@ -9,11 +9,12 @@
  */
 import { ethers } from 'ethers';
 import { Contract as MulticallContract } from 'ethers-multicall';
+import { entries } from 'lodash';
 
 import { OLAS_CONTRACTS } from '@/config/olasContracts';
 import {
-  STAKING_PROGRAM_ADDRESS,
   STAKING_PROGRAMS,
+  StakingProgramConfig,
 } from '@/config/stakingPrograms';
 import {
   CONTRACT_TYPE,
@@ -23,6 +24,7 @@ import {
   StakingProgramId,
 } from '@/constants';
 import { Address, Maybe, Nullable } from '@/types';
+import { areAddressesEqual } from '@/utils';
 
 export const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 
@@ -173,11 +175,12 @@ export abstract class StakedAgentService {
     chainId: EvmChainId,
     contractAddress: Address,
   ): Nullable<StakingProgramId> => {
-    const addresses = STAKING_PROGRAM_ADDRESS[chainId];
-    const entries = Object.entries(addresses) as [StakingProgramId, Address][];
-    const foundEntry = entries.find(
-      ([, address]) => address.toLowerCase() === contractAddress.toLowerCase(),
-    );
+    const stakingPrograms = STAKING_PROGRAMS[chainId];
+
+    const foundEntry = entries(stakingPrograms).find(([, config]) =>
+      areAddressesEqual(config.address, contractAddress),
+    ) as [StakingProgramId, StakingProgramConfig] | undefined;
+
     return foundEntry ? foundEntry[0] : null;
   };
 }

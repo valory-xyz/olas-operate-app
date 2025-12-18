@@ -72,18 +72,15 @@ const fetchTransakQuote = async (
 
 export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
   const { selectedAgentConfig } = useServices();
-  const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-  const networkName = asMiddlewareChain(onRampChainMap[fromChainName]);
+  const agentChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
+  const fromChain = asMiddlewareChain(onRampChainMap[agentChainName]);
 
   return useQuery({
-    queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(
-      networkName,
-      nativeTokenAmount!,
-    ),
+    queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(fromChain, nativeTokenAmount!),
     queryFn: async ({ signal }) => {
       try {
         const { response } = await fetchTransakQuote(
-          networkName,
+          fromChain,
           nativeTokenAmount!,
           signal,
         );
@@ -94,6 +91,6 @@ export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
       }
     },
     select: (data) => data.fiatAmount,
-    enabled: !!networkName && !!nativeTokenAmount,
+    enabled: !!fromChain && !!nativeTokenAmount,
   });
 };

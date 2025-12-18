@@ -141,6 +141,7 @@ const AgentListMenu = ({
       icon: (
         <Image
           src={`/agent-${agent.agentType}-icon.png`}
+          className="rounded-4"
           alt={agent.name}
           width={32}
           height={32}

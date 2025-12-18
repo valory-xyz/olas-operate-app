@@ -1,23 +1,21 @@
 import { Button, Flex, Typography } from 'antd';
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { BackButton, CardFlex, CardTitle } from '@/components/ui';
+import { Alert, BackButton, CardFlex, CardTitle } from '@/components/ui';
 import { COLOR, EvmChainId, EvmChainName, SETUP_SCREEN } from '@/constants';
 import {
   useFeatureFlag,
+  useGetRefillRequirements,
   useOnRampContext,
   useServices,
   useSetup,
   useTotalFiatFromNativeToken,
   useTotalNativeTokenRequired,
 } from '@/hooks';
+import { TokenRequirement } from '@/types';
 
-import {
-  type TokenRequirement,
-  TokenRequirements,
-} from './components/TokensRequirements';
-import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
+import { TokenRequirements } from './components/TokensRequirements';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -46,6 +44,8 @@ type FundMethodCardProps = {
   isBalancesAndFundingRequirementsLoading: boolean;
 };
 
+const MIN_ONRAMP_AMOUNT = 5;
+
 const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
   const { goto } = useSetup();
 
@@ -59,6 +59,14 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
       hasNativeTokenError ? undefined : totalNativeToken,
     );
   const isLoading = isNativeTokenLoading || isFiatLoading;
+
+  const isFiatAmountTooLow = useMemo(() => {
+    if (isLoading) return false;
+    if (isNativeTokenLoading) return false;
+    if (totalNativeToken === 0) return true;
+    if (fiatAmount && fiatAmount < MIN_ONRAMP_AMOUNT) return true;
+    return false;
+  }, [fiatAmount, isLoading, isNativeTokenLoading, totalNativeToken]);
 
   return (
     <FundMethodCard>
@@ -75,14 +83,23 @@ const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
           fundType="onRamp"
         />
       </div>
-      <Button
-        type="primary"
-        size="large"
-        onClick={() => goto(SETUP_SCREEN.SetupOnRamp)}
-        disabled={isLoading || hasNativeTokenError}
-      >
-        Buy Crypto with USD
-      </Button>
+      {isFiatAmountTooLow ? (
+        <Alert
+          message={`The minimum value of crypto to buy with your credit card is $${MIN_ONRAMP_AMOUNT}.`}
+          type="info"
+          showIcon
+          className="text-sm"
+        />
+      ) : (
+        <Button
+          type="primary"
+          size="large"
+          onClick={() => goto(SETUP_SCREEN.SetupOnRamp)}
+          disabled={isLoading || hasNativeTokenError}
+        >
+          Buy Crypto with USD
+        </Button>
+      )}
     </FundMethodCard>
   );
 };
@@ -163,17 +180,13 @@ export const FundYourAgent = () => {
   ]);
   const { goto } = useSetup();
   const { selectedAgentConfig } = useServices();
-  const { evmHomeChainId, requiresSetup, isX402Enabled } = selectedAgentConfig;
+  const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const {
     totalTokenRequirements: tokenRequirements,
     isLoading,
     resetTokenRequirements,
-  } = useGetRefillRequirementsWithMonthlyGas({
-    // In case x402 feature is turned off, service creation for agents
-    // requiring setup is already handled at the time of agentForm
-    shouldCreateDummyService: requiresSetup && !isX402Enabled ? false : true,
-  });
+  } = useGetRefillRequirements();
 
   const { networkId: onRampChainId } = useOnRampContext();
   const areTokenRequirementsLoading =

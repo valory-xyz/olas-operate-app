@@ -9,7 +9,7 @@ import {
 } from 'react';
 
 import {
-  EvmChainId,
+  AllEvmChainId,
   FIVE_SECONDS_INTERVAL,
   MasterEoa,
   MasterSafe,
@@ -30,7 +30,7 @@ type MasterWalletContext = {
   masterSafes?: MasterSafe[];
   masterWallets?: MasterWallet[];
   /** Get the master safe for a specific chain ID */
-  getMasterSafeOf?: (chainId: EvmChainId) => MasterSafe | undefined;
+  getMasterSafeOf?: (chainId: AllEvmChainId) => MasterSafe | undefined;
 } & Partial<QueryObserverBaseResult<MasterWallet[]>>;
 
 export const MasterWalletContext = createContext<MasterWalletContext>({});
@@ -103,7 +103,7 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
   );
 
   const getMasterSafeOf = useCallback(
-    (chainId: EvmChainId) =>
+    (chainId: AllEvmChainId) =>
       masterSafes?.find((safe) => safe.evmChainId === chainId),
     [masterSafes],
   );
