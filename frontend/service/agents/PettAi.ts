@@ -23,6 +23,10 @@ import {
 } from './shared-services/StakedAgentService';
 
 const REQUESTS_SAFETY_MARGIN = 1;
+// There's an issue with current contracts setup, if all
+// slots are taken it will prevent from checkpoint to happen.
+// Temporarily set it to the below value
+const MAX_ALLOWED_SERVICES = 100;
 
 export abstract class PettAiService extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({
@@ -213,7 +217,10 @@ export abstract class PettAiService extends StakedAgentService {
     );
 
     const serviceIds = getServiceIdsInBN.map((id: bigint) => id);
-    const maxNumServices = maxNumServicesInBN.toNumber();
+    const maxNumServices = Math.min(
+      maxNumServicesInBN.toNumber(),
+      MAX_ALLOWED_SERVICES,
+    );
 
     // APY
     const rewardsPerYear = rewardsPerSecond.mul(ONE_YEAR);
