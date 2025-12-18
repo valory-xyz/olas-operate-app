@@ -80,8 +80,8 @@ export const SetupWelcomeCreate = () => {
         By downloading, installing, or using the Pearl Application, you
         acknowledge and agree to be bound by the{' '}
         <a onClick={onTermsClick}>Pearl Terms</a>, including the related terms
-        and privacy policies of Valory, Web3Auth, Transak, Zendesk, Pett.ai and
-        the Olas Site.
+        and privacy policies of Valory, Web3Auth, Transak, Zendesk, Pett.ai,
+        Pearl Site and the Olas Site.
       </CustomCheckbox>
 
       <Flex vertical gap={16}>
