@@ -62,6 +62,24 @@ const RootCard = styled(Flex)`
   margin-top: 32px;
 `;
 
+const NATIVE_TOKEN_PRECISION = 5;
+const ERC20_TOKEN_PRECISION = 2;
+
+const formatTokenAmount = ({
+  amountInWei,
+  decimals,
+  isNative,
+}: {
+  amountInWei: bigint;
+  decimals: number;
+  isNative: boolean;
+}) =>
+  formatUnitsToNumber(
+    amountInWei,
+    decimals,
+    isNative ? NATIVE_TOKEN_PRECISION : ERC20_TOKEN_PRECISION,
+  );
+
 const RequestingQuote = () => (
   <Flex gap={8} align="center" className="p-16">
     <Spin indicator={<LoadingSpinner />} />
@@ -95,16 +113,6 @@ type DepositForBridgingProps = {
   onNext: () => void;
   bridgeToChain: MiddlewareChain;
 };
-
-const formatTokenAmount = ({
-  amountInWei,
-  decimals,
-  isNative,
-}: {
-  amountInWei: bigint;
-  decimals: number;
-  isNative: boolean;
-}) => formatUnitsToNumber(amountInWei, decimals, isNative ? 5 : 2);
 
 export const DepositForBridging = ({
   getBridgeRequirementsParams,

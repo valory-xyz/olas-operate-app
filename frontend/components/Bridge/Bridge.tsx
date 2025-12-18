@@ -5,7 +5,6 @@ import { usePageState } from '@/hooks';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
 
-import { BridgeCompleted } from './BridgeCompleted';
 import { BridgeInProgress } from './BridgeInProgress/BridgeInProgress';
 import { BridgeOnEvm } from './BridgeOnEvm/BridgeOnEvm';
 import {
@@ -21,7 +20,6 @@ const TRANSFER_AMOUNTS_ERROR =
 type BridgeState = 'depositing' | 'in_progress' | 'completed';
 
 type BridgeProps = {
-  bridgeFromDescription: string;
   showCompleteScreen?: {
     completionMessage: string;
     onComplete?: () => void;
@@ -41,7 +39,6 @@ type BridgeProps = {
 export const Bridge = ({
   showCompleteScreen,
   getBridgeRequirementsParams,
-  bridgeFromDescription,
   enabledStepsAfterBridging,
   onPrevBeforeBridging,
   isOnboarding = false,
@@ -109,7 +106,6 @@ export const Bridge = ({
     case bridgeState === 'depositing':
       return (
         <BridgeOnEvm
-          bridgeFromDescription={bridgeFromDescription}
           bridgeToChain={bridgeToChain}
           getBridgeRequirementsParams={getBridgeRequirementsParams}
           updateQuoteId={updateQuoteId}
@@ -118,12 +114,8 @@ export const Bridge = ({
           onNext={handleNextStep}
         />
       );
-    /**
-     * In case of onboarding, instead of showing the `BridgeCompleted` component to the user,
-     * Show the Setup complete modal on top of the `BridgeInProgress` component
-     */
     case bridgeState === 'in_progress':
-    case bridgeState === 'completed' && isOnboarding: {
+    case bridgeState === 'completed': {
       if (!quoteId) throw new Error(QUOTE_ID_ERROR);
       if (!transferAndReceivingDetails) throw new Error(TRANSFER_AMOUNTS_ERROR);
       return (
@@ -141,18 +133,6 @@ export const Bridge = ({
         />
       );
     }
-    case bridgeState === 'completed':
-      if (!transferAndReceivingDetails) throw new Error(TRANSFER_AMOUNTS_ERROR);
-      if (!showCompleteScreen || !showCompleteScreen.completionMessage) {
-        throw new Error('Completion message is required for completed state');
-      }
-      return (
-        <BridgeCompleted
-          {...transferAndReceivingDetails}
-          completionMessage={showCompleteScreen.completionMessage}
-          onComplete={showCompleteScreen.onComplete}
-        />
-      );
     default:
       throw new Error('Invalid bridge state!');
   }

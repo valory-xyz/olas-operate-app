@@ -8,9 +8,6 @@ import { useMasterWalletContext, useServices, useSetup } from '@/hooks';
 
 import { useGetBridgeRequirementsParams } from '../hooks/useGetBridgeRequirementsParams';
 
-const BRIDGE_FROM_MESSAGE =
-  'Send the specified amounts from your external wallet to the Pearl Wallet address below. Pearl will automatically detect your transfer and bridge the funds for you.';
-
 export const SetupBridgeOnboarding = () => {
   const { goto: gotoSetup, prevState } = useSetup();
   const { selectedAgentConfig } = useServices();
@@ -37,7 +34,6 @@ export const SetupBridgeOnboarding = () => {
         enabledStepsAfterBridging={
           hasMasterSafe ? undefined : ['masterSafeCreationAndTransfer']
         }
-        bridgeFromDescription={BRIDGE_FROM_MESSAGE}
         bridgeToChain={toMiddlewareChain}
         getBridgeRequirementsParams={getBridgeRequirementsParams}
         onPrevBeforeBridging={handlePrevStep}

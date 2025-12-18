@@ -131,7 +131,6 @@ export const BridgeCryptoOn = ({
 
   return (
     <Bridge
-      bridgeFromDescription="Send the specified amounts from your external wallet to the Pearl Wallet address below. Pearl will automatically detect your transfer and bridge the funds for you."
       bridgeToChain={bridgeToChain}
       getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
       onPrevBeforeBridging={onBack}
