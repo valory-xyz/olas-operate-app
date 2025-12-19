@@ -17,7 +17,7 @@ import {
 } from '@/types/Autonolas';
 import { isValidServiceId } from '@/utils';
 
-import { StakedAgentService } from './StakedAgentService';
+import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
 
 const REQUESTS_SAFETY_MARGIN = 1;
 export abstract class AgentsFunService extends StakedAgentService {
