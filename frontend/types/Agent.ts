@@ -1,9 +1,10 @@
+import { TokenSymbol } from '@/config/tokens';
 import {
+  EvmChainId,
   MiddlewareDeploymentStatus,
+  StakingProgramId,
   SupportedMiddlewareChain,
 } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
-import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
@@ -15,13 +16,27 @@ type ServiceApi =
   | typeof OptimismService
   | typeof AgentsFunBaseService;
 
+type needsOpenProfileEachAgentRun =
+  | {
+      /** Whether the agent requires opening profile first before showing performance metrics */
+      needsOpenProfileEachAgentRun: true;
+      /** Custom message to show when agent requires to open profile after run */
+      needsOpenProfileEachAgentRunAlert: {
+        title: string;
+        message: string;
+      };
+    }
+  | {
+      needsOpenProfileEachAgentRun?: undefined;
+      needsOpenProfileEachAgentRunAlert?: never;
+    };
+
 export type AgentConfig = {
   name: string;
   evmHomeChainId: EvmChainId;
   middlewareHomeChainId: SupportedMiddlewareChain;
   agentIds: number[];
-  requiresAgentSafesOn: EvmChainId[];
-  requiresMasterSafesOn: EvmChainId[];
+  defaultStakingProgramId: StakingProgramId;
   additionalRequirements?: Partial<
     Record<EvmChainId, Partial<Record<TokenSymbol, number>>>
   >;
@@ -44,7 +59,6 @@ export type AgentConfig = {
    * instead of asking users to manually provide them
    **/
   isX402Enabled: boolean;
-  hasChatUI: boolean;
   /**
    * Whether the chat UI requires an API key (either via x402 or agent form)
    */
@@ -57,7 +71,7 @@ export type AgentConfig = {
    */
   defaultBehavior?: string;
   servicePublicId: string;
-};
+} & needsOpenProfileEachAgentRun;
 
 type AgentPerformanceMetric = {
   name: string;

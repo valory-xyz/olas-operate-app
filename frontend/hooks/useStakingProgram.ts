@@ -1,9 +1,6 @@
 import { useContext, useMemo } from 'react';
 
-import {
-  STAKING_PROGRAM_ADDRESS,
-  STAKING_PROGRAMS,
-} from '@/config/stakingPrograms';
+import { STAKING_PROGRAMS, StakingProgramMap } from '@/config/stakingPrograms';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { Address } from '@/types/Address';
 import { Nullable } from '@/types/Util';
@@ -23,31 +20,33 @@ export const useStakingProgram = () => {
     stakingProgramIdToMigrateTo,
     setStakingProgramIdToMigrateTo,
   } = useContext(StakingProgramContext);
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedAgentType } = useServices();
 
-  const allStakingProgramsMeta = useMemo(() => {
-    return STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId];
-  }, [selectedAgentConfig.evmHomeChainId]);
-
-  const allStakingProgramNameAddressPair =
-    STAKING_PROGRAM_ADDRESS[selectedAgentConfig.evmHomeChainId];
+  const allAvailableStakingPrograms = Object.entries(
+    STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId],
+  ).reduce((res, [programId, config]) => {
+    if (config.agentsSupported.includes(selectedAgentType)) {
+      res[programId] = config;
+    }
+    return res;
+  }, {} as StakingProgramMap);
 
   const activeStakingProgramMeta = useMemo(() => {
     if (!isActiveStakingProgramLoaded) return null;
     if (!activeStakingProgramId) return null;
-    if (!allStakingProgramsMeta) return null;
+    if (!allAvailableStakingPrograms) return null;
 
-    return allStakingProgramsMeta[activeStakingProgramId];
+    return allAvailableStakingPrograms[activeStakingProgramId];
   }, [
     isActiveStakingProgramLoaded,
-    allStakingProgramsMeta,
+    allAvailableStakingPrograms,
     activeStakingProgramId,
   ]);
 
   const activeStakingProgramAddress: Nullable<Address> = useMemo(() => {
     if (!activeStakingProgramId) return null;
-    return allStakingProgramNameAddressPair[activeStakingProgramId];
-  }, [allStakingProgramNameAddressPair, activeStakingProgramId]);
+    return allAvailableStakingPrograms[activeStakingProgramId].address;
+  }, [allAvailableStakingPrograms, activeStakingProgramId]);
 
   const defaultStakingProgramMeta = useMemo(() => {
     if (!defaultStakingProgramId) return null;
@@ -80,9 +79,8 @@ export const useStakingProgram = () => {
     selectedStakingProgramMeta,
 
     // all staking programs
-    allStakingProgramIds: Object.keys(allStakingProgramNameAddressPair),
-    allStakingProgramAddress: Object.values(allStakingProgramNameAddressPair),
-    allStakingProgramsMeta,
+    allStakingProgramIds: Object.keys(allAvailableStakingPrograms),
+    allStakingProgramsMeta: allAvailableStakingPrograms,
 
     // staking program id to migrate to
     stakingProgramIdToMigrateTo,

@@ -1,8 +1,12 @@
 import { sum } from 'lodash';
 import { useMemo } from 'react';
 
-import { TOKEN_CONFIG, TokenConfig } from '@/config/tokens';
-import { TokenSymbol, TokenSymbolMap } from '@/constants';
+import {
+  TOKEN_CONFIG,
+  TokenConfig,
+  TokenSymbol,
+  TokenSymbolMap,
+} from '@/config/tokens';
 import { AvailableAsset } from '@/types';
 import { asEvmChainDetails } from '@/utils';
 

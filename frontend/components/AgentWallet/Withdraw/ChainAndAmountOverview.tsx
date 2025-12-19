@@ -7,7 +7,8 @@ import styled from 'styled-components';
 import { AgentNft } from '@/components/AgentNft';
 import { BackButton, CardFlex, Divider, Tooltip } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { COLOR, TokenSymbolConfigMap } from '@/constants';
+import { TokenSymbolConfigMap } from '@/config/tokens';
+import { COLOR } from '@/constants';
 import { useBalanceContext } from '@/hooks';
 import { formatNumber } from '@/utils';
 

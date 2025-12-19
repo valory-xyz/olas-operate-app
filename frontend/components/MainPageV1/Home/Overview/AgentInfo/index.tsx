@@ -6,8 +6,7 @@ import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { CardFlex, Tooltip } from '@/components/ui';
-import { AddressZero } from '@/constants/address';
-import { Pages } from '@/enums/Pages';
+import { AddressZero, PAGES } from '@/constants';
 import { usePageState, useService, useServices } from '@/hooks';
 import { generateName } from '@/utils';
 
@@ -56,7 +55,10 @@ export const AgentInfo = () => {
   const { goto } = usePageState();
 
   const { getServiceSafeOf } = useService(selectedService?.service_config_id);
-  const serviceSafe = getServiceSafeOf?.(selectedAgentConfig.evmHomeChainId);
+  const serviceSafe = getServiceSafeOf?.(
+    selectedAgentConfig.evmHomeChainId,
+    selectedService?.service_config_id,
+  );
 
   const { isX402Enabled } = selectedAgentConfig;
 
@@ -70,6 +72,7 @@ export const AgentInfo = () => {
               width={88}
               height={88}
               alt={selectedAgentType}
+              className="rounded-12"
             />
             <Flex className="w-full" vertical align="flex-start">
               <Flex
@@ -83,14 +86,16 @@ export const AgentInfo = () => {
                 </Title>
                 <Flex gap={12} align="center">
                   <AboutAgent />
-                  {isX402Enabled ? null : (
-                    <Tooltip title="Agent settings">
-                      <Button
-                        onClick={() => goto(Pages.UpdateAgentTemplate)}
-                        icon={<SettingOutlined />}
-                      />
-                    </Tooltip>
-                  )}
+                  {isX402Enabled
+                    ? null
+                    : selectedAgentConfig.requiresSetup && (
+                        <Tooltip title="Agent settings">
+                          <Button
+                            onClick={() => goto(PAGES.UpdateAgentTemplate)}
+                            icon={<SettingOutlined />}
+                          />
+                        </Tooltip>
+                      )}
                 </Flex>
               </Flex>
               <AgentRunButton />

@@ -5,11 +5,13 @@ import { isEmpty, isNil } from 'lodash';
 import { useMemo } from 'react';
 
 import { GNOSIS_SAFE_ABI } from '@/abis/gnosisSafe';
-import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
-import { PROVIDERS } from '@/constants/providers';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
-import { EvmChainId } from '@/enums/Chain';
-import { Safe } from '@/enums/Wallet';
+import {
+  EvmChainId,
+  FIVE_SECONDS_INTERVAL,
+  PROVIDERS,
+  REACT_QUERY_KEYS,
+  Safe,
+} from '@/constants';
 import { Address } from '@/types/Address';
 import { extractFunctionsFromAbi } from '@/utils/abi';
 
