@@ -20,7 +20,6 @@ import { isValidServiceId } from '@/utils';
 import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
 
 const REQUESTS_SAFETY_MARGIN = 1;
-
 export abstract class AgentsFunService extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({
     agentMultisigAddress,
