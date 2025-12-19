@@ -162,7 +162,7 @@ function prepareLogsForDebug(data, forSupport = false) {
     logger.electron(e);
   }
 
-    // tm.log wraps tendermint logs
+  // tm.log wraps tendermint logs
   try {
     if (fs.existsSync(paths.agentRunnerLogFile)) {
       sanitizeLogFile({

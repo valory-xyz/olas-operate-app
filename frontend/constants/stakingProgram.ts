@@ -9,6 +9,10 @@ const GNOSIS_STAKING_PROGRAM_IDS = {
   PearlBeta5: 'pearl_beta_5',
   PearlBeta6: 'pearl_beta_6',
   PearlBetaMechMarketplace: 'pearl_beta_mech_marketplace',
+  PearlBetaMechMarketplace1: 'pearl_beta_mech_marketplace_1',
+  PearlBetaMechMarketplace2: 'pearl_beta_mech_marketplace_2',
+  PearlBetaMechMarketplace3: 'pearl_beta_mech_marketplace_3',
+  PearlBetaMechMarketplace4: 'pearl_beta_mech_marketplace_4',
 } as const;
 
 const BASE_STAKING_PROGRAM_IDS = {
@@ -19,6 +23,8 @@ const BASE_STAKING_PROGRAM_IDS = {
   AgentsFun1: 'agents_fun_1',
   AgentsFun2: 'agents_fun_2',
   AgentsFun3: 'agents_fun_3',
+  PettAiAgent: 'pett_ai_agent_1',
+  PettAiAgent2: 'pett_ai_agent_2',
 } as const;
 
 const MODE_STAKING_PROGRAM_IDS = {

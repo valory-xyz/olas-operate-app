@@ -1,7 +1,6 @@
 import { isAddress } from 'ethers/lib/utils';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { getFromToken } from '@/components/Bridge/utils';
 import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
 import {
   AddressZero,
@@ -9,7 +8,7 @@ import {
   AllEvmChainIdMap,
   EvmChainId,
 } from '@/constants';
-import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
+import { MASTER_SAFE_REFILL_PLACEHOLDER } from '@/constants/defaults';
 import {
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,
@@ -25,80 +24,83 @@ import {
   areAddressesEqual,
   asAllMiddlewareChain,
   asEvmChainId,
-  bigintMax,
+  getFromToken,
+  numberToPlainString,
 } from '@/utils';
 
 type TransferDirection = 'to' | 'from';
 
 /**
+ * Hook to combine native token requirements from master safe and master EOA.
+ * Updates bridge requests with the combined native token amount.
  *
- * @warning A HOOK THAT SHOULD NEVER EXIST.
- * @deprecated TODO: This hook is used because BE doesn't support monthly_gas_estimate in the refill requirements yet.
- * Remove the hook once it's supported.
- *
- * Hook to return the updated bridge requirements params to improve the
- * initial funding requirements.
- *
- * Request quote with formula (will be moved to backend):
- *   max(refill_requirement_masterSafe, monthly_gas_estimate) + refill_requirements_masterEOA
- *
+ * Formula: refill_requirement_masterSafe + refill_requirements_masterEOA
  */
-const useGetBridgeRequirementsParamsWithMonthlyGasEstimate = (
+const useCombineNativeTokenRequirements = (
   transferDirection: TransferDirection,
 ) => {
-  const { selectedAgentConfig, selectedAgentType } = useServices();
-  const { masterEoa } = useMasterWalletContext();
+  const { selectedAgentConfig } = useServices();
+  const {
+    masterEoa,
+    getMasterSafeOf,
+    isFetched: isMasterWalletsFetched,
+  } = useMasterWalletContext();
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
 
-  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
+  const masterSafe = useMemo(
+    () => getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId),
+    [getMasterSafeOf, selectedAgentConfig.evmHomeChainId],
+  );
 
   return useCallback(
     (bridgeRequests: BridgeRefillRequirementsRequest['bridge_requests']) => {
-      if (isBalancesAndFundingRequirementsLoading) return;
-      if (!refillRequirements) return;
-      if (!masterEoa?.address) return;
+      if (
+        isBalancesAndFundingRequirementsLoading ||
+        !refillRequirements ||
+        !masterEoa?.address ||
+        !isMasterWalletsFetched
+      )
+        return;
 
       const nativeTokenIndex = bridgeRequests.findIndex((req) =>
         areAddressesEqual(req[transferDirection].token, AddressZero),
       );
       if (nativeTokenIndex === -1) return;
 
-      // refill_requirements_masterEOA
+      // Refill requirements for masterEOA
       const masterEoaRequirementAmount = (
         refillRequirements as AddressBalanceRecord
       )[masterEoa.address]?.[AddressZero];
 
-      // refill_requirements_masterSafe
+      // Refill requirements for masterSafe
+      // uses actual safe address if available, otherwise fallback to placeholder
       const safeRequirementAmount = (
-        refillRequirements as MasterSafeBalanceRecord
-      )['master_safe']?.[AddressZero];
+        masterSafe
+          ? (refillRequirements as AddressBalanceRecord)?.[masterSafe.address]
+          : (refillRequirements as MasterSafeBalanceRecord)?.[
+              MASTER_SAFE_REFILL_PLACEHOLDER
+            ]
+      )?.[AddressZero];
 
       if (!masterEoaRequirementAmount) return;
       if (!safeRequirementAmount) return;
 
-      // monthly_gas_estimate
-      const monthlyGasEstimate =
-        SERVICE_TEMPLATES.find(
-          (template) => template.agentType === selectedAgentType,
-        )?.configurations[toMiddlewareChain]?.monthly_gas_estimate ?? 0;
-
-      // amount = max(refill_requirement_masterSafe, monthly_gas_estimate) + refill_requirements_masterEOA
+      // amount = refill_requirement_masterSafe + refill_requirements_masterEOA
       const amount =
-        bigintMax(BigInt(safeRequirementAmount), BigInt(monthlyGasEstimate)) +
-        BigInt(masterEoaRequirementAmount);
+        BigInt(safeRequirementAmount) + BigInt(masterEoaRequirementAmount);
 
       bridgeRequests[nativeTokenIndex].to.amount = amount.toString();
 
       return bridgeRequests;
     },
     [
-      masterEoa,
-      refillRequirements,
-      toMiddlewareChain,
       isBalancesAndFundingRequirementsLoading,
+      refillRequirements,
+      masterEoa,
+      isMasterWalletsFetched,
+      masterSafe,
       transferDirection,
-      selectedAgentType,
     ],
   );
 };
@@ -113,19 +115,25 @@ export const useGetBridgeRequirementsParams = (
   transferDirection: TransferDirection = 'from',
 ) => {
   const { selectedAgentConfig } = useServices();
-  const { masterEoa } = useMasterWalletContext();
+  const { masterEoa, getMasterSafeOf } = useMasterWalletContext();
   const { refillRequirements, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
   const getUpdatedBridgeRequirementsParams =
-    useGetBridgeRequirementsParamsWithMonthlyGasEstimate(transferDirection);
+    useCombineNativeTokenRequirements(transferDirection);
+
+  const masterSafe = useMemo(
+    () => getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId),
+    [getMasterSafeOf, selectedAgentConfig.evmHomeChainId],
+  );
 
   const fromChainConfig =
     fromChainId === AllEvmChainIdMap.Ethereum
       ? ETHEREUM_TOKEN_CONFIG
       : TOKEN_CONFIG[fromChainId as EvmChainId];
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
-  const fromAddress = masterEoa?.address;
-  const toAddress = masterEoa?.address;
+  const fromAddress =
+    getMasterSafeOf?.(fromChainId as EvmChainId)?.address ?? masterEoa?.address;
+  const toAddress = masterSafe?.address ?? masterEoa?.address;
 
   return useCallback(
     (isForceUpdate = false) => {
@@ -141,9 +149,12 @@ export const useGetBridgeRequirementsParams = (
 
       // Populate bridge requests from refill Requirements
       for (const [walletAddress, tokensWithRequirements] of tokensRefillList) {
-        // Only calculate the refill requirements from master EOA or master safe placeholder
+        // Only calculate the refill requirements from master EOA or master safe (address or placeholder)
         const isRecipientAddress = areAddressesEqual(walletAddress, toAddress);
-        if (!(isRecipientAddress || walletAddress === 'master_safe')) {
+        const isMasterSafeAddress = masterSafe
+          ? areAddressesEqual(walletAddress, masterSafe.address)
+          : walletAddress === MASTER_SAFE_REFILL_PLACEHOLDER;
+        if (!(isRecipientAddress || isMasterSafeAddress)) {
           continue;
         }
 
@@ -151,6 +162,7 @@ export const useGetBridgeRequirementsParams = (
           tokensWithRequirements,
         )) {
           if (!isAddress(tokenAddress)) continue;
+          if (BigInt(amount) === 0n) continue;
 
           const fromToken =
             defaultFromToken ||
@@ -185,7 +197,7 @@ export const useGetBridgeRequirementsParams = (
                 chain: toChain,
                 address: toAddress,
                 token: toToken,
-                amount: `${amount}`,
+                amount: numberToPlainString(amount),
               },
             });
           }
@@ -209,6 +221,7 @@ export const useGetBridgeRequirementsParams = (
       isBalancesAndFundingRequirementsLoading,
       toMiddlewareChain,
       getUpdatedBridgeRequirementsParams,
+      masterSafe,
     ],
   );
 };

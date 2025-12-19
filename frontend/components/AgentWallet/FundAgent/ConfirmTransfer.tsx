@@ -9,8 +9,8 @@ import {
   WarningOutlined,
 } from '@/components/custom-icons';
 import { CardFlex } from '@/components/ui/CardFlex';
-import { TOKEN_CONFIG } from '@/config/tokens';
-import { AddressZero, MiddlewareChain, TokenSymbol } from '@/constants';
+import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
+import { AddressZero, MiddlewareChain } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import {
   useAgentFundingRequests,

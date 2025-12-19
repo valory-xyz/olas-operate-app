@@ -7,9 +7,9 @@ import {
   WarningOutlined,
 } from '@/components/custom-icons';
 import { cardStyles } from '@/components/ui';
+import { PAGES } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
-import { Pages } from '@/enums/Pages';
-import { usePageState } from '@/hooks/usePageState';
+import { usePageState } from '@/hooks';
 
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { useWithdrawFunds } from './useWithdrawFunds';
@@ -50,7 +50,7 @@ const WithdrawalComplete = () => {
       </Flex>
 
       <Button
-        onClick={() => goto(Pages.PearlWallet)}
+        onClick={() => goto(PAGES.PearlWallet)}
         type="primary"
         block
         size="large"

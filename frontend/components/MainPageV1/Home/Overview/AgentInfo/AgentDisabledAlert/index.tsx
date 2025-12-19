@@ -1,14 +1,16 @@
 import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
-import { Pages } from '@/enums';
+import { PAGES } from '@/constants';
 import {
   useActiveStakingContractDetails,
   useAgentRunning,
   useIsInitiallyFunded,
   usePageState,
   useServices,
+  useStakingProgram,
 } from '@/hooks';
 
 import { AgentRunningAlert } from './AgentRunningAlert';
+import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { EvictedAlert } from './EvictedAlert';
 import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
@@ -27,6 +29,7 @@ export const AgentDisabledAlert = () => {
   const { isInitialFunded } = useIsInitiallyFunded();
   const { goto } = usePageState();
   const { isAnotherAgentRunning } = useAgentRunning();
+  const { selectedStakingProgramMeta } = useStakingProgram();
 
   if (selectedAgentConfig.isUnderConstruction) {
     return <UnderConstructionAlert />;
@@ -38,6 +41,14 @@ export const AgentDisabledAlert = () => {
 
   // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
   if (isInitialFunded === false) return <UnfinishedSetupAlert />;
+
+  if (selectedStakingProgramMeta && selectedStakingProgramMeta.deprecated) {
+    return (
+      <ContractDeprecatedAlert
+        stakingProgramName={selectedStakingProgramMeta.name}
+      />
+    );
+  }
 
   if (
     !isSelectedStakingContractDetailsLoading &&
@@ -52,7 +63,7 @@ export const AgentDisabledAlert = () => {
   // NOTE: Low-balance alerts, each component controls its own visibility.
   return (
     <>
-      <AgentLowBalanceAlert onFund={() => goto(Pages.AgentWallet)} />
+      <AgentLowBalanceAlert onFund={() => goto(PAGES.AgentWallet)} />
       <MasterEoaLowBalanceAlert />
     </>
   );

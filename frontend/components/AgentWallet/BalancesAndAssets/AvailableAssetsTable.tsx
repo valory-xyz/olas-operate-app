@@ -2,7 +2,7 @@ import { Flex, TableColumnsType, Typography } from 'antd';
 import Image from 'next/image';
 
 import { Table } from '@/components/ui';
-import { TokenSymbolConfigMap } from '@/constants';
+import { TokenSymbolConfigMap } from '@/config/tokens';
 import { AvailableAsset } from '@/types/Wallet';
 import { formatNumber } from '@/utils';
 

@@ -14,6 +14,13 @@ const {
 } = require('./windows/web3auth');
 
 const {
+  handleWeb3AuthSwapOwnerWindowShow,
+  handleWeb3AuthSwapOwnerSuccess,
+  handleWeb3AuthWindowSwapOwnerClose,
+  handleWeb3AuthSwapOwnerFailure,
+} = require('./windows/web3authSwapOwner');
+
+const {
   handleTermsAndConditionsWindowShow,
 } = require('./windows/termsAndConditions');
 
@@ -37,13 +44,19 @@ const http = require('http');
 
 const { setupDarwin, setupUbuntu, setupWindows, Env } = require('./install');
 
-const { paths, isMac } = require('./constants');
+const {
+  paths,
+  isMac,
+  isDev,
+  popupAllowedUrls,
+  PORT_RANGE,
+  WIDTH,
+  HEIGHT,
+} = require('./constants');
 const { killProcesses } = require('./processes');
 const { isPortAvailable, findAvailablePort } = require('./ports');
-const { PORT_RANGE } = require('./constants');
 const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
-const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
 
 const { pki } = require('node-forge');
@@ -389,10 +402,26 @@ const createMainWindow = async () => {
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    // // web3auth links should be open in Pearl for redirect to work
-    // if (url.includes('web3auth')) return { action: 'allow' };
+    // If it's in the list of urls we allow to open as pop-ups, do so
+    if (popupAllowedUrls.includes(url)) {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          parent: mainWindow,
+          modal: true,
+          width: WIDTH,
+          height: HEIGHT,
+          autoHideMenuBar: true,
+          resizable: false,
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+          },
+        },
+      };
+    }
 
-    // open url in a browser and prevent default
+    // If it's an external link, open url in a browser and prevent default
     shell.openExternal(url);
     return { action: 'deny' };
   });
@@ -861,6 +890,23 @@ ipcMain.handle('web3auth-window-show', () =>
 ipcMain.handle('web3auth-window-close', handleWeb3AuthWindowClose);
 ipcMain.handle('web3auth-address-received', (_event, address) =>
   handleWeb3AuthSuccessLogin(mainWindow, address),
+);
+
+/**
+ * Web3Auth swap owner window handlers
+ */
+ipcMain.handle('web3auth-swap-owner-window-show', (_event, params) =>
+  handleWeb3AuthSwapOwnerWindowShow(nextUrl(), params),
+);
+ipcMain.handle(
+  'web3auth-swap-owner-window-close',
+  handleWeb3AuthWindowSwapOwnerClose,
+);
+ipcMain.handle('web3auth-swap-owner-success', (_event, result) =>
+  handleWeb3AuthSwapOwnerSuccess(mainWindow, result),
+);
+ipcMain.handle('web3auth-swap-owner-failure', (_event, result) =>
+  handleWeb3AuthSwapOwnerFailure(mainWindow, result),
 );
 
 /**

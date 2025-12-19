@@ -3,14 +3,20 @@ import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { MODE_STAKING_PROGRAMS } from '@/config/stakingPrograms/mode';
-import { ModeStakingProgramId, PROVIDERS, StakingProgramId } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
 import {
-  Address,
+  EvmChainId,
+  EvmChainIdMap,
+  ModeStakingProgramId,
+  PROVIDERS,
+  StakingProgramId,
+} from '@/constants';
+import { Address } from '@/types';
+import {
   ServiceStakingDetails,
   StakingContractDetails,
   StakingRewardsInfo,
-} from '@/types';
+} from '@/types/Autonolas';
+import { isValidServiceId } from '@/utils';
 
 import {
   ONE_YEAR,
@@ -24,7 +30,7 @@ export abstract class ModiusService extends StakedAgentService {
     agentMultisigAddress,
     serviceId,
     stakingProgramId,
-    chainId = EvmChainId.Mode,
+    chainId = EvmChainIdMap.Mode,
   }: {
     agentMultisigAddress: Address;
     serviceId: number;
@@ -33,10 +39,9 @@ export abstract class ModiusService extends StakedAgentService {
   }): Promise<StakingRewardsInfo | undefined> => {
     if (!agentMultisigAddress) return;
     if (!serviceId) return;
-    if (serviceId === -1) return;
+    if (!isValidServiceId(serviceId)) return;
 
     const stakingProgramConfig = STAKING_PROGRAMS[chainId][stakingProgramId];
-
     if (!stakingProgramConfig) throw new Error('Staking program not found');
 
     const { activityChecker, contract: stakingTokenProxyContract } =
@@ -92,7 +97,7 @@ export abstract class ModiusService extends StakedAgentService {
     // Minimum staked amount is double the minimum staking deposit
     // (all the bonds must be the same as deposit)
     const minimumStakedAmount =
-      parseFloat(ethers.utils.formatEther(`${minStakingDeposit}`)) * 2;
+      parseFloat(formatEther(`${minStakingDeposit}`)) * 2;
 
     return {
       serviceInfo,
@@ -102,7 +107,7 @@ export abstract class ModiusService extends StakedAgentService {
       isEligibleForRewards,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(
-        ethers.utils.formatEther(`${accruedStakingReward}`),
+        formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
       tsCheckpoint,
@@ -111,7 +116,7 @@ export abstract class ModiusService extends StakedAgentService {
 
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Mode,
+    chainId: EvmChainId = EvmChainIdMap.Mode,
   ): Promise<bigint | undefined> => {
     const stakingTokenProxy =
       STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
@@ -143,7 +148,7 @@ export abstract class ModiusService extends StakedAgentService {
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Mode,
+    chainId: EvmChainId = EvmChainIdMap.Mode,
   ): Promise<ServiceStakingDetails> => {
     const { multicallProvider } = PROVIDERS[chainId];
 
@@ -240,9 +245,7 @@ export abstract class ModiusService extends StakedAgentService {
       maxNumServices,
       serviceIds,
       minimumStakingDuration: minStakingDurationInBN.toNumber(),
-      minStakingDeposit: parseFloat(
-        ethers.utils.formatEther(minStakingDeposit),
-      ),
+      minStakingDeposit: parseFloat(formatEther(minStakingDeposit)),
       apy,
       olasStakeRequired,
       rewardsPerWorkPeriod,

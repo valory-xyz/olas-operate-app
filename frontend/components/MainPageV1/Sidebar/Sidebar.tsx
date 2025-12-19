@@ -27,10 +27,11 @@ import {
   APP_HEIGHT,
   COLOR,
   EvmChainId,
+  PAGES,
+  Pages,
+  SETUP_SCREEN,
   SIDER_WIDTH,
 } from '@/constants';
-import { Pages } from '@/enums/Pages';
-import { SetupScreen } from '@/enums/SetupScreen';
 import {
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,
@@ -101,16 +102,16 @@ const PearlWalletLabel = () => {
 
 const menuItems: MenuProps['items'] = [
   {
-    key: Pages.PearlWallet,
+    key: PAGES.PearlWallet,
     icon: <TbWallet size={20} />,
     label: <PearlWalletLabel />,
   },
   {
-    key: Pages.HelpAndSupport,
+    key: PAGES.HelpAndSupport,
     icon: <TbHelpSquareRounded size={20} />,
     label: 'Help Center',
   },
-  { key: Pages.Settings, icon: <TbSettings size={20} />, label: 'Settings' },
+  { key: PAGES.Settings, icon: <TbSettings size={20} />, label: 'Settings' },
 ];
 
 type AgentList = {
@@ -129,38 +130,37 @@ const AgentListMenu = ({
   myAgents,
   selectedMenuKeys,
   onAgentSelect,
-}: AgentListMenuProps) => {
-  return (
-    <Menu
-      selectedKeys={selectedMenuKeys}
-      mode="inline"
-      inlineIndent={4}
-      onClick={onAgentSelect}
-      items={myAgents.map((agent) => ({
-        key: agent.agentType,
-        icon: (
+}: AgentListMenuProps) => (
+  <Menu
+    selectedKeys={selectedMenuKeys}
+    mode="inline"
+    inlineIndent={4}
+    onClick={onAgentSelect}
+    items={myAgents.map((agent) => ({
+      key: agent.agentType,
+      icon: (
+        <Image
+          src={`/agent-${agent.agentType}-icon.png`}
+          className="rounded-4"
+          alt={agent.name}
+          width={32}
+          height={32}
+        />
+      ),
+      label: (
+        <Flex justify="space-between" align="center">
+          {agent.name}{' '}
           <Image
-            src={`/agent-${agent.agentType}-icon.png`}
-            alt={agent.name}
-            width={32}
-            height={32}
+            src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
+            alt={`${agent.chainName} logo`}
+            width={14}
+            height={14}
           />
-        ),
-        label: (
-          <Flex justify="space-between" align="center">
-            {agent.name}{' '}
-            <Image
-              src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
-              alt={`${agent.chainName} logo`}
-              width={14}
-              height={14}
-            />
-          </Flex>
-        ),
-      }))}
-    />
-  );
-};
+        </Flex>
+      ),
+    }))}
+  />
+);
 
 export const Sidebar = () => {
   const { goto: gotoSetup } = useSetup();
@@ -218,13 +218,13 @@ export const Sidebar = () => {
     );
 
     if (isSafeCreated) {
-      gotoPage(Pages.Main);
+      gotoPage(PAGES.Main);
     } else {
-      gotoPage(Pages.Setup);
+      gotoPage(PAGES.Setup);
 
       // TODO: make back button on funding screen properly sending back to main
       // if was redirected from here
-      gotoSetup(SetupScreen.FundYourAgent);
+      gotoSetup(SETUP_SCREEN.FundYourAgent);
     }
   };
 
@@ -276,8 +276,8 @@ export const Sidebar = () => {
                   size="large"
                   className="flex mx-auto"
                   onClick={() => {
-                    gotoPage(Pages.Setup);
-                    gotoSetup(SetupScreen.AgentOnboarding);
+                    gotoPage(PAGES.Setup);
+                    gotoSetup(SETUP_SCREEN.AgentOnboarding);
                   }}
                   icon={<TbPlus size={20} />}
                 >

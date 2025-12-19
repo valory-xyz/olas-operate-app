@@ -1,7 +1,6 @@
 import { isNil } from 'lodash';
 import { createContext, PropsWithChildren, useEffect, useState } from 'react';
 
-import { DEFAULT_STAKING_PROGRAM_IDS } from '@/config/stakingPrograms';
 import { StakingProgramId } from '@/constants';
 import { useActiveStakingProgramId, useServices } from '@/hooks';
 import { Maybe, Nullable } from '@/types';
@@ -37,16 +36,14 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
   const { selectedService, selectedAgentConfig } = useServices();
 
   const [defaultStakingProgramId, setDefaultStakingProgramId] = useState(
-    DEFAULT_STAKING_PROGRAM_IDS[selectedAgentConfig.evmHomeChainId],
+    selectedAgentConfig.defaultStakingProgramId,
   );
 
   const [stakingProgramIdToMigrateTo, setStakingProgramIdToMigrateTo] =
     useState<Nullable<StakingProgramId>>(null);
 
   useEffect(() => {
-    setDefaultStakingProgramId(
-      DEFAULT_STAKING_PROGRAM_IDS[selectedAgentConfig.evmHomeChainId],
-    );
+    setDefaultStakingProgramId(selectedAgentConfig.defaultStakingProgramId);
   }, [selectedAgentConfig]);
 
   const serviceNftTokenId = isNil(selectedService?.chain_configs)

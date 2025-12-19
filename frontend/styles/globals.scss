@@ -374,6 +374,10 @@ textarea.ant-input {
   margin-top: 32px !important;
 }
 
+.mt-40 {
+  margin-top: 40px !important;
+}
+
 .mb-0 {
   margin-bottom: 0px !important;
 }
@@ -572,8 +576,16 @@ textarea.ant-input {
 }
 
 // radius
+.rounded-4 {
+  border-radius: 4px
+}
+
 .rounded-8 {
   border-radius: 8px
+}
+
+.rounded-10 {
+  border-radius: 10px
 }
 
 .rounded-12 {
@@ -691,6 +703,10 @@ ul.alert-list {
   width: fit-content !important;
 }
 
+.h-full {
+  height: 100% !important;
+}
+
 .max-width-200 {
   max-width: 200px;
 }
@@ -711,6 +727,10 @@ ul.alert-list {
 // Flexbox & Grid
 .self-center {
   align-self: center;
+}
+
+.self-start {
+  align-self: flex-start;
 }
 
 .loading-ellipses {

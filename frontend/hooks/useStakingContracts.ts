@@ -20,20 +20,19 @@ export const useStakingContracts = () => {
   const availableStakingProgramIds = Object.keys(
     STAKING_PROGRAMS[evmHomeChainId],
   ).map((stakingProgramIdKey) => stakingProgramIdKey as StakingProgramId);
-
   const orderedStakingProgramIds = useMemo(
     () =>
       availableStakingProgramIds.reduce(
         (acc: StakingProgramId[], stakingProgramId: StakingProgramId) => {
           if (!isActiveStakingProgramLoaded) return acc;
 
-          // Put the active staking program at the top
-          if (stakingProgramId === currentStakingProgramId)
-            return [stakingProgramId, ...acc];
-
           // If the program is deprecated, ignore it
           if (STAKING_PROGRAMS[evmHomeChainId][stakingProgramId].deprecated)
             return acc;
+
+          // Put the active staking program at the top
+          if (stakingProgramId === currentStakingProgramId)
+            return [stakingProgramId, ...acc];
 
           // if the program is not supported by the agent type, ignore it
           if (
@@ -53,9 +52,9 @@ export const useStakingContracts = () => {
       availableStakingProgramIds,
       isActiveStakingProgramLoaded,
       currentStakingProgramId,
-      evmHomeChainId,
       selectedAgentConfig.evmHomeChainId,
       selectedAgentType,
+      evmHomeChainId,
     ],
   );
 

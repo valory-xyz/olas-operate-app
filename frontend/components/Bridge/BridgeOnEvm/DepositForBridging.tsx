@@ -9,6 +9,9 @@ import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
 import {
   ETHEREUM_TOKEN_CONFIG,
   TOKEN_CONFIG,
+  TokenSymbol,
+  TokenSymbolConfigMap,
+  TokenSymbolMap,
   TokenType,
 } from '@/config/tokens';
 import {
@@ -16,9 +19,7 @@ import {
   COLOR,
   MiddlewareChain,
   MiddlewareChainMap,
-  TokenSymbolConfigMap,
 } from '@/constants';
-import { TokenSymbol } from '@/enums/Token';
 import {
   useBalanceAndRefillRequirementsContext,
   useBridgeRefillRequirements,
@@ -113,7 +114,8 @@ export const DepositForBridging = ({
   bridgeToChain,
 }: DepositForBridgingProps) => {
   const { isLoading: isServicesLoading } = useServices();
-  const { masterEoa } = useMasterWalletContext();
+  const { masterEoa, isFetched: isMasterWalletFetched } =
+    useMasterWalletContext();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
 
@@ -211,17 +213,21 @@ export const DepositForBridging = ({
   const tokens = useMemo(() => {
     if (!bridgeFundingRequirements) return [];
     if (!masterEoa) return [];
+    if (!isMasterWalletFetched) return [];
 
     const fromMiddlewareChain = MiddlewareChainMap.ETHEREUM;
+
+    // TODO: check if master safe exists once we support agents on From Chain
+    const destinationAddress = masterEoa.address;
 
     const bridgeTotalRequirements =
       bridgeFundingRequirements.bridge_total_requirements[
         fromMiddlewareChain
-      ]?.[masterEoa.address];
+      ]?.[destinationAddress];
     const bridgeRefillRequirements =
       bridgeFundingRequirements.bridge_refill_requirements[
         fromMiddlewareChain
-      ]?.[masterEoa.address];
+      ]?.[destinationAddress];
 
     if (!bridgeTotalRequirements || !bridgeRefillRequirements) return [];
 
@@ -261,7 +267,7 @@ export const DepositForBridging = ({
         isNative: token.tokenType === TokenType.NativeGas,
       } satisfies DepositTokenDetails;
     });
-  }, [bridgeFundingRequirements, masterEoa]);
+  }, [bridgeFundingRequirements, isMasterWalletFetched, masterEoa]);
 
   const tokensDataSource = useMemo(() => {
     const mappedTokens = tokens.map((token) => {
@@ -290,6 +296,7 @@ export const DepositForBridging = ({
     if (tokens.length === 0) return;
     if (isRequestingQuoteFailed) return;
     if (!masterEoa?.address) return;
+    if (!isMasterWalletFetched) return;
     if (!quoteEta) return;
 
     const areAllFundsReceived =
@@ -311,7 +318,7 @@ export const DepositForBridging = ({
           const chainTokenConfig =
             TOKEN_CONFIG[asEvmChainId(bridgeToChain)][token.symbol];
           const toTokenAddress =
-            token.symbol === TokenSymbol.ETH
+            token.symbol === TokenSymbolMap.ETH
               ? token.address
               : chainTokenConfig?.address;
 
@@ -359,6 +366,7 @@ export const DepositForBridging = ({
     onNext,
     updateQuoteId,
     updateCrossChainTransferDetails,
+    isMasterWalletFetched,
   ]);
 
   // Retry to fetch the bridge refill requirements
@@ -402,6 +410,7 @@ export const DepositForBridging = ({
     <TokenRequirementsTable
       tokensDataSource={tokensDataSource}
       locale={{ emptyText: 'No tokens to deposit!' }}
+      className="mt-32"
     />
   );
 };

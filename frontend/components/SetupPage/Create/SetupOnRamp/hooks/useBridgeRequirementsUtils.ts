@@ -1,12 +1,11 @@
 import { useCallback } from 'react';
 
-import { getTokenDetails } from '@/components/Bridge/utils';
-import { TOKEN_CONFIG } from '@/config/tokens';
+import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
-import { TokenSymbol } from '@/constants/token';
 import { useServices } from '@/hooks/useServices';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
+import { getTokenDetails } from '@/utils';
 import { asEvmChainDetails, asEvmChainId } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 

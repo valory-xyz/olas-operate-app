@@ -1,9 +1,14 @@
 import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
+import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { PROVIDERS, StakingProgramId } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
+import {
+  EvmChainId,
+  EvmChainIdMap,
+  PROVIDERS,
+  StakingProgramId,
+} from '@/constants';
 import {
   Address,
   ServiceStakingDetails,
@@ -23,7 +28,7 @@ export abstract class PredictTraderService extends StakedAgentService {
     agentMultisigAddress,
     serviceId,
     stakingProgramId,
-    chainId = EvmChainId.Gnosis,
+    chainId = EvmChainIdMap.Gnosis,
   }: {
     agentMultisigAddress: Address;
     serviceId: number;
@@ -34,7 +39,6 @@ export abstract class PredictTraderService extends StakedAgentService {
     if (!serviceId) return;
 
     const stakingProgramConfig = STAKING_PROGRAMS[chainId][stakingProgramId];
-
     if (!stakingProgramConfig) throw new Error('Staking program not found');
 
     const {
@@ -48,8 +52,9 @@ export abstract class PredictTraderService extends StakedAgentService {
     const provider = PROVIDERS[chainId].multicallProvider;
 
     const contractCalls = [
-      // TODO: for new mech MM there's no such function, need to use mapRequestCounts instead
-      mechContract.getRequestsCount(agentMultisigAddress),
+      stakingProgramConfig.mechType === MechType.MarketplaceV2
+        ? mechContract.mapRequestCounts(agentMultisigAddress)
+        : mechContract.getRequestsCount(agentMultisigAddress),
       stakingTokenProxyContract.getServiceInfo(serviceId),
       stakingTokenProxyContract.livenessPeriod(),
       activityChecker.livenessRatio(),
@@ -93,7 +98,7 @@ export abstract class PredictTraderService extends StakedAgentService {
     // Minimum staked amount is double the minimum staking deposit
     // (all the bonds must be the same as deposit)
     const minimumStakedAmount =
-      parseFloat(ethers.utils.formatEther(`${minStakingDeposit}`)) * 2;
+      parseFloat(formatEther(`${minStakingDeposit}`)) * 2;
 
     return {
       // mechRequestCount,
@@ -104,7 +109,7 @@ export abstract class PredictTraderService extends StakedAgentService {
       isEligibleForRewards,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(
-        ethers.utils.formatEther(`${accruedStakingReward}`),
+        formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
       tsCheckpoint,
@@ -113,7 +118,7 @@ export abstract class PredictTraderService extends StakedAgentService {
 
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Gnosis,
+    chainId: EvmChainId = EvmChainIdMap.Gnosis,
   ): Promise<bigint | undefined> => {
     const stakingTokenProxy =
       STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
@@ -146,7 +151,7 @@ export abstract class PredictTraderService extends StakedAgentService {
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainId.Gnosis,
+    chainId: EvmChainId = EvmChainIdMap.Gnosis,
   ): Promise<ServiceStakingDetails> => {
     const { multicallProvider } = PROVIDERS[chainId];
 
@@ -243,9 +248,7 @@ export abstract class PredictTraderService extends StakedAgentService {
       maxNumServices,
       serviceIds,
       minimumStakingDuration: minStakingDurationInBN.toNumber(),
-      minStakingDeposit: parseFloat(
-        ethers.utils.formatEther(minStakingDeposit),
-      ),
+      minStakingDeposit: parseFloat(formatEther(minStakingDeposit)),
       apy,
       olasStakeRequired,
       rewardsPerWorkPeriod,

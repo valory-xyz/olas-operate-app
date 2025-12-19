@@ -4,10 +4,9 @@ import { useCallback, useMemo } from 'react';
 
 import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { MasterEoa, MasterSafe, PAGES } from '@/constants';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { Pages } from '@/enums/Pages';
-import { MasterEoa, MasterSafe } from '@/enums/Wallet';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -64,8 +63,7 @@ export const useServiceDeployment = () => {
     setIsPaused: setIsStakingContractInfoPollingPaused,
     refetchSelectedStakingContractDetails: refetchActiveStakingContractDetails,
   } = useStakingContractContext();
-  const { selectedStakingProgramId, selectedStakingProgramMeta } =
-    useStakingProgram();
+  const { selectedStakingProgramId } = useStakingProgram();
   const {
     isEligibleForStaking,
     isAgentEvicted,
@@ -96,9 +94,6 @@ export const useServiceDeployment = () => {
     // If another agent is running, return false;
     if (isAnotherAgentRunning) return false;
 
-    // If staking contract is deprecated, return false
-    if (selectedStakingProgramMeta?.deprecated) return false;
-
     // If not enough service slots, and service is not staked, return false
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
     if (hasSlot && !isServiceStaked) return false;
@@ -122,7 +117,6 @@ export const useServiceDeployment = () => {
     isLoading,
     isServiceStaked,
     selectedAgentConfig.isUnderConstruction,
-    selectedStakingProgramMeta?.deprecated,
   ]);
 
   const pauseAllPolling = useCallback(() => {
@@ -231,7 +225,7 @@ export const useServiceDeployment = () => {
         masterSafesOwners,
         masterEoa,
         selectedAgentConfig,
-        gotoSettings: () => gotoPage(Pages.Settings),
+        gotoSettings: () => gotoPage(PAGES.Settings),
       });
       await deployAndStartService();
     } catch (error) {

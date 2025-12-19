@@ -1,11 +1,11 @@
 import {
+  AgentType,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
   StakingProgramId,
   SupportedMiddlewareChain,
 } from '@/constants';
 import { EnvProvision } from '@/constants/envVariables';
-import { AgentType } from '@/enums/Agent';
 
 import { Address } from './Address';
 
@@ -72,14 +72,13 @@ type ChainData = {
   };
 };
 
-type ConfigurationTemplate = {
+export type ConfigurationTemplate = {
   staking_program_id?: StakingProgramId; // added on deployment
   nft: string;
   rpc?: string; // added on deployment
   agent_id: number;
   cost_of_bond: number;
-  monthly_gas_estimate: number;
-  fund_requirements: FundRequirements;
+  fund_requirements: FundRequirements; // provided by agent teams, used by BE to send initial funds
 };
 
 export type ServiceTemplate = {
