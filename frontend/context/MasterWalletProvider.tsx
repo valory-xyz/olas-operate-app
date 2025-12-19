@@ -8,16 +8,16 @@ import {
   useMemo,
 } from 'react';
 
-import { EvmChainId } from '@/constants';
-import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import {
+  AllEvmChainId,
+  FIVE_SECONDS_INTERVAL,
   MasterEoa,
   MasterSafe,
   MasterWallet,
-  WalletOwnerType,
-  WalletType,
-} from '@/enums/Wallet';
+  REACT_QUERY_KEYS,
+  WALLET_OWNER,
+  WALLET_TYPE,
+} from '@/constants';
 import { WalletService } from '@/service/Wallet';
 import { MiddlewareWalletResponse } from '@/types';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
@@ -30,7 +30,7 @@ type MasterWalletContext = {
   masterSafes?: MasterSafe[];
   masterWallets?: MasterWallet[];
   /** Get the master safe for a specific chain ID */
-  getMasterSafeOf?: (chainId: EvmChainId) => MasterSafe | undefined;
+  getMasterSafeOf?: (chainId: AllEvmChainId) => MasterSafe | undefined;
 } & Partial<QueryObserverBaseResult<MasterWallet[]>>;
 
 export const MasterWalletContext = createContext<MasterWalletContext>({});
@@ -44,8 +44,8 @@ const transformMiddlewareWalletResponse = (
     if (getAddress(response.address)) {
       result.push({
         address: response.address,
-        owner: WalletOwnerType.Master,
-        type: WalletType.EOA,
+        owner: WALLET_OWNER.Master,
+        type: WALLET_TYPE.EOA,
       });
     }
 
@@ -54,8 +54,8 @@ const transformMiddlewareWalletResponse = (
         result.push({
           address: safeAddress,
           evmChainId: asEvmChainId(middlewareChain),
-          owner: WalletOwnerType.Master,
-          type: WalletType.Safe,
+          owner: WALLET_OWNER.Master,
+          type: WALLET_TYPE.Safe,
         });
       }
     });
@@ -78,7 +78,7 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
     select: (data) =>
       transformMiddlewareWalletResponse(data).filter(
         (wallet) =>
-          wallet.owner === WalletOwnerType.Master && isAddress(wallet.address),
+          wallet.owner === WALLET_OWNER.Master && isAddress(wallet.address),
       ),
   });
 
@@ -86,8 +86,8 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
     () =>
       masterWallets?.find(
         (wallet): wallet is MasterEoa =>
-          wallet.type === WalletType.EOA &&
-          wallet.owner === WalletOwnerType.Master,
+          wallet.type === WALLET_TYPE.EOA &&
+          wallet.owner === WALLET_OWNER.Master,
       ),
     [masterWallets],
   );
@@ -96,14 +96,14 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
     () =>
       masterWallets?.filter(
         (wallet): wallet is MasterSafe =>
-          wallet.type === WalletType.Safe &&
-          wallet.owner === WalletOwnerType.Master,
+          wallet.type === WALLET_TYPE.Safe &&
+          wallet.owner === WALLET_OWNER.Master,
       ),
     [masterWallets],
   );
 
   const getMasterSafeOf = useCallback(
-    (chainId: EvmChainId) =>
+    (chainId: AllEvmChainId) =>
       masterSafes?.find((safe) => safe.evmChainId === chainId),
     [masterSafes],
   );

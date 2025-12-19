@@ -3,7 +3,7 @@ import { get, isEqual, isUndefined, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
 import { RequiredMark } from '@/components/ui';
-import { Pages } from '@/enums/Pages';
+import { PAGES } from '@/constants';
 import { usePageState, useServices } from '@/hooks';
 import { Nullable } from '@/types/Util';
 
@@ -157,7 +157,7 @@ export const OptimusUpdatePage = ({ renderForm }: OptimusUpdatePageProps) => {
     if (hasUnsavedChanges) {
       unsavedModal.openModal();
     } else {
-      goto(Pages.Main);
+      goto(PAGES.Main);
     }
   }, [initialValues, form, unsavedModal, goto]);
 

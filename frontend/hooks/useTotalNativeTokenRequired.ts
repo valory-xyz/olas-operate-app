@@ -22,10 +22,17 @@ export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,
   queryKey: 'preview' | 'onboarding' = 'onboarding',
 ) => {
-  const { updateEthAmountToPay, isOnRampingTransactionSuccessful } =
-    useOnRampContext();
+  const {
+    updateEthAmountToPay,
+    updateEthTotalAmountRequired,
+    isOnRampingTransactionSuccessful,
+  } = useOnRampContext();
   const { selectedAgentConfig } = useServices();
-  const { masterEoa } = useMasterWalletContext();
+  const {
+    masterEoa,
+    getMasterSafeOf,
+    isFetched: isMasterWalletFetched,
+  } = useMasterWalletContext();
 
   const {
     isLoading,
@@ -49,15 +56,22 @@ export const useTotalNativeTokenRequired = (
    * - USDC_in_ETH = 100 OLAS bridged to ETH
    * Total native token required = 0.01 ETH + OLAS_in_ETH + USDC_in_ETH
    */
-  const totalNativeToken = useMemo(() => {
+  const totalNativeTokens = useMemo(() => {
     if (!bridgeParams) return;
     if (!bridgeFundingRequirements) return;
     if (!masterEoa?.address) return;
+    if (!isMasterWalletFetched) return;
 
-    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-    const toOnRampNetworkName = asMiddlewareChain(
-      onRampChainMap[fromChainName],
+    // "TO" chain, where we will bridge on-ramped funds to
+    const agentChainName = asMiddlewareChain(
+      selectedAgentConfig.evmHomeChainId,
     );
+    // "FROM" chain for bridging, the chain we will on-ramp funds to
+    const onRampNetworkName = asMiddlewareChain(onRampChainMap[agentChainName]);
+
+    const destinationAddress =
+      getMasterSafeOf?.(onRampChainMap[agentChainName])?.address ||
+      masterEoa.address;
 
     /**
      * Calculate native token amount needed from direct requirements (not from bridging)
@@ -75,48 +89,65 @@ export const useTotalNativeTokenRequired = (
       (request) => request.to.token === AddressZero,
     )?.to.amount;
     const nativeTokenFromBridgeParams =
-      fromChainName === toOnRampNetworkName ? nativeTokenAmount : 0;
+      agentChainName === onRampNetworkName ? nativeTokenAmount : 0;
 
     // Remaining token from the bridge quote.
     // e.g, For optimus, OLAS and USDC are bridged to ETH
     const bridgeRefillRequirements =
-      bridgeFundingRequirements.bridge_refill_requirements[toOnRampNetworkName];
-    const nativeTokenFromBridgeQuote =
-      bridgeRefillRequirements?.[masterEoa.address]?.[AddressZero];
+      bridgeFundingRequirements.bridge_refill_requirements[onRampNetworkName];
+    const nativeBridgeRefillRequirements =
+      bridgeRefillRequirements?.[destinationAddress]?.[AddressZero];
+    // Existing balance of native token on the source chain will be also used for bridging
+    const bridgeBalance = bridgeFundingRequirements.balances[onRampNetworkName];
+    const nativeBalance = bridgeBalance?.[destinationAddress]?.[AddressZero];
 
-    if (!nativeTokenFromBridgeQuote) return;
+    if (!nativeBridgeRefillRequirements) return;
 
-    // e.g, For optimus, addition of (ETH required) + (OLAS and USDC bridged to ETH).
-    const totalNativeTokenRequired =
-      BigInt(nativeTokenFromBridgeQuote) +
+    // e.g, For optimus, addition of (ETH required) + (OLAS and USDC bridged to ETH)
+    // + existing balance in case we already have another agent on this chain
+    const totalNativeTokenToPay =
+      BigInt(nativeBridgeRefillRequirements) +
       BigInt(nativeTokenFromBridgeParams || 0);
+    // All the above + existing balance in case we already have another agent on this chain
+    // and some native tokens are there
+    const totalNativeTokenRequired =
+      totalNativeTokenToPay + BigInt(nativeBalance || 0);
 
-    return totalNativeTokenRequired
-      ? formatUnitsToNumber(totalNativeTokenRequired, 18)
-      : 0;
+    return {
+      totalNativeTokenToPay: totalNativeTokenToPay
+        ? formatUnitsToNumber(totalNativeTokenToPay, 18)
+        : 0,
+      totalNativeTokenRequired: totalNativeTokenRequired
+        ? formatUnitsToNumber(totalNativeTokenRequired, 18)
+        : 0,
+    };
   }, [
     bridgeParams,
     bridgeFundingRequirements,
-    masterEoa?.address,
+    masterEoa,
+    isMasterWalletFetched,
     selectedAgentConfig.evmHomeChainId,
+    getMasterSafeOf,
   ]);
 
   // Update the ETH amount to pay in the on-ramp context
   useEffect(() => {
-    if (!totalNativeToken) return;
+    if (!totalNativeTokens) return;
     if (isOnRampingTransactionSuccessful) return;
 
-    updateEthAmountToPay(totalNativeToken);
+    updateEthAmountToPay(totalNativeTokens.totalNativeTokenToPay);
+    updateEthTotalAmountRequired(totalNativeTokens.totalNativeTokenRequired);
   }, [
-    totalNativeToken,
     isOnRampingTransactionSuccessful,
     updateEthAmountToPay,
+    totalNativeTokens,
+    updateEthTotalAmountRequired,
   ]);
 
   return {
     isLoading,
     hasError,
-    totalNativeToken,
+    totalNativeToken: totalNativeTokens?.totalNativeTokenToPay ?? 0,
     receivingTokens,
     onRetry,
   };

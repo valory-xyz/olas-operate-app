@@ -2,19 +2,82 @@ import { useQuery } from '@tanstack/react-query';
 import { isNil } from 'lodash';
 import { useContext } from 'react';
 
-import { EvmChainId } from '@/constants';
+import { EvmChainId, REACT_QUERY_KEYS, StakingProgramId } from '@/constants';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
-import { StakingProgramId } from '@/enums/StakingProgram';
 import { useServices } from '@/hooks/useServices';
+import { Address } from '@/types';
 import { AgentConfig } from '@/types/Agent';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
-import { Nullable } from '@/types/Util';
+import { Maybe, Nullable } from '@/types/Util';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { isValidServiceId } from '@/utils/service';
 
 import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
+
+type CreateStakingRewardsQueryParams = {
+  chainId: EvmChainId;
+  serviceConfigId: Maybe<string>;
+  stakingProgramId: Nullable<StakingProgramId>;
+  multisig: Maybe<string>;
+  serviceNftTokenId: Maybe<number>;
+  agentConfig: AgentConfig;
+  isOnline: boolean;
+  refetchInterval: number;
+};
+export const createStakingRewardsQuery = ({
+  chainId,
+  serviceConfigId,
+  stakingProgramId,
+  multisig,
+  serviceNftTokenId,
+  agentConfig,
+  isOnline,
+}: CreateStakingRewardsQueryParams) => {
+  return {
+    queryKey: REACT_QUERY_KEYS.REWARDS_KEY(
+      chainId,
+      serviceConfigId!,
+      stakingProgramId!,
+      multisig!,
+      serviceNftTokenId!,
+    ),
+    queryFn: async () => {
+      try {
+        const response =
+          await agentConfig.serviceApi.getAgentStakingRewardsInfo({
+            agentMultisigAddress: multisig! as Address,
+            serviceId: serviceNftTokenId!,
+            stakingProgramId: stakingProgramId!,
+            chainId,
+          });
+
+        if (!response) return null;
+
+        try {
+          const parsed = StakingRewardsInfoSchema.parse(response);
+          return parsed;
+        } catch (e) {
+          console.error('Error parsing staking rewards info', e);
+        }
+      } catch (e) {
+        console.error('Error getting staking rewards info', e);
+      }
+
+      return null;
+    },
+    enabled:
+      !!isOnline &&
+      !!serviceConfigId &&
+      !!stakingProgramId &&
+      !!multisig &&
+      isValidServiceId(serviceNftTokenId),
+    refetchInterval: (isOnline ? FIVE_SECONDS_INTERVAL : false) as
+      | number
+      | false,
+    refetchOnWindowFocus: false,
+  };
+};
 
 /**
  * Hook to fetch staking rewards details of a service on a given chain.
@@ -41,45 +104,16 @@ export const useAgentStakingRewardsDetails = (
   const multisig = chainDetails?.multisig;
   const serviceNftTokenId = chainDetails?.token;
 
-  return useQuery({
-    queryKey: REACT_QUERY_KEYS.REWARDS_KEY(
+  return useQuery(
+    createStakingRewardsQuery({
       chainId,
-      serviceConfigId!,
-      stakingProgramId!,
-      multisig!,
-      serviceNftTokenId!,
-    ),
-    queryFn: async () => {
-      try {
-        const response =
-          await agentConfig.serviceApi.getAgentStakingRewardsInfo({
-            agentMultisigAddress: multisig!,
-            serviceId: serviceNftTokenId!,
-            stakingProgramId: stakingProgramId!,
-            chainId,
-          });
-
-        if (!response) return null;
-
-        try {
-          const parsed = StakingRewardsInfoSchema.parse(response);
-          return parsed;
-        } catch (e) {
-          console.error('Error parsing staking rewards info', e);
-        }
-      } catch (e) {
-        console.error('Error getting staking rewards info', e);
-      }
-
-      return null;
-    },
-    enabled:
-      !!isOnline &&
-      !!serviceConfigId &&
-      !!stakingProgramId &&
-      !!multisig &&
-      isValidServiceId(serviceNftTokenId),
-    refetchInterval: isOnline ? refetchInterval : false,
-    refetchIntervalInBackground: true,
-  });
+      serviceConfigId,
+      stakingProgramId,
+      multisig,
+      serviceNftTokenId,
+      agentConfig,
+      isOnline,
+      refetchInterval,
+    }),
+  );
 };

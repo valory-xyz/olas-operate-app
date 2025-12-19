@@ -31,6 +31,7 @@ const paths = {
   osPearlTempDir: path.join(os.tmpdir(), 'pearl'),
   bridgeDirectory: path.join(dotOperateDirectory, 'bridge'),
   agentRunnerLogFile: path.join(dotOperateDirectory, 'agent_runner.log'),
+  tmLogFile: path.join(dotOperateDirectory, 'tm.log'),
 };
 
 // Publish options
@@ -44,6 +45,12 @@ const publishOptions = {
   publishAutoUpdate: false,
 };
 
+// URLs allowed to open as pop-ups from the agent UI
+const popupAllowedUrls = [
+  'http://127.0.0.1:8716/privy-login',
+  'http://localhost:8716/privy-login',
+];
+
 module.exports = {
   PORT_RANGE,
   ERROR_ADDRESS_IN_USE,
@@ -54,4 +61,5 @@ module.exports = {
   isDev,
   publishOptions,
   paths,
+  popupAllowedUrls,
 };

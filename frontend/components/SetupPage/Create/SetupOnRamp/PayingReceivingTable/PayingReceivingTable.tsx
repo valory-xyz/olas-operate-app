@@ -7,10 +7,10 @@ import { TbCreditCardFilled } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { Table } from '@/components/ui/Table';
+import { TokenSymbol, TokenSymbolConfigMap } from '@/config/tokens';
 import { EvmChainId } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
-import { TokenSymbol, TokenSymbolConfigMap } from '@/constants/token';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';

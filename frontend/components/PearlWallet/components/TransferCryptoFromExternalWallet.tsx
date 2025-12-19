@@ -11,7 +11,8 @@ import {
   FundingDescription,
   Table,
 } from '@/components/ui';
-import { COLOR, TokenSymbolConfigMap } from '@/constants';
+import { TokenSymbolConfigMap } from '@/config/tokens';
+import { COLOR } from '@/constants';
 import { Address, AvailableAsset, Nullable } from '@/types';
 import { formatNumber } from '@/utils';
 

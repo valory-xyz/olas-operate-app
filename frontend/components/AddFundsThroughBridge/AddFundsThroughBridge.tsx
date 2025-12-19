@@ -3,8 +3,8 @@ import { Button, Flex, Spin, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
 
-import { TokenSymbol, TokenSymbolConfigMap } from '@/constants';
-import { Pages } from '@/enums/Pages';
+import { TokenSymbol, TokenSymbolConfigMap } from '@/config/tokens';
+import { PAGES } from '@/constants';
 import {
   useBalanceAndRefillRequirementsContext,
   usePageState,
@@ -36,7 +36,7 @@ const BridgeHeader = () => {
 
   return (
     <Flex gap={16} align="center">
-      <Button onClick={() => goto(Pages.Main)} icon={<ArrowLeftOutlined />} />
+      <Button onClick={() => goto(PAGES.Main)} icon={<ArrowLeftOutlined />} />
       <Title level={5} className="m-0">
         Bridge from Ethereum
       </Title>

@@ -1,4 +1,5 @@
-import { MiddlewareChain, TokenSymbol } from '@/constants';
+import { TokenSymbol } from '@/config/tokens';
+import { EvmChainId, MiddlewareChain } from '@/constants';
 
 import { Address } from './Address';
 import { AddressTxnRecord } from './Records';
@@ -25,6 +26,8 @@ export type StakedAsset = {
   symbol: TokenSymbol;
   amount: number;
   value?: number;
+  configId: string;
+  chainId: EvmChainId;
 };
 
 export type TokenAmountDetails = {
@@ -37,6 +40,12 @@ export type TokenAmountDetails = {
  * { symbol: 'OLAS', amount: 10 }
  */
 export type TokenAmounts = Partial<Record<TokenSymbol, TokenAmountDetails>>;
+
+export type TokenRequirement = {
+  amount: number;
+  symbol: string;
+  iconSrc: string;
+};
 
 enum MiddlewareLedger {
   ETHEREUM = 0,

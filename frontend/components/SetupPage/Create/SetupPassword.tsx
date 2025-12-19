@@ -2,8 +2,8 @@ import { Form } from 'antd';
 import React, { useEffect, useState } from 'react';
 
 import { PasswordForm } from '@/components/ui';
+import { SETUP_SCREEN } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
-import { SetupScreen } from '@/enums/SetupScreen';
 import { useMnemonicExists, usePageState, useSetup } from '@/hooks';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
@@ -41,7 +41,7 @@ export const SetupPassword = () => {
         // Mnemonic is always created for new accounts
         setMnemonicExists(true);
         setUserLoggedIn();
-        goto(SetupScreen.SetupBackupSigner);
+        goto(SETUP_SCREEN.SetupBackupSigner);
       })
       .catch((e: unknown) => {
         message.error(getErrorMessage(e));
@@ -54,7 +54,7 @@ export const SetupPassword = () => {
       form={form}
       onFinish={handleCreateEoa}
       isSubmitting={isLoading}
-      onBack={() => goto(SetupScreen.Welcome)}
+      onBack={() => goto(SETUP_SCREEN.Welcome)}
       isPasswordValid={isPasswordValid}
     />
   );

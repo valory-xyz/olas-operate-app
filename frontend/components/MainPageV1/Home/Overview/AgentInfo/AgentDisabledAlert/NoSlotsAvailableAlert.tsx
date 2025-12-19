@@ -1,7 +1,7 @@
 import { Button, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
-import { Pages } from '@/enums/Pages';
+import { PAGES } from '@/constants';
 import { usePageState } from '@/hooks';
 
 const { Text } = Typography;
@@ -21,7 +21,7 @@ export const NoSlotsAvailableAlert = () => {
         </Text>
       }
       action={
-        <Button onClick={() => goto(Pages.AgentStaking)} size="small">
+        <Button onClick={() => goto(PAGES.AgentStaking)} size="small">
           Manage Staking
         </Button>
       }

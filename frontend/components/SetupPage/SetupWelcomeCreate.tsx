@@ -3,10 +3,8 @@ import { Button, Checkbox, Flex, Typography } from 'antd';
 import { MouseEvent, useCallback, useState } from 'react';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useElectronApi } from '@/hooks';
-import { useSetup } from '@/hooks/useSetup';
+import { COLOR, SETUP_SCREEN } from '@/constants';
+import { useElectronApi, useSetup } from '@/hooks';
 
 const { Title: AntTitle, Text } = Typography;
 
@@ -82,8 +80,8 @@ export const SetupWelcomeCreate = () => {
         By downloading, installing, or using the Pearl Application, you
         acknowledge and agree to be bound by the{' '}
         <a onClick={onTermsClick}>Pearl Terms</a>, including the related terms
-        and privacy policies of Valory, Web3Auth, Transak, Zendesk and the Olas
-        Site.
+        and privacy policies of Valory, Web3Auth, Transak, Zendesk, Pett.ai,
+        Pearl Site and the Olas Site.
       </CustomCheckbox>
 
       <Flex vertical gap={16}>
@@ -92,7 +90,7 @@ export const SetupWelcomeCreate = () => {
           type="primary"
           size="large"
           disabled={!isFormValid}
-          onClick={() => goto(SetupScreen.SetupPassword)}
+          onClick={() => goto(SETUP_SCREEN.SetupPassword)}
         >
           Create account
         </Button>

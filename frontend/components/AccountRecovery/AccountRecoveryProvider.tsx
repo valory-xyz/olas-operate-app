@@ -12,10 +12,10 @@ import {
 import {
   FIFTEEN_SECONDS_INTERVAL,
   REACT_QUERY_KEYS,
+  SETUP_SCREEN,
   SupportedMiddlewareChain,
 } from '@/constants';
 import { useOnlineStatus } from '@/context/OnlineStatusProvider';
-import { SetupScreen } from '@/enums';
 import { useMasterWalletContext, useSetup } from '@/hooks';
 import { RecoveryService } from '@/service/Recovery';
 import { Address } from '@/types';
@@ -46,7 +46,7 @@ const useRecoveryNavigation = (
         updateCurrentStep(RECOVERY_STEPS.ApproveWithBackupWallet);
         break;
       case RECOVERY_STEPS.ApproveWithBackupWallet:
-        goto(SetupScreen.Welcome);
+        goto(SETUP_SCREEN.Welcome);
         break;
       default:
         break;

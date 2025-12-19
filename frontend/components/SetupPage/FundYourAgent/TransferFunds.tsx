@@ -1,4 +1,5 @@
 import { Flex, Spin, Typography } from 'antd';
+import { isNil } from 'lodash';
 import { useCallback, useEffect, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
@@ -12,8 +13,8 @@ import {
   Modal,
   TokenRequirementsTable,
 } from '@/components/ui';
-import { ChainImageMap, EvmChainName, TokenSymbol } from '@/constants';
-import { SetupScreen } from '@/enums';
+import { TokenSymbol } from '@/config/tokens';
+import { ChainImageMap, EvmChainName, SETUP_SCREEN } from '@/constants';
 import {
   useMasterSafeCreationAndTransfer,
   useMasterWalletContext,
@@ -36,7 +37,11 @@ const FinishingSetupModal = () => (
 
 export const TransferFunds = () => {
   const { goto: gotoSetup } = useSetup();
-  const { masterEoa } = useMasterWalletContext();
+  const {
+    masterEoa,
+    getMasterSafeOf,
+    isFetched: isMasterWalletFetched,
+  } = useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
   const { isFullyFunded, tokensFundingStatus, isLoading } =
     useTokensFundingStatus();
@@ -54,12 +59,20 @@ export const TransferFunds = () => {
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const chainImage = ChainImageMap[evmHomeChainId];
-  const masterEoaAddress = masterEoa?.address;
+  const isSafeCreated = isMasterWalletFetched
+    ? !isNil(getMasterSafeOf?.(evmHomeChainId)) ||
+      masterSafeDetails?.isSafeCreated
+    : false;
+
+  const destinationAddress = isMasterWalletFetched
+    ? getMasterSafeOf?.(evmHomeChainId)?.address || masterEoa?.address
+    : null;
 
   const handleFunded = useCallback(async () => {
-    if (masterSafeDetails?.isSafeCreated) return;
+    if (!isMasterWalletFetched) return;
+    if (isSafeCreated) return;
     createMasterSafe();
-  }, [createMasterSafe, masterSafeDetails?.isSafeCreated]);
+  }, [createMasterSafe, isMasterWalletFetched, isSafeCreated]);
 
   useEffect(() => {
     if (isFullyFunded) {
@@ -70,7 +83,8 @@ export const TransferFunds = () => {
   useEffect(() => {
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
-    if (!isSuccessMasterSafeCreation) return;
+    if (!isSafeCreated) return;
+    if (!isFullyFunded) return;
 
     // Show setup finished modal after a bit of delay so the finishing setup modal is closed.
     delayInSeconds(0.25).then(() => {
@@ -81,6 +95,8 @@ export const TransferFunds = () => {
     isErrorMasterSafeCreation,
     isSuccessMasterSafeCreation,
     setShowSetupFinishedModal,
+    isSafeCreated,
+    isFullyFunded,
   ]);
 
   useUnmount(() => {
@@ -90,7 +106,7 @@ export const TransferFunds = () => {
   return (
     <Flex justify="center" className="pt-36">
       <CardFlex $noBorder $onboarding className="p-8">
-        <BackButton onPrev={() => gotoSetup(SetupScreen.FundYourAgent)} />
+        <BackButton onPrev={() => gotoSetup(SETUP_SCREEN.FundYourAgent)} />
         <Title level={3} className="mt-16">
           Transfer Crypto on {chainName}
         </Title>
@@ -106,9 +122,9 @@ export const TransferFunds = () => {
           message={`Only send on ${chainName} Chain — funds on other networks are unrecoverable.`}
         />
 
-        {masterEoaAddress && (
+        {destinationAddress && (
           <FundingDescription
-            address={masterEoaAddress}
+            address={destinationAddress}
             chainName={chainName}
             chainImage={chainImage}
             style={{ marginTop: 32 }}
