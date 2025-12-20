@@ -8,8 +8,8 @@ import { Nullable } from '@/types/Util';
 import { BridgeInProgress } from './BridgeInProgress/BridgeInProgress';
 import { BridgeOnEvm } from './BridgeOnEvm/BridgeOnEvm';
 import {
+  BridgeMode,
   BridgeRetryOutcome,
-  EnabledSteps,
   GetBridgeRequirementsParams,
 } from './types';
 
@@ -20,9 +20,8 @@ const TRANSFER_AMOUNTS_ERROR =
 type BridgeState = 'depositing' | 'in_progress' | 'completed';
 
 type BridgeProps = {
-  isOnboarding?: boolean;
+  mode?: BridgeMode;
   bridgeToChain: MiddlewareChain;
-  enabledStepsAfterBridging?: EnabledSteps;
   /**
    * Function to get the bridge requirements params. We are passing the function
    * instead of just the params so that the params can be requested again, in case
@@ -39,9 +38,8 @@ type BridgeProps = {
  * - Handles retry outcomes and updates the UI accordingly.
  */
 export const Bridge = ({
-  isOnboarding = false,
+  mode = 'depositing',
   bridgeToChain,
-  enabledStepsAfterBridging,
   getBridgeRequirementsParams,
   onPrevBeforeBridging,
   onBridgingCompleted,
@@ -135,10 +133,9 @@ export const Bridge = ({
           onBridgeRetryOutcome={(e: Nullable<BridgeRetryOutcome>) =>
             setBridgeRetryOutcome(e)
           }
-          enabledStepsAfterBridging={enabledStepsAfterBridging}
           onNext={handleNextStep}
-          isBridgeCompleted={bridgeState === 'completed'}
-          isOnboarding={isOnboarding}
+          areAllStepsCompleted={bridgeState === 'completed'}
+          mode={mode}
         />
       );
     }
