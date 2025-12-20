@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { OnRamp } from '@/components/OnRamp/OnRamp';
+import { OnRamp } from '@/components/OnRamp';
 import { SETUP_SCREEN } from '@/constants';
 import { useSetup } from '@/hooks';
 
