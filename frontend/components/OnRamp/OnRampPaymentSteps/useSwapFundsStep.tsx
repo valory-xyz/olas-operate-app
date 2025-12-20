@@ -17,7 +17,7 @@ import {
 } from '@/types/Bridge';
 import { delayInSeconds } from '@/utils/delay';
 
-import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
+import { useGetBridgeRequirementsParams } from '../../SetupPage/Create/hooks/useGetBridgeRequirementsParams';
 import { useBridgeRequirementsUtils } from '../hooks/useBridgeRequirementsUtils';
 
 const { Text } = Typography;

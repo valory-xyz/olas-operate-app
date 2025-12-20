@@ -65,9 +65,8 @@ export const useMasterSafeCreateAndTransferSteps = ({
     if (isBridgingFailed) return;
     if (!isBridgingCompleted) return;
 
-    // If master safe already exists, do not create it
+    // Wait for wallet data to be fetched before proceeding
     if (!isMasterWalletFetched) return;
-    if (hasMasterSafe) return;
 
     // if master safe creation is in progress or if it has failed, do not create master safe.
     if (isLoadingMasterSafeCreation) return;
@@ -81,7 +80,6 @@ export const useMasterSafeCreateAndTransferSteps = ({
     isBridgingFailed,
     isRefillRequired,
     isMasterWalletFetched,
-    hasMasterSafe,
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
     masterSafeDetails?.isSafeCreated,

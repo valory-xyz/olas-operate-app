@@ -6,7 +6,7 @@ import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRef
 import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
 import { delayInSeconds } from '@/utils/delay';
 
-import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
+import { useGetBridgeRequirementsParams } from '../../SetupPage/Create/hooks/useGetBridgeRequirementsParams';
 import { useBridgeRequirementsUtils } from '../hooks/useBridgeRequirementsUtils';
 
 type UseBridgeRequirementsQueryParams = {

@@ -119,7 +119,7 @@ export const Bridge = ({
     /**
      * Shows the same component for in_progress and completed states,
      * The parent component should take care of handling the logic post completion
-     * eg: For showing completion modal, etc.
+     * eg: For showing completion modal, redirecting etc.
      */
     case bridgeState === 'in_progress':
     case bridgeState === 'completed': {

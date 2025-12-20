@@ -3,11 +3,10 @@ import { ReactNode, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { Alert, BackButton, CardFlex, CardTitle } from '@/components/ui';
-import { COLOR, EvmChainId, EvmChainName, SETUP_SCREEN } from '@/constants';
+import { COLOR, EvmChainName, SETUP_SCREEN } from '@/constants';
 import {
   useFeatureFlag,
   useGetRefillRequirements,
-  useOnRampContext,
   useServices,
   useSetup,
   useTotalFiatFromNativeToken,
@@ -16,6 +15,7 @@ import {
 import { TokenRequirement } from '@/types';
 
 import { TokenRequirements } from './components/TokensRequirements';
+import { useOnRampNetworkConfig } from './hooks/useOnrampNetworkConfig';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -46,14 +46,15 @@ type FundMethodCardProps = {
 
 const MIN_ONRAMP_AMOUNT = 5;
 
-const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
+const OnRamp = () => {
   const { goto } = useSetup();
+  const { networkId } = useOnRampNetworkConfig();
 
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
     totalNativeToken,
-  } = useTotalNativeTokenRequired(onRampChainId, 'onboarding');
+  } = useTotalNativeTokenRequired(networkId, 'onboarding');
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken(
       hasNativeTokenError ? undefined : totalNativeToken,
@@ -188,7 +189,6 @@ export const FundYourAgent = () => {
     resetTokenRequirements,
   } = useGetRefillRequirements();
 
-  const { networkId: onRampChainId } = useOnRampContext();
   const areTokenRequirementsLoading =
     isLoading || tokenRequirements.length === 0;
 
@@ -208,9 +208,7 @@ export const FundYourAgent = () => {
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>
-        {isOnRampEnabled && onRampChainId && (
-          <OnRamp onRampChainId={onRampChainId} />
-        )}
+        {isOnRampEnabled && <OnRamp />}
         <TransferTokens
           chainName={chainName}
           tokenRequirements={tokenRequirements}
