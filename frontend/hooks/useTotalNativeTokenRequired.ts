@@ -16,7 +16,6 @@ import { useBridgeRequirementsQuery } from '../components/OnRamp/PayingReceiving
  *
  * Example: For Optimus, we require 0.01 ETH, 16 USDC, 100 OLAS.
  * So, total ETH required = 0.01 ETH + 16 USDC in ETH + 100 OLAS in ETH.
- *
  */
 export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,

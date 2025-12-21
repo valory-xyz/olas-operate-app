@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
-import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
-import { useBridgeRefillRequirements } from '@/hooks/useBridgeRefillRequirements';
+import {
+  useBalanceAndRefillRequirementsContext,
+  useBridgeRefillRequirements,
+  useGetBridgeRequirementsParams,
+} from '@/hooks';
 import { delayInSeconds } from '@/utils/delay';
 
-import { useGetBridgeRequirementsParams } from '../../SetupPage/Create/hooks/useGetBridgeRequirementsParams';
 import { useBridgeRequirementsUtils } from '../hooks/useBridgeRequirementsUtils';
 
 type UseBridgeRequirementsQueryParams = {
@@ -47,6 +49,7 @@ export const useBridgeRequirementsQuery = ({
   ] = useState(enabled);
   const [isManuallyRefetching, setIsManuallyRefetching] = useState(false);
 
+  // TODO: Add a new hook in case of depositing that calculated the params from the user provided inputs
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
     onRampChainId,
     AddressZero,

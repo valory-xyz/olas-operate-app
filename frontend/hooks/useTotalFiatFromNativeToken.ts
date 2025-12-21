@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { OnRampNetworkConfig } from '@/components/OnRamp';
 import {
   onRampChainMap,
   REACT_QUERY_KEYS,
   SupportedMiddlewareChain,
 } from '@/constants';
 import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
-import { useServices } from '@/hooks/useServices';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { asMiddlewareChain } from '@/utils';
 
 type FeeBreakdownItem = {
   name: string;
@@ -70,10 +70,23 @@ const fetchTransakQuote = async (
   return response.json();
 };
 
-export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
-  const { selectedAgentConfig } = useServices();
-  const agentChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-  const fromChain = asMiddlewareChain(onRampChainMap[agentChainName]);
+type UseTotalFiatFromNativeTokenProps = {
+  nativeTokenAmount?: number;
+  networkId: OnRampNetworkConfig['networkId'];
+};
+
+export const useTotalFiatFromNativeToken = ({
+  nativeTokenAmount,
+  networkId,
+}: UseTotalFiatFromNativeTokenProps) => {
+  const selectedChainName = networkId ? asMiddlewareChain(networkId) : null;
+  const fromChain = selectedChainName
+    ? asMiddlewareChain(onRampChainMap[selectedChainName])
+    : null;
+
+  if (!fromChain) {
+    throw new Error(`Invalid networkId: ${networkId}`);
+  }
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(fromChain, nativeTokenAmount!),

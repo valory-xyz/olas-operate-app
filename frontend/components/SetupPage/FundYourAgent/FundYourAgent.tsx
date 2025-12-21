@@ -145,7 +145,7 @@ export const FundYourAgent = () => {
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>
-        {isOnRampEnabled && <OnRampMethodCard />}
+        {isOnRampEnabled && <OnRampMethodCard mode="onboarding" />}
         <TransferTokens
           chainName={chainName}
           tokenRequirements={tokenRequirements}

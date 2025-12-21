@@ -4,9 +4,7 @@ import { useCallback, useState } from 'react';
 import { Bridge } from '@/components/Bridge';
 import { AgentSetupCompleteModal } from '@/components/ui';
 import { AllEvmChainIdMap, SETUP_SCREEN } from '@/constants';
-import { useServices, useSetup } from '@/hooks';
-
-import { useGetBridgeRequirementsParams } from '../hooks/useGetBridgeRequirementsParams';
+import { useGetBridgeRequirementsParams, useServices, useSetup } from '@/hooks';
 
 export const SetupBridgeOnboarding = () => {
   const [isBridgeCompleted, setIsBridgeCompleted] = useState(false);

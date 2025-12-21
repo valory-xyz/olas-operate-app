@@ -6,30 +6,35 @@ import {
   useState,
 } from 'react';
 
-import { EvmChainId, PAGES } from '@/constants';
+import type { OnRampMode, OnRampNetworkConfig } from '@/components/OnRamp';
+import { PAGES } from '@/constants';
 import {
   useElectronApi,
   useMasterBalances,
   useMasterWalletContext,
   usePageState,
 } from '@/hooks';
-import { Maybe, Nullable } from '@/types';
+import { Nullable } from '@/types';
 import { delayInSeconds } from '@/utils';
 
 const ETH_RECEIVED_THRESHOLD = 0.95;
 
-type NetworkConfig = {
-  networkId: EvmChainId;
-  networkName: string;
-  cryptoCurrencyCode: string;
-};
-
 export const OnRampContext = createContext<{
-  networkId: Maybe<EvmChainId>;
-  networkName: Maybe<string>;
-  cryptoCurrencyCode: Maybe<string>;
-  updateNetworkConfig: (config: NetworkConfig) => void;
+  networkId: OnRampNetworkConfig['networkId'];
+  networkName: OnRampNetworkConfig['networkName'];
+  cryptoCurrencyCode: OnRampNetworkConfig['cryptoCurrencyCode'];
+  /**
+   * Chain to which the funds are being transferred. It can have two cases:
+   * 1. Onboarding: homeChainId of the selected agent
+   * 2. Depositing: chainId to which the user is depositing new funds
+   */
+  selectedChainId: OnRampNetworkConfig['selectedChainId'];
+  updateNetworkConfig: (config: OnRampNetworkConfig) => void;
   resetOnRampState: () => void;
+
+  // on-ramping mode
+  mode: OnRampMode;
+  updateMode: (mode: OnRampMode) => void;
 
   ethAmountToPay: Nullable<number>;
   updateEthAmountToPay: (amount: Nullable<number>) => void;
@@ -52,8 +57,12 @@ export const OnRampContext = createContext<{
   networkId: null,
   networkName: null,
   cryptoCurrencyCode: null,
+  selectedChainId: null,
   updateNetworkConfig: () => {},
   resetOnRampState: () => {},
+
+  mode: 'onboarding',
+  updateMode: () => {},
 
   ethAmountToPay: null,
   updateEthAmountToPay: () => {},
@@ -109,8 +118,13 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsBuyCryptoBtnLoading(loading);
   }, []);
 
-  const [networkConfig, setNetworkConfig] =
-    useState<Nullable<NetworkConfig>>(null);
+  const [mode, setMode] = useState<'onboarding' | 'depositing'>('onboarding');
+  const [networkConfig, setNetworkConfig] = useState<OnRampNetworkConfig>({
+    networkId: null,
+    networkName: null,
+    cryptoCurrencyCode: null,
+    selectedChainId: null,
+  });
 
   /**
    * Check if the on-ramping step is completed
@@ -125,7 +139,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const isTransactionSuccessfulButFundsNotReceived =
     isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
 
-  const { networkId, networkName, cryptoCurrencyCode } = networkConfig ?? {};
+  const { networkId, networkName, cryptoCurrencyCode, selectedChainId } =
+    networkConfig;
 
   // check if the user has received funds after on-ramping to the master EOA
   useEffect(() => {
@@ -191,8 +206,13 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsSwappingStepCompleted(completed);
   }, []);
 
+  // Function to set the on-ramping mode
+  const updateMode = useCallback((mode: 'onboarding' | 'depositing') => {
+    setMode(mode);
+  }, []);
+
   // Function to set the network config
-  const updateNetworkConfig = useCallback((config: NetworkConfig) => {
+  const updateNetworkConfig = useCallback((config: OnRampNetworkConfig) => {
     setNetworkConfig(config);
   }, []);
 
@@ -244,6 +264,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   return (
     <OnRampContext.Provider
       value={{
+        /** On-ramping mode */
+        mode,
+        updateMode,
+
         ethAmountToPay,
         updateEthAmountToPay,
         ethTotalAmountRequired,
@@ -268,7 +292,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
         networkName,
         /** Crypto currency code to on-ramp */
         cryptoCurrencyCode,
-
+        /** Chain to which the funds are eventually transferred */
+        selectedChainId,
         /** Function to update the network config */
         updateNetworkConfig,
 

@@ -12,11 +12,13 @@ import { EvmChainId } from '@/constants/chains';
 import { COLOR } from '@/constants/colors';
 import { NA } from '@/constants/symbols';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
-import { useServices } from '@/hooks/useServices';
 import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
 import { useTotalNativeTokenRequired } from '@/hooks/useTotalNativeTokenRequired';
 import { ReceivingTokens } from '@/types/Bridge';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
+import {
+  asEvmChainDetails,
+  asMiddlewareChain,
+} from '@/utils/middlewareHelpers';
 
 const { Text } = Typography;
 
@@ -133,7 +135,7 @@ const ViewReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
 
 type PaymentTableProps = { onRampChainId: EvmChainId };
 export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
-  const { selectedAgentConfig } = useServices();
+  const { selectedChainId } = useOnRampContext();
   const {
     isOnRampingStepCompleted,
     isTransactionSuccessfulButFundsNotReceived,
@@ -149,9 +151,10 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     onRetry,
   } = useTotalNativeTokenRequired(onRampChainId, 'preview');
   const { isLoading: isFiatLoading, data: fiatAmount } =
-    useTotalFiatFromNativeToken(
-      hasNativeTokenError ? undefined : totalNativeToken,
-    );
+    useTotalFiatFromNativeToken({
+      nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
+      networkId: selectedChainId,
+    });
 
   // State to hold the tokensRequired to be displayed in the receiving column
   // and update only if the on-ramping step is not completed already.
@@ -237,7 +240,11 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     ],
   );
 
-  const toChain = asEvmChainDetails(selectedAgentConfig.middlewareHomeChainId);
+  if (!selectedChainId) {
+    throw new Error('Selected chain ID is not set in the on-ramp context');
+  }
+
+  const toChain = asEvmChainDetails(asMiddlewareChain(selectedChainId));
 
   return (
     <TableWrapper>

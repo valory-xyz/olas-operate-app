@@ -1,9 +1,10 @@
 import { Button, Typography } from 'antd';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { COLOR, SETUP_SCREEN } from '@/constants';
 import {
+  useOnRampContext,
   useSetup,
   useTotalFiatFromNativeToken,
   useTotalNativeTokenRequired,
@@ -12,6 +13,7 @@ import {
 import { TokenRequirements } from '../SetupPage/FundYourAgent/components/TokensRequirements';
 import { Alert, CardFlex, CardTitle } from '../ui';
 import { useOnRampNetworkConfig } from './hooks/useOnRampNetworkConfig';
+import { OnRampMode } from './types';
 
 const OnRampMethodCardCard = styled(CardFlex)`
   width: 370px;
@@ -26,8 +28,13 @@ const MIN_ONRAMP_AMOUNT = 5;
 
 const { Paragraph } = Typography;
 
-export const OnRampMethodCard = () => {
+type OnRampMethodCardProps = {
+  mode: OnRampMode;
+};
+
+export const OnRampMethodCard = ({ mode }: OnRampMethodCardProps) => {
   const { goto } = useSetup();
+  const { updateMode } = useOnRampContext();
   const { networkId } = useOnRampNetworkConfig();
 
   const {
@@ -36,9 +43,10 @@ export const OnRampMethodCard = () => {
     totalNativeToken,
   } = useTotalNativeTokenRequired(networkId, 'onboarding');
   const { isLoading: isFiatLoading, data: fiatAmount } =
-    useTotalFiatFromNativeToken(
-      hasNativeTokenError ? undefined : totalNativeToken,
-    );
+    useTotalFiatFromNativeToken({
+      nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
+      networkId,
+    });
   const isLoading = isNativeTokenLoading || isFiatLoading;
 
   const isFiatAmountTooLow = useMemo(() => {
@@ -48,6 +56,10 @@ export const OnRampMethodCard = () => {
     if (fiatAmount && fiatAmount < MIN_ONRAMP_AMOUNT) return true;
     return false;
   }, [fiatAmount, isLoading, isNativeTokenLoading, totalNativeToken]);
+
+  useEffect(() => {
+    updateMode(mode);
+  }, [mode, updateMode]);
 
   return (
     <OnRampMethodCardCard>

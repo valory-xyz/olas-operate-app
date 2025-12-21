@@ -8,24 +8,34 @@ export const useOnRampNetworkConfig = () => {
   const { selectedAgentConfig } = useServices();
   const { updateNetworkConfig } = useOnRampContext();
 
-  const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
-    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-    const networkId = onRampChainMap[fromChainName];
-    const chainDetails = asEvmChainDetails(asMiddlewareChain(networkId));
-    return {
-      networkId,
-      networkName: chainDetails.name,
-      cryptoCurrencyCode: chainDetails.symbol,
-    };
-  }, [selectedAgentConfig]);
+  const { selectedChainId, networkId, networkName, cryptoCurrencyCode } =
+    useMemo(() => {
+      const selectedChainId = selectedAgentConfig.evmHomeChainId;
+      const fromChainName = asMiddlewareChain(selectedChainId);
+      const networkId = onRampChainMap[fromChainName];
+      const chainDetails = asEvmChainDetails(asMiddlewareChain(networkId));
+      return {
+        selectedChainId,
+        networkId,
+        networkName: chainDetails.name,
+        cryptoCurrencyCode: chainDetails.symbol,
+      };
+    }, [selectedAgentConfig]);
 
   useEffect(() => {
     updateNetworkConfig({
       networkId,
       networkName,
       cryptoCurrencyCode,
+      selectedChainId,
     });
-  }, [updateNetworkConfig, networkId, networkName, cryptoCurrencyCode]);
+  }, [
+    updateNetworkConfig,
+    networkId,
+    networkName,
+    cryptoCurrencyCode,
+    selectedChainId,
+  ]);
 
-  return { networkId, networkName, cryptoCurrencyCode };
+  return { selectedChainId, networkId, networkName, cryptoCurrencyCode };
 };

@@ -28,9 +28,7 @@ const KeepOpenAlert = () => (
   />
 );
 
-type OnBackProps = {
-  handleBack: () => void;
-};
+type OnBackProps = OnRampProps;
 
 const OnBack = ({ handleBack }: OnBackProps) => {
   const [isDoNotLeavePageModalOpen, setIsDoNotLeavePageModalOpen] =
