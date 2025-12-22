@@ -6,6 +6,7 @@ import { useOnRampContext } from '@/hooks';
 
 import { OnRampPaymentSteps } from './OnRampPaymentSteps/OnRampPaymentSteps';
 import { PayingReceivingTable } from './PayingReceivingTable/PayingReceivingTable';
+import { OnRampMode } from './types';
 
 const { Text, Title } = Typography;
 
@@ -28,7 +29,7 @@ const KeepOpenAlert = () => (
   />
 );
 
-type OnBackProps = OnRampProps;
+type OnBackProps = Pick<OnRampProps, 'handleBack'>;
 
 const OnBack = ({ handleBack }: OnBackProps) => {
   const [isDoNotLeavePageModalOpen, setIsDoNotLeavePageModalOpen] =
@@ -79,9 +80,11 @@ const OnBack = ({ handleBack }: OnBackProps) => {
 };
 
 type OnRampProps = {
+  mode: OnRampMode;
   handleBack: () => void;
 };
 
+// TODO: use the prop passed as "mode" to figure out requirements for onboarding & depositing
 export const OnRamp = ({ handleBack }: OnRampProps) => {
   const { networkId } = useOnRampContext();
 

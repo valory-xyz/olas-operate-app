@@ -72,20 +72,22 @@ const fetchTransakQuote = async (
 
 type UseTotalFiatFromNativeTokenProps = {
   nativeTokenAmount?: number;
-  networkId: OnRampNetworkConfig['networkId'];
+  selectedChainId: OnRampNetworkConfig['selectedChainId'];
 };
 
 export const useTotalFiatFromNativeToken = ({
   nativeTokenAmount,
-  networkId,
+  selectedChainId,
 }: UseTotalFiatFromNativeTokenProps) => {
-  const selectedChainName = networkId ? asMiddlewareChain(networkId) : null;
+  const selectedChainName = selectedChainId
+    ? asMiddlewareChain(selectedChainId)
+    : null;
   const fromChain = selectedChainName
     ? asMiddlewareChain(onRampChainMap[selectedChainName])
     : null;
 
   if (!fromChain) {
-    throw new Error(`Invalid networkId: ${networkId}`);
+    throw new Error(`Invalid fromChain: ${fromChain}`);
   }
 
   return useQuery({

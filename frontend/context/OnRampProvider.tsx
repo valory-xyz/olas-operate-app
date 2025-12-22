@@ -6,7 +6,7 @@ import {
   useState,
 } from 'react';
 
-import type { OnRampMode, OnRampNetworkConfig } from '@/components/OnRamp';
+import type { OnRampNetworkConfig } from '@/components/OnRamp';
 import { PAGES } from '@/constants';
 import {
   useElectronApi,
@@ -32,10 +32,6 @@ export const OnRampContext = createContext<{
   updateNetworkConfig: (config: OnRampNetworkConfig) => void;
   resetOnRampState: () => void;
 
-  // on-ramping mode
-  mode: OnRampMode;
-  updateMode: (mode: OnRampMode) => void;
-
   ethAmountToPay: Nullable<number>;
   updateEthAmountToPay: (amount: Nullable<number>) => void;
   ethTotalAmountRequired: Nullable<number>;
@@ -60,9 +56,6 @@ export const OnRampContext = createContext<{
   selectedChainId: null,
   updateNetworkConfig: () => {},
   resetOnRampState: () => {},
-
-  mode: 'onboarding',
-  updateMode: () => {},
 
   ethAmountToPay: null,
   updateEthAmountToPay: () => {},
@@ -206,11 +199,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsSwappingStepCompleted(completed);
   }, []);
 
-  // Function to set the on-ramping mode
-  const updateMode = useCallback((mode: 'onboarding' | 'depositing') => {
-    setMode(mode);
-  }, []);
-
   // Function to set the network config
   const updateNetworkConfig = useCallback((config: OnRampNetworkConfig) => {
     setNetworkConfig(config);
@@ -264,10 +252,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   return (
     <OnRampContext.Provider
       value={{
-        /** On-ramping mode */
-        mode,
-        updateMode,
-
         ethAmountToPay,
         updateEthAmountToPay,
         ethTotalAmountRequired,

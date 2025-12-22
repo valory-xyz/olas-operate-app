@@ -2,7 +2,6 @@ import { Button, Flex, Typography } from 'antd';
 import { ReactNode } from 'react';
 import styled from 'styled-components';
 
-import { OnRampMethodCard } from '@/components/OnRamp';
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
 import { COLOR, EvmChainName, SETUP_SCREEN } from '@/constants';
 import {
@@ -13,6 +12,7 @@ import {
 } from '@/hooks';
 import { TokenRequirement } from '@/types';
 
+import { OnRampMethodCard } from './components/OnRampMethodCard';
 import { TokenRequirements } from './components/TokensRequirements';
 
 const { Text, Title, Paragraph } = Typography;
@@ -145,7 +145,7 @@ export const FundYourAgent = () => {
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>
-        {isOnRampEnabled && <OnRampMethodCard mode="onboarding" />}
+        {isOnRampEnabled && <OnRampMethodCard />}
         <TransferTokens
           chainName={chainName}
           tokenRequirements={tokenRequirements}

@@ -2,18 +2,21 @@ import { Button, Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { COLOR, SETUP_SCREEN } from '@/constants';
+import { COLOR, onRampChainMap, SETUP_SCREEN } from '@/constants';
 import {
   useOnRampContext,
+  useServices,
   useSetup,
   useTotalFiatFromNativeToken,
   useTotalNativeTokenRequired,
 } from '@/hooks';
+import {
+  asEvmChainDetails,
+  asMiddlewareChain,
+} from '@/utils/middlewareHelpers';
 
-import { TokenRequirements } from '../SetupPage/FundYourAgent/components/TokensRequirements';
-import { Alert, CardFlex, CardTitle } from '../ui';
-import { useOnRampNetworkConfig } from './hooks/useOnRampNetworkConfig';
-import { OnRampMode } from './types';
+import { Alert, CardFlex, CardTitle } from '../../../ui';
+import { TokenRequirements } from './TokensRequirements';
 
 const OnRampMethodCardCard = styled(CardFlex)`
   width: 370px;
@@ -28,14 +31,48 @@ const MIN_ONRAMP_AMOUNT = 5;
 
 const { Paragraph } = Typography;
 
-type OnRampMethodCardProps = {
-  mode: OnRampMode;
+/**
+ * Hook to set the network config required for Onramping in case of "onboarding"
+ */
+const useOnRampNetworkConfig = () => {
+  const { selectedAgentConfig } = useServices();
+  const { updateNetworkConfig } = useOnRampContext();
+
+  const { selectedChainId, networkId, networkName, cryptoCurrencyCode } =
+    useMemo(() => {
+      const selectedChainId = selectedAgentConfig.evmHomeChainId;
+      const fromChainName = asMiddlewareChain(selectedChainId);
+      const networkId = onRampChainMap[fromChainName];
+      const chainDetails = asEvmChainDetails(asMiddlewareChain(networkId));
+      return {
+        selectedChainId,
+        networkId,
+        networkName: chainDetails.name,
+        cryptoCurrencyCode: chainDetails.symbol,
+      };
+    }, [selectedAgentConfig]);
+
+  useEffect(() => {
+    updateNetworkConfig({
+      networkId,
+      networkName,
+      cryptoCurrencyCode,
+      selectedChainId,
+    });
+  }, [
+    updateNetworkConfig,
+    networkId,
+    networkName,
+    cryptoCurrencyCode,
+    selectedChainId,
+  ]);
+
+  return { selectedChainId, networkId, networkName, cryptoCurrencyCode };
 };
 
-export const OnRampMethodCard = ({ mode }: OnRampMethodCardProps) => {
+export const OnRampMethodCard = () => {
   const { goto } = useSetup();
-  const { updateMode } = useOnRampContext();
-  const { networkId } = useOnRampNetworkConfig();
+  const { selectedChainId, networkId } = useOnRampNetworkConfig();
 
   const {
     isLoading: isNativeTokenLoading,
@@ -45,7 +82,7 @@ export const OnRampMethodCard = ({ mode }: OnRampMethodCardProps) => {
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
-      networkId,
+      selectedChainId,
     });
   const isLoading = isNativeTokenLoading || isFiatLoading;
 
@@ -56,10 +93,6 @@ export const OnRampMethodCard = ({ mode }: OnRampMethodCardProps) => {
     if (fiatAmount && fiatAmount < MIN_ONRAMP_AMOUNT) return true;
     return false;
   }, [fiatAmount, isLoading, isNativeTokenLoading, totalNativeToken]);
-
-  useEffect(() => {
-    updateMode(mode);
-  }, [mode, updateMode]);
 
   return (
     <OnRampMethodCardCard>

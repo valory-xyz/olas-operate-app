@@ -153,7 +153,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
-      networkId: selectedChainId,
+      selectedChainId,
     });
 
   // State to hold the tokensRequired to be displayed in the receiving column
