@@ -1,5 +1,5 @@
 import { isNil } from 'lodash';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { TokenSymbol } from '@/config/tokens';
 import {
@@ -8,7 +8,7 @@ import {
   useMasterWalletContext,
   useServices,
 } from '@/hooks';
-import { BridgingStepStatus } from '@/types';
+import { BridgingStepStatus, Nullable } from '@/types';
 
 import { BridgeMode } from '../types';
 import { StepEvent } from './BridgingSteps';
@@ -38,24 +38,36 @@ export const useMasterSafeCreateAndTransferSteps = ({
   const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
     useMasterWalletContext();
 
+  // Using ref here so the steps don't go null when safe is created
+  const canCreateMasterSafeAndTransferRef = useRef<Nullable<boolean>>(null);
+
   const hasMasterSafe = isMasterWalletFetched
     ? !isNil(getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId))
     : false;
 
-  // Only create master safe during onboarding if it doesn't exist
-  const canCreateMasterSafeAndTransfer =
-    mode === 'onboarding' && !hasMasterSafe;
   const isSafeCreated = isMasterWalletFetched
     ? hasMasterSafe || masterSafeDetails?.isSafeCreated
     : false;
   const isTransferCompleted =
     masterSafeDetails?.masterSafeTransferStatus === 'FINISHED';
+  const shouldCreateMasterSafe = canCreateMasterSafeAndTransferRef.current;
+
+  useEffect(() => {
+    if (
+      isMasterWalletFetched &&
+      canCreateMasterSafeAndTransferRef.current === null
+    ) {
+      // Only create master safe during onboarding if it doesn't exist
+      canCreateMasterSafeAndTransferRef.current =
+        mode === 'onboarding' && !hasMasterSafe;
+    }
+  }, [hasMasterSafe, isMasterWalletFetched, mode]);
 
   /**
    * Create master safe after the bridging is completed, given it is not created yet.
    */
   useEffect(() => {
-    if (!canCreateMasterSafeAndTransfer) return;
+    if (!shouldCreateMasterSafe) return;
 
     // If refill is required, do not create master safe
     if (isRefillRequired) return;
@@ -84,11 +96,11 @@ export const useMasterSafeCreateAndTransferSteps = ({
     isErrorMasterSafeCreation,
     masterSafeDetails?.isSafeCreated,
     createMasterSafe,
-    canCreateMasterSafeAndTransfer,
+    shouldCreateMasterSafe,
   ]);
 
   const masterSafeCreationDetails = useMemo(() => {
-    if (!canCreateMasterSafeAndTransfer) return;
+    if (!shouldCreateMasterSafe) return;
 
     const currentMasterSafeCreationStatus: BridgingStepStatus = (() => {
       if (isRefillRequired) return 'wait';
@@ -112,7 +124,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
       ] satisfies StepEvent[],
     };
   }, [
-    canCreateMasterSafeAndTransfer,
+    shouldCreateMasterSafe,
     createMasterSafe,
     isRefillRequired,
     isBridging,
@@ -123,7 +135,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
   ]);
 
   const masterSafeTransferDetails = useMemo(() => {
-    if (!canCreateMasterSafeAndTransfer) return;
+    if (!shouldCreateMasterSafe) return;
     if (!masterSafeCreationDetails) return;
 
     const currentMasterSafeStatus: BridgingStepStatus = (() => {
@@ -144,7 +156,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
       })) satisfies StepEvent[],
     };
   }, [
-    canCreateMasterSafeAndTransfer,
+    shouldCreateMasterSafe,
     masterSafeCreationDetails,
     masterSafeDetails?.transfers,
     isRefillRequired,
@@ -157,7 +169,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
   ]);
 
   return {
-    shouldCreateMasterSafe: canCreateMasterSafeAndTransfer,
+    shouldCreateMasterSafe,
     isLoadingMasterSafeCreation,
     isMasterWalletFetched,
     isSafeCreationAndTransferCompleted: isSafeCreated && isTransferCompleted,
