@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { TokenSymbol } from '@/config/tokens';
 import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
-import { TokenSymbol } from '@/constants/token';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { BridgeService } from '@/service/Bridge';
 import {

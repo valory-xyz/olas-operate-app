@@ -6,13 +6,12 @@ import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
 import { Alert } from '@/components/ui';
 import { AGENT_CONFIG } from '@/config/agents';
 import {
-  AgentType,
-  COLOR,
   TokenSymbol,
   TokenSymbolConfigMap,
   TokenSymbolMap,
-} from '@/constants';
-import { useFundingRequirements } from '@/hooks';
+} from '@/config/tokens';
+import { AgentType, COLOR } from '@/constants';
+import { useInitialFundingRequirements } from '@/hooks';
 import { asEvmChainDetails } from '@/utils';
 
 const { Text, Title } = Typography;
@@ -92,7 +91,7 @@ const MinimumStakingRequirements = ({
   agentType,
 }: MinimumStakingRequirementsProps) => {
   const { evmHomeChainId } = AGENT_CONFIG[agentType];
-  const tokens = useFundingRequirements(agentType);
+  const tokens = useInitialFundingRequirements(agentType);
   const olasAmount = tokens?.[evmHomeChainId]?.[TokenSymbolMap.OLAS] || 0;
 
   return (
@@ -122,7 +121,7 @@ const MinimumFundingRequirements = ({
   agentType,
 }: MinimumFundingRequirementsProps) => {
   const { evmHomeChainId } = AGENT_CONFIG[agentType];
-  const tokens = useFundingRequirements(agentType);
+  const tokens = useInitialFundingRequirements(agentType);
 
   const allTokens = Object.entries(tokens[evmHomeChainId] || {})
     .map(([token, amount]) => {

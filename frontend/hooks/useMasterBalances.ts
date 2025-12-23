@@ -1,12 +1,8 @@
 import { compact, isNil } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import {
-  AddressZero,
-  EvmChainId,
-  TokenSymbol,
-  TokenSymbolMap,
-} from '@/constants';
+import { TokenSymbol, TokenSymbolMap } from '@/config/tokens';
+import { AddressZero, EvmChainId } from '@/constants';
 import {
   useBalanceAndRefillRequirementsContext,
   useBalanceContext,
@@ -170,6 +166,23 @@ export const useMasterBalances = () => {
     [allMasterWalletBalances, masterSafes],
   );
 
+  /** Get the master Safe balances as WalletBalance[] */
+  const getMasterSafeBalancesOf = useCallback(
+    (chainId: EvmChainId) => {
+      const masterSafeForProvidedChain = masterSafes?.find(
+        (wallet) => wallet.evmChainId === chainId,
+      );
+      if (isNil(masterSafeForProvidedChain)) return [];
+      if (isNil(allMasterWalletBalances)) return [];
+      return allMasterWalletBalances.filter(
+        ({ walletAddress, evmChainId }) =>
+          chainId === evmChainId &&
+          areAddressesEqual(walletAddress, masterSafeForProvidedChain.address),
+      );
+    },
+    [masterSafes, allMasterWalletBalances],
+  );
+
   /** Get the master Safe OLAS balance as a string */
   const getMasterSafeOlasBalanceOfInStr = useCallback(
     (chainId: EvmChainId) => {
@@ -181,6 +194,7 @@ export const useMasterBalances = () => {
     [_getMasterSafeOlasBalanceOfCalc],
   );
 
+  // TODO: why this returns an array if there can be only 1 wallet per chain with native balance?
   /** Get the master Safe native balances for a chain */
   const getMasterSafeNativeBalanceOf = useCallback(
     (chainId: EvmChainId) => {
@@ -256,6 +270,7 @@ export const useMasterBalances = () => {
     getMasterSafeNativeBalanceOf,
     getMasterSafeOlasBalanceOfInStr,
     getMasterSafeErc20BalancesInStr,
+    getMasterSafeBalancesOf,
 
     // master eoa
     isMasterEoaLowOnGas: requiresFund(masterEoaGasRequirementInWei),

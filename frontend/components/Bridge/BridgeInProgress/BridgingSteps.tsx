@@ -3,8 +3,8 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { FundsAreSafeMessage, LoadingSpinner, Steps } from '@/components/ui';
+import { TokenSymbol } from '@/config/tokens';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { TokenSymbol } from '@/constants/token';
 import { BridgingStepStatus as Status } from '@/types/Bridge';
 import { Maybe, Nullable } from '@/types/Util';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';

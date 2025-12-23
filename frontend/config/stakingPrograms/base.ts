@@ -1,16 +1,12 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
-import {
-  AgentMap,
-  EvmChainIdMap,
-  STAKING_PROGRAM_IDS,
-  TokenSymbolMap,
-} from '@/constants';
+import { AgentMap, EvmChainIdMap, STAKING_PROGRAM_IDS } from '@/constants';
 import { Address } from '@/types';
 
 import { BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { MECHS, MechType } from '../mechs';
+import { TokenSymbolMap } from '../tokens';
 import { StakingProgramMap } from '.';
 
 export const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
@@ -29,6 +25,10 @@ export const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
       '0x26FA75ef9Ccaa60E58260226A71e9d07564C01bF',
     [STAKING_PROGRAM_IDS.AgentsFun3]:
       '0x4D4233EBF0473Ca8f34d105A6256A2389176F0Ce',
+    [STAKING_PROGRAM_IDS.PettAiAgent]:
+      '0x31183503be52391844594b4B587F0e764eB3956E',
+    [STAKING_PROGRAM_IDS.PettAiAgent2]:
+      '0xEA15F76D7316B09b3f89613e32d3B780619d61e2',
   };
 
 export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
@@ -42,6 +42,10 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     },
     activityChecker:
       BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.MemeBaseAlpha2
+      ],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.MemeBaseAlpha2
       ],
     contract: new MulticallContract(
@@ -61,6 +65,10 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     },
     activityChecker:
       BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.MemeBaseBeta],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.MemeBaseBeta
+      ],
     contract: new MulticallContract(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.MemeBaseBeta
@@ -78,6 +86,10 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     },
     activityChecker:
       BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.MemeBaseBeta2
+      ],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.MemeBaseBeta2
       ],
     contract: new MulticallContract(
@@ -99,6 +111,10 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.MemeBaseBeta3
       ],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.MemeBaseBeta3
+      ],
     contract: new MulticallContract(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.MemeBaseBeta3
@@ -117,6 +133,8 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     mech: MECHS[EvmChainIdMap.Base][MechType.Marketplace].contract,
     activityChecker:
       BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.AgentsFun1],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun1],
     contract: new MulticallContract(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun1],
       STAKING_TOKEN_PROXY_ABI,
@@ -133,6 +151,8 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     mech: MECHS[EvmChainIdMap.Base][MechType.Marketplace].contract,
     activityChecker:
       BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.AgentsFun2],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun2],
     contract: new MulticallContract(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun2],
       STAKING_TOKEN_PROXY_ABI,
@@ -149,8 +169,46 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     mech: MECHS[EvmChainIdMap.Base][MechType.Marketplace].contract,
     activityChecker:
       BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.AgentsFun3],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun3],
     contract: new MulticallContract(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun3],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+  },
+  [STAKING_PROGRAM_IDS.PettAiAgent]: {
+    chainId: EvmChainIdMap.Base,
+    name: 'Pett.AI Agent Staking Contract',
+    agentsSupported: [AgentMap.PettAi],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 20,
+    },
+    activityChecker:
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PettAiAgent],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.PettAiAgent],
+    contract: new MulticallContract(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.PettAiAgent],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+  },
+  [STAKING_PROGRAM_IDS.PettAiAgent2]: {
+    chainId: EvmChainIdMap.Base,
+    name: 'Pett.AI Agent Staking Contract 2',
+    agentsSupported: [AgentMap.PettAi],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 40,
+    },
+    activityChecker:
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.PettAiAgent2],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PettAiAgent2
+      ],
+    contract: new MulticallContract(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PettAiAgent2
+      ],
       STAKING_TOKEN_PROXY_ABI,
     ),
   },

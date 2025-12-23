@@ -3,13 +3,8 @@ import Image from 'next/image';
 import styled from 'styled-components';
 
 import { CardFlex } from '@/components/ui';
-import {
-  COLOR,
-  NA,
-  PAGES,
-  TokenSymbolConfigMap,
-  TokenSymbolMap,
-} from '@/constants';
+import { TokenSymbolConfigMap, TokenSymbolMap } from '@/config/tokens';
+import { COLOR, NA, PAGES } from '@/constants';
 import { useAvailableAgentAssets, usePageState } from '@/hooks';
 
 const { Text, Title } = Typography;

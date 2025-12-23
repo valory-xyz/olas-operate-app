@@ -16,6 +16,5 @@ export * from './setupScreen';
 export * from './stakingProgram';
 export * from './symbols';
 export * from './theme';
-export * from './token';
 export * from './urls';
 export * from './wallet';

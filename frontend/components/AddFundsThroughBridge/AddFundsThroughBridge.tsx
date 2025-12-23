@@ -3,7 +3,8 @@ import { Button, Flex, Spin, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
 
-import { PAGES, TokenSymbol, TokenSymbolConfigMap } from '@/constants';
+import { TokenSymbol, TokenSymbolConfigMap } from '@/config/tokens';
+import { PAGES } from '@/constants';
 import {
   useBalanceAndRefillRequirementsContext,
   usePageState,

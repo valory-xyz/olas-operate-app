@@ -81,18 +81,40 @@ const getInitialDepositValues = (
 export const getInitialDepositForMasterSafe = (
   walletChainId: EvmChainId,
   masterSafeAddress: Nullable<Address>,
-  getRefillRequirementsOf: (chainId: EvmChainId) => Maybe<AddressBalanceRecord>,
+  serviceConfigIds: string[],
+  getRefillRequirementsOf: (
+    chainId: EvmChainId,
+    serviceConfigId?: string,
+  ) => Maybe<AddressBalanceRecord>,
 ) => {
   if (!masterSafeAddress) return;
 
   // Get the refill requirements for the current chain
-  const refillRequirements = getRefillRequirementsOf(walletChainId);
+  const refillRequirements = serviceConfigIds.map((serviceConfigId) =>
+    getRefillRequirementsOf(walletChainId, serviceConfigId),
+  );
   if (!refillRequirements) return;
 
-  // Find the refill requirement for the master safe
-  const masterSafeRefillRequirement = getAddressBalance(
-    refillRequirements,
-    masterSafeAddress,
+  // Total of refill requiremnts across all the services on the chain
+  const masterSafeRefillRequirement = refillRequirements.reduce(
+    (acc, refillRequirementForService) => {
+      if (!refillRequirementForService) return acc;
+      const masterSafeRequirementForService = getAddressBalance(
+        refillRequirementForService,
+        masterSafeAddress,
+      );
+      if (!masterSafeRequirementForService) return acc;
+
+      for (const [tokenAddress, amount] of entries(
+        masterSafeRequirementForService,
+      )) {
+        acc[tokenAddress as Address] = (
+          BigInt(acc[tokenAddress as Address] || 0) + BigInt(amount)
+        ).toString();
+      }
+      return acc;
+    },
+    {} as TokenBalanceRecord,
   );
 
   if (!masterSafeRefillRequirement) return;

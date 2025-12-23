@@ -4,7 +4,7 @@ import { useUnmount } from 'usehooks-ts';
 
 import { RequiredMark } from '@/components/ui/RequiredMark';
 import { SETUP_SCREEN } from '@/constants';
-import { useSetup, useStakingProgram } from '@/hooks';
+import { useServices, useSetup, useStakingProgram } from '@/hooks';
 import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils/service';
 
@@ -46,6 +46,7 @@ const OptimusAgentFormContent = ({
   const [form] = Form.useForm<OptimusFieldValues>();
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
+  const { refetch: refetchServices } = useServices();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
@@ -102,6 +103,9 @@ const OptimusAgentFormContent = ({
           overriddenServiceConfig,
         );
 
+        // fetch services to update the state after service creation
+        await refetchServices?.();
+
         message.success('Agent setup complete');
 
         // move to next page
@@ -119,6 +123,7 @@ const OptimusAgentFormContent = ({
       serviceTemplate,
       validateForm,
       updateSubmitButtonText,
+      refetchServices,
       goto,
     ],
   );
