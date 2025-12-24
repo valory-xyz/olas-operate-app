@@ -121,11 +121,16 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const [isInvalidMessageShown, setIsInvalidMessageShown] = useState(false);
   const agentTypeFromStore = storeState?.lastSelectedAgentType;
 
-  // set the agent type from the store on load
-  const selectedAgentType = useMemo(() => {
-    if (!agentTypeFromStore) return AgentMap.PredictTrader;
-    return agentTypeFromStore;
-  }, [agentTypeFromStore]);
+  const [selectedAgentType, setSelectedAgentType] = useState<AgentType>(
+    agentTypeFromStore || AgentMap.PredictTrader,
+  );
+
+  useEffect(() => {
+    // Only sync the state at initial mount
+    if (agentTypeFromStore && agentTypeFromStore !== selectedAgentType) {
+      setSelectedAgentType(agentTypeFromStore);
+    }
+  }, [agentTypeFromStore, selectedAgentType]);
 
   // user selected service identifier
   const [selectedServiceConfigId, setSelectedServiceConfigId] =
@@ -280,6 +285,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   const updateAgentType = useCallback(
     (agentType: AgentType) => {
+      setSelectedAgentType(agentType);
       store?.set?.('lastSelectedAgentType', agentType);
       setIsInvalidMessageShown(false);
     },

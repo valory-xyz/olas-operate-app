@@ -1,20 +1,18 @@
 import { Button, Flex, Typography } from 'antd';
-import { ReactNode, useMemo } from 'react';
+import { ReactNode } from 'react';
 import styled from 'styled-components';
 
-import { Alert, BackButton, CardFlex, CardTitle } from '@/components/ui';
-import { COLOR, EvmChainId, EvmChainName, SETUP_SCREEN } from '@/constants';
+import { BackButton, CardFlex, CardTitle } from '@/components/ui';
+import { COLOR, EvmChainName, SETUP_SCREEN } from '@/constants';
 import {
   useFeatureFlag,
   useGetRefillRequirements,
-  useOnRampContext,
   useServices,
   useSetup,
-  useTotalFiatFromNativeToken,
-  useTotalNativeTokenRequired,
 } from '@/hooks';
 import { TokenRequirement } from '@/types';
 
+import { OnRampMethodCard } from './components/OnRampMethodCard';
 import { TokenRequirements } from './components/TokensRequirements';
 
 const { Text, Title, Paragraph } = Typography;
@@ -42,66 +40,6 @@ type FundMethodCardProps = {
   chainName: string;
   tokenRequirements: TokenRequirement[] | undefined;
   isBalancesAndFundingRequirementsLoading: boolean;
-};
-
-const MIN_ONRAMP_AMOUNT = 5;
-
-const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
-  const { goto } = useSetup();
-
-  const {
-    isLoading: isNativeTokenLoading,
-    hasError: hasNativeTokenError,
-    totalNativeToken,
-  } = useTotalNativeTokenRequired(onRampChainId, 'onboarding');
-  const { isLoading: isFiatLoading, data: fiatAmount } =
-    useTotalFiatFromNativeToken(
-      hasNativeTokenError ? undefined : totalNativeToken,
-    );
-  const isLoading = isNativeTokenLoading || isFiatLoading;
-
-  const isFiatAmountTooLow = useMemo(() => {
-    if (isLoading) return false;
-    if (isNativeTokenLoading) return false;
-    if (totalNativeToken === 0) return true;
-    if (fiatAmount && fiatAmount < MIN_ONRAMP_AMOUNT) return true;
-    return false;
-  }, [fiatAmount, isLoading, isNativeTokenLoading, totalNativeToken]);
-
-  return (
-    <FundMethodCard>
-      <div className="fund-method-card-body">
-        <CardTitle>Buy</CardTitle>
-        <CardDescription>
-          Pay in fiat by using your credit or debit card — perfect for speed and
-          ease!
-        </CardDescription>
-        <TokenRequirements
-          fiatAmount={fiatAmount ?? 0}
-          isLoading={isLoading}
-          hasError={hasNativeTokenError}
-          fundType="onRamp"
-        />
-      </div>
-      {isFiatAmountTooLow ? (
-        <Alert
-          message={`The minimum value of crypto to buy with your credit card is $${MIN_ONRAMP_AMOUNT}.`}
-          type="info"
-          showIcon
-          className="text-sm"
-        />
-      ) : (
-        <Button
-          type="primary"
-          size="large"
-          onClick={() => goto(SETUP_SCREEN.SetupOnRamp)}
-          disabled={isLoading || hasNativeTokenError}
-        >
-          Buy Crypto with USD
-        </Button>
-      )}
-    </FundMethodCard>
-  );
 };
 
 const TransferTokens = ({
@@ -188,7 +126,6 @@ export const FundYourAgent = () => {
     resetTokenRequirements,
   } = useGetRefillRequirements();
 
-  const { networkId: onRampChainId } = useOnRampContext();
   const areTokenRequirementsLoading =
     isLoading || tokenRequirements.length === 0;
 
@@ -208,9 +145,7 @@ export const FundYourAgent = () => {
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>
-        {isOnRampEnabled && onRampChainId && (
-          <OnRamp onRampChainId={onRampChainId} />
-        )}
+        {isOnRampEnabled && <OnRampMethodCard />}
         <TransferTokens
           chainName={chainName}
           tokenRequirements={tokenRequirements}
