@@ -10,11 +10,12 @@ type Url = `http${'s' | ''}://${string}`;
 export const BACKEND_URL: Url = `https://localhost:${process.env.NODE_ENV === 'production' ? 8765 : 8000}/api`;
 export const BACKEND_URL_V2: Url = `https://localhost:${process.env.NODE_ENV === 'production' ? 8765 : 8000}/api/v2`;
 
-// olas.network
-export const PEARL_URL: Url = 'https://olas.network/pearl';
-export const FAQ_URL: Url = 'https://olas.network/pearl#faq';
+// pearl site
+export const PEARL_URL: Url = 'https://www.pearl.you';
+export const FAQ_URL: Url = `${PEARL_URL}#FAQ`;
+export const DOWNLOAD_URL: Url = `${PEARL_URL}#update`;
+// to be moved to pearl site
 export const TERMS_AND_CONDITIONS_URL: Url = 'https://olas.network/pearl-terms';
-export const DOWNLOAD_URL: Url = 'https://olas.network/pearl#update';
 
 // thegraph
 export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<

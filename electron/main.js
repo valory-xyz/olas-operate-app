@@ -122,11 +122,11 @@ const platform = os.platform();
 
 const binaryPaths = {
   darwin: {
-    arm64: 'bins/pearl_arm64',
-    x64: 'bins/pearl_x64',
+    arm64: 'bins/middleware/pearl_arm64',
+    x64: 'bins/middleware/pearl_x64',
   },
   win32: {
-    x64: 'bins/pearl_win.exe',
+    x64: 'bins/middleware/pearl_win.exe',
   },
 };
 
@@ -576,9 +576,28 @@ const createOnRampWindow = async (amountToPay) => {
   return onRampWindow;
 };
 
+function removeQuarantine(filePath) {
+      try {
+        execSync(`xattr -p com.apple.quarantine "${filePath}"`, { stdio: 'ignore' });
+        execSync(`xattr -d com.apple.quarantine "${filePath}"`);
+        logger.electron(`Removed quarantine attribute from ${filePath}`);
+      } catch (e) {
+      }
+    }
+
+
 async function launchDaemon() {
   const check = new Promise(function (resolve, _reject) {
     const { keyPath, certPath } = createAndLoadSslCertificate();
+
+    const { execSync } = require('child_process');
+
+    
+    const binPath = path.join(process.resourcesPath, binaryPaths[platform][process.arch.toString()]);
+    if (platform === 'darwin') {
+        removeQuarantine(binPath);
+    }
+
     operateDaemon = spawn(
       path.join(
         process.resourcesPath,

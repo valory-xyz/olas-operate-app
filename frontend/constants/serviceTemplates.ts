@@ -22,7 +22,7 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PredictTrader,
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeiemvi77itu5ut7ybtrf7pwuzqemj4xfw2amgy4ipmvky52jmzrg54',
+  hash: 'bafybeibw46xqqqpzfiw5if7aoknstlxc4bmraiqyj7v3w7a3kzcybpsbou',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
@@ -163,17 +163,17 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   | 'service_version'
   | 'agent_release'
 > = {
-  hash: 'bafybeihdy6s4qtyhm245ystr5o3srhgjviiczr4pcj57avbwnv4nmy6phy',
+  hash: 'bafybeien6f3yzrn4e4vqoqsrddfwvr3i7ys7rft3h4ysp3il6qlhwm4hgq',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
-  service_version: 'v2.0.0',
+  service_version: 'v2.0.1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'meme-ooorr',
-      version: 'v2.0.0',
+      version: 'v2.0.1',
     },
   },
   env_variables: {
@@ -301,7 +301,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeif6dqiqvdrzeqooja5v6nj7meuwpfygakr3jda3n7w6atovcgogvm',
+  hash: 'bafybeidkdnfrueiivrdzrqo67np3w4gsubu5vb6lqxabsx3ulozvj7jtmq',
   service_version: 'v0.6.0-rc.1',
   agent_release: {
     is_aea: true,
@@ -627,7 +627,7 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
     repository: {
       owner: 'valory-xyz',
       name: 'pettai-agent',
-      version: 'v0.0.26',
+      version: 'v0.1.0',
     },
   },
   home_chain: MiddlewareChainMap.BASE,

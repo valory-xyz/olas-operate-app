@@ -87,8 +87,8 @@ export const PETT_AI_ONBOARDING_STEPS: OnboardingStep[] = [
     },
   },
   {
-    title: 'Your AI portfolio manager',
-    desc: 'Your PettBro Agent analyzes the entire game state and picks the winning path. It optimizes your pet’s growth to ensure it levels up faster than humanly possible, while automatically earning $OLAS staking rewards for you in the background.',
+    title: 'Grow your pet',
+    desc: 'Your PettBro Agent analyzes the entire game state and picks the winning path. It optimizes your pet’s growth to ensure it levels up faster than humanly possible.',
     imgSrc: 'introduction/setup-agent-pettbro-2',
     styles: {
       imageHeight: 202,

@@ -21,12 +21,16 @@
 cd "$(dirname "$0")"
 
 BIN_DIR="electron/bins/"
+ARCH=$(uname -m)
+
 mkdir -p $BIN_DIR
 
 poetry install
 
-poetry run pyinstaller operate/tendermint.py --onefile --distpath $BIN_DIR
+# Tendermint (собираем, но не копируем - используется отдельно)
+poetry run pyinstaller operate/tendermint.py --onedir --name tendermint_${ARCH}
 
+# Pearl - собираем во временную папку dist/
 poetry run pyinstaller \
     --collect-data eth_account \
     --collect-all aea \
@@ -41,7 +45,11 @@ poetry run pyinstaller \
     operate/pearl.py \
     --add-binary ${BIN_DIR}/aea_bin_x64:. \
     --add-binary ${BIN_DIR}/aea_bin_arm64:. \
-    --onefile \
-    --distpath $BIN_DIR \
-    --name pearl_$(uname -m)
+    --onedir \
+    --name pearl_${ARCH}
 
+# Копируем результат в middleware
+rm -rf ${BIN_DIR}/middleware
+cp -r dist/pearl_${ARCH} ${BIN_DIR}/middleware
+
+echo "Build complete. Middleware is in ${BIN_DIR}/middleware/"
