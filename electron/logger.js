@@ -1,6 +1,7 @@
 const winston = require('winston');
 const { format } = require('logform');
 const { paths } = require('./constants');
+const log = require('electron-log');
 
 const { combine, timestamp, printf } = format;
 
@@ -70,4 +71,21 @@ const logger = winston.createLogger({
   format: combine(timestamp(), logFormat),
 });
 
-module.exports = { logger };
+// Electron logger configuration for frontend logs
+log.transports.file.resolvePathFn = () => paths.nextLogFile;
+log.transports.console.format = (info) => {
+  const { level, data } = info;
+  const colors = {
+    error: '\x1b[31m',
+    warn: '\x1b[33m',
+    info: '\x1b[34m',
+    reset: '\x1b[0m',
+  };
+
+  const time = new Date().toISOString();
+  const logPrefix = `${colors[level]}${time} next:${colors.reset}`;
+  return [logPrefix, ...data];
+};
+log.initialize();
+
+module.exports = { logger, nextLogger: log };

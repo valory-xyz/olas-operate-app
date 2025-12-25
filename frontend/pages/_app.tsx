@@ -5,6 +5,7 @@ import { ConfigProvider } from 'antd';
 import type { AppProps } from 'next/app';
 import { useEffect, useState } from 'react';
 
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { Layout } from '@/components/Layout';
 import { mainTheme } from '@/constants';
 import { BalanceProvider } from '@/context/BalanceProvider/BalanceProvider';
@@ -25,18 +26,22 @@ import { StakingContractDetailsProvider } from '@/context/StakingContractDetails
 import { StakingProgramProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
 import { SupportModalProvider } from '@/context/SupportModalProvider';
+import { useElectronApi } from '@/hooks/useElectronApi';
 
 const queryClient = new QueryClient();
 
-export default function App({ Component, pageProps }: AppProps) {
+function App({ Component, pageProps }: AppProps) {
   const [isMounted, setIsMounted] = useState(false);
+
+  const { nextLogError } = useElectronApi();
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   return (
-    <OnlineStatusProvider>
-      <ElectronApiProvider>
+    <ErrorBoundary logger={nextLogError}>
+      <OnlineStatusProvider>
         <StoreProvider>
           <QueryClientProvider client={queryClient}>
             <PageStateProvider>
@@ -78,7 +83,15 @@ export default function App({ Component, pageProps }: AppProps) {
             </PageStateProvider>
           </QueryClientProvider>
         </StoreProvider>
-      </ElectronApiProvider>
-    </OnlineStatusProvider>
+      </OnlineStatusProvider>
+    </ErrorBoundary>
+  );
+}
+
+export default function AppWithElectronProvider(props: AppProps) {
+  return (
+    <ElectronApiProvider>
+      <App {...props} />
+    </ElectronApiProvider>
   );
 }
