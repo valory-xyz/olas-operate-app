@@ -7,14 +7,11 @@ import { useServices, useStakingProgram } from '@/hooks';
 export const useStakingContracts = () => {
   const { selectedAgentConfig, selectedAgentType } = useServices();
   const { evmHomeChainId } = selectedAgentConfig;
-  const {
-    activeStakingProgramId,
-    isActiveStakingProgramLoaded,
-    defaultStakingProgramId,
-  } = useStakingProgram();
+  const { isActiveStakingProgramLoaded, selectedStakingProgramId } =
+    useStakingProgram();
 
   const currentStakingProgramId = isActiveStakingProgramLoaded
-    ? activeStakingProgramId || defaultStakingProgramId
+    ? selectedStakingProgramId
     : null;
 
   const availableStakingProgramIds = Object.keys(
