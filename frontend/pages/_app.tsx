@@ -30,6 +30,7 @@ import {
   useSupportModal,
 } from '@/context/SupportModalProvider';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useGlobalErrorHandlers } from '@/hooks/useGlobalErrorHandlers';
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,8 @@ function App({ Component, pageProps }: AppProps) {
 
   const { nextLogError } = useElectronApi();
   const { toggleSupportModal } = useSupportModal();
+
+  useGlobalErrorHandlers(nextLogError);
 
   useEffect(() => {
     setIsMounted(true);
