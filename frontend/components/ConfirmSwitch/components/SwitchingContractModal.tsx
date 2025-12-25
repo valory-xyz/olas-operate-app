@@ -42,8 +42,6 @@ export const SwitchingContractModal = ({
     selectedService?.service_config_id,
   );
 
-  console.log('status, ', status);
-
   const modalProps = useMemo(() => {
     if (status === 'IN_PROGRESS') {
       return {
