@@ -17,6 +17,7 @@ export const useGlobalErrorHandlers = (
         type: 'unhandled-error',
         filename: event.filename,
         lineno: event.lineno,
+        stack: error?.stack,
         colno: event.colno,
       });
     };

@@ -92,7 +92,7 @@ function App({ Component, pageProps }: AppProps) {
   );
 }
 
-export default function AppWithNecessaryProviders(props: AppProps) {
+export default function AppRoot(props: AppProps) {
   return (
     <ElectronApiProvider>
       <QueryClientProvider client={queryClient}>
