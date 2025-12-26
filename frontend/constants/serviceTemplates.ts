@@ -167,13 +167,13 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
-  service_version: 'v2.0.2-rc1',
+  service_version: 'v2.0.2',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'meme-ooorr',
-      version: 'v2.0.2-rc1',
+      version: 'v2.0.2',
     },
   },
   env_variables: {
