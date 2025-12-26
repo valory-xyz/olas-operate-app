@@ -9,12 +9,11 @@ import {
   WarningOutlined,
 } from '@/components/custom-icons';
 import { CardFlex } from '@/components/ui/CardFlex';
-import { TOKEN_CONFIG } from '@/config/tokens';
+import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
 import {
   AddressZero,
   MiddlewareChain,
   SUPPORT_URL,
-  TokenSymbol,
   UNICODE_SYMBOLS,
 } from '@/constants';
 import {

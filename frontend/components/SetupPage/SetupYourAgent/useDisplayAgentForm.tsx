@@ -4,11 +4,10 @@ import React, { ReactNode, useCallback } from 'react';
 import styled from 'styled-components';
 
 import { BackButton } from '@/components/ui';
+import { SETUP_SCREEN } from '@/constants';
 import { COLOR } from '@/constants/colors';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useServices } from '@/hooks/useServices';
-import { useSetup } from '@/hooks/useSetup';
+import { useServices, useSetup } from '@/hooks';
 
 const { Title } = Typography;
 
@@ -44,7 +43,7 @@ export type RenderForm = (
 
 export const useDisplayAgentForm = () => {
   const { goto } = useSetup();
-  const { selectedAgentType } = useServices();
+  const { selectedAgentType, selectedAgentConfig } = useServices();
   const serviceTemplate = SERVICE_TEMPLATES.find(
     (template) => template.agentType === selectedAgentType,
   );
@@ -62,10 +61,14 @@ export const useDisplayAgentForm = () => {
         <>
           <Flex vertical className="setup-left-content">
             <BackButton
-              onPrev={onBack ? onBack : () => goto(SetupScreen.AgentOnboarding)}
+              onPrev={
+                onBack ? onBack : () => goto(SETUP_SCREEN.AgentOnboarding)
+              }
             />
             <Title level={3} style={{ margin: '16px 0 24px 0' }}>
-              {isUpdate ? 'Agent Settings' : 'Configure Your Agent'}
+              {isUpdate
+                ? 'Agent Settings'
+                : `Configure Your ${selectedAgentConfig?.displayName} Agent`}
             </Title>
             {form}
           </Flex>
@@ -79,7 +82,7 @@ export const useDisplayAgentForm = () => {
         </>
       );
     },
-    [serviceTemplate, goto],
+    [serviceTemplate, selectedAgentConfig?.displayName, goto],
   );
 
   return displayForm;

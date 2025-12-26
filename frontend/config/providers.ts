@@ -1,5 +1,4 @@
-import { PROVIDERS } from '@/constants/providers';
-import { EvmChainId } from '@/enums/Chain';
+import { EvmChainId, PROVIDERS } from '@/constants';
 
 import { AGENT_CONFIG } from './agents';
 

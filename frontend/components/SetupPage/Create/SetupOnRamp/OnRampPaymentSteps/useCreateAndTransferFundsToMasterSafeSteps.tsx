@@ -1,14 +1,20 @@
+import { isNil } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
 import { TransactionStep } from '@/components/ui/TransactionSteps';
-import { TokenSymbol } from '@/constants/token';
+import { TokenSymbol } from '@/config/tokens';
+import { useMasterWalletContext, useServices } from '@/hooks';
 import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
+import { Nullable } from '@/types';
 
-const EMPTY_STATE: TransactionStep[] = [
-  { status: 'wait', title: 'Create Pearl Wallet' },
-  { status: 'wait', title: 'Transfer funds to the Pearl Wallet' },
-];
+const EMPTY_STATE_STEPS: Record<string, TransactionStep> = {
+  createPearlWallet: { status: 'wait', title: 'Create Pearl Wallet' },
+  transferFunds: {
+    status: 'wait',
+    title: 'Transfer funds to the Pearl Wallet',
+  },
+};
 
 /**
  * Hook to create a Master Safe and transfer funds to it after the swap is completed.
@@ -23,27 +29,37 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     data: masterSafeDetails,
     mutateAsync: createMasterSafe,
   } = useMasterSafeCreationAndTransfer(tokensToBeTransferred);
+  const { selectedAgentConfig } = useServices();
+  const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
+    useMasterWalletContext();
 
-  const isSafeCreated = masterSafeDetails?.isSafeCreated;
+  const hasMasterSafe = !isNil(
+    getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId),
+  );
+  const isSafeCreated = isMasterWalletFetched
+    ? hasMasterSafe || masterSafeDetails?.isSafeCreated
+    : false;
 
   // Check if the swap is completed and tokens are available for transfer
   useEffect(() => {
     if (!isSwapCompleted) return;
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
-    if (masterSafeDetails?.isSafeCreated) return;
+    if (isSafeCreated) return;
 
     createMasterSafe();
   }, [
     isSwapCompleted,
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
-    masterSafeDetails,
+    isSafeCreated,
     createMasterSafe,
   ]);
 
   // Step for creating the Master Safe
-  const masterSafeCreationStep = useMemo<TransactionStep>(() => {
+  const masterSafeCreationStep = useMemo<Nullable<TransactionStep>>(() => {
+    if (isMasterWalletFetched && hasMasterSafe) return null;
+
     const currentMasterSafeCreationStatus = (() => {
       if (!isSwapCompleted) return 'wait';
       if (isErrorMasterSafeCreation) return 'error';
@@ -77,12 +93,14 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
       ],
     };
   }, [
-    isSwapCompleted,
+    isMasterWalletFetched,
+    hasMasterSafe,
+    masterSafeDetails?.txnLink,
     isErrorMasterSafeCreation,
+    createMasterSafe,
+    isSwapCompleted,
     isLoadingMasterSafeCreation,
     isSafeCreated,
-    masterSafeDetails?.txnLink,
-    createMasterSafe,
   ]);
 
   // Step for transferring funds to the Master Safe
@@ -165,12 +183,19 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   if (!isSwapCompleted) {
     return {
       isMasterSafeCreatedAndFundsTransferred: false,
-      steps: EMPTY_STATE,
+      steps: [
+        isMasterWalletFetched && hasMasterSafe
+          ? null
+          : EMPTY_STATE_STEPS.createPearlWallet,
+        EMPTY_STATE_STEPS.transferFunds,
+      ].filter(Boolean),
     };
   }
 
   return {
     isMasterSafeCreatedAndFundsTransferred,
-    steps: [masterSafeCreationStep, masterSafeTransferFundStep],
+    steps: [masterSafeCreationStep, masterSafeTransferFundStep].filter(
+      Boolean,
+    ) as TransactionStep[],
   };
 };

@@ -4,7 +4,7 @@ import { isFunction } from 'lodash';
 import Image from 'next/image';
 import { useCallback } from 'react';
 
-import { SetupScreen } from '@/enums/SetupScreen';
+import { SETUP_SCREEN, SetupScreen } from '@/constants';
 import { useSetup } from '@/hooks/useSetup';
 
 type SetupCreateHeaderProps = {
@@ -25,7 +25,7 @@ export const SetupCreateHeader = ({ prev }: SetupCreateHeaderProps) => {
   }, [goto, prev]);
 
   // If the user killed the app without adding the backup wallet and re-opened the application
-  const showBackButton = prev && prevState !== SetupScreen.Welcome;
+  const showBackButton = prev && prevState !== SETUP_SCREEN.Welcome;
   return (
     <Row>
       <Col span={8}>

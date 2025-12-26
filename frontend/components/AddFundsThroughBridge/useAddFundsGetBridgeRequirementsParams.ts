@@ -6,10 +6,9 @@ import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
 import { BridgeRequest } from '@/types/Bridge';
+import { getFromToken, getTokenDecimal } from '@/utils';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
-
-import { getFromToken, getTokenDecimal } from '../Bridge/utils';
 
 const fromChainConfig = ETHEREUM_TOKEN_CONFIG;
 
@@ -19,18 +18,19 @@ const fromChainConfig = ETHEREUM_TOKEN_CONFIG;
 export const useAddFundsGetBridgeRequirementsParams = (
   destinationAddress?: Address,
 ) => {
-  const { masterEoa, masterSafes } = useMasterWalletContext();
+  const {
+    masterEoa,
+    getMasterSafeOf,
+    isFetched: isMasterWalletFetched,
+  } = useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
   const toChainConfig = TOKEN_CONFIG[asEvmChainId(toMiddlewareChain)];
-  const masterSafe = masterSafes?.find(
-    ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
-  );
 
   return useCallback(
     (tokenAddress: Address, amount: number): BridgeRequest => {
       if (!masterEoa) throw new Error('Master EOA is not available');
-      if (!masterSafe) throw new Error('Master Safe is not available');
+      if (!isMasterWalletFetched) throw new Error('Master Safe not loaded');
 
       const fromToken = getFromToken(
         tokenAddress,
@@ -39,25 +39,35 @@ export const useAddFundsGetBridgeRequirementsParams = (
       );
       const tokenDecimal = getTokenDecimal(tokenAddress, toChainConfig);
 
+      const fromChain = MiddlewareChainMap.ETHEREUM;
+      const masterSafeOnToChain = getMasterSafeOf?.(
+        selectedAgentConfig.evmHomeChainId,
+      );
+
+      if (!masterSafeOnToChain) throw new Error('Master Safe is not available');
+
       return {
         from: {
-          chain: MiddlewareChainMap.ETHEREUM,
+          chain: fromChain,
+          // TODO: check if master safe exists once we support agents on From Chain
           address: masterEoa.address,
           token: fromToken,
         },
         to: {
           chain: toMiddlewareChain,
-          address: destinationAddress ?? masterSafe.address,
+          address: destinationAddress ?? masterSafeOnToChain.address,
           token: tokenAddress,
           amount: parseUnits(amount, tokenDecimal),
         },
       };
     },
     [
-      toMiddlewareChain,
-      toChainConfig,
       masterEoa,
-      masterSafe,
+      isMasterWalletFetched,
+      toChainConfig,
+      getMasterSafeOf,
+      selectedAgentConfig.evmHomeChainId,
+      toMiddlewareChain,
       destinationAddress,
     ],
   );

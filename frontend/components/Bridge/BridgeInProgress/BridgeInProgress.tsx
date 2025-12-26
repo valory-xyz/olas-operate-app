@@ -1,11 +1,13 @@
 import { Flex, Typography } from 'antd';
+import { isNil } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AgentSetupCompleteModal, Alert, CardFlex } from '@/components/ui';
-import { Pages } from '@/enums';
+import { PAGES } from '@/constants';
 import {
   useBridgingSteps,
   useMasterSafeCreationAndTransfer,
+  useMasterWalletContext,
   usePageState,
 } from '@/hooks';
 import {
@@ -13,6 +15,7 @@ import {
   CrossChainTransferDetails,
   Nullable,
 } from '@/types';
+import { asAllEvmChainId } from '@/utils';
 
 import { BridgeTransferFlow } from '../BridgeTransferFlow';
 import { BridgeRetryOutcome, EnabledSteps } from '../types';
@@ -71,11 +74,21 @@ export const BridgeInProgress = ({
     mutateAsync: createMasterSafe,
   } = useMasterSafeCreationAndTransfer(symbols);
 
+  const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
+    useMasterWalletContext();
+
   const canCreateMasterSafeAndTransfer = enabledStepsAfterBridging.includes(
     'masterSafeCreationAndTransfer',
   );
 
-  const isSafeCreated = masterSafeDetails?.isSafeCreated;
+  const hasMasterSafe = isMasterWalletFetched
+    ? !isNil(getMasterSafeOf?.(asAllEvmChainId(toChain)))
+    : false;
+
+  const isSafeCreated = isMasterWalletFetched
+    ? hasMasterSafe || masterSafeDetails?.isSafeCreated
+    : false;
+
   const isTransferCompleted =
     masterSafeDetails?.masterSafeTransferStatus === 'FINISHED';
 
@@ -87,10 +100,14 @@ export const BridgeInProgress = ({
     // if refill is required, do not create master safe.
     if (bridgeRetryOutcome === 'NEED_REFILL') return;
 
-    // if bridging is in progress or if it has failed, do not create master safe.
+    // if bridging is in progress or if it has failed, do not proceed
     if (isBridging) return;
     if (isBridgingFailed) return;
     if (!isBridgingCompleted) return;
+
+    // If master safe already exists, do not create it
+    if (!isMasterWalletFetched) return;
+    if (hasMasterSafe) return;
 
     // if master safe creation is in progress or if it has failed, do not create master safe.
     if (isLoadingMasterSafeCreation) return;
@@ -99,19 +116,20 @@ export const BridgeInProgress = ({
 
     createMasterSafe();
   }, [
-    canCreateMasterSafeAndTransfer,
-    enabledStepsAfterBridging,
     bridgeRetryOutcome,
-    isBridgingCompleted,
-    isBridging,
-    isBridgingFailed,
-    isLoadingMasterSafeCreation,
-    masterSafeDetails,
-    isErrorMasterSafeCreation,
+    canCreateMasterSafeAndTransfer,
     createMasterSafe,
+    hasMasterSafe,
+    isBridging,
+    isBridgingCompleted,
+    isBridgingFailed,
+    isErrorMasterSafeCreation,
+    isLoadingMasterSafeCreation,
+    isMasterWalletFetched,
+    masterSafeDetails?.isSafeCreated,
   ]);
 
-  // Redirect to main page if all 3 steps are completed
+  // Redirect to main page if all required steps are completed
   useEffect(() => {
     // if retry outcome is not null, do not redirect.
     if (bridgeRetryOutcome === 'NEED_REFILL') return;
@@ -121,8 +139,17 @@ export const BridgeInProgress = ({
     if (isBridgingFailed) return;
     if (!isBridgingCompleted) return;
 
+    if (!isMasterWalletFetched) return;
+
+    // If has master safe already exists, we can move to the next stage
+    if (hasMasterSafe && isOnboarding && !isBridgeCompleted) {
+      onNext();
+      return;
+    }
+
     // if master safe creation is not enabled, do not redirect
-    if (!canCreateMasterSafeAndTransfer) {
+    // Only applicable for depositing, not onboarding
+    if (!canCreateMasterSafeAndTransfer && !isOnboarding) {
       onNext();
       return;
     }
@@ -148,7 +175,7 @@ export const BridgeInProgress = ({
     }
 
     // wait for 3 seconds before redirecting to main page.
-    const timeoutId = setTimeout(() => goto(Pages.Main), 3000);
+    const timeoutId = setTimeout(() => goto(PAGES.Main), 3000);
     return () => clearTimeout(timeoutId);
   }, [
     canCreateMasterSafeAndTransfer,
@@ -163,6 +190,8 @@ export const BridgeInProgress = ({
     onNext,
     isOnboarding,
     isBridgeCompleted,
+    hasMasterSafe,
+    isMasterWalletFetched,
   ]);
 
   const onBridgeFailRetry = useCallback(() => {
