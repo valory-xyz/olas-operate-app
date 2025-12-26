@@ -178,7 +178,7 @@ jobs:
             # This is MUCH safer than falling into override mode accidentally
             TAG_SUFFIX=""
             COMMIT_SUFFIX=""
-            DELETE_EXISTING_TAG="true"
+            DELETE_EXISTING_TAG="false"
             TAG_MESSAGE_PREFIX="Feature Release"
             LATEST_RC_NUMBER="${{ steps.get-latest-rc.outputs.latest_rc_number }}"
             NEW_RC_NUMBER=$(( LATEST_RC_NUMBER + 1 ))
