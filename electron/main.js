@@ -24,6 +24,8 @@ const {
   handleTermsAndConditionsWindowShow,
 } = require('./windows/termsAndConditions');
 
+const { nextLogger } = require('./logger');
+
 // Load the self-signed certificate for localhost HTTPS requests
 loadLocalCertificate();
 
@@ -577,25 +579,30 @@ const createOnRampWindow = async (amountToPay) => {
 };
 
 function removeQuarantine(filePath) {
-      try {
-        execSync(`xattr -p com.apple.quarantine "${filePath}"`, { stdio: 'ignore' });
-        execSync(`xattr -d com.apple.quarantine "${filePath}"`);
-        logger.electron(`Removed quarantine attribute from ${filePath}`);
-      } catch (e) {
-      }
-    }
-
+  try {
+    const { execSync } = require('child_process');
+    execSync(`xattr -p com.apple.quarantine "${filePath}"`, {
+      stdio: 'ignore',
+    });
+    execSync(`xattr -d com.apple.quarantine "${filePath}"`);
+    logger.electron(`Removed quarantine attribute from ${filePath}`);
+  } catch (e) {
+    logger.electron(
+      `Failed to remove quarantine attribute from ${filePath}: ${e}`,
+    );
+  }
+}
 
 async function launchDaemon() {
   const check = new Promise(function (resolve, _reject) {
     const { keyPath, certPath } = createAndLoadSslCertificate();
 
-    const { execSync } = require('child_process');
-
-    
-    const binPath = path.join(process.resourcesPath, binaryPaths[platform][process.arch.toString()]);
+    const binPath = path.join(
+      process.resourcesPath,
+      binaryPaths[platform][process.arch.toString()],
+    );
     if (platform === 'darwin') {
-        removeQuarantine(binPath);
+      removeQuarantine(binPath);
     }
 
     operateDaemon = spawn(
@@ -850,6 +857,10 @@ ipcMain.on('open-path', (_, filePath) => {
  */
 ipcMain.handle('log-event', (_event, message) => {
   logger.electron(message);
+});
+
+ipcMain.handle('next-log-error', (_event, error, errorInfo) => {
+  nextLogger.error(error, errorInfo);
 });
 
 /**
