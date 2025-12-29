@@ -47,7 +47,6 @@ import {
 
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
-  balances: Optional<AddressBalanceRecord>;
   refillRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
   getRefillRequirementsOf: (
     chainId: EvmChainId,
@@ -74,7 +73,6 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   resetQueryCache: () => void;
 }>({
   isBalancesAndFundingRequirementsLoading: false,
-  balances: undefined,
   refillRequirements: undefined,
   getRefillRequirementsOf: () => null,
   totalRequirements: undefined,
@@ -240,16 +238,6 @@ export const BalancesAndRefillRequirementsProvider = ({
     refetchInterval,
   });
 
-  const balances = useMemo(() => {
-    if (isBalancesAndFundingRequirementsLoading) return;
-    if (!balancesAndFundingRequirements) return;
-    return balancesAndFundingRequirements.balances[asMiddlewareChain(chainId)];
-  }, [
-    isBalancesAndFundingRequirementsLoading,
-    chainId,
-    balancesAndFundingRequirements,
-  ]);
-
   const getRefillRequirementsOf = useCallback(
     <T extends AddressBalanceRecord | MasterSafeBalanceRecord>(
       chainId: EvmChainId,
@@ -375,7 +363,6 @@ export const BalancesAndRefillRequirementsProvider = ({
         isBalancesAndFundingRequirementsLoading,
         refillRequirements,
         getRefillRequirementsOf,
-        balances,
         totalRequirements,
         agentFundingRequests,
         canStartAgent:
