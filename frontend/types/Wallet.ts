@@ -2,8 +2,9 @@ import { TokenSymbol } from '@/config/tokens';
 import { EvmChainId, MiddlewareChain } from '@/constants';
 
 import { Address } from './Address';
-import { AddressTxnRecord } from './Records';
 import { Nullable } from './Util';
+
+export type AddressTxnRecord = Record<Address, `0x${string}`>;
 
 export type SafeCreationResponse = {
   safe: Address;
