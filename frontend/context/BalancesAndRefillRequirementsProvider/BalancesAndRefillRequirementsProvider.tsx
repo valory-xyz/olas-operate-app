@@ -31,7 +31,7 @@ import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
-import { BalanceService } from '@/service/balances';
+import { BalanceService } from '@/service/Balance';
 import {
   AddressBalanceRecord,
   BalancesAndFundingRequirements,
