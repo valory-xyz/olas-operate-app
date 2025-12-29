@@ -222,8 +222,8 @@ export const useGetBridgeRequirementsParams = (
       defaultFromToken,
       isBalancesAndFundingRequirementsLoading,
       toMiddlewareChain,
-      getUpdatedBridgeRequirementsParams,
       masterSafe,
+      getUpdatedBridgeRequirementsParams,
     ],
   );
 };

@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { compact, isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -43,10 +43,8 @@ const getTokensDetailsForFunding = (
   requirementsPerToken: { [tokenAddress: Address]: bigint },
   chainConfig: ChainTokenConfig,
 ) => {
-  const currentTokenRequirements: TokenRequirement[] = Object.entries(
-    requirementsPerToken,
-  )
-    .map(([tokenAddress, amount]) => {
+  const currentTokenRequirements: TokenRequirement[] = compact(
+    Object.entries(requirementsPerToken).map(([tokenAddress, amount]) => {
       const { symbol, decimals, iconSrc } = getTokenMeta(
         tokenAddress as Address,
         chainConfig,
@@ -60,8 +58,8 @@ const getTokensDetailsForFunding = (
           iconSrc: ICON_OVERRIDES[symbol] || iconSrc,
         };
       }
-    })
-    .filter(Boolean) as TokenRequirement[];
+    }),
+  ) satisfies TokenRequirement[];
 
   return currentTokenRequirements.sort((a, b) => b.amount - a.amount);
 };

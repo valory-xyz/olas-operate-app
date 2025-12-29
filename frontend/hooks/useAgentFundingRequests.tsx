@@ -57,11 +57,8 @@ const getFormattedTokensList = (
 export const useAgentFundingRequests = () => {
   const { selectedAgentConfig, selectedService } = useServices();
   const { serviceEoa } = useService(selectedService?.service_config_id);
-  const {
-    agentFundingRequests,
-    isBalancesAndFundingRequirementsLoading,
-    isAgentFundingRequestsStale,
-  } = useBalanceAndRefillRequirementsContext();
+  const { agentFundingRequests, isAgentFundingRequestsStale } =
+    useBalanceAndRefillRequirementsContext();
 
   /**
    * Merges amounts for the same token address by summing their BigInt values.
@@ -121,9 +118,6 @@ export const useAgentFundingRequests = () => {
   }, [agentFundingRequests, isAgentFundingRequestsStale, serviceEoa?.address]);
 
   return {
-    isLoading: isBalancesAndFundingRequirementsLoading,
-    /** All requirements, organized by wallet then by token address: {[walletAddress]: {[tokenAddress]: amount}} */
-    agentFundingRequests,
     /** Consolidated requirements per token address: {[tokenAddress]: totalAmount} */
     agentTokenRequirements,
     /** Requirements for service EOA address only: {[tokenAddress]: amount} */

@@ -105,11 +105,12 @@ export const getInitialDepositForMasterSafe = (
       );
       if (!masterSafeRequirementForService) return acc;
 
-      for (const [tokenAddress, amount] of entries(
+      for (const [untypedTokenAddress, amount] of entries(
         masterSafeRequirementForService,
       )) {
-        acc[tokenAddress as Address] = (
-          BigInt(acc[tokenAddress as Address] || 0) + BigInt(amount)
+        const tokenAddress = untypedTokenAddress as Address;
+        acc[tokenAddress] = (
+          BigInt(acc[tokenAddress] || 0) + BigInt(amount)
         ).toString();
       }
       return acc;

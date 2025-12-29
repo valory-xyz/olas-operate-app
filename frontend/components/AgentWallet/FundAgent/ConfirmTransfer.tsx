@@ -27,7 +27,7 @@ import {
   FundService,
   type TokenAmountMap,
 } from '@/service/Fund';
-import { Address, TokenAmounts, TokenBalanceRecord } from '@/types';
+import { Address, Maybe, TokenAmounts, TokenBalanceRecord } from '@/types';
 import { bigintMin } from '@/utils';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
@@ -150,7 +150,7 @@ const prepareAgentFundsForTransfer = ({
   middlewareHomeChainId: MiddlewareChain;
   serviceSafe: { address: Address };
   serviceEoa: { address: Address };
-  eoaTokenRequirements?: TokenBalanceRecord | null;
+  eoaTokenRequirements: Maybe<TokenBalanceRecord>;
 }): ChainFunds => {
   const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(middlewareHomeChainId)];
   const tokenAmountsByAddress: TokenAmountMap = {};
