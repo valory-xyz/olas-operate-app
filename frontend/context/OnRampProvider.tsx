@@ -111,7 +111,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsBuyCryptoBtnLoading(loading);
   }, []);
 
-  const [mode, setMode] = useState<'onboarding' | 'depositing'>('onboarding');
   const [networkConfig, setNetworkConfig] = useState<OnRampNetworkConfig>({
     networkId: null,
     networkName: null,
@@ -146,15 +145,16 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     // Get the master safe (in case it exists) or master EOA balance of the network to on-ramp
     const hasMasterSafe = getMasterSafeOf?.(networkId);
     const balance = hasMasterSafe
-      ? Number(
-          getMasterSafeNativeBalanceOf(networkId)?.[0]?.balanceString ?? '0',
-        )
+      ? (getMasterSafeNativeBalanceOf(networkId)?.[0]?.balanceString ?? '0')
       : getMasterEoaNativeBalanceOf(networkId);
     if (!balance) return;
 
     // If the balance is greater than or equal to 90% of the ETH amount to pay,
     // considering that the user has received the funds after on-ramping.
-    if (balance >= ethTotalAmountRequired * ETH_RECEIVED_THRESHOLD) {
+    if (
+      BigInt(balance) >=
+      BigInt(Math.floor(ethTotalAmountRequired * ETH_RECEIVED_THRESHOLD))
+    ) {
       updateIsBuyCryptoBtnLoading(false);
       setHasFundsReceivedAfterOnRamp(true);
       setIsOnRampingTransactionSuccessful(true);

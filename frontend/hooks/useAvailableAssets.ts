@@ -32,7 +32,7 @@ export const useAvailableAssets = (
     isLoaded,
     getMasterSafeNativeBalanceOf,
     getMasterSafeErc20BalancesInStr,
-    getMasterEoaNativeBalanceOfInStr,
+    getMasterEoaNativeBalanceOf,
     getMasterSafeOlasBalanceOfInStr,
   } = useMasterBalances();
 
@@ -48,7 +48,6 @@ export const useAvailableAssets = (
 
         const balance = (() => {
           // balance for OLAS
-
           if (symbol === TokenSymbolMap.OLAS) {
             return sumBigNumbers(
               compact([
@@ -68,7 +67,7 @@ export const useAvailableAssets = (
                 ({ balanceString }) => balanceString,
               ) ?? [];
             const masterEoaNativeBalanceInStr = includeMasterEoa
-              ? getMasterEoaNativeBalanceOfInStr(walletChainId)
+              ? getMasterEoaNativeBalanceOf(walletChainId)
               : '0';
 
             return sumBigNumbers(
@@ -88,6 +87,7 @@ export const useAvailableAssets = (
         const asset: AvailableAsset = {
           address,
           symbol,
+          /** @deprecated Use amountString instead */
           amount: Number(balance),
           amountString: balance,
         };
@@ -101,7 +101,7 @@ export const useAvailableAssets = (
     totalStakingRewards,
     getMasterSafeNativeBalanceOf,
     includeMasterEoa,
-    getMasterEoaNativeBalanceOfInStr,
+    getMasterEoaNativeBalanceOf,
   ]);
 
   return {
