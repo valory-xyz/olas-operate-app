@@ -24,11 +24,10 @@ const useRefillRequirement = (wallet?: WalletBalance) => {
   if ('master_safe' in refillRequirements) return;
 
   const requirement = refillRequirements[wallet.walletAddress]?.[AddressZero];
-  if (isNil(requirement)) return;
   return requirement;
 };
 
-const formatRequirement = (requirement: string | undefined) => {
+const formatRequirement = (requirement?: string) => {
   if (isNil(requirement)) return;
   return formatUnitsToNumber(requirement);
 };

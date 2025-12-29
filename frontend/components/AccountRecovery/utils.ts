@@ -115,13 +115,13 @@ export const parseRecoveryFundingRequirements = (
           chainName: chain,
           symbol,
           totalAmount: Number(
-            formatUnitsToNumber(String(totalAmount ?? 0), decimals),
+            formatUnitsToNumber(BigInt(totalAmount ?? 0), decimals),
           ),
           pendingAmount: Number(
-            formatUnitsToNumber(String(refillAmount), decimals),
+            formatUnitsToNumber(BigInt(refillAmount), decimals),
           ),
           iconSrc: ChainImageMap[evmChainId],
-          areFundsReceived: refillAmount === 0,
+          areFundsReceived: BigInt(refillAmount) === BigInt(0),
         });
       }
     }
