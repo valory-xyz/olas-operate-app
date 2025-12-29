@@ -95,7 +95,7 @@ export const getInitialDepositForMasterSafe = (
   );
   if (!refillRequirements) return;
 
-  // Total of refill requiremnts across all the services on the chain
+  // Total of refill requirements across all the services on the chain
   const masterSafeRefillRequirement = refillRequirements.reduce(
     (acc, refillRequirementForService) => {
       if (!refillRequirementForService) return acc;

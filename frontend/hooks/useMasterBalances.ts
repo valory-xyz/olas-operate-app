@@ -13,24 +13,24 @@ import { Optional, WalletBalance } from '@/types';
 import { areAddressesEqual, formatUnitsToNumber, sumBigNumbers } from '@/utils';
 
 /** Check if a balance requires funding (greater than 0) */
-const requiresFund = (balance: number | undefined) => {
+const requiresFund = (balance: string | undefined) => {
   if (isNil(balance)) return false;
-  return isFinite(balance) && balance > 0;
+  return BigInt(balance) > BigInt(0);
 };
 
 const useRefillRequirement = (wallet?: WalletBalance) => {
   const { refillRequirements } = useBalanceAndRefillRequirementsContext();
   if (!refillRequirements || !wallet) return;
-  const requirement = (
-    refillRequirements as Record<string, Record<string, number> | undefined>
-  )[wallet.walletAddress]?.[AddressZero];
+  if ('master_safe' in refillRequirements) return;
+
+  const requirement = refillRequirements[wallet.walletAddress]?.[AddressZero];
   if (isNil(requirement)) return;
   return requirement;
 };
 
-const formatRequirement = (requirement: number | undefined) => {
+const formatRequirement = (requirement: string | undefined) => {
   if (isNil(requirement)) return;
-  return formatUnitsToNumber(`${requirement}`);
+  return formatUnitsToNumber(requirement);
 };
 
 /**
