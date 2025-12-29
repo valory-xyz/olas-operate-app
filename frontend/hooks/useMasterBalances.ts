@@ -165,7 +165,7 @@ export const useMasterBalances = () => {
   /** Get the master Safe OLAS balance as a string */
   const getMasterSafeOlasBalanceOfInStr = useCallback(
     (chainId: EvmChainId) => {
-      return _getMasterSafeOlasBalanceOfCalc(chainId) as Optional<string>;
+      return _getMasterSafeOlasBalanceOfCalc(chainId);
     },
     [_getMasterSafeOlasBalanceOfCalc],
   );
