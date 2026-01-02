@@ -26,13 +26,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.27.5-rc.2',
+  service_version: 'v0.27.7',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.27.5-rc.2',
+      version: 'v0.27.7',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
@@ -617,7 +617,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
 export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PettAi,
   name: 'pett_agent',
-  hash: 'bafybeiabumpvdgnqecm4prum2njeslcf2ibcvc2y6m7ldv2evgmef6opam',
+  hash: 'bafybeiebj5n56dvxyxp6ml53hkgiawnnyzikshmd6kvd5foaitcknx3m4q',
   description: 'Pett.ai autonomous agent service for virtual pet management.',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
