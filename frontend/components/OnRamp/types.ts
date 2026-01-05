@@ -1,7 +1,7 @@
 import { EvmChainId } from '@/constants';
 import { Nullable } from '@/types';
 
-export type OnRampMode = 'onboarding' | 'depositing';
+export type OnRampMode = 'onboard' | 'deposit';
 
 export type OnRampNetworkConfig = {
   networkId: Nullable<EvmChainId>;

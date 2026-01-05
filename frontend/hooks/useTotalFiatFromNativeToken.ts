@@ -7,6 +7,7 @@ import {
   SupportedMiddlewareChain,
 } from '@/constants';
 import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
+import { ensureRequired } from '@/types';
 import { asMiddlewareChain } from '@/utils';
 
 type FeeBreakdownItem = {
@@ -79,16 +80,10 @@ export const useTotalFiatFromNativeToken = ({
   nativeTokenAmount,
   selectedChainId,
 }: UseTotalFiatFromNativeTokenProps) => {
-  const selectedChainName = selectedChainId
-    ? asMiddlewareChain(selectedChainId)
-    : null;
-  const fromChain = selectedChainName
-    ? asMiddlewareChain(onRampChainMap[selectedChainName])
-    : null;
-
-  if (!fromChain) {
-    throw new Error(`Invalid fromChain: ${fromChain}`);
-  }
+  const selectedChainName = asMiddlewareChain(
+    ensureRequired(selectedChainId, "Chain ID can't be empty"),
+  );
+  const fromChain = asMiddlewareChain(onRampChainMap[selectedChainName]);
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(fromChain, nativeTokenAmount!),

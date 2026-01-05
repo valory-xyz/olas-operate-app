@@ -59,7 +59,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
     ) {
       // Only create master safe during onboarding if it doesn't exist
       canCreateMasterSafeAndTransferRef.current =
-        mode === 'onboarding' && !hasMasterSafe;
+        mode === 'onboard' && !hasMasterSafe;
     }
   }, [hasMasterSafe, isMasterWalletFetched, mode]);
 

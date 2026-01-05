@@ -111,7 +111,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsBuyCryptoBtnLoading(loading);
   }, []);
 
-  const [mode, setMode] = useState<'onboarding' | 'depositing'>('onboarding');
   const [networkConfig, setNetworkConfig] = useState<OnRampNetworkConfig>({
     networkId: null,
     networkName: null,

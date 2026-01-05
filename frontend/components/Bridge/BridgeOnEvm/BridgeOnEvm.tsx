@@ -12,8 +12,6 @@ const { Text, Title } = Typography;
 
 const FROM_CHAIN_NAME = 'Ethereum';
 const FROM_CHAIN_IMAGE = '/chains/ethereum-chain.png';
-const BRIDGE_FROM_DESCRIPTION =
-  'Send the specified amounts from your external wallet to the Pearl Wallet address below. Pearl will automatically detect your transfer and bridge the funds for you.';
 
 type BridgeOnEvmProps = {
   bridgeToChain: MiddlewareChain;
@@ -51,7 +49,9 @@ export const BridgeOnEvm = ({
           Step 1. Send Funds
         </Title>
         <Text className="text-base text-lighter">
-          {BRIDGE_FROM_DESCRIPTION}
+          Send the specified amounts from your external wallet to the Pearl
+          Wallet address below. Pearl will automatically detect your transfer
+          and bridge the funds for you.
         </Text>
 
         {address && (
