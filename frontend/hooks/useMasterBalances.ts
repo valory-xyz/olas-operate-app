@@ -13,7 +13,7 @@ import { Optional, WalletBalance } from '@/types';
 import { areAddressesEqual, formatUnitsToNumber, sumBigNumbers } from '@/utils';
 
 /** Check if a balance requires funding (greater than 0) */
-const requiresFund = (balance: string | undefined) => {
+const requiresFund = (balance?: string) => {
   if (isNil(balance)) return false;
   return BigInt(balance) > BigInt(0);
 };

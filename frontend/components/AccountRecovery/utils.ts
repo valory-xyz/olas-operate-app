@@ -121,7 +121,7 @@ export const parseRecoveryFundingRequirements = (
             formatUnitsToNumber(BigInt(refillAmount), decimals),
           ),
           iconSrc: ChainImageMap[evmChainId],
-          areFundsReceived: BigInt(refillAmount) === BigInt(0),
+          areFundsReceived: BigInt(refillAmount) === 0n,
         });
       }
     }

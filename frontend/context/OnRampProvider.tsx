@@ -15,7 +15,7 @@ import {
   usePageState,
 } from '@/hooks';
 import { Nullable } from '@/types';
-import { delayInSeconds } from '@/utils';
+import { delayInSeconds, parseEther } from '@/utils';
 
 const ETH_RECEIVED_THRESHOLD = 0.95;
 
@@ -149,11 +149,14 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
       : getMasterEoaNativeBalanceOf(networkId);
     if (!balance) return;
 
-    // If the balance is greater than or equal to 90% of the ETH amount to pay,
+    const thresholdAmount = (
+      ethTotalAmountRequired * ETH_RECEIVED_THRESHOLD
+    ).toString();
+    // If the balance is greater than or equal to 95% of the ETH amount to pay,
     // considering that the user has received the funds after on-ramping.
     if (
-      BigInt(balance) >=
-      BigInt(Math.floor(ethTotalAmountRequired * ETH_RECEIVED_THRESHOLD))
+      BigInt(parseEther(balance.toString())) >=
+      BigInt(parseEther(thresholdAmount))
     ) {
       updateIsBuyCryptoBtnLoading(false);
       setHasFundsReceivedAfterOnRamp(true);
