@@ -45,7 +45,7 @@ export const BridgeInProgress = ({
   onNext,
   areAllStepsCompleted = false,
   eta,
-  mode = 'depositing',
+  mode = 'deposit',
 }: BridgeInProgressProps) => {
   const { goto } = usePageState();
   const symbols = transfers.map((transfer) => transfer.toSymbol);
