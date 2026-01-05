@@ -61,7 +61,11 @@ type ElectronApiContextProps = {
   >;
   openPath?: (filePath: string) => void;
   onRampWindow?: {
-    show?: (amountToPay: number) => void;
+    show?: (
+      amountToPay: number,
+      networkName?: string,
+      cryptoCurrencyCode?: string,
+    ) => void;
     close?: () => void;
     /**
      * @deprecated On-ramp window will be closed automatically

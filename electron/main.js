@@ -516,7 +516,11 @@ function createAndLoadSslCertificate() {
  * Create the on-ramping window for displaying transak iframe
  */
 /** @type {()=>Promise<BrowserWindow|undefined>} */
-const createOnRampWindow = async (amountToPay) => {
+const createOnRampWindow = async (
+  amountToPay,
+  networkName,
+  cryptoCurrencyCode,
+) => {
   if (!getOnRampWindow() || getOnRampWindow().isDestroyed) {
     onRampWindow = new BrowserWindow({
       title: 'Buy Crypto on Transak',
@@ -548,6 +552,12 @@ const createOnRampWindow = async (amountToPay) => {
     if (amountToPay) {
       onRampQuery.append('amount', amountToPay.toString());
     }
+    if (networkName) {
+      onRampQuery.append('networkName', networkName);
+    }
+    if (cryptoCurrencyCode) {
+      onRampQuery.append('cryptoCurrencyCode', cryptoCurrencyCode);
+    }
     const onRampUrl = `${nextUrl()}/onramp?${onRampQuery.toString()}`;
     logger.electron(`OnRamp URL: ${onRampUrl}`);
 
@@ -577,14 +587,14 @@ const createOnRampWindow = async (amountToPay) => {
 };
 
 function removeQuarantine(filePath) {
-      try {
-        execSync(`xattr -p com.apple.quarantine "${filePath}"`, { stdio: 'ignore' });
-        execSync(`xattr -d com.apple.quarantine "${filePath}"`);
-        logger.electron(`Removed quarantine attribute from ${filePath}`);
-      } catch (e) {
-      }
-    }
-
+  try {
+    execSync(`xattr -p com.apple.quarantine "${filePath}"`, {
+      stdio: 'ignore',
+    });
+    execSync(`xattr -d com.apple.quarantine "${filePath}"`);
+    logger.electron(`Removed quarantine attribute from ${filePath}`);
+  } catch (e) {}
+}
 
 async function launchDaemon() {
   const check = new Promise(function (resolve, _reject) {
@@ -592,10 +602,12 @@ async function launchDaemon() {
 
     const { execSync } = require('child_process');
 
-    
-    const binPath = path.join(process.resourcesPath, binaryPaths[platform][process.arch.toString()]);
+    const binPath = path.join(
+      process.resourcesPath,
+      binaryPaths[platform][process.arch.toString()],
+    );
     if (platform === 'darwin') {
-        removeQuarantine(binPath);
+      removeQuarantine(binPath);
     }
 
     operateDaemon = spawn(
@@ -855,15 +867,20 @@ ipcMain.handle('log-event', (_event, message) => {
 /**
  * OnRamp window handlers
  */
-ipcMain.handle('onramp-window-show', (_event, amountToPay) => {
-  logger.electron('onramp-window-show');
+ipcMain.handle(
+  'onramp-window-show',
+  (_event, amountToPay, networkName, cryptoCurrencyCode) => {
+    logger.electron('onramp-window-show');
 
-  if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) {
-    createOnRampWindow(amountToPay)?.then((window) => window.show());
-  } else {
-    getOnRampWindow()?.show();
-  }
-});
+    if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) {
+      createOnRampWindow(amountToPay, networkName, cryptoCurrencyCode)?.then(
+        (window) => window.show(),
+      );
+    } else {
+      getOnRampWindow()?.show();
+    }
+  },
+);
 
 ipcMain.handle('onramp-window-close', () => {
   logger.electron('onramp-window-close');
