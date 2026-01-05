@@ -50,7 +50,7 @@ async function checkServiceTemplates(): Promise<void> {
 
     // Check 3: packages.json and service.yaml
     const packagesUrl = `https://raw.githubusercontent.com/${owner}/${repoName}/refs/tags/${version}/packages/packages.json`;
-    const packagesUrlOlasSdk = `https://raw.githubusercontent.com/${owner}/${repoName}/refs/heads/main/olas-sdk-starter/packages/packages.json`;
+    const packagesUrlOlasSdk = `https://raw.githubusercontent.com/${owner}/${repoName}/refs/tags/${version}/olas-sdk-starter/packages/packages.json`;
     try {
       let packagesResponse = await fetch(packagesUrl);
       if (!packagesResponse.ok) {
