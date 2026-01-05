@@ -63,8 +63,8 @@ type ElectronApiContextProps = {
   onRampWindow?: {
     show?: (
       amountToPay: number,
-      networkName?: string,
-      cryptoCurrencyCode?: string,
+      networkName: string,
+      cryptoCurrencyCode: string,
     ) => void;
     close?: () => void;
     /**
