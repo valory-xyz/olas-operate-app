@@ -633,7 +633,7 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChainMap.BASE,
   configurations: {
     [MiddlewareChainMap.BASE]: {
-      staking_program_id: STAKING_PROGRAM_IDS.PettAiAgent,
+      staking_program_id: STAKING_PROGRAM_IDS.PettAiAgent3,
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 80,
