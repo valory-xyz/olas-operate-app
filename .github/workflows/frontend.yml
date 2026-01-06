@@ -68,3 +68,6 @@ jobs:
       # Test
       # - name: Test
       # run: yarn test:frontend
+
+      - name: Check service templates
+        run: cd frontend && npx tsx ../scripts/js/check_service_templates.ts
