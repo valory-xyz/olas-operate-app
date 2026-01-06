@@ -170,4 +170,5 @@ jobs:
         run: |
           export GITHUB_REF_TYPE="tag"
           export GITHUB_REF_NAME="${RELEASE_TAG}"
+          export GITHUB_REF="refs/tags/${RELEASE_TAG}"
           make build

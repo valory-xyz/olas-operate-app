@@ -240,4 +240,5 @@ jobs:
           echo "CELO_RPC=https://forno.celo.org" >> .env
           export GITHUB_REF_TYPE="tag"
           export GITHUB_REF_NAME="${RELEASE_TAG}"
+          export GITHUB_REF="refs/tags/${RELEASE_TAG}"
           node build.js
