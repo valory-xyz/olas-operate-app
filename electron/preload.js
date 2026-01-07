@@ -73,4 +73,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   web3AuthSwapOwnerWindow,
   termsAndConditionsWindow,
   logEvent: (message) => ipcRenderer.invoke('log-event', message),
+  nextLogError: (error, errorInfo) =>
+    ipcRenderer.invoke('next-log-error', error, errorInfo),
 });

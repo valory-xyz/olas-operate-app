@@ -96,6 +96,7 @@ type ElectronApiContextProps = {
     close?: () => void;
   };
   logEvent?: (message: string) => void;
+  nextLogError?: (error: Error, errorInfo: unknown) => void;
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -142,6 +143,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     close: () => {},
   },
   logEvent: () => {},
+  nextLogError: () => {},
 });
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
@@ -214,6 +216,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           show: getElectronApiFunction('termsAndConditionsWindow.show'),
         },
         logEvent: getElectronApiFunction('logEvent'),
+        nextLogError: getElectronApiFunction('nextLogError'),
       }}
     >
       {children}
