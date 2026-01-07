@@ -11,5 +11,5 @@ export const SetupOnRamp = () => {
     gotoSetup(prevState ?? SETUP_SCREEN.FundYourAgent);
   }, [gotoSetup, prevState]);
 
-  return <OnRamp mode="onboarding" handleBack={handleBack} />;
+  return <OnRamp mode="onboard" handleBack={handleBack} />;
 };

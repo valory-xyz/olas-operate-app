@@ -9,9 +9,14 @@ on:
         type: string
         default: ''
       version_strategy:
-        description: 'Version calculation strategy: increment, override, or production'
+        description: 'Version calculation strategy: increment, override, production-rc, or production-release'
         required: true
         type: string
+      base_version_from_branch:
+        description: 'If true, extract base version from branch name (e.g., release/v1.1.1 -> 1.1.1)'
+        required: false
+        type: boolean
+        default: false
     outputs:
       new_tag:
         description: 'The newly calculated tag name'
@@ -47,8 +52,32 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
+      - name: Extract version from branch name
+        id: branch-version
+        if: inputs.base_version_from_branch == true
+        run: |
+          # Determine the branch name
+          if [ -n "${{ inputs.branch }}" ]; then
+            BRANCH_NAME="${{ inputs.branch }}"
+          else
+            BRANCH_NAME="${GITHUB_REF_NAME}"
+          fi
+          
+          # Extract version from branch name (e.g., release/v1.2.3 -> 1.2.3)
+          # Support formats: release/v1.2.3, release/1.2.3, v1.2.3, 1.2.3
+          if [[ "$BRANCH_NAME" =~ (release/)?v?([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            BASE_VERSION="${BASH_REMATCH[2]}"
+            echo "Extracted version $BASE_VERSION from branch: $BRANCH_NAME"
+            echo "base_version=$BASE_VERSION" | tee -a $GITHUB_OUTPUT
+          else
+            echo "ERROR: Failed to extract version from branch name: $BRANCH_NAME"
+            echo "Expected format: release/vX.Y.Z or release/X.Y.Z"
+            exit 1
+          fi
+
       - name: Extract version info from package.json
         id: pkg-version
+        if: inputs.base_version_from_branch == false
         run: |
           # Read the "version" field from package.json using Node.
           # Example output: "1.2.3-rc4" or "1.2.3"
@@ -84,7 +113,11 @@ jobs:
           # Fetch all tags
           git fetch --tags || true
           
-          BASE_VERSION="${{ steps.pkg-version.outputs.base_version }}"
+          if [ "${{ inputs.base_version_from_branch }}" = "true" ]; then
+            BASE_VERSION="${{ steps.branch-version.outputs.base_version }}"
+          else
+            BASE_VERSION="${{ steps.pkg-version.outputs.base_version }}"
+          fi
           
           # Get the latest RC tag for this base version (format: vX.Y.Z-rcN)
           LATEST_RC_TAG=$(git tag -l "v${BASE_VERSION}-rc*" | sort -V | tail -1)
@@ -105,35 +138,48 @@ jobs:
         id: calculate-version
         run: |
           STRATEGY="${{ inputs.version_strategy }}"
-          BASE_VERSION="${{ steps.pkg-version.outputs.base_version }}"
+          
+          if [ "${{ inputs.base_version_from_branch }}" = "true" ]; then
+            BASE_VERSION="${{ steps.branch-version.outputs.base_version }}"
+          else
+            BASE_VERSION="${{ steps.pkg-version.outputs.base_version }}"
+          fi
           
           # Set tag suffix, commit message suffix, delete tag flag, and message prefix based on strategy
-          if [ "$STRATEGY" = "production" ]; then
+          if [ "$STRATEGY" = "production-release" ]; then
+            # Production release: no RC number
             TAG_SUFFIX="-signed"
             COMMIT_SUFFIX="[skip release]"
             DELETE_EXISTING_TAG="false"
             TAG_MESSAGE_PREFIX="Production Release"
-          else
-            TAG_SUFFIX=""
-            COMMIT_SUFFIX=""
-            DELETE_EXISTING_TAG="true"
-            TAG_MESSAGE_PREFIX="Feature Release"
-          fi
-          
-          if [ "$STRATEGY" = "production" ]; then
-            # Production: always increment from latest RC
+            NEW_VERSION="$BASE_VERSION"
+            NEW_TAG="v$NEW_VERSION$TAG_SUFFIX"
+          elif [ "$STRATEGY" = "production-rc" ]; then
+            # Production RC strategy: increment RC number for release branches
+            TAG_SUFFIX="-signed"
+            COMMIT_SUFFIX="[skip release]"
+            DELETE_EXISTING_TAG="false"
+            TAG_MESSAGE_PREFIX="Production RC Release"
             LATEST_RC_NUMBER="${{ steps.get-latest-rc.outputs.latest_rc_number }}"
             NEW_RC_NUMBER=$((LATEST_RC_NUMBER + 1))
             NEW_VERSION="$BASE_VERSION-rc$NEW_RC_NUMBER"
             NEW_TAG="v$NEW_VERSION$TAG_SUFFIX"
           elif [ "$STRATEGY" = "override" ]; then
             # Override: use the same RC/version as package.json (dangerous)
+            TAG_SUFFIX=""
+            COMMIT_SUFFIX=""
+            DELETE_EXISTING_TAG="true"
+            TAG_MESSAGE_PREFIX="Feature Release"
             NEW_RC_NUMBER="${{ steps.pkg-version.outputs.rc_number }}"
             NEW_VERSION="${{ steps.pkg-version.outputs.package_version }}"
             NEW_TAG="v$NEW_VERSION$TAG_SUFFIX"
           else
             # Default behavior: increment
             # This is MUCH safer than falling into override mode accidentally
+            TAG_SUFFIX=""
+            COMMIT_SUFFIX=""
+            DELETE_EXISTING_TAG="false"
+            TAG_MESSAGE_PREFIX="Feature Release"
             LATEST_RC_NUMBER="${{ steps.get-latest-rc.outputs.latest_rc_number }}"
             NEW_RC_NUMBER=$(( LATEST_RC_NUMBER + 1 ))
             NEW_VERSION="$BASE_VERSION-rc$NEW_RC_NUMBER"

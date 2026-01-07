@@ -157,10 +157,8 @@ export const DepositForBridging = ({
     canPollForBridgeRefillRequirements,
   );
 
-  /**
-   * fetch bridge refill requirements manually on mount, this is to ensure
-   * that stale values aren't shown - in case a user visits the bridging page again
-   */
+  // fetch bridge refill requirements manually on mount, this is to ensure
+  // that stale values aren't shown - in case a user visits the bridging page again
   useEffect(() => {
     if (!isBridgeRefillRequirementsApiLoading) return;
 

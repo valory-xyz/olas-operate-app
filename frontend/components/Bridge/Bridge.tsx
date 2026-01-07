@@ -38,7 +38,7 @@ type BridgeProps = {
  * - Handles retry outcomes and updates the UI accordingly.
  */
 export const Bridge = ({
-  mode = 'depositing',
+  mode = 'deposit',
   bridgeToChain,
   getBridgeRequirementsParams,
   onPrevBeforeBridging,

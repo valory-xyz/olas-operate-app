@@ -28,7 +28,7 @@ export const SetupBridgeOnboarding = () => {
   return (
     <Flex vertical className="pt-36">
       <Bridge
-        mode="onboarding"
+        mode="onboard"
         bridgeToChain={toMiddlewareChain}
         getBridgeRequirementsParams={getBridgeRequirementsParams}
         onPrevBeforeBridging={handlePrevStep}
