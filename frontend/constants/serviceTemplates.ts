@@ -26,13 +26,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.27.5-rc.2',
+  service_version: 'v0.27.7',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.27.5-rc.2',
+      version: 'v0.27.7',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
@@ -163,17 +163,17 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   | 'service_version'
   | 'agent_release'
 > = {
-  hash: 'bafybeien6f3yzrn4e4vqoqsrddfwvr3i7ys7rft3h4ysp3il6qlhwm4hgq',
+  hash: 'bafybeiawqqwkoeovm453mscwkxvmtnvaanhatlqh52cf5sdqavz6ldybae',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
-  service_version: 'v2.0.1',
+  service_version: 'v2.0.2',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'meme-ooorr',
-      version: 'v2.0.1',
+      version: 'v2.0.2',
     },
   },
   env_variables: {
@@ -301,14 +301,14 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeieisqmvuomqxr6dkcicxnht3befgrqfhuxwweuotyw4ldvmrcffre',
-  service_version: 'v0.6.0-rc.1',
+  hash: 'bafybeidkdnfrueiivrdzrqo67np3w4gsubu5vb6lqxabsx3ulozvj7jtmq',
+  service_version: 'v0.6.4',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.6.0-rc.1',
+      version: 'v0.6.4',
     },
   },
 };
@@ -617,7 +617,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
 export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PettAi,
   name: 'pett_agent',
-  hash: 'bafybeiabumpvdgnqecm4prum2njeslcf2ibcvc2y6m7ldv2evgmef6opam',
+  hash: 'bafybeiebj5n56dvxyxp6ml53hkgiawnnyzikshmd6kvd5foaitcknx3m4q',
   description: 'Pett.ai autonomous agent service for virtual pet management.',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
