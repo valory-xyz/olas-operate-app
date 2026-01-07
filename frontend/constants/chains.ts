@@ -5,6 +5,7 @@ export const EvmChainIdMap = {
   Base: 8453,
   Mode: 34443,
   Optimism: 10,
+  Polygon: 137,
 } as const;
 export type EvmChainId = (typeof EvmChainIdMap)[keyof typeof EvmChainIdMap];
 
@@ -13,6 +14,7 @@ export const EvmChainName = {
   [EvmChainIdMap.Base]: 'Base',
   [EvmChainIdMap.Mode]: 'Mode',
   [EvmChainIdMap.Optimism]: 'Optimism',
+  [EvmChainIdMap.Polygon]: 'Polygon',
 } as const;
 export type EvmChainName = ValueOf<typeof EvmChainName>;
 
@@ -22,6 +24,7 @@ export const AllEvmChainIdMap = {
   Base: EvmChainIdMap.Base,
   Mode: EvmChainIdMap.Mode,
   Optimism: EvmChainIdMap.Optimism,
+  Polygon: EvmChainIdMap.Polygon,
 } as const;
 export type AllEvmChainId =
   (typeof AllEvmChainIdMap)[keyof typeof AllEvmChainIdMap];
@@ -41,6 +44,7 @@ export const MiddlewareChainMap = {
   OPTIMISM: 'optimism',
   BASE: 'base',
   MODE: 'mode',
+  POLYGON: 'polygon',
 } as const;
 export type MiddlewareChain = ValueOf<typeof MiddlewareChainMap>;
 
@@ -49,6 +53,7 @@ export const SupportedMiddlewareChainMap = {
   optimism: MiddlewareChainMap.OPTIMISM,
   base: MiddlewareChainMap.BASE,
   mode: MiddlewareChainMap.MODE,
+  polygon: MiddlewareChainMap.POLYGON,
 } as const;
 export type SupportedMiddlewareChain = ValueOf<
   typeof SupportedMiddlewareChainMap
@@ -63,6 +68,7 @@ export const onRampChainMap: Record<SupportedMiddlewareChain, EvmChainId> = {
   [SupportedMiddlewareChainMap.optimism]: EvmChainIdMap.Optimism,
   [SupportedMiddlewareChainMap.base]: EvmChainIdMap.Base,
   [SupportedMiddlewareChainMap.mode]: EvmChainIdMap.Optimism,
+  [SupportedMiddlewareChainMap.polygon]: EvmChainIdMap.Polygon,
 };
 
 export const ChainImageMap = {
@@ -70,6 +76,7 @@ export const ChainImageMap = {
   [EvmChainIdMap.Base]: '/chains/base-chain.png',
   [EvmChainIdMap.Mode]: '/chains/mode-chain.png',
   [EvmChainIdMap.Optimism]: '/chains/optimism-chain.png',
+  [EvmChainIdMap.Polygon]: '/chains/polygon-chain.png',
 } as const;
 
 export type ChainImage = ValueOf<typeof ChainImageMap>;

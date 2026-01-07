@@ -79,6 +79,19 @@ const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
   color: '#FF042012',
 } as const;
 
+// TODO: Add proper RPC URL when available and update safe creation threshold
+const POLYGON_CHAIN_CONFIG: ChainConfig = {
+  evmChainId: EvmChainIdMap.Polygon,
+  name: 'Polygon',
+  nativeToken: TOKEN_CONFIG[EvmChainIdMap.Polygon][
+    TokenSymbolMap.POL
+  ] as TokenConfig,
+  middlewareChain: MiddlewareChainMap.POLYGON,
+  rpc: (process.env.POLYGON_RPC || 'https://polygon-rpc.com') as HttpUrl,
+  safeCreationThreshold: BigInt(parseEther(0.005)), // TODO: Add real safe creation threshold
+  color: '#8247E512',
+} as const;
+
 export const CHAIN_CONFIG: {
   [evmChainId in EvmChainId]: ChainConfig;
 } = {
@@ -86,4 +99,5 @@ export const CHAIN_CONFIG: {
   [EvmChainIdMap.Gnosis]: GNOSIS_CHAIN_CONFIG,
   [EvmChainIdMap.Mode]: MODE_CHAIN_CONFIG,
   [EvmChainIdMap.Optimism]: OPTIMISM_CHAIN_CONFIG,
+  [EvmChainIdMap.Polygon]: POLYGON_CHAIN_CONFIG,
 } as const;
