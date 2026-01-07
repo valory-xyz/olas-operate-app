@@ -518,7 +518,11 @@ function createAndLoadSslCertificate() {
  * Create the on-ramping window for displaying transak iframe
  */
 /** @type {()=>Promise<BrowserWindow|undefined>} */
-const createOnRampWindow = async (amountToPay) => {
+const createOnRampWindow = async (
+  amountToPay,
+  networkName,
+  cryptoCurrencyCode,
+) => {
   if (!getOnRampWindow() || getOnRampWindow().isDestroyed) {
     onRampWindow = new BrowserWindow({
       title: 'Buy Crypto on Transak',
@@ -549,6 +553,12 @@ const createOnRampWindow = async (amountToPay) => {
     const onRampQuery = new URLSearchParams();
     if (amountToPay) {
       onRampQuery.append('amount', amountToPay.toString());
+    }
+    if (networkName) {
+      onRampQuery.append('networkName', networkName);
+    }
+    if (cryptoCurrencyCode) {
+      onRampQuery.append('cryptoCurrencyCode', cryptoCurrencyCode);
     }
     const onRampUrl = `${nextUrl()}/onramp?${onRampQuery.toString()}`;
     logger.electron(`OnRamp URL: ${onRampUrl}`);
@@ -866,15 +876,20 @@ ipcMain.handle('next-log-error', (_event, error, errorInfo) => {
 /**
  * OnRamp window handlers
  */
-ipcMain.handle('onramp-window-show', (_event, amountToPay) => {
-  logger.electron('onramp-window-show');
+ipcMain.handle(
+  'onramp-window-show',
+  (_event, amountToPay, networkName, cryptoCurrencyCode) => {
+    logger.electron('onramp-window-show');
 
-  if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) {
-    createOnRampWindow(amountToPay)?.then((window) => window.show());
-  } else {
-    getOnRampWindow()?.show();
-  }
-});
+    if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) {
+      createOnRampWindow(amountToPay, networkName, cryptoCurrencyCode)?.then(
+        (window) => window.show(),
+      );
+    } else {
+      getOnRampWindow()?.show();
+    }
+  },
+);
 
 ipcMain.handle('onramp-window-close', () => {
   logger.electron('onramp-window-close');

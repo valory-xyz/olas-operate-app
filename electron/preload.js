@@ -2,7 +2,13 @@ const { contextBridge, ipcRenderer } = require('electron/renderer');
 
 /** IPC methods for transak window */
 const onRampWindow = {
-  show: (amountToPay) => ipcRenderer.invoke('onramp-window-show', amountToPay),
+  show: (amountToPay, networkName, cryptoCurrencyCode) =>
+    ipcRenderer.invoke(
+      'onramp-window-show',
+      amountToPay,
+      networkName,
+      cryptoCurrencyCode,
+    ),
   close: () => ipcRenderer.invoke('onramp-window-close'),
   transactionSuccess: () => ipcRenderer.invoke('onramp-transaction-success'),
   transactionFailure: () => ipcRenderer.invoke('onramp-transaction-failure'),

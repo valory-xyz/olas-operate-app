@@ -1,0 +1,181 @@
+import { isNil } from 'lodash';
+import { useEffect, useMemo, useRef } from 'react';
+
+import { TokenSymbol } from '@/config/tokens';
+import {
+  useBridgingSteps,
+  useMasterSafeCreationAndTransfer,
+  useMasterWalletContext,
+  useServices,
+} from '@/hooks';
+import { BridgingStepStatus, Nullable } from '@/types';
+
+import { BridgeMode } from '../types';
+import { StepEvent } from './BridgingSteps';
+
+type UseMasterSafeCreateAndTransferStepsProps = {
+  mode: BridgeMode;
+  isRefillRequired: boolean;
+  quoteId: string;
+  symbols: TokenSymbol[];
+};
+
+export const useMasterSafeCreateAndTransferSteps = ({
+  mode,
+  isRefillRequired,
+  symbols,
+  quoteId,
+}: UseMasterSafeCreateAndTransferStepsProps) => {
+  const { selectedAgentConfig } = useServices();
+  const { isBridging, isBridgingFailed, isBridgingCompleted } =
+    useBridgingSteps(symbols, quoteId);
+  const {
+    isPending: isLoadingMasterSafeCreation,
+    isError: isErrorMasterSafeCreation,
+    data: masterSafeDetails,
+    mutateAsync: createMasterSafe,
+  } = useMasterSafeCreationAndTransfer(symbols);
+  const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
+    useMasterWalletContext();
+
+  // Using ref here so the steps don't go null when safe is created
+  const canCreateMasterSafeAndTransferRef = useRef<Nullable<boolean>>(null);
+
+  const hasMasterSafe = isMasterWalletFetched
+    ? !isNil(getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId))
+    : false;
+
+  const isSafeCreated = isMasterWalletFetched
+    ? hasMasterSafe || masterSafeDetails?.isSafeCreated
+    : false;
+  const isTransferCompleted =
+    masterSafeDetails?.masterSafeTransferStatus === 'FINISHED';
+  const shouldCreateMasterSafe = canCreateMasterSafeAndTransferRef.current;
+
+  useEffect(() => {
+    if (
+      isMasterWalletFetched &&
+      canCreateMasterSafeAndTransferRef.current === null
+    ) {
+      // Only create master safe during onboarding if it doesn't exist
+      canCreateMasterSafeAndTransferRef.current =
+        mode === 'onboard' && !hasMasterSafe;
+    }
+  }, [hasMasterSafe, isMasterWalletFetched, mode]);
+
+  /**
+   * Create master safe after the bridging is completed, given it is not created yet.
+   */
+  useEffect(() => {
+    if (!shouldCreateMasterSafe) return;
+
+    // If refill is required, do not create master safe
+    if (isRefillRequired) return;
+
+    // If bridging is in progress or has failed, do not proceed
+    if (isBridging) return;
+    if (isBridgingFailed) return;
+    if (!isBridgingCompleted) return;
+
+    // Wait for wallet data to be fetched before proceeding
+    if (!isMasterWalletFetched) return;
+
+    // if master safe creation is in progress or if it has failed, do not create master safe.
+    if (isLoadingMasterSafeCreation) return;
+    if (isErrorMasterSafeCreation) return;
+    if (masterSafeDetails?.isSafeCreated) return;
+
+    createMasterSafe();
+  }, [
+    isBridging,
+    isBridgingCompleted,
+    isBridgingFailed,
+    isRefillRequired,
+    isMasterWalletFetched,
+    isLoadingMasterSafeCreation,
+    isErrorMasterSafeCreation,
+    masterSafeDetails?.isSafeCreated,
+    createMasterSafe,
+    shouldCreateMasterSafe,
+  ]);
+
+  const masterSafeCreationDetails = useMemo(() => {
+    if (!shouldCreateMasterSafe) return;
+
+    const currentMasterSafeCreationStatus: BridgingStepStatus = (() => {
+      if (isRefillRequired) return 'wait';
+      if (isBridging || !isBridgingCompleted) return 'wait';
+      if (isErrorMasterSafeCreation) return 'error';
+      if (isLoadingMasterSafeCreation) return 'process';
+      if (isSafeCreated) return 'finish';
+      return 'process';
+    })();
+
+    return {
+      status: currentMasterSafeCreationStatus,
+      subSteps: [
+        {
+          txnLink: null, // BE to be updated to return the txn link
+          onRetry: createMasterSafe,
+          onRetryProps: {
+            isLoading: currentMasterSafeCreationStatus === 'process',
+          },
+        },
+      ] satisfies StepEvent[],
+    };
+  }, [
+    shouldCreateMasterSafe,
+    createMasterSafe,
+    isRefillRequired,
+    isBridging,
+    isBridgingCompleted,
+    isErrorMasterSafeCreation,
+    isLoadingMasterSafeCreation,
+    isSafeCreated,
+  ]);
+
+  const masterSafeTransferDetails = useMemo(() => {
+    if (!shouldCreateMasterSafe) return;
+    if (!masterSafeCreationDetails) return;
+
+    const currentMasterSafeStatus: BridgingStepStatus = (() => {
+      if (isRefillRequired) return 'wait';
+      if (isErrorMasterSafeCreation) return 'error';
+      if (isBridging || !isBridgingCompleted || !isSafeCreated) return 'wait';
+      return isTransferCompleted ? 'finish' : 'wait';
+    })();
+
+    return {
+      status: currentMasterSafeStatus,
+      subSteps: (masterSafeDetails?.transfers || []).map((transfer) => ({
+        ...transfer,
+        onRetry: createMasterSafe,
+        onRetryProps: {
+          isLoading: masterSafeCreationDetails.status === 'process',
+        },
+      })) satisfies StepEvent[],
+    };
+  }, [
+    shouldCreateMasterSafe,
+    masterSafeCreationDetails,
+    masterSafeDetails?.transfers,
+    isRefillRequired,
+    isErrorMasterSafeCreation,
+    isBridging,
+    isBridgingCompleted,
+    isSafeCreated,
+    isTransferCompleted,
+    createMasterSafe,
+  ]);
+
+  return {
+    shouldCreateMasterSafe,
+    isLoadingMasterSafeCreation,
+    isMasterWalletFetched,
+    isSafeCreationAndTransferCompleted: isSafeCreated && isTransferCompleted,
+    steps: {
+      masterSafeCreation: masterSafeCreationDetails,
+      masterSafeTransfer: masterSafeTransferDetails,
+    },
+  };
+};
