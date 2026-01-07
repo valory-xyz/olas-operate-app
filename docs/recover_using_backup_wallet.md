@@ -172,7 +172,7 @@ Steps to recover Pearl using the backup owner:
 
     If you have swapped all the Safe{Wallet}s, you should see in the output JSON `status": "COMPLETED"`.
 
-    > [!NOTE]
+    > **Note.**
     > If the status is `IN_PROGRESS`, some Safe{Wallet}s still need their owners updated.
     > Review the status output to identify which ones are pending.
 
