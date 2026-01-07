@@ -148,13 +148,14 @@ Steps to recover Pearl using the backup owner:
 
 6. Swap the Safe{Wallet} owners. For each Safe{Wallet} that you have, you must use your **backup owner** to swap `owner_to_remove` (old MasterEOA), by `owner_to_add` (New MasterEOA). In the example above, there is only one Safe{Wallet} on Gnosis chain (`0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`) and the user must use their backup owner (`0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb`) to replace the old MasterEOA (`0x1111111111111111111111111111111111111111`) by the new MasterEOA (`0x2222222222222222222222222222222222222222`).
 
-   1. Open your wallet that controls the backup owner (e.g. MetaMask).
-   2. Open the Safe{Wallet} web app corresponding to your Safe address on each chain. For example [https://app.safe.global/home?safe=gno:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa](https://app.safe.global/home?safe=gno:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa).
-   3. Click `Connect` and approve the connection to your wallet.
-   4. Go to `Settings` -> `Setup` -> `Members`.
-   5. Find the old MasterEOA and click `Replace signer`.
-   6. Enter the address of the new MasterEOA.
-   7. Repeat for all Safe{Wallet}s on all chains.
+   1. Make sure you have set up the wallet that controls your backup owner (e.g. MetaMask).
+   2. Open the Safe{Wallet} web app [https://app.safe.global/welcome/accounts](https://app.safe.global/welcome/accounts), click `Add`, select the appropriate network and paste your Safe{Wallet} address.
+   3. Click on the Safe{Wallet} you have added. This will take you to the Safe{Wallet} home.
+   4. Click `Connect` and approve the connection to your backup owner wallet.
+   5. Go to `Settings` -> `Setup` -> `Members`.
+   6. Find the old MasterEOA and click `Replace signer`.
+   7. Enter the address of the new MasterEOA.
+   8. Repeat for every chain shown in `safes` in step 5. Each chain listed there is associated with one Safe{Wallet}.
 
 7. In the terminal window, type the command to display the recovery information again, and then press **Enter**:
 
