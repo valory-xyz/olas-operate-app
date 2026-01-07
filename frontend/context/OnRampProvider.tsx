@@ -3,27 +3,33 @@ import {
   PropsWithChildren,
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 
-import { EvmChainId, onRampChainMap, PAGES } from '@/constants';
+import type { OnRampNetworkConfig } from '@/components/OnRamp';
+import { PAGES } from '@/constants';
 import {
   useElectronApi,
   useMasterBalances,
   useMasterWalletContext,
   usePageState,
-  useServices,
 } from '@/hooks';
 import { Nullable } from '@/types';
-import { asEvmChainDetails, asMiddlewareChain, delayInSeconds } from '@/utils';
+import { delayInSeconds } from '@/utils';
 
 const ETH_RECEIVED_THRESHOLD = 0.95;
 
 export const OnRampContext = createContext<{
-  networkId: Nullable<EvmChainId>;
-  networkName: Nullable<string>;
-  cryptoCurrencyCode: Nullable<string>;
+  networkId: OnRampNetworkConfig['networkId'];
+  networkName: OnRampNetworkConfig['networkName'];
+  cryptoCurrencyCode: OnRampNetworkConfig['cryptoCurrencyCode'];
+  /**
+   * Chain to which the funds are being transferred. It can have two cases:
+   * 1. Onboarding: homeChainId of the selected agent
+   * 2. Depositing: chainId to which the user is depositing new funds
+   */
+  selectedChainId: OnRampNetworkConfig['selectedChainId'];
+  updateNetworkConfig: (config: OnRampNetworkConfig) => void;
   resetOnRampState: () => void;
 
   ethAmountToPay: Nullable<number>;
@@ -47,6 +53,8 @@ export const OnRampContext = createContext<{
   networkId: null,
   networkName: null,
   cryptoCurrencyCode: null,
+  selectedChainId: null,
+  updateNetworkConfig: () => {},
   resetOnRampState: () => {},
 
   ethAmountToPay: null,
@@ -71,7 +79,6 @@ export const OnRampContext = createContext<{
 export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { ipcRenderer, onRampWindow } = useElectronApi();
   const { pageState } = usePageState();
-  const { selectedAgentConfig } = useServices();
   const { getMasterEoaNativeBalanceOf, getMasterSafeNativeBalanceOf } =
     useMasterBalances();
   const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
@@ -104,6 +111,13 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsBuyCryptoBtnLoading(loading);
   }, []);
 
+  const [networkConfig, setNetworkConfig] = useState<OnRampNetworkConfig>({
+    networkId: null,
+    networkName: null,
+    cryptoCurrencyCode: null,
+    selectedChainId: null,
+  });
+
   /**
    * Check if the on-ramping step is completed
    * ie. if the on-ramping is successful AND funds are received in the master EOA.
@@ -117,18 +131,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const isTransactionSuccessfulButFundsNotReceived =
     isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
 
-  // Get the network id, name, and crypto currency code based on the selected agent's home chain
-  // This is used to determine the network and currency to on-ramp to.
-  const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
-    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-    const networkId = onRampChainMap[fromChainName];
-    const chainDetails = asEvmChainDetails(asMiddlewareChain(networkId));
-    return {
-      networkId,
-      networkName: chainDetails.name,
-      cryptoCurrencyCode: chainDetails.symbol,
-    };
-  }, [selectedAgentConfig]);
+  const { networkId, networkName, cryptoCurrencyCode, selectedChainId } =
+    networkConfig;
 
   // check if the user has received funds after on-ramping to the master EOA
   useEffect(() => {
@@ -136,6 +140,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     if (!usdAmountToPay) return;
     if (isOnRampingStepCompleted) return;
     if (!isMasterWalletFetched) return;
+    if (!networkId) return;
 
     // Get the master safe (in case it exists) or master EOA balance of the network to on-ramp
     const hasMasterSafe = getMasterSafeOf?.(networkId);
@@ -191,6 +196,11 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // Function to set the swapping step completion state
   const updateIsSwappingStepCompleted = useCallback((completed: boolean) => {
     setIsSwappingStepCompleted(completed);
+  }, []);
+
+  // Function to set the network config
+  const updateNetworkConfig = useCallback((config: OnRampNetworkConfig) => {
+    setNetworkConfig(config);
   }, []);
 
   // Listen for onramp window transaction failure event to reset the loading state
@@ -265,6 +275,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
         networkName,
         /** Crypto currency code to on-ramp */
         cryptoCurrencyCode,
+        /** Chain to which the funds are eventually transferred */
+        selectedChainId,
+        /** Function to update the network config */
+        updateNetworkConfig,
 
         /** Function to reset the on-ramp state */
         resetOnRampState,
