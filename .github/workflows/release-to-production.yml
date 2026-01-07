@@ -1,0 +1,76 @@
+# When label "Release to production" is added to a PR from a release/* branch
+#        │
+#        ▼
+# calculate-version  (extract version from branch, create production release)
+#        │
+#        ├─► run-release      (Mac/Linux)
+#        │       uses release.yml
+#        │       gets tag = new_tag
+#        │
+#        └─► run-release-win  (Windows)
+#                uses release_win.yml
+#                gets tag = new_tag
+
+name: Release to Production
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: write
+
+# Prevent multiple production releases running at the same time for the same branch
+concurrency:
+  group: release-to-production-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check-label:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.label.name == 'Release to production' && github.actor != 'github-actions[bot]' && startsWith(github.event.pull_request.head.ref, 'release/') }}
+    outputs:
+      branch: ${{ steps.set-branch.outputs.branch }}
+    steps:
+      - name: Set branch name
+        id: set-branch
+        run: |
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "Using branch: $BRANCH_NAME"
+
+  calculate-version:
+    needs: check-label
+    uses: ./.github/workflows/calculate-and-update-version.yml
+    with:
+      branch: ${{ needs.check-label.outputs.branch }}
+      version_strategy: production-release
+      base_version_from_branch: true
+    secrets: inherit
+
+  run-release:
+    needs: [check-label, calculate-version]
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
+
+  run-release-win:
+    needs: [check-label, calculate-version]
+    uses: ./.github/workflows/release_win.yml
+    with:
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
+
+  summary:
+    needs: [check-label, calculate-version, run-release, run-release-win]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create summary
+        run: |
+          echo "## Production Release Created Successfully :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ needs.calculate-version.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.calculate-version.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ needs.check-label.outputs.branch }}" >> $GITHUB_STEP_SUMMARY
+
