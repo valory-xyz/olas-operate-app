@@ -14,6 +14,7 @@ export * from './useBridgingSteps';
 export * from './useDynamicRefetchInterval';
 export * from './useElectronApi';
 export * from './useFeatureFlag';
+export * from './useGetBridgeRequirementsParams';
 export * from './useGetRefillRequirements';
 export * from './useInitialFundingRequirements';
 export * from './useIsInitiallyFunded';
