@@ -1,3 +1,4 @@
+import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG, TokenSymbol, TokenSymbolMap } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import {
@@ -137,4 +138,14 @@ export const getTokenDetailsFromAddress = (
   }
 
   return details;
+};
+
+/**
+ * Get EVM chain ID by chain name
+ */
+export const getEvmChainIdByName = (name: string) => {
+  const chain = Object.values(CHAIN_CONFIG).find(
+    (config) => config.name.toLowerCase() === name.toLowerCase(),
+  );
+  return chain?.evmChainId;
 };
