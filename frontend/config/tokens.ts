@@ -165,7 +165,7 @@ export const OPTIMISM_TOKEN_CONFIG: ChainTokenConfig = {
   },
 };
 
-// TODO: Add proper token addresses for Polygon when available
+// TODO: Add proper token addresses for Polygon when decided
 export const POLYGON_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbolMap.POL]: {
     tokenType: TokenType.NativeGas,
@@ -176,7 +176,7 @@ export const POLYGON_TOKEN_CONFIG: ChainTokenConfig = {
     tokenType: TokenType.Erc20,
     symbol: TokenSymbolMap.OLAS,
     decimals: 18,
-    address: '0x0000000000000000000000000000000000000000', // TODO: Add real address
+    address: '0xFEF5d947472e72Efbb2E388c730B7428406F2F95',
   },
 };
 

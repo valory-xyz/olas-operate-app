@@ -2,7 +2,6 @@
  * Chain configurations
  * - add new chains to the CHAIN_CONFIGS object
  */
-import { TokenSymbolMap } from '@/config/tokens';
 import {
   EvmChainId,
   EvmChainIdMap,
@@ -10,8 +9,8 @@ import {
   MiddlewareChainMap,
 } from '@/constants/chains';
 import { parseEther } from '@/utils';
+import { TokenSymbolMap, TOKEN_CONFIG, TokenConfig, } from '@/config/tokens';
 
-import { TOKEN_CONFIG, TokenConfig } from './tokens';
 
 type HttpUrl = `http${'s' | ''}://${string}`;
 
