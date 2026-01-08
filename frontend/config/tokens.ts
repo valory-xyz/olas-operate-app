@@ -20,7 +20,7 @@ export const TokenSymbolConfigMap: Record<TokenSymbol, { image: string }> = {
   [TokenSymbolMap.OLAS]: { image: '/tokens/olas-icon.png' },
   [TokenSymbolMap.USDC]: { image: '/tokens/usdc-icon.png' },
   [TokenSymbolMap.WXDAI]: { image: '/tokens/wxdai-icon.png' },
-  [TokenSymbolMap.POL]: { image: '/tokens/pol-icon.png' }, // TODO: add proper image
+  [TokenSymbolMap.POL]: { image: '/tokens/pol-icon.png' },
   [TokenSymbolMap['USDC.e']]: { image: '/tokens/usdc-icon.png' },
 } as const;
 

@@ -62,7 +62,7 @@ const GNOSIS_EXPLORER_URL: Url = 'https://gnosisscan.io';
 const BASE_EXPLORER_URL: Url = 'https://basescan.org';
 const MODE_EXPLORER_URL: Url = 'https://modescan.io';
 const OPTIMISM_EXPLORER_URL: Url = 'https://optimistic.etherscan.io';
-const POLYGON_EXPLORER_URL: Url = 'https://polygonscan.com'; // TODO: Update with real URL when available
+const POLYGON_EXPLORER_URL: Url = 'https://polygonscan.com';
 
 export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   SupportedMiddlewareChain,
@@ -83,7 +83,7 @@ export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChainMap.BASE]: 'https://base.blockscout.com',
   [MiddlewareChainMap.MODE]: 'https://explorer.mode.network',
   [MiddlewareChainMap.OPTIMISM]: 'https://optimism.blockscout.com',
-  [MiddlewareChainMap.POLYGON]: 'https://polygon.blockscout.com', // TODO: Update with real URL when available
+  [MiddlewareChainMap.POLYGON]: 'https://polygon.blockscout.com',
 };
 
 // on-ramp

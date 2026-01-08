@@ -85,7 +85,7 @@ const POLYGON_CHAIN_CONFIG: ChainConfig = {
     TokenSymbolMap.POL
   ] as TokenConfig,
   middlewareChain: MiddlewareChainMap.POLYGON,
-  rpc: (process.env.POLYGON_RPC || 'https://polygon-rpc.com') as HttpUrl,
+  rpc: process.env.POLYGON_RPC as HttpUrl,
   safeCreationThreshold: BigInt(parseEther(0.005)), // TODO: Add real safe creation threshold
   color: '#8247E512',
 } as const;

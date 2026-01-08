@@ -95,3 +95,7 @@ export const PETT_AI_ONBOARDING_STEPS: OnboardingStep[] = [
     },
   },
 ] as const;
+
+// TODO: Add real onboarding steps when available
+export const PREDICT_TRADER_POLYMARKET_ONBOARDING_STEPS: OnboardingStep[] =
+  [] as const;

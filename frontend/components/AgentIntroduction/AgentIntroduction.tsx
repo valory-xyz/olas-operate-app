@@ -33,6 +33,8 @@ const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
   [AgentMap.Modius]: MODIUS_ONBOARDING_STEPS,
   [AgentMap.Optimus]: OPTIMUS_ONBOARDING_STEPS,
   [AgentMap.PettAi]: PETT_AI_ONBOARDING_STEPS,
+  // [AgentMap.PredictTraderPolymarket]:
+  // PREDICT_TRADER_POLYMARKET_ONBOARDING_STEPS,
 };
 
 type AgentIntroductionProps = {
