@@ -103,7 +103,7 @@ const PearlWalletContext = createContext<{
     details: TokenAmountDetails,
   ) => void;
   updateAmountsToDeposit: (amounts: TokenAmounts) => void;
-  onReset: () => void;
+  onReset: (canNavigateOnReset?: boolean) => void;
   /** Initial values for funding agent wallet based on refill requirements */
   defaultRequirementDepositValues: Optional<TokenBalanceRecord>;
 }>({

@@ -302,13 +302,13 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   'hash' | 'service_version' | 'agent_release'
 > = {
   hash: 'bafybeidkdnfrueiivrdzrqo67np3w4gsubu5vb6lqxabsx3ulozvj7jtmq',
-  service_version: 'v0.6.0-rc.1',
+  service_version: 'v0.6.4',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.6.0-rc.1',
+      version: 'v0.6.4',
     },
   },
 };
@@ -617,7 +617,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
 export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PettAi,
   name: 'pett_agent',
-  hash: 'bafybeiabumpvdgnqecm4prum2njeslcf2ibcvc2y6m7ldv2evgmef6opam',
+  hash: 'bafybeiebj5n56dvxyxp6ml53hkgiawnnyzikshmd6kvd5foaitcknx3m4q',
   description: 'Pett.ai autonomous agent service for virtual pet management.',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
