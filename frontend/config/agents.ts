@@ -160,7 +160,7 @@ export const AGENT_CONFIG: {
     evmHomeChainId: EvmChainIdMap.Base,
     agentIds: [80],
     middlewareHomeChainId: MiddlewareChainMap.BASE,
-    defaultStakingProgramId: STAKING_PROGRAM_IDS.PettAiAgent,
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.PettAiAgent3,
     serviceApi: PettAiService,
     displayName: 'PettBro by Pett.ai',
     description: 'Pett.ai autonomous agent service for virtual pet management.',

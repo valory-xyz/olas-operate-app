@@ -2203,13 +2203,13 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.13.5"
+version = "0.13.9"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.10"
 files = [
-    {file = "olas_operate_middleware-0.13.5-py3-none-any.whl", hash = "sha256:dda3e0199404180b03145d7b8bc99120c17bdccea552fba1952d9f4c32d7ad5e"},
-    {file = "olas_operate_middleware-0.13.5.tar.gz", hash = "sha256:f0be5b9ecc56166f790c02611998fd1f90c437953e3b2237490913e764cc61dd"},
+    {file = "olas_operate_middleware-0.13.9-py3-none-any.whl", hash = "sha256:8a119810469994c3706ebeebbde2fd2012fede60c4d952531822610c9515682c"},
+    {file = "olas_operate_middleware-0.13.9.tar.gz", hash = "sha256:55b29372311188333c5235b72fe950e7a082d267f8230e8e19b8be24e888a991"},
 ]
 
 [package.dependencies]
@@ -2225,7 +2225,7 @@ open-aea-cli-ipfs = ">=2.0.6,<3.0.0"
 open-aea-ledger-cosmos = ">=2.0.6,<3.0.0"
 open-aea-ledger-ethereum = ">=2.0.6,<3.0.0"
 open-aea-ledger-ethereum-flashbots = ">=2.0.6,<3.0.0"
-open-autonomy = ">=0.21.4,<0.22.0"
+open-autonomy = ">=0.21.5,<0.22.0"
 psutil = ">=5.9.8,<6.0.0"
 pyinstaller = ">=6.8.0,<7.0.0"
 requests-mock = ">=1.12.1,<2.0.0"
@@ -3915,4 +3915,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "949cd3fa04fbeb2a791dfb92180c0d162609423acb9b5f4c4f89846f65f13496"
+content-hash = "17f3006e96142695f44f6ecc2d67b5ce77ccbad15796a8a8f4b6127f9017384e"

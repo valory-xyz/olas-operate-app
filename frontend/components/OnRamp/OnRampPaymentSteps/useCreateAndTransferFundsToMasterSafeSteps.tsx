@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
 import { TransactionStep } from '@/components/ui/TransactionSteps';
 import { TokenSymbol } from '@/config/tokens';
-import { useMasterWalletContext, useServices } from '@/hooks';
+import { useMasterWalletContext, useOnRampContext } from '@/hooks';
 import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
 import { Nullable } from '@/types';
 
@@ -29,13 +29,15 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     data: masterSafeDetails,
     mutateAsync: createMasterSafe,
   } = useMasterSafeCreationAndTransfer(tokensToBeTransferred);
-  const { selectedAgentConfig } = useServices();
+  const { selectedChainId } = useOnRampContext();
   const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
     useMasterWalletContext();
 
-  const hasMasterSafe = !isNil(
-    getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId),
-  );
+  if (!selectedChainId) {
+    throw new Error('Selected chain ID is not set in the on-ramp context');
+  }
+
+  const hasMasterSafe = !isNil(getMasterSafeOf?.(selectedChainId));
   const isSafeCreated = isMasterWalletFetched
     ? hasMasterSafe || masterSafeDetails?.isSafeCreated
     : false;

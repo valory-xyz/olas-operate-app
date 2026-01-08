@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { OnRampNetworkConfig } from '@/components/OnRamp';
 import {
   onRampChainMap,
   REACT_QUERY_KEYS,
   SupportedMiddlewareChain,
 } from '@/constants';
 import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
-import { useServices } from '@/hooks/useServices';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { ensureRequired } from '@/types';
+import { asMiddlewareChain } from '@/utils';
 
 type FeeBreakdownItem = {
   name: string;
@@ -70,10 +71,19 @@ const fetchTransakQuote = async (
   return response.json();
 };
 
-export const useTotalFiatFromNativeToken = (nativeTokenAmount?: number) => {
-  const { selectedAgentConfig } = useServices();
-  const agentChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-  const fromChain = asMiddlewareChain(onRampChainMap[agentChainName]);
+type UseTotalFiatFromNativeTokenProps = {
+  nativeTokenAmount?: number;
+  selectedChainId: OnRampNetworkConfig['selectedChainId'];
+};
+
+export const useTotalFiatFromNativeToken = ({
+  nativeTokenAmount,
+  selectedChainId,
+}: UseTotalFiatFromNativeTokenProps) => {
+  const selectedChainName = asMiddlewareChain(
+    ensureRequired(selectedChainId, "Chain ID can't be empty"),
+  );
+  const fromChain = asMiddlewareChain(onRampChainMap[selectedChainName]);
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(fromChain, nativeTokenAmount!),
