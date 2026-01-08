@@ -10,7 +10,7 @@ A cross-platform desktop application used to run autonomous agents powered by th
 
 #### Downloading the latest release
 
-**Note:** The release pages also contain Source Code `.zip` files and `dev-` prefixed builds. These are not intended for general use. Ignore them unless you're a developer!
+**Note:** The release pages also contain Source Code `.zip` files. These are not intended for general use. Ignore them unless you're a developer!
 
 - Go to the [Releases](https://github.com/valory-xyz/olas-operate-app/releases) page.
 - Download the latest release for your operating system.
@@ -36,15 +36,16 @@ A cross-platform desktop application used to run autonomous agents powered by th
 If you want to use a specific service hash, for testing purposes, follow these steps:
 
 1. `./frontend/constants/serviceTemplates.ts`: Ensure that the hash you want to use is correctly referenced in the appropriate service template `hash`.
-2. `./frontend/config/agents.ts`: Ensure that the corresponding service has `isAgentEnabled: true`.
+2. `./frontend/constants/serviceTemplates.ts`: Ensure the service template has corresponding to the hash you update service_version and agent_release.repository.version (you can run `scripts/js/check_service_templates.ts` to check it)
+3. `./frontend/config/agents.ts`: Ensure that the corresponding service has `isAgentEnabled: true`.
 
 ## Project Dependencies
 
 There are three parts to the project: the Electron app (CommonJS), the NextJS frontend (TypeScript), and the Python backend/middleware.
 
 - [Electron dependencies](package.json)
-- [Frontend dependencies](package.json)
-- [Backend dependencies](backend/pyproject.toml)
+- [Frontend dependencies](frontend/package.json)
+- [Backend dependencies](pyproject.toml)
 
 ## License
 
