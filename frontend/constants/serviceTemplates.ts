@@ -22,17 +22,17 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PredictTrader,
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeibw46xqqqpzfiw5if7aoknstlxc4bmraiqyj7v3w7a3kzcybpsbou',
+  hash: 'bafybeidivn5oni6xr746nbjx7n4446iwbyz7dczi7kgbi5vbnxhufkn7tm',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.27.7',
+  service_version: 'v0.29.0-rc1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.27.7',
+      version: 'v0.29.0-rc1',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
@@ -135,7 +135,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Irrelevant tools',
       description: '',
       value:
-        '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot","resolve-market-reasoning-gpt-4.1"]',
+        '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot","resolve-market-reasoning-gpt-4.1","openai-gpt-4o-2024-08-06","echo","google_image_gen","short_maker","stabilityai-stable-diffusion-v1-6","stabilityai-stable-diffusion-xl-1024-v1-0"]',
       provision_type: EnvProvisionType.FIXED,
     },
     GENAI_API_KEY: {
@@ -149,6 +149,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: X402_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
+    PENALIZE_MECH_TIME_WINDOW: {
+      name: 'The penalization window for an unresponsive mech in seconds',
+      description: 'The penalization window for an unresponsive mech in seconds.',
+      value: '7200', // 2 hours
       provision_type: EnvProvisionType.FIXED,
     },
   },
