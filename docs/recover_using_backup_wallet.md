@@ -76,7 +76,7 @@ Steps to recover Pearl using the backup owner:
     --cacert "$OPERATE_HOME/ssl/cert.pem" | python3 -m json.tool    
     ```
 
-    The output will include a JSON structure describing:
+    The output will be a JSON structure describing:
 
     - The current MasterEOA
 
@@ -86,11 +86,15 @@ Steps to recover Pearl using the backup owner:
 
     Pay special attention to the `safes` section. For each Safe{Wallet}, note:
 
-    - `owner_to_remove` (old MasterEOA)
+    - the Safe{Wallet} address,
+  
+    - `owner_to_remove` (old MasterEOA address),
 
-    - `owner_to_add` (new MasterEOA)
+    - `owner_to_add` (new MasterEOA address),
 
-    - `backup_owners`
+    - `backup_owners` (your backup owner address).
+
+    Also, you should note the field `"status": "PREPARED",`, meaning that a recovery bundle has been correctly initialized.
 
     For example:
 
@@ -146,12 +150,12 @@ Steps to recover Pearl using the backup owner:
     }
     ```
 
-6. Swap the Safe{Wallet} owners. For each Safe{Wallet} that you have, you must use your **backup owner** to swap `owner_to_remove` (old MasterEOA), by `owner_to_add` (New MasterEOA). In the example above, there is only one Safe{Wallet} on Gnosis chain (`0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`) and the user must use their backup owner (`0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb`) to replace the old MasterEOA (`0x1111111111111111111111111111111111111111`) by the new MasterEOA (`0x2222222222222222222222222222222222222222`).
+6. For each Safe{Wallet} that you have, you must use your **backup owner** to swap `owner_to_remove` (old MasterEOA), by `owner_to_add` (New MasterEOA). In the example above, there is only one Safe{Wallet} on Gnosis chain (`0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`) and the user must use their backup owner (`0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb`) to replace the old MasterEOA (`0x1111111111111111111111111111111111111111`) by the new MasterEOA (`0x2222222222222222222222222222222222222222`). Follow these steps:
 
    1. Make sure you have set up a crypto wallet that controls your backup owner (e.g. MetaMask).
-   2. Open the Safe{Wallet} web app [https://app.safe.global/welcome/accounts](https://app.safe.global/welcome/accounts), click `Add`, select the appropriate network and paste your Safe{Wallet} address.
+   2. Open the Safe{Wallet} web app [https://app.safe.global/welcome/accounts](https://app.safe.global/welcome/accounts), click `Add`, select the appropriate network and paste the Safe{Wallet} address.
    3. Click on the Safe{Wallet} you have added. This will take you to the Safe{Wallet} home.
-   4. Click `Connect` and approve the connection to your backup owner wallet.
+   4. Click `Connect` and approve the connection to your backup owner crypto wallet.
    5. Go to `Settings` -> `Setup` -> `Members`.
    6. Find the old MasterEOA and click `Replace signer`.
    7. Enter the address of the new MasterEOA.
@@ -174,8 +178,8 @@ Steps to recover Pearl using the backup owner:
     If you have swapped all the Safe{Wallet}s, you should see in the output JSON `status": "COMPLETED"`.
 
 > [!WARNING]
-> If the status is `IN_PROGRESS`, some Safe{Wallet}s still need their owners updated.
-> Please, review the status output to identify which ones are pending.
+> If the status is `PREPARED` or `IN_PROGRESS`, some Safe{Wallet}s still need their owners updated.
+> Please, review the status output to identify which ones are pending and refer to step 6 to finish all the swaps.
 
 8. In the terminal window, type the command to complete the recovery process and then press **Enter**:
 
@@ -187,3 +191,6 @@ Steps to recover Pearl using the backup owner:
     ```
 
 9. Close and restart Pearl. Log in using the **new password** set in step 4.
+
+After successfully finishing the process, your MasterSafe(s) will now be controlled by the new MasterEOA (and your backup owner), and
+new AgentEOAs will be created for your agents. Note that upon restarting, Pearl might require that you fund the MasterEOA and AgentEOAs, since they are new wallets.
