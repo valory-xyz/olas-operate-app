@@ -47,7 +47,8 @@ const main = async () => {
         optimism: process.env.OPTIMISM_RPC,
         base: process.env.BASE_RPC,
         ethereum: process.env.ETHEREUM_RPC,
-        mode: process.env.MODE_RPC
+        mode: process.env.MODE_RPC,
+        polygon: process.env.POLYGON_RPC
     };
 
     const erc20Addresses = {
@@ -68,7 +69,7 @@ const main = async () => {
 
     // ETH on all
     await Promise.all(Object.values(rpcs).map(rpc => setBalance(masterSafeAddress, rpc)));
-    
+
     // check eth on all
     await Promise.all(Object.entries(rpcs).map(([chain, rpc]) =>
         fetch(rpc, {
@@ -82,7 +83,7 @@ const main = async () => {
                 ],
                 id: 1
             }),
-        }).then(async (res) => JSON.stringify(({... await res.json(), chain}), null, 0)).then(console.log)
+        }).then(async (res) => JSON.stringify(({ ... await res.json(), chain }), null, 0)).then(console.log)
     ));
 
     // ERC20s
@@ -107,7 +108,7 @@ const main = async () => {
                 ],
                 id: 1
             }),
-        }).then(async (res) => JSON.stringify(({... await res.json(), chain}), null, 0)).then(console.log)
+        }).then(async (res) => JSON.stringify(({ ... await res.json(), chain }), null, 0)).then(console.log)
     ));
 }
 
