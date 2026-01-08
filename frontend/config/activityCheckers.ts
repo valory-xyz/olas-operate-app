@@ -167,7 +167,4 @@ export const POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.PolygonAlpha]: getStakingActivityCheckerContract(
     '0x0000000000000000000000000000000000000000', // TODO: Add real address
   ),
-  [STAKING_PROGRAM_IDS.PolygonAlpha2]: getStakingActivityCheckerContract(
-    '0x0000000000000000000000000000000000000000', // TODO: Add real address
-  ),
 } as const;

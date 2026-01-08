@@ -478,7 +478,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
   ...BABYDEGEN_COMMON_TEMPLATE,
 } as const;
 
-export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
+const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PettAi,
   name: 'pett_agent',
   hash: 'bafybeiebj5n56dvxyxp6ml53hkgiawnnyzikshmd6kvd5foaitcknx3m4q',

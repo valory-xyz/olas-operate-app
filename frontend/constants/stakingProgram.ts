@@ -53,7 +53,6 @@ export type OptimismStakingProgramId = ValueOf<
 // TODO: Add real Polygon staking program IDs when available
 const POLYGON_STAKING_PROGRAM_IDS = {
   PolygonAlpha: 'polygon_alpha',
-  PolygonAlpha2: 'polygon_alpha_2',
 } as const;
 
 export type PolygonStakingProgramId = ValueOf<

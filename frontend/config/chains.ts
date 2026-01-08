@@ -9,8 +9,7 @@ import {
   MiddlewareChainMap,
 } from '@/constants/chains';
 import { parseEther } from '@/utils';
-import { TokenSymbolMap, TOKEN_CONFIG, TokenConfig, } from '@/config/tokens';
-
+import { TOKEN_CONFIG, TokenConfig, TokenSymbolMap } from './tokens';
 
 type HttpUrl = `http${'s' | ''}://${string}`;
 
