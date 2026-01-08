@@ -17,7 +17,7 @@ import {
 import { Address } from '@/types/Address';
 import { Service } from '@/types/Service';
 import { Nullable, Optional } from '@/types/Util';
-import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { asEvmChainId, asMiddlewareChain } from '@/utils/chain';
 
 import { useServices } from './useServices';
 

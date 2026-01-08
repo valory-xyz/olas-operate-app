@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { APP_HEIGHT, APP_WIDTH, ON_RAMP_GATEWAY_URL } from '@/constants';
 import { useElectronApi, useMasterWalletContext } from '@/hooks';
-import { getEvmChainIdByName } from '@/utils';
+import { asEvmChainDetails } from '@/utils';
 import { delayInSeconds } from '@/utils/delay';
 
 type TransakEvent = {
@@ -30,7 +30,11 @@ export const OnRampIframe = ({
   cryptoCurrencyCode,
 }: OnRampIframeProps) => {
   const { onRampWindow, logEvent } = useElectronApi();
-  const { masterEoa, getMasterSafeOf, isLoading } = useMasterWalletContext();
+  const {
+    masterEoa,
+    getMasterSafeOf,
+    isFetched: isMasterWalletFetched,
+  } = useMasterWalletContext();
 
   const ref = useRef<HTMLIFrameElement>(null);
 
@@ -65,19 +69,15 @@ export const OnRampIframe = ({
   }, [logEvent, onRampWindow]);
 
   const onRampUrl = useMemo(() => {
-    if (isLoading) return;
+    if (!isMasterWalletFetched) return;
     if (!masterEoa?.address) return;
     if (!networkName || !cryptoCurrencyCode) return;
 
-    let walletAddress = masterEoa.address;
-
     // If master safe exists on the provided chain, we need to on-ramp there
-    const evmChainId = getEvmChainIdByName(networkName);
+    const evmChainId = asEvmChainDetails(networkName)?.chainId;
     const masterSafe =
       getMasterSafeOf && evmChainId ? getMasterSafeOf(evmChainId) : undefined;
-    if (masterSafe) {
-      walletAddress = masterSafe.address;
-    }
+    const walletAddress = masterSafe ? masterSafe.address : masterEoa.address;
 
     const url = new URL(ON_RAMP_GATEWAY_URL);
     url.searchParams.set('productsAvailed', 'BUY');
@@ -91,7 +91,7 @@ export const OnRampIframe = ({
 
     return url.toString();
   }, [
-    isLoading,
+    isMasterWalletFetched,
     masterEoa?.address,
     networkName,
     cryptoCurrencyCode,

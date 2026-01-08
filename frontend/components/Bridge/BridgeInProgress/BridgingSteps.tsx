@@ -7,7 +7,7 @@ import { TokenSymbol } from '@/config/tokens';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { BridgingStepStatus as Status } from '@/types/Bridge';
 import { Maybe, Nullable } from '@/types/Util';
-import { asEvmChainDetails } from '@/utils/middlewareHelpers';
+import { asEvmChainDetails } from '@/utils/chain';
 
 const { Text } = Typography;
 

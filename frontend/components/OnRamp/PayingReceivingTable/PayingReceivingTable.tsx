@@ -15,10 +15,7 @@ import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
 import { useTotalNativeTokenRequired } from '@/hooks/useTotalNativeTokenRequired';
 import { ReceivingTokens } from '@/types/Bridge';
-import {
-  asEvmChainDetails,
-  asMiddlewareChain,
-} from '@/utils/middlewareHelpers';
+import { asEvmChainDetails, asMiddlewareChain } from '@/utils/chain';
 
 const { Text } = Typography;
 

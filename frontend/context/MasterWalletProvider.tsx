@@ -20,7 +20,7 @@ import {
 } from '@/constants';
 import { WalletService } from '@/service/Wallet';
 import { MiddlewareWalletResponse } from '@/types';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import { asEvmChainId } from '@/utils/chain';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 

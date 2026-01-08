@@ -7,7 +7,7 @@ import { AgentType, EvmChainId, FIVE_SECONDS_INTERVAL } from '@/constants';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { assertRequired } from '@/types/Util';
 import { sumBigNumbers } from '@/utils/calculations';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { asMiddlewareChain } from '@/utils/chain';
 
 import { createActiveStakingProgramIdQuery } from './useActiveStakingProgramId';
 import { createStakingRewardsQuery } from './useAgentStakingRewardsDetails';

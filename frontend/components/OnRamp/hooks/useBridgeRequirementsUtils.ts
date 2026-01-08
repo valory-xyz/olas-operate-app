@@ -6,10 +6,7 @@ import { EvmChainId } from '@/constants/chains';
 import { useOnRampContext } from '@/hooks';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { getTokenDetails } from '@/utils';
-import {
-  asEvmChainDetails,
-  asMiddlewareChain,
-} from '@/utils/middlewareHelpers';
+import { asEvmChainDetails, asMiddlewareChain } from '@/utils/chain';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 export const useBridgeRequirementsUtils = (onRampChainId: EvmChainId) => {

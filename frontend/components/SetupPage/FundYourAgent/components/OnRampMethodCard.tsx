@@ -10,10 +10,7 @@ import {
   useTotalFiatFromNativeToken,
   useTotalNativeTokenRequired,
 } from '@/hooks';
-import {
-  asEvmChainDetails,
-  asMiddlewareChain,
-} from '@/utils/middlewareHelpers';
+import { asEvmChainDetails, asMiddlewareChain } from '@/utils/chain';
 
 import { Alert, CardFlex, CardTitle } from '../../../ui';
 import { TokenRequirements } from './TokensRequirements';

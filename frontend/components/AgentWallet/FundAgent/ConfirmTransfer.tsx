@@ -29,7 +29,7 @@ import {
 } from '@/service/Fund';
 import { Address, TokenAmounts, TokenBalanceRecord } from '@/types';
 import { bigintMin } from '@/utils';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import { asEvmChainId } from '@/utils/chain';
 import { parseUnits } from '@/utils/numberFormatters';
 
 const { Title, Text, Link } = Typography;
