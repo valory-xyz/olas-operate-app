@@ -8,7 +8,7 @@ import { useMasterWalletContext } from '@/hooks/useWallet';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
-import { useBridgeRequirementsQuery } from '../components/SetupPage/Create/SetupOnRamp/PayingReceivingTable/useBridgeRequirementsQuery';
+import { useBridgeRequirementsQuery } from '../components/OnRamp/PayingReceivingTable/useBridgeRequirementsQuery';
 
 /**
  * Hook to fetch the bridge refill requirements for the on-ramp process and
@@ -16,7 +16,6 @@ import { useBridgeRequirementsQuery } from '../components/SetupPage/Create/Setup
  *
  * Example: For Optimus, we require 0.01 ETH, 16 USDC, 100 OLAS.
  * So, total ETH required = 0.01 ETH + 16 USDC in ETH + 100 OLAS in ETH.
- *
  */
 export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,

@@ -7,17 +7,19 @@ import { TransactionStep } from '@/components/ui/TransactionSteps';
 import { TokenSymbol } from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
+import {
+  useBridgingSteps,
+  useGetBridgeRequirementsParams,
+  useOnRampContext,
+} from '@/hooks';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirementsOnDemand } from '@/hooks/useBridgeRefillRequirementsOnDemand';
-import { useBridgingSteps } from '@/hooks/useBridgingSteps';
-import { useOnRampContext } from '@/hooks/useOnRampContext';
 import {
   BridgeRefillRequirementsResponse,
   BridgeStatuses,
 } from '@/types/Bridge';
 import { delayInSeconds } from '@/utils/delay';
 
-import { useGetBridgeRequirementsParams } from '../../hooks/useGetBridgeRequirementsParams';
 import { useBridgeRequirementsUtils } from '../hooks/useBridgeRequirementsUtils';
 
 const { Text } = Typography;

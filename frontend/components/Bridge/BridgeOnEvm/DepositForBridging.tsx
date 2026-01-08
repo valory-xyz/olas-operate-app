@@ -62,6 +62,24 @@ const RootCard = styled(Flex)`
   margin-top: 32px;
 `;
 
+const NATIVE_TOKEN_PRECISION = 5;
+const ERC20_TOKEN_PRECISION = 2;
+
+const formatTokenAmount = ({
+  amountInWei,
+  decimals,
+  isNative,
+}: {
+  amountInWei: bigint;
+  decimals: number;
+  isNative: boolean;
+}) =>
+  formatUnitsToNumber(
+    amountInWei,
+    decimals,
+    isNative ? NATIVE_TOKEN_PRECISION : ERC20_TOKEN_PRECISION,
+  );
+
 const RequestingQuote = () => (
   <Flex gap={8} align="center" className="p-16">
     <Spin indicator={<LoadingSpinner />} />
@@ -95,16 +113,6 @@ type DepositForBridgingProps = {
   onNext: () => void;
   bridgeToChain: MiddlewareChain;
 };
-
-const formatTokenAmount = ({
-  amountInWei,
-  decimals,
-  isNative,
-}: {
-  amountInWei: bigint;
-  decimals: number;
-  isNative: boolean;
-}) => formatUnitsToNumber(amountInWei, decimals, isNative ? 5 : 2);
 
 export const DepositForBridging = ({
   getBridgeRequirementsParams,
@@ -149,7 +157,8 @@ export const DepositForBridging = ({
     canPollForBridgeRefillRequirements,
   );
 
-  // fetch bridge refill requirements manually on mount
+  // fetch bridge refill requirements manually on mount, this is to ensure
+  // that stale values aren't shown - in case a user visits the bridging page again
   useEffect(() => {
     if (!isBridgeRefillRequirementsApiLoading) return;
 
@@ -209,7 +218,12 @@ export const DepositForBridging = ({
     setCanPollForBridgeRefillRequirements(false);
   }, [isRequestingQuoteFailed]);
 
-  // List of tokens that need to be deposited
+  /**
+   * List of tokens that need to be deposited
+   *
+   * Potential bug: doesn't return an empty array in case the quote is still being requested,
+   * this can result in showing stale values as per the expired quotes.
+   */
   const tokens = useMemo(() => {
     if (!bridgeFundingRequirements) return [];
     if (!masterEoa) return [];

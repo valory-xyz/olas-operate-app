@@ -31,16 +31,26 @@ export const useBuyCryptoStep = () => {
     updateIsBuyCryptoBtnLoading,
     isTransactionSuccessfulButFundsNotReceived,
     isOnRampingStepCompleted,
+    networkName,
+    cryptoCurrencyCode,
   } = useOnRampContext();
 
   const handleBuyCrypto = useCallback(async () => {
     if (!onRampWindow?.show) return;
     if (!usdAmountToPay) return;
+    if (!networkName) return;
+    if (!cryptoCurrencyCode) return;
 
-    onRampWindow.show(usdAmountToPay);
+    onRampWindow.show(usdAmountToPay, networkName, cryptoCurrencyCode);
     await delayInSeconds(1);
     updateIsBuyCryptoBtnLoading(true);
-  }, [onRampWindow, usdAmountToPay, updateIsBuyCryptoBtnLoading]);
+  }, [
+    onRampWindow,
+    usdAmountToPay,
+    networkName,
+    cryptoCurrencyCode,
+    updateIsBuyCryptoBtnLoading,
+  ]);
 
   const cannotBuyCrypto = !masterEoa?.address || !usdAmountToPay;
 
