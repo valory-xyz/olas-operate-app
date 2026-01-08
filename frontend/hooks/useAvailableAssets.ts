@@ -87,9 +87,7 @@ export const useAvailableAssets = (
         const asset: AvailableAsset = {
           address,
           symbol,
-          /** @deprecated Use amountString instead */
           amount: Number(balance),
-          amountString: balance,
         };
         return asset;
       },

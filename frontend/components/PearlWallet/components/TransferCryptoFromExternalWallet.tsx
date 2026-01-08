@@ -68,7 +68,7 @@ const getColumns = (
       title: requestedColumnText,
       key: 'tokenAmount',
       render: (_: unknown, record: AvailableAsset) => (
-        <Text>{formatAmount(record.amountString, 4)}</Text>
+        <Text>{formatAmount(record.amount, 4)}</Text>
       ),
       width: '50%',
     },
