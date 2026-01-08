@@ -19,7 +19,7 @@ import {
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { AvailableAsset, TokenAmounts } from '@/types';
 import { Address, TxnHash } from '@/types/Address';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { asMiddlewareChain } from '@/utils/chain';
 import { parseUnits } from '@/utils/numberFormatters';
 
 /**

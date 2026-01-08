@@ -16,7 +16,7 @@ import {
   SwapSafeTransaction,
 } from '@/types/Recovery';
 import { delayInSeconds } from '@/utils';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import { asEvmChainId } from '@/utils/chain';
 
 import { useAccountRecoveryContext } from '../../AccountRecoveryProvider';
 import { useWeb3AuthSwapOwner } from '../../hooks/useWeb3AuthSwapOwner';

@@ -10,7 +10,7 @@ import { Address } from '@/types';
 import { AgentConfig } from '@/types/Agent';
 import { StakingRewardsInfoSchema } from '@/types/Autonolas';
 import { Maybe, Nullable } from '@/types/Util';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { asMiddlewareChain } from '@/utils/chain';
 import { isValidServiceId } from '@/utils/service';
 
 import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';

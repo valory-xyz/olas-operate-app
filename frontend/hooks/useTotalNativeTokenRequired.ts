@@ -5,7 +5,7 @@ import { EvmChainId, onRampChainMap } from '@/constants/chains';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { asMiddlewareChain } from '@/utils/chain';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
 import { useBridgeRequirementsQuery } from '../components/OnRamp/PayingReceivingTable/useBridgeRequirementsQuery';

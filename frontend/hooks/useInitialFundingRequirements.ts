@@ -16,7 +16,7 @@ import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { ConfigurationTemplate } from '@/types';
 import { Address } from '@/types/Address';
 import { formatUnitsToNumber } from '@/utils';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import { asEvmChainId } from '@/utils/chain';
 
 import { useMasterWalletContext } from './useWallet';
 

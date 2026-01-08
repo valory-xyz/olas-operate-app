@@ -18,7 +18,7 @@ import {
 import { StakedAgentService } from '@/service/agents/shared-services/StakedAgentService';
 import { MiddlewareServiceResponse } from '@/types';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
-import { asEvmChainId } from '@/utils/middlewareHelpers';
+import { asEvmChainId } from '@/utils/chain';
 import { formatUnits } from '@/utils/numberFormatters';
 import { isValidServiceId } from '@/utils/service';
 

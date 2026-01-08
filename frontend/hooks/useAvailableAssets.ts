@@ -11,10 +11,7 @@ import { EvmChainId } from '@/constants/chains';
 import { useMasterBalances } from '@/hooks';
 import { AvailableAsset } from '@/types/Wallet';
 import { sumBigNumbers } from '@/utils';
-import {
-  asEvmChainDetails,
-  asMiddlewareChain,
-} from '@/utils/middlewareHelpers';
+import { asEvmChainDetails, asMiddlewareChain } from '@/utils/chain';
 
 import { useStakingRewardsOf } from './useStakingRewardsOf';
 
