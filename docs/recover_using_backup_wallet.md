@@ -1,4 +1,4 @@
-# Recover Pearl using the backup owner
+# Recover Pearl using the backup owner (external backup wallet)
 
 Recovering Pearl using a **backup owner** allows you to regain access when you have lost your password and mnemonic seed phrase.
 
@@ -58,9 +58,9 @@ Steps to recover Pearl using the backup owner:
 
     Replace `YOUR_NEW_PASSWORD` with your desired password.
 
-    > [!WARNING]
-    > Do not call the `/api/wallet/recovery/prepare` endpoint more than once.
-    > Each call generates a new recovery bundle and invalidates the previous one.
+> [!WARNING]
+> Do not call the `/api/wallet/recovery/prepare` endpoint more than once.
+> Each call generates a new recovery bundle and invalidates the previous one.
 
 5. In the terminal window, type the command to display the recovery information and then press **Enter**:
 
@@ -148,7 +148,7 @@ Steps to recover Pearl using the backup owner:
 
 6. Swap the Safe{Wallet} owners. For each Safe{Wallet} that you have, you must use your **backup owner** to swap `owner_to_remove` (old MasterEOA), by `owner_to_add` (New MasterEOA). In the example above, there is only one Safe{Wallet} on Gnosis chain (`0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`) and the user must use their backup owner (`0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb`) to replace the old MasterEOA (`0x1111111111111111111111111111111111111111`) by the new MasterEOA (`0x2222222222222222222222222222222222222222`).
 
-   1. Make sure you have set up the wallet that controls your backup owner (e.g. MetaMask).
+   1. Make sure you have set up a crypto wallet that controls your backup owner (e.g. MetaMask).
    2. Open the Safe{Wallet} web app [https://app.safe.global/welcome/accounts](https://app.safe.global/welcome/accounts), click `Add`, select the appropriate network and paste your Safe{Wallet} address.
    3. Click on the Safe{Wallet} you have added. This will take you to the Safe{Wallet} home.
    4. Click `Connect` and approve the connection to your backup owner wallet.
@@ -173,9 +173,9 @@ Steps to recover Pearl using the backup owner:
 
     If you have swapped all the Safe{Wallet}s, you should see in the output JSON `status": "COMPLETED"`.
 
-    > **Note.**
-    > If the status is `IN_PROGRESS`, some Safe{Wallet}s still need their owners updated.
-    > Review the status output to identify which ones are pending.
+> [!WARNING]
+> If the status is `IN_PROGRESS`, some Safe{Wallet}s still need their owners updated.
+> Please, review the status output to identify which ones are pending.
 
 8. In the terminal window, type the command to complete the recovery process and then press **Enter**:
 
