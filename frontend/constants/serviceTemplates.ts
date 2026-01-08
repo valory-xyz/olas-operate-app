@@ -151,6 +151,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: X402_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
+    PENALIZE_MECH_TIME_WINDOW: {
+      name: 'The penalization window for an unresponsive mech in seconds',
+      description: 'The penalization window for an unresponsive mech in seconds.',
+      value: '7200', // 2 hours
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
 
