@@ -21,7 +21,7 @@ export const TokenSymbolConfigMap: Record<TokenSymbol, { image: string }> = {
   [TokenSymbolMap.USDC]: { image: '/tokens/usdc-icon.png' },
   [TokenSymbolMap.WXDAI]: { image: '/tokens/wxdai-icon.png' },
   [TokenSymbolMap.POL]: { image: '/tokens/pol-icon.png' }, // TODO: add proper image
-  [TokenSymbolMap['USDC.e']]: { image: '/tokens/usdc-e-icon.png' }, // TODO: add proper image
+  [TokenSymbolMap['USDC.e']]: { image: '/tokens/usdc-icon.png' },
 } as const;
 
 export enum TokenType {
