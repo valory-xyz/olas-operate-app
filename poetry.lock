@@ -2167,14 +2167,12 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.13.7"
+version = "0.13.9"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.10"
-files = [
-    {file = "olas_operate_middleware-0.13.7-py3-none-any.whl", hash = "sha256:caa98241e29ef9a6d26657bd508c5019302d079e8a0fe976d0d1bae0fa186975"},
-    {file = "olas_operate_middleware-0.13.7.tar.gz", hash = "sha256:8fe9b9478a46499e24670f0a3dcf199aa52358617f8597feddf494f82ba873d0"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 argon2-cffi = "==23.1.0"
@@ -2183,17 +2181,23 @@ cryptography = "^46.0.3"
 cytoolz = "==0.12.3"
 deepdiff = "^8.6.1"
 fastapi = "0.110.3"
-halo = "0.0.31"
-multiaddr = "0.0.9"
-open-aea-cli-ipfs = ">=2.0.6,<3.0.0"
-open-aea-ledger-cosmos = ">=2.0.6,<3.0.0"
-open-aea-ledger-ethereum = ">=2.0.6,<3.0.0"
-open-aea-ledger-ethereum-flashbots = ">=2.0.6,<3.0.0"
-open-autonomy = ">=0.21.5,<0.22.0"
-psutil = ">=5.9.8,<6.0.0"
-pyinstaller = ">=6.8.0,<7.0.0"
-requests-mock = ">=1.12.1,<2.0.0"
-uvicorn = "0.27.0"
+halo = "==0.0.31"
+multiaddr = "==0.0.9"
+open-aea-cli-ipfs = "^2.0.6"
+open-aea-ledger-cosmos = "^2.0.6"
+open-aea-ledger-ethereum = "^2.0.6"
+open-aea-ledger-ethereum-flashbots = "^2.0.6"
+open-autonomy = "^0.21.5"
+psutil = "^5.9.8"
+pyinstaller = "^6.8.0"
+requests-mock = "^1.12.1"
+uvicorn = "==0.27.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/valory-xyz/olas-operate-middleware.git"
+reference = "60fb9e5482ed7e7723cb01b934a637b473f53784"
+resolved_reference = "60fb9e5482ed7e7723cb01b934a637b473f53784"
 
 [[package]]
 name = "open-aea"
@@ -3521,13 +3525,13 @@ typing-extensions = ">=4.12.0"
 
 [[package]]
 name = "urllib3"
-version = "2.6.2"
+version = "2.6.3"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "urllib3-2.6.2-py3-none-any.whl", hash = "sha256:ec21cddfe7724fc7cb4ba4bea7aa8e2ef36f607a4bab81aa6ce42a13dc3f03dd"},
-    {file = "urllib3-2.6.2.tar.gz", hash = "sha256:016f9c98bb7e98085cb2b4b17b87d2c702975664e4f060c6532e64d1c1a5e797"},
+    {file = "urllib3-2.6.3-py3-none-any.whl", hash = "sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4"},
+    {file = "urllib3-2.6.3.tar.gz", hash = "sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed"},
 ]
 
 [package.extras]
@@ -3879,4 +3883,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "36d76d8e51b3887681761fb87290d280e696be0c3af29153f1ebf546f41f22ee"
+content-hash = "9466800eedd7e7adb6f8381640d719c7d52a61bd7c0504b6eb893b54fd946218"
