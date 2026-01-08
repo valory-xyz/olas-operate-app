@@ -192,13 +192,13 @@ files = [
 
 [[package]]
 name = "anyio"
-version = "4.12.0"
+version = "4.12.1"
 description = "High-level concurrency and networking framework on top of asyncio or Trio"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "anyio-4.12.0-py3-none-any.whl", hash = "sha256:dad2376a628f98eeca4881fc56cd06affd18f659b17a747d3ff0307ced94b1bb"},
-    {file = "anyio-4.12.0.tar.gz", hash = "sha256:73c693b567b0c55130c104d0b43a9baf3aa6a31fc6110116509f27bf75e21ec0"},
+    {file = "anyio-4.12.1-py3-none-any.whl", hash = "sha256:d405828884fc140aa80a3c667b8beed277f1dfedec42ba031bd6ac3db606ab6c"},
+    {file = "anyio-4.12.1.tar.gz", hash = "sha256:41cfcc3a4c85d3f05c932da7c26d0201ac36f72abd4435ba90d0464a3ffed703"},
 ]
 
 [package.dependencies]
@@ -2167,7 +2167,7 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.13.6"
+version = "0.13.9"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.10"
@@ -2196,8 +2196,8 @@ uvicorn = "==0.27.0"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "8b1517412dca3501b59c60f9b1fc672e228d9a2f"
-resolved_reference = "8b1517412dca3501b59c60f9b1fc672e228d9a2f"
+reference = "4c986f0e843def8c914f2906cf32e478c528606c"
+resolved_reference = "4c986f0e843def8c914f2906cf32e478c528606c"
 
 [[package]]
 name = "open-aea"
@@ -3486,13 +3486,13 @@ files = [
 
 [[package]]
 name = "types-requests"
-version = "2.32.4.20250913"
+version = "2.32.4.20260107"
 description = "Typing stubs for requests"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "types_requests-2.32.4.20250913-py3-none-any.whl", hash = "sha256:78c9c1fffebbe0fa487a418e0fa5252017e9c60d1a2da394077f1780f655d7e1"},
-    {file = "types_requests-2.32.4.20250913.tar.gz", hash = "sha256:abd6d4f9ce3a9383f269775a9835a4c24e5cd6b9f647d64f88aa4613c33def5d"},
+    {file = "types_requests-2.32.4.20260107-py3-none-any.whl", hash = "sha256:b703fe72f8ce5b31ef031264fe9395cac8f46a04661a79f7ed31a80fb308730d"},
+    {file = "types_requests-2.32.4.20260107.tar.gz", hash = "sha256:018a11ac158f801bfa84857ddec1650750e393df8a004a8a9ae2a9bec6fcb24f"},
 ]
 
 [package.dependencies]
@@ -3525,13 +3525,13 @@ typing-extensions = ">=4.12.0"
 
 [[package]]
 name = "urllib3"
-version = "2.6.2"
+version = "2.6.3"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "urllib3-2.6.2-py3-none-any.whl", hash = "sha256:ec21cddfe7724fc7cb4ba4bea7aa8e2ef36f607a4bab81aa6ce42a13dc3f03dd"},
-    {file = "urllib3-2.6.2.tar.gz", hash = "sha256:016f9c98bb7e98085cb2b4b17b87d2c702975664e4f060c6532e64d1c1a5e797"},
+    {file = "urllib3-2.6.3-py3-none-any.whl", hash = "sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4"},
+    {file = "urllib3-2.6.3.tar.gz", hash = "sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed"},
 ]
 
 [package.extras]
@@ -3883,4 +3883,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "5559d6dd1470f4b8a6deffa3c83186e2b6125c19fd43e5624ad1c95bee0d387b"
+content-hash = "224b7e7cdf8540769225f90096e308a1a286fa6ee1f9090b50e0b152ff24686e"
