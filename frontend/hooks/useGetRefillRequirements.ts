@@ -133,12 +133,12 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
       )
         return [];
 
-      const masterSafeRefill = (requirements as MasterSafeBalanceRecord)?.[
+      const masterSafePlaceholder = (requirements as MasterSafeBalanceRecord)?.[
         MASTER_SAFE_REFILL_PLACEHOLDER
       ];
       const masterSafeRequirements = masterSafe
         ? (requirements as AddressBalanceRecord)?.[masterSafe.address]
-        : masterSafeRefill;
+        : masterSafePlaceholder;
 
       if (!masterSafeRequirements) return [];
 

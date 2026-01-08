@@ -73,7 +73,7 @@ const useCombineNativeTokenRequirements = (
       )[masterEoa.address]?.[AddressZero];
 
       // Refill requirements for masterSafe (placeholder)
-      const masterSafeRefill = (
+      const masterSafePlaceholder = (
         refillRequirements as MasterSafeBalanceRecord
       )?.[MASTER_SAFE_REFILL_PLACEHOLDER];
 
@@ -82,7 +82,7 @@ const useCombineNativeTokenRequirements = (
       const safeRequirementAmount = (
         masterSafe
           ? (refillRequirements as AddressBalanceRecord)?.[masterSafe.address]
-          : masterSafeRefill
+          : masterSafePlaceholder
       )?.[AddressZero];
 
       if (!masterEoaRequirementAmount) return;

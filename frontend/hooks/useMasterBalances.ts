@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import { TokenSymbol, TokenSymbolMap } from '@/config/tokens';
 import { AddressZero, EvmChainId } from '@/constants';
+import { MASTER_SAFE_REFILL_PLACEHOLDER } from '@/constants/defaults';
 import {
   useBalanceAndRefillRequirementsContext,
   useBalanceContext,
@@ -21,7 +22,7 @@ const requiresFund = (balance?: string) => {
 const useRefillRequirement = (wallet?: WalletBalance) => {
   const { refillRequirements } = useBalanceAndRefillRequirementsContext();
   if (!refillRequirements || !wallet) return;
-  if ('master_safe' in refillRequirements) return;
+  if (MASTER_SAFE_REFILL_PLACEHOLDER in refillRequirements) return;
 
   const requirement = refillRequirements[wallet.walletAddress]?.[AddressZero];
   return requirement;

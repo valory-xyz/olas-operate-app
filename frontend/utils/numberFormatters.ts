@@ -64,33 +64,6 @@ export const formatAmount = (
 };
 
 /**
- * Formats a value provided in wei into a human-readable string.
- * Converts from wei (default 18 decimals) then applies locale formatting.
-
- * @example formatAmountFromWei('123400000000000000000054', {
- *   displayDecimals: 2,
- *   conversionDecimals: 18,
- *   round: 'floor'
- * }) => '123,400.00'
- */
-export const formatAmountFromWei = (
-  wei: BigNumberish | undefined,
-  {
-    displayDecimals = 2,
-    round = 'ceil',
-    conversionDecimals = 18,
-  }: {
-    displayDecimals?: number;
-    round?: 'ceil' | 'floor';
-    conversionDecimals?: number;
-  } = {},
-): string => {
-  if (wei === undefined) return '--';
-  const decimalStr = formatUnits(wei, conversionDecimals);
-  return formatAmount(decimalStr, displayDecimals, round);
-};
-
-/**
  * Formats larger numbers into small numbers
  * @note **divides** the input by 10^decimals
  * @example `formatUnits('1000000000000000000', 18)` => '1.0'

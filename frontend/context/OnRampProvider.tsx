@@ -149,6 +149,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
       : getMasterEoaNativeBalanceOf(networkId);
     if (!balance) return;
 
+    // Limit decimals to 18 (ethers parseEther requirement) to avoid NUMERIC_FAULT
     const thresholdAmount = (
       ethTotalAmountRequired * ETH_RECEIVED_THRESHOLD
     ).toFixed(18);
