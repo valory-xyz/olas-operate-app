@@ -86,24 +86,6 @@ export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChainMap.POLYGON]: 'https://polygon.blockscout.com', // TODO: Update with real URL when available
 };
 
-// swap URLs
-const COW_SWAP_GNOSIS_XDAI_OLAS_URL: Url =
-  'https://swap.cow.fi/#/100/swap/WXDAI/OLAS';
-const SWAP_BASE_URL: Url = 'https://balancer.fi/swap/base/ETH/OLAS';
-const SWAP_MODE_URL: Url =
-  'https://balancer.fi/swap/mode/0xd988097fb8612cc24eec14542bc03424c656005f/0xcfd1d50ce23c46d3cf6407487b2f8934e96dc8f9';
-const SWAP_OPTIMISM_URL: Url =
-  'https://balancer.fi/pools/optimism/v2/0x5bb3e58887264b667f915130fd04bbb56116c27800020000000000000000012a';
-const SWAP_POLYGON_URL: Url = 'https://balancer.fi/swap/polygon/ETH/OLAS'; // TODO: Update with real swap URL when available
-
-export const SWAP_URL_BY_EVM_CHAIN: Record<EvmChainId, Url> = {
-  [EvmChainIdMap.Gnosis]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
-  [EvmChainIdMap.Base]: SWAP_BASE_URL,
-  [EvmChainIdMap.Mode]: SWAP_MODE_URL,
-  [EvmChainIdMap.Optimism]: SWAP_OPTIMISM_URL,
-  [EvmChainIdMap.Polygon]: SWAP_POLYGON_URL,
-};
-
 // on-ramp
 export const ON_RAMP_GATEWAY_URL = `https://proxy.transak.${process.env.NODE_ENV === 'production' ? '' : 'staging.'}autonolas.tech/`;
 
