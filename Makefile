@@ -35,8 +35,8 @@ build: ./dist/pearl_win ./electron/bins/tendermint.exe
 	cp -r dist/pearl_win ./electron/bins/middleware
 	cp ./electron/bins/tendermint.exe ./electron/bins/middleware/tendermint.exe
 	cp dist/tendermint_win.exe ./electron/bins/middleware/tendermint_win.exe
-	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} yarn build:frontend
-	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} GH_TOKEN=${GH_TOKEN} GITHUB_REF_TYPE=${GITHUB_REF_TYPE} GITHUB_REF_NAME=${GITHUB_REF_NAME} GITHUB_REF=${GITHUB_REF} node build-win.js
+	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} POLYGON_RPC=${POLYGON_RPC} yarn build:frontend
+	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} POLYGON_RPC=${POLYGON_RPC} GH_TOKEN=${GH_TOKEN} GITHUB_REF_TYPE=${GITHUB_REF_TYPE} GITHUB_REF_NAME=${GITHUB_REF_NAME} GITHUB_REF=${GITHUB_REF} node build-win.js
 
 
 .PHONY: build-tenderly
@@ -46,5 +46,5 @@ build-tenderly:  ./dist/pearl_win ./electron/bins/tendermint.exe
 	cp -r dist/pearl_win ./electron/bins/middleware
 	cp ./electron/bins/tendermint.exe ./electron/bins/middleware/tendermint.exe
 	cp dist/tendermint_win.exe ./electron/bins/middleware/tendermint_win.exe
-	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} yarn build:frontend
+	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} POLYGON_RPC=${POLYGON_RPC} yarn build:frontend
 	GH_TOKEN=${GH_TOKEN} node build-win-tenderly.js

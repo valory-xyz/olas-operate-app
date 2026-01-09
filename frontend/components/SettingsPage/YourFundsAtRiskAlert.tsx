@@ -4,6 +4,7 @@ import { useToggle } from 'usehooks-ts';
 
 import { Alert, Modal } from '@/components/ui';
 import {
+  AllEvmChainId,
   AllEvmChainIdMap,
   COMMUNITY_ASSISTANCE_URL,
   EvmChainIdMap,
@@ -15,12 +16,15 @@ const { Text } = Typography;
 /**
  * update as needed; check https://app.safe.global/new-safe/create for prefixes
  */
-const safeChainPrefix = {
+const safeChainPrefix: {
+  [chainId in AllEvmChainId]: string;
+} = {
   [AllEvmChainIdMap.Ethereum]: 'eth',
   [EvmChainIdMap.Base]: 'base',
   [EvmChainIdMap.Optimism]: 'oeth',
   [EvmChainIdMap.Gnosis]: 'gno',
   [EvmChainIdMap.Mode]: '', // TODO: provide correct prefix once mode is supported on safe
+  [EvmChainIdMap.Polygon]: 'matic',
 };
 
 type AddBackupWalletAlertProps = {

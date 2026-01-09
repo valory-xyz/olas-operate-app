@@ -25,6 +25,8 @@ import {
 
 const REQUESTS_SAFETY_MARGIN = 1;
 
+const getNowInSeconds = () => Math.floor(Date.now() / 1000);
+
 export abstract class ModiusService extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({
     agentMultisigAddress,
@@ -73,25 +75,31 @@ export abstract class ModiusService extends StakedAgentService {
     ] = multicallResponse;
 
     const lastMultisigNonces = serviceInfo[2];
-    const nowInSeconds = Math.floor(Date.now() / 1000);
 
     const isServiceStaked = serviceInfo[2].length > 0;
 
+    // Calculate the number of requests required to be eligible for rewards
+    const secondsSinceCheckpoint = getNowInSeconds() - tsCheckpoint;
+    const effectivePeriod = Math.max(livenessPeriod, secondsSinceCheckpoint);
     const requiredRequests =
-      (Math.ceil(Math.max(livenessPeriod, nowInSeconds - tsCheckpoint)) *
-        livenessRatio) /
-        1e18 +
+      (Math.ceil(effectivePeriod) * livenessRatio) / 1e18 +
       REQUESTS_SAFETY_MARGIN;
 
+    // Determine how many requests the service has handled since last checkpoint
     const eligibleRequests = isServiceStaked
       ? currentMultisigNonces[0] - lastMultisigNonces[0]
       : 0;
 
+    // Check eligibility for rewards
     const isEligibleForRewards = eligibleRequests >= requiredRequests;
 
+    // Available rewards for the current epoch
+    const expectedEpochRewards = rewardsPerSecond * livenessPeriod;
+    // in case of late checkpoint
+    const lateCheckpointRewards = rewardsPerSecond * secondsSinceCheckpoint;
     const availableRewardsForEpoch = Math.max(
-      rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
-      rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+      expectedEpochRewards,
+      lateCheckpointRewards,
     );
 
     // Minimum staked amount is double the minimum staking deposit

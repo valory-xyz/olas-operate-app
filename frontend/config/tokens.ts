@@ -8,6 +8,8 @@ export const TokenSymbolMap = {
   XDAI: 'XDAI',
   /** WXDAI: Token used for making bets in predict agent */
   WXDAI: 'WXDAI',
+  POL: 'POL',
+  'USDC.e': 'USDC.e',
 } as const;
 
 export type TokenSymbol = keyof typeof TokenSymbolMap;
@@ -18,6 +20,8 @@ export const TokenSymbolConfigMap: Record<TokenSymbol, { image: string }> = {
   [TokenSymbolMap.OLAS]: { image: '/tokens/olas-icon.png' },
   [TokenSymbolMap.USDC]: { image: '/tokens/usdc-icon.png' },
   [TokenSymbolMap.WXDAI]: { image: '/tokens/wxdai-icon.png' },
+  [TokenSymbolMap.POL]: { image: '/tokens/pol-icon.png' },
+  [TokenSymbolMap['USDC.e']]: { image: '/tokens/usdc-icon.png' },
 } as const;
 
 export enum TokenType {
@@ -163,16 +167,36 @@ export const OPTIMISM_TOKEN_CONFIG: ChainTokenConfig = {
   },
 };
 
-/**
- * TODO:
- * 1. combine EvmChainIdMap and AllEvmChainId into one thing to avoid confusion
- * 2. include ethereum config into this and make it so balances are not requested for it
- */
+// TODO: Add proper token addresses for Polygon when decided
+export const POLYGON_TOKEN_CONFIG: ChainTokenConfig = {
+  [TokenSymbolMap.POL]: {
+    tokenType: TokenType.NativeGas,
+    symbol: TokenSymbolMap.POL,
+    decimals: 18,
+  },
+  [TokenSymbolMap.OLAS]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.OLAS,
+    decimals: 18,
+    address: '0xFEF5d947472e72Efbb2E388c730B7428406F2F95',
+  },
+  [TokenSymbolMap['USDC.e']]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap['USDC.e'],
+    decimals: 6,
+    address: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
+  },
+};
+
+// TODO
+// 1. combine EvmChainIdMap and AllEvmChainId into one thing to avoid confusion
+// 2. include ethereum config into this and make it so balances are not requested for it
 export const TOKEN_CONFIG: Record<EvmChainId, ChainTokenConfig> = {
   [EvmChainIdMap.Gnosis]: GNOSIS_TOKEN_CONFIG,
   [EvmChainIdMap.Base]: BASE_TOKEN_CONFIG,
   [EvmChainIdMap.Mode]: MODE_TOKEN_CONFIG,
   [EvmChainIdMap.Optimism]: OPTIMISM_TOKEN_CONFIG,
+  [EvmChainIdMap.Polygon]: POLYGON_TOKEN_CONFIG,
 } as const;
 
 type ChainErc20TokenConfig = {

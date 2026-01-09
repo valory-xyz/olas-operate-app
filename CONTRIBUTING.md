@@ -80,6 +80,7 @@ Follow the appropriate setup guide for your operating system:
    - `ETHEREUM_RPC`
    - `MODE_RPC`
    - `CELO_RPC`
+   - `POLYGON_RPC`
 
 6. **Start development server**
    ```bash

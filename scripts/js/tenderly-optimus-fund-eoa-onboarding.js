@@ -31,7 +31,8 @@ const main = async () => {
         optimus: process.env.OPTIMISM_RPC,
         base: process.env.BASE_RPC,
         ethereum: process.env.ETHEREUM_RPC,
-        mode: process.env.MODE_RPC
+        mode: process.env.MODE_RPC,
+        polygon: process.env.POLYGON_RPC
     };
 
     console.log(rpcs)
