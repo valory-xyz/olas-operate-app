@@ -68,7 +68,7 @@ export const AGENT_CONFIG: {
     evmHomeChainId: EvmChainIdMap.Gnosis,
     middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
     agentIds: [14, 25],
-    defaultStakingProgramId: STAKING_PROGRAM_IDS.PearlBeta,
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3,
     serviceApi: PredictTraderService,
     displayName: 'Prediction Trader',
     description: 'Participates in prediction markets.',
