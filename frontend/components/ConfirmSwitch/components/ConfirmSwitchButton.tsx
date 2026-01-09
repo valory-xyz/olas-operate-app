@@ -1,8 +1,8 @@
-import { Button, message } from 'antd';
+import { Button } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { MiddlewareDeploymentStatusMap, PAGES } from '@/constants';
+import { MiddlewareDeploymentStatusMap } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import {
   useBalanceContext,
@@ -99,11 +99,8 @@ export const ConfirmSwitchButton = ({
       // start service after updating or creating
       await ServicesService.startService(serviceConfigId);
       setContractSwitchStatus('COMPLETED');
-      message.success('Contract switched successfully.');
-      goto(PAGES.Main);
     } catch (error) {
       console.error(error);
-      message.error('An error occurred while switching contract.');
       setContractSwitchStatus('ERROR');
       resetState();
     }
@@ -122,10 +119,10 @@ export const ConfirmSwitchButton = ({
       >
         Confirm Switch
       </Button>
-      {(contractSwitchStatus === 'IN_PROGRESS' ||
-        contractSwitchStatus === 'COMPLETED') && (
+      {contractSwitchStatus !== 'NOT_STARTED' && (
         <SwitchingContractModal
-          isSwitchingContract={contractSwitchStatus === 'IN_PROGRESS'}
+          status={contractSwitchStatus}
+          onClose={() => setContractSwitchStatus('NOT_STARTED')}
           stakingProgramIdToMigrateTo={stakingProgramIdToMigrateTo!}
         />
       )}

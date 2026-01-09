@@ -38,12 +38,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChainMap.GNOSIS,
   configurations: {
     [MiddlewareChainMap.GNOSIS]: {
-      staking_program_id: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1, // default, may be overwritten
+      staking_program_id: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3, // default, may be overwritten
       nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 14,
       // TODO: pull fund requirements from staking program config
-      cost_of_bond: +parseEther(0.001),
+      cost_of_bond: +parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: +parseEther(2),
@@ -283,7 +283,7 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
     [MiddlewareChainMap.BASE]: {
       staking_program_id: STAKING_PROGRAM_IDS.AgentsFun1, // default, may be overwritten
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 43,
       cost_of_bond: +parseEther(50),
       fund_requirements: {
@@ -324,7 +324,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
     [MiddlewareChainMap.MODE]: {
       staking_program_id: STAKING_PROGRAM_IDS.ModiusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 40,
       cost_of_bond: +parseEther(20),
       fund_requirements: {
@@ -493,7 +493,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
     [MiddlewareChainMap.OPTIMISM]: {
       staking_program_id: STAKING_PROGRAM_IDS.OptimusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 40,
       cost_of_bond: +parseEther(20),
       fund_requirements: {
@@ -635,7 +635,7 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
     [MiddlewareChainMap.BASE]: {
       staking_program_id: STAKING_PROGRAM_IDS.PettAiAgent3,
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 80,
       cost_of_bond: +parseEther(20),
       fund_requirements: {
