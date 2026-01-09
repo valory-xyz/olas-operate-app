@@ -100,7 +100,7 @@ const formatWithdrawAssets = (
       const withdrawableAmount = (() => {
         if (!withdrawAll) return amount;
         const asset = availableAssets.find((asset) => asset.symbol === symbol);
-        return asset?.amount ?? 0;
+        return asset?.amountInStr ?? '0';
       })();
 
       acc[tokenAddress] = parseUnits(withdrawableAmount, decimals) || '0';

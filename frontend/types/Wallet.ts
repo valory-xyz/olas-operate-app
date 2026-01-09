@@ -16,7 +16,11 @@ export type SafeCreationResponse = {
 export type AvailableAsset = {
   address?: string;
   symbol: TokenSymbol;
-  amount: string;
+  amount: number;
+  /**
+   * String representation of amount to avoid precision issues
+   */
+  amountInStr?: string;
 };
 
 export type StakedAsset = {
