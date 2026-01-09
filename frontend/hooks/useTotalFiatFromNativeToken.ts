@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { OnRampNetworkConfig } from '@/components/OnRamp';
+import { TokenSymbol, TokenSymbolMap } from '@/config/tokens';
 import {
   onRampChainMap,
   REACT_QUERY_KEYS,
@@ -8,7 +9,7 @@ import {
 } from '@/constants';
 import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
 import { ensureRequired } from '@/types';
-import { asMiddlewareChain } from '@/utils';
+import { asEvmChainDetails, asMiddlewareChain } from '@/utils';
 
 type FeeBreakdownItem = {
   name: string;
@@ -39,9 +40,14 @@ type Quote = {
 
 const transakPriceUrl = `${ON_RAMP_GATEWAY_URL}price-quote`;
 
+type FetchTransakQuoteParams = {
+  network: SupportedMiddlewareChain;
+  amount: number | string;
+  cryptoCurrency?: TokenSymbol;
+};
+
 const fetchTransakQuote = async (
-  network: SupportedMiddlewareChain,
-  amount: number | string,
+  { network, amount, cryptoCurrency = 'ETH' }: FetchTransakQuoteParams,
   signal: AbortSignal,
 ): Promise<{ response: Quote }> => {
   const options = {
@@ -52,7 +58,7 @@ const fetchTransakQuote = async (
 
   const params = new URLSearchParams({
     fiatCurrency: 'USD',
-    cryptoCurrency: 'ETH',
+    cryptoCurrency,
     isBuyOrSell: 'BUY',
     network,
     paymentMethod: 'credit_debit_card',
@@ -84,14 +90,26 @@ export const useTotalFiatFromNativeToken = ({
     ensureRequired(selectedChainId, "Chain ID can't be empty"),
   );
   const fromChain = asMiddlewareChain(onRampChainMap[selectedChainName]);
+  const chainSymbol = asEvmChainDetails(fromChain).symbol;
+  /**
+   * For POL chain, Transak uses 'POL' as the cryptoCurrency code
+   * while for others it uses 'ETH'.
+   */
+  const cryptoCurrency: TokenSymbol =
+    chainSymbol === TokenSymbolMap.POL
+      ? TokenSymbolMap.POL
+      : TokenSymbolMap.ETH;
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(fromChain, nativeTokenAmount!),
     queryFn: async ({ signal }) => {
       try {
         const { response } = await fetchTransakQuote(
-          fromChain,
-          nativeTokenAmount!,
+          {
+            network: fromChain,
+            amount: nativeTokenAmount!,
+            cryptoCurrency,
+          },
           signal,
         );
         return response;
