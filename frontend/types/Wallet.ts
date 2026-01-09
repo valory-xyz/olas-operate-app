@@ -16,7 +16,7 @@ export type SafeCreationResponse = {
 export type AvailableAsset = {
   address?: string;
   symbol: TokenSymbol;
-  amount: number;
+  amount: string;
 };
 
 export type StakedAsset = {
