@@ -25,7 +25,6 @@ import {
   asAllMiddlewareChain,
   asEvmChainId,
   getFromToken,
-  numberToPlainString,
 } from '@/utils';
 
 type TransferDirection = 'to' | 'from';
@@ -73,14 +72,17 @@ const useCombineNativeTokenRequirements = (
         refillRequirements as AddressBalanceRecord
       )[masterEoa.address]?.[AddressZero];
 
+      // Refill requirements for masterSafe (placeholder)
+      const masterSafePlaceholder = (
+        refillRequirements as MasterSafeBalanceRecord
+      )?.[MASTER_SAFE_REFILL_PLACEHOLDER];
+
       // Refill requirements for masterSafe
       // uses actual safe address if available, otherwise fallback to placeholder
       const safeRequirementAmount = (
         masterSafe
           ? (refillRequirements as AddressBalanceRecord)?.[masterSafe.address]
-          : (refillRequirements as MasterSafeBalanceRecord)?.[
-              MASTER_SAFE_REFILL_PLACEHOLDER
-            ]
+          : masterSafePlaceholder
       )?.[AddressZero];
 
       if (!masterEoaRequirementAmount) return;
@@ -197,7 +199,7 @@ export const useGetBridgeRequirementsParams = (
                 chain: toChain,
                 address: toAddress,
                 token: toToken,
-                amount: numberToPlainString(amount),
+                amount,
               },
             });
           }
@@ -220,8 +222,8 @@ export const useGetBridgeRequirementsParams = (
       defaultFromToken,
       isBalancesAndFundingRequirementsLoading,
       toMiddlewareChain,
-      getUpdatedBridgeRequirementsParams,
       masterSafe,
+      getUpdatedBridgeRequirementsParams,
     ],
   );
 };

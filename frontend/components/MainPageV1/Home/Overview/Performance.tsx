@@ -71,7 +71,7 @@ const AgentBehaviorContainer = styled.div`
 /**
  * Hook to get the agent performance data
  */
-export const useAgentPerformance = () => {
+const useAgentPerformance = () => {
   const { selectedService } = useServices();
   const chainId = selectedService?.home_chain;
   const serviceConfigId = selectedService?.service_config_id;

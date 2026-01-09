@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { compact, isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -43,10 +43,8 @@ const getTokensDetailsForFunding = (
   requirementsPerToken: { [tokenAddress: Address]: bigint },
   chainConfig: ChainTokenConfig,
 ) => {
-  const currentTokenRequirements: TokenRequirement[] = Object.entries(
-    requirementsPerToken,
-  )
-    .map(([tokenAddress, amount]) => {
+  const currentTokenRequirements: TokenRequirement[] = compact(
+    Object.entries(requirementsPerToken).map(([tokenAddress, amount]) => {
       const { symbol, decimals, iconSrc } = getTokenMeta(
         tokenAddress as Address,
         chainConfig,
@@ -60,8 +58,8 @@ const getTokensDetailsForFunding = (
           iconSrc: ICON_OVERRIDES[symbol] || iconSrc,
         };
       }
-    })
-    .filter(Boolean) as TokenRequirement[];
+    }),
+  ) satisfies TokenRequirement[];
 
   return currentTokenRequirements.sort((a, b) => b.amount - a.amount);
 };
@@ -72,12 +70,6 @@ type UseGetRefillRequirementsReturn = {
    * funding cards (fund your agent screen)
    */
   totalTokenRequirements: TokenRequirement[];
-  /**
-   * Initial token requirements, calculated when the funds are requested for the first time,
-   * considers the eoa balances. This is the actual funds that user has to send in order to meet the
-   * initial funding requirements.
-   */
-  initialTokenRequirements: TokenRequirement[];
   isLoading: boolean;
   resetTokenRequirements: () => void;
 };
@@ -112,7 +104,6 @@ type UseGetRefillRequirementsReturn = {
 export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
   const {
     totalRequirements,
-    refillRequirements,
     resetQueryCache,
     isBalancesAndFundingRequirementsLoading,
   } = useBalanceAndRefillRequirementsContext();
@@ -123,9 +114,6 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
   } = useMasterWalletContext();
   const { selectedAgentConfig, selectedAgentType } = useServices();
 
-  const [initialTokenRequirements, setInitialTokenRequirements] = useState<
-    TokenRequirement[] | null
-  >(null);
   const [totalTokenRequirements, setTotalTokenRequirements] = useState<
     TokenRequirement[] | null
   >(null);
@@ -136,9 +124,7 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
   );
 
   const getRequirementsPerToken = useCallback(
-    (
-      requirements: AddressBalanceRecord | MasterSafeBalanceRecord | undefined,
-    ) => {
+    (requirements?: AddressBalanceRecord | MasterSafeBalanceRecord) => {
       if (
         isBalancesAndFundingRequirementsLoading ||
         !requirements ||
@@ -147,11 +133,12 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
       )
         return [];
 
+      const masterSafePlaceholder = (requirements as MasterSafeBalanceRecord)?.[
+        MASTER_SAFE_REFILL_PLACEHOLDER
+      ];
       const masterSafeRequirements = masterSafe
         ? (requirements as AddressBalanceRecord)?.[masterSafe.address]
-        : (requirements as MasterSafeBalanceRecord)?.[
-            MASTER_SAFE_REFILL_PLACEHOLDER
-          ];
+        : masterSafePlaceholder;
 
       if (!masterSafeRequirements) return [];
 
@@ -200,7 +187,6 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
   const resetTokenRequirements = useCallback(
     (resetCache = true) => {
       setTotalTokenRequirements(null);
-      setInitialTokenRequirements(null);
       if (resetCache) resetQueryCache?.();
     },
     [resetQueryCache],
@@ -213,17 +199,6 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
     resetTokenRequirements(false);
   }, [selectedAgentType, resetTokenRequirements]);
 
-  const currentTokenRequirements = useMemo(() => {
-    return getRequirementsPerToken(refillRequirements);
-  }, [getRequirementsPerToken, refillRequirements]);
-
-  // Capture the initial token requirements once, when they are first available
-  useEffect(() => {
-    if (!initialTokenRequirements && currentTokenRequirements.length) {
-      setInitialTokenRequirements(currentTokenRequirements);
-    }
-  }, [currentTokenRequirements, initialTokenRequirements]);
-
   // Get the total token requirements
   useEffect(() => {
     if (isEmpty(totalTokenRequirements)) {
@@ -234,8 +209,6 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
   return {
     isLoading:
       isBalancesAndFundingRequirementsLoading || !totalTokenRequirements,
-    initialTokenRequirements:
-      initialTokenRequirements ?? currentTokenRequirements,
     totalTokenRequirements: totalTokenRequirements || [],
     resetTokenRequirements,
   };

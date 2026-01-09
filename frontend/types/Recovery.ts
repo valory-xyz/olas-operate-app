@@ -13,7 +13,7 @@ export type RecoveryStatus = {
   has_pending_swaps: boolean;
 };
 
-type TokenBalance = Record<Address, number>;
+type TokenBalance = Record<Address, string>;
 
 type BackupOwnerSafe = {
   backup_owners: Address[];
@@ -59,13 +59,13 @@ export type RecoveryPrepareProcess = {
 };
 
 /** tokenAddress → amount */
-type TokenBalanceMap = Record<Address, number>;
+type TokenBalanceMap = Record<Address, string>;
 
 /**
  * @example
  * {
  *   "gnosis": {
- *     "0xSafeAddress": { "0xTokenAddress": 123n }
+ *     "0xSafeAddress": { "0xTokenAddress": '123' }
  *   }
  * }
  */

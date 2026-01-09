@@ -8,8 +8,6 @@ export * from './Bridge';
 export * from './ElectronApi';
 export * from './Epoch';
 export * from './Funding';
-export * from './Records';
 export * from './Service';
-export * from './TransactionInfo';
 export * from './Util';
 export * from './Wallet';
