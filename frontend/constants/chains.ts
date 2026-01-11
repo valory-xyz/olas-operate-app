@@ -72,6 +72,7 @@ export const onRampChainMap: Record<SupportedMiddlewareChain, EvmChainId> = {
 };
 
 export const ChainImageMap = {
+  [AllEvmChainIdMap.Ethereum]: '/chains/ethereum-chain.png',
   [EvmChainIdMap.Gnosis]: '/chains/gnosis-chain.png',
   [EvmChainIdMap.Base]: '/chains/base-chain.png',
   [EvmChainIdMap.Mode]: '/chains/mode-chain.png',

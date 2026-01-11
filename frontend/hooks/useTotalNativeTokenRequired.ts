@@ -22,8 +22,8 @@ export const useTotalNativeTokenRequired = (
   queryKey: 'preview' | 'onboarding' = 'onboarding',
 ) => {
   const {
-    updateEthAmountToPay,
-    updateEthTotalAmountRequired,
+    updateNativeAmountToPay,
+    updateNativeTotalAmountRequired,
     isOnRampingTransactionSuccessful,
   } = useOnRampContext();
   const { selectedAgentConfig } = useServices();
@@ -134,13 +134,13 @@ export const useTotalNativeTokenRequired = (
     if (!totalNativeTokens) return;
     if (isOnRampingTransactionSuccessful) return;
 
-    updateEthAmountToPay(totalNativeTokens.totalNativeTokenToPay);
-    updateEthTotalAmountRequired(totalNativeTokens.totalNativeTokenRequired);
+    updateNativeAmountToPay(totalNativeTokens.totalNativeTokenToPay);
+    updateNativeTotalAmountRequired(totalNativeTokens.totalNativeTokenRequired);
   }, [
     isOnRampingTransactionSuccessful,
-    updateEthAmountToPay,
+    updateNativeAmountToPay,
     totalNativeTokens,
-    updateEthTotalAmountRequired,
+    updateNativeTotalAmountRequired,
   ]);
 
   return {

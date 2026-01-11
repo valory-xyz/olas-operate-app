@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { MiddlewareChain, PAGES } from '@/constants';
+import { MiddlewareChain, MiddlewareChainMap, PAGES } from '@/constants';
 import { usePageState } from '@/hooks';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
@@ -21,6 +21,7 @@ type BridgeState = 'depositing' | 'in_progress' | 'completed';
 
 type BridgeProps = {
   mode?: BridgeMode;
+  fromChain?: MiddlewareChain;
   bridgeToChain: MiddlewareChain;
   /**
    * Function to get the bridge requirements params. We are passing the function
@@ -39,6 +40,7 @@ type BridgeProps = {
  */
 export const Bridge = ({
   mode = 'deposit',
+  fromChain,
   bridgeToChain,
   getBridgeRequirementsParams,
   onPrevBeforeBridging,
@@ -108,6 +110,7 @@ export const Bridge = ({
     case bridgeState === 'depositing':
       return (
         <BridgeOnEvm
+          fromChain={fromChain || MiddlewareChainMap.ETHEREUM}
           bridgeToChain={bridgeToChain}
           getBridgeRequirementsParams={getBridgeRequirementsParams}
           updateQuoteId={updateQuoteId}

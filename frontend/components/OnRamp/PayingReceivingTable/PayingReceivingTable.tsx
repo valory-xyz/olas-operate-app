@@ -140,7 +140,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     isOnRampingStepCompleted,
     isTransactionSuccessfulButFundsNotReceived,
     usdAmountToPay,
-    ethAmountToPay,
+    nativeAmountToPay,
     updateUsdAmountToPay,
   } = useOnRampContext();
   const {
@@ -217,7 +217,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
                       {usdAmountToPay ? `~$${usdAmountToPay} for` : NA}
                     </Text>
                     <ChainLogo chainName="ethereum" alt="ETH" />
-                    <Text>{`${ethAmountToPay} ETH`}</Text>
+                    <Text>{`${nativeAmountToPay} ETH`}</Text>
                   </>
                 )}
               </Flex>
@@ -232,7 +232,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     [
       isNativeTokenLoading,
       hasNativeTokenError,
-      ethAmountToPay,
+      nativeAmountToPay,
       usdAmountToPay,
       tokensRequired,
       onRetry,

@@ -32,10 +32,10 @@ export const OnRampContext = createContext<{
   updateNetworkConfig: (config: OnRampNetworkConfig) => void;
   resetOnRampState: () => void;
 
-  ethAmountToPay: Nullable<number>;
-  updateEthAmountToPay: (amount: Nullable<number>) => void;
-  ethTotalAmountRequired: Nullable<number>;
-  updateEthTotalAmountRequired: (amount: Nullable<number>) => void;
+  nativeAmountToPay: Nullable<number>;
+  updateNativeAmountToPay: (amount: Nullable<number>) => void;
+  nativeTotalAmountRequired: Nullable<number>;
+  updateNativeTotalAmountRequired: (amount: Nullable<number>) => void;
   usdAmountToPay: Nullable<number>;
   updateUsdAmountToPay: (amount: Nullable<number>) => void;
   isBuyCryptoBtnLoading: boolean;
@@ -57,10 +57,10 @@ export const OnRampContext = createContext<{
   updateNetworkConfig: () => {},
   resetOnRampState: () => {},
 
-  ethAmountToPay: null,
-  updateEthAmountToPay: () => {},
-  ethTotalAmountRequired: null,
-  updateEthTotalAmountRequired: () => {},
+  nativeAmountToPay: null,
+  updateNativeAmountToPay: () => {},
+  nativeTotalAmountRequired: null,
+  updateNativeTotalAmountRequired: () => {},
   usdAmountToPay: null,
   updateUsdAmountToPay: () => {},
   isBuyCryptoBtnLoading: false,
@@ -84,9 +84,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
     useMasterWalletContext();
 
-  // State to track the amount of ETH to pay for on-ramping and the USD equivalent
-  const [ethAmountToPay, setEthAmountToPay] = useState<Nullable<number>>(null);
-  const [ethTotalAmountRequired, setEthTotalAmountRequired] =
+  // State to track the amount of native (ETH or POL) to pay for on-ramping and the USD equivalent
+  const [nativeAmountToPay, setNativeAmountToPay] =
+    useState<Nullable<number>>(null);
+  const [nativeTotalAmountRequired, setNativeTotalAmountRequired] =
     useState<Nullable<number>>(null);
   const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
 
@@ -136,7 +137,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
   // check if the user has received funds after on-ramping to the master EOA
   useEffect(() => {
-    if (!ethTotalAmountRequired) return;
+    if (!nativeTotalAmountRequired) return;
     if (!usdAmountToPay) return;
     if (isOnRampingStepCompleted) return;
     if (!isMasterWalletFetched) return;
@@ -153,7 +154,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
     // If the balance is greater than or equal to 90% of the ETH amount to pay,
     // considering that the user has received the funds after on-ramping.
-    if (balance >= ethTotalAmountRequired * ETH_RECEIVED_THRESHOLD) {
+    if (balance >= nativeTotalAmountRequired * ETH_RECEIVED_THRESHOLD) {
       updateIsBuyCryptoBtnLoading(false);
       setHasFundsReceivedAfterOnRamp(true);
       setIsOnRampingTransactionSuccessful(true);
@@ -162,7 +163,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
       onRampWindow?.close?.();
     }
   }, [
-    ethTotalAmountRequired,
+    nativeTotalAmountRequired,
     networkId,
     getMasterEoaNativeBalanceOf,
     updateIsBuyCryptoBtnLoading,
@@ -175,15 +176,15 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   ]);
 
   // Function to set the ETH amount to pay for on-ramping
-  const updateEthAmountToPay = useCallback((amount: Nullable<number>) => {
-    setEthAmountToPay(amount);
+  const updateNativeAmountToPay = useCallback((amount: Nullable<number>) => {
+    setNativeAmountToPay(amount);
   }, []);
 
   // Function to set the total ETH amount required for on-ramping
   // (including what could possibly be on the balance + newly requested remaining amount to pay)
-  const updateEthTotalAmountRequired = useCallback(
+  const updateNativeTotalAmountRequired = useCallback(
     (amount: Nullable<number>) => {
-      setEthTotalAmountRequired(amount);
+      setNativeTotalAmountRequired(amount);
     },
     [],
   );
@@ -232,7 +233,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   }, [ipcRenderer]);
 
   const resetOnRampState = useCallback(() => {
-    setEthAmountToPay(null);
+    setNativeAmountToPay(null);
     setUsdAmountToPay(null);
     setIsBuyCryptoBtnLoading(false);
     setIsOnRampingTransactionSuccessful(false);
@@ -251,10 +252,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   return (
     <OnRampContext.Provider
       value={{
-        ethAmountToPay,
-        updateEthAmountToPay,
-        ethTotalAmountRequired,
-        updateEthTotalAmountRequired,
+        nativeAmountToPay,
+        updateNativeAmountToPay,
+        nativeTotalAmountRequired,
+        updateNativeTotalAmountRequired,
         usdAmountToPay,
         updateUsdAmountToPay,
         isBuyCryptoBtnLoading,
