@@ -48,6 +48,9 @@ export const Bridge = ({
 }: BridgeProps) => {
   const { goto } = usePageState();
 
+  // Default to ethereum if not specified for backward compatibility
+  const resolvedFromChain = fromChain || MiddlewareChainMap.ETHEREUM;
+
   const [bridgeState, setBridgeState] = useState<BridgeState>('depositing');
   const [quoteId, setQuoteId] = useState<Nullable<string>>(null);
   const [transferAndReceivingDetails, setTransferAndReceivingAmounts] =
@@ -110,7 +113,7 @@ export const Bridge = ({
     case bridgeState === 'depositing':
       return (
         <BridgeOnEvm
-          fromChain={fromChain || MiddlewareChainMap.ETHEREUM}
+          fromChain={resolvedFromChain}
           bridgeToChain={bridgeToChain}
           getBridgeRequirementsParams={getBridgeRequirementsParams}
           updateQuoteId={updateQuoteId}

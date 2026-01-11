@@ -13,12 +13,7 @@ import {
   TokenSymbolMap,
   TokenType,
 } from '@/config/tokens';
-import {
-  AddressZero,
-  COLOR,
-  MiddlewareChain,
-  MiddlewareChainMap,
-} from '@/constants';
+import { AddressZero, COLOR, MiddlewareChain } from '@/constants';
 import {
   useBalanceAndRefillRequirementsContext,
   useBridgeRefillRequirements,
@@ -322,7 +317,7 @@ export const DepositForBridging = ({
     if (!areAllFundsReceived) return;
     updateQuoteId(bridgeFundingRequirements.id);
     updateCrossChainTransferDetails({
-      fromChain: MiddlewareChainMap.ETHEREUM,
+      fromChain,
       toChain: bridgeToChain,
       eta: quoteEta,
       transfers: tokens.map((token) => {
@@ -384,6 +379,7 @@ export const DepositForBridging = ({
     updateQuoteId,
     updateCrossChainTransferDetails,
     isMasterWalletFetched,
+    fromChain,
   ]);
 
   // Retry to fetch the bridge refill requirements
