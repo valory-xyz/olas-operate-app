@@ -92,8 +92,8 @@ export const useTotalFiatFromNativeToken = ({
   const fromChain = asMiddlewareChain(onRampChainMap[selectedChainName]);
   const chainSymbol = asEvmChainDetails(fromChain).symbol;
   /**
-   * For POL chain, Transak uses 'POL' as the cryptoCurrency code
-   * while for others it uses 'ETH'.
+   * Currently supported on-ramp chains use ETH
+   * as their native token except Polygon which uses POL.
    */
   const cryptoCurrency: TokenSymbol =
     chainSymbol === TokenSymbolMap.POL

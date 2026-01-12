@@ -175,12 +175,12 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     usdAmountToPay,
   ]);
 
-  // Function to set the ETH amount to pay for on-ramping
+  // Function to set the native token amount to pay for on-ramping
   const updateNativeAmountToPay = useCallback((amount: Nullable<number>) => {
     setNativeAmountToPay(amount);
   }, []);
 
-  // Function to set the total ETH amount required for on-ramping
+  // Function to set the total native token amount required for on-ramping
   // (including what could possibly be on the balance + newly requested remaining amount to pay)
   const updateNativeTotalAmountRequired = useCallback(
     (amount: Nullable<number>) => {
