@@ -22,7 +22,7 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PredictTrader,
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeicrpqmggwurhkxiakuxzuxhdzm2x5zqyfvwcned56eikomkufma4i',
+  hash: 'bafybeibw46xqqqpzfiw5if7aoknstlxc4bmraiqyj7v3w7a3kzcybpsbou',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
@@ -301,7 +301,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeia4s3zfganb2jfvm7gxvmqf4ifg2d6wmd2nbqzzgx4v65mu34bdoi',
+  hash: 'bafybeicrpqmggwurhkxiakuxzuxhdzm2x5zqyfvwcned56eikomkufma4i',
   service_version: 'v0.6.5',
   agent_release: {
     is_aea: true,
