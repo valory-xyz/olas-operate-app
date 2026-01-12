@@ -152,7 +152,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
       : getMasterEoaNativeBalanceOf(networkId);
     if (!balance) return;
 
-    // If the balance is greater than or equal to 90% of the ETH amount to pay,
+    // If the balance is greater than or equal to 90% of the native token amount to pay,
     // considering that the user has received the funds after on-ramping.
     if (balance >= nativeTotalAmountRequired * ETH_RECEIVED_THRESHOLD) {
       updateIsBuyCryptoBtnLoading(false);
