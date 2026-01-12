@@ -84,7 +84,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
     useMasterWalletContext();
 
-  // State to track the amount of native (ETH or POL) to pay for on-ramping and the USD equivalent
+  // State to track the amount of native tokens (e.g., ETH, POL, etc.) to pay for on-ramping and the USD equivalent
   const [nativeAmountToPay, setNativeAmountToPay] =
     useState<Nullable<number>>(null);
   const [nativeTotalAmountRequired, setNativeTotalAmountRequired] =
