@@ -13,14 +13,14 @@ const PREDICT_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeibw46xqqqpzfiw5if7aoknstlxc4bmraiqyj7v3w7a3kzcybpsbou',
-  service_version: 'v0.27.7',
+  hash: 'bafybeifjlwodx3ic4abbs3uor73ooxzuamy53r4fdvbatyrhyyvclqf57y',
+  service_version: 'v0.30.0-test1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.27.7',
+      version: 'v0.30.0-test1',
     },
   },
 };
@@ -169,8 +169,8 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       cost_of_bond: +parseEther(0.001),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(2),
-          safe: +parseEther(8),
+          agent: +parseEther(2), // TODO: to be updated
+          safe: +parseEther(8), // TODO: to be updated
         },
       },
     },
@@ -182,8 +182,8 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    GNOSIS_LEDGER_RPC: {
-      name: 'Gnosis ledger RPC',
+    POLYGON_LEDGER_RPC: {
+      name: 'Polygon ledger RPC',
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
