@@ -43,7 +43,9 @@ const useOnRampNetworkConfig = () => {
       const selectedChainId = selectedAgentConfig.evmHomeChainId;
       const fromChainName = asMiddlewareChain(selectedChainId);
       const networkId = onRampChainMap[fromChainName];
-      const chainDetails = asEvmChainDetails(asMiddlewareChain(networkId));
+      const chainDetails = asEvmChainDetails(
+        asMiddlewareChain(networkId.chain),
+      );
       return {
         selectedChainId,
         networkId,
@@ -54,7 +56,7 @@ const useOnRampNetworkConfig = () => {
 
   useEffect(() => {
     updateNetworkConfig({
-      networkId,
+      networkId: networkId.chain,
       networkName,
       cryptoCurrencyCode,
       selectedChainId,
@@ -78,7 +80,7 @@ export const OnRampMethodCard = () => {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
     totalNativeToken,
-  } = useTotalNativeTokenRequired(networkId, 'onboarding');
+  } = useTotalNativeTokenRequired(networkId.chain, 'onboarding');
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
