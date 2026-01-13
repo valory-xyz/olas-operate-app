@@ -3,6 +3,8 @@ const nextConfig = {
   compiler: {
     styledComponents: true,
   },
+  // Enable source maps in production, helpful for readable stack traces.
+  productionBrowserSourceMaps: true,
   images: {
     remotePatterns: [
       {

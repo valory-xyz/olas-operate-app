@@ -14,7 +14,6 @@ const FROM_CHAIN_NAME = 'Ethereum';
 const FROM_CHAIN_IMAGE = '/chains/ethereum-chain.png';
 
 type BridgeOnEvmProps = {
-  bridgeFromDescription?: string;
   bridgeToChain: MiddlewareChain;
   onPrev: () => void;
   onNext: () => void;
@@ -28,7 +27,6 @@ type BridgeOnEvmProps = {
  * before proceeding with the bridging process.
  */
 export const BridgeOnEvm = ({
-  bridgeFromDescription,
   bridgeToChain,
   onPrev,
   onNext,
@@ -50,7 +48,11 @@ export const BridgeOnEvm = ({
         <Title level={5} className="mt-12 mb-8">
           Step 1. Send Funds
         </Title>
-        <Text className="text-base text-lighter">{bridgeFromDescription}</Text>
+        <Text className="text-base text-lighter">
+          Send the specified amounts from your external wallet to the Pearl
+          Wallet address below. Pearl will automatically detect your transfer
+          and bridge the funds for you.
+        </Text>
 
         {address && (
           <FundingDescription

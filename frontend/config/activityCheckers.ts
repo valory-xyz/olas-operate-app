@@ -121,6 +121,12 @@ export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.PettAiAgent2]: getPetActivityCheckerContract(
     '0x7aD8E6032849Edd8bF742E459722Ee8B10e2cCFc',
   ),
+  [STAKING_PROGRAM_IDS.PettAiAgent3]: getPetActivityCheckerContract(
+    '0x7aD8E6032849Edd8bF742E459722Ee8B10e2cCFc',
+  ),
+  [STAKING_PROGRAM_IDS.PettAiAgent4]: getPetActivityCheckerContract(
+    '0x7aD8E6032849Edd8bF742E459722Ee8B10e2cCFc',
+  ),
 } as const;
 
 export const MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<

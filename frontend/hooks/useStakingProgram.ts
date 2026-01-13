@@ -2,8 +2,6 @@ import { useContext, useMemo } from 'react';
 
 import { STAKING_PROGRAMS, StakingProgramMap } from '@/config/stakingPrograms';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
-import { Address } from '@/types/Address';
-import { Nullable } from '@/types/Util';
 
 import { useServices } from './useServices';
 
@@ -31,23 +29,6 @@ export const useStakingProgram = () => {
     return res;
   }, {} as StakingProgramMap);
 
-  const activeStakingProgramMeta = useMemo(() => {
-    if (!isActiveStakingProgramLoaded) return null;
-    if (!activeStakingProgramId) return null;
-    if (!allAvailableStakingPrograms) return null;
-
-    return allAvailableStakingPrograms[activeStakingProgramId];
-  }, [
-    isActiveStakingProgramLoaded,
-    allAvailableStakingPrograms,
-    activeStakingProgramId,
-  ]);
-
-  const activeStakingProgramAddress: Nullable<Address> = useMemo(() => {
-    if (!activeStakingProgramId) return null;
-    return allAvailableStakingPrograms[activeStakingProgramId].address;
-  }, [allAvailableStakingPrograms, activeStakingProgramId]);
-
   const defaultStakingProgramMeta = useMemo(() => {
     if (!defaultStakingProgramId) return null;
     return STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
@@ -63,11 +44,9 @@ export const useStakingProgram = () => {
   }, [selectedAgentConfig.evmHomeChainId, selectedStakingProgramId]);
 
   return {
-    // active staking program
+    // active staking program (on-chain)
     isActiveStakingProgramLoaded,
     activeStakingProgramId,
-    activeStakingProgramAddress,
-    activeStakingProgramMeta,
 
     // default staking program
     defaultStakingProgramId,

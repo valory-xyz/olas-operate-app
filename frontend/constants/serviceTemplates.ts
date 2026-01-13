@@ -22,28 +22,28 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PredictTrader,
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeibw46xqqqpzfiw5if7aoknstlxc4bmraiqyj7v3w7a3kzcybpsbou',
+  hash: 'bafybeig6eg65vqpaj7pkfqoz5ioxxmwlhttmiiuliwgwrnklipvq56qvoy',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.27.7',
+  service_version: 'v0.27.8',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.27.7',
+      version: 'v0.27.8',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
   configurations: {
     [MiddlewareChainMap.GNOSIS]: {
-      staking_program_id: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1, // default, may be overwritten
+      staking_program_id: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3, // default, may be overwritten
       nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 14,
       // TODO: pull fund requirements from staking program config
-      cost_of_bond: +parseEther(0.001),
+      cost_of_bond: +parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: +parseEther(2),
@@ -283,7 +283,7 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
     [MiddlewareChainMap.BASE]: {
       staking_program_id: STAKING_PROGRAM_IDS.AgentsFun1, // default, may be overwritten
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 43,
       cost_of_bond: +parseEther(50),
       fund_requirements: {
@@ -301,14 +301,14 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeidkdnfrueiivrdzrqo67np3w4gsubu5vb6lqxabsx3ulozvj7jtmq',
-  service_version: 'v0.6.4',
+  hash: 'bafybeicrpqmggwurhkxiakuxzuxhdzm2x5zqyfvwcned56eikomkufma4i',
+  service_version: 'v0.6.5',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.6.4',
+      version: 'v0.6.5',
     },
   },
 };
@@ -324,7 +324,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
     [MiddlewareChainMap.MODE]: {
       staking_program_id: STAKING_PROGRAM_IDS.ModiusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 40,
       cost_of_bond: +parseEther(20),
       fund_requirements: {
@@ -493,7 +493,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
     [MiddlewareChainMap.OPTIMISM]: {
       staking_program_id: STAKING_PROGRAM_IDS.OptimusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 40,
       cost_of_bond: +parseEther(20),
       fund_requirements: {
@@ -633,9 +633,9 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChainMap.BASE,
   configurations: {
     [MiddlewareChainMap.BASE]: {
-      staking_program_id: STAKING_PROGRAM_IDS.PettAiAgent,
+      staking_program_id: STAKING_PROGRAM_IDS.PettAiAgent3,
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 80,
       cost_of_bond: +parseEther(20),
       fund_requirements: {

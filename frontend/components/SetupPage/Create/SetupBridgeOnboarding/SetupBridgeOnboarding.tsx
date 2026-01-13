@@ -1,48 +1,40 @@
 import { Flex } from 'antd';
-import { isNil } from 'lodash';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Bridge } from '@/components/Bridge';
+import { AgentSetupCompleteModal } from '@/components/ui';
 import { AllEvmChainIdMap, SETUP_SCREEN } from '@/constants';
-import { useMasterWalletContext, useServices, useSetup } from '@/hooks';
-
-import { useGetBridgeRequirementsParams } from '../hooks/useGetBridgeRequirementsParams';
-
-const BRIDGE_FROM_MESSAGE =
-  'Send the specified amounts from your external wallet to the Pearl Wallet address below. Pearl will automatically detect your transfer and bridge the funds for you.';
+import { useGetBridgeRequirementsParams, useServices, useSetup } from '@/hooks';
 
 export const SetupBridgeOnboarding = () => {
+  const [isBridgeCompleted, setIsBridgeCompleted] = useState(false);
+
   const { goto: gotoSetup, prevState } = useSetup();
   const { selectedAgentConfig } = useServices();
-  const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
-    useMasterWalletContext();
-  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
-
-  // Bridging is supported only for Ethereum at the moment.
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
     AllEvmChainIdMap.Ethereum,
   );
+
+  const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
 
   const handlePrevStep = useCallback(() => {
     gotoSetup(prevState ?? SETUP_SCREEN.FundYourAgent);
   }, [gotoSetup, prevState]);
 
-  const hasMasterSafe = isMasterWalletFetched
-    ? !isNil(getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId))
-    : false;
+  const handleBridgingCompleted = useCallback(() => {
+    setIsBridgeCompleted(true);
+  }, [setIsBridgeCompleted]);
 
   return (
     <Flex vertical className="pt-36">
       <Bridge
-        enabledStepsAfterBridging={
-          hasMasterSafe ? undefined : ['masterSafeCreationAndTransfer']
-        }
-        bridgeFromDescription={BRIDGE_FROM_MESSAGE}
+        mode="onboard"
         bridgeToChain={toMiddlewareChain}
         getBridgeRequirementsParams={getBridgeRequirementsParams}
         onPrevBeforeBridging={handlePrevStep}
-        isOnboarding
+        onBridgingCompleted={handleBridgingCompleted}
       />
+      {isBridgeCompleted && <AgentSetupCompleteModal />}
     </Flex>
   );
 };
