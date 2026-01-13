@@ -13,7 +13,7 @@ import {
 } from '@/config/tokens';
 import { AddressZero, MiddlewareChain, MiddlewareChainMap } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
-import { useMasterWalletContext, usePageState } from '@/hooks';
+import { useMasterWalletContext } from '@/hooks';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
@@ -98,7 +98,6 @@ export const BridgeCryptoOn = ({
   onBack,
 }: BridgeCryptoOnProps) => {
   const { onReset } = usePearlWallet();
-  const { goto } = usePageState();
   const [showBridgingCompleteModal, setShowBridgingCompleteModal] =
     useState(false);
 
