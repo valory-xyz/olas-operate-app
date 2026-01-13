@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { OnRampNetworkConfig } from '@/components/OnRamp';
-import { TokenSymbol, TokenSymbolMap } from '@/config/tokens';
+import { TokenSymbol } from '@/config/tokens';
 import {
   onRampChainMap,
   REACT_QUERY_KEYS,
@@ -9,7 +9,7 @@ import {
 } from '@/constants';
 import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
 import { ensureRequired } from '@/types';
-import { asEvmChainDetails, asMiddlewareChain } from '@/utils';
+import { asMiddlewareChain } from '@/utils';
 
 type FeeBreakdownItem = {
   name: string;
@@ -89,16 +89,8 @@ export const useTotalFiatFromNativeToken = ({
   const selectedChainName = asMiddlewareChain(
     ensureRequired(selectedChainId, "Chain ID can't be empty"),
   );
-  const fromChain = asMiddlewareChain(onRampChainMap[selectedChainName]);
-  const chainSymbol = asEvmChainDetails(fromChain).symbol;
-  /**
-   * Currently supported on-ramp chains use ETH
-   * as their native token except Polygon which uses POL.
-   */
-  const cryptoCurrency: TokenSymbol =
-    chainSymbol === TokenSymbolMap.POL
-      ? TokenSymbolMap.POL
-      : TokenSymbolMap.ETH;
+  const { chain, cryptoCurrency } = onRampChainMap[selectedChainName];
+  const fromChain = asMiddlewareChain(chain);
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(fromChain, nativeTokenAmount!),

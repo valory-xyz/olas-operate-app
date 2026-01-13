@@ -15,7 +15,7 @@ export const SetupBridgeOnboarding = () => {
 
   // Determine the from chain based on the agent's home chain
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
-  const fromChainId = onRampChainMap[toMiddlewareChain];
+  const fromChainId = onRampChainMap[toMiddlewareChain].chain;
   const fromChain = asMiddlewareChain(fromChainId);
 
   const getBridgeRequirementsParams =

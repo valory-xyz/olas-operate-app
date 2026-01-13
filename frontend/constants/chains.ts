@@ -63,12 +63,30 @@ export type SupportedMiddlewareChain = ValueOf<
  * Map of middleware chains to EVM chain IDs for on-ramp purposes.
  * For example, If the agent is on Gnosis, the on-ramp will be done on Optimism.
  */
-export const onRampChainMap: Record<SupportedMiddlewareChain, EvmChainId> = {
-  [SupportedMiddlewareChainMap.gnosis]: EvmChainIdMap.Base,
-  [SupportedMiddlewareChainMap.optimism]: EvmChainIdMap.Optimism,
-  [SupportedMiddlewareChainMap.base]: EvmChainIdMap.Base,
-  [SupportedMiddlewareChainMap.mode]: EvmChainIdMap.Optimism,
-  [SupportedMiddlewareChainMap.polygon]: EvmChainIdMap.Polygon,
+export const onRampChainMap: Record<
+  SupportedMiddlewareChain,
+  { chain: EvmChainId; cryptoCurrency: 'ETH' | 'POL' }
+> = {
+  [SupportedMiddlewareChainMap.gnosis]: {
+    chain: EvmChainIdMap.Base,
+    cryptoCurrency: 'ETH',
+  },
+  [SupportedMiddlewareChainMap.optimism]: {
+    chain: EvmChainIdMap.Optimism,
+    cryptoCurrency: 'ETH',
+  },
+  [SupportedMiddlewareChainMap.base]: {
+    chain: EvmChainIdMap.Base,
+    cryptoCurrency: 'ETH',
+  },
+  [SupportedMiddlewareChainMap.mode]: {
+    chain: EvmChainIdMap.Optimism,
+    cryptoCurrency: 'ETH',
+  },
+  [SupportedMiddlewareChainMap.polygon]: {
+    chain: EvmChainIdMap.Polygon,
+    cryptoCurrency: 'POL',
+  },
 };
 
 export const ChainImageMap = {

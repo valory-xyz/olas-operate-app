@@ -65,12 +65,12 @@ export const useTotalNativeTokenRequired = (
     const agentChainName = asMiddlewareChain(
       selectedAgentConfig.evmHomeChainId,
     );
-    // "FROM" chain for bridging, the chain we will on-ramp funds to
-    const onRampNetworkName = asMiddlewareChain(onRampChainMap[agentChainName]);
 
+    // "FROM" chain for bridging, the chain we will on-ramp funds to
+    const chainName = onRampChainMap[agentChainName].chain;
+    const onRampNetworkName = asMiddlewareChain(chainName);
     const destinationAddress =
-      getMasterSafeOf?.(onRampChainMap[agentChainName])?.address ||
-      masterEoa.address;
+      getMasterSafeOf?.(chainName)?.address || masterEoa.address;
 
     /**
      * Calculate native token amount needed from direct requirements (not from bridging)
