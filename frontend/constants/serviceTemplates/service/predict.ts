@@ -9,10 +9,7 @@ import { STAKING_PROGRAM_IDS } from '../../stakingProgram';
 import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
-const PREDICT_COMMON_TEMPLATE: Pick<
-  ServiceTemplate,
-  'hash' | 'service_version' | 'agent_release'
-> = {
+export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   hash: 'bafybeibw46xqqqpzfiw5if7aoknstlxc4bmraiqyj7v3w7a3kzcybpsbou',
   service_version: 'v0.27.7',
   agent_release: {
@@ -23,9 +20,6 @@ const PREDICT_COMMON_TEMPLATE: Pick<
       version: 'v0.27.7',
     },
   },
-};
-
-export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PredictTrader,
   name: 'Trader Agent', // should be unique across all services and not be updated
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
@@ -148,11 +142,20 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
   },
-  ...PREDICT_COMMON_TEMPLATE,
 } as const;
 
 // TODO: Add real Polygon service template when available
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
+  hash: 'bafybeifjlwodx3ic4abbs3uor73ooxzuamy53r4fdvbatyrhyyvclqf57y',
+  service_version: 'v0.30.0-test1',
+  agent_release: {
+    is_aea: true,
+    repository: {
+      owner: 'valory-xyz',
+      name: 'trader',
+      version: 'v0.30.0-test1',
+    },
+  },
   agentType: AgentMap.PredictTrader,
   name: 'Trader Agent Polymarket', // should be unique across all services and not be updated
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets on Polygon`,
@@ -169,8 +172,8 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       cost_of_bond: +parseEther(0.001),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(2),
-          safe: +parseEther(8),
+          agent: +parseEther(2), // to be updated
+          safe: +parseEther(8), // to be updated
         },
       },
     },
@@ -182,8 +185,8 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    GNOSIS_LEDGER_RPC: {
-      name: 'Gnosis ledger RPC',
+    POLYGON_LEDGER_RPC: {
+      name: 'Polygon ledger RPC',
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
@@ -275,5 +278,4 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
   },
-  ...PREDICT_COMMON_TEMPLATE,
 } as const;
