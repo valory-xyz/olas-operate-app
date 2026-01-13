@@ -33,8 +33,6 @@ export const BalanceContext = createContext<{
   totalOlasBalance?: number;
   totalEthBalance?: number;
   totalStakedOlasBalance?: number;
-  /** Get total staked olas balance of a specific chain */
-  getTotalStakedOlasBalanceOf: (chainId: EvmChainId) => number;
   /** Get staked olas balance of a specific agent wallet address */
   getStakedOlasBalanceOf: (walletAddress: Address) => number;
   /** @deprecated not used */
@@ -52,7 +50,6 @@ export const BalanceContext = createContext<{
   isLoading: false,
   isLoaded: false,
   updateBalances: async () => {},
-  getTotalStakedOlasBalanceOf: () => 0,
   getStakedOlasBalanceOf: () => 0,
   isPaused: false,
   setIsPaused: () => {},
@@ -159,11 +156,9 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
         isLoading,
         isLoaded: !!data,
         walletBalances,
-        stakedBalances,
         totalOlasBalance,
         totalEthBalance,
         totalStakedOlasBalance,
-        getTotalStakedOlasBalanceOf,
         getStakedOlasBalanceOf,
         isPaused,
         setIsPaused,

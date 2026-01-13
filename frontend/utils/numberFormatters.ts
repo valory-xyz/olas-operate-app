@@ -18,20 +18,24 @@ export const balanceFormat = (
 };
 
 /**
+ * @deprecated Use `formatAmount` instead
+ *
  * Displays balance in a human readable format
  * @example 1234.578 => 1,234.58
  */
 export const formatNumber = (
-  amount: number | undefined,
+  amount: number | string | undefined,
   decimals = 2,
   round: 'ceil' | 'floor' = 'ceil',
 ): string => {
   if (amount === undefined) return '--';
 
+  const amountInNumber =
+    typeof amount === 'string' ? parseFloat(amount) : amount;
+
   // Round the amount to the specified number of decimals
   const factor = 10 ** decimals;
-  const adjustedAmount = amount * factor;
-
+  const adjustedAmount = amountInNumber * factor;
   // Extra precision to avoid floating point exception
   const amountWithPrecision = parseFloat(adjustedAmount.toFixed(12));
 
@@ -45,6 +49,18 @@ export const formatNumber = (
     maximumFractionDigits: decimals,
     minimumFractionDigits: decimals,
   }).format(rounded);
+};
+
+/**
+ * Accepts a number or numeric string and returns a locale-formatted string.
+ * @example formatAmount('1234.578', 2) => '1,234.58'
+ */
+export const formatAmount = (
+  amount: number | string | undefined,
+  decimals = 2,
+  round: 'ceil' | 'floor' = 'ceil',
+): string => {
+  return formatNumber(amount, decimals, round);
 };
 
 /**
