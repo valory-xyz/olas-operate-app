@@ -16,20 +16,24 @@ type ServiceApi =
   | typeof OptimismService
   | typeof AgentsFunBaseService;
 
+type NeedsOpenProfileEachAgentRun = {
+  /** Whether the agent requires opening profile first before showing performance metrics */
+  needsOpenProfileEachAgentRun: true;
+  /** Custom message to show when agent requires to open profile after run */
+  needsOpenProfileEachAgentRunAlert: {
+    title: string;
+    message: string;
+  };
+};
+
+type DoesNotNeedOpenProfileEachAgentRun = {
+  needsOpenProfileEachAgentRun?: undefined;
+  needsOpenProfileEachAgentRunAlert?: never;
+};
+
 type needsOpenProfileEachAgentRun =
-  | {
-      /** Whether the agent requires opening profile first before showing performance metrics */
-      needsOpenProfileEachAgentRun: true;
-      /** Custom message to show when agent requires to open profile after run */
-      needsOpenProfileEachAgentRunAlert: {
-        title: string;
-        message: string;
-      };
-    }
-  | {
-      needsOpenProfileEachAgentRun?: undefined;
-      needsOpenProfileEachAgentRunAlert?: never;
-    };
+  | NeedsOpenProfileEachAgentRun
+  | DoesNotNeedOpenProfileEachAgentRun;
 
 export type AgentConfig = {
   name: string;
@@ -71,6 +75,8 @@ export type AgentConfig = {
    */
   defaultBehavior?: string;
   servicePublicId: string;
+  /** Whether the agent is geo-location restricted */
+  isGeoLocationRestricted?: boolean;
 } & needsOpenProfileEachAgentRun;
 
 type AgentPerformanceMetric = {

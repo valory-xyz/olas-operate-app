@@ -98,6 +98,7 @@ export const AGENT_CONFIG: {
     defaultBehavior:
       'Adopting a conservative strategy with small, high-confidence bets.',
     servicePublicId: 'valory/trader_pearl:0.1.0',
+    isGeoLocationRestricted: true,
   },
   [AgentMap.Optimus]: {
     isAgentEnabled: true,
