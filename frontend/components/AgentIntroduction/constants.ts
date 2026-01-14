@@ -5,17 +5,17 @@ export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
     desc: 'An autonomous AI agent that interacts with decentralized prediction markets — platforms where users trade on the outcomes of future events.',
   },
   {
-    title: 'Market opportunity finder',
+    title: 'Market Opportunity Finder',
     desc: 'Prediction agents actively scan prediction markets to identify new opportunities for investment.',
     imgSrc: 'introduction/setup-agent-prediction-1',
   },
   {
-    title: 'Place intelligent bets',
+    title: 'Place Intelligent Bets',
     desc: 'Uses AI to make predictions and place bets on events by analyzing market trends and real-time information.',
     imgSrc: 'introduction/setup-agent-prediction-2',
   },
   {
-    title: 'Collect earnings',
+    title: 'Collect Earnings',
     desc: 'It collects earnings on the go, as the results of the corresponding prediction markets are finalized.',
     imgSrc: 'introduction/setup-agent-prediction-3',
   },
@@ -96,23 +96,22 @@ export const PETT_AI_ONBOARDING_STEPS: OnboardingStep[] = [
   },
 ] as const;
 
-// TODO: Add real onboarding steps when available
 export const PREDICT_TRADER_POLYMARKET_ONBOARDING_STEPS: OnboardingStep[] = [
   {
     desc: 'An autonomous AI agent that interacts with decentralized prediction markets — platforms where users trade on the outcomes of future events.',
   },
   {
-    title: 'Market opportunity finder',
-    desc: 'Prediction agents actively scan prediction markets to identify new opportunities for investment.',
+    title: 'Market Opportunity Finder',
+    desc: 'Prediction agent actively scans prediction markets to identify new opportunities for investment.',
     imgSrc: 'introduction/setup-agent-prediction-polymarket-1',
   },
   {
-    title: 'Place intelligent bets',
-    desc: 'Uses AI to make predictions and place bets on events by analyzing market trends and real-time information.',
+    title: 'Place Intelligent Bets',
+    desc: 'Agent uses AI to make predictions and place bets on events by analyzing market trends and real-time data.',
     imgSrc: 'introduction/setup-agent-prediction-polymarket-2',
   },
   {
-    title: 'Collect earnings',
+    title: 'Collect Earnings',
     desc: 'It collects earnings on the go, as the results of the corresponding prediction markets are finalized.',
     imgSrc: 'introduction/setup-agent-prediction-polymarket-3',
   },

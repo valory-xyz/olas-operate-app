@@ -16,6 +16,7 @@ import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
 import { PettAiService } from '@/service/agents/PettAi';
+import { PolymarketPredictTrader } from '@/service/agents/PolymarketPredictTrader';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
 import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
@@ -72,6 +73,25 @@ export const AGENT_CONFIG: {
     serviceApi: PredictTraderService,
     displayName: 'Prediction Trader',
     description: 'Participates in prediction markets.',
+    hasExternalFunds: false,
+    doesChatUiRequireApiKey: true,
+    category: 'Prediction Markets',
+    defaultBehavior:
+      'Adopting a conservative strategy with small, high-confidence bets.',
+    servicePublicId: 'valory/trader_pearl:0.1.0',
+  },
+  [AgentMap.PolymarketPredictTrader]: {
+    isAgentEnabled: true,
+    requiresSetup: true,
+    isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PolymarketPredictTrader],
+    name: 'Predict Trader - Polymarket',
+    evmHomeChainId: EvmChainIdMap.Polygon,
+    middlewareHomeChainId: MiddlewareChainMap.POLYGON,
+    agentIds: [14, 25], // TODO
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.PolygonAlpha,
+    serviceApi: PolymarketPredictTrader,
+    displayName: 'Polymarket Agent',
+    description: 'Participates in prediction markets on Polymarket.',
     hasExternalFunds: false,
     doesChatUiRequireApiKey: true,
     category: 'Prediction Markets',

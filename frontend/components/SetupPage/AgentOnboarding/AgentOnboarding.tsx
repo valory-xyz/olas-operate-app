@@ -89,7 +89,7 @@ const SelectYourAgentList = ({
     return (
       ACTIVE_AGENTS.filter(isNotInServices)
         // put all under construction in the end
-        .sort(([_, agentConfig]) => (agentConfig.isUnderConstruction ? 1 : -1))
+        .sort(([, agentConfig]) => (agentConfig.isUnderConstruction ? 1 : -1))
     );
   }, [services]);
 

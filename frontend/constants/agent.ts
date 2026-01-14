@@ -4,7 +4,7 @@ export const AgentMap = {
   Modius: 'modius',
   Optimus: 'optimus',
   PettAi: 'pett_ai',
-  // PredictTraderPolymarket: 'trader_polymarket',
+  PolymarketPredictTrader: 'trader_polymarket',
 } as const;
 
 export type AgentType = (typeof AgentMap)[keyof typeof AgentMap];
