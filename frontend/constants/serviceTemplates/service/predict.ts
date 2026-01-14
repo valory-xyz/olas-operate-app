@@ -17,7 +17,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.27.7',
+      version: 'v0.30.0-test1',
     },
   },
   agentType: AgentMap.PredictTrader,
@@ -172,8 +172,8 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       cost_of_bond: +parseEther(0.001),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(2), // to be updated
-          safe: +parseEther(8), // to be updated
+          agent: +parseEther(2), // TODO: to be updated
+          safe: +parseEther(8), // TODO: to be updated
         },
       },
     },
