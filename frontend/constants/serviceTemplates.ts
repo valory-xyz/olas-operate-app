@@ -26,13 +26,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.29.0-rc1',
+  service_version: 'v0.28.0-rc5',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.29.0-rc1',
+      version: 'v0.28.0-rc5',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
