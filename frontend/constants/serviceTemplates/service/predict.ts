@@ -17,7 +17,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.30.0-test1',
+      version: 'v0.27.7',
     },
   },
   agentType: AgentMap.PredictTrader,
@@ -146,7 +146,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 
 // TODO: Add real Polygon service template when available
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeifjlwodx3ic4abbs3uor73ooxzuamy53r4fdvbatyrhyyvclqf57y',
+  hash: 'bafybeic5te6on3erh3kxlbzi3qz3zall3lp46s3fm2r3vbpyyyuarzjmr4',
   service_version: 'v0.30.0-test1',
   agent_release: {
     is_aea: true,
