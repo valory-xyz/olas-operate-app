@@ -50,14 +50,10 @@ export type OptimismStakingProgramId = ValueOf<
   typeof OPTIMISM_STAKING_PROGRAM_IDS
 >;
 
-// TODO: Add real Polygon staking program IDs when available
 const POLYGON_STAKING_PROGRAM_IDS = {
-  PolygonAlpha1: 'polygon_alpha_1',
-  PolygonAlpha2: 'polygon_alpha_2',
-  PolygonAlpha3: 'polygon_alpha_3',
   PolygonBeta1: 'polygon_beta_1',
   PolygonBeta2: 'polygon_beta_2',
-  PolygonBeta3: 'polygon_beta_3',
+  PolygonBeta3: 'polygon_beta_3', // Note: “Polygon Alpha 3” is a typo in apps — the correct name is Polygon Beta 3.
 } as const;
 
 export type PolygonStakingProgramId = ValueOf<

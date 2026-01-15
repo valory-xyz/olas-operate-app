@@ -87,8 +87,8 @@ export const AGENT_CONFIG: {
     name: 'Predict Trader - Polymarket',
     evmHomeChainId: EvmChainIdMap.Polygon,
     middlewareHomeChainId: MiddlewareChainMap.POLYGON,
-    agentIds: [14, 25], // TODO
-    defaultStakingProgramId: STAKING_PROGRAM_IDS.PolygonAlpha1,
+    agentIds: [14, 25],
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.PolygonBeta1,
     serviceApi: PolymarketPredictTrader,
     displayName: 'Polymarket Agent',
     description: 'Participates in prediction markets on Polymarket.',
