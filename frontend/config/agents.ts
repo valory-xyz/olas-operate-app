@@ -16,7 +16,7 @@ import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
 import { PettAiService } from '@/service/agents/PettAi';
-import { PolymarketPredictTrader } from '@/service/agents/PolymarketPredictTrader';
+import { PolymarketTrader } from '@/service/agents/PolymarketTrader';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
 import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
@@ -80,16 +80,16 @@ export const AGENT_CONFIG: {
       'Adopting a conservative strategy with small, high-confidence bets.',
     servicePublicId: 'valory/trader_pearl:0.1.0',
   },
-  [AgentMap.PolymarketPredictTrader]: {
+  [AgentMap.PolymarketTrader]: {
     isAgentEnabled: true,
     requiresSetup: true,
-    isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PolymarketPredictTrader],
+    isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PolymarketTrader],
     name: 'Predict Trader - Polymarket',
     evmHomeChainId: EvmChainIdMap.Polygon,
     middlewareHomeChainId: MiddlewareChainMap.POLYGON,
     agentIds: [14, 25],
     defaultStakingProgramId: STAKING_PROGRAM_IDS.PolygonBeta1,
-    serviceApi: PolymarketPredictTrader,
+    serviceApi: PolymarketTrader,
     displayName: 'Polymarket Agent',
     description: 'Participates in prediction markets on Polymarket.',
     hasExternalFunds: false,

@@ -9,6 +9,7 @@ import { useServices } from '@/hooks';
 import { AgentsFunAgentSetup } from './AgentsFunAgentForm/AgentsFunAgentForm';
 import { ModiusAgentForm } from './ModiusAgentForm/ModiusAgentForm';
 import { OptimusAgentForm } from './OptimusAgentForm/OptimusAgentForm';
+import { PolymarketTraderAgentSetup } from './PolymarketTraderAgentForm/PolymarketTraderAgentForm';
 import { PredictAgentSetup } from './PredictAgentForm/PredictAgentForm';
 import { AgentFormContainer, useDisplayAgentForm } from './useDisplayAgentForm';
 
@@ -62,6 +63,12 @@ export const SetupYourAgent = () => {
       )}
       {selectedAgentType === AgentMap.AgentsFun && (
         <AgentsFunAgentSetup
+          serviceTemplate={serviceTemplate}
+          renderForm={displayForm}
+        />
+      )}
+      {selectedAgentType === AgentMap.PolymarketTrader && (
+        <PolymarketTraderAgentSetup
           serviceTemplate={serviceTemplate}
           renderForm={displayForm}
         />

@@ -156,7 +156,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       version: 'v0.30.0-test1',
     },
   },
-  agentType: AgentMap.PredictTrader,
+  agentType: AgentMap.PolymarketTrader,
   name: 'Trader Agent Polymarket', // should be unique across all services and not be updated
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets on Polygon`,
   image:

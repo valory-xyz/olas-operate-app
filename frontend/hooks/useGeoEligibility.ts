@@ -37,13 +37,13 @@ type UseGeoEligibilityProps = {
   enabled?: boolean;
 };
 
-// const mockData: GeoEligibilityResponse = {
-//   checked_at: 1697059200,
-//   geo: { source: 'vercel' },
-//   eligibility: {
-//     polymarket_trader: { status: 'restricted' },
-//   },
-// };
+const mockData: GeoEligibilityResponse = {
+  checked_at: 1697059200,
+  geo: { source: 'vercel' },
+  eligibility: {
+    polymarket_trader: { status: 'allowed' },
+  },
+};
 
 export const useGeoEligibility = ({
   agentType,
@@ -52,6 +52,9 @@ export const useGeoEligibility = ({
   return useQuery({
     queryKey: REACT_QUERY_KEYS.GEO_ELIGIBILITY_KEY(agentType),
     queryFn: async ({ signal }) => {
+      if (agentType === 'polymarket_trader') {
+        return mockData;
+      }
       const data = await fetchGeoEligibility(signal);
       return data;
     },
