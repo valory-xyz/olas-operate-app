@@ -274,7 +274,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Use x402',
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
-      value: X402_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
+      value: X402_ENABLED_FLAGS[AgentMap.PolymarketTrader].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
   },
