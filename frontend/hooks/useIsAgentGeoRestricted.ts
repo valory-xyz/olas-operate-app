@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 import {
   AgentType,
   GEO_ELIGIBILITY_API_URL,
   REACT_QUERY_KEYS,
 } from '@/constants';
+import { AgentConfig } from '@/types';
 
 type GeoEligibilityResponse = {
   checked_at: number;
@@ -76,4 +78,46 @@ export const isAgentEligibleInRegion = (
   if (!agentEligibility) return null;
 
   return agentEligibility.status === 'allowed';
+};
+
+type UseIsAgentGeoRestrictedProps = {
+  agentType?: AgentType;
+  agentConfig?: AgentConfig;
+};
+
+/**
+ * Hook to check if an agent is geo-restricted in the current region.
+ * Handles the logic of checking geo eligibility data and determining restriction status.
+ *
+ * @returns Object containing restriction status and loading/error states
+ */
+export const useIsAgentGeoRestricted = ({
+  agentType,
+  agentConfig,
+}: UseIsAgentGeoRestrictedProps) => {
+  const {
+    data: geoData,
+    isLoading: isGeoLoading,
+    isError: isGeoError,
+  } = useGeoEligibility({
+    agentType,
+    enabled: agentConfig?.isGeoLocationRestricted,
+  });
+
+  const isAgentGeoRestricted = useMemo(() => {
+    if (!agentConfig?.isGeoLocationRestricted) return false;
+    if (!geoData) return false;
+
+    const agentEligibility = geoData.eligibility[agentType || ''];
+    if (!agentEligibility) return false;
+
+    return agentEligibility.status !== 'allowed';
+  }, [agentType, geoData, agentConfig]);
+
+  return {
+    isAgentGeoRestricted,
+    isGeoLoading,
+    isGeoError,
+    geoData,
+  };
 };

@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR, SETUP_SCREEN } from '@/constants';
-import { useGeoEligibility, useServices, useSetup } from '@/hooks';
+import { useIsAgentGeoRestricted, useServices, useSetup } from '@/hooks';
 import { Optional } from '@/types';
 
 import { FundingRequirementStep } from './FundingRequirementStep';
@@ -67,35 +67,16 @@ export const AgentOnboarding = () => {
   const { goto } = useSetup();
   const { updateAgentType } = useServices();
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
-  const [geoCheckTriggered, setGeoCheckTriggered] = useState(false);
 
   const selectedAgentConfig = selectedAgent
     ? AGENT_CONFIG[selectedAgent]
     : undefined;
 
-  const {
-    data: geoData,
-    isLoading: isGeoLoading,
-    isError: isGeoError,
-  } = useGeoEligibility({
-    agentType: selectedAgent,
-    enabled:
-      geoCheckTriggered &&
-      !!selectedAgent &&
-      selectedAgentConfig?.isGeoLocationRestricted,
-  });
-
-  // Determine if the agent is restricted
-  const isAgentRestricted = useMemo(() => {
-    if (!selectedAgentConfig?.isGeoLocationRestricted) return false;
-    if (!geoData) return null; // loading state
-    if (isGeoError) return null; // error state
-
-    const agentEligibility = geoData.eligibility[selectedAgent || ''];
-    if (!agentEligibility) return null;
-
-    return agentEligibility.status !== 'allowed';
-  }, [selectedAgent, geoData, isGeoError, selectedAgentConfig]);
+  const { isAgentGeoRestricted, isGeoLoading, isGeoError } =
+    useIsAgentGeoRestricted({
+      agentType: selectedAgent,
+      agentConfig: selectedAgentConfig,
+    });
 
   const handleAgentSelect = useCallback(() => {
     if (!selectedAgent) return;
@@ -120,16 +101,21 @@ export const AgentOnboarding = () => {
     (agentType: AgentType) => {
       updateAgentType(agentType);
       setSelectedAgent(agentType);
-      if (AGENT_CONFIG[agentType].isGeoLocationRestricted) {
-        setGeoCheckTriggered(true);
-      }
     },
     [updateAgentType],
   );
 
-  const canSelectAgent = selectedAgent
-    ? !AGENT_CONFIG[selectedAgent].isUnderConstruction && !isAgentRestricted
-    : false;
+  const canSelectAgent = useMemo(() => {
+    if (!selectedAgent) return false;
+    const currentAgentConfig = AGENT_CONFIG[selectedAgent];
+    if (currentAgentConfig.isGeoLocationRestricted && isAgentGeoRestricted) {
+      return false;
+    }
+    if (currentAgentConfig.isUnderConstruction) {
+      return false;
+    }
+    return true;
+  }, [selectedAgent, isAgentGeoRestricted]);
 
   return (
     <Container>
@@ -145,7 +131,7 @@ export const AgentOnboarding = () => {
           <GeoLocationRestrictionLoading />
         ) : isGeoError ? (
           <GeoLocationRestrictionCouldNotLoad />
-        ) : isAgentRestricted ? (
+        ) : isAgentGeoRestricted ? (
           <RestrictedRegion />
         ) : (
           <AgentIntroduction

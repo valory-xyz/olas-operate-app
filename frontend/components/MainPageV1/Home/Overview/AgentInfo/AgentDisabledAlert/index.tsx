@@ -3,6 +3,7 @@ import { PAGES } from '@/constants';
 import {
   useActiveStakingContractDetails,
   useAgentRunning,
+  useIsAgentGeoRestricted,
   useIsInitiallyFunded,
   usePageState,
   useServices,
@@ -20,7 +21,7 @@ import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
 
 export const AgentDisabledAlert = () => {
   const { goto } = usePageState();
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedAgentType } = useServices();
   const {
     isSelectedStakingContractDetailsLoading,
     isAgentEvicted,
@@ -32,8 +33,12 @@ export const AgentDisabledAlert = () => {
   const { isAnotherAgentRunning } = useAgentRunning();
   const { selectedStakingProgramMeta } = useStakingProgram();
 
-  // TODO
-  if (selectedAgentConfig.isUnderConstruction) {
+  const { isAgentGeoRestricted } = useIsAgentGeoRestricted({
+    agentType: selectedAgentType,
+    agentConfig: selectedAgentConfig,
+  });
+
+  if (selectedAgentConfig?.isGeoLocationRestricted && isAgentGeoRestricted) {
     return <AgentUnavailableAlert />;
   }
 
