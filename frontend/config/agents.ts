@@ -88,7 +88,7 @@ export const AGENT_CONFIG: {
     evmHomeChainId: EvmChainIdMap.Polygon,
     middlewareHomeChainId: MiddlewareChainMap.POLYGON,
     agentIds: [14, 25], // TODO
-    defaultStakingProgramId: STAKING_PROGRAM_IDS.PolygonAlpha,
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.PolygonAlpha1,
     serviceApi: PolymarketPredictTrader,
     displayName: 'Polymarket Agent',
     description: 'Participates in prediction markets on Polymarket.',
@@ -97,7 +97,7 @@ export const AGENT_CONFIG: {
     category: 'Prediction Markets',
     defaultBehavior:
       'Adopting a conservative strategy with small, high-confidence bets.',
-    servicePublicId: 'valory/trader_pearl:0.1.0',
+    servicePublicId: 'valory/polymarket_trader:0.1.0',
     isGeoLocationRestricted: true,
   },
   [AgentMap.Optimus]: {

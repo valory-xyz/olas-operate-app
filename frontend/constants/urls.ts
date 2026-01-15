@@ -99,3 +99,8 @@ export const WEB3AUTH_SWAP_OWNER_URL = `${WEB3AUTH_GATEWAY_URL}/swap-owner-sessi
 
 // support API
 export const SUPPORT_API_URL = `${PEARL_API_URL}/api/zendesk`;
+
+// geo eligibility
+export const GEO_ELIGIBILITY_API_URL = `${PEARL_API_URL}/api/geo/agent-eligibility`;
+export const GEO_ELIGIBILITY_DOCS_URL =
+  'https://docs.polymarket.com/polymarket-learn/FAQ/geoblocking#close-only-countries';

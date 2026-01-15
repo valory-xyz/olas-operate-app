@@ -1,5 +1,5 @@
 import { Flex, Typography } from 'antd';
-import { LuLockKeyhole } from 'react-icons/lu';
+import { LuGlobeLock } from 'react-icons/lu';
 
 const { Title, Text, Link } = Typography;
 
@@ -12,7 +12,7 @@ export const RestrictedRegion = () => {
       gap={16}
       className="p-24 text-center"
     >
-      <LuLockKeyhole />
+      <LuGlobeLock />
       <Title level={4} className="m-0">
         Agent Unavailable
       </Title>

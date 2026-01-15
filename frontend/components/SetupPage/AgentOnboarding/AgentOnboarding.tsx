@@ -73,7 +73,6 @@ export const AgentOnboarding = () => {
     ? AGENT_CONFIG[selectedAgent]
     : undefined;
 
-  // fetch GEO eligibility only if the agent is geo-restricted and the user has selected it
   const {
     data: geoData,
     isLoading: isGeoLoading,

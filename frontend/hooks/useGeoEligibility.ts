@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { AgentType, REACT_QUERY_KEYS } from '@/constants';
+import {
+  AgentType,
+  GEO_ELIGIBILITY_API_URL,
+  REACT_QUERY_KEYS,
+} from '@/constants';
 
 type GeoEligibilityResponse = {
   checked_at: number;
@@ -11,9 +15,6 @@ type GeoEligibilityResponse = {
     };
   };
 };
-
-const GEO_ELIGIBILITY_API_URL =
-  'https://pearl-api-git-mohandas-ope-1195-technical-scop-4bfa36-autonolas.vercel.app/api/geo/agent-eligibility';
 
 const fetchGeoEligibility = async (
   signal: AbortSignal,
@@ -40,7 +41,7 @@ type UseGeoEligibilityProps = {
 //   checked_at: 1697059200,
 //   geo: { source: 'vercel' },
 //   eligibility: {
-//     trader_polymarket: { status: 'restricted' },
+//     polymarket_trader: { status: 'restricted' },
 //   },
 // };
 

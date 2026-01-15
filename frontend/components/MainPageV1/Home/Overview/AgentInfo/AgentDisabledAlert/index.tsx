@@ -10,6 +10,7 @@ import {
 } from '@/hooks';
 
 import { AgentRunningAlert } from './AgentRunningAlert';
+import { AgentUnavailableAlert } from './AgentUnavailableAlert';
 import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { EvictedAlert } from './EvictedAlert';
 import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
@@ -18,6 +19,7 @@ import { UnderConstructionAlert } from './UnderConstructionAlert';
 import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
 
 export const AgentDisabledAlert = () => {
+  const { goto } = usePageState();
   const { selectedAgentConfig } = useServices();
   const {
     isSelectedStakingContractDetailsLoading,
@@ -27,9 +29,13 @@ export const AgentDisabledAlert = () => {
     isServiceStaked,
   } = useActiveStakingContractDetails();
   const { isInitialFunded } = useIsInitiallyFunded();
-  const { goto } = usePageState();
   const { isAnotherAgentRunning } = useAgentRunning();
   const { selectedStakingProgramMeta } = useStakingProgram();
+
+  // TODO
+  if (selectedAgentConfig.isUnderConstruction) {
+    return <AgentUnavailableAlert />;
+  }
 
   if (selectedAgentConfig.isUnderConstruction) {
     return <UnderConstructionAlert />;
