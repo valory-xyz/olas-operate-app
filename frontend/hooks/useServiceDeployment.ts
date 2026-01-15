@@ -98,7 +98,9 @@ export const useServiceDeployment = () => {
     if (selectedAgentConfig.isUnderConstruction) return false;
 
     // If agent is geo-restricted in the current region, return false
-    if (isAgentGeoRestricted) return false;
+    if (selectedAgentConfig.isGeoLocationRestricted && isAgentGeoRestricted) {
+      return false;
+    }
 
     // If another agent is running, return false;
     if (isAnotherAgentRunning) return false;
@@ -127,6 +129,7 @@ export const useServiceDeployment = () => {
     isLoading,
     isServiceStaked,
     selectedAgentConfig.isUnderConstruction,
+    selectedAgentConfig.isGeoLocationRestricted,
   ]);
 
   const pauseAllPolling = useCallback(() => {
