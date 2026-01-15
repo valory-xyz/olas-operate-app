@@ -8,6 +8,7 @@ import {
 import { AgentsFunUpdateForm } from './components/AgentsFunUpdateForm';
 import { ModiusUpdatePage } from './components/ModiusUpdateForm';
 import { OptimusUpdatePage } from './components/OptimusUpdateForm';
+import { PolymarketTraderUpdatePage } from './components/PolymarketTraderUpdateForm';
 import { PredictUpdatePage } from './components/PredictUpdateForm';
 import { UpdateAgentProvider } from './context/UpdateAgentProvider';
 
@@ -28,6 +29,9 @@ export const UpdateAgentPage = () => {
       <UpdateAgentProvider>
         {selectedAgentType === AgentMap.PredictTrader && (
           <PredictUpdatePage renderForm={displayForm} />
+        )}
+        {selectedAgentType === AgentMap.PolymarketTrader && (
+          <PolymarketTraderUpdatePage renderForm={displayForm} />
         )}
         {selectedAgentType === AgentMap.AgentsFun && (
           <AgentsFunUpdateForm renderForm={displayForm} />

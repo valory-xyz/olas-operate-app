@@ -55,7 +55,8 @@ const GeoLocationRestrictionCouldNotLoad = () => (
       Something went wrong
     </Title>
     <Text className="text-neutral-tertiary">
-      Something went wrong to check your region eligibility. Please try again.
+      Something went wrong while checking your region eligibility. Please try
+      again.
     </Text>
   </Flex>
 );

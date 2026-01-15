@@ -43,7 +43,7 @@ const mockData: GeoEligibilityResponse = {
   checked_at: 1697059200,
   geo: { source: 'vercel' },
   eligibility: {
-    polymarket_trader: { status: 'allowed' },
+    polymarket_trader: { status: 'restricted' },
   },
 };
 

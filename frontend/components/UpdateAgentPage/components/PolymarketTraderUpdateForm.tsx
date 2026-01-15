@@ -110,7 +110,7 @@ type PolymarketTraderUpdatePageProps = {
 };
 
 /**
- * Form for updating Predict agent.
+ * Form for updating Polymarket Trader agent.
  */
 export const PolymarketTraderUpdatePage = ({
   renderForm,
