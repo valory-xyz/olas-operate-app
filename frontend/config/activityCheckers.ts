@@ -158,3 +158,13 @@ export const OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
     '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
   ),
 } as const;
+
+// TODO: Add real activity checker addresses for Polygon staking programs
+export const POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
+  string,
+  MulticallContract
+> = {
+  [STAKING_PROGRAM_IDS.PolygonAlpha]: getStakingActivityCheckerContract(
+    '0x0000000000000000000000000000000000000000', // TODO: Add real address
+  ),
+} as const;

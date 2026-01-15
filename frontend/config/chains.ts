@@ -2,7 +2,6 @@
  * Chain configurations
  * - add new chains to the CHAIN_CONFIGS object
  */
-import { TokenSymbolMap } from '@/config/tokens';
 import {
   EvmChainId,
   EvmChainIdMap,
@@ -10,8 +9,7 @@ import {
   MiddlewareChainMap,
 } from '@/constants/chains';
 import { parseEther } from '@/utils';
-
-import { TOKEN_CONFIG, TokenConfig } from './tokens';
+import { TOKEN_CONFIG, TokenConfig, TokenSymbolMap } from './tokens';
 
 type HttpUrl = `http${'s' | ''}://${string}`;
 
@@ -79,6 +77,19 @@ const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
   color: '#FF042012',
 } as const;
 
+// TODO: Add proper RPC URL when available and update safe creation threshold
+const POLYGON_CHAIN_CONFIG: ChainConfig = {
+  evmChainId: EvmChainIdMap.Polygon,
+  name: 'Polygon',
+  nativeToken: TOKEN_CONFIG[EvmChainIdMap.Polygon][
+    TokenSymbolMap.POL
+  ] as TokenConfig,
+  middlewareChain: MiddlewareChainMap.POLYGON,
+  rpc: process.env.POLYGON_RPC as HttpUrl,
+  safeCreationThreshold: BigInt(parseEther(0.005)), // TODO: Add real safe creation threshold
+  color: '#8247E512',
+} as const;
+
 export const CHAIN_CONFIG: {
   [evmChainId in EvmChainId]: ChainConfig;
 } = {
@@ -86,4 +97,5 @@ export const CHAIN_CONFIG: {
   [EvmChainIdMap.Gnosis]: GNOSIS_CHAIN_CONFIG,
   [EvmChainIdMap.Mode]: MODE_CHAIN_CONFIG,
   [EvmChainIdMap.Optimism]: OPTIMISM_CHAIN_CONFIG,
+  [EvmChainIdMap.Polygon]: POLYGON_CHAIN_CONFIG,
 } as const;
