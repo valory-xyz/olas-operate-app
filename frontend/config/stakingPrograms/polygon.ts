@@ -25,7 +25,7 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
     name: 'Polygon Beta 1',
     agentsSupported: [AgentMap.PolymarketTrader],
     stakingRequirements: {
-      OLAS: 100, // TODO: Add real staking requirement
+      OLAS: 100,
     },
     activityChecker:
       POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
