@@ -146,7 +146,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 
 // TODO: Add real Polygon service template when available
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeic5te6on3erh3kxlbzi3qz3zall3lp46s3fm2r3vbpyyyuarzjmr4',
+  hash: 'bafybeia4anriuocdtgkjgybomkeoqadxuu2igodrk2h6v2hkrjvlnm3obm',
   service_version: 'v0.30.0-test1',
   agent_release: {
     is_aea: true,
@@ -275,13 +275,6 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: X402_ENABLED_FLAGS[AgentMap.PolymarketTrader].toString(),
-      provision_type: EnvProvisionType.FIXED,
-    },
-    POLYMARKET_BUILDER_PROGRAM_ENABLED: {
-      name: 'Polymarket builder program enabled',
-      description:
-        'Enables integration with Polymarket builder program for enhanced prediction market functionalities',
-      value: 'false',
       provision_type: EnvProvisionType.FIXED,
     },
   },
