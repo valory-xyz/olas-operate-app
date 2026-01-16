@@ -22,66 +22,66 @@ export const POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
 export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.PolygonBeta1]: {
     chainId: EvmChainIdMap.Polygon,
-    name: 'Polygon Beta 1',
+    name: 'Polygon Beta I',
     agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
       OLAS: 50,
     },
     activityChecker:
       POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-      STAKING_PROGRAM_IDS.PolygonBeta1
+        STAKING_PROGRAM_IDS.PolygonBeta1
       ],
     address:
       POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-      STAKING_PROGRAM_IDS.PolygonBeta1
+        STAKING_PROGRAM_IDS.PolygonBeta1
       ],
     contract: new MulticallContract(
       POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-      STAKING_PROGRAM_IDS.PolygonBeta1
+        STAKING_PROGRAM_IDS.PolygonBeta1
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
   },
   [STAKING_PROGRAM_IDS.PolygonBeta2]: {
     chainId: EvmChainIdMap.Polygon,
-    name: 'Polygon Beta 2',
+    name: 'Polygon Beta II',
     agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
       OLAS: 500,
     },
     activityChecker:
       POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-      STAKING_PROGRAM_IDS.PolygonBeta2
+        STAKING_PROGRAM_IDS.PolygonBeta2
       ],
     address:
       POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-      STAKING_PROGRAM_IDS.PolygonBeta2
+        STAKING_PROGRAM_IDS.PolygonBeta2
       ],
     contract: new MulticallContract(
       POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-      STAKING_PROGRAM_IDS.PolygonBeta2
+        STAKING_PROGRAM_IDS.PolygonBeta2
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
   },
   [STAKING_PROGRAM_IDS.PolygonBeta3]: {
     chainId: EvmChainIdMap.Polygon,
-    name: 'Polygon Beta 3',
+    name: 'Polygon Alpha III',
     agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
       OLAS: 5000,
     },
     activityChecker:
       POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-      STAKING_PROGRAM_IDS.PolygonBeta3
+        STAKING_PROGRAM_IDS.PolygonBeta3
       ],
     address:
       POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-      STAKING_PROGRAM_IDS.PolygonBeta3
+        STAKING_PROGRAM_IDS.PolygonBeta3
       ],
     contract: new MulticallContract(
       POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-      STAKING_PROGRAM_IDS.PolygonBeta3
+        STAKING_PROGRAM_IDS.PolygonBeta3
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
