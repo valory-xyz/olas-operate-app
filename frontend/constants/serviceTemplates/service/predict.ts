@@ -277,5 +277,12 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       value: X402_ENABLED_FLAGS[AgentMap.PolymarketTrader].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
+    POLYMARKET_BUILDER_PROGRAM_ENABLED: {
+      name: 'Polymarket builder program enabled',
+      description:
+        'Enables integration with Polymarket builder program for enhanced prediction market functionalities',
+      value: 'false',
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
