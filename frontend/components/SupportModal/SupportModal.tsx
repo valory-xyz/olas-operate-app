@@ -76,9 +76,12 @@ type SupportModalFormValues = {
 export const SupportModal = ({
   open,
   onClose,
+  shouldUseFallbackLogs = false,
 }: {
   open: boolean;
   onClose: () => void;
+  /** When true, uses fallback logs that fetch data directly via API (for ErrorBoundary scenarios) */
+  shouldUseFallbackLogs?: boolean;
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadFile[]>([]);
@@ -87,7 +90,7 @@ export const SupportModal = ({
 
   const [form] = Form.useForm<SupportModalFormValues>();
   const { cleanupSupportLogs, termsAndConditionsWindow } = useElectronApi();
-  const { uploadFiles } = useUploadSupportFiles();
+  const { uploadFiles } = useUploadSupportFiles({ shouldUseFallbackLogs });
 
   const handleSubmit = useCallback(
     async (values: SupportModalFormValues) => {
