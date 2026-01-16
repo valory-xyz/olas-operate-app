@@ -146,7 +146,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 
 // TODO: Add real Polygon service template when available
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeic5te6on3erh3kxlbzi3qz3zall3lp46s3fm2r3vbpyyyuarzjmr4',
+  hash: 'bafybeia4anriuocdtgkjgybomkeoqadxuu2igodrk2h6v2hkrjvlnm3obm',
   service_version: 'v0.30.0-test1',
   agent_release: {
     is_aea: true,
@@ -156,7 +156,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       version: 'v0.30.0-test1',
     },
   },
-  agentType: AgentMap.PredictTrader,
+  agentType: AgentMap.Polystrat,
   name: 'Trader Agent Polymarket', // should be unique across all services and not be updated
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets on Polygon`,
   image:
@@ -274,7 +274,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Use x402',
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
-      value: X402_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
+      value: X402_ENABLED_FLAGS[AgentMap.Polystrat].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
   },
