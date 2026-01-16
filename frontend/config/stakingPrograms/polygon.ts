@@ -5,6 +5,7 @@ import { AgentMap, EvmChainIdMap, STAKING_PROGRAM_IDS } from '@/constants';
 import { Address } from '@/types';
 
 import { POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
+import { MECHS, MechType } from '../mechs';
 import { StakingProgramMap } from '.';
 
 export const POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
@@ -25,8 +26,10 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
     name: 'Polygon Beta I',
     agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
-      OLAS: 50,
+      OLAS: 100,
     },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Polygon][MechType.MarketplaceV2].contract,
     activityChecker:
       POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PolygonBeta1
@@ -47,8 +50,10 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
     name: 'Polygon Beta II',
     agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
-      OLAS: 500,
+      OLAS: 1000,
     },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Polygon][MechType.MarketplaceV2].contract,
     activityChecker:
       POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PolygonBeta2
@@ -69,8 +74,10 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
     name: 'Polygon Alpha III',
     agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
-      OLAS: 5000,
+      OLAS: 10000,
     },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Polygon][MechType.MarketplaceV2].contract,
     activityChecker:
       POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PolygonBeta3
