@@ -2,6 +2,8 @@ import { Button, Flex, Image, Typography } from 'antd';
 import React, { Component, ReactNode } from 'react';
 import { styled } from 'styled-components';
 
+import { SUPPORT_URL } from '@/constants/urls';
+
 const { Text, Title } = Typography;
 
 const ErrorContainer = styled(Flex)`
@@ -10,7 +12,6 @@ const ErrorContainer = styled(Flex)`
 `;
 
 type ErrorBoundaryProps = {
-  toggleSupportModal: () => void;
   logger?: (error: Error, errorInfo: unknown) => void;
   fallbackComponent?: ReactNode;
   children: ReactNode;
@@ -20,11 +21,7 @@ type ErrorBoundaryState = {
   hasError: boolean;
 };
 
-const MainPageFallback = ({
-  toggleSupportModal,
-}: {
-  toggleSupportModal: () => void;
-}) => (
+const MainPageFallback = () => (
   <ErrorContainer vertical align="center" justify="center">
     <Flex
       vertical
@@ -49,12 +46,13 @@ const MainPageFallback = ({
       </Text>
 
       <Button
-        type="default"
+        type="primary"
         size="large"
-        onClick={toggleSupportModal}
+        href={SUPPORT_URL}
+        target="_blank"
         className="mt-12"
       >
-        Contact Support
+        Get Help on Discord
       </Button>
     </Flex>
   </ErrorContainer>
@@ -80,15 +78,11 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   render() {
-    const { toggleSupportModal, children, fallbackComponent } = this.props;
+    const { children, fallbackComponent } = this.props;
     const { hasError } = this.state;
 
     if (hasError) {
-      return (
-        fallbackComponent || (
-          <MainPageFallback toggleSupportModal={toggleSupportModal} />
-        )
-      );
+      return fallbackComponent || <MainPageFallback />;
     }
     return children;
   }
