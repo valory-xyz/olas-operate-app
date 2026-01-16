@@ -23,21 +23,21 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.PolygonBeta1]: {
     chainId: EvmChainIdMap.Polygon,
     name: 'Polygon Beta 1',
-    agentsSupported: [AgentMap.PolymarketTrader],
+    agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
-      OLAS: 100, // TODO: Add real staking requirement
+      OLAS: 50,
     },
     activityChecker:
       POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-        STAKING_PROGRAM_IDS.PolygonBeta1
+      STAKING_PROGRAM_IDS.PolygonBeta1
       ],
     address:
       POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-        STAKING_PROGRAM_IDS.PolygonBeta1
+      STAKING_PROGRAM_IDS.PolygonBeta1
       ],
     contract: new MulticallContract(
       POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-        STAKING_PROGRAM_IDS.PolygonBeta1
+      STAKING_PROGRAM_IDS.PolygonBeta1
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
@@ -45,21 +45,21 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.PolygonBeta2]: {
     chainId: EvmChainIdMap.Polygon,
     name: 'Polygon Beta 2',
-    agentsSupported: [AgentMap.PolymarketTrader],
+    agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
-      OLAS: 200, // TODO: Add real staking requirement
+      OLAS: 500,
     },
     activityChecker:
       POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-        STAKING_PROGRAM_IDS.PolygonBeta2
+      STAKING_PROGRAM_IDS.PolygonBeta2
       ],
     address:
       POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-        STAKING_PROGRAM_IDS.PolygonBeta2
+      STAKING_PROGRAM_IDS.PolygonBeta2
       ],
     contract: new MulticallContract(
       POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-        STAKING_PROGRAM_IDS.PolygonBeta2
+      STAKING_PROGRAM_IDS.PolygonBeta2
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
@@ -67,21 +67,21 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.PolygonBeta3]: {
     chainId: EvmChainIdMap.Polygon,
     name: 'Polygon Beta 3',
-    agentsSupported: [AgentMap.PolymarketTrader],
+    agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
-      OLAS: 300, // TODO: Add real staking requirement
+      OLAS: 5000,
     },
     activityChecker:
       POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-        STAKING_PROGRAM_IDS.PolygonBeta3
+      STAKING_PROGRAM_IDS.PolygonBeta3
       ],
     address:
       POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-        STAKING_PROGRAM_IDS.PolygonBeta3
+      STAKING_PROGRAM_IDS.PolygonBeta3
       ],
     contract: new MulticallContract(
       POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-        STAKING_PROGRAM_IDS.PolygonBeta3
+      STAKING_PROGRAM_IDS.PolygonBeta3
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),

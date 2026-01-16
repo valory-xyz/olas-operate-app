@@ -6,7 +6,7 @@ import { useServices } from '@/hooks';
 
 const { Text } = Typography;
 
-export const AgentUnavailableAlert = () => {
+export const AgentGeoBlockedAlert = () => {
   const { selectedAgentConfig } = useServices();
 
   return (

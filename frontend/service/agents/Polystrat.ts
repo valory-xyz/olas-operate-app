@@ -23,7 +23,7 @@ import {
 
 const MECH_REQUESTS_SAFETY_MARGIN = 1;
 
-export abstract class PolymarketTrader extends StakedAgentService {
+export abstract class Polystrat extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({
     agentMultisigAddress,
     serviceId,

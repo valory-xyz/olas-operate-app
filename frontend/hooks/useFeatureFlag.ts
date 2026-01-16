@@ -34,7 +34,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-add-funds': true,
     'on-ramp': true,
   },
-  [AgentMap.PolymarketTrader]: {
+  [AgentMap.Polystrat]: {
     'withdraw-funds': true,
     'staking-contract-section': true,
     'backup-via-safe': true,

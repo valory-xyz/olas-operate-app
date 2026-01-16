@@ -53,7 +53,7 @@ export type OptimismStakingProgramId = ValueOf<
 const POLYGON_STAKING_PROGRAM_IDS = {
   PolygonBeta1: 'polygon_beta_1',
   PolygonBeta2: 'polygon_beta_2',
-  PolygonBeta3: 'polygon_beta_3', // Note: “Polygon Alpha 3” is a typo in apps — the correct name is Polygon Beta 3.
+  PolygonBeta3: 'polygon_beta_3', // Note: “Polygon Alpha 3” is a typo in contract setup (in meta data) — the correct name is Polygon Beta 3.
 } as const;
 
 export type PolygonStakingProgramId = ValueOf<

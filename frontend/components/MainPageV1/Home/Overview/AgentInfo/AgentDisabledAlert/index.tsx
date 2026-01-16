@@ -10,8 +10,8 @@ import {
   useStakingProgram,
 } from '@/hooks';
 
+import { AgentGeoBlockedAlert } from './AgentGeoBlockedAlert';
 import { AgentRunningAlert } from './AgentRunningAlert';
-import { AgentUnavailableAlert } from './AgentUnavailableAlert';
 import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { EvictedAlert } from './EvictedAlert';
 import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
@@ -39,7 +39,7 @@ export const AgentDisabledAlert = () => {
   });
 
   if (selectedAgentConfig?.isGeoLocationRestricted && isAgentGeoRestricted) {
-    return <AgentUnavailableAlert />;
+    return <AgentGeoBlockedAlert />;
   }
 
   if (selectedAgentConfig.isUnderConstruction) {

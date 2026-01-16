@@ -10,7 +10,7 @@ import {
   MODIUS_ONBOARDING_STEPS,
   OPTIMUS_ONBOARDING_STEPS,
   PETT_AI_ONBOARDING_STEPS,
-  PREDICT_TRADER_POLYMARKET_ONBOARDING_STEPS,
+  POLYSTRAT_ONBOARDING_STEPS,
   PREDICTION_ONBOARDING_STEPS,
 } from './constants';
 import {
@@ -34,7 +34,7 @@ const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
   [AgentMap.Modius]: MODIUS_ONBOARDING_STEPS,
   [AgentMap.Optimus]: OPTIMUS_ONBOARDING_STEPS,
   [AgentMap.PettAi]: PETT_AI_ONBOARDING_STEPS,
-  [AgentMap.PolymarketTrader]: PREDICT_TRADER_POLYMARKET_ONBOARDING_STEPS,
+  [AgentMap.Polystrat]: POLYSTRAT_ONBOARDING_STEPS,
 };
 
 type AgentIntroductionProps = {

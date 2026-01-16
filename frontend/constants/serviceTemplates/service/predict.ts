@@ -156,7 +156,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       version: 'v0.30.0-test1',
     },
   },
-  agentType: AgentMap.PolymarketTrader,
+  agentType: AgentMap.Polystrat,
   name: 'Trader Agent Polymarket', // should be unique across all services and not be updated
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets on Polygon`,
   image:
@@ -274,7 +274,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Use x402',
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
-      value: X402_ENABLED_FLAGS[AgentMap.PolymarketTrader].toString(),
+      value: X402_ENABLED_FLAGS[AgentMap.Polystrat].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
   },
