@@ -25,10 +25,7 @@ import { SharedProvider } from '@/context/SharedProvider/SharedProvider';
 import { StakingContractDetailsProvider } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
-import {
-  SupportModalProvider,
-  useSupportModal,
-} from '@/context/SupportModalProvider';
+import { SupportModalProvider } from '@/context/SupportModalProvider';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useGlobalErrorHandlers } from '@/hooks/useGlobalErrorHandlers';
 
@@ -38,7 +35,6 @@ function App({ Component, pageProps }: AppProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   const { nextLogError } = useElectronApi();
-  const { toggleSupportModal } = useSupportModal();
 
   useGlobalErrorHandlers(nextLogError);
 
@@ -47,10 +43,7 @@ function App({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
-    <ErrorBoundary
-      logger={nextLogError}
-      toggleSupportModal={toggleSupportModal}
-    >
+    <ErrorBoundary logger={nextLogError}>
       <OnlineStatusProvider>
         <StoreProvider>
           <PageStateProvider>
@@ -67,11 +60,13 @@ function App({ Component, pageProps }: AppProps) {
                                 <SharedProvider>
                                   <OnRampProvider>
                                     <PearlWalletProvider>
-                                      {isMounted ? (
-                                        <Layout>
-                                          <Component {...pageProps} />
-                                        </Layout>
-                                      ) : null}
+                                      <SupportModalProvider>
+                                        {isMounted ? (
+                                          <Layout>
+                                            <Component {...pageProps} />
+                                          </Layout>
+                                        ) : null}
+                                      </SupportModalProvider>
                                     </PearlWalletProvider>
                                   </OnRampProvider>
                                 </SharedProvider>
@@ -97,9 +92,7 @@ export default function AppRoot(props: AppProps) {
     <ElectronApiProvider>
       <QueryClientProvider client={queryClient}>
         <ConfigProvider theme={mainTheme}>
-          <SupportModalProvider>
-            <App {...props} />
-          </SupportModalProvider>
+          <App {...props} />
         </ConfigProvider>
       </QueryClientProvider>
     </ElectronApiProvider>
