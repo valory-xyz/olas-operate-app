@@ -163,13 +163,13 @@ export const POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   string,
   MulticallContract
 > = {
-  [STAKING_PROGRAM_IDS.PolygonBeta1]: getStakingActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.PolygonBeta1]: getRequesterActivityCheckerContract(
     '0x1f84F8F70dE0651C2d51Bf8850FE9D0289Ba3B3A',
   ),
-  [STAKING_PROGRAM_IDS.PolygonBeta2]: getStakingActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.PolygonBeta2]: getRequesterActivityCheckerContract(
     '0x7F69B6783855772d10A4bc2AFAaE650599F040DB',
   ),
-  [STAKING_PROGRAM_IDS.PolygonBeta3]: getStakingActivityCheckerContract(
+  [STAKING_PROGRAM_IDS.PolygonBeta3]: getRequesterActivityCheckerContract(
     '0x0e998DaAedaCD59ba2F65558a29417b69f05D972',
   ),
 } as const;
