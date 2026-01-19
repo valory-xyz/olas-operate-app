@@ -158,7 +158,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
   },
   agentType: AgentMap.Polystrat,
   name: 'Trader Agent Polymarket', // should be unique across all services and not be updated
-  description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets on Polygon`,
+  description: `${KPI_DESC_PREFIX} Trader agent for polymarket prediction markets on Polygon`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
   home_chain: MiddlewareChainMap.POLYGON,
