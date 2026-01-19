@@ -74,7 +74,7 @@ export const MECHS: Mechs = {
     },
   },
   [EvmChainIdMap.Polygon]: {
-    [MechType.Marketplace]: {
+    [MechType.MarketplaceV2]: {
       name: 'Mech Marketplace',
       contract: new MulticallContract(
         '0x343F2B005cF6D70bA610CD9F1F1927049414B582',
