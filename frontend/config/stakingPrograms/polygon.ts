@@ -28,8 +28,8 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       OLAS: 100,
     },
-    mechType: MechType.MarketplaceV2,
-    mech: MECHS[EvmChainIdMap.Polygon][MechType.MarketplaceV2].contract,
+    mechType: MechType.Marketplace,
+    mech: MECHS[EvmChainIdMap.Polygon][MechType.Marketplace].contract,
     activityChecker:
       POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PolygonBeta1
@@ -52,8 +52,8 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       OLAS: 1000,
     },
-    mechType: MechType.MarketplaceV2,
-    mech: MECHS[EvmChainIdMap.Polygon][MechType.MarketplaceV2].contract,
+    mechType: MechType.Marketplace,
+    mech: MECHS[EvmChainIdMap.Polygon][MechType.Marketplace].contract,
     activityChecker:
       POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PolygonBeta2
@@ -76,8 +76,8 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
     stakingRequirements: {
       OLAS: 10000,
     },
-    mechType: MechType.MarketplaceV2,
-    mech: MECHS[EvmChainIdMap.Polygon][MechType.MarketplaceV2].contract,
+    mechType: MechType.Marketplace,
+    mech: MECHS[EvmChainIdMap.Polygon][MechType.Marketplace].contract,
     activityChecker:
       POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PolygonBeta3
