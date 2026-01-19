@@ -145,7 +145,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 
 // TODO: Add real Polygon service template when available
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeia4anriuocdtgkjgybomkeoqadxuu2igodrk2h6v2hkrjvlnm3obm',
+  hash: 'bafybeibyl5gka5ptuh4ssmabgt6q7w3lck5fhvyptrjw5u3pousa7emy7q',
   service_version: 'v0.30.0-test1',
   agent_release: {
     is_aea: true,
