@@ -28,7 +28,7 @@ export abstract class Polystrat extends StakedAgentService {
     agentMultisigAddress,
     serviceId,
     stakingProgramId,
-    chainId = EvmChainIdMap.Gnosis,
+    chainId = EvmChainIdMap.Polygon,
   }: {
     agentMultisigAddress: Address;
     serviceId: number;
@@ -118,7 +118,7 @@ export abstract class Polystrat extends StakedAgentService {
 
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainIdMap.Gnosis,
+    chainId: EvmChainId = EvmChainIdMap.Polygon,
   ): Promise<bigint | undefined> => {
     const stakingTokenProxy =
       STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
@@ -147,11 +147,10 @@ export abstract class Polystrat extends StakedAgentService {
   /**
    * Get service details by it's NftTokenId on a provided staking contract
    */
-
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainIdMap.Gnosis,
+    chainId: EvmChainId = EvmChainIdMap.Polygon,
   ): Promise<ServiceStakingDetails> => {
     const { multicallProvider } = PROVIDERS[chainId];
 
@@ -224,7 +223,6 @@ export abstract class Polystrat extends StakedAgentService {
     const rewardsPerYear = rewardsPerSecond.mul(ONE_YEAR);
 
     let apy = 0;
-
     if (rewardsPerSecond.gt(0) && minStakingDeposit.gt(0)) {
       apy =
         Number(rewardsPerYear.mul(100).div(minStakingDeposit)) /

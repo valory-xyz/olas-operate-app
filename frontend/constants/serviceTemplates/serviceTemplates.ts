@@ -11,7 +11,7 @@ import { KPI_DESC_PREFIX } from './constants';
 import {
   PREDICT_POLYMARKET_SERVICE_TEMPLATE,
   PREDICT_SERVICE_TEMPLATE,
-} from './service/predict';
+} from './service/trader';
 
 const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,

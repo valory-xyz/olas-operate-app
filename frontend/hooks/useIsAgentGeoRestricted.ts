@@ -10,7 +10,6 @@ import { AgentConfig } from '@/types';
 
 type GeoEligibilityResponse = {
   checked_at: number;
-  geo: { source: 'vercel' | 'unknown' };
   eligibility: {
     [key: string]: {
       status: 'allowed' | 'restricted';
@@ -39,7 +38,7 @@ type UseGeoEligibilityProps = {
   enabled?: boolean;
 };
 
-export const useGeoEligibility = ({
+const useGeoEligibility = ({
   agentType,
   enabled = false,
 }: UseGeoEligibilityProps) => {
@@ -52,21 +51,6 @@ export const useGeoEligibility = ({
     enabled: enabled && !!agentType,
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });
-};
-
-/**
- * Check if an agent is eligible in the current region
- */
-export const isAgentEligibleInRegion = (
-  agentId: string,
-  geoData: GeoEligibilityResponse | undefined,
-): boolean | null => {
-  if (!geoData) return null;
-
-  const agentEligibility = geoData.eligibility[agentId];
-  if (!agentEligibility) return null;
-
-  return agentEligibility.status === 'allowed';
 };
 
 type UseIsAgentGeoRestrictedProps = {
