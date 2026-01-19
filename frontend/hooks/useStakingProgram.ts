@@ -44,7 +44,7 @@ export const useStakingProgram = () => {
   }, [selectedAgentConfig.evmHomeChainId, selectedStakingProgramId]);
 
   return {
-    // active staking program
+    // active staking program (on-chain)
     isActiveStakingProgramLoaded,
     activeStakingProgramId,
 
