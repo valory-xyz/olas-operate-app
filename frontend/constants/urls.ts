@@ -26,7 +26,7 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
   [EvmChainIdMap.Base]: 'https://staking-base.subgraph.autonolas.tech',
   [EvmChainIdMap.Mode]: 'https://staking-mode.subgraph.autonolas.tech',
   [EvmChainIdMap.Optimism]: 'https://staking-optimism.subgraph.autonolas.tech',
-  [EvmChainIdMap.Polygon]: 'https://staking-polygon.subgraph.autonolas.tech', // TODO: Update with real URL when available
+  [EvmChainIdMap.Polygon]: 'https://staking-polygon.subgraph.autonolas.tech',
 };
 
 // discord
