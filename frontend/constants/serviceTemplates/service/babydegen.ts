@@ -43,15 +43,15 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
-      cost_of_bond: +parseEther(20),
+      cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0002),
-          safe: 0,
+          agent: parseEther(0.0002),
+          safe: '0',
         },
         [MODE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
-          agent: 0,
-          safe: +parseUnits(
+          agent: '0',
+          safe: parseUnits(
             16,
             MODE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
           ),
@@ -212,15 +212,15 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 40,
-      cost_of_bond: +parseEther(20),
+      cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0002),
-          safe: 0,
+          agent: parseEther(0.0002),
+          safe: '0',
         },
         [OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
-          agent: 0,
-          safe: +parseUnits(
+          agent: '0',
+          safe: parseUnits(
             16,
             OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
           ),

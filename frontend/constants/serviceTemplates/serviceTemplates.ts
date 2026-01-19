@@ -144,11 +144,11 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 43,
-      cost_of_bond: +parseEther(50),
+      cost_of_bond: parseEther(50),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0003257),
-          safe: +parseEther(0.0016285),
+          agent: parseEther(0.0003257),
+          safe: parseEther(0.0016285),
         },
       },
     },
@@ -179,11 +179,11 @@ const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 80,
-      cost_of_bond: +parseEther(20),
+      cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.00008),
-          safe: 0,
+          agent: parseEther(0.00008),
+          safe: '0',
         },
       },
     },

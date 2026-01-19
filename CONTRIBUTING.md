@@ -5,10 +5,9 @@ Thank you for your interest in contributing to Pearl! This document provides gui
 ## Table of Contents
 
 - [Project Overview](#project-overview)
-- [Development Setup](#development-setup)
+- [Getting Started](#getting-started)
 - [Development Workflow](#development-workflow)
 - [Code Quality](#code-quality)
-- [Testing](#testing)
 - [Pull Request Process](#pull-request-process)
 - [Release Process](#release-process)
 
@@ -20,90 +19,21 @@ Pearl is a cross-platform desktop application for running autonomous agents powe
 - **Next.js Frontend** (TypeScript): React-based user interface
 - **Python Backend** (Poetry): Middleware and agent operations (separate repo)
 
-## Development Setup
+## Getting Started
 
-### Prerequisites
+Before contributing, please:
 
-- **Node.js**: Version 20.18.1 (use nvm for version management)
-- **Python**: Version 3.10-3.11
-- **Yarn**: Package manager for Node.js dependencies
-- **Poetry**: Python dependency management
-
-### Platform-Specific Setup
-
-Follow the appropriate setup guide for your operating system:
-
-- [Ubuntu Setup Guide](docs/dev/ubuntu-setup.md)
-- [MacOS Setup Guide](docs/dev/macos-setup.md)
-- [Windows Setup Guide](docs/dev/windows-setup.md)
-
-### Quick Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/valory-xyz/olas-operate-app.git
-   cd olas-operate-app
-   ```
-
-2. **Install Node.js and Yarn**
-   ```bash
-   nvm install
-   nvm use
-   npm install --global yarn
-   ```
-
-3. **Install Python and Poetry**
-   ```bash
-   # Ubuntu/Debian
-   sudo apt install python3.10 pipx
-   pipx install poetry==1.8.5
-
-   # macOS
-   brew install python@3.10 pipx
-   pipx install poetry==1.8.5
-   ```
-
-4. **Install all dependencies**
-   ```bash
-   yarn install-deps
-   ```
-
-5. **Setup environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-
-   Configure the following RPC endpoints in your `.env` file:
-   - `GNOSIS_RPC`
-   - `BASE_RPC`
-   - `OPTIMISM_RPC`
-   - `ETHEREUM_RPC`
-   - `MODE_RPC`
-   - `CELO_RPC`
-   - `POLYGON_RPC`
-
-6. **Start development server**
-   ```bash
-   # : Electron app
-   yarn dev
-   ```
-
-### Development Commands
-
-| Command | Description |
-|---------|-------------|
-| `yarn dev` | Start the full Electron application |
-| `yarn dev:frontend` | Start Next.js frontend in development mode |
-| `yarn build:frontend` | Build the frontend for production |
-| `yarn lint:frontend` | Run ESLint on frontend code |
+1. Review the [README](README.md) for setup instructions and development commands
+2. Check the [Issues](https://github.com/valory-xyz/olas-operate-app/issues) page for open tasks
+3. Look for issues labeled `good first issue` or `help wanted` if you're new to the project
 
 ## Development Workflow
 
 ### 1. Choose an Issue
 
-- Check the [Issues](https://github.com/valory-xyz/olas-operate-app/issues) page
-- Look for issues labeled `good first issue` or `help wanted`
-- Comment on the issue to indicate you're working on it
+- Find an issue you'd like to work on
+- Comment on the issue to indicate you're working on it to avoid duplicate efforts
+- If you're proposing a new feature, open an issue first to discuss it
 
 ### 2. Create a Branch
 
@@ -124,13 +54,13 @@ git checkout -b fix/issue-number-description
 
 - Run the application locally
 - Test on multiple platforms if possible
-- Run the test suite
 
 ### 5. Submit a Pull Request
 
 - Push your branch to GitHub
 - Create a pull request with a clear description
 - Reference any related issues
+- Ensure all CI checks pass
 
 ## Code Quality
 
@@ -138,7 +68,6 @@ git checkout -b fix/issue-number-description
 
 - **ESLint**: Configured with Prettier integration
 - **TypeScript**: Strict type checking enabled
-- **Prettier**: Code formatting
 
 ### Git Hooks
 
@@ -157,27 +86,6 @@ The project uses Husky for Git hooks to ensure code quality:
 
 ## Pull Request Process
 
-### Before Submitting
-
-1. **Update documentation** if your changes affect user-facing features
-2. **Test on multiple platforms** if applicable
-
-### PR Template
-
-Use the provided PR template and fill out:
-
-- **Proposed changes**: Clear description of what was changed
-- **Types of changes**: Check the appropriate boxes
-  - [ ] Bugfix
-  - [ ] New feature
-  - [ ] Breaking change
-
-### PR Review Process
-
-1. **Automated checks** run on CI/CD
-2. **Code review** by maintainers
-3. **Testing** on different platforms
-4. **Approval** and merge
 
 ### Commit Messages
 
@@ -200,13 +108,28 @@ Types:
 - `test`: Testing
 - `chore`: Maintenance
 
+### Before Submitting
+
+1. **Run code quality checks** 
+  ```bash
+  yarn lint:frontend
+  yarn typequality-check:frontend
+  ```
+2. **Test on multiple platforms** if applicable
+
+### PR Review Process
+
+1. **Automated checks** run on CI/CD
+2. **Code review** by maintainers
+3. **Testing** by maintainers
+4. **Approval and merge** by maintainers
+
+
 ## Release Process
 
 ### Version Management
 
 - Versions follow [Semantic Versioning](https://semver.org/)
-- Release branches are created automatically
-- Production releases go through thorough testing
 
 ### Release Types
 

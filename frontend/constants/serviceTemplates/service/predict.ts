@@ -32,12 +32,11 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 14,
-      // TODO: pull fund requirements from staking program config
-      cost_of_bond: +parseEther(0.001),
+      cost_of_bond: parseEther(0.001),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(2),
-          safe: +parseEther(8),
+          agent: parseEther(2),
+          safe: parseEther(8),
         },
       },
     },
@@ -169,11 +168,11 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 14,
       // TODO: pull fund requirements from staking program config
-      cost_of_bond: +parseEther(0.001),
+      cost_of_bond: parseEther(0.001),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(2), // TODO: to be updated
-          safe: +parseEther(8), // TODO: to be updated
+          agent: parseEther(2), // TODO: to be updated
+          safe: parseEther(8), // TODO: to be updated
         },
       },
     },

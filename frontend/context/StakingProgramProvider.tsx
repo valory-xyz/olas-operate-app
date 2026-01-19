@@ -55,10 +55,16 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     serviceNftTokenId,
     selectedAgentConfig,
   );
-
+  // Determine the staking program ID in the following order:
+  // 1) On-chain value (where the user actually staked)
+  // 2) If not available, use the selected service (can be updated during migration)
+  // 3) Fall back to the default config value
   const selectedStakingProgramId = isLoading
     ? null
-    : activeStakingProgramId || defaultStakingProgramId;
+    : activeStakingProgramId ||
+      selectedService?.chain_configs?.[selectedService?.home_chain]?.chain_data
+        .user_params.staking_program_id ||
+      defaultStakingProgramId;
 
   return (
     <StakingProgramContext.Provider
