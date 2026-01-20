@@ -166,7 +166,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 14,
-      cost_of_bond: parseEther(25),
+      cost_of_bond: parseEther(50),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: parseEther(2), // TODO: to be updated
