@@ -63,7 +63,7 @@ export type SupportedMiddlewareChain = ValueOf<
  * Map of middleware chains to EVM chain IDs for on-ramp purposes.
  * For example, If the agent is on Gnosis, the on-ramp will be done on Optimism.
  */
-export const onRampChainMap: Record<
+export const ON_RAMP_CHAIN: Record<
   SupportedMiddlewareChain,
   { chain: EvmChainId; cryptoCurrency: 'ETH' | 'POL' }
 > = {

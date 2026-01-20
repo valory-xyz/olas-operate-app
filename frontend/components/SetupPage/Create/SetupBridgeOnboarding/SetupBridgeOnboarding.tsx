@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { Bridge } from '@/components/Bridge';
 import { AgentSetupCompleteModal } from '@/components/ui';
-import { onRampChainMap, SETUP_SCREEN } from '@/constants';
+import { ON_RAMP_CHAIN, SETUP_SCREEN } from '@/constants';
 import { useGetBridgeRequirementsParams, useServices, useSetup } from '@/hooks';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
@@ -15,7 +15,7 @@ export const SetupBridgeOnboarding = () => {
 
   // Determine the from chain based on the agent's home chain
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
-  const fromChainId = onRampChainMap[toMiddlewareChain].chain;
+  const fromChainId = ON_RAMP_CHAIN[toMiddlewareChain].chain;
   const fromChain = asMiddlewareChain(fromChainId);
 
   const getBridgeRequirementsParams =
