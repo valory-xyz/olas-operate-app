@@ -14,7 +14,7 @@ import {
   TokenRequirementsTable,
 } from '@/components/ui';
 import { TokenSymbol } from '@/config/tokens';
-import { ChainImageMap, EvmChainName, SETUP_SCREEN } from '@/constants';
+import { CHAIN_IMAGE_MAP, EvmChainName, SETUP_SCREEN } from '@/constants';
 import {
   useMasterSafeCreationAndTransfer,
   useMasterWalletContext,
@@ -58,7 +58,7 @@ export const TransferFunds = () => {
 
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
-  const chainImage = ChainImageMap[evmHomeChainId];
+  const chainImage = CHAIN_IMAGE_MAP[evmHomeChainId];
   const isSafeCreated = isMasterWalletFetched
     ? !isNil(getMasterSafeOf?.(evmHomeChainId)) ||
       masterSafeDetails?.isSafeCreated

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { OnRampNetworkConfig } from '@/components/OnRamp';
 import { TokenSymbol } from '@/config/tokens';
 import {
-  ON_RAMP_CHAIN,
+  ON_RAMP_CHAIN_MAP,
   REACT_QUERY_KEYS,
   SupportedMiddlewareChain,
 } from '@/constants';
@@ -89,7 +89,7 @@ export const useTotalFiatFromNativeToken = ({
   const selectedChainName = asMiddlewareChain(
     ensureRequired(selectedChainId, "Chain ID can't be empty"),
   );
-  const { chain, cryptoCurrency } = ON_RAMP_CHAIN[selectedChainName];
+  const { chain, cryptoCurrency } = ON_RAMP_CHAIN_MAP[selectedChainName];
   const fromChain = asMiddlewareChain(chain);
 
   return useQuery({

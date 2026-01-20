@@ -63,7 +63,7 @@ export type SupportedMiddlewareChain = ValueOf<
  * Map of middleware chains to EVM chain IDs for on-ramp purposes.
  * For example, If the agent is on Gnosis, the on-ramp will be done on Optimism.
  */
-export const ON_RAMP_CHAIN: Record<
+export const ON_RAMP_CHAIN_MAP: Record<
   SupportedMiddlewareChain,
   { chain: EvmChainId; cryptoCurrency: 'ETH' | 'POL' }
 > = {
@@ -89,7 +89,7 @@ export const ON_RAMP_CHAIN: Record<
   },
 };
 
-export const ChainImageMap = {
+export const CHAIN_IMAGE_MAP = {
   [AllEvmChainIdMap.Ethereum]: '/chains/ethereum-chain.png',
   [EvmChainIdMap.Gnosis]: '/chains/gnosis-chain.png',
   [EvmChainIdMap.Base]: '/chains/base-chain.png',
@@ -98,4 +98,4 @@ export const ChainImageMap = {
   [EvmChainIdMap.Polygon]: '/chains/polygon-chain.png',
 } as const;
 
-export type ChainImage = ValueOf<typeof ChainImageMap>;
+export type ChainImage = ValueOf<typeof CHAIN_IMAGE_MAP>;
