@@ -1,8 +1,9 @@
 import { ethers } from 'ethers';
 
+import { POLYGON_TOKEN_CONFIG, TokenSymbolMap } from '@/config/tokens';
 import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
 import { ServiceTemplate } from '@/types';
-import { parseEther } from '@/utils';
+import { parseEther, parseUnits } from '@/utils';
 
 import { MiddlewareChainMap } from '../../chains';
 import { STAKING_PROGRAM_IDS } from '../../stakingProgram';
@@ -169,8 +170,15 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       cost_of_bond: parseEther(50),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: parseEther(2), // TODO: to be updated
-          safe: parseEther(8), // TODO: to be updated
+          agent: parseEther(28),
+          safe: parseEther(40),
+        },
+        [POLYGON_TOKEN_CONFIG[TokenSymbolMap['USDC.e']]?.address as string]: {
+          agent: '0',
+          safe: parseUnits(
+            65,
+            POLYGON_TOKEN_CONFIG[TokenSymbolMap['USDC.e']]?.decimals,
+          ),
         },
       },
     },
