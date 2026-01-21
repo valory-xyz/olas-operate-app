@@ -22,17 +22,17 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PredictTrader,
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeibw46xqqqpzfiw5if7aoknstlxc4bmraiqyj7v3w7a3kzcybpsbou',
+  hash: 'bafybeiffypttlwz4znzrwimrlqu5tu6m5fifz5tkqudmkqc5fozlitdl3i',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.27.7',
+  service_version: 'v0.27.10',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.27.7',
+      version: 'v0.27.10',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
@@ -43,11 +43,11 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       rpc: '', // overwritten
       agent_id: 14,
       // TODO: pull fund requirements from staking program config
-      cost_of_bond: +parseEther(20),
+      cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(2),
-          safe: +parseEther(8),
+          agent: parseEther(2),
+          safe: parseEther(8),
         },
       },
     },
@@ -285,11 +285,11 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: '', // overwritten
       agent_id: 43,
-      cost_of_bond: +parseEther(50),
+      cost_of_bond: parseEther(50),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0003257),
-          safe: +parseEther(0.0016285),
+          agent: parseEther(0.0003257),
+          safe: parseEther(0.0016285),
         },
       },
     },
@@ -301,14 +301,14 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeidkdnfrueiivrdzrqo67np3w4gsubu5vb6lqxabsx3ulozvj7jtmq',
-  service_version: 'v0.6.4',
+  hash: 'bafybeicrpqmggwurhkxiakuxzuxhdzm2x5zqyfvwcned56eikomkufma4i',
+  service_version: 'v0.6.5',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.6.4',
+      version: 'v0.6.5',
     },
   },
 };
@@ -326,15 +326,15 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: '', // overwritten
       agent_id: 40,
-      cost_of_bond: +parseEther(20),
+      cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0002),
-          safe: 0,
+          agent: parseEther(0.0002),
+          safe: '0',
         },
         [MODE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
-          agent: 0,
-          safe: +parseUnits(
+          agent: '0',
+          safe: parseUnits(
             16,
             MODE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
           ),
@@ -495,15 +495,15 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: '', // overwritten
       agent_id: 40,
-      cost_of_bond: +parseEther(20),
+      cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0002),
-          safe: 0,
+          agent: parseEther(0.0002),
+          safe: '0',
         },
         [OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
-          agent: 0,
-          safe: +parseUnits(
+          agent: '0',
+          safe: parseUnits(
             16,
             OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
           ),
@@ -637,11 +637,11 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: '', // overwritten
       agent_id: 80,
-      cost_of_bond: +parseEther(20),
+      cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.00008),
-          safe: 0,
+          agent: parseEther(0.00008),
+          safe: '0',
         },
       },
     },
