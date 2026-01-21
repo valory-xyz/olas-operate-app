@@ -143,7 +143,6 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   },
 } as const;
 
-// TODO: Add real Polygon service template when available
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
   hash: 'bafybeibdhsx2kgtz63qupf5h7obduhkzf5efdr5j26utxcmlx53pbpdhmm',
   service_version: 'v0.30.0-test1',
@@ -156,8 +155,8 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
     },
   },
   agentType: AgentMap.Polystrat,
-  name: 'Trader Agent Polymarket', // should be unique across all services and not be updated
-  description: `${KPI_DESC_PREFIX} Trader agent for polymarket prediction markets on Polygon`,
+  name: 'Trader Agent Polymarket', // NOTE: should be unique across all services and not be updated
+  description: `${KPI_DESC_PREFIX} Trader agent for polymarket prediction markets on Polygon`, // TODO: refine description
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
   home_chain: MiddlewareChainMap.POLYGON,
@@ -167,8 +166,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
       rpc: 'http://localhost:8545', // overwritten
       agent_id: 14,
-      // TODO: pull fund requirements from staking program config
-      cost_of_bond: parseEther(0.001),
+      cost_of_bond: parseEther(50),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: parseEther(2), // TODO: to be updated
