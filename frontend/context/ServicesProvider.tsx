@@ -74,6 +74,7 @@ type ServicesContextType = {
     tokenId: Optional<number>;
   }[];
   getServiceConfigIdsOf: (chainId: EvmChainId) => string[];
+  getAgentTypeFromService: (serviceConfigId?: string) => Nullable<AgentType>;
   serviceWallets?: AgentWallet[];
   selectedService?: Service;
   serviceStatusOverrides?: Record<string, Maybe<MiddlewareDeploymentStatus>>;
@@ -101,6 +102,7 @@ export const ServicesContext = createContext<ServicesContextType>({
   overrideSelectedServiceStatus: noop,
   availableServiceConfigIds: [],
   getServiceConfigIdsOf: () => [],
+  getAgentTypeFromService: () => null,
 });
 
 /**
@@ -355,6 +357,23 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     [availableServiceConfigIds],
   );
 
+  const getAgentTypeFromService = (
+    serviceConfigId?: string,
+  ): AgentType | null => {
+    if (!serviceConfigId) return null;
+
+    const service = services?.find(
+      (service) => service.service_config_id === serviceConfigId,
+    );
+    if (!service) return null;
+
+    const agentEntry = Object.entries(AGENT_CONFIG).find(
+      ([, config]) => config.servicePublicId === service.service_public_id,
+    );
+
+    return agentEntry ? (agentEntry[0] as AgentType) : null;
+  };
+
   return (
     <ServicesContext.Provider
       value={{
@@ -365,6 +384,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         refetch,
         availableServiceConfigIds,
         getServiceConfigIdsOf,
+        getAgentTypeFromService,
 
         // pause
         paused,
