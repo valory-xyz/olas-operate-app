@@ -2,7 +2,7 @@ import { Button, Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { COLOR, onRampChainMap, SETUP_SCREEN } from '@/constants';
+import { COLOR, ON_RAMP_CHAIN_MAP, SETUP_SCREEN } from '@/constants';
 import {
   useOnRampContext,
   useServices,
@@ -42,7 +42,7 @@ const useOnRampNetworkConfig = () => {
     useMemo(() => {
       const selectedChainId = selectedAgentConfig.evmHomeChainId;
       const fromChainName = asMiddlewareChain(selectedChainId);
-      const networkId = onRampChainMap[fromChainName];
+      const networkId = ON_RAMP_CHAIN_MAP[fromChainName];
       const chainDetails = asEvmChainDetails(
         asMiddlewareChain(networkId.chain),
       );

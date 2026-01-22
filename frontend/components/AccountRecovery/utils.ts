@@ -4,7 +4,7 @@ import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import {
   AddressZero,
-  ChainImageMap,
+  CHAIN_IMAGE_MAP,
   EvmChainId,
   SupportedMiddlewareChain,
 } from '@/constants';
@@ -120,7 +120,7 @@ export const parseRecoveryFundingRequirements = (
           pendingAmount: Number(
             formatUnitsToNumber(BigInt(refillAmount), decimals),
           ),
-          iconSrc: ChainImageMap[evmChainId],
+          iconSrc: CHAIN_IMAGE_MAP[evmChainId],
           areFundsReceived: BigInt(refillAmount) === 0n,
         });
       }

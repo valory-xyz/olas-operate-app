@@ -1,7 +1,7 @@
 import { Flex, Typography } from 'antd';
 
 import { BackButton, CardFlex, FundingDescription } from '@/components/ui';
-import { ChainImageMap, MiddlewareChain } from '@/constants';
+import { CHAIN_IMAGE_MAP, MiddlewareChain } from '@/constants';
 import { useMasterWalletContext } from '@/hooks';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
@@ -39,7 +39,7 @@ export const BridgeOnEvm = ({
   const address = masterEoa?.address;
 
   const fromChainDetails = asEvmChainDetails(fromChain);
-  const fromChainImage = ChainImageMap[fromChainDetails.chainId];
+  const fromChainImage = CHAIN_IMAGE_MAP[fromChainDetails.chainId];
 
   return (
     <Flex justify="center">

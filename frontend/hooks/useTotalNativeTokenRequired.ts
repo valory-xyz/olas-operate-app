@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { AddressZero } from '@/constants/address';
-import { EvmChainId, onRampChainMap } from '@/constants/chains';
+import { EvmChainId, ON_RAMP_CHAIN_MAP } from '@/constants/chains';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
@@ -67,7 +67,7 @@ export const useTotalNativeTokenRequired = (
     );
 
     // "FROM" chain for bridging, the chain we will on-ramp funds to
-    const chainName = onRampChainMap[agentChainName].chain;
+    const chainName = ON_RAMP_CHAIN_MAP[agentChainName].chain;
     const onRampNetworkName = asMiddlewareChain(chainName);
     const destinationAddress =
       getMasterSafeOf?.(chainName)?.address || masterEoa.address;
