@@ -81,7 +81,7 @@ const acknowledgeServiceAchievement = async ({
   achievementId,
 }: AcknowledgeServiceAchievementParams) => {
   const response = await fetch(
-    `${BACKEND_URL_V2}/api/v2/service/${serviceConfigId}/achievements/${achievementId}/ack`,
+    `${BACKEND_URL_V2}/api/v2/service/${serviceConfigId}/achievements/${achievementId}/acknowledge`,
     {
       method: 'POST',
       headers: { ...CONTENT_TYPE_JSON_UTF8 },
