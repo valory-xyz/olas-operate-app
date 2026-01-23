@@ -53,6 +53,7 @@ export const PolystratPayoutAchievement = ({
   achievement: PolystratPayoutData;
 }) => {
   const {
+    text,
     betId,
     payout,
     question,
@@ -85,10 +86,7 @@ export const PolystratPayoutAchievement = ({
         type,
       }),
     );
-    const xIntentUrl = generateXIntentUrl(
-      'Check out my latest achievement on Polymarket!',
-      predictUrl,
-    );
+    const xIntentUrl = generateXIntentUrl(text, predictUrl);
     window.open(xIntentUrl, '_blank');
   };
 

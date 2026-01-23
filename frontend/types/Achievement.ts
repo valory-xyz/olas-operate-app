@@ -6,6 +6,7 @@ type BaseAchievement = {
 
 export type PolystratPayoutData = BaseAchievement & {
   type: 'polystrat/payout';
+  text: string;
   betId: string;
   question: string;
   transactionHash: string;
