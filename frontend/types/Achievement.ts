@@ -1,21 +1,34 @@
-export type Achievement = {
+type BaseAchievement = {
   achievement_id: string;
   acknowledgement_timestamp: number;
-  /**
-   * Additional data fields for the achievement - depends on the achievement type
-   */
-  [achievement_data_field: string]: unknown;
 };
 
+export type PolystratPayoutData = BaseAchievement & {
+  betId: string;
+  question: string;
+  transactionHash: string;
+  position: string;
+  amount_betted: string;
+  payout: string;
+};
+
+export type AchievementTypeMap = {
+  // TODO: Use the correct achievement type from BE
+  'polystrat/payout': PolystratPayoutData;
+};
+
+export type AchievementType = keyof AchievementTypeMap;
+
 export type ServiceAchievements = {
-  [achievement_type: string]: Achievement;
+  [K in AchievementType]?: AchievementTypeMap[K];
 };
 
 export type AllServicesAchievements = {
   [service_config_id: string]: ServiceAchievements;
 };
 
-export type AchievementWithType = Achievement & {
-  serviceConfigId: string;
-  achievementType: string;
-};
+export type AchievementWithType<T extends AchievementType = AchievementType> =
+  AchievementTypeMap[T] & {
+    serviceConfigId: string;
+    achievementType: T;
+  };

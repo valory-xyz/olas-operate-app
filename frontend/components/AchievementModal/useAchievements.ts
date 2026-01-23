@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { FIVE_MINUTE_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
 import { useServices } from '@/hooks';
 import { getAllServicesAchievements } from '@/service/Achievement';
-import { AchievementWithType } from '@/types/Achievement';
+import { AchievementType, AchievementWithType } from '@/types/Achievement';
 
 export const useAchievements = () => {
   const { availableServiceConfigIds } = useServices();
@@ -33,7 +33,7 @@ export const useAchievements = () => {
               achievements.push({
                 ...achievement,
                 serviceConfigId,
-                achievementType,
+                achievementType: achievementType as AchievementType,
               });
             },
           );

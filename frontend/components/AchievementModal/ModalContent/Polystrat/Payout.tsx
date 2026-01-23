@@ -1,9 +1,11 @@
 import { Button, Flex, Typography } from 'antd';
 import Image from 'next/image';
+import { useMemo } from 'react';
 import { LuSquareArrowOutUpRight } from 'react-icons/lu';
 import styled from 'styled-components';
 
 import { COLOR, EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants';
+import { PolystratPayoutData } from '@/types/Achievement';
 
 const { Title, Text } = Typography;
 
@@ -35,16 +37,6 @@ const StatColumn = ({ stat }: { stat: { label: string; value?: string } }) => {
   );
 };
 
-type PolystratPayoutData = {
-  betId?: string;
-  question?: string;
-  transactionHash?: string;
-  position?: string;
-  amount_betted?: string;
-  payout?: string;
-  multiplier?: string;
-};
-
 export const PolystratPayoutAchievement = ({
   payoutData,
 }: {
@@ -69,6 +61,14 @@ export const PolystratPayoutAchievement = ({
     // Placeholder for Share on X functionality
   };
 
+  const payoutMultiplier = useMemo(() => {
+    if (!payoutData.amount_betted || !payoutData.payout) return null;
+
+    return (
+      Number(payoutData.payout) / Number(payoutData.amount_betted)
+    ).toFixed(2);
+  }, [payoutData.amount_betted, payoutData.payout]);
+
   return (
     <Flex vertical align="center">
       <Image
@@ -81,7 +81,7 @@ export const PolystratPayoutAchievement = ({
 
       <MultiplierBadge className="mb-16">
         <Title level={2} className="m-0 text-primary font-weight-600">
-          {payoutData.multiplier}
+          {payoutMultiplier}x
         </Title>
       </MultiplierBadge>
 
