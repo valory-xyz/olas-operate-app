@@ -59,7 +59,7 @@ export const PolystratPayoutAchievement = ({
     position,
     transactionHash,
     amount_betted,
-    achievement_type,
+    type,
   } = achievement;
 
   const stats = [
@@ -82,7 +82,7 @@ export const PolystratPayoutAchievement = ({
       'polystrat',
       new URLSearchParams({
         betId,
-        type: achievement_type,
+        type,
       }),
     );
     const xIntentUrl = generateXIntentUrl(

@@ -9,8 +9,13 @@ import { PolystratModalContent } from './ModalContent/Polystrat';
 
 export const AchievementModal = () => {
   const { getAgentTypeFromService } = useServices();
-  const { currentAchievement, markCurrentAchievementAsShown } =
-    useCurrentAchievement();
+  const {
+    currentAchievement,
+    markCurrentAchievementAsShown,
+    isLoading,
+    error,
+    isError,
+  } = useCurrentAchievement();
   const triggerAchievementBackgroundTasks =
     useTriggerAchievementBackgroundTasks();
 
@@ -26,12 +31,19 @@ export const AchievementModal = () => {
   };
 
   useEffect(() => {
+    if (isError && error) {
+      console.error('Failed to fetch achievements:', error);
+    }
+  }, [isError, error]);
+
+  useEffect(() => {
     if (!currentAchievement) return;
 
     setShowModal(true);
     triggerAchievementBackgroundTasks(currentAchievement);
   }, [currentAchievement, triggerAchievementBackgroundTasks]);
 
+  if (isLoading || isError) return null;
   if (!currentAchievement || !agentType) return null;
 
   return (

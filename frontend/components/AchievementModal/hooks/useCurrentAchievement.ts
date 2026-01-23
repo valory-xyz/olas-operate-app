@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AchievementWithConfig } from '@/types/Achievement';
+import { ONE_MINUTE_IN_MS } from '@/utils';
 
 import { useAchievements } from './useAchievements';
 
 export const useCurrentAchievement = () => {
-  const { achievements } = useAchievements();
+  const { achievements, isLoading, error, isError } = useAchievements();
 
   const [currentAchievement, setCurrentAchievement] =
     useState<AchievementWithConfig | null>(null);
@@ -29,9 +30,15 @@ export const useCurrentAchievement = () => {
 
   const markCurrentAchievementAsShown = useCallback(() => {
     if (!currentAchievement) return;
-    setShownAchievementIds(
-      (prev) => new Set([...prev, currentAchievement.achievement_id]),
-    );
+
+    // Wait for 1 minute before marking the current achievement as shown
+    // This is to ensure that their is a small delay between showing achievements
+    setTimeout(() => {
+      setCurrentAchievement(null);
+      setShownAchievementIds(
+        (prev) => new Set([...prev, currentAchievement.achievement_id]),
+      );
+    }, ONE_MINUTE_IN_MS);
   }, [currentAchievement]);
 
   useEffect(() => {
@@ -43,5 +50,8 @@ export const useCurrentAchievement = () => {
   return {
     currentAchievement,
     markCurrentAchievementAsShown,
+    isLoading,
+    error,
+    isError,
   };
 };

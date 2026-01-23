@@ -14,7 +14,7 @@ const RETRY_COUNT = 3;
  * For eg: betId in case of a payout.
  */
 const getAchievementDataIdFromType = (achievement: AchievementWithConfig) => {
-  switch (achievement.achievement_type) {
+  switch (achievement.type) {
     case 'polystrat/payout':
       return achievement.betId;
     default:
@@ -45,11 +45,12 @@ export const useTriggerAchievementBackgroundTasks = () => {
       if (!currentAchievement) return;
 
       const { serviceConfigId, achievement_id } = currentAchievement;
-      const [agent, type] = currentAchievement.achievement_id.split('/');
+      const [agent, type] = currentAchievement.type.split('/');
       const dataId = getAchievementDataIdFromType(currentAchievement);
 
       if (!dataId) {
-        throw new Error('Failed to get achievement data id');
+        console.error('Failed to get achievement data id');
+        return;
       }
 
       acknowledgeCurrentAchievement({

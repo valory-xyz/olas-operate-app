@@ -13,7 +13,12 @@ export const useAchievements = () => {
     return availableServiceConfigIds.map(({ configId }) => configId);
   }, [availableServiceConfigIds]);
 
-  const { data: achievements } = useQuery({
+  const {
+    data: achievements,
+    isLoading,
+    error,
+    isError,
+  } = useQuery({
     queryKey: REACT_QUERY_KEYS.ACHIEVEMENTS_KEY(serviceConfigIds),
     queryFn: async ({ signal }) => {
       const allServicesAchievements = await getAllServicesAchievements({
@@ -44,5 +49,8 @@ export const useAchievements = () => {
 
   return {
     achievements,
+    isLoading,
+    error,
+    isError,
   };
 };
