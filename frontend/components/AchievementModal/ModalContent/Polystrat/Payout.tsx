@@ -5,7 +5,12 @@ import { LuSquareArrowOutUpRight } from 'react-icons/lu';
 import styled from 'styled-components';
 
 import { COLOR, EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants';
-import { PolystratPayoutData } from '@/types/Achievement';
+import { AchievementWithType } from '@/types/Achievement';
+
+import {
+  generateXIntentUrl,
+  getPredictWebsiteAchievementUrl,
+} from '../../utils';
 
 const { Title, Text } = Typography;
 
@@ -26,48 +31,72 @@ const StatsWrapper = styled(Flex)`
 const getTransactionUrl = (hash?: string) =>
   `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN['polygon']}/tx/${hash}`;
 
-const StatColumn = ({ stat }: { stat: { label: string; value?: string } }) => {
-  if (!stat) return null;
+type StatColumnProps = {
+  label: string;
+  value?: string;
+};
+
+const StatColumn = ({ label, value }: StatColumnProps) => {
+  if (!value) return null;
 
   return (
-    <Flex vertical key={stat.label}>
-      <Text className="text-neutral-tertiary text-sm mb-2">{stat.label}</Text>
-      <Text className="text-lg">{stat.value}</Text>
+    <Flex vertical key={label}>
+      <Text className="text-neutral-tertiary text-sm mb-2">{label}</Text>
+      <Text className="text-lg">{value}</Text>
     </Flex>
   );
 };
 
 export const PolystratPayoutAchievement = ({
-  payoutData,
+  achievement,
 }: {
-  payoutData: PolystratPayoutData;
+  achievement: AchievementWithType<'polystrat/payout'>;
 }) => {
+  const {
+    betId,
+    payout,
+    question,
+    position,
+    transactionHash,
+    amount_betted,
+    achievementType,
+  } = achievement;
+
   const stats = [
     {
       label: 'Position',
-      value: payoutData.position,
+      value: position,
     },
     {
       label: 'Amount',
-      value: payoutData.amount_betted,
+      value: amount_betted,
     },
     {
       label: 'Won',
-      value: payoutData.payout,
+      value: payout,
     },
   ];
 
   const handleShareOnX = () => {
-    // Placeholder for Share on X functionality
+    const predictUrl = getPredictWebsiteAchievementUrl(
+      'polystrat',
+      new URLSearchParams({
+        betId,
+        type: achievementType,
+      }),
+    );
+    const xIntentUrl = generateXIntentUrl(
+      'Check out my latest achievement on Polymarket!',
+      predictUrl,
+    );
+    window.open(xIntentUrl, '_blank');
   };
 
   const payoutMultiplier = useMemo(() => {
-    if (!payoutData.amount_betted || !payoutData.payout) return null;
+    if (!amount_betted || !payout) return null;
 
-    return (
-      Number(payoutData.payout) / Number(payoutData.amount_betted)
-    ).toFixed(2);
-  }, [payoutData.amount_betted, payoutData.payout]);
+    return (Number(payout) / Number(amount_betted)).toFixed(2);
+  }, [amount_betted, payout]);
 
   return (
     <Flex vertical align="center">
@@ -87,15 +116,15 @@ export const PolystratPayoutAchievement = ({
 
       <Text className="text-center mb-12 text-neutral-secondary">
         Your Polystrat made a high-return trade and collected{' '}
-        <Text className="font-weight-600">{payoutData.payout}</Text>.
+        <Text className="font-weight-600">{payout}</Text>.
       </Text>
 
-      {payoutData.transactionHash && (
+      {transactionHash && (
         <a
           className="flex align-center text-sm gap-6 mb-24"
           target="_blank"
           rel="noopener noreferrer"
-          href={getTransactionUrl(payoutData.transactionHash)}
+          href={getTransactionUrl(transactionHash)}
         >
           View transaction <LuSquareArrowOutUpRight />
         </a>
@@ -103,12 +132,12 @@ export const PolystratPayoutAchievement = ({
 
       <MarketCard className="rounded-12">
         <Flex className="mx-16 mt-16 mb-20">
-          <Text>{payoutData.question}</Text>
+          <Text>{question}</Text>
         </Flex>
 
         <StatsWrapper justify="space-between" className="px-16 pt-16 mb-12">
           {stats.map((stat) => (
-            <StatColumn stat={stat} key={stat.label} />
+            <StatColumn key={stat.label} {...stat} />
           ))}
         </StatsWrapper>
       </MarketCard>
