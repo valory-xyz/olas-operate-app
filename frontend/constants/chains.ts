@@ -80,7 +80,7 @@ export const BRIDGE_CHAIN_MAP: Record<
     bridgeOn: AllEvmChainIdMap.Ethereum,
   },
   [SupportedMiddlewareChainMap.polygon]: {
-    bridgeOn: EvmChainIdMap.Polygon,
+    bridgeOn: AllEvmChainIdMap.Polygon,
   },
 };
 
