@@ -22,14 +22,11 @@ const getServiceAchievements = ({
   serviceConfigId,
   signal,
 }: GetServiceAchievementsParams): Promise<ServiceAchievements> => {
-  return fetch(
-    `${BACKEND_URL_V2}/api/v2/service/${serviceConfigId}/achievements`,
-    {
-      method: 'GET',
-      headers: { ...CONTENT_TYPE_JSON_UTF8 },
-      signal,
-    },
-  ).then((response) => {
+  return fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/achievements`, {
+    method: 'GET',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    signal,
+  }).then((response) => {
     if (response.ok) {
       return response.json();
     }
@@ -81,13 +78,10 @@ const acknowledgeServiceAchievement = async ({
   achievementId,
 }: AcknowledgeServiceAchievementParams) => {
   const response = await fetch(
-    `${BACKEND_URL_V2}/api/v2/service/${serviceConfigId}/achievements/${achievementId}/acknowledge`,
+    `${BACKEND_URL_V2}/service/${serviceConfigId}/achievement/${achievementId}/acknowledge`,
     {
       method: 'POST',
       headers: { ...CONTENT_TYPE_JSON_UTF8 },
-      body: JSON.stringify({
-        message: 'Achievement acknowledged',
-      }),
     },
   );
 
