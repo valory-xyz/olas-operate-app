@@ -3,13 +3,16 @@ import { useEffect, useState } from 'react';
 import { Modal } from '@/components/ui';
 import { useServices } from '@/hooks';
 
+import { useCurrentAchievement } from './hooks/useCurrentAchievement';
+import { useTriggerAchievementBackgroundTasks } from './hooks/useTriggerAchievementBackgroundTasks';
 import { PolystratModalContent } from './ModalContent/Polystrat';
-import { useCurrentAchievement } from './useCurrentAchievement';
 
 export const AchievementModal = () => {
   const { getAgentTypeFromService } = useServices();
   const { currentAchievement, markCurrentAchievementAsShown } =
     useCurrentAchievement();
+  const triggerAchievementBackgroundTasks =
+    useTriggerAchievementBackgroundTasks();
 
   const [showModal, setShowModal] = useState(false);
 
@@ -23,12 +26,13 @@ export const AchievementModal = () => {
   };
 
   useEffect(() => {
-    if (currentAchievement) {
-      setShowModal(true);
-    }
-  }, [currentAchievement]);
+    if (!currentAchievement) return;
 
-  if (!currentAchievement) return null;
+    setShowModal(true);
+    triggerAchievementBackgroundTasks(currentAchievement);
+  }, [currentAchievement, triggerAchievementBackgroundTasks]);
+
+  if (!currentAchievement || !agentType) return null;
 
   return (
     <Modal

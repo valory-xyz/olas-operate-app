@@ -5,7 +5,7 @@ import { LuSquareArrowOutUpRight } from 'react-icons/lu';
 import styled from 'styled-components';
 
 import { COLOR, EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants';
-import { AchievementWithType } from '@/types/Achievement';
+import { PolystratPayoutData } from '@/types/Achievement';
 
 import {
   generateXIntentUrl,
@@ -50,7 +50,7 @@ const StatColumn = ({ label, value }: StatColumnProps) => {
 export const PolystratPayoutAchievement = ({
   achievement,
 }: {
-  achievement: AchievementWithType<'polystrat/payout'>;
+  achievement: PolystratPayoutData;
 }) => {
   const {
     betId,
@@ -59,7 +59,7 @@ export const PolystratPayoutAchievement = ({
     position,
     transactionHash,
     amount_betted,
-    achievementType,
+    achievement_type,
   } = achievement;
 
   const stats = [
@@ -82,7 +82,7 @@ export const PolystratPayoutAchievement = ({
       'polystrat',
       new URLSearchParams({
         betId,
-        type: achievementType,
+        type: achievement_type,
       }),
     );
     const xIntentUrl = generateXIntentUrl(

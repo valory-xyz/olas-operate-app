@@ -1,15 +1,15 @@
-import { AchievementWithType } from '@/types/Achievement';
+import { AchievementWithConfig } from '@/types/Achievement';
 
 import { PolystratPayoutAchievement } from './Payout';
 
 type PolystratModalContentProps = {
-  achievement: AchievementWithType;
+  achievement: AchievementWithConfig;
 };
 
 export const PolystratModalContent = ({
   achievement,
 }: PolystratModalContentProps) => {
-  if (achievement.achievementType === 'polystrat/payout') {
+  if (achievement.achievement_type === 'polystrat/payout') {
     return <PolystratPayoutAchievement achievement={achievement} />;
   }
 

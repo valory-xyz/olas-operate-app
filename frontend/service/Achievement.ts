@@ -1,6 +1,10 @@
 import { compact } from 'lodash';
 
-import { BACKEND_URL_V2, CONTENT_TYPE_JSON_UTF8 } from '@/constants';
+import {
+  BACKEND_URL_V2,
+  CONTENT_TYPE_JSON_UTF8,
+  PEARL_API_URL,
+} from '@/constants';
 import {
   AllServicesAchievements,
   ServiceAchievements,
@@ -96,4 +100,43 @@ const acknowledgeServiceAchievement = async ({
   return response.json();
 };
 
-export { acknowledgeServiceAchievement, getAllServicesAchievements };
+type TriggerAchievementImageGenerationParams = {
+  agent: string; // Better types! ideally should be a union of all the agent types (not AgentType though)
+  type: string;
+  id: string;
+};
+
+/**
+ * Function to trigger image generation for an achievement basis the agent & achievement type
+ */
+const triggerAchievementImageGeneration = async ({
+  agent,
+  type,
+  id,
+}: TriggerAchievementImageGenerationParams) => {
+  const queryParams = new URLSearchParams({
+    agent,
+    type,
+    id,
+  }).toString();
+
+  const response = await fetch(
+    `${PEARL_API_URL}/api/achievement/generate-image?${queryParams}`,
+    {
+      method: 'POST',
+      headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to trigger achievement image generation');
+  }
+
+  return response.json();
+};
+
+export {
+  acknowledgeServiceAchievement,
+  getAllServicesAchievements,
+  triggerAchievementImageGeneration,
+};
