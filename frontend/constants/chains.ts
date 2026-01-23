@@ -60,6 +60,31 @@ export type SupportedMiddlewareChain = ValueOf<
 >;
 
 /**
+ * Map of middleware chains to EVM chain IDs for bridging purposes.
+ * For example, If the agent is on Gnosis, the bridge will be done on Ethereum.
+ */
+export const BRIDGE_CHAIN_MAP: Record<
+  SupportedMiddlewareChain,
+  { bridgeOn: AllEvmChainId }
+> = {
+  [SupportedMiddlewareChainMap.gnosis]: {
+    bridgeOn: AllEvmChainIdMap.Ethereum,
+  },
+  [SupportedMiddlewareChainMap.optimism]: {
+    bridgeOn: AllEvmChainIdMap.Ethereum,
+  },
+  [SupportedMiddlewareChainMap.base]: {
+    bridgeOn: AllEvmChainIdMap.Ethereum,
+  },
+  [SupportedMiddlewareChainMap.mode]: {
+    bridgeOn: AllEvmChainIdMap.Ethereum,
+  },
+  [SupportedMiddlewareChainMap.polygon]: {
+    bridgeOn: EvmChainIdMap.Polygon,
+  },
+};
+
+/**
  * Map of middleware chains to EVM chain IDs for on-ramp purposes.
  * For example, If the agent is on Gnosis, the on-ramp will be done on Optimism.
  */
