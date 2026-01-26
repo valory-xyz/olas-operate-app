@@ -10,6 +10,13 @@ import { formatNumber } from './numberFormatters';
  * Mapping of bridged token symbols to their source token symbols on Ethereum.
  * Used to resolve tokens when bridging between chains.
  * Example: USDC.e on Polygon bridges to USDC on Ethereum
+ *
+ * IMPORTANT: This mapping is Ethereum-specific and assumes Ethereum as the source chain.
+ * It is designed for the current use cases (Setup Bridge and Pearl Deposit), which both
+ * bridge FROM Ethereum TO other chains. If you need to support bridging from a different
+ * source chain in the future, you will need to either:
+ * 1. Create a separate mapping for that source chain, or
+ * 2. Refactor this to a multi-dimensional mapping that includes the source chain as a key
  */
 const BRIDGED_TOKEN_SOURCE_MAP: Partial<Record<TokenSymbol, TokenSymbol>> = {
   'USDC.e': 'USDC',
