@@ -7,6 +7,7 @@ import styled from 'styled-components';
 import { ERROR_ICON_STYLE, LoadingSpinner } from '@/components/ui';
 import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
 import {
+  ALL_TOKEN_CONFIG,
   TOKEN_CONFIG,
   TokenSymbol,
   TokenSymbolConfigMap,
@@ -253,8 +254,8 @@ export const DepositForBridging = ({
       // then the assumed current_balance = 1000 - 200 = 800
       const currentBalanceInWei = totalRequiredInWei - pendingAmountInWei;
 
-      const fromChainId = asEvmChainId(fromMiddlewareChain);
-      const fromChainTokenConfig = TOKEN_CONFIG[fromChainId];
+      const fromChainId = asEvmChainDetails(fromMiddlewareChain).chainId;
+      const fromChainTokenConfig = ALL_TOKEN_CONFIG[fromChainId];
       const token = Object.values(fromChainTokenConfig).find((tokenInfo) => {
         if (tokenAddress === AddressZero && !tokenInfo.address) return true;
         return areAddressesEqual(tokenInfo.address!, tokenAddress);
