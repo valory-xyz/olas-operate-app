@@ -213,16 +213,19 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
                 {isReceivingAmountLoading || isNativeTokenLoading ? (
                   <TokenLoader size="large" />
                 ) : (
-                  <>
+                  <Flex vertical gap={4} align="flex-start">
                     <Text>
                       {usdAmountToPay ? `~$${usdAmountToPay} for` : NA}
                     </Text>
-                    <ChainLogo
-                      chainName={fromChain.name}
-                      alt={fromChain.displayName}
-                    />
-                    <Text>{`${nativeAmountToPay} ${fromChain.symbol}`}</Text>
-                  </>
+
+                    <Flex align="center" gap={6}>
+                      <ChainLogo
+                        chainName={fromChain.name}
+                        alt={fromChain.displayName}
+                      />
+                      <Text>{`${nativeAmountToPay} ${fromChain.symbol}`}</Text>
+                    </Flex>
+                  </Flex>
                 )}
               </Flex>
             )}
