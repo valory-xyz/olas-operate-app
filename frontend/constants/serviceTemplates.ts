@@ -151,6 +151,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: X402_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
+    ENABLE_MULTI_BETS_FALLBACK: {
+      name: 'Enable multi-bets fallback mode',
+      description:
+        'Enables agents to run in multi-bets fallback mode',
+      value: 'true',
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
 
