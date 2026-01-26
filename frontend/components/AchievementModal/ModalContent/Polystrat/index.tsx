@@ -9,7 +9,7 @@ type PolystratModalContentProps = {
 export const PolystratModalContent = ({
   achievement,
 }: PolystratModalContentProps) => {
-  if (achievement.type === 'polystrat/payout') {
+  if (achievement.data.type === 'polystrat/payout') {
     return <PolystratPayoutAchievement achievement={achievement} />;
   }
 
