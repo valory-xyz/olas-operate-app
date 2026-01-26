@@ -70,7 +70,7 @@ export const AGENT_CONFIG: {
     agentIds: [14, 25],
     defaultStakingProgramId: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3,
     serviceApi: PredictTraderService,
-    displayName: 'Prediction Trader',
+    displayName: 'Omenstrat',
     description: 'Participates in prediction markets.',
     hasExternalFunds: false,
     doesChatUiRequireApiKey: true,

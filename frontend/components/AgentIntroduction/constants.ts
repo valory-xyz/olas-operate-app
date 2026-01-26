@@ -7,17 +7,17 @@ export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: 'Market opportunity finder',
     desc: 'Prediction agents actively scan prediction markets to identify new opportunities for investment.',
-    imgSrc: 'introduction/setup-agent-prediction-1',
+    imgSrc: 'introduction/setup-agent-omenstrat-1',
   },
   {
     title: 'Place intelligent bets',
     desc: 'Uses AI to make predictions and place bets on events by analyzing market trends and real-time information.',
-    imgSrc: 'introduction/setup-agent-prediction-2',
+    imgSrc: 'introduction/setup-agent-omenstrat-2',
   },
   {
     title: 'Collect earnings',
     desc: 'It collects earnings on the go, as the results of the corresponding prediction markets are finalized.',
-    imgSrc: 'introduction/setup-agent-prediction-3',
+    imgSrc: 'introduction/setup-agent-omenstrat-3',
   },
 ] as const;
 
