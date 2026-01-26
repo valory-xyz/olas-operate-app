@@ -5,7 +5,7 @@ import { LuSquareArrowOutUpRight } from 'react-icons/lu';
 import styled from 'styled-components';
 
 import { COLOR, EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants';
-import { PolystratPayoutData } from '@/types/Achievement';
+import { Achievement } from '@/types/Achievement';
 
 import {
   generateXIntentUrl,
@@ -50,18 +50,22 @@ const StatColumn = ({ label, value }: StatColumnProps) => {
 export const PolystratPayoutAchievement = ({
   achievement,
 }: {
-  achievement: PolystratPayoutData;
+  achievement: Achievement;
 }) => {
   const {
-    text,
-    betId,
-    payout,
-    question,
-    position,
-    transactionHash,
-    amount_betted,
-    type,
+    data: {
+      betId,
+      payout,
+      question,
+      position,
+      transactionHash,
+      amount_betted,
+      type,
+    },
   } = achievement;
+
+  // TODO: update with actual copy
+  const text = `My Polystrat made a high-return trade and collected ${payout}.`;
 
   const stats = [
     {
