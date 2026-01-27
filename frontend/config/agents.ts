@@ -76,7 +76,7 @@ export const AGENT_CONFIG: {
     doesChatUiRequireApiKey: true,
     category: 'Prediction Markets',
     defaultBehavior:
-      'Adopting a conservative strategy with small, high-confidence bets.',
+      'Adopting a conservative strategy with small, high-confidence trades.',
     servicePublicId: 'valory/trader_pearl:0.1.0',
   },
   [AgentMap.Optimus]: {

@@ -2,20 +2,20 @@ import { OnboardingStep } from './IntroductionStep';
 
 export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    desc: 'An autonomous AI agent that interacts with decentralized prediction markets — platforms where users trade on the outcomes of future events.',
+    desc: 'Trade Omen prediction markets on autopilot with your customizable, always-on AI agent. It scans markets in real-time, places trades on future events for you, and collects winnings as the markets resolve',
   },
   {
-    title: 'Market opportunity finder',
-    desc: 'Prediction agents actively scan prediction markets to identify new opportunities for investment.',
+    title: 'Market Opportunity Finder',
+    desc: 'Omenstrat actively scans prediction markets to identify new opportunities for investment.',
     imgSrc: 'introduction/setup-agent-omenstrat-1',
   },
   {
-    title: 'Place intelligent bets',
-    desc: 'Uses AI to make predictions and place bets on events by analyzing market trends and real-time information.',
+    title: 'Open Intelligent Trades',
+    desc: 'Agent uses AI to make predictions and open trades on events by analyzing market trends and real-time data.',
     imgSrc: 'introduction/setup-agent-omenstrat-2',
   },
   {
-    title: 'Collect earnings',
+    title: 'Collect Earnings',
     desc: 'It collects earnings on the go, as the results of the corresponding prediction markets are finalized.',
     imgSrc: 'introduction/setup-agent-omenstrat-3',
   },
