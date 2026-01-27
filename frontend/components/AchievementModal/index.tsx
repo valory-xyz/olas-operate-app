@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useUnmount } from 'usehooks-ts';
 
 import { Modal } from '@/components/ui';
+import { ConfettiAnimation } from '@/components/ui/animations';
 import { useServices } from '@/hooks';
 
 import { useCurrentAchievement } from './hooks/useCurrentAchievement';
@@ -43,6 +45,10 @@ export const AchievementModal = () => {
     triggerAchievementBackgroundTasks(currentAchievement);
   }, [currentAchievement, triggerAchievementBackgroundTasks]);
 
+  useUnmount(() => {
+    setShowModal(false);
+  });
+
   if (isLoading || isError) return null;
   if (!currentAchievement || !agentType) return null;
 
@@ -53,9 +59,12 @@ export const AchievementModal = () => {
       closable
       size="medium"
       action={
-        agentType === 'polymarket_trader' ? (
-          <PolystratModalContent achievement={currentAchievement} />
-        ) : null
+        <>
+          <ConfettiAnimation loop={false} />
+          {agentType === 'polymarket_trader' ? (
+            <PolystratModalContent achievement={currentAchievement} />
+          ) : null}
+        </>
       }
     />
   );
