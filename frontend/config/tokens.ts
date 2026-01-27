@@ -1,4 +1,9 @@
-import { EvmChainId, EvmChainIdMap } from '@/constants/chains';
+import {
+  AllEvmChainId,
+  AllEvmChainIdMap,
+  EvmChainId,
+  EvmChainIdMap,
+} from '@/constants/chains';
 import { Address } from '@/types/Address';
 
 export const TokenSymbolMap = {
@@ -197,6 +202,11 @@ export const TOKEN_CONFIG: Record<EvmChainId, ChainTokenConfig> = {
   [EvmChainIdMap.Mode]: MODE_TOKEN_CONFIG,
   [EvmChainIdMap.Optimism]: OPTIMISM_TOKEN_CONFIG,
   [EvmChainIdMap.Polygon]: POLYGON_TOKEN_CONFIG,
+} as const;
+
+export const ALL_TOKEN_CONFIG: Record<AllEvmChainId, ChainTokenConfig> = {
+  [AllEvmChainIdMap.Ethereum]: ETHEREUM_TOKEN_CONFIG,
+  ...TOKEN_CONFIG,
 } as const;
 
 type ChainErc20TokenConfig = {
