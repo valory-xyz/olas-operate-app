@@ -145,7 +145,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeic2u4ncxihc25koi624dqmlko4stxxv24bddmfdzgylmgsc5moc7a',
+  hash: 'bafybeifnjsapwsafgyxvtctjb3qpt5hymhraoaut4toe52z5s464iyv7oi',
   service_version: 'v0.31.0-rc1',
   agent_release: {
     is_aea: true,
