@@ -2,7 +2,7 @@ import { OnboardingStep } from './IntroductionStep';
 
 export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    desc: 'Trade Omen prediction markets on autopilot with your customizable, always-on AI agent. It scans markets in real-time, places trades on future events for you, and collects winnings as the markets resolve',
+    desc: 'Trade Omen prediction markets on autopilot with your customizable, always-on AI agent. It scans markets in real-time, places trades on future events for you, and collects winnings as the markets resolve.',
   },
   {
     title: 'Market Opportunity Finder',
