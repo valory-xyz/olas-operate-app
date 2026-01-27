@@ -70,13 +70,13 @@ export const AGENT_CONFIG: {
     agentIds: [14, 25],
     defaultStakingProgramId: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3,
     serviceApi: PredictTraderService,
-    displayName: 'Prediction Trader',
+    displayName: 'Omenstrat',
     description: 'Participates in prediction markets.',
     hasExternalFunds: false,
     doesChatUiRequireApiKey: true,
     category: 'Prediction Markets',
     defaultBehavior:
-      'Adopting a conservative strategy with small, high-confidence bets.',
+      'Adopting a conservative strategy with small, high-confidence trades.',
     servicePublicId: 'valory/trader_pearl:0.1.0',
   },
   [AgentMap.Optimus]: {
