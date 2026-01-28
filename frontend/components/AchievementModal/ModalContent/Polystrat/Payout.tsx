@@ -85,11 +85,12 @@ export const PolystratPayoutAchievement = ({
   ];
 
   const handleShareOnX = () => {
+    const [, polystratAchievemntType] = type.split('/');
     const predictUrl = getPredictWebsiteAchievementUrl(
       'polystrat',
       new URLSearchParams({
         betId,
-        type,
+        type: polystratAchievemntType,
       }),
     );
     const xIntentUrl = generateXIntentUrl(text, predictUrl);
