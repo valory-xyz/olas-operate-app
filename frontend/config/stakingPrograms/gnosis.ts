@@ -253,7 +253,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       [TokenSymbolMap.OLAS]: 5000,
     },
     mechType: MechType.MarketplaceV2,
-    mech: MECHS[EvmChainIdMap.Gnosis][MechType.Marketplace].contract,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
     activityChecker:
       GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace2
