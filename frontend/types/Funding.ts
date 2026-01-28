@@ -3,7 +3,7 @@ import { MiddlewareChain } from '@/constants';
 import { Address } from './Address';
 
 export type TokenBalanceRecord = {
-  [tokenAddress: Address]: number | string;
+  [tokenAddress: Address]: string;
 };
 
 export type MasterSafeBalanceRecord = {

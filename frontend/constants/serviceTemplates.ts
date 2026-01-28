@@ -22,17 +22,17 @@ export const KPI_DESC_PREFIX = '[Pearl service]';
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PredictTrader,
   name: 'Trader Agent', // should be unique across all services and not be updated
-  hash: 'bafybeiffypttlwz4znzrwimrlqu5tu6m5fifz5tkqudmkqc5fozlitdl3i',
+  hash: 'bafybeihw7gtkxpafhwbfudbzsrse6hlma2tfbvcxa6dvzx4sxncjzpb52q',
   description: `${KPI_DESC_PREFIX} Trader agent for omen prediction markets`,
   image:
     'https://operate.olas.network/_next/image?url=%2Fimages%2Fprediction-agent.png&w=3840&q=75',
-  service_version: 'v0.27.10',
+  service_version: 'v0.28.1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.27.10',
+      version: 'v0.28.1',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
@@ -43,11 +43,11 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       rpc: '', // overwritten
       agent_id: 14,
       // TODO: pull fund requirements from staking program config
-      cost_of_bond: +parseEther(20),
+      cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(2),
-          safe: +parseEther(8),
+          agent: parseEther(2),
+          safe: parseEther(8),
         },
       },
     },
@@ -285,11 +285,11 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: '', // overwritten
       agent_id: 43,
-      cost_of_bond: +parseEther(50),
+      cost_of_bond: parseEther(50),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0003257),
-          safe: +parseEther(0.0016285),
+          agent: parseEther(0.0003257),
+          safe: parseEther(0.0016285),
         },
       },
     },
@@ -326,15 +326,15 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: '', // overwritten
       agent_id: 40,
-      cost_of_bond: +parseEther(20),
+      cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0002),
-          safe: 0,
+          agent: parseEther(0.0002),
+          safe: '0',
         },
         [MODE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
-          agent: 0,
-          safe: +parseUnits(
+          agent: '0',
+          safe: parseUnits(
             16,
             MODE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
           ),
@@ -495,15 +495,15 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
       rpc: '', // overwritten
       agent_id: 40,
-      cost_of_bond: +parseEther(20),
+      cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.0002),
-          safe: 0,
+          agent: parseEther(0.0002),
+          safe: '0',
         },
         [OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
-          agent: 0,
-          safe: +parseUnits(
+          agent: '0',
+          safe: parseUnits(
             16,
             OPTIMISM_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
           ),
@@ -617,17 +617,17 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
 export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PettAi,
   name: 'pett_agent',
-  hash: 'bafybeiebj5n56dvxyxp6ml53hkgiawnnyzikshmd6kvd5foaitcknx3m4q',
+  hash: 'bafybeicatbkc35po2zdgwripfvstabpkqqks6rqwgm2ttc2rbutqsd3gga',
   description: 'Pett.ai autonomous agent service for virtual pet management.',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
-  service_version: 'v0.1.0',
+  service_version: 'v0.1.1',
   agent_release: {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
       name: 'pettai-agent',
-      version: 'v0.1.0',
+      version: 'v0.1.1',
     },
   },
   home_chain: MiddlewareChainMap.BASE,
@@ -637,11 +637,11 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
       rpc: '', // overwritten
       agent_id: 80,
-      cost_of_bond: +parseEther(20),
+      cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: +parseEther(0.00008),
-          safe: 0,
+          agent: parseEther(0.00008),
+          safe: '0',
         },
       },
     },
