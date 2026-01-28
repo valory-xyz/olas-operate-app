@@ -48,7 +48,7 @@ export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     title: 'Choose the best strategy',
-    desc: 'Modius learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest on your behalf.',
+    desc: 'Modius learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest for you.',
     imgSrc: 'introduction/setup-agent-modius-2',
   },
 ] as const;
@@ -64,7 +64,7 @@ export const OPTIMUS_ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     title: 'Choose the best strategy',
-    desc: 'Optimus learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest on your behalf.',
+    desc: 'Optimus learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest for you.',
     imgSrc: 'introduction/setup-agent-optimus-2',
   },
   // {

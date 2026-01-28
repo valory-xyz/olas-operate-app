@@ -97,7 +97,7 @@ export const AGENT_CONFIG: {
     serviceApi: OptimismService,
     displayName: 'Optimus',
     description:
-      'Invests crypto assets on your behalf and grows your portfolio on Optimus network.',
+      'Invests crypto assets for you and grows your portfolio on Optimus network.',
     hasExternalFunds: true,
     doesChatUiRequireApiKey: true,
     category: 'DeFi',
@@ -142,7 +142,7 @@ export const AGENT_CONFIG: {
     serviceApi: ModiusService,
     displayName: 'Modius',
     description:
-      'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
+      'Invests crypto assets for you and grows your portfolio on Mode network.',
     hasExternalFunds: true,
     doesChatUiRequireApiKey: true,
     category: 'DeFi',
