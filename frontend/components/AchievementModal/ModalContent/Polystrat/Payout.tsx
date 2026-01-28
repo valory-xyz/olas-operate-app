@@ -1,4 +1,5 @@
 import { Button, Flex, Typography } from 'antd';
+import { capitalize } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import { LuSquareArrowOutUpRight } from 'react-icons/lu';
@@ -53,32 +54,33 @@ export const PolystratPayoutAchievement = ({
   achievement: Achievement;
 }) => {
   const {
+    achievement_type: type,
     data: {
-      betId,
-      payout,
-      question,
-      position,
+      id: betId,
+      net_profit,
+      market: { title: question },
+      prediction_side: position,
+      bet_amount,
       transactionHash,
-      amount_betted,
-      type,
     },
   } = achievement;
+  const totalPayout = net_profit + bet_amount;
 
   // TODO: update with actual copy
-  const text = `My Polystrat made a high-return trade and collected ${payout}.`;
+  const text = `My Polystrat made a high-return trade and collected ${totalPayout}.`;
 
   const stats = [
     {
       label: 'Position',
-      value: position,
+      value: capitalize(position),
     },
     {
       label: 'Amount',
-      value: amount_betted,
+      value: `$${bet_amount}`,
     },
     {
       label: 'Won',
-      value: payout,
+      value: `$${totalPayout}`,
     },
   ];
 
@@ -95,10 +97,10 @@ export const PolystratPayoutAchievement = ({
   };
 
   const payoutMultiplier = useMemo(() => {
-    if (!amount_betted || !payout) return null;
+    if (!totalPayout || !bet_amount) return null;
 
-    return (Number(payout) / Number(amount_betted)).toFixed(2);
-  }, [amount_betted, payout]);
+    return (totalPayout / bet_amount).toFixed(2);
+  }, [bet_amount, totalPayout]);
 
   return (
     <Flex vertical align="center">
@@ -118,7 +120,7 @@ export const PolystratPayoutAchievement = ({
 
       <Text className="text-center mb-12 text-neutral-secondary">
         Your Polystrat made a high-return trade and collected{' '}
-        <Text className="font-weight-600">{payout}</Text>.
+        <Text className="font-weight-600">${totalPayout}</Text>.
       </Text>
 
       {transactionHash && (

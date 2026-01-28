@@ -1,24 +1,37 @@
-export type PolystratPayoutData = {
-  type: 'polystrat/payout';
-  betId: string;
-  question: string;
+export type PolystratAchievementData = {
+  id: string;
+  prediction_side: string;
+  bet_amount: number;
+  status: string;
+  net_profit: number;
+  created_at: string;
+  settled_at: string;
   transactionHash: string;
-  position: string;
-  amount_betted: string;
-  payout: string;
+  market: {
+    id: string;
+    title: string;
+    external_url: string;
+  };
 };
 
-// Discriminated union of all achievement data types
-export type AchievementData = PolystratPayoutData;
-
-export type Achievement = {
+export type BaseAchievement = {
   achievement_id: string;
   acknowledgement_timestamp: number;
   acknowledged: boolean;
-  data: AchievementData;
+  title: string;
+  description: string;
+  timestamp: number;
 };
 
-export type AchievementType = AchievementData['type'];
+export type PolystratPayoutAchievement = BaseAchievement & {
+  achievement_type: 'polystrat/payout';
+  data: PolystratAchievementData;
+};
+
+// Discriminated union of all achievement types
+export type Achievement = PolystratPayoutAchievement;
+
+export type AchievementType = Achievement['achievement_type'];
 
 export type ServiceAchievements = Achievement[];
 
