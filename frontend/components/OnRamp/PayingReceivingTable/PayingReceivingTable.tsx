@@ -154,6 +154,8 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
       selectedChainId,
+      // Skip price-quote API call if on-ramping step is already completed
+      skip: isOnRampingStepCompleted,
     });
 
   // State to hold the tokensRequired to be displayed in the receiving column

@@ -74,11 +74,13 @@ const fetchTransakQuote = async (
 type UseTotalFiatFromNativeTokenProps = {
   nativeTokenAmount?: number;
   selectedChainId: OnRampNetworkConfig['selectedChainId'];
+  skip?: boolean;
 };
 
 export const useTotalFiatFromNativeToken = ({
   nativeTokenAmount,
   selectedChainId,
+  skip = false,
 }: UseTotalFiatFromNativeTokenProps) => {
   const selectedChainName = asMiddlewareChain(
     ensureRequired(selectedChainId, "Chain ID can't be empty"),
@@ -101,6 +103,6 @@ export const useTotalFiatFromNativeToken = ({
       }
     },
     select: (data) => data.fiatAmount,
-    enabled: !!fromChain && !!nativeTokenAmount,
+    enabled: !skip && !!fromChain && !!nativeTokenAmount,
   });
 };
