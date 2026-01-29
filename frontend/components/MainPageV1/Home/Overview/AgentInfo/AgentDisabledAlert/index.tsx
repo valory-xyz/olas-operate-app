@@ -29,7 +29,8 @@ export const AgentDisabledAlert = () => {
   const { isInitialFunded } = useIsInitiallyFunded();
   const { goto } = usePageState();
   const { isAnotherAgentRunning } = useAgentRunning();
-  const { selectedStakingProgramMeta } = useStakingProgram();
+  const { selectedStakingProgramMeta, activeStakingProgramId } =
+    useStakingProgram();
 
   if (selectedAgentConfig.isUnderConstruction) {
     return <UnderConstructionAlert />;
@@ -42,7 +43,15 @@ export const AgentDisabledAlert = () => {
   // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
   if (isInitialFunded === false) return <UnfinishedSetupAlert />;
 
-  if (selectedStakingProgramMeta && selectedStakingProgramMeta.deprecated) {
+  // Only show deprecated alert if:
+  // 1. The selected staking program is marked as deprecated
+  // 2. AND there's an active staking program on-chain (meaning the agent has been staked before)
+  // This prevents showing the alert during onboarding when a deprecated program is selected but the service is not yet staked
+  if (
+    selectedStakingProgramMeta &&
+    selectedStakingProgramMeta.deprecated &&
+    activeStakingProgramId
+  ) {
     return (
       <ContractDeprecatedAlert
         stakingProgramName={selectedStakingProgramMeta.name}
