@@ -9,6 +9,7 @@ import {
 import type { OnRampNetworkConfig } from '@/components/OnRamp';
 import { PAGES } from '@/constants';
 import {
+  useBalanceAndRefillRequirementsContext,
   useElectronApi,
   useMasterBalances,
   useMasterWalletContext,
@@ -17,7 +18,7 @@ import {
 import { Nullable } from '@/types';
 import { delayInSeconds, parseEther } from '@/utils';
 
-const ETH_RECEIVED_THRESHOLD = 0.95;
+const ETH_RECEIVED_THRESHOLD = 0.9;
 
 export const OnRampContext = createContext<{
   networkId: OnRampNetworkConfig['networkId'];
@@ -83,6 +84,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     useMasterBalances();
   const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
     useMasterWalletContext();
+  const { refetch: refetchBalancesAndRequirements } =
+    useBalanceAndRefillRequirementsContext();
 
   // State to track the amount of ETH to pay for on-ramping and the USD equivalent
   const [ethAmountToPay, setEthAmountToPay] = useState<Nullable<number>>(null);
@@ -153,7 +156,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     const thresholdAmount = (
       ethTotalAmountRequired * ETH_RECEIVED_THRESHOLD
     ).toFixed(18);
-    // If the balance is greater than or equal to 95% of the ETH amount to pay,
+    // If the balance is greater than or equal to 90% of the ETH amount to pay,
     // considering that the user has received the funds after on-ramping.
     if (
       BigInt(parseEther(balance.toString())) >=
@@ -165,6 +168,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
       // If not closed already, close the on-ramp window after receiving funds
       onRampWindow?.close?.();
+    } else {
+      // Refetch balances and requirements to ensure fresh data when balance < threshold
+      // This prevents stale data from causing incorrect calculations
+      refetchBalancesAndRequirements();
     }
   }, [
     ethTotalAmountRequired,
@@ -177,6 +184,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     getMasterSafeOf,
     getMasterSafeNativeBalanceOf,
     usdAmountToPay,
+    refetchBalancesAndRequirements,
   ]);
 
   // Function to set the ETH amount to pay for on-ramping
