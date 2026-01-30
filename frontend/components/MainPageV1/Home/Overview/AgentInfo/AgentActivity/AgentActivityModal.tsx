@@ -82,6 +82,7 @@ export const AgentActivityModal = ({
       footer={null}
       closable
       maskClosable
+      style={{ top: 40 }}
     >
       <Flex vertical gap={8}>
         <Text className="text-sm">Current action</Text>

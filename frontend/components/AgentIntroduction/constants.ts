@@ -2,22 +2,22 @@ import { OnboardingStep } from './IntroductionStep';
 
 export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    desc: 'An autonomous AI agent that interacts with decentralized prediction markets — platforms where users trade on the outcomes of future events.',
+    desc: 'Trade Omen prediction markets on autopilot with your customizable, always-on AI agent. It scans markets in real-time, places trades on future events for you, and collects winnings as the markets resolve.',
   },
   {
     title: 'Market Opportunity Finder',
-    desc: 'Prediction agents actively scan prediction markets to identify new opportunities for investment.',
-    imgSrc: 'introduction/setup-agent-prediction-1',
+    desc: 'Omenstrat actively scans prediction markets to identify new opportunities for investment.',
+    imgSrc: 'introduction/setup-agent-omenstrat-1',
   },
   {
-    title: 'Place Intelligent Bets',
-    desc: 'Uses AI to make predictions and place bets on events by analyzing market trends and real-time information.',
-    imgSrc: 'introduction/setup-agent-prediction-2',
+    title: 'Open Intelligent Trades',
+    desc: 'Agent uses AI to make predictions and open trades on events by analyzing market trends and real-time data.',
+    imgSrc: 'introduction/setup-agent-omenstrat-2',
   },
   {
     title: 'Collect Earnings',
     desc: 'It collects earnings on the go, as the results of the corresponding prediction markets are finalized.',
-    imgSrc: 'introduction/setup-agent-prediction-3',
+    imgSrc: 'introduction/setup-agent-omenstrat-3',
   },
 ] as const;
 
@@ -48,7 +48,7 @@ export const MODIUS_ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     title: 'Choose the best strategy',
-    desc: 'Modius learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest on your behalf.',
+    desc: 'Modius learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest for you.',
     imgSrc: 'introduction/setup-agent-modius-2',
   },
 ] as const;
@@ -64,7 +64,7 @@ export const OPTIMUS_ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     title: 'Choose the best strategy',
-    desc: 'Optimus learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest on your behalf.',
+    desc: 'Optimus learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest for you.',
     imgSrc: 'introduction/setup-agent-optimus-2',
   },
   // {
@@ -98,21 +98,21 @@ export const PETT_AI_ONBOARDING_STEPS: OnboardingStep[] = [
 
 export const POLYSTRAT_ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    desc: 'An autonomous AI agent that interacts with decentralized prediction markets — platforms where users trade on the outcomes of future events.',
+    desc: 'Trade Polymarket on autopilot with your customizable, always-on AI agent. Polystrat scans markets in real-time, opens trades on future events for you and collects winnings as the markets resolve.',
   },
   {
     title: 'Market Opportunity Finder',
-    desc: 'Prediction agent actively scans prediction markets to identify new opportunities for investment.',
+    desc: 'Polystrat actively scans prediction markets to identify new opportunities for investment.',
     imgSrc: 'introduction/setup-agent-polystrat-1',
   },
   {
-    title: 'Place Intelligent Bets',
-    desc: 'Agent uses AI to make predictions and place bets on events by analyzing market trends and real-time data.',
+    title: 'Execute Intelligent Trades',
+    desc: 'Agent uses AI to generate predictions and execute trades on events by analyzing market trends and real-time data.',
     imgSrc: 'introduction/setup-agent-polystrat-2',
   },
   {
     title: 'Collect Earnings',
-    desc: 'It collects earnings on the go, as the results of the corresponding prediction markets are finalized.',
+    desc: 'It collects your earning on the go, as the results of the corresponding prediction markets are finalized.',
     imgSrc: 'introduction/setup-agent-polystrat-3',
   },
 ] as const;

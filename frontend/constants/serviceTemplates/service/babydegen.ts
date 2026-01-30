@@ -14,18 +14,18 @@ import { STAKING_PROGRAM_IDS } from '../../stakingProgram';
 import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
-export const BABYDEGEN_COMMON_TEMPLATE: Pick<
+const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeidkdnfrueiivrdzrqo67np3w4gsubu5vb6lqxabsx3ulozvj7jtmq',
-  service_version: 'v0.6.4',
+  hash: 'bafybeicrpqmggwurhkxiakuxzuxhdzm2x5zqyfvwcned56eikomkufma4i',
+  service_version: 'v0.6.5',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.6.4',
+      version: 'v0.6.5',
     },
   },
 };
@@ -41,7 +41,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
     [MiddlewareChainMap.MODE]: {
       staking_program_id: STAKING_PROGRAM_IDS.ModiusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 40,
       cost_of_bond: parseEther(20),
       fund_requirements: {
@@ -210,7 +210,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
     [MiddlewareChainMap.OPTIMISM]: {
       staking_program_id: STAKING_PROGRAM_IDS.OptimusAlpha, // default, may be overwritten
       nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 40,
       cost_of_bond: parseEther(20),
       fund_requirements: {
