@@ -1,5 +1,11 @@
 import { isNil } from 'lodash';
-import { createContext, PropsWithChildren, useEffect, useState } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import { StakingProgramId } from '@/constants';
 import { useActiveStakingProgramId, useServices } from '@/hooks';
@@ -55,16 +61,29 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     serviceNftTokenId,
     selectedAgentConfig,
   );
-  // Determine the staking program ID in the following order:
-  // 1) On-chain value (where the user actually staked)
-  // 2) If not available, use the selected service (can be updated during migration)
-  // 3) Fall back to the default config value
-  const selectedStakingProgramId = isLoading
-    ? null
-    : activeStakingProgramId ||
+
+  /**
+   * The selected staking program ID is determined in the following order:
+   * 1) On-chain value (where the user actually staked)
+   * 2) If not available, use the selected service (can be updated during migration)
+   * 3) If neither of the above are available, fall back to the default staking program ID from the agent config.
+   */
+  const selectedStakingProgramId = useMemo(() => {
+    if (isLoading) return null;
+
+    return (
+      activeStakingProgramId ||
       selectedService?.chain_configs?.[selectedService?.home_chain]?.chain_data
         .user_params.staking_program_id ||
-      defaultStakingProgramId;
+      defaultStakingProgramId
+    );
+  }, [
+    isLoading,
+    activeStakingProgramId,
+    selectedService?.chain_configs,
+    selectedService?.home_chain,
+    defaultStakingProgramId,
+  ]);
 
   return (
     <StakingProgramContext.Provider
