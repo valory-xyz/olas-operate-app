@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { AddressZero } from '@/constants/address';
 import { EvmChainId, onRampChainMap } from '@/constants/chains';
@@ -33,6 +33,13 @@ export const useTotalNativeTokenRequired = (
     isFetched: isMasterWalletFetched,
   } = useMasterWalletContext();
 
+  // Ref to store frozen totalNativeTokens once step 1 completes
+  // This prevents recalculation when bridge requirements update after onramping success
+  const frozenTotalNativeTokensRef = useRef<{
+    totalNativeTokenToPay: number;
+    totalNativeTokenRequired: number;
+  } | null>(null);
+
   const {
     isLoading,
     hasError,
@@ -54,8 +61,18 @@ export const useTotalNativeTokenRequired = (
    * - OLAS_in_ETH = 16 USDC bridged to ETH
    * - USDC_in_ETH = 100 OLAS bridged to ETH
    * Total native token required = 0.01 ETH + OLAS_in_ETH + USDC_in_ETH
+   *
+   * Note: Once step 1 (onramping) is complete, we freeze this calculation
+   * to prevent redundant price-quote API calls from bridge requirement updates.
    */
   const totalNativeTokens = useMemo(() => {
+    // Return frozen value if step 1 is complete
+    if (
+      isOnRampingTransactionSuccessful &&
+      frozenTotalNativeTokensRef.current
+    ) {
+      return frozenTotalNativeTokensRef.current;
+    }
     if (!bridgeParams) return;
     if (!bridgeFundingRequirements) return;
     if (!masterEoa?.address) return;
@@ -112,7 +129,7 @@ export const useTotalNativeTokenRequired = (
     const totalNativeTokenRequired =
       totalNativeTokenToPay + BigInt(nativeBalance || 0);
 
-    return {
+    const result = {
       totalNativeTokenToPay: totalNativeTokenToPay
         ? formatUnitsToNumber(totalNativeTokenToPay, 18)
         : 0,
@@ -120,6 +137,13 @@ export const useTotalNativeTokenRequired = (
         ? formatUnitsToNumber(totalNativeTokenRequired, 18)
         : 0,
     };
+
+    // Store in ref for future use if step 1 completes
+    if (!isOnRampingTransactionSuccessful) {
+      frozenTotalNativeTokensRef.current = result;
+    }
+
+    return result;
   }, [
     bridgeParams,
     bridgeFundingRequirements,
@@ -127,7 +151,15 @@ export const useTotalNativeTokenRequired = (
     isMasterWalletFetched,
     selectedAgentConfig.evmHomeChainId,
     getMasterSafeOf,
+    isOnRampingTransactionSuccessful,
   ]);
+
+  // Reset frozen ref when starting a new onramp flow
+  useEffect(() => {
+    if (!isOnRampingTransactionSuccessful) {
+      frozenTotalNativeTokensRef.current = null;
+    }
+  }, [isOnRampingTransactionSuccessful]);
 
   // Update the ETH amount to pay in the on-ramp context
   useEffect(() => {

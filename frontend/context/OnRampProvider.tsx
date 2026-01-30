@@ -9,7 +9,6 @@ import {
 import type { OnRampNetworkConfig } from '@/components/OnRamp';
 import { PAGES } from '@/constants';
 import {
-  useBalanceAndRefillRequirementsContext,
   useElectronApi,
   useMasterBalances,
   useMasterWalletContext,
@@ -84,8 +83,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     useMasterBalances();
   const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
     useMasterWalletContext();
-  const { refetch: refetchBalancesAndRequirements } =
-    useBalanceAndRefillRequirementsContext();
 
   // State to track the amount of ETH to pay for on-ramping and the USD equivalent
   const [ethAmountToPay, setEthAmountToPay] = useState<Nullable<number>>(null);
@@ -168,10 +165,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
       // If not closed already, close the on-ramp window after receiving funds
       onRampWindow?.close?.();
-    } else {
-      // Refetch balances and requirements to ensure fresh data when balance < threshold
-      // This prevents stale data from causing incorrect calculations
-      refetchBalancesAndRequirements();
     }
   }, [
     ethTotalAmountRequired,
@@ -184,7 +177,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     getMasterSafeOf,
     getMasterSafeNativeBalanceOf,
     usdAmountToPay,
-    refetchBalancesAndRequirements,
   ]);
 
   // Function to set the ETH amount to pay for on-ramping
