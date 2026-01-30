@@ -63,7 +63,7 @@ export const PolystratPayoutAchievement = ({
       bet_amount,
       transactionHash,
     },
-  } = achievement;
+  } = achievement ?? { data: {} };
   const totalPayout = net_profit + bet_amount;
 
   // TODO: update with actual copy

@@ -11,7 +11,7 @@ import {
   useState,
 } from 'react';
 
-import { AGENT_CONFIG } from '@/config/agents';
+import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import {
   AgentEoa,
   AgentMap,
@@ -369,7 +369,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     );
     if (!service) return null;
 
-    const agentEntry = Object.entries(AGENT_CONFIG).find(
+    const agentEntry = ACTIVE_AGENTS.find(
       ([, config]) => config.servicePublicId === service.service_public_id,
     );
 
