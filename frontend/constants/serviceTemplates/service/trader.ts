@@ -11,14 +11,15 @@ import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeiffypttlwz4znzrwimrlqu5tu6m5fifz5tkqudmkqc5fozlitdl3i',
-  service_version: 'v0.27.10',
+  hash: 'bafybeifsip5gf2tlf3sstk6jv3lognaubk4dffbw2nv42ojr7q7osjjqkm',
+
+  service_version: 'v0.29.1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.27.10',
+      version: 'v0.29.1',
     },
   },
   agentType: AgentMap.PredictTrader,
@@ -29,11 +30,11 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChainMap.GNOSIS,
   configurations: {
     [MiddlewareChainMap.GNOSIS]: {
-      staking_program_id: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1, // default, may be overwritten
+      staking_program_id: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3, // default, may be overwritten
       nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 14,
-      cost_of_bond: parseEther(0.001),
+      cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: parseEther(2),
@@ -139,6 +140,12 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: X402_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
+    ENABLE_MULTI_BETS_FALLBACK: {
+      name: 'Enable multi-bets fallback mode',
+      description: 'Enables agents to run in multi-bets fallback mode',
+      value: 'true',
       provision_type: EnvProvisionType.FIXED,
     },
   },

@@ -142,7 +142,7 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
     [MiddlewareChainMap.BASE]: {
       staking_program_id: STAKING_PROGRAM_IDS.AgentsFun1, // default, may be overwritten
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 43,
       cost_of_bond: parseEther(50),
       fund_requirements: {
@@ -156,28 +156,28 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
   ...AGENTS_FUN_COMMON_TEMPLATE,
 } as const;
 
-const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
+export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PettAi,
   name: 'pett_agent',
-  hash: 'bafybeiebj5n56dvxyxp6ml53hkgiawnnyzikshmd6kvd5foaitcknx3m4q',
+  hash: 'bafybeicatbkc35po2zdgwripfvstabpkqqks6rqwgm2ttc2rbutqsd3gga',
   description: 'Pett.ai autonomous agent service for virtual pet management.',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
-  service_version: 'v0.1.0',
+  service_version: 'v0.1.1',
   agent_release: {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
       name: 'pettai-agent',
-      version: 'v0.1.0',
+      version: 'v0.1.1',
     },
   },
   home_chain: MiddlewareChainMap.BASE,
   configurations: {
     [MiddlewareChainMap.BASE]: {
-      staking_program_id: STAKING_PROGRAM_IDS.PettAiAgent,
+      staking_program_id: STAKING_PROGRAM_IDS.PettAiAgent3,
       nft: 'bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-      rpc: 'http://localhost:8545', // overwritten
+      rpc: '', // overwritten
       agent_id: 80,
       cost_of_bond: parseEther(20),
       fund_requirements: {
