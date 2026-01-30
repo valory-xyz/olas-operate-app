@@ -113,11 +113,13 @@ export const PolystratPayoutAchievement = ({
         className="mb-24"
       />
 
-      <MultiplierBadge className="mb-16">
-        <Title level={2} className="m-0 text-primary font-weight-600">
-          {payoutMultiplier}x
-        </Title>
-      </MultiplierBadge>
+      {payoutMultiplier && (
+        <MultiplierBadge className="mb-16">
+          <Title level={2} className="m-0 text-primary font-weight-600">
+            {payoutMultiplier}x
+          </Title>
+        </MultiplierBadge>
+      )}
 
       <Text className="text-center mb-12 text-neutral-secondary">
         Your Polystrat made a high-return trade and collected{' '}

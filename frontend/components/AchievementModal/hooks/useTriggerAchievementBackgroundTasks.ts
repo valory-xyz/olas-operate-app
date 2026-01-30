@@ -1,9 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
+import { ACHIEVEMENT_TYPE } from '@/constants';
 import {
   acknowledgeServiceAchievement,
-  triggerAchievementImageGeneration,
+  generateAchievementImage,
 } from '@/service/Achievement';
 import { AchievementWithConfig } from '@/types/Achievement';
 
@@ -17,7 +18,7 @@ const getAchievementDataIdFromType = (achievement: AchievementWithConfig) => {
   const { achievement_type, data } = achievement;
 
   switch (achievement_type) {
-    case 'polystrat/payout':
+    case ACHIEVEMENT_TYPE.POLYSTRAT_PAYOUT:
       return data.id;
     default:
       return null;
@@ -36,7 +37,7 @@ export const useTriggerAchievementBackgroundTasks = () => {
       console.error('Failed to acknowledge achievement', error),
   });
   const { mutate: triggerImageGeneration } = useMutation({
-    mutationFn: triggerAchievementImageGeneration,
+    mutationFn: generateAchievementImage,
     retry: RETRY_COUNT,
     onError: (error) =>
       console.error('Failed to trigger image generation', error),

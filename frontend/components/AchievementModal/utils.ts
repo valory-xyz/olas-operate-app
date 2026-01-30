@@ -1,5 +1,6 @@
 import { PREDICT_WEBSITE_URL } from '@/constants';
 
+// TODO: Use AgentType
 export const getPredictWebsiteAchievementUrl = (
   agent: 'omenstrat' | 'polystrat',
   params: URLSearchParams,
@@ -9,6 +10,6 @@ export const getPredictWebsiteAchievementUrl = (
   ).toString();
 
 export const generateXIntentUrl = (text: string, url: string) =>
-  `https://twitter.com/intent/post?text=${encodeURIComponent(
+  `https://x.com/intent/post?text=${encodeURIComponent(
     text,
   )}&url=${encodeURIComponent(url)}`;

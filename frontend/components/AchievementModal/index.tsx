@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { Modal } from '@/components/ui';
-import { ConfettiAnimation } from '@/components/ui/animations';
+import { ConfettiAnimation, Modal } from '@/components/ui';
 import { useServices } from '@/hooks';
 
 import { useCurrentAchievement } from './hooks/useCurrentAchievement';
@@ -15,7 +14,6 @@ export const AchievementModal = () => {
     currentAchievement,
     markCurrentAchievementAsShown,
     isLoading,
-    error,
     isError,
   } = useCurrentAchievement();
   const triggerAchievementBackgroundTasks =
@@ -28,15 +26,9 @@ export const AchievementModal = () => {
   );
 
   const handleClose = () => {
-    setShowModal(false);
     markCurrentAchievementAsShown();
+    setShowModal(false);
   };
-
-  useEffect(() => {
-    if (isError && error) {
-      console.error('Failed to fetch achievements:', error);
-    }
-  }, [isError, error]);
 
   useEffect(() => {
     if (!currentAchievement) return;

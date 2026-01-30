@@ -1,17 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 
 import { FIVE_MINUTE_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
-import { useServices } from '@/hooks';
-import { getAllServicesAchievements } from '@/service/Achievement';
-import { AchievementWithConfig } from '@/types/Achievement';
+import { useAgentRunning } from '@/hooks';
+import { getServiceAchievements } from '@/service/Achievement';
 
 export const useAchievements = () => {
-  const { availableServiceConfigIds } = useServices();
-
-  const serviceConfigIds = useMemo(() => {
-    return availableServiceConfigIds.map(({ configId }) => configId);
-  }, [availableServiceConfigIds]);
+  const { runningServiceConfigId } = useAgentRunning();
 
   const {
     data: achievements,
@@ -19,38 +14,33 @@ export const useAchievements = () => {
     error,
     isError,
   } = useQuery({
-    queryKey: REACT_QUERY_KEYS.ACHIEVEMENTS_KEY(serviceConfigIds),
+    queryKey: REACT_QUERY_KEYS.ACHIEVEMENTS_KEY(runningServiceConfigId),
     queryFn: async ({ signal }) => {
-      const allServicesAchievements = await getAllServicesAchievements({
-        serviceConfigIds,
+      if (!runningServiceConfigId) return [];
+
+      const serviceAchievements = await getServiceAchievements({
+        serviceConfigId: runningServiceConfigId,
         signal,
       });
 
-      /**
-       * Flattened Achievements array with serviceConfigId
-       */
-      const achievements: AchievementWithConfig[] = [];
-
-      Object.entries(allServicesAchievements).forEach(
-        ([serviceConfigId, serviceAchievements]) => {
-          serviceAchievements.forEach((achievement) => {
-            achievements.push({
-              ...achievement,
-              serviceConfigId,
-            });
-          });
-        },
-      );
-
-      return achievements;
+      return serviceAchievements.map((achievement) => ({
+        ...achievement,
+        serviceConfigId: runningServiceConfigId,
+      }));
     },
+    enabled: !!runningServiceConfigId,
     refetchInterval: FIVE_MINUTE_INTERVAL,
   });
+
+  useEffect(() => {
+    if (isError && error) {
+      console.error('Failed to fetch achievements:', error);
+    }
+  }, [isError, error]);
 
   return {
     achievements,
     isLoading,
-    error,
     isError,
   };
 };

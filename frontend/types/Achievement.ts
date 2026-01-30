@@ -1,3 +1,5 @@
+import { ACHIEVEMENT_TYPE } from '@/constants';
+
 export type PolystratAchievementData = {
   id: string;
   prediction_side: string;
@@ -24,20 +26,17 @@ export type BaseAchievement = {
 };
 
 export type PolystratPayoutAchievement = BaseAchievement & {
-  achievement_type: 'polystrat/payout';
+  achievement_type: typeof ACHIEVEMENT_TYPE.POLYSTRAT_PAYOUT;
   data: PolystratAchievementData;
 };
 
 // Discriminated union of all achievement types
 export type Achievement = PolystratPayoutAchievement;
 
-export type AchievementType = Achievement['achievement_type'];
+export type AchievementType =
+  (typeof ACHIEVEMENT_TYPE)[keyof typeof ACHIEVEMENT_TYPE];
 
 export type ServiceAchievements = Achievement[];
-
-export type AllServicesAchievements = {
-  [service_config_id: string]: ServiceAchievements;
-};
 
 export type AchievementWithConfig = Achievement & {
   serviceConfigId: string;

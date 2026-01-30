@@ -1,18 +1,13 @@
-import { compact } from 'lodash';
-
 import {
   BACKEND_URL_V2,
   CONTENT_TYPE_JSON_UTF8,
   PEARL_API_URL,
 } from '@/constants';
-import {
-  AllServicesAchievements,
-  ServiceAchievements,
-} from '@/types/Achievement';
+import { ServiceAchievements } from '@/types/Achievement';
 
 type GetServiceAchievementsParams = {
   serviceConfigId: string;
-  signal?: AbortSignal;
+  signal: AbortSignal;
 };
 
 /**
@@ -34,35 +29,6 @@ const getServiceAchievements = ({
       `Failed to fetch service achievements for service config ${serviceConfigId}`,
     );
   });
-};
-
-type GetAllServicesAchievementsParams = {
-  serviceConfigIds: string[];
-  signal: AbortSignal;
-};
-
-/**
- * Function to fetch undelivered achievements for all the services in parallel
- */
-const getAllServicesAchievements = async ({
-  serviceConfigIds,
-  signal,
-}: GetAllServicesAchievementsParams): Promise<AllServicesAchievements> => {
-  const promises = await Promise.allSettled(
-    serviceConfigIds.map((serviceConfigId) =>
-      getServiceAchievements({ serviceConfigId, signal }),
-    ),
-  );
-
-  const validEntries = compact(
-    promises.map((promise, index) =>
-      promise.status === 'fulfilled'
-        ? ([serviceConfigIds[index], promise.value] as const)
-        : null,
-    ),
-  );
-
-  return Object.fromEntries(validEntries);
 };
 
 type AcknowledgeServiceAchievementParams = {
@@ -94,7 +60,7 @@ const acknowledgeServiceAchievement = async ({
   return response.json();
 };
 
-type TriggerAchievementImageGenerationParams = {
+type GenerateAchievementImageParams = {
   agent: string; // Better types! ideally should be a union of all the agent types (not AgentType though)
   type: string;
   id: string;
@@ -103,11 +69,11 @@ type TriggerAchievementImageGenerationParams = {
 /**
  * Function to trigger image generation for an achievement basis the agent & achievement type
  */
-const triggerAchievementImageGeneration = async ({
+const generateAchievementImage = async ({
   agent,
   type,
   id,
-}: TriggerAchievementImageGenerationParams) => {
+}: GenerateAchievementImageParams) => {
   const queryParams = new URLSearchParams({
     agent,
     type,
@@ -131,6 +97,6 @@ const triggerAchievementImageGeneration = async ({
 
 export {
   acknowledgeServiceAchievement,
-  getAllServicesAchievements,
-  triggerAchievementImageGeneration,
+  generateAchievementImage,
+  getServiceAchievements,
 };

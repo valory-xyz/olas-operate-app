@@ -127,6 +127,6 @@ export const REACT_QUERY_KEYS = {
     ['geoEligibility', agentType] as const,
 
   // achievements
-  ACHIEVEMENTS_KEY: (serviceConfigIds: string[]) =>
-    ['achievements', ...serviceConfigIds] as const,
+  ACHIEVEMENTS_KEY: (serviceConfigId: Maybe<string>) =>
+    ['achievements', serviceConfigId] as const,
 } as const;
