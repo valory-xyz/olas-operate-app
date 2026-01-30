@@ -185,6 +185,12 @@ export const POLYGON_TOKEN_CONFIG: ChainTokenConfig = {
     decimals: 18,
     address: '0xFEF5d947472e72Efbb2E388c730B7428406F2F95',
   },
+  [TokenSymbolMap.USDC]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.USDC,
+    decimals: 6,
+    address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+  },
   [TokenSymbolMap['USDC.e']]: {
     tokenType: TokenType.Erc20,
     symbol: TokenSymbolMap['USDC.e'],
