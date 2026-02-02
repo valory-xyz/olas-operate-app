@@ -8,7 +8,7 @@ export type PolystratAchievementData = {
   net_profit: number;
   created_at: string;
   settled_at: string;
-  transactionHash: string;
+  transaction_hash: string;
   market: {
     id: string;
     title: string;

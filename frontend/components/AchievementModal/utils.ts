@@ -9,7 +9,5 @@ export const getPredictWebsiteAchievementUrl = (
     `${PREDICT_WEBSITE_URL}/${agent}/achievement/?${params.toString()}`,
   ).toString();
 
-export const generateXIntentUrl = (text: string, url: string) =>
-  `https://x.com/intent/post?text=${encodeURIComponent(
-    text,
-  )}&url=${encodeURIComponent(url)}`;
+export const generateXIntentUrl = (text: string) =>
+  `https://x.com/intent/post?text=${encodeURIComponent(text)}`;

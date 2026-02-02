@@ -54,6 +54,7 @@ export const PolystratPayoutAchievement = ({
   achievement: Achievement;
 }) => {
   const {
+    description,
     achievement_type: type,
     data: {
       id: betId,
@@ -61,13 +62,10 @@ export const PolystratPayoutAchievement = ({
       market: { title: question },
       prediction_side: position,
       bet_amount,
-      transactionHash,
+      transaction_hash,
     },
   } = achievement ?? { data: {} };
   const totalPayout = net_profit + bet_amount;
-
-  // TODO: update with actual copy
-  const text = `My Polystrat made a high-return trade and collected ${totalPayout}.`;
 
   const stats = [
     {
@@ -93,7 +91,8 @@ export const PolystratPayoutAchievement = ({
         type: polystratAchievemntType,
       }),
     );
-    const xIntentUrl = generateXIntentUrl(text, predictUrl);
+    const postText = description.replace('{achievement_url}', predictUrl);
+    const xIntentUrl = generateXIntentUrl(postText);
     window.open(xIntentUrl, '_blank');
   };
 
@@ -126,12 +125,12 @@ export const PolystratPayoutAchievement = ({
         <Text className="font-weight-600">${totalPayout}</Text>.
       </Text>
 
-      {transactionHash && (
+      {transaction_hash && (
         <a
           className="flex align-center text-sm gap-6 mb-24"
           target="_blank"
           rel="noopener noreferrer"
-          href={getTransactionUrl(transactionHash)}
+          href={getTransactionUrl(transaction_hash)}
         >
           View transaction <LuSquareArrowOutUpRight />
         </a>
