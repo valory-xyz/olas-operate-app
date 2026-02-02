@@ -29,6 +29,7 @@ import {
   areAddressesEqual,
   asEvmChainDetails,
   asEvmChainId,
+  BRIDGED_TOKEN_SOURCE_MAP,
   delayInSeconds,
   formatUnitsToNumber,
   getTokenDetails,
@@ -349,16 +350,31 @@ export const DepositForBridging = ({
               ? destinationTokenConfig.address
               : AddressZero;
 
-          console.log({ toTokenAddress });
-          if (!toTokenAddress) return BigInt(0);
+          console.log({ toTokenAddress, bridgeRequirementsParams });
+          if (!destinationTokenConfig || !toTokenAddress) return BigInt(0);
 
           // Find the bridge request for this destination token
           const toToken = bridgeRequirementsParams?.bridge_requests?.find(
             ({ to }) => areAddressesEqual(to.token, toTokenAddress),
           );
+          if (toToken) {
+            return BigInt(toToken.to.amount);
+          }
 
-          console.log({ toToken });
-          return toToken ? BigInt(toToken.to.amount) : BigInt(0);
+          // USDC to USDC.e case
+          const bridgedToken =
+            BRIDGED_TOKEN_SOURCE_MAP[destinationTokenConfig.symbol];
+          if (bridgedToken) {
+            const bridgedToToken =
+              bridgeRequirementsParams?.bridge_requests?.find(({ to }) =>
+                areAddressesEqual(to.token, bridgedToken),
+              );
+            return bridgedToToken
+              ? BigInt(bridgedToToken.to.amount)
+              : BigInt(0);
+          }
+
+          return BigInt(0);
         })();
 
         console.log({
