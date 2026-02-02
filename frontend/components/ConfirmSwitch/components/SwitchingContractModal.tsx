@@ -87,7 +87,7 @@ export const SwitchingContractModal = ({
         description:
           'An error occurred during switching contracts. Please try again or contact support.',
         closable: true,
-        onCancel,
+        onCancel: onClose,
         action: (
           <Button className="mt-16" onClick={onCancel}>
             Contact support
@@ -102,6 +102,7 @@ export const SwitchingContractModal = ({
     serviceSafe?.address,
     stakingProgramIdToMigrateTo,
     status,
+    onClose,
     onCancel,
   ]);
 
