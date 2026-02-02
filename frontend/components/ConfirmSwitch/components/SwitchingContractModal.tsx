@@ -1,5 +1,5 @@
 import { Button, Spin } from 'antd';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
   LoadingOutlined,
@@ -42,6 +42,11 @@ export const SwitchingContractModal = ({
     selectedService?.service_config_id,
   );
 
+  const onCancel = useCallback(() => {
+    onClose();
+    toggleSupportModal();
+  }, [onClose, toggleSupportModal]);
+
   const modalProps = useMemo(() => {
     if (status === 'IN_PROGRESS') {
       return {
@@ -50,6 +55,7 @@ export const SwitchingContractModal = ({
           'Your agent is switching contracts. It usually takes up to 5 min. Please keep the app open until the process is complete.',
       };
     }
+
     if (status === 'COMPLETED') {
       const agentName = serviceSafe?.address
         ? generateName(serviceSafe?.address)
@@ -74,21 +80,16 @@ export const SwitchingContractModal = ({
         ),
       };
     }
+
     if (status === 'ERROR') {
       return {
         title: 'Switching Error',
         description:
           'An error occurred during switching contracts. Please try again or contact support.',
         closable: true,
-        onClose,
+        onCancel,
         action: (
-          <Button
-            className="mt-16"
-            onClick={() => {
-              onClose();
-              toggleSupportModal();
-            }}
-          >
+          <Button className="mt-16" onClick={onCancel}>
             Contact support
           </Button>
         ),
@@ -96,13 +97,12 @@ export const SwitchingContractModal = ({
     }
   }, [
     goto,
-    onClose,
     selectedAgentConfig.displayName,
     selectedAgentConfig.evmHomeChainId,
     serviceSafe?.address,
     stakingProgramIdToMigrateTo,
     status,
-    toggleSupportModal,
+    onCancel,
   ]);
 
   return <Modal header={<ModalHeader status={status} />} {...modalProps} />;
