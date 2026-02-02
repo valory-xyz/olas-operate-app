@@ -177,7 +177,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       cost_of_bond: parseEther(50),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: parseEther(28),
+          agent: parseEther(30),
           safe: parseEther(40),
         },
         [POLYGON_TOKEN_CONFIG[TokenSymbolMap['USDC.e']]?.address as string]: {
