@@ -42,7 +42,7 @@ export const SwitchingContractModal = ({
     selectedService?.service_config_id,
   );
 
-  const onCancel = useCallback(() => {
+  const handleContactSupport = useCallback(() => {
     onClose();
     toggleSupportModal();
   }, [onClose, toggleSupportModal]);
@@ -89,7 +89,7 @@ export const SwitchingContractModal = ({
         closable: true,
         onCancel: onClose,
         action: (
-          <Button className="mt-16" onClick={onCancel}>
+          <Button className="mt-16" onClick={handleContactSupport}>
             Contact support
           </Button>
         ),
@@ -103,7 +103,7 @@ export const SwitchingContractModal = ({
     stakingProgramIdToMigrateTo,
     status,
     onClose,
-    onCancel,
+    handleContactSupport,
   ]);
 
   return <Modal header={<ModalHeader status={status} />} {...modalProps} />;
