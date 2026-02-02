@@ -11,7 +11,6 @@ import {
   TOKEN_CONFIG,
   TokenSymbol,
   TokenSymbolConfigMap,
-  TokenSymbolMap,
   TokenType,
 } from '@/config/tokens';
 import { AddressZero, COLOR, MiddlewareChain } from '@/constants';
@@ -32,6 +31,7 @@ import {
   asEvmChainId,
   delayInSeconds,
   formatUnitsToNumber,
+  getTokenDetails,
 } from '@/utils';
 
 type DepositTokenDetails = {
@@ -323,27 +323,53 @@ export const DepositForBridging = ({
       eta: quoteEta,
       transfers: tokens.map((token) => {
         const toAmount = (() => {
-          // TODO: reuse getFromToken function from utils.ts
+          // Find token symbol from source chain, then look it up on destination chain
+          // eg. if the token is USDC on Ethereum, it will be USDC on Base but the address will be different
+          // This handles bridged tokens like USDC (Ethereum) -> USDC.e (Polygon)
+          const toChainTokenConfig = TOKEN_CONFIG[asEvmChainId(bridgeToChain)];
 
-          // Find the token address on the destination chain.
-          // eg. if the token is USDC on Ethereum, it will be USDC on Base
-          // but the address will be different.
-          const chainTokenConfig =
-            TOKEN_CONFIG[asEvmChainId(bridgeToChain)][token.symbol];
+          if (!toChainTokenConfig) return BigInt(0);
+
+          // Get the token symbol from source chain
+          const fromChainTokenConfig =
+            ALL_TOKEN_CONFIG[asEvmChainDetails(fromChain).chainId];
+          const sourceTokenDetails = getTokenDetails(
+            token.address || AddressZero,
+            fromChainTokenConfig,
+          );
+
+          console.log({ sourceTokenDetails });
+          if (!sourceTokenDetails) return BigInt(0);
+
+          // Find the same token symbol on destination chain
+          const destinationTokenConfig =
+            toChainTokenConfig[sourceTokenDetails.symbol];
           const toTokenAddress =
-            token.symbol === TokenSymbolMap.ETH
-              ? token.address
-              : chainTokenConfig?.address;
+            destinationTokenConfig && 'address' in destinationTokenConfig
+              ? destinationTokenConfig.address
+              : AddressZero;
 
+          console.log({ toTokenAddress });
           if (!toTokenAddress) return BigInt(0);
 
+          // Find the bridge request for this destination token
           const toToken = bridgeRequirementsParams?.bridge_requests?.find(
             ({ to }) => areAddressesEqual(to.token, toTokenAddress),
           );
-          if (!toToken) return BigInt(0);
 
-          return BigInt(toToken.to.amount);
+          console.log({ toToken });
+          return toToken ? BigInt(toToken.to.amount) : BigInt(0);
         })();
+
+        console.log({
+          fromSymbol: token.symbol,
+          fromAmount: token.currentBalanceInWei.toString(),
+          toSymbol: token.isNative
+            ? asEvmChainDetails(bridgeToChain).symbol
+            : token.symbol,
+          toAmount: toAmount.toString(),
+          decimals: token.decimals,
+        });
 
         return {
           fromSymbol: token.symbol,
