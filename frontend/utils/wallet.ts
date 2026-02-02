@@ -46,7 +46,7 @@ export function tokenBalancesToSentence(tokenAmounts: TokenAmounts): string {
  * Example: if tokenAddress is USDC, it will return the USDC details from the chainConfig.
  */
 export const getTokenDetails = (
-  tokenAddress: string,
+  tokenAddress: Address,
   chainConfig: ChainTokenConfig,
 ) => {
   if (areAddressesEqual(tokenAddress, AddressZero)) {
@@ -64,11 +64,11 @@ export const getTokenDetails = (
   );
 };
 
-const getTokenSymbol = (tokenAddress: string, chainConfig: ChainTokenConfig) =>
+const getTokenSymbol = (tokenAddress: Address, chainConfig: ChainTokenConfig) =>
   getTokenDetails(tokenAddress, chainConfig)?.symbol;
 
 export const getTokenDecimal = (
-  tokenAddress: string,
+  tokenAddress: Address,
   chainConfig: ChainTokenConfig,
 ) => getTokenDetails(tokenAddress, chainConfig)?.decimals;
 
@@ -80,7 +80,7 @@ export const getTokenDecimal = (
  * For bridged tokens like USDC.e, it resolves to the native token on the source chain (USDC).
  */
 export const getFromToken = (
-  tokenAddress: string,
+  tokenAddress: Address,
   fromChainConfig: ChainTokenConfig,
   toChainConfig: ChainTokenConfig,
 ): Address => {

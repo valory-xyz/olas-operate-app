@@ -29,7 +29,6 @@ import {
   areAddressesEqual,
   asEvmChainDetails,
   asEvmChainId,
-  BRIDGED_TOKEN_SOURCE_MAP,
   delayInSeconds,
   formatUnitsToNumber,
   getTokenDetails,
@@ -323,77 +322,35 @@ export const DepositForBridging = ({
       toChain: bridgeToChain,
       eta: quoteEta,
       transfers: tokens.map((token) => {
-        const toAmount = (() => {
-          // Find token symbol from source chain, then look it up on destination chain
-          // eg. if the token is USDC on Ethereum, it will be USDC on Base but the address will be different
-          // This handles bridged tokens like USDC (Ethereum) -> USDC.e (Polygon)
-          const toChainTokenConfig = TOKEN_CONFIG[asEvmChainId(bridgeToChain)];
+        const toTokenDetails = bridgeRequirementsParams?.bridge_requests?.find(
+          ({ from }) =>
+            areAddressesEqual(from.token, token.address || AddressZero),
+        )?.to;
 
-          if (!toChainTokenConfig) return BigInt(0);
+        if (!toTokenDetails) {
+          throw new Error('To token details not found for the deposited token');
+        }
 
-          // Get the token symbol from source chain
-          const fromChainTokenConfig =
-            ALL_TOKEN_CONFIG[asEvmChainDetails(fromChain).chainId];
-          const sourceTokenDetails = getTokenDetails(
-            token.address || AddressZero,
-            fromChainTokenConfig,
-          );
-
-          console.log({ sourceTokenDetails });
-          if (!sourceTokenDetails) return BigInt(0);
-
-          // Find the same token symbol on destination chain
-          const destinationTokenConfig =
-            toChainTokenConfig[sourceTokenDetails.symbol];
-          const toTokenAddress =
-            destinationTokenConfig && 'address' in destinationTokenConfig
-              ? destinationTokenConfig.address
-              : AddressZero;
-
-          console.log({ toTokenAddress, bridgeRequirementsParams });
-          if (!destinationTokenConfig || !toTokenAddress) return BigInt(0);
-
-          // Find the bridge request for this destination token
-          const toToken = bridgeRequirementsParams?.bridge_requests?.find(
-            ({ to }) => areAddressesEqual(to.token, toTokenAddress),
-          );
-          if (toToken) {
-            return BigInt(toToken.to.amount);
-          }
-
-          // USDC to USDC.e case
-          const bridgedToken =
-            BRIDGED_TOKEN_SOURCE_MAP[destinationTokenConfig.symbol];
-          if (bridgedToken) {
-            const bridgedToToken =
-              bridgeRequirementsParams?.bridge_requests?.find(({ to }) =>
-                areAddressesEqual(to.token, bridgedToken),
-              );
-            return bridgedToToken
-              ? BigInt(bridgedToToken.to.amount)
-              : BigInt(0);
-          }
-
-          return BigInt(0);
-        })();
-
-        console.log({
-          fromSymbol: token.symbol,
-          fromAmount: token.currentBalanceInWei.toString(),
-          toSymbol: token.isNative
-            ? asEvmChainDetails(bridgeToChain).symbol
-            : token.symbol,
-          toAmount: toAmount.toString(),
-          decimals: token.decimals,
-        });
+        // Find the token address on the destination chain.
+        // eg. if the token is USDC on Ethereum, it will be USDC on Base
+        // but the address will be different.
+        const toTokenConfig = getTokenDetails(
+          toTokenDetails.token,
+          TOKEN_CONFIG[asEvmChainId(bridgeToChain)],
+        );
+        if (!toTokenConfig) {
+          throw new Error('To token config not found on the destination chain');
+        }
 
         return {
           fromSymbol: token.symbol,
           fromAmount: token.currentBalanceInWei.toString(),
           toSymbol: token.isNative
             ? asEvmChainDetails(bridgeToChain).symbol
-            : token.symbol,
-          toAmount: toAmount.toString(),
+            : toTokenConfig.symbol,
+          toAmount: toTokenDetails
+            ? BigInt(toTokenDetails.amount).toString()
+            : BigInt(0).toString(),
           decimals: token.decimals,
         };
       }),
