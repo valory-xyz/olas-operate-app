@@ -172,7 +172,6 @@ export const OPTIMISM_TOKEN_CONFIG: ChainTokenConfig = {
   },
 };
 
-// TODO: Add proper token addresses for Polygon when decided
 export const POLYGON_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbolMap.POL]: {
     tokenType: TokenType.NativeGas,
