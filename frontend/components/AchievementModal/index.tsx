@@ -33,8 +33,8 @@ export const AchievementModal = () => {
   useEffect(() => {
     if (!currentAchievement) return;
 
-    setShowModal(true);
     triggerAchievementBackgroundTasks(currentAchievement);
+    setShowModal(true);
   }, [currentAchievement, triggerAchievementBackgroundTasks]);
 
   useUnmount(() => {

@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { LuSquareArrowOutUpRight } from 'react-icons/lu';
 import styled from 'styled-components';
 
-import { COLOR, EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants';
+import { COLOR, EXPLORER_URL_BY_MIDDLEWARE_CHAIN, NA } from '@/constants';
 import { Achievement } from '@/types/Achievement';
 
 import {
@@ -53,18 +53,18 @@ export const PolystratPayoutAchievement = ({
 }: {
   achievement: Achievement;
 }) => {
+  const { description = NA, achievement_type: type, data } = achievement ?? {};
+
   const {
-    description,
-    achievement_type: type,
-    data: {
-      id: betId,
-      net_profit,
-      market: { title: question },
-      prediction_side: position,
-      bet_amount,
-      transaction_hash,
-    },
-  } = achievement ?? { data: {} };
+    id: betId,
+    net_profit = 0,
+    market,
+    prediction_side: position,
+    bet_amount = 0,
+    transaction_hash,
+  } = data ?? {};
+
+  const question = market?.title ?? NA;
   const totalPayout = net_profit + bet_amount;
 
   const stats = [
