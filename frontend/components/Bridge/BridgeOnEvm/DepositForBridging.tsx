@@ -348,9 +348,7 @@ export const DepositForBridging = ({
           toSymbol: token.isNative
             ? asEvmChainDetails(bridgeToChain).symbol
             : toTokenConfig.symbol,
-          toAmount: toTokenDetails
-            ? BigInt(toTokenDetails.amount).toString()
-            : BigInt(0).toString(),
+          toAmount: BigInt(toTokenDetails.amount).toString(),
           decimals: token.decimals,
         };
       }),
