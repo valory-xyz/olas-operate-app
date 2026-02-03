@@ -4,7 +4,12 @@ import { useUnmount } from 'usehooks-ts';
 
 import { MiddlewareDeploymentStatusMap } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { useBalanceContext, useServices, useStakingProgram } from '@/hooks';
+import {
+  useBalanceContext,
+  usePageState,
+  useServices,
+  useStakingProgram,
+} from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { ServiceTemplate } from '@/types';
 import { updateServiceIfNeeded } from '@/utils';
@@ -27,6 +32,7 @@ export const ConfirmSwitchButton = ({
   const [contractSwitchStatus, setContractSwitchStatus] =
     useState<ContractSwitchStatus>('NOT_STARTED');
 
+  const { goto } = usePageState();
   const {
     setPaused: setIsServicePollingPaused,
     isFetched: isServicesLoaded,
