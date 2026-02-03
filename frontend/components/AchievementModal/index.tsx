@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { ConfettiAnimation, Modal } from '@/components/ui';
+import { Modal } from '@/components/ui';
 import { AgentMap } from '@/constants';
 import { useServices } from '@/hooks';
 
@@ -53,7 +53,7 @@ export const AchievementModal = () => {
       size="medium"
       action={
         <>
-          <ConfettiAnimation loop={false} />
+          {/* <ConfettiAnimation loop={false} /> */}
           {agentType === AgentMap.Polystrat ? (
             <PolystratModalContent achievement={currentAchievement} />
           ) : null}

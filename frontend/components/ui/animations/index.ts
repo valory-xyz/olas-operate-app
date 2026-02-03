@@ -1,2 +1,2 @@
 export * from './AnimateNumber';
-export * from './ConfettiAnimation';
+// export * from './ConfettiAnimation';
