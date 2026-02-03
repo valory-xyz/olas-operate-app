@@ -6,8 +6,11 @@ import { parseEther } from '@/utils';
 
 import { MiddlewareChainMap } from '../chains';
 import { STAKING_PROGRAM_IDS } from '../stakingProgram';
-import { MODIUS_SERVICE_TEMPLATE, OPTIMUS_SERVICE_TEMPLATE } from '.';
 import { KPI_DESC_PREFIX } from './constants';
+import {
+  MODIUS_SERVICE_TEMPLATE,
+  OPTIMUS_SERVICE_TEMPLATE,
+} from './service/babydegen';
 import {
   PREDICT_POLYMARKET_SERVICE_TEMPLATE,
   PREDICT_SERVICE_TEMPLATE,
