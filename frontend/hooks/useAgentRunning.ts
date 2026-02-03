@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
 import {
-  AgentType,
   FIVE_SECONDS_INTERVAL,
   MiddlewareDeploymentStatusMap,
   REACT_QUERY_KEYS,
@@ -13,12 +12,7 @@ import { ServicesService } from '@/service/Services';
 import { useServices } from './useServices';
 
 export const useAgentRunning = () => {
-  const {
-    services,
-    selectedService,
-    serviceStatusOverrides,
-    getServiceConfigIdFromAgentType,
-  } = useServices();
+  const { services, selectedService, serviceStatusOverrides } = useServices();
 
   const { data: allDeployments } = useQuery({
     queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
@@ -79,11 +73,5 @@ export const useAgentRunning = () => {
     return null;
   }, [selectedService, allDeployments, services]);
 
-  const runningServiceConfigId = useMemo(() => {
-    if (!runningAgentType) return null;
-
-    return getServiceConfigIdFromAgentType(runningAgentType as AgentType);
-  }, [getServiceConfigIdFromAgentType, runningAgentType]);
-
-  return { isAnotherAgentRunning, runningAgentType, runningServiceConfigId };
+  return { isAnotherAgentRunning, runningAgentType };
 };

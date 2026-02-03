@@ -104,6 +104,3 @@ export const SUPPORT_API_URL = `${PEARL_API_URL}/api/zendesk`;
 export const GEO_ELIGIBILITY_API_URL = `${PEARL_API_URL}/api/geo/agent-eligibility`;
 export const GEO_ELIGIBILITY_DOCS_URL =
   'https://docs.polymarket.com/polymarket-learn/FAQ/geoblocking#close-only-countries';
-
-// Predict website
-export const PREDICT_WEBSITE_URL = 'https://predict.olas.network';

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import ReactCanvasConfetti from 'react-canvas-confetti';
 import { useInterval } from 'usehooks-ts';
 
@@ -11,7 +11,7 @@ const canvasStyles = {
   left: 0,
 };
 
-export const ConfettiAnimation = ({ loop = true }) => {
+export const ConfettiAnimation = () => {
   const animationInstance = useRef(null);
 
   const makeShot = useCallback((particleRatio, opts) => {
@@ -36,13 +36,8 @@ export const ConfettiAnimation = ({ loop = true }) => {
     animationInstance.current = instance;
   }, []);
 
-  // Fire confetti every 2.5 seconds if loop is true
-  useInterval(() => fire(), loop ? 2500 : null);
-
-  // Fire the first show on mount
-  useEffect(() => {
-    fire();
-  }, [fire]);
+  // Fire confetti every 2.5 seconds
+  useInterval(() => fire(), 2500);
 
   return <ReactCanvasConfetti refConfetti={getInstance} style={canvasStyles} />;
 };
