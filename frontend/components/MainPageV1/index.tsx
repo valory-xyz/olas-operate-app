@@ -11,6 +11,7 @@ import { UpdateAgentPage } from '@/components/UpdateAgentPage';
 import { PAGES, SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants';
 import { usePageState } from '@/hooks';
 
+import { AchievementModal } from '../AchievementModal';
 import { AgentWallet } from '../AgentWallet';
 import { FundPearlWallet } from '../FundPearlWallet';
 import { PearlWallet } from '../PearlWallet';
@@ -98,6 +99,7 @@ export const Main = () => {
       <Sidebar />
       <Content $isSplitScreenPage={isSplitScreenPage} ref={contentContainerRef}>
         <MainDraggableTopBar $isSplitScreenPage={isSplitScreenPage} />
+        <AchievementModal />
         {mainContent}
       </Content>
     </MainLayout>
