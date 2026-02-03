@@ -1,58 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+// BISECT: Stubbed to return no current achievement
 
-import { AchievementWithConfig } from '@/types/Achievement';
-import { ONE_MINUTE_IN_MS } from '@/utils';
+import { useCallback } from 'react';
 
-import { useAchievements } from './useAchievements';
-
+/**
+ * BISECT: Stubbed hook that returns no current achievement
+ */
 export const useCurrentAchievement = () => {
-  const { achievements, isLoading, isError } = useAchievements();
-
-  const [currentAchievement, setCurrentAchievement] =
-    useState<AchievementWithConfig | null>(null);
-  // Tracks shown achievements in order to not show them again
-  const [shownAchievementIds, setShownAchievementIds] = useState<Set<string>>(
-    new Set(),
-  );
-
-  const unshownAchievements = useMemo(() => {
-    if (!achievements || achievements.length === 0) return [];
-
-    return achievements.filter(
-      (achievement) => !shownAchievementIds.has(achievement.achievement_id),
-    );
-  }, [achievements, shownAchievementIds]);
-
-  const showNextAchievement = useCallback(() => {
-    const nextAchievement = unshownAchievements[0] || null;
-    setCurrentAchievement(nextAchievement);
-  }, [unshownAchievements]);
-
   const markCurrentAchievementAsShown = useCallback(() => {
-    if (!currentAchievement) return;
-
-    // Wait for 1 minute before marking the current achievement as shown
-    // This is to ensure that there is a small delay between showing achievements
-    const timeout = setTimeout(() => {
-      setCurrentAchievement(null);
-      setShownAchievementIds(
-        (prev) => new Set([...prev, currentAchievement.achievement_id]),
-      );
-    }, ONE_MINUTE_IN_MS);
-
-    return () => clearTimeout(timeout);
-  }, [currentAchievement]);
-
-  useEffect(() => {
-    if (!currentAchievement && unshownAchievements.length > 0) {
-      showNextAchievement();
-    }
-  }, [currentAchievement, unshownAchievements, showNextAchievement]);
+    // BISECT: No-op
+  }, []);
 
   return {
-    currentAchievement,
+    currentAchievement: null,
     markCurrentAchievementAsShown,
-    isLoading,
-    isError,
+    isLoading: false,
+    isError: false,
   };
 };
