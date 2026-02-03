@@ -27,7 +27,7 @@ const nextConfig = {
     'rc-table',
     'rc-input',
   ],
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     if (config.snapshot) {
       config.snapshot = {
         ...(config.snapshot ?? {}),
@@ -35,6 +35,12 @@ const nextConfig = {
         // Allows for hot refresh of changes to @next module
         managedPaths: [/^(.+?[\\/]node_modules[\\/])(?!@next)/],
       };
+    }
+
+    // Enable source maps for server-side code in production for better debugging
+    // This allows stack traces to show actual file paths and line numbers
+    if (isServer) {
+      config.devtool = 'source-map';
     }
 
     return config;

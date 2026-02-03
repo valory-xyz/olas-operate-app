@@ -1,5 +1,10 @@
 require('dotenv').config();
 
+// Enable source maps for better stack traces in production
+// This allows stack traces to show actual file paths and line numbers
+// instead of minified/bundled code references
+process.setSourceMapsEnabled(true);
+
 const {
   configureSessionCertificates,
   loadLocalCertificate,
@@ -217,26 +222,37 @@ let appRealClose = false;
 async function stopBackend() {
   // Free up backend port if already occupied
   try {
-    logger.electron('Killing backend server by shutdown endpoint!');
+    logger.electron('Attempting to stop backend via /shutdown endpoint...');
     const result = await secureFetch(`${backendUrl()}/shutdown`);
     logger.electron(
       `Backend stopped with result: ${stringifyJson(await result.json())}`,
     );
   } catch (e) {
-    logger.electron(`Backend stopped with error: ${stringifyJson(e)}`);
+    const statusInfo = e.statusCode ? ` (HTTP ${e.statusCode})` : '';
+    logger.electron(
+      `Backend /shutdown request failed${statusInfo}: ${e.message || stringifyJson(e)}`,
+    );
   }
 
   try {
+    logger.electron('Checking if backend API is reachable...');
     await secureFetch(`${backendUrl()}/api`);
-    logger.electron('Killing backend server!');
+    logger.electron(
+      'Backend API reachable, attempting kill via operate.kill endpoint...',
+    );
     const endpoint = fs
       .readFileSync(`${paths.dotOperateDirectory}/operate.kill`)
       .toString()
       .trim();
 
     await secureFetch(`${backendUrl()}/${endpoint}`);
+    logger.electron('Backend kill endpoint called successfully');
   } catch (e) {
-    logger.electron(`Backend not running: ${stringifyJson(e)}`);
+    // Log with context about what operation failed
+    const statusInfo = e.statusCode ? ` (HTTP ${e.statusCode})` : '';
+    logger.electron(
+      `Backend API check/kill failed${statusInfo}: ${e.message || stringifyJson(e)}`,
+    );
   }
 }
 
@@ -395,9 +411,15 @@ const createMainWindow = async () => {
 
   ipcMain.handle('app-version', () => app.getVersion());
 
-  mainWindow.webContents.on('did-fail-load', () => {
-    mainWindow.webContents.reloadIgnoringCache();
-  });
+  mainWindow.webContents.on(
+    'did-fail-load',
+    (_event, errorCode, errorDescription, validatedURL) => {
+      logger.electron(
+        `Main window failed to load: errorCode=${errorCode}, description="${errorDescription}", url="${validatedURL}"`,
+      );
+      mainWindow.webContents.reloadIgnoringCache();
+    },
+  );
 
   mainWindow.webContents.on('ready-to-show', () => {
     mainWindow.show();
@@ -691,8 +713,29 @@ async function launchNextApp() {
   const handle = nextApp.getRequestHandler();
 
   logger.electron('Creating Next App Server');
-  const server = http.createServer((req, res) => {
-    handle(req, res); // Handle requests using the Next.js request handler
+  const server = http.createServer(async (req, res) => {
+    try {
+      await handle(req, res);
+    } catch (error) {
+      logger.electron(
+        `Next.js request handler error for ${req.method} ${req.url}: ${stringifyJson(error)}`,
+      );
+
+      if (!res.headersSent) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(
+          JSON.stringify({
+            error: 'Internal Server Error',
+            message: error.message,
+          }),
+        );
+      }
+    }
+  });
+
+  server.on('error', (error) => {
+    logger.electron(`Next.js server error: ${stringifyJson(error)}`);
   });
 
   logger.electron('Listening on Next App Server');
@@ -794,9 +837,22 @@ ipcMain.on('check', async function (event, _argument) {
     createMainWindow();
     tray = new PearlTray(getActiveWindow);
   } catch (e) {
-    logger.electron(e);
-    new Notification({ title: 'Error', body: e }).show();
-    event.sender.send('response', e);
+    const errorDetails = {
+      message: e.message || String(e),
+      stack: e.stack,
+      statusCode: e.statusCode,
+      url: e.url,
+      method: e.method,
+      responseBody: e.responseBody,
+    };
+    logger.electron(
+      `Startup error during splash screen: ${stringifyJson(errorDetails)}`,
+    );
+    const notificationBody = e.statusCode
+      ? `HTTP ${e.statusCode}: ${e.message}`
+      : e.message || String(e);
+    new Notification({ title: 'Startup Error', body: notificationBody }).show();
+    event.sender.send('response', `Error: ${notificationBody}`);
   }
 });
 

@@ -94,11 +94,34 @@ const secureFetch = async (url, options = {}) => {
     },
   });
 
-  const { body } = await request(url, {
-    method: options.method || 'GET',
+  const method = options.method || 'GET';
+  const response = await request(url, {
+    method,
     dispatcher: agent,
     ...options,
   });
+
+  const { statusCode, body } = response;
+
+  // Log and handle non-2xx status codes
+  if (statusCode < 200 || statusCode >= 300) {
+    let errorBody = '';
+    try {
+      errorBody = await body.text();
+    } catch {
+      errorBody = '[Unable to read response body]';
+    }
+
+    const errorMessage = `HTTP ${statusCode} error for ${method} ${url}: ${errorBody}`;
+    logger.electron(errorMessage);
+
+    const error = new Error(errorMessage);
+    error.statusCode = statusCode;
+    error.url = url;
+    error.method = method;
+    error.responseBody = errorBody;
+    throw error;
+  }
 
   return body;
 };
