@@ -19,6 +19,7 @@ function artifactName() {
 const main = async () => {
   console.log('Building...');
 
+
   /** @type import {CliOptions} from "electron-builder" */
   return await build({
     publish: 'onTag',
@@ -41,8 +42,11 @@ const main = async () => {
           to: '.env'
         },
       ],
-      cscKeyPassword: process.env.CSC_KEY_PASSWORD,
-      cscLink: process.env.CSC_LINK,
+      // Only provide signing config if NOT skipping
+      ...(!true && {
+        cscKeyPassword: process.env.CSC_KEY_PASSWORD,
+        cscLink: process.env.CSC_LINK,
+      }),
       mac: {
         target: [
           {
@@ -61,6 +65,8 @@ const main = async () => {
           '.*/_internal/.*',
           '.*/bins/middleware/pearl.*'
         ],
+        // Disable signing if requested
+        ...(true && { identity: null }),
       },
     },
   });

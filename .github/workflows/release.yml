@@ -8,6 +8,11 @@ on:
         description: "Tag name to build (e.g., v1.2.3-rc1)"
         required: true
         type: string
+      skip_signing:
+        description: "Skip code signing and notarization (for testing)"
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   # PyInstaller job for both x64 and arm64 binaries
@@ -71,6 +76,7 @@ jobs:
           poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py --onedir --name pearl_${{ env.OS_ARCH }}
 
       - name: Sign PyInstaller binaries
+        if: ${{ !inputs.skip_signing }}
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
@@ -288,6 +294,7 @@ jobs:
           MODE_RPC: https://mainnet.mode.network
           POLYGON_RPC: https://rpc-gate.autonolas.tech/polygon-rpc/
           CELO_RPC: https://forno.celo.org
+          SKIP_SIGNING: ${{ inputs.skip_signing }}
         run: |
           echo "OPTIMISM_RPC=https://rpc-gate.autonolas.tech/optimism-rpc/" >> .env
           echo "BASE_RPC=https://rpc-gate.autonolas.tech/base-rpc/" >> .env
