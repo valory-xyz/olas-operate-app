@@ -13,7 +13,7 @@ const getServiceAchievements = ({
   serviceConfigId: _serviceConfigId,
   signal: _signal,
 }: GetServiceAchievementsParams): Promise<ServiceAchievements> => {
-  return Promise.resolve({ achievements: [] });
+  return Promise.resolve([]);
 };
 
 type AcknowledgeServiceAchievementParams = {
