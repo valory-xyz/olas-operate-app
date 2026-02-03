@@ -684,15 +684,41 @@ async function launchDaemonDev() {
 async function launchNextApp() {
   logger.electron('Launching Next App');
 
-  logger.electron('Preparing Next App');
-  await nextApp.prepare();
+  try {
+    logger.electron('Preparing Next App');
+    await nextApp.prepare();
+  } catch (err) {
+    logger.next(`Error preparing Next App: ${err.message}`);
+    logger.next(`Stack trace: ${err.stack}`);
+    logger.electron(`Error preparing Next App: ${err.message}`);
+    throw err;
+  }
 
   logger.electron('Getting Next App Handler');
   const handle = nextApp.getRequestHandler();
 
   logger.electron('Creating Next App Server');
-  const server = http.createServer((req, res) => {
-    handle(req, res); // Handle requests using the Next.js request handler
+  const server = http.createServer(async (req, res) => {
+    try {
+      await handle(req, res);
+    } catch (err) {
+      const errorMessage = `Error handling request ${req.method} ${req.url}: ${err.message}`;
+      logger.next(errorMessage);
+      logger.next(`Stack trace: ${err.stack}`);
+
+      // Send error response if headers haven't been sent
+      if (!res.headersSent) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'text/html');
+        res.end(`<html><head></head><body>Internal Server Error</body></html>`);
+      }
+    }
+  });
+
+  server.on('error', (err) => {
+    logger.next(`Next server error: ${err.message}`);
+    logger.next(`Stack trace: ${err.stack}`);
+    logger.electron(`Next server error: ${err.message}`);
   });
 
   logger.electron('Listening on Next App Server');
