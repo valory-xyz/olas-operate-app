@@ -1,13 +1,22 @@
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { ConfettiAnimation, Modal } from '@/components/ui';
+import { Modal } from '@/components/ui';
 import { AgentMap } from '@/constants';
 import { useServices } from '@/hooks';
 
 import { useCurrentAchievement } from './hooks/useCurrentAchievement';
 import { useTriggerAchievementBackgroundTasks } from './hooks/useTriggerAchievementBackgroundTasks';
 import { PolystratModalContent } from './ModalContent/Polystrat';
+
+const ConfettiAnimation = dynamic(
+  () =>
+    import('@/components/ui/animations/ConfettiAnimation').then(
+      (mod) => mod.ConfettiAnimation,
+    ),
+  { ssr: false },
+);
 
 export const AchievementModal = () => {
   const { getAgentTypeFromService } = useServices();
