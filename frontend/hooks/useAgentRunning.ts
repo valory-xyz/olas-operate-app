@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
+// BISECT: Removed AgentType import
 import {
-  AgentType,
   FIVE_SECONDS_INTERVAL,
   MiddlewareDeploymentStatusMap,
   REACT_QUERY_KEYS,
@@ -13,12 +13,8 @@ import { ServicesService } from '@/service/Services';
 import { useServices } from './useServices';
 
 export const useAgentRunning = () => {
-  const {
-    services,
-    selectedService,
-    serviceStatusOverrides,
-    getServiceConfigIdFromAgentType,
-  } = useServices();
+  // BISECT: Removed getServiceConfigIdFromAgentType
+  const { services, selectedService, serviceStatusOverrides } = useServices();
 
   const { data: allDeployments } = useQuery({
     queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
@@ -79,11 +75,8 @@ export const useAgentRunning = () => {
     return null;
   }, [selectedService, allDeployments, services]);
 
-  const runningServiceConfigId = useMemo(() => {
-    if (!runningAgentType) return null;
-
-    return getServiceConfigIdFromAgentType(runningAgentType as AgentType);
-  }, [getServiceConfigIdFromAgentType, runningAgentType]);
+  // BISECT: Hardcoded runningServiceConfigId to null
+  const runningServiceConfigId = null;
 
   return { isAnotherAgentRunning, runningAgentType, runningServiceConfigId };
 };
