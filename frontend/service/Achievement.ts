@@ -1,8 +1,4 @@
-import {
-  BACKEND_URL_V2,
-  CONTENT_TYPE_JSON_UTF8,
-  PEARL_API_URL,
-} from '@/constants';
+// BISECT: All API calls stubbed to return empty data
 import { ServiceAchievements } from '@/types/Achievement';
 
 type GetServiceAchievementsParams = {
@@ -11,24 +7,13 @@ type GetServiceAchievementsParams = {
 };
 
 /**
- * Function to fetch all "not_acknowledged" achievements associated with a particular service
+ * BISECT: Stubbed to return empty achievements
  */
 const getServiceAchievements = ({
-  serviceConfigId,
-  signal,
+  serviceConfigId: _serviceConfigId,
+  signal: _signal,
 }: GetServiceAchievementsParams): Promise<ServiceAchievements> => {
-  return fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/achievements`, {
-    method: 'GET',
-    headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    signal,
-  }).then((response) => {
-    if (response.ok) {
-      return response.json();
-    }
-    throw new Error(
-      `Failed to fetch service achievements for service config ${serviceConfigId}`,
-    );
-  });
+  return Promise.resolve({ achievements: [] });
 };
 
 type AcknowledgeServiceAchievementParams = {
@@ -37,62 +22,30 @@ type AcknowledgeServiceAchievementParams = {
 };
 
 /**
- * Function to acknowledge an achievement associated with a particular service
+ * BISECT: Stubbed to do nothing
  */
 const acknowledgeServiceAchievement = async ({
-  serviceConfigId,
-  achievementId,
+  serviceConfigId: _serviceConfigId,
+  achievementId: _achievementId,
 }: AcknowledgeServiceAchievementParams) => {
-  const response = await fetch(
-    `${BACKEND_URL_V2}/service/${serviceConfigId}/achievement/${achievementId}/acknowledge`,
-    {
-      method: 'POST',
-      headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to acknowledge service achievement for service config ${serviceConfigId}`,
-    );
-  }
-
-  return response.json();
+  return Promise.resolve({});
 };
 
 type GenerateAchievementImageParams = {
-  agent: string; // Better types! ideally should be a union of all the agent types (not AgentType though)
+  agent: string;
   type: string;
   id: string;
 };
 
 /**
- * Function to trigger image generation for an achievement basis the agent & achievement type
+ * BISECT: Stubbed to do nothing
  */
 const generateAchievementImage = async ({
-  agent,
-  type,
-  id,
+  agent: _agent,
+  type: _type,
+  id: _id,
 }: GenerateAchievementImageParams) => {
-  const queryParams = new URLSearchParams({
-    agent,
-    type,
-    id,
-  }).toString();
-
-  const response = await fetch(
-    `${PEARL_API_URL}/api/achievement/generate-image?${queryParams}`,
-    {
-      method: 'POST',
-      headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error('Failed to trigger achievement image generation');
-  }
-
-  return response.json();
+  return Promise.resolve({});
 };
 
 export {
