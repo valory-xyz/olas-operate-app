@@ -1,5 +1,5 @@
 import { Button, Flex, Typography } from 'antd';
-import { capitalize } from 'lodash';
+// import { capitalize } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import { LuSquareArrowOutUpRight } from 'react-icons/lu';
@@ -70,7 +70,7 @@ export const PolystratPayoutAchievement = ({
   const stats = [
     {
       label: 'Position',
-      value: capitalize(position),
+      value: position,
     },
     {
       label: 'Amount',
