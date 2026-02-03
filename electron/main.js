@@ -1,10 +1,5 @@
 require('dotenv').config();
 
-// Enable source maps for better stack traces in production
-// This allows stack traces to show actual file paths and line numbers
-// instead of minified/bundled code references
-process.setSourceMapsEnabled(true);
-
 const {
   configureSessionCertificates,
   loadLocalCertificate,
@@ -760,9 +755,20 @@ async function launchNextAppDev() {
       },
     );
     devNextAppPid = devNextApp.pid;
+
+    // Wait for Next.js dev server to be actually ready before resolving
+    // Next.js prints "✓ Ready" when it's ready to accept connections
+    let resolved = false;
     devNextApp.stdout.on('data', (data) => {
-      logger.next(data.toString().trim());
-      resolve();
+      const output = data.toString();
+      logger.next(output.trim());
+
+      // Only resolve once we see "Ready" in the output
+      if (!resolved && output.includes('Ready')) {
+        resolved = true;
+        logger.electron('Next.js dev server is ready to accept connections');
+        resolve();
+      }
     });
   });
 }
