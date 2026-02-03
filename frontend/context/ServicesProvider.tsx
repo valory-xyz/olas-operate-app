@@ -11,7 +11,8 @@ import {
   useState,
 } from 'react';
 
-import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
+// BISECT: Removed ACTIVE_AGENTS import
+import { AGENT_CONFIG } from '@/config/agents';
 import {
   AgentEoa,
   AgentMap,
@@ -359,28 +360,15 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     [availableServiceConfigIds],
   );
 
+  // BISECT: Stubbed helper functions to return null
   const getAgentTypeFromService = (
-    serviceConfigId?: string,
+    _serviceConfigId?: string,
   ): AgentType | null => {
-    if (!serviceConfigId) return null;
-
-    const service = services?.find(
-      (service) => service.service_config_id === serviceConfigId,
-    );
-    if (!service) return null;
-
-    const agentEntry = ACTIVE_AGENTS.find(
-      ([, config]) => config.servicePublicId === service.service_public_id,
-    );
-
-    return agentEntry ? (agentEntry[0] as AgentType) : null;
+    return null;
   };
 
-  const getServiceConfigIdFromAgentType = (agentType: AgentType) => {
-    const serviceConfigId = availableServiceConfigIds.find(
-      ({ configId }) => getAgentTypeFromService(configId) === agentType,
-    )?.configId;
-    return serviceConfigId ?? null;
+  const getServiceConfigIdFromAgentType = (_agentType: AgentType) => {
+    return null;
   };
 
   return (
