@@ -37,11 +37,15 @@ const trayIcons = Object.entries(trayIconPaths).reduce(
   (acc, [status, path]) => ({
     ...acc,
     [status]: (() => {
-      // Linux does not support nativeImage
-      if (isLinux) return path;
+
 
       // Windows and macOS support nativeImage
       let trayIcon = Electron.nativeImage.createFromPath(path);
+
+      if (isLinux) {
+         trayIcon = trayIcon.resize({ width: 22, height: 22 });
+      }
+
 
       if (isMac) {
         // Resize icon for tray
