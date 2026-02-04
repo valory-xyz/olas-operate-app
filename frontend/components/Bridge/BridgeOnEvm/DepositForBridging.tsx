@@ -311,6 +311,7 @@ export const DepositForBridging = ({
     if (!masterEoa?.address) return;
     if (!isMasterWalletFetched) return;
     if (!quoteEta) return;
+    if (!bridgeRequirementsParams?.bridge_requests) return;
 
     const areAllFundsReceived =
       tokens.every((token) => token.areFundsReceived) &&
@@ -323,10 +324,10 @@ export const DepositForBridging = ({
       eta: quoteEta,
       transfers: compact(
         tokens.map((token) => {
-          const toTokenDetails =
-            bridgeRequirementsParams?.bridge_requests?.find(({ from }) =>
+          const toTokenDetails = bridgeRequirementsParams.bridge_requests?.find(
+            ({ from }) =>
               areAddressesEqual(from.token, token.address || AddressZero),
-            )?.to;
+          )?.to;
 
           if (!toTokenDetails) return;
 
