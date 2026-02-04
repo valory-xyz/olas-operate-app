@@ -3,6 +3,7 @@ import '../styles/globals.scss';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConfigProvider } from 'antd';
 import type { AppProps } from 'next/app';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -28,19 +29,38 @@ import { StoreProvider } from '@/context/StoreProvider';
 import { SupportModalProvider } from '@/context/SupportModalProvider';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useGlobalErrorHandlers } from '@/hooks/useGlobalErrorHandlers';
+import { logAppLifecycle, logNavigation } from '@/utils/logger';
 
 const queryClient = new QueryClient();
 
 function App({ Component, pageProps }: AppProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter();
 
-  const { nextLogError } = useElectronApi();
+  const { nextLogError, nextLogEvent } = useElectronApi();
 
   useGlobalErrorHandlers(nextLogError);
 
+  // Log route navigation
+  useEffect(() => {
+    if (router.isReady) {
+      const routeName =
+        router.pathname === '/'
+          ? 'dashboard'
+          : router.pathname.replace(/\//g, '-').substring(1);
+      logNavigation({ screen: routeName }, nextLogEvent).catch(() => {
+        // Silently fail if logging is not ready
+      });
+    }
+  }, [router.pathname, router.isReady, nextLogEvent]);
+
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    // Log app loaded event
+    logAppLifecycle({ stage: 'loaded' }, nextLogEvent).catch(() => {
+      // Silently fail if logging is not ready
+    });
+  }, [nextLogEvent]);
 
   return (
     <ErrorBoundary logger={nextLogError}>

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { WEB3AUTH_LOGIN_URL } from '@/constants';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useFELogger } from '@/hooks/useFELogger';
 import { Address } from '@/types/Address';
 
 import { LoadingSpinner } from '../ui';
@@ -29,8 +30,15 @@ type Web3AuthEvent = {
 export const Web3AuthIframe = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { web3AuthWindow, logEvent } = useElectronApi();
+  const { logWeb3AuthEvent } = useFELogger();
 
   const ref = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    logWeb3AuthEvent({ outcome: 'started' }).catch(() => {
+      // Silently fail
+    });
+  }, [logWeb3AuthEvent]);
 
   const handleEventListener = useCallback(
     (event: MessageEvent) => {
@@ -53,17 +61,23 @@ export const Web3AuthIframe = () => {
 
       // Handle modal close
       if (eventDetails.data.event_id === 'WEB3AUTH_MODAL_CLOSED') {
+        logWeb3AuthEvent({ outcome: 'cancelled' }).catch(() => {
+          // Silently fail
+        });
         web3AuthWindow?.close?.();
       }
 
       // Handle success auth
       if (eventDetails.data.event_id === 'WEB3AUTH_AUTH_SUCCESS') {
+        logWeb3AuthEvent({ outcome: 'success' }).catch(() => {
+          // Silently fail
+        });
         const backupWallet = eventDetails.data.address;
         if (!backupWallet) return;
         web3AuthWindow?.authSuccess?.(backupWallet);
       }
     },
-    [logEvent, web3AuthWindow],
+    [logEvent, logWeb3AuthEvent, web3AuthWindow],
   );
 
   useEffect(() => {
