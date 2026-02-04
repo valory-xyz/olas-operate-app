@@ -32,7 +32,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.29.1',
+      version: 'v0.0.101-20626',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
