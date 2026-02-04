@@ -32,7 +32,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.29.1',
+      version: 'v0.0.101-20626',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
@@ -180,7 +180,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
     repository: {
       owner: 'valory-xyz',
       name: 'meme-ooorr',
-      version: 'v2.0.2',
+      version: 'v0.0.1-linux1',
     },
   },
   env_variables: {
@@ -315,7 +315,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.6.5',
+      version: 'v0.0.1-linux1',
     },
   },
 };
@@ -634,7 +634,7 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
     repository: {
       owner: 'valory-xyz',
       name: 'pettai-agent',
-      version: 'v0.1.1',
+      version: 'v0.0.1-linux1',
     },
   },
   home_chain: MiddlewareChainMap.BASE,

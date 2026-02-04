@@ -40,6 +40,13 @@ jobs:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
     secrets: inherit
 
+  run-release-linux:
+    needs: calculate-version
+    uses: ./.github/workflows/release_linux.yml
+    with:
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
+
   summary:
     needs: [calculate-version, run-release, run-release-win]
     runs-on: ubuntu-latest

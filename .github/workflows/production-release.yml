@@ -44,6 +44,14 @@ jobs:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
     secrets: inherit
 
+  run-release-linux:
+    needs: calculate-version
+    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
+    uses: ./.github/workflows/release_linux.yml
+    with:
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
+
   run-release-win:
     needs: calculate-version
     if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
@@ -53,7 +61,7 @@ jobs:
     secrets: inherit
 
   summary:
-    needs: [calculate-version, run-release, run-release-win]
+    needs: [calculate-version, run-release, run-release-win, run-release-linux]
     if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
     runs-on: ubuntu-latest
     steps:
