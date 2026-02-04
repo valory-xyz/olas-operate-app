@@ -1,12 +1,9 @@
 name: Release for Windows
 
 on:
-  workflow_call:
-    inputs:
-      tag:
-        description: "Tag name to build (e.g., v1.2.3-rc1)"
-        required: true
-        type: string
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
   build-windows:
@@ -26,10 +23,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.tag }}
-          fetch-depth: 0
+      - uses: actions/checkout@v3
 
       # Set up Python with setup-python action and add it to PATH
       - uses: actions/setup-python@v5
@@ -110,17 +104,15 @@ jobs:
       - name: Set variables 
         id: variables 
         run: | 
-          VERSION='${{ inputs.tag }}'
-          VERSION_NO_V=${VERSION#v}
-          echo "version=$VERSION_NO_V" >> $GITHUB_OUTPUT 
+          echo "::set-output name=version::${GITHUB_REF#refs/tags/v}" 
           echo "SM_HOST=${{ secrets.SM_HOST }}" >> "$GITHUB_ENV" 
           echo "SM_API_KEY=${{ secrets.SM_API_KEY }}" >> "$GITHUB_ENV" 
 
-          if [[ -n $(echo -n "${{ inputs.tag }}"|egrep "\-(ga|ea|release|signed)$") ]]; then
-            echo "${{ inputs.tag }} is a release tag! enable signature support"
+          if [[ -n $(echo -n "${{ github.ref_name }}"|egrep "\-(ga|ea|release|signed)$") ]]; then
+            echo "${{ github.ref_name }} is a release tag! enable signature support"
             echo "SM_KEY_PAIR_ALIAS=${{ secrets.SM_KEY_PAIR_ALIAS }}" >> "$GITHUB_ENV" 
           else
-            echo "${{ inputs.tag }} is a NOT release tag! disable signature support"
+            echo "${{ github.ref_name }} is a NOT release tag! disable signature support"
           fi
           
           echo "SM_CLIENT_CERT_FILE=D:\\Certificate_pkcs12.p12" >> "$GITHUB_ENV" 
@@ -151,7 +143,6 @@ jobs:
           CELO_RPC: ${{ matrix.CELO_RPC }}
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
           GH_TOKEN: ${{ secrets.github_token}}
-          RELEASE_TAG: ${{ inputs.tag }}
         run: |
           echo NODE_ENV=$NODE_ENV >> prod.env
           echo IS_STAGING=$IS_STAGING >> prod.env
@@ -165,10 +156,4 @@ jobs:
           echo GH_TOKEN=$GH_TOKEN >> prod.env
       - run: rm -rf /dist
       - name: "Build, notarize, publish"
-        env:
-          RELEASE_TAG: ${{ inputs.tag }}
-        run: |
-          export GITHUB_REF_TYPE="tag"
-          export GITHUB_REF_NAME="${RELEASE_TAG}"
-          export GITHUB_REF="refs/tags/${RELEASE_TAG}"
-          make build
+        run: make build
