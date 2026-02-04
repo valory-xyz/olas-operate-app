@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 
 const {
@@ -37,6 +38,10 @@ const {
   shell,
   systemPreferences,
 } = require('electron');
+
+
+
+
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -130,7 +135,11 @@ const binaryPaths = {
   win32: {
     x64: 'bins/middleware/pearl_win.exe',
   },
+  linux: {
+    x64: 'bins/middleware/pearl_x64',
+  },
 };
+
 
 let appConfig = {
   ports: {
@@ -614,12 +623,9 @@ async function launchDaemon() {
     if (platform === 'darwin') {
       removeQuarantine(binPath);
     }
-
+    logger.electron(`middleware bin path: ${binPath}`);
     operateDaemon = spawn(
-      path.join(
-        process.resourcesPath,
-        binaryPaths[platform][process.arch.toString()],
-      ),
+        binPath,
       [
         'daemon',
         `--port=${appConfig.ports.prod.operate}`,
