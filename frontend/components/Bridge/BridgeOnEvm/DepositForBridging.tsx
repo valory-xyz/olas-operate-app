@@ -1,6 +1,6 @@
 import { CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Button, Flex, message, Spin, Typography } from 'antd';
-import { sortBy } from 'lodash';
+import { compact, sortBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
@@ -321,37 +321,35 @@ export const DepositForBridging = ({
       fromChain,
       toChain: bridgeToChain,
       eta: quoteEta,
-      transfers: tokens.map((token) => {
-        const toTokenDetails = bridgeRequirementsParams?.bridge_requests?.find(
-          ({ from }) =>
-            areAddressesEqual(from.token, token.address || AddressZero),
-        )?.to;
+      transfers: compact(
+        tokens.map((token) => {
+          const toTokenDetails =
+            bridgeRequirementsParams?.bridge_requests?.find(({ from }) =>
+              areAddressesEqual(from.token, token.address || AddressZero),
+            )?.to;
 
-        if (!toTokenDetails) {
-          throw new Error('To token details not found for the deposited token');
-        }
+          if (!toTokenDetails) return;
 
-        // Find the token address on the destination chain.
-        // eg. if the token is USDC on Ethereum, it will be USDC on Base
-        // but the address will be different.
-        const toTokenConfig = getTokenDetails(
-          toTokenDetails.token,
-          TOKEN_CONFIG[asEvmChainId(bridgeToChain)],
-        );
-        if (!toTokenConfig) {
-          throw new Error('To token config not found on the destination chain');
-        }
+          // Find the token address on the destination chain.
+          // eg. if the token is USDC on Ethereum, it will be USDC on Base
+          // but the address will be different.
+          const toTokenConfig = getTokenDetails(
+            toTokenDetails.token,
+            TOKEN_CONFIG[asEvmChainId(bridgeToChain)],
+          );
+          if (!toTokenConfig) return;
 
-        return {
-          fromSymbol: token.symbol,
-          fromAmount: token.currentBalanceInWei.toString(),
-          toSymbol: token.isNative
-            ? asEvmChainDetails(bridgeToChain).symbol
-            : toTokenConfig.symbol,
-          toAmount: BigInt(toTokenDetails.amount).toString(),
-          decimals: token.decimals,
-        };
-      }),
+          return {
+            fromSymbol: token.symbol,
+            fromAmount: token.currentBalanceInWei.toString(),
+            toSymbol: token.isNative
+              ? asEvmChainDetails(bridgeToChain).symbol
+              : toTokenConfig.symbol,
+            toAmount: BigInt(toTokenDetails.amount).toString(),
+            decimals: token.decimals,
+          };
+        }),
+      ),
     });
 
     // wait for 2 seconds before proceeding to the next step.
