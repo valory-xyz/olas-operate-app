@@ -18,6 +18,7 @@ import { asMiddlewareChain } from '@/utils';
 const ON_RAMP_FIAT_BUFFER_USD = 3;
 
 // function to calculate buffered ETH amount based on the fiat buffer
+// eg., if fiat buffer is $3, and 1 ETH = $1500, then buffered ETH = (3 / 1500) = 0.002 ETH
 const getEthWithBuffer = (
   ethAmount: number,
   fiatAmount: number,
