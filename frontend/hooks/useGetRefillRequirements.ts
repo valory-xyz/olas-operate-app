@@ -50,6 +50,7 @@ const getTokensDetailsForFunding = (
         chainConfig,
       );
       const parsedAmount = formatUnitsToNumber(amount, decimals);
+      console.log({ parsedAmount });
 
       if (parsedAmount > 0) {
         return {
@@ -61,6 +62,7 @@ const getTokensDetailsForFunding = (
     }),
   ) satisfies TokenRequirement[];
 
+  console.log({ currentTokenRequirements });
   return currentTokenRequirements.sort((a, b) => b.amount - a.amount);
 };
 
@@ -130,20 +132,20 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
         !requirements ||
         !masterEoa ||
         !isMasterWalletsFetched
-      )
+      ) {
         return [];
+      }
 
+      const chainConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
+
+      // master safe requirements
       const masterSafePlaceholder = (requirements as MasterSafeBalanceRecord)?.[
         MASTER_SAFE_REFILL_PLACEHOLDER
       ];
       const masterSafeRequirements = masterSafe
         ? (requirements as AddressBalanceRecord)?.[masterSafe.address]
         : masterSafePlaceholder;
-
       if (!masterSafeRequirements) return [];
-
-      const { evmHomeChainId } = selectedAgentConfig;
-      const chainConfig = TOKEN_CONFIG[evmHomeChainId];
 
       // Refill requirements for masterEOA
       const masterEoaRequirementAmount = (requirements as AddressBalanceRecord)[
@@ -168,6 +170,8 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
           }
         },
       );
+
+      console.log({ requirementsPerToken, chainConfig });
 
       return getTokensDetailsForFunding(requirementsPerToken, chainConfig);
     },
@@ -205,6 +209,8 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
       setTotalTokenRequirements(getRequirementsPerToken(totalRequirements));
     }
   }, [totalRequirements, getRequirementsPerToken, totalTokenRequirements]);
+
+  console.log({ totalRequirements });
 
   return {
     isLoading:

@@ -34,16 +34,10 @@ const getNativeInitialGasRequirement = (
 ): bigint => {
   const fundRequirements = config?.fund_requirements;
 
-  if (!fundRequirements) {
-    return 0n;
-  }
-
+  if (!fundRequirements) return 0n;
   const nativeRequirements = fundRequirements[constants.AddressZero as Address];
 
-  if (!nativeRequirements) {
-    return 0n;
-  }
-
+  if (!nativeRequirements) return 0n;
   const combinedRequirement =
     BigInt(nativeRequirements.safe || 0) +
     BigInt(nativeRequirements.agent || 0);
@@ -94,7 +88,10 @@ export const useInitialFundingRequirements = (agentType: AgentType) => {
 
         if (!stakingProgramId) return;
 
-        // Total native token requirement = initial gas estimate + safe creation threshold
+        // Total native token requirement =
+        // initial gas estimate +
+        // safe creation threshold +
+        // agent deployment gas requirement
         const nativeTokenSymbol = getNativeTokenSymbol(evmChainId);
         const nativeTokenConfig =
           NATIVE_TOKEN_CONFIG[evmChainId]?.[nativeTokenSymbol];
@@ -105,6 +102,13 @@ export const useInitialFundingRequirements = (agentType: AgentType) => {
           nativeTokenConfig.decimals,
         );
 
+        console.log({
+          evmChainId,
+          monthlyGasEstimate,
+          safeCreationThreshold,
+          agentDeploymentGas,
+        });
+
         // OLAS staking requirements
         const minimumStakedAmountRequired =
           STAKING_PROGRAMS[evmChainId]?.[stakingProgramId]
@@ -112,6 +116,12 @@ export const useInitialFundingRequirements = (agentType: AgentType) => {
 
         // Additional tokens requirements
         const additionalTokens = additionalRequirements?.[evmChainId] ?? {};
+
+        console.log({
+          [TokenSymbolMap.OLAS]: minimumStakedAmountRequired,
+          [nativeTokenSymbol]: totalNativeAmount,
+          ...additionalTokens,
+        });
 
         results[evmChainId] = {
           [TokenSymbolMap.OLAS]: minimumStakedAmountRequired,

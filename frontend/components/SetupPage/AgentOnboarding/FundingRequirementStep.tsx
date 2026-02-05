@@ -122,6 +122,7 @@ const MinimumFundingRequirements = ({
 }: MinimumFundingRequirementsProps) => {
   const { evmHomeChainId } = AGENT_CONFIG[agentType];
   const tokens = useInitialFundingRequirements(agentType);
+  console.log({ tokens });
 
   const allTokens = Object.entries(tokens[evmHomeChainId] || {})
     .map(([token, amount]) => {
@@ -130,6 +131,8 @@ const MinimumFundingRequirements = ({
     })
     // filter out OLAS as it's shown in staking requirements above.
     .filter(({ token }) => token !== TokenSymbolMap.OLAS);
+
+  console.log({ allTokens });
 
   if (allTokens.length === 0) {
     return (
