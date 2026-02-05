@@ -89,8 +89,8 @@ const generateMasterSafeCreationStep = (
   return {
     title: 'Create Pearl Wallet',
     status,
-    computedSubSteps: subSteps.map(({ txnLink }) => {
-      return { description, txnLink, isFailed };
+    computedSubSteps: subSteps.map(({ txnLink, onRetry, onRetryProps }) => {
+      return { description, txnLink, isFailed, onRetry, onRetryProps };
     }),
   };
 };
