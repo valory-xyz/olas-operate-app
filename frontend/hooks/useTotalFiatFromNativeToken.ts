@@ -76,6 +76,12 @@ type UseTotalFiatFromNativeTokenProps = {
   selectedChainId: OnRampNetworkConfig['selectedChainId'];
 };
 
+/**
+ * Adds a buffer to the total fiat amount calculated from the native token amount
+ * to account for price fluctuations during the on-ramp process.
+ */
+const ON_RAMP_FIAT_BUFFER_USD = 3;
+
 export const useTotalFiatFromNativeToken = ({
   nativeTokenAmount,
   selectedChainId,
@@ -100,7 +106,7 @@ export const useTotalFiatFromNativeToken = ({
         throw error;
       }
     },
-    select: (data) => data.fiatAmount,
+    select: (data) => data.fiatAmount + ON_RAMP_FIAT_BUFFER_USD,
     enabled: !!fromChain && !!nativeTokenAmount,
   });
 };
