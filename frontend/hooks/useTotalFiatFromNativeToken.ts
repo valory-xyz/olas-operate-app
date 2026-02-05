@@ -93,12 +93,14 @@ type UseTotalFiatFromNativeTokenProps = {
   nativeTokenAmount?: number;
   ethAmountToPay?: Nullable<number>;
   selectedChainId: OnRampNetworkConfig['selectedChainId'];
+  skip?: boolean;
 };
 
 export const useTotalFiatFromNativeToken = ({
   nativeTokenAmount,
   ethAmountToPay,
   selectedChainId,
+  skip = false,
 }: UseTotalFiatFromNativeTokenProps) => {
   const selectedChainName = asMiddlewareChain(
     ensureRequired(selectedChainId, "Chain ID can't be empty"),
@@ -133,6 +135,6 @@ export const useTotalFiatFromNativeToken = ({
         data.cryptoAmount,
       ),
     }),
-    enabled: !!fromChain && !!nativeTokenAmount,
+    enabled: !skip && !!fromChain && !!nativeTokenAmount,
   });
 };
