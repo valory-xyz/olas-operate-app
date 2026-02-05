@@ -128,3 +128,19 @@ export const numberToPlainString = (
   }
   return possiblyBrokenBigNumber;
 };
+
+/**
+ *
+ * @example formatAmountTrimmed(1234.578) => '1234.578'
+ * @example formatAmountTrimmed(1234.0) => '1234'
+ * Removes trailing zeros from decimal numbers
+ */
+export const formatAmountNormalized = (
+  amount: number,
+  decimals = 4,
+): string => {
+  if (Number.isInteger(amount)) {
+    return amount.toString();
+  }
+  return amount.toFixed(decimals).replace(/\.?0+$/, '');
+};

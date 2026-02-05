@@ -15,6 +15,7 @@ import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
 import { useTotalNativeTokenRequired } from '@/hooks/useTotalNativeTokenRequired';
 import { ReceivingTokens } from '@/types/Bridge';
+import { formatAmountNormalized } from '@/utils';
 import {
   asEvmChainDetails,
   asMiddlewareChain,
@@ -150,9 +151,10 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     receivingTokens,
     onRetry,
   } = useTotalNativeTokenRequired(onRampChainId, 'preview');
-  const { isLoading: isFiatLoading, data: fiatAmount } =
+  const { isLoading: isFiatLoading, data: totalFiatDetails } =
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
+      ethAmountToPay,
       selectedChainId,
     });
 
@@ -180,17 +182,23 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
 
     if (isReceivingAmountLoading || hasNativeTokenError) {
       updateUsdAmountToPay(null);
-    } else if (fiatAmount) {
-      updateUsdAmountToPay(fiatAmount);
+    } else if (totalFiatDetails?.fiatAmount) {
+      updateUsdAmountToPay(totalFiatDetails.fiatAmount);
     }
   }, [
     isTransactionSuccessfulButFundsNotReceived,
     isOnRampingStepCompleted,
     isReceivingAmountLoading,
     hasNativeTokenError,
-    fiatAmount,
+    totalFiatDetails,
     updateUsdAmountToPay,
   ]);
+
+  const totalEthAmountToDisplay = useMemo(() => {
+    const eth = totalFiatDetails?.ethAmountToDisplay;
+    if (!eth) return `0 ETH`;
+    return `${formatAmountNormalized(eth, 4)} ETH`;
+  }, [totalFiatDetails]);
 
   const ethToTokenDataSource = useMemo<PaymentTableDataType[]>(
     () => [
@@ -214,10 +222,12 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
                 ) : (
                   <>
                     <Text>
-                      {usdAmountToPay ? `~$${usdAmountToPay} for` : NA}
+                      {usdAmountToPay
+                        ? `~$${formatAmountNormalized(usdAmountToPay, 2)} for`
+                        : NA}
                     </Text>
                     <ChainLogo chainName="ethereum" alt="ETH" />
-                    <Text>{`${ethAmountToPay} ETH`}</Text>
+                    <Text>{totalEthAmountToDisplay}</Text>
                   </>
                 )}
               </Flex>
@@ -232,11 +242,11 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     [
       isNativeTokenLoading,
       hasNativeTokenError,
-      ethAmountToPay,
       usdAmountToPay,
       tokensRequired,
       onRetry,
       isReceivingAmountLoading,
+      totalEthAmountToDisplay,
     ],
   );
 
