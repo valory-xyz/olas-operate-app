@@ -131,8 +131,8 @@ export const numberToPlainString = (
 
 /**
  * Removes trailing zeros from decimal numbers
- * @example formatAmountTrimmed(1234.578) => '1234.578'
- * @example formatAmountTrimmed(1234.0) => '1234'
+ * @example formatAmountNormalized(1234.578) => '1234.578'
+ * @example formatAmountNormalized(1234.0) => '1234'
  */
 export const formatAmountNormalized = (
   amount: number,
