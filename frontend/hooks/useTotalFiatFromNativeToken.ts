@@ -24,6 +24,9 @@ const getEthWithBuffer = (
   fiatAmount: number,
   cryptoAmount: number,
 ) => {
+  if (!fiatAmount) {
+    return ethAmount;
+  }
   const bufferedEth = (cryptoAmount / fiatAmount) * ON_RAMP_FIAT_BUFFER_USD;
   return ethAmount + bufferedEth;
 };
