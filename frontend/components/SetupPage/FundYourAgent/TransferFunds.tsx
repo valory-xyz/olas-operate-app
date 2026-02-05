@@ -1,9 +1,9 @@
-import { Flex, Spin, Typography } from 'antd';
+import { Button, Flex, Spin, Typography } from 'antd';
 import { isNil } from 'lodash';
 import { useCallback, useEffect, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { LoadingOutlined } from '@/components/custom-icons';
+import { LoadingOutlined, WarningOutlined } from '@/components/custom-icons';
 import {
   AgentSetupCompleteModal,
   Alert,
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui';
 import { TokenSymbol } from '@/config/tokens';
 import { CHAIN_IMAGE_MAP, EvmChainName, SETUP_SCREEN } from '@/constants';
+import { useSupportModal } from '@/context/SupportModalProvider';
 import {
   useMasterSafeCreationAndTransfer,
   useMasterWalletContext,
@@ -35,8 +36,34 @@ const FinishingSetupModal = () => (
   />
 );
 
+type MasterSafeCreationFailedModalProps = {
+  onTryAgain: () => void;
+  onContactSupport: () => void;
+};
+const MasterSafeCreationFailedModal = ({
+  onTryAgain,
+  onContactSupport,
+}: MasterSafeCreationFailedModalProps) => (
+  <Modal
+    header={<WarningOutlined />}
+    title="Master Safe Creation Failed"
+    description="Please try again in a few minutes."
+    action={
+      <Flex gap={16} vertical className="mt-24 w-full">
+        <Button onClick={onTryAgain} type="primary" block size="large">
+          Try Again
+        </Button>
+        <Button onClick={onContactSupport} type="default" block size="large">
+          Contact Support
+        </Button>
+      </Flex>
+    }
+  />
+);
+
 export const TransferFunds = () => {
   const { goto: gotoSetup } = useSetup();
+  const { toggleSupportModal } = useSupportModal();
   const {
     masterEoa,
     getMasterSafeOf,
@@ -48,13 +75,15 @@ export const TransferFunds = () => {
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
-    mutateAsync: createMasterSafe,
+    mutate: createMasterSafe,
     isSuccess: isSuccessMasterSafeCreation,
     data: masterSafeDetails,
   } = useMasterSafeCreationAndTransfer(
     Object.keys(tokensFundingStatus) as TokenSymbol[],
   );
   const [showSetupFinishedModal, setShowSetupFinishedModal] = useState(false);
+  const [showSafeCreationFailedModal, setShowSafeCreationFailedModal] =
+    useState(false);
 
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
@@ -74,11 +103,27 @@ export const TransferFunds = () => {
     createMasterSafe();
   }, [createMasterSafe, isMasterWalletFetched, isSafeCreated]);
 
+  const handleTryAgain = useCallback(() => {
+    setShowSafeCreationFailedModal(false);
+    createMasterSafe();
+  }, [createMasterSafe]);
+
+  const handleContactSupport = useCallback(() => {
+    toggleSupportModal();
+  }, [toggleSupportModal]);
+
+  // If funds are already received, proceed to create the Master Safe
   useEffect(() => {
     if (isFullyFunded) {
       handleFunded();
     }
   }, [isFullyFunded, handleFunded]);
+
+  // If master safe creation failed, show the failure modal
+  useEffect(() => {
+    if (!isErrorMasterSafeCreation) return;
+    setShowSafeCreationFailedModal(true);
+  }, [isErrorMasterSafeCreation]);
 
   useEffect(() => {
     if (isLoadingMasterSafeCreation) return;
@@ -89,6 +134,7 @@ export const TransferFunds = () => {
     // Show setup finished modal after a bit of delay so the finishing setup modal is closed.
     delayInSeconds(0.25).then(() => {
       setShowSetupFinishedModal(true);
+      setShowSafeCreationFailedModal(false);
     });
   }, [
     isLoadingMasterSafeCreation,
@@ -101,6 +147,7 @@ export const TransferFunds = () => {
 
   useUnmount(() => {
     setShowSetupFinishedModal(false);
+    setShowSafeCreationFailedModal(false);
   });
 
   return (
@@ -138,10 +185,19 @@ export const TransferFunds = () => {
         />
       </CardFlex>
 
-      {isLoadingMasterSafeCreation && !showSetupFinishedModal && (
-        <FinishingSetupModal />
+      {showSetupFinishedModal ? (
+        <AgentSetupCompleteModal />
+      ) : (
+        <>
+          {isLoadingMasterSafeCreation && <FinishingSetupModal />}
+          {showSafeCreationFailedModal && (
+            <MasterSafeCreationFailedModal
+              onTryAgain={handleTryAgain}
+              onContactSupport={handleContactSupport}
+            />
+          )}
+        </>
       )}
-      {showSetupFinishedModal && <AgentSetupCompleteModal />}
     </Flex>
   );
 };
