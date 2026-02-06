@@ -34,12 +34,10 @@ export const useMasterSafeCreationAndTransfer = (
           chain,
           backupSignerAddress,
         );
-
         const hasTransferErrors = keys(response.transfer_errors).length > 0;
 
         return {
-          isSafeCreated: true,
-          isTransferSuccessful: !hasTransferErrors,
+          isSafeCreated: !hasTransferErrors,
           txnLink: response.create_tx
             ? `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[chain]}/tx/${response.create_tx}`
             : null,

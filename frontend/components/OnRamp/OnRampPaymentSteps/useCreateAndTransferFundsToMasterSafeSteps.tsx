@@ -1,4 +1,4 @@
-import { isNil } from 'lodash';
+import { compact, isNil } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
@@ -196,8 +196,6 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 
   return {
     isMasterSafeCreatedAndFundsTransferred,
-    steps: [masterSafeCreationStep, masterSafeTransferFundStep].filter(
-      Boolean,
-    ) as TransactionStep[],
+    steps: compact([masterSafeCreationStep, masterSafeTransferFundStep]),
   };
 };
