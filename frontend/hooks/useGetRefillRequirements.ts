@@ -50,7 +50,6 @@ const getTokensDetailsForFunding = (
         chainConfig,
       );
       const parsedAmount = formatUnitsToNumber(amount, decimals);
-      console.log({ parsedAmount });
 
       if (parsedAmount > 0) {
         return {
@@ -62,7 +61,6 @@ const getTokensDetailsForFunding = (
     }),
   ) satisfies TokenRequirement[];
 
-  console.log({ currentTokenRequirements });
   return currentTokenRequirements.sort((a, b) => b.amount - a.amount);
 };
 
@@ -171,8 +169,6 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
         },
       );
 
-      console.log({ requirementsPerToken, chainConfig });
-
       return getTokensDetailsForFunding(requirementsPerToken, chainConfig);
     },
     [
@@ -209,8 +205,6 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
       setTotalTokenRequirements(getRequirementsPerToken(totalRequirements));
     }
   }, [totalRequirements, getRequirementsPerToken, totalTokenRequirements]);
-
-  console.log({ totalRequirements });
 
   return {
     isLoading:

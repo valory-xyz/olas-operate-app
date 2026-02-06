@@ -102,13 +102,6 @@ export const useInitialFundingRequirements = (agentType: AgentType) => {
           nativeTokenConfig.decimals,
         );
 
-        console.log({
-          evmChainId,
-          monthlyGasEstimate,
-          safeCreationThreshold,
-          agentDeploymentGas,
-        });
-
         // OLAS staking requirements
         const minimumStakedAmountRequired =
           STAKING_PROGRAMS[evmChainId]?.[stakingProgramId]
@@ -116,12 +109,6 @@ export const useInitialFundingRequirements = (agentType: AgentType) => {
 
         // Additional tokens requirements
         const additionalTokens = additionalRequirements?.[evmChainId] ?? {};
-
-        console.log({
-          [TokenSymbolMap.OLAS]: minimumStakedAmountRequired,
-          [nativeTokenSymbol]: totalNativeAmount,
-          ...additionalTokens,
-        });
 
         results[evmChainId] = {
           [TokenSymbolMap.OLAS]: minimumStakedAmountRequired,
