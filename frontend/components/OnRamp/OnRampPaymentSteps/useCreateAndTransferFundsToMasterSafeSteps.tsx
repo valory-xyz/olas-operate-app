@@ -128,7 +128,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
       if (areFundsBeingTransferred?.some((x) => x)) return 'process';
 
       if (isSafeCreated && isTransferComplete) return 'finish';
-      if (!isTransferComplete) return 'error';
+      if (isSafeCreated && !isTransferComplete) return 'error';
       return 'wait';
     })();
 
