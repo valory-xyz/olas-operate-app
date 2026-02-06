@@ -42,10 +42,7 @@ export const useMasterSafeCreationAndTransfer = (
         const { transfer_errors, transfer_txs, create_tx, status } = response;
 
         // Details related to safe creation
-        const isSafeCreatedNow =
-          status === 'SAFE_EXISTS_ALREADY_FUNDED'
-            ? true
-            : status !== 'SAFE_CREATION_FAILED';
+        const isSafeCreatedNow = status !== 'SAFE_CREATION_FAILED';
         if (isSafeCreatedNow) wasSafePreviouslyCreated.current = true;
         const isSafeCreated =
           isSafeCreatedNow || wasSafePreviouslyCreated.current;
