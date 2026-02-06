@@ -146,6 +146,7 @@ export const TransferFunds = () => {
     isSafeCreated,
     isTransferComplete,
     createMasterSafe,
+    hasAttemptedCreation,
   ]);
 
   // If master safe creation or transfer failed, show the failure modal
