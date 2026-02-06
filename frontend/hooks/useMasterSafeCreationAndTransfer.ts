@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { keys } from 'lodash';
+import { useRef } from 'react';
 
 import { TOKEN_CONFIG, TokenSymbol, TokenType } from '@/config/tokens';
 import { AddressZero } from '@/constants';
@@ -19,6 +19,10 @@ import { useBalanceAndRefillRequirementsContext } from '.';
 export const useMasterSafeCreationAndTransfer = (
   tokenSymbols: TokenSymbol[],
 ) => {
+  // Using ref to track if the safe was previously created to avoid step status going back to 'wait'
+  // in case of safe creation failure after the safe has been created successfully once.
+  // This is a workaround and API will be split into two separate APIs.
+  const wasSafePreviouslyCreated = useRef(false);
   const backupSignerAddress = useBackupSigner();
   const { selectedAgentConfig } = useServices();
   const { refetch } = useBalanceAndRefillRequirementsContext();
@@ -29,6 +33,7 @@ export const useMasterSafeCreationAndTransfer = (
 
   return useMutation({
     mutationFn: async () => {
+      const explorer = `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[chain]}/tx`;
       try {
         // await delayInSeconds(5); // Adding delay to ensure the backup signer is ready before making the API call
         // throw new Error('Simulated master safe creation failure'); // Simulating an error for testing purposes --- IGNORE ---
@@ -38,17 +43,25 @@ export const useMasterSafeCreationAndTransfer = (
           backupSignerAddress,
         );
         const { transfer_errors, transfer_txs, create_tx, status } = response;
-        const hasTransferErrors = keys(transfer_errors).length > 0;
-
-        const explorer = `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[chain]}/tx`;
 
         // Details related to safe creation
-        const isSafeCreated = status !== 'SAFE_CREATION_FAILED';
+        const isSafeCreatedNow = status !== 'SAFE_CREATION_FAILED';
+        if (isSafeCreatedNow) wasSafePreviouslyCreated.current = true;
+        const isSafeCreated =
+          isSafeCreatedNow ?? wasSafePreviouslyCreated.current;
         const safeCreationDetails = {
           isSafeCreated,
           txnLink: create_tx ? `${explorer}/${create_tx}` : null,
           status: isSafeCreated ? 'finish' : 'error',
         };
+
+        console.log({
+          tokenSymbols,
+          transfer_errors,
+          transfer_txs,
+          create_tx,
+          status,
+        });
 
         //  details related to transfers (NOTE: to be split into different API)
         const isTransferComplete = status === 'SAFE_CREATED_TRANSFER_COMPLETED';
@@ -62,6 +75,7 @@ export const useMasterSafeCreationAndTransfer = (
               );
             }
 
+            console.log({ tokenDetails });
             const { tokenType, address } = tokenDetails;
             const tokenAddress =
               tokenType === TokenType.NativeGas ? AddressZero : address;
@@ -82,51 +96,7 @@ export const useMasterSafeCreationAndTransfer = (
           }),
         };
 
-        return {
-          /** @deprecated */
-          isSafeCreated: !hasTransferErrors,
-          /** @deprecated */
-          txnLink: response.create_tx
-            ? `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[chain]}/tx/${response.create_tx}`
-            : null,
-
-          // NOTE: Currently, both creation and transfer are handled in the same API call.
-          // Hence, the response contains the transfer status as well.
-          /** @deprecated */
-          masterSafeTransferStatus: hasTransferErrors ? 'FAILED' : 'FINISHED',
-          /** @deprecated */
-          transfers: tokenSymbols.map((symbol) => {
-            const tokenDetails = chainTokenConfig[symbol];
-            if (!tokenDetails) {
-              throw new Error(
-                `Token config not found for symbol: ${symbol} on chain: ${chain}`,
-              );
-            }
-
-            const { tokenType, address } = tokenDetails;
-            const tokenAddress =
-              tokenType === TokenType.NativeGas ? AddressZero : address;
-            const transferTxn = response.transfer_txs[tokenAddress];
-            const txnLink = transferTxn
-              ? `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[chain]}/tx/${transferTxn}`
-              : null;
-            const isTransferFailed = Boolean(
-              response.transfer_errors?.[tokenAddress],
-            );
-            const status = (
-              isTransferFailed ? 'error' : 'finish'
-            ) as BridgingStepStatus;
-
-            return {
-              symbol,
-              status,
-              txnLink,
-            };
-          }),
-
-          safeCreationDetails,
-          transferDetails,
-        };
+        return { safeCreationDetails, transferDetails };
       } catch (error) {
         console.error('Safe creation failed:', error);
         throw error;

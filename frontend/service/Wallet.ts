@@ -1,10 +1,11 @@
 import {
+  AddressZero,
   BACKEND_URL,
   CONTENT_TYPE_JSON_UTF8,
   MiddlewareChain,
 } from '@/constants';
 import { MiddlewareWalletResponse, SafeCreationResponse } from '@/types';
-import { parseApiError } from '@/utils';
+import { delayInSeconds, parseApiError } from '@/utils';
 
 /**
  * Returns a list of available wallets
@@ -29,21 +30,43 @@ const createEoa = async () =>
     throw new Error('Failed to create EOA');
   });
 
+const dummy: SafeCreationResponse = {
+  safe: '0xSafeAddress',
+  create_tx: '0xCreateTxHash',
+  transfer_txs: {
+    [AddressZero]: '0x0000000000000000000000000000000000000000000',
+  },
+  transfer_errors: {
+    '0xcE11e14225575945b8E6Dc0D4F2dD4C570f79d9f':
+      '0x0000000000000000000000000000000000000000000',
+  },
+  message: 'Safe created successfully',
+  status: 'SAFE_CREATED_TRANSFER_FAILED',
+};
+
 /**
  * Creates a new safe (master safe) on the specified chain with an optional backup owner.
  */
 const createSafe = async (
   chain: MiddlewareChain,
   backup_owner?: string,
-): Promise<SafeCreationResponse> =>
-  fetch(`${BACKEND_URL}/wallet/safe`, {
+): Promise<SafeCreationResponse> => {
+  await delayInSeconds(3);
+  return new Promise((resolve) => resolve(dummy));
+
+  return fetch(`${BACKEND_URL}/wallet/safe`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    body: JSON.stringify({ chain, backup_owner, transfer_excess_assets: true }),
+    body: JSON.stringify({
+      chain,
+      backup_owner,
+      transfer_excess_assets: true,
+    }),
   }).then((res) => {
     if (res.ok) return res.json();
     throw new Error('Failed to create safe');
   });
+};
 
 const updateSafeBackupOwner = async (
   chain: MiddlewareChain,

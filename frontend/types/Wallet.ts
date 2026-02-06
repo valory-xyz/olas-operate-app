@@ -10,7 +10,8 @@ export type SafeCreationStatus =
   | 'SAFE_CREATION_FAILED'
   | 'SAFE_CREATED_TRANSFER_FAILED'
   | 'SAFE_EXISTS_TRANSFER_FAILED'
-  | 'SAFE_CREATED_TRANSFER_COMPLETED';
+  | 'SAFE_CREATED_TRANSFER_COMPLETED'
+  | 'SAFE_EXISTS_ALREADY_FUNDED';
 
 export type SafeCreationResponse = {
   safe: Address;
