@@ -78,7 +78,7 @@ export const useMasterSafeCreationAndTransfer = (
               : transfer_txs[tokenAddress];
             const txnLink = transferTxn ? `${explorer}/${transferTxn}` : null;
             const status = (
-              isTransferFailed ? 'error' : 'finish'
+              isTransferFailed ? 'error' : !transferTxn ? 'wait' : 'finish'
             ) as BridgingStepStatus;
 
             return {
