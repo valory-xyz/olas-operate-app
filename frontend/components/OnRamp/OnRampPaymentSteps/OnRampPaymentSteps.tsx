@@ -1,10 +1,8 @@
+import { compact } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
-import {
-  TransactionStep,
-  TransactionSteps,
-} from '@/components/ui/TransactionSteps';
+import { TransactionSteps } from '@/components/ui/TransactionSteps';
 import { EvmChainId } from '@/constants/chains';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 
@@ -53,8 +51,9 @@ export const OnRampPaymentSteps = ({
     if (
       createAndTransferFundsToMasterSafeSteps.length > 0 &&
       !isMasterSafeCreatedAndFundsTransferred
-    )
+    ) {
       return;
+    }
 
     setIsSetupCompleted(true);
   }, [
@@ -70,7 +69,7 @@ export const OnRampPaymentSteps = ({
         steps={[
           buyCryptoStep,
           swapStep,
-          ...(createAndTransferFundsToMasterSafeSteps as TransactionStep[]),
+          ...compact(createAndTransferFundsToMasterSafeSteps),
         ]}
       />
       {isSetupCompleted && <AgentSetupCompleteModal />}
