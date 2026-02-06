@@ -105,18 +105,14 @@ export const TransferFunds = () => {
   const hasTransferFailure = (() => {
     const safeCreationDetails = creationAndTransferDetails?.safeCreationDetails;
     const transferDetails = creationAndTransferDetails?.transferDetails;
-    const safeStatus = safeCreationDetails?.status;
     const transfersHaveError = transferDetails?.transfers?.some(
       (t) => t.status === 'error',
     );
-    const isTransferFailedStatus =
-      safeStatus === 'SAFE_EXISTS_TRANSFER_FAILED' ||
-      safeStatus === 'SAFE_CREATED_TRANSFER_FAILED';
 
     return (
       safeCreationDetails?.isSafeCreated &&
       !transferDetails?.isTransferComplete &&
-      (transfersHaveError || isTransferFailedStatus)
+      transfersHaveError
     );
   })();
   const shouldShowFailureModal = hasSafeCreationFailure || hasTransferFailure;
