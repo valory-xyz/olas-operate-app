@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { round } from 'lodash';
 
 import { OnRampNetworkConfig } from '@/components/OnRamp';
 import {
@@ -7,8 +8,28 @@ import {
   SupportedMiddlewareChain,
 } from '@/constants';
 import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
-import { ensureRequired } from '@/types';
+import { ensureRequired, Nullable } from '@/types';
 import { asMiddlewareChain } from '@/utils';
+
+/**
+ * Adds a buffer to the total fiat amount calculated from the native token amount
+ * to account for price fluctuations during the on-ramp process.
+ */
+const ON_RAMP_FIAT_BUFFER_USD = 3;
+
+// function to calculate buffered ETH amount based on the fiat buffer
+// eg., if fiat buffer is $3, and 1 ETH = $1500, then buffered ETH = (3 / 1500) = 0.002 ETH
+const getEthWithBuffer = (
+  ethAmount: number,
+  fiatAmount: number,
+  cryptoAmount: number,
+) => {
+  if (!fiatAmount) {
+    return ethAmount;
+  }
+  const bufferedEth = (cryptoAmount / fiatAmount) * ON_RAMP_FIAT_BUFFER_USD;
+  return ethAmount + bufferedEth;
+};
 
 type FeeBreakdownItem = {
   name: string;
@@ -73,12 +94,14 @@ const fetchTransakQuote = async (
 
 type UseTotalFiatFromNativeTokenProps = {
   nativeTokenAmount?: number;
+  ethAmountToPay?: Nullable<number>;
   selectedChainId: OnRampNetworkConfig['selectedChainId'];
   skip?: boolean;
 };
 
 export const useTotalFiatFromNativeToken = ({
   nativeTokenAmount,
+  ethAmountToPay,
   selectedChainId,
   skip = false,
 }: UseTotalFiatFromNativeTokenProps) => {
@@ -102,7 +125,19 @@ export const useTotalFiatFromNativeToken = ({
         throw error;
       }
     },
-    select: (data) => data.fiatAmount,
+    select: (data) => ({
+      // round is used to avoid 15.38 + 3 = 18.380000000000003 issues
+      fiatAmount: round(data.fiatAmount + ON_RAMP_FIAT_BUFFER_USD, 2),
+      /**
+       * JUST TO DISPLAY TO THE USER
+       * calculate the buffered ETH amount to display to the user during the on-ramp process.
+       */
+      ethAmountToDisplay: getEthWithBuffer(
+        ethAmountToPay ?? 0,
+        data.fiatAmount,
+        data.cryptoAmount,
+      ),
+    }),
     enabled: !skip && !!fromChain && !!nativeTokenAmount,
   });
 };
