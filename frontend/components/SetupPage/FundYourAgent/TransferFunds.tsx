@@ -77,7 +77,7 @@ export const TransferFunds = () => {
     isError: isErrorMasterSafeCreation,
     mutate: createMasterSafe,
     isSuccess: isSuccessMasterSafeCreation,
-    data: masterSafeDetails,
+    data: creationAndTransferDetails,
   } = useMasterSafeCreationAndTransfer(
     Object.keys(tokensFundingStatus) as TokenSymbol[],
   );
@@ -90,8 +90,10 @@ export const TransferFunds = () => {
   const chainImage = CHAIN_IMAGE_MAP[evmHomeChainId];
   const isSafeCreated = isMasterWalletFetched
     ? !isNil(getMasterSafeOf?.(evmHomeChainId)) ||
-      masterSafeDetails?.isSafeCreated
+      creationAndTransferDetails?.safeCreationDetails?.isSafeCreated
     : false;
+  const isTransferComplete =
+    creationAndTransferDetails?.transferDetails.isTransferComplete;
 
   const destinationAddress = isMasterWalletFetched
     ? getMasterSafeOf?.(evmHomeChainId)?.address || masterEoa?.address
@@ -99,9 +101,15 @@ export const TransferFunds = () => {
 
   const handleFunded = useCallback(async () => {
     if (!isMasterWalletFetched) return;
-    if (isSafeCreated) return;
+    if (isSafeCreated || isTransferComplete) return;
+
     createMasterSafe();
-  }, [createMasterSafe, isMasterWalletFetched, isSafeCreated]);
+  }, [
+    createMasterSafe,
+    isMasterWalletFetched,
+    isSafeCreated,
+    isTransferComplete,
+  ]);
 
   const handleTryAgain = useCallback(() => {
     setShowSafeCreationFailedModal(false);
@@ -129,6 +137,7 @@ export const TransferFunds = () => {
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
     if (!isSafeCreated) return;
+    if (!isTransferComplete) return;
     if (!isFullyFunded) return;
 
     // Show setup finished modal after a bit of delay so the finishing setup modal is closed.
@@ -142,6 +151,7 @@ export const TransferFunds = () => {
     isSuccessMasterSafeCreation,
     setShowSetupFinishedModal,
     isSafeCreated,
+    isTransferComplete,
     isFullyFunded,
   ]);
 

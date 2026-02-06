@@ -6,12 +6,19 @@ import { Nullable } from './Util';
 
 export type AddressTxnRecord = Record<Address, `0x${string}`>;
 
+export type SafeCreationStatus =
+  | 'SAFE_CREATION_FAILED'
+  | 'SAFE_CREATED_TRANSFER_FAILED'
+  | 'SAFE_EXISTS_TRANSFER_FAILED'
+  | 'SAFE_CREATED_TRANSFER_COMPLETED';
+
 export type SafeCreationResponse = {
   safe: Address;
   create_tx: string;
   transfer_txs: AddressTxnRecord;
   transfer_errors: AddressTxnRecord;
   message: string;
+  status: SafeCreationStatus;
 };
 
 export type AvailableAsset = {
