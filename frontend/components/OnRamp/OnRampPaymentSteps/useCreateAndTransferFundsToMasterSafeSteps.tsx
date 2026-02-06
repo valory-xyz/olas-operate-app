@@ -135,28 +135,29 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     return {
       status: currentMasterSafeCreationStatus,
       title: 'Transfer funds to the Pearl Wallet',
-      subSteps: transferStatuses?.map(({ status, symbol, txnLink }) => {
-        const description = (() => {
-          if (status === 'finish') return `Transfer ${symbol} complete.`;
-          if (status === 'error') return `Transfer ${symbol} failed.`;
-          if (status === 'process') return 'Sending transaction...';
-          return null;
-        })();
+      subSteps:
+        transferStatuses?.map(({ status, symbol, txnLink }) => {
+          const description = (() => {
+            if (status === 'finish') return `Transfer ${symbol} complete.`;
+            if (status === 'error') return `Transfer ${symbol} failed.`;
+            if (status === 'process') return 'Sending transaction...';
+            return null;
+          })();
 
-        return {
-          description,
-          txnLink,
-          failed:
-            status === 'error' ? (
-              <FundsAreSafeMessage
-                onRetry={createMasterSafe}
-                onRetryProps={{
-                  isLoading: currentMasterSafeCreationStatus === 'process',
-                }}
-              />
-            ) : null,
-        };
-      }),
+          return {
+            description,
+            txnLink,
+            failed:
+              status === 'error' ? (
+                <FundsAreSafeMessage
+                  onRetry={createMasterSafe}
+                  onRetryProps={{
+                    isLoading: currentMasterSafeCreationStatus === 'process',
+                  }}
+                />
+              ) : null,
+          };
+        }) || [],
     };
   }, [
     isSwapCompleted,
