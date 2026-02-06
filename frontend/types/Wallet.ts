@@ -8,9 +8,10 @@ export type AddressTxnRecord = Record<Address, `0x${string}`>;
 
 export type SafeCreationResponse = {
   safe: Address;
-  message: string;
   create_tx: string;
   transfer_txs: AddressTxnRecord;
+  transfer_errors: AddressTxnRecord;
+  message: string;
 };
 
 export type AvailableAsset = {

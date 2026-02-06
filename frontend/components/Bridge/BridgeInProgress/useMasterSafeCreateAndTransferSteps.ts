@@ -115,7 +115,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
       status: currentMasterSafeCreationStatus,
       subSteps: [
         {
-          txnLink: null, // BE to be updated to return the txn link
+          txnLink: masterSafeDetails?.txnLink || null,
           onRetry: createMasterSafe,
           onRetryProps: {
             isLoading: currentMasterSafeCreationStatus === 'process',
@@ -132,6 +132,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
     isErrorMasterSafeCreation,
     isLoadingMasterSafeCreation,
     isSafeCreated,
+    masterSafeDetails?.txnLink,
   ]);
 
   const masterSafeTransferDetails = useMemo(() => {

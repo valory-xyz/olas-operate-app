@@ -102,23 +102,25 @@ const generateMasterSafeTransferStep = (
   return {
     title: 'Transfer funds to the Pearl Wallet',
     status,
-    computedSubSteps: subSteps.map(({ symbol, status, txnLink }) => {
-      const isFailed = status === 'error';
-      const description = (() => {
-        if (status === 'finish') {
-          return `Transfer ${symbol} transaction complete.`;
-        }
-        if (status === 'process') {
-          return 'Sending transaction...';
-        }
-        if (status === 'error') {
-          return `Transfer ${symbol} transaction failed.`;
-        }
-        return null;
-      })();
+    computedSubSteps: subSteps.map(
+      ({ symbol, status, txnLink, onRetry, onRetryProps }) => {
+        const isFailed = status === 'error';
+        const description = (() => {
+          if (status === 'finish') {
+            return `Transfer ${symbol} transaction complete.`;
+          }
+          if (status === 'process') {
+            return 'Sending transaction...';
+          }
+          if (status === 'error') {
+            return `Transfer ${symbol} transaction failed.`;
+          }
+          return null;
+        })();
 
-      return { description, txnLink, isFailed };
-    }),
+        return { description, txnLink, isFailed, onRetry, onRetryProps };
+      },
+    ),
   };
 };
 

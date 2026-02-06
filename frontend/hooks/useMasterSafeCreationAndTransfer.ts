@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { keys } from 'lodash';
 
 import { TOKEN_CONFIG, TokenSymbol, TokenType } from '@/config/tokens';
 import { AddressZero } from '@/constants';
@@ -34,13 +35,18 @@ export const useMasterSafeCreationAndTransfer = (
           backupSignerAddress,
         );
 
+        const hasTransferErrors = keys(response.transfer_errors).length > 0;
+
         return {
           isSafeCreated: true,
-          txnLink: `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[chain]}/tx/${response.create_tx}`,
+          isTransferSuccessful: !hasTransferErrors,
+          txnLink: response.create_tx
+            ? `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[chain]}/tx/${response.create_tx}`
+            : null,
 
           // NOTE: Currently, both creation and transfer are handled in the same API call.
           // Hence, the response contains the transfer status as well.
-          masterSafeTransferStatus: 'FINISHED',
+          masterSafeTransferStatus: hasTransferErrors ? 'FAILED' : 'FINISHED',
           transfers: tokenSymbols.map((symbol) => {
             const tokenDetails = chainTokenConfig[symbol];
             if (!tokenDetails) {
@@ -56,9 +62,16 @@ export const useMasterSafeCreationAndTransfer = (
             const txnLink = transferTxn
               ? `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[chain]}/tx/${transferTxn}`
               : null;
+            const isTransferFailed = Boolean(
+              response.transfer_errors?.[tokenAddress],
+            );
+            const status = (
+              isTransferFailed ? 'error' : 'finish'
+            ) as BridgingStepStatus;
+
             return {
               symbol,
-              status: 'finish' as BridgingStepStatus,
+              status,
               txnLink,
             };
           }),
