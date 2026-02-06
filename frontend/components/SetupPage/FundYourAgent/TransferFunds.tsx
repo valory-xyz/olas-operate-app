@@ -1,6 +1,6 @@
 import { Button, Flex, Spin, Typography } from 'antd';
 import { isNil } from 'lodash';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { LoadingOutlined, WarningOutlined } from '@/components/custom-icons';
@@ -84,6 +84,7 @@ export const TransferFunds = () => {
   const [showSetupFinishedModal, setShowSetupFinishedModal] = useState(false);
   const [showSafeCreationFailedModal, setShowSafeCreationFailedModal] =
     useState(false);
+  const hasAttemptedCreation = useRef(false);
 
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
@@ -99,20 +100,19 @@ export const TransferFunds = () => {
     ? getMasterSafeOf?.(evmHomeChainId)?.address || masterEoa?.address
     : null;
 
-  const handleFunded = useCallback(async () => {
-    if (!isMasterWalletFetched) return;
-    if (isSafeCreated || isTransferComplete) return;
-
-    createMasterSafe();
-  }, [
-    createMasterSafe,
-    isMasterWalletFetched,
-    isSafeCreated,
-    isTransferComplete,
-  ]);
+  // Check if safe creation or transfer failed
+  const hasSafeCreationFailure = isErrorMasterSafeCreation;
+  const hasTransferFailure =
+    creationAndTransferDetails?.safeCreationDetails?.isSafeCreated &&
+    !creationAndTransferDetails?.transferDetails?.isTransferComplete &&
+    creationAndTransferDetails?.transferDetails?.transfers?.some(
+      (t) => t.status === 'error',
+    );
+  const shouldShowFailureModal = hasSafeCreationFailure || hasTransferFailure;
 
   const handleTryAgain = useCallback(() => {
     setShowSafeCreationFailedModal(false);
+    hasAttemptedCreation.current = false; // Reset to allow retry
     createMasterSafe();
   }, [createMasterSafe]);
 
@@ -120,18 +120,28 @@ export const TransferFunds = () => {
     toggleSupportModal();
   }, [toggleSupportModal]);
 
-  // If funds are already received, proceed to create the Master Safe
+  // If funds are already received, proceed to create the Master Safe (only once)
   useEffect(() => {
-    if (isFullyFunded) {
-      handleFunded();
-    }
-  }, [isFullyFunded, handleFunded]);
+    if (!isFullyFunded) return;
+    if (!isMasterWalletFetched) return;
+    if (isSafeCreated || isTransferComplete) return;
+    if (hasAttemptedCreation.current) return;
 
-  // If master safe creation failed, show the failure modal
+    hasAttemptedCreation.current = true;
+    createMasterSafe();
+  }, [
+    isFullyFunded,
+    isMasterWalletFetched,
+    isSafeCreated,
+    isTransferComplete,
+    createMasterSafe,
+  ]);
+
+  // If master safe creation or transfer failed, show the failure modal
   useEffect(() => {
-    if (!isErrorMasterSafeCreation) return;
+    if (!shouldShowFailureModal) return;
     setShowSafeCreationFailedModal(true);
-  }, [isErrorMasterSafeCreation]);
+  }, [shouldShowFailureModal]);
 
   useEffect(() => {
     if (isLoadingMasterSafeCreation) return;
