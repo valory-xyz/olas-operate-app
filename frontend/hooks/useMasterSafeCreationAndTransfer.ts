@@ -48,7 +48,7 @@ export const useMasterSafeCreationAndTransfer = (
             : status !== 'SAFE_CREATION_FAILED';
         if (isSafeCreatedNow) wasSafePreviouslyCreated.current = true;
         const isSafeCreated =
-          isSafeCreatedNow ?? wasSafePreviouslyCreated.current;
+          isSafeCreatedNow || wasSafePreviouslyCreated.current;
         const safeCreationDetails = {
           isSafeCreated,
           txnLink: create_tx ? `${explorer}/${create_tx}` : null,
