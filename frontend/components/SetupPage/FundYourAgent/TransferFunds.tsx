@@ -105,10 +105,7 @@ export const TransferFunds = () => {
     const safeCreationDetails = creationAndTransferDetails?.safeCreationDetails;
 
     // Treat both network/transport errors and backend-reported errors as failures
-    return (
-      isErrorMasterSafeCreation ||
-      safeCreationDetails?.status === 'error'
-    );
+    return isErrorMasterSafeCreation || safeCreationDetails?.status === 'error';
   })();
   const hasTransferFailure = (() => {
     const safeCreationDetails = creationAndTransferDetails?.safeCreationDetails;
