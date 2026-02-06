@@ -139,7 +139,7 @@ export const TransferFunds = () => {
   useEffect(() => {
     if (!isFullyFunded) return;
     if (!isMasterWalletFetched) return;
-    if (isSafeCreated || isTransferComplete) return;
+    if (isTransferComplete) return;
     if (hasAttemptedCreation.current) return;
 
     hasAttemptedCreation.current = true;
