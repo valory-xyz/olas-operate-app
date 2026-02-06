@@ -35,9 +35,6 @@ export const useMasterSafeCreationAndTransfer = (
     mutationFn: async () => {
       const explorer = `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[chain]}/tx`;
       try {
-        // await delayInSeconds(5); // Adding delay to ensure the backup signer is ready before making the API call
-        // throw new Error('Simulated master safe creation failure'); // Simulating an error for testing purposes --- IGNORE ---
-
         const response = await WalletService.createSafe(
           chain,
           backupSignerAddress,
@@ -45,7 +42,10 @@ export const useMasterSafeCreationAndTransfer = (
         const { transfer_errors, transfer_txs, create_tx, status } = response;
 
         // Details related to safe creation
-        const isSafeCreatedNow = status !== 'SAFE_CREATION_FAILED';
+        const isSafeCreatedNow =
+          status === 'SAFE_EXISTS_ALREADY_FUNDED'
+            ? true
+            : status !== 'SAFE_CREATION_FAILED';
         if (isSafeCreatedNow) wasSafePreviouslyCreated.current = true;
         const isSafeCreated =
           isSafeCreatedNow ?? wasSafePreviouslyCreated.current;
@@ -55,16 +55,10 @@ export const useMasterSafeCreationAndTransfer = (
           status: isSafeCreated ? 'finish' : 'error',
         };
 
-        console.log({
-          tokenSymbols,
-          transfer_errors,
-          transfer_txs,
-          create_tx,
-          status,
-        });
-
         //  details related to transfers (NOTE: to be split into different API)
-        const isTransferComplete = status === 'SAFE_CREATED_TRANSFER_COMPLETED';
+        const isTransferComplete =
+          status === 'SAFE_EXISTS_ALREADY_FUNDED' ||
+          status === 'SAFE_CREATED_TRANSFER_COMPLETED';
         const transferDetails = {
           isTransferComplete,
           transfers: tokenSymbols.map((symbol) => {
@@ -75,7 +69,6 @@ export const useMasterSafeCreationAndTransfer = (
               );
             }
 
-            console.log({ tokenDetails });
             const { tokenType, address } = tokenDetails;
             const tokenAddress =
               tokenType === TokenType.NativeGas ? AddressZero : address;

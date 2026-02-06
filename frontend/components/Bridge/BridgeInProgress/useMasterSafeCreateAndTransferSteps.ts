@@ -52,8 +52,6 @@ export const useMasterSafeCreateAndTransferSteps = ({
     : false;
   const isTransferCompleted =
     creationAndTransferDetails?.transferDetails?.isTransferComplete;
-  const isSafeCreatedAndTransferCompleted =
-    isMasterSafeCreated && isTransferCompleted;
   const shouldCreateMasterSafe = canCreateMasterSafeAndTransferRef.current;
 
   useEffect(() => {
@@ -87,7 +85,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
     // if master safe creation is in progress or if it has failed, do not create master safe.
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
-    if (isSafeCreatedAndTransferCompleted) return;
+    if (isSafeCreated) return;
 
     createMasterSafe();
   }, [
@@ -98,7 +96,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
     isMasterWalletFetched,
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
-    isSafeCreatedAndTransferCompleted,
+    isSafeCreated,
     createMasterSafe,
     shouldCreateMasterSafe,
   ]);

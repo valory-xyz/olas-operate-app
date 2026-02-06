@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
 import { TransactionStep } from '@/components/ui/TransactionSteps';
-import { TokenSymbol, TokenSymbolMap } from '@/config/tokens';
+import { TokenSymbol } from '@/config/tokens';
 import { useMasterWalletContext, useOnRampContext } from '@/hooks';
 import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
 import { Nullable } from '@/types';
@@ -20,11 +20,9 @@ const EMPTY_STATE_STEPS: Record<string, TransactionStep> = {
  * Hook to create a Master Safe and transfer funds to it after the swap is completed.
  */
 export const useCreateAndTransferFundsToMasterSafeSteps = (
-  isSwapCompletedAbcd: boolean,
-  tokensToBeTransferredAbcd: TokenSymbol[],
+  isSwapCompleted: boolean,
+  tokensToBeTransferred: TokenSymbol[],
 ) => {
-  const isSwapCompleted = true;
-  const tokensToBeTransferred = [TokenSymbolMap.OLAS];
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: hasErrorMasterSafeCreation,
@@ -57,7 +55,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     if (!isSwapCompleted) return;
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
-    if (isSafeCreated && isTransferComplete) return;
+    if (isSafeCreated) return;
 
     createMasterSafe();
   }, [
@@ -65,7 +63,6 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
     isSafeCreated,
-    isTransferComplete,
     createMasterSafe,
   ]);
 
@@ -116,39 +113,24 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     isSafeCreated,
   ]);
 
-  console.log('Transfer statuses:', {
-    isSwapCompleted,
-    isLoadingMasterSafeCreation,
-    isErrorMasterSafeCreation,
-    transferStatuses,
-  });
-
   // Step for transferring funds to the Master Safe
   const masterSafeTransferFundStep = useMemo<TransactionStep>(() => {
     const currentMasterSafeCreationStatus = (() => {
-      console.log('11111:', isLoadingMasterSafeCreation);
       if (!isSwapCompleted) return 'wait';
 
-      console.log('22222:', isLoadingMasterSafeCreation);
       if (isLoadingMasterSafeCreation) return 'process';
 
       const statuses = transferStatuses?.map(({ status }) => status);
       const hasError = statuses?.some((x) => x === 'error');
-      console.log('33333:', { statuses, hasError });
       if (hasError) return 'error';
 
       const areFundsBeingTransferred = statuses?.map((x) => x === 'process');
-      console.log('44444:', { areFundsBeingTransferred });
       if (areFundsBeingTransferred?.some((x) => x)) return 'process';
 
-      console.log('55555:', { ok: isSafeCreated && isTransferComplete });
       if (isSafeCreated && isTransferComplete) return 'finish';
       if (!isTransferComplete) return 'error';
       return 'wait';
     })();
-    console.log('masterSafeTransferFundStep:', {
-      currentMasterSafeCreationStatus,
-    });
 
     return {
       status: currentMasterSafeCreationStatus,
@@ -192,13 +174,6 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     if (!isTransferComplete) return false;
     if (tokensToBeTransferred.length === 0) return false;
 
-    console.log('------------------------------------', {
-      isErrorMasterSafeCreation,
-      isSafeCreated,
-      isTransferComplete,
-      transferStatuses,
-    });
-
     const transfers = transferStatuses || [];
     if (tokensToBeTransferred.length !== transfers.length) {
       window.console.warn(
@@ -216,11 +191,6 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     tokensToBeTransferred.length,
     transferStatuses,
   ]);
-
-  console.log('final:', {
-    isMasterSafeCreatedAndFundsTransferred,
-    masterSafeTransferFundStep,
-  });
 
   if (!isSwapCompleted) {
     return {
