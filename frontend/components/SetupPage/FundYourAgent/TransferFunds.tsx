@@ -101,7 +101,15 @@ export const TransferFunds = () => {
     : null;
 
   // Check if safe creation or transfer failed
-  const hasSafeCreationFailure = isErrorMasterSafeCreation;
+  const hasSafeCreationFailure = (() => {
+    const safeCreationDetails = creationAndTransferDetails?.safeCreationDetails;
+
+    // Treat both network/transport errors and backend-reported errors as failures
+    return (
+      isErrorMasterSafeCreation ||
+      safeCreationDetails?.status === 'error'
+    );
+  })();
   const hasTransferFailure = (() => {
     const safeCreationDetails = creationAndTransferDetails?.safeCreationDetails;
     const transferDetails = creationAndTransferDetails?.transferDetails;
