@@ -102,12 +102,23 @@ export const TransferFunds = () => {
 
   // Check if safe creation or transfer failed
   const hasSafeCreationFailure = isErrorMasterSafeCreation;
-  const hasTransferFailure =
-    creationAndTransferDetails?.safeCreationDetails?.isSafeCreated &&
-    !creationAndTransferDetails?.transferDetails?.isTransferComplete &&
-    creationAndTransferDetails?.transferDetails?.transfers?.some(
+  const hasTransferFailure = (() => {
+    const safeCreationDetails = creationAndTransferDetails?.safeCreationDetails;
+    const transferDetails = creationAndTransferDetails?.transferDetails;
+    const safeStatus = safeCreationDetails?.status;
+    const transfersHaveError = transferDetails?.transfers?.some(
       (t) => t.status === 'error',
     );
+    const isTransferFailedStatus =
+      safeStatus === 'SAFE_EXISTS_TRANSFER_FAILED' ||
+      safeStatus === 'SAFE_CREATED_TRANSFER_FAILED';
+
+    return (
+      safeCreationDetails?.isSafeCreated &&
+      !transferDetails?.isTransferComplete &&
+      (transfersHaveError || isTransferFailedStatus)
+    );
+  })();
   const shouldShowFailureModal = hasSafeCreationFailure || hasTransferFailure;
 
   const handleTryAgain = useCallback(() => {
