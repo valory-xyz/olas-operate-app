@@ -80,7 +80,7 @@ const POLYGON_CHAIN_CONFIG: ChainConfig = {
   ] as TokenConfig,
   middlewareChain: MiddlewareChainMap.POLYGON,
   rpc: process.env.POLYGON_RPC as HttpUrl,
-  safeCreationThreshold: BigInt(parseEther(1.5)),
+  safeCreationThreshold: BigInt(parseEther(16)),
 } as const;
 
 export const CHAIN_CONFIG: {

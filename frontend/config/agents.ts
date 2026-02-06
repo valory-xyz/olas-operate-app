@@ -11,6 +11,7 @@ import {
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
 } from '@/constants/serviceTemplates';
+import { PREDICT_POLYMARKET_SERVICE_TEMPLATE } from '@/constants/serviceTemplates/service/trader';
 import { X402_ENABLED_FLAGS } from '@/constants/x402';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
@@ -24,6 +25,7 @@ import { AgentConfig } from '@/types/Agent';
 import {
   MODE_TOKEN_CONFIG,
   OPTIMISM_TOKEN_CONFIG,
+  POLYGON_TOKEN_CONFIG,
   TokenSymbolMap,
 } from './tokens';
 
@@ -58,6 +60,26 @@ const getOptimusUsdcConfig = () => {
   return Number(formatUnits(usdcSafeRequirement, optimusUsdcConfig.decimals));
 };
 
+const getPolystratUsdceConfig = () => {
+  const polystratFundRequirements =
+    PREDICT_POLYMARKET_SERVICE_TEMPLATE.configurations[
+      MiddlewareChainMap.POLYGON
+    ]?.fund_requirements;
+  const polystratUsdceConfig = POLYGON_TOKEN_CONFIG[TokenSymbolMap['USDC.e']];
+
+  if (!polystratUsdceConfig) {
+    throw new Error('Polystrat USDC.e config not found');
+  }
+
+  const usdceSafeRequirement =
+    polystratFundRequirements?.[polystratUsdceConfig.address as Address]
+      ?.safe || 0;
+
+  return Number(
+    formatUnits(usdceSafeRequirement, polystratUsdceConfig.decimals),
+  );
+};
+
 export const AGENT_CONFIG: {
   [key in AgentType]: AgentConfig;
 } = {
@@ -88,6 +110,11 @@ export const AGENT_CONFIG: {
     evmHomeChainId: EvmChainIdMap.Polygon,
     middlewareHomeChainId: MiddlewareChainMap.POLYGON,
     agentIds: [86],
+    additionalRequirements: {
+      [EvmChainIdMap.Polygon]: {
+        [TokenSymbolMap['USDC.e']]: getPolystratUsdceConfig(),
+      },
+    },
     defaultStakingProgramId: STAKING_PROGRAM_IDS.PolygonBeta1,
     serviceApi: Polystrat,
     displayName: 'Polystrat',
