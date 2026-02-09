@@ -1,5 +1,8 @@
 name: Release for linux
 
+permissions:
+  contents: read
+
 # Triggered only via workflow_call
 on:
   workflow_call:
@@ -242,11 +245,6 @@ jobs:
       # Run the build and notarization process for production
       - name: Build, notarize, and publish (Production)
         env:
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
-          APPLE_ID: ${{ secrets.APPLEID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}
           GITHUB_TOKEN: ${{ secrets.github_token }}
           RELEASE_TAG: ${{ inputs.tag }}
