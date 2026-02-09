@@ -2291,8 +2291,8 @@ uvicorn = "==0.27.0"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "feat/security-fixes"
-resolved_reference = "3bdbbbd1fe3495c58d953e0f8017c5d68f3e0894"
+reference = "fix/dangling-instances-issues"
+resolved_reference = "88e5f99ffadfee95e331610b432413f8f594aef8"
 
 [[package]]
 name = "open-aea"
@@ -4065,4 +4065,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.12"
-content-hash = "7755b5e887a643f1330aa34114f79a9d7018c2da4f175d5ce323d6c48b10fdbf"
+content-hash = "000f2c3ea07e47658c7629622a595ac6501bf547d6ec9b5146b96c506164cebf"
