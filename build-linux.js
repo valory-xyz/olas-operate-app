@@ -77,5 +77,5 @@ main().then((res) => {
   console.error('💥 Error stack:', e?.stack || 'No stack');
   console.error('💥 Error details:', e);
   console.error('\n');
-  throw new Error('Failed to build and notarize.');
+  throw new Error('Failed to build.');
 });
