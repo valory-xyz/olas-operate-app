@@ -93,7 +93,7 @@ export const PolystratPayoutAchievement = ({
     );
     const postText = description.replace('{achievement_url}', predictUrl);
     const xIntentUrl = generateXIntentUrl(postText);
-    window.open(xIntentUrl, '_blank');
+    window.open(xIntentUrl, '_blank', 'noopener,noreferrer');
   };
 
   const payoutMultiplier = useMemo(() => {
