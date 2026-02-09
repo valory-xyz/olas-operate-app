@@ -123,7 +123,7 @@ export const AGENT_CONFIG: {
     doesChatUiRequireApiKey: true,
     category: 'Prediction Markets',
     defaultBehavior:
-      'Adopting a conservative strategy with small, high-confidence trades.',
+      'Trade sizes adapt to market conditions and agent confidence.',
     servicePublicId: 'valory/polymarket_trader:0.1.0',
     isGeoLocationRestricted: true,
   },
