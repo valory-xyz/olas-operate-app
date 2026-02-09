@@ -15,7 +15,7 @@ export const useCurrentAchievement = () => {
   const [shownAchievementIds, setShownAchievementIds] = useState<Set<string>>(
     new Set(),
   );
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const unshownAchievements = useMemo(() => {
     if (!achievements || achievements.length === 0) return [];
