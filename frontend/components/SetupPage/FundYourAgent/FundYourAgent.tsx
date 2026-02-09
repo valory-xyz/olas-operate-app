@@ -91,10 +91,11 @@ const BridgeTokens = ({
           expensive.
         </CardDescription>
         <TokenRequirements
+          fundType="bridge"
           tokenRequirements={tokenRequirements}
           chainName={chainName}
           isLoading={isBalancesAndFundingRequirementsLoading}
-          fundType="bridge"
+          title="Estimated to pay"
         />
       </div>
       <Button

@@ -105,10 +105,10 @@ export const OnRampMethodCard = () => {
           ease!
         </Paragraph>
         <TokenRequirements
+          fundType="onRamp"
           fiatAmount={fiatAmount ?? 0}
           isLoading={isLoading}
           hasError={hasNativeTokenError}
-          fundType="onRamp"
         />
       </div>
       {isFiatAmountTooLow ? (
