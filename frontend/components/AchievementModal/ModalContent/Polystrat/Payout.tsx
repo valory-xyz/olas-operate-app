@@ -32,6 +32,8 @@ const StatsWrapper = styled(Flex)`
 const getTransactionUrl = (hash?: string) =>
   `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN['polygon']}/tx/${hash}`;
 
+const formatAmount = (amount: number) => parseFloat(amount.toFixed(2));
+
 type StatColumnProps = {
   label: string;
   value?: string;
@@ -66,6 +68,7 @@ export const PolystratPayoutAchievement = ({
 
   const question = market?.title ?? NA;
   const totalPayout = net_profit + bet_amount;
+  const totalPayoutFormatted = formatAmount(totalPayout);
 
   const stats = [
     {
@@ -74,11 +77,11 @@ export const PolystratPayoutAchievement = ({
     },
     {
       label: 'Amount',
-      value: `$${bet_amount}`,
+      value: `$${formatAmount(bet_amount)}`,
     },
     {
       label: 'Won',
-      value: `$${totalPayout}`,
+      value: `$${totalPayoutFormatted}`,
     },
   ];
 
@@ -93,13 +96,13 @@ export const PolystratPayoutAchievement = ({
     );
     const postText = description.replace('{achievement_url}', predictUrl);
     const xIntentUrl = generateXIntentUrl(postText);
-    window.open(xIntentUrl, '_blank');
+    window.open(xIntentUrl, '_blank', 'noopener,noreferrer');
   };
 
   const payoutMultiplier = useMemo(() => {
     if (!totalPayout || !bet_amount) return null;
 
-    return (totalPayout / bet_amount).toFixed(2);
+    return formatAmount(totalPayout / bet_amount);
   }, [bet_amount, totalPayout]);
 
   return (
@@ -122,7 +125,7 @@ export const PolystratPayoutAchievement = ({
 
       <Text className="text-center mb-12 text-neutral-secondary">
         Your Polystrat made a high-return trade and collected{' '}
-        <Text className="font-weight-600">${totalPayout}</Text>.
+        <Text className="font-weight-600">${totalPayoutFormatted}</Text>.
       </Text>
 
       {transaction_hash && (
