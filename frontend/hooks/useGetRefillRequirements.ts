@@ -130,20 +130,20 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
         !requirements ||
         !masterEoa ||
         !isMasterWalletsFetched
-      )
+      ) {
         return [];
+      }
 
+      const chainConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
+
+      // master safe requirements
       const masterSafePlaceholder = (requirements as MasterSafeBalanceRecord)?.[
         MASTER_SAFE_REFILL_PLACEHOLDER
       ];
       const masterSafeRequirements = masterSafe
         ? (requirements as AddressBalanceRecord)?.[masterSafe.address]
         : masterSafePlaceholder;
-
       if (!masterSafeRequirements) return [];
-
-      const { evmHomeChainId } = selectedAgentConfig;
-      const chainConfig = TOKEN_CONFIG[evmHomeChainId];
 
       // Refill requirements for masterEOA
       const masterEoaRequirementAmount = (requirements as AddressBalanceRecord)[

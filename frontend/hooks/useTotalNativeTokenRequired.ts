@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { AddressZero } from '@/constants/address';
-import { EvmChainId, onRampChainMap } from '@/constants/chains';
+import { EvmChainId, ON_RAMP_CHAIN_MAP } from '@/constants/chains';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
@@ -22,8 +22,8 @@ export const useTotalNativeTokenRequired = (
   queryKey: 'preview' | 'onboarding' = 'onboarding',
 ) => {
   const {
-    updateEthAmountToPay,
-    updateEthTotalAmountRequired,
+    updateNativeAmountToPay,
+    updateNativeTotalAmountRequired,
     isOnRampingTransactionSuccessful,
   } = useOnRampContext();
   const { selectedAgentConfig } = useServices();
@@ -65,12 +65,12 @@ export const useTotalNativeTokenRequired = (
     const agentChainName = asMiddlewareChain(
       selectedAgentConfig.evmHomeChainId,
     );
-    // "FROM" chain for bridging, the chain we will on-ramp funds to
-    const onRampNetworkName = asMiddlewareChain(onRampChainMap[agentChainName]);
 
+    // "FROM" chain for bridging, the chain we will on-ramp funds to
+    const chainName = ON_RAMP_CHAIN_MAP[agentChainName].chain;
+    const onRampNetworkName = asMiddlewareChain(chainName);
     const destinationAddress =
-      getMasterSafeOf?.(onRampChainMap[agentChainName])?.address ||
-      masterEoa.address;
+      getMasterSafeOf?.(chainName)?.address || masterEoa.address;
 
     /**
      * Calculate native token amount needed from direct requirements (not from bridging)
@@ -134,13 +134,13 @@ export const useTotalNativeTokenRequired = (
     if (!totalNativeTokens) return;
     if (isOnRampingTransactionSuccessful) return;
 
-    updateEthAmountToPay(totalNativeTokens.totalNativeTokenToPay);
-    updateEthTotalAmountRequired(totalNativeTokens.totalNativeTokenRequired);
+    updateNativeAmountToPay(totalNativeTokens.totalNativeTokenToPay);
+    updateNativeTotalAmountRequired(totalNativeTokens.totalNativeTokenRequired);
   }, [
     isOnRampingTransactionSuccessful,
-    updateEthAmountToPay,
+    updateNativeAmountToPay,
     totalNativeTokens,
-    updateEthTotalAmountRequired,
+    updateNativeTotalAmountRequired,
   ]);
 
   return {

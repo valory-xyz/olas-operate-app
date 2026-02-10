@@ -1,4 +1,4 @@
-import { isNil } from 'lodash';
+import { compact, isNil } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
@@ -25,9 +25,9 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 ) => {
   const {
     isPending: isLoadingMasterSafeCreation,
-    isError: isErrorMasterSafeCreation,
-    data: masterSafeDetails,
-    mutateAsync: createMasterSafe,
+    isError: hasErrorMasterSafeCreation,
+    data: creationAndTransferDetails,
+    mutate: createMasterSafe,
   } = useMasterSafeCreationAndTransfer(tokensToBeTransferred);
   const { selectedChainId } = useOnRampContext();
   const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
@@ -39,8 +39,16 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 
   const hasMasterSafe = !isNil(getMasterSafeOf?.(selectedChainId));
   const isSafeCreated = isMasterWalletFetched
-    ? hasMasterSafe || masterSafeDetails?.isSafeCreated
+    ? hasMasterSafe ||
+      creationAndTransferDetails?.safeCreationDetails?.isSafeCreated
     : false;
+  const isErrorMasterSafeCreation =
+    hasErrorMasterSafeCreation ||
+    creationAndTransferDetails?.safeCreationDetails?.status === 'error';
+  const isTransferComplete =
+    creationAndTransferDetails?.transferDetails.isTransferComplete;
+  const transferStatuses =
+    creationAndTransferDetails?.transferDetails.transfers;
 
   // Check if the swap is completed and tokens are available for transfer
   useEffect(() => {
@@ -82,7 +90,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
       subSteps: [
         {
           description,
-          txnLink: masterSafeDetails?.txnLink,
+          txnLink: creationAndTransferDetails?.safeCreationDetails?.txnLink,
           failed: isErrorMasterSafeCreation ? (
             <FundsAreSafeMessage
               onRetry={createMasterSafe}
@@ -97,7 +105,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   }, [
     isMasterWalletFetched,
     hasMasterSafe,
-    masterSafeDetails?.txnLink,
+    creationAndTransferDetails?.safeCreationDetails?.txnLink,
     isErrorMasterSafeCreation,
     createMasterSafe,
     isSwapCompleted,
@@ -112,22 +120,23 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 
       if (isLoadingMasterSafeCreation) return 'process';
 
-      const statuses = masterSafeDetails?.transfers.map(({ status }) => status);
+      const statuses = transferStatuses?.map(({ status }) => status);
       const hasError = statuses?.some((x) => x === 'error');
       if (hasError) return 'error';
 
       const areFundsBeingTransferred = statuses?.map((x) => x === 'process');
       if (areFundsBeingTransferred?.some((x) => x)) return 'process';
 
-      if (isSafeCreated) return 'finish';
+      if (isSafeCreated && isTransferComplete) return 'finish';
+      if (isSafeCreated && !isTransferComplete) return 'error';
       return 'wait';
     })();
 
     return {
       status: currentMasterSafeCreationStatus,
       title: 'Transfer funds to the Pearl Wallet',
-      subSteps: masterSafeDetails?.transfers.map(
-        ({ status, symbol, txnLink }) => {
+      subSteps:
+        transferStatuses?.map(({ status, symbol, txnLink }) => {
           const description = (() => {
             if (status === 'finish') return `Transfer ${symbol} complete.`;
             if (status === 'error') return `Transfer ${symbol} failed.`;
@@ -148,14 +157,14 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
                 />
               ) : null,
           };
-        },
-      ),
+        }) || [],
     };
   }, [
     isSwapCompleted,
     isLoadingMasterSafeCreation,
     isSafeCreated,
-    masterSafeDetails?.transfers,
+    isTransferComplete,
+    transferStatuses,
     createMasterSafe,
   ]);
 
@@ -163,9 +172,10 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   const isMasterSafeCreatedAndFundsTransferred = useMemo(() => {
     if (isErrorMasterSafeCreation) return false;
     if (!isSafeCreated) return false;
+    if (!isTransferComplete) return false;
     if (tokensToBeTransferred.length === 0) return false;
 
-    const transfers = masterSafeDetails?.transfers || [];
+    const transfers = transferStatuses || [];
     if (tokensToBeTransferred.length !== transfers.length) {
       window.console.warn(
         `Expected ${tokensToBeTransferred.length} transfers, but got ${transfers.length}.
@@ -178,8 +188,9 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   }, [
     isErrorMasterSafeCreation,
     isSafeCreated,
+    isTransferComplete,
     tokensToBeTransferred.length,
-    masterSafeDetails?.transfers,
+    transferStatuses,
   ]);
 
   if (!isSwapCompleted) {
@@ -196,8 +207,6 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 
   return {
     isMasterSafeCreatedAndFundsTransferred,
-    steps: [masterSafeCreationStep, masterSafeTransferFundStep].filter(
-      Boolean,
-    ) as TransactionStep[],
+    steps: compact([masterSafeCreationStep, masterSafeTransferFundStep]),
   };
 };
