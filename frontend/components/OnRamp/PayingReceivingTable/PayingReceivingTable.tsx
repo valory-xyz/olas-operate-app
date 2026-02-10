@@ -229,11 +229,13 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
                         ? `~$${formatAmountNormalized(usdAmountToPay, 2)} for`
                         : NA}
                     </Text>
-                    <ChainLogo
-                      chainName={fromChain.name}
-                      alt={fromChain.displayName}
-                    />
-                    <Text>{totalEthAmountToDisplay}</Text>
+                    <Flex align="center" gap={6}>
+                      <ChainLogo
+                        chainName={fromChain.name}
+                        alt={fromChain.displayName}
+                      />
+                      <Text>{totalEthAmountToDisplay}</Text>
+                    </Flex>
                   </Flex>
                 )}
               </Flex>
