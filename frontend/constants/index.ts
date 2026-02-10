@@ -1,3 +1,4 @@
+export * from './achievement';
 export * from './address';
 export * from './agent';
 export * from './chains';

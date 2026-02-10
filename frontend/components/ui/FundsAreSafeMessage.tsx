@@ -18,10 +18,6 @@ export const FundsAreSafeMessage = ({
 }: FundsAreSafeMessageProps) => {
   const { toggleSupportModal } = useSupportModal();
 
-  const openSupportModal = () => {
-    toggleSupportModal();
-  };
-
   return (
     <Flex vertical gap={8} align="flex-start" className="mt-12 text-sm">
       <Flex gap={8}>
@@ -30,8 +26,6 @@ export const FundsAreSafeMessage = ({
             loading={onRetryProps?.isLoading}
             onClick={onRetry}
             type="primary"
-            className="text-sm"
-            size="large"
           >
             Retry
           </Button>
@@ -39,9 +33,7 @@ export const FundsAreSafeMessage = ({
         <Button
           loading={onRetryProps?.isLoading}
           type="default"
-          onClick={openSupportModal}
-          className="text-sm"
-          size="large"
+          onClick={toggleSupportModal}
         >
           Contact Support
         </Button>

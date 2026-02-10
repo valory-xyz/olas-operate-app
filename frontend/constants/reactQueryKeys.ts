@@ -1,4 +1,4 @@
-import { Safe } from '@/constants';
+import { AgentType, Safe } from '@/constants';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { Maybe } from '@/types/Util';
 
@@ -121,4 +121,12 @@ export const REACT_QUERY_KEYS = {
   EXTENDED_WALLET_KEY: ['extendedWallet'] as const,
   RECOVERY_STATUS_KEY: ['recoveryStatus'] as const,
   RECOVERY_FUNDING_REQUIREMENTS_KEY: ['recoveryFundingRequirements'] as const,
+
+  // geo eligibility
+  GEO_ELIGIBILITY_KEY: (agentType?: AgentType) =>
+    ['geoEligibility', agentType] as const,
+
+  // achievements
+  ACHIEVEMENTS_KEY: (serviceConfigId: Maybe<string>) =>
+    ['achievements', serviceConfigId] as const,
 } as const;

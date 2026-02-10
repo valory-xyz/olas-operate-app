@@ -1,0 +1,164 @@
+import { Button, Flex, Typography } from 'antd';
+import { capitalize } from 'lodash';
+import Image from 'next/image';
+import { useMemo } from 'react';
+import { LuSquareArrowOutUpRight } from 'react-icons/lu';
+import styled from 'styled-components';
+
+import { COLOR, EXPLORER_URL_BY_MIDDLEWARE_CHAIN, NA } from '@/constants';
+import { Achievement } from '@/types/Achievement';
+
+import {
+  generateXIntentUrl,
+  getPredictWebsiteAchievementUrl,
+} from '../../utils';
+
+const { Title, Text } = Typography;
+
+const MultiplierBadge = styled.div`
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: ${COLOR.PURPLE_LIGHT_3};
+`;
+
+const MarketCard = styled.div`
+  border: 1px solid ${COLOR.GRAY_3};
+`;
+
+const StatsWrapper = styled(Flex)`
+  border-top: 1px dashed ${COLOR.GRAY_3};
+`;
+
+const getTransactionUrl = (hash?: string) =>
+  `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN['polygon']}/tx/${hash}`;
+
+const formatAmount = (amount: number) => parseFloat(amount.toFixed(2));
+
+type StatColumnProps = {
+  label: string;
+  value?: string;
+};
+
+const StatColumn = ({ label, value }: StatColumnProps) => {
+  if (!value) return null;
+
+  return (
+    <Flex vertical key={label}>
+      <Text className="text-neutral-tertiary text-sm mb-2">{label}</Text>
+      <Text className="text-lg">{value}</Text>
+    </Flex>
+  );
+};
+
+export const PolystratPayoutAchievement = ({
+  achievement,
+}: {
+  achievement: Achievement;
+}) => {
+  const { description = NA, achievement_type: type, data } = achievement ?? {};
+
+  const {
+    id: betId,
+    net_profit = 0,
+    market,
+    prediction_side: position,
+    bet_amount = 0,
+    transaction_hash,
+  } = data ?? {};
+
+  const question = market?.title ?? NA;
+  const totalPayout = net_profit + bet_amount;
+  const totalPayoutFormatted = formatAmount(totalPayout);
+
+  const stats = [
+    {
+      label: 'Position',
+      value: capitalize(position),
+    },
+    {
+      label: 'Amount',
+      value: `$${formatAmount(bet_amount)}`,
+    },
+    {
+      label: 'Won',
+      value: `$${totalPayoutFormatted}`,
+    },
+  ];
+
+  const handleShareOnX = () => {
+    const [, polystratAchievemntType] = type.split('/');
+    const predictUrl = getPredictWebsiteAchievementUrl(
+      'polystrat',
+      new URLSearchParams({
+        betId,
+        type: polystratAchievemntType,
+      }),
+    );
+    const postText = description.replace('{achievement_url}', predictUrl);
+    const xIntentUrl = generateXIntentUrl(postText);
+    window.open(xIntentUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const payoutMultiplier = useMemo(() => {
+    if (!totalPayout || !bet_amount) return null;
+
+    return formatAmount(totalPayout / bet_amount);
+  }, [bet_amount, totalPayout]);
+
+  return (
+    <Flex vertical align="center">
+      <Image
+        src={'/agent-polymarket_trader-icon.png'}
+        width={56}
+        height={56}
+        alt="Polystrat"
+        className="mb-24"
+      />
+
+      {payoutMultiplier && (
+        <MultiplierBadge className="mb-16">
+          <Title level={2} className="m-0 text-primary font-weight-600">
+            {payoutMultiplier}x
+          </Title>
+        </MultiplierBadge>
+      )}
+
+      <Text className="text-center mb-12 text-neutral-secondary">
+        Your Polystrat made a high-return trade and collected{' '}
+        <Text className="font-weight-600">${totalPayoutFormatted}</Text>.
+      </Text>
+
+      {transaction_hash && (
+        <a
+          className="flex align-center text-sm gap-6 mb-24"
+          target="_blank"
+          rel="noopener noreferrer"
+          href={getTransactionUrl(transaction_hash)}
+        >
+          View transaction <LuSquareArrowOutUpRight />
+        </a>
+      )}
+
+      <MarketCard className="rounded-12">
+        <Flex className="mx-16 mt-16 mb-20">
+          <Text>{question}</Text>
+        </Flex>
+
+        <StatsWrapper justify="space-between" className="px-16 pt-16 mb-12">
+          {stats.map((stat) => (
+            <StatColumn key={stat.label} {...stat} />
+          ))}
+        </StatsWrapper>
+      </MarketCard>
+
+      <Button
+        size="large"
+        type="primary"
+        className="w-full mt-24"
+        onClick={handleShareOnX}
+      >
+        Share on X <LuSquareArrowOutUpRight />
+      </Button>
+    </Flex>
+  );
+};

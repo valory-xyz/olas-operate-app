@@ -26,6 +26,7 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
   [EvmChainIdMap.Base]: 'https://staking-base.subgraph.autonolas.tech',
   [EvmChainIdMap.Mode]: 'https://staking-mode.subgraph.autonolas.tech',
   [EvmChainIdMap.Optimism]: 'https://staking-optimism.subgraph.autonolas.tech',
+  [EvmChainIdMap.Polygon]: 'https://staking-polygon.subgraph.autonolas.tech',
 };
 
 // discord
@@ -61,6 +62,7 @@ const GNOSIS_EXPLORER_URL: Url = 'https://gnosisscan.io';
 const BASE_EXPLORER_URL: Url = 'https://basescan.org';
 const MODE_EXPLORER_URL: Url = 'https://modescan.io';
 const OPTIMISM_EXPLORER_URL: Url = 'https://optimistic.etherscan.io';
+const POLYGON_EXPLORER_URL: Url = 'https://polygonscan.com';
 
 export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   SupportedMiddlewareChain,
@@ -70,6 +72,7 @@ export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChainMap.BASE]: BASE_EXPLORER_URL,
   [MiddlewareChainMap.MODE]: MODE_EXPLORER_URL,
   [MiddlewareChainMap.OPTIMISM]: OPTIMISM_EXPLORER_URL,
+  [MiddlewareChainMap.POLYGON]: POLYGON_EXPLORER_URL,
 };
 
 export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
@@ -80,22 +83,7 @@ export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChainMap.BASE]: 'https://base.blockscout.com',
   [MiddlewareChainMap.MODE]: 'https://explorer.mode.network',
   [MiddlewareChainMap.OPTIMISM]: 'https://optimism.blockscout.com',
-};
-
-// swap URLs
-const COW_SWAP_GNOSIS_XDAI_OLAS_URL: Url =
-  'https://swap.cow.fi/#/100/swap/WXDAI/OLAS';
-const SWAP_BASE_URL: Url = 'https://balancer.fi/swap/base/ETH/OLAS';
-const SWAP_MODE_URL: Url =
-  'https://balancer.fi/swap/mode/0xd988097fb8612cc24eec14542bc03424c656005f/0xcfd1d50ce23c46d3cf6407487b2f8934e96dc8f9';
-const SWAP_OPTIMISM_URL: Url =
-  'https://balancer.fi/pools/optimism/v2/0x5bb3e58887264b667f915130fd04bbb56116c27800020000000000000000012a';
-
-export const SWAP_URL_BY_EVM_CHAIN: Record<EvmChainId, Url> = {
-  [EvmChainIdMap.Gnosis]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
-  [EvmChainIdMap.Base]: SWAP_BASE_URL,
-  [EvmChainIdMap.Mode]: SWAP_MODE_URL,
-  [EvmChainIdMap.Optimism]: SWAP_OPTIMISM_URL,
+  [MiddlewareChainMap.POLYGON]: 'https://polygon.blockscout.com',
 };
 
 // on-ramp
@@ -111,3 +99,11 @@ export const WEB3AUTH_SWAP_OWNER_URL = `${WEB3AUTH_GATEWAY_URL}/swap-owner-sessi
 
 // support API
 export const SUPPORT_API_URL = `${PEARL_API_URL}/api/zendesk`;
+
+// geo eligibility
+export const GEO_ELIGIBILITY_API_URL = `${PEARL_API_URL}/api/geo/agent-eligibility`;
+export const GEO_ELIGIBILITY_DOCS_URL =
+  'https://docs.polymarket.com/polymarket-learn/FAQ/geoblocking#close-only-countries';
+
+// Predict website
+export const PREDICT_WEBSITE_URL = 'https://predict.olas.network';
