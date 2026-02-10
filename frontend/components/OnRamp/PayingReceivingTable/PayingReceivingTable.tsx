@@ -201,7 +201,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     const native = totalFiatDetails?.nativeAmountToDisplay;
     if (!native) return `0 ${fromChain.symbol}`;
     return `${formatAmountNormalized(native, 4)} ${fromChain.symbol}`;
-  }, [totalFiatDetails, fromChain]);
+  }, [totalFiatDetails?.nativeAmountToDisplay, fromChain]);
 
   const payingReceivingDataSource = useMemo<PaymentTableDataType[]>(
     () => [

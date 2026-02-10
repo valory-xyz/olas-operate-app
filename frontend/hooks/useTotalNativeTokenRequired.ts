@@ -138,6 +138,16 @@ export const useTotalNativeTokenRequired = (
         : 0,
     };
 
+    window.console.log({
+      to_chain_name: agentChainName,
+      [`refill_requirements of ${onRampNetworkName}`]: bridgeRefillRequirements,
+      [`native_refill_requirements of ${onRampNetworkName}`]:
+        formatUnitsToNumber(nativeBridgeRefillRequirements, 18),
+      other_tokens: formatUnitsToNumber(nativeTokenFromBridgeParams || 0, 18),
+      ['total_native_token_to_pay (including from bridge and direct requirements)']:
+        result,
+    });
+
     // Store in ref for future use if step 1 completes
     if (!isOnRampingTransactionSuccessful) {
       frozenTotalNativeTokensRef.current = result;

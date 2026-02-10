@@ -16,7 +16,7 @@ import { asMiddlewareChain } from '@/utils';
  * Adds a buffer to the total fiat amount calculated from the native token amount
  * to account for price fluctuations during the on-ramp process.
  */
-const ON_RAMP_FIAT_BUFFER_USD = 3;
+const ON_RAMP_FIAT_BUFFER_USD = 5;
 
 // function to calculate buffered ETH amount based on the fiat buffer
 // eg., if fiat buffer is $3, and 1 ETH = $1500, then buffered ETH = (3 / 1500) = 0.002 ETH
@@ -135,19 +135,31 @@ export const useTotalFiatFromNativeToken = ({
         throw error;
       }
     },
-    select: (data) => ({
-      // round is used to avoid 15.38 + 3 = 18.380000000000003 issues
-      fiatAmount: round(data.fiatAmount + ON_RAMP_FIAT_BUFFER_USD, 2),
-      /**
-       * JUST TO DISPLAY TO THE USER
-       * calculate the buffered ETH amount to display to the user during the on-ramp process.
-       */
-      nativeAmountToDisplay: getEthWithBuffer(
+    select: (data) => {
+      const fiatAmount = round(data.fiatAmount + ON_RAMP_FIAT_BUFFER_USD, 2);
+      const nativeAmountToDisplay = getEthWithBuffer(
         nativeAmountToPay ?? 0,
         data.fiatAmount,
         data.cryptoAmount,
-      ),
-    }),
+      );
+
+      window.console.log({
+        'actual_Transak quote response': data.fiatAmount,
+        fiat_buffer_to_add: ON_RAMP_FIAT_BUFFER_USD,
+        buffer_plus_total_fiat_amount_to_pay: fiatAmount,
+        buffer_plus_total_native_token_to_pay: nativeAmountToDisplay,
+      });
+
+      return {
+        // round is used to avoid 15.38 + 3 = 18.380000000000003 issues
+        fiatAmount: round(data.fiatAmount + ON_RAMP_FIAT_BUFFER_USD, 2),
+        /**
+         * JUST TO DISPLAY TO THE USER
+         * calculate the buffered ETH amount to display to the user during the on-ramp process.
+         */
+        nativeAmountToDisplay,
+      };
+    },
     enabled: !skip && !!fromChain && !!nativeTokenAmount,
   });
 };
