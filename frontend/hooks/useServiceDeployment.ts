@@ -28,6 +28,7 @@ import { delayInSeconds } from '@/utils/delay';
 import { updateServiceIfNeeded } from '@/utils/service';
 
 import { useAgentRunning } from './useAgentRunning';
+import { useIsAgentGeoRestricted } from './useIsAgentGeoRestricted';
 
 /**
  * hook to handle service deployment and starting the service
@@ -73,6 +74,11 @@ export const useServiceDeployment = () => {
 
   const { masterSafesOwners } = useMultisigs(masterSafes);
 
+  const { isAgentGeoRestricted } = useIsAgentGeoRestricted({
+    agentType: selectedAgentType,
+    agentConfig: selectedAgentConfig,
+  });
+
   const isLoading = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return true;
     if (isServicesLoading || isServiceRunning) return true;
@@ -90,6 +96,11 @@ export const useServiceDeployment = () => {
 
     // If service is under construction, return false
     if (selectedAgentConfig.isUnderConstruction) return false;
+
+    // If agent is geo-restricted in the current region, return false
+    if (selectedAgentConfig.isGeoLocationRestricted && isAgentGeoRestricted) {
+      return false;
+    }
 
     // If another agent is running, return false;
     if (isAnotherAgentRunning) return false;
@@ -111,12 +122,14 @@ export const useServiceDeployment = () => {
     canStartAgent,
     hasEnoughServiceSlots,
     isAgentEvicted,
+    isAgentGeoRestricted,
     isAgentsFunFieldUpdateRequired,
     isAnotherAgentRunning,
     isEligibleForStaking,
     isLoading,
     isServiceStaked,
     selectedAgentConfig.isUnderConstruction,
+    selectedAgentConfig.isGeoLocationRestricted,
   ]);
 
   const pauseAllPolling = useCallback(() => {

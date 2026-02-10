@@ -1,6 +1,7 @@
 export * from './AddressLink';
 export * from './AgentSetupCompleteModal';
 export * from './Alert';
+export * from './animations';
 export * from './BackButton';
 export * from './CardFlex';
 export * from './CardSection';

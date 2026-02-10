@@ -2,8 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { round } from 'lodash';
 
 import { OnRampNetworkConfig } from '@/components/OnRamp';
+import { TokenSymbol } from '@/config/tokens';
 import {
-  onRampChainMap,
+  ON_RAMP_CHAIN_MAP,
   REACT_QUERY_KEYS,
   SupportedMiddlewareChain,
 } from '@/constants';
@@ -60,9 +61,14 @@ type Quote = {
 
 const transakPriceUrl = `${ON_RAMP_GATEWAY_URL}price-quote`;
 
+type FetchTransakQuoteParams = {
+  network: SupportedMiddlewareChain;
+  amount: number | string;
+  cryptoCurrency?: TokenSymbol;
+};
+
 const fetchTransakQuote = async (
-  network: SupportedMiddlewareChain,
-  amount: number | string,
+  { network, amount, cryptoCurrency = 'ETH' }: FetchTransakQuoteParams,
   signal: AbortSignal,
 ): Promise<{ response: Quote }> => {
   const options = {
@@ -73,7 +79,7 @@ const fetchTransakQuote = async (
 
   const params = new URLSearchParams({
     fiatCurrency: 'USD',
-    cryptoCurrency: 'ETH',
+    cryptoCurrency,
     isBuyOrSell: 'BUY',
     network,
     paymentMethod: 'credit_debit_card',
@@ -94,29 +100,33 @@ const fetchTransakQuote = async (
 
 type UseTotalFiatFromNativeTokenProps = {
   nativeTokenAmount?: number;
-  ethAmountToPay?: Nullable<number>;
+  nativeAmountToPay?: Nullable<number>;
   selectedChainId: OnRampNetworkConfig['selectedChainId'];
   skip?: boolean;
 };
 
 export const useTotalFiatFromNativeToken = ({
   nativeTokenAmount,
-  ethAmountToPay,
+  nativeAmountToPay,
   selectedChainId,
   skip = false,
 }: UseTotalFiatFromNativeTokenProps) => {
   const selectedChainName = asMiddlewareChain(
     ensureRequired(selectedChainId, "Chain ID can't be empty"),
   );
-  const fromChain = asMiddlewareChain(onRampChainMap[selectedChainName]);
+  const { chain, cryptoCurrency } = ON_RAMP_CHAIN_MAP[selectedChainName];
+  const fromChain = asMiddlewareChain(chain);
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(fromChain, nativeTokenAmount!),
     queryFn: async ({ signal }) => {
       try {
         const { response } = await fetchTransakQuote(
-          fromChain,
-          nativeTokenAmount!,
+          {
+            network: fromChain,
+            amount: nativeTokenAmount!,
+            cryptoCurrency,
+          },
           signal,
         );
         return response;
@@ -132,8 +142,8 @@ export const useTotalFiatFromNativeToken = ({
        * JUST TO DISPLAY TO THE USER
        * calculate the buffered ETH amount to display to the user during the on-ramp process.
        */
-      ethAmountToDisplay: getEthWithBuffer(
-        ethAmountToPay ?? 0,
+      nativeAmountToDisplay: getEthWithBuffer(
+        nativeAmountToPay ?? 0,
         data.fiatAmount,
         data.cryptoAmount,
       ),

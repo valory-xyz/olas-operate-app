@@ -8,6 +8,7 @@ import { BASE_STAKING_PROGRAMS } from './base';
 import { GNOSIS_STAKING_PROGRAMS } from './gnosis';
 import { MODE_STAKING_PROGRAMS } from './mode';
 import { OPTIMISM_STAKING_PROGRAMS } from './optimism';
+import { POLYGON_STAKING_PROGRAMS } from './polygon';
 
 /**
  * Single non-chain specific staking program configuration
@@ -38,4 +39,5 @@ export const STAKING_PROGRAMS: {
   [EvmChainIdMap.Base]: BASE_STAKING_PROGRAMS,
   [EvmChainIdMap.Mode]: MODE_STAKING_PROGRAMS,
   [EvmChainIdMap.Optimism]: OPTIMISM_STAKING_PROGRAMS,
+  [EvmChainIdMap.Polygon]: POLYGON_STAKING_PROGRAMS,
 };
