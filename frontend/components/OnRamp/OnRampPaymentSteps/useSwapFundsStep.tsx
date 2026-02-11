@@ -120,8 +120,7 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
 
     await delayInSeconds(1); // slight delay before refetching.
 
-    refetchBalancesAndRequirements()
-      .then(() => refetchBridgeRefillRequirements())
+    refetchBridgeRefillRequirements()
       .then(({ data }) => {
         setBridgeFundingRequirements(data ?? null);
 
@@ -132,7 +131,7 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
       .finally(() => {
         setIsManuallyRefetching(false);
       });
-  }, [refetchBridgeRefillRequirements, refetchBalancesAndRequirements]);
+  }, [refetchBridgeRefillRequirements]);
 
   return {
     isLoading,
