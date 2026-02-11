@@ -26,13 +26,13 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
-  service_version: 'v2.0.2',
+  service_version: 'v2.1.1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'meme-ooorr',
-      version: 'v2.0.2',
+      version: 'v2.1.1',
     },
   },
   env_variables: {
@@ -163,13 +163,13 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
   description: 'Pett.ai autonomous agent service for virtual pet management.',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
-  service_version: 'v0.1.1',
+  service_version: 'v0.1.4',
   agent_release: {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
       name: 'pettai-agent',
-      version: 'v0.1.1',
+      version: 'v0.1.4',
     },
   },
   home_chain: MiddlewareChainMap.BASE,
