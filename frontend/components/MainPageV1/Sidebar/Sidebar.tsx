@@ -140,6 +140,7 @@ const AgentListMenu = ({
       key: agent.agentType,
       icon: (
         <Image
+          key={agent.agentType}
           src={`/agent-${agent.agentType}-icon.png`}
           className="rounded-4"
           alt={agent.name}
