@@ -140,6 +140,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const {
     isOnRampingStepCompleted,
     isTransactionSuccessfulButFundsNotReceived,
+    isBuyCryptoBtnLoading,
     usdAmountToPay,
     nativeAmountToPay,
     updateUsdAmountToPay,
@@ -157,7 +158,10 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
       nativeAmountToPay,
       selectedChainId,
       // Skip price-quote API call if on-ramping step is already completed
-      skip: isOnRampingStepCompleted,
+      skip:
+        isOnRampingStepCompleted ||
+        isTransactionSuccessfulButFundsNotReceived ||
+        isBuyCryptoBtnLoading,
     });
 
   // State to hold the tokensRequired to be displayed in the receiving column
@@ -182,6 +186,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   useEffect(() => {
     if (isOnRampingStepCompleted) return;
     if (isTransactionSuccessfulButFundsNotReceived) return;
+    if (isBuyCryptoBtnLoading) return;
 
     if (isReceivingAmountLoading || hasNativeTokenError) {
       updateUsdAmountToPay(null);
@@ -191,6 +196,7 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   }, [
     isTransactionSuccessfulButFundsNotReceived,
     isOnRampingStepCompleted,
+    isBuyCryptoBtnLoading,
     isReceivingAmountLoading,
     hasNativeTokenError,
     totalFiatDetails,
