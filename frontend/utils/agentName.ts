@@ -1,5 +1,8 @@
+import { utils } from 'ethers';
+
 import { NA } from '@/constants/symbols';
 
+// keep your syllable list exactly the same
 const phoneticSyllables = [
   'ba',
   'bi',
@@ -216,19 +219,49 @@ const phoneticSyllables = [
   'chip',
 ];
 
-const generatePhoneticSyllable = (seed: number) => {
-  return phoneticSyllables[seed % phoneticSyllables.length];
+const generatePhoneticSyllable = (seed: number) =>
+  phoneticSyllables[seed % phoneticSyllables.length];
+
+const strip0x = (hex: string) => (hex.startsWith('0x') ? hex.slice(2) : hex);
+
+/**
+ * Normalize input into a 64-hex seed (32 bytes, no 0x)
+ * - bytes32 (64 hex): use directly
+ * - address (40 hex): keccak256(addressBytes) -> bytes32 seed
+ */
+const normalizeToSeedHex64 = (input?: string): string | null => {
+  if (!input) return null;
+
+  const hex = input.startsWith('0x') ? input : `0x${input}`;
+  if (!utils.isHexString(hex)) return null;
+
+  const raw = strip0x(hex).toLowerCase();
+
+  // bytes32 seed already
+  if (raw.length === 64) return raw;
+
+  // address -> hash to bytes32 seed
+  if (raw.length === 40) {
+    // validate / checksum
+    const checksummed = utils.getAddress(`0x${raw}`);
+    // hash the *address bytes* (20 bytes)
+    const seed32 = utils.keccak256(checksummed);
+    return strip0x(seed32).toLowerCase();
+  }
+
+  return null;
 };
 
-const generatePhoneticName = (
-  address: string,
+const generatePhoneticNameFromSeed = (
+  seedHex64: string,
   startIndex: number,
   syllables: number,
 ): string => {
   return Array.from({ length: syllables }, (_, i) => {
-    const slice = address.slice(startIndex + i * 8, startIndex + (i + 1) * 8);
+    const slice = seedHex64.slice(startIndex + i * 8, startIndex + (i + 1) * 8);
     const seedValue = parseInt(slice, 16);
-    return !isNaN(seedValue)
+
+    return Number.isFinite(seedValue)
       ? generatePhoneticSyllable(seedValue)
       : phoneticSyllables[0];
   })
@@ -236,14 +269,19 @@ const generatePhoneticName = (
     .toLowerCase();
 };
 
-const generateName = (address?: string): string => {
-  if (!address) return NA;
+/**
+ * Input can be:
+ * - bytes32 agentId from computeAgentId(...)
+ * - (optionally) legacy address
+ */
+export const generateName = (input?: string): string => {
+  const seed = normalizeToSeedHex64(input);
+  if (!seed) return NA;
 
-  const firstName = generatePhoneticName(address, 2, 2);
-  const lastNamePrefix = generatePhoneticName(address, 18, 2);
-  const lastNameNumber = parseInt(address.slice(-4), 16) % 100;
+  // indices are now based on seed WITHOUT 0x
+  const firstName = generatePhoneticNameFromSeed(seed, 0, 2);
+  const lastNamePrefix = generatePhoneticNameFromSeed(seed, 16, 2);
+  const lastNameNumber = parseInt(seed.slice(-4), 16) % 100;
 
-  return `${firstName}-${lastNamePrefix}${lastNameNumber.toString().padStart(2, '0')}`;
+  return `${firstName}-${lastNamePrefix}${String(lastNameNumber).padStart(2, '0')}`;
 };
-
-export { generateName };
