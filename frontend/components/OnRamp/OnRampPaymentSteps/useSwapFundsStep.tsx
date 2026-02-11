@@ -31,10 +31,8 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   const [bridgeFundingRequirements, setBridgeFundingRequirements] =
     useState<BridgeRefillRequirementsResponse | null>(null);
   const { isOnRampingStepCompleted } = useOnRampContext();
-  const {
-    isBalancesAndFundingRequirementsLoading,
-    refetch: refetchBalancesAndRequirements,
-  } = useBalanceAndRefillRequirementsContext();
+  const { isBalancesAndFundingRequirementsLoading } =
+    useBalanceAndRefillRequirementsContext();
   const {
     getReceivingTokens,
     getTokensToBeBridged,
@@ -77,8 +75,7 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
     if (!isBridgeRefillRequirementsApiLoading) return;
     if (!isOnRampingStepCompleted) return;
 
-    refetchBalancesAndRequirements()
-      .then(() => refetchBridgeRefillRequirements())
+    refetchBridgeRefillRequirements()
       .then(({ data }) => setBridgeFundingRequirements(data ?? null))
       .finally(() => {
         setIsBridgeRefillRequirementsApiLoading(false);
@@ -86,7 +83,6 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   }, [
     isBridgeRefillRequirementsApiLoading,
     isOnRampingStepCompleted,
-    refetchBalancesAndRequirements,
     refetchBridgeRefillRequirements,
     setIsBridgeRefillRequirementsApiLoading,
   ]);
