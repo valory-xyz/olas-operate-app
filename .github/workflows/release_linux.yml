@@ -1,7 +1,7 @@
 name: Release for linux
 
 permissions:
-  contents: read
+  contents: write
 
 # Triggered only via workflow_call
 on:
