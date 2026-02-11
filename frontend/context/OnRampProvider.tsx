@@ -160,14 +160,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     const isAboveThreshold =
       BigInt(parseEther(balance.toString())) >=
       BigInt(parseEther(thresholdAmount));
-    window.console.log({
-      currentBalance: balance,
-      masterSafeNativeBalance:
-        getMasterSafeNativeBalanceOf(networkId)?.[0]?.balanceString,
-      masterEoaNativeBalance: getMasterEoaNativeBalanceOf(networkId),
-      thresholdAmount,
-      isAboveThreshold,
-    });
 
     if (isAboveThreshold) {
       updateIsBuyCryptoBtnLoading(false);

@@ -86,10 +86,6 @@ export const useTotalNativeTokenRequired = (
     isBuyCryptoBtnLoading || isOnRampingTransactionSuccessful;
 
   const computedTotalNativeTokens = useMemo(() => {
-    window.console.log(
-      'Calculating total native tokens required for on-ramping...',
-      { nativeTokenAmount },
-    );
     if (!bridgeFundingRequirements) return;
     if (!masterEoa?.address) return;
     if (!isMasterWalletFetched) return;
@@ -118,21 +114,6 @@ export const useTotalNativeTokenRequired = (
     const bridgeBalance = bridgeFundingRequirements.balances[onRampNetworkName];
     const nativeBalance = bridgeBalance?.[destinationAddress]?.[AddressZero];
 
-    window.console.log({
-      agentChainName,
-      onRampNetworkName,
-      destinationAddress,
-      nativeTokenFromBridgeParams: formatUnitsToNumber(
-        nativeTokenFromBridgeParams || 0,
-        18,
-      ),
-      bridgeRefillRequirementsOfNonNativeTokens: formatUnitsToNumber(
-        bridgeRefillRequirementsOfNonNativeTokens ?? 0,
-        18,
-      ),
-      nativeBalance: formatUnitsToNumber(nativeBalance ?? 0, 18),
-    });
-
     if (!bridgeRefillRequirementsOfNonNativeTokens) return;
 
     // e.g, For optimus, addition of (ETH required) + (OLAS and USDC bridged to ETH)
@@ -153,19 +134,6 @@ export const useTotalNativeTokenRequired = (
         ? formatUnitsToNumber(totalNativeTokenRequired, 18)
         : 0,
     };
-
-    window.console.log({
-      to_chain_name: agentChainName,
-      [`refill_requirements of ${onRampNetworkName}`]: bridgeRefillRequirements,
-      [`other tokens of ${onRampNetworkName}`]: formatUnitsToNumber(
-        bridgeRefillRequirementsOfNonNativeTokens,
-        18,
-      ),
-      [`native_refill_requirements of ${onRampNetworkName}`]:
-        formatUnitsToNumber(nativeTokenFromBridgeParams || 0, 18),
-      ['total_native_token_to_pay (including from bridge and direct requirements)']:
-        result,
-    });
 
     return result;
   }, [

@@ -136,19 +136,11 @@ export const useTotalFiatFromNativeToken = ({
       }
     },
     select: (data) => {
-      const fiatAmount = round(data.fiatAmount + ON_RAMP_FIAT_BUFFER_USD, 2);
       const nativeAmountToDisplay = getEthWithBuffer(
         nativeAmountToPay ?? 0,
         data.fiatAmount,
         data.cryptoAmount,
       );
-
-      window.console.log({
-        'actual_Transak quote response': data.fiatAmount,
-        fiat_buffer_to_add: ON_RAMP_FIAT_BUFFER_USD,
-        buffer_plus_total_fiat_amount_to_pay: fiatAmount,
-        buffer_plus_total_native_token_to_pay: nativeAmountToDisplay,
-      });
 
       return {
         // round is used to avoid 15.38 + 3 = 18.380000000000003 issues
