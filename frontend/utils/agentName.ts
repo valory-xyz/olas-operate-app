@@ -2,7 +2,6 @@ import { utils } from 'ethers';
 
 import { NA } from '@/constants/symbols';
 
-// keep your syllable list exactly the same
 const phoneticSyllables = [
   'ba',
   'bi',
