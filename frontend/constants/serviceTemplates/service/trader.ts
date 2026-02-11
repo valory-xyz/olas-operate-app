@@ -12,13 +12,13 @@ import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   hash: 'bafybeibmh5q6vh4bc3tqzavsxpm7uickwlcpemvanmxnx7cfztfntlhiky',
-  service_version: 'v0.29.2-rc2',
+  service_version: 'v0.29.3',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.29.2-rc2',
+      version: 'v0.29.3',
     },
   },
   agentType: AgentMap.PredictTrader,
