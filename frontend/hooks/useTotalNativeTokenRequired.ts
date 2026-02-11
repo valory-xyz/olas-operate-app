@@ -126,7 +126,7 @@ export const useTotalNativeTokenRequired = (
     const totalNativeTokenRequired =
       totalNativeTokenToPay + BigInt(nativeBalance || 0);
 
-    const result = {
+    return {
       totalNativeTokenToPay: totalNativeTokenToPay
         ? formatUnitsToNumber(totalNativeTokenToPay, 18)
         : 0,
@@ -134,8 +134,6 @@ export const useTotalNativeTokenRequired = (
         ? formatUnitsToNumber(totalNativeTokenRequired, 18)
         : 0,
     };
-
-    return result;
   }, [
     nativeTokenAmount,
     bridgeFundingRequirements,

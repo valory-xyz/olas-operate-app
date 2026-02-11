@@ -97,6 +97,9 @@ const useSetupNavigation = ({
 
     // If no service is created for the selected agent
     if (!isServiceCreatedForAgent) {
+      window.console.log(
+        `No service created for chain ${selectedServiceOrAgentChainId}`,
+      );
       goto(SETUP_SCREEN.AgentOnboarding);
       return;
     }

@@ -157,11 +157,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
     // If the balance is greater than or equal to 90% of the ETH amount to pay,
     // considering that the user has received the funds after on-ramping.
-    const isAboveThreshold =
+    if (
       BigInt(parseEther(balance.toString())) >=
-      BigInt(parseEther(thresholdAmount));
-
-    if (isAboveThreshold) {
+      BigInt(parseEther(thresholdAmount))
+    ) {
       updateIsBuyCryptoBtnLoading(false);
       setHasFundsReceivedAfterOnRamp(true);
       setIsOnRampingTransactionSuccessful(true);
