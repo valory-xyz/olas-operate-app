@@ -55,6 +55,22 @@ export const useTotalNativeTokenRequired = (
   });
 
   /**
+   * Calculate native token amount needed from direct requirements (not from bridging)
+   *
+   * When the source chain (where user is on-ramping) matches the destination chain:
+   *   - We need to include the native token amount in our total calculation.
+   *   - This amount won't go through bridging since it's already on the correct chain.
+   *
+   * Example: For Optimus on Optimism
+   *   - We need 0.01 ETH for agent operation.
+   *   - Since on-ramping is already on Optimism, this ETH will be directly funded.
+   *   - We add this to our total required amount (separate from bridge calculations)
+   */
+  const nativeTokenAmount = bridgeParams?.bridge_requests.find(
+    (request) => request.to.token === AddressZero,
+  )?.to.amount;
+
+  /**
    * Calculates the total native token required for the bridge.
    *
    * Example: for Optimus, we require 0.01 ETH, 16 USDC, 100 OLAS.
@@ -66,14 +82,18 @@ export const useTotalNativeTokenRequired = (
    * to prevent redundant price-quote API calls from bridge requirement updates.
    */
   const totalNativeTokens = useMemo(() => {
+    window.console.log(
+      'Calculating total native tokens required for on-ramping...',
+      { nativeTokenAmount },
+    );
     // Return frozen value if step 1 is complete
     if (
+      // || bridgeFundingRequirements?.is_refill_required === false
       isOnRampingTransactionSuccessful &&
       frozenTotalNativeTokensRef.current
     ) {
       return frozenTotalNativeTokensRef.current;
     }
-    if (!bridgeParams) return;
     if (!bridgeFundingRequirements) return;
     if (!masterEoa?.address) return;
     if (!isMasterWalletFetched) return;
@@ -89,21 +109,6 @@ export const useTotalNativeTokenRequired = (
     const destinationAddress =
       getMasterSafeOf?.(chainName)?.address || masterEoa.address;
 
-    /**
-     * Calculate native token amount needed from direct requirements (not from bridging)
-     *
-     * When the source chain (where user is on-ramping) matches the destination chain:
-     *   - We need to include the native token amount in our total calculation.
-     *   - This amount won't go through bridging since it's already on the correct chain.
-     *
-     * Example: For Optimus on Optimism
-     *   - We need 0.01 ETH for agent operation.
-     *   - Since on-ramping is already on Optimism, this ETH will be directly funded.
-     *   - We add this to our total required amount (separate from bridge calculations)
-     */
-    const nativeTokenAmount = bridgeParams.bridge_requests.find(
-      (request) => request.to.token === AddressZero,
-    )?.to.amount;
     const nativeTokenFromBridgeParams =
       agentChainName === onRampNetworkName ? nativeTokenAmount : 0;
 
@@ -111,18 +116,33 @@ export const useTotalNativeTokenRequired = (
     // e.g, For optimus, OLAS and USDC are bridged to ETH
     const bridgeRefillRequirements =
       bridgeFundingRequirements.bridge_refill_requirements[onRampNetworkName];
-    const nativeBridgeRefillRequirements =
+    const bridgeRefillRequirementsOfNonNativeTokens =
       bridgeRefillRequirements?.[destinationAddress]?.[AddressZero];
     // Existing balance of native token on the source chain will be also used for bridging
     const bridgeBalance = bridgeFundingRequirements.balances[onRampNetworkName];
     const nativeBalance = bridgeBalance?.[destinationAddress]?.[AddressZero];
 
-    if (!nativeBridgeRefillRequirements) return;
+    window.console.log({
+      agentChainName,
+      onRampNetworkName,
+      destinationAddress,
+      nativeTokenFromBridgeParams: formatUnitsToNumber(
+        nativeTokenFromBridgeParams || 0,
+        18,
+      ),
+      bridgeRefillRequirementsOfNonNativeTokens: formatUnitsToNumber(
+        bridgeRefillRequirementsOfNonNativeTokens ?? 0,
+        18,
+      ),
+      nativeBalance: formatUnitsToNumber(nativeBalance ?? 0, 18),
+    });
+
+    if (!bridgeRefillRequirementsOfNonNativeTokens) return;
 
     // e.g, For optimus, addition of (ETH required) + (OLAS and USDC bridged to ETH)
     // + existing balance in case we already have another agent on this chain
     const totalNativeTokenToPay =
-      BigInt(nativeBridgeRefillRequirements) +
+      BigInt(bridgeRefillRequirementsOfNonNativeTokens) +
       BigInt(nativeTokenFromBridgeParams || 0);
     // All the above + existing balance in case we already have another agent on this chain
     // and some native tokens are there
@@ -141,9 +161,12 @@ export const useTotalNativeTokenRequired = (
     window.console.log({
       to_chain_name: agentChainName,
       [`refill_requirements of ${onRampNetworkName}`]: bridgeRefillRequirements,
+      [`other tokens of ${onRampNetworkName}`]: formatUnitsToNumber(
+        bridgeRefillRequirementsOfNonNativeTokens,
+        18,
+      ),
       [`native_refill_requirements of ${onRampNetworkName}`]:
-        formatUnitsToNumber(nativeBridgeRefillRequirements, 18),
-      other_tokens: formatUnitsToNumber(nativeTokenFromBridgeParams || 0, 18),
+        formatUnitsToNumber(nativeTokenFromBridgeParams || 0, 18),
       ['total_native_token_to_pay (including from bridge and direct requirements)']:
         result,
     });
@@ -155,7 +178,7 @@ export const useTotalNativeTokenRequired = (
 
     return result;
   }, [
-    bridgeParams,
+    nativeTokenAmount,
     bridgeFundingRequirements,
     masterEoa,
     isMasterWalletFetched,

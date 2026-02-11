@@ -154,12 +154,22 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     const thresholdAmount = (
       nativeTotalAmountRequired * ETH_RECEIVED_THRESHOLD
     ).toFixed(18);
+
     // If the balance is greater than or equal to 90% of the ETH amount to pay,
     // considering that the user has received the funds after on-ramping.
-    if (
+    const isAboveThreshold =
       BigInt(parseEther(balance.toString())) >=
-      BigInt(parseEther(thresholdAmount))
-    ) {
+      BigInt(parseEther(thresholdAmount));
+    window.console.log({
+      currentBalance: balance,
+      masterSafeNativeBalance:
+        getMasterSafeNativeBalanceOf(networkId)?.[0]?.balanceString,
+      masterEoaNativeBalance: getMasterEoaNativeBalanceOf(networkId),
+      thresholdAmount,
+      isAboveThreshold,
+    });
+
+    if (isAboveThreshold) {
       updateIsBuyCryptoBtnLoading(false);
       setHasFundsReceivedAfterOnRamp(true);
       setIsOnRampingTransactionSuccessful(true);

@@ -11,6 +11,7 @@ export const useBridgeRefillRequirements = (
   canPoll: boolean = true,
   enabled: boolean = true,
   queryKeySuffix?: string,
+  pollingInterval: number = TEN_SECONDS_INTERVAL,
 ) => {
   const { isOnline } = useContext(OnlineStatusContext);
 
@@ -37,7 +38,7 @@ export const useBridgeRefillRequirements = (
       return response;
     },
 
-    refetchInterval: enabled && canPoll ? TEN_SECONDS_INTERVAL : false,
+    refetchInterval: enabled && canPoll ? pollingInterval : false,
     refetchOnWindowFocus: false,
     enabled: isOnline && !!params && !!enabled,
     staleTime: 0,

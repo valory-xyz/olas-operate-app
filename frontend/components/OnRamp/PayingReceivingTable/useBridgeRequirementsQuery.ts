@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { THIRTY_SECONDS_INTERVAL } from '@/constants';
 import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
 import {
@@ -49,7 +50,6 @@ export const useBridgeRequirementsQuery = ({
   ] = useState(enabled);
   const [isManuallyRefetching, setIsManuallyRefetching] = useState(false);
 
-  // TODO: Add a new hook in case of depositing that calculated the params from the user provided inputs
   const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
     onRampChainId,
     AddressZero,
@@ -61,8 +61,10 @@ export const useBridgeRequirementsQuery = ({
     return getBridgeRequirementsParams(isForceUpdate);
   }, [isForceUpdate, getBridgeRequirementsParams]);
 
-  const bridgeParamsExceptNativeToken =
-    getBridgeParamsExceptNativeToken(bridgeParams);
+  const bridgeParamsExceptNativeToken = useMemo(
+    () => getBridgeParamsExceptNativeToken(bridgeParams),
+    [getBridgeParamsExceptNativeToken, bridgeParams],
+  );
 
   const {
     data: bridgeFundingRequirements,
@@ -74,6 +76,7 @@ export const useBridgeRequirementsQuery = ({
     canPollForBridgeRefillRequirements && !stopPollingCondition,
     enabled,
     queryKeySuffix,
+    THIRTY_SECONDS_INTERVAL,
   );
 
   // fetch bridge refill requirements manually on mount
