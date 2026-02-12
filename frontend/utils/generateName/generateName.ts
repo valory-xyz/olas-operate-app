@@ -1,6 +1,9 @@
 import { utils } from 'ethers';
 
+import { EvmChainId } from '@/constants/chains';
 import { NA } from '@/constants/symbols';
+
+import { computeAgentId } from './computeAgentId';
 
 const phoneticSyllables = [
   'ba',
@@ -273,7 +276,10 @@ const generatePhoneticNameFromSeed = (
  * - bytes32 agentId from computeAgentId(...)
  * - (optionally) legacy address
  */
-export const generateName = (input?: string): string => {
+export const generateName = (chainId: EvmChainId, tokenId: number): string => {
+  if (!chainId || tokenId === undefined) return NA;
+
+  const input = computeAgentId(chainId, tokenId);
   const seed = normalizeToSeedHex64(input);
   if (!seed) return NA;
 
