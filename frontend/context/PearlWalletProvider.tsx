@@ -40,7 +40,7 @@ import {
   TokenBalanceRecord,
   ValueOf,
 } from '@/types';
-import { generateAgentName } from '@/utils';
+import { generateAgentName, isValidServiceId } from '@/utils';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { STEPS, WalletChain } from '../components/PearlWallet/types';
@@ -167,7 +167,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       );
 
       const tokenId = service?.chain_configs?.[chainName]?.chain_data?.token;
-      return typeof tokenId === 'number' ? tokenId : null;
+      return tokenId;
     },
     [services],
   );
@@ -224,8 +224,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       const agentSafe = getServiceSafeOf?.(walletChainId, configId)?.address;
       const tokenId = getServiceTokenId(chainId, configId);
       const agentName =
-        chainId && configId
-          ? generateAgentName(chainId, Number(tokenId))
+        chainId && isValidServiceId(tokenId)
+          ? generateAgentName(chainId, tokenId)
           : null;
       const agentType = getAgentTypeOf(walletChainId, configId);
 
