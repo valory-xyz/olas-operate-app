@@ -6,7 +6,7 @@ import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { CardFlex, Tooltip } from '@/components/ui';
-import { NA, PAGES } from '@/constants';
+import { PAGES } from '@/constants';
 import { usePageState, useServices } from '@/hooks';
 
 import { AgentActivity } from './AgentActivity';
@@ -50,8 +50,11 @@ const AboutAgent = () => {
 
 export const AgentInfo = () => {
   const { goto } = usePageState();
-  const { selectedAgentType, selectedAgentConfig, selectedAgentName } =
-    useServices();
+  const {
+    selectedAgentType,
+    selectedAgentConfig,
+    selectedAgentNameOrFallback,
+  } = useServices();
 
   const { isX402Enabled } = selectedAgentConfig;
 
@@ -76,7 +79,7 @@ export const AgentInfo = () => {
                 className="mb-16 w-full"
               >
                 <Title level={5} className="m-0">
-                  {selectedAgentName || NA}
+                  {selectedAgentNameOrFallback}
                 </Title>
                 <Flex gap={12} align="center">
                   <AboutAgent />

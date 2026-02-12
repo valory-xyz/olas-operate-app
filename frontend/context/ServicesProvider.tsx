@@ -88,6 +88,7 @@ type ServicesContextType = {
   selectedAgentConfig: AgentConfig;
   selectedAgentType: AgentType;
   selectedAgentName: Nullable<string>;
+  selectedAgentNameOrFallback: string;
   deploymentDetails: ServiceDeployment | undefined;
   updateAgentType: (agentType: AgentType) => void;
   overrideSelectedServiceStatus: (
@@ -105,6 +106,7 @@ export const ServicesContext = createContext<ServicesContextType>({
   selectedAgentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
   selectedAgentType: AgentMap.PredictTrader,
   selectedAgentName: null,
+  selectedAgentNameOrFallback: 'My agent',
   deploymentDetails: undefined,
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
@@ -404,6 +406,9 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     selectedService?.home_chain,
   ]);
 
+  const selectedAgentNameOrFallback =
+    selectedAgentName ?? `My ${selectedAgentConfig.displayName} agent`;
+
   return (
     <ServicesContext.Provider
       value={{
@@ -428,6 +433,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         selectedAgentConfig,
         selectedAgentType,
         selectedAgentName,
+        selectedAgentNameOrFallback,
 
         // others
         deploymentDetails,

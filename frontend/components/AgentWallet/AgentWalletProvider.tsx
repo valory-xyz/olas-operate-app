@@ -54,7 +54,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
     isLoading: isServicesLoading,
     selectedAgentConfig,
     selectedService,
-    selectedAgentName,
+    selectedAgentNameOrFallback,
   } = useServices();
   const { isLoaded } = useService(selectedService?.service_config_id);
   const { isLoading: isBalanceLoading } = useBalanceContext();
@@ -103,7 +103,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
         isLoading: isServicesLoading || !isLoaded || isBalanceLoading,
         walletChainId,
         transactionHistory: [],
-        agentName: selectedAgentName,
+        agentName: selectedAgentNameOrFallback,
         agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
         stakingRewards,
         availableAssets,
