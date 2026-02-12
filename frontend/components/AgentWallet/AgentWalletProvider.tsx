@@ -29,7 +29,7 @@ const AgentWalletContext = createContext<{
   isLoading: boolean;
   walletChainId: Nullable<EvmChainId>;
   transactionHistory: TransactionHistory[];
-  agentName: Nullable<string>;
+  agentName: string;
   agentImgSrc: Nullable<string>;
   stakingRewards: number;
   availableAssets: AvailableAsset[];
@@ -41,7 +41,7 @@ const AgentWalletContext = createContext<{
   isLoading: false,
   walletChainId: null,
   transactionHistory: [],
-  agentName: null,
+  agentName: '',
   agentImgSrc: null,
   stakingRewards: 0,
   availableAssets: [],

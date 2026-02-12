@@ -8,7 +8,7 @@ import { AgentNft } from '@/components/AgentNft';
 import { BackButton, CardFlex, Divider, Tooltip } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TokenSymbolConfigMap } from '@/config/tokens';
-import { COLOR, NA } from '@/constants';
+import { COLOR } from '@/constants';
 import { useBalanceContext } from '@/hooks';
 import { formatNumber } from '@/utils';
 
@@ -62,10 +62,10 @@ const AgentWalletToPearlWallet = () => {
       <Flex gap={16} style={{ padding: '12px 32px' }} align="center">
         <Flex gap={8} align="center">
           <Text type="secondary">From</Text>{' '}
-          {agentName && agentImgSrc && (
+          {agentImgSrc && (
             <Image src={agentImgSrc} alt={agentName} width={28} height={28} />
           )}
-          <Text className="font-weight-500">{agentName || NA}</Text>
+          <Text className="font-weight-500">{agentName}</Text>
         </Flex>
         <ArrowRightOutlined style={{ fontSize: 12 }} />
         <Text>

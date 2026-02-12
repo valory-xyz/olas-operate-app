@@ -223,10 +223,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     return configIds.map(({ configId, chainId }) => {
       const agentSafe = getServiceSafeOf?.(walletChainId, configId)?.address;
       const tokenId = getServiceTokenId(chainId, configId);
-      const agentName =
-        chainId && isValidServiceId(tokenId)
-          ? generateAgentName(chainId, tokenId)
-          : null;
+      const agentName = isValidServiceId(tokenId)
+        ? generateAgentName(chainId, tokenId)
+        : `My ${selectedAgentConfig.displayName}`;
       const agentType = getAgentTypeOf(walletChainId, configId);
 
       return {
@@ -245,6 +244,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     getAgentTypeOf,
     getServiceTokenId,
     getStakedOlasBalanceOf,
+    selectedAgentConfig.displayName,
   ]);
 
   const updateStep = useCallback(
