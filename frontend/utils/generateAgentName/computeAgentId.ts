@@ -13,13 +13,25 @@ const SERVICE_REGISTRY_ADDRESSES: Record<EvmChainId, string> = {
 } as const;
 
 /**
- * Matches: bytes32 constant DOMAIN = keccak256("Olas");
+ * Matches: bytes32 constant DOMAIN = keccak256("OlasAgentId");
  */
 const DOMAIN: string = utils.keccak256(utils.toUtf8Bytes('OlasAgentId')); // 0x + 64 hex chars
 
 /**
  * Matches:
- * keccak256(abi.encode(DOMAIN, chainId, serviceRegistryContract, tokenId))
+ * keccak256(
+ *   abi.encode(
+ *     DOMAIN,
+ *     keccak256(bytes(string.concat("eip155:", Strings.toString(chainId)))),
+ *     serviceRegistryContract,
+ *     tokenId
+ *   )
+ * )
+ *
+ * In this implementation:
+ * - caip2      = `eip155:${chainId}`
+ * - caip2Hash  = keccak256(bytes(caip2))
+ * - encoded    = abi.encode(bytes32 DOMAIN, bytes32 caip2Hash, address serviceRegistryContract, uint256 tokenId)
  *
  * NOTE: This is abi.encode (NOT encodePacked), so we use AbiCoder.encode.
  */
