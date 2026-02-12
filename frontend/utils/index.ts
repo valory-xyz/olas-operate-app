@@ -6,7 +6,7 @@ export * from './copyToClipboard';
 export * from './dateFormatter';
 export * from './delay';
 export * from './error';
-export * from './generateName';
+export * from './generateAgentName';
 export * from './lodashExtensions';
 export * from './middlewareHelpers';
 export * from './numberFormatters';

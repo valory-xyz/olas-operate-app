@@ -277,7 +277,10 @@ const generatePhoneticNameFromSeed = (
  * - bytes32 agentId from computeAgentId(...)
  * - (optionally) legacy address
  */
-export const generateName = (chainId: EvmChainId, tokenId: number): string => {
+export const generateAgentName = (
+  chainId: EvmChainId,
+  tokenId: number,
+): string => {
   if (isNil(chainId) || isNil(tokenId)) return NA;
 
   const input = computeAgentId(chainId, tokenId);

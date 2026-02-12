@@ -48,7 +48,7 @@ import {
   ServiceDeployment,
   ServiceValidationResponse,
 } from '@/types';
-import { asEvmChainId, generateName, isNilOrEmpty } from '@/utils';
+import { asEvmChainId, generateAgentName, isNilOrEmpty } from '@/utils';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 
@@ -392,7 +392,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         .token;
     const chainId = selectedAgentConfig?.evmHomeChainId;
     if (!chainId || !tokenId) return null;
-    return generateName(chainId, tokenId);
+    return generateAgentName(chainId, tokenId);
   }, [
     selectedAgentConfig?.evmHomeChainId,
     selectedService?.chain_configs,

@@ -40,7 +40,7 @@ import {
   TokenBalanceRecord,
   ValueOf,
 } from '@/types';
-import { generateName } from '@/utils';
+import { generateAgentName } from '@/utils';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { STEPS, WalletChain } from '../components/PearlWallet/types';
@@ -224,7 +224,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       const agentSafe = getServiceSafeOf?.(walletChainId, configId)?.address;
       const tokenId = getServiceTokenId(chainId, configId);
       const agentName =
-        chainId && configId ? generateName(chainId, Number(tokenId)) : null;
+        chainId && configId
+          ? generateAgentName(chainId, Number(tokenId))
+          : null;
       const agentType = getAgentTypeOf(walletChainId, configId);
 
       return {
