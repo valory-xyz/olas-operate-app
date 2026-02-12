@@ -61,7 +61,7 @@ const acknowledgeServiceAchievement = async ({
 };
 
 type GenerateAchievementImageParams = {
-  agent: string; // Better types! ideally should be a union of all the agent types (not AgentType though)
+  agent: string; // TODO: Better types! ideally should be a union of all the agent types (not AgentType though)
   type: string;
   id: string;
 };
