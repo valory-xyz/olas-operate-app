@@ -232,25 +232,14 @@ const strip0x = (hex: string) => (hex.startsWith('0x') ? hex.slice(2) : hex);
  * - bytes32 (64 hex): use directly
  * - address (40 hex): keccak256(addressBytes) -> bytes32 seed
  */
-const normalizeToSeedHex64 = (input?: string): string | null => {
+const normalizeToSeedHex64 = (input?: string) => {
   if (!input) return null;
 
   const hex = input.startsWith('0x') ? input : `0x${input}`;
   if (!utils.isHexString(hex)) return null;
 
   const raw = strip0x(hex).toLowerCase();
-
-  // bytes32 seed already
   if (raw.length === 64) return raw;
-
-  // address -> hash to bytes32 seed
-  if (raw.length === 40) {
-    // validate / checksum
-    const checksummed = utils.getAddress(`0x${raw}`);
-    // hash the *address bytes* (20 bytes)
-    const seed32 = utils.keccak256(checksummed);
-    return strip0x(seed32).toLowerCase();
-  }
 
   return null;
 };
@@ -259,8 +248,8 @@ const generatePhoneticNameFromSeed = (
   seedHex64: string,
   startIndex: number,
   syllables: number,
-): string => {
-  return Array.from({ length: syllables }, (_, i) => {
+): string =>
+  Array.from({ length: syllables }, (_, i) => {
     const slice = seedHex64.slice(startIndex + i * 8, startIndex + (i + 1) * 8);
     const seedValue = parseInt(slice, 16);
 
@@ -270,7 +259,6 @@ const generatePhoneticNameFromSeed = (
   })
     .join('')
     .toLowerCase();
-};
 
 /**
  * Input can be:
