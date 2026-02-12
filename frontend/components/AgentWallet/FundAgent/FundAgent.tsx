@@ -13,7 +13,7 @@ import {
   TokenAmountInput,
 } from '@/components/ui';
 import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
-import { AddressZero, PAGES } from '@/constants';
+import { AddressZero, NA, PAGES } from '@/constants';
 import { useAvailableAssets, usePageState, useServices } from '@/hooks';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
 import { formatUnitsToNumber } from '@/utils';
@@ -62,7 +62,7 @@ const PearlWalletToAgentWallet = () => {
           {agentName && agentImgSrc && (
             <Image src={agentImgSrc} alt={agentName} width={28} height={28} />
           )}
-          <Text className="font-weight-500">{agentName}</Text>
+          <Text className="font-weight-500">{agentName || NA}</Text>
         </Flex>
       </Flex>
       <Divider className="m-0" />

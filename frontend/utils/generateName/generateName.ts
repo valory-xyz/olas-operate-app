@@ -1,4 +1,5 @@
 import { utils } from 'ethers';
+import { isNil } from 'lodash';
 
 import { EvmChainId } from '@/constants/chains';
 import { NA } from '@/constants/symbols';
@@ -277,7 +278,7 @@ const generatePhoneticNameFromSeed = (
  * - (optionally) legacy address
  */
 export const generateName = (chainId: EvmChainId, tokenId: number): string => {
-  if (!chainId || tokenId === undefined) return NA;
+  if (isNil(chainId) || isNil(tokenId)) return NA;
 
   const input = computeAgentId(chainId, tokenId);
   const seed = normalizeToSeedHex64(input);

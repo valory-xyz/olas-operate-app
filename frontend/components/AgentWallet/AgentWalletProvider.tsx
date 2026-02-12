@@ -20,7 +20,6 @@ import {
 import { TokenBalanceRecord } from '@/types';
 import { Nullable, Optional, ValueOf } from '@/types/Util';
 import { AvailableAsset } from '@/types/Wallet';
-import { generateName } from '@/utils/agentName';
 
 import { STEPS, TransactionHistory } from './types';
 
@@ -55,10 +54,9 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
     isLoading: isServicesLoading,
     selectedAgentConfig,
     selectedService,
+    selectedAgentName,
   } = useServices();
-  const { isLoaded, serviceSafes } = useService(
-    selectedService?.service_config_id,
-  );
+  const { isLoaded } = useService(selectedService?.service_config_id);
   const { isLoading: isBalanceLoading } = useBalanceContext();
   const { availableRewardsForEpochEth, accruedServiceStakingRewards } =
     useRewardContext();
@@ -79,12 +77,6 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
       agentConfig.middlewareHomeChainId === selectedService?.home_chain,
   );
   const agentType = agent ? agent[0] : null;
-
-  // agent safe
-  const serviceSafe = useMemo(
-    () => serviceSafes?.find(({ evmChainId }) => evmChainId === walletChainId),
-    [serviceSafes, walletChainId],
-  );
 
   // rewards not yet claimed from staking contract
   const stakingRewards = useMemo(() => {
@@ -111,7 +103,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
         isLoading: isServicesLoading || !isLoaded || isBalanceLoading,
         walletChainId,
         transactionHistory: [],
-        agentName: generateName(serviceSafe?.address),
+        agentName: selectedAgentName,
         agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
         stakingRewards,
         availableAssets,

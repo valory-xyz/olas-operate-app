@@ -10,8 +10,7 @@ import { Modal } from '@/components/ui';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { PAGES } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
-import { usePageState, useService, useServices } from '@/hooks';
-import { generateName } from '@/utils/agentName';
+import { usePageState, useServices } from '@/hooks';
 
 type SwitchingContractStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ERROR';
 
@@ -35,12 +34,7 @@ export const SwitchingContractModal = ({
 }: SwitchingContractModalProps) => {
   const { goto } = usePageState();
   const { toggleSupportModal } = useSupportModal();
-  const { selectedAgentConfig, selectedService } = useServices();
-  const { getServiceSafeOf } = useService(selectedService?.service_config_id);
-  const serviceSafe = getServiceSafeOf?.(
-    selectedAgentConfig.evmHomeChainId,
-    selectedService?.service_config_id,
-  );
+  const { selectedAgentConfig, selectedAgentName } = useServices();
 
   const handleContactSupport = useCallback(() => {
     onClose();
@@ -57,9 +51,6 @@ export const SwitchingContractModal = ({
     }
 
     if (status === 'COMPLETED') {
-      const agentName = serviceSafe?.address
-        ? generateName(serviceSafe?.address)
-        : '-';
       const stakingProgramMeta =
         STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
           stakingProgramIdToMigrateTo
@@ -67,7 +58,7 @@ export const SwitchingContractModal = ({
 
       return {
         title: 'Contract Switched Successfully!',
-        description: `Your ${selectedAgentConfig.displayName} agent ${agentName} is now staked on ${stakingProgramMeta?.name} staking contract.`,
+        description: `Your ${selectedAgentConfig.displayName} agent ${selectedAgentName} is now staked on ${stakingProgramMeta?.name} staking contract.`,
         action: (
           <Button
             type="primary"
@@ -99,11 +90,11 @@ export const SwitchingContractModal = ({
     goto,
     selectedAgentConfig.displayName,
     selectedAgentConfig.evmHomeChainId,
-    serviceSafe?.address,
     stakingProgramIdToMigrateTo,
     status,
     onClose,
     handleContactSupport,
+    selectedAgentName,
   ]);
 
   return <Modal header={<ModalHeader status={status} />} {...modalProps} />;
