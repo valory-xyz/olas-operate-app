@@ -1,4 +1,10 @@
+import { utils } from 'ethers';
+import { isNil } from 'lodash';
+
+import { EvmChainId } from '@/constants/chains';
 import { NA } from '@/constants/symbols';
+
+import { computeAgentId } from './computeAgentId';
 
 const phoneticSyllables = [
   'ba',
@@ -216,34 +222,63 @@ const phoneticSyllables = [
   'chip',
 ];
 
-const generatePhoneticSyllable = (seed: number) => {
-  return phoneticSyllables[seed % phoneticSyllables.length];
+const generatePhoneticSyllable = (seed: number) =>
+  phoneticSyllables[seed % phoneticSyllables.length];
+
+const strip0x = (hex: string) => (hex.startsWith('0x') ? hex.slice(2) : hex);
+
+/**
+ * Normalize input into a 64-hex seed (32 bytes, no 0x)
+ * - bytes32 (64 hex): use directly
+ * - address (40 hex): keccak256(addressBytes) -> bytes32 seed
+ */
+const normalizeToSeedHex64 = (input?: string) => {
+  if (!input) return null;
+
+  const hex = input.startsWith('0x') ? input : `0x${input}`;
+  if (!utils.isHexString(hex)) return null;
+
+  const raw = strip0x(hex).toLowerCase();
+  if (raw.length === 64) return raw;
+
+  return null;
 };
 
-const generatePhoneticName = (
-  address: string,
+const generatePhoneticNameFromSeed = (
+  seedHex64: string,
   startIndex: number,
   syllables: number,
-): string => {
-  return Array.from({ length: syllables }, (_, i) => {
-    const slice = address.slice(startIndex + i * 8, startIndex + (i + 1) * 8);
+): string =>
+  Array.from({ length: syllables }, (_, i) => {
+    const slice = seedHex64.slice(startIndex + i * 8, startIndex + (i + 1) * 8);
     const seedValue = parseInt(slice, 16);
-    return !isNaN(seedValue)
+
+    return Number.isFinite(seedValue)
       ? generatePhoneticSyllable(seedValue)
       : phoneticSyllables[0];
   })
     .join('')
     .toLowerCase();
+
+/**
+ * Input can be:
+ * - bytes32 agentId from computeAgentId(...)
+ * - (optionally) legacy address
+ */
+export const generateAgentName = (
+  chainId: EvmChainId,
+  tokenId: number,
+): string => {
+  if (isNil(chainId) || isNil(tokenId)) return NA;
+
+  const input = computeAgentId(chainId, tokenId);
+  const seed = normalizeToSeedHex64(input);
+  if (!seed) return NA;
+
+  // indices are now based on seed WITHOUT 0x
+  const firstName = generatePhoneticNameFromSeed(seed, 0, 2);
+  const lastNamePrefix = generatePhoneticNameFromSeed(seed, 16, 2);
+  const lastNameNumber = parseInt(seed.slice(-4), 16) % 100;
+
+  return `${firstName}-${lastNamePrefix}${String(lastNameNumber).padStart(2, '0')}`;
 };
-
-const generateName = (address?: string): string => {
-  if (!address) return NA;
-
-  const firstName = generatePhoneticName(address, 2, 2);
-  const lastNamePrefix = generatePhoneticName(address, 18, 2);
-  const lastNameNumber = parseInt(address.slice(-4), 16) % 100;
-
-  return `${firstName}-${lastNamePrefix}${lastNameNumber.toString().padStart(2, '0')}`;
-};
-
-export { generateName };

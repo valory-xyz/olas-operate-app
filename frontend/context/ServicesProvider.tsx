@@ -48,7 +48,12 @@ import {
   ServiceDeployment,
   ServiceValidationResponse,
 } from '@/types';
-import { asEvmChainId, isNilOrEmpty } from '@/utils';
+import {
+  asEvmChainId,
+  generateAgentName,
+  isNilOrEmpty,
+  isValidServiceId,
+} from '@/utils';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 
@@ -82,6 +87,8 @@ type ServicesContextType = {
   isSelectedServiceDeploymentStatusLoading: boolean;
   selectedAgentConfig: AgentConfig;
   selectedAgentType: AgentType;
+  selectedAgentName: Nullable<string>;
+  selectedAgentNameOrFallback: string;
   deploymentDetails: ServiceDeployment | undefined;
   updateAgentType: (agentType: AgentType) => void;
   overrideSelectedServiceStatus: (
@@ -98,6 +105,8 @@ export const ServicesContext = createContext<ServicesContextType>({
   isSelectedServiceDeploymentStatusLoading: true,
   selectedAgentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
   selectedAgentType: AgentMap.PredictTrader,
+  selectedAgentName: null,
+  selectedAgentNameOrFallback: 'My agent',
   deploymentDetails: undefined,
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
@@ -383,6 +392,23 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     return serviceConfigId ?? null;
   };
 
+  // Agent name generated based on the tokenId and chain of the selected service
+  const selectedAgentName = useMemo(() => {
+    const tokenId =
+      selectedService?.chain_configs[selectedService.home_chain].chain_data
+        .token;
+    const chainId = selectedAgentConfig?.evmHomeChainId;
+    if (!chainId || !isValidServiceId(tokenId)) return null;
+    return generateAgentName(chainId, tokenId);
+  }, [
+    selectedAgentConfig?.evmHomeChainId,
+    selectedService?.chain_configs,
+    selectedService?.home_chain,
+  ]);
+
+  const selectedAgentNameOrFallback =
+    selectedAgentName ?? `My ${selectedAgentConfig.displayName}`;
+
   return (
     <ServicesContext.Provider
       value={{
@@ -406,6 +432,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         isSelectedServiceDeploymentStatusLoading,
         selectedAgentConfig,
         selectedAgentType,
+        selectedAgentName,
+        selectedAgentNameOrFallback,
 
         // others
         deploymentDetails,
