@@ -407,7 +407,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   ]);
 
   const selectedAgentNameOrFallback =
-    selectedAgentName ?? `My ${selectedAgentConfig.displayName} agent`;
+    selectedAgentName ?? `My ${selectedAgentConfig.displayName}`;
 
   return (
     <ServicesContext.Provider
