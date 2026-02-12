@@ -68,6 +68,7 @@ export const AgentInfo = () => {
         <AgentInfoContainer>
           <Flex justify="start" align="center" gap={24}>
             <Image
+              key={selectedAgentType}
               src={`/agent-${selectedAgentType}-icon.png`}
               width={88}
               height={88}
