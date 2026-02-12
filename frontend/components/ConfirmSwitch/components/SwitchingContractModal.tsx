@@ -58,7 +58,7 @@ export const SwitchingContractModal = ({
 
       return {
         title: 'Contract Switched Successfully!',
-        description: `Your ${selectedAgentConfig.displayName} agent ${selectedAgentName} is now staked on ${stakingProgramMeta?.name} staking contract.`,
+        description: `Your ${selectedAgentConfig.displayName} agent ${selectedAgentName ?? 'N/A'} is now staked on ${stakingProgramMeta?.name} staking contract.`,
         action: (
           <Button
             type="primary"
