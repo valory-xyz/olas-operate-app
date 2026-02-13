@@ -395,9 +395,25 @@ const createMainWindow = async () => {
 
   ipcMain.handle('app-version', () => app.getVersion());
 
-  mainWindow.webContents.on('did-fail-load', () => {
-    mainWindow.webContents.reloadIgnoringCache();
-  });
+  mainWindow.webContents.on(
+    'did-fail-load',
+    (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      if (isMainFrame) {
+        logger.electron(
+          `Main frame failed to load (${errorCode}): ${errorDescription} at ${validatedURL}`,
+        );
+        mainWindow.webContents.reloadIgnoringCache();
+        return;
+      }
+
+      // subframe failures are expected due to the nature of the app
+      // (loading external content in iframes), but we don't want to reload
+      // the entire window in those cases.
+      logger.electron(
+        `Subframe failed to load (${errorCode}): ${errorDescription} at ${validatedURL}`,
+      );
+    },
+  );
 
   mainWindow.webContents.on('ready-to-show', () => {
     mainWindow.show();
