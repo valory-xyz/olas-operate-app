@@ -2,7 +2,12 @@ import { Button, Flex, Typography } from 'antd';
 import { ReactNode } from 'react';
 import styled from 'styled-components';
 
-import { BackButton, CardFlex, CardTitle } from '@/components/ui';
+import {
+  BackButton,
+  CardFlex,
+  CardTitle,
+  TokenRequirements,
+} from '@/components/ui';
 import { COLOR, EvmChainName, SETUP_SCREEN } from '@/constants';
 import {
   useFeatureFlag,
@@ -13,7 +18,6 @@ import {
 import { TokenRequirement } from '@/types';
 
 import { OnRampMethodCard } from './components/OnRampMethodCard';
-import { TokenRequirements } from './components/TokensRequirements';
 
 const { Text, Title, Paragraph } = Typography;
 

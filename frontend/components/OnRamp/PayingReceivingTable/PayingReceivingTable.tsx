@@ -20,6 +20,8 @@ import {
   asEvmChainDetails,
 } from '@/utils/middlewareHelpers';
 
+import { GetOnRampRequirementsParams, OnRampMode } from '../types';
+
 const { Text } = Typography;
 
 const TableWrapper = styled.div`
@@ -133,8 +135,16 @@ const ViewReceivingTokens = ({ receivingTokens }: ReceivingTokensProps) => (
   </Flex>
 );
 
-type PaymentTableProps = { onRampChainId: EvmChainId };
-export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
+type PaymentTableProps = {
+  onRampChainId: EvmChainId;
+  mode: OnRampMode;
+  getOnRampRequirementsParams: GetOnRampRequirementsParams;
+};
+export const PayingReceivingTable = ({
+  onRampChainId,
+  mode,
+  getOnRampRequirementsParams,
+}: PaymentTableProps) => {
   const { selectedChainId } = useOnRampContext();
   const {
     isOnRampingStepCompleted,
@@ -143,13 +153,23 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     nativeAmountToPay,
     updateUsdAmountToPay,
   } = useOnRampContext();
+
+  if (!selectedChainId) {
+    throw new Error('Selected chain ID is not set in the on-ramp context');
+  }
+
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
     totalNativeToken,
     receivingTokens,
     onRetry,
-  } = useTotalNativeTokenRequired(onRampChainId, 'preview');
+  } = useTotalNativeTokenRequired(
+    onRampChainId,
+    selectedChainId,
+    getOnRampRequirementsParams,
+    mode,
+  );
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
@@ -247,10 +267,6 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
       fromChain,
     ],
   );
-
-  if (!selectedChainId) {
-    throw new Error('Selected chain ID is not set in the on-ramp context');
-  }
 
   const toChain = asEvmChainDetails(asAllMiddlewareChain(selectedChainId));
 

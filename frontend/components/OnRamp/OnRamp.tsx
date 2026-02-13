@@ -6,7 +6,7 @@ import { useOnRampContext } from '@/hooks';
 
 import { OnRampPaymentSteps } from './OnRampPaymentSteps/OnRampPaymentSteps';
 import { PayingReceivingTable } from './PayingReceivingTable/PayingReceivingTable';
-import { OnRampMode } from './types';
+import { GetOnRampRequirementsParams, OnRampMode } from './types';
 
 const { Text, Title } = Typography;
 
@@ -81,11 +81,17 @@ const OnBack = ({ handleBack }: OnBackProps) => {
 
 type OnRampProps = {
   mode: OnRampMode;
+  getOnRampRequirementsParams: GetOnRampRequirementsParams;
   handleBack: () => void;
+  onOnRampCompleted?: () => void;
 };
 
-// TODO: use the prop passed as "mode" to figure out requirements for onboarding & depositing
-export const OnRamp = ({ handleBack }: OnRampProps) => {
+export const OnRamp = ({
+  mode,
+  getOnRampRequirementsParams,
+  handleBack,
+  onOnRampCompleted,
+}: OnRampProps) => {
   const { networkId } = useOnRampContext();
 
   return (
@@ -104,8 +110,17 @@ export const OnRamp = ({ handleBack }: OnRampProps) => {
 
         {networkId ? (
           <Flex vertical gap={24} className="mt-32">
-            <PayingReceivingTable onRampChainId={networkId} />
-            <OnRampPaymentSteps onRampChainId={networkId} />
+            <PayingReceivingTable
+              onRampChainId={networkId}
+              mode={mode}
+              getOnRampRequirementsParams={getOnRampRequirementsParams}
+            />
+            <OnRampPaymentSteps
+              mode={mode}
+              onRampChainId={networkId}
+              getOnRampRequirementsParams={getOnRampRequirementsParams}
+              onOnRampCompleted={onOnRampCompleted}
+            />
           </Flex>
         ) : (
           <Loader />

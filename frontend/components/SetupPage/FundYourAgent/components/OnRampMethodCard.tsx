@@ -2,8 +2,14 @@ import { Button, Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { COLOR, ON_RAMP_CHAIN_MAP, SETUP_SCREEN } from '@/constants';
 import {
+  AddressZero,
+  COLOR,
+  ON_RAMP_CHAIN_MAP,
+  SETUP_SCREEN,
+} from '@/constants';
+import {
+  useGetBridgeRequirementsParams,
   useOnRampContext,
   useServices,
   useSetup,
@@ -15,8 +21,7 @@ import {
   asMiddlewareChain,
 } from '@/utils/middlewareHelpers';
 
-import { Alert, CardFlex, CardTitle } from '../../../ui';
-import { TokenRequirements } from './TokensRequirements';
+import { Alert, CardFlex, CardTitle, TokenRequirements } from '../../../ui';
 
 const OnRampMethodCardCard = styled(CardFlex)`
   width: 370px;
@@ -76,11 +81,23 @@ export const OnRampMethodCard = () => {
   const { goto } = useSetup();
   const { selectedChainId, networkId } = useOnRampNetworkConfig();
 
+  // Get requirements params function (use 'to' direction for on-ramping)
+  const getOnRampRequirementsParams = useGetBridgeRequirementsParams(
+    networkId.chain,
+    AddressZero,
+    'to',
+  );
+
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
     totalNativeToken,
-  } = useTotalNativeTokenRequired(networkId.chain, 'onboarding');
+  } = useTotalNativeTokenRequired(
+    networkId.chain,
+    selectedChainId,
+    getOnRampRequirementsParams,
+    'onboard',
+  );
   const { isLoading: isFiatLoading, data: fiatAmount } =
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,

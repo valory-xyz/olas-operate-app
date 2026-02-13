@@ -1,9 +1,9 @@
 import { useEffect, useMemo } from 'react';
 
+import { GetOnRampRequirementsParams } from '@/components/OnRamp/types';
 import { AddressZero } from '@/constants/address';
-import { EvmChainId, ON_RAMP_CHAIN_MAP } from '@/constants/chains';
+import { EvmChainId } from '@/constants/chains';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
-import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
@@ -16,17 +16,23 @@ import { useBridgeRequirementsQuery } from '../components/OnRamp/PayingReceiving
  *
  * Example: For Optimus, we require 0.01 ETH, 16 USDC, 100 OLAS.
  * So, total ETH required = 0.01 ETH + 16 USDC in ETH + 100 OLAS in ETH.
+ *
+ * @param onRampChainId - The chain ID where on-ramping occurs
+ * @param toChainId - The destination chain ID where funds will be sent
+ * @param getOnRampRequirementsParams - Function to get on-ramp requirements
+ * @param queryKey - Query key suffix for caching
  */
 export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,
-  queryKey: 'preview' | 'onboarding' = 'onboarding',
+  toChainId: EvmChainId,
+  getOnRampRequirementsParams: GetOnRampRequirementsParams,
+  queryKey: 'preview' | 'onboard' | 'deposit' = 'onboard',
 ) => {
   const {
     updateNativeAmountToPay,
     updateNativeTotalAmountRequired,
     isOnRampingTransactionSuccessful,
   } = useOnRampContext();
-  const { selectedAgentConfig } = useServices();
   const {
     masterEoa,
     getMasterSafeOf,
@@ -42,6 +48,7 @@ export const useTotalNativeTokenRequired = (
     onRetry,
   } = useBridgeRequirementsQuery({
     onRampChainId,
+    getOnRampRequirementsParams,
     enabled: !isOnRampingTransactionSuccessful,
     stopPollingCondition: isOnRampingTransactionSuccessful,
     queryKeySuffix: queryKey,
@@ -61,16 +68,13 @@ export const useTotalNativeTokenRequired = (
     if (!masterEoa?.address) return;
     if (!isMasterWalletFetched) return;
 
-    // "TO" chain, where we will bridge on-ramped funds to
-    const agentChainName = asMiddlewareChain(
-      selectedAgentConfig.evmHomeChainId,
-    );
-
-    // "FROM" chain for bridging, the chain we will on-ramp funds to
-    const chainName = ON_RAMP_CHAIN_MAP[agentChainName].chain;
-    const onRampNetworkName = asMiddlewareChain(chainName);
+    // "FROM" chain - where we will on-ramp funds (source)
+    const onRampNetworkName = asMiddlewareChain(onRampChainId);
     const destinationAddress =
-      getMasterSafeOf?.(chainName)?.address || masterEoa.address;
+      getMasterSafeOf?.(onRampChainId)?.address || masterEoa.address;
+
+    // "TO" chain - where we will send the on-ramped funds (destination)
+    const toChainName = asMiddlewareChain(toChainId);
 
     /**
      * Calculate native token amount needed from direct requirements (not from bridging)
@@ -88,7 +92,7 @@ export const useTotalNativeTokenRequired = (
       (request) => request.to.token === AddressZero,
     )?.to.amount;
     const nativeTokenFromBridgeParams =
-      agentChainName === onRampNetworkName ? nativeTokenAmount : 0;
+      toChainName === onRampNetworkName ? nativeTokenAmount : 0;
 
     // Remaining token from the bridge quote.
     // e.g, For optimus, OLAS and USDC are bridged to ETH
@@ -125,7 +129,8 @@ export const useTotalNativeTokenRequired = (
     bridgeFundingRequirements,
     masterEoa,
     isMasterWalletFetched,
-    selectedAgentConfig.evmHomeChainId,
+    onRampChainId,
+    toChainId,
     getMasterSafeOf,
   ]);
 
