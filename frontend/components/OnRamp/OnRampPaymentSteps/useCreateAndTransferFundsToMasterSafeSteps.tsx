@@ -8,6 +8,8 @@ import { useMasterWalletContext, useOnRampContext } from '@/hooks';
 import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
 import { Nullable } from '@/types';
 
+import { OnRampMode } from '../types';
+
 const EMPTY_STATE_STEPS: Record<string, TransactionStep> = {
   createPearlWallet: { status: 'wait', title: 'Create Pearl Wallet' },
   transferFunds: {
@@ -18,8 +20,10 @@ const EMPTY_STATE_STEPS: Record<string, TransactionStep> = {
 
 /**
  * Hook to create a Master Safe and transfer funds to it after the swap is completed.
+ * Only creates safe during onboarding mode if it doesn't exist.
  */
 export const useCreateAndTransferFundsToMasterSafeSteps = (
+  mode: OnRampMode,
   isSwapCompleted: boolean,
   tokensToBeTransferred: TokenSymbol[],
 ) => {
@@ -38,6 +42,10 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   }
 
   const hasMasterSafe = !isNil(getMasterSafeOf?.(selectedChainId));
+
+  // Only create master safe during onboarding if it doesn't exist
+  const shouldCreateMasterSafe = mode === 'onboard' && !hasMasterSafe;
+
   const isSafeCreated = isMasterWalletFetched
     ? hasMasterSafe ||
       creationAndTransferDetails?.safeCreationDetails?.isSafeCreated
@@ -51,7 +59,9 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     creationAndTransferDetails?.transferDetails.transfers;
 
   // Check if the swap is completed and tokens are available for transfer
+  // Only create safe if we're in onboard mode and don't have one yet
   useEffect(() => {
+    if (!shouldCreateMasterSafe) return;
     if (!isSwapCompleted) return;
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
@@ -59,6 +69,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 
     createMasterSafe();
   }, [
+    shouldCreateMasterSafe,
     isSwapCompleted,
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
@@ -68,7 +79,8 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 
   // Step for creating the Master Safe
   const masterSafeCreationStep = useMemo<Nullable<TransactionStep>>(() => {
-    if (isMasterWalletFetched && hasMasterSafe) return null;
+    // Don't show this step if we shouldn't create a safe (deposit mode or safe already exists)
+    if (!shouldCreateMasterSafe) return null;
 
     const currentMasterSafeCreationStatus = (() => {
       if (!isSwapCompleted) return 'wait';
@@ -103,8 +115,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
       ],
     };
   }, [
-    isMasterWalletFetched,
-    hasMasterSafe,
+    shouldCreateMasterSafe,
     creationAndTransferDetails?.safeCreationDetails?.txnLink,
     isErrorMasterSafeCreation,
     createMasterSafe,
@@ -197,9 +208,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     return {
       isMasterSafeCreatedAndFundsTransferred: false,
       steps: [
-        isMasterWalletFetched && hasMasterSafe
-          ? null
-          : EMPTY_STATE_STEPS.createPearlWallet,
+        shouldCreateMasterSafe ? EMPTY_STATE_STEPS.createPearlWallet : null,
         EMPTY_STATE_STEPS.transferFunds,
       ].filter(Boolean),
     };

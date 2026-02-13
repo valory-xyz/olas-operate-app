@@ -23,6 +23,7 @@ export * from './Steps';
 export * from './styles';
 export * from './Table';
 export * from './TokenAmountInput';
+export * from './TokenRequirementsDisplay';
 export * from './TokenRequirementsTable';
 export * from './tooltips';
 export * from './TransactionSteps';

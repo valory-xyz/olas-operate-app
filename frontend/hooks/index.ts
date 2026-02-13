@@ -15,6 +15,7 @@ export * from './useDynamicRefetchInterval';
 export * from './useElectronApi';
 export * from './useFeatureFlag';
 export * from './useGetBridgeRequirementsParams';
+export * from './useGetOnRampRequirementsParams';
 export * from './useGetRefillRequirements';
 export * from './useInitialFundingRequirements';
 export * from './useIsAgentGeoRestricted';

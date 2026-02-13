@@ -5,13 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FundsAreSafeMessage } from '@/components/ui/FundsAreSafeMessage';
 import { TransactionStep } from '@/components/ui/TransactionSteps';
 import { TokenSymbol } from '@/config/tokens';
-import { AddressZero } from '@/constants/address';
 import { EvmChainId } from '@/constants/chains';
-import {
-  useBridgingSteps,
-  useGetBridgeRequirementsParams,
-  useOnRampContext,
-} from '@/hooks';
+import { useBridgingSteps, useOnRampContext } from '@/hooks';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBridgeRefillRequirementsOnDemand } from '@/hooks/useBridgeRefillRequirementsOnDemand';
 import {
@@ -21,13 +16,17 @@ import {
 import { delayInSeconds } from '@/utils/delay';
 
 import { useBridgeRequirementsUtils } from '../hooks/useBridgeRequirementsUtils';
+import { GetOnRampRequirementsParams } from '../types';
 
 const { Text } = Typography;
 
 /**
  * Hook to calculate the bridge requirements for the swapping process after on-ramp,
  */
-const useBridgeRequirements = (onRampChainId: EvmChainId) => {
+const useBridgeRequirements = (
+  onRampChainId: EvmChainId,
+  getOnRampRequirementsParams: GetOnRampRequirementsParams,
+) => {
   const [bridgeFundingRequirements, setBridgeFundingRequirements] =
     useState<BridgeRefillRequirementsResponse | null>(null);
   const { isOnRampingStepCompleted } = useOnRampContext();
@@ -48,16 +47,10 @@ const useBridgeRequirements = (onRampChainId: EvmChainId) => {
   ] = useState(true);
   const [isManuallyRefetching, setIsManuallyRefetching] = useState(false);
 
-  const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
-    onRampChainId,
-    AddressZero,
-    'to',
-  );
-
   const bridgeParams = useMemo(() => {
-    if (!getBridgeRequirementsParams) return null;
-    return getBridgeRequirementsParams(isForceUpdate);
-  }, [isForceUpdate, getBridgeRequirementsParams]);
+    if (!getOnRampRequirementsParams) return null;
+    return getOnRampRequirementsParams(isForceUpdate);
+  }, [isForceUpdate, getOnRampRequirementsParams]);
 
   const bridgeParamsExceptNativeToken = useMemo(
     () => getBridgeParamsExceptNativeToken(bridgeParams),
@@ -187,7 +180,10 @@ const getQuoteFailedErrorState = (onRetry: () => void): SwapFundsStep => ({
 /**
  * Hook to manage the swap funds step in the on-ramping process.
  */
-export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
+export const useSwapFundsStep = (
+  onRampChainId: EvmChainId,
+  getOnRampRequirementsParams: GetOnRampRequirementsParams,
+): SwapFundsStep => {
   const {
     isOnRampingStepCompleted,
     isSwappingFundsStepCompleted,
@@ -200,7 +196,7 @@ export const useSwapFundsStep = (onRampChainId: EvmChainId) => {
     receivingTokens,
     tokensToBeBridged,
     onRetry,
-  } = useBridgeRequirements(onRampChainId);
+  } = useBridgeRequirements(onRampChainId, getOnRampRequirementsParams);
 
   // State to hold the steps for the swap funds process
   const [swapFundsSteps, setSwapFundsSteps] = useState<BridgeStatuses>();
