@@ -62,7 +62,7 @@ const AgentWalletToPearlWallet = () => {
       <Flex gap={16} style={{ padding: '12px 32px' }} align="center">
         <Flex gap={8} align="center">
           <Text type="secondary">From</Text>{' '}
-          {agentName && agentImgSrc && (
+          {agentImgSrc && (
             <Image src={agentImgSrc} alt={agentName} width={28} height={28} />
           )}
           <Text className="font-weight-500">{agentName}</Text>

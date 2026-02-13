@@ -3,12 +3,14 @@ import { PAGES } from '@/constants';
 import {
   useActiveStakingContractDetails,
   useAgentRunning,
+  useIsAgentGeoRestricted,
   useIsInitiallyFunded,
   usePageState,
   useServices,
   useStakingProgram,
 } from '@/hooks';
 
+import { AgentGeoBlockedAlert } from './AgentGeoBlockedAlert';
 import { AgentRunningAlert } from './AgentRunningAlert';
 import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { EvictedAlert } from './EvictedAlert';
@@ -18,7 +20,8 @@ import { UnderConstructionAlert } from './UnderConstructionAlert';
 import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
 
 export const AgentDisabledAlert = () => {
-  const { selectedAgentConfig } = useServices();
+  const { goto } = usePageState();
+  const { selectedAgentConfig, selectedAgentType } = useServices();
   const {
     isSelectedStakingContractDetailsLoading,
     isAgentEvicted,
@@ -27,9 +30,17 @@ export const AgentDisabledAlert = () => {
     isServiceStaked,
   } = useActiveStakingContractDetails();
   const { isInitialFunded } = useIsInitiallyFunded();
-  const { goto } = usePageState();
   const { isAnotherAgentRunning } = useAgentRunning();
   const { selectedStakingProgramMeta } = useStakingProgram();
+
+  const { isAgentGeoRestricted } = useIsAgentGeoRestricted({
+    agentType: selectedAgentType,
+    agentConfig: selectedAgentConfig,
+  });
+
+  if (selectedAgentConfig?.isGeoLocationRestricted && isAgentGeoRestricted) {
+    return <AgentGeoBlockedAlert />;
+  }
 
   if (selectedAgentConfig.isUnderConstruction) {
     return <UnderConstructionAlert />;

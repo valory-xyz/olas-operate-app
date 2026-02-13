@@ -160,19 +160,19 @@ export const useGetBridgeRequirementsParams = (
           continue;
         }
 
-        for (const [tokenAddress, amount] of Object.entries(
+        for (const [untypedTokenAddress, amount] of Object.entries(
           tokensWithRequirements,
         )) {
-          if (!isAddress(tokenAddress)) continue;
+          if (!isAddress(untypedTokenAddress)) continue;
           if (BigInt(amount) === 0n) continue;
 
+          const tokenAddress = untypedTokenAddress as Address;
           const fromToken =
             defaultFromToken ||
             getFromToken(tokenAddress, fromChainConfig, toChainConfig);
 
           const fromChain = asAllMiddlewareChain(fromChainId);
           const toChain = toMiddlewareChain;
-          const toToken = tokenAddress as Address;
 
           const existingRequest = bridgeRequests.find(
             (req) =>
@@ -181,7 +181,7 @@ export const useGetBridgeRequirementsParams = (
               areAddressesEqual(req.from.address, fromAddress) &&
               areAddressesEqual(req.to.address, toAddress) &&
               areAddressesEqual(req.from.token, fromToken) &&
-              areAddressesEqual(req.to.token, toToken),
+              areAddressesEqual(req.to.token, tokenAddress),
           );
 
           if (existingRequest) {
@@ -198,7 +198,7 @@ export const useGetBridgeRequirementsParams = (
               to: {
                 chain: toChain,
                 address: toAddress,
-                token: toToken,
+                token: tokenAddress,
                 amount,
               },
             });

@@ -35,6 +35,12 @@ const schema = {
     type: 'object',
     default: defaultInitialAgentSettings,
   },
+  polymarket_trader: {
+    type: 'object',
+    default: defaultInitialAgentSettings,
+  },
+
+  // Backup wallet information
   lastProvidedBackupWallet: {
     type: 'object',
     default: { address: null, type: 'manual' },

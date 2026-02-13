@@ -52,6 +52,17 @@ const OPTIMISM_OLAS_CONTRACTS: ContractsByType = {
   ),
 };
 
+const POLYGON_OLAS_CONTRACTS: ContractsByType = {
+  [CONTRACT_TYPE.ServiceRegistryL2]: new MulticallContract(
+    '0xE3607b00E75f6405248323A9417ff6b39B244b50',
+    SERVICE_REGISTRY_L2_ABI,
+  ),
+  [CONTRACT_TYPE.ServiceRegistryTokenUtility]: new MulticallContract(
+    '0xa45E64d13A30a51b91ae0eb182e88a40e9b18eD8',
+    SERVICE_REGISTRY_TOKEN_UTILITY_ABI,
+  ),
+};
+
 export const OLAS_CONTRACTS: {
   [evmHomeChainId in EvmChainId]: ContractsByType;
 } = {
@@ -59,4 +70,5 @@ export const OLAS_CONTRACTS: {
   [EvmChainIdMap.Base]: BASE_OLAS_CONTRACTS,
   [EvmChainIdMap.Mode]: MODE_OLAS_CONTRACTS,
   [EvmChainIdMap.Optimism]: OPTIMISM_OLAS_CONTRACTS,
+  [EvmChainIdMap.Polygon]: POLYGON_OLAS_CONTRACTS,
 };

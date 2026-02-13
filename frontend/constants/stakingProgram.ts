@@ -52,6 +52,16 @@ export type OptimismStakingProgramId = ValueOf<
   typeof OPTIMISM_STAKING_PROGRAM_IDS
 >;
 
+const POLYGON_STAKING_PROGRAM_IDS = {
+  PolygonBeta1: 'polygon_beta_1',
+  PolygonBeta2: 'polygon_beta_2',
+  PolygonBeta3: 'polygon_beta_3', // Note: “Polygon Alpha 3” is a typo in contract setup (in meta data) — the correct name is Polygon Beta 3.
+} as const;
+
+export type PolygonStakingProgramId = ValueOf<
+  typeof POLYGON_STAKING_PROGRAM_IDS
+>;
+
 /**
  * @link https://github.com/valory-xyz/olas-operate-middleware/blob/9ca362f302ae749dd99b236d062ccc5c722acabf/operate/ledger/profiles.py#L115
  * Refer the above link for the list of staking program ids.
@@ -61,6 +71,7 @@ export const STAKING_PROGRAM_IDS = {
   ...BASE_STAKING_PROGRAM_IDS,
   ...MODE_STAKING_PROGRAM_IDS,
   ...OPTIMISM_STAKING_PROGRAM_IDS,
+  ...POLYGON_STAKING_PROGRAM_IDS,
 } as const;
 
 export type StakingProgramId = ValueOf<typeof STAKING_PROGRAM_IDS>;

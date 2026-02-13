@@ -95,3 +95,24 @@ export const PETT_AI_ONBOARDING_STEPS: OnboardingStep[] = [
     },
   },
 ] as const;
+
+export const POLYSTRAT_ONBOARDING_STEPS: OnboardingStep[] = [
+  {
+    desc: 'Trade Polymarket on autopilot with your customizable, always-on AI agent. Polystrat scans markets in real-time, opens trades on future events for you and collects winnings as the markets resolve.',
+  },
+  {
+    title: 'Market Opportunity Finder',
+    desc: 'Polystrat actively scans prediction markets to identify new opportunities for investment.',
+    imgSrc: 'introduction/setup-agent-polystrat-1',
+  },
+  {
+    title: 'Execute Intelligent Trades',
+    desc: 'Agent uses AI to generate predictions and execute trades on events by analyzing market trends and real-time data.',
+    imgSrc: 'introduction/setup-agent-polystrat-2',
+  },
+  {
+    title: 'Collect Earnings',
+    desc: 'It collects your earning on the go, as the results of the corresponding prediction markets are finalized.',
+    imgSrc: 'introduction/setup-agent-polystrat-3',
+  },
+] as const;

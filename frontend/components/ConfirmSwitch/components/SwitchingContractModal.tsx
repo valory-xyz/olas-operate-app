@@ -1,5 +1,5 @@
 import { Button, Spin } from 'antd';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
   LoadingOutlined,
@@ -10,8 +10,7 @@ import { Modal } from '@/components/ui';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { PAGES } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
-import { usePageState, useService, useServices } from '@/hooks';
-import { generateName } from '@/utils/agentName';
+import { usePageState, useServices } from '@/hooks';
 
 type SwitchingContractStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ERROR';
 
@@ -35,12 +34,12 @@ export const SwitchingContractModal = ({
 }: SwitchingContractModalProps) => {
   const { goto } = usePageState();
   const { toggleSupportModal } = useSupportModal();
-  const { selectedAgentConfig, selectedService } = useServices();
-  const { getServiceSafeOf } = useService(selectedService?.service_config_id);
-  const serviceSafe = getServiceSafeOf?.(
-    selectedAgentConfig.evmHomeChainId,
-    selectedService?.service_config_id,
-  );
+  const { selectedAgentConfig, selectedAgentName } = useServices();
+
+  const handleContactSupport = useCallback(() => {
+    onClose();
+    toggleSupportModal();
+  }, [onClose, toggleSupportModal]);
 
   const modalProps = useMemo(() => {
     if (status === 'IN_PROGRESS') {
@@ -50,10 +49,8 @@ export const SwitchingContractModal = ({
           'Your agent is switching contracts. It usually takes up to 5 min. Please keep the app open until the process is complete.',
       };
     }
+
     if (status === 'COMPLETED') {
-      const agentName = serviceSafe?.address
-        ? generateName(serviceSafe?.address)
-        : '-';
       const stakingProgramMeta =
         STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
           stakingProgramIdToMigrateTo
@@ -61,7 +58,7 @@ export const SwitchingContractModal = ({
 
       return {
         title: 'Contract Switched Successfully!',
-        description: `Your ${selectedAgentConfig.displayName} agent ${agentName} is now staked on ${stakingProgramMeta?.name} staking contract.`,
+        description: `Your ${selectedAgentConfig.displayName} agent ${selectedAgentName} is now staked on ${stakingProgramMeta?.name} staking contract.`,
         action: (
           <Button
             type="primary"
@@ -74,21 +71,16 @@ export const SwitchingContractModal = ({
         ),
       };
     }
+
     if (status === 'ERROR') {
       return {
         title: 'Switching Error',
         description:
           'An error occurred during switching contracts. Please try again or contact support.',
         closable: true,
-        onClose,
+        onCancel: onClose,
         action: (
-          <Button
-            className="mt-16"
-            onClick={() => {
-              onClose();
-              toggleSupportModal();
-            }}
-          >
+          <Button className="mt-16" onClick={handleContactSupport}>
             Contact support
           </Button>
         ),
@@ -96,13 +88,13 @@ export const SwitchingContractModal = ({
     }
   }, [
     goto,
-    onClose,
     selectedAgentConfig.displayName,
     selectedAgentConfig.evmHomeChainId,
-    serviceSafe?.address,
     stakingProgramIdToMigrateTo,
     status,
-    toggleSupportModal,
+    onClose,
+    handleContactSupport,
+    selectedAgentName,
   ]);
 
   return <Modal header={<ModalHeader status={status} />} {...modalProps} />;

@@ -77,6 +77,13 @@ export type ConfigurationTemplate = {
   nft: string;
   rpc?: string; // added on deployment
   agent_id: number;
+  /**
+   * Used as a fallback default if middleware doesn't get it from the staking contract.
+   * Also, we can add half of the default staking contract.
+   *
+   * For example: Service staking deposit (OLAS) of Polymarket Beta 1 is 100,
+   * so cost_of_bond here is 50.
+   */
   cost_of_bond: string;
   fund_requirements: FundRequirements; // provided by agent teams, used by BE to send initial funds
 };

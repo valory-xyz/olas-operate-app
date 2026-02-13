@@ -11,7 +11,7 @@ import {
   useState,
 } from 'react';
 
-import { AGENT_CONFIG } from '@/config/agents';
+import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import {
   AgentEoa,
   AgentMap,
@@ -48,7 +48,12 @@ import {
   ServiceDeployment,
   ServiceValidationResponse,
 } from '@/types';
-import { asEvmChainId, isNilOrEmpty } from '@/utils';
+import {
+  asEvmChainId,
+  generateAgentName,
+  isNilOrEmpty,
+  isValidServiceId,
+} from '@/utils';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 
@@ -74,12 +79,16 @@ type ServicesContextType = {
     tokenId: Optional<number>;
   }[];
   getServiceConfigIdsOf: (chainId: EvmChainId) => string[];
+  getAgentTypeFromService: (serviceConfigId?: string) => Nullable<AgentType>;
+  getServiceConfigIdFromAgentType: (agentType: AgentType) => Nullable<string>;
   serviceWallets?: AgentWallet[];
   selectedService?: Service;
   serviceStatusOverrides?: Record<string, Maybe<MiddlewareDeploymentStatus>>;
   isSelectedServiceDeploymentStatusLoading: boolean;
   selectedAgentConfig: AgentConfig;
   selectedAgentType: AgentType;
+  selectedAgentName: Nullable<string>;
+  selectedAgentNameOrFallback: string;
   deploymentDetails: ServiceDeployment | undefined;
   updateAgentType: (agentType: AgentType) => void;
   overrideSelectedServiceStatus: (
@@ -96,11 +105,15 @@ export const ServicesContext = createContext<ServicesContextType>({
   isSelectedServiceDeploymentStatusLoading: true,
   selectedAgentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
   selectedAgentType: AgentMap.PredictTrader,
+  selectedAgentName: null,
+  selectedAgentNameOrFallback: 'My agent',
   deploymentDetails: undefined,
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
   availableServiceConfigIds: [],
   getServiceConfigIdsOf: () => [],
+  getAgentTypeFromService: () => null,
+  getServiceConfigIdFromAgentType: () => null,
 });
 
 /**
@@ -355,6 +368,47 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     [availableServiceConfigIds],
   );
 
+  const getAgentTypeFromService = (
+    serviceConfigId?: string,
+  ): AgentType | null => {
+    if (!serviceConfigId) return null;
+
+    const service = services?.find(
+      (service) => service.service_config_id === serviceConfigId,
+    );
+    if (!service) return null;
+
+    const agentEntry = ACTIVE_AGENTS.find(
+      ([, config]) => config.servicePublicId === service.service_public_id,
+    );
+
+    return agentEntry ? (agentEntry[0] as AgentType) : null;
+  };
+
+  const getServiceConfigIdFromAgentType = (agentType: AgentType) => {
+    const serviceConfigId = availableServiceConfigIds.find(
+      ({ configId }) => getAgentTypeFromService(configId) === agentType,
+    )?.configId;
+    return serviceConfigId ?? null;
+  };
+
+  // Agent name generated based on the tokenId and chain of the selected service
+  const selectedAgentName = useMemo(() => {
+    const tokenId =
+      selectedService?.chain_configs[selectedService.home_chain].chain_data
+        .token;
+    const chainId = selectedAgentConfig?.evmHomeChainId;
+    if (!chainId || !isValidServiceId(tokenId)) return null;
+    return generateAgentName(chainId, tokenId);
+  }, [
+    selectedAgentConfig?.evmHomeChainId,
+    selectedService?.chain_configs,
+    selectedService?.home_chain,
+  ]);
+
+  const selectedAgentNameOrFallback =
+    selectedAgentName ?? `My ${selectedAgentConfig.displayName}`;
+
   return (
     <ServicesContext.Provider
       value={{
@@ -365,6 +419,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         refetch,
         availableServiceConfigIds,
         getServiceConfigIdsOf,
+        getAgentTypeFromService,
+        getServiceConfigIdFromAgentType,
 
         // pause
         paused,
@@ -376,6 +432,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         isSelectedServiceDeploymentStatusLoading,
         selectedAgentConfig,
         selectedAgentType,
+        selectedAgentName,
+        selectedAgentNameOrFallback,
 
         // others
         deploymentDetails,

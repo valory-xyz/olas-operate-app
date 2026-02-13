@@ -15,9 +15,10 @@ import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useTotalFiatFromNativeToken } from '@/hooks/useTotalFiatFromNativeToken';
 import { useTotalNativeTokenRequired } from '@/hooks/useTotalNativeTokenRequired';
 import { ReceivingTokens } from '@/types/Bridge';
+import { formatAmountNormalized } from '@/utils';
 import {
+  asAllMiddlewareChain,
   asEvmChainDetails,
-  asMiddlewareChain,
 } from '@/utils/middlewareHelpers';
 
 const { Text } = Typography;
@@ -51,8 +52,8 @@ type PaymentTableDataType = {
 };
 
 const getColumns = (
-  chainName: string,
-  chainDisplayName: string,
+  toChainName: string,
+  toChainDisplayName: string,
 ): TableProps<PaymentTableDataType>['columns'] => [
   {
     title: (
@@ -69,7 +70,7 @@ const getColumns = (
   {
     title: (
       <Flex align="center" gap={8}>
-        <ChainLogo chainName={chainName} alt={chainDisplayName} />
+        <ChainLogo chainName={toChainName} alt={toChainDisplayName} />
         <Text className="text-sm">Receiving</Text>
       </Flex>
     ),
@@ -139,8 +140,9 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   const {
     isOnRampingStepCompleted,
     isTransactionSuccessfulButFundsNotReceived,
+    isBuyCryptoBtnLoading,
     usdAmountToPay,
-    ethAmountToPay,
+    nativeAmountToPay,
     updateUsdAmountToPay,
   } = useOnRampContext();
   const {
@@ -150,10 +152,16 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     receivingTokens,
     onRetry,
   } = useTotalNativeTokenRequired(onRampChainId, 'preview');
-  const { isLoading: isFiatLoading, data: fiatAmount } =
+  const { isLoading: isFiatLoading, data: totalFiatDetails } =
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
+      nativeAmountToPay,
       selectedChainId,
+      // Skip price-quote API call if on-ramping step is already completed
+      skip:
+        isOnRampingStepCompleted ||
+        isTransactionSuccessfulButFundsNotReceived ||
+        isBuyCryptoBtnLoading,
     });
 
   // State to hold the tokensRequired to be displayed in the receiving column
@@ -171,28 +179,37 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
   ]);
 
   const isReceivingAmountLoading = isFiatLoading || isNativeTokenLoading;
+  const fromChain = asEvmChainDetails(asAllMiddlewareChain(onRampChainId));
 
   // Update the USD amount to pay only if the on-ramping step is not completed.
   // Or if the transaction is successful but funds are not received.
   useEffect(() => {
     if (isOnRampingStepCompleted) return;
     if (isTransactionSuccessfulButFundsNotReceived) return;
+    if (isBuyCryptoBtnLoading) return;
 
     if (isReceivingAmountLoading || hasNativeTokenError) {
       updateUsdAmountToPay(null);
-    } else if (fiatAmount) {
-      updateUsdAmountToPay(fiatAmount);
+    } else if (totalFiatDetails?.fiatAmount) {
+      updateUsdAmountToPay(totalFiatDetails.fiatAmount);
     }
   }, [
     isTransactionSuccessfulButFundsNotReceived,
     isOnRampingStepCompleted,
+    isBuyCryptoBtnLoading,
     isReceivingAmountLoading,
     hasNativeTokenError,
-    fiatAmount,
+    totalFiatDetails,
     updateUsdAmountToPay,
   ]);
 
-  const ethToTokenDataSource = useMemo<PaymentTableDataType[]>(
+  const totalEthAmountToDisplay = useMemo(() => {
+    const native = totalFiatDetails?.nativeAmountToDisplay;
+    if (!native) return `0 ${fromChain.symbol}`;
+    return `${formatAmountNormalized(native, 4)} ${fromChain.symbol}`;
+  }, [totalFiatDetails?.nativeAmountToDisplay, fromChain]);
+
+  const payingReceivingDataSource = useMemo<PaymentTableDataType[]>(
     () => [
       {
         key: 'headers',
@@ -212,13 +229,20 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
                 {isReceivingAmountLoading || isNativeTokenLoading ? (
                   <TokenLoader size="large" />
                 ) : (
-                  <>
+                  <Flex vertical gap={4} align="flex-start">
                     <Text>
-                      {usdAmountToPay ? `~$${usdAmountToPay} for` : NA}
+                      {usdAmountToPay
+                        ? `~$${formatAmountNormalized(usdAmountToPay, 2)} for`
+                        : NA}
                     </Text>
-                    <ChainLogo chainName="ethereum" alt="ETH" />
-                    <Text>{`${ethAmountToPay} ETH`}</Text>
-                  </>
+                    <Flex align="center" gap={6}>
+                      <ChainLogo
+                        chainName={fromChain.name}
+                        alt={fromChain.displayName}
+                      />
+                      <Text>{totalEthAmountToDisplay}</Text>
+                    </Flex>
+                  </Flex>
                 )}
               </Flex>
             )}
@@ -232,11 +256,12 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     [
       isNativeTokenLoading,
       hasNativeTokenError,
-      ethAmountToPay,
       usdAmountToPay,
       tokensRequired,
       onRetry,
       isReceivingAmountLoading,
+      totalEthAmountToDisplay,
+      fromChain,
     ],
   );
 
@@ -244,13 +269,13 @@ export const PayingReceivingTable = ({ onRampChainId }: PaymentTableProps) => {
     throw new Error('Selected chain ID is not set in the on-ramp context');
   }
 
-  const toChain = asEvmChainDetails(asMiddlewareChain(selectedChainId));
+  const toChain = asEvmChainDetails(asAllMiddlewareChain(selectedChainId));
 
   return (
     <TableWrapper>
       <Table<PaymentTableDataType>
         columns={getColumns(toChain.name, toChain.displayName)}
-        dataSource={ethToTokenDataSource}
+        dataSource={payingReceivingDataSource}
         pagination={false}
         bordered
         $noBorder={false}

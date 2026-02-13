@@ -2,7 +2,7 @@ import { Button, Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { COLOR, onRampChainMap, SETUP_SCREEN } from '@/constants';
+import { COLOR, ON_RAMP_CHAIN_MAP, SETUP_SCREEN } from '@/constants';
 import {
   useOnRampContext,
   useServices,
@@ -42,8 +42,10 @@ const useOnRampNetworkConfig = () => {
     useMemo(() => {
       const selectedChainId = selectedAgentConfig.evmHomeChainId;
       const fromChainName = asMiddlewareChain(selectedChainId);
-      const networkId = onRampChainMap[fromChainName];
-      const chainDetails = asEvmChainDetails(asMiddlewareChain(networkId));
+      const networkId = ON_RAMP_CHAIN_MAP[fromChainName];
+      const chainDetails = asEvmChainDetails(
+        asMiddlewareChain(networkId.chain),
+      );
       return {
         selectedChainId,
         networkId,
@@ -54,7 +56,7 @@ const useOnRampNetworkConfig = () => {
 
   useEffect(() => {
     updateNetworkConfig({
-      networkId,
+      networkId: networkId.chain,
       networkName,
       cryptoCurrencyCode,
       selectedChainId,
@@ -78,8 +80,8 @@ export const OnRampMethodCard = () => {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
     totalNativeToken,
-  } = useTotalNativeTokenRequired(networkId, 'onboarding');
-  const { isLoading: isFiatLoading, data: fiatAmount } =
+  } = useTotalNativeTokenRequired(networkId.chain, 'onboarding');
+  const { isLoading: isFiatLoading, data: totalFiatDetails } =
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
       selectedChainId,
@@ -90,9 +92,14 @@ export const OnRampMethodCard = () => {
     if (isLoading) return false;
     if (isNativeTokenLoading) return false;
     if (totalNativeToken === 0) return true;
-    if (fiatAmount && fiatAmount < MIN_ONRAMP_AMOUNT) return true;
+    if (
+      totalFiatDetails?.fiatAmount &&
+      totalFiatDetails.fiatAmount < MIN_ONRAMP_AMOUNT
+    ) {
+      return true;
+    }
     return false;
-  }, [fiatAmount, isLoading, isNativeTokenLoading, totalNativeToken]);
+  }, [totalFiatDetails, isLoading, isNativeTokenLoading, totalNativeToken]);
 
   return (
     <OnRampMethodCardCard>
@@ -103,10 +110,10 @@ export const OnRampMethodCard = () => {
           ease!
         </Paragraph>
         <TokenRequirements
-          fundType="onRamp"
-          fiatAmount={fiatAmount ?? 0}
+          fiatAmount={totalFiatDetails?.fiatAmount ?? 0}
           isLoading={isLoading}
           hasError={hasNativeTokenError}
+          fundType="onRamp"
         />
       </div>
       {isFiatAmountTooLow ? (

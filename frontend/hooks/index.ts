@@ -17,6 +17,7 @@ export * from './useFeatureFlag';
 export * from './useGetBridgeRequirementsParams';
 export * from './useGetRefillRequirements';
 export * from './useInitialFundingRequirements';
+export * from './useIsAgentGeoRestricted';
 export * from './useIsInitiallyFunded';
 export * from './useLogs';
 export * from './useMasterBalances';

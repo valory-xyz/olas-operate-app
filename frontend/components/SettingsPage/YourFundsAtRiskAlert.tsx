@@ -3,7 +3,7 @@ import { TbExternalLink } from 'react-icons/tb';
 import { useToggle } from 'usehooks-ts';
 
 import { Alert, Modal } from '@/components/ui';
-import { AllEvmChainIdMap, EvmChainIdMap } from '@/constants';
+import { AllEvmChainId, AllEvmChainIdMap, EvmChainIdMap } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { useMasterWalletContext, useServices } from '@/hooks';
 
@@ -12,12 +12,15 @@ const { Text } = Typography;
 /**
  * update as needed; check https://app.safe.global/new-safe/create for prefixes
  */
-const safeChainPrefix = {
+const safeChainPrefix: {
+  [chainId in AllEvmChainId]: string;
+} = {
   [AllEvmChainIdMap.Ethereum]: 'eth',
   [EvmChainIdMap.Base]: 'base',
   [EvmChainIdMap.Optimism]: 'oeth',
   [EvmChainIdMap.Gnosis]: 'gno',
   [EvmChainIdMap.Mode]: '', // TODO: provide correct prefix once mode is supported on safe
+  [EvmChainIdMap.Polygon]: 'matic',
 };
 
 type AddBackupWalletAlertProps = {

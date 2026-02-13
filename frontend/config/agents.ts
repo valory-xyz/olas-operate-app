@@ -11,11 +11,13 @@ import {
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
 } from '@/constants/serviceTemplates';
+import { PREDICT_POLYMARKET_SERVICE_TEMPLATE } from '@/constants/serviceTemplates/service/trader';
 import { X402_ENABLED_FLAGS } from '@/constants/x402';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
 import { PettAiService } from '@/service/agents/PettAi';
+import { Polystrat } from '@/service/agents/Polystrat';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
 import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
@@ -23,6 +25,7 @@ import { AgentConfig } from '@/types/Agent';
 import {
   MODE_TOKEN_CONFIG,
   OPTIMISM_TOKEN_CONFIG,
+  POLYGON_TOKEN_CONFIG,
   TokenSymbolMap,
 } from './tokens';
 
@@ -57,6 +60,26 @@ const getOptimusUsdcConfig = () => {
   return Number(formatUnits(usdcSafeRequirement, optimusUsdcConfig.decimals));
 };
 
+const getPolystratUsdceConfig = () => {
+  const polystratFundRequirements =
+    PREDICT_POLYMARKET_SERVICE_TEMPLATE.configurations[
+      MiddlewareChainMap.POLYGON
+    ]?.fund_requirements;
+  const polystratUsdceConfig = POLYGON_TOKEN_CONFIG[TokenSymbolMap['USDC.e']];
+
+  if (!polystratUsdceConfig) {
+    throw new Error('Polystrat USDC.e config not found');
+  }
+
+  const usdceSafeRequirement =
+    polystratFundRequirements?.[polystratUsdceConfig.address as Address]
+      ?.safe || 0;
+
+  return Number(
+    formatUnits(usdceSafeRequirement, polystratUsdceConfig.decimals),
+  );
+};
+
 export const AGENT_CONFIG: {
   [key in AgentType]: AgentConfig;
 } = {
@@ -78,6 +101,31 @@ export const AGENT_CONFIG: {
     defaultBehavior:
       'Adopting a conservative strategy with small, high-confidence trades.',
     servicePublicId: 'valory/trader_pearl:0.1.0',
+  },
+  [AgentMap.Polystrat]: {
+    isAgentEnabled: true,
+    requiresSetup: true,
+    isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Polystrat],
+    name: 'Polystrat',
+    evmHomeChainId: EvmChainIdMap.Polygon,
+    middlewareHomeChainId: MiddlewareChainMap.POLYGON,
+    agentIds: [86],
+    additionalRequirements: {
+      [EvmChainIdMap.Polygon]: {
+        [TokenSymbolMap['USDC.e']]: getPolystratUsdceConfig(),
+      },
+    },
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.PolygonBeta1,
+    serviceApi: Polystrat,
+    displayName: 'Polystrat',
+    description: 'Participates in prediction markets on Polymarket.',
+    hasExternalFunds: false,
+    doesChatUiRequireApiKey: true,
+    category: 'Prediction Markets',
+    defaultBehavior:
+      'Trade sizes adapt to market conditions and agent confidence.',
+    servicePublicId: 'valory/polymarket_trader:0.1.0',
+    isGeoLocationRestricted: true,
   },
   [AgentMap.Optimus]: {
     isAgentEnabled: true,
