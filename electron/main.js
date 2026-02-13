@@ -399,9 +399,6 @@ const createMainWindow = async () => {
     'did-fail-load',
     (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
       if (isMainFrame) {
-        logger.electron(
-          `Main frame failed to load (${errorCode}): ${errorDescription} at ${validatedURL}`,
-        );
         mainWindow.webContents.reloadIgnoringCache();
         return;
       }
