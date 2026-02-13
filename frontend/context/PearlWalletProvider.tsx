@@ -40,7 +40,8 @@ import {
   TokenBalanceRecord,
   ValueOf,
 } from '@/types';
-import { generateName } from '@/utils';
+import { generateAgentName, isValidServiceId } from '@/utils';
+import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { STEPS, WalletChain } from '../components/PearlWallet/types';
 import { getInitialDepositForMasterSafe } from '../components/PearlWallet/utils';
@@ -156,6 +157,21 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const [defaultRequirementDepositValues, setDefaultDepositValues] =
     useState<TokenBalanceRecord>({});
 
+  const getServiceTokenId = useCallback(
+    (chainId: EvmChainId, configId: string) => {
+      const chainName = asMiddlewareChain(chainId);
+      const service = services?.find(
+        (entry) =>
+          entry.service_config_id === configId &&
+          entry.home_chain === chainName,
+      );
+
+      const tokenId = service?.chain_configs?.[chainName]?.chain_data?.token;
+      return tokenId;
+    },
+    [services],
+  );
+
   // Update chain id when switching between agents
   useEffect(() => {
     setWalletChainId(selectedAgentConfig.evmHomeChainId);
@@ -206,8 +222,12 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
 
     return configIds.map(({ configId, chainId }) => {
       const agentSafe = getServiceSafeOf?.(walletChainId, configId)?.address;
-      const agentName = generateName(agentSafe) ?? 'Agent';
+      const tokenId = getServiceTokenId(chainId, configId);
+      const agentName = isValidServiceId(tokenId)
+        ? generateAgentName(chainId, tokenId)
+        : `My ${selectedAgentConfig.displayName}`;
       const agentType = getAgentTypeOf(walletChainId, configId);
+
       return {
         chainId,
         configId,
@@ -222,7 +242,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     walletChainId,
     getServiceSafeOf,
     getAgentTypeOf,
+    getServiceTokenId,
     getStakedOlasBalanceOf,
+    selectedAgentConfig.displayName,
   ]);
 
   const updateStep = useCallback(
