@@ -151,33 +151,6 @@ const nextUrl = () =>
 const backendUrl = () =>
   `https://localhost:${isDev ? appConfig.ports.dev.operate : appConfig.ports.prod.operate}`;
 
-const waitForUrl = async (url, { timeoutMs = 30000, intervalMs = 300 } = {}) => {
-  const start = Date.now();
-  const attempt = () =>
-    new Promise((resolve, reject) => {
-      const req = http.get(url, (res) => {
-        res.resume(); // drain
-        const ok = res.statusCode && res.statusCode < 500;
-        ok ? resolve() : reject(new Error(`HTTP ${res.statusCode}`));
-      });
-      req.on('error', reject);
-      req.setTimeout(2000, () => {
-        req.destroy(new Error('timeout'));
-      });
-    });
-
-  while (Date.now() - start < timeoutMs) {
-    try {
-      await attempt();
-      return true;
-    } catch (e) {
-      await new Promise((r) => setTimeout(r, intervalMs));
-    }
-  }
-
-  return false;
-};
-
 /** @type {Electron.BrowserWindow | null} */
 let mainWindow = null;
 /** @type {Electron.BrowserWindow | null} */
@@ -442,45 +415,6 @@ const createMainWindow = async () => {
     },
   );
 
-  // Navigation + crash diagnostics for debugging reloads
-  mainWindow.webContents.on(
-    'did-start-navigation',
-    (_event, url, _isInPlace, isMainFrame) => {
-      if (isMainFrame) {
-        logger.electron(`Main frame navigation started: ${url}`);
-      }
-    },
-  );
-
-  mainWindow.webContents.on('will-navigate', (_event, url) => {
-    logger.electron(`Main frame will navigate: ${url}`);
-  });
-
-  mainWindow.webContents.on('did-navigate', (_event, url) => {
-    logger.electron(`Main frame did navigate: ${url}`);
-  });
-
-  mainWindow.webContents.on(
-    'did-navigate-in-page',
-    (_event, url, isMainFrame) => {
-      if (isMainFrame) {
-        logger.electron(`Main frame did navigate in-page: ${url}`);
-      }
-    },
-  );
-
-  mainWindow.webContents.on('did-finish-load', () => {
-    logger.electron(
-      `Main frame finished load: ${mainWindow.webContents.getURL()}`,
-    );
-  });
-
-  mainWindow.webContents.on('render-process-gone', (_event, details) => {
-    logger.electron(
-      `Renderer process gone: ${JSON.stringify(details, null, 2)}`,
-    );
-  });
-
   mainWindow.webContents.on('ready-to-show', () => {
     mainWindow.show();
   });
@@ -523,16 +457,6 @@ const createMainWindow = async () => {
   }
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
-  }
-
-  if (isDev) {
-    logger.electron(`Waiting for Next dev server at ${nextUrl()}`);
-    const isReady = await waitForUrl(nextUrl());
-    if (!isReady) {
-      logger.electron(`Timed out waiting for Next dev server at ${nextUrl()}`);
-    } else {
-      logger.electron(`Next dev server is ready at ${nextUrl()}`);
-    }
   }
 
   await mainWindow.loadURL(nextUrl());
