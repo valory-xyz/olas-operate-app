@@ -97,7 +97,7 @@ export const OnRampMethodCard = () => {
     getOnRampRequirementsParams,
     'onboard',
   );
-  const { isLoading: isFiatLoading, data: fiatAmount } =
+  const { isLoading: isFiatLoading, data: totalFiatDetails } =
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
       selectedChainId,
@@ -108,9 +108,14 @@ export const OnRampMethodCard = () => {
     if (isLoading) return false;
     if (isNativeTokenLoading) return false;
     if (totalNativeToken === 0) return true;
-    if (fiatAmount && fiatAmount < MIN_ONRAMP_AMOUNT) return true;
+    if (
+      totalFiatDetails?.fiatAmount &&
+      totalFiatDetails.fiatAmount < MIN_ONRAMP_AMOUNT
+    ) {
+      return true;
+    }
     return false;
-  }, [fiatAmount, isLoading, isNativeTokenLoading, totalNativeToken]);
+  }, [totalFiatDetails, isLoading, isNativeTokenLoading, totalNativeToken]);
 
   return (
     <OnRampMethodCardCard>
@@ -121,10 +126,10 @@ export const OnRampMethodCard = () => {
           ease!
         </Paragraph>
         <TokenRequirements
-          fundType="onRamp"
-          fiatAmount={fiatAmount ?? 0}
+          fiatAmount={totalFiatDetails?.fiatAmount ?? 0}
           isLoading={isLoading}
           hasError={hasNativeTokenError}
+          fundType="onRamp"
         />
       </div>
       {isFiatAmountTooLow ? (

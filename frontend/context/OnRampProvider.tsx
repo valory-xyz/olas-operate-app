@@ -17,7 +17,7 @@ import {
 import { Nullable } from '@/types';
 import { delayInSeconds, parseEther } from '@/utils';
 
-const ETH_RECEIVED_THRESHOLD = 0.95;
+const ETH_RECEIVED_THRESHOLD = 0.9;
 
 export const OnRampContext = createContext<{
   networkId: OnRampNetworkConfig['networkId'];
@@ -154,7 +154,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     const thresholdAmount = (
       nativeTotalAmountRequired * ETH_RECEIVED_THRESHOLD
     ).toFixed(18);
-    // If the balance is greater than or equal to 95% of the native token amount to pay,
+
+    // If the balance is greater than or equal to 90% of the ETH amount to pay,
     // considering that the user has received the funds after on-ramping.
     if (
       BigInt(parseEther(balance.toString())) >=

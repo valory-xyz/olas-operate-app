@@ -204,7 +204,7 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
     'preview',
   );
 
-  const { isLoading: isFiatLoading, data: fiatAmount } =
+  const { isLoading: isFiatLoading, data: totalFiatDetails } =
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
       selectedChainId: chainId,
@@ -217,9 +217,14 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
     if (isLoading) return false;
     if (isNativeTokenLoading) return false;
     if (totalNativeToken === 0) return true;
-    if (fiatAmount && fiatAmount < MIN_ONRAMP_AMOUNT) return true;
+    if (
+      totalFiatDetails?.fiatAmount &&
+      totalFiatDetails.fiatAmount < MIN_ONRAMP_AMOUNT
+    ) {
+      return true;
+    }
     return false;
-  }, [fiatAmount, isLoading, isNativeTokenLoading, totalNativeToken]);
+  }, [totalFiatDetails, isLoading, isNativeTokenLoading, totalNativeToken]);
 
   return (
     <SelectPaymentMethodCard>
@@ -253,7 +258,7 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
                 <Text type="danger">Unable to calculate</Text>
               )
             ) : (
-              <Text>~${fiatAmount?.toFixed(2) ?? '0.00'}</Text>
+              <Text>~${totalFiatDetails?.fiatAmount?.toFixed(2) ?? '0.00'}</Text>
             )}
             <Text className="text-sm text-neutral-tertiary" type="secondary">
               Powered by Transak. Funds may take up to 10 minutes to be
