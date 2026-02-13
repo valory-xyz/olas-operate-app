@@ -874,6 +874,14 @@ ipcMain.handle('next-log-error', (_event, error, errorInfo) => {
 });
 
 /**
+ * Logs a frontend event to the next logger.
+ * @param {string} message - The event message (structured JSON string)
+ */
+ipcMain.handle('next-log-event', (_event, message) => {
+  nextLogger.info(message);
+});
+
+/**
  * OnRamp window handlers
  */
 ipcMain.handle(

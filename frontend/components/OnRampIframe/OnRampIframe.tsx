@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { APP_HEIGHT, APP_WIDTH, ON_RAMP_GATEWAY_URL } from '@/constants';
 import { useElectronApi, useMasterWalletContext } from '@/hooks';
+import { useFELogger } from '@/hooks/useFELogger';
 import { delayInSeconds } from '@/utils/delay';
 
 type TransakEvent = {
@@ -30,8 +31,19 @@ export const OnRampIframe = ({
 }: OnRampIframeProps) => {
   const { onRampWindow, logEvent } = useElectronApi();
   const { masterEoa } = useMasterWalletContext();
+  const { logFundingEvent } = useFELogger();
 
   const ref = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    // Log funding flow start
+    logFundingEvent({
+      outcome: 'started',
+      message: `Amount: ${usdAmountToPay} USD`,
+    }).catch(() => {
+      // Silently fail
+    });
+  }, [usdAmountToPay, logFundingEvent]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -48,20 +60,37 @@ export const OnRampIframe = ({
       );
 
       if (eventDetails.data.event_id === 'TRANSAK_WIDGET_CLOSE') {
+        logFundingEvent({ outcome: 'cancelled' }).catch(() => {
+          // Silently fail
+        });
         onRampWindow?.close?.();
       }
 
       // Close the on-ramp window if the transaction fails
       if (eventDetails.data.event_id === 'TRANSAK_ORDER_FAILED') {
+        logFundingEvent({
+          outcome: 'failure',
+          code: 'TRANSAK_ORDER_FAILED',
+          message: 'Transak order failed',
+        }).catch(() => {
+          // Silently fail
+        });
         delayInSeconds(3).then(() => {
           onRampWindow?.transactionFailure?.();
+        });
+      }
+
+      // Log success
+      if (eventDetails.data.event_id === 'TRANSAK_ORDER_SUCCESSFUL') {
+        logFundingEvent({ outcome: 'success' }).catch(() => {
+          // Silently fail
         });
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [logEvent, onRampWindow]);
+  }, [logEvent, logFundingEvent, onRampWindow]);
 
   const onRampUrl = useMemo(() => {
     if (!masterEoa?.address) return;
