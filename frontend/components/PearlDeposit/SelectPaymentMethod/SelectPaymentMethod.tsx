@@ -258,7 +258,9 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
                 <Text type="danger">Unable to calculate</Text>
               )
             ) : (
-              <Text>~${totalFiatDetails?.fiatAmount?.toFixed(2) ?? '0.00'}</Text>
+              <Text>
+                ~${totalFiatDetails?.fiatAmount?.toFixed(2) ?? '0.00'}
+              </Text>
             )}
             <Text className="text-sm text-neutral-tertiary" type="secondary">
               Powered by Transak. Funds may take up to 10 minutes to be
