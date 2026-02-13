@@ -151,14 +151,14 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeif5mual7we3mffen2p4hnxczwvbluirmrdjaxssvisosd7rllsfz4',
-  service_version: 'v0.31.0-rc19',
+  hash: 'bafybeif7hi6dzyemtbcvauh4jwmwh3r6ui4tdmynnv6xun5cwdz7oyojzu',
+  service_version: 'v0.30.1-rc1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.31.0-rc19',
+      version: 'v0.30.1-rc1',
     },
   },
   agentType: AgentMap.Polystrat,
