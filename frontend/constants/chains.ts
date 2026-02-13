@@ -60,6 +60,11 @@ export type SupportedMiddlewareChain = ValueOf<
 >;
 
 /**
+ * Minimum amount in USD required for on-ramping with credit/debit card
+ */
+export const MIN_ONRAMP_AMOUNT = 5;
+
+/**
  * Map of middleware chains to EVM chain IDs for on-ramp purposes.
  * For example, If the agent is on Gnosis, the on-ramp will be done on Optimism.
  */

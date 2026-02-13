@@ -4,13 +4,19 @@ import { useCallback, useMemo, useState } from 'react';
 import { styled } from 'styled-components';
 
 import { YouPayContainer } from '@/components/PearlWallet';
-import { BackButton, CardFlex, CardTitle } from '@/components/ui';
+import { Alert, BackButton, CardFlex, CardTitle } from '@/components/ui';
 import {
   TOKEN_CONFIG,
   TokenSymbol,
   TokenSymbolConfigMap,
 } from '@/config/tokens';
-import { AddressZero, COLOR, EvmChainId, ON_RAMP_CHAIN_MAP } from '@/constants';
+import {
+  AddressZero,
+  COLOR,
+  EvmChainId,
+  MIN_ONRAMP_AMOUNT,
+  ON_RAMP_CHAIN_MAP,
+} from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import {
   useFeatureFlag,
@@ -71,7 +77,7 @@ const TransferMethod = ({ chainId, onSelect }: TransferMethodProps) => {
 
   return (
     <SelectPaymentMethodCard>
-      <Flex vertical gap={32}>
+      <Flex vertical gap={32} flex="auto">
         <Flex vertical gap={16}>
           <CardTitle className="m-0">Transfer</CardTitle>
           <Paragraph type="secondary" className="m-0 text-center">
@@ -91,7 +97,7 @@ const TransferMethod = ({ chainId, onSelect }: TransferMethodProps) => {
           </YouPayContainer>
         </Flex>
 
-        <Button onClick={onSelect} size="large">
+        <Button onClick={onSelect} size="large" className="mt-auto">
           Transfer Crypto on {chainName}
         </Button>
       </Flex>
@@ -101,7 +107,7 @@ const TransferMethod = ({ chainId, onSelect }: TransferMethodProps) => {
 
 const BridgeMethod = ({ onSelect }: { onSelect: () => void }) => (
   <SelectPaymentMethodCard>
-    <Flex vertical gap={32}>
+    <Flex vertical gap={32} flex="auto">
       <Flex vertical gap={16}>
         <CardTitle className="m-0">Bridge</CardTitle>
         <Paragraph type="secondary" className="m-0 text-center">
@@ -121,7 +127,7 @@ const BridgeMethod = ({ onSelect }: { onSelect: () => void }) => (
         </YouPayContainer>
       </Flex>
 
-      <Button onClick={onSelect} size="large">
+      <Button onClick={onSelect} size="large" className="mt-auto">
         Bridge Crypto from Ethereum
       </Button>
     </Flex>
@@ -136,6 +142,20 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
   const { amountsToDeposit } = usePearlWallet();
   const chainName = asMiddlewareChain(chainId);
   const onRampChainId = ON_RAMP_CHAIN_MAP[chainName].chain;
+
+  // Check if user is trying to onramp native token
+  const chainConfig = TOKEN_CONFIG[chainId];
+  const hasNativeToken = Object.entries(amountsToDeposit).some(
+    ([tokenSymbol, { amount }]) => {
+      const token = chainConfig[tokenSymbol as TokenSymbol];
+      return token && !token.address && Number(amount) > 0;
+    },
+  );
+
+  // We can't on-ramp native tokens on the same chain between the same wallets
+  // Because under the hood we use bridging after on-ramping, and for this case
+  // The quote will fail. TODO: we should handle that differently
+  const showSameChainError = onRampChainId === chainId && hasNativeToken;
 
   // Get on-ramp requirements params based on user-provided amounts
   const getOnRampRequirementsParams =
@@ -191,10 +211,19 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
     });
 
   const isLoading = isNativeTokenLoading || isFiatLoading;
+  const isBuyDisabled = showSameChainError || hasNativeTokenError;
+
+  const isFiatAmountTooLow = useMemo(() => {
+    if (isLoading) return false;
+    if (isNativeTokenLoading) return false;
+    if (totalNativeToken === 0) return true;
+    if (fiatAmount && fiatAmount < MIN_ONRAMP_AMOUNT) return true;
+    return false;
+  }, [fiatAmount, isLoading, isNativeTokenLoading, totalNativeToken]);
 
   return (
     <SelectPaymentMethodCard>
-      <Flex vertical gap={32}>
+      <Flex vertical gap={32} flex="auto">
         <Flex vertical gap={16}>
           <CardTitle className="m-0">Buy</CardTitle>
           <Paragraph type="secondary" className="m-0 text-center">
@@ -214,8 +243,15 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
                 active
                 style={{ width: '120px', height: '22px' }}
               />
-            ) : hasNativeTokenError ? (
-              <Text type="danger">Unable to calculate</Text>
+            ) : isBuyDisabled ? (
+              showSameChainError ? (
+                <Text type="danger" className="text-sm">
+                  On-ramping of native tokens on the same chain is not yet
+                  supported. Please use Transfer or Bridge method instead.
+                </Text>
+              ) : (
+                <Text type="danger">Unable to calculate</Text>
+              )
             ) : (
               <Text>~${fiatAmount?.toFixed(2) ?? '0.00'}</Text>
             )}
@@ -226,13 +262,23 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
           </YouPayContainer>
         </Flex>
 
-        <Button
-          onClick={onSelect}
-          size="large"
-          disabled={isLoading || hasNativeTokenError}
-        >
-          Buy Crypto with USD
-        </Button>
+        {isFiatAmountTooLow ? (
+          <Alert
+            message={`The minimum value of crypto to buy with your credit card is $${MIN_ONRAMP_AMOUNT}.`}
+            type="info"
+            showIcon
+            className="text-sm mt-auto"
+          />
+        ) : (
+          <Button
+            onClick={onSelect}
+            size="large"
+            className="mt-auto"
+            disabled={isLoading || isBuyDisabled}
+          >
+            Buy Crypto with USD
+          </Button>
+        )}
       </Flex>
     </SelectPaymentMethodCard>
   );

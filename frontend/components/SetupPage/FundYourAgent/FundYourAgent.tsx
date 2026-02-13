@@ -70,6 +70,7 @@ const TransferTokens = ({
       </div>
       <Button
         size="large"
+        className="mt-auto"
         onClick={() => goto(SETUP_SCREEN.TransferFunds)}
         disabled={isBalancesAndFundingRequirementsLoading}
       >

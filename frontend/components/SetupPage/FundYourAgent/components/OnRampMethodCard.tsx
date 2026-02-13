@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import {
   AddressZero,
   COLOR,
+  MIN_ONRAMP_AMOUNT,
   ON_RAMP_CHAIN_MAP,
   SETUP_SCREEN,
 } from '@/constants';
@@ -31,8 +32,6 @@ const OnRampMethodCardCard = styled(CardFlex)`
     height: 100%;
   }
 `;
-
-const MIN_ONRAMP_AMOUNT = 5;
 
 const { Paragraph } = Typography;
 
@@ -139,6 +138,7 @@ export const OnRampMethodCard = () => {
         <Button
           type="primary"
           size="large"
+          className="mt-auto"
           onClick={() => goto(SETUP_SCREEN.SetupOnRamp)}
           disabled={isLoading || hasNativeTokenError}
         >

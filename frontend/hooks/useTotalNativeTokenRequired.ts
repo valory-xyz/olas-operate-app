@@ -54,6 +54,13 @@ export const useTotalNativeTokenRequired = (
     queryKeySuffix: queryKey,
   });
 
+  console.log(
+    'bridgeParams',
+    bridgeParams,
+    'isOnRampingTransactionSuccessful',
+    isOnRampingTransactionSuccessful,
+  );
+
   /**
    * Calculates the total native token required for the bridge.
    *
@@ -133,6 +140,13 @@ export const useTotalNativeTokenRequired = (
     toChainId,
     getMasterSafeOf,
   ]);
+
+  console.log(
+    'totalNativeTokens',
+    totalNativeTokens,
+    'bridgeFundingRequirements',
+    bridgeFundingRequirements,
+  );
 
   // Update the ETH amount to pay in the on-ramp context
   useEffect(() => {
