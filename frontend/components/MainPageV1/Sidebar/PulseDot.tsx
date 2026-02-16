@@ -54,12 +54,25 @@ const Ring = styled.span<{ $delayMs: number }>`
   animation-delay: ${(p) => p.$delayMs}ms;
 `;
 
+const VisuallyHidden = styled.span`
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  width: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+`;
+
 export const PulseDot = () => {
   return (
-    <Container aria-hidden>
-      <Dot />
+    <Container role="status" aria-live="polite">
+      <VisuallyHidden>Agent is currently running</VisuallyHidden>
+      <Dot aria-hidden="true" />
       {Array.from({ length: RING_COUNT }).map((_, i) => (
-        <Ring key={i} $delayMs={i * STAGGER} />
+        <Ring key={i} $delayMs={i * STAGGER} aria-hidden="true" />
       ))}
     </Container>
   );
