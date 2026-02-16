@@ -74,14 +74,6 @@ const ResponsiveButton = styled(Button)`
   }
 `;
 
-const RunningDot = styled.span`
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: ${COLOR.RED};
-  box-shadow: 0 0 0 2px ${COLOR.WHITE};
-`;
-
 const AgentMenuLoading = () => (
   <Flex vertical gap={8}>
     <Skeleton.Input active block />
