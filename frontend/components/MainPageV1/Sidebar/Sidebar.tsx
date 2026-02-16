@@ -61,6 +61,9 @@ const SiderContainer = styled.div`
       width: 100%;
     }
   }
+  .ant-menu-item.menu-running-agent {
+    padding-right: 0 !important;
+  }
 `;
 
 const ResponsiveButton = styled(Button)`
@@ -146,34 +149,38 @@ const AgentListMenu = ({
     mode="inline"
     inlineIndent={4}
     onClick={onAgentSelect}
-    items={myAgents.map((agent) => ({
-      key: agent.agentType,
-      icon: (
-        <Image
-          key={agent.agentType}
-          src={`/agent-${agent.agentType}-icon.png`}
-          className="rounded-4"
-          alt={agent.name}
-          width={32}
-          height={32}
-        />
-      ),
-      label: (
-        <Flex justify="space-between" align="center">
-          <span>{agent.name}</span>
-          {runningAgentType === agent.agentType ? (
-            <PulseDot />
-          ) : (
-            <Image
-              src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
-              alt={`${agent.chainName} logo`}
-              width={14}
-              height={14}
-            />
-          )}
-        </Flex>
-      ),
-    }))}
+    items={myAgents.map((agent) => {
+      const isRunning = runningAgentType === agent.agentType;
+      return {
+        key: agent.agentType,
+        className: isRunning ? 'menu-running-agent' : undefined,
+        icon: (
+          <Image
+            key={agent.agentType}
+            src={`/agent-${agent.agentType}-icon.png`}
+            className="rounded-4"
+            alt={agent.name}
+            width={32}
+            height={32}
+          />
+        ),
+        label: (
+          <Flex justify="space-between" align="center">
+            <span>{agent.name}</span>
+            {isRunning ? (
+              <PulseDot />
+            ) : (
+              <Image
+                src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
+                alt={`${agent.chainName} logo`}
+                width={14}
+                height={14}
+              />
+            )}
+          </Flex>
+        ),
+      };
+    })}
   />
 );
 
