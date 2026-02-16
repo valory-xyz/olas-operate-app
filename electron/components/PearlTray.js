@@ -1,6 +1,7 @@
 const Electron = require('electron');
 const { isMac, isLinux, isWindows, isDev } = require('../constants');
 const { logger } = require('../logger');
+const { nativeTheme } = Electron;
 
 // Used to resize the tray icon on macOS
 const macTrayIconSize = { width: 16, height: 16 };
@@ -14,6 +15,27 @@ const TrayIconStatus = {
   LowGas: 'low-gas',
   Paused: 'paused',
   Running: 'running',
+};
+
+const invertImage = (nativeImg) => {
+  const size = nativeImg.getSize();
+  // Получаем сырые данные пикселей (RGBA)
+  const buffer = nativeImg.toBitmap();
+
+  // Проходим по каждому пикселю и инвертируем цвета
+  // Структура: [R, G, B, A, R, G, B, A, ...]
+  for (let i = 0; i < buffer.length; i += 4) {
+    // Инвертируем только RGB, Альфа-канал (прозрачность) [i+3] не трогаем
+    buffer[i] = 255 - buffer[i];     // Red
+    buffer[i + 1] = 255 - buffer[i + 1]; // Green
+    buffer[i + 2] = 255 - buffer[i + 2]; // Blue
+  }
+
+  // Создаем новое изображение из измененного буфера
+  return Electron.nativeImage.createFromBitmap(buffer, {
+    width: size.width,
+    height: size.height,
+  });
 };
 
 const appPath = Electron.app.getAppPath();
@@ -43,7 +65,16 @@ const trayIcons = Object.entries(trayIconPaths).reduce(
       let trayIcon = Electron.nativeImage.createFromPath(path);
 
       if (isLinux) {
-         trayIcon = trayIcon.resize({ width: 22, height: 22 });
+        logger.electron(`LINUX: ${isLinux}`);
+        logger.electron(`LINUX DARK: ${nativeTheme.shouldUseDarkColors}`);
+        trayIcon = trayIcon.resize({ width: 22, height: 22 });
+        // make it white! cause linux does not respect reverse color schemas. darkmode autodetect does not work for evey linux
+        try {
+          trayIcon = invertImage(trayIcon);
+        } catch (e) {
+          console.error('Failed to invert tray icon:', e);
+          logger.electron(`LINUX DARK: Failed to invert tray icon`);
+        }
       }
 
 

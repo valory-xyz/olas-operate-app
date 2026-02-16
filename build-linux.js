@@ -52,7 +52,7 @@ const main = async () => {
           }
         ],
         category: 'Utility',
-        icon: 'electron/assets/icons/splash-robot-head-dock.png',
+        icon: 'electron/assets/icons',
         maintainer: 'Valory',
         synopsis: 'Pearl - Olas Operate App',
       },
