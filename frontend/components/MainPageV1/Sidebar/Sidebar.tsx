@@ -33,13 +33,13 @@ import {
   SIDER_WIDTH,
 } from '@/constants';
 import {
+  useAgentRunning,
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,
   usePageState,
   useServices,
   useSetup,
 } from '@/hooks';
-import { AgentConfig } from '@/types';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
@@ -69,6 +69,14 @@ const ResponsiveButton = styled(Button)`
       display: none;
     }
   }
+`;
+
+const RunningDot = styled.span`
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: ${COLOR.RED};
+  box-shadow: 0 0 0 2px ${COLOR.WHITE};
 `;
 
 const AgentMenuLoading = () => (
@@ -125,11 +133,13 @@ type AgentListMenuProps = {
   myAgents: AgentList;
   selectedMenuKeys: (Pages | AgentType)[];
   onAgentSelect: MenuProps['onClick'];
+  runningAgentType: AgentType | null;
 };
 const AgentListMenu = ({
   myAgents,
   selectedMenuKeys,
   onAgentSelect,
+  runningAgentType,
 }: AgentListMenuProps) => (
   <Menu
     selectedKeys={selectedMenuKeys}
@@ -150,13 +160,17 @@ const AgentListMenu = ({
       ),
       label: (
         <Flex justify="space-between" align="center">
-          {agent.name}{' '}
-          <Image
-            src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
-            alt={`${agent.chainName} logo`}
-            width={14}
-            height={14}
-          />
+          <span>{agent.name}</span>
+          {runningAgentType === agent.agentType ? (
+            <RunningDot role="img" aria-label="Agent running" />
+          ) : (
+            <Image
+              src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
+              alt={`${agent.chainName} logo`}
+              width={14}
+              height={14}
+            />
+          )}
         </Flex>
       ),
     }))}
@@ -166,6 +180,7 @@ const AgentListMenu = ({
 export const Sidebar = () => {
   const { goto: gotoSetup } = useSetup();
   const { pageState, goto: gotoPage } = usePageState();
+  const { runningAgentType } = useAgentRunning();
 
   const { services, isLoading, selectedAgentType, updateAgentType } =
     useServices();
@@ -183,17 +198,13 @@ export const Sidebar = () => {
       );
       if (!agent) return result;
 
-      const [agentType, agentConfig] = agent as [AgentType, AgentConfig];
+      const [agentType, agentConfig] = agent;
       if (!agentConfig.evmHomeChainId) return result;
 
       const chainId = agentConfig.evmHomeChainId;
       const chainName = CHAIN_CONFIG[chainId].name;
-      result.push({
-        name: agentConfig.displayName,
-        agentType,
-        chainName,
-        chainId,
-      });
+      const name = agentConfig.displayName;
+      result.push({ name, agentType, chainName, chainId });
       return result;
     }, []);
   }, [services]);
@@ -269,6 +280,7 @@ export const Sidebar = () => {
                   myAgents={myAgents}
                   selectedMenuKeys={selectedMenuKey}
                   onAgentSelect={handleAgentSelect}
+                  runningAgentType={runningAgentType}
                 />
               ) : null}
 
