@@ -128,59 +128,59 @@ type AgentListMenuProps = {
   myAgents: AgentList;
   selectedMenuKeys: (Pages | AgentType)[];
   onAgentSelect: MenuProps['onClick'];
-  runningAgentType: AgentType | null;
 };
 const AgentListMenu = ({
   myAgents,
   selectedMenuKeys,
   onAgentSelect,
-  runningAgentType,
-}: AgentListMenuProps) => (
-  <Menu
-    selectedKeys={selectedMenuKeys}
-    mode="inline"
-    inlineIndent={4}
-    onClick={onAgentSelect}
-    items={myAgents.map((agent) => {
-      const isRunning = runningAgentType === agent.agentType;
-      return {
-        key: agent.agentType,
-        className: isRunning ? 'menu-running-agent' : undefined,
-        icon: (
-          <Image
-            key={agent.agentType}
-            src={`/agent-${agent.agentType}-icon.png`}
-            className="rounded-4"
-            alt={agent.name}
-            width={32}
-            height={32}
-          />
-        ),
-        label: (
-          <Flex justify="space-between" align="center">
-            <span>{agent.name}</span>
-            {isRunning ? (
-              <PulseDot />
-            ) : (
-              <Image
-                src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
-                alt={`${agent.chainName} logo`}
-                width={14}
-                height={14}
-              />
-            )}
-          </Flex>
-        ),
-      };
-    })}
-  />
-);
+}: AgentListMenuProps) => {
+  const { runningAgentType } = useAgentRunning();
+
+  return (
+    <Menu
+      selectedKeys={selectedMenuKeys}
+      mode="inline"
+      inlineIndent={4}
+      onClick={onAgentSelect}
+      items={myAgents.map((agent) => {
+        const isRunning = runningAgentType === agent.agentType;
+        return {
+          key: agent.agentType,
+          className: isRunning ? 'menu-running-agent' : undefined,
+          icon: (
+            <Image
+              key={agent.agentType}
+              src={`/agent-${agent.agentType}-icon.png`}
+              className="rounded-4"
+              alt={agent.name}
+              width={32}
+              height={32}
+            />
+          ),
+          label: (
+            <Flex justify="space-between" align="center">
+              <span>{agent.name}</span>
+              {isRunning ? (
+                <PulseDot />
+              ) : (
+                <Image
+                  src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
+                  alt={`${agent.chainName} logo`}
+                  width={14}
+                  height={14}
+                />
+              )}
+            </Flex>
+          ),
+        };
+      })}
+    />
+  );
+};
 
 export const Sidebar = () => {
   const { goto: gotoSetup } = useSetup();
   const { pageState, goto: gotoPage } = usePageState();
-  const { runningAgentType } = useAgentRunning();
-
   const { services, isLoading, selectedAgentType, updateAgentType } =
     useServices();
 
@@ -279,7 +279,6 @@ export const Sidebar = () => {
                   myAgents={myAgents}
                   selectedMenuKeys={selectedMenuKey}
                   onAgentSelect={handleAgentSelect}
-                  runningAgentType={runningAgentType}
                 />
               ) : null}
 
