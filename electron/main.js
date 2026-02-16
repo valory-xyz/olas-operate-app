@@ -37,8 +37,8 @@ const {
   ipcMain,
   shell,
   systemPreferences,
+  nativeImage,
 } = require('electron');
-
 
 
 
@@ -50,6 +50,13 @@ const next = require('next/dist/server/next');
 const http = require('http');
 
 const { setupDarwin, setupUbuntu, setupWindows, Env } = require('./install');
+
+
+
+
+const iconPath = path.join(__dirname, 'assets/icons/512x512.png');
+const appIcon = nativeImage.createFromPath(iconPath);
+
 
 const {
   paths,
@@ -336,6 +343,7 @@ const createSplashWindow = () => {
   /** @type {Electron.BrowserWindow} */
   splashWindow = new BrowserWindow({
     width: APP_WIDTH,
+    icon: appIcon,
     height: APP_HEIGHT,
     resizable: false,
     show: true,
@@ -356,6 +364,7 @@ const createMainWindow = async () => {
   if (mainWindow) return;
   mainWindow = new BrowserWindow({
     title: 'Pearl',
+    icon: appIcon,
     resizable: false,
     draggable: true,
     frame: false,
