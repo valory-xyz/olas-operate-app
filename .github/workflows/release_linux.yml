@@ -240,6 +240,7 @@ jobs:
           GNOSIS_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
           MODE_RPC: https://mainnet.mode.network
+          POLYGON_RPC: https://rpc-gate.autonolas.tech/polygon-rpc/
           CELO_RPC: https://forno.celo.org
 
       # Run the build and notarization process for production
@@ -259,6 +260,7 @@ jobs:
           GNOSIS_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
           MODE_RPC: https://mainnet.mode.network
+          POLYGON_RPC: https://rpc-gate.autonolas.tech/polygon-rpc/
           CELO_RPC: https://forno.celo.org
         run: |
           echo "OPTIMISM_RPC=https://rpc-gate.autonolas.tech/optimism-rpc/" >> .env
@@ -266,6 +268,7 @@ jobs:
           echo "GNOSIS_RPC=https://rpc-gate.autonolas.tech/gnosis-rpc/" >> .env
           echo "ETHEREUM_RPC=https://rpc-gate.autonolas.tech/ethereum-rpc/" >> .env
           echo "MODE_RPC=https://mainnet.mode.network" >> .env
+          echo "POLYGON_RPC=https://rpc-gate.autonolas.tech/polygon-rpc/" >> .env
           echo "CELO_RPC=https://forno.celo.org" >> .env
           export GITHUB_REF_TYPE="tag"
           export GITHUB_REF_NAME="${RELEASE_TAG}"
