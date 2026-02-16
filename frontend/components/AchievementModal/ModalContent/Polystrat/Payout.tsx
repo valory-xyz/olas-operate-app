@@ -52,8 +52,10 @@ const StatColumn = ({ label, value }: StatColumnProps) => {
 
 export const PolystratPayoutAchievement = ({
   achievement,
+  onShare,
 }: {
   achievement: Achievement;
+  onShare?: () => void;
 }) => {
   const { description = NA, achievement_type: type, data } = achievement ?? {};
 
@@ -97,6 +99,7 @@ export const PolystratPayoutAchievement = ({
     const postText = description.replace('{achievement_url}', predictUrl);
     const xIntentUrl = generateXIntentUrl(postText);
     window.open(xIntentUrl, '_blank', 'noopener,noreferrer');
+    onShare?.();
   };
 
   const payoutMultiplier = useMemo(() => {
