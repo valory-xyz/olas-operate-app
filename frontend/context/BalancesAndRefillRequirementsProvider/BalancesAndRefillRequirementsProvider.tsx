@@ -15,7 +15,6 @@ import {
 
 import { ACTIVE_AGENTS } from '@/config/agents';
 import {
-  AgentType,
   EvmChainId,
   MiddlewareDeploymentStatusMap,
   REACT_QUERY_KEYS,
@@ -331,7 +330,7 @@ export const BalancesAndRefillRequirementsProvider = ({
         );
         if (!agentConfig) return false;
 
-        const agentType = agentConfig[0] as AgentType;
+        const agentType = agentConfig[0];
 
         // Check if initial funding is done for this agent
         // and only then consider refill requirement
