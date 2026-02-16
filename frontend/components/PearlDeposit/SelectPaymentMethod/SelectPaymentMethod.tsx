@@ -1,6 +1,6 @@
 import { Button, Flex, Skeleton, Typography } from 'antd';
 import Image from 'next/image';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { styled } from 'styled-components';
 
 import { YouPayContainer } from '@/components/PearlWallet';
@@ -21,6 +21,7 @@ import { usePearlWallet } from '@/context/PearlWalletProvider';
 import {
   useFeatureFlag,
   useGetOnRampRequirementsParams,
+  useOnRampContext,
   useTotalFiatFromNativeToken,
   useTotalNativeTokenRequired,
 } from '@/hooks';
@@ -140,22 +141,22 @@ type OnRampMethodProps = {
 };
 const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
   const { amountsToDeposit } = usePearlWallet();
+  const { updateNetworkConfig } = useOnRampContext();
   const chainName = asMiddlewareChain(chainId);
   const onRampChainId = ON_RAMP_CHAIN_MAP[chainName].chain;
 
-  // Check if user is trying to onramp native token
-  const chainConfig = TOKEN_CONFIG[chainId];
-  const hasNativeToken = Object.entries(amountsToDeposit).some(
-    ([tokenSymbol, { amount }]) => {
-      const token = chainConfig[tokenSymbol as TokenSymbol];
-      return token && !token.address && Number(amount) > 0;
-    },
-  );
+  // Set network config early so that getBridgeParamsExceptNativeToken works correctly
+  useEffect(() => {
+    const toChain = asMiddlewareChain(onRampChainId);
+    const chainDetails = asEvmChainDetails(toChain);
 
-  // We can't on-ramp native tokens on the same chain between the same wallets
-  // Because under the hood we use bridging after on-ramping, and for this case
-  // The quote will fail. TODO: we should handle that differently
-  const showSameChainError = onRampChainId === chainId && hasNativeToken;
+    updateNetworkConfig({
+      networkId: onRampChainId,
+      networkName: chainDetails.name,
+      cryptoCurrencyCode: chainDetails.symbol,
+      selectedChainId: chainId,
+    });
+  }, [chainId, onRampChainId, updateNetworkConfig]);
 
   // Get on-ramp requirements params based on user-provided amounts
   const getOnRampRequirementsParams =
@@ -201,7 +202,7 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
     onRampChainId,
     chainId,
     handleGetOnRampRequirementsParams,
-    'preview',
+    'deposit',
   );
 
   const { isLoading: isFiatLoading, data: totalFiatDetails } =
@@ -211,7 +212,7 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
     });
 
   const isLoading = isNativeTokenLoading || isFiatLoading;
-  const isBuyDisabled = showSameChainError || hasNativeTokenError;
+  const isBuyDisabled = hasNativeTokenError;
 
   const isFiatAmountTooLow = useMemo(() => {
     if (isLoading) return false;
@@ -249,14 +250,7 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
                 style={{ width: '120px', height: '22px' }}
               />
             ) : isBuyDisabled ? (
-              showSameChainError ? (
-                <Text type="danger" className="text-sm">
-                  On-ramping of native tokens on the same chain is not yet
-                  supported. Please use Transfer or Bridge method instead.
-                </Text>
-              ) : (
-                <Text type="danger">Unable to calculate</Text>
-              )
+              <Text type="danger">Unable to calculate</Text>
             ) : (
               <Text>
                 ~${totalFiatDetails?.fiatAmount?.toFixed(2) ?? '0.00'}

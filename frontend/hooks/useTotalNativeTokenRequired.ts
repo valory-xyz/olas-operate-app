@@ -26,7 +26,7 @@ export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,
   toChainId: EvmChainId,
   getOnRampRequirementsParams: GetOnRampRequirementsParams,
-  queryKey: 'preview' | 'onboard' | 'deposit' = 'onboard',
+  queryKey: 'onboard' | 'deposit' = 'onboard',
 ) => {
   const {
     updateNativeAmountToPay,
@@ -118,12 +118,18 @@ export const useTotalNativeTokenRequired = (
     const bridgeBalance = bridgeFundingRequirements.balances[onRampNetworkName];
     const nativeBalance = bridgeBalance?.[destinationAddress]?.[AddressZero];
 
-    if (!bridgeRefillRequirementsOfNonNativeTokens) return;
+    // Return early only if both non-native token requirements AND native token params are missing
+    if (
+      !bridgeRefillRequirementsOfNonNativeTokens &&
+      !nativeTokenFromBridgeParams
+    )
+      return;
 
     // e.g, For optimus, addition of (ETH required) + (OLAS and USDC bridged to ETH)
     // + existing balance in case we already have another agent on this chain
+    // Note: Handle case where only native token is deposited (bridgeRefillRequirementsOfNonNativeTokens is undefined)
     const totalNativeTokenToPay =
-      BigInt(bridgeRefillRequirementsOfNonNativeTokens) +
+      BigInt(bridgeRefillRequirementsOfNonNativeTokens || 0) +
       BigInt(nativeTokenFromBridgeParams || 0);
     // All the above + existing balance in case we already have another agent on this chain
     // and some native tokens are there
