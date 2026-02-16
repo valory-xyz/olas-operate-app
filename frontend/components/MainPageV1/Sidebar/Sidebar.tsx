@@ -44,6 +44,7 @@ import {
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
+import { PulseDot } from './PulseDot';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -62,7 +63,6 @@ const SiderContainer = styled.div`
   }
 `;
 
-// TODO: make reusable for new styled buttons in Pearl v1
 const ResponsiveButton = styled(Button)`
   @media (max-width: ${ANTD_BREAKPOINTS[SIDEBAR_BREAKPOINT]}px) {
     > span:not(.ant-btn-icon) {
@@ -162,7 +162,7 @@ const AgentListMenu = ({
         <Flex justify="space-between" align="center">
           <span>{agent.name}</span>
           {runningAgentType === agent.agentType ? (
-            <RunningDot role="img" aria-label="Agent running" />
+            <PulseDot />
           ) : (
             <Image
               src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
