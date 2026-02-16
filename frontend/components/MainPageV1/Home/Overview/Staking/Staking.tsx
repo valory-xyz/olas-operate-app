@@ -7,6 +7,7 @@ import {
   useActiveStakingContractDetails,
   useAgentActivity,
   usePageState,
+  useService,
   useServices,
 } from '@/hooks';
 
@@ -54,9 +55,16 @@ export const Staking = () => {
   const { isAgentEvicted, isEligibleForStaking } =
     useActiveStakingContractDetails();
   const { isServiceRunning } = useAgentActivity();
-  const { selectedAgentConfig } = useServices();
+  const { selectedService, selectedAgentConfig } = useServices();
+  const { service } = useService(selectedService?.service_config_id);
 
-  const { isUnderConstruction } = selectedAgentConfig;
+  const { isUnderConstruction, evmHomeChainId } = selectedAgentConfig;
+
+  const hasValidServiceToken = useMemo(() => {
+    if (!service) return false;
+    const token = service?.chain_configs?.[evmHomeChainId]?.chain_data?.token;
+    return !!token;
+  }, [service, evmHomeChainId]);
 
   const alert = useMemo(() => {
     if (isUnderConstruction) return <UnderConstructionAlert />;
@@ -76,7 +84,7 @@ export const Staking = () => {
         <Title level={5} className="m-0">
           Staking
         </Title>
-        {!selectedAgentConfig?.isUnderConstruction && (
+        {!isUnderConstruction && hasValidServiceToken && (
           <Button size="small" onClick={() => goto(PAGES.AgentStaking)}>
             Manage Staking
           </Button>
