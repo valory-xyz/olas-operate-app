@@ -97,63 +97,43 @@ const useTransformCheckpoints = () => {
   const { serviceApi: agent, evmHomeChainId: chainId } = selectedAgentConfig;
 
   return useCallback(
-    (
-      rewardsHistory: ServiceRewardsHistory[],
-      timestampToIgnore?: null | number,
-      {
-        canCheckpointsHaveMissingEpochs,
-      }: { canCheckpointsHaveMissingEpochs?: boolean } = {},
-    ): Checkpoint[] => {
+    (rewardsHistory: ServiceRewardsHistory[]): Checkpoint[] => {
       if (!rewardsHistory?.length) return [];
 
-      return rewardsHistory
-        .map((history, index) => {
-          const blockTimestamp = Number(history.blockTimestamp);
-          const epochLength = Number(history.checkpoint?.epochLength ?? 0);
+      return rewardsHistory.map((history, index) => {
+        const blockTimestamp = Number(history.blockTimestamp);
+        const epochLength = Number(history.checkpoint?.epochLength ?? 0);
 
-          /**
-           * If:
-           *   1. The epoch is 0, it means it's the first epoch
-           *   2. The checkpoint list can have missing epochs
-           * Else:
-           *   The start time of the epoch is the end time of the previous epoch
-           */
-          const epochStartTimeStamp =
-            history.epoch === '0' || canCheckpointsHaveMissingEpochs
-              ? blockTimestamp - epochLength
-              : Number(rewardsHistory[index + 1]?.blockTimestamp ?? 0);
+        /**
+         * If:
+         *   1. The epoch is 0, it means it's the first epoch
+         *   2. The checkpoint list can have missing epochs
+         * Else:
+         *   The start time of the epoch is the end time of the previous epoch
+         */
+        const epochStartTimeStamp =
+          history.epoch === '0' || !rewardsHistory[index + 1]
+            ? blockTimestamp - epochLength
+            : Number(rewardsHistory[index + 1].blockTimestamp);
 
-          const stakingContractId = agent.getStakingProgramIdByAddress(
-            chainId,
-            history.contractAddress as Address,
-          );
+        const stakingContractId = agent.getStakingProgramIdByAddress(
+          chainId,
+          history.contractAddress as Address,
+        );
 
-          return {
-            epoch: history.epoch,
-            blockTimestamp: history.blockTimestamp,
-            transactionHash: history.transactionHash,
-            epochLength: history.checkpoint?.epochLength ?? '0',
-            contractAddress: history.contractAddress,
-            contractName: stakingContractId,
-            epochEndTimeStamp: blockTimestamp,
-            epochStartTimeStamp,
-            reward: Number(ethers.utils.formatUnits(history.rewardAmount, 18)),
-            earned: BigInt(history.rewardAmount) > 0n,
-          };
-        })
-        .filter((checkpoint) => {
-          // If the contract has been switched to new contract,
-          // ignore the rewards from the old contract of the same epoch,
-          // as the rewards are already accounted in the new contract.
-          // Example: If contract was switched on September 1st, 2024,
-          // ignore the rewards before that date in the old contract.
-          if (!timestampToIgnore) return true;
-
-          if (!checkpoint) return false;
-          if (!checkpoint.epochEndTimeStamp) return false;
-
-          return checkpoint.epochEndTimeStamp < timestampToIgnore;
-        });
+        return {
+          epoch: history.epoch,
+          blockTimestamp: history.blockTimestamp,
+          transactionHash: history.transactionHash,
+          epochLength: history.checkpoint?.epochLength ?? '0',
+          contractAddress: history.contractAddress,
+          contractName: stakingContractId,
+          epochEndTimeStamp: blockTimestamp,
+          epochStartTimeStamp,
+          reward: Number(ethers.utils.formatUnits(history.rewardAmount, 18)),
+          earned: BigInt(history.rewardAmount) > 0n,
+        };
+      });
     },
     [agent, chainId],
   );
@@ -210,7 +190,7 @@ const useServiceRewardsHistory = (
         if (!histories?.length) return acc;
 
         // transform the rewards history, includes epoch start and end time, rewards, etc
-        const transformed = transformCheckpoints(histories, null);
+        const transformed = transformCheckpoints(histories);
 
         return { ...acc, [address]: transformed };
       }, {});

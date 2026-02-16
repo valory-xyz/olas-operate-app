@@ -7,9 +7,9 @@ import {
   useActiveStakingContractDetails,
   useAgentActivity,
   usePageState,
-  useService,
   useServices,
 } from '@/hooks';
+import { isValidServiceId } from '@/utils';
 
 import { EpochClock } from './EpochClock';
 import { Streak } from './Streak';
@@ -49,22 +49,22 @@ const RunAgentAlert = () => (
 /**
  * To display current epoch lifetime, streak, and relevant alerts.
  */
-
 export const Staking = () => {
   const { goto } = usePageState();
   const { isAgentEvicted, isEligibleForStaking } =
     useActiveStakingContractDetails();
   const { isServiceRunning } = useAgentActivity();
   const { selectedService, selectedAgentConfig } = useServices();
-  const { service } = useService(selectedService?.service_config_id);
 
-  const { isUnderConstruction, evmHomeChainId } = selectedAgentConfig;
+  const { isUnderConstruction } = selectedAgentConfig;
 
   const hasValidServiceToken = useMemo(() => {
-    if (!service) return false;
-    const token = service?.chain_configs?.[evmHomeChainId]?.chain_data?.token;
-    return !!token;
-  }, [service, evmHomeChainId]);
+    if (!selectedService) return false;
+    const token =
+      selectedService?.chain_configs?.[selectedService?.home_chain]?.chain_data
+        ?.token;
+    return isValidServiceId(token);
+  }, [selectedService]);
 
   const alert = useMemo(() => {
     if (isUnderConstruction) return <UnderConstructionAlert />;
